@@ -1,104 +1,111 @@
 {
- "artifact": "symbolon/roz-symbolon-whole.journey.json",
- "family": "symbolon",
- "worker": "E5",
- "profile_lineage": [
-  "roz-corpus-base",
-  "register-symbolon"
- ],
- "source_revision": {
-  "repo": "EpiLogos/Antykathera-Essay-Work",
-  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
-  "records": [
-   {
-    "record_id": "symbolon-root",
-    "path": "submission-package/essay/symbolon/README.md",
-    "sha256": "d6b2d32165e7c1ba75053643587ae63abfd10b1d4a1c0ea2a9c801912c963426",
-    "note": "publication-root README; carries the whole/register relation this artifact stages. Not one of the 13 T25 census records (those are the twelvefold roots + spine-index, bound by roz-symbolon-spine); hash recorded here at capture for exactness."
-   }
+  "artifact": "symbolon/roz-symbolon-whole.journey.json",
+  "family": "symbolon",
+  "worker": "E5",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "register-symbolon"
   ],
-  "referenced_not_bound": [
-   "submission-package/essay/symbolon/matheme/README.md (d1121877b5c43ea8…)",
-   "submission-package/essay/symbolon/mytheme/README.md (a9af4a1c248fafc3…)",
-   "submission-package/essay/symbolon/episteme/README.md (b0e05a207e10d5dc…)"
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+    "records": [
+      {
+        "record_id": "symbolon-root",
+        "path": "submission-package/essay/symbolon/README.md",
+        "sha256": "d6b2d32165e7c1ba75053643587ae63abfd10b1d4a1c0ea2a9c801912c963426",
+        "note": "publication-root README; carries the whole/register relation this artifact stages. Not one of the 13 T25 census records (those are the twelvefold roots + spine-index, bound by roz-symbolon-spine); hash recorded here at capture for exactness."
+      }
+    ],
+    "referenced_not_bound": [
+      "submission-package/essay/symbolon/matheme/README.md (d1121877b5c43ea8…)",
+      "submission-package/essay/symbolon/mytheme/README.md (a9af4a1c248fafc3…)",
+      "submission-package/essay/symbolon/episteme/README.md (b0e05a207e10d5dc…)"
+    ],
+    "basis_commit": "dbf3b17",
+    "note": "README re-read at fc59a719 (canonical for the 2026-10-06 enrichment pass); the sha256 below remains the dbf3b17 basis hash, kept per protocol — the dbf3b17→fc59a719 delta touched the README (+10/-x lines, figures-and-images merge); every claim carried in the journey text layers was re-checked against the fc59a719 text"
+  },
+  "pointcloud_revision": "a39cf5f",
+  "scenes": [
+    {
+      "scene_id": "whole-root",
+      "source_ref": "symbolon-root (README, opening paragraphs)",
+      "relations": "root relation `0/1`, obverse `1/0`, equality `0/1 = 1/0`; Symbolon as whole form and self-nesting 3+1 holding Matheme/Mytheme/Episteme without becoming a fourth bucket"
+    },
+    {
+      "scene_id": "held-matheme",
+      "source_ref": "symbolon-root → Matheme register (paśyantī)",
+      "relations": "register presence and office only; full equation `0/1 = 4+2 = 5→0 = 1/0 = 4′+2′ = 5′→0′ = 0/1` quoted from README; register records referenced (E4 Expression), not restaged"
+    },
+    {
+      "scene_id": "held-mytheme",
+      "source_ref": "symbolon-root → Mytheme register (madhyamā)",
+      "relations": "register presence and office only; images perform operations, not decorative equivalents of equations; register wholes referenced (E6), not restaged"
+    },
+    {
+      "scene_id": "held-episteme",
+      "source_ref": "symbolon-root → Episteme register (vaikharī)",
+      "relations": "register presence and office only; instituted knowledge (source houses, histories, etymologies, lenses, dossiers); register records referenced (E3), not restaged"
+    },
+    {
+      "scene_id": "whole-held",
+      "source_ref": "symbolon-root (self-nesting 3+1; four reading movements)",
+      "relations": "the containment scene: three held presences distinct within one whole, slash active between them, no fusion, no fourth-sibling placement"
+    },
+    {
+      "scene_id": "whole-return",
+      "source_ref": "symbolon-root (root relation, obverse direction)",
+      "relations": "`0/1 = 1/0` — the registers returned without fusion; orientation reversed relative to whole-root (return at centre, first orientation at rim); hands on to roz-symbolon-spine"
+    }
   ],
-  "basis_commit": "dbf3b17",
-  "note": "README re-read at fc59a719 (canonical for the 2026-10-06 enrichment pass); the sha256 below remains the dbf3b17 basis hash, kept per protocol — the dbf3b17→fc59a719 delta touched the README (+10/-x lines, figures-and-images merge); every claim carried in the journey text layers was re-checked against the fc59a719 text"
- },
- "pointcloud_revision": "a39cf5f",
- "scenes": [
-  {
-   "scene_id": "whole-root",
-   "source_ref": "symbolon-root (README, opening paragraphs)",
-   "relations": "root relation `0/1`, obverse `1/0`, equality `0/1 = 1/0`; Symbolon as whole form and self-nesting 3+1 holding Matheme/Mytheme/Episteme without becoming a fourth bucket"
+  "assets": [
+    {
+      "kind": "glyph",
+      "ref": "notation glyphs 0/1, 1/0, / (authored formations)",
+      "provenance": "authored"
+    },
+    {
+      "kind": "diagram",
+      "ref": "envelope ring as the whole (parā); cymatic circular template as mytheme presence; square as episteme presence",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "symbolon/roz-symbolon-whole.cover.png",
+  "status": "reviewed",
+  "notes": "Craft: register-symbolon baseline (deepest field, near-black #14161a, whiteOnBlack ink, ink material); whole scenes use backgroundMode vignette, held scenes solid. Presence tints (matheme #9fb4c8, mytheme #c9ad7a, episteme #9aa89b) are presentation policy only — no colour correspondence is claimed. All 6 scenes inspected at draft count (8000) and at authored count (62000). Revised during inspection: envelope ring 2.05→1.9 and rim marks moved from ±1.24 to ±0.96 (they fell outside the visible extent at ±~1.05); mytheme presence switched from default cymatic (renders as a square slab) to templateGeometry circular + templateFrequency 3 at size 0.85 (reads as a formed image); whole-held presences shrunk to stay inside the ring. Covers captured with authored params (no count override) through the real engine. Honest remainers: scene text layers are compressed refractions with source-of-record lines, never replacements for the canonical pages; backticked tokens are kept verbatim; register records are other workers' outputs and are deliberately not restaged here.\nENRICHMENT MOVES 2026-10-06 (per scene: what changes, and why that gesture carries the record's move) —\nwhole-root: the whole at near-stillness (pointer repel 0.08, slow turn circulation 0.5, ring layout — the envelope is the composition); SEQUENCE on the root relation: `0/1 → 1/0 → 0/1` with the obverse step rotated 180° — the one sign read from its other end; the rim 1/0 leans toward centre (the return is already implicated).\nheld-matheme: finer grain (48k/2.6, contrast 0.96, dispersion 0.03) — the operative logic exact and cool; relational orbital mode (distinctions held in relation); line layout (the equation is serial); SEQUENCE decomposes the locked equation into its own terms — full → `4+2` → `5→0` → full — the matheme traversing its own identity; pointer attract 0.45 (the logic draws distinctions together).\nheld-mytheme: resonance becomes audible-visible — cymatic frequency 396 with autoSweep driven by automation (the formed image re-forms under a swept drive, which is what a cymatic plate is); pointer vortex 0.5 (the image turns slowly); SEQUENCE walks the presence's shape cymatic → yantra → cymatic — the pattern varies, the image remains image (warm mytheme tint kept, presentation policy only); ring layout; transition 1.6.\nheld-episteme: instituted knowledge as checkable bounds — collisionEnabled obstacle mode (records hold their edges), finest grain (52k/2.5), slowest speed 0.4; pointer repel 0.9 (warrant guards its bounds); grid layout (the instituted lattice); episteme presence repels gently (the inspected utterance holds its surface).\nwhole-held: THE containment scene, in 3D — the three registers held at different z inside one whole: Matheme deepest (paśyantī nearest parā), Mytheme at mid-depth, Episteme nearest the viewer (vaikharī, the spoken surface); z IS the depth of the one descent of speech, and the envelope ring surrounds all depths (parā holds them without becoming a fourth sibling); volumeEnabled dome + perspective + occlusion + depthTint give the presences standing depth; the holding-slash SEQUENCE walks `/` through the three register positions in 3D and back to centre — the slash itself descends and returns: distinction remains the form of belonging; pointer attract 0.7 (containment gathers); duration 14, transition 2.0.\nwhole-return: the orientation reverses — circulation −0.5 (the whole's turn runs back), implode click (the return gathers); automation lane on field.speed (sine 0.3–0.6, rate 0.09): the return breathes; SEQUENCE mirrors whole-root: `1/0 → 0/1 → 1/0` with the recognised step rotated 180° — the return resolves into the first orientation; rim 0/1 leans toward centre. Hands on to roz-symbolon-spine.\nJourney-wide: framing scenes (whole-root, whole-return) at text size 26, held scenes at 30 — the size hierarchy marks the whole/register distinction; every adjacent pair changes ≥3 settings across ≥2 families (pointer/physics/material/colour/resonance/relational/collision/camera); 6 distinct pointer profiles chosen per meaning (stillness, logic-attract, image-vortex, warrant-repel, containment-attract, return-implode); presence tints stay presentation policy only — no colour correspondence claimed; text bodies compressed to ≤70 words with claim and source-of-record lines intact, @-revision updated dbf3b17 → fc59a719.",
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-symbolon-l1",
+    "lane": "symbolon",
+    "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+    "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
   },
-  {
-   "scene_id": "held-matheme",
-   "source_ref": "symbolon-root → Matheme register (paśyantī)",
-   "relations": "register presence and office only; full equation `0/1 = 4+2 = 5→0 = 1/0 = 4′+2′ = 5′→0′ = 0/1` quoted from README; register records referenced (E4 Expression), not restaged"
+  "glyph_rationales": {
+    "0/1": "the first orientation — the non-objectifiable ground and the determinate mark held through the slash that differentiates them; the whole form's root relation, earned as notation at §1 · #5→0",
+    "1/0": "the obverse orientation — the mark returning toward the condition it cannot possess; QL asserts `0/1 = 1/0`: two orientations of one relation",
+    "/": "the differentiating activity itself — division and ratio, AND/OR; in the whole member, the slash that holds the three registers distinct and carries the descent between them (distinction remains the form of belonging)",
+    "4+2": "the sixfold — four relational forms (00, 01, 10, 11) plus the two single terms through which their differences are written; the first explicit generative count",
+    "5→0": "the consequent essence — the achieved fifth determination returning through its ground, 5 implicated in 1 through exactly this connection",
+    "whole-envelope": "the whole form drawn as one envelope — Symbolon as parā, holding its registers without fusing them",
+    "the ground of the root": "the still centre against which the root relation reads — the whole's own depth",
+    "the exact lattice": "the matheme's square: exact, repeatable structure — cool and checkable",
+    "mytheme-presence": "the formed image's presence: myth as patterned sound made visible — a cymatic field",
+    "episteme-presence": "the instituted lattice's presence: the frame of checkable houses",
+    "the check within": "inspection inside the instituted frame — the turned square of verification"
   },
-  {
-   "scene_id": "held-mytheme",
-   "source_ref": "symbolon-root → Mytheme register (madhyamā)",
-   "relations": "register presence and office only; images perform operations, not decorative equivalents of equations; register wholes referenced (E6), not restaged"
+  "recraft": {
+    "date": "2026-10-07",
+    "actor": "zcode:craft-lane-3",
+    "lane": "enrich/expressions-craft-20261007",
+    "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+    "note": "rework pass: editorial panels removed from the stage (the record's words live here; scene characters carry the reading); the matheme's compression no longer sits as one sentence-glyph — it performs as time, the notation cycling 0/1 → 4+2 → 5→0 → 1/0 on the exact lattice; the yantra step in the mytheme presence is replaced by the pattern gathering to a rim; the episteme presence gains its turned square of verification; the three registers are held under one gathered ground, each its own tint and figure, and the whole-held stages them unfused in 3d; the return lands the obverse back on the root's ground; two of five adjacent pairs hold their ground unchanged."
   },
-  {
-   "scene_id": "held-episteme",
-   "source_ref": "symbolon-root → Episteme register (vaikharī)",
-   "relations": "register presence and office only; instituted knowledge (source houses, histories, etymologies, lenses, dossiers); register records referenced (E3), not restaged"
-  },
-  {
-   "scene_id": "whole-held",
-   "source_ref": "symbolon-root (self-nesting 3+1; four reading movements)",
-   "relations": "the containment scene: three held presences distinct within one whole, slash active between them, no fusion, no fourth-sibling placement"
-  },
-  {
-   "scene_id": "whole-return",
-   "source_ref": "symbolon-root (root relation, obverse direction)",
-   "relations": "`0/1 = 1/0` — the registers returned without fusion; orientation reversed relative to whole-root (return at centre, first orientation at rim); hands on to roz-symbolon-spine"
+  "deepen": {
+    "date": "2026-10-07",
+    "actor": "zcode:deepen-lane-3",
+    "lane": "agent/o-i-20261007-1639",
+    "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+    "note": "Deepen pass: every scene titled with the root record's own line (README: 'Ground and mark held through the slash', 'A sentence opens into its derivation', 'A myth performs the same movement', 'The historical warrant', 'Holding Matheme, Mytheme and Episteme', 'The mark returns toward its condition'); 33 stage words, no metadata. Alive and deep: whole-held — the self-nesting 3+1 in 3d — now carries the morph (engine.morphEnabled, toroidalHopf, product law, theta 0.07 / phi 0.15: the whole holding its three presences in one turning relation) and its depth is authored (0.7, zConfinement 0.7, curlDepth 0.35) so the registers stand at -0.55/0/+0.55 in volume; whole-return holds the obverse state (contrast 0.96, elongation 0.12 — the return drawn out). Stillness kept lawful: only the two scenes whose adjacent pairs were already moving changed state. Step-scale repair: text-changing steps carried objectState without size (invalid) — objectState removed; no text-changing step carries objectState.size anywhere in the journey."
   }
- ],
- "assets": [
-  {
-   "kind": "glyph",
-   "ref": "notation glyphs 0/1, 1/0, / (authored formations)",
-   "provenance": "authored"
-  },
-  {
-   "kind": "diagram",
-   "ref": "envelope ring as the whole (parā); cymatic circular template as mytheme presence; square as episteme presence",
-   "provenance": "authored"
-  }
- ],
- "capture": "symbolon/roz-symbolon-whole.cover.png",
- "status": "reviewed",
- "notes": "Craft: register-symbolon baseline (deepest field, near-black #14161a, whiteOnBlack ink, ink material); whole scenes use backgroundMode vignette, held scenes solid. Presence tints (matheme #9fb4c8, mytheme #c9ad7a, episteme #9aa89b) are presentation policy only — no colour correspondence is claimed. All 6 scenes inspected at draft count (8000) and at authored count (62000). Revised during inspection: envelope ring 2.05→1.9 and rim marks moved from ±1.24 to ±0.96 (they fell outside the visible extent at ±~1.05); mytheme presence switched from default cymatic (renders as a square slab) to templateGeometry circular + templateFrequency 3 at size 0.85 (reads as a formed image); whole-held presences shrunk to stay inside the ring. Covers captured with authored params (no count override) through the real engine. Honest remainers: scene text layers are compressed refractions with source-of-record lines, never replacements for the canonical pages; backticked tokens are kept verbatim; register records are other workers' outputs and are deliberately not restaged here.\nENRICHMENT MOVES 2026-10-06 (per scene: what changes, and why that gesture carries the record's move) —\nwhole-root: the whole at near-stillness (pointer repel 0.08, slow turn circulation 0.5, ring layout — the envelope is the composition); SEQUENCE on the root relation: `0/1 → 1/0 → 0/1` with the obverse step rotated 180° — the one sign read from its other end; the rim 1/0 leans toward centre (the return is already implicated).\nheld-matheme: finer grain (48k/2.6, contrast 0.96, dispersion 0.03) — the operative logic exact and cool; relational orbital mode (distinctions held in relation); line layout (the equation is serial); SEQUENCE decomposes the locked equation into its own terms — full → `4+2` → `5→0` → full — the matheme traversing its own identity; pointer attract 0.45 (the logic draws distinctions together).\nheld-mytheme: resonance becomes audible-visible — cymatic frequency 396 with autoSweep driven by automation (the formed image re-forms under a swept drive, which is what a cymatic plate is); pointer vortex 0.5 (the image turns slowly); SEQUENCE walks the presence's shape cymatic → yantra → cymatic — the pattern varies, the image remains image (warm mytheme tint kept, presentation policy only); ring layout; transition 1.6.\nheld-episteme: instituted knowledge as checkable bounds — collisionEnabled obstacle mode (records hold their edges), finest grain (52k/2.5), slowest speed 0.4; pointer repel 0.9 (warrant guards its bounds); grid layout (the instituted lattice); episteme presence repels gently (the inspected utterance holds its surface).\nwhole-held: THE containment scene, in 3D — the three registers held at different z inside one whole: Matheme deepest (paśyantī nearest parā), Mytheme at mid-depth, Episteme nearest the viewer (vaikharī, the spoken surface); z IS the depth of the one descent of speech, and the envelope ring surrounds all depths (parā holds them without becoming a fourth sibling); volumeEnabled dome + perspective + occlusion + depthTint give the presences standing depth; the holding-slash SEQUENCE walks `/` through the three register positions in 3D and back to centre — the slash itself descends and returns: distinction remains the form of belonging; pointer attract 0.7 (containment gathers); duration 14, transition 2.0.\nwhole-return: the orientation reverses — circulation −0.5 (the whole's turn runs back), implode click (the return gathers); automation lane on field.speed (sine 0.3–0.6, rate 0.09): the return breathes; SEQUENCE mirrors whole-root: `1/0 → 0/1 → 1/0` with the recognised step rotated 180° — the return resolves into the first orientation; rim 0/1 leans toward centre. Hands on to roz-symbolon-spine.\nJourney-wide: framing scenes (whole-root, whole-return) at text size 26, held scenes at 30 — the size hierarchy marks the whole/register distinction; every adjacent pair changes ≥3 settings across ≥2 families (pointer/physics/material/colour/resonance/relational/collision/camera); 6 distinct pointer profiles chosen per meaning (stillness, logic-attract, image-vortex, warrant-repel, containment-attract, return-implode); presence tints stay presentation policy only — no colour correspondence claimed; text bodies compressed to ≤70 words with claim and source-of-record lines intact, @-revision updated dbf3b17 → fc59a719.",
- "enrichment": {
-  "date": "2026-10-06",
-  "actor": "zcode:enrich-symbolon-l1",
-  "lane": "symbolon",
-  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
-  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
- },
- "glyph_rationales": {
-  "0/1": "the first orientation — the non-objectifiable ground and the determinate mark held through the slash that differentiates them; the whole form's root relation, earned as notation at §1 · #5→0",
-  "1/0": "the obverse orientation — the mark returning toward the condition it cannot possess; QL asserts `0/1 = 1/0`: two orientations of one relation",
-  "/": "the differentiating activity itself — division and ratio, AND/OR; in the whole member, the slash that holds the three registers distinct and carries the descent between them (distinction remains the form of belonging)",
-  "4+2": "the sixfold — four relational forms (00, 01, 10, 11) plus the two single terms through which their differences are written; the first explicit generative count",
-  "5→0": "the consequent essence — the achieved fifth determination returning through its ground, 5 implicated in 1 through exactly this connection",
-  "whole-envelope": "the whole form drawn as one envelope — Symbolon as parā, holding its registers without fusing them",
-  "the ground of the root": "the still centre against which the root relation reads — the whole's own depth",
-  "the exact lattice": "the matheme's square: exact, repeatable structure — cool and checkable",
-  "mytheme-presence": "the formed image's presence: myth as patterned sound made visible — a cymatic field",
-  "episteme-presence": "the instituted lattice's presence: the frame of checkable houses",
-  "the check within": "inspection inside the instituted frame — the turned square of verification"
- },
- "recraft": {
-  "date": "2026-10-07",
-  "actor": "zcode:craft-lane-3",
-  "lane": "enrich/expressions-craft-20261007",
-  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
-  "note": "rework pass: editorial panels removed from the stage (the record's words live here; scene characters carry the reading); the matheme's compression no longer sits as one sentence-glyph — it performs as time, the notation cycling 0/1 → 4+2 → 5→0 → 1/0 on the exact lattice; the yantra step in the mytheme presence is replaced by the pattern gathering to a rim; the episteme presence gains its turned square of verification; the three registers are held under one gathered ground, each its own tint and figure, and the whole-held stages them unfused in 3d; the return lands the obverse back on the root's ground; two of five adjacent pairs hold their ground unchanged."
- }
 }

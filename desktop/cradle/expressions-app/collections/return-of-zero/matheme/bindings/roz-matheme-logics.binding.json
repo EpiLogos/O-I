@@ -126,7 +126,11 @@
   "Rework 2026-10-07 (craft lane 4): word-labels replaced by the records' own operations drawn — the pole axis with its three exact operator results, the refit token with the seam line kept visible, the x/2 landscape against one highlighted trajectory, the two chains of the one subject, the office lanes with the double ?/!, and the translation map with its boundary plate.",
   "Colour: three pair-grounds — umber for the cut and its gathering, slate for configuration and the one field, olive-sage for plurality and its translations. Tints travel copper→steel→sage, gold at the seams earned.",
   "Stillness: each ground holds across its pair (3 of 5 adjacent pairs still); motion only at the pair changes.",
-  "Stage text 40 words across six scenes."
+  "Stage text 40 words across six scenes.",
+  "Deepen 2026-10-07 (lane 4): four scenes stand in 3d, in still pairs deepened identically so the rests survive. Dia and syn — the third dimension is the interior the cut falls into: the slash travels at z +0.25 before the axis that both poles need (z −0.3); the broken token rides toward the viewer (z +0.3) while the gathered field holds it from behind (z −0.25). Their shared morph clock is pulse-driven (θ̇ 0.2, dwell 0.5): for dia the pulse is the cut falling; for syn the same beat is the seam refitting.",
+  "Deepen, chronic and mono — the third dimension is the passage: the landscape stands behind (z −0.4) while the fixed point travels in front (z +0.2); the one field recedes (z −0.35) behind the chains of notation (z +0.25) — the one is deeper than any of its notations. Their shared clock turns slowly (law theta, θ̇ 0.1, φ̇ 0.06, smooth drive): the field holds while the passage turns. Poly and translations stay planar — address lanes and correspondence are drawn flat, on purpose.",
+  "Deepen, physics states: three profiles — warm cut (grain 0.04, halo 0.16, softness 0.24) for dia-syn, cool passage (grain 0.032, roundness 0.96) for chronic-mono, olive lanes (elongation 0.06) for poly-translations. Props vary across the pairs, hold within them.",
+  "Deepen, titles: every scene carries the record's own line — dia #0 'Begin inside the field', syn #0 'Gather terms that remain distinct', chronic record title kept, mono #5→0 near-quote 'The one through the many', poly #0 'Inventory offices rather than synonyms', translations record title 'Correspondence with its proof boundary'. Stage words 56."
  ],
  "description": "The two logics: dia/syn (cut and gathering, locked expressions / = −/− → (−1)/(+1) → (−1)+/−(+1), (0/1)/(1/0)) and mono/poly (one field through many notations).",
  "scene_count": 6,
@@ -161,6 +165,13 @@
   "actor": "zcode:craft-expressions-l4",
   "lane": "craft-l4/matheme",
   "pass": "expression rework — TEXT IS THE MINIMUM FORM (owner commission 2026-10-07)",
-  "gate": "site/tests/expression-richness.mjs"
+  "gate": "site/tests/expression-richness.mjs",
+  "deepen": {
+   "date": "2026-10-07",
+   "actor": "zcode:deepen-lane4",
+   "lane": "deepen-l4/matheme",
+   "pass": "the deepen pass — depth, alive material, named scenes (second movement)",
+   "gate": "site/tests/expression-richness.mjs"
+  }
  }
 }

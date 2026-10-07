@@ -1,2119 +1,2171 @@
 {
- "schema": "oi.journey",
- "version": 1,
- "id": "roz-mytheme-uroboros-trickster",
- "name": "Uroboros, circulation and trickster",
- "description": "The native toroidal whole in eight movements: the round and its trickster costume, position, opposition, the metabolic fork, superposition, interposition (torus and winding), discharge/confinement, and the return with the hole intact.",
- "loop": true,
- "scenes": [
-  {
-   "id": "m-urob-0-round",
-   "name": "The snake bends until its head meets its tail",
-   "character": "The costume succeeds by making an actual feature exhaustive: head and tail complete a visible circumference, and the mouth, the depth, and the opening disappear into the outline.",
-   "duration": 13,
-   "transition": 1.5,
-   "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "blackOnWhite",
-    "backgroundMode": "solid",
-    "pointerMode": "repel",
-    "pointerClick": "shove",
-    "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
-   },
-   "field": {
-    "background": "#141a16",
-    "palette": [
-     "#7a9b6a",
-     "#c9a227",
-     "#4b3f63",
-     "#d8d2c4"
-    ],
-    "material": "round",
-    "params": {
-     "count": 58000,
-     "size": 2.4,
-     "opacity": 0.92,
-     "contrast": 0.95,
-     "speed": 0.42,
-     "circulation": 0.34,
-     "dispersion": 0.06,
-     "turbulence": 0.14,
-     "pointerStrength": 0.4
-    }
-   },
-   "entities": [
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-uroboros-trickster",
+  "name": "Uroboros, circulation and trickster",
+  "description": "The native toroidal whole in eight movements: the round and its trickster costume, position, opposition, the metabolic fork, superposition, interposition (torus and winding), discharge/confinement, and the return with the hole intact.",
+  "loop": true,
+  "scenes": [
     {
-     "id": "u0-body",
-     "name": "the uroboros — the body curving around an opening",
-     "kind": "formation",
-     "position": {
-      "x": -0.05,
-      "y": -0.24,
-      "z": 0
-     },
-     "size": {
-      "x": 0.34,
-      "y": 0.3
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#7a9b6a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": true,
-      "clock": "seconds",
-      "order": "loop",
-      "easing": "smoothstep",
-      "steps": [
-       {
-        "id": "u0-body-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3.2,
-        "transition": 3.0,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.34,
-          "y": 0.3
-         },
-         "rotation": 0,
-         "tint": "#c9a227",
-         "tintWeight": 1,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      "id": "m-urob-0-round",
+      "name": "The snake bends until its head meets its tail",
+      "character": "The costume succeeds by making an actual feature exhaustive: head and tail complete a visible circumference, and the mouth, the depth, and the opening disappear into the outline.",
+      "duration": 13,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.32
+      },
+      "field": {
+        "background": "#141a16",
+        "palette": [
+          "#7a9b6a",
+          "#c9a227",
+          "#4b3f63",
+          "#d8d2c4"
+        ],
+        "material": "round",
+        "params": {
+          "count": 58000,
+          "size": 2.4,
+          "opacity": 0.92,
+          "contrast": 0.95,
+          "speed": 0.42,
+          "circulation": 0.34,
+          "dispersion": 0.06,
+          "turbulence": 0.14,
+          "pointerStrength": 0.4,
+          "grain": 0.04,
+          "halo": 0.14,
+          "roundness": 0.9,
+          "softness": 0.2,
+          "irregularity": 0.3,
+          "elongation": 0.06
         }
-       },
-       {
-        "id": "u0-body-sq1",
-        "text": "",
-        "shape": "disc",
-        "hold": 3.2,
-        "transition": 3.0,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.34,
-          "y": 0.3
-         },
-         "rotation": 3.1416,
-         "tint": "#c9a227",
-         "tintWeight": 1,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      },
+      "entities": [
+        {
+          "id": "u0-body",
+          "name": "the uroboros — the body curving around an opening",
+          "kind": "formation",
+          "position": {
+            "x": -0.05,
+            "y": -0.24,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#7a9b6a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "u0-body-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3.2,
+                "transition": 3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "u0-body-sq1",
+                "text": "",
+                "shape": "disc",
+                "hold": 3.2,
+                "transition": 3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.3
+                  },
+                  "rotation": 3.1416,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "      .-~~~~~~-.\n    .'          '.\n   /   ~~~~~~~    \\\n  |  ~~        ~~  |\n  |  ~~        ~~  |\n   \\   ~~~~~~~    /\n    '.          .'\n      '-______-'"
+            }
+          }
+        },
+        {
+          "id": "u0-head",
+          "name": "head at tail — the mouth receiving its own body",
+          "kind": "formation",
+          "position": {
+            "x": 0.16,
+            "y": -0.08,
+            "z": 0
+          },
+          "size": {
+            "x": 0.09,
+            "y": 0.08
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u0-head-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "    ___\n   (o \\\n    \\  _)\n    _\\_\\"
+            }
+          }
+        },
+        {
+          "id": "u0-costume",
+          "name": "the trickster — circle or sphere as costume; the visible completion offering itself as the whole truth",
+          "kind": "formation",
+          "position": {
+            "x": -0.05,
+            "y": -0.24,
+            "z": 0
+          },
+          "size": {
+            "x": 0.44,
+            "y": 0.4
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#8b5fb8",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u0-costume-sq0",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "u0-hidden",
+          "name": "what the outline hides — mouth, depth, the opening kept",
+          "kind": "formation",
+          "position": {
+            "x": -0.05,
+            "y": -0.24,
+            "z": 0
+          },
+          "size": {
+            "x": 0.07,
+            "y": 0.06
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#0e120f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u0-hidden-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
         }
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "      .-~~~~~~-.\n    .'          '.\n   /   ~~~~~~~    \\\n  |  ~~        ~~  |\n  |  ~~        ~~  |\n   \\   ~~~~~~~    /\n    '.          .'\n      '-______-'"
-      }
-     }
-    },
-    {
-     "id": "u0-head",
-     "name": "head at tail — the mouth receiving its own body",
-     "kind": "formation",
-     "position": {
-      "x": 0.16,
-      "y": -0.08,
-      "z": 0
-     },
-     "size": {
-      "x": 0.09,
-      "y": 0.08
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u0-head-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "    ___\n   (o \\\n    \\  _)\n    _\\_\\"
-      }
-     }
-    },
-    {
-     "id": "u0-costume",
-     "name": "the trickster — circle or sphere as costume; the visible completion offering itself as the whole truth",
-     "kind": "formation",
-     "position": {
-      "x": -0.05,
-      "y": -0.24,
-      "z": 0
-     },
-     "size": {
-      "x": 0.44,
-      "y": 0.4
-     },
-     "rotation": 0,
-     "shape": "ring",
-     "text": "",
-     "share": 1,
-     "tint": "#8b5fb8",
-     "tintWeight": 0.5,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u0-costume-sq0",
-        "text": "",
-        "shape": "ring",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
-    },
-    {
-     "id": "u0-hidden",
-     "name": "what the outline hides — mouth, depth, the opening kept",
-     "kind": "formation",
-     "position": {
-      "x": -0.05,
-      "y": -0.24,
-      "z": 0
-     },
-     "size": {
-      "x": 0.07,
-      "y": 0.06
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#0e120f",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u0-hidden-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": [],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "The snake bends until its head meets its tail",
-     "italic": "The visible completion offers itself as the whole truth of the creature.",
-     "body": "",
-     "x": 0.04,
-     "y": 0.04,
-     "width": 520,
-     "size": 28,
-     "align": "left"
-    }
-   ]
-  },
-  {
-   "id": "m-urob-1-position",
-   "name": "Position and opposition",
-   "character": "Position gives the creature a face; the signed cancellation (-1)+(+1)=0 assigns completeness the office of a terminated account. Opposition restores head and tail as oriented terms.",
-   "duration": 12,
-   "transition": 1.5,
-   "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "blackOnWhite",
-    "backgroundMode": "solid",
-    "pointerMode": "repel",
-    "pointerClick": "shove",
-    "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
-   },
-   "field": {
-    "background": "#141a16",
-    "palette": [
-     "#7a9b6a",
-     "#c9a227",
-     "#4b3f63",
-     "#d8d2c4"
-    ],
-    "material": "round",
-    "params": {
-     "count": 58000,
-     "size": 2.4,
-     "opacity": 0.92,
-     "contrast": 0.95,
-     "speed": 0.42,
-     "circulation": 0.34,
-     "dispersion": 0.06,
-     "turbulence": 0.14,
-     "pointerStrength": 0.4
-    }
-   },
-   "entities": [
-    {
-     "id": "u1-outline",
-     "name": "the circle seen as an outline — position",
-     "kind": "formation",
-     "position": {
-      "x": -0.35,
-      "y": -0.2,
-      "z": 0
-     },
-     "size": {
-      "x": 0.26,
-      "y": 0.26
-     },
-     "rotation": 0,
-     "shape": "ring",
-     "text": "",
-     "share": 1,
-     "tint": "#7a9b6a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u1-outline-sq0",
-        "text": "",
-        "shape": "ring",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
-    },
-    {
-     "id": "u1-sphere",
-     "name": "the filled perfection — sphere; the costume's first office",
-     "kind": "formation",
-     "position": {
-      "x": 0.28,
-      "y": -0.2,
-      "z": 0
-     },
-     "size": {
-      "x": 0.26,
-      "y": 0.26
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 0.85,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u1-sphere-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
-    },
-    {
-     "id": "u1-cancel",
-     "name": "the signed cancellation — the terminated account; no place left for the mouth",
-     "kind": "formation",
-     "position": {
-      "x": 0.0,
-      "y": -0.48,
-      "z": 0
-     },
-     "size": {
-      "x": 0.16,
-      "y": 0.09
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#d8d2c4",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u1-cancel-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " (+)   (-)\n  \\   /\n    0"
-      }
-     }
-    },
-    {
-     "id": "u1-head",
-     "name": "head — reaches",
-     "kind": "formation",
-     "position": {
-      "x": -0.3,
-      "y": -0.44,
-      "z": 0
-     },
-     "size": {
-      "x": 0.1,
-      "y": 0.09
-     },
-     "rotation": 1.5708,
-     "shape": "triangle",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u1-head-sq0",
-        "text": "",
-        "shape": "triangle",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
-    },
-    {
-     "id": "u1-tail",
-     "name": "tail — reached",
-     "kind": "formation",
-     "position": {
-      "x": 0.32,
-      "y": -0.44,
-      "z": 0
-     },
-     "size": {
-      "x": 0.08,
-      "y": 0.07
-     },
-     "rotation": -1.5708,
-     "shape": "triangle",
-     "text": "",
-     "share": 1,
-     "tint": "#4b3f63",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u1-tail-sq0",
-        "text": "",
-        "shape": "triangle",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": [],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "Position and opposition",
-     "italic": "The costume makes an actual feature exhaustive; opposition restores the oriented terms.",
-     "body": "",
-     "x": 0.04,
-     "y": 0.04,
-     "width": 520,
-     "size": 28,
-     "align": "left"
-    }
-   ]
-  },
-  {
-   "id": "m-urob-2-fork",
-   "name": "The metabolic fork",
-   "character": "Assimilation changes the receiver; Saturnine detention receives without generating; the Eden-serpent trades the hole for the fork.",
-   "duration": 13,
-   "transition": 1.5,
-   "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "blackOnWhite",
-    "backgroundMode": "solid",
-    "pointerMode": "repel",
-    "pointerClick": "shove",
-    "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
-   },
-   "field": {
-    "background": "#221410",
-    "palette": [
-     "#c96a3a",
-     "#a5623a",
-     "#7a6a52",
-     "#d8d2c4"
-    ],
-    "material": "round",
-    "params": {
-     "count": 58000,
-     "size": 2.4,
-     "opacity": 0.92,
-     "contrast": 0.95,
-     "speed": 0.44,
-     "circulation": 0.3,
-     "dispersion": 0.07,
-     "turbulence": 0.16,
-     "pointerStrength": 0.4
-    }
-   },
-   "entities": [
-    {
-     "id": "u2-mouth",
-     "name": "the mouth — the operative opening",
-     "kind": "formation",
-     "position": {
-      "x": 0.0,
-      "y": -0.14,
-      "z": 0
-     },
-     "size": {
-      "x": 0.2,
-      "y": 0.11
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c96a3a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u2-mouth-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " \\______/\n  \\____/\n   \\~~/"
-      }
-     }
-    },
-    {
-     "id": "u2-assim",
-     "name": "assimilation — what enters changes the life that receives",
-     "kind": "formation",
-     "position": {
-      "x": 0.4,
-      "y": -0.24,
-      "z": 0
-     },
-     "size": {
-      "x": 0.14,
-      "y": 0.09
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u2-assim-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " o  >  O\n~~~~~~~~~~"
-      }
-     }
-    },
-    {
-     "id": "u2-saturn",
-     "name": "Saturnine detention — the blocked gut; reception becomes detention",
-     "kind": "formation",
-     "position": {
-      "x": -0.4,
-      "y": -0.24,
-      "z": 0
-     },
-     "size": {
-      "x": 0.18,
-      "y": 0.11
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#7a6a52",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u2-saturn-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " .------.\n( [====] )\n '------'"
-      }
-     }
-    },
-    {
-     "id": "u2-fusion",
-     "name": "fusion — the mouth that takes every answer as confirmation",
-     "kind": "formation",
-     "position": {
-      "x": -0.22,
-      "y": -0.48,
-      "z": 0
-     },
-     "size": {
-      "x": 0.12,
-      "y": 0.08
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#b0413e",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u2-fusion-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " (oo)\n(oooo)"
-      }
-     }
-    },
-    {
-     "id": "u2-eden",
-     "name": "the Eden-serpent — the hole traded for the fork",
-     "kind": "formation",
-     "position": {
-      "x": 0.22,
-      "y": -0.48,
-      "z": 0
-     },
-     "size": {
-      "x": 0.12,
-      "y": 0.1
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#a5623a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u2-eden-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  _,-.\n (  Y\n  `-'"
-      }
-     }
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": [],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "The metabolic fork",
-     "italic": "Assimilation changes the receiver; detention receives without generating.",
-     "body": "",
-     "x": 0.04,
-     "y": 0.04,
-     "width": 520,
-     "size": 28,
-     "align": "left"
-    }
-   ]
-  },
-  {
-   "id": "m-urob-3-torus",
-   "name": "Interposition — the toroidal winding",
-   "character": "The four explicate field-lines and two implicates wind; the path γ(t)=[2t,−t] returns home while its lift ends at (2,−1).",
-   "duration": 13,
-   "transition": 1.5,
-   "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "blackOnWhite",
-    "backgroundMode": "solid",
-    "pointerMode": "repel",
-    "pointerClick": "shove",
-    "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
-   },
-   "field": {
-    "background": "#10141f",
-    "palette": [
-     "#d9d2c2",
-     "#c9a227",
-     "#4a90b8",
-     "#e07020"
-    ],
-    "material": "round",
-    "params": {
-     "count": 58000,
-     "size": 2.4,
-     "opacity": 0.92,
-     "contrast": 0.95,
-     "speed": 0.36,
-     "circulation": 0.26,
-     "dispersion": 0.05,
-     "turbulence": 0.1,
-     "pointerStrength": 0.4
-    }
-   },
-   "entities": [
-    {
-     "id": "u3-torus",
-     "name": "the torus — formed surface around an opening it cannot convert into surface",
-     "kind": "formation",
-     "position": {
-      "x": -0.05,
-      "y": -0.24,
-      "z": 0
-     },
-     "size": {
-      "x": 0.26,
-      "y": 0.22
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#6a7ba8",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u3-torus-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "   .-------.\n  /  .-----. \\\n |  (       ) |\n  \\  '-----' /\n   '-------'"
-      }
-     }
-    },
-    {
-     "id": "u3-opening",
-     "name": "the opening — Anuttara/Paramaśiva owns it; Māyā the measure wound around it",
-     "kind": "formation",
-     "position": {
-      "x": -0.05,
-      "y": -0.24,
-      "z": 0
-     },
-     "size": {
-      "x": 0.07,
-      "y": 0.06
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#0b0e15",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u3-opening-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
-    },
-    {
-     "id": "u3-winding",
-     "name": "the winding — four explicate field-lines and two implicates; the path returning home",
-     "kind": "formation",
-     "position": {
-      "x": -0.05,
-      "y": -0.24,
-      "z": 0
-     },
-     "size": {
-      "x": 0.4,
-      "y": 0.34
-     },
-     "rotation": 0,
-     "shape": "ring",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 0.7,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": true,
-      "clock": "seconds",
-      "order": "loop",
-      "easing": "smoothstep",
-      "steps": [
-       {
-        "id": "u3-winding-sq0",
-        "text": "",
-        "shape": "ring",
-        "hold": 2.6,
-        "transition": 2.6,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.4,
-          "y": 0.34
-         },
-         "rotation": 0,
-         "tint": "#c9a227",
-         "tintWeight": 1,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "The snake bends until its head meets its tail",
+          "italic": "The visible completion offers itself as the whole truth of the creature.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.04,
+          "width": 520,
+          "size": 28,
+          "align": "left"
         }
-       },
-       {
-        "id": "u3-winding-sq1",
-        "text": "",
-        "shape": "ring",
-        "hold": 2.6,
-        "transition": 2.6,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.4,
-          "y": 0.34
-         },
-         "rotation": 3.1416,
-         "tint": "#c9a227",
-         "tintWeight": 1,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      ]
+    },
+    {
+      "id": "m-urob-1-position",
+      "name": "Position and opposition",
+      "character": "Position gives the creature a face; the signed cancellation (-1)+(+1)=0 assigns completeness the office of a terminated account. Opposition restores head and tail as oriented terms.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.32
+      },
+      "field": {
+        "background": "#141a16",
+        "palette": [
+          "#7a9b6a",
+          "#c9a227",
+          "#4b3f63",
+          "#d8d2c4"
+        ],
+        "material": "round",
+        "params": {
+          "count": 58000,
+          "size": 2.4,
+          "opacity": 0.92,
+          "contrast": 0.95,
+          "speed": 0.42,
+          "circulation": 0.34,
+          "dispersion": 0.06,
+          "turbulence": 0.14,
+          "pointerStrength": 0.4,
+          "grain": 0.04,
+          "halo": 0.14,
+          "roundness": 0.9,
+          "softness": 0.2,
+          "irregularity": 0.3,
+          "elongation": 0.06
         }
-       }
-      ]
-     }
-    },
-    {
-     "id": "u3-lift",
-     "name": "the lifted endpoint (2, -1) — the homecoming retaining its displacement",
-     "kind": "formation",
-     "position": {
-      "x": 0.4,
-      "y": -0.46,
-      "z": 0
-     },
-     "size": {
-      "x": 0.16,
-      "y": 0.12
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#d9d2c2",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u3-lift-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " (0,0)\n    \\\n     \\\n    (2,-1)"
-      }
-     }
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": [],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "Interposition — the toroidal winding",
-     "italic": "The measure wound around the opening; the homecoming retains its displacement.",
-     "body": "",
-     "x": 0.04,
-     "y": 0.04,
-     "width": 520,
-     "size": 28,
-     "align": "left"
-    }
-   ]
-  },
-  {
-   "id": "m-urob-3b-energy",
-   "name": "Discharge and confinement",
-   "character": "Earthlight carries unconfined discharge; the tokamak holds charged plasma so its activity can continue within arranged containment. An opening is not simply a leak; containment need not be devouring closure.",
-   "duration": 12,
-   "transition": 1.5,
-   "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "blackOnWhite",
-    "backgroundMode": "solid",
-    "pointerMode": "repel",
-    "pointerClick": "shove",
-    "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
-   },
-   "field": {
-    "background": "#10141f",
-    "palette": [
-     "#d9d2c2",
-     "#c9a227",
-     "#4a90b8",
-     "#e07020"
-    ],
-    "material": "round",
-    "params": {
-     "count": 58000,
-     "size": 2.4,
-     "opacity": 0.92,
-     "contrast": 0.95,
-     "speed": 0.36,
-     "circulation": 0.26,
-     "dispersion": 0.05,
-     "turbulence": 0.1,
-     "pointerStrength": 0.4
-    }
-   },
-   "entities": [
-    {
-     "id": "u4-earth",
-     "name": "earthlight — the excluded ground's return as event",
-     "kind": "formation",
-     "position": {
-      "x": -0.38,
-      "y": -0.2,
-      "z": 0
-     },
-     "size": {
-      "x": 0.18,
-      "y": 0.15
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u4-earth-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "   \\  |  /\n   -. o .-\n   /  |  \\"
-      }
-     }
-    },
-    {
-     "id": "u4-tokamak",
-     "name": "tokamak — the doughnut chamber; magnetic confinement",
-     "kind": "formation",
-     "position": {
-      "x": 0.22,
-      "y": -0.26,
-      "z": 0
-     },
-     "size": {
-      "x": 0.3,
-      "y": 0.19
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#3c6e71",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u4-tokamak-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  ~(~~~~~~~)~\n ( (       ) )\n  ~(~~~~~~~)~"
-      }
-     }
-    },
-    {
-     "id": "u4-plasma",
-     "name": "plasma held so its activity can continue",
-     "kind": "formation",
-     "position": {
-      "x": 0.22,
-      "y": -0.26,
-      "z": 0
-     },
-     "size": {
-      "x": 0.1,
-      "y": 0.09
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#e07020",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": true,
-      "clock": "seconds",
-      "order": "loop",
-      "easing": "smoothstep",
-      "steps": [
-       {
-        "id": "u4-plasma-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 2.2,
-        "transition": 1.8,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.09,
-          "y": 0.08
-         },
-         "rotation": 0,
-         "tint": "#e07020",
-         "tintWeight": 1,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      },
+      "entities": [
+        {
+          "id": "u1-outline",
+          "name": "the circle seen as an outline — position",
+          "kind": "formation",
+          "position": {
+            "x": -0.35,
+            "y": -0.2,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#7a9b6a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u1-outline-sq0",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "u1-sphere",
+          "name": "the filled perfection — sphere; the costume's first office",
+          "kind": "formation",
+          "position": {
+            "x": 0.28,
+            "y": -0.2,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.85,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u1-sphere-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "u1-cancel",
+          "name": "the signed cancellation — the terminated account; no place left for the mouth",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.48,
+            "z": 0
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.09
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#d8d2c4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u1-cancel-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " (+)   (-)\n  \\   /\n    0"
+            }
+          }
+        },
+        {
+          "id": "u1-head",
+          "name": "head — reaches",
+          "kind": "formation",
+          "position": {
+            "x": -0.3,
+            "y": -0.44,
+            "z": 0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.09
+          },
+          "rotation": 1.5708,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u1-head-sq0",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "u1-tail",
+          "name": "tail — reached",
+          "kind": "formation",
+          "position": {
+            "x": 0.32,
+            "y": -0.44,
+            "z": 0
+          },
+          "size": {
+            "x": 0.08,
+            "y": 0.07
+          },
+          "rotation": -1.5708,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#4b3f63",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u1-tail-sq0",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
         }
-       },
-       {
-        "id": "u4-plasma-sq1",
-        "text": "",
-        "shape": "disc",
-        "hold": 2.2,
-        "transition": 1.8,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.12,
-          "y": 0.11
-         },
-         "rotation": 0,
-         "tint": "#f0a050",
-         "tintWeight": 1,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "Position gives the creature a face",
+          "italic": "The costume makes an actual feature exhaustive; opposition restores the oriented terms.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.04,
+          "width": 520,
+          "size": 28,
+          "align": "left"
         }
-       }
       ]
-     }
     },
     {
-     "id": "u4-works",
-     "name": "release and holding do different work — an opening not a leak; containment not devouring closure",
-     "kind": "formation",
-     "position": {
-      "x": 0.0,
-      "y": -0.5,
-      "z": 0
-     },
-     "size": {
-      "x": 0.2,
-      "y": 0.08
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#d9d2c2",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u4-works-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
+      "id": "m-urob-2-fork",
+      "name": "The metabolic fork",
+      "character": "Assimilation changes the receiver; Saturnine detention receives without generating; the Eden-serpent trades the hole for the fork.",
+      "duration": 13,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.32
+      },
+      "field": {
+        "background": "#221410",
+        "palette": [
+          "#c96a3a",
+          "#a5623a",
+          "#7a6a52",
+          "#d8d2c4"
+        ],
+        "material": "round",
+        "params": {
+          "count": 58000,
+          "size": 2.4,
+          "opacity": 0.92,
+          "contrast": 0.95,
+          "speed": 0.44,
+          "circulation": 0.3,
+          "dispersion": 0.07,
+          "turbulence": 0.16,
+          "pointerStrength": 0.4,
+          "grain": 0.055,
+          "halo": 0.1,
+          "roundness": 0.75,
+          "softness": 0.3,
+          "irregularity": 0.5,
+          "elongation": 0.14
+        }
+      },
+      "entities": [
+        {
+          "id": "u2-mouth",
+          "name": "the mouth — the operative opening",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.14,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.11
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c96a3a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u2-mouth-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " \\______/\n  \\____/\n   \\~~/"
+            }
+          }
+        },
+        {
+          "id": "u2-assim",
+          "name": "assimilation — what enters changes the life that receives",
+          "kind": "formation",
+          "position": {
+            "x": 0.4,
+            "y": -0.24,
+            "z": 0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.09
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u2-assim-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " o  >  O\n~~~~~~~~~~"
+            }
+          }
+        },
+        {
+          "id": "u2-saturn",
+          "name": "Saturnine detention — the blocked gut; reception becomes detention",
+          "kind": "formation",
+          "position": {
+            "x": -0.4,
+            "y": -0.24,
+            "z": 0
+          },
+          "size": {
+            "x": 0.18,
+            "y": 0.11
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#7a6a52",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u2-saturn-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " .------.\n( [====] )\n '------'"
+            }
+          }
+        },
+        {
+          "id": "u2-fusion",
+          "name": "fusion — the mouth that takes every answer as confirmation",
+          "kind": "formation",
+          "position": {
+            "x": -0.22,
+            "y": -0.48,
+            "z": 0
+          },
+          "size": {
+            "x": 0.12,
+            "y": 0.08
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#b0413e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u2-fusion-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " (oo)\n(oooo)"
+            }
+          }
+        },
+        {
+          "id": "u2-eden",
+          "name": "the Eden-serpent — the hole traded for the fork",
+          "kind": "formation",
+          "position": {
+            "x": 0.22,
+            "y": -0.48,
+            "z": 0
+          },
+          "size": {
+            "x": 0.12,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#a5623a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u2-eden-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  _,-.\n (  Y\n  `-'"
+            }
+          }
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "Superposition is self-eating made bodily",
+          "italic": "Assimilation changes the receiver; detention receives without generating.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.04,
+          "width": 520,
+          "size": 28,
+          "align": "left"
+        }
       ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  -->   .--.\n        (  )\n        `--'"
-      }
-     }
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": [],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "Discharge and confinement",
-     "italic": "An opening is not simply a leak; containment need not be devouring closure.",
-     "body": "",
-     "x": 0.04,
-     "y": 0.04,
-     "width": 520,
-     "size": 28,
-     "align": "left"
-    }
-   ]
-  },
-  {
-   "id": "m-urob-4-variants",
-   "name": "The Neumann ground and its variants",
-   "character": "World parents, Prajāpati, En-Soph, the self-rolling wheel, Aion and Gebser — substantial differences in what the images do, not interchangeable costumes for the snake.",
-   "duration": 13,
-   "transition": 1.5,
-   "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "blackOnWhite",
-    "backgroundMode": "solid",
-    "pointerMode": "repel",
-    "pointerClick": "shove",
-    "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
-   },
-   "field": {
-    "background": "#241c12",
-    "palette": [
-     "#c9a227",
-     "#8a6a3a",
-     "#d8c9a8",
-     "#4b3f63"
-    ],
-    "material": "round",
-    "params": {
-     "count": 56000,
-     "size": 2.5,
-     "opacity": 0.92,
-     "contrast": 0.93,
-     "speed": 0.38,
-     "circulation": 0.28,
-     "dispersion": 0.06,
-     "turbulence": 0.12,
-     "pointerStrength": 0.4
-    }
-   },
-   "entities": [
-    {
-     "id": "u5-mother",
-     "name": "mother and child — nourishment through differentiated dependency",
-     "kind": "formation",
-     "position": {
-      "x": -0.42,
-      "y": -0.16,
-      "z": 0
-     },
-     "size": {
-      "x": 0.18,
-      "y": 0.12
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#8a6a3a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u5-mother-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  .--.--.\n (  (o)  )\n  '------'"
-      }
-     }
     },
     {
-     "id": "u5-prajapati",
-     "name": "Prajāpati's self-offering — the horse/universe image; a generative body",
-     "kind": "formation",
-     "position": {
-      "x": 0.08,
-      "y": -0.12,
-      "z": 0
-     },
-     "size": {
-      "x": 0.2,
-      "y": 0.12
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u5-prajapati-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
+      "id": "m-urob-3-torus",
+      "name": "Interposition — the toroidal winding",
+      "character": "The four explicate field-lines and two implicates wind; the path γ(t)=[2t,−t] returns home while its lift ends at (2,−1).",
+      "duration": 13,
+      "transition": 1.5,
+      "view": {
+        "mode": "3d",
+        "yaw": 0.35,
+        "pitch": -0.28,
+        "zoom": 0.95,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.32,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine"
+      },
+      "field": {
+        "background": "#10141f",
+        "palette": [
+          "#d9d2c2",
+          "#c9a227",
+          "#4a90b8",
+          "#e07020"
+        ],
+        "material": "round",
+        "params": {
+          "count": 58000,
+          "size": 2.4,
+          "opacity": 0.88,
+          "contrast": 0.95,
+          "speed": 0.36,
+          "circulation": 0.26,
+          "dispersion": 0.05,
+          "turbulence": 0.1,
+          "pointerStrength": 0.4,
+          "grain": 0.03,
+          "halo": 0.12,
+          "roundness": 0.85,
+          "softness": 0.18,
+          "irregularity": 0.22,
+          "elongation": 0.3,
+          "depth": 0.55,
+          "zConfinement": 0.9
+        }
+      },
+      "entities": [
+        {
+          "id": "u3-torus",
+          "name": "the torus — formed surface around an opening it cannot convert into surface",
+          "kind": "formation",
+          "position": {
+            "x": -0.05,
+            "y": -0.24,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#6a7ba8",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u3-torus-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   .-------.\n  /  .-----. \\\n |  (       ) |\n  \\  '-----' /\n   '-------'"
+            }
+          }
+        },
+        {
+          "id": "u3-opening",
+          "name": "the opening — Anuttara/Paramaśiva owns it; Māyā the measure wound around it",
+          "kind": "formation",
+          "position": {
+            "x": -0.05,
+            "y": -0.24,
+            "z": -0.38
+          },
+          "size": {
+            "x": 0.07,
+            "y": 0.06
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#0b0e15",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u3-opening-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "u3-winding",
+          "name": "the winding — four explicate field-lines and two implicates; the path returning home",
+          "kind": "formation",
+          "position": {
+            "x": -0.05,
+            "y": -0.24,
+            "z": 0.3
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.7,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "u3-winding-sq0",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.6,
+                "transition": 2.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.34
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "u3-winding-sq1",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.6,
+                "transition": 2.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.34
+                  },
+                  "rotation": 3.1416,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "u3-lift",
+          "name": "the lifted endpoint (2, -1) — the homecoming retaining its displacement",
+          "kind": "formation",
+          "position": {
+            "x": 0.4,
+            "y": -0.46,
+            "z": 0.28
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#d9d2c2",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u3-lift-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " (0,0)\n    \\\n     \\\n    (2,-1)"
+            }
+          }
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.42,
+        "phiRate": -0.21,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1.2,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "Interposition — the toroidal winding",
+          "italic": "The measure wound around the opening; the homecoming retains its displacement.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.04,
+          "width": 520,
+          "size": 28,
+          "align": "left"
+        }
       ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "   (  :  )\n  /~~~~~~~\\\n  ========="
-      }
-     }
     },
     {
-     "id": "u5-wheel",
-     "name": "En-Soph; the self-rolling wheel — continuing formation about an opening",
-     "kind": "formation",
-     "position": {
-      "x": 0.44,
-      "y": -0.2,
-      "z": 0
-     },
-     "size": {
-      "x": 0.16,
-      "y": 0.14
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#d8c9a8",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u5-wheel-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
+      "id": "m-urob-3b-energy",
+      "name": "Discharge and confinement",
+      "character": "Earthlight carries unconfined discharge; the tokamak holds charged plasma so its activity can continue within arranged containment. An opening is not simply a leak; containment need not be devouring closure.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "3d",
+        "yaw": 0.35,
+        "pitch": -0.28,
+        "zoom": 0.95,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.32,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine"
+      },
+      "field": {
+        "background": "#10141f",
+        "palette": [
+          "#d9d2c2",
+          "#c9a227",
+          "#4a90b8",
+          "#e07020"
+        ],
+        "material": "round",
+        "params": {
+          "count": 58000,
+          "size": 2.4,
+          "opacity": 0.88,
+          "contrast": 0.95,
+          "speed": 0.36,
+          "circulation": 0.26,
+          "dispersion": 0.05,
+          "turbulence": 0.1,
+          "pointerStrength": 0.4,
+          "grain": 0.03,
+          "halo": 0.12,
+          "roundness": 0.85,
+          "softness": 0.18,
+          "irregularity": 0.22,
+          "elongation": 0.3,
+          "depth": 0.55,
+          "zConfinement": 0.9
+        }
+      },
+      "entities": [
+        {
+          "id": "u4-earth",
+          "name": "earthlight — the excluded ground's return as event",
+          "kind": "formation",
+          "position": {
+            "x": -0.38,
+            "y": -0.2,
+            "z": 0.35
+          },
+          "size": {
+            "x": 0.18,
+            "y": 0.15
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u4-earth-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   \\  |  /\n   -. o .-\n   /  |  \\"
+            }
+          }
+        },
+        {
+          "id": "u4-tokamak",
+          "name": "tokamak — the doughnut chamber; magnetic confinement",
+          "kind": "formation",
+          "position": {
+            "x": 0.22,
+            "y": -0.26,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.19
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u4-tokamak-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  ~(~~~~~~~)~\n ( (       ) )\n  ~(~~~~~~~)~"
+            }
+          }
+        },
+        {
+          "id": "u4-plasma",
+          "name": "plasma held so its activity can continue",
+          "kind": "formation",
+          "position": {
+            "x": 0.22,
+            "y": -0.26,
+            "z": -0.05
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.09
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#e07020",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "u4-plasma-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 2.2,
+                "transition": 1.8,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.09,
+                    "y": 0.08
+                  },
+                  "rotation": 0,
+                  "tint": "#e07020",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "u4-plasma-sq1",
+                "text": "",
+                "shape": "disc",
+                "hold": 2.2,
+                "transition": 1.8,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.12,
+                    "y": 0.11
+                  },
+                  "rotation": 0,
+                  "tint": "#f0a050",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "u4-works",
+          "name": "release and holding do different work — an opening not a leak; containment not devouring closure",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.08
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#d9d2c2",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u4-works-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  -->   .--.\n        (  )\n        `--'"
+            }
+          }
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.42,
+        "phiRate": -0.21,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1.2,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "Discharge and confinement",
+          "italic": "An opening is not simply a leak; containment need not be devouring closure.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.04,
+          "width": 520,
+          "size": 28,
+          "align": "left"
+        }
       ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "   .-=-.\n  ( (o) )\n   '-=-'"
-      }
-     }
     },
     {
-     "id": "u5-parents",
-     "name": "world parents — day and night, four directions; separation with the enduring relation",
-     "kind": "formation",
-     "position": {
-      "x": -0.24,
-      "y": -0.46,
-      "z": 0
-     },
-     "size": {
-      "x": 0.18,
-      "y": 0.11
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u5-parents-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
+      "id": "m-urob-4-variants",
+      "name": "The Neumann ground and its variants",
+      "character": "World parents, Prajāpati, En-Soph, the self-rolling wheel, Aion and Gebser — substantial differences in what the images do, not interchangeable costumes for the snake.",
+      "duration": 13,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.32
+      },
+      "field": {
+        "background": "#241c12",
+        "palette": [
+          "#c9a227",
+          "#8a6a3a",
+          "#d8c9a8",
+          "#4b3f63"
+        ],
+        "material": "print",
+        "params": {
+          "count": 56000,
+          "size": 2.5,
+          "opacity": 0.92,
+          "contrast": 0.93,
+          "speed": 0.38,
+          "circulation": 0.28,
+          "dispersion": 0.06,
+          "turbulence": 0.12,
+          "pointerStrength": 0.4,
+          "grain": 0.05,
+          "halo": 0.06,
+          "roundness": 0.3,
+          "softness": 0.1,
+          "irregularity": 0.5,
+          "elongation": 0.02
+        }
+      },
+      "entities": [
+        {
+          "id": "u5-mother",
+          "name": "mother and child — nourishment through differentiated dependency",
+          "kind": "formation",
+          "position": {
+            "x": -0.42,
+            "y": -0.16,
+            "z": 0
+          },
+          "size": {
+            "x": 0.18,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8a6a3a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u5-mother-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  .--.--.\n (  (o)  )\n  '------'"
+            }
+          }
+        },
+        {
+          "id": "u5-prajapati",
+          "name": "Prajāpati's self-offering — the horse/universe image; a generative body",
+          "kind": "formation",
+          "position": {
+            "x": 0.08,
+            "y": -0.12,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u5-prajapati-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   (  :  )\n  /~~~~~~~\\\n  ========="
+            }
+          }
+        },
+        {
+          "id": "u5-wheel",
+          "name": "En-Soph; the self-rolling wheel — continuing formation about an opening",
+          "kind": "formation",
+          "position": {
+            "x": 0.44,
+            "y": -0.2,
+            "z": 0
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#d8c9a8",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u5-wheel-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   .-=-.\n  ( (o) )\n   '-=-'"
+            }
+          }
+        },
+        {
+          "id": "u5-parents",
+          "name": "world parents — day and night, four directions; separation with the enduring relation",
+          "kind": "formation",
+          "position": {
+            "x": -0.24,
+            "y": -0.46,
+            "z": 0
+          },
+          "size": {
+            "x": 0.18,
+            "y": 0.11
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u5-parents-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " .--|--.\n(   |   )\n '--|--'"
+            }
+          }
+        },
+        {
+          "id": "u5-horizon",
+          "name": "Jung's Self/shadow horizon; Gebser's changed seeing",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": -0.48,
+            "z": 0
+          },
+          "size": {
+            "x": 0.18,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#7a6a52",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u5-horizon-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  .--.--.\n (## |   )\n  '--'--'"
+            }
+          }
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "The Neumann ground and its variants",
+          "italic": "Substantial differences in what the images do — not interchangeable costumes.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.04,
+          "width": 520,
+          "size": 28,
+          "align": "left"
+        }
       ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " .--|--.\n(   |   )\n '--|--'"
-      }
-     }
     },
     {
-     "id": "u5-horizon",
-     "name": "Jung's Self/shadow horizon; Gebser's changed seeing",
-     "kind": "formation",
-     "position": {
-      "x": 0.3,
-      "y": -0.48,
-      "z": 0
-     },
-     "size": {
-      "x": 0.18,
-      "y": 0.1
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#7a6a52",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u5-horizon-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
+      "id": "m-urob-5-return",
+      "name": "The snake returns with its hole intact",
+      "character": "Hunger still moves, but a received thing can change the terms of receiving. The Māyā-not-the-hole distinction stands; the eightfold recapitulation is complete.",
+      "duration": 13,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.32
+      },
+      "field": {
+        "background": "#1c231a",
+        "palette": [
+          "#a8c98a",
+          "#c9a227",
+          "#d8d2c4",
+          "#7a9b6a"
+        ],
+        "material": "round",
+        "params": {
+          "count": 58000,
+          "size": 2.4,
+          "opacity": 0.92,
+          "contrast": 0.93,
+          "speed": 0.34,
+          "circulation": 0.24,
+          "dispersion": 0.05,
+          "turbulence": 0.08,
+          "pointerStrength": 0.4,
+          "grain": 0.03,
+          "halo": 0.2,
+          "roundness": 0.98,
+          "softness": 0.28,
+          "irregularity": 0.18,
+          "elongation": 0.03
+        }
+      },
+      "entities": [
+        {
+          "id": "u6-round",
+          "name": "the round — wholeness keeping its opening",
+          "kind": "formation",
+          "position": {
+            "x": -0.05,
+            "y": -0.26,
+            "z": 0
+          },
+          "size": {
+            "x": 0.36,
+            "y": 0.32
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#a8c98a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u6-round-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "      .-~~~~~~-.\n    .'          '.\n   /   ~~~~~~~    \\\n  |  ~~        ~~  |\n  |  ~~        ~~  |\n   \\   ~~~~~~~    /\n    '.          .'\n      '-______-'"
+            }
+          }
+        },
+        {
+          "id": "u6-hole",
+          "name": "the intact hole — constitutive, not absent",
+          "kind": "formation",
+          "position": {
+            "x": -0.05,
+            "y": -0.26,
+            "z": 0
+          },
+          "size": {
+            "x": 0.09,
+            "y": 0.08
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u6-hole-sq0",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "u6-symbol",
+          "name": "living symbol / idol — the image's efficacy stays in relation to what it cannot exhaust",
+          "kind": "formation",
+          "position": {
+            "x": 0.42,
+            "y": -0.44,
+            "z": 0
+          },
+          "size": {
+            "x": 0.18,
+            "y": 0.09
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#d8d2c4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u6-symbol-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  .-.   .-.\n (   | ( * |\n  '-'   '-'"
+            }
+          }
+        },
+        {
+          "id": "u6-rest",
+          "name": "rest — the completed circuit coming to rest; the next circuit need not be demanded",
+          "kind": "formation",
+          "position": {
+            "x": -0.32,
+            "y": -0.48,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.04
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#7a9b6a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "u6-rest-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  ~~~~~~~~~~~~~~~~~~"
+            }
+          }
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "The snake returns with its hole intact",
+          "italic": "Hunger still moves, and a received thing can change the terms of receiving.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.04,
+          "width": 520,
+          "size": 28,
+          "align": "left"
+        }
       ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  .--.--.\n (## |   )\n  '--'--'"
-      }
-     }
     }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": [],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "The Neumann ground and its variants",
-     "italic": "Substantial differences in what the images do — not interchangeable costumes.",
-     "body": "",
-     "x": 0.04,
-     "y": 0.04,
-     "width": 520,
-     "size": 28,
-     "align": "left"
-    }
-   ]
-  },
-  {
-   "id": "m-urob-5-return",
-   "name": "The snake returns with its hole intact",
-   "character": "Hunger still moves, but a received thing can change the terms of receiving. The Māyā-not-the-hole distinction stands; the eightfold recapitulation is complete.",
-   "duration": 13,
-   "transition": 1.5,
-   "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "blackOnWhite",
-    "backgroundMode": "solid",
-    "pointerMode": "repel",
-    "pointerClick": "shove",
-    "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
-   },
-   "field": {
-    "background": "#1c231a",
-    "palette": [
-     "#a8c98a",
-     "#c9a227",
-     "#d8d2c4",
-     "#7a9b6a"
-    ],
-    "material": "round",
-    "params": {
-     "count": 58000,
-     "size": 2.4,
-     "opacity": 0.92,
-     "contrast": 0.93,
-     "speed": 0.34,
-     "circulation": 0.24,
-     "dispersion": 0.05,
-     "turbulence": 0.08,
-     "pointerStrength": 0.4
-    }
-   },
-   "entities": [
-    {
-     "id": "u6-round",
-     "name": "the round — wholeness keeping its opening",
-     "kind": "formation",
-     "position": {
-      "x": -0.05,
-      "y": -0.26,
-      "z": 0
-     },
-     "size": {
-      "x": 0.36,
-      "y": 0.32
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#a8c98a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u6-round-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "      .-~~~~~~-.\n    .'          '.\n   /   ~~~~~~~    \\\n  |  ~~        ~~  |\n  |  ~~        ~~  |\n   \\   ~~~~~~~    /\n    '.          .'\n      '-______-'"
-      }
-     }
-    },
-    {
-     "id": "u6-hole",
-     "name": "the intact hole — constitutive, not absent",
-     "kind": "formation",
-     "position": {
-      "x": -0.05,
-      "y": -0.26,
-      "z": 0
-     },
-     "size": {
-      "x": 0.09,
-      "y": 0.08
-     },
-     "rotation": 0,
-     "shape": "ring",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u6-hole-sq0",
-        "text": "",
-        "shape": "ring",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
-    },
-    {
-     "id": "u6-symbol",
-     "name": "living symbol / idol — the image's efficacy stays in relation to what it cannot exhaust",
-     "kind": "formation",
-     "position": {
-      "x": 0.42,
-      "y": -0.44,
-      "z": 0
-     },
-     "size": {
-      "x": 0.18,
-      "y": 0.09
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#d8d2c4",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u6-symbol-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  .-.   .-.\n (   | ( * |\n  '-'   '-'"
-      }
-     }
-    },
-    {
-     "id": "u6-rest",
-     "name": "rest — the completed circuit coming to rest; the next circuit need not be demanded",
-     "kind": "formation",
-     "position": {
-      "x": -0.32,
-      "y": -0.48,
-      "z": 0
-     },
-     "size": {
-      "x": 0.2,
-      "y": 0.04
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#7a9b6a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "u6-rest-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  ~~~~~~~~~~~~~~~~~~"
-      }
-     }
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": [],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "The snake returns with its hole intact",
-     "italic": "Hunger still moves, and a received thing can change the terms of receiving.",
-     "body": "",
-     "x": 0.04,
-     "y": 0.04,
-     "width": 520,
-     "size": 28,
-     "align": "left"
-    }
-   ]
-  }
- ],
- "updatedAt": "2026-10-06T12:00:00.000Z"
+  ],
+  "updatedAt": "2026-10-06T12:00:00.000Z"
 }

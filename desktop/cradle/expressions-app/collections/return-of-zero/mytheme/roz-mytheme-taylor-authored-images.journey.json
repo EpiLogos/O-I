@@ -36,7 +36,7 @@
      "#3c6e71",
      "#b0803a"
     ],
-    "material": "round",
+    "material": "ink",
     "params": {
      "count": 56000,
      "size": 2.5,
@@ -46,7 +46,9 @@
      "circulation": 0.3,
      "dispersion": 0.06,
      "turbulence": 0.12,
-     "pointerStrength": 0.4
+     "pointerStrength": 0.4,
+     "grain": 0.04,
+     "softness": 0.2
     }
    },
    "entities": [
@@ -356,7 +358,7 @@
      "#3c6e71",
      "#b0803a"
     ],
-    "material": "round",
+    "material": "ink",
     "params": {
      "count": 56000,
      "size": 2.5,
@@ -366,7 +368,9 @@
      "circulation": 0.3,
      "dispersion": 0.06,
      "turbulence": 0.12,
-     "pointerStrength": 0.4
+     "pointerStrength": 0.4,
+     "grain": 0.04,
+     "softness": 0.2
     }
    },
    "entities": [
@@ -783,9 +787,9 @@
    "duration": 14,
    "transition": 1.5,
    "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
+    "mode": "3d",
+    "yaw": 0.28,
+    "pitch": 0.12,
     "zoom": 1,
     "panX": 0,
     "panY": 0
@@ -806,17 +810,21 @@
      "#4a5d7e",
      "#8c3b2e"
     ],
-    "material": "round",
+    "material": "print",
     "params": {
      "count": 56000,
      "size": 2.5,
      "opacity": 0.92,
-     "contrast": 0.93,
+     "contrast": 0.92,
      "speed": 0.35,
      "circulation": 0.28,
      "dispersion": 0.06,
      "turbulence": 0.12,
-     "pointerStrength": 0.4
+     "pointerStrength": 0.4,
+     "zConfinement": 0.75,
+     "elongation": 0.05,
+     "roundness": 0.4,
+     "softness": 0.1
     }
    },
    "entities": [
@@ -827,7 +835,7 @@
      "position": {
       "x": -0.43,
       "y": -0.1,
-      "z": 0
+      "z": -0.3
      },
      "size": {
       "x": 0.16,
@@ -875,7 +883,7 @@
      "position": {
       "x": -0.22,
       "y": -0.3,
-      "z": 0
+      "z": 0.2
      },
      "size": {
       "x": 0.12,
@@ -923,7 +931,7 @@
      "position": {
       "x": -0.02,
       "y": -0.3,
-      "z": 0
+      "z": 0.2
      },
      "size": {
       "x": 0.12,
@@ -971,7 +979,7 @@
      "position": {
       "x": 0.16,
       "y": -0.14,
-      "z": 0
+      "z": 0.05
      },
      "size": {
       "x": 0.14,
@@ -1067,7 +1075,7 @@
      "position": {
       "x": -0.1,
       "y": -0.48,
-      "z": 0
+      "z": -0.15
      },
      "size": {
       "x": 0.26,
@@ -1115,7 +1123,7 @@
      "position": {
       "x": 0.22,
       "y": -0.48,
-      "z": 0
+      "z": 0.3
      },
      "size": {
       "x": 0.2,
@@ -1163,7 +1171,7 @@
      "position": {
       "x": 0.45,
       "y": -0.48,
-      "z": 0
+      "z": 0.3
      },
      "size": {
       "x": 0.12,
@@ -1260,7 +1268,10 @@
     "pointerMode": "repel",
     "pointerClick": "shove",
     "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
+    "pointerClickRadius": 0.32,
+    "morphEnabled": true,
+    "trajectory": "toroidalHopf",
+    "driveShape": "pulse"
    },
    "field": {
     "background": "#12151c",
@@ -1280,7 +1291,9 @@
      "circulation": 0.3,
      "dispersion": 0.07,
      "turbulence": 0.14,
-     "pointerStrength": 0.4
+     "pointerStrength": 0.4,
+     "halo": 0.18,
+     "softness": 0.3
     }
    },
    "entities": [
@@ -1291,7 +1304,7 @@
      "position": {
       "x": -0.3,
       "y": -0.22,
-      "z": 0
+      "z": 0.2
      },
      "size": {
       "x": 0.22,
@@ -1379,7 +1392,7 @@
      "position": {
       "x": 0.3,
       "y": -0.22,
-      "z": 0
+      "z": -0.35
      },
      "size": {
       "x": 0.22,
@@ -1467,7 +1480,7 @@
      "position": {
       "x": 0,
       "y": -0.24,
-      "z": 0
+      "z": 0.1
      },
      "size": {
       "x": 0.07,
@@ -1509,7 +1522,7 @@
      "position": {
       "x": 0,
       "y": -0.24,
-      "z": 0
+      "z": 0.12
      },
      "size": {
       "x": 0.16,
@@ -1551,7 +1564,7 @@
      "position": {
       "x": 0,
       "y": -0.24,
-      "z": 0
+      "z": -0.06
      },
      "size": {
       "x": 0.28,
@@ -1593,7 +1606,7 @@
      "position": {
       "x": 0,
       "y": -0.24,
-      "z": 0
+      "z": -0.24
      },
      "size": {
       "x": 0.42,
@@ -1635,7 +1648,7 @@
      "position": {
       "x": -0.32,
       "y": -0.5,
-      "z": 0
+      "z": 0.05
      },
      "size": {
       "x": 0.2,
@@ -1683,7 +1696,7 @@
      "position": {
       "x": 0.34,
       "y": -0.5,
-      "z": 0
+      "z": 0.05
      },
      "size": {
       "x": 0.2,
@@ -1735,12 +1748,12 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
+    "thetaRate": 0.09,
+    "phiRate": 0.06,
     "thetaOffset": 0,
     "phiOffset": 0,
     "law": "theta",
-    "depth": 1,
+    "depth": 1.35,
     "dwell": 0.3
    },
    "automation": [],
@@ -1780,7 +1793,10 @@
     "pointerMode": "repel",
     "pointerClick": "shove",
     "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
+    "pointerClickRadius": 0.32,
+    "morphEnabled": true,
+    "trajectory": "toroidalHopf",
+    "driveShape": "pulse"
    },
    "field": {
     "background": "#12151c",
@@ -1800,7 +1816,9 @@
      "circulation": 0.3,
      "dispersion": 0.07,
      "turbulence": 0.14,
-     "pointerStrength": 0.4
+     "pointerStrength": 0.4,
+     "halo": 0.18,
+     "softness": 0.3
     }
    },
    "entities": [
@@ -1811,7 +1829,7 @@
      "position": {
       "x": -0.32,
       "y": -0.2,
-      "z": 0
+      "z": 0.2
      },
      "size": {
       "x": 0.1,
@@ -1859,7 +1877,7 @@
      "position": {
       "x": -0.32,
       "y": -0.44,
-      "z": 0
+      "z": -0.3
      },
      "size": {
       "x": 0.12,
@@ -1907,7 +1925,7 @@
      "position": {
       "x": 0.0,
       "y": -0.18,
-      "z": 0
+      "z": 0.1
      },
      "size": {
       "x": 0.2,
@@ -2003,7 +2021,7 @@
      "position": {
       "x": -0.44,
       "y": -0.44,
-      "z": 0
+      "z": -0.15
      },
      "size": {
       "x": 0.14,
@@ -2051,7 +2069,7 @@
      "position": {
       "x": 0.42,
       "y": -0.14,
-      "z": 0
+      "z": 0.3
      },
      "size": {
       "x": 0.16,
@@ -2103,12 +2121,12 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
+    "thetaRate": 0.09,
+    "phiRate": 0.06,
     "thetaOffset": 0,
     "phiOffset": 0,
     "law": "theta",
-    "depth": 1,
+    "depth": 1.35,
     "dwell": 0.3
    },
    "automation": [],
@@ -2129,5 +2147,8 @@
    ]
   }
  ],
- "updatedAt": "2026-10-06T00:00:00.000Z"
+ "updatedAt": "2026-10-06T00:00:00.000Z",
+ "notes": [
+  "2026-10-07 deepen pass (agent/o-i-20261007-1639, lane 2): the material made alive and deep. DEPTH: #3 prose images stand in the depth they expose — the fish describing water swims deep (z −0.3), cage and window come to the hand (+0.2), the Necker cube holds its ambiguous reversal at the picture plane where depth itself is what reverses; #4 the black-sun rings become orbital distance — Mercury's fixers near the plane (+0.12), capital's Jupiter gravity deeper (−0.06), philanthropy at Neptune's distance (−0.24), the radiating star deepest (−0.35) and giving outward; #5→0 the loop fallen through stays deepest (−0.3) — the opening kept in the form's depth — while the particular words come nearest (+0.3). MORPH: the black-sun pair turns on one clock (theta 0.09 / phi 0.06, depth 1.35) — the corona's slow rotation, capture drawing inward and the star radiating outward as one turning. PARTICLE PROPS: parchment fine and soft (grain 0.04, softness 0.2); prose slate drawn out (elongation 0.05, contrast 0.92); the dark register haloed, softer (halo 0.18, softness 0.3 — the corona's glow). TITLES confirmed as the record's own lines: A word that can return to its speaker; Two roads, six works, and the return through the loop; Images that retain the relation they expose; The black sun and the radiating star; Keeping the opening in the form. Still pairs held: the parchment pair and the black-sun pair each rest unchanged."
+ ]
 }

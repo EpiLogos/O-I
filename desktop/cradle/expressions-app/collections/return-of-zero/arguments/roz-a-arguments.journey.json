@@ -224,7 +224,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a01-title",
+          "kicker": "",
+          "title": "Definedly indefinable",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -485,7 +499,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a02-title",
+          "kicker": "",
+          "title": "Identity through difference",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -539,15 +567,15 @@
           "sizeBias": 1.6,
           "opacity": 0.92,
           "roundness": 0.95,
-          "softness": 0.15,
+          "softness": 0.08,
           "irregularity": 0.35,
           "elongation": 0.04,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.97,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.08,
           "speed": 0.65,
           "circulation": 1,
           "turbulence": 0.18,
@@ -558,7 +586,7 @@
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
           "depth": 0.12,
-          "grain": 0.035,
+          "grain": 0.06,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -740,28 +768,27 @@
                 "shape": "text",
                 "hold": 3.4,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.28,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               }
             ]
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a03-title",
+          "kicker": "",
+          "title": "Each inclusion renews the gap",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -945,7 +972,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a04-title",
+          "kicker": "",
+          "title": "A world from somewhere",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -1190,7 +1231,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a05-title",
+          "kicker": "",
+          "title": "Light turning, no second light",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -1242,8 +1297,8 @@
       "transition": 2.6,
       "view": {
         "mode": "3d",
-        "yaw": 0.1,
-        "pitch": 0.12,
+        "yaw": 0.5,
+        "pitch": 0.3,
         "zoom": 1,
         "panX": 0,
         "panY": 0
@@ -1279,11 +1334,11 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.35,
+          "depth": 0.85,
           "grain": 0.035,
           "snapRigidity": 1,
           "densityTether": 1,
-          "curlDepth": 0.2,
+          "curlDepth": 0.5,
           "vortexRadius": 0.4,
           "gravityX": 0,
           "gravityY": -0.22,
@@ -1291,7 +1346,7 @@
           "quadraticDrag": 0.2,
           "thermalJitter": 0,
           "speedLimit": 3,
-          "zConfinement": 1,
+          "zConfinement": 0.55,
           "timeScale": 1,
           "gravitySoftening": 0.1,
           "gravityFalloff": 2,
@@ -1309,7 +1364,7 @@
           "position": {
             "x": 0,
             "y": 0.3,
-            "z": -0.6
+            "z": -1.2
           },
           "size": {
             "x": 0.9,
@@ -1416,21 +1471,6 @@
                   "x": 0,
                   "y": 0.08,
                   "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.55,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#e8e2d4",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
                 }
               },
               {
@@ -1443,21 +1483,6 @@
                   "x": 0,
                   "y": -0.1,
                   "z": -0.5
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.6,
-                    "y": 0.6
-                  },
-                  "rotation": 0,
-                  "tint": "#e8e2d4",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
                 }
               },
               {
@@ -1470,28 +1495,27 @@
                   "x": 0,
                   "y": -0.28,
                   "z": -1
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.65,
-                    "y": 0.65
-                  },
-                  "rotation": 0,
-                  "tint": "#e8e2d4",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
                 }
               }
             ]
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a06-title",
+          "kicker": "",
+          "title": "Levels of speech, one descent",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Kundalini",
         "plane": "XY",
@@ -1753,7 +1777,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a07-title",
+          "kicker": "",
+          "title": "Vikalpa differentiates; saṃkalpa gathers",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -2140,7 +2178,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a08-title",
+          "kicker": "",
+          "title": "Intelligible through what it excludes",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -2194,9 +2246,9 @@
           "sizeBias": 1.6,
           "opacity": 0.88,
           "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "softness": 0.3,
+          "irregularity": 0.5,
+          "elongation": 0.22,
           "orientation": 0,
           "contrast": 0.93,
           "densityScale": 1,
@@ -2305,21 +2357,6 @@
                   "x": 0,
                   "y": 0.33,
                   "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.58,
-                    "y": 0.58
-                  },
-                  "rotation": 0,
-                  "tint": "#d8cfe0",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
                 }
               },
               {
@@ -2332,21 +2369,6 @@
                   "x": 0,
                   "y": 0.11,
                   "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.47,
-                    "y": 0.47
-                  },
-                  "rotation": 0,
-                  "tint": "#d8cfe0",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
                 }
               },
               {
@@ -2359,21 +2381,6 @@
                   "x": 0,
                   "y": -0.11,
                   "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.38,
-                    "y": 0.38
-                  },
-                  "rotation": 0,
-                  "tint": "#d8cfe0",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
                 }
               },
               {
@@ -2386,21 +2393,6 @@
                   "x": 0,
                   "y": -0.33,
                   "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#d8cfe0",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
                 }
               },
               {
@@ -2413,21 +2405,6 @@
                   "x": 0,
                   "y": -0.55,
                   "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.22
-                  },
-                  "rotation": 0,
-                  "tint": "#d8cfe0",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
                 }
               }
             ]
@@ -2478,7 +2455,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a09-title",
+          "kicker": "",
+          "title": "No second reality outside itself",
+          "italic": "",
+          "body": "",
+          "x": 0.6,
+          "y": 0.82,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -2533,10 +2524,10 @@
           "opacity": 0.95,
           "roundness": 0.95,
           "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "irregularity": 0.12,
+          "elongation": 0.02,
           "orientation": 0,
-          "contrast": 0.97,
+          "contrast": 0.98,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
@@ -2551,7 +2542,7 @@
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
           "depth": 0.12,
-          "grain": 0.035,
+          "grain": 0.05,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -2569,7 +2560,8 @@
           "swirlRadius": 0.4,
           "frequency": 220,
           "dominance": 0,
-          "excitation": 0.6
+          "excitation": 0.6,
+          "material": "print"
         }
       },
       "entities": [
@@ -2774,7 +2766,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a10-title",
+          "kicker": "",
+          "title": "A nameable place for no quantity",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -2827,12 +2833,12 @@
           "size": 2.8,
           "sizeBias": 1.6,
           "opacity": 0.92,
-          "roundness": 0.95,
+          "roundness": 0.7,
           "softness": 0.15,
           "irregularity": 0.35,
-          "elongation": 0.04,
+          "elongation": 0.3,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.95,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
@@ -3018,7 +3024,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a11-title",
+          "kicker": "",
+          "title": "0 One, 1 All",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -3435,7 +3455,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a12-title",
+          "kicker": "",
+          "title": "One whole, many real expressions",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -3843,7 +3877,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a13-title",
+          "kicker": "",
+          "title": "Difference within one relation",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -4104,7 +4152,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a14-title",
+          "kicker": "",
+          "title": "Process prior to finished things",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -4400,7 +4462,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a15-title",
+          "kicker": "",
+          "title": "Rationality begins in ratio",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -4690,7 +4766,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a16-title",
+          "kicker": "",
+          "title": "Positions acquired together",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -4744,7 +4834,7 @@
           "sizeBias": 1.6,
           "opacity": 0.92,
           "roundness": 0.95,
-          "softness": 0.15,
+          "softness": 0.3,
           "irregularity": 0.35,
           "elongation": 0.04,
           "orientation": 0,
@@ -4752,9 +4842,9 @@
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.22,
           "speed": 0.6,
-          "circulation": 1,
+          "circulation": 1.6,
           "turbulence": 0.18,
           "turbulenceScale": 1.2,
           "recovery": 1.1,
@@ -4762,8 +4852,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.5,
+          "grain": 0.03,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -4774,7 +4864,7 @@
           "quadraticDrag": 0.2,
           "thermalJitter": 0,
           "speedLimit": 3,
-          "zConfinement": 1,
+          "zConfinement": 0.7,
           "timeScale": 1,
           "gravitySoftening": 0.1,
           "gravityFalloff": 2,
@@ -4890,7 +4980,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a17-title",
+          "kicker": "",
+          "title": "Whole through the opening retained",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -4901,18 +5005,18 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
+        "thetaRate": 0.17,
+        "phiRate": 0.08,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
+        "depth": 1.4,
+        "dwell": 0.25
       },
       "automation": [
         {
           "id": "a17-orbit-x",
-          "target": "entity:a17-traveller:x",
+          "target": "entity:a17-path:x",
           "type": "lfo",
           "wave": "sine",
           "blend": "add",
@@ -4928,7 +5032,7 @@
         },
         {
           "id": "a17-orbit-y",
-          "target": "entity:a17-traveller:y",
+          "target": "entity:a17-path:y",
           "type": "lfo",
           "wave": "sine",
           "blend": "add",
@@ -4947,7 +5051,10 @@
         "pointerMode": "vortex",
         "pointerClick": "pulse",
         "pointerClickStrength": 1.8,
-        "pointerClickRadius": 0.42
+        "pointerClickRadius": 0.42,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine"
       }
     },
     {
@@ -4975,17 +5082,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
+          "opacity": 0.85,
           "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
+          "softness": 0.25,
+          "irregularity": 0.55,
           "elongation": 0.04,
           "orientation": 0,
           "contrast": 0.93,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.15,
           "speed": 0.6,
           "circulation": 1,
           "turbulence": 0.18,
@@ -4996,7 +5103,7 @@
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
           "depth": 0.12,
-          "grain": 0.035,
+          "grain": 0.02,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -5080,22 +5187,7 @@
                 "shape": "text",
                 "hold": 2.4,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.55,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#e4e8e4",
-                  "tintWeight": 0.65,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               },
               {
                 "id": "st-106",
@@ -5103,22 +5195,7 @@
                 "shape": "text",
                 "hold": 2.4,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.6,
-                    "y": 0.6
-                  },
-                  "rotation": 0,
-                  "tint": "#e4e8e4",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               },
               {
                 "id": "st-107",
@@ -5126,22 +5203,7 @@
                 "shape": "text",
                 "hold": 2.4,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.65,
-                    "y": 0.65
-                  },
-                  "rotation": 0,
-                  "tint": "#e4e8e4",
-                  "tintWeight": 0.75,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               },
               {
                 "id": "st-108",
@@ -5149,22 +5211,7 @@
                 "shape": "text",
                 "hold": 2.4,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.7,
-                    "y": 0.7
-                  },
-                  "rotation": 0,
-                  "tint": "#e4e8e4",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               },
               {
                 "id": "st-109",
@@ -5172,22 +5219,7 @@
                 "shape": "text",
                 "hold": 2.4,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.75,
-                    "y": 0.75
-                  },
-                  "rotation": 0,
-                  "tint": "#e4e8e4",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               },
               {
                 "id": "st-110",
@@ -5195,22 +5227,7 @@
                 "shape": "text",
                 "hold": 2.4,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.8,
-                    "y": 0.8
-                  },
-                  "rotation": 0,
-                  "tint": "#e4e8e4",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               },
               {
                 "id": "st-111",
@@ -5218,22 +5235,7 @@
                 "shape": "text",
                 "hold": 3,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.85,
-                    "y": 0.85
-                  },
-                  "rotation": 0,
-                  "tint": "#e4e8e4",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               }
             ]
           }
@@ -5283,7 +5285,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a18-title",
+          "kicker": "",
+          "title": "One relation, eight determinations",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Kundalini",
         "plane": "XY",
@@ -5294,20 +5310,22 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
+        "thetaRate": 0.05,
+        "phiRate": 0.21,
         "thetaOffset": 0,
         "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
+        "law": "product",
+        "depth": 1.1,
+        "dwell": 0.4
       },
       "automation": [],
       "engine": {
         "pointerMode": "vortex",
         "pointerClick": "pulse",
         "pointerClickStrength": 1.8,
-        "pointerClickRadius": 0.42
+        "pointerClickRadius": 0.42,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf"
       }
     },
     {
@@ -5440,22 +5458,7 @@
                 "shape": "disc",
                 "hold": 3.6,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.95,
-                    "y": 0.95
-                  },
-                  "rotation": 0,
-                  "tint": "#e5d9c3",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0.8,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               }
             ]
           }
@@ -5549,7 +5552,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a19-title",
+          "kicker": "",
+          "title": "Settled before judgment begins",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -5787,28 +5804,27 @@
                 "shape": "triangle",
                 "hold": 3.6,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.7,
-                    "y": 0.6
-                  },
-                  "rotation": 90,
-                  "tint": "#e5d9c3",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "repel",
-                    "strength": 1,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               }
             ]
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a20-title",
+          "kicker": "",
+          "title": "Possessed by the image's criteria",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -5950,22 +5966,7 @@
                 "shape": "text",
                 "hold": 3.4,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.8,
-                    "y": 0.8
-                  },
-                  "rotation": 0,
-                  "tint": "#e5d9c3",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               },
               {
                 "id": "st-124",
@@ -5977,21 +5978,6 @@
                   "x": 0.12,
                   "y": -0.06,
                   "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#e5d9c3",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
                 }
               }
             ]
@@ -6042,7 +6028,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a21-title",
+          "kicker": "",
+          "title": "Known through source and history",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -6278,7 +6278,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a22-title",
+          "kicker": "",
+          "title": "Situated accounts, traversable",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Kundalini",
         "plane": "XY",
@@ -6428,22 +6442,7 @@
                 "shape": "ring",
                 "hold": 3.6,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 1.45,
-                    "y": 1.45
-                  },
-                  "rotation": 0,
-                  "tint": "#e8d8cc",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               }
             ]
           }
@@ -6537,7 +6536,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a23-title",
+          "kicker": "",
+          "title": "Trusted wherever knowledge acts",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -6755,22 +6768,7 @@
                 "shape": "disc",
                 "hold": 3,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.5
-                  },
-                  "rotation": 0,
-                  "tint": "#e8d8cc",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               },
               {
                 "id": "st-138",
@@ -6799,7 +6797,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a24-title",
+          "kicker": "",
+          "title": "Locality becomes source authority",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -6851,9 +6863,9 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
+          "opacity": 0.8,
           "roundness": 0.95,
-          "softness": 0.15,
+          "softness": 0.4,
           "irregularity": 0.35,
           "elongation": 0.04,
           "orientation": 0,
@@ -6861,7 +6873,7 @@
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.24,
           "speed": 0.55,
           "circulation": 0.6,
           "turbulence": 0.2,
@@ -7043,7 +7055,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a25-title",
+          "kicker": "",
+          "title": "Primary arbitration precedes its mediators",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -7332,22 +7358,7 @@
                 "shape": "ring",
                 "hold": 2.4,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.5
-                  },
-                  "rotation": 0,
-                  "tint": "#2c3438",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               },
               {
                 "id": "st-149",
@@ -7355,22 +7366,7 @@
                 "shape": "disc",
                 "hold": 2.4,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.5
-                  },
-                  "rotation": 0,
-                  "tint": "#2c3438",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               },
               {
                 "id": "st-150",
@@ -7378,22 +7374,7 @@
                 "shape": "ring",
                 "hold": 2.4,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.55,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#2c3438",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               },
               {
                 "id": "st-151",
@@ -7401,22 +7382,7 @@
                 "shape": "disc",
                 "hold": 2.6,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.6,
-                    "y": 0.6
-                  },
-                  "rotation": 0,
-                  "tint": "#2c3438",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               },
               {
                 "id": "st-152",
@@ -7424,28 +7390,27 @@
                 "shape": "ring",
                 "hold": 3,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.65,
-                    "y": 0.65
-                  },
-                  "rotation": 0,
-                  "tint": "#2c3438",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               }
             ]
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a26-title",
+          "kicker": "",
+          "title": "Knower, means and known",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -7673,7 +7638,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a27-title",
+          "kicker": "",
+          "title": "Within Mono, not within me",
+          "italic": "",
+          "body": "",
+          "x": 0.6,
+          "y": 0.82,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -7962,7 +7941,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a28-title",
+          "kicker": "",
+          "title": "Authored before it is occupied",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -8214,7 +8207,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a29-title",
+          "kicker": "",
+          "title": "Return where work meets world",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -8299,9 +8306,9 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.9,
-          "roundness": 0.95,
-          "softness": 0.15,
+          "opacity": 0.75,
+          "roundness": 0.99,
+          "softness": 0.5,
           "irregularity": 0.35,
           "elongation": 0.04,
           "orientation": 0,
@@ -8309,7 +8316,7 @@
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.3,
           "speed": 0.55,
           "circulation": 1,
           "turbulence": 0.16,
@@ -8320,7 +8327,7 @@
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
           "depth": 0.12,
-          "grain": 0.035,
+          "grain": 0.02,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -8448,28 +8455,27 @@
                 "shape": "disc",
                 "hold": 3.4,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.9,
-                    "y": 0.9
-                  },
-                  "rotation": 0,
-                  "tint": "#5c6a66",
-                  "tintWeight": 0.55,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               }
             ]
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a30-title",
+          "kicker": "",
+          "title": "Reciprocal world-constitution, non-identical interiors",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -8626,22 +8632,7 @@
                 "shape": "disc",
                 "hold": 3.6,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.6,
-                    "y": 0.6
-                  },
-                  "rotation": 10,
-                  "tint": "#dfe6da",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               }
             ]
           }
@@ -8691,7 +8682,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a31-title",
+          "kicker": "",
+          "title": "Model-revising encounter",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -8939,7 +8944,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a32-title",
+          "kicker": "",
+          "title": "The mirror that moves first",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -8992,12 +9011,12 @@
           "size": 2.8,
           "sizeBias": 1.6,
           "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
+          "roundness": 1,
+          "softness": 0.06,
+          "irregularity": 0.06,
           "elongation": 0.04,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.97,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
@@ -9012,7 +9031,7 @@
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
           "depth": 0.12,
-          "grain": 0.035,
+          "grain": 0.015,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -9125,28 +9144,27 @@
                 "shape": "ring",
                 "hold": 3.6,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 1.25,
-                    "y": 1.25
-                  },
-                  "rotation": 0,
-                  "tint": "#8fae96",
-                  "tintWeight": 0.5,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               }
             ]
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a33-title",
+          "kicker": "",
+          "title": "A discriminable consequence",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -9418,7 +9436,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a34-title",
+          "kicker": "",
+          "title": "The order of dependence",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Kundalini",
         "plane": "XY",
@@ -9619,28 +9651,27 @@
                 "shape": "disc",
                 "hold": 3.8,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#33291e",
-                  "tintWeight": 0.55,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               }
             ]
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a35-title",
+          "kicker": "",
+          "title": "Loving sensitivity to origins",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",
@@ -9692,9 +9723,9 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
+          "opacity": 0.88,
           "roundness": 0.95,
-          "softness": 0.15,
+          "softness": 0.28,
           "irregularity": 0.35,
           "elongation": 0.04,
           "orientation": 0,
@@ -9702,7 +9733,7 @@
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.2,
           "speed": 0.65,
           "circulation": 1,
           "turbulence": 0.18,
@@ -9797,22 +9828,7 @@
                 "shape": "text",
                 "hold": 3,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.65,
-                    "y": 0.65
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               },
               {
                 "id": "st-190",
@@ -9820,22 +9836,7 @@
                 "shape": "text",
                 "hold": 4,
                 "transition": 0.9,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.8,
-                    "y": 0.8
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               }
             ]
           }
@@ -9946,7 +9947,21 @@
           }
         }
       ],
-      "text": [],
+      "text": [
+        {
+          "id": "a36-title",
+          "kicker": "",
+          "title": "Exact sign, living Symbol again",
+          "italic": "",
+          "body": "",
+          "x": 0.055,
+          "y": 0.8,
+          "width": 380,
+          "size": 22,
+          "align": "left",
+          "visible": true
+        }
+      ],
       "composition": {
         "layout": "Single formation",
         "plane": "XY",

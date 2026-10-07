@@ -31,17 +31,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.9,
+          "roundness": 0.86,
+          "softness": 0.2,
+          "irregularity": 0.42,
+          "elongation": 0.05,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.9,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.13,
+          "halo": 0.12,
           "speed": 0.42,
           "circulation": 0.32,
           "turbulence": 0.1,
@@ -51,8 +51,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.3,
+          "grain": 0.04,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -343,22 +343,7 @@
                   "z": 0
                 },
                 "text": "relation",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#33424e",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-ancient-philosophy-21-s2",
@@ -370,22 +355,7 @@
                   "z": 0
                 },
                 "text": "finite",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#4a4438",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-ancient-philosophy-21-s3",
@@ -397,22 +367,7 @@
                   "z": 0
                 },
                 "text": "instrument",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#20262b",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -480,7 +435,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Antiquity",
+          "title": "Agreement within the differing",
           "italic": "the stream of the Logos in time",
           "body": "",
           "x": 0.04,
@@ -543,17 +498,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.9,
+          "roundness": 0.86,
+          "softness": 0.2,
+          "irregularity": 0.42,
+          "elongation": 0.05,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.9,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.13,
+          "halo": 0.12,
           "speed": 0.42,
           "circulation": 0.32,
           "turbulence": 0.1,
@@ -563,8 +518,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.3,
+          "grain": 0.04,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -912,22 +867,7 @@
                   "z": 0
                 },
                 "text": "instrument",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#2a3b33",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-indian-philosophy-21-s2",
@@ -939,22 +879,7 @@
                   "z": 0
                 },
                 "text": "exclusion",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#6a2f2a",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-indian-philosophy-21-s3",
@@ -966,22 +891,7 @@
                   "z": 0
                 },
                 "text": "arithmetic",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#4a4438",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-indian-philosophy-21-s4",
@@ -993,22 +903,7 @@
                   "z": 0
                 },
                 "text": "self-differentiation",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#20262b",
-                  "tintWeight": 0.95,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -1076,7 +971,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Emptiness",
+          "title": "Finite powers and the return of recognition",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -1139,17 +1034,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.95,
+          "roundness": 0.94,
+          "softness": 0.11,
+          "irregularity": 0.22,
+          "elongation": 0.18,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.97,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.13,
+          "halo": 0.08,
           "speed": 0.42,
           "circulation": 0.32,
           "turbulence": 0.1,
@@ -1159,8 +1054,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.25,
+          "grain": 0.026,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -1622,22 +1517,7 @@
                   "z": 0
                 },
                 "text": "logos",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#4a4438",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-language-law-nation-centralisation-21-s2",
@@ -1649,22 +1529,7 @@
                   "z": 0
                 },
                 "text": "arbitration",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#6a2f2a",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-language-law-nation-centralisation-21-s3",
@@ -1676,22 +1541,7 @@
                   "z": 0
                 },
                 "text": "logos",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#5c6a74",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-language-law-nation-centralisation-21-s4",
@@ -1703,22 +1553,7 @@
                   "z": 0
                 },
                 "text": "field",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#5c6a74",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-language-law-nation-centralisation-21-s5",
@@ -1730,22 +1565,7 @@
                   "z": 0
                 },
                 "text": "leonardo",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#8a7a5c",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-language-law-nation-centralisation-21-s6",
@@ -1757,22 +1577,7 @@
                   "z": 0
                 },
                 "text": "knowledge",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#20262b",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -1871,7 +1676,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The tree",
+          "title": "Twelve situated histories",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -1934,17 +1739,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.95,
+          "roundness": 0.94,
+          "softness": 0.11,
+          "irregularity": 0.22,
+          "elongation": 0.18,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.97,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.13,
+          "halo": 0.08,
           "speed": 0.42,
           "circulation": 0.32,
           "turbulence": 0.1,
@@ -1954,8 +1759,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.25,
+          "grain": 0.026,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -2417,22 +2222,7 @@
                   "z": 0
                 },
                 "text": "possible",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#5c6a74",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-language-symbol-dialogue-21-s2",
@@ -2444,22 +2234,7 @@
                   "z": 0
                 },
                 "text": "edge",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#33424e",
-                  "tintWeight": 0.65,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-language-symbol-dialogue-21-s3",
@@ -2471,22 +2246,7 @@
                   "z": 0
                 },
                 "text": "signifier",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#6a2f2a",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-language-symbol-dialogue-21-s4",
@@ -2498,22 +2258,7 @@
                   "z": 0
                 },
                 "text": "separated",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#2a3b33",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-language-symbol-dialogue-21-s5",
@@ -2525,22 +2270,7 @@
                   "z": 0
                 },
                 "text": "account",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#4a4438",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-language-symbol-dialogue-21-s6",
@@ -2552,22 +2282,7 @@
                   "z": 0
                 },
                 "text": "meaning",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#20262b",
-                  "tintWeight": 0.95,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -2693,7 +2408,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Dialogue",
+          "title": "The account answers back",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -2756,17 +2471,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.93,
+          "roundness": 0.91,
+          "softness": 0.14,
+          "irregularity": 0.3,
+          "elongation": 0.12,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.95,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.13,
+          "halo": 0.1,
           "speed": 0.42,
           "circulation": 0.32,
           "turbulence": 0.1,
@@ -2776,8 +2491,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.55,
+          "grain": 0.032,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -3182,22 +2897,7 @@
                   "z": 0.42
                 },
                 "text": "office",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#5c6a74",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-mathematics-21-s2",
@@ -3209,22 +2909,7 @@
                   "z": 0.21
                 },
                 "text": "generators",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#33424e",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-mathematics-21-s3",
@@ -3236,22 +2921,7 @@
                   "z": 0
                 },
                 "text": "re-enters",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#2a3b33",
-                  "tintWeight": 0.75,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-mathematics-21-s4",
@@ -3263,22 +2933,7 @@
                   "z": -0.21000000000000002
                 },
                 "text": "form",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#4a4438",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-mathematics-21-s5",
@@ -3290,22 +2945,7 @@
                   "z": -0.42
                 },
                 "text": "machine",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#20262b",
-                  "tintWeight": 0.95,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -3373,7 +3013,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Mathematics",
+          "title": "Changed permissions and retained conditions",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -3393,8 +3033,8 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.05,
-        "phiRate": 0.03,
+        "thetaRate": 0.1,
+        "phiRate": 0.06,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
@@ -3408,7 +3048,10 @@
         "pointerMode": "attract",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.9,
-        "pointerClickRadius": 0.42
+        "pointerClickRadius": 0.42,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine"
       }
     },
     {
@@ -3436,17 +3079,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.88,
+          "roundness": 0.82,
+          "softness": 0.24,
+          "irregularity": 0.48,
+          "elongation": 0.06,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.89,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.13,
+          "halo": 0.18,
           "speed": 0.42,
           "circulation": 0.32,
           "turbulence": 0.1,
@@ -3456,8 +3099,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.3,
+          "grain": 0.046,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -3862,22 +3505,7 @@
                   "z": 0
                 },
                 "text": "harmonia",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#6a2f2a",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-myth-21-s2",
@@ -3889,22 +3517,7 @@
                   "z": 0
                 },
                 "text": "bonds",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#4a4438",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-myth-21-s3",
@@ -3916,22 +3529,7 @@
                   "z": 0
                 },
                 "text": "dionysus",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#3b3050",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-myth-21-s4",
@@ -3943,22 +3541,7 @@
                   "z": 0
                 },
                 "text": "imagination",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#4a4438",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-myth-21-s5",
@@ -3970,22 +3553,7 @@
                   "z": 0
                 },
                 "text": "huayan",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#2a3b33",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -4053,7 +3621,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Myth",
+          "title": "Tellings, changed offices, consequential return",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -4116,17 +3684,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.88,
+          "roundness": 0.82,
+          "softness": 0.24,
+          "irregularity": 0.48,
+          "elongation": 0.06,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.89,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.13,
+          "halo": 0.18,
           "speed": 0.42,
           "circulation": 0.32,
           "turbulence": 0.1,
@@ -4136,8 +3704,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.3,
+          "grain": 0.046,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -4599,22 +4167,7 @@
                   "z": 0
                 },
                 "text": "relation",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#2a3b33",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-process-systems-science-21-s2",
@@ -4626,22 +4179,7 @@
                   "z": 0
                 },
                 "text": "substance",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#33424e",
-                  "tintWeight": 0.65,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-process-systems-science-21-s3",
@@ -4653,22 +4191,7 @@
                   "z": 0
                 },
                 "text": "boundary",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#5c6a74",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-process-systems-science-21-s4",
@@ -4680,22 +4203,7 @@
                   "z": 0
                 },
                 "text": "mathematics",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#33424e",
-                  "tintWeight": 0.75,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-process-systems-science-21-s5",
@@ -4707,22 +4215,7 @@
                   "z": 0
                 },
                 "text": "experience",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#4a4438",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-process-systems-science-21-s6",
@@ -4734,22 +4227,7 @@
                   "z": 0
                 },
                 "text": "attunement",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#20262b",
-                  "tintWeight": 0.95,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -4848,7 +4326,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Process",
+          "title": "Different histories enter a common question",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -4911,17 +4389,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
+          "opacity": 0.86,
+          "roundness": 0.78,
+          "softness": 0.27,
+          "irregularity": 0.54,
           "elongation": 0.04,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.87,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.13,
+          "halo": 0.22,
           "speed": 0.42,
           "circulation": 0.32,
           "turbulence": 0.1,
@@ -4931,8 +4409,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.3,
+          "grain": 0.05,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -5337,22 +4815,7 @@
                   "z": 0
                 },
                 "text": "state",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#5c6a74",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-psychology-21-s2",
@@ -5364,22 +4827,7 @@
                   "z": 0
                 },
                 "text": "individuation",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#3b3050",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-psychology-21-s3",
@@ -5391,22 +4839,7 @@
                   "z": 0
                 },
                 "text": "psychoid",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#20262b",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-psychology-21-s4",
@@ -5418,22 +4851,7 @@
                   "z": 0
                 },
                 "text": "time",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#33424e",
-                  "tintWeight": 0.75,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-psychology-21-s5",
@@ -5445,22 +4863,7 @@
                   "z": 0
                 },
                 "text": "agentworld",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#2a3b33",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -5585,7 +4988,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Psychology",
+          "title": "Formation, symbolic transformation, return of responsibility",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -5648,17 +5051,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.94,
+          "roundness": 0.93,
+          "softness": 0.12,
+          "irregularity": 0.26,
+          "elongation": 0.16,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.96,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.13,
+          "halo": 0.09,
           "speed": 0.42,
           "circulation": 0.32,
           "turbulence": 0.1,
@@ -5668,8 +5071,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.3,
+          "grain": 0.03,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -6074,22 +5477,7 @@
                   "z": 0
                 },
                 "text": "technical",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#20262b",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-technology-politics-21-s2",
@@ -6101,22 +5489,7 @@
                   "z": 0
                 },
                 "text": "infrastructure",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#4a4438",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-technology-politics-21-s3",
@@ -6128,22 +5501,7 @@
                   "z": 0
                 },
                 "text": "world",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#6a2f2a",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-technology-politics-21-s4",
@@ -6155,22 +5513,7 @@
                   "z": 0
                 },
                 "text": "machine",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#6a2f2a",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-technology-politics-21-s5",
@@ -6182,22 +5525,7 @@
                   "z": 0
                 },
                 "text": "depth",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#2a3b33",
-                  "tintWeight": 0.95,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -6296,7 +5624,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Technē",
+          "title": "Formation, delegation and return",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -6359,17 +5687,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.9,
+          "roundness": 0.87,
+          "softness": 0.19,
+          "irregularity": 0.38,
+          "elongation": 0.08,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.92,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.13,
+          "halo": 0.15,
           "speed": 0.42,
           "circulation": 0.32,
           "turbulence": 0.1,
@@ -6379,8 +5707,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.4,
+          "grain": 0.038,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -6785,22 +6113,7 @@
                   "z": 0
                 },
                 "text": "count",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#33424e",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-zero-subject-advent-21-s2",
@@ -6812,22 +6125,7 @@
                   "z": 0
                 },
                 "text": "scene",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#5c6a74",
-                  "tintWeight": 0.75,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-zero-subject-advent-21-s3",
@@ -6839,22 +6137,7 @@
                   "z": 0
                 },
                 "text": "fact",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#3b3050",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-zero-subject-advent-21-s4",
@@ -6866,22 +6149,7 @@
                   "z": 0
                 },
                 "text": "arrives",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#20262b",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-h-history-zero-subject-advent-21-s5",
@@ -6893,22 +6161,7 @@
                   "z": 0
                 },
                 "text": "threshold",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#4a4438",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -7022,7 +6275,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Zero",
+          "title": "An advent changes what can be said",
           "italic": "",
           "body": "",
           "x": 0.04,

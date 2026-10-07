@@ -512,10 +512,10 @@
    "duration": 13,
    "transition": 1.5,
    "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
+    "mode": "3d",
+    "yaw": 0.34,
+    "pitch": 0.38,
+    "zoom": 0.94,
     "panX": 0,
     "panY": 0
    },
@@ -531,16 +531,16 @@
      "size": 2.8,
      "sizeBias": 1.6,
      "opacity": 0.92,
-     "roundness": 0.95,
-     "softness": 0.15,
-     "irregularity": 0.35,
-     "elongation": 0.04,
+     "roundness": 0.93,
+     "softness": 0.23,
+     "irregularity": 0.36,
+     "elongation": 0.05,
      "orientation": 0,
      "contrast": 0.93,
      "densityScale": 1,
      "densityPhase": 0.3,
      "edgeWeight": 0,
-     "halo": 0.13,
+     "halo": 0.17,
      "speed": 0.5,
      "circulation": 0.5,
      "turbulence": 0.15,
@@ -550,8 +550,8 @@
      "pointerStrength": 0.8,
      "pointerRadius": 0.23,
      "pointerFalloff": 2,
-     "depth": 0.12,
-     "grain": 0.035,
+     "depth": 0.34,
+     "grain": 0.036,
      "snapRigidity": 1,
      "densityTether": 1,
      "curlDepth": 0.2,
@@ -562,7 +562,7 @@
      "quadraticDrag": 0.2,
      "thermalJitter": 0,
      "speedLimit": 3,
-     "zConfinement": 1,
+     "zConfinement": 0.76,
      "timeScale": 1,
      "gravitySoftening": 0.1,
      "gravityFalloff": 2,
@@ -578,7 +578,13 @@
     "pointerMode": "attract",
     "pointerClick": "pulse",
     "pointerClickStrength": 0.8,
-    "pointerClickRadius": 0.4
+    "pointerClickRadius": 0.4,
+    "morphEnabled": true,
+    "trajectory": "toroidalHopf",
+    "driveShape": "smooth",
+    "depthPerspective": true,
+    "vortex3d": 0.3,
+    "dispersion3d": 0.08
    },
    "entities": [
     {
@@ -676,7 +682,7 @@
      "position": {
       "x": 0.78,
       "y": 0.34,
-      "z": 0
+      "z": -0.3
      },
      "size": {
       "x": 0.16,
@@ -718,7 +724,7 @@
      "position": {
       "x": 0.88,
       "y": 0.34,
-      "z": 0
+      "z": 0.2
      },
      "size": {
       "x": 0.26,
@@ -779,13 +785,13 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
+    "law": "sum",
+    "thetaRate": 0.11,
+    "phiRate": 0.07,
     "thetaOffset": 0,
     "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
+    "depth": 0.9,
+    "dwell": 0.35
    },
    "automation": []
   },
@@ -1381,10 +1387,10 @@
    "duration": 16,
    "transition": 2,
    "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
+    "mode": "3d",
+    "yaw": -0.32,
+    "pitch": 0.36,
+    "zoom": 0.94,
     "panX": 0,
     "panY": 0
    },
@@ -1400,16 +1406,16 @@
      "size": 2.8,
      "sizeBias": 1.6,
      "opacity": 0.92,
-     "roundness": 0.95,
-     "softness": 0.15,
-     "irregularity": 0.35,
-     "elongation": 0.04,
+     "roundness": 0.91,
+     "softness": 0.25,
+     "irregularity": 0.4,
+     "elongation": 0.08,
      "orientation": 0,
      "contrast": 0.93,
      "densityScale": 1,
      "densityPhase": 0.3,
      "edgeWeight": 0,
-     "halo": 0.13,
+     "halo": 0.18,
      "speed": 0.3,
      "circulation": 0.3,
      "turbulence": 0.06,
@@ -1419,8 +1425,8 @@
      "pointerStrength": 0.8,
      "pointerRadius": 0.23,
      "pointerFalloff": 2,
-     "depth": 0.25,
-     "grain": 0.035,
+     "depth": 0.32,
+     "grain": 0.04,
      "snapRigidity": 1,
      "densityTether": 1,
      "curlDepth": 0.2,
@@ -1431,7 +1437,7 @@
      "quadraticDrag": 0.2,
      "thermalJitter": 0,
      "speedLimit": 3,
-     "zConfinement": 1,
+     "zConfinement": 0.78,
      "timeScale": 1,
      "gravitySoftening": 0.1,
      "gravityFalloff": 2,
@@ -1447,7 +1453,13 @@
     "pointerMode": "attract",
     "pointerClick": "implode",
     "pointerClickStrength": 1,
-    "pointerClickRadius": 0.4
+    "pointerClickRadius": 0.4,
+    "morphEnabled": true,
+    "trajectory": "vortexSpiral",
+    "driveShape": "smooth",
+    "depthPerspective": true,
+    "vortex3d": 0.45,
+    "dispersion3d": 0.1
    },
    "entities": [
     {
@@ -1457,7 +1469,7 @@
      "position": {
       "x": 0.34,
       "y": -0.04,
-      "z": 0
+      "z": 0.26
      },
      "size": {
       "x": 2.4,
@@ -1545,7 +1557,7 @@
      "position": {
       "x": 0.82,
       "y": 0.3,
-      "z": 0
+      "z": 0.02
      },
      "size": {
       "x": 0.09,
@@ -1587,7 +1599,7 @@
      "position": {
       "x": 0.82,
       "y": 0.3,
-      "z": -0.05
+      "z": -0.32
      },
      "size": {
       "x": 0.52,
@@ -1648,13 +1660,13 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
+    "law": "beat",
+    "thetaRate": 0.13,
+    "phiRate": 0.13,
     "thetaOffset": 0,
     "phiOffset": 0,
-    "law": "theta",
     "depth": 1,
-    "dwell": 0.3
+    "dwell": 0.4
    },
    "automation": [
     {

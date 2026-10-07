@@ -42,7 +42,9 @@
           "speed": 0.5,
           "circulation": 0.15,
           "dispersion": 0.08,
-          "turbulence": 0.15
+          "turbulence": 0.15,
+          "opacity": 0.9,
+          "grain": 0.05
         }
       },
       "entities": [
@@ -359,22 +361,7 @@
                 "shape": "text",
                 "hold": 2.8,
                 "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.1
-                  },
-                  "rotation": 0,
-                  "tint": "#7a6a52",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               },
               {
                 "id": "e6-sq2",
@@ -382,22 +369,7 @@
                 "shape": "text",
                 "hold": 3.2,
                 "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.1
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "position": null
               }
             ]
           }
@@ -468,12 +440,17 @@
           "#2b6b8a",
           "#c9a227"
         ],
-        "material": "round",
+        "material": "print",
         "params": {
           "pointerStrength": 0.45,
           "speed": 0.6,
           "circulation": -0.3,
-          "dispersion": 0.1
+          "dispersion": 0.1,
+          "softness": 0.2,
+          "halo": 0.22,
+          "irregularity": 0.5,
+          "grain": 0.06,
+          "roundness": 0.4
         }
       },
       "entities": [
@@ -768,8 +745,8 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The flood and its aftermaths",
-          "italic": "The verdict binds; the beaten sea keeps moving.",
+          "title": "Variant aftermaths",
+          "italic": "Poseidon floods the plain; Hyginus prevents; Augustine takes the vote back.",
           "body": "",
           "x": 0.03,
           "y": 0.04,
@@ -821,7 +798,10 @@
         "pointerMode": "attract",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.3,
-        "pointerClickRadius": 0.3
+        "pointerClickRadius": 0.3,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine"
       },
       "field": {
         "background": "#ebe6d4",
@@ -838,7 +818,9 @@
           "circulation": 0.2,
           "zConfinement": 0.7,
           "dispersion": 0.06,
-          "turbulence": 0.1
+          "turbulence": 0.1,
+          "halo": 0.08,
+          "contrast": 0.95
         }
       },
       "entities": [
@@ -1103,7 +1085,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The sanctuary remembers",
+          "title": "The sanctuary remembers both claims",
           "italic": "Burnt to a stump, the olive answers by morning.",
           "body": "",
           "x": 0.03,
@@ -1123,12 +1105,12 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
+        "thetaRate": 0.07,
+        "phiRate": 0.11,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
-        "depth": 1,
+        "depth": 1.2,
         "dwell": 0.3
       },
       "automation": [
@@ -1172,7 +1154,10 @@
         "pointerMode": "attract",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.3,
-        "pointerClickRadius": 0.3
+        "pointerClickRadius": 0.3,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine"
       },
       "field": {
         "background": "#ebe6d4",
@@ -1189,7 +1174,9 @@
           "circulation": 0.2,
           "zConfinement": 0.7,
           "dispersion": 0.06,
-          "turbulence": 0.1
+          "turbulence": 0.1,
+          "halo": 0.08,
+          "contrast": 0.95
         }
       },
       "entities": [
@@ -1282,7 +1269,7 @@
           "position": {
             "x": 0,
             "y": -0.35,
-            "z": 0.0
+            "z": -0.3
           },
           "size": {
             "x": 0.2,
@@ -1396,7 +1383,11 @@
                 "shape": "disc",
                 "hold": 2.4,
                 "transition": 1.3,
-                "position": null,
+                "position": {
+                  "x": 0.58,
+                  "y": -0.48,
+                  "z": -0.25
+                },
                 "source": {
                   "kind": "ascii",
                   "ascii": {
@@ -1425,7 +1416,11 @@
                 "shape": "disc",
                 "hold": 2.4,
                 "transition": 1.3,
-                "position": null,
+                "position": {
+                  "x": 0.58,
+                  "y": -0.48,
+                  "z": -0.12
+                },
                 "source": {
                   "kind": "ascii",
                   "ascii": {
@@ -1454,7 +1449,11 @@
                 "shape": "disc",
                 "hold": 2.4,
                 "transition": 1.3,
-                "position": null,
+                "position": {
+                  "x": 0.58,
+                  "y": -0.48,
+                  "z": 0.0
+                },
                 "source": {
                   "kind": "ascii",
                   "ascii": {
@@ -1483,7 +1482,11 @@
                 "shape": "disc",
                 "hold": 2.4,
                 "transition": 1.3,
-                "position": null,
+                "position": {
+                  "x": 0.58,
+                  "y": -0.48,
+                  "z": 0.12
+                },
                 "source": {
                   "kind": "ascii",
                   "ascii": {
@@ -1512,7 +1515,11 @@
                 "shape": "disc",
                 "hold": 2.8,
                 "transition": 1.3,
-                "position": null,
+                "position": {
+                  "x": 0.58,
+                  "y": -0.48,
+                  "z": 0.24
+                },
                 "source": {
                   "kind": "ascii",
                   "ascii": {
@@ -1586,7 +1593,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The well at the centre",
+          "title": "Poseidon's well at the centre",
           "italic": "The city is ordered around a depth it cannot fill.",
           "body": "",
           "x": 0.03,
@@ -1606,12 +1613,12 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
+        "thetaRate": 0.07,
+        "phiRate": 0.11,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
-        "depth": 1,
+        "depth": 1.2,
         "dwell": 0.3
       },
       "automation": []
@@ -1639,7 +1646,10 @@
         "pointerMode": "attract",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.3,
-        "pointerClickRadius": 0.3
+        "pointerClickRadius": 0.3,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine"
       },
       "field": {
         "background": "#ebe6d4",
@@ -1656,7 +1666,9 @@
           "circulation": 0.2,
           "zConfinement": 0.7,
           "dispersion": 0.06,
-          "turbulence": 0.1
+          "turbulence": 0.1,
+          "halo": 0.08,
+          "contrast": 0.95
         }
       },
       "entities": [
@@ -1667,7 +1679,7 @@
           "position": {
             "x": 0,
             "y": -0.4,
-            "z": 0.0
+            "z": -0.12
           },
           "size": {
             "x": 0.62,
@@ -1749,7 +1761,7 @@
           "position": {
             "x": 0.58,
             "y": -0.24,
-            "z": 0.0
+            "z": 0.05
           },
           "size": {
             "x": 0.24,
@@ -1900,16 +1912,19 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
+        "thetaRate": 0.07,
+        "phiRate": 0.11,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
-        "depth": 1,
+        "depth": 1.2,
         "dwell": 0.3
       },
       "automation": []
     }
   ],
-  "updatedAt": "2026-10-07T00:00:00.000Z"
+  "updatedAt": "2026-10-07T00:00:00.000Z",
+  "notes": [
+    "2026-10-07 deepen pass (agent/o-i-20261007-1639, lane 2): the material made alive and deep. MORPH: one morph clock (theta 0.07 / phi 0.11, depth 1.2) authored across the three clarified scenes #3–#5→0 — the precinct's breath; in #4 the winding of formed order around the well is that clock's strictest reading (thetaRate carries the wound ring around the depth it cannot fill). DEPTH: #3 sanctuary keeps its two-terrace z (olive at the upper eastern dedication +0.4, trident mark and salt cistern in the lower west −0.45 — the victorious civic form literally retaining the counter-claim below itself); #4 now stands in true depth: the well/sea sunk to z −0.3 under the wound ring while the olive chain climbs out of that depth toward the viewer — root −0.25 rising to flame +0.24, the record's rooted life becoming light; #5→0 lets the retained-contrary ring hold slightly deeper (z −0.12) than the civic fourfold (+0.05) — with standing, within, below. PARTICLE PROPS: contest matte parchment (opacity 0.9, grain 0.05); aftermath sea-spray (softness 0.35, halo 0.22, irregularity 0.5); the clarified register luminous and fine (halo 0.08, contrast 0.95) held unchanged across its three scenes as deliberate rest. TITLES set to the record's own lines: Claim, witness, verdict; Variant aftermaths; The sanctuary remembers both claims; Poseidon's well at the centre; The verdict returns to the place. The Cecropia→Athens renaming steps now carry no objectState — the text changes and the engine refits; the land is renamed in place."
+  ]
 }

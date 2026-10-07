@@ -41,7 +41,12 @@
           "speed": 0.24,
           "circulation": 0.06,
           "dispersion": 0.04,
-          "pointerStrength": 0.25
+          "pointerStrength": 0.25,
+          "grain": 0.04,
+          "softness": 0.18,
+          "contrast": 0.9,
+          "halo": 0.16,
+          "roundness": 0.92
         }
       },
       "entities": [
@@ -266,7 +271,12 @@
           "speed": 0.24,
           "circulation": 0.06,
           "dispersion": 0.04,
-          "pointerStrength": 0.25
+          "pointerStrength": 0.25,
+          "grain": 0.04,
+          "softness": 0.18,
+          "contrast": 0.9,
+          "halo": 0.16,
+          "roundness": 0.92
         }
       },
       "entities": [
@@ -457,10 +467,10 @@
       "duration": 11,
       "transition": 1.4,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
+        "mode": "3d",
+        "yaw": 0.55,
+        "pitch": 0.45,
+        "zoom": 0.9,
         "panX": 0,
         "panY": 0
       },
@@ -485,7 +495,14 @@
           "speed": 0.2,
           "circulation": 0.05,
           "dispersion": 0.04,
-          "pointerStrength": 0.22
+          "pointerStrength": 0.22,
+          "depth": 0.5,
+          "zConfinement": 0.7,
+          "contrast": 0.95,
+          "grain": 0.05,
+          "roundness": 0.9,
+          "softness": 0.2,
+          "opacity": 0.85
         }
       },
       "entities": [
@@ -496,7 +513,7 @@
           "position": {
             "x": -0.34,
             "y": -0.44,
-            "z": 0
+            "z": -0.3
           },
           "size": {
             "x": 0.24,
@@ -535,7 +552,7 @@
           "position": {
             "x": 0.2,
             "y": -0.5,
-            "z": 0
+            "z": -0.55
           },
           "size": {
             "x": 0.22,
@@ -574,7 +591,7 @@
           "position": {
             "x": 0.0,
             "y": -0.34,
-            "z": 0
+            "z": 0.3
           },
           "size": {
             "x": 0.6,
@@ -607,7 +624,7 @@
           "position": {
             "x": 0.58,
             "y": -0.66,
-            "z": 0
+            "z": 0.15
           },
           "size": {
             "x": 0.14,
@@ -676,10 +693,10 @@
       "duration": 11,
       "transition": 1.1,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
+        "mode": "3d",
+        "yaw": -0.35,
+        "pitch": 0.2,
+        "zoom": 0.85,
         "panX": 0,
         "panY": 0
       },
@@ -705,7 +722,14 @@
           "speed": 0.38,
           "circulation": 0.18,
           "dispersion": 0.06,
-          "pointerStrength": 0.35
+          "pointerStrength": 0.35,
+          "depth": 0.6,
+          "zConfinement": 0.85,
+          "elongation": 0.28,
+          "softness": 0.3,
+          "irregularity": 0.5,
+          "halo": 0.24,
+          "opacity": 0.78
         }
       },
       "entities": [
@@ -716,7 +740,7 @@
           "position": {
             "x": -0.38,
             "y": -0.46,
-            "z": 0
+            "z": 0.2
           },
           "size": {
             "x": 0.18,
@@ -755,7 +779,7 @@
           "position": {
             "x": 0.1,
             "y": -0.54,
-            "z": 0
+            "z": 0.0
           },
           "size": {
             "x": 0.16,
@@ -794,7 +818,7 @@
           "position": {
             "x": 0.5,
             "y": -0.38,
-            "z": 0
+            "z": -0.45
           },
           "size": {
             "x": 0.28,
@@ -833,7 +857,7 @@
           "position": {
             "x": -0.05,
             "y": -0.32,
-            "z": 0
+            "z": 0.05
           },
           "size": {
             "x": 0.44,
@@ -885,13 +909,13 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.16,
-        "phiRate": 0.1,
+        "thetaRate": 0.42,
+        "phiRate": 0.26,
         "thetaOffset": 0,
         "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
+        "law": "sum",
+        "depth": 1.5,
+        "dwell": 0.25
       },
       "automation": []
     },
@@ -902,10 +926,10 @@
       "duration": 16,
       "transition": 2.2,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
+        "mode": "3d",
+        "yaw": -0.35,
+        "pitch": 0.2,
+        "zoom": 0.85,
         "panX": 0,
         "panY": 0
       },
@@ -931,7 +955,14 @@
           "speed": 0.38,
           "circulation": 0.18,
           "dispersion": 0.06,
-          "pointerStrength": 0.35
+          "pointerStrength": 0.35,
+          "depth": 0.6,
+          "zConfinement": 0.85,
+          "elongation": 0.28,
+          "softness": 0.3,
+          "irregularity": 0.5,
+          "halo": 0.24,
+          "opacity": 0.78
         }
       },
       "entities": [
@@ -942,7 +973,7 @@
           "position": {
             "x": -0.1,
             "y": -0.44,
-            "z": 0
+            "z": -0.15
           },
           "size": {
             "x": 0.3,
@@ -981,7 +1012,7 @@
           "position": {
             "x": 0.5,
             "y": -0.6,
-            "z": 0
+            "z": 0.3
           },
           "size": {
             "x": 0.2,
@@ -1020,7 +1051,7 @@
           "position": {
             "x": 0.45,
             "y": -0.32,
-            "z": 0
+            "z": -0.4
           },
           "size": {
             "x": 0.2,
@@ -1059,7 +1090,7 @@
           "position": {
             "x": -0.6,
             "y": -0.24,
-            "z": 0
+            "z": 0.5
           },
           "size": {
             "x": 0.13,
@@ -1111,13 +1142,13 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.16,
-        "phiRate": 0.1,
+        "thetaRate": 0.42,
+        "phiRate": 0.26,
         "thetaOffset": 0,
         "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
+        "law": "sum",
+        "depth": 1.5,
+        "dwell": 0.25
       },
       "automation": []
     },
@@ -1156,7 +1187,12 @@
           "speed": 0.26,
           "circulation": 0.08,
           "dispersion": 0.05,
-          "pointerStrength": 0.28
+          "pointerStrength": 0.28,
+          "irregularity": 0.55,
+          "elongation": 0.22,
+          "roundness": 0.75,
+          "opacity": 0.85,
+          "halo": 0.18
         }
       },
       "entities": [
@@ -1375,7 +1411,12 @@
           "speed": 0.32,
           "circulation": 0.1,
           "dispersion": 0.04,
-          "pointerStrength": 0.28
+          "pointerStrength": 0.28,
+          "roundness": 0.96,
+          "softness": 0.1,
+          "contrast": 0.92,
+          "grain": 0.03,
+          "opacity": 0.8
         }
       },
       "entities": [
@@ -1600,7 +1641,12 @@
           "speed": 0.32,
           "circulation": 0.1,
           "dispersion": 0.04,
-          "pointerStrength": 0.28
+          "pointerStrength": 0.28,
+          "roundness": 0.96,
+          "softness": 0.1,
+          "contrast": 0.92,
+          "grain": 0.03,
+          "opacity": 0.8
         }
       },
       "entities": [

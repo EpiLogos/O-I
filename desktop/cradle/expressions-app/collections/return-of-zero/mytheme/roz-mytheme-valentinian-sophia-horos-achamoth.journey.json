@@ -1,1847 +1,1920 @@
 {
- "schema": "oi.journey",
- "version": 1,
- "id": "roz-mytheme-valentinian-sophia-horos-achamoth",
- "name": "Valentinian Sophia, Horos, Achamoth and Soter",
- "description": "The reported whole in sequence: the Ogdoad's conjunctions, Sophia's solitary reach and Horos's restoring limit, the collective Soter, Achamoth's two formations, the Demiurge who does not know his mother, and the bridal return with what remains outside.",
- "loop": true,
- "scenes": [
-  {
-   "id": "m-val-0-ogdoad",
-   "name": "The fullness in conjunction",
-   "character": "Bythus and Sige; Nous and Aletheia; Logos and Zoe; Anthropos and Ecclesia — thirty Aeons in fifteen syzygies, with a shared longing none of them fully knows.",
-   "duration": 13,
-   "transition": 1.5,
-   "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "blackOnWhite",
-    "backgroundMode": "solid",
-    "pointerMode": "repel",
-    "pointerClick": "shove",
-    "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
-   },
-   "field": {
-    "background": "#161126",
-    "palette": [
-     "#c9a227",
-     "#8a7ab8",
-     "#efe9d6",
-     "#5a4a8a"
-    ],
-    "material": "round",
-    "params": {
-     "count": 58000,
-     "size": 2.4,
-     "opacity": 0.92,
-     "contrast": 0.95,
-     "speed": 0.38,
-     "circulation": 0.3,
-     "dispersion": 0.06,
-     "turbulence": 0.12,
-     "pointerStrength": 0.4
-    }
-   },
-   "entities": [
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-valentinian-sophia-horos-achamoth",
+  "name": "Valentinian Sophia, Horos, Achamoth and Soter",
+  "description": "The reported whole in sequence: the Ogdoad's conjunctions, Sophia's solitary reach and Horos's restoring limit, the collective Soter, Achamoth's two formations, the Demiurge who does not know his mother, and the bridal return with what remains outside.",
+  "loop": true,
+  "scenes": [
     {
-     "id": "v0-ogdoad",
-     "name": "the Ogdoad — the four primary conjunctions",
-     "kind": "formation",
-     "position": {
-      "x": -0.28,
-      "y": -0.18,
-      "z": 0
-     },
-     "size": {
-      "x": 0.26,
-      "y": 0.12
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#8a7ab8",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v0-ogdoad-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " (o)-(o)   (o)-(o)\n (o)-(o)   (o)-(o)"
-      }
-     }
-    },
-    {
-     "id": "v0-decad",
-     "name": "the Decad — five pairs from Logos and Zoe",
-     "kind": "formation",
-     "position": {
-      "x": 0.28,
-      "y": -0.14,
-      "z": 0
-     },
-     "size": {
-      "x": 0.2,
-      "y": 0.11
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v0-decad-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " (o) (o) (o)\n (o) (o)"
-      }
-     }
-    },
-    {
-     "id": "v0-duodecad",
-     "name": "the Duodecad — six pairs from Anthropos and Ecclesia; Sophia youngest of the twelve",
-     "kind": "formation",
-     "position": {
-      "x": 0.26,
-      "y": -0.42,
-      "z": 0
-     },
-     "size": {
-      "x": 0.2,
-      "y": 0.14
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#efe9d6",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v0-duodecad-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " (o) (o) (o)\n (o) (o) (o)\n (o) (.)"
-      }
-     }
-    },
-    {
-     "id": "v0-nous",
-     "name": "Nous alone comprehends the Father; the rest long and are restrained",
-     "kind": "formation",
-     "position": {
-      "x": -0.32,
-      "y": -0.46,
-      "z": 0
-     },
-     "size": {
-      "x": 0.14,
-      "y": 0.1
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#efe9d6",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v0-nous-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  \\ | /\n  ( + )"
-      }
-     }
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": [],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "The fullness in conjunction",
-     "italic": "Nous alone comprehends the Father; the rest long and are restrained.",
-     "body": "",
-     "x": 0.04,
-     "y": 0.04,
-     "width": 520,
-     "size": 28,
-     "align": "left"
-    }
-   ]
-  },
-  {
-   "id": "m-val-1-horos",
-   "name": "Sophia reaches; Horos restores",
-   "character": "She strains into the Father's depth and nears dissolution; Horos supports and restrains; purified, she returns to conjunction — while her enthymesis, carrying its passion, is excluded.",
-   "duration": 13,
-   "transition": 1.5,
-   "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "blackOnWhite",
-    "backgroundMode": "solid",
-    "pointerMode": "repel",
-    "pointerClick": "shove",
-    "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
-   },
-   "field": {
-    "background": "#161126",
-    "palette": [
-     "#c9a227",
-     "#8a7ab8",
-     "#efe9d6",
-     "#5a4a8a"
-    ],
-    "material": "round",
-    "params": {
-     "count": 58000,
-     "size": 2.4,
-     "opacity": 0.92,
-     "contrast": 0.95,
-     "speed": 0.38,
-     "circulation": 0.3,
-     "dispersion": 0.06,
-     "turbulence": 0.12,
-     "pointerStrength": 0.4
-    }
-   },
-   "entities": [
-    {
-     "id": "v1-reach",
-     "name": "Sophia's solitary reach — apart from Theletos, nearing dissolution in the Father's sweetness",
-     "kind": "formation",
-     "position": {
-      "x": -0.4,
-      "y": -0.16,
-      "z": 0
-     },
-     "size": {
-      "x": 0.14,
-      "y": 0.16
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#efe9d6",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": true,
-      "clock": "seconds",
-      "order": "loop",
-      "easing": "smoothstep",
-      "steps": [
-       {
-        "id": "v1-reach-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 2.8,
-        "transition": 2.2,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.14,
-          "y": 0.16
-         },
-         "rotation": 0,
-         "tint": "#efe9d6",
-         "tintWeight": 1,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      "id": "m-val-0-ogdoad",
+      "name": "The fullness in conjunction",
+      "character": "Bythus and Sige; Nous and Aletheia; Logos and Zoe; Anthropos and Ecclesia — thirty Aeons in fifteen syzygies, with a shared longing none of them fully knows.",
+      "duration": 13,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.32
+      },
+      "field": {
+        "background": "#161126",
+        "palette": [
+          "#c9a227",
+          "#8a7ab8",
+          "#efe9d6",
+          "#5a4a8a"
+        ],
+        "material": "round",
+        "params": {
+          "count": 58000,
+          "size": 2.4,
+          "opacity": 0.92,
+          "contrast": 0.95,
+          "speed": 0.38,
+          "circulation": 0.3,
+          "dispersion": 0.06,
+          "turbulence": 0.12,
+          "pointerStrength": 0.4
         }
-       },
-       {
-        "id": "v1-reach-sq1",
-        "text": "",
-        "shape": "disc",
-        "hold": 2.8,
-        "transition": 2.2,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.14,
-          "y": 0.16
-         },
-         "rotation": 0,
-         "tint": "#e8c96a",
-         "tintWeight": 1,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      },
+      "entities": [
+        {
+          "id": "v0-ogdoad",
+          "name": "the Ogdoad — the four primary conjunctions",
+          "kind": "formation",
+          "position": {
+            "x": -0.28,
+            "y": -0.18,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8a7ab8",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v0-ogdoad-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " (o)-(o)   (o)-(o)\n (o)-(o)   (o)-(o)"
+            }
+          }
+        },
+        {
+          "id": "v0-decad",
+          "name": "the Decad — five pairs from Logos and Zoe",
+          "kind": "formation",
+          "position": {
+            "x": 0.28,
+            "y": -0.14,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.11
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v0-decad-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " (o) (o) (o)\n (o) (o)"
+            }
+          }
+        },
+        {
+          "id": "v0-duodecad",
+          "name": "the Duodecad — six pairs from Anthropos and Ecclesia; Sophia youngest of the twelve",
+          "kind": "formation",
+          "position": {
+            "x": 0.26,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v0-duodecad-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " (o) (o) (o)\n (o) (o) (o)\n (o) (.)"
+            }
+          }
+        },
+        {
+          "id": "v0-nous",
+          "name": "Nous alone comprehends the Father; the rest long and are restrained",
+          "kind": "formation",
+          "position": {
+            "x": -0.32,
+            "y": -0.46,
+            "z": 0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v0-nous-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  \\ | /\n  ( + )"
+            }
+          }
         }
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "   \\ | /\n  o/\n /|\n / \\"
-      }
-     }
-    },
-    {
-     "id": "v1-horos",
-     "name": "Horos / Stauros — the same power establishing and dividing",
-     "kind": "formation",
-     "position": {
-      "x": 0.05,
-      "y": -0.24,
-      "z": 0
-     },
-     "size": {
-      "x": 0.1,
-      "y": 0.18
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v1-horos-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  |\n  |\n====="
-      }
-     }
-    },
-    {
-     "id": "v1-enthymesis",
-     "name": "the enthymesis — the intention excluded with its passion; later called Achamoth",
-     "kind": "formation",
-     "position": {
-      "x": 0.34,
-      "y": -0.44,
-      "z": 0
-     },
-     "size": {
-      "x": 0.1,
-      "y": 0.08
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#8a7ab8",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v1-enthymesis-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "   ~\n  ( )"
-      }
-     }
-    },
-    {
-     "id": "v1-amorph",
-     "name": "the amorphous-birth variant — a second articulation, not silently merged",
-     "kind": "formation",
-     "position": {
-      "x": -0.36,
-      "y": -0.48,
-      "z": 0
-     },
-     "size": {
-      "x": 0.14,
-      "y": 0.09
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#5a4a8a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v1-amorph-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " ,-~-.\n( , , )\n `-~-'"
-      }
-     }
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": [],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "Sophia reaches; Horos restores",
-     "italic": "She nears dissolution; the limit supports and divides; the passion persists outside.",
-     "body": "",
-     "x": 0.04,
-     "y": 0.04,
-     "width": 520,
-     "size": 28,
-     "align": "left"
-    }
-   ]
-  },
-  {
-   "id": "m-val-2-soter",
-   "name": "Teaching, thanksgiving, and the common fruit",
-   "character": "Christ teaches the conjunctions and the Father's incomprehensibility; the Aeons rest, give thanks, and each contributes what is most beautiful — together producing the Soter.",
-   "duration": 13,
-   "transition": 1.5,
-   "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "blackOnWhite",
-    "backgroundMode": "solid",
-    "pointerMode": "repel",
-    "pointerClick": "shove",
-    "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
-   },
-   "field": {
-    "background": "#1c1630",
-    "palette": [
-     "#e8c96a",
-     "#efe9d6",
-     "#c9a227",
-     "#b09a58"
-    ],
-    "material": "round",
-    "params": {
-     "count": 58000,
-     "size": 2.4,
-     "opacity": 0.92,
-     "contrast": 0.95,
-     "speed": 0.36,
-     "circulation": 0.28,
-     "dispersion": 0.06,
-     "turbulence": 0.1,
-     "pointerStrength": 0.4
-    }
-   },
-   "entities": [
-    {
-     "id": "v2-christ",
-     "name": "the earlier Christ — produced by Monogenes and Aletheia; teacher of the Aeons",
-     "kind": "formation",
-     "position": {
-      "x": -0.42,
-      "y": -0.2,
-      "z": 0
-     },
-     "size": {
-      "x": 0.12,
-      "y": 0.15
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#efe9d6",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v2-christ-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  o\n /|\\_\n  |\n / \\"
-      }
-     }
-    },
-    {
-     "id": "v2-spirit",
-     "name": "the Holy Spirit — bringing the Aeons to thanksgiving and rest",
-     "kind": "formation",
-     "position": {
-      "x": -0.05,
-      "y": -0.12,
-      "z": 0
-     },
-     "size": {
-      "x": 0.09,
-      "y": 0.1
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#e8c96a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v2-spirit-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  ,>\n ( )\n  v"
-      }
-     }
-    },
-    {
-     "id": "v2-contrib",
-     "name": "the contributions — each Aeon's most beautiful, composing one common fruit",
-     "kind": "formation",
-     "position": {
-      "x": 0.3,
-      "y": -0.22,
-      "z": 0
-     },
-     "size": {
-      "x": 0.24,
-      "y": 0.14
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#e8c96a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": true,
-      "clock": "seconds",
-      "order": "loop",
-      "easing": "smoothstep",
-      "steps": [
-       {
-        "id": "v2-contrib-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 2.6,
-        "transition": 2.2,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.22,
-          "y": 0.13
-         },
-         "rotation": 0,
-         "tint": "#e8c96a",
-         "tintWeight": 1,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "The fullness in conjunction",
+          "italic": "Nous alone comprehends the Father; the rest long and are restrained.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.04,
+          "width": 520,
+          "size": 28,
+          "align": "left"
         }
-       },
-       {
-        "id": "v2-contrib-sq1",
-        "text": "",
-        "shape": "disc",
-        "hold": 2.6,
-        "transition": 2.2,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.26,
-          "y": 0.15
-         },
-         "rotation": 0,
-         "tint": "#f0dc90",
-         "tintWeight": 1,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      ]
+    },
+    {
+      "id": "m-val-1-horos",
+      "name": "Sophia reaches; Horos restores",
+      "character": "She strains into the Father's depth and nears dissolution; Horos supports and restrains; purified, she returns to conjunction — while her enthymesis, carrying its passion, is excluded.",
+      "duration": 13,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.32
+      },
+      "field": {
+        "background": "#161126",
+        "palette": [
+          "#c9a227",
+          "#8a7ab8",
+          "#efe9d6",
+          "#5a4a8a"
+        ],
+        "material": "round",
+        "params": {
+          "count": 58000,
+          "size": 2.4,
+          "opacity": 0.92,
+          "contrast": 0.95,
+          "speed": 0.38,
+          "circulation": 0.3,
+          "dispersion": 0.06,
+          "turbulence": 0.12,
+          "pointerStrength": 0.4
         }
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " (o)(o)(o)\n  \\|)|/\n   (O)"
-      }
-     }
-    },
-    {
-     "id": "v2-soter",
-     "name": "the Soter — called also Christ, Logos and Everything, because he comes from all",
-     "kind": "formation",
-     "position": {
-      "x": 0.3,
-      "y": -0.5,
-      "z": 0
-     },
-     "size": {
-      "x": 0.11,
-      "y": 0.14
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#efe9d6",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v2-soter-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  /_\\\n  (o)\n /|\\\n / \\"
-      }
-     }
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": [],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "Teaching, thanksgiving, and the common fruit",
-     "italic": "Each contributes what is most beautiful; the common fruit comes from all.",
-     "body": "",
-     "x": 0.04,
-     "y": 0.04,
-     "width": 520,
-     "size": 28,
-     "align": "left"
-    }
-   ]
-  },
-  {
-   "id": "m-val-3-achamoth",
-   "name": "Achamoth receives form twice",
-   "character": "Formed according to substance, then according to intelligence; tears, smile and grief become substrates; conversion generates the psychic; the angels' likeness the spiritual seed.",
-   "duration": 14,
-   "transition": 1.5,
-   "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "blackOnWhite",
-    "backgroundMode": "solid",
-    "pointerMode": "repel",
-    "pointerClick": "shove",
-    "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
-   },
-   "field": {
-    "background": "#0f0c18",
-    "palette": [
-     "#5a4a8a",
-     "#8a7ab8",
-     "#c9a227",
-     "#6a5a7a"
-    ],
-    "material": "round",
-    "params": {
-     "count": 58000,
-     "size": 2.4,
-     "opacity": 0.92,
-     "contrast": 0.95,
-     "speed": 0.38,
-     "circulation": 0.26,
-     "dispersion": 0.07,
-     "turbulence": 0.14,
-     "pointerStrength": 0.4
-    }
-   },
-   "entities": [
-    {
-     "id": "v3-formless",
-     "name": "Achamoth in darkness and vacuity — formless, like an untimely birth",
-     "kind": "formation",
-     "position": {
-      "x": -0.42,
-      "y": -0.16,
-      "z": 0
-     },
-     "size": {
-      "x": 0.14,
-      "y": 0.12
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#5a4a8a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v3-formless-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "   .-.\n  (   )\n   `-'"
-      }
-     }
-    },
-    {
-     "id": "v3-first",
-     "name": "the first formation — according to substance; the odour of immortality left behind",
-     "kind": "formation",
-     "position": {
-      "x": 0.05,
-      "y": -0.16,
-      "z": 0
-     },
-     "size": {
-      "x": 0.14,
-      "y": 0.16
-     },
-     "rotation": 0,
-     "shape": "triangle",
-     "text": "",
-     "share": 1,
-     "tint": "#8a7ab8",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v3-first-sq0",
-        "text": "",
-        "shape": "triangle",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
-    },
-    {
-     "id": "v3-affects",
-     "name": "the affects becoming substrates — tears to liquid, smile to lucid, grief to corporeal; fear to the psychic",
-     "kind": "formation",
-     "position": {
-      "x": 0.02,
-      "y": -0.44,
-      "z": 0
-     },
-     "size": {
-      "x": 0.26,
-      "y": 0.07
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v3-affects-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " (,) (') [__] ( ~ )"
-      }
-     }
-    },
-    {
-     "id": "v3-barred",
-     "name": "Horos stops her crossing back — the cry of Iao at the barred passage",
-     "kind": "formation",
-     "position": {
-      "x": 0.42,
-      "y": -0.3,
-      "z": 0
-     },
-     "size": {
-      "x": 0.11,
-      "y": 0.07
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v3-barred-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " -->|"
-      }
-     }
-    },
-    {
-     "id": "v3-seed",
-     "name": "the spiritual offspring — conceived in the likeness of the Soter's angels",
-     "kind": "formation",
-     "position": {
-      "x": -0.4,
-      "y": -0.46,
-      "z": 0
-     },
-     "size": {
-      "x": 0.18,
-      "y": 0.05
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#efe9d6",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v3-seed-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " (o) (o) (o)"
-      }
-     }
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": [],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "Achamoth receives form twice",
-     "italic": "Formed according to substance, then according to intelligence; the passions become substrates.",
-     "body": "",
-     "x": 0.04,
-     "y": 0.04,
-     "width": 520,
-     "size": 28,
-     "align": "left"
-    }
-   ]
-  },
-  {
-   "id": "m-val-4-demiurge",
-   "name": "A maker who does not know his mother",
-   "character": "Achamoth forms the psychic Demiurge; through her, hidden, he makes the images of higher realities, seven heavens and the elements; his declaration \"no other God\" expresses his ignorance of what exceeds him.",
-   "duration": 14,
-   "transition": 1.5,
-   "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "blackOnWhite",
-    "backgroundMode": "solid",
-    "pointerMode": "repel",
-    "pointerClick": "shove",
-    "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
-   },
-   "field": {
-    "background": "#0f0c18",
-    "palette": [
-     "#5a4a8a",
-     "#8a7ab8",
-     "#c9a227",
-     "#6a5a7a"
-    ],
-    "material": "round",
-    "params": {
-     "count": 58000,
-     "size": 2.4,
-     "opacity": 0.92,
-     "contrast": 0.95,
-     "speed": 0.38,
-     "circulation": 0.26,
-     "dispersion": 0.07,
-     "turbulence": 0.14,
-     "pointerStrength": 0.4
-    }
-   },
-   "entities": [
-    {
-     "id": "v4-hidden",
-     "name": "Achamoth — moving him without making herself known",
-     "kind": "formation",
-     "position": {
-      "x": -0.44,
-      "y": -0.14,
-      "z": 0
-     },
-     "size": {
-      "x": 0.07,
-      "y": 0.07
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#8a7ab8",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v4-hidden-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " (.)"
-      }
-     }
-    },
-    {
-     "id": "v4-demiurge",
-     "name": "the Demiurge — ordering the substances, ruler of the Hebdomas",
-     "kind": "formation",
-     "position": {
-      "x": -0.1,
-      "y": -0.2,
-      "z": 0
-     },
-     "size": {
-      "x": 0.24,
-      "y": 0.16
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v4-demiurge-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "   o\n  /|\\__\n   |\n  / \\  [=====]"
-      }
-     }
-    },
-    {
-     "id": "v4-heavens",
-     "name": "the seven heavens — above them Achamoth's Ogdoad dwelling, below the Pleroma",
-     "kind": "formation",
-     "position": {
-      "x": 0.34,
-      "y": -0.16,
-      "z": 0
-     },
-     "size": {
-      "x": 0.24,
-      "y": 0.08
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#8a7ab8",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v4-heavens-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " ( ( ( ( ) ) ) )"
-      }
-     }
-    },
-    {
-     "id": "v4-elements",
-     "name": "the elements and their affects — earth: stupor, water: fear, air: grief, fire inherent in the three",
-     "kind": "formation",
-     "position": {
-      "x": 0.0,
-      "y": -0.48,
-      "z": 0
-     },
-     "size": {
-      "x": 0.2,
-      "y": 0.05
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#6a5a7a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v4-elements-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " [] [] [] []"
-      }
-     }
-    },
-    {
-     "id": "v4-human",
-     "name": "the human — earth formed, psychic breath, skins; the seed placed within unknowingly",
-     "kind": "formation",
-     "position": {
-      "x": 0.42,
-      "y": -0.44,
-      "z": 0
-     },
-     "size": {
-      "x": 0.12,
-      "y": 0.14
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#efe9d6",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v4-human-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "   o\n  /|\\\n / | \\\n   /\\"
-      }
-     }
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": [],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "A maker who does not know his mother",
-     "italic": "Effective in his world, he cannot yet account for what exceeds him.",
-     "body": "",
-     "x": 0.04,
-     "y": 0.04,
-     "width": 520,
-     "size": 28,
-     "align": "left"
-    }
-   ]
-  },
-  {
-   "id": "m-val-5-return",
-   "name": "Bridal return and what remains outside",
-   "character": "Achamoth enters the Pleroma as bride; the spiritual become brides of the angels; the Demiurge restored to the intermediate place; fire consumes matter and itself. The founding comparison stays Offered.",
-   "duration": 13,
-   "transition": 1.5,
-   "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "blackOnWhite",
-    "backgroundMode": "solid",
-    "pointerMode": "repel",
-    "pointerClick": "shove",
-    "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
-   },
-   "field": {
-    "background": "#241a38",
-    "palette": [
-     "#e8c96a",
-     "#d8b8d8",
-     "#efe9d6",
-     "#c9a227"
-    ],
-    "material": "round",
-    "params": {
-     "count": 58000,
-     "size": 2.4,
-     "opacity": 0.92,
-     "contrast": 0.93,
-     "speed": 0.34,
-     "circulation": 0.26,
-     "dispersion": 0.05,
-     "turbulence": 0.1,
-     "pointerStrength": 0.4
-    }
-   },
-   "entities": [
-    {
-     "id": "v5-bridal",
-     "name": "the bridal chamber — Achamoth joined to the Soter; the spiritual to the angels",
-     "kind": "formation",
-     "position": {
-      "x": -0.15,
-      "y": -0.22,
-      "z": 0
-     },
-     "size": {
-      "x": 0.28,
-      "y": 0.18
-     },
-     "rotation": 0,
-     "shape": "ring",
-     "text": "",
-     "share": 1,
-     "tint": "#e8c96a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": true,
-      "clock": "seconds",
-      "order": "loop",
-      "easing": "smoothstep",
-      "steps": [
-       {
-        "id": "v5-bridal-sq0",
-        "text": "",
-        "shape": "ring",
-        "hold": 3.0,
-        "transition": 2.6,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.28,
-          "y": 0.18
-         },
-         "rotation": 0,
-         "tint": "#efe9d6",
-         "tintWeight": 1,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      },
+      "entities": [
+        {
+          "id": "v1-reach",
+          "name": "Sophia's solitary reach — apart from Theletos, nearing dissolution in the Father's sweetness",
+          "kind": "formation",
+          "position": {
+            "x": -0.4,
+            "y": -0.16,
+            "z": 0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "v1-reach-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 2.8,
+                "transition": 2.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.14,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#efe9d6",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "v1-reach-sq1",
+                "text": "",
+                "shape": "disc",
+                "hold": 2.8,
+                "transition": 2.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.14,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#e8c96a",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   \\ | /\n  o/\n /|\n / \\"
+            }
+          }
+        },
+        {
+          "id": "v1-horos",
+          "name": "Horos / Stauros — the same power establishing and dividing",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": -0.24,
+            "z": 0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.18
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v1-horos-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  |\n  |\n====="
+            }
+          }
+        },
+        {
+          "id": "v1-enthymesis",
+          "name": "the enthymesis — the intention excluded with its passion; later called Achamoth",
+          "kind": "formation",
+          "position": {
+            "x": 0.34,
+            "y": -0.44,
+            "z": 0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.08
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8a7ab8",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v1-enthymesis-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   ~\n  ( )"
+            }
+          }
+        },
+        {
+          "id": "v1-amorph",
+          "name": "the amorphous-birth variant — a second articulation, not silently merged",
+          "kind": "formation",
+          "position": {
+            "x": -0.36,
+            "y": -0.48,
+            "z": 0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.09
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v1-amorph-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " ,-~-.\n( , , )\n `-~-'"
+            }
+          }
         }
-       },
-       {
-        "id": "v5-bridal-sq1",
-        "text": "",
-        "shape": "ring",
-        "hold": 3.0,
-        "transition": 2.6,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.28,
-          "y": 0.18
-         },
-         "rotation": 3.1416,
-         "tint": "#efe9d6",
-         "tintWeight": 1,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "Sophia reaches; Horos restores",
+          "italic": "She nears dissolution; the limit supports and divides; the passion persists outside.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.04,
+          "width": 520,
+          "size": 28,
+          "align": "left"
         }
-       }
       ]
-     }
     },
     {
-     "id": "v5-middle",
-     "name": "the Demiurge restored to the intermediate place; righteous psychic souls resting there, not entering",
-     "kind": "formation",
-     "position": {
-      "x": 0.35,
-      "y": -0.24,
-      "z": 0
-     },
-     "size": {
-      "x": 0.16,
-      "y": 0.1
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#8a7ab8",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v5-middle-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
+      "id": "m-val-2-soter",
+      "name": "Teaching, thanksgiving, and the common fruit",
+      "character": "Christ teaches the conjunctions and the Father's incomprehensibility; the Aeons rest, give thanks, and each contributes what is most beautiful — together producing the Soter.",
+      "duration": 13,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.32
+      },
+      "field": {
+        "background": "#1c1630",
+        "palette": [
+          "#e8c96a",
+          "#efe9d6",
+          "#c9a227",
+          "#b09a58"
+        ],
+        "material": "round",
+        "params": {
+          "count": 58000,
+          "size": 2.4,
+          "opacity": 0.9,
+          "roundness": 0.85,
+          "softness": 0.28,
+          "irregularity": 0.3,
+          "elongation": 0.04,
+          "contrast": 0.9,
+          "halo": 0.2,
+          "grain": 0.03,
+          "speed": 0.32,
+          "circulation": 0.26,
+          "dispersion": 0.05,
+          "turbulence": 0.08,
+          "pointerStrength": 0.45,
+          "pointerRadius": 0.28
+        }
+      },
+      "entities": [
+        {
+          "id": "v2-christ",
+          "name": "the earlier Christ — produced by Monogenes and Aletheia; teacher of the Aeons",
+          "kind": "formation",
+          "position": {
+            "x": -0.42,
+            "y": -0.2,
+            "z": 0
+          },
+          "size": {
+            "x": 0.12,
+            "y": 0.15
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v2-christ-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  o\n /|\\_\n  |\n / \\"
+            }
+          }
+        },
+        {
+          "id": "v2-spirit",
+          "name": "the Holy Spirit — bringing the Aeons to thanksgiving and rest",
+          "kind": "formation",
+          "position": {
+            "x": -0.05,
+            "y": -0.12,
+            "z": 0
+          },
+          "size": {
+            "x": 0.09,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#e8c96a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v2-spirit-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  ,>\n ( )\n  v"
+            }
+          }
+        },
+        {
+          "id": "v2-contrib",
+          "name": "the contributions — each Aeon's most beautiful, composing one common fruit",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": -0.22,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#e8c96a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "v2-contrib-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 2.6,
+                "transition": 2.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.22,
+                    "y": 0.13
+                  },
+                  "rotation": 0,
+                  "tint": "#e8c96a",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "v2-contrib-sq1",
+                "text": "",
+                "shape": "disc",
+                "hold": 2.6,
+                "transition": 2.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.15
+                  },
+                  "rotation": 0,
+                  "tint": "#f0dc90",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " (o)(o)(o)\n  \\|)|/\n   (O)"
+            }
+          }
+        },
+        {
+          "id": "v2-soter",
+          "name": "the Soter — called also Christ, Logos and Everything, because he comes from all",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.11,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v2-soter-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  /_\\\n  (o)\n /|\\\n / \\"
+            }
+          }
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "Teaching, thanksgiving, and the common fruit",
+          "italic": "Each contributes what is most beautiful; the common fruit comes from all.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.04,
+          "width": 520,
+          "size": 28,
+          "align": "left"
+        }
       ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "    ___\n  ~(   )~"
-      }
-     }
     },
     {
-     "id": "v5-fire",
-     "name": "fire consuming matter and finally itself",
-     "kind": "formation",
-     "position": {
-      "x": -0.42,
-      "y": -0.48,
-      "z": 0
-     },
-     "size": {
-      "x": 0.11,
-      "y": 0.12
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c96a3a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v5-fire-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
+      "id": "m-val-3-achamoth",
+      "name": "Achamoth receives form twice",
+      "character": "Formed according to substance, then according to intelligence; tears, smile and grief become substrates; conversion generates the psychic; the angels' likeness the spiritual seed.",
+      "duration": 14,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.32
+      },
+      "field": {
+        "background": "#0f0c18",
+        "palette": [
+          "#5a4a8a",
+          "#8a7ab8",
+          "#c9a227",
+          "#6a5a7a"
+        ],
+        "material": "print",
+        "params": {
+          "count": 58000,
+          "size": 2.4,
+          "opacity": 0.9,
+          "roundness": 0.7,
+          "softness": 0.12,
+          "irregularity": 0.5,
+          "elongation": 0.1,
+          "contrast": 0.95,
+          "halo": 0.08,
+          "grain": 0.06,
+          "speed": 0.4,
+          "circulation": 0.32,
+          "dispersion": 0.07,
+          "turbulence": 0.16,
+          "pointerStrength": 0.4
+        }
+      },
+      "entities": [
+        {
+          "id": "v3-formless",
+          "name": "Achamoth in darkness and vacuity — formless, like an untimely birth",
+          "kind": "formation",
+          "position": {
+            "x": -0.42,
+            "y": -0.16,
+            "z": 0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v3-formless-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   .-.\n  (   )\n   `-'"
+            }
+          }
+        },
+        {
+          "id": "v3-first",
+          "name": "the first formation — according to substance; the odour of immortality left behind",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": -0.16,
+            "z": 0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#8a7ab8",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v3-first-sq0",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "v3-second",
+          "name": "the second formation — according to intelligence; she meets his coming",
+          "kind": "formation",
+          "position": {
+            "x": 0.19,
+            "y": -0.16,
+            "z": 0
+          },
+          "size": {
+            "x": 0.12,
+            "y": 0.13
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#e8c96a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v3-second-sq0",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "v3-affects",
+          "name": "the affects becoming substrates — tears to liquid, smile to lucid, grief to corporeal; fear to the psychic",
+          "kind": "formation",
+          "position": {
+            "x": 0.02,
+            "y": -0.44,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.07
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v3-affects-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " (,) (') [__] ( ~ )"
+            }
+          }
+        },
+        {
+          "id": "v3-barred",
+          "name": "Horos stops her crossing back — the cry of Iao at the barred passage",
+          "kind": "formation",
+          "position": {
+            "x": 0.42,
+            "y": -0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.11,
+            "y": 0.07
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v3-barred-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " -->|"
+            }
+          }
+        },
+        {
+          "id": "v3-seed",
+          "name": "the spiritual offspring — conceived in the likeness of the Soter's angels",
+          "kind": "formation",
+          "position": {
+            "x": -0.4,
+            "y": -0.46,
+            "z": 0
+          },
+          "size": {
+            "x": 0.18,
+            "y": 0.05
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v3-seed-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " (o) (o) (o)"
+            }
+          }
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "Achamoth receives form twice",
+          "italic": "Formed according to substance, then according to intelligence; the passions become substrates.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.04,
+          "width": 520,
+          "size": 28,
+          "align": "left"
+        }
       ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "    (\n   ) )\n  ( (\n   (_)"
-      }
-     }
     },
     {
-     "id": "v5-founding",
-     "name": "the founding comparison, Offered — the reach, the limit, the common fruit beside the native count",
-     "kind": "formation",
-     "position": {
-      "x": 0.34,
-      "y": -0.48,
-      "z": 0
-     },
-     "size": {
-      "x": 0.24,
-      "y": 0.09
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#efe9d6",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "v5-founding-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
+      "id": "m-val-4-demiurge",
+      "name": "A maker who does not know his mother",
+      "character": "Achamoth forms the psychic Demiurge; through her, hidden, he makes the images of higher realities, seven heavens and the elements; his declaration \"no other God\" expresses his ignorance of what exceeds him.",
+      "duration": 14,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.32
+      },
+      "field": {
+        "background": "#0f0c18",
+        "palette": [
+          "#5a4a8a",
+          "#8a7ab8",
+          "#c9a227",
+          "#6a5a7a"
+        ],
+        "material": "print",
+        "params": {
+          "count": 58000,
+          "size": 2.4,
+          "opacity": 0.9,
+          "roundness": 0.7,
+          "softness": 0.12,
+          "irregularity": 0.5,
+          "elongation": 0.1,
+          "contrast": 0.95,
+          "halo": 0.08,
+          "grain": 0.06,
+          "speed": 0.4,
+          "circulation": 0.32,
+          "dispersion": 0.07,
+          "turbulence": 0.16,
+          "pointerStrength": 0.4
+        }
+      },
+      "entities": [
+        {
+          "id": "v4-hidden",
+          "name": "Achamoth — moving him without making herself known",
+          "kind": "formation",
+          "position": {
+            "x": -0.44,
+            "y": -0.14,
+            "z": 0
+          },
+          "size": {
+            "x": 0.07,
+            "y": 0.07
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8a7ab8",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v4-hidden-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " (.)"
+            }
+          }
+        },
+        {
+          "id": "v4-demiurge",
+          "name": "the Demiurge — ordering the substances, ruler of the Hebdomas",
+          "kind": "formation",
+          "position": {
+            "x": -0.1,
+            "y": -0.2,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v4-demiurge-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   o\n  /|\\__\n   |\n  / \\  [=====]"
+            }
+          }
+        },
+        {
+          "id": "v4-heavens",
+          "name": "the seven heavens — above them Achamoth's Ogdoad dwelling, below the Pleroma",
+          "kind": "formation",
+          "position": {
+            "x": 0.34,
+            "y": -0.16,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.08
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8a7ab8",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v4-heavens-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " ( ( ( ( ) ) ) )"
+            }
+          }
+        },
+        {
+          "id": "v4-elements",
+          "name": "the elements and their affects — earth: stupor, water: fear, air: grief, fire inherent in the three",
+          "kind": "formation",
+          "position": {
+            "x": 0.0,
+            "y": -0.48,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.05
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#6a5a7a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v4-elements-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " [] [] [] []"
+            }
+          }
+        },
+        {
+          "id": "v4-human",
+          "name": "the human — earth formed, psychic breath, skins; the seed placed within unknowingly",
+          "kind": "formation",
+          "position": {
+            "x": 0.42,
+            "y": -0.44,
+            "z": 0
+          },
+          "size": {
+            "x": 0.12,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v4-human-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   o\n  /|\\\n / | \\\n   /\\"
+            }
+          }
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "A maker who does not know his mother",
+          "italic": "Effective in his world, he cannot yet account for what exceeds him.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.04,
+          "width": 520,
+          "size": 28,
+          "align": "left"
+        }
       ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " ( )  ->  ( )( )( )()\n      +      ( )( )"
-      }
-     }
+    },
+    {
+      "id": "m-val-5-return",
+      "name": "Bridal return and what remains outside",
+      "character": "Achamoth enters the Pleroma as bride; the spiritual become brides of the angels; the Demiurge restored to the intermediate place; fire consumes matter and itself. The founding comparison stays Offered.",
+      "duration": 13,
+      "transition": 1.5,
+      "view": {
+        "mode": "3d",
+        "yaw": 0.42,
+        "pitch": 0.3,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.55,
+        "pointerClickRadius": 0.3
+      },
+      "field": {
+        "background": "#241a38",
+        "palette": [
+          "#e8c96a",
+          "#d8b8d8",
+          "#efe9d6",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {
+          "count": 58000,
+          "size": 2.4,
+          "opacity": 0.85,
+          "roundness": 0.9,
+          "softness": 0.34,
+          "irregularity": 0.28,
+          "elongation": 0.04,
+          "contrast": 0.88,
+          "halo": 0.24,
+          "grain": 0.03,
+          "speed": 0.3,
+          "circulation": 0.34,
+          "dispersion": 0.04,
+          "turbulence": 0.06,
+          "pointerStrength": 0.55,
+          "pointerRadius": 0.3,
+          "depth": 0.4,
+          "zConfinement": 0.6,
+          "gravityZ": 0.06
+        }
+      },
+      "entities": [
+        {
+          "id": "v5-bridal",
+          "name": "the bridal chamber — Achamoth joined to the Soter; the spiritual to the angels",
+          "kind": "formation",
+          "position": {
+            "x": -0.15,
+            "y": -0.22,
+            "z": 0
+          },
+          "size": {
+            "x": 0.28,
+            "y": 0.18
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#e8c96a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0.5,
+            "radius": 0.45,
+            "spin": 0.15
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "v5-bridal-sq0",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.0,
+                "transition": 2.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.28,
+                    "y": 0.18
+                  },
+                  "rotation": 0,
+                  "tint": "#efe9d6",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "v5-bridal-sq1",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.0,
+                "transition": 2.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.28,
+                    "y": 0.18
+                  },
+                  "rotation": 3.1416,
+                  "tint": "#efe9d6",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "v5-middle",
+          "name": "the Demiurge restored to the intermediate place; righteous psychic souls resting there, not entering",
+          "kind": "formation",
+          "position": {
+            "x": 0.35,
+            "y": -0.24,
+            "z": -0.2
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8a7ab8",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v5-middle-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "    ___\n  ~(   )~"
+            }
+          }
+        },
+        {
+          "id": "v5-fire",
+          "name": "fire consuming matter and finally itself",
+          "kind": "formation",
+          "position": {
+            "x": -0.42,
+            "y": -0.48,
+            "z": -0.35
+          },
+          "size": {
+            "x": 0.11,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c96a3a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v5-fire-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "    (\n   ) )\n  ( (\n   (_)"
+            }
+          }
+        },
+        {
+          "id": "v5-founding",
+          "name": "the founding comparison, Offered — the reach, the limit, the common fruit beside the native count",
+          "kind": "formation",
+          "position": {
+            "x": 0.34,
+            "y": -0.48,
+            "z": 0.3
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.09
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "v5-founding-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " ( )  ->  ( )( )( )()\n      +      ( )( )"
+            }
+          }
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.12,
+        "phiRate": 0.07,
+        "thetaOffset": 0,
+        "phiOffset": 0.5,
+        "law": "theta",
+        "depth": 1.4,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "Bridal return and what remains outside",
+          "italic": "Some gathered into conjunction, some restored to a middle place, matter consumed — each at its own depth.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.04,
+          "width": 520,
+          "size": 28,
+          "align": "left"
+        }
+      ]
     }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": [],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "Bridal return and what remains outside",
-     "italic": "Some gathered into conjunction, some restored to a middle place, matter consumed.",
-     "body": "",
-     "x": 0.04,
-     "y": 0.04,
-     "width": 520,
-     "size": 28,
-     "align": "left"
-    }
-   ]
-  }
- ],
- "updatedAt": "2026-10-06T12:00:00.000Z"
+  ],
+  "updatedAt": "2026-10-06T12:00:00.000Z"
 }

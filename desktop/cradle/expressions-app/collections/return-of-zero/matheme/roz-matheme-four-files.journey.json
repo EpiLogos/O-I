@@ -40,7 +40,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.1,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.03,
+     "halo": 0.1,
+     "roundness": 0.97,
+     "softness": 0.12,
+     "irregularity": 0.22,
+     "elongation": 0.03
     }
    },
    "engine": {
@@ -206,7 +212,7 @@
     {
      "id": "def-the-matheme-t",
      "kicker": "",
-     "title": "The matheme",
+     "title": "Three minimal marks",
      "italic": "One act, three offices.",
      "body": "",
      "x": 0.03,
@@ -271,7 +277,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.1,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.03,
+     "halo": 0.1,
+     "roundness": 0.97,
+     "softness": 0.12,
+     "irregularity": 0.22,
+     "elongation": 0.03
     }
    },
    "engine": {
@@ -437,7 +449,7 @@
     {
      "id": "def-minus-over-minus-t",
      "kicker": "",
-     "title": "Minus over minus",
+     "title": "Two marks before their names",
      "italic": "",
      "body": "",
      "x": 0.03,
@@ -502,7 +514,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.1,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.03,
+     "halo": 0.1,
+     "roundness": 0.97,
+     "softness": 0.12,
+     "irregularity": 0.22,
+     "elongation": 0.03
     }
    },
    "engine": {
@@ -668,7 +686,7 @@
     {
      "id": "def-copula-t",
      "kicker": "",
-     "title": "The copula",
+     "title": "Compose equality and difference",
      "italic": "Difference: identity under cut.",
      "body": "",
      "x": 0.03,
@@ -733,7 +751,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.13,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.04,
+     "halo": 0.15,
+     "roundness": 0.93,
+     "softness": 0.2,
+     "irregularity": 0.34,
+     "elongation": 0.05
     }
    },
    "engine": {
@@ -899,7 +923,7 @@
     {
      "id": "def-harmonics-and-recount-t",
      "kicker": "",
-     "title": "Four plus two",
+     "title": "Hold the hinge as one",
      "italic": "The fourth holds.",
      "body": "",
      "x": 0.03,
@@ -964,7 +988,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.13,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.04,
+     "halo": 0.15,
+     "roundness": 0.93,
+     "softness": 0.2,
+     "irregularity": 0.34,
+     "elongation": 0.05
     }
    },
    "engine": {
@@ -1130,7 +1160,7 @@
     {
      "id": "def-six-determinations-t",
      "kicker": "",
-     "title": "Six determinations",
+     "title": "Ground becomes answerable",
      "italic": "",
      "body": "",
      "x": 0.03,
@@ -1195,7 +1225,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.13,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.04,
+     "halo": 0.15,
+     "roundness": 0.93,
+     "softness": 0.2,
+     "irregularity": 0.34,
+     "elongation": 0.05
     }
    },
    "engine": {
@@ -1426,7 +1462,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.13,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.04,
+     "halo": 0.15,
+     "roundness": 0.93,
+     "softness": 0.2,
+     "irregularity": 0.34,
+     "elongation": 0.05
     }
    },
    "engine": {
@@ -1630,10 +1672,10 @@
    "duration": 9,
    "transition": 1.5,
    "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
+    "mode": "3d",
+    "yaw": 0.3,
+    "pitch": 0.4,
+    "zoom": 0.95,
     "panX": 0,
     "panY": 0
    },
@@ -1656,8 +1698,14 @@
      "frequency": 220,
      "dominance": 0,
      "excitation": 0.6,
-     "depth": 0.12,
-     "zConfinement": 1
+     "depth": 0.3,
+     "zConfinement": 0.8,
+     "grain": 0.04,
+     "halo": 0.14,
+     "roundness": 0.92,
+     "softness": 0.22,
+     "irregularity": 0.36,
+     "elongation": 0.06
     }
    },
    "engine": {
@@ -1668,7 +1716,10 @@
     "pointerClickStrength": 1.3,
     "pointerClickRadius": 0.45,
     "resonanceEnabled": false,
-    "morphEnabled": false
+    "morphEnabled": false,
+    "depthPerspective": true,
+    "vortex3d": 0.3,
+    "dispersion3d": 0.08
    },
    "entities": [
     {
@@ -1678,7 +1729,7 @@
      "position": {
       "x": 0.05,
       "y": 0.06,
-      "z": 0
+      "z": 0.12
      },
      "size": {
       "x": 2.6,
@@ -1823,7 +1874,7 @@
     {
      "id": "proc-t1-geometry-t",
      "kicker": "",
-     "title": "AND + OR",
+     "title": "The geometry of space-time",
      "italic": "",
      "body": "",
      "x": 0.03,
@@ -1888,7 +1939,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.12,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.04,
+     "halo": 0.14,
+     "roundness": 0.92,
+     "softness": 0.22,
+     "irregularity": 0.36,
+     "elongation": 0.06
     }
    },
    "engine": {
@@ -2054,7 +2111,7 @@
     {
      "id": "proc-phase-flip-t",
      "kicker": "",
-     "title": "The phase-flip",
+     "title": "Re-entry makes the phase consequential",
      "italic": "One into All, returned.",
      "body": "",
      "x": 0.03,
@@ -2119,7 +2176,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.12,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.04,
+     "halo": 0.14,
+     "roundness": 0.92,
+     "softness": 0.22,
+     "irregularity": 0.36,
+     "elongation": 0.06
     }
    },
    "engine": {
@@ -2285,7 +2348,7 @@
     {
      "id": "proc-t0-onto-logic-t",
      "kicker": "",
-     "title": "The onto-logic",
+     "title": "A placed term carries a relation",
      "italic": "",
      "body": "",
      "x": 0.03,
@@ -2350,7 +2413,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.12,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.05,
+     "halo": 0.17,
+     "roundness": 0.9,
+     "softness": 0.26,
+     "irregularity": 0.4,
+     "elongation": 0.08
     }
    },
    "engine": {
@@ -2361,7 +2430,9 @@
     "pointerClickStrength": 1.3,
     "pointerClickRadius": 0.45,
     "resonanceEnabled": false,
-    "morphEnabled": false
+    "morphEnabled": true,
+    "trajectory": "toroidalHopf",
+    "driveShape": "pulse"
    },
    "entities": [
     {
@@ -2516,7 +2587,7 @@
     {
      "id": "proc-spanda-t",
      "kicker": "",
-     "title": "Spanda equations",
+     "title": "The two arcs meet",
      "italic": "",
      "body": "",
      "x": 0.03,
@@ -2538,13 +2609,13 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.08,
-    "phiRate": 0.13,
+    "law": "theta",
+    "thetaRate": 0.25,
+    "phiRate": 0.05,
     "thetaOffset": 0,
     "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
+    "depth": 1.3,
+    "dwell": 0.45
    }
   },
   {
@@ -2581,7 +2652,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.12,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.05,
+     "halo": 0.17,
+     "roundness": 0.9,
+     "softness": 0.26,
+     "irregularity": 0.4,
+     "elongation": 0.08
     }
    },
    "engine": {
@@ -2747,7 +2824,7 @@
     {
      "id": "proc-ratio-threshold-t",
      "kicker": "",
-     "title": "Ratio threshold",
+     "title": "The doubled fourth",
      "italic": "3–4–5 keeps it.",
      "body": "",
      "x": 0.03,
@@ -2812,7 +2889,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.12,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.05,
+     "halo": 0.17,
+     "roundness": 0.9,
+     "softness": 0.26,
+     "irregularity": 0.4,
+     "elongation": 0.08
     }
    },
    "engine": {
@@ -2995,7 +3078,7 @@
     {
      "id": "proc-harmonics-symmetries-t",
      "kicker": "",
-     "title": "Harmonics and folds",
+     "title": "Being, Becoming and Knowing",
      "italic": "",
      "body": "",
      "x": 0.03,
@@ -3060,7 +3143,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.12,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.05,
+     "halo": 0.17,
+     "roundness": 0.9,
+     "softness": 0.26,
+     "irregularity": 0.4,
+     "elongation": 0.08
     }
    },
    "engine": {
@@ -3211,7 +3300,7 @@
     {
      "id": "proc-ql-positions-t",
      "kicker": "",
-     "title": "The consolidated crosswalk",
+     "title": "One address, exact readings",
      "italic": "",
      "body": "",
      "x": 0.03,
@@ -3276,7 +3365,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.11,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.035,
+     "halo": 0.12,
+     "roundness": 0.95,
+     "softness": 0.17,
+     "irregularity": 0.3,
+     "elongation": 0.04
     }
    },
    "engine": {
@@ -3427,7 +3522,7 @@
     {
      "id": "quilt-etymology-t",
      "kicker": "",
-     "title": "Etymological ground",
+     "title": "The psychoid threshold",
      "italic": "",
      "body": "",
      "x": 0.03,
@@ -3492,7 +3587,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.11,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.035,
+     "halo": 0.12,
+     "roundness": 0.95,
+     "softness": 0.17,
+     "irregularity": 0.3,
+     "elongation": 0.04
     }
    },
    "engine": {
@@ -3643,7 +3744,7 @@
     {
      "id": "quilt-psychology-t",
      "kicker": "",
-     "title": "Jungian architecture",
+     "title": "The Self as equation",
      "italic": "",
      "body": "",
      "x": 0.03,
@@ -3708,7 +3809,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.11,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.035,
+     "halo": 0.12,
+     "roundness": 0.95,
+     "softness": 0.17,
+     "irregularity": 0.3,
+     "elongation": 0.04
     }
    },
    "engine": {
@@ -3874,7 +3981,7 @@
     {
      "id": "quilt-number-t",
      "kicker": "",
-     "title": "Pythagorean number",
+     "title": "Number counting itself",
      "italic": "Two operations, one number.",
      "body": "",
      "x": 0.03,
@@ -3912,10 +4019,10 @@
    "duration": 9,
    "transition": 1.5,
    "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
+    "mode": "3d",
+    "yaw": 0.5,
+    "pitch": 0.35,
+    "zoom": 0.9,
     "panX": 0,
     "panY": 0
    },
@@ -3938,8 +4045,14 @@
      "frequency": 220,
      "dominance": 0,
      "excitation": 0.6,
-     "depth": 0.14,
-     "zConfinement": 1
+     "depth": 0.36,
+     "zConfinement": 0.72,
+     "grain": 0.045,
+     "halo": 0.18,
+     "roundness": 0.91,
+     "softness": 0.25,
+     "irregularity": 0.38,
+     "elongation": 0.05
     }
    },
    "engine": {
@@ -3950,7 +4063,12 @@
     "pointerClickStrength": 1.3,
     "pointerClickRadius": 0.45,
     "resonanceEnabled": false,
-    "morphEnabled": false
+    "morphEnabled": true,
+    "trajectory": "toroidalHopf",
+    "driveShape": "sine",
+    "depthPerspective": true,
+    "vortex3d": 0.35,
+    "dispersion3d": 0.1
    },
    "entities": [
     {
@@ -4065,7 +4183,7 @@
      "position": {
       "x": 0.05,
       "y": 0.05,
-      "z": -0.4
+      "z": -0.5
      },
      "size": {
       "x": 1.5,
@@ -4105,7 +4223,7 @@
     {
      "id": "quilt-topology-t",
      "kicker": "",
-     "title": "Topological form",
+     "title": "A loop through its cover",
      "italic": "χ = 0.",
      "body": "",
      "x": 0.03,
@@ -4127,12 +4245,12 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.08,
-    "phiRate": 0.13,
+    "law": "sum",
+    "thetaRate": 0.13,
+    "phiRate": 0.08,
     "thetaOffset": 0,
     "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
+    "depth": 1.1,
     "dwell": 0.3
    }
   },
@@ -4170,7 +4288,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.14,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.045,
+     "halo": 0.18,
+     "roundness": 0.91,
+     "softness": 0.25,
+     "irregularity": 0.38,
+     "elongation": 0.05
     }
    },
    "engine": {
@@ -4336,7 +4460,7 @@
     {
      "id": "quilt-metaphysics-t",
      "kicker": "",
-     "title": "Kashmir Shaivism",
+     "title": "Prakāśa-Vimarśa",
      "italic": "",
      "body": "",
      "x": 0.03,
@@ -4401,7 +4525,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.14,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.045,
+     "halo": 0.18,
+     "roundness": 0.91,
+     "softness": 0.25,
+     "irregularity": 0.38,
+     "elongation": 0.05
     }
    },
    "engine": {
@@ -4590,10 +4720,10 @@
    "duration": 9,
    "transition": 1.5,
    "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
+    "mode": "3d",
+    "yaw": -0.4,
+    "pitch": 0.3,
+    "zoom": 0.95,
     "panX": 0,
     "panY": 0
    },
@@ -4616,8 +4746,14 @@
      "frequency": 220,
      "dominance": 0,
      "excitation": 0.6,
-     "depth": 0.1,
-     "zConfinement": 1
+     "depth": 0.28,
+     "zConfinement": 0.85,
+     "grain": 0.05,
+     "halo": 0.2,
+     "roundness": 0.88,
+     "softness": 0.3,
+     "irregularity": 0.45,
+     "elongation": 0.1
     }
    },
    "engine": {
@@ -4628,7 +4764,12 @@
     "pointerClickStrength": 1.3,
     "pointerClickRadius": 0.45,
     "resonanceEnabled": false,
-    "morphEnabled": false
+    "morphEnabled": true,
+    "trajectory": "toroidalHopf",
+    "driveShape": "smooth",
+    "depthPerspective": true,
+    "vortex3d": 0.3,
+    "dispersion3d": 0.08
    },
    "entities": [
     {
@@ -4760,7 +4901,7 @@
      "position": {
       "x": 1.32,
       "y": -0.3,
-      "z": 0
+      "z": 0.3
      },
      "size": {
       "x": 0.4,
@@ -4800,7 +4941,7 @@
     {
      "id": "quilt-enantiodromic-return-t",
      "kicker": "",
-     "title": "Enantiodromic return",
+     "title": "The Möbius Stitch",
      "italic": "IS turns to AM.",
      "body": "",
      "x": 0.03,
@@ -4822,13 +4963,13 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.08,
-    "phiRate": 0.13,
+    "law": "beat",
+    "thetaRate": 0.09,
+    "phiRate": 0.16,
     "thetaOffset": 0,
     "phiOffset": 0,
-    "law": "theta",
     "depth": 1,
-    "dwell": 0.3
+    "dwell": 0.35
    }
   },
   {
@@ -4865,7 +5006,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.12,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.04,
+     "halo": 0.15,
+     "roundness": 0.92,
+     "softness": 0.2,
+     "irregularity": 0.32,
+     "elongation": 0.05
     }
    },
    "engine": {
@@ -5048,7 +5195,7 @@
     {
      "id": "music-foundational-ratios-t",
      "kicker": "",
-     "title": "Foundational ratios",
+     "title": "The standing identity",
      "italic": "",
      "body": "",
      "x": 0.03,
@@ -5113,7 +5260,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.12,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.04,
+     "halo": 0.15,
+     "roundness": 0.92,
+     "softness": 0.2,
+     "irregularity": 0.32,
+     "elongation": 0.05
     }
    },
    "engine": {
@@ -5279,7 +5432,7 @@
     {
      "id": "music-chromatic-substrates-t",
      "kicker": "",
-     "title": "Chromatic substrates",
+     "title": "One palette, two traversals",
      "italic": "",
      "body": "",
      "x": 0.03,
@@ -5344,7 +5497,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.12,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.04,
+     "halo": 0.15,
+     "roundness": 0.92,
+     "softness": 0.2,
+     "irregularity": 0.32,
+     "elongation": 0.05
     }
    },
    "engine": {
@@ -5594,7 +5753,7 @@
     {
      "id": "music-pairing-grammar-t",
      "kicker": "",
-     "title": "Pairing grammar",
+     "title": "A pair acquires an interval",
      "italic": "",
      "body": "",
      "x": 0.03,
@@ -5659,7 +5818,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.12,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.045,
+     "halo": 0.16,
+     "roundness": 0.9,
+     "softness": 0.24,
+     "irregularity": 0.38,
+     "elongation": 0.07
     }
    },
    "engine": {
@@ -5867,7 +6032,7 @@
     {
      "id": "music-lens-anchors-t",
      "kicker": "",
-     "title": "Lens as anchor",
+     "title": "The field is heard from somewhere",
      "italic": "",
      "body": "",
      "x": 0.03,
@@ -5932,7 +6097,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.12,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.045,
+     "halo": 0.16,
+     "roundness": 0.9,
+     "softness": 0.24,
+     "irregularity": 0.38,
+     "elongation": 0.07
     }
    },
    "engine": {
@@ -6098,7 +6269,7 @@
     {
      "id": "music-diatonic-cf-grammar-t",
      "kicker": "",
-     "title": "Diatonic CF grammar",
+     "title": "A configuration selects its tones",
      "italic": "",
      "body": "",
      "x": 0.03,
@@ -6136,10 +6307,10 @@
    "duration": 9,
    "transition": 1.5,
    "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
+    "mode": "3d",
+    "yaw": 0.25,
+    "pitch": 0.5,
+    "zoom": 0.92,
     "panX": 0,
     "panY": 0
    },
@@ -6162,8 +6333,14 @@
      "frequency": 220,
      "dominance": 0,
      "excitation": 0.6,
-     "depth": 0.12,
-     "zConfinement": 1
+     "depth": 0.4,
+     "zConfinement": 0.7,
+     "grain": 0.045,
+     "halo": 0.16,
+     "roundness": 0.9,
+     "softness": 0.24,
+     "irregularity": 0.38,
+     "elongation": 0.07
     }
    },
    "engine": {
@@ -6174,7 +6351,10 @@
     "pointerClickStrength": 1.3,
     "pointerClickRadius": 0.45,
     "resonanceEnabled": false,
-    "morphEnabled": false
+    "morphEnabled": false,
+    "depthPerspective": true,
+    "vortex3d": 0.3,
+    "dispersion3d": 0.1
    },
    "entities": [
     {
@@ -6274,7 +6454,7 @@
      "position": {
       "x": 0.05,
       "y": 0.05,
-      "z": -0.4
+      "z": -0.45
      },
      "size": {
       "x": 1.4,
@@ -6316,7 +6496,7 @@
      "position": {
       "x": 1.32,
       "y": -0.3,
-      "z": 0
+      "z": 0.25
      },
      "size": {
       "x": 0.32,
@@ -6356,7 +6536,7 @@
     {
      "id": "music-field-t",
      "kicker": "",
-     "title": "Mode–tonic field",
+     "title": "Two choices give a field",
      "italic": "",
      "body": "",
      "x": 0.03,
@@ -6421,7 +6601,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.12,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.045,
+     "halo": 0.16,
+     "roundness": 0.9,
+     "softness": 0.24,
+     "irregularity": 0.38,
+     "elongation": 0.07
     }
    },
    "engine": {
@@ -6432,7 +6618,9 @@
     "pointerClickStrength": 1.3,
     "pointerClickRadius": 0.45,
     "resonanceEnabled": false,
-    "morphEnabled": false
+    "morphEnabled": true,
+    "trajectory": "toroidalHopf",
+    "driveShape": "sine"
    },
    "entities": [
     {
@@ -6604,7 +6792,7 @@
     {
      "id": "music-observer-instrument-t",
      "kicker": "",
-     "title": "Observer, instrument",
+     "title": "The player recognises the circuit",
      "italic": "",
      "body": "",
      "x": 0.03,
@@ -6626,12 +6814,12 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.08,
-    "phiRate": 0.13,
+    "law": "theta",
+    "thetaRate": 0.15,
+    "phiRate": 0.1,
     "thetaOffset": 0,
     "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
+    "depth": 0.9,
     "dwell": 0.3
    }
   }

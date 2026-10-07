@@ -175,5 +175,18 @@
   "date": "2026-10-07",
   "actor": "zcode craft lane 2",
   "law": "campaign-evidence/2026-10-07-expression-rework/REWORK-PROTOCOL.md"
+ },
+ "deepen_pass": {
+  "date": "2026-10-07",
+  "actor": "zcode deepen lane 2",
+  "law": "campaign-evidence/2026-10-07-expression-rework/REWORK-PROTOCOL.md, 'The deepen pass'",
+  "note": [
+   "DEPTH — one scene stands in 3d and z is the dreamer's position among what he finds: #2 hand lays pictures 1–2 behind (z −0.3), the blue-shelled third egg and its divided pair forward (z +0.3/+0.15), the dreamer's own approach between (z +0.1/−0.15) — the scene passes from watching a division to performing one on what he holds, and the depth holds that change of position.",
+   "MORPH — the dream's opening pair morph on the authored linear trajectory with smooth drive (theta 0.07/0.12): nothing circles yet in the dream — the first division happens before the dreamer intervenes, arriving as drift, not circulation.",
+   "ALIVE — five physics profiles: the night dream block's quiet field (grain 0.03, halo 0.1) held across background/self-division — the journey's rest; the hand scene's softened depth field (softness 0.3, halo 0.16, zConfinement 0.75); the quotient's strained inverse field (circulation −0.2, elongation 0.06, contrast 0.92); the circle scene in ink (material ink — the formula and the drawn circle, grain 0.025, contrast 0.97); the commentary and return's reflective field held identical (opacity 0.85, halo 0.12) — the final rest.",
+   "STEP-SCALE — no text-changing step carries objectState.size; the running sequence animates tint only.",
+   "TITLES — every scene title is the record's own heading or clause: 'A physicist meets his concepts in a dream' (#0), 'The first division happens before the dreamer intervenes' (#1), 'The dreamer finds what is in his own hand' (#2), 'Four eggs become a relation' and 'The formula vanishes and a circle appears' (the two halves of #3's move), 'Pauli reads the part played by consciousness' (#4), 'Conscious participation changes the received image' (#5→0). No metadata on the stage.",
+   "PAGE FIDELITY — #0 the dreamer, ψ, the brass-toned companion dream, Fierz's undated typescript; #1 the woman with the bird, the single egg, its unbidden division, ≠ held without good/evil; #2 the blue shell, division that leaves the eggs whole, ✦; #3 four expressions in two rows, the conjugate quotient, no shell-to-function assignment; #3b the vanishing formula, the point for fixed angle, the seven pictures complete; #4 the ground state, the noticing eye, the ✂ of the cut, the refusal of further progress, Neumann's round compared; #5→0 the circle exact in its own scope, the four eggs with two histories, X/x, the observer inside the operation. Each scene answers to its page."
+  ]
  }
 }

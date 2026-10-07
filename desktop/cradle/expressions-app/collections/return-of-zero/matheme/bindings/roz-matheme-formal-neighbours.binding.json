@@ -302,7 +302,11 @@
   "Rework 2026-10-07 (craft lane 4): the seventeen word-label scenes replaced by drawn formal structure — each scene's ascii plate is the record's own construction (nested ordinals, NAND tables, the paradox loop, the CRT grid, the pitchfork), with geometry carrying the state changes (the ring that collapses under 0=1; three rings for i, j, k; basin discs).",
   "Colour: six chapter grounds — cool workshop (#10131a), paradox violet (#131017), jade exactness (#101614), amber construction (#171310), physics blue (#0f1418), ember fork (#14110f). Palettes and tints travel; gold marks earned selections (the selected antiderivative, the true-but-unprovable G, the catuṣkoṭi reading).",
   "Stillness: the six chapters hold field, engine, view and morph across their 2-3 scenes (11 of 16 adjacent pairs still); motion at the chapter turns only.",
-  "Stage text 117 words across 17 scenes — titles and one line each; all record metadata lives in this binding."
+  "Stage text 117 words across 17 scenes — titles and one line each; all record metadata lives in this binding.",
+  "Deepen 2026-10-07 (lane 4): three scenes stand in 3d. The Bloch scene's third dimension is the ball of mixed states — the pure ket rides the pole toward the viewer (z +0.32) while the state shell holds the volume behind it (z −0.1) and the particle field fills the interior (depth 0.38, zConfinement 0.75, perspective on). The Q8 scene's third dimension is three-space itself — the algebra's plate recedes to z −0.45 behind the imaginary units (i +0.2, j −0.2, k +0.05) that act on that space. The attractor scene's third dimension is phase depth — the two basins lie at z +0.28 and z −0.28 behind and before the bifurcation fork, the parameter μ nearest the viewer.",
+  "Deepen, morph: three authored laws. Bloch — law theta, θ̇ 0.18 against φ̇ 0.02: the phase circles the sphere while probability barely stirs (work phase and probability separately). Q8 — law product, θ̇ 0.11 against φ̇ 0.17: two independent turns composed as a product, swapping them changes the result — noncommutativity drawn as the morph law. Chaos — vortexSpiral trajectory, θ̇ 0.12: trajectories spiral down into the attractor.",
+  "Deepen, physics states: each colour register now holds its own particle material — crisp workshop (grain 0.03, roundness 0.97) for the ordinals chapter, violet nesting (softness 0.24, irregularity 0.38) for boundaries and re-entry, jade plates, lamplight (grain 0.05, halo 0.18) for the group-completion chapter, deep water for the spheres, ember for calculus and chaos (elongation 0.12 on the attractor's stretched trajectories). Props vary across the journey and hold within each chapter's rest.",
+  "Deepen, titles: every scene carries the record's own line — ordinals #1 'The first enclosure changes the count', division #0 'The inverse has a domain', Sheffer #1 'Repeating an input earns negation', Laws of Form #0 'A boundary changes where a mark acts', Russell #2 near-quote 'Restriction acts before evaluation', Gödel #3 'Consistency becomes an internal sentence', FDE #1 'The diamond has a direction', CRT record title 'Six as two by three', trivial ring record title kept, Grothendieck #1 'Construct formal differences', Kauffman #0 'An alternation has two views', cross-ratio record title 'Under fractional-linear transformation', Bloch #3 'The ball of mixed states', Noether record title kept, Q8 #3 'Let unit quaternions act on three-space', calculus #2 near-quote 'The constant is the only freedom', chaos record title 'Attractors, basins and a bifurcation'. Stage words 159."
  ],
  "description": "Seventeen formal neighbours exactly worked on their own terms, each with its defined/undefined seam kept visible.",
  "scene_count": 17,
@@ -369,6 +373,13 @@
   "actor": "zcode:craft-expressions-l4",
   "lane": "craft-l4/matheme",
   "pass": "expression rework — TEXT IS THE MINIMUM FORM (owner commission 2026-10-07)",
-  "gate": "site/tests/expression-richness.mjs"
+  "gate": "site/tests/expression-richness.mjs",
+  "deepen": {
+   "date": "2026-10-07",
+   "actor": "zcode:deepen-lane4",
+   "lane": "deepen-l4/matheme",
+   "pass": "the deepen pass — depth, alive material, named scenes (second movement)",
+   "gate": "site/tests/expression-richness.mjs"
+  }
  }
 }

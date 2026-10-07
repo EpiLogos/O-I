@@ -165,5 +165,18 @@
   "actor": "zcode craft lane 2",
   "law": "campaign-evidence/2026-10-07-expression-rework/REWORK-PROTOCOL.md",
   "note": "Re-craft pass: the travelling image drawn — box lid and border, sorted pieces, the turned anomaly; flat assembly against the globe, the recorded view, overlapping charts; the two-chart circle with its shared point, reciprocal rule and transformed motion; the torus with its running loop, lifted endpoint, disk contrast and Euler count; the turning Blue Marble with box-lid, gauges and the diaphanous ring; the atlas book, reopened picture, Mapper nerve, sheaf obstruction and the traveller. Table-field-void-table colour journey; stillness held across the void scenes (circle, torus, marble)."
+ },
+ "deepen_pass": {
+  "date": "2026-10-07",
+  "actor": "zcode deepen lane 2",
+  "law": "campaign-evidence/2026-10-07-expression-rework/REWORK-PROTOCOL.md, 'The deepen pass'",
+  "note": [
+   "DEPTH — three scenes stand in 3d and each z-distribution is the record's own move: #2 circle (yaw 0.35 / pitch 0.18) lifts the shared point (3/5, 4/5) off the flat page — the common point the two charts report differently, seen from outside both; #2b torus separates the loop from its lift in depth (presenting square z −0.3, running loop z 0, the lifted endpoint (2,−1)→[2t,−t] nearest at z +0.35) — the winding the disk abstraction loses is exactly the third dimension; #4 marble holds the planet, its box-lid reading and the diaphanous ring at separate depths — the image and the making of the picture no longer flattened into one plane.",
+   "MORPH — the three 3d scenes morph on the toroidal trajectory, authored (toroidalHopf, drive sine, law theta 0.14/0.09, morph depth 1.5): the field itself circulates the torus — the surface whose loops retain their winding; rest scenes keep the still theta clock 0.06/0.1.",
+   "ALIVE — four physics profiles: the lid's patient sorting (speed 0.4, grain 0.04, softness 0.2); travel in ink (material ink — the travelled world met as drawn charts, irregularity 0.4, grain 0.05, softness 0.08); the matheme block's one held profile across circle/torus/marble (halo 0.1, grain 0.028, zConfinement 0.7) — the journey's rest; the atlas return softened (softness 0.28, halo 0.12). Stillness held across the void scenes; motion where the record moves.",
+   "STEP-SCALE — no text-changing step carries objectState.size; sequences animate form and tint only.",
+   "TITLES — every scene title is the record's own section line or its exact clause: 'The picture arrives before the pieces', 'Travel changes what it means to fit', 'A crossing has a rule', 'A return retains a path' (the record's #2 heading split across its two witness scenes), 'The planet appears, and the making of the picture returns', 'The atlas travels with the means to revise it'. No metadata on the stage.",
+   "PAGE FIDELITY — #0 lid/frame/sorted pieces/silent criterion; #1 flat assembly, travelled world, recorded view, pieces-become-charts; #2 two-chart circle, shared point, v=1/u crossing rule, even motion transformed; #2b torus, retained loop, lifted endpoint, disk contrast, four sides two generators; #4 Earth disc, box-lid 'planetary', whose-planet gauges, diaphanous ring; #5→0 atlas, reopened first picture, Mapper nerve, sheaf obstruction, the traveller. Each scene answers to its page."
+  ]
  }
 }

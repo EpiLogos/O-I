@@ -31,13 +31,13 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.91,
+          "roundness": 0.89,
+          "softness": 0.17,
+          "irregularity": 0.37,
+          "elongation": 0.07,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.92,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
@@ -51,8 +51,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.3,
+          "grain": 0.036,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -571,22 +571,7 @@
                   "z": 0
                 },
                 "text": "Central",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#b08a3e",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-s-s-9-s2",
@@ -598,22 +583,7 @@
                   "z": 0
                 },
                 "text": "Actuation",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#c07856",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-s-s-9-s3",
@@ -625,22 +595,7 @@
                   "z": 0
                 },
                 "text": "AIKit",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#5898a4",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-s-s-9-s4",
@@ -652,22 +607,7 @@
                   "z": 0
                 },
                 "text": "Factory",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-s-s-9-s5",
@@ -679,22 +619,7 @@
                   "z": 0
                 },
                 "text": "Workcell",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#638c69",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-s-s-9-s6",
@@ -706,22 +631,7 @@
                   "z": 0
                 },
                 "text": "Quaternal",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#9a7ab0",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -732,7 +642,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The field",
+          "title": "A Life discloses its World through its means",
           "italic": "one Life, one World, six offices",
           "body": "",
           "x": 0.04,
@@ -812,13 +722,13 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.91,
+          "roundness": 0.89,
+          "softness": 0.17,
+          "irregularity": 0.37,
+          "elongation": 0.07,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.92,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
@@ -832,8 +742,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.3,
+          "grain": 0.036,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -1124,22 +1034,7 @@
                   "z": 0
                 },
                 "text": "sayable",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#e8e6df",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-s-s0-14-s2",
@@ -1151,22 +1046,7 @@
                   "z": 0
                 },
                 "text": "return",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#b08a3e",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -1177,7 +1057,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Central",
+          "title": "Meaningful continuity: the intelligible ground",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -1240,17 +1120,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.94,
+          "roundness": 0.93,
+          "softness": 0.12,
+          "irregularity": 0.25,
+          "elongation": 0.16,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.96,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.14,
+          "halo": 0.09,
           "speed": 0.42,
           "circulation": 0.32,
           "turbulence": 0.1,
@@ -1260,8 +1140,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.3,
+          "grain": 0.028,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -1552,22 +1432,7 @@
                   "z": 0
                 },
                 "text": "event",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#e8e6df",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-s-s1-14-s2",
@@ -1579,22 +1444,7 @@
                   "z": 0
                 },
                 "text": "knowledge",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#c07856",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -1605,7 +1455,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Actuation",
+          "title": "The living articulation of an internality",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -1650,9 +1500,9 @@
       "duration": 13,
       "transition": 2.2,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
+        "mode": "3d",
+        "yaw": 0.26,
+        "pitch": 0.15,
         "zoom": 1,
         "panX": 0,
         "panY": 0
@@ -1668,17 +1518,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.88,
+          "roundness": 0.81,
+          "softness": 0.24,
+          "irregularity": 0.48,
+          "elongation": 0.06,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.89,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.14,
+          "halo": 0.2,
           "speed": 0.42,
           "circulation": 0.32,
           "turbulence": 0.1,
@@ -1688,8 +1538,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.5,
+          "grain": 0.044,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -1718,7 +1568,7 @@
           "position": {
             "x": 0,
             "y": 0.02,
-            "z": 0
+            "z": 0.12
           },
           "size": {
             "x": 0.15,
@@ -1775,7 +1625,7 @@
           "position": {
             "x": -0.16,
             "y": -0.16,
-            "z": 0
+            "z": 0.25
           },
           "size": {
             "x": 0.26,
@@ -1832,7 +1682,7 @@
           "position": {
             "x": 0.16,
             "y": -0.16,
-            "z": 0
+            "z": -0.25
           },
           "size": {
             "x": 0.26,
@@ -1889,7 +1739,7 @@
           "position": {
             "x": 0,
             "y": -0.16,
-            "z": 0
+            "z": 0.0
           },
           "size": {
             "x": 0.08,
@@ -1977,25 +1827,10 @@
                 "position": {
                   "x": -0.2,
                   "y": 0.28,
-                  "z": 0
+                  "z": 0.22
                 },
                 "text": "silence",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#e8e6df",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-s-s2-14-s2",
@@ -2004,25 +1839,10 @@
                 "position": {
                   "x": 0.2,
                   "y": 0.28,
-                  "z": 0
+                  "z": -0.22
                 },
                 "text": "return",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#5898a4",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -2033,7 +1853,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "AIKit",
+          "title": "Potency: the changing horizon",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -2096,17 +1916,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
+          "opacity": 0.93,
+          "roundness": 0.91,
           "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "irregularity": 0.3,
+          "elongation": 0.13,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.95,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.14,
+          "halo": 0.11,
           "speed": 0.42,
           "circulation": 0.32,
           "turbulence": 0.1,
@@ -2116,8 +1936,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.3,
+          "grain": 0.032,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -2408,22 +2228,7 @@
                   "z": 0
                 },
                 "text": "actuality",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#e8e6df",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-s-s3-14-s2",
@@ -2435,22 +2240,7 @@
                   "z": 0
                 },
                 "text": "grammar",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -2461,7 +2251,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Factory",
+          "title": "Intention, encounter and learning become changed form",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -2541,17 +2331,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
+          "opacity": 0.93,
+          "roundness": 0.91,
           "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "irregularity": 0.3,
+          "elongation": 0.13,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.95,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.14,
+          "halo": 0.11,
           "speed": 0.42,
           "circulation": 0.32,
           "turbulence": 0.1,
@@ -2561,8 +2351,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.3,
+          "grain": 0.032,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -2853,22 +2643,7 @@
                   "z": 0
                 },
                 "text": "world",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#e8e6df",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-s-s4-14-s2",
@@ -2880,22 +2655,7 @@
                   "z": 0
                 },
                 "text": "encounter",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#638c69",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -2906,7 +2666,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Workcell",
+          "title": "The concrete here in which a Life finds itself",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -2969,17 +2729,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.9,
+          "roundness": 0.86,
+          "softness": 0.2,
+          "irregularity": 0.41,
+          "elongation": 0.09,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.92,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.14,
+          "halo": 0.16,
           "speed": 0.42,
           "circulation": 0.32,
           "turbulence": 0.1,
@@ -2989,8 +2749,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.45,
+          "grain": 0.038,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -3281,22 +3041,7 @@
                   "z": 0
                 },
                 "text": "distinction",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#e8e6df",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-s-s5-14-s2",
@@ -3308,22 +3053,7 @@
                   "z": 0
                 },
                 "text": "whole",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#9a7ab0",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -3335,7 +3065,7 @@
           "position": {
             "x": 0,
             "y": 0.02,
-            "z": 0
+            "z": 0.0
           },
           "size": {
             "x": 0.3,
@@ -3392,7 +3122,7 @@
           "position": {
             "x": 0,
             "y": 0.02,
-            "z": 0
+            "z": 0.2
           },
           "size": {
             "x": 0.12,
@@ -3449,7 +3179,7 @@
           "position": {
             "x": 0,
             "y": 0.02,
-            "z": 0
+            "z": -0.2
           },
           "size": {
             "x": 0.12,
@@ -3505,7 +3235,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Quaternal",
+          "title": "A whole differentiates without ceasing to be whole",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -3525,8 +3255,8 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.05,
-        "phiRate": 0.03,
+        "thetaRate": 0.18,
+        "phiRate": 0.08,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
@@ -3557,7 +3287,10 @@
         "pointerMode": "vortex",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.9,
-        "pointerClickRadius": 0.42
+        "pointerClickRadius": 0.42,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine"
       }
     }
   ],

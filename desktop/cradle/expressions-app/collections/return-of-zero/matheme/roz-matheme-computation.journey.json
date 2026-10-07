@@ -40,7 +40,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.1,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.03,
+     "halo": 0.1,
+     "roundness": 0.97,
+     "softness": 0.12,
+     "irregularity": 0.22,
+     "elongation": 0.03
     }
    },
    "engine": {
@@ -403,7 +409,7 @@
     {
      "id": "comp-softmax-argmax-t",
      "kicker": "",
-     "title": "The distribution and the cut",
+     "title": "The distribution, maximum selection and random draw",
      "italic": "Add ten to every logit: nothing moves. Cool the field: mass gathers on the max.",
      "body": "",
      "x": 0.03,
@@ -468,7 +474,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.1,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.03,
+     "halo": 0.1,
+     "roundness": 0.97,
+     "softness": 0.12,
+     "irregularity": 0.22,
+     "elongation": 0.03
     }
    },
    "engine": {
@@ -799,7 +811,7 @@
     {
      "id": "comp-preference-gauge-t",
      "kicker": "",
-     "title": "The preference gauge",
+     "title": "It therefore leaves every probability unchanged",
      "italic": "A shift of all scores is inert. A new reference acts: 3/4 becomes 1/2.",
      "body": "",
      "x": 0.03,
@@ -837,10 +849,10 @@
    "duration": 14,
    "transition": 2,
    "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
+    "mode": "3d",
+    "yaw": 0.35,
+    "pitch": 0.42,
+    "zoom": 0.92,
     "panX": 0,
     "panY": 0
    },
@@ -863,8 +875,14 @@
      "frequency": 220,
      "dominance": 0,
      "excitation": 0.6,
-     "depth": 0.16,
-     "zConfinement": 1
+     "depth": 0.42,
+     "zConfinement": 0.72,
+     "grain": 0.045,
+     "halo": 0.2,
+     "roundness": 0.9,
+     "softness": 0.3,
+     "irregularity": 0.4,
+     "elongation": 0.06
     }
    },
    "engine": {
@@ -875,7 +893,12 @@
     "pointerClickStrength": 1.3,
     "pointerClickRadius": 0.45,
     "resonanceEnabled": false,
-    "morphEnabled": false
+    "morphEnabled": true,
+    "trajectory": "toroidalHopf",
+    "driveShape": "smooth",
+    "depthPerspective": true,
+    "vortex3d": 0.45,
+    "dispersion3d": 0.1
    },
    "entities": [
     {
@@ -885,7 +908,7 @@
      "position": {
       "x": 0.05,
       "y": 0.12,
-      "z": -0.4
+      "z": -0.55
      },
      "size": {
       "x": 3.2,
@@ -1066,7 +1089,7 @@
      "position": {
       "x": -1.35,
       "y": 0.62,
-      "z": 0
+      "z": 0.32
      },
      "size": {
       "x": 0.4,
@@ -1148,8 +1171,8 @@
     {
      "id": "comp-j-space-t",
      "kicker": "",
-     "title": "J-space",
-     "italic": "Permission is operative, not metadata: one policy change redraws the reachable set.",
+     "title": "Permission is an operative condition",
+     "italic": "One policy change redraws the reachable set; the boundary keeps its horizon behind the actions.",
      "body": "",
      "x": 0.03,
      "y": 0.74,
@@ -1170,13 +1193,13 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.08,
-    "phiRate": 0.13,
+    "law": "theta",
+    "thetaRate": 0.07,
+    "phiRate": 0.11,
     "thetaOffset": 0,
     "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
+    "depth": 0.9,
+    "dwell": 0.25
    }
   },
   {
@@ -1186,10 +1209,10 @@
    "duration": 13,
    "transition": 2,
    "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
+    "mode": "3d",
+    "yaw": 0.35,
+    "pitch": 0.42,
+    "zoom": 0.92,
     "panX": 0,
     "panY": 0
    },
@@ -1212,8 +1235,14 @@
      "frequency": 220,
      "dominance": 0,
      "excitation": 0.6,
-     "depth": 0.16,
-     "zConfinement": 1
+     "depth": 0.42,
+     "zConfinement": 0.72,
+     "grain": 0.045,
+     "halo": 0.2,
+     "roundness": 0.9,
+     "softness": 0.3,
+     "irregularity": 0.4,
+     "elongation": 0.06
     }
    },
    "engine": {
@@ -1224,7 +1253,12 @@
     "pointerClickStrength": 1.3,
     "pointerClickRadius": 0.45,
     "resonanceEnabled": false,
-    "morphEnabled": false
+    "morphEnabled": true,
+    "trajectory": "toroidalHopf",
+    "driveShape": "smooth",
+    "depthPerspective": true,
+    "vortex3d": 0.45,
+    "dispersion3d": 0.1
    },
    "entities": [
     {
@@ -1234,7 +1268,7 @@
      "position": {
       "x": 0.05,
       "y": 0.08,
-      "z": 0
+      "z": -0.3
      },
      "size": {
       "x": 2.2,
@@ -1388,7 +1422,7 @@
      "position": {
       "x": -1.15,
       "y": -0.35,
-      "z": 0
+      "z": -0.5
      },
      "size": {
       "x": 0.34,
@@ -1430,7 +1464,7 @@
      "position": {
       "x": 1.05,
       "y": -0.42,
-      "z": 0
+      "z": 0.28
      },
      "size": {
       "x": 0.5,
@@ -1512,7 +1546,7 @@
     {
      "id": "comp-ebm-resonance-t",
      "kicker": "",
-     "title": "Energy-based inference",
+     "title": "Optimisation over y, learning over θ",
      "italic": "Search harder and the minimum holds. Change the domain or the energy and the answer moves.",
      "body": "",
      "x": 0.03,
@@ -1534,13 +1568,13 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.08,
-    "phiRate": 0.13,
+    "law": "theta",
+    "thetaRate": 0.07,
+    "phiRate": 0.11,
     "thetaOffset": 0,
     "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
+    "depth": 0.9,
+    "dwell": 0.25
    }
   },
   {
@@ -1568,7 +1602,7 @@
      "count": 62000,
      "size": 2.6,
      "opacity": 0.92,
-     "contrast": 0.93,
+     "contrast": 0.95,
      "speed": 0.5,
      "turbulence": 0.1,
      "dispersion": 0.05,
@@ -1578,7 +1612,13 @@
      "excitation": 0.6,
      "depth": 0.12,
      "zConfinement": 1,
-     "circulation": 1.1
+     "circulation": 1.1,
+     "elongation": 0.16,
+     "halo": 0.16,
+     "irregularity": 0.5,
+     "grain": 0.04,
+     "roundness": 0.88,
+     "softness": 0.22
     }
    },
    "engine": {
@@ -1589,7 +1629,9 @@
     "pointerClickStrength": 1.5,
     "pointerClickRadius": 0.45,
     "resonanceEnabled": false,
-    "morphEnabled": false
+    "morphEnabled": true,
+    "trajectory": "vortexSpiral",
+    "driveShape": "triangle"
    },
    "entities": [
     {
@@ -1845,7 +1887,7 @@
     {
      "id": "comp-operational-parity-t",
      "kicker": "",
-     "title": "Operational parity",
+     "title": "Varying it changes a declared operation",
      "italic": "Six interventions; each names its failure first. A receipt, or an honest null.",
      "body": "",
      "x": 0.03,
@@ -1867,13 +1909,13 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.08,
-    "phiRate": 0.13,
+    "law": "theta",
+    "thetaRate": 0.14,
+    "phiRate": 0.09,
     "thetaOffset": 0,
     "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
+    "depth": 1.2,
+    "dwell": 0.35
    }
   }
  ],

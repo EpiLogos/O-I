@@ -114,7 +114,7 @@ function checkJourney(journey, journeyPath) {
   }
 
   // 1 — carriers: text is the minimum form
-  let entities = 0, nonText = 0, sentence = null, yantra = null;
+  let entities = 0, nonText = 0, sentence = null, yantra = null, squishHit = null;
   const scenesWithoutMark = [];
   for (const s of scenes) {
     const es = s.entities ?? [];
@@ -158,12 +158,42 @@ function checkJourney(journey, journeyPath) {
   for (const s of scenes) {
     if (s.engine && "autoFitSizes" in s.engine && s.engine.autoFitSizes === false) { fail("scale", `${s.id}: autoFitSizes disabled — size normalisation is the engine's job; compose within it`); break; }
   }
+  // the step-scale law: a step that changes the text must not inherit the
+  // previous glyph's size — the engine fits each glyph, so "o-i" growing into
+  // "vocation" must not squish "vocation" into "o-i"'s box
+  for (const s of scenes) {
+    for (const e of s.entities ?? []) {
+      const seq = e.sequence;
+      if (!seq?.enabled || !seq.steps?.length) continue;
+      let prevText = e.text ?? "";
+      for (const st of seq.steps) {
+        const stText = st.text ?? "";
+        const size = st.objectState?.size;
+        if (stText && prevText && stText !== prevText && size != null && !squishHit) squishHit = `${s.id}/${e.name ?? e.id}: '${prevText}' -> '${stText}' carries size ${JSON.stringify(size)} — a text change lets the engine resize; animate position, rotation or tint instead`;
+        if (stText) prevText = stText;
+      }
+    }
+  }
+  if (squishHit) fail("step-scale", squishHit);
 
-  // 5 — stage text: hospitable only
-  let words = 0, metadata = null, overlapHit = null;
+  // 4b — depth: the third dimension is part of the format
+  const scenes3d = scenes.filter((s) => s.view?.mode === "3d" && (s.entities ?? []).some((e) => (e.position?.z ?? 0) !== 0));
+  if (!scenes3d.length) fail("depth", "no scene stands in 3d (z-distributed entities on view.mode 3d — say what the third dimension means there)");
+
+  // 4c — alive: the expressive space is used, within the rest law
+  const morphing = scenes.filter((s) => (s.engine?.morphEnabled ?? false) && (s.engine?.morph ?? s.morph) !== undefined);
+  const paramProfiles = new Set(scenes.map((s) => JSON.stringify(s.field?.params ?? {})));
+  const materials = new Set(scenes.map((s) => s.field?.material).filter(Boolean));
+  const materialProps = new Set(scenes.flatMap((s) => Object.entries(s.field?.params ?? {}).filter(([k]) => ["grain", "halo", "opacity", "roundness", "softness", "irregularity", "elongation", "contrast", "densityScale"].includes(k)).map(([k, v]) => `${k}=${v}`)));
+  const aliveScore = morphing.length + paramProfiles.size + materials.size + materialProps.size;
+  if (aliveScore < 6) fail("alive", `the material barely varies: ${morphing.length} morph scene(s), ${paramProfiles.size} physics profile(s), ${materials.size} material(s), ${materialProps.size} material-prop settings — vary the states of the field (morph law, physics, particle props), stillness included`);
+
+  // 5 — stage text: present enough to name what is shown, hospitable always
+  let words = 0, metadata = null, overlapHit = null, unnamed = [];
   for (const s of scenes) {
     const items = (s.text ?? []).filter((t) => t && t.visible !== false && (t.kicker || t.title || t.italic || t.body));
     const ents = (s.entities ?? []).filter((e) => e.position && e.kind === "formation");
+    if (ents.length && !items.some((t) => (t.title ?? "").trim())) unnamed.push(s.id);
     for (const t of items) {
       words += wordCount([t.kicker, t.title, t.italic, t.body].filter(Boolean).join(" "));
       if (!metadata) {
@@ -183,7 +213,9 @@ function checkJourney(journey, journeyPath) {
       if (overlapHit) break;
     }
   }
-  if (words > 120) fail("stage-text", `${words} words of visible stage text (budget 120 — the field carries the words; the stage carries the sign)`);
+  if (unnamed.length) fail("stage-text", `scenes with no title naming what they show: ${unnamed.slice(0, 6).join(", ")}${unnamed.length > 6 ? ` +${unnamed.length - 6}` : ""} — text is the minimum form: name the scene, then draw it`);
+  if (words < 24 && scenes.length >= 3) fail("stage-text", `${words} words of visible stage text — too few to read the journey (floor 24; the title of each scene is the minimum)`);
+  if (words > 160) fail("stage-text", `${words} words of visible stage text (budget 160 — the field carries the words; the stage carries the sign)`);
   if (metadata) fail("stage-text", metadata);
   if (overlapHit) fail("stage-text", overlapHit);
 

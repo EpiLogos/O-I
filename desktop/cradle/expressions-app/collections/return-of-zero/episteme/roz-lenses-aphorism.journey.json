@@ -31,17 +31,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.93,
+          "roundness": 0.93,
+          "softness": 0.12,
+          "irregularity": 0.26,
+          "elongation": 0.15,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.95,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.14,
+          "halo": 0.1,
           "speed": 0.4,
           "circulation": 0.32,
           "turbulence": 0.1,
@@ -51,8 +51,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.35,
+          "grain": 0.03,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -313,7 +313,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The aperture",
+          "title": "The account changes what becomes credible",
           "italic": "two glasses, one bending",
           "body": "",
           "x": 0.04,
@@ -376,17 +376,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.93,
+          "roundness": 0.93,
+          "softness": 0.12,
+          "irregularity": 0.26,
+          "elongation": 0.15,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.95,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.14,
+          "halo": 0.1,
           "speed": 0.4,
           "circulation": 0.32,
           "turbulence": 0.1,
@@ -396,8 +396,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.35,
+          "grain": 0.03,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -631,22 +631,7 @@
                   "z": 0
                 },
                 "text": "access",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#e3e7e6",
-                  "tintWeight": 0.55,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-lens-lens-baudrillard-4-s2",
@@ -658,22 +643,7 @@
                   "z": 0
                 },
                 "text": "conduct",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#e3e7e6",
-                  "tintWeight": 0.7000000000000001,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-lens-lens-baudrillard-4-s3",
@@ -685,22 +655,7 @@
                   "z": 0
                 },
                 "text": "profile",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.8500000000000001,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -711,7 +666,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Simulation",
+          "title": "When the account helps make its object",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -791,17 +746,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.89,
+          "roundness": 0.85,
+          "softness": 0.21,
+          "irregularity": 0.44,
+          "elongation": 0.08,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.91,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.14,
+          "halo": 0.17,
           "speed": 0.4,
           "circulation": 0.32,
           "turbulence": 0.1,
@@ -811,8 +766,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.3,
+          "grain": 0.042,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -1046,22 +1001,7 @@
                   "z": 0
                 },
                 "text": "case",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#ece7dc",
-                  "tintWeight": 0.55,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-lens-lens-foucault-4-s2",
@@ -1073,22 +1013,7 @@
                   "z": 0
                 },
                 "text": "it",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#ece7dc",
-                  "tintWeight": 0.7000000000000001,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-lens-lens-foucault-4-s3",
@@ -1100,22 +1025,7 @@
                   "z": 0
                 },
                 "text": "describes",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.8500000000000001,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -1183,7 +1093,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Authority",
+          "title": "The authority to return",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -1246,17 +1156,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
+          "opacity": 0.88,
+          "roundness": 0.8,
+          "softness": 0.26,
+          "irregularity": 0.5,
           "elongation": 0.04,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.89,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.16,
+          "halo": 0.2,
           "speed": 0.3,
           "circulation": 0.2,
           "turbulence": 0.1,
@@ -1266,8 +1176,8 @@
           "pointerStrength": 0.35,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.5,
+          "grain": 0.036,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -1589,22 +1499,7 @@
                   "z": 0.3
                 },
                 "text": "investigation",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#5898a4",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-lens-aph-5-s2",
@@ -1616,22 +1511,7 @@
                   "z": -0.4
                 },
                 "text": "faith",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#9a7ab0",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-lens-aph-5-s3",
@@ -1643,22 +1523,7 @@
                   "z": -0.4
                 },
                 "text": "determination",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#9a7ab0",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-lens-aph-5-s4",
@@ -1670,22 +1535,7 @@
                   "z": -0.55
                 },
                 "text": "determined",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#9a7ab0",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -1696,7 +1546,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The two limits",
+          "title": "The approachable limit is the basis of investigation; the absolute limit is the basis of faith",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -1716,8 +1566,8 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.04,
-        "phiRate": 0.02,
+        "thetaRate": 0.2,
+        "phiRate": 0.03,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
@@ -1731,7 +1581,10 @@
         "pointerMode": "attract",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.9,
-        "pointerClickRadius": 0.42
+        "pointerClickRadius": 0.42,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine"
       }
     }
   ],

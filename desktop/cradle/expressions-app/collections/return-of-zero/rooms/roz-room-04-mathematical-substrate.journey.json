@@ -142,22 +142,7 @@
                   "z": 0
                 },
                 "text": "0/1",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.46
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.46,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-034-s3",
@@ -169,22 +154,7 @@
                   "z": 0
                 },
                 "text": "?/!",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.46
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.52,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-034-s4",
@@ -196,22 +166,7 @@
                   "z": 0
                 },
                 "text": "−/+",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.46
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.58,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-034-s5",
@@ -223,22 +178,7 @@
                   "z": 0
                 },
                 "text": "X/x",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.46
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.64,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-034-s6",
@@ -250,22 +190,7 @@
                   "z": 0
                 },
                 "text": "AM/IS",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.46
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-034-s7",
@@ -277,22 +202,7 @@
                   "z": 0
                 },
                 "text": "∞/dx",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.46
-                  },
-                  "rotation": 0,
-                  "tint": "#3d5a80",
-                  "tintWeight": 0.76,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-034-s8",
@@ -304,22 +214,7 @@
                   "z": 0
                 },
                 "text": "1/0",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.46
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -581,7 +476,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Eight determinations",
+          "title": "The ground–mark relation unfolds as eight determinations",
           "italic": "",
           "body": "Eight turns in order, and the return that reddens.",
           "x": 0.04,
@@ -764,22 +659,7 @@
                 "transition": 1.3,
                 "position": null,
                 "text": "5→0",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.44
-                  },
-                  "rotation": 0,
-                  "tint": "#3d5a80",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-03e-s3",
@@ -787,22 +667,7 @@
                 "transition": 1.3,
                 "position": null,
                 "text": "4+2",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.44
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.5,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -1087,7 +952,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The pulse",
+          "title": "The native generative kernel of QL",
           "italic": "",
           "body": "Four and two breathe; five returns through zero.",
           "x": 0.04,
@@ -1150,17 +1015,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.9,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.85,
+          "roundness": 0.8,
+          "softness": 0.3,
+          "irregularity": 0.5,
+          "elongation": 0.08,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.88,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.22,
           "speed": 0.45,
           "circulation": 0.5,
           "turbulence": 0.18,
@@ -1171,7 +1036,7 @@
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
           "depth": 0.12,
-          "grain": 0.035,
+          "grain": 0.05,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -1257,22 +1122,7 @@
                 "transition": 1.3,
                 "position": null,
                 "text": "M(M)→U",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.36,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.65,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-r04c-mark-s3",
@@ -1280,22 +1130,7 @@
                 "transition": 1.5,
                 "position": null,
                 "text": "re-entry",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.36,
-                    "y": 0.4
-                  },
-                  "rotation": 180,
-                  "tint": "#a9b399",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -1447,7 +1282,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The mark re-enters",
+          "title": "The mark creates inside and outside together",
           "italic": "",
           "body": "A crossing crossed returns changed.",
           "x": 0.04,
@@ -1492,9 +1327,9 @@
       "duration": 15,
       "transition": 1.5,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
+        "mode": "3d",
+        "yaw": 0.35,
+        "pitch": 0.22,
         "zoom": 1,
         "panX": 0,
         "panY": 0
@@ -1510,17 +1345,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.94,
+          "roundness": 0.9,
+          "softness": 0.12,
+          "irregularity": 0.28,
+          "elongation": 0.16,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.97,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.09,
           "speed": 0.42,
           "circulation": 0.35,
           "turbulence": 0.1,
@@ -1530,8 +1365,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.55,
+          "grain": 0.02,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -1560,7 +1395,7 @@
           "position": {
             "x": -0.3,
             "y": 0.28,
-            "z": 0
+            "z": 0.34
           },
           "size": {
             "x": 0.4,
@@ -1591,7 +1426,7 @@
                 "position": {
                   "x": -0.3,
                   "y": 0.28,
-                  "z": 0
+                  "z": 0.34
                 },
                 "text": "u=x/y",
                 "shape": "text",
@@ -1617,22 +1452,7 @@
                 "transition": 1.2,
                 "position": null,
                 "text": "[1:0]",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-r04c-chart-s3",
@@ -1641,25 +1461,10 @@
                 "position": {
                   "x": 0.3,
                   "y": 0.28,
-                  "z": 0
+                  "z": 0.34
                 },
                 "text": "v=1/u",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-r04c-chart-s4",
@@ -1667,22 +1472,7 @@
                 "transition": 1.3,
                 "position": null,
                 "text": "v=0",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#5898a4",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -1694,7 +1484,7 @@
           "position": {
             "x": -0.3,
             "y": -0.02,
-            "z": 0
+            "z": -0.28
           },
           "size": {
             "x": 0.4,
@@ -1751,7 +1541,7 @@
           "position": {
             "x": 0.3,
             "y": -0.02,
-            "z": 0
+            "z": 0.2
           },
           "size": {
             "x": 0.4,
@@ -1865,7 +1655,7 @@
           "position": {
             "x": -0.42,
             "y": -0.2,
-            "z": 0
+            "z": -0.28
           },
           "size": {
             "x": 0.1,
@@ -1919,7 +1709,7 @@
                 "position": {
                   "x": 0.42,
                   "y": -0.2,
-                  "z": 0
+                  "z": 0.2
                 },
                 "text": "",
                 "shape": "disc",
@@ -1948,7 +1738,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The second chart",
+          "title": "Obstructions become tractable after the representational space is changed",
           "italic": "",
           "body": "What one mapping blocks, another holds plainly.",
           "x": 0.04,
@@ -1968,8 +1758,8 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
+        "thetaRate": 0.16,
+        "phiRate": 0.09,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
@@ -1983,7 +1773,10 @@
         "pointerMode": "vortex",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.9,
-        "pointerClickRadius": 0.42
+        "pointerClickRadius": 0.42,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine"
       }
     },
     {
@@ -1993,9 +1786,9 @@
       "duration": 16,
       "transition": 1.6,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
+        "mode": "3d",
+        "yaw": 0.35,
+        "pitch": 0.22,
         "zoom": 1,
         "panX": 0,
         "panY": 0
@@ -2011,17 +1804,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.94,
+          "roundness": 0.9,
+          "softness": 0.12,
+          "irregularity": 0.28,
+          "elongation": 0.16,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.97,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.09,
           "speed": 0.42,
           "circulation": 0.35,
           "turbulence": 0.1,
@@ -2031,8 +1824,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.55,
+          "grain": 0.02,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -2061,7 +1854,7 @@
           "position": {
             "x": 0.17,
             "y": -0.02,
-            "z": 0
+            "z": -0.3
           },
           "size": {
             "x": 0.62,
@@ -2118,7 +1911,7 @@
           "position": {
             "x": 0.1,
             "y": 0,
-            "z": 0
+            "z": 0.06
           },
           "size": {
             "x": 0.42,
@@ -2175,7 +1968,7 @@
           "position": {
             "x": 0.24,
             "y": -0.04,
-            "z": 0
+            "z": 0.06
           },
           "size": {
             "x": 0.42,
@@ -2232,7 +2025,7 @@
           "position": {
             "x": 0.34,
             "y": 0.26,
-            "z": 0
+            "z": 0.4
           },
           "size": {
             "x": 0.32,
@@ -2285,22 +2078,7 @@
                 "transition": 1.2,
                 "position": null,
                 "text": "χ=0",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.32,
-                    "y": 0.36
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.65,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-r04c-torus-s3",
@@ -2308,22 +2086,7 @@
                 "transition": 1.3,
                 "position": null,
                 "text": "(2,−1)",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.32,
-                    "y": 0.36
-                  },
-                  "rotation": 0,
-                  "tint": "#5898a4",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -2335,7 +2098,7 @@
           "position": {
             "x": -0.34,
             "y": 0.26,
-            "z": 0
+            "z": 0.06
           },
           "size": {
             "x": 0.3,
@@ -2388,22 +2151,7 @@
                 "transition": 1.2,
                 "position": null,
                 "text": "9/8",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.34
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-r04c-harmonic-s3",
@@ -2411,22 +2159,7 @@
                 "transition": 1.3,
                 "position": null,
                 "text": "2/1",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.34
-                  },
-                  "rotation": 0,
-                  "tint": "#638c69",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -2437,7 +2170,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Resolution",
+          "title": "Local closure and retained displacement coexist exactly",
           "italic": "",
           "body": "The path closes and keeps its difference.",
           "x": 0.04,
@@ -2457,8 +2190,8 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
+        "thetaRate": 0.16,
+        "phiRate": 0.09,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
@@ -2472,7 +2205,10 @@
         "pointerMode": "vortex",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.9,
-        "pointerClickRadius": 0.42
+        "pointerClickRadius": 0.42,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine"
       }
     },
     {
@@ -2500,17 +2236,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
+          "opacity": 0.8,
+          "roundness": 0.7,
+          "softness": 0.22,
+          "irregularity": 0.6,
           "elongation": 0.04,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.85,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.3,
           "speed": 0.6,
           "circulation": 0.85,
           "turbulence": 0.12,
@@ -2520,8 +2256,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.2,
+          "grain": 0.05,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -2603,22 +2339,7 @@
                 "transition": 1.3,
                 "position": null,
                 "text": "maker",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.34,
-                    "y": 0.38
-                  },
-                  "rotation": 0,
-                  "tint": "#252720",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-r04c-atlas-s3",
@@ -2626,22 +2347,7 @@
                 "transition": 1.5,
                 "position": null,
                 "text": "arche-topos",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.34,
-                    "y": 0.38
-                  },
-                  "rotation": 0,
-                  "tint": "#737599",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -2880,7 +2586,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The arche-topos",
+          "title": "No single chart covers the whole",
           "italic": "",
           "body": "Every chart comes to rest in the held field.",
           "x": 0.04,
