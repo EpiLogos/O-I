@@ -4,7 +4,7 @@
   "spec_ref": "docs/cradle/05-EXECUTION.md §3",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-10-07T00:38:33.842Z",
+  "generated_at": "2026-10-07T11:17:49.550Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -13,26 +13,32 @@
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "reused-dist",
-      "bundle_fingerprint": "c1567b7a630822d623e90004d104adababac73e9dd9735777bbc119a51d30833"
+      "bundle_fingerprint": "5be35ce813b1770e70d1099e5f28bb706964047cbc2a7f1bf817a48162d1deba"
     },
     "node": "v24.21.0",
     "platform": "darwin",
     "source": {
-      "repository_root": "/private/tmp/tarot-score-walk",
-      "repository_head": "fe06576426e301b90064e3382e00014862f7320d",
+      "repository_root": "/private/tmp/tarot-land",
+      "repository_head": "3ddb143dc4b0e68a7c31b8cbb96a25ed0a940fd9",
       "tracked_changes": [
-        "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/instrument-session.mjs",
-        "desktop/cradle/walk/run.mjs"
+        "desktop/cradle/walk/artifacts/tarot-score-failure.png",
+        "desktop/cradle/walk/artifacts/tarot-score-tarot-720-return.png",
+        "desktop/cradle/walk/artifacts/tarot-score-tarot-default-scene-resolve.png",
+        "desktop/cradle/walk/artifacts/tarot-score-tarot-field-live.png",
+        "desktop/cradle/walk/artifacts/tarot-score-tarot-identity-selected.png",
+        "desktop/cradle/walk/artifacts/tarot-score-tarot-score-view.png",
+        "desktop/cradle/walk/artifacts/tarot-score-tarot-token-selected.png",
+        "desktop/cradle/walk/artifacts/tarot-score.json"
       ],
-      "dirty_digest": "3dd9dffe977a83287b9b8a29998fe78445e54b1a5b5d3599edb30302d684be6d",
-      "engine_provenance_path": "/private/tmp/tarot-score-walk/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "dirty_digest": "ec697016844f59c096a0c778f688b27d5502c433c48e66178bb6caea3c541523",
+      "engine_provenance_path": "/private/tmp/tarot-land/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 63487,
+  "duration_ms": 37726,
   "checks": [
     {
       "ok": true,
@@ -53,7 +59,7 @@
       "ok": true,
       "label": "The scene event carries an admitted ql.sky-snapshot/v1 in its source receipts",
       "data": {
-        "snapshot_ref": "sha256:12868e1e11d1e4a71"
+        "snapshot_ref": "sha256:4b43353e3d0043979"
       }
     },
     {
@@ -151,7 +157,7 @@
       "ok": true,
       "label": "The held score keeps its basis revision — no re-derivation",
       "data": {
-        "basis_revision": "sha256:0b55b9ace61c13321"
+        "basis_revision": "sha256:a439c71dcdf0ab234"
       }
     },
     {
@@ -195,7 +201,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 101,
+      "duration_ms": 78,
       "data": {
         "file": "tarot-score-relay-relay-scene-composed.png"
       }
@@ -203,7 +209,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 54,
+      "duration_ms": 38,
       "data": {
         "file": "tarot-score-relay-relay-score-resolved.png"
       }
@@ -211,7 +217,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 68,
+      "duration_ms": 56,
       "data": {
         "file": "tarot-score-relay-relay-refusal-named.png"
       }

@@ -1069,7 +1069,10 @@ nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!awaitingNativeBoo
  // The saved determinant mirrors into the working draft, so its Scene
  // material matches the owner's document and no later refresh reads the join
  // back as an unsaved edit.
- occasionSaved:occasion=>{const target=scene() as Scene;if(sameSceneData(target.native?.occasion??null,occasion))return;changed(()=>{target.native={...(target.native??{}),occasion:clone(occasion)} as Scene['native'];});},
+ // The mirror syncs the draft from the owner's just-committed document: an
+ // in-place adoption, not a changed() edit — dirtying the draft here would
+ // undo the save's own standing (the join reads back as an unsaved edit).
+ occasionSaved:occasion=>{const target=scene() as Scene;if(sameSceneData(target.native?.occasion??null,occasion))return;target.native={...(target.native??{}),occasion:clone(occasion)} as Scene['native'];store.touch();markSaved();renderAll();},
  status:showNativeStatus,followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
 // Acts & reusable material (EXPRESSION-ACT-MATERIAL-V1): roles on this Scene's
 // objects/text, save-as-reusable, the material register and act playback,

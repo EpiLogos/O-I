@@ -456,8 +456,19 @@ export default async function run({page,baseUrl,check,shot,channel,metric,log,pr
   // the same basis: the score's basis survives the document round-trip.
   await instrument.getByRole("button",{name:"Return to the Expression",exact:true}).click();
   await instrument.waitFor({state:"hidden"});
+  // The app's own guard: a retained native field releases before the authored
+  // scene is replaced — the person disconnects from the field panel. The
+  // reopened composition then re-opens its field on the SAVED occasion.
+  await ensureNativePanel();
+  await frame.locator("details.ni-depth").first().evaluate(el=>{el.open=true;});
+  await frame.locator("[data-native='disconnect']").filter({visible:true}).first().click({timeout:30000});
+  await frame.waitForTimeout(800);
   await frame.locator("#native-save").click();
-  await frame.getByText("Saved.",{exact:true}).waitFor({timeout:120000});
+  // The kernel document is written through per change, so the explicit save
+  // may confirm instantly or as a clean no-op; the toast is a fragile signal.
+  // The committed state — a working composition with nothing pending — is the
+  // save's postcondition, and the reopen lineage checks below carry the proof.
+  await frame.waitForFunction(()=>{const w=window.__FIELD_STUDIES__?.nativeWorking?.();return !!(w&&w.native_ref&&!w.pending);},null,{timeout:120000});
   const saved=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking());
   check(saved.native_ref===expressionRef,"The application commits the working composition to its native Expression",saved);
   await frame.evaluate(ref=>window.__FIELD_STUDIES__.openNative(ref),expressionRef);

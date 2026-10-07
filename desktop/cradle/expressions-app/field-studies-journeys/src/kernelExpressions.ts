@@ -94,9 +94,12 @@ function call<T>(kind:string,body:Record<string,unknown>,timeoutMs=20000):Promis
  });
 }
 
-/** Personal readings stay on this session channel, outside Journey data. */
+/** Personal readings stay on this session channel, outside Journey data.
+ * The window matches the dated-sky provider's real cost (the pinned occasion
+ * spawns the qualified provider and the personal-current chain behind it);
+ * a refusal or an unknown still rejects inside it. */
 export function naraInstrumentRequest(request:import('../../../src/nara/instrumentProtocol').NaraInstrumentRequest):Promise<import('../../../src/nara/instrumentProtocol').NaraInstrumentReply>{
- return call('nara-instrument',{request},90000);
+ return call('nara-instrument',{request},240000);
 }
 
 export interface KernelExpressionListing {expression_ref:string;title:string;revision:number;dirty?:boolean;last_touched_unix?:number}

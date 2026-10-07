@@ -4,7 +4,7 @@
   "spec_ref": "docs/cradle/05-EXECUTION.md §3",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-10-07T10:49:01.382Z",
+  "generated_at": "2026-10-07T12:16:32.363Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -19,17 +19,33 @@
     "platform": "darwin",
     "source": {
       "repository_root": "/private/tmp/tarot-land",
-      "repository_head": "0c8b24b880c622d14a2d7a20314eb5b6fa15c5de",
-      "tracked_changes": [],
-      "dirty_digest": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+      "repository_head": "3ddb143dc4b0e68a7c31b8cbb96a25ed0a940fd9",
+      "tracked_changes": [
+        "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+        "desktop/cradle/expressions-app/field-studies-journeys/src/kernelExpressions.ts",
+        "desktop/cradle/walk/artifacts/tarot-score-failure.png",
+        "desktop/cradle/walk/artifacts/tarot-score-relay-relay-refusal-named.png",
+        "desktop/cradle/walk/artifacts/tarot-score-relay-relay-scene-composed.png",
+        "desktop/cradle/walk/artifacts/tarot-score-relay-relay-score-resolved.png",
+        "desktop/cradle/walk/artifacts/tarot-score-relay.json",
+        "desktop/cradle/walk/artifacts/tarot-score-tarot-720-return.png",
+        "desktop/cradle/walk/artifacts/tarot-score-tarot-default-scene-resolve.png",
+        "desktop/cradle/walk/artifacts/tarot-score-tarot-field-live.png",
+        "desktop/cradle/walk/artifacts/tarot-score-tarot-identity-selected.png",
+        "desktop/cradle/walk/artifacts/tarot-score-tarot-score-view.png",
+        "desktop/cradle/walk/artifacts/tarot-score-tarot-token-selected.png",
+        "desktop/cradle/walk/artifacts/tarot-score.json",
+        "desktop/cradle/walk/scenarios/tarot-score.mjs"
+      ],
+      "dirty_digest": "fbadf49f0eb91720f203362cd44277d1c40f5e65ee7c411c2c5f95c80474332e",
       "engine_provenance_path": "/private/tmp/tarot-land/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
-  "passed": false,
-  "error": "Error: the dated sky reading did not return: {\"alerts\":[\"the kernel host channel did not answer the nara-instrument request\"],\"statuses\":[\"Saved. This identity is selected for the Expression.\"]}\n    at Module.run (file:///private/tmp/tarot-land/desktop/cradle/walk/scenarios/tarot-score.mjs:263:11)\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:541:9)\n    at async runScenario (file:///private/tmp/tarot-land/desktop/cradle/walk/run.mjs:636:7)\n    at async file:///private/tmp/tarot-land/desktop/cradle/walk/run.mjs:719:18",
-  "duration_ms": 337317,
+  "passed": true,
+  "error": null,
+  "duration_ms": 276090,
   "checks": [
     {
       "ok": true,
@@ -73,7 +89,7 @@
         "kind": "dated",
         "mode": "undefined",
         "epoch": "undefined",
-        "snapshot_ref": "sha256:89a3cf9244f17f18f4b4a047c9072d9c1f84bbbe936a53c794104f471c298b7a",
+        "snapshot_ref": "sha256:5faa717edda58fe834f7a67dc80b89bebfed9f4912ec18a71e4256f62c626d24",
         "label": "Dated sky · undefined"
       }
     },
@@ -84,6 +100,708 @@
     {
       "ok": true,
       "label": "The Atlas adopts the rooted M coordinate as the Expression's profile through the native owner"
+    },
+    {
+      "ok": true,
+      "label": "The native form opens for the encounter through the Form and clock view"
+    },
+    {
+      "ok": true,
+      "label": "The score resolve admits through the exchange transport and the tokens render",
+      "data": {
+        "tokens": 10
+      }
+    },
+    {
+      "ok": true,
+      "label": "The held reading names its schema and basis revision",
+      "data": {
+        "caption": "Score ql.tarot-score/v1 · basis sha256:6c81baf93… · score revision 3918804783895438000"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A token renders as its named card from the minor-id decode",
+      "data": {
+        "cardName": "Seven of Wands"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The token shows its score role",
+      "data": {
+        "cardRole": "kairos/Jupiter"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The token shows its computed origin label",
+      "data": {
+        "cardOrigin": "Computed"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The token shows its pose admission badge within the lawful state count",
+      "data": {
+        "poseBadge": "lawfully admitted · state 1/7"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The held score answers as current for this field event"
+    },
+    {
+      "ok": true,
+      "label": "Selecting a token applies the card's form and pose through the native M3 owner",
+      "data": {
+        "generation": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "The applied native form answers with its real state",
+      "data": {
+        "address": 26,
+        "pose": 1,
+        "state_count": 7
+      }
+    },
+    {
+      "ok": true,
+      "label": "Stepping the pose moves the native form within its lawful state count",
+      "data": {
+        "pose": 2,
+        "previous": 1,
+        "step": "Pose +1",
+        "state_count": 7
+      }
+    },
+    {
+      "ok": true,
+      "label": "Advancing the clock moves the native clock projection by the named steps",
+      "data": {
+        "steps": 360,
+        "previous": 359
+      }
+    },
+    {
+      "ok": true,
+      "label": "The 720° Return advances the completed double covers",
+      "data": {
+        "completed_double_covers": 1,
+        "previous": 0,
+        "degree720": 360,
+        "sheet": 2,
+        "previous_sheet": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "After the traversal the re-resolve answers current through score-state"
+    },
+    {
+      "ok": true,
+      "label": "The second scene composes without a dated sky request",
+      "data": {
+        "kind": "none",
+        "label": "No dated sky requested"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The default scene's resolve admits anchored by the event's own world sky and answers current"
+    },
+    {
+      "ok": true,
+      "label": "The application commits the working composition to its native Expression",
+      "data": {
+        "native_ref": "expression:tarot-score-walk",
+        "revision": 4,
+        "notes": [],
+        "bindings": {
+          "expression:tarot-score-walk:scene:main": {
+            "scene_ref": "expression:tarot-score-walk:scene:main",
+            "member_refs": [],
+            "loaded_refs": [],
+            "page": 0,
+            "page_count": 1,
+            "hidden_refs": [],
+            "focused_relation": null,
+            "occurrences": [],
+            "relations": [],
+            "body": null,
+            "triggers": []
+          },
+          "expression:tarot-score-walk:scene:occasion": {
+            "scene_ref": "expression:tarot-score-walk:scene:occasion",
+            "member_refs": [
+              "expression:tarot-score-walk:entity:anchor"
+            ],
+            "loaded_refs": [
+              "expression:tarot-score-walk:entity:anchor"
+            ],
+            "page": 0,
+            "page_count": 1,
+            "hidden_refs": [],
+            "focused_relation": null,
+            "occurrences": [
+              {
+                "expression_ref": "expression:tarot-score-walk",
+                "scene_ref": "expression:tarot-score-walk:scene:occasion",
+                "entity_ref": "expression:tarot-score-walk:entity:anchor",
+                "view_entity_id": "expression:tarot-score-walk:entity:anchor",
+                "subject": null
+              }
+            ],
+            "relations": [],
+            "body": null,
+            "triggers": []
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "Reopening the saved composition's field restores its retained occasion sky (the saved determinant, not a fresh compose)",
+      "data": {
+        "retained_snapshot_ref": "sha256:5faa717edda58fe834f7a67dc80b89bebfed9f4912ec18a71e4256f62c626d24",
+        "restored": {
+          "kind": "dated",
+          "mode": "undefined",
+          "epoch": "undefined",
+          "snapshot_ref": "sha256:5faa717edda58fe834f7a67dc80b89bebfed9f4912ec18a71e4256f62c626d24",
+          "label": "Dated sky · undefined"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "After save and reopen the score re-resolves on the reopened basis",
+      "data": {
+        "before": "sha256:6c81baf93",
+        "after": "sha256:6c81baf93"
+      }
+    },
+    {
+      "ok": true,
+      "label": "After save and reopen the score's token lineage survives (same anchors, roles and cards)",
+      "data": {
+        "before": {
+          "name": "Seven of Wands",
+          "role": "kairos/Jupiter",
+          "codons": "",
+          "probe": {
+            "caption": "sha256:6c81baf93",
+            "state": {
+              "status": "held",
+              "acting_sky": {
+                "kind": "dated",
+                "mode": "undefined",
+                "epoch": "undefined",
+                "snapshot_ref": "sha256:5faa717edda58fe834f7a67dc80b89bebfed9f4912ec18a71e4256f62c626d24",
+                "label": "Dated sky · undefined"
+              },
+              "acting_event": "ql:k2/default-event",
+              "field_basis": {
+                "schema": "oi.field-score-basis/v1",
+                "subject_ref": "ql:k2/default-subject",
+                "event_ref": "ql:k2/default-event",
+                "clock_steps": 359,
+                "occasion_sky": {
+                  "ayanamsha_degrees": null,
+                  "bodies": [
+                    {
+                      "backend": "moshier",
+                      "body": "Sun",
+                      "data_files": [],
+                      "distance_au": 0.9995035291676487,
+                      "latitude_degrees": 0.000013774476330829484,
+                      "latitude_speed_degrees_per_day": -0.000039783267708213347,
+                      "longitude_degrees": 194.25112675161273,
+                      "longitude_speed_degrees_per_day": 0.9867938314014052,
+                      "native_planet_id": 0,
+                      "radial_speed_au_per_day": -0.00028206137918647774,
+                      "retrograde": false,
+                      "returned_flags": 260,
+                      "swiss_body_id": 0
+                    },
+                    {
+                      "backend": "moshier",
+                      "body": "Moon",
+                      "data_files": [],
+                      "distance_au": 0.0025213714058527656,
+                      "latitude_degrees": -0.5616780010392626,
+                      "latitude_speed_degrees_per_day": -1.2212912151481208,
+                      "longitude_degrees": 155.35415744052543,
+                      "longitude_speed_degrees_per_day": 13.635078648925491,
+                      "native_planet_id": 1,
+                      "radial_speed_au_per_day": 0.00001787648162213826,
+                      "retrograde": false,
+                      "returned_flags": 260,
+                      "swiss_body_id": 1
+                    },
+                    {
+                      "backend": "moshier",
+                      "body": "Mercury",
+                      "data_files": [],
+                      "distance_au": 1.0831972758214845,
+                      "latitude_degrees": -2.469356402881955,
+                      "latitude_speed_degrees_per_day": -0.09999406768573488,
+                      "longitude_degrees": 218.81224916228058,
+                      "longitude_speed_degrees_per_day": 1.1631052147528405,
+                      "native_planet_id": 2,
+                      "radial_speed_au_per_day": -0.015476411074253384,
+                      "retrograde": false,
+                      "returned_flags": 260,
+                      "swiss_body_id": 2
+                    },
+                    {
+                      "backend": "moshier",
+                      "body": "Venus",
+                      "data_files": [],
+                      "distance_au": 0.31490661556166144,
+                      "latitude_degrees": -7.494502417105488,
+                      "latitude_speed_degrees_per_day": -0.04089762861933943,
+                      "longitude_degrees": 218.14293310600934,
+                      "longitude_speed_degrees_per_day": -0.16624647674078583,
+                      "native_planet_id": 3,
+                      "radial_speed_au_per_day": -0.004464423000789217,
+                      "retrograde": true,
+                      "returned_flags": 260,
+                      "swiss_body_id": 3
+                    },
+                    {
+                      "backend": "moshier",
+                      "body": "Mars",
+                      "data_files": [],
+                      "distance_au": 1.6198781727642406,
+                      "latitude_degrees": 1.1291130154218636,
+                      "latitude_speed_degrees_per_day": 0.017784876287056786,
+                      "longitude_degrees": 125.44016146844177,
+                      "longitude_speed_degrees_per_day": 0.5691647135673862,
+                      "native_planet_id": 4,
+                      "radial_speed_au_per_day": -0.00714623790479079,
+                      "retrograde": false,
+                      "returned_flags": 260,
+                      "swiss_body_id": 4
+                    },
+                    {
+                      "backend": "moshier",
+                      "body": "Jupiter",
+                      "data_files": [],
+                      "distance_au": 5.841975168156962,
+                      "latitude_degrees": 0.6146329020840862,
+                      "latitude_speed_degrees_per_day": 0.0027650389063165527,
+                      "longitude_degrees": 140.7266188355305,
+                      "longitude_speed_degrees_per_day": 0.16933073086794245,
+                      "native_planet_id": 5,
+                      "radial_speed_au_per_day": -0.012566049343799497,
+                      "retrograde": false,
+                      "returned_flags": 260,
+                      "swiss_body_id": 5
+                    },
+                    {
+                      "backend": "moshier",
+                      "body": "Saturn",
+                      "data_files": [],
+                      "distance_au": 8.435574490223631,
+                      "latitude_degrees": -2.7140878283631715,
+                      "latitude_speed_degrees_per_day": 0.000010276013720135647,
+                      "longitude_degrees": 11.066856640818244,
+                      "longitude_speed_degrees_per_day": -0.07853191397606485,
+                      "native_planet_id": 6,
+                      "radial_speed_au_per_day": 0.0008880795779010298,
+                      "retrograde": true,
+                      "returned_flags": 260,
+                      "swiss_body_id": 6
+                    },
+                    {
+                      "backend": "moshier",
+                      "body": "Uranus",
+                      "data_files": [],
+                      "distance_au": 18.79743646877297,
+                      "latitude_degrees": -0.15308826319059599,
+                      "latitude_speed_degrees_per_day": 0.00005456257406811572,
+                      "longitude_degrees": 65.40110564082934,
+                      "longitude_speed_degrees_per_day": -0.021666371021501613,
+                      "native_planet_id": 7,
+                      "radial_speed_au_per_day": -0.013273374874433535,
+                      "retrograde": true,
+                      "returned_flags": 260,
+                      "swiss_body_id": 7
+                    },
+                    {
+                      "backend": "moshier",
+                      "body": "Neptune",
+                      "data_files": [],
+                      "distance_au": 28.898401007363997,
+                      "latitude_degrees": -1.4200103555186803,
+                      "latitude_speed_degrees_per_day": 0.00005712972351524803,
+                      "longitude_degrees": 2.6837837298111955,
+                      "longitude_speed_degrees_per_day": -0.027086030489073043,
+                      "native_planet_id": 8,
+                      "radial_speed_au_per_day": 0.003636591186521451,
+                      "retrograde": true,
+                      "returned_flags": 260,
+                      "swiss_body_id": 8
+                    },
+                    {
+                      "backend": "moshier",
+                      "body": "Pluto",
+                      "data_files": [],
+                      "distance_au": 35.280358189511986,
+                      "latitude_degrees": -4.28946032321945,
+                      "latitude_speed_degrees_per_day": 0.0006060774090064223,
+                      "longitude_degrees": 303.08626313072244,
+                      "longitude_speed_degrees_per_day": -0.004093629251732832,
+                      "native_planet_id": 9,
+                      "radial_speed_au_per_day": 0.01693836982784478,
+                      "retrograde": true,
+                      "returned_flags": 260,
+                      "swiss_body_id": 9
+                    }
+                  ],
+                  "epoch_unix_ms": 1791375405000,
+                  "epoch_utc": "2026-10-07T12:16:45Z",
+                  "house_policy": "not-emitted; factory auxiliary Whole-Sign houses discarded",
+                  "julian_day_ut_argument": 2461321.011631944,
+                  "provider": {
+                    "adapter_epoch_range_utc": [
+                      "1800-01-01T00:00:00Z",
+                      "2400-01-01T00:00:00Z"
+                    ],
+                    "adapter_sha256": "e57b14706d09df33999092932252538296f306f4e60fe9b7cecad75589a12d8e",
+                    "engine_sha256": "7cf7b3e90ffad5cd1b12965ef088c81b5740794086d7f739cbdba8b50549d01b",
+                    "engine_version": "2.10.03",
+                    "factory_sha256": "0adda8e06e43d3be42926c70d91e4f9d94da5b2273423d83dfe8abcc673ee380",
+                    "name": "Kerykeion",
+                    "network": "disabled",
+                    "python_version": "3.13.11",
+                    "pytz_version": "2026.5",
+                    "requested_flags": 258,
+                    "used_data_files": [],
+                    "version": "5.7.1",
+                    "wrapper": "pyswisseph",
+                    "wrapper_version": "2.10.3.2"
+                  },
+                  "receipt_clock": "host-utc-clock",
+                  "receipt_unix_ms": 1791375405689,
+                  "receipt_utc": "2026-10-07T12:16:45.689535Z",
+                  "reference_frame": "ecliptic-of-date",
+                  "request": {
+                    "ayanamsha": null,
+                    "backend_policy": "allow-moshier",
+                    "epoch": "2026-10-07T12:16:45Z",
+                    "max_age_seconds": 3600,
+                    "mode": "current",
+                    "observer": null,
+                    "perspective": "Apparent Geocentric",
+                    "schema": "ql.sky-request/v1",
+                    "timezone": "UTC",
+                    "zodiac": "Tropical"
+                  },
+                  "schema": "ql.sky-snapshot/v1",
+                  "scope": "shared-geocentric",
+                  "snapshot_ref": "sha256:5faa717edda58fe834f7a67dc80b89bebfed9f4912ec18a71e4256f62c626d24",
+                  "source_binding": {
+                    "earth_body": {
+                      "is_eighth_chakra": false,
+                      "outside_planet_array": true,
+                      "role": "grounding-anchor",
+                      "source_ref": "#2-5-0/1-0"
+                    },
+                    "epogdoon": [
+                      9,
+                      8
+                    ],
+                    "header": "vendor/epi-kernel/reference/include/m2.h",
+                    "header_sha256": "7dfcd2906afb4415151d059d2259aa2252dfe74fa74a64a6b843ae5b385ab4c8",
+                    "native_table": "M2_PLANET_LUT",
+                    "non_sun_operators": 9,
+                    "receiving_chakras": 7,
+                    "registry_revision": "82cd2a438fe82fdf3cd6a56383cc591b3beef53bd22b593922cd3fd6768f7de2",
+                    "scope": "#2-5",
+                    "standing": "retained-symbolic-model-not-astronomical-measurement",
+                    "sun_role": "solar-parent",
+                    "transpersonal_meaning": "source-preempted-not-invented",
+                    "transpersonal_native_ids": [
+                      7,
+                      8,
+                      9
+                    ]
+                  },
+                  "standing": "calculated-ephemeris-not-observed-sky",
+                  "time_scale_policy": "UTC-as-UT argument; UT1 correction not supplied"
+                }
+              }
+            },
+            "anchor": "kairos · body 5 · 140.7266°",
+            "inscription": "Leo Decan 3 · #2-3-1-1-2 · #3-4-1-6 · #3-4.0-2-6"
+          }
+        },
+        "after": {
+          "name": "Seven of Wands",
+          "role": "kairos/Jupiter",
+          "codons": "",
+          "probe": {
+            "caption": "sha256:6c81baf93",
+            "state": {
+              "status": "held",
+              "acting_sky": {
+                "kind": "dated",
+                "mode": "undefined",
+                "epoch": "undefined",
+                "snapshot_ref": "sha256:5faa717edda58fe834f7a67dc80b89bebfed9f4912ec18a71e4256f62c626d24",
+                "label": "Dated sky · undefined"
+              },
+              "acting_event": "ql:k2/default-event",
+              "field_basis": {
+                "schema": "oi.field-score-basis/v1",
+                "subject_ref": "ql:k2/default-subject",
+                "event_ref": "ql:k2/default-event",
+                "clock_steps": 359,
+                "occasion_sky": {
+                  "ayanamsha_degrees": null,
+                  "bodies": [
+                    {
+                      "backend": "moshier",
+                      "body": "Sun",
+                      "data_files": [],
+                      "distance_au": 0.9995035291676487,
+                      "latitude_degrees": 0.000013774476330829484,
+                      "latitude_speed_degrees_per_day": -0.000039783267708213347,
+                      "longitude_degrees": 194.25112675161273,
+                      "longitude_speed_degrees_per_day": 0.9867938314014052,
+                      "native_planet_id": 0,
+                      "radial_speed_au_per_day": -0.00028206137918647774,
+                      "retrograde": false,
+                      "returned_flags": 260,
+                      "swiss_body_id": 0
+                    },
+                    {
+                      "backend": "moshier",
+                      "body": "Moon",
+                      "data_files": [],
+                      "distance_au": 0.0025213714058527656,
+                      "latitude_degrees": -0.5616780010392626,
+                      "latitude_speed_degrees_per_day": -1.2212912151481208,
+                      "longitude_degrees": 155.35415744052543,
+                      "longitude_speed_degrees_per_day": 13.635078648925491,
+                      "native_planet_id": 1,
+                      "radial_speed_au_per_day": 0.00001787648162213826,
+                      "retrograde": false,
+                      "returned_flags": 260,
+                      "swiss_body_id": 1
+                    },
+                    {
+                      "backend": "moshier",
+                      "body": "Mercury",
+                      "data_files": [],
+                      "distance_au": 1.0831972758214845,
+                      "latitude_degrees": -2.469356402881955,
+                      "latitude_speed_degrees_per_day": -0.09999406768573488,
+                      "longitude_degrees": 218.81224916228058,
+                      "longitude_speed_degrees_per_day": 1.1631052147528405,
+                      "native_planet_id": 2,
+                      "radial_speed_au_per_day": -0.015476411074253384,
+                      "retrograde": false,
+                      "returned_flags": 260,
+                      "swiss_body_id": 2
+                    },
+                    {
+                      "backend": "moshier",
+                      "body": "Venus",
+                      "data_files": [],
+                      "distance_au": 0.31490661556166144,
+                      "latitude_degrees": -7.494502417105488,
+                      "latitude_speed_degrees_per_day": -0.04089762861933943,
+                      "longitude_degrees": 218.14293310600934,
+                      "longitude_speed_degrees_per_day": -0.16624647674078583,
+                      "native_planet_id": 3,
+                      "radial_speed_au_per_day": -0.004464423000789217,
+                      "retrograde": true,
+                      "returned_flags": 260,
+                      "swiss_body_id": 3
+                    },
+                    {
+                      "backend": "moshier",
+                      "body": "Mars",
+                      "data_files": [],
+                      "distance_au": 1.6198781727642406,
+                      "latitude_degrees": 1.1291130154218636,
+                      "latitude_speed_degrees_per_day": 0.017784876287056786,
+                      "longitude_degrees": 125.44016146844177,
+                      "longitude_speed_degrees_per_day": 0.5691647135673862,
+                      "native_planet_id": 4,
+                      "radial_speed_au_per_day": -0.00714623790479079,
+                      "retrograde": false,
+                      "returned_flags": 260,
+                      "swiss_body_id": 4
+                    },
+                    {
+                      "backend": "moshier",
+                      "body": "Jupiter",
+                      "data_files": [],
+                      "distance_au": 5.841975168156962,
+                      "latitude_degrees": 0.6146329020840862,
+                      "latitude_speed_degrees_per_day": 0.0027650389063165527,
+                      "longitude_degrees": 140.7266188355305,
+                      "longitude_speed_degrees_per_day": 0.16933073086794245,
+                      "native_planet_id": 5,
+                      "radial_speed_au_per_day": -0.012566049343799497,
+                      "retrograde": false,
+                      "returned_flags": 260,
+                      "swiss_body_id": 5
+                    },
+                    {
+                      "backend": "moshier",
+                      "body": "Saturn",
+                      "data_files": [],
+                      "distance_au": 8.435574490223631,
+                      "latitude_degrees": -2.7140878283631715,
+                      "latitude_speed_degrees_per_day": 0.000010276013720135647,
+                      "longitude_degrees": 11.066856640818244,
+                      "longitude_speed_degrees_per_day": -0.07853191397606485,
+                      "native_planet_id": 6,
+                      "radial_speed_au_per_day": 0.0008880795779010298,
+                      "retrograde": true,
+                      "returned_flags": 260,
+                      "swiss_body_id": 6
+                    },
+                    {
+                      "backend": "moshier",
+                      "body": "Uranus",
+                      "data_files": [],
+                      "distance_au": 18.79743646877297,
+                      "latitude_degrees": -0.15308826319059599,
+                      "latitude_speed_degrees_per_day": 0.00005456257406811572,
+                      "longitude_degrees": 65.40110564082934,
+                      "longitude_speed_degrees_per_day": -0.021666371021501613,
+                      "native_planet_id": 7,
+                      "radial_speed_au_per_day": -0.013273374874433535,
+                      "retrograde": true,
+                      "returned_flags": 260,
+                      "swiss_body_id": 7
+                    },
+                    {
+                      "backend": "moshier",
+                      "body": "Neptune",
+                      "data_files": [],
+                      "distance_au": 28.898401007363997,
+                      "latitude_degrees": -1.4200103555186803,
+                      "latitude_speed_degrees_per_day": 0.00005712972351524803,
+                      "longitude_degrees": 2.6837837298111955,
+                      "longitude_speed_degrees_per_day": -0.027086030489073043,
+                      "native_planet_id": 8,
+                      "radial_speed_au_per_day": 0.003636591186521451,
+                      "retrograde": true,
+                      "returned_flags": 260,
+                      "swiss_body_id": 8
+                    },
+                    {
+                      "backend": "moshier",
+                      "body": "Pluto",
+                      "data_files": [],
+                      "distance_au": 35.280358189511986,
+                      "latitude_degrees": -4.28946032321945,
+                      "latitude_speed_degrees_per_day": 0.0006060774090064223,
+                      "longitude_degrees": 303.08626313072244,
+                      "longitude_speed_degrees_per_day": -0.004093629251732832,
+                      "native_planet_id": 9,
+                      "radial_speed_au_per_day": 0.01693836982784478,
+                      "retrograde": true,
+                      "returned_flags": 260,
+                      "swiss_body_id": 9
+                    }
+                  ],
+                  "epoch_unix_ms": 1791375405000,
+                  "epoch_utc": "2026-10-07T12:16:45Z",
+                  "house_policy": "not-emitted; factory auxiliary Whole-Sign houses discarded",
+                  "julian_day_ut_argument": 2461321.011631944,
+                  "provider": {
+                    "adapter_epoch_range_utc": [
+                      "1800-01-01T00:00:00Z",
+                      "2400-01-01T00:00:00Z"
+                    ],
+                    "adapter_sha256": "e57b14706d09df33999092932252538296f306f4e60fe9b7cecad75589a12d8e",
+                    "engine_sha256": "7cf7b3e90ffad5cd1b12965ef088c81b5740794086d7f739cbdba8b50549d01b",
+                    "engine_version": "2.10.03",
+                    "factory_sha256": "0adda8e06e43d3be42926c70d91e4f9d94da5b2273423d83dfe8abcc673ee380",
+                    "name": "Kerykeion",
+                    "network": "disabled",
+                    "python_version": "3.13.11",
+                    "pytz_version": "2026.5",
+                    "requested_flags": 258,
+                    "used_data_files": [],
+                    "version": "5.7.1",
+                    "wrapper": "pyswisseph",
+                    "wrapper_version": "2.10.3.2"
+                  },
+                  "receipt_clock": "host-utc-clock",
+                  "receipt_unix_ms": 1791375405689,
+                  "receipt_utc": "2026-10-07T12:16:45.689535Z",
+                  "reference_frame": "ecliptic-of-date",
+                  "request": {
+                    "ayanamsha": null,
+                    "backend_policy": "allow-moshier",
+                    "epoch": "2026-10-07T12:16:45Z",
+                    "max_age_seconds": 3600,
+                    "mode": "current",
+                    "observer": null,
+                    "perspective": "Apparent Geocentric",
+                    "schema": "ql.sky-request/v1",
+                    "timezone": "UTC",
+                    "zodiac": "Tropical"
+                  },
+                  "schema": "ql.sky-snapshot/v1",
+                  "scope": "shared-geocentric",
+                  "snapshot_ref": "sha256:5faa717edda58fe834f7a67dc80b89bebfed9f4912ec18a71e4256f62c626d24",
+                  "source_binding": {
+                    "earth_body": {
+                      "is_eighth_chakra": false,
+                      "outside_planet_array": true,
+                      "role": "grounding-anchor",
+                      "source_ref": "#2-5-0/1-0"
+                    },
+                    "epogdoon": [
+                      9,
+                      8
+                    ],
+                    "header": "vendor/epi-kernel/reference/include/m2.h",
+                    "header_sha256": "7dfcd2906afb4415151d059d2259aa2252dfe74fa74a64a6b843ae5b385ab4c8",
+                    "native_table": "M2_PLANET_LUT",
+                    "non_sun_operators": 9,
+                    "receiving_chakras": 7,
+                    "registry_revision": "82cd2a438fe82fdf3cd6a56383cc591b3beef53bd22b593922cd3fd6768f7de2",
+                    "scope": "#2-5",
+                    "standing": "retained-symbolic-model-not-astronomical-measurement",
+                    "sun_role": "solar-parent",
+                    "transpersonal_meaning": "source-preempted-not-invented",
+                    "transpersonal_native_ids": [
+                      7,
+                      8,
+                      9
+                    ]
+                  },
+                  "standing": "calculated-ephemeris-not-observed-sky",
+                  "time_scale_policy": "UTC-as-UT argument; UT1 correction not supplied"
+                }
+              }
+            },
+            "anchor": "kairos · body 5 · 140.7266°",
+            "inscription": "Leo Decan 3 · #2-3-1-1-2 · #3-4-1-6 · #3-4.0-2-6"
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "Re-resolving the reopened composition is deterministic (same basis revision)",
+      "data": {
+        "first": "sha256:6c81baf93",
+        "second": "sha256:6c81baf93"
+      }
     }
   ],
   "ops": [
@@ -93,7 +811,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-10-07T10:49:01.760Z",
+        "mounted_at": "2026-10-07T12:16:32.594Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -104,7 +822,7 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 1695.4,
+      "duration_ms": 497.4,
       "seq_range": {
         "from": 3,
         "to": 3
@@ -152,7 +870,7 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 3.4,
+      "duration_ms": 1.5,
       "seq_range": {
         "from": 4,
         "to": 4
@@ -223,7 +941,7 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 2.7,
+      "duration_ms": 1.1,
       "seq_range": {
         "from": 5,
         "to": 6
@@ -294,7 +1012,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 1100,
+      "duration_ms": 350,
       "data": {
         "file": "tarot-score-tarot-field-live.png"
       }
@@ -302,16 +1020,53 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 994,
+      "duration_ms": 324,
       "data": {
         "file": "tarot-score-tarot-identity-selected.png"
       }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 387,
+      "data": {
+        "file": "tarot-score-tarot-score-view.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 292,
+      "data": {
+        "file": "tarot-score-tarot-token-selected.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 237,
+      "data": {
+        "file": "tarot-score-tarot-720-return.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 595,
+      "data": {
+        "file": "tarot-score-tarot-default-scene-resolve.png"
+      }
     }
   ],
-  "metrics": {},
+  "metrics": {
+    "tarot_tokens": 10
+  },
   "screenshots": [
     "tarot-score-tarot-field-live.png",
-    "tarot-score-tarot-identity-selected.png"
-  ],
-  "failure_stage": "application"
+    "tarot-score-tarot-identity-selected.png",
+    "tarot-score-tarot-score-view.png",
+    "tarot-score-tarot-token-selected.png",
+    "tarot-score-tarot-720-return.png",
+    "tarot-score-tarot-default-scene-resolve.png"
+  ]
 }
