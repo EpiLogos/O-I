@@ -51,6 +51,7 @@ export class NativeFieldController {
  private suspension:{tokens:Set<symbol>;epoch:number;revision:number;restore:boolean;reason:string}|null=null;
  private restoring:{epoch:number;revision:number}|null=null;
  private scene=false;private influenceReading:any=null;private acting:SceneActing|null=null;
+ private stageReading:any=null;private stageStale=false;
  private event:any=null;private opening:any=null;private sourcesStale=false;private influenceStale=false;private timing:any=null;private timingStart=0;private lastInspect=0;
  private operating=0;private cadence:Cadence|null=null;private lastCadence:Cadence|null=null;
  private refusal:{operation:string;reason:string;at:number}|null=null;
@@ -129,6 +130,7 @@ export class NativeFieldController {
   presented_clock:clock,
   instrument:this.scene?{schema:'oi.scene-instrument-reading/v1',acting:this.acting,influence:this.influenceReading,influence_stale:this.influenceStale,
    opening_event_available:!!this.opening,sources_stale:this.sourcesStale,cadence:this.cadenceReading(),refusal:this.refusal,played:this.played,
+   stage:this.stageReading,stage_stale:this.stageStale,
    presentation:INSTRUMENT_PRESENTATION}:null,
   checkpoint:this.checkpoint?{supported:true,scope:'same live GPU and unchanged native cursor',receipt:this.checkpoint.receipt}:null,
   exact_seek:false,restart:'explicit new native process; no implicit rewind',
@@ -331,7 +333,7 @@ export class NativeFieldController {
      if(!this.current(session))return;
      // The owner acknowledged: the event happened. A busy follow-up read only
      // leaves the influence stale for the next refresh; it never un-counts it.
-     this.checkpoint=null;this.sourcesStale=true;this.influenceStale=true;this.refusal=null;
+     this.checkpoint=null;this.sourcesStale=true;this.influenceStale=true;this.stageStale=true;this.refusal=null;
      // The acknowledgement carried the new influence; take it without a
      // second exchange (the audio pump must not wait on another read).
      const carried=session.lastInfluence;
@@ -350,7 +352,7 @@ export class NativeFieldController {
     await held.recover('native determinant admission');
     if(needsEvent&&this.sourcesStale)await this.readSources(held);
     await held.operate(build());
-    this.refusal=null;
+    this.refusal=null;this.stageStale=true;
     await this.readSources(held);await this.readInfluence(held);
     await held.recover('native determinant readback admitted; rebase device only');
     this.reason=following?null:prior;
@@ -421,6 +423,28 @@ export class NativeFieldController {
   try{await held.recover('native influence reading');return await this.readInfluence(held);}
   finally{if(this.current(held))this.hold('influence reading complete; resume explicitly');}
  });}
+ /** The Ta-Onta procedural stage's scoped disclosure (ql.stage-state/v1): the
+  * live constituents, their effective values and each owned slot's procedure,
+  * read from the one scene owner. A read: the field does not advance. */
+ stageState(){return this.serial(async()=>{
+  const session=this.session;if(!session||!this.scene)throw new Error('the procedural stage belongs to a scene owner');
+  if(this.status==='following'){if(!(await this.waitIdle(session,5000)))throw new Error('native owner busy');return this.readStage(session);}
+  this.hold('stage disclosure reading');const held=await this.idle();
+  try{await held.recover('stage disclosure reading');return await this.readStage(held);}
+  finally{if(this.current(held))this.hold('stage disclosure complete; resume explicitly');}
+ });}
+ private async readStage(session:InstrumentSession){
+  const stage=await session.stageState();
+  if(this.session!==session||this.dead)throw new Error('stage disclosure belongs to a released lifetime');
+  this.stageReading=stage;this.stageStale=false;this.changed();return stage;
+ }
+ /** One invoked stage procedure through the one serial owner: the host compiles
+  * it into its own admitted determinant applications and acknowledges with the
+  * applied field and new influence; the ownership claims are read back from
+  * stage state, never asserted locally. */
+ stageEvaluate(procedure:unknown){
+  return this.determinant('stage evaluate',()=>({operation:'stage-evaluate',procedure:structuredClone(procedure)}),false);
+ }
  /** Human-cadence source refresh after determinant events; never while an event
   * is in flight, never while held. */
  async refreshSources(){
@@ -429,7 +453,10 @@ export class NativeFieldController {
   // plays it yields to the ticks and runs at most every 5 s.
   if(session&&this.scene&&this.influenceStale&&this.status==='following'&&!this.suspension&&!this.operating&&!this.serialDepth){
    this.operating++;
-   try{if(await this.waitIdle(session,100)&&this.status==='following'){await this.readInfluence(session);this.changed();}}
+   try{if(await this.waitIdle(session,100)&&this.status==='following'){await this.readInfluence(session);
+    // A displayed stage disclosure rides the same human cadence after the
+    // determinants that move its constituents; a cheap read, never a beat.
+    if(this.stageStale&&this.stageReading)await this.readStage(session);this.changed();}}
    catch{}finally{this.operating--;}
   }
   if(!session||!this.scene||!this.sourcesStale||this.status!=='following'||this.suspension||this.operating||this.serialDepth||performance.now()-this.lastInspect<(this.cadence?5000:1500))return false;
@@ -518,6 +545,7 @@ export class NativeFieldController {
   const context=this.context;this.context=null;const opened=this.opened;this.opened=null;this.checkpoint=null;this.contextLost=false;
   this.sources=null;this.domain=null;this.openingHold=null;
   this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.level=null;
+  this.stageReading=null;this.stageStale=false;
   this.admitting=null;this.suspension=null;this.restoring=null;
   if(manual){this.status='manual';this.lastNative=null;this.reason=null;this.refusal=null;this.lastCadence=null;this.changed();}
   const close=async()=>{

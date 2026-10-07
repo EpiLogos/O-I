@@ -22,7 +22,9 @@ function sameState(a, b) {
 }
 
 const EVENT_OPERATIONS = ['m1-advance', 'replace-event'];
-const READ_OPERATIONS = ['read', 'inspect', 'influence', 'personal', 'receive-personal'];
+// stage-state is the Ta-Onta procedural stage's scoped disclosure: a read on
+// the one owner — the field does not advance and the receipt is unchanged.
+const READ_OPERATIONS = ['read', 'inspect', 'influence', 'personal', 'receive-personal', 'stage-state'];
 
 export class InstrumentSession {
   #context; #owner; #port; #field; #audio; #native; #instance; #sequence;
@@ -149,11 +151,19 @@ export class InstrumentSession {
       // additionally commits inscription-axis alignment. replace-event's own
       // strike flag is a policy within the modes commit, not another generation.
       const event = EVENT_OPERATIONS.includes(command.operation);
+      // A stage evaluation is the host's own compiled plan: 1..N admitted
+      // applications (replace / set-damping / set-axis / strike / m1-advance,
+      // plus the generated passage's m1-advance ticks), so the generation
+      // advances by the plan's own steps. Samples and PCM do not move: each
+      // step's receipt is audio-empty and the plan never schedules data-plane
+      // blocks — sound continues through the ordinary advance path.
+      const stageEvaluation = command.operation === 'stage-evaluate';
       const frames = command.operation === 'advance' ? command.frames : 0;
       const before = cursor(this.#native.generation), after = cursor(frame.generation);
       const minimumEventDelta = command.operation === 'm1-advance' ? 2n : 1n;
       const maximumEventDelta = command.operation === 'm1-advance' ? 3n : 2n;
       need((event ? after >= before + minimumEventDelta && after <= before + maximumEventDelta
+        : stageEvaluation ? after > before
         : after === before + (changing ? 1n : 0n)) &&
         cursor(frame.samples_elapsed) === cursor(this.#native.samples_elapsed) + BigInt(frames) &&
         frame.audio.length === frames, 'host operation and native cursor disagree');
@@ -165,7 +175,9 @@ export class InstrumentSession {
       this.#journal(command, request.request_id);
       // A scene determinant acknowledgement carries its own influence reading.
       if (reply.influence !== undefined) this.#influence = structuredClone(reply.influence);
-      return { frame, sources: reply.sources, influence: reply.influence, personal: reply.personal };
+      // A stage acknowledgement carries the stage's own scoped body: the
+      // ql.stage-state/v1 disclosure or the ql.stage-receipt/v1 claim.
+      return { frame, sources: reply.sources, influence: reply.influence, personal: reply.personal, stage: reply.stage };
     } catch (error) {
       this.#unknown(String(error)); throw error;
     } finally { clearTimeout(timer); }
@@ -258,10 +270,13 @@ export class InstrumentSession {
   }
 
   /** Explicit owner-authorised domain change, serialized with data delivery.
-   * It changes the existing native owner; no UI-local clock or second composer. */
+   * It changes the existing native owner; no UI-local clock or second composer.
+   * The Ta-Onta procedural stage's invoked procedure rides the same envelope:
+   * the host compiles it into its own admitted applications and acknowledges
+   * with the applied field, the new influence and the stage claim. */
   async operate(command) {
     need(!this.#busy && !this.#held && !this.#disposed &&
-      ['set-axis', 'replace', 'set-damping', 'strike', ...EVENT_OPERATIONS].includes(command?.operation), 'domain operation requires idle admitted owner');
+      ['set-axis', 'replace', 'set-damping', 'strike', ...EVENT_OPERATIONS, 'stage-evaluate'].includes(command?.operation), 'domain operation requires idle admitted owner');
     this.present();
     need(this.#queue.length < this.#maxBlocks &&
       this.#bytes + JSON.stringify(this.#native).length * 2 <= this.#maxBytes, 'wait for bounded presentation capacity');
@@ -281,6 +296,17 @@ export class InstrumentSession {
     try {
       const reply = await this.#exchange({ operation: 'influence' });
       need(!reply.refused, String(reply.error)); this.#influence = structuredClone(reply.influence); return reply.influence;
+    } finally { this.#busy = false; }
+  }
+
+  /** The Ta-Onta procedural stage's scoped disclosure (ql.stage-state/v1): the
+   * live constituents, their effective values and each owned slot's procedure.
+   * A read on the one owner: the field does not advance or reset. */
+  async stageState() {
+    need(!this.#busy && !this.#held, 'inspection requires an idle admitted owner'); this.#busy = true;
+    try {
+      const reply = await this.#exchange({ operation: 'stage-state' });
+      need(!reply.refused, String(reply.error)); return reply.stage;
     } finally { this.#busy = false; }
   }
 
