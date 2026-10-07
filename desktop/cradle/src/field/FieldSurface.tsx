@@ -47,11 +47,13 @@ function useHostTheme(root: React.RefObject<HTMLElement>): "light" | "dark" {
       setTheme(t === "dark" || t === "light" ? t : matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     };
     read();
+    // The host sets `data-theme` on the document body (or an ancestor of the pane) and may add it LATER (light → dark): the observer is
+    // on every place it can appear, not only on an element that already carried it when the field mounted.
+    const mo = new MutationObserver(read);
     const owner = root.current?.closest<HTMLElement>("[data-theme]");
-    const mo = owner ? new MutationObserver(read) : null;
-    if (owner && mo) mo.observe(owner, {attributes: true, attributeFilter: ["data-theme"]});
+    for (const el of new Set<HTMLElement | null | undefined>([owner, document.body, document.documentElement])) if (el) mo.observe(el, {attributes: true, attributeFilter: ["data-theme"]});
     const mq = matchMedia("(prefers-color-scheme: dark)"); mq.addEventListener("change", read);
-    return () => { mo?.disconnect(); mq.removeEventListener("change", read); };
+    return () => { mo.disconnect(); mq.removeEventListener("change", read); };
   }, [root]);
   return theme;
 }

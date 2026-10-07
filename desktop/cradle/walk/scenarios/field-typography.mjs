@@ -42,8 +42,14 @@ const read = (p, sel, scope) => p.evaluate(({sel, scope}) => {
   return o;
 }, {sel, scope});
 const num = v => (v === "normal" ? NaN : parseFloat(v));
+// A colour is compared as RGB numbers (computed colours serialise as rgb() or color(srgb …)). The field draws the site's gold from the
+// ONE gold token (--oi-meta-relation, "gold stays scarce"), mixed toward black: those are the only colours allowed to differ, by at
+// most GOLD_TOLERANCE per 8-bit channel, and every colour that is not identical is listed in the detail with both values.
+const GOLD_TOLERANCE = 4;
+const rgbOf = v => { const m = /^rgba?\(([^)]+)\)$/.exec(v); if (m) return m[1].split(/[ ,\/]+/).slice(0, 3).map(Number); const c = /^color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)/.exec(v); return c ? [c[1], c[2], c[3]].map(x => Math.round(Number(x) * 255 * 100) / 100) : null; };
 const norm = v => String(v).replace(/\s+/g, " ").replace(/"/g, "'").trim();
 
+const goldDrift = [];
 let failed = false;
 try {
   const search = page.getByRole("searchbox", {name: "Search"});
@@ -72,7 +78,12 @@ try {
       if (!n || !s) { if (required || !!n !== !!s) check(false, `[${w}px] ${name}: present in both documents`, {native: !!n, site: !!s}); else console.log(`(skip) [${w}px] ${name}: absent in both`); continue; }
       const diffs = [];
       for (const k of PROPS) {
-        if (NUMERIC.has(k) && Number.isFinite(num(n[k])) && Number.isFinite(num(s[k]))) { if (Math.abs(num(n[k]) - num(s[k])) > 0.05) diffs.push({prop: k, native: n[k], site: s[k]}); }
+        if (k === "color" && rgbOf(n[k]) && rgbOf(s[k])) {
+          const a = rgbOf(n[k]), b = rgbOf(s[k]), d = Math.max(...a.map((x, i) => Math.abs(x - b[i])));
+          if (d > GOLD_TOLERANCE) diffs.push({prop: k, native: n[k], site: s[k]});
+          else if (d > 0.5) goldDrift.push({w, element: name, native: a.map(x => Math.round(x)), site: b, maxChannelDelta: Math.round(d * 10) / 10});
+        }
+        else if (NUMERIC.has(k) && Number.isFinite(num(n[k])) && Number.isFinite(num(s[k]))) { if (Math.abs(num(n[k]) - num(s[k])) > 0.05) diffs.push({prop: k, native: n[k], site: s[k]}); }
         else if (norm(n[k]) !== norm(s[k])) diffs.push({prop: k, native: n[k], site: s[k]});
       }
       check(diffs.length === 0, `[${w}px] ${name}: computed type styles equal the site's`, diffs.length ? diffs : {sample: n.text});
@@ -97,6 +108,31 @@ try {
     const wantPanel = w >= 1100 ? {native: 340, site: 340} : {native: 340, site: 300};
     check(Math.round(gn.right) === wantPanel.native && Math.round(gs.right) === wantPanel.site, `[${w}px] DEPARTURE recorded: the field panel is ${wantPanel.native}px natively and ${wantPanel.site}px in the baseline edition${w >= 1100 ? " (equal)" : " (site-version drift: the baseline predates the resizable panel)"}`, {native: Math.round(gn.right), site: Math.round(gs.right)});
   }
+  // ---- the palette itself, both themes (the generated stylesheet holds only token references; this reads what they RESOLVE to) ----
+  // Each palette variable is painted on a probe element inside the field (native) / on the site's root (site) and read back as a
+  // computed colour, light and dark. Everything but the gold family must be identical to the site's; the gold family is drawn from
+  // --oi-meta-relation and is asserted to equal the documented mapping (port-field-styles.mjs, GOLD), with the site's value recorded.
+  const PALETTE = ["--bg", "--panel", "--field-bg", "--ink", "--muted", "--faint", "--rule", "--rule-soft", "--c-essay", "--c-core", "--c-matheme", "--c-mytheme", "--c-episteme", "--plate-mat", "--gold", "--gold-hi", "--hl"];
+  const GOLDY = new Set(["--gold", "--gold-hi", "--hl"]);
+  const MAPPED = {light: {"--gold": [128, 103, 48], "--gold-hi": [168, 135, 63]}, dark: {"--gold": [177, 147, 83], "--gold-hi": [192, 169, 117]}};
+  const rgbaOf = v => { const m = /^rgba?\(([^)]+)\)$/.exec(v); if (m) { const p = m[1].split(/[ ,\/]+/).map(Number); return [p[0], p[1], p[2], p[3] ?? 1]; } const c = /^color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?/.exec(v); return c ? [c[1], c[2], c[3]].map(x => Math.round(Number(x) * 255 * 100) / 100).concat([c[4] === undefined ? 1 : Number(c[4])]) : null; };
+  const resolve = (p, scope, names) => p.evaluate(({scope, names}) => { const host = document.querySelector(scope); const out = {}; for (const n of names) { const e = document.createElement("i"); e.style.cssText = `position:absolute;background:var(${n})`; host.append(e); out[n] = getComputedStyle(e).backgroundColor; e.remove(); } return out; }, {scope, names});
+  const desktop = () => page.evaluate(() => document.body.dataset.theme ?? null);
+  for (const theme of ["light", "dark"]) {
+    await page.evaluate(t => { document.body.dataset.theme = t; }, theme);   // the host sets the theme on the body (index.html: <body class="oi-desktop">)
+    await site.evaluate(t => document.documentElement.setAttribute("saved-theme", t), theme);
+    await settle(900);
+    const nat = await resolve(page, ".field-root", PALETTE), sit = await resolve(site, "#quartz-root", PALETTE);
+    const plain = PALETTE.filter(n => !GOLDY.has(n)), wrong = plain.filter(n => { const a = rgbaOf(nat[n]), b = rgbaOf(sit[n]); return !a || !b || a.some((x, i) => Math.abs(x - b[i]) > (i === 3 ? 0.005 : 0.6)); });
+    record[`palette-${theme}`] = {native: nat, site: sit};
+    check(wrong.length === 0, `[${theme}] the palette the field resolves to equals the site's (${plain.length} roles: grounds, inks, rules, the five register hues, the plate)`, wrong.length ? wrong.map(n => ({role: n, native: nat[n], site: sit[n]})) : {desktopTheme: await desktop()});
+    const gold = ["--gold", "--gold-hi"].map(n => ({role: n, native: rgbaOf(nat[n]).slice(0, 3).map(Math.round), site: rgbaOf(sit[n]).slice(0, 3), want: MAPPED[theme][n]}));
+    check(gold.every(g => g.native.every((x, i) => Math.abs(x - g.want[i]) <= 1)), `[${theme}] DEPARTURE recorded: the field's gold is drawn from the one gold token and equals the documented mapping (site values listed)`, gold);
+  }
+  await page.evaluate(() => { document.body.dataset.theme = "light"; });
+  record.goldDrift = goldDrift;
+  const seen = [...new Map(goldDrift.map(g => [g.element + JSON.stringify(g.native), g])).values()];
+  check(seen.length <= 1 && seen.every(g => g.element === "eyebrow"), "colours: the only computed colour that differs from the site's is the eyebrow's gold, drawn from the one gold token (--oi-meta-relation), within 4/255 per channel", seen.map(g => ({element: g.element, native: g.native, site: g.site, maxChannelDelta: g.maxChannelDelta})));
 } catch (error) {
   failed = true; check(false, "the walk ran to its end", String(error?.stack ?? error).split("\n").slice(0, 5).join(" | "));
 } finally {
