@@ -642,13 +642,19 @@ mod tests {
         let read_error = store
             .load_desired(&record.setting_ref, &record.scope)
             .expect_err("a broken record is named, never degraded");
-        assert!(read_error.contains("invalid desired record"), "{read_error}");
+        assert!(
+            read_error.contains("invalid desired record"),
+            "{read_error}"
+        );
         assert!(store.list_desired().is_err(), "the listing refuses too");
 
         let write_error = store
             .save_desired(&record)
             .expect_err("writes refuse to overwrite the human's broken file");
-        assert!(write_error.contains("refusing to overwrite"), "{write_error}");
+        assert!(
+            write_error.contains("refusing to overwrite"),
+            "{write_error}"
+        );
         assert_eq!(
             std::fs::read(&path).expect("file preserved"),
             hand_broken,
