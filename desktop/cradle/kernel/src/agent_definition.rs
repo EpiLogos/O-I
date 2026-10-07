@@ -31,20 +31,20 @@ pub enum Request {
         expected_scope_ref: String,
         #[serde(default)]
         skill_refs: Vec<String>,
-        /// Central file ref to a reusable `kind:"character"` Expression
-        /// material document; forwarded as the profile's
-        /// `expressive_character_ref`. The material itself never travels here.
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        expressive_character_ref: Option<String>,
-        #[serde(default)]
-        skill_set_refs: Vec<String>,
-        /// The authored self definition: two exact Central source pins
-        /// (particular self + shared Relational Logos), carried verbatim into
-        /// the express input. The wire object is Central's snake_case shape
-        /// (`source` / `relational_logos`, each `{reference, content_digest}`);
-        /// only shape and pin grammar are checked here, never the prose.
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        self_definition: Option<Value>,
+    /// Central file ref to a reusable `kind:"character"` Expression
+    /// material document; forwarded as the profile's
+    /// `expressive_character_ref`. The material itself never travels here.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    expressive_character_ref: Option<String>,
+    #[serde(default)]
+    skill_set_refs: Vec<String>,
+    /// The authored self definition: two exact Central source pins
+    /// (particular self + shared Relational Logos), carried verbatim into
+    /// the express input. The wire object is Central's snake_case shape
+    /// (`source` / `relational_logos`, each `{reference, content_digest}`);
+    /// only shape and pin grammar are checked here, never the prose.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    self_definition: Option<Value>,
     },
     Review {
         profile_ref: String,
@@ -162,9 +162,9 @@ fn source_pin(value: &Value, field: &str) -> Result<(), String> {
     for (key, value) in object {
         match key.as_str() {
             "reference" => {
-                let reference = value
-                    .as_str()
-                    .ok_or_else(|| format!("Self definition {field} reference must be a string"))?;
+                let reference = value.as_str().ok_or_else(|| {
+                    format!("Self definition {field} reference must be a string")
+                })?;
                 source_reference(reference)?;
             }
             "content_digest" => {
@@ -173,9 +173,7 @@ fn source_pin(value: &Value, field: &str) -> Result<(), String> {
                 })?;
                 exact(digest, 71, "Self source content digest")?;
                 if !is_sha256_digest(digest) {
-                    return Err(
-                        "Self source digests must be `sha256:` plus 64 lowercase hex digits".into(),
-                    );
+                    return Err("Self source digests must be `sha256:` plus 64 lowercase hex digits".into());
                 }
             }
             other => {
@@ -197,11 +195,7 @@ fn validate_self_definition(value: &Value) -> Result<(), String> {
     for (key, value) in object {
         match key.as_str() {
             "source" | "relational_logos" => source_pin(value, key)?,
-            other => {
-                return Err(format!(
-                    "Self definition carries an unknown member `{other}`"
-                ))
-            }
+            other => return Err(format!("Self definition carries an unknown member `{other}`")),
         }
     }
     Ok(())
@@ -231,17 +225,13 @@ fn self_source_reading(
         .source_read(project, reference)
         .map_err(|error| error.to_string())?;
     if !reading.source.exists {
-        return Err(
-            "Central holds no such self source; the reference resolves to an absent file".into(),
-        );
+        return Err("Central holds no such self source; the reference resolves to an absent file".into());
     }
     if reading.source.source_ref != reference {
         return Err("Central redirected the requested self source reference".into());
     }
     if reading.content_encoding != "utf-8" {
-        return Err(
-            "Self sources resolve as exact UTF-8 bytes; the owner returned another encoding".into(),
-        );
+        return Err("Self sources resolve as exact UTF-8 bytes; the owner returned another encoding".into());
     }
     let bytes = reading.content.as_bytes();
     let end = preview_boundary(&reading.content, SELF_SOURCE_PREVIEW_BYTES);

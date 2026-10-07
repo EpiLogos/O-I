@@ -171,7 +171,7 @@ fn the_expressive_character_ref_is_forwarded_to_the_profile_proposal() {
         expected_scope_ref: "control:root".into(),
         skill_refs: vec![],
         skill_set_refs: vec![],
-        self_definition: None,
+            self_definition: None,
         expressive_character_ref: Some(character.into()),
     })
     .unwrap();
@@ -195,7 +195,7 @@ fn the_expressive_character_ref_is_forwarded_to_the_profile_proposal() {
         expected_scope_ref: "control:root".into(),
         skill_refs: vec![],
         skill_set_refs: vec![],
-        self_definition: None,
+            self_definition: None,
         expressive_character_ref: None,
     })
     .unwrap();
@@ -221,7 +221,7 @@ fn the_expressive_character_ref_is_forwarded_to_the_profile_proposal() {
                 expected_scope_ref: "control:root".into(),
                 skill_refs: vec![],
                 skill_set_refs: vec![],
-                self_definition: None,
+            self_definition: None,
                 expressive_character_ref: Some(bad.into()),
             })
             .is_err());
@@ -895,8 +895,16 @@ fn pasted_self_prose_is_created_through_the_native_human_door_and_pinned_from_re
         })
         .unwrap()
         .clone();
-    let request: Value =
-        serde_json::from_str(create.as_array().unwrap().last().unwrap().as_str().unwrap()).unwrap();
+    let request: Value = serde_json::from_str(
+        create
+            .as_array()
+            .unwrap()
+            .last()
+            .unwrap()
+            .as_str()
+            .unwrap(),
+    )
+    .unwrap();
     assert_eq!(request["path"], "agents/kite/self.md");
     assert_eq!(request["content"], content);
     assert_eq!(request["provenance"], "human-authored");
