@@ -107,9 +107,17 @@ fn settings_reads_and_a_prompt_free_provision_return_real_data() {
         data["provider_default"], "owner-choice",
         "the held choice must win: {data}"
     );
-    assert_eq!(
-        data["agency"], "reused-admitted-source",
-        "the installed suite has no mint verb yet: {data}"
+    // The conversation's agency carries a real admission source, whichever
+    // path this suite takes: the mint verb with the standing delegation
+    // template ("minted-per-project", the designed path), or disclosed reuse
+    // of an admitted binding on a suite without the mint verb
+    // ("reused-admitted-source"). A foreign binding is never a substitute.
+    assert!(
+        matches!(
+            data["agency"].as_str(),
+            Some("minted-per-project") | Some("reused-admitted-source")
+        ),
+        "the conversation's agency must be minted or disclosed reuse: {data}"
     );
     assert!(
         data["agent_ref"]

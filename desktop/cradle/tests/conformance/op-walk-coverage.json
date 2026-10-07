@@ -1067,6 +1067,15 @@
       ],
       "owner_lane": "SharedField native-owner verification",
       "reason": "Real native Kernel operations across a Unix owner socket exercise exact World/process identity, concurrent Expression CAS, scoped offers, privacy refusal and restart fencing. This references native execution coverage; installed visual acceptance has its own episode receipts."
+    },
+    {
+      "op": "protocol_read",
+      "native_owner": "kernel/src/protocol.rs",
+      "spec_ref": "gateway-parity convergence r1; the kernel's contract disclosure (oi.kernel-protocol/v1)",
+      "status": "unverified",
+      "owner_lane": "gateway-parity-convergence",
+      "reason": "Implementation added; enforcement proven at the kernel crate level (advertised contract refused one version ahead). Native UX acceptance evidence still required before verification.",
+      "scenarios": []
     }
-  ]
+ ]
 }
