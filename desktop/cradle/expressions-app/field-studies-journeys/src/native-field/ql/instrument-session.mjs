@@ -152,7 +152,8 @@ export class InstrumentSession {
       this.#native = withoutAudio(frame);
       // A scene determinant acknowledgement carries its own influence reading.
       if (reply.influence !== undefined) this.#influence = structuredClone(reply.influence);
-      return { frame, sources: reply.sources, influence: reply.influence, personal: reply.personal, score: reply.score };
+      return { frame, sources: reply.sources, influence: reply.influence, personal: reply.personal, score: reply.score,
+        current: reply.current, resolved_event_ref: reply.resolved_event_ref };
     } catch (error) {
       this.#unknown(String(error)); throw error;
     } finally { clearTimeout(timer); }
