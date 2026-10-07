@@ -19,46 +19,46 @@
 
 .field-root,
 .field-root[data-theme='light'] {
-  --bg: #fbfaf6;
-  --panel: #f5f3ed;
-  --field-bg: #f1efe8;
-  --ink: #111112;
-  --muted: #66645f;
-  --faint: #8f8c84;
-  --rule: rgb(17 17 18 / 14%);
-  --rule-soft: rgb(17 17 18 / 7%);
-  --gold: #80642e;
-  --gold-hi: #a67f2c;
-  --hl: rgb(178 148 79 / 22%);
-  --c-essay: #111112;
-  --c-core: #8a8473;
-  --c-matheme: #2a766e;
-  --c-mytheme: #a54a31;
-  --c-episteme: #3d5c8d;
-  --plate-mat: #f5f0e6;
-  --shadow: 0 18px 40px -24px rgb(17 17 18 / 45%);
+  --bg: var(--oi-field-paper);
+  --panel: var(--oi-field-panel);
+  --field-bg: var(--oi-field-ground);
+  --ink: var(--oi-field-ink);
+  --muted: var(--oi-field-muted);
+  --faint: var(--oi-field-faint);
+  --rule: color-mix(in srgb, var(--oi-field-ink) 14%, transparent);
+  --rule-soft: color-mix(in srgb, var(--oi-field-ink) 7%, transparent);
+  --gold: color-mix(in srgb, var(--oi-meta-relation) 76%, var(--oi-field-black));
+  --gold-hi: var(--oi-meta-relation);
+  --hl: color-mix(in srgb, var(--oi-meta-relation) 22%, transparent);
+  --c-essay: var(--oi-field-ink);
+  --c-core: var(--oi-field-register-core);
+  --c-matheme: var(--oi-field-register-matheme);
+  --c-mytheme: var(--oi-field-register-mytheme);
+  --c-episteme: var(--oi-field-register-episteme);
+  --plate-mat: var(--oi-field-plate);
+  --shadow: 0 18px 40px -24px color-mix(in srgb, var(--oi-field-ink) 45%, transparent);
 }
 
 .field-root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #0b0b0c;
-  --panel: #101011;
-  --field-bg: #0e0e0f;
-  --ink: #f4f2ec;
-  --muted: #b8b6b0;
-  --faint: #7e7c76;
-  --rule: rgb(244 242 236 / 18%);
-  --rule-soft: rgb(244 242 236 / 8%);
-  --gold: #b2944f;
-  --gold-hi: #d2ae5e;
-  --hl: rgb(178 148 79 / 26%);
-  --c-essay: #f4f2ec;
-  --c-core: #a8a291;
-  --c-matheme: #6fb8ae;
-  --c-mytheme: #df8f72;
-  --c-episteme: #8eaad6;
-  --plate-mat: #ece6d8;
-  --shadow: 0 18px 40px -22px rgb(0 0 0 / 80%);
+  --bg: var(--oi-field-paper);
+  --panel: var(--oi-field-panel);
+  --field-bg: var(--oi-field-ground);
+  --ink: var(--oi-field-ink);
+  --muted: var(--oi-field-muted);
+  --faint: var(--oi-field-faint);
+  --rule: color-mix(in srgb, var(--oi-field-ink) 18%, transparent);
+  --rule-soft: color-mix(in srgb, var(--oi-field-ink) 8%, transparent);
+  --gold: color-mix(in srgb, var(--oi-meta-relation) 89%, var(--oi-white));
+  --gold-hi: color-mix(in srgb, var(--oi-meta-relation) 70%, var(--oi-white));
+  --hl: color-mix(in srgb, var(--oi-meta-relation) 26%, transparent);
+  --c-essay: var(--oi-field-ink);
+  --c-core: var(--oi-field-register-core);
+  --c-matheme: var(--oi-field-register-matheme);
+  --c-mytheme: var(--oi-field-register-mytheme);
+  --c-episteme: var(--oi-field-register-episteme);
+  --plate-mat: var(--oi-field-plate);
+  --shadow: 0 18px 40px -22px color-mix(in srgb, var(--oi-field-black) 80%, transparent);
 }
 
 .field-root, .field-root * { box-sizing: border-box; }
@@ -1424,7 +1424,7 @@
 }
 
 .field-root.field-root .lightbox::backdrop {
-  background: rgba(0, 0, 0, 0.62);
+  background: color-mix(in srgb, var(--oi-field-black) 62%, transparent);
 }
 
 .field-root.field-root .lb__x {
@@ -2118,7 +2118,7 @@
     position: absolute;
     inset: 0;
     z-index: 55;
-    background: rgba(0, 0, 0, 0.38);
+    background: color-mix(in srgb, var(--oi-field-black) 38%, transparent);
     opacity: 0;
     pointer-events: none;
     transition: opacity 260ms;
@@ -3224,7 +3224,7 @@ ul.tags {
   padding: 3px 9px;
   border-radius: 99px;
   background: var(--gold-hi);
-  color: #111;
+  color: var(--oi-field-on-mark);
   font: 700 0.6rem var(--ui);
   letter-spacing: 0.08em;
   text-transform: uppercase;

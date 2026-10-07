@@ -1,6 +1,6 @@
 {
   "scenario": "field-typography",
-  "at": "2026-10-06T23:14:44.414Z",
+  "at": "2026-10-07T10:41:44.080Z",
   "record": {
     "760": {
       "title": {
@@ -45,7 +45,7 @@
           "fontStyle": "normal",
           "lineHeight": "25.6px",
           "letterSpacing": "1.7408px",
-          "color": "rgb(128, 100, 46)",
+          "color": "color(srgb 0.500706 0.402353 0.187765)",
           "textTransform": "uppercase",
           "textAlign": "start",
           "marginTop": "0px",
@@ -479,7 +479,7 @@
           "fontStyle": "normal",
           "lineHeight": "25.6px",
           "letterSpacing": "1.7408px",
-          "color": "rgb(128, 100, 46)",
+          "color": "color(srgb 0.500706 0.402353 0.187765)",
           "textTransform": "uppercase",
           "textAlign": "start",
           "marginTop": "0px",
@@ -913,7 +913,7 @@
           "fontStyle": "normal",
           "lineHeight": "25.6px",
           "letterSpacing": "1.7408px",
-          "color": "rgb(128, 100, 46)",
+          "color": "color(srgb 0.500706 0.402353 0.187765)",
           "textTransform": "uppercase",
           "textAlign": "start",
           "marginTop": "0px",
@@ -1303,12 +1303,139 @@
           "expected": 592
         }
       }
-    }
+    },
+    "palette-light": {
+      "native": {
+        "--bg": "rgb(251, 250, 246)",
+        "--panel": "rgb(245, 243, 237)",
+        "--field-bg": "rgb(241, 239, 232)",
+        "--ink": "rgb(17, 17, 18)",
+        "--muted": "rgb(102, 100, 95)",
+        "--faint": "rgb(143, 140, 132)",
+        "--rule": "color(srgb 0.0666667 0.0666667 0.0705882 / 0.14)",
+        "--rule-soft": "color(srgb 0.0666667 0.0666667 0.0705882 / 0.07)",
+        "--c-essay": "rgb(17, 17, 18)",
+        "--c-core": "rgb(138, 132, 115)",
+        "--c-matheme": "rgb(42, 118, 110)",
+        "--c-mytheme": "rgb(165, 74, 49)",
+        "--c-episteme": "rgb(61, 92, 141)",
+        "--plate-mat": "rgb(245, 240, 230)",
+        "--gold": "color(srgb 0.500706 0.402353 0.187765)",
+        "--gold-hi": "rgb(168, 135, 63)",
+        "--hl": "color(srgb 0.658824 0.529412 0.247059 / 0.22)"
+      },
+      "site": {
+        "--bg": "rgb(251, 250, 246)",
+        "--panel": "rgb(245, 243, 237)",
+        "--field-bg": "rgb(241, 239, 232)",
+        "--ink": "rgb(17, 17, 18)",
+        "--muted": "rgb(102, 100, 95)",
+        "--faint": "rgb(143, 140, 132)",
+        "--rule": "rgba(17, 17, 18, 0.14)",
+        "--rule-soft": "rgba(17, 17, 18, 0.07)",
+        "--c-essay": "rgb(17, 17, 18)",
+        "--c-core": "rgb(138, 132, 115)",
+        "--c-matheme": "rgb(42, 118, 110)",
+        "--c-mytheme": "rgb(165, 74, 49)",
+        "--c-episteme": "rgb(61, 92, 141)",
+        "--plate-mat": "rgb(245, 240, 230)",
+        "--gold": "rgb(128, 100, 46)",
+        "--gold-hi": "rgb(166, 127, 44)",
+        "--hl": "rgba(178, 148, 79, 0.22)"
+      }
+    },
+    "palette-dark": {
+      "native": {
+        "--bg": "rgb(11, 11, 12)",
+        "--panel": "rgb(16, 16, 17)",
+        "--field-bg": "rgb(14, 14, 15)",
+        "--ink": "rgb(244, 242, 236)",
+        "--muted": "rgb(184, 182, 176)",
+        "--faint": "rgb(126, 124, 118)",
+        "--rule": "color(srgb 0.956863 0.94902 0.92549 / 0.18)",
+        "--rule-soft": "color(srgb 0.956863 0.94902 0.92549 / 0.08)",
+        "--c-essay": "rgb(244, 242, 236)",
+        "--c-core": "rgb(168, 162, 145)",
+        "--c-matheme": "rgb(111, 184, 174)",
+        "--c-mytheme": "rgb(223, 143, 114)",
+        "--c-episteme": "rgb(142, 170, 214)",
+        "--plate-mat": "rgb(236, 230, 216)",
+        "--gold": "color(srgb 0.692902 0.577726 0.325137)",
+        "--gold-hi": "color(srgb 0.751765 0.661177 0.46)",
+        "--hl": "color(srgb 0.658824 0.529412 0.247059 / 0.26)"
+      },
+      "site": {
+        "--bg": "rgb(11, 11, 12)",
+        "--panel": "rgb(16, 16, 17)",
+        "--field-bg": "rgb(14, 14, 15)",
+        "--ink": "rgb(244, 242, 236)",
+        "--muted": "rgb(184, 182, 176)",
+        "--faint": "rgb(126, 124, 118)",
+        "--rule": "rgba(244, 242, 236, 0.18)",
+        "--rule-soft": "rgba(244, 242, 236, 0.08)",
+        "--c-essay": "rgb(244, 242, 236)",
+        "--c-core": "rgb(168, 162, 145)",
+        "--c-matheme": "rgb(111, 184, 174)",
+        "--c-mytheme": "rgb(223, 143, 114)",
+        "--c-episteme": "rgb(142, 170, 214)",
+        "--plate-mat": "rgb(236, 230, 216)",
+        "--gold": "rgb(178, 148, 79)",
+        "--gold-hi": "rgb(210, 174, 94)",
+        "--hl": "rgba(178, 148, 79, 0.26)"
+      }
+    },
+    "goldDrift": [
+      {
+        "w": 1440,
+        "element": "eyebrow",
+        "native": [
+          128,
+          103,
+          48
+        ],
+        "site": [
+          128,
+          100,
+          46
+        ],
+        "maxChannelDelta": 2.6
+      },
+      {
+        "w": 1000,
+        "element": "eyebrow",
+        "native": [
+          128,
+          103,
+          48
+        ],
+        "site": [
+          128,
+          100,
+          46
+        ],
+        "maxChannelDelta": 2.6
+      },
+      {
+        "w": 760,
+        "element": "eyebrow",
+        "native": [
+          128,
+          103,
+          48
+        ],
+        "site": [
+          128,
+          100,
+          46
+        ],
+        "maxChannelDelta": 2.6
+      }
+    ]
   },
   "passed": true,
   "counts": {
-    "passed": 52,
-    "total": 52
+    "passed": 57,
+    "total": 57
   },
   "checks": [
     {
@@ -1700,6 +1827,124 @@
         "native": 340,
         "site": 300
       }
+    },
+    {
+      "ok": true,
+      "label": "[light] the palette the field resolves to equals the site's (14 roles: grounds, inks, rules, the five register hues, the plate)",
+      "detail": {
+        "desktopTheme": "light"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[light] DEPARTURE recorded: the field's gold is drawn from the one gold token and equals the documented mapping (site values listed)",
+      "detail": [
+        {
+          "role": "--gold",
+          "native": [
+            128,
+            103,
+            48
+          ],
+          "site": [
+            128,
+            100,
+            46
+          ],
+          "want": [
+            128,
+            103,
+            48
+          ]
+        },
+        {
+          "role": "--gold-hi",
+          "native": [
+            168,
+            135,
+            63
+          ],
+          "site": [
+            166,
+            127,
+            44
+          ],
+          "want": [
+            168,
+            135,
+            63
+          ]
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "label": "[dark] the palette the field resolves to equals the site's (14 roles: grounds, inks, rules, the five register hues, the plate)",
+      "detail": {
+        "desktopTheme": "dark"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[dark] DEPARTURE recorded: the field's gold is drawn from the one gold token and equals the documented mapping (site values listed)",
+      "detail": [
+        {
+          "role": "--gold",
+          "native": [
+            177,
+            147,
+            83
+          ],
+          "site": [
+            178,
+            148,
+            79
+          ],
+          "want": [
+            177,
+            147,
+            83
+          ]
+        },
+        {
+          "role": "--gold-hi",
+          "native": [
+            192,
+            169,
+            117
+          ],
+          "site": [
+            210,
+            174,
+            94
+          ],
+          "want": [
+            192,
+            169,
+            117
+          ]
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "label": "colours: the only computed colour that differs from the site's is the eyebrow's gold, drawn from the one gold token (--oi-meta-relation), within 4/255 per channel",
+      "detail": [
+        {
+          "element": "eyebrow",
+          "native": [
+            128,
+            103,
+            48
+          ],
+          "site": [
+            128,
+            100,
+            46
+          ],
+          "maxChannelDelta": 2.6
+        }
+      ]
     },
     {
       "ok": true,
