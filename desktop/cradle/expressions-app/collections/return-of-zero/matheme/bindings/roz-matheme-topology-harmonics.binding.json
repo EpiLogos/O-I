@@ -270,7 +270,11 @@
   "Rework 2026-10-07 (craft lane 4): the word-label scenes replaced by drawn surfaces and drawn ratios. Topology: parallels meeting at [1:2:0], the glued square with its lifted winding, the half-twisted band, the two circulating windings. Harmonics: the interval stack, 531441/524288 drawn large as the comma, the two orbits, the 288→576 ladder, the Metonic wheels, the standing-wave modes with a real cymatic plate formation.",
   "Colour: four chapter grounds — projective blue, surfaces teal, ratio amber, kept-fit sage. Tints travel steel→teal→brass→sage, gold at completions and returns.",
   "Stillness: chapters hold field, engine, view and morph across their scenes (11 of 14 adjacent pairs still); motion at chapter turns and inside the derivation sequences.",
-  "Stage text 79 words across 15 scenes."
+  "Stage text 79 words across 15 scenes.",
+  "Deepen 2026-10-07 (lane 4): five scenes stand in 3d — the topology block and the medium. Riemann sphere: the third dimension is the sphere standing over its plane — the drawn plate rides to z +0.15 while the complex-plane ring holds z −0.4, one point added, north pole toward the viewer (depth 0.4, zConfinement 0.7, perspective). Torus: the third dimension is the winding itself — toroidalHopf, law sum (θ̇ 0.15 + φ̇ 0.1), the π path dipping to z −0.25, displacement retained through the turn. Möbius/Klein: the third dimension is the twist — the morph clock carries φ offset π, one half-turn in the poloidal cycle, orientation flipping through return. Toroidal/poloidal: the third dimension is the vessel — law product (θ̇ 0.14 × φ̇ 0.21): the two circuits composed, confinement as their product, seen down into the chamber (pitch 0.5).",
+  "Deepen, cymatics: the third dimension is the medium's depth — the second plate stands at z +0.3 before the first; the morph law IS the record's move: beat (θ̇ 0.2, φ̇ 0.2, dwell 0.5) — two travelling components superposed into the standing pattern, drawn crisp (roundness 0.98, softness 0.1).",
+  "Deepen, physics states: six materials — projective-cool crisp, topology-deep (halo 0.17, softness 0.24, elongation 0.06) for torus/Möbius/confinement, flat atlas charts (elongation 0.04), lamplight harmonics, olive calendar/number plates, and the cymatic medium. Props vary across the journey, hold within each rest.",
+  "Deepen, titles: every scene carries the record's own line — completion #2 'Work a pair of parallels', line and torus and whole-tone and comma and arche-topos and tetraktys keep their record titles, sphere #0 'Add one point to the complex plane', Möbius record subtitle 'Orientation through return' with #0 as its line, confinement record title 'Toroidal and poloidal circulation', atlas record title 'Charts and transition functions', cycle #0 'Name what is returning', Metonic #5→0 'Return as maintained fit', cymatics #1 'Superpose the travelling components', six #1 'Enumerate the divisors'. Stage words 101."
  ],
  "description": "Topology (projective completion/line, Riemann sphere, torus-cover-winding, Möbius-Klein, toroidal-poloidal, manifold atlas) and harmonics (whole-tone return, comma, cycle, musical resolution, Metonic, cymatics, perfect six, tetraktys).",
  "scene_count": 15,
@@ -322,6 +326,13 @@
   "actor": "zcode:craft-expressions-l4",
   "lane": "craft-l4/matheme",
   "pass": "expression rework — TEXT IS THE MINIMUM FORM (owner commission 2026-10-07)",
-  "gate": "site/tests/expression-richness.mjs"
+  "gate": "site/tests/expression-richness.mjs",
+  "deepen": {
+   "date": "2026-10-07",
+   "actor": "zcode:deepen-lane4",
+   "lane": "deepen-l4/matheme",
+   "pass": "the deepen pass — depth, alive material, named scenes (second movement)",
+   "gate": "site/tests/expression-richness.mjs"
+  }
  }
 }

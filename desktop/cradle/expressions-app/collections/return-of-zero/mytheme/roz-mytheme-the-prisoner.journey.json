@@ -40,13 +40,14 @@
     "params": {
      "count": 56000,
      "size": 2.5,
-     "opacity": 0.92,
+     "opacity": 0.94,
      "contrast": 0.93,
      "speed": 0.4,
      "circulation": 0.3,
      "dispersion": 0.06,
      "turbulence": 0.12,
-     "pointerStrength": 0.4
+     "pointerStrength": 0.4,
+     "grain": 0.05
     }
    },
    "entities": [
@@ -396,17 +397,20 @@
      "#c9a227",
      "#3a3a3c"
     ],
-    "material": "round",
+    "material": "print",
     "params": {
      "count": 54000,
      "size": 2.6,
      "opacity": 0.9,
-     "contrast": 0.9,
+     "contrast": 0.88,
      "speed": 0.4,
      "circulation": 0.32,
      "dispersion": 0.06,
      "turbulence": 0.12,
-     "pointerStrength": 0.4
+     "pointerStrength": 0.4,
+     "softness": 0.25,
+     "roundness": 0.45,
+     "grain": 0.055
     }
    },
    "entities": [
@@ -693,9 +697,9 @@
    "duration": 14,
    "transition": 1.5,
    "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
+    "mode": "3d",
+    "yaw": 0.26,
+    "pitch": 0.12,
     "zoom": 1,
     "panX": 0,
     "panY": 0
@@ -706,7 +710,10 @@
     "pointerMode": "repel",
     "pointerClick": "shove",
     "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
+    "pointerClickRadius": 0.32,
+    "morphEnabled": true,
+    "trajectory": "toroidalHopf",
+    "driveShape": "pulse"
    },
    "field": {
     "background": "#17151a",
@@ -726,7 +733,10 @@
      "circulation": 0.28,
      "dispersion": 0.07,
      "turbulence": 0.13,
-     "pointerStrength": 0.4
+     "pointerStrength": 0.4,
+     "halo": 0.14,
+     "irregularity": 0.35,
+     "zConfinement": 0.75
     }
    },
    "entities": [
@@ -737,7 +747,7 @@
      "position": {
       "x": -0.42,
       "y": -0.14,
-      "z": 0
+      "z": -0.35
      },
      "size": {
       "x": 0.2,
@@ -785,7 +795,7 @@
      "position": {
       "x": -0.05,
       "y": -0.24,
-      "z": 0
+      "z": -0.15
      },
      "size": {
       "x": 0.26,
@@ -833,7 +843,7 @@
      "position": {
       "x": 0.3,
       "y": -0.28,
-      "z": 0
+      "z": 0.25
      },
      "size": {
       "x": 0.2,
@@ -881,7 +891,7 @@
      "position": {
       "x": 0.3,
       "y": -0.28,
-      "z": 0
+      "z": -0.05
      },
      "size": {
       "x": 0.08,
@@ -929,7 +939,7 @@
      "position": {
       "x": 0.42,
       "y": -0.34,
-      "z": 0
+      "z": 0.1
      },
      "size": {
       "x": 0.1,
@@ -995,7 +1005,7 @@
      "position": {
       "x": -0.38,
       "y": -0.46,
-      "z": 0
+      "z": 0.1
      },
      "size": {
       "x": 0.14,
@@ -1047,12 +1057,12 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
+    "thetaRate": 0.12,
+    "phiRate": 0.12,
     "thetaOffset": 0,
     "phiOffset": 0,
     "law": "theta",
-    "depth": 1,
+    "depth": 1.4,
     "dwell": 0.3
    },
    "automation": [],
@@ -1061,8 +1071,8 @@
      "id": "stage",
      "visible": true,
      "kicker": "",
-     "title": "Degree Absolute; the masks; the escape",
-     "italic": "Beneath the ape mask a face identical to his own; the escape continues.",
+     "title": "Beneath the ape mask, a face identical to his own",
+     "italic": "Degree Absolute ends; the escape continues.",
      "body": "",
      "x": 0.04,
      "y": 0.04,
@@ -1079,9 +1089,9 @@
    "duration": 12,
    "transition": 1.5,
    "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
+    "mode": "3d",
+    "yaw": 0.26,
+    "pitch": 0.12,
     "zoom": 1,
     "panX": 0,
     "panY": 0
@@ -1092,7 +1102,10 @@
     "pointerMode": "repel",
     "pointerClick": "shove",
     "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
+    "pointerClickRadius": 0.32,
+    "morphEnabled": true,
+    "trajectory": "toroidalHopf",
+    "driveShape": "pulse"
    },
    "field": {
     "background": "#17151a",
@@ -1112,7 +1125,10 @@
      "circulation": 0.28,
      "dispersion": 0.07,
      "turbulence": 0.13,
-     "pointerStrength": 0.4
+     "pointerStrength": 0.4,
+     "halo": 0.14,
+     "irregularity": 0.35,
+     "zConfinement": 0.75
     }
    },
    "entities": [
@@ -1123,7 +1139,7 @@
      "position": {
       "x": -0.4,
       "y": -0.16,
-      "z": 0
+      "z": 0.2
      },
      "size": {
       "x": 0.2,
@@ -1219,7 +1235,7 @@
      "position": {
       "x": 0.4,
       "y": -0.16,
-      "z": 0
+      "z": -0.35
      },
      "size": {
       "x": 0.08,
@@ -1267,7 +1283,7 @@
      "position": {
       "x": 0.0,
       "y": -0.46,
-      "z": 0
+      "z": -0.1
      },
      "size": {
       "x": 0.2,
@@ -1319,12 +1335,12 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
+    "thetaRate": 0.12,
+    "phiRate": 0.12,
     "thetaOffset": 0,
     "phiOffset": 0,
     "law": "theta",
-    "depth": 1,
+    "depth": 1.4,
     "dwell": 0.3
    },
    "automation": [],
@@ -1333,7 +1349,7 @@
      "id": "stage",
      "visible": true,
      "kicker": "",
-     "title": "The asymmetric count: Two replaces, Six is assigned, One stays withheld",
+     "title": "Two names Six while One remains unanswerable",
      "italic": "The office gains continuity across replacement; the captive is denied authority over his designation.",
      "body": "",
      "x": 0.04,
@@ -1351,9 +1367,9 @@
    "duration": 13,
    "transition": 1.5,
    "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
+    "mode": "3d",
+    "yaw": 0.26,
+    "pitch": 0.12,
     "zoom": 1,
     "panX": 0,
     "panY": 0
@@ -1364,7 +1380,10 @@
     "pointerMode": "repel",
     "pointerClick": "shove",
     "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
+    "pointerClickRadius": 0.32,
+    "morphEnabled": true,
+    "trajectory": "toroidalHopf",
+    "driveShape": "pulse"
    },
    "field": {
     "background": "#17151a",
@@ -1384,7 +1403,10 @@
      "circulation": 0.28,
      "dispersion": 0.07,
      "turbulence": 0.13,
-     "pointerStrength": 0.4
+     "pointerStrength": 0.4,
+     "halo": 0.14,
+     "irregularity": 0.35,
+     "zConfinement": 0.75
     }
    },
    "entities": [
@@ -1395,7 +1417,7 @@
      "position": {
       "x": 0.0,
       "y": -0.24,
-      "z": 0
+      "z": -0.3
      },
      "size": {
       "x": 0.26,
@@ -1443,7 +1465,7 @@
      "position": {
       "x": 0.0,
       "y": -0.5,
-      "z": 0
+      "z": 0.2
      },
      "size": {
       "x": 0.24,
@@ -1491,7 +1513,7 @@
      "position": {
       "x": -0.4,
       "y": -0.2,
-      "z": 0
+      "z": -0.1
      },
      "size": {
       "x": 0.16,
@@ -1539,7 +1561,7 @@
      "position": {
       "x": 0.4,
       "y": -0.22,
-      "z": 0
+      "z": 0.05
      },
      "size": {
       "x": 0.14,
@@ -1591,12 +1613,12 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
+    "thetaRate": 0.12,
+    "phiRate": 0.12,
     "thetaOffset": 0,
     "phiOffset": 0,
     "law": "theta",
-    "depth": 1,
+    "depth": 1.4,
     "dwell": 0.3
    },
    "automation": [],
@@ -1617,5 +1639,8 @@
    ]
   }
  ],
- "updatedAt": "2026-10-06T12:00:00.000Z"
+ "updatedAt": "2026-10-06T12:00:00.000Z",
+ "notes": [
+  "2026-10-07 deepen pass (agent/o-i-20261007-1639, lane 2): the material made alive and deep. DEPTH: the finale, the count and the return stand in the person's depth — #2 z is the layers of the self: the embryo-room regression deepest (−0.35), the ape mask worn nearest (+0.25) and beneath it the face identical to his own (−0.05); #3 the withheld One recedes to −0.35 — the source of command is not available at any accessible depth — while Two's delegated office stands nearest (+0.2); #5→0 the road out recedes into depth (−0.3) as the escapees walk toward the viewer (+0.2), the vacant seat left near the surface. MORPH: one clock across the finale register (theta 0.12 / phi 0.12, depth 1.4) — the Village's rotating attention: the countdown, the serial replacement of Two, the road's travel are one turning. PARTICLE PROPS: arrival cold and grainy (grain 0.05, opacity 0.94); the Village picturesque soft (contrast 0.88, softness 0.25); the finale register haloed and tense (halo 0.14, irregularity 0.35). TITLES set to the record's own lines: The resignation that becomes an address; A whole world for obtaining one answer; Beneath the ape mask, a face identical to his own; Two names Six while One remains unanswerable; Return without inheriting the hidden throne. Still pairs held: the finale register (finale, count, return) rests unchanged across its two pairs."
+ ]
 }

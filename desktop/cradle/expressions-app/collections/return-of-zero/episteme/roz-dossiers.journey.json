@@ -31,17 +31,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.93,
+          "roundness": 0.92,
+          "softness": 0.13,
+          "irregularity": 0.28,
+          "elongation": 0.14,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.95,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.06,
-          "halo": 0.13,
+          "halo": 0.1,
           "speed": 0.42,
           "circulation": 0.34,
           "turbulence": 0.1,
@@ -51,8 +51,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.25,
+          "grain": 0.03,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -427,22 +427,7 @@
                   "z": 0
                 },
                 "text": "contradiction",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#7d95a8",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-dos-dossier-formal-limit-6-s3",
@@ -454,22 +439,7 @@
                   "z": 0
                 },
                 "text": "excess",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#7d95a8",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-dos-dossier-formal-limit-6-s4",
@@ -481,22 +451,7 @@
                   "z": 0
                 },
                 "text": "manner",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#e6e4da",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-dos-dossier-formal-limit-6-s5",
@@ -508,22 +463,7 @@
                   "z": 0
                 },
                 "text": "continues",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#638c69",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -534,7 +474,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Formal limit",
+          "title": "Source-specific limits and their consequences",
           "italic": "what the dossier has reached, pressed in order",
           "body": "",
           "x": 0.04,
@@ -597,17 +537,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.85,
+          "roundness": 0.78,
+          "softness": 0.27,
+          "irregularity": 0.54,
+          "elongation": 0.05,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.87,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.06,
-          "halo": 0.13,
+          "halo": 0.24,
           "speed": 0.42,
           "circulation": 0.34,
           "turbulence": 0.1,
@@ -617,8 +557,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.6,
+          "grain": 0.05,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -879,22 +819,7 @@
                   "z": 0.3
                 },
                 "text": "unfold",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#5898a4",
-                  "tintWeight": 0.75,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-dos-dossier-bohm-4-s3",
@@ -906,22 +831,7 @@
                   "z": 0.05
                 },
                 "text": "assumption",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#5898a4",
-                  "tintWeight": 0.65,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-dos-dossier-bohm-4-s4",
@@ -933,22 +843,7 @@
                   "z": -0.15
                 },
                 "text": "running",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#e3e6ea",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-dos-dossier-bohm-4-s5",
@@ -960,22 +855,7 @@
                   "z": -0.15
                 },
                 "text": "continuation",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#638c69",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -986,7 +866,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Enfoldment",
+          "title": "Enfoldment, dialogue, return",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -1006,8 +886,8 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.05,
-        "phiRate": 0.03,
+        "thetaRate": 0.11,
+        "phiRate": 0.07,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
@@ -1021,7 +901,10 @@
         "pointerMode": "attract",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.9,
-        "pointerClickRadius": 0.42
+        "pointerClickRadius": 0.42,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine"
       }
     },
     {
@@ -1049,17 +932,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.88,
+          "roundness": 0.83,
+          "softness": 0.23,
+          "irregularity": 0.46,
+          "elongation": 0.07,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.9,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.06,
-          "halo": 0.13,
+          "halo": 0.19,
           "speed": 0.42,
           "circulation": 0.34,
           "turbulence": 0.1,
@@ -1069,8 +952,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.35,
+          "grain": 0.044,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -1559,22 +1442,7 @@
                   "z": 0
                 },
                 "text": "coincidence",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#9a7ab0",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-dos-dossier-jung-pauli-psychoid-8-s3",
@@ -1586,22 +1454,7 @@
                   "z": 0
                 },
                 "text": "number",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#7d95a8",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-dos-dossier-jung-pauli-psychoid-8-s4",
@@ -1613,22 +1466,7 @@
                   "z": 0
                 },
                 "text": "translation",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#638c69",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -1639,7 +1477,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Coincidence",
+          "title": "A translation that changes its terms",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -1719,17 +1557,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.88,
+          "roundness": 0.83,
+          "softness": 0.23,
+          "irregularity": 0.46,
+          "elongation": 0.07,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.9,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.06,
-          "halo": 0.13,
+          "halo": 0.19,
           "speed": 0.42,
           "circulation": 0.34,
           "turbulence": 0.1,
@@ -1739,8 +1577,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.35,
+          "grain": 0.044,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -2203,22 +2041,7 @@
                   "z": 0
                 },
                 "text": "note",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#638c69",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-dos-dossier-process-7-s3",
@@ -2230,22 +2053,7 @@
                   "z": 0
                 },
                 "text": "jurisdiction",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#638c69",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-dos-dossier-process-7-s4",
@@ -2257,22 +2065,7 @@
                   "z": 0
                 },
                 "text": "conditions",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#eae4ee",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -2283,7 +2076,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Process",
+          "title": "What an achieved form makes possible",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -2363,17 +2156,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.9,
+          "roundness": 0.88,
+          "softness": 0.18,
+          "irregularity": 0.38,
+          "elongation": 0.1,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.92,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.06,
-          "halo": 0.13,
+          "halo": 0.15,
           "speed": 0.42,
           "circulation": 0.34,
           "turbulence": 0.1,
@@ -2383,8 +2176,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.3,
+          "grain": 0.038,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -2868,7 +2661,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Indian philosophy",
+          "title": "Articulation, agency, the sourceward turn",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -2931,11 +2724,11 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.91,
+          "roundness": 0.9,
+          "softness": 0.16,
+          "irregularity": 0.34,
+          "elongation": 0.11,
           "orientation": 0,
           "contrast": 0.93,
           "densityScale": 1,
@@ -2951,8 +2744,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.3,
+          "grain": 0.034,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -3442,22 +3235,7 @@
                   "z": 0
                 },
                 "text": "rules",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#b08a3e",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-dos-dossier-zero-reception-7-s3",
@@ -3469,22 +3247,7 @@
                   "z": 0
                 },
                 "text": "exception",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-dos-dossier-zero-reception-7-s4",
@@ -3496,22 +3259,7 @@
                   "z": 0
                 },
                 "text": "loan",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#b08a3e",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -3522,7 +3270,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Zero received",
+          "title": "What the receiving practice permits",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -3585,11 +3333,11 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.91,
+          "roundness": 0.9,
+          "softness": 0.16,
+          "irregularity": 0.34,
+          "elongation": 0.11,
           "orientation": 0,
           "contrast": 0.93,
           "densityScale": 1,
@@ -3605,8 +3353,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.3,
+          "grain": 0.034,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -4090,7 +3838,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Responsibility",
+          "title": "What was entrusted, what became operative",
           "italic": "",
           "body": "",
           "x": 0.04,

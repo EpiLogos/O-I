@@ -13,10 +13,10 @@
       "duration": 12,
       "transition": 1.4,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
+        "mode": "3d",
+        "yaw": -0.3,
+        "pitch": 0.25,
+        "zoom": 0.85,
         "panX": 0,
         "panY": 0
       },
@@ -26,7 +26,8 @@
         "pointerMode": "attract",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.4,
-        "pointerClickRadius": 0.3
+        "pointerClickRadius": 0.3,
+        "morphEnabled": true
       },
       "field": {
         "background": "#141428",
@@ -41,7 +42,14 @@
           "speed": 0.26,
           "circulation": 0.1,
           "dispersion": 0.04,
-          "pointerStrength": 0.28
+          "pointerStrength": 0.28,
+          "halo": 0.3,
+          "opacity": 0.7,
+          "roundness": 0.9,
+          "contrast": 0.88,
+          "grain": 0.02,
+          "depth": 0.7,
+          "zConfinement": 0.75
         }
       },
       "entities": [
@@ -52,7 +60,7 @@
           "position": {
             "x": 0.02,
             "y": -0.42,
-            "z": 0
+            "z": -0.15
           },
           "size": {
             "x": 0.36,
@@ -91,7 +99,7 @@
           "position": {
             "x": -0.5,
             "y": -0.56,
-            "z": 0
+            "z": 0.3
           },
           "size": {
             "x": 0.14,
@@ -130,7 +138,7 @@
           "position": {
             "x": 0.5,
             "y": -0.36,
-            "z": 0
+            "z": 0.45
           },
           "size": {
             "x": 0.3,
@@ -163,7 +171,7 @@
           "position": {
             "x": 0.55,
             "y": -0.68,
-            "z": 0
+            "z": 0.2
           },
           "size": {
             "x": 0.13,
@@ -215,13 +223,13 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
+        "thetaRate": 0.2,
+        "phiRate": 0.2,
         "thetaOffset": 0,
         "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
+        "law": "product",
+        "depth": 1.4,
+        "dwell": 0.35
       },
       "automation": []
     },
@@ -232,10 +240,10 @@
       "duration": 13,
       "transition": 1.3,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
+        "mode": "3d",
+        "yaw": -0.3,
+        "pitch": 0.25,
+        "zoom": 0.85,
         "panX": 0,
         "panY": 0
       },
@@ -245,7 +253,8 @@
         "pointerMode": "attract",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.4,
-        "pointerClickRadius": 0.3
+        "pointerClickRadius": 0.3,
+        "morphEnabled": true
       },
       "field": {
         "background": "#141428",
@@ -260,7 +269,14 @@
           "speed": 0.26,
           "circulation": 0.1,
           "dispersion": 0.04,
-          "pointerStrength": 0.28
+          "pointerStrength": 0.28,
+          "halo": 0.3,
+          "opacity": 0.7,
+          "roundness": 0.9,
+          "contrast": 0.88,
+          "grain": 0.02,
+          "depth": 0.7,
+          "zConfinement": 0.75
         }
       },
       "entities": [
@@ -271,7 +287,7 @@
           "position": {
             "x": -0.2,
             "y": -0.44,
-            "z": 0
+            "z": -0.35
           },
           "size": {
             "x": 0.22,
@@ -310,7 +326,7 @@
           "position": {
             "x": 0.35,
             "y": -0.56,
-            "z": 0
+            "z": 0.1
           },
           "size": {
             "x": 0.26,
@@ -349,7 +365,7 @@
           "position": {
             "x": 0.05,
             "y": -0.34,
-            "z": 0
+            "z": 0.0
           },
           "size": {
             "x": 0.5,
@@ -382,7 +398,7 @@
           "position": {
             "x": -0.6,
             "y": -0.3,
-            "z": 0
+            "z": 0.3
           },
           "size": {
             "x": 0.14,
@@ -434,13 +450,13 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
+        "thetaRate": 0.2,
+        "phiRate": 0.2,
         "thetaOffset": 0,
         "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
+        "law": "product",
+        "depth": 1.4,
+        "dwell": 0.35
       },
       "automation": []
     },
@@ -451,10 +467,10 @@
       "duration": 12,
       "transition": 1.5,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
+        "mode": "3d",
+        "yaw": -0.3,
+        "pitch": 0.25,
+        "zoom": 0.85,
         "panX": 0,
         "panY": 0
       },
@@ -464,7 +480,8 @@
         "pointerMode": "attract",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.4,
-        "pointerClickRadius": 0.3
+        "pointerClickRadius": 0.3,
+        "morphEnabled": true
       },
       "field": {
         "background": "#141428",
@@ -479,7 +496,14 @@
           "speed": 0.26,
           "circulation": 0.1,
           "dispersion": 0.04,
-          "pointerStrength": 0.28
+          "pointerStrength": 0.28,
+          "halo": 0.3,
+          "opacity": 0.7,
+          "roundness": 0.9,
+          "contrast": 0.88,
+          "grain": 0.02,
+          "depth": 0.7,
+          "zConfinement": 0.75
         }
       },
       "entities": [
@@ -490,7 +514,7 @@
           "position": {
             "x": 0.02,
             "y": -0.44,
-            "z": 0
+            "z": 0.3
           },
           "size": {
             "x": 0.36,
@@ -529,7 +553,7 @@
           "position": {
             "x": -0.5,
             "y": -0.56,
-            "z": 0
+            "z": -0.4
           },
           "size": {
             "x": 0.26,
@@ -562,7 +586,7 @@
           "position": {
             "x": 0.55,
             "y": -0.36,
-            "z": 0
+            "z": 0.15
           },
           "size": {
             "x": 0.18,
@@ -595,7 +619,7 @@
           "position": {
             "x": 0.56,
             "y": -0.66,
-            "z": 0
+            "z": 0.35
           },
           "size": {
             "x": 0.13,
@@ -647,13 +671,13 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
+        "thetaRate": 0.2,
+        "phiRate": 0.2,
         "thetaOffset": 0,
         "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
+        "law": "product",
+        "depth": 1.4,
+        "dwell": 0.35
       },
       "automation": []
     },
@@ -692,7 +716,11 @@
           "speed": 0.24,
           "circulation": 0.08,
           "dispersion": 0.04,
-          "pointerStrength": 0.25
+          "pointerStrength": 0.25,
+          "roundness": 0.99,
+          "softness": 0.05,
+          "contrast": 0.96,
+          "halo": 0.14
         }
       },
       "entities": [
@@ -911,7 +939,10 @@
           "speed": 0.3,
           "circulation": 0.14,
           "dispersion": 0.05,
-          "pointerStrength": 0.3
+          "pointerStrength": 0.3,
+          "contrast": 0.92,
+          "roundness": 0.94,
+          "softness": 0.1
         }
       },
       "entities": [
@@ -1180,7 +1211,11 @@
           "speed": 0.28,
           "circulation": 0.1,
           "dispersion": 0.05,
-          "pointerStrength": 0.28
+          "pointerStrength": 0.28,
+          "opacity": 0.6,
+          "halo": 0.26,
+          "softness": 0.3,
+          "irregularity": 0.3
         }
       },
       "entities": [
@@ -1405,7 +1440,11 @@
           "speed": 0.26,
           "circulation": 0.1,
           "dispersion": 0.04,
-          "pointerStrength": 0.28
+          "pointerStrength": 0.28,
+          "halo": 0.32,
+          "opacity": 0.72,
+          "roundness": 0.86,
+          "contrast": 0.85
         }
       },
       "entities": [

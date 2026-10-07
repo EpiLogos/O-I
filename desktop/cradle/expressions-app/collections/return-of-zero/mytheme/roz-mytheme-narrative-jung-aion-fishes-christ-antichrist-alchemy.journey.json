@@ -1,1523 +1,1551 @@
 {
- "schema": "oi.journey",
- "version": 1,
- "id": "roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
- "name": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow",
- "description": "The complete interpretive movement: ego and shadow, the Christ-image and its excluded contrary, the fishes' doubled time, the alchemical work and its scientific aftermath, the quaternio with its declared modern reconstruction, and the age becoming visible as an age.",
- "loop": true,
- "scenes": [
-  {
-   "id": "m-ai-0-shadow",
-   "name": "Ego, shadow, and the image of perfection",
-   "character": "The ego as centre of reference meets the shadow; the Christ-image gives wholeness a human face; Antichrist belongs to the ensuing drama as the excluded contrary made historically active.",
-   "duration": 13,
-   "transition": 1.5,
-   "view": {
-    "mode": "2d",
-    "yaw": 0.04,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "blackOnWhite",
-    "backgroundMode": "solid",
-    "pointerMode": "repel",
-    "pointerClick": "shove",
-    "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
-   },
-   "field": {
-    "background": "#f2efe4",
-    "palette": [
-     "#3a2c18",
-     "#8a5a2b",
-     "#2b6b6b",
-     "#c9a227"
-    ],
-    "material": "round",
-    "params": {
-     "pointerStrength": 0.4,
-     "speed": 0.45,
-     "circulation": 0.1,
-     "dispersion": 0.1,
-     "turbulence": 0.15
-    }
-   },
-   "entities": [
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+  "name": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow",
+  "description": "The complete interpretive movement: ego and shadow, the Christ-image and its excluded contrary, the fishes' doubled time, the alchemical work and its scientific aftermath, the quaternio with its declared modern reconstruction, and the age becoming visible as an age.",
+  "loop": true,
+  "scenes": [
     {
-     "id": "e1",
-     "name": "the ego — centre of reference, rooted beyond what it knows of itself",
-     "kind": "formation",
-     "position": {
-      "x": -0.3,
-      "y": -0.24,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.14,
-      "y": 0.16
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#3a2c18",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e1-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  .-~-.\n (  .  )\n  '---'"
-      }
-     }
-    },
-    {
-     "id": "e2",
-     "name": "the shadow — recognised through moral effort; projection returning",
-     "kind": "formation",
-     "position": {
-      "x": -0.32,
-      "y": -0.44,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.18,
-      "y": 0.12
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#4a4458",
-     "tintWeight": 0.9,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e2-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  .::.:.\n :.:..:.:"
-      }
-     }
-    },
-    {
-     "id": "e3",
-     "name": "the Christ-image — the Self given a human face",
-     "kind": "formation",
-     "position": {
-      "x": 0.05,
-      "y": -0.32,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.14,
-      "y": 0.22
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e3-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "    _|_\n   (.o.)\n   /|\\\n   / \\\\"
-      }
-     }
-    },
-    {
-     "id": "e4",
-     "name": "Antichrist — the excluded contrary given a face in the same aeon",
-     "kind": "formation",
-     "position": {
-      "x": 0.45,
-      "y": -0.32,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.14,
-      "y": 0.22
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#7d3b1f",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e4-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "    \\|/\n   (o.)\n   /|\\\n   / \\\\"
-      }
-     }
-    }
-   ],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "Ego, shadow, and the bright image",
-     "italic": "What the image excludes returns with a face.",
-     "body": "",
-     "x": 0.03,
-     "y": 0.04,
-     "width": 400,
-     "size": 26,
-     "align": "left"
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": []
-  },
-  {
-   "id": "m-ai-1-fishes",
-   "name": "The fishes give the age its temporal image",
-   "character": "Pisces lets the double figure acquire duration; the precessional spring-point; the Pistis Sophia child-double embracing; the overlapping ram and fish; Leviathan becoming food.",
-   "duration": 14,
-   "transition": 1.5,
-   "view": {
-    "mode": "2d",
-    "yaw": 0.04,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "blackOnWhite",
-    "backgroundMode": "solid",
-    "pointerMode": "repel",
-    "pointerClick": "shove",
-    "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
-   },
-   "field": {
-    "background": "#f2efe4",
-    "palette": [
-     "#3a2c18",
-     "#8a5a2b",
-     "#2b6b6b",
-     "#c9a227"
-    ],
-    "material": "round",
-    "params": {
-     "pointerStrength": 0.4,
-     "speed": 0.45,
-     "circulation": 0.1,
-     "dispersion": 0.1,
-     "turbulence": 0.15
-    }
-   },
-   "entities": [
-    {
-     "id": "e5",
-     "name": "the precessional wheel — the spring-point moving through the signs",
-     "kind": "formation",
-     "position": {
-      "x": 0.05,
-      "y": -0.4,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.5,
-      "y": 0.4
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#8a5a2b",
-     "tintWeight": 0.9,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": true,
-      "clock": "seconds",
-      "order": "loop",
-      "easing": "smoothstep",
-      "steps": [
-       {
-        "id": "e5-sq1",
-        "text": "",
-        "shape": "disc",
-        "hold": 3.4,
-        "transition": 1.8,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.5,
-          "y": 0.4
-         },
-         "rotation": 0,
-         "tint": "#8a5a2b",
-         "tintWeight": 0.9,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      "id": "m-ai-0-shadow",
+      "name": "Ego, shadow, and the image of perfection",
+      "character": "The ego as centre of reference meets the shadow; the Christ-image gives wholeness a human face; Antichrist belongs to the ensuing drama as the excluded contrary made historically active.",
+      "duration": 13,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0.04,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.32
+      },
+      "field": {
+        "background": "#f2efe4",
+        "palette": [
+          "#3a2c18",
+          "#8a5a2b",
+          "#2b6b6b",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {
+          "pointerStrength": 0.4,
+          "speed": 0.45,
+          "circulation": 0.1,
+          "dispersion": 0.1,
+          "turbulence": 0.15,
+          "contrast": 0.95,
+          "grain": 0.04
         }
-       },
-       {
-        "id": "e5-sq2",
-        "text": "",
-        "shape": "disc",
-        "hold": 3.4,
-        "transition": 1.8,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.5,
-          "y": 0.4
-         },
-         "rotation": 0,
-         "tint": "#c9a227",
-         "tintWeight": 1,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      },
+      "entities": [
+        {
+          "id": "e1",
+          "name": "the ego — centre of reference, rooted beyond what it knows of itself",
+          "kind": "formation",
+          "position": {
+            "x": -0.3,
+            "y": -0.24,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#3a2c18",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e1-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  .-~-.\n (  .  )\n  '---'"
+            }
+          }
+        },
+        {
+          "id": "e2",
+          "name": "the shadow — recognised through moral effort; projection returning",
+          "kind": "formation",
+          "position": {
+            "x": -0.32,
+            "y": -0.44,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.18,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#4a4458",
+          "tintWeight": 0.9,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e2-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  .::.:.\n :.:..:.:"
+            }
+          }
+        },
+        {
+          "id": "e3",
+          "name": "the Christ-image — the Self given a human face",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": -0.32,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e3-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "    _|_\n   (.o.)\n   /|\\\n   / \\\\"
+            }
+          }
+        },
+        {
+          "id": "e4",
+          "name": "Antichrist — the excluded contrary given a face in the same aeon",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": -0.32,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#7d3b1f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e4-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "    \\|/\n   (o.)\n   /|\\\n   / \\\\"
+            }
+          }
         }
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "      .-~~~~~-.\n    /  *     *  \\\n   |       +     |\n   |             |\n    \\  *     *  /\n      '~.___.~'"
-      }
-     }
-    },
-    {
-     "id": "e6",
-     "name": "Pisces — the two fishes of the age, head to tail",
-     "kind": "formation",
-     "position": {
-      "x": -0.55,
-      "y": -0.24,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.26,
-      "y": 0.1
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#2b6b6b",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e6-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " ><'~'>          <'~'><\n      \\          /\n       ~~~ ~~~ ~~"
-      }
-     }
-    },
-    {
-     "id": "e7",
-     "name": "♈",
-     "kind": "formation",
-     "position": {
-      "x": 0.6,
-      "y": -0.18,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.1,
-      "y": 0.12
-     },
-     "rotation": 0,
-     "shape": "text",
-     "text": "♈",
-     "share": 1,
-     "tint": "#3a2c18",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e7-sq0",
-        "text": "♈",
-        "shape": "text",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
-    },
-    {
-     "id": "e8",
-     "name": "the Pistis Sophia double — bound, released, embraced, one",
-     "kind": "formation",
-     "position": {
-      "x": -0.52,
-      "y": -0.46,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.14,
-      "y": 0.12
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#6b5d4a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e8-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  .o. .o.\n  |\\| |/|\n   |.|.|"
-      }
-     }
-    },
-    {
-     "id": "e9",
-     "name": "Leviathan — split against itself, then food for the devout",
-     "kind": "formation",
-     "position": {
-      "x": 0.55,
-      "y": -0.52,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.24,
-      "y": 0.24
-     },
-     "rotation": 0,
-     "shape": "ring",
-     "text": "",
-     "share": 1,
-     "tint": "#2b6b6b",
-     "tintWeight": 0.6,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e9-sq0",
-        "text": "",
-        "shape": "ring",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
-    },
-    {
-     "id": "e10",
-     "name": "Epiphanius's rite — the image carried up by night, returned below",
-     "kind": "formation",
-     "position": {
-      "x": 0.05,
-      "y": -0.12,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.2,
-      "y": 0.14
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#8a5a2b",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e10-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "   o o o\n   ._''_.\n  (  ..  )\n   ~~~~~~"
-      }
-     }
-    }
-   ],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "The age of two fishes",
-     "italic": "The wheel gives the doubled figure its duration.",
-     "body": "",
-     "x": 0.03,
-     "y": 0.04,
-     "width": 400,
-     "size": 26,
-     "align": "left"
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": []
-  },
-  {
-   "id": "m-ai-2-alchemy",
-   "name": "The fish is caught, worked, and made to transform",
-   "character": "The round creature heated to radiance; the eyewash; the Echeneis reversal — the magnet that attracts the attracting power; Mercurius as substance and philosophy; science born as the mother recedes.",
-   "duration": 13,
-   "transition": 1.5,
-   "view": {
-    "mode": "2d",
-    "yaw": 0.04,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "whiteOnBlack",
-    "backgroundMode": "solid",
-    "pointerMode": "vortex",
-    "pointerClick": "pulse",
-    "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.35
-   },
-   "field": {
-    "background": "#1c1410",
-    "palette": [
-     "#e8b84a",
-     "#c9622b",
-     "#7d3b1f",
-     "#e8e2d0"
-    ],
-    "material": "round",
-    "params": {
-     "pointerStrength": 0.4,
-     "speed": 0.5,
-     "circulation": 0.3,
-     "dispersion": 0.06,
-     "turbulence": 0.1
-    }
-   },
-   "entities": [
-    {
-     "id": "e11",
-     "name": "the round sea creature — heated with sea water until it shines",
-     "kind": "formation",
-     "position": {
-      "x": -0.05,
-      "y": -0.32,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.24,
-      "y": 0.2
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#e8b84a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e11-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "   ,~~~~~,\n  (  ~ ~  )\n   '~~~~~'\n    ( ( (\n   ) ) )\n  ~~~~~~~"
-      }
-     }
-    },
-    {
-     "id": "e12",
-     "name": "the eyewash — the preparation becoming the capacity to see",
-     "kind": "formation",
-     "position": {
-      "x": -0.55,
-      "y": -0.26,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.14,
-      "y": 0.14
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#e8e2d0",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e12-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  (     )\n   \\ ~ /\n    \\_/"
-      }
-     }
-    },
-    {
-     "id": "e13",
-     "name": "the Echeneis reversal — the magnet that attracts the attracting power",
-     "kind": "formation",
-     "position": {
-      "x": 0.45,
-      "y": -0.22,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.26,
-      "y": 0.16
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9622b",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e13-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  ||\n  ||        .--.\n  ||  ~~~  ( ><(((*>\n  ||        '--'\n ~~~~~~~~~~~~~~~"
-      }
-     }
-    },
-    {
-     "id": "e14",
-     "name": "☿",
-     "kind": "formation",
-     "position": {
-      "x": 0.6,
-      "y": -0.46,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.1,
-      "y": 0.12
-     },
-     "rotation": 0,
-     "shape": "text",
-     "text": "☿",
-     "share": 1,
-     "tint": "#e8b84a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e14-sq0",
-        "text": "☿",
-        "shape": "text",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
-    },
-    {
-     "id": "e15",
-     "name": "the aftermath — the instrument inherits the operation, the mother recedes",
-     "kind": "formation",
-     "position": {
-      "x": -0.5,
-      "y": -0.54,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.2,
-      "y": 0.14
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#7d8a8f",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e15-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  ____\n |____|=====>\n    |\n   /|\\\\ "
-      }
-     }
-    }
-   ],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "The fish is worked",
-     "italic": "The substance alters; so does the capacity to see.",
-     "body": "",
-     "x": 0.03,
-     "y": 0.04,
-     "width": 400,
-     "size": 26,
-     "align": "left"
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": []
-  },
-  {
-   "id": "m-ai-3-quaternio",
-   "name": "The quaternio — Anthropos, Shadow, Physis, lapis",
-   "character": "A→B→C→D with lower-case transformations; the connected diamonds; the Shadow Quaternio declared a modern reconstruction; solve et coagula as the ring's movement.",
-   "duration": 13,
-   "transition": 1.6,
-   "view": {
-    "mode": "3d",
-    "yaw": 0.22,
-    "pitch": 0.1,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "whiteOnBlack",
-    "backgroundMode": "solid",
-    "pointerMode": "attract",
-    "pointerClick": "pulse",
-    "pointerClickStrength": 0.3,
-    "pointerClickRadius": 0.3
-   },
-   "field": {
-    "background": "#14121c",
-    "palette": [
-     "#c9b98a",
-     "#8a7ba8",
-     "#e8e2d0",
-     "#5a4d78"
-    ],
-    "material": "round",
-    "params": {
-     "pointerStrength": 0.3,
-     "speed": 0.4,
-     "circulation": 0.15,
-     "dispersion": 0.05
-    }
-   },
-   "entities": [
-    {
-     "id": "e16",
-     "name": "the connected diamonds — Anthropos, Shadow, Physis, lapis; the Shadow diamond drawn dashed, Jung's declared modern insertion",
-     "kind": "formation",
-     "position": {
-      "x": 0.05,
-      "y": -0.36,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.6,
-      "y": 0.2
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9b98a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e16-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "   /A\\     .B.     /C\\     /D\\\n  <   >---(   )---<   >---<   >\n   \\a/     ' '     \\c/     \\d/"
-      }
-     }
-    },
-    {
-     "id": "e17",
-     "name": "the opus circling — solve et coagula, the ring returning through differentiation",
-     "kind": "formation",
-     "position": {
-      "x": 0.05,
-      "y": -0.34,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.55,
-      "y": 0.55
-     },
-     "rotation": 0,
-     "shape": "ring",
-     "text": "",
-     "share": 1,
-     "tint": "#8a7ba8",
-     "tintWeight": 0.6,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": true,
-      "clock": "seconds",
-      "order": "loop",
-      "easing": "smoothstep",
-      "steps": [
-       {
-        "id": "e17-sq1",
-        "text": "",
-        "shape": "ring",
-        "hold": 3.2,
-        "transition": 1.8,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.55,
-          "y": 0.55
-         },
-         "rotation": 0,
-         "tint": "#8a7ba8",
-         "tintWeight": 0.6,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      ],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "Ego, shadow and the image of perfection",
+          "italic": "What the image excludes returns with a face.",
+          "body": "",
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
+          "align": "left"
         }
-       },
-       {
-        "id": "e17-sq2",
-        "text": "",
-        "shape": "ring",
-        "hold": 3.2,
-        "transition": 1.8,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.45,
-          "y": 0.45
-         },
-         "rotation": 0,
-         "tint": "#5a4d78",
-         "tintWeight": 0.8,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-ai-1-fishes",
+      "name": "The fishes give the age its temporal image",
+      "character": "Pisces lets the double figure acquire duration; the precessional spring-point; the Pistis Sophia child-double embracing; the overlapping ram and fish; Leviathan becoming food.",
+      "duration": 14,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0.04,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "pointerMode": "repel",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.32
+      },
+      "field": {
+        "background": "#f2efe4",
+        "palette": [
+          "#3a2c18",
+          "#8a5a2b",
+          "#2b6b6b",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {
+          "pointerStrength": 0.4,
+          "speed": 0.45,
+          "circulation": 0.1,
+          "dispersion": 0.1,
+          "turbulence": 0.15,
+          "contrast": 0.95,
+          "grain": 0.04
         }
-       }
-      ]
-     }
-    },
-    {
-     "id": "e18",
-     "name": "the return changed — an unconscious totality become conscious",
-     "kind": "formation",
-     "position": {
-      "x": 0.05,
-      "y": -0.66,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.14,
-      "y": 0.14
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#e8e2d0",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e18-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
-    }
-   ],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "The quaternio",
-     "italic": "Four states returning through differentiation — one diamond redrawn, and declared modern.",
-     "body": "",
-     "x": 0.03,
-     "y": 0.04,
-     "width": 400,
-     "size": 26,
-     "align": "left"
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": []
-  },
-  {
-   "id": "m-ai-5-return",
-   "name": "The age becomes visible as an age",
-   "character": "Historical de-monopolisation: the inherited image exposed as background; generative vs historical succession; the register decision placing Christ/Antichrist at the occupied slash; the unresolved seams named.",
-   "duration": 15,
-   "transition": 2.2,
-   "view": {
-    "mode": "3d",
-    "yaw": 0.22,
-    "pitch": 0.1,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "whiteOnBlack",
-    "backgroundMode": "solid",
-    "pointerMode": "attract",
-    "pointerClick": "pulse",
-    "pointerClickStrength": 0.3,
-    "pointerClickRadius": 0.3
-   },
-   "field": {
-    "background": "#14121c",
-    "palette": [
-     "#c9b98a",
-     "#8a7ba8",
-     "#e8e2d0",
-     "#5a4d78"
-    ],
-    "material": "round",
-    "params": {
-     "pointerStrength": 0.3,
-     "speed": 0.4,
-     "circulation": 0.15,
-     "dispersion": 0.05
-    }
-   },
-   "entities": [
-    {
-     "id": "e19",
-     "name": "de-monopolisation — the inherited image becoming revisable",
-     "kind": "formation",
-     "position": {
-      "x": 0.05,
-      "y": -0.38,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.44,
-      "y": 0.44
-     },
-     "rotation": 0,
-     "shape": "ring",
-     "text": "",
-     "share": 1,
-     "tint": "#8a7ba8",
-     "tintWeight": 0.5,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": true,
-      "clock": "seconds",
-      "order": "loop",
-      "easing": "smoothstep",
-      "steps": [
-       {
-        "id": "e19-sq1",
-        "text": "",
-        "shape": "ring",
-        "hold": 3.4,
-        "transition": 1.8,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.44,
-          "y": 0.44
-         },
-         "rotation": 0,
-         "tint": "#8a7ba8",
-         "tintWeight": 0.5,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      },
+      "entities": [
+        {
+          "id": "e5",
+          "name": "the precessional wheel — the spring-point moving through the signs",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": -0.4,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.4
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8a5a2b",
+          "tintWeight": 0.9,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "e5-sq1",
+                "text": "",
+                "shape": "disc",
+                "hold": 3.4,
+                "transition": 1.8,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
+                  "tint": "#8a5a2b",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e5-sq2",
+                "text": "",
+                "shape": "disc",
+                "hold": 3.4,
+                "transition": 1.8,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.5,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "      .-~~~~~-.\n    /  *     *  \\\n   |       +     |\n   |             |\n    \\  *     *  /\n      '~.___.~'"
+            }
+          }
+        },
+        {
+          "id": "e6",
+          "name": "Pisces — the two fishes of the age, head to tail",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.24,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#2b6b6b",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e6-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " ><'~'>          <'~'><\n      \\          /\n       ~~~ ~~~ ~~"
+            }
+          }
+        },
+        {
+          "id": "e7",
+          "name": "♈",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": -0.18,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "♈",
+          "share": 1,
+          "tint": "#3a2c18",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e7-sq0",
+                "text": "♈",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e8",
+          "name": "the Pistis Sophia double — bound, released, embraced, one",
+          "kind": "formation",
+          "position": {
+            "x": -0.52,
+            "y": -0.46,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#6b5d4a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e8-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  .o. .o.\n  |\\| |/|\n   |.|.|"
+            }
+          }
+        },
+        {
+          "id": "e9",
+          "name": "Leviathan — split against itself, then food for the devout",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.52,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#2b6b6b",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e9-sq0",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e10",
+          "name": "Epiphanius's rite — the image carried up by night, returned below",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": -0.12,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8a5a2b",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e10-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   o o o\n   ._''_.\n  (  ..  )\n   ~~~~~~"
+            }
+          }
         }
-       },
-       {
-        "id": "e19-sq2",
-        "text": "",
-        "shape": "ring",
-        "hold": 3.4,
-        "transition": 1.8,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.36,
-          "y": 0.36
-         },
-         "rotation": 0,
-         "tint": "#c9b98a",
-         "tintWeight": 0.8,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      ],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "The fishes give the age its temporal image",
+          "italic": "The wheel gives the doubled figure its duration.",
+          "body": "",
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
+          "align": "left"
         }
-       }
-      ]
-     }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
     },
     {
-     "id": "e20",
-     "name": "succession — what a work makes possible beside what it leaves as condition",
-     "kind": "formation",
-     "position": {
-      "x": 0.62,
-      "y": -0.26,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.24,
-      "y": 0.14
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9b98a",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e20-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  ,O,      ==>   ====>\n   |\n  / \\\\"
-      }
-     }
+      "id": "m-ai-2-alchemy",
+      "name": "The fish is caught, worked, and made to transform",
+      "character": "The round creature heated to radiance; the eyewash; the Echeneis reversal — the magnet that attracts the attracting power; Mercurius as substance and philosophy; science born as the mother recedes.",
+      "duration": 13,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0.04,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.35,
+        "morphEnabled": true,
+        "trajectory": "vortexSpiral",
+        "driveShape": "pulse"
+      },
+      "field": {
+        "background": "#1c1410",
+        "palette": [
+          "#e8b84a",
+          "#c9622b",
+          "#7d3b1f",
+          "#e8e2d0"
+        ],
+        "material": "print",
+        "params": {
+          "pointerStrength": 0.4,
+          "speed": 0.5,
+          "circulation": 0.3,
+          "dispersion": 0.06,
+          "turbulence": 0.1,
+          "opacity": 0.95,
+          "halo": 0.2,
+          "irregularity": 0.45,
+          "softness": 0.3
+        }
+      },
+      "entities": [
+        {
+          "id": "e11",
+          "name": "the round sea creature — heated with sea water until it shines",
+          "kind": "formation",
+          "position": {
+            "x": -0.05,
+            "y": -0.32,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#e8b84a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e11-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   ,~~~~~,\n  (  ~ ~  )\n   '~~~~~'\n    ( ( (\n   ) ) )\n  ~~~~~~~"
+            }
+          }
+        },
+        {
+          "id": "e12",
+          "name": "the eyewash — the preparation becoming the capacity to see",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.26,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e12-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  (     )\n   \\ ~ /\n    \\_/"
+            }
+          }
+        },
+        {
+          "id": "e13",
+          "name": "the Echeneis reversal — the magnet that attracts the attracting power",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": -0.22,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9622b",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e13-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  ||\n  ||        .--.\n  ||  ~~~  ( ><(((*>\n  ||        '--'\n ~~~~~~~~~~~~~~~"
+            }
+          }
+        },
+        {
+          "id": "e14",
+          "name": "☿",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": -0.46,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☿",
+          "share": 1,
+          "tint": "#e8b84a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e14-sq0",
+                "text": "☿",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e15",
+          "name": "the aftermath — the instrument inherits the operation, the mother recedes",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.54,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#7d8a8f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e15-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  ____\n |____|=====>\n    |\n   /|\\\\ "
+            }
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "The fish is caught, worked and made to transform",
+          "italic": "The substance's alteration returns as an alteration in the capacity to see.",
+          "body": "",
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.16,
+        "phiRate": 0.09,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "beat",
+        "depth": 1.6,
+        "dwell": 0.3
+      },
+      "automation": []
     },
     {
-     "id": "e21",
-     "name": "⊘",
-     "kind": "formation",
-     "position": {
-      "x": -0.55,
-      "y": -0.32,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.1,
-      "y": 0.1
-     },
-     "rotation": 0,
-     "shape": "text",
-     "text": "⊘",
-     "share": 1,
-     "tint": "#e8e2d0",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e21-sq0",
-        "text": "⊘",
-        "shape": "text",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
+      "id": "m-ai-3-quaternio",
+      "name": "The quaternio — Anthropos, Shadow, Physis, lapis",
+      "character": "A→B→C→D with lower-case transformations; the connected diamonds; the Shadow Quaternio declared a modern reconstruction; solve et coagula as the ring's movement.",
+      "duration": 13,
+      "transition": 1.6,
+      "view": {
+        "mode": "3d",
+        "yaw": 0.22,
+        "pitch": 0.1,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.3,
+        "pointerClickRadius": 0.3,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "driveShape": "smooth"
+      },
+      "field": {
+        "background": "#14121c",
+        "palette": [
+          "#c9b98a",
+          "#8a7ba8",
+          "#e8e2d0",
+          "#5a4d78"
+        ],
+        "material": "round",
+        "params": {
+          "pointerStrength": 0.3,
+          "speed": 0.4,
+          "circulation": 0.15,
+          "dispersion": 0.05,
+          "halo": 0.14,
+          "elongation": 0.06,
+          "opacity": 0.9,
+          "zConfinement": 0.7
+        }
+      },
+      "entities": [
+        {
+          "id": "e16",
+          "name": "the connected diamonds — Anthropos, Shadow, Physis, lapis; the Shadow diamond drawn dashed, Jung's declared modern insertion",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": -0.36,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.6,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9b98a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e16-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   /A\\     .B.     /C\\     /D\\\n  <   >---(   )---<   >---<   >\n   \\a/     ' '     \\c/     \\d/"
+            }
+          }
+        },
+        {
+          "id": "e17",
+          "name": "the opus circling — solve et coagula, the ring returning through differentiation",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": -0.34,
+            "z": -0.15
+          },
+          "size": {
+            "x": 0.55,
+            "y": 0.55
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#8a7ba8",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "e17-sq1",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.2,
+                "transition": 1.8,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.55,
+                    "y": 0.55
+                  },
+                  "rotation": 0,
+                  "tint": "#8a7ba8",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e17-sq2",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.2,
+                "transition": 1.8,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.45,
+                    "y": 0.45
+                  },
+                  "rotation": 0,
+                  "tint": "#5a4d78",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "e18",
+          "name": "the return changed — an unconscious totality become conscious",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": -0.66,
+            "z": 0.3
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e18-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "The return changes an unconscious totality into a conscious one",
+          "italic": "Four states returning through differentiation — one diamond redrawn, and declared modern.",
+          "body": "",
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.04,
+        "phiRate": 0.07,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1.2,
+        "dwell": 0.3
+      },
+      "automation": []
     },
     {
-     "id": "e22",
-     "name": "the unratified — held unassigned until their own argument is made",
-     "kind": "formation",
-     "position": {
-      "x": -0.55,
-      "y": -0.56,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.14,
-      "y": 0.1
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#5a4d78",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e22-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " [     ]\n  '---'"
-      }
-     }
+      "id": "m-ai-5-return",
+      "name": "The age becomes visible as an age",
+      "character": "Historical de-monopolisation: the inherited image exposed as background; generative vs historical succession; the register decision placing Christ/Antichrist at the occupied slash; the unresolved seams named.",
+      "duration": 15,
+      "transition": 2.2,
+      "view": {
+        "mode": "3d",
+        "yaw": 0.22,
+        "pitch": 0.1,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.3,
+        "pointerClickRadius": 0.3,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "driveShape": "smooth"
+      },
+      "field": {
+        "background": "#14121c",
+        "palette": [
+          "#c9b98a",
+          "#8a7ba8",
+          "#e8e2d0",
+          "#5a4d78"
+        ],
+        "material": "round",
+        "params": {
+          "pointerStrength": 0.3,
+          "speed": 0.4,
+          "circulation": 0.15,
+          "dispersion": 0.05,
+          "halo": 0.14,
+          "elongation": 0.06,
+          "opacity": 0.9,
+          "zConfinement": 0.7
+        }
+      },
+      "entities": [
+        {
+          "id": "e19",
+          "name": "de-monopolisation — the inherited image becoming revisable",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": -0.38,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.44,
+            "y": 0.44
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#8a7ba8",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "e19-sq1",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.4,
+                "transition": 1.8,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.44,
+                    "y": 0.44
+                  },
+                  "rotation": 0,
+                  "tint": "#8a7ba8",
+                  "tintWeight": 0.5,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e19-sq2",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.4,
+                "transition": 1.8,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.36,
+                    "y": 0.36
+                  },
+                  "rotation": 0,
+                  "tint": "#c9b98a",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "e20",
+          "name": "succession — what a work makes possible beside what it leaves as condition",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": -0.26,
+            "z": 0.2
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9b98a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e20-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  ,O,      ==>   ====>\n   |\n  / \\\\"
+            }
+          }
+        },
+        {
+          "id": "e21",
+          "name": "⊘",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.32,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⊘",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e21-sq0",
+                "text": "⊘",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e22",
+          "name": "the unratified — held unassigned until their own argument is made",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.56,
+            "z": -0.2
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#5a4d78",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e22-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " [     ]\n  '---'"
+            }
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "The age becomes visible as an age",
+          "italic": "The inherited measure becomes revisable.",
+          "body": "",
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.04,
+        "phiRate": 0.07,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1.2,
+        "dwell": 0.3
+      },
+      "automation": []
     }
-   ],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "The age visible as an age",
-     "italic": "The inherited measure becomes revisable.",
-     "body": "",
-     "x": 0.03,
-     "y": 0.04,
-     "width": 400,
-     "size": 26,
-     "align": "left"
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": []
-  }
- ],
- "updatedAt": "2026-10-07T00:00:00.000Z"
+  ],
+  "updatedAt": "2026-10-07T00:00:00.000Z",
+  "notes": [
+    "2026-10-07 deepen pass (agent/o-i-20261007-1639, lane 2): the material made alive and deep. MORPH: the furnace scene gets a beat law (theta 0.16 / phi 0.09, depth 1.6) — two rates interfering, the solve et coagula alternation in the heating of the round creature; the indigo night pair shares one slow theta clock (0.04 / 0.07, depth 1.2) — the opus circling whose return is the book's own. DEPTH: #4 quaternio stands in true z — the connected diamonds in the middle plane, the opus ring running beneath them (z −0.15) and the return emerging toward the viewer (z +0.3): what becomes conscious comes out of the opus' depth; #5→0: succession rises to z +0.2 while the unratified appointments hold at z −0.2 — kept deeper until their own argument is made. PARTICLE PROPS: theological daylight fine and bright (contrast 0.95, grain 0.04); furnace fire haloed, soft, irregular (opacity 0.95, halo 0.2, irregularity 0.45, softness 0.3); indigo night drawn slightly elongated and dimmer (halo 0.14, elongation 0.06, opacity 0.9). TITLES set to the record's own lines: Ego, shadow and the image of perfection; The fishes give the age its temporal image; The fish is caught, worked and made to transform; The return changes an unconscious totality into a conscious one; The age becomes visible as an age. Still pairs held: the daylight pair and the indigo pair each rest unchanged."
+  ]
 }

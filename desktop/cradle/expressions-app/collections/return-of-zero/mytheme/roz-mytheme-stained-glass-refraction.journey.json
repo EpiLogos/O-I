@@ -26,7 +26,10 @@
     "pointerMode": "repel",
     "pointerClick": "shove",
     "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
+    "pointerClickRadius": 0.32,
+    "morphEnabled": true,
+    "trajectory": "quantumInterference",
+    "driveShape": "sine"
    },
    "field": {
     "background": "#0f0d13",
@@ -46,7 +49,10 @@
      "circulation": 0.35,
      "dispersion": 0.06,
      "turbulence": 0.12,
-     "pointerStrength": 0.4
+     "pointerStrength": 0.4,
+     "grain": 0.03,
+     "halo": 0.2,
+     "softness": 0.25
     }
    },
    "entities": [
@@ -337,12 +343,12 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
+    "thetaRate": 0.08,
+    "phiRate": 0.05,
     "thetaOffset": 0,
     "phiOffset": 0,
     "law": "theta",
-    "depth": 1,
+    "depth": 1.3,
     "dwell": 0.3
    },
    "automation": [],
@@ -382,7 +388,10 @@
     "pointerMode": "repel",
     "pointerClick": "shove",
     "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
+    "pointerClickRadius": 0.32,
+    "morphEnabled": true,
+    "trajectory": "quantumInterference",
+    "driveShape": "sine"
    },
    "field": {
     "background": "#0f0d13",
@@ -402,7 +411,10 @@
      "circulation": 0.35,
      "dispersion": 0.06,
      "turbulence": 0.12,
-     "pointerStrength": 0.4
+     "pointerStrength": 0.4,
+     "grain": 0.03,
+     "halo": 0.2,
+     "softness": 0.25
     }
    },
    "entities": [
@@ -765,12 +777,12 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
+    "thetaRate": 0.08,
+    "phiRate": 0.05,
     "thetaOffset": 0,
     "phiOffset": 0,
     "law": "theta",
-    "depth": 1,
+    "depth": 1.3,
     "dwell": 0.3
    },
    "automation": [],
@@ -820,7 +832,7 @@
      "#3c6e71",
      "#b0803a"
     ],
-    "material": "round",
+    "material": "print",
     "params": {
      "count": 56000,
      "size": 2.6,
@@ -830,7 +842,11 @@
      "circulation": 0.3,
      "dispersion": 0.06,
      "turbulence": 0.12,
-     "pointerStrength": 0.4
+     "pointerStrength": 0.4,
+     "halo": 0.1,
+     "grain": 0.05,
+     "roundness": 0.4,
+     "softness": 0.08
     }
    },
    "entities": [
@@ -1099,9 +1115,9 @@
    "duration": 14,
    "transition": 1.5,
    "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
+    "mode": "3d",
+    "yaw": 0.3,
+    "pitch": 0.12,
     "zoom": 1,
     "panX": 0,
     "panY": 0
@@ -1112,7 +1128,10 @@
     "pointerMode": "repel",
     "pointerClick": "shove",
     "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
+    "pointerClickRadius": 0.32,
+    "morphEnabled": true,
+    "trajectory": "vortexSpiral",
+    "driveShape": "triangle"
    },
    "field": {
     "background": "#221019",
@@ -1132,7 +1151,11 @@
      "circulation": 0.3,
      "dispersion": 0.07,
      "turbulence": 0.15,
-     "pointerStrength": 0.4
+     "pointerStrength": 0.4,
+     "softness": 0.2,
+     "halo": 0.16,
+     "irregularity": 0.3,
+     "zConfinement": 0.7
     }
    },
    "entities": [
@@ -1143,7 +1166,7 @@
      "position": {
       "x": -0.1,
       "y": -0.04,
-      "z": 0
+      "z": -0.4
      },
      "size": {
       "x": 0.14,
@@ -1209,7 +1232,7 @@
      "position": {
       "x": -0.38,
       "y": -0.28,
-      "z": 0
+      "z": -0.25
      },
      "size": {
       "x": 0.2,
@@ -1257,7 +1280,7 @@
      "position": {
       "x": 0.3,
       "y": -0.42,
-      "z": 0
+      "z": 0.35
      },
      "size": {
       "x": 0.24,
@@ -1339,7 +1362,7 @@
      "position": {
       "x": 0.13,
       "y": -0.38,
-      "z": 0
+      "z": 0.05
      },
      "size": {
       "x": 0.07,
@@ -1387,7 +1410,7 @@
      "position": {
       "x": 0.3,
       "y": -0.42,
-      "z": 0
+      "z": 0.35
      },
      "size": {
       "x": 0.42,
@@ -1429,7 +1452,7 @@
      "position": {
       "x": -0.16,
       "y": -0.52,
-      "z": 0
+      "z": 0.1
      },
      "size": {
       "x": 0.2,
@@ -1481,12 +1504,12 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
+    "thetaRate": 0.05,
+    "phiRate": 0.09,
     "thetaOffset": 0,
     "phiOffset": 0,
     "law": "theta",
-    "depth": 1,
+    "depth": 1.2,
     "dwell": 0.3
    },
    "automation": [],
@@ -1495,7 +1518,7 @@
      "id": "stage",
      "visible": true,
      "kicker": "",
-     "title": "The image appears; changing light discloses the construction",
+     "title": "The image appears inside the room",
      "italic": "As sun, pane and viewer change, the display changes; a later view reveals what the first withheld.",
      "body": "",
      "x": 0.04,
@@ -1513,9 +1536,9 @@
    "duration": 13,
    "transition": 1.5,
    "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
+    "mode": "3d",
+    "yaw": 0.3,
+    "pitch": 0.12,
     "zoom": 1,
     "panX": 0,
     "panY": 0
@@ -1526,7 +1549,10 @@
     "pointerMode": "repel",
     "pointerClick": "shove",
     "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.32
+    "pointerClickRadius": 0.32,
+    "morphEnabled": true,
+    "trajectory": "vortexSpiral",
+    "driveShape": "triangle"
    },
    "field": {
     "background": "#221019",
@@ -1546,7 +1572,11 @@
      "circulation": 0.3,
      "dispersion": 0.07,
      "turbulence": 0.15,
-     "pointerStrength": 0.4
+     "pointerStrength": 0.4,
+     "softness": 0.2,
+     "halo": 0.16,
+     "irregularity": 0.3,
+     "zConfinement": 0.7
     }
    },
    "entities": [
@@ -1557,7 +1587,7 @@
      "position": {
       "x": -0.05,
       "y": -0.22,
-      "z": 0
+      "z": -0.3
      },
      "size": {
       "x": 0.28,
@@ -1605,7 +1635,7 @@
      "position": {
       "x": -0.05,
       "y": -0.22,
-      "z": 0
+      "z": -0.3
      },
      "size": {
       "x": 0.4,
@@ -1687,7 +1717,7 @@
      "position": {
       "x": 0.12,
       "y": -0.4,
-      "z": 0
+      "z": 0.05
      },
      "size": {
       "x": 0.08,
@@ -1735,7 +1765,7 @@
      "position": {
       "x": -0.44,
       "y": -0.46,
-      "z": 0
+      "z": -0.15
      },
      "size": {
       "x": 0.16,
@@ -1783,7 +1813,7 @@
      "position": {
       "x": 0.42,
       "y": -0.44,
-      "z": 0
+      "z": 0.3
      },
      "size": {
       "x": 0.16,
@@ -1831,7 +1861,7 @@
      "position": {
       "x": 0.44,
       "y": -0.12,
-      "z": 0
+      "z": 0.35
      },
      "size": {
       "x": 0.12,
@@ -1877,12 +1907,12 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
+    "thetaRate": 0.05,
+    "phiRate": 0.09,
     "thetaOffset": 0,
     "phiOffset": 0,
     "law": "theta",
-    "depth": 1,
+    "depth": 1.2,
     "dwell": 0.3
    },
    "automation": [],
@@ -1903,5 +1933,8 @@
    ]
   }
  ],
- "updatedAt": "2026-10-06T12:00:00.000Z"
+ "updatedAt": "2026-10-06T12:00:00.000Z",
+ "notes": [
+  "2026-10-07 deepen pass (agent/o-i-20261007-1639, lane 2): the material made alive and deep. DEPTH: #3–#5→0 stand in the room's true depth — z is the crossing the light makes: sun deepest at −0.4, the made aperture at −0.25, the viewer mid-room at +0.05, the cast image on the near wall at +0.35; the return traverses the same depth back — the returned viewer mid-room, the inert mirror near (the display without knowing), recognition returning toward the aperture it disclosed; zConfinement 0.7 authored. MORPH: the entry pair breathes on the light's clock (theta 0.08 / phi 0.05, depth 1.3 — the breathing before the spectrum opens); the projection pair turns on the sun's slow clock (theta 0.05 / phi 0.09, depth 1.2 — as sun and angle change, the cast changes). PARTICLE PROPS: night glass haloed and soft (grain 0.03, halo 0.2, softness 0.25); lead-and-join daylight coarser and flatter (halo 0.1, grain 0.05); the shifting cast slightly irregular, gently haloed (softness 0.2, halo 0.16, irregularity 0.3). TITLES set to the record's own lines: Light entering a made aperture; The spectrum implicated in the light; Colour acquires a passage; the joins stay visible; The image appears inside the room; Recognition returns to the aperture. Still pairs held: the entry pair and the projection pair each rest unchanged."
+ ]
 }

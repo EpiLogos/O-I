@@ -358,7 +358,11 @@
   "Rework 2026-10-07 (craft lane 4): all 28 word-label scenes replaced by drawn constructions — each ascii plate is the record's own operation (the nested 0/1 derivation, the T1 square, the 2×3→wait, the CRT is formal-neighbours; here the 64+36 bar, the fundamental square, the Möbius stitch, the three pairing arcs, the seven-frame selection). Geometry carries state: the collapsing disc under the immutable subject, the 3-4-5 triangle, the anchor ring with its selected dot.",
   "Colour: nine grounds across four files — definition cool ink/plum, process violet/orchid-rose, quilt jade/deep-jade and a Night ground for the return, music amber/ember. Tints travel per file; gold reserved for earned closures (the recount, the perfect number, the stitch, the selected anchor).",
   "Stillness: chapters of 2-3 scenes hold field, engine, view and morph byte-identical (16 of 27 adjacent pairs still); motion at file and half-file turns.",
-  "Stage text 93 words across 28 scenes — a title each, one short line on eight."
+  "Stage text 93 words across 28 scenes — a title each, one short line on eight.",
+  "Deepen 2026-10-07 (lane 4): four scenes stand in 3d. t1-geometry — the third dimension is space-time extension: the drawn plate floats to z +0.12 before the square that gathers the crossed field (z −0.4), perspective on. Quilt topology — the third dimension is the torus: the quotient square recedes to z −0.5 into the cover the loop travels; the morph is toroidalHopf, law sum (θ̇ 0.13 + φ̇ 0.08) — the two cycles of the loop's cover added. Enantiodromic return — the third dimension is the Möbius twist: the AM face turns to z +0.3 out of the plate's plane; the morph is law beat (θ̇ 0.09 against φ̇ 0.16) — the beat between the stitch's two faces. Music field — the third dimension is the voicing landscape: the grid of groundings recedes to z −0.45 under the mode X at z +0.25, seen down its depth (pitch 0.5).",
+  "Deepen, morph (the material is alive): Spanda is the count's turn — toroidalHopf with driveShape pulse, θ̇ 0.25, depth 1.3, dwell 0.45: spanda drawn as the pulse of recognition. The observer-instrument's played loop circulates (toroidalHopf, θ̇ 0.15, φ̇ 0.1). Together with the topology sum-law and the return's beat-law, four morph scenes carry the journey's motion; the rest holds.",
+  "Deepen, physics states: nine colour registers now hold nine particle materials — crisp definition-cool, violet definitional depth, slate process, rose inverse-field (elongation 0.08, the arcs stretch), jade quilt ground, deep quilt topology, night for the enantiodromic reversal (irregularity 0.45, elongation 0.1), lamplight for the ratios, ember for the diatonic chapters. Props vary across the journey and hold within each register's rest.",
+  "Deepen, titles: every scene carries the record's own line — matheme #2 'Three minimal marks', minus-over-minus #0 'Two marks before their names', copula #1 'Compose equality and difference', harmonics #2 'Hold the hinge as one', six determinations #1 'Ground becomes answerable', catuṣkoṭi and immutable subject keep their record titles, t1 record title 'The geometry of space-time', phase-flip #3 'Re-entry makes the phase consequential', onto-logic #0 'A placed term carries a relation', spanda #1 near-quote 'The two arcs meet', ratio #3 near-quote 'The doubled fourth', harmonics #1 'Being, Becoming and Knowing', crosswalk #1 near-quote 'One address, exact readings', etymology #0 'The psychoid threshold', psychology #0 'The Self as equation', number #0 'Number counting itself', topology #2 near-quote 'A loop through its cover', metaphysics #0 'Prakāśa-Vimarśa', recognition record title kept, return #5→0 'The Möbius Stitch', ratios #0 'The standing identity', substrates #0 'One palette, two traversals', pairing #2 'A pair acquires an interval', lens #0 'The field is heard from somewhere', grammar #0 'A configuration selects its tones', field #0 'Two choices give a field', observer #5→0 'The player recognises the circuit'. Stage words 140."
  ],
  "description": "Binary Explication four-file circuit: definition, process, quilt, music — 28 addressable matheme scenes from \"I see x\" to the musical-epistemic return.",
  "scene_count": 28,
@@ -437,6 +441,13 @@
   "actor": "zcode:craft-expressions-l4",
   "lane": "craft-l4/matheme",
   "pass": "expression rework — TEXT IS THE MINIMUM FORM (owner commission 2026-10-07)",
-  "gate": "site/tests/expression-richness.mjs"
+  "gate": "site/tests/expression-richness.mjs",
+  "deepen": {
+   "date": "2026-10-07",
+   "actor": "zcode:deepen-lane4",
+   "lane": "deepen-l4/matheme",
+   "pass": "the deepen pass — depth, alive material, named scenes (second movement)",
+   "gate": "site/tests/expression-richness.mjs"
+  }
  }
 }

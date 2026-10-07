@@ -110,7 +110,11 @@
   "Rework 2026-10-07 (craft lane 4): word-labels replaced by drawn formal structure. Softmax is the bar field itself — weights (1,2,4) normalise to Σ=1, +10 repeats the same bars (invariance shown, not said), T=2 softens to (1,√2,2), T→0 gathers mass one-hot, T→∞ flattens uniform: temperature read as geometry. The gauge is a beam: tilt 3/4, shift inert (identical plate), swap mirrors to 1/4, ×2 steepens to 9/10, the new reference levels it to 1/2. J-space is a permission graph: the ✕ edge redrawn ▶ by a policy change — the reachable set is the drawing. EBM is the bowl: (y−θ)², the domain {0,1} moving the minimum, learning shifting θ, and the frame notation (m,θ,E)→(m′,θ′,E′) for the second-order revision. Parity is the hexagon circuit E1–E6 around the promoted distinction, failure named first, receipt returned.",
   "Colour: three grounds — cool workshop #10131a (the two Derived scenes), lamplight #16120e (the two Offered constructions), ember walk #141210 (parity). Palette and tints travel ivory→steel→brass→ember; gold reserved for the earned openings (T→0 cut, publish open, receipt).",
   "Stillness: pairs softmax/gauge and J-space/EBM hold field, engine, view and morph byte-identical while the drawn plates hand over — rest between scenes of one register; motion at the register changes (and into the vortex walk of parity).",
-  "Stage text is eight-one words across five scenes; claim metadata and routing live only in this binding and the field's connections panel."
+  "Stage text is eight-one words across five scenes; claim metadata and routing live only in this binding and the field's connections panel.",
+  "Deepen 2026-10-07 (lane 4): the two Offered constructions stand in 3d — in J-space the third dimension is the horizon the boundary hides: the drawn square recedes to z −0.55 behind its action graph (z 0) while the lens J stands before the field (z +0.32), circumscription shown with its circumstance; in the EBM the third dimension is the descent itself — the bowl's far wall at z −0.3, θ at the deepest point of the valley (z −0.5), the declared domain turned toward the inquirer (z +0.28). The pair keeps its shared world (view yaw 0.35 pitch 0.42, perspective, vortex3d 0.45) so the rest between them is still a rest.",
+  "Deepen, morph: the material is alive — J-space and EBM share one morph clock (toroidalHopf trajectory, smooth drive, law theta, θ̇ 0.07 φ̇ 0.11, depth 0.9): the held field breathes, the bowl turns slowly under its own gravity; parity's circuit morphs on a vortexSpiral (triangle drive, θ̇ 0.14, depth 1.2) — the six-test walk circles the promoted distinction and stretches the ember grain (elongation 0.16).",
+  "Deepen, physics states: three profiles across the journey — crisp workshop (grain 0.03, halo 0.1, roundness 0.97, softness 0.12, irregularity 0.22) for the two Derived plates; deep offered field (depth 0.42, zConfinement 0.72, halo 0.2, softness 0.3) for J-space and EBM; ember walk (irregularity 0.5, contrast 0.95, elongation 0.16) for parity. Particle props vary across the journey and hold within each register's rest.",
+  "Deepen, titles: every scene now carries the record's own line — softmax 'The distribution, maximum selection and random draw' (#2), gauge 'It therefore leaves every probability unchanged' (#1), J-space 'Permission is an operative condition' (#2), EBM 'Optimisation over y, learning over θ' (#2), parity 'Varying it changes a declared operation' (#0). Stage words 103; no metadata on stage."
  ],
  "description": "Computation mathemes: softmax/argmax, preference gauge and reference policy, J-space, energy-based inference, the six operational-parity tests.",
  "scene_count": 5,
@@ -144,6 +148,13 @@
   "actor": "zcode:craft-expressions-l4",
   "lane": "craft-l4/matheme",
   "pass": "expression rework — TEXT IS THE MINIMUM FORM (owner commission 2026-10-07)",
-  "gate": "site/tests/expression-richness.mjs"
+  "gate": "site/tests/expression-richness.mjs",
+  "deepen": {
+   "date": "2026-10-07",
+   "actor": "zcode:deepen-lane4",
+   "lane": "deepen-l4/matheme",
+   "pass": "the deepen pass — depth, alive material, named scenes (second movement)",
+   "gate": "site/tests/expression-richness.mjs"
+  }
  }
 }

@@ -31,17 +31,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.9,
+          "roundness": 0.87,
+          "softness": 0.19,
+          "irregularity": 0.4,
+          "elongation": 0.06,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.91,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.14,
+          "halo": 0.16,
           "speed": 0.42,
           "circulation": 0.34,
           "turbulence": 0.1,
@@ -51,8 +51,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.35,
+          "grain": 0.04,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -598,22 +598,7 @@
                   "z": 0
                 },
                 "text": "Name-through-Count",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#9a7ab0",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-ety-etymology-encounter-region-name-count-9-s3",
@@ -625,22 +610,7 @@
                   "z": 0
                 },
                 "text": "Count-through-Countenance",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#9a7ab0",
-                  "tintWeight": 0.78,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-ety-etymology-encounter-region-name-count-9-s4",
@@ -652,22 +622,7 @@
                   "z": 0
                 },
                 "text": "Count-to-Account",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#e9e4ec",
-                  "tintWeight": 0.88,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -678,7 +633,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Encounter",
+          "title": "Encounter before its completed account",
           "italic": "the word's whole field, drawn from its root",
           "body": "",
           "x": 0.04,
@@ -758,17 +713,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.9,
+          "roundness": 0.87,
+          "softness": 0.19,
+          "irregularity": 0.4,
+          "elongation": 0.06,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.91,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.14,
+          "halo": 0.16,
           "speed": 0.42,
           "circulation": 0.34,
           "turbulence": 0.1,
@@ -778,8 +733,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.35,
+          "grain": 0.04,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -1325,22 +1280,7 @@
                   "z": 0
                 },
                 "text": "Criterion-through-Distinction",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#e9e4ec",
-                  "tintWeight": 0.58,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-ety-etymology-arbitration-hybris-regard-anamnesis-9-s3",
@@ -1352,22 +1292,7 @@
                   "z": 0
                 },
                 "text": "Delineation-through-Difference",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#9a7ab0",
-                  "tintWeight": 0.66,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-ety-etymology-arbitration-hybris-regard-anamnesis-9-s4",
@@ -1379,22 +1304,7 @@
                   "z": 0
                 },
                 "text": "Arbitration-in-Crisis",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#9a7ab0",
-                  "tintWeight": 0.74,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-ety-etymology-arbitration-hybris-regard-anamnesis-9-s5",
@@ -1406,22 +1316,7 @@
                   "z": 0
                 },
                 "text": "Con-text-through-Diaphaneity",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#7d95a8",
-                  "tintWeight": 0.82,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-ety-etymology-arbitration-hybris-regard-anamnesis-9-s6",
@@ -1433,22 +1328,7 @@
                   "z": 0
                 },
                 "text": "Resolution-in-Reconciliation",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#638c69",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -1521,22 +1401,7 @@
                   "z": 0
                 },
                 "text": "hybris",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-ety-etymology-arbitration-hybris-regard-anamnesis-10-s3",
@@ -1548,22 +1413,7 @@
                   "z": 0
                 },
                 "text": "regard",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#9a7ab0",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-ety-etymology-arbitration-hybris-regard-anamnesis-10-s4",
@@ -1575,22 +1425,7 @@
                   "z": 0
                 },
                 "text": "anamnesis",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#7d95a8",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -1601,7 +1436,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Arbitration",
+          "title": "Conditions active through the act of judging",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -1664,17 +1499,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.94,
+          "roundness": 0.93,
+          "softness": 0.12,
+          "irregularity": 0.24,
+          "elongation": 0.16,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.96,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.14,
+          "halo": 0.09,
           "speed": 0.42,
           "circulation": 0.34,
           "turbulence": 0.1,
@@ -1684,8 +1519,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.55,
+          "grain": 0.028,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -2231,22 +2066,7 @@
                   "z": 0.15
                 },
                 "text": "Topos",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.28,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#e2e7ec",
-                  "tintWeight": 0.65,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-ety-etymology-trust-place-logos-nomos-natio-credere-9-s3",
@@ -2258,22 +2078,7 @@
                   "z": 0.15
                 },
                 "text": "Logos",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.28,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#e2e7ec",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-ety-etymology-trust-place-logos-nomos-natio-credere-9-s4",
@@ -2285,22 +2090,7 @@
                   "z": 0.15
                 },
                 "text": "Nomos",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.28,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#e2e7ec",
-                  "tintWeight": 0.75,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-ety-etymology-trust-place-logos-nomos-natio-credere-9-s5",
@@ -2312,22 +2102,7 @@
                   "z": 0.15
                 },
                 "text": "Natio",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.28,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#e2e7ec",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-ety-etymology-trust-place-logos-nomos-natio-credere-9-s6",
@@ -2339,22 +2114,7 @@
                   "z": 0.15
                 },
                 "text": "Credere",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.28,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#5898a4",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -2365,7 +2125,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Fides",
+          "title": "Six distinct operations held together",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -2385,8 +2145,8 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.05,
-        "phiRate": 0.03,
+        "thetaRate": 0.14,
+        "phiRate": 0.09,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
@@ -2400,7 +2160,10 @@
         "pointerMode": "vortex",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.9,
-        "pointerClickRadius": 0.42
+        "pointerClickRadius": 0.42,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine"
       }
     },
     {
@@ -2428,17 +2191,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.88,
+          "roundness": 0.83,
+          "softness": 0.23,
+          "irregularity": 0.47,
+          "elongation": 0.08,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.9,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
-          "halo": 0.14,
+          "halo": 0.19,
           "speed": 0.42,
           "circulation": 0.34,
           "turbulence": 0.1,
@@ -2448,8 +2211,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.3,
+          "grain": 0.046,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -2995,22 +2758,7 @@
                   "z": 0
                 },
                 "text": "account",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.28,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a15e",
-                  "tintWeight": 0.75,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-ety-etymology-symbol-account-and-trust-9-s3",
@@ -3022,22 +2770,7 @@
                   "z": 0
                 },
                 "text": "trust",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.28,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#b08a3e",
-                  "tintWeight": 0.88,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -3048,7 +2781,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Symbol",
+          "title": "Three terms, four operations",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -3111,13 +2844,13 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.91,
+          "roundness": 0.89,
+          "softness": 0.17,
+          "irregularity": 0.37,
+          "elongation": 0.1,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.92,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
@@ -3131,8 +2864,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.4,
+          "grain": 0.036,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -3678,22 +3411,7 @@
                   "z": 0
                 },
                 "text": "Analogia",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.28,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#638c69",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -3704,7 +3422,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Analogia",
+          "title": "Distinct fields entering one comparison",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -3767,13 +3485,13 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.91,
+          "roundness": 0.89,
+          "softness": 0.17,
+          "irregularity": 0.37,
+          "elongation": 0.1,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.92,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.05,
@@ -3787,8 +3505,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.4,
+          "grain": 0.036,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -4422,22 +4140,7 @@
                   "z": 0
                 },
                 "text": "Economy",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#b08a3e",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -4448,7 +4151,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Economy",
+          "title": "The share within its sustaining order",
           "italic": "",
           "body": "",
           "x": 0.04,

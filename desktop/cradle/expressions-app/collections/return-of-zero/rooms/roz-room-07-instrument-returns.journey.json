@@ -31,17 +31,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.9,
+          "roundness": 0.88,
+          "softness": 0.2,
+          "irregularity": 0.4,
+          "elongation": 0.05,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.91,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.15,
           "speed": 0.45,
           "circulation": 0.4,
           "turbulence": 0.12,
@@ -51,8 +51,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.25,
+          "grain": 0.038,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -142,22 +142,7 @@
                   "z": 0
                 },
                 "text": "relations",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.34
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.65,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-r07a-turn-s3",
@@ -169,22 +154,7 @@
                   "z": 0
                 },
                 "text": "answerable",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.34
-                  },
-                  "rotation": 0,
-                  "tint": "#c2a852",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -450,9 +420,9 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Vocation",
+          "title": "Logos turning back without erasing its marks",
           "italic": "",
-          "body": "The work turns back without erasing its marks.",
+          "body": "The made instrument is not the source of what it coordinates.",
           "x": 0.04,
           "y": 0.58,
           "width": 330,
@@ -513,17 +483,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.9,
+          "roundness": 0.88,
+          "softness": 0.2,
+          "irregularity": 0.4,
+          "elongation": 0.05,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.91,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.15,
           "speed": 0.45,
           "circulation": 0.4,
           "turbulence": 0.12,
@@ -533,8 +503,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.25,
+          "grain": 0.038,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -620,22 +590,7 @@
                 "transition": 1.5,
                 "position": null,
                 "text": "grammar",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.38,
-                    "y": 0.42
-                  },
-                  "rotation": 0,
-                  "tint": "#c2a852",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -874,9 +829,9 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "One architecture",
+          "title": "One disclosure-and-return architecture",
           "italic": "",
-          "body": "Four functions beside the earned relation.",
+          "body": "The four functions remain distinct.",
           "x": 0.04,
           "y": 0.58,
           "width": 330,
@@ -937,17 +892,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.95,
+          "roundness": 0.94,
+          "softness": 0.1,
+          "irregularity": 0.22,
+          "elongation": 0.18,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.97,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.08,
           "speed": 0.4,
           "circulation": 0.35,
           "turbulence": 0.1,
@@ -957,8 +912,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.15,
+          "grain": 0.026,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -1504,22 +1459,7 @@
                   "z": 0
                 },
                 "text": "together",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.36,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -1530,7 +1470,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Attunement",
+          "title": "The heavens remain beyond the instrument",
           "italic": "",
           "body": "Cycles made legible together; the sky stays open.",
           "x": 0.04,
@@ -1550,8 +1490,8 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
+        "thetaRate": 0.16,
+        "phiRate": 0.11,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
@@ -1565,7 +1505,10 @@
         "pointerMode": "vortex",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.9,
-        "pointerClickRadius": 0.42
+        "pointerClickRadius": 0.42,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine"
       }
     },
     {
@@ -1593,17 +1536,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.87,
+          "roundness": 0.8,
+          "softness": 0.26,
+          "irregularity": 0.5,
+          "elongation": 0.08,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.88,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.2,
           "speed": 0.5,
           "circulation": 0.55,
           "turbulence": 0.14,
@@ -1613,8 +1556,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.3,
+          "grain": 0.05,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -1704,22 +1647,7 @@
                   "z": 0
                 },
                 "text": "mono–poly",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.32,
-                    "y": 0.36
-                  },
-                  "rotation": 0,
-                  "tint": "#638c69",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -1958,9 +1886,9 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Sovereign commons",
+          "title": "One common field, locally governed centres",
           "italic": "",
-          "body": "One field, three grounds, real crossings.",
+          "body": "Common enough for shared consequence, sovereign enough for difference.",
           "x": 0.04,
           "y": 0.58,
           "width": 330,
@@ -2003,9 +1931,9 @@
       "duration": 15,
       "transition": 1.6,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
+        "mode": "3d",
+        "yaw": 0.3,
+        "pitch": 0.18,
         "zoom": 1,
         "panX": 0,
         "panY": 0
@@ -2021,17 +1949,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.89,
+          "roundness": 0.84,
+          "softness": 0.2,
+          "irregularity": 0.44,
+          "elongation": 0.06,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.92,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.18,
           "speed": 0.4,
           "circulation": 0.35,
           "turbulence": 0.1,
@@ -2041,8 +1969,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.55,
+          "grain": 0.042,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -2071,7 +1999,7 @@
           "position": {
             "x": 0,
             "y": 0.02,
-            "z": 0
+            "z": -0.42
           },
           "size": {
             "x": 0.74,
@@ -2128,7 +2056,7 @@
           "position": {
             "x": -0.3,
             "y": 0,
-            "z": 0
+            "z": 0.3
           },
           "size": {
             "x": 0.1,
@@ -2185,7 +2113,7 @@
           "position": {
             "x": 0,
             "y": 0,
-            "z": 0
+            "z": 0.0
           },
           "size": {
             "x": 0.13,
@@ -2242,7 +2170,7 @@
           "position": {
             "x": 0.3,
             "y": 0,
-            "z": 0
+            "z": -0.3
           },
           "size": {
             "x": 0.1,
@@ -2330,7 +2258,7 @@
                 "position": {
                   "x": -0.3,
                   "y": 0.2,
-                  "z": 0
+                  "z": 0.28
                 },
                 "text": "subject",
                 "shape": "text",
@@ -2357,25 +2285,10 @@
                 "position": {
                   "x": 0,
                   "y": 0.2,
-                  "z": 0
+                  "z": 0.0
                 },
                 "text": "internality",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.34
-                  },
-                  "rotation": 0,
-                  "tint": "#c2a852",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-r07a-order-s3",
@@ -2384,25 +2297,10 @@
                 "position": {
                   "x": 0.3,
                   "y": 0.2,
-                  "z": 0
+                  "z": -0.28
                 },
                 "text": "object",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.34,
-                    "y": 0.38
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.55,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -2413,9 +2311,9 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The horizon",
+          "title": "Immediate experiential existence is self-proving",
           "italic": "",
-          "body": "Dependence is not manufacture; the field is not an object.",
+          "body": "Object, model and doubt appear within it.",
           "x": 0.04,
           "y": 0.58,
           "width": 330,
@@ -2458,9 +2356,9 @@
       "duration": 17,
       "transition": 2.2,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
+        "mode": "3d",
+        "yaw": 0.3,
+        "pitch": 0.18,
         "zoom": 1,
         "panX": 0,
         "panY": 0
@@ -2476,17 +2374,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.89,
+          "roundness": 0.84,
+          "softness": 0.2,
+          "irregularity": 0.44,
+          "elongation": 0.06,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.92,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.18,
           "speed": 0.4,
           "circulation": 0.35,
           "turbulence": 0.1,
@@ -2496,8 +2394,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.55,
+          "grain": 0.042,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -2557,7 +2455,7 @@
                 "position": {
                   "x": -0.22,
                   "y": 0.34,
-                  "z": 0
+                  "z": 0.24
                 },
                 "text": "AHI",
                 "shape": "text",
@@ -2584,25 +2482,10 @@
                 "position": {
                   "x": 0,
                   "y": 0.34,
-                  "z": 0
+                  "z": 0.0
                 },
                 "text": "return",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.36,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-r07a-planetary-s3",
@@ -2611,25 +2494,10 @@
                 "position": {
                   "x": 0.22,
                   "y": 0.34,
-                  "z": 0
+                  "z": -0.24
                 },
                 "text": "0/1",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.36,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.95,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -2641,7 +2509,7 @@
           "position": {
             "x": 0,
             "y": 0.24,
-            "z": 0
+            "z": 0.26
           },
           "size": {
             "x": 0.14,
@@ -2698,7 +2566,7 @@
           "position": {
             "x": 0,
             "y": 0.02,
-            "z": 0
+            "z": 0.0
           },
           "size": {
             "x": 0.34,
@@ -2755,7 +2623,7 @@
           "position": {
             "x": 0,
             "y": -0.24,
-            "z": 0
+            "z": -0.26
           },
           "size": {
             "x": 0.36,
@@ -2812,7 +2680,7 @@
           "position": {
             "x": 0,
             "y": -0.24,
-            "z": 0
+            "z": -0.26
           },
           "size": {
             "x": 0.1,
@@ -2868,7 +2736,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The return of zero",
+          "title": "Turning the Logos back upon its conditions",
           "italic": "",
           "body": "The determination kept, the relation restored.",
           "x": 0.04,

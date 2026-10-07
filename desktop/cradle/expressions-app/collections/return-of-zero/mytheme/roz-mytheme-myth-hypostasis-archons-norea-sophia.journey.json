@@ -1,1629 +1,1660 @@
 {
- "schema": "oi.journey",
- "version": 1,
- "id": "roz-mytheme-myth-hypostasis-archons-norea-sophia",
- "name": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above",
- "description": "The tractate's whole disclosure: the blind ruler's claim, Adam and Eve and the rulers' pursuit, Norea's refusal, Eleleth's rescue and retrospective cosmology, Zoe and Sabaoth, and the promised ending still to come.",
- "loop": true,
- "scenes": [
-  {
-   "id": "m-hyp-0-ruler",
-   "name": "The arrogant ruler mistakes a local realm for the entirety",
-   "character": "The chief ruler — blind, arrogant — declares himself sole god; a voice from incorruptibility names his error: he has mistaken absence from his field for absence from reality.",
-   "duration": 13,
-   "transition": 1.5,
-   "view": {
-    "mode": "2d",
-    "yaw": 0.04,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "whiteOnBlack",
-    "backgroundMode": "solid",
-    "pointerMode": "vortex",
-    "pointerClick": "pulse",
-    "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.35
-   },
-   "field": {
-    "background": "#1a1626",
-    "palette": [
-     "#d8cfb8",
-     "#8a7ba8",
-     "#c9a227",
-     "#5a4d78"
-    ],
-    "material": "round",
-    "params": {
-     "pointerStrength": 0.4,
-     "speed": 0.5,
-     "circulation": -0.2,
-     "dispersion": 0.08,
-     "turbulence": 0.18
-    }
-   },
-   "entities": [
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-myth-hypostasis-archons-norea-sophia",
+  "name": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above",
+  "description": "The tractate's whole disclosure: the blind ruler's claim, Adam and Eve and the rulers' pursuit, Norea's refusal, Eleleth's rescue and retrospective cosmology, Zoe and Sabaoth, and the promised ending still to come.",
+  "loop": true,
+  "scenes": [
     {
-     "id": "e1",
-     "name": "the blind chief ruler — crowned, sightless, pronouncing himself sole god",
-     "kind": "formation",
-     "position": {
-      "x": 0.05,
-      "y": -0.3,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.2,
-      "y": 0.22
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e1-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "   _|||||_\n  /       \\\n |  _   _  |\n |         |\n  \\  ___  /\n   \\/   \\/"
-      }
-     }
-    },
-    {
-     "id": "e2",
-     "name": "Samael — the dense centre of the claim",
-     "kind": "formation",
-     "position": {
-      "x": -0.1,
-      "y": -0.42,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.14,
-      "y": 0.14
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#8a7ba8",
-     "tintWeight": 0.9,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e2-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
-    },
-    {
-     "id": "e3",
-     "name": "his field's edge — no visible superior inside it",
-     "kind": "formation",
-     "position": {
-      "x": 0.05,
-      "y": -0.3,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.52,
-      "y": 0.42
-     },
-     "rotation": 0,
-     "shape": "ring",
-     "text": "",
-     "share": 1,
-     "tint": "#5a4d78",
-     "tintWeight": 0.8,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": true,
-      "clock": "seconds",
-      "order": "loop",
-      "easing": "smoothstep",
-      "steps": [
-       {
-        "id": "e3-sq1",
-        "text": "",
-        "shape": "ring",
-        "hold": 3.0,
-        "transition": 1.8,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.52,
-          "y": 0.42
-         },
-         "rotation": 0,
-         "tint": "#5a4d78",
-         "tintWeight": 0.8,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+      "id": "m-hyp-0-ruler",
+      "name": "The arrogant ruler mistakes a local realm for the entirety",
+      "character": "The chief ruler — blind, arrogant — declares himself sole god; a voice from incorruptibility names his error: he has mistaken absence from his field for absence from reality.",
+      "duration": 13,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0.04,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.35
+      },
+      "field": {
+        "background": "#1a1626",
+        "palette": [
+          "#d8cfb8",
+          "#8a7ba8",
+          "#c9a227",
+          "#5a4d78"
+        ],
+        "material": "print",
+        "params": {
+          "pointerStrength": 0.4,
+          "speed": 0.5,
+          "circulation": -0.2,
+          "dispersion": 0.08,
+          "turbulence": 0.18,
+          "opacity": 0.95,
+          "grain": 0.06,
+          "roundness": 0.35,
+          "softness": 0.1,
+          "halo": 0.07
         }
-       },
-       {
-        "id": "e3-sq2",
-        "text": "",
-        "shape": "ring",
-        "hold": 3.0,
-        "transition": 1.8,
-        "position": null,
-        "objectState": {
-         "size": {
-          "x": 0.44,
-          "y": 0.36
-         },
-         "rotation": 0,
-         "tint": "#6f5f8f",
-         "tintWeight": 0.6,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
-        }
-       }
-      ]
-     }
-    },
-    {
-     "id": "e4",
-     "name": "the voice from incorruptibility — the ray from beyond the field",
-     "kind": "formation",
-     "position": {
-      "x": 0.6,
-      "y": -0.14,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.14,
-      "y": 0.2
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#e8e2d0",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e4-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " \\\n  \\\n   \\\n    *\n   -*-"
-      }
-     }
-    }
-   ],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "The blind ruler's claim",
-     "italic": "He mistakes what is absent from his field for absence itself.",
-     "body": "",
-     "x": 0.03,
-     "y": 0.04,
-     "width": 400,
-     "size": 26,
-     "align": "left"
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": []
-  },
-  {
-   "id": "m-hyp-1-adam",
-   "name": "A formed human exceeds the makers",
-   "character": "The rulers form Adam after an image they perceived; breath fails until spirit descends; the spiritual woman awakens Adam, escapes as a tree; the violated shadow stays in the narrative.",
-   "duration": 12,
-   "transition": 1.3,
-   "view": {
-    "mode": "2d",
-    "yaw": 0.04,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "whiteOnBlack",
-    "backgroundMode": "solid",
-    "pointerMode": "vortex",
-    "pointerClick": "pulse",
-    "pointerClickStrength": 0.4,
-    "pointerClickRadius": 0.35
-   },
-   "field": {
-    "background": "#1a1626",
-    "palette": [
-     "#d8cfb8",
-     "#8a7ba8",
-     "#c9a227",
-     "#5a4d78"
-    ],
-    "material": "round",
-    "params": {
-     "pointerStrength": 0.4,
-     "speed": 0.5,
-     "circulation": -0.2,
-     "dispersion": 0.08,
-     "turbulence": 0.18
-    }
-   },
-   "entities": [
-    {
-     "id": "e5",
-     "name": "the image they perceived — a reflection of incorruptibility",
-     "kind": "formation",
-     "position": {
-      "x": 0.1,
-      "y": -0.2,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.3,
-      "y": 0.3
-     },
-     "rotation": 0,
-     "shape": "ring",
-     "text": "",
-     "share": 1,
-     "tint": "#8a7ba8",
-     "tintWeight": 0.5,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e5-sq0",
-        "text": "",
-        "shape": "ring",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
-    },
-    {
-     "id": "e6",
-     "name": "Adam — formed of earth after the perceived image",
-     "kind": "formation",
-     "position": {
-      "x": 0.05,
-      "y": -0.4,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.14,
-      "y": 0.2
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#8a5a2b",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e6-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "    .o.\n    /|\\\n    / \\\n   _|_|_"
-      }
-     }
-    },
-    {
-     "id": "e7",
-     "name": "spirit descending from the Adamantine Land",
-     "kind": "formation",
-     "position": {
-      "x": 0.4,
-      "y": -0.14,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.1,
-      "y": 0.16
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#e8e2d0",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e7-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  \\\n   *\n  / \\\\"
-      }
-     }
-    },
-    {
-     "id": "e8",
-     "name": "the spiritual woman — awakening Adam, escaping pursuit as a tree",
-     "kind": "formation",
-     "position": {
-      "x": 0.62,
-      "y": -0.34,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.16,
-      "y": 0.24
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": true,
-      "clock": "seconds",
-      "order": "loop",
-      "easing": "smoothstep",
-      "steps": [
-       {
-        "id": "e8-sq1",
-        "text": "",
-        "shape": "disc",
-        "hold": 2.8,
-        "transition": 1.6,
-        "position": null,
-        "source": {
-         "kind": "ascii",
-         "ascii": {
-          "text": "    .o.\n   \\ /\\\n     |\n    / \\\\"
-         }
+      },
+      "entities": [
+        {
+          "id": "e1",
+          "name": "the blind chief ruler — crowned, sightless, pronouncing himself sole god",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": -0.3,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e1-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   _|||||_\n  /       \\\n |  _   _  |\n |         |\n  \\  ___  /\n   \\/   \\/"
+            }
+          }
         },
-        "objectState": {
-         "size": {
-          "x": 0.16,
-          "y": 0.24
-         },
-         "rotation": 0,
-         "tint": "#c9a227",
-         "tintWeight": 1,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
-        }
-       },
-       {
-        "id": "e8-sq2",
-        "text": "",
-        "shape": "disc",
-        "hold": 3.2,
-        "transition": 1.6,
-        "position": null,
-        "source": {
-         "kind": "ascii",
-         "ascii": {
-          "text": "   ,O,\n  +o+o+\n    |\n   (|\n    |"
-         }
+        {
+          "id": "e2",
+          "name": "Samael — the dense centre of the claim",
+          "kind": "formation",
+          "position": {
+            "x": -0.1,
+            "y": -0.42,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8a7ba8",
+          "tintWeight": 0.9,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e2-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
         },
-        "objectState": {
-         "size": {
-          "x": 0.16,
-          "y": 0.24
-         },
-         "rotation": 0,
-         "tint": "#5a6b2f",
-         "tintWeight": 1,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
-        }
-       }
-      ]
-     }
-    },
-    {
-     "id": "e9",
-     "name": "the shadow — violated; materially necessary to Norea's later refusal",
-     "kind": "formation",
-     "position": {
-      "x": -0.42,
-      "y": -0.52,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.2,
-      "y": 0.1
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#4a4458",
-     "tintWeight": 0.9,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e9-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "  .:..::.\n   .:..:"
-      }
-     }
-    },
-    {
-     "id": "e10",
-     "name": "⛔",
-     "kind": "formation",
-     "position": {
-      "x": -0.5,
-      "y": -0.2,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.1,
-      "y": 0.1
-     },
-     "rotation": 0,
-     "shape": "text",
-     "text": "⛔",
-     "share": 1,
-     "tint": "#8a5a2b",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e10-sq0",
-        "text": "⛔",
-        "shape": "text",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
-    }
-   ],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "The formed human",
-     "italic": "Breath fails until spirit descends; she escapes pursuit as a tree.",
-     "body": "",
-     "x": 0.03,
-     "y": 0.04,
-     "width": 400,
-     "size": 26,
-     "align": "left"
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": []
-  },
-  {
-   "id": "m-hyp-2-norea",
-   "name": "Norea refuses the ancestry of possession",
-   "character": "The rulers claim her through Eve; she refuses the genealogy and names her origin above; their coercion is answered by her cry.",
-   "duration": 11,
-   "transition": 1.6,
-   "view": {
-    "mode": "3d",
-    "yaw": 0.25,
-    "pitch": 0.1,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "whiteOnBlack",
-    "backgroundMode": "solid",
-    "pointerMode": "attract",
-    "pointerClick": "pulse",
-    "pointerClickStrength": 0.3,
-    "pointerClickRadius": 0.3
-   },
-   "field": {
-    "background": "#101426",
-    "palette": [
-     "#e8e2d0",
-     "#c9a227",
-     "#7d8a8f",
-     "#8a5a2b"
-    ],
-    "material": "round",
-    "params": {
-     "pointerStrength": 0.3,
-     "speed": 0.45,
-     "circulation": 0.15,
-     "dispersion": 0.06
-    }
-   },
-   "entities": [
-    {
-     "id": "e11",
-     "name": "Norea — upright, refusing the imposed descent",
-     "kind": "formation",
-     "position": {
-      "x": 0.02,
-      "y": -0.32,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.14,
-      "y": 0.22
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e11-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "    .o.\n  --|--*\n     |\n    / \\\\"
-      }
-     }
-    },
-    {
-     "id": "e12",
-     "name": "the rulers' claim — coercion attempted through Eve",
-     "kind": "formation",
-     "position": {
-      "x": -0.5,
-      "y": -0.3,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.2,
-      "y": 0.14
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#8a7ba8",
-     "tintWeight": 0.9,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e12-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " \\(\\\n  ( (\\\n  (  (\\\n   '   '"
-      }
-     }
-    },
-    {
-     "id": "e13",
-     "name": "her cry to the higher divine reality",
-     "kind": "formation",
-     "position": {
-      "x": 0.52,
-      "y": -0.18,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.1,
-      "y": 0.18
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#e8e2d0",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e13-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "    *\n   /|\n    |\n   /\n  |"
-      }
-     }
-    },
-    {
-     "id": "e14",
-     "name": "the ark refused, breathed aflame",
-     "kind": "formation",
-     "position": {
-      "x": -0.35,
-      "y": -0.55,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.26,
-      "y": 0.18
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#8a5a2b",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": true,
-      "clock": "seconds",
-      "order": "loop",
-      "easing": "smoothstep",
-      "steps": [
-       {
-        "id": "e14-sq1",
-        "text": "",
-        "shape": "disc",
-        "hold": 2.6,
-        "transition": 1.5,
-        "position": null,
-        "source": {
-         "kind": "ascii",
-         "ascii": {
-          "text": "    (\n   )_(\n  /___ \\\n /______\\\\"
-         }
+        {
+          "id": "e3",
+          "name": "his field's edge — no visible superior inside it",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": -0.3,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.52,
+            "y": 0.42
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#5a4d78",
+          "tintWeight": 0.8,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "e3-sq1",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.0,
+                "transition": 1.8,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.52,
+                    "y": 0.42
+                  },
+                  "rotation": 0,
+                  "tint": "#5a4d78",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e3-sq2",
+                "text": "",
+                "shape": "ring",
+                "hold": 3.0,
+                "transition": 1.8,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.44,
+                    "y": 0.36
+                  },
+                  "rotation": 0,
+                  "tint": "#6f5f8f",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
         },
-        "objectState": {
-         "size": {
-          "x": 0.26,
-          "y": 0.18
-         },
-         "rotation": 0,
-         "tint": "#8a5a2b",
-         "tintWeight": 1,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+        {
+          "id": "e4",
+          "name": "the voice from incorruptibility — the ray from beyond the field",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": -0.14,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e4-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " \\\n  \\\n   \\\n    *\n   -*-"
+            }
+          }
         }
-       },
-       {
-        "id": "e14-sq2",
-        "text": "",
-        "shape": "disc",
-        "hold": 2.8,
-        "transition": 1.5,
-        "position": null,
-        "source": {
-         "kind": "ascii",
-         "ascii": {
-          "text": "   ( (\n  )_((\n  /___ \\\n /______\\\\"
-         }
+      ],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "A local realm taken for the entirety",
+          "italic": "He mistakes what is absent from his field for absence itself.",
+          "body": "",
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-hyp-1-adam",
+      "name": "A formed human exceeds the makers",
+      "character": "The rulers form Adam after an image they perceived; breath fails until spirit descends; the spiritual woman awakens Adam, escapes as a tree; the violated shadow stays in the narrative.",
+      "duration": 12,
+      "transition": 1.3,
+      "view": {
+        "mode": "2d",
+        "yaw": 0.04,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.35
+      },
+      "field": {
+        "background": "#1a1626",
+        "palette": [
+          "#d8cfb8",
+          "#8a7ba8",
+          "#c9a227",
+          "#5a4d78"
+        ],
+        "material": "print",
+        "params": {
+          "pointerStrength": 0.4,
+          "speed": 0.5,
+          "circulation": -0.2,
+          "dispersion": 0.08,
+          "turbulence": 0.18,
+          "opacity": 0.95,
+          "grain": 0.06,
+          "roundness": 0.35,
+          "softness": 0.1,
+          "halo": 0.07
+        }
+      },
+      "entities": [
+        {
+          "id": "e5",
+          "name": "the image they perceived — a reflection of incorruptibility",
+          "kind": "formation",
+          "position": {
+            "x": 0.1,
+            "y": -0.2,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#8a7ba8",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e5-sq0",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
         },
-        "objectState": {
-         "size": {
-          "x": 0.26,
-          "y": 0.18
-         },
-         "rotation": 0,
-         "tint": "#e07020",
-         "tintWeight": 1,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
-        }
-       }
-      ]
-     }
-    }
-   ],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "Norea refuses",
-     "italic": "I am not your descendant; I come from the world above.",
-     "body": "",
-     "x": 0.03,
-     "y": 0.04,
-     "width": 400,
-     "size": 26,
-     "align": "left"
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": []
-  },
-  {
-   "id": "m-hyp-3-eleleth",
-   "name": "Eleleth: rescue and the rulers' own origin",
-   "character": "The luminary rescues and teaches: Pistis Sophia's initiative, the veil, shadow, matter; the deficient ruler's second totalising claim; seven offspring and layered heavens; Zoe's rebuke; Sabaoth's change of allegiance.",
-   "duration": 14,
-   "transition": 1.8,
-   "view": {
-    "mode": "3d",
-    "yaw": 0.25,
-    "pitch": 0.1,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "whiteOnBlack",
-    "backgroundMode": "solid",
-    "pointerMode": "attract",
-    "pointerClick": "pulse",
-    "pointerClickStrength": 0.3,
-    "pointerClickRadius": 0.3
-   },
-   "field": {
-    "background": "#101426",
-    "palette": [
-     "#e8e2d0",
-     "#c9a227",
-     "#7d8a8f",
-     "#8a5a2b"
-    ],
-    "material": "round",
-    "params": {
-     "pointerStrength": 0.3,
-     "speed": 0.45,
-     "circulation": 0.15,
-     "dispersion": 0.06
-    }
-   },
-   "entities": [
-    {
-     "id": "e15",
-     "name": "the veil between the realms — shadow gathers beneath it",
-     "kind": "formation",
-     "position": {
-      "x": 0.05,
-      "y": -0.12,
-      "z": 0.5
-     },
-     "size": {
-      "x": 0.8,
-      "y": 0.12
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#8a7ba8",
-     "tintWeight": 0.7,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e15-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n ````````````````````````````````````"
-      }
-     }
-    },
-    {
-     "id": "e16",
-     "name": "Eleleth — golden appearance, snowy clothing; rescue and disclosure",
-     "kind": "formation",
-     "position": {
-      "x": 0.05,
-      "y": -0.34,
-      "z": 0.2
-     },
-     "size": {
-      "x": 0.16,
-      "y": 0.24
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#e8e2d0",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e16-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "    \\*\n   -*o*-\n    /*\n     |\n    / \\\\"
-      }
-     }
-    },
-    {
-     "id": "e17",
-     "name": "the lion-faced ruler — his eyes opening on limitless matter",
-     "kind": "formation",
-     "position": {
-      "x": -0.05,
-      "y": -0.52,
-      "z": -0.2
-     },
-     "size": {
-      "x": 0.2,
-      "y": 0.16
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": true,
-      "clock": "seconds",
-      "order": "loop",
-      "easing": "smoothstep",
-      "steps": [
-       {
-        "id": "e17-sq1",
-        "text": "",
-        "shape": "disc",
-        "hold": 3.0,
-        "transition": 1.6,
-        "position": null,
-        "source": {
-         "kind": "ascii",
-         "ascii": {
-          "text": "  /\\ /\\\n ( -.- )\n  \\_^_/"
-         }
+        {
+          "id": "e6",
+          "name": "Adam — formed of earth after the perceived image",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": -0.4,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8a5a2b",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e6-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "    .o.\n    /|\\\n    / \\\n   _|_|_"
+            }
+          }
         },
-        "objectState": {
-         "size": {
-          "x": 0.2,
-          "y": 0.16
-         },
-         "rotation": 0,
-         "tint": "#6f5f2f",
-         "tintWeight": 0.9,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
-        }
-       },
-       {
-        "id": "e17-sq2",
-        "text": "",
-        "shape": "disc",
-        "hold": 3.0,
-        "transition": 1.6,
-        "position": null,
-        "source": {
-         "kind": "ascii",
-         "ascii": {
-          "text": "  /\\ /\\\n ( o.o )\n  \\_^_/"
-         }
+        {
+          "id": "e7",
+          "name": "spirit descending from the Adamantine Land",
+          "kind": "formation",
+          "position": {
+            "x": 0.4,
+            "y": -0.14,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e7-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  \\\n   *\n  / \\\\"
+            }
+          }
         },
-        "objectState": {
-         "size": {
-          "x": 0.2,
-          "y": 0.16
-         },
-         "rotation": 0,
-         "tint": "#c9a227",
-         "tintWeight": 1,
-         "force": {
-          "kind": "none",
-          "strength": 0,
-          "radius": 0.45,
-          "spin": 0
-         }
+        {
+          "id": "e8",
+          "name": "the spiritual woman — awakening Adam, escaping pursuit as a tree",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": -0.34,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "e8-sq1",
+                "text": "",
+                "shape": "disc",
+                "hold": 2.8,
+                "transition": 1.6,
+                "position": null,
+                "source": {
+                  "kind": "ascii",
+                  "ascii": {
+                    "text": "    .o.\n   \\ /\\\n     |\n    / \\\\"
+                  }
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.16,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e8-sq2",
+                "text": "",
+                "shape": "disc",
+                "hold": 3.2,
+                "transition": 1.6,
+                "position": null,
+                "source": {
+                  "kind": "ascii",
+                  "ascii": {
+                    "text": "   ,O,\n  +o+o+\n    |\n   (|\n    |"
+                  }
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.16,
+                    "y": 0.24
+                  },
+                  "rotation": 0,
+                  "tint": "#5a6b2f",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "e9",
+          "name": "the shadow — violated; materially necessary to Norea's later refusal",
+          "kind": "formation",
+          "position": {
+            "x": -0.42,
+            "y": -0.52,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#4a4458",
+          "tintWeight": 0.9,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e9-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  .:..::.\n   .:..:"
+            }
+          }
+        },
+        {
+          "id": "e10",
+          "name": "⛔",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.2,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⛔",
+          "share": 1,
+          "tint": "#8a5a2b",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e10-sq0",
+                "text": "⛔",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
         }
-       }
-      ]
-     }
+      ],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "A formed human exceeds the makers",
+          "italic": "Breath fails until spirit descends; she escapes pursuit as a tree.",
+          "body": "",
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
     },
     {
-     "id": "e18",
-     "name": "7",
-     "kind": "formation",
-     "position": {
-      "x": 0.55,
-      "y": -0.42,
-      "z": -0.35
-     },
-     "size": {
-      "x": 0.1,
-      "y": 0.12
-     },
-     "rotation": 0,
-     "shape": "text",
-     "text": "7",
-     "share": 1,
-     "tint": "#7d8a8f",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e18-sq0",
-        "text": "7",
-        "shape": "text",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
+      "id": "m-hyp-2-norea",
+      "name": "Norea refuses the ancestry of possession",
+      "character": "The rulers claim her through Eve; she refuses the genealogy and names her origin above; their coercion is answered by her cry.",
+      "duration": 11,
+      "transition": 1.6,
+      "view": {
+        "mode": "3d",
+        "yaw": 0.25,
+        "pitch": 0.1,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.3,
+        "pointerClickRadius": 0.3,
+        "morphEnabled": true,
+        "trajectory": "vortexSpiral",
+        "driveShape": "triangle"
+      },
+      "field": {
+        "background": "#101426",
+        "palette": [
+          "#e8e2d0",
+          "#c9a227",
+          "#7d8a8f",
+          "#8a5a2b"
+        ],
+        "material": "round",
+        "params": {
+          "pointerStrength": 0.3,
+          "speed": 0.45,
+          "circulation": 0.15,
+          "dispersion": 0.06,
+          "halo": 0.12,
+          "softness": 0.2,
+          "elongation": 0.08,
+          "zConfinement": 0.7
+        }
+      },
+      "entities": [
+        {
+          "id": "e11",
+          "name": "Norea — upright, refusing the imposed descent",
+          "kind": "formation",
+          "position": {
+            "x": 0.02,
+            "y": -0.32,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e11-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "    .o.\n  --|--*\n     |\n    / \\\\"
+            }
+          }
+        },
+        {
+          "id": "e12",
+          "name": "the rulers' claim — coercion attempted through Eve",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.3,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8a7ba8",
+          "tintWeight": 0.9,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e12-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " \\(\\\n  ( (\\\n  (  (\\\n   '   '"
+            }
+          }
+        },
+        {
+          "id": "e13",
+          "name": "her cry to the higher divine reality",
+          "kind": "formation",
+          "position": {
+            "x": 0.52,
+            "y": -0.18,
+            "z": 0.35
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.18
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e13-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "    *\n   /|\n    |\n   /\n  |"
+            }
+          }
+        },
+        {
+          "id": "e14",
+          "name": "the ark refused, breathed aflame",
+          "kind": "formation",
+          "position": {
+            "x": -0.35,
+            "y": -0.55,
+            "z": -0.25
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.18
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8a5a2b",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "e14-sq1",
+                "text": "",
+                "shape": "disc",
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "source": {
+                  "kind": "ascii",
+                  "ascii": {
+                    "text": "    (\n   )_(\n  /___ \\\n /______\\\\"
+                  }
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.18
+                  },
+                  "rotation": 0,
+                  "tint": "#8a5a2b",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e14-sq2",
+                "text": "",
+                "shape": "disc",
+                "hold": 2.8,
+                "transition": 1.5,
+                "position": null,
+                "source": {
+                  "kind": "ascii",
+                  "ascii": {
+                    "text": "   ( (\n  )_((\n  /___ \\\n /______\\\\"
+                  }
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.26,
+                    "y": 0.18
+                  },
+                  "rotation": 0,
+                  "tint": "#e07020",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "Norea refuses",
+          "italic": "I am not your descendant; I come from the world above.",
+          "body": "",
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.09,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1.3,
+        "dwell": 0.3
+      },
+      "automation": []
     },
     {
-     "id": "e19",
-     "name": "Zoe's rebuke — the breath become a fiery angel",
-     "kind": "formation",
-     "position": {
-      "x": 0.55,
-      "y": -0.18,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.1,
-      "y": 0.16
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#e07020",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e19-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "   (\n  ) )\n  (_)"
-      }
-     }
-    }
-   ],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "The rescue and the root",
-     "italic": "Eleleth teaches where the rulers themselves came from.",
-     "body": "",
-     "x": 0.03,
-     "y": 0.04,
-     "width": 400,
-     "size": 26,
-     "align": "left"
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": []
-  },
-  {
-   "id": "m-hyp-5-return",
-   "name": "The root disclosed; the ending still to come",
-   "character": "The true Man promised after three generations; the closing hymn before Father, Son and Holy Spirit. False sovereignty corrected by provenance.",
-   "duration": 15,
-   "transition": 2.2,
-   "view": {
-    "mode": "2d",
-    "yaw": 0.04,
-    "pitch": 0,
-    "zoom": 1,
-    "panX": 0,
-    "panY": 0
-   },
-   "engine": {
-    "inkMode": "whiteOnBlack",
-    "backgroundMode": "solid",
-    "pointerMode": "attract",
-    "pointerClick": "pulse",
-    "pointerClickStrength": 0.25,
-    "pointerClickRadius": 0.3
-   },
-   "field": {
-    "background": "#16101d",
-    "palette": [
-     "#e8e2d0",
-     "#d8cfb8",
-     "#c9a227",
-     "#8a7ba8"
-    ],
-    "material": "round",
-    "params": {
-     "pointerStrength": 0.25,
-     "speed": 0.35,
-     "circulation": 0.1,
-     "dispersion": 0.05,
-     "turbulence": 0.05
-    }
-   },
-   "entities": [
-    {
-     "id": "e20",
-     "name": "the root above — Norea's origin, a tree whose crown is a star",
-     "kind": "formation",
-     "position": {
-      "x": 0.05,
-      "y": -0.36,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.2,
-      "y": 0.3
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e20-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": "      *\n    \\_|_/\n      |\n      |\n     \\|/\n    ~~~"
-      }
-     }
+      "id": "m-hyp-3-eleleth",
+      "name": "Eleleth: rescue and the rulers' own origin",
+      "character": "The luminary rescues and teaches: Pistis Sophia's initiative, the veil, shadow, matter; the deficient ruler's second totalising claim; seven offspring and layered heavens; Zoe's rebuke; Sabaoth's change of allegiance.",
+      "duration": 14,
+      "transition": 1.8,
+      "view": {
+        "mode": "3d",
+        "yaw": 0.25,
+        "pitch": 0.1,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.3,
+        "pointerClickRadius": 0.3,
+        "morphEnabled": true,
+        "trajectory": "vortexSpiral",
+        "driveShape": "triangle"
+      },
+      "field": {
+        "background": "#101426",
+        "palette": [
+          "#e8e2d0",
+          "#c9a227",
+          "#7d8a8f",
+          "#8a5a2b"
+        ],
+        "material": "round",
+        "params": {
+          "pointerStrength": 0.3,
+          "speed": 0.45,
+          "circulation": 0.15,
+          "dispersion": 0.06,
+          "halo": 0.12,
+          "softness": 0.2,
+          "elongation": 0.08,
+          "zConfinement": 0.7
+        }
+      },
+      "entities": [
+        {
+          "id": "e15",
+          "name": "the veil between the realms — shadow gathers beneath it",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": -0.12,
+            "z": 0.5
+          },
+          "size": {
+            "x": 0.8,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8a7ba8",
+          "tintWeight": 0.7,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e15-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n ````````````````````````````````````"
+            }
+          }
+        },
+        {
+          "id": "e16",
+          "name": "Eleleth — golden appearance, snowy clothing; rescue and disclosure",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": -0.34,
+            "z": 0.2
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e16-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "    \\*\n   -*o*-\n    /*\n     |\n    / \\\\"
+            }
+          }
+        },
+        {
+          "id": "e17",
+          "name": "the lion-faced ruler — his eyes opening on limitless matter",
+          "kind": "formation",
+          "position": {
+            "x": -0.05,
+            "y": -0.52,
+            "z": -0.2
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "e17-sq1",
+                "text": "",
+                "shape": "disc",
+                "hold": 3.0,
+                "transition": 1.6,
+                "position": null,
+                "source": {
+                  "kind": "ascii",
+                  "ascii": {
+                    "text": "  /\\ /\\\n ( -.- )\n  \\_^_/"
+                  }
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#6f5f2f",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "e17-sq2",
+                "text": "",
+                "shape": "disc",
+                "hold": 3.0,
+                "transition": 1.6,
+                "position": null,
+                "source": {
+                  "kind": "ascii",
+                  "ascii": {
+                    "text": "  /\\ /\\\n ( o.o )\n  \\_^_/"
+                  }
+                },
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "e18",
+          "name": "7",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.42,
+            "z": -0.35
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "7",
+          "share": 1,
+          "tint": "#7d8a8f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e18-sq0",
+                "text": "7",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e19",
+          "name": "Zoe's rebuke — the breath become a fiery angel",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.18,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#e07020",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e19-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   (\n  ) )\n  (_)"
+            }
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "Rescue and revelation of the root",
+          "italic": "Eleleth teaches where the rulers themselves came from.",
+          "body": "",
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.09,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1.3,
+        "dwell": 0.3
+      },
+      "automation": []
     },
     {
-     "id": "e21",
-     "name": "the image claimed — formation as decoy, authority claimed through possession",
-     "kind": "formation",
-     "position": {
-      "x": 0.62,
-      "y": -0.3,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.24,
-      "y": 0.2
-     },
-     "rotation": 0,
-     "shape": "disc",
-     "text": "",
-     "share": 1,
-     "tint": "#8a7ba8",
-     "tintWeight": 0.8,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e21-sq0",
-        "text": "",
-        "shape": "disc",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     },
-     "source": {
-      "kind": "ascii",
-      "ascii": {
-       "text": " +--------+\n |  .--.  |\n |  |  |  |\n |  '--'  |\n +--------+"
-      }
-     }
-    },
-    {
-     "id": "e22",
-     "name": "3",
-     "kind": "formation",
-     "position": {
-      "x": -0.55,
-      "y": -0.26,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.1,
-      "y": 0.12
-     },
-     "rotation": 0,
-     "shape": "text",
-     "text": "3",
-     "share": 1,
-     "tint": "#d8cfb8",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e22-sq0",
-        "text": "3",
-        "shape": "text",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
-    },
-    {
-     "id": "e23",
-     "name": "♪",
-     "kind": "formation",
-     "position": {
-      "x": -0.52,
-      "y": -0.54,
-      "z": 0.0
-     },
-     "size": {
-      "x": 0.1,
-      "y": 0.12
-     },
-     "rotation": 0,
-     "shape": "text",
-     "text": "♪",
-     "share": 1,
-     "tint": "#c9a227",
-     "tintWeight": 1,
-     "locked": false,
-     "force": {
-      "kind": "none",
-      "strength": 0,
-      "radius": 0.45,
-      "spin": 0
-     },
-     "station": null,
-     "sequence": {
-      "enabled": false,
-      "clock": "seconds",
-      "steps": [
-       {
-        "id": "e23-sq0",
-        "text": "♪",
-        "shape": "text",
-        "hold": 3,
-        "transition": 1,
-        "position": null
-       }
-      ]
-     }
+      "id": "m-hyp-5-return",
+      "name": "The root disclosed; the ending still to come",
+      "character": "The true Man promised after three generations; the closing hymn before Father, Son and Holy Spirit. False sovereignty corrected by provenance.",
+      "duration": 15,
+      "transition": 2.2,
+      "view": {
+        "mode": "3d",
+        "yaw": 0.2,
+        "pitch": 0.15,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.25,
+        "pointerClickRadius": 0.3
+      },
+      "field": {
+        "background": "#16101d",
+        "palette": [
+          "#e8e2d0",
+          "#d8cfb8",
+          "#c9a227",
+          "#8a7ba8"
+        ],
+        "material": "round",
+        "params": {
+          "pointerStrength": 0.25,
+          "speed": 0.35,
+          "circulation": 0.1,
+          "dispersion": 0.05,
+          "turbulence": 0.05,
+          "zConfinement": 0.75,
+          "opacity": 0.85,
+          "roundness": 0.98,
+          "grain": 0.03
+        }
+      },
+      "entities": [
+        {
+          "id": "e20",
+          "name": "the root above — Norea's origin, a tree whose crown is a star",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": -0.36,
+            "z": 0.3
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e20-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "      *\n    \\_|_/\n      |\n      |\n     \\|/\n    ~~~"
+            }
+          }
+        },
+        {
+          "id": "e21",
+          "name": "the image claimed — formation as decoy, authority claimed through possession",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": -0.3,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8a7ba8",
+          "tintWeight": 0.8,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e21-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " +--------+\n |  .--.  |\n |  |  |  |\n |  '--'  |\n +--------+"
+            }
+          }
+        },
+        {
+          "id": "e22",
+          "name": "3",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.26,
+            "z": -0.15
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "3",
+          "share": 1,
+          "tint": "#d8cfb8",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e22-sq0",
+                "text": "3",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e23",
+          "name": "♪",
+          "kind": "formation",
+          "position": {
+            "x": -0.52,
+            "y": -0.54,
+            "z": -0.15
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "♪",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e23-sq0",
+                "text": "♪",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "The root disclosed, the ending still to come",
+          "italic": "Disclosure is promised; the ending is not yet told.",
+          "body": "",
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
     }
-   ],
-   "text": [
-    {
-     "id": "stage",
-     "visible": true,
-     "kicker": "",
-     "title": "The root above",
-     "italic": "Disclosure is promised; the ending is not yet told.",
-     "body": "",
-     "x": 0.03,
-     "y": 0.04,
-     "width": 400,
-     "size": 26,
-     "align": "left"
-    }
-   ],
-   "composition": {
-    "layout": "free",
-    "plane": "XY",
-    "focus": "parallel",
-    "focusDuration": 4,
-    "carryTint": true,
-    "carryStation": false,
-    "frequencyDriver": "manual"
-   },
-   "morph": {
-    "thetaRate": 0.06,
-    "phiRate": 0.1,
-    "thetaOffset": 0,
-    "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
-   },
-   "automation": []
-  }
- ],
- "updatedAt": "2026-10-07T00:00:00.000Z"
+  ],
+  "updatedAt": "2026-10-07T00:00:00.000Z",
+  "notes": [
+    "2026-10-07 deepen pass (agent/o-i-20261007-1639, lane 2): the material made alive and deep. MORPH: one breathing clock (theta 0.09 / phi 0.13, depth 1.3) authored across the two true-register scenes — Norea's cry rising and Eleleth's descent are one motion of the depth the rulers cannot see; the blind ruler's field and the formed-human scene hold a heavier, matte clockless register (opacity 0.95, grain 0.06 — the archons' jurisdiction dense and opaque). DEPTH: #3 Norea now stands in true verticality — her cry to the higher divine reality lifted to z +0.35 while the ark she refuses sits at z −0.25, refusal and rescue on one axis; #4 eleleth keeps the veil z-stack (veil +0.5, luminary +0.2, lion-faced ruler −0.2, the seven heavens −0.35 — the retrospective cosmology laid out in its layers); #5→0 turns 3d: the root whose crown is a star rises to z +0.3 above the flat claimed image at z 0 — origin answers the claim from the dimension the claim does not occupy — with zConfinement 0.75 authored. PARTICLE PROPS: rulers' field matte-dense; true register haloed and upright (halo 0.12, softness 0.2, elongation 0.08); the return settled faint (opacity 0.85, roundness 0.98, grain 0.03 — the promise not forced). TITLES set to the record's own lines: A local realm taken for the entirety; A formed human exceeds the makers; Norea refuses; Rescue and revelation of the root; The root disclosed, the ending still to come. Still pairs held: the two rulers'-field scenes and the two true-register scenes each rest unchanged."
+  ]
 }

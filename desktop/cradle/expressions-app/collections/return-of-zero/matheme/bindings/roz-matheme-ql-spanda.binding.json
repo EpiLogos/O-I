@@ -174,7 +174,11 @@
   "Rework 2026-10-07 (craft lane 4): word-labels replaced by drawn derivation. The centre of the journey is the mandala plate rebuilt as drawn geometry: three concentric rings carrying parent slash, sixfold body and return-switch, the six determination signs placed at hexagon vertices, a vortex pin walking the circuit. Each derivation step is an ascii plate of the record's own construction (the fold, the B×B grid, the fused Ø, the 4-3-5 perpendicular, the two Spanda chains).",
   "Colour: five pair-grounds — derivation blue, mandala violet, re-entry jade, orientation brass-dark, Spanda ember. Tints travel; gold at earned returns (the fold, the return-switch, i⁴z=z, the audible family).",
   "Stillness: four of eight adjacent pairs hold field, engine, view and morph (the pairs within each ground); motion at the ground changes and inside the mandala's vortex walk.",
-  "Stage text 57 words across nine scenes."
+  "Stage text 57 words across nine scenes.",
+  "Deepen 2026-10-07 (lane 4): two scenes stand in 3d. The slash/mandala pair (deepened identically, rest preserved) — the third dimension is the mandala's address depth: the qualitative body already receded (z −0.3), the slash-form ring between (z −0.15), the six signs before the viewer (z +0.1), and in the slash scene the stroke itself falls in front of the co-present field (z +0.28). Their shared morph is the eight turns: toroidalHopf, triangle drive, θ̇ 0.16, φ̇ 0.08 — for the slash scene the same clock is the two orientations trading selection and co-presence.",
+  "Deepen, spanda-equations — the count's turn: law beat (θ̇ 0.12 against φ̇ 0.19), the two directions of the relation sounding against each other while the return completes; the three directional ratios stand at z +0.22 / 0 / −0.22, perspective on.",
+  "Deepen, physics states: five registers, five materials — cool derivation crisp (grain 0.03, roundness 0.97), violet address-depth (halo 0.18, softness 0.26), jade binary plates, lamplight X/x (grain 0.045), ember for the count (irregularity 0.42, elongation 0.09). Props vary across the journey, hold within each rest.",
+  "Deepen, titles: every scene carries the record's own line — primordial #0 'The terms and their relation', two ones #0 quoted 'One and All are assigned different offices', slash #0 'Specify what the stroke does', mandala record title kept with #0 as its line, binary #5→0 'The two includes its act of distinction', crossed zero #0 'The crossing has a subjectward face', X/x record subtitle 'Specification without exhaustion', complex orientation record subtitle 'Measure through rotation', spanda #0 'The relation acquires two directions'. Stage words 85."
  ],
  "description": "The native QL derivation and both Spanda equations: 0/1 ↔ 1/0, 2+2² = 4+2 = 6, the crossed-zero recognition sequence, the concentric mandala plate.",
  "scene_count": 9,
@@ -226,6 +230,13 @@
   "actor": "zcode:craft-expressions-l4",
   "lane": "craft-l4/matheme",
   "pass": "expression rework — TEXT IS THE MINIMUM FORM (owner commission 2026-10-07)",
-  "gate": "site/tests/expression-richness.mjs"
+  "gate": "site/tests/expression-richness.mjs",
+  "deepen": {
+   "date": "2026-10-07",
+   "actor": "zcode:deepen-lane4",
+   "lane": "deepen-l4/matheme",
+   "pass": "the deepen pass — depth, alive material, named scenes (second movement)",
+   "gate": "site/tests/expression-richness.mjs"
+  }
  }
 }

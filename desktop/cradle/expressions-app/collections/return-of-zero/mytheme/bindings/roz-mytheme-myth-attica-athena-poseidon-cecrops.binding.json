@@ -152,5 +152,18 @@
   "date": "2026-10-07",
   "actor": "zcode craft lane 2",
   "law": "campaign-evidence/2026-10-07-expression-rework/REWORK-PROTOCOL.md"
+ },
+ "deepen_pass": {
+  "date": "2026-10-07",
+  "actor": "zcode deepen lane 2",
+  "law": "campaign-evidence/2026-10-07-expression-rework/REWORK-PROTOCOL.md, 'The deepen pass'",
+  "note": [
+   "DEPTH — three scenes stand in 3d (yaw 0.3 / pitch 0.12) and z is the vertical of the sacred place: #2 sanctuary sets the Erechtheion above (z +0.4) and the two retained signs below it (olive and salt cistern at z −0.45) — the building keeps the contest's contrary inside its own ground; #3 torus drops the well/sea to z −0.3 beneath the wound civic ring — the depth the formed order is organised around, never converted into itself; #5→0 return lets the retained contrary and the shared ground sit at barely separated depths — the verdict's contrary still under the place.",
+   "MORPH — the three 3d scenes morph on the authored toroidal trajectory (toroidalHopf, drive sine, law theta 0.07/0.11): the record's own claim that 'the strongest image is toroidal rather than linear' — the city's field literally organised around an opening.",
+   "ALIVE — three physics profiles: the daylight contest's measured field (speed 0.5, circulation 0.15, grain 0.05); the aftermath's churning inverse-circulation flood (speed 0.6, circulation −0.3, material print — the variant tellings as inscribed testimony, grain 0.06, roundness 0.4); the sanctuary block's one held bright profile across sanctuary/torus/return (halo 0.08, contrast 0.95, zConfinement 0.7) — the journey's rest. Stillness held across the sanctuary block.",
+   "STEP-SCALE — no text-changing step carries objectState.size; sequences animate tint and form only.",
+   "TITLES — every scene title is the record's own line or clause: 'Claim, witness, verdict' (#1's heading minus its trailing 'and flood'), 'Variant aftermaths' (#2 heading), 'The sanctuary remembers both claims' (the record's own sub-heading), 'Poseidon's well at the centre' (from 'The torus with Poseidon's well at its centre', 3.3), 'The verdict returns to the place' (#5→0, from 'the verdict determines the city; it does not exhaust the place'). No metadata on the stage.",
+   "PAGE FIDELITY — #1 Cecrops witness, trident sea, olive under witness, Zeus's twelve arbiters, the naming; #2 Thriasian flood, spreading ring, west pediment, the prevented/punished variants; #2b Erechtheion, burnt-and-regrown olive, Ψ shoot, salt cistern's wave-sound; #3 civic order wound around the well, the olive chain root→light, the standing scale; #5→0 retained contrary, fourfold offices, five ratified relations, shared ground. Each scene answers to its page."
+  ]
  }
 }
