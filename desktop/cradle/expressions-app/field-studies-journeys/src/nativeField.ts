@@ -75,6 +75,31 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    <p class="ni-label">M3 transcription</p>${seg('rna',[{value:'false',label:'DNA'},{value:'true',label:'RNA'}],'M3 transcription')}
    <p class="ni-refusal" role="alert" data-ni-v="refusal" hidden></p>
   </section>
+  <section class="ni-block" aria-label="Procedural stage" data-ni-stage-block hidden>
+   <h4>Procedural stage</h4>
+   <p class="control-note">The stage's owned slots on this scene: what each constituent is now and which procedure owns it. A procedure is compiled by the one native owner into its own determinant operations — nothing here is a second composer.</p>
+   <div class="ni-row"><button type="button" class="secondary" data-ni="stage-read">Read stage state</button></div>
+   <dl class="ni-kv">
+    <dt>Subject</dt><dd data-ni-v="stage-subject">Not read yet.</dd>
+    <dt>Form</dt><dd data-ni-v="stage-form">—</dd>
+    <dt>Material</dt><dd data-ni-v="stage-material">—</dd>
+    <dt>Clocks</dt><dd data-ni-v="stage-clocks">—</dd>
+   </dl>
+   <table class="ni-voices"><caption>Stage slots and their owners</caption><thead><tr><th scope="col">Slot</th><th scope="col">Owner</th><th scope="col">Rev</th></tr></thead>
+   <tbody>
+    <tr data-ni-slot="form"><th scope="row">form</th><td>—</td><td>—</td></tr>
+    <tr data-ni-slot="material.damping"><th scope="row">material.damping</th><td>—</td><td>—</td></tr>
+    <tr data-ni-slot="clock.inscription"><th scope="row">clock.inscription</th><td>—</td><td>—</td></tr>
+    <tr data-ni-slot="clock.lensing"><th scope="row">clock.lensing</th><td>—</td><td>—</td></tr>
+   </tbody></table>
+   <p class="control-note" data-ni-v="stage-bindings">No stage disclosure read yet.</p>
+   <details class="control-group"><summary>Example procedure (sent verbatim on evaluate)</summary><div class="group-content">
+    <pre data-ni-v="stage-procedure">Read the stage state once; the example then addresses the live subject verbatim.</pre>
+    <div class="ni-row"><button type="button" class="secondary" data-ni="stage-evaluate">Evaluate procedure on the stage</button></div>
+    <p class="control-note">The evaluation claims its slot through the owner: the slots table above is the honest readback. Stage release and rule authoring are later verticals — a claimed slot stands until a stage release lands.</p>
+   </div></details>
+   <output class="ni-key" role="status" aria-live="polite" data-ni-v="stage-status">Read the stage state to disclose slots, owners and bindings.</output>
+  </section>
   <section class="ni-block" aria-label="See and hear">
    <h4>See and hear</h4>
    <div class="ni-row"><button type="button" class="secondary" data-ni="sound" aria-pressed="false">Sound on</button><span class="control-note" data-ni-v="sound">Muted.</span></div>
@@ -171,6 +196,45 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   const m=a?.material;
   query('[data-ni-v="policy"]').innerHTML=m?`<strong>Material policy</strong><span class="ni-badge">declared policy — not source</span><br>damping ${esc(m.damping_per_second)}/s · strike ${esc(m.strike_metres)} m${m.strike_on_event?' on every event':''} · gain ${esc(m.audio_gain_per_metre)}/m · ${esc(m.metres_per_unit)} m per torus unit. ${esc(a?.material_standing??'')}`:'';
  };
+ // The stage's built-in example procedure: one invocation-triggered damping
+ // claim on the live subject, sent verbatim. Not an editor — the full scope
+ // (rule authoring, takeover/release) is later PS-U verticals (O-I #580).
+ const exampleProcedure=()=>{
+  const stage=(controller.reading as any).instrument?.stage;
+  if(!stage?.subject_ref)throw new Error('Read the stage state once first: the procedure addresses the live subject');
+  return {schema:'ql.stage-procedure/v1',procedure_ref:'ta-onta:studio:first-vertical',revision:1,
+   subject_ref:stage.subject_ref,trigger:{trigger:'invocation'},selector:['material.damping'],
+   changes:[{change:'damping',per_second:0.25}]};
+ };
+ const STAGE_SLOTS=['form','material.damping','clock.inscription','clock.lensing'];
+ let stageStamp='';
+ const renderStage=(stage:any,stale:boolean)=>{
+  const stamp=JSON.stringify([stage,stale]);if(stamp===stageStamp)return;stageStamp=stamp;
+  if(!stage){
+   setText('stage-subject','Not read yet.');setText('stage-form','—');setText('stage-material','—');setText('stage-clocks','—');
+   setText('stage-bindings','No stage disclosure read yet.');
+   setText('stage-status','Read the stage state to disclose slots, owners and bindings.');
+   query('[data-ni-v="stage-procedure"]').textContent='Read the stage state once; the example then addresses the live subject verbatim.';
+   return;
+  }
+  setText('stage-status',`Read at generation ${stage.generation??'—'}${stale?' · a determinant landed since; the next human-cadence refresh re-reads':''}.`);
+  setText('stage-subject',`${stage.subject_ref??'—'} · ${stage.event_ref??'—'}`);
+  const form=stage.form??{};
+  setText('stage-form',`address ${form.address??'—'} · pose ${form.pose==null?'—':JSON.stringify(form.pose)} · aperture ${form.aperture??'—'} · M3 clock steps ${form.clock_steps??'—'}`);
+  const m=stage.material;
+  setText('stage-material',m?`damping ${m.damping_per_second}/s · strike ${m.strike_metres} m · gain ${m.audio_gain_per_metre}/m`:'—');
+  setText('stage-clocks',`M3 clock steps ${form.clock_steps??'—'} · inscription/lensing phases owned per the slots table`);
+  for(const slot of STAGE_SLOTS){
+   const held=stage.slots?.[slot],row=query(`[data-ni-slot="${slot}"]`),cells=row.querySelectorAll('td');
+   const values=[held?.owner??'authored base',held?.revision??'—'];
+   values.forEach((t,j)=>{const text=String(t);if(cells[j].textContent!==text)cells[j].textContent=text;});
+  }
+  const bindings=Array.isArray(stage.bindings)?stage.bindings:[];
+  setText('stage-bindings',bindings.length
+   ?bindings.map((b:any)=>`${b.procedure_ref}@${b.revision} fires on ${b.determinant||'invocation'} · ${b.evaluations}/${b.max_evaluations} evaluations · ${b.standing}`).join(' | ')
+   :'No procedures bound to the flow.');
+  try{query('[data-ni-v="stage-procedure"]').textContent=JSON.stringify(exampleProcedure(),null,2);}catch{}
+ };
  // The Jankó surface is laid out from the owner's own `played_addresses.janko`; the voices a
  // key strikes come from its `by_class`. No pitch is computed here. White/black is the historical
  // piano colouring of the Jankó keyboard (a presentation layer, not a derivation).
@@ -228,14 +292,16 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   // The stage overlay is the supplied-owner reading; the scene surface reads here.
   domainView.update(instrument?null:reading.domain,reading.presented_clock,reading.status,reading.native?.presented?.generation);
   const live=!!instrument&&(reading.status==='following'||reading.status==='held');
-  for(const b of panel.querySelectorAll<HTMLButtonElement>('[data-ni-set],[data-ni="step"],[data-ni="strike"],[data-ni="restore-opening"]'))b.disabled=!live||(busy&&b.dataset.niSet!=='cadence')||(reducedMotion&&b.dataset.niSet==='cadence'&&Number(b.dataset.value)>1);
+  for(const b of panel.querySelectorAll<HTMLButtonElement>('[data-ni-set],[data-ni="step"],[data-ni="strike"],[data-ni="restore-opening"],[data-ni="stage-read"],[data-ni="stage-evaluate"]'))b.disabled=!live||(busy&&b.dataset.niSet!=='cadence')||(reducedMotion&&b.dataset.niSet==='cadence'&&Number(b.dataset.value)>1);
   for(const b of panel.querySelectorAll<HTMLButtonElement>('[data-ni="sound"],[data-ni="hold"],[data-ni="resume"],[data-ni="checkpoint"],[data-ni="restore"],[data-ni="follow-scale"],[data-ni="raw"]'))b.disabled=!reading.lease||reading.status==='unavailable';
   query<HTMLButtonElement>('[data-ni="close"]').disabled=!reading.lease&&reading.status!=='unavailable';
   query<HTMLButtonElement>('[data-ni="restore-opening"]').disabled||=!instrument?.opening_event_available;
   const playing=!!instrument&&reading.status==='following';
   for(const k of panel.querySelectorAll<HTMLButtonElement>('button.ni-jk'))k.disabled=!playing;
   setText('janko-note',!instrument?'Open the instrument to lay out the keys.':playing?`Live${reading.muted?' · sound is off — turn it on to hear the notes':''}. Keys that are paler have no voice in this sky.`:'The field is held: resume it, then play.');
+  query('[data-ni-stage-block]').hidden=!instrument;
   if(instrument){
+   renderStage(instrument.stage,!!instrument.stage_stale);
    renderJanko(instrument.influence?.played_addresses,instrument.influence?.voices??[]);
    acting(instrument.acting,instrument,reading);
    const c=instrument.cadence;
@@ -304,6 +370,8 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    if(op==='step')return run(()=>controller.m1Advance(1));
    if(op==='strike')return run(()=>controller.strike());
    if(op==='restore-opening')return run(()=>controller.restoreOpening());
+   if(op==='stage-read')return run(()=>controller.stageState());
+   if(op==='stage-evaluate')return run(async()=>{await controller.stageEvaluate(exampleProcedure());await controller.stageState();});
    if(op==='sound')return run(()=>controller.setMuted(!controller.reading.muted));
    if(op==='resume')return run(async()=>{await controller.resume();onResumeApplication();});
    if(op==='checkpoint')return run(()=>controller.saveCheckpoint());
