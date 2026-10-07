@@ -1,10 +1,10 @@
 // The field on the shared ExpressionWorld seam, against the REAL kernel (the prebuilt walk bridge on a disposable ground):
 // a human field select / tangent and an agent's selection_set / portal_open mean the same thing and read back the same.
 //   node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/field-world.test.mjs
-// Skips (and says so) without a built walk-bridge.
+// Skips (and says so) without a built walk-bridge or without Central's ctrl.
 import test from "node:test";
 import assert from "node:assert/strict";
-import {execFileSync, spawn} from "node:child_process";
+import {execFileSync, spawn, spawnSync} from "node:child_process";
 import {existsSync, mkdirSync, mkdtempSync, rmSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join, resolve} from "node:path";
@@ -13,7 +13,10 @@ import {createWorldSync, planOutbound, planInbound, portalRefOf} from "../src/fi
 import {viaTransport} from "../src/expression/world.ts";
 
 const bin = process.env.FIELD_BRIDGE_BIN ?? resolve(import.meta.dirname, "../kernel/target/debug/walk-bridge");
-const have = existsSync(bin);
+const ctrlBin = process.env.OI_CENTRAL_CTRL_BIN ?? "ctrl";
+// The real kernel needs the walk bridge AND Central's own `ctrl` to lay a disposable ground; a runner with only the bridge skips (and says so).
+const haveCtrl = !spawnSync(ctrlBin, ["--version"], {stdio: "ignore"}).error;
+const have = existsSync(bin) && haveCtrl;
 const W = "project:Field", R = p => `central:source:project:Field:${p}`;
 const PAGES = {[R("README.md")]: "Harbour Notes", [R("notes/alpha.md")]: "Alpha Tide", [R("notes/beta.md")]: "Beta Mooring", [R("notes/deep/gamma.md")]: "Gamma Depth"};
 const describe = ref => PAGES[ref] ? {title: PAGES[ref], revision: "rev:" + PAGES[ref][0], owner: "Central", kind: "source", page: true} : ref.startsWith("expression:") ? {title: ref, owner: "Expressions", kind: "expression", page: false} : undefined;
@@ -22,7 +25,7 @@ let ground, child, call;
 test.before(async () => {
   if (!have) return;
   const root = mkdtempSync(join(tmpdir(), "oi-fworld-")), home = mkdtempSync(join(tmpdir(), "oi-fworld-home-"));
-  const ctrl = process.env.OI_CENTRAL_CTRL_BIN ?? "ctrl";
+  const ctrl = ctrlBin;
   const c = (a, i = {}) => execFileSync(ctrl, ["--root", root, "--json", "action", "run", a, JSON.stringify(i)], {encoding: "utf8"});
   c("central.init"); mkdirSync(join(root, "Work", "Field")); c("projectcentral.init", {project: "Field", project_id: "field-world"});
   const port = 4600 + Math.floor(Math.random() * 150);
@@ -32,7 +35,7 @@ test.before(async () => {
   ground = {root, home};
 });
 test.after(() => { child?.kill(); if (ground) { rmSync(ground.root, {recursive: true, force: true}); rmSync(ground.home, {recursive: true, force: true}); } });
-const T = (name, fn) => test(name, {skip: have ? false : "no built walk-bridge (set FIELD_BRIDGE_BIN)"}, fn);
+const T = (name, fn) => test(name, {skip: have ? false : "needs a built walk-bridge (FIELD_BRIDGE_BIN) and Central's ctrl on PATH (OI_CENTRAL_CTRL_BIN)"}, fn);
 const field = binding => { let state = freshEncounter(W, {ref: R("README.md")}); const sync = createWorldSync(call, {binding, actor: `field:${binding}`, describe}); const apply = async (op, origin) => { const prev = state; const r = fieldApply(state, op); state = r.state; await sync.mirror(prev, state, op, origin); return r; }; const pull = async () => { const {ops, adopt} = await sync.inbound(state); for (const op of ops) state = fieldApply(state, op).state; sync.bind(state, adopt); return ops; }; return {sync, apply, pull, get state() { return state; }}; };
 const read = () => call({operation: "selection_read"});
 const portals = async () => (await call({operation: "portal_inspect"})).portals;
