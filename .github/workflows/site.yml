@@ -46,7 +46,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: EpiLogos/Antykathera-Essay-Work
-          ref: c39ac80ae816f1b29595d825c2b39bab1c1ec97f
+          ref: bb1a3b256273860070022c51640a10e98e7f8afc
           path: .publication-sources/essay-reading
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -109,7 +109,7 @@ jobs:
         # publication shelf (curated native publications, byte receipt) is no
         # longer built or gated; its old addresses continue into the essay field.
         env:
-          OI_ESSAY_BROWSER_REPO: ${{ github.workspace }}/.publication-sources/essay-reading/published-reading/2026-10-06
+          OI_ESSAY_BROWSER_REPO: ${{ github.workspace }}/.publication-sources/essay-reading/published-reading/2026-10-07
           # the S0–S5 product Expressions (lifted into the essay field's Library) come from this pinned checkout
           OI_PCD_S_PRODUCTS_ROOT: ${{ github.workspace }}/.publication-sources/Point-Cloud-Demo/production/s-products
         run: npm run build:public
