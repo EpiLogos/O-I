@@ -6,13 +6,16 @@
 //
 //   OI_WORLDS_ROOT=<root with the installed World> (default ~/.oi-candidates/worlds)  [OI_CANDIDATE_BIN=<oi>]  [FIELD_BRIDGE_BIN=<walk-bridge>]
 //   node walk/scenarios/candidate-route.mjs [--url http://127.0.0.1:PORT/ --bridge http://127.0.0.1:PORT]   (default: launch the candidate itself)
+//   OI_WALK_REAL_PROVIDER=1 node walk/scenarios/candidate-route.mjs --turn      ONE real companion turn on top (receipt: candidate-companion.json): the panel provisions the
+//        Prime-QL body from the candidate's own AIKit home, Redis-prepared NOW context electing the live Kev is delivered, and `encounter-use` shows QL operations
+//        + Kev + Redis. The model key comes only from this environment (ZAI_API_KEY); no retries.
 //
 // It launches the candidate with its own free ports and stops exactly the processes it started (the launcher's pid; the launcher stops its bridge
 // and vite). The real ground is read, and the AIKit/Central state the field touches is the candidate profile's; nothing is written to the ground.
 // Receipt: walk/artifacts/candidate-route.json (grade A: the real ground, the installed World, the real kernel).
-import {spawn} from "node:child_process";
+import {execFileSync, spawn, spawnSync} from "node:child_process";
 import {createServer} from "node:net";
-import {existsSync} from "node:fs";
+import {existsSync, readFileSync} from "node:fs";
 import {homedir} from "node:os";
 import {dirname, join, resolve} from "node:path";
 import {fileURLToPath} from "node:url";
@@ -24,6 +27,9 @@ const cradle = resolve(here, "../..");
 const argv = process.argv.slice(2);
 const arg = (n, d) => { const i = argv.indexOf(`--${n}`); return i >= 0 ? argv[i + 1] : d; };
 const worldsRoot = process.env.OI_WORLDS_ROOT ?? join(homedir(), ".oi-candidates/worlds");
+const turn = argv.includes("--turn");
+const ground = resolve(process.env.OI_CENTRAL_ROOT ?? join(homedir(), "Central"));
+const aikitHome = join(homedir(), ".oi-candidates/central-field/aikit-home");
 const checks = [];
 const check = (ok, label, detail) => { checks.push({ok: !!ok, label, ...(detail !== undefined ? {detail} : {})}); console.log(`${ok ? "PASS" : "FAIL"} — ${label}${detail !== undefined ? " · " + JSON.stringify(detail).slice(0, 300) : ""}`); };
 const freePort = () => new Promise((res, rej) => { const s = createServer(); s.listen(0, "127.0.0.1", () => { const {port} = s.address(); s.close(() => res(port)); }); s.on("error", rej); });
@@ -31,7 +37,7 @@ const waitHttp = async (url, label, ms = 60000) => { const end = Date.now() + ms
 
 let launcherLog = "";
 let launcher = null, appUrl = arg("url"), bridgeUrl = arg("bridge");
-const record = {scenario: "candidate-route", spec_ref: "docs/cradle/CENTRAL-FIELD-WORLD-PACKAGE.md §5 and scripts/candidate-launch.mjs (the owner's candidate route)", grade: "A", at: new Date().toISOString(), worlds_root: worldsRoot};
+const record = {scenario: turn ? "candidate-companion" : "candidate-route", spec_ref: "docs/cradle/CENTRAL-FIELD-WORLD-PACKAGE.md §5 and scripts/candidate-launch.mjs (the owner's candidate route)", grade: "A", at: new Date().toISOString(), worlds_root: worldsRoot};
 let browser, page, failed = false;
 try {
   if (!appUrl) {
@@ -77,6 +83,15 @@ try {
   check(/NOT CONNECTED/i.test(choose) && projects.length >= 4, "the field opens on 'Choose a corpus', listing the real ground's projects", projects);
   check(await page.locator('.futil__btn[data-util="scope"]').isVisible(), "the utility bar is there (scope, modes, companion, settings)", await page.evaluate(() => [...document.querySelectorAll("[data-util]")].map(e => e.getAttribute("data-util"))));
   await page.screenshot({path: shotPath("candidate-route-01-choose.png")});
+  // the scope menu is how a person chooses a project from here: every item must be reachable (it used to open upward past the top of a short window)
+  await page.locator('.futil__btn[data-util="scope"]').click(); await settle(300);
+  const menuItems = await page.evaluate(() => [...document.querySelectorAll('.futil__menu[aria-label="Scope"] .futil__item')].map(e => { const r = e.getBoundingClientRect(); return {t: e.textContent.trim(), top: Math.round(r.top), bottom: Math.round(r.bottom)}; }));
+  const reachable = menuItems.length > 8 && menuItems.every(i => i.top >= 0 && i.bottom <= 900);
+  check(reachable, "the scope menu opens with every item inside the window (Central, the projects, the Epi-Logos world)", {items: menuItems.length, first: menuItems[0], last: menuItems.at(-1)});
+  if (turn) {
+    await page.locator('.futil__menu[aria-label="Scope"] .futil__item', {hasText: /^O-I$/}).click(); await settle(2500);
+    check(await page.locator('.futil__btn[data-util="scope"]').getAttribute("aria-label").then(l => /O-I/.test(l ?? "")), "the O-I project (which holds the essay) is the scope: the companion's conversation will belong to it");
+  } else await page.keyboard.press("Escape");
 
   // 2 — the Epi-Logos lens on: the footer lens is revealed from the bottom edge (hover), then pressed
   const lens = page.locator('button[aria-label="Epi-Logos lens"]');
@@ -131,6 +146,74 @@ try {
   check(playing && playing.text > 40 && playing.state === "ready" && playing.canvas > 0, "the Expression plays (state ready: the body was checked against the index digest)", playing);
   await page.screenshot({path: shotPath("candidate-route-04-expression.png")});
 
+
+  // 6 — ONE real companion turn (opt-in: it spends plan quota)
+  if (turn) {
+    if (process.env.OI_WALK_REAL_PROVIDER !== "1") throw new Error("--turn spends plan quota: set OI_WALK_REAL_PROVIDER=1");
+    const prime = JSON.parse(readFileSync(join(homedir(), ".prime/agent/settings.json"), "utf8"));
+    if (prime.defaultProvider !== "zai" || prime.defaultModel !== "glm-5.3-flash") throw new Error(`refusing: Prime's configured model is ${prime.defaultProvider}/${prime.defaultModel}, not the walk law's zai/glm-5.3-flash`);
+    record.model = {provider: prime.defaultProvider, model: prime.defaultModel, source: "~/.prime/agent/settings.json"};
+    const aikit = join(homedir(), ".oi-candidates/central-field/aikit-bin/aikit");   // the verified copy the profile froze (the shared cargo target is not trusted)
+    const projectDir = join(ground, "Work", "O-I");
+    const turnEnv = {...process.env, AIKIT_HOME: aikitHome, OI_CENTRAL_ROOT: ground};
+    const native = (...p) => JSON.parse(execFileSync(aikit, ["--json", "session-space", "-C", projectDir, ...p], {encoding: "utf8", env: turnEnv, maxBuffer: 64 * 1024 * 1024}));
+    const BODY = "agent-body/epi-prime-ql";
+    const spec = JSON.parse(readFileSync(join(cradle, "tests/fixtures/prime-kev-redis/candidates.json"), "utf8"));
+    const kevAddress = JSON.parse(readFileSync(join(aikitHome, "decision-provider.json"), "utf8")).address;
+    const kevRequests = async () => (await (await fetch(`http://${kevAddress}/v1/models`, {signal: AbortSignal.timeout(4000)})).json()).models?.find(m => m.name === "kev-latest")?.batches?.requests ?? null;
+    const kevBefore = await kevRequests();
+    const provisionOps = [];
+    page.on("request", r => { if (r.url().endsWith("/op")) { try { const b = r.postDataJSON(); if (b?.op === "encounter_provision") provisionOps.push({project: b.project, preferred_body_ref: b.preferred_body_ref}); } catch { /* not json */ } } });
+    // the companion's context: the person's choice about the field is "present, not prepared" until they ask for it to follow them
+    await page.locator('.futil [data-util="companion"]').click();
+    await page.locator('.futil__menu[aria-label="Companion"] .futil__item', {hasText: "Follows the active locus"}).click(); await settle(300);
+    await page.keyboard.press("Escape"); await settle(500);
+    await page.getByRole("button", {name: "Toggle right region"}).click(); await settle(800);
+    const panel = page.locator('[data-region="right"]');
+    const message = panel.getByRole("textbox", {name: "Message", exact: true});
+    await message.waitFor({timeout: 60000});
+    check(/First send opens it in O-I/.test(await panel.innerText()), "the panel says where the first send opens the conversation: in O-I");
+    await message.fill(spec.message);
+    await page.waitForFunction(() => !document.querySelector(".agent-chat .chat-send")?.disabled, undefined, {timeout: 60000});
+    await panel.getByRole("button", {name: "Send", exact: true}).click();
+    await page.waitForFunction(() => !!document.querySelector(".agent-layer")?.dataset.agentSessionRef, null, {timeout: 180000});
+    const ref = await page.evaluate(() => document.querySelector(".agent-layer")?.dataset.agentSessionRef);
+    record.agent_session = ref;
+    check(provisionOps.length === 1 && provisionOps[0].project === "O-I" && provisionOps[0].preferred_body_ref === BODY, "the panel's provision asked for the Epi-Logos Prime-QL body (the lens selects it)", provisionOps);
+    const request = (action, fields = {}) => { const r = native("encounter", "--request-json", JSON.stringify({action, agent_session: ref, ...fields})); if (r.ok === false) throw new Error(JSON.stringify(r)); return r.data; };
+    const status = request("status");
+    const row = JSON.parse(readFileSync(join(aikitHome, "state/encounter-providers/epi-prime-ql.json"), "utf8"));
+    check(status.provider?.id === "epi-prime-ql" && status.provider?.body_ref === BODY && row.argv.includes("--extension") && row.argv.includes("--installation") && !row.argv.includes("--no-extensions"), "the conversation runs on the candidate home's Prime-QL row: new launcher, explicit extension, verified installation", {id: status.provider?.id, body_revision: status.provider?.body_revision, launcher: row.argv[0].replace(homedir(), "~")});
+    record.provider = {id: status.provider?.id, body_ref: status.provider?.body_ref, body_revision: status.provider?.body_revision, native_session_id: status.native_session_id};
+    // the turn is over when the journal says so (the model does not always write the closing marker it was asked for)
+    const readTurn = () => { const r = spawnSync(aikit, ["session-space", "-C", projectDir, "encounter-use", "--agent-session", ref], {encoding: "utf8", env: turnEnv, maxBuffer: 64 * 1024 * 1024}); try { return JSON.parse(r.stdout)?.turn?.outcome ?? null; } catch { return null; } };
+    const turnDeadline = Date.now() + 25 * 60 * 1000;
+    let outcome = null;
+    while (Date.now() < turnDeadline) { await settle(20000); outcome = readTurn(); if (outcome && outcome !== "open") break; }
+    record.turn_outcome = outcome;
+    await settle(2500);
+    await page.screenshot({path: shotPath("candidate-companion-turn.png")});
+    record.chat_tail = (await panel.innerText()).slice(-2400);
+    const events = request("read", {after: 0, limit: 4000}).events.map(r => r.event);
+    const userText = JSON.stringify(events.find(e => e?.kind === "user-message") ?? {});
+    check(/field-encounter|field generation/.test(userText), "the delivered turn carried the field's own item (the reader's place), through the prepared-context seam", {chars: userText.length});
+    const use = spawnSync(aikit, ["session-space", "-C", projectDir, "encounter-use", "--agent-session", ref, "--faculty-config", join(aikitHome, "faculty/faculty.json"), "--redis-config", join(aikitHome, "services/redis-now/redis-now.json")], {encoding: "utf8", env: turnEnv, maxBuffer: 64 * 1024 * 1024});
+    record.encounter_use = {exit: use.status, raw: use.stdout || use.stderr};
+    console.log("---- encounter-use (raw) ----\n" + record.encounter_use.raw + "\n---- end ----");
+    let reading = null; try { reading = JSON.parse(use.stdout); } catch { /* raw kept */ }
+    const delivered = reading?.prepared_context?.delivered ?? [], receipt = delivered[0]?.receipt, faculty = reading?.ql_operations ?? {};
+    check(reading?.prepared_context?.state === "delivered" && (reading?.prepared_context?.degraded ?? []).length === 0, "Redis-prepared NOW context was delivered to the turn, with no degradation", reading?.prepared_context?.state);
+    check(receipt?.participant_ref === "agent/o-i-chat" && !!receipt?.jev_invocation_ref && !!receipt?.decision_provider, "the delivery names the Kev decision invocation and provider identity behind the view", {participant: receipt?.participant_ref, invocation: receipt?.jev_invocation_ref});
+    check(reading?.decision?.selection_readback?.read === true && reading.decision.selection_readback.view_is_the_delivered_one === true && (reading.decision.selection_readback.selected_source_refs ?? []).length > 0, "the Redis readback is the delivered view and lists the sources Kev selected", reading?.decision?.selection_readback?.selected_source_refs?.length);
+    const kevAfter = await kevRequests();
+    check((kevAfter ?? -1) > (kevBefore ?? 1e9), "Kev's own counters moved", {before: kevBefore, after: kevAfter});
+    const qlCalls = (faculty.tool_calls ?? []).length + (faculty.python_faculty_calls ?? []).length;
+    check(qlCalls > 0 && (faculty.faculty_receipts ?? []).length > 0 && (faculty.faculty_receipts ?? []).every(r => r.success === true), "the body made QL operations and the owner filed their faculty receipts (all successful)", {tool_calls: (faculty.tool_calls ?? []).map(c => c.tool), python: (faculty.python_faculty_calls ?? []).map(c => c.function), receipts: (faculty.faculty_receipts ?? []).map(r => `${r.operation}:${r.success}`)});
+    const all = await panel.innerText();
+    record.done_marker_seen = all.includes(spec.done_marker);
+    check(!!outcome && outcome !== "open" && all.length > 400, "the turn ended (the journal says so) with the assistant's answer in the panel", {outcome, done_marker_seen: record.done_marker_seen});
+  }
+
   // 5 — where every byte of the essay came from, and what went wrong on the way
   const world = responses.filter(r => r.url.startsWith(`${bridgeUrl}/world/`));
   const foreign = responses.filter(r => !r.url.startsWith(appUrl) && !r.url.startsWith(bridgeUrl) && !/^(data|blob):/.test(r.url));
@@ -156,7 +239,7 @@ try {
   if (launcher) { launcher.kill("SIGTERM"); await new Promise(r => setTimeout(r, 2500)); stopped = launcher.exitCode !== null || launcher.killed; }
   const passed = checks.filter(c => c.ok).length;
   if (failed || checks.some(c => !c.ok)) record.launcher_log_tail = launcherLog.split("\n").filter(l => !/GET \/(state|events)/.test(l)).slice(-40);
-  writeReceipt("candidate-route.json", {...record, launcher_stopped: stopped, passed: passed === checks.length && !failed, counts: {passed, total: checks.length}, checks});
+  writeReceipt(turn ? "candidate-companion.json" : "candidate-route.json", {...record, launcher_stopped: stopped, passed: passed === checks.length && !failed, counts: {passed, total: checks.length}, checks});
   console.log(`\n${passed}/${checks.length} checks passed`);
   process.exit(passed === checks.length && !failed ? 0 : 1);
 }

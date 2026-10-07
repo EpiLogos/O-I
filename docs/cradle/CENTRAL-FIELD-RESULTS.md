@@ -61,6 +61,27 @@ from a receipt or a command the lead re-ran; "proven" names the check, "not prov
 
 ## Next concrete action
 
-1. Owner: open the candidate (`scripts/candidate-launch.mjs --mode tauri --worlds-root ~/.oi-candidates/worlds --oi <candidate oi>`), use the field with Epi on, and give feedback; refine in place.
-2. Install AIKit ≥ `557abfc8` through the owner's `oi` install, then reconfigure the everyday rows (reversible; backups pattern in `~/.oi-candidates/epi-prime/`).
-3. Land the branch (O:I, AIKit, Actuation) through their PRs after the owner's review.
+1. **Open the candidate from a Terminal (zsh), not from Finder or the Dock:**
+   `cd desktop/cradle && node scripts/candidate-launch.mjs --mode web --worlds-root ~/.oi-candidates/worlds --oi <candidate oi>` (or `--mode tauri` for the native shell).
+   It provisions, idempotently, an isolated AIKit home at `~/.oi-candidates/central-field/aikit-home` (the everyday `~/.aikit`, its rows and tools are not touched):
+   the `epi-prime-ql` row on the NEW launcher (explicit `-e` QL extension, fail-closed binding, coherent faculty config generated from the owner instrument), Redis-prepared NOW
+   context electing your live Kev, a Redis service of its own on `127.0.0.1:6391` (stopped when the launcher exits), a frozen, verified copy of the candidate AIKit build
+   (`~/.oi-candidates/central-field/aikit-bin/aikit`), and frozen copies of the `ql` and `ql-wiki-refraction` engines (builds of the live QL checkout, not release material: the G4 gap).
+2. **In the app:** choose the **O-I** project in the scope menu (it holds the essay; the companion's conversation belongs to a project, and with none the panel says "opens a new conversation in ,"), turn the
+   **Epi-Logos** lens on (hover the bottom edge, press the lens, or Scope → World → Epi-Logos), open the companion (right panel) and set **Companion → "Follows the active locus"** so each turn carries the field's
+   place (the default is "present, not prepared"). The first send provisions the Prime-QL body.
+3. **Kev** must be answering at `127.0.0.1:8019`. The launcher says if it is not; to start it:
+   `sh ~/.workcell/decision-models/kev-0.8b/serve-kev.sh ~/.workcell/decision-models/kev-0.8b 8019`. If it is down, context delivery degrades and says so; the turn still runs.
+4. **Model login, per harness, stated independently.** Both harnesses default to `zai` / `glm-5.3-flash` (`~/.prime/agent/settings.json`: low thinking; `~/.pi/agent/settings.json`: high).
+   - **Prime** (the Epi-Logos Prime-QL body, what the lens uses): its stored logins (`~/.prime/agent/auth.json`) hold only `minimax` (API key). There is **no stored `zai` login**: the key comes from the
+     environment variable `ZAI_API_KEY` of the process that launches the candidate (candidate-launch to bridge to the resident owner to Prime). Nothing here ever writes it to a file.
+   - **Pi** (the other body): `~/.pi/agent/auth.json` holds only `openai-codex` (OAuth). Likewise no stored `zai` login: it also reads `ZAI_API_KEY` from its environment. A Pi `/login` for zai would store one, and is optional.
+   - Where the variable lives today: it is exported in `~/.zshenv`, so any zsh (including non-interactive ones) has it and a Terminal launch works. `launchctl getenv ZAI_API_KEY` is empty, so an app started from
+     Finder/Dock has NO key and Prime/Pi will fail to authenticate (`401`/"no API key"). If you want Dock launches to work, either `launchctl setenv ZAI_API_KEY ...` (kept in launchd memory until logout) or log Prime in with `prime-agent` for zai.
+   - The launcher prints `ZAI_API_KEY is not set in this environment` when it is absent.
+   - A `429 Rate limit reached for requests` from the provider (seen when several runs overlap on the same plan) is the plan's limit, not the candidate: wait and send again.
+5. **Everyday rows, not changed.** To upgrade `epi-prime-ql` and `pi` in place, safely and reversibly: (a) back up `~/.aikit/state/encounter-providers/{epi-prime-ql,pi}.json`, `~/.aikit/decision-provider.json`, `~/.config/epi-logos/faculty.json` (pattern: `~/.oi-candidates/epi-prime/backups/<stamp>/`);
+   (b) install AIKit at or after `557abfc8` through the owner's `oi` install (the installed `1bf1f02a` lacks `encounter-now-context-configure`, provider selection and the elections), restart the resident `encounter-serve` owner and the gateway;
+   (c) install the Prime distribution into a tools root (`epi-distribution.mjs install`), generate the faculty config from the instrument (`epi-distribution.mjs faculty-config`), `encounter-epi-prime-configure --provider-id epi-prime-ql ...`, then
+   `encounter-now-context-configure` on both rows against a request authored for the project; (d) verify with one real turn and `encounter-use`; to undo, restore the backed-up files and the previous aikit. I have not done this: the owner's call, after the candidate review.
+6. Land the branch (O:I, AIKit, Actuation) through their PRs after the owner's review.
