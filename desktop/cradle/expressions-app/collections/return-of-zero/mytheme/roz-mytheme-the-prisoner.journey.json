@@ -1,1693 +1,1621 @@
 {
-  "schema": "oi.journey",
-  "version": 1,
-  "id": "roz-mytheme-the-prisoner",
-  "name": "The Prisoner — Number Six, the changing Two, and the question of One",
-  "description": "The whole series movement: the resignation that becomes an address, the administered world, the last interrogation, the masked assembly and escape, the asymmetric count, and return without inheriting the hidden throne.",
-  "loop": true,
-  "scenes": [
-    {
-      "id": "m-pri-0-arrival",
-      "name": "The resignation that becomes an address",
-      "character": "An agent resigns; before the decision can carry into another life he wakes in a copy of his own room, in the Village.",
-      "duration": 14,
-      "transition": 1.3,
-      "view": {
-        "mode": "2d",
-        "yaw": 0.05,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "engine": {
-        "inkMode": "blackOnWhite",
-        "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "repel",
-        "pointerClick": "shove",
-        "pointerClickStrength": 1.6,
-        "pointerClickRadius": 0.4
-      },
-      "field": {
-        "background": "#f6f1e6",
-        "palette": [
-          "#2e2e2e",
-          "#6b6b6b",
-          "#b0413e",
-          "#e3ddd0"
-        ],
-        "material": "round",
-        "params": {
-          "speed": 0.5,
-          "circulation": -0.2,
-          "dispersion": 0.05,
-          "gravityY": -0.04,
-          "pointerStrength": 0.55
-        }
-      },
-      "entities": [
-        {
-          "id": "e334",
-          "name": "the Village — picturesque, enclosed, no freedom to leave",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.46,
-            "z": 0
-          },
-          "size": {
-            "x": 0.992,
-            "y": 0.73
-          },
-          "rotation": 0,
-          "shape": "ring",
-          "text": "",
-          "share": 1,
-          "tint": "#6b6b6b",
-          "tintWeight": 0.5,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st371",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e335",
-          "name": "Number Six — the assigned designation",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.23,
-            "z": 0
-          },
-          "size": {
-            "x": 0.217,
-            "y": 0.246
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "6",
-          "share": 1,
-          "tint": "#e3ddd0",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e335-1",
-                "text": "6",
-                "shape": "text",
-                "hold": 3.6,
-                "transition": 1.6,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.217,
-                    "y": 0.246
-                  },
-                  "rotation": 0,
-                  "tint": "#8f8a80",
-                  "tintWeight": 0.5,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e335-2",
-                "text": "6",
-                "shape": "text",
-                "hold": 4.2,
-                "transition": 1.6,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.27
-                  },
-                  "rotation": 0,
-                  "tint": "#e3ddd0",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e336",
-          "name": "Rover — the guardian that intercepts escape",
-          "kind": "formation",
-          "position": {
-            "x": 0.6,
-            "y": 0.5,
-            "z": 0
-          },
-          "size": {
-            "x": 0.34,
-            "y": 0.34
-          },
-          "rotation": 0,
-          "shape": "disc",
-          "text": "",
-          "share": 1.4,
-          "tint": "#e3ddd0",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "repel",
-            "strength": 0.5,
-            "radius": 0.4,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st373",
-                "text": "",
-                "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e337",
-          "name": "the helicopter brought back by remote control (Arrival)",
-          "kind": "formation",
-          "position": {
-            "x": -0.6,
-            "y": -0.4,
-            "z": 0
-          },
-          "size": {
-            "x": 0.3,
-            "y": 0.16
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "🚁",
-          "share": 1,
-          "tint": "#b0413e",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e337-1",
-                "text": "🚁",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1.4,
-                "position": {
-                  "x": -0.6,
-                  "y": -0.4,
-                  "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.16
-                  },
-                  "rotation": 0,
-                  "tint": "#b0413e",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e337-2",
-                "text": "↩",
-                "shape": "text",
-                "hold": 3.2,
-                "transition": 1.4,
-                "position": {
-                  "x": 0.2,
-                  "y": -0.2,
-                  "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.24
-                  },
-                  "rotation": 0,
-                  "tint": "#b0413e",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "title",
-          "visible": true,
-          "kicker": "#0 · \"Arrival\" (paraphrased); the title exchange at q001",
-          "title": "The resignation that becomes an address",
-          "italic": "The opening act demonstrates assignment: the inquiry into who may order the field is redirected into an order within that field — \"You are Number Six.\"",
-          "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "An intelligence agent resigns; before he can carry that decision into another life he is abducted, waking in surroundings resembling his own room — now belonging to the Village. The administration wants the reason for his resignation: it knows much, and seeks cooperation in completing the account. Its visible chief is Number Two; his own designation is Number Six. \"Arrival\" gives the arrangement material actors: technicians watching, Rover",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "intercepting escape, Cobb apparently dead, Number Nine's arrangement ending in a remotely controlled helicopter, another man already installed as Number Two. The title exchange compresses the situation — \"Who is Number One?\" / \"You are Number Six.\" / \"I am not a number; I am a free man!\" — Two's laughter follows. No comma after \"are\": the reply assigns the questioner's number; it does not conceal an identity.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "free",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": []
-    },
-    {
-      "id": "m-pri-1-world",
-      "name": "A whole world for obtaining one answer",
-      "character": "Staged allies, escapes that return, an election for Number Two — resistance carried inside administered procedures.",
-      "duration": 12,
-      "transition": 1.5,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "engine": {
-        "inkMode": "blackOnWhite",
-        "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "attract",
-        "pointerClick": "pulse",
-        "pointerClickStrength": 0.6,
-        "pointerClickRadius": 0.45
-      },
-      "field": {
-        "background": "#f6f1e6",
-        "palette": [
-          "#2e2e2e",
-          "#6b6b6b",
-          "#b0413e",
-          "#e3ddd0"
-        ],
-        "material": "round",
-        "params": {
-          "speed": 0.55,
-          "circulation": 0.3,
-          "dispersion": 0.08,
-          "pointerStrength": 0.4
-        }
-      },
-      "entities": [
-        {
-          "id": "e338",
-          "name": "the campaign — publicity ready before the candidate speaks",
-          "kind": "formation",
-          "position": {
-            "x": -0.45,
-            "y": -0.12,
-            "z": 0
-          },
-          "size": {
-            "x": 0.27,
-            "y": 0.27
-          },
-          "rotation": 0,
-          "shape": "square",
-          "text": "",
-          "share": 1,
-          "tint": "#b0413e",
-          "tintWeight": 0.55,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st375",
-                "text": "",
-                "shape": "square",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e339",
-          "name": "Number Fifty-Eight — incomprehensible, then English, then authority",
-          "kind": "formation",
-          "position": {
-            "x": 0.45,
-            "y": 0.3,
-            "z": 0
-          },
-          "size": {
-            "x": 0.34,
-            "y": 0.16
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "58",
-          "share": 1,
-          "tint": "#e3ddd0",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e339-1",
-                "text": "58",
-                "shape": "text",
-                "hold": 3.4,
-                "transition": 1.5,
-                "position": {
-                  "x": 0.45,
-                  "y": 0.3,
-                  "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.34,
-                    "y": 0.16
-                  },
-                  "rotation": 0,
-                  "tint": "#e3ddd0",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e339-2",
-                "text": "2",
-                "shape": "text",
-                "hold": 3.8,
-                "transition": 1.5,
-                "position": {
-                  "x": -0.45,
-                  "y": -0.1,
-                  "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.24
-                  },
-                  "rotation": 0,
-                  "tint": "#b0413e",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e340",
-          "name": "the Green Dome — the office won without the power to end captivity",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.39,
-            "z": 0
-          },
-          "size": {
-            "x": 0.68,
-            "y": 0.51
-          },
-          "rotation": 0,
-          "shape": "ring",
-          "text": "",
-          "share": 1,
-          "tint": "#6b6b6b",
-          "tintWeight": 0.7,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st377",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e341",
-          "name": "the seventeen-episode field — neighbours, experiments, chess pawns, a Western town",
-          "kind": "formation",
-          "position": {
-            "x": -0.5,
-            "y": -0.45,
-            "z": 0
-          },
-          "size": {
-            "x": 0.3,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "17",
-          "share": 1,
-          "tint": "#6b6b6b",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st378",
-                "text": "17",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "title",
-          "visible": true,
-          "kicker": "#1 · \"Free for All\" (paraphrased); the ITVX listing order as declared extent",
-          "title": "A whole world for obtaining one answer",
-          "italic": "The Village embodies the counterfeit gathering: a population assembled for voting and ceremony while the routes by which answers can matter stay controlled (C25).",
-          "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The Village can stage the circumstances in which Six acts: an apparent ally part of an interrogation, an escape route returning its user, an invitation bringing resistance inside an administered procedure. \"Free for All\" gives participation electoral form: Six accepts the contest for Number Two after the prospect of meeting Number One is held out; publicity bearing his face is already printed; a reporter supplies answers when he declines.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "He promises freedom, undergoes drugging, wins the vote — and at the Green Dome his attempt to use the office meets violence. Fifty-Eight, previously speaking a language he cannot understand, now addresses him in English and takes authority as incoming Number Two. The election carries Six into the office without giving his command power to end captivity. The intervening episodes remain a declared extent — premises located, not invented.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "ring",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": [
-        {
-          "id": "auto-tannoy",
-          "target": "field.params.pointerStrength",
-          "type": "lfo",
-          "wave": "square",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.15,
-          "max": 0.15,
-          "rate": 0.5,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
-    },
-    {
-      "id": "m-pri-2-finale",
-      "name": "Degree Absolute; the masks; the escape",
-      "character": "Once Upon a Time reverses the interrogation; Fall Out unmasking One — an ape mask, then his own face — before the rocket, the rescue of Two and Forty-Eight, and the door that opens automatically.",
-      "duration": 16,
-      "transition": 1.8,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "engine": {
-        "inkMode": "whiteOnBlack",
-        "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "vortex",
-        "pointerClick": "shove",
-        "pointerClickStrength": 1.8,
-        "pointerClickRadius": 0.45
-      },
-      "field": {
-        "background": "#1a1a1c",
-        "palette": [
-          "#e3ddd0",
-          "#1a1a1c",
-          "#b0413e",
-          "#6b6b6b"
-        ],
-        "material": "round",
-        "params": {
-          "speed": 0.6,
-          "circulation": 0.35,
-          "dispersion": 0.14,
-          "turbulence": 0.3,
-          "pointerStrength": 0.6
-        }
-      },
-      "entities": [
-        {
-          "id": "e342",
-          "name": "the embryo room — a week of regression; Two dies as the period ends",
-          "kind": "formation",
-          "position": {
-            "x": -0.45,
-            "y": -0.21,
-            "z": 0
-          },
-          "size": {
-            "x": 0.261,
-            "y": 0.209
-          },
-          "rotation": 0,
-          "shape": "disc",
-          "text": "",
-          "share": 1,
-          "tint": "#6b6b6b",
-          "tintWeight": 0.75,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st379",
-                "text": "",
-                "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e343",
-          "name": "the masked assembly — revolt acclaimed, then judged",
-          "kind": "formation",
-          "position": {
-            "x": 0.42,
-            "y": 0.35,
-            "z": 0
-          },
-          "size": {
-            "x": 0.7,
-            "y": 0.5
-          },
-          "rotation": 0,
-          "shape": "ring",
-          "text": "",
-          "share": 1,
-          "tint": "#6b6b6b",
-          "tintWeight": 0.7,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st380",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e344",
-          "name": " beneath the ape mask — a face identical to his own",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.24,
-            "z": 0
-          },
-          "size": {
-            "x": 0.306,
-            "y": 0.306
-          },
-          "rotation": 0,
-          "shape": "disc",
-          "text": "",
-          "share": 1.4,
-          "tint": "#b0413e",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e344-1",
-                "text": "·",
-                "shape": "disc",
-                "hold": 3,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.306,
-                    "y": 0.306
-                  },
-                  "rotation": 0,
-                  "tint": "#b0413e",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e344-2",
-                "text": "·",
-                "shape": "square",
-                "hold": 3,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#6b4a3a",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e344-3",
-                "text": "·",
-                "shape": "disc",
-                "hold": 3.6,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.24
-                  },
-                  "rotation": 0,
-                  "tint": "#e3ddd0",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e345",
-          "name": "the rocket countdown; Two and Forty-Eight freed; the Butler beside him",
-          "kind": "formation",
-          "position": {
-            "x": 0.55,
-            "y": -0.45,
-            "z": 0
-          },
-          "size": {
-            "x": 0.2,
-            "y": 0.26
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "⑃",
-          "share": 1,
-          "tint": "#e3ddd0",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st382",
-                "text": "⑃",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e346",
-          "name": "the London door opening automatically — recalling the Village",
-          "kind": "formation",
-          "position": {
-            "x": -0.55,
-            "y": -0.45,
-            "z": 0
-          },
-          "size": {
-            "x": 0.34,
-            "y": 0.4
-          },
-          "rotation": 0,
-          "shape": "square",
-          "text": "",
-          "share": 1,
-          "tint": "#e3ddd0",
-          "tintWeight": 0.5,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st383",
-                "text": "",
-                "shape": "square",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "title",
-          "visible": true,
-          "kicker": "#2 · \"Once Upon a Time\" and \"Fall Out\" (paraphrased); Barr's episode studies; BFI's qualification",
-          "title": "Degree Absolute; the masks; the escape",
-          "italic": "The finale turns the sovereign position inward without cancelling the material apparatus: removal from one setting does not establish that the desire to monopolise the deciding position has ended.",
-          "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "In \"Once Upon a Time\" that Two returns and commits to Degree Absolute: a week in the embryo room, through regression, nursery language, counting, enacted stages. The struggle reverses; Six gains the upper hand and Two dies as the period ends; Six demands to see Number One. \"Fall Out\" brings a masked assembly: his resistance acclaimed as qualifying him for freedom; Two resuscitated; Two and Forty-Eight appear as revolt",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "to be judged while Six is distinguished, his first-person address drowned out. Beneath One's outer mask is an ape mask; beneath that, a face identical to his own. Six starts a rocket countdown, frees Two and Forty-Eight, escapes with them and the Butler; Two enters Parliament; the Butler accompanies Six home — where the door opens automatically, recalling the Village. BFI qualifies any claim of a final exterior.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "free",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": [
-        {
-          "id": "auto-degree",
-          "target": "field.params.turbulence",
-          "type": "lfo",
-          "wave": "steps",
-          "blend": "replace",
-          "loop": "loop",
-          "min": 0.15,
-          "max": 0.5,
-          "rate": 0.16,
-          "phase": 0.2,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
-    },
-    {
-      "id": "m-pri-3-count",
-      "name": "The asymmetric count: Two replaces, Six is assigned, One stays withheld",
-      "character": "The office gains continuity across replacement; the captive is denied authority over how his designation counts. 2→6 is the political counterfeit of the internally derived count.",
-      "duration": 12,
-      "transition": 1.2,
-      "view": {
-        "mode": "3d",
-        "yaw": 0.3,
-        "pitch": 0.3,
-        "zoom": 0.95,
-        "panX": 0,
-        "panY": 0
-      },
-      "engine": {
-        "inkMode": "blackOnWhite",
-        "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "repel",
-        "pointerClick": "pulse",
-        "pointerClickStrength": 0.35,
-        "pointerClickRadius": 0.3,
-        "depthOcclusion": true,
-        "depthTintColor": "#101014",
-        "volumeEnabled": true
-      },
-      "field": {
-        "background": "#f6f1e6",
-        "palette": [
-          "#2e2e2e",
-          "#6b6b6b",
-          "#b0413e",
-          "#e3ddd0"
-        ],
-        "material": "round",
-        "params": {
-          "speed": 0.4,
-          "circulation": 0.1,
-          "dispersion": 0.05,
-          "zConfinement": 0.85,
-          "pointerStrength": 0.3
-        }
-      },
-      "entities": [
-        {
-          "id": "e347",
-          "name": "Number Two — an office through changes of bearer",
-          "kind": "formation",
-          "position": {
-            "x": -0.55,
-            "y": -0.38,
-            "z": 0.4
-          },
-          "size": {
-            "x": 0.156,
-            "y": 0.178
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "2",
-          "share": 1,
-          "tint": "#6b6b6b",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e347-1",
-                "text": "2",
-                "shape": "text",
-                "hold": 3.2,
-                "transition": 1.3,
-                "position": {
-                  "x": -0.55,
-                  "y": -0.38,
-                  "z": 0.4
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.156,
-                    "y": 0.178
-                  },
-                  "rotation": 0,
-                  "tint": "#6b6b6b",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e347-2",
-                "text": "2",
-                "shape": "text",
-                "hold": 3.4,
-                "transition": 1.3,
-                "position": {
-                  "x": -0.4,
-                  "y": -0.3,
-                  "z": 0.4
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.18,
-                    "y": 0.2
-                  },
-                  "rotation": 0,
-                  "tint": "#b0413e",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e348",
-          "name": "Number Six — a person held within an assigned position",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.22,
-            "z": 0
-          },
-          "size": {
-            "x": 0.184,
-            "y": 0.209
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "6",
-          "share": 1,
-          "tint": "#e3ddd0",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "repel",
-            "strength": 0.35,
-            "radius": 0.32,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st385",
-                "text": "6",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e349",
-          "name": "Number One — the withheld source of command",
-          "kind": "formation",
-          "position": {
-            "x": 0.5,
-            "y": 0.12,
-            "z": -0.5
-          },
-          "size": {
-            "x": 0.3,
-            "y": 0.34
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "1",
-          "share": 1,
-          "tint": "#b0413e",
-          "tintWeight": 0.75,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st386",
-                "text": "1",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e350",
-          "name": "2+2²=6=4+2 — the count including the relation that generates it; the Village's speech-act keeps the power of assignment",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.46,
-            "z": -0.15
-          },
-          "size": {
-            "x": 0.6,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "4+2",
-          "share": 1,
-          "tint": "#6b6b6b",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st387",
-                "text": "4+2",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "title",
-          "visible": true,
-          "kicker": "#3 · the political-count carrier; A02 copula; A13; C25; the Syn matheme comparison",
-          "title": "The asymmetric count: Two replaces, Six is assigned, One stays withheld",
-          "italic": "The scene requires all three numbered offices — and the mytheme is the appointed political counterfeit of the count: the office retains the power of assignment and gives the captive its result.",
-          "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The abstraction operates differently at the two ends. Number Two identifies an office through changes of bearer; Number Six identifies a person the office seeks to hold in an assigned position — the office gains continuity across replacement while the captive is denied authority over how his designation counts. Three offices: One the withheld source of command, Two delegated authority, Six the classified answer. A02 defines the difference",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "between identifying this participant and making a predicate exhaustive of him; A03 qualifies the demand to close the relation — the institution's concealed information is not the Immutable Gap. The movement from Two to Six compares with the Syn matheme 2+2²=6=4+2, the count including its generating relation: in the Village's speech-act the office keeps assignment's power, giving the captive its result. McGoohan and Markstein are not credited with QL notation.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "free",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": []
-    },
-    {
-      "id": "m-pri-5-return",
-      "name": "Return without inheriting the hidden throne",
-      "character": "Q27's political return: a counter-position must be able to return the field, rather than merely take possession of the office it opposed.",
-      "duration": 13,
-      "transition": 2,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "engine": {
-        "inkMode": "blackOnWhite",
-        "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "attract",
-        "pointerClick": "pulse",
-        "pointerClickStrength": 0.3,
-        "pointerClickRadius": 0.28
-      },
-      "field": {
-        "background": "#f6f1e6",
-        "palette": [
-          "#2e2e2e",
-          "#6b6b6b",
-          "#b0413e",
-          "#e3ddd0"
-        ],
-        "material": "round",
-        "params": {
-          "speed": 0.5,
-          "circulation": 0.3,
-          "dispersion": 0.12,
-          "pointerStrength": 0.25
-        }
-      },
-      "entities": [
-        {
-          "id": "e351",
-          "name": "the open road from the Village — escape with others, divergence after",
-          "kind": "formation",
-          "position": {
-            "x": 0.66,
-            "y": 0.32,
-            "z": 0
-          },
-          "size": {
-            "x": 0.3,
-            "y": 0.16
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "⇗",
-          "share": 1,
-          "tint": "#e3ddd0",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0.3,
-            "radius": 0.3,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st388",
-                "text": "⇗",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e352",
-          "name": "the counting operation — who selected the number, who answers for the selection",
-          "kind": "formation",
-          "position": {
-            "x": -0.05,
-            "y": -0.22,
-            "z": 0
-          },
-          "size": {
-            "x": 0.136,
-            "y": 0.136
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "⚖",
-          "share": 1,
-          "tint": "#b0413e",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st389",
-                "text": "⚖",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e353",
-          "name": "M40/M46/M48 — the hidden evaluator; the contestable count; the answerable federation",
-          "kind": "formation",
-          "position": {
-            "x": 0.5,
-            "y": -0.4,
-            "z": 0
-          },
-          "size": {
-            "x": 0.36,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "M40",
-          "share": 1,
-          "tint": "#6b6b6b",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st390",
-                "text": "M40",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e354",
-          "name": "A32 — the reply must be able to revise image, measure and institution",
-          "kind": "formation",
-          "position": {
-            "x": -0.5,
-            "y": -0.4,
-            "z": 0
-          },
-          "size": {
-            "x": 0.3,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "A32",
-          "share": 1,
-          "tint": "#6b6b6b",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st391",
-                "text": "A32",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "title",
-          "visible": true,
-          "kicker": "#5→0 · Q27 political return; A30/C42; C57; A32; M02, M20, M24, M26, M40, M46, M48",
-          "title": "Return without inheriting the hidden throne",
-          "italic": "The whole demonstrates the exact consequence: release must reach the office of measure as well as its current occupant — a larger shared account gains no exemption from the question asked of the smaller one.",
-          "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Six leaves the Village with others — Butler, Forty-Eight and the former Two beside him, then diverging. The familiar face beneath One's masks and the automatic door in London alter the sense of arrival without making every escape fictitious. Q27's political return: a counter-position must be able to return the field rather than take possession of the office it opposed. A30/C42 define shared conditions administered without reciprocity.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "C57 extends this to artifacts, permissions and inherited accounts; A32 demands the reply be able to revise the image, its measure and the institution holding it. Returns-to: M02 (subject vs assigned predicate), M20 (the cut's apparatus visible), M40 (the hidden evaluator), M46 (participants contest the counting), M48 (a federation answerable to sources). Rover, the embryo room, Fifty-Eight and the rocket receive no symbolic equation to a native determination (human-amplified: no).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "line",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": []
+ "schema": "oi.journey",
+ "version": 1,
+ "id": "roz-mytheme-the-prisoner",
+ "name": "The Prisoner — Number Six, the changing Two, and the question of One",
+ "description": "The whole series movement: the resignation that becomes an address, the administered world, the last interrogation, the masked assembly and escape, the asymmetric count, and return without inheriting the hidden throne.",
+ "loop": true,
+ "scenes": [
+  {
+   "id": "m-pri-0-arrival",
+   "name": "The resignation that becomes an address",
+   "character": "An agent resigns; before the decision can carry into another life he wakes in a copy of his own room, in the Village.",
+   "duration": 13,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "backgroundMode": "solid",
+    "pointerMode": "repel",
+    "pointerClick": "shove",
+    "pointerClickStrength": 0.4,
+    "pointerClickRadius": 0.32
+   },
+   "field": {
+    "background": "#2c3a42",
+    "palette": [
+     "#e3ddd0",
+     "#b0413e",
+     "#8fb0c9",
+     "#6b7b8c"
+    ],
+    "material": "round",
+    "params": {
+     "count": 56000,
+     "size": 2.5,
+     "opacity": 0.92,
+     "contrast": 0.93,
+     "speed": 0.4,
+     "circulation": 0.3,
+     "dispersion": 0.06,
+     "turbulence": 0.12,
+     "pointerStrength": 0.4
     }
-  ],
-  "updatedAt": "2026-10-06T12:00:00.000Z"
+   },
+   "entities": [
+    {
+     "id": "p0-village",
+     "name": "the Village — picturesque, enclosed, no freedom to leave",
+     "kind": "formation",
+     "position": {
+      "x": 0.05,
+      "y": -0.42,
+      "z": 0
+     },
+     "size": {
+      "x": 0.5,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#8fb0c9",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p0-village-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "    /\\   /\\     ___\n   /  \\ /  \\   /   \\\n  ~~~~~~~~~~~~~~~~~~~~~\n   \\_______________/"
+      }
+     }
+    },
+    {
+     "id": "p0-room",
+     "name": "the copied room — his own interior, now belonging to the Village",
+     "kind": "formation",
+     "position": {
+      "x": -0.36,
+      "y": -0.12,
+      "z": 0
+     },
+     "size": {
+      "x": 0.18,
+      "y": 0.15
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#e3ddd0",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p0-room-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " +--------+\n | []  ___|\n |     \\__|\n +--------+"
+      }
+     }
+    },
+    {
+     "id": "p0-rover",
+     "name": "Rover — the guardian that intercepts escape",
+     "kind": "formation",
+     "position": {
+      "x": 0.36,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.17,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#e3ddd0",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "steps": [
+       {
+        "id": "p0-rover-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 2.6,
+        "transition": 1.8,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 0.16,
+          "y": 0.15
+         },
+         "rotation": 0,
+         "tint": "#e3ddd0",
+         "tintWeight": 1,
+         "force": {
+          "kind": "none",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
+       },
+       {
+        "id": "p0-rover-sq1",
+        "text": "",
+        "shape": "disc",
+        "hold": 2.6,
+        "transition": 1.8,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 0.18,
+          "y": 0.17
+         },
+         "rotation": 0,
+         "tint": "#e3ddd0",
+         "tintWeight": 1,
+         "force": {
+          "kind": "none",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "   .---.\n  ( ~~~ )\n   `---'\n    \\|/"
+      }
+     }
+    },
+    {
+     "id": "p0-heli",
+     "name": "the helicopter brought back by remote control",
+     "kind": "formation",
+     "position": {
+      "x": -0.38,
+      "y": -0.34,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.11
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#b0413e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p0-heli-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " -----[====]\n         |\n      o--+--o"
+      }
+     }
+    },
+    {
+     "id": "p0-six",
+     "name": "Number Six — the designation arriving with accommodation and supervision",
+     "kind": "formation",
+     "position": {
+      "x": 0.08,
+      "y": -0.18,
+      "z": 0
+     },
+     "size": {
+      "x": 0.1,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#e3ddd0",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p0-six-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " _\n|_\n|_|\n .\n .\n ."
+      }
+     }
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": [],
+   "text": [
+    {
+     "id": "stage",
+     "visible": true,
+     "kicker": "",
+     "title": "The resignation that becomes an address",
+     "italic": "The room resembles his own; the room now belongs to the Village.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.04,
+     "width": 520,
+     "size": 28,
+     "align": "left"
+    }
+   ]
+  },
+  {
+   "id": "m-pri-1-world",
+   "name": "A whole world for obtaining one answer",
+   "character": "Staged allies, escapes that return, an election for Number Two — resistance carried inside administered procedures.",
+   "duration": 13,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "backgroundMode": "solid",
+    "pointerMode": "repel",
+    "pointerClick": "shove",
+    "pointerClickStrength": 0.4,
+    "pointerClickRadius": 0.32
+   },
+   "field": {
+    "background": "#f0e6d6",
+    "palette": [
+     "#b0413e",
+     "#2a6b5f",
+     "#c9a227",
+     "#3a3a3c"
+    ],
+    "material": "round",
+    "params": {
+     "count": 54000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.9,
+     "speed": 0.4,
+     "circulation": 0.32,
+     "dispersion": 0.06,
+     "turbulence": 0.12,
+     "pointerStrength": 0.4
+    }
+   },
+   "entities": [
+    {
+     "id": "p1-poster",
+     "name": "the campaign — publicity ready before the candidate speaks",
+     "kind": "formation",
+     "position": {
+      "x": -0.4,
+      "y": -0.16,
+      "z": 0
+     },
+     "size": {
+      "x": 0.14,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#b0413e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p1-poster-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " +-----+\n | o o |\n |  ~  |\n |[===]|"
+      }
+     }
+    },
+    {
+     "id": "p1-58",
+     "name": "Number Fifty-Eight — incomprehensible, then English, then authority",
+     "kind": "formation",
+     "position": {
+      "x": 0.4,
+      "y": -0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 0.16,
+      "y": 0.12
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#3a3a3c",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p1-58-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " _  _\n|_ |_|\n|_| _|"
+      }
+     }
+    },
+    {
+     "id": "p1-dome",
+     "name": "the Green Dome — the office won without the power to end captivity",
+     "kind": "formation",
+     "position": {
+      "x": 0.02,
+      "y": -0.2,
+      "z": 0
+     },
+     "size": {
+      "x": 0.24,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#2a6b5f",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p1-dome-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "     ___\n   ,'   ',\n  (_______)\n   |     |"
+      }
+     }
+    },
+    {
+     "id": "p1-bunting",
+     "name": "the election — resistance carried inside an administered procedure",
+     "kind": "formation",
+     "position": {
+      "x": 0.05,
+      "y": -0.46,
+      "z": 0
+     },
+     "size": {
+      "x": 0.4,
+      "y": 0.05
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#c9a227",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p1-bunting-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " \\/\\/\\/\\/\\/\\/\\/\\/"
+      }
+     }
+    },
+    {
+     "id": "p1-pawn",
+     "name": "the human chess piece — each neighbour a positioned piece",
+     "kind": "formation",
+     "position": {
+      "x": -0.32,
+      "y": -0.44,
+      "z": 0
+     },
+     "size": {
+      "x": 0.09,
+      "y": 0.14
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#3a3a3c",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p1-pawn-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "   ()\n  (||)\n  (||)\n [====]"
+      }
+     }
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": [],
+   "text": [
+    {
+     "id": "stage",
+     "visible": true,
+     "kicker": "",
+     "title": "A whole world for obtaining one answer",
+     "italic": "Escape routes return their users; the refusal is carried inside the administered procedure.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.04,
+     "width": 520,
+     "size": 28,
+     "align": "left"
+    }
+   ]
+  },
+  {
+   "id": "m-pri-2-finale",
+   "name": "Degree Absolute; the masks; the escape",
+   "character": "Once Upon a Time reverses the interrogation; Fall Out unmasking One — an ape mask, then his own face — before the rocket, the rescue of Two and Forty-Eight, and the door that opens automatically.",
+   "duration": 14,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "backgroundMode": "solid",
+    "pointerMode": "repel",
+    "pointerClick": "shove",
+    "pointerClickStrength": 0.4,
+    "pointerClickRadius": 0.32
+   },
+   "field": {
+    "background": "#17151a",
+    "palette": [
+     "#e3ddd0",
+     "#b0413e",
+     "#c9a227",
+     "#6b7b8c"
+    ],
+    "material": "round",
+    "params": {
+     "count": 58000,
+     "size": 2.4,
+     "opacity": 0.92,
+     "contrast": 0.95,
+     "speed": 0.38,
+     "circulation": 0.28,
+     "dispersion": 0.07,
+     "turbulence": 0.13,
+     "pointerStrength": 0.4
+    }
+   },
+   "entities": [
+    {
+     "id": "p2-embryo",
+     "name": "the embryo room — a week of regression; Two dies as the period ends",
+     "kind": "formation",
+     "position": {
+      "x": -0.42,
+      "y": -0.14,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.14
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#6b7b8c",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p2-embryo-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "  .-~~~~-.\n (   o o   )\n  `-,-',-'"
+      }
+     }
+    },
+    {
+     "id": "p2-assembly",
+     "name": "the masked assembly — revolt acclaimed, then judged",
+     "kind": "formation",
+     "position": {
+      "x": -0.05,
+      "y": -0.24,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.12
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#e3ddd0",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p2-assembly-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " o o ^ o o\n o o o o o\n o o o o o"
+      }
+     }
+    },
+    {
+     "id": "p2-ape",
+     "name": "the ape mask — the outer disguise",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": -0.28,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.12
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#6b7b8c",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p2-ape-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "  /\\    /\\\n (  \\__/  )\n (  (__)  )"
+      }
+     }
+    },
+    {
+     "id": "p2-face",
+     "name": "the face beneath — identical to his own",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": -0.28,
+      "z": 0
+     },
+     "size": {
+      "x": 0.08,
+      "y": 0.09
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#b0413e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p2-face-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "   .-.\n  ( o )\n   `-'"
+      }
+     }
+    },
+    {
+     "id": "p2-rocket",
+     "name": "the rocket countdown — Six's answer at the console",
+     "kind": "formation",
+     "position": {
+      "x": 0.42,
+      "y": -0.34,
+      "z": 0
+     },
+     "size": {
+      "x": 0.1,
+      "y": 0.18
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#c9a227",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smooth",
+      "steps": [
+       {
+        "id": "p2-rocket-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 4.0,
+        "transition": 0.6,
+        "position": {
+         "x": 0.42,
+         "y": -0.34,
+         "z": 0
+        }
+       },
+       {
+        "id": "p2-rocket-sq1",
+        "text": "",
+        "shape": "disc",
+        "hold": 1.0,
+        "transition": 3.0,
+        "position": {
+         "x": 0.42,
+         "y": -0.06,
+         "z": 0
+        }
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "   /\\\n  |==|\n  |##|\n  /__\\\n   \\/"
+      }
+     }
+    },
+    {
+     "id": "p2-door",
+     "name": "the London door opening automatically — recalling the Village",
+     "kind": "formation",
+     "position": {
+      "x": -0.38,
+      "y": -0.46,
+      "z": 0
+     },
+     "size": {
+      "x": 0.14,
+      "y": 0.14
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#e3ddd0",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p2-door-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "  ____\n /   |\n/ ___|\n| |"
+      }
+     }
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": [],
+   "text": [
+    {
+     "id": "stage",
+     "visible": true,
+     "kicker": "",
+     "title": "Degree Absolute; the masks; the escape",
+     "italic": "Beneath the ape mask a face identical to his own; the escape continues.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.04,
+     "width": 520,
+     "size": 28,
+     "align": "left"
+    }
+   ]
+  },
+  {
+   "id": "m-pri-3-count",
+   "name": "The asymmetric count: Two replaces, Six is assigned, One stays withheld",
+   "character": "The office gains continuity across replacement; the captive is denied authority over how his designation counts. 2→6 is the political counterfeit of the internally derived count.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "backgroundMode": "solid",
+    "pointerMode": "repel",
+    "pointerClick": "shove",
+    "pointerClickStrength": 0.4,
+    "pointerClickRadius": 0.32
+   },
+   "field": {
+    "background": "#17151a",
+    "palette": [
+     "#e3ddd0",
+     "#b0413e",
+     "#c9a227",
+     "#6b7b8c"
+    ],
+    "material": "round",
+    "params": {
+     "count": 58000,
+     "size": 2.4,
+     "opacity": 0.92,
+     "contrast": 0.95,
+     "speed": 0.38,
+     "circulation": 0.28,
+     "dispersion": 0.07,
+     "turbulence": 0.13,
+     "pointerStrength": 0.4
+    }
+   },
+   "entities": [
+    {
+     "id": "p3-two",
+     "name": "Number Two — an office through changes of bearer",
+     "kind": "formation",
+     "position": {
+      "x": -0.4,
+      "y": -0.16,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.14
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#c9a227",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p3-two-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " _   _\n _|  _|\n|_   _|"
+      }
+     }
+    },
+    {
+     "id": "p3-six",
+     "name": "Number Six — a person held within an assigned position",
+     "kind": "formation",
+     "position": {
+      "x": 0.0,
+      "y": -0.16,
+      "z": 0
+     },
+     "size": {
+      "x": 0.08,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#e3ddd0",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p3-six-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " _\n|_\n|_|\n .\n ."
+      }
+     }
+    },
+    {
+     "id": "p3-one",
+     "name": "Number One — the withheld source of command",
+     "kind": "formation",
+     "position": {
+      "x": 0.4,
+      "y": -0.16,
+      "z": 0
+     },
+     "size": {
+      "x": 0.08,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#b0413e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p3-one-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " .\n '|\n '|\n .\n ."
+      }
+     }
+    },
+    {
+     "id": "p3-tally",
+     "name": "the count that includes its generation — the Village keeps the power of assignment",
+     "kind": "formation",
+     "position": {
+      "x": 0.0,
+      "y": -0.46,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.05
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#e3ddd0",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p3-tally-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " || || ||"
+      }
+     }
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": [],
+   "text": [
+    {
+     "id": "stage",
+     "visible": true,
+     "kicker": "",
+     "title": "The asymmetric count: Two replaces, Six is assigned, One stays withheld",
+     "italic": "The office gains continuity across replacement; the captive is denied authority over his designation.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.04,
+     "width": 520,
+     "size": 28,
+     "align": "left"
+    }
+   ]
+  },
+  {
+   "id": "m-pri-5-return",
+   "name": "Return without inheriting the hidden throne",
+   "character": "Q27's political return: a counter-position must be able to return the field, rather than merely take possession of the office it opposed.",
+   "duration": 13,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "backgroundMode": "solid",
+    "pointerMode": "repel",
+    "pointerClick": "shove",
+    "pointerClickStrength": 0.4,
+    "pointerClickRadius": 0.32
+   },
+   "field": {
+    "background": "#17151a",
+    "palette": [
+     "#e3ddd0",
+     "#b0413e",
+     "#c9a227",
+     "#6b7b8c"
+    ],
+    "material": "round",
+    "params": {
+     "count": 58000,
+     "size": 2.4,
+     "opacity": 0.92,
+     "contrast": 0.95,
+     "speed": 0.38,
+     "circulation": 0.28,
+     "dispersion": 0.07,
+     "turbulence": 0.13,
+     "pointerStrength": 0.4
+    }
+   },
+   "entities": [
+    {
+     "id": "p5-road",
+     "name": "the open road — escape with others; divergence after",
+     "kind": "formation",
+     "position": {
+      "x": 0.0,
+      "y": -0.24,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#e3ddd0",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p5-road-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " +--------+\n  \\      /\n   \\    /\n  ~~~+~~~\n    /  \\\n   /    \\\n  /      \\"
+      }
+     }
+    },
+    {
+     "id": "p5-three",
+     "name": "the escapees diverging — Forty-Eight, Two, the Butler beside Six",
+     "kind": "formation",
+     "position": {
+      "x": 0.0,
+      "y": -0.5,
+      "z": 0
+     },
+     "size": {
+      "x": 0.24,
+      "y": 0.07
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#e3ddd0",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p5-three-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "  o      o      o\n /|\\    /|\\    /|\n / \\    / \\      \\"
+      }
+     }
+    },
+    {
+     "id": "p5-scales",
+     "name": "the count returned — who selected the number, who answers for the selection",
+     "kind": "formation",
+     "position": {
+      "x": -0.4,
+      "y": -0.2,
+      "z": 0
+     },
+     "size": {
+      "x": 0.16,
+      "y": 0.12
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#b0413e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p5-scales-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "    ____\n  ~~~~~~~~\n   |    |\n  /\\    /\\"
+      }
+     }
+    },
+    {
+     "id": "p5-seat",
+     "name": "the vacant seat — return without inheriting the hidden throne",
+     "kind": "formation",
+     "position": {
+      "x": 0.4,
+      "y": -0.22,
+      "z": 0
+     },
+     "size": {
+      "x": 0.14,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#6b7b8c",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "p5-seat-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "  ______\n |  __  |\n | |__| |\n |______|"
+      }
+     }
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": [],
+   "text": [
+    {
+     "id": "stage",
+     "visible": true,
+     "kicker": "",
+     "title": "Return without inheriting the hidden throne",
+     "italic": "The counter-position must be able to return the field, not merely possess the office.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.04,
+     "width": 520,
+     "size": 28,
+     "align": "left"
+    }
+   ]
+  }
+ ],
+ "updatedAt": "2026-10-06T12:00:00.000Z"
 }

@@ -82,14 +82,44 @@
  ],
  "assets": [
   {
+   "kind": "ascii",
+   "ref": "migration plates: blank place kept → Indian dot → ٠→0 → the number line (movement-13)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "operations plates: a+0=a, a·0=0, the boxed a/0 edge (movement-14)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "von Neumann plates: 0=∅, 1={∅}, the successor chain n+1=n∪{n} (movement-15)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "crossed-zero plates: ◯ → Ø → the recognition series 0→Ø→X→Ø/X→(0/Ø)/(1/X)→1↩0/1 (movement-16)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "division plates: 1/0=x contradiction, the boxed wall, the projective point (movement-17)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "loan plates: 0/1↔1/0, first mediant 1/1, the Stern–Brocot ramification (movement-18)",
+   "provenance": "authored"
+  },
+  {
    "kind": "diagram",
-   "ref": "engine-native formations and text glyphs only (disc/ring/square/triangle/yantra + authored glyph strings: 0, Ø, 1/0, 0/1, 4+2, X/x, S1, ∅-succession, eight-determination and recognition sequences); no external imagery",
+   "ref": "geometry: origin ring, containing-algebra square, ordinal discs, the red mediating stroke over the crossed zero, determinate-mark square, zero-space ring, sphere ring, the slash, retained-endpoints ring",
    "provenance": "authored"
   }
  ],
  "capture": "rooms/roz-room-02-return-of-zero.cover.png",
  "capture_note": "cover = the room door (first movement scene) at authored particle count 62000 through the real engine (tools/capture.mjs, port 47911)",
- "status": "captured",
+ "status": "authored",
  "notes": [
   "E0 acceptance repair: text/field collision fixed on movement-14 and movement-18 (spot-checked) and the same class on all six scenes — formations shifted right-of-centre (GX 0.2), 0/1↔1/0 pair re-centred at ±0.5 about GX with text column 320, route layer moved to top-left; cover re-captured at authored count.",
   "one shared section-room grammar across all eight rooms (positional chassis forms #0 disc / #1 text / #2 triangle / #3 yantra / #4 square / #5,#5→0 ring); recorded variations listed in profiles/family-section-room.profile.json",
@@ -107,7 +137,9 @@
   "m16 the crossed zero — Ø's single appearance in the corpus: '0' → 'Ø' fuses the stroke into the zero at weight 0.9; repel pointer 0.7 (the zero-space cannot be filled); the scene holds two steps only — the plate performs the first occlusion and its recognition, no further step.",
   "m17 outside mathematics: '1/0' → '0·q=1' (reddens: the impossible demand) → '∞' (the adjoined point that discloses the container); shove pointer = the exception that breaks the field open; saw LFO.",
   "m18 the loan returns (#5→0, the earning): the boundaries 0/1 and 1/0 stand fixed at repel while the mediant walker fills between — 1/1 → 1/2 → 2/1 — and lands as the earned 0/1 below the row, reddened and heaviest (notation earned, not borrowed); vortex/vortex pointer = the generative spiral; longest duration 16.",
-  "Legibility pattern (all members, 2026-10-06; bounds corrected 2026-10-06 after the wave-2 audit): (a) on 40 scenes a sequence whose carrier is a non-text formation walks on a dedicated TEXT-shaped walker entity — the original formation stays as the quiet field form behind it (tintWeight ≤ 0.25) and those scenes hold calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22; speed LFOs clamped ≤ 0.7) so the walking letterform can condense — the wave-1 legible-walk pattern; (b) on 16 scenes the sequence carrier is already a text-shaped formation and keeps its own authored physics (measured maxima: speed 0.8, circulation 1.7, turbulence 0.34), which the render pass pixel-verified holds the letterforms. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text."
+  "Legibility pattern (all members, 2026-10-06; bounds corrected 2026-10-06 after the wave-2 audit): (a) on 40 scenes a sequence whose carrier is a non-text formation walks on a dedicated TEXT-shaped walker entity — the original formation stays as the quiet field form behind it (tintWeight ≤ 0.25) and those scenes hold calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22; speed LFOs clamped ≤ 0.7) so the walking letterform can condense — the wave-1 legible-walk pattern; (b) on 16 scenes the sequence carrier is already a text-shaped formation and keeps its own authored physics (measured maxima: speed 0.8, circulation 1.7, turbulence 0.34), which the render pass pixel-verified holds the letterforms. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text.",
+  "Craft rework 2026-10-07 (expression rework pass, lane 4; records re-read at fc59a719). The chassis and word-walkers are retired; each movement draws zero's own career. m13 clay ground: the sign migrates — Babylonian blank kept, Indian dot, ٠→0 transmission, the number line's concealed origin (ring beside). m14 the same clay held (deliberate rest): the three operations drawn in sequence, the boxed a/0 edge pressing out of the containing square. m15 crisp formal day: ∅ → {∅} → the successor chain, ordinal discs growing beside. m16 night, the Offered occlusion: ◯ → Ø → the recognition series as horizon; the mediating stroke laid red over the identical geometry (uncrossing is not erasing), determinate mark beyond its upper end, zero-space ring faint within; saw on turbulence = the stroke's edge. m17 the same night held (deliberate rest): the 0·x contradiction stacked, the boxed wall, the projective point; the sphere ring that closes the plane. m18 deep gold-black, slowest transition: the earned pair 0/1 ↔ 1/0, the mediant rising between retained endpoints, the Stern–Brocot ramification; the gold slash stands over the endpoint ring. Stillness pairs: m13–m14 (one clay ground of early practice), m16–m17 (one night of the boundary). Colour arc: clay → formal day → night → gold-black. Stage text: one hospitable line per movement; claim statuses and canonical routes ride in this binding's scenes[].relations.",
+  "Craft rework 2026-10-07 (expression rework pass, lane 4; records re-read at fc59a719). The chassis and word-walkers are retired; each movement draws zero's own career. m13 clay ground: the sign migrates — Babylonian blank kept, Indian dot, ٠→0 transmission, the number line's concealed origin (ring beside). m14 the same clay held (deliberate rest): the three operations drawn in sequence, the boxed a/0 edge pressing out of the containing square. m15 crisp formal day: ∅ → {∅} → the successor chain, ordinal discs growing beside. m16 night, the Offered occlusion: ◯ → Ø → the recognition series as horizon; the mediating stroke laid red over the identical geometry (uncrossing is not erasing), determinate mark beyond its upper end, zero-space ring faint within; saw on turbulence = the stroke's edge. m17 the same night held (deliberate rest): the 0·x contradiction stacked, the boxed wall, the projective point; the sphere ring that closes the plane. m18 deep gold-black, slowest transition: the earned pair 0/1 ↔ 1/0, the mediant rising between retained endpoints, the Stern–Brocot ramification; the gold slash stands over the endpoint ring. Stillness pairs: m13–m14 (one clay ground of early practice), m16–m17 (one night of the boundary). Colour arc: clay → formal day → night → gold-black. Stage text: one hospitable line per movement; claim statuses and canonical routes ride in this binding's scenes[].relations."
  ],
  "enrichment": {
   "date": "2026-10-06",
@@ -118,20 +150,27 @@
   "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
  },
  "glyph_rationales": {
-  "0": "M13→M16: the kept blank place becoming the numeral — and at m16 the zero-space the stroke crosses without filling",
-  "·": "M13: the plate's own token (Plate 1: the disc stands for no historical numeral form) — the sign migrates; its witnesses do not migrate with it",
-  "a+0=a": "M14: addition — the other quantity survives unchanged (Brahmagupta's rules; absence operational)",
-  "a·0=0": "M14: multiplication — different quantities sent to the same result; the operation absorbs a distinction the numbers still possess (the step darkens: absorption)",
-  "∅": "M15: the empty set — 0=∅ in the von Neumann construction: what can be generated from an apparently meagre beginning",
-  "{∅}": "M15: 1={∅} — the multiplicative identity generated from nothing (the ladder grows: each step larger)",
-  "{∅,{∅}}": "M15: 2={∅,{∅}} — the construction's second rung, ordinals from the empty set",
-  "Ø": "M16: the crossed zero with its ONE job — the mediating stroke present but fused into the zero it crosses; a relation whose middle is not yet recognised as middle (Plate 2: 0 → Ø; occlusion only, no further step — the full sequence waits for psychoid material, room-05 m34)",
-  "1/0": "M17: the failed quotient — no element q satisfies 0·q=1 in a field; the frame disclosed at zero",
-  "0·q=1": "M17: the record's own equation — distributivity forces 0q=0, so the required product would make zero equal one (the step reddens: the impossible demand)",
-  "∞": "M17: the point at infinity the projective line adjoins — completion is always completion within a declared structure",
-  "0/1": "M18: the earned relational notation (§1 · #5→0) — the loan returned with mathematical interest; also the mediant walker's final form, recognition's return to the boundary pair",
-  "1/1": "M18: the first mediant (0+1)/(1+0) — inserted between the two boundaries",
-  "1/2": "M18: the mediant inserted between the left boundary and the result — Kaplan's generative construction",
-  "2/1": "M18: the mediant inserted between the result and the right boundary — endpoints remain while new terms become a sequence"
+  "the migration of the sign": "M13: zero converges distinct inventions — blank place, placeholder, numeral, origin — because the sign migrates between scripts and civilisations",
+  "the origin": "M13: what the modern number line conceals — zero had to be earned as origin, not found already in place",
+  "the three operations": "M14: Brahmagupta's payload — additive identity (a+0=a), multiplicative absorber (a·0=0), and the divisor a/0 as pressure-point",
+  "the containing algebra": "M14: the box inside which the first two operations are stable — and against whose wall the third forces the system to state completion",
+  "the von Neumann chain": "M15: 0=∅, 1={0}, n+1=n∪{n} — one generated from nothing, each finite ordinal gathering the prior as part of the next",
+  "the ordinals": "M15: the growing finite ordinals — no second primitive numerical object beyond the empty set plus succession",
+  "the crossed zero": "M16: the first occlusion of the recognition-matheme — the mediating stroke present but fused into the zero it crosses; the series inscribed as horizon, no further step performed",
+  "the mediating stroke": "M16: the stroke legible as mediation — laid red over the identical geometry: uncrossing is not erasing, nothing is removed",
+  "the determinate mark": "M16: the small square beyond the stroke's upper end — the mark the mediation makes available",
+  "the zero-space": "M16: the circle's interior — the subject-pole not exhausted as object",
+  "division by zero": "M17: the derivation 0·x=1 against 0·x=0 — the point at which the formal system must disclose its container",
+  "the sphere closes the plane": "M17: the Riemann compactification — one completion among declared alternatives (projective point, wheels, meadows, transreal), each with purpose and cost",
+  "the earned pair": "M18: 0/1 ↔ 1/0 — the indefinite condition becoming definite and the definite returning; the essay's own relational notation, now earned",
+  "the slash": "M18: the act or means of differentiation — not a decorative separator; it carries provenance: what field, what exclusion, what mediation",
+  "the retained endpoints": "M18: 0/1 and 1/0 as formal boundary fractions — between them the mediant field ramifies (Kaplan's pp. 204–207); the precise Stern–Brocot relation stays a specialist debt"
+ },
+ "craft": {
+  "date": "2026-10-07",
+  "actor": "zcode:craft-expressions-l4",
+  "lane": "craft-l4/rooms",
+  "pass": "expression rework — TEXT IS THE MINIMUM FORM (owner commission 2026-10-07)",
+  "gate": "site/tests/expression-richness.mjs"
  }
 }

@@ -1,2173 +1,1795 @@
 {
-  "schema": "oi.journey",
-  "version": 1,
-  "id": "roz-mytheme-travelling-jigsaw-atlas",
-  "name": "The travelling jigsaw — from box-lid to atlas",
-  "description": "The authored travelling image: the picture before the pieces, travel against the frame, pieces become charts with declared transitions, the circle example's exact transformation, the torus loop retaining its winding, the Blue Marble hinge, and the atlas travelling with the means to revise it.",
-  "loop": true,
-  "scenes": [
-    {
-      "id": "m-jig-0-lid",
-      "name": "The picture arrives before the pieces",
-      "character": "The maker sets the edges, builds the frame, sorts pieces by marks — each successful fit confirming a part of the anticipated whole.",
-      "duration": 13,
-      "transition": 1.4,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "engine": {
-        "inkMode": "blackOnWhite",
-        "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "attract",
-        "pointerClick": "pulse",
-        "pointerClickStrength": 0.5,
-        "pointerClickRadius": 0.3
-      },
-      "field": {
-        "background": "#f6f1e6",
-        "palette": [
-          "#2b2733",
-          "#4a5d7e",
-          "#a5623a",
-          "#c9b458"
-        ],
-        "material": "round",
-        "params": {
-          "speed": 0.35,
-          "circulation": 0.15,
-          "dispersion": 0.05,
-          "pointerStrength": 0.35
-        }
-      },
-      "entities": [
-        {
-          "id": "e272",
-          "name": "the box lid — the destination already visible",
-          "kind": "formation",
-          "position": {
-            "x": -0.45,
-            "y": -0.27,
-            "z": 0
-          },
-          "size": {
-            "x": 0.676,
-            "y": 0.491
-          },
-          "rotation": 0,
-          "shape": "square",
-          "text": "",
-          "share": 1.4,
-          "tint": "#4a5d7e",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st299",
-                "text": "",
-                "shape": "square",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e273",
-          "name": "the edge frame — built first",
-          "kind": "formation",
-          "position": {
-            "x": -0.45,
-            "y": -0.27,
-            "z": 0
-          },
-          "size": {
-            "x": 0.552,
-            "y": 0.393
-          },
-          "rotation": 0,
-          "shape": "ring",
-          "text": "",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 0.7,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st300",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e274",
-          "name": "sorted pieces — awaiting their place",
-          "kind": "formation",
-          "position": {
-            "x": 0.5,
-            "y": 0.3,
-            "z": 0
-          },
-          "size": {
-            "x": 0.4,
-            "y": 0.3
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "▦",
-          "share": 1,
-          "tint": "#a5623a",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e274-1",
-                "text": "▦",
-                "shape": "text",
-                "hold": 3.2,
-                "transition": 1.4,
-                "position": {
-                  "x": 0.5,
-                  "y": 0.3,
-                  "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#a5623a",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e274-2",
-                "text": "▦",
-                "shape": "text",
-                "hold": 3.6,
-                "transition": 1.4,
-                "position": {
-                  "x": 0.06,
-                  "y": -0.27,
-                  "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.28,
-                    "y": 0.2
-                  },
-                  "rotation": 0,
-                  "tint": "#7a4a2a",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e275",
-          "name": "the lid's silent power — it decides which anomaly is merely misplaced",
-          "kind": "formation",
-          "position": {
-            "x": 0.52,
-            "y": -0.35,
-            "z": 0
-          },
-          "size": {
-            "x": 0.2,
-            "y": 0.2
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "⚖",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 0.8,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st302",
-                "text": "⚖",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "title",
-          "visible": true,
-          "kicker": "#0 · Frank Taylor's travelling image; Heidegger's world-picture passages (q012)",
-          "title": "The picture arrives before the pieces",
-          "italic": "The lid embodies the diagnostic: the world approached as though its possible appearances had already been cut by a maker whose picture requires only assembly.",
-          "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The puzzle begins with its destination visible. The maker sets out the edges, builds the frame, sorts the remaining pieces by marks promising a place within it; each fit confirms part of the anticipated whole. Yet the finished picture entered the work before the first piece: it supplies the criterion for every later placement. The maker can hesitate over a patch of colour while remaining entirely certain what",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "counts as completion; the lid decides which differences belong together, which edge is outside, and which apparent anomaly is merely a piece awaiting its correct position. Heidegger's world-picture passages historicise the diagnosis — world grasped as picture and the representer installed as its normative centre belong to one event. The lid can remain absent from discussion precisely because everything discussed has already been assigned a possible place beneath it.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the lid picture (#0, reopened at #5→0); the frame and sorted pieces (#0); the criterion working silently (#0, #1).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
-          "align": "left",
-          "id": "occ"
-        }
-      ],
-      "composition": {
-        "layout": "grid",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": []
-    },
-    {
-      "id": "m-jig-1-travel",
-      "name": "Travel changes what it means to fit",
-      "character": "A turn the flat arrangement cannot preserve; a continuation beyond an edge; the question reaches the frame and the prior picture.",
-      "duration": 11,
-      "transition": 1.1,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "engine": {
-        "inkMode": "blackOnWhite",
-        "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "vortex",
-        "pointerClick": "shove",
-        "pointerClickStrength": 1.1,
-        "pointerClickRadius": 0.4
-      },
-      "field": {
-        "background": "#f6f1e6",
-        "palette": [
-          "#2b2733",
-          "#4a5d7e",
-          "#a5623a",
-          "#c9b458"
-        ],
-        "material": "round",
-        "params": {
-          "speed": 0.5,
-          "circulation": 0.3,
-          "dispersion": 0.08,
-          "turbulence": 0.25,
-          "pointerStrength": 0.4
-        }
-      },
-      "entities": [
-        {
-          "id": "e276",
-          "name": "the flat assembly — meeting a turn it cannot preserve",
-          "kind": "formation",
-          "position": {
-            "x": -0.4,
-            "y": -0.32,
-            "z": 0
-          },
-          "size": {
-            "x": 0.614,
-            "y": 0.46
-          },
-          "rotation": 0,
-          "shape": "square",
-          "text": "",
-          "share": 1,
-          "tint": "#4a5d7e",
-          "tintWeight": 0.5,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e276-1",
-                "text": "·",
-                "shape": "square",
-                "hold": 3.2,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.614,
-                    "y": 0.46
-                  },
-                  "rotation": 0,
-                  "tint": "#4a5d7e",
-                  "tintWeight": 0.5,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e276-2",
-                "text": "·",
-                "shape": "square",
-                "hold": 3.4,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.58,
-                    "y": 0.5
-                  },
-                  "rotation": 0.42,
-                  "tint": "#3a4d66",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e277",
-          "name": "the travelled world — curvature beyond the frame",
-          "kind": "formation",
-          "position": {
-            "x": 0.45,
-            "y": 0.15,
-            "z": 0
-          },
-          "size": {
-            "x": 0.8,
-            "y": 0.8
-          },
-          "rotation": 0,
-          "shape": "ring",
-          "text": "",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 0.55,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st304",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e278",
-          "name": "the question reaching the frame: what relation was lost in this rendering?",
-          "kind": "formation",
-          "position": {
-            "x": 0.5,
-            "y": -0.42,
-            "z": 0
-          },
-          "size": {
-            "x": 0.22,
-            "y": 0.22
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "?",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st305",
-                "text": "?",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e279",
-          "name": "recording how a view was made — from where, across which region, under what projection",
-          "kind": "formation",
-          "position": {
-            "x": -0.45,
-            "y": -0.45,
-            "z": 0
-          },
-          "size": {
-            "x": 0.22,
-            "y": 0.22
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "✎",
-          "share": 1,
-          "tint": "#a5623a",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e279-1",
-                "text": "✎",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.22
-                  },
-                  "rotation": 0,
-                  "tint": "#a5623a",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e279-2",
-                "text": "▦",
-                "shape": "text",
-                "hold": 3.4,
-                "transition": 1.3,
-                "position": {
-                  "x": -0.3,
-                  "y": -0.4,
-                  "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.2
-                  },
-                  "rotation": 0,
-                  "tint": "#a5623a",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "title",
-          "visible": true,
-          "kicker": "#1 · the reconstruction requirement (quilt correction)",
-          "title": "Travel changes what it means to fit",
-          "italic": "The change demonstrates itself: pieces become local charts whose edges mark limits of usable description, and neighbours overlap rather than merely meet along a cut.",
-          "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The puzzle travels into the world it claims to depict. Its maker encounters a turn the flat arrangement cannot preserve, a continuation beyond an edge, a view distorting with position. At first the assembly absorbs it as traveller's error — another piece still judged under the same criterion. The change: the maker records how a view was made: from where, across which region, under what projection, with which",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "omissions. Pieces become local charts; their edges mark limits of usable description; neighbours overlap rather than merely meet. Within an overlap the maker explains how a position here appears there; a difference between reports can disclose a change of coordinates, a difference of measurement, or an unresolved disagreement. The seam becomes operative, and an atlas can be worked: enter a chart, cross an overlap, learn what changed, return routed.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the encountered turn and edge (#1); charts and overlaps (#1, made exact at #2); the return with the route available (#1, #5→0).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
-          "align": "left",
-          "id": "occ"
-        }
-      ],
-      "composition": {
-        "layout": "free",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": []
-    },
-    {
-      "id": "m-jig-2-circle",
-      "name": "A crossing has a rule — the circle's two charts",
-      "character": "At (3/5,4/5): u=3 and v=1/3 name one point; the overlap rule is v=1/u; height is 4/5 in either account; du/dt=2 gives dv/dt=−2/9.",
-      "duration": 14,
-      "transition": 1.6,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "engine": {
-        "inkMode": "blackOnWhite",
-        "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "attract",
-        "pointerClick": "pulse",
-        "pointerClickStrength": 0.4,
-        "pointerClickRadius": 0.3
-      },
-      "field": {
-        "background": "#f6f1e6",
-        "palette": [
-          "#2b2733",
-          "#4a5d7e",
-          "#a5623a",
-          "#c9b458"
-        ],
-        "material": "round",
-        "params": {
-          "speed": 0.3,
-          "circulation": 0.15,
-          "dispersion": 0.04,
-          "pointerStrength": 0.25
-        }
-      },
-      "entities": [
-        {
-          "id": "e280",
-          "name": "the circle covered by two charts — opposite poles omitted",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.41,
-            "z": 0
-          },
-          "size": {
-            "x": 0.678,
-            "y": 0.678
-          },
-          "rotation": 0,
-          "shape": "ring",
-          "text": "",
-          "share": 1.8,
-          "tint": "#4a5d7e",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st307",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e281",
-          "name": "the shared point (x,y)=(3/5,4/5)",
-          "kind": "formation",
-          "position": {
-            "x": 0.36,
-            "y": -0.14,
-            "z": 0
-          },
-          "size": {
-            "x": 0.18,
-            "y": 0.18
-          },
-          "rotation": 0,
-          "shape": "disc",
-          "text": "",
-          "share": 1.4,
-          "tint": "#c9b458",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st308",
-                "text": "",
-                "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e282",
-          "name": "v = 1/u — the declared transformation on the overlap",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.45,
-            "z": 0
-          },
-          "size": {
-            "x": 0.6,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "v=1/u",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e282-1",
-                "text": "v=1/u",
-                "shape": "text",
-                "hold": 3.4,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.6,
-                    "y": 0.14
-                  },
-                  "rotation": 0,
-                  "tint": "#c9b458",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e282-2",
-                "text": "(3/5,4/5)",
-                "shape": "text",
-                "hold": 3.8,
-                "transition": 1.5,
-                "position": {
-                  "x": 0.36,
-                  "y": -0.14,
-                  "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.14
-                  },
-                  "rotation": 0,
-                  "tint": "#c9b458",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e283",
-          "name": "du/dt=2 ⇒ dv/dt=−2/9 — even motion must be transformed",
-          "kind": "formation",
-          "position": {
-            "x": 0.66,
-            "y": -0.1,
-            "z": 0
-          },
-          "size": {
-            "x": 0.3,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "dv",
-          "share": 1,
-          "tint": "#a5623a",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e283-1",
-                "text": "dv",
-                "shape": "text",
-                "hold": 3.4,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.14
-                  },
-                  "rotation": 0,
-                  "tint": "#a5623a",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e283-2",
-                "text": "−2/9",
-                "shape": "text",
-                "hold": 3.8,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.14
-                  },
-                  "rotation": 0,
-                  "tint": "#a5623a",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e284",
-          "name": "height 4/5 in either account",
-          "kind": "formation",
-          "position": {
-            "x": -0.6,
-            "y": -0.35,
-            "z": 0
-          },
-          "size": {
-            "x": 0.24,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "4/5",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st311",
-                "text": "4/5",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "title",
-          "visible": true,
-          "kicker": "#2 · the manifold-atlas matheme (Derived in its home; the crossing Offered)",
-          "title": "A crossing has a rule — the circle's two charts",
-          "italic": "The example demonstrates local pictures disagreeing in written values while agreeing in what those values describe — the overlap and transformation explain the agreement.",
-          "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The mathematical witness is Offered; the constructions keep the Derived standing of their matheme homes. Two charts cover the circle by omitting opposite poles. At the point (x,y)=(3/5,4/5), their coordinates are u=3 and v=1/3; on the overlap the rule is v=1/u. The reports differ numerically because they use different coordinates; the declared transformation identifies their common point. Height is 4/5 in either account. Even motion must be",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "transformed: when du/dt=2 at this point, dv/dt=−2/9, and both descriptions give the same change of height — giving both coordinate velocities the number two would change the motion described. Conversely, when the inverse is missing, the common domain absent, or regularity fails, no conclusion follows. Compact circle, sphere and torus admit no single global chart into an open Euclidean domain of the same dimension; compactness gives the obstruction.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the two charts and omitted poles (#2); the shared point and v=1/u (#2); the transformed velocity (#2); the compactness obstruction (#2, contrasted with the disk at #2b).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
-          "align": "left",
-          "id": "occ"
-        }
-      ],
-      "composition": {
-        "layout": "ring",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": []
-    },
-    {
-      "id": "m-jig-2b-torus",
-      "name": "The torus loop returns with its winding",
-      "character": "T²=R²/Z²; the loop [2t,−t] returns to [0,0] while its lift ends at (2,−1) — the pair records winding, not the whole experience of the traveller.",
-      "duration": 15,
-      "transition": 2,
-      "view": {
-        "mode": "3d",
-        "yaw": 0.35,
-        "pitch": 0.38,
-        "zoom": 0.92,
-        "panX": 0,
-        "panY": 0
-      },
-      "engine": {
-        "inkMode": "blackOnWhite",
-        "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "vortex",
-        "pointerClick": "vortex",
-        "pointerClickStrength": 1.2,
-        "pointerClickRadius": 0.35,
-        "vortex3d": 0.5,
-        "depthOcclusion": true,
-        "depthTintColor": "#0e1420",
-        "volumeEnabled": true
-      },
-      "field": {
-        "background": "#f6f1e6",
-        "palette": [
-          "#2b2733",
-          "#4a5d7e",
-          "#a5623a",
-          "#c9b458"
-        ],
-        "material": "round",
-        "params": {
-          "speed": 0.5,
-          "circulation": 0.35,
-          "dispersion": 0.07,
-          "zConfinement": 0.9,
-          "pointerStrength": 0.4
-        }
-      },
-      "entities": [
-        {
-          "id": "e285",
-          "name": "the flat quotient — one surface address, infinitely many plane representatives",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.42,
-            "z": -0.3
-          },
-          "size": {
-            "x": 0.626,
-            "y": 0.626
-          },
-          "rotation": 0,
-          "shape": "square",
-          "text": "",
-          "share": 1,
-          "tint": "#4a5d7e",
-          "tintWeight": 0.5,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st312",
-                "text": "",
-                "shape": "square",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e286",
-          "name": "the loop γ(t)=[2t,−t]",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.3,
-            "z": 0
-          },
-          "size": {
-            "x": 0.43,
-            "y": 0.583
-          },
-          "rotation": 0,
-          "shape": "ring",
-          "text": "",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 0.7,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st313",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e287",
-          "name": "the lifted endpoint (2,−1) — displacement retained",
-          "kind": "formation",
-          "position": {
-            "x": 0.58,
-            "y": 0.45,
-            "z": 0.35
-          },
-          "size": {
-            "x": 0.4,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "(2,−1)",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e287-1",
-                "text": "(2,−1)",
-                "shape": "text",
-                "hold": 3.4,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.14
-                  },
-                  "rotation": 0,
-                  "tint": "#c9b458",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e287-2",
-                "text": "[2t,−t]",
-                "shape": "text",
-                "hold": 3.8,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.34,
-                    "y": 0.14
-                  },
-                  "rotation": 0,
-                  "tint": "#d9cdb4",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e288",
-          "name": "the disk abstraction — every loop contractible; the winding classes are what it lacks",
-          "kind": "formation",
-          "position": {
-            "x": -0.58,
-            "y": -0.42,
-            "z": -0.15
-          },
-          "size": {
-            "x": 0.4,
-            "y": 0.4
-          },
-          "rotation": 0,
-          "shape": "disc",
-          "text": "",
-          "share": 1,
-          "tint": "#a5623a",
-          "tintWeight": 0.4,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st315",
-                "text": "",
-                "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e289",
-          "name": "four sides, two generators, one vertex, one face — counts with distinct offices",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.6,
-            "z": 0
-          },
-          "size": {
-            "x": 0.6,
-            "y": 0.12
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "4·2·1·1",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st316",
-                "text": "4·2·1·1",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "title",
-          "visible": true,
-          "kicker": "#2 · the torus-cover matheme; A17 toroidal circulation; A16",
-          "title": "The torus loop returns with its winding",
-          "italic": "The lift demonstrates local closure retaining a difference in the wider relation — the diagnosis concerns the lost winding relation, not a ban on ordinary movement.",
-          "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The torus-cover matheme derives the next operation: T²=R²/Z², with (x,y)~(x+m,y+n) for integers (m,n). One surface address has infinitely many plane representatives; a local lift represents a small neighbourhood accurately; the quotient relates its other representatives. Follow the loop [2t,−t] from t=0 to t=1: it returns to [0,0] on the torus while its lift moves from (0,0) to (2,−1). The pair records winding — not the traveller's",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "entire experience or the timing of every step. Under the first puzzle's disk abstraction every loop is contractible: the diagnosis concerns the loss of the torus's independent, non-contractible winding classes, not a ban on movement. The presenting square's four sides and two generating loops have offices distinct from the quotient's one vertex, two edge classes, one face; the counts cannot be exchanged because a picture makes them look alike.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the lift's displaced endpoint (#2b, shared image with the uroboros whole's γ); the disk abstraction's lack (#2b); the distinct counted offices (#2b).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
-          "align": "left",
-          "id": "occ"
-        }
-      ],
-      "composition": {
-        "layout": "free",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": [
-        {
-          "id": "auto-loop",
-          "target": "field.params.circulation",
-          "type": "lfo",
-          "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.15,
-          "max": 0.15,
-          "rate": 0.2,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
-    },
-    {
-      "id": "m-jig-4-marble",
-      "name": "The planet appears, and the making of the picture returns",
-      "character": "The Blue Marble at the hinge: as a box-lid it settles in advance what the world is; as diaphanous, its conditions remain readable within its use.",
-      "duration": 13,
-      "transition": 1.3,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "engine": {
-        "inkMode": "whiteOnBlack",
-        "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "attract",
-        "pointerClick": "implode",
-        "pointerClickStrength": 0.8,
-        "pointerClickRadius": 0.3
-      },
-      "field": {
-        "background": "#10141f",
-        "palette": [
-          "#d9d2c2",
-          "#10141f",
-          "#2b6b8a",
-          "#c9b458"
-        ],
-        "material": "round",
-        "params": {
-          "speed": 0.35,
-          "circulation": 0.2,
-          "dispersion": 0.06,
-          "pointerStrength": 0.35
-        }
-      },
-      "entities": [
-        {
-          "id": "e290",
-          "name": "the planetary view — Earth gathered around a shared frame",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.46,
-            "z": 0
-          },
-          "size": {
-            "x": 0.522,
-            "y": 0.522
-          },
-          "rotation": 0,
-          "shape": "disc",
-          "text": "",
-          "share": 2,
-          "tint": "#2b6b8a",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e290-1",
-                "text": "·",
-                "shape": "disc",
-                "hold": 3.4,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.38,
-                    "y": 0.38
-                  },
-                  "rotation": 0,
-                  "tint": "#2b6b8a",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e290-2",
-                "text": "·",
-                "shape": "disc",
-                "hold": 3.8,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.522,
-                    "y": 0.522
-                  },
-                  "rotation": 0,
-                  "tint": "#3d85a3",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e291",
-          "name": "as box-lid — \"planetary\" the unexamined scale under which lives are counted",
-          "kind": "formation",
-          "position": {
-            "x": -0.62,
-            "y": -0.5,
-            "z": 0
-          },
-          "size": {
-            "x": 0.4,
-            "y": 0.4
-          },
-          "rotation": 0,
-          "shape": "square",
-          "text": "",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 0.3,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st318",
-                "text": "",
-                "shape": "square",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e292",
-          "name": "whose planet, computed by whom, on whose gauge?",
-          "kind": "formation",
-          "position": {
-            "x": 0.62,
-            "y": -0.5,
-            "z": 0
-          },
-          "size": {
-            "x": 0.22,
-            "y": 0.22
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "?",
-          "share": 1,
-          "tint": "#d9d2c2",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st319",
-                "text": "?",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e293",
-          "name": "the diaphanous turn — location, time, production and transformations inspectable",
-          "kind": "formation",
-          "position": {
-            "x": 0.6,
-            "y": 0.55,
-            "z": 0
-          },
-          "size": {
-            "x": 0.3,
-            "y": 0.3
-          },
-          "rotation": 0,
-          "shape": "ring",
-          "text": "",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 0.9,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st320",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "title",
-          "visible": true,
-          "kicker": "#4 · the quilt's named image-unit; no NASA frame selected; A04/C09; A20; C38/C61",
-          "title": "The planet appears, and the making of the picture returns",
-          "italic": "The same image embodies both possibilities: breadth of view cannot by itself establish the authority of the account made through it — the question is what happens to position, instrument, production and measure.",
-          "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The Blue Marble enters at the hinge between a final box-lid world-picture and a first diaphanous planetary image — the quilt's named image-unit, not a newly selected NASA photograph; no frame, date, mission or credit selected, so none supplied by inference. As box-lid, it settles in advance what the world is: \"planetary\" becomes the unexamined scale under which particular lives and claims are counted. The quilt's questions",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "reopen that completeness: whose planet, computed by whom, on whose gauge? The same image becomes diaphanous when its conditions remain readable in use — location and time, production and transformations inspectable, what lies outside the selected account mattering to the next judgment. A04/C09 ground the change; A20 tests whether the image can still be altered by what it claims to disclose; the Encounter/Region/Name/Count/Countenance/Account field extends the hinge at register 3.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the box-lid and its silent criterion (#0, #4); the planetary image and its reopened questions (#4); the inspectable conditions (#4, #5→0).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
-          "align": "left",
-          "id": "occ"
-        }
-      ],
-      "composition": {
-        "layout": "free",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": [
-        {
-          "id": "auto-marble",
-          "target": "field.params.speed",
-          "type": "lfo",
-          "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.08,
-          "max": 0.08,
-          "rate": 0.1,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
-    },
-    {
-      "id": "m-jig-5-return",
-      "name": "The atlas travels with the means to revise it",
-      "character": "Mapper and sheaf routes remain Offered; the surety comparison names the responsibility where the formal arrangement cannot supply the continuation; the first picture reopened.",
-      "duration": 14,
-      "transition": 1.8,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "engine": {
-        "inkMode": "blackOnWhite",
-        "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "attract",
-        "pointerClick": "pulse",
-        "pointerClickStrength": 0.25,
-        "pointerClickRadius": 0.25
-      },
-      "field": {
-        "background": "#f6f1e6",
-        "palette": [
-          "#2b2733",
-          "#4a5d7e",
-          "#a5623a",
-          "#c9b458"
-        ],
-        "material": "round",
-        "params": {
-          "speed": 0.4,
-          "circulation": 0.3,
-          "dispersion": 0.09,
-          "pointerStrength": 0.2
-        }
-      },
-      "entities": [
-        {
-          "id": "e294",
-          "name": "the atlas — charts, transitions, obstructions",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.55,
-            "z": 0
-          },
-          "size": {
-            "x": 0.509,
-            "y": 0.509
-          },
-          "rotation": 0,
-          "shape": "yantra",
-          "text": "",
-          "share": 1.6,
-          "tint": "#c9b458",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e294-1",
-                "text": "·",
-                "shape": "yantra",
-                "hold": 3.6,
-                "transition": 1.6,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.509,
-                    "y": 0.509
-                  },
-                  "rotation": 0,
-                  "tint": "#c9b458",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e294-2",
-                "text": "·",
-                "shape": "yantra",
-                "hold": 3.8,
-                "transition": 1.6,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.509,
-                    "y": 0.509
-                  },
-                  "rotation": 0.7854,
-                  "tint": "#c9b458",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e295",
-          "name": "the first picture reopened — its achievement retained, frame now visible",
-          "kind": "formation",
-          "position": {
-            "x": -0.55,
-            "y": -0.45,
-            "z": 0
-          },
-          "size": {
-            "x": 0.5,
-            "y": 0.4
-          },
-          "rotation": 0,
-          "shape": "square",
-          "text": "",
-          "share": 1,
-          "tint": "#4a5d7e",
-          "tintWeight": 0.85,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st322",
-                "text": "",
-                "shape": "square",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e296",
-          "name": "Mapper: lens, cover, clustering, nerve — answerable to its construction (Offered)",
-          "kind": "formation",
-          "position": {
-            "x": 0.55,
-            "y": -0.4,
-            "z": 0
-          },
-          "size": {
-            "x": 0.44,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "Mapper",
-          "share": 1,
-          "tint": "#a5623a",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st323",
-                "text": "Mapper",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e297",
-          "name": "A31/A32/A33 — the world can revise the model; the instrument exposes its own conditions; what actually changes",
-          "kind": "formation",
-          "position": {
-            "x": 0.6,
-            "y": 0.55,
-            "z": 0
-          },
-          "size": {
-            "x": 0.3,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "A32",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st324",
-                "text": "A32",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "title",
-          "visible": true,
-          "kicker": "#5→0 · C39 MEF; the Homologia/Analogia field; A34; Bratton q029; M05, M30, M41, M42, M44",
-          "title": "The atlas travels with the means to revise it",
-          "italic": "The whole returns-to its movements with duties intact: the map-making operation travels alongside its map — sufficiently definite to guide the next step, sufficiently answerable for the journey to change where it leads.",
-          "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The reconstructive proposal begins where the puzzle finished. C39 defines lenses and gauges through which inquiry changes salience and judgment; a changed lens must change what it does. Mapper is offered as a route — lens, cover, clustering, nerve — choices retained, representation answerable to construction; a nerve is not automatically an atlas. Sheaves: local data, restrictions, compatibility; an obstruction is exposed, not computed away.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "neither impossible nor an entailment of an ethical pledge. The surety comparison names the responsibility where the formal arrangement cannot supply the continuation. Bratton's world-models need a common procedural grammar through which disagreement becomes legible — explicit transitions, scope, obstruction are the atlas's response. The traveller opens the first picture again: its colours and fits keep their achievement, now read with their frame, missed continuations and routes into other accounts.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the reopened first picture (#0, #5→0); the surety gap (#5→0); the declared returns to M05/M30/M41/M42/M44 (#5→0).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
-          "align": "left",
-          "id": "occ"
-        }
-      ],
-      "composition": {
-        "layout": "free",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": []
+ "schema": "oi.journey",
+ "version": 1,
+ "id": "roz-mytheme-travelling-jigsaw-atlas",
+ "name": "The travelling jigsaw — from box-lid to atlas",
+ "description": "The authored travelling image: the picture before the pieces, travel against the frame, pieces become charts with declared transitions, the circle example's exact transformation, the torus loop retaining its winding, the Blue Marble hinge, and the atlas travelling with the means to revise it.",
+ "loop": true,
+ "scenes": [
+  {
+   "id": "m-jig-0-lid",
+   "name": "The picture arrives before the pieces",
+   "character": "The maker sets the edges, builds the frame, sorts pieces by marks — each successful fit confirming a part of the anticipated whole.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "backgroundMode": "solid",
+    "pointerMode": "repel",
+    "pointerClick": "shove",
+    "pointerClickStrength": 0.4,
+    "pointerClickRadius": 0.32
+   },
+   "field": {
+    "background": "#eae2d0",
+    "palette": [
+     "#3a352c",
+     "#4a5d7e",
+     "#a5623a",
+     "#c9b458"
+    ],
+    "material": "round",
+    "params": {
+     "count": 56000,
+     "size": 2.5,
+     "opacity": 0.92,
+     "contrast": 0.93,
+     "speed": 0.4,
+     "circulation": 0.3,
+     "dispersion": 0.06,
+     "turbulence": 0.12,
+     "pointerStrength": 0.4
     }
-  ],
-  "updatedAt": "2026-10-06T12:00:00.000Z"
+   },
+   "entities": [
+    {
+     "id": "j0-lid",
+     "name": "the box lid — the destination already visible",
+     "kind": "formation",
+     "position": {
+      "x": -0.28,
+      "y": -0.2,
+      "z": 0
+     },
+     "size": {
+      "x": 0.3,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#4a5d7e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j0-lid-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "+----------+\n|  \\  |  / |\n| ~~----~~ |\n| /~~~~~~\\ |\n+----------+"
+      }
+     }
+    },
+    {
+     "id": "j0-frame",
+     "name": "the edge frame — built first",
+     "kind": "formation",
+     "position": {
+      "x": -0.28,
+      "y": -0.2,
+      "z": 0
+     },
+     "size": {
+      "x": 0.38,
+      "y": 0.3
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#c9b458",
+     "tintWeight": 0.7,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j0-frame-sq0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "j0-pieces",
+     "name": "the sorted pieces — each promising a place within it",
+     "kind": "formation",
+     "position": {
+      "x": 0.24,
+      "y": -0.42,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.11
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#a5623a",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j0-pieces-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "+--+ +--+\n|  +-+  |\n+--+ +--+"
+      }
+     }
+    },
+    {
+     "id": "j0-anomaly",
+     "name": "the lid's silent power — it decides which anomaly is merely misplaced",
+     "kind": "formation",
+     "position": {
+      "x": 0.46,
+      "y": -0.16,
+      "z": 0
+     },
+     "size": {
+      "x": 0.08,
+      "y": 0.08
+     },
+     "rotation": 3.1416,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#8c3b2e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j0-anomaly-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "+--+\n|  /\n+--+"
+      }
+     }
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": [],
+   "text": [
+    {
+     "id": "stage",
+     "visible": true,
+     "kicker": "",
+     "title": "The picture arrives before the pieces",
+     "italic": "The finished picture entered the work before the first piece was placed.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.04,
+     "width": 520,
+     "size": 28,
+     "align": "left"
+    }
+   ]
+  },
+  {
+   "id": "m-jig-1-travel",
+   "name": "Travel changes what it means to fit",
+   "character": "A turn the flat arrangement cannot preserve; a continuation beyond an edge; the question reaches the frame and the prior picture.",
+   "duration": 13,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "backgroundMode": "solid",
+    "pointerMode": "repel",
+    "pointerClick": "shove",
+    "pointerClickStrength": 0.4,
+    "pointerClickRadius": 0.32
+   },
+   "field": {
+    "background": "#2f3d38",
+    "palette": [
+     "#c9d4c9",
+     "#c9b458",
+     "#8c3b2e",
+     "#3a4a44"
+    ],
+    "material": "round",
+    "params": {
+     "count": 54000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.9,
+     "speed": 0.42,
+     "circulation": 0.34,
+     "dispersion": 0.07,
+     "turbulence": 0.14,
+     "pointerStrength": 0.4
+    }
+   },
+   "entities": [
+    {
+     "id": "j1-flat",
+     "name": "the flat assembly — meeting a turn it cannot preserve",
+     "kind": "formation",
+     "position": {
+      "x": -0.3,
+      "y": -0.24,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#4a5d7e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j1-flat-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "+--+--+--+\n|  |  |  |  ,\n+--+--+--+ }\n|  |  |  |"
+      }
+     }
+    },
+    {
+     "id": "j1-globe",
+     "name": "the travelled world — curvature beyond the frame",
+     "kind": "formation",
+     "position": {
+      "x": 0.28,
+      "y": -0.18,
+      "z": 0
+     },
+     "size": {
+      "x": 0.24,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#c9b458",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j1-globe-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "   _.--._\n .'      '.\n(    -+-    )\n '.      .'\n   '--..-'"
+      }
+     }
+    },
+    {
+     "id": "j1-record",
+     "name": "recording how a view was made — from where, across which region, under what projection",
+     "kind": "formation",
+     "position": {
+      "x": -0.3,
+      "y": -0.5,
+      "z": 0
+     },
+     "size": {
+      "x": 0.18,
+      "y": 0.12
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#8c3b2e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j1-record-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " (o)----\n   \\  \\\n    \\  \\\n  [~~~~]"
+      }
+     }
+    },
+    {
+     "id": "j1-charts",
+     "name": "the pieces become charts — edges mark limits, neighbours overlap",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": -0.48,
+      "z": 0
+     },
+     "size": {
+      "x": 0.22,
+      "y": 0.12
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#c9d4c9",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j1-charts-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "+---+---+\n|   +---+---+\n+---+   |   |\n     +--+---+"
+      }
+     }
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": [],
+   "text": [
+    {
+     "id": "stage",
+     "visible": true,
+     "kicker": "",
+     "title": "Travel changes what it means to fit",
+     "italic": "The question reaches the frame: what relation was lost in this rendering?",
+     "body": "",
+     "x": 0.04,
+     "y": 0.04,
+     "width": 520,
+     "size": 28,
+     "align": "left"
+    }
+   ]
+  },
+  {
+   "id": "m-jig-2-circle",
+   "name": "A crossing has a rule — the circle's two charts",
+   "character": "At (3/5,4/5): u=3 and v=1/3 name one point; the overlap rule is v=1/u; height is 4/5 in either account; du/dt=2 gives dv/dt=−2/9.",
+   "duration": 13,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "backgroundMode": "solid",
+    "pointerMode": "repel",
+    "pointerClick": "shove",
+    "pointerClickStrength": 0.4,
+    "pointerClickRadius": 0.32
+   },
+   "field": {
+    "background": "#1c2026",
+    "palette": [
+     "#d9d2c2",
+     "#c9b458",
+     "#a5623a",
+     "#4a5d7e"
+    ],
+    "material": "round",
+    "params": {
+     "count": 58000,
+     "size": 2.4,
+     "opacity": 0.92,
+     "contrast": 0.95,
+     "speed": 0.36,
+     "circulation": 0.26,
+     "dispersion": 0.05,
+     "turbulence": 0.1,
+     "pointerStrength": 0.4
+    }
+   },
+   "entities": [
+    {
+     "id": "j2-circle",
+     "name": "the circle covered by two charts — opposite poles omitted",
+     "kind": "formation",
+     "position": {
+      "x": 0.02,
+      "y": -0.24,
+      "z": 0
+     },
+     "size": {
+      "x": 0.3,
+      "y": 0.28
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#4a5d7e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j2-circle-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "     . . .\n   /       \\\n |           |\n   \\       /\n     ' ' '"
+      }
+     }
+    },
+    {
+     "id": "j2-point",
+     "name": "the shared point (3/5, 4/5) — one point, two names",
+     "kind": "formation",
+     "position": {
+      "x": 0.24,
+      "y": -0.15,
+      "z": 0
+     },
+     "size": {
+      "x": 0.055,
+      "y": 0.055
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#c9b458",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j2-point-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "j2-rule",
+     "name": "the declared transformation v = 1/u — the reports differ, the point agrees",
+     "kind": "formation",
+     "position": {
+      "x": -0.36,
+      "y": -0.46,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.1
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#c9b458",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j2-rule-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "u: ~~~~~\\ /~~~~\n         x\nv: ~~~~~/ \\~~~~"
+      }
+     }
+    },
+    {
+     "id": "j2-motion",
+     "name": "even motion is transformed — the same change of height, two speeds written",
+     "kind": "formation",
+     "position": {
+      "x": 0.36,
+      "y": -0.46,
+      "z": 0
+     },
+     "size": {
+      "x": 0.15,
+      "y": 0.08
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#a5623a",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j2-motion-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " -->-->  |\n -->     |\n        same height"
+      }
+     }
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": [],
+   "text": [
+    {
+     "id": "stage",
+     "visible": true,
+     "kicker": "",
+     "title": "A crossing has a rule — the circle's two charts",
+     "italic": "The reports differ; the declared transformation identifies their common point.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.04,
+     "width": 520,
+     "size": 28,
+     "align": "left"
+    }
+   ]
+  },
+  {
+   "id": "m-jig-2b-torus",
+   "name": "The torus loop returns with its winding",
+   "character": "T²=R²/Z²; the loop [2t,−t] returns to [0,0] while its lift ends at (2,−1) — the pair records winding, not the whole experience of the traveller.",
+   "duration": 13,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "backgroundMode": "solid",
+    "pointerMode": "repel",
+    "pointerClick": "shove",
+    "pointerClickStrength": 0.4,
+    "pointerClickRadius": 0.32
+   },
+   "field": {
+    "background": "#1c2026",
+    "palette": [
+     "#d9d2c2",
+     "#c9b458",
+     "#a5623a",
+     "#4a5d7e"
+    ],
+    "material": "round",
+    "params": {
+     "count": 58000,
+     "size": 2.4,
+     "opacity": 0.92,
+     "contrast": 0.95,
+     "speed": 0.36,
+     "circulation": 0.26,
+     "dispersion": 0.05,
+     "turbulence": 0.1,
+     "pointerStrength": 0.4
+    }
+   },
+   "entities": [
+    {
+     "id": "j3-torus",
+     "name": "the torus — the flat quotient, one address, infinitely many representatives",
+     "kind": "formation",
+     "position": {
+      "x": -0.06,
+      "y": -0.22,
+      "z": 0
+     },
+     "size": {
+      "x": 0.24,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#4a5d7e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j3-torus-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "   .----.\n  (  __  )\n (  (  )  )\n  (  --  )\n   '----'"
+      }
+     }
+    },
+    {
+     "id": "j3-loop",
+     "name": "the loop returning to its start — its winding retained",
+     "kind": "formation",
+     "position": {
+      "x": -0.06,
+      "y": -0.22,
+      "z": 0
+     },
+     "size": {
+      "x": 0.34,
+      "y": 0.28
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#c9b458",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "steps": [
+       {
+        "id": "j3-loop-sq0",
+        "text": "",
+        "shape": "ring",
+        "hold": 2.4,
+        "transition": 2.4,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 0.34,
+          "y": 0.28
+         },
+         "rotation": 0,
+         "tint": "#c9b458",
+         "tintWeight": 1,
+         "force": {
+          "kind": "none",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
+       },
+       {
+        "id": "j3-loop-sq1",
+        "text": "",
+        "shape": "ring",
+        "hold": 2.4,
+        "transition": 2.4,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 0.34,
+          "y": 0.28
+         },
+         "rotation": 3.1416,
+         "tint": "#c9b458",
+         "tintWeight": 1,
+         "force": {
+          "kind": "none",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
+       }
+      ]
+     }
+    },
+    {
+     "id": "j3-lift",
+     "name": "the lifted endpoint (2, -1) — the displacement the return carries",
+     "kind": "formation",
+     "position": {
+      "x": 0.34,
+      "y": -0.38,
+      "z": 0
+     },
+     "size": {
+      "x": 0.16,
+      "y": 0.12
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#c9b458",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j3-lift-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " (0,0)\n    \\\n     \\\n    (2,-1)"
+      }
+     }
+    },
+    {
+     "id": "j3-disk",
+     "name": "the disk abstraction — every loop contractible; the winding classes are what it lacks",
+     "kind": "formation",
+     "position": {
+      "x": -0.4,
+      "y": -0.48,
+      "z": 0
+     },
+     "size": {
+      "x": 0.18,
+      "y": 0.11
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#a5623a",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j3-disk-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "  .-~~~~-.\n ( (o) (o) )\n (   ()    )\n  '-~~~~-'"
+      }
+     }
+    },
+    {
+     "id": "j3-euler",
+     "name": "four sides, two generators, one vertex, one face — counts with distinct offices",
+     "kind": "formation",
+     "position": {
+      "x": 0.06,
+      "y": -0.5,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.08
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#d9d2c2",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j3-euler-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " +--+--+\n | a  b |\n +--+--+"
+      }
+     }
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": [],
+   "text": [
+    {
+     "id": "stage",
+     "visible": true,
+     "kicker": "",
+     "title": "The torus loop returns with its winding",
+     "italic": "The return retains its winding — displacement the flat disk cannot record.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.04,
+     "width": 520,
+     "size": 28,
+     "align": "left"
+    }
+   ]
+  },
+  {
+   "id": "m-jig-4-marble",
+   "name": "The planet appears, and the making of the picture returns",
+   "character": "The Blue Marble at the hinge: as a box-lid it settles in advance what the world is; as diaphanous, its conditions remain readable within its use.",
+   "duration": 13,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "backgroundMode": "solid",
+    "pointerMode": "repel",
+    "pointerClick": "shove",
+    "pointerClickStrength": 0.4,
+    "pointerClickRadius": 0.32
+   },
+   "field": {
+    "background": "#1c2026",
+    "palette": [
+     "#d9d2c2",
+     "#c9b458",
+     "#a5623a",
+     "#4a5d7e"
+    ],
+    "material": "round",
+    "params": {
+     "count": 58000,
+     "size": 2.4,
+     "opacity": 0.92,
+     "contrast": 0.95,
+     "speed": 0.36,
+     "circulation": 0.26,
+     "dispersion": 0.05,
+     "turbulence": 0.1,
+     "pointerStrength": 0.4
+    }
+   },
+   "entities": [
+    {
+     "id": "j4-marble",
+     "name": "the planetary view — Earth gathered around a shared frame",
+     "kind": "formation",
+     "position": {
+      "x": 0.0,
+      "y": -0.22,
+      "z": 0
+     },
+     "size": {
+      "x": 0.28,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#2b6b8a",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "steps": [
+       {
+        "id": "j4-marble-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3.4,
+        "transition": 3.0,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 0.28,
+          "y": 0.26
+         },
+         "rotation": 0,
+         "tint": "#c9b458",
+         "tintWeight": 1.0,
+         "force": {
+          "kind": "none",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
+       },
+       {
+        "id": "j4-marble-sq1",
+        "text": "",
+        "shape": "disc",
+        "hold": 3.4,
+        "transition": 3.0,
+        "position": null,
+        "objectState": {
+         "size": {
+          "x": 0.28,
+          "y": 0.26
+         },
+         "rotation": 1.5708,
+         "tint": "#c9b458",
+         "tintWeight": 1.0,
+         "force": {
+          "kind": "none",
+          "strength": 0,
+          "radius": 0.45,
+          "spin": 0
+         }
+        }
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "   _.--~~--._\n .'  (o)  ~  '.\n(      ~~~~    )\n '.  ~~~~   _.'\n   '--.__.--'"
+      }
+     }
+    },
+    {
+     "id": "j4-boxlid",
+     "name": "as box-lid — \"planetary\" the unexamined scale under which lives are counted",
+     "kind": "formation",
+     "position": {
+      "x": -0.36,
+      "y": -0.44,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#c9b458",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j4-boxlid-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "+-------+\n|  ( )  |\n+-------+"
+      }
+     }
+    },
+    {
+     "id": "j4-gauges",
+     "name": "whose planet, computed by whom, on whose gauge?",
+     "kind": "formation",
+     "position": {
+      "x": 0.36,
+      "y": -0.44,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.08
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#d9d2c2",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j4-gauges-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " | |  / /  _ _\n |_| / /  |_|"
+      }
+     }
+    },
+    {
+     "id": "j4-diaph",
+     "name": "the diaphanous turn — location, time, production and transformations inspectable within its use",
+     "kind": "formation",
+     "position": {
+      "x": 0.4,
+      "y": -0.12,
+      "z": 0
+     },
+     "size": {
+      "x": 0.14,
+      "y": 0.14
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#c9b458",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j4-diaph-sq0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": [],
+   "text": [
+    {
+     "id": "stage",
+     "visible": true,
+     "kicker": "",
+     "title": "The planet appears, and the making of the picture returns",
+     "italic": "Whose planet, computed by whom, on whose gauge?",
+     "body": "",
+     "x": 0.04,
+     "y": 0.04,
+     "width": 520,
+     "size": 28,
+     "align": "left"
+    }
+   ]
+  },
+  {
+   "id": "m-jig-5-return",
+   "name": "The atlas travels with the means to revise it",
+   "character": "Mapper and sheaf routes remain Offered; the surety comparison names the responsibility where the formal arrangement cannot supply the continuation; the first picture reopened.",
+   "duration": 13,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "engine": {
+    "inkMode": "blackOnWhite",
+    "backgroundMode": "solid",
+    "pointerMode": "repel",
+    "pointerClick": "shove",
+    "pointerClickStrength": 0.4,
+    "pointerClickRadius": 0.32
+   },
+   "field": {
+    "background": "#eae2d0",
+    "palette": [
+     "#3a352c",
+     "#4a5d7e",
+     "#a5623a",
+     "#c9b458"
+    ],
+    "material": "round",
+    "params": {
+     "count": 56000,
+     "size": 2.5,
+     "opacity": 0.92,
+     "contrast": 0.93,
+     "speed": 0.4,
+     "circulation": 0.3,
+     "dispersion": 0.06,
+     "turbulence": 0.12,
+     "pointerStrength": 0.4
+    }
+   },
+   "entities": [
+    {
+     "id": "j5-atlas",
+     "name": "the atlas — charts with declared transitions and obstructions",
+     "kind": "formation",
+     "position": {
+      "x": -0.2,
+      "y": -0.22,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.17
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#c9b458",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j5-atlas-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "  ______ ______\n /      |      \\\n | ~~~~ | /~~~\\ |\n |______|______|"
+      }
+     }
+    },
+    {
+     "id": "j5-reopened",
+     "name": "the first picture reopened — its achievement retained, its frame now visible",
+     "kind": "formation",
+     "position": {
+      "x": 0.28,
+      "y": -0.2,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.18
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#4a5d7e",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j5-reopened-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "+-+--------+-+\n| |  /\\  ~ | |\n| | (    ) | |\n+-+--------+-+"
+      }
+     }
+    },
+    {
+     "id": "j5-nerve",
+     "name": "the Mapper route — lens, cover, clustering, nerve; answerable to its construction",
+     "kind": "formation",
+     "position": {
+      "x": -0.3,
+      "y": -0.48,
+      "z": 0
+     },
+     "size": {
+      "x": 0.18,
+      "y": 0.1
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#a5623a",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j5-nerve-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": " o--o--o\n       |\n    o--o"
+      }
+     }
+    },
+    {
+     "id": "j5-sheaf",
+     "name": "sheaf and obstruction — local data, restriction maps; the obstruction a result to expose",
+     "kind": "formation",
+     "position": {
+      "x": 0.06,
+      "y": -0.48,
+      "z": 0
+     },
+     "size": {
+      "x": 0.16,
+      "y": 0.1
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#3c6e71",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j5-sheaf-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "+--+--+\n |  +--+--+\n +--+--+  |\n     x"
+      }
+     }
+    },
+    {
+     "id": "j5-traveller",
+     "name": "the traveller — the atlas carried forward as an instrument within the world",
+     "kind": "formation",
+     "position": {
+      "x": 0.45,
+      "y": -0.46,
+      "z": 0
+     },
+     "size": {
+      "x": 0.09,
+      "y": 0.14
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#3a352c",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "none",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "j5-traveller-sq0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     },
+     "source": {
+      "kind": "ascii",
+      "ascii": {
+       "text": "  o\n /|_\n / \\"
+      }
+     }
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.06,
+    "phiRate": 0.1,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": [],
+   "text": [
+    {
+     "id": "stage",
+     "visible": true,
+     "kicker": "",
+     "title": "The atlas travels with the means to revise it",
+     "italic": "Definite enough to guide the following step; answerable enough to be changed.",
+     "body": "",
+     "x": 0.04,
+     "y": 0.04,
+     "width": 520,
+     "size": 28,
+     "align": "left"
+    }
+   ]
+  }
+ ],
+ "updatedAt": "2026-10-06T12:00:00.000Z"
 }

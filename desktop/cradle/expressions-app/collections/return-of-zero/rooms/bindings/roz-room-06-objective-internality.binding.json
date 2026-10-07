@@ -1,141 +1,162 @@
 {
- "artifact": "rooms/roz-room-06-objective-internality.journey.json",
- "family": "rooms",
- "room_slug": "06-objective-internality",
- "worker": "E1",
- "profile_lineage": [
-  "roz-corpus-base",
-  "register-essay",
-  "family-section-room"
- ],
- "source_revision": {
-  "repo": "EpiLogos/Antykathera-Essay-Work",
-  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-  "note": "publication surfaces outside the 288-record census receipt; sha256 computed at authoring time (2026-09-17) for change detection, not taken from a census receipt",
-  "records": [
-   {
-    "path": "submission-package/essay/section-rooms/06-objective-internality/ROOM.md",
-    "sha256": "0d45caf3a1bd19d159f5bf1cc90f5826caa99c5d99d34c820d29125544ed2056"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/06-objective-internality/P1-CANONICAL-ALIGNMENT.md",
-    "sha256": "2f8c03cfc0db406466b33451e04abe9417d211548b6f53978300316242d52cb9"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/06-objective-internality/movements/37-s5-p0-math-moves-meaning.md",
-    "sha256": "359a04816d4337b4fd790b8a890f962bb4c9be9575a147ba4e9008df87f38f3c"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/06-objective-internality/movements/38-s5-p1-apoha-softmax.md",
-    "sha256": "6b5845b301fb4db0c060c8f0fe4e458ed51070c17b615f96e177e6fda53c8ea0"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/06-objective-internality/movements/39-s5-p2-j-space.md",
-    "sha256": "ebb024b02f3781b4c4c80890b3efa040112e4cbfe62c187ca12b6fc7024c0771"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/06-objective-internality/movements/40-s5-p3-preference-hidden-zero.md",
-    "sha256": "7a966b1837fdbdef0dc9e7c527b953e952ed99b5bbaceceb7f912099a46a3b1c"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/06-objective-internality/movements/41-s5-p4-bimba-energy-fields.md",
-    "sha256": "6b260aab9ed6dae68a4d631a442ae8463dc3c4706d45fb8b85ad36dfd42df38d"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/06-objective-internality/movements/42-s5-p5-research-vectors.md",
-    "sha256": "6b21fa66601b228f7ece1d32dcf3cbd6cd2315b4cc3940148b865e415e206a07"
-   }
-  ]
- },
- "pointcloud_revision": "f257de5",
- "scenes": [
-  {
-   "scene_id": "movement-37",
-   "source_ref": "submission-package/essay/section-rooms/06-objective-internality/movements/37-s5-p0-math-moves-meaning.md",
-   "relations": "movement identity: §5 · #0 — Central — Meaningful Continuity · canonical route: P1-M37 → S0 · A26 · A28 · A29 / C38 · C41 · C45 — Central bears authorship, ground, Bimba/reference and returned revision · reading path: ← previous · M36 MEF and Prompt Thrownness   ·   next → M38 Actuation — Living Articulation"
+  "artifact": "rooms/roz-room-06-objective-internality.journey.json",
+  "family": "rooms",
+  "room_slug": "06-objective-internality",
+  "worker": "E1",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "register-essay",
+    "family-section-room"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+    "note": "publication surfaces outside the 288-record census receipt; sha256 computed at authoring time (2026-09-17) for change detection, not taken from a census receipt",
+    "records": [
+      {
+        "path": "submission-package/essay/section-rooms/06-objective-internality/ROOM.md",
+        "sha256": "0d45caf3a1bd19d159f5bf1cc90f5826caa99c5d99d34c820d29125544ed2056"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/06-objective-internality/P1-CANONICAL-ALIGNMENT.md",
+        "sha256": "2f8c03cfc0db406466b33451e04abe9417d211548b6f53978300316242d52cb9"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/06-objective-internality/movements/37-s5-p0-math-moves-meaning.md",
+        "sha256": "359a04816d4337b4fd790b8a890f962bb4c9be9575a147ba4e9008df87f38f3c"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/06-objective-internality/movements/38-s5-p1-apoha-softmax.md",
+        "sha256": "6b5845b301fb4db0c060c8f0fe4e458ed51070c17b615f96e177e6fda53c8ea0"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/06-objective-internality/movements/39-s5-p2-j-space.md",
+        "sha256": "ebb024b02f3781b4c4c80890b3efa040112e4cbfe62c187ca12b6fc7024c0771"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/06-objective-internality/movements/40-s5-p3-preference-hidden-zero.md",
+        "sha256": "7a966b1837fdbdef0dc9e7c527b953e952ed99b5bbaceceb7f912099a46a3b1c"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/06-objective-internality/movements/41-s5-p4-bimba-energy-fields.md",
+        "sha256": "6b260aab9ed6dae68a4d631a442ae8463dc3c4706d45fb8b85ad36dfd42df38d"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/06-objective-internality/movements/42-s5-p5-research-vectors.md",
+        "sha256": "6b21fa66601b228f7ece1d32dcf3cbd6cd2315b4cc3940148b865e415e206a07"
+      }
+    ]
   },
-  {
-   "scene_id": "movement-38",
-   "source_ref": "submission-package/essay/section-rooms/06-objective-internality/movements/38-s5-p1-apoha-softmax.md",
-   "relations": "movement identity: §5 · #1 — Actuation — Living Articulation · canonical route: P1-M38 → S1 · A26 · A28 · A31 · A32 · A33 / C40 · C41 · C43 · C44 · C45 — Actuation owns the model-as-such sequence · reading path: ← previous · M37 Central — Meaningful Continuity   ·   next → M39 AIKit — Potency"
+  "pointcloud_revision": "f257de5",
+  "scenes": [
+    {
+      "scene_id": "movement-37",
+      "source_ref": "submission-package/essay/section-rooms/06-objective-internality/movements/37-s5-p0-math-moves-meaning.md",
+      "relations": "movement identity: §5 · #0 — Central — Meaningful Continuity · canonical route: P1-M37 → S0 · A26 · A28 · A29 / C38 · C41 · C45 — Central bears authorship, ground, Bimba/reference and returned revision · reading path: ← previous · M36 MEF and Prompt Thrownness   ·   next → M38 Actuation — Living Articulation"
+    },
+    {
+      "scene_id": "movement-38",
+      "source_ref": "submission-package/essay/section-rooms/06-objective-internality/movements/38-s5-p1-apoha-softmax.md",
+      "relations": "movement identity: §5 · #1 — Actuation — Living Articulation · canonical route: P1-M38 → S1 · A26 · A28 · A31 · A32 · A33 / C40 · C41 · C43 · C44 · C45 — Actuation owns the model-as-such sequence · reading path: ← previous · M37 Central — Meaningful Continuity   ·   next → M39 AIKit — Potency"
+    },
+    {
+      "scene_id": "movement-39",
+      "source_ref": "submission-package/essay/section-rooms/06-objective-internality/movements/39-s5-p2-j-space.md",
+      "relations": "movement identity: §5 · #2 — AIKit — Potency · canonical route: P1-M39 → S2 · A26 · A28 · A31 / C41 · C44 · C45 — AIKit bears the horizon: existence, availability, relevance, permission, selection, operation through time · reading path: ← previous · M38 Actuation — Living Articulation   ·   next → M40 Software Factory — Transformation"
+    },
+    {
+      "scene_id": "movement-40",
+      "source_ref": "submission-package/essay/section-rooms/06-objective-internality/movements/40-s5-p3-preference-hidden-zero.md",
+      "relations": "movement identity: §5 · #3 — Software Factory — Transformation · canonical route: P1-M40 → S3 · A29 · A31 · A33 / C43 · C45 · C47 — preference/hidden-measure remains one transformation case · reading path: ← previous · M39 AIKit — Potency   ·   next → M41 Workcell — Situated Existence"
+    },
+    {
+      "scene_id": "movement-41",
+      "source_ref": "submission-package/essay/section-rooms/06-objective-internality/movements/41-s5-p4-bimba-energy-fields.md",
+      "relations": "movement identity: §5 · #4 — Workcell — Situated Existence · canonical route: P1-M41 → S4 · A26 · A27 · A31 / C41 · C44 · C45 — Workcell owns the irreducibly situated and material encounter · reading path: ← previous · M40 Software Factory — Transformation   ·   next → M42 Quaternal Logic — Transcendent Relation"
+    },
+    {
+      "scene_id": "movement-42",
+      "source_ref": "submission-package/essay/section-rooms/06-objective-internality/movements/42-s5-p5-research-vectors.md",
+      "relations": "movement identity: §5 · #5 — Quaternal Logic — Transcendent Relation · canonical route: P1-M42 → S5 · A05 · A06 · A13 · A30 · A33 / C39 · C41 · C42 · C45 · C50 — concludes through dia/syn, co-internality and the 5→0 return · reading path: ← previous · M41 Workcell — Situated Existence   ·   next → M43 From Theory to Vocation"
+    }
+  ],
+  "assets": [
+    {
+      "kind": "diagram",
+      "ref": "engine-native formations and text glyphs only (disc/ring/square/triangle/yantra + authored glyph strings: 0, Ø, 1/0, 0/1, 4+2, X/x, S1, ∅-succession, eight-determination and recognition sequences); no external imagery",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "rooms/roz-room-06-objective-internality.cover.png",
+  "capture_note": "cover = the room door (first movement scene) at authored particle count 62000 through the real engine (tools/capture.mjs, port 47911)",
+  "status": "captured",
+  "notes": [
+    "E0 acceptance repair: text/field collision class fixed on all six scenes — formations shifted right-of-centre (GX 0.2), ring 1.7→1.55, route layer moved to top-left, text column 400→360; cover re-captured at authored count.",
+    "one shared section-room grammar across all eight rooms (positional chassis forms #0 disc / #1 text / #2 triangle / #3 yantra / #4 square / #5,#5→0 ring); recorded variations listed in profiles/family-section-room.profile.json",
+    "withholdings hold: no mechanism imagery anywhere before movement-45; no 0/1 glyphs before movement-18; Ø appears exactly once with its one job (movement-16)",
+    "claim statuses travel as data (italic layer = claim_status verbatim from movement frontmatter); P1 canonical routes travel as data (route layer = record ids from the authored P1-CANONICAL-ALIGNMENT, never restaged)",
+    "previous/next carried in scene text with exact titles; movement-48 carries the Return to movement-01",
+    "SHARED CAPTURE DEFECT (for Point-Cloud #6): tools/capture.mjs --all-scenes drifts — from the third scene on, screenshots show an earlier scene than requested (openScene + 2500ms does not settle; DOM text confirms the wrong scene). Single-scene captures (one-scene document, default first-scene path) are reliable; all E1 per-scene inspection and all covers used the reliable path. Tool file untouched by E1.",
+    "SCHEMA NOTE (for Point-Cloud #6): TextLayer.size minimum is 14 (finite(t.size,14,150)); a 13px route layer fails validation with the generic message \"Invalid page text.\" — a range-specific message would help authoring.",
+    "OBSERVATION: on dark scenes (room 07, essay return scene) the editorial body text renders dim grey on near-black; legible but low-contrast. No text-colour field exists on TextLayer — presentation is engine-owned.",
+    "OBSERVATION: sequence scenes are temporal; a cover/inspection screenshot shows one phase of the traversal (movement-25 and movement-34 covers/captures catch a settled step or a mid-morph). The artifact, not the still, carries the full sequence.",
+    "Enrichment moves 2026-10-06 (zcode:enrich-essay-l2; records re-read at fc59a719).",
+    "m37 Central: authored ground → observed events → inferred readings — the three registers of the address Central gives the question 'what now governs?'; cool green accents = the working day.",
+    "m38 Actuation: S1 → instruction → act — the product named, then its passage performed; shove pointer = the act entering the world; saw LFO = the impulse.",
+    "m39 AIKit (layout line — the ladder is serial): the record's own six predicates climbed in order, each step rising as it darkens, 'operative' green and last — potency's horizon without possession.",
+    "m40 Software Factory: intention → resistance → changed form — the transformation performed with the resistance reddened; shove pointer holds the record's dynamic.",
+    "m41 3D (z = the concrete somewhere): 'the attempt' steps from the present depth (bright) to the absent depth (dim) while the host-here stays bright and the source-there stays dim — situation as constitution, staged as depth; volume + perspective + occlusion on.",
+    "m42 QL (layout ring): one whole → differentiating → still whole inside the ring of offices — the culmination that gathers the previous five as relational; implode click = the whole gathering without merging.",
+    "Legibility pattern (all members, 2026-10-06; bounds corrected 2026-10-06 after the wave-2 audit): (a) on 40 scenes a sequence whose carrier is a non-text formation walks on a dedicated TEXT-shaped walker entity — the original formation stays as the quiet field form behind it (tintWeight ≤ 0.25) and those scenes hold calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22; speed LFOs clamped ≤ 0.7) so the walking letterform can condense — the wave-1 legible-walk pattern; (b) on 16 scenes the sequence carrier is already a text-shaped formation and keeps its own authored physics (measured maxima: speed 0.8, circulation 1.7, turbulence 0.34), which the render pass pixel-verified holds the letterforms. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text.",
+    "Craft rework 2026-10-07 (expression rework pass, lane 5; records re-read at fc59a719). The six product offices now read as one working day moving through colour: moss (Central) → slate (Actuation) → amber held across potency and forge (m39–m40 still) → cold stone held across situation and culmination (m41–m42 still). m37 the carried ground as a green stratum, the question's ring above it, the returned difference travelling back to the source that can be revised; the three registers of the address walk as single words. m38 the record's own softmax figure drawn: three score bars, then the distribution as three discs sized to probability; S1 → instruction → act walks above, reddened at the act. m39 the ladder of potency drawn as six rungs rising and darkening, the last green; the six predicates climb it in order. m40 the three depths as concentric rings (artifact, criterion, paradigm) with the red resistance point travelling inward to the level that must change; intention → resistance → precipitate walks. m41 here and there drawn bright and dim in one situated field, the attempt crossing and dimming; the material answer reddens at the here's edge. m42 the ring of offices with the five products gathered in their own tints; whole → differentiating → whole walks the culmination, violet at the 5→0 return. Stage text: one hospitable line per room.",
+    "Craft rework 2026-10-07 (expression rework pass, lane 5; records re-read at fc59a719). The six product offices now read as one working day moving through colour: moss (Central) → slate (Actuation) → amber held across potency and forge (m39–m40 still) → cold stone held across situation and culmination (m41–m42 still). m37 the carried ground as a green stratum, the question's ring above it, the returned difference travelling back to the source that can be revised; the three registers of the address walk as single words. m38 the record's own softmax figure drawn: three score bars, then the distribution as three discs sized to probability; S1 → instruction → act walks above, reddened at the act. m39 the ladder of potency drawn as six rungs rising and darkening, the last green; the six predicates climb it in order. m40 the three depths as concentric rings (artifact, criterion, paradigm) with the red resistance point travelling inward to the level that must change; intention → resistance → precipitate walks. m41 here and there drawn bright and dim in one situated field, the attempt crossing and dimming; the material answer reddens at the here's edge. m42 the ring of offices with the five products gathered in their own tints; whole → differentiating → whole walks the culmination, violet at the 5→0 return. Stage text: one hospitable line per room."
+  ],
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-essay-l2",
+    "lane": "ESSAY+ROOMS wave 2",
+    "basis_commit": "dbf3b17",
+    "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+    "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
   },
-  {
-   "scene_id": "movement-39",
-   "source_ref": "submission-package/essay/section-rooms/06-objective-internality/movements/39-s5-p2-j-space.md",
-   "relations": "movement identity: §5 · #2 — AIKit — Potency · canonical route: P1-M39 → S2 · A26 · A28 · A31 / C41 · C44 · C45 — AIKit bears the horizon: existence, availability, relevance, permission, selection, operation through time · reading path: ← previous · M38 Actuation — Living Articulation   ·   next → M40 Software Factory — Transformation"
-  },
-  {
-   "scene_id": "movement-40",
-   "source_ref": "submission-package/essay/section-rooms/06-objective-internality/movements/40-s5-p3-preference-hidden-zero.md",
-   "relations": "movement identity: §5 · #3 — Software Factory — Transformation · canonical route: P1-M40 → S3 · A29 · A31 · A33 / C43 · C45 · C47 — preference/hidden-measure remains one transformation case · reading path: ← previous · M39 AIKit — Potency   ·   next → M41 Workcell — Situated Existence"
-  },
-  {
-   "scene_id": "movement-41",
-   "source_ref": "submission-package/essay/section-rooms/06-objective-internality/movements/41-s5-p4-bimba-energy-fields.md",
-   "relations": "movement identity: §5 · #4 — Workcell — Situated Existence · canonical route: P1-M41 → S4 · A26 · A27 · A31 / C41 · C44 · C45 — Workcell owns the irreducibly situated and material encounter · reading path: ← previous · M40 Software Factory — Transformation   ·   next → M42 Quaternal Logic — Transcendent Relation"
-  },
-  {
-   "scene_id": "movement-42",
-   "source_ref": "submission-package/essay/section-rooms/06-objective-internality/movements/42-s5-p5-research-vectors.md",
-   "relations": "movement identity: §5 · #5 — Quaternal Logic — Transcendent Relation · canonical route: P1-M42 → S5 · A05 · A06 · A13 · A30 · A33 / C39 · C41 · C42 · C45 · C50 — concludes through dia/syn, co-internality and the 5→0 return · reading path: ← previous · M41 Workcell — Situated Existence   ·   next → M43 From Theory to Vocation"
+  "glyph_rationales": {
+    "S1": "M38: Actuation — living articulation, the second product (the room walks its office in sequence)",
+    "instruction": "M38: the sentence received — before the act lies a differentiating field",
+    "act": "M38: the passage into actuality under an identity and authority (green and heaviest: the consequential event)",
+    "exists": "M39: a capability can exist — yet be unavailable",
+    "available": "M39: available — yet irrelevant",
+    "relevant": "M39: relevant — yet unpermitted",
+    "permitted": "M39: permitted — yet unselected",
+    "selected": "M39: selected — yet unable to become operative",
+    "operative": "M39: the horizon's arrival — potency become operative (green: AIKit's office fulfilled); the record's own predicates in order",
+    "intention": "M40: what is wanted — the specification is one finite articulation of it",
+    "resistance": "M40: intention encounters resistance — the world answers the projection (reddened)",
+    "differentiating": "M42: difference enters relation — determinations answerable to relations they do not possess as contents (green: the living fold)",
+    "ground": "M37: the carried register of the address — what the question inherits, determinate and revisable",
+    "event": "M37: the observed register — what arrives to be answered by what is carried",
+    "reading": "M37: the inferred register — the reading that must return to its ground (green: the working day's continuity)",
+    "Traversal — the three registers of the address": "M37: authored ground → observed events → inferred readings — the address Central gives the question 'what now governs'",
+    "the carried ground": "M37: meaningful continuity drawn as a stratum — enough stability to orient return, enough provenance to be revised",
+    "the question the day addresses": "M37: the present asking — what now governs — held above the ground it rises from",
+    "the returned difference": "M37: returned provenance travelling back to the source able to alter what happens next — continuity which can learn",
+    "Traversal — the act's passage": "M38: the product named, its instruction given, the act entering the world (reddened at the act)",
+    "the given scores": "M38: the record's own bars — 2, 1, 0 — the differential field before any selection",
+    "the weighted field retained": "M38: the softmax distribution — sizes to probability; apoha's exclusions still visible in the field's shape",
+    "Traversal — the predicates climbed in order": "M39: exists → available → relevant → permitted → selected → operative — potency's six predicates, each rising as it darkens",
+    "the ladder of potency": "M39: the drawn ladder — the horizon of what can be brought to bear, climbed rather than possessed (the last rung green: operative)",
+    "Traversal — the transformation performed": "M40: intention → resistance → precipitate — the alchemical passage, resistance reddened, form precipitated",
+    "the three depths": "M40: artifact change, criterion change, paradigm change — concentric rings the return can reach",
+    "the resistance answered": "M40: the red point of resistance travelling into the depths — transformation reflective where the return reaches what needs to change",
+    "attempt": "M41: the attempt itself — bright at the present depth, dimming as it steps to the absent depth; situation as constitution",
+    "Traversal — the attempt crossing the field": "M41: the attempt stepping from the host-here to the source-there — neither distance nor possession, situation",
+    "the host here — bright and concrete": "M41: the concrete somewhere — bodily, material, available to others",
+    "the source there — real and dim": "M41: what the here inherits from elsewhere — real though not present; situation is relational before geometric",
+    "the situated field": "M41: one situated field holding here and there without merging them",
+    "the material answer": "M41: latency, failure, scarcity — the world's answer to intention, materially consequential",
+    "whole": "M42: the culmination's own word — unity which differentiates without ceasing to be whole (violet at the return: the achieved articulation returning as 0/1)",
+    "Traversal — the culmination walked": "M42: whole → differentiating → whole — the movement QL names, walked inside the ring of offices",
+    "the whole that holds them": "M42: Transcendent Relation drawn — the wider whole as the relation through which local differences remain real",
+    "the five offices gathered": "M42: Central, Actuation, AIKit, Factory, Workcell — the previous five products gathered as relational, each in its own tint",
+    "precipitate": "M40: the precipitated form — Salt, the changed condition the transformation leaves behind (forge-tinted: substance made)"
   }
- ],
- "assets": [
-  {
-   "kind": "diagram",
-   "ref": "engine-native formations and text glyphs only (disc/ring/square/triangle/yantra + authored glyph strings: 0, Ø, 1/0, 0/1, 4+2, X/x, S1, ∅-succession, eight-determination and recognition sequences); no external imagery",
-   "provenance": "authored"
-  }
- ],
- "capture": "rooms/roz-room-06-objective-internality.cover.png",
- "capture_note": "cover = the room door (first movement scene) at authored particle count 62000 through the real engine (tools/capture.mjs, port 47911)",
- "status": "captured",
- "notes": [
-  "E0 acceptance repair: text/field collision class fixed on all six scenes — formations shifted right-of-centre (GX 0.2), ring 1.7→1.55, route layer moved to top-left, text column 400→360; cover re-captured at authored count.",
-  "one shared section-room grammar across all eight rooms (positional chassis forms #0 disc / #1 text / #2 triangle / #3 yantra / #4 square / #5,#5→0 ring); recorded variations listed in profiles/family-section-room.profile.json",
-  "withholdings hold: no mechanism imagery anywhere before movement-45; no 0/1 glyphs before movement-18; Ø appears exactly once with its one job (movement-16)",
-  "claim statuses travel as data (italic layer = claim_status verbatim from movement frontmatter); P1 canonical routes travel as data (route layer = record ids from the authored P1-CANONICAL-ALIGNMENT, never restaged)",
-  "previous/next carried in scene text with exact titles; movement-48 carries the Return to movement-01",
-  "SHARED CAPTURE DEFECT (for Point-Cloud #6): tools/capture.mjs --all-scenes drifts — from the third scene on, screenshots show an earlier scene than requested (openScene + 2500ms does not settle; DOM text confirms the wrong scene). Single-scene captures (one-scene document, default first-scene path) are reliable; all E1 per-scene inspection and all covers used the reliable path. Tool file untouched by E1.",
-  "SCHEMA NOTE (for Point-Cloud #6): TextLayer.size minimum is 14 (finite(t.size,14,150)); a 13px route layer fails validation with the generic message \"Invalid page text.\" — a range-specific message would help authoring.",
-  "OBSERVATION: on dark scenes (room 07, essay return scene) the editorial body text renders dim grey on near-black; legible but low-contrast. No text-colour field exists on TextLayer — presentation is engine-owned.",
-  "OBSERVATION: sequence scenes are temporal; a cover/inspection screenshot shows one phase of the traversal (movement-25 and movement-34 covers/captures catch a settled step or a mid-morph). The artifact, not the still, carries the full sequence.",
-  "Enrichment moves 2026-10-06 (zcode:enrich-essay-l2; records re-read at fc59a719).",
-  "m37 Central: authored ground → observed events → inferred readings — the three registers of the address Central gives the question 'what now governs?'; cool green accents = the working day.",
-  "m38 Actuation: S1 → instruction → act — the product named, then its passage performed; shove pointer = the act entering the world; saw LFO = the impulse.",
-  "m39 AIKit (layout line — the ladder is serial): the record's own six predicates climbed in order, each step rising as it darkens, 'operative' green and last — potency's horizon without possession.",
-  "m40 Software Factory: intention → resistance → changed form — the transformation performed with the resistance reddened; shove pointer holds the record's dynamic.",
-  "m41 3D (z = the concrete somewhere): 'the attempt' steps from the present depth (bright) to the absent depth (dim) while the host-here stays bright and the source-there stays dim — situation as constitution, staged as depth; volume + perspective + occlusion on.",
-  "m42 QL (layout ring): one whole → differentiating → still whole inside the ring of offices — the culmination that gathers the previous five as relational; implode click = the whole gathering without merging.",
-  "Legibility pattern (all members, 2026-10-06; bounds corrected 2026-10-06 after the wave-2 audit): (a) on 40 scenes a sequence whose carrier is a non-text formation walks on a dedicated TEXT-shaped walker entity — the original formation stays as the quiet field form behind it (tintWeight ≤ 0.25) and those scenes hold calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22; speed LFOs clamped ≤ 0.7) so the walking letterform can condense — the wave-1 legible-walk pattern; (b) on 16 scenes the sequence carrier is already a text-shaped formation and keeps its own authored physics (measured maxima: speed 0.8, circulation 1.7, turbulence 0.34), which the render pass pixel-verified holds the letterforms. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text."
- ],
- "enrichment": {
-  "date": "2026-10-06",
-  "actor": "zcode:enrich-essay-l2",
-  "lane": "ESSAY+ROOMS wave 2",
-  "basis_commit": "dbf3b17",
-  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
-  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
- },
- "glyph_rationales": {
-  "authored ground": "M37: Central distinguishes authored ground — what governs the work, established in place",
-  "observed events": "M37: observed events — the second register of Central's address",
-  "inferred readings": "M37: inferred interpretations — the third; what now governs is not what a perfect recording would settle",
-  "S1": "M38: Actuation — living articulation, the second product (the room walks its office in sequence)",
-  "instruction": "M38: the sentence received — before the act lies a differentiating field",
-  "act": "M38: the passage into actuality under an identity and authority (green and heaviest: the consequential event)",
-  "exists": "M39: a capability can exist — yet be unavailable",
-  "available": "M39: available — yet irrelevant",
-  "relevant": "M39: relevant — yet unpermitted",
-  "permitted": "M39: permitted — yet unselected",
-  "selected": "M39: selected — yet unable to become operative",
-  "operative": "M39: the horizon's arrival — potency become operative (green: AIKit's office fulfilled); the record's own predicates in order",
-  "intention": "M40: what is wanted — the specification is one finite articulation of it",
-  "resistance": "M40: intention encounters resistance — the world answers the projection (reddened)",
-  "changed form": "M40: the return as changed form — what happened changes the conditions of what becomes possible next",
-  "the attempt": "M41: Workcell — situated existence; the same attempt present on one machine, absent on another (it dims as it steps to the absent depth)",
-  "one whole": "M42: QL — Transcendent Relation: unity differentiating",
-  "differentiating": "M42: difference enters relation — determinations answerable to relations they do not possess as contents (green: the living fold)",
-  "still whole": "M42: without ceasing to be whole — the movement's exact claim, heaviest at rest"
- }
 }

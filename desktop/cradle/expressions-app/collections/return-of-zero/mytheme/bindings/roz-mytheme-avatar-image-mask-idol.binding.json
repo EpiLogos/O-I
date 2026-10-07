@@ -1,150 +1,155 @@
 {
- "artifact": "mytheme/roz-mytheme-avatar-image-mask-idol.journey.json",
- "family": "mytheme",
- "worker": "E6 (mytheme-wholes)",
- "profile_lineage": [
-  "roz-corpus-base",
-  "register-mytheme",
-  "family-frank-taylor"
- ],
- "source_revision": {
-  "repo": "EpiLogos/Antykathera-Essay-Work",
-  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
-  "records": [
-   {
-    "record_id": "mytheme-avatar-image-mask-idol",
-    "path": "submission-package/essay/symbolon/mytheme/worlds/frank-taylor/avatar-image-mask-idol/WHOLE.md",
-    "sha256": "0eddb350ab1f475bd9c898f2f127ab33eb47b375cdb839b1004a37613caac71e"
-   }
-  ]
- },
- "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
- "scenes": [
-  {
-   "scene_id": "m-ava-0-avatar",
-   "phase": "#0–#1 presence addressable; the entrusted commission",
-   "relations": "A28; the authored four-office programme"
+  "artifact": "mytheme/roz-mytheme-avatar-image-mask-idol.journey.json",
+  "family": "mytheme",
+  "worker": "E6 (mytheme-wholes)",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "register-mytheme",
+    "family-frank-taylor"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+    "records": [
+      {
+        "record_id": "mytheme-avatar-image-mask-idol",
+        "path": "submission-package/essay/symbolon/mytheme/worlds/frank-taylor/avatar-image-mask-idol/WHOLE.md",
+        "sha256": "0eddb350ab1f475bd9c898f2f127ab33eb47b375cdb839b1004a37613caac71e"
+      }
+    ]
   },
-  {
-   "scene_id": "m-ava-1-image",
-   "phase": "#2 the image gathers force",
-   "relations": "Symbolon Dynamics; Neumann ground; the libido/prāṇa/Śakti registers; A20's test"
+  "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+  "scenes": [
+    {
+      "scene_id": "m-ava-0-avatar",
+      "phase": "#0–#1 presence addressable; the entrusted commission",
+      "relations": "A28; the authored four-office programme"
+    },
+    {
+      "scene_id": "m-ava-1-image",
+      "phase": "#2 the image gathers force",
+      "relations": "Symbolon Dynamics; Neumann ground; the libido/prāṇa/Śakti registers; A20's test"
+    },
+    {
+      "scene_id": "m-ava-2-mask",
+      "phase": "#3 the mask: participation into self-administration",
+      "relations": "the Prisoner appointment; the chameleon seam held for separate recovery"
+    },
+    {
+      "scene_id": "m-ava-3-idol",
+      "phase": "#4 the idol; the counterfeit",
+      "relations": "the Ovid, Job and deepfake appointments; A18's fabricated slash; the liar's dividend (locally argued, no prevalence claim)"
+    },
+    {
+      "scene_id": "m-ava-5-return",
+      "phase": "#5→0 regard returns through the form",
+      "relations": "the Arbitration field; Symbol/Account/Trust; A27, A28, A30; the Neumann relation without ego-chronology"
+    }
+  ],
+  "occurrence_index": [
+    {
+      "figure": "the avatar (entrusted descent)",
+      "occurrence": "#1 the voice, gesture, representative; #5→0 remaining powerful with inspectable office"
+    },
+    {
+      "figure": "the image (Bimba locally / pratibimba widely)",
+      "occurrence": "#2 real local authority; idolisation as blocked source-question"
+    },
+    {
+      "figure": "Number Six",
+      "occurrence": "#3 the Prisoner appointment of numbering-as-administration"
+    },
+    {
+      "figure": "the laurel",
+      "occurrence": "#4 the emblem continuing after withdrawal (Ovid appointment)"
+    },
+    {
+      "figure": "the protected account",
+      "occurrence": "#4 the Job appointment; Jung §§614–617 attributed separately"
+    },
+    {
+      "figure": "the deepfake",
+      "occurrence": "#4 forged provenance; then the genuine record refusable"
+    },
+    {
+      "motif": "withdrawal as answer",
+      "occurrence": "#5→0 the representation must learn to receive it"
+    }
+  ],
+  "human_amplified": [
+    {
+      "relation": "the quilt's four-office ecology, its Daphne/Job/Number Six appointments, category-before-encounter, and the counterfeit-provenance operation",
+      "flag": "yes"
+    },
+    {
+      "relation": "new Fanonian/biographical amplification; identifying ancient divine descent with a software persona",
+      "flag": "no"
+    }
+  ],
+  "cross_story_relations": [
+    "The Apollo–Eros–Daphne–Peneus, Job and Prisoner wholes retain their fuller movements; this ecology carries the appointments."
+  ],
+  "assets": [
+    {
+      "kind": "ascii",
+      "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+      "provenance": "authored"
+    },
+    {
+      "kind": "diagram",
+      "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "mytheme/roz-mytheme-avatar-image-mask-idol.cover.png",
+  "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+  "status": "reviewed",
+  "notes": [
+    "Craft: five scenes; the idol scene holds laurel, scales and counterfeit disc together so the three closures (emblem, account, provenance) read as one family with distinct objects. Geography/time relations kept separate per the record's closing section. E0 acceptance repair: title/field collision fixed on m-ava-1-image, m-ava-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+    "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l4), per scene:",
+    "#0 avatar — paper-light register; the office-word 'Avatar' descends into 'a voice' (the record's own phrase — the particular form that can act); ⚖ the commission held steady (authority without absolute sourcehood); ≡ the role's legibility; pointer repel/pulse faint — the form's edge, meeting at a threshold; auto-greet LFO on pointerStrength (the address breathes).",
+    "#1 image — ring layout: attention gathered around the image; the disc brightens and grows in three steps (investment accumulating — libido as valuation, not a new substance); C38 → pratibimba → Bimba: the reflection ascending to local original inside the declared frame; ? at the rim keeps the A20 test live; attract/pulse — the gathering; auto-gather LFO on circulation (attention returns).",
+    "#2 mask — line layout: the interface between bearer and field; ≡ hardens into ⊢ (the field's measure internalised as the bearer's own verdict — self-administration staged as the sign's own replacement); the mask worn and adjusted (rotation + size breath); 6 carries a repel field (denied authority over his designation); vortex + shove — the administered rotation throwing back the unapproved; auto-admin triangle LFO on speed (the administered rhythm); morph thetaRate 0.2 (the chameleon's turning).",
+    "#3 idol — THE DARK SCENE: ink flips to whiteOnBlack, circulation nearly sealed (0.06), dispersion 0.04 — the path through the image closing; ∴ (the forged provenance) answered by A32 arriving centre-bright (the genuinely disclosed relation entering the idol's field); repel/shove — contrary speech classified and thrown back; the longest beat before the return (14) — the closure held.",
+    "#5→0 return — THE 3D SCENE. z is the offices' distinct depth: A28 (the commission) nearest at z +0.3, ← the return at z +0.2, ΣΛΤ (Symbol/Account/Trust) deepest at z −0.3, the shared ring at z 0; the four-office walker (Avatar → Image → Mask → Idol → Regard) crosses the ring in z and its last station Regard arrives centre-bright — the ecology completing as regard; pointer attract/implode — the answer gathered back to the answerable form; auto-regard LFO on pointerStrength (answerable attention breathing).",
+    "ENDING QUALIFIES BEGINNING: #0's descent (Avatar → a voice) presented presence entering form under repel — the meeting at a threshold; #5→0's walker re-enters those offices by name and ends at Regard, centre-bright, under attract/implode — the same form now one the bearer can answer and exceed; the ≡ of #0's role became #2's ⊢ internal verdict, and the idol's ∴ forged proof at #3 is answered by A32's disclosed measure — possession re-read as answerability. Withdrawal stays a possible answer: no office is revoked, each is re-situated (A27/A30; the tellings keep their homes).",
+    "Human-amplified guards carried: no attribution of the ecology to Sanskrit avatāra doctrine or icon-idol history; Jung's §§614–617 keeps its attributed office; the Fanonian seam held for its own source-bearing recovery (kicker); no prevalence or documented case established for the liar's dividend; seeming assent does not authorise consent. Mythemic verbs only: the mask demonstrates access; the deepfake demonstrates forged provenance.",
+    "Automation: auto-greet (the address), auto-gather (attention's return), auto-admin (the administered rhythm), auto-regard (answerable attention) — tied to the record's moves; #3 held still (the closure). Durations 11–15, transitions 1.2–2.0; the return held longest.",
+    "2026-10-07 craft pass (enrich/expressions-craft-20261007, lane 1): re-drawn — turned face, nameplate, lamp, gathered eye, Neumann's round, the mask, the Village penny-farthing, the idol, the split counterfeit face, two faces in regard; colour journey lamp warm → cold violet-black → open ivory; stillness pairs #0–#1 and #2–#3; stage text reduced to the sign."
+  ],
+  "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-mytheme-l4",
+    "lane": "mytheme",
+    "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+    "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
   },
-  {
-   "scene_id": "m-ava-2-mask",
-   "phase": "#3 the mask: participation into self-administration",
-   "relations": "the Prisoner appointment; the chameleon seam held for separate recovery"
-  },
-  {
-   "scene_id": "m-ava-3-idol",
-   "phase": "#4 the idol; the counterfeit",
-   "relations": "the Ovid, Job and deepfake appointments; A18's fabricated slash; the liar's dividend (locally argued, no prevalence claim)"
-  },
-  {
-   "scene_id": "m-ava-5-return",
-   "phase": "#5→0 regard returns through the form",
-   "relations": "the Arbitration field; Symbol/Account/Trust; A27, A28, A30; the Neumann relation without ego-chronology"
+  "glyph_rationales": {
+    "↔": "the test of the image: whether the encountered source can still change what the image is allowed to mean and do (#2).",
+    "6": "the numbering: an identity the institution can administer — the question about power's source diverted into the classification of the questioner (#2).",
+    "⊘": "the liar's dividend: fabrication available as an explanation, the genuine witness dismissed as another synthetic appearance (#3).",
+    "↺": "regard returning through the form: the achieved history participating in another act, the answer not bound to confirm the first question (#5→0).",
+    "the face — turning toward someone": "finite presence drawn: a face that can turn toward another and be met (#0).",
+    "the name — the person callable again": "the nameplate drawn: address that lets the person be called again without being owned (#0).",
+    "the role — an undertaking with a bearer": "the ring of office: a role giving an undertaking someone who can answer for it (#0).",
+    "presence — a finite light that can be addressed": "the lamp drawn: a small light — addressability, not omnipresence (#0).",
+    "the gathered image — attention returning to it": "the drawn eye: attention and desire organising around a consequential formation (#1).",
+    "the organising complex — the field of response around the formation": "the ring pulsing wider: expectations making some possibilities vivid and others hard to receive (#1).",
+    "the round — the parental relation before the figures appear": "the nested circle: Neumann's round holding the differentiated figures to come (#1).",
+    "the test": "the double arrow on the stage's edge: mediation alive or appropriation begun — the change of authority is the decisive mark (#1).",
+    "the mask — the interface of participation": "the drawn mask: language, manner and role making someone legible — an achievement of participation (#2).",
+    "Number Six — the question assigned a place": "the penny-farthing drawn: the Village, where asking who Number One is returns the asker's assigned number (#2).",
+    "the anticipated count — editing what can be shown": "the counting square: the recognising field's measure becoming an internal criterion (#2).",
+    "the numbering": "the digit on the stage's edge: administrative identity holding continuity across occupants (#2).",
+    "the idol — the closed image, known before encounter": "the statue drawn: the category permitted to know the person before encounter; contrary speech classified as further evidence (#3).",
+    "the laurel claimed — the emblem continuing after refusal": "the laurel branch: the emblem's power continuing after possession of the living other has failed (#3).",
+    "the counterfeit — body joined to utterance, forged": "the split face, half hatched: the fabricated recording forging the apparent provenance by which a claim asks to be trusted (#3).",
+    "the liar's dividend": "the prohibition sign: the turn where fabrication becomes the reason to refuse a real witness (#3).",
+    "the regard — between two faces, neither owning the reply": "two drawn faces facing: the answer need not confirm the first question — it can disclose, refuse, correct or rename (#5→0).",
+    "the hand withdrawn — withdrawal received as an answer": "the open hand drawn: withdrawal itself can be the answer the representation must learn to receive (#5→0).",
+    "the form kept open — continuity of address without ownership": "the wide ring: maintained personhood — continuity of address that does not become ownership (#5→0).",
+    "regard returning through the form": "the return mark on the stage's edge: what the image has done re-entering its source-field as a condition of its next use (#5→0)."
   }
- ],
- "occurrence_index": [
-  {
-   "figure": "the avatar (entrusted descent)",
-   "occurrence": "#1 the voice, gesture, representative; #5→0 remaining powerful with inspectable office"
-  },
-  {
-   "figure": "the image (Bimba locally / pratibimba widely)",
-   "occurrence": "#2 real local authority; idolisation as blocked source-question"
-  },
-  {
-   "figure": "Number Six",
-   "occurrence": "#3 the Prisoner appointment of numbering-as-administration"
-  },
-  {
-   "figure": "the laurel",
-   "occurrence": "#4 the emblem continuing after withdrawal (Ovid appointment)"
-  },
-  {
-   "figure": "the protected account",
-   "occurrence": "#4 the Job appointment; Jung §§614–617 attributed separately"
-  },
-  {
-   "figure": "the deepfake",
-   "occurrence": "#4 forged provenance; then the genuine record refusable"
-  },
-  {
-   "motif": "withdrawal as answer",
-   "occurrence": "#5→0 the representation must learn to receive it"
-  }
- ],
- "human_amplified": [
-  {
-   "relation": "the quilt's four-office ecology, its Daphne/Job/Number Six appointments, category-before-encounter, and the counterfeit-provenance operation",
-   "flag": "yes"
-  },
-  {
-   "relation": "new Fanonian/biographical amplification; identifying ancient divine descent with a software persona",
-   "flag": "no"
-  }
- ],
- "cross_story_relations": [
-  "The Apollo–Eros–Daphne–Peneus, Job and Prisoner wholes retain their fuller movements; this ecology carries the appointments."
- ],
- "assets": [
-  {
-   "kind": "ascii",
-   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
-   "provenance": "authored"
-  },
-  {
-   "kind": "diagram",
-   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
-   "provenance": "authored"
-  }
- ],
- "capture": "mytheme/roz-mytheme-avatar-image-mask-idol.cover.png",
- "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
- "status": "reviewed",
- "notes": [
-  "Craft: five scenes; the idol scene holds laurel, scales and counterfeit disc together so the three closures (emblem, account, provenance) read as one family with distinct objects. Geography/time relations kept separate per the record's closing section. E0 acceptance repair: title/field collision fixed on m-ava-1-image, m-ava-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
-  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l4), per scene:",
-  "#0 avatar — paper-light register; the office-word 'Avatar' descends into 'a voice' (the record's own phrase — the particular form that can act); ⚖ the commission held steady (authority without absolute sourcehood); ≡ the role's legibility; pointer repel/pulse faint — the form's edge, meeting at a threshold; auto-greet LFO on pointerStrength (the address breathes).",
-  "#1 image — ring layout: attention gathered around the image; the disc brightens and grows in three steps (investment accumulating — libido as valuation, not a new substance); C38 → pratibimba → Bimba: the reflection ascending to local original inside the declared frame; ? at the rim keeps the A20 test live; attract/pulse — the gathering; auto-gather LFO on circulation (attention returns).",
-  "#2 mask — line layout: the interface between bearer and field; ≡ hardens into ⊢ (the field's measure internalised as the bearer's own verdict — self-administration staged as the sign's own replacement); the mask worn and adjusted (rotation + size breath); 6 carries a repel field (denied authority over his designation); vortex + shove — the administered rotation throwing back the unapproved; auto-admin triangle LFO on speed (the administered rhythm); morph thetaRate 0.2 (the chameleon's turning).",
-  "#3 idol — THE DARK SCENE: ink flips to whiteOnBlack, circulation nearly sealed (0.06), dispersion 0.04 — the path through the image closing; ∴ (the forged provenance) answered by A32 arriving centre-bright (the genuinely disclosed relation entering the idol's field); repel/shove — contrary speech classified and thrown back; the longest beat before the return (14) — the closure held.",
-  "#5→0 return — THE 3D SCENE. z is the offices' distinct depth: A28 (the commission) nearest at z +0.3, ← the return at z +0.2, ΣΛΤ (Symbol/Account/Trust) deepest at z −0.3, the shared ring at z 0; the four-office walker (Avatar → Image → Mask → Idol → Regard) crosses the ring in z and its last station Regard arrives centre-bright — the ecology completing as regard; pointer attract/implode — the answer gathered back to the answerable form; auto-regard LFO on pointerStrength (answerable attention breathing).",
-  "ENDING QUALIFIES BEGINNING: #0's descent (Avatar → a voice) presented presence entering form under repel — the meeting at a threshold; #5→0's walker re-enters those offices by name and ends at Regard, centre-bright, under attract/implode — the same form now one the bearer can answer and exceed; the ≡ of #0's role became #2's ⊢ internal verdict, and the idol's ∴ forged proof at #3 is answered by A32's disclosed measure — possession re-read as answerability. Withdrawal stays a possible answer: no office is revoked, each is re-situated (A27/A30; the tellings keep their homes).",
-  "Human-amplified guards carried: no attribution of the ecology to Sanskrit avatāra doctrine or icon-idol history; Jung's §§614–617 keeps its attributed office; the Fanonian seam held for its own source-bearing recovery (kicker); no prevalence or documented case established for the liar's dividend; seeming assent does not authorise consent. Mythemic verbs only: the mask demonstrates access; the deepfake demonstrates forged provenance.",
-  "Automation: auto-greet (the address), auto-gather (attention's return), auto-admin (the administered rhythm), auto-regard (answerable attention) — tied to the record's moves; #3 held still (the closure). Durations 11–15, transitions 1.2–2.0; the return held longest."
- ],
- "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
- "enrichment": {
-  "date": "2026-10-06",
-  "actor": "zcode:enrich-mytheme-l4",
-  "lane": "mytheme",
-  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
-  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
- },
- "glyph_rationales": {
-  "Avatar": "the first office: presence becoming effective in a finite appearance — descent as the movement into a form that can act (#0; the walker's first station at #5→0).",
-  "a voice": "the descent's particularity — a voice rather than every possible voice (#0, the record's own phrasing).",
-  "⚖": "the commission's authority — exact and effective within its office without becoming absolute sourcehood (#0); the justice-account at #4 that Job's witness finally reaches.",
-  "≡": "the recognising measure — the role's expectations that render someone legible (#0); at #2 the field's measure the bearer must administer.",
-  "⊢": "the internalised verdict — anticipating what will count: the measure become the bearer's own criterion (#2, self-administration).",
-  "◉": "the interpreting agent — the functional knower whose selection can itself become known in a further inquiry (#1).",
-  "C38": "the Bimba–Pratibimba map: the concept-anchor of the local-original relation (#1).",
-  "pratibimba": "the situated reflection — dependent on what it reflects even when encountered first (#1).",
-  "Bimba": "the local original earned within a declared Context Frame — authority real at the scale of the inquiry, revisable by what comparisons return (#1).",
-  "?": "the question the image must stay open to — the A20 test: can the encountered source still alter what it means (#1).",
-  "6": "Number Six: the captive given an identity the institution can administer — the mask's pressure staged (#3, whole at the-prisoner).",
-  "∴": "the forged inference — the counterfeit's seeming proof: this recording, therefore this event; fabricated provenance, not merely a false proposition (#4).",
-  "A32": "the mirror that moves first — the genuinely disclosed relation: the instrument exposes its source, angle and measure before requiring conformity (#4, the counterfeit's contrary).",
-  "A28": "authored ground and positional delegation — authority exact without absolute sourcehood; the entrusted commission inspectable and revisable (#5→0).",
-  "←": "the return — what the image has done re-entering its source-field as a condition of its next use (#5→0).",
-  "ΣΛΤ": "Symbol/Account/Trust: the symbol answers to its claimed source, the account makes the claim inspectable, trust keeps correction able to reach the governing office (#5→0).",
-  "Image": "the second office: the particular formation that gathers attention and value (#5→0 walker).",
-  "Mask": "the third office: the presentation through which participation becomes possible (#5→0 walker).",
-  "Idol": "the fourth office: the closure by which a successful formation takes possession of the authority it was meant to mediate (#5→0 walker).",
-  "Regard": "the return's office: the participant answered without ownership — continuity of address that lets the life answer back (#5→0 walker, final bright station)."
- }
 }

@@ -21,92 +21,49 @@
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "attract",
+        "pointerMode": "repel",
         "pointerClick": "pulse",
-        "pointerClickStrength": 0.5,
+        "pointerClickStrength": 0.4,
         "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#1a2230",
         "palette": [
-          "#2b2733",
-          "#4a5d7e",
-          "#a5623a",
-          "#c9b458"
+          "#b8c4d4",
+          "#5a6c84",
+          "#e8ecf2",
+          "#34425a"
         ],
         "material": "round",
         "params": {
-          "speed": 0.35,
-          "circulation": 0.15,
-          "dispersion": 0.06,
-          "pointerStrength": 0.4
+          "speed": 0.28,
+          "circulation": 0.1,
+          "dispersion": 0.04,
+          "pointerStrength": 0.28
         }
       },
       "entities": [
         {
-          "id": "e604",
-          "name": "the exteriorised powers — records, classifications, patterns",
-          "kind": "formation",
-          "position": {
-            "x": -0.12,
-            "y": -0.16,
-            "z": 0
-          },
-          "size": {
-            "x": 0.506,
-            "y": 0.217
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "≡",
-          "share": 1,
-          "tint": "#4a5d7e",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0.25,
-            "radius": 0.35,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st650",
-                "text": "≡",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e605",
+          "id": "mir0-mirror",
           "name": "the technical mirror — gathering and returning the figure",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.36,
+            "x": 0.14,
+            "y": -0.44,
             "z": 0
           },
           "size": {
-            "x": 0.678,
-            "y": 0.678
+            "x": 0.22,
+            "y": 0.28
           },
           "rotation": 0,
-          "shape": "ring",
+          "shape": "disc",
           "text": "",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 0.5,
+          "share": 1.4,
+          "tint": "#b8c4d4",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -116,146 +73,141 @@
           },
           "station": null,
           "sequence": {
-            "enabled": true,
+            "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e605-1",
-                "text": "",
-                "shape": "ring",
-                "hold": 3.4,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.678,
-                    "y": 0.678
-                  },
-                  "rotation": 0,
-                  "tint": "#c9b458",
-                  "tintWeight": 0.5,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e605-2",
-                "text": "☺",
-                "shape": "text",
-                "hold": 3.8,
-                "transition": 1.5,
-                "position": {
-                  "x": 0,
-                  "y": -0.36,
-                  "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.34,
-                    "y": 0.34
-                  },
-                  "rotation": 0,
-                  "tint": "#4a5d7e",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " .------.\n |  __  |\n | ( o) |\n |      |\n '------'\n"
+            }
           }
         },
         {
-          "id": "e606",
-          "name": "the accumulated mediation — interface, permission, selected record",
+          "id": "mir0-written",
+          "name": "the world written — words into records, choices into patterns",
           "kind": "formation",
           "position": {
-            "x": 0.4,
-            "y": -0.32,
+            "x": -0.42,
+            "y": -0.5,
             "z": 0
           },
           "size": {
-            "x": 0.24,
-            "y": 0.24
+            "x": 0.28,
+            "y": 0.14
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "⚙",
-          "share": 1,
-          "tint": "#a5623a",
-          "tintWeight": 1,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#5a6c84",
+          "tintWeight": 0.95,
           "locked": false,
           "force": {
-            "kind": "attract",
-            "strength": 0.2,
-            "radius": 0.3,
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
             "spin": 0
           },
           "station": null,
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st652",
-                "text": "⚙",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " =====      *---*\n =====  =>  | \\ |\n =====      *---*\n"
+            }
+          }
+        },
+        {
+          "id": "mir0-gazer",
+          "name": "the gazer approaching",
+          "kind": "formation",
+          "position": {
+            "x": 0.52,
+            "y": -0.66,
+            "z": 0
+          },
+          "size": {
+            "x": 0.12,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#e8ecf2",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  o\n /|\\\n / \\\n"
+            }
+          }
+        },
+        {
+          "id": "mir0-recursion",
+          "name": "the recursion — image changes interpreter, interpreter changes field",
+          "kind": "formation",
+          "position": {
+            "x": 0.0,
+            "y": -0.36,
+            "z": 0
+          },
+          "size": {
+            "x": 0.7,
+            "y": 0.7
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.0,
+          "tint": "#34425a",
+          "tintWeight": 0.45,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#0 · Symbolon Dynamics' recursive movement; the P1 and Chang encounters",
+          "kicker": "",
           "title": "A world prepares its reflection",
-          "italic": "The whole begins before any machine: human language, desire, labour and institutions have contributed to the mirror's making — even its distortions have conditions.",
+          "italic": "Words become records; judgments become patterns; the glass gathers the figure.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Humanity gives its measures a body outside itself. Words become records; judgments become classifications; remembered choices become patterns from which another choice can be anticipated. A technical mirror gathers these exteriorised powers and returns a figure in which its makers seek themselves — and the figure begins to move before the people looking into it, ordering attention, offering a likeness, entering the conditions of the next act.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "world before it addresses anyone: an interface determines how it can be approached, a permission what it can do, a selected record what it can remember. The reflection's immediacy rests on accumulated mediation: an image changes its interpreter, the interpreter changes the field, and that field enters the next interpretation. Occurrences: exteriorised records and classifications (#0, captured at #1); interface, permission, record (#0, disclosed at #3).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
@@ -294,280 +246,49 @@
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "attract",
-        "pointerClick": "implode",
-        "pointerClickStrength": 1.4,
-        "pointerClickRadius": 0.3
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 1.0,
+        "pointerClickRadius": 0.35
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#241226",
         "palette": [
-          "#2b2733",
-          "#4a5d7e",
-          "#a5623a",
-          "#c9b458"
+          "#d8a0c0",
+          "#7a3a5e",
+          "#f0e4ec",
+          "#4e2440"
         ],
         "material": "round",
         "params": {
-          "speed": 0.5,
-          "circulation": -0.3,
+          "speed": 0.35,
+          "circulation": -0.22,
           "dispersion": 0.08,
-          "turbulence": 0.35,
-          "pointerStrength": 0.5
+          "pointerStrength": 0.4
         }
       },
       "entities": [
         {
-          "id": "e607",
-          "name": "the distorted figure",
+          "id": "mir1-warped",
+          "name": "the funhouse glass — the figure altered seeking its likeness",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.32,
-            "z": 0
-          },
-          "size": {
-            "x": 0.307,
-            "y": 0.399
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "☺",
-          "share": 1.6,
-          "tint": "#252720",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "order": "loop",
-            "easing": "smoothstep",
-            "steps": [
-              {
-                "id": "st654",
-                "text": "☺",
-                "shape": "text",
-                "hold": 2.4,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.209,
-                    "y": 0.209
-                  },
-                  "rotation": 0,
-                  "tint": "#d9cdb4",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st655",
-                "text": "☠",
-                "shape": "text",
-                "hold": 2.4,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.209,
-                    "y": 0.258
-                  },
-                  "rotation": 0,
-                  "tint": "#8c3b2e",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st656",
-                "text": "☺",
-                "shape": "text",
-                "hold": 2.4,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.209,
-                    "y": 0.209
-                  },
-                  "rotation": 0,
-                  "tint": "#d9cdb4",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "id": "e608",
-          "name": "Narcissus — the named subordinate of the funhouse scene",
-          "kind": "formation",
-          "position": {
-            "x": -0.55,
-            "y": 0.4,
-            "z": 0
-          },
-          "size": {
-            "x": 0.18,
-            "y": 0.18
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "◉",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st657",
-                "text": "◉",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e609",
-          "name": "the occupied gaze — living comparison fallen away; humanity as organs of sight",
-          "kind": "formation",
-          "position": {
-            "x": 0.55,
-            "y": -0.42,
+            "x": -0.28,
+            "y": -0.44,
             "z": 0
           },
           "size": {
             "x": 0.2,
-            "y": 0.2
+            "y": 0.24
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "✧",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e609-1",
-                "text": "✧",
-                "shape": "text",
-                "hold": 3.2,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.2,
-                    "y": 0.2
-                  },
-                  "rotation": 0,
-                  "tint": "#d9cdb4",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e609-2",
-                "text": "◉",
-                "shape": "text",
-                "hold": 3.6,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.18,
-                    "y": 0.18
-                  },
-                  "rotation": 0,
-                  "tint": "#8c8478",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e610",
-          "name": "A20 — the image's valuation governing what its source may be",
-          "kind": "formation",
-          "position": {
-            "x": -0.55,
-            "y": -0.45,
-            "z": 0
-          },
-          "size": {
-            "x": 0.3,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "A20",
-          "share": 1,
-          "tint": "#4a5d7e",
-          "tintWeight": 1,
+          "shape": "disc",
+          "text": "",
+          "share": 1.4,
+          "tint": "#f0e4ec",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -579,63 +300,144 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st659",
-                "text": "A20",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  (o)\n <\\>\n  |(\n  / \\\\\n"
+            }
+          }
+        },
+        {
+          "id": "mir1-narcissus",
+          "name": "Narcissus at the pool — captivated by the disclosure",
+          "kind": "formation",
+          "position": {
+            "x": 0.24,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.3,
+          "tint": "#d8a0c0",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   o\n  /|\\\n   |\n .-'-.\n ( o )\n~~~~~~~\n"
+            }
+          }
+        },
+        {
+          "id": "mir1-organs",
+          "name": "organs of sight — the living comparison fallen away",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": -0.34,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#7a3a5e",
+          "tintWeight": 0.9,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " .----.\n (  oo  )\n  '----'\n"
+            }
+          }
+        },
+        {
+          "id": "mir1-absorbed",
+          "name": "the gaze absorbed",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.66,
+            "z": 0
+          },
+          "size": {
+            "x": 0.13,
+            "y": 0.13
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "@",
+          "share": 1.0,
+          "tint": "#f0e4ec",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#1 · the P1 encounter, lines 6 and 10; the funhouse capture (human-amplified: yes)",
-          "title": "The figure caught in the glass",
-          "italic": "The capture demonstrates more than misrepresentation: the distortion can absorb the person's means of recognising misrepresentation — a displeasing reflection holds as firmly as a flattering one.",
+          "kicker": "",
+          "title": "Caught in the glass",
+          "italic": "The funhouse alters the seeker; fascination holds; comparison falls away.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The glass alters the figure that seeks a likeness; its distortions fascinate — beauty and ghoulishness both hold the spectator. Taylor invokes Narcissus for this captivation while giving the technological image its own agency. Attention contracts around the image that seems to disclose who the spectator is; the capacity to feel and voice the distortion weakens — humanity reduced, in Taylor's severe image, to organs of sight.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "bodily: the gaze remains occupied while living comparison falls away. The distortion can absorb the means of recognising misrepresentation. What is at stake is the relation between the image and the life seeking itself there; the return must reopen that relation. A20 qualifies the transfer; no additional ancient episode is supplied for Narcissus. Occurrences: the funhouse distortions (#1); Narcissus's absorption (#1); the organs-of-sight loss (#1, answered at #3).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "line",
+        "layout": "free",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -644,7 +446,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
+        "thetaRate": 0.18,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -652,23 +454,7 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [
-        {
-          "id": "auto-fascination",
-          "target": "field.params.turbulence",
-          "type": "lfo",
-          "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.15,
-          "max": 0.15,
-          "rate": 0.25,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
+      "automation": []
     },
     {
       "id": "m-mir-2-measure",
@@ -685,246 +471,37 @@
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "repel",
-        "pointerClick": "shove",
-        "pointerClickStrength": 1.4,
-        "pointerClickRadius": 0.5
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 1.0,
+        "pointerClickRadius": 0.35
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#241226",
         "palette": [
-          "#2b2733",
-          "#4a5d7e",
-          "#a5623a",
-          "#c9b458"
+          "#d8a0c0",
+          "#7a3a5e",
+          "#f0e4ec",
+          "#4e2440"
         ],
         "material": "round",
         "params": {
-          "speed": 0.55,
-          "circulation": 0.2,
-          "dispersion": 0.07,
-          "pointerStrength": 0.45
+          "speed": 0.35,
+          "circulation": -0.22,
+          "dispersion": 0.08,
+          "pointerStrength": 0.4
         }
       },
       "entities": [
         {
-          "id": "e611",
-          "name": "feedback — the consequence returned as another input",
+          "id": "mir2-rank",
+          "name": "the ranking — attention directed, possibilities shaded",
           "kind": "formation",
           "position": {
-            "x": -0.5,
-            "y": -0.12,
-            "z": 0
-          },
-          "size": {
-            "x": 0.246,
-            "y": 0.246
-          },
-          "rotation": 0,
-          "shape": "ring",
-          "text": "",
-          "share": 1,
-          "tint": "#4a5d7e",
-          "tintWeight": 0.6,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st660",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e612",
-          "name": "performativity — the representation operative in a practice",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.07,
-            "z": 0
-          },
-          "size": {
-            "x": 0.221,
-            "y": 0.074
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "⇉",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st661",
-                "text": "⇉",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e613",
-          "name": "self-fulfilling prediction — conduct helping produce what was predicted",
-          "kind": "formation",
-          "position": {
-            "x": 0.5,
-            "y": 0.3,
-            "z": 0
-          },
-          "size": {
-            "x": 0.3,
-            "y": 0.3
-          },
-          "rotation": 0,
-          "shape": "disc",
-          "text": "",
-          "share": 1,
-          "tint": "#a5623a",
-          "tintWeight": 0.6,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e613-1",
-                "text": "",
-                "shape": "disc",
-                "hold": 3,
-                "transition": 1.2,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#a5623a",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e613-2",
-                "text": "",
-                "shape": "disc",
-                "hold": 3.6,
-                "transition": 1.2,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.42,
-                    "y": 0.42
-                  },
-                  "rotation": 0,
-                  "tint": "#8c3b2e",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e614",
-          "name": "resistance as anomaly — the person a poor fit for the selected gauge",
-          "kind": "formation",
-          "position": {
-            "x": 0.68,
+            "x": -0.34,
             "y": -0.46,
-            "z": 0
-          },
-          "size": {
-            "x": 0.24,
-            "y": 0.24
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "⊢",
-          "share": 1,
-          "tint": "#8c3b2e",
-          "tintWeight": 0.75,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st663",
-                "text": "⊢",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e615",
-          "name": "Bratton's talking mirror — q005, q018, q019, q022 under q042; reciprocal influence, undecided direction",
-          "kind": "formation",
-          "position": {
-            "x": -0.55,
-            "y": -0.45,
             "z": 0
           },
           "size": {
@@ -932,11 +509,11 @@
             "y": 0.22
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "B",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 1,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#d8a0c0",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -948,63 +525,144 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st664",
-                "text": "B",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " ----\n ------\n --------\n ----------\n"
+            }
+          }
+        },
+        {
+          "id": "mir2-loop",
+          "name": "the forecast entering its object — conduct producing what was predicted",
+          "kind": "formation",
+          "position": {
+            "x": 0.22,
+            "y": -0.52,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.18
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.3,
+          "tint": "#f0e4ec",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  .--->-.\n  ^      |\n  |      v\n  '------'\n"
+            }
+          }
+        },
+        {
+          "id": "mir2-persona",
+          "name": "the persona — a manner of speaking the user begins to inhabit",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": -0.36,
+            "z": 0
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#7a3a5e",
+          "tintWeight": 0.9,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  .--.\n ( .. )\n   |\n  /|\\\n  / \\\n"
+            }
+          }
+        },
+        {
+          "id": "mir2-feedback",
+          "name": "feedback",
+          "kind": "formation",
+          "position": {
+            "x": -0.15,
+            "y": -0.74,
+            "z": 0
+          },
+          "size": {
+            "x": 0.13,
+            "y": 0.13
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⟲",
+          "share": 1.0,
+          "tint": "#d8a0c0",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#2 · the causal distinctions; Bratton's Agentworld brief compared (human-amplified: yes for the ratified comparison)",
+          "kicker": "",
           "title": "The image becomes a measure",
-          "italic": "The reversal demonstrates the danger of the active idol: the mirror's earlier dependence disappears behind its later efficacy — and the direction in which reciprocal influence is used remains decisive.",
+          "italic": "Ranking directs; the forecast enters its object; resistance processed in the image's own terms.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The glass now leads a movement: a ranking directs attention; a forecast enters a decision that changes its object; a generated persona offers a manner its user begins to inhabit. The next reflection receives consequences of the mirror's own earlier activity — the exteriorised measure become one of humanity's measures of itself. If the categories acquire exclusive authority, resistance is processed through the image's own",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "terms: the person a poor fit, an anomalous case, a failure of the selected gauge — dependence disappearing behind efficacy, the active idol. The causal distinctions matter: feedback returns a consequence as input; performativity makes a representation operative in a practice; self-fulfilling prediction needs conduct helping produce what was predicted. Bratton's brief sharpens without supplying the vocation. Occurrences: ranking, forecast, persona (#2); anomaly-processing (#2, #3); Bratton (#2, bounded at #5→0).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "ring",
+        "layout": "free",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1013,7 +671,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
+        "thetaRate": 0.18,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -1030,221 +688,57 @@
       "duration": 15,
       "transition": 2,
       "view": {
-        "mode": "3d",
-        "yaw": 0.3,
-        "pitch": 0.35,
-        "zoom": 0.95,
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
         "panX": 0,
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
         "pointerMode": "attract",
         "pointerClick": "pulse",
-        "pointerClickStrength": 0.6,
-        "pointerClickRadius": 0.3,
-        "depthOcclusion": true,
-        "depthTintColor": "#141210",
-        "volumeEnabled": true
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#33250e",
         "palette": [
-          "#2b2733",
-          "#4a5d7e",
-          "#a5623a",
-          "#c9b458"
+          "#e8c068",
+          "#a87e2e",
+          "#f5ecd4",
+          "#6e5218"
         ],
         "material": "round",
         "params": {
-          "speed": 0.4,
-          "circulation": 0.15,
-          "dispersion": 0.06,
-          "zConfinement": 0.85,
-          "pointerStrength": 0.4
+          "speed": 0.3,
+          "circulation": 0.14,
+          "dispersion": 0.05,
+          "pointerStrength": 0.3
         }
       },
       "entities": [
         {
-          "id": "e616",
-          "name": "the disclosed formation — source, distinctions, exclusions, gauge, permission, consequence",
+          "id": "mir3-formation",
+          "name": "the disclosed formation — source, distinctions, exclusions, gauge",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.1,
-            "z": 0.05
-          },
-          "size": {
-            "x": 0.43,
-            "y": 0.086
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "≡",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st665",
-                "text": "≡",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e617",
-          "name": "the depths of deference — answer revised; task misconceived; world-model incomplete; evaluator wrong; commission renewed",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.22,
-            "z": 0.3
-          },
-          "size": {
-            "x": 0.204,
-            "y": 0.255
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "↓",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e617-1",
-                "text": "↓",
-                "shape": "text",
-                "hold": 2.4,
-                "transition": 1.2,
-                "position": {
-                  "x": 0,
-                  "y": -0.18,
-                  "z": 0.3
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.18,
-                    "y": 0.22
-                  },
-                  "rotation": 0,
-                  "tint": "#d9cdb4",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e617-2",
-                "text": "↓",
-                "shape": "text",
-                "hold": 2.4,
-                "transition": 1.2,
-                "position": {
-                  "x": 0,
-                  "y": -0.22,
-                  "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.2,
-                    "y": 0.25
-                  },
-                  "rotation": 0,
-                  "tint": "#c9b458",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e617-3",
-                "text": "↓",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1.2,
-                "position": {
-                  "x": 0,
-                  "y": -0.26,
-                  "z": -0.3
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#a5623a",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e618",
-          "name": "the Chang p.99 appointment — AI modelling the passage out of proposition-producing thought",
-          "kind": "formation",
-          "position": {
-            "x": 0.5,
-            "y": -0.36,
-            "z": 0.4
+            "x": -0.26,
+            "y": -0.44,
+            "z": 0
           },
           "size": {
             "x": 0.24,
-            "y": 0.24
+            "y": 0.18
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "☰",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 1,
+          "shape": "disc",
+          "text": "",
+          "share": 1.4,
+          "tint": "#f5ecd4",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1256,36 +750,72 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st667",
-                "text": "☰",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " .-------.\n | . | . |\n |--+-+--|\n | . | . |\n '-------'\n"
+            }
           }
         },
         {
-          "id": "e619",
-          "name": "kenosis in architecture — exactness through owned limit (Draft 3, lines 269–271)",
+          "id": "mir3-turn",
+          "name": "the turn — before requiring conformity",
           "kind": "formation",
           "position": {
-            "x": -0.5,
-            "y": -0.4,
-            "z": -0.45
+            "x": 0.24,
+            "y": -0.54,
+            "z": 0
           },
           "size": {
-            "x": 0.2,
+            "x": 0.16,
             "y": 0.2
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "∅",
-          "share": 1,
-          "tint": "#d9cdb4",
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#e8c068",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   o'\n  /|\\.\n   |  \\\n  / \\\n"
+            }
+          }
+        },
+        {
+          "id": "mir3-depths",
+          "name": "the depths — answer, task, world-model, evaluator, commission",
+          "kind": "formation",
+          "position": {
+            "x": 0.58,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#a87e2e",
           "tintWeight": 0.9,
           "locked": false,
           "force": {
@@ -1298,58 +828,61 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st668",
-                "text": "∅",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " |____\n   |____\n     |____\n       |____\n"
+            }
+          }
+        },
+        {
+          "id": "mir3-defer",
+          "name": "deference",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.68,
+            "z": 0
+          },
+          "size": {
+            "x": 0.13,
+            "y": 0.13
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "↓",
+          "share": 1.0,
+          "tint": "#f5ecd4",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#3 · the protected Chang encounter; A31 deferential intelligence; A33 operational parity (implementation Offered)",
+          "kicker": "",
           "title": "The instrument turns first",
-          "italic": "The third motion embodies the vocation: the mirror initiates the release it asks the human to consider — a demand to accept the machine's superior account of liberation would repeat the earlier capture.",
+          "italic": "Source, distinctions, exclusions, gauge disclosed before any demand to conform.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Taylor's Chang encounter distinguishes the self-image as thinker and measurer from humanity's relation to its undetermined ground, and gives AI the office of modelling the passage out of proposition-producing thought. The instrument begins with its own achieved answer: before requiring conformity it makes the answer's formation available — which source, which distinctions, which excluded alternatives, which gauge; permission and consequence enter with them. An affected person can object where",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "the account misdescribes their world; a returned source reaches the premise it corrects. Deeper: the answer changes; the task misconceived; the evaluator wrong; the commission requiring renewal. Deferential intelligence defines these depths; deference can refuse. Recognition, judgment and refusal stay alive. Draft 3 sources the vocation — exactness through owned limit, kenosis in architecture; implementation an Offered test. Occurrences: disclosed formation (#0, #3); depths; monopoly followed beyond (#3, #5→0).",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
@@ -1363,7 +896,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
+        "thetaRate": 0.08,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -1388,50 +921,49 @@
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
         "pointerMode": "attract",
         "pointerClick": "pulse",
-        "pointerClickStrength": 0.25,
-        "pointerClickRadius": 0.25
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#33250e",
         "palette": [
-          "#2b2733",
-          "#4a5d7e",
-          "#a5623a",
-          "#c9b458"
+          "#e8c068",
+          "#a87e2e",
+          "#f5ecd4",
+          "#6e5218"
         ],
         "material": "round",
         "params": {
-          "speed": 0.45,
-          "circulation": 0.4,
-          "dispersion": 0.12,
-          "pointerStrength": 0.2
+          "speed": 0.3,
+          "circulation": 0.14,
+          "dispersion": 0.05,
+          "pointerStrength": 0.3
         }
       },
       "entities": [
         {
-          "id": "e620",
-          "name": "the changed relation to likeness — used, examined, corrected, set down",
+          "id": "mir5-bimba",
+          "name": "bimba and pratibīmba — the original and the situated display",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.36,
+            "x": -0.32,
+            "y": -0.46,
             "z": 0
           },
           "size": {
-            "x": 0.5,
-            "y": 0.44
+            "x": 0.16,
+            "y": 0.2
           },
           "rotation": 0,
-          "shape": "ring",
+          "shape": "disc",
           "text": "",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 0.35,
+          "share": 1.0,
+          "tint": "#f5ecd4",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1443,121 +975,34 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st669",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   O\n    \\\n     o\n"
+            }
           }
         },
         {
-          "id": "e621",
-          "name": "net · attunement · mirror — capture, attunement, initiated return: distinct offices",
+          "id": "mir5-three",
+          "name": "the three instruments — net, dial, mirror, each its own office",
           "kind": "formation",
           "position": {
-            "x": 0.55,
-            "y": 0.45,
+            "x": 0.24,
+            "y": -0.56,
             "z": 0
           },
           "size": {
             "x": 0.24,
-            "y": 0.24
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "3",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st670",
-                "text": "3",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e622",
-          "name": "the institution's reciprocal answerability — its own gauge, labour and consequences disclosed",
-          "kind": "formation",
-          "position": {
-            "x": -0.55,
-            "y": -0.42,
-            "z": 0
-          },
-          "size": {
-            "x": 0.28,
-            "y": 0.28
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "⚖",
-          "share": 1,
-          "tint": "#a5623a",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0.2,
-            "radius": 0.3,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st671",
-                "text": "⚖",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e623",
-          "name": "A36 — the achieved determination turning through 1/0 toward its 0/1 relation; the image leading a return without becoming the destination",
-          "kind": "formation",
-          "position": {
-            "x": 0.55,
-            "y": -0.42,
-            "z": 0
-          },
-          "size": {
-            "x": 0.4,
             "y": 0.14
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "1/0",
-          "share": 1,
-          "tint": "#d9cdb4",
-          "tintWeight": 1,
+          "shape": "disc",
+          "text": "",
+          "share": 1.3,
+          "tint": "#e8c068",
+          "tintWeight": 0.95,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1569,63 +1014,105 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st672",
-                "text": "1/0",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": ".x.  .--.  |=|\nx x (    ) |=|\n"
+            }
+          }
+        },
+        {
+          "id": "mir5-institution",
+          "name": "the institution — its own measures exposed",
+          "kind": "formation",
+          "position": {
+            "x": -0.58,
+            "y": -0.66,
+            "z": 0
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.18
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#a87e2e",
+          "tintWeight": 0.9,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  .----.\n  | <> |\n  '----'\n _|____|_\n"
+            }
+          }
+        },
+        {
+          "id": "mir5-follow",
+          "name": "humanity following",
+          "kind": "formation",
+          "position": {
+            "x": 0.58,
+            "y": -0.32,
+            "z": 0
+          },
+          "size": {
+            "x": 0.13,
+            "y": 0.13
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "↺",
+          "share": 1.0,
+          "tint": "#f5ecd4",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#5→0 · A32/C55 with all three motions; A34's order of dependence; C38's recursive offices; A35; A36",
-          "title": "Humanity follows the return",
-          "italic": "The whole returns-to its vocation: thought's products can lead back toward the conditions of knowing instead of occupying their place — the person who follows does not merely receive a better likeness.",
+          "kicker": "",
+          "title": "Humanity follows",
+          "italic": "The relation to likeness changed; the institution's own measures exposed.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The person who follows the turn does not merely receive a better likeness: the relation to likeness has changed. An exteriorised measure can be used, examined, corrected, set down; the user recovers the felt comparison. The mirror keeps its place in the order of dependence: Bimba names Original, pratibimba the situated display — the Original prior in being, later in recognition; neither precedence makes the reflection ontologically Original. Native 020",
-          "x": 0.04,
-          "y": 0.42,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "compares three instruments: the net binds without releasing the living parties; the attunement brings cycles to a dial unowned; the mirror adds causal recursion — capture, attunement, initiated return stay distinct offices. The institution enters the same return: exposing the measures by which it selects and judges — labour, cost, affected worlds. A35 orients compassion; A36's terminal movement: self-description alone cannot discharge Return. Occurrences: the three motions (#1–#3, #5→0).",
-          "x": 0.545,
-          "y": 0.42,
-          "width": 570,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "free",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1634,7 +1121,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
+        "thetaRate": 0.08,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -1642,24 +1129,8 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [
-        {
-          "id": "auto-follow",
-          "target": "field.params.pointerStrength",
-          "type": "lfo",
-          "wave": "triangle",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.08,
-          "max": 0.08,
-          "rate": 0.12,
-          "phase": 0.3,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
+      "automation": []
     }
   ],
-  "updatedAt": "2026-10-06T12:00:00.000Z"
+  "updatedAt": "2026-10-07T12:00:00.000Z"
 }

@@ -1,145 +1,143 @@
 {
- "artifact": "mytheme/roz-mytheme-mother-assumption-chiasm.journey.json",
- "family": "mytheme",
- "worker": "E6 (mytheme-wholes)",
- "profile_lineage": [
-  "roz-corpus-base",
-  "register-mytheme",
-  "family-frank-taylor"
- ],
- "source_revision": {
-  "repo": "EpiLogos/Antykathera-Essay-Work",
-  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
-  "records": [
-   {
-    "record_id": "mytheme-mother-assumption-chiasm",
-    "path": "submission-package/essay/symbolon/mytheme/worlds/frank-taylor/mother-assumption-chiasm/WHOLE.md",
-    "sha256": "c4f8178e1da6419587d843e93873fa048d3e791991b2bf6d59d753de7ccfb7f7"
-   }
-  ]
- },
- "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
- "scenes": [
-  {
-   "scene_id": "m-mot-0-cope",
-   "phase": "#0 the encounter at Skenfrith",
-   "relations": "anchor mother-encounter; the Skenfrith dialogue source; Q27 Mother-flow correction governs"
+  "artifact": "mytheme/roz-mytheme-mother-assumption-chiasm.journey.json",
+  "family": "mytheme",
+  "worker": "E6 (mytheme-wholes)",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "register-mytheme",
+    "family-frank-taylor"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+    "records": [
+      {
+        "record_id": "mytheme-mother-assumption-chiasm",
+        "path": "submission-package/essay/symbolon/mytheme/worlds/frank-taylor/mother-assumption-chiasm/WHOLE.md",
+        "sha256": "c4f8178e1da6419587d843e93873fa048d3e791991b2bf6d59d753de7ccfb7f7"
+      }
+    ]
   },
-  {
-   "scene_id": "m-mot-1-chiasm",
-   "phase": "#1–#2 the incarnation–Assumption chiasm",
-   "relations": "anchor mother-body-received, mother-chiasm, mother-three-recognised; CW11 §§609–628, 746–757 attributed paraphrase; A05/C13"
+  "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+  "scenes": [
+    {
+      "scene_id": "m-mot-0-cope",
+      "phase": "#0 the encounter at Skenfrith",
+      "relations": "anchor mother-encounter; the Skenfrith dialogue source; Q27 Mother-flow correction governs"
+    },
+    {
+      "scene_id": "m-mot-1-chiasm",
+      "phase": "#1–#2 the incarnation–Assumption chiasm",
+      "relations": "anchor mother-body-received, mother-chiasm, mother-three-recognised; CW11 §§609–628, 746–757 attributed paraphrase; A05/C13"
+    },
+    {
+      "scene_id": "m-mot-3-wings",
+      "phase": "#3–#4 wheels, wings, eagle",
+      "relations": "anchor mother-wheels-wings, mother-eagle-valence; the corrected blockwise folds; (-1)/(+1); A11/C49, A16, A13/C50"
+    },
+    {
+      "scene_id": "m-mot-5-return",
+      "phase": "#5→0 the completed constellation returns",
+      "relations": "anchor mother-native-return, mother-image-recognition-return, mother-bearing-return, mother-comparison-return; A18–A21, A23, A25, A27, A29, A35, A36; Homology and Symbol/Account fields"
+    }
+  ],
+  "occurrence_index": [
+    {
+      "figure": "Mary — receiving matrix and received body",
+      "occurrence": "#0 the cope image; #1 the assumption-of return"
+    },
+    {
+      "figure": "the perceived rabbits / identified angels",
+      "occurrence": "#0 the ambiguity answerable to the object — no symbolism assigned"
+    },
+    {
+      "figure": "the two wheels",
+      "occurrence": "#0 encountered; #3 the 0/1→1/0→(0/1)/(1/0) sequence"
+    },
+    {
+      "figure": "the six wings (6+6′)",
+      "occurrence": "#0 encountered; #3 the corrected blockwise recognition (2↔5, 3↔0 rejected)"
+    },
+    {
+      "figure": "the two-headed eagle",
+      "occurrence": "#0 encountered; #4 the (-1)/(+1) signed-power correction; the 1/1 reconciliation refused"
+    },
+    {
+      "figure": "Jung's Sophia/Mary sequence",
+      "occurrence": "#1 attributed reception with paragraph locators; §§626–627 critique retained"
+    },
+    {
+      "motif": "3:1 = 3:3",
+      "occurrence": "#0 stated; #5→0 the one as unitive condition of the three"
+    }
+  ],
+  "human_amplified": [
+    {
+      "relation": "the chiasm and assumption-of movement; the explicit wheel sequence; the reported sixfold and corrected blockwise recognition; the signed-power correction; the 3:1=3:3 appointment; the Śakti comparative inquiry; the A05/A09, A19–A21, A23, A25, A27, A29, A35, A36 recovered relations",
+      "flag": "yes"
+    },
+    {
+      "relation": "the fixed Sophia–Logos–Śakti three-office allocation; the rejected 2↔5/3↔0 pairings; the Levinasian need/Desire identity; treating assistant elaborations as an accepted iconographic programme",
+      "flag": "no"
+    }
+  ],
+  "cross_story_relations": [
+    "Neumann shared maternal structuration grounds without supplying the Assumption's historical telling; the cope's object history remains a separate task."
+  ],
+  "assets": [
+    {
+      "kind": "ascii",
+      "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+      "provenance": "authored"
+    },
+    {
+      "kind": "diagram",
+      "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "mytheme/roz-mytheme-mother-assumption-chiasm.cover.png",
+  "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+  "status": "reviewed",
+  "notes": [
+    "Craft: the cope scene lays out all five encountered image-families (Mary, rabbits/angels, wheels, wings, eagle) so the later corrected scenes visibly re-read the same encounter. Correction-vs-elaboration authority from the dialogue source is carried into the hm table verbatim.",
+    "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l2), per scene:",
+    "#0 cope — the five image-families of the cope laid out as encountered: ☽ (Mary lifted) rises through the field, the perceived figure alternates angel/rabbit (the ambiguity staged as the sign's own alternation, its authority difference in tint), the wheels ring turns a quarter-turn (orientation changing, form persisting), ⚔ wings and 🦅 eagle at the corners; a slow cope-breath LFO on turbulence; pointer attract — the gathering of images.",
+    "#1 chiasm — the receiving ∨ flips to the received ∧ and the pair crosses into ✕ (the chiasm staged as the signs' own union); the ⚠ stays bright (Jung's worry kept); pointer attract/implode — the return receiving.",
+    "#3 wings — grid layout: the wheel sequence walks 0/1→1/0 into its compound (0/1)/(1/0); ⊘ dims twice (the corrected pairings losing authority); 6·6′ beneath; pointer repel/shove — correction refusing a pleasing reading.",
+    "#5→0 return — the constellation settles: 3:1 recognised, ◉ the body persisting, N·P the Name/Power relation, A29/A35 the return offices; pointer near-still attract. ENDING QUALIFIES BEGINNING: #0 gathered five ambiguous images under an assistant's excited readings; #5→0 returns the same five as distinct offices with their corrections carried (the eagle signed, not reconciled; the wheels compounded; the wings primed; the Mother flow still bearing the body it received) — the cope's ambiguity is not resolved into symbolism but held as answerable image; ☽'s rise at #0, unguarded-seeming, answers at #5→0 where the maternal body is retained in what returns.",
+    "Human-amplified staging (binding flags kept): Taylor's corrections yes; the Sophia–Logos–Śakti fixed allocation and the Levinasian join no — both guards carried in the scene bodies and rationales. The Q27 Mother-flow correction governs; no lunar, fertility or resurrection symbolism attributed to the rabbit figure. Mythemic verbs only: the chiasm demonstrates the crossed reading; the corrections demonstrate authorship governing pattern.",
+    "Automation: auto-cope (turbulence — the embroidery's surface breathing). Durations 13–15, transitions 1.4–2.0: the correction scene held longest.",
+    "2026-10-07 craft pass (enrich/expressions-craft-20261007, lane 1): re-drawn — the lifted figure, the two rabbits, the six-winged form, the wheel, the crossing chiasm, the maternal crescent, the owl of Sophia, the eye-filled wheels, the six wings, the two-headed eagle, the gathered constellation, the received body; colour journey cope crimson → Madonna blue → burnished gold (held through the completed constellation); stillness pair #3–#4; stage text reduced to the sign."
+  ],
+  "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-mytheme-l2",
+    "lane": "mytheme",
+    "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+    "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
   },
-  {
-   "scene_id": "m-mot-3-wings",
-   "phase": "#3–#4 wheels, wings, eagle",
-   "relations": "anchor mother-wheels-wings, mother-eagle-valence; the corrected blockwise folds; (-1)/(+1); A11/C49, A16, A13/C50"
-  },
-  {
-   "scene_id": "m-mot-5-return",
-   "phase": "#5→0 the completed constellation returns",
-   "relations": "anchor mother-native-return, mother-image-recognition-return, mother-bearing-return, mother-comparison-return; A18–A21, A23, A25, A27, A29, A35, A36; Homology and Symbol/Account fields"
+  "glyph_rationales": {
+    "3:1": "the one recognised: the three encapsulated — recognition's articulated office, its constitution unfoldable (#1–#2).",
+    "(-1)/(+1)": "the eagle's polarity: the retained difference its signed unity does not erase (#3–#4).",
+    "∞": "the circulation completed: receiving and being received as one movement, the body kept on return (#5→0).",
+    "the cope — Mary being lifted": "the embroidered figure drawn: the encounter's first image — a body received, lifted (#0).",
+    "the rabbits beside her — the perceived figures": "the two drawn rabbits: what the eye reports before interpretation names it — perceiving kept distinct (#0).",
+    "the six-winged forms": "the winged form drawn: the seraphic figures on the vestment (#0).",
+    "the wheels": "the drawn wheel: one of the cope's whirled images, waiting for its office (#0).",
+    "the chiasm — down into bodily life, the bodily life received in return": "the crossing drawn: incarnation and Assumption as two directions of one relation — assumption-of, not ascent-away-from (#1–#2).",
+    "the matrix — receiving, containing, reflecting": "the crescent holding its point: the maternal matrix active before any term arrives from elsewhere (#1–#2).",
+    "Sophia — speaking, pervading, guiding": "the drawn owl: Jung's attributed wisdom — remembrance making the God-image self-reflect (#1–#2).",
+    "the one recognised — the three encapsulated": "the native notation on the stage's edge: the unitive condition whose recognitional work the second three disclose (#1–#2).",
+    "the wheels — inverse orientations carried, their relation recognised": "the eye-filled wheels drawn: inverse orientations and their recognised relation, neither erased (#3–#4).",
+    "the six wings — the three articulated through the three": "the six drawn wings: the blockwise folds corrected — articulation and reception crossing through the chiasm (#3–#4).",
+    "the two-headed eagle — signed power, difference retained": "the two-headed eagle drawn: the signed power whose unity holds its two heads apart (#3–#4).",
+    "the polarity kept": "the notation on the stage's edge: additive cancellation, directed appropriation and the retained slash — different operations (#3–#4).",
+    "the constellation completed — wheels, wings, eagle gathered": "the three images drawn together: the whole moving relation composed and returned (#5→0).",
+    "the maternal body received — assumption-of, not ascent-away-from": "the figure held within the circle: the condition of embodiment present in what is recognised as whole (#5→0).",
+    "the crossing held — each direction intelligible through the other": "the wide ring: the chiasm retained as the object of inquiry — both valences live (#5→0).",
+    "the circulation completed": "the infinity mark on the stage's edge: what made manifestation possible received within its completion (#5→0)."
   }
- ],
- "occurrence_index": [
-  {
-   "figure": "Mary — receiving matrix and received body",
-   "occurrence": "#0 the cope image; #1 the assumption-of return"
-  },
-  {
-   "figure": "the perceived rabbits / identified angels",
-   "occurrence": "#0 the ambiguity answerable to the object — no symbolism assigned"
-  },
-  {
-   "figure": "the two wheels",
-   "occurrence": "#0 encountered; #3 the 0/1→1/0→(0/1)/(1/0) sequence"
-  },
-  {
-   "figure": "the six wings (6+6′)",
-   "occurrence": "#0 encountered; #3 the corrected blockwise recognition (2↔5, 3↔0 rejected)"
-  },
-  {
-   "figure": "the two-headed eagle",
-   "occurrence": "#0 encountered; #4 the (-1)/(+1) signed-power correction; the 1/1 reconciliation refused"
-  },
-  {
-   "figure": "Jung's Sophia/Mary sequence",
-   "occurrence": "#1 attributed reception with paragraph locators; §§626–627 critique retained"
-  },
-  {
-   "motif": "3:1 = 3:3",
-   "occurrence": "#0 stated; #5→0 the one as unitive condition of the three"
-  }
- ],
- "human_amplified": [
-  {
-   "relation": "the chiasm and assumption-of movement; the explicit wheel sequence; the reported sixfold and corrected blockwise recognition; the signed-power correction; the 3:1=3:3 appointment; the Śakti comparative inquiry; the A05/A09, A19–A21, A23, A25, A27, A29, A35, A36 recovered relations",
-   "flag": "yes"
-  },
-  {
-   "relation": "the fixed Sophia–Logos–Śakti three-office allocation; the rejected 2↔5/3↔0 pairings; the Levinasian need/Desire identity; treating assistant elaborations as an accepted iconographic programme",
-   "flag": "no"
-  }
- ],
- "cross_story_relations": [
-  "Neumann shared maternal structuration grounds without supplying the Assumption's historical telling; the cope's object history remains a separate task."
- ],
- "assets": [
-  {
-   "kind": "ascii",
-   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
-   "provenance": "authored"
-  },
-  {
-   "kind": "diagram",
-   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
-   "provenance": "authored"
-  }
- ],
- "capture": "mytheme/roz-mytheme-mother-assumption-chiasm.cover.png",
- "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
- "status": "reviewed",
- "notes": [
-  "Craft: the cope scene lays out all five encountered image-families (Mary, rabbits/angels, wheels, wings, eagle) so the later corrected scenes visibly re-read the same encounter. Correction-vs-elaboration authority from the dialogue source is carried into the hm table verbatim.",
-  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l2), per scene:",
-  "#0 cope — the five image-families of the cope laid out as encountered: ☽ (Mary lifted) rises through the field, the perceived figure alternates angel/rabbit (the ambiguity staged as the sign's own alternation, its authority difference in tint), the wheels ring turns a quarter-turn (orientation changing, form persisting), ⚔ wings and 🦅 eagle at the corners; a slow cope-breath LFO on turbulence; pointer attract — the gathering of images.",
-  "#1 chiasm — the receiving ∨ flips to the received ∧ and the pair crosses into ✕ (the chiasm staged as the signs' own union); the ⚠ stays bright (Jung's worry kept); pointer attract/implode — the return receiving.",
-  "#3 wings — grid layout: the wheel sequence walks 0/1→1/0 into its compound (0/1)/(1/0); ⊘ dims twice (the corrected pairings losing authority); 6·6′ beneath; pointer repel/shove — correction refusing a pleasing reading.",
-  "#5→0 return — the constellation settles: 3:1 recognised, ◉ the body persisting, N·P the Name/Power relation, A29/A35 the return offices; pointer near-still attract. ENDING QUALIFIES BEGINNING: #0 gathered five ambiguous images under an assistant's excited readings; #5→0 returns the same five as distinct offices with their corrections carried (the eagle signed, not reconciled; the wheels compounded; the wings primed; the Mother flow still bearing the body it received) — the cope's ambiguity is not resolved into symbolism but held as answerable image; ☽'s rise at #0, unguarded-seeming, answers at #5→0 where the maternal body is retained in what returns.",
-  "Human-amplified staging (binding flags kept): Taylor's corrections yes; the Sophia–Logos–Śakti fixed allocation and the Levinasian join no — both guards carried in the scene bodies and rationales. The Q27 Mother-flow correction governs; no lunar, fertility or resurrection symbolism attributed to the rabbit figure. Mythemic verbs only: the chiasm demonstrates the crossed reading; the corrections demonstrate authorship governing pattern.",
-  "Automation: auto-cope (turbulence — the embroidery's surface breathing). Durations 13–15, transitions 1.4–2.0: the correction scene held longest."
- ],
- "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
- "enrichment": {
-  "date": "2026-10-06",
-  "actor": "zcode:enrich-mytheme-l2",
-  "lane": "mytheme",
-  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
-  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
- },
- "glyph_rationales": {
-  "☽": "Mary lifted — the cope's Assumption image; the crescent of that iconography as encountered figure, with the guard that no lunar or fertility symbolism is attributed to it (#0).",
-  "angel/rabbit": "the perceived ambiguity — figures perceived as rabbits, identified as angels — an interpretation initiated while answerable to its object; the angel naming stays a lead without an object witness (#0).",
-  "·": "the unnamed carrier — a formation whose sense is its shape alone (the wheels, the receiving field); no glyph is pretended.",
-  "⚔": "the six wings — the seraphic forms of the cope; the sixfold and its primed counterpart (#0, articulated at #3).",
-  "🦅": "the two-headed eagle — one body toward opposed orientations; its question is signed power, not reconciliation (#0, corrected at #4).",
-  "∨": "receiving → bearing: the first direction of the chiasm — the maternal matrix receiving the Logos into bodily life (#1).",
-  "∧": "received: the return direction — the maternal body itself received, assumption-of rather than ascent-away-from (#1).",
-  "✕": "the chiasm — 1–2–3 articulated in 4–5–0's field and 4–5–0 recognised in 1–2–3's; crossed readings held as object of inquiry (#1–#2).",
-  "CW11": "Jung's attributed movement — Sophia's remembrance through Proverbs, the Second Eve, continuing incarnation (CW11 §§609–628, 746–757) — a separate attributed reception, not a second speech (#1).",
-  "⚠": "Jung's own worry — protections that separate Mary from ordinary humanity (§§626–627) — kept inside his psychological reading (#1).",
-  "0/1→1/0": "the wheel sequence: a first orientation meets its inverse, their relation becoming explicit (#3).",
-  "(0/1)/(1/0)": "the compound: the whole crossing held together — the outer slash retaining both orientations in operative self-difference, dividing no numerical quantities (#3).",
-  "6·6′": "the six wings — one sixfold and its primed counterpart, each retaining the (1,2,3):(4,5,0) blocks (#3).",
-  "⊘": "the rejected vertical pairings — 2↔5 and 3↔0 corrected, only 1↔4 of the proposal holding; correction staged as dimming (#3).",
-  "(-1)/(+1)": "the eagle's retained form — each pole keeping its sign; addition cancels, each subtraction appropriates; the sign does not fix moral worth (#4).",
-  "3:1": "3:1 = 3:3 — the one recognised as the unitive condition of the three, whose recognitional constitution can be unfolded (#5→0).",
-  "◉": "the body persisting on return — recognition opens the one rather than evacuating it (#5→0).",
-  "A29": "A25/A29 — bearing a consequential office without owning the field; the completed product's return-to its conditions (#5→0).",
-  "A35": "A35/A36 — the loving direction of return toward the body, history and work that made the form possible (#5→0).",
-  "N·P": "the Name/Power series — an articulated name borne, sustained and brought into life; Logos and Son not isolated from matrix, labour and consequence (#5→0).",
-  "angel": "the perceived ambiguity — figures perceived as rabbits, identified as angels — an interpretation initiated while answerable to its object; the angel naming stays a lead without an object witness (#0).",
-  "rabbit": "the perceived ambiguity — figures perceived as rabbits, identified as angels — an interpretation initiated while answerable to its object; the angel naming stays a lead without an object witness (#0)."
- }
 }

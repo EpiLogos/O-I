@@ -1,151 +1,163 @@
 {
- "artifact": "mytheme/roz-mytheme-apollo-eros-daphne-peneus.journey.json",
- "family": "mytheme",
- "worker": "E6 (mytheme-wholes)",
- "profile_lineage": [
-  "roz-corpus-base",
-  "register-mytheme"
- ],
- "source_revision": {
-  "repo": "EpiLogos/Antykathera-Essay-Work",
-  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
-  "records": [
-   {
-    "record_id": "mytheme-apollo-eros-daphne-peneus",
-    "path": "submission-package/essay/symbolon/mytheme/worlds/roman-latin/apollo-eros-daphne-peneus/WHOLE.md",
-    "sha256": "5a24300768dbf44881d1d2bdbc362ae940f113a921f60e44ff53bca1d68b1389",
-    "sha256_receipt_stale": "f4837d9f88f1d663677b36aff002ea6e49752dafa23390c6c7006e7ca00ba4a9"
-   }
-  ]
- },
- "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
- "scenes": [
-  {
-   "scene_id": "m-ovid-0-python",
-   "phase": "#0 Python, the games, and the boast",
-   "relations": "Met. 1.416–465 (q001)"
+  "artifact": "mytheme/roz-mytheme-apollo-eros-daphne-peneus.journey.json",
+  "family": "mytheme",
+  "worker": "E6 (mytheme-wholes)",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "register-mytheme"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+    "records": [
+      {
+        "record_id": "mytheme-apollo-eros-daphne-peneus",
+        "path": "submission-package/essay/symbolon/mytheme/worlds/roman-latin/apollo-eros-daphne-peneus/WHOLE.md",
+        "sha256": "5a24300768dbf44881d1d2bdbc362ae940f113a921f60e44ff53bca1d68b1389",
+        "sha256_receipt_stale": "f4837d9f88f1d663677b36aff002ea6e49752dafa23390c6c7006e7ca00ba4a9"
+      }
+    ]
   },
-  {
-   "scene_id": "m-ovid-1-arrows",
-   "phase": "#1 two contrary arrows; Daphne's wish granted",
-   "relations": "Met. 1.466–489 (q001); order of narration preserved"
+  "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+  "scenes": [
+    {
+      "scene_id": "m-ovid-0-python",
+      "phase": "#0 Python, the games, and the boast",
+      "relations": "Met. 1.416–465 (q001)"
+    },
+    {
+      "scene_id": "m-ovid-1-arrows",
+      "phase": "#1 two contrary arrows; Daphne's wish granted",
+      "relations": "Met. 1.466–489 (q001); order of narration preserved"
+    },
+    {
+      "scene_id": "m-ovid-2-pursuit",
+      "phase": "#2 the pursuit",
+      "relations": "Met. 1.490–542 (q002); the failed self-cure; hound/hare"
+    },
+    {
+      "scene_id": "m-ovid-3-tree",
+      "phase": "#3 the transformation and the shrinking wood",
+      "relations": "Met. 1.543–556 (q002, q003); Miller 1.556 quoted exactly"
+    },
+    {
+      "scene_id": "m-ovid-4-laurel",
+      "phase": "#4 the laurel's public office",
+      "relations": "Met. 1.557–567 (q003); recoil + seeming assent retained together"
+    },
+    {
+      "scene_id": "m-ovid-5-return",
+      "phase": "#5→0 appropriation after withdrawal",
+      "relations": "the ratified whole seam; A20, A27 (yes); C21, C27; A04, A19, A24, A26 (yes); A08, A09, A21, A25, A29, A31, A32, A35, C14, C18, C38, C47, C53 (no); movement 35"
+    }
+  ],
+  "occurrence_index": [
+    {
+      "figure": "Python",
+      "occurrence": "#0 slain with the deer-goat bow; Pythian games with oak leaves, no laurel"
+    },
+    {
+      "figure": "Cupid's two arrows",
+      "occurrence": "#1 golden to Apollo's marrow, leaden to Daphne — one retaliatory intervention"
+    },
+    {
+      "figure": "Peneus",
+      "occurrence": "#1 grants perpetual virginity; #3 the addressed rescue; #4 distinct from Apollo's later appointment"
+    },
+    {
+      "figure": "the beating heart under bark",
+      "occurrence": "#3 resistance retained in the changed body"
+    },
+    {
+      "figure": "\"even the wood shrank from his kisses\" (1.556)",
+      "occurrence": "#3 quoted exactly; the recoil kept with the seeming nod"
+    },
+    {
+      "figure": "the laurel at triumphs and Augustus's doorposts",
+      "occurrence": "#4 the emblem's divine, artistic, martial, political life"
+    },
+    {
+      "place": "Delphi, Claros, Tenedos, Patara",
+      "occurrence": "#2 Apollo's self-listing during the pursuit"
+    },
+    {
+      "action": "the slower-pursuit proposal",
+      "occurrence": "#2 means changed, end protected (A31 comparison, human-amplified: no)"
+    }
+  ],
+  "human_amplified": [
+    {
+      "relation": "Apollo figures measure/illumination/form; Cupid's opposed charges as fallen accounting; appropriation after withdrawal; A20, A27, C21, C27, C09 returns; movement 35",
+      "flag": "yes"
+    },
+    {
+      "relation": "AM/IS and X/x local refractions; A08, A09, A21, A25, A29, A31, A32, A35 comparisons; C14, C18, C38, C47, C53; Python→Eros→Peneus→laurel constellation",
+      "flag": "no — visible proposals, not ratified correspondences"
+    }
+  ],
+  "cross_story_relations": [
+    "Daphne ↔ the Apollo/Dionysus bracket (movement 35 keeps its own relation; no resolution imported into Ovid's ending).",
+    "Avatar-image-mask-idol whole figures the laurel as emblematic possession after withdrawal; this whole retains the fuller telling."
+  ],
+  "assets": [
+    {
+      "kind": "ascii",
+      "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+      "provenance": "authored"
+    },
+    {
+      "kind": "diagram",
+      "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "mytheme/roz-mytheme-apollo-eros-daphne-peneus.cover.png",
+  "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+  "status": "reviewed",
+  "notes": [
+    "Craft: the transformation scene is the journey's centre — Daphne's name-form cycles into the tree triangle and back, with the heart glyph held above the trunk. The recoil and the nod are both named in scene 4 so neither can be cut away without visible loss. | E0 correction 2026-09-17: receipt-era sha256 replaced with actual-bytes hash at dbf3b17 (prior value kept as sha256_receipt_stale). E0 acceptance repair: title/field collision fixed on m-ovid-0-python, m-ovid-4-laurel, m-ovid-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+    "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l3), per scene:\n#0 python — the pre-emblem world: repel + shove pointer (Python's terror, the boast's contest), turbulence 0.15; Cupid carries an attract force (the intervention foreshadowed); the games' ring sequence walks oak → 'no laurel yet' → oak — the absence the ending will fill, named in the record's own words. Duration 12.\n#1 arrows — the contrary charges staged as opposed flights: the golden arrow flies from the left toward Apollo, the leaden from the right toward Daphne, both shrinking as they strike; Peneus's disc becomes 'granted' — the yielded permission as a word. Vortex + pulse pointer (the crossing charges). Duration 11 — the sharpest beat, the wounding.\n#2 pursuit — THE 3D SCENE. z is the chase's depth: Apollo nearest (z +0.45, breath reaching her hair), Daphne ahead (z +0.05) with her own position sequence fleeing across the field, hound and hare behind (z −0.2), the self-listing (z −0.3) and the failed self-cure deepest (z −0.45); auto-chase, a sine LFO on speed — the pace that changes while the pursuit stays. Repel + shove at 0.55, the hardest pointer in the journey. Duration 14.\n#3 tree — near-still field (speed 0.3, dispersion 0.04) — the transformation holds everything still while it happens; attract + implode pointer (the reaching hand, the embrace); the pursued sequence walks Daphne → bark→branches → laurel; the heart's sequence beats quick (1.6s/1.4s holds — the fastest cadence in the journey) under the ⤫ that keeps the record's exact quotation. Duration 13.\n#4 laurel — line layout: the procession — laurel, Capitol, doorposts in series; the laurel triangle greens then gilds (the offices acquired); the nod sequence runs ↘ grey → ↘ gold (recoil, then seeming assent, neither cancelling the other); vortex + pulse pointer (the emblem entering circulation). Duration 12.\n#5→0 return — ring layout: the emblem's history held in the round; attract at 0.2, the gentlest hold; the A20 seam walked 'A20' → valuation→possession → 'A20'; the ♡ re-brightens inside the emblem's history — the recoil retained in the reading. Duration 15, the longest beat.\nENDING QUALIFIES BEGINNING: the journey opens with oak crowns and 'no laurel yet' — honour before the emblem exists — and closes holding that emblem in the round with its acquired history attached: the record's own closing line, returning to the first leaves awarded after Python's defeat and encountering the laurel with pursuit, exhaustion, heart and recoil still in it. The Cupid attract force foreshadowed at #0 answers as the heart that keeps beating at #3 and the recoil retained at #5→0; the arrows' opposed flights (#1) are the asymmetry the two accountings name; the nod's gold at #4 never cancels the recoil's grey — the ending that would disappear if the last lines were cut away is kept visible on purpose.\nHuman-amplified staging: the kicker carries the ratified seam's flag (A20, A27 human-amplified: yes); the craft note keeps appropriation named as Taylor's judgment with Ovid supplying the event and its tension. Mythemic verbs only: the images demonstrate pursuit, transformation and appropriation through the acts staged; no universal meanings distributed to serpent, river and tree.\nAutomation: auto-chase (#2, field.params.speed sine — the pace that changes while the pursuit stays), tied to the record's own A31 comparison. Durations 11–15 and transitions 1.2–2.2: the wounding sharpest, the return held longest; the heart's 1.4–1.6s holds the fastest cadence.",
+    "2026-10-07 craft pass (enrich/expressions-craft-20261007, lane 1): re-drawn — bow, serpent, oak crown, woodland, flame, hound-and-hare chase lines, the metamorphosing tree with beating heart, triumphal arch, laurel branch; colour journey dry ochre → chase heat → public gold → sign's night; stillness pairs #0–#1 and #2–#3; stage text reduced to the sign."
+  ],
+  "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-mytheme-l3",
+    "lane": "mytheme",
+    "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+    "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
   },
-  {
-   "scene_id": "m-ovid-2-pursuit",
-   "phase": "#2 the pursuit",
-   "relations": "Met. 1.490–542 (q002); the failed self-cure; hound/hare"
-  },
-  {
-   "scene_id": "m-ovid-3-tree",
-   "phase": "#3 the transformation and the shrinking wood",
-   "relations": "Met. 1.543–556 (q002, q003); Miller 1.556 quoted exactly"
-  },
-  {
-   "scene_id": "m-ovid-4-laurel",
-   "phase": "#4 the laurel's public office",
-   "relations": "Met. 1.557–567 (q003); recoil + seeming assent retained together"
-  },
-  {
-   "scene_id": "m-ovid-5-return",
-   "phase": "#5→0 appropriation after withdrawal",
-   "relations": "the ratified whole seam; A20, A27 (yes); C21, C27; A04, A19, A24, A26 (yes); A08, A09, A21, A25, A29, A31, A32, A35, C14, C18, C38, C47, C53 (no); movement 35"
+  "glyph_rationales": {
+    "»": "the boast: the victor disputing the boy's right to the bow — whose power counts is the quarrel that starts the pursuit (#0).",
+    "↑": "the golden arrow, sharply pointed: it excites love and pierces Apollo to the marrow (#1).",
+    "↓": "the leaden arrow, blunt: it drives love away and strikes Daphne — desire and aversion arising in one retaliatory intervention (#1).",
+    "⚕": "the healing art: prophecy, medicine, music and archery remain real offices, yet none can cure the wound whose master he is (#2).",
+    "♥": "the heart still beating under the fresh bark: life and resistance present within the changed body (#3).",
+    "laurel": "the declaration made sign: since Daphne cannot be his bride, she will be his tree — hair, lyre and quiver, triumphs and doorposts (#4).",
+    "1/0": "the return: the achieved expression turning back toward its ground — held beside a pursuit that reached a terminating zero instead (#5→0).",
+    "the bow — first on deer and goats, then the serpent": "the bow almost exhausted on deer, goats and Python: the violent achievement before any laurel exists (#0).",
+    "Python — the monstrous serpent subdued": "the coiled serpent drawn down by arrows: the deed the games exist to keep from being erased (#0).",
+    "the oak crown — the games' prize before the laurel exists": "victors' honour in oak leaves: Apollo wears the foliage of whatever tree is available (#0).",
+    "the boast": "the loud claim on the stage's edge: the public means of remembering joined to the achievement it remembers (#0).",
+    "the golden arrow — piercing Apollo to the marrow": "the sharp gold point: desire excited in the god who disputed the boy's weapon (#1).",
+    "the leaden arrow — driving love from Daphne": "the blunt lead: love driven out — an imposed aversion, not her chosen refusal (#1).",
+    "the woods — the hunted life she asks to keep": "the drawn woodland: secluded ground, spoils of the hunt, Phoebe's example — the life her wish protects (#1).",
+    "the granted wish — a life outside marriage": "the closed ring of the granted request: Peneus yields, and her determinate wish stands before any pursuit (#1).",
+    "the burning — stubble after harvest, a hedge set alight": "the drawn flame: the god who assigned Cupid the torch now burns within that office (#2).",
+    "the chase — hound and hare, each running for a different end": "the straight line and the bounding line: the hunter seeks prey, the hare seeks safety — hope and fear in two aims (#2).",
+    "the promised slowdown — the pace changes, the pursuit stays": "the fixed square: run more slowly so that he may pursue more slowly — the chase itself left in place (#2).",
+    "the healing art's limit": "the healer's staff: another arrow has wounded him more surely than his art can cure (#2).",
+    "the tree — bark rising, fingers into leaves, feet into roots": "the metamorphosis drawn: one arm still reaching as branch, the base spreading into root — rescue changing the very capacities of flight (#3).",
+    "Peneus' waters — the river that answers": "the water strip: the river entering the event as the addressed power of rescue (#3).",
+    "the heart still beating": "the heart beneath the bark: the embrace feels it beating under the fresh bark (#3).",
+    "the wood shrinking from the kisses": "the ring contracting through its steps: even the wood shrank from his kisses — recoil given a bodily sign (#3).",
+    "his tree — lasting green for enduring youth": "the upright laurel: the body that escaped the pursuit becomes the permanent emblem of the pursuer's powers (#4).",
+    "the triumph — processions, the Capitol, the guarded doorposts": "the drawn arch: the laurel's civic and martial life through triumphal celebration and guarded thresholds (#4).",
+    "the declaration": "the sign-name on the stage's edge: the aetiology spoken — what the tree will become for him (#4).",
+    "the crown — hair, lyre and quiver": "the wreath ring: the offices named during the chase acquiring a permanent emblem (#4).",
+    "the branch carried on — the sign enduring": "the laurel branch carried into the dark: symbolic appropriation persisting after the living source withdraws (#5→0).",
+    "the withdrawn centre — the image remains where the encounter failed": "the ring dimming through its steps: the image remains powerful where the hoped-for encounter failed (#5→0).",
+    "the return toward the ground": "the native notation beside the dimming ring: a durable sign does not establish successful mutual return (#5→0)."
   }
- ],
- "occurrence_index": [
-  {
-   "figure": "Python",
-   "occurrence": "#0 slain with the deer-goat bow; Pythian games with oak leaves, no laurel"
-  },
-  {
-   "figure": "Cupid's two arrows",
-   "occurrence": "#1 golden to Apollo's marrow, leaden to Daphne — one retaliatory intervention"
-  },
-  {
-   "figure": "Peneus",
-   "occurrence": "#1 grants perpetual virginity; #3 the addressed rescue; #4 distinct from Apollo's later appointment"
-  },
-  {
-   "figure": "the beating heart under bark",
-   "occurrence": "#3 resistance retained in the changed body"
-  },
-  {
-   "figure": "\"even the wood shrank from his kisses\" (1.556)",
-   "occurrence": "#3 quoted exactly; the recoil kept with the seeming nod"
-  },
-  {
-   "figure": "the laurel at triumphs and Augustus's doorposts",
-   "occurrence": "#4 the emblem's divine, artistic, martial, political life"
-  },
-  {
-   "place": "Delphi, Claros, Tenedos, Patara",
-   "occurrence": "#2 Apollo's self-listing during the pursuit"
-  },
-  {
-   "action": "the slower-pursuit proposal",
-   "occurrence": "#2 means changed, end protected (A31 comparison, human-amplified: no)"
-  }
- ],
- "human_amplified": [
-  {
-   "relation": "Apollo figures measure/illumination/form; Cupid's opposed charges as fallen accounting; appropriation after withdrawal; A20, A27, C21, C27, C09 returns; movement 35",
-   "flag": "yes"
-  },
-  {
-   "relation": "AM/IS and X/x local refractions; A08, A09, A21, A25, A29, A31, A32, A35 comparisons; C14, C18, C38, C47, C53; Python→Eros→Peneus→laurel constellation",
-   "flag": "no — visible proposals, not ratified correspondences"
-  }
- ],
- "cross_story_relations": [
-  "Daphne ↔ the Apollo/Dionysus bracket (movement 35 keeps its own relation; no resolution imported into Ovid's ending).",
-  "Avatar-image-mask-idol whole figures the laurel as emblematic possession after withdrawal; this whole retains the fuller telling."
- ],
- "assets": [
-  {
-   "kind": "ascii",
-   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
-   "provenance": "authored"
-  },
-  {
-   "kind": "diagram",
-   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
-   "provenance": "authored"
-  }
- ],
- "capture": "mytheme/roz-mytheme-apollo-eros-daphne-peneus.cover.png",
- "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
- "status": "reviewed",
- "notes": [
-  "Craft: the transformation scene is the journey's centre — Daphne's name-form cycles into the tree triangle and back, with the heart glyph held above the trunk. The recoil and the nod are both named in scene 4 so neither can be cut away without visible loss. | E0 correction 2026-09-17: receipt-era sha256 replaced with actual-bytes hash at dbf3b17 (prior value kept as sha256_receipt_stale). E0 acceptance repair: title/field collision fixed on m-ovid-0-python, m-ovid-4-laurel, m-ovid-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
-  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l3), per scene:\n#0 python — the pre-emblem world: repel + shove pointer (Python's terror, the boast's contest), turbulence 0.15; Cupid carries an attract force (the intervention foreshadowed); the games' ring sequence walks oak → 'no laurel yet' → oak — the absence the ending will fill, named in the record's own words. Duration 12.\n#1 arrows — the contrary charges staged as opposed flights: the golden arrow flies from the left toward Apollo, the leaden from the right toward Daphne, both shrinking as they strike; Peneus's disc becomes 'granted' — the yielded permission as a word. Vortex + pulse pointer (the crossing charges). Duration 11 — the sharpest beat, the wounding.\n#2 pursuit — THE 3D SCENE. z is the chase's depth: Apollo nearest (z +0.45, breath reaching her hair), Daphne ahead (z +0.05) with her own position sequence fleeing across the field, hound and hare behind (z −0.2), the self-listing (z −0.3) and the failed self-cure deepest (z −0.45); auto-chase, a sine LFO on speed — the pace that changes while the pursuit stays. Repel + shove at 0.55, the hardest pointer in the journey. Duration 14.\n#3 tree — near-still field (speed 0.3, dispersion 0.04) — the transformation holds everything still while it happens; attract + implode pointer (the reaching hand, the embrace); the pursued sequence walks Daphne → bark→branches → laurel; the heart's sequence beats quick (1.6s/1.4s holds — the fastest cadence in the journey) under the ⤫ that keeps the record's exact quotation. Duration 13.\n#4 laurel — line layout: the procession — laurel, Capitol, doorposts in series; the laurel triangle greens then gilds (the offices acquired); the nod sequence runs ↘ grey → ↘ gold (recoil, then seeming assent, neither cancelling the other); vortex + pulse pointer (the emblem entering circulation). Duration 12.\n#5→0 return — ring layout: the emblem's history held in the round; attract at 0.2, the gentlest hold; the A20 seam walked 'A20' → valuation→possession → 'A20'; the ♡ re-brightens inside the emblem's history — the recoil retained in the reading. Duration 15, the longest beat.\nENDING QUALIFIES BEGINNING: the journey opens with oak crowns and 'no laurel yet' — honour before the emblem exists — and closes holding that emblem in the round with its acquired history attached: the record's own closing line, returning to the first leaves awarded after Python's defeat and encountering the laurel with pursuit, exhaustion, heart and recoil still in it. The Cupid attract force foreshadowed at #0 answers as the heart that keeps beating at #3 and the recoil retained at #5→0; the arrows' opposed flights (#1) are the asymmetry the two accountings name; the nod's gold at #4 never cancels the recoil's grey — the ending that would disappear if the last lines were cut away is kept visible on purpose.\nHuman-amplified staging: the kicker carries the ratified seam's flag (A20, A27 human-amplified: yes); the craft note keeps appropriation named as Taylor's judgment with Ovid supplying the event and its tension. Mythemic verbs only: the images demonstrate pursuit, transformation and appropriation through the acts staged; no universal meanings distributed to serpent, river and tree.\nAutomation: auto-chase (#2, field.params.speed sine — the pace that changes while the pursuit stays), tied to the record's own A31 comparison. Durations 11–15 and transitions 1.2–2.2: the wounding sharpest, the return held longest; the heart's 1.4–1.6s holds the fastest cadence."
- ],
- "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
- "enrichment": {
-  "date": "2026-10-06",
-  "actor": "zcode:enrich-mytheme-l3",
-  "lane": "mytheme",
-  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
-  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
- },
- "glyph_rationales": {
-  "Apollo": "at #0 the victor over Python claiming the bow's martial office; at #2 the pursuer whose prophecy, medicine and song cannot secure Daphne's desire.",
-  "Cupid": "the retaliatory archer — his two arrows give the pursuit its asymmetry before Apollo knows he is in it.",
-  "no laurel yet": "the games' oak crowns — the honour that exists before the emblem; the absence the ending's history will fill.",
-  "→": "the arrows — golden exciting love, leaden driving it away; one retaliatory intervention, opposite charges in two bodies.",
-  "Daphne": "at #1 the woodland life with refused suitors and Phoebe her model; at #2 the pursued; at #3 the pursued become tree.",
-  "granted": "Peneus's yielded permission — the request for perpetual virginity accepted before any pursuit; a participant's act, not a generic river.",
-  "⚕": "Apollo's self-listing — Delphi, Claros, Tenedos, Patara, Jupiter's son; competence substantial, jurisdiction limited.",
-  "✕": "the failed self-cure — another arrow has wounded him more surely; his healing art cannot cure its master.",
-  "◌◌": "the Gallic hound and hare — hunter seeks prey, hare seeks safety; the specified difference between their aims.",
-  "♡": "the beating heart under the fresh bark — life and resistance retained in the changed body; at #5→0 the heart inside the emblem's history.",
-  "⤫": "'even the wood shrank from his kisses' (1.556) — the recoil's exact witness, quoted in the record's own words.",
-  "✧": "her radiance remaining in the changed form.",
-  "bark→branches": "the transformation's conversions — heaviness, bark, foliage, branches, roots; each altering a capacity the chase had used or threatened.",
-  "laurel": "the leaf-crown — the changed form that will carry the public office.",
-  "≤≥": "Augustus's doorposts — the civic honour flanking the oak; the emblem's extension into political life.",
-  "↘": "the nod after the recoil — the seeming assent retained with the recoil, neither moment cancelling the other.",
-  "A20": "image, valuation and possession — competent distinction become possession; the ratified return route.",
-  "valuation→possession": "the seam the record names — how the valued image begins to dictate the terms on which its living source is admitted.",
-  "A27": "self and other without possession — another can appear in my world without becoming mine to complete."
- }
 }

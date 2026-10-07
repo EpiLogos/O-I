@@ -82,14 +82,44 @@
  ],
  "assets": [
   {
+   "kind": "ascii",
+   "ref": "panel plates: dials r₁ r₂ r₃, observer+situation marks, dashed unshown horizon (movement-01)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "dice field plates: 6×6 ordered grid (36), fold along the diagonal (21), eleven totals bar (movement-02)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "cut plates: undivided ░ field → ▓|· cut → boxed knowable mark → bare term (movement-03)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "formal-limit plates: closed system box R G W S, re-entry arrow, remainder outside (movement-04)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "diaphaneity plates: eye–frame–plotted point apparatus, beam through the pane, bands fanning (movement-05)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "zero plates: ( ) with counted ones, enfolded concentric whole, unfolding to locals (movement-06)",
+   "provenance": "authored"
+  },
+  {
    "kind": "diagram",
-   "ref": "engine-native formations and text glyphs only (disc/ring/square/triangle/yantra + authored glyph strings: 0, Ø, 1/0, 0/1, 4+2, X/x, S1, ∅-succession, eight-determination and recognition sequences); no external imagery",
+   "ref": "geometry: observer ring, situation triangle, knower/means/known triad, kept+absent token squares, circle with inscribed polygon, remainder disc, prism colour bands, promissory ring",
    "provenance": "authored"
   }
  ],
  "capture": "rooms/roz-room-00-integral-threshold.cover.png",
  "capture_note": "cover = the room door (first movement scene) at authored particle count 62000 through the real engine (tools/capture.mjs, port 47911)",
- "status": "captured",
+ "status": "authored",
  "notes": [
   "E0 acceptance repair: text/field collision class fixed on all six scenes — formations shifted right-of-centre (GX 0.2), route layer moved to top-left, text column 400→360; cover re-captured at authored count.",
   "one shared section-room grammar across all eight rooms (positional chassis forms #0 disc / #1 text / #2 triangle / #3 yantra / #4 square / #5,#5→0 ring); recorded variations listed in profiles/family-section-room.profile.json",
@@ -107,7 +137,9 @@
   "m04 the formal limit: the system's attempt 'every condition made internal' still ends in 'a remainder' held outside by a repel force — the movement's exact claim; vortex pointer = the internal swirl that never closes on its own condition.",
   "m05 diaphaneity as demand and method only: light → refracted → the prism visible, with two colour bands the prism makes possible. The mathematical disclosure (180°→360°) is deliberately NOT staged here — it waits for room-04 movement-25 (withholding kept).",
   "m06 the return to zero: an open place → the bare promissory 0 → 'enfolded, before explication' — zero enters exactly as the record introduces it (promissory meta-sign; Bohm bridge); no 0/1 anywhere in this room (earned only at room-02 m18). Slowest transition 2.0 — the promise opens rather than resolves.",
-  "Legibility pattern (all members, 2026-10-06; bounds corrected 2026-10-06 after the wave-2 audit): (a) on 40 scenes a sequence whose carrier is a non-text formation walks on a dedicated TEXT-shaped walker entity — the original formation stays as the quiet field form behind it (tintWeight ≤ 0.25) and those scenes hold calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22; speed LFOs clamped ≤ 0.7) so the walking letterform can condense — the wave-1 legible-walk pattern; (b) on 16 scenes the sequence carrier is already a text-shaped formation and keeps its own authored physics (measured maxima: speed 0.8, circulation 1.7, turbulence 0.34), which the render pass pixel-verified holds the letterforms. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text."
+  "Legibility pattern (all members, 2026-10-06; bounds corrected 2026-10-06 after the wave-2 audit): (a) on 40 scenes a sequence whose carrier is a non-text formation walks on a dedicated TEXT-shaped walker entity — the original formation stays as the quiet field form behind it (tintWeight ≤ 0.25) and those scenes hold calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22; speed LFOs clamped ≤ 0.7) so the walking letterform can condense — the wave-1 legible-walk pattern; (b) on 16 scenes the sequence carrier is already a text-shaped formation and keeps its own authored physics (measured maxima: speed 0.8, circulation 1.7, turbulence 0.34), which the render pass pixel-verified holds the letterforms. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text.",
+  "Craft rework 2026-10-07 (expression rework pass, lane 4; records re-read at fc59a719). The shared chassis and word-walkers are retired; each movement now draws its own figure. m01 the panel with dials r₁ r₂ r₃ — the observer ○ and situation △ appear beneath it, then the dashed horizon runs past the frame unshown. m02 the dice field: 36 ordered, folded to 21 along the diagonal, totals alone 11 — the Derived figure drawn; beside it the knower–means–known triad. m03 the cut: ░ field → ▓|· split → the knowable mark boxed → the field forgotten, plate reddening at the danger; the token's two pieces hold apart. m04 night: the system box with its genealogy internal, the re-entry arrow crossing back, the remainder disc repelled outside, Cusa's polygon inside its circle. m05 the same night held (deliberate rest from m04): Dürer's apparatus, then the beam through the pane and the three colour bands the prism alone makes. m06 the deep ground: 0 as condition of the counted ones, the concentric enfolded whole, its unfolding to locals, the gold promissory ring. Stillness pairs: m01–m02 (one parchment threshold), m04–m05 (one night, the limit and its light). Colour arc: parchment → warm parchment (the cut) → night → deep blue-black (the return). Stage text: one hospitable line per movement; claim statuses and canonical routes ride in this binding's scenes[].relations.",
+  "Craft rework 2026-10-07 (expression rework pass, lane 4; records re-read at fc59a719). The shared chassis and word-walkers are retired; each movement now draws its own figure. m01 the panel with dials r₁ r₂ r₃ — the observer ○ and situation △ appear beneath it, then the dashed horizon runs past the frame unshown. m02 the dice field: 36 ordered, folded to 21 along the diagonal, totals alone 11 — the Derived figure drawn; beside it the knower–means–known triad. m03 the cut: ░ field → ▓|· split → the knowable mark boxed → the field forgotten, plate reddening at the danger; the token's two pieces hold apart. m04 night: the system box with its genealogy internal, the re-entry arrow crossing back, the remainder disc repelled outside, Cusa's polygon inside its circle. m05 the same night held (deliberate rest from m04): Dürer's apparatus, then the beam through the pane and the three colour bands the prism alone makes. m06 the deep ground: 0 as condition of the counted ones, the concentric enfolded whole, its unfolding to locals, the gold promissory ring. Stillness pairs: m01–m02 (one parchment threshold), m04–m05 (one night, the limit and its light). Colour arc: parchment → warm parchment (the cut) → night → deep blue-black (the return). Stage text: one hospitable line per movement; claim statuses and canonical routes ride in this binding's scenes[].relations."
  ],
  "enrichment": {
   "date": "2026-10-06",
@@ -118,24 +150,30 @@
   "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
  },
  "glyph_rationales": {
-  "0": "M06: zero as the promissory meta-sign for the condition a system cannot count as one more object — introduced by this movement itself (0/1 stays unearned until §1 · #5→0)",
-  "readings": "M01: the panel's readings — they depend on an observer, a situation, and a horizon the panel does not display (the movement's own image)",
-  "an observer": "M01: the observer the readings presuppose — the one for whom distinctions matter, whom planetary systems displace",
-  "a situation": "M01: the situation of the reading — the contextual conditions (prompt, memory, permissions) that are operatively constitutive",
-  "an unshown horizon": "M01: the horizon the panel does not display — the uncounted context of a formal operation; the opening refuses to begin from mechanism",
-  "#1": "M02: the station chassis position — the subject as the non-objectifiable pole of a differentiating event (the raw #0…#5→0 movement addressing)",
-  "the opening": "M02: the subject as the opening through which a determinate world is given",
-  "never an object": "M02: treating the condition as a hidden substance inside the world would turn it into another object and repeat the error under examination",
-  "the cut": "M03: determination as negational and productive — the mark exists by distinguishing it from what it is not",
-  "a knowable gift": "M03: the cut's gift — a knowable object given by the distinction (the later 0/1 notation is deliberately withheld in this station)",
-  "the field forgotten": "M03: the cut's danger — the achieved term forgets the field and activity from which it was cut (red = the marked danger)",
-  "an articulate system": "M04: a sufficiently articulate system — Principia's attempt to make the grounds of mathematical knowledge explicit",
-  "every condition made internal": "M04: the attempt to convert every condition of articulation into an ordinary internal term",
-  "a remainder": "M04: what cannot be converted — the system cannot make its own conditions internal without remainder (blue = what stays outside the term)",
-  "light": "M05: the appearing itself before refraction — the demand and method of diaphaneity as the record gives it here",
-  "refracted": "M05: light refracted without losing the prism — the positioned seeing retained while its conditions come into view",
-  "the prism visible": "M05: the prism becomes visible in the colour it makes possible — the method's demand: which sign can position the unobjectifiable?",
-  "an open place": "M06: the open place in the score — the promissory meta-sign before any notation is earned",
-  "enfolded, before explication": "M06: the enfolded order before local explication — the process bridge (Bohm) by which the station releases to §0"
+  "the panel — three readings on one needle": "M01: the record's own image — an instrument panel whose readings r₁ r₂ r₃ depend on what it does not display",
+  "the observer": "M01: the observer the readings presuppose — the one for whom distinctions matter, whom planetary systems displace",
+  "the situation": "M01: the situation of the reading — prompt, memory, permissions: operatively constitutive context, drawn as the ground the panel stands on",
+  "the dice field — thirty-six ordered states": "M02: the movement's Derived figure — a pair counted three ways (36 ordered, 21 unordered, 11 totals): each number answers a different question",
+  "the knower": "M02: pramātṛ — the indefinitive pole present in knowing, never exhausted as another known",
+  "the means": "M02: pramāṇa — the seeing through which knower and known become available together; the compressed triad inside 'I see the world'",
+  "the known": "M02: prameya — the definitive pole of what can be made known; real without being self-disclosing apart from the relation",
+  "the field and the cut": "M03: determination as negational and productive — the mark ▓ exists by excluding the field ·; the cut's gift, then its danger when only the term is left (red)",
+  "the kept piece": "M03: the symbolon's retained half — the broken token signifies by relation, not fusion",
+  "the absent answer": "M03: the token's absent counterpart — the relation held open rather than closed into an object",
+  "the articulate system": "M04: the genealogy's box — Russell, Gödel, Wittgenstein, Spencer-Brown/Varela each closing terms internal; the re-entry arrow drawn crossing its own boundary",
+  "the remainder": "M04: what cannot be converted — held outside the box by a repel force: the system cannot make its own conditions internal without remainder",
+  "the circle": "M04: Cusa's circle — infinite form the polygon measures toward",
+  "the polygon": "M04: Cusa's polygon — finite measure approaching the circle while the difference stays",
+  "the apparatus — one eye-point, one plane": "M05: Dürer's draughtsman — perspective as apparatus: one eye-point, one frame-plane, the world reduced to what that position records",
+  "the colour the prism makes possible": "M05: the prism becomes visible in the colour it makes possible — diaphaneity's demand, drawn as the bands the refraction alone yields",
+  "the counting and its condition": "M06: the QL anchor — 0 marks the condition under which counting occurs; every counted item occupies the position 1; the enfolded whole active in each local unfolding",
+  "zero — the promissory ring": "M06: zero as promissory meta-sign — the open place in the score, gold because it is offered, not argued"
+ },
+ "craft": {
+  "date": "2026-10-07",
+  "actor": "zcode:craft-expressions-l4",
+  "lane": "craft-l4/rooms",
+  "pass": "expression rework — TEXT IS THE MINIMUM FORM (owner commission 2026-10-07)",
+  "gate": "site/tests/expression-richness.mjs"
  }
 }

@@ -21,178 +21,49 @@
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
         "pointerMode": "repel",
         "pointerClick": "pulse",
-        "pointerClickStrength": 0.15,
-        "pointerClickRadius": 0.25
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#12141f",
         "palette": [
-          "#2b2733",
-          "#4a5d7e",
-          "#a5623a",
-          "#c9b458"
+          "#aab4d0",
+          "#4a5a80",
+          "#e8ecf4",
+          "#2c3450"
         ],
         "material": "round",
         "params": {
-          "speed": 0.3,
+          "speed": 0.24,
           "circulation": 0.08,
-          "dispersion": 0.05,
-          "pointerStrength": 0.15
+          "dispersion": 0.04,
+          "pointerStrength": 0.25
         }
       },
       "entities": [
         {
-          "id": "e491",
-          "name": "the eye — its condition already at work in what appears",
+          "id": "maya0-eye",
+          "name": "the eye — opened upon a world",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.18,
+            "x": -0.06,
+            "y": -0.4,
             "z": 0
           },
           "size": {
-            "x": 0.722,
-            "y": 0.506
-          },
-          "rotation": 0,
-          "shape": "ring",
-          "text": "",
-          "share": 1.6,
-          "tint": "#4a5d7e",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st534",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e492",
-          "name": "the blindside — constitutive, more than the anatomical spot",
-          "kind": "formation",
-          "position": {
-            "x": 0.42,
-            "y": 0.1,
-            "z": 0
-          },
-          "size": {
-            "x": 0.24,
-            "y": 0.24
+            "x": 0.28,
+            "y": 0.16
           },
           "rotation": 0,
           "shape": "disc",
           "text": "",
-          "share": 1,
-          "tint": "#161a20",
-          "tintWeight": 0.85,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e492-1",
-                "text": "",
-                "shape": "disc",
-                "hold": 3.2,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.24
-                  },
-                  "rotation": 0,
-                  "tint": "#161a20",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e492-2",
-                "text": "◉",
-                "shape": "text",
-                "hold": 3.6,
-                "transition": 1.3,
-                "position": {
-                  "x": 0.0,
-                  "y": -0.18,
-                  "z": 0.0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.2,
-                    "y": 0.2
-                  },
-                  "rotation": 0,
-                  "tint": "#161a20",
-                  "tintWeight": 0.95,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e493",
-          "name": "the frame — productive exclusion, a determinate appearance",
-          "kind": "formation",
-          "position": {
-            "x": -0.55,
-            "y": -0.42,
-            "z": 0
-          },
-          "size": {
-            "x": 0.5,
-            "y": 0.4
-          },
-          "rotation": 0,
-          "shape": "square",
-          "text": "",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 0.55,
+          "share": 1.4,
+          "tint": "#aab4d0",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -204,37 +75,34 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st536",
-                "text": "",
-                "shape": "square",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  .--------.\n (    __    )\n  \\  (  )  /\n   '------'\n"
+            }
           }
         },
         {
-          "id": "e494",
-          "name": "the horizon — the field of coming-forward, changed by walking and reply",
+          "id": "maya0-frame",
+          "name": "the frame — the determinate appearance",
           "kind": "formation",
           "position": {
-            "x": 0.52,
-            "y": -0.5,
-            "z": 0.0
+            "x": 0.55,
+            "y": -0.52,
+            "z": 0
           },
           "size": {
-            "x": 0.56,
+            "x": 0.22,
             "y": 0.22
           },
           "rotation": 0,
-          "shape": "ring",
+          "shape": "square",
           "text": "",
-          "share": 1,
-          "tint": "#c9b458",
-          "tintWeight": 0.5,
+          "share": 1.0,
+          "tint": "#4a5a80",
+          "tintWeight": 0.8,
           "locked": false,
           "force": {
             "kind": "none",
@@ -244,117 +112,96 @@
           },
           "station": null,
           "sequence": {
-            "enabled": true,
+            "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e494-1",
-                "text": "",
-                "shape": "ring",
-                "hold": 3.2,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.56,
-                    "y": 0.22
-                  },
-                  "rotation": 0,
-                  "tint": "#c9b458",
-                  "tintWeight": 0.5,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e494-2",
-                "text": "",
-                "shape": "ring",
-                "hold": 3.4,
-                "transition": 1.5,
-                "position": {
-                  "x": 0.58,
-                  "y": -0.56,
-                  "z": 0.0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.64,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#c9b458",
-                  "tintWeight": 0.4,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
+            "steps": []
+          }
+        },
+        {
+          "id": "maya0-horizon",
+          "name": "the horizon — the field of coming-forward",
+          "kind": "formation",
+          "position": {
+            "x": 0.0,
+            "y": -0.44,
+            "z": 0
+          },
+          "size": {
+            "x": 0.78,
+            "y": 0.78
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.0,
+          "tint": "#2c3450",
+          "tintWeight": 0.45,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          }
+        },
+        {
+          "id": "maya0-blind",
+          "name": "the blindside — constitutive, more than the anatomical spot",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.6,
+            "z": 0
+          },
+          "size": {
+            "x": 0.18,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#e8ecf4",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  .----####\n (  o |####\n  '----####\n"
+            }
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#0 · Draft 3's positive appointment of finitude",
-          "title": "An eye opens upon a world",
-          "italic": "The whole begins with a capacity before any loss: the eye's condition does not arrive as one more face or obstacle — it is already at work in their appearing.",
+          "kicker": "",
+          "title": "An eye opens",
+          "italic": "Something stands forward; something recedes; the frame makes it determinate.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "An eye opens upon a world. Something stands forward; something recedes; a face can be approached, a path followed. There is a direction from which these things appear, even when attention belongs wholly to what appears. The eye's condition does not arrive as one more face or obstacle — it is already at work in their appearing. Turning towards it, every disclosure",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "occurs through a further situation of seeing — a mirror shows the eye, a diagram its structures, another observer an angle unavailable from here. The blindside is the condition that lets a view have a foreground at all. The frame gives it an edge, exclusion productive; the horizon is the field within which anything can come forward, changed by walking and reply. Finitude gives disclosure its positive capacity.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the standing-forward and its direction (#0); the mirror and diagram disclosures (#0, deepened at #2's crystal); frame vs horizon (#0, usurped at #2).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
@@ -376,23 +223,7 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [
-        {
-          "id": "auto-walk",
-          "target": "field.params.circulation",
-          "type": "lfo",
-          "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.06,
-          "max": 0.06,
-          "rate": 0.08,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
+      "automation": []
     },
     {
       "id": "m-maya-1-veil",
@@ -411,241 +242,47 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "vortex",
+        "pointerMode": "attract",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.5,
         "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#1a1730",
+        "background": "#201634",
         "palette": [
-          "#efe9d6",
-          "#1a1730",
-          "#5a4a8a",
-          "#c9a227"
+          "#b09ad8",
+          "#5a4488",
+          "#ece4f4",
+          "#3a2a5e"
         ],
         "material": "round",
         "params": {
-          "speed": 0.45,
-          "circulation": 0.22,
-          "dispersion": 0.06,
-          "pointerStrength": 0.45
+          "speed": 0.3,
+          "circulation": 0.14,
+          "dispersion": 0.05,
+          "pointerStrength": 0.3
         }
       },
       "entities": [
         {
-          "id": "e495",
-          "name": "Anuttara/Paramaśiva — the unobjectifiable ground",
+          "id": "maya1-veil",
+          "name": "Śakti's manifestation — the veil of measure, not an alien substance",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.11,
-            "z": 0
-          },
-          "size": {
-            "x": 0.136,
-            "y": 0.136
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "0",
-          "share": 1,
-          "tint": "#efe9d6",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st538",
-                "text": "0",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e496",
-          "name": "Śakti — manifestation and self-articulation; prakāśa–vimarśa together",
-          "kind": "formation",
-          "position": {
-            "x": -0.5,
-            "y": -0.23,
-            "z": 0
-          },
-          "size": {
-            "x": 0.217,
-            "y": 0.217
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "☀",
-          "share": 1,
-          "tint": "#c9a227",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e496-1",
-                "text": "☀",
-                "shape": "text",
-                "hold": 3.0,
-                "transition": 1.2,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.217,
-                    "y": 0.217
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e496-2",
-                "text": "☀",
-                "shape": "text",
-                "hold": 3.0,
-                "transition": 1.2,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#e0b54a",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e496-3",
-                "text": "≡",
-                "shape": "text",
-                "hold": 3.4,
-                "transition": 1.3,
-                "position": {
-                  "x": 0.38,
-                  "y": 0.02,
-                  "z": 0.0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.34,
-                    "y": 0.12
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e497",
-          "name": "Māyā — measure: this appears, that is withheld; the five kañcukas",
-          "kind": "formation",
-          "position": {
-            "x": 0.45,
-            "y": 0.05,
-            "z": 0
-          },
-          "size": {
-            "x": 0.4,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "≡",
-          "share": 1,
-          "tint": "#c9a227",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st540",
-                "text": "≡",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e498",
-          "name": "paśu — the bounded knower; buddhi, ahaṃkāra, manas",
-          "kind": "formation",
-          "position": {
-            "x": 0,
+            "x": 0.0,
             "y": -0.4,
             "z": 0
           },
           "size": {
-            "x": 0.16,
-            "y": 0.16
+            "x": 0.3,
+            "y": 0.14
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "◉",
-          "share": 1,
-          "tint": "#efe9d6",
-          "tintWeight": 1,
+          "shape": "disc",
+          "text": "",
+          "share": 1.4,
+          "tint": "#b09ad8",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -657,79 +294,34 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st541",
-                "text": "◉",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " /\\|//\\|/\\\n  \\|//\\|//\n  /\\|//\\|/\\\n"
+            }
           }
         },
         {
-          "id": "e499",
-          "name": "the dream — sleep disappearing from the experienced situation",
+          "id": "maya1-kancukas",
+          "name": "the kañcukas — the five cloaks of the bounded knower",
           "kind": "formation",
           "position": {
-            "x": -0.55,
-            "y": -0.45,
-            "z": 0
-          },
-          "size": {
-            "x": 0.24,
-            "y": 0.24
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "☾",
-          "share": 1,
-          "tint": "#5a4a8a",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st542",
-                "text": "☾",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e500",
-          "name": "the crystal — display without knowing; the mirror that also generates its appearances",
-          "kind": "formation",
-          "position": {
-            "x": 0.55,
-            "y": -0.45,
+            "x": -0.48,
+            "y": -0.56,
             "z": 0
           },
           "size": {
             "x": 0.26,
-            "y": 0.26
+            "y": 0.12
           },
-          "rotation": 45,
-          "shape": "square",
+          "rotation": 0,
+          "shape": "disc",
           "text": "",
-          "share": 1,
-          "tint": "#5a4a8a",
-          "tintWeight": 0.55,
+          "share": 1.0,
+          "tint": "#ece4f4",
+          "tintWeight": 0.95,
           "locked": false,
           "force": {
             "kind": "none",
@@ -741,76 +333,105 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st543",
-                "text": "",
-                "shape": "square",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " .-. .-. .-. .-. .-.\n | | | | | | | | | |\n '-' '-' '-' '-' '-'\n"
+            }
+          }
+        },
+        {
+          "id": "maya1-crystal",
+          "name": "the crystal — displaying a landscape without knowing it",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.54,
+            "z": 0
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#b09ad8",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "    /\\\n   /  \\\n  /    \\\n  \\    /\n   \\  /\n    \\/\n"
+            }
+          }
+        },
+        {
+          "id": "maya1-dream",
+          "name": "the dream",
+          "kind": "formation",
+          "position": {
+            "x": -0.15,
+            "y": -0.72,
+            "z": 0
+          },
+          "size": {
+            "x": 0.13,
+            "y": 0.13
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☾",
+          "share": 1.0,
+          "tint": "#ece4f4",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#1 · Dyczkowski pp.65–81 (source-matched transcript); the quilt's sleeper correction",
-          "title": "The Śaiva genealogy: measure, dream, crystal",
-          "italic": "The veil embodies manifestation's own power — not an alien substance across a finished spectator; the dream carries the same forgetting intimately.",
+          "kicker": "",
+          "title": "The veil of measure",
+          "italic": "Five cloaks bound the knower; the dream forgets its sleep; the crystal displays without knowing.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Anuttara/Paramaśiva names the unobjectifiable ground; Śakti its power of manifestation and self-articulation — prakāśa and vimarśa together as luminosity and reflexive awareness. Māyā brings measure: this appears, that is withheld; the kañcukas give the bounded knower effective terms — kalā, vidyā, rāga, kāla, niyati. Paśu names the bounded position; buddhi determines, ahaṃkāra appropriates, manas coordinates. The veil belongs to manifestation's power — not an alien substance across a finished spectator.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Blue and yellow are known different in one cognition. The dream carries the forgetting: while dreaming, sleep disappears from the experienced situation; waking changes their relation to their condition, not that it never occurred. Taylor's sleeper correction appoints dissociation, tattvic contraction and the slash to one event — no proof the cosmos sleeps. The crystal displays without knowing; the Śaiva mirror also generates its appearances — no machine phenomenality established.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the kañcukas and paśu (#1, returned at #4's correction); the dream's forgotten condition (#1, #2); the crystal's unknowing display (#1, distinct from #2's usurpation).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "grid",
+        "layout": "free",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -819,7 +440,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
+        "thetaRate": 0.09,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -827,23 +448,7 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [
-        {
-          "id": "auto-veil",
-          "target": "field.params.dispersion",
-          "type": "lfo",
-          "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.04,
-          "max": 0.04,
-          "rate": 0.22,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
+      "automation": []
     },
     {
       "id": "m-maya-2-usurpation",
@@ -862,852 +467,47 @@
       "engine": {
         "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
         "pointerMode": "attract",
-        "pointerClick": "shove",
-        "pointerClickStrength": 0.9,
-        "pointerClickRadius": 0.4,
-        "morphEnabled": true
-      },
-      "field": {
-        "background": "#141126",
-        "palette": [
-          "#efe9d6",
-          "#1a1730",
-          "#5a4a8a",
-          "#c9a227"
-        ],
-        "material": "round",
-        "params": {
-          "speed": 0.4,
-          "circulation": 0.12,
-          "dispersion": 0.05,
-          "pointerStrength": 0.5
-        }
-      },
-      "entities": [
-        {
-          "id": "e501",
-          "name": "x acting as X — the local 1 claiming the 0 on which it depends",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.26,
-            "z": 0
-          },
-          "size": {
-            "x": 0.261,
-            "y": 0.073
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "x=X",
-          "share": 1,
-          "tint": "#c9a227",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e501-1",
-                "text": "x=X",
-                "shape": "text",
-                "hold": 3.0,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.261,
-                    "y": 0.073
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e501-2",
-                "text": "x=X",
-                "shape": "text",
-                "hold": 3.2,
-                "transition": 1.4,
-                "position": {
-                  "x": 0.0,
-                  "y": -0.18,
-                  "z": 0.0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.34,
-                    "y": 0.095
-                  },
-                  "rotation": 0,
-                  "tint": "#b0413e",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e501-3",
-                "text": "X/x",
-                "shape": "text",
-                "hold": 3.4,
-                "transition": 1.4,
-                "position": {
-                  "x": 0.62,
-                  "y": -0.5,
-                  "z": 0.0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.18,
-                    "y": 0.06
-                  },
-                  "rotation": 0,
-                  "tint": "#5a4a8a",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e502",
-          "name": "the prepared role — words becoming further evidence of what the frame knew",
-          "kind": "formation",
-          "position": {
-            "x": 0.55,
-            "y": 0.35,
-            "z": 0
-          },
-          "size": {
-            "x": 0.26,
-            "y": 0.2
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "⊢",
-          "share": 1,
-          "tint": "#efe9d6",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st545",
-                "text": "⊢",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e503",
-          "name": "the complex — investment colouring perception confirming the image",
-          "kind": "formation",
-          "position": {
-            "x": -0.5,
-            "y": -0.37,
-            "z": 0
-          },
-          "size": {
-            "x": 0.246,
-            "y": 0.246
-          },
-          "rotation": 0,
-          "shape": "disc",
-          "text": "",
-          "share": 1,
-          "tint": "#5a4a8a",
-          "tintWeight": 0.6,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st546",
-                "text": "",
-                "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e504",
-          "name": "the nested relay — model, action, changed world, model; capture when results erase their status as results",
-          "kind": "formation",
-          "position": {
-            "x": -0.5,
-            "y": -0.45,
-            "z": 0
-          },
-          "size": {
-            "x": 0.44,
-            "y": 0.44
-          },
-          "rotation": 0,
-          "shape": "ring",
-          "text": "",
-          "share": 1,
-          "tint": "#c9a227",
-          "tintWeight": 0.55,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st547",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e505",
-          "name": "Bratton p.25 §§5.1–5.3 — the relay's distinct temporal tasks",
-          "kind": "formation",
-          "position": {
-            "x": 0.55,
-            "y": -0.45,
-            "z": 0
-          },
-          "size": {
-            "x": 0.2,
-            "y": 0.2
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "B",
-          "share": 1,
-          "tint": "#efe9d6",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st548",
-                "text": "B",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "title",
-          "visible": true,
-          "kicker": "#2 · the second forgetting; the Simulation concept's disclosure demand",
-          "title": "The frame calls its boundary the horizon",
-          "italic": "Usurpation embodies constitutive limitation become jurisdiction: the operation that made a situation intelligible now judges every subsequent situation — capture begins when results circulate as self-originating authority.",
-          "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The second forgetting: a finite measure forgets its finitude. The frame calls its boundary the horizon; what it cannot admit is redescribed as unreal, irrelevant or already explained. Before another person can answer, the frame supplies a role, score or expected motive; their words become further evidence of what the frame knew. x acts as X — the local 1 claiming the 0 on which it depends.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "A complex makes the arrest durable: an image attracts investment, investment colours perception, the perception confirms the image; its basin treats its criterion as necessity — the forgotten field holds rejected alternatives, bodily conditions, other lives. The relay: a model describes, action changes the situation, another model receives the changed world. Recurrence is not captivity: capture begins when the result erases its status as result and circulates as self-originating authority.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the usurping criterion and the prepared role (#2); the complex basin (#2, returned at #5→0 via A19); the relay's provenance condition (#2, #5→0 via A31/A32).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "ring",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.14,
-        "phiRate": 0.1,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": [
-        {
-          "id": "auto-relay",
-          "target": "field.params.speed",
-          "type": "lfo",
-          "wave": "triangle",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.12,
-          "max": 0.12,
-          "rate": 0.33,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
-    },
-    {
-      "id": "m-maya-3-regard",
-      "name": "The Other interrupts — regard, context, refraction",
-      "character": "A reply refuses the prepared role; the 180°→360° turn; the stained window's seams; the holographic unit carrying the whole descent.",
-      "duration": 12,
-      "transition": 1.5,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1.05,
-        "panX": 0,
-        "panY": 0
-      },
-      "engine": {
-        "inkMode": "whiteOnBlack",
-        "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "vortex",
         "pointerClick": "pulse",
-        "pointerClickStrength": 0.35,
+        "pointerClickStrength": 0.5,
         "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#0f1b22",
+        "background": "#201634",
         "palette": [
-          "#efe9d6",
-          "#1a1730",
-          "#5a4a8a",
-          "#c9a227"
+          "#b09ad8",
+          "#5a4488",
+          "#ece4f4",
+          "#3a2a5e"
         ],
         "material": "round",
         "params": {
-          "speed": 0.5,
-          "circulation": 0.3,
-          "dispersion": 0.08,
-          "pointerStrength": 0.35
+          "speed": 0.3,
+          "circulation": 0.14,
+          "dispersion": 0.05,
+          "pointerStrength": 0.3
         }
       },
       "entities": [
         {
-          "id": "e506",
-          "name": "the Other's refusal — the excess that can alter the measure of the encounter",
+          "id": "maya2-throne",
+          "name": "the frame enthroned — its boundary named the horizon of reality",
           "kind": "formation",
           "position": {
-            "x": 0.5,
-            "y": 0.4,
-            "z": 0
-          },
-          "size": {
-            "x": 0.24,
-            "y": 0.24
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "☮",
-          "share": 1,
-          "tint": "#efe9d6",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st549",
-                "text": "☮",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e507",
-          "name": "the 180°→360° turn — perspectives and transitions held in context",
-          "kind": "formation",
-          "position": {
-            "x": -0.45,
-            "y": -0.36,
-            "z": 0
-          },
-          "size": {
-            "x": 0.4,
-            "y": 0.4
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "180°",
-          "share": 1,
-          "tint": "#c9a227",
-          "tintWeight": 0.9,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e507-1",
-                "text": "180°",
-                "shape": "text",
-                "hold": 3.2,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e507-2",
-                "text": "360°",
-                "shape": "text",
-                "hold": 3.6,
-                "transition": 1.4,
-                "position": {
-                  "x": -0.28,
-                  "y": -0.3,
-                  "z": 0.0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.54,
-                    "y": 0.54
-                  },
-                  "rotation": 0,
-                  "tint": "#e0b54a",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e508",
-          "name": "the stained window — panes, seams, changing projection; Bimba/QL/MEF/pratibimba assigned",
-          "kind": "formation",
-          "position": {
-            "x": 0.5,
-            "y": -0.35,
-            "z": 0
-          },
-          "size": {
-            "x": 0.5,
-            "y": 0.5
-          },
-          "rotation": 0,
-          "shape": "square",
-          "text": "",
-          "share": 1,
-          "tint": "#c9a227",
-          "tintWeight": 0.45,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st551",
-                "text": "",
-                "shape": "square",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e509",
-          "name": "the holographic unit — the whole descent carried through one local unit",
-          "kind": "formation",
-          "position": {
-            "x": -0.55,
-            "y": -0.45,
-            "z": 0
-          },
-          "size": {
-            "x": 0.3,
-            "y": 0.3
-          },
-          "rotation": 0,
-          "shape": "disc",
-          "text": "",
-          "share": 1,
-          "tint": "#efe9d6",
-          "tintWeight": 0.6,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st552",
-                "text": "",
-                "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e510",
-          "name": "Watson/Gans/Levinas — the face-to-face exceeding the image held of the Other",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.5,
-            "z": 0
-          },
-          "size": {
-            "x": 0.2,
-            "y": 0.2
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "⊣",
-          "share": 1,
-          "tint": "#efe9d6",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st553",
-                "text": "⊣",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "title",
-          "visible": true,
-          "kicker": "#3 · Watson 1998; Gebser; the corrected optical assignments; C38's local-Bimba office",
-          "title": "The Other interrupts — regard, context, refraction",
-          "italic": "Regard begins when the excess can alter the measure of the encounter: attention becomes answerable, the criterion questionable by what it concerns.",
-          "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The Other interrupts: a reply refuses the role prepared for it; an encounter changes which question deserves to be asked. Regard begins when this excess can alter the measure of the encounter — attention becomes answerable, the criterion questionable by what it concerns. The face-to-face exceeds the image held of the Other; ethical excess is not a stronger quantity on an unchanged scale of power.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Context holds their difference: one view meets a counterview, the 180°→360° turn — another angle discloses an occlusion and carries its own; never an omniscient panorama. The stained window: light through panes, seams marking divisions, projection changing with sun and viewer; Bimba the Original order, QL the immanent spectrum, MEF the refractive operation, pratibimba the situated display. An achieved image can become local Bimba, remaining pratibimba to wider sources.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the interrupting reply (#2, #3); the window's assignments (shared with the stained-glass whole); the local-Bimba office (#3, #5→0).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "line",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.16,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": [
-        {
-          "id": "auto-context",
-          "target": "field.params.circulation",
-          "type": "lfo",
-          "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.1,
-          "max": 0.1,
-          "rate": 0.36,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
-    },
-    {
-      "id": "m-maya-5-return",
-      "name": "Recognition returns through the veil",
-      "character": "\"Līlā veils; hybris absolutises the veil; recognition sees the veil as Śakti.\" The finite view remains precious because this is where the whole becomes encounterable.",
-      "duration": 15,
-      "transition": 2.0,
-      "view": {
-        "mode": "3d",
-        "yaw": 0.3,
-        "pitch": 0.35,
-        "zoom": 0.95,
-        "panX": 0,
-        "panY": 0
-      },
-      "engine": {
-        "inkMode": "whiteOnBlack",
-        "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "attract",
-        "pointerClick": "implode",
-        "pointerClickStrength": 0.7,
-        "pointerClickRadius": 0.3,
-        "depthOcclusion": true,
-        "depthTintColor": "#120c20",
-        "volumeEnabled": true
-      },
-      "field": {
-        "background": "#171226",
-        "palette": [
-          "#efe9d6",
-          "#1a1730",
-          "#5a4a8a",
-          "#c9a227"
-        ],
-        "material": "round",
-        "params": {
-          "speed": 0.5,
-          "circulation": 0.28,
-          "dispersion": 0.08,
-          "zConfinement": 0.85,
-          "pointerStrength": 0.55
-        }
-      },
-      "entities": [
-        {
-          "id": "e511",
-          "name": "the veil — seen as Śakti, not as hole; Māyā the measure wound around the opening Anuttara owns",
-          "kind": "formation",
-          "position": {
-            "x": 0,
+            "x": -0.3,
             "y": -0.46,
             "z": 0
           },
           "size": {
-            "x": 0.73,
-            "y": 0.73
+            "x": 0.2,
+            "y": 0.26
           },
           "rotation": 0,
-          "shape": "ring",
+          "shape": "disc",
           "text": "",
-          "share": 1,
-          "tint": "#c9a227",
-          "tintWeight": 0.55,
+          "share": 1.0,
+          "tint": "#ece4f4",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1717,68 +517,25 @@
           },
           "station": null,
           "sequence": {
-            "enabled": true,
+            "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e511-1",
-                "text": "",
-                "shape": "ring",
-                "hold": 3.4,
-                "transition": 1.6,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.73,
-                    "y": 0.73
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 0.55,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e511-2",
-                "text": "",
-                "shape": "ring",
-                "hold": 3.4,
-                "transition": 1.6,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.79,
-                    "y": 0.79
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 0.42,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  _______\n |       |\n |   o   |\n |_______|\n    /\\\n   /__\\\n"
+            }
           }
         },
         {
-          "id": "e512",
-          "name": "the opening — never one more bounded patch",
+          "id": "maya2-relay",
+          "name": "the nested relay — model, action, changed world, another model",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.18,
-            "z": -0.45
+            "x": 0.25,
+            "y": -0.52,
+            "z": 0
           },
           "size": {
             "x": 0.22,
@@ -1787,8 +544,8 @@
           "rotation": 0,
           "shape": "disc",
           "text": "",
-          "share": 1,
-          "tint": "#1a1730",
+          "share": 1.3,
+          "tint": "#b09ad8",
           "tintWeight": 0.95,
           "locked": false,
           "force": {
@@ -1801,37 +558,67 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st555",
-                "text": "",
-                "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " .--------.\n | .----. |\n | | :: | |\n | '----' |\n '--------'\n"
+            }
           }
         },
         {
-          "id": "e513",
-          "name": "A24 — necessary measuring preserved; usurped measure made answerable",
+          "id": "maya2-complex",
+          "name": "the complex — the basin treating its criterion as necessity",
           "kind": "formation",
           "position": {
-            "x": 0.55,
-            "y": 0.5,
-            "z": 0.2
+            "x": 0.0,
+            "y": -0.38,
+            "z": 0
           },
           "size": {
-            "x": 0.3,
+            "x": 0.62,
+            "y": 0.62
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.0,
+          "tint": "#5a4488",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          }
+        },
+        {
+          "id": "maya2-claim",
+          "name": "the reflected image as source",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.28,
+            "z": 0
+          },
+          "size": {
+            "x": 0.14,
             "y": 0.14
           },
           "rotation": 0,
           "shape": "text",
-          "text": "A24",
-          "share": 1,
-          "tint": "#efe9d6",
-          "tintWeight": 1,
+          "text": "x→X",
+          "share": 1.0,
+          "tint": "#ece4f4",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1843,407 +630,466 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st556",
-                "text": "A24",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e514",
-          "name": "the paśu correction — the \"I am\" preceding separation; the bounded position arising within recognition's field",
-          "kind": "formation",
-          "position": {
-            "x": -0.55,
-            "y": -0.45,
-            "z": 0.35
-          },
-          "size": {
-            "x": 0.24,
-            "y": 0.24
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "प",
-          "share": 1,
-          "tint": "#efe9d6",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st557",
-                "text": "प",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e515",
-          "name": "A35/A36 — the eye opens again; recognition lived in the next seeing",
-          "kind": "formation",
-          "position": {
-            "x": 0.55,
-            "y": -0.45,
-            "z": 0.1
-          },
-          "size": {
-            "x": 0.16,
-            "y": 0.16
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "◉",
-          "share": 1,
-          "tint": "#efe9d6",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st558",
-                "text": "◉",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e516",
-          "name": "the eight determinations walk the whole field (native articulation, #4)",
-          "kind": "formation",
-          "position": {
-            "x": -0.5,
-            "y": 0.0,
-            "z": -0.2
-          },
-          "size": {
-            "x": 0.15,
-            "y": 0.15
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "−/−",
-          "share": 1,
-          "tint": "#efe9d6",
-          "tintWeight": 0.6,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e516-1",
-                "text": "−/−",
-                "shape": "text",
-                "hold": 2.4,
-                "transition": 1.0,
-                "position": {
-                  "x": -0.5,
-                  "y": 0.0,
-                  "z": -0.2
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.15,
-                    "y": 0.15
-                  },
-                  "rotation": 0,
-                  "tint": "#efe9d6",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e516-2",
-                "text": "0/1",
-                "shape": "text",
-                "hold": 2.4,
-                "transition": 1.0,
-                "position": {
-                  "x": -0.35,
-                  "y": -0.42,
-                  "z": -0.1
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.15,
-                    "y": 0.15
-                  },
-                  "rotation": 0,
-                  "tint": "#efe9d6",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e516-3",
-                "text": "?/!",
-                "shape": "text",
-                "hold": 2.4,
-                "transition": 1.0,
-                "position": {
-                  "x": 0.05,
-                  "y": -0.55,
-                  "z": 0.0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.15,
-                    "y": 0.15
-                  },
-                  "rotation": 0,
-                  "tint": "#efe9d6",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e516-4",
-                "text": "−/+",
-                "shape": "text",
-                "hold": 2.4,
-                "transition": 1.0,
-                "position": {
-                  "x": 0.42,
-                  "y": -0.32,
-                  "z": 0.05
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.15,
-                    "y": 0.15
-                  },
-                  "rotation": 0,
-                  "tint": "#efe9d6",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e516-5",
-                "text": "X/x",
-                "shape": "text",
-                "hold": 2.4,
-                "transition": 1.0,
-                "position": {
-                  "x": 0.4,
-                  "y": 0.02,
-                  "z": 0.1
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.15,
-                    "y": 0.15
-                  },
-                  "rotation": 0,
-                  "tint": "#efe9d6",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e516-6",
-                "text": "AM/IS",
-                "shape": "text",
-                "hold": 2.4,
-                "transition": 1.0,
-                "position": {
-                  "x": 0.15,
-                  "y": 0.38,
-                  "z": 0.12
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.15,
-                    "y": 0.15
-                  },
-                  "rotation": 0,
-                  "tint": "#efe9d6",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e516-7",
-                "text": "∞/dx",
-                "shape": "text",
-                "hold": 2.4,
-                "transition": 1.0,
-                "position": {
-                  "x": -0.28,
-                  "y": 0.42,
-                  "z": 0.1
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.15,
-                    "y": 0.15
-                  },
-                  "rotation": 0,
-                  "tint": "#efe9d6",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e516-8",
-                "text": "1/0",
-                "shape": "text",
-                "hold": 3.6,
-                "transition": 1.0,
-                "position": {
-                  "x": 0.0,
-                  "y": -0.3,
-                  "z": -0.3
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.15,
-                    "y": 0.15
-                  },
-                  "rotation": 0,
-                  "tint": "#efe9d6",
-                  "tintWeight": 1.0,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#4–#5→0 · the eightfold field; the Neumann appointments (human-amplified: yes); the Arbitration field at register 3",
-          "title": "Recognition returns through the veil",
-          "italic": "The return keeps the world differentiated and the knower situated: līlā's play has real positions and consequences — the return releases their claim to originate the whole, not the positions themselves.",
+          "kicker": "",
+          "title": "The frame claims the horizon",
+          "italic": "The reflected image acts as its source; the relay erases its own provenance.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.09,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-maya-3-regard",
+      "name": "The Other interrupts — regard, context, refraction",
+      "character": "A reply refuses the prepared role; the 180°→360° turn; the stained window's seams; the holographic unit carrying the whole descent.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.3
+      },
+      "field": {
+        "background": "#cfc4ae",
+        "palette": [
+          "#3c3020",
+          "#6e5c3a",
+          "#20282c",
+          "#8a5a30"
+        ],
+        "material": "round",
+        "params": {
+          "speed": 0.34,
+          "circulation": 0.12,
+          "dispersion": 0.04,
+          "pointerStrength": 0.3
+        }
+      },
+      "entities": [
+        {
+          "id": "maya3-window",
+          "name": "the stained window — light altered by pane, angle and seam",
+          "kind": "formation",
+          "position": {
+            "x": 0.02,
+            "y": -0.44,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.4,
+          "tint": "#3c3020",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " .-----+-----.\n |  \\  |  /  |\n +-----+-----+\n |   \\ | /   |\n '-----+-----'\n"
+            }
+          }
         },
         {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The native articulation holds the field: −/−; 0/1; ?/!; −/+; X/x; AM/IS; ∞/dx; returning 1/0 — the six turns renumber nothing. The Neumann appointments carry it (human-amplified: yes). The paśu correction: recognition precedes separation into husband and wife; the bounded position arises within recognition's field and cannot originate it. The toroidal appointment keeps its offices: Anuttara the unobjectifiable opening; Māyā the measure-field wound around it — not the hole.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
+          "id": "maya3-other",
+          "name": "the Other's face — the reply refusing the prepared role",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.58,
+            "z": 0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#6e5c3a",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   .-.\n  ( o )\n   ) (\n  '---'\n"
+            }
+          }
         },
         {
-          "id": "body2",
+          "id": "maya3-context",
+          "name": "the context — views and their transitions held together",
+          "kind": "formation",
+          "position": {
+            "x": 0.0,
+            "y": -0.44,
+            "z": 0
+          },
+          "size": {
+            "x": 0.8,
+            "y": 0.8
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.0,
+          "tint": "#8a5a30",
+          "tintWeight": 0.4,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          }
+        },
+        {
+          "id": "maya3-turn",
+          "name": "the context turn",
+          "kind": "formation",
+          "position": {
+            "x": 0.58,
+            "y": -0.68,
+            "z": 0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "360°",
+          "share": 1.0,
+          "tint": "#20282c",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Recognition returns through the veil: \"Līlā veils; hybris absolutises the veil; recognition sees the veil as Śakti.\" The play keeps positions; the return releases their claim to originate the whole, not the positions. A24: necessary measuring preserved, usurped measure answerable; A19 the complex's changed jurisdiction; A21 resituation without deleting the differentiated life; A27 the Other beyond my image; A35/A36 the completed view returning to the zero it could never occupy.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
+          "title": "The Other interrupts",
+          "italic": "A reply refuses its role; the seams hold; the view opens into context.",
+          "body": "",
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-maya-5-return",
+      "name": "Recognition returns through the veil",
+      "character": "\"Līlā veils; hybris absolutises the veil; recognition sees the veil as Śakti.\" The finite view remains precious because this is where the whole becomes encounterable.",
+      "duration": 15,
+      "transition": 2.0,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.3
+      },
+      "field": {
+        "background": "#cfc4ae",
+        "palette": [
+          "#3c3020",
+          "#6e5c3a",
+          "#20282c",
+          "#8a5a30"
+        ],
+        "material": "round",
+        "params": {
+          "speed": 0.34,
+          "circulation": 0.12,
+          "dispersion": 0.04,
+          "pointerStrength": 0.3
+        }
+      },
+      "entities": [
+        {
+          "id": "maya5-veil-lit",
+          "name": "the veil seen as Śakti — the power recognised in its formation",
+          "kind": "formation",
+          "position": {
+            "x": 0.0,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.28,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.4,
+          "tint": "#3c3020",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " /\\|//\\|/\\\n  \\|//\\|//\n  *---*---*\n  *   *   *\n"
+            }
+          }
         },
         {
-          "id": "occ",
+          "id": "maya5-eight",
+          "name": "the eightfold — the whole relation traversed",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.6,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#6e5c3a",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   o o o o\n  o       o\n  o       o\n   o o o o\n"
+            }
+          }
+        },
+        {
+          "id": "maya5-torus",
+          "name": "the torus — depth, opening, winding",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.6,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.18
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#8a5a30",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "    .----.\n   /  __  \\\n  |  (  )  |\n   \\ '--'  /\n    '----'\n"
+            }
+          }
+        },
+        {
+          "id": "maya5-recognition",
+          "name": "recognition",
+          "kind": "formation",
+          "position": {
+            "x": -0.15,
+            "y": -0.74,
+            "z": 0
+          },
+          "size": {
+            "x": 0.13,
+            "y": 0.13
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☀",
+          "share": 1.0,
+          "tint": "#20282c",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Declared cross-story: toroidal offices shared with the uroboros whole; the paśu correction shared with the Neumann whole. ↳ Occurrences: the veil and the opening (#1, #4, #5→0); the eye opening again (#0, #5→0).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
+          "title": "Recognition through the veil",
+          "italic": "Līlā veils; hybris absolutises the veil; recognition sees the veil as power.",
+          "body": "",
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
@@ -2257,7 +1103,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
+        "thetaRate": 0.08,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -2265,24 +1111,8 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [
-        {
-          "id": "auto-return",
-          "target": "field.params.pointerStrength",
-          "type": "lfo",
-          "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": 0.35,
-          "max": 0.75,
-          "rate": 0.28,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
+      "automation": []
     }
   ],
-  "updatedAt": "2026-10-06T12:00:00.000Z"
+  "updatedAt": "2026-10-07T12:00:00.000Z"
 }

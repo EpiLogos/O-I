@@ -1,150 +1,177 @@
 {
- "artifact": "rooms/roz-room-04-mathematical-substrate.journey.json",
- "family": "rooms",
- "room_slug": "04-mathematical-substrate",
- "worker": "E1",
- "profile_lineage": [
-  "roz-corpus-base",
-  "register-essay",
-  "family-section-room"
- ],
- "source_revision": {
-  "repo": "EpiLogos/Antykathera-Essay-Work",
-  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-  "note": "publication surfaces outside the 288-record census receipt; sha256 computed at authoring time (2026-09-17) for change detection, not taken from a census receipt",
-  "records": [
-   {
-    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/ROOM.md",
-    "sha256": "8bd7d7cd7d31bc608398c597ea76957c2a3c8e663cf22b2b9c2ee80a1d0fe230"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/P1-CANONICAL-ALIGNMENT.md",
-    "sha256": "4b657d4ad8700c211b6b0ea24dc7cb878cab2cc6b9103394b910477a2303c455"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md",
-    "sha256": "25a6166dc80d383b871de0106489c3e48432e89031d1a1a9af5bfbc574401876"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/26-s3-p1-spanda-4-2.md",
-    "sha256": "29a94e3230e2aa4337e6de7a477558c7bf426aa4093b9e829350a65f8e6bdb02"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/27-s3-p2-mark-reentry-complex.md",
-    "sha256": "a722fc39aed65c47d95c9fbc98eabc15a8a899afaca33e8338c04152c510180d"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/28-s3-p3-projective-dimensional-reframing.md",
-    "sha256": "f716be16da2e47f2abe4db9a14911e793644fd5bd056117a41e17c7b1cb4a259"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md",
-    "sha256": "2032030478b911b48946070b5fa79d75c551158d3b614a98e7f0f28b6f4cc561"
-   },
-   {
-    "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/30-s3-p5-arche-topos.md",
-    "sha256": "68a20486fa03ad5dc035dd3ffab3fcaa72cde3feed6015984b8514a84862991f"
-   }
-  ]
- },
- "pointcloud_revision": "f257de5",
- "scenes": [
-  {
-   "scene_id": "movement-25",
-   "source_ref": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md",
-   "relations": "movement identity: §3 · #0 — Eight Determinations · canonical route: P1-M25 → A18 / C11 · C21 · C49 · C50 · C61 · C64 — exact traversal + Symbol/Account/Trust · reading path: ← previous · M24 Zero Changes Its Role   ·   next → M26 The Spanda Equations and 4+2"
+  "artifact": "rooms/roz-room-04-mathematical-substrate.journey.json",
+  "family": "rooms",
+  "room_slug": "04-mathematical-substrate",
+  "worker": "E1",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "register-essay",
+    "family-section-room"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+    "note": "publication surfaces outside the 288-record census receipt; sha256 computed at authoring time (2026-09-17) for change detection, not taken from a census receipt",
+    "records": [
+      {
+        "path": "submission-package/essay/section-rooms/04-mathematical-substrate/ROOM.md",
+        "sha256": "8bd7d7cd7d31bc608398c597ea76957c2a3c8e663cf22b2b9c2ee80a1d0fe230"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/04-mathematical-substrate/P1-CANONICAL-ALIGNMENT.md",
+        "sha256": "4b657d4ad8700c211b6b0ea24dc7cb878cab2cc6b9103394b910477a2303c455"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md",
+        "sha256": "25a6166dc80d383b871de0106489c3e48432e89031d1a1a9af5bfbc574401876"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/26-s3-p1-spanda-4-2.md",
+        "sha256": "29a94e3230e2aa4337e6de7a477558c7bf426aa4093b9e829350a65f8e6bdb02"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/27-s3-p2-mark-reentry-complex.md",
+        "sha256": "a722fc39aed65c47d95c9fbc98eabc15a8a899afaca33e8338c04152c510180d"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/28-s3-p3-projective-dimensional-reframing.md",
+        "sha256": "f716be16da2e47f2abe4db9a14911e793644fd5bd056117a41e17c7b1cb4a259"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md",
+        "sha256": "2032030478b911b48946070b5fa79d75c551158d3b614a98e7f0f28b6f4cc561"
+      },
+      {
+        "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/30-s3-p5-arche-topos.md",
+        "sha256": "68a20486fa03ad5dc035dd3ffab3fcaa72cde3feed6015984b8514a84862991f"
+      }
+    ]
   },
-  {
-   "scene_id": "movement-26",
-   "source_ref": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/26-s3-p1-spanda-4-2.md",
-   "relations": "movement identity: §3 · #1 — The Spanda Equations and 4+2 · canonical route: P1-M26 → A11 · A12 · A13 · A14 · A18 / C11 · C49 · C50 — Spanda/4+2 Matheme with source boundary intact · reading path: ← previous · M25 Eight Determinations   ·   next → M27 Mark, Re-entry, and Complex Orientation"
+  "pointcloud_revision": "f257de5",
+  "scenes": [
+    {
+      "scene_id": "movement-25",
+      "source_ref": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md",
+      "relations": "movement identity: §3 · #0 — Eight Determinations · canonical route: P1-M25 → A18 / C11 · C21 · C49 · C50 · C61 · C64 — exact traversal + Symbol/Account/Trust · reading path: ← previous · M24 Zero Changes Its Role   ·   next → M26 The Spanda Equations and 4+2"
+    },
+    {
+      "scene_id": "movement-26",
+      "source_ref": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/26-s3-p1-spanda-4-2.md",
+      "relations": "movement identity: §3 · #1 — The Spanda Equations and 4+2 · canonical route: P1-M26 → A11 · A12 · A13 · A14 · A18 / C11 · C49 · C50 — Spanda/4+2 Matheme with source boundary intact · reading path: ← previous · M25 Eight Determinations   ·   next → M27 Mark, Re-entry, and Complex Orientation"
+    },
+    {
+      "scene_id": "movement-27",
+      "source_ref": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/27-s3-p2-mark-reentry-complex.md",
+      "relations": "movement identity: §3 · #2 — Mark, Re-entry, and Complex Orientation · canonical route: P1-M27 → A14 · A18 · A19 / C31 · C64 — re-entry/complex formal neighbours via source-distinct Homologia/Analogia · reading path: ← previous · M26 The Spanda Equations and 4+2   ·   next → M28 Projective Completion and Dimensional Reframing"
+    },
+    {
+      "scene_id": "movement-28",
+      "source_ref": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/28-s3-p3-projective-dimensional-reframing.md",
+      "relations": "movement identity: §3 · #3 — Projective Completion and Dimensional Reframing · canonical route: P1-M28 → A10 · A17 / C52 · C64 — projective/dimensional Matheme; witness not metaphysical derivation · reading path: ← previous · M27 Mark, Re-entry, and Complex Orientation   ·   next → M29 Topology and Musical Resolution"
+    },
+    {
+      "scene_id": "movement-29",
+      "source_ref": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md",
+      "relations": "movement identity: §3 · #4 — Topology and Musical Resolution · canonical route: P1-M29 → A15 · A16 · A17 / C20 · C52 — topology/music Matheme + Homologia/Analogia · reading path: ← previous · M28 Projective Completion and Dimensional Reframing   ·   next → M30 The Arche-Topos"
+    },
+    {
+      "scene_id": "movement-30",
+      "source_ref": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/30-s3-p5-arche-topos.md",
+      "relations": "movement identity: §3 · #5→0 — The Arche-Topos · canonical route: P1-M30 → A16 · A17 · A18 / C20 · C30 · C61 — Arche-Topos across Matheme/Mytheme/Episteme without register collapse · reading path: ← previous · M29 Topology and Musical Resolution   ·   next → M31 The Psychoid Problem"
+    }
+  ],
+  "assets": [
+    {
+      "kind": "diagram",
+      "ref": "engine-native formations and text glyphs only (disc/ring/square/triangle/yantra + authored glyph strings: 0, Ø, 1/0, 0/1, 4+2, X/x, S1, ∅-succession, eight-determination and recognition sequences); no external imagery",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "rooms/roz-room-04-mathematical-substrate.cover.png",
+  "capture_note": "cover = the room door (first movement scene) at authored particle count 62000 through the real engine (tools/capture.mjs, port 47911)",
+  "status": "captured",
+  "notes": [
+    "E0 acceptance repair: text/field collision fixed on movement-30 (ring trimmed 1.9→1.55, spot-checked) and movement-25 (traversal glyph narrowed, offset to GX); positional grammar shifted right-of-centre, route layer top-left; cover re-captured at authored count.",
+    "one shared section-room grammar across all eight rooms (positional chassis forms #0 disc / #1 text / #2 triangle / #3 yantra / #4 square / #5,#5→0 ring); recorded variations listed in profiles/family-section-room.profile.json",
+    "withholdings hold: no mechanism imagery anywhere before movement-45; no 0/1 glyphs before movement-18; Ø appears exactly once with its one job (movement-16)",
+    "claim statuses travel as data (italic layer = claim_status verbatim from movement frontmatter); P1 canonical routes travel as data (route layer = record ids from the authored P1-CANONICAL-ALIGNMENT, never restaged)",
+    "previous/next carried in scene text with exact titles; movement-48 carries the Return to movement-01",
+    "SHARED CAPTURE DEFECT (for Point-Cloud #6): tools/capture.mjs --all-scenes drifts — from the third scene on, screenshots show an earlier scene than requested (openScene + 2500ms does not settle; DOM text confirms the wrong scene). Single-scene captures (one-scene document, default first-scene path) are reliable; all E1 per-scene inspection and all covers used the reliable path. Tool file untouched by E1.",
+    "SCHEMA NOTE (for Point-Cloud #6): TextLayer.size minimum is 14 (finite(t.size,14,150)); a 13px route layer fails validation with the generic message \"Invalid page text.\" — a range-specific message would help authoring.",
+    "OBSERVATION: on dark scenes (room 07, essay return scene) the editorial body text renders dim grey on near-black; legible but low-contrast. No text-colour field exists on TextLayer — presentation is engine-owned.",
+    "OBSERVATION: sequence scenes are temporal; a cover/inspection screenshot shows one phase of the traversal (movement-25 and movement-34 covers/captures catch a settled step or a mid-morph). The artifact, not the still, carries the full sequence.",
+    "Enrichment moves 2026-10-06 (zcode:enrich-essay-l2; records re-read at fc59a719).",
+    "m25 the eight determinations: the record's own table walked in its fixed order (−/− parent frame → 0/1 → ?/! → −/+ → X/x → AM/IS → ∞/dx → 1/0 return-switch), each turn stepping along the row with deepening ink, the switch reddened; beside it diaphaneity's WITHHELD disclosure lands exactly here: the triangle N·E·W 180° steps to the square N·E·S·W 360° — perspective becomes contextual holding; the Trika becomes quaternary. Longest duration 18 — an ordered traversal, not a catalogue.",
+    "m26 the Spanda kernel: 4+2 → 5→0 → 4+2 — the horizontal pulse and its return read in the declared QL register; the middle step cools blue (the return-switch's own office).",
+    "m27 mark and re-entry: M → M(M)→U → re-entry, the last step rotated 180° — the form re-entering its own space; shove pointer = the crossing's cut.",
+    "m28 projective completion: u=x/y → [1:0] blocked (red) → v=1/u → v=0 (heaviest) — the obstruction made tractable by changing the representational space; the handoff IS the move.",
+    "m29 3D (z = the lift): the torus walks T² → χ=0 → (2,−1) at mid-depth while the music ring walks 16/9 → 9/8 → 2/1 deeper down and the covering square holds the floor — a path closes on the torus while its endpoints differ on the plane; two exact returns through retained difference. Vortex/vortex pointer, circulation LFO.",
+    "m30 the Arche-Topos (layout spiral — charts, transitions, lift): the lid's promise → the maker enters → arche-topos; implode click gathers the atlas; the second formation holds as the quiet complement (the stained-glass office).",
+    "Legibility pattern (all members, 2026-10-06; bounds corrected 2026-10-06 after the wave-2 audit): (a) on 40 scenes a sequence whose carrier is a non-text formation walks on a dedicated TEXT-shaped walker entity — the original formation stays as the quiet field form behind it (tintWeight ≤ 0.25) and those scenes hold calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22; speed LFOs clamped ≤ 0.7) so the walking letterform can condense — the wave-1 legible-walk pattern; (b) on 16 scenes the sequence carrier is already a text-shaped formation and keeps its own authored physics (measured maxima: speed 0.8, circulation 1.7, turbulence 0.34), which the render pass pixel-verified holds the letterforms. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text.",
+    "Craft rework 2026-10-07 (expression rework pass, lane 5; records re-read at fc59a719). The shared section-room grammar is retired; each scene now draws the record's own figure and the notation walks on it. m25 the QL unit mandala drawn (ground ring, stations ring, horizon ring); the eight determinations walk it in fixed order and the triangle opens to the square beside them. m26 the two triads drawn (emanative up, reversionary turned 180°) with the composed bridge between and the ring breathing over it; 4+2 → 5→0 → 4+2 walks above. m27 night ground: the drawn distinction circled, M → M(M)→U → re-entry walking, and the disc performing its re-entry from outside to inside the boundary. m28 the two charts squared with the overlap disc between; [1:0] reddened then made definite teal as the point itself crosses charts. m29 the torus as two interlocked rings on its covering square; T²/χ=0/(2,−1) and 16/9/9/8/2/1 walk the resolution; field held still from m28 (deliberate rest). m30 the atlas: three charts gathered inside the held field ring; lid → maker → arche-topos walks. Stillness pairs: m25–m26 (one paper, the pulse continuing), m28–m29 (one cold light, resolution read calmly). Colour arc: parchment → night → cold morning → gathering near-white. Stage text reduced to one hospitable line per room."
+  ],
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-essay-l2",
+    "lane": "ESSAY+ROOMS wave 2",
+    "basis_commit": "dbf3b17",
+    "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+    "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
   },
-  {
-   "scene_id": "movement-27",
-   "source_ref": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/27-s3-p2-mark-reentry-complex.md",
-   "relations": "movement identity: §3 · #2 — Mark, Re-entry, and Complex Orientation · canonical route: P1-M27 → A14 · A18 · A19 / C31 · C64 — re-entry/complex formal neighbours via source-distinct Homologia/Analogia · reading path: ← previous · M26 The Spanda Equations and 4+2   ·   next → M28 Projective Completion and Dimensional Reframing"
-  },
-  {
-   "scene_id": "movement-28",
-   "source_ref": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/28-s3-p3-projective-dimensional-reframing.md",
-   "relations": "movement identity: §3 · #3 — Projective Completion and Dimensional Reframing · canonical route: P1-M28 → A10 · A17 / C52 · C64 — projective/dimensional Matheme; witness not metaphysical derivation · reading path: ← previous · M27 Mark, Re-entry, and Complex Orientation   ·   next → M29 Topology and Musical Resolution"
-  },
-  {
-   "scene_id": "movement-29",
-   "source_ref": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md",
-   "relations": "movement identity: §3 · #4 — Topology and Musical Resolution · canonical route: P1-M29 → A15 · A16 · A17 / C20 · C52 — topology/music Matheme + Homologia/Analogia · reading path: ← previous · M28 Projective Completion and Dimensional Reframing   ·   next → M30 The Arche-Topos"
-  },
-  {
-   "scene_id": "movement-30",
-   "source_ref": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/30-s3-p5-arche-topos.md",
-   "relations": "movement identity: §3 · #5→0 — The Arche-Topos · canonical route: P1-M30 → A16 · A17 · A18 / C20 · C30 · C61 — Arche-Topos across Matheme/Mytheme/Episteme without register collapse · reading path: ← previous · M29 Topology and Musical Resolution   ·   next → M31 The Psychoid Problem"
+  "glyph_rationales": {
+    "−/−": "M25: the parent relation — bare relationality before the field is divided into named terms; frame, never content",
+    "0/1": "M25: #0 Ground — awareness/phenomenon; the appearing known within awareness, immanent to every mark",
+    "?/!": "M25: #1 Definition — questioning/asserting; every assertion bears the unsettled question that makes it accountable",
+    "−/+": "M25: #2 Dynamis — withdrawal/extension; the sustained pulse whose moments remain co-present",
+    "X/x": "M25: #3 Pattern — determining-capacity/determinate instance; the local instance makes the general legible without exhausting it",
+    "AM/IS": "M25: #4 Context — first-person presence/third-person sayability; pramātṛ/pramāṇa/prameya one appearing-act",
+    "∞/dx": "M25: #5 Realisation — unbounded depth/infinitesimal differential; exactness never becomes possession",
+    "1/0": "M25: the return-switch — the achieved determinate meets the incomputable; pratyabhijñā, recognition not acquisition (reddened at the switch)",
+    "4+2": "M26: the native generative kernel — read in the declared QL register, not as ordinary field arithmetic",
+    "5→0": "M26: the return through ground that renews a further cycle — the composition of 0/1 with 1/0 in the authorial calculus",
+    "M": "M27: the mark — Spencer-Brown's injunction to draw a distinction; inside and outside created together",
+    "M(M)→U": "M27: crossing a crossing returns to the unmarked state — calling and crossing perform different operations",
+    "re-entry": "M27: the form re-entering its own space — the Argued temporal reading: the mark carries its prior crossing as memory (rotated 180° at the re-entry)",
+    "u=x/y": "M28: the ordinary chart — valid where y≠0",
+    "v=1/u": "M28: the second chart and the overlap rule — the same point perfectly definite under the other representation",
+    "v=0": "M28: the zero belongs to the new chart — not the multiplicative inverse of zero in the field (heaviest blue: completion within a declared structure)",
+    "T²": "M29: the torus T²=ℝ²/ℤ² — the essay's primary kinetic image of retained return",
+    "χ=0": "M29: Euler characteristic zero, genus one — local closure and retained displacement coexist exactly",
+    "(2,−1)": "M29: the winding pair retained by the loop — the endpoints differ in the plane and coincide on the torus",
+    "16/9": "M29: the total span — (4/3)², the selected incomplete return",
+    "9/8": "M29: the exact complement to the octave — the live tick that gives the next cycle something to begin from",
+    "2/1": "M29: the octave — reached through, not by eliminating, the remainder (green: resolution with the path retained)",
+    "the lid's promise": "M30: the jigsaw's promised whole — the useful orientation every later fit disturbs and uses",
+    "the maker enters": "M30: the picture's maker enters the world depicted — the road continues beyond the edge",
+    "arche-topos": "M30: the authorial Arche-Topos — the Derived formal synthesis where charts, transitions and lifts hold a situated place-field, returning into psyche",
+    "[1:0]": "M28: the point the first chart cannot represent — reddened: a failed coordinate need not mean a failed object",
+    "lid": "M30: the jigsaw's promised whole — the useful orientation every later fit disturbs and uses",
+    "maker": "M30: the picture's maker enters the world depicted — the road continues beyond the edge",
+    "Traversal — the eight determinations walked in order": "M25: the record's own table walked in its fixed order across the mandala's stations, each turn deepening in ink, the return-switch reddened",
+    "the ground ring — 0/1 empty of object": "M25: the mandala's centre — the red-ringed ground, empty of object, immanent to every station",
+    "the four stations' ring": "M25: the inner ring holding Definition, Dynamis, Pattern and Context at the compass points",
+    "the horizon — infinity over dx enclosing": "M25: the outer ring — Realisation as the enclosing horizon no finite mark contains",
+    "perspective opened into holding — the triangle becomes the square": "M25: diaphaneity's disclosure drawn as form — the 180° triangle of three views steps into the 360° square of contextual holding; the Trika becomes quaternary (green at the holding)",
+    "Traversal — the spanda pulse and its return": "M26: the kernel's pulse 4+2 → 5→0 → 4+2 read in the declared QL register; the middle step cools blue — the return through ground that renews the cycle",
+    "the emanative triad — source toward expression": "M26: the first triad (0/0) → (0/1)/(1/0) → [T0] — Prakāśa, source becoming expression",
+    "the reversionary triad — return toward recognition": "M26: the second triad [T1] → (1/0+0/1) → 1/1 — Vimarśa, form turning toward its condition (drawn turned 180°)",
+    "the bridge — composed inverse orientations": "M26: (1/0+0/1) in the QL register — the composition of inverse orientations, not ordinary addition",
+    "the breathed ring — the spanda pulse": "M26: spanda itself — the ring breathing out and in, expansion and contraction co-present",
+    "Traversal — the mark, the crossing, the re-entry": "M27: M → M(M)→U → re-entry — the distinction drawn, crossed, and re-entering its own space (turned 180° at the re-entry)",
+    "the drawn distinction — the boundary crossed": "M27: the circle Spencer-Brown draws — inside and outside created together by one stroke",
+    "the form re-entering its own space": "M27: the disc crossing back within the boundary — the Argued temporal reading: the form carries its prior crossing as memory",
+    "Traversal — the obstruction made tractable": "M28: u=x/y → [1:0] → v=1/u → v=0 — the walk across the two charts; the handoff is the move",
+    "the first chart": "M28: u=x/y — the space valid where y≠0, unable to show [1:0]",
+    "the second chart": "M28: v=1/u — the representational space changed so the obstruction becomes definite",
+    "the overlap rule": "M28: where both charts are valid, v=1/u — one object under two readings",
+    "the blocked point made definite": "M28: [1:0] red inside the first chart, then definite teal inside the second — the same point, perfectly definite under the other representation",
+    "Traversal — the torus walk": "M29: T² → χ=0 → (2,−1) — the lift's path closing on the torus while its endpoints differ on the plane",
+    "Traversal — the harmonic walk": "M29: 16/9 → 9/8 → 2/1 — the octave reached through, not by eliminating, the remainder (green: resolution with the path retained)",
+    "the meridian circle": "M29: one circle of the torus T²=ℝ²/ℤ² — the essay's kinetic image of retained return",
+    "the longitude circle": "M29: the second circle of the torus — local closure and retained displacement coexisting",
+    "the covering square": "M29: ℝ² — the plane where the lifted path's endpoints differ; the torus remembers what the plane cannot",
+    "Traversal — the atlas gathered": "M30: lid → maker → arche-topos — the promised whole disturbed, the maker entering, the synthesis that holds both",
+    "the held field": "M30: the Arche-Topos as situated place-field — charts, transitions and lifts held in one return into psyche",
+    "charts gathered": "M30: the atlas's charts — each a partial fit, gathered by the click into one common field"
   }
- ],
- "assets": [
-  {
-   "kind": "diagram",
-   "ref": "engine-native formations and text glyphs only (disc/ring/square/triangle/yantra + authored glyph strings: 0, Ø, 1/0, 0/1, 4+2, X/x, S1, ∅-succession, eight-determination and recognition sequences); no external imagery",
-   "provenance": "authored"
-  }
- ],
- "capture": "rooms/roz-room-04-mathematical-substrate.cover.png",
- "capture_note": "cover = the room door (first movement scene) at authored particle count 62000 through the real engine (tools/capture.mjs, port 47911)",
- "status": "captured",
- "notes": [
-  "E0 acceptance repair: text/field collision fixed on movement-30 (ring trimmed 1.9→1.55, spot-checked) and movement-25 (traversal glyph narrowed, offset to GX); positional grammar shifted right-of-centre, route layer top-left; cover re-captured at authored count.",
-  "one shared section-room grammar across all eight rooms (positional chassis forms #0 disc / #1 text / #2 triangle / #3 yantra / #4 square / #5,#5→0 ring); recorded variations listed in profiles/family-section-room.profile.json",
-  "withholdings hold: no mechanism imagery anywhere before movement-45; no 0/1 glyphs before movement-18; Ø appears exactly once with its one job (movement-16)",
-  "claim statuses travel as data (italic layer = claim_status verbatim from movement frontmatter); P1 canonical routes travel as data (route layer = record ids from the authored P1-CANONICAL-ALIGNMENT, never restaged)",
-  "previous/next carried in scene text with exact titles; movement-48 carries the Return to movement-01",
-  "SHARED CAPTURE DEFECT (for Point-Cloud #6): tools/capture.mjs --all-scenes drifts — from the third scene on, screenshots show an earlier scene than requested (openScene + 2500ms does not settle; DOM text confirms the wrong scene). Single-scene captures (one-scene document, default first-scene path) are reliable; all E1 per-scene inspection and all covers used the reliable path. Tool file untouched by E1.",
-  "SCHEMA NOTE (for Point-Cloud #6): TextLayer.size minimum is 14 (finite(t.size,14,150)); a 13px route layer fails validation with the generic message \"Invalid page text.\" — a range-specific message would help authoring.",
-  "OBSERVATION: on dark scenes (room 07, essay return scene) the editorial body text renders dim grey on near-black; legible but low-contrast. No text-colour field exists on TextLayer — presentation is engine-owned.",
-  "OBSERVATION: sequence scenes are temporal; a cover/inspection screenshot shows one phase of the traversal (movement-25 and movement-34 covers/captures catch a settled step or a mid-morph). The artifact, not the still, carries the full sequence.",
-  "Enrichment moves 2026-10-06 (zcode:enrich-essay-l2; records re-read at fc59a719).",
-  "m25 the eight determinations: the record's own table walked in its fixed order (−/− parent frame → 0/1 → ?/! → −/+ → X/x → AM/IS → ∞/dx → 1/0 return-switch), each turn stepping along the row with deepening ink, the switch reddened; beside it diaphaneity's WITHHELD disclosure lands exactly here: the triangle N·E·W 180° steps to the square N·E·S·W 360° — perspective becomes contextual holding; the Trika becomes quaternary. Longest duration 18 — an ordered traversal, not a catalogue.",
-  "m26 the Spanda kernel: 4+2 → 5→0 → 4+2 — the horizontal pulse and its return read in the declared QL register; the middle step cools blue (the return-switch's own office).",
-  "m27 mark and re-entry: M → M(M)→U → re-entry, the last step rotated 180° — the form re-entering its own space; shove pointer = the crossing's cut.",
-  "m28 projective completion: u=x/y → [1:0] blocked (red) → v=1/u → v=0 (heaviest) — the obstruction made tractable by changing the representational space; the handoff IS the move.",
-  "m29 3D (z = the lift): the torus walks T² → χ=0 → (2,−1) at mid-depth while the music ring walks 16/9 → 9/8 → 2/1 deeper down and the covering square holds the floor — a path closes on the torus while its endpoints differ on the plane; two exact returns through retained difference. Vortex/vortex pointer, circulation LFO.",
-  "m30 the Arche-Topos (layout spiral — charts, transitions, lift): the lid's promise → the maker enters → arche-topos; implode click gathers the atlas; the second formation holds as the quiet complement (the stained-glass office).",
-  "Legibility pattern (all members, 2026-10-06; bounds corrected 2026-10-06 after the wave-2 audit): (a) on 40 scenes a sequence whose carrier is a non-text formation walks on a dedicated TEXT-shaped walker entity — the original formation stays as the quiet field form behind it (tintWeight ≤ 0.25) and those scenes hold calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22; speed LFOs clamped ≤ 0.7) so the walking letterform can condense — the wave-1 legible-walk pattern; (b) on 16 scenes the sequence carrier is already a text-shaped formation and keeps its own authored physics (measured maxima: speed 0.8, circulation 1.7, turbulence 0.34), which the render pass pixel-verified holds the letterforms. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text."
- ],
- "enrichment": {
-  "date": "2026-10-06",
-  "actor": "zcode:enrich-essay-l2",
-  "lane": "ESSAY+ROOMS wave 2",
-  "basis_commit": "dbf3b17",
-  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
-  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
- },
- "glyph_rationales": {
-  "−/−": "M25: the parent relation — bare relationality before the field is divided into named terms; frame, never content",
-  "0/1": "M25: #0 Ground — awareness/phenomenon; the appearing known within awareness, immanent to every mark",
-  "?/!": "M25: #1 Definition — questioning/asserting; every assertion bears the unsettled question that makes it accountable",
-  "−/+": "M25: #2 Dynamis — withdrawal/extension; the sustained pulse whose moments remain co-present",
-  "X/x": "M25: #3 Pattern — determining-capacity/determinate instance; the local instance makes the general legible without exhausting it",
-  "AM/IS": "M25: #4 Context — first-person presence/third-person sayability; pramātṛ/pramāṇa/prameya one appearing-act",
-  "∞/dx": "M25: #5 Realisation — unbounded depth/infinitesimal differential; exactness never becomes possession",
-  "1/0": "M25: the return-switch — the achieved determinate meets the incomputable; pratyabhijñā, recognition not acquisition (reddened at the switch)",
-  "N·E·W 180°": "M25: diaphaneity's disclosure, first half — first, second and third person compose the 180° triangle of determinate perspective (stations N, E, W acquired in order)",
-  "N·E·S·W 360°": "M25: the disclosure completed — #4 opens the triangle into the square's 360° holding; the Trika becomes quaternary as one appearing-act (green: the contextual holding)",
-  "4+2": "M26: the native generative kernel — read in the declared QL register, not as ordinary field arithmetic",
-  "5→0": "M26: the return through ground that renews a further cycle — the composition of 0/1 with 1/0 in the authorial calculus",
-  "M": "M27: the mark — Spencer-Brown's injunction to draw a distinction; inside and outside created together",
-  "M(M)→U": "M27: crossing a crossing returns to the unmarked state — calling and crossing perform different operations",
-  "re-entry": "M27: the form re-entering its own space — the Argued temporal reading: the mark carries its prior crossing as memory (rotated 180° at the re-entry)",
-  "u=x/y": "M28: the ordinary chart — valid where y≠0",
-  "[1:0] blocked": "M28: the point the first chart cannot represent — a failed coordinate need not mean a failed object (reddened: the obstruction)",
-  "v=1/u": "M28: the second chart and the overlap rule — the same point perfectly definite under the other representation",
-  "v=0": "M28: the zero belongs to the new chart — not the multiplicative inverse of zero in the field (heaviest blue: completion within a declared structure)",
-  "T²": "M29: the torus T²=ℝ²/ℤ² — the essay's primary kinetic image of retained return",
-  "χ=0": "M29: Euler characteristic zero, genus one — local closure and retained displacement coexist exactly",
-  "(2,−1)": "M29: the winding pair retained by the loop — the endpoints differ in the plane and coincide on the torus",
-  "16/9": "M29: the total span — (4/3)², the selected incomplete return",
-  "9/8": "M29: the exact complement to the octave — the live tick that gives the next cycle something to begin from",
-  "2/1": "M29: the octave — reached through, not by eliminating, the remainder (green: resolution with the path retained)",
-  "the lid's promise": "M30: the jigsaw's promised whole — the useful orientation every later fit disturbs and uses",
-  "the maker enters": "M30: the picture's maker enters the world depicted — the road continues beyond the edge",
-  "arche-topos": "M30: the authorial Arche-Topos — the Derived formal synthesis where charts, transitions and lifts hold a situated place-field, returning into psyche"
- }
 }

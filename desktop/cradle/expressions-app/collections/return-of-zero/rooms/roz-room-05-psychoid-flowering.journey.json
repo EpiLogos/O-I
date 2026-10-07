@@ -10,13 +10,13 @@
       "id": "movement-31",
       "name": "§4 · #0 — The Psychoid Problem",
       "character": "§4 · #0 — The Psychoid Problem (Argued).",
-      "duration": 14,
+      "duration": 16,
       "transition": 1.6,
       "view": {
-        "mode": "3d",
-        "yaw": 0.38,
-        "pitch": 0.26,
-        "zoom": 0.92,
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
         "panX": 0,
         "panY": 0
       },
@@ -24,8 +24,7 @@
         "background": "#171a21",
         "palette": [
           "#eee9d9",
-          "#a94138",
-          "#3d5a80"
+          "#737599"
         ],
         "material": "ink",
         "params": {
@@ -45,689 +44,7 @@
           "halo": 0.13,
           "speed": 0.5,
           "circulation": 0.5,
-          "turbulence": 0.22,
-          "turbulenceScale": 1.2,
-          "recovery": 1.1,
-          "dispersion": 0.08,
-          "pointerStrength": 0.8,
-          "pointerRadius": 0.23,
-          "pointerFalloff": 2,
-          "depth": 0.5,
-          "grain": 0.035,
-          "snapRigidity": 1,
-          "densityTether": 1,
-          "curlDepth": 0.2,
-          "vortexRadius": 0.4,
-          "gravityX": 0,
-          "gravityY": 0,
-          "gravityZ": 0,
-          "quadraticDrag": 0.2,
-          "thermalJitter": 0,
-          "speedLimit": 3,
-          "zConfinement": 1,
-          "timeScale": 1,
-          "gravitySoftening": 0.1,
-          "gravityFalloff": 2,
-          "swirlRadius": 0.4,
-          "frequency": 220,
-          "dominance": 0,
-          "excitation": 0.6
-        }
-      },
-      "entities": [
-        {
-          "id": "ent-03w",
-          "name": "psyche — one description — quiet field form",
-          "kind": "formation",
-          "position": {
-            "x": 0.12,
-            "y": 0.06,
-            "z": -0.35
-          },
-          "size": {
-            "x": 1.2,
-            "y": 1.2
-          },
-          "rotation": 0,
-          "shape": "disc",
-          "text": "psyche",
-          "share": 1,
-          "tint": "#a94138",
-          "tintWeight": 0.25,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "ent-03w-s1",
-                "hold": 3.4,
-                "transition": 1.4,
-                "position": null,
-                "text": "psyche",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.7,
-                    "y": 0.7
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "id": "ent-03y",
-          "name": "matter — the other description, one seam — quiet field form",
-          "kind": "formation",
-          "position": {
-            "x": 0.6,
-            "y": -0.04,
-            "z": 0.35
-          },
-          "size": {
-            "x": 1.2,
-            "y": 1.2
-          },
-          "rotation": 0,
-          "shape": "disc",
-          "text": "physis",
-          "share": 1,
-          "tint": "#3d5a80",
-          "tintWeight": 0.25,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "ent-03y-s1",
-                "hold": 3.4,
-                "transition": 1.4,
-                "position": null,
-                "text": "physis",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.7,
-                    "y": 0.7
-                  },
-                  "rotation": 0,
-                  "tint": "#3d5a80",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "id": "ent-03w-walk",
-          "name": "psyche — one description — quiet field form — the walking sign",
-          "kind": "formation",
-          "position": {
-            "x": 0.12,
-            "y": 0.06,
-            "z": -0.35
-          },
-          "size": {
-            "x": 0.7,
-            "y": 0.56
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "psyche",
-          "share": 1,
-          "tint": "#a94138",
-          "tintWeight": 0.9,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "ent-03w-s1",
-                "hold": 3.4,
-                "transition": 1.4,
-                "position": null,
-                "text": "psyche",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.7,
-                    "y": 0.5
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "id": "ent-03y-walk",
-          "name": "matter — the other description, one seam — quiet field form — the walking sign",
-          "kind": "formation",
-          "position": {
-            "x": 0.6,
-            "y": -0.04,
-            "z": 0.35
-          },
-          "size": {
-            "x": 0.7,
-            "y": 0.56
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "physis",
-          "share": 1,
-          "tint": "#3d5a80",
-          "tintWeight": 0.9,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "ent-03y-s1",
-                "hold": 3.4,
-                "transition": 1.4,
-                "position": null,
-                "text": "physis",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.7,
-                    "y": 0.5
-                  },
-                  "rotation": 0,
-                  "tint": "#3d5a80",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "editorial",
-          "visible": true,
-          "kicker": "MOVEMENT 31 OF 48 · §4 · #0 · ROOM 05-PSYCHOID-FLOWERING",
-          "title": "The Psychoid Problem",
-          "italic": "Argued",
-          "body": "Jung and Pauli's psychoid problem asks how psychological image and physical event can show meaningful structural relation without causal reduction to either side.\n← previous · M30 The Arche-Topos   ·   next → M32 Individuation through QL `X/x`",
-          "x": 0.033,
-          "y": 0.42,
-          "width": 360,
-          "size": 22,
-          "align": "left"
-        },
-        {
-          "id": "p1-route",
-          "visible": true,
-          "kicker": "P1 CANONICAL ROUTE",
-          "title": "",
-          "italic": "",
-          "body": "P1-M31 → A18 · A19 · A20 / C30 · C31 · C32 — Homologia/Analogia + Jung–Pauli Episteme",
-          "x": 0.05,
-          "y": 0.05,
-          "width": 400,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "free",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": [
-        {
-          "id": "seam-stirs",
-          "enabled": true,
-          "target": "field.params.turbulence",
-          "type": "lfo",
-          "wave": "sine",
-          "min": 0.12,
-          "max": 0.2,
-          "rate": 0.09,
-          "phase": 0,
-          "blend": "replace",
-          "duration": 14,
-          "delay": 0,
-          "loop": "loop",
-          "firedAt": null
-        }
-      ],
-      "engine": {
-        "inkMode": "blackOnWhite",
-        "fontWeight": 900,
-        "pointerMode": "attract",
-        "pointerClick": "pulse",
-        "pointerClickStrength": 0.6,
-        "pointerClickRadius": 0.45,
-        "mediumEnabled": true,
-        "mediumPlane": "vertical",
-        "mediumDimension": "2D",
-        "volumeEnabled": true,
-        "volumeProfile": "round",
-        "depthPerspective": true,
-        "depthOcclusion": true,
-        "depthTintColor": "#101321"
-      }
-    },
-    {
-      "id": "movement-32",
-      "name": "§4 · #1 — Individuation through QL `X/x`",
-      "character": "§4 · #1 — Individuation through QL `X/x` (Argued).",
-      "duration": 13,
-      "transition": 1.4,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "field": {
-        "background": "#171a21",
-        "palette": [
-          "#eee9d9",
-          "#a94138",
-          "#3d5a80"
-        ],
-        "material": "ink",
-        "params": {
-          "count": 62000,
-          "size": 2.8,
-          "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
-          "orientation": 0,
-          "contrast": 0.93,
-          "densityScale": 1,
-          "densityPhase": 0.3,
-          "edgeWeight": 0,
-          "halo": 0.13,
-          "speed": 0.55,
-          "circulation": 0.9,
           "turbulence": 0.2,
-          "turbulenceScale": 1.2,
-          "recovery": 1.1,
-          "dispersion": 0.06,
-          "pointerStrength": 0.8,
-          "pointerRadius": 0.23,
-          "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
-          "snapRigidity": 1,
-          "densityTether": 1,
-          "curlDepth": 0.2,
-          "vortexRadius": 0.4,
-          "gravityX": 0,
-          "gravityY": 0,
-          "gravityZ": 0,
-          "quadraticDrag": 0.2,
-          "thermalJitter": 0,
-          "speedLimit": 3,
-          "zConfinement": 1,
-          "timeScale": 1,
-          "gravitySoftening": 0.1,
-          "gravityFalloff": 2,
-          "swirlRadius": 0.4,
-          "frequency": 220,
-          "dominance": 0,
-          "excitation": 0.6
-        }
-      },
-      "entities": [
-        {
-          "id": "ent-040",
-          "name": "X — determining capacity",
-          "kind": "formation",
-          "position": {
-            "x": 0.18,
-            "y": 0.06,
-            "z": 0
-          },
-          "size": {
-            "x": 0.56,
-            "y": 0.6100000000000001
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "X",
-          "share": 1,
-          "tint": "#252720",
-          "tintWeight": 0,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "ent-040-s1",
-                "hold": 3,
-                "transition": 1.2,
-                "position": null,
-                "text": "X",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.35,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-040-s2",
-                "hold": 3.2,
-                "transition": 1.3,
-                "position": null,
-                "text": "X",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "id": "ent-042",
-          "name": "x — indefinite particular",
-          "kind": "formation",
-          "position": {
-            "x": 0.5,
-            "y": -0.08,
-            "z": 0
-          },
-          "size": {
-            "x": 0.56,
-            "y": 0.6100000000000001
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "x",
-          "share": 1,
-          "tint": "#a94138",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "ent-042-s1",
-                "hold": 2.8,
-                "transition": 1.2,
-                "position": null,
-                "text": "x",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.4
-                  },
-                  "rotation": 0.08,
-                  "tint": "#a94138",
-                  "tintWeight": 0.55,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-042-s2",
-                "hold": 2.8,
-                "transition": 1.3,
-                "position": null,
-                "text": "x",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.5
-                  },
-                  "rotation": 0.08,
-                  "tint": "#a94138",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "editorial",
-          "visible": true,
-          "kicker": "MOVEMENT 32 OF 48 · §4 · #1 · ROOM 05-PSYCHOID-FLOWERING",
-          "title": "Individuation through QL `X/x`",
-          "italic": "Argued",
-          "body": "The authorial QL matheme X/x places determining capacity and indefinite particular in one relation: X becomes legible only through concrete transformations x, while no determination exhausts the whole.\n← previous · M31 The Psychoid Problem   ·   next → M33 Complexio, Quaternity, and Senarius",
-          "x": 0.033,
-          "y": 0.42,
-          "width": 360,
-          "size": 22,
-          "align": "left"
-        },
-        {
-          "id": "p1-route",
-          "visible": true,
-          "kicker": "P1 CANONICAL ROUTE",
-          "title": "",
-          "italic": "",
-          "body": "P1-M32 → A21 / C19 · C31 · C34 · C35 · C36 — Arbitration Resolution-in-Reconciliation → Recognition",
-          "x": 0.05,
-          "y": 0.05,
-          "width": 400,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "free",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": [
-        {
-          "id": "legibility-grow",
-          "enabled": true,
-          "target": "field.params.speed",
-          "type": "lfo",
-          "wave": "sine",
-          "min": 0.4,
-          "max": 0.8,
-          "rate": 0.1,
-          "phase": 0,
-          "blend": "replace",
-          "duration": 13,
-          "delay": 0,
-          "loop": "loop",
-          "firedAt": null
-        }
-      ],
-      "engine": {
-        "inkMode": "blackOnWhite",
-        "fontWeight": 900,
-        "pointerMode": "attract",
-        "pointerClick": "pulse",
-        "pointerClickStrength": 0.85,
-        "pointerClickRadius": 0.4
-      }
-    },
-    {
-      "id": "movement-33",
-      "name": "§4 · #2 — Complexio, Quaternity, and Senarius",
-      "character": "§4 · #2 — Complexio, Quaternity, and Senarius (Argued).",
-      "duration": 14,
-      "transition": 1.5,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "field": {
-        "background": "#171a21",
-        "palette": [
-          "#eee9d9",
-          "#a94138",
-          "#3d5a80"
-        ],
-        "material": "ink",
-        "params": {
-          "count": 62000,
-          "size": 2.8,
-          "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
-          "orientation": 0,
-          "contrast": 0.93,
-          "densityScale": 1,
-          "densityPhase": 0.3,
-          "edgeWeight": 0,
-          "halo": 0.13,
-          "speed": 0.6,
-          "circulation": 1.2,
-          "turbulence": 0.18,
           "turbulenceScale": 1.2,
           "recovery": 1.1,
           "dispersion": 0.05,
@@ -758,24 +75,24 @@
       },
       "entities": [
         {
-          "id": "ent-044",
-          "name": "4+2 — Complexio, Quaternity, and Senarius",
+          "id": "ent-r05a-cross",
+          "name": "Traversal — two descriptions across one seam",
           "kind": "formation",
           "position": {
-            "x": 0.2,
+            "x": 0,
             "y": 0,
             "z": 0
           },
           "size": {
-            "x": 0.56,
-            "y": 0.6100000000000001
+            "x": 0.4,
+            "y": 0.42
           },
           "rotation": 0,
           "shape": "text",
-          "text": "4+2",
+          "text": "psyche",
           "share": 1,
-          "tint": "#252720",
-          "tintWeight": 0,
+          "tint": "#eee9d9",
+          "tintWeight": 0.5,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -789,20 +106,24 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "ent-044-s1",
-                "hold": 2.8,
-                "transition": 1.2,
-                "position": null,
-                "text": "complexio",
+                "id": "ent-r05a-cross-s1",
+                "hold": 4,
+                "transition": 1.4,
+                "position": {
+                  "x": -0.05,
+                  "y": 0.2,
+                  "z": 0
+                },
+                "text": "psyche",
                 "shape": "text",
                 "objectState": {
                   "size": {
-                    "x": 0.7,
+                    "x": 0.4,
                     "y": 0.42
                   },
                   "rotation": 0,
                   "tint": "#a94138",
-                  "tintWeight": 0.5,
+                  "tintWeight": 0.75,
                   "force": {
                     "kind": "attract",
                     "strength": 0,
@@ -812,43 +133,24 @@
                 }
               },
               {
-                "id": "ent-044-s2",
-                "hold": 2.8,
-                "transition": 1.2,
-                "position": null,
-                "text": "quaternity",
+                "id": "ent-r05a-cross-s2",
+                "hold": 4,
+                "transition": 1.6,
+                "position": {
+                  "x": 0.05,
+                  "y": -0.2,
+                  "z": 0
+                },
+                "text": "physis",
                 "shape": "text",
                 "objectState": {
                   "size": {
-                    "x": 0.78,
+                    "x": 0.4,
                     "y": 0.42
                   },
                   "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-044-s3",
-                "hold": 3.2,
-                "transition": 1.4,
-                "position": null,
-                "text": "4+2",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.9,
+                  "tint": "#5898a4",
+                  "tintWeight": 0.75,
                   "force": {
                     "kind": "attract",
                     "strength": 0,
@@ -861,299 +163,24 @@
           }
         },
         {
-          "id": "ent-r05-corner-0",
-          "name": "quaternion corner — held relation",
-          "kind": "pin",
-          "position": {
-            "x": 0.12000000000000002,
-            "y": 0.2,
-            "z": 0
-          },
-          "size": {
-            "x": 0.05,
-            "y": 0.05
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "",
-          "share": 1,
-          "tint": "#eee9d9",
-          "tintWeight": 0.3,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": []
-          }
-        },
-        {
-          "id": "ent-r05-corner-1",
-          "name": "quaternion corner — held relation",
-          "kind": "pin",
-          "position": {
-            "x": 0.5800000000000001,
-            "y": 0.18,
-            "z": 0
-          },
-          "size": {
-            "x": 0.05,
-            "y": 0.05
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "",
-          "share": 1,
-          "tint": "#eee9d9",
-          "tintWeight": 0.3,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": []
-          }
-        },
-        {
-          "id": "ent-r05-corner-2",
-          "name": "quaternion corner — held relation",
-          "kind": "pin",
-          "position": {
-            "x": 0.56,
-            "y": -0.2,
-            "z": 0
-          },
-          "size": {
-            "x": 0.05,
-            "y": 0.05
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "",
-          "share": 1,
-          "tint": "#eee9d9",
-          "tintWeight": 0.3,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": []
-          }
-        },
-        {
-          "id": "ent-r05-corner-3",
-          "name": "quaternion corner — held relation",
-          "kind": "pin",
-          "position": {
-            "x": 0.14,
-            "y": -0.22,
-            "z": 0
-          },
-          "size": {
-            "x": 0.05,
-            "y": 0.05
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "",
-          "share": 1,
-          "tint": "#eee9d9",
-          "tintWeight": 0.3,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": []
-          }
-        }
-      ],
-      "text": [
-        {
-          "id": "editorial",
-          "visible": true,
-          "kicker": "MOVEMENT 33 OF 48 · §4 · #2 · ROOM 05-PSYCHOID-FLOWERING",
-          "title": "Complexio, Quaternity, and Senarius",
-          "italic": "Argued",
-          "body": "The complexio oppositorum preserves the energy of opposites; Jung's quaternity gives explicit differentiated wholeness, while QL's 4+2 retains the implicate poles that let it move and return.\n← previous · M32 Individuation through QL `X/x`   ·   next → M34 Lacan, Matheme, and Mytheme",
-          "x": 0.033,
-          "y": 0.42,
-          "width": 360,
-          "size": 22,
-          "align": "left"
-        },
-        {
-          "id": "p1-route",
-          "visible": true,
-          "kicker": "P1 CANONICAL ROUTE",
-          "title": "",
-          "italic": "",
-          "body": "P1-M33 → A18 · A21 / C30 · C36 · C64 — exact quaternity/senarius relations only where earned",
-          "x": 0.05,
-          "y": 0.05,
-          "width": 400,
-          "size": 14,
-          "align": "left"
-        }
-      ],
-      "composition": {
-        "layout": "ring",
-        "plane": "XY",
-        "focus": "parallel",
-        "focusDuration": 4,
-        "carryTint": true,
-        "carryStation": false,
-        "frequencyDriver": "manual"
-      },
-      "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
-        "thetaOffset": 0,
-        "phiOffset": 0,
-        "law": "theta",
-        "depth": 1,
-        "dwell": 0.3
-      },
-      "automation": [
-        {
-          "id": "quaternion-turn",
-          "enabled": true,
-          "target": "field.params.circulation",
-          "type": "lfo",
-          "wave": "sine",
-          "min": 0.9,
-          "max": 1.6,
-          "rate": 0.08,
-          "phase": 0,
-          "blend": "replace",
-          "duration": 14,
-          "delay": 0,
-          "loop": "loop",
-          "firedAt": null
-        }
-      ],
-      "engine": {
-        "inkMode": "blackOnWhite",
-        "fontWeight": 900,
-        "pointerMode": "vortex",
-        "pointerClick": "pulse",
-        "pointerClickStrength": 1,
-        "pointerClickRadius": 0.42
-      }
-    },
-    {
-      "id": "movement-34",
-      "name": "§4 · #3 — Lacan, Matheme, and Mytheme",
-      "character": "§4 · #3 — Lacan, Matheme, and Mytheme (Argued).",
-      "duration": 18,
-      "transition": 2,
-      "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
-        "zoom": 1,
-        "panX": 0,
-        "panY": 0
-      },
-      "field": {
-        "background": "#171a21",
-        "palette": [
-          "#eee9d9",
-          "#a94138",
-          "#3d5a80"
-        ],
-        "material": "ink",
-        "params": {
-          "count": 62000,
-          "size": 2.8,
-          "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
-          "orientation": 0,
-          "contrast": 0.93,
-          "densityScale": 1,
-          "densityPhase": 0.3,
-          "edgeWeight": 0,
-          "halo": 0.13,
-          "speed": 0.6,
-          "circulation": 0.9,
-          "turbulence": 0.16,
-          "turbulenceScale": 1.2,
-          "recovery": 1.1,
-          "dispersion": 0.06,
-          "pointerStrength": 0.8,
-          "pointerRadius": 0.23,
-          "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
-          "snapRigidity": 1,
-          "densityTether": 1,
-          "curlDepth": 0.2,
-          "vortexRadius": 0.4,
-          "gravityX": 0,
-          "gravityY": 0,
-          "gravityZ": 0,
-          "quadraticDrag": 0.2,
-          "thermalJitter": 0,
-          "speedLimit": 3,
-          "zConfinement": 1,
-          "timeScale": 1,
-          "gravitySoftening": 0.1,
-          "gravityFalloff": 2,
-          "swirlRadius": 0.4,
-          "frequency": 220,
-          "dominance": 0,
-          "excitation": 0.6
-        }
-      },
-      "entities": [
-        {
-          "id": "ent-046",
-          "name": "Traversal — Lacan, Matheme, and Mytheme",
+          "id": "ent-r05a-seam",
+          "name": "the seam — not a wall, not a bridge",
           "kind": "formation",
           "position": {
-            "x": 0.2,
+            "x": 0,
             "y": 0,
             "z": 0
           },
           "size": {
-            "x": 0.56,
-            "y": 0.6100000000000001
+            "x": 0.66,
+            "y": 0.012
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "0",
+          "shape": "square",
+          "text": "",
           "share": 1,
-          "tint": "#252720",
-          "tintWeight": 0,
+          "tint": "#a94138",
+          "tintWeight": 0.8,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -1163,23 +190,80 @@
           },
           "station": null,
           "sequence": {
-            "enabled": true,
+            "enabled": false,
             "clock": "seconds",
             "steps": [
               {
-                "id": "ent-046-s1",
-                "hold": 2.2,
-                "transition": 1.1,
+                "id": "ent-r05a-seam-s0",
+                "hold": 3,
+                "transition": 1,
                 "position": null,
-                "text": "0",
-                "shape": "text",
+                "text": "",
+                "shape": "square",
                 "objectState": {
                   "size": {
-                    "x": 0.5,
-                    "y": 0.55
+                    "x": 0.66,
+                    "y": 0.012
                   },
                   "rotation": 0,
-                  "tint": "#eee9d9",
+                  "tint": "#a94138",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-p1",
+          "name": "the psychic pattern — image and meaning",
+          "kind": "formation",
+          "position": {
+            "x": -0.08,
+            "y": 0.26,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#737599",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-p1-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "ring",
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#737599",
                   "tintWeight": 0.55,
                   "force": {
                     "kind": "attract",
@@ -1188,22 +272,113 @@
                     "spin": 0
                   }
                 }
-              },
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-p2",
+          "name": "the psychic pattern — image and meaning",
+          "kind": "formation",
+          "position": {
+            "x": 0.1,
+            "y": 0.22,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#737599",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
               {
-                "id": "ent-046-s2",
-                "hold": 2.2,
-                "transition": 1.4,
+                "id": "ent-r05a-p2-s0",
+                "hold": 3,
+                "transition": 1,
                 "position": null,
-                "text": "Ø",
-                "shape": "text",
+                "text": "",
+                "shape": "ring",
                 "objectState": {
                   "size": {
-                    "x": 0.5,
-                    "y": 0.55
+                    "x": 0.3,
+                    "y": 0.3
+                  },
+                  "rotation": 0,
+                  "tint": "#737599",
+                  "tintWeight": 0.55,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-p3",
+          "name": "the physical pattern — event and measure",
+          "kind": "formation",
+          "position": {
+            "x": -0.08,
+            "y": -0.26,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-p3-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "ring",
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.3
                   },
                   "rotation": 0,
                   "tint": "#eee9d9",
-                  "tintWeight": 0.72,
+                  "tintWeight": 0.5,
                   "force": {
                     "kind": "attract",
                     "strength": 0,
@@ -1211,114 +386,56 @@
                     "spin": 0
                   }
                 }
-              },
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-p4",
+          "name": "the physical pattern — event and measure",
+          "kind": "formation",
+          "position": {
+            "x": 0.1,
+            "y": -0.22,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
               {
-                "id": "ent-046-s3",
-                "hold": 2.2,
-                "transition": 1.1,
+                "id": "ent-r05a-p4-s0",
+                "hold": 3,
+                "transition": 1,
                 "position": null,
-                "text": "X",
-                "shape": "text",
+                "text": "",
+                "shape": "ring",
                 "objectState": {
                   "size": {
-                    "x": 0.5,
-                    "y": 0.55
+                    "x": 0.3,
+                    "y": 0.3
                   },
                   "rotation": 0,
                   "tint": "#eee9d9",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-046-s4",
-                "hold": 2.2,
-                "transition": 1.1,
-                "position": null,
-                "text": "Ø/X",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.78,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-046-s5",
-                "hold": 2.2,
-                "transition": 1.1,
-                "position": null,
-                "text": "(0/Ø)/(1/X)",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.62,
-                    "y": 0.42
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.68,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-046-s6",
-                "hold": 3.2,
-                "transition": 1.1,
-                "position": null,
-                "text": "1",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-046-s7",
-                "hold": 3.2,
-                "transition": 1.1,
-                "position": null,
-                "text": "0/1",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.5,
-                    "y": 0.55
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.95,
+                  "tintWeight": 0.5,
                   "force": {
                     "kind": "attract",
                     "strength": 0,
@@ -1333,29 +450,16 @@
       ],
       "text": [
         {
-          "id": "editorial",
+          "id": "stage",
           "visible": true,
-          "kicker": "MOVEMENT 34 OF 48 · §4 · #3 · ROOM 05-PSYCHOID-FLOWERING",
-          "title": "Lacan, Matheme, and Mytheme",
-          "italic": "Argued",
-          "body": "The matheme transmits an invariant relation; the mytheme lets that relation be lived and transformed; the barred subject prevents either from closing over its own condition.\n← previous · M33 Complexio, Quaternity, and Senarius   ·   next → M35 Apollo Through Dionysus",
-          "x": 0.033,
-          "y": 0.42,
-          "width": 360,
-          "size": 22,
-          "align": "left"
-        },
-        {
-          "id": "p1-route",
-          "visible": true,
-          "kicker": "P1 CANONICAL ROUTE",
-          "title": "",
+          "kicker": "",
+          "title": "The psychoid field",
           "italic": "",
-          "body": "P1-M34 → A18 · A20 / C21 · C30 · C61 · C64 — Matheme/Mytheme/Episteme disclosure with warrant boundaries",
-          "x": 0.05,
-          "y": 0.05,
-          "width": 400,
-          "size": 14,
+          "body": "One pattern on both sides of the seam.",
+          "x": 0.04,
+          "y": 0.58,
+          "width": 330,
+          "size": 20,
           "align": "left"
         }
       ],
@@ -1379,37 +483,37 @@
       },
       "automation": [
         {
-          "id": "occlusion-holds",
+          "id": "seam-stir",
           "enabled": true,
-          "target": "field.params.speed",
+          "target": "field.params.turbulence",
           "type": "lfo",
           "wave": "sine",
-          "min": 0.4,
-          "max": 0.8,
-          "rate": 0.07,
+          "min": 0.14,
+          "max": 0.24,
+          "rate": 0.06,
           "phase": 0,
           "blend": "replace",
-          "duration": 18,
+          "duration": 16,
           "delay": 0,
           "loop": "loop",
           "firedAt": null
         }
       ],
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "fontWeight": 900,
-        "pointerMode": "repel",
-        "pointerClick": "shove",
-        "pointerClickStrength": 1.6,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.9,
         "pointerClickRadius": 0.42
       }
     },
     {
-      "id": "movement-35",
-      "name": "§4 · #4 — Apollo Through Dionysus",
-      "character": "§4 · #4 — Apollo Through Dionysus (Argued).",
-      "duration": 15,
-      "transition": 1.8,
+      "id": "movement-32",
+      "name": "§4 · #1 — Individuation through QL `X/x`",
+      "character": "§4 · #1 — Individuation through QL `X/x` (Argued).",
+      "duration": 14,
+      "transition": 1.5,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -1419,11 +523,10 @@
         "panY": 0
       },
       "field": {
-        "background": "#171a21",
+        "background": "#1b1e2b",
         "palette": [
           "#eee9d9",
-          "#a94138",
-          "#3d5a80"
+          "#a9b399"
         ],
         "material": "ink",
         "params": {
@@ -1441,12 +544,12 @@
           "densityPhase": 0.3,
           "edgeWeight": 0,
           "halo": 0.13,
-          "speed": 0.6,
-          "circulation": 0.5,
-          "turbulence": 0.22,
+          "speed": 0.4,
+          "circulation": 0.35,
+          "turbulence": 0.1,
           "turbulenceScale": 1.2,
           "recovery": 1.1,
-          "dispersion": 0.07,
+          "dispersion": 0.05,
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
@@ -1474,24 +577,24 @@
       },
       "entities": [
         {
-          "id": "ent-04e",
-          "name": "Apollo — measure, boundary, form — quiet field form",
+          "id": "ent-r05a-indiv",
+          "name": "Traversal — capacity and instance become mutually legible",
           "kind": "formation",
           "position": {
-            "x": 0.18,
-            "y": 0.05,
+            "x": 0,
+            "y": 0.24,
             "z": 0
           },
           "size": {
-            "x": 1.25,
-            "y": 1.25
+            "x": 0.38,
+            "y": 0.42
           },
           "rotation": 0,
-          "shape": "square",
-          "text": "",
+          "shape": "text",
+          "text": "X",
           "share": 1,
-          "tint": "#252720",
-          "tintWeight": 0,
+          "tint": "#eee9d9",
+          "tintWeight": 0.5,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -1501,24 +604,28 @@
           },
           "station": null,
           "sequence": {
-            "enabled": false,
+            "enabled": true,
             "clock": "seconds",
             "steps": [
               {
-                "id": "ent-04e-s1",
-                "hold": 2.8,
-                "transition": 1.3,
-                "position": null,
-                "text": "form",
+                "id": "ent-r05a-indiv-s1",
+                "hold": 3,
+                "transition": 1.2,
+                "position": {
+                  "x": -0.16,
+                  "y": 0.24,
+                  "z": 0
+                },
+                "text": "X",
                 "shape": "text",
                 "objectState": {
                   "size": {
-                    "x": 0.6,
-                    "y": 0.6
+                    "x": 0.38,
+                    "y": 0.42
                   },
                   "rotation": 0,
                   "tint": "#eee9d9",
-                  "tintWeight": 0.55,
+                  "tintWeight": 0.6,
                   "force": {
                     "kind": "attract",
                     "strength": 0,
@@ -1528,20 +635,51 @@
                 }
               },
               {
-                "id": "ent-04e-s2",
+                "id": "ent-r05a-indiv-s2",
                 "hold": 3,
-                "transition": 1.4,
-                "position": null,
-                "text": "transparent",
+                "transition": 1.3,
+                "position": {
+                  "x": 0.16,
+                  "y": 0.24,
+                  "z": 0
+                },
+                "text": "x",
                 "shape": "text",
                 "objectState": {
                   "size": {
-                    "x": 0.66,
-                    "y": 0.66
+                    "x": 0.38,
+                    "y": 0.42
                   },
                   "rotation": 0,
-                  "tint": "#3d5a80",
-                  "tintWeight": 0.3,
+                  "tint": "#a9b399",
+                  "tintWeight": 0.75,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-indiv-s3",
+                "hold": 3.5,
+                "transition": 1.4,
+                "position": {
+                  "x": 0,
+                  "y": 0.24,
+                  "z": 0
+                },
+                "text": "X/x",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.38,
+                    "y": 0.42
+                  },
+                  "rotation": 0,
+                  "tint": "#a9b399",
+                  "tintWeight": 0.8,
                   "force": {
                     "kind": "attract",
                     "strength": 0,
@@ -1554,24 +692,230 @@
           }
         },
         {
-          "id": "ent-04g",
-          "name": "Dionysus — participatory life — quiet field form",
+          "id": "ent-r05a-capacity",
+          "name": "the determining capacity — the field that grows",
           "kind": "formation",
           "position": {
-            "x": 0.56,
+            "x": 0,
             "y": -0.06,
             "z": 0
           },
           "size": {
-            "x": 1.25,
-            "y": 1.25
+            "x": 0.5,
+            "y": 0.5
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0.35,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-capacity-s1",
+                "hold": 3,
+                "transition": 1.6,
+                "position": null,
+                "text": "",
+                "shape": "ring",
+                "objectState": {
+                  "size": {
+                    "x": 0.42,
+                    "y": 0.42
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.35,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-capacity-s2",
+                "hold": 3,
+                "transition": 1.8,
+                "position": null,
+                "text": "",
+                "shape": "ring",
+                "objectState": {
+                  "size": {
+                    "x": 0.52,
+                    "y": 0.52
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.35,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-capacity-s3",
+                "hold": 3,
+                "transition": 1.6,
+                "position": null,
+                "text": "",
+                "shape": "ring",
+                "objectState": {
+                  "size": {
+                    "x": 0.46,
+                    "y": 0.46
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.35,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-instance",
+          "name": "the local instance brightening",
+          "kind": "formation",
+          "position": {
+            "x": 0.14,
+            "y": -0.12,
+            "z": 0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.14
           },
           "rotation": 0,
           "shape": "disc",
           "text": "",
           "share": 1,
-          "tint": "#a94138",
-          "tintWeight": 0.25,
+          "tint": "#a9b399",
+          "tintWeight": 0.3,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-instance-s1",
+                "hold": 3,
+                "transition": 1.6,
+                "position": null,
+                "text": "",
+                "shape": "disc",
+                "objectState": {
+                  "size": {
+                    "x": 0.14,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#a9b399",
+                  "tintWeight": 0.3,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-instance-s2",
+                "hold": 3,
+                "transition": 1.8,
+                "position": null,
+                "text": "",
+                "shape": "disc",
+                "objectState": {
+                  "size": {
+                    "x": 0.14,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#a9b399",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-instance-s3",
+                "hold": 3,
+                "transition": 1.6,
+                "position": null,
+                "text": "",
+                "shape": "disc",
+                "objectState": {
+                  "size": {
+                    "x": 0.14,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#a9b399",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-basin",
+          "name": "the basin that holds the formation",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.06,
+            "z": 0
+          },
+          "size": {
+            "x": 0.62,
+            "y": 0.58
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#5898a4",
+          "tintWeight": 0.1,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -1585,203 +929,20 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "ent-04g-s1",
+                "id": "ent-r05a-basin-s0",
                 "hold": 3,
-                "transition": 1.4,
+                "transition": 1,
                 "position": null,
-                "text": "participation",
-                "shape": "text",
+                "text": "",
+                "shape": "disc",
                 "objectState": {
                   "size": {
-                    "x": 0.7,
-                    "y": 0.7
+                    "x": 0.62,
+                    "y": 0.58
                   },
                   "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-04g-s2",
-                "hold": 3.2,
-                "transition": 1.4,
-                "position": null,
-                "text": "communicable",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.6,
-                    "y": 0.6
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.75,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "id": "ent-04e-walk",
-          "name": "Apollo — measure, boundary, form — quiet field form — the walking sign",
-          "kind": "formation",
-          "position": {
-            "x": 0.18,
-            "y": 0.05,
-            "z": 0
-          },
-          "size": {
-            "x": 0.6,
-            "y": 0.56
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "form",
-          "share": 1,
-          "tint": "#eee9d9",
-          "tintWeight": 0.55,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "ent-04e-s1",
-                "hold": 2.8,
-                "transition": 1.3,
-                "position": null,
-                "text": "form",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.6,
-                    "y": 0.5
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.55,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-04e-s2",
-                "hold": 3,
-                "transition": 1.4,
-                "position": null,
-                "text": "transparent",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.66,
-                    "y": 0.42
-                  },
-                  "rotation": 0,
-                  "tint": "#3d5a80",
-                  "tintWeight": 0.3,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "id": "ent-04g-walk",
-          "name": "Dionysus — participatory life — quiet field form — the walking sign",
-          "kind": "formation",
-          "position": {
-            "x": 0.56,
-            "y": -0.06,
-            "z": 0
-          },
-          "size": {
-            "x": 0.7,
-            "y": 0.48
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "participation",
-          "share": 1,
-          "tint": "#a94138",
-          "tintWeight": 0.85,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "ent-04g-s1",
-                "hold": 3,
-                "transition": 1.4,
-                "position": null,
-                "text": "participation",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.7,
-                    "y": 0.42
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-04g-s2",
-                "hold": 3.2,
-                "transition": 1.4,
-                "position": null,
-                "text": "communicable",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.6,
-                    "y": 0.42
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.75,
+                  "tint": "#5898a4",
+                  "tintWeight": 0.1,
                   "force": {
                     "kind": "attract",
                     "strength": 0,
@@ -1796,29 +957,1450 @@
       ],
       "text": [
         {
-          "id": "editorial",
+          "id": "stage",
           "visible": true,
-          "kicker": "MOVEMENT 35 OF 48 · §4 · #4 · ROOM 05-PSYCHOID-FLOWERING",
-          "title": "Apollo Through Dionysus",
-          "italic": "Argued",
-          "body": "Integral diaphaneity is the higher consciousness mutation in which the mono–poly relation becomes available within a perspective: each aperture becomes transparent to the relational whole through which it is this aperture, without losing its determinate difference.\n← previous · M34 Lacan, Matheme, and Mytheme   ·   next → M36 MEF and Prompt Thrownness",
-          "x": 0.033,
-          "y": 0.42,
-          "width": 360,
-          "size": 22,
+          "kicker": "",
+          "title": "Individuation",
+          "italic": "",
+          "body": "The instance brightens; the capacity grows to meet it.",
+          "x": 0.04,
+          "y": 0.58,
+          "width": 330,
+          "size": 20,
           "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "fontWeight": 900,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.9,
+        "pointerClickRadius": 0.42
+      }
+    },
+    {
+      "id": "movement-33",
+      "name": "§4 · #2 — Complexio, Quaternity, and Senarius",
+      "character": "§4 · #2 — Complexio, Quaternity, and Senarius (Argued).",
+      "duration": 15,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#1b1e2b",
+        "palette": [
+          "#eee9d9",
+          "#a9b399"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.4,
+          "circulation": 0.35,
+          "turbulence": 0.1,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.05,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-r05a-centre",
+          "name": "Traversal — the centre of the quaternity",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 0.44,
+            "y": 0.4
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "complexio",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-centre-s1",
+                "hold": 3.2,
+                "transition": 1.3,
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "text": "complexio",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.44,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
+                  "tint": "#a94138",
+                  "tintWeight": 0.75,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-centre-s2",
+                "hold": 3.5,
+                "transition": 1.4,
+                "position": null,
+                "text": "quaternity",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.44,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.65,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-centre-s3",
+                "hold": 3.5,
+                "transition": 1.4,
+                "position": null,
+                "text": "4+2",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.44,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
+                  "tint": "#a9b399",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
         },
         {
-          "id": "p1-route",
+          "id": "ent-r05a-square",
+          "name": "the quaternity's square",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 0.56,
+            "y": 0.5
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0.3,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-square-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "square",
+                "objectState": {
+                  "size": {
+                    "x": 0.56,
+                    "y": 0.5
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.3,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-f1",
+          "name": "the four functions",
+          "kind": "formation",
+          "position": {
+            "x": -0.28,
+            "y": 0.22,
+            "z": 0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c67c46",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-f1-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "disc",
+                "objectState": {
+                  "size": {
+                    "x": 0.1,
+                    "y": 0.1
+                  },
+                  "rotation": 0,
+                  "tint": "#c67c46",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-f2",
+          "name": "the four functions",
+          "kind": "formation",
+          "position": {
+            "x": 0.28,
+            "y": 0.22,
+            "z": 0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#638c69",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-f2-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "disc",
+                "objectState": {
+                  "size": {
+                    "x": 0.1,
+                    "y": 0.1
+                  },
+                  "rotation": 0,
+                  "tint": "#638c69",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-f3",
+          "name": "the four functions",
+          "kind": "formation",
+          "position": {
+            "x": -0.28,
+            "y": -0.22,
+            "z": 0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#5898a4",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-f3-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "disc",
+                "objectState": {
+                  "size": {
+                    "x": 0.1,
+                    "y": 0.1
+                  },
+                  "rotation": 0,
+                  "tint": "#5898a4",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-f4",
+          "name": "the four functions",
+          "kind": "formation",
+          "position": {
+            "x": 0.28,
+            "y": -0.22,
+            "z": 0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#a94138",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-f4-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "disc",
+                "objectState": {
+                  "size": {
+                    "x": 0.1,
+                    "y": 0.1
+                  },
+                  "rotation": 0,
+                  "tint": "#a94138",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "stage",
           "visible": true,
-          "kicker": "P1 CANONICAL ROUTE",
-          "title": "",
+          "kicker": "",
+          "title": "Complexio",
           "italic": "",
-          "body": "P1-M35 → A04 · A20 · A21 · A35 / C09 · C32 · C34 · C36 · C56 — Regard + whole Apollo/Dionysus/Daphne Mytheme where ratified",
-          "x": 0.05,
-          "y": 0.05,
-          "width": 400,
-          "size": 14,
+          "body": "Four held apart, two kept implicit, one centre turning.",
+          "x": 0.04,
+          "y": 0.58,
+          "width": 330,
+          "size": 20,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "fontWeight": 900,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.9,
+        "pointerClickRadius": 0.42
+      }
+    },
+    {
+      "id": "movement-34",
+      "name": "§4 · #3 — Lacan, Matheme, and Mytheme",
+      "character": "§4 · #3 — Lacan, Matheme, and Mytheme (Argued).",
+      "duration": 18,
+      "transition": 1.6,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#2b1d22",
+        "palette": [
+          "#eee9d9",
+          "#a94138"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.45,
+          "circulation": 0.4,
+          "turbulence": 0.12,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.05,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-r05a-chain",
+          "name": "Traversal — the crossed-zero recognition chain",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": 0.26,
+            "z": 0
+          },
+          "size": {
+            "x": 0.42,
+            "y": 0.44
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "0",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-chain-s1",
+                "hold": 2.2,
+                "transition": 1.1,
+                "position": {
+                  "x": 0,
+                  "y": 0.26,
+                  "z": 0
+                },
+                "text": "0",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.42,
+                    "y": 0.44
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.55,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-chain-s2",
+                "hold": 2.6,
+                "transition": 1.6,
+                "position": null,
+                "text": "Ø",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.42,
+                    "y": 0.44
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-chain-s3",
+                "hold": 2.2,
+                "transition": 1.2,
+                "position": null,
+                "text": "X",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.42,
+                    "y": 0.44
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.65,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-chain-s4",
+                "hold": 2.4,
+                "transition": 1.3,
+                "position": null,
+                "text": "Ø/X",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.42,
+                    "y": 0.44
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-chain-s5",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "text": "(0/Ø)/(1/X)",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.38
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.75,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-chain-s6",
+                "hold": 2.2,
+                "transition": 1.3,
+                "position": null,
+                "text": "1",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.42,
+                    "y": 0.44
+                  },
+                  "rotation": 0,
+                  "tint": "#c67c46",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-chain-s7",
+                "hold": 2.8,
+                "transition": 1.5,
+                "position": null,
+                "text": "0/1",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.42,
+                    "y": 0.44
+                  },
+                  "rotation": 0,
+                  "tint": "#a94138",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-stroke",
+          "name": "the stroke that becomes the bar",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.06,
+            "z": 0
+          },
+          "size": {
+            "x": 0.6,
+            "y": 0.014
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#a94138",
+          "tintWeight": 0.8,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-stroke-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "square",
+                "objectState": {
+                  "size": {
+                    "x": 0.6,
+                    "y": 0.014
+                  },
+                  "rotation": 0,
+                  "tint": "#a94138",
+                  "tintWeight": 0.8,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-instituted",
+          "name": "the field the first mark institutes",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.06,
+            "z": 0
+          },
+          "size": {
+            "x": 0.6,
+            "y": 0.6
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0.3,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-instituted-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "ring",
+                "objectState": {
+                  "size": {
+                    "x": 0.6,
+                    "y": 0.6
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.3,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "The crossed zero",
+          "italic": "",
+          "body": "The stroke that hid becomes the bar that shows.",
+          "x": 0.04,
+          "y": 0.58,
+          "width": 330,
+          "size": 20,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "fontWeight": 900,
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.9,
+        "pointerClickRadius": 0.42
+      }
+    },
+    {
+      "id": "movement-35",
+      "name": "§4 · #4 — Apollo Through Dionysus",
+      "character": "§4 · #4 — Apollo Through Dionysus (Argued).",
+      "duration": 16,
+      "transition": 1.6,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#2b1d22",
+        "palette": [
+          "#eee9d9",
+          "#a94138"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.45,
+          "circulation": 0.4,
+          "turbulence": 0.12,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.05,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-r05a-swing",
+          "name": "Traversal — the diaphaneity swing",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": 0.28,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.4
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "form",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-swing-s1",
+                "hold": 2.5,
+                "transition": 1.3,
+                "position": {
+                  "x": 0,
+                  "y": 0.28,
+                  "z": 0
+                },
+                "text": "form",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-swing-s2",
+                "hold": 2.5,
+                "transition": 1.5,
+                "position": null,
+                "text": "transparent",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
+                  "tint": "#5898a4",
+                  "tintWeight": 0.25,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-swing-s3",
+                "hold": 2.5,
+                "transition": 1.5,
+                "position": null,
+                "text": "participation",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
+                  "tint": "#a94138",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-swing-s4",
+                "hold": 2.5,
+                "transition": 1.5,
+                "position": null,
+                "text": "communicable",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.4,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-apollo",
+          "name": "the Apollonian triangle — determinate form",
+          "kind": "formation",
+          "position": {
+            "x": -0.2,
+            "y": -0.04,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.28
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0.7,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-apollo-s1",
+                "hold": 2.5,
+                "transition": 1.4,
+                "position": null,
+                "text": "",
+                "shape": "triangle",
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.28
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-apollo-s2",
+                "hold": 2.5,
+                "transition": 1.6,
+                "position": null,
+                "text": "",
+                "shape": "triangle",
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.28
+                  },
+                  "rotation": 0,
+                  "tint": "#5898a4",
+                  "tintWeight": 0.12,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-apollo-s3",
+                "hold": 2.5,
+                "transition": 1.4,
+                "position": null,
+                "text": "",
+                "shape": "triangle",
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
+                    "y": 0.28
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-dionysus",
+          "name": "the Dionysian disc — participation",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": -0.04,
+            "z": 0
+          },
+          "size": {
+            "x": 0.28,
+            "y": 0.28
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#a94138",
+          "tintWeight": 0.15,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-dionysus-s1",
+                "hold": 2.5,
+                "transition": 1.4,
+                "position": null,
+                "text": "",
+                "shape": "disc",
+                "objectState": {
+                  "size": {
+                    "x": 0.28,
+                    "y": 0.28
+                  },
+                  "rotation": 0,
+                  "tint": "#a94138",
+                  "tintWeight": 0.15,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-dionysus-s2",
+                "hold": 2.5,
+                "transition": 1.6,
+                "position": null,
+                "text": "",
+                "shape": "disc",
+                "objectState": {
+                  "size": {
+                    "x": 0.28,
+                    "y": 0.28
+                  },
+                  "rotation": 0,
+                  "tint": "#a94138",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-dionysus-s3",
+                "hold": 2.5,
+                "transition": 1.4,
+                "position": null,
+                "text": "",
+                "shape": "disc",
+                "objectState": {
+                  "size": {
+                    "x": 0.28,
+                    "y": 0.28
+                  },
+                  "rotation": 0,
+                  "tint": "#a94138",
+                  "tintWeight": 0.4,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-onefield",
+          "name": "one field — many apertures",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.04,
+            "z": 0
+          },
+          "size": {
+            "x": 0.66,
+            "y": 0.62
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0.28,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-onefield-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "ring",
+                "objectState": {
+                  "size": {
+                    "x": 0.66,
+                    "y": 0.62
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.28,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "stage",
+          "visible": true,
+          "kicker": "",
+          "title": "Diaphaneity",
+          "italic": "",
+          "body": "Form fades, participation swells, and each returns.",
+          "x": 0.04,
+          "y": 0.58,
+          "width": 330,
+          "size": 20,
           "align": "left"
         }
       ],
@@ -1847,32 +2429,32 @@
           "target": "field.params.circulation",
           "type": "lfo",
           "wave": "sine",
-          "min": 0.4,
-          "max": 0.6,
+          "min": 0.3,
+          "max": 0.7,
           "rate": 0.09,
           "phase": 0,
           "blend": "replace",
-          "duration": 15,
+          "duration": 16,
           "delay": 0,
           "loop": "loop",
           "firedAt": null
         }
       ],
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "fontWeight": 900,
         "pointerMode": "vortex",
         "pointerClick": "pulse",
-        "pointerClickStrength": 0.8,
-        "pointerClickRadius": 0.45
+        "pointerClickStrength": 0.9,
+        "pointerClickRadius": 0.42
       }
     },
     {
       "id": "movement-36",
       "name": "§4 · #5→0 — MEF and Prompt Thrownness",
       "character": "§4 · #5→0 — MEF and Prompt Thrownness (Argued).",
-      "duration": 15,
-      "transition": 1.7,
+      "duration": 20,
+      "transition": 1.6,
       "view": {
         "mode": "2d",
         "yaw": 0,
@@ -1885,8 +2467,7 @@
         "background": "#171a21",
         "palette": [
           "#eee9d9",
-          "#a94138",
-          "#3d5a80"
+          "#5898a4"
         ],
         "material": "ink",
         "params": {
@@ -1905,11 +2486,11 @@
           "edgeWeight": 0,
           "halo": 0.13,
           "speed": 0.55,
-          "circulation": 0.5,
-          "turbulence": 0.18,
+          "circulation": 0.7,
+          "turbulence": 0.12,
           "turbulenceScale": 1.2,
           "recovery": 1.1,
-          "dispersion": 0.06,
+          "dispersion": 0.08,
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
@@ -1937,188 +2518,24 @@
       },
       "entities": [
         {
-          "id": "ent-04i",
-          "name": "one QL light — quiet field form",
+          "id": "ent-r05a-refraction",
+          "name": "Traversal — the declared refraction",
           "kind": "formation",
           "position": {
-            "x": 0.2,
-            "y": 0,
+            "x": 0.34,
+            "y": 0.28,
             "z": 0
           },
           "size": {
-            "x": 1.5,
-            "y": 1.5
-          },
-          "rotation": 0,
-          "shape": "ring",
-          "text": "",
-          "share": 1,
-          "tint": "#252720",
-          "tintWeight": 0,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "ent-04i-s1",
-                "hold": 2.8,
-                "transition": 1.3,
-                "position": null,
-                "text": "one light",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.75,
-                    "y": 0.75
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.4,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "ent-04i-s2",
-                "hold": 3.4,
-                "transition": 1.5,
-                "position": null,
-                "text": "declared refractions",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.88,
-                    "y": 0.88
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "id": "ent-04k",
-          "name": "lens — declared refraction",
-          "kind": "formation",
-          "position": {
-            "x": 0.58,
-            "y": 0.12,
-            "z": 0
-          },
-          "size": {
-            "x": 0.4,
+            "x": 0.36,
             "y": 0.4
-          },
-          "rotation": 0,
-          "shape": "disc",
-          "text": "",
-          "share": 1,
-          "tint": "#3d5a80",
-          "tintWeight": 0.8,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "step-04l",
-                "text": "",
-                "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "ent-04m",
-          "name": "lens — declared refraction",
-          "kind": "formation",
-          "position": {
-            "x": 0.7,
-            "y": -0.1,
-            "z": 0
-          },
-          "size": {
-            "x": 0.4,
-            "y": 0.4
-          },
-          "rotation": 0,
-          "shape": "disc",
-          "text": "",
-          "share": 1,
-          "tint": "#a94138",
-          "tintWeight": 0.8,
-          "locked": false,
-          "force": {
-            "kind": "attract",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "step-04n",
-                "text": "",
-                "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "ent-04i-walk",
-          "name": "one QL light — quiet field form — the walking sign",
-          "kind": "formation",
-          "position": {
-            "x": 0.2,
-            "y": 0,
-            "z": 0
-          },
-          "size": {
-            "x": 0.75,
-            "y": 0.48
           },
           "rotation": 0,
           "shape": "text",
-          "text": "one light",
+          "text": "source",
           "share": 1,
           "tint": "#eee9d9",
-          "tintWeight": 0.4,
+          "tintWeight": 0.5,
           "locked": false,
           "force": {
             "kind": "attract",
@@ -2132,20 +2549,20 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "ent-04i-s1",
-                "hold": 2.8,
-                "transition": 1.3,
+                "id": "ent-r05a-refraction-s1",
+                "hold": 2.2,
+                "transition": 1.1,
                 "position": null,
-                "text": "one light",
+                "text": "source",
                 "shape": "text",
                 "objectState": {
                   "size": {
-                    "x": 0.75,
-                    "y": 0.42
+                    "x": 0.36,
+                    "y": 0.4
                   },
                   "rotation": 0,
                   "tint": "#eee9d9",
-                  "tintWeight": 0.4,
+                  "tintWeight": 0.7,
                   "force": {
                     "kind": "attract",
                     "strength": 0,
@@ -2155,20 +2572,477 @@
                 }
               },
               {
-                "id": "ent-04i-s2",
-                "hold": 3.4,
-                "transition": 1.5,
+                "id": "ent-r05a-refraction-s2",
+                "hold": 2.2,
+                "transition": 1.1,
                 "position": null,
-                "text": "declared refractions",
+                "text": "lens",
                 "shape": "text",
                 "objectState": {
                   "size": {
-                    "x": 0.88,
+                    "x": 0.36,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
+                  "tint": "#5898a4",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-refraction-s3",
+                "hold": 2.2,
+                "transition": 1.2,
+                "position": null,
+                "text": "transformation",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.3,
                     "y": 0.34
                   },
                   "rotation": 0,
+                  "tint": "#638c69",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-refraction-s4",
+                "hold": 2.2,
+                "transition": 1.1,
+                "position": null,
+                "text": "agreement",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.36,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
+                  "tint": "#c67c46",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-refraction-s5",
+                "hold": 2.2,
+                "transition": 1.2,
+                "position": null,
+                "text": "divergence",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.36,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
                   "tint": "#a94138",
-                  "tintWeight": 0.8,
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-refraction-s6",
+                "hold": 2.2,
+                "transition": 1.1,
+                "position": null,
+                "text": "limit",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.36,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
+                  "tint": "#737599",
+                  "tintWeight": 0.7,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "ent-r05a-refraction-s7",
+                "hold": 2.8,
+                "transition": 1.4,
+                "position": null,
+                "text": "return",
+                "shape": "text",
+                "objectState": {
+                  "size": {
+                    "x": 0.36,
+                    "y": 0.4
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.85,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-light",
+          "name": "the one light",
+          "kind": "formation",
+          "position": {
+            "x": -0.1,
+            "y": 0.24,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0.9,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0.4,
+            "radius": 0.35,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-light-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "disc",
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.9,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-l1",
+          "name": "the declared lenses",
+          "kind": "formation",
+          "position": {
+            "x": -0.32,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 0.05,
+            "y": 0.34
+          },
+          "rotation": 180,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#5898a4",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-l1-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "triangle",
+                "objectState": {
+                  "size": {
+                    "x": 0.05,
+                    "y": 0.34
+                  },
+                  "rotation": 180,
+                  "tint": "#5898a4",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-l2",
+          "name": "the declared lenses",
+          "kind": "formation",
+          "position": {
+            "x": -0.21,
+            "y": -0.02,
+            "z": 0
+          },
+          "size": {
+            "x": 0.05,
+            "y": 0.34
+          },
+          "rotation": 180,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#638c69",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-l2-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "triangle",
+                "objectState": {
+                  "size": {
+                    "x": 0.05,
+                    "y": 0.34
+                  },
+                  "rotation": 180,
+                  "tint": "#638c69",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-l3",
+          "name": "the declared lenses",
+          "kind": "formation",
+          "position": {
+            "x": -0.1,
+            "y": -0.03,
+            "z": 0
+          },
+          "size": {
+            "x": 0.05,
+            "y": 0.34
+          },
+          "rotation": 180,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-l3-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "triangle",
+                "objectState": {
+                  "size": {
+                    "x": 0.05,
+                    "y": 0.34
+                  },
+                  "rotation": 180,
+                  "tint": "#eee9d9",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-l4",
+          "name": "the declared lenses",
+          "kind": "formation",
+          "position": {
+            "x": 0.01,
+            "y": -0.02,
+            "z": 0
+          },
+          "size": {
+            "x": 0.05,
+            "y": 0.34
+          },
+          "rotation": 180,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#c67c46",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-l4-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "triangle",
+                "objectState": {
+                  "size": {
+                    "x": 0.05,
+                    "y": 0.34
+                  },
+                  "rotation": 180,
+                  "tint": "#c67c46",
+                  "tintWeight": 0.6,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-r05a-l5",
+          "name": "the declared lenses",
+          "kind": "formation",
+          "position": {
+            "x": 0.12,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 0.05,
+            "y": 0.34
+          },
+          "rotation": 180,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#a94138",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "ent-r05a-l5-s0",
+                "hold": 3,
+                "transition": 1,
+                "position": null,
+                "text": "",
+                "shape": "triangle",
+                "objectState": {
+                  "size": {
+                    "x": 0.05,
+                    "y": 0.34
+                  },
+                  "rotation": 180,
+                  "tint": "#a94138",
+                  "tintWeight": 0.6,
                   "force": {
                     "kind": "attract",
                     "strength": 0,
@@ -2183,29 +3057,16 @@
       ],
       "text": [
         {
-          "id": "editorial",
+          "id": "stage",
           "visible": true,
-          "kicker": "MOVEMENT 36 OF 48 · §4 · #5→0 · ROOM 05-PSYCHOID-FLOWERING",
-          "title": "MEF and Prompt Thrownness",
-          "italic": "Argued",
-          "body": "MEF makes each account a declared refraction—source, lens, transformation, agreement, divergence, limit, and return—while Prompt Thrownness turns agent disclosure into an encounter-axis test.\n← previous · M35 Apollo Through Dionysus   ·   next → M37 Central — Meaningful Continuity",
-          "x": 0.033,
-          "y": 0.42,
-          "width": 360,
-          "size": 22,
-          "align": "left"
-        },
-        {
-          "id": "p1-route",
-          "visible": true,
-          "kicker": "P1 CANONICAL ROUTE",
-          "title": "",
+          "kicker": "",
+          "title": "Declared refractions",
           "italic": "",
-          "body": "P1-M36 → A14 · A26 · A28 · A33 / C39 · C40 · C43 · C44 · C45 · C46 — Account; MEF framework / Prompt Thrownness / model-internal technical handoff",
-          "x": 0.05,
-          "y": 0.05,
-          "width": 400,
-          "size": 14,
+          "body": "One light through many lenses, each declared.",
+          "x": 0.04,
+          "y": 0.58,
+          "width": 330,
+          "size": 20,
           "align": "left"
         }
       ],
@@ -2227,31 +3088,14 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [
-        {
-          "id": "spectrum-drift",
-          "enabled": true,
-          "target": "field.params.dispersion",
-          "type": "lfo",
-          "wave": "sine",
-          "min": 0.05,
-          "max": 0.12,
-          "rate": 0.08,
-          "phase": 0,
-          "blend": "replace",
-          "duration": 15,
-          "delay": 0,
-          "loop": "loop",
-          "firedAt": null
-        }
-      ],
+      "automation": [],
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "fontWeight": 900,
-        "pointerMode": "attract",
-        "pointerClick": "implode",
-        "pointerClickStrength": 1.1,
-        "pointerClickRadius": 0.45
+        "pointerMode": "vortex",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.9,
+        "pointerClickRadius": 0.42
       }
     }
   ],

@@ -1,150 +1,166 @@
 {
- "artifact": "mytheme/roz-mytheme-apollo-dionysus-daphne.journey.json",
- "family": "mytheme",
- "worker": "E6 (mytheme-wholes)",
- "profile_lineage": [
-  "roz-corpus-base",
-  "register-mytheme",
-  "family-frank-taylor"
- ],
- "source_revision": {
-  "repo": "EpiLogos/Antykathera-Essay-Work",
-  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
-  "records": [
-   {
-    "record_id": "mytheme-apollo-dionysus-daphne",
-    "path": "submission-package/essay/symbolon/mytheme/worlds/frank-taylor/apollo-dionysus-daphne/WHOLE.md",
-    "sha256": "aed5b63dce5c2dd5c3d1302fcfbc56f9c02a649ba62da50e350cbcd10aabed5c"
-   }
-  ]
- },
- "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
- "scenes": [
-  {
-   "scene_id": "m-apd-0-view",
-   "phase": "#0 a world becomes a view",
-   "relations": "anchor apollo-whole; the authored programme"
+  "artifact": "mytheme/roz-mytheme-apollo-dionysus-daphne.journey.json",
+  "family": "mytheme",
+  "worker": "E6 (mytheme-wholes)",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "register-mytheme",
+    "family-frank-taylor"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+    "records": [
+      {
+        "record_id": "mytheme-apollo-dionysus-daphne",
+        "path": "submission-package/essay/symbolon/mytheme/worlds/frank-taylor/apollo-dionysus-daphne/WHOLE.md",
+        "sha256": "aed5b63dce5c2dd5c3d1302fcfbc56f9c02a649ba62da50e350cbcd10aabed5c"
+      }
+    ]
   },
-  {
-   "scene_id": "m-apd-1-confidence",
-   "phase": "#1 the view grows confident",
-   "relations": "anchor apollo-form; Gebser pp.11–21, 255–58; P5 carrier; the absent Father; A20"
+  "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+  "scenes": [
+    {
+      "scene_id": "m-apd-0-view",
+      "phase": "#0 a world becomes a view",
+      "relations": "anchor apollo-whole; the authored programme"
+    },
+    {
+      "scene_id": "m-apd-1-confidence",
+      "phase": "#1 the view grows confident",
+      "relations": "anchor apollo-form; Gebser pp.11–21, 255–58; P5 carrier; the absent Father; A20"
+    },
+    {
+      "scene_id": "m-apd-2-dionysus",
+      "phase": "#2 Dionysus opens the enclosure",
+      "relations": "anchor apollo-dionysus-participation; Nietzsche §1 (p.21), §21 (p.167); the plan's dismemberment"
+    },
+    {
+      "scene_id": "m-apd-3-daphne",
+      "phase": "#3 Daphne requires someone to remain other",
+      "relations": "anchor daphne-alterity; the Ovidian whole kept distinct; movement 35's recoil+assent"
+    },
+    {
+      "scene_id": "m-apd-4-diaphaneity",
+      "phase": "#4 the view becomes transparent to its context",
+      "relations": "anchor apollo-diaphaneity; Gebser pp.1–3, 24–28, 470–86; Q27 180°→360°; P5 third/fourth-person"
+    },
+    {
+      "scene_id": "m-apd-5-return",
+      "phase": "#5→0 form returns with its source still able to answer",
+      "relations": "anchor apollo-diaphaneity-return; Neumann ground; Draft 3; A20, A21; movement 35"
+    }
+  ],
+  "occurrence_index": [
+    {
+      "figure": "Apollo",
+      "occurrence": "#0 the communicable boundary; #5→0 articulation without final possession"
+    },
+    {
+      "figure": "Dionysus",
+      "occurrence": "#2 the opening and return through form — Taylor's composition, not an actor in Ovid"
+    },
+    {
+      "figure": "Daphne",
+      "occurrence": "#3 the centre exceeding what either power makes of her; her literary whole distinct"
+    },
+    {
+      "figure": "the absent Father",
+      "occurrence": "#1 surrogate authority and self-exemption; #4 returned as owned finite judgment"
+    },
+    {
+      "motif": "the tree's recoil with the seeming assent",
+      "occurrence": "#3 carried via movement 35 — neither moment cancels the other"
+    },
+    {
+      "action": "reciprocal expression (§21)",
+      "occurrence": "#2 each power expressive through the other"
+    }
+  ],
+  "human_amplified": [
+    {
+      "relation": "apollo-dionysus-mutual-answerability",
+      "flag": "yes"
+    },
+    {
+      "relation": "daphne-alterity-check",
+      "flag": "yes"
+    },
+    {
+      "relation": "apollo-contextual-return",
+      "flag": "yes"
+    }
+  ],
+  "cross_story_relations": [
+    "Daphne ↔ the Apollo/Dionysus bracket: the Ovidian whole (mytheme-apollo-eros-daphne-peneus) and this philosophical composition retain distinct casts and operations; Dionysus does not enter Ovid's cast.",
+    "Shared Neumann whole grounds the declared A20/A21 relation."
+  ],
+  "assets": [
+    {
+      "kind": "ascii",
+      "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+      "provenance": "authored"
+    },
+    {
+      "kind": "diagram",
+      "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "mytheme/roz-mytheme-apollo-dionysus-daphne.cover.png",
+  "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+  "status": "reviewed",
+  "notes": [
+    "Craft: the enclosure scene uses a square→ring sequence to stage opening-and-return; the Daphne scene keeps both the ring (tree) and the two powers at its edges, refusing a blend. Gebser paraphrase boundaries (no exact quotation) respected. E0 acceptance repair: title/field collision fixed on m-apd-0-view, m-apd-1-confidence, m-apd-3-daphne, m-apd-4-diaphaneity, m-apd-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+    "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l2), per scene:",
+    "#0 view — the sight-line triangle walks from beside the world-disc toward the ring's edge, inside the held image's frame (the situated line of sight acquiring its position); gentle attract field; a slow turbulence LFO breathes the world before the view (auto-drift). Critic fix 2026-10-06: the return now stages the triangle the note claims (grounded in the record's 'definite image can again be offered'); the #0 description corrected — the sight-line sits inside the ring; body columns nudged (y 0.60, narrower) clear of the formation mass.",
+    "#1 confidence — grid layout (Gebser's sector claiming exclusive validity); the enclosure square grows; the unmarked remainder is pushed to the frame's edge and marked x — the measure's own act of counting what escapes it as deficient; the absent Father (∅) stands inside the enclosure; field turns inward (circulation −0.4); pointer repel/shove — the view discounts the witness.",
+    "#2 Dionysus — the bounded disc dismembers (❋) and reconstitutes as a ring: what dies is the form's claim to stand complete; what returns must acquire a form; field turbulence 0.4, dispersion 0.2, vortex pointer — the maenadic opening; ϴ (the opened circle) brightens at the rim.",
+    "#3 Daphne — Daphne carries a repel field (the other who cannot be absorbed); her own boundary-ring deepens green and tightens around her under both powers' pull (A and ϴ hold attract at the edges — drawn, not merging); pointer repel/pulse — respect of the other's edge; no Ovidian pursuit is staged (her separate whole is declared, not restaged).",
+    "#4 diaphaneity — THE 3D SCENE. z is the opening of 180° into 360°: the perspectival triangle stays deep (z −0.35), the contextual ring expands at z 0, the ∴ of counter-positions stands nearest (z +0.3), care ❤ and the knower's ◉ hold intermediate depths — the knower has a position within the field, not above it; depth perspective + occlusion with a cold depth tint; contextual ring sequence 180°-small → 360°-full; circulation LFO breathes the field (auto-context); pointer attract/implode — the context gathers without erasing.",
+    "#5→0 return — the definite image offered again: a triangle (e147) stands inside the relation ring beside the renewed seeing ◉, A20/A21 and the ↺ of contextual return — the record's own return, 'Apollo returns to articulation. A definite image can again be offered to another'; attract strength halved against #0 (0.35 vs 0.7) — offering without grasping. ENDING QUALIFIES BEGINNING: #0's sight-line walked inside the gold ring toward its edge (a view forming); #5→0 sets the triangle at rest within the same ring — the act of seeing re-formed inside the relation it had only begun to hold, Daphne's green ◉ remnant at the rim; the field that opened gathering (attract 0.7) closes offering (attract 0.35).",
+    "Human-amplified staging (frontmatter: all three relations yes): the alterity check, mutual answerability and contextual return are Taylor's authored programme — the scene bodies carry the landings (A20, Mv 35, Draft 3) and the record-scope guards (no Ovidian restaging; Dionysus not in Ovid's cast). Mythemic verbs only: Daphne proves-discloses the alterity difference; no formal entailment, no historical attribution.",
+    "Automation: auto-drift (turbulence, the world before the view) and auto-context (circulation, the contextual field's breath) — tied to the record's moves. Durations 11–15, transitions 1.2–2.2: the diaphaneity scene held longest. Critic fix 2026-10-06: the return now stages the triangle the note claims (grounded in the record's 'definite image can again be offered'); the #0 description corrected — the sight-line sits inside the ring; body columns nudged (y 0.60, narrower) clear of the formation mass.",
+    "2026-10-07 craft pass (enrich/expressions-craft-20261007, lane 1): re-drawn — framed view, perspectival construction, empty temple, kantharos, a figure scattered and returning open-armed, laurel, rays, Rotundum, lyre and leaf; colour journey dawn grey-blue → wine-dark → laurel earth → diaphanous silver; stillness pairs #0–#1 and #4–#5; stage text reduced to the sign."
+  ],
+  "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-mytheme-l2",
+    "lane": "mytheme",
+    "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+    "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
   },
-  {
-   "scene_id": "m-apd-2-dionysus",
-   "phase": "#2 Dionysus opens the enclosure",
-   "relations": "anchor apollo-dionysus-participation; Nietzsche §1 (p.21), §21 (p.167); the plan's dismemberment"
-  },
-  {
-   "scene_id": "m-apd-3-daphne",
-   "phase": "#3 Daphne requires someone to remain other",
-   "relations": "anchor daphne-alterity; the Ovidian whole kept distinct; movement 35's recoil+assent"
-  },
-  {
-   "scene_id": "m-apd-4-diaphaneity",
-   "phase": "#4 the view becomes transparent to its context",
-   "relations": "anchor apollo-diaphaneity; Gebser pp.1–3, 24–28, 470–86; Q27 180°→360°; P5 third/fourth-person"
-  },
-  {
-   "scene_id": "m-apd-5-return",
-   "phase": "#5→0 form returns with its source still able to answer",
-   "relations": "anchor apollo-diaphaneity-return; Neumann ground; Draft 3; A20, A21; movement 35"
+  "glyph_rationales": {
+    "!": "the confident assertion: the finite judgment invoking an ultimate warrant while exempting its own position from the order it imposes (#1).",
+    "♪": "music: what gives the myth a significance word and image alone cannot carry — the culminating reciprocity in which each power speaks through the other (#2, and again at the return #5→0).",
+    "→": "the pursuit: the line of illumination that arrives at the tree and stops — the grasp that fails without ending the image (#3).",
+    "360°": "contextual inclusion: the perspectival triangle opened to its conditions and counter-positions — an authorial operation that promises no exhaustive panorama (#4).",
+    "0/1": "the native relation of whole and particular: the determining depth present through the manifest circumstance (#4).",
+    "the framed view — a world given a form it can inhabit": "Apollo's achievement drawn: something stands out, a boundary holds it, the image lets one person show another what has been seen (#0).",
+    "the boundary that lets a difference hold": "the ring around the standing figure: without an articulated view no one knows what is claimed or where disagreement begins (#0).",
+    "something stands out — figure against ground": "the triangle: a difference made distinct, definite enough to revisit, question and change (#0).",
+    "the seer — the one the view belongs to": "the person for whom the view matters: body, history, language and concern affect what becomes salient (#0).",
+    "the perspectival construction — order through a situated line of sight": "one-point perspective drawn: Giotto, Petrarch, Alberti, Leonardo — a view acquires order through the position from which it is drawn (#1).",
+    "the sector — claiming exclusive validity": "the hard square: exactness become restrictive when one sector claims the whole (#1).",
+    "the invoked Father — a structure standing where the ground is absent": "the temple with its empty cell: surrogate authority, a justification standing where the ground is absent (#1).",
+    "the exempting assertion": "the exclamation on the stage's edge: the view presenting its situated authority as though its conditions had vanished (#1).",
+    "the kantharos — shared life, held and poured": "the wine cup: participation — the living relation the self-sufficient view concealed (#2).",
+    "the bounded form — what dies is the claim to stand complete": "the drawn figure closing, scattered, and returning open-armed: dismemberment and reconstitution — what dies is the form's claim, what returns must carry living relation (#2).",
+    "the enclosure opened": "the ring widened by its own steps: the boundary ceases to be the world's final perimeter (#2).",
+    "the music beneath the words": "the note beside the opened enclosure: Dionysian wisdom mediated through the drama (#2).",
+    "the laurel — the transformed tree, recoil and afterlife": "the tree drawn with its bent branch: the transformed tree's recoil, and the emblem that continues after the living withdrawal (#3).",
+    "the other centre — existence exceeding what either power makes of it": "the triangle apart from both figures: Daphne's office — neither a balance of quantities nor an intermediate blend (#3).",
+    "the emblem — the image continuing after the living withdrawal": "the wreath ring: appropriation after withdrawal — the failure of possession at one level need not end its symbolic continuation (#3).",
+    "the pursuit — the line that arrives at the tree and stops": "the arrow: Apollo cannot make illumination into entitlement; Dionysus cannot make participation into permission to absorb (#3).",
+    "the rays — the view opened to every aspect around it": "radiants in all directions: aperspectivity — perspective released from exclusive validity, not amalgamated away (#4).",
+    "the contextual field — limits, relations and transitions available together": "the wide ring: positions, counter-positions and the conditions of their transition made available together (#4).",
+    "the Rotundum — the round that cannot proceed from any limited view": "nested circles: the ultimate context, impartial because it proceeds from no limited perspective (#4).",
+    "contextual inclusion": "the notation on the stage's edge: the authorial operation by which the knower's position joins the accounted relations (#4).",
+    "depth through circumstance": "the native mark in gold: this view appears through a source and capacity it cannot exhaust (#4).",
+    "the lyre — articulation returned, speaking through the form": "the lyre drawn: Apollo returns to articulation — a definite image again offered, now bearing its acknowledged relation (#5→0).",
+    "the leaf — the answer still alive in the relation": "the single leaf: Daphne effective within participation — another centre can answer without being pre-assigned the answer (#5→0).",
+    "the source still able to answer": "the wide ring holding lyre and leaf: form returns with its source still able to answer (#5→0)."
   }
- ],
- "occurrence_index": [
-  {
-   "figure": "Apollo",
-   "occurrence": "#0 the communicable boundary; #5→0 articulation without final possession"
-  },
-  {
-   "figure": "Dionysus",
-   "occurrence": "#2 the opening and return through form — Taylor's composition, not an actor in Ovid"
-  },
-  {
-   "figure": "Daphne",
-   "occurrence": "#3 the centre exceeding what either power makes of her; her literary whole distinct"
-  },
-  {
-   "figure": "the absent Father",
-   "occurrence": "#1 surrogate authority and self-exemption; #4 returned as owned finite judgment"
-  },
-  {
-   "motif": "the tree's recoil with the seeming assent",
-   "occurrence": "#3 carried via movement 35 — neither moment cancels the other"
-  },
-  {
-   "action": "reciprocal expression (§21)",
-   "occurrence": "#2 each power expressive through the other"
-  }
- ],
- "human_amplified": [
-  {
-   "relation": "apollo-dionysus-mutual-answerability",
-   "flag": "yes"
-  },
-  {
-   "relation": "daphne-alterity-check",
-   "flag": "yes"
-  },
-  {
-   "relation": "apollo-contextual-return",
-   "flag": "yes"
-  }
- ],
- "cross_story_relations": [
-  "Daphne ↔ the Apollo/Dionysus bracket: the Ovidian whole (mytheme-apollo-eros-daphne-peneus) and this philosophical composition retain distinct casts and operations; Dionysus does not enter Ovid's cast.",
-  "Shared Neumann whole grounds the declared A20/A21 relation."
- ],
- "assets": [
-  {
-   "kind": "ascii",
-   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
-   "provenance": "authored"
-  },
-  {
-   "kind": "diagram",
-   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
-   "provenance": "authored"
-  }
- ],
- "capture": "mytheme/roz-mytheme-apollo-dionysus-daphne.cover.png",
- "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
- "status": "reviewed",
- "notes": [
-  "Craft: the enclosure scene uses a square→ring sequence to stage opening-and-return; the Daphne scene keeps both the ring (tree) and the two powers at its edges, refusing a blend. Gebser paraphrase boundaries (no exact quotation) respected. E0 acceptance repair: title/field collision fixed on m-apd-0-view, m-apd-1-confidence, m-apd-3-daphne, m-apd-4-diaphaneity, m-apd-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
-  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l2), per scene:",
-  "#0 view — the sight-line triangle walks from beside the world-disc toward the ring's edge, inside the held image's frame (the situated line of sight acquiring its position); gentle attract field; a slow turbulence LFO breathes the world before the view (auto-drift). Critic fix 2026-10-06: the return now stages the triangle the note claims (grounded in the record's 'definite image can again be offered'); the #0 description corrected — the sight-line sits inside the ring; body columns nudged (y 0.60, narrower) clear of the formation mass.",
-  "#1 confidence — grid layout (Gebser's sector claiming exclusive validity); the enclosure square grows; the unmarked remainder is pushed to the frame's edge and marked x — the measure's own act of counting what escapes it as deficient; the absent Father (∅) stands inside the enclosure; field turns inward (circulation −0.4); pointer repel/shove — the view discounts the witness.",
-  "#2 Dionysus — the bounded disc dismembers (❋) and reconstitutes as a ring: what dies is the form's claim to stand complete; what returns must acquire a form; field turbulence 0.4, dispersion 0.2, vortex pointer — the maenadic opening; ϴ (the opened circle) brightens at the rim.",
-  "#3 Daphne — Daphne carries a repel field (the other who cannot be absorbed); her own boundary-ring deepens green and tightens around her under both powers' pull (A and ϴ hold attract at the edges — drawn, not merging); pointer repel/pulse — respect of the other's edge; no Ovidian pursuit is staged (her separate whole is declared, not restaged).",
-  "#4 diaphaneity — THE 3D SCENE. z is the opening of 180° into 360°: the perspectival triangle stays deep (z −0.35), the contextual ring expands at z 0, the ∴ of counter-positions stands nearest (z +0.3), care ❤ and the knower's ◉ hold intermediate depths — the knower has a position within the field, not above it; depth perspective + occlusion with a cold depth tint; contextual ring sequence 180°-small → 360°-full; circulation LFO breathes the field (auto-context); pointer attract/implode — the context gathers without erasing.",
-  "#5→0 return — the definite image offered again: a triangle (e147) stands inside the relation ring beside the renewed seeing ◉, A20/A21 and the ↺ of contextual return — the record's own return, 'Apollo returns to articulation. A definite image can again be offered to another'; attract strength halved against #0 (0.35 vs 0.7) — offering without grasping. ENDING QUALIFIES BEGINNING: #0's sight-line walked inside the gold ring toward its edge (a view forming); #5→0 sets the triangle at rest within the same ring — the act of seeing re-formed inside the relation it had only begun to hold, Daphne's green ◉ remnant at the rim; the field that opened gathering (attract 0.7) closes offering (attract 0.35).",
-  "Human-amplified staging (frontmatter: all three relations yes): the alterity check, mutual answerability and contextual return are Taylor's authored programme — the scene bodies carry the landings (A20, Mv 35, Draft 3) and the record-scope guards (no Ovidian restaging; Dionysus not in Ovid's cast). Mythemic verbs only: Daphne proves-discloses the alterity difference; no formal entailment, no historical attribution.",
-  "Automation: auto-drift (turbulence, the world before the view) and auto-context (circulation, the contextual field's breath) — tied to the record's moves. Durations 11–15, transitions 1.2–2.2: the diaphaneity scene held longest. Critic fix 2026-10-06: the return now stages the triangle the note claims (grounded in the record's 'definite image can again be offered'); the #0 description corrected — the sight-line sits inside the ring; body columns nudged (y 0.60, narrower) clear of the formation mass."
- ],
- "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
- "enrichment": {
-  "date": "2026-10-06",
-  "actor": "zcode:enrich-mytheme-l2",
-  "lane": "mytheme",
-  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
-  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
- },
- "glyph_rationales": {
-  "∅": "the absent Father: the missing ground invoked as ultimate warrant — lack numbed into a surrogate presence that exempts the view's own position from the order it imposes (#1).",
-  "·": "the unnamed carrier — a formation whose sense is its shape alone (world-disc, enclosure, held image, ring of relation); no glyph is pretended.",
-  "◉": "the marked remainder: what escapes the measure, counted deficient by the confident view (#1); at #5→0 it re-reads as the remnant of the other the form still carries.",
-  "ϴ": "Dionysus — the circle opened at its crown: release through which the enclosed view meets its conditions again, returning through form (#2).",
-  "♪": "Nietzsche's musical office: music's overwhelming universality mediated to the hearer by tragic myth (Birth of Tragedy §21).",
-  "❋": "the dismemberment: the form's claim to stand complete in itself dying, so life can return through reconstitution (#2, Taylor's authored sequence).",
-  "Daphne": "the particular centre whose existence exceeds what either power makes of her — the alterity check on appropriation by determination and by undifferentiation (#3).",
-  "A": "Apollo: the communicable boundary — articulation that lets a difference hold long enough to be shared and revisited (#0–#1).",
-  "x": "the finite particular marked deficient by the confident measure (Taylor's X/x: the manifest circumstance whose determining depth the view cannot name) — discounted at #1, restored within the contextual field at #4.",
-  "∴": "positions, counter-positions and their transitions available together — the 360° contextual field into which the perspectival triangle opens (#4).",
-  "❤": "care and telos: the embodied concern giving transparency its lived direction — equanimity requires acknowledging concern (Taylor's P5).",
-  "A20": "image, valuation, possession: the transition where the image's valuation governs what its source is allowed to be (#1, answered at #5→0).",
-  "A21": "individuation and recognition: the other received through the continuing capacity to respond (#5→0).",
-  "↺": "the contextual return: form coming back with its source still able to answer (#5→0)."
- }
 }

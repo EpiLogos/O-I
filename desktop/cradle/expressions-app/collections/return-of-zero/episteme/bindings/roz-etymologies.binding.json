@@ -172,7 +172,9 @@
   "symbol-account-and-trust: the four bolded operations walk the centre verbatim; vortex pointer (the account circulates to its source-field).",
   "homology-and-analogy: Homologia ↔ Analogia alternate at the centre while op1 drifts (the comparison crossing); repel keeps the two fields distinct; long transition (the qualification develops).",
   "apportionment-and-economy: the three named operations walk the centre; attract with shove click (measure apportions; liability presses).",
-  "Beats: durations 13–15s, transitions 1.8–2.4; 2 automation lanes; ring layouts on the three six-operation fields."
+  "Beats: durations 13–15s, transitions 1.8–2.4; 2 automation lanes; ring layouts on the three six-operation fields.",
+  "Craft rework 2026-10-07 (expression rework pass, lane 5; records re-read at fc59a719). The whole-fields are now drawn as word-root diagrams: the root centre, the envelope ring, and the six generated operations as a hexagonal ring of discs — and the record's own word-chain walks the envelope (Encounter-in-Region → … → Count-to-Account; arbitration → hybris → regard → anamnesis over the six relations deepening at the root; Fides → Topos → Logos → Nomos → Natio → Credere circling above the sunken centre in the 3D scene; symbol → account → trust; Homologia ↔ Analogia crossing between two distinct, repelled fields; Apportionment ↔ Economy with the apportioning marks and the pressing liability). The archive holds still where it can: encounter and arbitration share one dusk ground (the pair's stillness), homologia and economy share one moss ground, and the journey moves through deep water (trust) and lamplight (symbol) between them. Excitation carries encounter's light; stage text is one hospitable sign-name per field plus a single opening line (13 words).",
+  "Craft rework 2026-10-07 (expression rework pass, lane 5; records re-read at fc59a719). The whole-fields are now drawn as word-root diagrams: the root centre, the envelope ring, and the six generated operations as a hexagonal ring of discs — and the record's own word-chain walks the envelope (Encounter-in-Region → … → Count-to-Account; arbitration → hybris → regard → anamnesis over the six relations deepening at the root; Fides → Topos → Logos → Nomos → Natio → Credere circling above the sunken centre in the 3D scene; symbol → account → trust; Homologia ↔ Analogia crossing between two distinct, repelled fields; Apportionment ↔ Economy with the apportioning marks and the pressing liability). The archive holds still where it can: encounter and arbitration share one dusk ground (the pair's stillness), homologia and economy share one moss ground, and the journey moves through deep water (trust) and lamplight (symbol) between them. Excitation carries encounter's light; stage text is one hospitable sign-name per field plus a single opening line (13 words)."
  ],
  "enrichment": {
   "date": "2026-10-06",
@@ -210,6 +212,19 @@
   "Analogia": "proportion across difference — the analogy operation (record's Analogical proportion)",
   "Power becomes finite by apportionment": "the apportionment record's named operation",
   "Measure is an apportioned criterion": "the record's named operation — measure's office",
-  "Delegated labour distributes capacity and return": "the record's named operation — commission and return"
+  "Delegated labour distributes capacity and return": "the record's named operation — commission and return",
+  "the field envelope": "the whole-field boundary — returns kept inside the record's own standing",
+  "the whole-field centre": "the root — the shared sense-core every operation generates from and returns to",
+  "the generated operations": "one of the six relations generated around the root — N / N′ bearing N+N′",
+  "arbitration": "the whole's office word — the deciding field the other three stage",
+  "symbol": "the word's stage — the sign that answers to its source",
+  "account": "the word's stage — the account that does not replace its source",
+  "trust": "the word's stage — the reliance that keeps the return route active",
+  "the homologia field": "the first field — likeness held as sameness-of-relation",
+  "the analogia field": "the second field — proportion carried across difference",
+  "the apportioning marks": "the measure dividing the field — power become finite by apportionment",
+  "the pressing liability": "the liability pressing on the measure — delegated labour answering for its distribution",
+  "Apportionment": "the word's stage — measure as an apportioned criterion",
+  "Economy": "the word's stage — the household law that distributes capacity and return"
  }
 }

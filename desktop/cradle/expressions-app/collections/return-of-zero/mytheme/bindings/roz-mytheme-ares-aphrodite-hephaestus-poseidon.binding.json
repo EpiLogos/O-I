@@ -1,189 +1,207 @@
 {
- "artifact": "mytheme/roz-mytheme-ares-aphrodite-hephaestus-poseidon.journey.json",
- "family": "mytheme",
- "worker": "E6 (mytheme-wholes)",
- "profile_lineage": [
-  "roz-corpus-base",
-  "register-mytheme",
-  "family-hellenic"
- ],
- "source_revision": {
-  "repo": "EpiLogos/Antykathera-Essay-Work",
-  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
-  "records": [
-   {
-    "record_id": "mytheme-ares-aphrodite-hephaestus-poseidon",
-    "path": "submission-package/essay/symbolon/mytheme/worlds/hellenic/ares-aphrodite-hephaestus-poseidon/WHOLE.md",
-    "sha256": "b41b556514a41fd21854ddbf70ff8c03c1523eb478b1444f71563b62b3cf334c"
-   }
-  ]
- },
- "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
- "scenes": [
-  {
-   "scene_id": "m-ares-0-song",
-   "phase": "#0 the song, the bed, and the gods at the door",
-   "relations": "anchor ares-source-song; Demodocus/Helios occurrences; source: Odyssey 8.266–366 paraphrase"
+  "artifact": "mytheme/roz-mytheme-ares-aphrodite-hephaestus-poseidon.journey.json",
+  "family": "mytheme",
+  "worker": "E6 (mytheme-wholes)",
+  "profile_lineage": [
+    "roz-corpus-base",
+    "register-mytheme",
+    "family-hellenic"
+  ],
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+    "records": [
+      {
+        "record_id": "mytheme-ares-aphrodite-hephaestus-poseidon",
+        "path": "submission-package/essay/symbolon/mytheme/worlds/hellenic/ares-aphrodite-hephaestus-poseidon/WHOLE.md",
+        "sha256": "b41b556514a41fd21854ddbf70ff8c03c1523eb478b1444f71563b62b3cf334c"
+      }
+    ]
   },
-  {
-   "scene_id": "m-ares-0b-bonds",
-   "phase": "#0 the bonds and the feigned departure",
-   "relations": "anchor ares-source-song; δεσμοὶ τεχνήεντες; Lemnos; Ares' watch; Helios' second report"
+  "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+  "scenes": [
+    {
+      "scene_id": "m-ares-0-song",
+      "phase": "#0 the song, the bed, and the gods at the door",
+      "relations": "anchor ares-source-song; Demodocus/Helios occurrences; source: Odyssey 8.266–366 paraphrase"
+    },
+    {
+      "scene_id": "m-ares-0b-bonds",
+      "phase": "#0 the bonds and the feigned departure",
+      "relations": "anchor ares-source-song; δεσμοὶ τεχνήεντες; Lemnos; Ares' watch; Helios' second report"
+    },
+    {
+      "scene_id": "m-ares-1-genealogies",
+      "phase": "#1 the children belong to their own tellings",
+      "relations": "anchor ares-distinct-genealogies; Theogony 933–937, 975–978, 116–122, 176–206; Simonides scholia variant"
+    },
+    {
+      "scene_id": "m-ares-2-difference",
+      "phase": "#2 the difference that can meet; the bow that is also a lyre",
+      "relations": "anchor ares-generative-difference, ares-bow-lyre-hamartia; A13, A12, A15; C23–C25; Q27 hamartia (human-amplified)"
+    },
+    {
+      "scene_id": "m-ares-3-apparatus",
+      "phase": "#3 what the apparatus gathers — stalled at its own limit",
+      "relations": "anchor ares-capture-gaze; C25 counterfeit gathering; C27; A20; the Gestell comparison is the essay's own"
+    },
+    {
+      "scene_id": "m-ares-4-surety",
+      "phase": "#4 the word that takes on the debt",
+      "relations": "anchor ares-guarantee-release; A23, A25, A27; C48"
+    },
+    {
+      "scene_id": "m-ares-5-return",
+      "phase": "#5→0 the relation after release",
+      "relations": "anchor ares-field-return; returns-to M22, M40, M46; A18 eightfold; A28–A32, A35, A36"
+    }
+  ],
+  "occurrence_index": [
+    {
+      "figure": "Demodocus' lyre / dancers' circle",
+      "occurrence": "#0 opening of the song at the Phaeacian court"
+    },
+    {
+      "figure": "Helios",
+      "occurrence": "#0 first and second reports; #3 member of the capture/display apparatus"
+    },
+    {
+      "figure": "the spider's-web bonds / bed / beams",
+      "occurrence": "#0 fabrication; #3 the public exhibit"
+    },
+    {
+      "figure": "Lemnos",
+      "occurrence": "#0 the feigned departure to the Sintians"
+    },
+    {
+      "figure": "Harmonia, Deimos, Phobos, Eros",
+      "occurrence": "#1 distinct genealogies (Theogony; Simonides scholia) — outside the release scene; #2 offices in the authored relation"
+    },
+    {
+      "figure": "the gateway audience / laughter / Hermes' quip / Apollo's question",
+      "occurrence": "#0, #3 the spectators inside the apparatus"
+    },
+    {
+      "figure": "Poseidon's ἐγγύη",
+      "occurrence": "#4 the undertaking: first promise refused, self-answerable liability accepted"
+    },
+    {
+      "figure": "Thrace / Paphos / the Graces",
+      "occurrence": "#5→0 the paths beyond the image; bathing, anointing, clothing as source events"
+    },
+    {
+      "action": "the same hands binding and loosening",
+      "occurrence": "#0 and #4 technē retains the capacity in both offices"
+    },
+    {
+      "motif": "the unnarrated payment",
+      "occurrence": "#4–#5→0 the open liability the returned account must carry"
+    }
+  ],
+  "human_amplified": [
+    {
+      "relation": "Ares/Aphrodite/Harmonia/Eros productive-difference relation",
+      "flag": "yes"
+    },
+    {
+      "relation": "the complete capture/display apparatus; counterfeit gathering; Gestell comparison",
+      "flag": "yes"
+    },
+    {
+      "relation": "Poseidon's guarantee; trust beyond technical capture",
+      "flag": "yes"
+    },
+    {
+      "relation": "native eightfold and shared archetypal ground",
+      "flag": "yes"
+    },
+    {
+      "relation": "symbol/account/trust and apportionment returns; M22/M40/M46",
+      "flag": "yes"
+    },
+    {
+      "relation": "Graces' re-clothing as symbolic transformation of shame",
+      "flag": "no — source events, no appointed amplification"
+    }
+  ],
+  "cross_story_relations": [
+    "Indra's jewel net (mytheme-indra-net): the declared double-net comparison distinguishes mutual implication from capture organised as public evidence; neither net supplies the other a missing episode (Offered).",
+    "Shared archetypal ground with mytheme-neumann-images and mytheme-uroboros-trickster via the A18 return links."
+  ],
+  "assets": [
+    {
+      "kind": "ascii",
+      "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+      "provenance": "authored"
+    },
+    {
+      "kind": "diagram",
+      "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+      "provenance": "authored"
+    }
+  ],
+  "capture": "mytheme/roz-mytheme-ares-aphrodite-hephaestus-poseidon.cover.png",
+  "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+  "status": "reviewed",
+  "notes": [
+    "Craft: the scene deliberately stalls at the apparatus (scene m-ares-3-apparatus): exposure without payment, display without release — the record's own limit is staged rather than narratively resolved. Forge scenes use the family-hellenic forge palette; the surety scene uses the sea palette. Word-formations (\"Ares\", \"Aphrodite\") render as particle glyphs at draft count and remain legible at authored count. Editor defects listed below are shared, returned for one repair. E0 acceptance repair: title/field collision fixed on m-ares-0-song, m-ares-0b-bonds, m-ares-1-genealogies, m-ares-2-difference, m-ares-3-apparatus, m-ares-4-surety, m-ares-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+    "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l2), per scene:",
+    "#0 song — attraction authored as field: Ares and Aphrodite carry attract forces (the secret gathering), Helios a weak repel at the rim (the seeing that withdraws nothing); slow circulation 0.35; the song takes time (duration 14, the longest opening beat).",
+    "#0b bonds — the bond carrier walks the bed: · at the left post → ✕ at the right → ✕✕✕ suspended above, tint brightening as the work completes; field holds inward (circulation −0.45, speed 0.3, dispersion 0.03); pointer repel/pulse faint — nothing may reach the bed. The same ring that gathered in #0 now encloses.",
+    "#1 genealogies — grid layout: witnesses in columns that hold their seams; Eros walks his two tellings (Eros at the primordial disc → Ἔρως at the filial station), the recurrence-with-difference staging the record's own claim that Eros has more than one genealogy and neither is collapsed; pointer shove — tellings refuse merging.",
+    "#2 difference — the union ring morphs ring → triangle (the backwards-turning fastening, the drawn bow) → yantra (Harmonia's sustained form); a sine LFO breathes field circulation (the lyre's held note, the 9/8 tick); Ares and Aphrodite pull toward the form without moving from ±0.5 — distinct poles, generative between; pointer vortex (countertension).",
+    "#3 apparatus — THE 3D SCENE. z is the vertical of the apparatus: the net ring at z 0 closes over the lovers (z −0.05/−0.08), the exhibit platform below (z −0.42), the anvil at depth (z −0.3), the laughing gods above (z +0.35), Helios highest (z +0.5) — who stands above the display is the record's own question (the goddesses stay home; shame unevenly distributed); depth occlusion + dark-bronze depth tint; the net sequence tightens then holds (the stall); field nearly still (speed 0.25, circulation 0.05) — the scene stalls where the apparatus stalls; pointer vortex with shove click (the seizure).",
+    "#4 surety — the pledge triangle grows from pale refused promise to gold undertaking; Hephaestus becomes ⚒ and moves to the bonds (the same hands loosening); the bond ring widens and fades (loosened); Ares still pale (release not yet narrated as departure here); pointer attract/implode — the word gathers the debt to a named bearer; triangle LFO breathes pointer strength (the oath's weight).",
+    "#5→0 return — the two path-discs carry attract fields at opposite edges (Thrace, Paphos — lives in motion beyond the image); the net ring recedes (widens, tint 0.3→0.12 — the apparatus becoming background); near-still pointer (0.10) — no capture left; the unnarrated '?' stays bright at the rim. ENDING QUALIFIES BEGINNING: the field that opened with two attract forces gathering toward a bed inside a house now holds two attract forces drawing toward open paths at the frame's edge — same forces, transformed office: attraction without enclosure; the sun that saw and reported in #0 has set (no ☉ here), and what remains of exposure is the '?' — the debt the song did not narrate. The dark field (whiteOnBlack, kept from the forge scenes) says the song-world's daylight does not return: the relation continues past its telling.",
+    "Human-amplified staging: #2's hamartia re-entry and #5→0's Graces note carry whose account it is in the scene bodies (Taylor's quilt operation; source event with no appointed amplification). Mythemic verbs only: the bonds demonstrate enclosure, the undertaking proves-discloses trust — no formal entailment, no attribution of QL operations to Homer or Hesiod.",
+    "Automation: auto-lyre (field.params.circulation sine, the lyre's held tension) and auto-oath (field.params.pointerStrength triangle, the oath's weight) — both tied to the record's moves. Durations 10–16 and transitions 1.0–2.4: the stall (#3, 16s) and the return (15s) are held longer than the forging (10s).",
+    "2026-10-07 craft pass (enrich/expressions-craft-20261007, lane 1): re-drawn — kithara, bed, forged net, Lemnos, shell-birth, genealogical tree, a single shape turning bow and lyre, the display, trident, opened chain, diverging paths; colour journey hall bronze → genealogical sea-green → violet tension → apparatus grey → deep sea; stillness pairs #0–#0b and #4–#5; stage text reduced to the sign."
+  ],
+  "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "enrichment": {
+    "date": "2026-10-06",
+    "actor": "zcode:enrich-mytheme-l2",
+    "lane": "mytheme",
+    "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+    "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
   },
-  {
-   "scene_id": "m-ares-1-genealogies",
-   "phase": "#1 the children belong to their own tellings",
-   "relations": "anchor ares-distinct-genealogies; Theogony 933–937, 975–978, 116–122, 176–206; Simonides scholia variant"
-  },
-  {
-   "scene_id": "m-ares-2-difference",
-   "phase": "#2 the difference that can meet; the bow that is also a lyre",
-   "relations": "anchor ares-generative-difference, ares-bow-lyre-hamartia; A13, A12, A15; C23–C25; Q27 hamartia (human-amplified)"
-  },
-  {
-   "scene_id": "m-ares-3-apparatus",
-   "phase": "#3 what the apparatus gathers — stalled at its own limit",
-   "relations": "anchor ares-capture-gaze; C25 counterfeit gathering; C27; A20; the Gestell comparison is the essay's own"
-  },
-  {
-   "scene_id": "m-ares-4-surety",
-   "phase": "#4 the word that takes on the debt",
-   "relations": "anchor ares-guarantee-release; A23, A25, A27; C48"
-  },
-  {
-   "scene_id": "m-ares-5-return",
-   "phase": "#5→0 the relation after release",
-   "relations": "anchor ares-field-return; returns-to M22, M40, M46; A18 eightfold; A28–A32, A35, A36"
+  "glyph_rationales": {
+    "♪": "Demodocus' song itself: the whole scene exists as what the lyre carries to the Phaeacians (#0).",
+    "☀": "Helios: the seeing that reports — knowledge of the hidden entering another's hands, twice (#0b).",
+    "†": "Deimos and Phobos: terror and fear born beside Harmonia — the stakes kept within the same family (#1).",
+    "9/8": "the retained ratio: read as a defect to erase it would destroy the completion it enables — the octave kept whole by its remainder (#2).",
+    "3×": "Hermes' answer: three times the bonds, all the gods looking on — the deterrent received as inducement (#3).",
+    "⚖": "the guarantee: a named bearer of possible loss standing behind the disputed continuation (#4).",
+    "6": "the count of two poles and their four ordered pairings: beside, never instead of, the eight determinations (#5→0).",
+    "Demodocus' lyre — the song that carries the whole": "the kithara drawn: the bard among the Phaeacians — the tale's body is the song itself (#0).",
+    "the hidden bed — the affair in the craftsman's house": "the bed drawn: Ares and Aphrodite in Hephaestus' house, the secret the song opens (#0).",
+    "the gods at the door — the audience already gathering": "the wide ring: the spectators around the tale before the trap is sprung (#0).",
+    "the song itself": "the note beside the lyre: what binds hearing to the whole (#0).",
+    "the bonds — unbreakable, finely wrought, laid around the bed": "the drawn net: δεσμοὶ τεχνήεντες — craft making an arrangement no one can break or loosen (#0b).",
+    "the feigned departure — Lemnos, the sign Ares reads": "the island drawn: what Ares reads as the husband's absence has been prepared for him (#0b).",
+    "the chamber prepared — knowledge turned into arrangement": "the square: Helios' report, Hephaestus' making and Ares' reading entering one effective sequence (#0b).",
+    "Helios — the seeing that reports": "the sun: sees, reports, watches again and reports the capture (#0b).",
+    "Aphrodite from the sea — her entrance among the gods": "the figure over the scallop and waves: emergence after the severing — a different occasion from the song's address to Zeus (#1).",
+    "Harmonia's line — the genealogy into a human house": "the branching tree drawn through three generations: the divine parentage continuing into Cadmus' household (#1).",
+    "Eros' two tellings — primordial power and reported child": "one ring, two tints in sequence: the primordial Eros beside Chaos, and the separately reported child of Ares and Aphrodite (#1).",
+    "Deimos and Phobos — terror and fear beside the same family": "the dagger: the terrors of battle the same parentage bears — differentiation can become hostility (#1).",
+    "the same shape — bow and lyre, the tension retained": "one drawn form turning bow, then lyre: what differs agrees through a backwards-turning fastening (#2).",
+    "the two powers — distinct being and joining": "spear and blossom side by side: Ares' refusal and Aphrodite's attraction, each keeping its office (#2).",
+    "severance — the cut that denies relation": "the triangle's hard edges: difference converted into enemy (#2).",
+    "fusion — the join that absorbs the difference": "the filled disc: relation converted into a demand to surrender the difference one wished to meet (#2).",
+    "the retained tone": "the ratio on the stage's edge: the incomputable seam kept — the bow remembering it is also a lyre (#2).",
+    "the public exhibit — the held bodies on display": "the drawn display: surveillance, fabrication and immobilisation ending in a public exhibit (#3).",
+    "the spectators — laughter at the displayed bodies": "three drawn figures: the gods' laughter, no single moral verdict (#3).",
+    "Hermes' answer — three times the bonds at the same price": "the count on the stage's edge: multiplied bonds and a larger audience as the acceptable price of desire (#3).",
+    "the stall — reciprocity arrested": "the cold square: counterfeit gathering — the relation held visibly together and prevented from answering (#3).",
+    "Poseidon — the sea taking the debt on itself": "the trident: if Ares flees without paying, Poseidon will pay (#4).",
+    "the loosening — the same hands undoing the work": "the opened chain: technē retaining the capacity to make and to release (#4).",
+    "the undertaking — the sea's own word behind the release": "the wide ring: Hephaestus' objection answered without making Ares' future conduct present to inspection (#4).",
+    "the guarantee": "the scales on the stage's edge: the shifted bearer of a possible loss (#4).",
+    "the paths apart — Thrace and Paphos": "two roads from one stem: the spectators' scene no longer containing them (#5→0).",
+    "the Graces — bathing, anointing, clothing": "three drawn figures with their vessels: Aphrodite's reception at Paphos — the event Homer keeps (#5→0).",
+    "the continuing field — the claim persists, the lives answer beyond the display": "the wide ring holding paths and Graces: what the bonds achieved, what the undertaking enabled, and what the field still bears (#5→0).",
+    "the count of two poles and their four pairings — beside, not replacing, the eightfold": "the numeral on the stage's edge: the local arithmetic kept in its place under the native determinations (#5→0)."
   }
- ],
- "occurrence_index": [
-  {
-   "figure": "Demodocus' lyre / dancers' circle",
-   "occurrence": "#0 opening of the song at the Phaeacian court"
-  },
-  {
-   "figure": "Helios",
-   "occurrence": "#0 first and second reports; #3 member of the capture/display apparatus"
-  },
-  {
-   "figure": "the spider's-web bonds / bed / beams",
-   "occurrence": "#0 fabrication; #3 the public exhibit"
-  },
-  {
-   "figure": "Lemnos",
-   "occurrence": "#0 the feigned departure to the Sintians"
-  },
-  {
-   "figure": "Harmonia, Deimos, Phobos, Eros",
-   "occurrence": "#1 distinct genealogies (Theogony; Simonides scholia) — outside the release scene; #2 offices in the authored relation"
-  },
-  {
-   "figure": "the gateway audience / laughter / Hermes' quip / Apollo's question",
-   "occurrence": "#0, #3 the spectators inside the apparatus"
-  },
-  {
-   "figure": "Poseidon's ἐγγύη",
-   "occurrence": "#4 the undertaking: first promise refused, self-answerable liability accepted"
-  },
-  {
-   "figure": "Thrace / Paphos / the Graces",
-   "occurrence": "#5→0 the paths beyond the image; bathing, anointing, clothing as source events"
-  },
-  {
-   "action": "the same hands binding and loosening",
-   "occurrence": "#0 and #4 technē retains the capacity in both offices"
-  },
-  {
-   "motif": "the unnarrated payment",
-   "occurrence": "#4–#5→0 the open liability the returned account must carry"
-  }
- ],
- "human_amplified": [
-  {
-   "relation": "Ares/Aphrodite/Harmonia/Eros productive-difference relation",
-   "flag": "yes"
-  },
-  {
-   "relation": "the complete capture/display apparatus; counterfeit gathering; Gestell comparison",
-   "flag": "yes"
-  },
-  {
-   "relation": "Poseidon's guarantee; trust beyond technical capture",
-   "flag": "yes"
-  },
-  {
-   "relation": "native eightfold and shared archetypal ground",
-   "flag": "yes"
-  },
-  {
-   "relation": "symbol/account/trust and apportionment returns; M22/M40/M46",
-   "flag": "yes"
-  },
-  {
-   "relation": "Graces' re-clothing as symbolic transformation of shame",
-   "flag": "no — source events, no appointed amplification"
-  }
- ],
- "cross_story_relations": [
-  "Indra's jewel net (mytheme-indra-net): the declared double-net comparison distinguishes mutual implication from capture organised as public evidence; neither net supplies the other a missing episode (Offered).",
-  "Shared archetypal ground with mytheme-neumann-images and mytheme-uroboros-trickster via the A18 return links."
- ],
- "assets": [
-  {
-   "kind": "ascii",
-   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
-   "provenance": "authored"
-  },
-  {
-   "kind": "diagram",
-   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
-   "provenance": "authored"
-  }
- ],
- "capture": "mytheme/roz-mytheme-ares-aphrodite-hephaestus-poseidon.cover.png",
- "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
- "status": "reviewed",
- "notes": [
-  "Craft: the scene deliberately stalls at the apparatus (scene m-ares-3-apparatus): exposure without payment, display without release — the record's own limit is staged rather than narratively resolved. Forge scenes use the family-hellenic forge palette; the surety scene uses the sea palette. Word-formations (\"Ares\", \"Aphrodite\") render as particle glyphs at draft count and remain legible at authored count. Editor defects listed below are shared, returned for one repair. E0 acceptance repair: title/field collision fixed on m-ares-0-song, m-ares-0b-bonds, m-ares-1-genealogies, m-ares-2-difference, m-ares-3-apparatus, m-ares-4-surety, m-ares-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
-  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l2), per scene:",
-  "#0 song — attraction authored as field: Ares and Aphrodite carry attract forces (the secret gathering), Helios a weak repel at the rim (the seeing that withdraws nothing); slow circulation 0.35; the song takes time (duration 14, the longest opening beat).",
-  "#0b bonds — the bond carrier walks the bed: · at the left post → ✕ at the right → ✕✕✕ suspended above, tint brightening as the work completes; field holds inward (circulation −0.45, speed 0.3, dispersion 0.03); pointer repel/pulse faint — nothing may reach the bed. The same ring that gathered in #0 now encloses.",
-  "#1 genealogies — grid layout: witnesses in columns that hold their seams; Eros walks his two tellings (Eros at the primordial disc → Ἔρως at the filial station), the recurrence-with-difference staging the record's own claim that Eros has more than one genealogy and neither is collapsed; pointer shove — tellings refuse merging.",
-  "#2 difference — the union ring morphs ring → triangle (the backwards-turning fastening, the drawn bow) → yantra (Harmonia's sustained form); a sine LFO breathes field circulation (the lyre's held note, the 9/8 tick); Ares and Aphrodite pull toward the form without moving from ±0.5 — distinct poles, generative between; pointer vortex (countertension).",
-  "#3 apparatus — THE 3D SCENE. z is the vertical of the apparatus: the net ring at z 0 closes over the lovers (z −0.05/−0.08), the exhibit platform below (z −0.42), the anvil at depth (z −0.3), the laughing gods above (z +0.35), Helios highest (z +0.5) — who stands above the display is the record's own question (the goddesses stay home; shame unevenly distributed); depth occlusion + dark-bronze depth tint; the net sequence tightens then holds (the stall); field nearly still (speed 0.25, circulation 0.05) — the scene stalls where the apparatus stalls; pointer vortex with shove click (the seizure).",
-  "#4 surety — the pledge triangle grows from pale refused promise to gold undertaking; Hephaestus becomes ⚒ and moves to the bonds (the same hands loosening); the bond ring widens and fades (loosened); Ares still pale (release not yet narrated as departure here); pointer attract/implode — the word gathers the debt to a named bearer; triangle LFO breathes pointer strength (the oath's weight).",
-  "#5→0 return — the two path-discs carry attract fields at opposite edges (Thrace, Paphos — lives in motion beyond the image); the net ring recedes (widens, tint 0.3→0.12 — the apparatus becoming background); near-still pointer (0.10) — no capture left; the unnarrated '?' stays bright at the rim. ENDING QUALIFIES BEGINNING: the field that opened with two attract forces gathering toward a bed inside a house now holds two attract forces drawing toward open paths at the frame's edge — same forces, transformed office: attraction without enclosure; the sun that saw and reported in #0 has set (no ☉ here), and what remains of exposure is the '?' — the debt the song did not narrate. The dark field (whiteOnBlack, kept from the forge scenes) says the song-world's daylight does not return: the relation continues past its telling.",
-  "Human-amplified staging: #2's hamartia re-entry and #5→0's Graces note carry whose account it is in the scene bodies (Taylor's quilt operation; source event with no appointed amplification). Mythemic verbs only: the bonds demonstrate enclosure, the undertaking proves-discloses trust — no formal entailment, no attribution of QL operations to Homer or Hesiod.",
-  "Automation: auto-lyre (field.params.circulation sine, the lyre's held tension) and auto-oath (field.params.pointerStrength triangle, the oath's weight) — both tied to the record's moves. Durations 10–16 and transitions 1.0–2.4: the stall (#3, 16s) and the return (15s) are held longer than the forging (10s)."
- ],
- "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
- "enrichment": {
-  "date": "2026-10-06",
-  "actor": "zcode:enrich-mytheme-l2",
-  "lane": "mytheme",
-  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
-  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
- },
- "glyph_rationales": {
-  "ℓ": "Demodocus' lyre: the song itself, the telling that carries the whole (Odyssey 8.266–366).",
-  "☉": "Helios, the sun that sees: sight from above that makes the hidden encounter reportable — he watches twice and reports twice.",
-  "Ares": "distinct being, refusal, defence — the force by which a difference can stand (record #2, Taylor's amplification).",
-  "Aphrodite": "attraction, pleasure, the movement of joining — the office that makes meeting generative (record #2).",
-  "Lemnos": "the island of the Sintians Hephaestus loves: the feigned departure that supplies the trap its occasion.",
-  "Harmonia": "the named child whose countertension figures the form sustained through both parents' powers (record #2).",
-  "Deimos": "terror — one of the two terrors kept beside the relation: differentiation become hostility as standing stake (Theogony 933–937).",
-  "Phobos": "fear — the second retained terror: joining become demand, kept beside the family (#1–#2).",
-  "Eros": "the primordial power of attraction (Theogony 116–122) and, in the separately reported filial variant, the living desiring-between.",
-  "Ἔρως": "the same name at his primordial station in Hesiod's Greek — the witness kept in its own tongue, distinct from the filial variant; the recurrence with difference is the scene's point.",
-  "♪": "the lyre's note: the bow that is also a lyre (Heraclitus B51) — tension that sounds instead of shooting.",
-  "☠": "the gods' laughter at the exhibit — the audience's reception, no single moral verdict; the deterrent received as inducement.",
-  "Poseidon": "the guarantor: a named participant's standing placed behind the continuation the present account cannot secure (#4).",
-  "Hephaestus": "the craftsman whose skill makes and, by the same hands, loosens — technē retaining make-and-release (#0, #4).",
-  "?": "the unnarrated payment: what the song leaves open, carried beyond its completed action (#4–#5→0).",
-  "·": "the unnamed carrier — a formation whose sense is its shape alone (bed, thread, bond, exhibit, path); no glyph is pretended.",
-  "✕": "the bond's crossing: threads crossing as a web is woven — fine work beyond even the gods' sight (#0).",
-  "✕✕✕": "the web thickened: crossings accumulating around the bed until the held know escape is impossible (#0).",
-  "⚒": "the craftsman's tool: the same hands that forged the bonds now loosen them — Homer's own emphasis, the record's own office of technē (#4)."
- }
 }

@@ -21,50 +21,49 @@
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
         "pointerMode": "repel",
         "pointerClick": "pulse",
-        "pointerClickStrength": 0.25,
+        "pointerClickStrength": 0.4,
         "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#191512",
+        "background": "#232a34",
         "palette": [
-          "#2b2733",
-          "#7c5a33",
-          "#c99a3c",
-          "#ddd3c1"
+          "#a8b4c4",
+          "#5a6878",
+          "#e8ecf0",
+          "#3a4450"
         ],
         "material": "round",
         "params": {
           "speed": 0.3,
-          "circulation": 0.08,
+          "circulation": 0.16,
           "dispersion": 0.05,
-          "pointerStrength": 0.25
+          "pointerStrength": 0.3
         }
       },
       "entities": [
         {
-          "id": "e553",
+          "id": "meal0-report",
           "name": "the finished report — recallable, unchanged in its receiver",
           "kind": "formation",
           "position": {
-            "x": -0.45,
-            "y": -0.17,
+            "x": -0.3,
+            "y": -0.44,
             "z": 0
           },
           "size": {
-            "x": 0.368,
-            "y": 0.27
+            "x": 0.24,
+            "y": 0.2
           },
           "rotation": 0,
-          "shape": "square",
+          "shape": "disc",
           "text": "",
-          "share": 1,
-          "tint": "#7c5a33",
-          "tintWeight": 0.55,
+          "share": 1.3,
+          "tint": "#e8ecf0",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -76,37 +75,34 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st599",
-                "text": "",
-                "shape": "square",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " ________\n| ====== |\n| ==     |\n| ====== |\n '------'\n"
+            }
           }
         },
         {
-          "id": "e554",
-          "name": "the continuous feed — attention occupied, the discrepancy unarticulated",
+          "id": "meal0-case",
+          "name": "the display case — cataloguing behind glass",
           "kind": "formation",
           "position": {
-            "x": 0.45,
-            "y": 0.3,
+            "x": 0.22,
+            "y": -0.56,
             "z": 0
           },
           "size": {
-            "x": 0.5,
-            "y": 0.14
+            "x": 0.24,
+            "y": 0.18
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "≣",
-          "share": 1,
-          "tint": "#c99a3c",
-          "tintWeight": 1,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#a8b4c4",
+          "tintWeight": 0.95,
           "locked": false,
           "force": {
             "kind": "none",
@@ -116,78 +112,35 @@
           },
           "station": null,
           "sequence": {
-            "enabled": true,
+            "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e554-1",
-                "text": "≣",
-                "shape": "text",
-                "hold": 3.0,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.14
-                  },
-                  "rotation": 0,
-                  "tint": "#c99a3c",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e554-2",
-                "text": "…",
-                "shape": "text",
-                "hold": 3.6,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.12
-                  },
-                  "rotation": 0,
-                  "tint": "#8b7a63",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " .--------.\n | o  o o |\n |  o     |\n '--------'\n"
+            }
           }
         },
         {
-          "id": "e555",
-          "name": "the display case — cataloguing behind glass, untouched",
+          "id": "meal0-feed",
+          "name": "the continuous feed — attention occupied, the discrepancy unarticulated",
           "kind": "formation",
           "position": {
-            "x": -0.5,
+            "x": 0.0,
             "y": -0.4,
             "z": 0
           },
           "size": {
-            "x": 0.4,
-            "y": 0.4
+            "x": 0.66,
+            "y": 0.66
           },
           "rotation": 0,
-          "shape": "square",
+          "shape": "ring",
           "text": "",
-          "share": 1,
-          "tint": "#7c5a33",
+          "share": 1.0,
+          "tint": "#3a4450",
           "tintWeight": 0.5,
           "locked": false,
           "force": {
@@ -200,37 +153,28 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st601",
-                "text": "",
-                "shape": "square",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
           }
         },
         {
-          "id": "e556",
-          "name": "the disposal — distinctions destroyed before consequence",
+          "id": "meal0-hollow",
+          "name": "the hollow — appetite without form",
           "kind": "formation",
           "position": {
-            "x": 0.5,
-            "y": -0.42,
+            "x": -0.58,
+            "y": -0.68,
             "z": 0
           },
           "size": {
-            "x": 0.26,
-            "y": 0.26
+            "x": 0.13,
+            "y": 0.13
           },
           "rotation": 0,
           "shape": "text",
-          "text": "⌫",
-          "share": 1,
-          "tint": "#8c3b2e",
-          "tintWeight": 1,
+          "text": "○",
+          "share": 1.0,
+          "tint": "#a8b4c4",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -242,153 +186,22 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st602",
-                "text": "⌫",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e557",
-          "name": "appetite — the question with standing as an opening",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.19,
-            "z": 0
-          },
-          "size": {
-            "x": 0.187,
-            "y": 0.187
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "?",
-          "share": 1,
-          "tint": "#ddd3c1",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e557-1",
-                "text": "?",
-                "shape": "text",
-                "hold": 3.0,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.2,
-                    "y": 0.2
-                  },
-                  "rotation": 0,
-                  "tint": "#ddd3c1",
-                  "tintWeight": 0.5,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e557-2",
-                "text": "?",
-                "shape": "text",
-                "hold": 3.8,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#ddd3c1",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#0 · the authored video-essay outline; the quilt's logos-health appointment (human-amplified: yes)",
+          "kicker": "",
           "title": "Information without nourishment",
-          "italic": "The opening images demonstrate what the meal requires: a passage through received difference — the feed's interruptions keep attention occupied while the quieter discrepancy stays unarticulated.",
+          "italic": "The report can be recalled; the morning account of the world proceeds as before.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The reader has finished the report: its contents can be recalled, repeated and discussed; next morning the world proceeds as before — something received without entering the conditions from which the reader judges and acts. Food has arrived, but the meal has not taken place. A stream of supplied answers arrives so continuously that the recipient has little opportunity to feel a question; the feed takes the place of seeking.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "interruptions keep attention occupied while the quieter discrepancy stays unarticulated — what is encountered and what the inherited account allows no longer fit together. Appetite gives that discrepancy a direction: what needs understanding, what has resisted explanation, what would count as an answer — felt urgency without a certified conclusion. Two failure images: the display case preserves material behind glass, catalogued untouched; the disposal destroys distinctions before they become consequential.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the finished report (#0); the feed (#0, returned at #5→0's emptied rite); the display case and disposal (#0); the standing question (#0, #1).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
@@ -402,7 +215,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
+        "thetaRate": 0.08,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -410,7 +223,23 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": []
+      "automation": [
+        {
+          "id": "meal-feed",
+          "target": "field.params.circulation",
+          "type": "lfo",
+          "wave": "sine",
+          "blend": "add",
+          "loop": "loop",
+          "min": -0.06,
+          "max": 0.06,
+          "rate": 0.09,
+          "phase": 0,
+          "duration": 0,
+          "delay": 0,
+          "firedAt": null
+        }
+      ]
     },
     {
       "id": "m-meal-1-plate",
@@ -427,92 +256,88 @@
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
         "pointerMode": "attract",
         "pointerClick": "pulse",
-        "pointerClickStrength": 0.45,
+        "pointerClickStrength": 0.5,
         "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#1d1712",
+        "background": "#2e1c12",
         "palette": [
-          "#2b2733",
-          "#7c5a33",
-          "#c99a3c",
-          "#ddd3c1"
+          "#e0a86a",
+          "#9a5e2e",
+          "#f4e8d0",
+          "#6a3e1c"
         ],
         "material": "round",
         "params": {
-          "speed": 0.35,
+          "speed": 0.34,
           "circulation": 0.12,
-          "dispersion": 0.04,
-          "pointerStrength": 0.4
+          "dispersion": 0.05,
+          "pointerStrength": 0.3
         }
       },
       "entities": [
         {
-          "id": "e558",
+          "id": "meal1-plate",
+          "name": "the plate — the question given something determinate to meet",
+          "kind": "formation",
+          "position": {
+            "x": 0.0,
+            "y": -0.44,
+            "z": 0
+          },
+          "size": {
+            "x": 0.36,
+            "y": 0.18
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.5,
+          "tint": "#e0a86a",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   .---------.\n  ( oo  o  oo )\n  (     o     )\n   '---------'\n"
+            }
+          }
+        },
+        {
+          "id": "meal1-raw",
           "name": "raw — the demanding texture of primary material",
           "kind": "formation",
           "position": {
-            "x": -0.6,
-            "y": -0.12,
+            "x": -0.55,
+            "y": -0.6,
             "z": 0
           },
           "size": {
-            "x": 0.184,
-            "y": 0.184
-          },
-          "rotation": 0,
-          "shape": "ring",
-          "text": "",
-          "share": 1,
-          "tint": "#7c5a33",
-          "tintWeight": 0.6,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st604",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e559",
-          "name": "cooked — responsible interpretation making material accessible",
-          "kind": "formation",
-          "position": {
-            "x": -0.2,
-            "y": -0.12,
-            "z": 0
-          },
-          "size": {
-            "x": 0.172,
-            "y": 0.172
+            "x": 0.14,
+            "y": 0.12
           },
           "rotation": 0,
           "shape": "disc",
           "text": "",
-          "share": 1,
-          "tint": "#c99a3c",
-          "tintWeight": 0.6,
+          "share": 1.0,
+          "tint": "#f4e8d0",
+          "tintWeight": 0.95,
           "locked": false,
           "force": {
             "kind": "none",
@@ -522,79 +347,36 @@
           },
           "station": null,
           "sequence": {
-            "enabled": true,
+            "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e559-1",
-                "text": "",
-                "shape": "disc",
-                "hold": 3.2,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.2,
-                    "y": 0.2
-                  },
-                  "rotation": 0,
-                  "tint": "#c99a3c",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e559-2",
-                "text": "",
-                "shape": "disc",
-                "hold": 3.4,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.24
-                  },
-                  "rotation": 0,
-                  "tint": "#c99a3c",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " ,;,,;,\n ;;,;;;\n  ';,;'\n"
+            }
           }
         },
         {
-          "id": "e560",
-          "name": "processed — earlier transformations hard to recover",
+          "id": "meal1-cooked",
+          "name": "cooked — labour making the difficult accessible",
           "kind": "formation",
           "position": {
-            "x": 0.2,
-            "y": 0.3,
+            "x": -0.15,
+            "y": -0.66,
             "z": 0
           },
           "size": {
-            "x": 0.28,
-            "y": 0.28
+            "x": 0.16,
+            "y": 0.16
           },
           "rotation": 0,
           "shape": "disc",
           "text": "",
-          "share": 1,
-          "tint": "#8c3b2e",
-          "tintWeight": 0.6,
+          "share": 1.0,
+          "tint": "#e0a86a",
+          "tintWeight": 0.95,
           "locked": false,
           "force": {
             "kind": "none",
@@ -606,37 +388,34 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st606",
-                "text": "",
-                "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "    (   )\n   (     )\n  .------.\n  '------'\n"
+            }
           }
         },
         {
-          "id": "e561",
-          "name": "junk — stimulation after the relation to nourishment has fallen away",
+          "id": "meal1-junk",
+          "name": "processed and junk — the transformations unrecoverable; stimulation after nourishment",
           "kind": "formation",
           "position": {
-            "x": 0.6,
-            "y": 0.3,
+            "x": 0.25,
+            "y": -0.66,
             "z": 0
           },
           "size": {
-            "x": 0.28,
-            "y": 0.28
+            "x": 0.16,
+            "y": 0.16
           },
           "rotation": 0,
           "shape": "disc",
           "text": "",
-          "share": 1,
-          "tint": "#8c3b2e",
-          "tintWeight": 0.8,
+          "share": 1.0,
+          "tint": "#9a5e2e",
+          "tintWeight": 0.9,
           "locked": false,
           "force": {
             "kind": "none",
@@ -648,37 +427,34 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st607",
-                "text": "",
-                "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " .======.\n |XXXXXX|\n |XXXXXX|\n '======'\n"
+            }
           }
         },
         {
-          "id": "e562",
-          "name": "fermented — inherited practices having worked on what a newcomer receives",
+          "id": "meal1-jar",
+          "name": "fermented — inherited practice already working on what is received",
           "kind": "formation",
           "position": {
-            "x": -0.2,
-            "y": -0.4,
+            "x": 0.55,
+            "y": -0.56,
             "z": 0
           },
           "size": {
-            "x": 0.4,
-            "y": 0.3
+            "x": 0.12,
+            "y": 0.16
           },
           "rotation": 0,
-          "shape": "ring",
+          "shape": "disc",
           "text": "",
-          "share": 1,
-          "tint": "#7c5a33",
-          "tintWeight": 0.5,
+          "share": 1.0,
+          "tint": "#6a3e1c",
+          "tintWeight": 0.95,
           "locked": false,
           "force": {
             "kind": "none",
@@ -690,158 +466,33 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st608",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e563",
-          "name": "provenance — who produced it, what it says, what preparation it carries",
-          "kind": "formation",
-          "position": {
-            "x": 0.45,
-            "y": -0.42,
-            "z": 0
+            "steps": []
           },
-          "size": {
-            "x": 0.24,
-            "y": 0.24
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "⌘",
-          "share": 1,
-          "tint": "#ddd3c1",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e563-1",
-                "text": "⌘",
-                "shape": "text",
-                "hold": 3.0,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.2,
-                    "y": 0.2
-                  },
-                  "rotation": 0,
-                  "tint": "#ddd3c1",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e563-2",
-                "text": "A29",
-                "shape": "text",
-                "hold": 3.6,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.14
-                  },
-                  "rotation": 0,
-                  "tint": "#c99a3c",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  .--.\n |    |\n | :: |\n |____|\n"
+            }
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#1 · the outline's five forms; A29 delegated labour",
-          "title": "The plate and its five preparations",
-          "italic": "Preparation embodies an affirmative office: another's labour can make an encounter possible — the question is whether it stays answerable to what was prepared.",
+          "kicker": "",
+          "title": "The plate",
+          "italic": "Raw, cooked, processed, junk, fermented — preparations with provenance and labour behind them.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The plate gives the question something determinate to meet: a document, an account, a testimony, an argument. Provenance matters from contact — who produced the material, what it says, what work prepared it; document-existence and inferred truth are different matters. Preparation has five forms: raw carries the demanding texture of primary material; cooked figures responsible interpretation; processed, transformations hard to recover; junk, stimulation after nourishment has fallen away.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "fermentation figures inherited practices earlier participants worked on — roles in an authored information ecology, not a dietary ranking. Cooking's affirmative office: a good translation opens the source, if it remains answerable to what was prepared and leaves the recipient able to examine, disagree and continue. A29 follows what happens when the finished product is accepted but the conditions and costs of its production disappear from the account.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the five preparation roles (#1); the provenance questions (#1, #5→0's circuit); the disappeared labour (#1, returned at #4).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "ring",
+        "layout": "free",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -850,7 +501,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
+        "thetaRate": 0.09,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -858,23 +509,7 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [
-        {
-          "id": "auto-plate",
-          "target": "field.params.circulation",
-          "type": "lfo",
-          "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.06,
-          "max": 0.06,
-          "rate": 0.18,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
+      "automation": []
     },
     {
       "id": "m-meal-2-chew",
@@ -891,257 +526,49 @@
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "vortex",
+        "pointerMode": "attract",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.5,
-        "pointerClickRadius": 0.35,
-        "morphEnabled": true
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#201812",
+        "background": "#2e1c12",
         "palette": [
-          "#2b2733",
-          "#7c5a33",
-          "#c99a3c",
-          "#ddd3c1"
+          "#e0a86a",
+          "#9a5e2e",
+          "#f4e8d0",
+          "#6a3e1c"
         ],
         "material": "round",
         "params": {
-          "speed": 0.45,
-          "circulation": 0.2,
-          "dispersion": 0.06,
-          "pointerStrength": 0.45
+          "speed": 0.34,
+          "circulation": 0.12,
+          "dispersion": 0.05,
+          "pointerStrength": 0.3
         }
       },
       "entities": [
         {
-          "id": "e564",
-          "name": "the first taste — welcome or rejection before the material is worked through",
+          "id": "meal2-mouth",
+          "name": "the first bite — attraction and aversion at the threshold",
           "kind": "formation",
           "position": {
-            "x": -0.45,
-            "y": -0.03,
-            "z": 0
-          },
-          "size": {
-            "x": 0.26,
-            "y": 0.26
-          },
-          "rotation": 0,
-          "shape": "disc",
-          "text": "",
-          "share": 1,
-          "tint": "#c99a3c",
-          "tintWeight": 0.6,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st610",
-                "text": "",
-                "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e565",
-          "name": "chewing — distinguishing statement from evidence, event from interpretation",
-          "kind": "formation",
-          "position": {
-            "x": 0.4,
-            "y": 0.3,
-            "z": 0
-          },
-          "size": {
-            "x": 0.5,
-            "y": 0.5
-          },
-          "rotation": 0,
-          "shape": "cymatic",
-          "text": "",
-          "share": 1.4,
-          "tint": "#7c5a33",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e565-1",
-                "text": "",
-                "shape": "cymatic",
-                "hold": 3.0,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#7c5a33",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e565-2",
-                "text": "",
-                "shape": "cymatic",
-                "hold": 3.0,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.44,
-                    "y": 0.44
-                  },
-                  "rotation": 22,
-                  "tint": "#7c5a33",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e566",
-          "name": "the fourfold — affirm · reject · hold together · recognise a false alternative",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.35,
-            "z": 0
-          },
-          "size": {
-            "x": 0.26,
-            "y": 0.26
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "4",
-          "share": 1,
-          "tint": "#ddd3c1",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e566-1",
-                "text": "4",
-                "shape": "text",
-                "hold": 3.0,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.24
-                  },
-                  "rotation": 0,
-                  "tint": "#ddd3c1",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e566-2",
-                "text": "✓/✗",
-                "shape": "text",
-                "hold": 3.8,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.16
-                  },
-                  "rotation": 0,
-                  "tint": "#ddd3c1",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e567",
-          "name": "the pathology — the jolt discharged before the work; gulping; refusal; the sensation of consumption mistaken for nourishment",
-          "kind": "formation",
-          "position": {
-            "x": 0.6,
+            "x": -0.3,
             "y": -0.42,
             "z": 0
           },
           "size": {
-            "x": 0.24,
-            "y": 0.24
+            "x": 0.22,
+            "y": 0.16
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "⚠",
-          "share": 1,
-          "tint": "#8c3b2e",
-          "tintWeight": 1,
+          "shape": "disc",
+          "text": "",
+          "share": 1.3,
+          "tint": "#f4e8d0",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1153,71 +580,139 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st613",
-                "text": "⚠",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  .----.\n (  __  )\n  \\    /\n   '--'\n"
+            }
+          }
+        },
+        {
+          "id": "meal2-teeth",
+          "name": "chewing — the division that keeps contact and makes it usable",
+          "kind": "formation",
+          "position": {
+            "x": 0.18,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.08
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#e0a86a",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " |VV|VV|VV|\n"
+            }
+          }
+        },
+        {
+          "id": "meal2-four",
+          "name": "the fourfold — affirm, reject, hold together, change the question",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.34,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#f4e8d0",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " .-. .-. .-. .-.\n |+| |-| |+| |?|\n '-' '-' '-' '-'\n"
+            }
+          }
+        },
+        {
+          "id": "meal2-jolt",
+          "name": "the jolt — contact discharged before its work",
+          "kind": "formation",
+          "position": {
+            "x": -0.1,
+            "y": -0.72,
+            "z": 0
+          },
+          "size": {
+            "x": 0.13,
+            "y": 0.13
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⚡",
+          "share": 1.0,
+          "tint": "#9a5e2e",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#2 · the outline's thresholds and pathologies; the taste/knowing word-field as research route",
+          "kicker": "",
           "title": "Taste and chewing",
-          "italic": "The mouth demonstrates discrimination maintaining contact with what it distinguishes — the relation does not wait for an etymology to license it, nor verify one in return.",
+          "italic": "Attraction first; then division that keeps contact — affirm, reject, hold together, change the question.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The first bite has a taste: attraction, aversion and neutrality at the threshold — a familiar account welcome, a contrary one provoking rejection. Liking an account and establishing its claim do different work. Chewing prolongs contact: the epistemic act follows the texture of a claim — statement from evidence, event from interpretation, connection from the explanation offered; returning to the passage instead of letting the headline decide.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The fourfold keeps several responses available: affirm what is established; reject what the evidence contradicts; hold together jointly present aspects; recognise when the proposed alternatives fail to address the material — the fourth can change the question under which the plate was first presented. The pathology is contact repeatedly discharged before its work: mistaking the sensation of consumption for nourishment. The taste/knowing word-fields remain research routes.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the first taste's valuations (#2); the fourfold discrimination (#2); the discharged contact (#2); the word-field routes (#2, held at #5→0).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
@@ -1231,7 +726,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.18,
+        "thetaRate": 0.09,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -1239,23 +734,7 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [
-        {
-          "id": "auto-chew",
-          "target": "field.params.speed",
-          "type": "lfo",
-          "wave": "triangle",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.12,
-          "max": 0.12,
-          "rate": 0.3,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
+      "automation": []
     },
     {
       "id": "m-meal-3-table",
@@ -1264,61 +743,173 @@
       "duration": 15,
       "transition": 1.7,
       "view": {
-        "mode": "3d",
-        "yaw": 0.3,
-        "pitch": 0.35,
-        "zoom": 0.95,
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
         "panX": 0,
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
         "pointerMode": "attract",
-        "pointerClick": "implode",
-        "pointerClickStrength": 0.6,
-        "pointerClickRadius": 0.3,
-        "depthOcclusion": true,
-        "depthTintColor": "#100b08",
-        "volumeEnabled": true
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.5,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#171310",
+        "background": "#2e1c12",
         "palette": [
-          "#2b2733",
-          "#7c5a33",
-          "#c99a3c",
-          "#ddd3c1"
+          "#e0a86a",
+          "#9a5e2e",
+          "#f4e8d0",
+          "#6a3e1c"
         ],
         "material": "round",
         "params": {
-          "speed": 0.4,
-          "circulation": 0.22,
-          "dispersion": 0.06,
-          "zConfinement": 0.85,
-          "pointerStrength": 0.5
+          "speed": 0.34,
+          "circulation": 0.12,
+          "dispersion": 0.05,
+          "pointerStrength": 0.3
         }
       },
       "entities": [
         {
-          "id": "e568",
-          "name": "the container — a bounded interior able to sustain the work it permits",
+          "id": "meal3-table",
+          "name": "the shared table — distinct companions, consequential differences",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.4,
-            "z": -0.35
+            "x": 0.0,
+            "y": -0.44,
+            "z": 0
           },
           "size": {
-            "x": 0.399,
-            "y": 0.266
+            "x": 0.3,
+            "y": 0.28
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.5,
+          "tint": "#e0a86a",
+          "tintWeight": 1.0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   o     o\n  /|\\   /|\\\n .---+---.\n |       |\n '---+---'\n  /|\\   /|\\\n   o     o\n"
+            }
+          }
+        },
+        {
+          "id": "meal3-boundary",
+          "name": "companions are not food — the boundary keeping the meal social",
+          "kind": "formation",
+          "position": {
+            "x": -0.52,
+            "y": -0.6,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#f4e8d0",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  o    |    o\n /|\\   |   /|\\\n  |    |    |\n"
+            }
+          }
+        },
+        {
+          "id": "meal3-microbes",
+          "name": "the epistemic microbiome — assistance exceeding solitary agency",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.62,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#9a5e2e",
+          "tintWeight": 0.9,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  . . . . .\n . . . . .\n  . . . . .\n"
+            }
+          }
+        },
+        {
+          "id": "meal3-circuit",
+          "name": "the circuit — share, consequence, return, revision",
+          "kind": "formation",
+          "position": {
+            "x": 0.0,
+            "y": -0.36,
+            "z": 0
+          },
+          "size": {
+            "x": 0.6,
+            "y": 0.6
           },
           "rotation": 0,
           "shape": "ring",
           "text": "",
-          "share": 1,
-          "tint": "#7c5a33",
+          "share": 1.0,
+          "tint": "#6a3e1c",
           "tintWeight": 0.5,
           "locked": false,
           "force": {
@@ -1331,324 +922,27 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st614",
-                "text": "",
-                "shape": "ring",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e569",
-          "name": "the changed criteria — a decisive distinction become incidental; an excluded condition become necessary",
-          "kind": "formation",
-          "position": {
-            "x": 0.55,
-            "y": 0.4,
-            "z": -0.15
-          },
-          "size": {
-            "x": 0.4,
-            "y": 0.12
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "≡",
-          "share": 1,
-          "tint": "#ddd3c1",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e569-1",
-                "text": "≡",
-                "shape": "text",
-                "hold": 3.0,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.2,
-                    "y": 0.14
-                  },
-                  "rotation": 0,
-                  "tint": "#ddd3c1",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e569-2",
-                "text": "≡?",
-                "shape": "text",
-                "hold": 3.6,
-                "transition": 1.3,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.14
-                  },
-                  "rotation": 0,
-                  "tint": "#c99a3c",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e570",
-          "name": "the shared table — companions from histories the others do not possess",
-          "kind": "formation",
-          "position": {
-            "x": -0.5,
-            "y": -0.44,
-            "z": 0.0
-          },
-          "size": {
-            "x": 0.68,
-            "y": 0.425
-          },
-          "rotation": 0,
-          "shape": "ring",
-          "text": "",
-          "share": 1,
-          "tint": "#c99a3c",
-          "tintWeight": 0.55,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e570-1",
-                "text": "",
-                "shape": "ring",
-                "hold": 3.2,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.36,
-                    "y": 0.36
-                  },
-                  "rotation": 0,
-                  "tint": "#c99a3c",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e570-2",
-                "text": "",
-                "shape": "ring",
-                "hold": 3.4,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.42,
-                    "y": 0.42
-                  },
-                  "rotation": 0,
-                  "tint": "#c99a3c",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e571",
-          "name": "the epistemic microbiome — inherited frameworks and practices assisting beyond solitary agency",
-          "kind": "formation",
-          "position": {
-            "x": 0.5,
-            "y": -0.4,
-            "z": 0.15
-          },
-          "size": {
-            "x": 0.4,
-            "y": 0.12
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "⋅⋅⋅",
-          "share": 1,
-          "tint": "#c99a3c",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st617",
-                "text": "⋅⋅⋅",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e572",
-          "name": "companions are not food — the contributor retains the capacity to contest use (A29/A30)",
-          "kind": "formation",
-          "position": {
-            "x": -0.5,
-            "y": -0.28,
-            "z": 0.3
-          },
-          "size": {
-            "x": 0.098,
-            "y": 0.098
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "⊗",
-          "share": 1,
-          "tint": "#8c3b2e",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st618",
-                "text": "⊗",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#3–#4 · Symbolon Dynamics' native mechanism; A30; the Apportionment and Encounter/Countenance fields",
-          "title": "The container; the shared table; companions are not food",
-          "italic": "The table demonstrates reciprocal world-constitution: one participant's contribution becomes a condition of another's action without making its source mere material — assimilation reaches the receiving organisation itself.",
+          "kicker": "",
+          "title": "The shared table",
+          "italic": "Criteria can change; companions are not food; what is served keeps its makers present.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "What has been chewed passes where its first form can loosen: the stomach figures a bounded interior able to sustain the work it permits. The initial story can be taken apart for another account; more than changing the conclusion, change the criteria through which the next conclusion is reached — Symbolon Dynamics' image, interpreter and altered field. Patience means allowing the work time; no rule makes distress evidence of truth.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The table receives companions whose contributions change what the others can next ask; disagreement is included — a correction to a passage differs from a change in who can speak. The microbiome image names inherited frameworks assisting beyond solitary agency, biological claims kept to their own sources. Companions are not food: a table absorbing everyone's work into one authority performs the devouring relation the meal exists to transform.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the criteria changed in processing (#3); the disagreeing table (#4); the microbiome image (#4); the non-food boundary (#4, against the black sun's capture in the taylor-images whole's field).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "ring",
+        "layout": "free",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1657,7 +951,7 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
+        "thetaRate": 0.09,
         "phiRate": 0.1,
         "thetaOffset": 0,
         "phiOffset": 0,
@@ -1684,48 +978,47 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "repel",
-        "pointerClick": "shove",
-        "pointerClickStrength": 0.35,
-        "pointerClickRadius": 0.4
+        "pointerMode": "attract",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 0.45,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#14100c",
+        "background": "#e6ddc4",
         "palette": [
-          "#2b2733",
-          "#7c5a33",
-          "#c99a3c",
-          "#ddd3c1"
+          "#3c3222",
+          "#6e5e3e",
+          "#20282c",
+          "#8a7244"
         ],
         "material": "round",
         "params": {
           "speed": 0.3,
           "circulation": 0.1,
-          "dispersion": 0.05,
-          "pointerStrength": 0.3
+          "dispersion": 0.04,
+          "pointerStrength": 0.28
         }
       },
       "entities": [
         {
-          "id": "e573",
-          "name": "satiety — nourishment recognisable in the change of capacity",
+          "id": "meal5-rest",
+          "name": "satiety — enough worked through to act from changed ground",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.26,
+            "x": -0.3,
+            "y": -0.44,
             "z": 0
           },
           "size": {
-            "x": 0.209,
-            "y": 0.209
+            "x": 0.24,
+            "y": 0.12
           },
           "rotation": 0,
           "shape": "disc",
           "text": "",
-          "share": 1,
-          "tint": "#c99a3c",
-          "tintWeight": 0.7,
+          "share": 1.3,
+          "tint": "#3c3222",
+          "tintWeight": 1.0,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1737,207 +1030,112 @@
           "sequence": {
             "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st619",
-                "text": "",
-                "shape": "disc",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   ,----.\n  o-----/|\n  '------'\n"
+            }
           }
         },
         {
-          "id": "e574",
-          "name": "rest — the meal can be enough; no machinery of compulsory intake",
+          "id": "meal5-hunger",
+          "name": "renewed hunger — beginning from what was assimilated",
+          "kind": "formation",
+          "position": {
+            "x": 0.24,
+            "y": -0.56,
+            "z": 0
+          },
+          "size": {
+            "x": 0.12,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#6e5e3e",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   (\n  ) (\n   (\n  '-'\n"
+            }
+          }
+        },
+        {
+          "id": "meal5-chalice",
+          "name": "the emptied rite — the form continuing without the change",
           "kind": "formation",
           "position": {
             "x": 0.55,
-            "y": 0.35,
+            "y": -0.38,
             "z": 0
           },
           "size": {
-            "x": 0.3,
+            "x": 0.14,
+            "y": 0.18
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.0,
+          "tint": "#8a7244",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " .---.\n  \\ /\n   |\n  ===\n"
+            }
+          }
+        },
+        {
+          "id": "meal5-loaf",
+          "name": "the bread passed hand to hand",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.16,
             "y": 0.1
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "—",
-          "share": 1,
-          "tint": "#ddd3c1",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st620",
-                "text": "—",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e575",
-          "name": "renewed hunger — beginning from changed ground, unlike the uninterrupted demand",
-          "kind": "formation",
-          "position": {
-            "x": -0.55,
-            "y": -0.35,
-            "z": 0
-          },
-          "size": {
-            "x": 0.3,
-            "y": 0.14
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "?′",
-          "share": 1,
-          "tint": "#ddd3c1",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e575-1",
-                "text": "?′",
-                "shape": "text",
-                "hold": 3.2,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.22
-                  },
-                  "rotation": 0,
-                  "tint": "#ddd3c1",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e575-2",
-                "text": "?",
-                "shape": "text",
-                "hold": 3.8,
-                "transition": 1.4,
-                "position": {
-                  "x": 0.0,
-                  "y": -0.26,
-                  "z": 0.0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#e8ddc4",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
-          }
-        },
-        {
-          "id": "e576",
-          "name": "the coda — bread in the hands of companions; loaves and fishes as the outline's explicit wink, no derivation of 4+2",
-          "kind": "formation",
-          "position": {
-            "x": 0.5,
-            "y": -0.4,
-            "z": 0
-          },
-          "size": {
-            "x": 0.26,
-            "y": 0.26
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "☩",
-          "share": 1,
-          "tint": "#c99a3c",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": false,
-            "clock": "seconds",
-            "steps": [
-              {
-                "id": "st622",
-                "text": "☩",
-                "shape": "text",
-                "hold": 3,
-                "transition": 1,
-                "position": null
-              }
-            ]
-          }
-        },
-        {
-          "id": "e577",
-          "name": "the emptied rite — form continuing after the capacity to change relation has ceased",
-          "kind": "formation",
-          "position": {
-            "x": -0.55,
-            "y": -0.16,
-            "z": 0
-          },
-          "size": {
-            "x": 0.209,
-            "y": 0.209
-          },
-          "rotation": 0,
-          "shape": "ring",
+          "shape": "disc",
           "text": "",
-          "share": 1,
-          "tint": "#8c3b2e",
-          "tintWeight": 0.5,
+          "share": 1.0,
+          "tint": "#20282c",
+          "tintWeight": 0.95,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1947,118 +1145,35 @@
           },
           "station": null,
           "sequence": {
-            "enabled": true,
+            "enabled": false,
             "clock": "seconds",
-            "steps": [
-              {
-                "id": "st-e577-1",
-                "text": "",
-                "shape": "ring",
-                "hold": 3.4,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.22
-                  },
-                  "rotation": 0,
-                  "tint": "#8c3b2e",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "st-e577-2",
-                "text": "",
-                "shape": "ring",
-                "hold": 3.4,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.22,
-                    "y": 0.22
-                  },
-                  "rotation": 0,
-                  "tint": "#8c3b2e",
-                  "tintWeight": 0.35,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ],
-            "order": "loop",
-            "easing": "smoothstep"
+            "steps": []
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   .-~~~.\n  (_______)\n"
+            }
           }
         }
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#5→0 · logos-health; the Symbol/Account/Trust and Arbitration fields; A29/A30/A35; A21",
-          "title": "Satiety, rest, renewed hunger — and the emptied rite",
-          "italic": "The meal returns-to its arguments with the whole movement intact: received determination examined, assimilated, shared and returned so the receiver and the conditions of future receiving can change.",
+          "kicker": "",
+          "title": "Satiety and renewed hunger",
+          "italic": "Enough to act from changed ground; rest; then a question the meal prepared.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body1",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The meal can finish. Satiety gives a measure of sufficiency: enough worked through to judge, act or live from changed ground. Integration increases the ability to bear differentiated relations; recognition makes source and history active; repeating a transformation's vocabulary leaves the identifying act untouched. Then a new question arises from the nourished life — renewed hunger carries the previous meal's consequence, unlike the uninterrupted demand for the next stimulus.",
-          "x": 0.04,
-          "y": 0.47,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 520
-        },
-        {
-          "id": "body2",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The coda places bread in the hands of companions, naming potlatch, seder, langar, iftar and thanksgiving — the association remaining the outline's explicit wink, no derivation of 4+2. The coda retains the emptied rite: the meal's form continuing after its capacity to bring people into changed relation has ceased. Logos-health names the integrity (human-amplified: yes for the ratified operation); demonstrating a therapeutic or institutional outcome would be another task.",
-          "x": 0.6,
-          "y": 0.47,
-          "width": 505,
-          "size": 14,
-          "align": "left"
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the satiety and rest (#5→0); the renewed hunger against the feed (#0, #5→0); the emptied rite (#5→0); the declared returns to A29/A30/A35 (#4, #5→0).",
-          "x": 0.04,
-          "y": 0.78,
-          "width": 560,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "line",
+        "layout": "ring",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -2075,24 +1190,8 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [
-        {
-          "id": "auto-rest",
-          "target": "field.params.pointerStrength",
-          "type": "lfo",
-          "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": 0.2,
-          "max": 0.4,
-          "rate": 0.16,
-          "phase": 0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
+      "automation": []
     }
   ],
-  "updatedAt": "2026-10-06T12:00:00.000Z"
+  "updatedAt": "2026-10-07T12:00:00.000Z"
 }

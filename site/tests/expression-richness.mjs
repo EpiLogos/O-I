@@ -54,6 +54,8 @@ const REPO = resolve(HERE, "../..");
 const PLACEHOLDER_GLYPHS = new Set(["◉", "●", "○", "·", "•", "?", "∅", "#", "*"]);
 const BANNED_SHAPES = new Set(["yantra"]);
 const METADATA_RE = /(^|\s)(q\d{3}\b|Met\.\s*\d|Source of record|submission-package|previous\b|next\b|related\b|In the essay)|^#\d+\s*·|\.(md|json|mjs)\b|\/[a-z-]+\/[a-z-]+/i;
+// a sentence = two or more letter-words; spaced pure-symbol notation ("/ = −/−") is a mark
+const isSentence = (s) => s.trim().split(/\s+/).filter((t) => /\p{L}/u.test(t)).length >= 2;
 
 function wordCount(s) { return (s ?? "").trim().split(/\s+/).filter(Boolean).length; }
 
@@ -123,7 +125,13 @@ function checkJourney(journey, journeyPath) {
     for (const e of forms) {
       if (BANNED_SHAPES.has(e.shape) && !yantra) yantra = `${s.id}/${e.name ?? e.id}: ${e.shape}`;
       const g = formationGlyph(e);
-      if (isTextFormation(e) && g.length > 3 && g.includes(" ") && !sentence) sentence = `${s.id}: ${JSON.stringify(g)} — a sentence is not a glyph`;
+      if (isTextFormation(e) && isSentence(g) && !sentence) sentence = `${s.id}: ${JSON.stringify(g)} — a sentence is not a glyph`;
+      // sequences can carry what the entity's top-level shape hides
+      for (const st of e.sequence?.steps ?? []) {
+        if (BANNED_SHAPES.has(st.shape) && !yantra) yantra = `${s.id}/${e.name ?? e.id} step ${st.id ?? ""}: ${st.shape}`;
+        const sg = (st.text ?? "").trim();
+        if (isSentence(sg) && !sentence) sentence = `${s.id}: ${JSON.stringify(sg)} — a sentence is not a glyph`;
+      }
     }
   }
   if (scenesWithoutMark.length) fail("carriers", `scenes drawn with text only (no non-text formation): ${scenesWithoutMark.slice(0, 6).join(", ")}${scenesWithoutMark.length > 6 ? ` +${scenesWithoutMark.length - 6}` : ""}`);

@@ -11,7 +11,7 @@
       "name": "Speaking opens access and installs a measure",
       "character": "Metropolitan French carries education, prestige, institutional authority: the speaker must speak in a field that has already attached a value to his manner of appearing.",
       "duration": 12,
-      "transition": 1.4,
+      "transition": 1.5,
       "view": {
         "mode": "2d",
         "yaw": 0.04,
@@ -21,260 +21,50 @@
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "attract",
-        "pointerClick": "pulse",
+        "pointerMode": "vortex",
+        "pointerClick": "shove",
         "pointerClickStrength": 0.4,
-        "pointerClickRadius": 0.3
+        "pointerClickRadius": 0.35
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#33363b",
         "palette": [
-          "#26221f",
-          "#8c3b2e",
-          "#c99a3c",
-          "#ddd3c1"
+          "#d8cfb8",
+          "#8b8f94",
+          "#c9a227",
+          "#4a4e55"
         ],
         "material": "round",
         "params": {
           "pointerStrength": 0.4,
-          "speed": 0.45,
-          "circulation": 0.25,
-          "dispersion": 0.06
+          "speed": 0.5,
+          "circulation": -0.15,
+          "dispersion": 0.1,
+          "turbulence": 0.2
         }
       },
       "entities": [
         {
-          "id": "e451",
-          "name": "the language — access and inherited judgement at once",
+          "id": "e1",
+          "name": "the speaker — acquiring real capacity, hearing himself through the standard",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.13,
-            "z": 0
-          },
-          "size": {
-            "x": 0.361,
-            "y": 0.217
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "℘",
-          "share": 1,
-          "tint": "#c99a3c",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "order": "loop",
-            "easing": "smoothstep",
-            "steps": [
-              {
-                "id": "e451-sq1",
-                "text": "access",
-                "shape": "text",
-                "hold": 2.6,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.34,
-                    "y": 0.13
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "e451-sq2",
-                "text": "measure",
-                "shape": "text",
-                "hold": 2.8,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.38,
-                    "y": 0.13
-                  },
-                  "rotation": 0,
-                  "tint": "#7a6a52",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "e451-sq3",
-                "text": "℘",
-                "shape": "text",
-                "hold": 2.6,
-                "transition": 1.4,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.28,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#d8d2c4",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "id": "e452",
-          "name": "the speaker — acquiring real capacity; hearing himself through the standard",
-          "kind": "formation",
-          "position": {
-            "x": 0.5,
-            "y": -0.3,
-            "z": 0
+            "x": -0.35,
+            "y": -0.28,
+            "z": 0.0
           },
           "size": {
             "x": 0.18,
-            "y": 0.18
+            "y": 0.24
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "◉",
-          "share": 1,
-          "tint": "#ddd3c1",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "order": "loop",
-            "easing": "smoothstep",
-            "steps": [
-              {
-                "id": "e452-sq1",
-                "text": "◉",
-                "shape": "text",
-                "hold": 2.4,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.16,
-                    "y": 0.16
-                  },
-                  "rotation": 0,
-                  "tint": "#7a6a52",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "e452-sq2",
-                "text": "◉",
-                "shape": "text",
-                "hold": 2.8,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.26
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "e452-sq3",
-                "text": "◉",
-                "shape": "text",
-                "hold": 2.8,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.2,
-                    "y": 0.2
-                  },
-                  "rotation": 0,
-                  "tint": "#8a7a52",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "id": "e453",
-          "name": "the measure turned inward — then applied to others",
-          "kind": "formation",
-          "position": {
-            "x": -0.5,
-            "y": -0.35,
-            "z": 0
-          },
-          "size": {
-            "x": 0.44,
-            "y": 0.3
-          },
-          "rotation": 0,
-          "shape": "square",
+          "shape": "disc",
           "text": "",
           "share": 1,
-          "tint": "#8c3b2e",
-          "tintWeight": 0.55,
+          "tint": "#d8cfb8",
+          "tintWeight": 1,
           "locked": false,
           "force": {
             "kind": "none",
@@ -288,7 +78,103 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "st496",
+                "id": "e1-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "   .-~-.\n  (  o  )\n   \\ __/\n   ) ) )\n  '~'~'~"
+            }
+          }
+        },
+        {
+          "id": "e2",
+          "name": "the language — access and inherited judgement at once",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": -0.34,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e2-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " ______________\n|'|'|'|'|'|'|'|\n|             |\n|_____________|"
+            }
+          }
+        },
+        {
+          "id": "e3",
+          "name": "the measure turned inward — then applied to others",
+          "kind": "formation",
+          "position": {
+            "x": -0.02,
+            "y": -0.26,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.18,
+            "y": 0.18
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#8b8f94",
+          "tintWeight": 0.8,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e3-sq0",
                 "text": "",
                 "shape": "square",
                 "hold": 3,
@@ -301,43 +187,16 @@
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#1 · Peau noire, masques blancs, chapter I (French text, PDF pp.36–56)",
-          "title": "Speaking opens access and installs a measure",
-          "italic": "The scene demonstrates the double movement: real acquisition, and the alienation that can accompany it — the mask is socially effective because it can do something.",
+          "kicker": "",
+          "title": "The acquired tongue",
+          "italic": "Access arrives carrying a measure he did not institute.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The Antillean speaker enters a language whose social authority precedes his arrival. Linguistic skill opens real capacities of participation — treating it as an empty disguise would erase them. But the authority attached to the skill becomes a rule for self-evaluation: he hears himself through the standard by which the dominant world hears him, and an inward criterion can be turned on others whose speech does not satisfy it.",
-          "x": 0.04,
-          "y": 0.55,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 620
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the acquired skill and its prestige (#1); the inward criterion (#1, deepened at #3); the reproduction of the hierarchy (#1, #3).",
-          "x": 0.765,
-          "y": 0.55,
-          "width": 300,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
@@ -366,64 +225,60 @@
       "name": "The body returns from a gaze that precedes it",
       "character": "The racial hail on the train: from a smile toward the child's fear; the body-schema gives way to the epidermal racial schema; the chapter's aftermath refuses a completed reconciliation.",
       "duration": 13,
-      "transition": 1.6,
+      "transition": 1.5,
       "view": {
-        "mode": "3d",
-        "yaw": 0.35,
-        "pitch": 0.12,
+        "mode": "2d",
+        "yaw": 0.04,
+        "pitch": 0,
         "zoom": 1,
         "panX": 0,
         "panY": 0
       },
       "engine": {
-        "inkMode": "blackOnWhite",
+        "inkMode": "whiteOnBlack",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "repel",
+        "pointerMode": "vortex",
         "pointerClick": "shove",
-        "pointerClickStrength": 0.5,
-        "pointerClickRadius": 0.32,
-        "volumeEnabled": true,
-        "depthOcclusion": true,
-        "depthTintColor": "#0c0a10"
+        "pointerClickStrength": 0.4,
+        "pointerClickRadius": 0.35
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#33363b",
         "palette": [
-          "#26221f",
-          "#8c3b2e",
-          "#c99a3c",
-          "#ddd3c1"
+          "#d8cfb8",
+          "#8b8f94",
+          "#c9a227",
+          "#4a4e55"
         ],
         "material": "round",
         "params": {
-          "pointerStrength": 0.5,
+          "pointerStrength": 0.4,
           "speed": 0.5,
-          "circulation": -0.25,
-          "zConfinement": 0.7,
-          "dispersion": 0.1
+          "circulation": -0.15,
+          "dispersion": 0.1,
+          "turbulence": 0.2
         }
       },
       "entities": [
         {
-          "id": "e454",
+          "id": "e4",
           "name": "the train carriage — the practical bodily orientation interrupted",
           "kind": "formation",
           "position": {
-            "x": -0.45,
-            "y": -0.22,
+            "x": -0.3,
+            "y": -0.32,
             "z": 0.0
           },
           "size": {
-            "x": 0.614,
-            "y": 0.307
+            "x": 0.3,
+            "y": 0.18
           },
           "rotation": 0,
-          "shape": "square",
+          "shape": "disc",
           "text": "",
           "share": 1,
-          "tint": "#8c3b2e",
-          "tintWeight": 0.45,
+          "tint": "#8b8f94",
+          "tintWeight": 0.9,
           "locked": false,
           "force": {
             "kind": "none",
@@ -437,9 +292,57 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "st497",
+                "id": "e4-sq0",
                 "text": "",
-                "shape": "square",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": " [ ==o==o= ]\n |  /|\\  , |\n |_________|"
+            }
+          }
+        },
+        {
+          "id": "e5",
+          "name": "the hail — the smile becoming the child's fear",
+          "kind": "formation",
+          "position": {
+            "x": 0.35,
+            "y": -0.22,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "!",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e5-sq0",
+                "text": "!",
+                "shape": "text",
                 "hold": 3,
                 "transition": 1,
                 "position": null
@@ -448,23 +351,23 @@
           }
         },
         {
-          "id": "e455",
-          "name": "the hail — \"Look, a Negro!\" — the smile becoming the child's fear",
+          "id": "e6",
+          "name": "the body-schema giving way to the epidermal racial schema",
           "kind": "formation",
           "position": {
-            "x": 0.3,
-            "y": 0.35,
-            "z": -0.5
+            "x": 0.05,
+            "y": -0.5,
+            "z": 0.0
           },
           "size": {
-            "x": 0.24,
-            "y": 0.24
+            "x": 0.16,
+            "y": 0.2
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "!",
+          "shape": "disc",
+          "text": "",
           "share": 1,
-          "tint": "#c99a3c",
+          "tint": "#d8cfb8",
           "tintWeight": 1,
           "locked": false,
           "force": {
@@ -481,101 +384,25 @@
             "easing": "smoothstep",
             "steps": [
               {
-                "id": "e455-sq1",
-                "text": "!",
-                "shape": "text",
+                "id": "e6-sq1",
+                "text": "",
+                "shape": "disc",
                 "hold": 2.6,
-                "transition": 1.5,
+                "transition": 1.6,
                 "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.12,
-                    "y": 0.12
-                  },
-                  "rotation": 0,
-                  "tint": "#7d8a8f",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
+                "source": {
+                  "kind": "ascii",
+                  "ascii": {
+                    "text": "    .o.\n    /|\\\n    / \\\n   _|_"
                   }
-                }
-              },
-              {
-                "id": "e455-sq2",
-                "text": "!",
-                "shape": "text",
-                "hold": 3.0,
-                "transition": 1.5,
-                "position": null,
+                },
                 "objectState": {
                   "size": {
-                    "x": 0.3,
-                    "y": 0.3
+                    "x": 0.16,
+                    "y": 0.2
                   },
                   "rotation": 0,
-                  "tint": "#c04a2b",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "id": "e456",
-          "name": "historico-racial schema → epidermal racial schema — the field giving the visible body its force",
-          "kind": "formation",
-          "position": {
-            "x": 0,
-            "y": -0.35,
-            "z": 0.4
-          },
-          "size": {
-            "x": 0.8,
-            "y": 0.12
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "≡→◦",
-          "share": 1,
-          "tint": "#ddd3c1",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "order": "loop",
-            "easing": "smoothstep",
-            "steps": [
-              {
-                "id": "e456-sq1",
-                "text": "body-schema",
-                "shape": "text",
-                "hold": 2.6,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.46,
-                    "y": 0.12
-                  },
-                  "rotation": 0,
-                  "tint": "#d8d2c4",
+                  "tint": "#d8cfb8",
                   "tintWeight": 1,
                   "force": {
                     "kind": "none",
@@ -586,19 +413,25 @@
                 }
               },
               {
-                "id": "e456-sq2",
-                "text": "epidermal schema",
-                "shape": "text",
+                "id": "e6-sq2",
+                "text": "",
+                "shape": "disc",
                 "hold": 3.0,
-                "transition": 1.5,
+                "transition": 1.6,
                 "position": null,
+                "source": {
+                  "kind": "ascii",
+                  "ascii": {
+                    "text": "  .-~~~-, \n (       )\n  \\ ___ /\n   ~"
+                  }
+                },
                 "objectState": {
                   "size": {
-                    "x": 0.52,
-                    "y": 0.12
+                    "x": 0.16,
+                    "y": 0.2
                   },
                   "rotation": 0,
-                  "tint": "#a05038",
+                  "tint": "#8a2f2b",
                   "tintWeight": 1,
                   "force": {
                     "kind": "none",
@@ -614,43 +447,16 @@
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#2 · chapter V, PDF pp.118–148 (hail at pp.120–122)",
-          "title": "The body returns from a gaze that precedes it",
-          "italic": "The scene demonstrates a socially prepared image reorganising lived bodily possibility — not history become biology, but the occasion through which the image arrives.",
+          "kicker": "",
+          "title": "The hail",
+          "italic": "The whole body returns through the skin it is seen as.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "A person moves through a public world with a practical bodily orientation. The hail interrupts: responsibility for body, race and ancestors imposed, the space around him part of the event. The body-schema gives way to the epidermal racial schema — not history become biology, but the racialised appearance as the occasion through which a prepared image reorganises lived possibility. Chapter V ends in wounded openness, no completed reconciliation.",
-          "x": 0.04,
-          "y": 0.55,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 620
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the train and the child's fear (#2); the two schemata (#2); the frustrated answers and open ending (#2, #4).",
-          "x": 0.765,
-          "y": 0.55,
-          "width": 300,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
@@ -679,11 +485,11 @@
       "name": "The mask becomes an inward criterion",
       "character": "Accomplishment in the forms the dominant world recognises, with the standard of recognition administering the life it measures. No untouched private essence beneath.",
       "duration": 12,
-      "transition": 1.3,
+      "transition": 1.5,
       "view": {
-        "mode": "2d",
-        "yaw": 0.05,
-        "pitch": 0,
+        "mode": "3d",
+        "yaw": 0.2,
+        "pitch": 0.08,
         "zoom": 1,
         "panX": 0,
         "panY": 0
@@ -691,152 +497,47 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
-        "pointerMode": "vortex",
-        "pointerClick": "pulse",
-        "pointerClickStrength": 0.4,
-        "pointerClickRadius": 0.32
+        "pointerMode": "attract",
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.3,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#eceae2",
         "palette": [
-          "#26221f",
-          "#8c3b2e",
-          "#c99a3c",
-          "#ddd3c1"
+          "#2b2620",
+          "#6b5d4a",
+          "#8a2f2b",
+          "#c9a227"
         ],
         "material": "round",
         "params": {
-          "pointerStrength": 0.4,
+          "pointerStrength": 0.3,
           "speed": 0.4,
-          "circulation": 0.15,
-          "dispersion": 0.05
+          "circulation": 0.1,
+          "dispersion": 0.05,
+          "turbulence": 0.12
         }
       },
       "entities": [
         {
-          "id": "e457",
-          "name": "the mask — legible form, opened participation",
+          "id": "e7",
+          "name": "the white mask — legible form, opened participation",
           "kind": "formation",
           "position": {
-            "x": -0.45,
-            "y": -0.27,
-            "z": 0
+            "x": 0.05,
+            "y": -0.32,
+            "z": 0.0
           },
           "size": {
-            "x": 0.307,
-            "y": 0.368
+            "x": 0.22,
+            "y": 0.24
           },
           "rotation": 0,
-          "shape": "square",
+          "shape": "disc",
           "text": "",
           "share": 1,
-          "tint": "#ddd3c1",
-          "tintWeight": 0.5,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "order": "loop",
-            "easing": "smoothstep",
-            "steps": [
-              {
-                "id": "e457-sq1",
-                "text": "",
-                "shape": "square",
-                "hold": 2.6,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.42,
-                    "y": 0.42
-                  },
-                  "rotation": 0,
-                  "tint": "#d8d2c4",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "e457-sq2",
-                "text": "",
-                "shape": "square",
-                "hold": 2.6,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#8a7a6a",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "e457-sq3",
-                "text": "≡",
-                "shape": "text",
-                "hold": 3.0,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.24
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "id": "e458",
-          "name": "the inward measure — anticipation, editing, the unapproved response as defect",
-          "kind": "formation",
-          "position": {
-            "x": 0.4,
-            "y": 0.2,
-            "z": 0
-          },
-          "size": {
-            "x": 0.36,
-            "y": 0.3
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "≡",
-          "share": 1,
-          "tint": "#8c3b2e",
+          "tint": "#6b5d4a",
           "tintWeight": 1,
           "locked": false,
           "force": {
@@ -851,7 +552,103 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "st501",
+                "id": "e7-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  ,-~~~-,\n ( o   o )\n |   >   |\n  \\ ___ /\n   \\___/"
+            }
+          }
+        },
+        {
+          "id": "e8",
+          "name": "beneath it no untouched essence — another social contour",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.46,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.18,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8b8f94",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e8-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  ,-~~~-,\n (       )\n  \\ ___ /\n   ~"
+            }
+          }
+        },
+        {
+          "id": "e9",
+          "name": "≡",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.26,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≡",
+          "share": 1,
+          "tint": "#2b2620",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e9-sq0",
                 "text": "≡",
                 "shape": "text",
                 "hold": 3,
@@ -862,23 +659,23 @@
           }
         },
         {
-          "id": "e459",
-          "name": "the double edge — access reinforcing the measure admission depended on",
+          "id": "e10",
+          "name": "⚖",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.42,
-            "z": 0
+            "x": -0.5,
+            "y": -0.52,
+            "z": 0.0
           },
           "size": {
-            "x": 0.24,
-            "y": 0.24
+            "x": 0.1,
+            "y": 0.1
           },
           "rotation": 0,
           "shape": "text",
           "text": "⚖",
           "share": 1,
-          "tint": "#c99a3c",
+          "tint": "#8a2f2b",
           "tintWeight": 1,
           "locked": false,
           "force": {
@@ -893,7 +690,7 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "st502",
+                "id": "e10-sq0",
                 "text": "⚖",
                 "shape": "text",
                 "hold": 3,
@@ -906,43 +703,16 @@
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#3 · the title-field; persona and chameleon kept distinct",
-          "title": "The mask becomes an inward criterion",
-          "italic": "The mask embodies the passage from participation into self-administration — the whole cannot end by peeling a surface to reveal an untouched essence beneath.",
+          "kicker": "",
+          "title": "The white mask",
+          "italic": "What opens the door begins to administer the life inside.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The white mask cannot be confined to intentional pretending: a subject becomes accomplished in the forms through which the dominant world recognises him, while the standard of recognition becomes a rule for administering his own life. Not four detachable masks: speech, self-image and recognition are ways the same hierarchy becomes consequential. A legible form opens participation, and participation reinforces the measure admission depended on.",
-          "x": 0.04,
-          "y": 0.55,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 620
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the recognising forms and their mastery (#1, #3); the inward administration (#3); the refused surface/essence ending (#3, #4).",
-          "x": 0.765,
-          "y": 0.55,
-          "width": 300,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
@@ -971,11 +741,11 @@
       "name": "Recognition must change the relation that distributes it",
       "character": "Chapter VII: comparison under a socially governing standard; the reciprocal demand inside an unequal history; de-alienation answerable to material situations.",
       "duration": 14,
-      "transition": 1.8,
+      "transition": 1.5,
       "view": {
-        "mode": "2d",
-        "yaw": 0.06,
-        "pitch": 0,
+        "mode": "3d",
+        "yaw": 0.2,
+        "pitch": 0.08,
         "zoom": 1,
         "panX": 0,
         "panY": 0
@@ -983,137 +753,47 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
         "pointerMode": "attract",
-        "pointerClick": "implode",
-        "pointerClickStrength": 0.45,
-        "pointerClickRadius": 0.32
+        "pointerClick": "shove",
+        "pointerClickStrength": 0.3,
+        "pointerClickRadius": 0.3
       },
       "field": {
-        "background": "#f6f1e6",
+        "background": "#eceae2",
         "palette": [
-          "#26221f",
-          "#8c3b2e",
-          "#c99a3c",
-          "#ddd3c1"
+          "#2b2620",
+          "#6b5d4a",
+          "#8a2f2b",
+          "#c9a227"
         ],
         "material": "round",
         "params": {
-          "pointerStrength": 0.45,
-          "speed": 0.5,
-          "circulation": 0.3,
-          "dispersion": 0.07
+          "pointerStrength": 0.3,
+          "speed": 0.4,
+          "circulation": 0.1,
+          "dispersion": 0.05,
+          "turbulence": 0.12
         }
       },
       "entities": [
         {
-          "id": "e460",
-          "name": "recognition — more than one participant's changed self-description",
+          "id": "e11",
+          "name": "recognition — two participants, each requiring the other's answer",
           "kind": "formation",
           "position": {
-            "x": 0,
-            "y": -0.12,
-            "z": 0
+            "x": 0.05,
+            "y": -0.34,
+            "z": 0.0
           },
           "size": {
-            "x": 0.27,
-            "y": 0.099
+            "x": 0.3,
+            "y": 0.16
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "◉◉",
+          "shape": "disc",
+          "text": "",
           "share": 1,
-          "tint": "#ddd3c1",
-          "tintWeight": 1,
-          "locked": false,
-          "force": {
-            "kind": "none",
-            "strength": 0,
-            "radius": 0.45,
-            "spin": 0
-          },
-          "station": null,
-          "sequence": {
-            "enabled": true,
-            "clock": "seconds",
-            "order": "loop",
-            "easing": "smoothstep",
-            "steps": [
-              {
-                "id": "e460-sq1",
-                "text": "◉◉",
-                "shape": "text",
-                "hold": 2.6,
-                "transition": 1.6,
-                "position": {
-                  "x": 0.0,
-                  "y": -0.12,
-                  "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.44,
-                    "y": 0.18
-                  },
-                  "rotation": 0,
-                  "tint": "#7a6a52",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "e460-sq2",
-                "text": "◉◉",
-                "shape": "text",
-                "hold": 3.0,
-                "transition": 1.6,
-                "position": {
-                  "x": 0.0,
-                  "y": -0.12,
-                  "z": 0
-                },
-                "objectState": {
-                  "size": {
-                    "x": 0.36,
-                    "y": 0.16
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              }
-            ]
-          }
-        },
-        {
-          "id": "e461",
-          "name": "the unequal history — one participant inheriting an authority to classify",
-          "kind": "formation",
-          "position": {
-            "x": 0.55,
-            "y": -0.3,
-            "z": 0
-          },
-          "size": {
-            "x": 0.24,
-            "y": 0.24
-          },
-          "rotation": 0,
-          "shape": "text",
-          "text": "≠",
-          "share": 1,
-          "tint": "#8c3b2e",
+          "tint": "#2b2620",
           "tintWeight": 1,
           "locked": false,
           "force": {
@@ -1128,9 +808,57 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "st504",
-                "text": "≠",
-                "shape": "text",
+                "id": "e11-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  ___     ___\n / o \\   / o \\\n \\___/   \\___/"
+            }
+          }
+        },
+        {
+          "id": "e12",
+          "name": "the white standard — the social third governing their comparison",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": -0.1,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#8a2f2b",
+          "tintWeight": 0.8,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e12-sq0",
+                "text": "",
+                "shape": "square",
                 "hold": 3,
                 "transition": 1,
                 "position": null
@@ -1139,23 +867,23 @@
           }
         },
         {
-          "id": "e462",
-          "name": "the revised terms — who determines the conditions of recognition",
+          "id": "e13",
+          "name": "≠",
           "kind": "formation",
           "position": {
-            "x": -0.5,
-            "y": -0.35,
-            "z": 0
+            "x": 0.6,
+            "y": -0.5,
+            "z": 0.0
           },
           "size": {
-            "x": 0.26,
-            "y": 0.26
+            "x": 0.1,
+            "y": 0.1
           },
           "rotation": 0,
           "shape": "text",
-          "text": "⚖",
+          "text": "≠",
           "share": 1,
-          "tint": "#c99a3c",
+          "tint": "#8a2f2b",
           "tintWeight": 1,
           "locked": false,
           "force": {
@@ -1166,56 +894,58 @@
           },
           "station": null,
           "sequence": {
-            "enabled": true,
+            "enabled": false,
             "clock": "seconds",
-            "order": "loop",
-            "easing": "smoothstep",
             "steps": [
               {
-                "id": "e462-sq1",
+                "id": "e13-sq0",
+                "text": "≠",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e14",
+          "name": "⚖",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.46,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⚖",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e14-sq0",
                 "text": "⚖",
                 "shape": "text",
-                "hold": 2.6,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.24
-                  },
-                  "rotation": 0,
-                  "tint": "#7a6a52",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "e462-sq2",
-                "text": "who determines the terms?",
-                "shape": "text",
-                "hold": 3.0,
-                "transition": 1.5,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.56,
-                    "y": 0.11
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "hold": 3,
+                "transition": 1,
+                "position": null
               }
             ]
           }
@@ -1223,48 +953,21 @@
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#4 · chapter VII, PDF pp.207–220; conclusion, pp.221–229",
-          "title": "Recognition must change the relation that distributes it",
-          "italic": "The whole demonstrates the destination: not private self-esteem but the social relation becoming revisable — a transformation of recognition makes its terms answerable to the person they concern.",
+          "kicker": "",
+          "title": "Recognition",
+          "italic": "The terms must become answerable to the person they concern.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Private self-esteem is an insufficient destination: a person can improve his self-account while continuing to be received through the same inherited measure. If access is granted only on condition that the hierarchy remains authoritative, increased access does not change the relation that demanded the mask. Reciprocal as a demand, the distribution of power stays unequal; the conclusion keeps de-alienation answerable to material situations.",
-          "x": 0.04,
-          "y": 0.55,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 620
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the demanding reciprocity (#4); the inherited authority to classify (#1, #4); the conclusion's material answerability (#2, #4).",
-          "x": 0.765,
-          "y": 0.55,
-          "width": 300,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
       "composition": {
-        "layout": "line",
+        "layout": "free",
         "plane": "XY",
         "focus": "parallel",
         "focusDuration": 4,
@@ -1281,23 +984,7 @@
         "depth": 1,
         "dwell": 0.3
       },
-      "automation": [
-        {
-          "id": "auto-demand",
-          "target": "field.params.circulation",
-          "type": "lfo",
-          "wave": "sine",
-          "blend": "add",
-          "loop": "loop",
-          "min": -0.12,
-          "max": 0.12,
-          "rate": 0.18,
-          "phase": 0.0,
-          "duration": 0,
-          "delay": 0,
-          "firedAt": null
-        }
-      ]
+      "automation": []
     },
     {
       "id": "m-fan-5-return",
@@ -1307,7 +994,7 @@
       "transition": 2.2,
       "view": {
         "mode": "2d",
-        "yaw": 0.05,
+        "yaw": 0.04,
         "pitch": 0,
         "zoom": 1,
         "panX": 0,
@@ -1316,7 +1003,6 @@
       "engine": {
         "inkMode": "blackOnWhite",
         "backgroundMode": "solid",
-        "autoFitSizes": false,
         "pointerMode": "attract",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.25,
@@ -1325,39 +1011,39 @@
       "field": {
         "background": "#f6f1e6",
         "palette": [
-          "#26221f",
-          "#8c3b2e",
-          "#c99a3c",
-          "#ddd3c1"
+          "#3a2c18",
+          "#2b6b6b",
+          "#c9a227",
+          "#5a6b2f"
         ],
         "material": "round",
         "params": {
           "pointerStrength": 0.25,
           "speed": 0.35,
-          "circulation": 0.2,
+          "circulation": 0.12,
           "dispersion": 0.06
         }
       },
       "entities": [
         {
-          "id": "e463",
+          "id": "e15",
           "name": "the mask returned to the scene that made it meaningful",
           "kind": "formation",
           "position": {
-            "x": 0,
+            "x": 0.05,
             "y": -0.36,
-            "z": 0
+            "z": 0.0
           },
           "size": {
-            "x": 0.626,
-            "y": 0.522
+            "x": 0.4,
+            "y": 0.4
           },
           "rotation": 0,
           "shape": "ring",
           "text": "",
           "share": 1,
-          "tint": "#8c3b2e",
-          "tintWeight": 0.45,
+          "tint": "#2b6b6b",
+          "tintWeight": 0.5,
           "locked": false,
           "force": {
             "kind": "none",
@@ -1367,101 +1053,38 @@
           },
           "station": null,
           "sequence": {
-            "enabled": true,
+            "enabled": false,
             "clock": "seconds",
-            "order": "loop",
-            "easing": "smoothstep",
             "steps": [
               {
-                "id": "e463-sq1",
+                "id": "e15-sq0",
                 "text": "",
                 "shape": "ring",
-                "hold": 2.8,
-                "transition": 1.7,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#7a6a52",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "e463-sq2",
-                "text": "",
-                "shape": "ring",
-                "hold": 3.2,
-                "transition": 1.7,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.46,
-                    "y": 0.46
-                  },
-                  "rotation": 0,
-                  "tint": "#c9a227",
-                  "tintWeight": 1,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
-              },
-              {
-                "id": "e463-sq3",
-                "text": "",
-                "shape": "ring",
-                "hold": 2.8,
-                "transition": 1.7,
-                "position": null,
-                "objectState": {
-                  "size": {
-                    "x": 0.4,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#7a6a52",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "none",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "hold": 3,
+                "transition": 1,
+                "position": null
               }
             ]
           }
         },
         {
-          "id": "e464",
-          "name": "the four flags — adaptive interface, category before encounter, co-internality, idol/image: all human-amplified: no",
+          "id": "e16",
+          "name": "the door held open — the person exceeds the assigned image",
           "kind": "formation",
           "position": {
-            "x": 0.55,
-            "y": 0.45,
-            "z": 0
+            "x": 0.58,
+            "y": -0.32,
+            "z": 0.0
           },
           "size": {
-            "x": 0.3,
-            "y": 0.16
+            "x": 0.2,
+            "y": 0.24
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "4×",
+          "shape": "disc",
+          "text": "",
           "share": 1,
-          "tint": "#c99a3c",
+          "tint": "#3a2c18",
           "tintWeight": 1,
           "locked": false,
           "force": {
@@ -1476,7 +1099,55 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "st507",
+                "id": "e16-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          },
+          "source": {
+            "kind": "ascii",
+            "ascii": {
+              "text": "  ______\n /|    |\n| |    |\n| |    |\n|_|____|"
+            }
+          }
+        },
+        {
+          "id": "e17",
+          "name": "4×",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.3,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.12,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "4×",
+          "share": 1,
+          "tint": "#8a5a2b",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e17-sq0",
                 "text": "4×",
                 "shape": "text",
                 "hold": 3,
@@ -1487,23 +1158,23 @@
           }
         },
         {
-          "id": "e465",
-          "name": "Number Six · Apollo–Daphne · the moving mirror · Attica — comparisons that must return to distinct worlds",
+          "id": "e18",
+          "name": "◌",
           "kind": "formation",
           "position": {
             "x": -0.55,
-            "y": -0.35,
-            "z": 0
+            "y": -0.55,
+            "z": 0.0
           },
           "size": {
-            "x": 0.4,
-            "y": 0.16
+            "x": 0.1,
+            "y": 0.1
           },
           "rotation": 0,
           "shape": "text",
           "text": "◌",
           "share": 1,
-          "tint": "#ddd3c1",
+          "tint": "#2b6b6b",
           "tintWeight": 1,
           "locked": false,
           "force": {
@@ -1518,7 +1189,7 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "st508",
+                "id": "e18-sq0",
                 "text": "◌",
                 "shape": "text",
                 "hold": 3,
@@ -1529,23 +1200,23 @@
           }
         },
         {
-          "id": "e466",
-          "name": "A27 — the other's reality not exhausted by a prior image (project synthesis, human-amplified: no)",
+          "id": "e19",
+          "name": "one centre — inward, answerable, not absorbed",
           "kind": "formation",
           "position": {
-            "x": 0.55,
-            "y": -0.4,
-            "z": 0
+            "x": -0.22,
+            "y": -0.6,
+            "z": 0.0
           },
           "size": {
-            "x": 0.3,
-            "y": 0.14
+            "x": 0.12,
+            "y": 0.12
           },
           "rotation": 0,
-          "shape": "text",
-          "text": "A27",
+          "shape": "disc",
+          "text": "",
           "share": 1,
-          "tint": "#ddd3c1",
+          "tint": "#5a6b2f",
           "tintWeight": 1,
           "locked": false,
           "force": {
@@ -1560,9 +1231,51 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "st509",
-                "text": "A27",
-                "shape": "text",
+                "id": "e19-sq0",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e20",
+          "name": "another centre — not exhausted by the first's image",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": -0.6,
+            "z": 0.0
+          },
+          "size": {
+            "x": 0.12,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "e20-sq0",
+                "text": "",
+                "shape": "disc",
                 "hold": 3,
                 "transition": 1,
                 "position": null
@@ -1573,43 +1286,16 @@
       ],
       "text": [
         {
-          "id": "title",
+          "id": "stage",
           "visible": true,
-          "kicker": "#5→0 · the four inherited flags; the cross-whole ledger; the source standing",
-          "title": "The historical person remains available to answer",
-          "italic": "The return keeps the whole load-bearing: a mask without its world is a portable symbol of disguise; a world without the person's capacity to answer makes its classifications final.",
+          "kicker": "",
+          "title": "Available to answer",
+          "italic": "The person exceeds the image; the encounter is still open.",
           "body": "",
-          "x": 0.04,
-          "y": 0.05,
-          "width": 560,
-          "size": 30,
-          "align": "left"
-        },
-        {
-          "id": "body",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "The mask can return to the scene that made it meaningful: language carried a prestige hierarchy; the hail returned the body through inherited stories; the mask became a criterion of self-administration; recognition required the relation itself to become revisable. The four comparisons keep their unratified standing. The primary return is A27 — recognition where the other's reality cannot be exhausted by a prior image (human-amplified: no).",
-          "x": 0.04,
-          "y": 0.55,
-          "width": 620,
-          "size": 14,
-          "align": "left",
-          "w": 620
-        },
-        {
-          "id": "occ",
-          "visible": true,
-          "kicker": "",
-          "title": "",
-          "italic": "",
-          "body": "Occurrences: the four scenes' retention (#0–#4, #5→0). Declared cross-story: The Prisoner, the Ovidian Daphne, the moving mirror and Attica as named comparisons with their differences carried.",
-          "x": 0.765,
-          "y": 0.55,
-          "width": 300,
-          "size": 14,
+          "x": 0.03,
+          "y": 0.04,
+          "width": 400,
+          "size": 26,
           "align": "left"
         }
       ],
@@ -1634,5 +1320,5 @@
       "automation": []
     }
   ],
-  "updatedAt": "2026-10-06T00:00:00.000Z"
+  "updatedAt": "2026-10-07T00:00:00.000Z"
 }

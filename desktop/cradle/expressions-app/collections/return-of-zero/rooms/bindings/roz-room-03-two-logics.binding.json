@@ -82,14 +82,44 @@
  ],
  "assets": [
   {
+   "kind": "ascii",
+   "ref": "bare-relation plates: the slash → / = −/− → the two accountings (movement-19)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "polar plates: axis through zero → sum → difference → the red appropriation band (movement-20)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "symbolon plates: conjugate form → fitted halves → severed → fused (movement-21)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "nets plates: bow and lyre → the artful bond with exposed terms → the jewel net (movement-22)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "pulse plates: bifurcation → basin → perturbation at the boundary (movement-23)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "ascii",
+   "ref": "theorem plates: 2+2²=6=4+2 → the four states → the sixfold returning unit (movement-24)",
+   "provenance": "authored"
+  },
+  {
    "kind": "diagram",
-   "ref": "engine-native formations and text glyphs only (disc/ring/square/triangle/yantra + authored glyph strings: 0, Ø, 1/0, 0/1, 4+2, X/x, S1, ∅-succession, eight-determination and recognition sequences); no external imagery",
+   "ref": "geometry: seam ring, axial-zero ring, token halves, exposed-term rings, the pledge disc, basin ring, boundary trajectory disc, renewed-ground ring",
    "provenance": "authored"
   }
  ],
  "capture": "rooms/roz-room-03-two-logics.cover.png",
  "capture_note": "cover = the room door (first movement scene) at authored particle count 62000 through the real engine (tools/capture.mjs, port 47911)",
- "status": "captured",
+ "status": "authored",
  "notes": [
   "E0 acceptance repair: text/field collision fixed on movement-20 (poles moved to the upper band clear of the claim text; spot-checked) and the pair scene movement-21; positional grammar shifted right-of-centre (GX 0.2), route layer top-left; cover re-captured at authored count.",
   "one shared section-room grammar across all eight rooms (positional chassis forms #0 disc / #1 text / #2 triangle / #3 yantra / #4 square / #5,#5→0 ring); recorded variations listed in profiles/family-section-room.profile.json",
@@ -107,7 +137,9 @@
   "m22 the myth: Ares and Aphrodite step toward each other (positions converge, weight softens) while Harmonia appears at their midpoint as the third term; the pin 'the net' sits quiet in the scene — the plant the ledger requires. Warm palette: the dramatic register.",
   "m23 3D (z = the basin's depth): the walker descends bifurcate → compose → perturbation while the basin ring holds mid-depth and a trajectory disc rides near the boundary — attractor dynamics as volume; vortex/vortex pointer = the swirl; depth tint warm.",
   "m24 zero changes its office (layout ring — the pairings read in the round): B={0,1} → 2+2² → 4+2, the last step gilded — the measurable two counted with its relation; implode click gathers the count.",
-  "Legibility pattern (all members, 2026-10-06; bounds corrected 2026-10-06 after the wave-2 audit): (a) on 40 scenes a sequence whose carrier is a non-text formation walks on a dedicated TEXT-shaped walker entity — the original formation stays as the quiet field form behind it (tintWeight ≤ 0.25) and those scenes hold calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22; speed LFOs clamped ≤ 0.7) so the walking letterform can condense — the wave-1 legible-walk pattern; (b) on 16 scenes the sequence carrier is already a text-shaped formation and keeps its own authored physics (measured maxima: speed 0.8, circulation 1.7, turbulence 0.34), which the render pass pixel-verified holds the letterforms. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text."
+  "Legibility pattern (all members, 2026-10-06; bounds corrected 2026-10-06 after the wave-2 audit): (a) on 40 scenes a sequence whose carrier is a non-text formation walks on a dedicated TEXT-shaped walker entity — the original formation stays as the quiet field form behind it (tintWeight ≤ 0.25) and those scenes hold calm field physics (speed ≤ 0.6, circulation ≤ 0.5, turbulence ≤ 0.22; speed LFOs clamped ≤ 0.7) so the walking letterform can condense — the wave-1 legible-walk pattern; (b) on 16 scenes the sequence carrier is already a text-shaped formation and keeps its own authored physics (measured maxima: speed 0.8, circulation 1.7, turbulence 0.34), which the render pass pixel-verified holds the letterforms. Glyph step sizes scale by sign length. Static glyph-carrying formations render as shape text.",
+  "Craft rework 2026-10-07 (expression rework pass, lane 4; records re-read at fc59a719). The chassis and word-walkers are retired; each movement draws its own logic. m19 cold iron: the bare slash grows into / = −/− and then forks into the two accountings, (−1)/(+1) beside (0/1)/(1/0); the seam ring holds what makes them terms. m20 the same iron held (deliberate rest): the polar axis drawn as the record's diagram — sum cancelling to zero, difference taking the span, the band reddening at appropriation; axial-zero ring beside. m21 wine-dark: the conjugate form, then the symbolon's three states — fitted halves, severed, fused; the token's two squares hold apart across the stage. m22 the same wine-dark held (deliberate rest): bow and lyre's backwards-turning fastening, then the artful bond with its two exposed rings, then the jewel net reflecting; the pale pledge disc sits apart — the one who does not laugh. m23 dark teal, vortex pointer (the attractor): bifurcation, basin, perturbation; basin ring and boundary trajectory beside; circulation LFO = the pulse. m24 ember ground, slowest transition: the compact theorem, the four states, the sixfold unit returning through 5→0 over the gold ground-ring; implode click = the return. Stillness pairs: m19–m20 (one iron, the fork and its working-out), m21–m22 (one wine-dark, the token and its mytheme). Colour arc: iron → wine-dark → teal → ember. Stage text: one hospitable line per movement; claim statuses and canonical routes ride in this binding's scenes[].relations.",
+  "Craft rework 2026-10-07 (expression rework pass, lane 4; records re-read at fc59a719). The chassis and word-walkers are retired; each movement draws its own logic. m19 cold iron: the bare slash grows into / = −/− and then forks into the two accountings, (−1)/(+1) beside (0/1)/(1/0); the seam ring holds what makes them terms. m20 the same iron held (deliberate rest): the polar axis drawn as the record's diagram — sum cancelling to zero, difference taking the span, the band reddening at appropriation; axial-zero ring beside. m21 wine-dark: the conjugate form, then the symbolon's three states — fitted halves, severed, fused; the token's two squares hold apart across the stage. m22 the same wine-dark held (deliberate rest): bow and lyre's backwards-turning fastening, then the artful bond with its two exposed rings, then the jewel net reflecting; the pale pledge disc sits apart — the one who does not laugh. m23 dark teal, vortex pointer (the attractor): bifurcation, basin, perturbation; basin ring and boundary trajectory beside; circulation LFO = the pulse. m24 ember ground, slowest transition: the compact theorem, the four states, the sixfold unit returning through 5→0 over the gold ground-ring; implode click = the return. Stillness pairs: m19–m20 (one iron, the fork and its working-out), m21–m22 (one wine-dark, the token and its mytheme). Colour arc: iron → wine-dark → teal → ember. Stage text: one hospitable line per movement; claim statuses and canonical routes ride in this binding's scenes[].relations."
  ],
  "enrichment": {
   "date": "2026-10-06",
@@ -118,22 +150,26 @@
   "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
  },
  "glyph_rationales": {
-  "a refusal": "M19: a judgment's edge — a refusal needs an edge; a perception needs a difference",
-  "needs an edge": "M19: the cut that lets anything appear or be asked",
-  "a world": "M19: without difference no world becomes articulate — difference cannot be escaped (gilded: the stakes)",
-  "−/−": "M20: the bare relation — a stroke between two unassigned marks, before a determinate contrast is given",
-  "(−1)/(+1)": "M20: dia's polar form — positive and negative held through a common zero; the stroke retains polarity rather than instructing division",
-  "(−1)+(+1)=0": "M20: the collapsed operation — addition cancels to 0; changing the operation changes the result (the step reddens: the appropriation the record marks)",
-  "0/1": "M21: one orientation of the retained ground–mark relation (earned notation, §1); in m24 the pair B={0,1} counted with its pairings",
-  "(0/1)/(1/0)": "M21: sym-ballein — superpositional polarity as inverse orientations of one relation; recognition through the maintained break (gilded when held)",
-  "1/0": "M21: the other orientation, held at attract — the two lean toward one another without fusing",
-  "the net": "M22: Hephaestus's bonds too fine to see — craft that encloses relation (planted here per the presaging ledger; paid off at §5→0 · #3)",
-  "Harmonia": "M22: concord borne through the conjunction of beauty and strife — opposition generative without silencing (the triangle appears between the drawn-together pair)",
-  "bifurcate": "M23: dia as dynamical operation — bifurcate a field, make a trajectory actual",
-  "compose": "M23: sym as dynamical operation — recursively compose differentiated trajectories into a provisional basin (the ring: trajectories drawn, boundaries open)",
-  "perturbation": "M23: perturbation opens the basin to further difference (the step reddens and tips: the opening)",
-  "4+2": "M24: the first compact QL theorem — 2 + 2² = 6 = 4 + 2: what a two amounts to once it includes the relation that generates it",
-  "B={0,1}": "M24: the minimum recursive body counted directly — pair each with each, retaining order",
-  "2+2²": "M24: the generative count on the way to 6 — two poles plus the four ordered pairings"
+  "the bare relation and its two accountings": "M19: every binary has two provenances — polarity measured from outside, or inverse determinations of one differentiating relation; the two ways a two can be true",
+  "the seam that makes them terms": "M19: the originating distinction the opposed terms share — what logic must account for besides the terms themselves",
+  "the polar axis and its operations": "M20: dia-ballein drawn as the record's own diagram — the axis through zero, the cancelled sum, the span-taking difference, and the red band of appropriation",
+  "the axial zero": "M20: zero retained as the axis of tension and connection between the signed ones — lost when the sum is read as cancellation",
+  "the retained relation": "M21: sym-ballein (0/1)/(1/0) and the symbolon's three states — halves that fit (recognition through the break), the lost half (severance), the melted lump (fusion)",
+  "the token's halves": "M21: fracture verifies rather than destroys the bond — wholeness is fracture retained as relation",
+  "the fastening and the two nets": "M22: Heraclitus B51's backwards-turning fastening, then the two technical destinies of the web — Hephaestus's artful bond against Indra's jewel net (0/1)",
+  "the exposed terms": "M22: the lovers held in the mesh — polarity arrested into (−1)+/−(+1), made observable by having replaced encounter with capture",
+  "the one who does not laugh": "M22: Poseidon's surety — release entering from outside the apparatus; no alignment system is trustless, the finished score conceals the pledge that underwrites it",
+  "the alternating pulse": "M23: dia bifurcates, sym composes a provisional basin, perturbation opens it — symmetry breaking and making as one metabolism",
+  "the provisional basin": "M23: the attractor landscape as one aspect of paradigmatic stability — some trajectories easy, others unstable, none final",
+  "the trajectory near the boundary": "M23: individuation legible near the basin boundary — coherent enough to persist, encounter able to reorganise what futures are available",
+  "the first compact theorem": "M24: 2+2²=2+4=6=4+2 — the full account of a binary relation once its poles and relational possibilities are both retained",
+  "the renewed ground": "M24: the 5→0 hinge — completed form becomes renewed condition rather than terminal object; zero's role changed"
+ },
+ "craft": {
+  "date": "2026-10-07",
+  "actor": "zcode:craft-expressions-l4",
+  "lane": "craft-l4/rooms",
+  "pass": "expression rework — TEXT IS THE MINIMUM FORM (owner commission 2026-10-07)",
+  "gate": "site/tests/expression-richness.mjs"
  }
 }
