@@ -24,7 +24,7 @@
 // What is shared with the everyday machine is data/tool caches only, never a credential, row or election.
 //
 // Parameters (environment): OI_AIKIT_BIN (REQUIRED, the aikit build under test), EPI_LOCAL_KEV_CHECKOUT (default ~/.workcell/decision-models/kev-0.8b/kev),
-// EPI_REDIS_SERVER (default /opt/homebrew/bin/redis-server), EPI_ACTUATION_ROOT, EPI_OWNER_INSTRUMENT, EPI_QL_ROOT, OI_CENTRAL_CTRL_BIN.
+// EPI_REDIS_SERVER (default /opt/homebrew/bin/redis-server), EPI_PRIME_DIR (default ~/Central/Work/Epi-Prime), EPI_OWNER_INSTRUMENT, EPI_QL_ROOT, OI_CENTRAL_CTRL_BIN.
 import {execFileSync, spawnSync} from "node:child_process";
 import {createServer, connect} from "node:net";
 import {existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync} from "node:fs";
@@ -46,7 +46,7 @@ const AIKIT = env0.OI_AIKIT_BIN;
 if (!AIKIT || !existsSync(AIKIT)) { console.error("OI_AIKIT_BIN is required: the aikit build under test"); process.exit(2); }
 const LOCAL_KEV = env0.EPI_LOCAL_KEV_CHECKOUT ?? join(realHome, ".workcell/decision-models/kev-0.8b/kev");
 const REDIS_SERVER = env0.EPI_REDIS_SERVER ?? "/opt/homebrew/bin/redis-server";
-const ACTUATION = env0.EPI_ACTUATION_ROOT ?? "/Users/admin/Central/worktrees/env-1/actuation";
+const EPI_PRIME_DIR = env0.EPI_PRIME_DIR ?? join(realHome, "Central/Work/Epi-Prime");   // EpiLogos/Epi-Prime, the Prime distribution
 const INSTRUMENT = env0.EPI_OWNER_INSTRUMENT ?? join(realHome, "Central/Work/Actuation/experiments/ql-runtime/native-owner-instrument/target/debug/actuation-ql-owner-instrument");
 const QL_ROOT = env0.EPI_QL_ROOT ?? join(realHome, "Central/Work/Quaternal-Logic");
 const CTRL = env0.OI_CENTRAL_CTRL_BIN ?? join(realHome, ".local/bin/ctrl");
@@ -182,7 +182,7 @@ try {
 
   // ---- 4 a direct QL operation through the instrument, with a configuration generated from it --------------------------------
   const facultyConfig = join(run, "faculty.generated.json"), evidence = join(run, "faculty-evidence"); mkdirSync(evidence, {recursive: true});
-  const generated = JSON.parse(sh(process.execPath, [join(ACTUATION, "distribution/prime-epi/tools/epi-distribution.mjs"), "faculty-config", "--instrument", INSTRUMENT, "--source-root", QL_ROOT, "--evidence-root", evidence, "--out", facultyConfig]));
+  const generated = JSON.parse(sh(process.execPath, [join(EPI_PRIME_DIR, "tools/epi-distribution.mjs"), "faculty-config", "--instrument", INSTRUMENT, "--source-root", QL_ROOT, "--evidence-root", evidence, "--out", facultyConfig]));
   const invoked = spawnSync(RESEARCH, [], {input: JSON.stringify({operation: "faculty.invoke", configuration: facultyConfig, request: {operation: "mef-lenses"}, trace_ref: "clean-services/qlop-1", declared_locus_ref: "clean-services"}), encoding: "utf8", env: process_env, maxBuffer: 64 * 1024 * 1024});
   let result = null; try { result = JSON.parse(invoked.stdout); } catch { /* raw below */ }
   const receiptFiles = existsSync(evidence) ? readdirSync(evidence).filter(f => f.endsWith(".json")) : [];

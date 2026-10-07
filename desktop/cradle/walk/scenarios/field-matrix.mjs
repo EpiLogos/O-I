@@ -87,6 +87,7 @@ const cell = `${HARNESS}-${CONTEXT}`;
 
 // ---- the material (the owner's installed material on this machine; env overrides) ------------------------------------
 const ACTUATION = process.env.EPI_ACTUATION_ROOT ?? "/Users/admin/Central/worktrees/env-1/actuation";
+const EPI_PRIME_DIR = process.env.EPI_PRIME_DIR ?? join(realHome, "Central/Work/Epi-Prime");   // EpiLogos/Epi-Prime, the Prime distribution
 const CANDIDATE_TOOLS = join(realHome, ".oi-candidates/epi-prime/tools");
 const LAUNCHER = process.env.EPI_ACTUATION_PRIME_BINARY ?? join(CANDIDATE_TOOLS, "prime-epi/bin/actuation-epi-prime");   // the delivered launcher: requires --extension, loads the QL binding with explicit -e, fails closed
 const QL_BIN = process.env.EPI_QL_BINARY ?? "/Users/admin/Central/Work/Quaternal-Logic/target/debug/ql";
@@ -148,7 +149,7 @@ const provision = async ({root, home: oiHome, projectRoot}) => {
     writeFileSync(facultyConfig, JSON.stringify({...JSON.parse(readFileSync(FACULTY, "utf8")), evidence_root: facultyEvidence}, null, 2));
     record.facultyConfig = facultyConfig; record.facultyEvidence = facultyEvidence;
     const toolsRoot = join(aikitHome, "tools"); mkdirSync(toolsRoot, {recursive: true});
-    const installed = JSON.parse(run("node", [join(ACTUATION, "distribution/prime-epi/tools/epi-distribution.mjs"), "install", "--research-bin", RESEARCH, "--faculty-config", facultyConfig, "--root", toolsRoot]));
+    const installed = JSON.parse(run("node", [join(EPI_PRIME_DIR, "tools/epi-distribution.mjs"), "install", "--research-bin", RESEARCH, "--faculty-config", facultyConfig, "--root", toolsRoot]));
     record.installation = installed;
     const configured = native("encounter-epi-prime-configure", "--provider-id", "epi-prime-ql", "--launcher", LAUNCHER, "--prime-bin", PRIME, "--ql-bin", QL_BIN, "--ql-revision", QL_REVISION, "--body-revision", BODY_REVISION, "--skill-path", SKILL, "--extension", installed.extension, "--installation", installed.binding, "--research-bin", RESEARCH, "--faculty-config", facultyConfig, "--ql-root", QL_ROOT);
     if (configured.ok === false) throw new Error(JSON.stringify(configured));
