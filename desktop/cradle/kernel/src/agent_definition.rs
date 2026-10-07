@@ -107,10 +107,7 @@ fn pinned_ref(value: &str) -> Result<(), String> {
         return Err("Self-definition source reference must be a single-line ref".into());
     }
     if !value.starts_with("central:source:") {
-        return Err(
-            "Self-definition source reference must name a Central source (central:source:…)"
-                .into(),
-        );
+        return Err("Self-definition source reference must name a Central source (central:source:…)".into());
     }
     Ok(())
 }
