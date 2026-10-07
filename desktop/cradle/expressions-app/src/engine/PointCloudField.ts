@@ -27,6 +27,7 @@ import { DEFAULT_GLYPH_VOLUME } from './glyphVolume';
 import { applyAutomations, createAutomationRuntime, AutomationRuntime, AutomationLiveValue } from './automation';
 import { GPGPUSimulator } from './GPGPUSimulator';
 import { GlyphSampler } from './GlyphSampler';
+import { PsgFormSampler, glyphPreparation, coveragesFromAlpha, type FoldProgressReceipt } from './psg-form-sampler';
 import { particleVertexShader, particleFragmentShader } from './shaders/particleShaders';
 import { isLightHex } from './colorPalettes';
 import { CymaticResonator, ResonatorTelemetry, type ResonanceState, type ResonanceAnchor } from './cymaticResonator';
@@ -137,6 +138,10 @@ export class PointCloudField {
   private pinLayer: PinMarkerLayer | null = null;
   private simulator!: GPGPUSimulator;
   private glyphSampler!: GlyphSampler;
+  /** The PS-G forms sampler (QL-MEF #296 #299): the retained glyph body, its
+   * correspondence and the rasterisation/reseed instrument, consuming the
+   * landed native form law. */
+  private psgForm = new PsgFormSampler();
   private entities!: EntityRuntime;
 
   private particleGeometry!: THREE.BufferGeometry;
@@ -1410,6 +1415,7 @@ export class PointCloudField {
       partitions:this.entities.getPartitions().map(partition=>({...partition})),
       connections: {...this.entities.connections.inspect(),nodeFormations:this.entities.getPartitions().length,maxNodeFormations:MAX_FORMATIONS},
       drive: this.lastDrive, composition: this.getCompositionTelemetry(),
+      psgForm: this.psgForm.disclose(),
       localizedResonance:this.localizedFrames.map(f=>({entityId:f.entityId,frequencyHz:f.frequencyHz,position:f.position,params:f.params,re:Array.from(f.re),im:Array.from(f.im)})),
       positions: [] as number[], velocities: [] as number[] };
     if (readParticles) {
@@ -1432,6 +1438,54 @@ export class PointCloudField {
       programs: this.renderer.info.programs?.length ?? 0,
       candidateCache: this.entities.getCandidateCacheStats(),
     };
+  }
+
+  // -- PS-G forms (QL-MEF #296, ticket #299): the app's sampler half over the
+  // landed native form law. One text-glyph path, end to end.
+
+  /**
+   * Declares the retained sample body for one text glyph: the rasteriser's own
+   * alpha cited into the declared mask, the body retained through the form
+   * instrument. Re-declaring the same glyph is a cache hit (the rasteriser did
+   * not run — stable IDs survive re-resolution); a resolution change reseeds
+   * through the explicit old-to-new mapping; a coating change is refused a
+   * reseed by name. Bounded disclosure: identity line, receipt, reseed outcome.
+   */
+  public psgFormDeclareGlyph(text: string, resolution = 32): Record<string, unknown> {
+    const glyph = text.trim() || 'O';
+    const { alpha, width, height, maskRef } = this.glyphSampler.rasterizeTextAlpha(glyph);
+    const coverages = coveragesFromAlpha(alpha, width, height, resolution, 4);
+    const outcome = this.psgForm.declare(glyphPreparation({
+      prepRef: `oi:psg:glyph:${glyph}`,
+      maskRef,
+      coverages,
+      resolution,
+    }));
+    return {
+      prep_ref: outcome.body.preparation.prepRef,
+      preparation_sha256: outcome.body.preparationSha256,
+      sample_count: outcome.body.samples.length,
+      preparation: outcome.preparation,
+      reseed: outcome.reseed,
+      mask_ref: maskRef,
+    };
+  }
+
+  /**
+   * Applies one fold-progress receipt (ql.psg-fold-progress/v1) to the retained
+   * body: the deformed per-sample positions in stage units plus the observation
+   * receipt (commanded creases and form beside the observed resident geometry).
+   * A progress read never re-rasterises and never reseeds — provable on the
+   * instrument counters, not by trust.
+   */
+  public psgFormApplyFold(progress: FoldProgressReceipt) {
+    return this.psgForm.applyFold(progress);
+  }
+
+  /** The instrument's proof surface: counters per cache key and the retained
+   * receipts, in the native disclosure's shapes. */
+  public psgFormDisclose(): Record<string, unknown> {
+    return this.psgForm.disclose();
   }
 
   /** Editing decoration only. Neither GPU state nor the stored configuration is touched. */
