@@ -87,7 +87,9 @@ export function mountReader() {
     onScroll()
   })
 
-  /* contents: Quartz's table of contents, position-aware; for the manuscript it is the 48 movements */
+  /* contents: Quartz's table of contents, position-aware; a manuscript page's
+     contents are the movements it itself carries (all 48 on the whole manuscript,
+     M01–M06 on §0/1), so both track and are tracked the same way */
   function buildToc(n: any) {
     let html = ""
     const xv = (view as any).x
@@ -96,9 +98,14 @@ export function mountReader() {
       html = xv.entry.scenes.map((sc: any, k: number) => `<a class="l3${sc.id === xv.scene ? " is-here" : ""}" href="#" data-router-ignore="true" data-xscene="${esc(sc.id)}"><b>${pad(k + 1)}</b>${esc(sc.name)}</a>`).join("")
     } else if (isManuscript(n)) {
       let room = -1
-      for (let m = 1; m <= 48; m++) {
+      for (const m of n.mvs ?? []) {
         const mv = D.moves[m]
-        if (mv.room !== room) { room = mv.room; html += `<a class="l2" href="#" data-router-ignore="true" data-room="${room}"><b>${esc(D.rooms[room].sec)}</b>${esc(D.rooms[room].title)}</a>` }
+        if (!mv) continue
+        if (mv.room !== room) {
+          room = mv.room
+          const r = D.rooms[room]
+          if (r) html += `<a class="l2" href="#" data-router-ignore="true" data-room="${room}"><b>${esc(r.sec)}</b>${esc(r.title)}</a>`
+        }
         html += `<a class="l3" href="#" data-router-ignore="true" data-m="${m}"><b>M${pad(m)}</b>${esc(mv.title)}</a>`
       }
     } else {
@@ -126,17 +133,19 @@ export function mountReader() {
     else act.scrollToId(a.dataset.h!, true)
   })
 
-  /* the reading line: 48 movements as an edge rail */
+  /* the reading line: the page's own movements as an edge rail */
   function buildRail(n: any) {
     const on_ = readsAsMovement(n)
     rail!.hidden = !on_
     if (!on_) return
-    if (!rail!.dataset.built || !rail!.firstChild) {
-      rail!.dataset.built = "1"
+    const mvs = (isManuscript(n) ? n.mvs ?? [] : Object.keys(D.moves).map(Number)).filter((m) => D.moves[m])
+    const sig = mvs.join(",")
+    if (rail!.dataset.mvs !== sig || !rail!.firstChild) {
+      rail!.dataset.mvs = sig
       let room = -1, html = ""
-      for (let m = 1; m <= 48; m++) {
+      for (const m of mvs) {
         const mv = D.moves[m], brk = mv.room !== room; room = mv.room
-        html += `<button class="mrail__t${brk ? " is-first" : ""}" type="button" data-m="${m}" aria-label="M${pad(m)} ${esc(mv.title)}"><i></i><span class="mrail__tip"><b>M${pad(m)}</b> ${esc(mv.title)}<em>${esc(D.rooms[mv.room].sec)}</em></span></button>`
+        html += `<button class="mrail__t${brk ? " is-first" : ""}" type="button" data-m="${m}" aria-label="M${pad(m)} ${esc(mv.title)}"><i></i><span class="mrail__tip"><b>M${pad(m)}</b> ${esc(mv.title)}<em>${esc(D.rooms[mv.room]?.sec ?? "")}</em></span></button>`
       }
       rail!.innerHTML = html
     }

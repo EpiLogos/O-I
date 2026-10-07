@@ -141,6 +141,13 @@ jobs:
             sleep 0.2
           done
           echo "::error::walk bridge never came up"; cat "$RUNNER_TEMP/walk-bridge.log"; exit 1
+      - name: Prove bounded native replay, owner resync and process generation
+        working-directory: desktop/cradle
+        env:
+          OI_NATIVE_EVENT_REPLAY: '1'
+          OI_KERNEL_BIN: ${{ github.workspace }}/desktop/cradle/kernel/target/debug/walk-bridge
+          OI_EVENT_REPLAY_RECEIPT: ${{ runner.temp }}/kernel-event-replay.json
+        run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/kernel-event-replay-native.test.mjs
       - name: Guard executable source — no unresolved markers, runner entry points parse
         working-directory: desktop/cradle
         run: |

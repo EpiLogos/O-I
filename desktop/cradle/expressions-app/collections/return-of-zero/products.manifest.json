@@ -1,6 +1,6 @@
 {
   "schema": "oi.legacy-collections/v1",
-  "exported_at": "2026-09-25T12:55:00.000Z",
+  "exported_at": "2026-10-06T19:30:00.000Z",
   "source": "Return of Zero — S0–S5 product Expression corpus",
   "provenance": {
     "schema": "oi.collection-provenance/v1",
@@ -9,11 +9,11 @@
     "paths": [
       "production/s-products"
     ],
-    "ground": "S-register product field from Antykathera-Essay-Work; exact authored oi.journey bodies from EpiLogos/Point-Cloud-Demo production/s-products.",
+    "ground": "S-register product field from Antykathera-Essay-Work; exact authored oi.journey bodies from EpiLogos/Point-Cloud-Demo production/s-products. | enriched in place 2026-10-06 by the Expression enrichment programme (branch enrich/expressions-20261006); the E0 byte-exact-copy lineage above is the collection origin, not its current content.",
     "exported_at": "2026-09-25T12:55:00.000Z",
     "generator": {
-      "name": "O:I native-publication fidelity repair",
-      "revision": "2026-09-25"
+      "name": "session enrich/expressions-20261006 (the 2026-10 enrichment pass: every member re-authored to the richness floor in place — sequences, multi-family scene change, 3d, pointer profiles, in-stage text, glyph rationales; bindings re-based, source records preserved at dbf3b17 with reading revision fc59a719)",
+      "revision": "enrichment-2026-10-06"
     },
     "production_revision": {
       "repo": "EpiLogos/Point-Cloud-Demo",

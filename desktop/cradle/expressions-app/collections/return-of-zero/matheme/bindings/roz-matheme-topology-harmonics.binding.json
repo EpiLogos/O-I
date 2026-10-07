@@ -8,7 +8,7 @@
  ],
  "source_revision": {
   "repo": "EpiLogos/Antykathera-Essay-Work",
-  "commit": "fc59a719",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
   "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
   "records": [
    {
@@ -222,7 +222,9 @@
   "date": "2026-10-06",
   "actor": "zcode:enrich-matheme-l1",
   "lane": "wave1/matheme",
-  "basis_commit": "dbf3b17"
+  "basis_commit": "dbf3b17",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
  },
  "glyph_rationales": {
   "(1,2/3) closes · (1,√2) dense": "the linear flows of #4: rational slope closes with winding, irrational slope is dense — recurrence without return through a point.",

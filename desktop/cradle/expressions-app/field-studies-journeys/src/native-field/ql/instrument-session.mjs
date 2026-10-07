@@ -32,6 +32,7 @@ export class InstrumentSession {
   #views = new Set(); #maxViews; #busy = false; #held = false; #uncertain = false;
   #disposed = false; #reason = null; #presented; #timer = null; #running = false;
   #generation = 0; #coalesced = 0; #influence = null;
+  #acts = []; #advances = { blocks: 0, frames: 0, first_samples_elapsed: null, last_samples_elapsed: null };
 
   constructor({ context, owner, transport, initialReceipt, fieldBinding,
     blockFrames = 512, lookaheadSeconds = 0.1, maxBlocks = 16,
@@ -76,6 +77,14 @@ export class InstrumentSession {
       reason: this.#reason, in_flight: this.#busy, queued_blocks: this.#queue.length,
       queued_bytes: this.#bytes, coalesced_presentation_frames: this.#coalesced,
       views: this.#views.size, disposed: this.#disposed };
+  }
+
+  /** The played-performance journal: a frozen independent copy of every admitted
+   * owner act and the aggregate advance data plane. Refused exchanges and plain
+   * inspection reads are not acts; the copy survives disposal. */
+  journal() {
+    return Object.freeze(structuredClone({ schema: 'ql.instrument-performance-journal/v1',
+      instance_ref: this.#instance, acts: this.#acts, advances: this.#advances }));
   }
 
   /** The host must authorise disclosure before passing even this reference-only
@@ -136,13 +145,18 @@ export class InstrumentSession {
         this.#sequence = next;
         return { refused: true, error: reply.error ?? 'native command refused' };
       }
-      const changing = command.operation === 'set-axis' || command.operation === 'replace';
-      // A scene event re-reads the whole basis: an optional strike and an explicit
-      // reshape each commit one generation, so the owner states how many.
+      const changing = command.operation === 'set-axis' || command.operation === 'replace' ||
+        command.operation === 'set-damping' || command.operation === 'strike';
+      // replace-event commits modes and, when required, shape. m1-advance
+      // additionally commits inscription-axis alignment. replace-event's own
+      // strike flag is a policy within the modes commit, not another generation.
       const event = EVENT_OPERATIONS.includes(command.operation);
       const frames = command.operation === 'advance' ? command.frames : 0;
       const before = cursor(this.#native.generation), after = cursor(frame.generation);
-      need((event ? after > before && after <= before + 2n : after === before + (changing ? 1n : 0n)) &&
+      const minimumEventDelta = command.operation === 'm1-advance' ? 2n : 1n;
+      const maximumEventDelta = command.operation === 'm1-advance' ? 3n : 2n;
+      need((event ? after >= before + minimumEventDelta && after <= before + maximumEventDelta
+        : after === before + (changing ? 1n : 0n)) &&
         cursor(frame.samples_elapsed) === cursor(this.#native.samples_elapsed) + BigInt(frames) &&
         frame.audio.length === frames, 'host operation and native cursor disagree');
       if (READ_OPERATIONS.includes(command.operation)) need(unchanged, 'native read advanced or reset state');
@@ -150,6 +164,7 @@ export class InstrumentSession {
       // The native operation is now acknowledged even if presentation later
       // fails. Recovery reads this cursor; no claim of rolling native state back.
       this.#native = withoutAudio(frame);
+      this.#journal(command, request.request_id);
       // A scene determinant acknowledgement carries its own influence reading.
       if (reply.influence !== undefined) this.#influence = structuredClone(reply.influence);
       return { frame, sources: reply.sources, influence: reply.influence, personal: reply.personal, score: reply.score,
@@ -157,6 +172,21 @@ export class InstrumentSession {
     } catch (error) {
       this.#unknown(String(error)); throw error;
     } finally { clearTimeout(timer); }
+  }
+
+  /** Admitted-exchange record: data-plane advances aggregate into ranges; owner
+   * acts and explicit recovery reads journal individually at their commit cursor. */
+  #journal(command, requestId) {
+    const acknowledged = { generation: this.#native.generation, samples_elapsed: this.#native.samples_elapsed };
+    if (command.operation === 'advance') {
+      const advances = this.#advances; advances.blocks++; advances.frames += command.frames;
+      if (advances.first_samples_elapsed === null) advances.first_samples_elapsed = acknowledged.samples_elapsed;
+      advances.last_samples_elapsed = acknowledged.samples_elapsed;
+    } else if (command.operation === 'read') {
+      this.#acts.push({ request_id: requestId, operation: command.operation, command: structuredClone(command), acknowledged, kind: 'recovery' });
+    } else if (!READ_OPERATIONS.includes(command.operation)) {
+      this.#acts.push({ request_id: requestId, operation: command.operation, command: structuredClone(command), acknowledged, kind: 'act' });
+    }
   }
 
   #enqueue(frame) {
@@ -234,7 +264,7 @@ export class InstrumentSession {
    * It changes the existing native owner; no UI-local clock or second composer. */
   async operate(command) {
     need(!this.#busy && !this.#held && !this.#disposed &&
-      ['set-axis', 'replace', ...EVENT_OPERATIONS].includes(command?.operation), 'domain operation requires idle admitted owner');
+      ['set-axis', 'replace', 'set-damping', 'strike', ...EVENT_OPERATIONS].includes(command?.operation), 'domain operation requires idle admitted owner');
     this.present();
     need(this.#queue.length < this.#maxBlocks &&
       this.#bytes + JSON.stringify(this.#native).length * 2 <= this.#maxBytes, 'wait for bounded presentation capacity');
@@ -274,6 +304,24 @@ export class InstrumentSession {
       return { refused: false, score: structuredClone(reply.score), current: reply.current === true,
         resolved_event_ref: String(reply.resolved_event_ref ?? '') };
     } finally { this.#busy = false; }
+  }
+
+  /** A played excitation: strike named voices of the standing instrument now.
+   * Each act names a native mode reference (disclosed on the owner's influence
+   * voices) with an impulse in modal metres. Serialized with data delivery like
+   * every other owner operation; the reply's end-of-block targets present the
+   * struck body, so sound and visible displacement share the native state. */
+  async strike(strikes) {
+    need(Array.isArray(strikes) && strikes.length > 0 && strikes.length <= 4096, 'a strike act names 1..4096 voices');
+    const acts = strikes.map(act => {
+      need(act && typeof act.mode_ref === 'string' && act.mode_ref.length > 0 && act.mode_ref.length <= 2048,
+        'invalid strike mode reference');
+      need(Array.isArray(act.amplitude) && act.amplitude.length === 2 &&
+        act.amplitude.every(v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= 1e6),
+        'strike amplitude must be two finite metres');
+      return { mode_ref: act.mode_ref, amplitude: [act.amplitude[0], act.amplitude[1]] };
+    });
+    return this.operate({ operation: 'strike', strikes: acts });
   }
 
   /** A Nara-constituted scene owner's reception: `input` (seven supplied centre

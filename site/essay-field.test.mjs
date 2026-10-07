@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -15,7 +15,17 @@ const load = async (entry) => {
 };
 const { classify, fieldModel, treePath } = await load('./vendor/quartz/quartz/util/essayField.ts');
 const { resolveRelativeSlug } = await load('./vendor/quartz/quartz/plugins/transformers/links.ts');
+const { SourceNotes } = await load('./vendor/quartz/quartz/plugins/transformers/sourceNotes.ts');
 test.after(() => rm(dir, { recursive: true, force: true }));
+
+const treeNode = (root, label) => {
+  for (const f of root.children) {
+    if (f.label === label) return f;
+    const found = treeNode(f, label);
+    if (found) return found;
+  }
+  return null;
+};
 
 const page = (slug, title, extra = {}) => ({ slug, frontmatter: { title, ...(extra.frontmatter ?? {}) }, text: extra.text ?? 'one two three', links: extra.links ?? [] });
 const room = (n, sec, name) => page(`section-rooms/0${n}-${name}/ROOM-0${n}-${name}`, `${sec} Room — ${name} — a deck`, { frontmatter: { station: sec } });
@@ -84,4 +94,88 @@ test('relative file links resolve against the linking page, not the vault root',
   assert.equal(resolveRelativeSlug(from, '../../../../README.md', slugs), null, 'above the vault root: left for the default resolver');
   assert.equal(resolveRelativeSlug(from, 'https://example.org/x.md', slugs), null);
   assert.equal(resolveRelativeSlug(from, 'missing.md', slugs), null);
+});
+
+test('the manuscript reads by its title, and the sections keep their own folder', () => {
+  const model = fieldModel(corpus());
+  const ms = model.nodes.find((n) => n.s === 'THE-RETURN-OF-ZERO'), s01 = model.nodes.find((n) => n.s === 'CONFRONTING-THE-LIMIT-S01');
+  assert.equal(ms.lab, 'Confronting the Limit');
+  assert.equal(ms.coord, 'M01–M48');
+  assert.equal(s01.lab, '§0/1 — The Integral Threshold');
+  const msFolder = treeNode(model.tree, 'The manuscript');
+  assert.deepEqual(msFolder.children.map((f) => f.label), ['Confronting the Limit', 'Sections', 'Reading home']);
+  const sections = msFolder.children.find((f) => f.label === 'Sections');
+  assert.deepEqual(sections.children.map((f) => f.label), ['§0/1 — The Integral Threshold']);
+  assert.equal(sections.children[0].coord, '§0/1');
+});
+
+test('a manuscript page carries its own movement anchors', async () => {
+  const file = join(dir, 'manuscript-fixtures.md');
+  await writeFile(file, '# t\n\n<a id="M01"></a>\n\n<a id="M07"></a>\n', 'utf8');
+  const pages = corpus();
+  pages.find((p) => p.slug === 'THE-RETURN-OF-ZERO').filePath = file;
+  const ms = fieldModel(pages).nodes.find((n) => n.s === 'THE-RETURN-OF-ZERO');
+  assert.deepEqual(ms.mvs, [1, 7]);
+  const s01 = fieldModel(corpus()).nodes.find((n) => n.s === 'CONFRONTING-THE-LIMIT-S01');
+  assert.equal(s01.mvs, undefined, 'without a readable source file the anchors simply ride along later');
+});
+
+test('source notes read down into their source houses, and stay prose when there is no house', async () => {
+  const root = join(dir, 'srcnotes-vault');
+  const houseDir = join(root, 'symbolon/episteme/sources/philosophy/kripke/kripke-1980-naming-and-necessity');
+  await mkdir(houseDir, { recursive: true });
+  await writeFile(join(houseDir, 'kripke-1980-naming-and-necessity.md'), [
+    '---',
+    'title: "Kripke — Naming and Necessity (1980)"',
+    'title_full: "Naming and Necessity"',
+    'author:',
+    '  - Saul A. Kripke',
+    'year: 1980',
+    '---',
+    '',
+    'House body.',
+  ].join('\n'), 'utf8');
+  const fregeDir = join(root, 'symbolon/episteme/sources/analytic-philosophy/frege/frege-1892-ueber-sinn-und-bedeutung');
+  await mkdir(fregeDir, { recursive: true });
+  await writeFile(join(fregeDir, 'frege-1892-ueber-sinn-und-bedeutung.md'), [
+    '---',
+    'title: "Frege — Über Sinn und Bedeutung (1892)"',
+    'title_full: "Über Sinn und Bedeutung"',
+    'author:',
+    '  - Gottlob Frege',
+    'year: 1892',
+    '---',
+    '',
+    'House body.',
+  ].join('\n'), 'utf8');
+  const em = (t) => ({ type: 'element', tagName: 'em', properties: {}, children: [{ type: 'text', value: t }] });
+  const li = (...children) => ({ type: 'element', tagName: 'li', properties: { id: 'user-content-fn-1' }, children });
+  const noteTree = (slug) => ({
+    type: 'root',
+    children: [
+      { type: 'element', tagName: 'section', properties: { dataFootnotes: '' }, children: [
+        { type: 'element', tagName: 'ol', properties: {}, children: [
+          li({ type: 'text', value: 'Saul A. Kripke, ' }, em('Naming and Necessity'), { type: 'text', value: ', 16–18 and n. 17.' }),
+          li({ type: 'text', value: 'Ludwig Wittgenstein, ' }, em('Tractatus Logico-Philosophicus'), { type: 'text', value: ', prop. 7.' }),
+          li({ type: 'text', value: 'The difference in informativeness between ' }, em('Bedeutung'), { type: 'text', value: ' and different ' }, em('Sinn'), { type: 'text', value: ', follow on 27. Frege’s terms.' }),
+        ] },
+      ] },
+    ],
+  });
+  const instance = SourceNotes();
+  const run = instance.htmlPlugins({ argv: { directory: root } })[0]();
+  const tree = noteTree('THE-RETURN-OF-ZERO');
+  await run(tree, { data: { slug: 'THE-RETURN-OF-ZERO' } });
+  const [noteA, noteB] = tree.children[0].children[0].children;
+  const anchor = noteA.children.find((c) => c.type === 'element' && c.tagName === 'a');
+  assert.ok(anchor, 'the title of a housed source becomes a link');
+  assert.equal(anchor.properties.href, './symbolon/episteme/sources/philosophy/kripke/kripke-1980-naming-and-necessity/kripke-1980-naming-and-necessity');
+  assert.equal(anchor.children[0].tagName, 'em', 'the citation text itself is kept');
+  assert.ok(!noteB.children.some((c) => c.type === 'element' && c.tagName === 'a'), 'a source with no house stays prose');
+  const noteC = tree.children[0].children[0].children[2];
+  assert.ok(!noteC.children.some((c) => c.type === 'element' && c.tagName === 'a'), 'a term from inside a title is prose, not a citation');
+  // a page that is not the manuscript is left alone
+  const other = noteTree('section-rooms/00-x/ROOM-00-x');
+  await run(other, { data: { slug: 'section-rooms/00-x/ROOM-00-x' } });
+  assert.ok(!other.children[0].children[0].children[0].children.some((c) => c.type === 'element' && c.tagName === 'a'));
 });

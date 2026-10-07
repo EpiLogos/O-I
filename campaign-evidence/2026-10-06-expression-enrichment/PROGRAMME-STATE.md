@@ -1,5 +1,8 @@
 # Programme state — Expression enrichment 2026-10
 
+**LANDED TO REVIEW (2026-10-06, post-crash continuation):** O-I PR #603 (`enrich/expressions-convergence` — RoZ 52 members + linter + evidence, gates render 72/72 · essay 20/20 · expressions 4/4) and Point-Cloud-Demo PR #20 (`enrich/s-products-20261006` — S-products 83 members). Defects filed at PCD #6 (comment 6023200620). The NOW clearing is closed; day 2026-10-06 closed. Seats env-1/o-i (this lane) and env-2/point-cloud-demo (S-products lane) stay claimed until the PRs land; release after merge.
+**Follow-up after merge (owner or successor):** move `.github/workflows/site.yml` PCD pin (line ~42) to the merged PCD commit; the tarot-score ride-along awaits its own PR at branch `enrich/tarot-score-312-landing`.
+
 **Owner brief:** 2026-10-06 (committed at Point-Cloud-Demo lane site/essay-live-library-retired-20261006, and driving this programme).
 **NOW clearing:** `central:now:control:root:664e4c586f97ea62f3fe955be0a277d5bb6527231108d74ba66a26e9971f4dab` (task `control:task:expression-enrichment-2026-10-06`).
 **Lane branch (O-I):** `enrich/expressions-20261006` at `~/Central/worktrees/env-1/o-i` (seat env-1/o-i, lead actor `zcode:expression-enrichment-20261006`, zone site/tests; content lanes attach as co-workers with their own family regions).
@@ -48,7 +51,7 @@
 **Running tally: 110 of 135 fully through the office.** Outstanding: mytheme 25 (21 floor-clean, family critics after continuation-B lands), the S-products hygiene cleanup, then convergence.
 
 **Mytheme critics:** wave B 12/12 PASS (valentinian human-amplified verified true; pauli's no-finished-interpretation refusal verified in JSON). Wave A: 11 PASS, 2 REJECT — apollo-dionysus (ending note claims a triangle the return scene does not stage) and the antikythera capstone (glyphs "82" and "Ἡλίου" assert archaeology the record does not state, violating its own carried guard) — both routed back to the first worker; everything else about the capstone verified exact (Offered kept, returns precise).
-**Office tally: 122/135 PASS through Aletheia's office;** the two mytheme revisions in flight, covers pass running.
+**THE OFFICE IS COMPLETE: 135/135 PASS through Aletheia's office.** The two mytheme revisions re-checked PASS (93460e7fd): apollo-dionysus stages the triangle the record's own sentence describes (centre distance 0.02, inside the ring), and the antikythera capstone carries no ungrounded glyph — the withdrawal and its guard recorded in the binding. Every family now stands: wave 1 (10), episteme (8), essay+rooms (9), mytheme (25), S-products (83). Three revise-and-resubmit cycles closed cleanly across the programme (a26p attribution; episteme concepts-2/etymologies; mytheme apollo-dionysus/antikythera).
 
 ## Convergence additions from wave-2 critic findings (parent decisions)
 

@@ -95,6 +95,20 @@ fn owner_process_failure(operation: &str, output: &std::process::Output) -> Stri
     )
 }
 
+/// The encounter verb's transport refusal when no resident owner is
+/// listening: the socket file does not exist yet, or nothing accepts on it.
+/// Distinct from the owner's own addressed refusals, which arrive as
+/// `{ok:false}` bodies with an error code.
+fn owner_unreachable(output: &std::process::Output) -> bool {
+    let text = format!(
+        "{} {}",
+        String::from_utf8_lossy(&output.stderr),
+        String::from_utf8_lossy(&output.stdout)
+    );
+    text.contains("encounter.runtime")
+        && (text.contains("No such file or directory") || text.contains("Connection refused"))
+}
+
 #[derive(Clone, Debug)]
 pub struct Client {
     executable: PathBuf,
@@ -775,9 +789,23 @@ impl Client {
                 .args(["encounter", "--request-json"])
                 .arg(body.to_string());
         }
-        let output = command
+        let mut output = command
             .output()
             .map_err(|error| format!("AIKit encounter owner unavailable: {error}"))?;
+        // Every encounter verb but the start itself rides the resident owner,
+        // and the plain verb never spawns one. A caller that arrives before
+        // the owner — the day's first chat provisioning, the settings panel's
+        // providers read — starts it here, once, and retries: the same enter
+        // the session handle performs when it attaches.
+        if !output.status.success()
+            && !matches!(request, EncounterRequest::Start)
+            && owner_unreachable(&output)
+        {
+            self.encounter(cwd, project_ref, &EncounterRequest::Start)?;
+            output = command
+                .output()
+                .map_err(|error| format!("AIKit encounter owner unavailable: {error}"))?;
+        }
         if !output.status.success() {
             return Err(owner_process_failure("encounter", &output));
         }
@@ -1555,6 +1583,35 @@ mod tests {
         assert!(message.contains("AIKit encounter failed"), "{message}");
         assert!(message.contains("9"), "{message}");
         assert!(message.contains("without an owner diagnostic"), "{message}");
+    }
+
+    #[test]
+    fn owner_unreachable_names_only_the_transport_refusals() {
+        let refused = |stderr: &str| std::process::Output {
+            status: std::process::ExitStatus::default(),
+            stdout: Vec::new(),
+            stderr: stderr.as_bytes().to_vec(),
+        };
+        // The day's first read: no socket file exists yet.
+        assert!(super::owner_unreachable(&refused(
+            "encounter.runtime: No such file or directory (os error 2)"
+        )));
+        // A stale socket file nothing accepts on any more.
+        assert!(super::owner_unreachable(&refused(
+            "encounter.runtime: Connection refused (os error 61)"
+        )));
+        // The owner's own addressed refusals are facts, never a missing owner.
+        assert!(!super::owner_unreachable(&refused(
+            "encounter.runtime: encounter.disclosure_denied"
+        )));
+        assert!(!super::owner_unreachable(&refused(
+            "harness_auth.unknown_harness: no such profile"
+        )));
+        assert!(!super::owner_unreachable(&std::process::Output {
+            status: std::process::ExitStatus::default(),
+            stdout: Vec::new(),
+            stderr: Vec::new(),
+        }));
     }
     use super::*;
 

@@ -67,6 +67,16 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    ${seg('cadence',[{value:'hold',label:'Hold'},...CADENCES.map(c=>({value:String(c.ticks_per_second),label:c.label,title:c.source}))],'Tick cadence')}
    <p class="control-note" data-ni-v="cadence">Cadence held. 1 tick/s follows the M3/M4′ world clock; 12 ticks/s is PPS's user-facing tick.</p>
   </section>
+  <section class="ni-block" aria-label="Jankó keys" data-ni-janko-block>
+   <h4>Jankó keys</h4>
+   <p class="control-note" data-ni-v="janko-note">Open the instrument to lay out the keys.</p>
+   <div class="ni-janko" data-ni-janko role="group" aria-label="Jankó keyboard: six rows, two interleaved whole-tone families, three touch-points per note"></div>
+   <output class="ni-key" role="status" aria-live="polite" data-ni-v="key">Press a key: it strikes the sky's voices nearest that note. The body then rings by its own damping.</output>
+   <details class="control-group"><summary>How the keys are read</summary><div class="group-content">
+    <p class="control-note">Six rows are two interleaved whole-tone families (even rows direct, odd rows conjugate), each held three times as repeated touch-points; the next row is the semitone-shifted collection. The surface is the kernel's own projection for the event's lens. Paper and ink colouring is the historical white/black colouring of the Jankó keyboard; its reading as QL's 3:3 and 4:2 is a project Figure, kept separate.</p>
+    <p class="control-note" data-ni-v="janko-standing"></p>
+   </div></details>
+  </section>
   <section class="ni-block" aria-label="Change a determinant">
    <h4>Change a determinant</h4>
    <p class="ni-label" id="ni-lens-label">Lens</p>${seg('lens',LENSES.map(l=>({value:String(l.lens12),label:l.label})),'Lens')}
@@ -132,7 +142,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  </div>`;
  // Local component styles in the app's Studio grammar: quiet, no animated
  // chrome, stable layout (fixed voice rows, fixed segmented groups).
- const style=document.createElement('style');style.textContent=`.native-field-panel{font:12px/1.5 var(--sans,system-ui)}.ni{display:grid;gap:4px}.ni h4{font:italic 16px/1.3 var(--serif,Georgia,serif);font-weight:400;margin:0 0 10px}.ni-block{border-top:1px solid var(--line);padding:14px 0 6px}.ni-status{display:block;font-size:10px;color:var(--muted);margin:0 0 12px;overflow-wrap:anywhere}.ni-open{width:100%;margin:4px 0 8px}.ni-kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0 0 12px;font-size:10px}.ni-kv dt{color:var(--muted)}.ni-kv dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.ni-voices{width:100%;border-collapse:collapse;font-size:10px;font-variant-numeric:tabular-nums;margin-bottom:10px}.ni-voices caption{text-align:left;color:var(--muted);font-size:9px;padding-bottom:4px}.ni-voices th,.ni-voices td{text-align:right;padding:3px 4px;border-bottom:1px solid var(--line);font-weight:400}.ni-voices th:first-child,.ni-voices td:last-child{text-align:left}.ni-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:0 0 10px}.ni-row>button{flex:1}.ni-label{font-size:10px;margin:6px 0 6px}.ni-seg{flex-wrap:wrap;margin-bottom:10px}.ni-seg button{flex:1 0 auto;min-width:34px;font-variant-numeric:tabular-nums}.ni-seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}.ni-refusal{font-size:10px;line-height:1.6;border-left:2px solid var(--accent);padding:4px 8px;margin:4px 0 10px;background:var(--wash)}.ni-effects table{width:100%;border-collapse:collapse;font-size:9px;line-height:1.45}.ni-effects th,.ni-effects td{text-align:left;vertical-align:top;padding:5px 4px;border-bottom:1px solid var(--line);font-weight:400;overflow-wrap:anywhere}.ni-effects th{color:var(--muted)}.ni-effects tr.ni-declared td{background:var(--wash)}.ni-badge{display:inline-block;font-size:8px;letter-spacing:.06em;border:1px solid var(--line);border-radius:3px;padding:0 4px;margin-left:4px;color:var(--accent)}.ni-policy{font-size:10px;line-height:1.6;margin:10px 0}.ni pre,.native-field-depth pre{font:10px/1.4 monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto}.native-field-depth output{display:block;overflow-wrap:anywhere;font-size:10px}.ni [data-ni-v="level"],.ni [data-ni-v="scale"]{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}`;
+ const style=document.createElement('style');style.textContent=`.ni-janko{display:grid;gap:3px;margin:0 0 8px;touch-action:none;user-select:none}.ni-janko-row{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;width:96%}.ni-janko-row[data-family="1"]{margin-left:4%}.ni-jk{all:unset;box-sizing:border-box;min-height:26px;display:flex;align-items:center;justify-content:center;font:500 9px/1 var(--sans,system-ui);border:1px solid var(--ink);border-radius:2px;cursor:pointer;background:var(--paper);color:var(--ink)}.ni-jk[data-black="true"]{background:var(--ink);color:var(--paper)}.ni-jk[data-silent="true"]{opacity:.32;cursor:default}.ni-jk:focus-visible{outline:2px solid var(--accent);outline-offset:1px}.ni-jk[data-struck="true"]{box-shadow:inset 0 0 0 2px var(--accent)}.ni-jk:disabled{opacity:.25;cursor:default}.ni-key{display:block;min-height:3em;font-size:10px;line-height:1.5;color:var(--muted);margin:0 0 6px}.native-field-panel{font:12px/1.5 var(--sans,system-ui)}.ni{display:grid;gap:4px}.ni h4{font:italic 16px/1.3 var(--serif,Georgia,serif);font-weight:400;margin:0 0 10px}.ni-block{border-top:1px solid var(--line);padding:14px 0 6px}.ni-status{display:block;font-size:10px;color:var(--muted);margin:0 0 12px;overflow-wrap:anywhere}.ni-open{width:100%;margin:4px 0 8px}.ni-kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0 0 12px;font-size:10px}.ni-kv dt{color:var(--muted)}.ni-kv dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.ni-voices{width:100%;border-collapse:collapse;font-size:10px;font-variant-numeric:tabular-nums;margin-bottom:10px}.ni-voices caption{text-align:left;color:var(--muted);font-size:9px;padding-bottom:4px}.ni-voices th,.ni-voices td{text-align:right;padding:3px 4px;border-bottom:1px solid var(--line);font-weight:400}.ni-voices th:first-child,.ni-voices td:last-child{text-align:left}.ni-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:0 0 10px}.ni-row>button{flex:1}.ni-label{font-size:10px;margin:6px 0 6px}.ni-seg{flex-wrap:wrap;margin-bottom:10px}.ni-seg button{flex:1 0 auto;min-width:34px;font-variant-numeric:tabular-nums}.ni-seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}.ni-refusal{font-size:10px;line-height:1.6;border-left:2px solid var(--accent);padding:4px 8px;margin:4px 0 10px;background:var(--wash)}.ni-effects table{width:100%;border-collapse:collapse;font-size:9px;line-height:1.45}.ni-effects th,.ni-effects td{text-align:left;vertical-align:top;padding:5px 4px;border-bottom:1px solid var(--line);font-weight:400;overflow-wrap:anywhere}.ni-effects th{color:var(--muted)}.ni-effects tr.ni-declared td{background:var(--wash)}.ni-badge{display:inline-block;font-size:8px;letter-spacing:.06em;border:1px solid var(--line);border-radius:3px;padding:0 4px;margin-left:4px;color:var(--accent)}.ni-policy{font-size:10px;line-height:1.6;margin:10px 0}.ni pre,.native-field-depth pre{font:10px/1.4 monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto}.native-field-depth output{display:block;overflow-wrap:anywhere;font-size:10px}.ni [data-ni-v="level"],.ni [data-ni-v="scale"]{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}`;
  const domainView=new NativeDomainView();
  document.head.append(style);document.body.append(domainView.element);
  let domainStamp="",effectsStamp="",busy=false,composing=false,source:{path:string;revision:string;sampleRate:number}|null=null,depthMuted=true;
@@ -171,6 +181,54 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   const m=a?.material;
   query('[data-ni-v="policy"]').innerHTML=m?`<strong>Material policy</strong><span class="ni-badge">declared policy — not source</span><br>damping ${esc(m.damping_per_second)}/s · strike ${esc(m.strike_metres)} m${m.strike_on_event?' on every event':''} · gain ${esc(m.audio_gain_per_metre)}/m · ${esc(m.metres_per_unit)} m per torus unit. ${esc(a?.material_standing??'')}`:'';
  };
+ // The Jankó surface is laid out from the owner's own `played_addresses.janko`; the voices a
+ // key strikes come from its `by_class`. No pitch is computed here. White/black is the historical
+ // piano colouring of the Jankó keyboard (a presentation layer, not a derivation).
+ const HISTORICAL_NATURALS=[0,2,4,5,7,9,11];
+ let jankoStamp='',jankoClasses=new Map<number,{refs:string[];label:string}>();
+ const flash=(button:HTMLElement)=>{button.dataset.struck='true';window.setTimeout(()=>{delete button.dataset.struck;},180);};
+ const renderJanko=(played:any,voices:any[])=>{
+  const janko=played?.janko;if(!janko||!Array.isArray(played.by_class))return;
+  const stamp=JSON.stringify([janko.lens12,played.by_class.map((c:any)=>c.voices.map((v:any)=>v.mode_ref))]);
+  if(stamp===jankoStamp)return;jankoStamp=stamp;
+  const nameOf=(ref:string)=>PLANET_NAMES[voices.findIndex(v=>v.planet_ref===ref)]??ref;
+  jankoClasses=new Map(played.by_class.filter((c:any)=>c.voices.length).map((c:any)=>[c.pitch_class,{
+   refs:c.voices.map((v:any)=>v.mode_ref),
+   label:c.voices.map((v:any)=>`${nameOf(v.planet_ref)} ${v.frequency_hz.toFixed(1)} Hz (${v.cents_from_class>=0?'+':''}${v.cents_from_class.toFixed(0)}¢)`).join(', ')}]));
+  const surface=query('[data-ni-janko]');surface.replaceChildren();
+  for(let row=0;row<janko.rows;row++){
+   const line=document.createElement('div');line.className='ni-janko-row';line.dataset.family=String(row%2);
+   for(const key of janko.keys.filter((k:any)=>k.key.row===row)){
+    const b=document.createElement('button');b.type='button';b.className='ni-jk';
+    const cls=key.sounding_pitch_class as number,voice=jankoClasses.get(cls);
+    b.dataset.jkRow=String(key.key.row);b.dataset.jkColumn=String(key.key.column);b.dataset.jkClass=String(cls);
+    b.dataset.black=String(!HISTORICAL_NATURALS.includes(cls));b.dataset.silent=String(!voice);
+    b.textContent=key.pitch_name;
+    b.setAttribute('aria-label',`${key.pitch_name}, row ${row+1} column ${key.key.column+1}, ${voice?`strikes ${voice.label}`:'no voice of this sky sounds at this note'}`);
+    line.append(b);
+   }
+   surface.append(line);
+  }
+  setText('janko-standing',String(played.standing??''));
+ };
+ const describeKey=(button:HTMLElement)=>{
+  const cls=Number(button.dataset.jkClass),voice=jankoClasses.get(cls);
+  return `${button.textContent} · row ${Number(button.dataset.jkRow)+1}, column ${Number(button.dataset.jkColumn)+1} — ${voice?`strikes ${voice.label}`:'no voice of this sky sounds at this note, so the key is silent'}.`;
+ };
+ let pointerPlayedAt=0;
+ const playKey=(button:HTMLElement,amplitude?:number)=>{
+  const cls=Number(button.dataset.jkClass),voice=jankoClasses.get(cls);
+  setText('key',describeKey(button));
+  if(!voice)return;
+  flash(button);
+  controller.playVoices(voice.refs,amplitude).catch(error=>{setText('key',`Not played: ${String(error instanceof Error?error.message:error)}`);});
+ };
+ const pressKey=(event:PointerEvent)=>{
+  const button=(event.target as HTMLElement).closest<HTMLButtonElement>('button.ni-jk');if(!button||button.disabled)return;
+  pointerPlayedAt=event.timeStamp;event.preventDefault();
+  playKey(button,event.pointerType==='pen'&&event.pressure>0?Math.min(0.9,Math.max(0.15,event.pressure*0.9)):undefined);
+ };
+ const focusKey=(event:FocusEvent)=>{const button=(event.target as HTMLElement).closest('button.ni-jk');if(button instanceof HTMLElement)setText('key',describeKey(button));};
  const update=()=>{
   const reading=controller.reading as any,instrument=reading.instrument,open=!!reading.lease||reading.status==='opening';
   panel.setAttribute('aria-busy',String(busy));
@@ -189,7 +247,11 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   for(const b of panel.querySelectorAll<HTMLButtonElement>('[data-ni="sound"],[data-ni="hold"],[data-ni="resume"],[data-ni="checkpoint"],[data-ni="restore"],[data-ni="follow-scale"],[data-ni="raw"]'))b.disabled=!reading.lease||reading.status==='unavailable';
   query<HTMLButtonElement>('[data-ni="close"]').disabled=!reading.lease&&reading.status!=='unavailable';
   query<HTMLButtonElement>('[data-ni="restore-opening"]').disabled||=!instrument?.opening_event_available;
+  const playing=!!instrument&&reading.status==='following';
+  for(const k of panel.querySelectorAll<HTMLButtonElement>('button.ni-jk'))k.disabled=!playing;
+  setText('janko-note',!instrument?'Open the instrument to lay out the keys.':playing?`Live${reading.muted?' · sound is off — turn it on to hear the notes':''}. Keys that are paler have no voice in this sky.`:'The field is held: resume it, then play.');
   if(instrument){
+   renderJanko(instrument.influence?.played_addresses,instrument.influence?.voices??[]);
    acting(instrument.acting,instrument,reading);
    const c=instrument.cadence;
    press('cadence',c.playing?String(c.rate):'hold');
@@ -237,6 +299,9 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  };
  const click=async(event:Event)=>{
   const target=event.target as HTMLElement;
+  const jk=target.closest<HTMLButtonElement>('button.ni-jk');
+  // Pointer presses play on pointerdown; a click is a keyboard activation (detail 0) only.
+  if(jk){if((event as MouseEvent).detail===0&&!jk.disabled)playKey(jk);return;}
   const set=target.closest<HTMLButtonElement>('button[data-ni-set]');
   if(set){
    const group=set.dataset.niSet!,value=set.dataset.value!;
@@ -311,7 +376,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  };
  const modeChange=()=>{const reading=controller.reading,ref=query<HTMLSelectElement>('[name="native-mode"]').value;query<HTMLInputElement>('[name="native-damping"]').value=String(reading.domain?.m2.modes.find(mode=>mode.ref===ref)?.damping_per_second??0);};
  query('[name="native-mode"]').addEventListener('change',modeChange);
- panel.addEventListener('click',click);panel.addEventListener('input',range);
+ panel.addEventListener('click',click);panel.addEventListener('input',range);panel.addEventListener('pointerdown',pressKey);panel.addEventListener('focusin',focusKey);
  controller.onChange=update;
  const visibility=()=>{if(document.hidden)controller.hold('document hidden');};
  document.addEventListener('visibilitychange',visibility);
@@ -320,5 +385,5 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  // A cadence-stale event basis is re-read here, never inside a beat.
  const timer=window.setInterval(()=>{void controller.refreshSources();update();},250);
  update();
- return {controller,panel,dispose:()=>{clearInterval(timer);panel.removeEventListener('click',click);panel.removeEventListener('input',range);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
+ return {controller,panel,dispose:()=>{clearInterval(timer);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
 }

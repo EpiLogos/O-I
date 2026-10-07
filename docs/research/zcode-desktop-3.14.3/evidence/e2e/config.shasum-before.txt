@@ -1,0 +1,2 @@
+12b0994c4849ab31a56922da7c182d2a0835a6625be5de883e9ad45496f92015  /Users/admin/.zcode/cli/config.json
+12b0994c4849ab31a56922da7c182d2a0835a6625be5de883e9ad45496f92015  /tmp/zcode-re/a3-plugins/e2e/config.json.backup

@@ -1,146 +1,148 @@
 {
-  "artifact": "mytheme/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.journey.json",
-  "family": "mytheme",
-  "worker": "E6 (mytheme-wholes)",
-  "profile_lineage": [
-    "roz-corpus-base",
-    "register-mytheme"
-  ],
-  "source_revision": {
-    "repo": "EpiLogos/Antykathera-Essay-Work",
-    "commit": "fc59a719",
-    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
-    "records": [
-      {
-        "record_id": "mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
-        "path": "submission-package/essay/symbolon/mytheme/worlds/analytical-psychology/jung-aion-fishes-christ-antichrist-alchemy/WHOLE.md",
-        "sha256": "7abe84069734e88bb597cb693269dde6c887e8ee9fda47659bd7ee43bf90c188"
-      }
-    ]
+ "artifact": "mytheme/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.journey.json",
+ "family": "mytheme",
+ "worker": "E6 (mytheme-wholes)",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-mytheme"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+    "path": "submission-package/essay/symbolon/mytheme/worlds/analytical-psychology/jung-aion-fishes-christ-antichrist-alchemy/WHOLE.md",
+    "sha256": "7abe84069734e88bb597cb693269dde6c887e8ee9fda47659bd7ee43bf90c188"
+   }
+  ]
+ },
+ "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+ "scenes": [
+  {
+   "scene_id": "m-ai-0-shadow",
+   "phase": "#1 ego, shadow, and the image of perfection",
+   "relations": "chs. I–V (§§1–77)"
   },
-  "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
-  "scenes": [
-    {
-      "scene_id": "m-ai-0-shadow",
-      "phase": "#1 ego, shadow, and the image of perfection",
-      "relations": "chs. I–V (§§1–77)"
-    },
-    {
-      "scene_id": "m-ai-1-fishes",
-      "phase": "#2 the fishes give the age its temporal image",
-      "relations": "chs. VI–IX (§§127–187); Pistis Sophia double; Epiphanius rite; Leviathan"
-    },
-    {
-      "scene_id": "m-ai-2-alchemy",
-      "phase": "#3 the fish is caught, worked, and made to transform",
-      "relations": "chs. X–XII (§§193–271); the Echeneis reversal; the scientific aftermath"
-    },
-    {
-      "scene_id": "m-ai-3-quaternio",
-      "phase": "#4 the quaternio",
-      "relations": "chs. XIII–XV (§§287–427); the Shadow Quaternio declared a modern reconstruction; p.259 diamonds"
-    },
-    {
-      "scene_id": "m-ai-5-return",
-      "phase": "#5→0 the age becomes visible as an age",
-      "relations": "anchor aion-historical-arbitration-return, aion-differentiated-return, aion-authored-register-boundary; the human-amplified ledger; A19/A21; Neumann/Gebser qualified; Q27 §6 register decision"
-    }
-  ],
-  "occurrence_index": [
-    {
-      "figure": "the shadow and projection",
-      "occurrence": "#1 §§13–19; #4 the declared modern reconstruction returns to it"
-    },
-    {
-      "figure": "Christ and Antichrist",
-      "occurrence": "#1 §§70–77 the excluded contrary; #5→0 placed at the occupied slash (Q27 §6)"
-    },
-    {
-      "figure": "the two fishes / Pisces / precession",
-      "occurrence": "#2 §§127–137 the age's doubled duration; index uninstantiated"
-    },
-    {
-      "figure": "the Pistis Sophia child-double",
-      "occurrence": "#2 §§131–133 reunion, distinct from antagonistic doubling"
-    },
-    {
-      "figure": "the round creature, eyewash, Echeneis magnet, Mercurius",
-      "occurrence": "#3 §§193–241 the worked transformation"
-    },
-    {
-      "figure": "the two yoked fishes of the Carcassonne revelation",
-      "occurrence": "#3 §§225–229 kept distinct from the Christian pair"
-    },
-    {
-      "figure": "A/B/C/D diamonds with lower-case transformations",
-      "occurrence": "#4 §§408–421; solve et coagula; nuclear comparison hypothetical"
-    },
-    {
-      "motif": "generative vs historical succession",
-      "occurrence": "#5→0 alchemy's forgotten motherhood articulating the latter"
-    }
-  ],
-  "human_amplified": [
-    {
-      "relation": "whole-before-fragments as design commitment",
-      "flag": "yes"
-    },
-    {
-      "relation": "the exact QL/Symbolon appointment; Christ/Antichrist as 1/1′ formalism; Pisces/precession as frame-awareness image; the diamonds' diagram-specific Bimba application",
-      "flag": "no — Offered candidates requiring Frank's encounter and passage control"
-    }
-  ],
-  "cross_story_relations": [
-    "Neumann whole compared as shared ground without supplying historical evidence; Valentinian whole distinct; Meal whole distinct from Leviathan-becoming-food."
-  ],
-  "assets": [
-    {
-      "kind": "ascii",
-      "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
-      "provenance": "authored"
-    },
-    {
-      "kind": "diagram",
-      "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
-      "provenance": "authored"
-    }
-  ],
-  "capture": "mytheme/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.cover.png",
-  "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
-  "status": "reviewed",
-  "notes": [
-    "Craft: five scenes carry the interpretive movement; the quaternio scene keeps the declared-modernity of the Shadow visible (B glyph labelled) so the project's Offered reading cannot silently harden. House standing: sixteen recovered locations, 1979 paperback vs selected 1978 printing, no promoted quotation cards. E0 acceptance repair: title/field collision fixed on m-ai-3-quaternio, m-ai-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
-    "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l3), per scene:\n#1 shadow — confrontation staged: repel + shove pointer, turbulence 0.15 (projection's disturbed field); the Christ-image sequence walks triangle → 'privatio boni' → a dimmed triangle (the exclusively luminous image meeting the argument that keeps evil's efficacy in view); the shadow disc grows as the world gives the rejected face back; Antichrist's ☹ brightens from excluded dim to compensatory red-brown. Duration 13.\n#2 fishes — THE 3D SCENE. z is the age's layered time: the embracing double nearest (z +0.4, lived), Epiphanius's carried image at z +0.2, Pisces at middle depth (z 0), Leviathan behind (z −0.25), the precessional spring-point deepest (z −0.5, the slow astronomical background); auto-aeon, the journey's slowest sine LFO on circulation (rate 0.05 — the precession's pace). The double's sequence walks ◑◕ dim → ◑◕ bright → ◕ (bound, released, embraced, one); Leviathan's ring splits and becomes the golden disc of meal. Vortex + pulse pointer (the age's slow turning). Duration 14.\n#3 alchemy — attraction worked: attract + pulse pointer (the magnet taught); the sea creature's ring heats grey → copper → shining gold; the Echeneis sequence walks 🧲 (the fish that halts ships) → 'magnet' (the operative understanding that draws the substance up) — the record's reversal in its own terms. Duration 13.\n#4 quaternio — grid layout: the four states A/B/C/D held in their quadrants; the Anthropos sequence walks A → a → A (the record's own lower-case notation for transformation within the state); the diamonds' ring rotates 0 → 45 → 90 with the gold returning (each whole unfolding into four and passing onward, p.259); vortex + pulse pointer (the opus's circulation). Duration 13.\n#5→0 return — the two successions walked ⇉ → generative → historical → ⇉ (what a work makes possible beside how its image becomes an inherited condition); attract at 0.3 — the revisable measure held without forcing; the register decision ⊘ and the uninstantiated ∅ kept exactly as the ledger holds them. Duration 15, the longest beat.\nENDING QUALIFIES BEGINNING: the journey opens with the ego meeting its excluded contrary — the shadow disc growing, the Christ-image dimming through its own argument, Antichrist brightening at the rim — and closes with the same structure at the scale of an age: de-monopolisation names what #1 lived, the inherited image becoming revisable, its exclusions active. The ego's ◉ of #1 returns as the eyewash ◉ of #3 — the same sign changed from centre-of-reference to capacity-to-see — and the dimmed Antichrist of #1 returns as the ⊘ register decision: the contrary held at the occupied slash without being installed. The ending qualifies the record's own line: a person who encounters the larger psychic field still has to judge and act; a culture that recognises the history of its image has acquired a responsibility to that history.\nHuman-amplified staging: the ledger's four appointments stay exactly as the record holds them — whole-before-fragments human-amplified: yes as design commitment; the exact symbolic appointment, the 1/1′ conjugate and the Pisces/precession appointment human-amplified: no (the #5→0 body and ⊘/∅ entities carry this). Mythemic verbs only: the images demonstrate and transform through the acts staged; no reusable index before the whole.\nAutomation: auto-aeon (#2, field.params.circulation sine at rate 0.05 — the precession's slow breath), tied to the record's aeonic office. Durations 13–15 and transitions 1.5–2.2: the fishes and the return held longest."
-  ],
-  "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-  "enrichment": {
-    "date": "2026-10-06",
-    "actor": "zcode:enrich-mytheme-l3",
-    "lane": "mytheme"
+  {
+   "scene_id": "m-ai-1-fishes",
+   "phase": "#2 the fishes give the age its temporal image",
+   "relations": "chs. VI–IX (§§127–187); Pistis Sophia double; Epiphanius rite; Leviathan"
   },
-  "glyph_rationales": {
-    "◉": "at #1 the ego — centre of reference rooted beyond what it knows of itself; at #3 the eyewash — the preparation become the capacity to see.",
-    "☹": "Antichrist — the compensatory counter-image of the contrary excluded from a representation of totality (chs. V).",
-    "privatio boni": "the doctrine Jung argues against — evil as mere privation of good; his argument keeps evil's experience and efficacy in view.",
-    "♓": "Pisces — the two fishes of the age, head to tail; the constellational image making contrary tendencies visible together while the age lives them successively.",
-    "♈": "the precessional spring-point — expectation become a historical actor in Jung's interpretive chronology, deepest in the scene's depth as the slow astronomical background.",
-    "◑◕": "the Pistis Sophia double — bound, released, embraced, one; doubling leading to reunion, an office distinct from Christ/Antichrist antagonism.",
-    "◕": "the double become one — the reunion after release; nature rising from below met by spirit descending from above (Jung's mediated reading).",
-    "☵": "Epiphanius's rite — the image carried up from the underground sanctuary and returned below; a pagan rite used as testimony, reception having already changed its office.",
-    "🧲": "the Echeneis reversed — the small fish that halts ships; the attracting power that overcame human intention, now the object of the work.",
-    "magnet": "the magnet taught — the doctrine or operative understanding that draws the hidden substance to the surface (chs. XI).",
-    "☿": "Mercurius — substance and philosophy; the bright mercurial substance concealed within darkness, toward the lapis.",
-    "⚗": "the aftermath — science born in the sixteenth and seventeenth centuries, the mother receding as outlived; the investigating psyche disappearing from objective knowledge's account.",
-    "A": "Anthropos — the first major state of the quaternio (§§408–421).",
-    "a": "the lower-case transformation within the state — the record's own notation for the inner articulation of a major state.",
-    "B": "Shadow — the inserted modern reconstruction, declared by Jung absent from the Gnostic texts.",
-    "C": "Physis/serpent — the chthonic approach to Nature in the downward balancing movement.",
-    "D": "lapis — the transformed stone toward which the work proceeds.",
-    "↺": "the ring returning through differentiation — an unconscious totality becoming a conscious one; solve et coagula, the circular opus.",
-    "⇉": "the two successions held together — what a work makes possible beside how its image becomes an inherited condition.",
-    "generative": "generative succession — what further life or capacity a work makes possible.",
-    "historical": "historical succession — how an achieved image becomes an inherited condition and later encounters its contrary or transformation.",
-    "⊘": "the register decision — Christ/Antichrist held at the occupied slash after the native derivation; no exact QL coordinate assigned (human-amplified: no).",
-    "∅": "the uninstantiated indexes — Christ, Antichrist, fishes, alchemy, aeon: every later use must returns-to this complete whole and preserve its particular action."
+  {
+   "scene_id": "m-ai-2-alchemy",
+   "phase": "#3 the fish is caught, worked, and made to transform",
+   "relations": "chs. X–XII (§§193–271); the Echeneis reversal; the scientific aftermath"
+  },
+  {
+   "scene_id": "m-ai-3-quaternio",
+   "phase": "#4 the quaternio",
+   "relations": "chs. XIII–XV (§§287–427); the Shadow Quaternio declared a modern reconstruction; p.259 diamonds"
+  },
+  {
+   "scene_id": "m-ai-5-return",
+   "phase": "#5→0 the age becomes visible as an age",
+   "relations": "anchor aion-historical-arbitration-return, aion-differentiated-return, aion-authored-register-boundary; the human-amplified ledger; A19/A21; Neumann/Gebser qualified; Q27 §6 register decision"
   }
+ ],
+ "occurrence_index": [
+  {
+   "figure": "the shadow and projection",
+   "occurrence": "#1 §§13–19; #4 the declared modern reconstruction returns to it"
+  },
+  {
+   "figure": "Christ and Antichrist",
+   "occurrence": "#1 §§70–77 the excluded contrary; #5→0 placed at the occupied slash (Q27 §6)"
+  },
+  {
+   "figure": "the two fishes / Pisces / precession",
+   "occurrence": "#2 §§127–137 the age's doubled duration; index uninstantiated"
+  },
+  {
+   "figure": "the Pistis Sophia child-double",
+   "occurrence": "#2 §§131–133 reunion, distinct from antagonistic doubling"
+  },
+  {
+   "figure": "the round creature, eyewash, Echeneis magnet, Mercurius",
+   "occurrence": "#3 §§193–241 the worked transformation"
+  },
+  {
+   "figure": "the two yoked fishes of the Carcassonne revelation",
+   "occurrence": "#3 §§225–229 kept distinct from the Christian pair"
+  },
+  {
+   "figure": "A/B/C/D diamonds with lower-case transformations",
+   "occurrence": "#4 §§408–421; solve et coagula; nuclear comparison hypothetical"
+  },
+  {
+   "motif": "generative vs historical succession",
+   "occurrence": "#5→0 alchemy's forgotten motherhood articulating the latter"
+  }
+ ],
+ "human_amplified": [
+  {
+   "relation": "whole-before-fragments as design commitment",
+   "flag": "yes"
+  },
+  {
+   "relation": "the exact QL/Symbolon appointment; Christ/Antichrist as 1/1′ formalism; Pisces/precession as frame-awareness image; the diamonds' diagram-specific Bimba application",
+   "flag": "no — Offered candidates requiring Frank's encounter and passage control"
+  }
+ ],
+ "cross_story_relations": [
+  "Neumann whole compared as shared ground without supplying historical evidence; Valentinian whole distinct; Meal whole distinct from Leviathan-becoming-food."
+ ],
+ "assets": [
+  {
+   "kind": "ascii",
+   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "mytheme/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.cover.png",
+ "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+ "status": "reviewed",
+ "notes": [
+  "Craft: five scenes carry the interpretive movement; the quaternio scene keeps the declared-modernity of the Shadow visible (B glyph labelled) so the project's Offered reading cannot silently harden. House standing: sixteen recovered locations, 1979 paperback vs selected 1978 printing, no promoted quotation cards. E0 acceptance repair: title/field collision fixed on m-ai-3-quaternio, m-ai-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l3), per scene:\n#1 shadow — confrontation staged: repel + shove pointer, turbulence 0.15 (projection's disturbed field); the Christ-image sequence walks triangle → 'privatio boni' → a dimmed triangle (the exclusively luminous image meeting the argument that keeps evil's efficacy in view); the shadow disc grows as the world gives the rejected face back; Antichrist's ☹ brightens from excluded dim to compensatory red-brown. Duration 13.\n#2 fishes — THE 3D SCENE. z is the age's layered time: the embracing double nearest (z +0.4, lived), Epiphanius's carried image at z +0.2, Pisces at middle depth (z 0), Leviathan behind (z −0.25), the precessional spring-point deepest (z −0.5, the slow astronomical background); auto-aeon, the journey's slowest sine LFO on circulation (rate 0.05 — the precession's pace). The double's sequence walks ◑◕ dim → ◑◕ bright → ◕ (bound, released, embraced, one); Leviathan's ring splits and becomes the golden disc of meal. Vortex + pulse pointer (the age's slow turning). Duration 14.\n#3 alchemy — attraction worked: attract + pulse pointer (the magnet taught); the sea creature's ring heats grey → copper → shining gold; the Echeneis sequence walks 🧲 (the fish that halts ships) → 'magnet' (the operative understanding that draws the substance up) — the record's reversal in its own terms. Duration 13.\n#4 quaternio — grid layout: the four states A/B/C/D held in their quadrants; the Anthropos sequence walks A → a → A (the record's own lower-case notation for transformation within the state); the diamonds' ring rotates 0 → 45 → 90 with the gold returning (each whole unfolding into four and passing onward, p.259); vortex + pulse pointer (the opus's circulation). Duration 13.\n#5→0 return — the two successions walked ⇉ → generative → historical → ⇉ (what a work makes possible beside how its image becomes an inherited condition); attract at 0.3 — the revisable measure held without forcing; the register decision ⊘ and the uninstantiated ∅ kept exactly as the ledger holds them. Duration 15, the longest beat.\nENDING QUALIFIES BEGINNING: the journey opens with the ego meeting its excluded contrary — the shadow disc growing, the Christ-image dimming through its own argument, Antichrist brightening at the rim — and closes with the same structure at the scale of an age: de-monopolisation names what #1 lived, the inherited image becoming revisable, its exclusions active. The ego's ◉ of #1 returns as the eyewash ◉ of #3 — the same sign changed from centre-of-reference to capacity-to-see — and the dimmed Antichrist of #1 returns as the ⊘ register decision: the contrary held at the occupied slash without being installed. The ending qualifies the record's own line: a person who encounters the larger psychic field still has to judge and act; a culture that recognises the history of its image has acquired a responsibility to that history.\nHuman-amplified staging: the ledger's four appointments stay exactly as the record holds them — whole-before-fragments human-amplified: yes as design commitment; the exact symbolic appointment, the 1/1′ conjugate and the Pisces/precession appointment human-amplified: no (the #5→0 body and ⊘/∅ entities carry this). Mythemic verbs only: the images demonstrate and transform through the acts staged; no reusable index before the whole.\nAutomation: auto-aeon (#2, field.params.circulation sine at rate 0.05 — the precession's slow breath), tied to the record's aeonic office. Durations 13–15 and transitions 1.5–2.2: the fishes and the return held longest."
+ ],
+ "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-mytheme-l3",
+  "lane": "mytheme",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "◉": "at #1 the ego — centre of reference rooted beyond what it knows of itself; at #3 the eyewash — the preparation become the capacity to see.",
+  "☹": "Antichrist — the compensatory counter-image of the contrary excluded from a representation of totality (chs. V).",
+  "privatio boni": "the doctrine Jung argues against — evil as mere privation of good; his argument keeps evil's experience and efficacy in view.",
+  "♓": "Pisces — the two fishes of the age, head to tail; the constellational image making contrary tendencies visible together while the age lives them successively.",
+  "♈": "the precessional spring-point — expectation become a historical actor in Jung's interpretive chronology, deepest in the scene's depth as the slow astronomical background.",
+  "◑◕": "the Pistis Sophia double — bound, released, embraced, one; doubling leading to reunion, an office distinct from Christ/Antichrist antagonism.",
+  "◕": "the double become one — the reunion after release; nature rising from below met by spirit descending from above (Jung's mediated reading).",
+  "☵": "Epiphanius's rite — the image carried up from the underground sanctuary and returned below; a pagan rite used as testimony, reception having already changed its office.",
+  "🧲": "the Echeneis reversed — the small fish that halts ships; the attracting power that overcame human intention, now the object of the work.",
+  "magnet": "the magnet taught — the doctrine or operative understanding that draws the hidden substance to the surface (chs. XI).",
+  "☿": "Mercurius — substance and philosophy; the bright mercurial substance concealed within darkness, toward the lapis.",
+  "⚗": "the aftermath — science born in the sixteenth and seventeenth centuries, the mother receding as outlived; the investigating psyche disappearing from objective knowledge's account.",
+  "A": "Anthropos — the first major state of the quaternio (§§408–421).",
+  "a": "the lower-case transformation within the state — the record's own notation for the inner articulation of a major state.",
+  "B": "Shadow — the inserted modern reconstruction, declared by Jung absent from the Gnostic texts.",
+  "C": "Physis/serpent — the chthonic approach to Nature in the downward balancing movement.",
+  "D": "lapis — the transformed stone toward which the work proceeds.",
+  "↺": "the ring returning through differentiation — an unconscious totality becoming a conscious one; solve et coagula, the circular opus.",
+  "⇉": "the two successions held together — what a work makes possible beside how its image becomes an inherited condition.",
+  "generative": "generative succession — what further life or capacity a work makes possible.",
+  "historical": "historical succession — how an achieved image becomes an inherited condition and later encounters its contrary or transformation.",
+  "⊘": "the register decision — Christ/Antichrist held at the occupied slash after the native derivation; no exact QL coordinate assigned (human-amplified: no).",
+  "∅": "the uninstantiated indexes — Christ, Antichrist, fishes, alchemy, aeon: every later use must returns-to this complete whole and preserve its particular action."
+ }
 }

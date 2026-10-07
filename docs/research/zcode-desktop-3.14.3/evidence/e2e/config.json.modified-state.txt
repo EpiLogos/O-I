@@ -1,0 +1,87 @@
+{
+  "hooks": {
+    "enabled": true,
+    "events": {
+      "PostToolUse": [
+        {
+          "hooks": [
+            {
+              "command": "aikit hook dispatch zcode PostToolUse",
+              "type": "command"
+            }
+          ]
+        }
+      ],
+      "PreToolUse": [
+        {
+          "hooks": [
+            {
+              "command": "aikit hook dispatch zcode PreToolUse",
+              "type": "command"
+            }
+          ]
+        }
+      ],
+      "SessionStart": [
+        {
+          "hooks": [
+            {
+              "command": "aikit hook dispatch zcode SessionStart",
+              "type": "command"
+            }
+          ]
+        }
+      ],
+      "Stop": [
+        {
+          "hooks": [
+            {
+              "command": "aikit hook dispatch zcode Stop",
+              "type": "command"
+            }
+          ]
+        }
+      ],
+      "UserPromptSubmit": [
+        {
+          "hooks": [
+            {
+              "command": "aikit hook dispatch zcode UserPromptSubmit",
+              "type": "command"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "mcp": {
+    "servers": {
+      "bimba": {
+        "args": [
+          "/Users/admin/Central/Work/epi/bimba-portable/dist/main.js"
+        ],
+        "command": "/opt/homebrew/opt/node@24/bin/node",
+        "env": {
+          "BIMBA_MCP_PERMISSIONS": "bimba:read,bimba:write,bimba:admin",
+          "BIMBA_MCP_PRINCIPAL": "zcode-local-client",
+          "NEO4J_PASSWORD": "bimba",
+          "NEO4J_URI": "bolt://100.92.62.101:7687",
+          "NEO4J_USER": "neo4j"
+        },
+        "protocolVersion": "legacy",
+        "timeoutMs": 30000,
+        "type": "stdio"
+      }
+    }
+  },
+  "plugins": {
+    "enabledPlugins": {
+      "github@zcode-plugins-official": true
+    }
+  },
+  "skills": {
+    "/tmp/zcode-re/a3-ws/.agents/skills/scratch-re-probe/SKILL.md": {
+      "enable": false
+    }
+  }
+}

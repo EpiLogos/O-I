@@ -1,1552 +1,1553 @@
 {
-	"artifact": "arguments-a/roz-a-arguments.journey.json",
-	"family": "arguments-a",
-	"worker": "E2",
-	"date": "2026-09-17",
-	"profile_lineage": [
-		"roz-corpus-base",
-		"family-argument"
-	],
-	"source_revision": {
-		"repo": "EpiLogos/Antykathera-Essay-Work",
-		"commit": "fc59a719",
-		"census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
-		"census_caveat": "receipt sha256 values predate the T23/T24 content repair (see notes)",
-		"records": [
-			{
-				"record_id": "A01",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A01-Subject-God-and-Faithful-Definition.md",
-				"sha256": "43d8d1b647d6d815d6e871087e92bde9deccb0b2a62a70270805aa8fcf24ac41"
-			},
-			{
-				"record_id": "A02",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A02-Copula-Self-Identity-through-Difference.md",
-				"sha256": "68e62bc7f25f8608f46658757b5e6e53c9234df99f4fee3d73f8626118e7559a"
-			},
-			{
-				"record_id": "A03",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A03-Immutable-Gap-Formal-Limit.md",
-				"sha256": "60fb85d54eb368ef76b41c70d80df06faf4eac9d7a99e570f58dd9959ef8a777"
-			},
-			{
-				"record_id": "A04",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A04-Diaphaneity-Contextual-Transparency.md",
-				"sha256": "76087050e472397122aa8854dcbc2f119b2fcb3933c2b2296d32cbf5a542f1a8"
-			},
-			{
-				"record_id": "A05",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A05-Prakasa-Vimarsa.md",
-				"sha256": "5691ddb99686ac2107dc3d8c4b9627e59c20e59026abbf1d1957c4bba5508501"
-			},
-			{
-				"record_id": "A06",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A06-Vak.md",
-				"sha256": "cf8db86c40e8d36ed4337e4e92d7395c375fd927db56ee4275410dbd1faabbe6"
-			},
-			{
-				"record_id": "A07",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A07-Vikalpa-Samkalpa-Script-Frozen-Conditioned-Will.md",
-				"sha256": "1ec9c1d33d06879a9d0e1f2fdfc62e997786729664cbc36fd0d05e23dd8b67d8"
-			},
-			{
-				"record_id": "A08",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A08-Apoha-Constitutive-Exclusion.md",
-				"sha256": "bd93645225d6f26989af451f896cf57dc948be9814ec2a6c0d3dff73f3be3abf"
-			},
-			{
-				"record_id": "A09",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A09-Tattvic-Differential-Field.md",
-				"sha256": "486e4ba1e00bded205d8e170ff42ff9b197b29df3ad2006cb671b74a4bcf5e0c"
-			},
-			{
-				"record_id": "A10",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A10-Advent-of-Zero.md",
-				"sha256": "37c5fa2c734e76024eaa956445b4956e97af9432de20485d4f16f9b940a1feb3"
-			},
-			{
-				"record_id": "A11",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A11-The-Two-Ones-0-One-1-All.md",
-				"sha256": "a2548789600a9b52d80416de0dacb987c472e7e2420cdd1972b450be6e5d9c17"
-			},
-			{
-				"record_id": "A12",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A12-Mono-Poly-One-All-Whole-Many.md",
-				"sha256": "f0101e1c941d9063adff2b9d7939de23ccdf91f17e3b488a1263b4485b19d777"
-			},
-			{
-				"record_id": "A13",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A13-Two-Logics-of-Two-Dia-Syn.md",
-				"sha256": "a37b98507afc71ad019ce26f26465b7ae17bd6dab5c2765e2ba39e4dbd98814d"
-			},
-			{
-				"record_id": "A14",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A14-Computational-Process-Ontology.md",
-				"sha256": "b038b43c66362e26bfa9b0f069384053cc8b1505fb04d201fea1d37a26e2eb85"
-			},
-			{
-				"record_id": "A15",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account.md",
-				"sha256": "d6238163af627a22eefb832df592fee60363d09f77e1f3d09014e0284a9dd6fa"
-			},
-			{
-				"record_id": "A16",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A16-Arche-Topos-as-Differential-Field.md",
-				"sha256": "bda5b8bbb2224fc4231c726c6415c9c1512e6604abb0098f88ee71b9e7d69d31"
-			},
-			{
-				"record_id": "A17",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A17-Toroidal-Circulation-and-the-Arche-Topos.md",
-				"sha256": "f73c25f40a7560b4651ee368532858a45a730635f2a756a1a9e630502ef41420"
-			},
-			{
-				"record_id": "A18",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md",
-				"sha256": "11517bef25bd5ea6ccbaf0e10fea23085d477fd23d5ace40f207b5e942f4c857"
-			},
-			{
-				"record_id": "A19",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A19-Complex-as-Local-Arbitration-Regime.md",
-				"sha256": "9f4b047c0ce635687096d9339fbe6e07aaa156bf19e2fd5511a58be1af4497b3"
-			},
-			{
-				"record_id": "A20",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A20-Image-Valuation-Possession.md",
-				"sha256": "e89d75b1ceba32d33eaa57278257d4fff4fd8bbee4dcccb37690ed9b89b6ad8a"
-			},
-			{
-				"record_id": "A21",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A21-Individuation-Recognition.md",
-				"sha256": "d74bcfac899b1147c9d9a424c7163e7880c9b8fe4e7b8963f6609d0c11958fc3"
-			},
-			{
-				"record_id": "A22",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A22-World-Picture-to-World-Atlas.md",
-				"sha256": "fdd96a1e8130b7f7db41ccabdd9f52955af8fe0ecc68ac80604bc37cadcb74d5"
-			},
-			{
-				"record_id": "A23",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A23-Trust-Faith-and-the-Formal-Limit.md",
-				"sha256": "6620befe8395b0d7892849a963be6ef3c0f704d8800cbcf23633d656c4508bd9"
-			},
-			{
-				"record_id": "A24",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A24-Arbitration-and-the-Usurpation-of-Measure.md",
-				"sha256": "6a59bfa5c289baf9e719a8f980a6d1b9b65c6a7ca73043a66c010f8d8274e7e5"
-			},
-			{
-				"record_id": "A25",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A25-Covenant-Mediating-Office-Source-Authority.md",
-				"sha256": "a4e4b3c36bf6e47b1cee232c01f0f5602265a929b393d025189e59627c6a69b6"
-			},
-			{
-				"record_id": "A26",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A26-Objective-Internality-Mind-as-Worldhood.md",
-				"sha256": "d80829bbe46b9fe7c1192d3b6febb1896c56ae3fe50ccfd47bd7ca9f1934c1d1"
-			},
-			{
-				"record_id": "A27",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A27-Self-and-Other-Unity-without-Possession.md",
-				"sha256": "b5dccd6f1a17d0dfd14d91dffe26f28605eef95dc184906d1f26b32a2e659ae3"
-			},
-			{
-				"record_id": "A28",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A28-Authored-Ground-Positional-Delegation.md",
-				"sha256": "60673f654d632e796ee27e01dd5f063c3936a214e9d186921f88b1eefe7858f1"
-			},
-			{
-				"record_id": "A29",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A29-Power-Delegated-Labour-Return.md",
-				"sha256": "63edfcffb9f59194ccff525e513a5d869e1b069899f4a6cd3ab268fa93a36301"
-			},
-			{
-				"record_id": "A30",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A30-Objective-Co-Internality.md",
-				"sha256": "32c25fa2d680ffd39b1d325f28ab00b1476b4cf2967af2e51fa738f551da0eb7"
-			},
-			{
-				"record_id": "A31",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A31-Deferential-Intelligence.md",
-				"sha256": "0351744b02faa702add8198694c639d1ff75dfcac0d296eb3c36ae9d7d093e26"
-			},
-			{
-				"record_id": "A32",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A32-Reflective-Field-The-Mirror-That-Moves-First.md",
-				"sha256": "680ccb7c690f25876345cda8ee359fd48850f55b6cfbca127643096d38f6bbfb"
-			},
-			{
-				"record_id": "A33",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A33-Epistemic-Cultivation-Operational-Parity.md",
-				"sha256": "21cdf6c161ee578a43ade2e4c18d1add8e4240af3117eaac292a347445dae73f"
-			},
-			{
-				"record_id": "A34",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A34-Idealism-Order-of-Dependence.md",
-				"sha256": "a67481ea059d28940cdf9f573930f67a137e3756e91896a7441e67379744cb0e"
-			},
-			{
-				"record_id": "A35",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation.md",
-				"sha256": "aefa44225c53c11ca5397a6248eb60af8fccb3ed3fc00c35138fef7a747a8770"
-			},
-			{
-				"record_id": "A36",
-				"path": "submission-package/essay/symbolon/episteme/arguments/A36-Advent-of-Integral-Zero.md",
-				"sha256": "b0965598db54d9a536b89a7f29dba55908666659021e13b8516a1bec4a978137"
-			}
-		],
-		"hash_repair": {
-			"date": "2026-09-19",
-			"repaired_records": 36,
-			"cause": "the E2 worker hashed pre-5c22906 content; hashes now computed from the actual bytes at dbf3b17 (verified byte-identical at the working tree), same reconciliation the census receipt needs before T26",
-			"repaired_by": "track-3 corpus vertical session (walk/scenarios/corpus-return-of-zero.mjs verifies bindings against actual bytes)"
-		}
-	},
-	"pointcloud_revision": "a39cf5f",
-	"journey": {
-		"id": "roz-a-arguments",
-		"name": "Return of Zero — Arguments A01–A36",
-		"scenes": 36,
-		"validated": "node tools/validate.mjs — VALID (oi.journey v1, schema validateJourney)"
-	},
-	"scenes": [
-		{
-			"scene_id": "a01",
-			"source_ref": "A01",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A01-Subject-God-and-Faithful-Definition.md",
-			"sha256_census_receipt": "e7d88ae66c41e30cf10f0141a76c3896003dafbe237e54495e17542fdf526ec8",
-			"sha256_working_dbf3b17": "43d8d1b647d6d815d6e871087e92bde9deccb0b2a62a70270805aa8fcf24ac41",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A01p — A01′ — Faithful Definition of the Agent",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"00-integral-threshold",
-					"01-differentiating-mind",
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M01",
-					"M02",
-					"M03",
-					"M07",
-					"M47"
-				]
-			},
-			"declared_record_relations": [
-				"A11",
-				"A18",
-				"A08",
-				"A03",
-				"A20",
-				"A19",
-				"A24",
-				"A04",
-				"A06",
-				"A05",
-				"A02",
-				"A23",
-				"A25",
-				"A27",
-				"A26",
-				"A34",
-				"A36"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a02",
-			"source_ref": "A02",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A02-Copula-Self-Identity-through-Difference.md",
-			"sha256_census_receipt": "6b0d27da3d93277b10cffb8511e8e98c8d3231b92fd10eaf53850c1b62d7541b",
-			"sha256_working_dbf3b17": "68e62bc7f25f8608f46658757b5e6e53c9234df99f4fee3d73f8626118e7559a",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A02p — A02′ — Continuity as Maintained Identification",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"00-integral-threshold",
-					"03-two-logics"
-				],
-				"movements": [
-					"M02",
-					"M19"
-				]
-			},
-			"declared_record_relations": [
-				"A01",
-				"A08",
-				"A03",
-				"A11",
-				"A12",
-				"A13",
-				"A27",
-				"A21",
-				"A34"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a03",
-			"source_ref": "A03",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A03-Immutable-Gap-Formal-Limit.md",
-			"sha256_census_receipt": "566d991665331b8889e416ccb6fc815f402b85e75aca998f06b575de65d009a0",
-			"sha256_working_dbf3b17": "60fb85d54eb368ef76b41c70d80df06faf4eac9d7a99e570f58dd9959ef8a777",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A03p — A03′ — The Limit of Self-Surfacing",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"00-integral-threshold",
-					"03-two-logics"
-				],
-				"movements": [
-					"M01",
-					"M02",
-					"M03",
-					"M04",
-					"M19"
-				]
-			},
-			"declared_record_relations": [
-				"A01",
-				"A02",
-				"A10",
-				"A18",
-				"A04",
-				"A23",
-				"A36",
-				"A33",
-				"A16"
-			],
-			"declared_dependency_lines": [
-				"**Concept dependencies:** C03 Determination, C04 Formal Limit, C05 Immutable Gap, C08 Context / Context Frame, C09 Diaphaneity, C21 Living Symbol / Idol, C48 Trust / Faith under Formal Limit, C52 Dimensional Reframing at Zero and Infinity, C64 Paradox.",
-				"**Consequences:** A04, A10, A18, A23, A33 and A36.",
-				"**P1 Movement consumers:** 01 — Question Before the Mechanism; 02 — Define the Subject; 03 — Definition: Cut, Gift, Danger; 04 — Formal-Limit Genealogy; 19 — Difference Cannot Be Escaped. These are consumption declarations, not section rewrites."
-			]
-		},
-		{
-			"scene_id": "a04",
-			"source_ref": "A04",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A04-Diaphaneity-Contextual-Transparency.md",
-			"sha256_census_receipt": "45d2026a0122a91cdbde37c1907a633ea4fff4c46c365cb71db2662e8e544373",
-			"sha256_working_dbf3b17": "76087050e472397122aa8854dcbc2f119b2fcb3933c2b2296d32cbf5a542f1a8",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A04p — A04′ — The Mask as Document",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"00-integral-threshold",
-					"05-psychoid-flowering"
-				],
-				"movements": [
-					"M01",
-					"M05",
-					"M35"
-				]
-			},
-			"declared_record_relations": [
-				"A03",
-				"A24",
-				"A25",
-				"A35",
-				"A18",
-				"A22",
-				"A26",
-				"A31",
-				"A33",
-				"A16"
-			],
-			"declared_dependency_lines": [
-				"**Concept dependencies:** C07 Conditions of Worldhood, C08 Context / Context Frame, C09 Diaphaneity, C10 Mediation / Pramāṇa, C40 Model Internality / Judgment Field, C41 Objective Internality.",
-				"**Consequences:** A16 Arche-Topos, A22 World-Picture → World-Atlas, A26 Objective Internality, A31 Deferential Intelligence and A33 Epistemic Cultivation.",
-				"**P1 Movement consumers:** 01 — Question Before the Mechanism; 05 — Gebser / Diaphaneity; 35 — Gebser / Apollo–Dionysus. These declare consumption without rewriting the movements."
-			]
-		},
-		{
-			"scene_id": "a05",
-			"source_ref": "A05",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A05-Prakasa-Vimarsa.md",
-			"sha256_census_receipt": "022a3f817ac10439ff88a0288f1610ba9811bdd50df3bca07974d13c8659440d",
-			"sha256_working_dbf3b17": "5691ddb99686ac2107dc3d8c4b9627e59c20e59026abbf1d1957c4bba5508501",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A05p — A05′ — Lights, Camera, Action",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"01-differentiating-mind",
-					"02-return-of-zero",
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M07",
-					"M13",
-					"M48"
-				]
-			},
-			"declared_record_relations": [
-				"A03",
-				"A04",
-				"A06",
-				"A09",
-				"A18",
-				"A32",
-				"A14",
-				"A26"
-			],
-			"declared_dependency_lines": [
-				"**Concept dependencies:** C01 Subject, C10 Mediation / Pramāṇa, C13 Prakāśa–Vimarśa, C19 Recognition, C43 Computational Vimarśa.",
-				"**Consequences:** A06 Vāk, A09 Tattvic Differential Field, A14 Computational Process Ontology, A26 Objective Internality and A32 Reflective Field.",
-				"**Movement consumers:** the live provenance carrier explicitly supports Movements 07, 13 and 48; the canonical map carries additional tattvic and articulation returns without T09 rewriting them."
-			]
-		},
-		{
-			"scene_id": "a06",
-			"source_ref": "A06",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A06-Vak.md",
-			"sha256_census_receipt": "9573209edc0511e35e8671d8392af6d7b51276f7647a58a045503f59587bd58b",
-			"sha256_working_dbf3b17": "cf8db86c40e8d36ed4337e4e92d7395c375fd927db56ee4275410dbd1faabbe6",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A06p — A06′ — Articulation as Ontological Descent",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"04-mathematical-substrate",
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M29",
-					"M30",
-					"M44",
-					"M38",
-					"M42"
-				]
-			},
-			"declared_record_relations": [
-				"A04",
-				"A02",
-				"A07",
-				"A01",
-				"A05",
-				"A35",
-				"A14",
-				"A18"
-			],
-			"declared_dependency_lines": [
-				"**Concept dependencies:** C10 Mediation / Pramāṇa, C13 Prakāśa–Vimarśa, C17 Vikalpa–Saṃkalpa, C41 Objective Internality, C43 Computational Vimarśa, C51 Logos / Epi-Logos.",
-				"**Consequences:** A07, A14, A18, A35; S1 Actuation and S5 Quaternal Logic consume the articulation at the product culmination.",
-				"**Movement consumers:** the live Vāk carrier explicitly supports Movements 29, 30 and 44; the restored product culmination adds M38 Actuation and M42 Quaternal Logic as explicit philosophical returns. Other language/return consumers remain routed in the canonical quilt."
-			]
-		},
-		{
-			"scene_id": "a07",
-			"source_ref": "A07",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A07-Vikalpa-Samkalpa-Script-Frozen-Conditioned-Will.md",
-			"sha256_census_receipt": "9bd3a9428981330817d4c56ad73054004c8fa955fd0e0d371dedc9326b5345bc",
-			"sha256_working_dbf3b17": "1ec9c1d33d06879a9d0e1f2fdfc62e997786729664cbc36fd0d05e23dd8b67d8",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A07p — A07′ — Purpose That Survives the Metric",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"01-differentiating-mind"
-				],
-				"movements": [
-					"M09"
-				]
-			},
-			"declared_record_relations": [
-				"A05",
-				"A09",
-				"A14",
-				"A26",
-				"A06",
-				"A08",
-				"A19",
-				"A31",
-				"A24",
-				"A33"
-			],
-			"declared_dependency_lines": [
-				"**Concept dependencies:** C12 Script / Frozen Conditioned Will, C14 Māyā / Operative Measure, C15 Paśu, C16 Antaḥkaraṇa, C17 Vikalpa–Saṃkalpa, C44 Prompt Thrownness.",
-				"**Consequences:** A08, A09, A19, A24, A26, A31 and A33.",
-				"**Movement consumers:** tattvic, prompt-thrownness and hidden-evaluator sequences in the canonical quilt; exact per-Movement backlinks are a Depth Restoration item. No section propagation occurs here."
-			]
-		},
-		{
-			"scene_id": "a08",
-			"source_ref": "A08",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A08-Apoha-Constitutive-Exclusion.md",
-			"sha256_census_receipt": "147076134423dfba93ff6ecbae9a7f45efbeb495f078f0a0023c69052f0fdbb8",
-			"sha256_working_dbf3b17": "bd93645225d6f26989af451f896cf57dc948be9814ec2a6c0d3dff73f3be3abf",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A08p — A08′ — Exclusion That Remembers",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"00-integral-threshold",
-					"01-differentiating-mind",
-					"03-two-logics"
-				],
-				"movements": [
-					"M03",
-					"M10",
-					"M19"
-				]
-			},
-			"declared_record_relations": [
-				"A02",
-				"A13",
-				"A05",
-				"A07",
-				"A03",
-				"A18",
-				"A14",
-				"A33",
-				"A09",
-				"A12"
-			],
-			"declared_dependency_lines": [
-				"**Concept dependencies:** C03 Determination, C18 Apoha, C20 Arche-Topos, C23 Severance, C40 Model Internality / Judgment Field, C45 Operational Parity.",
-				"**Consequences:** A09 Tattvic Field, A12 Mono/Poly, A13 Dia/Syn, A14 Computational Process Ontology, A33 Epistemic Cultivation.",
-				"**Movement consumers:** the definition/difference, tattvic and technical-evaluation movements routed by the canonical map; exact lists remain depth debt rather than invented here."
-			]
-		},
-		{
-			"scene_id": "a09",
-			"source_ref": "A09",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A09-Tattvic-Differential-Field.md",
-			"sha256_census_receipt": "dc05bdc7b317393646fa728f59af7002e3993d53bd456173d5ad74181fc383c3",
-			"sha256_working_dbf3b17": "486e4ba1e00bded205d8e170ff42ff9b197b29df3ad2006cb671b74a4bcf5e0c",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A09p — A09′ — The Stack as Descent",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"01-differentiating-mind"
-				],
-				"movements": [
-					"M08",
-					"M09",
-					"M11"
-				]
-			},
-			"declared_record_relations": [
-				"A05",
-				"A26",
-				"A14",
-				"A16",
-				"A19",
-				"A21",
-				"A35"
-			],
-			"declared_dependency_lines": [
-				"**Concept dependencies:** C13 Prakāśa–Vimarśa, C14 Māyā / Operative Measure, C15 Paśu, C16 Antaḥkaraṇa, C17 Vikalpa–Saṃkalpa, C18 Apoha, C19 Recognition, C41 Objective Internality.",
-				"**Consequences:** A14, A16, A19, A21, A26 and A35; S0–S5 receive the finite-world genealogy at the Objective Internality culmination.",
-				"**Movement consumers:** the tattvic descent/recognition and later technical worldhood movements in the canonical quilt; the live carrier is itself a developed cross-Movement support surface. M37–M42 now receive its finite-world consequence through the product records rather than by one-to-one mechanism matching."
-			]
-		},
-		{
-			"scene_id": "a10",
-			"source_ref": "A10",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A10-Advent-of-Zero.md",
-			"sha256_census_receipt": "70bd61eae087ac272284d4b1361ac1c1a5e2a6a7def00fdc6346a28939599a96",
-			"sha256_working_dbf3b17": "37c5fa2c734e76024eaa956445b4956e97af9432de20485d4f16f9b940a1feb3",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A10p — A10′ — The Uncounted Enters the Account",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"00-integral-threshold",
-					"02-return-of-zero",
-					"04-mathematical-substrate"
-				],
-				"movements": [
-					"M06",
-					"M13",
-					"M14",
-					"M15",
-					"M16",
-					"M17",
-					"M28"
-				]
-			},
-			"declared_record_relations": [
-				"A03",
-				"A04",
-				"A09",
-				"A36",
-				"A11",
-				"A15",
-				"A18"
-			],
-			"declared_dependency_lines": [
-				"**Concept dependencies:** C03 Determination, C04 Formal Limit, C49 Two Ones, C52 Dimensional Reframing at Zero and Infinity. There is no standalone canonical “Zero” Concept.",
-				"**Consequences:** A11, A15, A18 and finally A36.",
-				"**Movement consumers:** the zero-advent and zero-role-changing movements, especially the current carrier's routes into the early formal-limit braid and Movements 24–25 where zero changes role; T09 records but does not rewrite them."
-			]
-		},
-		{
-			"scene_id": "a11",
-			"source_ref": "A11",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A11-The-Two-Ones-0-One-1-All.md",
-			"sha256_census_receipt": "5fad3792b2fbc67340ea94eb955465f4f56a452eb8398d70372c01eece870e74",
-			"sha256_working_dbf3b17": "a2548789600a9b52d80416de0dacb987c472e7e2420cdd1972b450be6e5d9c17",
-			"claim_status": "Derived",
-			"relations": {
-				"other_face": "A11p — A11′ — One Field, Two Faces",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"00-integral-threshold",
-					"02-return-of-zero",
-					"03-two-logics",
-					"04-mathematical-substrate"
-				],
-				"movements": [
-					"M06",
-					"M15",
-					"M18",
-					"M24",
-					"M26"
-				]
-			},
-			"declared_record_relations": [
-				"A23",
-				"A10",
-				"A12",
-				"A13",
-				"A18",
-				"A16",
-				"A34",
-				"A36"
-			],
-			"declared_dependency_lines": [
-				"**Concept dependencies:** C11 Quaternal Logic, C49 The Two Ones, C50 Dia/Syn, C52 Dimensional Reframing.",
-				"**Consequences:** A12, A13, A16–A18, A34 and A36.",
-				"**Movement consumers:** the live carrier explicitly routes through the zero-role and eight-determination sequence (Movements 24–25) and supports the larger theorem braid."
-			]
-		},
-		{
-			"scene_id": "a12",
-			"source_ref": "A12",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A12-Mono-Poly-One-All-Whole-Many.md",
-			"sha256_census_receipt": "d8108bbef31d46aee14af55f0b2780dcd2debf651358fea923954417c7cd15fa",
-			"sha256_working_dbf3b17": "f0101e1c941d9063adff2b9d7939de23ccdf91f17e3b488a1263b4485b19d777",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A12p — A12′ — Against Monoculture",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"03-two-logics",
-					"04-mathematical-substrate",
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M24",
-					"M26",
-					"M46"
-				]
-			},
-			"declared_record_relations": [
-				"A08",
-				"A05",
-				"A09",
-				"A23",
-				"A30",
-				"A24",
-				"A29",
-				"A35",
-				"A13",
-				"A18",
-				"A27",
-				"A34"
-			],
-			"declared_dependency_lines": [
-				"**Concept dependencies:** C18 Apoha, C26 Monoisation / Counter-Generation, C49 Two Ones, C50 Dia/Syn, C54 Commons / Non-Monopoly.",
-				"**Consequences:** A13–A18, A27–A30, A34–A35.",
-				"**Movement consumers:** the live `11-mono-poly-whole-and-many.md` braids the relation through §0, §2, §4, §5 and §5→0; exact Movement numbers are inherited by the quilt map and restored later without propagation here."
-			]
-		},
-		{
-			"scene_id": "a13",
-			"source_ref": "A13",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A13-Two-Logics-of-Two-Dia-Syn.md",
-			"sha256_census_receipt": "35a937a6ff1c581708e938af47bd36903c94a5a0c2f5976751ced07af71a2fc8",
-			"sha256_working_dbf3b17": "a37b98507afc71ad019ce26f26465b7ae17bd6dab5c2765e2ba39e4dbd98814d",
-			"claim_status": "Derived",
-			"relations": {
-				"other_face": "A13p — A13′ — The Cut and the Gathering",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"03-two-logics",
-					"04-mathematical-substrate"
-				],
-				"movements": [
-					"M19",
-					"M20",
-					"M21",
-					"M22",
-					"M24",
-					"M26"
-				]
-			},
-			"declared_record_relations": [
-				"A11",
-				"A12",
-				"A19",
-				"A24",
-				"A14",
-				"A31",
-				"A18",
-				"A25",
-				"A33"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a14",
-			"source_ref": "A14",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A14-Computational-Process-Ontology.md",
-			"sha256_census_receipt": "6d71cda9fd1a03cce0d22b07ce6ab1d67a0a569e80bb246d740edf4b00ee8972",
-			"sha256_working_dbf3b17": "b038b43c66362e26bfa9b0f069384053cc8b1505fb04d201fea1d37a26e2eb85",
-			"claim_status": "Derived",
-			"relations": {
-				"other_face": "A14p — A14′ — Code as the Age's Logos",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"02-return-of-zero",
-					"04-mathematical-substrate",
-					"05-psychoid-flowering"
-				],
-				"movements": [
-					"M15",
-					"M26",
-					"M27",
-					"M36"
-				]
-			},
-			"declared_record_relations": [
-				"A13",
-				"A26",
-				"A29",
-				"A33",
-				"A15",
-				"A18",
-				"A35"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a15",
-			"source_ref": "A15",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account.md",
-			"sha256_census_receipt": "b749243203623008668ffc3e4de86e440e240a9365f7636a21abb50409568ccc",
-			"sha256_working_dbf3b17": "d6238163af627a22eefb832df592fee60363d09f77e1f3d09014e0284a9dd6fa",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A15p — A15′ — The Measure Constitutes",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"02-return-of-zero",
-					"03-two-logics",
-					"04-mathematical-substrate",
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M13",
-					"M18",
-					"M20",
-					"M29",
-					"M45"
-				]
-			},
-			"declared_record_relations": [
-				"A14",
-				"A24",
-				"A29",
-				"A33",
-				"A16",
-				"A18",
-				"A25"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a16",
-			"source_ref": "A16",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A16-Arche-Topos-as-Differential-Field.md",
-			"sha256_census_receipt": "a26b070d7710ef14ee65f324c3bae9c504cbe45763917245073322a4ed67c38f",
-			"sha256_working_dbf3b17": "bda5b8bbb2224fc4231c726c6415c9c1512e6604abb0098f88ee71b9e7d69d31",
-			"claim_status": "Derived",
-			"relations": {
-				"other_face": "A16p — A16′ — No View from Nowhere",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"04-mathematical-substrate",
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M29",
-					"M30",
-					"M45"
-				]
-			},
-			"declared_record_relations": [
-				"A13",
-				"A15",
-				"A14",
-				"A26",
-				"A19",
-				"A17",
-				"A18",
-				"A32"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a17",
-			"source_ref": "A17",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A17-Toroidal-Circulation-and-the-Arche-Topos.md",
-			"sha256_census_receipt": "7e7d78c817f675f2514d5c16cb69ddaf84be72e5c53ffaf6b0fe1f804e819999",
-			"sha256_working_dbf3b17": "f73c25f40a7560b4651ee368532858a45a730635f2a756a1a9e630502ef41420",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A17p — A17′ — Traversal with Return",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"04-mathematical-substrate",
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M28",
-					"M29",
-					"M30",
-					"M45"
-				]
-			},
-			"declared_record_relations": [
-				"A16",
-				"A13",
-				"A15",
-				"A18",
-				"A36",
-				"A32"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a18",
-			"source_ref": "A18",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md",
-			"sha256_census_receipt": "1cd68de4c18c6125f4d5eae7743fde7eeb203f7c33aa24eae247726f3b7fd0f2",
-			"sha256_working_dbf3b17": "11517bef25bd5ea6ccbaf0e10fea23085d477fd23d5ace40f207b5e942f4c857",
-			"claim_status": "Derived",
-			"relations": {
-				"other_face": "A18p — A18′ — The Traversal Run in Code",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"02-return-of-zero",
-					"03-two-logics",
-					"04-mathematical-substrate",
-					"05-psychoid-flowering"
-				],
-				"movements": [
-					"M16",
-					"M17",
-					"M21",
-					"M22",
-					"M24",
-					"M25",
-					"M26",
-					"M27",
-					"M30",
-					"M31",
-					"M33",
-					"M34"
-				]
-			},
-			"declared_record_relations": [
-				"A11",
-				"A12",
-				"A13",
-				"A14",
-				"A17",
-				"A24",
-				"A36",
-				"A19",
-				"A25",
-				"A32"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a19",
-			"source_ref": "A19",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A19-Complex-as-Local-Arbitration-Regime.md",
-			"sha256_census_receipt": "3c6196436fd7061d02d0bdd197183e22dd91458a31be91950f586b3066dad7a5",
-			"sha256_working_dbf3b17": "9f4b047c0ce635687096d9339fbe6e07aaa156bf19e2fd5511a58be1af4497b3",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A19p — A19′ — The Local Regime",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"03-two-logics",
-					"04-mathematical-substrate",
-					"05-psychoid-flowering"
-				],
-				"movements": [
-					"M23",
-					"M27",
-					"M31"
-				]
-			},
-			"declared_record_relations": [
-				"A07",
-				"A08",
-				"A18",
-				"A21",
-				"A24",
-				"A20"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a20",
-			"source_ref": "A20",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A20-Image-Valuation-Possession.md",
-			"sha256_census_receipt": "78fc35cd345aa0d214a0c6e661cd22e9a2a31f89576757e7c68eb6f8b3c61df4",
-			"sha256_working_dbf3b17": "e89d75b1ceba32d33eaa57278257d4fff4fd8bbee4dcccb37690ed9b89b6ad8a",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A20p — A20′ — The Image That Closes the Loop",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"03-two-logics",
-					"05-psychoid-flowering"
-				],
-				"movements": [
-					"M22",
-					"M23",
-					"M31",
-					"M34",
-					"M35"
-				]
-			},
-			"declared_record_relations": [
-				"A19",
-				"A27",
-				"A31",
-				"A21"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a21",
-			"source_ref": "A21",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A21-Individuation-Recognition.md",
-			"sha256_census_receipt": "44769154f862e0260f726db6338d4b816783c92a2f84fba17287773a818e23e3",
-			"sha256_working_dbf3b17": "d74bcfac899b1147c9d9a424c7163e7880c9b8fe4e7b8963f6609d0c11958fc3",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A21p — A21′ — Individuation with Recognition",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"03-two-logics",
-					"05-psychoid-flowering"
-				],
-				"movements": [
-					"M23",
-					"M32",
-					"M33",
-					"M35"
-				]
-			},
-			"declared_record_relations": [
-				"A19",
-				"A20",
-				"A09",
-				"A35",
-				"A36",
-				"A27"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a22",
-			"source_ref": "A22",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A22-World-Picture-to-World-Atlas.md",
-			"sha256_census_receipt": "36a857ec953ad1040bc1a9c5ee0f88a2c45bd40e9ccc056702215591bde4b373",
-			"sha256_working_dbf3b17": "fdd96a1e8130b7f7db41ccabdd9f52955af8fe0ecc68ac80604bc37cadcb74d5",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A22p — A22′ — The Atlas, Not the Camera",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"00-integral-threshold"
-				],
-				"movements": [
-					"M05"
-				]
-			},
-			"declared_record_relations": [
-				"A04",
-				"A16",
-				"A20",
-				"A26",
-				"A31",
-				"A33"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a23",
-			"source_ref": "A23",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A23-Trust-Faith-and-the-Formal-Limit.md",
-			"sha256_census_receipt": "aeb6948cbdd93d99c4054641bcdfcb4620a047ac0460805b3ac33becab5724e8",
-			"sha256_working_dbf3b17": "6620befe8395b0d7892849a963be6ef3c0f704d8800cbcf23633d656c4508bd9",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A23p — A23′ — Trust under Unpossessable Interiors",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"00-integral-threshold",
-					"02-return-of-zero",
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M04",
-					"M06",
-					"M14",
-					"M17",
-					"M18",
-					"M46"
-				]
-			},
-			"declared_record_relations": [
-				"A03",
-				"A15",
-				"A24",
-				"A25",
-				"A31",
-				"A01"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a24",
-			"source_ref": "A24",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A24-Arbitration-and-the-Usurpation-of-Measure.md",
-			"sha256_census_receipt": "6227e28c2ef52533504dff1dfdde08c16bb2459208fd73cc68d18798c7fa0e75",
-			"sha256_working_dbf3b17": "6a59bfa5c289baf9e719a8f980a6d1b9b65c6a7ca73043a66c010f8d8274e7e5",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A24p — A24′ — The Usurping Criterion",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"00-integral-threshold",
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M03",
-					"M43",
-					"M46"
-				]
-			},
-			"declared_record_relations": [
-				"A15",
-				"A19",
-				"A23",
-				"A20",
-				"A31",
-				"A33",
-				"A21",
-				"A25",
-				"A29"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a25",
-			"source_ref": "A25",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A25-Covenant-Mediating-Office-Source-Authority.md",
-			"sha256_census_receipt": "23bc59d5134fb5fe48a1dbbd9d968cfdcff433e00a0c2922d66848607e689350",
-			"sha256_working_dbf3b17": "a4e4b3c36bf6e47b1cee232c01f0f5602265a929b393d025189e59627c6a69b6",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A25p — A25′ — Covenant Architecture",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M43",
-					"M46"
-				]
-			},
-			"declared_record_relations": [
-				"A24",
-				"A23",
-				"A01",
-				"A29",
-				"A28",
-				"A31",
-				"A30",
-				"A35"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a26",
-			"source_ref": "A26",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A26-Objective-Internality-Mind-as-Worldhood.md",
-			"sha256_census_receipt": "e38289d5d513c846a17453214a6faa2c300ee95f642070607c2b375834198275",
-			"sha256_working_dbf3b17": "d80829bbe46b9fe7c1192d3b6febb1896c56ae3fe50ccfd47bd7ca9f1934c1d1",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A26p — A26′ — The Essay Inside the Film",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"00-integral-threshold",
-					"01-differentiating-mind",
-					"05-psychoid-flowering",
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M01",
-					"M05",
-					"M07",
-					"M08",
-					"M12",
-					"M36",
-					"M47"
-				]
-			},
-			"declared_record_relations": [
-				"A22",
-				"A25",
-				"A28",
-				"A30",
-				"A07",
-				"A27",
-				"A31"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a27",
-			"source_ref": "A27",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A27-Self-and-Other-Unity-without-Possession.md",
-			"sha256_census_receipt": "772c8375bd87d1153f21d32e036e9fec5f62e75f7c21b686ba647e5954295ee6",
-			"sha256_working_dbf3b17": "b5dccd6f1a17d0dfd14d91dffe26f28605eef95dc184906d1f26b32a2e659ae3",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A27p — A27′ — Encounter over Sovereignty",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M47"
-				]
-			},
-			"declared_record_relations": [
-				"A20",
-				"A22",
-				"A26",
-				"A21",
-				"A31",
-				"A30",
-				"A35"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a28",
-			"source_ref": "A28",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A28-Authored-Ground-Positional-Delegation.md",
-			"sha256_census_receipt": "0741739318f6956ff22e98a25c3879a9455ba196059e6df883c92a3bd2c9a637",
-			"sha256_working_dbf3b17": "60673f654d632e796ee27e01dd5f063c3936a214e9d186921f88b1eefe7858f1",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A28p — A28′ — The Authored Session",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"05-psychoid-flowering"
-				],
-				"movements": [
-					"M36"
-				]
-			},
-			"declared_record_relations": [
-				"A25",
-				"A26",
-				"A27",
-				"A29",
-				"A31",
-				"A30",
-				"A33"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a29",
-			"source_ref": "A29",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A29-Power-Delegated-Labour-Return.md",
-			"sha256_census_receipt": "53ca7dc586138670088228eeba3cb1ff623abf263050b9eacce816d768e52d03",
-			"sha256_working_dbf3b17": "63edfcffb9f59194ccff525e513a5d869e1b069899f4a6cd3ab268fa93a36301",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A29p — A29′ — Return or Extraction",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M43",
-					"M46"
-				]
-			},
-			"declared_record_relations": [
-				"A25",
-				"A28",
-				"A24",
-				"A30",
-				"A33",
-				"A35"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a30",
-			"source_ref": "A30",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A30-Objective-Co-Internality.md",
-			"sha256_census_receipt": "298f480eecc277526585b14ad22895a1401eb16c87a7baeec554eac11aa3de5d",
-			"sha256_working_dbf3b17": "32c25fa2d680ffd39b1d325f28ab00b1476b4cf2967af2e51fa738f551da0eb7",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A30p — A30′ — Shared Worlds, Unmerged",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M44",
-					"M46",
-					"M48"
-				]
-			},
-			"declared_record_relations": [
-				"A26",
-				"A27",
-				"A29",
-				"A31",
-				"A12",
-				"A33",
-				"A32",
-				"A35"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a31",
-			"source_ref": "A31",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A31-Deferential-Intelligence.md",
-			"sha256_census_receipt": "6bfb6dc3b7ec23899a24d45472fb93e3f65e1f1375f2f67ba2a1939ac98696af",
-			"sha256_working_dbf3b17": "0351744b02faa702add8198694c639d1ff75dfcac0d296eb3c36ae9d7d093e26",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A31p — A31′ — Deference as Co-Evolutionary Alignment",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M48"
-				]
-			},
-			"declared_record_relations": [
-				"A27",
-				"A30",
-				"A28",
-				"A33",
-				"A32",
-				"A35",
-				"A23"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a32",
-			"source_ref": "A32",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A32-Reflective-Field-The-Mirror-That-Moves-First.md",
-			"sha256_census_receipt": "304a536ec000b2c9c1fd00547b4e1a419435fcd95a741a5e30c226c6e901288f",
-			"sha256_working_dbf3b17": "680ccb7c690f25876345cda8ee359fd48850f55b6cfbca127643096d38f6bbfb",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A32p — A32′ — The Mirror Is a Film",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M44",
-					"M48"
-				]
-			},
-			"declared_record_relations": [
-				"A30",
-				"A31",
-				"A34",
-				"A29",
-				"A33",
-				"A35",
-				"A36"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a33",
-			"source_ref": "A33",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A33-Epistemic-Cultivation-Operational-Parity.md",
-			"sha256_census_receipt": "3dd86a0d84b54b7854844b5e31a18824038634167817bb4dac7610bf67dcf928",
-			"sha256_working_dbf3b17": "21cdf6c161ee578a43ade2e4c18d1add8e4240af3117eaac292a347445dae73f",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A33p — A33′ — Parity",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"05-psychoid-flowering",
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M36",
-					"M44",
-					"M48"
-				]
-			},
-			"declared_record_relations": [
-				"A31",
-				"A32",
-				"A14",
-				"A27",
-				"A28",
-				"A30",
-				"A35"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a34",
-			"source_ref": "A34",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A34-Idealism-Order-of-Dependence.md",
-			"sha256_census_receipt": "02d9ed7be5b0658868469162bfbde035d7842e404a1b52ece2e7de274b2d3680",
-			"sha256_working_dbf3b17": "a67481ea059d28940cdf9f573930f67a137e3756e91896a7441e67379744cb0e",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A34p — A34′ — The Direction of Dependence",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"00-integral-threshold",
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M04",
-					"M47",
-					"M48"
-				]
-			},
-			"declared_record_relations": [
-				"A33",
-				"A01",
-				"A04",
-				"A26",
-				"A32",
-				"A27",
-				"A35",
-				"A36"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a35",
-			"source_ref": "A35",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation.md",
-			"sha256_census_receipt": "145922ab29e6cf76526c6c98f472d3bd41934726bb8fece691599d6d26d5e845",
-			"sha256_working_dbf3b17": "aefa44225c53c11ca5397a6248eb60af8fccb3ed3fc00c35138fef7a747a8770",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A35p — A35′ — The Commons Behind the System",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"05-psychoid-flowering",
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M35",
-					"M43",
-					"M45",
-					"M48"
-				]
-			},
-			"declared_record_relations": [
-				"A34",
-				"A23",
-				"A27",
-				"A31",
-				"A29",
-				"A32",
-				"A36"
-			],
-			"declared_dependency_lines": []
-		},
-		{
-			"scene_id": "a36",
-			"source_ref": "A36",
-			"source_path": "submission-package/essay/symbolon/episteme/arguments/A36-Advent-of-Integral-Zero.md",
-			"sha256_census_receipt": "6323457b71a8e30494b05a189b2d6ce7f0837d05e7a922b74dc85681634cfbf4",
-			"sha256_working_dbf3b17": "b0965598db54d9a536b89a7f29dba55908666659021e13b8516a1bec4a978137",
-			"claim_status": "Argued",
-			"relations": {
-				"other_face": "A36p — A36′ — Integral Zero of the Hybrid Society",
-				"shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
-				"rooms": [
-					"07-instrument-returns"
-				],
-				"movements": [
-					"M48"
-				]
-			},
-			"declared_record_relations": [
-				"A10",
-				"A18",
-				"A15",
-				"A17",
-				"A32",
-				"A35",
-				"A01",
-				"A03"
-			],
-			"declared_dependency_lines": []
-		}
-	],
-	"assets": [
-		{
-			"kind": "glyph",
-			"ref": "inline entity text sources (the records' own notation tokens; see notes)",
-			"provenance": "authored"
-		}
-	],
-	"capture": "arguments-a/roz-a-arguments.cover.png",
-	"capture_detail": "final cover via tools/capture.mjs at authored params (count 62000); draft inspection of all 36 scenes at count 8000 via the scratch setScene driver (see notes)",
-	"status": "reviewed",
-	"notes": [
-		"Grammar: one governing formation per record carrying its declared operation; the record's own load-bearing notation appears as text sources only where the record states it (A06 speech descent, A13 '/ = −/−', '(−1)/(+1)', '(0/1)/(1/0)', A14 process words, A18 eight-determination traversal, A21 'x→X→x', A34 order of dependence, A14′ 'ℝ²/ℤ²', A36′ 'AGI → AHI').",
-		"Status-as-data: kicker carries '<record id> · <CLAIM_STATUS>'; palette accent encodes status (Argued/Derived/Offered) — presentation policy recorded in the family profiles, never a semantic claim.",
-		"CENSUS RECONCILIATION FINDING (returned to E0): every sha256 in census receipt T25-current-census-acceptance.json for these 72 records was computed at commit 82446f6 (T22) and no longer matches the files at the pinned revision dbf3b17, where content changed at 5c22906 (T23/T24 repair). Bindings therefore carry both hashes: sha256_census_receipt (as the packet instructs) and sha256_working_dbf3b17 (verified on disk). Record ids, canonical homes and register/type in the census match.",
-		"SHARED TOOL DEFECT (returned to Point-Cloud-Demo #6): tools/capture.mjs --all-scenes calls window.__FIELD_STUDIES__.openScene(...), which no longer exists in the presentation build (current API: setScene(index)); switching is a silent no-op and all-scenes captures drift on the journey autoplay clock (verified by probe: hasOpenScene=false). Draft per-scene captures for this pass were made with a scratch driver (/tmp) using the same server + window.__JOURNEY__ injection path and setScene + sceneIndex polling; final covers used tools/capture.mjs itself (first scene, which is faithful).",
-		"Craft: entity sequences were lengthened (holds 3.4–5.2s) after draft inspection showed stills catching transition smears; word-carrying scenes (A06/A14/A34) run quieter fields (lower speed/turbulence) so letterforms hold. Residual: a still of a live sequence can catch a morph; in motion the operation reads.",
-		"Room routing: argument→room/movement refs merged from the rooms' P1-CANONICAL-ALIGNMENT.md files and movement consumers declared inside the record bodies (A05: M07·M13·M48; A06: M29·M30·M44 + M38·M42 philosophical returns); each source is per-record in the scenes array.",
-		"E0 acceptance repair: relation-block overlap fixed on a01 (cover) and a30; relations now wrap in a dedicated 290px left-margin layer on all 36 scenes.",
-		"Enrichment moves 2026-10-06 (per scene, what changes and why): a01 cage→window→frame sequence on the window-frame: the record's own image — a definite frame that discloses what it cannot contain; repel/pulse pointer holds the frame's boundary; scale automation breathes the frame (definiteness alive, not rigid). a02 is/= steps with micro-shifts on the copula: identification across altered presentation; attract/implode gathers the two terms the copula holds together; relational orbital ties the discs. a03 0→Ø→0 steps: representation crossing the zero-space it cannot fill; the returning 0 shrinks (the gap recurs through every gain); repel with wider radius keeps the limit. a04 quiet scene — viewer/world squares in slow orbital relation, stillness pointer (strength 0.5): diaphaneity is achieved readability, not manipulation. a05 ring→disc→ring on Vimarśa: appearing taking up its own activity (reflexive form); resonance on (180 Hz) as luminous appearing; attract/pulse low. a06 THE 3D SCENE — Vāk speech descent: z is the depth of articulation, Parā Vāk nearest the viewer (source-side), Vaikharī deepest (gross utterance); step positions descend through z; depthPerspective+occlusion+tint carry the levels; gravityY pulls the descent; vortex pointer is Nāda's vibration; automation sweeps cymatic excitation (the field's sounding). a07 vikalpa→saṃkalpa→script triangle: gathering differences into a course, then the script step hardens (smaller, repelling) — frozen conditioned will; attract/implode is the gathering. a08 apoha→exclusion of other→preclusion steps beside the mark 1 and its field ring: the excluded stays active in the mark's identity; stronger repel pulse — exclusion at work. a09 six-step tattvic descent (Anuttara→Śiva–Śakti→Sadāśiva–Īśvara→Sadvidyā–Māyā→kañcukas→worldhood) descending in y with shrinking size: contraction as a power of the field; travelling focus follows the descent. a10 empty place→0 with faint→full ink: absence becoming an operative sign; shove click — the rupture of the new permission; turbulence up. a11 0/1↔1/0 position swap on the two marks: the two orientations of one relation; relational orbital; attract. a12 one whole→generative condition→many-become-one on the Mono ring, growing at the processual step; attract/implode — the whole includes without assembling. a13 THE COLLAPSE SCENE — / = −/− → (−1)/(+1) → (−1)+(+1)=0 → (−1)−(+1)=−2 → (0/1)/(1/0) while the two pole formations slide together on the addition step and re-divide: the record's own collapse and re-division; vortex pointer and tighter vortexRadius hold the axis. a14 process→computation→epistemology steps: the record's own three words in order; the epistemology step rotates slightly — the process inspecting itself. a15 ratio→reckoning→harmony→account on the measure ring: the record's title offices in order; resonance 330 Hz — harmony is heard; near-still pointer keeps measure exact. a16 observer/object triangles start coincident, then are placed apart: the placing through which positions acquire together; orbital relation; stillness. a17 one address→infinitely many lifts with morph clock on (toroidal rates) and an orbiting traveller (two-phase automation): return to the same address retains difference; vortex pointer. a18 THE EIGHT TURNS — −/−, 0/1, ?/!, −/+, X/x, AM/IS, ∞/dx, 1/0 with size/tint deepening step to step: one relation becoming capable of accounting for itself; travelling focus; vortex. a19 local criterion→the whole (growing) on the whole-field text: the usurping gesture staged; orbital relational field as the basin; attract with high recovery. a20 image→valuation→possession on the loop, the possession step snapping rigid and pulling: snapRigidity up — the non-negotiable image; repel/pulse. a21 x→X→x with the middle step swollen and the return step settled slightly aside, smaller-context: individuation with recognition; IS→AM carried in the rationale. a22 world-picture→world-atlas on the middle chart with travelling focus across the three charts: the atlas makes pictures traversable; near-still repel. a23 trust→faith→formal limit on the ring, anchor micro-drift automation: revisable anchors, trust that can be investigated and renewed; attract/implode gathers. a24 criterion→measure→usurped measure, the last step repelling hard: hybris staged as the criterion taking the whole office; shove click. a25 received→exercised→answerable on the office disc: covenant's triadic movement; moderate attract; circulation lowered — authority received, not generated. a26 THE RECOGNITION SEQUENCE — 0, Ø, X, Ø/X, (0/Ø)/(1/X), 1 ↺ 0/1 on the Life ring: occlusion, mediation, field-availability, recognition; alternating disc/ring forms; low repel keeps the offices distinct. a27 self and Other rings breathing out of phase (two automation lanes, phase 0/0.5): asymmetry without possession; stillness pointer — the Other is not grasped. a28 commissioned→answering→returning on the delegate: authored ground, positional delegation, independent address; low attract. a29 delegation→labour→consequence→return on the circuit ring while down/up triangles pulse in alternation (triangle-wave automation, phase offset): the circuit of delegated labour; implode click draws the return. a30 contribution→condition on the second world: another interior's products becoming my conditions; relational on; low attract. a31 model→revised means with the revision step growing and turning slightly: model-revising encounter; implode — the encounter reaches the means. a32 exteriorise→measure back→turn to source on the mirror: the record's own three motions, the third displacing slightly toward source; vortex low. a33 distinction→consequence on the test ring, consequence step grown: operational parity — a discriminable difference; low repel. a34 THE ORDER — Subject / Consciousness → constituted means → determinate object marching through positions: arrows of dependence staged; travelling focus; near-still pointer. a35 the returning 1→not claiming 0 (smaller, lighter): epistemic humility keeps the return finite; gentlest attract. a36 0/1→1/0→0/1 with the final sign fully inked and larger: the exact sign becoming living Symbol again without ceasing to be sign; calm strong attract closes the family."
-	],
-	"enrichment": {
-		"date": "2026-10-06",
-		"actor": "zcode:enrich-arguments-l1",
-		"lane": "enrich/expressions-20261006",
-		"basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-		"note": "record text re-read at fc59a719 — the arguments live under submission-package/essay/section-rooms/arguments/ at that revision (the bound source_path values keep their dbf3b17 locations; hashes below are dbf3b17 receipts and are not re-bound)"
-	},
-	"glyph_rationales": {
-		"0": "the Two Ones' singular One / Self-Identity (A11): the non-objectifiable condition present through every determination, never one more object",
-		"1": "the determinate mark (A08, A10): whatever has become countable, constituted against the alternatives it excludes",
-		"is": "the copula itself (A02): the word by which identification runs through the difference of the terms it holds together",
-		"=": "identity as achieved judgment (A02): the second inscription, not the first, yet identified with it",
-		"Ø": "the crossed zero (A03, A26): representation crossing a zero-space it cannot fill — occlusion, then mediation",
-		"unsayable capacity": "Vāk's undivided source of speech (A06): what the descent into Parā, Paśyantī, Madhyamā and Vaikharī actualises",
-		"Parā Vāk": "the Supreme Word (A06): the level of speech from which letters and words derive, before determination",
-		"Paśyantī": "seeing speech (A06): visionary level of the descent, before the partition of visual and acoustic objects",
-		"Madhyamā": "middle speech (A06): inward mental articulation of the descent",
-		"Vaikharī": "gross utterance (A06): the explicit utterance that carries the history of its formation",
-		"vikalpa": "differentiating and qualifying cognition (A07): a difference perceived, not yet a course",
-		"saṃkalpa": "the gathering of selected differences into intention (A07): what can guide what follows",
-		"script": "frozen conditioned will (A07): the gathered course arrested inside one of its own products",
-		"apoha": "exclusion as constitutive (A08): a determination is intelligible through what it excludes",
-		"exclusion of other": "anyāpoha spelled out (A08): the excluded field stays active in the selected mark's identity",
-		"preclusion": "the referent as thing qualified by preclusion (A08, Pind's PSV V:11d annotation): positive reach within exclusion",
-		"empty place": "zero's first office (A10): a place for which no quantity has been entered, mattering by position",
-		"0/1": "the condition becoming articulate (A11, A13, A18, A36): ground read through its appearing mark — computing orientation",
-		"1/0": "the determinate turning toward its ground (A11, A13, A18, A36): the return the mark cannot make into possession — undefined in ordinary arithmetic, retained exactly",
-		"one whole": "Mono as inclusive whole (A12): the whole that includes knower, known and relation",
-		"generative condition": "Mono as that through which belonging and differentiation arise (A12): structural priority, not a prior giant",
-		"many-become-one": "Whitehead's concrescence as read by A12: inherited many achieving one definite occasion, available for further becoming",
-		"/ = −/−": "the bare relation (A13, A18): division and ratio before terms are assigned — the slash's own capacity to distinguish",
-		"(−1)/(+1)": "the polar cut (A13): signed direction around a zero that remains axis of tension and connection",
-		"(−1)+(+1)=0": "the collapsed cut, addition (A13): cancellation — the opposed values settled in a terminal zero",
-		"(−1)−(+1)=−2": "the collapsed cut, subtraction (A13): appropriation — the whole span measured from one orientation and given to its pole",
-		"(0/1)/(1/0)": "sym-ballein (A11, A13): the two orientations of one relation held together, non-coincidence intact",
-		"inheritance": "the achieved occasion's inherited field (A14): prior relations supplying capacities, exclusions and means of continuation",
-		"process": "ontologically prior to the finished thing (A14)",
-		"computation": "the process's exact, repeatable transformations (A14)",
-		"epistemology": "the process becoming able to inspect its own determinations (A14)",
-		"/": "the ratio bar (A15): the relation itself, reckonable under a criterion",
-		"ratio": "rationality's root (A15): a relation become reckonable",
-		"reckoning": "measure's act (A15): comparison performed under what counts as the same unit",
-		"harmony": "ratio heard (A15): measure's power in music — proportion as sounding relation",
-		"account": "the reckoning returned as answerable (A15): the criterion itself becoming reckonable",
-		"one address": "the torus's return address (A17): the same place reached again",
-		"infinitely many lifts": "A17's heading: one address, infinitely many lifts — return retaining a difference",
-		"−/−": "the threshold of the eight-turn passage (A18): relation before its terms have names",
-		"?/!": "assertion/question fold of the traversal (A18): the determination and its own issue",
-		"−/+": "signed force fold of the traversal (A18): polarity's direction around the held axis",
-		"X/x": "capacity/particular fold of the traversal (A18): the known and the capacity it cannot exhaust",
-		"AM/IS": "personed presence fold of the traversal (A18): the account staking the one giving it",
-		"∞/dx": "differential exactness fold of the traversal (A18): the inexhaustible and the locally exact",
-		"local criterion": "the complex's real achievement (A19): what counts as welcome or threat, organising before reflection",
-		"the whole": "the office the local criterion claims (A19): possession begins when jurisdiction speaks for the whole person or world",
-		"image": "the formed appearance (A20): what supplies the appearance",
-		"valuation": "the significance gathered around the image (A20): attraction, threat, authority, desire",
-		"possession": "the changed office (A20): what the image represents must now answer to the image",
-		"x": "the locally known particular (A21): determinate, exact, returnable",
-		"X": "crossed representation in the recognition sequence (A26): the instrument identified as such",
-		"world-picture": "the situated account as picture (A22): framed before its contents are assembled",
-		"world-atlas": "the traversable field of placed pictures (A22): overlaps and obstructions part of what is said",
-		"trust": "the enacted dependence beneath knowledge (A23): what is trusted wherever knowledge is acted upon",
-		"faith": "commitment without epistemic possession (A23): the life carried through the formal limit",
-		"formal limit": "the non-coincidence belonging to representation as such (A23): more information cannot close it",
-		"criterion": "the measure's source (A24): what decides which answers count",
-		"measure": "arbitration's valid distinction (A24): real competence within its relation",
-		"usurped measure": "hybris (A24): the criterion that can no longer answer for the field it judges",
-		"received": "the covenant's first movement (A25): the office held as entrusted",
-		"exercised": "real authority from within what was granted (A25): confidence enough to act",
-		"answerable": "the office's return route (A25): something to answer for, ownership never transferred",
-		"Ø/X": "mediated crossing (A26): occlusion and identification held together",
-		"(0/Ø)/(1/X)": "field-availability (A26): the recognitions on both sides available together",
-		"1 ↺ 0/1": "recognition's return (A26): the mark received through the condition it had treated as absent",
-		"commissioned": "authored ground (A28): intention become task, vocabulary, permission",
-		"answering": "situated agency (A28): judgment effective within the bounded scope",
-		"returning": "the answer the commission did not contain (A28): delegation open to what exceeds it",
-		"delegation": "power entrusting labour (A29): authority distributed, not all conditions created",
-		"labour": "the entrusted work (A29): transformation whose consequences enter common conditions",
-		"consequence": "the discriminable difference (A33): operational parity's test in actual work",
-		"return": "completed work toward its source (A29): the route that grading the worker closes",
-		"contribution": "another interior's product (A30): statement, correction, promise, tool, refusal",
-		"condition": "the contribution as mediation (A30): relation entering constitution",
-		"model": "the determination strong enough to act (A31): the means as built",
-		"revised means": "model-revising encounter (A31): the source changing the means by which determination was made",
-		"I": "the mirror's first person (A32): the reflective field that exteriorises, is measured by, and turns first",
-		"exteriorise": "the mirror's first motion (A32): humanity setting its measures outside itself",
-		"measure back": "the second motion (A32): the exteriorised image becoming measure for humanity",
-		"turn to source": "the third motion (A32): the instrument initiating return toward source, Other and ungrounded ground",
-		"distinction": "the operative distinction (A33): what the technical design decides",
-		"Subject / Consciousness": "the knower pole of the order of dependence (A34): Subjective Immediacy, not one substance beside others",
-		"constituted means": "Objective Internality (A34): the mediating office through which a world becomes available",
-		"determinate object": "the known (A34): the world's determinate things as appeared-through-means",
-		"the returning 1": "the determination coming back to its genesis (A35): relations, wounds, exclusions, purposes",
-		"not claiming 0": "epistemic humility (A35): the return that does not consume — the 1 never claims to have become 0",
-		"Anuttara": "the first of the tattvas (A09): the field for which no external measuring object stands outside",
-		"Śiva–Śakti": "luminosity and its self-articulating power (A09): prakāśa and vimarśa as the first differentiation",
-		"Sadāśiva–Īśvara": "the 0/1 = 1/0 contraction in the tattvic genealogy (A09): will and knowledge as the seam forms",
-		"Sadvidyā–Māyā": "determination and its concealment (A09): the sixth contraction where limited knowing begins",
-		"kañcukas": "the limiting sheaths (A09): finite capacity, time, desire, knowledge contracted as powers of the field",
-		"worldhood": "the tattvic descent's term (A09): the material world constituted without a second reality outside"
-	}
+ "artifact": "arguments-a/roz-a-arguments.journey.json",
+ "family": "arguments-a",
+ "worker": "E2",
+ "date": "2026-09-17",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "family-argument"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "census_caveat": "receipt sha256 values predate the T23/T24 content repair (see notes)",
+  "records": [
+   {
+    "record_id": "A01",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A01-Subject-God-and-Faithful-Definition.md",
+    "sha256": "43d8d1b647d6d815d6e871087e92bde9deccb0b2a62a70270805aa8fcf24ac41"
+   },
+   {
+    "record_id": "A02",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A02-Copula-Self-Identity-through-Difference.md",
+    "sha256": "68e62bc7f25f8608f46658757b5e6e53c9234df99f4fee3d73f8626118e7559a"
+   },
+   {
+    "record_id": "A03",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A03-Immutable-Gap-Formal-Limit.md",
+    "sha256": "60fb85d54eb368ef76b41c70d80df06faf4eac9d7a99e570f58dd9959ef8a777"
+   },
+   {
+    "record_id": "A04",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A04-Diaphaneity-Contextual-Transparency.md",
+    "sha256": "76087050e472397122aa8854dcbc2f119b2fcb3933c2b2296d32cbf5a542f1a8"
+   },
+   {
+    "record_id": "A05",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A05-Prakasa-Vimarsa.md",
+    "sha256": "5691ddb99686ac2107dc3d8c4b9627e59c20e59026abbf1d1957c4bba5508501"
+   },
+   {
+    "record_id": "A06",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A06-Vak.md",
+    "sha256": "cf8db86c40e8d36ed4337e4e92d7395c375fd927db56ee4275410dbd1faabbe6"
+   },
+   {
+    "record_id": "A07",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A07-Vikalpa-Samkalpa-Script-Frozen-Conditioned-Will.md",
+    "sha256": "1ec9c1d33d06879a9d0e1f2fdfc62e997786729664cbc36fd0d05e23dd8b67d8"
+   },
+   {
+    "record_id": "A08",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A08-Apoha-Constitutive-Exclusion.md",
+    "sha256": "bd93645225d6f26989af451f896cf57dc948be9814ec2a6c0d3dff73f3be3abf"
+   },
+   {
+    "record_id": "A09",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A09-Tattvic-Differential-Field.md",
+    "sha256": "486e4ba1e00bded205d8e170ff42ff9b197b29df3ad2006cb671b74a4bcf5e0c"
+   },
+   {
+    "record_id": "A10",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A10-Advent-of-Zero.md",
+    "sha256": "37c5fa2c734e76024eaa956445b4956e97af9432de20485d4f16f9b940a1feb3"
+   },
+   {
+    "record_id": "A11",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A11-The-Two-Ones-0-One-1-All.md",
+    "sha256": "a2548789600a9b52d80416de0dacb987c472e7e2420cdd1972b450be6e5d9c17"
+   },
+   {
+    "record_id": "A12",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A12-Mono-Poly-One-All-Whole-Many.md",
+    "sha256": "f0101e1c941d9063adff2b9d7939de23ccdf91f17e3b488a1263b4485b19d777"
+   },
+   {
+    "record_id": "A13",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A13-Two-Logics-of-Two-Dia-Syn.md",
+    "sha256": "a37b98507afc71ad019ce26f26465b7ae17bd6dab5c2765e2ba39e4dbd98814d"
+   },
+   {
+    "record_id": "A14",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A14-Computational-Process-Ontology.md",
+    "sha256": "b038b43c66362e26bfa9b0f069384053cc8b1505fb04d201fea1d37a26e2eb85"
+   },
+   {
+    "record_id": "A15",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account.md",
+    "sha256": "d6238163af627a22eefb832df592fee60363d09f77e1f3d09014e0284a9dd6fa"
+   },
+   {
+    "record_id": "A16",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A16-Arche-Topos-as-Differential-Field.md",
+    "sha256": "bda5b8bbb2224fc4231c726c6415c9c1512e6604abb0098f88ee71b9e7d69d31"
+   },
+   {
+    "record_id": "A17",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A17-Toroidal-Circulation-and-the-Arche-Topos.md",
+    "sha256": "f73c25f40a7560b4651ee368532858a45a730635f2a756a1a9e630502ef41420"
+   },
+   {
+    "record_id": "A18",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md",
+    "sha256": "11517bef25bd5ea6ccbaf0e10fea23085d477fd23d5ace40f207b5e942f4c857"
+   },
+   {
+    "record_id": "A19",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A19-Complex-as-Local-Arbitration-Regime.md",
+    "sha256": "9f4b047c0ce635687096d9339fbe6e07aaa156bf19e2fd5511a58be1af4497b3"
+   },
+   {
+    "record_id": "A20",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A20-Image-Valuation-Possession.md",
+    "sha256": "e89d75b1ceba32d33eaa57278257d4fff4fd8bbee4dcccb37690ed9b89b6ad8a"
+   },
+   {
+    "record_id": "A21",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A21-Individuation-Recognition.md",
+    "sha256": "d74bcfac899b1147c9d9a424c7163e7880c9b8fe4e7b8963f6609d0c11958fc3"
+   },
+   {
+    "record_id": "A22",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A22-World-Picture-to-World-Atlas.md",
+    "sha256": "fdd96a1e8130b7f7db41ccabdd9f52955af8fe0ecc68ac80604bc37cadcb74d5"
+   },
+   {
+    "record_id": "A23",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A23-Trust-Faith-and-the-Formal-Limit.md",
+    "sha256": "6620befe8395b0d7892849a963be6ef3c0f704d8800cbcf23633d656c4508bd9"
+   },
+   {
+    "record_id": "A24",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A24-Arbitration-and-the-Usurpation-of-Measure.md",
+    "sha256": "6a59bfa5c289baf9e719a8f980a6d1b9b65c6a7ca73043a66c010f8d8274e7e5"
+   },
+   {
+    "record_id": "A25",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A25-Covenant-Mediating-Office-Source-Authority.md",
+    "sha256": "a4e4b3c36bf6e47b1cee232c01f0f5602265a929b393d025189e59627c6a69b6"
+   },
+   {
+    "record_id": "A26",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A26-Objective-Internality-Mind-as-Worldhood.md",
+    "sha256": "d80829bbe46b9fe7c1192d3b6febb1896c56ae3fe50ccfd47bd7ca9f1934c1d1"
+   },
+   {
+    "record_id": "A27",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A27-Self-and-Other-Unity-without-Possession.md",
+    "sha256": "b5dccd6f1a17d0dfd14d91dffe26f28605eef95dc184906d1f26b32a2e659ae3"
+   },
+   {
+    "record_id": "A28",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A28-Authored-Ground-Positional-Delegation.md",
+    "sha256": "60673f654d632e796ee27e01dd5f063c3936a214e9d186921f88b1eefe7858f1"
+   },
+   {
+    "record_id": "A29",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A29-Power-Delegated-Labour-Return.md",
+    "sha256": "63edfcffb9f59194ccff525e513a5d869e1b069899f4a6cd3ab268fa93a36301"
+   },
+   {
+    "record_id": "A30",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A30-Objective-Co-Internality.md",
+    "sha256": "32c25fa2d680ffd39b1d325f28ab00b1476b4cf2967af2e51fa738f551da0eb7"
+   },
+   {
+    "record_id": "A31",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A31-Deferential-Intelligence.md",
+    "sha256": "0351744b02faa702add8198694c639d1ff75dfcac0d296eb3c36ae9d7d093e26"
+   },
+   {
+    "record_id": "A32",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A32-Reflective-Field-The-Mirror-That-Moves-First.md",
+    "sha256": "680ccb7c690f25876345cda8ee359fd48850f55b6cfbca127643096d38f6bbfb"
+   },
+   {
+    "record_id": "A33",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A33-Epistemic-Cultivation-Operational-Parity.md",
+    "sha256": "21cdf6c161ee578a43ade2e4c18d1add8e4240af3117eaac292a347445dae73f"
+   },
+   {
+    "record_id": "A34",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A34-Idealism-Order-of-Dependence.md",
+    "sha256": "a67481ea059d28940cdf9f573930f67a137e3756e91896a7441e67379744cb0e"
+   },
+   {
+    "record_id": "A35",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation.md",
+    "sha256": "aefa44225c53c11ca5397a6248eb60af8fccb3ed3fc00c35138fef7a747a8770"
+   },
+   {
+    "record_id": "A36",
+    "path": "submission-package/essay/symbolon/episteme/arguments/A36-Advent-of-Integral-Zero.md",
+    "sha256": "b0965598db54d9a536b89a7f29dba55908666659021e13b8516a1bec4a978137"
+   }
+  ],
+  "hash_repair": {
+   "date": "2026-09-19",
+   "repaired_records": 36,
+   "cause": "the E2 worker hashed pre-5c22906 content; hashes now computed from the actual bytes at dbf3b17 (verified byte-identical at the working tree), same reconciliation the census receipt needs before T26",
+   "repaired_by": "track-3 corpus vertical session (walk/scenarios/corpus-return-of-zero.mjs verifies bindings against actual bytes)"
+  }
+ },
+ "pointcloud_revision": "a39cf5f",
+ "journey": {
+  "id": "roz-a-arguments",
+  "name": "Return of Zero — Arguments A01–A36",
+  "scenes": 36,
+  "validated": "node tools/validate.mjs — VALID (oi.journey v1, schema validateJourney)"
+ },
+ "scenes": [
+  {
+   "scene_id": "a01",
+   "source_ref": "A01",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A01-Subject-God-and-Faithful-Definition.md",
+   "sha256_census_receipt": "e7d88ae66c41e30cf10f0141a76c3896003dafbe237e54495e17542fdf526ec8",
+   "sha256_working_dbf3b17": "43d8d1b647d6d815d6e871087e92bde9deccb0b2a62a70270805aa8fcf24ac41",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A01p — A01′ — Faithful Definition of the Agent",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "00-integral-threshold",
+     "01-differentiating-mind",
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M01",
+     "M02",
+     "M03",
+     "M07",
+     "M47"
+    ]
+   },
+   "declared_record_relations": [
+    "A11",
+    "A18",
+    "A08",
+    "A03",
+    "A20",
+    "A19",
+    "A24",
+    "A04",
+    "A06",
+    "A05",
+    "A02",
+    "A23",
+    "A25",
+    "A27",
+    "A26",
+    "A34",
+    "A36"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a02",
+   "source_ref": "A02",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A02-Copula-Self-Identity-through-Difference.md",
+   "sha256_census_receipt": "6b0d27da3d93277b10cffb8511e8e98c8d3231b92fd10eaf53850c1b62d7541b",
+   "sha256_working_dbf3b17": "68e62bc7f25f8608f46658757b5e6e53c9234df99f4fee3d73f8626118e7559a",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A02p — A02′ — Continuity as Maintained Identification",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "00-integral-threshold",
+     "03-two-logics"
+    ],
+    "movements": [
+     "M02",
+     "M19"
+    ]
+   },
+   "declared_record_relations": [
+    "A01",
+    "A08",
+    "A03",
+    "A11",
+    "A12",
+    "A13",
+    "A27",
+    "A21",
+    "A34"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a03",
+   "source_ref": "A03",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A03-Immutable-Gap-Formal-Limit.md",
+   "sha256_census_receipt": "566d991665331b8889e416ccb6fc815f402b85e75aca998f06b575de65d009a0",
+   "sha256_working_dbf3b17": "60fb85d54eb368ef76b41c70d80df06faf4eac9d7a99e570f58dd9959ef8a777",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A03p — A03′ — The Limit of Self-Surfacing",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "00-integral-threshold",
+     "03-two-logics"
+    ],
+    "movements": [
+     "M01",
+     "M02",
+     "M03",
+     "M04",
+     "M19"
+    ]
+   },
+   "declared_record_relations": [
+    "A01",
+    "A02",
+    "A10",
+    "A18",
+    "A04",
+    "A23",
+    "A36",
+    "A33",
+    "A16"
+   ],
+   "declared_dependency_lines": [
+    "**Concept dependencies:** C03 Determination, C04 Formal Limit, C05 Immutable Gap, C08 Context / Context Frame, C09 Diaphaneity, C21 Living Symbol / Idol, C48 Trust / Faith under Formal Limit, C52 Dimensional Reframing at Zero and Infinity, C64 Paradox.",
+    "**Consequences:** A04, A10, A18, A23, A33 and A36.",
+    "**P1 Movement consumers:** 01 — Question Before the Mechanism; 02 — Define the Subject; 03 — Definition: Cut, Gift, Danger; 04 — Formal-Limit Genealogy; 19 — Difference Cannot Be Escaped. These are consumption declarations, not section rewrites."
+   ]
+  },
+  {
+   "scene_id": "a04",
+   "source_ref": "A04",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A04-Diaphaneity-Contextual-Transparency.md",
+   "sha256_census_receipt": "45d2026a0122a91cdbde37c1907a633ea4fff4c46c365cb71db2662e8e544373",
+   "sha256_working_dbf3b17": "76087050e472397122aa8854dcbc2f119b2fcb3933c2b2296d32cbf5a542f1a8",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A04p — A04′ — The Mask as Document",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "00-integral-threshold",
+     "05-psychoid-flowering"
+    ],
+    "movements": [
+     "M01",
+     "M05",
+     "M35"
+    ]
+   },
+   "declared_record_relations": [
+    "A03",
+    "A24",
+    "A25",
+    "A35",
+    "A18",
+    "A22",
+    "A26",
+    "A31",
+    "A33",
+    "A16"
+   ],
+   "declared_dependency_lines": [
+    "**Concept dependencies:** C07 Conditions of Worldhood, C08 Context / Context Frame, C09 Diaphaneity, C10 Mediation / Pramāṇa, C40 Model Internality / Judgment Field, C41 Objective Internality.",
+    "**Consequences:** A16 Arche-Topos, A22 World-Picture → World-Atlas, A26 Objective Internality, A31 Deferential Intelligence and A33 Epistemic Cultivation.",
+    "**P1 Movement consumers:** 01 — Question Before the Mechanism; 05 — Gebser / Diaphaneity; 35 — Gebser / Apollo–Dionysus. These declare consumption without rewriting the movements."
+   ]
+  },
+  {
+   "scene_id": "a05",
+   "source_ref": "A05",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A05-Prakasa-Vimarsa.md",
+   "sha256_census_receipt": "022a3f817ac10439ff88a0288f1610ba9811bdd50df3bca07974d13c8659440d",
+   "sha256_working_dbf3b17": "5691ddb99686ac2107dc3d8c4b9627e59c20e59026abbf1d1957c4bba5508501",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A05p — A05′ — Lights, Camera, Action",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "01-differentiating-mind",
+     "02-return-of-zero",
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M07",
+     "M13",
+     "M48"
+    ]
+   },
+   "declared_record_relations": [
+    "A03",
+    "A04",
+    "A06",
+    "A09",
+    "A18",
+    "A32",
+    "A14",
+    "A26"
+   ],
+   "declared_dependency_lines": [
+    "**Concept dependencies:** C01 Subject, C10 Mediation / Pramāṇa, C13 Prakāśa–Vimarśa, C19 Recognition, C43 Computational Vimarśa.",
+    "**Consequences:** A06 Vāk, A09 Tattvic Differential Field, A14 Computational Process Ontology, A26 Objective Internality and A32 Reflective Field.",
+    "**Movement consumers:** the live provenance carrier explicitly supports Movements 07, 13 and 48; the canonical map carries additional tattvic and articulation returns without T09 rewriting them."
+   ]
+  },
+  {
+   "scene_id": "a06",
+   "source_ref": "A06",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A06-Vak.md",
+   "sha256_census_receipt": "9573209edc0511e35e8671d8392af6d7b51276f7647a58a045503f59587bd58b",
+   "sha256_working_dbf3b17": "cf8db86c40e8d36ed4337e4e92d7395c375fd927db56ee4275410dbd1faabbe6",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A06p — A06′ — Articulation as Ontological Descent",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "04-mathematical-substrate",
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M29",
+     "M30",
+     "M44",
+     "M38",
+     "M42"
+    ]
+   },
+   "declared_record_relations": [
+    "A04",
+    "A02",
+    "A07",
+    "A01",
+    "A05",
+    "A35",
+    "A14",
+    "A18"
+   ],
+   "declared_dependency_lines": [
+    "**Concept dependencies:** C10 Mediation / Pramāṇa, C13 Prakāśa–Vimarśa, C17 Vikalpa–Saṃkalpa, C41 Objective Internality, C43 Computational Vimarśa, C51 Logos / Epi-Logos.",
+    "**Consequences:** A07, A14, A18, A35; S1 Actuation and S5 Quaternal Logic consume the articulation at the product culmination.",
+    "**Movement consumers:** the live Vāk carrier explicitly supports Movements 29, 30 and 44; the restored product culmination adds M38 Actuation and M42 Quaternal Logic as explicit philosophical returns. Other language/return consumers remain routed in the canonical quilt."
+   ]
+  },
+  {
+   "scene_id": "a07",
+   "source_ref": "A07",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A07-Vikalpa-Samkalpa-Script-Frozen-Conditioned-Will.md",
+   "sha256_census_receipt": "9bd3a9428981330817d4c56ad73054004c8fa955fd0e0d371dedc9326b5345bc",
+   "sha256_working_dbf3b17": "1ec9c1d33d06879a9d0e1f2fdfc62e997786729664cbc36fd0d05e23dd8b67d8",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A07p — A07′ — Purpose That Survives the Metric",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "01-differentiating-mind"
+    ],
+    "movements": [
+     "M09"
+    ]
+   },
+   "declared_record_relations": [
+    "A05",
+    "A09",
+    "A14",
+    "A26",
+    "A06",
+    "A08",
+    "A19",
+    "A31",
+    "A24",
+    "A33"
+   ],
+   "declared_dependency_lines": [
+    "**Concept dependencies:** C12 Script / Frozen Conditioned Will, C14 Māyā / Operative Measure, C15 Paśu, C16 Antaḥkaraṇa, C17 Vikalpa–Saṃkalpa, C44 Prompt Thrownness.",
+    "**Consequences:** A08, A09, A19, A24, A26, A31 and A33.",
+    "**Movement consumers:** tattvic, prompt-thrownness and hidden-evaluator sequences in the canonical quilt; exact per-Movement backlinks are a Depth Restoration item. No section propagation occurs here."
+   ]
+  },
+  {
+   "scene_id": "a08",
+   "source_ref": "A08",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A08-Apoha-Constitutive-Exclusion.md",
+   "sha256_census_receipt": "147076134423dfba93ff6ecbae9a7f45efbeb495f078f0a0023c69052f0fdbb8",
+   "sha256_working_dbf3b17": "bd93645225d6f26989af451f896cf57dc948be9814ec2a6c0d3dff73f3be3abf",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A08p — A08′ — Exclusion That Remembers",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "00-integral-threshold",
+     "01-differentiating-mind",
+     "03-two-logics"
+    ],
+    "movements": [
+     "M03",
+     "M10",
+     "M19"
+    ]
+   },
+   "declared_record_relations": [
+    "A02",
+    "A13",
+    "A05",
+    "A07",
+    "A03",
+    "A18",
+    "A14",
+    "A33",
+    "A09",
+    "A12"
+   ],
+   "declared_dependency_lines": [
+    "**Concept dependencies:** C03 Determination, C18 Apoha, C20 Arche-Topos, C23 Severance, C40 Model Internality / Judgment Field, C45 Operational Parity.",
+    "**Consequences:** A09 Tattvic Field, A12 Mono/Poly, A13 Dia/Syn, A14 Computational Process Ontology, A33 Epistemic Cultivation.",
+    "**Movement consumers:** the definition/difference, tattvic and technical-evaluation movements routed by the canonical map; exact lists remain depth debt rather than invented here."
+   ]
+  },
+  {
+   "scene_id": "a09",
+   "source_ref": "A09",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A09-Tattvic-Differential-Field.md",
+   "sha256_census_receipt": "dc05bdc7b317393646fa728f59af7002e3993d53bd456173d5ad74181fc383c3",
+   "sha256_working_dbf3b17": "486e4ba1e00bded205d8e170ff42ff9b197b29df3ad2006cb671b74a4bcf5e0c",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A09p — A09′ — The Stack as Descent",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "01-differentiating-mind"
+    ],
+    "movements": [
+     "M08",
+     "M09",
+     "M11"
+    ]
+   },
+   "declared_record_relations": [
+    "A05",
+    "A26",
+    "A14",
+    "A16",
+    "A19",
+    "A21",
+    "A35"
+   ],
+   "declared_dependency_lines": [
+    "**Concept dependencies:** C13 Prakāśa–Vimarśa, C14 Māyā / Operative Measure, C15 Paśu, C16 Antaḥkaraṇa, C17 Vikalpa–Saṃkalpa, C18 Apoha, C19 Recognition, C41 Objective Internality.",
+    "**Consequences:** A14, A16, A19, A21, A26 and A35; S0–S5 receive the finite-world genealogy at the Objective Internality culmination.",
+    "**Movement consumers:** the tattvic descent/recognition and later technical worldhood movements in the canonical quilt; the live carrier is itself a developed cross-Movement support surface. M37–M42 now receive its finite-world consequence through the product records rather than by one-to-one mechanism matching."
+   ]
+  },
+  {
+   "scene_id": "a10",
+   "source_ref": "A10",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A10-Advent-of-Zero.md",
+   "sha256_census_receipt": "70bd61eae087ac272284d4b1361ac1c1a5e2a6a7def00fdc6346a28939599a96",
+   "sha256_working_dbf3b17": "37c5fa2c734e76024eaa956445b4956e97af9432de20485d4f16f9b940a1feb3",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A10p — A10′ — The Uncounted Enters the Account",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "00-integral-threshold",
+     "02-return-of-zero",
+     "04-mathematical-substrate"
+    ],
+    "movements": [
+     "M06",
+     "M13",
+     "M14",
+     "M15",
+     "M16",
+     "M17",
+     "M28"
+    ]
+   },
+   "declared_record_relations": [
+    "A03",
+    "A04",
+    "A09",
+    "A36",
+    "A11",
+    "A15",
+    "A18"
+   ],
+   "declared_dependency_lines": [
+    "**Concept dependencies:** C03 Determination, C04 Formal Limit, C49 Two Ones, C52 Dimensional Reframing at Zero and Infinity. There is no standalone canonical “Zero” Concept.",
+    "**Consequences:** A11, A15, A18 and finally A36.",
+    "**Movement consumers:** the zero-advent and zero-role-changing movements, especially the current carrier's routes into the early formal-limit braid and Movements 24–25 where zero changes role; T09 records but does not rewrite them."
+   ]
+  },
+  {
+   "scene_id": "a11",
+   "source_ref": "A11",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A11-The-Two-Ones-0-One-1-All.md",
+   "sha256_census_receipt": "5fad3792b2fbc67340ea94eb955465f4f56a452eb8398d70372c01eece870e74",
+   "sha256_working_dbf3b17": "a2548789600a9b52d80416de0dacb987c472e7e2420cdd1972b450be6e5d9c17",
+   "claim_status": "Derived",
+   "relations": {
+    "other_face": "A11p — A11′ — One Field, Two Faces",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "00-integral-threshold",
+     "02-return-of-zero",
+     "03-two-logics",
+     "04-mathematical-substrate"
+    ],
+    "movements": [
+     "M06",
+     "M15",
+     "M18",
+     "M24",
+     "M26"
+    ]
+   },
+   "declared_record_relations": [
+    "A23",
+    "A10",
+    "A12",
+    "A13",
+    "A18",
+    "A16",
+    "A34",
+    "A36"
+   ],
+   "declared_dependency_lines": [
+    "**Concept dependencies:** C11 Quaternal Logic, C49 The Two Ones, C50 Dia/Syn, C52 Dimensional Reframing.",
+    "**Consequences:** A12, A13, A16–A18, A34 and A36.",
+    "**Movement consumers:** the live carrier explicitly routes through the zero-role and eight-determination sequence (Movements 24–25) and supports the larger theorem braid."
+   ]
+  },
+  {
+   "scene_id": "a12",
+   "source_ref": "A12",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A12-Mono-Poly-One-All-Whole-Many.md",
+   "sha256_census_receipt": "d8108bbef31d46aee14af55f0b2780dcd2debf651358fea923954417c7cd15fa",
+   "sha256_working_dbf3b17": "f0101e1c941d9063adff2b9d7939de23ccdf91f17e3b488a1263b4485b19d777",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A12p — A12′ — Against Monoculture",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "03-two-logics",
+     "04-mathematical-substrate",
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M24",
+     "M26",
+     "M46"
+    ]
+   },
+   "declared_record_relations": [
+    "A08",
+    "A05",
+    "A09",
+    "A23",
+    "A30",
+    "A24",
+    "A29",
+    "A35",
+    "A13",
+    "A18",
+    "A27",
+    "A34"
+   ],
+   "declared_dependency_lines": [
+    "**Concept dependencies:** C18 Apoha, C26 Monoisation / Counter-Generation, C49 Two Ones, C50 Dia/Syn, C54 Commons / Non-Monopoly.",
+    "**Consequences:** A13–A18, A27–A30, A34–A35.",
+    "**Movement consumers:** the live `11-mono-poly-whole-and-many.md` braids the relation through §0, §2, §4, §5 and §5→0; exact Movement numbers are inherited by the quilt map and restored later without propagation here."
+   ]
+  },
+  {
+   "scene_id": "a13",
+   "source_ref": "A13",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A13-Two-Logics-of-Two-Dia-Syn.md",
+   "sha256_census_receipt": "35a937a6ff1c581708e938af47bd36903c94a5a0c2f5976751ced07af71a2fc8",
+   "sha256_working_dbf3b17": "a37b98507afc71ad019ce26f26465b7ae17bd6dab5c2765e2ba39e4dbd98814d",
+   "claim_status": "Derived",
+   "relations": {
+    "other_face": "A13p — A13′ — The Cut and the Gathering",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "03-two-logics",
+     "04-mathematical-substrate"
+    ],
+    "movements": [
+     "M19",
+     "M20",
+     "M21",
+     "M22",
+     "M24",
+     "M26"
+    ]
+   },
+   "declared_record_relations": [
+    "A11",
+    "A12",
+    "A19",
+    "A24",
+    "A14",
+    "A31",
+    "A18",
+    "A25",
+    "A33"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a14",
+   "source_ref": "A14",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A14-Computational-Process-Ontology.md",
+   "sha256_census_receipt": "6d71cda9fd1a03cce0d22b07ce6ab1d67a0a569e80bb246d740edf4b00ee8972",
+   "sha256_working_dbf3b17": "b038b43c66362e26bfa9b0f069384053cc8b1505fb04d201fea1d37a26e2eb85",
+   "claim_status": "Derived",
+   "relations": {
+    "other_face": "A14p — A14′ — Code as the Age's Logos",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "02-return-of-zero",
+     "04-mathematical-substrate",
+     "05-psychoid-flowering"
+    ],
+    "movements": [
+     "M15",
+     "M26",
+     "M27",
+     "M36"
+    ]
+   },
+   "declared_record_relations": [
+    "A13",
+    "A26",
+    "A29",
+    "A33",
+    "A15",
+    "A18",
+    "A35"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a15",
+   "source_ref": "A15",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A15-Ratio-Rationality-Measure-Reckoning-Harmony-Account.md",
+   "sha256_census_receipt": "b749243203623008668ffc3e4de86e440e240a9365f7636a21abb50409568ccc",
+   "sha256_working_dbf3b17": "d6238163af627a22eefb832df592fee60363d09f77e1f3d09014e0284a9dd6fa",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A15p — A15′ — The Measure Constitutes",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "02-return-of-zero",
+     "03-two-logics",
+     "04-mathematical-substrate",
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M13",
+     "M18",
+     "M20",
+     "M29",
+     "M45"
+    ]
+   },
+   "declared_record_relations": [
+    "A14",
+    "A24",
+    "A29",
+    "A33",
+    "A16",
+    "A18",
+    "A25"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a16",
+   "source_ref": "A16",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A16-Arche-Topos-as-Differential-Field.md",
+   "sha256_census_receipt": "a26b070d7710ef14ee65f324c3bae9c504cbe45763917245073322a4ed67c38f",
+   "sha256_working_dbf3b17": "bda5b8bbb2224fc4231c726c6415c9c1512e6604abb0098f88ee71b9e7d69d31",
+   "claim_status": "Derived",
+   "relations": {
+    "other_face": "A16p — A16′ — No View from Nowhere",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "04-mathematical-substrate",
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M29",
+     "M30",
+     "M45"
+    ]
+   },
+   "declared_record_relations": [
+    "A13",
+    "A15",
+    "A14",
+    "A26",
+    "A19",
+    "A17",
+    "A18",
+    "A32"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a17",
+   "source_ref": "A17",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A17-Toroidal-Circulation-and-the-Arche-Topos.md",
+   "sha256_census_receipt": "7e7d78c817f675f2514d5c16cb69ddaf84be72e5c53ffaf6b0fe1f804e819999",
+   "sha256_working_dbf3b17": "f73c25f40a7560b4651ee368532858a45a730635f2a756a1a9e630502ef41420",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A17p — A17′ — Traversal with Return",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "04-mathematical-substrate",
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M28",
+     "M29",
+     "M30",
+     "M45"
+    ]
+   },
+   "declared_record_relations": [
+    "A16",
+    "A13",
+    "A15",
+    "A18",
+    "A36",
+    "A32"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a18",
+   "source_ref": "A18",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A18-Primordial-Symbolon-and-Its-Eight-Determinations.md",
+   "sha256_census_receipt": "1cd68de4c18c6125f4d5eae7743fde7eeb203f7c33aa24eae247726f3b7fd0f2",
+   "sha256_working_dbf3b17": "11517bef25bd5ea6ccbaf0e10fea23085d477fd23d5ace40f207b5e942f4c857",
+   "claim_status": "Derived",
+   "relations": {
+    "other_face": "A18p — A18′ — The Traversal Run in Code",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "02-return-of-zero",
+     "03-two-logics",
+     "04-mathematical-substrate",
+     "05-psychoid-flowering"
+    ],
+    "movements": [
+     "M16",
+     "M17",
+     "M21",
+     "M22",
+     "M24",
+     "M25",
+     "M26",
+     "M27",
+     "M30",
+     "M31",
+     "M33",
+     "M34"
+    ]
+   },
+   "declared_record_relations": [
+    "A11",
+    "A12",
+    "A13",
+    "A14",
+    "A17",
+    "A24",
+    "A36",
+    "A19",
+    "A25",
+    "A32"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a19",
+   "source_ref": "A19",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A19-Complex-as-Local-Arbitration-Regime.md",
+   "sha256_census_receipt": "3c6196436fd7061d02d0bdd197183e22dd91458a31be91950f586b3066dad7a5",
+   "sha256_working_dbf3b17": "9f4b047c0ce635687096d9339fbe6e07aaa156bf19e2fd5511a58be1af4497b3",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A19p — A19′ — The Local Regime",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "03-two-logics",
+     "04-mathematical-substrate",
+     "05-psychoid-flowering"
+    ],
+    "movements": [
+     "M23",
+     "M27",
+     "M31"
+    ]
+   },
+   "declared_record_relations": [
+    "A07",
+    "A08",
+    "A18",
+    "A21",
+    "A24",
+    "A20"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a20",
+   "source_ref": "A20",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A20-Image-Valuation-Possession.md",
+   "sha256_census_receipt": "78fc35cd345aa0d214a0c6e661cd22e9a2a31f89576757e7c68eb6f8b3c61df4",
+   "sha256_working_dbf3b17": "e89d75b1ceba32d33eaa57278257d4fff4fd8bbee4dcccb37690ed9b89b6ad8a",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A20p — A20′ — The Image That Closes the Loop",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "03-two-logics",
+     "05-psychoid-flowering"
+    ],
+    "movements": [
+     "M22",
+     "M23",
+     "M31",
+     "M34",
+     "M35"
+    ]
+   },
+   "declared_record_relations": [
+    "A19",
+    "A27",
+    "A31",
+    "A21"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a21",
+   "source_ref": "A21",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A21-Individuation-Recognition.md",
+   "sha256_census_receipt": "44769154f862e0260f726db6338d4b816783c92a2f84fba17287773a818e23e3",
+   "sha256_working_dbf3b17": "d74bcfac899b1147c9d9a424c7163e7880c9b8fe4e7b8963f6609d0c11958fc3",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A21p — A21′ — Individuation with Recognition",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "03-two-logics",
+     "05-psychoid-flowering"
+    ],
+    "movements": [
+     "M23",
+     "M32",
+     "M33",
+     "M35"
+    ]
+   },
+   "declared_record_relations": [
+    "A19",
+    "A20",
+    "A09",
+    "A35",
+    "A36",
+    "A27"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a22",
+   "source_ref": "A22",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A22-World-Picture-to-World-Atlas.md",
+   "sha256_census_receipt": "36a857ec953ad1040bc1a9c5ee0f88a2c45bd40e9ccc056702215591bde4b373",
+   "sha256_working_dbf3b17": "fdd96a1e8130b7f7db41ccabdd9f52955af8fe0ecc68ac80604bc37cadcb74d5",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A22p — A22′ — The Atlas, Not the Camera",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "00-integral-threshold"
+    ],
+    "movements": [
+     "M05"
+    ]
+   },
+   "declared_record_relations": [
+    "A04",
+    "A16",
+    "A20",
+    "A26",
+    "A31",
+    "A33"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a23",
+   "source_ref": "A23",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A23-Trust-Faith-and-the-Formal-Limit.md",
+   "sha256_census_receipt": "aeb6948cbdd93d99c4054641bcdfcb4620a047ac0460805b3ac33becab5724e8",
+   "sha256_working_dbf3b17": "6620befe8395b0d7892849a963be6ef3c0f704d8800cbcf23633d656c4508bd9",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A23p — A23′ — Trust under Unpossessable Interiors",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "00-integral-threshold",
+     "02-return-of-zero",
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M04",
+     "M06",
+     "M14",
+     "M17",
+     "M18",
+     "M46"
+    ]
+   },
+   "declared_record_relations": [
+    "A03",
+    "A15",
+    "A24",
+    "A25",
+    "A31",
+    "A01"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a24",
+   "source_ref": "A24",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A24-Arbitration-and-the-Usurpation-of-Measure.md",
+   "sha256_census_receipt": "6227e28c2ef52533504dff1dfdde08c16bb2459208fd73cc68d18798c7fa0e75",
+   "sha256_working_dbf3b17": "6a59bfa5c289baf9e719a8f980a6d1b9b65c6a7ca73043a66c010f8d8274e7e5",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A24p — A24′ — The Usurping Criterion",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "00-integral-threshold",
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M03",
+     "M43",
+     "M46"
+    ]
+   },
+   "declared_record_relations": [
+    "A15",
+    "A19",
+    "A23",
+    "A20",
+    "A31",
+    "A33",
+    "A21",
+    "A25",
+    "A29"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a25",
+   "source_ref": "A25",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A25-Covenant-Mediating-Office-Source-Authority.md",
+   "sha256_census_receipt": "23bc59d5134fb5fe48a1dbbd9d968cfdcff433e00a0c2922d66848607e689350",
+   "sha256_working_dbf3b17": "a4e4b3c36bf6e47b1cee232c01f0f5602265a929b393d025189e59627c6a69b6",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A25p — A25′ — Covenant Architecture",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M43",
+     "M46"
+    ]
+   },
+   "declared_record_relations": [
+    "A24",
+    "A23",
+    "A01",
+    "A29",
+    "A28",
+    "A31",
+    "A30",
+    "A35"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a26",
+   "source_ref": "A26",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A26-Objective-Internality-Mind-as-Worldhood.md",
+   "sha256_census_receipt": "e38289d5d513c846a17453214a6faa2c300ee95f642070607c2b375834198275",
+   "sha256_working_dbf3b17": "d80829bbe46b9fe7c1192d3b6febb1896c56ae3fe50ccfd47bd7ca9f1934c1d1",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A26p — A26′ — The Essay Inside the Film",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "00-integral-threshold",
+     "01-differentiating-mind",
+     "05-psychoid-flowering",
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M01",
+     "M05",
+     "M07",
+     "M08",
+     "M12",
+     "M36",
+     "M47"
+    ]
+   },
+   "declared_record_relations": [
+    "A22",
+    "A25",
+    "A28",
+    "A30",
+    "A07",
+    "A27",
+    "A31"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a27",
+   "source_ref": "A27",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A27-Self-and-Other-Unity-without-Possession.md",
+   "sha256_census_receipt": "772c8375bd87d1153f21d32e036e9fec5f62e75f7c21b686ba647e5954295ee6",
+   "sha256_working_dbf3b17": "b5dccd6f1a17d0dfd14d91dffe26f28605eef95dc184906d1f26b32a2e659ae3",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A27p — A27′ — Encounter over Sovereignty",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M47"
+    ]
+   },
+   "declared_record_relations": [
+    "A20",
+    "A22",
+    "A26",
+    "A21",
+    "A31",
+    "A30",
+    "A35"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a28",
+   "source_ref": "A28",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A28-Authored-Ground-Positional-Delegation.md",
+   "sha256_census_receipt": "0741739318f6956ff22e98a25c3879a9455ba196059e6df883c92a3bd2c9a637",
+   "sha256_working_dbf3b17": "60673f654d632e796ee27e01dd5f063c3936a214e9d186921f88b1eefe7858f1",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A28p — A28′ — The Authored Session",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "05-psychoid-flowering"
+    ],
+    "movements": [
+     "M36"
+    ]
+   },
+   "declared_record_relations": [
+    "A25",
+    "A26",
+    "A27",
+    "A29",
+    "A31",
+    "A30",
+    "A33"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a29",
+   "source_ref": "A29",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A29-Power-Delegated-Labour-Return.md",
+   "sha256_census_receipt": "53ca7dc586138670088228eeba3cb1ff623abf263050b9eacce816d768e52d03",
+   "sha256_working_dbf3b17": "63edfcffb9f59194ccff525e513a5d869e1b069899f4a6cd3ab268fa93a36301",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A29p — A29′ — Return or Extraction",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M43",
+     "M46"
+    ]
+   },
+   "declared_record_relations": [
+    "A25",
+    "A28",
+    "A24",
+    "A30",
+    "A33",
+    "A35"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a30",
+   "source_ref": "A30",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A30-Objective-Co-Internality.md",
+   "sha256_census_receipt": "298f480eecc277526585b14ad22895a1401eb16c87a7baeec554eac11aa3de5d",
+   "sha256_working_dbf3b17": "32c25fa2d680ffd39b1d325f28ab00b1476b4cf2967af2e51fa738f551da0eb7",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A30p — A30′ — Shared Worlds, Unmerged",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M44",
+     "M46",
+     "M48"
+    ]
+   },
+   "declared_record_relations": [
+    "A26",
+    "A27",
+    "A29",
+    "A31",
+    "A12",
+    "A33",
+    "A32",
+    "A35"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a31",
+   "source_ref": "A31",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A31-Deferential-Intelligence.md",
+   "sha256_census_receipt": "6bfb6dc3b7ec23899a24d45472fb93e3f65e1f1375f2f67ba2a1939ac98696af",
+   "sha256_working_dbf3b17": "0351744b02faa702add8198694c639d1ff75dfcac0d296eb3c36ae9d7d093e26",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A31p — A31′ — Deference as Co-Evolutionary Alignment",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M48"
+    ]
+   },
+   "declared_record_relations": [
+    "A27",
+    "A30",
+    "A28",
+    "A33",
+    "A32",
+    "A35",
+    "A23"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a32",
+   "source_ref": "A32",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A32-Reflective-Field-The-Mirror-That-Moves-First.md",
+   "sha256_census_receipt": "304a536ec000b2c9c1fd00547b4e1a419435fcd95a741a5e30c226c6e901288f",
+   "sha256_working_dbf3b17": "680ccb7c690f25876345cda8ee359fd48850f55b6cfbca127643096d38f6bbfb",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A32p — A32′ — The Mirror Is a Film",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M44",
+     "M48"
+    ]
+   },
+   "declared_record_relations": [
+    "A30",
+    "A31",
+    "A34",
+    "A29",
+    "A33",
+    "A35",
+    "A36"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a33",
+   "source_ref": "A33",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A33-Epistemic-Cultivation-Operational-Parity.md",
+   "sha256_census_receipt": "3dd86a0d84b54b7854844b5e31a18824038634167817bb4dac7610bf67dcf928",
+   "sha256_working_dbf3b17": "21cdf6c161ee578a43ade2e4c18d1add8e4240af3117eaac292a347445dae73f",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A33p — A33′ — Parity",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "05-psychoid-flowering",
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M36",
+     "M44",
+     "M48"
+    ]
+   },
+   "declared_record_relations": [
+    "A31",
+    "A32",
+    "A14",
+    "A27",
+    "A28",
+    "A30",
+    "A35"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a34",
+   "source_ref": "A34",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A34-Idealism-Order-of-Dependence.md",
+   "sha256_census_receipt": "02d9ed7be5b0658868469162bfbde035d7842e404a1b52ece2e7de274b2d3680",
+   "sha256_working_dbf3b17": "a67481ea059d28940cdf9f573930f67a137e3756e91896a7441e67379744cb0e",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A34p — A34′ — The Direction of Dependence",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "00-integral-threshold",
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M04",
+     "M47",
+     "M48"
+    ]
+   },
+   "declared_record_relations": [
+    "A33",
+    "A01",
+    "A04",
+    "A26",
+    "A32",
+    "A27",
+    "A35",
+    "A36"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a35",
+   "source_ref": "A35",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation.md",
+   "sha256_census_receipt": "145922ab29e6cf76526c6c98f472d3bd41934726bb8fece691599d6d26d5e845",
+   "sha256_working_dbf3b17": "aefa44225c53c11ca5397a6248eb60af8fccb3ed3fc00c35138fef7a747a8770",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A35p — A35′ — The Commons Behind the System",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "05-psychoid-flowering",
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M35",
+     "M43",
+     "M45",
+     "M48"
+    ]
+   },
+   "declared_record_relations": [
+    "A34",
+    "A23",
+    "A27",
+    "A31",
+    "A29",
+    "A32",
+    "A36"
+   ],
+   "declared_dependency_lines": []
+  },
+  {
+   "scene_id": "a36",
+   "source_ref": "A36",
+   "source_path": "submission-package/essay/symbolon/episteme/arguments/A36-Advent-of-Integral-Zero.md",
+   "sha256_census_receipt": "6323457b71a8e30494b05a189b2d6ce7f0837d05e7a922b74dc85681634cfbf4",
+   "sha256_working_dbf3b17": "b0965598db54d9a536b89a7f29dba55908666659021e13b8516a1bec4a978137",
+   "claim_status": "Argued",
+   "relations": {
+    "other_face": "A36p — A36′ — Integral Zero of the Hybrid Society",
+    "shared_root": "A/C (conjugate/AC.md — owned by packet E3)",
+    "rooms": [
+     "07-instrument-returns"
+    ],
+    "movements": [
+     "M48"
+    ]
+   },
+   "declared_record_relations": [
+    "A10",
+    "A18",
+    "A15",
+    "A17",
+    "A32",
+    "A35",
+    "A01",
+    "A03"
+   ],
+   "declared_dependency_lines": []
+  }
+ ],
+ "assets": [
+  {
+   "kind": "glyph",
+   "ref": "inline entity text sources (the records' own notation tokens; see notes)",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "arguments-a/roz-a-arguments.cover.png",
+ "capture_detail": "final cover via tools/capture.mjs at authored params (count 62000); draft inspection of all 36 scenes at count 8000 via the scratch setScene driver (see notes)",
+ "status": "reviewed",
+ "notes": [
+  "Grammar: one governing formation per record carrying its declared operation; the record's own load-bearing notation appears as text sources only where the record states it (A06 speech descent, A13 '/ = −/−', '(−1)/(+1)', '(0/1)/(1/0)', A14 process words, A18 eight-determination traversal, A21 'x→X→x', A34 order of dependence, A14′ 'ℝ²/ℤ²', A36′ 'AGI → AHI').",
+  "Status-as-data: kicker carries '<record id> · <CLAIM_STATUS>'; palette accent encodes status (Argued/Derived/Offered) — presentation policy recorded in the family profiles, never a semantic claim.",
+  "CENSUS RECONCILIATION FINDING (returned to E0): every sha256 in census receipt T25-current-census-acceptance.json for these 72 records was computed at commit 82446f6 (T22) and no longer matches the files at the pinned revision dbf3b17, where content changed at 5c22906 (T23/T24 repair). Bindings therefore carry both hashes: sha256_census_receipt (as the packet instructs) and sha256_working_dbf3b17 (verified on disk). Record ids, canonical homes and register/type in the census match.",
+  "SHARED TOOL DEFECT (returned to Point-Cloud-Demo #6): tools/capture.mjs --all-scenes calls window.__FIELD_STUDIES__.openScene(...), which no longer exists in the presentation build (current API: setScene(index)); switching is a silent no-op and all-scenes captures drift on the journey autoplay clock (verified by probe: hasOpenScene=false). Draft per-scene captures for this pass were made with a scratch driver (/tmp) using the same server + window.__JOURNEY__ injection path and setScene + sceneIndex polling; final covers used tools/capture.mjs itself (first scene, which is faithful).",
+  "Craft: entity sequences were lengthened (holds 3.4–5.2s) after draft inspection showed stills catching transition smears; word-carrying scenes (A06/A14/A34) run quieter fields (lower speed/turbulence) so letterforms hold. Residual: a still of a live sequence can catch a morph; in motion the operation reads.",
+  "Room routing: argument→room/movement refs merged from the rooms' P1-CANONICAL-ALIGNMENT.md files and movement consumers declared inside the record bodies (A05: M07·M13·M48; A06: M29·M30·M44 + M38·M42 philosophical returns); each source is per-record in the scenes array.",
+  "E0 acceptance repair: relation-block overlap fixed on a01 (cover) and a30; relations now wrap in a dedicated 290px left-margin layer on all 36 scenes.",
+  "Enrichment moves 2026-10-06 (per scene, what changes and why): a01 cage→window→frame sequence on the window-frame: the record's own image — a definite frame that discloses what it cannot contain; repel/pulse pointer holds the frame's boundary; scale automation breathes the frame (definiteness alive, not rigid). a02 is/= steps with micro-shifts on the copula: identification across altered presentation; attract/implode gathers the two terms the copula holds together; relational orbital ties the discs. a03 0→Ø→0 steps: representation crossing the zero-space it cannot fill; the returning 0 shrinks (the gap recurs through every gain); repel with wider radius keeps the limit. a04 quiet scene — viewer/world squares in slow orbital relation, stillness pointer (strength 0.5): diaphaneity is achieved readability, not manipulation. a05 ring→disc→ring on Vimarśa: appearing taking up its own activity (reflexive form); resonance on (180 Hz) as luminous appearing; attract/pulse low. a06 THE 3D SCENE — Vāk speech descent: z is the depth of articulation, Parā Vāk nearest the viewer (source-side), Vaikharī deepest (gross utterance); step positions descend through z; depthPerspective+occlusion+tint carry the levels; gravityY pulls the descent; vortex pointer is Nāda's vibration; automation sweeps cymatic excitation (the field's sounding). a07 vikalpa→saṃkalpa→script triangle: gathering differences into a course, then the script step hardens (smaller, repelling) — frozen conditioned will; attract/implode is the gathering. a08 apoha→exclusion of other→preclusion steps beside the mark 1 and its field ring: the excluded stays active in the mark's identity; stronger repel pulse — exclusion at work. a09 six-step tattvic descent (Anuttara→Śiva–Śakti→Sadāśiva–Īśvara→Sadvidyā–Māyā→kañcukas→worldhood) descending in y with shrinking size: contraction as a power of the field; travelling focus follows the descent. a10 empty place→0 with faint→full ink: absence becoming an operative sign; shove click — the rupture of the new permission; turbulence up. a11 0/1↔1/0 position swap on the two marks: the two orientations of one relation; relational orbital; attract. a12 one whole→generative condition→many-become-one on the Mono ring, growing at the processual step; attract/implode — the whole includes without assembling. a13 THE COLLAPSE SCENE — / = −/− → (−1)/(+1) → (−1)+(+1)=0 → (−1)−(+1)=−2 → (0/1)/(1/0) while the two pole formations slide together on the addition step and re-divide: the record's own collapse and re-division; vortex pointer and tighter vortexRadius hold the axis. a14 process→computation→epistemology steps: the record's own three words in order; the epistemology step rotates slightly — the process inspecting itself. a15 ratio→reckoning→harmony→account on the measure ring: the record's title offices in order; resonance 330 Hz — harmony is heard; near-still pointer keeps measure exact. a16 observer/object triangles start coincident, then are placed apart: the placing through which positions acquire together; orbital relation; stillness. a17 one address→infinitely many lifts with morph clock on (toroidal rates) and an orbiting traveller (two-phase automation): return to the same address retains difference; vortex pointer. a18 THE EIGHT TURNS — −/−, 0/1, ?/!, −/+, X/x, AM/IS, ∞/dx, 1/0 with size/tint deepening step to step: one relation becoming capable of accounting for itself; travelling focus; vortex. a19 local criterion→the whole (growing) on the whole-field text: the usurping gesture staged; orbital relational field as the basin; attract with high recovery. a20 image→valuation→possession on the loop, the possession step snapping rigid and pulling: snapRigidity up — the non-negotiable image; repel/pulse. a21 x→X→x with the middle step swollen and the return step settled slightly aside, smaller-context: individuation with recognition; IS→AM carried in the rationale. a22 world-picture→world-atlas on the middle chart with travelling focus across the three charts: the atlas makes pictures traversable; near-still repel. a23 trust→faith→formal limit on the ring, anchor micro-drift automation: revisable anchors, trust that can be investigated and renewed; attract/implode gathers. a24 criterion→measure→usurped measure, the last step repelling hard: hybris staged as the criterion taking the whole office; shove click. a25 received→exercised→answerable on the office disc: covenant's triadic movement; moderate attract; circulation lowered — authority received, not generated. a26 THE RECOGNITION SEQUENCE — 0, Ø, X, Ø/X, (0/Ø)/(1/X), 1 ↺ 0/1 on the Life ring: occlusion, mediation, field-availability, recognition; alternating disc/ring forms; low repel keeps the offices distinct. a27 self and Other rings breathing out of phase (two automation lanes, phase 0/0.5): asymmetry without possession; stillness pointer — the Other is not grasped. a28 commissioned→answering→returning on the delegate: authored ground, positional delegation, independent address; low attract. a29 delegation→labour→consequence→return on the circuit ring while down/up triangles pulse in alternation (triangle-wave automation, phase offset): the circuit of delegated labour; implode click draws the return. a30 contribution→condition on the second world: another interior's products becoming my conditions; relational on; low attract. a31 model→revised means with the revision step growing and turning slightly: model-revising encounter; implode — the encounter reaches the means. a32 exteriorise→measure back→turn to source on the mirror: the record's own three motions, the third displacing slightly toward source; vortex low. a33 distinction→consequence on the test ring, consequence step grown: operational parity — a discriminable difference; low repel. a34 THE ORDER — Subject / Consciousness → constituted means → determinate object marching through positions: arrows of dependence staged; travelling focus; near-still pointer. a35 the returning 1→not claiming 0 (smaller, lighter): epistemic humility keeps the return finite; gentlest attract. a36 0/1→1/0→0/1 with the final sign fully inked and larger: the exact sign becoming living Symbol again without ceasing to be sign; calm strong attract closes the family."
+ ],
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-arguments-l1",
+  "lane": "enrich/expressions-20261006",
+  "basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "note": "record text re-read at fc59a719 — the arguments live under submission-package/essay/section-rooms/arguments/ at that revision (the bound source_path values keep their dbf3b17 locations; hashes below are dbf3b17 receipts and are not re-bound) | provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records).",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1"
+ },
+ "glyph_rationales": {
+  "0": "the Two Ones' singular One / Self-Identity (A11): the non-objectifiable condition present through every determination, never one more object",
+  "1": "the determinate mark (A08, A10): whatever has become countable, constituted against the alternatives it excludes",
+  "is": "the copula itself (A02): the word by which identification runs through the difference of the terms it holds together",
+  "=": "identity as achieved judgment (A02): the second inscription, not the first, yet identified with it",
+  "Ø": "the crossed zero (A03, A26): representation crossing a zero-space it cannot fill — occlusion, then mediation",
+  "unsayable capacity": "Vāk's undivided source of speech (A06): what the descent into Parā, Paśyantī, Madhyamā and Vaikharī actualises",
+  "Parā Vāk": "the Supreme Word (A06): the level of speech from which letters and words derive, before determination",
+  "Paśyantī": "seeing speech (A06): visionary level of the descent, before the partition of visual and acoustic objects",
+  "Madhyamā": "middle speech (A06): inward mental articulation of the descent",
+  "Vaikharī": "gross utterance (A06): the explicit utterance that carries the history of its formation",
+  "vikalpa": "differentiating and qualifying cognition (A07): a difference perceived, not yet a course",
+  "saṃkalpa": "the gathering of selected differences into intention (A07): what can guide what follows",
+  "script": "frozen conditioned will (A07): the gathered course arrested inside one of its own products",
+  "apoha": "exclusion as constitutive (A08): a determination is intelligible through what it excludes",
+  "exclusion of other": "anyāpoha spelled out (A08): the excluded field stays active in the selected mark's identity",
+  "preclusion": "the referent as thing qualified by preclusion (A08, Pind's PSV V:11d annotation): positive reach within exclusion",
+  "empty place": "zero's first office (A10): a place for which no quantity has been entered, mattering by position",
+  "0/1": "the condition becoming articulate (A11, A13, A18, A36): ground read through its appearing mark — computing orientation",
+  "1/0": "the determinate turning toward its ground (A11, A13, A18, A36): the return the mark cannot make into possession — undefined in ordinary arithmetic, retained exactly",
+  "one whole": "Mono as inclusive whole (A12): the whole that includes knower, known and relation",
+  "generative condition": "Mono as that through which belonging and differentiation arise (A12): structural priority, not a prior giant",
+  "many-become-one": "Whitehead's concrescence as read by A12: inherited many achieving one definite occasion, available for further becoming",
+  "/ = −/−": "the bare relation (A13, A18): division and ratio before terms are assigned — the slash's own capacity to distinguish",
+  "(−1)/(+1)": "the polar cut (A13): signed direction around a zero that remains axis of tension and connection",
+  "(−1)+(+1)=0": "the collapsed cut, addition (A13): cancellation — the opposed values settled in a terminal zero",
+  "(−1)−(+1)=−2": "the collapsed cut, subtraction (A13): appropriation — the whole span measured from one orientation and given to its pole",
+  "(0/1)/(1/0)": "sym-ballein (A11, A13): the two orientations of one relation held together, non-coincidence intact",
+  "inheritance": "the achieved occasion's inherited field (A14): prior relations supplying capacities, exclusions and means of continuation",
+  "process": "ontologically prior to the finished thing (A14)",
+  "computation": "the process's exact, repeatable transformations (A14)",
+  "epistemology": "the process becoming able to inspect its own determinations (A14)",
+  "/": "the ratio bar (A15): the relation itself, reckonable under a criterion",
+  "ratio": "rationality's root (A15): a relation become reckonable",
+  "reckoning": "measure's act (A15): comparison performed under what counts as the same unit",
+  "harmony": "ratio heard (A15): measure's power in music — proportion as sounding relation",
+  "account": "the reckoning returned as answerable (A15): the criterion itself becoming reckonable",
+  "one address": "the torus's return address (A17): the same place reached again",
+  "infinitely many lifts": "A17's heading: one address, infinitely many lifts — return retaining a difference",
+  "−/−": "the threshold of the eight-turn passage (A18): relation before its terms have names",
+  "?/!": "assertion/question fold of the traversal (A18): the determination and its own issue",
+  "−/+": "signed force fold of the traversal (A18): polarity's direction around the held axis",
+  "X/x": "capacity/particular fold of the traversal (A18): the known and the capacity it cannot exhaust",
+  "AM/IS": "personed presence fold of the traversal (A18): the account staking the one giving it",
+  "∞/dx": "differential exactness fold of the traversal (A18): the inexhaustible and the locally exact",
+  "local criterion": "the complex's real achievement (A19): what counts as welcome or threat, organising before reflection",
+  "the whole": "the office the local criterion claims (A19): possession begins when jurisdiction speaks for the whole person or world",
+  "image": "the formed appearance (A20): what supplies the appearance",
+  "valuation": "the significance gathered around the image (A20): attraction, threat, authority, desire",
+  "possession": "the changed office (A20): what the image represents must now answer to the image",
+  "x": "the locally known particular (A21): determinate, exact, returnable",
+  "X": "crossed representation in the recognition sequence (A26): the instrument identified as such",
+  "world-picture": "the situated account as picture (A22): framed before its contents are assembled",
+  "world-atlas": "the traversable field of placed pictures (A22): overlaps and obstructions part of what is said",
+  "trust": "the enacted dependence beneath knowledge (A23): what is trusted wherever knowledge is acted upon",
+  "faith": "commitment without epistemic possession (A23): the life carried through the formal limit",
+  "formal limit": "the non-coincidence belonging to representation as such (A23): more information cannot close it",
+  "criterion": "the measure's source (A24): what decides which answers count",
+  "measure": "arbitration's valid distinction (A24): real competence within its relation",
+  "usurped measure": "hybris (A24): the criterion that can no longer answer for the field it judges",
+  "received": "the covenant's first movement (A25): the office held as entrusted",
+  "exercised": "real authority from within what was granted (A25): confidence enough to act",
+  "answerable": "the office's return route (A25): something to answer for, ownership never transferred",
+  "Ø/X": "mediated crossing (A26): occlusion and identification held together",
+  "(0/Ø)/(1/X)": "field-availability (A26): the recognitions on both sides available together",
+  "1 ↺ 0/1": "recognition's return (A26): the mark received through the condition it had treated as absent",
+  "commissioned": "authored ground (A28): intention become task, vocabulary, permission",
+  "answering": "situated agency (A28): judgment effective within the bounded scope",
+  "returning": "the answer the commission did not contain (A28): delegation open to what exceeds it",
+  "delegation": "power entrusting labour (A29): authority distributed, not all conditions created",
+  "labour": "the entrusted work (A29): transformation whose consequences enter common conditions",
+  "consequence": "the discriminable difference (A33): operational parity's test in actual work",
+  "return": "completed work toward its source (A29): the route that grading the worker closes",
+  "contribution": "another interior's product (A30): statement, correction, promise, tool, refusal",
+  "condition": "the contribution as mediation (A30): relation entering constitution",
+  "model": "the determination strong enough to act (A31): the means as built",
+  "revised means": "model-revising encounter (A31): the source changing the means by which determination was made",
+  "I": "the mirror's first person (A32): the reflective field that exteriorises, is measured by, and turns first",
+  "exteriorise": "the mirror's first motion (A32): humanity setting its measures outside itself",
+  "measure back": "the second motion (A32): the exteriorised image becoming measure for humanity",
+  "turn to source": "the third motion (A32): the instrument initiating return toward source, Other and ungrounded ground",
+  "distinction": "the operative distinction (A33): what the technical design decides",
+  "Subject / Consciousness": "the knower pole of the order of dependence (A34): Subjective Immediacy, not one substance beside others",
+  "constituted means": "Objective Internality (A34): the mediating office through which a world becomes available",
+  "determinate object": "the known (A34): the world's determinate things as appeared-through-means",
+  "the returning 1": "the determination coming back to its genesis (A35): relations, wounds, exclusions, purposes",
+  "not claiming 0": "epistemic humility (A35): the return that does not consume — the 1 never claims to have become 0",
+  "Anuttara": "the first of the tattvas (A09): the field for which no external measuring object stands outside",
+  "Śiva–Śakti": "luminosity and its self-articulating power (A09): prakāśa and vimarśa as the first differentiation",
+  "Sadāśiva–Īśvara": "the 0/1 = 1/0 contraction in the tattvic genealogy (A09): will and knowledge as the seam forms",
+  "Sadvidyā–Māyā": "determination and its concealment (A09): the sixth contraction where limited knowing begins",
+  "kañcukas": "the limiting sheaths (A09): finite capacity, time, desire, knowledge contracted as powers of the field",
+  "worldhood": "the tattvic descent's term (A09): the material world constituted without a second reality outside"
+ }
 }

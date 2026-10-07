@@ -4,7 +4,7 @@
   "spec_ref": "docs/cradle/05-EXECUTION.md §3",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-10-07T10:16:55.509Z",
+  "generated_at": "2026-10-07T10:49:01.382Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -18,41 +18,18 @@
     "node": "v24.21.0",
     "platform": "darwin",
     "source": {
-      "repository_root": "/Users/admin/Central/worktrees/env-1/o-i",
-      "repository_head": "fa4034ae4bc1450437ba59f5922f480ca14cb629",
-      "tracked_changes": [
-        "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
-        "desktop/cradle/expressions-app/field-studies-journeys/src/kernelComposition.ts",
-        "desktop/cradle/expressions-app/field-studies-journeys/src/model.ts",
-        "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/channel.ts",
-        "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/controller.ts",
-        "desktop/cradle/expressions-app/field-studies-journeys/src/nativeField.ts",
-        "desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorkspace.ts",
-        "desktop/cradle/expressions-app/field-studies-journeys/tests/native-composition.test.mjs",
-        "desktop/cradle/kernel/src/agent_definition.rs",
-        "desktop/cradle/kernel/tests/agent_definition_gate.rs",
-        "desktop/cradle/src/agency/NativeAgentLauncher.tsx",
-        "desktop/cradle/src/agency/nativeAgent.ts",
-        "desktop/cradle/tests/agent-native-creation-browser.mjs",
-        "desktop/cradle/tests/agent-native-creation-browser.tsx",
-        "desktop/cradle/tests/agent-native-creation.test.mjs",
-        "desktop/cradle/walk/artifacts/tarot-score-failure.png",
-        "desktop/cradle/walk/artifacts/tarot-score-tarot-720-return.png",
-        "desktop/cradle/walk/artifacts/tarot-score-tarot-field-live.png",
-        "desktop/cradle/walk/artifacts/tarot-score-tarot-identity-selected.png",
-        "desktop/cradle/walk/artifacts/tarot-score-tarot-score-view.png",
-        "desktop/cradle/walk/artifacts/tarot-score-tarot-token-selected.png",
-        "desktop/cradle/walk/scenarios/tarot-score.mjs"
-      ],
-      "dirty_digest": "fe0a343aff7c52882d5d0565b86d70ae0a00b7dcd70731e925b501c8de143771",
-      "engine_provenance_path": "/Users/admin/Central/worktrees/env-1/o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "repository_root": "/private/tmp/tarot-land",
+      "repository_head": "0c8b24b880c622d14a2d7a20314eb5b6fa15c5de",
+      "tracked_changes": [],
+      "dirty_digest": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+      "engine_provenance_path": "/private/tmp/tarot-land/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
   "passed": false,
-  "error": "Error: the dated sky reading did not return: {\"alerts\":[\"the kernel host channel did not answer the nara-instrument request\"],\"statuses\":[\"Saved. This identity is selected for the Expression.\"]}\n    at Module.run (file:///Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/walk/scenarios/tarot-score.mjs:263:11)\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:541:9)\n    at async runScenario (file:///Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/walk/run.mjs:636:7)\n    at async file:///Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/walk/run.mjs:719:18",
-  "duration_ms": 382871,
+  "error": "Error: the dated sky reading did not return: {\"alerts\":[\"the kernel host channel did not answer the nara-instrument request\"],\"statuses\":[\"Saved. This identity is selected for the Expression.\"]}\n    at Module.run (file:///private/tmp/tarot-land/desktop/cradle/walk/scenarios/tarot-score.mjs:263:11)\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:541:9)\n    at async runScenario (file:///private/tmp/tarot-land/desktop/cradle/walk/run.mjs:636:7)\n    at async file:///private/tmp/tarot-land/desktop/cradle/walk/run.mjs:719:18",
+  "duration_ms": 337317,
   "checks": [
     {
       "ok": true,
@@ -96,7 +73,7 @@
         "kind": "dated",
         "mode": "undefined",
         "epoch": "undefined",
-        "snapshot_ref": "sha256:c551a30062134b7315e9c7ef6d379ea5fe9ebe672073cc2b1839be1a0f0f39a7",
+        "snapshot_ref": "sha256:89a3cf9244f17f18f4b4a047c9072d9c1f84bbbe936a53c794104f471c298b7a",
         "label": "Dated sky · undefined"
       }
     },
@@ -116,7 +93,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-10-07T10:16:55.867Z",
+        "mounted_at": "2026-10-07T10:49:01.760Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -127,7 +104,7 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 1205.3,
+      "duration_ms": 1695.4,
       "seq_range": {
         "from": 3,
         "to": 3
@@ -175,7 +152,7 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 4,
+      "duration_ms": 3.4,
       "seq_range": {
         "from": 4,
         "to": 4
@@ -246,7 +223,7 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 2.4,
+      "duration_ms": 2.7,
       "seq_range": {
         "from": 5,
         "to": 6
@@ -317,7 +294,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 2249,
+      "duration_ms": 1100,
       "data": {
         "file": "tarot-score-tarot-field-live.png"
       }
@@ -325,7 +302,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 1271,
+      "duration_ms": 994,
       "data": {
         "file": "tarot-score-tarot-identity-selected.png"
       }

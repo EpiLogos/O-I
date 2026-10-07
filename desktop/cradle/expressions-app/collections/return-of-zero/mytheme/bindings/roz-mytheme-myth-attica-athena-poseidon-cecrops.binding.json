@@ -1,139 +1,141 @@
 {
-  "artifact": "mytheme/roz-mytheme-myth-attica-athena-poseidon-cecrops.journey.json",
-  "family": "mytheme",
-  "worker": "E6 (mytheme-wholes)",
-  "profile_lineage": [
-    "roz-corpus-base",
-    "register-mytheme",
-    "family-hellenic"
-  ],
-  "source_revision": {
-    "repo": "EpiLogos/Antykathera-Essay-Work",
-    "commit": "fc59a719",
-    "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
-    "records": [
-      {
-        "record_id": "mytheme-myth-attica-athena-poseidon-cecrops",
-        "path": "submission-package/essay/symbolon/mytheme/worlds/hellenic/attica-athena-poseidon-cecrops/WHOLE.md",
-        "sha256": "0ce5ecbdc362909d1a09d67c3cd73563769ffc44d5b3e64165af2a929abe8926",
-        "sha256_receipt_stale": "68aa4168cf423d9744c74aff43a75ce47d090ca5af699bb5325149086b56e3a5"
-      }
-    ]
+ "artifact": "mytheme/roz-mytheme-myth-attica-athena-poseidon-cecrops.journey.json",
+ "family": "mytheme",
+ "worker": "E6 (mytheme-wholes)",
+ "profile_lineage": [
+  "roz-corpus-base",
+  "register-mytheme",
+  "family-hellenic"
+ ],
+ "source_revision": {
+  "repo": "EpiLogos/Antykathera-Essay-Work",
+  "commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+  "census": "working/pre-manuscript-refinement-2026-09-10/T25-current-census-acceptance.json",
+  "records": [
+   {
+    "record_id": "mytheme-myth-attica-athena-poseidon-cecrops",
+    "path": "submission-package/essay/symbolon/mytheme/worlds/hellenic/attica-athena-poseidon-cecrops/WHOLE.md",
+    "sha256": "0ce5ecbdc362909d1a09d67c3cd73563769ffc44d5b3e64165af2a929abe8926",
+    "sha256_receipt_stale": "68aa4168cf423d9744c74aff43a75ce47d090ca5af699bb5325149086b56e3a5"
+   }
+  ]
+ },
+ "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
+ "scenes": [
+  {
+   "scene_id": "m-att-0-contest",
+   "phase": "#1 claim, witness, verdict",
+   "relations": "Pseudo-Apollodorus 3.14.1 (q001); Cecrops #0"
   },
-  "pointcloud_revision": "a39cf5f5fa45cd6526d1c8af432dad711c9758ec",
-  "scenes": [
-    {
-      "scene_id": "m-att-0-contest",
-      "phase": "#1 claim, witness, verdict",
-      "relations": "Pseudo-Apollodorus 3.14.1 (q001); Cecrops #0"
-    },
-    {
-      "scene_id": "m-att-1-aftermath",
-      "phase": "#2 variant aftermaths",
-      "relations": "Hyginus Fab. 164 (q001 + Latin); Augustine Civ. Dei 18.9 (q001); the west pediment record"
-    },
-    {
-      "scene_id": "m-att-2-sanctuary",
-      "phase": "#2 material memory",
-      "relations": "Herodotus 8.55 (q001); Pausanias 1.26.5–7 (q001) and 1.27.2 (q002); the Erechtheion account"
-    },
-    {
-      "scene_id": "m-att-3-torus",
-      "phase": "#3 the five ratified relations",
-      "relations": "anchors 3.1–3.5, all human-amplified: yes; A24; the Arbitration field"
-    },
-    {
-      "scene_id": "m-att-5-return",
-      "phase": "#5→0 the verdict returns to the place",
-      "relations": "anchor attica-verdict-retained-contrary; the five held candidates (no); Topos/Logos/Nomos/Natio analogy; Neumann shared ground"
-    }
-  ],
-  "occurrence_index": [
-    {
-      "figure": "Cecrops",
-      "occurrence": "#0–#1 the earth-born serpent-human witness; prior naming of Cecropia"
-    },
-    {
-      "figure": "Poseidon's trident / sea Erechtheis",
-      "occurrence": "#1 the mid-Acropolis strike; #2 trident marks and salt spring in the sanctuary"
-    },
-    {
-      "figure": "Athena's olive",
-      "occurrence": "#1 planted under witness; #2 burnt and regrown in two reports; #3 the root-to-flame chain"
-    },
-    {
-      "figure": "the twelve arbiters / Zeus's separation",
-      "occurrence": "#1 distinct from the king's testimony"
-    },
-    {
-      "figure": "the Thriasian flood",
-      "occurrence": "#1–#2 the unresolved aftermath; prevented in Hyginus; punitive in Augustine's telling"
-    },
-    {
-      "figure": "the women's vote and its removal",
-      "occurrence": "#2 Augustine's Varro-derived account, his polemic named"
-    },
-    {
-      "place": "the Erechtheion",
-      "occurrence": "#2 the double shrine retaining both claims"
-    },
-    {
-      "motif": "\"the verdict determines the city; it does not exhaust the place\"",
-      "occurrence": "#3.5 the ratified formulation"
-    }
-  ],
-  "human_amplified": [
-    {
-      "relation": "the five ratified relations (sea-depth retained at the centre; Athena as rational-civic differentiation; the torus with Poseidon's well at its centre; the olive chain; a valid verdict is not an exhaustive ontology) and the shared Neumann structuration",
-      "flag": "yes"
-    },
-    {
-      "relation": "the five held candidates: Cecrops as psychoid mediator; sea/olive as two modes of power; flood as return of excluded force; the two namings; Erechtheion as complexio oppositorum",
-      "flag": "no — presented for encounter, never propagated"
-    }
-  ],
-  "cross_story_relations": [
-    "Uroboros whole compared through the toroidal reading at its appointed scale; no sanctuary-as-proof-of-topology."
-  ],
-  "assets": [
-    {
-      "kind": "ascii",
-      "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
-      "provenance": "authored"
-    },
-    {
-      "kind": "diagram",
-      "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
-      "provenance": "authored"
-    }
-  ],
-  "capture": "mytheme/roz-mytheme-myth-attica-athena-poseidon-cecrops.cover.png",
-  "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
-  "status": "reviewed",
-  "notes": [
-    "Craft: the contest scene stages the arbitral triangle with the two gifts at its base corners; the sanctuary scene keeps olive and trident-mark on opposite flanks of the shrine so the retained contrary is visible. All seven source houses' passage-card standing and the print-collation debts are named in the record and preserved here. | E0 correction 2026-09-17: receipt-era sha256 replaced with actual-bytes hash at dbf3b17 (prior value kept as sha256_receipt_stale). E0 acceptance repair: title/field collision fixed on m-att-0-contest, m-att-1-aftermath, m-att-3-torus, m-att-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
-    "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l3), per scene:\n#1 contest — the striving staged: repel + shove pointer (Zeus's separation as the click), turbulence 0.15 (two divine forces contending); the trident carries a repel force (the strike entering the field); the olive grows from seedling to tree (the witnessed planting taking time); the land's two namings walk Cecropia → Athens — the record's naming archaeology in its own order. Duration 13.\n#2 aftermath — the flood's three variants as one sea-ring: it swells dark (the accomplished Thriasian flood), recedes pale (Hyginus's prevented inundation); vortex + pulse pointer (the surge), circulation −0.3 (the sea's pull-back). Duration 12.\n#3 sanctuary — THE 3D SCENE. z is the precinct's two levels: Athena's olive at the eastern, upper dedication (z +0.4), the Erechtheion between (z 0), the trident mark and salt spring in the lower western shrine (z −0.45) — the victorious civic form retaining the counter-claim below itself, literally. The olive's sequence burns and regrows (gold → burnt dark → the green-gold shoot); auto-wave, a slow sine LFO on circulation — the cistern's wave sounding in a south wind; attract pointer (the precinct gathers both cults). Duration 14 — the material memory takes time.\n#4 torus — the toroidal image composed in place: the ring wound around the well-disc at centre (both at 0,−0.35), its rotation sequence turning the wound form; the olive chain walked in the record's own stages root→tree → fruit→pressing→oil → anointing→flame/light (tint ripening toward flame); vortex + pulse pointer (circulation around an unfilled depth). Duration 13.\n#5→0 return — the fourfold walked T·L·N·N → Topos→Logos → Nomos→Natio → T·L·N·N (operational analogy, held as analogy); the retained-contrary ring settles from sea-dark to the civic violet (standing, not revolt); attract pointer at 0.25 — the gentlest hold in the journey. Duration 15, the longest beat.\nENDING QUALIFIES BEGINNING: the journey opens in strife — two claims shoving apart, a land renamed by force of verdict — and closes in the same field at rest: the retained contrary ring holds Poseidon's sign with standing inside Athena's city, the fourfold analogy naming what #1 performed (place → signs → verdict → belonging). The trident of #1 (weapon at the centre) re-enters at #3 as the mark retained in the bedrock — the same Ψ, changed office — and the flood-ring that swelled in #2 settles at #5→0 into the ring of the force that remains without governing. The verdict the arbiters gave in #0 returns to the place it named, now bounded: it determines the city; it does not exhaust the place.\nHuman-amplified staging: the five ratified relations carry human-amplified: yes in the #4 kicker; the five candidate readings remain deliberately human-amplified: no in the #5→0 body, verbatim. Mythemic verbs only: the contest demonstrates the retained-contrary relation; no dictionary key (Poseidon = #0), no historical or topological claim.\nAutomation: auto-wave (#3, field.params.circulation sine — the cistern's wave-sound), tied to the record's own reported sign. Durations 12–15 and transitions 1.3–2.2: the sanctuary and the return held longest.\nLayouts: #2 aftermath in line (the variant aftermaths in series), #5→0 return in ring (the retained contrary held in the round); the torus scene keeps hand placement so the ring can wind the well at its exact centre."
-  ],
-  "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
-  "enrichment": {
-    "date": "2026-10-06",
-    "actor": "zcode:enrich-mytheme-l3",
-    "lane": "mytheme"
+  {
+   "scene_id": "m-att-1-aftermath",
+   "phase": "#2 variant aftermaths",
+   "relations": "Hyginus Fab. 164 (q001 + Latin); Augustine Civ. Dei 18.9 (q001); the west pediment record"
   },
-  "glyph_rationales": {
-    "Cecrops": "the earth-born king, man and serpent — the autochthonous witness whose double nature sees both signs; his testimony is the verdict's stated ground (Pseudo-Apollodorus 3.14.1).",
-    "Cecropia": "the prior naming — the country formerly called Acte named after its king; the first of the story's two naming events.",
-    "Ψ": "Poseidon's trident — at #1 the strike at the Acropolis's middle that opens the sea called Erechtheis; at #2 the mark retained in the bedrock: weapon become memory.",
-    "Athens": "the civic name given through Athena — the naming that binds the city without exhausting the place.",
-    "☄": "Mercury in Hyginus, Fab. 164 — the prevention of the flood on Jupiter's orders; higher authority restraining the defeated claimant.",
-    "⚖": "the scales — at #1 Augustine's account of the women's outvoting and its reversal; at #3 the verdict's bounded authority.",
-    "→→→": "the olive chain's direction — root to light; the authored chain's flow through cultivation and transformation (record 3.4).",
-    "root→tree": "the chain's first stage — rooted life persisting through seasons and generations.",
-    "fruit→pressing→oil": "the chain's middle stages — the fruit made useful through cultivation and transformation.",
-    "anointing→flame/light": "the chain's completion — nourishment, anointing, burning: the fruit of rooted life become light.",
-    "5×": "the five proposed comparisons held deliberately unratified — presented for encounter, not installed as canon.",
-    "T·L·N·N": "the operational fourfold Topos→Logos→Nomos→Natio — an analogical relation, not a claim that the myth encoded the later sixfold.",
-    "Topos→Logos": "place become logos — the claimed Acropolis receiving rival signs, testimony and naming.",
-    "Nomos→Natio": "nomos become natio — divine arbitration and verdict becoming Athens as named civic belonging."
+  {
+   "scene_id": "m-att-2-sanctuary",
+   "phase": "#2 material memory",
+   "relations": "Herodotus 8.55 (q001); Pausanias 1.26.5–7 (q001) and 1.27.2 (q002); the Erechtheion account"
+  },
+  {
+   "scene_id": "m-att-3-torus",
+   "phase": "#3 the five ratified relations",
+   "relations": "anchors 3.1–3.5, all human-amplified: yes; A24; the Arbitration field"
+  },
+  {
+   "scene_id": "m-att-5-return",
+   "phase": "#5→0 the verdict returns to the place",
+   "relations": "anchor attica-verdict-retained-contrary; the five held candidates (no); Topos/Logos/Nomos/Natio analogy; Neumann shared ground"
   }
+ ],
+ "occurrence_index": [
+  {
+   "figure": "Cecrops",
+   "occurrence": "#0–#1 the earth-born serpent-human witness; prior naming of Cecropia"
+  },
+  {
+   "figure": "Poseidon's trident / sea Erechtheis",
+   "occurrence": "#1 the mid-Acropolis strike; #2 trident marks and salt spring in the sanctuary"
+  },
+  {
+   "figure": "Athena's olive",
+   "occurrence": "#1 planted under witness; #2 burnt and regrown in two reports; #3 the root-to-flame chain"
+  },
+  {
+   "figure": "the twelve arbiters / Zeus's separation",
+   "occurrence": "#1 distinct from the king's testimony"
+  },
+  {
+   "figure": "the Thriasian flood",
+   "occurrence": "#1–#2 the unresolved aftermath; prevented in Hyginus; punitive in Augustine's telling"
+  },
+  {
+   "figure": "the women's vote and its removal",
+   "occurrence": "#2 Augustine's Varro-derived account, his polemic named"
+  },
+  {
+   "place": "the Erechtheion",
+   "occurrence": "#2 the double shrine retaining both claims"
+  },
+  {
+   "motif": "\"the verdict determines the city; it does not exhaust the place\"",
+   "occurrence": "#3.5 the ratified formulation"
+  }
+ ],
+ "human_amplified": [
+  {
+   "relation": "the five ratified relations (sea-depth retained at the centre; Athena as rational-civic differentiation; the torus with Poseidon's well at its centre; the olive chain; a valid verdict is not an exhaustive ontology) and the shared Neumann structuration",
+   "flag": "yes"
+  },
+  {
+   "relation": "the five held candidates: Cecrops as psychoid mediator; sea/olive as two modes of power; flood as return of excluded force; the two namings; Erechtheion as complexio oppositorum",
+   "flag": "no — presented for encounter, never propagated"
+  }
+ ],
+ "cross_story_relations": [
+  "Uroboros whole compared through the toroidal reading at its appointed scale; no sanctuary-as-proof-of-topology."
+ ],
+ "assets": [
+  {
+   "kind": "ascii",
+   "ref": "entity glyphs and word-formations inside the journey file (all scene text traces to the record)",
+   "provenance": "authored"
+  },
+  {
+   "kind": "diagram",
+   "ref": "scene compositions (net, torus, dial, egg-sequence, quaternio) staged with the engine shapes ring/disc/square/triangle/yantra/cymatic",
+   "provenance": "authored"
+  }
+ ],
+ "capture": "mytheme/roz-mytheme-myth-attica-athena-poseidon-cecrops.cover.png",
+ "capture_notes": "Cover captured through tools/capture.mjs at authored params (scene 1 of the journey). Draft pass at --count 8000 across all scenes; final cover at authored count.",
+ "status": "reviewed",
+ "notes": [
+  "Craft: the contest scene stages the arbitral triangle with the two gifts at its base corners; the sanctuary scene keeps olive and trident-mark on opposite flanks of the shrine so the retained contrary is visible. All seven source houses' passage-card standing and the print-collation debts are named in the record and preserved here. | E0 correction 2026-09-17: receipt-era sha256 replaced with actual-bytes hash at dbf3b17 (prior value kept as sha256_receipt_stale). E0 acceptance repair: title/field collision fixed on m-att-0-contest, m-att-1-aftermath, m-att-3-torus, m-att-5-return (title width 560; formations iteratively scaled and dropped clear of the title band); cover re-captured.",
+  "Enrichment moves 2026-10-06 (zcode:enrich-mytheme-l3), per scene:\n#1 contest — the striving staged: repel + shove pointer (Zeus's separation as the click), turbulence 0.15 (two divine forces contending); the trident carries a repel force (the strike entering the field); the olive grows from seedling to tree (the witnessed planting taking time); the land's two namings walk Cecropia → Athens — the record's naming archaeology in its own order. Duration 13.\n#2 aftermath — the flood's three variants as one sea-ring: it swells dark (the accomplished Thriasian flood), recedes pale (Hyginus's prevented inundation); vortex + pulse pointer (the surge), circulation −0.3 (the sea's pull-back). Duration 12.\n#3 sanctuary — THE 3D SCENE. z is the precinct's two levels: Athena's olive at the eastern, upper dedication (z +0.4), the Erechtheion between (z 0), the trident mark and salt spring in the lower western shrine (z −0.45) — the victorious civic form retaining the counter-claim below itself, literally. The olive's sequence burns and regrows (gold → burnt dark → the green-gold shoot); auto-wave, a slow sine LFO on circulation — the cistern's wave sounding in a south wind; attract pointer (the precinct gathers both cults). Duration 14 — the material memory takes time.\n#4 torus — the toroidal image composed in place: the ring wound around the well-disc at centre (both at 0,−0.35), its rotation sequence turning the wound form; the olive chain walked in the record's own stages root→tree → fruit→pressing→oil → anointing→flame/light (tint ripening toward flame); vortex + pulse pointer (circulation around an unfilled depth). Duration 13.\n#5→0 return — the fourfold walked T·L·N·N → Topos→Logos → Nomos→Natio → T·L·N·N (operational analogy, held as analogy); the retained-contrary ring settles from sea-dark to the civic violet (standing, not revolt); attract pointer at 0.25 — the gentlest hold in the journey. Duration 15, the longest beat.\nENDING QUALIFIES BEGINNING: the journey opens in strife — two claims shoving apart, a land renamed by force of verdict — and closes in the same field at rest: the retained contrary ring holds Poseidon's sign with standing inside Athena's city, the fourfold analogy naming what #1 performed (place → signs → verdict → belonging). The trident of #1 (weapon at the centre) re-enters at #3 as the mark retained in the bedrock — the same Ψ, changed office — and the flood-ring that swelled in #2 settles at #5→0 into the ring of the force that remains without governing. The verdict the arbiters gave in #0 returns to the place it named, now bounded: it determines the city; it does not exhaust the place.\nHuman-amplified staging: the five ratified relations carry human-amplified: yes in the #4 kicker; the five candidate readings remain deliberately human-amplified: no in the #5→0 body, verbatim. Mythemic verbs only: the contest demonstrates the retained-contrary relation; no dictionary key (Poseidon = #0), no historical or topological claim.\nAutomation: auto-wave (#3, field.params.circulation sine — the cistern's wave-sound), tied to the record's own reported sign. Durations 12–15 and transitions 1.3–2.2: the sanctuary and the return held longest.\nLayouts: #2 aftermath in line (the variant aftermaths in series), #5→0 return in ring (the retained contrary held in the round); the torus scene keeps hand placement so the ring can wind the well at its exact centre."
+ ],
+ "enrichment_basis_commit": "dbf3b1771724bd56663e4e3410df13e9d3ae681b",
+ "enrichment": {
+  "date": "2026-10-06",
+  "actor": "zcode:enrich-mytheme-l3",
+  "lane": "mytheme",
+  "read_revision": "fc59a719c75ddddb821afc7bb0ac0e66116c12a1",
+  "note": "provenance normalisation 2026-10-06: source_revision.commit records the revision the preserved records[] hashes resolve at (dbf3b17, the basis this binding inherited); the enrichment read the records at read_revision fc59a719 (see enrichment notes for moved/deleted records)."
+ },
+ "glyph_rationales": {
+  "Cecrops": "the earth-born king, man and serpent — the autochthonous witness whose double nature sees both signs; his testimony is the verdict's stated ground (Pseudo-Apollodorus 3.14.1).",
+  "Cecropia": "the prior naming — the country formerly called Acte named after its king; the first of the story's two naming events.",
+  "Ψ": "Poseidon's trident — at #1 the strike at the Acropolis's middle that opens the sea called Erechtheis; at #2 the mark retained in the bedrock: weapon become memory.",
+  "Athens": "the civic name given through Athena — the naming that binds the city without exhausting the place.",
+  "☄": "Mercury in Hyginus, Fab. 164 — the prevention of the flood on Jupiter's orders; higher authority restraining the defeated claimant.",
+  "⚖": "the scales — at #1 Augustine's account of the women's outvoting and its reversal; at #3 the verdict's bounded authority.",
+  "→→→": "the olive chain's direction — root to light; the authored chain's flow through cultivation and transformation (record 3.4).",
+  "root→tree": "the chain's first stage — rooted life persisting through seasons and generations.",
+  "fruit→pressing→oil": "the chain's middle stages — the fruit made useful through cultivation and transformation.",
+  "anointing→flame/light": "the chain's completion — nourishment, anointing, burning: the fruit of rooted life become light.",
+  "5×": "the five proposed comparisons held deliberately unratified — presented for encounter, not installed as canon.",
+  "T·L·N·N": "the operational fourfold Topos→Logos→Nomos→Natio — an analogical relation, not a claim that the myth encoded the later sixfold.",
+  "Topos→Logos": "place become logos — the claimed Acropolis receiving rival signs, testimony and naming.",
+  "Nomos→Natio": "nomos become natio — divine arbitration and verdict becoming Athens as named civic belonging."
+ }
 }

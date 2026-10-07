@@ -24,7 +24,11 @@ try {
     const calls = [];
     const errors = [];
     page.on('pageerror', error => errors.push(String(error)));
-    await page.route('**/__search_fixture/**', async route => {
+    // Intercept only the knowledge operations (/op). The /events poll stays
+    // on the real same-origin server: a WebKit fulfilled route can surface
+    // its own masked CORS failure as an uncaught page error (the
+    // 2026-10-06 cradle CI flake), and the poll carries no contract here.
+    await page.route('**/__search_fixture/op', async route => {
       if (route.request().method() !== 'POST') return route.fulfill({json:{ok:true,receipts:[]}});
       const op = route.request().postDataJSON();
       if (op.op !== 'knowledge') return route.fulfill({json:{ok:true,outcome:{result:'state',snapshot:{focus:{},surfaces:{},buffers:{}},receipts:[]}}});
