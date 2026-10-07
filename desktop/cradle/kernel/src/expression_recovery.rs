@@ -57,6 +57,12 @@ impl Scope {
 pub enum Kind {
     Draft,
     Checkpoint,
+    /// A Ta-Onta stage session's authored configuration (O:I #581, PS-C first
+    /// vertical): versioned `ql.stage-procedure/v1` procedures, their
+    /// contribution-ownership claims, evaluation seeds and determinant
+    /// bindings, retained so the session's Open-configuration restoration
+    /// reconstructs the authored/procedural configuration from this store.
+    StageConfiguration,
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
@@ -87,6 +93,21 @@ pub enum Request {
         id: String,
         expected_revision: u64,
     },
+    /// Open configuration (contract P6 §5.2, first restoration operation):
+    /// reconstruct a retained stage session's authored/procedural
+    /// configuration and answer its entry standing against the caller's
+    /// current source basis. A changed source revision is the typed
+    /// re-evaluation case (`source_drift`), never a silent reopen; the
+    /// retained original basis travels unchanged either way. This is a read:
+    /// it consumes no sequence and writes nothing.
+    OpenConfiguration {
+        scope: Scope,
+        id: String,
+        /// The caller's current source revision for the stage's subject.
+        source_revision: String,
+        /// The caller's current live event basis.
+        event_ref: String,
+    },
 }
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -112,6 +133,13 @@ impl Record {
                 .and_then(Value::as_str)
             {
                 row["expression_ref"] = json!(reference);
+            }
+        }
+        if self.kind == Kind::StageConfiguration {
+            for name in ["stage_ref", "subject_ref", "source_revision"] {
+                if let Some(reading) = self.value.get(name).and_then(Value::as_str) {
+                    row[name] = json!(reading);
+                }
             }
         }
         row
@@ -206,6 +234,9 @@ fn validate(kind: Kind, id: &str, value: &Value) -> Result<(), String> {
     data(value, 0)?;
     if kind == Kind::Draft {
         return journey(value, id);
+    }
+    if kind == Kind::StageConfiguration {
+        return stage_configuration(value);
     }
     let fields = value
         .as_object()
@@ -392,6 +423,519 @@ fn filename(kind: Kind, id: &str) -> String {
         Sha256::digest(format!("{kind:?}:{id}").as_bytes())
     )
 }
+
+// --- The Ta-Onta stage's retained configuration (O:I #581, PS-C) -----------
+//
+// The stage's procedure grammar, ownership law and receipts live at their
+// native owner (QL-MEF `crates/ql-mef/src/continuous/stage.rs`, contract P6
+// §5). This store retains a stage session's authored configuration so the
+// Open-configuration restoration reconstructs it: the versioned procedures,
+// each contribution's ownership claim (its origin: procedure_ref/revision/slot
+// and the receipt's warrant), the evaluation seeds and the determinant
+// bindings. The validator below mirrors the landed stage law's named clauses
+// exactly, so a persisted procedure that no longer validates is refused with
+// the same clause the live stage applies; the owner host re-validates every
+// payload again at evaluate/bind time, as it does for live exchanges.
+
+/// The retained record contract.
+pub const STAGE_CONFIGURATION_SCHEMA: &str = "oi.stage-configuration/v1";
+/// The stage procedure contract this store retains, as landed.
+pub const STAGE_PROCEDURE_SCHEMA: &str = "ql.stage-procedure/v1";
+/// The stage slots a procedure may own, mirrored from the landed law.
+const STAGE_SLOTS: [&str; 4] = [
+    "form",
+    "material.damping",
+    "clock.inscription",
+    "clock.lensing",
+];
+const STAGE_CLOCK_SLOTS: [&str; 2] = ["clock.inscription", "clock.lensing"];
+/// The determinant operations a binding may follow, mirrored from the landed law.
+const STAGE_DETERMINANTS: [&str; 2] = ["m1-advance", "replace-event"];
+/// The exact JSON integer bound the stage applies to clock phases.
+const MAX_EXACT_JSON_INTEGER: u64 = 9_007_199_254_740_991;
+
+const MAX_STAGE_PROCEDURES: usize = 16;
+const MAX_STAGE_BINDINGS: usize = 16;
+const MAX_STAGE_CONTRIBUTIONS: usize = 64;
+const MAX_STAGE_SEEDS: usize = 64;
+
+/// A bounded, control-free identity or reading carried by the record.
+fn stage_basis_text(value: &str, name: &str) -> Result<(), String> {
+    if value.is_empty() || value.len() > 2048 || value.chars().any(char::is_control) {
+        Err(format!("Stage configuration requires a bounded {name}"))
+    } else {
+        Ok(())
+    }
+}
+
+/// Exactly these keys, no more: the store's closed-record idiom.
+fn stage_fields(value: &Value, name: &str, keys: &[&str]) -> Result<(), String> {
+    let body = value
+        .as_object()
+        .ok_or_else(|| format!("Stage {name} must be an object"))?;
+    if body.keys().any(|key| !keys.contains(&key.as_str())) || body.len() > keys.len() {
+        return Err(format!("Unsupported stage {name} field"));
+    }
+    Ok(())
+}
+
+fn stage_array<'a>(value: &'a Value, name: &str) -> Result<&'a Vec<Value>, String> {
+    value
+        .as_array()
+        .ok_or_else(|| format!("Stage {name} must be an array"))
+}
+
+/// The stage trigger grammar: an invocation, or a named admitted determinant.
+fn stage_trigger(value: &Value) -> Result<(), String> {
+    stage_fields(value, "trigger", &["trigger", "operation"])?;
+    match value["trigger"].as_str() {
+        Some("invocation") => {
+            if value.as_object().is_some_and(|body| body.len() != 1) {
+                return Err("Unsupported stage trigger field".into());
+            }
+            Ok(())
+        }
+        Some("determinant") => {
+            if value.as_object().is_some_and(|body| body.len() != 2) {
+                return Err("Unsupported stage trigger field".into());
+            }
+            let operation = value["operation"]
+                .as_str()
+                .ok_or("A determinant trigger names its operation")?;
+            if STAGE_DETERMINANTS.contains(&operation) {
+                Ok(())
+            } else {
+                Err(format!(
+                    "unknown determinant trigger {operation:?}; admitted: {STAGE_DETERMINANTS:?}"
+                ))
+            }
+        }
+        other => Err(format!("Unsupported stage trigger {:?}", other)),
+    }
+}
+
+/// The slot one typed stage change addresses, when it addresses owned state at
+/// all — mirrored from the landed law's own routing.
+fn stage_change_slot(change: &Value) -> Result<Option<&'static str>, String> {
+    match change["change"].as_str() {
+        Some("form") => Ok(Some("form")),
+        Some("damping") => Ok(Some("material.damping")),
+        Some("clock") => {
+            let slot = change["slot"]
+                .as_str()
+                .ok_or("A clock change addresses clock.inscription or clock.lensing")?;
+            STAGE_CLOCK_SLOTS
+                .iter()
+                .find(|admitted| **admitted == slot)
+                .copied()
+                .map(Some)
+                .ok_or_else(|| {
+                    format!(
+                        "a clock change addresses clock.inscription or clock.lensing, not {slot}"
+                    )
+                })
+        }
+        Some("strike") => Ok(None),
+        other => Err(format!("Unsupported stage change {:?}", other)),
+    }
+}
+
+/// One typed stage change, bounded exactly as the landed law bounds it.
+fn stage_change(change: &Value) -> Result<(), String> {
+    // The slot routing is validated first: an unknown clock slot or change tag
+    // is refused by the same clause the live stage applies.
+    stage_change_slot(change)?;
+    match change["change"].as_str() {
+        Some("form") => {
+            stage_fields(change, "form change", &["change", "operations"])?;
+            let operations = stage_array(&change["operations"], "form change operations")?;
+            if operations.is_empty() || operations.len() > 64 {
+                return Err("an M3 form change carries 1..64 operations".into());
+            }
+            for operation in operations {
+                if !operation.is_object() || operation["operation"].as_str().is_none() {
+                    return Err("an M3 form operation names its operation".into());
+                }
+            }
+        }
+        Some("damping") => {
+            stage_fields(change, "damping change", &["change", "per_second"])?;
+            let per_second = change["per_second"]
+                .as_f64()
+                .ok_or("stage damping must be finite and in 0..1000000 per second")?;
+            if !per_second.is_finite() || !(0.0..=1e6).contains(&per_second) {
+                return Err("stage damping must be finite and in 0..1000000 per second".into());
+            }
+        }
+        Some("clock") => {
+            stage_fields(change, "clock change", &["change", "slot", "phase"])?;
+            let phase = &change["phase"];
+            stage_fields(phase, "clock phase", &["turns", "half_degrees"])?;
+            let turns: u64 = phase["turns"]
+                .as_str()
+                .and_then(|t| t.parse().ok())
+                .ok_or("clock phase must carry canonical turns and half_degrees < 720")?;
+            if turns.to_string() != phase["turns"].as_str().unwrap_or_default() {
+                return Err("clock phase must carry canonical turns and half_degrees < 720".into());
+            }
+            let half_degrees = phase["half_degrees"]
+                .as_u64()
+                .ok_or("clock phase must carry canonical turns and half_degrees < 720")?;
+            if half_degrees >= 720 {
+                return Err("clock phase must carry canonical turns and half_degrees < 720".into());
+            }
+            let steps = turns
+                .checked_mul(720)
+                .and_then(|t| t.checked_add(half_degrees))
+                .ok_or("clock phase exceeds the exact native range")?;
+            if steps > MAX_EXACT_JSON_INTEGER {
+                return Err("clock phase exceeds the exact native range".into());
+            }
+        }
+        Some("strike") => {
+            stage_fields(
+                change,
+                "strike change",
+                &["change", "mode_ref", "amplitude"],
+            )?;
+            let mode_ref = change["mode_ref"]
+                .as_str()
+                .ok_or("a played strike names a current scene voice by its mode reference")?;
+            if mode_ref.is_empty()
+                || mode_ref.len() > 2048
+                || mode_ref.chars().any(|c| c.is_control())
+            {
+                return Err(
+                    "a played strike names a current scene voice by its mode reference".into(),
+                );
+            }
+            let amplitude = stage_array(&change["amplitude"], "strike amplitude")?;
+            if amplitude.len() != 2
+                || amplitude
+                    .iter()
+                    .any(|a| !a.as_f64().is_some_and(|v| v.is_finite() && v.abs() <= 1.0))
+            {
+                return Err("a played strike's amplitude is modal metres within the declared material policy (finite, |a| <= 1.0)".into());
+            }
+        }
+        _ => unreachable!("stage_change_slot already refused the unknown change tag"),
+    }
+    Ok(())
+}
+
+/// One versioned stage procedure, validated clause-for-clause against the
+/// landed stage law (`StageProcedure::validate` and the serde closed shapes).
+pub fn stage_procedure(value: &Value) -> Result<(), String> {
+    stage_fields(
+        value,
+        "procedure",
+        &[
+            "schema",
+            "procedure_ref",
+            "revision",
+            "subject_ref",
+            "trigger",
+            "selector",
+            "changes",
+            "passage",
+        ],
+    )?;
+    if value["schema"].as_str() != Some(STAGE_PROCEDURE_SCHEMA) {
+        return Err(format!(
+            "unsupported stage procedure contract {}; expected {STAGE_PROCEDURE_SCHEMA}",
+            value["schema"]
+        ));
+    }
+    let procedure_ref = value["procedure_ref"]
+        .as_str()
+        .ok_or("invalid stage procedure reference")?;
+    if procedure_ref.is_empty()
+        || procedure_ref.len() > 2048
+        || procedure_ref.chars().any(|c| c.is_control())
+    {
+        return Err("invalid stage procedure reference".into());
+    }
+    // The subject's semantic qualification stays with its owner; this store
+    // carries it as bounded text and the owner host re-validates it through
+    // the PS-E subject owner at evaluate/bind time.
+    stage_basis_text(
+        value["subject_ref"].as_str().unwrap_or_default(),
+        "procedure subject",
+    )
+    .map_err(|_| "stage procedure subject must be bounded text".to_string())?;
+    if value["revision"].as_u64().unwrap_or(0) == 0 {
+        return Err("stage procedure revision must be at least 1".into());
+    }
+    stage_trigger(&value["trigger"])?;
+    let selector = stage_array(&value["selector"], "procedure selector")?;
+    if selector.len() > STAGE_SLOTS.len() {
+        return Err(format!(
+            "a procedure selects at most {} distinct stage slots",
+            STAGE_SLOTS.len()
+        ));
+    }
+    for slot in selector {
+        let slot = slot
+            .as_str()
+            .ok_or_else(|| format!("unknown stage slot {slot:?}; admitted: {STAGE_SLOTS:?} (voice retuning is not an admitted stage change yet)"))?;
+        if slot.starts_with("voice:") || !STAGE_SLOTS.contains(&slot) {
+            return Err(format!(
+                "unknown stage slot {slot:?}; admitted: {STAGE_SLOTS:?} (voice retuning is not an admitted stage change yet)"
+            ));
+        }
+    }
+    let changes = stage_array(&value["changes"], "procedure changes")?;
+    if changes.is_empty() || changes.len() > 16 {
+        return Err("a procedure carries 1..16 changes".into());
+    }
+    let mut slots: Vec<&'static str> = Vec::new();
+    for change in changes {
+        if !change.is_object() {
+            return Err("Unsupported stage change".into());
+        }
+        stage_change(change)?;
+        if let Some(slot) = stage_change_slot(change)? {
+            if slots.contains(&slot) {
+                return Err(format!("two changes address {slot} in one procedure"));
+            }
+            slots.push(slot);
+        }
+    }
+    if !slots.is_empty() && selector.is_empty() {
+        return Err(
+            "a procedure whose changes claim owned state must select the slots it addresses".into(),
+        );
+    }
+    for slot in &slots {
+        if !selector.iter().any(|s| s.as_str() == Some(slot)) {
+            return Err(format!(
+                "change addresses {slot} outside the procedure's selector"
+            ));
+        }
+    }
+    if let Some(passage) = value.get("passage") {
+        stage_fields(passage, "passage", &["scenes"])?;
+        if !matches!(passage["scenes"].as_u64(), Some(scenes) if (2..=8).contains(&scenes)) {
+            return Err("a generated passage holds 2..=8 scenes".into());
+        }
+    }
+    Ok(())
+}
+
+/// One contribution's ownership claim, exactly as the stage receipts carry it:
+/// the origin explanation (procedure_ref/revision/slot) plus the receipt's
+/// warrant, with the landed key format `procedure_ref@revision/slot`.
+fn stage_contribution(
+    configuration: &Value,
+    claim: &Value,
+    owned: &mut Vec<(String, String)>,
+) -> Result<(), String> {
+    stage_fields(
+        claim,
+        "contribution claim",
+        &["key", "procedure_ref", "revision", "slot", "warrant"],
+    )?;
+    let key = claim["key"]
+        .as_str()
+        .ok_or("A contribution claim carries its stage key")?;
+    let procedure_ref = claim["procedure_ref"]
+        .as_str()
+        .ok_or("A contribution claim names its origin procedure")?;
+    let revision = claim["revision"]
+        .as_u64()
+        .ok_or("A contribution claim names its origin revision")?;
+    let slot = claim["slot"]
+        .as_str()
+        .ok_or("A contribution claim names its owned slot")?;
+    if !STAGE_SLOTS.contains(&slot) {
+        return Err(format!(
+            "unknown stage slot {slot:?}; admitted: {STAGE_SLOTS:?} (voice retuning is not an admitted stage change yet)"
+        ));
+    }
+    let expected = format!("{procedure_ref}@{revision}/{slot}");
+    if key != expected {
+        return Err(format!(
+            "contribution key {key} does not name its origin {expected}"
+        ));
+    }
+    let carried = configuration["procedures"]
+        .as_array()
+        .map(|procedures| {
+            procedures.iter().any(|p| {
+                p["procedure_ref"].as_str() == Some(procedure_ref)
+                    && p["revision"].as_u64() == Some(revision)
+            })
+        })
+        .unwrap_or(false);
+    if !carried {
+        return Err(format!(
+            "contribution names procedure {procedure_ref}@{revision}, which this configuration does not carry"
+        ));
+    }
+    if !claim["warrant"].is_object() {
+        return Err("A contribution claim carries its receipt's warrant".into());
+    }
+    if let Some((_, holder)) = owned.iter().find(|(held_slot, _)| held_slot == slot) {
+        return Err(format!(
+            "stage slot {slot} is owned by {holder}; two procedures writing one property need an explicit composition, not arrival order"
+        ));
+    }
+    owned.push((slot.to_owned(), key.to_owned()));
+    Ok(())
+}
+
+/// The retained stage session configuration: the authored/procedural record an
+/// Open-configuration restoration reconstructs, with every contribution's
+/// origin carried and the session's source basis pinned for drift detection.
+fn stage_configuration(value: &Value) -> Result<(), String> {
+    stage_fields(
+        value,
+        "configuration",
+        &[
+            "schema",
+            "stage_ref",
+            "subject_ref",
+            "source_revision",
+            "event_ref",
+            "generation",
+            "procedures",
+            "bindings",
+            "contributions",
+            "seeds",
+        ],
+    )?;
+    if value["schema"].as_str() != Some(STAGE_CONFIGURATION_SCHEMA) {
+        return Err("Unsupported native stage configuration".into());
+    }
+    stage_basis_text(
+        value["stage_ref"].as_str().unwrap_or_default(),
+        "stage instance reference",
+    )
+    .map_err(|_| "invalid native host instance reference".to_string())?;
+    stage_basis_text(value["subject_ref"].as_str().unwrap_or_default(), "subject")
+        .map_err(|_| "stage configuration has no bounded subject".to_string())?;
+    stage_basis_text(
+        value["source_revision"].as_str().unwrap_or_default(),
+        "source revision",
+    )
+    .map_err(|_| "stage configuration has no retained source revision".to_string())?;
+    stage_basis_text(
+        value["event_ref"].as_str().unwrap_or_default(),
+        "event basis",
+    )
+    .map_err(|_| "stage configuration has no retained event basis".to_string())?;
+    if value["generation"].as_u64().is_none() {
+        return Err("stage configuration generation must be an exact unsigned integer".into());
+    }
+    let subject_ref = value["subject_ref"].as_str().unwrap_or_default();
+    let procedures = stage_array(&value["procedures"], "procedures")?;
+    if procedures.is_empty() || procedures.len() > MAX_STAGE_PROCEDURES {
+        return Err(format!(
+            "a stage configuration carries 1..{MAX_STAGE_PROCEDURES} procedures"
+        ));
+    }
+    let mut carried: Vec<(&str, u64)> = Vec::new();
+    for procedure in procedures {
+        stage_procedure(procedure)?;
+        let procedure_ref = procedure["procedure_ref"].as_str().unwrap_or_default();
+        let revision = procedure["revision"].as_u64().unwrap_or(0);
+        if procedure["subject_ref"].as_str() != Some(subject_ref) {
+            return Err(format!(
+                "stage procedure addresses subject {}, but the configuration belongs to {subject_ref}",
+                procedure["subject_ref"]
+            ));
+        }
+        if carried.contains(&(procedure_ref, revision)) {
+            return Err(format!(
+                "stage configuration carries two revisions of {procedure_ref}; one binding per procedure identity"
+            ));
+        }
+        carried.push((procedure_ref, revision));
+    }
+    let bindings = stage_array(&value["bindings"], "bindings")?;
+    if bindings.len() > MAX_STAGE_BINDINGS {
+        return Err(format!(
+            "a stage configuration binds at most {MAX_STAGE_BINDINGS} procedures"
+        ));
+    }
+    let mut bound: Vec<&str> = Vec::new();
+    for binding in bindings {
+        stage_fields(binding, "binding", &["procedure_ref", "max_evaluations"])?;
+        let procedure_ref = binding["procedure_ref"]
+            .as_str()
+            .ok_or("A stage binding names its procedure")?;
+        if !carried
+            .iter()
+            .any(|(carried_ref, _)| *carried_ref == procedure_ref)
+        {
+            return Err(format!(
+                "binding names procedure {procedure_ref}, which this configuration does not carry"
+            ));
+        }
+        let procedure = procedures
+            .iter()
+            .find(|p| p["procedure_ref"].as_str() == Some(procedure_ref))
+            .unwrap_or(&Value::Null);
+        if procedure["trigger"]["trigger"].as_str() != Some("determinant") {
+            return Err(
+                "only determinant-triggered procedures bind; an invocation procedure evaluates explicitly"
+                    .into(),
+            );
+        }
+        if !matches!(binding["max_evaluations"].as_u64(), Some(budget) if (1..=1024).contains(&budget))
+        {
+            return Err("a binding's evaluation budget holds 1..=1024".into());
+        }
+        if bound.contains(&procedure_ref) {
+            return Err(format!("stage binding duplicates {procedure_ref}"));
+        }
+        bound.push(procedure_ref);
+    }
+    let contributions = stage_array(&value["contributions"], "contributions")?;
+    if contributions.len() > MAX_STAGE_CONTRIBUTIONS {
+        return Err(format!(
+            "a stage configuration retains at most {MAX_STAGE_CONTRIBUTIONS} contribution claims"
+        ));
+    }
+    let mut owned: Vec<(String, String)> = Vec::new();
+    for claim in contributions {
+        stage_contribution(value, claim, &mut owned)?;
+    }
+    let seeds = stage_array(&value["seeds"], "seeds")?;
+    if seeds.len() > MAX_STAGE_SEEDS {
+        return Err(format!(
+            "a stage configuration retains at most {MAX_STAGE_SEEDS} evaluation seeds"
+        ));
+    }
+    for seed in seeds {
+        stage_fields(
+            seed,
+            "evaluation seed",
+            &["procedure_ref", "revision", "event_ref", "generation"],
+        )?;
+        let procedure_ref = seed["procedure_ref"]
+            .as_str()
+            .ok_or("A stage seed names its procedure")?;
+        let revision = seed["revision"]
+            .as_u64()
+            .ok_or("A stage seed names its procedure revision")?;
+        if !carried.contains(&(procedure_ref, revision)) {
+            return Err(format!(
+                "seed names procedure {procedure_ref}@{revision}, which this configuration does not carry"
+            ));
+        }
+        stage_basis_text(
+            seed["event_ref"].as_str().unwrap_or_default(),
+            "seed event basis",
+        )
+        .map_err(|_| "stage seed has no retained event basis".to_string())?;
+        if seed["generation"].as_u64().is_none() {
+            return Err("stage seed generation must be an exact unsigned integer".into());
+        }
+    }
+    Ok(())
+}
+
 fn ready(record: Option<&Record>) -> Value {
     json!({"schema":SCHEMA,"state":"ready","record":record.map(Record::public)})
 }
@@ -455,7 +999,8 @@ impl Store {
             | Request::List { scope, .. }
             | Request::FindCheckpoint { scope, .. }
             | Request::Write { scope, .. }
-            | Request::Remove { scope, .. } => *scope,
+            | Request::Remove { scope, .. }
+            | Request::OpenConfiguration { scope, .. } => *scope,
         };
         let dir = root.child(scope.name())?;
         dir.cleanup_pending(MAX_RECORD_BYTES + 2048)?;
@@ -583,6 +1128,46 @@ impl Store {
                 )?;
                 dir.remove(&filename(kind, &id))?;
                 Ok(json!({"schema":SCHEMA,"state":"removed","id":id,"revision":sequence}))
+            }
+            Request::OpenConfiguration {
+                scope,
+                id,
+                source_revision,
+                event_ref,
+            } => {
+                safe_id(&id)?;
+                stage_basis_text(&source_revision, "current source revision")?;
+                stage_basis_text(&event_ref, "current event basis")?;
+                // The open-time revalidation is the gate: persisted bytes from
+                // an older producer are re-admitted through the current stage
+                // grammar, and a procedure that no longer validates reports its
+                // exact clause instead of restoring.
+                let record = read_record(
+                    &dir,
+                    scope,
+                    &filename(Kind::StageConfiguration, &id),
+                    sequence,
+                    true,
+                )?;
+                let Some(record) = record else {
+                    return Ok(json!({"schema":SCHEMA,"state":"absent","record":null}));
+                };
+                let retained_source = record.value["source_revision"].as_str().unwrap_or_default();
+                let drifted = retained_source != source_revision;
+                let mut answer = if drifted {
+                    // Source drift is a deliberate re-evaluation of the saved
+                    // composition: the typed case names both bases and the
+                    // retained original basis stays exactly as saved.
+                    json!({"schema":SCHEMA,"state":"source_drift",
+                        "standing":"source drift is a deliberate re-evaluation of the saved composition, with the retained original basis unchanged; re-evaluate and save through the ordinary compare-and-set write",
+                        "retained_source_revision":retained_source,
+                        "current_source_revision":source_revision})
+                } else {
+                    json!({"schema":SCHEMA,"state":"opened","entry":"open-configuration",
+                        "event_currentness":record.value["event_ref"] == json!(event_ref)})
+                };
+                answer["record"] = record.public();
+                Ok(answer)
             }
         }
     }
@@ -1482,5 +2067,560 @@ mod tests {
             .unwrap()["record"]
             .is_object());
         assert!(!home.path(Scope::Expressions, Kind::Draft, "extra").exists());
+    }
+}
+
+#[cfg(all(test, unix))]
+mod stage_configuration_tests {
+    use super::*;
+    use serde_json::json;
+    use std::fs;
+    use std::path::PathBuf;
+
+    struct Home(PathBuf);
+    impl Home {
+        fn new() -> Self {
+            let mut nonce = [0u8; 16];
+            getrandom::fill(&mut nonce).unwrap();
+            let path = std::env::temp_dir().join(format!(
+                "oi-stage-configuration-{:x}",
+                Sha256::digest(nonce)
+            ));
+            fs::create_dir(&path).unwrap();
+            Self(path)
+        }
+        fn store(&self) -> Store {
+            Store {
+                home: Some(self.0.clone()),
+            }
+        }
+        fn path(&self, id: &str) -> PathBuf {
+            self.0
+                .join("desktop/expression-recovery/expressions")
+                .join(filename(Kind::StageConfiguration, id))
+        }
+    }
+    impl Drop for Home {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+
+    const SUBJECT: &str = "ql:k2/default-subject";
+    const SOURCE: &str = "sha256:5c2f8a1e6d3b4a7f9e0c1d2b3a4f5e6d7c8b9a0f1e2d3c4b5a6f7e8d9c0b1a2f";
+    const FOLD: &str = "ta-onta:stage:cli-fold";
+    const FLOW_CLOCK: &str = "ta-onta:stage:flow-clock";
+
+    /// The landed stage fixture (QL-MEF `fixtures/kernel/stage-procedure-example-v1.json`),
+    /// pinned here as the retention consumer pins its producer, retargeted to
+    /// this configuration's subject.
+    fn fold_procedure() -> Value {
+        json!({
+            "schema": STAGE_PROCEDURE_SCHEMA,
+            "procedure_ref": FOLD,
+            "revision": 1,
+            "subject_ref": SUBJECT,
+            "trigger": {"trigger": "invocation"},
+            "selector": ["form"],
+            "changes": [
+                {"change": "form", "operations": [
+                    {"operation": "cast-creases", "angles_deg10": [120, -60, 30],
+                     "velocities_deg10": [0, 0, 0]},
+                    {"operation": "set-pose", "pose": 2}
+                ]}
+            ],
+            "passage": {"scenes": 3}
+        })
+    }
+
+    /// A determinant-triggered procedure bound to the live flow, exactly as
+    /// `stage-bind` admits it.
+    fn flow_clock_procedure() -> Value {
+        json!({
+            "schema": STAGE_PROCEDURE_SCHEMA,
+            "procedure_ref": FLOW_CLOCK,
+            "revision": 2,
+            "subject_ref": SUBJECT,
+            "trigger": {"trigger": "determinant", "operation": "m1-advance"},
+            "selector": ["clock.inscription"],
+            "changes": [{"change": "clock", "slot": "clock.inscription",
+                "phase": {"turns": "1", "half_degrees": 36}}]
+        })
+    }
+
+    /// A saved stage session: two versioned procedures, the determinant
+    /// binding, one ownership claim per owned slot (origin + receipt warrant)
+    /// and one evaluation seed per procedure (the stage's seed is its event
+    /// basis: deterministic in the event, no clock, no randomness).
+    fn configuration() -> Value {
+        json!({
+            "schema": STAGE_CONFIGURATION_SCHEMA,
+            "stage_ref": "ql-field:session-1",
+            "subject_ref": SUBJECT,
+            "source_revision": SOURCE,
+            "event_ref": "event-41",
+            "generation": 7,
+            "procedures": [fold_procedure(), flow_clock_procedure()],
+            "bindings": [{"procedure_ref": FLOW_CLOCK, "max_evaluations": 16}],
+            "contributions": [
+                {"key": format!("{FOLD}@1/form"), "procedure_ref": FOLD, "revision": 1,
+                 "slot": "form",
+                 "warrant": {"determinant": "the event's own M3 form law",
+                     "through": "M3 command batch applied by the coupled composer, receipt retained",
+                     "warrant": "source-defined (M3 state owner; C-kernel parity-tested)"}},
+                {"key": format!("{FLOW_CLOCK}@2/clock.inscription"),
+                 "procedure_ref": FLOW_CLOCK, "revision": 2, "slot": "clock.inscription",
+                 "warrant": {"determinant": "the continuous display clock",
+                     "warrant": "declared display driver, distinct from the admitted M3 clock action"}}
+            ],
+            "seeds": [
+                {"procedure_ref": FOLD, "revision": 1, "event_ref": "event-41",
+                 "generation": 6},
+                {"procedure_ref": FLOW_CLOCK, "revision": 2, "event_ref": "event-41",
+                 "generation": 7}
+            ]
+        })
+    }
+
+    fn write(id: &str, revision: Option<u64>, value: Value) -> Request {
+        Request::Write {
+            scope: Scope::Expressions,
+            kind: Kind::StageConfiguration,
+            id: id.into(),
+            expected_revision: revision,
+            value,
+        }
+    }
+
+    fn open(id: &str, source_revision: &str, event_ref: &str) -> Request {
+        Request::OpenConfiguration {
+            scope: Scope::Expressions,
+            id: id.into(),
+            source_revision: source_revision.into(),
+            event_ref: event_ref.into(),
+        }
+    }
+
+    #[test]
+    fn stage_configuration_save_reopen_continue_with_origin_explanations() {
+        let home = Home::new();
+        let saved = home
+            .store()
+            .apply(write("stage:session-1", None, configuration()))
+            .unwrap();
+        assert_eq!(saved["state"], "written");
+        let revision = saved["record"]["revision"].as_u64().unwrap();
+        assert_eq!(saved["record"]["kind"], "stage_configuration");
+
+        // Reopen on a fresh owner: the store holds no in-memory session, so a
+        // new Store reading the same home is exactly the restart case. The
+        // flow has advanced (a later event) while the source stayed put.
+        let reopened = home
+            .store()
+            .apply(open("stage:session-1", SOURCE, "event-42"))
+            .unwrap();
+        assert_eq!(reopened["state"], "opened");
+        assert_eq!(reopened["entry"], "open-configuration");
+        assert_eq!(reopened["event_currentness"], false);
+        let record = &reopened["record"];
+        assert_eq!(record["revision"], json!(revision));
+        let procedures = record["value"]["procedures"].as_array().unwrap();
+        assert_eq!(procedures.len(), 2);
+        assert_eq!(procedures[0]["procedure_ref"], FOLD);
+        assert_eq!(procedures[0]["revision"], json!(1));
+        assert_eq!(
+            procedures[0]["changes"][0]["operations"][0]["operation"],
+            "cast-creases"
+        );
+        assert_eq!(procedures[1]["procedure_ref"], FLOW_CLOCK);
+        assert_eq!(
+            procedures[1]["trigger"]["operation"], "m1-advance",
+            "the restored determinant payload is re-issuable as stage-bind"
+        );
+        // Each ownership claim explains its origin: the landed key format
+        // names procedure_ref@revision/slot, and the receipt's warrant is
+        // retained verbatim beside it.
+        let claims = record["value"]["contributions"].as_array().unwrap();
+        assert_eq!(claims.len(), 2);
+        assert_eq!(claims[0]["key"], json!(format!("{FOLD}@1/form")));
+        assert_eq!(claims[0]["slot"], "form");
+        assert_eq!(
+            claims[0]["warrant"]["warrant"],
+            "source-defined (M3 state owner; C-kernel parity-tested)"
+        );
+        assert_eq!(
+            claims[1]["key"],
+            json!(format!("{FLOW_CLOCK}@2/clock.inscription"))
+        );
+        // The retained seeds name the exact event basis each procedure was
+        // last evaluated against.
+        assert_eq!(record["value"]["seeds"].as_array().unwrap().len(), 2);
+        assert_eq!(record["value"]["seeds"][0]["event_ref"], "event-41");
+
+        // Continue against the restored state: the next evaluation of the
+        // restored fold procedure is recorded through the ordinary
+        // compare-and-set write, extending the seeds on the reopened basis.
+        let mut continued = configuration();
+        continued["event_ref"] = json!("event-42");
+        continued["generation"] = json!(8);
+        continued["seeds"].as_array_mut().unwrap().push(json!({
+            "procedure_ref": FOLD, "revision": 1,
+            "event_ref": "event-42", "generation": 8}));
+        let written = home
+            .store()
+            .apply(write("stage:session-1", Some(revision), continued.clone()))
+            .unwrap();
+        assert_eq!(written["state"], "written");
+        let reread = home
+            .store()
+            .apply(open("stage:session-1", SOURCE, "event-42"))
+            .unwrap();
+        assert_eq!(reread["state"], "opened");
+        assert_eq!(reread["event_currentness"], true);
+        assert_eq!(reread["record"]["value"], continued);
+        // The stale CAS predecessor is refused after the continuation.
+        assert_eq!(
+            home.store()
+                .apply(write("stage:session-1", Some(revision), configuration()))
+                .unwrap()["state"],
+            "revision_conflict"
+        );
+        // Listing discloses the retained sessions without expanding bodies.
+        let listed = home
+            .store()
+            .apply(Request::List {
+                scope: Scope::Expressions,
+                kind: Kind::StageConfiguration,
+            })
+            .unwrap();
+        let rows = listed["records"].as_array().unwrap();
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0]["subject_ref"], SUBJECT);
+        assert_eq!(rows[0]["stage_ref"], "ql-field:session-1");
+        assert_eq!(rows[0]["source_revision"], SOURCE);
+        assert!(rows[0].get("value").is_none());
+    }
+
+    #[test]
+    fn opening_across_a_changed_source_revision_is_a_typed_re_evaluation_case() {
+        let home = Home::new();
+        home.store()
+            .apply(write("stage:drift", None, configuration()))
+            .unwrap();
+        let path = home.path("stage:drift");
+        let bytes_on_disk = fs::read(&path).unwrap();
+
+        // Same source, same event: the clean open, current in both bases.
+        let current = home
+            .store()
+            .apply(open("stage:drift", SOURCE, "event-41"))
+            .unwrap();
+        assert_eq!(current["state"], "opened");
+        assert_eq!(current["event_currentness"], true);
+
+        // A moved source revision is never a silent reopen: the typed case
+        // names both bases, carries the retained record unchanged for the
+        // deliberate re-evaluation, and writes nothing.
+        let drifted = home
+            .store()
+            .apply(open(
+                "stage:drift",
+                "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+                "event-41",
+            ))
+            .unwrap();
+        assert_eq!(drifted["state"], "source_drift");
+        assert_eq!(drifted["retained_source_revision"], SOURCE);
+        assert_eq!(
+            drifted["current_source_revision"],
+            "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        );
+        assert!(drifted["standing"]
+            .as_str()
+            .unwrap()
+            .contains("deliberate re-evaluation"));
+        assert_eq!(drifted["record"]["value"], configuration());
+        assert_eq!(
+            fs::read(&path).unwrap(),
+            bytes_on_disk,
+            "the open is a read"
+        );
+
+        // An unknown session is a distinguishable outcome, not an empty read.
+        let absent = home
+            .store()
+            .apply(open("stage:never-saved", SOURCE, "event-41"))
+            .unwrap();
+        assert_eq!(absent["state"], "absent");
+        assert!(absent["record"].is_null());
+    }
+
+    #[test]
+    fn a_persisted_procedure_that_no_longer_validates_reports_its_exact_clause() {
+        let home = Home::new();
+        // The write path already refuses an invalid procedure by its exact
+        // landed clause, so a bad configuration never becomes durable.
+        let mut voice = configuration();
+        voice["procedures"][0]["selector"] = json!(["voice:#2-5-4"]);
+        let error = home
+            .store()
+            .apply(write("stage:voice", None, voice))
+            .unwrap_err();
+        assert!(
+            error.contains("voice retuning is not an admitted stage change"),
+            "{error}"
+        );
+        let mut stale = configuration();
+        stale["procedures"][0]["revision"] = json!(0);
+        let error = home
+            .store()
+            .apply(write("stage:stale", None, stale))
+            .unwrap_err();
+        assert!(
+            error.contains("stage procedure revision must be at least 1"),
+            "{error}"
+        );
+        let mut doubled = configuration();
+        let form_change = doubled["procedures"][0]["changes"][0].clone();
+        doubled["procedures"][0]["changes"]
+            .as_array_mut()
+            .unwrap()
+            .push(form_change);
+        let error = home
+            .store()
+            .apply(write("stage:doubled", None, doubled))
+            .unwrap_err();
+        assert!(
+            error.contains("two changes address form in one procedure"),
+            "{error}"
+        );
+        let mut wide = configuration();
+        wide["procedures"][0]["passage"] = json!({"scenes": 9});
+        let error = home
+            .store()
+            .apply(write("stage:wide", None, wide))
+            .unwrap_err();
+        assert!(
+            error.contains("a generated passage holds 2..=8 scenes"),
+            "{error}"
+        );
+        let mut many = configuration();
+        many["procedures"][0]["changes"] =
+            json!(vec![json!({"change": "damping", "per_second": 0.5}); 17]);
+        let error = home
+            .store()
+            .apply(write("stage:many", None, many))
+            .unwrap_err();
+        assert!(
+            error.contains("a procedure carries 1..16 changes"),
+            "{error}"
+        );
+
+        // The open path revalidates the persisted bytes through the current
+        // grammar: a record saved by an older producer whose procedure no
+        // longer validates reports the exact clause instead of restoring.
+        home.store()
+            .apply(write("stage:aged", None, configuration()))
+            .unwrap();
+        let path = home.path("stage:aged");
+        let mut record: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        record["value"]["procedures"][0]["selector"] = json!(["voice:#2-5-4"]);
+        fs::write(&path, serde_json::to_vec(&record).unwrap()).unwrap();
+        let error = home
+            .store()
+            .apply(open("stage:aged", SOURCE, "event-41"))
+            .unwrap_err();
+        assert!(
+            error.contains("voice retuning is not an admitted stage change"),
+            "{error}"
+        );
+        // And a drift out of the declared material policy is refused by name.
+        home.store()
+            .apply(write("stage:damped", None, configuration()))
+            .unwrap();
+        let path = home.path("stage:damped");
+        let mut record: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        record["value"]["procedures"][0]["changes"][0] =
+            json!({"change": "damping", "per_second": 2000000.0});
+        fs::write(&path, serde_json::to_vec(&record).unwrap()).unwrap();
+        let error = home
+            .store()
+            .apply(open("stage:damped", SOURCE, "event-41"))
+            .unwrap_err();
+        assert!(
+            error.contains("stage damping must be finite and in 0..1000000 per second"),
+            "{error}"
+        );
+    }
+
+    #[test]
+    fn ownership_claims_bindings_and_seeds_name_their_carried_origins() {
+        let home = Home::new();
+        let claim = |key: &str, procedure_ref: &str, revision: u64, slot: &str| {
+            let mut value = configuration();
+            value["contributions"][0] = json!({
+                "key": key, "procedure_ref": procedure_ref,
+                "revision": revision, "slot": slot, "warrant": {"determinant": "d"}});
+            value
+        };
+        let error = home
+            .store()
+            .apply(write(
+                "stage:keys",
+                None,
+                claim("ta-onta:stage:other@1/form", FOLD, 1, "form"),
+            ))
+            .unwrap_err();
+        assert!(
+            error.contains(format!("does not name its origin {FOLD}@1/form").as_str()),
+            "{error}"
+        );
+        let error = home
+            .store()
+            .apply(write(
+                "stage:ghost",
+                None,
+                claim(&format!("{FOLD}@3/form"), FOLD, 3, "form"),
+            ))
+            .unwrap_err();
+        assert!(
+            error.contains("which this configuration does not carry"),
+            "{error}"
+        );
+        let error = home
+            .store()
+            .apply(write(
+                "stage:voice-slot",
+                None,
+                claim(&format!("{FOLD}@1/voice:x"), FOLD, 1, "voice:x"),
+            ))
+            .unwrap_err();
+        assert!(error.contains("unknown stage slot"), "{error}");
+        // Two procedures claiming one slot is the landed arrival-order
+        // refusal, not a silent overwrite.
+        let mut contested = configuration();
+        contested["procedures"].as_array_mut().unwrap().push(json!({
+            "schema": STAGE_PROCEDURE_SCHEMA,
+            "procedure_ref": "ta-onta:stage:second",
+            "revision": 1,
+            "subject_ref": SUBJECT,
+            "trigger": {"trigger": "invocation"},
+            "selector": ["form"],
+            "changes": [{"change": "form", "operations": [{"operation": "set-pose", "pose": 1}]}]
+        }));
+        contested["contributions"]
+            .as_array_mut()
+            .unwrap()
+            .push(json!({
+            "key": "ta-onta:stage:second@1/form", "procedure_ref": "ta-onta:stage:second",
+            "revision": 1, "slot": "form", "warrant": {"determinant": "d"}}));
+        let error = home
+            .store()
+            .apply(write("stage:contested", None, contested))
+            .unwrap_err();
+        assert!(
+            error.contains("two procedures writing one property need an explicit composition"),
+            "{error}"
+        );
+        // Bindings name carried determinant procedures within the budget law.
+        let binding = |procedure_ref: &str, budget: u64, trigger: Value| {
+            let mut value = configuration();
+            value["procedures"][1]["trigger"] = trigger;
+            value["bindings"][0] =
+                json!({"procedure_ref": procedure_ref, "max_evaluations": budget});
+            value
+        };
+        let error = home
+            .store()
+            .apply(write(
+                "stage:bind-missing",
+                None,
+                binding(
+                    "ta-onta:stage:absent",
+                    16,
+                    json!({"trigger": "determinant", "operation": "m1-advance"}),
+                ),
+            ))
+            .unwrap_err();
+        assert!(
+            error.contains("which this configuration does not carry"),
+            "{error}"
+        );
+        let error = home
+            .store()
+            .apply(write(
+                "stage:bind-invocation",
+                None,
+                binding(FLOW_CLOCK, 16, json!({"trigger": "invocation"})),
+            ))
+            .unwrap_err();
+        assert!(
+            error.contains("only determinant-triggered procedures bind"),
+            "{error}"
+        );
+        let error = home
+            .store()
+            .apply(write(
+                "stage:bind-budget",
+                None,
+                binding(
+                    FLOW_CLOCK,
+                    0,
+                    json!({"trigger": "determinant", "operation": "m1-advance"}),
+                ),
+            ))
+            .unwrap_err();
+        assert!(
+            error.contains("a binding's evaluation budget holds 1..=1024"),
+            "{error}"
+        );
+        let error = home
+            .store()
+            .apply(write(
+                "stage:bind-determinant",
+                None,
+                binding(
+                    FLOW_CLOCK,
+                    16,
+                    json!({"trigger": "determinant", "operation": "shutdown"}),
+                ),
+            ))
+            .unwrap_err();
+        assert!(error.contains("unknown determinant trigger"), "{error}");
+        // Seeds name carried procedure revisions on a bounded event basis.
+        let mut ghost_seed = configuration();
+        ghost_seed["seeds"][0] = json!({"procedure_ref": "ta-onta:stage:absent",
+            "revision": 1, "event_ref": "event-41", "generation": 6});
+        let error = home
+            .store()
+            .apply(write("stage:ghost-seed", None, ghost_seed))
+            .unwrap_err();
+        assert!(
+            error.contains("which this configuration does not carry"),
+            "{error}"
+        );
+        // The procedures must share the configuration's subject, exactly as
+        // the live stage refuses a foreign subject at evaluation time.
+        let mut foreign = configuration();
+        foreign["procedures"][0]["subject_ref"] = json!("person:someone-else");
+        let error = home
+            .store()
+            .apply(write("stage:foreign", None, foreign))
+            .unwrap_err();
+        assert!(
+            error.contains("but the configuration belongs to"),
+            "{error}"
+        );
+        // Unknown fields are refused: the retained record is closed.
+        let mut extra = configuration();
+        extra["surprise"] = json!(1);
+        let error = home
+            .store()
+            .apply(write("stage:extra", None, extra))
+            .unwrap_err();
+        assert!(
+            error.contains("Unsupported stage configuration field"),
+            "{error}"
+        );
     }
 }
