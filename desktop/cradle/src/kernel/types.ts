@@ -285,6 +285,8 @@ export type KernelOp =
   | {op:"working_surface_read";project:string;agent_session:string;binding?:string}
   | {op:"working_surface_attachment";project:string;agent_session:string;binding:string}
   | {op:"recording_capability_read"}
+  /** Which contracts the kernel speaks and enforces (oi.kernel-protocol/v1). */
+  | {op:"protocol_read"}
   | { op: "agency_read"; project: string }
   | { op: "model_roster"; project?: string }
   | { op: "agent_definition"; project: string | null; request: import("../agency/nativeAgent").AgentRequest }
@@ -473,6 +475,7 @@ export type KernelOpResult =
   | { result:"central_reading";data:unknown }
   | {result:"working_surface_reading";document:unknown}
   | {result:"recording_capability";document:unknown}
+  | {result:"protocol";document:unknown}
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; harness_disclosure?: unknown; observed_at_unix_ms: number }
   | { result: "model_roster_reading"; reading: unknown }
   | { result: "knowledge"; data: unknown }
