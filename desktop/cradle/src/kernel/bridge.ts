@@ -82,7 +82,7 @@ export async function kernelOp(
 ): Promise<KernelOpCall> {
   try {
     if (transport.kind === "tauri") {
-      const outcome = await tauriInvoke<KernelOutcome>("kernel_op", { opJson: JSON.stringify(op) });
+      const outcome = await tauriInvoke<KernelOutcome>("kernel_op", { op });
       return { outcome: outcome ? normaliseOutcome(outcome) : null };
     }
     if (transport.kind === "bridge") {
