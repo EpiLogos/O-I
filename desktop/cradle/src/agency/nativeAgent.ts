@@ -4,28 +4,58 @@ import {readAgentScope,readAgentSkills,type NativeAgentScope,type NativeAgentSki
 export interface AgentDraftInput { name: string; purpose: string; skillRefs: string[]; skillSetRefs: string[]; scopeConfirmed: boolean;
  /** Central file ref of the reusable expressive character (`reuse.kind:"character"`); saved as the profile's `expressive_character_ref`. */
  characterRef?: string;
- /** Authored self-definition pins: Central source refs whose exact bytes are
-  * digested natively and carried on the profile as `self_definition`. Both
-  * refs or neither; the source temperament stands apart from the visual
-  * character above. */
- selfDefinition?: { selfSourceRef: string; logosRef: string } }
-/** One pinned source as the stored profile carries it (reference + digest). */
-export interface SelfSourcePin { reference: string; content_digest?: string }
-/** The stored `self_definition` pins echoed back on the profile. */
-export interface SelfDefinitionPins { source?: SelfSourcePin; relational_logos?: SelfSourcePin }
-/** One pinned source as the owner's review resolves it — the exact operative
- * text when it resolved, or the named reason when it did not. */
-export interface SelfSourceReading { reference: string; content_digest?: string; resolved?: boolean; text?: string; reason?: string }
-/** `agent-profile.review`'s self-definition payload: the resolved exact text
- * per pin and whether the whole set resolved. */
-export interface SelfDefinitionReading { source?: SelfSourceReading; relational_logos?: SelfSourceReading; self_sources_resolved?: boolean }
+ /** Authored self definition: two exact Central source pins (particular self + shared Relational Logos), digest resolved by an actual source read, never hand-typed. */
+ selfDefinition?: SelfDefinitionDraft }
+/** One authored Central source pin: the `central:source:` reference plus the
+ * digest of the exact bytes that were read and pinned. */
+export interface SelfSourcePin { reference: string; contentDigest: string }
+export interface SelfDefinitionDraft { source?: SelfSourcePin; relationalLogos?: SelfSourcePin }
+/** The exact snake_case wire object a draft pin set maps to; absent pins stay absent. */
+export function selfDefinitionWire(draft?: SelfDefinitionDraft): {source?: {reference: string; content_digest: string}; relational_logos?: {reference: string; content_digest: string}} | undefined {
+ if (!draft) return undefined;
+ const pin = (p?: SelfSourcePin) => p?.reference && p?.contentDigest ? {reference: p.reference, content_digest: p.contentDigest} : undefined;
+ const source = pin(draft.source), logos = pin(draft.relationalLogos);
+ if (!source && !logos) return undefined;
+ return {...(source?{source}:{}), ...(logos?{relational_logos:logos}:{})};
+}
+/** The profile's bound self definition (snake_case) back as a draft for editing. */
+export function selfDefinitionFromProfile(value?: SelfDefinitionWireReading): SelfDefinitionDraft | undefined {
+ if (!value) return undefined;
+ const pin = (p?: {reference?: string; content_digest?: string}) => p?.reference && p?.content_digest ? {reference: p.reference, contentDigest: p.content_digest} : undefined;
+ const source = pin(value.source), logos = pin(value.relational_logos);
+ if (!source && !logos) return undefined;
+ return {...(source?{source}:{}), ...(logos?{relational_logos:logos}:{})};
+}
+/** Whether the source carries exactly the requested pins (or, for a null
+ * request, none at all). Reference AND digest must both match; malformed
+ * readings count as not carried, never as a crash. */
+export function selfPinsCarried(actual: unknown, expected: ReturnType<typeof selfDefinitionWire> | null): boolean {
+ const object = (value: unknown): Record<string, unknown> | undefined =>
+  value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
+ const source = object(actual);
+ const pin = (name: string) => {
+  const want = expected?.[name as "source"];
+  const have = object(source?.[name]);
+  if (!want) return have === undefined;
+  return have?.reference === want.reference && have?.content_digest === want.content_digest;
+ };
+ // Nothing is bound on the source: only a clear request (no pins) carries that.
+ if (source === undefined) return expected == null;
+ return pin("source") && pin("relational_logos");
+}
 export interface NativeReview {
  schema: "central.agent-profile-review/v1";
- profile: { ref: string; revision: string; agent_ref: string; name?: string; purpose?: string; intent_provenance?: {intent_expression: string}; skill_refs?: string[]; skill_set_refs?: string[]; expressive_character_ref?: string; self_definition?: SelfDefinitionPins };
- self_definition?: SelfDefinitionReading;
+ profile: { ref: string; revision: string; agent_ref: string; name?: string; purpose?: string; intent_provenance?: {intent_expression: string}; skill_refs?: string[]; skill_set_refs?: string[]; expressive_character_ref?: string; self_definition?: SelfDefinitionWireReading };
  scope_ref: string; content_digest: string; accepted: boolean; execution_authority_granted: false;
+ /** Present when the profile binds a self: the exact review of each pin. */
+ self_definition?: {source?: SelfSourceResolution; relational_logos?: SelfSourceResolution};
+ self_sources_resolved?: boolean;
  acceptance: null | {schema: "central.agent-profile-acceptance/v1"; acceptance_ref: string; profile_ref: string; agent_ref: string; profile_revision: string; content_digest: string; scope_ref: string};
 }
+/** The wire shape of a bound self definition on the profile (snake_case verbatim). */
+export interface SelfDefinitionWireReading {source?: {reference?: string; content_digest?: string}; relational_logos?: {reference?: string; content_digest?: string}}
+/** Central's review of one pinned self source: the exact text when resolved, a named reason when not. */
+export interface SelfSourceResolution {reference: string; content_digest: string; resolved: boolean; text?: string; reason?: string}
 export interface NativePrepared {
  schema: "aikit.direct-agent-session/v1"; request_id: string; profile_ref: string; profile_revision: string;
  agent_ref: string; agent_session: string; space: string; project_ref: string; acceptance_ref: string;
@@ -41,13 +71,17 @@ export interface NativeSkillSetDetail {
  projected: string[]; withheld: {capability: string; reason: string}[];
  children: {name: string; ref: string; members: number; attached_by?: string}[];
 }
+export interface SelfDefinitionWireInput {source?: {reference: string; content_digest: string}; relational_logos?: {reference: string; content_digest: string}}
 export type AgentRequest =
  | {action: "roster" | "scope" | "skills" | "skillsets"}
  | {action: "skillset"; name: string}
  | {action: "session"; agent_session: string}
- | {action: "propose"; name: string; purpose: string; skill_refs: string[]; skill_set_refs: string[]; expected_scope_ref: string; expressive_character_ref?: string; self_source_ref?: string; logos_ref?: string}
+ | {action: "propose"; name: string; purpose: string; skill_refs: string[]; skill_set_refs: string[]; expected_scope_ref: string; expressive_character_ref?: string; self_definition?: SelfDefinitionWireInput}
  | {action: "review"; profile_ref: string}
  | {action: "set-character"; profile_ref: string; expected_revision: string; expressive_character_ref: string | null}
+ | {action: "set-self"; profile_ref: string; expected_revision: string; self_definition: SelfDefinitionWireInput | null}
+ | {action: "self-source-read"; reference: string}
+ | {action: "self-source-create"; name: string; content: string}
  | {action: "accept"; profile_ref: string; expected_revision: string; expected_content_digest: string}
  | {action: "prepare"; request_id: string; profile_ref: string; expected_revision: string; expected_content_digest: string; expected_acceptance_ref: string}
  | {action: "find"; request_id: string};
@@ -162,6 +196,40 @@ export async function setAgentCharacter(owner: AgentOwner, scope: string, input:
   throw new Error("Central's source does not carry the requested character; re-read it before trying again");
  }
  return review;
+}
+/** What changing the self definition did to the source (kernel `SetSelf`). */
+export interface SelfChange {state: "saved" | "unchanged"; previous_revision?: string; revision: string; re_acceptance_required: boolean}
+export type SelfReview = NativeReview & {self_change?: SelfChange};
+/** One resolved self source: exact bytes preview, digest to pin, total size. */
+export interface SelfSourceReading {reference: string; content_digest: string; size_bytes: number; text: string; truncated: boolean; path?: string}
+export function readSelfSourceReading(value: unknown): SelfSourceReading {
+ const v = record(value);
+ if (!text(v.reference) || !text(v.content_digest) || !v.content_digest.startsWith("sha256:")
+     || typeof v.size_bytes !== "number" || typeof v.text !== "string") {
+  throw new Error("The native self source reading is malformed");
+ }
+ return {reference: v.reference, content_digest: v.content_digest, size_bytes: v.size_bytes, text: v.text, truncated: v.truncated === true, ...(typeof v.path === "string" ? {path: v.path} : {})};
+}
+/** Set or clear an EXISTING Agent's authored self definition through
+ * Central's compare-and-swap save. The answer is the re-read source review;
+ * it must carry exactly the requested pins (reference AND digest) or the
+ * change is not confirmed. */
+export async function setAgentSelf(owner: AgentOwner, scope: string, input: {profileRef: string; expectedRevision: string; selfDefinition: SelfDefinitionDraft | null}): Promise<SelfReview> {
+ const wire = selfDefinitionWire(input.selfDefinition ?? undefined) ?? null;
+ const value = await owner({action:"set-self",profile_ref:input.profileRef,expected_revision:input.expectedRevision,self_definition:wire});
+ const review = validateReview(value, scope) as SelfReview;
+ if (review.profile.ref !== input.profileRef || !selfPinsCarried(review.profile.self_definition, wire)) {
+  throw new Error("Central's source does not carry the requested self definition; re-read it before trying again");
+ }
+ return review;
+}
+/** Whether acceptance must wait: the review names the profile's bound self
+ * sources unresolved. Absent field means no self binding blocks anything —
+ * existing no-self flows behave exactly as before. */
+export function selfSourcesBlocked(review: NativeReview): string | undefined {
+ if (review.self_sources_resolved !== false) return undefined;
+ const reason = (pin?: SelfSourceResolution) => !pin || pin.resolved ? undefined : pin.reason;
+ return `The bound self sources are not resolved on the reviewed source (${reason(review.self_definition?.source) ?? reason(review.self_definition?.relational_logos) ?? "unresolved"}); Central will refuse acceptance.`;
 }
 export class NativeAgentController {
  private state: NativeAgentState = {draft:{name:"",purpose:"",skillRefs:[],skillSetRefs:[],scopeConfirmed:false},profiles:[],busy:false};
@@ -279,35 +347,18 @@ export class NativeAgentController {
    throw new StagePrecondition("A selected SkillSet is not in the native set field. Re-read the repertoire and explicitly repair or remove that selection.");
   }
   const character = draft.characterRef?.trim() || undefined;
-  // The authored self-definition is pinned exactly as given: a ref is an
-  // identity, so untrimmed input is refused, never silently rewritten, and a
-  // half-pinned pair is refused before any native call.
-  const rawSelf = draft.selfDefinition?.selfSourceRef ?? "";
-  const rawLogos = draft.selfDefinition?.logosRef ?? "";
-  if (rawSelf !== rawSelf.trim() || rawLogos !== rawLogos.trim()) {
-   throw new StagePrecondition("Self-definition source refs are pinned exactly as given; remove the surrounding spaces.");
-  }
-  if (!!rawSelf !== !!rawLogos) {
-   throw new StagePrecondition("Pin both the self-definition source and the Relational Logos source, or leave both empty.");
-  }
-  const selfSourceRef = rawSelf || undefined, logosRef = rawLogos || undefined;
-  for (const ref of [selfSourceRef, logosRef]) {
-   if (ref !== undefined && !ref.startsWith("central:source:")) {
-    throw new StagePrecondition("Self-definition refs are Central source refs (central:source:…); the exact bytes they name are pinned and human-accepted.");
-   }
-  }
+  const selfWire = selfDefinitionWire(draft.selfDefinition);
   currentStage(current);
   const review = validateReview(await this.owner({action:"propose",name:draft.name,purpose:draft.purpose,
    skill_refs:[...draft.skillRefs],skill_set_refs:[...draft.skillSetRefs],expected_scope_ref:scopeRef,
    ...(character?{expressive_character_ref:character}:{}),
-   ...(selfSourceRef?{self_source_ref:selfSourceRef,logos_ref:logosRef}:{})}),scopeRef);
+   ...(selfWire?{self_definition:selfWire}:{})}),scopeRef);
   if (review.accepted || review.profile.name !== draft.name || review.profile.intent_provenance?.intent_expression !== draft.purpose
       || JSON.stringify(review.profile.skill_refs??[])!==JSON.stringify(draft.skillRefs)
       || JSON.stringify(review.profile.skill_set_refs??[])!==JSON.stringify(draft.skillSetRefs)
       || (review.profile.expressive_character_ref ?? undefined) !== character
-      || (review.profile.self_definition?.source?.reference ?? undefined) !== selfSourceRef
-      || (review.profile.self_definition?.relational_logos?.reference ?? undefined) !== logosRef) {
-   throw new Error("The native proposal differs from the submitted purpose/name/character/self-definition or was accepted without this review");
+      || !selfPinsCarried(review.profile.self_definition, selfWire ?? null)) {
+   throw new Error("The native proposal differs from the submitted purpose/name/character/self pins or was accepted without this review");
   }
   this.set({review,prepared:undefined,requestId:undefined,compound:undefined});
  }
@@ -323,6 +374,41 @@ export class NativeAgentController {
    this.set({review:next,profiles:roster.profiles,prepared:undefined,requestId:undefined,compound:undefined});
    return next.character_change;
   } catch (error) { this.set({error:`The character was not changed: ${String(error)}`}); return undefined; }
+  finally { this.set({busy:false}); }
+ };
+ /** Change the reviewed Agent's authored self definition in place (CAS on
+  * its revision); a saved change requires acceptance again. */
+ setSelf = async (selfDefinition: SelfDefinitionDraft | null,current?:()=>boolean): Promise<SelfChange | undefined> => {
+  const {review,scopeRef,busy,unknown} = this.state;
+  if (busy || unknown || !review || !scopeRef) return undefined;
+  this.set({busy:true,error:undefined});
+  try {
+   currentStage(current);
+   const next = await setAgentSelf(this.owner, scopeRef, {profileRef:review.profile.ref,expectedRevision:review.profile.revision,selfDefinition});
+   const roster = await this.readRoster();
+   this.set({review:next,profiles:roster.profiles,prepared:undefined,requestId:undefined,compound:undefined});
+   return next.self_change;
+  } catch (error) { this.set({error:`The self definition was not changed: ${String(error)}`}); return undefined; }
+  finally { this.set({busy:false}); }
+ };
+ /** Resolve one central:source: reference to its exact bytes and digest for
+  * pinning. A refusal is shown, never guessed around. */
+ readSelfSource = async (reference: string): Promise<SelfSourceReading | undefined> => {
+  if (this.state.busy) return undefined;
+  this.set({busy:true,error:undefined});
+  try {
+   return readSelfSourceReading(await this.owner({action:"self-source-read",reference:reference.trim()}));
+  } catch (error) { this.set({error:`The self source could not be read: ${String(error)}`}); return undefined; }
+  finally { this.set({busy:false}); }
+ };
+ /** Save pasted prose as a new root self-description source through
+  * Central's own creation door, then pin from the resolved digest. */
+ createSelfSource = async (name: string, content: string): Promise<SelfSourceReading | undefined> => {
+  if (this.state.busy) return undefined;
+  this.set({busy:true,error:undefined});
+  try {
+   return readSelfSourceReading(await this.owner({action:"self-source-create",name:name.trim(),content}));
+  } catch (error) { this.set({error:`The self source was not saved: ${String(error)}`}); return undefined; }
   finally { this.set({busy:false}); }
  };
  accept = async (current?: () => boolean) => {

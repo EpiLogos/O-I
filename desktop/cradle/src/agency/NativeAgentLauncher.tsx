@@ -7,6 +7,8 @@ import {openAgentSetup} from "./agentSetup";
 import {LiveHumanAgentCard} from "./HumanAgentCard";
 import {CharacterSection} from "./character/CharacterSection";
 import {CharacterEditor} from "./character/CharacterEditor";
+import {SelfDefinitionSection, SelfReviewBlock, SelfDefinitionEditor} from "./SelfDefinitionSection";
+import {selfSourcesBlocked, selfDefinitionFromProfile} from "./nativeAgent";
 
 /** Native stage names read as outcomes, not implementation seams. The
  * `data-stage` values stay the native stage identities for tests. */
@@ -48,6 +50,7 @@ export function NativeAgentLauncher({project,sourceWorldRef,current,onChoose,con
 	};
 	const {draft,review,prepared,compound}=state;
 	const repertoireFirst=!!state.skillSets&&state.skillSets.length>0;
+	const selfBlock=review?selfSourcesBlocked(review):undefined;
 	return <section ref={host} className="oi-section native-agent-launcher" aria-label="Native Agent creation" onClickCapture={guard} onKeyDownCapture={guard} onSubmitCapture={guard} aria-busy={state.busy||opening}>
 		<header className="oi-panel-head"><strong>Agents in {project??"Central root"}</strong><button type="button" className="oi-action" disabled={state.busy} onClick={()=>void refresh()}>Read native roster</button></header>
 		<p className="oi-note">A reusable Agent is an accepted native definition. Temporary task roles and runtime sessions stay separate. Preparing a session neither starts a harness nor grants execution authority.</p>
@@ -81,13 +84,8 @@ export function NativeAgentLauncher({project,sourceWorldRef,current,onChoose,con
 				{draft.skillRefs.filter(ref=>!state.skills?.some(row=>row.ref===ref)).map(ref=><label key={ref}><input type="checkbox" checked onChange={()=>controller.edit({skillRefs:draft.skillRefs.filter(r=>r!==ref)})}/>Unavailable selection: {ref}</label>)}
 				<p className="oi-note">Exact effective bytes are checked at preparation and sent to the parent session. Brokered children require separate admission.</p>
 			</fieldset>
+			<SelfDefinitionSection value={draft.selfDefinition} onChange={selfDefinition=>controller.edit({selfDefinition})} onRead={reference=>controller.readSelfSource(reference)} onCreate={(name,content)=>controller.createSelfSource(name,content)}/>
 			<CharacterSection value={draft.characterRef} onChange={characterRef=>controller.edit({characterRef})}/>
-			<fieldset className="oi-section" disabled={state.busy||!!state.unknown} aria-label="Self-definition sources">
-				<legend>Self-definition — authored sources</legend>
-				<label className="oi-field">Self source ref<input className="oi-input" aria-label="Self source ref" value={draft.selfDefinition?.selfSourceRef??""} maxLength={1024} onChange={e=>controller.edit({selfDefinition:{selfSourceRef:e.target.value,logosRef:draft.selfDefinition?.logosRef??""}})}/></label>
-				<label className="oi-field">Relational Logos ref<input className="oi-input" aria-label="Relational Logos ref" value={draft.selfDefinition?.logosRef??""} maxLength={1024} onChange={e=>controller.edit({selfDefinition:{selfSourceRef:draft.selfDefinition?.selfSourceRef??"",logosRef:e.target.value}})}/></label>
-				<p className="oi-note">Central source refs; exact bytes are pinned and human-accepted. Optional — pin both refs or neither. The source temperament stands apart from the visual character above.</p>
-			</fieldset>
 			<button type="button" className="oi-action oi-action-primary" onClick={()=>void saveAndStart()} disabled={!draft.name||!draft.purpose||!draft.scopeConfirmed}>Save and start Direct work</button>
 			<button type="button" className="oi-action" onClick={()=>void controller.propose(belongs)} disabled={!draft.name||!draft.purpose||!draft.scopeConfirmed}>Save as native proposal only</button>
 			<p className="oi-note">Save and start runs the native save (CAS), acceptance, world-readiness check and session preparation in order, then opens the conversation. Each stage&apos;s real outcome is shown; a failure after the save keeps the source and names the failing stage.</p>
@@ -97,21 +95,10 @@ export function NativeAgentLauncher({project,sourceWorldRef,current,onChoose,con
 			<pre className="oi-note" style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{review.profile.intent_provenance?.intent_expression??review.profile.purpose}</pre>
 			<p className="oi-note">Scope <code>{review.scope_ref}</code> · source <code>{review.profile.ref}</code> · revision <code>{review.profile.revision}</code></p>
 			{review.profile.skill_set_refs&&review.profile.skill_set_refs.length>0&&<p className="oi-note">SkillSets: {review.profile.skill_set_refs.join(", ")}</p>}
-			{review.self_definition&&<section aria-label="Operative self-definition text" className="oi-section">
-				<h4>Operative text — the exact accepted source</h4>
-				{(["source","relational_logos"] as const).map(pin=>{
-					const reading=review.self_definition?.[pin];
-					if(!reading?.reference)return null;
-					return <details key={pin} open={pin==="source"}>
-						<summary>{pin==="source"?"Self definition":"Relational Logos"} — <code>{reading.reference}</code></summary>
-						{reading.resolved===true&&typeof reading.text==="string"
-							?<pre data-operative-text={pin} style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{reading.text}</pre>
-							:<p className="oi-refusal" data-attention="true" data-self-source-unresolved={pin}>{reading.reason??"The pinned source text did not resolve; no text is shown in its place."}</p>}
-					</details>;
-				})}
-				{review.self_definition.self_sources_resolved===false&&<p className="oi-refusal">The pinned self-definition sources did not all resolve; this Agent is not running on its intended exact ground.</p>}
-			</section>}
+			<SelfReviewBlock review={review}/>
 			{!review.accepted&&<CharacterEditor current={review.profile.expressive_character_ref} onSave={character=>controller.setCharacter(character,belongs)} disabled={state.busy||!!state.unknown}/>}
+			{!review.accepted&&review.profile.self_definition&&<SelfDefinitionEditor current={selfDefinitionFromProfile(review.profile.self_definition)} accepted={review.accepted} onRead={reference=>controller.readSelfSource(reference)} onCreate={(name,content)=>controller.createSelfSource(name,content)} onSave={next=>controller.setSelf(next,belongs)} disabled={state.busy||!!state.unknown}/>}
+			{selfBlock&&<p className="oi-refusal" role="alert" data-self-accept-blocked="true">{selfBlock}</p>}
 			<details><summary>Show raw — exact source basis and delivery limits</summary><p><code>{review.content_digest}</code></p><pre style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{JSON.stringify(review.profile,null,2)}</pre><p>Selected Skill content is checked and delivered to the native parent session. Child activation requires its own admission and is not implied.</p></details>
 			{review.accepted&&<LiveHumanAgentCard agentRef={review.profile.agent_ref} worldRef={review.scope_ref} standing={prepared?"prepared":"accepted"} editableCharacter onCharacterChanged={()=>void controller.select(review.profile.ref)}
 				actions={[prepared
@@ -119,10 +106,10 @@ export function NativeAgentLauncher({project,sourceWorldRef,current,onChoose,con
 					:{label:"Save and start Direct work",run:()=>void saveAndStart()}]}/>}
 			{review.accepted?<p role="status">Accepted by the native human-authority path and read back from the roster.</p>:<p role="status">This is a stored proposal, not an accepted Agent and not permission to execute.</p>}
 			<details><summary>Stage-by-stage native operations</summary>
-				{!review.accepted&&<button type="button" className="oi-action" disabled={state.busy||!!state.unknown} onClick={()=>void controller.accept(belongs)}>Accept this exact Agent definition</button>}
+				{!review.accepted&&<button type="button" className="oi-action" disabled={state.busy||!!state.unknown||!!selfBlock} title={selfBlock} onClick={()=>void controller.accept(belongs)}>Accept this exact Agent definition</button>}
 				{review.accepted&&!prepared&&<button type="button" className="oi-action" disabled={state.busy||!!state.unknown||state.world?.world_readiness.ready!==true} onClick={()=>void controller.prepare(belongs)}>Prepare Direct session</button>}
 			</details>
-			{!prepared&&<button type="button" className="oi-action oi-action-primary" disabled={state.busy||!!state.unknown} onClick={()=>void saveAndStart()}>Save and start Direct work</button>}
+			{!prepared&&<button type="button" className="oi-action oi-action-primary" disabled={state.busy||!!state.unknown||(!review.accepted&&!!selfBlock)} title={selfBlock} onClick={()=>void saveAndStart()}>Save and start Direct work</button>}
 			<button type="button" className="oi-action" disabled={state.busy||!!state.unknown} onClick={()=>controller.edit({})}>Back to held draft</button>
 		</section>}
 		{compound&&<div role="status" aria-label="Save and start stage outcomes" className="oi-note">
