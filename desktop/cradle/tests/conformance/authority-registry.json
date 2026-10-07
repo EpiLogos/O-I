@@ -16,6 +16,13 @@
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical conformance plan Lane A \u00a72"
     },
     {
+      "owner": "src/field/epi/essaySource.ts",
+      "kind": "network",
+      "expression": "fetch(input, init)",
+      "rationale": "The one site that reads the essay edition for the field: only the kernel-resolved installed World route (oi-material: natively, the bridge's /world mirror in walks) or a loopback development override; any other origin is refused before the fetch. Not arbitrary owner HTTP.",
+      "spec_ref": "docs/cradle/CENTRAL-FIELD-CONTRACT.md \u00a70/\u00a76; docs/cradle/CENTRAL-FIELD-WORLD-PACKAGE.md \u00a74; docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712"
+    },
+    {
       "owner": "src/kernel/bridge.ts",
       "kind": "network",
       "expression": "fetch(`${transport.url}/op`, {\n    method: \"POST\",\n    headers: { \"content-type\": \"application/json\" },\n    body: JSON.stringify(op),\n    signal,\n})",
