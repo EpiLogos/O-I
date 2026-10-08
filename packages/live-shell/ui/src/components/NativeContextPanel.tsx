@@ -26,7 +26,7 @@ export function NativeContextPanel({ project = 'O-I', preparedContext }: { proje
   currentScope.current = scopeKey
   const [tab, setTab] = useState<ContextTab>('context')
   const [refresh, setRefresh] = useState(0)
-  const [agency, setAgency] = useState<AgencyReading | null>(null)
+  const [agencyReading, setAgencyReading] = useState<AgencyReading | null>(null)
   const [agencyError, setAgencyError] = useState<string | null>(null)
   const [agencyLoading, setAgencyLoading] = useState(false)
   const [rosterScope, setRosterScope] = useState<'project' | 'central'>('project')
@@ -45,7 +45,7 @@ export function NativeContextPanel({ project = 'O-I', preparedContext }: { proje
 
   useEffect(() => {
     ++cardEpoch.current
-    setAgency(null); setCard(null); setSelectedAgent(null); setDay(null); setProfiles([]); setRosterScopeRef(null)
+    setAgencyReading(null); setCard(null); setSelectedAgent(null); setDay(null); setProfiles([]); setRosterScopeRef(null)
     setCardError(null); setCardLoading(false)
     return () => { ++cardEpoch.current }
   }, [transport, project, scopeKey])
@@ -60,7 +60,7 @@ export function NativeContextPanel({ project = 'O-I', preparedContext }: { proje
     void readAgency(transport, project).then(result => {
       if (!belongs()) return
       if ('error' in result) { setAgencyError(result.error) }
-      else setAgency(result.reading)
+      else setAgencyReading(result.reading)
     }).catch(reason => {
       if (belongs()) { setAgencyError(reason instanceof Error ? reason.message : String(reason)) }
     }).finally(() => { if (belongs()) setAgencyLoading(false) })
@@ -128,7 +128,7 @@ export function NativeContextPanel({ project = 'O-I', preparedContext }: { proje
         <h3>Participating sessions</h3>
         {agencyLoading && <p className="native-empty" role="status">Reading agent participation…</p>}
         {agencyError && <p className="native-error" role="alert">{agencyError}</p>}
-        {agency && <><p className="native-context-meta" title={agency.projectRef}>{project} · {agency.rows.length} participating sessions{agency.observedAtUnixMs !== undefined && <span> · read {new Date(agency.observedAtUnixMs).toLocaleTimeString()}</span>}</p><ul className="native-agent-list">{agency.rows.map(row => <li key={`${row.spaceRef}:${row.sessionRef}`}><button type="button" disabled={!row.agentRef} className={selectedAgent === row.agentRef ? 'selected' : undefined} title={row.agentRef ?? 'This session has no disclosed Agent card reference'} onClick={() => row.agentRef && void selectAgent(row.agentRef)}><strong>{row.spaceLabel ?? row.spaceRef}</strong><span>{row.purpose ?? row.sessionRef}</span></button></li>)}</ul>{!agency.rows.length && <p className="native-empty">No participating sessions are disclosed by this owner.</p>}</>}
+        {agencyReading && <><p className="native-context-meta" title={agencyReading.projectRef}>{project} · {agencyReading.rows.length} participating sessions{agencyReading.observedAtUnixMs !== undefined && <span> · read {new Date(agencyReading.observedAtUnixMs).toLocaleTimeString()}</span>}</p><ul className="native-agent-list">{agencyReading.rows.map(row => <li key={`${row.spaceRef}:${row.sessionRef}`}><button type="button" disabled={!row.agentRef} className={selectedAgent === row.agentRef ? 'selected' : undefined} title={row.agentRef ?? 'This session has no disclosed Agent card reference'} onClick={() => row.agentRef && void selectAgent(row.agentRef)}><strong>{row.spaceLabel ?? row.spaceRef}</strong><span>{row.purpose ?? row.sessionRef}</span></button></li>)}</ul>{!agencyReading.rows.length && <p className="native-empty">No participating sessions are disclosed by this owner.</p>}</>}
         {cardLoading && <p className="native-empty" role="status">Reading Agent card…</p>}
         {cardError && <p className="native-error" role="alert">{cardError}</p>}
         {card && <article className="native-agent-card"><h3 title={`${card.identity.agent_ref} · ${card.identity.revision}`}>{card.identity.name}</h3>{card.why_im_here.role && <p className="native-context-meta">{card.why_im_here.role}</p>}<Field label="Purpose" field={card.why_im_here} /><Field label="Capabilities" field={card.what_i_can_do} /><Field label="Current work" field={card.currently} /><details><summary>Participation and repertoire</summary><Field label="Participation" field={card.where_i_participate} /><Field label="Working practice" field={card.how_i_work} /><Field label="Repertoire" field={card.what_i_carry} />{card.citizenship.summary && <p>{card.citizenship.summary}</p>}</details></article>}
