@@ -441,7 +441,7 @@ pub fn decode(content: &str) -> Result<Document, String> {
         .checked_add(expansion_delta(&stored.document, None, &images, &mut used)?)
         .ok_or("Expanded Expression file size overflow")?;
     if size < 0 || size > DOCUMENT_BYTES as i128 {
-        return Err("Expanded Expression document exceeds 8 MiB before material cloning".into());
+        return Err("Expanded Expression document exceeds the document allowance before material cloning".into());
     }
     if used.len() != images.len() {
         return Err("Unused embedded image reference".into());
