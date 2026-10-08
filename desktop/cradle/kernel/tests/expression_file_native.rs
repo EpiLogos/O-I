@@ -215,9 +215,9 @@ fn encoded_expanded_nul_unsafe_and_incomplete_inputs_refuse() {
     deep["document"]["title"] = depth;
     refuse(&deep, "Expression file nesting budget exceeded");
     let mut bomb = original.clone();
-    let big_image = source_png("128x128@2x.png");
+    let big_image = source_png("icon.png");
     let reference = hash(big_image.as_bytes());
-    assert!(big_image.len() * 4096 > 8 * 1024 * 1024);
+    assert!(big_image.len() * 4096 > 16 * 1024 * 1024);
     bomb["images"]
         .as_array_mut()
         .unwrap()
@@ -228,7 +228,7 @@ fn encoded_expanded_nul_unsafe_and_incomplete_inputs_refuse() {
     ]);
     refuse(
         &bomb,
-        "Expanded Expression document exceeds 16 MiB before material cloning",
+        "Expanded Expression document exceeds the document allowance before material cloning",
     );
 }
 
