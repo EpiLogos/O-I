@@ -22,6 +22,7 @@ identical (M1). OP5: single note, key 60 (C4, 261.6256 Hz). Analyzer:
 | OP3_OSCA050 | `Operator.0/Volume` | 0.5 (−6.02 dB) | oscillator A level |
 | OP4_TRIM025 | `Globals/Volume` | 0.0314731337 (= default ×0.25) | device output trim |
 | OP5_KEY60 | key 60, single note | — | pitch law + level key-invariance |
+| OP6_DECAY | `Envelope/DecayTime` (first `DecayTime` in document order = `Operator.0/Envelope`) | 3000 (default 1000) | DecayTime stored→τ mapping; OP2's sustain pin repeated so the decay is audible |
 
 Render format 44.1 kHz/16-bit stereo AIFF, 256.0 s. All four landed via
 `lane3_render_relaunch.sh` (the runtime-swap driver wedged on Live's
@@ -77,9 +78,35 @@ output level is key-invariant (OP5 −32.77 dBFS = M1).
 |----------|-------|----------|----------|
 | RESIDUAL_GAIN | 0.25825 (−11.76 dB) | M1 peak −29.76 dBFS / stored −18 dB trim; held across OP3/OP4 | ≤0.01 dB (peak law, 3 renders) |
 | DECAY_TAU_S | 0.120 s (at DecayTime 1000 ms) | OP2 full 10 ms-window curve | RMS 0.11 dB, max 0.22 dB |
+| τ(DecayTime) mapping | linear through origin, τ ≈ 0.121 s per 1.0 s stored | OP6_DECAY: 0.3623 s at 3000 ms vs OP2 re-fit 0.1211 s at 1000 ms (ratio 2.99) | ±0.6 % on the proportional law (two pins) |
 | release law | rate = (level + 70)/0.4 dB/s | M1/OP5: 175–180 dB/s; OP2: ≈115 dB/s | windows ≤0.62 dB |
 | pitch law | f = 440·2^((k−69)/12) | M1 131.0 Hz, OP5 261.5 Hz (0.5 Hz grid) | ≤0.14 % |
 | level laws | linear amplitude × | OP3 −38.79 (pred −38.79), OP4 −44.81 (pred −44.81) | ≤0.01 dB |
+
+## DecayTime mapping (OP6_DECAY, 2026-10-08, render lane 3)
+
+OP2's sustain pin repeated with `Operator.0/Envelope/DecayTime` pinned to
+3000 (the first `DecayTime` in document order — the same element family the
+OP2 pin used). Analyzer: `harness/analyze_operator_decay.py` (10 ms-window
+exponential fit, peak free with sustain tied to it by the stored ratio;
+**validated on OP2: τ = 0.1211 s** vs the documented 0.120).
+
+- Note-1 100 ms windows (1.0–1.8 s): −33.82 / −36.01 / −38.14 / −40.22 /
+  −42.23 / −44.14 / −45.92 / −47.53 dBFS — one clean exponential.
+- **τ = 0.3623 s** (10 ms fit; 100 ms integration-modeled cross-check
+  0.3629 s; fit residual −34 dB rel peak). Onset aligned at 1.000 s.
+- **Law: τ ∝ DecayTime.** 0.3623 / 0.120 = 3.02; against the OP2 re-fit
+  (0.1211): 2.99. Linear through the origin at **τ ≈ 0.121 s per 1.0 s
+  stored** (two pins, ±0.6 %). The attack-floor hypothesis constant
+  (τ = DecayTime/ln(1/AttackLevel) = 0.1241 s/s) is close but rejected at
+  ~2.7 % — the mapping is proportional with a measured constant, not that
+  derivation.
+
+Level anomaly (OP2 and OP6, independent renders): the fitted audible peak is
+**−32.75 dBFS in both** — ≈3.0 dB below M1's plateau (−29.76) — while the
+onset→sustain span stays exactly the stored −24.00 dB. Pinning SustainLevel
+shifts the whole voice down ≈3 dB, not just the tail: an unmodeled
+loudness-compensation stage in Operator (open item below).
 
 ## Gate residuals (operator_voice_golden_gate, 2026-10-08)
 
@@ -106,10 +133,17 @@ key 48).
   previously untested — it is now measured at one pin and modeled.
 - **Fixed release rate** (175 dB/s): refuted by OP2; the rate is set by the
   note-off level (time-normalized to ReleaseTime).
-- **τ(DecayTime, levels) mapping**: one pin only. τ = 0.120 s is consistent
-  with "excess reaches the AttackLevel floor at DecayTime"
-  (1.0 s / ln(1/0.000316) = 0.124 s) — a hypothesis, not a law. A DecayTime
-  sweep (and a DecayLevel pin) would name it.
+- **τ(DecayTime, levels) mapping**: **RESOLVED for direction and rough law
+  (2026-10-08, OP6_DECAY)** — linear through the origin, τ ≈ 0.121 s per
+  1.0 s stored (two pins, ±0.6 %); the attack-floor constant (0.1241 s/s) is
+  near but rejected at ~2.7 %. Still open: a third pin (e.g. 500 ms) to
+  test curvature, and the **DecayLevel ≠ SustainLevel decay-target case**
+  (both pins hold DecayLevel = 1.0).
+- **Pinned-sustain voice shift**: the OP2/OP6 renders sit ≈3.0 dB below the
+  M1 plateau at all points (fitted peak −32.75 dBFS in both) with the stored
+  −24.00 dB span intact — Operator compensates voice loudness when the
+  envelope levels change. Mechanism open; the crate's peak law uses the M1
+  constant and would read ≈3 dB hot on pinned-sustain patches.
 - **Waveform beyond sine**: at key 60 (OP5) a faint h2 appears at ≈−88 dBFS
   (−58 dB below h1; at key 48 h2 sits at the −93 dBFS dither floor). Whether
   that is Operator waveshaping at higher pitch or export-dither correlation
@@ -129,8 +163,11 @@ key 48).
   scan grid).
 - Envelope topology A→D→S→R with these level targets: **high** (M1/OP3/OP4
   exact; OP2 onset + steady + release all consistent with one model).
-- Decay shape exp-in-amplitude, τ = 0.120 s: **medium-high** (full-curve fit
-  0.11 dB RMS at one pin; τ mapping open).
+- Decay shape exp-in-amplitude, τ = 0.120 s: **high** (full-curve fit
+  0.11 dB RMS at one pin; τ ∝ DecayTime confirmed at a second pin,
+  ratio 2.99 vs 3.0).
+- τ(DecayTime) proportionality: **medium-high** (two pins, ±0.6 %; no
+  third pin, and the 0.121 constant is measured, not derived).
 - Release time-normalized dB-linear: **high** (two level regimes, ≤0.62 dB).
 - Sine purity at key 48: **high** (h2..h10 at dither floor); at key 60:
   **medium** (h2 ≈ −88 dBFS, cause open).
@@ -138,10 +175,12 @@ key 48).
 ## Evidence
 
 - Renders: `harness/renders/OP2_SUSTAIN24.aif`, `OP3_OSCA050.aif`,
-  `OP4_TRIM025.aif`, `OP5_KEY60.aif` (+ `.asd`), baseline
+  `OP4_TRIM025.aif`, `OP5_KEY60.aif`, `OP6_DECAY.aif` (+ `.asd`), baseline
   `M1_OPERATOR.aif`; sets `harness/live/OP2_SUSTAIN24.als` …
-  `OP5_KEY60.als`.
-- Analyzer: `harness/analyze_operator.py`; gate:
+  `OP5_KEY60.als`, `OP6_DECAY.als`.
+- Analyzers: `harness/analyze_operator.py`,
+  `harness/analyze_operator_decay.py` (τ fit; self-validates on OP2);
+  gate:
   `packages/live-dynamics/tests/golden.rs::operator_voice_golden_gate`;
   model: `packages/live-dynamics/src/operator.rs`.
 - Render-lane note: OP4's export dialog was found open (a prior lane died

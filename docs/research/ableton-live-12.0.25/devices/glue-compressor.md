@@ -45,6 +45,7 @@ Device element: `GlueCompressor` (factory preset "Mastering - gentle limiter",
 | G19_REL2 | −12 | 30 | 0 | 2 | 1 | **2** | 1 | true (`release-probe.wav`) |
 | DF1_R0 | **−24** | **60** | 0 | 2 | **0** | 0 | 1 | true (D1-final deep-over discriminator) |
 | DF2_R2 | **−24** | **60** | 0 | 2 | **2** | 0 | 1 | true (D1-final deep-over discriminator) |
+| LAM_T24_A5_R60 | **−24** | **60** | 0 | **5** | 1 (preset) | 0 (preset) | 1 | true (λ discriminator, attack menu idx 5, deep-over) |
 
 Preset stored values (unpinned): Threshold −40, Range 3, Makeup 0, Attack 2,
 Ratio 1, Release 0, DryWet 1, PeakClipIn true, SideChain off, Oversample false,
@@ -388,6 +389,44 @@ DF2_R2 (Ratio 2, Range 60, T=−24):
   ratio-dependent knee widths of D1b. Consistent with the binary finding that
   Ratio picks one of three 512-entry LUTs feeding a Newton-solved feedback
   loop: the "ratio" is a curve, not a constant.
+
+## LAM — the λ discriminator at attack menu index 5 (2026-10-08, render lane 3)
+
+`LAM_T24_A5_R60` (T=−24, Range 60, MU 0, **Attack 5 = menu idx 5, 82 ms
+period**, Ratio 1, Release 0, DryWet 1, PeakClipIn true — inert, see below).
+This is the deep-over render the integration record asks for
+(`glue-perblock-derivation.md` §7 "The remaining residual"): the
+`CircuitModel`'s λ·A·k solver-feedback term is ~100× smaller at attack idx 5
+than at idx 1, and the model's idx-5 pins are exact — so a deep-over render
+at idx 5 tests whether that exactness survives where any missed
+depth-scaling residual would show largest. Stored Attack is the raw menu
+index (the setter `switch`es on it directly — glue-perblock-decompiles.txt
+~line 897), so pin `Attack=5` is idx 5, not a scaled value.
+
+Gain map (pasted from `analyze_render.py`):
+```
+  in_peak  in_rms   out_rms   gain_reduction
+      -30   -33.01    -33.01      -0.00
+      -24   -27.01    -27.19      -0.18
+      -18   -21.01    -23.85      -2.84
+      -12   -15.01    -21.34      -6.33
+       -6    -9.01    -19.28     -10.27
+       -3    -6.01    -18.37     -12.36
+        0    -3.01    -17.52     -14.51
+  release tail (4.3-5.3s): -96.33 dBFS
+```
+
+- **GR at +6/+12/+18/+24 over = −2.84 / −6.33 / −10.27 / −14.51 dB.**
+  Marginals 3.49 / 3.94 / 4.24 dB — steepening with depth, the r1
+  curve-family shape (D1-final), no asymptote.
+- Output clipper inert throughout (max out_rms −17.5 dBFS vs the −0.50 dBFS
+  ceiling), so these are pure gain-computer numbers.
+- Attack shallowing vs the A2 grid at +12 over: −8.12 (G9, idx 2) → −6.33
+  (idx 5) — first-order y-attenuation direction as mapped (§3 attack
+  coupling); the second-order partial compensation is visible (0.676 DC-gain
+  factor alone would predict ≈−5.5).
+- The four numbers are the record for the coordinator-side CircuitModel
+  comparison (λ verdict lives with the integration lane).
 
 ## D2 verdict — Makeup is additive feedforward; detector topology = feedforward (sidechain pre-makeup)
 

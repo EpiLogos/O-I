@@ -182,3 +182,34 @@ The `WM_S*.als` sets and the `WM_BASE.als` control remain staged; when the
 routes render audibly again, re-run the three sets and analyze with
 `analyze_wm_sources.py` (per-note RMS + sub-window shape + fundamental).
 
+## Same-instance re-run: silence fully replicates (2026-10-08 evening, lane 3)
+
+The discriminator protocol ran again on the already-running Live instance,
+renders minutes apart, owner focus contended but every keystroke guarded:
+
+- **Discriminator PASS again.** `WT1_AMPVEL_check2.als` (fresh byte-copy of
+  the known-audible set) rendered **audible at exactly the 13:28 reference
+  values** — per-note RMS −62.30/−62.18/−62.18/−62.18, spread 0.12 dB,
+  fundamental 131.0 Hz — third independent replication (13:28, 19:33 clean
+  boot, now same-instance).
+- **S8/S9/S12 all render digital silence in the same minutes-adjacent
+  session**: `WM_S8b.aif`, `WM_S9b.aif`, `WM_S12b.aif` (byte-copy sets of the
+  staged originals, md5-identical content) read the −96.3 dBFS dither floor
+  with no note activity, flat sub-window profiles, no fundamental. This
+  removes the last session-boundary confound: **control audible and probes
+  silent within one boot, minutes apart** — the modulator-family → Amp route
+  itself is what silences the voice, matching the `WM_BASE` isolation.
+- Attribution status unchanged: 8/9/12 stay unattributed while silent; the
+  13:28 S9 audible render (−31.2, envelope-shaped) remains the sole
+  counter-evidence that these routes CAN sound. What changed the engine's
+  reading of a non-zero Amp-row modulator amount after 13:28 — persisting
+  across boots, invisible to the control set — is still open.
+
+Driver lesson (harness): an Export panel that survived a crashed Save-panel
+read re-opens with a **dead name field** (text field reads `missing value`
+indefinitely; `readSavePanel` then throws on the empty read). Recovery that
+works: cancel the Save panel AND the Export panel by named clicks, then
+re-run the full `lane3_render.sh` flow — a fresh panel populates normally
+(all three evening renders after recovery used route=direct).
+
+
