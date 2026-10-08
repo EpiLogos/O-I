@@ -12,3 +12,4 @@ import './knowledge'
 import './settings'
 
 import './workbench'
+import './agentShell'

@@ -2,10 +2,10 @@ import type { UseSet } from '../shell/useSet'
 import type { HostedAppState } from '@epilogos/expressions-boundary'
 import type { DetailMode } from './DeviceChainPanel'
 import {Icon} from './Icon'
-export function StatusBar({ state, documentError, viewport, selectedTrack, audio, reading, detailMode, changeDetailMode }: { state: UseSet; documentError: string | null; viewport: number[]; selectedTrack?: string; audio: boolean; reading: HostedAppState | null; detailMode: DetailMode; changeDetailMode: (mode: DetailMode) => void }) {
+export function StatusBar({ state, documentError, viewport, selectedTrack, audio, reading, detailMode, changeDetailMode, agentInfo }: { state: UseSet; documentError: string | null; viewport: number[]; selectedTrack?: string; audio: boolean; reading: HostedAppState | null; detailMode: DetailMode; changeDetailMode: (mode: DetailMode) => void; agentInfo?: { label: string; fn: string } | null }) {
   const { set, path, error, loading } = state
-  return <footer className="statusbar" role="status" title={`Viewport ${viewport[0]} × ${viewport[1]} · ${audio ? documentError ?? 'Summary and deep document readings' : reading?.nativeScene?.expression_ref ?? 'Native Expressions owner'} `}>
-    <span className="statusbar-info">i</span><span className="statusbar-path" title={audio ? path ?? undefined : reading?.nativeScene?.scene_ref}>{audio ? error ? <span className="statusbar-error">Open failed: {error}</span> : loading ? 'Opening…' : set ? set.path : 'No set open' : reading?.document?.name ?? 'Expressions'}</span>
+  return <footer className="statusbar" data-region="status-bar" role="status" title={`Viewport ${viewport[0]} × ${viewport[1]} · ${audio ? documentError ?? 'Summary and deep document readings' : reading?.nativeScene?.expression_ref ?? 'Native Expressions owner'} `}>
+    <span className="statusbar-info">i</span>{agentInfo && <span className="statusbar-agent-info" data-region="agent-status-info"><b>{agentInfo.label}</b>{agentInfo.fn}</span>}<span className="statusbar-path" title={audio ? path ?? undefined : reading?.nativeScene?.scene_ref}>{audio ? error ? <span className="statusbar-error">Open failed: {error}</span> : loading ? 'Opening…' : set ? set.path : 'No set open' : reading?.document?.name ?? 'Expressions'}</span>
     {audio && documentError && <span className="statusbar-error" title={documentError}>Document unavailable</span>}
     {audio && set && <span className="statusbar-counts">{set.tracks.length} tracks · {set.scene_count} scenes · {set.arrangement_clips} clips</span>}
     <span className="statusbar-track">{audio ? selectedTrack : reading?.sceneName}</span>

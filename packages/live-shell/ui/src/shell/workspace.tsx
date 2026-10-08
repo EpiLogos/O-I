@@ -1,54 +1,17 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { HostedAppState } from '@epilogos/expressions-boundary'
-import type { KernelTransportStatus } from '@epilogos/expressions-boundary/cradle'
-import type { KernelReceipt, NativeFileReading } from '@epilogos/expressions-boundary/cradle'
+import type { KernelReceipt, KernelTransportStatus, NativeFileReading } from '@epilogos/expressions-boundary/cradle'
 import type { NativeEditorController, NativeEditorReading } from '@epilogos/expressions-boundary/editor'
 import { ContinuityResources, ContinuityResidency, useContinuity, type FileResourceAccess, type ResourceIntent } from '../continuity'
 import { groupsOf, openBinding } from '../../../../../desktop/cradle/src/surface/engine'
 import type { CentralLocation } from '../../../../../desktop/cradle/src/kernel/location'
-import type { SurfaceBinding } from '../../../../../desktop/cradle/src/surface/types'
-import type { FileResourceScope } from '../../../../../desktop/cradle/src/files/resources'
 import { CANDIDATE_WARM_WORKSPACE_LIMIT, retainSourceReading } from '../continuity/resources'
-export type WorkspaceMode = 'audio' | 'expressions' | 'techne'
-/** Presentation readings of native work. This context never owns or saves a document. */
-export interface WorkspaceReading {
-  workspaceId: string
-  resources: ContinuityResources
-  residency: ContinuityResidency
-  accessEpoch: number
-  accessReady: boolean
-  readonly nativeScope: Readonly<FileResourceScope> | null
-  nativeAccessCurrent: (epoch: number) => boolean
-  attachNativeAccess: (access: FileResourceAccess | null) => void
-  sourceError: string | null
-  sourceRecoveryReady: boolean
-  sourceReadingCurrent: boolean
-  prepareSource: (location: CentralLocation) => string
-  publishSource: (source: NativeFileReading, intent: ResourceIntent) => void
-  browserPath: string
-  navigateFiles: (path: string) => void
-  nativeWorks: readonly { expression_ref: string; title: string; revision: number }[]
-  publishWorks: (works: readonly { expression_ref: string; title: string; revision: number }[]) => void
-  expressionToOpen: { ref: string; request: number } | null
-  requestExpression: (ref: string) => void
-  mode: WorkspaceMode
-  setMode: (mode: WorkspaceMode) => void
-  transport: KernelTransportStatus
-  attachTransport: (transport: KernelTransportStatus) => void
-  reading: HostedAppState | null
-  publishReading: (reading: HostedAppState | null) => void
-  editor: NativeEditorController | null
-  attachEditor: (editor: NativeEditorController | null) => void
-  editorReading: NativeEditorReading | null
-  publishEditorReading: (reading: NativeEditorReading | null) => void
-  receipts: readonly KernelReceipt[]
-  publishReceipts: (receipts: readonly KernelReceipt[]) => void
-  revalidateSource: (invalidate?: boolean) => Promise<boolean>
-  selectedSource: NativeFileReading | null
-  selectedRef: string | null
-  selectSource: (source: NativeFileReading | null) => void
-}
-const Workspace = createContext<WorkspaceReading | null>(null)
+import { Workspace } from './workspaceContext'
+import type { FileResourceScope } from '../../../../../desktop/cradle/src/files/resources'
+import type { WorkspaceMode, WorkspaceReading } from './workspaceTypes'
+import type { SurfaceBinding } from '../../../../../desktop/cradle/src/surface/types'
+export type { WorkspaceMode, WorkspaceReading } from './workspaceTypes'
+export { useWorkspace, StubWorkspaceProvider } from './workspaceContext'
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const continuity = useContinuity()
   const current = useRef(continuity)
@@ -235,4 +198,3 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const navigateFiles = (path: string) => continuity.setProjectNavigation('control:root', {mode: 'files', locationPath: path}, continuity.current.id)
   return <Workspace.Provider value={{ workspaceId: continuity.current.id, resources, residency, accessEpoch, accessReady, nativeScope, nativeAccessCurrent, attachNativeAccess, sourceError, sourceRecoveryReady, sourceReadingCurrent, prepareSource, publishSource, browserPath, navigateFiles, nativeWorks, publishWorks, expressionToOpen, requestExpression, mode, setMode, transport, attachTransport, reading, publishReading, editor, attachEditor, editorReading, publishEditorReading, receipts, publishReceipts, revalidateSource, selectedSource, selectedRef: selectedSource?.location.ref ?? null, selectSource }}>{children}</Workspace.Provider>
 }
-export function useWorkspace() { const workspace = useContext(Workspace); if (!workspace) throw Error('The shell workspace provider is absent'); return workspace }

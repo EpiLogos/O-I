@@ -1,0 +1,126 @@
+/* Agent-shell fidelity floor. The token block and frame geometry are
+   transcribed from the shell oracle (agent-shell-fidelity.json) and scoped
+   to the agent frame so the shared :root tokens of styles.css stay
+   untouched for the classic shell. Colours without an oracle token are
+   declared here as proposed additions and flagged in the lane report. */
+.frame.agent-shell-frame {
+  --bg-0:#26292d;
+  --bg-1:#33363b;
+  --bg-2:#3f4348;
+  --bg-3:#4a4e54;
+  --surface:#43464c;
+  --line:#24262a;
+  --line-strong:#3d4147;
+  --text:#d4d7da;
+  --text-dim:#a2a7ad;
+  --text-faint:#71767c;
+  --accent:#ffbe00;
+  --accent-soft:rgba(255,190,0,.13);
+  --sel:#7ec3e6;
+  --rec:#e0523f;
+  --green:#8fd0a8;
+  --stall:#ff9b4a;
+  --fizz:#5cc6b4;
+  --honey:#e2a35e;
+  --bumble:#d985a6;
+  --drone:#8fbfb6;
+  --mono:ui-monospace,'SF Mono',Menlo,monospace;
+  /* Proposed token additions — no oracle token carries these yet. */
+  --accent-ink:#1d1f22;
+  --rec-ink:#c9c8ad;
+  --sel-ring:#ffffffb0;
+  --track-default:#79b6ce;
+  --slot-ink:#252a2d;
+  --slot-ink-tri:#252a2dbb;
+  --light-ring:#0007;
+  --browser-w:400px;
+  --transport-h:64px;
+  --detail-h:300px;
+  --dock-w:300px;
+  grid-template-columns:400px minmax(0, 1fr) var(--dock-w);
+  grid-template-rows:64px minmax(0, 1fr) 300px 28px;
+  grid-template-areas:"tp tp tp" "br ct dk" "ch ch dk" "sb sb sb";
+}
+.agent-shell-transport .agent-nc { height:19px; min-width:17px; padding:1px 4px; background:var(--bg-0); border:1px solid var(--line-strong); line-height:14px; font-size:10px; color:var(--text-dim); display:inline-flex; align-items:center; gap:3px }
+.agent-shell-transport .agent-nc.on { background:var(--accent); color:var(--accent-ink); border-color:var(--accent) }
+.agent-shell-transport .agent-nc.warn { color:var(--stall) }
+.agent-shell-transport .agent-fld { height:19px; padding:2px 6px; font-size:10px; background:var(--bg-0); display:inline-flex; align-items:center; gap:4px; font-family:var(--mono) }
+.agent-shell-transport .agent-tbtn { width:20px; height:22px; display:grid; place-items:center; color:var(--text-dim) }
+.agent-shell-transport .agent-tbtn.play.on { color:var(--accent-ink); background:var(--accent) }
+.agent-shell-transport .agent-tbtn.rec { color:var(--rec-ink) }
+.agent-shell-transport .cpu-meter { background:linear-gradient(90deg, var(--accent) 0, var(--accent) var(--fill, 0%), var(--bg-0) var(--fill, 0%), var(--bg-0) 100%) }
+.agent-shell-browser { min-height:0; display:flex; flex-direction:column; background:var(--bg-1); border:1px solid var(--line-strong); border-right:4px solid var(--line) }
+.agent-shell-browser .agent-bcats { width:112px; flex:none; border-right:1px solid var(--line); font-size:11px; overflow:auto }
+.agent-shell-browser .agent-bcat { display:flex; align-items:center; gap:6px; padding:2px 3px; color:var(--text-dim); width:100%; text-align:left }
+.agent-shell-browser .agent-bcat.on { background:var(--bg-3); color:var(--text) }
+.agent-shell-centre { height:100%; min-height:0; display:flex; flex-direction:row; background:var(--bg-2); border:1px solid var(--line-strong) }
+.agent-track { flex:none; display:flex; flex-direction:column; border-right:2px solid var(--line); min-width:118px; max-width:160px }
+.agent-track-hd { height:26px; display:flex; align-items:center; gap:4px; padding:3px 4px; border-bottom:2px solid var(--line); font-size:10px; font-weight:500; overflow:hidden; white-space:nowrap }
+.agent-track-hd.sel { box-shadow:inset 0 0 0 1px var(--sel-ring) }
+.agent-slot { height:26px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:4px; padding:0 4px; font-size:10px; cursor:default }
+.agent-slot.task { background:var(--track-color, var(--track-default)); color:var(--slot-ink) }
+.agent-slot .tri { width:0; height:0; border-left:7px solid var(--slot-ink-tri); border-top:4.5px solid transparent; border-bottom:4.5px solid transparent; flex:none }
+.agent-stoprow { height:22px; display:flex; align-items:center; gap:3px; padding:0 4px; border-top:1px solid var(--line) }
+.agent-stoprow button { width:18px; height:16px; display:grid; place-items:center; background:var(--bg-0); border:1px solid var(--line) }
+.agent-context-dock { min-height:0; display:flex; flex-direction:column; background:var(--bg-1); border-left:1px solid var(--line-strong); position:relative }
+.agent-context-dock .agent-tiles { flex:1; min-height:0; overflow:auto; display:grid; grid-template-columns:1fr; gap:4px; padding:4px }
+.agent-context-dock .agent-tile { border:1px solid var(--line); background:var(--bg-2); min-height:120px; display:flex; flex-direction:column }
+.agent-context-dock .agent-tile-h { padding:4px 6px; font-size:10px; border-bottom:1px solid var(--line); color:var(--text-dim) }
+.agent-context-dock .agent-launch { flex:none; border-top:1px solid var(--line); padding:4px }
+.agent-context-dock .agent-lgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; max-height:140px; overflow:auto }
+.agent-device-chain { display:flex; flex-direction:column; gap:6px; padding:6px; font-size:11px }
+.agent-device { border:1px solid var(--line); background:var(--bg-1); padding:6px }
+.agent-device h4 { margin:0 0 4px; font-size:10px; color:var(--text-faint); font-weight:500 }
+.agent-arr { height:100%; overflow:auto; padding:8px; font-size:10px; color:var(--text-dim) }
+.agent-arr .needle { height:2px; background:var(--accent); margin:4px 0; position:relative; transform-origin:left center }
+.agent-arr .needle.stall { background:var(--stall) }
+.native-agent-rack { display:flex; flex-wrap:wrap; gap:8px; padding:6px }
+.agent-device-compact { min-width:140px; flex:1 }
+.agent-device-compact .native-chain-head { display:flex; align-items:center; gap:6px; font-size:10px; margin-bottom:4px }
+.agent-device-compact .native-chain-light { width:9px; height:9px; border-radius:50%; border:1px solid var(--light-ring); background:var(--bg-0) }
+.agent-device-compact .native-chain-light.is-on { background:var(--accent) }
+.agent-turn-ring { display:flex; justify-content:center; margin:4px 0 }
+.agent-knobs { display:grid; grid-template-columns:78px 1fr; gap:2px 6px; font-size:10px }
+.agent-knobs label { display:contents }
+.agent-knobs span { color:var(--text-dim) }
+.agent-knobs output { font-family:var(--mono); color:var(--text) }
+.agent-thread { height:100%; min-height:0; display:flex; flex-direction:column }
+.agent-disclosed { color:var(--text-faint); font-size:10px }
+/* Oracle area names (tp br ct dk ch sb): styles.css names the frame
+   children with the shared-shell area words, so the agent frame re-points
+   them here without touching the classic shell. */
+.frame.agent-shell-frame .transport { grid-area:tp }
+.frame.agent-shell-frame .agent-shell-browser { grid-area:br }
+.frame.agent-shell-frame .center { grid-area:ct }
+.frame.agent-shell-frame .agent-shell-centre { grid-area:ct }
+.frame.agent-shell-frame .agent-context-dock { grid-area:dk }
+.frame.agent-shell-frame .chain { grid-area:ch }
+.frame.agent-shell-frame .agent-device-chain { grid-area:ch; min-height:0; overflow:auto }
+.frame.agent-shell-frame .statusbar { grid-area:sb }
+.frame.agent-shell-frame.dock-open { grid-template-columns:400px minmax(0, 1fr) var(--dock-w) }
+.frame.agent-shell-frame.browser-hidden,
+.frame.agent-shell-frame.no-browser { grid-template-columns:0 minmax(0, 1fr) var(--dock-w) }
+.frame.agent-shell-frame.browser-hidden.dock-open,
+.frame.agent-shell-frame.no-browser.dock-open { grid-template-columns:0 minmax(0, 1fr) var(--dock-w) }
+.frame.agent-shell-frame.detail-hidden,
+.frame.agent-shell-frame.no-detail { grid-template-rows:64px minmax(0, 1fr) 0 28px }
+.frame.agent-shell-frame.no-dock { grid-template-columns:400px minmax(0, 1fr) 0 }
+.frame.agent-shell-frame.browser-hidden.no-dock,
+.frame.agent-shell-frame.no-browser.no-dock { grid-template-columns:0 minmax(0, 1fr) 0 }
+@media (max-width:760px) {
+  .frame.agent-shell-frame.dock-open { grid-template-columns:0 minmax(0, 1fr) var(--dock-w) }
+  .frame.agent-shell-frame .agent-shell-browser { display:none }
+}
+.agent-context-dock { width:var(--dock-w, 300px) }
+.agent-launch.folded .agent-lgrid { display:none }
+.agent-transport-note { margin:0; padding:0 10px 4px; font-size:10px; color:var(--text-dim) }
+.agent-device-pool .agent-pool-row { display:grid; grid-template-columns:78px minmax(0,1fr); gap:6px; padding:2px 8px; font-size:11px; min-height:22px; align-items:center }
+.agent-device-pool .agent-pool-row span:first-child { color:var(--text-dim) }
+.agent-device-compact { cursor:pointer }
+.agent-world-read { color:var(--fizz) }
+.agent-world-write { color:var(--honey) }
+.agent-shell-browser .browser-columns { display:flex; flex:1; min-height:0 }
+.agent-shell-browser .browser-results { flex:1; min-height:0; overflow:auto; background:var(--bg-2) }
+.agent-shell-browser .pool { height:46%; min-height:85px; display:flex; flex-direction:column; border-top:5px solid var(--line); background:var(--bg-2) }
+.agent-shell-browser .poolh { height:22px; display:flex; align-items:center; gap:6px; padding:0 6px; background:var(--bg-1); border-bottom:1px solid var(--line); font-size:11px; flex:none }
+.agent-shell-browser .poolb { flex:1; overflow:auto; padding:4px 0 8px }

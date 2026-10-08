@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client'
 
 import './styles.css'
 import './panels' // builtin panel registration — third-party panels import here too
+import {loadAgentShellFamilies} from './inhabitants/loadAgentShellFamilies'
+loadAgentShellFamilies()
 import { App } from './App'
 import { WorkspaceProvider } from './shell/workspace'
 import { ContinuityProvider } from './continuity/workspace'

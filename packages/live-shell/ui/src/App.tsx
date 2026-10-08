@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type CSSProperties, type RefObject } from 'react'
 import {useContinuity} from './continuity/workspace'
 import { ArrangementView } from './components/ArrangementView'
 import { BrowserPane } from './components/BrowserPane'
 import { WorldBrowser } from './components/WorldBrowser'
-import { OPEN_DEVICE_EVENT } from './components/nativeDrag'
+import { OPEN_DEVICE_EVENT, PARAMETER_BROWSE_EVENT } from './components/nativeDrag'
 import { NativeWorldDetail, type NativeDetailConfigurationIntent } from './components/NativeWorldDetail'
 import {NativeInputRetentionProvider,nativeInputBinding} from './components/NativeInputRetention'
 import { useWorkspace } from './shell/workspace'
@@ -12,6 +12,18 @@ import { RightDock } from './components/RightDock'
 import { SessionView, type SetSelection } from './components/SessionView'
 import { StatusBar } from './components/StatusBar'
 import { TransportBar } from './components/TransportBar'
+import {AgentShellProvider, useAgentShell} from './agent/AgentShellContext'
+import {useAgentMetrics} from './agent/useAgentMetrics'
+import {useHarnessBinding} from './agent/useHarnessBinding'
+import {harnessAgentControl} from './agent/harnessAgentControl'
+import {AgentShellTransport} from './agent/AgentShellTransport'
+import {AgentShellBrowser} from './agent/AgentShellBrowser'
+import {AgentContextDock} from './agent/AgentContextDock'
+import {useAgencySessions, type AgentSessionTrack} from './agent/useAgencySessions'
+import {trackKey} from './agent/agentRunModel'
+import type {KernelTransportStatus} from '../../../../desktop/cradle/src/kernel/types'
+import {AgentShellDeviceDetail} from './agent/AgentShellDeviceDetail'
+import './agent/agentShell.css'
 import { useSetSummary, useShellConfig } from './shell/useSet'
 import { useSetDocument } from './shell/document'
 import { getPanels, type PanelContext } from './shell/panels'
@@ -23,6 +35,11 @@ import {sameEditorBasis,type NativeEditorBasis,type NativeEditorController} from
 import './NativeCompositionResidence.css'
 const PALETTE = ['#79b6ce', '#779dcc', '#9885bc', '#8baf9c', '#b096b2', '#6caaa9']
 export function App() {
+  const frameRef = useRef<HTMLDivElement>(null)
+  return <AgentShellProvider frameRef={frameRef}><AgentShellFrameInner frameRef={frameRef} /></AgentShellProvider>
+}
+
+function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>}) {
   const workspace = useWorkspace()
   const currentEditorReading=useRef(workspace.editorReading)
   // The qualified owner publishes its reply before React presents that reading.
@@ -121,8 +138,8 @@ export function App() {
       setBrowser(true)
       requestAnimationFrame(() => document.querySelector<HTMLInputElement>('.world-browser-search input')?.focus())
     }
-    window.addEventListener('oi:expression-browse-parameters', browseParameters)
-    return () => window.removeEventListener('oi:expression-browse-parameters', browseParameters)
+    window.addEventListener(PARAMETER_BROWSE_EVENT, browseParameters)
+    return () => window.removeEventListener(PARAMETER_BROWSE_EVENT, browseParameters)
   }, [workspace.mode])
   const [detail, setDetail] = useState(restored?.detail ?? true)
   const [detailConfiguration, configureDetail] = useState<NativeDetailConfigurationIntent | null>(null)
@@ -258,15 +275,34 @@ export function App() {
   const colors = (state.set?.tracks ?? []).map((track, i) => overrides[i] ?? (track.kind === 'master' ? '#a2b6c2' : track.kind === 'return' ? '#76c0b7' : PALETTE[i % PALETTE.length]))
   const panels = getPanels('center')
   const choose = (value: SetSelection) => { select(value); changeDetailMode(value.scene !== null || value.clip !== undefined ? 'clip' : 'device') }
-  return <div style={{ ...(browserWidth === null ? {} : { '--browser-w': `${browserWidth}px` }), ...(detailHeight === null ? {} : { '--detail-h': `${detailHeight}px` }) } as CSSProperties} className={`frame mode-${workspace.mode}${browser ? '' : ' browser-hidden'}${detail ? '' : ' detail-hidden'}${dock ? ' dock-open' : ''}`}>
-    <TransportBar tempoBpm={state.set?.tempo_bpm ?? null} name={state.set?.path.split('/').pop()?.replace(/\.als$/i, '') ?? ''} mode={workspace.mode} view={tab} setView={chooseView} setMode={mode => {presentSettings(false); setCenterPanel('world.expressions'); workspace.setMode(mode)}} centerPanels={panels.filter(panel => panel.id !== 'world.expressions' && panel.navigation !== false)} activeCenter={settingsPresented ? 'world.settings' : workspace.mode === 'audio' ? null : centerPanel} openCenter={id => {
-      if (id === 'world.settings') {
-        settingsOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
-        presentSettings(true)
-      } else {presentSettings(false); setCenterPanel(id); workspace.setMode('expressions')}
-    }} workName={workspace.reading?.document?.name} sceneName={workspace.reading?.sceneName} nativeTransport={nativeView('expressions')} browser={browser} detail={detail} dock={dock} toggleBrowser={() => setBrowser(!browser)} toggleDetail={() => setDetail(!detail)} toggleDock={() => setDock(!dock)} />
-    <NativeInputRetentionProvider><div className="browser-residence" hidden={!browser || workspace.mode !== 'audio'}><BrowserPane defaultSet={config?.default_set ?? ''} ctx={ctx} /></div>
-    <div className="browser-residence" hidden={!browser || workspace.mode === 'audio'}><WorldBrowser /></div>
+  const agentShell = centerPanel === 'native.agent' && !settingsPresented
+  const agency = useAgencySessions(workspace.transport)
+  const shellCtx = useAgentShell()
+  const openCenterPanel = (id: string) => {
+    if (id === 'world.settings') {
+      settingsOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+      presentSettings(true)
+    } else {
+      presentSettings(false)
+      setCenterPanel(id)
+      if (id === 'native.agent') setDock(true)
+      // native.agent is a centre panel like the others: the workspace leaves
+      // the audio surface, or the centre residence stays hidden in mode audio.
+      workspace.setMode('expressions')
+    }
+  }
+  const frameBody = (<>
+    {agentShell ? <AgentShellTransportBridge
+      title={workspace.reading?.document?.name ?? 'Agent sessions'}
+      browser={browser} detail={detail} dock={dock}
+      toggleBrowser={() => setBrowser(!browser)} toggleDetail={() => setDetail(!detail)} toggleDock={() => setDock(!dock)}
+      onLeaveAgent={() => openCenterPanel('world.expressions')}
+      tracks={agency.tracks}
+      transport={workspace.transport}
+    /> : <TransportBar tempoBpm={state.set?.tempo_bpm ?? null} name={state.set?.path.split('/').pop()?.replace(/\.als$/i, '') ?? ''} mode={workspace.mode} view={tab} setView={chooseView} setMode={mode => {presentSettings(false); setCenterPanel('world.expressions'); workspace.setMode(mode)}} centerPanels={panels.filter(panel => panel.id !== 'world.expressions' && panel.navigation !== false)} activeCenter={settingsPresented ? 'world.settings' : workspace.mode === 'audio' ? null : centerPanel} openCenter={openCenterPanel} workName={workspace.reading?.document?.name} sceneName={workspace.reading?.sceneName} nativeTransport={nativeView('expressions')} browser={browser} detail={detail} dock={dock} toggleBrowser={() => setBrowser(!browser)} toggleDetail={() => setDetail(!detail)} toggleDock={() => setDock(!dock)} />}
+    <NativeInputRetentionProvider><div className="browser-residence" hidden={!browser || workspace.mode !== 'audio' || agentShell}><BrowserPane defaultSet={config?.default_set ?? ''} ctx={ctx} /></div>
+    <div className="browser-residence" hidden={!browser || workspace.mode === 'audio' || agentShell}><WorldBrowser /></div>
+    <div className="browser-residence" hidden={!browser || !agentShell}><AgentShellBrowser rows={agency.rows} error={agency.error} loading={agency.loading} /></div>
     {browser && <div className="browser-resizer" role="separator" aria-label="Resize browser" aria-orientation="vertical" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); resizeBrowser(Math.max(120, Math.min(viewport[0] - 320, (browserWidth ?? document.querySelector('.browser-residence:not([hidden]) .browser,.browser-residence:not([hidden]) .world-browser')?.getBoundingClientRect().width ?? 430) + (event.key === 'ArrowRight' ? 10 : -10))))} }} onPointerDown={event => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) resizeBrowser(Math.max(120, Math.min(viewport[0] - 320, event.clientX))) }} />}
     <main className="center"><div className={`center-body${nativeComposition && !settingsPresented ? ' native-composition-residence' : ''}${nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented?' native-editor-residence':''}`}>
       {nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented&&<div className="native-editor-return"><span>{nativeEditorReturn.editor==='source'?'Source':nativeEditorReturn.editor==='layers'?'Layers':'State placement'}</span><button onClick={returnNativeEditor}>Return to {nativeEditorReturn.centerPanel==='native.arrangement'?'Arrangement':nativeEditorReturn.centerPanel==='native.session'?'Session':'Glyph editor'}</button></div>}
@@ -275,10 +311,73 @@ export function App() {
       <div className="inhabitant composition-view" hidden={settingsPresented || (workspace.mode === 'audio' ? tab !== 'arrangement' : centerPanel !== 'native.arrangement')}><ArrangementView set={state.set} document={deep.document} selection={selection} select={choose} colors={colors} native={nativeView('arrangement')} compactTransport={workspace.mode === 'expressions'} /></div>
       {panels.map(panel => { const Panel = panel.component; return <div className={`inhabitant${panel.id === 'world.expressions' ? ' native-stage-residence' : ''}`} hidden={panel.id === 'world.settings' ? !settingsPresented : settingsPresented || workspace.mode === 'audio' && panel.id !== 'world.knowledge' || (centerPanel !== panel.id && !(nativeComposition && panel.id === 'world.expressions'))} key={panel.id}><Panel {...ctx} /></div> })}
     </div></main>
-    <div className="dock-residence" hidden={!dock}><RightDock ctx={ctx} /></div>
+    <div className="dock-residence" hidden={!dock || agentShell}><RightDock ctx={ctx} /></div>
+    <div className="dock-residence" hidden={!dock || !agentShell}><AgentContextDock /></div>
     {detail && <div className="detail-resizer" role="separator" aria-label="Resize detail" aria-orientation="horizontal" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {event.preventDefault(); resizeDetail(Math.max(120, Math.min(viewport[1] - 240, (detailHeight ?? document.querySelector('.detail-residence:not([hidden]) .chain,.detail-residence:not([hidden]) .native-world-detail')?.getBoundingClientRect().height ?? 330) + (event.key === 'ArrowUp' ? 10 : -10))))} }} onPointerDown={event => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) resizeDetail(Math.max(120, Math.min(viewport[1] - 240, viewport[1] - 28 - event.clientY))) }} />}
     <div className="detail-residence" hidden={!detail || workspace.mode !== 'audio'}><DeviceChainPanel ctx={ctx} document={deep.document} selection={selection} mode={detailMode}/></div>
-    <div className="detail-residence" hidden={!detail || workspace.mode === 'audio'}><NativeWorldDetail mode={detailMode} configurationIntent={detailConfiguration} presentMode={mode=>{changeDetailMode(mode);setDetail(true)}} presentNativeEditor={presentNativeEditor} expand={() => {if(!detailExpansionReturn.current)detailExpansionReturn.current={height:detailHeight,workspaceId:workspace.workspaceId,accessEpoch:workspace.accessEpoch};resizeDetail(Math.max(120,viewport[1]-156))}} collapse={() => {const previous=detailExpansionReturn.current;detailExpansionReturn.current=null;if(previous&&previous.workspaceId===workspace.workspaceId&&previous.accessEpoch===workspace.accessEpoch)resizeDetail(previous.height)}}/></div></NativeInputRetentionProvider>
-    <StatusBar detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={workspace.mode === 'audio'} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={state.set?.tracks[selection.track]?.name} />
-  </div>
+    <div className="detail-residence" hidden={!detail || workspace.mode === 'audio' || agentShell}><NativeWorldDetail mode={detailMode} configurationIntent={detailConfiguration} presentMode={mode=>{changeDetailMode(mode);setDetail(true)}} presentNativeEditor={presentNativeEditor} expand={() => {if(!detailExpansionReturn.current)detailExpansionReturn.current={height:detailHeight,workspaceId:workspace.workspaceId,accessEpoch:workspace.accessEpoch};resizeDetail(Math.max(120,viewport[1]-156))}} collapse={() => {const previous=detailExpansionReturn.current;detailExpansionReturn.current=null;if(previous&&previous.workspaceId===workspace.workspaceId&&previous.accessEpoch===workspace.accessEpoch)resizeDetail(previous.height)}}/></div>
+    <div className="detail-residence" hidden={!detail || !agentShell}><AgentShellDeviceDetail tracks={agency.tracks} /></div></NativeInputRetentionProvider>
+    {agentShell ? <AgentStatusBarBridge detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={workspace.mode === 'audio'} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={agency.tracks[0]?.purpose ?? undefined} /> : <StatusBar detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={workspace.mode === 'audio'} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={state.set?.tracks[selection.track]?.name} />}
+  </>)
+  return <div ref={frameRef} style={{ ...(browserWidth === null ? {} : { '--browser-w': `${browserWidth}px` }), ...(detailHeight === null ? {} : { '--detail-h': `${detailHeight}px` }), ...(agentShell ? {'--dock-w': `${shellCtx.dockWidth}px`} : {}) } as CSSProperties} className={`frame mode-${workspace.mode}${browser ? '' : ' browser-hidden'}${detail ? '' : ' detail-hidden'}${dock ? ' dock-open' : ''}${agentShell ? ' agent-shell-frame' : ''}`} data-agent-shell={agentShell ? 'true' : undefined}>{frameBody}</div>
+}
+
+function AgentStatusBarBridge(props: ComponentProps<typeof StatusBar>) {
+  const {statusInfo} = useAgentShell()
+  return <StatusBar {...props} agentInfo={statusInfo} />
+}
+
+
+function AgentShellTransportBridge(props: {
+  title: string
+  browser: boolean
+  detail: boolean
+  dock: boolean
+  toggleBrowser: () => void
+  toggleDetail: () => void
+  toggleDock: () => void
+  onLeaveAgent: () => void
+  tracks: AgentSessionTrack[]
+  transport: KernelTransportStatus
+}) {
+  const shell = useAgentShell()
+  const track = props.tracks.find(item => trackKey(item) === shell.selectedTrackId) ?? props.tracks[0]
+  const metrics = useAgentMetrics(props.transport, track?.sessionRef ?? null)
+  const {binding} = useHarnessBinding(props.transport)
+  const [running, setRunning] = useState(true)
+  const [controlBusy, setControlBusy] = useState(false)
+  const runControl = async (control: 'resume' | 'stop' | 'restart') => {
+    setControlBusy(true)
+    const outcome = await harnessAgentControl(props.transport, binding, control)
+    setControlBusy(false)
+    if (outcome.ok) {
+      if (control === 'stop') setRunning(false)
+      if (control === 'resume' || control === 'restart') setRunning(true)
+    } else {
+      console.warn(outcome.error)
+    }
+  }
+  return (
+    <AgentShellTransport
+      title={props.title}
+      browser={props.browser}
+      detail={props.detail}
+      dock={props.dock}
+      toggleBrowser={props.toggleBrowser}
+      toggleDetail={props.toggleDetail}
+      toggleDock={props.toggleDock}
+      centreView={shell.centreView}
+      onCentreView={view => shell.setCentreView(view)}
+      tokensIn={metrics.tokensIn}
+      tokensOut={metrics.tokensOut}
+      spendFill={metrics.spend}
+      running={running}
+      controlBusy={controlBusy}
+      onRun={() => void runControl('resume')}
+      onStop={() => void runControl('stop')}
+      budgetLabel={metrics.budgetUsed === null && metrics.budgetCap === null ? '— / —' : `${metrics.budgetUsed ?? '—'} / ${metrics.budgetCap ?? '—'}`}
+      positionLabel={metrics.position}
+      transport={props.transport}
+    />
+  )
 }

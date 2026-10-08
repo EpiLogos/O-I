@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:agent-shell-fidelity": "node --test tests/agent-shell-transport-ids.test.mjs && node tests/agent-shell-fidelity.browser.mjs"
   },
   "dependencies": {
     "@epilogos/expressions-boundary": "file:../../expressions-boundary",

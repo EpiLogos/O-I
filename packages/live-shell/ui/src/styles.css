@@ -96,6 +96,8 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .panel-hint-error,.statusbar-error { color:var(--rec) }
 .statusbar { grid-area:status; border-top:1px solid var(--line); background:var(--bg-1); display:flex; align-items:center; color:var(--text-dim); min-width:0 }
 .statusbar-path { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.statusbar-agent-info { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-dim) }
+.statusbar-agent-info b { color:var(--text); font-weight:600; margin-right:6px }
 .statusbar-counts { white-space:nowrap }
 .statusbar-meta { display:none }
 .statusbar-spacer { display:none }
