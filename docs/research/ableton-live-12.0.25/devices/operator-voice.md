@@ -28,6 +28,23 @@ Render format 44.1 kHz/16-bit stereo AIFF, 256.0 s. All four landed via
 Project-enforcement Save panel — see the session log; relaunch-with-document
 is the reliable path for loose sets).
 
+## Parameter table
+
+The panel-facing descriptor table for this device lives at
+`packages/live-dynamics/src/params.rs` (`OPERATOR`, 23 rows) — built from
+`evidence/devices/Operator/default.xml` (+ `preset-choir.xml`, which widens
+the observed WaveForm extent to 22), with this dossier's fitted laws in the
+row notes: level knobs linear amplitude, the envelope topology above,
+velocity unrouted by default (routing is the `MidiCtrl/VelDst` matrix, not
+the VelScale knob). Oscillator shells store as `Operator.0`..`Operator.3`
+(A..D), each holding `Envelope` (Times/Levels/Slopes + `TimeVelScale`),
+`Tune` (Coarse/Fine/VelCoarseScale), `Volume`, `WaveForm`, `Phase`,
+`Feedback`, `VelScale`, `KeyScale`, `IsOn`; the device output level is
+`Globals/Volume`. Its ids are the document paths the OP probes pin; the
+table is served to panels on `/api/device-descriptors` (`PANEL_DEVICES`),
+and `params.rs` tests assert the probe pins and the τ = 0.120 s / 175 dB/s
+references against it.
+
 ## Envelope topology (the OP2 finding)
 
 The default-patch family sounded by oscillator A follows this segment map,

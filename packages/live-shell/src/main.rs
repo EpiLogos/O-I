@@ -641,7 +641,7 @@ mod tests {
         let (status, body) = get_body(app, "/api/device-descriptors").await;
         assert_eq!(status, StatusCode::OK);
         let v: serde_json::Value = serde_json::from_str(&body).unwrap();
-        for name in ["GlueCompressor", "Echo", "Reverb"] {
+        for name in ["GlueCompressor", "Echo", "Reverb", "Operator"] {
             let rows = v[name].as_array().unwrap_or_else(|| panic!("{name} missing"));
             assert!(!rows.is_empty());
             for row in rows {
@@ -662,5 +662,13 @@ mod tests {
         }
         let glue = &v["GlueCompressor"];
         assert_eq!(glue.as_array().unwrap().len(), 8);
+        // the Operator table carries the document paths the voice model and
+        // the OP probes pin (`Operator.0/Envelope/...`, `Globals/Volume`)
+        let operator = v["Operator"].as_array().unwrap();
+        assert_eq!(operator.len(), 23);
+        assert!(operator
+            .iter()
+            .any(|r| r["id"] == "Operator.0/Envelope/SustainLevel"));
+        assert!(operator.iter().any(|r| r["id"] == "Globals/Volume"));
     }
 }

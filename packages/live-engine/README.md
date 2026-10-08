@@ -43,6 +43,12 @@ below).
   UNKNOWN device element names instantiate `BypassDevice` and produce a
   warning. MIDI and return tracks are warnings (not rendered in M1).
   Sources are not loaded by the bridge — the host fills `Track::source`.
+- `src/realtime.rs` — realtime output (feature `realtime`, cpal): the
+  phase-1 audition path. The cpal callback pulls `Graph::mix_frame`
+  through `pull_block` — the exact arithmetic the offline render runs,
+  verified bit-identical OFFLINE (no device needed) by
+  `pull_blocks_reproduce_the_render_exactly`. Design constraints and the
+  audition recipe below.
 - `tests/m1_gate.rs` — **the M1 gate**.
 - `tests/m3_gate.rs` — **the M3 gate** (`#[ignore]`-gated, needs the
   golden renders, like `live-dynamics/tests/golden.rs`).
@@ -145,11 +151,75 @@ Marked in code where they are made; listed here so they are findable:
   staging at unity, so it does not exercise the order).
 - **No clipper**: the master bus carries raw float; no limiting.
 
+## Realtime output (feature `realtime`)
+
+`src/realtime.rs` makes the shell audible: a cpal output stream on the
+default device whose callback pulls **the same mixing arithmetic the
+offline render runs** — one mixing law, two execution paths. Phase-1
+constraints, stated in the module doc and kept deliberately minimal:
+
+- **Verified offline, no device needed.** The callback's mixing body is
+  factored into `pull_block`; the unit test
+  `pull_blocks_reproduce_the_render_exactly` drives it over the same
+  frame sequence as `Graph::render` (state-carrying Glue, short track,
+  uneven device-sized blocks, the arrangement ending mid-block) and pins
+  every sample BIT-IDENTICAL to the offline render. Frames past the
+  arrangement render as silence and the transport rests at the end.
+- **Graph swap = rebuild + swap.** A parameter change builds a fresh
+  graph (device state resets — the same one-shot semantics as the
+  offline render) and hands it over through a lock-guarded handoff; the
+  callback only ever `try_lock`s (on contention it keeps playing and
+  tries again next callback), retired graphs are dropped on the UI
+  thread, the beat clock follows the adopted graph's tempo. The swap is
+  NOT click-free — a boundary discontinuity is acceptable in phase 1.
+- **No resampling.** The stream requests the graph's sample rate in
+  stereo f32; a device that refuses it surfaces as
+  `RealtimeError::StreamBuild`, never a panic. No output device is
+  `RealtimeError::NoOutputDevice` (headless/CI machines degrade
+  gracefully).
+- **Failure posture:** a runtime stream error (device unplugged) is
+  logged to stderr and the stream goes silent; the callback cannot panic
+  (block writes are exact 2-sample frames, missing graphs render
+  silence).
+
+### Audition recipe (the harness sets, through `live-shell --play`)
+
+Run from `packages/live-shell` (there is no workspace manifest above the
+packages, so the package directory is where `-p live-shell` resolves):
+
+```text
+cargo run -p live-shell -- --play <set.als>
+```
+
+The shell bridges the set, loads the arrangement clips (unwarped only in
+phase 1; samples must be 48 kHz float WAV — the harness signals are both),
+plays through the default output device and exits when the arrangement
+ends. Verified against the real device:
+
+- `harness/live/steps-1k-gluecompressor.als` — **the canonical audition**.
+  1 audio track, tempo 120, clip 0–10.5 beats = **5.25 s**. What you
+  should hear: the level-staircase tone — a 1 kHz tone stepping up
+  through seven levels (−30…0 dBFS peak, ~3.75 s of tone) then silence
+  to the clip end — with the steps above the Glue threshold (−12 dB,
+  Range 30, the G1 pins the M1 gate pins) sitting under the compressor's
+  gain map. Play `g6-bypass.als` next to it: same staircase, no gain map.
+- `harness/live/E8_BARE.als` — **4.00 s**; one impulse click, then the
+  Echo bare-line tap train: taps every 0.1875 s (the measured synced hop
+  at 120 BPM) alternating L/R, fading −6 dB per hop (FB 0.5), 100% wet.
+- Warp-probe sets (`W1_TONES.als`, `WS1_TONES_2X.als`, …) correctly load
+  nothing in phase 1: the shell prints
+  `'<name>': warped clip skipped (no warp playback in phase 1)` and
+  refuses to start a silent graph — that is the documented behavior, not
+  a failure. A machine with no output device prints the
+  `NoOutputDevice` message and exits 1.
+
 ## Deliberately not here
 
-- **Realtime audio I/O** — no cpal/no audio thread; the render path is
-  offline and deterministic (the acceptance path). cpal output is the
-  next milestone's backlog.
+- **Realtime audio I/O beyond phase 1** — the cpal output path is landed
+  and pull-path-verified (see the realtime section above); click-free
+  crossfaded swaps, resampling, realtime MIDI input and a mixer clock
+  are the stated phase-1 non-goals (module doc). The offline render
+  stays the acceptance path and the default, dependency-light build.
 - **Live-native devices beyond the hosted four** — Glue, Echo, Reverb and
   the utilities are hosted; everything else from Live's device list
   (including Echo's filter/ducking/modulation/internal-reverb sections
@@ -174,8 +244,15 @@ Marked in code where they are made; listed here so they are findable:
 M1 standing: graph, mixer, transport clock, offline render, bridge; the
 3-part M1 gate green (0.000 dB max error vs the static predictions).
 M3 (engine side) standing: Echo and Reverb hosted on the gated
-live-dynamics models, bridged at factory-preset stored values; 29 unit
-tests + the 3-part M1 gate + the 3-part M3 gate green, zero clippy
-warnings. Written from `session-model.md`, the device dossiers
-(`devices/glue-compressor.md`, `devices/echo.md`, `devices/reverb.md`)
-and the gated `live-dynamics` models only.
+live-dynamics models, bridged at factory-preset stored values; 27 unit
+tests (32 with the `realtime` feature) + the 3-part M1 gate + the 3-part
+M3 gate green, zero clippy warnings. Written from `session-model.md`, the
+device dossiers (`devices/glue-compressor.md`, `devices/echo.md`,
+`devices/reverb.md`) and the gated `live-dynamics` models only.
+
+Realtime (2026-10-08): the cpal output path landed behind the `realtime`
+feature — `pull_block` verified bit-identical to the offline render
+offline (`pull_blocks_reproduce_the_render_exactly`), the handoff/swap
+contract unit-tested, and the shell's `--play` auditioned against the
+real device (steps-1k through Glue, 5.25 s, clean exit; E8_BARE through
+Echo, 4.00 s). Clippy clean with and without the feature.

@@ -165,7 +165,7 @@ fn kind_str(kind: live_set::model::TrackKind) -> String {
 /// tables themselves are generated from the behavior dossiers
 /// (`live-dynamics/src/params.rs`); a panel is generated from a table, never
 /// hand-coded per parameter.
-pub const PANEL_DEVICES: &[&str] = &["GlueCompressor", "Echo", "Reverb", "Wavetable"];
+pub const PANEL_DEVICES: &[&str] = &["GlueCompressor", "Echo", "Reverb", "Wavetable", "Operator"];
 
 #[derive(Serialize)]
 pub struct ParamDescJson {

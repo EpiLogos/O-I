@@ -6,9 +6,12 @@
 //! mixer clock:
 //!
 //! - **One mixing law.** The callback pulls [`Graph::mix_frame`] — the
-//!   exact arithmetic the offline render runs (pinned bit-identical by a
-//!   graph.rs unit test). Devices are frame-granular and state-carrying,
-//!   so a graph instance is driven by exactly one consumer.
+//!   exact arithmetic the offline render runs — through [`pull_block`],
+//!   the callback's mixing body factored out so the pull path can be
+//!   verified OFFLINE, bit-for-bit against [`Graph::render`], without a
+//!   device (`pull_blocks_reproduce_the_render_exactly`). Devices are
+//!   frame-granular and state-carrying, so a graph instance is driven by
+//!   exactly one consumer.
 //!
 //! - **The playing graph belongs to the audio thread.** The callback owns
 //!   the mutable state (device detectors, delay rings, the playhead). The
@@ -16,7 +19,12 @@
 //!
 //! - **Graph swap = rebuild + swap.** A parameter change builds a FRESH
 //!   graph (device state resets — the same one-shot semantics as the
-//!   offline render) and hands it over through [`Handoff`]. The handoff
+//!   offline render) and hands it over through [`Handoff`]; the beat
+//!   clock follows the adopted graph's tempo (the transport position
+//!   does not move, but the beats the devices see are the new
+//!   document's). The swapped graph must be built for the stream's
+//!   sample rate ([`Player::sample_rate`]) — there is no resampling.
+//!   The handoff
 //!   is two one-way slots of `Mutex<Option<Graph>>`: the UI thread uses
 //!   blocking locks (it may drop megabytes of retired graph — fine off
 //!   the audio thread), the callback only ever `try_lock`s — on
@@ -105,7 +113,11 @@ impl Handoff {
     /// the next callback tries again. The superseded graph goes to the
     /// retire slot — unless that slot is contended, in which case it is
     /// dropped here (bounded: one graph, rare — see the module doc).
-    fn adopt(&self, current: &mut Option<Graph>) {
+    /// The clock's tempo follows the adopted graph in the same breath:
+    /// a swap may change the document tempo, and the beats the devices
+    /// see from the next frame on must be the new document's (the
+    /// transport POSITION does not move — only the tempo reading does).
+    fn adopt(&self, current: &mut Option<Graph>, clock: &mut Clock) {
         let next = match self.inbox.try_lock() {
             Ok(mut inbox) => inbox.take(),
             Err(_) => return, // UI thread mid-install — keep playing
@@ -115,6 +127,7 @@ impl Handoff {
             Ok(mut retire) => *retire = current.take(),
             Err(_) => drop(current.take()), // rare, bounded (see module doc)
         }
+        clock.tempo_bpm = next.tempo_bpm;
         *current = Some(next);
     }
 
@@ -122,6 +135,51 @@ impl Handoff {
     /// outlive the stream).
     fn drain(&self) {
         drop(self.retire.lock().unwrap().take());
+    }
+}
+
+/// Pull one output block into `out` (stereo-interleaved f32) — the audio
+/// callback's mixing body, factored out so the pull path is verifiable
+/// OFFLINE: the callback adds only the graph handoff, the transport
+/// read and the position write around this call, and
+/// `pull_blocks_reproduce_the_render_exactly` drives this function over
+/// the same frame sequence as [`Graph::render`] and pins the outputs
+/// bit-identical, across arbitrary (device-chosen) block sizes.
+///
+/// Frames at or past `total_frames` render as silence, and the playhead
+/// rests there: it IS the arrangement position (what the host's
+/// transport reads via [`Player::position`]), so it stops when the
+/// arrangement does and [`Player::is_finished`] fires the moment the
+/// last frame is mixed. `clock.sample` follows
+/// the playhead, so state-carrying devices see the same absolute sample
+/// positions the offline render would give them. A graph that is not yet
+/// adopted (`None` — the first callbacks before the first adopt) renders
+/// silence, not a panic. Blocks are walked as exact 2-sample frames
+/// (`as_chunks_mut::<2>`): with the stream's fixed stereo config every
+/// slot is a frame, and an impossible odd remainder would be a panic on
+/// the audio thread (which tears the process down) — this shape cannot
+/// have one.
+fn pull_block(
+    graph: &mut Option<Graph>,
+    clock: &mut Clock,
+    playhead: &mut u64,
+    total_frames: u64,
+    out: &mut [f32],
+) {
+    for slot in out.as_chunks_mut::<2>().0 {
+        if *playhead >= total_frames {
+            slot[0] = 0.0;
+            slot[1] = 0.0;
+            continue;
+        }
+        clock.sample = *playhead;
+        let frame = match graph {
+            None => [0.0, 0.0],
+            Some(g) => g.mix_frame(clock),
+        };
+        slot[0] = frame[0];
+        slot[1] = frame[1];
+        *playhead += 1;
     }
 }
 
@@ -139,7 +197,10 @@ struct PlayerState {
 /// A running realtime output: the cpal stream plus the handle the host
 /// holds. Dropping the `Player` stops the audio.
 pub struct Player {
-    stream: cpal::Stream,
+    /// `Some` while running; taken (which stops the stream and retires
+    /// the callback) FIRST on drop, before the handoff is drained — see
+    /// the `Drop` impl.
+    stream: Option<cpal::Stream>,
     state: Arc<PlayerState>,
 }
 
@@ -179,28 +240,12 @@ impl Player {
                     buffer_size: cpal::BufferSize::Default,
                 },
                 move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
-                    // adopt a swapped-in graph, if one is waiting
-                    cb_state.handoff.adopt(&mut current);
+                    // adopt a swapped-in graph, if one is waiting (the
+                    // clock's tempo follows the adopted graph — see
+                    // Handoff::adopt)
+                    cb_state.handoff.adopt(&mut current, &mut clock);
                     let total = cb_state.total_frames.load(Ordering::Relaxed);
-                    for out in data.chunks_mut(2) {
-                        if playhead >= total {
-                            // past the arrangement: silence (the stream
-                            // stays open until the host drops the Player)
-                            out[0] = 0.0;
-                            out[1] = 0.0;
-                            continue;
-                        }
-                        clock.sample = playhead;
-                        let frame = match current.as_mut() {
-                            // no graph yet (first callbacks before the
-                            // first adopt) — silence, not a panic
-                            None => [0.0, 0.0],
-                            Some(g) => g.mix_frame(&clock),
-                        };
-                        out[0] = frame[0];
-                        out[1] = frame[1];
-                        playhead += 1;
-                    }
+                    pull_block(&mut current, &mut clock, &mut playhead, total, data);
                     cb_state.position.store(playhead, Ordering::Relaxed);
                 },
                 err_fn,
@@ -209,7 +254,7 @@ impl Player {
             .map_err(|e| RealtimeError::StreamBuild(e.to_string()))?;
 
         stream.play().map_err(|e| RealtimeError::StreamBuild(e.to_string()))?;
-        Ok(Player { stream, state })
+        Ok(Player { stream: Some(stream), state })
     }
 
     /// UI thread: install a rebuilt graph (parameter changes rebuild and
@@ -245,8 +290,12 @@ impl Player {
 
 impl Drop for Player {
     fn drop(&mut self) {
-        // the cpal Stream stops (and joins its thread) on drop; take back
-        // any graph the callback retired and was never picked up
+        // Stop the stream FIRST (dropping it retires the callback), so
+        // no callback can be mid-adoption while the retire slot is
+        // drained below — teardown cannot race a swap into dropping a
+        // graph on the audio thread.
+        drop(self.stream.take());
+        // take back any graph the callback retired and was never picked up
         self.state.handoff.drain();
     }
 }
@@ -254,6 +303,7 @@ impl Drop for Player {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::devices::{BypassDevice, GainDevice, GlueDevice};
     use crate::graph::Track;
 
     fn graph_at_tempo(tempo: f64, frames: usize) -> Graph {
@@ -265,29 +315,36 @@ mod tests {
     }
 
     /// The handoff contract, exercised without a device: install → adopt
-    /// swaps the graph in; the superseded one comes back through the
+    /// swaps the graph in AND moves the beat clock to the adopted
+    /// graph's tempo (a swap may change the document tempo — the clock
+    /// must not stay behind); the superseded one comes back through the
     /// retire slot (to be dropped on the UI thread); a second install
     /// picks it up; adoption with an empty inbox changes nothing.
     #[test]
     fn handoff_swaps_graphs_and_retires_the_old_one() {
         let handoff = Handoff::new(graph_at_tempo(100.0, 4));
         let mut current: Option<Graph> = None;
+        let mut clock = Clock::start(48_000, 100.0);
 
-        handoff.adopt(&mut current);
+        handoff.adopt(&mut current, &mut clock);
         assert_eq!(current.as_ref().unwrap().tempo_bpm, 100.0);
+        assert_eq!(clock.tempo_bpm, 100.0);
 
-        // install a rebuilt graph; the retired first one comes back to
-        // the UI side
+        // install a rebuilt graph at a NEW tempo; the retired first one
+        // comes back to the UI side and the clock follows the document
         handoff.install(graph_at_tempo(132.0, 4));
-        handoff.adopt(&mut current);
+        handoff.adopt(&mut current, &mut clock);
         assert_eq!(current.as_ref().unwrap().tempo_bpm, 132.0);
+        assert_eq!(clock.tempo_bpm, 132.0);
         let retired = handoff.retire.lock().unwrap().take();
         assert_eq!(retired.unwrap().tempo_bpm, 100.0);
 
-        // empty inbox: adoption is a no-op, no spurious retire
-        handoff.adopt(&mut current);
+        // empty inbox: adoption is a no-op, no spurious retire, no
+        // clock movement
+        handoff.adopt(&mut current, &mut clock);
         assert!(handoff.retire.lock().unwrap().is_none());
         assert_eq!(current.as_ref().unwrap().tempo_bpm, 132.0);
+        assert_eq!(clock.tempo_bpm, 132.0);
     }
 
     /// A swap that lands before the callback ever adopted the previous
@@ -300,9 +357,88 @@ mod tests {
         let handoff = Handoff::new(graph_at_tempo(100.0, 4));
         handoff.install(graph_at_tempo(120.0, 4)); // last swap wins
         let mut current: Option<Graph> = None;
-        handoff.adopt(&mut current);
+        let mut clock = Clock::start(48_000, 100.0);
+        handoff.adopt(&mut current, &mut clock);
         assert_eq!(current.as_ref().unwrap().tempo_bpm, 120.0);
+        assert_eq!(clock.tempo_bpm, 120.0);
         assert!(handoff.retire.lock().unwrap().is_none());
+    }
+
+    /// OFFLINE VERIFICATION of the realtime pull path (no device
+    /// needed): driving [`pull_block`] — the callback's mixing body —
+    /// over the SAME frame sequence as the offline render reproduces
+    /// [`Graph::render`] BIT-FOR-BIT, across an awkward device-sized
+    /// block sequence (uneven blocks, a single-frame block, one running
+    /// past the arrangement end mid-block). A state-carrying device
+    /// (Glue's follower), a short track (the silence-past-end path) and
+    /// mixer staging all compose — the same composition the graph.rs
+    /// `mix_frame_composes_the_render_exactly` pin requires of the
+    /// frame pull this function is built on. The realtime output is
+    /// therefore the acceptance path's arithmetic, not a second mixer.
+    #[test]
+    fn pull_blocks_reproduce_the_render_exactly() {
+        let build = || {
+            let mut g = Graph::new(48_000, 120.0);
+            let mut a = Track::new("A", 2);
+            a.source = (0..96).map(|i| ((i as f32) * 0.03).sin() * 0.4).collect();
+            a.pan = 0.3;
+            a.devices.push(Box::new(GainDevice::new_db(3.0)));
+            a.devices.push(Box::new(BypassDevice));
+            let mut b = Track::new("B", 1);
+            b.source = vec![0.25f32; 40]; // ends before A — silence tail
+            b.devices.push(Box::new(GlueDevice::new(
+                live_dynamics::glue::GlueParams {
+                    threshold_db: -12.0,
+                    range: 30.0,
+                    ratio: 1.0,
+                    makeup_db: 0.0,
+                },
+            )));
+            g.tracks.push(a);
+            g.tracks.push(b);
+            g.master.devices.push(Box::new(GainDevice::new_db(-1.5)));
+            g
+        };
+        let offline = build().render(48_000);
+        let frames = (offline.len() / 2) as u64;
+        // track A is stereo: 96 samples = 48 frames, the render length
+        assert_eq!(frames, 48);
+
+        let mut graph = Some(build());
+        let mut clock = Clock::start(48_000, 120.0);
+        let mut playhead: u64 = 0;
+        // the callback's block size is the DEVICE's choice and the
+        // arrangement end can land mid-block; pull through an
+        // irregular sequence (17+1+33+5 = 56, then 51 crosses the end
+        // at 96 mid-block, then 24 fully past it) and pin every sample:
+        // render frames bit-identical, frames past the end silent.
+        let mut done = 0u64;
+        for block in [17usize, 1, 33, 5, 51, 24] {
+            let mut out = vec![0f32; block * 2];
+            pull_block(&mut graph, &mut clock, &mut playhead, frames, &mut out);
+            for (i, s) in out.chunks(2).enumerate() {
+                let f = done + i as u64;
+                if f < frames {
+                    assert_eq!(
+                        s[0].to_bits(),
+                        offline[(f as usize) * 2].to_bits(),
+                        "L frame {f}"
+                    );
+                    assert_eq!(
+                        s[1].to_bits(),
+                        offline[(f as usize) * 2 + 1].to_bits(),
+                        "R frame {f}"
+                    );
+                } else {
+                    assert_eq!((s[0], s[1]), (0.0, 0.0), "frame {f} past the arrangement");
+                }
+            }
+            done += block as u64;
+        }
+        assert!(done >= frames, "the sequence must run past the end");
+        // the playhead is the ARRANGEMENT position: it rests at the end
+        // (silence past it does not move the transport)
+        assert_eq!(playhead, frames);
     }
 
     /// Real start: with a device present the player runs and finishes an

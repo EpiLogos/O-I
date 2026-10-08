@@ -5631,6 +5631,298 @@ pub const WAVETABLE: &[ParamDesc] = &[
     },
 ];
 
+/// Operator parameter table: the sounding-voice scope a device panel
+/// exposes for persistence — the device switch, the oscillator A shell
+/// (level, tune, wave, phase, feedback, scale knobs), its amp envelope
+/// (times + levels + slopes + velocity-time scale) and the device output
+/// level.
+///
+/// Sources: `evidence/devices/Operator/default.xml` (factory default preset;
+/// element names, Manual values, MidiControllerRange extents) and
+/// `evidence/devices/Operator/preset-choir.xml` (widens the observed
+/// WaveForm extent to 22); fitted laws from
+/// `devices/operator-voice.md` — level knobs are LINEAR AMPLITUDES (OP3/OP4
+/// land on `20·log10(ratio)` to 0.01 dB, high confidence), the amp envelope
+/// runs attack → DecayLevel, exponential-in-amplitude decay
+/// DecayLevel → SustainLevel (τ = 0.120 s fitted at the OP2 pin,
+/// DecayTime 1000 ms) and a dB-linear release to the ReleaseLevel floor
+/// (rate set by the note-off level, 175 dB/s at the default patch), and
+/// velocity is UNROUTED at the default patch — routing lives in the
+/// `MidiCtrl/VelDst` connection matrix (amounts 0), so the per-shell
+/// VelScale amount knobs alone do nothing (M1: flat to 0.01 dB over 4:1
+/// velocity).
+///
+/// Nesting: the four oscillator shells store as `Operator.0`..`Operator.3`
+/// (A..D), each holding `Envelope`, `Tune` (Coarse/Fine/VelCoarseScale/…),
+/// `Volume`, `WaveForm`, `Phase`, `Feedback`, `VelScale`, `KeyScale`,
+/// `IsOn`; the device output level lives under `Globals`. Scope here is
+/// oscillator A only — the dossier's sounding voice: shells B/C/D store
+/// their Volume at the −70 dB floor (inaudible; see the `src/operator.rs`
+/// module note) and would mirror A's structure.
+pub const OPERATOR: &[ParamDesc] = &[
+    ParamDesc {
+        id: "On",
+        ui_name: "On",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "device on/off, stored 0..1 (bool element in the preset XML)",
+    },
+    ParamDesc {
+        id: "Operator.0/IsOn",
+        ui_name: "Operator.0  Is On",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "osc A on/off, bool element; true in both cited presets — the \
+                default patch mutes shells B/C/D at the Volume floor (−70 dB), \
+                not by this switch",
+    },
+    ParamDesc {
+        id: "Operator.0/Volume",
+        ui_name: "Operator.0  Volume",
+        stored_min: 0.0003162277571,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "osc A level, LINEAR AMPLITUDE (operator-voice.md, high \
+                confidence: OP3 ×0.5 lands on 20·log10(ratio) to 0.01 dB); \
+                panels show dB via 20·log10(value) (src/operator.rs amp_to_db); \
+                stored floor −70 dB",
+    },
+    ParamDesc {
+        id: "Operator.0/Tune/Coarse",
+        ui_name: "Operator.0  Tune  Coarse",
+        stored_min: 0.0,
+        stored_max: 48.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "pitch stepper carrying a continuous MidiControllerRange — \
+                quantized whole steps; stored 1 displays as 0 (RelativePosition \
+                offset) and does not shift pitch (operator-voice.md pitch law, \
+                OP5)",
+    },
+    ParamDesc {
+        id: "Operator.0/Tune/Fine",
+        ui_name: "Operator.0  Tune  Fine",
+        stored_min: 0.0,
+        stored_max: 1000.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "fine pitch, stored extent 0..1000 from the preset XML; the \
+                stored semantic (offset direction and scaling) is unverified — \
+                no probe",
+    },
+    ParamDesc {
+        id: "Operator.0/Tune/VelCoarseScale",
+        ui_name: "Operator.0  Tune  Vel Coarse Scale",
+        stored_min: -100.0,
+        stored_max: 100.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "velocity→coarse-pitch amount; velocity is unrouted at the \
+                default patch — the MidiCtrl/VelDst connection amounts are 0 \
+                (operator-voice.md/M1: flat to 0.01 dB over 4:1 velocity), so \
+                this knob alone does nothing",
+    },
+    ParamDesc {
+        id: "Operator.0/WaveForm",
+        ui_name: "Operator.0  Wave Form",
+        stored_min: 0.0,
+        stored_max: 22.0,
+        unit: "",
+        kind: ParamKind::Discrete {
+            labels: &[
+                "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?", "?",
+                "?", "?", "?", "?", "?", "?", "?", "?", "?", "?",
+            ],
+        },
+        notes: "wave selector, bare integer element — no menu structure or \
+                labels stored in the XML; observed values 0 (default.xml) and \
+                22 (preset-choir.xml, all four shells) bound the extent — an \
+                observed lower bound, the app menu may extend it",
+    },
+    ParamDesc {
+        id: "Operator.0/Phase",
+        ui_name: "Operator.0  Phase",
+        stored_min: 0.0,
+        stored_max: 100.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "osc start phase, stored extent 0..100 (preset XML); semantic \
+                (degrees vs normalized) unverified — no probe",
+    },
+    ParamDesc {
+        id: "Operator.0/Feedback",
+        ui_name: "Operator.0  Feedback",
+        stored_min: 0.0,
+        stored_max: 100.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "self-modulation amount, stored extent 0..100 (preset XML); 0 in \
+                both cited presets, semantic unverified — no probe",
+    },
+    ParamDesc {
+        id: "Operator.0/VelScale",
+        ui_name: "Operator.0  Vel Scale",
+        stored_min: -100.0,
+        stored_max: 100.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "velocity→level amount for this shell; UNROUTED at the default \
+                patch — velocity routing is the MidiCtrl/VelDst matrix \
+                (amounts 0), not this knob (operator-voice.md/M1: all four \
+                velocities acoustically identical, flat to 0.01 dB); stored 50 \
+                is the factory amount",
+    },
+    ParamDesc {
+        id: "Operator.0/KeyScale",
+        ui_name: "Operator.0  Key Scale",
+        stored_min: -100.0,
+        stored_max: 100.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "key→level amount for this shell; stored 0 at the default patch, \
+                −22 observed in the choir preset; semantic unverified — no probe",
+    },
+    ParamDesc {
+        id: "Operator.0/Envelope/AttackTime",
+        ui_name: "Operator.0  Envelope  Attack Time",
+        stored_min: 0.1000000015,
+        stored_max: 20000.0,
+        unit: "ms",
+        kind: ParamKind::Continuous,
+        notes: "dB-linear rise from AttackLevel to DecayLevel (fitted \
+                topology); stored 0.1 ms at the default patch — below export \
+                resolution, the shape unverified at that pin (dossier open item)",
+    },
+    ParamDesc {
+        id: "Operator.0/Envelope/AttackLevel",
+        ui_name: "Operator.0  Envelope  Attack Level",
+        stored_min: 0.0003162277571,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "attack start floor, linear amplitude; its −70 dB stored value \
+                equals the release end floor — the start-floor role is inferred \
+                (dossier open item: no dedicated AttackLevel pin)",
+    },
+    ParamDesc {
+        id: "Operator.0/Envelope/AttackSlope",
+        ui_name: "Operator.0  Envelope  Attack Slope",
+        stored_min: -1.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored 0 at the default patch; the fitted attack shape \
+                (dB-linear) was measured at this value — the stored-value→curve \
+                mapping is unmeasured",
+    },
+    ParamDesc {
+        id: "Operator.0/Envelope/DecayTime",
+        ui_name: "Operator.0  Envelope  Decay Time",
+        stored_min: 1.0,
+        stored_max: 60000.0,
+        unit: "ms",
+        kind: ParamKind::Continuous,
+        notes: "decay segment length; the fitted τ = 0.120 s at the stored \
+                1000 ms pin (OP2, RMS 0.11 dB) is consistent with 'excess \
+                reaches the AttackLevel floor at DecayTime' — the \
+                τ(DecayTime, levels) mapping stays open (one pin)",
+    },
+    ParamDesc {
+        id: "Operator.0/Envelope/DecayLevel",
+        ui_name: "Operator.0  Envelope  Decay Level",
+        stored_min: 0.0003162277571,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "post-attack peak, linear amplitude — the decay falls from here, \
+                not from the attack end (OP2: onset already at full level)",
+    },
+    ParamDesc {
+        id: "Operator.0/Envelope/DecaySlope",
+        ui_name: "Operator.0  Envelope  Decay Slope",
+        stored_min: -1.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored 1 at the default patch (attack slope 0, release slope 1); \
+                the fitted decay shape (exponential in amplitude, τ = 0.120 s) \
+                was measured at this value — stored-value→curve mapping \
+                unmeasured",
+    },
+    ParamDesc {
+        id: "Operator.0/Envelope/SustainLevel",
+        ui_name: "Operator.0  Envelope  Sustain Level",
+        stored_min: 0.0003162277571,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "decay TARGET, linear amplitude — not an output level knob (OP2 \
+                refuted the flat-sustain reading: −49.81 dBFS rendered vs \
+                −56.77 predicted); at the default DecayLevel = SustainLevel = 1 \
+                the decay is sonically inert (M1's organ-like plateau)",
+    },
+    ParamDesc {
+        id: "Operator.0/Envelope/ReleaseTime",
+        ui_name: "Operator.0  Envelope  Release Time",
+        stored_min: 1.0,
+        stored_max: 60000.0,
+        unit: "ms",
+        kind: ParamKind::Continuous,
+        notes: "dB-linear release spans this time from the note-off level down \
+                to ReleaseLevel — the rate is set by the level (0 dB → 175 dB/s \
+                at the stored 400 ms; ≈−25 dB → ≈115 dB/s at OP2), not constant",
+    },
+    ParamDesc {
+        id: "Operator.0/Envelope/ReleaseLevel",
+        ui_name: "Operator.0  Envelope  Release Level",
+        stored_min: 0.0003162277571,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "release end floor, linear amplitude (−70 dB at the default \
+                patch); the release rate numerator is note-off level_db minus \
+                this floor's dB",
+    },
+    ParamDesc {
+        id: "Operator.0/Envelope/ReleaseSlope",
+        ui_name: "Operator.0  Envelope  Release Slope",
+        stored_min: -1.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored 1 at the default patch; the fitted release shape \
+                (dB-linear, time-normalized) was measured at this value — \
+                stored-value→curve mapping unmeasured",
+    },
+    ParamDesc {
+        id: "Operator.0/Envelope/TimeVelScale",
+        ui_name: "Operator.0  Envelope  Time Vel Scale",
+        stored_min: -100.0,
+        stored_max: 100.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "velocity→envelope-times amount for this shell's amp envelope; \
+                unrouted at the default patch like VelScale (MidiCtrl/VelDst \
+                amounts 0; the four M1 notes are acoustically identical)",
+    },
+    ParamDesc {
+        id: "Globals/Volume",
+        ui_name: "Globals  Volume",
+        stored_min: 0.0003162277571,
+        stored_max: 1.99526238,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "device output trim, LINEAR AMPLITUDE (operator-voice.md, high \
+                confidence: OP4 ×0.25 lands on 20·log10(ratio) to 0.01 dB); \
+                stored default 0.1258925349 = −18 dB exactly",
+    },
+];
+
 /// Parameter table for a device, keyed by its XML/LOM **document element
 /// name** (`"GlueCompressor"`, `"Echo"`, `"Reverb"`, `"Eq8"`, `"Delay"`, …).
 /// Several product names differ from their document element: Chorus-Ensemble
@@ -5654,6 +5946,7 @@ pub fn table(device: &str) -> Option<&'static [ParamDesc]> {
         "StereoGain" => Some(STEREO_GAIN),
         "Drift" => Some(DRIFT),
         "Wavetable" | "InstrumentVector" => Some(WAVETABLE),
+        "Operator" => Some(OPERATOR),
         _ => None,
     }
 }
@@ -5837,6 +6130,7 @@ mod tests {
         assert_eq!(table("Drift").map(|t| t.len()), Some(81));
         assert_eq!(table("Wavetable").map(|t| t.len()), Some(101));
         assert_eq!(table("InstrumentVector").map(|t| t.len()), Some(101));
+        assert_eq!(table("Operator").map(|t| t.len()), Some(23));
         assert_eq!(table("Compressor"), None);
         assert_eq!(table("reverb"), None); // exact element-name match only
 
@@ -5856,6 +6150,7 @@ mod tests {
             "StereoGain",
             "Drift",
             "Wavetable",
+            "Operator",
         ];
         for device in all {
             let t = table(device).unwrap();
@@ -6357,5 +6652,155 @@ mod tests {
         assert_continuous(desc(t, "Voice_Global_Glide"), 0.0, 20.0);
         assert_continuous(desc(t, "Volume"), 0.0, 1.0);
         assert_toggle(desc(t, "HiQ"));
+    }
+
+    /// Operator ranges match the preset XML
+    /// (evidence/devices/Operator/default.xml, MidiControllerRange elements):
+    /// the osc shells store as `Operator.0`..`Operator.3` and the device
+    /// output level under `Globals`; envelope times are dossier-pinned ms,
+    /// level knobs linear amplitude (no unit claim), WaveForm's extent is
+    /// observed-only (0 in default.xml, 22 in preset-choir.xml).
+    #[test]
+    fn operator_ranges_match_preset_xml() {
+        let t = table("Operator").expect("operator table");
+        assert_eq!(t.len(), 23);
+
+        assert_toggle(desc(t, "On"));
+        assert_toggle(desc(t, "Operator.0/IsOn"));
+
+        // oscillator A level: linear amplitude, −70 dB stored floor
+        assert_continuous(desc(t, "Operator.0/Volume"), 0.0003162277571, 1.0);
+        assert_eq!(desc(t, "Operator.0/Volume").unit, "");
+
+        // pitch steppers carry continuous ranges (quantize notes)
+        assert_continuous(desc(t, "Operator.0/Tune/Coarse"), 0.0, 48.0);
+        assert_continuous(desc(t, "Operator.0/Tune/Fine"), 0.0, 1000.0);
+        assert_continuous(desc(t, "Operator.0/Tune/VelCoarseScale"), -100.0, 100.0);
+
+        // wave selector: bare integer menu, observed-lower-bound extent
+        let wf = desc(t, "Operator.0/WaveForm");
+        assert!(matches!(wf.kind, ParamKind::Discrete { .. }));
+        assert_range(wf, 0.0, 22.0);
+        if let ParamKind::Discrete { labels } = wf.kind {
+            assert_eq!(labels.len(), 23);
+            assert!(labels.iter().all(|l| *l == "?"));
+        }
+
+        assert_continuous(desc(t, "Operator.0/Phase"), 0.0, 100.0);
+        assert_continuous(desc(t, "Operator.0/Feedback"), 0.0, 100.0);
+        assert_continuous(desc(t, "Operator.0/VelScale"), -100.0, 100.0);
+        assert_continuous(desc(t, "Operator.0/KeyScale"), -100.0, 100.0);
+
+        // amp envelope: times in ms, levels linear amplitude, slopes ±1
+        let floor = 0.0003162277571;
+        assert_continuous(
+            desc(t, "Operator.0/Envelope/AttackTime"),
+            0.1000000015,
+            20000.0,
+        );
+        assert_continuous(desc(t, "Operator.0/Envelope/DecayTime"), 1.0, 60000.0);
+        assert_continuous(desc(t, "Operator.0/Envelope/ReleaseTime"), 1.0, 60000.0);
+        for time in ["AttackTime", "DecayTime", "ReleaseTime"] {
+            assert_eq!(
+                desc(t, &format!("Operator.0/Envelope/{time}")).unit,
+                "ms"
+            );
+        }
+        for level in ["AttackLevel", "DecayLevel", "SustainLevel", "ReleaseLevel"] {
+            assert_continuous(
+                desc(t, &format!("Operator.0/Envelope/{level}")),
+                floor,
+                1.0,
+            );
+        }
+        for slope in ["AttackSlope", "DecaySlope", "ReleaseSlope"] {
+            assert_continuous(
+                desc(t, &format!("Operator.0/Envelope/{slope}")),
+                -1.0,
+                1.0,
+            );
+        }
+        assert_continuous(desc(t, "Operator.0/Envelope/TimeVelScale"), -100.0, 100.0);
+
+        // device output trim: linear amplitude, max 1.99526238 (≈ +6 dB)
+        assert_continuous(desc(t, "Globals/Volume"), 0.0003162277571, 1.99526238);
+    }
+
+    /// The voice model's stored document constants (src/operator.rs, all
+    /// citing default.xml) sit inside the panel table's stored extents — a
+    /// panel pinning these ids stays in range against the model. The model
+    /// stores envelope times in seconds; the document stores ms.
+    #[test]
+    fn operator_stored_constants_sit_inside_table_ranges() {
+        let t = table("Operator").expect("operator table");
+        use crate::operator::stored as s;
+
+        let in_range = |id: &str, v: f64| {
+            let p = desc(t, id);
+            assert!(
+                (p.stored_min..=p.stored_max).contains(&v),
+                "{id}: {v} outside [{}, {}]",
+                p.stored_min,
+                p.stored_max
+            );
+        };
+        in_range("Operator.0/Volume", s::OSC_A_LEVEL_AMP);
+        in_range("Operator.0/Envelope/AttackTime", s::ATTACK_TIME_S * 1000.0);
+        in_range("Operator.0/Envelope/AttackLevel", s::ATTACK_LEVEL_AMP);
+        in_range("Operator.0/Envelope/DecayTime", s::DECAY_TIME_S * 1000.0);
+        in_range("Operator.0/Envelope/DecayLevel", s::DECAY_LEVEL_AMP);
+        in_range("Operator.0/Envelope/SustainLevel", s::SUSTAIN_LEVEL_AMP);
+        in_range("Operator.0/Envelope/ReleaseTime", s::RELEASE_TIME_S * 1000.0);
+        in_range("Operator.0/Envelope/ReleaseLevel", s::RELEASE_LEVEL_AMP);
+        in_range("Globals/Volume", s::GLOBALS_VOLUME_AMP);
+
+        // doc-unit conversions hold to float rounding (1e-9 ms)
+        assert!((s::ATTACK_TIME_S * 1000.0 - 0.1000000015).abs() < 1e-9);
+        assert!((s::DECAY_TIME_S * 1000.0 - 1000.0).abs() < 1e-9);
+        assert!((s::RELEASE_TIME_S * 1000.0 - 400.0).abs() < 1e-9);
+    }
+
+    /// The amp-envelope family carries the dossier's fitted laws
+    /// (devices/operator-voice.md): the OP2 probe pin (SustainLevel −24 dB,
+    /// DecayTime 1000 ms) sits inside the table's stored extents; the voice
+    /// model decays exponentially at the fitted τ = 0.120 s for that pin; and
+    /// the default-patch release rate (175 dB/s) follows from the model's
+    /// stored levels through the table's ReleaseTime span.
+    #[test]
+    fn operator_amp_envelope_matches_fitted_tau_law() {
+        let t = table("Operator").expect("operator table");
+
+        // OP2 pin inside the stored extents (SustainLevel −24 dB linear,
+        // DecayTime 1000 stored ms, DecayLevel at the 1.0 extent)
+        let op2_sustain = 0.06309572607_f64; // −24 dB
+        let sus = desc(t, "Operator.0/Envelope/SustainLevel");
+        assert!(
+            (sus.stored_min..=sus.stored_max).contains(&op2_sustain),
+            "OP2 pin {} outside SustainLevel extent",
+            op2_sustain
+        );
+        let dcy_t = desc(t, "Operator.0/Envelope/DecayTime");
+        assert!((dcy_t.stored_min..=dcy_t.stored_max).contains(&1000.0));
+        let dcy_l = desc(t, "Operator.0/Envelope/DecayLevel");
+        assert!((dcy_l.stored_min..=dcy_l.stored_max).contains(&1.0));
+
+        // τ = 0.120 s fitted at that pin (RMS 0.11 dB on the OP2 render),
+        // carried by the model's envelope
+        assert_eq!(crate::operator::fitted::DECAY_TAU_S, 0.120);
+        let env_at_pin = crate::operator::AmpEnvelope {
+            sustain_amp: op2_sustain,
+            ..Default::default()
+        };
+        assert_eq!(env_at_pin.decay_tau_s, crate::operator::fitted::DECAY_TAU_S);
+
+        // release law at the default patch: (0 − (−70)) dB over the stored
+        // 0.4 s = 175 dB/s, the dossier's measured rate (M1/OP5); the OP2
+        // variant reads (−24 + 70)/0.4 = 115 dB/s
+        let rate = crate::operator::AmpEnvelope::default().sustained_release_rate_db_s();
+        assert!(
+            (rate - crate::operator::fitted::RELEASE_FROM_SUSTAIN_RATE_DB_S).abs() < 0.01,
+            "release rate {rate} vs fitted 175 dB/s"
+        );
+        assert!((env_at_pin.sustained_release_rate_db_s() - 115.0).abs() < 0.01);
     }
 }

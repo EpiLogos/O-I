@@ -300,7 +300,7 @@ mod tests {
         bytes.extend_from_slice(&3u16.to_le_bytes()); // IEEE float
         bytes.extend_from_slice(&2u16.to_le_bytes()); // stereo
         bytes.extend_from_slice(&SAMPLE_RATE.to_le_bytes());
-        bytes.extend_from_slice(&(SAMPLE_RATE as u32 * 8).to_le_bytes()); // byte rate
+        bytes.extend_from_slice(&(SAMPLE_RATE * 8).to_le_bytes()); // byte rate
         bytes.extend_from_slice(&8u16.to_le_bytes()); // block align
         bytes.extend_from_slice(&32u16.to_le_bytes()); // bits
         bytes.extend_from_slice(b"data");

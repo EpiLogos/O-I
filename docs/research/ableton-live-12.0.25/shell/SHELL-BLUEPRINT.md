@@ -38,7 +38,7 @@ design language, code, icons, fonts and colors.
 | --- | --- |
 | Document model | **strong** — `session-model.md` (loader-validated rules), Schema vocabulary (356 class tables), proven write-path into the real loader (audio + MIDI crafted sets), reading/writing evidence sets |
 | Device dynamics | **partial** — Glue (static curve + ballistics + measured menus), Echo (tap laws), Reverb (gated model) live in `live-dynamics` behind golden gates; Operator/Wavetable synthesis NOT yet modeled (velocity mapping documented; voice models are a RE-lane work item) |
-| Audio graph/transport | **standing (M1)** — `packages/live-engine`: typed track/device/mixer graph, beat clock, deterministic offline render; realtime I/O and warp deliberately absent (backlog) |
+| Audio graph/transport | **standing (M1 + realtime audition)** — `packages/live-engine`: typed track/device/mixer graph, beat clock, deterministic offline render; realtime output landed behind the `realtime` feature — the callback pulls the render's exact mixing arithmetic, verified bit-identical to the offline render OFFLINE (`pull_blocks_reproduce_the_render_exactly`); warp deliberately absent (M5 backlog) |
 | UI shell | **none** — greenfield, M2 |
 | Golden-render acceptance | **strong** — 51 labeled renders + hardened drivers + analyzers; the same harness validates engine output against Live truth |
 
@@ -52,7 +52,10 @@ packages/live-dynamics device DSP (exists, gated): glue/echo/reverb models,
                        envelope + tap verification
 packages/live-engine   audio graph (M1): tracks, mixer, transport, offline
                        render path (deterministic — same path used for
-                       acceptance vs golden renders), cpal output later
+                       acceptance vs golden renders); cpal realtime
+                       output behind the `realtime` feature (the
+                       callback pulls the render's arithmetic — one
+                       mixing law, pull-path verified offline)
 packages/live-shell    UI shell (M2+): Tauri + React per the Cradle house
                        pattern, so it can surface as a cradle panel later;
                        views: browser, session grid, arrangement, device
@@ -77,8 +80,20 @@ spectral/static gates used for the DSP models.
 | **M6 instruments** | Operator/Wavetable voice models (RE lane: synthesis + routing RE) | velocity/envelope gates vs MIDI-harness renders |
 | **M7 library interop** | read .adv/.adg libraries (parameter trees), preset browsing | parameter trees match Schema vocabulary |
 
+**Realtime audition — LANDED 2026-10-08** (phase-1 constraints in
+`packages/live-engine/src/realtime.rs`, audition recipe in
+`packages/live-engine/README.md`): the cpal callback pulls the offline
+render's exact mixing arithmetic (`pull_block`, verified bit-identical
+to `Graph::render` offline, no device needed); graph swap = rebuild +
+swap (boundary clicks acceptable), no resampling, error-not-panic on
+missing devices. The shell's first audition path is
+`cargo run -p live-shell -- --play <set.als>` from `packages/live-shell`
+— e.g. `harness/live/steps-1k-gluecompressor.als` = the level-staircase
+tone through Glue at the G1 pins, 5.25 s at the shrunk arrangement loop,
+then a clean exit.
+
 M1 backlog (deliberately not built, see `packages/live-engine/README.md`):
-realtime cpal output, MIDI tracks (blocked on RE-lane voice models), warp /
+MIDI tracks (blocked on RE-lane voice models), warp /
 arrangement clip playback (M5), send/return buses, Live's pan law
 (unmeasured — engine uses a unity-center placeholder), D6-measured Glue
 ballistics (engine uses a simplified smoothed follower). Echo/Reverb
