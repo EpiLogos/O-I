@@ -13,8 +13,11 @@ pub(crate) const LIMIT: usize = 256;
 /// Scene): a constellation is never truncated to fit a draw budget (Technē
 /// map §36).
 pub(crate) const DOCUMENT_MEMBERS: usize = 2048;
-/// Outer storage bound for one native Expression document.
-pub(crate) const DOCUMENT_BYTES: usize = 8 * 1024 * 1024;
+/// Outer storage bound for one native Expression document. Sized for the
+/// commissioned 15-minute retained-performance workload: the recorded score
+/// plus the world carrier (~45k events over a 2.6 MiB world) at full plain
+/// JSON weight.
+pub(crate) const DOCUMENT_BYTES: usize = 16 * 1024 * 1024;
 pub(crate) const MAX_REVISION: u64 = 9_007_199_254_740_991;
 /// Reusable ES3 catalog, distinct from four adoptions per Document and the
 /// lineage bound. The count admits 64 open worlds with up to 64 definitions
@@ -1108,7 +1111,7 @@ impl Document {
 
     pub fn validate(&self) -> Result<(), String> {
         if serde_json::to_vec(self).map_err(|e| e.to_string())?.len() > DOCUMENT_BYTES {
-            return Err("Expression document exceeds 8 MiB".into());
+            return Err("Expression document exceeds 16 MiB".into());
         }
         if self.schema != SCHEMA || self.revision == 0 || self.revision > MAX_REVISION {
             return Err("Unsupported document schema/revision".into());
