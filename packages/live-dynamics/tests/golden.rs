@@ -332,6 +332,11 @@ fn operator_voice_golden_gate() {
     assert!(h1_db - h2_db >= 60.0, "h2 only {} dB below h1", h1_db - h2_db);
 
     // --- OP2: sustain pinned to −24 dB (level knob = linear amplitude) ---
+    // Model revision (2026-10-08, probe analysis): the flat-sustain reading
+    // is refuted by the render — the steady window reads −49.81 dBFS, not
+    // the −56.77 a flat model predicts, because SustainLevel engages the
+    // decay segment (attack→DecayLevel, exp-in-amp decay toward
+    // SustainLevel). The envelope below now decays; thresholds unchanged.
     let render = read_render("OP2_SUSTAIN24.aif");
     let mut voice = operator::OperatorVoiceA::default_patch(48, sr);
     voice.envelope.sustain_amp = 0.06309572607;
@@ -346,6 +351,27 @@ fn operator_voice_golden_gate() {
         }
     }
     check_steady("OP2", &render, &model, &note_starts);
+
+    // OP2 release path: leaves the decayed level at ≈115 dB/s
+    // ((−24 + 70)/0.4) — the release rate is set by the note-off level
+    for k in 0..6 {
+        let t0 = 0.875 + k as f64 * 0.020;
+        let a = (t0 * sr as f64) as usize;
+        let b = ((t0 + 0.020) * sr as f64) as usize;
+        let got = audio::rms_db(&render.samples[a..b]);
+        if got <= -80.0 {
+            break;
+        }
+        let pred = audio::rms_db(&model[a..b]);
+        println!(
+            "OP2 release t={t0:6.3}: render {got:8.2}  model {pred:8.2}  Δ {:+.2} dB",
+            pred - got
+        );
+        assert!(
+            (pred - got).abs() <= 2.0,
+            "OP2 release window {t0:.3}: model {pred:.2} vs render {got:.2}"
+        );
+    }
 
     // --- OP3: oscillator A level 1.0 → 0.5 ---
     let render = read_render("OP3_OSCA050.aif");

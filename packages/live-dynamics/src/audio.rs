@@ -186,9 +186,9 @@ pub fn read_aiff_i16_channels(bytes: &[u8]) -> Result<(Audio, Audio), AudioError
         .collect();
     let mut l = Vec::with_capacity(ints.len() / 2);
     let mut r = Vec::with_capacity(ints.len() / 2);
-    for frame in ints.chunks_exact(2) {
-        l.push(frame[0]);
-        r.push(frame[1]);
+    for [lp, rp] in ints.as_chunks::<2>().0 {
+        l.push(*lp);
+        r.push(*rp);
     }
     Ok((
         Audio { sample_rate: rate, samples: l },

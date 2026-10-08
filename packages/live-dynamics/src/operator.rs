@@ -1,4 +1,4 @@
-//! Operator voice model — oscillator A + amp envelope, default patch.
+//! Operator voice model — oscillator A + amp envelope, default-patch family.
 //!
 //! Provenance: stored values cite the device document
 //! `docs/research/ableton-live-12.0.25/evidence/devices/Operator/default.xml`;
@@ -9,21 +9,32 @@
 //! Scope: the default patch's sounding voice is oscillator A alone —
 //! oscillators B/C/D store `Volume` at 0.0003162277571 (−70 dB, the
 //! parameter floor) and are inaudible; the measured harmonic scan confirms
-//! the output is a pure sine (h2..h10 at the ≈−93 dBFS dither floor,
-//! ≥60 dB below h1). Velocity is unrouted at the default patch (VelScale
-//! stored 50, VelDst amounts 0 — `midi-instruments.md` M1, flat to 0.01 dB
-//! over 4:1 velocity), so the voice model takes no velocity.
+//! the output is a pure sine (h2..h10 at the ≈−93 dBFS dither floor, ≥60 dB
+//! below h1; a faint ~−88 dBFS h2 appears at key 60 — see the dossier).
+//! Velocity is unrouted at the default patch (VelScale stored 50, VelDst
+//! amounts 0 — `midi-instruments.md` M1, flat to 0.01 dB over 4:1 velocity),
+//! so the voice model takes no velocity.
+//!
+//! Envelope topology (measured, `operator-voice.md`): AttackTime rises from
+//! AttackLevel to DecayLevel; DecayTime falls from DecayLevel to SustainLevel
+//! as an exponential IN AMPLITUDE (τ ≈ 0.120 s at the probe's stored
+//! DecayTime = 1000 ms); the note then holds SustainLevel; ReleaseTime ramps
+//! dB-linearly from the level at note-off down to ReleaseLevel. The level
+//! knobs (osc Volume, Globals Volume, SustainLevel at the default pin) act
+//! as linear amplitudes: OP3/OP4 render deltas match `20·log10(ratio)` to
+//! ≤0.01 dB.
 
 /// Level knobs are linear amplitude; UI dB is `20·log10(value)`.
-/// Fitted: OP2/OP3/OP4 render deltas match `20·log10(ratio)` exactly
-/// (see `operator-voice.md`).
+/// Fitted: OP3 (osc A ×0.5) and OP4 (Globals ×0.25) render deltas match
+/// `20·log10(ratio)` to the last 0.01 dB (see `operator-voice.md`).
 pub fn amp_to_db(amp: f64) -> f64 {
     20.0 * amp.max(1e-9).log10()
 }
 
 /// Pitch law: equal temperament, A4 = 440 Hz. Measured 131.0 Hz at key 48
-/// (M1) and confirmed at key 60 (OP5); stored `Coarse=1` displays as 0
-/// (RelativePosition offset) and does not shift pitch.
+/// (M1) and 261.5 Hz at key 60 (OP5; ±0.5 Hz scan grid, |err| ≤ 0.14%);
+/// stored `Coarse=1` displays as 0 (RelativePosition offset) and does not
+/// shift pitch.
 pub fn note_freq(key: u8) -> f64 {
     440.0 * 2.0f64.powf((key as f64 - 69.0) / 12.0)
 }
@@ -34,6 +45,10 @@ pub mod stored {
     pub const ATTACK_TIME_S: f64 = 0.1000000015e-3;
     /// `AttackLevel` — 0.0003162277571 ≡ −70 dB, the parameter floor.
     pub const ATTACK_LEVEL_AMP: f64 = 0.0003162277571;
+    /// `DecayTime` (ms in document; seconds here).
+    pub const DECAY_TIME_S: f64 = 1.0;
+    /// `DecayLevel` — the post-attack peak of the envelope.
+    pub const DECAY_LEVEL_AMP: f64 = 1.0;
     /// `SustainLevel`.
     pub const SUSTAIN_LEVEL_AMP: f64 = 1.0;
     /// `ReleaseTime`.
@@ -42,7 +57,7 @@ pub mod stored {
     pub const RELEASE_LEVEL_AMP: f64 = 0.0003162277571;
     /// `Operator.0/Volume` — oscillator A level.
     pub const OSC_A_LEVEL_AMP: f64 = 1.0;
-    /// `Globals/Volume` — device output trim.
+    /// `Globals/Volume` — device output trim (−18 dB exactly).
     pub const GLOBALS_VOLUME_AMP: f64 = 0.1258925349;
 }
 
@@ -50,31 +65,48 @@ pub mod stored {
 pub mod fitted {
     /// Fixed output scalar: rendered peak = RESIDUAL_GAIN × osc_a_level ×
     /// envelope × globals_volume, for a unit-peak sine oscillator.
-    /// M1: output peak −29.76 dBFS with stored gains −18.00 dB → −11.76 dB.
-    /// Held to ±0.06 dB across OP2/OP3/OP4 (linear-law confirmations).
-    /// Decomposition (waveform peak vs voice-bus scalar vs post-voice trim)
-    /// is not identifiable from audio alone.
-    pub const RESIDUAL_GAIN: f64 = 0.2582;
-    /// Release is linear-in-dB. Measured 175 dB/s from M1's release path
-    /// (−3.5 ± 0.2 dB per 20 ms); equals (0 − (−70 dB)) / 0.4 s — i.e. the
-    /// stored ReleaseLevel/ReleaseTime pair realized as a dB ramp.
-    pub const RELEASE_RATE_DB_S: f64 = 175.0;
+    /// M1: output peak −29.76 dBFS with stored gains −18.00 dB → −11.76 dB
+    /// (linear 0.25825). Held to ≤0.01 dB across OP3/OP4 (the ×0.5 and
+    /// ×0.25 level probes land on the same scalar). Decomposition (waveform
+    /// peak vs voice-bus scalar vs post-voice trim) is not identifiable from
+    /// audio alone.
+    pub const RESIDUAL_GAIN: f64 = 0.25825;
+    /// Decay time constant of the exponential-in-amplitude fall from
+    /// DecayLevel to SustainLevel, measured on OP2 (SustainLevel −24 dB,
+    /// DecayLevel 1, DecayTime 1000 ms): the whole 10 ms-window curve fits
+    /// with RMS residual 0.11 dB (max 0.22 dB) at τ = 0.120 s. The mapping
+    /// τ(DecayTime, levels) is OPEN — one pin only; the value is consistent
+    /// with "excess reaches the AttackLevel floor at DecayTime"
+    /// (1.0 s / ln(1/0.000316) = 0.124 s, within the fit tolerance).
+    pub const DECAY_TAU_S: f64 = 0.120;
+    /// Release is dB-linear from the level at note-off to ReleaseLevel over
+    /// ReleaseTime — i.e. rate = (level_db + 70 dB)/ReleaseTime. Measured:
+    /// M1/OP5 from 0 dB → 175–180 dB/s (= 70/0.4); OP2 from −25 dB →
+    /// ≈115 dB/s (= 46/0.4, windows match the model ≤0.6 dB). A fixed-rate
+    /// reading (175 dB/s regardless of level) is refuted by OP2.
+    pub const RELEASE_FROM_SUSTAIN_RATE_DB_S: f64 = 175.0;
 }
 
-/// Operator's amp envelope as it is audible on the default patch:
-/// instant attack (stored 0.1 ms), flat sustain, linear-in-dB release.
+/// Operator's amp envelope as audible on the default patch family:
+/// instant attack to DecayLevel, exponential-in-amplitude decay toward
+/// SustainLevel, flat sustain, dB-linear release over ReleaseTime.
 ///
-/// Honest operative simplification: the document also stores
-/// `DecayTime=1000, DecayLevel=1` — a literal ADSR reading would predict a
-/// 1 s fade-in, which M1 refutes (onset steady within 0.05 dB from the first
-/// 10 ms window). With `DecayLevel = SustainLevel = 1` the decay segment is
-/// sonically inert at these pins; its behavior when the levels differ is
-/// UNTESTED (backlog, operator row).
+/// With the default patch's `DecayLevel = SustainLevel = 1` the decay is
+/// sonically inert and release leaves 0 dB — M1's organ-like behavior. OP2
+/// (SustainLevel −24 dB) exposed the decay segment: the note starts at FULL
+/// level and falls toward −24 dB, refuting any reading of SustainLevel as a
+/// plain output level knob at separated pins.
 #[derive(Debug, Clone)]
 pub struct AmpEnvelope {
     pub attack_s: f64,
     /// envelope floor where attack starts and release ends (amplitude)
     pub floor_amp: f64,
+    /// `DecayLevel` — post-attack peak (amplitude)
+    pub decay_level_amp: f64,
+    /// `DecayTime` (stored seconds; kept for the τ mapping once probed)
+    pub decay_time_s: f64,
+    /// exponential decay time constant (fitted at the probe pin)
+    pub decay_tau_s: f64,
     pub sustain_amp: f64,
     pub release_time_s: f64,
 }
@@ -84,6 +116,9 @@ impl Default for AmpEnvelope {
         AmpEnvelope {
             attack_s: stored::ATTACK_TIME_S,
             floor_amp: stored::RELEASE_LEVEL_AMP,
+            decay_level_amp: stored::DECAY_LEVEL_AMP,
+            decay_time_s: stored::DECAY_TIME_S,
+            decay_tau_s: fitted::DECAY_TAU_S,
             sustain_amp: stored::SUSTAIN_LEVEL_AMP,
             release_time_s: stored::RELEASE_TIME_S,
         }
@@ -92,25 +127,47 @@ impl Default for AmpEnvelope {
 
 impl AmpEnvelope {
     /// Envelope gain in dB at `t` seconds after note-on, note held until
-    /// `note_off_s`. Attack is a dB-linear rise from the floor; release is
-    /// the measured linear-in-dB ramp at `fitted::RELEASE_RATE_DB_S`,
-    /// clamped at the floor.
+    /// `note_off_s`. Attack is a dB-linear rise from the floor to
+    /// DecayLevel; decay is exponential in amplitude toward SustainLevel;
+    /// release is dB-linear from the note-off level to the floor across
+    /// ReleaseTime (rate = (level − floor)/release_time), clamped at the
+    /// floor.
     pub fn gain_db(&self, t: f64, note_off_s: f64) -> f64 {
-        let sustain_db = amp_to_db(self.sustain_amp);
         let floor_db = amp_to_db(self.floor_amp);
+        let peak_db = amp_to_db(self.decay_level_amp);
         if t < 0.0 {
             return -200.0;
         }
         if t < self.attack_s {
-            // dB-linear from floor to sustain across the attack
             let k = t / self.attack_s;
-            return floor_db + k * (sustain_db - floor_db);
+            return floor_db + k * (peak_db - floor_db);
         }
+        let level_db = |tt: f64| -> f64 {
+            if tt < self.attack_s + self.decay_time_s {
+                let a = self.sustain_amp
+                    + (self.decay_level_amp - self.sustain_amp)
+                        * (-(tt - self.attack_s) / self.decay_tau_s).exp();
+                amp_to_db(a)
+            } else {
+                amp_to_db(self.sustain_amp)
+            }
+        };
         if t < note_off_s {
-            return sustain_db;
+            return level_db(t);
         }
-        let rel = sustain_db - fitted::RELEASE_RATE_DB_S * (t - note_off_s);
-        rel.max(floor_db).min(sustain_db)
+        let off_db = level_db(note_off_s.max(self.attack_s));
+        let rate_db_s = (off_db - floor_db) / self.release_time_s.max(1e-6);
+        (off_db - rate_db_s * (t - note_off_s))
+            .max(floor_db)
+            .min(peak_db)
+    }
+
+    /// Release rate for a note released from the sustained level (dB/s).
+    /// At the default patch this is the measured 175 dB/s; OP2's pins give
+    /// (−24 + 70)/0.4 = 115 dB/s.
+    pub fn sustained_release_rate_db_s(&self) -> f64 {
+        let off_db = amp_to_db(self.sustain_amp.min(self.decay_level_amp));
+        (off_db - amp_to_db(self.floor_amp)) / self.release_time_s.max(1e-6)
     }
 }
 
@@ -208,23 +265,49 @@ mod tests {
         );
     }
 
-    /// Release is linear-in-dB at 175 dB/s: the render's 20 ms window whose
-    /// midpoint is 30 ms after note-off must read sustain_db − 175×0.03.
+    /// Release is dB-linear from the note-off level to the floor over
+    /// ReleaseTime. Default patch: (0 − (−70))/0.4 = 175 dB/s; the render's
+    /// 20 ms window whose midpoint is 30 ms after note-off must read
+    /// sustain_db − 175×0.03.
     #[test]
     fn release_path_is_linear_db() {
         let v = OperatorVoiceA::default_patch(48, 44100);
+        let rate = v.envelope.sustained_release_rate_db_s();
+        assert!((rate - fitted::RELEASE_FROM_SUSTAIN_RATE_DB_S).abs() < 0.01,
+            "default-patch release rate {rate} vs 175");
         let s = v.render_note(0.875, 1.5);
         let mid = 0.905f64;
         let a = (0.895 * 44100.0) as usize;
         let b = (0.915 * 44100.0) as usize;
         let rms = rms_db(&s[a..b]);
-        let expect = -32.77 - fitted::RELEASE_RATE_DB_S * (mid - 0.875);
+        let expect = -32.77 - fitted::RELEASE_FROM_SUSTAIN_RATE_DB_S * (mid - 0.875);
         // tolerance 0.3 dB: a 20 ms window spans ~1.45 cycles at C3, so the
         // window RMS sits near (not exactly at) the midpoint value
         assert!((rms - expect).abs() <= 0.3, "release {rms:.2} vs {expect:.2}");
     }
 
-    /// Pitch law: key 60 → 261.63 Hz (OP5).
+    /// OP2 pins (SustainLevel −24 dB): the sustain knob engages the decay
+    /// segment. Steady window [0.15, 0.70] reads −49.81 dBFS in the render
+    /// (NOT the −56.77 a flat-sustain model predicts); the exponential
+    /// decay (τ = 0.120 s fitted) reproduces it, and the release rate
+    /// follows the note-off level: (−24 + 70)/0.4 = 115 dB/s.
+    #[test]
+    fn sustain_pin_engages_decay_segment() {
+        let mut v = OperatorVoiceA::default_patch(48, 44100);
+        v.envelope.sustain_amp = 0.06309572607;
+        let s = v.render_note(0.875, 1.5);
+        let a = (44100.0 * 0.15) as usize;
+        let b = (44100.0 * 0.70) as usize;
+        let rms = rms_db(&s[a..b]);
+        assert!(
+            (rms - (-49.81)).abs() <= 0.5,
+            "OP2 steady {rms:.2} vs render −49.81"
+        );
+        let rate = v.envelope.sustained_release_rate_db_s();
+        assert!((rate - 115.0).abs() < 0.5, "OP2 release rate {rate} vs 115");
+    }
+
+    /// Pitch law: key 60 → 261.63 Hz (OP5), key 48 → 130.81 Hz (M1).
     #[test]
     fn note_freq_key60_is_c4() {
         assert!((note_freq(60) - 261.6255653).abs() < 0.01);
