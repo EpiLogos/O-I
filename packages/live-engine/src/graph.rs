@@ -54,12 +54,16 @@ impl Clock {
 /// simple and the offline render bit-deterministic, which the acceptance
 /// gates rely on. Block/buffer processing is a later optimization, not a
 /// semantic change.
-pub trait Device: std::fmt::Debug {
+pub trait Device: std::fmt::Debug + Send {
     /// The document element name this device instantiates (e.g.
     /// `GlueCompressor`), or the engine-side name for engine-native
     /// devices (`Gain`, `Bypass`).
     fn name(&self) -> &str;
     fn process(&mut self, frame_io: &mut [f32], clock: &Clock);
+    // `Send` is a supertrait because a Graph is mixed on the realtime
+    // callback (realtime.rs): cpal's stream closure is a `Send` bound, so
+    // `Box<dyn Device>` must be Send. Every device is plain DSP state
+    // (floats, usize, Vec<f32>), which is exactly what the bound asks for.
 }
 
 /// Amplitude to dBFS (20·log10). Silence reads as the crate's -144 floor

@@ -50,7 +50,8 @@ struct AudioClip {
 }
 
 /// The arrangement clips of one audio track element, document order.
-fn clips_of_track(track: &Element) -> Vec<AudioClip> {
+/// Unplaceable clips are reported through `notes` (the loader prints them).
+fn clips_of_track(track: &Element, notes: &mut Vec<String>) -> Vec<AudioClip> {
     let mut clips = Vec::new();
     let Some(events) = track
         .find("MainSequencer")
@@ -65,7 +66,11 @@ fn clips_of_track(track: &Element) -> Vec<AudioClip> {
             el.child(tag).and_then(|c| c.attr("Value")).and_then(|v| v.parse().ok())
         };
         let (Some(start), Some(end)) = (num(clip, "CurrentStart"), num(clip, "CurrentEnd")) else {
-            continue; // no bounds — nothing defensible to place
+            // unbounded clip: nothing defensible to place, but say so — a
+            // silent skip reads as a loaded arrangement that plays nothing
+            let name = clip.find("Name").and_then(|n| n.attr("Value")).unwrap_or("?");
+            notes.push(format!("'{name}': clip has no CurrentStart/CurrentEnd — skipped"));
+            continue;
         };
         let sample_path = clip
             .find("SampleRef")
@@ -78,7 +83,18 @@ fn clips_of_track(track: &Element) -> Vec<AudioClip> {
             start_beat: start,
             end_beat: end,
             volume: num(clip, "SampleVolume").unwrap_or(1.0),
-            warped: num(clip, "IsWarped").map(|v| v != 0.0).unwrap_or(false),
+            // documents store booleans as "true"/"false" (numeric 0/1
+            // tolerated as a fallback) — a f64 parse alone would read
+            // every real warped clip as unwarped
+            warped: clip
+                .child("IsWarped")
+                .and_then(|c| c.attr("Value"))
+                .map(|v| match v {
+                    "true" => true,
+                    "false" => false,
+                    other => other.parse::<f64>().map(|n| n != 0.0).unwrap_or(false),
+                })
+                .unwrap_or(false),
             sample_path,
             name: clip
                 .find("Name")
@@ -123,7 +139,7 @@ pub fn load_arrangement_sources(graph: &mut Graph, root: &Element) -> LoadReport
 
     // clip inventory first — the arrangement length is the last clip end
     let per_track: Vec<Vec<AudioClip>> =
-        audio_tracks.iter().map(|t| clips_of_track(t)).collect();
+        audio_tracks.iter().map(|t| clips_of_track(t, &mut notes)).collect();
     let end_beat = per_track
         .iter()
         .flatten()
@@ -336,7 +352,8 @@ mod tests {
         let set = write_set(
             &dir,
             &format!(
-                r#"<AudioClip CurrentStart="2" CurrentEnd="6">
+                r#"<AudioClip>
+                  <CurrentStart Value="2" /><CurrentEnd Value="6" />
                   <Name Value="tone" /><SampleVolume Value="0.5" /><IsWarped Value="false" />
                   <SampleRef><FileRef><Path Value="{wav_path}" /></FileRef></SampleRef>
                 </AudioClip>"#
@@ -365,8 +382,9 @@ mod tests {
         assert!((src[mid] - expect).abs() < 1e-5, "{} vs {expect}", src[mid]);
         // the wav is 1 s inside a 2 s clip: its LAST frame lands at
         // clip start + 47 999, everything after is silence (no loop, no
-        // resample — phase 1)
-        let last_wav = (2 * SAMPLE_RATE as usize + SAMPLE_RATE as usize - 1) * 2;
+        // resample — phase 1). Interleaved: clip start is 2·SR, the
+        // offset adds (SR−1)·2 — the ×2 must not distribute over the sum.
+        let last_wav = 2 * SAMPLE_RATE as usize + (SAMPLE_RATE as usize - 1) * 2;
         let expect = peak * ((SAMPLE_RATE as usize - 1) as f32 / SAMPLE_RATE as f32) * 0.5;
         assert!((src[last_wav] - expect).abs() < 1e-5, "{} vs {expect}", src[last_wav]);
         assert_eq!(src[last_wav + 2], 0.0);
@@ -382,15 +400,18 @@ mod tests {
         let set = write_set(
             &dir,
             &format!(
-                r#"<AudioClip CurrentStart="0" CurrentEnd="2">
+                r#"<AudioClip>
+                  <CurrentStart Value="0" /><CurrentEnd Value="2" />
                   <Name Value="warped" /><IsWarped Value="true" />
                   <SampleRef><FileRef><Path Value="{wav_path}" /></FileRef></SampleRef>
                 </AudioClip>
-                <AudioClip CurrentStart="0" CurrentEnd="2">
+                <AudioClip>
+                  <CurrentStart Value="0" /><CurrentEnd Value="2" />
                   <Name Value="elsewhere" /><IsWarped Value="false" />
                   <SampleRef><FileRef><Path Value="/definitely/not/here.wav" /></FileRef></SampleRef>
                 </AudioClip>
-                <AudioClip CurrentStart="0" CurrentEnd="2">
+                <AudioClip>
+                  <CurrentStart Value="0" /><CurrentEnd Value="2" />
                   <Name Value="nopath" /><IsWarped Value="false" />
                   <SampleRef><FileRef><Path Value="" /></FileRef></SampleRef>
                 </AudioClip>"#
@@ -427,7 +448,8 @@ mod tests {
         let set = write_set(
             &dir,
             &format!(
-                r#"<AudioClip CurrentStart="0" CurrentEnd="2">
+                r#"<AudioClip>
+                  <CurrentStart Value="0" /><CurrentEnd Value="2" />
                   <Name Value="odd" /><IsWarped Value="false" />
                   <SampleRef><FileRef><Path Value="{wav_path}" /></FileRef></SampleRef>
                 </AudioClip>"#
