@@ -1017,6 +1017,17 @@ the deficit's home at all:
   The curve-based `static_gain_change_db` remains the gate of record for
   static behavior; the failing LAM assertions stay in the tree under
   `#[ignore]` as the honest record and the acceptance target.
+  **Follow-up (same day, absolute-threshold lane —
+  `glue-absolute-threshold.md`): the 0x1bc candidate is REFUTED** — the
+  binding is the fixed factory constant 2.0 (ctor-only caller, setter law
+  max(v,2)), and the captured kernel is *provably* threshold-shift
+  invariant for every constant binding (the covariance law, exact-port
+  confirmed, Range-inert at idx 5 to <0.01 dB across all four T/R
+  corners). The residual is relocalized: either the G7(T−12/R30) vs
+  LAM(T−24/R60) device pair is confounded (different sessions; the
+  (T,R)-separated idx-5 cells were never rendered) or the mechanism lies
+  outside `OGlueCompressorProcessor`. Deciding renders: the four-cell
+  (T−12/T−24 × R30/R60, idx 5) grid of `glue-absolute-threshold.md` §4.
 
 Scope not modeled: Release index 6 (special constants, shell lines 63–71),
 Oversample, SideChain EQ, the PRNG dither (scale unmapped), and the

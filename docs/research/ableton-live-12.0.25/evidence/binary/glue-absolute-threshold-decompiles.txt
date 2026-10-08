@@ -1,0 +1,72 @@
+// PROVENANCE: Ghidra 12.1.4 decompiles, fresh project LiveRE2 (per-block lane
+// import, ALREADY ANALYZED), Live.arm64 (Live 12.0.25, 2024-08-27_2627c43816),
+// arm64 slice. Owner-private analysis evidence. NOT FOR REDISTRIBUTION. Never
+// enters product source (packages/live-dynamics).
+// Captured 2026-10-08 (absolute-threshold lane) via XrefProbe.java /
+// DataProbe.java / FuncProbe.java. Companion dossier:
+// devices/glue-absolute-threshold.md. Companion simulation:
+// evidence/devices/glue_abs_threshold_sim.py (exact CircuitModel port).
+
+// ===== FUN_10179fcfc — the 0x1bc setter (stage-1 frequency parameter) =====
+// XrefProbe.java '0x10179fcfc': body=1 lines=13
+// LAW: 0x1bc = (v >= 20.0) ? v : 2.0  — values in (2,20) are unreachable;
+// every value < 20 (including the 0x1e4 ladder 1e-5..0.03) lands on 2.0.
+// XREFS: exactly ONE reference total — DATA-typed, from 0x106b97c5b, an
+// unanalyzed code blob that also holds the only DATA refs to the Threshold
+// setter (0x10179f9c4 <- 0x106b97c52) and the Attack shell (0x10179f9d4 <-
+// 0x106b97c54): the shared setter-registration region. No code caller exists
+// outside the constructor.
+FUNC 10179fcfc
+void FUN_10179fcfc(float param_1,long param_2)
+{
+  float fVar1;
+  fVar1 = 2.0;
+  if (20.0 <= param_1) {
+    fVar1 = param_1;
+  }
+  *(float *)(param_2 + 0x1bc) = fVar1;
+  return;
+}
+
+// ===== Constructor setter chain (the function containing 0x101687328) =====
+// FuncProbe.java '0x101687300': the factory-default calls, in order:
+//   FUN_10179fff8(...)            coefficient master
+//   func_0x10179fd14()            Reset
+//   func_0x10179f954()            device on = 1
+//   func_0x10179f9c4(0xc0a00000)  Threshold = -5.0f
+//   func_0x10179f9cc(0)           Makeup = 0.0
+//   FUN_10179fcdc(0xc2c80000)     Range = -100.0f (negated+clamped)
+//   func_0x10179f9d4()            Attack (menu default)
+//   FUN_10179fb4c()               Release (menu default)
+//   func_0x10179fca4()            Ratio (table select)
+//   func_0x10179fcd4(0x3f800000)  DryWet = 1.0
+//   func_0x10179f96c()            0x1e8 enable = 1
+//   func_0x10179f998()            PeakClipIn
+//   FUN_10179fcfc(0)              0x1bc: 0.0 -> 2.0  (the ONLY call site)
+// Confirms the derivation ledger's factory-default list; 0x1bc factory 2.0.
+
+// ===== Const pool for the init 8-byte copy into 0x1bc..0x1c3 =====
+// DataProbe.java '0x104d27080':
+//  104d27080: 0000000040000000  -> low word 0.0f -> 0x1bc, high word 0.5f -> 0x1c0
+// (FUN_10179f64c then relies on the ctor's FUN_10179fcfc(0) to make 0x1bc 2.0;
+// the 0x1b8 ramp target reads s[0x1bc], so the effective factory is 2.0.)
+
+// ===== FUN_10179ff74 — the per-block "apply queued message" call =====
+// FuncProbe.java '0x10179ff74': 45 lines. Moves the metering min/max hold
+// slots (0x20c/0x214/0x219/0x224..0x231) into the inter-thread message and
+// resets the holds to 0x41a00000 (20.0). WRITES NO DSP COEFFICIENT SLOTS.
+// (Full 45-line body in the session log; summarized here — every store
+// targets 0x20c..0x231 or the message struct param_2.)
+
+// ===== FUN_1017a03c4 — the per-block metering tick =====
+// FuncProbe.java '0x1017a03c4': 95 lines. PRNG tick (0xf8/0x100, same LCG as
+// the kernel), then smoothing of the GR-meter states only: 0x248 (min-hold),
+// 0x278/0x268/0x270/0x280/0x284, 0x20c/0x214/0x218 min-holds, 0x23c+ band.
+// WRITES NO SLOT THE KERNEL READS (kernel reads 0x8..0xc8, 0xf8/0x100,
+// 0x110..0x138, 0x158..0x1ec, 0x200/0x204, 0x288 — none in 0x23c..0x288).
+
+// CONSEQUENCE (dossier §3): within OGlueCompressorProcessor the writers of
+// 0x1bc are exactly {FUN_10179fcfc}; its callers are exactly {ctor(0.0)};
+// no per-block, shell, apply, or metering path touches it. The LAM verdict's
+// "0x1bc stage-1 binding" is a FIXED factory constant 2.0 in this build.
+// ===== end capture =====

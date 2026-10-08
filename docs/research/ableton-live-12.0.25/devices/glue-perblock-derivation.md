@@ -260,7 +260,12 @@ accumulator just tracks the stored Range).
   dependence of `k = 9.4e-7·N` is likewise unverified (a render pair at a
   different ParamBlockSize would decide it).
 - **The 0x1bc setter's parameter binding** (stage-1 frequency; factory 2.0,
-  clamp < 20 → 2) — its caller is outside the captured processor code.
+  clamp < 20 → 2) — CLOSED 2026-10-08 (absolute-threshold lane): the only
+  caller is the constructor's factory call `FUN_10179fcfc(0)`; the setter
+  law is `0x1bc = (v ≥ 20) ? v : 2.0` (values in (2,20) unreachable); no
+  shell, per-block, apply, or metering path writes it. Capture:
+  `evidence/binary/glue-absolute-threshold-decompiles.txt`; analysis:
+  `glue-absolute-threshold.md` §2.
 - **s[0x1e4]'s consumer** (per-attack ladder 1e-5…0.03) — outside the DSP
   loop as captured.
 - Release index 6 special constants (0x74 = 91000, 0x7c ≈ 7.5e5, 0x90 =
