@@ -624,7 +624,7 @@ fn full_native_act_register_validates_fresh_performance_before_archiving_another
         request(before["revision"].clone(), json!(oversize_changes)),
     )
     .unwrap_err();
-    assert_eq!(oversize, "Expression document exceeds 8 MiB");
+    assert_eq!(oversize, "Expression document exceeds 16 MiB");
     assert_eq!(document(&mut k), before);
     assert_eq!(admission_files(&home), stored);
     assert_eq!(
