@@ -28,8 +28,9 @@ Local preflight: `oi dev gate PRODUCT` builds an isolated candidate and runs the
 
 For a task spanning repertoire composition, native collaboration and Factory
 delivery, `cross-product.yml` accepts `focused-development=true` with exact
-40-character `ai-kit-revision` and `factory-revision` inputs. The focused job
-confirms both checked-out revisions before executing the owners' repertoire,
+40-character `ai-kit-revision` and `factory-revision` inputs, and an explicit
+`workcell-revision` when material execution is part of the selected proof.
+The focused job confirms every selected checked-out revision before executing the owners' repertoire,
 projection, generation, existing TUI application, handoff, team and delivery regressions. It also exercises
 peer retention against Pi 0.84.4's actual session implementation. Its artifact
 contains the requested and observed commits, Git trees, lockfile and binary
@@ -38,21 +39,32 @@ requested cuts and checked against the compiled binaries' reported versions;
 `build-versions.json` preserves that readback beside `source-build-cut.json`.
 A restored binary with a mismatched stamp fails the required job.
 Rust filters must report nonzero passed tests for every selected owner target;
-an empty filter is not verification evidence.
+an empty filter is not verification evidence. A selected Workcell cut builds
+its actual native guardian binary and tests finite server grants, durable
+execution/restart, owner and guardian crashes, process retirement, and bounded
+native HTTP. Factory's delivery, native owner and dispatch gates include the
+source-bound no-delivery recovery. Explicit live-provider cases remain separate
+from these native deterministic checks.
 Ordinary scheduled and manual suite
 runs keep their existing jobs; focused dispatch selects only this job.
 
 ```sh
 gh workflow run cross-product.yml --repo EpiLogos/O-I --ref TASK_BRANCH \
   -f focused-development=true -f ai-kit-revision=AIKIT_COMMIT \
-  -f factory-revision=FACTORY_COMMIT
+  -f factory-revision=FACTORY_COMMIT -f workcell-revision=WORKCELL_COMMIT
 ```
 
 Dispatch and artifact presence are not readiness. Factory rereads the selected
 hosted run and required checks against the exact candidate revision and Git
 tree, alongside independent review and native publication readback. The
 focused job records deterministic owner execution; provider inference and
-physical Workcell acceptance require their own observed owner evidence.
+physical Workcell acceptance require their own observed owner evidence. The
+optional Workcell source selection participates in Factory's full cross-owner
+fingerprint only when present; a two-owner fingerprint cannot attest to it.
+The actual Task/material receipt must also identify the Workcell executable
+used by the live operation. A settled failed hosted result can retain an
+immutable source/build witness for a bounded repair, including a missing binary
+when compilation failed. It is not successful verification or readiness.
 
 Consume: the next local session refreshes the accepted source and rebuilds or rebinds the executable it will actually use (`oi dev sync`, `oi dev build`, `oi dev install`). `suite/mainline.json` is the recorded cut an install was made from, a receipt; it is checked for structure in `verify.yml` and is not required to equal every sibling's live main (`verify-mainline-snapshot.py --live` remains a manual comparison).
 

@@ -20,6 +20,9 @@ on:
       factory-revision:
         description: Exact 40-character Factory commit for the focused development cut
         type: string
+      workcell-revision:
+        description: Optional exact Workcell commit when material execution is selected
+        type: string
 
 permissions:
   contents: read
@@ -42,6 +45,7 @@ jobs:
     env:
       AIKIT_REVISION: ${{ inputs.ai-kit-revision }}
       FACTORY_REVISION: ${{ inputs.factory-revision }}
+      WORKCELL_REVISION: ${{ inputs.workcell-revision }}
       AIKIT_BUILD_SOURCE_REVISION: ${{ inputs.ai-kit-revision }}
       AIKIT_BUILD_SOURCE_DIRTY: '0'
       CARGO_BUILD_JOBS: '2'
@@ -54,6 +58,7 @@ jobs:
           set -euo pipefail
           [[ "$AIKIT_REVISION" =~ ^[0-9a-f]{40}$ ]]
           [[ "$FACTORY_REVISION" =~ ^[0-9a-f]{40}$ ]]
+          [[ -z "$WORKCELL_REVISION" || "$WORKCELL_REVISION" =~ ^[0-9a-f]{40}$ ]]
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
@@ -69,6 +74,13 @@ jobs:
           ref: ${{ inputs.factory-revision }}
           path: development-factory
           persist-credentials: false
+      - uses: actions/checkout@v4
+        if: ${{ inputs.workcell-revision != '' }}
+        with:
+          repository: EpiLogos/Workcell
+          ref: ${{ inputs.workcell-revision }}
+          path: development-workcell
+          persist-credentials: false
       - name: Confirm the requested material before execution
         shell: bash
         run: |
@@ -77,6 +89,10 @@ jobs:
           test "$(git -C development-factory rev-parse HEAD)" = "$FACTORY_REVISION"
           test -z "$(git -C development-ai-kit status --porcelain)"
           test -z "$(git -C development-factory status --porcelain)"
+          if [[ -n "$WORKCELL_REVISION" ]]; then
+            test "$(git -C development-workcell rev-parse HEAD)" = "$WORKCELL_REVISION"
+            test -z "$(git -C development-workcell status --porcelain)"
+          fi
           mkdir -p "$RUNNER_TEMP/exact-development-cut"
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-node@v4
@@ -89,6 +105,12 @@ jobs:
           workspaces: |
             development-ai-kit
             development-factory
+      - uses: Swatinem/rust-cache@v2.9.2
+        if: ${{ inputs.workcell-revision != '' }}
+        with:
+          shared-key: exact-development-cut-workcell
+          cache-on-failure: true
+          workspaces: development-workcell
       - name: Repertoire, generation and harness projection owner checks
         working-directory: development-ai-kit
         shell: bash
@@ -144,8 +166,68 @@ jobs:
           # Refresh its build script mtime so a restored cache records this cut.
           touch factory/build.rs
           cargo test --locked -p epilogos-factory --test attempt_public_regressions -- --test-threads=1 2>&1 | tee "$RUNNER_TEMP/exact-development-cut/delivery.log"
+          cargo test --locked -p epilogos-factory --test attempt_owner_delivery -- --test-threads=1 2>&1 | tee "$RUNNER_TEMP/exact-development-cut/owner-delivery.log"
+          cargo test --locked -p epilogos-factory --lib native_owner:: -- --test-threads=1 2>&1 | tee "$RUNNER_TEMP/exact-development-cut/native-owner.log"
+          cargo test --locked -p epilogos-factory --lib attempt_owner_dispatch:: -- --test-threads=1 2>&1 | tee "$RUNNER_TEMP/exact-development-cut/owner-dispatch.log"
           cargo test --locked -p epilogos-factory --lib native_process:: -- --test-threads=1 2>&1 | tee "$RUNNER_TEMP/exact-development-cut/process-lifecycle.log"
           cargo build --locked -p epilogos-factory --bin factory
+      - name: Qualified native private failure-capture regressions
+        working-directory: development-factory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYTHON'
+          import hashlib, os, pathlib, subprocess, sys
+          root = (pathlib.Path(os.environ['RUNNER_TEMP']) / 'exact-development-cut' / 'native-os').resolve()
+          root.mkdir(mode=0o700)
+          executable = pathlib.Path(sys.executable).resolve()
+          env = dict(os.environ, FACTORY_NATIVE_EVIDENCE_DIR=str(root), TMPDIR=str(root),
+                     FACTORY_NATIVE_PYTHON_BIN=str(executable),
+                     FACTORY_NATIVE_PYTHON_SHA256=hashlib.sha256(executable.read_bytes()).hexdigest())
+          (root.parent / 'native-os-qualification.json').write_text(__import__('json').dumps({
+              'python': str(executable), 'sha256': env['FACTORY_NATIVE_PYTHON_SHA256'],
+              'scope': 'controlled native owner failure capture; no provider or publication'}, indent=2) + '\n')
+          with (root.parent / 'native-os.log').open('wb') as log:
+              result = subprocess.run(['cargo', 'test', '--locked', '-p', 'epilogos-factory', '--lib',
+                  'attempt_owner_dispatch::native_failure_tests::', '--', '--ignored', '--test-threads=1'],
+                  env=env, stdout=log, stderr=subprocess.STDOUT, timeout=180)
+          print((root.parent / 'native-os.log').read_text())
+          raise SystemExit(result.returncode)
+          PYTHON
+      - name: Bounded material execution and native recovery owner checks
+        if: ${{ inputs.workcell-revision != '' }}
+        working-directory: development-workcell
+        shell: bash
+        env:
+          SUITE_BUILD_REVISION: ${{ inputs.workcell-revision }}
+        run: |
+          set -euo pipefail
+          # Component staging is source-pinned to this actual hosted checkout.
+          # It does not establish a Central Project, NOW or provider observation.
+          export GITHUB_WORKSPACE="$PWD"
+          export WORKCELL_TEST_ARTIFACT_ROOT="$PWD/evidence/native-processes"
+          export WORKCELL_TEST_ARTIFACT_ADMISSION=hosted-runner
+          export WORKCELL_TEST_ARTIFACT_OWNER_SOURCE="$PWD/evidence/source-commit.txt"
+          export WORKCELL_TEST_ARTIFACT_OWNER_REF="$(git rev-parse HEAD)"
+          test "$WORKCELL_TEST_ARTIFACT_OWNER_REF" = "$WORKCELL_REVISION"
+          mkdir -p "$WORKCELL_TEST_ARTIFACT_ROOT"
+          printf '%s\n' "$WORKCELL_TEST_ARTIFACT_OWNER_REF" > "$WORKCELL_TEST_ARTIFACT_OWNER_SOURCE"
+          # Preserve the final source-clean check while excluding only these
+          # two exact job-owned evidence coordinates from local Git bookkeeping.
+          printf '/evidence/native-processes/\n/evidence/source-commit.txt\n' >> "$(git rev-parse --git-path info/exclude)"
+          touch crates/workcell-cli/build.rs
+          cargo build --locked -p epilogos-workcell-cli --bin workcell --bin workcell-control-service
+          export WORKCELL_TEST_NATIVE_EXECUTABLE="$PWD/target/debug/workcell"
+          cargo test --locked -p epilogos-workcell-cli --lib durable::tests::material_ -- --test-threads=1 2>&1 | tee "$RUNNER_TEMP/exact-development-cut/material-journal.log"
+          cargo test --locked -p epilogos-workcell-runtime --lib material_process::tests:: -- --list 2>&1 | tee "$RUNNER_TEMP/exact-development-cut/material-process-list.log"
+          test "$(grep -c ': test$' "$RUNNER_TEMP/exact-development-cut/material-process-list.log")" -eq 6
+          cargo test --locked -p epilogos-workcell-runtime --lib material_process::tests:: -- --test-threads=1 2>&1 | tee "$RUNNER_TEMP/exact-development-cut/material-process.log"
+          cargo test --locked -p epilogos-workcell-runtime --lib bounded_process::owned_operation_tests:: -- --list 2>&1 | tee "$RUNNER_TEMP/exact-development-cut/material-owned-list.log"
+          test "$(grep -c ': test$' "$RUNNER_TEMP/exact-development-cut/material-owned-list.log")" -eq 3
+          cargo test --locked -p epilogos-workcell-runtime --lib bounded_process::owned_operation_tests:: -- --test-threads=1 2>&1 | tee "$RUNNER_TEMP/exact-development-cut/material-owned.log"
+          cargo test --locked -p epilogos-workcell-runtime --lib bounded_process::tests:: -- --test-threads=1 2>&1 | tee "$RUNNER_TEMP/exact-development-cut/material-capture.log"
+          cargo test --locked -p epilogos-workcell-opensandbox --lib tests::actual_ -- --test-threads=1 2>&1 | tee "$RUNNER_TEMP/exact-development-cut/material-http.log"
+          cargo test --locked -p epilogos-workcell-control --test connections -- --test-threads=1 2>&1 | tee "$RUNNER_TEMP/exact-development-cut/material-connections.log"
       - name: Verify the compiled revision identities
         shell: bash
         run: |
@@ -162,16 +244,27 @@ jobs:
               'hook-runner-compatibility.log': 1, 'runner-held-pipes.log': 1,
               'runner-strict-retirement.log': 1, 'runner-timeout.log': 1,
               'delivery.log': 1, 'process-lifecycle.log': 1,
+              'owner-delivery.log': 1, 'native-owner.log': 1, 'owner-dispatch.log': 1, 'native-os.log': 1,
           }
+          if os.environ.get('WORKCELL_REVISION'):
+              expected_rust_results.update({name: 1 for name in ['material-journal.log', 'material-process.log', 'material-owned.log', 'material-capture.log', 'material-http.log', 'material-connections.log']})
           for name, expected_count in expected_rust_results.items():
               results = re.findall(r'^test result: ok\. ([0-9]+) passed;', (output / name).read_text(), re.MULTILINE)
               if len(results) != expected_count or any(int(count) == 0 for count in results):
                   raise SystemExit(f'{name}: missing or empty owner test execution: {results}')
+          if os.environ.get('WORKCELL_REVISION'):
+              for name, count in [('material-process.log', 6), ('material-owned.log', 3), ('material-capture.log', 4)]:
+                  required = f'test result: ok. {count} passed; 0 failed; 0 ignored;'
+                  if required not in (output / name).read_text():
+                      raise SystemExit(f'{name}: required native group did not execute in full')
           versions = {}
-          for owner, path, binary, expected, stamp in [
+          selected = [
               ('ai-kit', pathlib.Path('development-ai-kit'), 'aikit', os.environ['AIKIT_REVISION'], os.environ['AIKIT_REVISION'][:12]),
               ('factory', pathlib.Path('development-factory'), 'factory', os.environ['FACTORY_REVISION'], os.environ['FACTORY_REVISION']),
-          ]:
+          ]
+          if os.environ.get('WORKCELL_REVISION'):
+              selected.append(('workcell', pathlib.Path('development-workcell'), 'workcell', os.environ['WORKCELL_REVISION'], os.environ['WORKCELL_REVISION']))
+          for owner, path, binary, expected, stamp in selected:
               result = subprocess.run([str(path / 'target/debug' / binary), '--version'], text=True, capture_output=True, timeout=15, check=True)
               version = result.stdout.strip()
               matched = re.fullmatch(re.escape(binary) + r' \S+ \(([0-9a-f]+)\)', version)
@@ -189,6 +282,10 @@ jobs:
           test "$(git -C development-factory rev-parse HEAD)" = "$FACTORY_REVISION"
           test -z "$(git -C development-ai-kit status --porcelain)"
           test -z "$(git -C development-factory status --porcelain)"
+          if [[ -n "$WORKCELL_REVISION" ]]; then
+            test "$(git -C development-workcell rev-parse HEAD)" = "$WORKCELL_REVISION"
+            test -z "$(git -C development-workcell status --porcelain)"
+          fi
       - name: Record executed source and build cuts
         if: ${{ always() }}
         shell: bash
@@ -205,10 +302,13 @@ jobs:
           version_path = output / 'build-versions.json'
           versions = json.loads(version_path.read_text()) if version_path.is_file() else {}
           owners = {}
-          for owner, path, expected, binary in [
+          selected = [
               ('ai-kit', pathlib.Path('development-ai-kit'), os.environ['AIKIT_REVISION'], 'aikit'),
               ('factory', pathlib.Path('development-factory'), os.environ['FACTORY_REVISION'], 'factory'),
-          ]:
+          ]
+          if os.environ.get('WORKCELL_REVISION'):
+              selected.append(('workcell', pathlib.Path('development-workcell'), os.environ['WORKCELL_REVISION'], 'workcell'))
+          for owner, path, expected, binary in selected:
               owners[owner] = {'requested_revision': expected, 'observed_revision': observed(path, 'rev-parse', 'HEAD'),
                   'tree': observed(path, 'rev-parse', 'HEAD^{tree}'), 'lock_sha256': digest(path / 'Cargo.lock'),
                   'binary_sha256': digest(path / 'target/debug' / binary), **versions.get(owner, {})}
