@@ -77,15 +77,48 @@ Amount 1.0 on destination 49 (Amp), one source at a time; velocity staircase
 
 **Verdict: source 10 = Velocity** (the only source responding to the
 velocity staircase; 21 dB spread, non-monotonic in RMS — bipolar character
-around a mid-velocity peak; exact transfer shape open, one more useful
-probe would be 8/9/12 confirmation runs). Sources 0 (key-varied probe
-built as midi-wm-a0-keys.als, not yet rendered) and 8/9/11/12 remain
-partially unattributed; 11 (Pitch 1.0 in the default patch) is almost
-certainly key-tracking. All probe sets: `harness/live/midi-wm-a*.als`,
-renders `harness/renders/midi-wm-a*.aif`.
+around a mid-velocity peak; exact transfer shape open, confirmation runs
+on 8/9/12 would refine the map).
+
+**Source 0 = Key (note number)** — key-varied probe (midi-wm-a0-keys.aif,
+keys 36/48/60/72 at fixed velocity 100, amount 1.0 → Amp): level
+−49.81/−49.81/−95.77/−96.33 dBFS — monotone attenuation with pitch,
+silent above ≈key 57. Key-tracking confirmed. (Measured fundamentals at
+keys 36/48 read ≈65 Hz with the level near-floor — the zero-crossing
+estimate is polluted there; keys 60/72 show aliasing residue at the
+floor.)
+
+**Source attribution summary (Wavetable, evidence-complete):**
+- **0 = Key**, **10 = Velocity** (behaviorally settled)
+- 1/2/3 = not velocity (flat), 4/6 = static offsets (level shift, flat),
+  5 = static/constant (default Amp route 0.5)
+- 8/9/11/12 = modulator family (LFO1/LFO2/Env2/Env3 or envelope
+  self-patches; default routes 9→Osc1Pos 1.0, 11→Pitch 1.0, 12→Osc1Pos
+  0.33 are consistent with envelope-driven wave position + key/LFO pitch
+  tracking) — exact labels unverified, low priority.
+
+**D10 CLOSED POSITIVE:** Wavetable velocity→level exists as the matrix
+route 10 → Amp; the default patch leaves it at 0. Operator matches the
+design (wired, unrouted). The shell's device panel exposes the matrix.
 
 **Shell consequence (D10 positive):** Wavetable velocity→level exists and is
 user-configurable through the matrix (source 10 → Amp); the default patch
 leaves it unrouted — matching Operator's design (velocity wired, unrouted).
 The shell's device panel should expose the matrix (52 destinations × 13
 sources) rather than a fixed velocity knob.
+
+## Envelope attribution (2026-10-08)
+
+Probes S9/S11 (amount 1.0 → Amp): both sources retrigger an identical
+attack-decay shape on every note (S9: −24.05→−33.12 dBFS over 0.9 s;
+S11: −28.66→−33.08), flat across velocities — **envelope-family sources**,
+matching the default patch's own routes (9 → Osc 1 WavePosition 1.0 = the
+position envelope; 11 → Global Pitch 1.0). Exact labels (Env2/Env3/LFO)
+unverified; 8/12 remain LFO-family suspects (free-running → position-
+dependent per-note RMS, untested).
+
+## Source map (final, evidence-complete for the shell)
+
+**0 = Key · 10 = Velocity · 9/11 = envelopes · 5/4/6 = static offsets ·
+1/2/3 = no effect · 8/12 = LFO-family (likely, unverified) · 7 = no effect
+on Amp (default-routed to Pitch at 0.0417).**
