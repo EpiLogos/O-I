@@ -166,6 +166,22 @@ def build(preset_path, pins, signal_path):
         for s in list(scenes)[1:]:
             scenes.remove(s)
 
+    # shrink the arrangement loop to the content: Live exports the
+    # Transport loop (default 512 beats = 256 s of silence per render)
+    transport = ls.find("Transport")
+    if transport is not None:
+        end_loop = beats(dur_s) + 2.0
+        for tag in ("LoopLength", "LoopEnd"):
+            el = transport.find(tag)
+            if el is not None:
+                el.set("Value", repr(end_loop))
+        lon = transport.find("LoopOn")
+        if lon is not None:
+            lon.set("Value", "true")
+        lst = transport.find("LoopStart")
+        if lst is not None:
+            lst.set("Value", "0")
+
     # pin tempo — lives in the MainTrack mixer, not directly under LiveSet
     tempo = ls.find("MainTrack/DeviceChain/Mixer/Tempo")
     if tempo is None:
