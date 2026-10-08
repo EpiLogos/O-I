@@ -7,3 +7,9 @@ description = "Audio graph core for the Live shell (M1 of shell/SHELL-BLUEPRINT.
 [dependencies]
 live-dynamics = { path = "../live-dynamics" }
 live-set = { path = "../live-set" }
+# Realtime output only — the offline render path (the acceptance path) stays
+# zero-dep. Default off so the gated tests build without an audio stack.
+cpal = { version = "0.15", optional = true }
+
+[features]
+realtime = ["dep:cpal"]

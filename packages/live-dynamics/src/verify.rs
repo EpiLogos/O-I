@@ -9,6 +9,14 @@ pub const STATIC_TOLERANCE_DB: f64 = 0.5;
 pub const SPECTRAL_MEAN_TOLERANCE_DB: f64 = 1.0;
 pub const SPECTRAL_MAX_BAND_TOLERANCE_DB: f64 = 3.0;
 
+// Glue circuit-model gate thresholds (circuit-model lane, 2026-10-08).
+// STATED BEFORE the fitted closure was calibrated and before any render was
+// measured with the model — see devices/glue-compressor.md
+// "Circuit-model derivation" for the derivation and the fit boundary.
+pub const CIRCUIT_STATIC_TOL_DB: f64 = 1.0;
+pub const CIRCUIT_RELEASE_TAU_TOL: f64 = 0.25;
+pub const CIRCUIT_TAIL_SHAPE_TOL_DB: f64 = 2.0;
+
 // Reverb gate thresholds, stated before the model was fitted. The ±10% /
 // ±20% split mirrors the backlog's reverb row ("RT60 ∝ DecayTime (ms)
 // ±20%") tightened to ±10% at the pin the model was fitted on; the

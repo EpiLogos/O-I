@@ -8,3 +8,5 @@
 
 import './inspector'
 import './clock'
+import './devices'
+import './devices-b2'

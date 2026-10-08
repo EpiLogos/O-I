@@ -174,3 +174,37 @@ CalcMainSingleSample` — a per-sample main kernel
 redistribution). Constant-level reconciliation of delay/feedback internals
 is **remaining work** (backlog); no decompiled claim above contradicts the
 measured tap tables.
+
+## Rebuild coverage and E1 gate (2026-10-08, circuit-model lane)
+
+`packages/live-dynamics/src/echo.rs` now carries the synced-time mapping, the
+filter section and the E1-family tap model, gated by
+`echo_e1_golden_gate` (tests/golden.rs):
+
+- **Synced mapping** (`synced_time_s`): anchored on the one measured cell —
+  (division −4, sixteenth 3, SyncMode 2) at 120 BPM → 0.1875 s = dotted 1/16.
+  Structure: base = 2^(sixteenth−5) beats; SyncMode 2 = dotted ×1.5
+  (triplet ×2/3 and straight ×1 stated unverified). **Division's independent
+  effect is unmeasured** (both channels' divisions −4/−3 land on the same
+  hop): modeled as ×1 and documented in code.
+- **Filter section**: one-pole LP 5000.026 Hz → HP 49.9997 Hz at the preset
+  pins, **stated as fitted** from the D8 smear analysis. Order note (stated
+  inference): the measured −17.1 dB E1-vs-E8 impulse-peak smear requires the
+  LP to act before the HP (LP→HP gives −5.9 dB of it at 44.1 kHz; HP→LP
+  passes the onset at −0.06 dB and cannot smear). The residual ~−11 dB is
+  attributed to the render path (SRC/dither) — boundary, not modeled.
+- **E1 gate result** (E1_IMPULSE_default_v2.aif): six taps found within
+  0.13–1.55 ms of the k×0.1875 s grid (±1 ms held on the first-pass taps;
+  ±2 ms allowed on recirculated taps because the evidence itself records
+  ±1.5 ms of modulation wobble on this grid — "E1/E7 grids match within
+  ±1.5 ms"); all six levels match the dossier table to 0.01 dB and all five
+  per-hop slopes to 0.01 dB (level constants are same-pin fitted to that
+  table; the out-of-sample content is the time grid and the FB
+  proportionality verified across E3/E7 in D4).
+- **Boundary — OUT of the rebuild**: ducking (no visible impulse-table change
+  in D8) and the internal reverb (the between-tap tail: −54 vs −90 dBFS
+  floors) are not modeled; the gate reads tap peaks, which sit above that
+  tail. Modulation is out (grid unchanged in D8). Per-channel measurement is
+  required: the mono mixdown halves every single-channel tap by 6 dB and lets
+  the reverb floor mask the late taps (audio.rs gained
+  `read_aiff_i16_channels` for this).

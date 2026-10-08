@@ -97,6 +97,61 @@ Ship example: `core.inspector` (opened-set JSON) and `core.clock` (stub) —
 `ui/src/panels/inspector.tsx`, `ui/src/panels/clock.tsx`. Read them as the
 reference implementation.
 
+## Device panels (M3 — the editing surface)
+
+The `devices.*` family (`ui/src/panels/devices/`) is the worked example of a
+panel that is more than a view: it **edits the opened set** through its own
+API surface. Three panels are registered — `devices.glue-compressor`,
+`devices.echo`, `devices.reverb` (right-dock, after the Inspector) — for the
+devices whose DSP is modeled and gated in `live-dynamics`.
+
+What makes them one family, not three copies:
+
+- **One generic component.** `devices/DevicePanel.tsx` renders whatever a
+  parameter table holds — Continuous → slider + numeric field (double-click
+  to type), Discrete → stepper + menu, Toggle → switch — with the stored
+  unit and a one-line semantic note under each control (full dossier note as
+  the row tooltip). Nothing is hand-coded per parameter.
+- **Tables come from the backend.** `GET /api/device-descriptors` serves the
+  live-dynamics parameter tables (`src/params.rs` — id, ui_name, stored
+  min/max, unit, kind, labels, notes) keyed by device element name. The UI
+  never re-states a range or a menu.
+- **Values are the document's.** `GET /api/document/device-params?path=
+  &track=&device=` returns the stored `Manual` values (the deep model's
+  parameter walk). `POST /api/document/device-param` with
+  `{path, track, deviceName|deviceIndex, paramId, value}` validates against
+  the table's stored range, sets the `Manual` value and writes the set back
+  (deterministic gzip); it answers with the persisted parameter. Out-of-range
+  or untyped writes are rejected by name with the range in the message.
+- **State lives in the family.** `devices/api.ts` owns the endpoint client;
+  styles inject from `devices/device-styles.ts` (`devp-` classes, design
+  tokens only). The bound track is shown in the panel header and defaults to
+  the first track carrying the device; a selector switches carriers.
+
+A new device panel for a table that `live_dynamics::params::table` already
+serves is ~15 lines: add the element name to `PANEL_DEVICES`
+(`live-shell/src/api.rs`), then one `registerPanel` with
+`devicePanel("<ElementName>", "<Title>")` in `devices/index.tsx`.
+
+## Device panel ports (batch 2 — `devicesb2.*`, the visual family)
+
+The `devices-b2/` family is the other half of the device surface: **faithful
+visual ports** of twelve real device panels (EQ Eight, Auto Filter, Auto
+Pan, Saturator, Drum Buss, Chorus-Ensemble, Delay, Hybrid Reverb, Multiband
+Dynamics, Utility, Drift, Wavetable), rebuilt original from captured
+running-app screenshots (`docs/research/ableton-live-12.0.25/evidence/ui/
+device-panels/`) with the live-dynamics parameter tables as the control
+inventory — every ParamDesc has a control; `Discrete{labels}` renders as a
+menu/segmented with those labels, `Toggle` as a switch.
+
+Where the two families meet: the generic `devices/DevicePanel` edits stored
+values through the M3 API; the `devices-b2/` ports are the layout/interaction
+layer those controls will bind to as per-device edit wiring lands. Port
+state is local until then (corner badge, no prose on the canvas). Shared
+primitives live in `devices-b2/kit.tsx` (`b2-` classes, own injection);
+the capture → panel map and honesty notes are in
+`devices-b2/README.md`.
+
 ## Icons
 
 `icon` is raw SVG path data in a 24x24 stroke space (rendered at 14px,

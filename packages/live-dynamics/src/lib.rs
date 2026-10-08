@@ -5,6 +5,7 @@
 pub mod audio;
 pub mod echo;
 pub mod glue;
+pub mod operator;
 pub mod params;
 pub mod reverb;
 pub mod spectrum;
