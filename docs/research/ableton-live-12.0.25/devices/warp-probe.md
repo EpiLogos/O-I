@@ -278,3 +278,14 @@ source and render, so shift *ratios* remain exact while absolute cent errors
 of ±130–180 cent at the fastest fractions are instrument, not engine).
 
 
+
+## Harness note for future warp renders (2026-10-08, closing batch)
+
+Exports no longer carry 256 s of trailing silence: the render driver now
+steps Live's Export panel Render Length to the set's own arrangement loop
+(the panel is session-persistent and does not sync to the loop by itself —
+see `reconstruction-backlog.md`, "Render-cycle loop-length fix"). Warp sets
+keep the old 512-beat transport loop, so their next re-render should first
+rebuild with the current `build_set.py` (loop = content + 2 beats) or pass
+an explicit length; existing 256 s reference renders remain valid for
+comparison (the extra tail is dither-floor silence).

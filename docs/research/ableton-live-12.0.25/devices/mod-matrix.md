@@ -123,35 +123,62 @@ dependent per-note RMS, untested).
 1/2/3 = no effect · 8/12 = LFO-family (likely, unverified) · 7 = no effect
 on Amp (default-routed to Pitch at 0.0417).**
 
-## Probe attempt: 8/9/12 → Amp (2026-10-08, BLOCKED — environment)
+## Probe attempt: 8/9/12 → Amp (2026-10-08, BLOCKED — route renders silence; mechanism isolated)
 
 The completion probes for 8/12 (and a same-spec S9 confirmation run) were
-built and driven to render, but **every render came back as digital
-silence** (−96.3 dBFS = 16-bit dither floor, no note activity, no between-
-note residual). The sets are NOT in question and the earlier attribution is
-NOT reopened:
+built and driven to render. First pass (17:54–18:05) rendered digital
+silence; the closing Live batch (18:27–19:36) re-ran the full discriminator
+protocol and **confirmed the silence is real, set-specific, and caused by the
+modulator→Amp route itself**:
 
-- `live/WM_S9.als` (17:53 build) is **byte-identical** to
-  `live/midi-wm-s9.als`, which rendered audibly at 13:28 the same day
-  (−33.5 dBFS, notes + release, content end 4.29 s).
-- Operator MIDI sets built by the same builder render audibly in the same
-  Live instance (OP2/OP3 renders, 17:43/17:45, content end 4.1 s).
-- Audio-clip sets (warp lane) render audibly in the same instance.
-- The silence **persists across a graceful quit + clean relaunch** of Live
-  (guardrail recipe, no crash-recovery state).
-- A re-render of the older Wavetable set `WT1_AMPVEL.als` (audible at
-  −63.5 dBFS in its original render) could not be loaded for the
-  discriminator pass (open-handoff flake; not attempted again).
+- **Discriminator PASS.** `WT1_AMPVEL_check.als` (byte-copy of the
+  known-audible set) rendered **audible**, per-note RMS identical to the
+  13:28 reference (−62.30/−62.18/−62.18/−62.18), twice: in the pre-crash
+  instance (18:27) and again on a **fully clean-boot instance** (graceful
+  quit, recovery state wiped, fresh launch, 19:33).
+- **S8/S9/S12 all render digital silence** (−96.3 dBFS dither floor, no
+  note activity) on the clean-boot instance — `WM_S8.aif`/`WM_S12.aif`
+  (fresh, verified export path), `midi-wm-s9.aif` (re-rendered from the
+  original bytes that rendered −31.2 dBFS audible at 13:28).
+  `WM_S9.aif` is a byte-copy (md5-verified) of that `midi-wm-s9.aif`
+  render — `WM_S9.als` and `midi-wm-s9.als` are the same bytes (md5
+  93b71e2b…) — made because the owner held machine focus at the last
+  render slot; a same-name re-render can replace it when Live is free.
+- **Mechanism isolated (WM_BASE control).** `WM_BASE.als` = WM_S8 with the
+  single pin `ModulationAmounts.8[Amp]` zeroed (all else byte-equal) renders
+  **audible at −26.2 dBFS**. So the files load, Wavetable instantiates, the
+  MIDI clip fires, the amp envelope works — **a non-zero Amp-row amount on a
+  modulator-family source (8/9/12) is what silences the voice** (amount 0 →
+  audible; amount 1.0 → exact digital floor).
+- The 13:28 renders of byte-identical sets (S9 flat −31.2, envelope-shaped)
+  therefore reflect an engine behavior that changed on this machine between
+  13:28 and the 17:12 crash and **persists across clean boots**; the app
+  binary is unchanged (Aug 2024 build). Root cause of the behavior change is
+  open (persistent Live state; not pursued further in this batch).
 
-So: Live 12.0.25 on this machine currently mis-instantiates the Wavetable
-(InstrumentVector) device from loose hand-built sets — MIDI clips load
-(window title correct), the export runs, the result is silence — while
-Operator and audio clips are unaffected, and the same bytes rendered
-audibly earlier the same day. The trigger window coincides with the
-17:12 crash + forced pkill-relaunch storm from a parallel lane. S8/S9/S12
-labels (`WM_S*.als`, pins `Conn:Voice_Global_AmpModulation#ModulationAmounts.N=1.0`
-on the standard velocity staircase) are built and waiting; **the next Live
-window should first re-render `WT1_AMPVEL.als` as the discriminator**, then
-the three WM sets. Until then the source map above stands as-is (8/12
-LFO-family = working hypothesis, not verified).
+Two separate environment findings from the same session:
+
+- **Live export crash (real bug, 2 hits):** `LRecordManager::
+  OnCheckFreeDiskSpaceAndFileSizesTimer` SIGSEGV near-null
+  (`Live-2026-10-08-171236.ips` — the storm trigger — and
+  `Live-2026-10-08-184344.ips`, hit during the `midi-wm-a10` export). The
+  crash kills the export mid-flight (no output file); a crash-recovery
+  prompt then stands in the way of the next open. The a10 velocity route was
+  verified only at 13:28 (−35.31/−43.27/−27.35/−48.34); its re-render is
+  still owed.
+- **Harness driver hardened** (`lane3_render.sh` + `lane3_export.applescript`
+  v2): swap-prompt static-text scan now reads inside AX groups (the prompt
+  text moved a level deeper — this was the "open-handoff flake");
+  crash-recovery prompts auto-declined; every export stashes any existing
+  render first and refuses to bless a stale file; the export panel is driven
+  by named-button clicks + field reads instead of blind keystrokes (the
+  go-to desync after relaunch silently ate two exports).
+
+Status of the attribution: **unchanged and still blocked by the silence** —
+the 13:28 evidence (10 = Velocity, 0 = Key, 9/11 = envelope-family,
+5/4/6 = static, 8/12 = LFO-family hypothesis) stands as-is, but until the
+modulator→Amp routes render again, S8/S9/S12 re-renders cannot refine it.
+The `WM_S*.als` sets and the `WM_BASE.als` control remain staged; when the
+routes render audibly again, re-run the three sets and analyze with
+`analyze_wm_sources.py` (per-note RMS + sub-window shape + fundamental).
 

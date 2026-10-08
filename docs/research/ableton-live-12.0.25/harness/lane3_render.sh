@@ -132,7 +132,42 @@ accept_swap_save() {
   end tell' 2>/dev/null
 }
 
-# click "No" on Live's crash-recovery prompt ("Live unexpectedly quit while
+# click OK on Live's "This action will stop audio. Proceed?" prompt — the
+# export requires the transport stopped; buttons sit inside a group (AX drift)
+accept_stop_audio() {
+  osascript -e 'tell application "System Events" to tell process "Live"
+    repeat with w in windows
+      set nm to "?"
+      try
+        set nm to name of w
+      end try
+      if (nm as string) is "" then
+        try
+          repeat with grp in (every UI element of w)
+            try
+              set txs to value of every static text of grp
+              repeat with t in txs
+                if (t as string) starts with "This action will stop audio" then
+                  set bdescs to value of attribute "AXDescription" of every button of grp
+                  repeat with i from 1 to count of bdescs
+                    if item i of bdescs is "OK" then
+                      click button i of grp
+                      return "accepted stop-audio"
+                    end if
+                  end repeat
+                  return "prompt found, OK not found"
+                end if
+              end repeat
+            end try
+          end repeat
+        end try
+      end if
+    end repeat
+    return "no-prompt"
+  end tell' 2>/dev/null
+}
+
+# click OK on Live's crash-recovery prompt ("Live unexpectedly quit while
 # you were working on ..."). The built sets are never modified, so recovery is
 # never wanted on this lane; the prompt's buttons sit inside a group (AX drift).
 decline_crash_recovery() {
@@ -187,7 +222,11 @@ for i in $(seq 1 150); do
     continue
   fi
   if [ "$F" = "Live" ] && [ "$TITLE" = "" ]; then
-    # crash-recovery prompt (unnamed dialog, no document window): decline it
+    # unnamed dialog with no document window: crash-recovery or stop-audio
+    R=$(accept_stop_audio)
+    case "$R" in
+      accepted*) echo "  [stop-audio: $R @${i}]"; sleep 3; continue;;
+    esac
     R=$(decline_crash_recovery)
     case "$R" in
       declined*) echo "  [crash-recovery: $R @${i}]"; sleep 3; continue;;
@@ -228,6 +267,36 @@ if [ "$LOADED" != "1" ]; then
   esac
 fi
 
+# export length: the Export panel's Render Length is session-persistent and
+# does NOT sync to the set's transport loop — pass the set's own loop so the
+# export driver can step the panel sliders to it (4/4 assumed, as pinned)
+LOOP_BEATS=$(python3 - "$ALS" <<'PYEOF'
+import gzip, sys, xml.etree.ElementTree as ET
+with gzip.open(sys.argv[1]) as f:
+    root = ET.parse(f).getroot()
+tr = root.find("LiveSet/Transport")
+lon = tr.find("LoopOn")
+ll = tr.find("LoopLength")
+if lon is not None and lon.get("Value") == "true" and ll is not None:
+    print(ll.get("Value"))
+else:
+    print("")  # loop off -> no length spec; the export panel is left untouched
+PYEOF
+) || LOOP_BEATS=""
+if [ -n "$LOOP_BEATS" ]; then
+LOOP_SPEC=$(python3 -c "
+b = $LOOP_BEATS
+bars = int(b // 4)
+rem = b - bars * 4
+beats = int(rem // 1)
+six = round((rem - beats) * 4)
+print(f'{bars} {beats} {six}')
+")
+else
+LOOP_SPEC=""
+fi
+echo "  [set loop: '${LOOP_BEATS:-off}' -> bars/beats/16ths: '${LOOP_SPEC:-untouched}']"
+
 # export (driver re-guards internally before every keystroke, polls for focus)
 # stash any existing render first: the post-export check only sees "a stable
 # file", which would otherwise bless a stale artifact when the export misfires
@@ -238,7 +307,7 @@ if [ -f "$OUT" ]; then
   [ -f "$OUT.asd" ] && mv "$OUT.asd" "$STASH.asd"
   echo "  [stashed previous render -> $STASH]"
 fi
-EXP=$(osascript "$HARNESS/lane3_export.applescript" "$RENDERS")
+EXP=$(osascript "$HARNESS/lane3_export.applescript" "$RENDERS" "$LABEL" "$LOOP_SPEC")
 echo "  [export: $EXP]"
 case "$EXP" in
   *done*) : ;;
