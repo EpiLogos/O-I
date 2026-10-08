@@ -26,6 +26,34 @@ Rules:
 
 Local preflight: `oi dev gate PRODUCT` builds an isolated candidate and runs the owner and Cradle consumer tests. It is a convenience before pushing, not a second requirement; CI is the record.
 
+For a task spanning repertoire composition, native collaboration and Factory
+delivery, `cross-product.yml` accepts `focused-development=true` with exact
+40-character `ai-kit-revision` and `factory-revision` inputs. The focused job
+confirms both checked-out revisions before executing the owners' repertoire,
+projection, generation, existing TUI application, handoff, team and delivery regressions. It also exercises
+peer retention against Pi 0.84.4's actual session implementation. Its artifact
+contains the requested and observed commits, Git trees, lockfile and binary
+hashes, run/attempt identity and test logs. Native build stamps are pinned to the
+requested cuts and checked against the compiled binaries' reported versions;
+`build-versions.json` preserves that readback beside `source-build-cut.json`.
+A restored binary with a mismatched stamp fails the required job.
+Rust filters must report nonzero passed tests for every selected owner target;
+an empty filter is not verification evidence.
+Ordinary scheduled and manual suite
+runs keep their existing jobs; focused dispatch selects only this job.
+
+```sh
+gh workflow run cross-product.yml --repo EpiLogos/O-I --ref TASK_BRANCH \
+  -f focused-development=true -f ai-kit-revision=AIKIT_COMMIT \
+  -f factory-revision=FACTORY_COMMIT
+```
+
+Dispatch and artifact presence are not readiness. Factory rereads the selected
+hosted run and required checks against the exact candidate revision and Git
+tree, alongside independent review and native publication readback. The
+focused job records deterministic owner execution; provider inference and
+physical Workcell acceptance require their own observed owner evidence.
+
 Consume: the next local session refreshes the accepted source and rebuilds or rebinds the executable it will actually use (`oi dev sync`, `oi dev build`, `oi dev install`). `suite/mainline.json` is the recorded cut an install was made from, a receipt; it is checked for structure in `verify.yml` and is not required to equal every sibling's live main (`verify-mainline-snapshot.py --live` remains a manual comparison).
 
 Adding a check: put it in the job of `verify.yml` that already has its toolchain, or in `cross-product.yml` if it needs another repository. Do not add a workflow.
