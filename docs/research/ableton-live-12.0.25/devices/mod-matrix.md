@@ -122,3 +122,36 @@ dependent per-note RMS, untested).
 **0 = Key · 10 = Velocity · 9/11 = envelopes · 5/4/6 = static offsets ·
 1/2/3 = no effect · 8/12 = LFO-family (likely, unverified) · 7 = no effect
 on Amp (default-routed to Pitch at 0.0417).**
+
+## Probe attempt: 8/9/12 → Amp (2026-10-08, BLOCKED — environment)
+
+The completion probes for 8/12 (and a same-spec S9 confirmation run) were
+built and driven to render, but **every render came back as digital
+silence** (−96.3 dBFS = 16-bit dither floor, no note activity, no between-
+note residual). The sets are NOT in question and the earlier attribution is
+NOT reopened:
+
+- `live/WM_S9.als` (17:53 build) is **byte-identical** to
+  `live/midi-wm-s9.als`, which rendered audibly at 13:28 the same day
+  (−33.5 dBFS, notes + release, content end 4.29 s).
+- Operator MIDI sets built by the same builder render audibly in the same
+  Live instance (OP2/OP3 renders, 17:43/17:45, content end 4.1 s).
+- Audio-clip sets (warp lane) render audibly in the same instance.
+- The silence **persists across a graceful quit + clean relaunch** of Live
+  (guardrail recipe, no crash-recovery state).
+- A re-render of the older Wavetable set `WT1_AMPVEL.als` (audible at
+  −63.5 dBFS in its original render) could not be loaded for the
+  discriminator pass (open-handoff flake; not attempted again).
+
+So: Live 12.0.25 on this machine currently mis-instantiates the Wavetable
+(InstrumentVector) device from loose hand-built sets — MIDI clips load
+(window title correct), the export runs, the result is silence — while
+Operator and audio clips are unaffected, and the same bytes rendered
+audibly earlier the same day. The trigger window coincides with the
+17:12 crash + forced pkill-relaunch storm from a parallel lane. S8/S9/S12
+labels (`WM_S*.als`, pins `Conn:Voice_Global_AmpModulation#ModulationAmounts.N=1.0`
+on the standard velocity staircase) are built and waiting; **the next Live
+window should first re-render `WT1_AMPVEL.als` as the discriminator**, then
+the three WM sets. Until then the source map above stands as-is (8/12
+LFO-family = working hypothesis, not verified).
+

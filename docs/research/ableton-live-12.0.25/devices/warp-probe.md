@@ -179,12 +179,15 @@ not a resample.
   `W2_TEXTURE.aif`, `W3_COMPLEXPRO.aif` (+ `.asd` sidecars)
 - 2× renders: `harness/renders/WS1_TONES_2X.aif`, `WS2_TEXTURE_2X.aif`,
   `WS3_COMPLEXPRO_2X.aif`, `WS4_SWEEP_TONES_2X.aif`
+- Transposition renders: `harness/renders/WT_UP12.aif`, `WT_DN12.aif`
 - Sets: `harness/live/W*.als`, `WS*.als` (stretch edits via
-  `harness/warp_edit.py <set> <mode> <stretch>`)
-- Tools: `harness/warp_edit.py` (clip warp-state editor),
+  `harness/warp_edit.py <set> <mode> <stretch>`), `WT_*.als` (transposition
+  via `harness/warp_edit.py <set> <mode> 1.0 <semitones>`)
+- Tools: `harness/warp_edit.py` (clip warp-state + transposition editor),
   `harness/analyze_warp.py` (1:1 duration + band profile + harmonics),
   `harness/analyze_warp_stretch.py` (stretch-aware matched-window analysis,
-  sweep mode)
+  sweep mode), `harness/analyze_warp_transpose.py` (pitch-shift factor vs
+  generator law + gain map + Nyquist probe)
 - Baseline lineage note: G6_BYPASS_v2/v2b predate the builder's clip-gain
   fix and carry −3.72 dB uniformly; W0_UNWARPED is the unity reference.
 
@@ -220,6 +223,58 @@ Verdict (confidence: high — direct spectral measurement, mapped windows):
   Tones where level continuity matters more than HF cleanliness, Texture
   only for deliberately textured material.
 
-Limitations: single-signal-class probes (sine + sweep); transposition not
-yet probed; the analyzer's Goertzel probe set (1k–10k harmonics) cannot see
-sub-1k artifacts.
+## Transposition probe (D9-continued): ±12 semitones at 1:1, 2026-10-08
+
+Transposition at 1:1 time mapping, closing the "transposition not yet probed"
+limitation of the stretch section. Same lineage (built set, Glue bypassed,
+unity staging) with `signals/sweep-20-20k.wav` (exponential 20 Hz→20 kHz over
+3.0 s at −6 dBFS peak — the exact generator law is `f(t) = 20·(1000)^(t/3)`).
+Clip warped Tones (mode 1), 1:1 marker pair, `PitchCoarse` = ±12 (clip
+children are plain Value elements, semitones; `PitchFine` 0) via the extended
+`warp_edit.py <set> <mode> <stretch> <pitch>`.
+
+- Renders: `WT_UP12` (+12), `WT_DN12` (−12).
+- Analysis: `harness/analyze_warp_transpose.py` — content end, peak frequency
+  at matched sweep fractions vs the shifted generator law (cent error), gain
+  map vs the source file itself (same-window RMS), harmonic artifacts of the
+  local fundamental, Nyquist-folding probe at +12 (sweep end would map to
+  40 kHz > 22.05 kHz Nyquist).
+- Baseline note: W0_UNWARPED is the steps-1k unity reference; for a sweep the
+  comparison baseline is the source file's own generator law + windows (the
+  analyzer reads `signals/sweep-20-20k.wav` directly), which is stronger than
+  a cross-signal band diff.
+
+| render | content end (ratio) | shift vs source-measured peaks | gain map (matched windows) | discrete artifacts |
+|--------|--------------------|--------------------------------|-----------------------------|--------------------|
+| WT_UP12 | 3.029 s (1.0098) | ×1.86–2.22 across fractions, mean ≈ ×2.0 | −0.09…−0.51 dB | 3f −41 dB rel, 2f/4f/6f ≤ −57 rel |
+| WT_DN12 | 3.057 s (1.0190) | ×0.50: +0.7 cent @316 Hz, +4 cent @56 Hz | −0.17…−0.96 dB | 2f −36 dB rel, 3f −44 rel, rest ≤ −49 |
+
+Key reads: at t=1.5 s the −12 render peaks at 316.4 Hz vs theory 316.2 Hz
+(+0.7 cent); the +12 render tracks ×2 everywhere within the sweep-speed bias
+of the probe (the same-bias source-side measurement runs ×0.90–0.94 of theory
+at HF — the bias cancels in render/source). Nyquist probe at +12: no folded
+alias products (end-of-sweep peaks ≤ −79 dBFS ≈ floor) — out-of-band content
+is dropped by the granulator, not resample-folded.
+
+### Transposition verdicts (confidence: high for the mapping, medium for exact levels — single render per direction)
+
+- **Tones transposition is a true pitch shift, not a rate change**: the sweep
+  reads ×2.000 (+12) / ×0.500 (−12) against the source measured under the
+  same probe bias, while duration stays 1:1 (+29/+57 ms grain tails — the
+  same grain-smear signature as the 1:1/2× probes).
+- **Level is preserved** (≤1 dB everywhere, droop toward the HF sweep end).
+- **Artifacts are modest discrete grain products** (≤ −36 dB rel at −12, where
+  the longer period lets 2f stand out; ≤ −41 dB rel at +12).
+- **No Nyquist folding at +12**: content that would land above 22.05 kHz is
+  simply absent; the granulator does not alias it back into band.
+- **PitchCoarse/PitchFine are plain `Value` elements on the clip** (semitones
+  / cents); both values load alongside the 1:1 marker pair without any
+  further clip fields.
+
+Stretch-section limitations carried forward: single-signal-class probes
+(sine + sweep); the Goertzel probe set is measurement-biased at fast sweep
+fractions (±50 ms windows under-bias HF peaks ~10% — this bias is shared by
+source and render, so shift *ratios* remain exact while absolute cent errors
+of ±130–180 cent at the fastest fractions are instrument, not engine).
+
+
