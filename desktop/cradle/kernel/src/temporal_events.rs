@@ -172,7 +172,12 @@ impl TemporalEvent {
     /// ones; the tie-breakers are stream name then within-stream position.
     fn order_key(&self) -> (u8, i64, &str, &str) {
         match self.instant_unix_ms {
-            Some(instant) => (0, instant, self.stream.as_str(), self.stream_position.as_str()),
+            Some(instant) => (
+                0,
+                instant,
+                self.stream.as_str(),
+                self.stream_position.as_str(),
+            ),
             None => (1, 0, self.stream.as_str(), self.stream_position.as_str()),
         }
     }
@@ -217,11 +222,12 @@ impl CivilField {
 
     /// The civil day an instant belongs to, under the policy.
     pub fn day_ref_for(&self, instant: &str) -> Result<String, TemporalEventsError> {
-        let parsed = instant
-            .parse::<jiff::Timestamp>()
-            .map_err(|error| TemporalEventsError::CivilTime {
-                reason: format!("`{instant}` is not an RFC 3339 instant: {error}"),
-            })?;
+        let parsed =
+            instant
+                .parse::<jiff::Timestamp>()
+                .map_err(|error| TemporalEventsError::CivilTime {
+                    reason: format!("`{instant}` is not an RFC 3339 instant: {error}"),
+                })?;
         let local = parsed
             .in_tz(&self.timezone)
             .map_err(|error| TemporalEventsError::CivilTime {
@@ -254,10 +260,7 @@ pub enum Window {
     Day { day_ref: String },
     /// Instants in `[from, to)`; instant-less events have no civil position
     /// and are never answered by a civil window.
-    Between {
-        from_unix_ms: i64,
-        to_unix_ms: i64,
-    },
+    Between { from_unix_ms: i64, to_unix_ms: i64 },
 }
 
 /// The one question the field answers, with its optional axes.
@@ -368,13 +371,13 @@ pub fn project(
                 });
             }
             if let Some(instant) = &event.civil_instant {
-                let parsed = instant
-                    .parse::<jiff::Timestamp>()
-                    .map_err(|error| TemporalEventsError::InvalidRecord {
+                let parsed = instant.parse::<jiff::Timestamp>().map_err(|error| {
+                    TemporalEventsError::InvalidRecord {
                         stream: event.stream.clone(),
                         position: event.stream_position.clone(),
                         reason: format!("`{instant}` is not an RFC 3339 instant: {error}"),
-                    })?;
+                    }
+                })?;
                 event.instant_unix_ms = Some(parsed.as_millisecond());
                 event.day_ref = Some(field.day_ref_for(instant)?);
             }
@@ -495,7 +498,13 @@ mod tests {
     }
 
     fn thought(stream: &str, position: &str, instant: &str, reading: ThoughtType) -> TemporalEvent {
-        let mut event = event(stream, EventKind::Thought, position, Some(instant), "a fixture thought");
+        let mut event = event(
+            stream,
+            EventKind::Thought,
+            position,
+            Some(instant),
+            "a fixture thought",
+        );
         event.thought_type = Some(reading);
         event
     }
@@ -506,9 +515,27 @@ mod tests {
         let fixture = Fixture::new(
             "usage-events",
             vec![
-                event("usage-events", EventKind::Run, "seq-3", Some("2026-10-08T12:56:32+01:00"), "third"),
-                event("usage-events", EventKind::Run, "seq-1", Some("2026-10-08T09:00:00+01:00"), "first"),
-                event("usage-events", EventKind::Run, "seq-2", Some("2026-10-08T10:30:00+01:00"), "second"),
+                event(
+                    "usage-events",
+                    EventKind::Run,
+                    "seq-3",
+                    Some("2026-10-08T12:56:32+01:00"),
+                    "third",
+                ),
+                event(
+                    "usage-events",
+                    EventKind::Run,
+                    "seq-1",
+                    Some("2026-10-08T09:00:00+01:00"),
+                    "first",
+                ),
+                event(
+                    "usage-events",
+                    EventKind::Run,
+                    "seq-2",
+                    Some("2026-10-08T10:30:00+01:00"),
+                    "second",
+                ),
             ],
         );
         let answer = project(
@@ -539,11 +566,23 @@ mod tests {
     fn a_duplicated_stream_position_is_refused_not_merged() {
         let first = Fixture::new(
             "now-clearing",
-            vec![event("now-clearing", EventKind::Return, "returns[1]", Some("2026-10-08T09:00:00+01:00"), "one")],
+            vec![event(
+                "now-clearing",
+                EventKind::Return,
+                "returns[1]",
+                Some("2026-10-08T09:00:00+01:00"),
+                "one",
+            )],
         );
         let second = Fixture::new(
             "now-clearing",
-            vec![event("now-clearing", EventKind::Return, "returns[1]", Some("2026-10-08T10:00:00+01:00"), "two")],
+            vec![event(
+                "now-clearing",
+                EventKind::Return,
+                "returns[1]",
+                Some("2026-10-08T10:00:00+01:00"),
+                "two",
+            )],
         );
         let error = project(
             &[&first, &second],
@@ -615,7 +654,10 @@ mod tests {
 
         let summaries: Vec<&str> = answer.events.iter().map(|e| e.summary.as_str()).collect();
         assert_eq!(summaries, vec!["midnight-boundary", "midday"]);
-        assert!(answer.events.iter().all(|e| e.day_ref.as_deref() == Some("central:day:control:root:2026-10-08")));
+        assert!(answer
+            .events
+            .iter()
+            .all(|e| e.day_ref.as_deref() == Some("central:day:control:root:2026-10-08")));
     }
 
     #[test]
@@ -624,8 +666,20 @@ mod tests {
         let kernel = Fixture::new(
             "kernel-event-log",
             vec![
-                event("kernel-event-log", EventKind::Run, "gen-a/seq-1", None, "state change, no instant"),
-                event("kernel-event-log", EventKind::Run, "gen-a/seq-2", None, "later state change, still no instant"),
+                event(
+                    "kernel-event-log",
+                    EventKind::Run,
+                    "gen-a/seq-1",
+                    None,
+                    "state change, no instant",
+                ),
+                event(
+                    "kernel-event-log",
+                    EventKind::Run,
+                    "gen-a/seq-2",
+                    None,
+                    "later state change, still no instant",
+                ),
             ],
         );
         let timed = Fixture::new(
@@ -670,7 +724,11 @@ mod tests {
         let summaries: Vec<&str> = all.events.iter().map(|e| e.summary.as_str()).collect();
         assert_eq!(
             summaries,
-            vec!["timed", "state change, no instant", "later state change, still no instant"]
+            vec![
+                "timed",
+                "state change, no instant",
+                "later state change, still no instant"
+            ]
         );
         for event in &all.events {
             if event.stream == "kernel-event-log" {
@@ -733,8 +791,20 @@ mod tests {
         let runs = Fixture::new(
             "usage-events",
             vec![
-                event("usage-events", EventKind::Run, "seq-1", Some("2026-10-08T09:00:00+01:00"), "the run asked about"),
-                event("usage-events", EventKind::Run, "seq-2", Some("2026-10-08T09:05:00+01:00"), "another run"),
+                event(
+                    "usage-events",
+                    EventKind::Run,
+                    "seq-1",
+                    Some("2026-10-08T09:00:00+01:00"),
+                    "the run asked about",
+                ),
+                event(
+                    "usage-events",
+                    EventKind::Run,
+                    "seq-2",
+                    Some("2026-10-08T09:05:00+01:00"),
+                    "another run",
+                ),
             ],
         );
         let answer = project(
@@ -756,7 +826,13 @@ mod tests {
     fn an_unparsable_instant_is_refused_not_silently_dropped() {
         let broken = Fixture::new(
             "usage-events",
-            vec![event("usage-events", EventKind::Run, "seq-1", Some("the day before yesterday"), "nonsense")],
+            vec![event(
+                "usage-events",
+                EventKind::Run,
+                "seq-1",
+                Some("the day before yesterday"),
+                "nonsense",
+            )],
         );
         let error = project(
             &[&broken],

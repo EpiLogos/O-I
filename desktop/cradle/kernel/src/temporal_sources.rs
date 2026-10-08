@@ -21,9 +21,7 @@
 
 use crate::events::KernelEventLog;
 use crate::flow::{CentralClient, OwnerCallError};
-use crate::temporal_events::{
-    EventKind, TemporalEvent, TemporalEventsError, TemporalStreamSource,
-};
+use crate::temporal_events::{EventKind, TemporalEvent, TemporalEventsError, TemporalStreamSource};
 use serde_json::{json, Value};
 use std::path::PathBuf;
 use std::process::Command;
@@ -42,17 +40,27 @@ fn unavailable(stream: &str, error: OwnerCallError) -> TemporalEventsError {
     }
 }
 
-fn unix_seconds_instant(stream: &str, position: &str, seconds: i64) -> Result<String, TemporalEventsError> {
+fn unix_seconds_instant(
+    stream: &str,
+    position: &str,
+    seconds: i64,
+) -> Result<String, TemporalEventsError> {
     jiff::Timestamp::from_second(seconds)
         .map(|instant| instant.to_string())
         .map_err(|error| TemporalEventsError::InvalidRecord {
             stream: stream.to_string(),
             position: position.to_string(),
-            reason: format!("`created_at_unix_seconds` ({seconds}) is not a valid instant: {error}"),
+            reason: format!(
+                "`created_at_unix_seconds` ({seconds}) is not a valid instant: {error}"
+            ),
         })
 }
 
-fn unix_millis_instant(stream: &str, position: &str, millis: i64) -> Result<String, TemporalEventsError> {
+fn unix_millis_instant(
+    stream: &str,
+    position: &str,
+    millis: i64,
+) -> Result<String, TemporalEventsError> {
     jiff::Timestamp::from_millisecond(millis)
         .map(|instant| instant.to_string())
         .map_err(|error| TemporalEventsError::InvalidRecord {
@@ -68,13 +76,14 @@ fn require_str<'a>(
     key: &str,
     position: &str,
 ) -> Result<&'a str, TemporalEventsError> {
-    value.get(key).and_then(Value::as_str).ok_or_else(|| {
-        TemporalEventsError::InvalidRecord {
+    value
+        .get(key)
+        .and_then(Value::as_str)
+        .ok_or_else(|| TemporalEventsError::InvalidRecord {
             stream: stream.to_string(),
             position: position.to_string(),
             reason: format!("record carries no string `{key}`"),
-        }
-    })
+        })
 }
 
 // ---------------------------------------------------------------------------
@@ -100,13 +109,14 @@ impl CentralNowListSource {
         if envelope["automatic_agent_or_model_invocation"] == true {
             return Err(refused_reading(STREAM));
         }
-        let records = envelope["records"]
-            .as_array()
-            .ok_or_else(|| TemporalEventsError::InvalidRecord {
-                stream: STREAM.to_string(),
-                position: String::new(),
-                reason: "the field reading carries no `records` array".into(),
-            })?;
+        let records =
+            envelope["records"]
+                .as_array()
+                .ok_or_else(|| TemporalEventsError::InvalidRecord {
+                    stream: STREAM.to_string(),
+                    position: String::new(),
+                    reason: "the field reading carries no `records` array".into(),
+                })?;
         records.iter().map(now_record_to_event).collect()
     }
 }
@@ -227,7 +237,12 @@ pub(crate) fn thought_fixture_to_event(
         .get("content")
         .and_then(Value::as_str)
         .and_then(|content| serde_json::from_str::<Value>(content).ok())
-        .and_then(|parsed| parsed.get("utc").and_then(Value::as_str).map(str::to_string));
+        .and_then(|parsed| {
+            parsed
+                .get("utc")
+                .and_then(Value::as_str)
+                .map(str::to_string)
+        });
     let conforming = fixture.get("conforming").and_then(Value::as_bool) == Some(true);
     let mut evidence = vec![format!("{directory}/{file}")];
     if let Some(revision) = fixture.get("revision").and_then(Value::as_str) {
@@ -284,18 +299,22 @@ impl WikiReturnsPlacementSource {
         const STREAM: &str = "wiki-returns";
         let envelope = self
             .client
-            .run_envelope("central.files.list", json!({ "path": self.path, "project": Value::Null }))
+            .run_envelope(
+                "central.files.list",
+                json!({ "path": self.path, "project": Value::Null }),
+            )
             .map_err(|error| unavailable(STREAM, error))?;
         if envelope["automatic_agent_or_model_invocation"] == true {
             return Err(refused_reading(STREAM));
         }
-        let entries = envelope["entries"]
-            .as_array()
-            .ok_or_else(|| TemporalEventsError::InvalidRecord {
-                stream: STREAM.to_string(),
-                position: self.path.clone(),
-                reason: "the directory reading carries no `entries` array".into(),
-            })?;
+        let entries =
+            envelope["entries"]
+                .as_array()
+                .ok_or_else(|| TemporalEventsError::InvalidRecord {
+                    stream: STREAM.to_string(),
+                    position: self.path.clone(),
+                    reason: "the directory reading carries no `entries` array".into(),
+                })?;
         entries
             .iter()
             .filter(|entry| entry.get("kind").and_then(Value::as_str) == Some("file"))
@@ -353,8 +372,8 @@ impl<'a> KernelEventLogSource<'a> {
             .since(1)
             .into_iter()
             .map(|receipt| {
-                let event = serde_json::to_value(&receipt.envelope.event)
-                    .unwrap_or_else(|_| json!({}));
+                let event =
+                    serde_json::to_value(&receipt.envelope.event).unwrap_or_else(|_| json!({}));
                 let name = event
                     .get("event")
                     .and_then(Value::as_str)
@@ -370,7 +389,9 @@ impl<'a> KernelEventLogSource<'a> {
                         position: format!("seq-{}", receipt.seq),
                         reason: "`observed_at_unix_ms` overflows an instant".into(),
                     })?
-                    .map(|millis| unix_millis_instant(STREAM, &format!("seq-{}", receipt.seq), millis))
+                    .map(|millis| {
+                        unix_millis_instant(STREAM, &format!("seq-{}", receipt.seq), millis)
+                    })
                     .transpose()?;
                 // A payload names its own ref when it has one; the variant
                 // name is the subject otherwise.
@@ -455,11 +476,12 @@ impl AikitHistorySource {
                 ),
             });
         }
-        let envelope: Value = serde_json::from_slice(&output.stdout)
-            .map_err(|error| TemporalEventsError::SourceUnavailable {
+        let envelope: Value = serde_json::from_slice(&output.stdout).map_err(|error| {
+            TemporalEventsError::SourceUnavailable {
                 stream: STREAM.to_string(),
                 detail: format!("aikit history returned an unreadable response: {error}"),
-            })?;
+            }
+        })?;
         if envelope["ok"] != true {
             return Err(TemporalEventsError::SourceUnavailable {
                 stream: STREAM.to_string(),
@@ -469,13 +491,13 @@ impl AikitHistorySource {
                     .to_string(),
             });
         }
-        let entries = envelope["data"]["entries"]
-            .as_array()
-            .ok_or_else(|| TemporalEventsError::InvalidRecord {
+        let entries = envelope["data"]["entries"].as_array().ok_or_else(|| {
+            TemporalEventsError::InvalidRecord {
                 stream: STREAM.to_string(),
                 position: String::new(),
                 reason: "the history reading carries no `entries` array".into(),
-            })?;
+            }
+        })?;
         entries.iter().map(history_entry_to_event).collect()
     }
 }
@@ -567,11 +589,11 @@ mod tests {
         .unwrap();
         let event = now_record_to_event(&record).unwrap();
         assert_eq!(event.kind, EventKind::Now);
+        assert_eq!(event.civil_instant.as_deref(), Some("2026-10-06T21:40:33Z"));
         assert_eq!(
-            event.civil_instant.as_deref(),
-            Some("2026-10-06T21:40:33Z")
+            event.day_ref, None,
+            "day derivation is the projection's act"
         );
-        assert_eq!(event.day_ref, None, "day derivation is the projection's act");
         assert_eq!(event.evidence_refs.len(), 2);
 
         // Through the projection the day arrives, derived from the policy.
@@ -618,8 +640,14 @@ mod tests {
         let event =
             thought_fixture_to_event("central:now:control:root:abc", "dir/T", &conforming).unwrap();
         assert_eq!(event.kind, EventKind::Thought);
-        assert_eq!(event.civil_instant.as_deref(), Some("2026-10-08T08:15:00+01:00"));
-        assert_eq!(event.stream_position, "central:now:control:root:abc#T/a-fixture.json");
+        assert_eq!(
+            event.civil_instant.as_deref(),
+            Some("2026-10-08T08:15:00+01:00")
+        );
+        assert_eq!(
+            event.stream_position,
+            "central:now:control:root:abc#T/a-fixture.json"
+        );
 
         let pre_law: Value = serde_json::from_str(
             r#"{ "file": "older-note.md", "conforming": false, "revision": "central.content-fnv1a64/v1:1:bbbb" }"#,
@@ -707,10 +735,19 @@ mod tests {
         .unwrap();
         let event = history_entry_to_event(&entry).unwrap();
         assert_eq!(event.kind, EventKind::Generation);
-        assert_eq!(event.civil_instant.as_deref(), Some("2026-10-08T02:59:44.933Z"));
+        assert_eq!(
+            event.civil_instant.as_deref(),
+            Some("2026-10-08T02:59:44.933Z")
+        );
         assert_eq!(history_kind_to_event_kind("procedure"), EventKind::Run);
-        assert_eq!(history_kind_to_event_kind("familiarity"), EventKind::Curation);
+        assert_eq!(
+            history_kind_to_event_kind("familiarity"),
+            EventKind::Curation
+        );
         assert_eq!(history_kind_to_event_kind("session-space"), EventKind::Now);
-        assert_eq!(history_kind_to_event_kind("knowledge-route"), EventKind::Knowledge);
+        assert_eq!(
+            history_kind_to_event_kind("knowledge-route"),
+            EventKind::Knowledge
+        );
     }
 }
