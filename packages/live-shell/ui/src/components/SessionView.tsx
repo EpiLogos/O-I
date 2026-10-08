@@ -5,15 +5,19 @@ import { TrackRouting, MixerStrip } from './MixerStrip'
 import {createNativeCompositionPresentationGuard, nativeSourceLanes, selectNativeSource, type CompositionViewSource, type NativeCompositionViewSource} from '../shell/compositionViews'
 import type {NativeSceneAction} from '../shell/nativeContent'
 import {NativeSceneTransport} from './NativeSceneTransport'
+import {playingState, sceneDuration, stopRequest} from './nativeScenePlayback'
+import {sceneStanding} from './nativeSceneList'
 import './NativeCompositionViews.css'
 export type SetSelection = { track: number; scene: number | null; clip?: number }
-export function SessionView({ set, document, selection, select, colors, setColor, native }: {
+export function SessionView({ set, document, selection, select, colors, setColor, native, compactTransport }: {
   set: SetSummary | null; document: SetDocument | null; selection: SetSelection; select: (value: SetSelection) => void
   colors: string[]; setColor: (track: number, value: string) => void
   native?: NativeCompositionViewSource
+  /** The header transport bar is present: the in-view Scene transport keeps only what the bar lacks. */
+  compactTransport?: boolean
 }) {
   const source: CompositionViewSource = native ?? {owner: 'live-set', set, document}
-  if (source.owner === 'expressions') return <NativeSessionContent source={source}/>
+  if (source.owner === 'expressions') return <NativeSessionContent source={source} compactTransport={compactTransport}/>
   if (!set) return <div className="view-empty">Open a Live set from the browser.</div>
   const indexed = set.tracks.map((track, index) => ({ track, index }))
   const master = indexed.find(({ track }) => track.kind === 'master')
@@ -43,7 +47,7 @@ export function SessionView({ set, document, selection, select, colors, setColor
   </div>
 }
 
-function NativeSessionContent({source}: {source: NativeCompositionViewSource}) {
+function NativeSessionContent({source, compactTransport}: {source: NativeCompositionViewSource; compactTransport?: boolean}) {
   const [fault, setFault] = useState<string | null>(null)
   const latest = useRef(source); latest.current = source
   const presentation = useRef(createNativeCompositionPresentationGuard()).current
@@ -79,7 +83,12 @@ function NativeSessionContent({source}: {source: NativeCompositionViewSource}) {
   }
   if(!scenes)return <div className="view-empty">Native Scene membership is unavailable.</div>
   const objectRefs=[...new Set(scenes.scenes.flatMap(row=>row.member_refs))]
-  return <div className="session-view native-composition" onScrollCapture={event=>{const column=event.target as HTMLElement;if(!column.classList.contains('track-slots'))return;for(const other of event.currentTarget.querySelectorAll<HTMLElement>('.track-slots'))if(other!==column&&Math.abs(other.scrollTop-column.scrollTop)>1)other.scrollTop=column.scrollTop}}><NativeSceneTransport source={source}/>
+  // Playing state comes from the owner's playback reading; Stop is one seek to 0 (see nativeScenePlayback).
+  const playback=content.playback, playing=playback?playingState(playback):{playing:false,sceneRef:null}
+  const presented=scenes.scenes.find(row=>row.scene_ref===content.basis.scene_ref)
+  const stop=playback&&presented?stopRequest(playback,presented.scene_ref,sceneDuration(presented.working?.duration)):null
+  const presentedStanding=presented?sceneStanding(presented):null
+  return <div className="session-view native-composition" onScrollCapture={event=>{const column=event.target as HTMLElement;if(!column.classList.contains('track-slots'))return;for(const other of event.currentTarget.querySelectorAll<HTMLElement>('.track-slots'))if(other!==column&&Math.abs(other.scrollTop-column.scrollTop)>1)other.scrollTop=column.scrollTop}}><NativeSceneTransport source={source} compact={compactTransport}/>
     {fault&&<div className="native-composition-caption" role="alert">{fault}</div>}
     <div className="native-session-columns"><div className="session-work-tracks"><div className="session-tracks">
       {objectRefs.map(ref=>{
@@ -98,10 +107,10 @@ function NativeSessionContent({source}: {source: NativeCompositionViewSource}) {
         </section>
       })}
     </div></div><section className="session-main native-scene-master">
-      <div className="track-header">Scenes</div><div className="track-slots">{scenes.scenes.map(row=><div key={row.scene_ref} className={`scene-label${row.scene_ref===content.basis.scene_ref?' selected-scene':''}`}>
+      <div className="track-header"><span>Scenes</span><span className="native-play-state" role="status"><span aria-hidden="true" className={`native-play-dot${playing.playing?' is-playing':''}`}/>{playing.playing?'Playing':'Stopped'}</span>{presentedStanding&&presented&&<small className="native-standing" data-tone={presentedStanding.tone} title={presentedStanding.title}>{presentedStanding.label}</small>}</div><div className="track-slots">{scenes.scenes.map(row=><div key={row.scene_ref} className={`scene-label${row.scene_ref===content.basis.scene_ref?' selected-scene':''}${playing.sceneRef===row.scene_ref?' is-playing':''}`}>
         <button aria-label={`Play whole Scene: ${row.title}`} title={row.material.reason??'Play this whole Scene'} disabled={!ready||!row.material.available} onClick={()=>void sceneAction({action:'play-scene',scene_ref:row.scene_ref})}>▷</button>
-        <button title={`${row.title} · Scene clip details`} disabled={!ready||!row.material.available} onClick={()=>void sceneAction({action:'focus',scene_ref:row.scene_ref},'clip','scene')}>{row.title}</button>
-      </div>)}</div><div className="native-source-controls"><button disabled={!ready} onClick={()=>void settle(()=>source.actions!.selectField(),'device','device')}>Field</button></div>
+        <button title={`${row.title} · ${sceneStanding(row).label} · Scene clip details`} disabled={!ready||!row.material.available} onClick={()=>void sceneAction({action:'focus',scene_ref:row.scene_ref},'clip','scene')}>{row.title}</button>
+      </div>)}</div><div className="native-source-controls"><button aria-label="Stop Scene transport" title={stop?'Stop: pause and return the presented Scene to 0 s':'Nothing is playing or past 0 s'} disabled={!ready||!stop} onClick={()=>stop&&void sceneAction(stop)}>■ Stop</button><button disabled={!ready} onClick={()=>void settle(()=>source.actions!.selectField(),'device','device')}>Field</button></div>
     </section></div>
   </div>
 }

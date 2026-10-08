@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { agentController, dayRead, readAgency, readAgentCard, type AgencyReading, type CardField, type DayReading, type HumanAgentCard, type KernelReceipt, type NativeReview } from '@epilogos/expressions-boundary/cradle'
 import { useWorkspace } from '../shell/workspace'
 import { NativePreparedContext, type NativePreparedContextProps } from './NativePreparedContext'
+import { NativeAgencyParticipation, type NativeAgencyParticipationProps } from './NativeAgencyParticipation'
 
 type ContextTab = 'agents' | 'context' | 'receipts'
 function Field({ label, field }: { label: string; field: CardField | null | undefined }) {
@@ -18,8 +19,9 @@ function Receipt({ receipt }: { receipt: KernelReceipt }) {
 
 /** Read surfaces over the existing native owners. Agency and Day reads never
  * commission work; reading an Agent card requires selecting its disclosed ref. */
-export function NativeContextPanel({ project = 'O-I', preparedContext }: { project?: string; preparedContext?: NativePreparedContextProps }) {
+export function NativeContextPanel({ project = 'O-I', preparedContext, agency }: { project?: string; preparedContext?: NativePreparedContextProps; agency?: NativeAgencyParticipationProps }) {
   const id = useId()
+  const hasAgency = !!agency
   const { transport, reading, selectedSource, receipts, selectSource, workspaceId, accessEpoch, sourceError, sourceReadingCurrent } = useWorkspace()
   const scopeKey = `${workspaceId}|${accessEpoch}|${project}|${JSON.stringify(transport)}`
   const currentScope = useRef(scopeKey)
@@ -50,7 +52,7 @@ export function NativeContextPanel({ project = 'O-I', preparedContext }: { proje
     return () => { ++cardEpoch.current }
   }, [transport, project, scopeKey])
   useEffect(() => {
-    if (tab !== 'agents') return
+    if (tab !== 'agents' || hasAgency) return
     let live = true
     const origin = scopeKey
     const belongs = () => live && currentScope.current === origin
@@ -65,9 +67,9 @@ export function NativeContextPanel({ project = 'O-I', preparedContext }: { proje
       if (belongs()) { setAgencyError(reason instanceof Error ? reason.message : String(reason)) }
     }).finally(() => { if (belongs()) setAgencyLoading(false) })
     return () => { live = false }
-  }, [transport, project, tab, refresh, scopeKey])
+  }, [transport, project, tab, refresh, scopeKey, hasAgency])
   useEffect(() => {
-    if (tab !== 'agents') return
+    if (tab !== 'agents' || hasAgency) return
     let live = true
     const origin = scopeKey
     const belongs = () => live && currentScope.current === origin
@@ -85,7 +87,7 @@ export function NativeContextPanel({ project = 'O-I', preparedContext }: { proje
       if (belongs()) setRosterError(reason instanceof Error ? reason.message : String(reason))
     }).finally(() => { if (belongs()) setRosterLoading(false) })
     return () => { live = false; ++cardEpoch.current }
-  }, [transport, project, rosterScope, tab, refresh, scopeKey])
+  }, [transport, project, rosterScope, tab, refresh, scopeKey, hasAgency])
   useEffect(() => {
     if (tab !== 'context') return
     let live = true
@@ -119,7 +121,8 @@ export function NativeContextPanel({ project = 'O-I', preparedContext }: { proje
     <div className="native-context-header"><div className="native-context-tabs" role="tablist" aria-label="Native work context">{(['agents', 'context', 'receipts'] as const).map(value => <button key={value} type="button" role="tab" id={`${id}-${value}-tab`} aria-selected={tab === value} aria-controls={`${id}-${value}-panel`} onClick={() => setTab(value)}>{value === 'agents' ? 'Agents' : value === 'context' ? 'Context' : 'Receipts'}{value === 'receipts' && receipts.length > 0 && <span className="native-receipt-count">{receipts.length}</span>}</button>)}</div>{tab !== 'receipts' && <button type="button" aria-label={`Refresh ${tab}`} title="Read the current native owner" onClick={() => setRefresh(value => value + 1)} disabled={transport.kind === 'unavailable' || (tab === 'agents' ? agencyLoading : dayLoading)}>↻</button>}</div>
     <div className="native-context-content" role="tabpanel" id={`${id}-${tab}-panel`} aria-labelledby={`${id}-${tab}-tab`}>
       {transport.kind === 'unavailable' && <p className="native-error" role="status">{transport.reason}</p>}
-      {tab === 'agents' && <div className="native-agency">
+      {tab === 'agents' && agency && <NativeAgencyParticipation {...agency}/>}
+      {tab === 'agents' && !agency && <div className="native-agency">
         <label className="native-agent-scope">Agent profiles<select aria-label="Agent profile scope" value={rosterScope} onChange={event => setRosterScope(event.target.value as 'project' | 'central')}><option value="project">{project}</option><option value="central">Central</option></select></label>
         {rosterLoading && <p className="native-empty" role="status">Reading native Agent profiles…</p>}
         {rosterError && <p className="native-error" role="alert">{rosterError}</p>}

@@ -14,3 +14,9 @@
 @media(max-width:560px){.native-force-layout,.native-field-layout{grid-template-columns:1fr}.native-force-surface svg{max-height:170px}.native-control-grid,.native-field-layout .native-control-grid{grid-template-columns:repeat(3,minmax(65px,1fr))}}
 .native-device-light.is-unknown{background:transparent;box-shadow:inset 0 0 0 1px var(--text-dim)}
 .native-world-detail:fullscreen .native-force-surface svg,.native-world-detail:fullscreen .native-field-surface svg{max-height:min(65dvh,560px)}
+.native-control-groups{display:flex;flex-direction:column;gap:10px;min-width:0}.native-control-group{min-width:0}.native-control-group>h4{margin:0 0 4px;font-size:10px;font-weight:600;letter-spacing:.02em;color:var(--text-dim,#a7a7a7)}.native-control-group>p{margin:0 0 5px;font-size:9px;opacity:.65}
+/* The pool is a narrow column in a wide viewport, so panels respond to their own width, not the viewport's. */
+.native-device-editors{container-type:inline-size;container-name:native-devices}
+@container native-devices (max-width:600px){.native-force-layout,.native-field-layout{grid-template-columns:1fr;gap:8px}.native-control-grid,.native-field-layout .native-control-grid{grid-template-columns:repeat(2,minmax(80px,1fr))}.native-field-surface svg,.native-force-surface svg{width:100%;height:auto;max-height:none}}
+@container native-devices (max-width:360px){.native-control-grid,.native-field-layout .native-control-grid{grid-template-columns:1fr}.native-medium-switches{flex-wrap:wrap;gap:6px 12px}}
+

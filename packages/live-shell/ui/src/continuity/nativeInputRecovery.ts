@@ -1,5 +1,7 @@
 import type {NativeEditorChange,NativeEditorReading} from '@epilogos/expressions-boundary/editor'
 import type {PrivateNativeInputReceipt} from './nativeInputs'
+import {validateNativeMorphSetting} from '../../../../expressions-boundary/src/nativeDeviceEdits'
+import {nativeColourInputChanges} from '../components/nativeColourController'
 
 type Copy=PrivateNativeInputReceipt['copy']
 /** Recovery may address only the original native instance and stable state. */
@@ -18,6 +20,7 @@ export function privateNativeInputChanges(copy:Copy,reading:NativeEditorReading,
   if(!privateNativeInputTargetCurrent(copy,reading,requireSelectedState))throw Error('The retained input target is no longer selected or available')
   const {target,input}=copy
   if(!requireSelectedState&&(input.kind!=='gesture'||input.changes.some(change=>change.kind!=='step-timing')))throw Error('Only an active timing handle may edit an unselected stable state')
+  if(target.family?.startsWith('colour:'))return nativeColourInputChanges(copy)
   if(input.kind==='text') {
     if(target.parameter==='glyph-source'&&target.entity_id&&target.step_id)return [{kind:'step-source',entity_id:target.entity_id,step_id:target.step_id,shape:'text',text:input.text}]
     if(!target.parameter||!input.text.trim()||!Number.isFinite(Number(input.text)))throw Error('This retained input needs its original editor or a finite exact parameter value')
@@ -31,6 +34,9 @@ export function privateNativeInputChanges(copy:Copy,reading:NativeEditorReading,
     if(change.kind==='parameter') {
       const prefix=target.scope==='field'?'field.':`entity:${encodeURIComponent(target.entity_id!)}:`
       if(!change.target.startsWith(prefix)||target.parameter!==null&&change.target!==target.parameter)throw Error('The retained gesture crosses a native target')
+    }else if(change.kind==='morph-setting') {
+      const setting=validateNativeMorphSetting(change)
+      if(target.scope!=='field'||target.parameter!==null||target.family!=='morph-setting:'+setting.key)throw Error('The retained Morph setting crosses its original shared Field target')
     }else if(change.kind==='field-setting'||change.kind==='field-font') {
       if(target.scope!=='field')throw Error('This retained gesture cannot change the shared Field')
     }else if(change.kind==='force-mode') {

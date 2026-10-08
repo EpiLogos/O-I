@@ -22,8 +22,8 @@ pub mod transport;
 pub mod wire;
 
 pub use orchestration::{
-    assemble_changeset, canonical_reading_digest, execute_changeset, idempotency_key_of,
-    mint_changeset_id, plan_request, reset_setting, resolve_setting, resolve_setting_address,
+    assemble_changeset, canonical_reading_digest, execute_changeset, execute_reviewed_changeset, idempotency_key_of,
+    mint_changeset_id, plan_request, plan_owner_request, reset_setting, resolve_setting, resolve_setting_address,
     ChangeKind, DesiredChange, DesiredInput, ExecuteReport, KernelError,
 };
 pub use registry::{

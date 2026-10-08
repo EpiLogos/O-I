@@ -120,3 +120,9 @@ an agent dissolving into points), with the received F/H reading kept for
 earlier documents. The desktop declares the person from its settable
 writing identity, and an answering agent's entry declares the live agent's
 own initial and the session ref it answered from.
+
+## Native current-payload observation (2026-10-08)
+
+The operative `ql-flow.html` exposes its existing live closure payload through `__OI_DOCUMENT_PAYLOAD_READ__`, a read-only observation consumed by the original `document-host.js` read contract. Title/entry edits and the form’s own debounced revision remain owned by the original form. This observer introduces no write route or second document model. `src/flow/instance.ts` imports this operative form directly, so fresh Flow copies and candidate builds carry the same seam.
+
+The byte-exact received 0/1 and 4+2 files above remain unchanged. The receiving `document/frame.ts` adapts their exact original closure declaration only in the rendered copy when a live snapshot reader is needed. Generated Beings/Things pages already update their own `ql-doc` island on editing; `src/personal/page.mjs` remains their sole generator source.

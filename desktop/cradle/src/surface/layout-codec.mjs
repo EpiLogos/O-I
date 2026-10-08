@@ -17,9 +17,34 @@
 // Hosted kinds come from the same reviewed source generation as the mounts.
 // Their state stays with their owners, never copied into the arrangement.
 import {hostedSurfaceDescriptors} from '../contributions/registered-kinds.mjs';
+import {validateNativeKnowledgeContext} from '../knowledge/nativeContext.mjs';
 const SURFACE_KINDS = ['source', 'sources', 'knowledge', 'file', 'encounter', 'browser', 'terminal', 'flow', 'draft', 'blank', 'instrument', 'explore', 'presentation', 'agency', 'object', ...hostedSurfaceDescriptors.map(descriptor => descriptor.kind)];
 const ENCOUNTER_PLANES = ['Conversation', 'Activity', 'Context', 'Inspect'];
 const KNOWLEDGE_PLANES = ['graph', 'page'];
+
+/** Core preserves compact application presentation without interpreting it.
+ * Owning applications validate their own payload fields before use. */
+export function validApplicationView(raw) {
+  if (!raw || typeof raw !== 'object' || raw.schema !== 'oi.application-view/v1' || raw.version !== 1 || typeof raw.app_id !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/.test(raw.app_id)) return undefined;
+  if (!raw.payload || typeof raw.payload !== 'object' || Array.isArray(raw.payload)) return undefined;
+  let nodes = 0;
+  const bounded = (value, depth) => {
+    if (++nodes > 512 || depth > 6) return false;
+    if (value === null || typeof value === 'boolean') return true;
+    if (typeof value === 'number') return Number.isFinite(value);
+    if (typeof value === 'string') return value.length <= 4096;
+    if (Array.isArray(value)) return value.length <= 64 && value.every(item => bounded(item,depth + 1));
+    if (typeof value !== 'object' || Object.getPrototypeOf(value) !== Object.prototype) return false;
+    const keys = Object.keys(value);
+    return keys.length <= 64 && keys.every(key => key.length <= 128 && !['__proto__','constructor','prototype'].includes(key) && bounded(value[key],depth + 1));
+  };
+  try {
+    if (!bounded(raw.payload,0)) return undefined;
+    const payload = JSON.stringify(raw.payload);
+    if (payload.length > 16384) return undefined;
+    return {schema:'oi.application-view/v1',version:1,app_id:raw.app_id,payload:JSON.parse(payload)};
+  } catch { return undefined; }
+}
 
 export function validBinding(raw) {
   if (!raw || typeof raw !== 'object') return null;
@@ -46,7 +71,12 @@ export function validBinding(raw) {
   if (o.kind === 'object' && (typeof o.ref !== 'string' || !o.ref.startsWith('oi-object:'))) return null;
   if (o.project !== undefined && typeof o.project !== 'string') return null;
   const address = o.address;
-  if (o.kind === 'knowledge' && (!address || !['wiki', 'source', 'project-map'].includes(address.kind) || typeof address.value !== 'string' || address.value !== o.ref)) return null;
+  const nativeKnowledge = o.view?.nativeKnowledge === undefined ? undefined : validateNativeKnowledgeContext(o.view.nativeKnowledge);
+  if (o.kind === 'knowledge') {
+    if (o.view?.nativeKnowledge !== undefined && !nativeKnowledge) return null;
+    if (address ? !['wiki', 'source', 'project-map'].includes(address.kind) || typeof address.value !== 'string' || address.value !== o.ref
+      : o.view?.knowledgePlane !== 'graph' || !nativeKnowledge?.subject_ref || !nativeKnowledge.native_owner || nativeKnowledge.subject_ref !== o.ref) return null;
+  }
   const location = o.location;
   if (o.kind === 'file' && (!location || location.schema !== 'central.path-ref/v1' || typeof location.ref !== 'string' || location.ref !== o.ref || typeof location.root !== 'string' || typeof location.path !== 'string')) return null;
   const encounter = o.encounter;
@@ -79,11 +109,19 @@ export function validBinding(raw) {
   const viewRaw = o.view && typeof o.view === 'object' ? o.view : {};
   const view = {};
   if (o.kind === 'encounter' && ENCOUNTER_PLANES.includes(viewRaw.encounterPlane)) view.encounterPlane = viewRaw.encounterPlane;
+  if (['file','source','flow'].includes(o.kind) && typeof viewRaw.fileHistory?.open === 'boolean') {
+    const pin = viewRaw.fileHistory;
+    const selected = [pin.revision,pin.expectedRevision].every(value => typeof value === 'string' && value.length > 0 && value.length <= 4096);
+    if ((pin.revision === undefined && pin.expectedRevision === undefined) || selected) {
+      view.fileHistory = {open:pin.open,...(selected?{revision:pin.revision,expectedRevision:pin.expectedRevision}:{})};
+    }
+  }
   // The knowledge view is one compact unit: a plane that is not a plane
   // invalidates the whole view (drop, never guess); a well-typed origin
   // graph rides along only with a valid plane.
   if (o.kind === 'knowledge' && KNOWLEDGE_PLANES.includes(viewRaw.knowledgePlane)) {
     view.knowledgePlane = viewRaw.knowledgePlane;
+    if (nativeKnowledge) view.nativeKnowledge = nativeKnowledge;
     if (typeof viewRaw.graphOrigin === 'string' && viewRaw.graphOrigin.trim()) view.graphOrigin = viewRaw.graphOrigin;
   }
   const terminal = o.kind === 'terminal' ? { cwd: typeof o.terminal?.cwd === 'string' ? o.terminal.cwd : undefined } : undefined;

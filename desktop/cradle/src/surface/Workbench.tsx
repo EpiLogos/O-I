@@ -50,6 +50,17 @@ import type { ActionArg, LayoutState, Pane, SurfaceId } from "./types";
 import { TAB_LIST_WIDTH_MAX, TAB_LIST_WIDTH_MIN, MODE_CURATION } from "../workspace/mode";
 
 export interface WorkbenchProps {
+  /** A receiving frame without dedicated mode stages presents centres in panes. */
+  centreBodiesInPanes?: boolean;
+  /** Exact hosted native World identity, when disclosed by the receiving owner. */
+  sourceWorldRef?: string;
+  /** Kinds already owned by a separate native application host. */
+  omitBodyKinds?: readonly string[];
+  /** Conceal the pane's active body when its receiving frame is hidden. */
+  presented?: boolean;
+  /** An absent optional owner retains its binding and names the local reason. */
+  bodyUnavailable?: (binding: import("./types").SurfaceBinding) => string | undefined;
+  onHostedState?: (id: string, state: import("../expressions/hostedApp").HostedAppState) => void;
   workspaceName: string;
   onView:(id:string,view:NonNullable<import("./types").SurfaceBinding["view"]>)=>void;
   state: LayoutState;
@@ -79,6 +90,9 @@ export interface WorkbenchProps {
    * binding renders. */
   factoryTasks?: {
     project?: string;
+    sourceWorldRef?: string;
+    current?: () => boolean;
+    unavailable?: string;
     accompanying?: {ref: string; project: string; space: string};
     onOpenTask?: (row: import("../encounter/EncounterList").EncounterRow) => void | Promise<void>;
     onMessage?: (message: string) => void;
@@ -171,6 +185,14 @@ export function Workbench(props: WorkbenchProps) {
       </main>
     </div>
   );
+}
+
+// First presentation is admission only for an explicitly receiving frame.
+// Once admitted, concealment retains the original body and its owner model.
+function ReceivingBody({concealed, children}: {concealed: boolean; children: ReactNode}) {
+  const [admitted, setAdmitted] = useState(!concealed);
+  useEffect(() => {if (!concealed) setAdmitted(true);}, [concealed]);
+  return admitted ? children : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -432,10 +454,11 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
         {tabs.length ? tabs.map(id => {
           const binding = state.surfaces[id];
           if (!binding || id === props.stageBindingId) return null;
-          const concealed = id !== active;
+          const concealed = props.presented === false || id !== active;
           if (concealed && CONCEAL_RELEASES.has(binding.kind)) return null;
+          const body = <SurfaceBody sourceWorldRef={props.sourceWorldRef} binding={binding} centreBodiesInPanes={props.centreBodiesInPanes} omitBodyKinds={props.omitBodyKinds} bodyUnavailable={props.bodyUnavailable} onHostedState={props.onHostedState} treeMode={state.mode ?? "base"} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} openPresentation={props.openPresentation} openExplore={props.openExplore} factoryCentre={props.factoryCentre} factoryTasks={props.factoryTasks} subject={props.subject} />;
           return <div key={id} className="surface-retained" data-surface-kind={binding.kind} hidden={concealed}>
-            <SurfaceBody binding={binding} treeMode={state.mode ?? "base"} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} openPresentation={props.openPresentation} openExplore={props.openExplore} factoryCentre={props.factoryCentre} factoryTasks={props.factoryTasks} subject={props.subject} />
+            {props.presented === undefined ? body : <ReceivingBody concealed={concealed}>{body}</ReceivingBody>}
           </div>;
         }) : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
       </div>
@@ -474,14 +497,24 @@ class SurfaceBoundary extends Component<{children: ReactNode; title: string}, {f
 /** The surface body by kind, isolated from unrelated working panes. */
 export function SurfaceBody(props: Parameters<typeof SurfaceBodyImpl>[0]) {
   const label = props.binding.pending ? `Opening ${props.binding.title}…` : props.binding.title;
-  return <SurfaceBoundary key={props.binding.id} title={props.binding.title}><Suspense fallback={<Loading label={`Loading ${label}`} scope="surface"/>}><SurfaceBodyImpl {...props}/></Suspense></SurfaceBoundary>;
+  return <SurfaceBoundary key={props.binding.id} title={props.binding.title}><Suspense fallback={<Loading label={`Loading ${label}`} scope="surface"/>}><>{props.bodyUnavailable ? <RetainedAdmission reason={props.bodyUnavailable(props.binding)}><SurfaceBodyImpl {...props} bodyUnavailable={undefined}/></RetainedAdmission> : <SurfaceBodyImpl {...props}/>}</></Suspense></SurfaceBoundary>;
+}
+function RetainedAdmission({reason, children}: {reason?: string; children: ReactNode}) {
+  const [admitted, setAdmitted] = useState(!reason);
+  useEffect(() => {if (!reason) setAdmitted(true);}, [reason]);
+  return <div className="receiving-surface-admission" style={{display:"flex",flexDirection:"column",height:"100%",minHeight:0}}>{reason&&<p role="status" className="source-note">{reason}</p>}<div hidden={!!reason} style={{display:reason?"none":"flex",flex:1,minHeight:0,flexDirection:"column"}}>{admitted?children:null}</div></div>;
 }
 function SurfaceBodyImpl({
   binding,onView,
   openSource, openKnowledge, openPresentation, openExplore,
-  factoryCentre, factoryTasks, subject, treeMode,
+  factoryCentre, factoryTasks, subject, treeMode, centreBodiesInPanes, omitBodyKinds, bodyUnavailable, sourceWorldRef, onHostedState,
 }: {
   binding: import("./types").SurfaceBinding;
+  sourceWorldRef?: WorkbenchProps["sourceWorldRef"];
+  centreBodiesInPanes?: WorkbenchProps["centreBodiesInPanes"];
+  omitBodyKinds?: WorkbenchProps["omitBodyKinds"];
+  bodyUnavailable?: WorkbenchProps["bodyUnavailable"];
+  onHostedState?: WorkbenchProps["onHostedState"];
   onView:WorkbenchProps["onView"];
   openKnowledge: WorkbenchProps["openKnowledge"];
   openSource: (source: ListedSource) => void;
@@ -502,6 +535,9 @@ function SurfaceBodyImpl({
    * body right here (spec §7.1). */
   treeMode: import("../workspace/mode").WorkspaceMode;
 }) {
+  if (omitBodyKinds?.includes(binding.kind)) return null;
+  const unavailable = bodyUnavailable?.(binding);
+  if (unavailable) return <p role="status" className="source-note">{unavailable}</p>;
   if (binding.pending) return <Loading label={`Opening ${binding.title}…`} scope="surface"/>;
   // Retained centre kinds (expressions/techne/epi-logos/system/factory —
   // surface/retention.tsx) mount their ONE body directly, in place, inside
@@ -513,17 +549,17 @@ function SurfaceBodyImpl({
   // composes the frame-built chat node — the frame passes
   // CradleFrame.factoryCentre down, so there is no second direct arm here.
   if (isRetainedCentreKind(binding.kind) || binding.hosted) {
-    if (binding.kind === MODE_CURATION[treeMode].centreKind) return null;
-    return <ModeCentreBody binding={binding} subject={subject} factoryCentre={factoryCentre} factoryTasks={factoryTasks}/>;
+    if (!centreBodiesInPanes && binding.kind === MODE_CURATION[treeMode].centreKind) return null;
+    return <ModeCentreBody binding={binding} subject={subject} factoryCentre={factoryCentre} factoryTasks={factoryTasks} onHostedState={reading=>onHostedState?.(binding.id,reading)}/>;
   }
   if(binding.kind==="explore"||binding.kind==="presentation")return <ExploreSurface key={binding.id} binding={binding} onOpenPresentation={openPresentation} onOpenExplore={openExplore}/>;
-  if(binding.kind==="encounter")return <EncounterSurface key={binding.id} binding={binding} onView={view=>onView(binding.id,view)}/>;
+  if(binding.kind==="encounter")return <EncounterSurface key={binding.id} binding={binding} sourceWorldRef={(binding.view as (NonNullable<typeof binding.view> & {sourceWorldRef?: string}) | undefined)?.sourceWorldRef ?? sourceWorldRef} onView={view=>onView(binding.id,view)}/>;
   if (binding.kind === "terminal") return <TerminalSurface binding={binding} />;
   if (binding.kind === "flow") return <FlowSurface binding={binding} />;
   if (binding.kind === "draft") return <DraftSurface binding={binding} />;
   if (binding.kind === "blank") return <FreshSurface binding={binding} />;
   if (binding.kind === "browser") return <BrowserSurface binding={binding} />;
-  if (binding.kind === "file") return <FileSurface key={binding.id} binding={binding}/>;
+  if (binding.kind === "file") return <FileSurface key={binding.id} binding={binding} onView={view=>onView(binding.id,view)}/>;
   if (binding.kind === "object") return <ObjectSurface key={binding.id} binding={binding}/>;
   // The Expressions centre IS the application (owner ruling 2026-09-19):
   // the Point-Cloud-Demo workspace hosted as-is, full-screen, its own UI and
@@ -532,7 +568,7 @@ function SurfaceBodyImpl({
   // Expressions surface is retired from the centre; the centre kinds
   // themselves present through the retention outlet dispatched above.
   if (binding.kind === "agency") return <AgencySurface project={binding.project} onMessage={message=>window.dispatchEvent(new CustomEvent("oi:workspace-message",{detail:{message}}))} onOpenSettings={()=>window.dispatchEvent(new CustomEvent("oi:open-settings"))} />;
-  if (binding.kind === "knowledge") return <KnowledgeSurface binding={binding} onOpen={openKnowledge} />;
+  if (binding.kind === "knowledge") return <KnowledgeSurface binding={binding} nativeContext={binding.view?.nativeKnowledge} onOpen={openKnowledge} />;
   if (binding.kind === "source") {
     return <SourceSurface binding={binding} />;
   }

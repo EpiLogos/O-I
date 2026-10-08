@@ -38,7 +38,18 @@
     "initial_recovery_failure": "evidence/restart-initial-failure.json",
     "isolation": "evidence/isolation-result.json",
     "transferred_native_reopen": "evidence/isolation-reopen-result.json",
-    "native_owner_basis": "Existing shipped bridge built 2026-10-07 11:55; current renderer/editor source. No newest-kernel-source build claim."
+    "native_owner_basis": "Existing shipped bridge built 2026-10-07 11:55; current renderer/editor source. No newest-kernel-source build claim.",
+    "receiving_vite_types": {
+      "passed": true,
+      "command": "npm --prefix packages/instrument-editors run check:receiving"
+    },
+    "bundler_conformance": "evidence/bundler-conformance.json",
+    "independent_packaging_review": "evidence/packaging-review.json",
+    "latest_shared_compile_collision": {
+      "command": "NODE_OPTIONS=--max-old-space-size=2048 npm --prefix packages/instrument-editors run check / run build",
+      "error": "GraphCanvas resolves navigationMinimap.ts instead of NavigationMinimap.tsx; missing component/controller exports",
+      "status": "repair in progress by shared UI owner"
+    }
   },
   "remaining": [
     "Compiled host registration and rack/Browser receiving",
@@ -62,8 +73,19 @@
     ]
   },
   "git": {
-    "committed": false,
+    "committed": true,
     "installed": false,
-    "shared_files_edited": false
+    "shared_files_edited": false,
+    "foundation_commit": "d195306a3"
+  },
+  "integration": {
+    "owner_authorization": "lets commit and integrate properly with the UI shell thread",
+    "ui_thread": "01a116e5-0e01-7ea1-bde3-4ede463be984",
+    "ui_thread_title": "Integrate Epi-Logos into Ableton",
+    "same_branch": true,
+    "cherry_pick_required": false,
+    "receiving_owner_notified": true,
+    "native_mount_verified": false,
+    "shared_collision": "UI shell owner repairing NavigationMinimap.tsx/navigationMinimap.ts collision; no package-side shared edit"
   }
 }

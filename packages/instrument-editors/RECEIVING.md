@@ -3,6 +3,37 @@
 All product writes are in this package. Shared owners consume these additive
 ports in their normal integration lane; no new plugin runtime is required.
 
+## Import into the current shell
+
+The package is committed on the same env-1 branch as the shell. It needs no
+cherry-pick. Add `"@epilogos/instrument-editors": "file:../../instrument-editors"`
+to the shell UI's existing package dependencies. Its normal source exports
+include each editor separately, the frame, presentation, panels, contribution
+and native owner adapters. No development entrance is imported by those exports.
+
+The adopted research source needs its existing module aliases and complete
+MapLibre worker. The package exports their build adapter:
+
+```ts
+import {instrumentEditorBundler} from '@epilogos/instrument-editors/vite';
+// In the existing Vite configuration:
+plugins: [react(), instrumentEditorBundler()]
+```
+
+For source imports, the shell's existing `tsconfig.json` can extend
+`../../instrument-editors/tsconfig.json` to receive its native module/type paths;
+retain the shell's own `include` and compiler checks. The adapter preserves existing host React aliases; otherwise it resolves the
+canonical React and react-dom installations from the receiving shell root. The
+standalone entrance/build names Cradle as its explicit runtime root. React19
+alias preservation is exercised, but full editor support currently retains its
+React18 peer contract. `npm --prefix
+packages/instrument-editors run build` compiles the public production entry,
+without fixtures or the controlled native receiver. This proves bundling;
+actual component mounting and native presentation acknowledgement still require
+the following owner hooks.
+
+## Bound receiving ports
+
 1. **Current contribution registry / Browser / rack.** Register descriptors from
    `instrumentEditorContribution(definition, owner, Component)`. Its only extra
    descriptor fields are `editorPresentation` and `targetIds`. Close the
@@ -41,7 +72,10 @@ ports in their normal integration lane; no new plugin runtime is required.
    recovery. Scene timing, split, reorder and branches consume published
    current native commands when available; absent commands remain disabled.
 6. **Palace.** Supply `PalaceEditorHost` from actual expression read/list/edit,
-   exact CAS and published native readback. Publish composition changes back
+   exact CAS and published native readback. Its current native contract also
+   requires `authoredRevision` from the retained DocumentStore revision and
+   `canCompose` from actual transaction/pending/draft standing. The editor
+   retains that stamp with every room/name draft and refuses silent rebasing. Publish composition changes back
    through the state owner. Supply `PalaceIntegralHost` for disclosed integral
    reading/context and acknowledged native Return execution. A computed Return
    route is not execution or human acceptance.

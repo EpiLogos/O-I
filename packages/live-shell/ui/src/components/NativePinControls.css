@@ -1,0 +1,15 @@
+/* Pin mode: shell tokens only. The pin is a small target on each control; amber marks the pinned/active state. */
+.bar-pin-mode{display:inline-flex;align-items:center;gap:4px;flex:none}
+.bar-pin-chip{display:inline-flex;gap:1px;padding:1px;border:1px solid var(--line);border-radius:4px}
+.native-transport .bar-pin-chip button{border-color:transparent;background:transparent}
+.native-transport .bar-pin-chip button[aria-checked=true]{background:var(--bg-3);color:var(--accent)}
+.pin-affordance{display:inline-flex;align-items:center;gap:3px;position:relative;margin-left:4px}
+.pin-button{min-width:22px;height:22px;padding:0 4px;border:1px solid var(--line);border-radius:3px;background:var(--bg-2);color:var(--text-dim);font-size:12px;line-height:1;cursor:pointer}
+.pin-button[aria-pressed=true]{color:var(--accent);border-color:var(--accent)}
+.pin-button:focus-visible{outline:1px solid var(--accent);outline-offset:1px}
+.pin-button:disabled{opacity:.4;cursor:default}
+.pin-scope{font-size:9px;color:var(--text-dim);border:1px solid var(--line);border-radius:2px;padding:0 3px}
+.pin-fault{position:absolute;top:100%;left:0;z-index:40;padding:2px 6px;border:1px solid var(--accent);border-radius:3px;background:var(--bg-2);color:var(--accent);font-size:10px;width:max-content;max-width:240px;white-space:normal}
+.world-property-rows > li{display:flex;align-items:center}
+.world-property-rows > li > .world-property-row{flex:1 1 auto;min-width:0}
+.native-number > span .pin-affordance{vertical-align:middle}

@@ -26,7 +26,7 @@
 .native-chosen-draft{display:flex;flex-wrap:wrap;gap:3px;font-size:8px;margin-top:4px;color:var(--accent)}
 .native-chosen-draft>span{width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .native-chosen-draft button{font-size:8px;padding:1px 3px}
-.native-chosen-error,.native-chosen-unavailable{display:block;font-size:9px;line-height:1.35;overflow-wrap:anywhere;margin:4px 0;color:#e9b299}
+.native-chosen-error,.native-chosen-unavailable{display:block;font-size:9px;line-height:1.35;overflow-wrap:anywhere;margin:4px 0;color:var(--rec)}
 .native-chosen-unavailable{color:var(--text-dim)}
 .native-chosen-manage{display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding:5px}
 .native-chosen-manage>select{max-width:100%;font-size:9px}
@@ -35,3 +35,17 @@
 .native-chosen-manage[hidden]{display:none}
 .native-chosen-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;flex:1;padding:22px 12px;color:var(--text-dim);min-height:110px;font-size:11px}
 @media(max-width:720px){.native-chosen-grid{grid-auto-columns:112px}}
+
+.native-chosen-editor button{min-height:22px}
+.native-chosen-editor[data-drop=valid]{outline:1px solid var(--accent);outline-offset:-1px}
+.native-chosen-editor[data-drop=invalid]{outline:1px dashed var(--rec);outline-offset:-1px}
+.native-chosen-drop{margin:0;padding:3px 6px;font-size:10px;line-height:1.35;overflow-wrap:anywhere}
+.native-chosen-drop.is-valid{color:var(--accent)}
+.native-chosen-drop.is-invalid{color:var(--rec)}
+.native-chosen-item{position:relative}
+.native-chosen-item[data-drop-edge=before]::before,.native-chosen-item[data-drop-edge=after]::after{content:"";position:absolute;top:0;bottom:0;width:2px;background:var(--accent);z-index:1}
+.native-chosen-item[data-drop-edge=before]::before{left:0}
+.native-chosen-item[data-drop-edge=after]::after{right:0}
+.native-chosen-item.is-dragging{opacity:.45}
+.native-chosen-handle{min-width:22px;cursor:grab;touch-action:none}
+.native-chosen-handle:active{cursor:grabbing}

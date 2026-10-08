@@ -16,6 +16,14 @@ import {withHostedDescriptor} from '../../../../../desktop/cradle/src/contributi
 import type {SurfaceBinding} from '../../../../../desktop/cradle/src/surface/types'
 import {registeredHostedSurfaces} from '../../../../../desktop/cradle/src/contributions/generated'
 import {contributionRegistrationFailure} from '../native/contributions'
+import {connectTechneInstrumentRequests} from '../native/techneInstrumentOpen'
+import {NATIVE_OPEN_STUDIO, NATIVE_PRESENT_EXPRESSIONS, parseNativeOpenStudio} from '../native/openStudio'
+import {NATIVE_ENGINE_COMMAND, parseNativeEngineCommand, setNativeEngineMounted} from '../native/engineCommand'
+import {stageEngine} from '../native/stageCommands'
+import type {StudioSection} from '@epilogos/expressions-boundary'
+import type {HostedAppState, StageCommand, StageResult} from '@epilogos/expressions-boundary'
+import {NativeStageTools} from '../components/NativeStageTools'
+import {publishFrameTakeLink} from '../native/frameTakes'
 
 interface NativeWork {expression_ref: string; title: string; revision: number}
 const expressionDescriptor = registeredHostedSurfaces.find(row => row.descriptor.kind === 'expressions')?.descriptor
@@ -40,6 +48,7 @@ export function ExpressionsPanel() {
   const navigator = useRef<ReturnType<typeof createNativeTechneNavigator> | null>(null)
   const stopSelection = useRef<(() => void) | null>(null)
   const pendingOpen = useRef<string | null>(null)
+  const pendingStudio = useRef<StudioSection | null>(null)
   const workspace = useWorkspace()
   const book = useContinuity(), kernel = useKernel()
   const bookRef = useRef(book)
@@ -60,6 +69,15 @@ export function ExpressionsPanel() {
   const [fault, setFault] = useState<string | null>(null)
   const [hostFault, setHostFault] = useState<string | null>(null)
   const [surfaceFault, setSurfaceFault] = useState<string | null>(null)
+  const [stage, setStage] = useState<HostedAppState | null>(null)
+  // Stage controls go through the mounted host only; the answer settles the toolbar's own refusal line.
+  const stageRun = (command: StageCommand): Promise<StageResult> => {
+    if (!host.current) throw Error('No Expressions application is mounted')
+    return host.current.stageCommand(command)
+  }
+  // The shell's transport and Clip Takes tab reach the frame only through this link (native/frameTakes.ts).
+  useEffect(() => {publishFrameTakeLink({state: stage, run: host.current ? stageRun : null})}, [stage])
+  useEffect(() => () => publishFrameTakeLink({state: null, run: null}), [])
 
   useEffect(() => {
     if (!qualified || !workspaceRef.current.accessReady) return
@@ -72,6 +90,7 @@ export function ExpressionsPanel() {
     let editor: NativeEditorController | null = null
     let stopEditor: (() => void) | null = null
     let stopFacade: (() => void) | null = null
+    let stopInstruments: (() => void) | null = null
     let facadeGeneration = 0
     let facade: {frame: HTMLIFrameElement; state: () => ReturnType<ExpressionsHost['getState']>} | null = null
     let readingQueued = false
@@ -102,20 +121,24 @@ export function ExpressionsPanel() {
       const rebind = () => {
         const request = ++facadeGeneration
         stopFacade?.(); stopFacade = null
+        stopInstruments?.(); stopInstruments = null
         stopSelection.current?.(); stopSelection.current = null
         navigator.current?.dispose(); navigator.current = null
         const access = workspaceRef.current, epoch = access.accessEpoch
-        if (!live || !access.accessReady || !mounted) return
+        const isCurrent = () => live && request === facadeGeneration && workspaceRef.current.nativeAccessCurrent(epoch) && workspaceRef.current.accessReady && !!mounted
+        if (!isCurrent()) return
         void readShellConfig().then(current => {
-          if (!live || request !== facadeGeneration || !workspaceRef.current.nativeAccessCurrent(epoch) || !mounted) return
+          if (!isCurrent() || !mounted) return
           const registrationFailure = contributionRegistrationFailure(expressionDescriptor, current.contributions)
           if (registrationFailure) throw Error(registrationFailure)
           if (JSON.stringify([current.world_scope, current.backing_id, current.profile_scope]) !== JSON.stringify([config.world_scope, config.backing_id, config.profile_scope])) throw Error('This retained Expression belongs to another native ground or installation profile')
-          if (facade) stopFacade = createCradleOwners(access.transport, {project: 'O-I', retainSelectionOnDispose: true, isCurrent: () => live && workspaceRef.current.nativeAccessCurrent(epoch) && workspaceRef.current.accessReady}).attach?.(facade.frame, facade.state) ?? null
+          if (facade) stopFacade = createCradleOwners(access.transport, {project: 'O-I', retainSelectionOnDispose: true, isCurrent}).attach?.(facade.frame, facade.state) ?? null
           navigator.current = createNativeTechneNavigator({transport: access.transport, host: mounted.host,
-            isPresented: () => live && workspaceRef.current.nativeAccessCurrent(epoch) && workspaceRef.current.accessReady && modeRef.current === 'techne' && presented(), onError: fail})
+            isPresented: () => isCurrent() && modeRef.current === 'techne' && presented(), onError: cause => {if (isCurrent()) fail(cause)}})
+          stopInstruments = connectTechneInstrumentRequests({host:mounted.host,current:()=>workspaceRef.current,
+            isPresented:()=>isCurrent()&&presented()})
           if (modeRef.current === 'techne' && presented()) stopSelection.current = navigator.current.connectSelectionRequests()
-        }).catch(fail)
+        }).catch(cause => {if (isCurrent()) fail(cause)})
       }
       requalify.current = rebind
       owners.attach = (frame, state) => {facade = {frame, state}; rebind(); return () => {stopFacade?.(); stopFacade = null; facade = null}}
@@ -153,6 +176,8 @@ export function ExpressionsPanel() {
         isPresented: presented,
         onState: state => {
           if (!live) return
+          setStage(previous => JSON.stringify(previous) === JSON.stringify(state) ? previous : state)
+          setNativeEngineMounted(!!state.nativeScene)
           workspaceRef.current.publishReading(state)
           if (state.nativeScene) {
             const owner = bookRef.current, selected = selectionOwner.current
@@ -169,6 +194,7 @@ export function ExpressionsPanel() {
           setHostFault(value === 'ready' ? null : reason ?? null)
         }},
         onHostRequest: request => {if (request.request === 'workspace-mode' && (request.mode === 'expressions' || request.mode === 'techne')) workspace.setMode(request.mode)},
+        onStudioResult: result => {if (live && !result.ok) setFault(result.error)},
       })
       host.current = mounted.host
       editor = createNativeEditorClient(mounted.host)
@@ -181,6 +207,32 @@ export function ExpressionsPanel() {
       // The boot deep link opens this work after the native channel arrives.
       // Posting it again would retain a second copy during initial recovery.
     })().catch(fail).finally(() => {starting.current = false})
+    // A device's open-studio request. Ignored unless native work is mounted.
+    // Otherwise the centre is revealed first; the section opens once this
+    // body is presented (visible() below flushes it).
+    const flushStudio = () => {
+      const section = pendingStudio.current
+      if (!section || !mounted || !presented()) return
+      pendingStudio.current = null
+      try {mounted.host.openStudio(section)} catch (cause) {fail(cause)}
+    }
+    const openStudio = (event: Event) => {
+      const section = parseNativeOpenStudio((event as CustomEvent<unknown>).detail)
+      if (!live || !section || !mounted) return
+      pendingStudio.current = section
+      if (presented()) flushStudio()
+      else window.dispatchEvent(new Event(NATIVE_PRESENT_EXPRESSIONS))
+    }
+    window.addEventListener(NATIVE_OPEN_STUDIO, openStudio)
+    // A physics device's runtime action, run by the mounted host as one engine stage command. Refusals show in this panel.
+    const engineCommand = (event: Event) => {
+      const request = parseNativeEngineCommand((event as CustomEvent<unknown>).detail)
+      if (!live || !request) return
+      if (!mounted) {setFault('No native Expression is mounted.'); return}
+      try {void mounted.host.stageCommand(stageEngine(request.action, request.confirmed)).then(result => {if (live && !result.ok) setFault(result.error)}, fail)}
+      catch (cause) {fail(cause)}
+    }
+    window.addEventListener(NATIVE_ENGINE_COMMAND, engineCommand)
     const visible = () => {
       host.current?.setPresented()
       if (presented()) refreshEditor()
@@ -188,15 +240,17 @@ export function ExpressionsPanel() {
       if (deepPresented && navigator.current && !stopSelection.current) stopSelection.current = navigator.current.connectSelectionRequests()
       else if (!deepPresented && stopSelection.current) {stopSelection.current(); stopSelection.current = null}
       if (pendingOpen.current && presented()) {const ref = pendingOpen.current; pendingOpen.current = null; openNative(ref)}
+      flushStudio()
     }
     const examine = () => {if (live) workspace.setMode('techne')}
     window.addEventListener('oi:epi-examine', examine)
     const observer = new MutationObserver(visible)
     for (let parent: HTMLElement | null = target; parent; parent = parent.parentElement) observer.observe(parent, {attributes: true, attributeFilter: ['hidden', 'inert', 'style', 'class']})
-    return () => {live = false; ++facadeGeneration; openRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); window.removeEventListener('oi:epi-examine', examine);
+    return () => {live = false; ++facadeGeneration; openRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
       stopSelection.current?.(); stopSelection.current = null; navigator.current?.dispose(); navigator.current = null;
+      stopInstruments?.(); stopInstruments = null;
       stopEditor?.(); editor?.dispose(); workspace.attachEditor(null); workspace.publishEditorReading(null);
-      mounted?.dispose(); host.current = null}
+      mounted?.dispose(); host.current = null; setNativeEngineMounted(false)}
   }, [qualified, attempt])
   useEffect(() => {
     if (!workspace.accessReady || !kernel.operationReady || (book.current.layout.mode !== 'expressions' && book.current.layout.mode !== 'techne')) return
@@ -262,6 +316,7 @@ export function ExpressionsPanel() {
     {hostFault && <div role="alert" className="inhabitant-fault">{hostFault}</div>}
     {surfaceFault && <div role="alert" className="inhabitant-fault">{surfaceFault}</div>}
     {fault && <div role="alert" className="inhabitant-fault">{fault}</div>}
+    <NativeStageTools state={stage} run={host.current ? stageRun : null} />
     {!host.current && !starting.current && <button type="button" onClick={() => retry(value => value + 1)}>Reopen native work</button>}
     <div ref={container} className="expressions-application" />
   </div>

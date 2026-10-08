@@ -10,11 +10,11 @@ button:focus-visible,input:focus-visible { outline:1px solid var(--accent); outl
 input { min-width:0; border:1px solid var(--line); background:var(--bg-1); padding:3px 5px; border-radius:0 }
 .micro-label { font-size:10px; color:var(--text-faint) }
 .tag { font-size:10px; color:var(--text-dim) }
-.frame { height:100%; display:grid; grid-template-columns:var(--browser-w) minmax(0,1fr) 0px; grid-template-rows:64px minmax(0,1fr) var(--detail-h) 28px; grid-template-areas:'transport transport transport' 'browser center dock' 'chain chain dock' 'status status status' }
+.frame { height:100%; display:grid; grid-template-columns:var(--browser-w) minmax(0,1fr) 0px; grid-template-rows:var(--transport-h) minmax(0,1fr) var(--detail-h) 28px; grid-template-areas:'transport transport transport' 'browser center dock' 'chain chain dock' 'status status status' }
 .frame.browser-hidden { grid-template-columns:0 minmax(0,1fr) 0 }
 .frame.dock-open { grid-template-columns:var(--browser-w) minmax(0,1fr) 260px }
 .frame.browser-hidden.dock-open { grid-template-columns:0 minmax(0,1fr) 260px }
-.frame.detail-hidden { grid-template-rows:64px minmax(0,1fr) 0 28px }
+.frame.detail-hidden { grid-template-rows:var(--transport-h) minmax(0,1fr) 0 28px }
 .transport { grid-area:transport; display:flex; flex-direction:column }
 .set-title { height:20px; text-align:center; color:var(--text-dim); font-weight:600; overflow:hidden; white-space:nowrap; text-overflow:ellipsis }
 .transport-controls { display:flex; align-items:center; flex:1 }
@@ -108,7 +108,7 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 @media(max-width:1000px) { :root { --session-slot-w:80px} .frame.dock-open { grid-template-columns:var(--browser-w) minmax(0,1fr) 210px } .meter-field { display:none } .detail-inspector { width:140px } }
 @media(max-width:760px) { :root { --session-slot-w:68px} .browser-search { padding:3px } .position-field { padding:3px 5px } .detail-inspector { width:118px } .track-reading { height:88px } .mixer-unavailable { height:104px } .track-slots { min-height:208px } .statusbar-counts { font-size:9px } .frame.dock-open { grid-template-columns:0 minmax(0,1fr) 210px } .frame.dock-open .browser { display:none } .arrange-lane-label,.arrange-header-space { width:140px } }
 /* Second evidence pass: complete control geometry, reading values only from native contracts. */
-:root { --session-slot-w:68px; --browser-w:clamp(176px,22.4vw,430px); --detail-h:clamp(180px,27.5vh,330px) }
+:root { --transport-h:64px; --session-slot-w:68px; --browser-w:clamp(176px,22.4vw,430px); --detail-h:clamp(180px,27.5vh,330px) }
 .frame { position:relative; padding:0 6px 0; gap:0; background:var(--bg-1) }
 .transport { margin:0 -6px; padding:3px 10px 8px; background:var(--bg-1); border-bottom:3px solid var(--line) }
 .transport-controls { gap:7px }
@@ -274,7 +274,7 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .statusbar-path { background:var(--bg-0); padding:2px 5px }
 .statusbar-track { min-width:90px; max-width:140px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; color:var(--text-dim) }
 .statusbar-mini-meter { color:var(--accent); font-size:17px; line-height:18px }
-.browser-resizer { position:absolute; left:calc(var(--browser-w) + 2px); top:64px; bottom:calc(var(--detail-h) + 28px); width:6px; cursor:col-resize; z-index:3; touch-action:none }
+.browser-resizer { position:absolute; left:calc(var(--browser-w) + 2px); top:var(--transport-h); bottom:calc(var(--detail-h) + 28px); width:6px; cursor:col-resize; z-index:3; touch-action:none }
 .detail-resizer { position:absolute; left:6px; right:6px; bottom:calc(var(--detail-h) + 25px); height:6px; z-index:3; cursor:row-resize; touch-action:none }
 .browser-resizer:focus-visible,.detail-resizer:focus-visible { outline:1px solid var(--accent) }
 @media(max-width:1400px) { .transport-scale,.transport-loop { display:none } .transport-system { margin-left:10px } }
@@ -373,3 +373,6 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .browser-residence[hidden], .dock-residence[hidden] { display: none; }
 .native-foundation-fault { position: fixed; z-index: 90; bottom: 28px; left: 12px; max-width: min(640px, calc(100vw - 24px)); padding: 8px 12px; background: #251e1c; color: #edc9bc; border: 1px solid #705344; font-size: 12px; }
 .native-foundation-pending { position: fixed; z-index: 90; bottom: 3px; left: 32px; color: var(--muted); font-size: 11px; pointer-events: none; }
+
+/* The Expressions bar carries a second row of pinned controls (NativeBarStrip): the header grows to hold it. */
+.frame:has(.native-transport-pins) { --transport-h:98px }

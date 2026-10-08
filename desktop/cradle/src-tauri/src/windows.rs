@@ -115,7 +115,11 @@ pub fn window_detach(
         workspace_id,
         binding,
     };
-    let builder = WebviewWindowBuilder::new(&app, &label, WebviewUrl::App("index.html".into()))
+    #[cfg(feature = "native_shell")]
+    let asset = "app/index.html";
+    #[cfg(not(feature = "native_shell"))]
+    let asset = "index.html";
+    let builder = WebviewWindowBuilder::new(&app, &label, WebviewUrl::App(asset.into()))
         .title(format!("{} — O-I", record.binding.title))
         .inner_size(800.0, 650.0)
         .min_inner_size(400.0, 300.0)
@@ -240,21 +244,63 @@ pub fn window_detach(
     Ok(())
 }
 #[tauri::command]
-pub fn window_binding(app: AppHandle, window: Window) -> Result<Detached, String> {
+pub fn window_binding(app: AppHandle, window: tauri::WebviewWindow, label: Option<String>) -> Result<Detached, String> {
+    #[cfg(feature = "native_shell")]
+    crate::native_shell::admit_candidate_webview(&window)?;
+    let label = detached_binding_label(window.label(), label.as_deref())?;
     app.state::<Windows>()
         .0
         .lock()
         .map_err(|_| "Window state unavailable")?
-        .get(window.label())
+        .get(label)
         .cloned()
         .ok_or_else(|| "This window has no detached binding".into())
 }
+
+fn detached_binding_label<'a>(caller: &'a str, target: Option<&'a str>) -> Result<&'a str, &'static str> {
+    match target {
+        Some(label) if caller == "main" => Ok(label),
+        Some(_) => Err("Only the main workspace can inspect another detached window binding"),
+        None => Ok(caller),
+    }
+}
+
+#[cfg(test)]
+mod detached_binding_lookup_tests {
+    use super::detached_binding_label;
+    #[test]
+    fn original_self_lookup_and_main_owner_lookup_are_preserved() {
+        assert_eq!(detached_binding_label("surface-1", None), Ok("surface-1"));
+        assert_eq!(detached_binding_label("main", Some("surface-1")), Ok("surface-1"));
+    }
+    #[test]
+    fn detached_callers_cannot_override_their_registered_label() {
+        assert!(detached_binding_label("surface-1", Some("surface-2")).is_err());
+        assert!(detached_binding_label("surface-1", Some("surface-1")).is_err());
+    }
+}
 #[tauri::command]
-pub fn window_redock(window: Window) -> Result<(), String> {
+pub fn window_redock(app: AppHandle, window: tauri::WebviewWindow) -> Result<(), String> {
     if window.label() == "main" {
         return Err("The workspace window cannot re-dock itself".into());
     }
-    window.close().map_err(|e| e.to_string())
+    #[cfg(feature = "native_shell")]
+    {
+        crate::native_shell::admit_candidate_webview(&window)?;
+        let detached = app.state::<Windows>().0.lock().map_err(|_| "Window state unavailable")?
+            .get(window.label()).cloned().ok_or("This window has no detached binding")?;
+        if detached.binding.kind == "browser" {
+            crate::browser::return_to_main(&app, &detached.binding.id)?;
+        }
+        // The candidate receiver acknowledged its own document checkpoint
+        // before this native owner release; preserve transfer failures above.
+        window.destroy().map_err(|e| e.to_string())
+    }
+    #[cfg(not(feature = "native_shell"))]
+    {
+        let _ = app;
+        window.close().map_err(|e| e.to_string())
+    }
 }
 /// A Scene portal may return only its exact admitted detached Surface.
 /// Closing follows the existing Destroyed -> window-redock lifecycle.

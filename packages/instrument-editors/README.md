@@ -6,6 +6,16 @@ current O:I editor and native owners. It does not own the Browser, rack, Clip
 engine, field renderer, workspace store or window runtime.
 
 `src/index.ts` exports components, instrument constraints and receiving adapters.
+Per-instrument source exports and `@epilogos/instrument-editors/vite` let the
+shell import the production components through its normal package mechanism.
+The build adapter adopts the existing research aliases and complete native
+MapLibre worker. `npm --prefix packages/instrument-editors run build` compiles
+the public component entry without the development entrance or fixtures.
+`npm --prefix packages/instrument-editors run test:bundler` checks the actual
+receiving Vite6 resolver and offline MapLibre worker through browser rendering,
+data updates and resizing. `run check:receiving` verifies strict Vite6 config
+types. The worker conformance data is mathematical GeoJSON, separately labelled
+from native source and provider acceptance.
 The development entrance at `http://127.0.0.1:4298/` retains every opened editor;
 switching editors does not replace its binding or discard pending input.
 

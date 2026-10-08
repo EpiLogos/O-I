@@ -1,0 +1,12 @@
+/* Expanded device panel in the Browser's contextual pool: the whole panel of one device, under its header. */
+.native-device-pool{display:flex;flex-direction:column;min-width:0;min-height:0;font-size:11px;color:var(--text);background:var(--bg-2)}
+.native-device-pool-head{display:flex;flex-wrap:wrap;align-items:center;gap:4px;min-height:26px;padding:2px 4px;border-bottom:1px solid var(--line);background:var(--bg-1)}
+.native-device-pool-title{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.native-device-pool button{min-height:22px;padding:2px 7px;font:inherit;font-size:10px;color:inherit;background:var(--bg-3);border:1px solid var(--line);border-radius:2px;white-space:nowrap;cursor:pointer}
+.native-device-pool button:disabled{opacity:.45;cursor:default}
+.native-device-pool button:focus-visible{outline:1px solid var(--accent);outline-offset:-1px}
+.native-device-pool .native-device-pool-add:not(:disabled){border-color:var(--accent)}
+.native-device-pool-close{min-width:22px;padding:2px 4px}
+.native-device-pool-error{margin:0;padding:3px 6px;border-bottom:1px solid var(--line);color:var(--rec);font-size:10px;line-height:1.35;overflow-wrap:anywhere}
+.native-device-pool-body{min-height:0;overflow:auto;padding:4px}
+.world-browser-categories .world-context-pool.is-device{flex:0 0 62%;max-height:none}

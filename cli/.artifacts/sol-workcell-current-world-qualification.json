@@ -1,0 +1,178 @@
+{
+  "command": [
+    "/Users/admin/Central/Work/O-I/target/debug/oi",
+    "current-world",
+    "--json"
+  ],
+  "candidate_binary": "/Users/admin/Central/Work/O-I/target/debug/oi",
+  "source": "/Users/admin/Central/worktrees/env-1/o-i/cli/src/current_world.rs",
+  "source_sha256": "6c18583543f3fbcde69770cbce33af13796a4ab17c672fb56338d4bc76b6543b",
+  "candidate_binary_sha256": "0baf156726bf9025d92e61803712bd220d33575e2d2d3e98a58e5bd3eee628a1",
+  "build_command": "CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/Users/admin/Central/Work/O-I/target cargo build --manifest-path cli/Cargo.toml --bin oi --locked --offline",
+  "build_exit_code": 0,
+  "build_duration": "7m16s",
+  "installed_baseline": {
+    "command": [
+      "/Users/admin/.local/bin/oi",
+      "current-world",
+      "--json"
+    ],
+    "seconds": 7.329417832996114,
+    "exit_code": 0,
+    "stdout_bytes": 3693,
+    "stdout_sha256": "d66d99d8709f87f8de8764b9195ae6673318cd1fbae98102189d602e1a02ecfb",
+    "warning": "current Workcell status failed with exit code 7",
+    "replaced": false
+  },
+  "seconds": 9.404038542008493,
+  "exit_code": 0,
+  "stdout_bytes": 3661,
+  "stdout_sha256": "58cd7340f3dc3f2389da8ebaca855dd220464ea4166f8ab20dea58dddc7bf0a0",
+  "stdout": "{\n  \"schema\": \"oi.current-world/v2\",\n  \"personal_ground\": \"/Users/admin/Central\",\n  \"current_machine\": {\n    \"role\": \"current\",\n    \"central_source\": \"Control/machines/current.json\",\n    \"workcell_ref\": \"workcell:mac\",\n    \"health\": \"healthy\"\n  },\n  \"positions\": [\n    {\n      \"position\": 0,\n      \"product_id\": \"central\",\n      \"public_name\": \"Central\",\n      \"native_owner\": \"https://github.com/EpiLogos/Central\",\n      \"accepted_revision\": \"39efa03ea8607bdd8a79b0e317457c2ccc3ead4c\",\n      \"canonical_namespace\": \"central\",\n      \"compatibility_aliases\": [\n        \"ctrl\"\n      ],\n      \"state\": \"registered\",\n      \"present\": true,\n      \"native_location\": \"/Users/admin/Library/Application Support/OI/bin/ctrl\",\n      \"version\": \"ctrl 0.1.0 (128df0a4c236)\",\n      \"modality\": \"developer-source\"\n    },\n    {\n      \"position\": 1,\n      \"product_id\": \"actuation\",\n      \"public_name\": \"Actuation\",\n      \"native_owner\": \"https://github.com/EpiLogos/Actuation\",\n      \"accepted_revision\": \"67e6b296b85bd3eb1554802fd55a476c474aa566\",\n      \"canonical_namespace\": \"actuation\",\n      \"compatibility_aliases\": [],\n      \"state\": \"registered\",\n      \"present\": true,\n      \"native_location\": \"/Users/admin/Library/Application Support/OI/bin/actuation\",\n      \"version\": \"actuation 0.2.1\",\n      \"modality\": \"developer-source\"\n    },\n    {\n      \"position\": 2,\n      \"product_id\": \"ai-kit\",\n      \"public_name\": \"AIKit\",\n      \"native_owner\": \"https://github.com/EpiLogos/ai-kit\",\n      \"accepted_revision\": \"8ef8a4f02ee9e095281d2d03d3e711404ead074a\",\n      \"canonical_namespace\": \"aikit\",\n      \"compatibility_aliases\": [\n        \"kit\"\n      ],\n      \"state\": \"registered\",\n      \"present\": true,\n      \"native_location\": \"/Users/admin/Library/Application Support/OI/bin/aikit\",\n      \"version\": \"aikit 0.1.0 (fd3a58615c7f)\",\n      \"modality\": \"developer-source\"\n    },\n    {\n      \"position\": 3,\n      \"product_id\": \"software-factory\",\n      \"public_name\": \"Software Factory\",\n      \"native_owner\": \"https://github.com/EpiLogos/Factory\",\n      \"accepted_revision\": \"a335048b0a5b907adc5d09f0dcbda05b98f79a05\",\n      \"canonical_namespace\": \"factory\",\n      \"compatibility_aliases\": [],\n      \"state\": \"registered\",\n      \"present\": true,\n      \"native_location\": \"/Users/admin/Library/Application Support/OI/bin/factory\",\n      \"version\": \"factory 0.1.0 (60f5e4c637ee)\",\n      \"modality\": \"developer-source\"\n    },\n    {\n      \"position\": 4,\n      \"product_id\": \"workcell\",\n      \"public_name\": \"Workcell\",\n      \"native_owner\": \"https://github.com/EpiLogos/Workcell\",\n      \"accepted_revision\": \"0c3ad1efafdeb254366b7b6122306fe657916a10\",\n      \"canonical_namespace\": \"workcell\",\n      \"compatibility_aliases\": [],\n      \"state\": \"registered\",\n      \"present\": true,\n      \"native_location\": \"/Users/admin/Library/Application Support/OI/bin/workcell\",\n      \"version\": \"workcell 0.1.0 (c7261e23bc93)\",\n      \"modality\": \"developer-source\"\n    },\n    {\n      \"position\": 5,\n      \"product_id\": \"quaternal-logic\",\n      \"public_name\": \"Quaternal Logic\",\n      \"native_owner\": \"https://github.com/EpiLogos/QL-MEF\",\n      \"accepted_revision\": \"4276b94157058d0b211be20b4ebf5587fcb85a72\",\n      \"canonical_namespace\": \"ql\",\n      \"compatibility_aliases\": [],\n      \"state\": \"registered\",\n      \"present\": true,\n      \"native_location\": \"/Users/admin/Library/Application Support/OI/bin/ql\",\n      \"version\": \"ql 0.1.0 (ba4c5cfee09e)\",\n      \"modality\": \"developer-source\"\n    }\n  ],\n  \"context_frame\": {\n    \"containing_frame\": \"cf5\",\n    \"install_mode\": null,\n    \"present_positions\": [\n      0,\n      1,\n      2,\n      3,\n      4,\n      5\n    ]\n  },\n  \"warnings\": []\n}\n",
+  "stderr": "",
+  "reading": {
+    "schema": "oi.current-world/v2",
+    "personal_ground": "/Users/admin/Central",
+    "current_machine": {
+      "role": "current",
+      "central_source": "Control/machines/current.json",
+      "workcell_ref": "workcell:mac",
+      "health": "healthy"
+    },
+    "positions": [
+      {
+        "position": 0,
+        "product_id": "central",
+        "public_name": "Central",
+        "native_owner": "https://github.com/EpiLogos/Central",
+        "accepted_revision": "39efa03ea8607bdd8a79b0e317457c2ccc3ead4c",
+        "canonical_namespace": "central",
+        "compatibility_aliases": [
+          "ctrl"
+        ],
+        "state": "registered",
+        "present": true,
+        "native_location": "/Users/admin/Library/Application Support/OI/bin/ctrl",
+        "version": "ctrl 0.1.0 (128df0a4c236)",
+        "modality": "developer-source"
+      },
+      {
+        "position": 1,
+        "product_id": "actuation",
+        "public_name": "Actuation",
+        "native_owner": "https://github.com/EpiLogos/Actuation",
+        "accepted_revision": "67e6b296b85bd3eb1554802fd55a476c474aa566",
+        "canonical_namespace": "actuation",
+        "compatibility_aliases": [],
+        "state": "registered",
+        "present": true,
+        "native_location": "/Users/admin/Library/Application Support/OI/bin/actuation",
+        "version": "actuation 0.2.1",
+        "modality": "developer-source"
+      },
+      {
+        "position": 2,
+        "product_id": "ai-kit",
+        "public_name": "AIKit",
+        "native_owner": "https://github.com/EpiLogos/ai-kit",
+        "accepted_revision": "8ef8a4f02ee9e095281d2d03d3e711404ead074a",
+        "canonical_namespace": "aikit",
+        "compatibility_aliases": [
+          "kit"
+        ],
+        "state": "registered",
+        "present": true,
+        "native_location": "/Users/admin/Library/Application Support/OI/bin/aikit",
+        "version": "aikit 0.1.0 (fd3a58615c7f)",
+        "modality": "developer-source"
+      },
+      {
+        "position": 3,
+        "product_id": "software-factory",
+        "public_name": "Software Factory",
+        "native_owner": "https://github.com/EpiLogos/Factory",
+        "accepted_revision": "a335048b0a5b907adc5d09f0dcbda05b98f79a05",
+        "canonical_namespace": "factory",
+        "compatibility_aliases": [],
+        "state": "registered",
+        "present": true,
+        "native_location": "/Users/admin/Library/Application Support/OI/bin/factory",
+        "version": "factory 0.1.0 (60f5e4c637ee)",
+        "modality": "developer-source"
+      },
+      {
+        "position": 4,
+        "product_id": "workcell",
+        "public_name": "Workcell",
+        "native_owner": "https://github.com/EpiLogos/Workcell",
+        "accepted_revision": "0c3ad1efafdeb254366b7b6122306fe657916a10",
+        "canonical_namespace": "workcell",
+        "compatibility_aliases": [],
+        "state": "registered",
+        "present": true,
+        "native_location": "/Users/admin/Library/Application Support/OI/bin/workcell",
+        "version": "workcell 0.1.0 (c7261e23bc93)",
+        "modality": "developer-source"
+      },
+      {
+        "position": 5,
+        "product_id": "quaternal-logic",
+        "public_name": "Quaternal Logic",
+        "native_owner": "https://github.com/EpiLogos/QL-MEF",
+        "accepted_revision": "4276b94157058d0b211be20b4ebf5587fcb85a72",
+        "canonical_namespace": "ql",
+        "compatibility_aliases": [],
+        "state": "registered",
+        "present": true,
+        "native_location": "/Users/admin/Library/Application Support/OI/bin/ql",
+        "version": "ql 0.1.0 (ba4c5cfee09e)",
+        "modality": "developer-source"
+      }
+    ],
+    "context_frame": {
+      "containing_frame": "cf5",
+      "install_mode": null,
+      "present_positions": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "warnings": []
+  },
+  "observed_native_machine": {
+    "role": "current",
+    "central_source": "Control/machines/current.json",
+    "workcell_ref": "workcell:mac",
+    "health": "healthy"
+  },
+  "observed_warnings": [],
+  "private_candidate_binary": "/Users/admin/Central/worktrees/env-1/o-i/cli/.artifacts/sol-scoped-current-world-oi-0baf156726bf9025",
+  "private_candidate_binary_sha256": "0baf156726bf9025d92e61803712bd220d33575e2d2d3e98a58e5bd3eee628a1",
+  "timing_method": "seconds measures packet wall time from before source/binary hashing through the native subprocess result; it is not an isolated subprocess benchmark",
+  "observed_workcell_native_owner": {
+    "position": 4,
+    "product_id": "workcell",
+    "public_name": "Workcell",
+    "native_owner": "https://github.com/EpiLogos/Workcell",
+    "accepted_revision": "0c3ad1efafdeb254366b7b6122306fe657916a10",
+    "canonical_namespace": "workcell",
+    "compatibility_aliases": [],
+    "state": "registered",
+    "present": true,
+    "native_location": "/Users/admin/Library/Application Support/OI/bin/workcell",
+    "version": "workcell 0.1.0 (c7261e23bc93)",
+    "modality": "developer-source"
+  },
+  "observed_present_product_ids": [
+    "central",
+    "actuation",
+    "ai-kit",
+    "software-factory",
+    "workcell",
+    "quaternal-logic"
+  ]
+}

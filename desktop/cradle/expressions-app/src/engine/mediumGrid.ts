@@ -126,7 +126,7 @@ export function mediumTrilinearWeights(fx: number, fy: number, fz: number): numb
  * (free-slip) instead of leaking beyond it, and a full cell away contributes
  * nothing.
  */
-export function mediumSplatSliceWeight(fz: number, n: number, offset: number): number {
+export function mediumSplatSliceWeight(fz: number, _n: number, offset: number): number {
   const target = Math.round(fz) + offset;
   return Math.max(0, 1 - Math.abs(fz - target));
 }

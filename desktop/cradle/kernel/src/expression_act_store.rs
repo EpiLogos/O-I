@@ -88,7 +88,9 @@ impl ActStore {
     /// The store under the process's O:I home: `$OI_HOME`, else `~/.oi` —
     /// the same resolution the recovery store uses.
     pub fn discover() -> Option<Self> {
-        std::env::var_os("OI_HOME")
+        std::env::var_os("OI_EXPRESSION_HOME")
+            .filter(|v| !v.is_empty())
+            .or_else(|| std::env::var_os("OI_HOME"))
             .map(PathBuf::from)
             .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".oi")))
             .map(|home| Self::at_home(&home))

@@ -1,8 +1,8 @@
 {
-  "expression_ref": "expression:modulation-editor-60100d85-89ef-4873-9de6-c3c88da72593",
-  "scene_ref": "expression:modulation-editor-60100d85-89ef-4873-9de6-c3c88da72593:scene:main",
-  "checkpoint_id": "expression:modulation-editor-60100d85-89ef-4873-9de6-c3c88da72593",
-  "checkpoint_revision": 94,
+  "expression_ref": "expression:modulation-editor-83b364d8-6dad-4c4e-a5b7-907b0bef53ea",
+  "scene_ref": "expression:modulation-editor-83b364d8-6dad-4c4e-a5b7-907b0bef53ea:scene:main",
+  "checkpoint_id": "expression:modulation-editor-83b364d8-6dad-4c4e-a5b7-907b0bef53ea",
+  "checkpoint_revision": 148,
   "confirmed": [
     "retained owner edit",
     "native material readback",

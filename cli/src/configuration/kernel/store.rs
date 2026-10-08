@@ -162,6 +162,17 @@ impl ConfigurationStore {
         Ok(path)
     }
 
+    /// First admission publishes an immutable review identity without replacing
+    /// an existing record. The no-replace publication also fences concurrent admissions.
+    pub fn admit_changeset(&self, changeset: &ChangeSet) -> Result<PathBuf, String> {
+        changeset.validate()?;
+        let path = self.changeset_path(&changeset.changeset_id);
+        let bytes = serde_json::to_vec_pretty(changeset)
+            .map_err(|error| format!("cannot encode changeset: {error}"))?;
+        publish_mode(&path, &bytes, false)?;
+        Ok(path)
+    }
+
     pub fn load_changeset(&self, changeset_id: &str) -> Result<Option<ChangeSet>, String> {
         let path = self.changeset_path(changeset_id);
         let Some(bytes) = read_regular(&path)? else {
@@ -181,7 +192,7 @@ impl ConfigurationStore {
             match serde_json::from_slice::<ChangeSet>(&bytes) {
                 Ok(changeset) => changesets.push(changeset),
                 Err(error) => {
-                    return Err(format!("invalid changeset {}: {error}", entry.display()))
+                    return Err(format!("invalid changeset {}: {error}", entry.display()));
                 }
             }
         }
@@ -398,6 +409,10 @@ fn refuse_corrupt_overwrite<T: serde::de::DeserializeOwned>(
 }
 
 fn publish(path: &Path, bytes: &[u8]) -> Result<(), String> {
+    publish_mode(path, bytes, true)
+}
+
+fn publish_mode(path: &Path, bytes: &[u8], replace: bool) -> Result<(), String> {
     if bytes.len() as u64 > MAX_FILE_BYTES {
         return Err(format!(
             "{} would exceed the {} byte bound",
@@ -430,8 +445,21 @@ fn publish(path: &Path, bytes: &[u8]) -> Result<(), String> {
         file.write_all(bytes)
             .and_then(|_| file.sync_all())
             .map_err(|error| format!("cannot write {}: {error}", temporary.display()))?;
-        std::fs::rename(&temporary, path)
-            .map_err(|error| format!("cannot publish {}: {error}", path.display()))?;
+        if replace {
+            std::fs::rename(&temporary, path)
+                .map_err(|error| format!("cannot publish {}: {error}", path.display()))?;
+        } else {
+            // A hard link publishes the complete fsynced file atomically and
+            // refuses an existing identity, unlike rename's replacement.
+            std::fs::hard_link(&temporary, path).map_err(|error| {
+                format!(
+                    "cannot admit {} without replacement: {error}",
+                    path.display()
+                )
+            })?;
+            std::fs::remove_file(&temporary)
+                .map_err(|error| format!("cannot retire admission temporary file: {error}"))?;
+        }
         std::fs::File::open(parent)
             .and_then(|directory| directory.sync_all())
             .map_err(|error| {

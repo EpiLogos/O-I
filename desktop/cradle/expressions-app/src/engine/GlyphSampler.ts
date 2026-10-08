@@ -894,7 +894,7 @@ export class GlyphSampler {
    */
   public rasterizeSpatialNode(
     node: SpatialChakraNode,
-    glyphType: SpatialChakraGlyphType = 'yantra',
+    _glyphType: SpatialChakraGlyphType = 'yantra',
     fontFamily: string = FALLBACK_FONT_STACK,
     fontWeight: string | number = 900,
     variant: 'yantraA' | 'yantraB' = 'yantraA',
@@ -1111,7 +1111,7 @@ export class GlyphSampler {
     particleCount: number,
     texWidth: number,
     texHeight: number,
-    style: 'stipple' | 'halftone' = 'stipple',
+    _style: 'stipple' | 'halftone' = 'stipple',
     glyphType: SpatialChakraGlyphType = 'yantra',
     fontFamily: string = FALLBACK_FONT_STACK,
     fontWeight: string | number = 900,
@@ -1231,7 +1231,7 @@ export class GlyphSampler {
     particleCount: number,
     texWidth: number,
     texHeight: number,
-    style: 'stipple' | 'halftone' = 'stipple',
+    _style: 'stipple' | 'halftone' = 'stipple',
     glyphType: SpatialChakraGlyphType = 'both',
     fontFamily: string = FALLBACK_FONT_STACK,
     fontWeight: string | number = 900,

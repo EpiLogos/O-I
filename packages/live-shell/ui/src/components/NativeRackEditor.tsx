@@ -3,6 +3,8 @@ import type {NativeEditorBasis, NativeEditorReading, NativeEditorReply, NativeEd
 import {NATIVE_BINDINGS, entityTargets, getParamDef, entityParamDefs} from '../../../../expressions-boundary/src/parameters'
 import {readNativeRacks} from '../../../../expressions-boundary/src/nativeRacks'
 import {nativeRackMappingValue, type NativeParameterRack, type NativeRackChange, type NativeRackMacro, type NativeRackMapping} from '../../../../expressions-boundary/src/nativeRackSchema'
+import {rackMapReason, rackMappingPath} from './nativeBrowserModel'
+import {MAP_PARAMETER_EVENT, activeDrag, type ParameterDrag} from './nativeDrag'
 import './NativeRackEditor.css'
 
 export type NativeRackEditorRequest = Exclude<NativeEditorRequest, {operation: 'apply'}> | {operation: 'apply'; basis: NativeEditorBasis; changes: readonly NativeRackChange[]}
@@ -11,7 +13,7 @@ const identity = (kind: string) => `${kind}:${crypto.randomUUID()}`
 const number = (value: number) => String(Number(value.toPrecision(6)))
 type Apply = (changes: NativeRackChange[], basis?: NativeEditorBasis) => Promise<boolean>
 
-function MacroControl({macro, rack, reading, disabled, apply, configure}: {macro: NativeRackMacro; rack: NativeParameterRack; reading: NativeEditorReading; disabled: boolean; apply: Apply; configure: boolean}) {
+function MacroControl({macro, rack, reading, disabled, apply, configure, onMap}: {macro: NativeRackMacro; rack: NativeParameterRack; reading: NativeEditorReading; disabled: boolean; apply: Apply; configure: boolean; onMap: (macroId: string, drag: ParameterDrag) => void}) {
   const [draft, setDraft] = useState<string | null>(null)
   const basis = useRef(reading.basis), active = useRef(false), intended = useRef(macro.value)
   const commit = async () => {
@@ -22,8 +24,18 @@ function MacroControl({macro, rack, reading, disabled, apply, configure}: {macro
   const start = () => {basis.current = reading.basis; active.current = true; intended.current = draft === null ? macro.value : Number(draft)}
   const value = draft === null ? macro.value : Number(draft)
   const excluded = rack.excluded.includes(macro.id)
-  return <article className="native-rack-macro">
+  const [hint, setHint] = useState<{status: 'valid' | 'invalid'; text: string} | null>(null)
+  /** A parameter from the Browser maps onto this macro only after the person confirms its range in the mapping form. */
+  const dropReason = (drag: ParameterDrag) => disabled ? 'The rack is busy or locked' : rackMapReason(drag, rack, reading)
+  return <article className="native-rack-macro" data-drop={hint?.status}
+    onDragOver={event => {const active = activeDrag(); if (active?.kind !== 'parameter') return; const reason = dropReason(active.drag)
+      if (reason) {setHint(current => current?.text === reason ? current : {status: 'invalid', text: reason}); return}
+      event.preventDefault(); event.dataTransfer.dropEffect = 'copy'
+      const text = `Map ${active.drag.label} to ${macro.name}`; setHint(current => current?.text === text ? current : {status: 'valid', text})}}
+    onDragLeave={event => {if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHint(null)}}
+    onDrop={event => {const active = activeDrag(); setHint(null); if (active?.kind !== 'parameter' || dropReason(active.drag)) return; event.preventDefault(); onMap(macro.id, active.drag)}}>
     <header><strong>{macro.name}</strong><label hidden={!configure} title="Retain this macro when recalling a variation"><input type="checkbox" checked={excluded} disabled={disabled} onChange={event => void apply([{kind: 'rack-exclusions', rack_id: rack.id, macro_ids: event.target.checked ? [...rack.excluded, macro.id] : rack.excluded.filter(id => id !== macro.id)}])} />Exclude recall</label></header>
+    {hint && <small className="native-rack-drop" role="status">{hint.text}</small>}
     <div className="native-rack-scalar"><input type="range" aria-label={`${macro.name} macro`} min="0" max="1" step="0.001" value={Number.isFinite(value) ? value : macro.value} disabled={disabled}
       onPointerDown={start} onPointerCancel={() => {active.current = false; setDraft(null)}}
       onChange={event => {intended.current = Number(event.target.value); setDraft(event.target.value)}}
@@ -47,30 +59,53 @@ function MappingReading({mapping, value, onRemove, disabled}: {mapping: NativeRa
     <svg viewBox="0 0 160 64" aria-label={`${mapping.law} mapping response in ${mapping.unit}`}><path d="M8 8V52H152" /><polyline points={points} /><circle cx={8 + value * 144} cy={ordinate(value)} r="3" /></svg><button aria-label={`Remove ${definition?.label ?? mapping.target.path} mapping`} disabled={disabled} onClick={onRemove}>×</button></div>
 }
 
-function MappingForm({rack, reading, disabled, apply}: {rack: NativeParameterRack; reading: NativeEditorReading; disabled: boolean; apply: Apply}) {
+function MappingForm({rack, reading, disabled, apply, prefill, hidden, onDone}: {rack: NativeParameterRack; reading: NativeEditorReading; disabled: boolean; apply: Apply; prefill?: {macroId: string; drag: ParameterDrag; nonce: number}; hidden: boolean; onDone: () => void}) {
   const entityId = rack.scope.kind === 'entity' ? Object.keys(reading.entityOccurrences).find(id => reading.entityOccurrences[id] === (rack.scope.kind === 'entity' ? rack.scope.entity_ref : '')) : undefined
   const bindings = rack.scope.kind === 'field' ? NATIVE_BINDINGS : entityTargets(reading.scene).filter(item => item.entityId === entityId)
   const [path, setPath] = useState(''), [macroId, setMacroId] = useState(rack.macros[0]?.id ?? ''), [min, setMin] = useState(''), [max, setMax] = useState(''), [law, setLaw] = useState<'linear' | 'log'>('linear')
   const selectPath = (path: string) => {setPath(path); const binding = bindings.find(item => (rack.scope.kind === 'field' ? item.path : item.key) === path); if (binding) {setMin(number(binding.min * binding.factor)); setMax(number(binding.max * binding.factor)); setLaw(binding.scale === 'log' && binding.min > 0 ? 'log' : 'linear')}}
   const binding = bindings.find(item => (rack.scope.kind === 'field' ? item.path : item.key) === path)
   const definition = binding && (rack.scope.kind === 'field' ? getParamDef(path) : entityParamDefs(0, {}).find(item => item.path === 'entities.0.' + path))
+  const minInput = useRef<HTMLInputElement>(null), focusMin = useRef(false)
+  // A Browser drop or 'Map to macro…' only prefills: the person still confirms the range and presses Add mapping.
+  useEffect(() => {if (!prefill) return; setMacroId(prefill.macroId); selectPath(rackMappingPath(rack, prefill.drag)); focusMin.current = true}, [prefill?.nonce])
+  useEffect(() => {if (focusMin.current && minInput.current) {focusMin.current = false; minInput.current.focus()}})
   const submit = (event: FormEvent) => {
     event.preventDefault(); if (!definition || !binding) return
     const mapping: NativeRackMapping = {id: identity('mapping'), target: rack.scope.kind === 'field' ? {kind: 'field', path} : {kind: 'entity', entity_ref: rack.scope.entity_ref, path}, min: min.trim() ? Number(min) : NaN, max: max.trim() ? Number(max) : NaN, unit: definition.unit ?? 'scalar', law}
-    void apply([{kind: 'rack-set', rack: {...rack, macros: rack.macros.map(macro => macro.id === macroId ? {...macro, mappings: [...macro.mappings, mapping]} : macro)}}]).then(ok => {if (ok) setPath('')})
+    void apply([{kind: 'rack-set', rack: {...rack, macros: rack.macros.map(macro => macro.id === macroId ? {...macro, mappings: [...macro.mappings, mapping]} : macro)}}]).then(ok => {if (ok) {setPath(''); onDone()}})
   }
-  return <form className="native-rack-map-form" onSubmit={submit}><strong>Map native parameter</strong><select aria-label="Mapping macro" value={macroId} disabled={disabled} onChange={event => setMacroId(event.target.value)}>{rack.macros.map(macro => <option key={macro.id} value={macro.id}>{macro.name}</option>)}</select>
+  return <form className="native-rack-map-form" hidden={hidden} onSubmit={submit}><strong>Map native parameter</strong><select aria-label="Mapping macro" value={macroId} disabled={disabled} onChange={event => setMacroId(event.target.value)}>{rack.macros.map(macro => <option key={macro.id} value={macro.id}>{macro.name}</option>)}</select>
     <select aria-label="Native mapping parameter" value={path} disabled={disabled} onChange={event => selectPath(event.target.value)}><option value="">Choose parameter…</option>{bindings.map(item => <option key={item.key} value={rack.scope.kind === 'field' ? item.path : item.key}>{item.label}</option>)}</select>
-    {definition && <><label>At 0<input aria-label="Mapping minimum" value={min} onChange={event => setMin(event.target.value)} disabled={disabled} inputMode="decimal" /></label><label>At 1<input aria-label="Mapping maximum" value={max} onChange={event => setMax(event.target.value)} disabled={disabled} inputMode="decimal" /></label><select aria-label="Mapping law" value={law} onChange={event => setLaw(event.target.value as 'linear' | 'log')} disabled={disabled}><option value="linear">Linear</option><option value="log">Logarithmic</option></select><small>{number(definition.hardMin)}–{number(definition.hardMax)} {definition.unit ?? 'scalar'} · {definition.hardMin < 0 ? 'signed' : 'positive domain'}</small><button disabled={disabled || !rack.macros.some(macro => macro.id === macroId)} type="submit">Add mapping</button></>}
+    {definition && <><label>At 0<input ref={minInput} aria-label="Mapping minimum" value={min} onChange={event => setMin(event.target.value)} disabled={disabled} inputMode="decimal" /></label><label>At 1<input aria-label="Mapping maximum" value={max} onChange={event => setMax(event.target.value)} disabled={disabled} inputMode="decimal" /></label><select aria-label="Mapping law" value={law} onChange={event => setLaw(event.target.value as 'linear' | 'log')} disabled={disabled}><option value="linear">Linear</option><option value="log">Logarithmic</option></select><small>{number(definition.hardMin)}–{number(definition.hardMax)} {definition.unit ?? 'scalar'} · {definition.hardMin < 0 ? 'signed' : 'positive domain'}</small><button disabled={disabled || !rack.macros.some(macro => macro.id === macroId)} type="submit">Add mapping</button></>}
+    {prefill && <button type="button" onClick={onDone}>Cancel mapping</button>}
   </form>
 }
 
 export function NativeRackEditor({reading, request, configure = false}: NativeRackEditorProps) {
   const [selected, setSelected] = useState<string | null>(null), [busy, setBusy] = useState(false), [error, setError] = useState(''), [variationName, setVariationName] = useState('')
   const pending = useRef(false), currentBasis = useRef(reading?.basis)
+  const [prefill, setPrefill] = useState<{rackId: string; macroId: string; drag: ParameterDrag; nonce: number} | null>(null)
+  const nonce = useRef(0), selectedRef = useRef(selected), readingRef = useRef(reading)
+  selectedRef.current = selected; readingRef.current = reading
   currentBasis.current = reading?.basis
   const [attempt, setAttempt] = useState<{changes: NativeRackChange[]; basis: NativeEditorBasis} | null>(null)
-  useEffect(() => {setSelected(null); setError(''); setAttempt(null)}, [reading?.basis.expression_ref, reading?.basis.scene_ref])
+  useEffect(() => {setSelected(null); setError(''); setAttempt(null); setPrefill(null)}, [reading?.basis.expression_ref, reading?.basis.scene_ref])
+  // 'Map to macro…' from the Browser: the first rack that accepts this parameter, preferring the one shown.
+  useEffect(() => {
+    const map = (event: Event) => {
+      const drag = (event as CustomEvent<ParameterDrag>).detail, current = readingRef.current
+      if (!current || !drag) return
+      let racks: NativeParameterRack[]
+      try {racks = readNativeRacks(current.scene, current.entityOccurrences).racks} catch {return}
+      const ok = (rack: NativeParameterRack) => rackMapReason(drag, rack, current) === null
+      const target = racks.find(rack => rack.id === selectedRef.current && ok(rack)) ?? racks.find(ok)
+      if (!target) return
+      setSelected(target.id); setPrefill({rackId: target.id, macroId: target.macros[0].id, drag, nonce: ++nonce.current})
+    }
+    window.addEventListener(MAP_PARAMETER_EVENT, map)
+    return () => window.removeEventListener(MAP_PARAMETER_EVENT, map)
+  }, [])
   if (!reading) return configure ? <section className="native-rack-editor">Open a native Scene to read its parameter racks.</section> : null
   let racks: NativeParameterRack[]
   try {racks = readNativeRacks(reading.scene, reading.entityOccurrences).racks} catch (error) {return <section className="native-rack-editor" role="alert">{String(error)}</section>}
@@ -97,10 +132,10 @@ export function NativeRackEditor({reading, request, configure = false}: NativeRa
     <header><strong>Macros</strong><select aria-label="Selected rack" value={rack?.id ?? ''} onChange={event => setSelected(event.target.value)}><option value="" disabled>Select rack</option>{racks.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select><span hidden={!configure} className="native-rack-create"><button disabled={busy || reading.standing.pending || racks.length >= 32} onClick={() => create(false)}>+ Field</button><button disabled={busy || reading.standing.pending || racks.length >= 32 || reading.selection.entity_ids.length !== 1 || !reading.entityOccurrences[reading.selection.entity_ids[0]] || reading.scene.entities.find(entity => entity.id === reading.selection.entity_ids[0])?.locked} onClick={() => create(true)}>+ Selected object</button></span></header>
     {rack ? <div key={reading.basis.scene_ref + rack.id}><div className="native-rack-scope"><span>{rack.scope.kind === 'field' ? 'Field' : owner?.name ?? 'Bound object absent'}</span><code hidden={!configure} title={rack.scope.kind === 'entity' ? rack.scope.entity_ref : reading.basis.scene_ref}>{rack.scope.kind === 'entity' ? rack.scope.entity_ref : reading.basis.scene_ref}</code><button hidden={!configure} disabled={disabled} onClick={() => void apply([{kind: 'rack-remove', rack_id: rack.id}])}>Remove rack</button></div>
       {unavailable && <p>Retained rack belongs to an off-page entity. Return to its Scene to operate it.</p>}{owner?.locked && <p>Unlock {owner.name} to edit this rack.</p>}
-      <div className="native-rack-macros">{rack.macros.map(macro => <MacroControl key={macro.id} macro={macro} rack={rack} reading={reading} disabled={disabled} apply={apply} configure={configure} />)}</div>
-      <div hidden={!configure} className="native-rack-configuration"><button disabled={disabled || rack.macros.length >= 16} onClick={() => {const id = identity('macro'); void apply([{kind: 'rack-set', rack: {...rack, macros: [...rack.macros, {id, name: `Macro ${rack.macros.length + 1}`, value: .5, mappings: []}], variations: rack.variations.map(variation => ({...variation, values: {...variation.values, [id]: .5}}))}}])}}>Add macro</button>
-      <MappingForm key={rack.id + ':' + rack.macros.length} rack={rack} reading={reading} disabled={disabled} apply={apply} />
-      <div className="native-rack-variations"><strong>Variations</strong><input aria-label="Variation name" placeholder="Name this variation" value={variationName} maxLength={160} disabled={disabled} onChange={event => setVariationName(event.target.value)} /><button disabled={disabled || !variationName.trim() || rack.variations.length >= 128} onClick={() => void apply([{kind: 'rack-variation-capture', rack_id: rack.id, variation_id: identity('variation'), name: variationName.trim()}]).then(ok => {if (ok) setVariationName('')})}>Capture</button>{rack.variations.map(variation => <span key={variation.id}><button disabled={disabled} onClick={() => void apply([{kind: 'rack-variation-recall', rack_id: rack.id, variation_id: variation.id}])}>{variation.name}</button><button disabled={disabled} aria-label={`Remove variation ${variation.name}`} onClick={() => void apply([{kind: 'rack-variation-remove', rack_id: rack.id, variation_id: variation.id}])}>×</button></span>)}</div></div>
+      <div className="native-rack-macros">{rack.macros.map(macro => <MacroControl key={macro.id} macro={macro} rack={rack} reading={reading} disabled={disabled} apply={apply} configure={configure} onMap={(macroId, drag) => setPrefill({rackId: rack.id, macroId, drag, nonce: ++nonce.current})} />)}</div>
+      <div className="native-rack-configuration"><div hidden={!configure}><button disabled={disabled || rack.macros.length >= 16} onClick={() => {const id = identity('macro'); void apply([{kind: 'rack-set', rack: {...rack, macros: [...rack.macros, {id, name: `Macro ${rack.macros.length + 1}`, value: .5, mappings: []}], variations: rack.variations.map(variation => ({...variation, values: {...variation.values, [id]: .5}}))}}])}}>Add macro</button></div>
+      <MappingForm key={rack.id + ':' + rack.macros.length} rack={rack} reading={reading} disabled={disabled} apply={apply} prefill={prefill?.rackId === rack.id ? prefill : undefined} hidden={!configure && prefill?.rackId !== rack.id} onDone={() => setPrefill(null)} />
+      <div hidden={!configure} className="native-rack-variations"><strong>Variations</strong><input aria-label="Variation name" placeholder="Name this variation" value={variationName} maxLength={160} disabled={disabled} onChange={event => setVariationName(event.target.value)} /><button disabled={disabled || !variationName.trim() || rack.variations.length >= 128} onClick={() => void apply([{kind: 'rack-variation-capture', rack_id: rack.id, variation_id: identity('variation'), name: variationName.trim()}]).then(ok => {if (ok) setVariationName('')})}>Capture</button>{rack.variations.map(variation => <span key={variation.id}><button disabled={disabled} onClick={() => void apply([{kind: 'rack-variation-recall', rack_id: rack.id, variation_id: variation.id}])}>{variation.name}</button><button disabled={disabled} aria-label={`Remove variation ${variation.name}`} onClick={() => void apply([{kind: 'rack-variation-remove', rack_id: rack.id, variation_id: variation.id}])}>×</button></span>)}</div></div>
     </div> : <p>Create a Field or selected entity rack, then map native parameters to its macros.</p>}
     {error && <div role="alert" className="native-rack-error">{error}{attempt && <><button disabled={busy || unavailable || attempt.basis.expression_ref !== reading.basis.expression_ref || attempt.basis.scene_ref !== reading.basis.scene_ref} onClick={() => void apply(attempt.changes, reading.basis)}>Retry on current revision</button><button onClick={() => {setAttempt(null); setError('')}}>Discard pending request</button></>}</div>}
     <footer hidden={!configure}>Native r{reading.basis.revision} · authored r{reading.basis.authored_revision} · {busy ? 'Committing through owner…' : reading.standing.pending ? 'Native acknowledgement pending' : reading.standing.dirty ? 'Retained draft' : 'Native readback current'}</footer>

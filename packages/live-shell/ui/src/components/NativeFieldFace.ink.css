@@ -1,0 +1,17 @@
+.ink-swatch{fill:none;stroke:var(--line);stroke-width:1}
+.ink-mark{fill:var(--text)}
+.ink-track{fill:none;stroke:var(--line);stroke-width:2;stroke-linecap:round}
+.ink-active{fill:none;stroke:var(--text-dim);stroke-width:3;stroke-linecap:round}
+.ink-switches{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.ink-switches label{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ink-switches label input[type=checkbox]{align-self:flex-start}
+.ink-switches small{color:var(--text-dim)}
+.ink-switches select{min-height:22px}
+.ink-glyph{margin:0;padding:4px 8px;border:1px solid var(--line);min-width:0;flex-basis:100%}
+.ink-glyph legend{color:var(--text-dim);padding:0 4px}
+.ink-glyph p{margin:2px 0}
+.ink-glyph-row{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:flex-end}
+.ink-glyph label{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ink-glyph select{min-height:22px}
+.ink-note{color:var(--text-dim);margin:0;flex-basis:100%}
+@media (prefers-reduced-motion: reduce){.ink-mark,.ink-track,.ink-active{transition:none}}

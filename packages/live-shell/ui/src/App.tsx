@@ -3,6 +3,7 @@ import {useContinuity} from './continuity/workspace'
 import { ArrangementView } from './components/ArrangementView'
 import { BrowserPane } from './components/BrowserPane'
 import { WorldBrowser } from './components/WorldBrowser'
+import { OPEN_DEVICE_EVENT } from './components/nativeDrag'
 import { NativeWorldDetail, type NativeDetailConfigurationIntent } from './components/NativeWorldDetail'
 import {NativeInputRetentionProvider,nativeInputBinding} from './components/NativeInputRetention'
 import { useWorkspace } from './shell/workspace'
@@ -17,6 +18,7 @@ import { getPanels, type PanelContext } from './shell/panels'
 import { configureSettingsHost, openSettings, useSettingsHost } from './settings/host'
 import {createNativeContentActions, readNativeExpressionsContent} from './shell/nativeContent'
 import type {NativeCompositionViewSource} from './shell/compositionViews'
+import {NATIVE_PRESENT_EXPRESSIONS} from './native/openStudio'
 import {sameEditorBasis,type NativeEditorBasis,type NativeEditorController} from '@epilogos/expressions-boundary/editor'
 import './NativeCompositionResidence.css'
 const PALETTE = ['#79b6ce', '#779dcc', '#9885bc', '#8baf9c', '#b096b2', '#6caaa9']
@@ -89,6 +91,13 @@ export function App() {
     if (continuity.current.layout.surfaces[knowledgeIntent.bindingId]?.kind !== 'knowledge') return
     presentSettings(false); setCenterPanel('native.workbench'); setKnowledgeIntent(null)
   }, [knowledgeIntent, workspace.workspaceId, workspace.mode, workspace.setMode, continuity.current.layout.surfaces])
+  useEffect(() => {
+    // Only the Expressions panel requests this, and only with native work
+    // mounted: the centre shows that body in the cut the workspace stands in.
+    const reveal = () => {presentSettings(false); setCenterPanel('world.expressions'); workspace.setMode(workspace.mode === 'techne' ? 'techne' : 'expressions')}
+    window.addEventListener(NATIVE_PRESENT_EXPRESSIONS, reveal)
+    return () => window.removeEventListener(NATIVE_PRESENT_EXPRESSIONS, reveal)
+  }, [workspace.mode, workspace.setMode])
   const settingsHost = useSettingsHost()
   const [settingsPresented, presentSettings] = useState(restored?.settingsPresented ?? false)
   const settingsOrigin = useRef<HTMLElement | null>(null)
@@ -104,6 +113,8 @@ export function App() {
     presentSettings(true)
   }, [settingsHost.request])
   const [browser, setBrowser] = useState(restored?.browser ?? true)
+  // An open device request shows the Browser: the expanded panel lives in its pool, not on the bottom rack.
+  useEffect(() => {const openDevice = () => {if (workspace.mode !== 'audio') setBrowser(true)}; window.addEventListener(OPEN_DEVICE_EVENT, openDevice); return () => window.removeEventListener(OPEN_DEVICE_EVENT, openDevice)}, [workspace.mode])
   useEffect(() => {
     const browseParameters = () => {
       if (workspace.mode === 'audio') return
@@ -154,13 +165,13 @@ export function App() {
   }
   const nativeEditorPresented=!!nativeEditorReturn&&!settingsPresented&&centerPanel==='world.expressions'&&workspace.mode===nativeEditorReturn.mode&&workspace.editor===nativeEditorReturn.owner
   useEffect(()=>{if(nativeEditorReturn&&!nativeEditorPresented)setNativeEditorReturn(null)},[nativeEditorReturn,nativeEditorPresented])
-  const nativeView = (view: 'session' | 'arrangement'): NativeCompositionViewSource | undefined => {
+  const nativeView = (view: 'session' | 'arrangement' | 'expressions'): NativeCompositionViewSource | undefined => {
     if (workspace.mode === 'audio') return undefined
     const epoch = presentation.current.epoch
     const isPresented = () => {
       const current = presentation.current
       return current.epoch === epoch && !current.settingsPresented && current.mode !== 'audio'
-        && current.centerPanel === `native.${view}` && workspace.nativeAccessCurrent(current.accessEpoch)
+        && current.centerPanel === (view === 'expressions' ? 'world.expressions' : `native.${view}`) && workspace.nativeAccessCurrent(current.accessEpoch)
     }
     const actions = nativeProjection.content && workspace.editor ? createNativeContentActions(nativeProjection.content, {
       request: request => isPresented() ? workspace.editor!.request(request)
@@ -253,21 +264,21 @@ export function App() {
         settingsOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
         presentSettings(true)
       } else {presentSettings(false); setCenterPanel(id); workspace.setMode('expressions')}
-    }} workName={workspace.reading?.document?.name} sceneName={workspace.reading?.sceneName} browser={browser} detail={detail} dock={dock} toggleBrowser={() => setBrowser(!browser)} toggleDetail={() => setDetail(!detail)} toggleDock={() => setDock(!dock)} />
-    <div className="browser-residence" hidden={!browser || workspace.mode !== 'audio'}><BrowserPane defaultSet={config?.default_set ?? ''} ctx={ctx} /></div>
+    }} workName={workspace.reading?.document?.name} sceneName={workspace.reading?.sceneName} nativeTransport={nativeView('expressions')} browser={browser} detail={detail} dock={dock} toggleBrowser={() => setBrowser(!browser)} toggleDetail={() => setDetail(!detail)} toggleDock={() => setDock(!dock)} />
+    <NativeInputRetentionProvider><div className="browser-residence" hidden={!browser || workspace.mode !== 'audio'}><BrowserPane defaultSet={config?.default_set ?? ''} ctx={ctx} /></div>
     <div className="browser-residence" hidden={!browser || workspace.mode === 'audio'}><WorldBrowser /></div>
     {browser && <div className="browser-resizer" role="separator" aria-label="Resize browser" aria-orientation="vertical" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); resizeBrowser(Math.max(120, Math.min(viewport[0] - 320, (browserWidth ?? document.querySelector('.browser-residence:not([hidden]) .browser,.browser-residence:not([hidden]) .world-browser')?.getBoundingClientRect().width ?? 430) + (event.key === 'ArrowRight' ? 10 : -10))))} }} onPointerDown={event => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) resizeBrowser(Math.max(120, Math.min(viewport[0] - 320, event.clientX))) }} />}
     <main className="center"><div className={`center-body${nativeComposition && !settingsPresented ? ' native-composition-residence' : ''}${nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented?' native-editor-residence':''}`}>
       {nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented&&<div className="native-editor-return"><span>{nativeEditorReturn.editor==='source'?'Source':nativeEditorReturn.editor==='layers'?'Layers':'State placement'}</span><button onClick={returnNativeEditor}>Return to {nativeEditorReturn.centerPanel==='native.arrangement'?'Arrangement':nativeEditorReturn.centerPanel==='native.session'?'Session':'Glyph editor'}</button></div>}
       {nativeComposition && !settingsPresented && nativeProjection.error && <div className="native-composition-fault" role="alert">{nativeProjection.error}</div>}
-      <div className="inhabitant composition-view" hidden={settingsPresented || (workspace.mode === 'audio' ? tab !== 'session' : centerPanel !== 'native.session')}><SessionView set={state.set} document={deep.document} selection={selection} select={choose} colors={colors} setColor={setColor} native={nativeView('session')} /></div>
-      <div className="inhabitant composition-view" hidden={settingsPresented || (workspace.mode === 'audio' ? tab !== 'arrangement' : centerPanel !== 'native.arrangement')}><ArrangementView set={state.set} document={deep.document} selection={selection} select={choose} colors={colors} native={nativeView('arrangement')} /></div>
+      <div className="inhabitant composition-view" hidden={settingsPresented || (workspace.mode === 'audio' ? tab !== 'session' : centerPanel !== 'native.session')}><SessionView set={state.set} document={deep.document} selection={selection} select={choose} colors={colors} setColor={setColor} native={nativeView('session')} compactTransport={workspace.mode === 'expressions'} /></div>
+      <div className="inhabitant composition-view" hidden={settingsPresented || (workspace.mode === 'audio' ? tab !== 'arrangement' : centerPanel !== 'native.arrangement')}><ArrangementView set={state.set} document={deep.document} selection={selection} select={choose} colors={colors} native={nativeView('arrangement')} compactTransport={workspace.mode === 'expressions'} /></div>
       {panels.map(panel => { const Panel = panel.component; return <div className={`inhabitant${panel.id === 'world.expressions' ? ' native-stage-residence' : ''}`} hidden={panel.id === 'world.settings' ? !settingsPresented : settingsPresented || workspace.mode === 'audio' && panel.id !== 'world.knowledge' || (centerPanel !== panel.id && !(nativeComposition && panel.id === 'world.expressions'))} key={panel.id}><Panel {...ctx} /></div> })}
     </div></main>
     <div className="dock-residence" hidden={!dock}><RightDock ctx={ctx} /></div>
     {detail && <div className="detail-resizer" role="separator" aria-label="Resize detail" aria-orientation="horizontal" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {event.preventDefault(); resizeDetail(Math.max(120, Math.min(viewport[1] - 240, (detailHeight ?? document.querySelector('.detail-residence:not([hidden]) .chain,.detail-residence:not([hidden]) .native-world-detail')?.getBoundingClientRect().height ?? 330) + (event.key === 'ArrowUp' ? 10 : -10))))} }} onPointerDown={event => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) resizeDetail(Math.max(120, Math.min(viewport[1] - 240, viewport[1] - 28 - event.clientY))) }} />}
     <div className="detail-residence" hidden={!detail || workspace.mode !== 'audio'}><DeviceChainPanel ctx={ctx} document={deep.document} selection={selection} mode={detailMode}/></div>
-    <div className="detail-residence" hidden={!detail || workspace.mode === 'audio'}><NativeInputRetentionProvider><NativeWorldDetail mode={detailMode} configurationIntent={detailConfiguration} presentMode={mode=>{changeDetailMode(mode);setDetail(true)}} presentNativeEditor={presentNativeEditor} expand={() => {if(!detailExpansionReturn.current)detailExpansionReturn.current={height:detailHeight,workspaceId:workspace.workspaceId,accessEpoch:workspace.accessEpoch};resizeDetail(Math.max(120,viewport[1]-156))}} collapse={() => {const previous=detailExpansionReturn.current;detailExpansionReturn.current=null;if(previous&&previous.workspaceId===workspace.workspaceId&&previous.accessEpoch===workspace.accessEpoch)resizeDetail(previous.height)}}/></NativeInputRetentionProvider></div>
+    <div className="detail-residence" hidden={!detail || workspace.mode === 'audio'}><NativeWorldDetail mode={detailMode} configurationIntent={detailConfiguration} presentMode={mode=>{changeDetailMode(mode);setDetail(true)}} presentNativeEditor={presentNativeEditor} expand={() => {if(!detailExpansionReturn.current)detailExpansionReturn.current={height:detailHeight,workspaceId:workspace.workspaceId,accessEpoch:workspace.accessEpoch};resizeDetail(Math.max(120,viewport[1]-156))}} collapse={() => {const previous=detailExpansionReturn.current;detailExpansionReturn.current=null;if(previous&&previous.workspaceId===workspace.workspaceId&&previous.accessEpoch===workspace.accessEpoch)resizeDetail(previous.height)}}/></div></NativeInputRetentionProvider>
     <StatusBar detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={workspace.mode === 'audio'} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={state.set?.tracks[selection.track]?.name} />
   </div>
 }

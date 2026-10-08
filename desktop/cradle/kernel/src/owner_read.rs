@@ -21,6 +21,7 @@ impl PreparedRead {
             | KernelOp::GitRepositoryRead { .. }
             | KernelOp::GitDiffRead { .. }
             | KernelOp::ConfigRegistryRead
+            | KernelOp::ConfigCapabilitiesRead
             | KernelOp::ConfigResolutionsRead { .. }
             | KernelOp::ConfigDiff
             | KernelOp::SystemCompositionRead
@@ -103,6 +104,32 @@ impl PreparedRead {
             return Ok(KernelOpOutcome {
                 receipts: vec![],
                 result,
+            });
+        }
+
+        // This schema belongs to the selected configuration engine. Reading
+        // it needs no World enumeration and must not stall editor admission
+        // behind unrelated owner disclosures. The producer still receives
+        // the explicit host root, retained World root, or existing cwd fallback.
+        if matches!(&self.op, KernelOp::ConfigCapabilitiesRead) {
+            let cwd = self
+                .client
+                .configured_root()
+                .map(std::path::PathBuf::from)
+                .or_else(|| {
+                    self.world
+                        .as_ref()
+                        .and_then(|world| world["root"].as_str())
+                        .map(std::path::PathBuf::from)
+                });
+            let cwd = match cwd {
+                Some(cwd) => cwd,
+                None => std::env::current_dir().map_err(|e| e.to_string())?,
+            };
+            let document = crate::configuration::Client::discover().capabilities(&cwd)?;
+            return Ok(KernelOpOutcome {
+                receipts: vec![],
+                result: KernelOpResult::ConfigCapabilitiesReading { document },
             });
         }
 

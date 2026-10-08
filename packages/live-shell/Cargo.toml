@@ -1,0 +1,17 @@
+[package]
+name = "live-shell"
+version = "0.1.0"
+edition = "2021"
+description = "Live shell — dev server surface (M2 skeleton): JSON API + minimal UI over live-set documents. Tauri wrap lands at M2-complete per shell/SHELL-BLUEPRINT.md"
+
+[dependencies]
+axum = "0.7"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "process"] }
+tower-http = { version = "0.5", features = ["fs"] }
+live-set = { path = "../live-set" }
+
+[dev-dependencies]
+tower = { version = "0.4", features = ["util"] }

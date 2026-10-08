@@ -2,9 +2,9 @@
   "schema": "oi.native-source-contribution/v1",
   "contribution_ref": "oi.contribution/factory",
   "owner": "software-factory",
-  "revision": 1,
+  "revision": 2,
   "entry": "descriptor.tsx",
-  "entry_sha256": "d68ee7a54b22427adf4c721adfc59345b6a912a1617010519a990a0f56de3c5d",
+  "entry_sha256": "c4d6a9dd101838d2434958521efcc6dfba244ea70a746f69802c3eec6215704a",
   "surfaces": [
     {
       "descriptor_ref": "oi.surface/factory",

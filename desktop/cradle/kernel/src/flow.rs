@@ -271,6 +271,13 @@ impl CentralClient {
         &self.project_query
     }
 
+    /// The host's explicit owner root, without launching a World disclosure.
+    /// Pure capability schemas may use this context; owner data and mutations
+    /// retain their existing native World qualification.
+    pub(crate) fn configured_root(&self) -> Option<&std::path::Path> {
+        self.central_root.as_deref()
+    }
+
     /// Run one owner Action, ported envelope law: `--json` global flag,
     /// optional `--root`, `action run <action> <input-json>`; `ok` must be
     /// true; the `data` payload is returned. Spawn failures are

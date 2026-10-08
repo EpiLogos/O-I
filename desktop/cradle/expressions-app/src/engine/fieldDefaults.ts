@@ -129,8 +129,7 @@ export const DEFAULT_CONFIG: PointCloudConfig = {
     maxSpeed: 35000,
     zConfinement: 1.0,
     timeScale: 1.0,
-    vortex3d: 0,
-    dispersion3d: 0,
+    // vortex3d and dispersion3d are deliberately absent: the engine derives them from the body law (GPGPUSimulator.ts) until an author sets one.
   },
   interaction: {
     radius: 180,

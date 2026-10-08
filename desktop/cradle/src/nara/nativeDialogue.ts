@@ -107,29 +107,38 @@ export function buildNativeTurnBasis(identity: CurrentIdentity, agent_session: s
 }
 /** The source is read again before every turn: correction elsewhere cannot ride an old selection. */
 export async function currentTurnBasis(transport: KernelTransportStatus, dialogue: NativeDialogue,
-  identity: CurrentIdentity, expression_ref: string): Promise<TurnBasis> {
+  identity: CurrentIdentity, expression_ref: string, requireCurrent?: () => void): Promise<TurnBasis> {
+  requireCurrent?.();
   if (currentIdentity()?.selection_ref !== identity.selection_ref) throw new Error('Choose the current saved identity before sending.');
   const saved = await naraIdentity(transport, {operation: 'open', source_ref: identity.source.source_ref});
+  requireCurrent?.();
   if (!saved.source || saved.source.revision !== identity.source.revision || saved.reading?.input_revision !== identity.reading.input_revision) {
     clearCurrentIdentity(identity.reading.person_ref);
     throw new Error('The saved identity changed in Central. Reopen it, review the correction and choose Use this identity.');
   }
   const document = await readNativeExpression(transport, expression_ref);
+  requireCurrent?.();
   if (currentIdentity()?.selection_ref !== identity.selection_ref) throw new Error('Identity selection changed before this turn. Nothing was submitted.');
   const basis = buildNativeTurnBasis(identity, dialogue.provisioning.agent_session, document);
   if (document.profiles?.some(profile=>profile.profile_ref.startsWith('profile:epi-coordinate-'))) {
     await ensureNativeCoordinateProfile(async request=>{
+      requireCurrent?.();
       const reply=await kernelOp(transport,{op:'expression',request});
+      requireCurrent?.();
       if(reply.error||reply.outcome?.result!=='expression')throw Error(reply.error??'The native profile owner did not answer.');
       return reply.outcome.data;
     },async request=>{
+      requireCurrent?.();
       const reply=await kernelOp(transport,{op:'nara_coordinate',request});
+      requireCurrent?.();
       if(reply.error||reply.outcome?.result!=='nara_coordinate')throw Error(reply.error??'The native coordinate owner did not answer.');
       return validateCoordinateExpression(reply.outcome.data);
     },document);
+    requireCurrent?.();
     const request: NativeDialogueRequest = {...dialogue.binding, operation: 'context',
       expected_revision: identity.source.revision};
     const reply = await kernelOp(transport, {op: 'nara_dialogue', project: dialogue.project, request});
+    requireCurrent?.();
     if (reply.error || reply.outcome?.result !== 'nara_dialogue'
         || reply.outcome.data.schema !== 'oi.nara-coordinate-context/v1') throw new Error(reply.error ?? 'Native coordinate context is unavailable.');
     const reading = reply.outcome.data;

@@ -3,11 +3,13 @@ import {createPortal} from 'react-dom'
 import {createCradleOwners} from '@epilogos/expressions-boundary/cradle'
 import {listNativeMaterials, type BindingInput, type MaterialListing, type MaterialListResult} from '../../../../expressions-boundary/src/nativeMaterials'
 import {useWorkspace} from '../shell/workspace'
+import {materialCompatibility, materialRowVisible, selectionSlot} from './nativeBrowserModel'
+import {sceneReuseForm} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/reuse'
 import './NativeMaterialBrowser.css'
 
 /** Browser definitions are discovered by the native material register. Perform
  * binds that source at the retained editor's captured native destination. */
-export function NativeMaterialBrowser({query, detailHost}: {query: string; detailHost?: HTMLElement | null}) {
+export function NativeMaterialBrowser({query, detailHost, onCount}: {query: string; detailHost?: HTMLElement | null; onCount?: (count: number) => void}) {
   const workspace=useWorkspace(), current=useRef(workspace)
   current.current=workspace
   const [listing,setListing]=useState<MaterialListResult|null>(null)
@@ -23,6 +25,9 @@ export function NativeMaterialBrowser({query, detailHost}: {query: string; detai
   const [fault,setFault]=useState<string|null>(null)
   const [notice,setNotice]=useState<string|null>(null)
   const [retainedOutcome,setRetainedOutcome]=useState<{copy?:string;outcome?:unknown}|null>(null)
+  const [showAll,setShowAll]=useState(false)
+  const [saveTitle,setSaveTitle]=useState('')
+  const [saved,setSaved]=useState<{copy:string;location:string|null}|null>(null)
   const generation=useRef(0)
   const {transport,accessEpoch,accessReady,workspaceId}=workspace
   useEffect(()=>{
@@ -75,8 +80,27 @@ export function NativeMaterialBrowser({query, detailHost}: {query: string; detai
     }catch(error){setFault(error instanceof Error?error.message:String(error))}
     finally{setBusy(false)}
   }
+  /** Save the open native Scene as reusable material: the same saveReusable owner as Perform, addressed by its native ref. */
+  async function saveCurrent() {
+    const editor=workspace.editor,reading=workspace.editorReading
+    if(!editor||!reading||reading.standing.pending||busy)return
+    setBusy(true);setFault(null);setSaved(null)
+    try {
+      const form=sceneReuseForm(saveTitle,reading.basis.scene_ref,reading.scenes?.scenes??[])
+      const result=await editor.request({operation:'material',basis:structuredClone(reading.basis),action:'save-reusable',input:{form}})
+      if(!result.ok){setRetainedOutcome({copy:result.retained_copy_ref,outcome:result.native_outcome});throw Error(result.error)}
+      if(result.material?.kind!=='saved')throw Error('The native owner omitted its saved-material receipt')
+      setSaved({copy:result.material.receipt.copy_ref,location:result.material.receipt.outcome.file?.location.path??null})
+      setSaveTitle('');setRefresh(value=>value+1)
+    } catch(error){setFault(error instanceof Error?error.message:String(error))}
+    finally{setBusy(false)}
+  }
   const needle=query.trim().toLocaleLowerCase()
-  const materials=(listing?.materials??[]).filter(material=>(!kind||material.kind===kind)&&(!needle||`${material.title} ${material.kind}`.toLocaleLowerCase().includes(needle)))
+  const slot=selectionSlot(workspace.editorReading)
+  const compat=(material:MaterialListing)=>materialCompatibility(material.roles,slot)
+  const materials=(listing?.materials??[]).filter(material=>(!kind||material.kind===kind)&&(!needle||`${material.title} ${material.kind}`.toLocaleLowerCase().includes(needle))&&materialRowVisible(compat(material),showAll,selected?.file_ref===material.file_ref))
+  const report=useRef(onCount);report.current=onCount
+  useEffect(()=>{report.current?.(materials.length)},[materials.length])
   const characters=(listing?.materials??[]).filter(material=>material.kind==='character')
   const preview = selected &&<div className="native-material-preview">
       <strong>{selected.title}</strong><span>{selected.kind}</span>
@@ -93,12 +117,18 @@ export function NativeMaterialBrowser({query, detailHost}: {query: string; detai
     </div>;
   return <section className="native-material-browser" aria-label="Reusable native material">
     <header><h3>Material</h3><button type="button" disabled={loading||busy||!accessReady} aria-label="Refresh native material" onClick={()=>setRefresh(value=>value+1)}>↻</button></header>
-    <label className="native-material-kind">Kind <select value={kind} onChange={event=>setKind(event.target.value)}><option value="">All</option>{['character','scene','expression','gesture'].map(value=><option key={value}>{value}</option>)}</select></label>
+    <div className="native-material-filter"><label className="native-material-kind">Kind <select value={kind} onChange={event=>setKind(event.target.value)}><option value="">All</option>{['character','scene','expression','gesture'].map(value=><option key={value}>{value}</option>)}</select></label>
+      {slot&&<><small className="native-material-basis">Fits {slot.name} ({slot.slot})</small><button type="button" className="native-material-showall" aria-pressed={showAll} title="Show materials whose roles do not fit the selected object, marked" onClick={()=>setShowAll(value=>!value)}>Show all</button></>}</div>
+    <details className="native-material-save"><summary>Save current Scene as reusable…</summary>
+      <label>Name <input value={saveTitle} maxLength={256} disabled={busy} placeholder="Title" onChange={event=>setSaveTitle(event.target.value)}/></label>
+      <button type="button" disabled={busy||!workspace.editor||!workspace.editorReading||workspace.editorReading.standing.pending||!saveTitle.trim()} onClick={()=>void saveCurrent()}>Save as reusable</button>
+      {saved&&<p role="status">Saved <code>{saved.copy}</code>{saved.location?<> at <code>{saved.location}</code></>:null}</p>}
+    </details>
     {loading&&<p role="status">Reading native material…</p>}
     {fault&&<p className="native-error" role="alert">{fault}</p>}
     {retainedOutcome&&(retainedOutcome.copy||retainedOutcome.outcome!==undefined)&&<details><summary>Retained native outcome</summary>{retainedOutcome.copy&&<p>Copy: <code>{retainedOutcome.copy}</code></p>}{retainedOutcome.outcome!==undefined&&<pre>{JSON.stringify(retainedOutcome.outcome,null,2)}</pre>}</details>}
     {notice&&<p role="status">{notice}</p>}
-    <ul>{materials.map(material=><li key={material.file_ref}><button type="button" className={`world-file-row${selected?.file_ref===material.file_ref?' selected':''}`} disabled={busy} onClick={()=>choose(material)} title={`${material.kind} · ${material.file_ref} · ${material.revision}`} aria-pressed={selected?.file_ref===material.file_ref}><span aria-hidden="true">◇</span><span>{material.title}</span></button></li>)}</ul>
+    <ul>{materials.map(material=>{const state=compat(material),reason=state.state==='incompatible'?state.reason:undefined;return <li key={material.file_ref}><button type="button" data-browser-row className={`world-file-row${selected?.file_ref===material.file_ref?' selected':''}${reason?' is-incompatible':''}`} disabled={busy} onClick={()=>choose(material)} onKeyDown={event=>{if(event.key===' '){event.preventDefault();choose(material)}}} onKeyUp={event=>{if(event.key===' ')event.preventDefault()}} title={`${material.kind} · ${material.file_ref} · ${material.revision}${reason?`\n${reason}`:''}`} aria-pressed={selected?.file_ref===material.file_ref}><span aria-hidden="true">◇</span><span>{material.title}</span>{reason&&<small className="native-material-mark">Incompatible</small>}</button></li>})}</ul>
     {listing&&!materials.length&&<p className="native-empty">No material matches.</p>}
     {!!listing?.unreadable.length&&<details><summary>{listing.unreadable.length} unreadable sources</summary>{listing.unreadable.map((item,i)=><p key={i}>{item.path??item.file_ref}: {item.error}</p>)}</details>}
     {listing?.truncated&&<p role="status">The native register disclosed a bounded page.</p>}

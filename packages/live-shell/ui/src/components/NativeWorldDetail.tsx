@@ -2,12 +2,14 @@ import {useCallback, useEffect, useRef, useState} from 'react'
 import {sameEditorBasis,type NativeEditorBasis,type NativeEditorReply,type NativeEditorRequest} from '@epilogos/expressions-boundary/editor'
 import {useWorkspace} from '../shell/workspace'
 import {GlyphSequenceEditor, type RetainedGlyphInput} from './GlyphSequenceEditor'
-import {NativeDeviceEditors} from './NativeDeviceEditors'
+import {NativeDeviceRack} from './NativeDeviceRack'
 import {NativeRackEditor} from './NativeRackEditor'
 import {NativeChosenControls} from './NativeChosenControls'
 import {NativeSceneEditor} from './NativeSceneEditor'
 import {NativeSceneTransport} from './NativeSceneTransport'
 import {NativeInputRecovery} from './NativeInputRetention'
+import {NativeTakes} from './NativeTakes'
+import {dispatchOpenDevice} from './nativeDrag'
 import {createNativeContentActions, readNativeExpressionsContent} from '../shell/nativeContent'
 import type {DetailMode} from './DeviceChainPanel'
 import type {NativeDetailConfigurationFamily} from '../shell/compositionViews'
@@ -39,7 +41,7 @@ export function NativeWorldDetail({mode, expand, collapse, presentMode, presentN
   const [fullscreen, setFullscreen] = useState(false)
   const acknowledgedFullscreen=useRef(false)
   const [expanded,setExpanded]=useState(false)
-  const [clipSurface,setClipSurface] = useState<'scene' | 'glyph'>('glyph')
+  const [clipSurface,setClipSurface] = useState<'scene' | 'glyph' | 'takes'>('glyph')
   const deepReturn = useRef<{mode:DetailMode;configure: boolean; configuration: NativeDetailConfigurationFamily; focus: HTMLElement | null; scroll: number} | null>(null)
   useEffect(()=>{deepReturn.current=null;setExpanded(false)},[workspace.workspaceId,workspace.accessEpoch])
   const restoreDepth = () => {
@@ -151,24 +153,25 @@ export function NativeWorldDetail({mode, expand, collapse, presentMode, presentN
       </select></label>
       <span className="native-detail-title" title={reading ? `${reading.basis.expression_ref}\n${reading.basis.scene_ref}` : undefined}>{reading?.scene.name}</span>
       <span className="native-detail-actions">
-        {mode==='clip'&&<><button aria-pressed={clipSurface==='scene'} onClick={()=>setClipSurface('scene')}>Scene</button><button aria-pressed={clipSurface==='glyph'} onClick={()=>setClipSurface('glyph')}>States</button></>}
+        {mode==='clip'&&<><button aria-pressed={clipSurface==='scene'} onClick={()=>setClipSurface('scene')}>Scene</button><button aria-pressed={clipSurface==='glyph'} onClick={()=>setClipSurface('glyph')}>States</button><button aria-pressed={clipSurface==='takes'} onClick={()=>setClipSurface('takes')}>Takes</button></>}
         {mode === 'device' && <><button type="button" aria-expanded={configure} title="Configure chosen controls, devices and macros" onClick={() => {const next = !configure; setConfigure(next); if (next) chooseConfiguration(configuration)}}>{configure ? 'Close settings' : 'Configure'}</button>
-          {configure && <select aria-label="Editor settings family" value={configuration} onChange={event => chooseConfiguration(event.target.value as NativeDetailConfigurationFamily)}><option value="controls">Chosen controls</option><option value="device">Field &amp; Force</option><option value="rack">Macros</option><option value="scene">Scene</option></select>}</>}
+          {configure && <select aria-label="Editor settings family" value={configuration} onChange={event => chooseConfiguration(event.target.value as NativeDetailConfigurationFamily)}><option value="controls">Chosen controls</option><option value="device">Devices</option><option value="rack">Macros</option><option value="scene">Scene</option></select>}</>}
         <button type="button" disabled={!reading} title="Expand this editor; Return restores its previous placement" onClick={() => void deep()}>{expanded || fullscreen ? 'Return' : 'Deep edit ↗'}</button>
         <button type="button" disabled={!workspace.editor} title="Read the retained editor owner" aria-label="Refresh native editor" onClick={() => void request({operation: 'read'})}>↻</button>
       </span>
       {fault && <span role="alert">{fault}</span>}
     </header>
     <div className="native-detail-body">
-      <div className="native-detail-view" hidden={mode !== 'clip'}><div className="native-clip-surface" hidden={clipSurface!=='scene'}><NativeSceneEditor reading={reading} request={request}/></div><div className="native-clip-surface" hidden={clipSurface!=='glyph'}><GlyphSequenceEditor reading={reading} request={request} drafts={drafts.current} onExpand={expandClip} isPresented={glyphPresented}/></div></div>
+      <div className="native-detail-view" hidden={mode !== 'clip'}><div className="native-clip-surface" hidden={clipSurface!=='scene'}><NativeSceneEditor reading={reading} request={request}/></div><div className="native-clip-surface" hidden={clipSurface!=='glyph'}><GlyphSequenceEditor reading={reading} request={request} drafts={drafts.current} onExpand={expandClip} isPresented={glyphPresented}/></div><div className="native-clip-surface" hidden={clipSurface!=='takes'}><NativeTakes reading={reading} request={request}/></div></div>
       <div className="native-detail-view native-device-view" hidden={mode !== 'device'}>
         <div className="native-chain-glyph" hidden={!selectedFormation}><GlyphSequenceEditor compact reading={reading} request={request} drafts={drafts.current} onExpand={expandGlyphDevice} isPresented={compactGlyphPresented}/></div>
+        <div className="native-chain-strip"><NativeDeviceRack reading={reading} request={request} onOpen={dispatchOpenDevice}/></div>
         <div className="native-chain-controls"><NativeChosenControls reading={reading} request={request} configure={configure && configuration === 'controls'}/></div>
         <div className="native-chain-rack"><NativeRackEditor reading={reading} request={request} configure={configure && configuration === 'rack'}/></div>
         <div className="native-chain-configuration" hidden={!configure}>
-          <nav aria-label="Native device settings"><button aria-pressed={configuration === 'controls'} onClick={() => chooseConfiguration('controls')}>Chosen controls</button><button aria-pressed={configuration === 'device'} onClick={() => chooseConfiguration('device')}>Field &amp; Force</button><button aria-pressed={configuration === 'rack'} onClick={() => chooseConfiguration('rack')}>Macros</button><button aria-pressed={configuration === 'scene'} onClick={() => chooseConfiguration('scene')}>Scene</button></nav>
+          <nav aria-label="Native device settings"><button aria-pressed={configuration === 'controls'} onClick={() => chooseConfiguration('controls')}>Chosen controls</button><button aria-pressed={configuration === 'device'} onClick={() => chooseConfiguration('device')}>Devices</button><button aria-pressed={configuration === 'rack'} onClick={() => chooseConfiguration('rack')}>Macros</button><button aria-pressed={configuration === 'scene'} onClick={() => chooseConfiguration('scene')}>Scene</button></nav>
           <div className="native-settings-note" hidden={configuration !== 'controls'}>Choose properties in the browser. Reorder, bind or remove them in the chosen-control rack.</div>
-          <div className="native-settings-editor" hidden={configuration !== 'device'}><NativeDeviceEditors reading={reading} request={request} onSelectEntity={selectEntity} isPresented={devicePresented}/></div>
+          <div className="native-settings-editor native-settings-handoff" hidden={configuration !== 'device'}><p className="native-settings-note">Device settings open in the Browser pool beside the rack, so changing them never adds a widget to the rack.</p><button type="button" disabled={!reading || !devicePresented()} onClick={() => {const selected = (reading?.selection.entity_ids.length ?? 0) > 0; dispatchOpenDevice({scope: selected ? 'entity' : 'field', family: selected ? 'force' : 'physics'})}}>Open device settings</button></div>
           <div className="native-settings-editor" hidden={configuration !== 'scene'}><NativeSceneTransport source={sceneSource}/>{sceneProjectionFault&&<p role="alert">{sceneProjectionFault}</p>}</div>
           <div className="native-settings-note" hidden={configuration !== 'rack'}>Map parameters, set recall exclusions and capture variations in the macro rack.</div>
         </div>

@@ -53,3 +53,25 @@
   .world-browser-categories .world-file-row { padding:2px 3px; font-size:10px }
   .world-context-pool { flex-basis:36%; min-height:100px }
 }
+
+/* Browser search, counts and keyboard rows */
+.world-browser-searchrow { display:flex; align-items:center; gap:6px; flex:0 0 auto; padding:4px 4px 5px; border-bottom:1px solid var(--line) }
+.world-browser-categories .world-browser-searchrow .world-browser-search { flex:1 1 auto; min-width:0; padding:0; border:0 }
+.world-browser-count { flex:0 0 auto; max-width:45%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; color:var(--text-dim) }
+.world-browser-preview { margin:6px 7px; font-size:11px; line-height:1.4; color:var(--text-dim); overflow-wrap:anywhere }
+.world-work-row.previewed { outline:1px dashed var(--accent); outline-offset:-1px }
+.world-browser-results [data-browser-row]:focus-visible { outline:1px solid var(--accent); outline-offset:-1px }
+/* Parameter groups, rows and detail actions */
+.world-property-groups,.world-property-rows { list-style:none; margin:0; padding:0 }
+.world-property-group { display:flex; align-items:center; gap:5px; width:100%; min-height:23px; padding:2px 6px; background:var(--bg-3); color:var(--text); font-size:10px; text-align:left; border:0; border-bottom:1px solid var(--line) }
+.world-property-group small { margin-left:auto; font-size:9px; color:var(--text-dim) }
+.world-property-group:focus-visible { outline:1px solid var(--accent); outline-offset:-1px }
+.world-property-row { cursor:grab; min-height:22px }
+.world-property-row:active { cursor:grabbing }
+.world-property-actions { display:flex; flex-wrap:wrap; gap:4px }
+.world-property-actions button { min-height:22px; font-size:11px; padding:2px 6px }
+.world-property-hint { font-size:10px; line-height:1.35; color:var(--text-dim); overflow-wrap:anywhere }
+.world-property-preview code { font-size:10px; overflow-wrap:anywhere }
+/* Drag image chip (created at drag start, removed on the next tick) */
+.native-drag-chip { position:fixed; top:-200px; left:-200px; padding:2px 7px; border:1px solid var(--accent); border-radius:2px; background:var(--bg-1); color:var(--text); font:11px var(--font-ui); white-space:nowrap; pointer-events:none }
+@media(max-width:700px) { .world-browser-count { max-width:38% } }

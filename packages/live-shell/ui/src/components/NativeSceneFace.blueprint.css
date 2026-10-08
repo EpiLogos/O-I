@@ -1,0 +1,39 @@
+/* Blueprint device panel. Shell tokens only; amber (--accent) marks focus, the draft and the handles. */
+.native-blueprint {display: grid; gap: 12px; color: var(--text); font-size: 12px}
+.native-blueprint-section {display: grid; gap: 8px; padding: 10px; background: var(--bg-1); border: 1px solid var(--line); border-radius: 6px; min-width: 0}
+.native-blueprint-section > header {display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap}
+.native-blueprint-section h3 {margin: 0; font-size: 12px; font-weight: 600}
+.native-blueprint-section > header > span {color: var(--text-dim); font-size: 11px}
+.native-blueprint button, .native-blueprint input {font: inherit; color: inherit}
+.native-blueprint button {min-height: 22px; padding: 3px 8px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; cursor: pointer}
+.native-blueprint button:disabled {opacity: .5; cursor: default}
+.native-blueprint button:focus-visible, .native-blueprint input:focus-visible {outline: 2px solid var(--accent); outline-offset: 1px}
+.native-blueprint-actions {display: flex; flex-wrap: wrap; gap: 6px}
+.native-blueprint-note, .native-blueprint small {color: var(--text-dim); font-size: 11px; line-height: 1.4}
+.native-blueprint-members {list-style: none; margin: 0; padding: 0; display: grid; gap: 4px}
+.native-blueprint-members li {display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline}
+.native-blueprint-members small {font-variant-numeric: tabular-nums}
+.native-blueprint-plan {display: block; width: 100%; max-width: 360px; height: auto; margin: 0 auto; background: var(--bg-0); border: 1px solid var(--line); border-radius: 4px; box-sizing: border-box; touch-action: none}
+.native-blueprint-frame {fill: none; stroke: var(--line)}
+.native-blueprint-grid line {stroke: var(--line); stroke-dasharray: 2 4; opacity: .6}
+.native-blueprint-committed {fill: none; stroke: var(--text-dim); stroke-width: 1.5; stroke-dasharray: 4 3}
+.native-blueprint-draft {fill: color-mix(in srgb, var(--accent) 12%, transparent); stroke: var(--accent); stroke-width: 2}
+.native-blueprint-member {fill: var(--bg-2); stroke: var(--text); stroke-width: 1}
+.native-blueprint-label {fill: var(--text-dim); font-size: 10px; text-anchor: middle; font-variant-numeric: tabular-nums}
+.native-blueprint-spoke {stroke: var(--text-dim); stroke-width: 1}
+.native-blueprint-handle {cursor: grab; outline: none}
+.native-blueprint-handle circle {fill: var(--accent); fill-opacity: .85; stroke: var(--bg-0); stroke-width: 2}
+.native-blueprint-handle.is-size circle {fill: var(--bg-2); stroke: var(--accent); stroke-width: 2}
+.native-blueprint-handle:focus-visible circle {stroke: var(--accent); stroke-width: 3}
+.native-blueprint-handle[aria-disabled='true'] {cursor: default; opacity: .5}
+.native-blueprint-readout {margin: 0; font-variant-numeric: tabular-nums; color: var(--text-dim)}
+.native-blueprint-fields {display: grid; grid-template-columns: 1fr 1fr; gap: 8px}
+.native-blueprint-field {display: grid; gap: 3px; min-width: 0}
+.native-blueprint-field > span {color: var(--text-dim); font-size: 11px}
+.native-blueprint-field input {min-height: 22px; padding: 3px 6px; background: var(--bg-0); border: 1px solid var(--line); border-radius: 4px; min-width: 0; width: 100%; box-sizing: border-box}
+.native-blueprint-field input[aria-invalid='true'] {border-color: var(--accent)}
+.native-blueprint-bounds {color: var(--accent); font-size: 11px}
+.native-blueprint-fault {display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--accent)}
+.native-blueprint-fault p {margin: 0; flex-basis: 100%}
+@media (max-width: 420px) {.native-blueprint-fields {grid-template-columns: 1fr}}
+@media (prefers-reduced-motion: reduce) {.native-blueprint * {transition: none !important; animation: none !important}}

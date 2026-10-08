@@ -2,7 +2,7 @@
  * Preparation is inert: the caller submits snapshot through NativeWorking's
  * existing commit/checkpoint/acknowledgement path. No store or clock lives here.
  */
-import {clone, type Journey, type Scene} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
+import {blankScene, clone, type Journey, type Scene} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
 import type {KernelConversion, KernelExpressionDocument} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge';
 import {prepareCompositionEdit, type CompositionEdit} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelComposition';
 import {nextSceneFrom} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/sceneWorkflow';
@@ -16,9 +16,17 @@ export type NativeSceneEditIntent =
   | {operation: 'pacing'; scene_ref: string; duration?: number; transition?: number}
   | {operation: 'reorder'; scene_refs: string[]}
   | {operation: 'duplicate'; scene_ref: string; title?: string}
-  | {operation: 'remove'; scene_ref: string};
+  | {operation: 'remove'; scene_ref: string}
+  /** A new blank draft after the presented Scene (the existing new-scene semantics). */
+  | {operation: 'add'; title?: string}
+  /** The Expression title (journey.name); kernelComposition emits it as `rename`. */
+  | {operation: 'expression-title'; title: string}
+  /** The Expression description (journey.description); carried by composition_set. */
+  | {operation: 'expression-description'; description: string}
+  /** The saved-sequence loop flag, carried as composition_set. */
+  | {operation: 'loop'; loop: boolean};
 export type NativeSceneSnapshotIntent =
-  | {operation: 'save-snapshot'; scene_ref: string; title?: string}
+  | {operation: 'save-snapshot'; scene_ref: string; title?: string; next?: boolean}
   | {operation: 'restore-snapshot'; scene_ref: string};
 
 export interface PreparedNativeSceneEdit {
@@ -37,6 +45,11 @@ function title(value: string): string {
   if (typeof value !== 'string' || !value.trim() || value.trim().length > 160)
     throw Error('Give this Scene a name of 1–160 characters');
   return value.trim();
+}
+/** The Expression description: free text bounded like the inspector field (inspector.ts maxlength 5000). Empty is a real value. */
+function description(value: string): string {
+  if (typeof value !== 'string' || value.length > 5000) throw Error('The description must be text of at most 5000 characters');
+  return value;
 }
 function exactScene(view: KernelConversion, journey: Journey, scene_ref: string): Scene {
   const matches = Object.entries(view.bindings).filter(([, binding]) => binding.scene_ref === scene_ref);
@@ -68,7 +81,11 @@ export function prepareNativeSceneSnapshot(reading: NativeEditorReading, intent:
   const row = reading.scenes?.scenes.find(scene => scene.scene_ref === intent.scene_ref);
   if (!row?.material.available || !row.membership.complete) throw Error('Load complete authored native Scene correspondence before using its snapshot');
   const base = {operation: 'scene' as const, basis: clone(reading.basis), intent_epoch: reading.playback.intent_epoch};
-  if (intent.operation === 'save-snapshot') return {...base, action: 'save-snapshot', name: title(intent.title ?? row.title), next: false};
+  if (intent.operation === 'save-snapshot') {
+    if (intent.next !== undefined && typeof intent.next !== 'boolean') throw Error('Save & next takes a yes or no value');
+    if (intent.next === true && (reading.scenes?.working_order.length ?? 0) >= 64) throw Error('An expression can contain up to 64 scenes.');
+    return {...base, action: 'save-snapshot', name: title(intent.title ?? row.title), next: intent.next === true};
+  }
   if (intent.operation !== 'restore-snapshot' || row.snapshot.availability !== 'present') throw Error('This native Scene has no saved snapshot to restore');
   return {...base, action: 'restore-snapshot'};
 }
@@ -97,9 +114,30 @@ export function prepareNativeSceneEdit(view: KernelConversion, working: Journey,
   let affected: Scene[], created: Scene | null = null;
   const labels: Record<NativeSceneEditIntent['operation'], string> = {
     rename: 'Rename Scene', pacing: 'Set Scene pacing', reorder: 'Reorder Scenes', duplicate: 'Duplicate Scene',
-    remove: 'Remove Scene',
+    remove: 'Remove Scene', add: 'Add Scene', loop: 'Set saved sequence loop',
+    'expression-title': 'Rename Expression', 'expression-description': 'Set Expression description',
   };
-  if (intent.operation === 'reorder') {
+  if (intent.operation === 'expression-title') {
+    // Journey-level: prepareCompositionEdit diffs journey.name into one `rename` change. No Scene is affected.
+    journey.name = title(intent.title);
+    affected = [];
+  } else if (intent.operation === 'expression-description') {
+    // Journey-level: prepareCompositionEdit diffs journey.description into the composition_set change.
+    journey.description = description(intent.description);
+    affected = [];
+  } else if (intent.operation === 'loop') {
+    if (typeof intent.loop !== 'boolean') throw Error('Loop takes a yes or no value');
+    journey.loop = intent.loop;
+    affected = [];
+  } else if (intent.operation === 'add') {
+    if (journey.scenes.length >= 64) throw Error('An expression can contain up to 64 scenes.');
+    if (intent.title !== undefined) title(intent.title);
+    // Same blank draft as the retained new-scene gesture, placed after the presented Scene.
+    const anchor = exactScene(view, journey, selectedRef);
+    created = blankScene(intent.title === undefined ? 'Untitled scene' : title(intent.title));
+    journey.scenes.splice(journey.scenes.indexOf(anchor) + 1, 0, created);
+    selected = created; selectedEntity = null; entityId = null; affected = [created];
+  } else if (intent.operation === 'reorder') {
     const refs = journey.scenes.map(scene => refFor(view, scene));
     if (intent.scene_refs.length !== refs.length || new Set(intent.scene_refs).size !== refs.length
       || intent.scene_refs.some(ref => !refs.includes(ref))) throw Error('Scene order must contain every captured working Scene ref exactly once');
@@ -198,6 +236,8 @@ function boundedSceneIntent(intent: NativeSceneEditIntent): void {
   const allowed: Record<NativeSceneEditIntent['operation'], string[]> = {
     rename: ['operation', 'scene_ref', 'title'], pacing: ['operation', 'scene_ref', 'duration', 'transition'],
     reorder: ['operation', 'scene_refs'], duplicate: ['operation', 'scene_ref', 'title'], remove: ['operation', 'scene_ref'],
+    add: ['operation', 'title'], loop: ['operation', 'loop'],
+    'expression-title': ['operation', 'title'], 'expression-description': ['operation', 'description'],
   };
   if (!Object.prototype.hasOwnProperty.call(allowed, intent.operation) || Object.keys(intent).some(key => !allowed[intent.operation].includes(key)))
     throw Error('Unsupported native Scene intent or operands');

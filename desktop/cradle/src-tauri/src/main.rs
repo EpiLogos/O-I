@@ -13,10 +13,11 @@ mod menus;
 mod ground_dialog;
 mod material_protocol;
 mod app_assets;
+mod native_shell;
 mod walk_diagnostics;
 use std::sync::Mutex;
 
-use oi_cradle_kernel::events::{KernelEventReceipt, KERNEL_EVENT_TOPIC};
+use oi_cradle_kernel::events::{KernelEventReplay, KERNEL_EVENT_TOPIC};
 use oi_cradle_kernel::{Kernel, KernelOp, KernelOpOutcome};
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
@@ -148,14 +149,14 @@ async fn decision_episode_authorise(app: AppHandle, window: tauri::WebviewWindow
 /// command the renderer bootstraps from and re-syncs through; the topic
 /// event is the push that says "look again".
 #[tauri::command]
-async fn kernel_event_log(app: AppHandle, since_seq: u64) -> Result<Vec<KernelEventReceipt>, String> {
+async fn kernel_event_log(app: AppHandle, cursor: u64, generation: Option<String>, limit: usize) -> Result<KernelEventReplay, String> {
     // An owner read can hold this mutex for seconds. Waiting on the main
     // thread freezes WebKit and native window interaction, even though
     // kernel_op itself correctly runs on the blocking pool.
     tauri::async_runtime::spawn_blocking(move || {
         let host = app.state::<KernelHost>();
         let kernel = host.0.lock().map_err(|_| "kernel lock unavailable".to_owned())?;
-        Ok(kernel.event_log().since(since_seq.max(1)).to_vec())
+        Ok(kernel.event_log().replay(generation.as_deref(), cursor, limit))
     }).await.map_err(|error| error.to_string())?
 }
 
@@ -164,6 +165,11 @@ fn apply_native_appearance(app: &AppHandle, appearance: &str) {
 }
 
 fn main() {
+    #[cfg(feature = "native_shell")]
+    if let Err(error)=native_shell::prepare() {
+        eprintln!("Native shell candidate bootstrap refused: {error}");
+        std::process::exit(2);
+    }
     // A Finder/Dock launch inherits launchd's minimal PATH, which never holds
     // the managed activation directory. Pin the suite executable once, before
     // any thread exists, so every kernel `oi` caller resolves the same one.
@@ -174,6 +180,13 @@ fn main() {
         }
     }
     let mut context=tauri::generate_context!();
+    // The pinned config token generator emits Vec for this array field.
+    // Use the same native runtime hook as isolated WebKit acceptance, with
+    // the candidate's stable identity inherited by its detached windows.
+    #[cfg(feature = "native_shell")]
+    for window in &mut context.config_mut().app.windows {
+        window.data_store_identifier=Some([79,73,83,72,69,76,76,67,65,78,68,73,68,65,84,69]);
+    }
     // A development/native acceptance run can use an isolated persistent
     // WebKit store while exercising the real owner ground and kernel.
     #[cfg(debug_assertions)]
@@ -187,6 +200,8 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             app.manage(windows::Windows::default());
+            #[cfg(feature = "native_shell")]
+            app.manage(native_shell::ApplicationClose::default());
             app.manage(browser::Browsers::default());
             app.manage(terminal::Terminals::default());
             // An installed desktop carries its own SharedField client (the
@@ -197,7 +212,11 @@ fn main() {
             }
             let mut kernel = Kernel::discover();
             // Expressive acts survive restart ($OI_HOME/desktop/expression-acts).
-            if let Err(error) = kernel.attach_default_act_store() {
+            #[cfg(feature = "native_shell")]
+            let act_store=native_shell::attach_act_store(&mut kernel);
+            #[cfg(not(feature = "native_shell"))]
+            let act_store=kernel.attach_default_act_store();
+            if let Err(error) = act_store {
                 eprintln!("Expressive act store unavailable; acts stay in memory: {error}");
             }
             match kernel.apply(KernelOp::PresentationRead) {
@@ -270,7 +289,29 @@ fn main() {
             Ok(())
         })
         .on_menu_event(|app, event| menus::dispatch(app, event.id().as_ref()))
-        .invoke_handler(tauri::generate_handler![walk_diagnostics::expression_walk_observation,working_surface_lease::working_surface_takeover,working_surface_lease::working_surface_client_poll,working_surface_lease::working_surface_client_input,working_surface_lease::working_surface_client_resize,working_surface_lease::working_surface_release,terminal::terminal_attach,terminal::terminal_poll,terminal::terminal_input,terminal::terminal_resize,terminal::terminal_checkpoint,terminal::terminal_reconcile,browser::browser_attach, browser::browser_control, browser::browser_reconcile, ground_dialog::choose_central_folder, menus::arrangement_menu, decision_episode_authorise, kernel_op, kernel_event_log, windows::window_detach, windows::window_binding, windows::window_redock, windows::window_redock_surface, windows::window_focus_subject, windows::window_focus_main])
-        .run(context)
-        .expect("error while running the cradle");
+        .invoke_handler(tauri::generate_handler![native_shell::live_shell_read,native_shell::live_shell_config,native_shell::live_shell_checkpoint_reply,native_shell::live_shell_request_close,walk_diagnostics::expression_walk_observation,working_surface_lease::working_surface_takeover,working_surface_lease::working_surface_client_poll,working_surface_lease::working_surface_client_input,working_surface_lease::working_surface_client_resize,working_surface_lease::working_surface_release,terminal::terminal_attach,terminal::terminal_poll,terminal::terminal_input,terminal::terminal_resize,terminal::terminal_checkpoint,terminal::terminal_reconcile,browser::browser_attach, browser::browser_control, browser::browser_reconcile, ground_dialog::choose_central_folder, menus::arrangement_menu, decision_episode_authorise, kernel_op, kernel_event_log, windows::window_detach, windows::window_binding, windows::window_redock, windows::window_redock_surface, windows::window_focus_subject, windows::window_focus_main])
+        .build(context)
+        .expect("error while building the cradle")
+        .run(|app,event| {
+            #[cfg(feature = "native_shell")]
+            match event {
+                tauri::RunEvent::WindowEvent {label,event:tauri::WindowEvent::CloseRequested {api,..},..} if label=="main" => {
+                    api.prevent_close();
+                    if let Err(error)=native_shell::request_close(app,0,false){native_shell::report_close_failure(app,error);}
+                }
+                tauri::RunEvent::ExitRequested {code,api,..} => {
+                    if !native_shell::close_approved(app,code) {
+                        // Pinned Tauri cannot prevent its direct restart API;
+                        // candidate Restart calls request_close before using it.
+                        api.prevent_exit();
+                        if code!=Some(tauri::RESTART_EXIT_CODE) {
+                            if let Err(error)=native_shell::request_close(app,code.unwrap_or(0),false){native_shell::report_close_failure(app,error);}
+                        }
+                    }
+                }
+                _=>{}
+            }
+            #[cfg(not(feature = "native_shell"))]
+            let _=(app,event);
+        });
 }

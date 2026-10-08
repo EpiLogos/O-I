@@ -1,6 +1,7 @@
-import type {Entity, NativeEditorBasis, NativeEditorController, NativeEditorReading, NativeEditorReply, NativeGlyphChange, NativeSceneEditorRequest} from '../../../../expressions-boundary/src/editor';
+import type {Entity, NativeEditorBasis, NativeEditorChange, NativeEditorController, NativeEditorReading, NativeEditorReply, NativeGlyphChange, NativeSceneEditorRequest} from '../../../../expressions-boundary/src/editor';
 import {toNativeEntity} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeBridge';
 import type {ActMaterialContract} from '../../../../expressions-boundary/src/nativeMaterials';
+import {loopIntent, sceneFocused} from '../components/nativeScenePlayback';
 
 /** Presentation identities are tuples, never invented native references. The
  * complete material stays with the retained Expressions document owner. */
@@ -65,10 +66,13 @@ export interface NativeExpressionsContent {
   scene_members: readonly NativeSceneMaterialCell[];
   scenes: NativeEditorReading['scenes'] | null;
   playback: NativeEditorReading['playback'] | null;
+  /** The native selection the presented Scene was read with. Composition-level
+   * edits (the loop flag) are addressed through it, as the Scene editor does. */
+  native_selection?: NativeEditorReading['nativeSelection'] | null;
   history: NativeEditorReading['history'];
   standing: NativeEditorReading['standing'];
 }
-const identity = (scope: ExpressionsContentScope, component: string, entityId?: string) =>
+const identity =(scope: ExpressionsContentScope, component: string, entityId?: string) =>
   JSON.stringify(['expressions', scope.expression_ref, scope.scene_ref, component, entityId ?? null]);
 
 export interface NativeGlyphTiming {
@@ -138,7 +142,8 @@ export function readNativeExpressionsContent(reading: NativeEditorReading): Nati
   tracks.push({owner: 'expressions', kind: 'field', id: identity(scope, 'field'), name: 'Field', scope,
     selected: reading.selection.entity_ids.length === 0});
   return {owner: 'expressions', basis, scene: {id: reading.scene.id, scene_ref: scope.scene_ref, name: reading.scene.name},
-    tracks, clip_sources: clips, scene_members: members, scenes: reading.scenes ?? null, playback: reading.playback ?? null, history: {...reading.history}, standing: {...reading.standing}};
+    tracks, clip_sources: clips, scene_members: members, scenes: reading.scenes ?? null, playback: reading.playback ?? null,
+    native_selection: reading.nativeSelection ? structuredClone(reading.nativeSelection) : null, history: {...reading.history}, standing: {...reading.standing}};
 }
 
 type SceneAction<T> = T extends NativeSceneEditorRequest ? Omit<T, 'operation' | 'basis' | 'intent_epoch'> : never;
@@ -168,6 +173,15 @@ export function createNativeContentActions(content: NativeExpressionsContent, co
       if(action.action==='focus-object'&&!content.scenes.scenes.find(row=>row.scene_ref===action.scene_ref)?.members.some(member=>member.entity_ref===action.entity_ref&&member.state==='loaded'))return refuse('This native occurrence is not loaded in the captured Scene');
       return controller.request({...action, operation: 'scene', basis, intent_epoch: content.playback.intent_epoch});
     },
+    /** The saved-sequence loop flag: the same scene-edit and loop intent the Scene
+     * editor's switch sends, on the captured basis and native selection. */
+    setSceneLoop(loop: boolean): Promise<NativeEditorReply> {
+      if (!content.scenes || !content.playback) return refuse('The native Scene transport is unavailable');
+      const selection = content.native_selection;
+      if (!sceneFocused(selection, basis.scene_ref) || !selection) return refuse('Focus a Scene before changing its loop.');
+      return controller.request({operation: 'scene-edit', basis, intent_epoch: content.playback.intent_epoch,
+        native_selection: structuredClone(selection), intent: loopIntent(loop)});
+    },
     selectField(): Promise<NativeEditorReply> {
       return controller.request({operation: 'select-field', basis});
     },
@@ -192,6 +206,11 @@ export function createNativeContentActions(content: NativeExpressionsContent, co
       const source = clip(sourceId);
       if (!source?.capabilities.open || !source.sequence.steps.some(step => step.id === stepId)) return refuse('This captured state has no native editor target');
       return controller.request({operation: 'open', basis, entity_id: source.scope.view_entity_id, step_id: stepId, editor});
+    },
+    /** Bar controls (Time Scale, pinned parameters, pointer and 3D switches): one admitted change transaction on the captured basis. */
+    applyChanges(changes: readonly NativeEditorChange[], at: NativeEditorBasis = basis): Promise<NativeEditorReply> {
+      if (!changes.length || changes.length > 64) return refuse('One bar gesture sends between one and 64 native changes');
+      return controller.request({operation: 'apply', basis: at, changes: [...changes]});
     },
     history(operation: 'undo' | 'redo' | 'save'): Promise<NativeEditorReply> {
       return controller.request({operation, basis});

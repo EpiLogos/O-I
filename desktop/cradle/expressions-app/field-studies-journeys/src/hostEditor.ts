@@ -1,8 +1,16 @@
-import {EDITOR_CHANNEL, sameEditorBasis, type NativeDeviceChange, type NativeEditorReading, type NativeEditorReply, type NativeEditorRequest, type NativeGlyphChange, type NativeChosenControlChange} from '../../../../../packages/expressions-boundary/src/editor';
+import {EDITOR_CHANNEL, sameEditorBasis, type NativeDeviceChange, type NativeEditorReading, type NativeEditorReply, type NativeEditorRequest, type NativeGlyphChange, type NativeChosenControlChange, type NativeDeviceWidgetChange, type NativeAutomationChange, type NativeFormationChange, type NativeObjectChange, type NativeTrackChange} from '../../../../../packages/expressions-boundary/src/editor';
+import {applyNativeFormationChanges, applyNativeObjectChanges} from '../../../../../packages/expressions-boundary/src/nativeFormations';
 import {readNativeChosenControls, applyNativeChosenControlChanges} from '../../../../../packages/expressions-boundary/src/chosenControls';
+import {readNativeDeviceWidgets, applyNativeDeviceWidgetChanges} from '../../../../../packages/expressions-boundary/src/nativeDeviceWidgets';
 import {applyNativeDeviceChanges, readNativeDeviceEffectiveValues} from '../../../../../packages/expressions-boundary/src/nativeDeviceEdits';
 import {applyNativeRackChanges} from '../../../../../packages/expressions-boundary/src/nativeRacks';
+import {readSharedFieldTargets} from '../../../../../packages/expressions-boundary/src/nativeSharedSettings';
 import {NativeMaterialRefusal} from '../../../../../packages/expressions-boundary/src/nativeMaterials';
+import {applyNativeSceneTextChanges, type NativeSceneTextChange} from '../../../../../packages/expressions-boundary/src/sceneMaterialEdits';
+import {applyNativeAutomationChanges} from '../../../../../packages/expressions-boundary/src/nativeAutomationEdits';
+import {applyNativeTrackChanges} from '../../../../../packages/expressions-boundary/src/nativeTrackEdits';
+import {applyNativeStateFoldChanges, readNativeFoldTargets} from '../../../../../packages/expressions-boundary/src/nativeStateFold';
+import type {NativeFoldChange} from '../../../../../packages/expressions-boundary/src/editor';
 import type {NativeRackChange, NativeRackTarget} from '../../../../../packages/expressions-boundary/src/nativeRackSchema';
 import {clone, uid, validateJourney, type Journey} from './model';
 import {appendFormationState} from './formationAuthoring';
@@ -16,6 +24,10 @@ import {effectiveScene, writeShared} from './sharedSettings';
 import {blueprintMember} from './blueprintGeometry';
 import {projectNativeScenes} from '../../../../../packages/expressions-boundary/src/scenes';
 import {nativeSceneTransportMaterial} from './sceneTransport';
+import {validateBlueprintIntent} from '../../../../../packages/expressions-boundary/src/nativeBlueprintEdits';
+import {blueprintTransformIntent} from './blueprintHUD';
+import {prepareBlueprintEdit, type BlueprintIntent} from './nativeBlueprint';
+import {readSceneBlueprint} from './kernelExpressions';
 
 function finite(value: number, min: number, max: number, label: string) {
   if (!Number.isFinite(value) || value < min || value > max) throw Error(`${label} must be between ${min} and ${max}`);
@@ -146,6 +158,8 @@ export interface NativeEditorReceiver {
   selectField(request: Extract<NativeEditorRequest,{operation:'select-field'}>, isCurrent?: () => boolean): Promise<void>;
   scene(request: Extract<NativeEditorRequest,{operation:'scene'}>, isCurrent?: () => boolean): Promise<void>;
   editScenes(request: Extract<NativeEditorRequest,{operation:'scene-edit'}>, isCurrent?: () => boolean): Promise<void>;
+  sceneMaterial?(request: Extract<NativeEditorRequest,{operation:'scene-material'}>, isCurrent?: () => boolean): Promise<void>;
+  blueprint?(request: Extract<NativeEditorRequest,{operation:'blueprint'}>, isCurrent?: () => boolean): Promise<void>;
   open(request: Extract<NativeEditorRequest,{operation:'open'}>, isCurrent?: () => boolean): Promise<void>;
   history(operation: 'undo' | 'redo'): Promise<void>;
   save(): Promise<void>;
@@ -169,6 +183,12 @@ interface RetainedEditorOptions {
   telemetry(): {params?: Record<string, number>; config?: unknown; simTime?: number; sequences?: NativeEditorReading['observation'] extends infer O ? O extends {sequences?: infer S} ? S : never : never} | undefined;
   fieldPaused(): boolean;
   editScenes?(request: Extract<NativeEditorRequest,{operation:'scene-edit'}>, isCurrent: () => boolean): Promise<void>;
+  /** Native body and jump-trigger owner: the host resolves a body reading and
+   * runs prepareNativeSceneMaterialEdit inside nativeWorkspace.edit. */
+  editSceneMaterial?(request: Extract<NativeEditorRequest,{operation:'scene-material'}>, isCurrent: () => boolean): Promise<void>;
+  /** Native blueprint owner: receives one fully resolved, preflighted BlueprintIntent (nativeBlueprint.ts) and must submit it
+   * through nativeWorkspace.blueprint, which keeps the captured revision CAS. Absent means the shell refuses honestly. */
+  editBlueprint?(intent: BlueprintIntent, isCurrent: () => boolean): Promise<void>;
   sceneControls?: {
     read(): NonNullable<NativeEditorReading['playback']>;
     recording(): boolean;
@@ -219,9 +239,12 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
     const effectiveValues=telemetry?readNativeDeviceEffectiveValues(projected,telemetry):undefined;
     let dirty=true;try{dirty=prepareCompositionEdit(view,options.store.document).changes.length>0}catch{/* conflicting local work remains dirty */}
     return {basis:{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref,authored_revision:options.store.revision},
-      scenes:projectNativeScenes(options.store.document,view),...(options.sceneControls?{playback:clone(options.sceneControls.read())}:{}),
+      scenes:projectNativeScenes(options.store.document,view),foldTargets:readNativeFoldTargets(options.store.document,scene.id),...(options.sceneControls?{playback:clone(options.sceneControls.read())}:{}),
       ...(view.document.selection?{nativeSelection:clone(view.document.selection)}:{}),
-      scene:clone(projected), entityOccurrences:occurrences,selection:clone(options.selection()),
+      scene:clone(projected), sharedTargets:readSharedFieldTargets(options.store.document,scene), entityOccurrences:occurrences,selection:clone(options.selection()),
+      nativeScene:{scene_ref:binding.scene_ref,body:clone(binding.body),triggers:clone(binding.triggers),
+        blueprint:clone(view.document.scenes.find(row=>row.scene_ref===binding.scene_ref)?.presentation?.scene.composition.blueprint??null)},
+      devices:readNativeDeviceWidgets(options.store.document),
       chosenControls:readNativeChosenControls(options.store.document,scene,{entity_ids:options.selection().entity_ids,entityOccurrences:occurrences,effectiveValues,nativePinned:new Set(Object.values(view.document.entities).filter(e=>(e as {pinned?:boolean}).pinned).map(e=>e.entity_ref))}),
       history:{canUndo:options.store.undoStack.length>0,canRedo:options.store.redoStack.length>0},standing:{dirty,pending:standing.busy,notice:standing.notice},
       observation:{fieldPaused:options.fieldPaused(),simTime:telemetry?.simTime,effectiveValues,sequences:telemetry?.sequences}};
@@ -233,6 +256,38 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
       if(options.sceneControls?.recording())throw Error('Finish the current parameter recording before editing Scenes');
       if(options.sceneControls?.transitionPending?.())throw Error('The saved Scene focus is awaiting native acknowledgement');
       await options.editScenes(clone(request),isCurrent);
+    },
+    async sceneMaterial(request,isCurrent=()=>true) {
+      // Same guards as Scene edits: the receiver already checked the captured basis and busy state.
+      if(!options.editSceneMaterial)throw Error('This retained editor has no Scene material receiver');
+      if(options.store.transactionOpen)throw Error('Finish the current human gesture before changing Scene material');
+      if(options.sceneControls?.recording())throw Error('Finish the current parameter recording before editing Scene material');
+      if(options.sceneControls?.transitionPending?.())throw Error('The saved Scene focus is awaiting native acknowledgement');
+      await options.editSceneMaterial(clone(request),isCurrent);
+    },
+    async blueprint(request,isCurrent=()=>true) {
+      // Same guards as Scene material. The receiver has checked the captured basis and busy state; the owner gets one resolved intent.
+      if(!options.editBlueprint)throw Error('This retained editor has no Blueprint receiver');
+      if(options.store.transactionOpen)throw Error('Finish the current human gesture before changing the blueprint');
+      if(options.sceneControls?.recording())throw Error('Finish the current parameter recording before changing the blueprint');
+      if(options.sceneControls?.transitionPending?.())throw Error('The saved Scene focus is awaiting native acknowledgement');
+      const captured=read(),{view}=current(),sceneId=options.sceneId();
+      if(captured.standing.pending)throw Error('A native editor operation is awaiting acknowledgement');
+      if(!sameEditorBasis(request.basis,captured.basis)||!isCurrent())throw Error('The captured Scene or editor lifetime changed');
+      const payload=validateBlueprintIntent(request.intent);
+      const address={expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:captured.basis.scene_ref};
+      let intent:BlueprintIntent;
+      if(payload.operation==='bind'){
+        // The assigned native roles are read by the owner, never supplied by the shell (the blueprint HUD's bind law).
+        const proposal=await readSceneBlueprint(address);
+        if(!sameEditorBasis(request.basis,read().basis)||!isCurrent())throw Error('The native Scene changed while reading its roles; try again');
+        intent={...address,operation:'bind',binding:proposal.binding};
+      }
+      else if(payload.operation==='release')intent={...address,operation:'release'};
+      else intent=blueprintTransformIntent(view,sceneId,{translation:payload.translation,rotationDegrees:payload.rotation_degrees,size:payload.size});
+      // Preflight the exact native edit law against the captured revision. Nothing is written here.
+      prepareBlueprintEdit(view,intent);
+      await options.editBlueprint(intent,isCurrent);
     },
     async scene(request,isCurrent=()=>true) {
       request=clone(request);
@@ -297,8 +352,8 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
         if(change.kind==='parameter'&&change.target.startsWith('entity:')&&/:(x|y|z)$/.test(change.target))checkPosition(decodeURIComponent(change.target.slice(7,change.target.lastIndexOf(':'))));
       }
       let next=options.store.document;
-      const deviceKinds=new Set(['parameter','force-mode','field-setting','force-insert']);
-      const family=(kind:string)=>kind.startsWith('chosen-')?'chosen':kind.startsWith('rack-')?'rack':deviceKinds.has(kind)?'device':'glyph';
+      const deviceKinds=new Set(['parameter','force-mode','field-setting','morph-setting','colour-setting','colour-palette','colour-background','colour-preset','force-insert','panel-setting','route-order','entity-setting','entity-sound','entity-semantic','semantic-field-setting','field-material','ink-mode']);
+      const family=(kind:string)=>kind.startsWith('device-')?'widget':kind.startsWith('chosen-')?'chosen':kind.startsWith('rack-')?'rack':kind.startsWith('automation-')?'automation':kind.startsWith('track-')?'track':kind.startsWith('text-layer-')?'text':kind.startsWith('formation-')?'formation':kind==='entity-duplicate'||kind==='entity-remove'?'object':kind==='state-fold'?'fold':deviceKinds.has(kind)?'device':'glyph';
       const authorizeTarget=(target:NativeRackTarget)=>{
         if(target.kind==='entity'&&['x','y','z'].includes(target.path)) {
           const occurrence=binding.occurrences.find(o=>o.entity_ref===target.entity_ref);
@@ -311,7 +366,7 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
         const type=family(request.changes[first].kind);let end=first+1;
         while(end<request.changes.length&&family(request.changes[end].kind)===type)end++;
         const changes=request.changes.slice(first,end);
-        next=type==='chosen'?applyNativeChosenControlChanges(next,scene.id,changes as NativeChosenControlChange[],options.selection().entity_ids,Object.fromEntries(binding.occurrences.map(o=>[o.view_entity_id,o.entity_ref]))):type==='device'?applyNativeDeviceChanges(next,scene.id,changes as NativeDeviceChange[],read().observation?.effectiveValues):type==='rack'?applyNativeRackChanges(next,scene.id,changes as NativeRackChange[],Object.fromEntries(binding.occurrences.map(o=>[o.view_entity_id,o.entity_ref])),read().observation?.effectiveValues,authorizeTarget):applyNativeGlyphChanges(next,scene.id,changes as NativeGlyphChange[]);
+        next=type==='widget'?applyNativeDeviceWidgetChanges(next,changes as NativeDeviceWidgetChange[]):type==='chosen'?applyNativeChosenControlChanges(next,scene.id,changes as NativeChosenControlChange[],options.selection().entity_ids,Object.fromEntries(binding.occurrences.map(o=>[o.view_entity_id,o.entity_ref]))):type==='device'?applyNativeDeviceChanges(next,scene.id,changes as NativeDeviceChange[],read().observation?.effectiveValues):type==='rack'?applyNativeRackChanges(next,scene.id,changes as NativeRackChange[],Object.fromEntries(binding.occurrences.map(o=>[o.view_entity_id,o.entity_ref])),read().observation?.effectiveValues,authorizeTarget):type==='automation'?applyNativeAutomationChanges(next,scene.id,changes as NativeAutomationChange[]):type==='track'?applyNativeTrackChanges(next,scene.id,changes as NativeTrackChange[]):type==='object'?applyNativeObjectChanges(next,scene.id,changes as NativeObjectChange[]):type==='formation'?applyNativeFormationChanges(next,scene.id,changes as NativeFormationChange[]):type==='text'?applyNativeSceneTextChanges(next,scene.id,changes as NativeSceneTextChange[]):type==='fold'?applyNativeStateFoldChanges(next,scene.id,changes as NativeFoldChange[]):applyNativeGlyphChanges(next,scene.id,changes as NativeGlyphChange[]);
         first=end;
       }
       options.change(()=>{options.store.document=next});await commit();
@@ -383,7 +438,7 @@ export function installNativeEditorReceiver(owner: NativeEditorReceiver, target:
     const request = data.request as NativeEditorRequest;
     let requestGeneration = generation, reply: NativeEditorReply, material: import('../../../../../packages/expressions-boundary/src/materialEditor').NativeMaterialEditorResult | undefined;
     try {
-      if (!request || !['read','apply','select','select-field','scene','scene-edit','open','undo','redo','save','material'].includes(request.operation)) throw Error('Unsupported native editor operation');
+      if (!request || !['read','apply','select','select-field','scene','scene-edit','scene-material','blueprint','open','undo','redo','save','material'].includes(request.operation)) throw Error('Unsupported native editor operation');
       if (!binding || !sameBinding(binding,address)) {
         if (request.operation !== 'read') throw Error('Read the current native editor before applying an operation');
         if (binding && binding.bindingId === address.bindingId && address.epoch < binding.epoch) throw Error('The editor binding belongs to a retired epoch');
@@ -410,6 +465,14 @@ export function installNativeEditorReceiver(owner: NativeEditorReceiver, target:
           else if (request.operation === 'select-field') await owner.selectField(request,()=>alive&&requestGeneration===generation&&!!binding&&sameBinding(binding,address));
           else if (request.operation === 'scene') await owner.scene(request,()=>alive&&requestGeneration===generation&&!!binding&&sameBinding(binding,address));
           else if (request.operation === 'scene-edit') await owner.editScenes(request,()=>alive&&requestGeneration===generation&&!!binding&&sameBinding(binding,address));
+          else if (request.operation === 'scene-material') {
+            if (!owner.sceneMaterial) throw Error('This retained editor has no Scene material receiver');
+            await owner.sceneMaterial(request,()=>alive&&requestGeneration===generation&&!!binding&&sameBinding(binding,address));
+          }
+          else if (request.operation === 'blueprint') {
+            if (!owner.blueprint) throw Error('This retained editor has no Blueprint receiver');
+            await owner.blueprint(request,()=>alive&&requestGeneration===generation&&!!binding&&sameBinding(binding,address));
+          }
           else if (request.operation === 'open') await owner.open(request,()=>alive&&requestGeneration===generation&&!!binding&&sameBinding(binding,address));
           else if (request.operation === 'save') await owner.save();
           else if (request.operation === 'material') {

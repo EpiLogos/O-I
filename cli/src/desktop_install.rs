@@ -398,6 +398,18 @@ pub fn plan_install(
     backing_id: &str,
     probe: &ProductProbe,
 ) -> Result<InstallPlan, String> {
+    refuse_pending_update(data_root)?;
+    plan_install_inner(staged, data_root, home, backing_id, probe, None)
+}
+
+fn plan_install_inner(
+    staged: &StagedBundle,
+    data_root: &Path,
+    home: &Path,
+    backing_id: &str,
+    probe: &ProductProbe,
+    previous: Option<&InstalledDesktopReceipt>,
+) -> Result<InstallPlan, String> {
     let target_footprint = staged
         .footprint
         .targets
@@ -433,13 +445,15 @@ pub fn plan_install(
         .join(&staged.footprint.managed_root)
         .join(&staged.manifest.version);
     assert_outside_ground(&payload_root)?;
-    if installed_receipt_path(data_root).is_file() {
+    if previous.is_none() && installed_receipt_path(data_root).is_file() {
         return Err(format!(
             "an installed Desktop is already recorded in {}; remove it first (oi desktop remove)",
             installed_receipt_path(data_root).display()
         ));
     }
-    if payload_root.exists() {
+    if payload_root.symlink_metadata().is_ok()
+        && !previous.is_some_and(|r| r.payload_root == payload_root.display().to_string())
+    {
         return Err(format!(
             "managed Desktop payload root {} exists without a recorded install (an earlier install may have been interrupted); remove that directory, then replan",
             payload_root.display()
@@ -625,6 +639,8 @@ pub struct InstalledDesktopReceipt {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub executable: Option<String>,
     pub owned_resources: Vec<OwnedResource>,
+    #[serde(default)]
+    pub owned_resource_digests: BTreeMap<String, String>,
     pub installed_at_ms: u64,
 }
 
@@ -697,6 +713,14 @@ pub fn commit_install(
         );
     }
     let data_root = PathBuf::from(&plan.data_root);
+    let _lifecycle_lock = desktop_lifecycle_lock(&data_root)?;
+    refuse_pending_update(&data_root)?;
+    if installed_receipt_path(&data_root)
+        .symlink_metadata()
+        .is_ok()
+    {
+        return Err("Desktop receipt appeared after planning; replan".into());
+    }
     let target_footprint = staged
         .footprint
         .targets
@@ -883,6 +907,7 @@ pub fn commit_install(
         footprint_sha256: staged.footprint_sha256.clone(),
         payload_root: payload_root.display().to_string(),
         executable: executable.map(|path| path.display().to_string()),
+        owned_resource_digests: owned_digests(&owned)?,
         owned_resources: owned,
         installed_at_ms: now_ms(),
     };
@@ -911,6 +936,700 @@ fn write_shim(app_source: &Path, shim_path: &Path) -> Result<String, String> {
     let before = state_name(shim_path);
     copy_file(app_source, shim_path)?;
     Ok(disposition_for(before))
+}
+
+// Desktop update stays within the original installer-owned native app resources.
+// The journal is durable before the first old-resource rename. The installed
+// receipt is the commit point; until then recovery restores the previous bytes.
+#[derive(Debug, Clone, Serialize)]
+pub struct UpdatePlan {
+    pub schema: String,
+    pub install: InstallPlan,
+    pub previous_receipt_sha256: String,
+    pub previous: InstalledDesktopReceipt,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct DesktopUpdateJournal {
+    schema: String,
+    data_root: String,
+    transaction: String,
+    previous_receipt: String,
+    next_receipt: String,
+    entries: Vec<DesktopUpdateEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct DesktopUpdateEntry {
+    path: String,
+    previous: Option<String>,
+    next: Option<String>,
+    prepared: String,
+    backup: String,
+}
+
+pub fn desktop_update_journal_path(data_root: &Path) -> PathBuf {
+    data_root.join("receipts/desktop-update.json")
+}
+
+fn desktop_lifecycle_lock(data_root: &Path) -> Result<fs::File, String> {
+    assert_outside_ground(data_root)?;
+    let directory = data_root.join("receipts");
+    fs::create_dir_all(&directory).map_err(|e| e.to_string())?;
+    if fs::canonicalize(&directory).map_err(|e| e.to_string())? != directory {
+        return Err("Desktop lifecycle directory has an aliased ancestor".into());
+    }
+    let path = directory.join("desktop-lifecycle.lock");
+    if path.is_symlink() {
+        return Err("Desktop lifecycle lock is a symlink".into());
+    }
+    let file = fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .open(&path)
+        .map_err(|e| e.to_string())?;
+    file.try_lock().map_err(|e| {
+        format!("another Desktop lifecycle operation owns this installation: {e:?}")
+    })?;
+    Ok(file)
+}
+
+fn refuse_pending_update(data_root: &Path) -> Result<(), String> {
+    if desktop_update_journal_path(data_root)
+        .symlink_metadata()
+        .is_ok()
+    {
+        return Err("Desktop update recovery is pending; run oi desktop recover before another lifecycle mutation".into());
+    }
+    Ok(())
+}
+
+fn owned_tree_sha256(path: &Path) -> Result<String, String> {
+    use std::io::Read;
+    #[cfg(unix)]
+    use std::os::unix::fs::PermissionsExt;
+    fn visit(path: &Path, root: &Path, hash: &mut Sha256) -> Result<(), String> {
+        let metadata = fs::symlink_metadata(path)
+            .map_err(|e| format!("cannot inspect {}: {e}", path.display()))?;
+        let relative = path
+            .strip_prefix(root)
+            .map_err(|e| e.to_string())?
+            .to_str()
+            .ok_or("owned path is not UTF-8")?;
+        let kind = if metadata.is_symlink() {
+            "link"
+        } else if metadata.is_dir() {
+            "dir"
+        } else if metadata.is_file() {
+            "file"
+        } else {
+            return Err("unsupported owned filesystem object".into());
+        };
+        hash.update((relative.len() as u64).to_le_bytes());
+        hash.update(relative.as_bytes());
+        hash.update(kind.as_bytes());
+        #[cfg(unix)]
+        hash.update((metadata.permissions().mode() & 0o7777).to_le_bytes());
+        if metadata.is_symlink() {
+            let target = fs::read_link(path).map_err(|e| e.to_string())?;
+            let resolved = fs::canonicalize(path)
+                .map_err(|e| format!("unresolved owned symlink {}: {e}", path.display()))?;
+            if !resolved.starts_with(root) {
+                return Err(format!(
+                    "owned symlink escapes its resource: {}",
+                    path.display()
+                ));
+            }
+            let target = target.to_str().ok_or("owned link target is not UTF-8")?;
+            hash.update((target.len() as u64).to_le_bytes());
+            hash.update(target.as_bytes());
+        } else if metadata.is_file() {
+            hash.update(metadata.len().to_le_bytes());
+            let mut file = fs::File::open(path).map_err(|e| e.to_string())?;
+            let mut buffer = [0_u8; 65536];
+            loop {
+                let n = file.read(&mut buffer).map_err(|e| e.to_string())?;
+                if n == 0 {
+                    break;
+                }
+                hash.update(&buffer[..n]);
+            }
+        } else {
+            let mut children = fs::read_dir(path)
+                .map_err(|e| e.to_string())?
+                .map(|entry| entry.map(|e| e.path()))
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| e.to_string())?;
+            children.sort();
+            for child in children {
+                visit(&child, root, hash)?;
+            }
+        }
+        Ok(())
+    }
+    assert_outside_ground(path)?;
+    if fs::symlink_metadata(path)
+        .map_err(|e| e.to_string())?
+        .is_symlink()
+    {
+        return Err("owned resource root cannot be a symlink".into());
+    }
+    if fs::canonicalize(path).map_err(|e| e.to_string())? != path {
+        return Err(format!(
+            "owned resource has an aliased ancestor: {}",
+            path.display()
+        ));
+    }
+    let mut hash = Sha256::new();
+    hash.update(b"oi.desktop-owned-tree/v1\0");
+    visit(path, path, &mut hash)?;
+    Ok(hex(&hash.finalize()))
+}
+
+fn owned_digests(resources: &[OwnedResource]) -> Result<BTreeMap<String, String>, String> {
+    let mut result = BTreeMap::new();
+    for resource in resources {
+        if result
+            .insert(
+                resource.path.clone(),
+                owned_tree_sha256(Path::new(&resource.path))?,
+            )
+            .is_some()
+        {
+            return Err("duplicate owned Desktop resource".into());
+        }
+    }
+    Ok(result)
+}
+
+fn verify_owned_receipt(receipt: &InstalledDesktopReceipt) -> Result<(), String> {
+    if receipt.owned_resource_digests.len() != receipt.owned_resources.len()
+        || receipt.owned_resource_digests.is_empty()
+    {
+        return Err(
+            "installed receipt has no complete byte basis; legacy receipts cannot authorize update"
+                .into(),
+        );
+    }
+    if owned_digests(&receipt.owned_resources)? != receipt.owned_resource_digests {
+        return Err("receipt-owned Desktop bytes changed; refusing update/removal".into());
+    }
+    Ok(())
+}
+
+fn require_native_app_resources(
+    staged: &StagedBundle,
+    receipt: &InstalledDesktopReceipt,
+) -> Result<(), String> {
+    let target = staged
+        .footprint
+        .targets
+        .get(&staged.manifest.target)
+        .ok_or("missing target footprint")?;
+    if !staged.manifest.target.ends_with("apple-darwin")
+        || target.shim
+        || target.registrations.len() != 1
+        || target.registrations[0].kind != "macos-app-copy"
+    {
+        return Err("this update route requires the native macOS app-copy footprint".into());
+    }
+    if receipt.app_id != staged.manifest.app_id
+        || receipt.target != staged.manifest.target
+        || receipt.owned_resources.len() != 2
+        || receipt
+            .owned_resources
+            .iter()
+            .filter(|r| r.kind == "app-payload" && r.path == receipt.payload_root)
+            .count()
+            != 1
+        || receipt
+            .owned_resources
+            .iter()
+            .filter(|r| r.kind == "macos-app-copy")
+            .count()
+            != 1
+    {
+        return Err(
+            "Desktop update identity or resource contract differs from installed receipt".into(),
+        );
+    }
+    Ok(())
+}
+
+pub fn plan_update(
+    staged: &StagedBundle,
+    data_root: &Path,
+    home: &Path,
+    backing_id: &str,
+    probe: &ProductProbe,
+) -> Result<UpdatePlan, String> {
+    refuse_pending_update(data_root)?;
+    let previous = load_installed_receipt(data_root)?.ok_or("no Desktop receipt to update")?;
+    require_native_app_resources(staged, &previous)?;
+    verify_owned_receipt(&previous)?;
+    let old_footprint_path = Path::new(&previous.payload_root).join("footprint.json");
+    if file_sha256(&old_footprint_path)? != previous.footprint_sha256 { return Err("installed footprint byte basis changed".into()); }
+    let old_footprint = load_footprint(&fs::read_to_string(old_footprint_path).map_err(|e| e.to_string())?)?;
+    let old_target = old_footprint.targets.get(&previous.target).ok_or("installed footprint has no native target")?;
+    if old_footprint.app_id != previous.app_id || old_footprint.managed_root != staged.footprint.managed_root
+        || data_root.join(&old_footprint.managed_root).join(&previous.version).display().to_string() != previous.payload_root
+        || old_target.shim || old_target.registrations.len() != 1 || old_target.registrations[0].kind != "macos-app-copy"
+        || !previous.owned_resources.iter().any(|r| r.kind == "macos-app-copy" && r.path == expand_tilde(&old_target.registrations[0].path, home).display().to_string()) {
+        return Err("installed footprint does not bind the receipt-owned resources".into());
+    }
+    if previous.backing.requested != backing_id {
+        return Err("Desktop update must retain the installed backing; choose a separate candidate installation for another backing".into());
+    }
+    let mut install =
+        plan_install_inner(staged, data_root, home, backing_id, probe, Some(&previous))?;
+    let old_app = previous
+        .owned_resources
+        .iter()
+        .find(|r| r.kind == "macos-app-copy")
+        .ok_or("missing installed native app resource")?;
+    for change in &mut install.changes {
+        if change.kind == "macos-app-copy" && change.path != old_app.path {
+            return Err("update cannot relocate the installed app-copy destination".into());
+        }
+        if previous.owned_resource_digests.contains_key(&change.path) {
+            change.state_before = "receipt-owned-verified".into();
+            change.action = "update".into();
+        } else if Path::new(&change.path).symlink_metadata().is_ok() {
+            return Err(format!("foreign update destination: {}", change.path));
+        }
+    }
+    Ok(UpdatePlan {
+        schema: "oi.desktop-update-plan/v1".into(),
+        previous_receipt_sha256: file_sha256(&installed_receipt_path(data_root))?,
+        install,
+        previous,
+    })
+}
+
+fn sync_parent(path: &Path) -> Result<(), String> {
+    let parent = path.parent().ok_or("resource has no parent")?;
+    #[cfg(unix)]
+    fs::File::open(parent)
+        .and_then(|file| file.sync_all())
+        .map_err(|e| format!("cannot sync {}: {e}", parent.display()))?;
+    Ok(())
+}
+
+fn durable_rename(from: &Path, to: &Path) -> Result<(), String> {
+    fs::rename(from, to)
+        .map_err(|e| format!("cannot rename {} to {}: {e}", from.display(), to.display()))?;
+    sync_parent(from)?;
+    sync_parent(to)
+}
+
+fn sync_tree(path: &Path) -> Result<(), String> {
+    let metadata = fs::symlink_metadata(path).map_err(|e| e.to_string())?;
+    if metadata.is_symlink() {
+        return Ok(());
+    }
+    if metadata.is_dir() {
+        for entry in fs::read_dir(path).map_err(|e| e.to_string())? {
+            sync_tree(&entry.map_err(|e| e.to_string())?.path())?;
+        }
+    }
+    fs::File::open(path)
+        .and_then(|file| file.sync_all())
+        .map_err(|e| format!("cannot sync {}: {e}", path.display()))
+}
+
+fn verify_native_app(path: &Path) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        let status = Command::new("/usr/bin/codesign")
+            .args(["--verify", "--deep", "--strict", "--all-architectures"])
+            .arg(path)
+            .status()
+            .map_err(|e| e.to_string())?;
+        if !status.success() {
+            return Err(format!(
+                "native app seal verification failed: {}",
+                path.display()
+            ));
+        }
+        Ok(())
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = path;
+        Err("native macOS update requires a macOS host".into())
+    }
+}
+
+fn expect_digest(path: &Path, expected: Option<&String>) -> Result<(), String> {
+    match (path.symlink_metadata().is_ok(), expected) {
+        (false, None) => Ok(()),
+        (true, Some(digest)) if &owned_tree_sha256(path)? == digest => Ok(()),
+        _ => Err(format!(
+            "unexpected or changed update resource: {}",
+            path.display()
+        )),
+    }
+}
+
+fn remove_verified(path: &Path, expected: &String) -> Result<(), String> {
+    expect_digest(path, Some(expected))?;
+    fs::remove_dir_all(path).map_err(|e| {
+        format!(
+            "cannot remove verified installer resource {}: {e}",
+            path.display()
+        )
+    })?;
+    sync_parent(path)
+}
+
+pub fn commit_update(
+    staged: StagedBundle,
+    plan: &UpdatePlan,
+    home: &Path,
+) -> Result<InstalledDesktopReceipt, String> {
+    let data_root = Path::new(&plan.install.data_root);
+    let _lifecycle_lock = desktop_lifecycle_lock(data_root)?;
+    // Recompute the exact native owner plan before allocating any promotion.
+    let fresh = plan_update(
+        &staged,
+        data_root,
+        home,
+        &plan.install.backing.requested,
+        &|id| {
+            plan.install
+                .backing
+                .products
+                .iter()
+                .find(|p| p.id == id)
+                .and_then(|p| p.resolved_to.clone())
+        },
+    )?;
+    if serde_json::to_value(&fresh).map_err(|e| e.to_string())?
+        != serde_json::to_value(plan).map_err(|e| e.to_string())?
+    {
+        return Err("Desktop update basis changed; replan".into());
+    }
+    let target = staged
+        .footprint
+        .targets
+        .get(&staged.manifest.target)
+        .ok_or("missing native footprint")?;
+    let app_path = expand_tilde(&target.registrations[0].path, home);
+    let payload_path = data_root
+        .join(&staged.footprint.managed_root)
+        .join(&staged.manifest.version);
+    let transaction = format!("{}-{}", std::process::id(), now_ms());
+    let adjacent = |path: &Path, suffix: &str| -> Result<PathBuf, String> {
+        let name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .ok_or("invalid resource filename")?;
+        Ok(path.with_file_name(format!(".{name}.oi-update-{transaction}.{suffix}")))
+    };
+    let payload_prepared = adjacent(&payload_path, "new")?;
+    let app_prepared = adjacent(&app_path, "new")?;
+    for path in [&payload_prepared, &app_prepared] {
+        assert_outside_ground(path)?;
+        if path.symlink_metadata().is_ok() {
+            return Err("update staging path already exists".into());
+        }
+        fs::create_dir_all(path.parent().ok_or("staging path has no parent")?)
+            .map_err(|e| e.to_string())?;
+    }
+    verify_native_app(&staged.root.join(&staged.manifest.app_entry))?;
+    // These are disposable staging bytes only; no installed resource is changed.
+    durable_rename(&staged.root, &payload_prepared)?;
+    let marker = serde_json::json!({"schema": MANAGED_PRODUCT_MARKER_SCHEMA, "app_id": staged.manifest.app_id, "version": staged.manifest.version, "target": staged.manifest.target, "asset": staged.archive_name, "sha256": staged.sha256, "footprint_sha256": staged.footprint_sha256});
+    write_file_atomic(
+        &payload_prepared.join(".oi-install.json"),
+        &serde_json::to_string_pretty(&marker).map_err(|e| e.to_string())?,
+    )?;
+    copy_dir_inner(
+        &payload_prepared.join(&staged.manifest.app_entry),
+        &app_prepared,
+    )?;
+    verify_native_app(&app_prepared)?;
+    sync_tree(&payload_prepared)?;
+    sync_tree(&app_prepared)?;
+    let resources = vec![
+        OwnedResource {
+            kind: "app-payload".into(),
+            path: payload_path.display().to_string(),
+            disposition: "updated".into(),
+        },
+        OwnedResource {
+            kind: "macos-app-copy".into(),
+            path: app_path.display().to_string(),
+            disposition: "updated".into(),
+        },
+    ];
+    let digests = BTreeMap::from([
+        (
+            payload_path.display().to_string(),
+            owned_tree_sha256(&payload_prepared)?,
+        ),
+        (
+            app_path.display().to_string(),
+            owned_tree_sha256(&app_prepared)?,
+        ),
+    ]);
+    let next = InstalledDesktopReceipt {
+        schema: INSTALLED_RECEIPT_SCHEMA.into(),
+        app_id: staged.manifest.app_id.clone(),
+        public_name: staged.footprint.public_name.clone(),
+        version: staged.manifest.version.clone(),
+        target: staged.manifest.target.clone(),
+        backing: RecordedBacking {
+            requested: plan.install.backing.requested.clone(),
+            label: plan.install.backing.label.clone(),
+            products: plan
+                .install
+                .backing
+                .products
+                .iter()
+                .map(|p| p.id.clone())
+                .collect(),
+        },
+        bundle: RecordedBundle {
+            name: staged.archive_name.clone(),
+            sha256: staged.sha256.clone(),
+            source_revision: staged.manifest.source_revision.clone(),
+        },
+        footprint_sha256: staged.footprint_sha256.clone(),
+        payload_root: payload_path.display().to_string(),
+        executable: target
+            .exec_relative
+            .as_ref()
+            .map(|p| app_path.join(p).display().to_string()),
+        owned_resources: resources,
+        owned_resource_digests: digests,
+        installed_at_ms: now_ms(),
+    };
+    let previous_receipt =
+        fs::read_to_string(installed_receipt_path(data_root)).map_err(|e| e.to_string())?;
+    if file_sha256_of_bytes(previous_receipt.as_bytes()) != plan.previous_receipt_sha256 {
+        return Err("installed receipt changed during update staging".into());
+    }
+    verify_owned_receipt(&plan.previous)?;
+    let mut paths = plan
+        .previous
+        .owned_resource_digests
+        .keys()
+        .chain(next.owned_resource_digests.keys())
+        .cloned()
+        .collect::<Vec<_>>();
+    paths.sort();
+    paths.dedup();
+    let mut entries = Vec::new();
+    for path in paths {
+        let p = Path::new(&path);
+        let prepared = adjacent(p, "new")?;
+        let backup = adjacent(p, "old")?;
+        if backup.symlink_metadata().is_ok() {
+            return Err("update backup destination exists".into());
+        }
+        entries.push(DesktopUpdateEntry {
+            previous: plan.previous.owned_resource_digests.get(&path).cloned(),
+            next: next.owned_resource_digests.get(&path).cloned(),
+            path,
+            prepared: prepared.display().to_string(),
+            backup: backup.display().to_string(),
+        });
+    }
+    let journal = DesktopUpdateJournal {
+        schema: "oi.desktop-update/v1".into(),
+        data_root: data_root.display().to_string(),
+        transaction,
+        previous_receipt,
+        next_receipt: serde_json::to_string_pretty(&next).map_err(|e| e.to_string())?,
+        entries,
+    };
+    // Exclusive reservation: a second update cannot overwrite recovery evidence.
+    use std::io::Write;
+    let journal_path = desktop_update_journal_path(data_root);
+    let mut file = fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&journal_path)
+        .map_err(|e| format!("cannot reserve Desktop update journal: {e}"))?;
+    file.write_all(&serde_json::to_vec_pretty(&journal).map_err(|e| e.to_string())?)
+        .and_then(|_| file.sync_all())
+        .map_err(|e| e.to_string())?;
+    sync_parent(&journal_path)?;
+    // Journal describes both rename intents; recovery needs no post-rename flag.
+    for entry in &journal.entries {
+        let path = Path::new(&entry.path);
+        let backup = Path::new(&entry.backup);
+        expect_digest(path, entry.previous.as_ref())?;
+        if entry.previous.is_some() {
+            durable_rename(path, backup)?;
+        }
+        if let Some(digest) = &entry.next {
+            expect_digest(Path::new(&entry.prepared), Some(digest))?;
+            durable_rename(Path::new(&entry.prepared), path)?;
+        }
+    }
+    verify_owned_receipt(&next)?;
+    verify_native_app(&app_path)?;
+    if file_sha256(&installed_receipt_path(data_root))? != plan.previous_receipt_sha256 {
+        return Err("installed receipt changed before update commit; recovery required".into());
+    }
+    write_file_atomic(&installed_receipt_path(data_root), &journal.next_receipt)?;
+    recover_update_inner(data_root, false)?;
+    Ok(next)
+}
+
+pub fn recover_update(data_root: &Path, plan_only: bool) -> Result<serde_json::Value, String> {
+    if plan_only {
+        return recover_update_inner(data_root, true);
+    }
+    let _lifecycle_lock = desktop_lifecycle_lock(data_root)?;
+    recover_update_inner(data_root, false)
+}
+
+fn recover_update_inner(data_root: &Path, plan_only: bool) -> Result<serde_json::Value, String> {
+    let journal_path = desktop_update_journal_path(data_root);
+    let bytes =
+        fs::read(&journal_path).map_err(|e| format!("cannot read Desktop update journal: {e}"))?;
+    let journal: DesktopUpdateJournal = serde_json::from_slice(&bytes)
+        .map_err(|e| format!("invalid update journal; no resources changed by recovery: {e}"))?;
+    if journal.schema != "oi.desktop-update/v1"
+        || Path::new(&journal.data_root) != data_root
+        || !journal
+            .transaction
+            .chars()
+            .all(|c| c.is_ascii_digit() || c == '-')
+    {
+        return Err("invalid Desktop recovery identity".into());
+    }
+    let previous: InstalledDesktopReceipt =
+        serde_json::from_str(&journal.previous_receipt).map_err(|e| e.to_string())?;
+    let next: InstalledDesktopReceipt =
+        serde_json::from_str(&journal.next_receipt).map_err(|e| e.to_string())?;
+    if previous.app_id != next.app_id
+        || previous.target != next.target
+        || previous.backing.requested != next.backing.requested
+    {
+        return Err("recovery receipt identities differ".into());
+    }
+    let actual_receipt =
+        fs::read_to_string(installed_receipt_path(data_root)).map_err(|e| e.to_string())?;
+    let committed = actual_receipt == journal.next_receipt;
+    if !committed && actual_receipt != journal.previous_receipt {
+        return Err("receipt changed outside update; refusing recovery".into());
+    }
+    let expected_paths = previous
+        .owned_resource_digests
+        .keys()
+        .chain(next.owned_resource_digests.keys())
+        .cloned()
+        .collect::<std::collections::BTreeSet<_>>();
+    if journal.entries.len() != expected_paths.len()
+        || journal
+            .entries
+            .iter()
+            .map(|e| e.path.clone())
+            .collect::<std::collections::BTreeSet<_>>()
+            != expected_paths
+    {
+        return Err("recovery resource aperture differs from receipts".into());
+    }
+    for entry in &journal.entries {
+        let path = Path::new(&entry.path);
+        assert_outside_ground(path)?;
+        let name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .ok_or("invalid recovery path")?;
+        if entry.prepared
+            != path
+                .with_file_name(format!(".{name}.oi-update-{}.new", journal.transaction))
+                .display()
+                .to_string()
+            || entry.backup
+                != path
+                    .with_file_name(format!(".{name}.oi-update-{}.old", journal.transaction))
+                    .display()
+                    .to_string()
+            || entry.previous.as_ref() != previous.owned_resource_digests.get(&entry.path)
+            || entry.next.as_ref() != next.owned_resource_digests.get(&entry.path)
+        {
+            return Err("invalid recovery resource basis".into());
+        }
+        if Path::new(&entry.backup).symlink_metadata().is_ok() {
+            expect_digest(Path::new(&entry.backup), entry.previous.as_ref())?;
+        }
+        if Path::new(&entry.prepared).symlink_metadata().is_ok() {
+            expect_digest(Path::new(&entry.prepared), entry.next.as_ref())?;
+        }
+        if committed {
+            expect_digest(path, entry.next.as_ref())?;
+        } else if path.symlink_metadata().is_ok() {
+            let digest = owned_tree_sha256(path)?;
+            if Some(&digest) != entry.previous.as_ref() && Some(&digest) != entry.next.as_ref() {
+                return Err(format!("changed recovery destination: {}", entry.path));
+            }
+            if Some(&digest) != entry.previous.as_ref()
+                && entry.previous.is_some()
+                && !Path::new(&entry.backup).exists()
+            {
+                return Err("previous resource backup missing".into());
+            }
+        } else if entry.previous.is_some() && !Path::new(&entry.backup).exists() {
+            return Err("previous resource and backup missing".into());
+        }
+    }
+    let result = serde_json::json!({"schema":"oi.desktop-recovery/v1", "transaction":journal.transaction, "action":if committed {"finish-committed-update"} else {"restore-previous-install"}, "plan_only":plan_only, "resources":journal.entries});
+    if plan_only {
+        return Ok(result);
+    }
+    if committed {
+        verify_owned_receipt(&next)?;
+    }
+    for entry in journal.entries.iter().rev() {
+        let path = Path::new(&entry.path);
+        let backup = Path::new(&entry.backup);
+        let prepared = Path::new(&entry.prepared);
+        if !committed && backup.symlink_metadata().is_ok() {
+            if path.symlink_metadata().is_ok() {
+                remove_verified(
+                    path,
+                    entry
+                        .next
+                        .as_ref()
+                        .ok_or("unexpected replacement during recovery")?,
+                )?;
+            }
+            durable_rename(backup, path)?;
+        } else if !committed && entry.previous.is_none() && path.symlink_metadata().is_ok() {
+            remove_verified(path, entry.next.as_ref().ok_or("unexpected new resource")?)?;
+        }
+        if prepared.symlink_metadata().is_ok() {
+            remove_verified(
+                prepared,
+                entry.next.as_ref().ok_or("unexpected prepared resource")?,
+            )?;
+        }
+    }
+    if committed {
+        for entry in &journal.entries {
+            if Path::new(&entry.backup).symlink_metadata().is_ok() {
+                remove_verified(
+                    Path::new(&entry.backup),
+                    entry.previous.as_ref().ok_or("unexpected update backup")?,
+                )?;
+            }
+        }
+    } else {
+        verify_owned_receipt(&previous)?;
+    }
+    // Receipt remains old throughout rollback. Recovery is safe to repeat after
+    // any rename; committed cleanup likewise checks every surviving old byte.
+    fs::remove_file(&journal_path).map_err(|e| e.to_string())?;
+    sync_parent(&journal_path)?;
+    Ok(result)
 }
 
 // ---------------------------------------------------------------------------
@@ -988,6 +1707,16 @@ pub fn commit_remove(
     receipt: &InstalledDesktopReceipt,
     data_root: &Path,
 ) -> Result<RemovedDesktopReceipt, String> {
+    let _lifecycle_lock = desktop_lifecycle_lock(data_root)?;
+    refuse_pending_update(data_root)?;
+    let current = load_installed_receipt(data_root)?.ok_or("Desktop receipt disappeared before removal")?;
+    if serde_json::to_value(&current).map_err(|e| e.to_string())? != serde_json::to_value(receipt).map_err(|e| e.to_string())? {
+        return Err("Desktop receipt changed before removal; replan".into());
+    }
+
+    if !receipt.owned_resource_digests.is_empty() {
+        verify_owned_receipt(receipt)?;
+    }
     let mut removed = Vec::new();
     let residuals: Vec<String> = Vec::new();
     let mut disclosures = Vec::new();
@@ -1332,11 +2061,22 @@ fn write_file_atomic(destination: &Path, content: &str) -> Result<(), String> {
         .ok_or_else(|| format!("destination {} has no parent", destination.display()))?;
     fs::create_dir_all(parent)
         .map_err(|error| format!("cannot create {}: {error}", parent.display()))?;
-    let temp = destination.with_extension("oi-new");
-    fs::write(&temp, content)
+    let temp = destination.with_extension(format!("oi-new-{}-{}", std::process::id(), now_ms()));
+    use std::io::Write;
+    let mut file = fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&temp)
+        .map_err(|error| {
+            format!(
+                "cannot reserve {}: {error}; preserve pending bytes for inspection",
+                temp.display()
+            )
+        })?;
+    file.write_all(content.as_bytes())
+        .and_then(|_| file.sync_all())
         .map_err(|error| format!("cannot write {}: {error}", temp.display()))?;
-    fs::rename(&temp, destination)
-        .map_err(|error| format!("cannot promote {}: {error}", destination.display()))
+    durable_rename(&temp, destination)
 }
 
 fn copy_file(source: &Path, destination: &Path) -> Result<(), String> {
@@ -1442,6 +2182,17 @@ mod tests {
     }
 
     #[test]
+    fn native_footprint_names_full_suite_without_replacing_smaller_backings() {
+        let footprint = load_embedded_footprint().unwrap();
+        assert_eq!(footprint.backing.default, "0/1/2");
+        assert_eq!(footprint.backing.options["0/1"].products, ["central", "actuation"]);
+        assert_eq!(footprint.backing.options["0/1/2"].products, ["central", "actuation", "ai-kit"]);
+        assert_eq!(footprint.backing.options["full-suite"].products, [
+            "central", "actuation", "ai-kit", "software-factory", "workcell", "quaternal-logic",
+        ]);
+    }
+
+    #[test]
     fn ground_guard_refuses_ownership_inside_control_work_and_central() {
         assert!(assert_outside_ground(Path::new("/home/person/Central/Control/user")).is_err());
         assert!(assert_outside_ground(Path::new("/home/person/Work/Central")).is_err());
@@ -1497,6 +2248,7 @@ mod tests {
                 path: "/data/products/desktop/0.1.0".to_owned(),
                 disposition: "created".to_owned(),
             }],
+            owned_resource_digests: BTreeMap::new(),
             installed_at_ms: 0,
         };
         let plan = plan_remove(&receipt);

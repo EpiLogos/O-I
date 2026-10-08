@@ -344,8 +344,7 @@ function sourceVolume(
 	return { law: volume, fields: buildDepthFieldsFromMask(mask, w, h) };
 }
 
-function coverageOf(ink: Float32Array, w: number, h: number, crop: InkField['crop'], threshold: number): number {
-	const cw = crop.x1 - crop.x0 + 1, ch = crop.y1 - crop.y0 + 1;
+function coverageOf(ink: Float32Array, w: number, _h: number, crop: InkField['crop'], threshold: number): number {
 	let inked = 0, total = 0;
 	for (let y = crop.y0; y <= crop.y1; y += 1) {
 		for (let x = crop.x0; x <= crop.x1; x += 1) {

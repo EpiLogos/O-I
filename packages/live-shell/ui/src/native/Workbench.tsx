@@ -15,8 +15,6 @@ import {fileOperation, type FileMutation} from '../../../../../desktop/cradle/sr
 import {detectFormat} from '../../../../../desktop/cradle/src/material/detect'
 import {encounter, encounterProvision} from '../../../../../desktop/cradle/src/encounter/client'
 import type {EncounterRow} from '../../../../../desktop/cradle/src/encounter/EncounterList'
-import {useEncounterSession} from '../../../../../desktop/cradle/src/encounter/session'
-import {AgentChat} from '../../../../../desktop/cradle/src/agent/chat/AgentChat'
 import {checkpointDocuments} from '../../../../../desktop/cradle/src/document/frame'
 import {readDraft} from '../../../../../desktop/cradle/src/workspace/drafts'
 import {bindScopeWriter, publishScope, publishFocusedProject, scopeFromWorkspace, scopeProject} from '../../../../../desktop/cradle/src/workspace/scope'
@@ -35,6 +33,10 @@ import {useContinuity, type CandidateWorkspace} from '../continuity'
 import {useWorkspace} from '../shell/workspace'
 import {readShellConfig, type ShellConfig} from './application'
 import {createKnowledgeBinding,sameKnowledgeDestination,type KnowledgeBinding} from './knowledgeOpen'
+import {NativeAgencyParticipation} from '../components/NativeAgencyParticipation'
+import {preparedContextScopeKey,type NativePreparedContextScope} from './preparedContextBinding'
+import {workbenchContextScope} from './workbenchContext'
+import type {AgentSubject,AgentAccompanying} from '../../../../../desktop/cradle/src/agent/AgentLayer'
 import {isRetainedCentreKind, WARM_WORKSPACES, type WarmTreeRef} from '../../../../../desktop/cradle/src/surface/warmTrees'
 import {RETAINED_VIEW_BUDGET} from '../../../../../desktop/cradle/src/surface/runtime'
 import './workbench.css'
@@ -43,7 +45,7 @@ const OMIT_BODY_KINDS = ['expressions'] as const
 const unowned = new Set(['draft', 'blank'])
 const identity = (binding: SurfaceBinding) => JSON.stringify([binding.kind, binding.ref, binding.project, binding.location, binding.address, binding.encounter, binding.hosted, binding.view?.nativeKnowledge, worldView(binding)?.sourceWorldRef])
 const worldView = (binding: SurfaceBinding) => binding.view as (NonNullable<SurfaceBinding['view']> & {sourceWorldRef?: string}) | undefined
-const hostedWorld = (binding: SurfaceBinding, fallback?: string) => worldView(binding)?.sourceWorldRef ?? fallback
+const hostedWorld = (binding: SurfaceBinding) => worldView(binding)?.sourceWorldRef
 const checkpoint = (state: LayoutState): RestorePoint => ({root: state.root, surfaces: state.surfaces, closedStack: state.closedStack, focusedGroupId: state.focusedGroupId})
 const layoutsOf = (book: CandidateWorkspace) => book.workspaces.flatMap(workspace => [...Object.values(workspace.modeLayouts ?? {}), workspace.layout])
 /** Membership includes every logical placement; closed-stack bindings are not open. */
@@ -151,8 +153,9 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
           admissionRef = reading.location.ref
         }
         if (binding.kind === 'encounter' && binding.ref && binding.project !== undefined) {
-          await ownerIO(current, () => encounter(origin.kernel.transport, binding.project!, {action: 'start'}, hostedWorld(binding, sourceWorldRef)))
-          await ownerIO(current, () => encounter(origin.kernel.transport, binding.project!, {action: 'read', agent_session: binding.ref!, after: 0, limit: 1}, hostedWorld(binding, sourceWorldRef)))
+          if(binding.hosted&&!hostedWorld(binding))throw Error('This hosted conversation has no disclosed native World address.')
+          await ownerIO(current, () => encounter(origin.kernel.transport, binding.project!, {action: 'start'}, hostedWorld(binding)))
+          await ownerIO(current, () => encounter(origin.kernel.transport, binding.project!, {action: 'read', agent_session: binding.ref!, after: 0, limit: 1}, hostedWorld(binding)))
         }
         const opened = await ownerIO(current, () => origin.kernel.apply({op: 'surface_open', surface_id: binding.id, kind: binding.kind, ...(admissionRef ? {source_ref: admissionRef} : {}), title: binding.title}))
         if (opened?.result !== 'surface_opened') throw Error(origin.kernel.lastOpError() ?? 'The native owner refused this surface.')
@@ -238,15 +241,21 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     const {origin, current} = capture(undefined, true)
     await ownerIO(current, () => encounter(origin.kernel.transport, row.project, {action: 'start'}, sourceWorldRef))
     await ownerIO(current, () => encounter(origin.kernel.transport, row.project, {action: 'read', agent_session: row.ref, after: 0, limit: 1}, sourceWorldRef))
-    const existing = Object.values(origin.book.current.layout.surfaces).find(binding => binding.kind === 'encounter' && binding.ref === row.ref && binding.project === row.project && hostedWorld(binding, sourceWorldRef) === sourceWorldRef)
+    const existing = Object.values(origin.book.current.layout.surfaces).find(binding => binding.kind === 'encounter' && binding.ref === row.ref && binding.project === row.project && binding.encounter?.space === row.space && hostedWorld(binding) === sourceWorldRef)
     insert(existing ?? {id: crypto.randomUUID(), kind: 'encounter', title: row.title, project: row.project, ref: row.ref, encounter: {space: row.space}, ...(sourceWorldRef ? {view: {sourceWorldRef} as NonNullable<SurfaceBinding['view']> & {sourceWorldRef: string}} : {})})
   }
-  const chooseFactory = async (row: EncounterRow) => {
-    const {origin, current} = capture(undefined, true)
-    await ownerIO(current, () => encounter(origin.kernel.transport, row.project, {action: 'start'}, sourceWorldRef))
-    await ownerIO(current, () => encounter(origin.kernel.transport, row.project, {action: 'read', agent_session: row.ref, after: 0, limit: 1}, sourceWorldRef))
+  const chooseConversation = async (row: EncounterRow,receivingCurrent?:()=>boolean,world:string|undefined=sourceWorldRef) => {
+    const {origin, current:ownerCurrent} = capture(undefined, true)
+    const current=()=>{ownerCurrent();if(receivingCurrent&&!receivingCurrent())throw Error('The originating conversation or human setup changed.')}
+    await ownerIO(current, () => encounter(origin.kernel.transport, row.project, {action: 'start'}, world))
+    await ownerIO(current, () => encounter(origin.kernel.transport, row.project, {action: 'read', agent_session: row.ref, after: 0, limit: 1}, world))
     current()
-    origin.book.setLayout(layout => ({...layout, accompanying: {ref: row.ref, project: row.project, space: row.space}}))
+    const existing=Object.values(origin.book.current.layout.surfaces).find(binding=>binding.kind==='encounter'&&binding.ref===row.ref&&binding.project===row.project&&binding.encounter?.space===row.space&&hostedWorld(binding)===world)
+    const binding:SurfaceBinding=existing??{id:crypto.randomUUID(),kind:'encounter',title:row.title,project:row.project,ref:row.ref,encounter:{space:row.space},...(world?{view:{sourceWorldRef:world} as NonNullable<SurfaceBinding['view']>&{sourceWorldRef:string}}:{})}
+    origin.book.setLayout(layout => openBinding({...layout, accompanying: {ref: row.ref, project: row.project, space: row.space}},binding))
+  }
+  const chooseFactory = async (row:EncounterRow) => {
+    await chooseConversation(row)
     publishCentreView('tasks')
   }
   const detach = async (id: string) => {
@@ -401,7 +410,11 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
               request.current();
               await ownerIO(request.current,()=>invoke('browser_reconcile',{live:[...retainedMembership().keys()]}));
               await ownerIO(request.current,()=>invoke('terminal_reconcile',{live:[...retainedMembership().keys()]}));
-            }catch(cause){if(latest.current.workspace.nativeAccessCurrent(request.epoch))report(cause);}
+            }catch(cause){
+              let originatingRequestCurrent=true
+              try{request.current()}catch{originatingRequestCurrent=false}
+              if(originatingRequestCurrent)report(cause)
+            }
           }
         }catch(cause){if(live)report(cause);}
         finally{queue.running=false;}
@@ -668,6 +681,12 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
       const receivingEpoch = workspace.accessEpoch
       const subjects = new Map(Object.values(tree.layout.surfaces).map(binding => [binding.id, identity(binding)]))
       const receivingCurrent = (id: string) => latest.current.workspace.nativeAccessCurrent(receivingEpoch) && identity(workbenchMembership(latest.current.book).get(id) ?? {id: '', kind: '', title: ''}) === subjects.get(id)
+      let factoryScope:NativePreparedContextScope|undefined,factoryUnavailable:string|undefined
+      try{factoryScope=workbenchContextScope(tree.layout,tree.workspaceId,receivingEpoch,owner.project,sourceWorldRef)}catch(cause){factoryUnavailable=String(cause instanceof Error?cause.message:cause)}
+      const factoryCurrent=()=>{
+        if(!factoryScope||!allowed()||!latest.current.workspace.nativeAccessCurrent(receivingEpoch)||host.current?.closest<HTMLElement>('.inhabitant')?.hidden)return false
+        try{return preparedContextScopeKey(factoryScope)===preparedContextScopeKey(workbenchContextScope(latest.current.book.current.layout,tree.workspaceId,receivingEpoch,latest.current.book.current.project,sourceWorldRef))}catch{return false}
+      }
       const props: WorkbenchProps = {
         state: tree.layout, workspaceName: owner.name, presented: tree.presented, centreBodiesInPanes: true, omitBodyKinds: OMIT_BODY_KINDS, sourceWorldRef, bodyUnavailable: unavailable,
         onView: (id, view) => {if (receivingCurrent(id)) latest.current.book.surfaceView(tree.workspaceId, id, view)},
@@ -682,14 +701,33 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
         execute: dispatch, openBindingMenu: (id, x, y) => {if (allowed()) menuFor(id, x, y)}, openFrameMenu: (x, y) => {if (allowed()) menuFor(undefined, x, y)}, menuOpen: !!menu,
         nativeWindows: kernel.transport.kind === 'tauri', openSource: source => {if (allowed()) openSource(source)}, openKnowledge, openExplore, openPresentation,
         openEncounter: row => allowed() ? openEncounter(row) : Promise.reject(Error('The originating Workbench tree is concealed.')),
-        factoryCentre: <FactoryChat layout={tree.layout} project={owner.project} sourceWorldRef={sourceWorldRef} choose={row => allowed() ? chooseFactory(row) : Promise.reject(Error('The originating Factory tree is concealed.'))} provision={async project => {
+        factoryCentre: <FactoryChat layout={tree.layout} project={owner.project} sourceWorldRef={sourceWorldRef} workspaceId={tree.workspaceId} accessEpoch={receivingEpoch}
+          current={scope=>{
+            if(!allowed()||!latest.current.workspace.nativeAccessCurrent(receivingEpoch)||host.current?.closest<HTMLElement>('.inhabitant')?.hidden)return false
+            try{return preparedContextScopeKey(scope)===preparedContextScopeKey(workbenchContextScope(latest.current.book.current.layout,tree.workspaceId,receivingEpoch,latest.current.book.current.project,sourceWorldRef))}catch{return false}
+          }} openSubject={subject=>{
+            try{
+              capture(undefined,true)
+              if(subject.location){insert({id:crypto.randomUUID(),kind:'file',ref:subject.location.ref,location:subject.location,title:subject.title,project:subject.project});return}
+              const held=Object.values(latest.current.book.current.layout.surfaces).find(binding=>!!subject.ref&&binding.ref===subject.ref&&binding.project===subject.project)
+              if(!held)throw Error('This context item has no disclosed native source-opening address.')
+              insert(held)
+            }catch(cause){report(cause)}
+          }} choose={(row,current,world)=>allowed()?chooseConversation(row,current,world):Promise.reject(Error('The originating conversation is concealed.'))} accompany={(value,world)=>{
+            if(!allowed()||!latest.current.workspace.nativeAccessCurrent(receivingEpoch))return
+            if(!value){latest.current.book.setLayout(layout=>({...layout,accompanying:undefined}));return}
+            const existing=Object.values(latest.current.book.current.layout.surfaces).find(binding=>binding.kind==='encounter'&&binding.ref===value.ref&&binding.project===value.project&&binding.encounter?.space===value.space&&hostedWorld(binding)===world)
+            const binding:SurfaceBinding=existing??{id:crypto.randomUUID(),kind:'encounter',title:'Conversation',project:value.project,ref:value.ref,encounter:{space:value.space},...(world?{view:{sourceWorldRef:world} as NonNullable<SurfaceBinding['view']>&{sourceWorldRef:string}}:{})}
+            latest.current.book.setLayout(layout=>openBinding({...layout,accompanying:value},binding))
+          }} provision={async (project,preferredBodyRef) => {
           if (!allowed()) throw Error('The originating Factory tree is concealed.')
           if (sourceWorldRef) throw Error('This hosted World does not disclose a qualified new-conversation provision operation.')
           const {origin, current} = capture(undefined, true)
-          const reading = await ownerIO(current, () => encounterProvision(origin.kernel.transport, project))
-          current(); origin.book.setLayout(layout => ({...layout, accompanying: {ref: reading.agent_session, project: reading.project, space: reading.space}}))
-        }} clear={() => {if (allowed()) latest.current.book.setLayout(layout => ({...layout, accompanying: undefined}))}} report={report}/>,
-        factoryTasks: {project: owner.project ?? tree.layout.accompanying?.project, accompanying: tree.layout.accompanying, onOpenTask: row => allowed() ? chooseFactory(row) : Promise.reject(Error('The originating Factory tree is concealed.')), onMessage: report}, subject: owner.context?.subject,
+          const reading = await ownerIO(current, () => encounterProvision(origin.kernel.transport, project,preferredBodyRef))
+          current()
+          return {ref:reading.agent_session,project:reading.project,space:reading.space}
+        }} report={report}/>,
+        factoryTasks: {project:factoryScope?.project,sourceWorldRef:factoryScope?.sourceWorldRef,current:factoryCurrent,unavailable:factoryUnavailable,accompanying:tree.layout.accompanying,onOpenTask:row=>factoryCurrent()?chooseFactory(row):Promise.reject(Error(factoryUnavailable??'The originating Factory owner is concealed or retired.')),onMessage:report}, subject: owner.context?.subject,
       }
       const side = tree.layout.sidePane
       return <div className="candidate-workbench-tree" key={tree.key} hidden={!tree.presented}>
@@ -704,12 +742,22 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
   </section></FactoryLiveProvider>
 }
 
-function FactoryChat({layout, project, sourceWorldRef, choose, provision, clear, report}: {
+function FactoryChat({layout, project, sourceWorldRef, workspaceId,accessEpoch,current,openSubject,choose,accompany, provision, report}: {
   layout: LayoutState; project?: string; sourceWorldRef?: string;
-  choose: (row: EncounterRow) => Promise<void>; provision: (project: string) => Promise<void>; clear: () => void; report: (cause: unknown) => void;
+  workspaceId:string;accessEpoch:number;current:(scope:NativePreparedContextScope)=>boolean;openSubject:(subject:AgentSubject)=>void;
+  accompany:(value:AgentAccompanying|undefined,world?:string)=>void;provision:(project:string,preferredBodyRef?:string)=>Promise<AgentAccompanying>;report:(cause:unknown)=>void;
+  choose:(row:EncounterRow,current?:()=>boolean,world?:string)=>Promise<void>;
 }) {
-  const session = useEncounterSession(layout.accompanying ? {...layout.accompanying, sourceWorldRef} : undefined)
-  const [choosing, setChoosing] = useState(false)
+  let scope:NativePreparedContextScope|undefined,scopeError:string|undefined
+  try{scope=workbenchContextScope(layout,workspaceId,accessEpoch,project,sourceWorldRef)}catch(cause){scopeError=String(cause instanceof Error?cause.message:cause)}
   const focused = activeBindingId(layout), subject = focused ? layout.surfaces[focused] : undefined
-  return <AgentChat session={session} accompanying={layout.accompanying} project={project ?? layout.accompanying?.project} situating={project ? 'Situated in ' + project : 'Situated in Central'} variant="centre" choosing={choosing} subject={{title: subject?.title ?? 'Workspace', location: subject?.location}} resolveSurface={id => layout.surfaces[id]} onMessage={report} onNewChat={clear} onProvision={provision} onChoose={async row => {setChoosing(true); try {await choose(row)} finally {setChoosing(false)}}}/>
+  return <>
+    {scopeError&&<p className="native-error" role="alert">{scopeError}</p>}
+    {scope&&<NativeAgencyParticipation scope={scope} current={()=>current(scope!)} mode={layout.mode}
+      subject={{ref:subject?.ref,kind:subject?.kind,title:subject?.title??'Workspace',project:subject?.project,location:subject?.location}}
+      onAccompanying={value=>{if(current(scope!))accompany(value,scope!.sourceWorldRef)}}
+      onChoose={(row,original)=>choose(row,()=>current(scope!)&&(!original||original()),scope!.sourceWorldRef)}
+      onProvision={async(project,preferredBodyRef)=>{if(!current(scope!))throw Error('The original conversation owner has retired.');if(scope!.sourceWorldRef)throw Error('This hosted World does not disclose a qualified new-conversation provision operation.');return await provision(project,preferredBodyRef)}}
+      onOpenSubject={openSubject} onError={report} resolveSurface={id=>layout.surfaces[id]}/>}
+  </>
 }

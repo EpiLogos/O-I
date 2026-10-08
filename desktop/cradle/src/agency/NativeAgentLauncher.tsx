@@ -1,8 +1,8 @@
-import {useEffect,useMemo,useState,useSyncExternalStore} from "react";
+import {useEffect,useMemo,useRef,useState,useSyncExternalStore,type SyntheticEvent} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import type {EncounterRow} from "../encounter/EncounterList";
 import {agentController} from "./nativeAgentClient";
-import type {NativeAgentController,NativePrepared} from "./nativeAgent";
+import {nativeAgentInputKey,type NativeAgentController,type NativePrepared} from "./nativeAgent";
 import {openAgentSetup} from "./agentSetup";
 import {LiveHumanAgentCard} from "./HumanAgentCard";
 import {CharacterSection} from "./character/CharacterSection";
@@ -14,32 +14,41 @@ const STAGE_LABEL={propose:"Saved",accept:"Accepted",readiness:"World ready",pre
 
 /** Native source creation and session selection in the existing Agent surface.
  * `controller` is a test/embed seam; production always uses the kernel owner. */
-export function NativeAgentLauncher({project,onChoose,controller:injected}:{project?:string;onChoose?:(row:EncounterRow)=>Promise<void>|void;controller?:NativeAgentController}) {
+export function NativeAgentLauncher({project,sourceWorldRef,current,onChoose,controller:injected}:{project?:string;sourceWorldRef?:string;current?:()=>boolean;onChoose?:(row:EncounterRow,current?:()=>boolean)=>Promise<void>|void;controller?:NativeAgentController}) {
 	const kernel=useKernel();
-	const controller=useMemo(()=>injected??agentController(kernel.transport,project),[injected,kernel.transport,project]);
+	const controller=useMemo(()=>injected??agentController(kernel.transport,project,sourceWorldRef),[injected,kernel.transport,project,sourceWorldRef]);
+	const host=useRef<HTMLElement>(null),mounted=useRef(false);
+	const latest=useRef({controller,current});latest.current={controller,current};
+	useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
+	const belongs=()=>mounted.current&&latest.current.controller===controller&&latest.current.current?.()!==false&&!!host.current?.getClientRects().length;
+	const guard=(event:SyntheticEvent)=>{if(!belongs()){event.preventDefault();event.stopPropagation();}};
 	const state=useSyncExternalStore(controller.subscribe,controller.snapshot);
 	const [opening,setOpening]=useState(false);const [openError,setOpenError]=useState<string>();
 	const refresh=async()=>{await controller.refresh();await controller.refreshReadiness();};
 	useEffect(()=>{void refresh();},[controller]);
 	const choose=async(prepared:NativePrepared)=>{
-		if(opening)return;setOpening(true);setOpenError(undefined);
+		if(opening||!belongs())return;setOpening(true);setOpenError(undefined);
+		const material=()=>nativeAgentInputKey(controller.snapshot());
+		const captured=material();const chooseCurrent=()=>belongs()&&material()===captured;
 		const row:EncounterRow={ref:prepared.agent_session,space:prepared.space,project:project??"",title:state.review?.profile.name??state.review?.profile.purpose??prepared.agent_ref};
 		try {
-			if(onChoose)await onChoose(row);
-			else window.dispatchEvent(new CustomEvent("oi:agent-session-prepared",{detail:row}));
-		}catch(error){setOpenError(String(error));}finally{setOpening(false);}
+			if(onChoose)await onChoose(row,chooseCurrent);
+			else if(!sourceWorldRef)window.dispatchEvent(new CustomEvent("oi:agent-session-prepared",{detail:row}));
+			else throw new Error("This native World has no qualified prepared-session presentation receiver.");
+		}catch(error){if(belongs())setOpenError(String(error));}finally{if(mounted.current&&latest.current.controller===controller)setOpening(false);}
 	};
 	/** The reviewed compound journey: native save → acceptance → readiness →
 	 * preparation, then the conversation actually opens. A failed stage keeps
 	 * its per-stage affordances and the Saved; not running report; a failed
 	 * open leaves the prepared session standing for explicit retry. */
 	const saveAndStart=async()=>{
-		const prepared=await controller.saveAndStart();
-		if(prepared)await choose(prepared);
+		if(!belongs())return;
+		const prepared=await controller.saveAndStart(belongs);
+		if(prepared&&belongs())await choose(prepared);
 	};
 	const {draft,review,prepared,compound}=state;
 	const repertoireFirst=!!state.skillSets&&state.skillSets.length>0;
-	return <section className="oi-section native-agent-launcher" aria-label="Native Agent creation" aria-busy={state.busy||opening}>
+	return <section ref={host} className="oi-section native-agent-launcher" aria-label="Native Agent creation" onClickCapture={guard} onKeyDownCapture={guard} onSubmitCapture={guard} aria-busy={state.busy||opening}>
 		<header className="oi-panel-head"><strong>Agents in {project??"Central root"}</strong><button type="button" className="oi-action" disabled={state.busy} onClick={()=>void refresh()}>Read native roster</button></header>
 		<p className="oi-note">A reusable Agent is an accepted native definition. Temporary task roles and runtime sessions stay separate. Preparing a session neither starts a harness nor grants execution authority.</p>
 		{state.profiles.length>0&&<div role="group" aria-label="Native Agent roster">{state.profiles.map(item=><button key={item.profile.ref} type="button" className="oi-row" disabled={state.busy||state.unknown==="prepare"} onClick={()=>void controller.select(item.profile.ref)}>
@@ -80,7 +89,7 @@ export function NativeAgentLauncher({project,onChoose,controller:injected}:{proj
 				<p className="oi-note">Central source refs; exact bytes are pinned and human-accepted. Optional — pin both refs or neither. The source temperament stands apart from the visual character above.</p>
 			</fieldset>
 			<button type="button" className="oi-action oi-action-primary" onClick={()=>void saveAndStart()} disabled={!draft.name||!draft.purpose||!draft.scopeConfirmed}>Save and start Direct work</button>
-			<button type="button" className="oi-action" onClick={()=>void controller.propose()} disabled={!draft.name||!draft.purpose||!draft.scopeConfirmed}>Save as native proposal only</button>
+			<button type="button" className="oi-action" onClick={()=>void controller.propose(belongs)} disabled={!draft.name||!draft.purpose||!draft.scopeConfirmed}>Save as native proposal only</button>
 			<p className="oi-note">Save and start runs the native save (CAS), acceptance, world-readiness check and session preparation in order, then opens the conversation. Each stage&apos;s real outcome is shown; a failure after the save keeps the source and names the failing stage.</p>
 		</fieldset>}
 		{review&&<section aria-label="Review native Agent source">
@@ -102,7 +111,7 @@ export function NativeAgentLauncher({project,onChoose,controller:injected}:{proj
 				})}
 				{review.self_definition.self_sources_resolved===false&&<p className="oi-refusal">The pinned self-definition sources did not all resolve; this Agent is not running on its intended exact ground.</p>}
 			</section>}
-			{!review.accepted&&<CharacterEditor current={review.profile.expressive_character_ref} onSave={controller.setCharacter} disabled={state.busy||!!state.unknown}/>}
+			{!review.accepted&&<CharacterEditor current={review.profile.expressive_character_ref} onSave={character=>controller.setCharacter(character,belongs)} disabled={state.busy||!!state.unknown}/>}
 			<details><summary>Show raw — exact source basis and delivery limits</summary><p><code>{review.content_digest}</code></p><pre style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{JSON.stringify(review.profile,null,2)}</pre><p>Selected Skill content is checked and delivered to the native parent session. Child activation requires its own admission and is not implied.</p></details>
 			{review.accepted&&<LiveHumanAgentCard agentRef={review.profile.agent_ref} worldRef={review.scope_ref} standing={prepared?"prepared":"accepted"} editableCharacter onCharacterChanged={()=>void controller.select(review.profile.ref)}
 				actions={[prepared
@@ -110,8 +119,8 @@ export function NativeAgentLauncher({project,onChoose,controller:injected}:{proj
 					:{label:"Save and start Direct work",run:()=>void saveAndStart()}]}/>}
 			{review.accepted?<p role="status">Accepted by the native human-authority path and read back from the roster.</p>:<p role="status">This is a stored proposal, not an accepted Agent and not permission to execute.</p>}
 			<details><summary>Stage-by-stage native operations</summary>
-				{!review.accepted&&<button type="button" className="oi-action" disabled={state.busy||!!state.unknown} onClick={()=>void controller.accept()}>Accept this exact Agent definition</button>}
-				{review.accepted&&!prepared&&<button type="button" className="oi-action" disabled={state.busy||!!state.unknown||state.world?.world_readiness.ready!==true} onClick={()=>void controller.prepare()}>Prepare Direct session</button>}
+				{!review.accepted&&<button type="button" className="oi-action" disabled={state.busy||!!state.unknown} onClick={()=>void controller.accept(belongs)}>Accept this exact Agent definition</button>}
+				{review.accepted&&!prepared&&<button type="button" className="oi-action" disabled={state.busy||!!state.unknown||state.world?.world_readiness.ready!==true} onClick={()=>void controller.prepare(belongs)}>Prepare Direct session</button>}
 			</details>
 			{!prepared&&<button type="button" className="oi-action oi-action-primary" disabled={state.busy||!!state.unknown} onClick={()=>void saveAndStart()}>Save and start Direct work</button>}
 			<button type="button" className="oi-action" disabled={state.busy||!!state.unknown} onClick={()=>controller.edit({})}>Back to held draft</button>

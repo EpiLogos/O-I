@@ -531,6 +531,37 @@ fn stale_revisions_are_refused_without_appending() {
 }
 
 #[test]
+fn gesture_material_revision_is_pinned_before_target_or_durable_act_mutation() {
+    let home = temp_home("gesture-material-pin");
+    let mut k = setup();
+    k.attach_act_store(&home).unwrap();
+    open_act(&mut k, "act:gesture-material-pin");
+    select_handoff(&mut k, "act:gesture-material-pin", "main");
+    let material_revision = doc(&mut k, "expression:nous")["revision"].to_string();
+    edit(&mut k, "expression:nous", json!([{"change":"rename","title":"Nous changed after listing"}]));
+    let before_target = doc(&mut k, RUN);
+    let before_act = world(&mut k, json!({"operation":"act_inspect","act_ref":"act:gesture-material-pin"})).unwrap()["act"].clone();
+    let refused = world(&mut k, json!({"operation":"act_gesture","act_ref":"act:gesture-material-pin","actor":"a","gesture":"nod","role":"sender",
+        "expected_revision":before_target["revision"],"expected_act_revision":before_act["revision"],
+        "material":{"expression_ref":"expression:nous","revision":material_revision}})).unwrap();
+    assert_eq!(refused["state"], "material_revision_changed", "{refused}");
+    assert_eq!(refused["material"], "gesture");
+    assert_eq!(refused["ref"], "expression:nous");
+    assert_eq!(doc(&mut k, RUN), before_target);
+    let mut fresh = kernel();
+    fresh.attach_act_store(&home).unwrap();
+    assert_eq!(world(&mut fresh, json!({"operation":"act_inspect","act_ref":"act:gesture-material-pin"})).unwrap()["act"], before_act);
+    let current_revision = doc(&mut k, "expression:nous")["revision"].to_string();
+    let accepted = world(&mut k, json!({"operation":"act_gesture","act_ref":"act:gesture-material-pin","actor":"a","gesture":"nod","role":"sender",
+        "expected_revision":before_target["revision"],"expected_act_revision":before_act["revision"],
+        "material":{"expression_ref":"expression:nous","revision":current_revision}})).unwrap();
+    assert_eq!(accepted["state"], "act_performed", "{accepted}");
+    assert_eq!(accepted["passage"]["revision"], current_revision);
+    assert_eq!(accepted["act"]["sequence"].as_array().unwrap().len(), before_act["sequence"].as_array().unwrap().len() + 1);
+    std::fs::remove_dir_all(home).unwrap();
+}
+
+#[test]
 fn unknown_fields_and_invalid_reuse_fail_closed() {
     let mut k = setup();
     open_act(&mut k, "act:closed");

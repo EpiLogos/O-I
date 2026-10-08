@@ -2,6 +2,7 @@ import {EDITOR_CHANNEL, type NativeEditorController, type NativeEditorReading, t
 import type {ExpressionsHost} from './host.ts';
 import type {HostTarget} from './protocol.ts';
 import {isNativeScenesReading} from './scenesValidation';
+import {isNativeFoldTargets} from './nativeStateFold.ts';
 
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 const text = (value: unknown): value is string => typeof value === 'string' && value.length > 0;
@@ -46,7 +47,18 @@ function chosenControls(value: unknown, scene: Record<string, unknown>, selectio
     return entry.scope === 'named' ? entry.entityId === control.entity_id : (selection.entity_ids as unknown[])[0] === control.entity_id;
   });
 }
-function reading(value: unknown): value is NativeEditorReading {
+/** Device widgets are ordered identities; the same bounds the kernel and the shell admit. */
+function deviceWidgets(value: unknown): boolean {
+  if (!Array.isArray(value) || value.length > 64) return false;
+  const ids = new Set<string>();
+  return value.every(entry => {
+    if (!object(entry) || !text(entry.id) || [...entry.id].length > 128 || ids.has(entry.id)
+      || typeof entry.family !== 'string' || !/^[a-z0-9-]{1,64}$/.test(entry.family)) return false;
+    ids.add(entry.id);
+    return true;
+  });
+}
+export function reading(value: unknown): value is NativeEditorReading {
   if (!object(value) || !object(value.basis) || !object(value.scene) || !object(value.history)
     || !object(value.selection) || !object(value.standing) || !object(value.entityOccurrences)) return false;
   const {basis: b, scene, history, selection, standing} = value;
@@ -60,7 +72,16 @@ function reading(value: unknown): value is NativeEditorReading {
     || !(standing.notice === null || typeof standing.notice === 'string')
     || !Object.values(value.entityOccurrences).every(text)
     || !chosenControls(value.chosenControls,scene,selection,value.entityOccurrences)
-    || value.scenes !== undefined && !isNativeScenesReading(value.scenes,{expression_ref:b.expression_ref,revision:b.revision,scene_ref:b.scene_ref})) return false;
+    || value.foldTargets !== undefined && !isNativeFoldTargets(value.foldTargets)
+    || value.devices !== undefined && !deviceWidgets(value.devices)
+    || value.scenes !== undefined && (!object(value.scenes) || value.scenes.loop !== undefined && typeof value.scenes.loop !== 'boolean'
+      || !isNativeScenesReading(value.scenes,{expression_ref:b.expression_ref,revision:b.revision,scene_ref:b.scene_ref}))) return false;
+  // An application without device widgets is an older reading: none is placed.
+  if (value.devices === undefined) value.devices = [];
+  // The saved-sequence loop flag is optional on the wire; a reading without it is not looping.
+  if (object(value.scenes) && value.scenes.loop === undefined) value.scenes.loop = false;
+  // The Expression description is optional on the wire; a reading without it has none.
+  if (object(value.scenes) && value.scenes.description === undefined) value.scenes.description = '';
   if (value.playback !== undefined && (!object(value.playback) || value.playback.scene_ref !== b.scene_ref
     || !revision(value.playback.intent_epoch) || !finite(value.playback.scene_elapsed_seconds) || value.playback.scene_elapsed_seconds < 0
     || !finite(value.playback.expression_time_seconds) || value.playback.expression_time_seconds < 0

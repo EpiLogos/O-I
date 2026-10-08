@@ -18,6 +18,9 @@ export interface HostedSurfaceDescriptor {
 
 export interface FactoryCentreContext {
   project?: string;
+  sourceWorldRef?: string;
+  current?: () => boolean;
+  unavailable?: string;
   accompanying?: {ref: string; project: string; space: string};
   onOpenTask?: (row: EncounterRow) => void | Promise<void>;
   onNewTask?: () => void;

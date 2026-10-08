@@ -42,10 +42,11 @@ use crate::config_surface::{
     ProfileSummary, ProfileSurface, ReceiptSummary, SurfaceError, SurfaceResult,
 };
 use crate::configuration::kernel::{
-    assemble_changeset, desired_change, execute_changeset, mint_changeset_id, plan_request,
-    product_position_specs, product_position_specs_with, reset_setting, resolve_setting,
-    resolve_setting_address, ConfigurationStore, DesiredChange, DesiredInput, DesiredRecord,
-    KernelError, OwnerGateway, OwnerRegistry, PlanDocument, ProcessTransport,
+    assemble_changeset, desired_change, execute_changeset, execute_reviewed_changeset,
+    mint_changeset_id, plan_owner_request, plan_request, product_position_specs,
+    product_position_specs_with, reset_setting, resolve_setting, resolve_setting_address,
+    ConfigurationStore, DesiredChange, DesiredInput, DesiredRecord, KernelError, OwnerGateway,
+    OwnerRegistry, PlanDocument, ProcessTransport,
 };
 use crate::configuration::profile_store::{
     import_document, is_valid_profile_ref, ProfileStore, StoreError,
@@ -90,6 +91,12 @@ pub struct KernelSurface {
 use crate::current_world as oi_cli_current_world;
 
 impl KernelSurface {
+    /// The native engine's reviewed-plan capability is independent of owner
+    /// discovery. A particular owner request still performs its own admission.
+    pub const fn reviewed_apply_capability() -> bool {
+        true
+    }
+
     /// Discover the machine's owners and open every store under the
     /// resolved O:I home. Discovery degradations are carried, not raised:
     /// an owner that does not answer is data the surface reports.
@@ -826,6 +833,141 @@ impl ConfigSurface for KernelSurface {
             Self::kernel_error(error, Some(&desired.setting_ref), Some(&desired.scope))
         })?;
         Ok(Self::plan_document_into(document))
+    }
+
+    fn reviewed_apply_available(&self) -> bool {
+        Self::reviewed_apply_capability()
+    }
+
+    fn plan_raw(&self, request: &ChangeRequest) -> SurfaceResult<Value> {
+        let desired = self.normalize(request)?;
+        plan_owner_request(
+            &self.registry,
+            &self.gateway(),
+            &Self::requested_of(&desired),
+        )
+        .map(|plan| plan.raw)
+        .map_err(|error| {
+            Self::kernel_error(error, Some(&desired.setting_ref), Some(&desired.scope))
+        })
+    }
+
+    fn plan_reviewed(&self, request: &ChangeSet) -> SurfaceResult<(ChangeSet, Vec<Value>)> {
+        validate_changeset(request, self.registry.settings())
+            .map_err(|error| SurfaceError::new(ErrorCode::InvalidValue, error))?;
+        if request.operations.is_empty()
+            || request.operations.len() != request.requested.len()
+            || request
+                .operations
+                .iter()
+                .any(|op| op.kind != OperationKind::Apply)
+        {
+            return Err(SurfaceError::new(
+                ErrorCode::InvalidValue,
+                "reviewed admission requires one apply operation per request",
+            ));
+        }
+        // Never replace a held identity, even when the owner digest is equal.
+        if self
+            .store
+            .load_changeset(&request.changeset_id)
+            .map_err(|error| SurfaceError::new(ErrorCode::Internal, error))?
+            .is_some()
+        {
+            return Err(SurfaceError::new(
+                ErrorCode::InvalidValue,
+                "ChangeSet identity is already admitted; review a new ChangeSet",
+            ));
+        }
+        let desired = request
+            .requested
+            .iter()
+            .map(|requested| {
+                self.normalize(&ChangeRequest {
+                    setting_ref: requested.setting_ref.clone(),
+                    scope: requested.scope.clone(),
+                    value: requested.value.clone(),
+                    secret_reference: requested.secret_reference.as_ref().map(|secret| {
+                        SecretReferenceValue {
+                            ref_: secret.ref_.clone(),
+                        }
+                    }),
+                })
+            })
+            .collect::<SurfaceResult<Vec<_>>>()?;
+        // Use the existing native assembler for contributed owner identity,
+        // writability, duplicate requests and dependency ordering.
+        let mut planned = assemble_changeset(
+            &self.registry,
+            &request.changeset_id,
+            request.created_at_unix_ms,
+            request.profile_ref.as_deref(),
+            &desired,
+        )
+        .map_err(|error| Self::kernel_error(error, None, None))?;
+        planned.authority = request.authority.clone();
+        let mut plans = Vec::with_capacity(desired.len());
+        for (operation, desired) in planned.operations.iter_mut().zip(&desired) {
+            let owner = plan_owner_request(
+                &self.registry,
+                &self.gateway(),
+                &Self::requested_of(desired),
+            )
+            .map_err(|error| {
+                Self::kernel_error(error, Some(&desired.setting_ref), Some(&desired.scope))
+            })?;
+            operation.plan_digest = Some(owner.document.plan_digest.clone());
+            operation.plan_ref = Some(owner.document.plan_id.clone());
+            operation.status = OperationStatus::Validated;
+            operation.receipt_ref = None;
+            operation.error = None;
+            plans.push(owner.raw);
+        }
+        planned.verification = None;
+        planned.status = crate::configuration::derive_changeset_status(&planned.operations, None);
+        planned
+            .validate()
+            .map_err(|error| SurfaceError::new(ErrorCode::InvalidValue, error))?;
+        self.store
+            .admit_changeset(&planned)
+            .map_err(|error| SurfaceError::new(ErrorCode::InvalidValue, error))?;
+        Ok((planned, plans))
+    }
+
+    fn apply_reviewed(
+        &self,
+        reviewed: &ChangeSet,
+        plans: &[Value],
+    ) -> SurfaceResult<AppliedChange> {
+        for request in &reviewed.requested {
+            self.normalize(&ChangeRequest {
+                setting_ref: request.setting_ref.clone(),
+                scope: request.scope.clone(),
+                value: request.value.clone(),
+                secret_reference: request.secret_reference.as_ref().map(|secret| {
+                    SecretReferenceValue {
+                        ref_: secret.ref_.clone(),
+                    }
+                }),
+            })?;
+        }
+        validate_changeset(reviewed, self.registry.settings())
+            .map_err(|error| SurfaceError::new(ErrorCode::InvalidValue, error))?;
+        let mut changeset = reviewed.clone();
+        let report = execute_reviewed_changeset(
+            &self.registry,
+            &self.gateway(),
+            Some(&self.store),
+            &mut changeset,
+            now_unix_ms(),
+            plans,
+        )
+        .map_err(|error| Self::kernel_error(error, None, None))?;
+        self.retire_holds(&changeset)?;
+        Ok(AppliedChange {
+            changeset,
+            receipts: report.receipts,
+        })
     }
 
     fn apply(

@@ -11,15 +11,15 @@
 
 import { kernelOp } from "../kernel/bridge";
 import type { KernelTransportStatus, NativeFileReading } from "../kernel/types";
-import { readFile, fileOperation, type FileMutation } from "../files/client";
-import { invalidateFile } from "../files/resources";
+import { fileOperation, type FileMutation } from "../files/client";
+import { invalidateFile, acquireFileReading, captureFileResourceAccess } from "../files/resources";
 import { islandSpan, type DocumentIdentity } from "./identity";
 
 export const DESKTOP_ACTOR = "oi-desktop-user";
 export const DESKTOP_ACTOR_KIND = "human";
 
 export type DocumentSaveOutcome =
-  | { state: "saved"; revision: string; sourceRevision?: string }
+  | { state: "saved"; revision?: string; sourceRevision?: string; readback: "verified" | "unavailable"; detail?: string }
   | { state: "unchanged" }
   | { state: "stale"; detail: string }
   | { state: "conflict"; detail: string; currentRevision?: string }
@@ -64,16 +64,21 @@ export async function saveDocumentPayload(
     identity: DocumentIdentity;
     basisFileRevision: string;
     frameIslandText: string;
+    isCurrent?: () => boolean;
   },
 ): Promise<{ outcome: DocumentSaveOutcome; reading?: NativeFileReading }> {
   const { location, project, identity, basisFileRevision, frameIslandText } = args;
+  const access=captureFileResourceAccess(transport);
+  const current=()=>{if(!access.current()||args.isCurrent?.()===false)throw Error("The document's originating subject or native access epoch has retired");};
+  const ownerIO=async<T,>(run:()=>Promise<T>):Promise<T>=>{current();const result=await run();current();return result;};
+  current();
   if (identity.payload !== "ql-doc") {
     return { outcome: { state: "refused", detail: "This document keeps no savable payload island; author it in source." } };
   }
   // Revalidation first, exactly like the file editor's read: drop the
   // broker's resident entry so this goes to the owner, not the cache.
   invalidateFile(location);
-  const saved = await readFile(transport, location);
+  const saved = await ownerIO(()=>acquireFileReading(transport, location));
   if (saved.revision !== basisFileRevision) {
     return { outcome: { state: "stale", detail: "The document changed behind this page. Reload to see it; nothing was overwritten." }, reading: saved };
   }
@@ -86,38 +91,40 @@ export async function saveDocumentPayload(
   }
   const content = saved.content.slice(0, span.start) + frameIslandText + saved.content.slice(span.end);
 
-  if (saved.source?.ref) {
+  const sourceRef = saved.source?.ref;
+  if (sourceRef) {
     // Participating source: the owner's own CAS write. Its own read is the
     // authority for the revision basis; a divergence from the file we just
     // read is a conflict, never a guess about which one is true.
-    const owner = await readWorldSource(transport, project ?? saved.project?.name ?? undefined, saved.source.ref);
+    const owner = await ownerIO(()=>readWorldSource(transport, project ?? saved.project?.name ?? undefined, sourceRef));
     if (owner.content !== saved.content) {
       return { outcome: { state: "conflict", detail: "The owner's source differs from the open file. Reload and review before saving.", currentRevision: owner.revision }, reading: saved };
     }
-    const written = await dispatchAction(transport, "projectcentral.source.write", saved.source.ref, {
+    const written = await ownerIO(()=>dispatchAction(transport, "projectcentral.source.write", sourceRef, {
       project: project ?? saved.project?.name ?? null,
-      source_ref: saved.source.ref,
+      source_ref: sourceRef,
       expected_revision: owner.revision,
       content,
       actor: DESKTOP_ACTOR,
       actor_kind: DESKTOP_ACTOR_KIND,
-    });
+    }));
     if (!written.ok) {
       return { outcome: { state: "refused", detail: `The owner refused this save: ${written.message}` }, reading: saved };
     }
     const receipt = written.data as { revision?: { revision?: string }; changed?: boolean } | undefined;
     invalidateFile(location);
-    const reread = await readFile(transport, location).catch(() => undefined);
+    const reread = await ownerIO(()=>acquireFileReading(transport, location)).catch(() => {current();return undefined;});
+    const matching = reread?.content === content ? reread : undefined;
     return {
-      outcome: { state: "saved", revision: reread?.revision ?? owner.revision, sourceRevision: receipt?.revision?.revision },
-      reading: reread,
+      outcome: { state: "saved", revision: matching?.revision, sourceRevision: receipt?.revision?.revision, readback:matching?"verified":"unavailable", detail:matching?undefined:reread?"The native owner saved the payload and then advanced again. The page remains on its original basis for review; the latest reading is available in source.":"The native owner saved the payload. Its updated file reading is unavailable; the page and its edits have been retained." },
+      reading: matching,
     };
   }
 
   if (saved.operations?.write && !saved.operations.write.available) {
     return { outcome: { state: "refused", detail: `Central holds this document read-only: ${saved.operations.write.reason ?? "no write authority"}` }, reading: saved };
   }
-  const result = await fileOperation<FileMutation>(transport, location, { action: "write", expected_revision: saved.revision, content });
+  const result = await ownerIO(()=>fileOperation<FileMutation>(transport, location, { action: "write", expected_revision: saved.revision, content }));
   if (result.outcome === "conflict") {
     return { outcome: { state: "conflict", detail: "The document changed while this page was open. Reload to review; your page edits are still here.", currentRevision: result.current?.revision }, reading: result.current };
   }
@@ -125,6 +132,7 @@ export async function saveDocumentPayload(
     return { outcome: { state: "unchanged" }, reading: saved };
   }
   invalidateFile(location);
-  const reread = await readFile(transport, location).catch(() => undefined);
-  return { outcome: { state: "saved", revision: result.revision ?? reread?.revision ?? saved.revision }, reading: reread };
+  const reread = await ownerIO(()=>acquireFileReading(transport, location)).catch(() => {current();return undefined;});
+  const matching = reread?.content === content ? reread : undefined;
+  return { outcome: { state: "saved", revision: result.revision ?? matching?.revision, readback:matching?"verified":"unavailable", detail:matching?undefined:reread?"The native owner saved the payload and then advanced again. The page remains on its original basis for review; the latest reading is available in source.":"The native owner saved the payload. Its updated file reading is unavailable; the page and its edits have been retained." }, reading: matching };
 }

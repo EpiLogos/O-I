@@ -48,6 +48,10 @@ export interface NativeScenesReading {
   schema: 'oi.native-scenes/v1';
   basis: {expression_ref: string; revision: number};
   title: string;
+  /** The Expression description of the working Journey (journey.description). Empty is a real value. */
+  description: string;
+  /** The saved-sequence loop flag of the working Journey (journey.loop). */
+  loop: boolean;
   native_selected_scene_ref: string | null;
   native_order: string[];
   object_titles: Record<string,string>;
@@ -138,7 +142,7 @@ export function projectNativeScenes(journey: Journey, view: KernelConversion): N
       })};
   };
   return {schema: 'oi.native-scenes/v1', basis: {expression_ref: view.document.expression_ref, revision: view.document.revision},
-    title: journey.name, native_selected_scene_ref: view.document.selection?.scene_ref ?? null,
+    title: journey.name, description: journey.description, loop: journey.loop === true, native_selected_scene_ref: view.document.selection?.scene_ref ?? null,
     object_titles:Object.fromEntries(Object.values(view.document.entities).map(entity=>[entity.entity_ref,entity.title])),
     native_order: nativeOrder, working_order: workingOrder, unbound_local_scene_ids: unbound, scenes: rows,
     completeness: {order: orderComplete, material: missing.length === 0, occurrences: rows.every(row => row.membership.complete)},

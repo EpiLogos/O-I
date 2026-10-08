@@ -14,3 +14,7 @@
 .native-rack-editor.is-compact .native-rack-draft{display:flex;flex-wrap:wrap;gap:3px;font-size:8px;line-height:1.4}
 .native-rack-editor.is-compact .native-rack-draft button{font-size:8px;padding:1px 3px;min-height:16px;margin:0}
 .native-rack-create{display:flex;gap:4px}
+
+.native-rack-macro[data-drop=valid]{outline:1px solid var(--accent);outline-offset:-1px}
+.native-rack-macro[data-drop=invalid]{outline:1px dashed var(--rec);outline-offset:-1px}
+.native-rack-drop{display:block;margin:2px 0;font-size:10px;color:var(--accent);overflow-wrap:anywhere}

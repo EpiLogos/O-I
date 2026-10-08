@@ -1,11 +1,11 @@
 import {
   validateNativeInputScope, sameNativeInputOwner, qualifyPrivateNativeInput,
   readPrivateNativeInputs, retainPrivateNativeInput, clearPrivateNativeInput,
-  type NativeInputScope, type NativeInputBasis, type NativeInputTarget, type NativeInputValue,
+  type NativeInputScope, type NativeInputBasis, type NativeInputTarget, type NativeInputJson, type NativeInputValue,
   type PrivateNativeInputReceipt, type PrivateNativeInputInventory,
 } from '../../../../../desktop/cradle/src/workspace/drafts'
 
-export type {NativeInputScope, NativeInputBasis, NativeInputTarget, NativeInputValue, PrivateNativeInputReceipt, PrivateNativeInputInventory}
+export type {NativeInputScope, NativeInputBasis, NativeInputTarget, NativeInputJson, NativeInputValue, PrivateNativeInputReceipt, PrivateNativeInputInventory}
 export interface NativeInputMaterial {basis:NativeInputBasis;target:NativeInputTarget;input:NativeInputValue;refusal?:string}
 /** Stable presentation key only. Revisions remain pinned in each retained copy. */
 export function nativeInputTargetKey(material:Pick<NativeInputMaterial,'basis'|'target'>):string {

@@ -13,8 +13,12 @@ import {RUN_STATE_WORD} from "./desk/runModel";
 import {clearObjectPages, closeObjectPage, openObjectPage, useObjectPage} from "./desk/objectNav";
 import "./desk/desk.css";
 import "./desk/fdesk.css";
+import {captureFactoryReceiver,factoryScopeRefusal,type FactoryReceivingScope} from './receivingScope';
 
 export interface FactoryCentreProps {
+  sourceWorldRef?: string;
+  current?: () => boolean;
+  unavailable?: string;
   /** The centre Chat: the SAME AgentChat the base-mode panel mounts, bound
    * to the mode's accompanying conversation — never a second chat
    * implementation, never a second composer. */
@@ -44,24 +48,29 @@ const FACTORY_KINDS = FACTORY_OBJECT_KINDS;
  * then object pages in place with ← back; Tasks is for talking about it — the
  * selected conversation at full size, with a Run chip only when its session
  * truly carried the run (F14), else "Direct conversation" once (F15). */
-export function FactoryCentre({chat,accompanying,onOpenTask,onNewTask,onOpenActivity,onMessage}:FactoryCentreProps) {
+export function FactoryCentre({chat,project,sourceWorldRef,current,unavailable,accompanying,onOpenTask,onNewTask,onOpenActivity,onMessage}:FactoryCentreProps) {
   const view=useCentreView();
   const openKey=useOpenRun();
   const object=useObjectPage();
   useDeskReading();
   const [debugOpen,setDebugOpen]=useState(false);
   const centre=useRef<HTMLElement>(null);
+  const latestScope=useRef<FactoryReceivingScope>({project,sourceWorldRef,current,unavailable});
+  latestScope.current={project,sourceWorldRef,current,unavailable};
+  const refusal=factoryScopeRefusal(latestScope.current);
+  const presented=()=>!!centre.current?.getClientRects().length&&(!latestScope.current.current||latestScope.current.current());
+  const receiving=()=>captureFactoryReceiver(()=>latestScope.current,presented)();
   // F14/F15 + ambiguity: a conversation joins a run only when exactly one
   // read run carried its session; several is shown as such, never the first.
-  const join=view==="tasks"&&accompanying?runsForSession(accompanying.ref):undefined;
+  const join=!refusal&&view==="tasks"&&accompanying?runsForSession(accompanying.ref):undefined;
   const joined=join?.outcome==="one"?join.entries[0]:undefined;
   const ambiguousRuns=join?.outcome==="ambiguous"?join.entries:[];
 
   // The right panel answers about the selected run: in Tasks, the joined run
   // (a Direct conversation clears it); on the Desk, the run held open.
-  useEffect(()=>{ if(view==="tasks")selectRun(joined?.card.key); },[view,joined?.card.key]);
+  useEffect(()=>{ if(!refusal&&view==="tasks")selectRun(joined?.card.key); },[view,joined?.card.key,refusal]);
   // A run opened (or closed) starts a fresh object stack.
-  useEffect(()=>{ clearObjectPages(); },[openKey]);
+  useEffect(()=>{ if(!refusal)clearObjectPages(); },[openKey,refusal]);
   // Object pages open IN PLACE in this full-page centre (§4.1a): a Factory
   // kind (or a tape event) asked for without Pop out lands on the stack.
   // Pop out is the frame's (its own window, the same identity).
@@ -70,7 +79,7 @@ export function FactoryCentre({chat,accompanying,onOpenTask,onNewTask,onOpenActi
       const detail=(event as CustomEvent).detail;
       // Only while this centre is the one presented (a retained, hidden
       // Factory centre never takes another mode's opens).
-      if(!centre.current||centre.current.offsetParent===null)return;
+      if(!receiving())return;
       if(!isOpenObjectDetail(detail)||detail.popOut||!FACTORY_KINDS.has(detail.object.kind))return;
       publishCentreView("desk");
       openObjectPage(detail.object);
@@ -80,10 +89,12 @@ export function FactoryCentre({chat,accompanying,onOpenTask,onNewTask,onOpenActi
   },[]);
 
   const openConversation=(sessionRef:string,spaceRef?:string,runProject?:string)=>{
+    if(!receiving())return;
     const row:EncounterRow={ref:sessionRef,space:spaceRef??"",title:"Conversation",project:runProject??""};
     void onOpenTask?.(row);
   };
   const host:RunPageHost={
+    current:captureFactoryReceiver(()=>latestScope.current,presented),
     onOpenConversation:onOpenTask?(sessionRef=>{
       const entry=runEntry(openKey);
       const attempt=entry?.inspection?.attempts?.find(item=>item.body?.agentSessionRef===sessionRef);
@@ -95,11 +106,15 @@ export function FactoryCentre({chat,accompanying,onOpenTask,onNewTask,onOpenActi
     onMessage,
   };
 
-  const openRunFromTask=(key=joined?.card.key)=>{ if(!key)return; openRunPage(key); publishCentreView("desk"); };
+  const openRunFromTask=(key=joined?.card.key)=>{ if(!receiving()||!key)return; openRunPage(key); publishCentreView("desk"); };
   // The conversation attached to a Run opens the same Live (spec §5).
   const openLiveFromTask=(key=joined?.card.key)=>{ if(!key)return; rememberRunTab(key,"live"); openRunFromTask(key); };
 
-  return <main ref={centre} className={"factory-centre"+(view==="tasks"?" factory-tasks":"")} aria-label="Factory" data-centre-view={view}>
+  return <main ref={centre} className={"factory-centre"+(view==="tasks"?" factory-tasks":"")} aria-label="Factory" data-centre-view={view}
+    onClickCapture={event=>{if(!presented()){event.preventDefault();event.stopPropagation()}}}
+    onKeyDownCapture={event=>{if(!presented()){event.preventDefault();event.stopPropagation()}}}
+    onSubmitCapture={event=>{if(!presented()){event.preventDefault();event.stopPropagation()}}}>
+    {refusal&&<p role="status">{refusal}</p>}
     {view==="tasks"
       ? <section className="factory-chat-full" aria-label="Task conversation">
         <header className="factory-chat-context ftasks-head">
@@ -119,18 +134,20 @@ export function FactoryCentre({chat,accompanying,onOpenTask,onNewTask,onOpenActi
                   <span className="ftasks-runchip-kind">Run</span><span>{entry.card.title}</span>
                 </button>)}
               </span>
+            : refusal
+              ? <span className="factory-chat-context-direct">Factory work reading unavailable</span>
             : accompanying
               ? <span className="factory-chat-context-direct" data-direct-conversation>Direct conversation</span>
               : <span className="factory-chat-context-direct">New conversation</span>}
         </header>
         <div className="factory-chat-host">{chat}</div>
       </section>
-      : object
+      : refusal ? null : object
         ? <div className="frun fobject" data-object-page={object.kind}><ObjectPage key={`${object.kind}|${object.ref}`} object={object} onBack={closeObjectPage}/></div>
         : openKey
           ? <RunPage runKey={openKey} onBack={closeRunPage} host={host}/>
           : <Desk onNewRun={onNewTask?()=>{onNewTask();publishCentreView("tasks");}:undefined}/>}
-    {import.meta.env.DEV&&view==="desk"&&!openKey&&!object&&<details className="factory-centre-debug" onToggle={event=>setDebugOpen((event.target as HTMLDetailsElement).open)}>
+    {!refusal&&import.meta.env.DEV&&view==="desk"&&!openKey&&!object&&<details className="factory-centre-debug" onToggle={event=>setDebugOpen((event.target as HTMLDetailsElement).open)}>
       <summary>Debug: development console</summary>
       {debugOpen&&<FactoryDevelopmentSurface/>}
     </details>}

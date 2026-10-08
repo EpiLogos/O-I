@@ -1,20 +1,32 @@
-import {useEffect, useRef, useState, type KeyboardEvent, type PointerEvent} from 'react'
+import {Fragment, useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode} from 'react'
 import type {Entity, Scene, NativeDeviceChange, NativeEditorBasis, NativeEditorReading, NativeEditorReply, NativeEditorRequest} from '../../../../expressions-boundary/src/editor'
 import {sameEditorBasis} from '../../../../expressions-boundary/src/editor'
 import {NATIVE_BINDINGS, baseValue, entityTargets, type NativeBinding} from '@epilogos/expressions-boundary/parameters'
-import {useNativeInputRetention, type NativeInputAperture} from '../continuity/nativeInputContext'
-import {nativeInputTargetKey, type NativeInputMaterial, type NativeInputTarget, type PrivateNativeInputReceipt} from '../continuity/nativeInputs'
+import {nativeInputTargetKey, type NativeInputJson, type NativeInputMaterial, type NativeInputTarget, type PrivateNativeInputReceipt} from '../continuity/nativeInputs'
 import './NativeDeviceEditors.css'
+import {NativeMorphDrive} from './NativeMorphDrive'
+import {PinAffordance} from './NativePinControls'
+import {MORPH_CONTROL_PATHS} from './nativeMorphController'
+import {NativeColourField} from './NativeColourField'
+import {COLOUR_CONTROL_PATHS} from './nativeColourController'
+import {FIELD_FACE_MODELS} from './nativeFieldFaceModel'
+import {FIELD_FACE_VIEWS} from './nativeFieldFaceViews'
+import {ENTITY_FACE_MODELS, entityFamilies, entityFaceModel} from './nativeEntityFaceModel'
+import {ENTITY_FACE_VIEWS, EntityFaceBody} from './nativeEntityFaceViews'
+import {NativeDeviceInputCustody, fieldInputTarget, nativeDeviceSvgPoint, useDeviceInputCustody, type Apply, type CaptureCurrent, type DeviceCurrent} from './nativeDeviceCustody'
+
+export {NativeDeviceInputCustody, nativeDeviceSvgPoint}
 
 export interface NativeDeviceEditorsProps {
   reading: NativeEditorReading | null
   request: (request: NativeEditorRequest) => Promise<NativeEditorReply>
   onSelectEntity?: (id: string) => void
   isPresented?: () => boolean
+  /** Hosted in the Browser pool for ONE device: the device name is the pool header, so the Entity/Field switch, the family strip and + Force are not shown. */
+  pooled?: boolean
+  /** A device-chain card asked to open its editor; the nonce makes repeat clicks distinct. */
+  requested?: {scope: 'entity' | 'field'; family: string; nonce: number} | null
 }
-type Apply = (changes: readonly NativeDeviceChange[], basis?: NativeEditorBasis) => Promise<NativeEditorReply>
-type DeviceCurrent = (reply?: NativeEditorReply) => boolean
-type CaptureCurrent = () => DeviceCurrent
 export interface NativeDevicePresentation {epoch:number;cut:string;reading:NativeEditorReading|null;presented:boolean;entity_id:string|null;entity_ref:string|null}
 /** Owner outcomes remain true; only the same visible receiving cut may display them. */
 export function currentNativeDeviceReply(captured:NativeDevicePresentation,current:NativeDevicePresentation,reply?:NativeEditorReply) {
@@ -34,61 +46,14 @@ const short = (n: number) => Number.isFinite(n) ? String(Number(n.toFixed(4))) :
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n))
 const fieldBinding = (path: string) => NATIVE_BINDINGS.find(binding => binding.path === path)
 
-/** Receiving projection only: every write and clear goes through the original
- * private draft owner. Ambiguous divergent copies remain in its recovery panel. */
-export class NativeDeviceInputCustody {
-  receipt:PrivateNativeInputReceipt|null=null
-  fault=''
-  constructor(readonly aperture:NativeInputAperture|null,material:Pick<NativeInputMaterial,'basis'|'target'>,kind:'text'|'gesture') {
-    if(!aperture)return
-    try {
-      if(!aperture.current())return
-      const copies=aperture.owner.read().copies.filter(row=>row.copy.writer_id===aperture.owner.writerId
-        &&row.copy.writer_scope.accessEpoch===aperture.owner.scope.accessEpoch
-        &&row.copy.input.kind===kind&&nativeInputTargetKey(row.copy)===nativeInputTargetKey(material))
-      if(copies.length===1)this.receipt=copies[0]
-      else if(copies.length>1)this.fault='Divergent input copies are retained; choose the exact copy in recovery'
-    }catch(cause){this.fault=cause instanceof Error?cause.message:String(cause)}
-  }
-  retain(material:NativeInputMaterial):PrivateNativeInputReceipt {
-    if(!this.aperture)throw Error('The private input owner is unavailable; keep this view open')
-    try {
-      if(this.fault&&!this.receipt)throw Error(this.fault)
-      const old=this.receipt
-      if(old&&nativeInputTargetKey(old.copy)!==nativeInputTargetKey(material))throw Error('The input belongs to another captured device target')
-      // A new human gesture may start on a later basis. It gets a distinct
-      // private copy; the older failed gesture is never rebased or overwritten.
-      // Explicit recovery-panel ACK/Discard may already have consumed this
-      // own copy. A later human edit starts a new private identity while still
-      // carrying the caller's original material; no native basis is refreshed.
-      const stillHeld=old&&this.aperture.owner.read().copies.some(row=>row.ref===old.ref)
-      const previous=old&&stillHeld&&sameEditorBasis(old.copy.basis,material.basis)?old:undefined
-      const receipt=this.aperture.owner.retain(material,this.aperture.current,previous)
-      this.receipt=receipt;this.aperture.failure?.(nativeInputTargetKey(material),null);this.aperture.changed();return receipt
-    }catch(cause){this.aperture.failure?.(nativeInputTargetKey(material),cause instanceof Error?cause.message:String(cause));throw cause}
-  }
-  clear(submitted:PrivateNativeInputReceipt|null):void {
-    if(!submitted||!this.aperture)return
-    if(this.aperture.owner.clear(submitted,this.aperture.current)){
-      if(this.receipt?.ref===submitted.ref&&this.receipt===submitted)this.receipt=null
-      this.aperture.failure?.(nativeInputTargetKey(submitted.copy),null);this.aperture.changed()
-    }
-  }
-}
-function useDeviceInputCustody(material:Pick<NativeInputMaterial,'basis'|'target'>,kind:'text'|'gesture') {
-  const aperture=useNativeInputRetention(),held=useRef<{aperture:NativeInputAperture|null;key:string;custody:NativeDeviceInputCustody}|null>(null)
-  const key=nativeInputTargetKey(material)
-  if(!held.current||held.current.aperture?.owner!==aperture?.owner||held.current.key!==key)held.current={aperture,key,custody:new NativeDeviceInputCustody(aperture,material,kind)}
-  return held.current.custody
-}
-const fieldInputTarget=(parameter:string,family:string):NativeInputTarget=>({scope:'field',entity_id:null,entity_ref:null,step_id:null,parameter,family,axis:null})
 const forceInputTarget=(reading:NativeEditorReading,entity:Entity,parameter:string|null,axis:'y'|'z'|null=null):NativeInputTarget=>({scope:'entity',entity_id:entity.id,entity_ref:reading.entityOccurrences[entity.id]??null,step_id:null,parameter,family:'force',axis})
+const entityInputTarget=(reading:NativeEditorReading,entity:Entity,parameter:string,family:string):NativeInputTarget=>({scope:'entity',entity_id:entity.id,entity_ref:reading.entityOccurrences[entity.id]??null,step_id:null,parameter,family,axis:null})
 
 /** Exact entry commits explicitly, so opening another disclosure retains the draft. */
-function NumberControl({label, value, binding, disabled, onCommit, automated, observed, captureCurrent, material}: {
+function NumberControl({label, value, binding, disabled, onCommit, automated, observed, captureCurrent, material, pin}: {
   label: string; value: number; binding: Pick<NativeBinding, 'hardMin' | 'hardMax' | 'step' | 'unit'>
   disabled: boolean; onCommit: (value: number,basis?:NativeEditorBasis) => Promise<NativeEditorReply>; automated?: boolean; observed?: number
-  captureCurrent: CaptureCurrent; material:Pick<NativeInputMaterial,'basis'|'target'>
+  captureCurrent: CaptureCurrent; material:Pick<NativeInputMaterial,'basis'|'target'>; pin?: ReactNode
 }) {
   const custody=useDeviceInputCustody(material,'text'),recovered=custody.receipt?.copy.input
   const [text, setText] = useState(recovered?.kind==='text'?recovered.text:short(value)), [error, setError] = useState(custody.fault), [retained, setRetained] = useState(!!recovered)
@@ -120,7 +85,7 @@ function NumberControl({label, value, binding, disabled, onCommit, automated, ob
     }
   }
   return <label className={`native-number ${automated ? 'is-automated' : ''}`}>
-    <span>{label}{automated && <i title="Automation drives this target">A</i>}</span>
+    <span>{label}{automated && <i title="Automation drives this target">A</i>}{pin}</span>
     <div><input aria-label={label} type="text" inputMode="decimal" value={text} disabled={disabled}
       onFocus={() => {focused.current = true;if(restoredFocus.current){commitCurrent.current=captureCurrent();commitTarget.current=onCommit;restoredFocus.current=false} if (!retained) {inputCustody.current=custody;original.current = value;initialText.current=short(value);inputBasis.current=material.basis; commitTarget.current = onCommit;commitCurrent.current=captureCurrent()}}}
       onChange={event => {draftEpoch.current++;setRetained(true); setText(event.target.value);try{retainText(event.target.value);setError('')}catch(cause){const message=cause instanceof Error?cause.message:String(cause);custody.aperture?.failure?.(nativeInputTargetKey(material),message);setError(message)}}}
@@ -139,19 +104,22 @@ function FieldControl({reading, path, family, disabled, apply, captureCurrent}: 
   const id = 'field.' + binding.key
   const automated = reading.scene.automation.some(lane => lane.enabled && lane.target === id)
   return <NumberControl material={{basis:reading.basis,target:fieldInputTarget(id,family)}} captureCurrent={captureCurrent} label={binding.label} value={baseValue(reading.scene, binding.key)} binding={binding} disabled={disabled} automated={automated}
+    pin={<PinAffordance reading={reading} control={{kind: 'field', path}} label={binding.label} apply={changes => apply(changes)} />}
     observed={reading.observation?.effectiveValues?.[id]} onCommit={(value,basis) => apply([{kind: 'parameter', target: id, value}],basis)} />
 }
 
-/** The browser supplies the real SVG screen transform, including letterboxing
- * and host scaling. Rect-only conversion drifts when max-height constrains it. */
-export function nativeDeviceSvgPoint(point: {clientX:number;clientY:number}, matrix: {a:number;b:number;c:number;d:number;e:number;f:number} | null) {
-  if(!matrix)return null
-  const determinant=matrix.a*matrix.d-matrix.b*matrix.c
-  if(!Number.isFinite(determinant)||Math.abs(determinant)<1e-12)return null
-  const x=point.clientX-matrix.e,y=point.clientY-matrix.f
-  const mapped={x:(matrix.d*x-matrix.c*y)/determinant,y:(matrix.a*y-matrix.b*x)/determinant}
-  return Number.isFinite(mapped.x)&&Number.isFinite(mapped.y)?mapped:null
+/** One exact-value control for an entity parameter (a suffix keyed as in entityTargets). Same custody and commit as the Force controls, for any entity family. */
+export function EntityControl({reading, entity, family, suffix, label, disabled, frozen, apply, captureCurrent}: {reading: NativeEditorReading; entity: Entity; family: string; suffix: string; label?: string
+  disabled: boolean; frozen?: string | null; apply: Apply; captureCurrent: CaptureCurrent}) {
+  const binding = entityTargets(reading.scene).find(item => item.entityId === entity.id && item.key === suffix)
+  if (!binding) return null
+  // A frozen suffix (the model's reason, e.g. a Blueprint member's position) is disabled on its own; the other controls keep their state.
+  return <NumberControl material={{basis:reading.basis,target:entityInputTarget(reading,entity,binding.target,family)}} captureCurrent={captureCurrent} label={label ?? binding.label} value={binding.value} binding={binding} disabled={disabled || !!frozen}
+    automated={reading.scene.automation.some(lane => lane.enabled && lane.target === binding.target)} observed={reading.observation?.effectiveValues?.[binding.target]}
+    pin={<PinAffordance reading={reading} control={{kind: 'entity', entityId: entity.id, key: suffix}} label={label ?? binding.label} apply={changes => apply(changes)} />}
+    onCommit={(value,basis) => apply([{kind: 'parameter', target: binding.target, value}],basis)} />
 }
+
 export interface ForceGesture {
   pointer:number;handle:'centre'|'radius';basis:NativeEditorBasis;entity_id:string;entity_ref:string|null;axis:'y'|'z';extent:number
   x:number;y:number;radius:number;initial:{x:number;y:number;radius:number};offset:{x:number;y:number;radius:number}
@@ -179,7 +147,7 @@ export function nativeForceGestureChanges(edit:ForceGesture):NativeDeviceChange[
 export function nativeForceInputMaterial(edit:ForceGesture):NativeInputMaterial {
   const {pointer,handle,basis,entity_id,entity_ref,axis,extent,x,y,radius,initial,offset,bounds}=edit
   return {basis,target:{scope:'entity',entity_id,entity_ref,step_id:null,parameter:null,family:'force',axis},
-    input:{kind:'gesture',gesture:{pointer,handle,basis:{...basis},entity_id,entity_ref,axis,extent,x,y,radius,initial:{...initial},offset:{...offset},bounds:{x:{...bounds.x},y:{...bounds.y},radius:{...bounds.radius}}},changes:nativeForceGestureChanges(edit).map(change=>({...change}))}}
+    input:{kind:'gesture',gesture:{pointer,handle,basis:{...basis},entity_id,entity_ref,axis,extent,x,y,radius,initial:{...initial},offset:{...offset},bounds:{x:{...bounds.x},y:{...bounds.y},radius:{...bounds.radius}}},changes:JSON.parse(JSON.stringify(nativeForceGestureChanges(edit))) as Array<{[key:string]:NativeInputJson}>}}
 }
 export interface FieldGesture {pointer:number;basis:NativeEditorBasis;value:number;initial:number;offset_x:number}
 export function nativeFieldInputMaterial(edit:FieldGesture,parameter:string,family:string):NativeInputMaterial {
@@ -311,24 +279,29 @@ function ForceEditor({reading, entity, disabled, apply, captureCurrent}: {readin
 }
 
 const FIELD_FAMILIES = {
-  flow: {name: 'Flow', paths: ['fluid.returnSpeed', 'fluid.viscosity', 'fluid.vortexStrength', 'fluid.curlScale', 'fluid.curlSpeed', 'fluid.turbulence', 'fluid.dispersion', 'fluid.quadraticDrag', 'fluid.maxSpeed']},
-  medium: {name: 'Shared Medium', paths: ['medium.pressure', 'medium.coupling', 'medium.persistence', 'medium.iterations', 'medium.gridRes', 'medium.splatGain', 'medium.extent']},
-  resonance: {name: 'Resonator', paths: ['cymatics.frequencyHz', 'cymatics.dampingQFactor', 'cymatics.driveStrength', 'cymatics.dominance', 'cymatics.modeCount']},
-  collision: {name: 'Collision', paths: ['collision.restitution', 'collision.friction', 'collision.band', 'collision.strength', 'collision.integrity', 'pairwise.radius', 'pairwise.stiffness', 'pairwise.restitution', 'pairwise.viscosity']},
+  morph: {name:'Morph',paths:MORPH_CONTROL_PATHS},
+  colour: {name:'Colour Field',paths:COLOUR_CONTROL_PATHS},
+  ...FIELD_FACE_MODELS,
 } as const
 type FieldFamily = keyof typeof FIELD_FAMILIES
 function nativeValue(scene: Scene, path: string) {const binding = fieldBinding(path); return binding ? baseValue(scene, binding.key) : undefined}
 
 /** Source-bound diagrams: handles change admitted native parameters. The
  * visuals describe configuration; physical output comes from the Stage. */
-function FieldSurface({reading, family, disabled, apply, captureCurrent}: {reading: NativeEditorReading; family: FieldFamily; disabled: boolean; apply: Apply;captureCurrent:CaptureCurrent}) {
+function FieldSurface({reading, family, disabled, apply, captureCurrent}: {reading: NativeEditorReading; family: Exclude<FieldFamily,'morph'|'colour'>; disabled: boolean; apply: Apply;captureCurrent:CaptureCurrent}) {
   const svg = useRef<SVGSVGElement>(null)
+  // Live values of in-diagram handles, keyed by native path; null removes the path. The slider keeps its own draft.
+  const [drafts, setDrafts] = useState<Record<string, number>>({})
+  const setPathDraft = useCallback((path: string, value: number | null) => setDrafts(current => {
+    if (value === null) {if (!(path in current)) return current; const next = {...current}; delete next[path]; return next}
+    return current[path] === value ? current : {...current, [path]: value}
+  }), [])
   const [draft, setDraft] = useState<number | null>(null)
   const [attempt, setAttempt] = useState<FieldGesture | null>(null)
   const active = useRef<(FieldGesture&{current:DeviceCurrent}) | null>(null)
   const mounted=useRef(true)
   useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;active.current=null}},[])
-  const controlPath = family === 'medium' ? 'medium.coupling' : family === 'flow' ? 'fluid.vortexStrength' : family === 'resonance' ? 'cymatics.frequencyHz' : 'pairwise.restitution'
+  const controlPath = FIELD_FACE_MODELS[family].controlPath
   const binding = fieldBinding(controlPath), value = binding ? baseValue(reading.scene, binding.key) : 0
   const custody=useDeviceInputCustody({basis:reading.basis,target:fieldInputTarget('field.'+(binding?.key??controlPath),family)},'gesture')
   const [custodyError,setCustodyError]=useState(custody.fault)
@@ -344,37 +317,15 @@ function FieldSurface({reading, family, disabled, apply, captureCurrent}: {readi
     onPointerDown={event => {if (disabled || active.current || !binding || event.button !== 0 || !(event.target as SVGElement).dataset.fieldHandle || !captureCurrent()()) return;const point=nativeDeviceSvgPoint(event,svg.current?.getScreenCTM()??null);if(!point)return;event.preventDefault();event.currentTarget.focus();event.currentTarget.setPointerCapture(event.pointerId);active.current={pointer:event.pointerId,basis:{...reading.basis},value,initial:value,offset_x:35+position*290-point.x,current:captureCurrent()};setDraft(value)}}
     onPointerMove={event => {const gesture=active.current;if(!gesture||gesture.pointer!==event.pointerId||!binding)return;if(!gesture.current()){if(gesture.value!==gesture.initial){retainGesture(gesture);setAttempt({...gesture})}cancel();return}const point=nativeDeviceSvgPoint(event,svg.current?.getScreenCTM()??null);if(!point)return;const next=binding.min+clamp((point.x+gesture.offset_x-35)/290,0,1)*(binding.max-binding.min);gesture.value=clamp(Math.round(next/binding.step)*binding.step,binding.hardMin,binding.hardMax);setDraft(gesture.value);if(gesture.value!==gesture.initial||custody.receipt)retainGesture(gesture)}}
     onPointerUp={finish} onPointerCancel={event=>{if(active.current?.pointer===event.pointerId)retainAndCancel()}} onLostPointerCapture={event=>{if(active.current?.pointer===event.pointerId)retainAndCancel()}} onKeyDown={event => {if (event.key === 'Escape') {event.preventDefault();cancel()}}}>
-    {family === 'medium' ? <>
-      <rect x="48" y="17" width="264" height="99" rx="2" className="native-medium-boundary" />
-      {Array.from({length: 11}, (_, index) => <path key={index} d={`M${48 + index * 26.4} 17V116`} className="native-grid-line" />)}
-      {Array.from({length: 5}, (_, index) => <path key={index} d={`M48 ${17 + index * 24.75}H312`} className="native-grid-line" />)}
-      <path d={`M70 67H${70 + graphValue * 30}M290 67H${290 - graphValue * 30}`} className="native-response-line" />
-      <text x="141" y="70" className="native-graph-label">Coupling</text>
-      <text x="56" y="31" className="native-graph-label">{short(nativeValue(reading.scene, 'medium.gridRes') ?? 0)}² grid · extent {short(nativeValue(reading.scene, 'medium.extent') ?? 0)} px</text>
-      <text x="56" y="108" className="native-graph-label">Pressure {short(nativeValue(reading.scene, 'medium.pressure') ?? 0)} · shared field</text>
-    </> : family === 'flow' ? <>
-      {Array.from({length: 35}, (_, index) => {const x = 42 + index % 7 * 45, y = 22 + Math.floor(index / 7) * 22, dx = x - 180, dy = y - 66, factor = graphValue / 25
-        return <path key={index} d={`M${x} ${y}l${-dy * factor * .16} ${dx * factor * .1}`} className="native-force-vector" />})}
-      <text x="20" y="117" className="native-graph-label">Vortex configuration · return {short(nativeValue(reading.scene, 'fluid.returnSpeed') ?? 0)}</text>
-    </> : family === 'resonance' ? <>
-      <rect x="25" y="36" width="310" height="70" className="native-medium-boundary" />
-      <path d={`M${25 + position * 310} 35V107`} className="native-response-line" />
-      <text x="34" y="60" className="native-graph-label">Continuous modal body</text>
-      <text x="34" y="81" className="native-graph-label">{short(nativeValue(reading.scene, 'cymatics.modeCount') ?? 0)} requested modes · excitation {short(nativeValue(reading.scene, 'cymatics.driveStrength') ?? 0)}</text>
-      <text x="25" y="22" className="native-graph-label">Drive {short(graphValue)} Hz · configured Q {short(nativeValue(reading.scene, 'cymatics.dampingQFactor') ?? 0)}</text>
-    </> : <>
-      <path d="M30 80H330M180 25V111" className="native-axis" /><circle cx="130" cy="64" r="18" className="native-medium-boundary" /><circle cx="230" cy="64" r="18" className="native-medium-boundary" />
-      <path d={`M148 64H${148 + graphValue * 64}M212 64H${212 - graphValue * 64}`} className="native-response-line" />
-      <text x="30" y="111" className="native-graph-label">Pairwise restitution · configured contact response</text>
-    </>}
+    {FIELD_FACE_VIEWS[family].draw({reading, graphValue, position, value: path => drafts[path] ?? nativeValue(reading.scene, path), family, disabled, apply, captureCurrent, setDraft: setPathDraft})}
     <path d="M35 140H325" className="native-axis" />
     {binding && <circle cx={35 + position * 290} cy="140" r="7" className="native-radius-handle" data-field-handle="true" tabIndex={disabled ? -1 : 0} role="slider" aria-label={binding.label} aria-valuemin={binding.hardMin} aria-valuemax={binding.hardMax} aria-valuenow={graphValue}
       onKeyDown={event => {if (disabled || !['ArrowLeft', 'ArrowRight'].includes(event.key)) return; event.preventDefault();const current=captureCurrent();if(!current())return;const edit:FieldGesture={pointer:-1,basis:{...reading.basis},initial:value,offset_x:0,value:clamp(value+(event.key==='ArrowLeft'?-1:1)*binding.step*(event.shiftKey?10:1),binding.hardMin,binding.hardMax)},receipt=retainGesture(edit);setAttempt(edit);if(!receipt)return;void apply([{kind:'parameter',target:'field.'+binding.key,value:edit.value}],edit.basis).then(reply=>{if(!mounted.current||!current(reply))return;if(reply.ok){if(clearGesture(receipt))setAttempt(value=>value===edit?null:value)}else retainGesture(edit,reply.error)})}} />}
   </svg>{custodyError&&<p role="alert">{custodyError}</p>}<span className="native-gesture-caption">{binding?.label} · {short(graphValue)} {binding?.unit} · configuration diagram</span>{attempt !== null && binding && <div className="native-retained-gesture">Unacknowledged gesture retained<button disabled={disabled} onClick={() => {const current=captureCurrent();if(!current())return;const submitted=attempt,receipt=retainGesture(submitted);if(!receipt)return;void apply([{kind: 'parameter', target: 'field.' + binding.key, value: submitted.value}], reading.basis).then(reply => {if(!mounted.current||!current(reply))return;if(reply.ok){if(clearGesture(receipt))setAttempt(value=>value===submitted?null:value)}else retainGesture(submitted,reply.error)})}}>Retry on current revision</button><button onClick={() => {if(clearGesture(custody.receipt))setAttempt(null)}}>Discard</button></div>}</div>
 }
 
-export function NativeDeviceEditors({reading, request, onSelectEntity, isPresented}: NativeDeviceEditorsProps) {
-  const [selected, setSelected] = useState<string | null>(null), [family, setFamily] = useState<FieldFamily>('flow')
+export function NativeDeviceEditors({reading, request, onSelectEntity, isPresented, requested, pooled}: NativeDeviceEditorsProps) {
+  const [selected, setSelected] = useState<string | null>(null), [family, setFamily] = useState<FieldFamily>('physics'), [entityFamily, setEntityFamily] = useState<string>('force')
   const [scope, setScope] = useState<'entity' | 'field'>(reading?.selection.entity_ids.length ? 'entity' : 'field'), [busy, setBusy] = useState(false), [error, setError] = useState<string | null>(null)
   const alive = useRef(true)
   const region=useRef<HTMLElement>(null),lifetime=useRef(0)
@@ -400,6 +351,12 @@ export function NativeDeviceEditors({reading, request, onSelectEntity, isPresent
     const selected = reading?.selection.entity_ids[0] ?? null
     setSelected(selected); setScope(selected === null ? 'field' : 'entity')
   }, [reading?.basis.scene_ref, reading?.selection.entity_ids.join('|')])
+  useEffect(() => {
+    if (!requested) return
+    setScope(requested.scope)
+    if (requested.scope === 'field' && requested.family in FIELD_FAMILIES) setFamily(requested.family as FieldFamily)
+    if (requested.scope === 'entity' && entityFamilies().includes(requested.family)) setEntityFamily(requested.family)
+  }, [requested?.nonce])
   const invoke = async (operation: NativeEditorRequest): Promise<NativeEditorReply> => {
     const current=captureCurrent(),now=presentation.current.reading
     if(!current()||operation.operation!=='read'&&(!now||!sameEditorBasis(operation.basis,now.basis)))return {ok:false,error:'The captured device presentation or revision changed; the draft is retained.'}
@@ -415,23 +372,31 @@ export function NativeDeviceEditors({reading, request, onSelectEntity, isPresent
   const entity = reading?.scene.entities.find(item => item.id === currentEntityId)
   if (!reading) return <section ref={region} className="native-devices-empty"><p>Open a native Expression to edit its devices.</p><button onClick={() => void invoke({operation: 'read'})} disabled={busy}>Read current work</button>{error && <p role="alert">{error}</p>}</section>
   const disabled = busy || reading.standing.pending
-  const fieldEnabled = family === 'medium' ? reading.scene.engine.mediumEnabled === true
-    : family === 'resonance' ? reading.scene.engine.resonanceEnabled === true
-      : family === 'collision' ? reading.scene.engine.collisionEnabled === true || reading.scene.engine.pairwiseEnabled === true : undefined
+  const fieldEnabled = family === 'morph' ? reading.scene.engine.morphEnabled === true : family === 'colour' ? reading.scene.engine.colorEnabled !== false : FIELD_FACE_MODELS[family].enabled(reading)
   return <section ref={region} className="native-device-editors" aria-label="Native visual device editors" aria-busy={busy}>
-    <div className="native-devices-toolbar"><div className="native-mode-buttons"><button aria-pressed={scope === 'entity'} onClick={() => setScope('entity')}>Entity</button><button aria-pressed={scope === 'field'} onClick={() => setScope('field')}>Field</button></div>
-      {scope === 'entity' ? <select aria-label="Device target entity" value={entity?.id ?? ''} disabled={disabled} onChange={event => {if(!captureCurrent()())return;setSelected(event.target.value); onSelectEntity?.(event.target.value)}}><option value="">Choose an object</option>{reading.scene.entities.map(item => <option key={item.id} value={item.id}>{item.name} · {item.kind === 'pin' ? 'Force' : 'Formation'}</option>)}</select>
-        : <div className="native-mode-buttons">{(Object.keys(FIELD_FAMILIES) as FieldFamily[]).map(key => <button key={key} aria-pressed={family === key} onClick={() => setFamily(key)}>{FIELD_FAMILIES[key].name}</button>)}</div>}
-      <button disabled={disabled || reading.scene.entities.length >= 32} onClick={() => apply([{kind: 'force-insert', position: {x: 0, y: 0, z: 0}}])}>+ Force</button>
+    <div className="native-devices-toolbar">{!pooled && <div className="native-mode-buttons"><button aria-pressed={scope === 'entity'} onClick={() => setScope('entity')}>Entity</button><button aria-pressed={scope === 'field'} onClick={() => setScope('field')}>Field</button></div>}
+      {scope === 'entity' ? <><select aria-label="Device target entity" value={entity?.id ?? ''} disabled={disabled} onChange={event => {if(!captureCurrent()())return;setSelected(event.target.value); onSelectEntity?.(event.target.value)}}><option value="">Choose an object</option>{reading.scene.entities.map(item => <option key={item.id} value={item.id}>{item.name} · {item.kind === 'pin' ? 'Force' : 'Formation'}</option>)}</select>
+        {!pooled && entityFamilies().length > 1 && <div className="native-mode-buttons" aria-label="Entity device family">{entityFamilies().map(key => <button key={key} aria-pressed={entityFamily === key} onClick={() => setEntityFamily(key)}>{key === 'force' ? 'Force' : entityFaceModel(key)?.name ?? key}</button>)}</div>}</>
+        :pooled ? null : <div className="native-mode-buttons">{(Object.keys(FIELD_FAMILIES) as FieldFamily[]).map(key => <button key={key} aria-pressed={family === key} onClick={() => setFamily(key)}>{FIELD_FAMILIES[key].name}</button>)}</div>}
+      {!pooled && <button disabled={disabled || reading.scene.entities.length >= 32} onClick={() => apply([{kind: 'force-insert', position: {x: 0, y: 0, z: 0}}])}>+ Force</button>}
       <span className="native-history-controls"><button disabled={disabled || !reading.history.canUndo} onClick={() => void invoke({operation: 'undo', basis: reading.basis})} title="Undo authored edit">↶</button><button disabled={disabled || !reading.history.canRedo} onClick={() => void invoke({operation: 'redo', basis: reading.basis})} title="Redo authored edit">↷</button><button disabled={disabled} onClick={() => void invoke({operation: 'save', basis: reading.basis})}>Save</button></span>
     </div>
     {error && <div className="native-editor-error" role="alert">{error}<button onClick={() => void invoke({operation: 'read'})} disabled={busy}>Read current revision</button></div>}
-    {scope === 'entity' ? entity ? <ForceEditor captureCurrent={captureCurrent} key={reading.basis.expression_ref + ':' + reading.basis.scene_ref + ':' + entity.id + ':' + reading.entityOccurrences[entity.id]} reading={reading} entity={entity} disabled={disabled} apply={apply} /> : <div className="native-devices-empty">{reading.scene.entities.length ? 'Choose an object to configure its Force.' : 'This Scene has no object. Insert a Force to create an independent emitter.'}</div>
+    {scope === 'entity' ? entity ? (entityFamily !== 'force' && entityFaceModel(entityFamily) ? <EntityFaceBody key={reading.basis.expression_ref + ':' + reading.basis.scene_ref + ':' + entity.id + ':' + reading.entityOccurrences[entity.id] + ':' + entityFamily} family={entityFamily} models={ENTITY_FACE_MODELS} views={ENTITY_FACE_VIEWS}
+        reading={reading} entity={entity} disabled={disabled || entity.locked} apply={apply}
+        renderControl={(suffix, frozen) => <EntityControl family={entityFamily} captureCurrent={captureCurrent} reading={reading} entity={entity} suffix={suffix} disabled={disabled || entity.locked} frozen={frozen} apply={apply} />} />
+      : <ForceEditor captureCurrent={captureCurrent} key={reading.basis.expression_ref + ':' + reading.basis.scene_ref + ':' + entity.id + ':' + reading.entityOccurrences[entity.id]} reading={reading} entity={entity} disabled={disabled} apply={apply} />) :<div className="native-devices-empty">{reading.scene.entities.length ? 'Choose an object to configure its Force.' : 'This Scene has no object. Insert a Force to create an independent emitter.'}</div>
       : <article className="native-device native-field-device"><header><span className={`native-device-light${fieldEnabled === undefined ? ' is-unknown' : fieldEnabled ? '' : ' is-off'}`} title={fieldEnabled === undefined ? 'No separate enable operation disclosed for Flow' : fieldEnabled ? 'Native field family enabled' : 'Native field family disabled'} /><strong>{FIELD_FAMILIES[family].name}</strong><span>Field · one shared native binding</span></header>
-        {family === 'resonance' && <div className="native-medium-switches"><label><input type="checkbox" checked={reading.scene.engine.resonanceEnabled} disabled={disabled} onChange={event => apply([{kind: 'field-setting', key: 'resonanceEnabled', value: event.target.checked}])} />Continuous resonance enabled</label></div>}
-        {family === 'collision' && <div className="native-medium-switches"><label><input type="checkbox" checked={reading.scene.engine.collisionEnabled === true} disabled={disabled} onChange={event => apply([{kind: 'field-setting', key: 'collisionEnabled', value: event.target.checked}])} />Glyph boundary</label><select aria-label="Collision mode" value={reading.scene.engine.collisionMode ?? 'obstacle'} disabled={disabled} onChange={event => apply([{kind: 'field-setting', key: 'collisionMode', value: event.target.value as 'obstacle' | 'vessel'}])}><option value="obstacle">Obstacle</option><option value="vessel">Vessel</option></select><label><input type="checkbox" checked={reading.scene.engine.pairwiseEnabled === true} disabled={disabled} onChange={event => apply([{kind: 'field-setting', key: 'pairwiseEnabled', value: event.target.checked}])} />Particle pairs</label></div>}
-        {family === 'medium' && <div className="native-medium-switches"><label><input type="checkbox" checked={reading.scene.engine.mediumEnabled === true} disabled={disabled} onChange={event => apply([{kind: 'field-setting', key: 'mediumEnabled', value: event.target.checked}])} />Enabled</label><select aria-label="Medium dimensions" value={reading.scene.engine.mediumDimension ?? '2D'} disabled={disabled} onChange={event => apply([{kind: 'field-setting', key: 'mediumDimension', value: event.target.value as '2D' | '3D'}])}><option>2D</option><option>3D</option></select><select aria-label="Physical medium plane" value={reading.scene.engine.mediumPlane} disabled={disabled} onChange={event => apply([{kind: 'field-setting', key: 'mediumPlane', value: event.target.value as 'vertical' | 'horizontal'}])}><option value="vertical">XY · vertical</option><option value="horizontal">XZ · horizontal</option></select></div>}
-        <div className="native-field-layout"><FieldSurface captureCurrent={captureCurrent} key={reading.basis.expression_ref + ':' + reading.basis.scene_ref + ':' + family} reading={reading} family={family} disabled={disabled} apply={apply} /><div className="native-control-grid">{FIELD_FAMILIES[family].paths.map(path => <FieldControl family={family} captureCurrent={captureCurrent} key={reading.basis.expression_ref + ':' + reading.basis.scene_ref + ':' + path} reading={reading} path={path} disabled={disabled} apply={apply} />)}</div></div>
+        {family !== 'morph' && family !== 'colour' && <Fragment key={family}>{FIELD_FACE_VIEWS[family].switches?.({reading, disabled, apply})}</Fragment>}
+        {family==='morph'?<NativeMorphDrive key={reading.basis.expression_ref+':'+reading.basis.scene_ref+':morph'} reading={reading} disabled={disabled} apply={apply} captureCurrent={captureCurrent}
+          createCustody={(aperture,material)=>new NativeDeviceInputCustody(aperture,material,'gesture')}
+          renderControl={path=><FieldControl family="morph" captureCurrent={captureCurrent} key={reading.basis.expression_ref+':'+reading.basis.scene_ref+':'+path} reading={reading} path={path} disabled={disabled} apply={apply}/>}/>
+          :family==='colour'?<NativeColourField key={reading.basis.expression_ref+':'+reading.basis.scene_ref+':colour'} reading={reading} disabled={disabled} apply={apply} captureCurrent={captureCurrent}
+            createCustody={(aperture,material)=>new NativeDeviceInputCustody(aperture,material,'gesture')}
+            renderControl={path=><FieldControl family="colour" captureCurrent={captureCurrent} key={reading.basis.expression_ref+':'+reading.basis.scene_ref+':'+path} reading={reading} path={path} disabled={disabled} apply={apply}/>}/>
+          :<div className="native-field-layout"><FieldSurface captureCurrent={captureCurrent} key={reading.basis.expression_ref + ':' + reading.basis.scene_ref + ':' + family} reading={reading} family={family} disabled={disabled} apply={apply} />{(() => {const control = (path: string) => <FieldControl family={family} captureCurrent={captureCurrent} key={reading.basis.expression_ref + ':' + reading.basis.scene_ref + ':' + path} reading={reading} path={path} disabled={disabled} apply={apply} />, groups = (FIELD_FAMILIES[family] as {groups?: readonly {title: string; paths: readonly string[]; note?: string}[]}).groups
+      // A panel that declares coupled groups shows each group together under its own title; otherwise the flat grid.
+      return groups ? <div className="native-control-groups">{groups.map(group => <section key={group.title} className="native-control-group" aria-label={group.title}><h4>{group.title}</h4>{group.note && <p>{group.note}</p>}<div className="native-control-grid">{group.paths.map(control)}</div></section>)}</div> : <div className="native-control-grid">{FIELD_FAMILIES[family].paths.map(control)}</div>})()}</div>}
         <footer>Configuration controls the current native Scene’s shared solver. Observe the resulting body on the Stage.</footer>
       </article>}
     <div className="native-editor-standing"><span>{reading.scene.name} · native r{reading.basis.revision} · authored r{reading.basis.authored_revision}</span><span>{busy ? 'Committing through owner…' : reading.standing.pending ? 'Native acknowledgement pending' : reading.standing.dirty ? 'Retained draft' : 'Native readback current'}{reading.observation?.fieldPaused ? ' · physics held' : ''}</span></div>

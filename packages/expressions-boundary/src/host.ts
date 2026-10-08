@@ -1,10 +1,13 @@
 import {
   boundedText, CHANNEL_VERSION, expressionRef, FRAME_EXPRESSION_OPERATIONS,
-  isDeepInstrument, isHostedAppMode, NATIVE_CHANNEL, object, positiveInteger, readHostedState,
+  isDeepInstrument, isHostedAppMode, isStudioSection, NATIVE_CHANNEL, object, OPEN_STUDIO_COMMAND, positiveInteger, readHostedState, readOpenStudioResult,
   type ChannelContext, type ExpressionsOwners, type HostedAppMode, type HostedAppState,
-  type HostedTechneLens, type HostTarget,
+  type HostedTechneLens, type HostTarget, type StudioSection,
 } from './protocol.ts';
+import {readStageResult, stageRequestMessage, type StageCommand, type StageResult} from './protocol.ts';
 import {RecoveryAdmission, type RecoveryBinding} from './recoveryBinding.ts';
+/** A stage control that the frame never answers settles as a refusal, never a hang. */
+const STAGE_TIMEOUT_MS = 60000;
 
 export interface ExpressionsHostOptions {
   bindingId: string;
@@ -21,6 +24,8 @@ export interface ExpressionsHostOptions {
   onState?: (state: HostedAppState) => void;
   onStatus?: (status: 'loading' | 'ready' | 'unavailable', reason?: string) => void;
   onHostRequest?: (request: Readonly<Record<string, unknown>>) => void;
+  /** The application's answer to an open-studio command: opened, or refused with its reason. */
+  onStudioResult?: (result: {ok: true; section: StudioSection} | {ok: false; error: string}) => void;
   handshakeTimeoutMs?: number;
   /** A newly created aperture is bound before its first document loads.
    * That load completes this epoch; later loads replace it. Existing frames
@@ -50,6 +55,11 @@ export class ExpressionsHost {
   private timeout?: ReturnType<typeof setTimeout>;
   private readonly seen = new Set<string>();
   private pendingOpen: {ref: string; refresh: boolean; lens?: HostedTechneLens; recovery?: RecoveryBinding} | null = null;
+  /** Tagged with the document epoch it was asked of: a reload drops it. */
+  private pendingStudio: {section: StudioSection; epoch: number} | null = null;
+  /** Each stage control awaits its own answer by request id. A reload or disposal settles all of them. */
+  private pendingStage = new Map<number, {epoch: number; settle: (result: StageResult) => void; timer: ReturnType<typeof setTimeout>}>();
+  private stageRequests = 0;
   private nativeEpoch = crypto.randomUUID();
   private nativeLease: string | null = null;
   private nativeOpening = false;
@@ -105,6 +115,9 @@ export class ExpressionsHost {
     if (lease && this.options.owners.native) void this.options.owners.native({operation: 'close', lease}, context)
       .catch(() => this.options.onStatus?.('unavailable', 'The native Expressions owner did not acknowledge lease cleanup'));
   }
+  private settleStage(error: string) {
+    for (const [req, pending] of this.pendingStage) {clearTimeout(pending.timer); this.pendingStage.delete(req); pending.settle({ok: false, error});}
+  }
   private loaded = () => {
     if (this.initialNavigationPending) {
       this.initialNavigationPending = false;
@@ -113,6 +126,7 @@ export class ExpressionsHost {
       this.announce();
       return;
     }
+    this.settleStage('The application reloaded before it answered this stage command');
     const lease = this.nativeLease;
     const context = this.context();
     this.abort.abort();
@@ -162,6 +176,11 @@ export class ExpressionsHost {
         this.pendingOpen = null;
         this.sendOpen(pending);
       }
+      if (this.pendingStudio && this.presented()) {
+        const pending = this.pendingStudio;
+        this.pendingStudio = null;
+        if (pending.epoch === this.epoch) this.sendStudio(pending.section);
+      }
       return;
     }
     if (kind === 'oi-kernel-hello') {this.announce(); return;}
@@ -174,6 +193,20 @@ export class ExpressionsHost {
     }
     // Existing Nara facade owns this grammar, and is protected by guard above.
     if (kind === 'nara-instrument') return;
+    // A stage answer is keyed by its request id. Only the current epoch settles it; a stale or malformed one is dropped, never echoed.
+    if (kind === 'host-capture-result' || kind === 'host-command-result') {
+      const stage = readStageResult(data), pending = stage ? this.pendingStage.get(stage.req) : undefined;
+      if (stage && pending && pending.epoch === this.epoch) {
+        clearTimeout(pending.timer); this.pendingStage.delete(stage.req);
+        pending.settle(stage.ok ? {ok: true} : {ok: false, error: stage.error});
+      }
+      if (kind === 'host-capture-result' || stage) return;
+    }
+    if (kind === 'host-command-result') {
+      const result = readOpenStudioResult(data);
+      if (result) this.options.onStudioResult?.(result);
+      return;
+    }
     if (!positiveInteger(data.req)) return;
     let context = this.context();
     const replyContext=context;
@@ -290,6 +323,33 @@ export class ExpressionsHost {
       ...(request.recovery ? {recovery: request.recovery} : {})});
     if (request.lens) this.selectInstrument(request.lens);
   }
+  /** Opens one Studio section in the presented application. Refused unless the
+   * section is a real nav id and this host is presented; queued until ready. */
+  openStudio(section: string) {
+    if (!this.alive) throw Error('The hosted application was disposed');
+    if (!isStudioSection(section)) throw Error('Unknown Expressions Studio section');
+    if (!this.presented()) throw Error('The requested application is concealed');
+    if (!this.ready) {this.pendingStudio = {section, epoch: this.epoch}; return;}
+    this.sendStudio(section);
+  }
+  private sendStudio(section: StudioSection) {
+    this.post({v: CHANNEL_VERSION, kind: 'host-command', command: OPEN_STUDIO_COMMAND, section});
+  }
+  /** Runs one stage control in the presented application and settles with its answer.
+   * Refused without posting unless the command is in the closed vocabulary and the application is ready and presented. */
+  stageCommand(command: StageCommand): Promise<StageResult> {
+    if (!this.alive) throw Error('The hosted application was disposed');
+    if (!this.ready) throw Error('The Expressions application has not reported its state yet');
+    if (!this.presented()) throw Error('The requested application is concealed');
+    const req = ++this.stageRequests;
+    const message = stageRequestMessage(req, command);
+    if (!message) throw Error('Unknown Expressions stage command');
+    return new Promise<StageResult>(settle => {
+      const timer = setTimeout(() => {if (this.pendingStage.delete(req)) settle({ok: false, error: 'The application did not answer this stage command'});}, STAGE_TIMEOUT_MS);
+      this.pendingStage.set(req, {epoch: this.epoch, settle, timer});
+      this.post(message);
+    });
+  }
   captureTarget(): HostTarget {
     if (!this.ready || !this.presented() || !this.reading?.nativeScene) throw Error('Open one native Expression Scene before capturing its target');
     return {bindingId: this.bindingId, epoch: this.epoch, scene: {...this.reading.nativeScene}};
@@ -310,6 +370,7 @@ export class ExpressionsHost {
     if (!this.alive) return;
     const context = this.context(), lease = this.nativeLease;
     this.alive = false;
+    this.settleStage('The hosted application was disposed');
     this.abort.abort();
     clearTimeout(this.timeout);
     this.stopOwners?.();
@@ -318,6 +379,7 @@ export class ExpressionsHost {
     this.messages.removeEventListener('message', this.receive);
     this.frame.removeEventListener('load', this.loaded);
     this.pendingOpen = null;
+    this.pendingStudio = null;
     this.reading = null;
   }
 }

@@ -24,7 +24,7 @@ function ScopedPreparedContext({scope, current, onOpenSubject}: NativePreparedCo
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const qualified = () => preparedContextCurrent(latest.current.scope, key, latest.current.current, mounted.current, !!region.current?.getClientRects().length)
   const session = useEncounterSession(current() ? preparedContextSession(scope) : undefined)
-  let receipts: ReturnType<typeof readDeliveredContext>
+  let receipts: ReturnType<typeof readDeliveredContext> = undefined
   let receiptError: string | undefined
   try { receipts = readDeliveredContext(scope, session?.state.reading) }
   catch (error) { receiptError = String(error) }
@@ -41,7 +41,7 @@ function ScopedPreparedContext({scope, current, onOpenSubject}: NativePreparedCo
       {receipts && receipts.length > 0 && <ol>{receipts.map((receipt, index) => <li key={`${receipt.cursor}:${receipt.digest}:${index}`}>
         <p>{receipt.standing}</p><ul>{receipt.items.map(item => <li key={item.id}>{item.title}</li>)}</ul>
         <details><summary>Delivery provenance · cursor {receipt.cursor}</summary><dl><dt>Digest</dt><dd>{receipt.digest}</dd><dt>Context revision</dt><dd>{receipt.revision}</dd></dl>
-          <ul>{receipt.items.map(item => <li key={item.id}>{item.id} · {item.source_ref}{item.source_revision !== undefined ? ` · ${item.source_revision}` : ''}</li>)}</ul>
+          <ul>{receipt.items.map(item => <li key={item.id}>{item.id} · {item.source_ref}{item.source_revision != null ? ` · ${item.source_revision}` : ' · source revision not disclosed'}</li>)}</ul>
         </details>
       </li>)}</ol>}
     </section>

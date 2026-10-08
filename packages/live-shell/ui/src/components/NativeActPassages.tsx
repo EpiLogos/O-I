@@ -18,14 +18,16 @@ export function currentNativeActReply(captured:NativeCompositionViewSource,curre
 export function NativeActPassages({source,close}:{source:NativeCompositionViewSource;close:()=>void}) {
   const latest=useRef(source);latest.current=source;
   const lifetime=useRef({mounted:false,epoch:0});
+  const inFlight=useRef<symbol|null>(null);
   const [inventory,setInventory]=useState<NativeActList|null>(null),[act,setAct]=useState<WorldAct|null>(null);
   const [busy,setBusy]=useState(false),[fault,setFault]=useState<string|null>(null);
   const expression=source.content?.basis.expression_ref;
   useEffect(()=>{const own=++lifetime.current.epoch;lifetime.current.mounted=true;return()=>{if(lifetime.current.epoch===own){lifetime.current.mounted=false;lifetime.current.epoch++}}},[]);
   useEffect(()=>{setInventory(null);setAct(null);setFault(null)},[expression]);
   const receive=async(effect:()=>Promise<NativeEditorReply>,act_ref?:string)=>{
-    if(busy||!source.isPresented()||!source.actions)return;
+    if(inFlight.current||!source.isPresented()||!source.actions)return;
     const captured=source,epoch=lifetime.current.epoch;
+    const request=Symbol('native-performance-request');inFlight.current=request;
     setBusy(true);setFault(null);
     try {
       const reply=await effect();
@@ -39,7 +41,7 @@ export function NativeActPassages({source,close}:{source:NativeCompositionViewSo
     }catch(cause){
       const error=cause instanceof Error?cause.message:String(cause);
       if(lifetime.current.mounted&&epoch===lifetime.current.epoch&&currentNativeActReply(captured,latest.current,{ok:false,error}))setFault(error);
-    }finally{if(lifetime.current.mounted&&epoch===lifetime.current.epoch)setBusy(false)}
+    }finally{if(inFlight.current===request){inFlight.current=null;if(lifetime.current.mounted&&epoch===lifetime.current.epoch)setBusy(false)}}
   };
   const ready=!!source.actions&&!source.content?.standing.pending&&!busy;
   const readList=()=>void receive(()=>source.actions!.listActs());

@@ -35,7 +35,9 @@ export function NativeFoundation({children}: {children: ReactNode}) {
   const [pending, setPending] = useState(true)
   const [fault, setFault] = useState<string | null>(null)
   const [replayFault, setReplayFault] = useState<string | null>(null)
-  const transportKey = JSON.stringify(qualifiedWorld(config) ? shellTransport(config!) : {kind: 'unavailable', reason: config?.world_error ?? 'The native World and Workcell have not been qualified.'})
+  // The qualified host can disclose state and recognise a personal ground
+  // before a World is selected. World-bound resources remain retired below.
+  const transportKey = JSON.stringify(config ? shellTransport(config) : {kind: 'unavailable', reason: 'The native host connection has not been read.'})
   const transport = useMemo<KernelTransportStatus>(() => JSON.parse(transportKey), [transportKey])
   const showFailure = useCallback((cause: unknown) => {if (live.current) setFault(cause instanceof Error ? cause.message : String(cause))}, [])
   const showReplayFailure = useCallback((error: string) => {if (live.current) setReplayFault(error)}, [])
@@ -50,34 +52,48 @@ export function NativeFoundation({children}: {children: ReactNode}) {
   const qualify = useCallback(async (reading: ShellConfig, ownerGeneration: string) => {
     const generation = ++accessGeneration.current
     const access = shellTransport(reading)
-    if (access.kind === 'unavailable') {retire(); currentWorkspace.current.attachTransport(access); throw Error(access.reason)}
+    if (access.kind === 'unavailable') {
+      retire(); currentWorkspace.current.attachTransport(access)
+      configureSettingsHost(unavailableSettingsAdapter(access.reason))
+      showFailure(access.reason)
+      throw Error(access.reason)
+    }
     if (!qualifiedWorld(reading)) {
       retire()
       const reason = reading.world_error ?? (reading.onboarding ? 'Choose the native personal ground to open its work.' : 'The host has not disclosed its native World and physical Workcell binding.')
-      currentWorkspace.current.attachTransport({kind: 'unavailable', reason})
-      throw Error(reason)
+      currentWorkspace.current.attachTransport(access)
+      configureSettingsHost(unavailableSettingsAdapter(reason))
+      setFault(reading.onboarding ? null : reason)
+      return
     }
     const world = reading.world_scope
-    currentWorkspace.current.attachTransport(access)
     const ownerEpoch = `${reading.kernel_epoch ?? reading.kernel_bridge}|${ownerGeneration}|${generation}`
     const isCurrent = () => live.current && generation === accessGeneration.current
-    configureWikiProjectionAccess(JSON.stringify([world.owner, world.world, world.personal_ground, world.workcell_ref, reading.backing_id]), ownerEpoch, isCurrent)
-    configureFileResourceHost({transport: access, scope: {owner: world.owner, world: world.world, workcell: world.workcell_ref, accessEpoch: ownerEpoch}}, isCurrent)
-    currentWorkspace.current.attachNativeAccess({transport: access, scope: {
-      owner: world.owner, world: world.world, workcell: world.workcell_ref, accessEpoch: ownerEpoch,
-    }})
-    const adapter = await connectNativeSettings(access, {ownerEpoch, isCurrent,
+    try {
+      currentWorkspace.current.attachTransport(access)
+      configureWikiProjectionAccess(JSON.stringify([world.owner, world.world, world.personal_ground, world.workcell_ref, reading.backing_id]), ownerEpoch, isCurrent)
+      configureFileResourceHost({transport: access, scope: {owner: world.owner, world: world.world, workcell: world.workcell_ref, accessEpoch: ownerEpoch}}, isCurrent)
+      currentWorkspace.current.attachNativeAccess({transport: access, scope: {
+        owner: world.owner, world: world.world, workcell: world.workcell_ref, accessEpoch: ownerEpoch,
+      }})
+      const adapter = await connectNativeSettings(access, {ownerEpoch, isCurrent,
       scopeChoices: [
         {address: {scope_kind: 'world', scope_ref: null}, title: 'Current World'},
         {address: {scope_kind: 'ground', scope_ref: null}, title: 'Personal ground'},
         {address: {scope_kind: 'machine', scope_ref: null}, title: 'This machine'},
         {address: {scope_kind: 'workcell', scope_ref: world.workcell_ref}, title: world.workcell_ref},
       ],
-    })
-    if (!isCurrent()) return
-    configureSettingsHost(adapter)
-    setFault(null)
-  }, [retire])
+      })
+      if (!isCurrent()) return
+      configureSettingsHost(adapter)
+      setFault(null)
+    } catch (cause) {
+      if (!isCurrent()) return
+      showFailure(cause)
+      configureSettingsHost(unavailableSettingsAdapter(cause instanceof Error ? cause.message : String(cause)))
+      throw cause
+    }
+  }, [retire, showFailure])
   useEffect(() => {
     live.current = true
     let cancelled = false
@@ -86,11 +102,13 @@ export function NativeFoundation({children}: {children: ReactNode}) {
     void readShellConfig(attempt > 0).then(async reading => {
       if (cancelled || !live.current || request !== accessGeneration.current) return
       setConfig(reading)
-      await qualify(reading, '')
-    }).catch(cause => {
-      if (cancelled) return
+      try {
+        await qualify(reading, '')
+      } catch { /* Qualification publishes its failure under the captured owner epoch. */ }
+    }, cause => {
+      if (cancelled || !live.current || request !== accessGeneration.current) return
       showFailure(cause)
-      if (live.current) configureSettingsHost(unavailableSettingsAdapter(cause instanceof Error ? cause.message : String(cause)))
+      configureSettingsHost(unavailableSettingsAdapter(cause instanceof Error ? cause.message : String(cause)))
     }).finally(() => {if (!cancelled && live.current) setPending(false)})
     return () => {cancelled = true; live.current = false; retire()}
   }, [attempt, qualify, retire, showFailure])

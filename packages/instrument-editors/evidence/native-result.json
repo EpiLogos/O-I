@@ -1,9 +1,9 @@
 {
   "bridge": "http://127.0.0.1:4186",
-  "expression_ref": "expression:instrument-editor-93e4e28a-16f2-4028-a649-0044743cccd5",
-  "member_ref": "expression:instrument-member-69190be6-23eb-4722-8949-098b2084ab06",
-  "checkpoint_id": "expression:instrument-editor-93e4e28a-16f2-4028-a649-0044743cccd5",
-  "member_checkpoint_id": "expression:instrument-member-69190be6-23eb-4722-8949-098b2084ab06",
+  "expression_ref": "expression:instrument-editor-0368824a-a6d7-4969-88ee-2cafabddf830",
+  "member_ref": "expression:instrument-member-4c753cb5-d361-4aca-bde0-7c7da54cd7dd",
+  "checkpoint_id": "expression:instrument-editor-0368824a-a6d7-4969-88ee-2cafabddf830",
+  "member_checkpoint_id": "expression:instrument-member-4c753cb5-d361-4aca-bde0-7c7da54cd7dd",
   "final_revision": 7,
   "confirmed": [
     "unrelated Scene refusal",

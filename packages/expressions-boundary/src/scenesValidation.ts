@@ -16,7 +16,8 @@ const indexOrNull = (value: unknown, minimum = 0) => value === null || Number.is
 export function isNativeScenesReading(value: unknown, basis: {expression_ref: string; revision: number; scene_ref: string}): value is NativeScenesReading {
   if (!object(value) || value.schema !== 'oi.native-scenes/v1' || !object(value.basis)
     || value.basis.expression_ref !== basis.expression_ref || value.basis.revision !== basis.revision
-    || typeof value.title !== 'string' || !object(value.object_titles) || Object.keys(value.object_titles).length>65536
+    || typeof value.title !== 'string' || value.description !== undefined && (typeof value.description !== 'string' || value.description.length > 5000)
+    || !object(value.object_titles) || Object.keys(value.object_titles).length>65536
     || !Object.entries(value.object_titles).every(([ref,title])=>text(ref)&&typeof title==='string')
     || !refs(value.native_order, 64) || !value.native_order.includes(basis.scene_ref)
     || !Array.isArray(value.working_order) || value.working_order.length > 64

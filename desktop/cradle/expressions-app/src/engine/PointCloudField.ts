@@ -6,20 +6,15 @@ import {TransportState,validateTransport} from './transportState';
  */
 
 import * as THREE from 'three';
-import {DEFAULT_COLOR_CONFIG,DEFAULT_TOROIDAL_CONFIG,DEFAULT_MEDIUM_CONFIG,DEFAULT_COLLISION_CONFIG,DEFAULT_PAIRWISE_CONFIG,DEFAULT_DEPTH_CONFIG,DEFAULT_CONFIG} from './fieldDefaults';
+import {DEFAULT_COLOR_CONFIG,DEFAULT_TOROIDAL_CONFIG,DEFAULT_MEDIUM_CONFIG,DEFAULT_COLLISION_CONFIG,DEFAULT_DEPTH_CONFIG,DEFAULT_CONFIG} from './fieldDefaults';
 export {DEFAULT_COLOR_CONFIG,DEFAULT_TOROIDAL_CONFIG,DEFAULT_MEDIUM_CONFIG,DEFAULT_COLLISION_CONFIG,DEFAULT_PAIRWISE_CONFIG,DEFAULT_DEPTH_CONFIG,DEFAULT_CONFIG} from './fieldDefaults';
 
 import {
   PointCloudConfig,
-  PointCloudColorConfig,
   CameraOrbState,
-  ToroidalMorphConfig,
   MorphTelemetry,
   PlacedInteractionPoint,
   CompositionTelemetry,
-  MediumConfig,
-  CollisionConfig,
-  PairwiseConfig,
   GlyphVolumeConfig,
   DepthRenderConfig,
 } from './types';
@@ -29,15 +24,14 @@ import { GPGPUSimulator } from './GPGPUSimulator';
 import { GlyphSampler } from './GlyphSampler';
 import { particleVertexShader, particleFragmentShader } from './shaders/particleShaders';
 import { isLightHex } from './colorPalettes';
-import { CymaticResonator, ResonatorTelemetry, type ResonanceState, type ResonanceAnchor } from './cymaticResonator';
+import { CymaticResonator, ResonatorTelemetry } from './cymaticResonator';
 import { PinMarkerLayer, PinGhostState } from './pinMarkers';
 import { EntityRuntime, EntityFrame } from './entityRuntime';
 import type { EvaluatedEntityPose } from './entityPose';
 import { compileEntityForceEmitters, relationalCarrierStates, type ForceEmitterState, type RelationalCarrierState, type ForceEmitterProjection } from './forceRuntime';
 import { SemanticFieldRuntime } from './semantics/semanticFieldRuntime';
 import type { SemanticFieldState } from './semantics/semanticTypes';
-import { CHAKRA_BY_ID } from './semantics/chakraSemantics';
-import { mapChakrasToAnchors, CHAKRA_PROFILE_ID } from './semantics/chakraProfile';
+import { mapChakrasToAnchors } from './semantics/chakraProfile';
 import {LocalizedResonanceBank,type LocalizedResonanceFrame} from './LocalizedResonanceBank';
 import type {LocalizedResonanceProjection} from './localizedResonanceProjection';
 import {DEFAULT_RESONATOR_PARAMS} from './cymaticResonator';
@@ -50,9 +44,6 @@ import {
   FocusState,
   DEFAULT_COMPOSITION,
   DEFAULT_CYMATIC_MEDIUM,
-  DEFAULT_SEQUENCE,
-  makeFormation,
-  makeLink,
   resolveFocus,
   MAX_FORMATIONS,
   MAX_PINS,
@@ -87,7 +78,6 @@ export function getColorModeIndex(mode?: string): number {
 
 
 const TAU = Math.PI * 2;
-const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
 
 
@@ -774,7 +764,6 @@ export class PointCloudField {
     const u = this.particleMaterial.uniforms;
     const depth = this.config.depth ?? DEFAULT_DEPTH_CONFIG;
     const persp = this.cameraProjection === 'perspective';
-    const fov = (this.perspCamera.fov * Math.PI) / 180;
     const viewH = persp ? this.viewHeight() : 0;
     // The tint is depth presentation too — without it in the gate, Depth Tint
     // silently dies in orthographic when fade and bias are zero.

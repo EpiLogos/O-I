@@ -67,9 +67,16 @@ export interface NativeAgentState {
  compound?: CompoundStages;
  busy: boolean; error?: string; unknown?: "propose" | "accept" | "prepare"; requestId?: string;
 }
+/** Captured form/source/preparation material, not a refreshed authority basis. */
+export function nativeAgentInputKey(state:Pick<NativeAgentState,"draft"|"review"|"prepared">):string {
+ return JSON.stringify([state.draft,state.review,state.prepared]);
+}
 /** A stage refused before any native write was attempted — an input problem,
  * not an uncertain outcome. */
 class StagePrecondition extends Error {}
+function currentStage(current?: () => boolean) {
+ if (current && !current()) throw new StagePrecondition("The Agent presentation retired. Retained native source and request are unchanged; continue explicitly in the current destination.");
+}
 function record(value: unknown): Record<string, unknown> {
  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Malformed native Agent reading");
  return value as Record<string, unknown>;
@@ -248,18 +255,18 @@ export class NativeAgentController {
    if (generation === this.generation) this.set({error:`The native SkillSet could not be read; nothing was selected. ${String(error)}`});
   }
  };
- propose = async () => {
+ propose = async (current?: () => boolean) => {
   const {busy,unknown} = this.state;
   if (busy || unknown) return;
   this.set({busy:true,error:undefined});
   try {
-   await this.stagePropose();
+   await this.stagePropose(current);
   } catch (error) {
    if (error instanceof StagePrecondition) this.set({error:String(error.message)});
    else this.set({unknown:"propose",error:`Proposal outcome is unconfirmed. Read the native roster and review the matching source before proposing again. ${String(error)}`});
   } finally { this.set({busy:false}); }
  };
- private async stagePropose(): Promise<void> {
+ private async stagePropose(current?: () => boolean): Promise<void> {
   const {draft,scopeRef} = this.state;
   if (!scopeRef || !draft.scopeConfirmed || !draft.name || !draft.purpose
       || draft.name !== draft.name.trim() || draft.purpose !== draft.purpose.trim()) {
@@ -289,6 +296,7 @@ export class NativeAgentController {
     throw new StagePrecondition("Self-definition refs are Central source refs (central:source:…); the exact bytes they name are pinned and human-accepted.");
    }
   }
+  currentStage(current);
   const review = validateReview(await this.owner({action:"propose",name:draft.name,purpose:draft.purpose,
    skill_refs:[...draft.skillRefs],skill_set_refs:[...draft.skillSetRefs],expected_scope_ref:scopeRef,
    ...(character?{expressive_character_ref:character}:{}),
@@ -304,11 +312,12 @@ export class NativeAgentController {
   this.set({review,prepared:undefined,requestId:undefined,compound:undefined});
  }
  /** Change the reviewed Agent's character in place (CAS on its revision). */
- setCharacter = async (characterRef: string | null): Promise<CharacterChange | undefined> => {
+ setCharacter = async (characterRef: string | null,current?:()=>boolean): Promise<CharacterChange | undefined> => {
   const {review,scopeRef,busy,unknown} = this.state;
   if (busy || unknown || !review || !scopeRef) return undefined;
   this.set({busy:true,error:undefined});
   try {
+   currentStage(current);
    const next = await setAgentCharacter(this.owner, scopeRef, {profileRef:review.profile.ref,expectedRevision:review.profile.revision,characterRef});
    const roster = await this.readRoster();
    this.set({review:next,profiles:roster.profiles,prepared:undefined,requestId:undefined,compound:undefined});
@@ -316,18 +325,19 @@ export class NativeAgentController {
   } catch (error) { this.set({error:`The character was not changed: ${String(error)}`}); return undefined; }
   finally { this.set({busy:false}); }
  };
- accept = async () => {
+ accept = async (current?: () => boolean) => {
   const {review,busy,unknown,scopeRef} = this.state;
   if (busy || unknown || !review || review.accepted || !scopeRef) return;
   this.set({busy:true,error:undefined});
   try {
-   await this.stageAccept();
-  } catch (error) { this.set({unknown:"accept",error:`Acceptance outcome is unconfirmed. Re-read this source; do not replay the write. ${String(error)}`}); }
+   await this.stageAccept(current);
+  } catch (error) { this.set(error instanceof StagePrecondition?{error:error.message}:{unknown:"accept",error:`Acceptance outcome is unconfirmed. Re-read this source; do not replay the write. ${String(error)}`}); }
   finally { this.set({busy:false}); }
  };
- private async stageAccept(): Promise<void> {
+ private async stageAccept(current?: () => boolean): Promise<void> {
   const {review,scopeRef} = this.state;
   if (!review || review.accepted || !scopeRef) throw new StagePrecondition("Acceptance needs a reviewed, unaccepted source in the current scope.");
+  currentStage(current);
   await this.owner({action:"accept",profile_ref:review.profile.ref,expected_revision:review.profile.revision,expected_content_digest:review.content_digest});
   // A write acknowledgement is not sufficient. Read both the source and the
   // roster, independently, before offering session preparation.
@@ -340,18 +350,19 @@ export class NativeAgentController {
   }
   this.set({review:acceptedReview,profiles:roster.profiles});
  }
- prepare = async () => {
+ prepare = async (current?: () => boolean) => {
   const {review,busy,unknown} = this.state;
   if (busy || unknown || !review?.accepted || !review.acceptance) return;
   this.set({busy:true,error:undefined});
   try {
-   await this.stagePrepare();
-  } catch (error) { this.set({unknown:"prepare",error:`Session preparation is unconfirmed. Inspect the original request; a replacement session will not be created. ${String(error)}`}); }
+   await this.stagePrepare(current);
+  } catch (error) { this.set(error instanceof StagePrecondition?{error:error.message}:{unknown:"prepare",error:`Session preparation is unconfirmed. Inspect the original request; a replacement session will not be created. ${String(error)}`}); }
   finally { this.set({busy:false}); }
  };
- private async stagePrepare(): Promise<void> {
+ private async stagePrepare(current?: () => boolean): Promise<void> {
   const {review} = this.state;
   if (!review?.accepted || !review.acceptance) throw new StagePrecondition("Preparation needs the exact accepted source.");
+  currentStage(current);
   const requestId = this.state.requestId ?? this.correlation();
   this.set({requestId});
   const result = await this.owner({action:"prepare",request_id:requestId,profile_ref:review.profile.ref,
@@ -366,7 +377,7 @@ export class NativeAgentController {
   * request), never mints Factory ancestry and never grants authority. The
   * final open-conversation step stays in the surface: its outcome is the
   * opened conversation or the surface's own open error. */
- saveAndStart = async () => {
+ saveAndStart = async (current?: () => boolean) => {
   const {busy,unknown,review} = this.state;
   if (busy || unknown) return;
   const stages: CompoundStages = {
@@ -383,11 +394,13 @@ export class NativeAgentController {
     error:saved?`Saved; not running — ${stage} did not complete. ${message}`:`Not saved — ${stage} did not complete. ${message}`});
   };
   try {
-   if (stages.propose==="pending") { await this.stagePropose(); stages.propose="ok"; this.set({compound:{...stages}}); }
+   currentStage(current);
+   if (stages.propose==="pending") { await this.stagePropose(current); stages.propose="ok"; this.set({compound:{...stages}}); }
    if (this.state.review && !this.state.review.accepted) {
-    await this.stageAccept();
+    await this.stageAccept(current);
     stages.accept="ok"; this.set({compound:{...stages}});
    } else if (!this.state.review) { throw new StagePrecondition("The reviewed source vanished before acceptance; re-read the roster."); }
+   currentStage(current);
    await this.refreshReadiness();
    if (this.state.world?.world_readiness.ready!==true) {
     this.set({busy:false,compound:{...stages,readiness:"failed"},
@@ -395,7 +408,7 @@ export class NativeAgentController {
     return;
    }
    stages.readiness="ok"; this.set({compound:{...stages}});
-   await this.stagePrepare();
+   await this.stagePrepare(current);
    this.set({busy:false,compound:{...stages,prepare:"ok"}});
    return this.state.prepared;
   } catch (error) {

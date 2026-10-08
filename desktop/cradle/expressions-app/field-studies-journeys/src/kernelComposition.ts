@@ -16,6 +16,7 @@ export type CompositionChange =
   | {change:'scene_reorder';scene_refs:string[]}
   | {change:'scene_compose';scene_ref:string;entity_refs:string[]}
   | {change:'entity_add';scene_ref:string;entity_ref:string;title:string}
+  | {change:'entity_remove';entity_ref:string}
   | {change:'scene_material_set';scene_ref:string;presentation:{schema:'oi.journey-scene/v1';scene:Scene;saved?:Scene|null}}
   | {change:'focus';scene_ref:string;entity_ref:string|null};
 export interface CompositionProperties {
@@ -69,6 +70,8 @@ export function prepareCompositionEdit(
     view.bindings[scene.id]?.scene_ref ?? localRef(doc.expression_ref,'scene',scene.id)]));
   const oldScenes=new Map(doc.scenes.map(scene=>[scene.scene_ref,scene]));
   const createdEntities=new Set<string>();
+  const removedMembers:{scene_ref:string;entity_ref:string}[]=[];
+  const finalMembers=new Map<string,string[]>();
   if (edited.name!==view.journey.name) changes.push({change:'rename',title:edited.name});
   const properties=compositionProperties(edited);
   if (!same(properties,compositionProperties(view.journey))) {
@@ -94,11 +97,21 @@ export function prepareCompositionEdit(
         changes.push({change:'entity_add',scene_ref:sceneRef,entity_ref:ref,title:entity.name});
       }
     }
-    const members=[...(before?.entity_refs??[])];
+    // A member whose occurrence is loaded on this page but no longer carried by
+    // the Scene (its working or saved material) was removed here. Hidden pages
+    // are not loaded, so they are never read as removed.
+    const carried=new Set(participating.map(entity=>entityRefs.get(entity.id)!));
+    const loadedHere=new Set(binding?.loaded_refs??[]);
+    const members=(before?.entity_refs??[]).filter(ref=>{
+      const removed=loadedHere.has(ref)&&!carried.has(ref);
+      if (removed) removedMembers.push({scene_ref:sceneRef,entity_ref:ref});
+      return !removed;
+    });
     for (const entity of participating) {
       const ref=entityRefs.get(entity.id)!;
       if (!members.includes(ref)) members.push(ref);
     }
+    finalMembers.set(sceneRef,members);
     // Existing memberships are not a renderer diff. Explicit constellation
     // membership/retraction operations address those through the Wiki owner.
     if (!before || !same(members,before.entity_refs)) changes.push({change:'scene_compose',scene_ref:sceneRef,entity_refs:members});
@@ -120,6 +133,17 @@ export function prepareCompositionEdit(
   const newRefs=[...sceneRefs.values()];
   for (const original of doc.scenes) if (!newRefs.includes(original.scene_ref)) {
     changes.push({change:'scene_remove',scene_ref:original.scene_ref});
+  }
+  // An object that no remaining Scene carries is deleted natively, as the app
+  // deletes it. The kernel drops relations touching a removed entity without
+  // a report, so such an edit is refused rather than silently widened.
+  const carriedAfter=new Set([...finalMembers.values()].flat());
+  for (const ref of new Set(removedMembers.map(row=>row.entity_ref))) {
+    if (carriedAfter.has(ref)) continue;
+    if (Object.values(doc.relations??{}).some(relation=>relation.from_entity_ref===ref||relation.to_entity_ref===ref)) {
+      throw new Error('This object still has native relations; remove those relations before deleting it. No edit was submitted.');
+    }
+    changes.push({change:'entity_remove',entity_ref:ref});
   }
   const afterCreateRemove=[...doc.scenes.map(scene=>scene.scene_ref).filter(ref=>newRefs.includes(ref)),...newRefs.filter(ref=>!oldScenes.has(ref))];
   if (!same(afterCreateRemove,newRefs)) changes.push({change:'scene_reorder',scene_refs:newRefs});

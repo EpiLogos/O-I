@@ -9,7 +9,7 @@ export interface EngineFrame {
  forceEmitterProjection?:import('../../src/engine/forceRuntime').ForceEmitterProjection|null;
  entitySoundProjection?:(scene:Readonly<Scene>)=>Readonly<Scene>;
  connections?:readonly ConnectionBinding[];selectedConnection?:string|null;
- scene:Readonly<Scene>;scaffold?:'off'|'axis'|'grid';authoringRevision?:number;simTime:number;delta:number;params:Readonly<Record<string,number>>;
+ scene:Readonly<Scene>;scaffold?:'off'|'axis'|'grid';authoringRevision?:number;liveRevision?:number;simTime:number;delta:number;params:Readonly<Record<string,number>>;
  camera:Readonly<Camera>;pointer:{active:boolean;world:Vec3};selectedIds:ReadonlyArray<string>;
 }
 export interface EngineCapabilities {name:string;kind:'preview'|'production';parameters:ReadonlyArray<string>;physicalResonance:boolean;runtimeCheckpoints:boolean;exactSeek:boolean;notes:ReadonlyArray<string>}

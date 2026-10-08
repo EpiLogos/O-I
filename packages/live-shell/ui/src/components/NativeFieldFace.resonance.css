@@ -1,0 +1,17 @@
+/* Continuous resonance device. Shell tokens only; amber (--accent) marks the live drive and the focused handle. */
+.native-resonance-track{fill:none;stroke:#ffffff30;stroke-width:1.2;stroke-linecap:round}
+.native-resonance-tick{stroke:#ffffff45;stroke-width:.8}
+.native-resonance-tick.is-nearest{stroke:var(--accent,#bdc060);stroke-width:1.8}
+.native-resonance-band{fill:var(--accent,#bdc060);opacity:.16}
+.native-resonance-cell.is-positive{fill:var(--accent,#bdc060)}
+.native-resonance-cell.is-negative{fill:var(--text,#c4c4c4)}
+.native-resonance-dwell{fill:var(--accent,#bdc060);opacity:.75}
+.native-resonance-glide{fill:var(--accent,#bdc060);opacity:.25}
+.native-resonance-standby{opacity:.4}
+.native-resonance-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:8px 10px}
+.native-resonance-controls label{display:flex;align-items:center;gap:5px;min-width:0}
+.native-resonance-controls input{accent-color:var(--accent,#bdc060)}
+.native-resonance-controls>label>span{color:var(--text-dim,#a7a7a7)}
+.native-resonance-notes,.native-resonance-unavailable{flex-basis:100%;margin:0;padding-left:16px;font-size:10px;color:var(--text-dim,#a7a7a7)}
+.native-resonance-notes li,.native-resonance-unavailable li{margin:2px 0}
+.native-resonance-more{flex-basis:100%;font-size:10px;color:var(--text-dim,#a7a7a7)}.native-resonance-more>summary{cursor:pointer;min-height:22px;display:flex;align-items:center;padding:0 2px}.native-resonance-more>summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}

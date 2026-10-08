@@ -65,7 +65,7 @@ export interface SurfaceBinding extends SurfacePresentationBinding {
    * the session runs instead of the login shell. */
   terminal?: {cwd?:string;command?:string[]};
   flow?: {flowRef:string;path:string};
-  view?: {constructionFrame?:{ref:string;requestId:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
+  view?: {fileHistory?:{open:boolean;revision?:string;expectedRevision?:string};constructionFrame?:{ref:string;requestId:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";nativeKnowledge?:import('../knowledge/nativeFocus').NativeKnowledgeContext;encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
   /** The hosted engine's checkpoint (MODE-ENGINE-STATE-PERSISTENCE §7.2):
    * where the hosted application stands, written by its stage slot from the
    * application's own hosted-state announcements, debounced, on change
@@ -114,8 +114,17 @@ export interface SplitPane {
 export type Pane = TabGroupPane | SplitPane;
 
 export interface NativeWindowBounds { x: number; y: number; width: number; height: number }
+export type ApplicationViewJson = null | boolean | number | string | ApplicationViewJson[] | {[key: string]: ApplicationViewJson};
+export interface ApplicationViewEnvelope {
+  schema: "oi.application-view/v1";
+  version: 1;
+  app_id: string;
+  /** Bounded application presentation only; native subjects stay in bindings. */
+  payload: {[key: string]: ApplicationViewJson};
+}
 
 export interface LayoutState {
+  applicationView?: ApplicationViewEnvelope;
   focusedTabId?: SurfaceId;
   /** null = austere rest (law 12: rest is *what is on screen*). */
   root: Pane | null;

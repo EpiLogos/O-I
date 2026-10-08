@@ -24,6 +24,10 @@ import {blueprintMember,type SceneBlueprint,type BlueprintTransform} from './blu
 import {icon} from './icons.js';
 import './researchInstrumentStyles.css';
 import './researchInstruments.css';
+import {CanvasNavigationOverview} from './canvasNavigationOverview';
+import {CanvasFindOverlay} from './canvasFindOverlay';
+import {canvasFindTargets,resolveCanvasFindTarget,canvasFindCamera,type CanvasFindTarget} from './canvasFind';
+import type {NavigationMinimapController} from '../../../src/shared/NavigationMinimap';
 
 /** D3 — the canvas tool row is icon-led, in the app's existing 24×24
  * thin-stroke icon language (icons.ts), not text-led. Every button below
@@ -181,6 +185,7 @@ export interface ResearchInstrumentsHost {
  pinEntity?:(sceneId:string,entityId:string,pinned:boolean)=>Promise<void>;
 }
 interface ViewState {
+ canvasMinimap?:React.MutableRefObject<NavigationMinimapController|null>;
  canvas?:{x:number;y:number;zoom:number};timeline?:TimelineViewState;place?:{latitude:number;longitude:number;zoom:number};selectedNode?:string|null;selectedEdge?:string|null;selectedPlace?:string|null;placeFilter?:PlaceFilterState;
  /** M2′: chronology (the vendored TimelineSurface) vs. the relation-field
   * projections (relationFieldView.tsx) — session-local presentation state,
@@ -338,6 +343,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    commit:(id,size)=>state.resizeAdapter!.commit(id,size),
    onChange:()=>state.resizeAdapter!.onChange(),
   });
+  state.canvasMinimap??={current:null};
   const previewNodes=withGesturePreviews(canvas.nodes,id=>state.groupPreview?.get(id)??state.moveGesture?.previewValue(id),id=>state.resizeGesture?.previewValue(id));
   const previewEdges=canvas.edges.map(edge=>state.sequencedEdges?.has(edge.id)?{...edge,sequencing:true}:edge);
   // R1 — shift/ctrl-click extends the multi-select; a plain click replaces
@@ -410,6 +416,20 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   const inspecting=!!cardFor&&cardFor!==dismissedCard;
   host.inspector.hidden=!inspecting;
   const closeInspector=()=>{dismissedCard=cardFor;host.inspector.hidden=true;redraw();};
+  const findTargets=editable?canvasFindTargets(canvas,material?.frames):[];
+  const findView=host.nativeView(),findBasis=findView&&canvas.sceneId?{expression_ref:findView.document.expression_ref,revision:findView.document.revision,scene_ref:findView.bindings[canvas.sceneId]?.scene_ref}:undefined;
+  const chooseFound=(target:CanvasFindTarget)=>{
+   const now=host.nativeView();
+   if(destroyed||epoch!==generation||lens!=='m1'||currentKey!==canvas.key||!now||!findBasis||host.sceneId()!==canvas.sceneId||materialInFlight>0
+    ||now.document.expression_ref!==findBasis.expression_ref||now.document.revision!==findBasis.revision||now.bindings[host.sceneId()]?.scene_ref!==findBasis.scene_ref)
+    throw Error('The searched native Canvas changed; reopen Find on the current source.');
+   const actual=nativeCanvas(now,host.sceneId()),current=resolveCanvasFindTarget(target,actual,host.sceneMaterial(host.sceneId())?.research?.frames);
+   if(!current)throw Error('The searched card or frame changed; refresh its query.');
+   const element=body.querySelector<HTMLElement>('.research-canvas'),bounds=element?.getBoundingClientRect(),viewport=captureCanvas?.();
+   if(!bounds||!viewport||!flyToNode)throw Error('The native Canvas viewport is unavailable.');
+   const camera=canvasFindCamera(current,actual,{width:bounds.width,height:bounds.height},viewport.zoom);
+   state.multiSelect=new Set(current.node_ids);select(current.node_ids[0]??null);flyToNode('',camera);redraw();
+  };
   const controls=<div className="research-tool-actions" aria-label="Canvas tools">
    {editable&&<><button aria-label="Note" title="Note" onClick={()=>act({type:'create-card',kind:'note',position:{x:0,y:0}})}><ToolIcon name="text"/></button><button aria-label="Image" title="Image" onClick={imageImport}><ToolIcon name="upload"/></button>
    <button aria-label="Draw" title="Draw" aria-pressed={!!state.drawing} onClick={()=>{state.drawing=!state.drawing;if(state.drawing)state.erasing=false;redraw();}}><ToolIcon name="pen"/></button>
@@ -482,6 +502,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
      // R3 — semantic zoom/LOD, driven directly by the vendored Canvas's own
      // viewport reporting instead of a 400ms captureCanvas() poll. Applies
      // to both native (editable) and read-only reading canvases.
+     state.canvas=viewport;state.canvasMinimap?.current?.draw(viewport);
      const level=semanticZoomLevel(viewport.zoom);
      if(level!==state.zoomLevel){state.zoomLevel=level;redraw();}
     }}
@@ -535,6 +556,8 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
      flushMoveEnd();
     }:undefined}
     onRegisterCaptureViewport={capture=>{captureCanvas=capture;}} />
+   {editable&&<CanvasFindOverlay key={`find:${canvas.key}`} canvasKey={canvas.key} targets={findTargets} tools={host.tools} onChoose={chooseFound}/>}
+   <CanvasNavigationOverview key={canvas.key} nodes={previewNodes} edges={previewEdges} capture={()=>state.canvas??captureCanvas?.()??null} controller={state.canvasMinimap} onCamera={viewport=>{if(epoch===generation&&currentKey===canvas.key)flyToNode?.('',viewport);}}/>
   </div></>;
  }
  async function load(selected:ResearchInstrument){

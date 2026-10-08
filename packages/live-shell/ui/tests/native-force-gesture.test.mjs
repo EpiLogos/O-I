@@ -75,7 +75,7 @@ function fieldCustody(r,binding){const owner=createNativeInputContinuity(scope),
  const material=face.nativeFieldInputMaterial({pointer:7,basis:r.reading.basis,value:432,initial:397,offset_x:0},'field.'+binding.key,'resonance'),custody=new face.NativeDeviceInputCustody(aperture,material,'gesture');
  return {custody,retainGesture:edit=>custody.retain(face.nativeFieldInputMaterial(edit,'field.'+binding.key,'resonance')),clearGesture:receipt=>{custody.clear(receipt);return true}};
 }
-const ts=tsModule.default,text=await readFile(new URL('packages/live-shell/ui/src/components/NativeDeviceEditors.tsx',root),'utf8'),ast=ts.createSourceFile('NativeDeviceEditors.tsx',text,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
+const ts=tsModule.default,text=await readFile(new URL('packages/live-shell/ui/src/components/NativeDeviceEditors.tsx',root),'utf8'),ast=ts.createSourceFile('NativeDeviceEditors.tsx',text,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);const custodyAst=ts.createSourceFile('nativeDeviceCustody.tsx',await readFile(new URL('packages/live-shell/ui/src/components/nativeDeviceCustody.tsx',root),'utf8'),ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
 const find=(node,predicate)=>{const all=[];const visit=n=>{if(predicate(n))all.push(n);ts.forEachChild(n,visit)};visit(node);assert.equal(all.length,1);return all[0];};
 const execute=(text,bindings)=>new Function(...Object.keys(bindings),ts.transpileModule(`const selected=${text};`,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText+'\nreturn selected;')(...Object.values(bindings));
 test('actual Field finish consumes latest ref value once, ignores another pointer and makes one real store change',async()=>{
@@ -223,7 +223,7 @@ test('after deliberate recovery-panel Discard a new human edit has a new copy wi
 test('actual context pulse keeps device custody tied to the same owner while distinct owners retire the projection',()=>{
  const r=source(),owner=createNativeInputContinuity(scope),aperture={owner,current:()=>true,changed:()=>{}},gesture=face.moveNativeForceGesture(face.createNativeForceGesture(r.reading,r.entity,'centre',7,{x:160,y:106}),{x:183,y:92}),material=face.nativeForceInputMaterial(gesture),custody=new face.NativeDeviceInputCustody(aperture,material,'gesture');
  custody.retain(material);custody.retain(face.nativeForceInputMaterial({...gesture,basis:{...gesture.basis,revision:gesture.basis.revision+1}}));
- const hook=find(ast,n=>ts.isFunctionDeclaration(n)&&n.name?.text==='useDeviceInputCustody'),condition=find(hook,n=>ts.isIfStatement(n)).expression.getText(ast),held={current:{aperture,key:JSON.stringify([1]),custody}},key=held.current.key;
+ const hook=find(custodyAst,n=>ts.isFunctionDeclaration(n)&&n.name?.text==='useDeviceInputCustody'),condition=find(hook,n=>ts.isIfStatement(n)).expression.getText(custodyAst),held={current:{aperture,key:JSON.stringify([1]),custody}},key=held.current.key;
  assert.equal(execute(`()=>(${condition})`,{held,aperture:{...aperture,failures:[]},key})(),false);
  assert.equal(execute(`()=>(${condition})`,{held,aperture:{...aperture,owner:createNativeInputContinuity(scope)},key})(),true);assert.equal(owner.read().copies.length,2);assert.equal(held.current.custody,custody);
 });

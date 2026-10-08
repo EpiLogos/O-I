@@ -6,12 +6,28 @@
   "description": "Bound compact and full instrument editors using the existing native O:I owners.",
   "exports": {
     ".": "./src/index.ts",
-    "./frame": "./src/frame/InstrumentFrame.tsx"
+    "./frame": "./src/frame/InstrumentFrame.tsx",
+    "./vite": "./src/receiving/vite.mjs",
+    "./presentation": "./src/frame/presentation.ts",
+    "./graph": "./src/graph/GraphEditor.tsx",
+    "./canvas": "./src/canvas/CanvasEditor.tsx",
+    "./research": "./src/research/ResearchEditor.tsx",
+    "./journey": "./src/journey/JourneyEditor.tsx",
+    "./palace": "./src/palace/PalaceEditor.tsx",
+    "./modulation": "./src/modulation/ModulationEditor.tsx",
+    "./panels": "./src/receiving/panels.tsx",
+    "./contribution": "./src/receiving/contribution.ts",
+    "./surface-owner": "./src/receiving/surfaceOwner.ts",
+    "./modulation-owner": "./src/receiving/modulationOwner.ts",
+    "./journey-phrase": "./src/receiving/journeyPhrase.tsx"
   },
   "scripts": {
     "check": "node ../../desktop/cradle/node_modules/typescript/bin/tsc -p tsconfig.json",
     "test": "node tests/run.mjs && node --experimental-strip-types --import ../../desktop/cradle/tests/ts-register.mjs tests/canvas-run.mjs && node tests/research-run.mjs && node tests/integral-run.mjs",
-    "dev": "node ../../desktop/cradle/node_modules/vite/bin/vite.js --config dev/vite.config.mjs"
+    "dev": "node ../../desktop/cradle/node_modules/vite/bin/vite.js --config dev/vite.config.mjs",
+    "build": "node ../../desktop/cradle/node_modules/vite/bin/vite.js build --config build.config.mjs",
+    "test:bundler": "node tests/bundler-run.mjs",
+    "check:receiving": "node ../../desktop/cradle/node_modules/typescript/bin/tsc --noEmit --strict --skipLibCheck --module ESNext --moduleResolution bundler --target ES2022 tests/vite-receiving.ts"
   },
   "peerDependencies": {
     "react": "^18.3.1",

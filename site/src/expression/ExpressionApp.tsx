@@ -21,7 +21,15 @@ type Failure = { kind: 'no-expression' | 'not-published' | 'index' | 'journey' |
 type Loaded = { entry: Entry; journey: Journey; collection: string };
 type Load = { status: 'loading' } | { status: 'ready'; data: Loaded } | { status: 'failed'; failure: Failure };
 
-const BASE = './essay/expressions/';
+/** Where the edition lives, relative to this page. The site serves the page beside `essay/`; a packaged World serves it from `renderer/` beside
+ * `edition/` and says so in a meta tag, so the same renderer reads the same index and bodies from the same route. */
+const EDITION = (() => {
+  try {
+    const declared = document.querySelector('meta[name="oi-edition-base"]')?.getAttribute('content');
+    return declared && /^[./A-Za-z0-9_-]+\/$/.test(declared) ? declared : './essay/';
+  } catch { return './essay/'; }
+})();
+const BASE = `${EDITION}expressions/`;
 const NODE_CAP = 12;
 const MAX_ZOOM = 5;
 const MIN_ZOOM = 0.25;
@@ -226,6 +234,17 @@ function Stage({ journey, scene, playing, onPlaying, onWidth }: { journey: Journ
     else f.view({ mode: '3d', yaw: f.camera.yaw + (e.key === 'ArrowLeft' ? -0.12 : e.key === 'ArrowRight' ? 0.12 : 0), pitch: clamp(f.camera.pitch + (e.key === 'ArrowUp' ? -0.12 : e.key === 'ArrowDown' ? 0.12 : 0), -1.4, 1.4) });
   };
   const ground = /^#[0-9a-f]{6}$/i.test(scene.field?.background ?? '') ? scene.field!.background : undefined;
+  // fullscreen: the field alone takes the screen; the browser owns the exit
+  const [fullscreen, setFullscreen] = useState(false);
+  useEffect(() => {
+    const onChange = () => setFullscreen(document.fullscreenElement === frame.current);
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else frame.current?.requestFullscreen?.().catch(() => { /* the browser may refuse; the field stays where it is */ });
+  };
   return (
     <div className="xp-stage" data-playing={playing ? 'true' : 'false'} data-scene={scene.id}>
       <div className="xp-field" ref={frame} style={ground ? { background: ground } : undefined}>
@@ -279,6 +298,12 @@ function Stage({ journey, scene, playing, onPlaying, onWidth }: { journey: Journ
           <button type="button" aria-label="Zoom out" title="Zoom out" data-control="zoom-out" onClick={() => zoom(0.8)}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10" /></svg></button>
           <button type="button" aria-label="Restore the scene view" title="Restore view" data-control="home" onClick={() => field.current?.home()}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6V3h3M10 3h3v3M13 10v3h-3M6 13H3v-3" /></svg></button>
           <button type="button" aria-label="Zoom in" title="Zoom in" data-control="zoom-in" onClick={() => zoom(1.2)}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8 3v10" /></svg></button>
+          <span className="xp-sep" aria-hidden="true" />
+          <button type="button" aria-pressed={fullscreen} aria-label={fullscreen ? 'Leave fullscreen' : 'Fullscreen the field'} title={fullscreen ? 'Leave fullscreen' : 'Fullscreen'} data-control="fullscreen" onClick={toggleFullscreen}>
+            {fullscreen
+              ? <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3H3v3M10 3h3v3M13 10v3h-3M6 13H3v-3" /></svg>
+              : <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" /></svg>}
+          </button>
         </div>
       </div>
     </div>
@@ -360,7 +385,7 @@ function SceneList({ scenes, current, onSelect }: { scenes: Scene[]; current: st
   );
 }
 
-const slugHref = (slug: string) => `./essay/${slug.split('/').map(encodeURIComponent).join('/')}`;
+const slugHref = (slug: string) => `${EDITION}${slug.split('/').map(encodeURIComponent).join('/')}`;
 const slugLabel = (slug: string) => { const last = slug.split('/').pop() || slug; try { return decodeURIComponent(last).replace(/-/g, ' '); } catch { return last; } };
 
 function InTheEssay({ nodes }: { nodes: string[] }) {
@@ -387,7 +412,7 @@ function State({ failure }: { failure: Failure }) {
       <p className="xp-kicker">Expression</p>
       <h1>{failure.title}</h1>
       <p>{failure.detail}</p>
-      <p><a href="./essay/" target="_top">Back to the essay</a></p>
+      <p><a href={EDITION} target="_top">Back to the essay</a></p>
     </main>
   );
 }
@@ -414,30 +439,47 @@ export function ExpressionApp() {
   const pick = (id: string) => { toTop.current = false; selectScene(id); };
   useEffect(() => { if (toTop.current) { side.current?.scrollTo({ top: 0 }); toTop.current = false; } }, [scene?.id]);
 
+  // Focus: the field alone. F toggles it; Escape leaves it (fullscreen's own Escape is the browser's).
+  const [focus, setFocus] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+      if (e.key === 'f' || e.key === 'F') { e.preventDefault(); setFocus((v) => !v); }
+      else if (e.key === 'Escape') setFocus(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   return (
-    <div className="xp" data-embed={embed ? 'true' : 'false'} data-theme-applied={theme} data-state={state.status === 'failed' ? state.failure.kind : state.status}>
+    <div className="xp" data-embed={embed ? 'true' : 'false'} data-focus={focus ? 'true' : 'false'} data-theme-applied={theme} data-state={state.status === 'failed' ? state.failure.kind : state.status}>
       {state.status === 'loading' && <div className="xp-boot" role="status">Verifying the published Expression…</div>}
       {state.status === 'failed' && <State failure={state.failure} />}
       {data && scene && (
         <>
           <header className="xp-head">
-            {!embed && <div className="xp-nav"><a className="xp-mark" href="./" aria-label="O:I home">O:I</a><a className="xp-back" href="./essay/">← The essay</a></div>}
+            {!embed && <div className="xp-nav"><a className="xp-mark" href="./" aria-label="O:I home">O:I</a><a className="xp-back" href={EDITION}>← The essay</a></div>}
             <h1 title={data.entry.title}>{data.entry.title}</h1>
             <div className="xp-step">
+              <button type="button" aria-pressed={focus} aria-label="Focus the field (F)" title="Focus the field (F)" data-control="focus" onClick={() => setFocus((v) => !v)}><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.2" /><path d="M8 1.5v2.4M8 12.1v2.4M1.5 8h2.4M12.1 8h2.4" /></svg></button>
               <button type="button" aria-label="Previous scene" disabled={index === 0} data-control="prev" onClick={() => step(scenes[index - 1].id)}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" /></svg></button>
               <span className="xp-count" data-testid="count" aria-live="polite">Scene {index + 1} of {scenes.length}</span>
               <button type="button" aria-label="Next scene" disabled={index === scenes.length - 1} data-control="next" onClick={() => step(scenes[index + 1].id)}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" /></svg></button>
             </div>
           </header>
           <main className="xp-main">
+            {!embed && (
+              <div className="xp-side" ref={side}>
+                {stray && <p className="xp-quiet" role="status">The scene named in the address (“{stray}”) is not in this Expression; showing its first scene.</p>}
+                {stageW < COMPACT && <SceneBody scene={scene} />}
+                <SceneList scenes={scenes} current={scene.id} onSelect={pick} />
+                <InTheEssay nodes={data.entry.nodes ?? []} />
+              </div>
+            )}
             <div className="xp-stagecol">
               <Stage journey={data.journey} scene={scene} playing={playing} onPlaying={setPlaying} onWidth={setStageW} />
-            </div>
-            <div className="xp-side" ref={side}>
-              {stray && <p className="xp-quiet" role="status">The scene named in the address (“{stray}”) is not in this Expression; showing its first scene.</p>}
-              {stageW < COMPACT && <SceneBody scene={scene} />}
-              <SceneList scenes={scenes} current={scene.id} onSelect={pick} />
-              {!embed && <InTheEssay nodes={data.entry.nodes ?? []} />}
+              {embed && stageW < COMPACT && <SceneBody scene={scene} />}
             </div>
           </main>
         </>

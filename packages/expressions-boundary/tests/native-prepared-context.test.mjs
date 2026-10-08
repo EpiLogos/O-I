@@ -14,10 +14,13 @@ test('binding carries the disclosed World/project/session/space without selectin
 });
 test('each actual destination dimension changes the retained key',()=>{
   const key=preparedContextScopeKey(scope);
-  for(const next of [{workspaceId:'other'},{accessEpoch:5},{sourceWorldRef:'world:other'},{project:'other',accompanying:{...scope.accompanying,project:'other'}},{accompanying:{...scope.accompanying,ref:'agent-session:other'}},{accompanying:{...scope.accompanying,space:'space:other'}}]) assert.notEqual(preparedContextScopeKey({...scope,...next}),key);
+  for(const next of [{workcell:'workcell:other'},{workspaceId:'other'},{accessEpoch:5},{sourceWorldRef:'world:other'},{project:'other',accompanying:{...scope.accompanying,project:'other'}},{accompanying:{...scope.accompanying,ref:'agent-session:other'}},{accompanying:{...scope.accompanying,space:'space:other'}}]) assert.notEqual(preparedContextScopeKey({...scope,...next}),key);
 });
 test('foreign project and malformed admission basis refuse instead of inventing a destination',()=>{
   for(const next of [{workspaceId:''},{accessEpoch:NaN},{accessEpoch:-1},{accessEpoch:0.5},{sourceWorldRef:''},{accompanying:{...scope.accompanying,project:'other'}},{accompanying:{...scope.accompanying,ref:''}},{accompanying:{...scope.accompanying,space:''}}]) assert.throws(()=>preparedContextSession({...scope,...next}));
+});
+test('explicit hosted companion cannot fall through to a local owner when World provenance is missing',()=>{
+  assert.throws(()=>preparedContextSession({...scope,hosted:true,sourceWorldRef:undefined}),/no disclosed native World/);
 });
 test('retired/hidden/unmounted destination blocks interaction qualification and late presentation',()=>{
   const key=preparedContextScopeKey(scope);
@@ -37,7 +40,10 @@ test('wrong session and malformed receipt fields fail before display',()=>{
 });
 test('duplicate/corrupt native item identities never become delivered source provenance',()=>{
   const item={id:'item:malformed-check',title:'Carried',source_ref:'source:malformed-check'};
-  for(const items of [[item,item],[{...item,source_revision:7}],[{...item,source_ref:''}],[{...item,id:''}]]) assert.throws(()=>readDeliveredContext(scope,{agent_session:scope.accompanying.ref,prepared_context_receipts:[{cursor:0,revision:0,digest:'blake3:malformed-check',standing:'invalid-input-test-only',items}]}),/malformed/);
+  for(const items of [[item,item],[{...item,source_revision:7}],[{...item,source_ref:''}],[{...item,id:''}]]) assert.throws(()=>readDeliveredContext(scope,{agent_session:scope.accompanying.ref,prepared_context_receipts:[{cursor:0,scope:{project:scope.project,agent_session:scope.accompanying.ref},revision:0,digest:'blake3:malformed-check',standing:'invalid-input-test-only',items}]}),/malformed/);
+});
+test('even a matching Encounter session cannot conceal a foreign receipt project or destination',()=>{
+  for(const receiptScope of [undefined,{project:'foreign',agent_session:scope.accompanying.ref},{project:scope.project,agent_session:'foreign'}]) assert.throws(()=>readDeliveredContext(scope,{agent_session:scope.accompanying.ref,prepared_context_receipts:[{scope:receiptScope}]}),/destination scope/);
 });
 test('actual archived rich Expression inspection cannot be relabelled as an Encounter receipt',async()=>{
   const receipt=JSON.parse(await readFile(archive,'utf8'));

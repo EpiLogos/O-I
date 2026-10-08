@@ -2,13 +2,21 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import type { SetSummary } from '../shell/useSet'
 import { displayDeviceName, type SetDocument } from '../shell/document'
 import type { SetSelection } from './SessionView'
-import {createNativeCompositionPresentationGuard, editNativeSourceTiming, nativeSourceLanes, readNativeSourceTimeline, selectNativeSource, type CompositionViewSource, type NativeCompositionViewSource} from '../shell/compositionViews'
+import {createNativeCompositionPresentationGuard, nativeSourceLanes, readNativeSourceTimeline, type CompositionViewSource, type NativeCompositionViewSource} from '../shell/compositionViews'
 import {NativeSceneTransport} from './NativeSceneTransport'
 import {NativeSceneOverview} from './NativeSceneOverview'
+import {sceneFocused, sceneLoopControl} from './nativeScenePlayback'
+import {NativeArrangementTimeline, arrangementEditEffect, type ArrangementEdit} from './nativeArrangementTimeline'
+import {NativeArrangementAbsences} from './nativeArrangementAbsences'
+import type {NativeGlyphClipSource} from '../shell/nativeContent'
+import type {NativeEditorReply} from '../../../../expressions-boundary/src/editor'
 import './NativeCompositionViews.css'
-export function ArrangementView({ set, document, selection, select, colors, native }: {
+import './nativeArrangement.css'
+export function ArrangementView({ set, document, selection, select, colors, native, compactTransport }: {
   set: SetSummary | null; document: SetDocument | null; selection: SetSelection; select: (value: SetSelection) => void; colors: string[]
   native?: NativeCompositionViewSource
+  /** The header transport bar is present: the in-view Scene transport keeps only what the bar lacks. */
+  compactTransport?: boolean
 }) {
   const [offset, setOffset] = useState(0)
   const [zoom, setZoom] = useState(1)
@@ -31,7 +39,7 @@ export function ArrangementView({ set, document, selection, select, colors, nati
     setOffset(value => Math.max(0, Math.min(Math.max(0, lastBeat - laneWidth / scale), value)))
   }, [lastBeat, laneWidth, scale])
   const source: CompositionViewSource = native ?? {owner: 'live-set', set, document}
-  if (source.owner === 'expressions') return <NativeSourceArrangement source={source}/>
+  if (source.owner === 'expressions') return <NativeSourceArrangement source={source} compactTransport={compactTransport}/>
   if (!set) return <div className="view-empty">Open a Live set from the browser.</div>
   const visibleBeats = Math.min(lastBeat, laneWidth / scale)
   const clampOffset = (value: number, nextScale = scale) => Math.max(0, Math.min(Math.max(0, lastBeat - laneWidth / nextScale), value))
@@ -81,7 +89,7 @@ export function ArrangementView({ set, document, selection, select, colors, nati
   </div>
 }
 
-function NativeSourceArrangement({source}: {source: NativeCompositionViewSource}) {
+function NativeSourceArrangement({source, compactTransport}: {source: NativeCompositionViewSource; compactTransport?: boolean}) {
   const [clock, setClock] = useState<'seconds' | 'morph'>('seconds')
   const [fault, setFault] = useState<string | null>(null)
   const latest = useRef(source); latest.current = source
@@ -96,7 +104,11 @@ function NativeSourceArrangement({source}: {source: NativeCompositionViewSource}
   const activeClock = clocks.includes(clock) ? clock : clocks[0] ?? 'seconds'
   const timeline = readNativeSourceTimeline(content, activeClock)
   const ready = !!source.actions && !content.standing.pending
-  const settle = async (effect: () => ReturnType<typeof selectNativeSource>, reveal: boolean|'source'|'layers'|'placement' = false) => {
+  // The loop value is the owner's reading; the toggle is the Scene editor's loop intent.
+  const loopControl = sceneLoopControl({loop: content.scenes?.loop === true, ready, focused: sceneFocused(content.native_selection, content.basis.scene_ref),
+    savedAvailable: !!content.scenes?.timing.saved.available})
+  const toggleLoop = () => {const actions = source.actions; if (actions && !loopControl.reason) void settle(() => actions.setSceneLoop(!loopControl.on))}
+  const settle = async (effect: () => Promise<NativeEditorReply>, reveal: boolean|'source'|'layers'|'placement' = false) => {
     const captured = source
     const current = presentation.capture(captured)
     try {
@@ -110,33 +122,18 @@ function NativeSourceArrangement({source}: {source: NativeCompositionViewSource}
       if (current(latest.current, {ok: false, error})) setFault(error)
     }
   }
-  const denominator = Math.max(1, timeline.duration)
-  return <div className="arrange-view native-composition"><NativeSceneTransport source={source}/>
+  // Every timeline gesture maps to one existing owner request on the captured basis.
+  const perform = (clip: NativeGlyphClipSource, edit: ArrangementEdit): Promise<void> => {
+    const {effect, reveal} = arrangementEditEffect(source, clip, edit);
+    return settle(effect, reveal);
+  }
+  return <div className="arrange-view native-composition"><NativeSceneTransport source={source} compact={compactTransport}/>
     <NativeSceneOverview source={source}/>
     <div className="native-composition-caption"><strong>{content.scene.name}</strong><span>Glyph source timing · {timeline.unit}</span>
       {clocks.length > 1 && <nav className="native-clock-tabs" aria-label="Source timing clock">{clocks.map(value => <button key={value} aria-pressed={activeClock === value} onClick={() => setClock(value)}>{value === 'seconds' ? 'Seconds' : 'Morph cycles'}</button>)}</nav>}
       {fault && <span role="alert">{fault}</span>}</div>
-    <div className="native-source-ruler" aria-label={`Authored source time in ${timeline.unit}`}><span>0</span><span>{Number((timeline.duration / 2).toFixed(3))}</span><span>{Number(timeline.duration.toFixed(3))} {timeline.unit}</span></div>
-    <div className="native-source-lanes">{timeline.lanes.map(lane => <div className="arrange-row native-source-row" key={lane.member.id} data-native-member={lane.member.id} data-native-source={lane.source.id}>
-      <div className="native-source-lane">{lane.states.map((state, index) => {
-        const step = lane.source.sequence.steps.find(value => value.id === state.step_id)!
-        const width = (state.axis_end - state.axis_start) / denominator * 100
-        return <button key={state.step_id} className="arrange-clip native-state-span" style={{width: `${width}%`}} aria-pressed={lane.source.selected_step_id === state.step_id}
-          disabled={!ready || !lane.source.capabilities.select} aria-label={`${lane.source.name}, state ${index + 1}, ${step.name || step.text || step.shape}`} title={activeClock === 'seconds' ? 'Select state and edit in Clip detail · Alt+←/→ changes hold by 0.1 seconds; Alt+↓/↑ changes transition by 0.1 seconds' : 'Select state and edit in Clip detail · morph dwell belongs to the shared Field'}
-          onClick={() => void settle(() => selectNativeSource(source, lane.source.id, state.step_id), true)}
-          onKeyDown={event => {
-            if (!event.altKey || event.repeat || activeClock !== 'seconds' || !lane.source.capabilities.edit || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return
-            event.preventDefault()
-            const hold = event.key === 'ArrowLeft' || event.key === 'ArrowRight'
-            const value = Math.max(0, Math.min(3600, Number(((hold ? state.hold_seconds : state.transition_seconds) + (event.key === 'ArrowLeft' || event.key === 'ArrowDown' ? -.1 : .1)).toFixed(3))))
-            void settle(() => editNativeSourceTiming(source, lane.source.id, state.step_id, hold ? {hold: value} : {transition: value}))
-          }}><span className="native-state-transition" style={{width: `${state.axis_end > state.axis_start ? state.axis_transition / (state.axis_end - state.axis_start) * 100 : 0}%`}}/><span>{step.name || step.text || `State ${index + 1}`}</span><small>{Number(state.axis_start.toFixed(3))}–{Number(state.axis_end.toFixed(3))}</small></button>
-      })}</div>
-      <div className="arrange-lane-label native-source-label"><button disabled={!ready || !lane.source.capabilities.select} onClick={() => void settle(() => selectNativeSource(source, lane.source.id), true)}>{lane.source.name}</button>
-        <small>{lane.states.length} authored states · {timeline.unit}</small>
-        <div className="native-source-controls">{(['source', 'layers', 'placement'] as const).map(editor => <button key={editor} disabled={!ready || !lane.source.capabilities.open || !lane.states.length}
-          onClick={() => void settle(() => source.actions!.openClip(lane.source.id, lane.source.selected_step_id ?? lane.states[0].step_id, editor),editor)}>{editor === 'source' ? 'Source' : editor === 'layers' ? 'Layers' : 'Placement'}</button>)}</div>
-      </div>
-    </div>)}{!timeline.lanes.length && <div className="view-empty">This Scene has no Glyph sources.</div>}</div>
+    <NativeArrangementTimeline key={`${content.basis.expression_ref}|${content.basis.scene_ref}|${activeClock}`} content={content} clock={activeClock} unit={timeline.unit} duration={timeline.duration} lanes={timeline.lanes} ready={ready} perform={perform} loop={{on: loopControl.on, reason: loopControl.reason, toggle: toggleLoop}}/>
+    {!timeline.lanes.length && <div className="view-empty">This Scene has no Glyph sources.</div>}
+    <NativeArrangementAbsences/>
   </div>
 }
