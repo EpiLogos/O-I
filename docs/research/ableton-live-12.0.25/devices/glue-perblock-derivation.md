@@ -303,3 +303,106 @@ failing gates `glue_circuit_golden_envelope_gate` /
   (stage-2 constant 1.1·2π, Range clamp −80): the byte-disassembly-only
   readings were wrong there, which is why the decompile capture ships
   alongside the disassembly.
+
+## 7. Integration result (2026-10-08, integration lane — `packages/live-dynamics/src/glue.rs`)
+
+§5's list was implemented the same day. The `CircuitModel` now runs LEDGER
+CONSTANTS ONLY (no fitted scalars; `CircuitFit` is kept for interface
+stability and retired, the old calibration driver deleted with it), and the
+loop was reconciled line-for-line against `glue-kernel-decompilation.txt`
+itself — not just the §2/§3 summaries — which produced four refinements and
+one honest residual.
+
+### What the decompile re-read changed (all folded into the model)
+
+1. **y is a STATE recursion, not a sample-direct read.** [K223-225] updates
+   y from `y[n−1]` (the state, computed once before the iterate loop) — the
+   iterate never enters. y is a one-pole lowpass of the solved x: §3's DC
+   gain A/(A+R̂) stands, and the pole carries the ballistics (next point).
+2. **Two branch gains — the attack onset emerges structurally.** The
+   under-branch [K227-231] uses `s[0x60] = 1/(k+R̂)` [S170], not `s[0x58]`.
+   With k placed on the recovery (below), the OVER-branch y-pole
+   `k/(A+k+R̂)` is ≈0.8 ms at attack menu index 1 and ≈40 ms at index 5 —
+   the measured attack onset, with NO attack-locked detector coefficient.
+   The detector stage-1/stage-2 coefficients therefore stay at their fixed
+   per-block laws (0x1b8 target with the factory 0x1bc = 2.0; 0x170 =
+   1−exp(−1.1·2π/N)). An integration draft briefly replaced stage-2 with a
+   release-locked coefficient on a suspected deadlock; that was this lane's
+   own arithmetic error (|1−H₂(1 kHz)| ≈ 0.97 — the spread passes) and was
+   reverted. §2's fixed readings stand.
+3. **The recovery pole is the (y, s38) 2-D system's slow eigenvalue 2p−1,
+   not p.** The exit tail [K234-240] makes s38 = k·Δy − s38_prev, and the
+   pair's matrix has det = 0, slow eigenvalue 2p−1. The draft placement
+   p = exp(−1/τ) recovered at exactly HALF the target τ (40.2/80.2/151.3 ms
+   measured for 80.3/160.5/302.7 placed — clean single pole, per-20 ms
+   ratio constant). Solving 2p−1 = exp(−1/τ_target) puts the system's slow
+   mode exactly on the measured law. Exact algebra on the mapped exit tail.
+4. **w ≈ 0 confirmed at the source.** [K166] w = s[0x1cc]·(0x1c8-scaled
+   PRNG sum): the dither-dead build makes w ≈ 0 (the 0x48 "noise integrator"
+   is write-only in this path). DryWet-in-the-gain-domain confirmed at
+   [K254-255]; the leg-1/leg-2 smoother forms confirmed at [K243-253]
+   (holds 0x158/0x15c = y + ν / Makeup + 7.8·y + ν).
+
+### The one open placement
+
+k is solved (not fitted) so the recovery lands on the measured release law
+τ = 0.4701·menu — §4's open absolute per-sample factor, reproduced by
+construction. A, R̂ keep the ledger µs-magnitudes (only ratios and the
+product λ·A·k enter the fixed points). That product is the residual's home
+(next section).
+
+### Gate table (thresholds unchanged; ±1.0 dB static, ±25% τ)
+
+| gate | pin | before (fitted closure) | after (ledger model) |
+|------|-----|------------------------|----------------------|
+| C1 step Δ (worst) | G12_LONG (A2/R0) | pass (0.79 dB) | **fail** +0.00/+0.27/+1.89/+2.05 |
+| C1 | G13_LONG_A10 (A20/R0) | **fail − sign-inverted** (−8.30→−11.98 vs −8.12→−4.70) | **PASS** +0.00/+0.11/+0.56/+0.13 |
+| C1 | G14_LONG_R4 (A2/R4) | pass (0.53 dB) | **fail** +0.00/+0.40/+1.94/+2.14 |
+| C1 | G15_LONG_AR (A20/R4) | **fail − sign-inverted** | fail by 0.14 dB (+0.00/+0.27/+1.14/+0.98) |
+| C2 release τ | G17/G19/G18 | **fail** 60/120/200 vs 100/180/320 ms (~1.6× fast) | **pass — exact**: 100/180/320 vs 100/180/320 ms |
+| C2 loud level | G17/G19/G18 | pass (≤0.53 dB) | **fail** +1.89/+1.92/+1.94 |
+
+The two residuals the circuit-model lane named are CLOSED: the attack
+coupling runs the device's way (the model shallows −6.0 → −4.6 dB GR from
+fast to slow attack at +12 over; device −8.12 → −4.70) and the recovery is
+the measured clean single pole at the gate's own metric, exact on all three
+pins. The static-curve structure (unity below threshold, threshold step,
+release-4 steady shift +0.16 dB model vs +0.25 dB device) comes out of the
+loop, not out of a fit.
+
+### The remaining residual, named
+
+The FAST-ATTACK steady depth is ~1.9-2.1 dB shallow (G12/G14 over-threshold
+steps, the C2 loud-segment level, G15 step 2 at 1.14 dB) while the
+SLOW-ATTACK pins are exact. The over-branch x-solve [K217-222] contains the
+feedback term A·k·y (z = −k·y[n−1]); its weight is λ·A — the per-sample
+scale of the coefficient set, which §4 leaves open (the ledger's
+µs-magnitude reading is the model's stated choice). At attack index 5 the
+term is 100× smaller and vanishes — hence the exact slow pins; at index 1
+it holds the operating point up. One render discriminator would pin it: a
+fast-attack deep-over render (T=−24, +24 over) separates λ hypotheses
+cleanly, since the term scales with the solved depth. Until then the
+curve-based model (`static_gain_change_db`) remains the gate of record for
+static behavior, and the failing C1/C2-level assertions above stay in the
+tree as the honest record.
+
+### Confidence
+
+- Loop algebra (branches, gains, exit tail, smoother, applied gain,
+  DryWet-in-gain-domain, w ≈ 0): **high** — reconciled directly against the
+  kernel decompile lines, and the τ/attack-family behavior falls out of the
+  mapped structure without fits.
+- Recovery placement (2p−1): **high** — exact at the gate metric on three
+  pins; the derivation is the exit tail's own algebra.
+- Fast-attack depth: **open** — the §4 per-sample scale, named above.
+
+### Integration-lane corrections to this dossier
+
+- §3's "the only memory in the applied path is the solver's own state" is
+  confirmed, but that memory is a one-pole (the y recursion), not zero: the
+  onset and recovery ballistics live in its branch-dependent poles.
+- §2's 0x1b8/0x170 fixed detector coefficients stand unchanged (a deadlock
+  suspicion raised during integration was the integration's own error and
+  is retracted).
+- §4's "composition of the branch-switched pair relaxation" is now derived:
+  the under-branch recovery mode is the 2-D (y, s38) eigenvalue 2p−1.
