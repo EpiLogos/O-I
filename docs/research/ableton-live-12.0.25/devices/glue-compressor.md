@@ -426,7 +426,9 @@ Gain map (pasted from `analyze_render.py`):
   coupling); the second-order partial compensation is visible (0.676 DC-gain
   factor alone would predict ≈−5.5).
 - The four numbers are the record for the coordinator-side CircuitModel
-  comparison (λ verdict lives with the integration lane).
+  comparison — **verdict rendered same day, see "LAM verdict" at the end of
+  the Circuit-model derivation section below: the λ term is refuted as the
+  residual's home, and the deficit's structure is named.**
 
 ## D2 verdict — Makeup is additive feedforward; detector topology = feedforward (sidechain pre-makeup)
 
@@ -955,6 +957,66 @@ documenting the residuals; they are the acceptance targets for the
 binary-lane work that maps the per-block layer (offsets 0x190/0x19c/0x1a8/
 0x1b4/0x1c0 and the dB-filter coefficients) — that mapping, not more curve
 fitting, is what would close them.
+
+### LAM verdict — the λ discriminator at attack idx 5 (2026-10-08, bounded comparison lane)
+
+The LAM render (above) against the ledger `CircuitModel` at its exact pins
+(T=−24, Range 60, Ratio 1, attack idx 5, Release 0, MU 0, steps-1k, 44.1 kHz;
+gate `glue_lam_lambda_discriminator_gate` in `tests/golden.rs`). Stated
+closure bar (before the run): |Δ| ≤ 1.0 dB at all four over-threshold steps
+AND G13 still passing. Mid-step windows [t0+0.15, t0+0.45], t0 = 0.25+k·0.5;
+the test's render-side readings reproduce the committed gain map to ≤0.01 dB.
+
+| over T | render GR | model GR | Δ (model − render) |
+|--------|-----------|----------|--------------------|
+| +6 dB  | −2.84     | −1.38    | **+1.46** |
+| +12 dB | −6.33     | −4.57    | **+1.77** |
+| +18 dB | −10.27    | −8.31    | **+1.96** |
+| +24 dB | −14.51    | −12.41   | **+2.10** |
+
+G13 re-check in the same gate (idx 5 shallow case, T−12/R30, steps-long):
+Δ −0.00/+0.11/+0.56/+0.13 — still passes ±1.0, unchanged.
+
+**VERDICT: NOT confirmed-by-simulation.** The model misses the bar at all
+four steps while G13 holds, so the λ·A·k per-sample scale term does not close
+the mechanism — and the residual structure refutes the per-sample scale as
+the deficit's home at all:
+
+- **Monotone, saturating, no sign change.** Model uniformly shallow;
+  Δ grows with over-level (+1.46 → +1.77 → +1.96 → +2.10, increments
+  decelerating) and saturates ≈2.1 dB.
+- **λ-independence (the discriminator's actual answer).** The same probe run
+  at attack idx 1, T−24 (G2's committed map) gives model
+  −2.02/−6.07/−10.42/−14.98 vs device −3.91/−8.12/−12.57/−17.22 —
+  Δ +1.89/+2.05/+2.15/+2.24. At +24 over the two attack pins miss by nearly
+  the same amount (+2.24 vs +2.10) across a **100× difference in the model's
+  λ·A·k feedback weight**: the deficit tracks the solved depth, not the
+  coefficient scale. Corroborated at the poles: the measured idx-5 attack
+  onset (τ ≈ 30–40 ms) pins λ ≈ 1 (the µs reading — the model's over-branch
+  pole is ≈52 ms there; λ = 2 already gives ≈78 ms), and any such λ moves the
+  steady fixed point by orders of magnitude less than the 2.1 dB deficit.
+- **Localization.** The model is exactly threshold-shift-invariant at both
+  attack pins (idx 5: −1.38/−4.57 at +6/+12 over at T−12 AND T−24; idx 1
+  likewise −2.02/−6.07/−10.42/−14.98 at both thresholds). The device is
+  invariant at idx 1 (G1 ≡ G2) but **breaks invariance at idx 5**: at the
+  same +6/+12 over it reads −1.92/−4.69 at T−12 (G7, same signal type;
+  G13-long agrees to 0.02 dB) vs −2.84/−6.33 at T−24. The entire LAM
+  residual is this missing absolute-threshold dependence: the model's loop
+  self-regulates to over-threshold-only gain reduction; the device deepens
+  as the threshold drops (−0.90 dB at +6 over, −1.63 dB at +12, ≈2.1 dB by
+  +24). Range is ruled out as the cause (the ceiling is inactive at both
+  R30 and R60 at these depths; R60 ≡ R30 is proven at idx 1 and the GR
+  nowhere approaches either ceiling).
+- **Home.** The λ-free equilibrium — how the shaped-LUT cycle mean maps to x
+  at depth (the per-block derivation §4 item left solver-produced). The one
+  multiplier of that equilibrium the ledger fixes without direct evidence is
+  the detector-ripple scale into the LUT (stage-1 coefficient binding 0x1bc,
+  open in §4 there); a slightly larger device-side LUT-index swing would
+  deepen exactly monotone-with-depth as measured. That binding, or a
+  threshold-coupled detector law, is where the next binary-lane look goes.
+  The curve-based `static_gain_change_db` remains the gate of record for
+  static behavior; the failing LAM assertions stay in the tree under
+  `#[ignore]` as the honest record and the acceptance target.
 
 Scope not modeled: Release index 6 (special constants, shell lines 63–71),
 Oversample, SideChain EQ, the PRNG dither (scale unmapped), and the

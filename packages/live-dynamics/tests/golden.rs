@@ -820,6 +820,13 @@ fn wavetable_law_gates() {
 // the ledger's µs-magnitude reading is the model's stated choice and the
 // gates keep it honest. The curve-based model (`static_gain_change_db`)
 // remains the gate of record for static behavior.
+// LAM OUTCOME (2026-10-08, glue_lam_lambda_discriminator_gate below): the
+// idx-5 deep-over discriminator REFUTES the per-sample scale as the
+// residual's home — the deep-over deficit is the same ≈2 dB at attack idx 5
+// (where λ·A·k is ~100× smaller) as at idx 1, monotone in over-level. The
+// deficit tracks solved depth, not the coefficient scale; verdict and
+// residuals in devices/glue-compressor.md "LAM verdict". This gate stays
+// failing under #[ignore] as the honest record and the acceptance target.
 
 fn synth_steps_long(sr: u32) -> Vec<f32> {
     // harness/gen_signals.py spec #4: 0.5 s silence, 2.5 s steps at
@@ -991,6 +998,130 @@ fn glue_circuit_golden_release_gate() {
     );
 }
 
+
+// ---------------------------------------------------------------------------
+// LAM λ discriminator — the CircuitModel against the deep-over slow-attack
+// render (bounded comparison lane, 2026-10-08)
+//
+// The render `LAM_T24_A5_R60.aif` (T=−24, Range=60, Ratio 1, Attack menu
+// idx 5, Release 0, Makeup 0, steps-1k, PeakClipIn inert — output peak
+// ≈ −17.5 dBFS, far under the −0.50 dBFS clip ceiling) is the discriminator
+// devices/glue-perblock-derivation.md §7 asks for: the over-branch x-solve's
+// feedback term carries the per-sample scale λ·A·k, ~100× smaller at attack
+// idx 5 than at idx 1 — where the model's pins are already exact. A pass
+// here says the ledger model reproduces the measured deep-over curve family
+// with NO new fitted constant, closing the mechanism; a fail names the
+// residual structure.
+//
+// Thresholds STATED BEFORE the model was run against the render:
+//   - per-step closure bar |model GR − render GR| ≤ 1.0 dB at all four
+//     over-threshold steps (+6/+12/+18/+24), the C1 static tolerance;
+//   - AND the G13 pin (idx 5's shallow case at T−12/R30 — the envelope
+//     gate's one passing attack pin) stays within the same ±1.0 dB.
+//   Both hold ⇒ the λ term is CONFIRMED-BY-SIMULATION at idx 5.
+#[test]
+#[ignore]
+fn glue_lam_lambda_discriminator_gate() {
+    const LAM_TOL_DB: f64 = verify::CIRCUIT_STATIC_TOL_DB; // ±1.0 dB, stated above
+    let sr = 44100u32;
+
+    // steps-1k: 0.25 s silence lead, 0.5 s steps at −30..0 dBFS peak (1 kHz),
+    // 1.5 s tail (harness/gen_signals.py #1)
+    let n = (5.25 * sr as f64) as usize;
+    let mut signal = vec![0f32; n];
+    let w = 2.0 * std::f64::consts::PI * 1000.0 / sr as f64;
+    for (i, db) in [-30.0f64, -24.0, -18.0, -12.0, -6.0, -3.0, 0.0]
+        .iter()
+        .enumerate()
+    {
+        let start = ((0.25 + 0.5 * i as f64) * sr as f64) as usize;
+        let end = (start + (0.5 * sr as f64) as usize).min(n);
+        let a = 10f64.powf(db / 20.0);
+        for (k, slot) in signal[start..end].iter_mut().enumerate() {
+            *slot = (a * (w * (start + k) as f64).sin()) as f32;
+        }
+    }
+
+    // the model at the exact LAM pins
+    let mut m = glue::CircuitModel::new(
+        glue::CircuitParams {
+            threshold_db: -24.0,
+            range_db: 60.0,
+            ratio_index: 1,
+            attack_idx: 5,
+            release_idx: 0,
+            makeup_db: 0.0,
+            dry_wet: 1.0,
+            peak_clip_in: true,
+            block_size: 128,
+        },
+        glue::CircuitFit::default(),
+        sr,
+    );
+    let mut out = vec![0f32; n];
+    let mut out_r = vec![0f32; n];
+    m.process_block(&signal, &signal, &mut out, &mut out_r);
+
+    let render = read_render("LAM_T24_A5_R60.aif");
+
+    // mid-step windows [t0+0.15, t0+0.45], t0 = 0.25 + k·0.5 — reproduces the
+    // committed gain map to ≤0.01 dB (checked against analyze_render.py)
+    let window_rms = |buf: &[f32], rate: u32, k: usize| -> f64 {
+        let t0 = 0.25 + 0.5 * k as f64;
+        let a = ((t0 + 0.15) * rate as f64) as usize;
+        let b = ((t0 + 0.45) * rate as f64) as usize;
+        audio::rms_db(&buf[a..b.min(buf.len())])
+    };
+
+    // steps −18/−12/−6/0 dBFS peak = +6/+12/+18/+24 over T=−24
+    // (step index k = 2, 3, 4, 6 on the t0 = 0.25 + k·0.5 grid);
+    // GR = out_rms − (peak − 3.01), the render's own gain-map arithmetic
+    let over_k = [2usize, 3, 4, 6];
+    let peak_db = [-18.0f64, -12.0, -6.0, 0.0];
+    let over_db = [6.0f64, 12.0, 18.0, 24.0];
+    let mut worst = 0.0f64;
+    let mut failures: Vec<String> = Vec::new();
+    println!("== LAM_T24_A5_R60: model (ledger constants, attack idx 5) vs render");
+    for (i, k) in over_k.iter().enumerate() {
+        let in_rms = peak_db[i] - 3.01;
+        let gr_render = window_rms(&render.samples, render.sample_rate, *k) - in_rms;
+        let gr_model = window_rms(&out, sr, *k) - in_rms;
+        let d = gr_model - gr_render;
+        worst = worst.max(d.abs());
+        println!(
+            "  +{:>2} over: render {gr_render:7.2}  model {gr_model:7.2}  Δ {d:+.2} dB (tol ±{LAM_TOL_DB:.1})",
+            over_db[i]
+        );
+        if d.abs() > LAM_TOL_DB {
+            failures.push(format!("+{} over: model {gr_model:.2} vs render {gr_render:.2}", over_db[i]));
+        }
+    }
+    println!("  worst |Δ| {worst:.2} dB");
+
+    // the closure condition's second leg: G13 (idx 5 shallow case, T−12/R30)
+    // must still pass — model vs G13_LONG_A10.aif on steps-long, ±1.0 dB
+    println!("== G13_LONG_A10 re-check (idx 5 shallow case, T−12/R30)");
+    let long = synth_steps_long(sr);
+    let mut m13 = glue::CircuitModel::new(circuit_params(5, 0), glue::CircuitFit::default(), sr);
+    let mut out13 = vec![0f32; long.len()];
+    let mut out13_r = vec![0f32; long.len()];
+    m13.process_block(&long, &long, &mut out13, &mut out13_r);
+    let got13 = glue::measure_envelope(&read_render("G13_LONG_A10.aif").samples, sr);
+    let pred13 = glue::measure_envelope(&out13, sr);
+    for (i, (g, p)) in got13.steady_state_db.iter().zip(&pred13.steady_state_db).enumerate() {
+        let d = p - g;
+        println!("  step {i}: render {g:8.2}  model {p:8.2}  Δ {d:+.2} dB (tol ±{LAM_TOL_DB:.1})");
+        if d.abs() > LAM_TOL_DB {
+            failures.push(format!("G13 step {i}: model {p:.2} vs render {g:.2}"));
+        }
+    }
+
+    assert!(
+        failures.is_empty(),
+        "LAM λ gate failed:\n  {}",
+        failures.join("\n  ")
+    );
+}
 
 // ---------------------------------------------------------------------------
 // Echo E1 gate (circuit-model lane, 2026-10-08)

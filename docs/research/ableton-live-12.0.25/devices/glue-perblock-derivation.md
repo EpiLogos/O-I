@@ -386,6 +386,21 @@ curve-based model (`static_gain_change_db`) remains the gate of record for
 static behavior, and the failing C1/C2-level assertions above stay in the
 tree as the honest record.
 
+**LAM outcome (2026-10-08, later same day): the discriminator ran and
+exonerated the per-sample scale.** `LAM_T24_A5_R60` (the idx-5 deep-over
+render, `glue-compressor.md` §LAM) misses the ledger model's ±1.0 dB bar at
+all four steps (+1.46/+1.77/+1.96/+2.10 dB, monotone in over-level) while
+G13 still passes — and the deficit at attack idx 1 (where λ·A·k is ~100×
+larger) is the same ≈2 dB at matched depth. The deficit tracks solved depth,
+not the coefficient scale; its measured signature is a threshold-dependence
+the mapped model cannot express (the device breaks threshold-shift
+invariance at idx 5: −1.92/−4.69 at T−12 vs −2.84/−6.33 at T−24, equal over;
+the model is exactly invariant). The residual's home moves to §4's
+solver-produced over-branch equilibrium — with the open 0x1bc stage-1
+binding the named candidate mechanism. Full table and verdict:
+`glue-compressor.md` "LAM verdict". The µs-magnitude reading of the
+coefficient set stands (the measured idx-5 onset pins λ ≈ 1).
+
 ### Confidence
 
 - Loop algebra (branches, gains, exit tail, smoother, applied gain,
