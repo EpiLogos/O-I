@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "explicit-native-sharedtime-refresh-verified-at-2026-10-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex:sol-shared-time",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791440316,
+  "subject": "Explicit native shared-time refresh verified at owner/helper scope",
+  "result": "Implemented operation refresh only in packages/expressions-boundary/src/timeWindow.ts and expanded its genuine native acceptance packet. Exact admitted primary reading and native Expression revision/Scene/current binding epoch required; valid prior session required; actual groundSelection plus injected native setSelection preserves same-source window/navigation and resets changed-source via existing owner semantics. Ordinary Read/Set still refuse source and ground drift. Frozen packet03 passed47checks/13native read requests/0domain writes; protected Chakral6, Central173, chosen-control11 bytes and revisions unchanged;189closure hashes match after execution. Package typecheck passed. Evidence: Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/shared-time-owner-native-20261008-03/time-window-acceptance.json and shared-time-acceptance-review.json. Full T6/T17 pending: installed Central Scene source is stale; actual register has0temporal/0spatial rows; no installed host/iframe or dated GUI acceptance. Parent owns production builds and CUA replay. No commits, restarts or personal writes.",
+  "status": "active"
+}

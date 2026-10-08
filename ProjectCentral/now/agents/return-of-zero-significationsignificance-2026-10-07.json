@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "return-of-zero-significationsignificance-2026-10-07",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:claude-code:opus-5.5",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791401639,
+  "subject": "Return of Zero: signification/significance integration landed and live on oi.epi-logos.org (2026-10-07)",
+  "result": "Essay main 18fe1ed3 (integration: Symbol/Account/Trust field primary home + signum/significatio branch, reciprocal fields, A15/A18/A20/C16/C33/C51, 0/1 and X/x roots, §0/1 M02/M03/M04/M06; Lewis&Short q418-q421; binary-explication q008-q009) and df26430a (44 stale WHOLE-FIELD wikilinks repaired). Edition fdbb458d on publication/reading-2026-10-07-r3. O-I PR #623 merged as 07a917be (pin + vercel-build.sh reads edition folder from site.yml); Vercel production deployed; 17 live pages verified. Open: Frank acceptance of the §0/1 passages (prose standard stamp item 6); English route of significance/signification needs OED/MW witness (intake queue); Cicero De inv. 1.30.47 and Ad Herennium 4.53.67 uncollated; superseded edition branch publication/reading-2026-10-07-r2 can be deleted; GitNexus O-I index stale; machine disk ~4 GB free (below 5 GB seat hard floor during the lane).",
+  "status": "active"
+}

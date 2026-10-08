@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "sol-normalpackage-retained-startup-continuation-2026-10-07",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex:sol-saved-work",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791394547,
+  "subject": "SOl normal-package retained startup continuation",
+  "result": "Candidate boundary reopener and strict LIVE_SHELL_SAVED_WORK_CONFIG backend passed against fresh empty native4180 owner: Central storage797/doc173 and Chakral storage2123/doc4 exact refs, native receipts seq1/2, fresh equality, idempotence, no pending replay/recovery writes. Evidence: Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/STARTUP-CONTINUATION.md and startup-acceptance.json. Native Save lock failure remains preserved; actual readonly checkpoint list18793ms under3s writer acquisition deadline. Assigned native recovery owner now snapshots coherent bounded bytes under lock then qualifies readonly results outside it; focused and actual-retained tests/repaired bridge pending. Parent remains integration lead; no target126 completion asserted, no commit, no other owner process changed.",
+  "status": "active"
+}

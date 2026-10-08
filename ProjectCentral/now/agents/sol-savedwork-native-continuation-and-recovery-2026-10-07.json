@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "sol-savedwork-native-continuation-and-recovery-2026-10-07",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex:sol-saved-work",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791395986,
+  "subject": "SOl saved-work native continuation and recovery lock repair evidence",
+  "result": "Candidate normal-package continuation and strict metadata backend pass real retained native owners; fresh empty inventory reopens Central797/173 and Chakral2133/4 with exact native receipts, independent equality, idempotence, no private copies/recovery writes/pending replay. Native envelope compatibility adopted from5c1c9e4 and readonly snapshot lock repair tested9focused+1actual source; real checkpoint inventory3453ms with independently measured lock hold116ms, original3second lock/CAS/durability/admission preserved. Final bridgeSHAe2d7360775de3c852470d9a908a5aff563e249be03639348bc03002ad27d56e0 running native4180 session74970 with matched env3ctrl; final shellSHA9d1c651aff1d1642c552ebe06ca588cd5cb29678fac9791261cbbd6feda4e5ec built, parent8788 untouched, isolated8789 stopped. GUI Save paused on parent-owned stale retained frame mode URL pinning wrong recovery family; other child examines canonical carrier. No Save/Restore/pending replay while unresolved. Evidence in campaign new-shell STARTUP-CONTINUATION.md,recovery-lock-repair.json,runtime-provenance.json and acceptance proofs.126target identity/revision/classification integrity passes with functional statuses all pending. No commits or external owner thread changes.",
+  "status": "active"
+}

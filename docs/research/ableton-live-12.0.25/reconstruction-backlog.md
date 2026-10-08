@@ -1,0 +1,85 @@
+# Reconstruction backlog — clean-room Rust rebuilds with verify gates
+
+**Status:** revision 1 (2026-10-07). Target language: **Rust**
+(`packages/live-dynamics/`). Rule: a rebuild exists only when its behavioral
+diff against the golden renders passes the stated threshold; decompiled-code
+claims that contradict curves are downgraded to *unverified hypothesis*.
+
+## The verify gate (common definition)
+
+- **Reference:** golden render (Live-exported audio, 44.1 kHz/16-bit observed)
+  of the pinned test signal at pinned parameters, plus its bypass-reference
+  render for staging calibration.
+- **Metric (static transfer):** per-step RMS gain map, error ≤ **0.5 dB** per
+  step against the golden map.
+- **Metric (spectral):** STFT (2048, 50% hop) log-magnitude difference averaged
+  over 20 Hz–20 kHz, ≤ **1.0 dB** mean, no band worse than **3.0 dB**.
+- **Metric (time/envelope):** envelope of the release tail, MAE ≤ **1.0 dB**.
+- **Determinism bound:** Live renders are *not* byte-deterministic at 16-bit
+  (dither; observed max |Δ| = 23 LSB, 4.1% of samples > 1 LSB on the
+  2026-10-07 pair). The gate therefore compares against the *behavioral
+  curves*, and any claim finer than the dither floor is out of scope.
+- Implementation lives in the crate (`verify.rs` + `#[ignore]`-gated tests that
+  activate when golden renders are present).
+
+## Rows
+
+| device | behavior doc | golden evidence | Rust rebuild | gate |
+| --- | --- | --- | --- | --- |
+| Glue Compressor | `devices/glue-compressor.md` | steps gain map @8 param points + envelope family + bypass ref (two render sessions) | `src/glue.rs` — feed-forward VCA model: convex soft-knee transfer, **Range = soft GR ceiling at stored dB**, Ratio reshapes knee/asymptote, ballistics-aware envelope detector (attack/release shift steady state), additive makeup, output clip −0.50 dBFS | static ≤0.5 dB/step; tail MAE ≤1.0 dB |
+| Echo | `devices/echo.md` | impulse IR @2 delay times + FB 0.25/0.5/0.75 + free-mode pairs + bare-delay baseline (render lane) | `src/echo.rs` — delay-line graph from IR: hop = min(tL,tR) in seconds, pingpong L-first, first 2 taps first-pass, FB once per hop, filter/ducking/mod/reverb per E8 decomposition | IR correlation: peak times ±1 sample; spectral ≤1.0 dB mean |
+| Reverb | `devices/reverb.md` | impulse IR @Decay 600/1200/2400 + sweep (render lane) | `src/reverb.rs` — only if IR analysis supports a parametric model; else FDN-fit with stated residual | RT60 ∝ DecayTime (ms) ±20%; spectral ≤1.5 dB mean |
+| Operator | `devices/midi-instruments.md` | 4-note velocity ramp render, default patch + VelDst-routed variant (render lane) | `src/operator.rs` — needs velocity-routing model first (VelDst destination enumeration open) | velocity→level per routed destination; envelope MAE ≤1.0 dB |
+| Wavetable | `devices/midi-instruments.md` | 4-note velocity ramp render, default patch + WT1_AMPVEL/WT2_TRIM amplitude-stage probes (render lanes 3–4); wavetable data policy unchanged (presets contain wavetables: do not redistribute) | `src/wavetable.rs` (device class `InstrumentVector`) — velocity routing topology INSPECTED: no velocity→level parameter exists (XML grep negative; Amp mod row live but velocity-inert); model = fixed per-note envelope × device `Volume`/oscillator gains | envelope MAE ≤1.0 dB; `Volume`/`Gain` trim linearity ≤0.1 dB |
+
+## Binary cross-check obligations
+
+- `rea search` for device/module symbols (`GlueCompressor`, `Operator`,
+  parameter names seen in XML) once a persistent analysis of `Live.arm64`
+  exists. Device class names already confirmed via binary strings
+  (`GlueCompressor`, `CompressorDevice`, `WavetableDevice`) and render-pref
+  keys (`RenderAudioPrefs`, `DitherMode`/"No Dither", `Normalize`,
+  `RenderLength`, `RenderStart`).
+- One targeted decompile of the Glue detector/gain path; its constants
+  (knee width, ratio law, detector coefficients) must agree with the measured
+  curves or be recorded as *unverified hypothesis* in the dossier.
+- **Practical note (2026-10-07):** `rea analyze` re-runs headless analysis per
+  command (temp project, `-deleteProject`); on a 120 MB binary that is hours
+  per command. Next session: build a persistent Ghidra project directly with
+  `analyzeHeadless` (import + save), then hand rea the snapshot via
+  `rea analyze --snapshot`. First attempt was queued 2026-10-07 and exceeded
+  the session window.
+
+## Open discriminators from the 2026-10-07 render matrices (per dossiers)
+
+| # | question | discriminating render | outcome (2026-10-07 second matrix) |
+| --- | --- | --- | --- |
+| D1 | Glue `Range` law: GR ceiling vs slope scale (ratio-tenths refuted) | Ratio-param sweep at fixed Range; Range sweep to ≥20 dB GR | **RESOLVED**: Range = soft GR ceiling at stored dB (R10 asymptotes ≈9.3 dB: −9.08/−9.21/−9.27 at +18/+21/+24 over, vs G2's −17.22; R60 ≡ R30); Ratio = active separate parameter (G8 vs G1 at every point; marginal slope 0.88 dB/dB; matches binary's separate OnRange/OnRatio DSP callbacks). **D1b grid DONE (lane 3)**: 9-cell Ratio 0/1/2 × Range 10/30/60 matrix at T=−12 — above +6 over GR is per-ratio LINEAR in over (a = 0.533/0.702/0.883 dB/dB, ≈0.175/unit of stored ratio; residuals ≤0.04 dB); knee WIDTH is ratio-dependent (stored 0: >18 dB-wide tail, GR(+6 over) = 6.81 > 6 dB — refutes stored-0 = 1:1 and both linear/log display maps); C60≡C30 at all ratios; C10 deflection grows with GR depth (0.18/0.49/1.43 dB at +12 over for r2/r1/r0), no 1-param soft-min fits ±0.3 dB. **D1-final DONE (lane 4, `DF1_R0`/`DF2_R2` at T=−24 R=60)**: stored 0 → GR(+24 over) = 17.43 dB — limiter family REFUTED (would be 19–20), fixed 2.14:1 REFUTED (12.79), tail slope ~0.62 dB/dB (≈2.6:1 instantaneous, still creeping up); stored 2 → GR(+24) = 18.15 dB — 8:1 REFUTED (21.0), ≥15:1 REFUTED (≥22.5), tail slope ~0.90 (≈10:1 instantaneous, stable). **The stored→display ratio question dissolves: Ratio selects a curve FAMILY (three 512-entry LUTs per binary), not a number n:1; every tail steepens with depth. Crate law: per-ratio piecewise-linear GR(over), slopes 0.533/0.702/0.883 (+6..+12) drifting to ~0.62/~0.78/~0.90 (+12..+24), ratio-dependent knee widths** |
+| D2 | Glue detector topology (makeup excess ~1.2 dB at +12 over) | MU5 vs MU10 pair | **RESOLVED — feedforward**: GR = net − Makeup equals the MU0 curve exactly at MU5 (0.27/3.91/5.98/8.12); makeup = purely additive feedforward gain; detector = feedforward (sidechain pre-makeup), high confidence. MU10's increasing excess (+0.25/+0.69/+1.24) = PeakClipIn output clipper (ceiling −0.50 dBFS, sample-30936 flat tops), proven by G16_NOCLIP (PeakClipIn=false → GR back on MU0 at +0/+6 over; residual excess moves to the render path's 0 dBFS FS clip, max sample 32768). Feedback-detector hypothesis refuted |
+| D3 | Echo `Delay_Time` unit (inert while synced — confirmed) | free-mode pair (`Delay_SyncL/R=false`) | **RESOLVED**: stored unit = seconds (E5 0.25→0.250 s hop; E6 2×→2×, exact). Refinement: hop = min(tL,tR); E1 "own-time" reading refuted (E5 L repeats at 0.5 ≠ tL 0.25); min() vs TimeLink force-equal still open |
+| D4 | Echo feedback insertion point in the pingpong graph | impulse at FB 0.25/0.75 | **RESOLVED**: FB once per hop, 2 applications by tap 3 (E7−E1 = −7.03 dB = 2×20log10(0.5/0.75) exact; taps 1–2 FB-invariant) |
+| D5 | Reverb DecayTime → RT60 mapping (measured RT60 ≈ stored ms at default) | DecayTime sweep | **RESOLVED**: RT60 ∝ stored ms (600→0.61–0.63 s, 1200→1.07–1.35 s, 2400→2.08–2.67 s at matched windows; ±20% window-dependence from double slope) |
+| D6 | Envelope family (attack/release shapes) | longer holds (≥2 s/step) at several attack/release pins | **RESOLVED (2026-10-07, lane 3)**: attack τ measured (A2 <10 ms; A20 ≈30–40 ms, clean single-pole); attack/release shift the steady-state curve (G13≡G7; monotone in both pins). **Release taus via step-down-to-tone signal (`release-probe.wav`, G17/G18/G19): τ(Release 0)=80 ms, τ(2)=160 ms, τ(4)=302 ms — single-pole exponentials, ln-residual ≤0.002; ≈doubles per +2 stored units.** Release steady-state shift re-verified on the probe (−3.91/−4.03/−4.13 dB). **Binary-menu reconciliation (2026-10-07)**: menu value = internal period, τ = 0.4701 ± 0.0003 × menu-µs (three pins, ±0.06% spread; "menu = the time constant" refuted at 2.13×) — settling render: Release 1/3/5/6 (k-line predictions 117.3/225.1/413.7 ms; special-cased index 6 predicts 42.8 ms < τ(0) if k is global) |
+| D7 | Operator/Wavetable dynamics | MIDI-clip harness (MidiClip XML crafting validated against the loader, same method as the audio harness) | **RESOLVED (2026-10-07, builder v5)** — loader accepted the crafted MidiClip and M1_OPERATOR / M1B_VELROUTE / M2_WAVETABLE rendered (`devices/midi-instruments.md`). v4→v5 lesson: the generators must serialize exactly as the real writer does — `<ProbabilityGroupIdGenerator><NextId Value="0"/></ProbabilityGroupIdGenerator>`, `<NoteIdGenerator><NextId Value="N"/></NoteIdGenerator>`, and `<PerNoteEventStore><EventLists /></PerNoteEventStore>`; generic `Id` attributes on note events and invented generator shapes are rejected. Error history: v1 `Not all list members have Ids. (line 313, col 26)`; v2 `Unknown class 'KeyTracks' encountered`; v3 `Unknown attribute 'Id' (line 313, col 620)`; v4 `Unknown attribute 'Value' (line 313, col 1028)`; v5 accepted. First instrument claims: velocity→level FLAT in both default patches (Operator 0.01 dB over 4:1 velocity — VelDst Amount=0, wired but unrouted; Wavetable 0.12 dB non-monotonic); M1B VelDst routing to Connections 0/1 = non-level destinations (flat, −48 dB, pitch moved) — Connection enumeration open |
+| D8 | Echo "Time Travel" preset is a full chain (filter/ducking/mod/reverb ON) | bare-delay baseline: default preset with filter/ducking/mod/reverb elements off | **RESOLVED**: bare line isolated — taps exact at k×0.1875, pure FB decay (−12.04 dB/2 hops) after one −3.5 dB settling; direct absent at DryWet=1; filter = ~17 dB impulse-peak smear; reverb = between-tap tail (−54 vs −90 dBFS); mod/ducking leave the grid unchanged (AmountDelay does not audibly modulate synced time — mechanism open) |
+| D9 | Clip warp engines: WarpMode enum surface + 1:1 character | clip-level `IsWarped`/`WarpMode` edits on built sets, 1:1 marker pair, bypassed device, vs unity unwarped baseline | **RESOLVED (2026-10-07, lane 3, `devices/warp-probe.md`)**: WarpMode = flat integer enum on the clip (`<WarpMode Value="N"/>`), values 1(Tones)/2(Texture)/5(Complex Pro) load and render; at 1:1 Texture & Complex Pro are sample-transparent (band Δ ≤0.33 dB = dither floor, duration exact); Tones re-granulates even at 1:1 (+14 ms grain tail, LF −6 dB skirt, HF grain noise +19 dB @11 kHz, pitch/duration preserved). **D9-continued DONE (2026-10-07, lane 3, same dossier, stretch section)**: 2× stretch via second warp marker at 4 beats + scaled bounds (`warp_edit.py <set> <mode> 2.0`); WS1_TONES_2X/WS2_TEXTURE_2X/WS3_COMPLEXPRO_2X/WS4_SWEEP_TONES_2X rendered — all three engines are true time-stretches (duration 1.996–2.011, pitch locked at 1 kHz, no 500 Hz resample signature); quality at 2×: Complex Pro (harmonics ≤−90 rel, mean band Δ 3.3 dB) > Tones (≤−79 rel, LF −11…−23 dB + HF grain +10.7 dB) > Texture (fundamental −12.8 dB + peak at 995 Hz, −26 dB 3rd harmonic — the 1:1 ranking INVERTS). **Open**: modes 0/3/4, grain-parameter dependence (Texture's 2× character may be fluctuation-driven), speed-up direction |
+| D11 | Operator VelDst negative-amount case: is Connection 0 level-related at Amount=−100? | `VD0_NEG` — slot0 Amount=−100 Connection=0, same 4-note ramp; RMS flat = negative-amount case closed | **STAGED, RENDER FOCUS-BLOCKED (2026-10-07 evening)**: `harness/live/VD0_NEG.als` built and verified (VelDst slot0 = (−100, 0), KeyDst untouched; pins must use the unique path `VelDst/ModConnections.0/Amount` — a bare `ModConnections.0/Amount` pin silently hits KeyDst, which precedes VelDst in the XML). Live was owner-occupied at render time (guardrail held: FOCUS-LOST, no keystrokes; a retry attempt found Safari frontmost and skipped). One relaunch-render cycle completes it |
+| D12 | Groove pool: does a set reference factory `.agr` by name, and does groove timing displace audio-clip playback? | `GR1_SWING` — GroovePool entry "Swing MPC 3000 8ths 74" (TimingAmount 100) + clip GrooveId, on the 1:1 Texture lineage; expected +0.24 beats (+120 ms) onset displacement | **STAGED, FORMAT UNVERIFIED (2026-10-07 evening)**: factory `.agr` = plain XML (`Ableton MajorVersion=5` → Groove → Name + Clip(MidiClip note onsets) + Grid/Quantization/Timing/Random/Velocity amounts) — groove timing lives in the file, not binary. `harness/groove_edit.py` writes a minimal `<GroovePool><Grooves><Groove Id LomId/Name/TimingAmount/VelocityAmount/RandomAmount/QuantizationAmount>` shape appended at LiveSet end + `<GrooveSettings><GrooveId>`; schema untested against the loader (LiveSet child position and Groove child set are guesses — let the loader log teach). `GR1_SWING.als` staged; analysis `harness/analyze_groove.py` ready |
+| D10 | Operator VelDst Connection enum: which destinations are velocity→level | one-connection-at-a-time sweep, slot0 Amount=100, Connection 2..6, same velocity ramp as M1 | **PARTIAL (2026-10-07, lane 3, `devices/midi-instruments.md` VD sweep)**: loader accepts all of 2..6 (no clamp/reject); Connections 2/3/4/6 audibly inert on the default patch (band-identity ≤0.12 dB); Connection 5 = velocity-INDEPENDENT +5.99 dB output gain. Combined with M1B (0/1 = pitch-family + −48 dB collapse): **no velocity→level destination exists in 0..6** on this patch. **Wavetable side DONE (2026-10-07, lane 4, WT1_AMPVEL/WT2_TRIM)**: device XML has NO velocity-named parameter (grep negative); the only nonzero amplitude-side mod routing ("Amp" row `Voice_Global_AmpModulation` ← source 5, amount 0.5) is LIVE but VELOCITY-INERT (doubling → −36.12 dB uniform, velocity-flat at both amounts); device `Volume` trim verified exact (−12.04 dB at ×0.25, positive control). **Wavetable verdict UPDATED (2026-10-08, inline ladder — devices/mod-matrix.md): D10 CLOSED POSITIVE. The mod matrix is 52 destinations × 13 sources (fully decoded from the default preset XML); source 10 = VELOCITY (behaviorally settled: 10→Amp at amount 1.0 gives a 21 dB velocity spread, bipolar character), source 0 = KEY (key-tracking confirmed, silent above ≈key 57), 1/2/3/4/6 = not velocity, 5 = static/constant. Wavetable velocity→level therefore EXISTS as the user-configurable route 10→Amp; the default patch leaves it at 0 — matching Operator's wired-but-unrouted design. The shell's device panel exposes the matrix.** Open (Operator): destination names/semantics (audio alone does not name them), connections >6, filter-active patch |
+
+New open items from this matrix: (a) ~~D1-continued final~~ **DONE (lane 4,
+D1-final — curve-family verdict, no display ratio exists)**; (b) D9-continued
+— warp modes at stretch ≠ 1 (marker pairs at ≠1:1), modes 0/3/4;
+(c) D10-continued — Operator VelDst destination names (binary callback map or
+a filter-active patch) **and Wavetable mod-source census: name the 13 source
+columns of `ModulationConnectionsForInstrumentVector` (binary
+`InstrumentVector` callback map or UI cross-reference) — needed before
+Wavetable velocity dynamics can be modeled**; (d) Echo TimeLink=false pair
+with tL/tR ratio ≠ 2; (e) Echo AmountDelay mechanism in synced mode.
+
+## Order of work
+
+1. Glue (canonical curve measured, crate gate green) → 2. Echo (tap table +
+   FB semantics measured) → 3. Reverb (IR + RT60 captured; FDN fit acceptable)
+   → 4. D1–D6 discriminating renders (cheap, same harness) → 5. D7 MIDI
+   harness.

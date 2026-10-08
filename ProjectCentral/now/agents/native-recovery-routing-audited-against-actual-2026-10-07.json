@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "native-recovery-routing-audited-against-actual-2026-10-07",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex:sol-saved-work",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791399627,
+  "subject": "Native recovery routing audited against actual saved work and disposable owner",
+  "result": "Actual-source app/host/native-owner routing regression passed on18 source hashes. Personal owner only2 exact checkpoint reads/0writes. Full Central pending request retained without replay; frame URLmode did not choose writer family; delayed genuine Chakralfocus4→5 checkpointed only Expressions after visiblework changedCentral; realcompetingwriter produced staleCAS refusal despite newerread withnooverwrite. Allscratchprocess/filesremoved. Rootfilesunmodifiedbychild. CleanChakral pre-editbasis checkpoint2142/draft2143/doc4/0compositionchanges documented. GUI Save acceptance root-owned/unclaimed. HostedCreate/fileOpen/unconfiguredwork requires admittedrecoveryaddress. Campaign new-shell/RECOVERY-ROUTING-AUDIT.md and recovery-route-checkpoint.json carry exact basis.",
+  "status": "active"
+}

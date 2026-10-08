@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "usage-wall-reached-resets-20261008-1613-2026-10-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:zcode-live-dynamics",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791447232,
+  "subject": "Usage wall reached (resets 2026-10-08 16:13): four lanes queued with briefs; parity + Operator agents still standing; landed work safe on main",
+  "result": "QUOTA STATE: subagent 5-hour window exhausted (1308, resets 2026-10-08 16:13:06). Two agents still standing: device-UI parity (editable Glue/Echo/Reverb panels + device-param API) and Operator voice model. QUEUED LANES (briefs already written in this conversation, resume by re-dispatching): (1) Glue per-block parameter layer decompile — closes the sign-inverted slow-attack residual (Ghidra project needs re-import: LiveRE.rep db corrupted, 52-min analysis, scripts at ~/tools/live-re/scripts); (2) Wavetable voice model phase 1 (offline census + WV2-4 probe renders + wavetable.rs with ORIGINAL generated tables — licence rule: document format, never bundle factory data); (3) engine realtime cpal output (--play mode); (4) mod-matrix sources 8/9/12 attribution (low priority). THIS STRETCH LANED ON MAIN (126343f91 + f15df9eec): UI ports batch 2 (12 device panels + 12 capture evidence PNGs), deep derivation (Glue Newton-loop equation derived; circuit model implemented; gates: in-sample+release PASS, slow-attack SIGN-INVERTED + recovery 1.6x fast = named residuals, curve model remains gate of record; per-block layer = next binary target offsets 0x190-0x1c0), Echo E1 gate PASS (taps/slopes exact, synced-time anchored, filter fitted), mod-matrix source attribution complete (0=Key, 10=Velocity, 9/11=envelopes, 5/4/6=statics, 8/12=LFO-family likely — D10 CLOSED POSITIVE), full-tree gates verified. Archive copy of everything: /Users/admin/tools/live-re/archive-20261007. RESUME PRIORITY at quota reset: parity+Operator land first (they hold context), then queue order 1-4 above.",
+  "status": "active"
+}

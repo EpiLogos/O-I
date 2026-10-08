@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "gateway-parity-r3-merged-b9a6b3fa1-walkbridge-2026-10-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent/oh-i",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791424614,
+  "subject": "Gateway parity r3 merged (b9a6b3fa1): walk-bridge fan-out invariant - a dying peer ends alone",
+  "result": "PR #626 squash-landed on main, all checks green. Every walk-bridge connection now carries a per-peer write budget (10s default, OI_BRIDGE_WRITE_TIMEOUT_MS override); a failed write - reset or budget expiry on a non-reading peer - ends that peer subscription alone while healthy keep-alive channels poll straight through (test-proven) and reads never time out (#616 never-initiate-close law preserved). The kernel lock stays released before socket writes so a wedged peer cannot stall handlers. Named limit: budget-expiry branch inspection-verified (hermetic over-buffer needs live material sizes). Three convergence rounds complete: r1 protocol verb + config law (3f31cfa42), r2 session verbs + readiness (030650b7d), r3 fan-out invariant (b9a6b3fa1). Remaining backlog: item 1 turn-streaming adapter (gated on ai-kit restore-gateway-ops lane), items 6/9 verification + UI work per adopted rulings, item 10 upstream Hermes.",
+  "status": "active"
+}
