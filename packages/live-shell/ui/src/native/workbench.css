@@ -1,0 +1,1233 @@
+
+
+.candidate-workbench {
+  color-scheme: light dark;
+
+  /* ===== section: foundation tokens ===== */
+  --oi-black: #050505;
+  --oi-white: #f7f7f4;
+  --oi-paper: #ffffff;
+  --oi-ink: #0a0a0a;
+  --oi-gold: #a8873f;
+  /* Canonical desktop ground / ink pairs also serve the deliberate inverse
+   * opening. One authority prevents the prepaint fallback drifting from the
+   * engine's palette or changing the person's saved appearance preference. */
+  --oi-canonical-light-canvas-ground: #fbfbf9;
+  --oi-canonical-light-foreground: #161614;
+  --oi-canonical-dark-canvas-ground: #121211;
+  --oi-canonical-dark-foreground: #e9e9e4;
+
+  /* ===== section: semantic tokens — surface / text / muted / rule roles ===== */
+  --oi-surface: var(--oi-paper);
+  --oi-foreground: var(--oi-ink);
+  --oi-muted: rgba(10, 10, 10, 0.58);
+  --oi-rule: rgba(10, 10, 10, 0.2);
+  --oi-focus: var(--oi-ink);
+  --oi-projection: rgba(10, 10, 10, 0.7);
+
+  /* ===== section: relation / focus / projection roles — scarce gold meta-relation ===== */
+  --oi-relation: rgba(10, 10, 10, 0.55);
+  --oi-meta-relation: var(--oi-gold);
+  /* World host hooks (site explore.css `world-presentation`): a world
+   * provider may override these to carry its own ground; they default to
+   * the paper/ink foundation. */
+  --oi-world-surface: var(--oi-paper);
+  --oi-world-foreground: var(--oi-ink);
+  /* World rule and muted: the same host hooks for hairlines and secondary text. */
+  --oi-world-rule: var(--oi-rule);
+  --oi-world-muted: var(--oi-muted);
+
+  /* ===== section: spacing / rhythm ===== */
+  --oi-space-1: 0.5rem;
+  --oi-space-2: 0.75rem;
+  --oi-space-3: 1rem;
+  --oi-space-4: 1.5rem;
+  --oi-space-5: 2rem;
+  --oi-space-6: 3rem;
+  --oi-space-7: 4rem;
+  --oi-section-x: clamp(1.25rem, 5vw, 5rem);
+  --oi-section-y: clamp(5rem, 10vw, 10rem);
+
+  /* ===== section: typography ===== */
+  --oi-shell-type-eyebrow: 10px;
+  --oi-shell-type-meta: 11px;
+  --oi-shell-type-ui: 12px;
+  --oi-shell-type-nav: 13px;
+  --oi-shell-type-body: 14px;
+  --oi-shell-type-prose: 15px;
+  --oi-shell-type-heading: 15px;
+  --oi-shell-type-title: 18px;
+  --oi-status-success: light-dark(#256b42, #69c489);
+  --oi-status-error: light-dark(#a3352b, #ef8179);
+  --oi-status-warning: light-dark(#745814, #d7b66a);
+  --oi-status-running: light-dark(#28619b, #79b8f3);
+  /* Family stacks — verbatim from the site body (index.css, explore.css)
+   * and the site code faces (pages.css, explore.css, direct-authoring.css). */
+  --oi-font-sans: 'Avenir Next', Avenir, 'Helvetica Neue', Arial, sans-serif;
+  --oi-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  /* Scale steps. */
+  --oi-type-xs: 0.68rem;
+  --oi-type-sm: 0.82rem;
+  --oi-type-md: 0.92rem;
+  --oi-type-body: clamp(1.02rem, 1.35vw, 1.28rem);
+  --oi-type-title: clamp(3rem, 6.5vw, 7rem);
+  --oi-type-display: clamp(3.5rem, 8vw, 8.5rem);
+  --oi-tracking-label: 0.14em;
+
+  /* ===== section: radii ===== */
+  /* From the site's authored-surface language (direct-authoring.css).
+   * The default house edge is square (radius 0) — radii are the exception,
+   * used only where the site already uses them. */
+  --oi-radius-xs: 4px;
+  --oi-radius-sm: 10px;
+  --oi-radius-md: 12px;
+  --oi-radius-lg: 14px;
+  --oi-radius-xl: 18px;
+  --oi-radius-pill: 999px;
+
+  /* ===== section: z-layers ===== */
+  /* The site's stacking altitudes: sticky app bars (40), the front-door
+   * nav above stage layers (50), sliding side panes (60), modal popover
+   * planes (80), floating notices above all (90). Local stacking inside
+   * a component (0–5) is not a house layer. */
+  --oi-z-nav: 40;
+  --oi-z-nav-top: 50;
+  --oi-z-drawer: 60;
+  --oi-z-popover: 80;
+  --oi-z-notice: 90;
+  /* Decorative expression fields ride with content (0–5 local band):
+   * particles are ink on the planes, never above dialogs or menus. */
+  --oi-z-expression: 1;
+  /* The Global Expression Stage planes (desktop): overlay expressions
+   * float over ordinary chrome but under every dialog, menu or popover;
+   * frontstate is the opening/welcome ground that may become the
+   * foreground experience. Consent and security surfaces stay above both
+   * (they ride above every token here). */
+  --oi-z-stage-overlay: 65;
+  --oi-z-stage-frontstate: 75;
+
+  /* ===== section: motion ===== */
+  --oi-motion-fast: 160ms;
+  --oi-motion-normal: 240ms;
+  --oi-motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  /* ===== section: focus / keyboard states ===== */
+  /* The keyboard ring: 2px of --oi-focus on :focus-visible (unanimous in
+   * site). Dense/app surfaces offset 3px (explore.css); spacious front-door
+   * surfaces offset 5px (index.css). */
+  --oi-focus-ring-width: 2px;
+  --oi-focus-ring-offset: 3px;
+  --oi-focus-ring-offset-loose: 5px;
+}
+  .candidate-workbench {
+    --oi-motion-fast: 0.01ms;
+    --oi-motion-normal: 0.01ms;
+  }
+.candidate-workbench {
+  --oi-syntax-meta: var(--oi-muted);
+  --oi-syntax-link: var(--oi-focus);
+  --oi-syntax-heading: var(--oi-foreground);
+  --oi-syntax-keyword: var(--oi-focus);
+  --oi-syntax-atom: var(--oi-foreground);
+  --oi-syntax-literal: var(--oi-foreground);
+  --oi-syntax-string: var(--oi-foreground);
+  --oi-syntax-special: var(--oi-focus);
+  --oi-syntax-definition: var(--oi-focus);
+  --oi-syntax-variable: var(--oi-foreground);
+  --oi-syntax-type: var(--oi-focus);
+  --oi-syntax-comment: var(--oi-muted);
+  --oi-syntax-invalid: var(--oi-focus);
+}
+
+.candidate-workbench {
+  /* ===== section: semantic tokens — surface / text / muted / rule roles ===== */
+  --oi-accent-ink: var(--oi-focus);
+  --oi-accent-ground: var(--oi-surface);
+  /* ===== section: spacing / rhythm ===== */
+  --oi-desktop-gap-xs: 4px;
+  --oi-desktop-gap-sm: 8px;
+  --oi-desktop-gap: 12px;
+  --oi-desktop-gap-lg: 20px;
+  --oi-desktop-bar: var(--oi-panel-head-height);
+  --oi-desktop-row: 30px;
+  --oi-desktop-hit-target: 28px;
+  --oi-desktop-rule: 1px;
+  --oi-reading-width: 660px;
+  --oi-dialog-width: calc(480px + var(--oi-space-6) + var(--oi-space-6));
+  --oi-spatial-min-height: 240px;
+  --oi-graph-point-min-radius: 0.45px;
+  --oi-graph-edge-width: 0.4px;
+  /* ===== section: typography ===== */
+  /* ===== section: motion ===== */
+}
+.candidate-workbench {
+  --oi-gesture-duration: 600ms;
+  --oi-expression-lease: 30000ms;
+  --oi-expression-field-width: 44px;
+  --oi-expression-field-height: 28px;
+}
+/* Original native pane grammar scoped to this receiving inhabitant. */
+/*
+ * Workbench, pane/tab chrome, context menu and the source/file surfaces.
+ * Every colour, spacing, size, and motion value comes from
+ * @epilogos/oi-design-system tokens — no raw values live here.
+ * The rest shape itself keeps rest.css untouched (austere rest preserved).
+ * Dead generations (the agency column, test bindings, the textarea-era
+ * source editor, the study empty-state) were removed 2026-09-15 once their
+ * replacements were structurally in place.
+ */
+
+:where(.candidate-workbench) .workbench {
+  position: relative;
+  display: flex;
+  height: 100%;
+}
+
+/* ---------------------------------------------------------------------------
+ * Surface host (APP-SPEC §5 — the canvas is a Surface host).
+ */
+
+:where(.candidate-workbench) .surface-host {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--oi-shell-ground);
+  padding: var(--oi-shell-gutter);
+  gap: var(--oi-shell-gutter);
+}
+
+:where(.candidate-workbench) .pane {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
+:where(.candidate-workbench) .pane.split[data-pane-dir="h"] {
+  flex-direction: row;
+}
+
+:where(.candidate-workbench) .pane.split[data-pane-dir="v"] {
+  flex-direction: column;
+}
+
+/* Splits no longer draw a rule between children — the split-resizer itself
+ * is the shell-ground gutter between two pane cards (brief FND-01). */
+:where(.candidate-workbench) .pane.split[data-pane-dir="h"] > .pane + .pane,
+:where(.candidate-workbench) .pane.split[data-pane-dir="v"] > .pane + .pane {
+  border: 0;
+}
+
+/* The split handle's visual (the shared resize-handle shape, desktop.css
+ * `.oi-resize-handle`): the gutter stays the quiet shell ground at rest —
+ * the two card edges already draw the seam — and a centred ink line appears
+ * while the handle is hovered, focused or dragged. The hit area reaches
+ * --oi-resize-hit across without moving any layout. Geometry and cursors
+ * stay with shell.css. */
+:where(.candidate-workbench) .pane.split > .split-resizer {
+  position: relative;
+  z-index: 2;
+  background: var(--oi-shell-ground);
+}
+:where(.candidate-workbench) .pane.split > .split-resizer::before {
+  content: "";
+  position: absolute;
+  inset: 0 calc((var(--oi-shell-gutter) - var(--oi-resize-hit)) / 2);
+}
+:where(.candidate-workbench) .pane.split > .split-resizer[aria-orientation="horizontal"]::before {
+  inset: calc((var(--oi-shell-gutter) - var(--oi-resize-hit)) / 2) 0;
+}
+:where(.candidate-workbench) .pane.split > .split-resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: transparent;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+:where(.candidate-workbench) .pane.split > .split-resizer[aria-orientation="horizontal"]::after {
+  top: 50%;
+  bottom: auto;
+  left: 0;
+  right: 0;
+  width: auto;
+  height: 2px;
+  margin: -1px 0 0;
+}
+:where(.candidate-workbench) .pane.split > .split-resizer:is(:hover, :focus-visible, :active)::after {
+  background: var(--oi-accent);
+}
+:where(.candidate-workbench) .pane.split > .split-resizer:focus-visible {
+  outline: none;
+}
+
+:where(.candidate-workbench) .pane.group {
+  position: relative;
+  flex-direction: column;
+  background: var(--oi-canvas-ground);
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  overflow: hidden;
+  transition: border-color var(--oi-motion-ui) var(--oi-motion-ease-out),
+              border-radius var(--oi-motion-plane) var(--oi-motion-ease-out),
+              opacity var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+/* A maximised group leaves the split's old weight and edge behind. This is
+ * especially visible when maximising the final child of a horizontal split. */
+:where(.candidate-workbench) .surface-host:has(.pane.group[data-maximized="true"]) { position: relative; }
+:where(.candidate-workbench) .surface-host:has(.pane.group[data-maximized="true"]) .pane.split { display: contents; }
+:where(.candidate-workbench) .pane.group[data-maximized="true"] { position: absolute; inset: var(--oi-shell-gutter); z-index: 1; }
+:where(.candidate-workbench) ::view-transition-old(root), :where(.candidate-workbench) ::view-transition-new(root) {
+  animation-duration: var(--oi-motion-plane);
+  animation-timing-function: var(--oi-motion-ease-out);
+}
+
+/* The focused group carries a top inset highlight on its tab bar; the
+ * unfocused group is not dimmed (brief B2 — delete the old opacity rule). */
+:where(.candidate-workbench) .pane.group.focused > .tab-strip {
+  box-shadow: inset 0 1px 0 var(--oi-accent-soft);
+}
+
+/* Finding 9: this re-introduces the dimming B2 deletes — the tab-bar inset
+ * highlight (above) already signals which group is focused; an unfocused
+ * group's active tab does not need its own muted colour on top of that. */
+
+/* ---------------------------------------------------------------------------
+ * Tab strip — one tab per open Surface binding (D16).
+ */
+
+:where(.candidate-workbench) .tab-strip {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  min-height: var(--oi-shell-tabbar);
+  height: var(--oi-shell-tabbar);
+  padding: 0 4px;
+  background: var(--oi-pane-bar-ground);
+  border-bottom: 1px solid var(--oi-hairline-soft);
+  overflow-x: auto;
+
+}
+
+:where(.candidate-workbench) .tab-strip.drop {
+  box-shadow: inset 0 2px 0 var(--oi-accent);
+}
+
+/* Activation and close are separate native accessibility actions. */
+:where(.candidate-workbench) .tab-entry {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+:where(.candidate-workbench) .tab.drop-before {
+  box-shadow: inset 2px 0 0 var(--oi-accent);
+}
+
+:where(.candidate-workbench) .tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:where(.candidate-workbench) .tab-pin {
+  flex: none;
+  color: var(--oi-accent);
+  font-size: var(--oi-shell-type-eyebrow);
+}
+
+:where(.candidate-workbench) .tab-entry > .tab-close {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: var(--oi-shell-radius-row);
+  background: transparent;
+  color: var(--oi-muted-2);
+  font-size: var(--oi-shell-type-ui);
+  line-height: 1;
+  opacity: 0.45;
+  cursor: pointer;
+  transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), opacity var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+/* With a hovering pointer an unfocused tab keeps its close control out of
+ * the strip until the tab is approached; touch keeps it faintly present. */
+@media (hover: hover) and (pointer: fine) {
+  :where(.candidate-workbench) .tab-entry > .tab-close { opacity: 0; }
+}
+
+:where(.candidate-workbench) .tab-entry:hover .tab-close,
+:where(.candidate-workbench) .tab.active + .tab-close,
+:where(.candidate-workbench) .tab-close:focus-visible {
+  opacity: 1;
+}
+
+:where(.candidate-workbench) .tab-close:hover,
+:where(.candidate-workbench) .tab-close:focus-visible {
+  color: var(--oi-accent-ink);
+  background: var(--oi-wash-strong);
+  outline: none;
+}
+
+:where(.candidate-workbench) .tab-close:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-accent);
+  outline-offset: calc(0px - var(--oi-focus-ring-width));
+}
+
+/* Pane tools — '+' (open source) and the '⋯' window menu, at the strip's
+ * right (brief FND-01 "Pane tools at the right of the bar"). */
+:where(.candidate-workbench) .pane-tools {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  margin-left: auto;
+  flex: none;
+  background: var(--oi-pane-bar-ground);
+  padding-left: 4px;
+}
+
+:where(.candidate-workbench) .strip-open,
+:where(.candidate-workbench) .pane-tool-menu {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: var(--oi-shell-radius-row);
+  background: transparent;
+  color: var(--oi-muted-2);
+  cursor: pointer;
+  transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out), box-shadow var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+:where(.candidate-workbench) .strip-open svg,
+:where(.candidate-workbench) .pane-tool-menu svg {
+  flex: none;
+  width: 13px;
+  height: 13px;
+}
+
+:where(.candidate-workbench) .strip-open:hover,
+:where(.candidate-workbench) .strip-open:focus-visible,
+:where(.candidate-workbench) .pane-tool-menu:hover,
+:where(.candidate-workbench) .pane-tool-menu:focus-visible,
+:where(.candidate-workbench) .pane-tool-menu[aria-expanded="true"],
+:where(.candidate-workbench) .pane-tool-menu[aria-pressed="true"] {
+  color: var(--oi-accent-ink);
+  background: var(--oi-wash);
+  outline: none;
+}
+
+:where(.candidate-workbench) .strip-open:active,
+:where(.candidate-workbench) .pane-tool-menu:active {
+  background: var(--oi-wash-strong);
+}
+
+/* A held tool (an open menu, a pressed toggle) keeps an inset edge so the
+ * state does not rest on the wash alone; the keyboard ring is drawn inside
+ * the strip, which clips anything outside it. */
+:where(.candidate-workbench) .pane-tool-menu[aria-expanded="true"],
+:where(.candidate-workbench) .pane-tool-menu[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 1px var(--oi-hairline);
+}
+
+:where(.candidate-workbench) .strip-open:focus-visible,
+:where(.candidate-workbench) .pane-tool-menu:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-accent);
+  outline-offset: calc(0px - var(--oi-focus-ring-width));
+}
+
+/* ---------------------------------------------------------------------------
+ * Surface bodies — the pane's one scroll owner beneath its tab strip.
+ */
+
+:where(.candidate-workbench) .surface-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--oi-space-3);
+}
+
+/* Retention tier (owner-approved 2026-09-19): the pane presents one open
+ * tab and keeps its siblings mounted-concealed. The wrapper is layout-
+ * transparent while presented (the body roots keep the sizing they had as
+ * direct children) and genuinely off-screen while concealed — display:none
+ * skips layout and paint, which is what the surfaces' own viewport
+ * suspension laws (MaterialSurface's useSuspend, engine visibility gates)
+ * observe to pause honestly. */
+:where(.candidate-workbench) .surface-retained { display: contents; }
+:where(.candidate-workbench) .surface-retained[hidden] { display: none; }
+
+/* ---------------------------------------------------------------------------
+ * Context menu — the canonical-Actions disclosure UI (D15).
+ */
+
+@keyframes ctx-menu-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* The menu body is the shared popover (desktop.css `.oi-menu`): a glass
+ * plane with tight rows, a glyph column, mono shortcut hints at the right.
+ * `.ctx-menu` stays self-sufficient because the editor's writing menu
+ * composes it without the grammar class. */
+:where(.candidate-workbench) .ctx-menu {
+  position: fixed;
+  z-index: var(--oi-z-popover);
+  width: 232px;
+  padding: 4px;
+  background: var(--oi-sidebar-ground);
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius-menu);
+  box-shadow: var(--oi-shadow-menu);
+  font-family: var(--oi-font-sans);
+  font-size: var(--oi-shell-type-nav);
+  color: var(--oi-accent-ink);
+  transform-origin: top left;
+  animation: ctx-menu-in var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :where(.candidate-workbench) .ctx-menu {
+    background: var(--oi-popover-ground-glass);
+    -webkit-backdrop-filter: blur(var(--oi-popover-blur)) saturate(1.3);
+    backdrop-filter: blur(var(--oi-popover-blur)) saturate(1.3);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+  :where(.candidate-workbench) .ctx-menu { background: var(--oi-sidebar-ground); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+:where(.candidate-workbench) .ctx-menu:focus-visible { outline: none; }
+
+:where(.candidate-workbench) .ctx-menu-subject {
+  display: block;
+  padding: 6px 8px 5px;
+  font-family: var(--oi-font-sans);
+  font-size: var(--oi-shell-type-eyebrow);
+  font-weight: 500;
+  letter-spacing: var(--oi-shell-tracking);
+  text-transform: uppercase;
+  color: var(--oi-muted-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:where(.candidate-workbench) .ctx-menu hr {
+  border: 0;
+  border-top: 1px solid var(--oi-hairline-soft);
+  margin: 4px;
+}
+
+:where(.candidate-workbench) .ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--oi-shell-menu-row);
+  box-sizing: border-box;
+  text-align: left;
+  border: none;
+  border-radius: var(--oi-shell-radius-row);
+  background: transparent;
+  padding: 4px 8px;
+  font-family: inherit;
+  font-size: var(--oi-shell-type-nav);
+  color: var(--oi-accent-ink);
+  cursor: pointer;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+:where(.candidate-workbench) .ctx-item-glyph {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  color: var(--oi-muted-2);
+  transition: color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+:where(.candidate-workbench) .ctx-item-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:where(.candidate-workbench) .ctx-item kbd {
+  flex: none;
+  padding-left: 12px;
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-shell-type-ui);
+  letter-spacing: 0.02em;
+  color: var(--oi-muted-2);
+}
+
+:where(.candidate-workbench) .ctx-item:not([disabled]):hover,
+:where(.candidate-workbench) .ctx-item:not([disabled]):focus-visible {
+  background: var(--oi-wash);
+  outline: none;
+}
+
+:where(.candidate-workbench) .ctx-item:not([disabled]):hover .ctx-item-glyph,
+:where(.candidate-workbench) .ctx-item:not([disabled]):focus-visible .ctx-item-glyph {
+  color: inherit;
+}
+
+:where(.candidate-workbench) .ctx-item:not([disabled]):active {
+  background: var(--oi-wash-strong);
+}
+
+:where(.candidate-workbench) .ctx-item[disabled] {
+  color: var(--oi-muted-2);
+  opacity: 0.4;
+  cursor: default;
+}
+
+@media (pointer: coarse) {
+  :where(.candidate-workbench) .ctx-item { min-height: 36px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.candidate-workbench) .ctx-menu { animation: none; }
+  :where(.candidate-workbench) .ctx-item, :where(.candidate-workbench) .ctx-item-glyph { transition: none; }
+}
+
+/* ---------------------------------------------------------------------------
+ * Source surfaces (U0.4) — the kernel seam's minimal editor and the
+ * participating-sources index. Every value from oi-design-system tokens.
+ */
+
+:where(.candidate-workbench) .tab-dirty {
+  color: var(--oi-accent);
+  font-size: var(--oi-shell-type-eyebrow);
+}
+
+/* The editor: the textarea IS the cradle-held buffer (presentation layer);
+ * the status line shows the Central-owned canonical revision. */
+
+:where(.candidate-workbench) .source-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+}
+
+:where(.candidate-workbench) .source-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 35px;
+  flex: none;
+  padding: 0 15px;
+  background: var(--oi-pane-bar-ground);
+  border-bottom: 1px solid var(--oi-hairline-soft);
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-muted-2);
+}
+
+:where(.candidate-workbench) .source-revision {
+  letter-spacing: var(--oi-shell-tracking);
+}
+
+:where(.candidate-workbench) .source-dirty-marker,
+:where(.candidate-workbench) .source-clean-marker {
+  flex: none;
+  font-size: var(--oi-shell-type-eyebrow);
+  letter-spacing: var(--oi-shell-tracking);
+  text-transform: uppercase;
+}
+
+:where(.candidate-workbench) .source-dirty-marker {
+  color: var(--oi-accent-ink);
+}
+
+:where(.candidate-workbench) .source-clean-marker {
+  color: var(--oi-muted-2);
+}
+
+/* Finding 11: Refresh/History/Save used to inherit the old --oi-rule/
+ * --oi-surface bordered-button look (and, before finding 1's fix, the
+ * shell's blanket button padding inflated them past the 35px row). A quiet
+ * 22px body with a wash hover matches the pane-tools grammar (`.strip-open`
+ * / `.pane-tool-menu`) these controls sit beside. Covers both the classed
+ * controls in SourceSurface.tsx (.source-history-toggle / .source-save) and
+ * the plain <button>s FileSurface.tsx renders in the same row. */
+:where(.candidate-workbench) .source-status button {
+  height: 22px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 5px;
+  font: inherit;
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-muted-2);
+  background: transparent;
+  cursor: pointer;
+  transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+:where(.candidate-workbench) .source-status button:hover,
+:where(.candidate-workbench) .source-status button:focus-visible {
+  color: var(--oi-accent-ink);
+  background: var(--oi-wash);
+  outline: none;
+}
+:where(.candidate-workbench) .source-status button:disabled {
+  opacity: .4;
+  cursor: default;
+}
+:where(.candidate-workbench) .source-status .source-save,
+:where(.candidate-workbench) .source-status button.source-save {
+  margin-left: auto;
+}
+
+/* The scrollable middle of a source/file surface: the editor body plus any
+ * open history / conflict disclosure, all above the fixed footer. The
+ * CodeMirror editor (text-editor.css) sizes itself inside `.source-editor-body`. */
+:where(.candidate-workbench) .source-editor-scroll {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+:where(.candidate-workbench) .source-editor-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: auto;
+  padding: 7px 15px 20px 0;
+}
+
+/* Finding 24: gold is the scarce meta-relation role only — a revision
+ * conflict is not a meta-relation, it is the accent's own "needs attention"
+ * signal, same as the dirty marker and the tab-active underline. */
+:where(.candidate-workbench) .source-editor.conflicted .cm-editor {
+  box-shadow: inset 2px 0 0 var(--oi-accent);
+}
+
+:where(.candidate-workbench) .source-note {
+  margin: 0;
+  padding: 10px 16px;
+  font-size: var(--oi-shell-type-ui);
+  line-height: 1.5;
+  color: var(--oi-accent-ink);
+  overflow-wrap: anywhere;
+}
+
+:where(.candidate-workbench) .source-note-muted {
+  color: var(--oi-muted-2);
+}
+
+/* The structured conflict: both sides preserved, nothing overwritten. It is
+ * a `role="alert"`, so it already wears the shared refusal shape (left ink
+ * rule on the wash); these rules only lay out its contents. */
+
+:where(.candidate-workbench) .source-conflict {
+  flex: none;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(var(--oi-space-7) * 6);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+:where(.candidate-workbench) .desktop-shell .source-conflict[role="alert"] {
+  margin: 0;
+  border-radius: 0;
+  border-top: 1px solid var(--oi-hairline-soft);
+}
+
+:where(.candidate-workbench) .source-conflict p { margin: 0; }
+
+:where(.candidate-workbench) .source-conflict-title {
+  font-size: var(--oi-shell-type-nav);
+  font-weight: 550;
+  color: var(--oi-accent-ink);
+}
+
+:where(.candidate-workbench) .source-conflict-revisions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 0;
+}
+
+:where(.candidate-workbench) .source-conflict-revisions dt,
+:where(.candidate-workbench) .source-conflict-canonical-label {
+  font-size: var(--oi-shell-type-eyebrow);
+  font-weight: 500;
+  letter-spacing: var(--oi-shell-tracking);
+  text-transform: uppercase;
+  color: var(--oi-muted-2);
+}
+
+:where(.candidate-workbench) .source-conflict-revisions dd {
+  margin: 2px 0 0;
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-accent-ink);
+  overflow-wrap: anywhere;
+}
+
+:where(.candidate-workbench) .source-conflict-sides,
+:where(.candidate-workbench) .source-conflict-hint {
+  font-size: var(--oi-shell-type-ui);
+  line-height: 1.5;
+  color: var(--oi-muted);
+}
+
+:where(.candidate-workbench) .source-conflict-canonical {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+:where(.candidate-workbench) .source-conflict-canonical-body {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--oi-hairline);
+  border-radius: 6px;
+  background: var(--oi-canvas-ground);
+  color: var(--oi-foreground);
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-shell-type-ui);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow: auto;
+  max-height: calc(var(--oi-space-7) * 3);
+}
+
+/* Hairline text actions in the shared `.oi-action` register. */
+:where(.candidate-workbench) .source-reread,
+:where(.candidate-workbench) .source-history button {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 9px;
+  border: 1px solid var(--oi-hairline);
+  border-radius: 6px;
+  background: var(--oi-composer-ground);
+  color: var(--oi-foreground);
+  font: inherit;
+  font-size: var(--oi-shell-type-nav);
+  cursor: pointer;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), border-color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+:where(.candidate-workbench) .source-reread:hover,
+:where(.candidate-workbench) .source-reread:focus-visible,
+:where(.candidate-workbench) .source-history button:hover:not(:disabled),
+:where(.candidate-workbench) .source-history button:focus-visible {
+  background: var(--oi-wash);
+  border-color: var(--oi-accent-soft);
+}
+
+:where(.candidate-workbench) .source-history button:disabled {
+  color: var(--oi-muted-2);
+  cursor: default;
+}
+
+/* The sources index: real participating sources, honest unavailability. */
+
+:where(.candidate-workbench) .sources-index {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 16px 18px;
+  gap: 10px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+:where(.candidate-workbench) .sources-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 0 8px;
+}
+
+:where(.candidate-workbench) .sources-head p { margin: 0; }
+
+:where(.candidate-workbench) .sources-title {
+  font-size: var(--oi-shell-type-eyebrow);
+  font-weight: 500;
+  letter-spacing: var(--oi-shell-tracking);
+  text-transform: uppercase;
+  color: var(--oi-muted-2);
+}
+
+:where(.candidate-workbench) .sources-project {
+  font-size: var(--oi-shell-type-nav);
+  color: var(--oi-accent-ink);
+}
+
+:where(.candidate-workbench) .sources-unavailable {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px dashed var(--oi-hairline);
+  border-radius: 6px;
+  font-size: var(--oi-shell-type-ui);
+  line-height: 1.5;
+  color: var(--oi-muted);
+  overflow-wrap: anywhere;
+}
+
+:where(.candidate-workbench) .sources-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* A source row is the shared dense row: path in mono, its treatment and
+ * revision as trailing meta. */
+:where(.candidate-workbench) .source-row-open {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--oi-shell-row-dense);
+  box-sizing: border-box;
+  text-align: left;
+  border: 0;
+  border-radius: var(--oi-shell-radius-row);
+  background: transparent;
+  padding: 3px 8px;
+  font-size: var(--oi-shell-type-nav);
+  color: var(--oi-accent-ink);
+  cursor: pointer;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+:where(.candidate-workbench) .source-row-open:hover,
+:where(.candidate-workbench) .source-row-open:focus-visible {
+  background: var(--oi-wash);
+}
+
+:where(.candidate-workbench) .source-row-open:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-accent);
+  outline-offset: calc(0px - var(--oi-focus-ring-width));
+}
+
+:where(.candidate-workbench) .source-row-path {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-shell-type-ui);
+  overflow-wrap: anywhere;
+}
+
+:where(.candidate-workbench) .source-row-treatment,
+:where(.candidate-workbench) .source-row-revision {
+  flex: none;
+  font-size: var(--oi-shell-type-meta);
+  color: var(--oi-muted-2);
+  white-space: nowrap;
+}
+
+:where(.candidate-workbench) .source-row-revision {
+  font-family: var(--oi-font-mono);
+}
+
+:where(.candidate-workbench) .source-save:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); }
+
+:where(.candidate-workbench) .source-history { flex-shrink: 0; max-height: 35vh; padding: 12px 16px; border-top: 1px solid var(--oi-hairline-soft); overflow: auto; overscroll-behavior: contain; font-size: var(--oi-shell-type-ui); }
+:where(.candidate-workbench) .source-history-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+:where(.candidate-workbench) .source-history h2 { margin: 0; font-size: var(--oi-shell-type-nav); font-weight: 550; color: var(--oi-accent-ink); }
+:where(.candidate-workbench) .source-history .source-note { padding: 4px 0 8px; }
+:where(.candidate-workbench) .source-history-rows { list-style: none; margin: 0; padding: 0; }
+:where(.candidate-workbench) .source-history-rows li { padding: 8px 0; border-bottom: 1px solid var(--oi-hairline-soft); }
+:where(.candidate-workbench) .source-history-rows li:last-child { border-bottom: 0; }
+:where(.candidate-workbench) .source-history time { margin-left: 10px; color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); font-variant-numeric: tabular-nums; }
+:where(.candidate-workbench) .source-history details { margin-top: 6px; font-size: var(--oi-shell-type-ui); color: var(--oi-muted); }
+:where(.candidate-workbench) .source-history summary { cursor: pointer; }
+:where(.candidate-workbench) .source-history dd { margin: 0 0 4px; overflow-wrap: anywhere; font-family: var(--oi-font-mono); }
+:where(.candidate-workbench) .source-history dt { color: var(--oi-muted-2); }
+
+/* Owner cleanup: tabs scroll independently; pane actions stay within reach. */
+:where(.candidate-workbench) .tab-strip { overflow: hidden; }
+:where(.candidate-workbench) .tab-scroll { display: flex; flex: 1; min-width: 0; overflow-x: auto;  }
+
+:where(.candidate-workbench) .pane-tools { margin-left: 0; }
+:where(.candidate-workbench) .pane.group.focused > .tab-strip { box-shadow: none; }
+:where(.candidate-workbench) .pane-status { flex: none; min-height: 18px; display: flex; align-items: center; gap: 8px; padding: 0 10px; background: var(--oi-canvas-ground); border-top: 1px solid var(--oi-hairline-soft); font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); white-space: nowrap; overflow: hidden; }
+
+/* A status edge expands in flow, gently making room for its content. */
+:where(.candidate-workbench) .pane.group{position:relative;overflow:hidden}
+/* Pane footers follow focus: unfocused panes keep their footers up; the
+   newly focused pane's footer drops — now FULLY (height 0, no 3px
+   residue strip). No hover reveal: the pane's bottom-right dot pins the
+   footer up ([data-footer-up]) for as long as it is pressed. */
+:where(.candidate-workbench) .pane.group.focused:not([data-footer-up]) :is(.editor-footer,.terminal-footer,.browser-status),:where(.candidate-workbench) .pane.group.focused:not([data-footer-up]) > .pane-footer{position:relative;inset:auto;flex:none;z-index:15;height:0;min-height:0;padding-top:0;padding-bottom:0;border-top:none;overflow:hidden;transform:none;background:var(--oi-canvas-ground);transition:height 420ms cubic-bezier(.22,.7,.25,1),min-height 420ms cubic-bezier(.22,.7,.25,1)}
+:where(.candidate-workbench) .pane.group.focused:not([data-footer-up]) :is(.editor-footer,.terminal-footer,.browser-status)>*{visibility:hidden}
+:where(.candidate-workbench) .desktop-shell .pane-footer-dot{position:absolute;right:7px;bottom:5px;width:6px;height:6px;padding:0;border:1px solid var(--oi-muted-2);border-radius:999px;background:transparent;cursor:pointer;z-index:16;transition:border-color var(--oi-motion-ui) var(--oi-motion-ease-out),background var(--oi-motion-ui) var(--oi-motion-ease-out),transform var(--oi-motion-ui) var(--oi-motion-ease-out)}
+:where(.candidate-workbench) .desktop-shell .pane-footer-dot:hover{border-color:var(--oi-accent-ink);transform:scale(1.25)}
+:where(.candidate-workbench) .desktop-shell .pane-footer-dot[aria-pressed="true"]{background:var(--oi-accent-ink);border-color:var(--oi-accent-ink)}
+/* Footer content keeps clear of the corner dot. */
+:where(.candidate-workbench) .desktop-shell .pane.group :is(.editor-footer,.terminal-footer,.browser-status),:where(.candidate-workbench) .desktop-shell .pane.group > .pane-footer{padding-right:24px}
+
+
+/* Writing surfaces already own a footer: keep one bottom status band. */
+:where(.candidate-workbench) .pane.group:has(.editor-footer, .browser-status, .terminal-footer) > .pane-status { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.candidate-workbench) .pane.group, :where(.candidate-workbench) .pane-footer, :where(.candidate-workbench) .editor-footer, :where(.candidate-workbench) .browser-status, :where(.candidate-workbench) .terminal-footer { transition-duration: 0.01ms !important; }
+}
+
+/* Tab hiding has ONE law: the unpinned reveal (see the tab-presentation
+ * section below) — the old `data-tab-focus` fold and its `.tab-focus-reveal`
+ * button are gone. `data-tab-focus` only marks the frame's tab focus; it
+ * never hides the bar, so the two mechanisms can no longer fight. */
+
+/* The die face of a native Day document: the supplied shell projected with
+ * the owner's canonical payload, read-only, beside the ordinary strips.
+ * Same opaque-origin posture as the material frames (no allow-same-origin,
+ * so the face can never reach the desktop bridge). */
+:where(.candidate-workbench) .die-face {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: var(--oi-canvas-ground);
+}
+
+/* The Rendered / Source toggle composes the shared `.oi-segment`; these
+ * rules only seat it in the editor's command line, whose own button rule
+ * would otherwise size the segments as toolbar buttons. */
+:where(.candidate-workbench) .source-view-toggle {
+  margin-right: 8px;
+}
+
+:where(.candidate-workbench) .die-face-unavailable,
+:where(.candidate-workbench) .die-face-loading {
+  margin: 0;
+  padding: 14px 16px;
+  font-size: var(--oi-shell-type-ui);
+  line-height: 1.5;
+  color: var(--oi-muted-2);
+}
+
+/* The die face hosts the owner's field writes: a compact sync line above the
+ * frame reports what is saving, what saved, what the owner refused
+ * (verbatim), and which edited regions have no owner field mapping. */
+:where(.candidate-workbench) .die-face-host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+:where(.candidate-workbench) .die-face-sync {
+  padding: 4px 15px;
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-muted-2);
+}
+:where(.candidate-workbench) .die-face-sync p { margin: 2px 0; }
+:where(.candidate-workbench) .die-face-sync-saving { color: var(--oi-accent-ink); }
+:where(.candidate-workbench) .die-face-sync-refused { color: var(--oi-accent-ink); font-weight: 500; }
+:where(.candidate-workbench) .source-reread-day {
+  margin-right: 8px;
+}
+/* The opening gates interaction without changing the workspace's layout.
+ * The inverse ground itself belongs to the splash (visuals/welcome.css). */
+:where(.candidate-workbench) .oi-workspace-mount { display: contents; }
+
+/* ---------------------------------------------------------------------------
+ * Tab presentation — the pin model (LayoutState.tabPresentation,
+ * workspace/mode.ts). Pinned horizontal is the strip above; pinned vertical
+ * is a resizable list beside the body; unpinned folds the tabs to a slim
+ * reveal edge.
+ *
+ * ONE hiding law: only an unpinned pane hides its tabs, and it follows the
+ * workspace footer's reveal grammar (.workspace-footer-edge, shell.css) — a
+ * hairline edge at rest that opens IN FLOW on hover or focus-within (the
+ * surface gives room; nothing overlays) and collapses when they leave. The
+ * reveal zone is generous exactly where the tab icons live: the full top
+ * edge with extra depth over the pane tools (horizontal geometry), the
+ * bottom of the strip region (vertical geometry — where the pane tools now
+ * sit). Nothing about a tab changes but where it is drawn: activation,
+ * close, pin, drag, the context menu and the keyboard map are the strip's
+ * own.
+ */
+
+/* The pin glyph reads the pane's state: upright pinned vertical (fixed to the
+ * left edge), rotated flat pinned horizontal, tilted off unpinned. */
+:where(.candidate-workbench) .pane-tool-pin svg { transition: transform var(--oi-motion-ui) var(--oi-motion-ease-out); }
+:where(.candidate-workbench) .pane-tool-pin[data-tab-presentation="pinned-horizontal"] svg { transform: rotate(-90deg); }
+:where(.candidate-workbench) .pane-tool-pin[data-tab-presentation="unpinned"] svg { transform: rotate(45deg); opacity: 0.7; }
+
+/* Vertical presentation — pinned, or unpinned revealing in the vertical
+ * geometry: the strip is the pane's left column (the persisted
+ * LayoutState.tabListWidth arrives as the pane's --tab-list-width), and the
+ * pane tools sit at the column's foot so the icons live exactly where the
+ * vertical reveal zone waits. */
+:where(.candidate-workbench) .pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+:where(.candidate-workbench) .pane.group[data-tab-presentation="pinned-vertical"] { grid-template-columns: var(--tab-list-width, clamp(132px, 22%, 208px)) minmax(0, 1fr); }
+:where(.candidate-workbench) .pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) > .tab-strip { grid-column: 1; grid-row: 1 / span 2; position: relative; z-index: 26; flex-direction: column; align-items: stretch; height: auto; min-height: 0; min-width: 0; padding: 0; overflow: hidden; border-bottom: 0; border-right: 1px solid var(--oi-hairline-soft); }
+:where(.candidate-workbench) .pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) > .surface-body { grid-column: 2; grid-row: 1; min-width: 0; }
+:where(.candidate-workbench) .pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) > .pane-status { grid-column: 2; grid-row: 2; }
+:where(.candidate-workbench) .pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) > .tab-strip > .pane-tools { justify-content: flex-end; height: var(--oi-shell-tabbar); min-height: var(--oi-shell-tabbar); margin: 0; padding: 0 4px; border-top: 1px solid var(--oi-hairline-soft); }
+:where(.candidate-workbench) .pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) > .tab-strip > .tab-scroll { flex: 1; min-height: 0; flex-direction: column; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 4px; gap: 1px; }
+:where(.candidate-workbench) .pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) .tab-entry { display: flex; flex: none; width: 100%; }
+:where(.candidate-workbench) .pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) .tab-entry > .tab { flex: 1; min-width: 0; max-width: none; height: 28px; padding: 0 28px 0 8px; border-right: 0; border-radius: 5px; }
+:where(.candidate-workbench) .pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) .tab-entry > .tab-close { right: 4px; }
+:where(.candidate-workbench) .pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) .tab.drop-before { box-shadow: inset 0 2px 0 var(--oi-accent); }
+
+/* Unpinned, horizontal geometry: the bar folds to a hairline band along the
+ * pane's top and opens in flow on approach — the surface shrinks, nothing
+ * overlays. Focus-within keeps it open (the footer's own law), so a keyboard
+ * user never loses their place inside the folded strip. */
+:where(.candidate-workbench) .pane.group[data-tab-presentation="unpinned"][data-tab-orientation="horizontal"] > .tab-strip { position: relative; z-index: 26; height: 0px; min-height: 0; padding: 0; border-bottom-width: 0; overflow: hidden; transition: height var(--oi-motion-ui) var(--oi-motion-ease-out), min-height var(--oi-motion-ui) var(--oi-motion-ease-out); }
+:where(.candidate-workbench) .pane.group[data-tab-presentation="unpinned"][data-tab-orientation="horizontal"]:is(:has(> .tab-reveal-zone:hover), :has(> .tab-strip:hover), :has(> .tab-strip :focus-within)) > .tab-strip { height: var(--oi-shell-tabbar); min-height: var(--oi-shell-tabbar); padding: 0 4px; }
+
+/* Unpinned, vertical geometry: the column folds to a hairline edge and the
+ * grid track itself re-opens in flow. */
+:where(.candidate-workbench) .pane.group[data-tab-presentation="unpinned"][data-tab-orientation="vertical"] { grid-template-columns: 0px minmax(0, 1fr); transition: grid-template-columns var(--oi-motion-plane) var(--oi-motion-ease-out); }
+:where(.candidate-workbench) .pane.group[data-tab-presentation="unpinned"][data-tab-orientation="vertical"] > .tab-strip { border-right-width: 0; }
+:where(.candidate-workbench) .pane.group[data-tab-presentation="unpinned"][data-tab-orientation="vertical"]:is(:has(> .tab-reveal-zone:hover), :has(> .tab-strip:hover), :has(> .tab-strip :focus-within)) { grid-template-columns: var(--tab-list-width, clamp(132px, 22%, 208px)) minmax(0, 1fr); }
+
+/* The window-corner reserve (shell.css) is a horizontal-strip concern — the
+ * shared window row's cutouts. A vertical or folded list has no top edge in
+ * that row, and its border-box could never shrink below that padding, so the
+ * folded 6px track would stay 39px wide. The vertical strip's padding is its own. */
+:where(.candidate-workbench) .desktop-shell .desktop-centre .workbench .pane.group:is([data-tab-presentation="pinned-vertical"],[data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) > .tab-strip { padding: 0; }
+
+/* A dedicated mode stands full screen: its own surface, no pane/tab chrome.
+ * The window-corner attribute carries the same top cutouts a tabbed pane
+ * gets, so a dedicated mode never reads as an incomplete page. */
+:where(.candidate-workbench) .mode-stage { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--oi-canvas-ground); overflow: auto;
+  /* Owner refinement 2026-09-18: the centre fixture wears the same card as
+   * the Central workbench pane — canvas ground, hairline bevel, one radius —
+   * so the chrome is coherent whatever mode holds the centre. */
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius); }
+/* Scrolling inherits the global design-system law. */
+
+/* The stage and everything it holds never show a scrollbar. */
+:where(.candidate-workbench) .mode-stage,:where(.candidate-workbench) .mode-stage * { scrollbar-width: none; }
+:where(.candidate-workbench) .mode-stage::-webkit-scrollbar,:where(.candidate-workbench) .mode-stage *::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+
+/* The per-mode stage slots (CradleFrame.tsx): a slot is ALWAYS PRESENT and
+ * hides by visibility alone — the authored display:flex above would
+ * otherwise override the UA [hidden] rule, and an off stage must genuinely
+ * paint nothing while its application stays mounted inside. */
+:where(.candidate-workbench) .mode-stage[hidden] { display: none; }
+/* Children keep their natural height against a full-stage floor: short
+ * surfaces still fill the stage, tall ones (Factory's desk sections) grow
+ * and THIS stage is their scroll owner. */
+:where(.candidate-workbench) .mode-stage > * { flex: none; min-width: 0; min-height: 100%; }
+
+/* Mode-centre retention (surface/retention.tsx): the former hidden park
+ * layer and its adopt outlets are retired (spec §7.1) — every centre mounts
+ * in place, in the stage slot or the pane's own `.surface-retained`
+ * wrapper, so no park layer, layout-transparent wrappers or depth-matched
+ * child rules are needed here any more. `.mode-stage > *` above now reaches
+ * the centre body directly. */
+/* The warm trees (surface/retention.tsx): each warm tree renders whole at a
+ * stable position; visibility flips, the DOM never moves — a hidden tree's
+ * documents, editors and sessions stay alive for its return. */
+:where(.candidate-workbench) .mode-stage-slot { display: contents; }
+:where(.candidate-workbench) .warm-tree-host { display: contents; }
+:where(.candidate-workbench) .warm-tree-host[hidden] { display: none; }
+/* The rest frame (CradleFrame.tsx): one stable sibling beside the stages
+ * and the warm trees — the empty active tree only decides whether it
+ * paints, never whether it exists (branching it moved the tree hosts'
+ * positions and remounted them on every first mode visit). */
+:where(.candidate-workbench) .rest-host { display: contents; }
+:where(.candidate-workbench) .rest-host[hidden] { display: none; }
+
+/* The reveal zone: an invisible, generous approach area rendered only while
+ * unpinned (Workbench.tsx) — a pseudo-element cannot carry :hover. It sits
+ * beneath the strip (z 25 < 26) so an open bar is never blocked by it. */
+:where(.candidate-workbench) .pane.group > .tab-reveal-zone { position: absolute; z-index: 25; }
+/* Horizontal: the full top edge, with extra depth over the pane-tool icons. */
+:where(.candidate-workbench) .pane.group > .tab-reveal-zone[data-orientation="horizontal"] { top: 0; left: 0; right: 0; height: 8px; }
+:where(.candidate-workbench) .pane.group > .tab-reveal-zone[data-orientation="horizontal"]::after { content: ""; position: absolute; top: 0; right: 0; width: 132px; height: 32px; }
+/* Vertical: the bottom of the strip region, at the column's full open width. */
+/* Owner correction 2026-09-18: the vertical reveal answers along the FULL
+ * height of the drawer's edge — one narrow invisible band, not a pocket at
+ * the foot. When the drawer stands open the strip (z 26) covers the band. */
+:where(.candidate-workbench) .pane.group > .tab-reveal-zone[data-orientation="vertical"] { left: 0; top: 0; bottom: 0; width: 14px; height: auto; }
+
+/* The vertical list's width separator (the .region-resizer grammar,
+ * shell.css): a transparent hit area on the strip's inner edge whose
+ * hairline inks on approach; the geometry it moves is the pane's
+ * --tab-list-width. */
+:where(.candidate-workbench) .pane.group > .tab-list-resizer { position: absolute; top: 0; bottom: 0; left: calc(var(--tab-list-width, clamp(132px, 22%, 208px)) - 4px); width: 9px; cursor: col-resize; z-index: 27; touch-action: none; background: transparent; }
+:where(.candidate-workbench) .pane.group > .tab-list-resizer::after { content: ""; position: absolute; top: 0; bottom: 0; left: 4px; width: 1px; background: transparent; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out); }
+:where(.candidate-workbench) .pane.group > .tab-list-resizer:is(:hover, :focus-visible, :active)::after { background: var(--oi-ink); }
+:where(.candidate-workbench) .pane.group > .tab-list-resizer:focus-visible { outline: none; }
+
+/* The window-corner pane gives its top band to the window controls and the
+ * region toggles (shell.css cutouts): the list starts beneath that band. */
+@media (min-width: 760px) and (pointer: fine) {
+  /* shell.css reserves strip padding for the corner controls (including a
+   * :has() reservation for the collapsed agent toggle); a list column is not
+   * under the right corner, so it gives none of its width away. With the
+   * tools at the column's foot, the list's tabs start below the controls'
+   * cut band instead of beside them. */
+  :where(.candidate-workbench) .desktop-shell [data-window-corner-left="true"][data-tab-presentation="pinned-vertical"] > .tab-strip,
+  :where(.candidate-workbench) .desktop-shell [data-window-corner-left="true"][data-tab-presentation="unpinned"][data-tab-orientation="vertical"] > .tab-strip { padding: 0; }
+  :where(.candidate-workbench) .desktop-shell [data-window-corner-left="true"][data-tab-presentation="pinned-vertical"] > .tab-strip > .tab-scroll,
+  :where(.candidate-workbench) .desktop-shell [data-window-corner-left="true"][data-tab-presentation="unpinned"][data-tab-orientation="vertical"] > .tab-strip > .tab-scroll { padding-top: var(--oi-shell-tabbar); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.candidate-workbench) .pane.group[data-tab-presentation="unpinned"] > .tab-strip,
+  :where(.candidate-workbench) .pane.group[data-tab-presentation="unpinned"][data-tab-orientation="vertical"] { transition: none; }
+}
+
+/* The dead-tree revive glyph (Cradle.tsx FrameBoundary, repeated failure):
+   one tiny footer-vocabulary tool pinned to the footer's own corner — the
+   only element the boundary ever renders, so a dead shell still has a
+   clickable reload. Nothing else, no bar, no page. */
+:where(.candidate-workbench) .oi-frame-revive{ position: fixed; right: 10px; bottom: 10px; z-index: 100; width: 24px; height: 24px; border-radius: 6px; font-size: 13px; line-height: 1; }
+
+/* An empty pane's hint centres in the pane room (the approved study's
+   empty-material state) instead of hugging the top edge above dead space. */
+:where(.candidate-workbench) .surface-body[data-empty="true"]{display:grid;place-items:center}
+:where(.candidate-workbench) .surface-body[data-empty="true"]>.source-note{margin:0;text-align:center}
+/* The active tab's indicator follows the strip's orientation: a left edge
+   in the pinned-vertical list — never a heavy bottom bar under the row. */
+:where(.candidate-workbench) .icon-tab-strip[aria-orientation="vertical"] .icon-tab:is([aria-selected="true"],[aria-checked="true"]){box-shadow:inset 2px 0 var(--oi-accent-ink)}
+
+.candidate-workbench {position:relative; display:flex; flex-direction:column; min-height:0; height:100%; color:var(--oi-text, #d8d8d8); background:var(--oi-bg, #151515);}
+.candidate-workbench-toolbar {display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding:6px 8px; border-bottom:1px solid var(--oi-border, #333);}
+.candidate-workbench-toolbar > span {margin-right:auto;}
+.candidate-workbench-toolbar button, .candidate-workbench-fault button, .candidate-workbench-return button {font:inherit; font-size:11px; padding:3px 6px;}
+.candidate-workbench-tree {flex:1; min-height:0; display:flex;}
+.candidate-workbench-tree[hidden], .candidate-workbench-rest[hidden] {display:none;}
+.candidate-workbench-tree > .workbench {flex:1; min-width:0; min-height:0;}
+.candidate-workbench-side {display:flex; min-width:200px; width:30%; border-left:1px solid var(--oi-border, #333);}
+.candidate-workbench-fault, .candidate-workbench-return {margin:0; padding:6px 8px; font-size:12px;}
+.candidate-workbench-fault button {margin-left:8px;}
+.candidate-workbench-rest {padding:24px;}

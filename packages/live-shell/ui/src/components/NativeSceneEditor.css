@@ -1,0 +1,15 @@
+.native-scene-editor{display:flex;gap:5px;height:100%;min-height:0;padding:4px;color:var(--text);font-size:11px}
+.native-scene-editor>section{flex:none;border:1px solid var(--line);background:var(--bg-1);padding:5px;overflow:auto;min-height:0}
+.native-scene-editor header{display:flex;align-items:center;gap:12px;padding:2px 0 7px;font-size:10px}
+.native-scene-editor header span{margin-left:auto;color:var(--text-dim);font-weight:normal}
+.native-scene-properties{width:235px}.native-scene-structure{width:220px}.native-scene-members{width:250px}
+.native-scene-editor label{display:grid;grid-template-columns:90px minmax(0,1fr);align-items:center;gap:6px;margin-bottom:5px}
+.native-scene-editor input,.native-scene-editor button{font:inherit;color:var(--text);border:1px solid var(--line);background:var(--bg-2);border-radius:2px;padding:3px 5px;min-width:0}
+.native-scene-editor input:focus,.native-scene-editor button:focus-visible{outline:1px solid var(--accent)}
+.native-scene-detail-actions{display:flex;gap:3px;margin-top:7px;flex-wrap:wrap}
+.native-scene-editor button{cursor:pointer}.native-scene-editor button:disabled{opacity:.4;cursor:default}
+.native-scene-editor [hidden]{display:none}.native-scene-editor small{color:var(--text-dim);font-size:10px}
+.native-scene-members>button{display:flex;justify-content:space-between;width:100%;margin-bottom:3px;text-align:left}
+.native-scene-editor [role=alert]{color:#f3b4a0;max-width:32ch;font-size:10px;line-height:1.4}
+.native-world-detail:fullscreen .native-scene-editor{height:100%;align-items:start;flex-wrap:wrap}
+@media(max-width:720px){.native-scene-editor{overflow:auto}.native-scene-members{width:200px}}

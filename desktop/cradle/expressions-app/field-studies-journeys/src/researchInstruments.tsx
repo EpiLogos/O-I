@@ -17,6 +17,9 @@ import {RelationFieldView} from './relationFieldView.js';
 import {PlaceFacetsPanel} from './placeFacetsPanel.js';
 import {OPEN_PLACE_FILTER,filteredPlacesRepository,subjectEntityRef,type PlaceFilterState} from './placeReading.js';
 import type {TechneReading} from '../../../src/techne/contract';
+import {readSharedTimeWindow,SharedTimeWindowControls,type SharedTimeDraft} from './sharedTimeWindow.js';
+import {sharedTimelinePresentation} from './sharedTimeProjection.js';
+import type {NativeTimeWindowReply} from '../../../../../packages/expressions-boundary/src/timeWindow';
 import {blueprintMember,type SceneBlueprint,type BlueprintTransform} from './blueprintGeometry.js';
 import {icon} from './icons.js';
 import './researchInstrumentStyles.css';
@@ -183,6 +186,7 @@ interface ViewState {
   * projections (relationFieldView.tsx) — session-local presentation state,
   * never a second store. */
  m2Projection?:'chronology'|'field';
+ timeDraft?:SharedTimeDraft;
  /** Gesture transactions live on the ViewState, not inside canvasNode's
   * per-render closures, so one gesture survives the many re-renders a drag
   * or resize produces. The `*Adapter` refs are rebound on every canvasNode()
@@ -587,7 +591,21 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    let relationReason=relationMetadata.reason;let sourceRelations:ReturnType<typeof nativeInstrumentSourceRelations>=[];
    if(relationMetadata.value!==undefined){try{sourceRelations=nativeInstrumentSourceRelations(relationMetadata.value,view,sceneId);}catch(error){relationReason=error instanceof Error?error.message:String(error);}}
    const data=await readingInstruments(raw,nativeInstrumentTitles(view,sceneId),nativeInstrumentPreviews(view,sceneId),tags,sourceRelations);if(epoch!==generation||destroyed)return;
+   if(!sameBasis())throw Error('The native Scene changed while preparing this instrument reading');
    const state=stateFor(data.reading.subject.subject_ref);
+   const nativeReading=data.reading as unknown as TechneReading;
+   const timeCurrent=()=>epoch===generation&&!destroyed&&lens===selected&&sameBasis();
+   let sharedTime:NativeTimeWindowReply|null=null;
+   let timeReason:string|undefined;
+   if(selected==='m2'||selected==='m4') {
+    try{sharedTime=await readSharedTimeWindow(request,nativeReading,selected==='m2'?'timeline':'place',timeCurrent);}
+    catch(error){if(!timeCurrent())return;timeReason=error instanceof Error?error.message:String(error);message(timeReason);}
+    if(!timeCurrent())return;
+    state.timeDraft??={from:sharedTime?.axis.window?.from??'',to:sharedTime?.axis.window?.to??'',captured:null};
+    if(!state.timeDraft.captured){state.timeDraft.from=sharedTime?.axis.window?.from??'';state.timeDraft.to=sharedTime?.axis.window?.to??'';}
+   }
+   const timeControls=(redraw:()=>void)=><SharedTimeWindowControls basis={request} reading={nativeReading} instrument={selected==='m2'?'timeline':'place'}
+    acknowledged={sharedTime} draft={state.timeDraft!} current={timeCurrent} unavailableReason={timeReason} onError={message} onAcknowledged={reply=>{if(timeCurrent()){sharedTime=reply;redraw();}}}/>;
    if(view){
     const loadTimeline=data.dataSource.loadTimelineView;
     data.dataSource.loadTimelineView=async(range,filters)=>{const returned=await loadTimeline(range,filters),material=host.sceneMaterial(sceneId).research;return {...returned,nodes:returned.nodes.map(node=>{const layout=material?.timeline[node.node.graphNodeId];return layout?{...node,layoutOverride:{lane:layout.lane??'default',offsetY:layout.offsetY,width:layout.width??240,height:layout.height??160,style:{},layoutRevision:layout.layoutRevision??0}}:node;})};};
@@ -622,13 +640,15 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
       <button aria-label="Refresh timeline" title="Refresh timeline" onClick={()=>void load('m2')}><ToolIcon name="history"/></button>
       {view&&state.m2Projection==='chronology'&&<button aria-label="Save timeline view" title="Save timeline view" onClick={()=>{if(state.timeline)void host.material(sceneId,{type:'viewport',key:'timeline',value:{x:state.timeline.centerYear,y:0,zoom:state.timeline.pixelsPerYear}}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}
       {(tagReason||relationReason)&&<button onClick={()=>message([tagReason&&`Tags: ${tagReason}`,relationReason&&`Relations: ${relationReason}`].filter(Boolean).join(' · '))}>Reading incomplete</button>}
+      {timeControls(()=>render(canvasNode2()))}
      </div>;
      if(state.m2Projection==='field'){
-      return <>{createPortal(toggle,host.tools)}<RelationFieldView reading={data.reading as unknown as TechneReading} width={available}
+      return <>{createPortal(toggle,host.tools)}<RelationFieldView reading={nativeReading} width={available} timeAxis={sharedTime?.axis}
        onSelectRelation={edge=>{if(!edge.derived_id)host.select(sceneId,null,edge.id);}}
        onOpenMember={ref=>host.inspectSubject(ref)}/></>;
      }
-     return <>{createPortal(toggle,host.tools)}<TimelineSurface timeExtent={years.length?{startYear:first,endYear:last}:undefined} toolbarContainer={host.tools} repository={data.timeline} constellationId={data.reading.subject.subject_ref} dataSource={data.dataSource}
+     const timed=sharedTimelinePresentation(data.dataSource,data.timeline,nativeReading,sharedTime?.axis??null);
+     return <>{createPortal(toggle,host.tools)}<TimelineSurface timeExtent={years.length?{startYear:first,endYear:last}:undefined} toolbarContainer={host.tools} repository={timed.repository} constellationId={data.reading.subject.subject_ref} dataSource={timed.dataSource}
       initialState={state.timeline!} onViewStateChange={value=>{state.timeline=value;}}
       onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref);if(node)host.inspectSubject(ref,{node});}} onOpenNode={(ref,node,relationField)=>host.inspectSubject(ref,{node,relationField})}/></>;
     };
@@ -636,6 +656,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     render(canvasNode2());return;
    }
    const places=await data.places.getLocatedNodes(data.reading.subject.subject_ref);if(epoch!==generation||destroyed)return;
+   if(!sameBasis())throw Error('The native Scene changed while loading its places');
    // The shipped basemap is geographic context, never personal graph nodes.
    // Located subject markers come only from the current native reading.
    const pack=loadBundledGeographyPack();
@@ -657,11 +678,12 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    // wrapped repository's reads) and the panel's facet list, so the markers
    // and the panel always agree.
    const renderPlaces=():ReactNode=>{
-    const filteredRepository=filteredPlacesRepository(data.places,data.reading as unknown as TechneReading,state.placeFilter!);
-    const facets=<PlaceFacetsPanel reading={data.reading as unknown as TechneReading} selectedRef={state.selectedPlace??null} filter={state.placeFilter!}
-      onFilterChange={next=>{state.placeFilter=next;render(renderPlaces());}}
+    const filter={...state.placeFilter!,window:sharedTime?.axis.window??null};
+    const filteredRepository=filteredPlacesRepository(data.places,nativeReading,filter);
+    const facets=<PlaceFacetsPanel reading={nativeReading} selectedRef={state.selectedPlace??null} filter={filter} sharedTime
+      onFilterChange={next=>{state.placeFilter={...next,window:null};render(renderPlaces());}}
       editRequest={placeEditRequest} onError={message}/>;
-    return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:{x:state.place.longitude,y:state.place.latitude,zoom:state.place.zoom}}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}</div>,host.tools)}
+    return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:{x:state.place.longitude,y:state.place.latitude,zoom:state.place.zoom}}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}{timeControls(()=>render(renderPlaces()))}</div>,host.tools)}
     <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly
      initialViewState={state.place} initialSelectedGraphNodeId={state.selectedPlace}
      onViewStateChange={value=>{state.place=value;}} onSelectedGraphNodeIdChange={value=>{state.selectedPlace=value;render(renderPlaces());}}

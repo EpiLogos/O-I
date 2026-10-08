@@ -19,6 +19,7 @@ import {equirectBounds,projectEquirect,DEFAULT_CAMERA} from '../../../src/techne
 import {
  filteredFacets,filteredReading,placeFilterOptions,toggleFilterMembership,
  type PlaceFilterState,
+ sharedPlaceTimeScope,
 } from './placeReading.js';
 import './placeFacetsPanel.css';
 
@@ -89,15 +90,19 @@ export interface PlaceFacetsPanelProps {
   * current native document (W3). Absent means honestly no edit route. */
  editRequest?:Omit<TechneConstellationRequest,'operation'>;
  onError:(message:string)=>void;
+ /** Mounted shared-session controls replace the legacy local time inputs. */
+ sharedTime?:boolean;
 }
 
-export function PlaceFacetsPanel({reading,selectedRef,filter,onFilterChange,editRequest,onError}:PlaceFacetsPanelProps){
+export function PlaceFacetsPanel({reading,selectedRef,filter,onFilterChange,editRequest,onError,sharedTime=false}:PlaceFacetsPanelProps){
  const status=placeState(reading);
  const options=placeFilterOptions(reading);
  const facets=filteredFacets(reading,filter);
  const narrowed=filteredReading(reading,filter);
  const world=worldState(narrowed,{mode:'street',window:filter.window,selectedRef});
- const street=renderStreetModel(facets,{selectedRef,window:filter.window});
+ // The shared axis already narrowed facets. A second comparator must not
+ // silently exclude unresolved validity while drawing the selected place.
+ const street=renderStreetModel(facets,{selectedRef,window:sharedTime?null:filter.window});
  const relations=placeRelations(facets);
  const depths=depthChain(reading);
  const route=routeModel(facets,filter.window);
@@ -120,11 +125,11 @@ export function PlaceFacetsPanel({reading,selectedRef,filter,onFilterChange,edit
     <span>Standing</span>
     {options.standing.map(value=><label key={value}><input type="checkbox" checked={!filter.standing||filter.standing.has(value)} onChange={()=>toggleStanding(value)}/>{value}</label>)}
    </div>}
-   <div className="place-facets-filter-group">
+   {!sharedTime&&<div className="place-facets-filter-group">
     <span>Valid within</span>
     <label>From<input type="text" placeholder="open" value={filter.window?.from??''} onChange={event=>setWindowEdge('from',event.target.value)}/></label>
     <label>To<input type="text" placeholder="open" value={filter.window?.to??''} onChange={event=>setWindowEdge('to',event.target.value)}/></label>
-   </div>
+   </div>}
   </fieldset>}
 
   {!selectedRef&&<p className="place-facets-message" role="status">No place disclosed — select a place on the map to inspect it.</p>}
@@ -140,6 +145,7 @@ export function PlaceFacetsPanel({reading,selectedRef,filter,onFilterChange,edit
     <dt>Precision</dt><dd>{street.precision} — {street.precision_note}</dd>
     {street.uncertainty&&<><dt>Uncertainty</dt><dd>{street.uncertainty}</dd></>}
     <dt>Validity</dt><dd>{street.valid_from??'open'} — {street.valid_to??'open'}</dd>
+    {sharedTime&&<><dt>Time scope</dt><dd>{sharedPlaceTimeScope(street.place,filter.window).state}</dd></>}
     {street.source_ref&&<><dt>Source</dt><dd>{street.source_ref}</dd></>}
     {street.observer_frame&&<><dt>Observer frame</dt><dd>{street.observer_frame}</dd></>}
    </dl>

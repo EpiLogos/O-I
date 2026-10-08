@@ -58,7 +58,7 @@ export function entityTargets(scene:Scene):AutomationTarget[]{
   let value=readPath(e,local);if(typeof value!=='number'){value=readPath(e.native,suffix);if(typeof value==='number')value/=factor;}
   if(typeof value!=='number')value=suffix==='scale'||suffix==='sequence.rateMul'?1:suffix==='sequence.hold'?e.sequence.steps[0]?.hold??3:suffix==='sequence.transition'?e.sequence.steps[0]?.transition??1:0;
 
-  return {...p,key:suffix,bind:'entity.'+local,factor,group:'entity',target:'entity:'+encodeURIComponent(e.id)+':'+suffix,entityId:e.id,min:p.min/factor,max:p.max/factor,hardMin:p.hardMin/factor,hardMax:p.hardMax/factor,step:p.step/factor,defaultValue:Number(value),value:Number(value)};
+  return {...p,key:suffix,bind:'entity.'+local,factor,unit:factor===WORLD_SCALE?'stage units':p.unit,group:'entity',target:'entity:'+encodeURIComponent(e.id)+':'+suffix,entityId:e.id,min:p.min/factor,max:p.max/factor,hardMin:p.hardMin/factor,hardMax:p.hardMax/factor,step:p.step/factor,defaultValue:Number(value),value:Number(value)};
  }));
 }
 export function automationTarget(scene:Scene,target:string):AutomationTarget|undefined{

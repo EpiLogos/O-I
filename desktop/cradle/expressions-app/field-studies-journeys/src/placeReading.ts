@@ -15,7 +15,8 @@
 import type {PlacesRepository} from '@research-canvas/domain';
 import type {TechnePlaceFacet, TechneReading} from '../../../src/techne/contract';
 import {relationStandingClass, type RelationStandingClass} from '../../../src/techne/m0m5/place/world';
-import {coversWindow, type TimeWindow} from '../../../src/techne/m0m5/place/filter';
+import {type TimeWindow} from '../../../src/techne/m0m5/place/filter';
+import {timeAxisEventScope,type TimeAxisScope} from '../../../src/techne/m0m5/timeline/timeAxis';
 
 /** Presentation-only place filter (W2). `null` on any facet means "every
  * value disclosed" — the honest default, never a narrowed default. */
@@ -41,10 +42,16 @@ export function placeFilterOptions(reading: TechneReading | null): {relations: s
  return {relations, standing};
 }
 
+/** The same native time-axis comparator used by Timeline. An unresolved
+ * validity remains disclosed and visible, never lexically excluded. */
+export function sharedPlaceTimeScope(facet:TechnePlaceFacet,window:TimeWindow|null):TimeAxisScope {
+ return timeAxisEventScope({kind:'valid',interval:{from:facet.valid_from??null,to:facet.valid_to??null}},window);
+}
+
 function facetPasses(facet: TechnePlaceFacet, filter: PlaceFilterState): boolean {
  if (filter.relations && !filter.relations.has(facet.relation ?? UNDISCLOSED_RELATION)) return false;
  if (filter.standing && !filter.standing.has(relationStandingClass(facet.relation))) return false;
- if (!coversWindow(facet, filter.window)) return false;
+ if (sharedPlaceTimeScope(facet,filter.window).state==='out-of-scope') return false;
  return true;
 }
 

@@ -58,7 +58,10 @@ export interface DisclosureSessionGround {
   occasion_ref?: string;
   return_target_ref?: string;
   reference_frame_ref?: string;
+  expression_focus_ref?: string;
   scene_focus_ref?: string;
+  /** Explicitly declared bounds, never inferred from a view camera. */
+  time_window?: DisclosureSession["time_window"];
 }
 
 export interface DisclosureSessionStore {
@@ -85,6 +88,7 @@ export interface DisclosureSessionStore {
    * untouched byte-exact; a crossing onto the cut the session already
    * occupies is refused. */
   crossCut(target: TechneInstrument): { session: DisclosureSession; cut: TechneReadingKind };
+  setTimeWindow(window: NonNullable<DisclosureSession["time_window"]> | null): DisclosureSession;
   /** End the session (austere rest). */
   clear(): void;
 }
@@ -164,6 +168,16 @@ export function createDisclosureSessionStore(): DisclosureSessionStore {
       notify(listeners);
       return crossed;
     },
+    setTimeWindow(window) {
+      if (!current) throw new Error("No DisclosureSession is open — select a subject first");
+      const next = {...current};
+      if (window === null) delete next.time_window;
+      else next.time_window = declaredWindow(window);
+      const session = checkedSession(next);
+      current = session;
+      notify(listeners);
+      return session;
+    },
     clear() {
       if (current === null) return;
       current = null;
@@ -185,11 +199,21 @@ function checkedSession(session: DisclosureSession): DisclosureSession {
  * ref (validateSession refuses anything else before it is observable). */
 function appliedGround(ground: DisclosureSessionGround): DisclosureSessionGround {
   const applied: DisclosureSessionGround = {};
-  for (const key of ["whole_ref", "project_ref", "world_ref", "context_frame_ref", "occasion_ref", "return_target_ref", "reference_frame_ref", "scene_focus_ref"] as const) {
+  for (const key of ["whole_ref", "project_ref", "world_ref", "context_frame_ref", "occasion_ref", "return_target_ref", "reference_frame_ref", "expression_focus_ref", "scene_focus_ref"] as const) {
     const value = ground[key];
     if (value !== undefined) applied[key] = value;
   }
+  if (ground.time_window !== undefined) applied.time_window = declaredWindow(ground.time_window);
   return applied;
+}
+
+function declaredWindow(window: NonNullable<DisclosureSession["time_window"]>): NonNullable<DisclosureSession["time_window"]> {
+  if (!window || typeof window !== "object" || Array.isArray(window)
+    || Object.keys(window).some(key => key !== "from" && key !== "to")
+    || ![window.from, window.to].every(bound => bound === null || typeof bound === "string")) {
+    throw new Error("An explicit time window requires only from/to strings or null bounds");
+  }
+  return structuredClone(window);
 }
 
 /** Two sessions are co-referenced when they disclose the same subject on the
