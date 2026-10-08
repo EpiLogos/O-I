@@ -72,6 +72,7 @@ fn native_generator_reproduces_both_committed_registries_from_actual_admitted_so
     let core = root.join("core/contribution.json");
     let factory = root.join("factory/contribution.json");
     let automations = root.join("automations/contribution.json");
+    let field = root.join("field/contribution.json");
     for (metadata, filename) in [(false, "generated.ts"), (true, "registered-kinds.mjs")] {
         let mut args = vec![
             "contribution",
@@ -86,6 +87,7 @@ fn native_generator_reproduces_both_committed_registries_from_actual_admitted_so
             core.to_str().unwrap(),
             factory.to_str().unwrap(),
             automations.to_str().unwrap(),
+            field.to_str().unwrap(),
         ]);
         let output = run(home.path(), &args);
         assert!(
@@ -97,6 +99,50 @@ fn native_generator_reproduces_both_committed_registries_from_actual_admitted_so
             String::from_utf8(output.stdout).unwrap(),
             fs::read_to_string(root.join(filename)).unwrap(),
             "Regenerate {filename} through the native CLI"
+        );
+    }
+}
+
+/// A selected build without Factory: the generator admits the remaining
+/// contributions from their own manifests, and the registry it emits names
+/// no Factory surface and imports no Factory source. Nothing in the generator
+/// or the other contributions requires Factory to be among the manifests.
+#[test]
+fn registry_compiles_without_the_factory_contribution_and_names_no_factory() {
+    let home = tempfile::tempdir().unwrap();
+    let root = repo().join("desktop/cradle/src/contributions");
+    for metadata in [false, true] {
+        let mut args = vec![
+            "contribution",
+            "compile-registry",
+            "--root",
+            root.to_str().unwrap(),
+        ];
+        if metadata {
+            args.push("--metadata");
+        }
+        let manifests: Vec<String> = ["core", "automations", "field"]
+            .iter()
+            .map(|name| {
+                root.join(name)
+                    .join("contribution.json")
+                    .to_str()
+                    .unwrap()
+                    .to_owned()
+            })
+            .collect();
+        args.extend(manifests.iter().map(String::as_str));
+        let output = run(home.path(), &args);
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let emitted = String::from_utf8(output.stdout).unwrap();
+        assert!(emitted.contains("oi.surface/field") && emitted.contains("oi.surface/expressions"));
+        assert!(
+            !emitted.to_lowercase().contains("factory"),
+            "a registry compiled without the Factory manifest must not mention Factory: {emitted}"
         );
     }
 }
@@ -343,16 +389,30 @@ fn catalogue_service_child() {
         .iter()
         .find(|owner| owner.product_id == "ai-kit")
         .unwrap();
-    assert_eq!(
-        owner.reading_command,
-        vec!["aikit-reviewed", "system", "--json"]
+    // The census (the adopted namespace above) reports this owner missing: no
+    // executable exists, so no command runs and no refusal is manufactured.
+    // The owner is disclosed unavailable and not installed — never probed, and
+    // never given a fabricated descriptor (contract evolution, O:I #598: a
+    // product the census reports missing is not dispatched to).
+    assert!(
+        owner.reading_command.is_empty(),
+        "a missing owner must not be probed: {:?}",
+        owner.reading_command
     );
     assert!(
         owner.descriptor.is_none(),
         "An absent executable must not fabricate a service descriptor"
     );
     assert!(
-        owner.error.is_some(),
-        "The actual CLI's missing-owner refusal must survive registration"
+        owner.error.is_none(),
+        "no command ran, so no error is claimed"
     );
+    assert_eq!(
+        owner.availability,
+        oi_cradle_kernel::system_composition::Availability::Unavailable
+    );
+    assert!(owner
+        .reason
+        .as_deref()
+        .is_some_and(|reason| reason.contains("not installed")));
 }

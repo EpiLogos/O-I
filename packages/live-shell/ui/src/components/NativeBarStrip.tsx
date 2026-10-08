@@ -78,7 +78,7 @@ function BarToggle({toggle, reading, apply, disabled}: {toggle: BarToggleSpec; r
   const on = toggle.read(reading)
   const press = () => {
     setFault(null)
-    void send(apply, toggle.changes(on !== true)).then(reply => {if (!reply.ok) setFault(reply.error)}, cause => setFault(reasonOf(cause)))
+    void send(apply, toggle.changes(on !== true, reading)).then(reply => {if (!reply.ok) setFault(reply.error)}, cause => setFault(reasonOf(cause)))
   }
   return <span className="bar-toggle-wrap">
     <button type="button" className="bar-toggle" aria-label={toggle.label} aria-pressed={on} title={toggle.title} disabled={disabled} onClick={press}>{toggle.label}</button>

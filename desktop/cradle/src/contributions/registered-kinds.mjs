@@ -67,7 +67,7 @@ export const hostedSurfaceDescriptors = [
     "owner": "software-factory",
     "region": "canvas",
     "retention": "mounted",
-    "revision": 1,
+    "revision": 2,
     "title": "Factory"
   },
   {
@@ -79,5 +79,15 @@ export const hostedSurfaceDescriptors = [
     "retention": "mounted",
     "revision": 1,
     "title": "Automations"
+  },
+  {
+    "contribution_ref": "oi.contribution/field",
+    "descriptor_ref": "oi.surface/field",
+    "kind": "field",
+    "owner": "oi",
+    "region": "canvas",
+    "retention": "mounted",
+    "revision": 2,
+    "title": "Field"
   }
 ];

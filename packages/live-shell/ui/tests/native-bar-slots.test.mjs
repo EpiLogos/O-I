@@ -279,3 +279,14 @@ test('hidden-slot storage: unknown ids and non-strings are dropped; corrupt or n
   withLocalStorage(mapStorage({[HIDDEN_KEY]: '{"id":"viscosity"}'}), () => assert.equal(readHiddenSlots().size, 0))
   withLocalStorage(mapStorage(), () => assert.equal(readHiddenSlots().size, 0))
 })
+
+test('turning the Cymatic field on pairs a low plate size, never raises one, and turning it off writes only the switch', () => {
+  const cymatic = bars.SEED_SLOTS.find(slot => slot.id === 'cymatic').toggle
+  const plate = NATIVE_BINDINGS.find(item => item.path === 'cymatics.plateSize')
+  const reading = value => ({scene: {field: {params: {[plate.key]: value}}, engine: {}}})
+  assert.deepEqual(cymatic.changes(true, reading(700)), [{kind: 'field-setting', key: 'resonanceEnabled', value: true}, {kind: 'parameter', target: 'field.' + plate.key, value: bars.CYMATIC_LOW_PLATE}])
+  assert.deepEqual(cymatic.changes(true, reading(200)), [{kind: 'field-setting', key: 'resonanceEnabled', value: true}], 'an already lower plate is left alone')
+  assert.deepEqual(cymatic.changes(false, reading(700)), [{kind: 'field-setting', key: 'resonanceEnabled', value: false}])
+  assert.deepEqual(cymatic.changes(true), [{kind: 'field-setting', key: 'resonanceEnabled', value: true}], 'without a reading only the switch is sent')
+  assert.ok(bars.CYMATIC_LOW_PLATE >= plate.min && bars.CYMATIC_LOW_PLATE <= plate.max, 'the low plate sits inside the registry soft range')
+})

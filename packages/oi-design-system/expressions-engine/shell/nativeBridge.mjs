@@ -101,7 +101,7 @@ function projectNativeConfig(s) {
   cfg.color = { ...DEFAULT_COLOR_CONFIG, ...cfg.color, enabled: s.engine.colorEnabled !== false, mode: s.engine.colorMode, primaryColor: s.field.palette[0], secondaryColor: s.field.palette.at(-1), accentColor: s.field.palette[Math.floor(s.field.palette.length / 2)], customPaletteColors: s.engine.paletteSource === "legacy" ? void 0 : [...s.field.palette], backgroundColor: s.field.background, backgroundMode: s.engine.backgroundMode ?? "solid" };
   cfg.colorMode = s.engine.inkMode ?? cfg.colorMode;
   if (s.engine.paletteId) cfg.color.paletteId = s.engine.paletteId;
-  cfg.style = s.field.material === "print" ? "halftone" : "stipple";
+  cfg.style = s.field.material === "print" ? "halftone" : "stipple"; if (s.field.material === "round") cfg.authoredMaterial = "round"; else delete cfg.authoredMaterial;
   cfg.dotShape = s.engine.dotShape ?? "circle";
   if (s.engine.grainProfile === false) cfg.material = void 0;
   const semanticAuthority = !!s.semanticField?.enabled;
@@ -228,7 +228,7 @@ function nativeSnapshotToJourney(raw, index = 0) {
   s.text = [];
   s.engine = { ...DEFAULT_ENGINE_SETTINGS, inkMode: cfg.colorMode, templateGeometry: cfg.cymatics?.plateGeometry, templateDimension: cfg.cymatics?.dimension, resonanceEnabled: cfg.cymatics?.enabled ?? false, morphEnabled: cfg.toroidalMorph?.enabled ?? false, autoOscillate: cfg.toroidalMorph?.autoOscillate ?? true, trajectory: cfg.toroidalMorph?.trajectory ?? "linear", driveShape: cfg.toroidalMorph?.driveShape ?? "sine", relationalEnabled: cfg.relational?.enabled ?? false, relationalMode: cfg.relational?.mode ?? "orbital", mediumEnabled: cfg.medium?.enabled ?? false, mediumDimension: cfg.medium?.dimension ?? "2D", collisionEnabled: cfg.collision?.enabled ?? false, collisionMode: cfg.collision?.mode ?? "obstacle", pairwiseEnabled: cfg.pairwise?.enabled ?? false, pointerMode: cfg.interaction.mode, pointerClick: cfg.interaction.clickMode ?? "pulse", pointerClickStrength: cfg.interaction.clickStrength ?? 2.2, pointerClickRadius: (cfg.interaction.clickRadius ?? 180) / 400, colorMode: cfg.color?.mode ?? "monochrome", colorEnabled: cfg.color?.enabled ?? false, mediumPlane: cfg.composition?.plane ?? "vertical", autoSweep: cfg.cymatics?.sweep?.enabled ?? cfg.cymatics?.autoSweep ?? false, sweepDirection: cfg.cymatics?.sweep?.direction ?? "ascent", volumeEnabled: cfg.glyphVolume?.enabled ?? false, volumeProfile: cfg.glyphVolume?.profile ?? DEFAULT_GLYPH_VOLUME.profile, depthPerspective: (cfg.depth?.projection ?? DEFAULT_DEPTH_CONFIG.projection) === "perspective", depthOcclusion: cfg.depth?.occlusion ?? DEFAULT_DEPTH_CONFIG.occlusion, ...(cfg.fluid?.vortex3d !== undefined ? { vortex3d: cfg.fluid.vortex3d } : {}), ...(cfg.fluid?.dispersion3d !== undefined ? { dispersion3d: cfg.fluid.dispersion3d } : {}), depthTintColor: cfg.depth?.depthTintColor ?? DEFAULT_DEPTH_CONFIG.depthTintColor };
   s.field.background = cfg.backgroundColor ?? cfg.color?.backgroundColor ?? "#f4f2eb";
-  s.field.material = cfg.style === "halftone" ? "print" : "ink";
+  s.field.material = cfg.style === "halftone" ? "print" : cfg.authoredMaterial === "round" ? "round" : "ink";
   s.field.palette = cfg.color?.customPaletteColors?.length ? cfg.color.customPaletteColors.slice(0, 8) : [cfg.color?.primaryColor ?? "#252720", cfg.color?.accentColor ?? "#252720", cfg.color?.secondaryColor ?? "#252720"];
   for (const b of NATIVE_BINDINGS) {
     const v = readPath(cfg, b.path);

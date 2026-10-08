@@ -237,6 +237,7 @@ export type KernelOp =
   | {op:"nara_voice";project:string;request:import("../nara/nativeVoice").NativeVoiceRequest}
   | {op:"nara_dialogue";project:string;request:import("../nara/nativeDialogue").NativeDialogueRequest}
   | {op: "native_expression"; request: NativeExpressionRequest}
+  | {op: "world_resolve"; world_id?: string; verify?: boolean}
   | {op: "setup"; request: import("../configuration/adoptionController").AdoptionRequest}
   | {op:"being_encounter";request:Record<string,unknown>}
   | {op:"hosted_native";source_world_ref:string;request:KernelOp}
@@ -291,6 +292,10 @@ export type KernelOp =
   | {op:"recording_capability_read"}
   /** Which contracts the kernel speaks and enforces (oi.kernel-protocol/v1). */
   | {op:"protocol_read"}
+  /** The AIKit gateway's canonical session surface for one harness binding; the gateway's answer or named refusal passes through verbatim. */
+  | {op:"harness_agent_read";binding:string}
+  /** Drive a conversation lifecycle control on the binding's gateway (the kernel owns no session state). */
+  | {op:"harness_agent_control";binding:string;control:"new"|"stop"|"restart"|"pause"|"resume"}
   | { op: "agency_read"; project: string }
   | { op: "model_roster"; project?: string }
   | { op: "agent_definition"; project: string | null; request: import("../agency/nativeAgent").AgentRequest }
@@ -407,6 +412,7 @@ export type KernelOpResult =
   | {result:"presentation_reading";document:PresentationDocument}
   | {result:"nara_decision_recorded";decision:unknown}
   | {result: "native_expression"; data: unknown}
+  | {result: "world_resolve"; resolution: unknown}
   | {result:"nara_epii";data:import("../nara/epiiTypes").NativeEpiiResult}
   | {result:"nara_expressive_act";data:import("../nara/nativeExpressiveAct").NativeActReview|import("../nara/nativeExpressiveAct").NativeActEffect|import("../nara/nativeExpressiveAct").NativeActStatus}
   | {result:"nara_current";data:import("../nara/nativeCurrent").NativeCurrentReading}
@@ -482,6 +488,8 @@ export type KernelOpResult =
   | {result:"working_surface_reading";document:unknown}
   | {result:"recording_capability";document:unknown}
   | {result:"protocol";document:unknown}
+  | {result:"harness_agent_reading";binding:string;document:unknown}
+  | {result:"harness_agent_outcome";binding:string;control:"new"|"stop"|"restart"|"pause"|"resume";document:unknown}
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; harness_disclosure?: unknown; observed_at_unix_ms: number }
   | { result: "model_roster_reading"; reading: unknown }
   | { result: "knowledge"; data: unknown }

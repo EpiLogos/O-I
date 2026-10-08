@@ -4,6 +4,7 @@ import {groupsOf} from "../surface/engine";
 import {bindingDisclosures, frameDisclosures} from "../surface/registry";
 import type {Workspace, WorkspaceRecentPlace} from "../workspace/store";
 import type {WorkspaceMode} from "../workspace/mode";
+import type {FieldContextReading} from "../field/fieldHost";
 
 export type SituationPresence = "focused" | "presented" | "resident" | "detached" | "recent";
 
@@ -47,6 +48,8 @@ export interface SituationFrame {
   places: SituationPlace[];
   accompanying?: LayoutState["accompanying"];
   nativeFocus: KernelSnapshotState["focus"];
+  /** The field's encounter at the generation it was read (primary, tangent, selected, constellation, scene). */
+  field?: FieldContextReading;
   capabilities: {
     /** Cradle-owned presentation Actions only. Semantic/native owner Actions
      * stay with their owner disclosures and are never fabricated here. */
@@ -132,10 +135,12 @@ function recentPlace(place: WorkspaceRecentPlace): SituationPlace {
   };
 }
 
-export function buildSituationFrame({workspace, snapshot, restorePoint}: {
+export function buildSituationFrame({workspace, snapshot, restorePoint, field}: {
   workspace: Workspace;
   snapshot: KernelSnapshotState;
   restorePoint?: RestorePoint;
+  /** The mounted field's present encounter (field/fieldHost.ts) — present here, NOT thereby prepared for the Agent. */
+  field?: FieldContextReading;
 }): SituationFrame {
   const activeMode = modeOf(workspace.layout);
   const layouts: {mode: WorkspaceMode; layout: LayoutState; active: boolean}[] = [
@@ -261,6 +266,7 @@ export function buildSituationFrame({workspace, snapshot, restorePoint}: {
     places,
     accompanying: workspace.layout.accompanying,
     nativeFocus: snapshot.focus,
+    ...(field ? {field} : {}),
     capabilities: {presentation},
   };
 }

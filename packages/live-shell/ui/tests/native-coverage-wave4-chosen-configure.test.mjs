@@ -19,7 +19,7 @@ const [{NativeChosenControls}, {NATIVE_BINDINGS}] = await Promise.all([
   import(parameters),
 ])
 
-const [first, second] = NATIVE_BINDINGS
+const [first, second, third] = NATIVE_BINDINGS
 const ENGINE = {mediumEnabled: false, resonanceEnabled: false, collisionEnabled: false, pairwiseEnabled: false, morphEnabled: false,
   colorEnabled: false, trajectory: 'toroidalHopf', driveShape: 'sine', colorMode: 'linearGradient', mediumPlane: 'vertical', autoOscillate: true}
 const object = {id: 'object-1', name: 'Pin A', kind: 'pin', enabled: true, position: {x: 0, y: 0, z: 0}, size: {x: 1, y: 1}, rotation: 0,
@@ -28,7 +28,7 @@ const object = {id: 'object-1', name: 'Pin A', kind: 'pin', enabled: true, posit
 const control = (entry, binding, over = {}) => ({entry_id: entry, target: binding ? 'field.' + binding.key : null, binding, entity_id: null,
   native_ref: null, base_value: 1, effective_value: null, locked: false, unavailable_reason: null, ...over})
 
-// Two chosen controls: one Field entry and one Follow entry. `selection` decides whether a single object is selected.
+// Three chosen controls: one Field entry (shown in the top bar, never in this rack), one Follow entry and one Bind entry. `selection` decides whether a single object is selected.
 function reading({entries, controls, available = true, selection = []} = {}) {
   const scene = {name: 'Chosen fixture', entities: [object], engine: {...ENGINE}, field: {background: '#ffffff', palette: ['#111111'], material: 'ink', params: {}}}
   return {
@@ -37,7 +37,8 @@ function reading({entries, controls, available = true, selection = []} = {}) {
     chosenControls: {available, entries: entries ?? [
       {id: 'entry-field', key: first.key, scope: 'field'},
       {id: 'entry-follow', key: second.key, scope: 'selected'},
-    ], controls: controls ?? [control('entry-field', first), control('entry-follow', second)]},
+      {id: 'entry-named', key: third.key, scope: 'named', entityId: object.id},
+    ], controls: controls ?? [control('entry-field', first), control('entry-follow', second), control('entry-named', third, {entity_id: object.id})]},
     selection: {entity_ids: selection, step_id: null}, history: {canUndo: false, canRedo: false},
     standing: {dirty: false, pending: false, notice: null},
   }
@@ -66,20 +67,33 @@ test('with Configure on, the management rows are revealed for the same reading a
   const markup = render({}, true)
   assert.equal(countOf(markup, /class="native-chosen-manage" hidden=""/g), 0)
   assert.equal(countOf(markup, /class="native-chosen-manage"/g), 2)
-  for (const binding of [first, second]) {
+  assert.doesNotMatch(markup, new RegExp(escape(`Drag to reorder ${first.label}`).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), 'a Field pin is managed from the top bar, not here')
+  for (const binding of [second, third]) {
     assert.match(markup, new RegExp(`aria-label="${escape(`Drag to reorder ${binding.label}; or Alt with Left or Right arrow`).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`))
     assert.match(markup, new RegExp(`aria-label="${escape(`Remove ${binding.label} chosen control`).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`))
   }
-  // Only the Follow entry has a scope choice; a Field entry is never scoped.
-  assert.equal(countOf(markup, /<select aria-label="Scope for /g), 1)
+  // Both object entries (Follow and Bind) have a scope choice; a Field entry is never scoped and never shown here.
+  assert.equal(countOf(markup, /<select aria-label="Scope for /g), 2)
 })
 
-test('reorder is disabled at the edges: the first chosen control cannot move earlier, the last cannot move later', () => {
+test('reorder is disabled at the edges of the visible object controls', () => {
   const markup = render({}, true)
-  assert.match(tagWithLabel(markup, `Move ${first.label} earlier`), /disabled=""/)
-  assert.doesNotMatch(tagWithLabel(markup, `Move ${first.label} later`), /disabled=""/)
-  assert.doesNotMatch(tagWithLabel(markup, `Move ${second.label} earlier`), /disabled=""/)
-  assert.match(tagWithLabel(markup, `Move ${second.label} later`), /disabled=""/)
+  assert.match(tagWithLabel(markup, `Move ${second.label} earlier`), /disabled=""/)
+  assert.doesNotMatch(tagWithLabel(markup, `Move ${second.label} later`), /disabled=""/)
+  assert.doesNotMatch(tagWithLabel(markup, `Move ${third.label} earlier`), /disabled=""/)
+  assert.match(tagWithLabel(markup, `Move ${third.label} later`), /disabled=""/)
+})
+
+test('Field pins are not shown in the rack, and a reorder of the object controls keeps each Field entry in its own slot', async () => {
+  const markup = render()
+  assert.equal(countOf(markup, /class="native-chosen-item"/g), 2, 'only the two object entries render')
+  const {wholeChosenOrder} = await import('../src/components/nativeBrowserModel.ts')
+  const entries = [{id: 'f1', scope: 'field'}, {id: 'a', scope: 'selected'}, {id: 'f2', scope: 'field'}, {id: 'b', scope: 'named'}]
+  assert.deepEqual(wholeChosenOrder(entries, ['b', 'a']), ['f1', 'b', 'f2', 'a'])
+  assert.deepEqual(wholeChosenOrder(entries, ['a', 'b']), ['f1', 'a', 'f2', 'b'])
+  assert.deepEqual(wholeChosenOrder([{id: 'f1', scope: 'field'}], []), ['f1'])
+  const fieldOnly = render({entries: [{id: 'entry-field', key: first.key, scope: 'field'}], controls: [control('entry-field', first)]})
+  assert.match(fieldOnly, /No object parameters chosen\. Field pins are in the top bar\./)
 })
 
 test('a Follow entry offers Bind this object only when one object is selected to bind', () => {
@@ -98,17 +112,17 @@ test('an unavailable owner disables Add Parameter and says the owner has not dis
 })
 
 test('a retained declaration the owner has not resolved shows its reason and cannot take a typed value', () => {
-  const markup = render({entries: [{id: 'entry-field', key: first.key, scope: 'field'}], controls: []})
+  const markup = render({entries: [{id: 'entry-follow', key: second.key, scope: 'selected'}], controls: []})
   assert.match(markup, /The native owner has not resolved this retained declaration\./)
   assert.match(markup, /class="native-chosen-control is-unavailable"/)
   assert.match(tagWithLabel(markup, 'Unavailable parameter exact value'), /disabled=""/)
 })
 
 test('the dial reports its range and current value to assistive technology', () => {
-  const markup = render({entries: [{id: 'entry-field', key: first.key, scope: 'field'}], controls: [control('entry-field', first, {base_value: 1})]})
-  const dial = tagWithLabel(markup, `${first.label} · Field`)
+  const markup = render({entries: [{id: 'entry-follow', key: second.key, scope: 'selected'}], controls: [control('entry-follow', second, {base_value: 1, entity_id: object.id})], selection: [object.id]})
+  const dial = tagWithLabel(markup, `${second.label} · ${object.name}`)
   assert.match(dial, /role="slider"/)
-  assert.match(dial, new RegExp(`aria-valuemin="${first.hardMin}"`))
-  assert.match(dial, new RegExp(`aria-valuemax="${first.hardMax}"`))
+  assert.match(dial, new RegExp(`aria-valuemin="${second.hardMin}"`))
+  assert.match(dial, new RegExp(`aria-valuemax="${second.hardMax}"`))
   assert.match(dial, /aria-valuenow="1"/)
 })

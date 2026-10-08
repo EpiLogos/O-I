@@ -419,7 +419,9 @@ pub(crate) fn decode_document(value: Value) -> Result<Document, String> {
             .ok_or("native file expansion overflow")?;
     }
     if expanded < 0 || expanded as usize > DOCUMENT_BYTES {
-        return Err("complete native Document exceeds 8 MiB before cloning".into());
+        return Err(
+            "complete native Document exceeds the document allowance before cloning".into(),
+        );
     }
     for (index, r) in markers {
         let p = catalogs[r.catalog as usize].restore(r.manifest as usize)?;
@@ -957,7 +959,10 @@ impl ActPerformanceCustody {
         fields.insert("scenes".into(), Value::Array(scenes));
         let value = Value::Object(fields);
         if weight(&value)? > DOCUMENT_BYTES {
-            return Err("native Act selected Document exceeds 8 MiB before typed clone".into());
+            return Err(
+                "native Act selected Document exceeds the document allowance before typed clone"
+                    .into(),
+            );
         }
         let document: Document = serde_json::from_value(value).map_err(|e| e.to_string())?;
         document.validate()?;
@@ -1256,7 +1261,7 @@ mod borrowed_metadata_tests {
         assert!(ActPerformanceCustody::default()
             .appended(&oversized)
             .unwrap_err()
-            .contains("Expression document exceeds 8 MiB"));
+            .contains("Expression document exceeds 16 MiB"));
     }
 }
 

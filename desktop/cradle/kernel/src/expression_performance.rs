@@ -23,7 +23,10 @@ pub const MAX_PITCHES: usize = 4096;
 pub const MAX_LAYERS: usize = 64;
 pub const MAX_ROUTES: usize = 256;
 pub const MAX_CHECKPOINTS: usize = 256;
-pub const MAX_PERFORMANCE_BYTES: usize = 8 * 1024 * 1024;
+/// The complete-performance allowance matches the commissioned fixture
+/// admission (scripts/prepare-retained-performance-fixture.py admits
+/// source-performance artifacts under 16 MiB).
+pub const MAX_PERFORMANCE_BYTES: usize = 16 * 1024 * 1024;
 pub const MAX_CHECKPOINT_BYTES: usize = 1024 * 1024;
 pub const MAX_PREPARED_OPERATIONS: usize = 256;
 
@@ -1890,6 +1893,17 @@ impl Performance {
                     });
                 }
             }
+            // An admitted source asset's context readings are the recorded
+            // truth about what its dependency currently is. Where one names
+            // a ref the basis's own sources also name, the asset's reading
+            // supersedes the original basis reading in this requirement set:
+            // the asset was admitted as the performance's valid form of it,
+            // and requiring both revisions at once is unsatisfiable by
+            // construction.
+            let superseded: std::collections::BTreeSet<String> = source_context_refs
+                .iter()
+                .map(|r| r.r#ref.clone())
+                .collect();
             if b.tuning["available"] != true {
                 issues.push(ReadinessIssue {
                     reference: b.tuning["policy_ref"]
@@ -1904,6 +1918,7 @@ impl Performance {
             for r in b
                 .sources
                 .iter()
+                .filter(|r| !superseded.contains(&r.r#ref))
                 .map(|r| (r, true))
                 .chain(b.required_assets.iter().map(|r| (r, false)))
                 .chain(

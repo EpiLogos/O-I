@@ -124,6 +124,9 @@ export function validBinding(raw) {
     if (nativeKnowledge) view.nativeKnowledge = nativeKnowledge;
     if (typeof viewRaw.graphOrigin === 'string' && viewRaw.graphOrigin.trim()) view.graphOrigin = viewRaw.graphOrigin;
   }
+  // The field's presentation state (field/model.ts): one compact unit — the encounter and its view. It is kept whole
+  // (bounded) and validated by the field's own parser on restore, which drops anything that does not parse.
+  if (o.kind === 'field' && viewRaw.field && typeof viewRaw.field === 'object' && JSON.stringify(viewRaw.field).length <= 65536) view.field = viewRaw.field;
   const terminal = o.kind === 'terminal' ? { cwd: typeof o.terminal?.cwd === 'string' ? o.terminal.cwd : undefined } : undefined;
   const browser = o.kind === 'browser' ? { url: typeof o.browser?.url === 'string' ? o.browser.url : '' } : undefined;
   // The hosted engine's checkpoint (MODE-ENGINE-STATE-PERSISTENCE §7.2):

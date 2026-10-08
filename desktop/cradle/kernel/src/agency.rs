@@ -139,6 +139,79 @@ impl Client {
         )
     }
 
+    /// The AIKit gateway's canonical conversation control for one harness
+    /// binding: `aikit gateway agent --binding <REF> <op> --json` (`sessions`
+    /// and `status` read; `new`, `stop`, `restart`, `pause`, `resume` drive
+    /// the conversation lifecycle). The gateway's answer passes through
+    /// verbatim — the kernel owns no session state — and its refusal comes
+    /// back as a named document (`{"refused":true, ...}`) carrying the
+    /// gateway's own error object: an offline gateway or an unknown binding
+    /// refuses honestly and this surface shows exactly that refusal.
+    pub fn gateway_agent(
+        &self,
+        cwd: Option<&Path>,
+        binding: &str,
+        op: &str,
+    ) -> Result<Value, String> {
+        let mut args: Vec<std::ffi::OsString> = Vec::new();
+        if self.suite_route {
+            args.push("aikit".into());
+        }
+        args.push("--json".into());
+        args.push("gateway".into());
+        args.push("agent".into());
+        args.push("--binding".into());
+        args.push(binding.into());
+        args.push(op.into());
+        let mut environment = self
+            .home
+            .as_ref()
+            .map(|home| vec![("AIKIT_HOME".into(), home.as_os_str().to_owned())])
+            .unwrap_or_default();
+        if let Some(root) = std::env::var_os("OI_CENTRAL_ROOT") {
+            environment.push(("CENTRAL_ROOT".into(), root));
+        }
+        let answer = match crate::inhabitation::run_bounded_with_env(
+            &self.executable,
+            &args,
+            cwd,
+            std::time::Duration::from_secs(15),
+            "AIKit gateway agent control",
+            &environment,
+        ) {
+            Ok(answer) => answer,
+            // An unreachable gateway is a refused answer, not a kernel
+            // failure: the owner's own words travel as named data.
+            Err(error) => {
+                return Ok(serde_json::json!({
+                    "refused": true,
+                    "error": {"code": "owner_unreachable", "message": error.message},
+                    "message": error.message,
+                }));
+            }
+        };
+        if answer.get("ok").and_then(Value::as_bool) == Some(false) {
+            // The owner's own words sit at the answer's top level or inside
+            // its error object; surface them either way, verbatim.
+            let message = answer
+                .get("message")
+                .or_else(|| answer.get("error").and_then(|error| error.get("message")))
+                .cloned()
+                .unwrap_or(Value::Null);
+            return Ok(serde_json::json!({
+                "refused": true,
+                "error": answer.get("error").cloned().unwrap_or(Value::Null),
+                "message": message,
+            }));
+        }
+        // The gateway answer carries no schema field of its own; the shape
+        // is the owner's own document and passes through unwrapped.
+        answer
+            .get("data")
+            .cloned()
+            .ok_or_else(|| "AIKit gateway agent answer has no data".to_owned())
+    }
+
     /// Read-only protocol currency comes from the same owner and isolated home
     /// as this client's SessionSpace calls. These verbs never open a provider.
     fn disclosure(&self, cwd: &Path, verb: &[&str], schema: &str) -> Result<Value, String> {
@@ -1930,5 +2003,99 @@ mod tests {
         let refused = find_reference_binding(&dir, "elsewhere").unwrap_err();
         assert!(refused.contains("elsewhere"), "{refused}");
         let _ = std::fs::remove_dir_all(&dir);
+    }
+}
+
+#[cfg(test)]
+mod gateway_agent_tests {
+    use super::Client;
+    use std::path::PathBuf;
+
+    /// A scratch dir per test, unique per process and invocation.
+    fn unique_dir(tag: &str) -> std::path::PathBuf {
+        let dir = std::env::temp_dir().join(format!(
+            "oi-kernel-gateway-agent-{tag}-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    /// A fake `aikit`: records its argv into the answer and speaks a canned
+    /// envelope, so the client's own contract (argv order, ok-unwrap,
+    /// refusal-as-data) is provable without a gateway.
+    fn fake_aikit(dir: &std::path::Path, canned: &str) -> PathBuf {
+        let path = dir.join("aikit-fake");
+        let script = format!(
+            "#!/bin/sh\nprintf '%s' \"$*\" > {}/argv.txt\nprintf '%s' '{}'\n",
+            dir.display(),
+            canned.replace('\'', "'\\''"),
+        );
+        std::fs::write(&path, script).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        path
+    }
+
+    #[test]
+    fn argv_carries_the_binding_and_the_canonical_verb_in_order() {
+        let dir = unique_dir("argv");
+        let canned = r#"{"ok":true,"data":{"type":"sessions","sessions":[]},"schema":1}"#;
+        let client = Client::with(fake_aikit(&dir, canned), None);
+        let document = client
+            .gateway_agent(None, "gateway-binding/telegram", "sessions")
+            .expect("fake answers");
+        assert_eq!(document["type"], "sessions");
+        let argv = std::fs::read_to_string(dir.join("argv.txt")).unwrap();
+        for expected in [
+            "--json",
+            "gateway",
+            "agent",
+            "--binding",
+            "gateway-binding/telegram",
+            "sessions",
+        ] {
+            assert!(argv.contains(expected), "argv missing `{expected}`: {argv}");
+        }
+    }
+
+    #[test]
+    fn the_gateway_answer_passes_through_verbatim() {
+        let dir = unique_dir("pass-through");
+        let canned = r#"{"ok":true,"data":{"type":"status","binding":"gateway-binding/x","alive":true},"schema":1}"#;
+        let client = Client::with(fake_aikit(&dir, canned), None);
+        let document = client
+            .gateway_agent(None, "gateway-binding/x", "status")
+            .expect("fake answers");
+        assert_eq!(document["binding"], "gateway-binding/x");
+        assert_eq!(document["alive"], true);
+        assert!(document.get("refused").is_none());
+    }
+
+    #[test]
+    fn a_gateway_refusal_is_named_data_with_the_owner_error_verbatim() {
+        let dir = unique_dir("refusal");
+        let canned = r#"{"error":{"code":"agency_gateway_client.gateway_refused","details":{"gateway_error_code":"agency_gateway.unknown_binding","gateway_error_message":"gateway binding harness:hermes does not exist"},"message":"gateway refused the command: gateway binding harness:hermes does not exist"},"ok":false,"schema":1}"#;
+        let client = Client::with(fake_aikit(&dir, canned), None);
+        let document = client
+            .gateway_agent(None, "harness:hermes", "sessions")
+            .expect("a refusal is an answer, not a kernel error");
+        eprintln!("DOC: {document}");
+        assert_eq!(document["refused"], true);
+        assert_eq!(
+            document["error"]["details"]["gateway_error_code"],
+            "agency_gateway.unknown_binding"
+        );
+        assert!(document["message"]
+            .as_str()
+            .unwrap()
+            .contains("does not exist"));
     }
 }

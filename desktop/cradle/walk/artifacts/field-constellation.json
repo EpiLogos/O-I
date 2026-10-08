@@ -1,0 +1,145 @@
+{
+  "scenario": "field-constellation",
+  "at": "2026-10-06T22:20:54.971Z",
+  "passed": true,
+  "counts": {
+    "passed": 25,
+    "total": 25
+  },
+  "record": {
+    "wikiFrame": {
+      "frame": "wiki:frame:5c64e3f8-a50a-4f84-882d-1dd0cd238030",
+      "members": [
+        "central:source:project:field-walk:ProjectCentral/user/notes/alpha.md",
+        "central:source:project:field-walk:ProjectCentral/user/notes/beta.md",
+        "central:source:project:field-walk:ProjectCentral/user/projects/plan.md"
+      ]
+    },
+    "techneFrameText": "? Nara ⋮ 03 Harbour pages Saved Acts Save scene 0:00 / 0:00 Harbour pages Fit Harbour pages alpha beta plan React Flow",
+    "refusal": "source_revision_conflict: central:source:project:field-walk:outside.md changed or was redirected; inspect and reconcile"
+  },
+  "checks": [
+    {
+      "ok": true,
+      "label": "the corpus's refs use the Project's own id (project:field-walk), not its directory name",
+      "detail": "central:source:project:field-walk:outside.md"
+    },
+    {
+      "ok": true,
+      "label": "the main page is the corpus README",
+      "detail": "Harbour Notes"
+    },
+    {
+      "ok": true,
+      "label": "the graph draws Alpha, Beta and the Plan around the home page",
+      "detail": 6
+    },
+    {
+      "ok": true,
+      "label": "Ctrl-click gathers a node into the constellation (and selects nothing)",
+      "detail": {
+        "refs": [
+          "central:source:project:field-walk:ProjectCentral/user/notes/alpha.md",
+          "central:source:project:field-walk:ProjectCentral/user/notes/beta.md"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "gathering opened no tab and navigated nowhere"
+    },
+    {
+      "ok": true,
+      "label": "the card's Gather adds the selected page",
+      "detail": 3
+    },
+    {
+      "ok": true,
+      "label": "the three gathered nodes are marked in the graph"
+    },
+    {
+      "ok": true,
+      "label": "the constellation bar lists exactly the three"
+    },
+    {
+      "ok": true,
+      "label": "keyboard: g on the selected node takes it out"
+    },
+    {
+      "ok": true,
+      "label": "…and puts it back"
+    },
+    {
+      "ok": true,
+      "label": "Technè is entered by the existing hop (oi:epi-examine)",
+      "detail": "techne"
+    },
+    {
+      "ok": true,
+      "label": "the Project's Wiki register on disk holds the constellation with exactly the gathered set",
+      "detail": {
+        "members": 3
+      }
+    },
+    {
+      "ok": true,
+      "label": "every member cites its source at an exact revision"
+    },
+    {
+      "ok": true,
+      "label": "the register changed only by that creation"
+    },
+    {
+      "ok": true,
+      "label": "Technè's wiki map lists the constellation with exactly its three members",
+      "detail": "Field Return to Harbour Notes Central 1 field walk 0 Field 2 · field-walk ⌇1 0 Harbour pages 3 alpha beta plan O-I Inbox"
+    },
+    {
+      "ok": true,
+      "label": "the focused Technè projection shows that constellation: its title and the three members",
+      "detail": "? Nara ⋮ 03 Harbour pages Saved Acts Save scene 0:00 / 0:00 Harbour pages Fit Harbour pages alpha beta plan React Flow"
+    },
+    {
+      "ok": true,
+      "label": "…and nothing else of the corpus"
+    },
+    {
+      "ok": true,
+      "label": "Return lands on the field"
+    },
+    {
+      "ok": true,
+      "label": "the encounter is intact on return: same main page, same constellation, same generation",
+      "detail": {
+        "gen": 7,
+        "was": 7
+      }
+    },
+    {
+      "ok": true,
+      "label": "the gathered nodes are still marked"
+    },
+    {
+      "ok": true,
+      "label": "a new constellation of two pages is gathered (one outside the source horizon)"
+    },
+    {
+      "ok": true,
+      "label": "the owner's refusal is shown in its own words and the field stays",
+      "detail": "source_revision_conflict: central:source:project:field-walk:outside.md changed or was redirected; inspect and reconcile"
+    },
+    {
+      "ok": true,
+      "label": "nothing was created: the Wiki register is byte-identical"
+    },
+    {
+      "ok": true,
+      "label": "the gathered set is kept so the person can adjust it"
+    },
+    {
+      "ok": true,
+      "label": "no page or console errors",
+      "detail": []
+    }
+  ]
+}

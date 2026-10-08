@@ -11,6 +11,7 @@ import {nativeContext,announceContext,registerSelectionValidator,PREPARED_CONTEX
 import {getContextPreview,setContextPreview,useContextPreview} from "./contextPreview";
 import {scopeGuard,selectionScopeKey} from "./scopeGuard";
 import {setContextCues} from "./selectionPresentation";
+import {useFieldContextKeeper} from "./useFieldContextKeeper";
 import "./prepared-context.css";
 
 /** The existing root mount now joins explicit selections to native preparation.
@@ -18,6 +19,7 @@ import "./prepared-context.css";
  * The old publishing/address/remember dialog is a deliberately summoned extra. */
 export function ContextTray({bindings,accompanying}:{bindings:Record<string,SurfaceBinding>;accompanying:LayoutState["accompanying"]}){
  const kernel=useKernel();const latest=useRef({kernel,bindings,accompanying});latest.current={kernel,bindings,accompanying};
+ useFieldContextKeeper(kernel.transport,accompanying);
  const companionKey=selectionScopeKey(accompanying?.project,accompanying?.ref);
  useEffect(()=>{setContextPreview({});setContextCues([]);markObservations([]);},[companionKey]);
  const cueRevisions=useRef(new Map<string,number>());

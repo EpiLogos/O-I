@@ -10,7 +10,7 @@
     "build:journeys": "node field-studies-journeys/scripts/build.mjs",
     "preview": "vite preview",
     "lint": "npm run build:journeys && tsc --noEmit && tsc --noEmit -p field-studies-journeys/tsconfig.json",
-    "test": "npm run build:journeys && node --test field-studies-journeys/tests/model.test.mjs field-studies-journeys/tests/entry-gate.test.mjs field-studies-journeys/tests/formation-authoring.test.mjs",
+    "test": "npm run build:journeys && node --test field-studies-journeys/tests/model.test.mjs field-studies-journeys/tests/entry-gate.test.mjs field-studies-journeys/tests/formation-authoring.test.mjs src/engine/psg-form-sampler.test.mjs",
     "export:legacy-collections": "node scripts/export-legacy-collections.mjs"
   },
   "dependencies": {

@@ -101,6 +101,7 @@ const SCENARIOS = {
   "settings-auth": {module:"scenarios/settings-auth.mjs",kernel:true,aliases:["s-auth"]},
   "settings-unreadable": {module:"scenarios/settings-unreadable.mjs",kernel:true,aliases:["s-unreadable"]},
   configuration: {module:"scenarios/configuration.mjs",kernel:true,aliases:["c6"]},
+  "personal-history": {module:"scenarios/personal-history.mjs",kernel:true},
   permission: {module:"scenarios/permission.mjs",kernel:true,aliases:[]},
   encounter: {module:"scenarios/encounter.mjs",kernel:true,aliases:[]},
   "epi-prime-body": {module:"scenarios/epi-prime-body.mjs",kernel:true,aliases:["epi-body"]},
@@ -198,6 +199,7 @@ const SCENARIO_SPEC = {
   "settings-credentials": { spec_ref: "docs/cradle/12-SETTINGS.md §3.4 §4 S12 S13" },
   "settings-auth": { spec_ref: "docs/cradle/12-SETTINGS.md §3.3 §3.4; docs/experience/HARNESS-SETTINGS-RESEARCH-2026-09-22.md §2a" },
   "settings-unreadable": { spec_ref: "docs/cradle/12-SETTINGS.md §2 §4 S2" },
+  "personal-history": { spec_ref: "docs/experience/PERSONAL-WEB.md PW13 (Central #242 packet C)" },
   configuration: { spec_ref: "docs/cradle/09-CONFIGURATION-PLANE.md" },
   "factory-development": { spec_ref: "docs/experience/FACTORY-AGENCY.md §4/§5/§8/§12" },
   "background-completion": { spec_ref: "docs/experience/FACTORY-AGENCY.md §1 + handoff §4" },
@@ -567,10 +569,12 @@ async function runScenario(name, { baseUrl }) {
     let bridgeUrl = null;
     if (spec.kernel) {
       stage = "bridge";
+      // WALK_BRIDGE_BIN runs an already-built bridge binary instead of `cargo run` (no build on a busy machine).
+      const prebuilt = process.env.WALK_BRIDGE_BIN;
       const bridgeService = spawnService(
         "walk-bridge",
-        "cargo",
-        [
+        prebuilt ?? "cargo",
+        prebuilt ? [`127.0.0.1:${BRIDGE_PORT}`] : [
           "run",
           "--quiet",
           "--manifest-path",
@@ -622,6 +626,9 @@ async function runScenario(name, { baseUrl }) {
         // access entirely — the touch must not throw there; only the top
         // document's stand-down matters.
         try {
+          // Base opens on the field by default (src/field); walks of the other Base surfaces start without it
+          // unless they ask for it with ?field.
+          if (!new URLSearchParams(location.search).has("field")) sessionStorage.setItem("oi-cradle.field-default", "off");
           sessionStorage.setItem("oi-cradle.welcome.v1", "walk-continuing-session");
         } catch { /* opaque frame: no storage authority, no stand-down needed */ }
       }

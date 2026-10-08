@@ -1,0 +1,157 @@
+{
+  "scenario": "field-keyboard",
+  "at": "2026-10-06T22:22:05.594Z",
+  "record": {
+    "ctrlK": {
+      "focus": "DIV"
+    }
+  },
+  "passed": true,
+  "counts": {
+    "passed": 22,
+    "total": 22
+  },
+  "checks": [
+    {
+      "ok": true,
+      "label": "search: `/` puts the cursor in the search box (site: Ctrl+K — departure below)"
+    },
+    {
+      "ok": true,
+      "label": "search: titles and paths answer at once while typing",
+      "detail": {
+        "hits": 99
+      }
+    },
+    {
+      "ok": true,
+      "label": "search: ArrowDown moves the active hit (exactly one is active)",
+      "detail": {
+        "active": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "search: Shift+Enter turns the MAIN page (the manuscript)"
+    },
+    {
+      "ok": true,
+      "label": "search: Enter opens the best hit as a tangent; the main page is kept",
+      "detail": {
+        "tangent": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "search: Escape clears the query and leaves the box"
+    },
+    {
+      "ok": true,
+      "label": "graph: arrow keys select and move between nodes (one selected, keyboard focus ring drawn)",
+      "detail": {
+        "s1": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/mathematical-artistic-image-register.md",
+        "s2": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/zero.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "graph: Escape lets go (selection cleared, card hidden)"
+    },
+    {
+      "ok": true,
+      "label": "graph: Enter opens the selected page as a tangent; the main page is kept",
+      "detail": {
+        "target": "central:source:project:Antykathera-Essay-Work:submission-package/essay/symbolon/episteme/sources/mathematics-logic/hatcher/hatcher-2002-algebraic-topology/hatcher-2002-algebraic-topology.md",
+        "tangent": "central:source:project:Antykathera-Essay-Work:submission-package/essay/symbolon/episteme/sources/mathematics-logic/hatcher/hatcher-2002-algebraic-topology/hatcher-2002-algebraic-topology.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "graph: the keyboard open advanced the encounter generation (same op as the pointer)",
+      "detail": {
+        "gen": 8,
+        "now": 10
+      }
+    },
+    {
+      "ok": true,
+      "label": "graph: `-` and `0` (zoom out, fit) are accepted without leaving the graph"
+    },
+    {
+      "ok": true,
+      "label": "L opens the Library",
+      "detail": "library"
+    },
+    {
+      "ok": true,
+      "label": "L again returns to reading",
+      "detail": "essay"
+    },
+    {
+      "ok": true,
+      "label": "1 / 2 / 3 / 4 choose Essay / Split / Field / Library",
+      "detail": {
+        "v2": "split",
+        "v3": "field",
+        "v4": "library"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the panel handle answers the arrow keys (Shift+Left widens, Right narrows) and Home restores the default",
+      "detail": {
+        "w0": 340,
+        "w1": 500,
+        "w2": 476,
+        "w3": 340
+      }
+    },
+    {
+      "ok": true,
+      "label": "explorer: ArrowDown moves between rows",
+      "detail": {
+        "f0": "Essay194",
+        "f1": "The manuscript3"
+      }
+    },
+    {
+      "ok": true,
+      "label": "explorer: ArrowRight opens a closed folder",
+      "detail": {
+        "before": 9,
+        "after": 10
+      }
+    },
+    {
+      "ok": true,
+      "label": "explorer: ArrowLeft closes it again"
+    },
+    {
+      "ok": true,
+      "label": "explorer: Enter on a row turns the main page to that page",
+      "detail": {
+        "from": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md",
+        "to": "central:source:project:Antykathera-Essay-Work:submission-package/essay/CONFRONTING-THE-LIMIT-S01.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Alt+Left goes back to the previous main page",
+      "detail": {
+        "main": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "DEPARTURE recorded: Ctrl+K is not a field key (the field's search key is `/`; Ctrl/Cmd+K belongs to the window shell)",
+      "detail": {
+        "focus": "DIV"
+      }
+    },
+    {
+      "ok": true,
+      "label": "no page or console errors",
+      "detail": []
+    }
+  ]
+}

@@ -11,7 +11,8 @@ import {fraction, fromFraction, type HandleBinding} from './nativeFieldHandleMod
 export interface BarToggleSpec {
   id: string; label: string; title: string
   read: (reading: NativeEditorReading) => boolean | undefined
-  changes: (on: boolean) => NativeEditorChange[]
+  /** The reading is passed so a toggle can pair a companion value with its switch (Cymatic and its plate size). */
+  changes: (on: boolean, reading?: NativeEditorReading) => NativeEditorChange[]
 }
 export interface BarMacroSpec {
   rackId: string; macroId: string; title: string
@@ -35,10 +36,20 @@ const VOLUME_3D: BarToggleSpec = {
   read: reading => reading.scene.engine.volumeEnabled === undefined ? undefined : reading.scene.engine.volumeEnabled === true,
   changes: on => [{kind: 'panel-setting', key: 'volumeEnabled', value: on}, {kind: 'panel-setting', key: 'depthPerspective', value: on}],
 }
+/** The plate size the Cymatic pair starts a field at. Low reads clearly; the person can raise it, and turning the field on never raises it. */
+export const CYMATIC_LOW_PLATE = 300
 const CYMATIC: BarToggleSpec = {
-  id: 'cymatic', label: 'Cymatic', title: 'Cymatic field on or off (resonanceEnabled).',
+  id: 'cymatic', label: 'Cymatic', title: `Cymatic field on or off (resonanceEnabled). Turning it on also sets the plate size to ${CYMATIC_LOW_PLATE} unless it is already lower, so the pattern reads clearly.`,
   read: reading => reading.scene.engine.resonanceEnabled === undefined ? undefined : reading.scene.engine.resonanceEnabled === true,
-  changes: on => [{kind: 'field-setting', key: 'resonanceEnabled', value: on}],
+  changes: (on, reading) => {
+    const changes: NativeEditorChange[] = [{kind: 'field-setting', key: 'resonanceEnabled', value: on}]
+    const plate = NATIVE_BINDINGS.find(item => item.path === 'cymatics.plateSize')
+    if (on && reading && plate) {
+      const current = Number(reading.scene.field.params[plate.key] ?? plate.defaultValue)
+      if (current > CYMATIC_LOW_PLATE) changes.push({kind: 'parameter', target: 'field.' + plate.key, value: CYMATIC_LOW_PLATE})
+    }
+    return changes
+  },
 }
 const RELATIONAL: BarToggleSpec = {
   id: 'relational', label: 'Relational', title: 'Relational forces on or off (relationalEnabled).',

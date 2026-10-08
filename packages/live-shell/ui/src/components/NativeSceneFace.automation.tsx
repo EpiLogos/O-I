@@ -1,4 +1,4 @@
-import {useRef, useState, type KeyboardEvent, type PointerEvent} from 'react'
+import {useEffect, useRef, useState, type KeyboardEvent, type PointerEvent} from 'react'
 import type {NativeAutomationChange, NativeAutomationLaneValues} from '../../../../expressions-boundary/src/editor'
 import {NATIVE_AUTOMATION_BLENDS, NATIVE_AUTOMATION_EASINGS, NATIVE_AUTOMATION_LANE_LIMIT, NATIVE_AUTOMATION_LOOPS, NATIVE_AUTOMATION_TYPES, NATIVE_AUTOMATION_WAVES} from '../../../../expressions-boundary/src/nativeAutomationEdits'
 import {automationTarget} from '../../../../expressions-boundary/src/parameters'
@@ -237,6 +237,20 @@ export function AutomationFacePanel({reading, apply, disabled}: SceneFacePanelPr
   const leaderChoices = groups.map(group => group.leader).filter(lane => lane.id !== selected?.id)
   const readout = selected ? targetLabel(scene, selected.target) : null
   const observed = selected ? effectiveReadout(reading, selected.target) : null
+  // Monitor: authored shape, or the live output the owner reports. The trace holds only the readings received (the bar polls while a lane runs).
+  const [monitorMode, setMonitorMode] = useState<'authored' | 'live'>('authored')
+  const trace = useRef<{target: string | null; values: number[]}>({target: null, values: []})
+  const [, redraw] = useState(0)
+  useEffect(() => {
+    const target = selected?.target ?? null
+    if (trace.current.target !== target) trace.current = {target, values: []}
+    if (target && observed !== null) {
+      const values = trace.current.values
+      values.push(observed)
+      if (values.length > MONITOR_TRACE_LIMIT) values.shift()
+      redraw(count => count + 1)
+    }
+  }, [reading])
   const roleNote = role === 'leader'
     ? `Leads ${plural(selectedGroup?.followers.length ?? 0, 'other target')}. Source, wave, rate, phase, duration, delay, repeat and easing are edited here. Each target keeps its own low, high, blend and enabled.`
     : role === 'follower'
@@ -363,12 +377,23 @@ export function AutomationFacePanel({reading, apply, disabled}: SceneFacePanelPr
         </div>
         {role === 'leader' && <small className="native-automation-face-note">The group stays: its first remaining target takes over the shape.</small>}
         <section className="native-automation-face-monitor" aria-labelledby="native-automation-monitor-title">
-          <header><h4 id="native-automation-monitor-title">Monitor</h4><span>Authored shape</span></header>
-          <p>Live output not in the reading: the diagram above shows the authored shape only.</p>
+          <header><h4 id="native-automation-monitor-title">Monitor</h4>
+            <span role="group" aria-label="Monitor mode">
+              <button type="button" aria-pressed={monitorMode === 'authored'} onClick={() => setMonitorMode('authored')}>Authored shape</button>
+              <button type="button" aria-pressed={monitorMode === 'live'} onClick={() => setMonitorMode('live')}>Live output</button></span></header>
+          {monitorMode === 'authored'
+            ? <p>The diagram above shows the authored shape. Choose Live output for what the engine is using now.</p>
+            : (() => {
+              const shapeTrace = monitorTrace(trace.current.values)
+              return shapeTrace.last === null
+                ? <p>No live reading yet: the owner has not reported an effective value for this target.</p>
+                : <figure className="native-automation-face-trace"><svg viewBox="0 0 240 48" role="img" aria-label={`Live output of ${readout.label}: ${short(shapeTrace.last)} now, between ${short(shapeTrace.min)} and ${short(shapeTrace.max)} over the last ${trace.current.values.length} readings`} preserveAspectRatio="none"><path d={shapeTrace.path} fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" /></svg>
+                  <figcaption>{short(shapeTrace.min)} – {short(shapeTrace.max)}{readout.unit ? ` ${readout.unit}` : ''} · {trace.current.values.length} readings</figcaption></figure>
+            })()}
           <dl className="native-automation-face-values">
             <div><dt>Base</dt><dd>{readout.base !== null ? `${short(readout.base)}${readout.unit ? ` ${readout.unit}` : ''}` : 'Not in this Scene'}</dd></div>
             <div><dt>Effective</dt><dd>{observed !== null ? `${short(observed)}${readout.unit ? ` ${readout.unit}` : ''}` : 'not in the reading'}</dd></div>
-            <div><dt>Automated</dt><dd>live output not in the reading</dd></div>
+            <div><dt>Automated</dt><dd>{selected.enabled ? 'running' : 'paused'}</dd></div>
           </dl>
         </section>
       </div> : <p className="native-automation-face-empty">{selected ? 'This target is no longer in the Scene. Remove the lane to clear it.' : 'Add a lane to shape a parameter over time.'}</p>}

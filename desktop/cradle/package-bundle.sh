@@ -20,9 +20,15 @@
 # ~/Applications/O-I.app contract). --dry-run validates everything that does
 # not need a real build.
 #
-# Usage: package-bundle.sh [--dry-run] [--skip-build] [--out DIR]
+# Usage: package-bundle.sh [--dry-run] [--skip-build] [--minimal] [--skip-install] [--out DIR]
 #   --dry-run       print the planned steps and validate contract data, no writes
 #   --skip-build    adopt an existing Tauri build output (already built once)
+#   --minimal       the closure of the minimal composition (Central, Actuation, AIKit, QL-MEF; no Factory,
+#                   no Workcell): the hosted SharedField client — a passive client asset for the deferred
+#                   shared-field experience, not a service anything in the minimal composition needs — is
+#                   left out of the bundle, and BUNDLE.json records the closure that was chosen. The same
+#                   build pipeline and the same application identity; only resource selection differs.
+#   --skip-install  do not run `npm ci` (reuse the checkout's installed node_modules)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -30,6 +36,8 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 OUT_DIR="${REPO_ROOT}/desktop/cradle/dist"
 DRY_RUN=0
 SKIP_BUILD=0
+MINIMAL=0
+SKIP_INSTALL=0
 
 log() { printf 'package-bundle: %s\n' "$*"; }
 die() { printf 'package-bundle: error: %s\n' "$*" >&2; exit 1; }
@@ -38,8 +46,10 @@ while [ "$#" -gt 0 ]; do
   case "$1" in
     --dry-run) DRY_RUN=1 ;;
     --skip-build) SKIP_BUILD=1 ;;
+    --minimal) MINIMAL=1 ;;
+    --skip-install) SKIP_INSTALL=1 ;;
     --out) [ "$#" -ge 2 ] || die "--out requires a directory"; OUT_DIR="$2"; shift ;;
-    *) die "unknown option '$1' (usage: package-bundle.sh [--dry-run] [--skip-build] [--out DIR])" ;;
+    *) die "unknown option '$1' (usage: package-bundle.sh [--dry-run] [--skip-build] [--minimal] [--skip-install] [--out DIR])" ;;
   esac
   shift
 done
@@ -82,8 +92,12 @@ MACOS_APP_PATH="${TARGET_ROOT}/release/bundle/macos/O-I.app"
 
 if [ "${DRY_RUN}" -eq 1 ]; then
   log "dry-run plan:"
-  log "  0. bundle the SharedField client into shared-field/dist-client (app resource shared-field/)"
-  log "  1. npm ci --prefix desktop/cradle"
+  if [ "${MINIMAL}" -eq 1 ]; then
+    log "  0. (--minimal) no SharedField client: the minimal composition needs no hosted client asset"
+  else
+    log "  0. bundle the SharedField client into shared-field/dist-client (app resource shared-field/)"
+  fi
+  if [ "${SKIP_INSTALL}" -eq 1 ]; then log "  1. (--skip-install) reuse desktop/cradle/node_modules"; else log "  1. npm ci --prefix desktop/cradle"; fi
   log "  2. npx --prefix desktop/cradle tauri build (frontend + native shell + bundle)"
   if [ "${TARGET}" = "aarch64-apple-darwin" ]; then
     log "  3. adopt ${MACOS_APP_PATH} as app/O-I.app"
@@ -115,12 +129,20 @@ build_shared_field_client() {
   node "${module}/build-client.mjs"
 }
 
+# The minimal closure drops the one resource the bundle config names (the hosted client); the same tauri.conf.json
+# otherwise applies, so there is one build pipeline and one application identity.
+TAURI_EXTRA=()
+if [ "${MINIMAL}" -eq 1 ]; then TAURI_EXTRA=(--config '{"bundle":{"resources":null}}'); fi
+install_node_modules() {
+  if [ "${SKIP_INSTALL}" -eq 1 ]; then log "reusing the installed node_modules (--skip-install)"; else npm ci --prefix "${REPO_ROOT}/desktop/cradle" --no-audit --no-fund; fi
+}
+
 if [ "${SKIP_BUILD}" -eq 0 ]; then
-  build_shared_field_client
+  if [ "${MINIMAL}" -eq 0 ]; then build_shared_field_client; else log "minimal closure: not bundling the SharedField client"; fi
   if [ "${TARGET}" = "aarch64-apple-darwin" ]; then
     log "building the cradle web bundle and native shell (macOS .app)"
-    npm ci --prefix "${REPO_ROOT}/desktop/cradle" --no-audit --no-fund
-    (cd "${REPO_ROOT}/desktop/cradle" && npx tauri build --bundles app)
+    install_node_modules
+    (cd "${REPO_ROOT}/desktop/cradle" && npx tauri build --bundles app ${TAURI_EXTRA[@]+"${TAURI_EXTRA[@]}"})
   else
     log "building the cradle web bundle and native shell (this needs the Tauri linux system packages)"
     npm ci --prefix "${REPO_ROOT}/desktop/cradle" --no-audit --no-fund
@@ -135,7 +157,11 @@ APPIMAGE=""
 if [ "${TARGET}" = "aarch64-apple-darwin" ]; then
   [ -d "${MACOS_APP_PATH}" ] && MACOS_APP="${MACOS_APP_PATH}"
   [ -n "${MACOS_APP}" ] || die "no .app found at ${MACOS_APP_PATH}; run the tauri build first (or drop --skip-build)"
-  [ -f "${MACOS_APP}/Contents/Resources/shared-field/field-client.sh" ] || die "${MACOS_APP} carries no shared-field/ client resource; the installed Explore would have no SharedField client"
+  if [ "${MINIMAL}" -eq 0 ]; then
+    [ -f "${MACOS_APP}/Contents/Resources/shared-field/field-client.sh" ] || die "${MACOS_APP} carries no shared-field/ client resource; the installed Explore would have no SharedField client"
+  elif [ -e "${MACOS_APP}/Contents/Resources/shared-field" ]; then
+    die "${MACOS_APP} carries a shared-field/ resource but --minimal names a closure without it; rebuild with --minimal"
+  fi
 else
   for candidate in "${TARGET_ROOT}"/release/bundle/appimage/*.AppImage; do
     if [ -f "${candidate}" ]; then APPIMAGE="${candidate}"; break; fi
@@ -162,9 +188,9 @@ fi
 cp "${TAURI_DIR}/icons/icon.png" "${BUNDLE_ROOT}/app/icon.png"
 cp "${FOOTPRINT}" "${BUNDLE_ROOT}/footprint.json"
 SOURCE_REVISION="$(git -C "${REPO_ROOT}" rev-parse HEAD 2>/dev/null || echo unknown)"
-python3 - "$VERSION" "$TARGET" "$SOURCE_REVISION" > "${BUNDLE_ROOT}/BUNDLE.json" <<'JSON'
+python3 - "$VERSION" "$TARGET" "$SOURCE_REVISION" "$MINIMAL" > "${BUNDLE_ROOT}/BUNDLE.json" <<'JSON'
 import datetime, json, sys
-version, target, revision = sys.argv[1], sys.argv[2], sys.argv[3]
+version, target, revision, minimal = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4] == "1"
 print(json.dumps({
     "schema": "oi.desktop-bundle/v1",
     "name": f"oi-cradle-{version}-{target}.tar.gz",
@@ -175,6 +201,13 @@ print(json.dumps({
     "created_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     "app_entry": "app/O-I.app" if target == "aarch64-apple-darwin" else "app/oi-cradle.AppImage",
     "app_kind": "app-bundle" if target == "aarch64-apple-darwin" else "single-executable",
+    # The package closure that was chosen, so what a build carries is a recorded fact, not an inference.
+    "closure": {
+        "profile": "minimal" if minimal else "full",
+        "composition": "central+actuation+ai-kit+quaternal-logic" if minimal else "any",
+        "excluded_products": ["software-factory", "workcell"] if minimal else [],
+        "resources": {"shared-field": "excluded: passive hosted client asset, not required by the minimal composition" if minimal else "bundled"},
+    },
 }, indent=2))
 JSON
 

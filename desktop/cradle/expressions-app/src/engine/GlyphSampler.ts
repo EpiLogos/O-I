@@ -260,6 +260,27 @@ export class GlyphSampler {
   }
 
   /**
+   * The application rasteriser's own text-glyph mask, cited for the PS-G form
+   * sampler (QL-MEF #296 #299): the alpha raster of the rendered glyph plus the
+   * stable rasteriser identity the declaration cites as `mask_ref`. The
+   * rasterisation stays this app's PS-G half — the sampler carries the mask,
+   * never invents it.
+   */
+  public rasterizeTextAlpha(
+    glyphText: string,
+    fontFamily: string = FALLBACK_FONT_STACK,
+    fontWeight: string | number = 900
+  ): { alpha: Uint8ClampedArray; width: number; height: number; maskRef: string } {
+    const { imageData } = this.rasterizeGlyph(glyphText, fontFamily, fontWeight);
+    return {
+      alpha: imageData.data,
+      width: this.canvas.width,
+      height: this.canvas.height,
+      maskRef: 'app:rasteriser:text-glyph@1',
+    };
+  }
+
+  /**
    * Generates target particle positions for a given glyph.
    * Supports both Stochastic Stipple (with perimeter falloff scatter) and Ordered Halftone Matrix.
    */

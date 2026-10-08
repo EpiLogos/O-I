@@ -46,6 +46,7 @@ const REQUIRED_SECTIONS = [
   "z-layers",
   "motion",
   "focus / keyboard states",
+  "field reading surface — the site palette hosted in Base",
 ];
 
 const lines = css.split("\n");

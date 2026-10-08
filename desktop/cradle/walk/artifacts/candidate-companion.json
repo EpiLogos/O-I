@@ -1,0 +1,349 @@
+{
+  "scenario": "candidate-companion",
+  "spec_ref": "docs/cradle/CENTRAL-FIELD-WORLD-PACKAGE.md §5 and scripts/candidate-launch.mjs (the owner's candidate route)",
+  "grade": "A",
+  "at": "2026-10-07T01:58:14.114Z",
+  "worlds_root": "/Users/admin/.oi-candidates/worlds",
+  "launch": {
+    "pid": 96488,
+    "args": [
+      "--mode",
+      "web",
+      "--worlds-root",
+      "/Users/admin/.oi-candidates/worlds",
+      "--bridge-port",
+      "60387",
+      "--vite-port",
+      "60388",
+      "--no-open",
+      "--oi",
+      "/Users/admin/Central/worktrees/env-2/o-i/target/debug/oi"
+    ],
+    "app": "http://127.0.0.1:60388/",
+    "bridge": "http://127.0.0.1:60387",
+    "edition_server": "none"
+  },
+  "model": {
+    "provider": "zai",
+    "model": "glm-5.3-flash",
+    "source": "~/.prime/agent/settings.json"
+  },
+  "agent_session": "agent-session/o-i-chat-1791338362-ece0",
+  "provider": {
+    "id": "epi-prime-ql",
+    "body_ref": "agent-body/epi-prime-ql",
+    "body_revision": "4b13b6d164ba43e4b13d285c10d66db08157f367",
+    "native_session_id": "01a11416-4178-740d-9a45-520fcbc28fd2"
+  },
+  "turn_outcome": "open",
+  "chat_tail": "Wo\nEarlier messages\nWORLD\n\n kernel.. \n`QL_PROJECT_EVENT` (DETERMINISTIC PROJECTION)\n — status ql_decide (requested head lens)** — the - L0 Quaternal · L0' Archetypal L5' Divine Logos\n\nBOTTOM LINE:\n for movement -related output the tools returned; I am not asserting any of them\n\nWorld\n· using ipython\n· 24m 52s\nGLM-5.3-Flash\nStop",
+  "encounter_use": {
+    "exit": 0,
+    "raw": "{\n  \"absences\": [\n    \"owner faculty receipts are read by schema and session; their content-addressed file names are not re-verified here\",\n    \"the turn has no completion signal yet; the reading covers what was journalled so far\",\n    \"addressed deliveries are not segmented as turns; only user messages open a turn\"\n  ],\n  \"agent_session\": \"agent-session/o-i-chat-1791338362-ece0\",\n  \"decision\": {\n    \"from_delivery_receipt\": {\n      \"decision_provider\": \"blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3\",\n      \"jev_invocation_ref\": \"invocation/jev/ca7c31d83cd60420bbd46c1d3904a66f2ef95aca70b56d47587651da1dcab76f\"\n    },\n    \"note\": \"the prepare path returns the decision receipt but does not persist its body: only the invocation ref and the provider identity digest travel with the view and its delivery receipt\",\n    \"selection_readback\": {\n      \"decision_provider\": \"blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3\",\n      \"jev_invocation_ref\": \"invocation/jev/ca7c31d83cd60420bbd46c1d3904a66f2ef95aca70b56d47587651da1dcab76f\",\n      \"read\": true,\n      \"read_as\": \"local view\",\n      \"selected_source_refs\": [\n        \"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero.md\",\n        \"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md\",\n        \"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md\",\n        \"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/14-s1-p1-sunya-operational.md\",\n        \"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md\",\n        \"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/18-s1-p5-loan-returns.md\",\n        \"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/ROOM-02-return-of-zero.md\",\n        \"central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/zero.md\"\n      ],\n      \"version\": 2,\n      \"view_is_the_delivered_one\": true\n    }\n  },\n  \"prepared_context\": {\n    \"degraded\": [],\n    \"delivered\": [\n      {\n        \"cursor\": 3800,\n        \"kind\": \"now-context-delivered\",\n        \"observed_at_ms\": 1791338412035,\n        \"receipt\": {\n          \"agent_session\": \"agent-session/o-i-chat-1791338362-ece0\",\n          \"basis_digest\": \"blake3:dea42b7e7d48cf5fb6ebf731d27e1de6b2fb54fc2bef8c81d7f31df49126c5cb\",\n          \"change_cursor\": 0,\n          \"decision_provider\": \"blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3\",\n          \"delivered_at_unix_ms\": 1791338412032,\n          \"jev_invocation_ref\": \"invocation/jev/ca7c31d83cd60420bbd46c1d3904a66f2ef95aca70b56d47587651da1dcab76f\",\n          \"participant_ref\": \"agent/o-i-chat\",\n          \"prepared_digest\": \"blake3:d5ca4bb47a5cbb53746c600f0cc77231e545aaf1820ed0c251256341f4e7cf5e\",\n          \"prepared_version\": 2,\n          \"schema\": \"aikit.now-context-delivery/v1\"\n        },\n        \"standing\": \"provider-turn-delivery-accepted; not a claim of model response\"\n      }\n    ],\n    \"source\": \"encounter journal: now-context-* events\",\n    \"state\": \"delivered\",\n    \"uncertain\": []\n  },\n  \"ql_operations\": {\n    \"faculty_receipts\": [],\n    \"python_faculty_calls\": [],\n    \"reconciliation\": {\n      \"faculty_receipts_in_turn\": 0,\n      \"python_calls_recorded\": 0,\n      \"statement\": \"no Python faculty call and no faculty receipt in this turn\"\n    },\n    \"tool_calls\": []\n  },\n  \"schema\": \"aikit.encounter-use-reading/v1\",\n  \"sources\": [\n    \"encounter journal (encounters.sqlite3)\",\n    \"Actuation faculty evidence (actuation.prime-ql-operation/v1)\",\n    \"Redis prepared view\"\n  ],\n  \"turn\": {\n    \"end_cursor_exclusive\": null,\n    \"index\": 1,\n    \"last_event_at_ms\": 1791339450246,\n    \"of\": 1,\n    \"outcome\": \"open\",\n    \"start_cursor\": 3799,\n    \"started_at_ms\": 1791338412029\n  }\n}\n"
+  },
+  "done_marker_seen": false,
+  "network_changed_aborts": {
+    "console_errors": 6,
+    "failed_requests": 6
+  },
+  "requests": {
+    "world": 15,
+    "sample": [
+      "/world/epi-logos%2Fconfronting-the-limit/34a3fa34c85c6eeb/edition/static/fieldIndex.json",
+      "/world/epi-logos%2Fconfronting-the-limit/34a3fa34c85c6eeb/edition/quartz-source.json",
+      "/world/epi-logos%2Fconfronting-the-limit/34a3fa34c85c6eeb/edition/expressions/index.json",
+      "/world/epi-logos%2Fconfronting-the-limit/34a3fa34c85c6eeb/edition/index.html"
+    ],
+    "failed": [
+      {
+        "url": "http://127.0.0.1:60387/op",
+        "error": "net::ERR_NETWORK_CHANGED"
+      },
+      {
+        "url": "http://127.0.0.1:60387/op",
+        "error": "net::ERR_NETWORK_CHANGED"
+      },
+      {
+        "url": "http://127.0.0.1:60387/op",
+        "error": "net::ERR_NETWORK_CHANGED"
+      },
+      {
+        "url": "http://127.0.0.1:60387/events?since=7",
+        "error": "net::ERR_NETWORK_CHANGED"
+      },
+      {
+        "url": "http://127.0.0.1:60387/op",
+        "error": "net::ERR_NETWORK_CHANGED"
+      }
+    ]
+  },
+  "projects": [
+    "ACTUATION",
+    "CENTRAL",
+    "FACTORY",
+    "O-I",
+    "QUATERNAL-LOGIC",
+    "AI-KIT"
+  ],
+  "launcher_log_tail": [
+    "[bridge] -> answered POST /op",
+    "[bridge] POST /op (144 bytes)",
+    "[bridge] -> answered POST /op",
+    "[bridge] POST /op (119 bytes)",
+    "[bridge] -> answered POST /op",
+    "[bridge] POST /op (144 bytes)",
+    "[bridge] POST /op (66 bytes)",
+    "[bridge] -> answered POST /op",
+    "[bridge] -> answered POST /op",
+    "[bridge] POST /op (119 bytes)",
+    "[bridge] POST /op (66 bytes)",
+    "[bridge] -> answered POST /op",
+    "[bridge] -> answered POST /op",
+    "[bridge] POST /op (144 bytes)",
+    "[bridge] -> answered POST /op",
+    "[bridge] OPTIONS /op (0 bytes)",
+    "[bridge] -> answered OPTIONS /op",
+    "[bridge] OPTIONS /op (0 bytes)",
+    "[bridge] -> answered OPTIONS /op",
+    "[bridge] POST /op (119 bytes)",
+    "[bridge] POST /op (66 bytes)",
+    "[bridge] -> answered POST /op",
+    "[bridge] -> answered POST /op",
+    "[bridge] POST /op (144 bytes)",
+    "[bridge] POST /op (66 bytes)",
+    "[bridge] -> answered POST /op",
+    "[bridge] -> answered POST /op",
+    "[bridge] POST /op (119 bytes)",
+    "[bridge] -> answered POST /op",
+    "[bridge] POST /op (66 bytes)",
+    "[bridge] -> answered POST /op",
+    "[bridge] POST /op (144 bytes)",
+    "[bridge] -> answered POST /op",
+    "[bridge] conn end (96604)",
+    "[bridge] conn end (96604)",
+    "[bridge] conn end (96604)",
+    "[bridge] conn end (96604)",
+    "[bridge] conn end (96604)",
+    "[bridge] conn end (96604)",
+    ""
+  ],
+  "launcher_stopped": true,
+  "passed": false,
+  "counts": {
+    "passed": 26,
+    "total": 28
+  },
+  "checks": [
+    {
+      "ok": true,
+      "label": "the candidate launched with the installed World and no edition server",
+      "detail": [
+        "candidate: essay World    installed under /Users/admin/.oi-candidates/worlds (kernel WorldResolve; no edition server)",
+        "candidate: companion  ql-engines  {\"ql\":\"3069968462753c41\",\"ql-wiki-refraction\":\"40ca509143542d2d\",\"built_from_checkout_head\":\"b49b993\",\"release_material\":\"not yet (G4)\"}",
+        "candidate: companion  distribution  {\"installed\":\"9881fbbd9d67503f\",\"faculty_owner_revision\":\"6a81fc441e4dda477f4de3a7ebd59c368cb28f37\",\"coherent\":true,\"launcher\":\"~/.oi-candidates/central-field/aikit-home/tools/prime-epi/bin/actuation-"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "a fresh profile shows the first-run welcome over the shell"
+    },
+    {
+      "ok": true,
+      "label": "one click dismisses the welcome (it fades out and leaves the shell)"
+    },
+    {
+      "ok": true,
+      "label": "the field opens on 'Choose a corpus', listing the real ground's projects",
+      "detail": [
+        "ACTUATION",
+        "CENTRAL",
+        "FACTORY",
+        "O-I",
+        "QUATERNAL-LOGIC",
+        "AI-KIT"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the utility bar is there (scope, modes, companion, settings)",
+      "detail": [
+        "scope",
+        "modes",
+        "companion",
+        "settings"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the scope menu opens with every item inside the window (Central, the projects, the Epi-Logos world)",
+      "detail": {
+        "items": 14,
+        "first": {
+          "t": "Central",
+          "top": 346,
+          "bottom": 376
+        },
+        "last": {
+          "t": "Epi-Logos",
+          "top": 778,
+          "bottom": 808
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "the O-I project (which holds the essay) is the scope: the companion's conversation will belong to it"
+    },
+    {
+      "ok": true,
+      "label": "the Epi-Logos lens is on (the chip is shown, the lens is pressed)"
+    },
+    {
+      "ok": true,
+      "label": "the packaged essay appears: its title and its graph",
+      "detail": {
+        "title": "Confronting the Limit: Determination, Subjectivity and Mind as Objective Internality.",
+        "graph_nodes": 19,
+        "opened_after_ms": 29328
+      }
+    },
+    {
+      "ok": true,
+      "label": "the field stands at M16, addressed by the World's native refs",
+      "detail": {
+        "ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/THE-RETURN-OF-ZERO.md",
+        "span": "M16"
+      }
+    },
+    {
+      "ok": true,
+      "label": "selecting a relation selects it without leaving the passage",
+      "detail": {
+        "selected": "ments/concepts/dimensional-reframing-at-zero-and-infinity.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "double-click opens the relation as a tangent beside the passage",
+      "detail": {
+        "tangent": "dimensional-reframing-at-zero-and-infinity.md",
+        "generation": 6
+      }
+    },
+    {
+      "ok": true,
+      "label": "an Expression opened as the tangent with its scene",
+      "detail": {
+        "ref": "expression:roz-room-02-return-of-zero",
+        "scene": "movement-15"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the frame is the packaged renderer, served by the bridge's /world/ route",
+      "detail": "/world/epi-logos%2Fconfronting-the-limit/34a3fa34c85c6eeb/renderer/expression.html?x=roz-room-02-return-of-zero&scene=movement-15&embed=1&theme=light"
+    },
+    {
+      "ok": true,
+      "label": "the Expression plays (state ready: the body was checked against the index digest)",
+      "detail": {
+        "text": 812,
+        "state": "ready",
+        "canvas": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "the panel says where the first send opens the conversation: in O-I"
+    },
+    {
+      "ok": true,
+      "label": "the panel's provision asked for the Epi-Logos Prime-QL body (the lens selects it)",
+      "detail": [
+        {
+          "project": "O-I",
+          "preferred_body_ref": "agent-body/epi-prime-ql"
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the conversation runs on the candidate home's Prime-QL row: new launcher, explicit extension, verified installation",
+      "detail": {
+        "id": "epi-prime-ql",
+        "body_revision": "4b13b6d164ba43e4b13d285c10d66db08157f367",
+        "launcher": "~/.oi-candidates/central-field/aikit-home/tools/prime-epi/bin/actuation-epi-prime"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the delivered turn carried the field's own item (the reader's place), through the prepared-context seam",
+      "detail": {
+        "chars": 2537
+      }
+    },
+    {
+      "ok": true,
+      "label": "Redis-prepared NOW context was delivered to the turn, with no degradation",
+      "detail": "delivered"
+    },
+    {
+      "ok": true,
+      "label": "the delivery names the Kev decision invocation and provider identity behind the view",
+      "detail": {
+        "participant": "agent/o-i-chat",
+        "invocation": "invocation/jev/ca7c31d83cd60420bbd46c1d3904a66f2ef95aca70b56d47587651da1dcab76f"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the Redis readback is the delivered view and lists the sources Kev selected",
+      "detail": 8
+    },
+    {
+      "ok": true,
+      "label": "Kev's own counters moved",
+      "detail": {
+        "before": 34,
+        "after": 35
+      }
+    },
+    {
+      "ok": false,
+      "label": "the body made QL operations and the owner filed their faculty receipts (all successful)",
+      "detail": {
+        "tool_calls": [],
+        "python": [],
+        "receipts": []
+      }
+    },
+    {
+      "ok": false,
+      "label": "the turn ended (the journal says so) with the assistant's answer in the panel",
+      "detail": {
+        "outcome": "open",
+        "done_marker_seen": false
+      }
+    },
+    {
+      "ok": true,
+      "label": "every edition and renderer request went to the bridge's /world/ route and was served (index, receipt, pages, renderer, journey)",
+      "detail": {
+        "requests": 15,
+        "statuses": [
+          200
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "nothing was requested from any other host (no edition server, no edition address)",
+      "detail": []
+    },
+    {
+      "ok": true,
+      "label": "no page or console errors (6 request(s) aborted by the browser's ERR_NETWORK_CHANGED are counted separately)",
+      "detail": []
+    }
+  ]
+}

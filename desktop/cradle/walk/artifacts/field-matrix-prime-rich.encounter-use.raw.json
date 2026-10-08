@@ -1,0 +1,112 @@
+{
+  "absences": [
+    "owner faculty receipts are read by schema and session; their content-addressed file names are not re-verified here",
+    "addressed deliveries are not segmented as turns; only user messages open a turn"
+  ],
+  "agent_session": "agent-session/field-walk-chat-1791323819-1668",
+  "decision": {
+    "from_delivery_receipt": {
+      "decision_provider": "blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3",
+      "jev_invocation_ref": "invocation/jev/f8b02d283480e837f11c4ad9096b3f47ce8b48775217e04d643fee62ae6eaa67"
+    },
+    "note": "the prepare path returns the decision receipt but does not persist its body: only the invocation ref and the provider identity digest travel with the view and its delivery receipt",
+    "selection_readback": {
+      "decision_provider": "blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3",
+      "jev_invocation_ref": "invocation/jev/f8b02d283480e837f11c4ad9096b3f47ce8b48775217e04d643fee62ae6eaa67",
+      "read": true,
+      "read_as": "local view",
+      "selected_source_refs": [
+        "context-source/field-walk-1",
+        "context-source/field-walk-2",
+        "context-source/field-walk-3",
+        "context-source/field-walk-4",
+        "context-source/field-walk-5",
+        "context-source/field-walk-6"
+      ],
+      "version": 2,
+      "view_is_the_delivered_one": true
+    }
+  },
+  "prepared_context": {
+    "degraded": [],
+    "delivered": [
+      {
+        "cursor": 5,
+        "kind": "now-context-delivered",
+        "observed_at_ms": 1791323831913,
+        "receipt": {
+          "agent_session": "agent-session/field-walk-chat-1791323819-1668",
+          "basis_digest": "blake3:9de192f1239ef14e6b546751a3536166026b7c66b1826d5f6d208a2e5269b6fe",
+          "change_cursor": 0,
+          "decision_provider": "blake3:bd0ecfeefbc137f6d3b371f3d8f4cd17d837adc85890bdda8b3a81b412dd68c3",
+          "delivered_at_unix_ms": 1791323831911,
+          "jev_invocation_ref": "invocation/jev/f8b02d283480e837f11c4ad9096b3f47ce8b48775217e04d643fee62ae6eaa67",
+          "participant_ref": "agent/field-walk-chat",
+          "prepared_digest": "blake3:c1768ff8d3bee69f9aca16eea7cbe56b246a3a2df6375869ee42547de9875063",
+          "prepared_version": 2,
+          "schema": "aikit.now-context-delivery/v1"
+        },
+        "standing": "provider-turn-delivery-accepted; not a claim of model response"
+      }
+    ],
+    "source": "encounter journal: now-context-* events",
+    "state": "delivered",
+    "uncertain": []
+  },
+  "ql_operations": {
+    "faculty_receipts": [
+      {
+        "declared_locus_ref": "agent-session/field-walk-chat-1791323819-1668",
+        "error": null,
+        "observed_unix_nanos": "1791324355922148000",
+        "operation": "epi-faculty",
+        "ql_mef_revision": "6a81fc441e4dda477f4de3a7ebd59c368cb28f37",
+        "request_digest": "7a2cadc37dba861fd021bf187d8a5aa64756c1ebdb9591082e7c864b5b9460e7",
+        "response_digest": "02c10351e527fe41d7d0a5ad394d4b5050e8e97787a1406b1df35186c4495d34",
+        "success": true
+      }
+    ],
+    "python_faculty_calls": [
+      {
+        "cursor": 653,
+        "function": "epi_faculty",
+        "tool_call_id": "call_347ff68ac26c4005992fe104"
+      }
+    ],
+    "reconciliation": {
+      "faculty_receipts_in_turn": 1,
+      "python_calls_recorded": 1,
+      "statement": "every recorded Python faculty call has an owner receipt in the turn window (counts agree; calls are matched by count and time, not by identity)"
+    },
+    "tool_calls": [
+      {
+        "cursor": 64,
+        "operation": null,
+        "position": null,
+        "result": {
+          "cursor": 65,
+          "is_error": false,
+          "result_schema": "ql.agent-projection/v1",
+          "result_sha256": "ed2f3ac35300c02b9698f53f7acc245787455c3151ede2dcf34258beac8d6cf4"
+        },
+        "tool": "ql_project_event",
+        "tool_call_id": "call_cea8dfee3e04493ab99c844b"
+      }
+    ]
+  },
+  "schema": "aikit.encounter-use-reading/v1",
+  "sources": [
+    "encounter journal (encounters.sqlite3)",
+    "Actuation faculty evidence (actuation.prime-ql-operation/v1)",
+    "Redis prepared view"
+  ],
+  "turn": {
+    "end_cursor_exclusive": null,
+    "index": 1,
+    "last_event_at_ms": 1791324384018,
+    "of": 1,
+    "outcome": "turn-ended",
+    "start_cursor": 4,
+    "started_at_ms": 1791323831908
+  }
+}

@@ -1,7 +1,7 @@
 import {useEffect, useRef, useState, type DragEvent, type KeyboardEvent, type PointerEvent} from 'react'
 import type {NativeChosenControlReading, NativeEditorBasis, NativeEditorReading, NativeEditorReply, NativeEditorRequest} from '@epilogos/expressions-boundary/editor'
 import type {NativeBinding} from '@epilogos/expressions-boundary/parameters'
-import {chosenAddChange, chosenDropReason, edgeGap, gapToIndex, reorderChange} from './nativeBrowserModel'
+import {chosenAddChange, chosenDropReason, edgeGap, gapToIndex, reorderChange, wholeChosenOrder} from './nativeBrowserModel'
 import {CHOSEN_MIME, activeDrag, setActiveDrag} from './nativeDrag'
 import './NativeChosenControls.css'
 
@@ -152,14 +152,18 @@ export function NativeChosenControls({reading, request, configure}: {reading: Na
     catch (cause) {setError(cause instanceof Error ? cause.message : String(cause))}
     finally {pendingRef.current = false; setPending(false)}
   }
-  const entryIds = () => chosen?.entries.map(entry => entry.id) ?? []
+  // Field pins live in the top bar (NativeBarStrip); this rack keeps the object controls (Follow and Bind). Ordering is of the
+  // visible controls only: the owner's chosen-order takes the whole list, so the hidden Field entries keep their own slots.
+  const objectEntries = chosen?.entries.filter(entry => entry.scope !== 'field') ?? []
+  const entryIds = () => objectEntries.map(entry => entry.id)
+  const wholeOrder = (visible: string[]) => wholeChosenOrder(chosen?.entries ?? [], visible)
   /** One chosen-order request per gesture; a move that changes nothing sends nothing. */
   const order = (id: string, offset: number) => {
     if (!reading || !chosen) return
     const ids = entryIds(), index = ids.indexOf(id)
     if (index < 0) return
     const next = reorderChange(ids, index, index + offset)
-    if (next) void invoke({operation: 'apply', basis: reading.basis, changes: [{kind: 'chosen-order', entry_ids: next}]})
+    if (next) void invoke({operation: 'apply', basis: reading.basis, changes: [{kind: 'chosen-order', entry_ids: wholeOrder(next)}]})
   }
   const edgeOf = (event: DragEvent<HTMLElement>): 'before' | 'after' => {
     const rect = event.currentTarget.getBoundingClientRect()
@@ -209,7 +213,7 @@ export function NativeChosenControls({reading, request, configure}: {reading: Na
     setMarker(null); setDragging(null); setActiveDrag(null)
     if (from < 0) return
     const next = reorderChange(ids, from, gapToIndex(from, edgeGap(index, edge)))
-    if (next) void invoke({operation: 'apply', basis: reading.basis, changes: [{kind: 'chosen-order', entry_ids: next}]})
+    if (next) void invoke({operation: 'apply', basis: reading.basis, changes: [{kind: 'chosen-order', entry_ids: wholeOrder(next)}]})
   }
   /** Alt+Arrow is the keyboard equal of dragging a handle. Text fields keep their own arrows. */
   const itemKey = (event: KeyboardEvent<HTMLDivElement>, entryId: string) => {
@@ -221,8 +225,8 @@ export function NativeChosenControls({reading, request, configure}: {reading: Na
     <header><strong>Chosen controls</strong><button disabled={!chosen?.available} onClick={() => window.dispatchEvent(new CustomEvent('oi:expression-browse-parameters'))}>+ Parameter</button></header>
     {drop && <p className={`native-chosen-drop is-${drop.status}`} role="status">{drop.text}</p>}
     {!reading || !chosen?.available ? <div className="native-chosen-empty">The retained owner has not disclosed its chosen controls.</div>
-      : !chosen.entries.length ? <div className="native-chosen-empty"><span>No parameters chosen.</span><button onClick={() => window.dispatchEvent(new CustomEvent('oi:expression-browse-parameters'))}>Browse parameters</button></div>
-      : <div className="native-chosen-grid">{chosen.entries.map((entry, index) => {
+      : !objectEntries.length ? <div className="native-chosen-empty"><span>{chosen.entries.length ? 'No object parameters chosen. Field pins are in the top bar.' : 'No parameters chosen.'}</span><button onClick={() => window.dispatchEvent(new CustomEvent('oi:expression-browse-parameters'))}>Browse parameters</button></div>
+      : <div className="native-chosen-grid">{objectEntries.map((entry, index) => {
         const control = chosen.controls.find(item => item.entry_id === entry.id)
         const resolved = control ?? {entry_id: entry.id, target: null, binding: null, entity_id: null, native_ref: null, base_value: null, effective_value: null, locked: false, unavailable_reason: 'The native owner has not resolved this retained declaration.'}
         const entityId = resolved.entity_id ?? (reading.selection.entity_ids.length === 1 ? reading.selection.entity_ids[0] : null)
@@ -239,7 +243,7 @@ export function NativeChosenControls({reading, request, configure}: {reading: Na
               if (scope === 'named' && !entityId) return
               void invoke({operation: 'apply', basis: reading.basis, changes: [{kind: 'chosen-scope', entry_id: entry.id, scope, ...(scope === 'named' ? {entity_id: entityId!} : {})}]})
             }}><option value="selected">Follow selection</option><option value="named" disabled={!entityId && entry.scope !== 'named'}>Bind this object</option></select>}
-            <span><button className="native-chosen-handle" draggable={!disabled} disabled={disabled} aria-label={`Drag to reorder ${name}; or Alt with Left or Right arrow`} title="Drag to reorder" onDragStart={event => handleStart(event, entry.id, index)} onDragEnd={handleEnd}>⠿</button><button aria-label={`Move ${name} earlier`} disabled={disabled || index === 0} onClick={() => order(entry.id, -1)}>←</button><button aria-label={`Move ${name} later`} disabled={disabled || index === chosen.entries.length - 1} onClick={() => order(entry.id, 1)}>→</button><button aria-label={`Remove ${name} chosen control`} disabled={disabled || draftIds.has(entry.id)} title={draftIds.has(entry.id) ? 'Apply or discard the captured value before removing its control' : 'Remove chosen control; retain parameter value'} onClick={() => void invoke({operation: 'apply', basis: reading.basis, changes: [{kind: 'chosen-remove', entry_id: entry.id}]})}>×</button></span>
+            <span><button className="native-chosen-handle" draggable={!disabled} disabled={disabled} aria-label={`Drag to reorder ${name}; or Alt with Left or Right arrow`} title="Drag to reorder" onDragStart={event => handleStart(event, entry.id, index)} onDragEnd={handleEnd}>⠿</button><button aria-label={`Move ${name} earlier`} disabled={disabled || index === 0} onClick={() => order(entry.id, -1)}>←</button><button aria-label={`Move ${name} later`} disabled={disabled || index === objectEntries.length - 1} onClick={() => order(entry.id, 1)}>→</button><button aria-label={`Remove ${name} chosen control`} disabled={disabled || draftIds.has(entry.id)} title={draftIds.has(entry.id) ? 'Apply or discard the captured value before removing its control' : 'Remove chosen control; retain parameter value'} onClick={() => void invoke({operation: 'apply', basis: reading.basis, changes: [{kind: 'chosen-remove', entry_id: entry.id}]})}>×</button></span>
           </div>
         </div>
       })}</div>}

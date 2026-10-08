@@ -1423,7 +1423,7 @@ fn legacy_full_history_budget_refuses_without_auto_handles_or_expression_mutatio
     }
     assert!(
         refused,
-        "complete legacy history must reach its unchanged 8 MiB expanded Act bound"
+        "complete legacy history must reach its expanded Act bound"
     );
 }
 

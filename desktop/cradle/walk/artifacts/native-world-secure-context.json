@@ -1,0 +1,36 @@
+{
+  "schema": "oi.native-world-secure-context/v1",
+  "spec_ref": "docs/cradle/CENTRAL-FIELD-WORLD-PACKAGE.md (Expressions play from the package; renderer in the native shell)",
+  "grade": "A",
+  "at": "2026-10-06T23:56:03+0100",
+  "question": "Is a document served from oi-material:// by the __world route a secure context in the native Tauri shell, so the renderer's crypto.subtle SHA-256 verification runs?",
+  "answer": "yes",
+  "method": "The debug shell (src-tauri/target/debug/oi-cradle, rebuilt from the current sources) was launched with an isolated OI_HOME, OI_EXPRESSION_SOCKET, OI_CRADLE_DATA_STORE_ID and OI_WORLDS_ROOT naming a throwaway World install. Its devUrl (http://localhost:1421) was answered by a stand-in server that served a parent page with the app's real CSP from tauri.conf.json (plus the hash of the one probe script) and recorded POST /report. The World's renderer slot held a probe page (renderer/expression.html, a module script with crossorigin and a stylesheet, as the real renderer page loads them), listed and digested in the throwaway World's world.files.json, with the real expressions index and one real journey body. The probe ran the renderer's own verify steps: fetch ../edition/expressions/index.json, fetch the journey, SHA-256 via crypto.subtle, compare to the index digest. No product code was changed; no probe exists in the renderer.",
+  "parent_document": {
+    "origin": "http://localhost:1421",
+    "tauri": true,
+    "isSecureContext": true
+  },
+  "frame_document": {
+    "origin": "oi-material://localhost",
+    "protocol": "oi-material:",
+    "isSecureContext": true,
+    "subtle": "object",
+    "digest": {
+      "expected": "sha256:edd83c1ff4fb39f10900a9bc35ff068dc48c5e7b33bbb56ff2b8fe609d2ff82c",
+      "actual": "sha256:edd83c1ff4fb39f10900a9bc35ff068dc48c5e7b33bbb56ff2b8fe609d2ff82c",
+      "matches": true
+    },
+    "error": null,
+    "journeyBytes": 28848,
+    "module": true,
+    "styled": "loaded"
+  },
+  "frame_origin": "oi-material://localhost",
+  "app_document_fetch_of_oi_material": {
+    "status": 200,
+    "bytes": 425722
+  },
+  "first_run": "an earlier run with an inline probe page (no module script or stylesheet) gave the same: isSecureContext true, crypto.subtle an object, digest match",
+  "not_exercised": "the real renderer page was not driven inside the native shell (no screen capture); the same files and verify steps ran in the browser walk (field-world-packaged.mjs), and the native run establishes the platform facts the renderer depends on."
+}

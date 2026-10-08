@@ -64,6 +64,13 @@ export function reorderChange(ids: readonly string[], from: number, to: number):
   return next.every((id, index) => id === ids[index]) ? null : next
 }
 
+/** The owner's chosen-order takes the whole list. The rack shows only the object controls, so a reorder of the visible ones is merged back:
+ * each Field entry keeps its own slot and the visible entries fill the other slots in their new order. */
+export function wholeChosenOrder(entries: readonly {id: string; scope: string}[], visibleOrder: readonly string[]): string[] {
+  let next = 0
+  return entries.map(entry => entry.scope === 'field' ? entry.id : visibleOrder[next++])
+}
+
 /** A drop gap is the insertion point before element `gap` (0..n); this gives the final index. */
 export function gapToIndex(from: number, gap: number): number {
   return gap > from ? gap - 1 : gap

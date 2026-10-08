@@ -69,7 +69,7 @@ test('the Browser, chosen rack and macro rack are wired to the shared drag rules
   assert.match(browser, /chosenAddChange\(drag\)/, 'the button and the drop share one chosen-add change')
   assert.match(browser, /dispatchEvent\(new CustomEvent\(MAP_PARAMETER_EVENT/)
   assert.match(chosen, /chosenDropReason\(active\.drag, reading\)/)
-  assert.match(chosen, /invoke\(\{operation: 'apply', basis: reading\.basis, changes: \[\{kind: 'chosen-order', entry_ids: next\}\]\}\)/, 'one chosen-order request per drop')
+  assert.match(chosen, /invoke\(\{operation: 'apply', basis: reading\.basis, changes: \[\{kind: 'chosen-order', entry_ids: wholeOrder\(next\)\}\]\}\)/, 'one chosen-order request per drop, merged over the whole list')
   assert.match(chosen, /if \(event\.altKey \|\| disabled/, 'Alt+arrow is not taken by the dial')
   assert.match(rack, /window\.addEventListener\(MAP_PARAMETER_EVENT, map\)/)
   assert.match(rack, /Cancel mapping/)

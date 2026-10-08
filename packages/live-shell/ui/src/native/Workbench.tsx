@@ -701,7 +701,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
         execute: dispatch, openBindingMenu: (id, x, y) => {if (allowed()) menuFor(id, x, y)}, openFrameMenu: (x, y) => {if (allowed()) menuFor(undefined, x, y)}, menuOpen: !!menu,
         nativeWindows: kernel.transport.kind === 'tauri', openSource: source => {if (allowed()) openSource(source)}, openKnowledge, openExplore, openPresentation,
         openEncounter: row => allowed() ? openEncounter(row) : Promise.reject(Error('The originating Workbench tree is concealed.')),
-        factoryCentre: <FactoryChat layout={tree.layout} project={owner.project} sourceWorldRef={sourceWorldRef} workspaceId={tree.workspaceId} accessEpoch={receivingEpoch}
+        conversation: <FactoryChat layout={tree.layout} project={owner.project} sourceWorldRef={sourceWorldRef} workspaceId={tree.workspaceId} accessEpoch={receivingEpoch}
           current={scope=>{
             if(!allowed()||!latest.current.workspace.nativeAccessCurrent(receivingEpoch)||host.current?.closest<HTMLElement>('.inhabitant')?.hidden)return false
             try{return preparedContextScopeKey(scope)===preparedContextScopeKey(workbenchContextScope(latest.current.book.current.layout,tree.workspaceId,receivingEpoch,latest.current.book.current.project,sourceWorldRef))}catch{return false}
@@ -727,7 +727,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
           current()
           return {ref:reading.agent_session,project:reading.project,space:reading.space}
         }} report={report}/>,
-        factoryTasks: {project:factoryScope?.project,sourceWorldRef:factoryScope?.sourceWorldRef,current:factoryCurrent,unavailable:factoryUnavailable,accompanying:tree.layout.accompanying,onOpenTask:row=>factoryCurrent()?chooseFactory(row):Promise.reject(Error(factoryUnavailable??'The originating Factory owner is concealed or retired.')),onMessage:report}, subject: owner.context?.subject,
+        host: {project:factoryScope?.project,sourceWorldRef:factoryScope?.sourceWorldRef,current:factoryCurrent,unavailable:factoryUnavailable,accompanying:tree.layout.accompanying,openEncounter:row=>factoryCurrent()?chooseFactory(row):Promise.reject(Error(factoryUnavailable??'The originating Factory owner is concealed or retired.')),onMessage:report}, subject: owner.context?.subject,
       }
       const side = tree.layout.sidePane
       return <div className="candidate-workbench-tree" key={tree.key} hidden={!tree.presented}>

@@ -1,0 +1,131 @@
+{
+  "scenario": "field-companion-ql",
+  "at": "2026-10-06T20:13:19.127Z",
+  "real_turn": false,
+  "record": {
+    "kev": {
+      "address": "127.0.0.1:8019",
+      "models": [
+        {
+          "name": "kev-latest",
+          "run": "jaredpalmer/kev-0.8b",
+          "base": "Qwen/Qwen3.5-0.8B-Base"
+        },
+        {
+          "name": "jev-latest",
+          "run": "jaredpalmer/kev-0.8b",
+          "base": "Qwen/Qwen3.5-0.8B-Base"
+        }
+      ]
+    },
+    "installation": {
+      "installed": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-x6iJN0/.aikit-home/tools/prime-epi/167f9f869a2c8bff",
+      "binding": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-x6iJN0/.aikit-home/tools/prime-epi/current.json",
+      "extension": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-x6iJN0/.aikit-home/tools/prime-epi/167f9f869a2c8bff/extensions/ql-faculty-bindings.ts",
+      "id": "167f9f869a2c8bff"
+    },
+    "configured": {
+      "body_ref": "agent-body/epi-prime-ql",
+      "body_revision": "38ee6379e9772c2570cfa226bcc7c21cce472bcf",
+      "configured": true,
+      "model_selection": "Prime native configured model unless an explicit AIKit model policy overrides it",
+      "provider": "epi-prime-ql",
+      "ql_revision": "b75d0ddd0d3d58b63a4bd4b081da00d3134fdc46",
+      "standing": "configured-not-started"
+    },
+    "candidates": [
+      {
+        "ref": "context-source/field-walk-1",
+        "title": "§3 · #0 — Eight Determinations",
+        "walk_kind": "relevant",
+        "slug": "section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations"
+      },
+      {
+        "ref": "context-source/field-walk-2",
+        "title": "§4′ — 5′→0′",
+        "walk_kind": "relevant",
+        "slug": "symbolon/matheme/process/harmonics-symmetries"
+      },
+      {
+        "ref": "context-source/field-walk-3",
+        "title": "§3′ — 4′+2′ = 5′→0′",
+        "walk_kind": "relevant",
+        "slug": "symbolon/matheme/process/spanda"
+      },
+      {
+        "ref": "context-source/field-walk-4",
+        "title": "Diaphaneity",
+        "walk_kind": "adjacent",
+        "slug": "section-rooms/arguments/concepts/diaphaneity"
+      },
+      {
+        "ref": "context-source/field-walk-5",
+        "title": "Jung — Aion, CW 9.2 (1978 corrected printing)",
+        "walk_kind": "unrelated",
+        "slug": "symbolon/episteme/sources/psychology/jung/jung-1978-aion-cw9-2/jung-1978-aion-cw9-2"
+      },
+      {
+        "ref": "context-source/field-walk-6",
+        "title": "Pauli — The Influence of Archetypal Ideas on the Scientific Theories of Kepler (Silz trans., 1955)",
+        "walk_kind": "unrelated",
+        "slug": "symbolon/episteme/sources/physics/pauli/pauli-1955-kepler-archetypal-ideas/pauli-1955-kepler-archetypal-ideas"
+      }
+    ],
+    "nowContext": {
+      "configured": true,
+      "now_context": {
+        "external_provider": true,
+        "prepare_request": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-x6iJN0/now-prepare.json",
+        "redis": {
+          "address": "127.0.0.1:4903",
+          "allow_remote": false,
+          "connect_timeout_ms": 1000,
+          "coordination_retention_seconds": 1209600,
+          "credential_ref": null,
+          "database": 0,
+          "io_timeout_ms": 1000,
+          "key_prefix": "aikit-now",
+          "prepared_ttl_seconds": 21600,
+          "schema": "aikit.redis-now-config/v1",
+          "username": null
+        },
+        "required": false
+      },
+      "preparation": {
+        "participant_ref": "agent/field-walk-chat",
+        "project_ref": "field-walk",
+        "selection": {
+          "mode": "provider",
+          "provider_file": "/Users/admin/.aikit/decision-provider.json",
+          "relevance_threshold": 0.2
+        }
+      },
+      "provider": "epi-prime-ql",
+      "standing": "configuration only; nothing was prepared or delivered"
+    },
+    "redisConfig": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-field-ground-x6iJN0/redis-now/redis-now.json"
+  },
+  "passed": true,
+  "counts": {
+    "passed": 2,
+    "total": 2,
+    "skipped": 1
+  },
+  "checks": [
+    {
+      "ok": true,
+      "label": "the field stands at M16 with a tangent open and a different page selected",
+      "detail": {
+        "gen": 7
+      }
+    },
+    {
+      "ok": true,
+      "label": "no page or console errors",
+      "detail": []
+    }
+  ],
+  "skipped": [
+    "the provision through the Epi lens and the real QL turn — SKIP: real-model turns are opt-in (set OI_WALK_REAL_PROVIDER=1 to authorise plan-quota spend); no model was prompted"
+  ]
+}

@@ -64,3 +64,15 @@ test('an unset colorEnabled reads as on in the shell, matching the native export
   assert.equal(enabled.enabled(reading), false, 'an explicit false is still off')
   assert.equal(Bridge.toNativeConfig(scene).color.enabled, false)
 })
+
+test('a Rounded material survives a native round trip, and Ink and Print still read back as themselves', () => {
+  for (const material of ['ink', 'print', 'round']) {
+    const scene = Model.blankScene('Material')
+    scene.field.material = material
+    const config = Bridge.toNativeConfig(scene)
+    assert.equal(config.style, material === 'print' ? 'halftone' : 'stipple', 'the rendering style is unchanged by the marker')
+    assert.equal(config.authoredMaterial, material === 'round' ? 'round' : undefined)
+    const back = Bridge.nativeSnapshotToJourney({schemaVersion: Bridge.CONFIG_SCHEMA_VERSION ?? 4, name: 'Material', config}).scenes[0]
+    assert.equal(back.field.material, material, `${material} reads back as ${material}`)
+  }
+})

@@ -294,6 +294,15 @@ export function admittedTargets(scene: Scene, lanes: readonly Lane[], entityId: 
 }
 
 /** Read-only facts the panel shows beside a lane: the reading's effective value when the engine reported it. */
+/** Recent effective values of one automated target, as a trace. Only readings the owner gave are drawn; nothing is interpolated or predicted. */
+export const MONITOR_TRACE_LIMIT = 120
+export function monitorTrace(values: readonly number[], width = 240, height = 48): {path: string; min: number; max: number; last: number | null} {
+  if (!values.length) return {path: '', min: 0, max: 0, last: null}
+  const min = Math.min(...values), max = Math.max(...values), span = max - min
+  const x = (index: number) => values.length === 1 ? width / 2 : (index / (values.length - 1)) * width
+  const y = (value: number) => span > 0 ? height - ((value - min) / span) * height : height / 2
+  return {path: values.map((value, index) => `${index === 0 ? 'M' : 'L'}${x(index).toFixed(2)} ${y(value).toFixed(2)}`).join(''), min, max, last: values[values.length - 1]}
+}
 export function effectiveReadout(reading: NativeEditorReading, target: string): number | null {
   const value = reading.observation?.effectiveValues?.[target]
   return typeof value === 'number' && Number.isFinite(value) ? value : null

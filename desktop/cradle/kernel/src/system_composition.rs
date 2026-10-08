@@ -164,9 +164,15 @@ impl Client {
                 .map(|position| {
                     let product_id = position.product_id.as_str();
                     let namespace = namespace_for(&census, product_id);
+                    // A product the census reports missing has nothing to
+                    // execute: it is disclosed unavailable and never probed
+                    // (an inherited OI_*_BIN override must not reach a binary
+                    // the census never found).
+                    let not_installed = position.availability == composition::Availability::Missing;
                     (
                         product_id,
                         scope.spawn(move || match namespace {
+                            _ if not_installed => not_installed_owner(product_id, observed),
                             Ok(namespace) => {
                                 let command: Vec<String> = std::iter::once(namespace)
                                     .chain(SYSTEM_VERB.iter().map(|value| value.to_string()))
@@ -278,6 +284,25 @@ impl Client {
                 digest: None,
             },
         }
+    }
+}
+
+/// A product the census reports missing: no command ran, so none is claimed.
+fn not_installed_owner(product_id: &str, observed: u64) -> OwnerMount {
+    OwnerMount {
+        product_id: product_id.to_owned(),
+        availability: Availability::Unavailable,
+        reason: Some(
+            "not installed in this world: the census reports it missing, so it was not probed"
+                .to_owned(),
+        ),
+        reading_command: Vec::new(),
+        descriptor: None,
+        error: None,
+        provenance: Provenance {
+            observed_at_unix_ms: observed,
+            digest: None,
+        },
     }
 }
 
@@ -890,12 +915,22 @@ esac
                 "quaternal-logic"
             ]
         );
-        // Every product is either honestly degraded or unavailable — never an
-        // empty success, never a fabricated descriptor.
+        // Every product is honestly unavailable — never an empty success,
+        // never a fabricated descriptor — and a product the census reports
+        // missing is disclosed as such without any command having run.
         for owner in &reading.owners[1..] {
-            assert_ne!(owner.availability, Availability::Available);
+            assert_eq!(
+                owner.availability,
+                Availability::Unavailable,
+                "{}",
+                owner.product_id
+            );
             assert!(owner.descriptor.is_none());
-            assert!(owner.error.is_some());
+            assert!(
+                owner.reading_command.is_empty() && owner.error.is_none(),
+                "{}",
+                owner.product_id
+            );
         }
         std::fs::remove_dir_all(&dir).ok();
     }

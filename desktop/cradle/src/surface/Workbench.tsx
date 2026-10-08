@@ -81,22 +81,14 @@ export interface WorkbenchProps {
   /** Factory's centre lists the project's conversations; opening one is the
    * frame's ordinary encounter open (CradleFrame.openEncounter). */
   openEncounter?: (row: import("../encounter/EncounterList").EncounterRow) => void | Promise<void>;
-  /** The frame-built centre Chat (the shared AgentChat) — Factory's centre
-   * mounts it; the frame owns the session observer and the choose pair. */
-  factoryCentre?: ReactNode;
-  /** The Factory centre's Desk/Tasks context (CradleFrame.factoryCentreProps):
-   * the browsed project, the bound conversation, the one task-open path and
-   * the message sink — carried verbatim into FactoryCentre wherever its
-   * binding renders. */
-  factoryTasks?: {
-    project?: string;
-    sourceWorldRef?: string;
-    current?: () => boolean;
-    unavailable?: string;
-    accompanying?: {ref: string; project: string; space: string};
-    onOpenTask?: (row: import("../encounter/EncounterList").EncounterRow) => void | Promise<void>;
-    onMessage?: (message: string) => void;
-  };
+  /** The frame-built conversation (the shared AgentChat): a hosted surface
+   * that relocates the conversation to its centre mounts it; the frame owns
+   * the session observer and the choose pair. */
+  conversation?: ReactNode;
+  /** The host operations the frame lends to any hosted surface (see
+   * contributions/contracts.ts HostedHostContext), carried verbatim into
+   * whichever binding renders. */
+  host?: import("../contributions/contracts").HostedHostContext;
   /** The workspace world-context subject (the person's selected subject,
    * the same one the panel planes receive): the frame passes it so a mode
    * centre surface — Technè's instrument disclosure — can request its
@@ -456,7 +448,7 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
           if (!binding || id === props.stageBindingId) return null;
           const concealed = props.presented === false || id !== active;
           if (concealed && CONCEAL_RELEASES.has(binding.kind)) return null;
-          const body = <SurfaceBody sourceWorldRef={props.sourceWorldRef} binding={binding} centreBodiesInPanes={props.centreBodiesInPanes} omitBodyKinds={props.omitBodyKinds} bodyUnavailable={props.bodyUnavailable} onHostedState={props.onHostedState} treeMode={state.mode ?? "base"} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} openPresentation={props.openPresentation} openExplore={props.openExplore} factoryCentre={props.factoryCentre} factoryTasks={props.factoryTasks} subject={props.subject} />;
+          const body = <SurfaceBody sourceWorldRef={props.sourceWorldRef} binding={binding} centreBodiesInPanes={props.centreBodiesInPanes} omitBodyKinds={props.omitBodyKinds} bodyUnavailable={props.bodyUnavailable} onHostedState={props.onHostedState} treeMode={state.mode ?? "base"} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} openPresentation={props.openPresentation} openExplore={props.openExplore} conversation={props.conversation} host={props.host} subject={props.subject} />;
           return <div key={id} className="surface-retained" data-surface-kind={binding.kind} hidden={concealed}>
             {props.presented === undefined ? body : <ReceivingBody concealed={concealed}>{body}</ReceivingBody>}
           </div>;
@@ -507,7 +499,7 @@ function RetainedAdmission({reason, children}: {reason?: string; children: React
 function SurfaceBodyImpl({
   binding,onView,
   openSource, openKnowledge, openPresentation, openExplore,
-  factoryCentre, factoryTasks, subject, treeMode, centreBodiesInPanes, omitBodyKinds, bodyUnavailable, sourceWorldRef, onHostedState,
+  conversation, host, subject, treeMode, centreBodiesInPanes, omitBodyKinds, bodyUnavailable, sourceWorldRef, onHostedState,
 }: {
   binding: import("./types").SurfaceBinding;
   sourceWorldRef?: WorkbenchProps["sourceWorldRef"];
@@ -520,8 +512,8 @@ function SurfaceBodyImpl({
   openSource: (source: ListedSource) => void;
   openPresentation?: WorkbenchProps["openPresentation"];
   openExplore?: WorkbenchProps["openExplore"];
-  factoryCentre?: WorkbenchProps["factoryCentre"];
-  factoryTasks?: WorkbenchProps["factoryTasks"];
+  conversation?: WorkbenchProps["conversation"];
+  host?: WorkbenchProps["host"];
   /** The workspace world-context subject — the person's selected subject,
    * shared with the panel planes. The retained centre bodies (surface/
    * retention.tsx) read it from the workspace context themselves; the
@@ -547,10 +539,10 @@ function SurfaceBodyImpl({
   // single-mount law: a stage-owned centre is presented ONLY by its stage
   // slot; a foreign-tree centre ONLY by its pane wrapper. Factory's body
   // composes the frame-built chat node — the frame passes
-  // CradleFrame.factoryCentre down, so there is no second direct arm here.
+  // CradleFrame.centreConversation down, so there is no second direct arm here.
   if (isRetainedCentreKind(binding.kind) || binding.hosted) {
     if (!centreBodiesInPanes && binding.kind === MODE_CURATION[treeMode].centreKind) return null;
-    return <ModeCentreBody binding={binding} subject={subject} factoryCentre={factoryCentre} factoryTasks={factoryTasks} onHostedState={reading=>onHostedState?.(binding.id,reading)}/>;
+    return <ModeCentreBody binding={binding} subject={subject} conversation={conversation} host={host} onView={view=>onView(binding.id,view)} onHostedState={reading=>onHostedState?.(binding.id,reading)}/>;
   }
   if(binding.kind==="explore"||binding.kind==="presentation")return <ExploreSurface key={binding.id} binding={binding} onOpenPresentation={openPresentation} onOpenExplore={openExplore}/>;
   if(binding.kind==="encounter")return <EncounterSurface key={binding.id} binding={binding} sourceWorldRef={(binding.view as (NonNullable<typeof binding.view> & {sourceWorldRef?: string}) | undefined)?.sourceWorldRef ?? sourceWorldRef} onView={view=>onView(binding.id,view)}/>;

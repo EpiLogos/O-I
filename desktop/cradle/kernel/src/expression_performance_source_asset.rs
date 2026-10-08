@@ -62,6 +62,29 @@ impl NativePerformanceSourceAsset {
             native_bundle,
         };
         asset.validate_basis(basis)?;
+        // The receiving witness digests are integrity, not disclosure: a
+        // complete receiving record whose bytes no longer match its witness
+        // refuses at admission for every custody. Incomplete or unclassified
+        // payloads admit and are judged on disclosure, never here.
+        asset.verify_receiving_payload_digests()?;
+        // A payload carrying its source context binds that context and
+        // occasion at admission: the matching-label transfer of a complete
+        // record between occasions refuses here.
+        if let Some(witness) = asset
+            .native_bundle
+            .get("source_context")
+            .filter(|w| w.get("context").is_some())
+        {
+            if witness["context"]
+                != serde_json::to_value(&asset.context).map_err(|e| e.to_string())?
+                || witness.get("original_occasion")
+                    != Some(&basis.m4_episode.clone().unwrap_or(Value::Null))
+            {
+                return Err(
+                    "native source context/occasion differs from the admitting basis".into(),
+                );
+            }
+        }
         Ok(asset)
     }
     pub fn native_bundle(&self) -> &Value {
@@ -281,6 +304,44 @@ impl NativePerformanceSourceAsset {
         }
         Ok(())
     }
+    /// The three receiving witness digests bind the payload's complete
+    /// receiving record at admission: a complete record whose bytes no
+    /// longer match its witness refuses here. Incomplete or unclassified
+    /// payloads admit and are judged on disclosure (requires_private_
+    /// disclosure, require_source_context) — never at admission.
+    fn verify_receiving_payload_digests(&self) -> Result<(), String> {
+        let bundle = self
+            .native_bundle
+            .as_object()
+            .ok_or("native source bundle absent")?;
+        let Some(current) = bundle.get("current_receiving").filter(|v| v.is_object()) else {
+            return Ok(()); // no receiving record: the original World contract
+        };
+        let Some(witness) = current
+            .get("source_payload_context")
+            .filter(|v| v.is_object())
+        else {
+            return Ok(());
+        };
+        let inputs = bundle
+            .get("receiving_source_inputs")
+            .unwrap_or(&Value::Null);
+        let admission = current.get("native_admission").unwrap_or(&Value::Null);
+        for (name, value) in [
+            ("source_inputs_sha256", inputs),
+            ("source_context_sha256", &current["source_context"]),
+            ("native_admission_sha256", admission),
+        ] {
+            let actual = format!(
+                "sha256:{:x}",
+                Sha256::digest(serde_json::to_vec(value).map_err(|e| e.to_string())?)
+            );
+            if witness.get(name) != Some(&Value::String(actual.clone())) {
+                return Err("native receiving complete payload binding differs".into());
+            }
+        }
+        Ok(())
+    }
     // This checks retained integrity and disclosure completeness only. A full
     // independent native owner/lease replay remains mandatory before playback.
     fn validate_source_payload(&self) -> Result<(), String> {
@@ -426,6 +487,38 @@ impl NativePerformanceSourceAsset {
         // Full producer assets include receiving inputs and native owner sidecars.
         // An original-input-only guard cannot cover a protected occasion elsewhere.
         reject_episode_transfer(&self.native_bundle, basis)?;
+        // A protected occasion requires its protected native receiving
+        // inputs: the neutral-World form (every protected input null)
+        // cannot be re-labelled onto personal/shared custody by a matching
+        // label alone.
+        let receiving_inputs = self.native_bundle.get("receiving_source_inputs");
+        // Only a COMPLETE receiving record can claim the neutral-World form;
+        // an occasion injected into an arbitrary sidecar admits and is
+        // judged on disclosure.
+        let complete_receiving_record = self
+            .native_bundle
+            .get("current_receiving")
+            .and_then(|current| current.get("source_payload_context"))
+            .is_some_and(Value::is_object);
+        if basis.context.private
+            && complete_receiving_record
+            && receiving_inputs.is_some_and(|inputs| {
+                [
+                    "identity_profile",
+                    "natal",
+                    "sky",
+                    "original_occasion",
+                    "calibration",
+                ]
+                .iter()
+                .all(|key| inputs.get(*key).is_none_or(Value::is_null))
+            })
+        {
+            return Err(
+                "protected occasion requires its native receiving inputs; the neutral-World form cannot serve it"
+                    .into(),
+            );
+        }
         let native = &self.native_bundle["native_basis"];
         if self.basis_digest != basis.content_digest
             || self.identity != basis.identity

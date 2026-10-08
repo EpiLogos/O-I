@@ -1,0 +1,775 @@
+{
+  "schema": "oi.clean-services/v1",
+  "spec_ref": "docs/cradle/CENTRAL-FIELD-NATIVE-AUDIT-A.md (what a clean installation can do without a model credential; O:I #598)",
+  "grade": "A",
+  "at": "2026-10-06T22:29:03.945Z",
+  "steps": [],
+  "checks": [
+    {
+      "label": "the clean context holds no model credential (no credential-shaped variable, no login under the sandbox HOME)",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "label": "Redis provisioned by AIKit on a sandbox port",
+      "ok": true,
+      "detail": {
+        "port": 53064
+      }
+    },
+    {
+      "label": "Redis started: PING answers +PONG and the live profile conforms",
+      "ok": true,
+      "detail": {
+        "ping": "+PONG",
+        "profile_conforms": true,
+        "version": "8.10.2"
+      }
+    },
+    {
+      "label": "Kev provisioned by AIKit from the pinned upstream and pinned weights, with nothing fetched",
+      "ok": true,
+      "detail": {
+        "port": 53065,
+        "stderr": ""
+      }
+    },
+    {
+      "label": "Kev started: the pinned model card answers and one warm decision completed",
+      "ok": true,
+      "detail": {}
+    },
+    {
+      "label": "a real `aikit decide invoke` against the sandbox Kev completed with a decision body",
+      "ok": true,
+      "detail": {
+        "outcome": "completed",
+        "standing": "local-protocol",
+        "endpoint": "http://127.0.0.1:53065/v1/systemone",
+        "answers": {
+          "candidate/000": {
+            "noul": 0.7824,
+            "type": "noul"
+          },
+          "candidate/001": {
+            "noul": 0.3103,
+            "type": "noul"
+          }
+        },
+        "invocation_ref": "invocation/jev/8a5eeb132a141b8aac032bd88a3fbfc150feceeeef1b7eb7c526e88689b1c0a0"
+      }
+    },
+    {
+      "label": "a real `aikit now-context prepare` elected the sandbox Kev (mode provider) and the decision completed with local-protocol standing",
+      "ok": true,
+      "detail": {
+        "selected": 8
+      }
+    },
+    {
+      "label": "the Redis readback holds the prepared view at the prepared digest, naming the decision invocation and provider identity",
+      "ok": true,
+      "detail": {
+        "version": 1,
+        "items": 8
+      }
+    },
+    {
+      "label": "a direct QL operation (mef-lenses) through the owner instrument succeeded with a faculty configuration generated from that instrument",
+      "ok": true,
+      "detail": {
+        "revision": "6a81fc441e4dda477f4de3a7ebd59c368cb28f37",
+        "lenses": 12
+      }
+    },
+    {
+      "label": "its native faculty receipt was filed in the evidence World and names the instrument's revision",
+      "ok": true,
+      "detail": {
+        "receipt_files": 1,
+        "revision": "6a81fc441e4dda477f4de3a7ebd59c368cb28f37"
+      }
+    },
+    {
+      "label": "both services stopped and nothing of ours is still running",
+      "ok": true,
+      "detail": {
+        "remaining": [],
+        "redis_ping_after": null,
+        "kev_port_after": "closed"
+      }
+    },
+    {
+      "label": "the tripwire log is empty: no Factory or Workcell dispatch was attempted",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "label": "the shared Hugging Face cache was read, not written (file count and bytes unchanged)",
+      "ok": true,
+      "detail": {
+        "before": {
+          "files": 147,
+          "bytes": 11351551519
+        },
+        "after": {
+          "files": 147,
+          "bytes": 11351551519
+        }
+      }
+    }
+  ],
+  "context": {
+    "sandbox_home": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-services-UNDCOp/home",
+    "aikit_home": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-services-UNDCOp/home/.aikit",
+    "withheld_from_path": [
+      "factory",
+      "workcell",
+      "workcell-write-boundary"
+    ],
+    "path": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-minimal-lRMf6w/bin:/opt/homebrew/Cellar/node@24/24.21.0_1/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+    "credential_env_removed_names": [
+      "AI_AGENT",
+      "ANTHROPIC_BASE_URL",
+      "API_TIMEOUT_MS",
+      "BAGGAGE",
+      "CLAUDECODE",
+      "CLAUDE_AGENT_SDK_VERSION",
+      "CLAUDE_CODE_ACCOUNT_UUID",
+      "CLAUDE_CODE_CHILD_SESSION",
+      "CLAUDE_CODE_DESKTOP_APP_VERSION",
+      "CLAUDE_CODE_DISABLE_CRON",
+      "CLAUDE_CODE_DISABLE_TERMINAL_TITLE",
+      "CLAUDE_CODE_EAGER_FLUSH",
+      "CLAUDE_CODE_EMIT_TOOL_USE_SUMMARIES",
+      "CLAUDE_CODE_ENABLE_ASK_USER_QUESTION_TOOL",
+      "CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING",
+      "CLAUDE_CODE_ENTRYPOINT",
+      "CLAUDE_CODE_EXECPATH",
+      "CLAUDE_CODE_HOST_SESSION_ID",
+      "CLAUDE_CODE_MESSAGING_SOCKET",
+      "CLAUDE_CODE_MESSAGING_TOKEN",
+      "CLAUDE_CODE_OAUTH_SCOPES",
+      "CLAUDE_CODE_ORGANIZATION_UUID",
+      "CLAUDE_CODE_REPORT_FINDINGS",
+      "CLAUDE_CODE_SDK_HAS_HOST_AUTH_REFRESH",
+      "CLAUDE_CODE_SESSION_ATTENDED",
+      "CLAUDE_CODE_SESSION_ID",
+      "CLAUDE_CODE_TERMINAL_MCP_TOOLS",
+      "CLAUDE_CODE_USER_EMAIL",
+      "CLAUDE_EFFORT",
+      "CLAUDE_PID",
+      "CLAUDE_PREVIEW_CLASSIFIER_FLOOR",
+      "COMMAND_MODE",
+      "COREPACK_ENABLE_AUTO_PIN",
+      "DA",
+      "DEEPSEEK_API_KEY",
+      "DISABLE_AUTOUPDATER",
+      "DISABLE_MICROCOMPACT",
+      "EPILOGOS_NEO4J_PASSWORD",
+      "EPILOGOS_NEO4J_URI",
+      "EPILOGOS_NEO4J_USER",
+      "EPILOGOS_PROJECT_ROOT",
+      "EPILOGOS_VAULT",
+      "GIT_EDITOR",
+      "HOMEBREW_PREFIX",
+      "KIMI_API_KEY",
+      "LaunchInstanceID",
+      "MCP_CONNECTION_NONBLOCKING",
+      "MCP_SERVER_CONNECTION_BATCH_SIZE",
+      "MINIMAX_API_KEY",
+      "MallocNanoZone",
+      "NODE24_HOME",
+      "NoDefaultCurrentDirectoryInExePath",
+      "OLDPWD",
+      "OPENROUTER_API_KEY",
+      "OSLogRateLimit",
+      "PAI_DIR",
+      "PAI_SOURCE_APP",
+      "PWD",
+      "PYTHONDONTWRITEBYTECODE",
+      "SECURITYSESSIONID",
+      "SHLVL",
+      "SLACK_APP_TOKEN",
+      "SLACK_BOT_TOKEN",
+      "SSH_AUTH_SOCK",
+      "TIME_ZONE",
+      "USE_LOCAL_OAUTH",
+      "USE_STAGING_OAUTH",
+      "XPC_FLAGS",
+      "XPC_SERVICE_NAME",
+      "ZAI_API_KEY",
+      "_",
+      "__CFBundleIdentifier"
+    ],
+    "credential_shaped_remaining": [],
+    "home_logins_present": [],
+    "ports": {
+      "redis": 53064,
+      "kev": 53065
+    }
+  },
+  "redis": {
+    "provision": {
+      "conf": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-services-UNDCOp/home/.aikit/services/redis-now/redis.conf",
+      "election_file": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-services-UNDCOp/home/.aikit/services/redis-now/redis-now.json",
+      "executable": {
+        "path": "/opt/homebrew/bin/redis-server",
+        "sha256": "5f7cd7e2982bca1c7f31e4e3e396cee8c369838a18e41fc53f96ece23e955ae9",
+        "version": "8.10.2"
+      },
+      "next": "aikit now-context service start",
+      "operation": "provision",
+      "owner": "aikit",
+      "profile": {
+        "appendonly": "yes",
+        "bind": "127.0.0.1",
+        "maxmemory_bytes": 67108864,
+        "maxmemory_policy": "noeviction"
+      },
+      "schema": "aikit.redis-service-status/v1",
+      "service_dir": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-services-UNDCOp/home/.aikit/services/redis-now",
+      "state": "stopped",
+      "workcell": "not involved"
+    },
+    "start": {
+      "address": "127.0.0.1:53064",
+      "election_file": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-services-UNDCOp/home/.aikit/services/redis-now/redis-now.json",
+      "health": {
+        "profile": {
+          "aof_enabled": true,
+          "maxmemory": 67108864,
+          "maxmemory_policy": "noeviction",
+          "redis_version": "8.10.2"
+        },
+        "profile_conforms": true,
+        "reachable": true,
+        "redis_version": "8.10.2",
+        "violations": []
+      },
+      "log": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-services-UNDCOp/home/.aikit/services/redis-now/redis-service.log",
+      "operation": "start",
+      "outcome": "started",
+      "owner": "aikit",
+      "pid": 47222,
+      "ready_ms": 112,
+      "schema": "aikit.redis-service-status/v1",
+      "state": "running",
+      "workcell": "not involved"
+    },
+    "status": {
+      "address": "127.0.0.1:53064",
+      "election_file": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-services-UNDCOp/home/.aikit/services/redis-now/redis-now.json",
+      "executable": {
+        "path": "/opt/homebrew/bin/redis-server",
+        "sha256": "5f7cd7e2982bca1c7f31e4e3e396cee8c369838a18e41fc53f96ece23e955ae9",
+        "version": "8.10.2"
+      },
+      "health": {
+        "profile": {
+          "aof_enabled": true,
+          "maxmemory": 67108864,
+          "maxmemory_policy": "noeviction",
+          "redis_version": "8.10.2"
+        },
+        "profile_conforms": true,
+        "reachable": true,
+        "redis_version": "8.10.2",
+        "violations": []
+      },
+      "lifecycle": "aikit now-context service",
+      "operation": "status",
+      "owner": "aikit",
+      "process": {
+        "pid": 47222,
+        "recorded": true,
+        "standing": "ours"
+      },
+      "schema": "aikit.redis-service-status/v1",
+      "service_dir": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-services-UNDCOp/home/.aikit/services/redis-now",
+      "state": "running",
+      "workcell": "not involved"
+    }
+  },
+  "kev": {
+    "provision": {
+      "manifest": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-services-UNDCOp/home/.aikit/services/decision/kev-0.8b/decision-material-manifest.json",
+      "manifest_sha256": "44181e381d6fb33cfe3df0aa49633235bda4df1b655b34649467f36a44d65cc5",
+      "next": "aikit decide service start",
+      "operation": "provision",
+      "owner": "aikit",
+      "pins": {
+        "adapter": "jaredpalmer/kev-0.8b@9a45d25eb2ab761841196625383fa1dff0e56c1e",
+        "base": "Qwen/Qwen3.5-0.8B-Base@dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+        "upstream": "5920c5fe4ca8e0970ed4209ac2c9b8e18bea5109"
+      },
+      "provider_file": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-services-UNDCOp/home/.aikit/services/decision/kev-0.8b/decision-provider.json",
+      "provider_mode": "endpoint",
+      "recipe": "kev-0.8b",
+      "schema": "aikit.decision-service-status/v1",
+      "service_dir": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-services-UNDCOp/home/.aikit/services/decision/kev-0.8b",
+      "state": "stopped",
+      "weights_bytes": 1746942600,
+      "workcell": "not involved"
+    },
+    "start": {
+      "address": "127.0.0.1:53065",
+      "log": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-services-UNDCOp/home/.aikit/services/decision/kev-0.8b/service.log",
+      "operation": "start",
+      "outcome": "started",
+      "owner": "aikit",
+      "pid": 50030,
+      "provider_file": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-services-UNDCOp/home/.aikit/services/decision/kev-0.8b/decision-provider.json",
+      "ready_ms": 50616,
+      "schema": "aikit.decision-service-status/v1",
+      "served": {
+        "backend": "mlx",
+        "base": "Qwen/Qwen3.5-0.8B-Base",
+        "batches": {
+          "count": 0,
+          "queued": 0,
+          "requests": 0
+        },
+        "cuda_graphs": null,
+        "description": "Kev pointer head on Qwen/Qwen3.5-0.8B-Base, serving jaredpalmer/kev-0.8b at temperature 2.35",
+        "device": "mps",
+        "dtype": "bfloat16",
+        "lora": 16,
+        "name": "kev-latest",
+        "prefix_cache": {
+          "cached_states": 0,
+          "hits": 0,
+          "max_tokens": 65536,
+          "min_state_tokens": 0,
+          "misses": 0,
+          "oom_retries": 0,
+          "size": 8
+        },
+        "release_date": "2026-09-27",
+        "run": "jaredpalmer/kev-0.8b",
+        "temperature": 2.3510958125672174
+      },
+      "state": "running",
+      "warm_ms": 252,
+      "workcell": "not involved"
+    },
+    "status": {
+      "address": "127.0.0.1:53065",
+      "health": {
+        "identity": "pinned",
+        "reachable": true,
+        "served": {
+          "backend": "mlx",
+          "base": "Qwen/Qwen3.5-0.8B-Base",
+          "batches": {
+            "count": 1,
+            "queued": 0,
+            "requests": 1
+          },
+          "cuda_graphs": null,
+          "description": "Kev pointer head on Qwen/Qwen3.5-0.8B-Base, serving jaredpalmer/kev-0.8b at temperature 2.35",
+          "device": "mps",
+          "dtype": "bfloat16",
+          "lora": 16,
+          "name": "kev-latest",
+          "prefix_cache": {
+            "cached_states": 1,
+            "hits": 0,
+            "max_tokens": 65536,
+            "min_state_tokens": 0,
+            "misses": 1,
+            "oom_retries": 0,
+            "size": 8
+          },
+          "release_date": "2026-09-27",
+          "run": "jaredpalmer/kev-0.8b",
+          "temperature": 2.3510958125672174
+        }
+      },
+      "lifecycle": "aikit decide service",
+      "operation": "status",
+      "owner": "aikit",
+      "process": {
+        "pid": 50030,
+        "recorded": true,
+        "standing": "ours",
+        "started_unix_ms": 1791325805950
+      },
+      "provider_file": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-services-UNDCOp/home/.aikit/services/decision/kev-0.8b/decision-provider.json",
+      "provider_mode": "endpoint",
+      "provisioned": {
+        "adapter_dir": "/Users/admin/.cache/huggingface/hub/models--jaredpalmer--kev-0.8b/snapshots/9a45d25eb2ab761841196625383fa1dff0e56c1e",
+        "base_dir": "/Users/admin/.cache/huggingface/hub/models--Qwen--Qwen3.5-0.8B-Base/snapshots/dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+        "manifest_sha256": "44181e381d6fb33cfe3df0aa49633235bda4df1b655b34649467f36a44d65cc5",
+        "provisioned_unix_ms": 1791325805868,
+        "upstream_head": "5920c5fe4ca8e0970ed4209ac2c9b8e18bea5109",
+        "weights_bytes": 1746942600
+      },
+      "recipe": "kev-0.8b",
+      "schema": "aikit.decision-service-status/v1",
+      "service_dir": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-services-UNDCOp/home/.aikit/services/decision/kev-0.8b",
+      "state": "running",
+      "workcell": "not involved"
+    }
+  },
+  "decide_invoke": {
+    "exit": 0,
+    "receipt": {
+      "answer": {
+        "answers": {
+          "candidate/000": {
+            "noul": 0.7824,
+            "type": "noul"
+          },
+          "candidate/001": {
+            "noul": 0.3103,
+            "type": "noul"
+          }
+        },
+        "latency_ms": 103.2,
+        "model": "kev-latest",
+        "usage": {
+          "input_tokens": 106,
+          "output_tokens": 52
+        }
+      },
+      "attempts": [
+        {
+          "effect_uncertain": false,
+          "elapsed_ms": 122,
+          "failure": null,
+          "http_status": 200,
+          "model": "kev-latest",
+          "ordinal": 1,
+          "usage": {
+            "input_tokens": 106,
+            "output_tokens": 52
+          }
+        }
+      ],
+      "elapsed_ms": 123,
+      "endpoint": "http://127.0.0.1:53065/v1/systemone",
+      "failure": null,
+      "invocation_ref": "invocation/jev/8a5eeb132a141b8aac032bd88a3fbfc150feceeeef1b7eb7c526e88689b1c0a0",
+      "limits": {
+        "max_attempts": 2,
+        "max_input_tokens_per_attempt": 16384,
+        "max_output_tokens_per_attempt": 8000,
+        "model": "kev-latest",
+        "timeout_ms": 120000
+      },
+      "outcome": "completed",
+      "protocol": "systemone-compatible/v1",
+      "request_digest": "blake3:3b7e63a284c50168b5e43135bc357302053a9cb2a56c77bb91b7e3f5df9aba42",
+      "requested_model": "kev-latest",
+      "schema": "aikit.decision-invocation/v1",
+      "standing": "local-protocol"
+    }
+  },
+  "prepare": {
+    "exit": 0,
+    "published_version": 1,
+    "prepared_digest": "blake3:4d946954379f703f8975f9cfef875c236538b432f335d0fa1b32a89203c62b3d",
+    "basis_digest": "blake3:a1c1b705ecf9f8f826da6aaeb1f663c2a79c2619d8045b8686781ab5478915ab",
+    "selection": {
+      "mode": "provider",
+      "selected": [
+        "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero.md",
+        "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md",
+        "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md",
+        "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/14-s1-p1-sunya-operational.md",
+        "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md",
+        "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/18-s1-p5-loan-returns.md",
+        "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/ROOM-02-return-of-zero.md",
+        "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/zero.md"
+      ],
+      "decision_provider": "blake3:9721481941a90e49caac70ca2560ba9fdbf08618fababc2ce78a76a07317ca86",
+      "invocation": {
+        "ref": "invocation/jev/e59fc1d990b6ba6e7074ffafd372316993fde9e9a48c8d8c004f5a718e42abe1",
+        "outcome": "completed",
+        "standing": "local-protocol",
+        "endpoint": "http://127.0.0.1:53065/v1/systemone",
+        "answers": {
+          "candidate/000": {
+            "noul": 0.9001,
+            "type": "noul"
+          },
+          "candidate/001": {
+            "noul": 0.9031,
+            "type": "noul"
+          },
+          "candidate/002": {
+            "noul": 0.8142,
+            "type": "noul"
+          },
+          "candidate/003": {
+            "noul": 0.821,
+            "type": "noul"
+          },
+          "candidate/004": {
+            "noul": 0.8581,
+            "type": "noul"
+          },
+          "candidate/005": {
+            "noul": 0.8715,
+            "type": "noul"
+          },
+          "candidate/006": {
+            "noul": 0.8994,
+            "type": "noul"
+          },
+          "candidate/007": {
+            "noul": 0.8522,
+            "type": "noul"
+          },
+          "catalogue-sufficient": {
+            "noul": 0.5638,
+            "type": "noul"
+          }
+        }
+      }
+    }
+  },
+  "redis_inspect": {
+    "exit": 0,
+    "raw": {
+      "context": {
+        "context_id": null,
+        "project_root": null,
+        "session_id": null
+      },
+      "data": {
+        "ackCursor": 0,
+        "currentVersion": 1,
+        "lastDelivery": null,
+        "participantRef": "agent/clean-field-0lb67-chat",
+        "prepared": {
+          "agent_session": "agent-session/clean-services",
+          "basis": {
+            "change_cursor": 0,
+            "decision_provider": "blake3:9721481941a90e49caac70ca2560ba9fdbf08618fababc2ce78a76a07317ca86",
+            "dependency_revisions": {},
+            "disclosure_revision": "clean-services:4df2f721dc01",
+            "factory_revision": null,
+            "source_revisions": {
+              "central:source:project:clean-field-0lb67:ProjectCentral/agents/now/clearings/022ef0ea5cef0276e39322616834b1276fd91c3aa105bcba6b25082fc211306b/now.json": "central.content-fnv1a64/v1:727:3fee6dcd1bf9c6f2"
+            }
+          },
+          "basis_digest": "blake3:a1c1b705ecf9f8f826da6aaeb1f663c2a79c2619d8045b8686781ab5478915ab",
+          "concern": "A reader of Confronting the Limit is at movement 16, The Crossed Zero (primary), with movement 15 open as a tangent and Dimensional Reframing at Zero and Infinity selected; the companion answers from the essay's own words.",
+          "continuation": null,
+          "factory": null,
+          "items": [
+            {
+              "agent_visibility": "payload",
+              "excerpt": "§1 · #3 — The Crossed Zero Movement 16 of 48 · This room · ← Previous · Next → Movement thesis Ø is the first occlusion in the essay’s native recognition-matheme: the mediating stroke is present and fused into the zero it crosses. Typographic history shows the structure in a form small enough to hold. Someone reading a router password cannot tell the zero from the letter O, because the typeface draws both as the same oval; programmers on coding sheets and the designers of early terminals struck the zero through with a diagonal stroke so that no one could read it as a letter; Danish and Norwegian write the vowel Ø; mathematics writes the empty set ∅, a sign Weil proposed to Bourbaki in 1939 because he alone knew the Norwegian alphabet; engineering writes a diameter ⌀. In each case a stroke crosses an empty figure and makes it determinate, a this rather than a that, and the stroke fills nothing: it marks the zero as one kind of thing among others, so that it can be counted, typed, read and told apart. Plate 2 — The crossed zero. The crossed zero Ø fuses the mediating stroke into the zero it crosses: one figure, read twice. On the left the stroke has succeeded so thoroughly that it di",
+              "external_egress": "allowed",
+              "route": "section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero",
+              "source_ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero.md",
+              "source_revision": "330f0cf015b2aaae9a137ec9d5e5446b3570b48a4b2d7dff75049ed6f3266944",
+              "title": "§1 · #3 — The Crossed Zero (primary)"
+            },
+            {
+              "agent_visibility": "payload",
+              "excerpt": "§1 · #2 — The Empty Set Generates One Movement 15 of 48 · This room · ← Previous · Next → Movement thesis Von Neumann’s construction of the natural numbers gives the essay’s zero/one relation a precise formal neighbour: 0=\\varnothing,\\qquad 1=\\{0\\}=\\{\\varnothing\\},\\qquad S(n)=n\\cup\\{n\\}. Nothing is added to the empty set: a relation is formed around it, and the braces show where the one appears. One is the first successor of zero, the void gathered into a unit, and every later number keeps zero inside it as the first member it gathered, so that zero and the operation that holds it are enough to begin the count. A desktop folder that reports “1 item” when it holds one empty folder makes the same count in a dialogue box. Set theory is offered as a rigorous neighbour; it proves nothing about the Subject, consciousness or QL. The construction is Derived (standard mathematics, displayed), and the readings the manuscript attaches to it are Argued. Derivation \\begin{aligned} 0 &amp;= \\varnothing,\\\\ 1 &amp;= \\{\\varnothing\\},\\\\ 2 &amp;= \\{\\varnothing,\\{\\varnothing\\}\\},\\\\ 3 &amp;= \\{\\varnothing,\\{\\varnothing\\},\\{\\varnothing,\\{\\varnothing\\}\\}\\}. \\end{aligned} The manuscript builds the result ",
+              "external_egress": "allowed",
+              "route": "section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one",
+              "source_ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md",
+              "source_revision": "91c9f3c7a733d92b1bab0cd148650bd79c9ca8ad636005dba20f02f3e32d34d8",
+              "title": "§1 · #2 — The Empty Set Generates One (tangent)"
+            },
+            {
+              "agent_visibility": "payload",
+              "excerpt": "Dimensional Reframing at Zero and Infinity The method proposition A mathematical obstruction can disclose which object or operation an account presupposes. Complex extension, projective completion, compactification, quotienting, covering and differential limiting answer different questions by changing particular definitions and permissions. A construction preserves the relation specified by its hypotheses; it does not guarantee a solution to every obstruction. Zero and infinity expose these differences sharply. The return to zero is where a system declares its law: the attempted operation makes its domain, inverse, extension or lost cancellation available for examination. Taylor reads that exposure through the immutable gap, while each mathematical construction retains its own proof. Case ledger Each case names the operation, its hypotheses and the relation it preserves. Signed line → complex plane. Over the real field, x² = −1 has no solution. Define multiplication of pairs by (a,b)(c,d)=(ac−bd,ad+bc) and let i=(0,1). Then i²=(-1,0) represents −1, and multiplication by i rotates a vector by a quarter-turn. Adjoining a coordinate alone would not establish this multiplication. Affin",
+              "external_egress": "allowed",
+              "route": "section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity",
+              "source_ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/dimensional-reframing-at-zero-and-infinity.md",
+              "source_revision": "9bbbb543d7c9b9982a81111a4aa377477b5ce71a3ec18f43ecf773b55b7a6a92",
+              "title": "Dimensional Reframing at Zero and Infinity (selected)"
+            },
+            {
+              "agent_visibility": "payload",
+              "excerpt": "§1 · #1 — Śūnya Becomes Operational Movement 14 of 48 · This room · ← Previous · Next → Movement thesis Brahmagupta’s Brāhmasphuṭasiddhānta (628, chapter 18) gives śūnya the permissions of a number. It sets the empty beside fortune (dhana) and debt (ṛṇa) and states what happens when any of the three meets another, so that zero stops being the mark of a vacant position and becomes a quantity arithmetic must pass through. Five centuries later Bhāskara II presses the same sign to the edge where division fails, keeps the zero-denominator expression (khahara) unevaluated, and compares its invariance to God, who is neither enlarged by the creation of worlds nor diminished by their destruction. Absence thereby acquires operational force: it changes calculations, and it stays unlike the positive magnitudes among which it operates. Its mathematical history is Derived; the braid with Kashmir Śaivism that closes the movement is Argued. Formal payload Zero has three offices in these verses and the manuscript separates them. As additive identity, a+0=a, it leaves a determination as it was. As multiplicative absorber, a·0=0, it sends every quantity to one result and keeps no record of which went",
+              "external_egress": "allowed",
+              "route": "section-rooms/02-return-of-zero/movements/14-s1-p1-sunya-operational",
+              "source_ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/14-s1-p1-sunya-operational.md",
+              "source_revision": "fd5bc377e38e96138176ef8f8d01ad13c50f7b9b7d436b2748921f0d4d913b44",
+              "title": "§1 · #1 — Śūnya Becomes Operational (neighbour)"
+            },
+            {
+              "agent_visibility": "payload",
+              "excerpt": "§1 · #4 — Zero Keeps One Foot Outside Mathematics Movement 17 of 48 · This room · ← Previous · Next → Movement thesis Division by zero is the point at which a formal system has to declare its law. A calculator that answers “Error” to one divided by zero has reported that the question has no answer under the rules it was built to follow. In an ordinary field, where zero and one are different numbers, dividing one by zero would require a q with 0\\cdot q=1, and the laws rule every such q out. Mathematics has given the quotient a place by changing something else, and each change shows the frame becoming visible at zero: the projective line adjoins a point at infinity, the Riemann sphere closes the complex plane, wheels and meadows keep division total at a price in the familiar laws, floating-point arithmetic signs its zeros, and calculus replaces the vanishing ratio with a limit or an enlarged number system. Completion is always completion within a declared structure, and division pluralisms establish the methodological point: exceptional operations reveal the container. Zero is wholly mathematical, since it is written, counted, operated on and indispensable to every positional notatio",
+              "external_egress": "allowed",
+              "route": "section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math",
+              "source_ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md",
+              "source_revision": "f21d3f39c9c2af0678875c1ff5f99e8698aa6cc408910c26516cfd03fde9fd85",
+              "title": "§1 · #4 — Zero Keeps One Foot Outside Mathematics (neighbour)"
+            },
+            {
+              "agent_visibility": "payload",
+              "excerpt": "§1 · #5→0 — The Loan Returns Movement 18 of 48 · This room · ← Previous · Next → Movement thesis §0/1 borrowed zero, and the loan is returned with what passed through it. A book lent for a year comes back with a train ticket, a softened spine and pencil in the margins: the same book, carrying the reading it went through. Its pencil marks are interest in the oldest sense, since §0/1 · #4 traced interest to inter-esse, what lies between, and a book returned with its margins full brings back what lay between lender and borrower without pricing it. §0/1 wrote 0 for the pole of knowing that cannot enter its own count as one more object and 0/1 for that pole’s relation to the determinate world, before showing where the sign came from or what it could bear, on the trust that readers knew zero from school. Zero has now been followed from a gap a Babylonian reader filled from context to the term at which every number system declares its laws, and it comes back carrying a history of offices it did not have when it was lent. We have now earned the notation as the essay’s own relational notation: 0/1 \\quad\\longleftrightarrow\\quad 1/0. 0/1 names the indefinite condition becoming available throu",
+              "external_egress": "allowed",
+              "route": "section-rooms/02-return-of-zero/movements/18-s1-p5-loan-returns",
+              "source_ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/movements/18-s1-p5-loan-returns.md",
+              "source_revision": "40365ecd76b32baa3f019e33e0e134739fd1cd277f9b17141e09ea0db0ec59d8",
+              "title": "§1 · #5→0 — The Loan Returns (neighbour)"
+            },
+            {
+              "agent_visibility": "payload",
+              "excerpt": "§1 — The Return of Zero — History, Empty Set, and Symbolic Linkage Write here: sovereign master manuscript Where you are: Reading root · the rooms · §1 · room 3 of 8 · previous §0 · next §2 Open beside it: reading route Arrival a lived horizon which can become partly transparent to the conditions through which it operates; the missing switch. Section wager Differentiation structurally retains a zero, and mathematics supplies exact forms through which absence becomes operative: placeholder, numeral, arithmetic element, empty set, origin, and exceptional boundary. Once zero enters a positional system, the whole field of number changes; once 0 is taken as ∅, one and the natural numbers can be generated from its reiterated marking. Present burden: establish the history precisely enough to carry the philosophical argument, then derive 0/1 as the minimal generative relation before presenting the two ways that relation can be accounted. Six waypoints #0 · A Sign Migrates Between Worlds Incoming pressure: §0 #5→0 · Objective Internality Earned position (Derived): Zero converges several historically distinct inventions (the blank place, placeholder, numeral, arithmetic element, origin, empt",
+              "external_egress": "allowed",
+              "route": "section-rooms/02-return-of-zero/ROOM-02-return-of-zero",
+              "source_ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/02-return-of-zero/ROOM-02-return-of-zero.md",
+              "source_revision": "9846e14916efd644cd78b225ad538a15d155e828a1b57db9659c7d6c914de9fa",
+              "title": "§1 Room — The Return of Zero — History, Empty Set, and Symbolic Linkage (room)"
+            },
+            {
+              "agent_visibility": "payload",
+              "excerpt": "Zero Definition Zero is the sign for no-counted-thing. Its several written and operative forms have different tasks: a blank leaves a place unmarked; a placeholder distinguishes positions; a numeral enters a script of numbers; addition and multiplication give zero distinct arithmetic offices; an origin locates a coordinate system; the empty set has no members. Their transmission through scripts, calculating practices and civilisations changes which written distinctions and operations become available; these changes have distinct histories. Philosophical void and QL’s uncounted One address a further register. In the coordinate canon P0 (Why? / Ground / Square A / Aether) names the implicate condition prior to differentiation, and 0/1 retains that ground through its mark. A written zero can refract this relation without becoming identical to all its other uses. In the argument A sign migrates between worlds when a receiving practice gives it a new permission while retaining its written inheritance. Making śūnya calculable gives zero operations without granting every quotient. The empty-set successor produces one as the singleton containing the empty set; the crossed zero retains the ",
+              "external_egress": "allowed",
+              "route": "section-rooms/arguments/concepts/zero",
+              "source_ref": "central:source:project:Antykathera-Essay-Work:submission-package/essay/section-rooms/arguments/concepts/zero.md",
+              "source_revision": "7ede75bfd4834ab3ccb17c6554e4fd34fccfb79f36e38fd1d296f395a65ca713",
+              "title": "Zero (concept)"
+            }
+          ],
+          "jev_invocation_ref": "invocation/jev/e59fc1d990b6ba6e7074ffafd372316993fde9e9a48c8d8c004f5a718e42abe1",
+          "knowledge_frames": [],
+          "neighbours": [],
+          "now_ref": "central:now:project:clean-field-0lb67:022ef0ea5cef0276e39322616834b1276fd91c3aa105bcba6b25082fc211306b",
+          "participant_ref": "agent/clean-field-0lb67-chat",
+          "practice_refs": [],
+          "prepared_at_unix_ms": 1791325862486,
+          "project_ref": "clean-field-0lb67",
+          "schema": "aikit.prepared-now-context/v1",
+          "version": 1
+        },
+        "schema": "aikit.now-context-inspection/v1"
+      },
+      "ok": true,
+      "schema": 1,
+      "warnings": []
+    }
+  },
+  "ql_operation": {
+    "faculty_config": {
+      "revision": "6a81fc441e4dda477f4de3a7ebd59c368cb28f37",
+      "coherence": {
+        "probed": true,
+        "revision": "6a81fc441e4dda477f4de3a7ebd59c368cb28f37",
+        "program": "/Users/admin/Central/Work/Actuation/experiments/ql-runtime/native-owner-instrument/target/debug/actuation-ql-owner-instrument"
+      }
+    },
+    "exit": 0,
+    "schema": "actuation.prime-faculty-result/v1",
+    "success": true,
+    "lenses": 12,
+    "lens_codes": [
+      "L0",
+      "L0'",
+      "L1",
+      "L1'",
+      "L2",
+      "L2'",
+      "L3",
+      "L3'",
+      "L4",
+      "L4'",
+      "L5",
+      "L5'"
+    ],
+    "receipt": {
+      "schema": "actuation.prime-ql-operation/v1",
+      "operation": "mef-lenses",
+      "trace_ref": "clean-services/qlop-1",
+      "declared_locus_ref": "clean-services",
+      "caller_identity_standing": "supplied-not-authenticated",
+      "process_id": 51749,
+      "sequence": 0,
+      "observed_unix_nanos": "1791325884246824000",
+      "ql_mef_revision": "6a81fc441e4dda477f4de3a7ebd59c368cb28f37",
+      "owner_basis": {
+        "repository": "EpiLogos/QL-MEF",
+        "revision": "6a81fc441e4dda477f4de3a7ebd59c368cb28f37",
+        "instrument_sha256": "93a677a3c55773556276694db0767aca63531d3b29ac02c7795e5fecd257ff4c",
+        "transport": "owner-instrument"
+      },
+      "request_digest": "35d05b69acba1275878cb177257460f442d6e012f77dd4a201b5494b694fd529",
+      "response_digest": "332ff7373cc16fc0cc26c033dde315c807b878a03ce368b3c82375c65707a78f",
+      "harmonic_enabled": false,
+      "success": true,
+      "error": null,
+      "provider_evidence": "not-assessed",
+      "human_acceptance": false
+    },
+    "stored_receipt_files": 1,
+    "stored_receipt": {
+      "schema": "actuation.prime-ql-operation/v1",
+      "operation": "mef-lenses",
+      "trace_ref": "clean-services/qlop-1",
+      "declared_locus_ref": "clean-services",
+      "caller_identity_standing": "supplied-not-authenticated",
+      "process_id": 51749,
+      "sequence": 0,
+      "observed_unix_nanos": "1791325884246824000",
+      "ql_mef_revision": "6a81fc441e4dda477f4de3a7ebd59c368cb28f37",
+      "owner_basis": {
+        "repository": "EpiLogos/QL-MEF",
+        "revision": "6a81fc441e4dda477f4de3a7ebd59c368cb28f37",
+        "instrument_sha256": "93a677a3c55773556276694db0767aca63531d3b29ac02c7795e5fecd257ff4c",
+        "transport": "owner-instrument"
+      },
+      "request_digest": "35d05b69acba1275878cb177257460f442d6e012f77dd4a201b5494b694fd529",
+      "response_digest": "332ff7373cc16fc0cc26c033dde315c807b878a03ce368b3c82375c65707a78f",
+      "harmonic_enabled": false,
+      "success": true,
+      "error": null,
+      "provider_evidence": "not-assessed",
+      "human_acceptance": false
+    }
+  },
+  "redis_view_revoked": true,
+  "stopped": {
+    "kev_stop": {
+      "escalated_to_kill": false,
+      "operation": "stop",
+      "outcome": "stopped",
+      "owner": "aikit",
+      "pid": 50030,
+      "schema": "aikit.decision-service-status/v1",
+      "state": "stopped",
+      "workcell": "not involved"
+    },
+    "redis_stop": {
+      "data_kept": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-services-UNDCOp/home/.aikit/services/redis-now/data",
+      "escalated_to_kill": false,
+      "operation": "stop",
+      "outcome": "stopped",
+      "owner": "aikit",
+      "pid": 47222,
+      "schema": "aikit.redis-service-status/v1",
+      "state": "stopped",
+      "workcell": "not involved"
+    },
+    "processes_of_ours_remaining": [],
+    "redis_ping_after": null,
+    "kev_port_after": "closed"
+  },
+  "tripwire": {
+    "log": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-minimal-lRMf6w/tripwire.log",
+    "entries": [],
+    "count": 0,
+    "withheld": [
+      "factory",
+      "workcell",
+      "workcell-write-boundary"
+    ]
+  },
+  "data": {
+    "policy": "service data is the sandbox's: removed with the sandbox unless --keep; `stop` itself keeps data (Redis AOF, Kev checkout and environment, manifests, logs)",
+    "sandbox": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-services-UNDCOp",
+    "bytes_before_removal": 1694011392,
+    "kept": false
+  },
+  "ok": true
+}

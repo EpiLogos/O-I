@@ -432,6 +432,7 @@ impl Client {
                 standing: MountStanding::Unpositioned,
                 position: None,
             },
+            false,
         )];
         for position in census
             .positions
@@ -439,6 +440,11 @@ impl Client {
             .filter(|position| position.product_id != "oi")
         {
             let product_id = &position.product_id;
+            // A product the census reports `missing` has nothing to execute:
+            // probing it can only fail — or, through an inherited override
+            // such as OI_FACTORY_BIN / OI_WORKCELL_BIN, reach a binary the
+            // census never found. It is disclosed as not installed, unprobed.
+            let not_installed = position.availability == composition::Availability::Missing;
             requests.push((
                 product_id.clone(),
                 namespace_for(&census, product_id).map(|namespace| {
@@ -449,13 +455,15 @@ impl Client {
                     ]
                 }),
                 mount_composition(&census, product_id),
+                not_installed,
             ));
         }
         let mounts = std::thread::scope(|scope| {
             let handles: Vec<_> = requests
                 .into_iter()
-                .map(|(product_id, args, composition)| {
+                .map(|(product_id, args, composition, not_installed)| {
                     scope.spawn(move || match args {
+                        _ if not_installed => not_installed_mount(&product_id, composition),
                         Ok(args) => {
                             let displayed = std::iter::once(self.executable.display().to_string())
                                 .chain(args.iter().cloned())
@@ -1058,6 +1066,22 @@ impl Client {
 /// owner — no per-product branch exists anywhere in this function. The
 /// owner's composition standing arrives from the census join; this function
 /// never judges it.
+/// A mount for a product the census reports missing: no command ran, so no
+/// reading command or error is claimed — only the census's own fact.
+fn not_installed_mount(owner_ref: &str, composition_facts: MountComposition) -> ConfigMount {
+    ConfigMount {
+        owner_ref: owner_ref.to_owned(),
+        document: None,
+        availability: MountAvailability {
+            state: Availability::Unavailable,
+            reason: Some("not installed in this world: the census reports it missing, so its contribution was not probed".to_owned()),
+        },
+        reading_command: Vec::new(),
+        error: None,
+        composition: composition_facts,
+    }
+}
+
 fn mount(
     owner_ref: &str,
     reading_command: &[String],
@@ -1403,9 +1427,9 @@ printf '%s\n' "$*" >> {log}
 
     fn census_body() -> &'static str {
         r#"{"schema":"oi.current-world/v2","personal_ground":null,"positions":[
-{"position":0,"product_id":"central","canonical_namespace":"central","state":"missing","present":false,"accepted_revision":""},
-{"position":1,"product_id":"actuation","canonical_namespace":"actuation","state":"missing","present":false,"accepted_revision":""},
-{"position":2,"product_id":"ai-kit","canonical_namespace":"aikit","state":"missing","present":false,"accepted_revision":""},
+{"position":0,"product_id":"central","canonical_namespace":"central","state":"registered","present":false,"accepted_revision":"r"},
+{"position":1,"product_id":"actuation","canonical_namespace":"actuation","state":"registered","present":false,"accepted_revision":"r"},
+{"position":2,"product_id":"ai-kit","canonical_namespace":"aikit","state":"registered","present":false,"accepted_revision":"r"},
 {"position":3,"product_id":"software-factory","canonical_namespace":"factory","state":"missing","present":false,"accepted_revision":""},
 {"position":4,"product_id":"workcell","canonical_namespace":"workcell","state":"missing","present":false,"accepted_revision":""},
 {"position":5,"product_id":"quaternal-logic","canonical_namespace":"ql","state":"missing","present":false,"accepted_revision":""}],
@@ -1495,15 +1519,39 @@ esac
             "the one-call convention ran through the dispatcher for the namespace"
         );
 
-        // Every other product answered nothing: degraded by name, never an
-        // invented contribution.
+        // An installed product that answered nothing: degraded by name, never
+        // an invented contribution. A product the census reports missing has
+        // nothing to execute: it is disclosed unavailable and never probed.
         for mount in &reading.mounts[1..] {
             if mount.owner_ref == "ai-kit" {
                 continue;
             }
-            assert_eq!(mount.availability.state, Availability::Degraded);
             assert!(mount.document.is_none());
-            assert!(mount.error.is_some());
+            if ["central", "actuation"].contains(&mount.owner_ref.as_str()) {
+                assert_eq!(mount.availability.state, Availability::Degraded);
+                assert!(mount.error.is_some());
+            } else {
+                assert_eq!(
+                    mount.availability.state,
+                    Availability::Unavailable,
+                    "{}",
+                    mount.owner_ref
+                );
+                assert!(
+                    mount.reading_command.is_empty() && mount.error.is_none(),
+                    "{}",
+                    mount.owner_ref
+                );
+            }
+        }
+        let invoked = std::fs::read_to_string(scene.dir.join("invocations.jsonl")).unwrap();
+        for absent in ["factory", "workcell", "ql"] {
+            assert!(
+                !invoked
+                    .lines()
+                    .any(|line| line.split_whitespace().next() == Some(absent)),
+                "a census-missing product was probed: {absent}\n{invoked}"
+            );
         }
 
         // The composition standing is the census's own fact per position:

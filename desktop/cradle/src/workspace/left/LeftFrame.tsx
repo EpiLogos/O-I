@@ -18,6 +18,7 @@ import type {WorkspaceMode} from "../mode";
 import type {Workspace} from "../store";
 import {useKernel} from "../../kernel/KernelProvider";
 import {kernelOp} from "../../kernel/bridge";
+import {knownPresent, useProductPresence, WORKCELL} from "../products";
 import {chooseScope, sameScope, scopeLabel, useFocusedProject, useScope, type Scope} from "../scope";
 import {setLens, useEpiLens} from "../lens";
 import {LeftHostProvider, type LeftHost} from "./host";
@@ -88,6 +89,7 @@ function ScopeMenu({mode, workspace, workspaces, onActivateWorkspace, onNewWorks
   }, [open]);
   const menuId = useId();
   const reading = kernel.snapshot.navigator;
+  const workcellPresent = knownPresent(useProductPresence(kernel.transport), WORKCELL);
   const projects = reading?.root?.work.projects ?? [];
   const current = scopeLabel(scope);
   const scopeProject = scope.kind === "project" ? scope.project : undefined;
@@ -106,14 +108,17 @@ function ScopeMenu({mode, workspace, workspaces, onActivateWorkspace, onNewWorks
       } catch { /* an unreadable project carries no marks */ }
     }));
     // Remote machines: only a real read (Workcell's cross-cell connections)
-    // earns the section; with none recorded the section is absent.
+    // earns the section; with none recorded the section is absent. The read
+    // is dispatched only when the census says Workcell is present — an
+    // installation without it never probes for it (#598).
+    if (!workcellPresent) { setMachines(undefined); return () => { live = false; for (const release of releases) release(); }; }
     void kernelOp(kernel.transport, {op: "workcell_status_read"}).then(result => {
       if (!live || result.outcome?.result !== "workcell_status_reading") return;
       const data = result.outcome.data as {connections?: {label?: string; connection?: string; state?: string; reachable?: boolean}[] | null};
       setMachines((data.connections ?? []).map(entry => ({label: entry.label ?? entry.connection ?? "Machine", state: entry.state, reachable: entry.reachable ?? (entry.state ? /connected|reachable|ready/i.test(entry.state) : undefined)})));
     }).catch(() => { if (live) setMachines(undefined); });
     return () => { live = false; for (const release of releases) release(); };
-  }, [open, kernel.transport, projects.map(project => project.name).join("|")]);
+  }, [open, kernel.transport, workcellPresent, projects.map(project => project.name).join("|")]);
   useEffect(() => { if (!open) setSwitching(false); }, [open]);
   const choose = (next: Scope) => { if (!sameScope(next, scope)) chooseScope(next); setOpen(false); trigger.current?.focus(); };
   return <div className="left-scope" ref={root}>
@@ -207,12 +212,13 @@ export function LeftHead(props: Omit<LeftFrameProps, "body" | "onMode">) {
 
 /** The fixed foot: Inbox, the mode strip, Settings. */
 export function LeftFoot({mode, onMode, inboxOpen, onInbox, badge}: {mode: WorkspaceMode; onMode: (mode: WorkspaceMode) => void; inboxOpen: boolean; onInbox: () => void; badge?: string}) {
+  const presence = useProductPresence(useKernel().transport);
   return <div className="left-foot" data-left-foot="true">
     <button type="button" className="left-row left-destination left-inbox-row" aria-pressed={inboxOpen} aria-label={badge ? `Inbox, ${badge} waiting` : "Inbox"} onClick={onInbox}>
       <Glyph name="handoff" size={14}/><span className="left-row-label">Inbox</span>{badge && <span className="left-row-badge" data-inbox-badge={badge}>{badge}</span>}
     </button>
     <div className="world-system left-mode-row">
-      <WorldModeStrip mode={mode} onMode={onMode}/>
+      <WorldModeStrip mode={mode} onMode={onMode} presence={presence}/>
       <span className="world-mode-separator" aria-hidden="true"/>
       <button type="button" className="world-system-settings" onClick={() => onMode("settings")} aria-pressed={mode === "settings"} aria-label="Settings" title="Settings"><Glyph name="settings" size={14}/></button>
     </div>

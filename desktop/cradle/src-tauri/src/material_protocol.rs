@@ -46,6 +46,11 @@ fn handle<R: Runtime>(app_handle: &AppHandle<R>, request: &Request<Vec<u8>>) -> 
     // so hosted drafts retain their browser storage. Personal file requests
     // still use the Central-owner location grammar below.
     if path.starts_with("/__application/") { return crate::app_assets::handle(app_handle, request); }
+    // The installed World (Essay #78): a derived artifact outside any Central ground, so it is not
+    // read through `central.files.read`. Its own, smaller law lives in the kernel
+    // (`world_resolve::serve`): only files the revision's `world.files.json` lists, only with
+    // matching bytes, nothing outside the revision directory.
+    if let Some(rest) = path.strip_prefix("/__world/") { return world_file(rest); }
     let mut segments = path.split('/').filter(|segment| !segment.is_empty());
 
     let Some(encoded_location) = segments.next() else {
@@ -117,6 +122,23 @@ fn handle<R: Runtime>(app_handle: &AppHandle<R>, request: &Request<Vec<u8>>) -> 
         },
         Err(message) => owner_error(&message),
     }
+}
+
+fn world_file(rest: &str) -> Response<Vec<u8>> {
+    let served = oi_cradle_kernel::world_resolve::serve(rest);
+    let status = StatusCode::from_u16(served.status).unwrap_or(StatusCode::NOT_FOUND);
+    let mut response = Response::builder()
+        .status(status)
+        .header("Content-Type", served.content_type)
+        .header("Cache-Control", "no-store")
+        .header("X-Content-Type-Options", "nosniff");
+    if status == StatusCode::OK {
+        // Public, read-only edition bytes; the app's own origin reads them with `fetch`.
+        response = response.header("Access-Control-Allow-Origin", "*");
+    }
+    response
+        .body(served.body)
+        .unwrap_or_else(|_| refuse(StatusCode::NOT_FOUND, "World response could not be built"))
 }
 
 fn decode_location(encoded: &str) -> Option<oi_cradle_kernel::files::Location> {

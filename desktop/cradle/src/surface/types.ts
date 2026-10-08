@@ -65,7 +65,9 @@ export interface SurfaceBinding extends SurfacePresentationBinding {
    * the session runs instead of the login shell. */
   terminal?: {cwd?:string;command?:string[]};
   flow?: {flowRef:string;path:string};
-  view?: {fileHistory?:{open:boolean;revision?:string;expectedRevision?:string};constructionFrame?:{ref:string;requestId:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";nativeKnowledge?:import('../knowledge/nativeFocus').NativeKnowledgeContext;encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
+  view?: {fileHistory?:{open:boolean;revision?:string;expectedRevision?:string};constructionFrame?:{ref:string;requestId:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";nativeKnowledge?:import('../knowledge/nativeFocus').NativeKnowledgeContext;encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect";
+    /** The field's presentation state (field/model.ts `FieldPersisted`, plus the encounters of other worlds): restored with the layout, never a source. */
+    field?: import("../field/model").FieldPersisted & {others?: Record<string, import("../field/model").FieldPersisted>}};
   /** The hosted engine's checkpoint (MODE-ENGINE-STATE-PERSISTENCE §7.2):
    * where the hosted application stands, written by its stage slot from the
    * application's own hosted-state announcements, debounced, on change

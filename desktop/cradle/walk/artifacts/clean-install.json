@@ -1,0 +1,176 @@
+{
+  "scenario": "clean-minimal-install",
+  "grade": "B",
+  "sandbox_root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-clean-39495",
+  "withheld": [
+    "factory",
+    "workcell",
+    "workcell-write-boundary"
+  ],
+  "bundle": "/Users/admin/.oi-candidates/bundles/oi-cradle-0.1.0-aarch64-apple-darwin.tar.gz",
+  "checks": [
+    {
+      "ok": true,
+      "label": "the install plan names neither Factory nor Workcell",
+      "detail": {
+        "backing": {
+          "requested": "0/1/2",
+          "label": "Central + Actuation + AIKit",
+          "note": "Packaging default for a new Desktop install, per the composition lock section 3. It is a disclosure, not an action: the backing products install through their own flows and adding or removing the Desktop never reinstalls ground, reconstitutes Agents or renames Projects.",
+          "products": [
+            {
+              "id": "central",
+              "present": false,
+              "resolved_to": null
+            },
+            {
+              "id": "actuation",
+              "present": false,
+              "resolved_to": null
+            },
+            {
+              "id": "ai-kit",
+              "present": false,
+              "resolved_to": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "the real install adopts the bundle into the sandbox",
+      "detail": [
+        "schema",
+        "app_id",
+        "public_name",
+        "version",
+        "target",
+        "backing",
+        "bundle",
+        "footprint_sha256",
+        "payload_root",
+        "executable",
+        "owned_resources",
+        "installed_at_ms"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the installed application is at ~/Applications/O-I.app of the SANDBOX home"
+    },
+    {
+      "ok": true,
+      "label": "the everyday ~/Applications/O-I.app, ~/.config/oi and ~/.aikit are unchanged by the install",
+      "detail": {
+        "before": {
+          "app": "1791173630905.0442:1",
+          "config": "1791324933183.312:5",
+          "aikit": "1791319439711.264:21"
+        },
+        "after": {
+          "app": "1791173630905.0442:1",
+          "config": "1791324933183.312:5",
+          "aikit": "1791319439711.264:21"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "oi desktop status discloses the installed state",
+      "detail": "installed"
+    },
+    {
+      "ok": true,
+      "label": "the census reports 0/1/2 (+ QL when its binary is installed) — an explicit selection",
+      "detail": {
+        "present": [
+          0,
+          1,
+          2,
+          5
+        ],
+        "install_mode": null
+      }
+    },
+    {
+      "ok": true,
+      "label": "Factory and Workcell are absent in the sandbox's own census",
+      "detail": {
+        "central": true,
+        "actuation": true,
+        "ai-kit": true,
+        "software-factory": false,
+        "workcell": false,
+        "quaternal-logic": true
+      }
+    },
+    {
+      "ok": true,
+      "label": "the installed application started and serves its expression socket in the sandbox",
+      "detail": {
+        "socket": true
+      }
+    },
+    {
+      "ok": true,
+      "label": "the installed application dispatched to neither Factory nor Workcell while starting",
+      "detail": []
+    },
+    {
+      "ok": true,
+      "label": "BUNDLE.json records the minimal closure",
+      "detail": {
+        "profile": "minimal",
+        "composition": "central+actuation+ai-kit+quaternal-logic",
+        "excluded_products": [
+          "software-factory",
+          "workcell"
+        ],
+        "resources": {
+          "shared-field": "excluded: passive hosted client asset, not required by the minimal composition"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "the application carries no hosted SharedField client"
+    },
+    {
+      "ok": true,
+      "label": "update (remove -> install 0.1.1) replaces the application",
+      "detail": {
+        "from": "0.1.0",
+        "to": "0.1.1"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the reader's state under OI_HOME/desktop survives the update"
+    },
+    {
+      "ok": true,
+      "label": "rollback to the recorded bundle restores the version and keeps the reader's state",
+      "detail": {
+        "version": "0.1.0"
+      }
+    },
+    {
+      "ok": true,
+      "label": "remove takes only receipt-owned resources: the app goes, the sandbox ground stays",
+      "detail": [
+        "schema",
+        "app_id",
+        "version",
+        "bundle_sha256",
+        "removed",
+        "residuals",
+        "disclosures",
+        "ground_untouched",
+        "removed_at_ms"
+      ]
+    }
+  ],
+  "ok": true,
+  "note": "The installed application's own window is not driven here; the frontend of the same build is walked against the sandbox kernel separately."
+}
