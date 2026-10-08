@@ -8,6 +8,9 @@ Return focus. The contribution stays mounted while hidden to retain drafts.
 `openSettings(request)`. `SettingsEntry.tsx` supplies contextual entries for
 an exact native setting and scope, or the Machines and Automations pages.
 Use the actual scope subject and a new `requestId` on each opening.
+Native admission calls `configureSettingsHost(adapter)` without a second
+argument and preserves the frame's Return callback. Frame teardown may clear
+that callback with an explicit `undefined` second argument.
 
 `adapter.ts` reuses Cradle configuration documents and `ConfigPlaneSource`.
 The native configuration receiver is `../native/configuration.ts`; its
