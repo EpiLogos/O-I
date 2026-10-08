@@ -1,0 +1,20 @@
+{
+  "name": "@epilogos/instrument-editors",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Bound compact and full instrument editors using the existing native O:I owners.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./frame": "./src/frame/InstrumentFrame.tsx"
+  },
+  "scripts": {
+    "check": "node ../../desktop/cradle/node_modules/typescript/bin/tsc -p tsconfig.json",
+    "test": "node tests/run.mjs && node --experimental-strip-types --import ../../desktop/cradle/tests/ts-register.mjs tests/canvas-run.mjs && node tests/research-run.mjs && node tests/integral-run.mjs",
+    "dev": "node ../../desktop/cradle/node_modules/vite/bin/vite.js --config dev/vite.config.mjs"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}

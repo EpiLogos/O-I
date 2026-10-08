@@ -1,0 +1,69 @@
+{
+  "schema": "oi.instrument-editor-return/v1",
+  "date": "2026-10-08",
+  "actor": "codex:sol-instrument-editors",
+  "status": "integration-ready; shared installation and complete target acceptance open",
+  "writable_scope": "packages/instrument-editors",
+  "seat": "/Users/admin/Central/worktrees/env-1/o-i",
+  "branch": "agent/o-i-20261007-1639",
+  "editors": [
+    "Project / Graph",
+    "Canvas",
+    "Timeline",
+    "Journey",
+    "Places",
+    "Palace",
+    "Modulation"
+  ],
+  "adopted_source_map": "SOURCE-TARGETS.md",
+  "receiving_contract": "RECEIVING.md",
+  "human_return": "RETURN.html",
+  "programme_handoff": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/INSTRUMENT-EDITORS.md",
+  "verification": {
+    "functional": {
+      "passed": 58,
+      "failed": 0,
+      "skipped": 0,
+      "command": "npm --prefix packages/instrument-editors test"
+    },
+    "typescript": {
+      "passed": true,
+      "command": "NODE_OPTIONS=--max-old-space-size=2048 npm --prefix packages/instrument-editors run check"
+    },
+    "native_browser": "evidence/native-browser-result.json",
+    "research_browser": "evidence/research-browser-result.json",
+    "graph_component_and_unavailable_candidate": "evidence/browser-result.json",
+    "restart": "evidence/restart-result.json",
+    "reopened_components": "evidence/restart-browser-result.json",
+    "initial_recovery_failure": "evidence/restart-initial-failure.json",
+    "isolation": "evidence/isolation-result.json",
+    "transferred_native_reopen": "evidence/isolation-reopen-result.json",
+    "native_owner_basis": "Existing shipped bridge built 2026-10-07 11:55; current renderer/editor source. No newest-kernel-source build claim."
+  },
+  "remaining": [
+    "Compiled host registration and rack/Browser receiving",
+    "Native contribution mounting and state checkpoint/visibility hooks in DetachedFrame",
+    "Native research frames/namedViews/card.size admission and fork-ref remap",
+    "Source/provider and populated Timeline/Places acceptance",
+    "Shared native Scene timing/branches and common-field transfer/handle ownership",
+    "Glyph input Map/component text checkpoint for detached/restart recovery",
+    "Native processing telemetry and admitted commands",
+    "Native Return execution and full programme target acceptance"
+  ],
+  "runtime_for_review": {
+    "editor_url": "http://127.0.0.1:4298/?bridge=http://127.0.0.1:4186",
+    "isolated_bridge": "http://127.0.0.1:4186",
+    "native_home": "packages/instrument-editors/evidence/native",
+    "protected_owner_bridge": "http://127.0.0.1:4180",
+    "note": "Owner bridge untouched; this isolated controlled native home is ignored by Git.",
+    "home_overrides": [
+      "OI_HOME",
+      "OI_EXPRESSION_HOME"
+    ]
+  },
+  "git": {
+    "committed": false,
+    "installed": false,
+    "shared_files_edited": false
+  }
+}

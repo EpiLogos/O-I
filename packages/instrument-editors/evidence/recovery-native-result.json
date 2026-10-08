@@ -1,0 +1,15 @@
+{
+  "expression_ref": "expression:research-editor-1b6cb8a9-591f-4224-a8dc-befd438ad6ef",
+  "checkpoint_id": "expression:research-editor-1b6cb8a9-591f-4224-a8dc-befd438ad6ef",
+  "revision": 1,
+  "pending_kind": "edit",
+  "confirmed": [
+    "actual native refusal preserved in native journal",
+    "reopen uses native open before inspection",
+    "submitted local input retained",
+    "no pending operation replay",
+    "acknowledgement cannot discard pending input",
+    "foreign journal refuses before native dispatch",
+    "second retained aperture cannot overwrite newer pending journal or submit a native edit"
+  ]
+}

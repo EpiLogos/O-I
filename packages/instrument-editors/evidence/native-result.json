@@ -1,0 +1,25 @@
+{
+  "bridge": "http://127.0.0.1:4186",
+  "expression_ref": "expression:instrument-editor-93e4e28a-16f2-4028-a649-0044743cccd5",
+  "member_ref": "expression:instrument-member-69190be6-23eb-4722-8949-098b2084ab06",
+  "checkpoint_id": "expression:instrument-editor-93e4e28a-16f2-4028-a649-0044743cccd5",
+  "member_checkpoint_id": "expression:instrument-member-69190be6-23eb-4722-8949-098b2084ab06",
+  "final_revision": 7,
+  "confirmed": [
+    "unrelated Scene refusal",
+    "generated identity and slug collision refusal",
+    "constituent revision update",
+    "rename preserves one portal",
+    "idempotent composition",
+    "compose",
+    "exact member readback",
+    "native body clear",
+    "managed portal retirement",
+    "renamed room exact-ref removal",
+    "stale CAS refusal",
+    "draft recovery",
+    "Palace effective readback advances native journal without a false local edit",
+    "new local input survives delayed actual native acknowledgement",
+    "constituent native checkpoint"
+  ]
+}

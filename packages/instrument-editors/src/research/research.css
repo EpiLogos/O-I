@@ -1,0 +1,30 @@
+.instrument-research{height:100%;display:flex;flex-direction:column;min-height:170px;overflow:hidden;background:var(--editor-recess);color:var(--editor-text)}
+.instrument-research[hidden]{display:none}.instrument-research:fullscreen{width:100vw;height:100vh}
+.instrument-research-body{display:flex;flex:1;min-height:0;position:relative}
+.instrument-research-home{display:flex;flex-direction:column;flex:0 0 240px;max-width:280px;min-width:0;min-height:0;position:relative;overflow:auto}
+.instrument-research-viewport{display:flex;flex:1;min-width:0;min-height:0;position:relative}
+.instrument-research-viewport>.research-instrument{display:flex;flex:1;flex-direction:column;min-width:0;min-height:0}
+.instrument-research-viewport .research-instrument-body{flex:1;min-height:0;position:relative}
+.instrument-research aside{width:220px;flex-shrink:0;overflow:auto}
+.instrument-research-tools{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:4px 8px;flex-shrink:0}
+.instrument-research[data-depth=compact] aside{display:none}
+.instrument-research[data-depth=compact] .instrument-research-body{flex-direction:column}
+.instrument-research[data-depth=compact] .instrument-research-home{flex:0 0 auto;max-width:none;flex-direction:row;gap:6px;overflow-x:auto;overflow-y:hidden;padding:2px 8px}
+.instrument-research[data-depth=compact] .place-facets-panel,.instrument-research[data-depth=compact] .research-street-view,.instrument-research[data-depth=compact] .research-source-list{display:none}
+.instrument-research[data-depth=compact] .instrument-research-home>div:empty{display:none}
+.instrument-research[data-depth=full]{min-height:420px}
+.instrument-research .maplibregl-map{height:100%;width:100%}
+.instrument-research .research-timeline,.instrument-research .research-places{height:100%;min-height:0;flex:1}
+.instrument-research .instrument-toolbar>span{overflow:hidden;text-overflow:ellipsis;max-width:240px;white-space:nowrap}
+.research-reading-basis{font-size:10px;padding:3px 8px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;color:var(--editor-muted,#a0a1a5)}
+.research-overview{display:flex;align-items:center;gap:8px;padding:4px 8px;font-size:11px;min-width:0;flex-wrap:wrap;border-bottom:1px solid var(--editor-line,#52555c)}
+.research-overview label{display:flex;align-items:center;gap:6px;min-width:0}.research-overview select{max-width:260px;min-width:120px}
+.research-time-overview{height:24px;max-width:480px;flex:1 1 140px;color:var(--editor-active,#ffbe00)}
+.research-precision{display:inline-flex;align-items:center;gap:5px}.research-precision:before{content:'';width:7px;height:7px;border-radius:50%;border:1px solid currentColor}.precision-solid:before{background:currentColor}.precision-halo:before{box-shadow:0 0 0 3px #ffbe0020}.precision-outline:before{border-radius:0}.precision-no-coordinate:before{border-style:dashed}
+.research-provenance{padding:5px 8px;flex:0 0 auto;max-height:180px;overflow:auto;border-top:1px solid var(--editor-line,#52555c);font-size:11px}
+.research-provenance article{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.research-provenance pre{flex-basis:100%;margin:0;white-space:pre-wrap}.research-provenance dl{display:grid;grid-template-columns:auto 1fr;gap:4px 10px}.research-provenance dd{margin:0;overflow-wrap:anywhere}
+.instrument-research[data-focus=true]>.research-header,.instrument-research[data-focus=true]>.research-reading-basis,.instrument-research[data-focus=true]>.research-overview,.instrument-research[data-focus=true]>.instrument-research-tools,.instrument-research[data-focus=true]>.research-provenance,.instrument-research[data-focus=true] .instrument-research-home,.instrument-research[data-focus=true] .instrument-research-body>aside{display:none}
+@media(max-width:700px){.instrument-research[data-depth=full] .instrument-research-body{flex-wrap:wrap}.instrument-research[data-depth=full] .instrument-research-home{flex-basis:180px;max-width:35%;font-size:11px}.instrument-research[data-depth=full] .instrument-research-body>aside{width:180px;max-width:35%}.instrument-research .research-header{overflow-x:auto;flex-wrap:nowrap}.research-overview select{max-width:180px}}
+.instrument-research[data-focus=true] .timeline-working-set,.instrument-research[data-focus=true] .timeline-walk{display:none}
+.instrument-research[data-depth=compact] .timeline-toolbar{display:none}
+.instrument-research[data-depth=compact] .instrument-research-home>.research-tool-actions{display:none}

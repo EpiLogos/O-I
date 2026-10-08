@@ -1,0 +1,10 @@
+{
+  "command": "node packages/instrument-editors/tests/restart.mjs verify",
+  "isolated_bridge": "http://127.0.0.1:4186",
+  "stopped_process": 76864,
+  "replacement_process": 11969,
+  "observed_failure": "AssertionError: Expression is not open",
+  "cause": "A fresh kernel has no open Expressions. The development receiver and original test inspected before reopening the native checkpoint. The Palace receiver also published an acknowledged native composition without advancing its retained native journal.",
+  "repair": "Use NativeWorking.reopenCheckpoint before inspection; retain pending submitted input without replay; advanceClean and DocumentStore.acknowledge after Palace composition; checkpoint the controlled constituent through NativeWorking; require every captured native document to match its native checkpoint before restart.",
+  "status": "Preserved initial failure. Subsequent acceptance is recorded separately in restart-result.json."
+}

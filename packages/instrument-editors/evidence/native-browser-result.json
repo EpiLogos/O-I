@@ -1,0 +1,35 @@
+{
+  "expression_ref": "expression:modulation-editor-0be5674c-7ead-4a50-969b-72c0488cde70",
+  "scene_ref": "expression:modulation-editor-0be5674c-7ead-4a50-969b-72c0488cde70:scene:main",
+  "palace_expression_ref": "expression:instrument-editor-53e2d6e9-b8f3-431e-8e7d-191733934e3c",
+  "palace_revision": 8,
+  "palace_source_scene": "expression:instrument-editor-53e2d6e9-b8f3-431e-8e7d-191733934e3c:scene:region-Source-room-7",
+  "phrase_hold": 1.375,
+  "phrase_state_ids": [
+    "step-1a052e53-9cbc-459b-9c7c-fdeb56d34f9f",
+    "step-d604b47a-ea8b-45f4-aec4-e44d62f42182",
+    "step-fd915955-3735-48b8-ba14-5a59e0c68c4a"
+  ],
+  "before_revision": 9,
+  "after_revision": 10,
+  "native_rate": 0.875,
+  "errors": [],
+  "confirmed": [
+    "native DocumentStore/NativeWorking receiving entrance",
+    "compact native modulation write and independent readback",
+    "following target range edited in full without replacing its source",
+    "uncommitted incomplete value across full/fold/reopen",
+    "pinned modulation input survives same-lane-ID foreign Scene without a foreign edit",
+    "rich native Glyph Sequence component reused inside Journey",
+    "same native phrase compact/full",
+    "stable glyph state IDs and native hold edit",
+    "pending glyph source retains its original state across selection and typing",
+    "two native Palace rooms with exact constituent and independent native readback",
+    "Palace native journal exactly matches acknowledged composition"
+  ],
+  "unverified": [
+    "native processing telemetry",
+    "native fullscreen/popout",
+    "Timeline/Places source renderer acceptance"
+  ]
+}

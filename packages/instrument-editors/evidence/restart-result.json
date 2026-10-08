@@ -1,0 +1,84 @@
+{
+  "bridge": "http://127.0.0.1:4186",
+  "previous_process": 7170,
+  "replacement_process": 16753,
+  "documents": [
+    {
+      "expression_ref": "expression:instrument-editor-53e2d6e9-b8f3-431e-8e7d-191733934e3c",
+      "revision": 8,
+      "sha256": "ecd0a9e7634fb7b32b083b744311f462dc2f379e685db5d6a95e831821b422ca"
+    },
+    {
+      "expression_ref": "expression:instrument-member-63860beb-e5fa-4ebf-99d2-b69178de2666",
+      "revision": 2,
+      "sha256": "29fe2627bc0dc5c983b9285e45233c77b6a1b77a5b31dfe0d4da13d142b7cbbe"
+    },
+    {
+      "expression_ref": "expression:modulation-editor-0be5674c-7ead-4a50-969b-72c0488cde70",
+      "revision": 14,
+      "sha256": "4f66f2c2e51bef0f0a90aea21da81019a010e3dd1e563c7060ab123a1070c8ae",
+      "pending_kind": "edit",
+      "retained_input_sha256": "e5a8eb806277aa06c96366cbc2c2fe2ca8eae6e3f1c2bf01c528e629ee1c93b9"
+    },
+    {
+      "expression_ref": "expression:research-editor-17016cb9-1c1c-4cd8-8218-1c8797d100d3",
+      "revision": 1,
+      "sha256": "9351e9d680a6973a9cb79e4df7997febf3c0d6d849c6d97989a53fa317b100ca",
+      "pending_kind": "edit",
+      "retained_input_sha256": "aa3a755dc0ff0c8c4ebf9f72053395b974b2ef3a42ce579b1a75fbf024738524"
+    },
+    {
+      "expression_ref": "expression:instrument-editor-aa0a395f-e68d-4f58-a221-2b61a8dc4876",
+      "revision": 5,
+      "sha256": "950a949c923df59e0409d1d7fa78778ed19789b11a1cf416bdd8404a0daa1ec4"
+    },
+    {
+      "expression_ref": "expression:research-editor-210fba9d-d613-4ff6-9142-67e1fe416c8b",
+      "revision": 1,
+      "sha256": "1e446b5d9dc4a5fe1c15cf18c7174cf8abd6e7e807fa095f020a71122fc38a50"
+    }
+  ],
+  "checkpoints": [
+    {
+      "id": "expression:instrument-editor-53e2d6e9-b8f3-431e-8e7d-191733934e3c",
+      "revision": 73,
+      "sha256": "f700abd79665852da3c02e83e9b3eb97c4f711b97ed915688d3e7e19c3cbeedf"
+    },
+    {
+      "id": "expression:instrument-member-63860beb-e5fa-4ebf-99d2-b69178de2666",
+      "revision": 37,
+      "sha256": "ed9f9d0d27596f91e85fd77714d51af1f663f4b60f1edaef665453b3380c2822"
+    },
+    {
+      "id": "expression:modulation-editor-0be5674c-7ead-4a50-969b-72c0488cde70",
+      "revision": 77,
+      "sha256": "bf377028470f5c62554474c55a3c5e3c212acb33ffa310b6ffeebc11f127ff52"
+    },
+    {
+      "id": "expression:research-editor-17016cb9-1c1c-4cd8-8218-1c8797d100d3",
+      "revision": 52,
+      "sha256": "d9cc44f4b12b57512cdf3aadad42bbe0ecb54cc7efe935bd5a16f3b709474a1c"
+    },
+    {
+      "id": "expression:instrument-editor-aa0a395f-e68d-4f58-a221-2b61a8dc4876",
+      "revision": 60,
+      "sha256": "91c628b5d6b83cc2185c8ec87bf2bc3ce44841c46f8c6104f7723f2505874822"
+    },
+    {
+      "id": "expression:research-editor-210fba9d-d613-4ff6-9142-67e1fe416c8b",
+      "revision": 74,
+      "sha256": "0f66ee93499906a22d79c27d025d73a1aee9b1424b7121f64e9ea94b18636ca3"
+    }
+  ],
+  "confirmed": [
+    "native Expressions initially absent from fresh process",
+    "actual NativeWorking reopen from native disk journals before inspection",
+    "exact native documents after actual bridge process restart",
+    "exact acknowledged native recovery journal after restart",
+    "actual pending submitted input retained without replay after process restart"
+  ],
+  "unverified": [
+    "native detached window restoration",
+    "component-local unsaved glyph source text after process restart"
+  ]
+}

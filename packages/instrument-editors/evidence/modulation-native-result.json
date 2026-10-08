@@ -1,0 +1,17 @@
+{
+  "expression_ref": "expression:modulation-editor-60100d85-89ef-4873-9de6-c3c88da72593",
+  "scene_ref": "expression:modulation-editor-60100d85-89ef-4873-9de6-c3c88da72593:scene:main",
+  "checkpoint_id": "expression:modulation-editor-60100d85-89ef-4873-9de6-c3c88da72593",
+  "checkpoint_revision": 94,
+  "confirmed": [
+    "retained owner edit",
+    "native material readback",
+    "one real transaction",
+    "stale captured basis refusal",
+    "native compensating undo/redo",
+    "journal reopen",
+    "following target range commit and native readback",
+    "following target cannot replace shared source"
+  ],
+  "telemetry": "No field engine is running in this Node test; no effective processing claim."
+}
