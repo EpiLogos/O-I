@@ -136,6 +136,13 @@ def make_page(browser, width=1280, height=800, **ctx):
 
 def render_and_controls(browser, index):
     entry = next(e for e in index['entries'] if e['id'] == X)
+    # the deepen pass titles each scene with its record's own line, which may differ from the scene's name
+    staged = json.loads((ROOT / 'dist' / 'essay' / 'expressions' / entry['journey']).read_text())
+    def staged_title(i):
+        for t in (staged['scenes'][i].get('text') or []):
+            if t.get('visible') is not False and (t.get('title') or '').strip():
+                return t['title'].strip()
+        return staged['scenes'][i]['name']
     page = make_page(browser)
     page.goto(url(), wait_until='load')
     wait_frames(page)
@@ -156,7 +163,7 @@ def render_and_controls(browser, index):
     page.wait_for_function("document.querySelector('[data-testid=count]').textContent === 'Scene 3 of 5'")
     check('picking scene 3 puts it in ?scene=', scene_id(page) == entry['scenes'][2]['id'], scene_id(page))
     title3 = page.inner_text('.xp-text h2')
-    check('picking scene 3 changes the editorial title', title3 != first_title and title3 == entry['scenes'][2]['name'], title3)
+    check('picking scene 3 changes the editorial title to the staged line', title3 != first_title and title3 == staged_title(2), title3)
     check('the field switched to scene 3', page.get_attribute('.xp-stage', 'data-scene') == entry['scenes'][2]['id'])
     check('the address keeps the other parameters (x)', page.evaluate("new URLSearchParams(location.search).get('x')") == X)
     check('browser history was not piled up (replaceState)', page.evaluate('history.length') <= 2)
@@ -183,7 +190,7 @@ def render_and_controls(browser, index):
     # popstate: the address drives the scene
     page.evaluate(f"history.pushState({{}}, '', location.pathname + '?x={X}&scene={entry['scenes'][1]['id']}'); window.dispatchEvent(new PopStateEvent('popstate'))")
     page.wait_for_function("document.querySelector('[data-testid=count]').textContent === 'Scene 2 of 5'")
-    check('popstate re-reads ?scene=', page.inner_text('.xp-text h2') == entry['scenes'][1]['name'])
+    check('popstate re-reads ?scene=', page.inner_text('.xp-text h2') == staged_title(1))
 
     # the editorial text is plain text: nothing injected as markup
     check('editorial text is rendered as text (no injected elements from journey strings)',
@@ -325,15 +332,16 @@ def embed_and_layouts(browser):
     for (w, h) in [(460, 640), (1400, 900)]:
         page = make_page(browser, w, h)
         page.goto(url(embed=1, theme='light'), wait_until='load'); wait_frames(page)
-        m = page.evaluate("({sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, bw: document.body.scrollWidth, sh: document.documentElement.scrollHeight, ch: document.documentElement.clientHeight, bar: !!document.querySelector('.xp-bar'), nav: !!document.querySelector('.xp-nav'), title: getComputedStyle(document.querySelector('.xp-head h1')).display !== 'none', mark: !!document.querySelector('.xp-mark'), c: document.querySelector('canvas').getBoundingClientRect().toJSON(), side: document.querySelector('.xp-side').getBoundingClientRect().toJSON(), root: document.querySelector('.xp').getBoundingClientRect().toJSON(), over: [...document.querySelectorAll('.xp *')].filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.right > innerWidth + 1 || r.left < -1); }).map(e => e.className || e.tagName).slice(0, 5)})")
+        m = page.evaluate("({sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, bw: document.body.scrollWidth, sh: document.documentElement.scrollHeight, ch: document.documentElement.clientHeight, bar: !!document.querySelector('.xp-bar'), nav: !!document.querySelector('.xp-nav'), title: getComputedStyle(document.querySelector('.xp-head h1')).display !== 'none', mark: !!document.querySelector('.xp-mark'), side: !!document.querySelector('.xp-side'), c: document.querySelector('canvas').getBoundingClientRect().toJSON(), body: (document.querySelector('.xp-scenebody') || {}).getBoundingClientRect ? document.querySelector('.xp-scenebody').getBoundingClientRect().toJSON() : null, root: document.querySelector('.xp').getBoundingClientRect().toJSON(), over: [...document.querySelectorAll('.xp *')].filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.right > innerWidth + 1 || r.left < -1); }).map(e => e.className || e.tagName).slice(0, 5)})")
         check(f'embed {w}x{h}: no site header or monogram, and no title row above the field', not m['bar'] and not m['mark'] and not m['nav'] and not m['title'])
+        check(f'embed {w}x{h}: no duplicate scene rail (the reader sidebar carries the scenes)', not m['side'])
         check(f'embed {w}x{h}: no horizontal overflow', m['sw'] <= m['cw'] and m['bw'] <= m['cw'] and not m['over'], str(m['over']))
         check(f'embed {w}x{h}: the page fills the frame without scrolling the page itself', abs(m['root']['height'] - h) <= 1 and m['sh'] <= m['ch'], f"root {m['root']['height']:.0f} of {h}")
-        check(f'embed {w}x{h}: the field is big enough to read and the text column is reachable', m['c']['width'] >= 300 and m['c']['height'] >= 180 and m['side']['height'] >= 120, f"canvas {m['c']['width']:.0f}x{m['c']['height']:.0f}, text {m['side']['width']:.0f}x{m['side']['height']:.0f}")
+        check(f'embed {w}x{h}: the field is big enough to read', m['c']['width'] >= 300 and m['c']['height'] >= 180, f"canvas {m['c']['width']:.0f}x{m['c']['height']:.0f}")
         if w < 760:
-            check(f'embed {w}x{h}: phone-width layout puts the field above the text', m['c']['bottom'] <= m['side']['top'] + 2)
+            check(f'embed {w}x{h}: phone-width layout puts the field above the scene text', m['body'] is not None and m['c']['bottom'] <= m['body']['top'] + 2)
         else:
-            check(f'embed {w}x{h}: wide layout puts the field beside the text', m['c']['right'] <= m['side']['left'] + 2)
+            check(f'embed {w}x{h}: wide layout fills the frame with the field', m['c']['width'] >= w * 0.9)
         page.screenshot(path=str(OUT / f'embed-{w}x{h}-light.png'))
         page.context.close()
     page = make_page(browser, 390, 844)

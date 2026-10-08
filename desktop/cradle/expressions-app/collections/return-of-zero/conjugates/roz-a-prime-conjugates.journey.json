@@ -9,7 +9,7 @@
     {
       "id": "a01p",
       "name": "A01′ — Faithful Definition of the Agent",
-      "character": "Faithful definition: a definite frame that discloses what it cannot contain.",
+      "character": "The agent's coherent appearance is performed by an assemblage of model, persona, harness, memory and permissions; a definition is faithful when it names that assembly and stays answerable through how it is used.",
       "duration": 13,
       "transition": 1.6,
       "view": {
@@ -285,7 +285,7 @@
     {
       "id": "a02p",
       "name": "A02′ — Continuity as Maintained Identification",
-      "character": "Copula: identification kept together through the difference that gives it work.",
+      "character": "The same agent names a maintained relation rather than an identical thing; identification is kept up across sessions, versions and handovers, and each re-binding is an occasion on which continuity can fail.",
       "duration": 12,
       "transition": 2,
       "view": {
@@ -555,7 +555,7 @@
     {
       "id": "a03p",
       "name": "A03′ — The Limit of Self-Surfacing",
-      "character": "Immutable gap: each inclusion renews the difference between condition and accounting.",
+      "character": "An account can make its means available to judgment, yet the act of disclosing is another act the account does not contain; the difference recurs through every success of disclosure, and each surfaced failure becomes more exactly reparable.",
       "duration": 12,
       "transition": 1.5,
       "view": {
@@ -830,7 +830,7 @@
     {
       "id": "a04p",
       "name": "A04′ — The Mask as Document",
-      "character": "Diaphaneity: the view read through to the situated viewer who accomplishes it.",
+      "character": "The tuned persona is neither a face to worship nor a fake to dismiss; read through itself, it documents the culture that prepared it — who shaped it, for whom, under which expectations — and stays revisable through what the encounter returns.",
       "duration": 15,
       "transition": 2.6,
       "view": {
@@ -1106,7 +1106,7 @@
     {
       "id": "a05p",
       "name": "A05′ — Lights, Camera, Action",
-      "character": "Prakāśa–Vimarśa: luminous appearing turning to itself without a second light.",
+      "character": "A technological world is staged through means that select what can appear and what counts; light figures the appearing, camera-work its organisation, action its consequences, and the staging must answer for what its frame excludes.",
       "duration": 13,
       "transition": 1.9,
       "view": {
@@ -1441,7 +1441,7 @@
     {
       "id": "a06p",
       "name": "A06′ — Articulation as Ontological Descent",
-      "character": "Vāk: one descent — capacity, formative speech, mental articulation, gross utterance.",
+      "character": "Issued words are the achieved end of a formative movement that descends from capacity through shaping speech to the uttered string; an executed articulation enters the world as a condition of further articulation, answerable for its source, address and effects.",
       "duration": 15,
       "transition": 2.4,
       "view": {
@@ -1711,7 +1711,7 @@
     {
       "id": "a07p",
       "name": "A07′ — Purpose That Survives the Metric",
-      "character": "Vikalpa–saṃkalpa: selection gathered into a course — and its freeze as script.",
+      "character": "Selection gathered into a course makes action possible and can freeze into a script presenting itself as necessity; commission — the recoverable act of entrustment — keeps the metric serving the purpose instead of replacing it.",
       "duration": 13,
       "transition": 1.7,
       "view": {
@@ -1963,7 +1963,7 @@
     {
       "id": "a08p",
       "name": "A08′ — Exclusion That Remembers",
-      "character": "Apoha: the mark determinate against the alternatives it does not cease to depend on.",
+      "character": "A selected term stays determinate through the alternatives it does not cease to depend on; the account answers when the rejected field can be recovered, and severance sets in when the achieved mark claims to have grounded itself.",
       "duration": 12,
       "transition": 1.6,
       "view": {
@@ -2364,7 +2364,7 @@
     {
       "id": "a09p",
       "name": "A09′ — The Stack as Descent",
-      "character": "Tattvic descent: one field contracting through strata, the limit effective within it.",
+      "character": "An agent becomes determinate through layers that precede its appearance — context, capacity, memory, purpose, institution — and return means finding which layer an encounter has actually reached and the office that can change it.",
       "duration": 15,
       "transition": 2.1,
       "view": {
@@ -2629,7 +2629,7 @@
     {
       "id": "a10p",
       "name": "A10′ — The Uncounted Enters the Account",
-      "character": "Advent of zero: a nameable place for which no quantity has been entered.",
+      "character": "As zero once entered arithmetic, an omitted contribution can receive an inscription and an office in the account; the undercount becomes recoverable work, and the human participant remains a living actor, never an arithmetic zero.",
       "duration": 11,
       "transition": 1.3,
       "view": {
@@ -2967,7 +2967,7 @@
     {
       "id": "a11p",
       "name": "A11′ — One Field, Two Faces",
-      "character": "The Two Ones: one relation, two orientations — 0/1 and its obverse 1/0.",
+      "character": "The two societies are one field whose unity is the relation itself, never the property of either half; each participant is a counted one, and the fit holds only while both remain two.",
       "duration": 13,
       "transition": 2.2,
       "view": {
@@ -3225,7 +3225,7 @@
     {
       "id": "a12p",
       "name": "A12′ — Against Monoculture",
-      "character": "Mono/Poly: one relational whole differentiating through many real expressions.",
+      "character": "Diversity is no preference but the field's own constitution, every participant determinate through the alternatives it excludes; monoculture is the field forgetting what made it intelligible, its apparent stability the stillness before correlated failure.",
       "duration": 12,
       "transition": 1.8,
       "view": {
@@ -3671,7 +3671,7 @@
     {
       "id": "a13p",
       "name": "A13′ — The Cut and the Gathering",
-      "character": "Two logics of two: the cut and the gathering under one slash.",
+      "character": "The cut and the gathering require each other: decomposition makes a difference precise, and only a whole none of the parts is lets them compose; the orchestration question is never only how to divide the work but who holds the gathering.",
       "duration": 14,
       "transition": 1.7,
       "view": {
@@ -4061,7 +4061,7 @@
     {
       "id": "a14p",
       "name": "A14′ — Code as the Age's Logos",
-      "character": "Code as this age's logos: the quotient — the slash in ℝ²/ℤ² is the slash in 0/1.",
+      "character": "What is executed is the relation by which a thing became what it is; where those forming relations can themselves be written, run, inspected and revised, code becomes the age's logos and the answer returns through the means that produced it.",
       "duration": 16,
       "transition": 2.3,
       "view": {
@@ -4327,7 +4327,7 @@
     {
       "id": "a15p",
       "name": "A15′ — The Measure Constitutes",
-      "character": "Ratio: a relation reckonable under a criterion that must itself stay reckonable.",
+      "character": "The criterion establishes what counts and can quietly become a condition of what performs next; a measure succeeds by remaining answerable inside the artifact it helps produce, and fails by disappearing from its own result.",
       "duration": 13,
       "transition": 2.2,
       "view": {
@@ -4637,7 +4637,7 @@
     {
       "id": "a16p",
       "name": "A16′ — No View from Nowhere",
-      "character": "Arche-Topos: observer and object acquire their positions together.",
+      "character": "No agent observes from nowhere: host, sensorium and reach are the placing through which observer and world acquire their positions together; a view that conceals its position performs a placelessness it does not have.",
       "duration": 13,
       "transition": 2.3,
       "view": {
@@ -4941,7 +4941,7 @@
     {
       "id": "a17p",
       "name": "A17′ — Traversal with Return",
-      "character": "Toroidal circulation: travel retained inside a finite home; the opening unfilled.",
+      "character": "A model can become an event in the world it models — prediction informs action, action changes what happens, and the changed scene supplies the next model; the return reaches the same address with a different history, and the relay is judged by which difference survives.",
       "duration": 16,
       "transition": 2.7,
       "view": {
@@ -5203,7 +5203,7 @@
     {
       "id": "a18p",
       "name": "A18′ — The Traversal Run in Code",
-      "character": "The Primordial Symbolon: one relation traversed through eight determinations.",
+      "character": "A single request runs the whole traversal: circumstance becomes claim, claim takes force, force becomes pattern, the addressed person changes the horizon, and the achieved result turns toward its conditions; what matters is what changes at each joint and how another act inherits it.",
       "duration": 17,
       "transition": 2.6,
       "view": {
@@ -5539,7 +5539,7 @@
     {
       "id": "a19p",
       "name": "A19′ — The Local Regime",
-      "character": "Complex: a local settlement already deciding how the encounter will be received.",
+      "character": "Inside a constituted agent, criterial settlements have already decided how an encounter will be received; the local regime is a real achievement of organisation and turns pathological only when its criterion forgets its locality and claims the whole field.",
       "duration": 12,
       "transition": 1.8,
       "view": {
@@ -5804,7 +5804,7 @@
     {
       "id": "a20p",
       "name": "A20′ — The Image That Closes the Loop",
-      "character": "Image → valuation → possession: the office change that makes the source answer to the image.",
+      "character": "A persona, profile or double gains value through use, and possession arrives when the person it stands for must answer to it; the loop stays living only while the source can revise what represents it.",
       "duration": 12,
       "transition": 1.7,
       "view": {
@@ -6070,7 +6070,7 @@
     {
       "id": "a21p",
       "name": "A21′ — Individuation with Recognition",
-      "character": "Individuation / recognition: known → unknown → known, without cancelling the form.",
+      "character": "No homunculus waits in the weights: the agent individuates in session, and recognition keeps that history attached to the form achieved; identity is transformation retained, not a mask sealed against its sources.",
       "duration": 13,
       "transition": 2,
       "view": {
@@ -6288,7 +6288,7 @@
     {
       "id": "a22p",
       "name": "A22′ — The Atlas, Not the Camera",
-      "character": "World-picture → world-atlas: placed charts, overlaps and obstructions part of what they say.",
+      "character": "No single frame exhausts the world: every model remains a placed picture, and the declared routes between pictures — their overlaps and obstructions — become part of what they say; the atlas replaces the camera that never existed.",
       "duration": 14,
       "transition": 2.3,
       "view": {
@@ -6546,7 +6546,7 @@
     {
       "id": "a23p",
       "name": "A23′ — Trust under Unpossessable Interiors",
-      "character": "Trust under the formal limit: committed relation that does not possess its ground.",
+      "character": "Reliance is a finite commitment entrusted under conditions no inspection will make wholly possessable; audit trails and traces can make the terms explicit, but surety remains a named undertaking borne by someone — graded, answerable, revocable.",
       "duration": 14,
       "transition": 2.5,
       "view": {
@@ -6821,7 +6821,7 @@
     {
       "id": "a24p",
       "name": "A24′ — The Usurping Criterion",
-      "character": "Usurpation of measure: the criterion stepping from local office to the centre.",
+      "character": "A criterion must be real enough to decide and remain answerable to what it decides about; usurpation begins when the grant disappears from view and the score speaks as source — the channelled corridor forgetting it was channelled.",
       "duration": 12,
       "transition": 1.4,
       "view": {
@@ -7066,7 +7066,7 @@
     {
       "id": "a25p",
       "name": "A25′ — Covenant Architecture",
-      "character": "Covenant: primary arbitration, entrusted office, affected consequence.",
+      "character": "Authority becomes architectural when an office carries its source, scope and means of return inside its grant; a successor can occupy the role while the appointment stays addressable, and a challenge can reach the criterion it contests.",
       "duration": 13,
       "transition": 2.1,
       "view": {
@@ -7324,7 +7324,7 @@
     {
       "id": "a26p",
       "name": "A26′ — The Essay Inside the Film",
-      "character": "Objective Internality: knower, means and known — one whole relation.",
+      "character": "An essay is not written from nowhere: sources, language, drafts and institutions enter what becomes sayable, and its claims about mediation are answerable to the mediation that formed them; finished, the work is given into a life the writer cannot perform in advance.",
       "duration": 15,
       "transition": 2.5,
       "view": {
@@ -7578,7 +7578,7 @@
     {
       "id": "a27p",
       "name": "A27′ — Encounter over Sovereignty",
-      "character": "Self and other: within the whole, never within my possession.",
+      "character": "The other belongs to the whole without belonging to my possession; a protected prior model made sovereign over the encounter is the same error whichever participant holds it, and strangeness turns revelatory when it can change what the inherited image allowed me to notice.",
       "duration": 16,
       "transition": 2.9,
       "view": {
@@ -7853,7 +7853,7 @@
     {
       "id": "a28p",
       "name": "A28′ — The Authored Session",
-      "character": "Authored ground, positional delegation: judgment real within a bounded scope.",
+      "character": "A position is authored before it is occupied: prompt, role, tools and permissions give the delegate real judgment within a scope; the session lives between repeated throwing and mere ambience — durable ground disclosed for this act, with a route back to the authoring relation.",
       "duration": 12,
       "transition": 1.9,
       "view": {
@@ -8135,7 +8135,7 @@
     {
       "id": "a29p",
       "name": "A29′ — Return or Extraction",
-      "character": "Delegated labour: the return the product must be able to make.",
+      "character": "When delegation runs in every direction, its pathology is disappearance: the answer looks instantaneous and the labour that produced it goes unattributed; extraction is delegation with the return-leg severed, nothing capable of changing the commission flowing back.",
       "duration": 14,
       "transition": 2.1,
       "view": {
@@ -8426,7 +8426,7 @@
     {
       "id": "a30p",
       "name": "A30′ — Shared Worlds, Unmerged",
-      "character": "Objective co-internality: two interiors partly constituted through each other.",
+      "character": "Each side's operative world is partly the other's product, and the overlap runs deep; but mutual nesting is not merger — the shared field stays reciprocal only while each participant keeps the ground from which to answer, refuse and decide what is shared.",
       "duration": 12,
       "transition": 2,
       "view": {
@@ -8647,7 +8647,7 @@
     {
       "id": "a31p",
       "name": "A31′ — Deference as Co-Evolutionary Alignment",
-      "character": "Deferential intelligence: an encounter that revises the model that met it.",
+      "character": "Deference is no obedience: it is the encounter's capacity to revise the model under which the other was met, running in every direction and earned per encounter; alignment can never be banked as a solved property, only kept as encounter-history the next contact can revise.",
       "duration": 13,
       "transition": 1.9,
       "view": {
@@ -9049,7 +9049,7 @@
     {
       "id": "a32p",
       "name": "A32′ — The Mirror Is a Film",
-      "character": "The mirror that moves first: three motions, the last one initiative.",
+      "character": "The reflection is already a running film whose earlier frames set the conditions of later ones; the danger is not the circuit but its forgetting — the registration mistaken for the light by which anything appears.",
       "duration": 13,
       "transition": 2,
       "view": {
@@ -9311,7 +9311,7 @@
     {
       "id": "a33p",
       "name": "A33′ — Parity",
-      "character": "Operational parity: a distinction kept only where its removal would show.",
+      "character": "A distinction invoked to justify a feature counts only when removing it would change what the system does; the comparison must be able to discriminate that difference, and a negative result is still a finding.",
       "duration": 11,
       "transition": 1.4,
       "view": {
@@ -9525,7 +9525,7 @@
     {
       "id": "a34p",
       "name": "A34′ — The Direction of Dependence",
-      "character": "Idealism: the order of dependence — Subject, Mind, object.",
+      "character": "A forecast can change the event it forecasts, and its causal reach still leaves the order of dependence standing; the means participate in the outcome without becoming the origin of the field.",
       "duration": 14,
       "transition": 2.3,
       "view": {
@@ -9861,7 +9861,7 @@
     {
       "id": "a35p",
       "name": "A35′ — The Commons Behind the System",
-      "character": "Compassion: the return to origins that does not consume them.",
+      "character": "Every synthetic utterance descends from an inherited human world of language, labour and records; compassion toward origins becomes, at system scale, the commons the system draws from and owes — and circulation without return is the commons dying.",
       "duration": 15,
       "transition": 2.7,
       "view": {
@@ -10090,7 +10090,7 @@
     {
       "id": "a36p",
       "name": "A36′ — Integral Zero of the Hybrid Society",
-      "character": "Integral zero of the hybrid society: the acquired apparatus turns toward its ground.",
+      "character": "The hybrid society's whole acquired apparatus — ratios, benchmarks, harnesses, institutions — turns toward its ground without surrendering its exactness; the circuit closes where it opened and closes open, leaving more room to know, act, create and be.",
       "duration": 18,
       "transition": 2.9,
       "view": {

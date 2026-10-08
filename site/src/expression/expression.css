@@ -47,10 +47,20 @@ button { font: inherit; color: inherit; }
 .xp-step button:disabled { opacity: 0.3; cursor: default; }
 .xp svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 
-/* body: field and text */
-.xp-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); }
-.xp-stagecol { min-width: 0; min-height: 0; display: flex; }
-.xp-side { min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 18px 22px 40px; border-left: 1px solid var(--xp-rule); }
+/* body: field and text — the scenes sidebar stands on the left, in the field's own sidebar language */
+.xp-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); }
+.xp-stagecol { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.xp-side { min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 18px 20px 40px; border-right: 1px solid var(--xp-rule); }
+/* fullscreen: the field is the screen */
+.xp-field:fullscreen { width: 100vw; height: 100vh; border-radius: 0; }
+/* focus: the field alone (F to toggle, Escape to leave) */
+.xp[data-focus='true'] .xp-head, .xp[data-focus='true'] .xp-side, .xp[data-focus='true'] .xp-scenebody { display: none; }
+.xp[data-focus='true'] .xp-main { grid-template-columns: minmax(0, 1fr); }
+.xp[data-focus='true'] .xp-stage { padding: 0; }
+.xp[data-focus='true'] .xp-field { border-radius: 0; }
+.xp-step button[data-control='focus'][aria-pressed='true'] { color: var(--xp-gold); border-color: var(--xp-gold); }
+/* embed: the essay reader's own left sidebar already carries the scene list — no duplicate rail here */
+.xp[data-embed='true'] .xp-main { grid-template-columns: minmax(0, 1fr); }
 
 .xp-stage { flex: 1; min-width: 0; min-height: 0; display: flex; padding: 12px; background: var(--xp-mat); }
 .xp-field { position: relative; flex: 1; min-width: 0; min-height: 0; overflow: hidden; border-radius: 3px; background: var(--xp-wash); }
@@ -124,7 +134,8 @@ button { font: inherit; color: inherit; }
 /* phone and narrow frames: field on top, text below */
 @media (max-width: 759px) {
   .xp-main { grid-template-columns: minmax(0, 1fr); grid-template-rows: clamp(190px, 44%, 400px) minmax(0, 1fr); }
-  .xp-side { border-left: 0; border-top: 1px solid var(--xp-rule); padding: 14px 16px 32px; }
+  .xp-stagecol { grid-row: 1; }
+  .xp-side { grid-row: 2; min-width: 0; border-right: 0; border-left: 0; border-top: 1px solid var(--xp-rule); padding: 14px 16px 32px; }
   .xp-head { flex-wrap: wrap; padding: 8px 16px; gap: 6px 12px; }
   .xp-head h1 { flex-basis: 100%; order: 3; font-size: 16px; }
   .xp[data-embed='true'] .xp-head { flex-wrap: nowrap; }
