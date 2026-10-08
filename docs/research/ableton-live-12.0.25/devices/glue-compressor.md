@@ -858,7 +858,10 @@ outside the captured functions): the accumulator sources 0x190/0x19c/0x1a8/
 0x1e8; the dither scales 0x1c4/0x1c8; 0xac; 0x88/0x7c; the kernel-time rate
 behind k = 2·4.7004e-7·rate. **Threshold (0x18c) and Range (0x1a4) are never
 read by the kernel** — they are consumed per-block, upstream of everything
-above.
+above. *(2026-10-08, per-block lane redo: this layer is now MAPPED — every
+slot above has a writer and a law; see `devices/glue-perblock-derivation.md`,
+which supersedes this inventory and closes the C1-attack/C2-τ mechanism
+questions at the structural level.)*
 
 ### The fitted closure (and what it may claim)
 

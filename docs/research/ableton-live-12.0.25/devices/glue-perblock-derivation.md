@@ -125,7 +125,7 @@ COF = `FUN_10179fff8(state, param_block, N)` with `N = os·block`
 | 0xc0 | Release-6-only integrator gain | SET | 0 unless Release 6 |
 | 0xc4 | k + 1/release | SET, COF | |
 | 0xc8 | **u_max** (over-branch clamp) | SET Attack | **0.38866684**; **0.40361890** at Attack idx 0 |
-| 0xcc, 0xd0 | f′(u_max), f(u_max) for the active attack case | SET Attack | else: 2.309e-4, 1.2e-5; case 0: 3.078e-4, 1.6e-5 — exactly m·(e^{B·u_max}−1) and B·f (checked) |
+| 0xcc, 0xd0 | f′(u_max), f(u_max) for the active attack case | SET Attack | else: 2.309e-4, 1.2e-5; case 0: 3.078e-4, 1.6e-5 — = m·B·e^{B·u_max} and m·(e^{B·u_max}−1) (both reproduced numerically) |
 | 0xd4 | f′(u_max) variant | SET Attack | 1.2007e-5 |
 | 0xdc–0xf4 | per-attack u_max/f/f′ tables (source of the 0xc8–0xd4 copies) | CO | case-0 {0.4036, 0.38867, 3.078e-4, 2.309e-4, 1.6e-5, 1.2e-5, 1.6007e-5, 1.2007e-5}; other cases take the 0xdc/0xe4/0xec/0xf4 lane |
 | 0xf8, 0x100 | 64-bit PRNG states (×2) | init, kernel, FUN_1017a03c4 | LCG (mult 0x0b9c86e1, add 0x361d6eaf) |
