@@ -255,6 +255,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ce5d3ddc6d3fa000eb1536d85e147bfe31aacaba692ed6a876f95cb7c855be78"
 
 [[package]]
+name = "live-dynamics"
+version = "0.1.0"
+
+[[package]]
 name = "live-set"
 version = "0.1.0"
 dependencies = [
@@ -267,6 +271,7 @@ name = "live-shell"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "live-dynamics",
  "live-set",
  "serde",
  "serde_json",

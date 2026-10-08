@@ -770,3 +770,150 @@ clamps, cascades, LUT indexing, menus, ceiling, clipper — is mapped. The
 crate stays curve-based; a circuit-model rebuild is a candidate future lane
 (needs the loop's state semantics derived and validated against the
 envelope-family renders).
+
+## Circuit-model derivation (2026-10-08, circuit-model lane)
+
+The full kernel decompile (`evidence/binary/glue-kernel-decompilation.txt`,
+378 lines) is a per-sample numerically-solved circuit model. This section
+records the derived fixed-point equation, the mapped/unmapped constant
+inventory, the fitted closure, and the honest gate result. The implementing
+code is `packages/live-dynamics/src/glue.rs` ("Circuit model" section);
+decompile-sourced constants are embedded there with file+line citations under
+this lane's brief (superseding, for this lane only, the older "crate never
+imports these constants" boundary — the owner's call to authorize is recorded
+here).
+
+### The fixed-point equation
+
+Per sample *n*, per channel *c* ∈ {L, R} (input clamped to ±20, kernel lines
+101–112; line numbers below cite the kernel decompile):
+
+1. **Detector cascade** — two dithered one-poles per channel:
+   `fast_c[n] = fast_c[n−1] + (in_c[n] − fast_c[n−1] + ν)·a_att` (lines
+   117–120, state 0x110/0x130); `e_c = (in_c[n] − fast_c[n])·G` (line 121);
+   `slow_c[n] = slow_c[n−1] + (e_c − slow_c[n−1] + ν)·a_rel` (lines 122–134,
+   state 0x118/0x138). G is a dB-law gain, `expf((s_a8·db1 − acc0x188 −
+   18)·0.05·ln10)` (line 115) — the loop's stabilizing feedback path.
+
+2. **Ratio LUT** — the *fast-minus-slow difference* indexes the curve:
+   `idx = trunc((e_c − slow_c + ν)·510.99976 + 0.5)` clamped to ±255, linear
+   interpolation between `table[255+idx]` and `table[256+idx]` (lines
+   135–153; three 512-entry tables selected by stored Ratio, shell
+   FUN_10179fca4). The LUT output passes a soft floor: with `t = |acc0x1a0
+   ·1.2·s_ac| + 0.01 − 1`, values below `−t` are mapped `lut ← cubic(lut + t)
+   − t` with `cubic(u) = u − u³/4 + |u|u³/16` on ±2 (lines 154–177) —
+   structurally the Range ceiling (the floor cannot pass −Range).
+
+3. **The Newton-solved loop** (lines 178–240) — two coupled variables, warm
+   started from the previous sample: *x* (state 0x8) and *y* (state 0x18).
+   With `z = −β·(y[n−1] − s28) − s38` (β = state 0xbc) and
+   `u_c = clamp(x − lut_c, 0, u_max)`:
+   - **Over-branch** (x above either LUT value): with `f(u) = m(e^{B·u} − 1)`,
+     `Φ = Σ_c[f(u_c) − u_c·f′(u_c)] − Σ_c lut_c·f′(u_c)` and
+     `S = f′(u_L) + f′(u_R)` (lines 206–216),
+
+     ```
+     x′ = [−A·(z + Φ) − c4·Φ + s28·A·c4] / [ (S+A)·β + S·A + (S+A)·R̂ ]
+     y′ = g·( β·(y[n−1] − s28) + s38 − w + x′·A + s28·c4 ),  g = 1/(A+k+R̂)
+     ```
+     (lines 217–225; A = 1/attack, R̂ = 1/release, k = c4 − R̂, all from the
+     setter-derived state).
+   - **Under-branch** (lines 227–231): `y′ = s28 − g·(w + z)`, `x′ = y′` —
+     linear relaxation toward zero, the loop's unity path.
+   - Convergence: both `|Δx| ≤ |x|·1e-5 + 1e-7` and `|Δy| ≤ |y|·1e-5 + 1e-7`,
+     capped at 10 iterations (lines 232–238, 385). Exit-tail state updates at
+     lines 234–240.
+
+   **What is solved, in words:** *x* rides the LUT curve — at quasistatic
+   equilibrium the over-branch solve collapses to x ≈ (lut_L + lut_R)/2, so
+   the LUT contributes the *shape* of the loop's operating point. *y* is the
+   attack/release-weighted image of x (its DC gain is A/(A+R̂) — the k terms
+   cancel because the decompile's β and k are the same constant), and the
+   fast-minus-slow detector difference is what *drives* x off the center.
+   The applied audio gain is read from a further dB-domain state (lines
+   243–253) fed by y — see the closure below. The GR meter derives from −y
+   (lines 345–350), confirming y < 0 = reduction and the dB-domain end-to-end
+   reading.
+
+4. **Output stage** (lines 241–344, exact): `v = in·10^((gr + Makeup)/20)
+   ·1.0592537`; beyond ±0.84139514 the cubic tanh-approximation on
+   (v ± 0.84139514)·6.304977, rescaled by 0.15860486 (the PeakClipIn "Soft"
+   stage, shared leaky peak state 0x24c); `out = w·v·0.94406086 +
+   in·gain·(1 − w)` with w the per-block ramped DryWet (setter mapping,
+   setters lines 154–160). Net unity below clip (1.0592537 × 0.94406086 ≈
+   1.00002) — matching the measured unity staging.
+
+### Mapped vs unmapped constants
+
+Mapped and cited: input clamp; LUT scale/interp/clamps; the three ratio
+tables; attack/release menus and their 1/period, sqrt(1/period) derivations;
+Range negation and −80 floor; Newton tolerances; the cubic and output-clipper
+constants; DryWet mapping; the PRNG construction `(bits>>9 | 0x40000000) − 3`
+(lines 62–90; two 32-bit LCG pairs per sample pair).
+
+**Unmapped** (the per-block parameter-application layer — slots written
+outside the captured functions): the accumulator sources 0x190/0x19c/0x1a8/
+0x1b4/0x1c0; 0x98/0xa4/0xc8 (the over-branch nonlinearity's m, B, clamp);
+0x170 (stage-2 coefficient); the dB-filter coefficients 0x178/0x17c/0x180/
+0x1e8; the dither scales 0x1c4/0x1c8; 0xac; 0x88/0x7c; the kernel-time rate
+behind k = 2·4.7004e-7·rate. **Threshold (0x18c) and Range (0x1a4) are never
+read by the kernel** — they are consumed per-block, upstream of everything
+above.
+
+### The fitted closure (and what it may claim)
+
+The rebuild replaces the unmapped layer with a minimal closure
+(`glue::CircuitFit`, calibrated **only** on the G1 static anchors at the
+preset pins): the G-exponent becomes `10^((g_y·y + s_w·(lvl − Threshold) −
+γ0)/20)` with a level tracker (τ 5 ms); the applied gain becomes a leaky
+integrator of the LUT drive, `gr ← gr + (Ts/τ_rel)·(−κ·(−avg lut) − gr)` —
+the integrator form is **forced by measurement**: the device reaches −8.12 dB
+GR at Ratio 1 and −17.43 dB at Ratio 0 (D1-final) while the LUTs bottom at
+−6.80/−3.56 dB, so the applied path cannot be a static map of the LUT value;
+the dither is omitted (scale unmapped; RMS-domain gates are insensitive to
+it); `rate_eff = sample_rate/block_size` (the block-rate reading; the
+full-rate alternative makes the solver's k dominate and wrecks the
+attack-family ratios). Fitted values: g_y 2.05, s_w 0.176, γ0 −2.35, κ 2.0,
+B 3.318 (coordinate scan, `static_closure_calibration_search` in the crate).
+Search robustness is a known limit: multi-start landed within ~0.1 dB of the
+same static optimum.
+
+### Gate result (thresholds stated before fitting)
+
+Stated gates (verify.rs `CIRCUIT_*`): C1 static steady state ±1.0 dB per
+step × all four envelope pins (G12/G13/G14/G15); C2 release τ ±25% and
+loud-segment level ±1.0 dB on the release-probe trio (G17/G19/G18).
+
+- **C1, in-sample pin (G12, A2/R0)**: pass — Δ −0.00/−0.79/−0.54/−0.18 dB.
+- **C1, Release pin (G14, A2/R4)**: pass — max Δ 0.53 dB (release-4 steady
+  shift reproduced out-of-sample).
+- **C1, Attack pins (G13, G15)**: **fail — the attack dependence is
+  sign-inverted.** The device gets *shallower* with slow attack
+  (−8.12 → −4.70 dB GR at +12 over); the model gets *deeper*
+  (−8.30 → −11.98). Mechanism (named): attenuating y through the solver's
+  A/(A+R̂) raises G in the closure (g_y > 0), deepening the LUT swings; the
+  device's coupling evidently runs the other way. The closure cannot express
+  the real coupling — it lives in the unmapped per-block layer.
+- **C2**: loud-segment levels pass on all three release pins (−0.53/−0.35/
+  +0.06 dB — the release-shift-on-steady-state is reproduced); τ **fails**:
+  model recovers 60/120/200 ms vs render 100/180/320 ms under the identical
+  1/e-crossing method — the model's loop recovers ~1.6–1.7× faster than its
+  own τ_leak = 0.4701·menu because the LUT's positive center bump keeps
+  driving the integrator during recovery, where the device recovers as a
+  clean single pole.
+
+**Verdict:** a failed derivation on the ballistics, with the residual
+structure named. The static curve family (including the Range-family ceiling
+and the release-4 steady shift) is reproduced by the derived loop under a
+minimal closure; the attack-path polarity and the recovery-path gating are
+not. The curve-based model (`static_gain_change_db`) remains the gate of
+record. The failing gates stay in the tree as `#[ignore]` tests
+(`glue_circuit_golden_envelope_gate`, `glue_circuit_golden_release_gate`)
+documenting the residuals; they are the acceptance targets for the
+binary-lane work that maps the per-block layer (offsets 0x190/0x19c/0x1a8/
+0x1b4/0x1c0 and the dB-filter coefficients) — that mapping, not more curve
+fitting, is what would close them.
+
+Scope not modeled: Release index 6 (special constants, shell lines 63–71),
+Oversample, SideChain EQ, the PRNG dither (scale unmapped), and the
+metering-only slots (0x23c/0x240/0x244/0x248/0x258/0x260).

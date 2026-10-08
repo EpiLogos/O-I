@@ -12,16 +12,25 @@
 //! `evidence/` content. Constants that are engine decisions rather than
 //! Live truth are marked at their definition.
 //!
-//! Deliberately not here (see README): realtime audio I/O, MIDI tracks,
-//! warp/clip playback, the unmeasured parts of the hosted devices
-//! (Echo's synced-division mapping, filter/ducking/modulation/internal
-//! reverb; Reverb's stereo decorrelation).
+//! Deliberately not here (see README): realtime MIDI input, warp/clip
+//! playback, the unmeasured parts of the hosted devices (Echo's
+//! synced-division mapping, filter/ducking/modulation/internal reverb;
+//! Reverb's stereo decorrelation). Realtime audio output lives behind the
+//! `realtime` feature (`realtime.rs`, phase-1 constraints documented
+//! there and in the README); the offline render stays the acceptance
+//! path and the default, dependency-light build.
 
 pub mod bridge;
 pub mod devices;
 pub mod graph;
 pub mod wav;
 
+#[cfg(feature = "realtime")]
+pub mod realtime;
+
 pub use bridge::{bridge, BridgeResult, BridgeWarning};
 pub use devices::{BypassDevice, EchoDevice, EchoParams, GainDevice, GlueDevice, ReverbDevice};
 pub use graph::{Clock, Device, Graph, MasterTrack, Track};
+
+#[cfg(feature = "realtime")]
+pub use realtime::{Player, RealtimeError};

@@ -3,10 +3,12 @@
 //! A [`Graph`] is a set of audio tracks (mono or stereo f32 buffers) each
 //! carrying a gain, a pan, an ordered [`Device`] chain and an output into
 //! the master; the master carries a gain and its own device chain. The
-//! transport is a tempo/beat clock. There is no realtime audio I/O in this
-//! milestone: the only execution path is the deterministic offline
-//! [`render`], which is also the acceptance path the milestone gates run
-//! against.
+//! transport is a tempo/beat clock. Two execution paths share ONE mixing
+//! arithmetic: the deterministic offline [`render`] (the acceptance path
+//! the milestone gates run against) and — behind the crate's `realtime`
+//! feature — the per-frame [`mix_frame`] pull of the cpal output callback
+//! (`realtime.rs`). Bit-identity of the two paths is pinned by a unit test
+//! (`mix_frame_composes_the_render_exactly`).
 //!
 //! Clean-room: written from `session-model.md`, the device dossiers and the
 //! gated `live-dynamics` models only. Mixing-topology decisions that no
@@ -177,44 +179,62 @@ impl Graph {
     /// contribute silence beyond their end; the master gain and devices
     /// still process those frames). No clipping or limiting is applied in
     /// M1 — the master bus carries raw float.
+    ///
+    /// The loop body is exactly [`Graph::mix_frame`]; see that method and
+    /// the `mix_frame_composes_the_render_exactly` test.
     pub fn render(mut self, sample_rate: u32) -> Vec<f32> {
         let frames = self.tracks.iter().map(|t| t.frames()).max().unwrap_or(0);
         let mut out = vec![0f32; frames * 2];
         let mut clock = Clock::start(sample_rate, self.tempo_bpm);
-        let mut frame = [0f32; 2];
         for i in 0..frames {
             clock.sample = i as u64;
-            let mut mix = [0f64; 2];
-            for track in &mut self.tracks {
-                // source frame in the track's own channel count (silence
-                // past the buffer end); devices process exactly those
-                // channels
-                for (c, slot) in frame.iter_mut().enumerate().take(track.channels) {
-                    *slot = track.source.get(i * track.channels + c).copied().unwrap_or(0.0);
-                }
-                for d in track.devices.iter_mut() {
-                    d.process(&mut frame[..track.channels], &clock);
-                }
-                // mixer staging: gain then pan; a mono track fans out to
-                // both mix channels before the pan weights
-                let (lw, rw) = pan_weights(track.pan);
-                let (l, r) = if track.channels == 1 {
-                    (frame[0], frame[0])
-                } else {
-                    (frame[0], frame[1])
-                };
-                mix[0] += l as f64 * track.gain * lw;
-                mix[1] += r as f64 * track.gain * rw;
-            }
-            frame[0] = (mix[0] * self.master.gain) as f32;
-            frame[1] = (mix[1] * self.master.gain) as f32;
-            for d in self.master.devices.iter_mut() {
-                d.process(&mut frame, &clock);
-            }
+            let frame = self.mix_frame(&clock);
             out[i * 2] = frame[0];
             out[i * 2 + 1] = frame[1];
         }
         out
+    }
+
+    /// Mix ONE frame at `clock.sample` and return it (stereo, L/R).
+    ///
+    /// This is the render loop body, factored so the realtime output
+    /// (`realtime.rs`, feature `realtime`) pulls the exact same arithmetic
+    /// the offline render runs — one shared mixing law, not two. Devices
+    /// carry state, so consecutive calls must advance `clock.sample` by
+    /// one and each graph instance must be driven by one consumer only
+    /// (the render, or one audio callback). The unit test
+    /// `mix_frame_composes_the_render_exactly` pins the composition
+    /// bit-identical to [`Graph::render`].
+    pub fn mix_frame(&mut self, clock: &Clock) -> [f32; 2] {
+        let mut frame = [0f32; 2];
+        let mut mix = [0f64; 2];
+        for track in &mut self.tracks {
+            // source frame in the track's own channel count (silence
+            // past the buffer end); devices process exactly those
+            // channels
+            for (c, slot) in frame.iter_mut().enumerate().take(track.channels) {
+                *slot = track.source.get(clock.sample as usize * track.channels + c).copied().unwrap_or(0.0);
+            }
+            for d in track.devices.iter_mut() {
+                d.process(&mut frame[..track.channels], clock);
+            }
+            // mixer staging: gain then pan; a mono track fans out to
+            // both mix channels before the pan weights
+            let (lw, rw) = pan_weights(track.pan);
+            let (l, r) = if track.channels == 1 {
+                (frame[0], frame[0])
+            } else {
+                (frame[0], frame[1])
+            };
+            mix[0] += l as f64 * track.gain * lw;
+            mix[1] += r as f64 * track.gain * rw;
+        }
+        frame[0] = (mix[0] * self.master.gain) as f32;
+        frame[1] = (mix[1] * self.master.gain) as f32;
+        for d in self.master.devices.iter_mut() {
+            d.process(&mut frame, clock);
+        }
+        frame
     }
 }
 
@@ -339,6 +359,48 @@ mod tests {
         assert_eq!(out[2], 0.75); // frame 1: still both (2 samples = 2 frames)
         assert_eq!(out[4], 0.25); // frame 2: past A's end, B still sounding
         assert_eq!(out[11], 0.25); // last frame of B
+    }
+
+    /// The realtime contract: driving [`Graph::mix_frame`] frame by frame
+    /// produces EXACTLY the offline render, bit for bit — one mixing law,
+    /// two execution paths (`realtime.rs` pulls this same method from the
+    /// audio callback). State-carrying devices (Glue's follower) and a
+    /// short track (the silence-past-end path) must both compose.
+    #[test]
+    fn mix_frame_composes_the_render_exactly() {
+        let build = || {
+            let mut g = Graph::new(48_000, 120.0);
+            let mut a = Track::new("A", 2);
+            a.source = (0..96).map(|i| ((i as f32) * 0.03).sin() * 0.4).collect();
+            a.pan = 0.3;
+            a.devices.push(Box::new(GainDevice::new_db(3.0)));
+            a.devices.push(Box::new(BypassDevice));
+            let mut b = Track::new("B", 1);
+            b.source = vec![0.25f32; 40]; // ends before A — silence tail
+            b.devices.push(Box::new(crate::devices::GlueDevice::new(
+                live_dynamics::glue::GlueParams {
+                    threshold_db: -12.0,
+                    range: 30.0,
+                    ratio: 1.0,
+                    makeup_db: 0.0,
+                },
+            )));
+            g.tracks.push(a);
+            g.tracks.push(b);
+            g.master.devices.push(Box::new(GainDevice::new_db(-1.5)));
+            g
+        };
+        let offline = build().render(48_000);
+
+        let mut streamed = build();
+        let mut clock = Clock::start(48_000, 120.0);
+        let frames = offline.len() / 2;
+        for i in 0..frames {
+            clock.sample = i as u64;
+            let f = streamed.mix_frame(&clock);
+            assert_eq!(f[0].to_bits(), offline[i * 2].to_bits(), "L frame {i}");
+            assert_eq!(f[1].to_bits(), offline[i * 2 + 1].to_bits(), "R frame {i}");
+        }
     }
 
     #[test]
