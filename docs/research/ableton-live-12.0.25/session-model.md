@@ -163,6 +163,7 @@ Loader-validated rules (each enforced by a real rejection):
 | **`MidiNoteEvent` takes NO `Id` attribute** | "Unknown attribute 'Id' (at line 313, column 620)" |
 | `MidiNoteEvent` fields: `Time`, `Duration` (doubles, beats), `Velocity` (float 0..1), `OffVelocity`, `IsEnabled` | Schema `MidiNoteEvent` translator; attributes accepted up to the noted rejection |
 | `NoteIdGenerator` = note count; `ProbabilityGroupIdGenerator` present | Schema + accepted so far |
+| **Arrangement anchoring: a crafted clip plays at arrangement 0 regardless of `CurrentStart`** — a clip built at start 9.75 rendered its note grid at 0, and a verified-present second `Events` member (Id 912, start 9.75) contributed no audio; no rejection in either case | FA probes 2026-10-08 (`devices/follow-action.md`). All earlier crafted sets sat at 0, so anchoring was never exercised; multi-clip / offset-clip crafted sets are blocked until the real writer's anchoring element is identified |
 
 `KeyTrack` = `{ MidiKey: Int, Notes: MidiNoteEvent[] }` (Schema). End-to-end
 load of a crafted MIDI clip: **VALIDATED 2026-10-07** — crafted clips (key 48,
@@ -179,7 +180,10 @@ rejection ladder is recorded in the D7 row of `reconstruction-backlog.md`.
 - Warp-algorithm behavior per mode (Beats vs Texture vs Complex Pro) — model
   surface documented, DSP behavior not yet probed.
 - FollowAction state machine (session follow), scene temporal semantics under
-  global quantise — fields documented, dynamics unprobed.
+  global quantise — element shape documented and loader-accepted
+  (`devices/follow-action.md`); dynamics **BLOCKED for the export driver**
+  (arrangement render is FollowAction-invariant; session-launch capture
+  needed).
 - Groove pool (`GrooveSettings`/`.agr`) application mechanics.
 - The LOM object graph as exposed to remote scripts is compiled into the binary
   (shipped Python is infrastructure-only); enumeration via `.pyc` decompile of

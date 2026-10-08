@@ -199,6 +199,24 @@ def build(preset_path, pins, notes_spec):
     nig = sub(notes_el, "NoteIdGenerator")
     sub(nig, "NextId", Value=str(max_id))
 
+    # shrink the arrangement loop to the content (same earned pattern as
+    # build_set.py): the Export panel's Render Length is session-persistent,
+    # so the driver steps it to the set's own loop — without this, every
+    # render is 512 beats (256 s) of mostly silence
+    transport = ls.find("Transport")
+    if transport is not None:
+        end_loop = end_beat + 2.0
+        for tag in ("LoopLength", "LoopEnd"):
+            el = transport.find(tag)
+            if el is not None:
+                el.set("Value", repr(end_loop))
+        lon = transport.find("LoopOn")
+        if lon is not None:
+            lon.set("Value", "true")
+        lst = transport.find("LoopStart")
+        if lst is not None:
+            lst.set("Value", "0")
+
     # master chain strip + unity staging + tempo (earned rules)
     master = ls.find("MainTrack")
     mdevs = master.find("DeviceChain/DeviceChain/Devices")

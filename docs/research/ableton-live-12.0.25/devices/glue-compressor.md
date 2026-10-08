@@ -1029,6 +1029,42 @@ the deficit's home at all:
   outside `OGlueCompressorProcessor`. Deciding renders: the four-cell
   (T−12/T−24 × R30/R60, idx 5) grid of `glue-absolute-threshold.md` §4.
 
+### Four-cell grid — the deciding renders (2026-10-08 evening, live render lane)
+
+GRID_{T12,T24}×{R30,R60} — `preset-gentle-limiter.xml`, stored **Attack=5
+(LAM's exact attack pin)**, Makeup 0, Ratio 1, Release 0, `steps-1k.wav`,
+all four built and rendered in ONE session through the guarded driver
+(`harness/renders/GRID_*.aif`, sets `harness/live/GRID_*.als`). Gain maps
+(`analyze_render.py`); GR at equal over-threshold:
+
+| over T | T12/R30 | T24/R30 | T12/R60 | T24/R60 | spread |
+|--------|---------|---------|---------|---------|--------|
+| +6 dB  | −2.84   | −2.84   | −2.84   | −2.84   | **0.00** |
+| +12 dB | −6.34   | −6.33   | −6.34   | −6.33   | **0.01** |
+
+Full-curve covariance: the T−24 cells equal the T−12 cells shifted exactly
+one −6 dB step (at-threshold incursion −0.18 = −0.18; −2.84 = −2.84;
+−6.33/−6.34); R30 ≡ R60 at BOTH thresholds across every step (≤0.01 dB, the
+ceiling never approached). GRID_T24_R60 reproduces the committed LAM map to
+**0.00–0.01 dB on all seven steps** — the LAM cell is cross-session
+deterministic.
+
+**VERDICT: the covariance law CLOSES.** At equal over-threshold the device is
+threshold-shift-invariant at this attack pin to 0.01 dB, and Range-inert —
+there is **no amplitude-asymmetric mechanism**; the captured kernel's
+invariance (exact-port confirmed) is the device's behavior, not a model
+artifact. The LAM-verdict comparison that broke invariance does not
+reproduce: today's T−12/R30/A5 cell reads −2.84/−6.34 at +6/+12 over, where
+G7's committed map reads −1.92/−4.69 — and the G7/G13 cells carry stored
+**Attack=20**, a different attack pin from LAM's stored **Attack=5** (the
+A20 family is shallower: G13 ≡ G7 in the dossier). The old divergence was
+therefore confounded by attack pin (and possibly session); it was never
+threshold dependence. The LAM **model** residual (model shallow
++1.46…+2.10 dB at A5) is unchanged by this grid — model −1.38/−4.57 vs the
+now-confirmed device −2.84/−6.33 — and stays where the verdict localized it
+(the λ-free equilibrium mapping); the absolute-threshold-dependence branch
+of that search is **closed**.
+
 Scope not modeled: Release index 6 (special constants, shell lines 63–71),
 Oversample, SideChain EQ, the PRNG dither (scale unmapped), and the
 metering-only slots (0x23c/0x240/0x244/0x248/0x258/0x260).

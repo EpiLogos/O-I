@@ -1,6 +1,8 @@
 # Wavetable voice model — fit + implement fold (Live 12.0.25, offline lane)
 
-**Status:** fitted + implemented + gated, revision 1 (2026-10-08). Model:
+**Status:** fitted + implemented + gated, revision 1 (2026-10-08); **rev 2
+same day — depth probes** (WavePosition interior frames, Slope=linear-ramp
+law, Unison Mode gate; see "Depth probes" below). Model:
 `packages/live-dynamics/src/wavetable.rs`; gate: `wavetable_voice_golden_gate`
 + `wavetable_law_gates` in `packages/live-dynamics/tests/golden.rs`; fitting
 tool: `harness/fit_wavetable_probes.py` (per-note RMS, harmonic scans,
@@ -160,19 +162,94 @@ cargo clippy --all-targets         # 2 pre-existing warnings (audio.rs,
   factory table, and interior-position timbre is interpolation, not
   measurement (Deferred).
 
+## Depth probes (2026-10-08 evening lane) — WavePosition interior, Slope, Unison
+
+Three deferred questions probed with single-pin sets (builder
+`build_set_midi.py`, same M2 notes clip; renders WV6/WV7/WV8/WV9/WV9B +
+`.asd` in `harness/renders/`, sets in `harness/live/`). WV2 was again
+git-recovered from `feat/live-re-lane-15min-workload` to a scratch path for
+the comparison (same procedure as the provenance section). Analyzer:
+`harness/analyze_lane_b1.py`.
+
+### WavePosition interior points (WV6 pos 0.25, WV7 pos 0.75)
+
+Harmonic profile, note-1 steady window (dBFS; `floor` = dither floor):
+
+| pos | h1 | h2 | h3 | h4 | h5 | h6 | h7 | h8 | steady RMS |
+|-----|----|----|----|----|----|----|----|----|------------|
+| 0.00 (M2) | −23.11 | floor | floor | floor | floor | floor | floor | floor | −26.06 |
+| 0.25 (WV6) | −24.44 | floor | −46.75 | floor | −55.30 | floor | −61.72 | floor | −27.36 |
+| 0.50 (WV2) | −25.92 | −39.41 | −47.90 | −45.28 | −44.96 | −48.51 | −51.78 | −51.35 | −28.43 |
+| 0.75 (WV7) | −25.09 | −35.89 | −35.03 | −41.76 | −38.96 | −44.99 | −42.14 | −47.85 | −26.72 |
+
+- **The two-frame linear-crossfade model is REFUTED.** Against the
+  amplitude-linear prediction from frames {pos 0, pos 0.5}: at pos 0.25 the
+  predicted frame-B evens are absent (h2 measured at floor, predicted
+  ≈−51 dBFS) while h3/h5/h7 sit +12.8/+1.5/+1.7 dB ABOVE prediction; at
+  pos 0.75 every harmonic sits +6.0…+15.3 dB above prediction.
+- **pos 0.25 reads an odd-harmonics-only frame** (triangle family):
+  h3/h1 = −22.3 dB, h5/h1 = −30.9, h7/h1 = −37.3 (ideal triangle:
+  −19.1/−28.0/−33.8 — same ordering, ~3.3 dB softer). Evens at the dither
+  floor. pos 0.50 and 0.75 read distinct full-spectrum (saw-family) frames.
+- **"Basic Shapes" therefore holds ≥3 discrete shape frames**, and interior
+  positions swap frame content more than they crossfade two endpoints. The
+  frame census (count, spacing — sine|triangle|saw|square at thirds is the
+  natural hypothesis) and the true interpolation law stay open (backlog).
+- **Model consequence**: `wavetable.rs`'s declared linear interior
+  interpolation is now KNOWN-WRONG against measurement. No gate exercises
+  interior positions (the golden/law gates hold at pos 0/0.5 only), so the
+  suite stays green — but no interior gate may be written against the
+  linear model; the frame census lands first.
+
+### Amp-envelope Slope semantics (WV8_SLOPE0: Slopes_Decay 0.5 → 0.0)
+
+- **The sustain plateau is invariant**: −23.96 dBFS in both renders (notes 1
+  and 3, late pre-release windows). The slope warps the decay segment
+  between pinned endpoints (attack peak → sustain); it changes no level.
+- **slope 0.0 = a straight LINEAR-amplitude ramp** from peak to sustain over
+  the stored decay time: dB-above-sustain +5.41 measured vs +5.44 linear at
+  t=75 ms, +3.32 vs +3.26 at t=325 ms (≤0.1 dB both points).
+- slope 0.5 = the dossier's fitted one-pole (τ = 0.170 s): +4.16 measured vs
+  +4.30 model at 75 ms.
+- Reading: **stored slope = shape warp on the segment** — 0 = linear,
+  0.5 ≈ one-pole exponential. The warping family (−1…+1 sweep, and whether
+  release/attack slopes share it) stays open (backlog).
+
+### Unison (WV9_UNISON: Amount 0.3 → 1.0 at Mode 0; WV9B_UNIM1: Mode 0 → 1)
+
+- **`Voice_Unison_Mode = 0` means unison OFF.** At Mode 0 the Amount=1.0 /
+  VoiceCount=3 render is dither-identical to M2 (max|Δ| 2 LSB16, 2.03% of
+  samples >1 LSB — export-dither level). Amount and VoiceCount are inert
+  while the mode gate is 0. (This also explains the stored patch's "no
+  audible unison".)
+- **Mode 1 engages unison** (signature at Mode 1 / Amount 1.0 / VoiceCount
+  3): the h1 partial splits — main sideband lobe at f0−3.8 Hz (peak
+  −24.70 dBFS vs M2's h1 −23.11), f0 component −27.7 dBFS, minor lobes at
+  −1.0/−5/−6.5 Hz, nothing strong above f0 within ±12 Hz; h2…h8 stay at the
+  floor (unison detunes whole voices; frame A is a pure sine). Steady RMS
+  +0.21 dB.
+- Voice-count/spacing law, the mode enum identities (1 = classic-family by
+  signature only), and the amount→cents mapping: open (backlog; one cell
+  rendered).
+
 ## Deferred (open, with the probe sets to answer them)
 
-- **WavePosition interior/exterior law**: only pos 0 and pos 0.5 are
-  evidenced; the model crossfades linearly in between and holds frame B
-  beyond (declared extrapolation). A pos sweep (0.25/0.75/1.0) would pin
-  the true frame interpolation and whether the table holds more shapes
-  ("Basic Shapes" suggests sine→…→saw across 0..1).
+- **WavePosition frame census** (REVISED by the depth probes): the 2-frame
+  linear model is refuted; the table holds ≥3 discrete shape frames.
+  Remaining: pin the frame count/spacing (pos sweep at 1/6…1/3 steps,
+  incl. pos 1.0 exterior), the true interpolation law between frames, and
+  whether "Basic Shapes" is sine|triangle|saw|square.
 - **Position-envelope sources**: routes 9/12 → Osc1 Pos (1.0/0.33) idle
   on this patch (output stays sine); Envelope2/3 + LFO1/2 idle values
   unverified — an Always-on Env2 or LFO probe would activate them.
-- **Unison**: `Voice_Unison_Amount = 0.3` stored, no audible unison in
-  M2 (stable single peak, h2 at floor). Unison voice count/detune
-  topology unmeasured.
+- **Unison topology** (REVISED): Mode=0 gates unison off; Mode=1 engages.
+  Remaining: VoiceCount sweep (1…8), Amount→cents mapping, mode enum
+  identities beyond the Mode-1 signature, voice layout (the measured
+  sideband energy was one-sided at the probed cell).
+- **Slope warping family** (REVISED): 0 = linear, 0.5 = one-pole τ=0.283×
+  stored, endpoints invariant. Remaining: the −1…+1 sweep to pin the warp
+  curve; whether Attack/Release slopes share the family.
+
 - **Mod matrix destinations on the voice**: source identities beyond
   `mod-matrix.md`'s attribution (9/11 envelopes, 8/12 LFO-family) and
   all non-Amp destinations are uncensus'd.
@@ -180,10 +257,6 @@ cargo clippy --all-targets         # 2 pre-existing warnings (audio.rs,
   on this patch; filter models are their own lane.
 - **Sub oscillator**: off by default (Gain stores 0.5012); tone/transpose
   behavior unmeasured.
-- **Envelope Slope semantics**: stored slopes 0/0.5/0.5 do not surface as
-  the shape-bend one might assume (decay measured one-pole-like; release
-  fits (1−v)e^(−cv)); a slope-sweep probe (0 → ±1) would decode the
-  warping family.
 - **Per-render first-voice startup quirk** (+0.12 dB on note 0): not
   modeled; reproduces deterministically per render.
 - **Polyphony/voice allocation**: the model renders one note at a time;

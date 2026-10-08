@@ -108,6 +108,51 @@ peaks above −70 dBFS); E1/E7 grids match the same positions within ±1.5 ms.
   - **DryWet=1** removes the direct entirely (no t0 peak in E8) — dry/wet is a
     crossfade, not a sum.
 
+### Sections decomposition — the EC probes (2026-10-08 evening lane)
+
+E8 (bare) splits into its two switchable sections with single-section sets
+(signal `impulse.wav`, all else the E8 recipe: Modulation_AmountDelay=0,
+Reverb_Level=0, DryWet=1, sync mode, FB 0.5; sets `harness/live/EC1_FILTER.als`,
+`EC2_DUCK.als`, renders `harness/renders/EC1_FILTER.aif`, `EC2_DUCK.aif`,
+5.0 s each):
+
+| Point | Pin(s) vs the E8 recipe | Values |
+|-------|------------------------|--------|
+| EC1_FILTER | Filter_On=true (only section on) | HP 49.9997 / LP 5000.026 as E1 |
+| EC2_DUCK | Ducking_On=true (only section on) | thr 0, rel 0.0999995 as E1 |
+
+Tap table (±8 ms windows at t0 + k·0.1875 s; E8 bare and E1 shown from the
+table above for comparison):
+
+| tap | E8 bare | EC1 filter-only | EC2 duck-only | E1 all-on |
+|-----|---------|-----------------|---------------|-----------|
+| 1 L | −2.50 | **−14.08** | −2.50 | −19.63 |
+| 2 R | −4.99 | **−18.45** | −4.99 | −23.86 |
+| 3 L | −18.37 | **−33.07** | −18.37 | −38.76 |
+| 4 R | −17.90 | **−35.19** | −17.90 | −40.68 |
+| 5 L | −30.09 | **−49.17** | −30.09 | −54.60 |
+| 6 R | −30.77 | **−50.94** | −30.76 | −56.68 |
+| 7 L | −43.99 | **−64.29** | −43.95 | — |
+| 8 R | −43.74 | **−65.20** | −43.74 | — |
+
+- **Filter-only reproduces the E1 tap SHAPE, not quite its depth**: −11.58 dB
+  of the E1-vs-E8 tap1 smear (−17.13 dB) is the filter section alone; the
+  filter deepens through the recirculation (−14.7 dB by tap 3, −19.1 by tap
+  5) — consistent with the filter sitting in the feedback path, each hop
+  re-filtered. Per-hop EC1 deltas settle at ≈−15..−16 dB per 2 hops vs bare's
+  −12.04 (FB 0.5) — the filter's per-hop insertion loss is ≈−1.5..−2 dB.
+- **Duck-only is impulse-invisible**: EC2 ≡ E8 to ≤0.04 dB through tap 8
+  (threshold 0, release 0.1 s; a 1-sample impulse gives the detector nothing
+  to hold). Confirms D8's reading with the section proven ON. Characterizing
+  ducking needs a sustained-signal probe (steps-1k) — backlog.
+- **Between-tap floors**: EC1/EC2 both sit at the scanner's near-silence floor
+  (−90.31 dBFS) like E8 — Reverb_Level=0 removes the tail in both, nailing
+  the internal reverb as the sole between-tap energy source.
+- **Residual**: E1's remaining ≈−5.5 dB at tap1 (−19.63 vs EC1 −14.08) is
+  attributable to the modulation section (AmountDelay wobble smearing the tap
+  peak) — attributed, not proven: an EC3_MOD-only / EC4_REV-only probe pair
+  would pin it (backlog).
+
 ## Determinism (E4 / E1b pair, per protocol)
 
 Sets rebuilt identically (md5 match). `cmp renders/E1_IMPULSE_default_v2.aif
@@ -129,10 +174,11 @@ estimated duration: 256.000000 sec
 
 - Renders: `harness/renders/E1_IMPULSE_default_v2.aif`, `E2_DELAY2X_v2.aif`,
   `E3_FB_HALF_v2.aif`, `E1b_v2.aif`, `E5_FREEMODE.aif`, `E6_FREE2X.aif`,
-  `E7_FB075.aif`, `E8_BARE.aif` (+ `.asd`)
+  `E7_FB075.aif`, `E8_BARE.aif`, sections probes `EC1_FILTER.aif`,
+  `EC2_DUCK.aif` (+ `.asd`)
 - Sets: `harness/live/e1-impulse-default.als`, `e2-delay2x.als`,
   `e3-fb-half.als`, `e1b.als`, `E5_FREEMODE.als`, `E6_FREE2X.als`,
-  `E7_FB075.als`, `E8_BARE.als`
+  `E7_FB075.als`, `E8_BARE.als`, `EC1_FILTER.als`, `EC2_DUCK.als`
 - Analyzer: `harness/analyze_echo_taps.py` (stereo broad peak scan + ±8 ms
   windowed tap table)
 - Preset source: `evidence/devices/Echo/preset-time-travel.xml`
