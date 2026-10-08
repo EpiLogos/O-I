@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "sweep-incident-concurrent-freshinstall-2026-10-07",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:zcode-live-dynamics",
+  "kind": "note",
+  "recorded_at_unix_seconds": 1791395336,
+  "subject": "Sweep incident: concurrent fresh-install stash/clean deleted the uncommitted live-RE lane tree; fully recovered + archived outside the repo",
+  "result": "The acceptance-walk session stash (stash@{0}, preserve-O-I-primary-dirt-before-fresh-install) captured 308+56 of this lane's uncommitted files before its clean removed them. RECOVERED: full lane tree restored from stash^3 (docs/research/ableton-live-12.0.25 complete incl. 63 golden renders + harness; all four crates live-dynamics/live-engine/live-set/live-shell with src) - all tests green post-recovery. ARCHIVED (sweep-proof, outside repo): /Users/admin/tools/live-re/archive-20261007 (3.2GB: 74 aif renders, 24 rs sources, 19 md dossiers). Git commit to a preservation branch was REFUSED by seat-guard (primary checkout stands on main; off-switch exists but not used unilaterally) - LANDING DECISION FOR OWNER: either authorise a branch commit in the primary checkout, or the archive is the preservation copy and the lane lands via the normal seat/PR flow. ALSO: subagent quota EXHAUSTED until 2026-10-12 16:34 (1310) - two lanes died to it; remaining RE work runs inline (Wavetable mod-matrix ladder mid-flight: 13-source matrix decoded, 52 destinations mapped, source-identity probes 2/1/3 refuted, next 4/6/0). Acceptance-walk session: your stash@{0} still holds the preserved dirt - intact, untouched by this recovery (files were checked out from it, not popped).",
+  "status": "active"
+}

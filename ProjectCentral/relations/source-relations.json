@@ -1,0 +1,18 @@
+{
+  "project_id": "O-I",
+  "relations": [
+    {
+      "path": "ProjectCentral/agents/now/clearings/0d4b615e8c60ab212a64f55c701158f1408dac65d7b5368375bd8ef5b97da11b/now.json",
+      "provenance": "agent-maintained",
+      "recognition": "owner-recorded-source-relation-not-human-recognition",
+      "recorded_at_unix_seconds": 1791430908,
+      "ref": "central:source:project:O-I:ProjectCentral/agents/now/clearings/0d4b615e8c60ab212a64f55c701158f1408dac65d7b5368375bd8ef5b97da11b/now.json",
+      "roles": [
+        "now-clearing"
+      ],
+      "standing": "current-development-state",
+      "treatment": "generated-derived"
+    }
+  ],
+  "schema": "central.project.ground-relations/v1"
+}

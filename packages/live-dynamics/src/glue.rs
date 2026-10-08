@@ -267,6 +267,8 @@ pub const OUT_WET_TRIM: f64 = 0.94406086;
 /// OWNER-PROVENANCE CONSTANTS, embedded under the circuit-model lane brief
 /// with file citations; see devices/glue-compressor.md
 /// "Circuit-model derivation" for the authorization record.
+// Values are a verbatim binary extract; do not round to placate the lint.
+#[allow(clippy::excessive_precision)]
 pub const RATIO_LUTS: [[f32; 512]; 3] = [
     // DAT_104cd0a80
     [

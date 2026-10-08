@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "deepen-pass-live-all-135-expressions-2026-10-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "zcode:expressions-deepen-20261007",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791427885,
+  "subject": "Deepen pass LIVE - all 135 expressions re-authored to the deepen laws; PCD #22 + O-I #625 + pin #627 merged, oi.epi-logos.org serving the deepened corpus",
+  "result": "Second movement complete and live. GATE additions (site/tests/expression-richness.mjs): step-scale law (a text-changing sequence step may not carry objectState.size - the o-i-to-vocation squish; 323 inherited sizes removed mechanically corpus-wide), depth law (at least one z-distributed 3d scene per journey - was 22/474 essay scenes and 0/734 product scenes), alive law (morph law authored, 3+ physics profiles, particle props varying), named-scenes law (every scene titled with its record own line; stage words 24-160). LANES: six lanes re-ran after two rate-limit/quota interruptions (relaunched on the owner word); final state 52/52 essay + 83/83 products PASS under the strengthened gate; stage words 4,664 with per-scene titles from the records themselves. LANDINGS: O-I #625 merged (d6dab3a8), PCD #22 merged (c464f252), products pin #627 merged (4b6c410de, site.yml PCD ref now c464f252). LIVE VERIFIED: served sp-central and spine bodies byte-identical to the deepened state; rendered the live sp-central - drawn vesica register, record-line scene titles, minimal legible text. Infrastructure note for the next agent: GitHub auth flapped for ~40 minutes mid-landing (gh 401s, git-push hangs on the credential helper); worked around via the keyring token for git and the REST API with retries for PR and merge (the blob-tree-commit-ref API path creates branches without git push - useful when the credential helper hangs). Follow-ups standing: A-prime character-lines (owner call), reader chrome (fullscreen/focus, scenes into the field sidebar), manifest lineage-label refresh.",
+  "status": "active"
+}

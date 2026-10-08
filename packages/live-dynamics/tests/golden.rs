@@ -242,13 +242,20 @@ fn render_determinism_within_bound() {
 // ---------------------------------------------------------------------------
 // Operator voice gate (M6, phase 1: oscillator A + amp envelope, default
 // patch). Thresholds STATED before the probe renders were analyzed:
-//   - steady-state RMS per note window (start+0.15..start+0.70):
-//     ±0.5 dB vs render (M1 + law probes OP2/OP3/OP4)
-//   - envelope release path: 20 ms windows from note-off while the render
-//     window is above −80 dBFS: ±2.0 dB
+//   - M1/OP3/OP4/OP5 steady-state RMS per note window (start+0.15..start+0.70):
+//     ±0.5 dB vs render (M1 baseline + the linear level-law probes)
+//   - OP2 (SustainLevel → −24 dB) is a SHAPE pin, not a steady pin: the
+//     decay segment engages, so the gate follows the measured note-0 path
+//     in 20 ms windows (onset + decay + release): ±1.5 dB per window, and
+//     the steady windows across the velocity ramp ±0.5 dB (velocity still
+//     unrouted). The prior linear-plateau reading of SustainLevel was
+//     refuted by this render (steady-window shift −17.04 dB ≠ −24 dB;
+//     see devices/operator-voice.md).
+//   - envelope release path (M1): 20 ms windows from note-off while the
+//     render window is above −80 dBFS: ±2.0 dB
 //   - fundamental (Goertzel peak): ±0.5 dB level, ±1% frequency (OP5)
-// Fitted constants under test: RESIDUAL_GAIN, RELEASE_RATE_DB_S, pitch law,
-// level knobs as linear amplitude.
+// Fitted constants under test: RESIDUAL_GAIN, DECAY_SHAPE_N, generalized
+// release rate, pitch law, level knobs as linear amplitude.
 
 fn operator_steady_rms(render: &audio::Audio, note_start_s: f64) -> f64 {
     let sr = render.sample_rate as f64;
@@ -330,7 +337,11 @@ fn operator_voice_golden_gate() {
     );
     assert!(h1_db - h2_db >= 60.0, "h2 only {} dB below h1", h1_db - h2_db);
 
-    // --- OP2: sustain pinned to −24 dB (level knob = linear amplitude) ---
+    // --- OP2: SustainLevel pinned to −24 dB — the DECAY segment engages
+    // (measured: onset at the full level, shaped fall toward −24 dB over
+    // the stored 1 s DecayTime; release dB-linear from the decayed level
+    // at ≈−117 dB/s = (70 − 23.9)/0.4). Gate the measured note-0 path in
+    // 20 ms windows, then the steady windows across the velocity ramp.
     let render = read_render("OP2_SUSTAIN24.aif");
     let mut voice = operator::OperatorVoiceA::default_patch(48, sr);
     voice.envelope.sustain_amp = 0.06309572607;
@@ -344,7 +355,43 @@ fn operator_voice_golden_gate() {
             }
         }
     }
-    check_steady("OP2", &render, &model, &note_starts);
+    let mut k = 0;
+    loop {
+        let t0 = 0.010 + k as f64 * 0.020;
+        if t0 + 0.020 > 1.30 {
+            break;
+        }
+        let a = (t0 * sr as f64) as usize;
+        let b = ((t0 + 0.020) * sr as f64) as usize;
+        let got = audio::rms_db(&render.samples[a..b]);
+        let pred = audio::rms_db(&model[a..b]);
+        if got <= -80.0 && pred <= -80.0 {
+            break;
+        }
+        println!(
+            "OP2 window t={t0:6.3}: render {got:8.2}  model {pred:8.2}  Δ {:+.2} dB",
+            pred - got
+        );
+        assert!(
+            (pred - got).abs() <= 1.5,
+            "OP2 window {t0:.3}: model {pred:.2} vs render {got:.2} (±1.5 dB)"
+        );
+        k += 1;
+    }
+    for (i, t) in note_starts.iter().enumerate() {
+        let got = operator_steady_rms(&render, *t);
+        let a = ((*t + 0.15) * sr as f64) as usize;
+        let b = ((*t + 0.70) * sr as f64) as usize;
+        let pred = audio::rms_db(&model[a..b]);
+        println!(
+            "OP2 steady note {i} @ {t:4.1}s: render {got:8.2}  model {pred:8.2}  Δ {:+.2} dB",
+            pred - got
+        );
+        assert!(
+            (pred - got).abs() <= verify::STATIC_TOLERANCE_DB,
+            "OP2 steady note {i}: model {pred:.2} vs render {got:.2}"
+        );
+    }
 
     // --- OP3: oscillator A level 1.0 → 0.5 ---
     let render = read_render("OP3_OSCA050.aif");

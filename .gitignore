@@ -55,3 +55,6 @@ ProjectCentral/agents/now/
 # live-shell ui build artifacts
 packages/live-shell/ui/node_modules/
 packages/live-shell/ui/ui-dist/
+
+# embedded checkouts inside day-source records are payload hazards
+ProjectCentral/now/day/*.sources/**/T/git-native/
