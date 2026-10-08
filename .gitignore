@@ -55,3 +55,4 @@ ProjectCentral/agents/now/
 # live-shell ui build artifacts
 packages/live-shell/ui/node_modules/
 packages/live-shell/ui/ui-dist/
+packages/live-shell/live-shell/ui/node_modules/
