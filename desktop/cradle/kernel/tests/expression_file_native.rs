@@ -228,7 +228,7 @@ fn encoded_expanded_nul_unsafe_and_incomplete_inputs_refuse() {
     ]);
     refuse(
         &bomb,
-        "Expanded Expression document exceeds 8 MiB before material cloning",
+        "Expanded Expression document exceeds 16 MiB before material cloning",
     );
 }
 
