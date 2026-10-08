@@ -1,0 +1,9 @@
+session|delivery|sender|phase|first_cursor|terminal_cursor
+agent-session/pf-baseline-inv-1|delivery/pf-baseline-inv-q1|human:owner|returned|4313|4328
+agent-session/pf-baseline-inv-1|delivery/pf-baseline-inv-group1|human:owner|returned|4330|4695
+agent-session/pf-baseline-inv-2|delivery/pf-baseline-inv-group1|human:owner|returned|4334|4529
+agent-session/pf-baseline-inv-3|delivery/pf-baseline-inv-qx-unrelated|human:owner|returned|4354|4371
+agent-session/pf-baseline-inv-2|delivery/pf-case1-qa|human:owner|returned|4696|4712
+agent-session/pf-baseline-inv-2|delivery/pf-case1-qb|human:owner|returned|4713|4729
+agent-session/pf-baseline-inv-3|delivery/pf-case2-qd-delayed|human:owner|returned|4730|4936
+agent-session/pf-baseline-inv-3|delivery/pf-case2-qd2|human:owner|returned|4937|5131

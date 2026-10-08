@@ -23,7 +23,7 @@
  *       and Status says the same.
  */
 import {settingsWorld} from "../lib/settings-world.mjs";
-import {enterSettings, openSection, settled, shotMatrix} from "../lib/settings-walk.mjs";
+import {enterSettings, openProduct, openSection, settled, shotMatrix} from "../lib/settings-walk.mjs";
 import {readFileSync, existsSync} from "node:fs";
 
 /** An apply plans, executes and reads back through the owners' real CLIs;
@@ -51,6 +51,36 @@ export default async function run({page, baseUrl, check, shot, provision: world,
   const skill = (name) => page.locator(`[data-skill-row][data-skill="skill/walkskills/${name}"]`);
 
   await enterSettings(page, {root: world.root, baseUrl});
+
+  // Structured list cells are a local draft until Enter/blur. The former
+  // per-key owner writes raced native replies and visibly spliced stale
+  // characters into the field during the installed computer-use replay.
+  await openProduct(page, "ai-kit");
+  const defaultSetsRef = "ai-kit:resolution:skill-sets.default";
+  const defaultSets = page.locator(`[data-settings-row="setting:${defaultSetsRef}"]`);
+  await defaultSets.getByRole("button", {name: "add item"}).click();
+  const setName = defaultSets.locator('[data-config-control="list"] input').last();
+  await setName.pressSequentially("oi-guardian", {delay: 25});
+  check(await setName.inputValue() === "oi-guardian",
+    "structured list typing stays an exact local draft while the person types");
+  const beforeCommit = JSON.parse(world.oi("config", "show", defaultSetsRef, "machine", "--json"));
+  check(JSON.stringify(beforeCommit.desired?.value ?? null) !== JSON.stringify(["oi-guardian"]),
+    "structured list typing does not write the owner before Enter or blur");
+  await setName.press("Enter");
+  await page.waitForFunction((selector) => document.querySelector(selector)?.value === "oi-guardian",
+    `[data-settings-row="setting:${defaultSetsRef}"] [data-config-control="list"] input`, {timeout: 240000});
+  const afterCommit = JSON.parse(world.oi("config", "show", defaultSetsRef, "machine", "--json"));
+  check(JSON.stringify(afterCommit.desired?.value ?? null) === JSON.stringify(["oi-guardian"]),
+    "Enter commits the exact structured value once through the native desired-state owner", {desired: afterCommit.desired});
+  await strip.getByRole("button", {name: "Discard"}).click();
+  await strip.waitFor({state: "detached", timeout: 240000});
+
+  // Reopen the Settings surface after cancelling the product edit. This is
+  // the same edit -> cancel -> reopen boundary exercised by the installed
+  // journey, and prevents any product-section component state from lending
+  // evidence to the independent Skills change below.
+  await page.reload();
+  await page.locator("[data-settings-page]").waitFor({timeout: 60000});
   await openSection(page, "skills");
   await settled(page);
   await skill("walk-beta").locator("[role=switch]").waitFor({timeout: 240000});
@@ -138,8 +168,17 @@ export default async function run({page, baseUrl, check, shot, provision: world,
   await strip.waitFor({state: "detached", timeout: 240000});
 
   // Partly applied: walk-alpha is also enabled at the project scope, so
-  // turning it off for the machine cannot take it off.
+  // turning it off for the machine cannot take it off. Reload after the
+  // external native edit so the switch is driven from the owner's fresh
+  // effective reading rather than the page's intentionally stale snapshot.
   world.aikit("enable", "skill/walkskills/walk-alpha", "--scope", "project", "--apply");
+  await page.reload();
+  await page.locator("[data-settings-page]").waitFor({timeout: 60000});
+  await openSection(page, "skills");
+  await settled(page);
+  await skill("walk-alpha").locator("[role=switch]").waitFor({timeout: 240000});
+  check(await skill("walk-alpha").locator("[role=switch]").getAttribute("aria-checked") === "true",
+    "S7 an external native edit appears after the Settings surface refreshes");
   await skill("walk-alpha").locator("[role=switch]").click();
   await page.waitForFunction(() => document.querySelector('[data-skill="skill/walkskills/walk-alpha"]')?.getAttribute("data-changed") === "true", null, {timeout: 240000});
   await strip.getByRole("button", {name: "Review changes"}).click();

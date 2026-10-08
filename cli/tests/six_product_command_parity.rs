@@ -130,7 +130,20 @@ mod unix {
                 format!("native:aikit:{first}:{second}\n"),
                 "{args:?}"
             );
-            assert!(output.stderr.is_empty(), "{args:?}");
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            if args[0] == "ui" {
+                // `ui` reads the World and NOW field supplies from the Central
+                // owner before delegating; without an owner the supply gap is
+                // named on stderr and the delegation itself stays native
+                // (argv, stdout and exit are asserted above). Only named
+                // supply notes may appear on stderr.
+                assert!(
+                    stderr.lines().all(|line| line.starts_with("oi ui:")),
+                    "{args:?}: unexpected stderr {stderr:?}"
+                );
+            } else {
+                assert!(stderr.is_empty(), "{args:?}");
+            }
         }
 
         // `work direct` is the same folded handler as `oi aikit-session-space`.
