@@ -39,14 +39,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: EpiLogos/Point-Cloud-Demo
-          ref: dbc0f1b01eec5add9a83844ac9f82ef05cd4027e
+          ref: c464f252c0a10891c10011b2d57bb3f98a205d59
           path: .publication-sources/Point-Cloud-Demo
           persist-credentials: false
       - name: Check out the exact current essay reading snapshot
         uses: actions/checkout@v4
         with:
           repository: EpiLogos/Antykathera-Essay-Work
-          ref: fdbb458d5f31d5e52c931adf6f81937f2ab3a289
+          ref: bb1a3b256273860070022c51640a10e98e7f8afc
           path: .publication-sources/essay-reading
           persist-credentials: false
       - uses: actions/setup-node@v4
