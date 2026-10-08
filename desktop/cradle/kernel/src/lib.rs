@@ -111,6 +111,8 @@ pub mod routine;
 pub mod setup;
 pub mod shared_field;
 pub mod system_composition;
+pub mod temporal_events;
+pub mod temporal_sources;
 pub mod working_surface;
 pub mod world;
 pub mod world_resolve;
