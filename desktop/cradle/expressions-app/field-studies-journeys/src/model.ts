@@ -49,7 +49,7 @@ export interface Scene {research?:ResearchMaterial;pointerScope?:'local'|'global
  resonanceDrive?:ResonanceDriveConfig;
  favourites?:string[];
  native?: {config:PointCloudConfig; original:unknown; projection?:PointCloudConfig};
- propertyTakeRange?:{start:number;end:number};toolbelt?:BeltEntry[];propertyTracks?:PropertyTrack[];id:string;name:string;character:string;duration:number;transition:number;
+ propertyTakeRange?:{start:number;end:number};toolbelt?:BeltEntry[];propertyTracks?:PropertyTrack[];parameterRacks?:import('../../../../../packages/expressions-boundary/src/nativeRackSchema').NativeRackState;id:string;name:string;character:string;duration:number;transition:number;
  view:{nativeScaffold?:'off'|'axis'|'grid';nativeCamera?:CameraOrbState;mode:'2d'|'3d';yaw:number;pitch:number;zoom:number;panX:number;panY:number};
  field:{background:string;palette:string[];material:Material;params:Record<string,number>};
  entities:Entity[];text:TextLayer[];

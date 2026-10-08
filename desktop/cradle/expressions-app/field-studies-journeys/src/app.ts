@@ -19,6 +19,7 @@ import {entityTargets} from './nativeParameters';
 import {recordRecent,recentJourneys} from './recentWork';
 import {installPanelResize} from './panelResize';
 import {initialiseSceneSaves,sceneSaveState,saveScene,nextSceneFrom,restoreScene,savedSceneIndices,sceneParameterChanges} from './sceneWorkflow';
+import {advanceSceneTransport,nativeSceneTransportMaterial} from './sceneTransport';
 import {liveWorkspaceHTML} from './liveWorkspace';
 import {defaultWorkspace,validateWorkspace,WORKSPACE_KEY,moveBeltEntry,syncHeldState} from './workspacePreferences';
 import {physisHost,installPhysis,saveDesktopCapture,type DesktopScene} from './physis';
@@ -51,6 +52,9 @@ import {hostedRecovery} from './nativeRecovery.js';
 import {entryGateHTML} from './entryGate.js';
 import {AUTHORED_CHAKRA_STARTER,STANDING_LABEL} from './centreStanding.js';
 import {installNativeWorkspace,type NativeSubject} from './nativeWorkspace.js';
+import {createRetainedNativeEditor,installNativeEditorReceiver,NativeSceneEditRefusal} from './hostEditor.js';
+import {createNativeSceneEditHandler} from '../../../../../packages/expressions-boundary/src/sceneEdits';
+import {nativeAdoptionHistory} from './nativeAdoption.js';
 import {installLensStudio,type LensId} from './lensStudio.js';
 import {installResearchInstruments} from './researchInstruments.js';
 import {installPalaceInstrument} from './palaceInstrument.js';
@@ -87,6 +91,7 @@ const recovery=document.createElement('section');recovery.id='engine-recovery';r
 let recentIds:string[]=[];try{const raw=JSON.parse(localStorage.getItem('oi.recent-work.v1')??'[]');if(Array.isArray(raw))recentIds=raw.filter((v):v is string=>typeof v==='string');}catch{}
 function rememberWork(id:string){recentIds=recordRecent(recentIds,id);try{localStorage.setItem('oi.recent-work.v1',JSON.stringify(recentIds));}catch{}}
 let workspace=defaultWorkspace(),workspaceStorageError=false;
+let nativeEditorEndpoint:ReturnType<typeof installNativeEditorReceiver>|undefined;
 try{const saved=localStorage.getItem(WORKSPACE_KEY);if(saved)workspace=validateWorkspace(JSON.parse(saved));}catch{workspaceStorageError=true;}
 const sceneNames=new Map<string,string>();
 let monitoredLane='';let monitorMode:MonitorMode='cycle';let monitorDocked=false;let assignmentTarget='',assignmentGroup='';let beltPickerOpen=false;const pendingBelt=new Set<string>();let contextKind:''|'objects'|'text'|'pointer'='';
@@ -125,7 +130,8 @@ const covers=new Map<string,string>();
 const sessionExpressions=new Map<string,Journey>();
 // Camera controls stay off the HUD: the field is zoomed by scroll/pinch and
 // each instrument carries its own view tools. The orbit widget is not mounted.
-const scene=()=>store.document.scenes[sceneIndex]??store.document.scenes[0];
+let sceneEditHeld:Scene|null=null;
+const scene=()=>sceneEditHeld??store.document.scenes[sceneIndex]??store.document.scenes[0];
 const activeScene=()=>effectiveScene(store.document,journeyPlaying?store.document.savedScenes?.[scene().id]??scene():scene());
 const selectedEntity=()=>scene().entities.find(e=>e.id===selected[0]);
 const currentText=()=>scene().text.find(t=>t.id===textId)??scene().text[0];
@@ -269,7 +275,8 @@ function updateAutomationRuntime(telemetry:any){const running=automationRunning(
 /** Scene transport: play runs this scene's playhead through its duration and fires
  *  every one-shot automation it carries; pause holds the playhead. The field's own
  *  motion — physics and morph — is never touched from here. */
-function toggleScenePlay(){if(scenePlaying){scenePlaying=false;transportUI();return;}
+let sceneIntentEpoch=0,sceneAdvancePending=false,sceneTransportAlive=true;
+function toggleScenePlay(){sceneIntentEpoch++;if(scenePlaying){scenePlaying=false;transportUI();return;}
  fieldPaused=false;
  const s=scene();if(journeyPlaying){journeyPlaying=false;applySceneView();}
  const fromTop=sceneElapsed<=.001||sceneElapsed>=s.duration-.001;
@@ -297,10 +304,28 @@ function activateRail(next:RailItem){
  renderAll();
 }
 function applySceneView(){const v=activeScene().view;if(v)Object.assign(camera,cameraForSceneView(v,width,height,camera));}
-function setScene(index:number,automatic=false){if(propertyTake)finishPropertyTake();trackPreview=false;pointer.active=false;if(index<0)index=store.document.scenes.length-1;if(index>=store.document.scenes.length)index=0;if(index===sceneIndex&&!automatic)return;
+function setScene(index:number,automatic=false){if(!automatic)sceneIntentEpoch++;if(propertyTake)finishPropertyTake();trackPreview=false;pointer.active=false;if(index<0)index=store.document.scenes.length-1;if(index>=store.document.scenes.length)index=0;if(index===sceneIndex&&!automatic)return;
  if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'){const c=$<HTMLCanvasElement>('transition-canvas');c.width=engine.canvas.width;c.height=engine.canvas.height;c.getContext('2d')!.drawImage(engine.canvas,0,0);transitionBackground=scene().field.background;c.style.background=transitionBackground;c.style.opacity='1';c.hidden=false;transitionStart=simTime;transitionDuration=store.document.scenes[index].transition;transitionEasing='linear';transitionSceneId=store.document.scenes[index].id;}else{transitionDuration=0;$('transition-canvas').hidden=true;}
 
  sceneIndex=index;if(!automatic)journeyPlaying=false;applySceneView();sceneElapsed=0;selected=[];textId=scene().text[0]?.id??null;saveSession();placementStep=false;shapePickerOpen=false;if(!automatic)journeyPlaying=false;renderAll();void researchInstruments?.refresh();}
+/** Saved playback uses the existing frame playhead; native location changes
+ * wait for its exact owner acknowledgement before the next Scene is rendered. */
+async function advanceSavedScene(index:number){if(sceneAdvancePending||!sceneTransportAlive)return;const view=nativeWorkspace?.nativeView(),target=store.document.scenes[index],targetRef=target&&view?.bindings[target.id]?.scene_ref;
+ if(!view){setScene(index,true);fireAutomations(true);return;}
+ if(!targetRef){scenePlaying=false;journeyPlaying=false;toast('The next saved Scene has no native occurrence basis.');renderAll();return;}
+ const originalId=scene().id,version=store.revision,intent=sceneIntentEpoch;sceneAdvancePending=true;scenePlaying=false;
+ try{if(await nativeWorkspace!.select(target.id,null)!=='applied')throw Error('Saved Scene transition was superseded or refused by the native owner');
+  const next=nativeWorkspace?.nativeView();if(!sceneTransportAlive||!next||store.transactionOpen||scene().id!==originalId||store.revision!==version||sceneIntentEpoch!==intent||!journeyPlaying
+   ||next.document.expression_ref!==view.document.expression_ref||next.document.revision<view.document.revision||next.document.revision>view.document.revision+1
+   ||next.document.selection?.scene_ref!==targetRef||next.document.selection.entity_ref!==null)throw Error('New work arrived during the saved Scene transition; its current target was retained');
+  sceneIntentEpoch++;scenePlaying=true;setScene(index,true);fireAutomations(true);
+ }catch(cause){if(!sceneTransportAlive)return;if(sceneIntentEpoch===intent&&scene().id===originalId){scenePlaying=false;journeyPlaying=false;applySceneView();}toast(cause instanceof Error?cause.message:String(cause));renderAll();}
+ finally{sceneAdvancePending=false;}
+}
+function setSavedScenePlay(playing:boolean){sceneIntentEpoch++;journeyPlaying=playing;if(journeyPlaying){fieldPaused=false;scenePlaying=true;editing=false;inspectorOpen=false;timelineOpen=false;selected=[];cursorTool='interact';tool='interact';shapePickerOpen=false;placementStep=false;if(!store.document.savedScenes?.[scene().id])sceneIndex=savedSceneIndices(store.document)[0];sceneElapsed=0;fireAutomations(true);}applySceneView();renderAll();}
+function seekWorkingScene(seconds:number){sceneIntentEpoch++;sceneElapsed=seconds;trackPreview=true;scenePlaying=false;journeyPlaying=false;applySceneView();needsFrame=true;transportUI();}
+function snapshotScene(input:{action:'save-snapshot';name:string;next:boolean}|{action:'restore-snapshot'}){const s=scene();sceneIntentEpoch++;if(input.action==='restore-snapshot'){sceneNames.delete(s.id);changed(()=>{if(!restoreScene(store.document,s.id))throw Error('This Scene has no saved snapshot');});return;}
+ changed(()=>{s.view={...s.view,mode:camera.mode,yaw:camera.yaw,pitch:camera.pitch,zoom:camera.zoom,panX:camera.panX/width,panY:camera.panY/height};delete s.view.nativeCamera;saveScene(store.document,s,input.name);sceneNames.delete(s.id);if(input.next){const next=nextSceneFrom(store.document,s);sceneIndex=store.document.scenes.indexOf(next);selected=[];stepIndex=0;sceneElapsed=0;}});}
 function selectEntity(id:string,multi=false){cursorTool='select';pointer.active=false;railKey='select';railExpanded=true;if(multi){selected=selected.includes(id)?selected.filter(x=>x!==id):[...selected,id];}else selected=[id];editing=true;inspectorOpen=false;contextKind='objects';tab='objects';studioSection='formations';tool='select';shapePickerOpen=false;journeyPlaying=false;stepIndex=0;renderAll();}
 function semanticBindingFor(s:Scene,entityId:string):SemanticBinding|undefined{return s.semanticField?.bindings.find(b=>b.carriers.some(c=>c.kind==='entity'&&c.id===entityId));}
 function defaultSemanticColor():SemanticColorCoupling{return{enabled:true,colorSource:'canonical',gain:1,radius:{source:'force'},falloff:'gaussian',metric:'compositionPlane',blend:'weighted',activation:'constant'};}
@@ -441,7 +466,7 @@ async function loadJourney(j:Journey){
  // Keep the gate and departing work intact if backup or navigation fails.
  closeEntryGate();
 }
-function applyJourney(j:Journey,native=false){journeyNavigation++;if(!native){awaitingNativeBoot=false;void nativeWorkspace?.changed(j);}if(propertyTake)finishPropertyTake();trackPreview=false;rememberWork(j.id);studioOpen=false;j.scenes.forEach(checkNativeLimits);sessionExpressions.set(store.document.id,clone(store.document));sessionExpressions.set(j.id,clone(j));try{if(!deletedLibraryIds.has(store.document.id))saveToLibrary(store.document);}catch{toast('The previous expression is retained in Undo; browser storage is unavailable. Export it before closing this page.',6500);}store.replace(initialiseSceneSaves(initialiseBelts(j)));store.document.updatedAt=j.updatedAt;sceneIndex=0;selected=[];camera=defaultCamera();applySceneView();transitionDuration=0;$('transition-canvas').hidden=true;sceneElapsed=0;journeyPlaying=false;editing=false;inspectorOpen=false;timelineOpen=false;cursorTool='interact';tool='interact';railKey='interact';railExpanded=false;shapePickerOpen=false;closeDialogs();libraryOpen=false;modesOpen=false;try{history.replaceState(null,'',location.pathname+location.search);}catch{}markSaved();renderAll();}
+function applyJourney(j:Journey,native=false,adoptionHistory:'record'|'acknowledge'='record',acknowledgement:'preserve'|'retire'='preserve'){journeyNavigation++;if(!native){awaitingNativeBoot=false;void nativeWorkspace?.changed(j);}if(propertyTake)finishPropertyTake();trackPreview=false;rememberWork(j.id);studioOpen=false;j.scenes.forEach(checkNativeLimits);sessionExpressions.set(store.document.id,clone(store.document));sessionExpressions.set(j.id,clone(j));try{if(!deletedLibraryIds.has(store.document.id))saveToLibrary(store.document);}catch{toast('The previous expression is retained in Undo; browser storage is unavailable. Export it before closing this page.',6500);}if(native&&adoptionHistory==='acknowledge'&&store.document.id===j.id)store.acknowledge(initialiseSceneSaves(initialiseBelts(j)),acknowledgement);else store.replace(initialiseSceneSaves(initialiseBelts(j)));store.document.updatedAt=j.updatedAt;sceneIndex=0;selected=[];camera=defaultCamera();applySceneView();transitionDuration=0;$('transition-canvas').hidden=true;sceneElapsed=0;journeyPlaying=false;editing=false;inspectorOpen=false;timelineOpen=false;cursorTool='interact';tool='interact';railKey='interact';railExpanded=false;shapePickerOpen=false;closeDialogs();libraryOpen=false;modesOpen=false;try{history.replaceState(null,'',location.pathname+location.search);}catch{}markSaved();renderAll();}
 function openKeep(){captureOpen=!captureOpen;modesOpen=false;pointer.active=false;
  if(captureOpen){inspectorOpen=false;contextKind='';timelineOpen=false;beltPickerOpen=false;shapePickerOpen=false;}renderAll();}
 function renderImageSuite(){readCapture();if(!selectedEntity()){const e=scene().entities.find(e=>e.kind==='formation');if(e)selected=[e.id];} $('capture-panel').innerHTML=`<header><h3>Image suite</h3>${ib('capture-options','close','Close image suite')}</header>${imageSuiteHTML(scene(),selected[0],stepIndex)}<details class="image-output"><summary>Capture output settings</summary><div class="two-col"><label class="control"><span>Output size</span><select id="capture-width"><option value="1280">1280</option><option value="1440">1440</option><option value="1920">1920</option><option value="3840">3840 · PNG</option></select></label><label class="control"><span>Frame</span><select id="capture-aspect"><option value="stage">Current stage</option><option value="16:9">16:9</option><option value="1:1">1:1</option><option value="9:16">9:16</option></select></label></div><label class="toggle-row"><span>Include page text</span><input id="capture-text" type="checkbox" ${captureSettings.includeText?'checked':''}><i></i></label><label class="toggle-row"><span>Transparent PNG</span><input id="capture-transparent" type="checkbox" ${captureSettings.transparent?'checked':''}><i></i></label><p class="control-note">Clean artwork only. Aspect changes centre-crop the current view. Silent live video requests 30 fps; 2-minute / 128 MB limit.</p></details>`;
@@ -480,8 +505,8 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'studio-section':studioSection=el.dataset.value!;instrumentOffered=true;tab=['formations','layout'].includes(studioSection)?'objects':['sequence','motion','focus','automation'].includes(studioSection)?'motion':['scene','text'].includes(studioSection)?'scene':'field';motionTab=studioSection==='automation'?'automation':studioSection==='motion'?'morph':studioSection==='focus'?'focus':'sequence';search='';$<HTMLInputElement>('control-search').value='';renderAll();$('inspector-content').scrollTop=0;break;
  case 'quick-guide':$<HTMLDialogElement>('guide-dialog').showModal();break;
  case 'sequence-panel':timelineOpen=false;beltPickerOpen=false;modesOpen=false;captureOpen=false;sequenceOpen=!sequenceOpen;if(sequenceOpen){inspectorOpen=false;contextKind='';}renderAll();break;
- case 'save-scene':case 'save-next':{if(propertyTake)finishPropertyTake();const name=$<HTMLInputElement>('scene-save-name').value;if(name.trim().length===0){toast('Give the scene a name first.');break;}if(el.dataset.action==='save-next'&&store.document.scenes.length>=64){toast('An expression can contain up to 64 scenes.');break;}changed(()=>{s.view={...s.view,mode:camera.mode,yaw:camera.yaw,pitch:camera.pitch,zoom:camera.zoom,panX:camera.panX/width,panY:camera.panY/height};delete s.view.nativeCamera;saveScene(store.document,s,name);sceneNames.delete(s.id);if(el.dataset.action==='save-next'){const next=nextSceneFrom(store.document,s);sceneIndex=store.document.scenes.indexOf(next);}});toast('Scene saved to your browser library'+(el.dataset.action==='save-next'?' · next draft ready.':'.'));break;}
- case 'restore-scene':sceneNames.delete(s.id);changed(()=>{restoreScene(store.document,s.id);});break;
+ case 'save-scene':case 'save-next':{if(propertyTake)finishPropertyTake();const name=$<HTMLInputElement>('scene-save-name').value;if(name.trim().length===0){toast('Give the scene a name first.');break;}if(el.dataset.action==='save-next'&&store.document.scenes.length>=64){toast('An expression can contain up to 64 scenes.');break;}snapshotScene({action:'save-snapshot',name,next:el.dataset.action==='save-next'});toast('Scene saved to your browser library'+(el.dataset.action==='save-next'?' · next draft ready.':'.'));break;}
+ case 'restore-scene':snapshotScene({action:'restore-snapshot'});break;
  case 'toolbelt':if(propertyTake)finishPropertyTake();beltOpen=!beltOpen;if(beltOpen){studioOpen=false;inspectorOpen=false;}renderAll();break;
  case 'browse-controls':pendingBelt.clear();beltPickerOpen=true;inspectorOpen=false;contextKind='';timelineOpen=false;modesOpen=false;captureOpen=false;renderAll();$('belt-search').focus();break;
  case 'close-belt-picker':beltPickerOpen=false;pendingBelt.clear();renderAll();break;
@@ -573,7 +598,7 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'previous':setScene(sceneIndex-1);break;case 'next':setScene(sceneIndex+1);break;
  case 'choose-scene':setScene(Number(el.dataset.index));break;
  case 'toggle-play':toggleScenePlay();break;
- case 'play-journey':if(!journeyPlaying&&!savedSceneIndices(store.document).length){timelineOpen=true;renderAll();toast('Save your first scene before playing the scene strip.');break;}journeyPlaying=!journeyPlaying;if(journeyPlaying){fieldPaused=false;scenePlaying=true;editing=false;inspectorOpen=false;timelineOpen=false;selected=[];cursorTool='interact';tool='interact';shapePickerOpen=false;placementStep=false;if(!store.document.savedScenes?.[scene().id])sceneIndex=savedSceneIndices(store.document)[0];sceneElapsed=0;fireAutomations(true);}applySceneView();renderAll();break;
+ case 'play-journey':if(!journeyPlaying&&!savedSceneIndices(store.document).length){timelineOpen=true;renderAll();toast('Save your first scene before playing the scene strip.');break;}setSavedScenePlay(!journeyPlaying);break;
  case 'present':presenting=true;selected=[];shapePickerOpen=false;renderAll();break;
  case 'exit-present':presenting=false;renderAll();break;
  case 'library':case 'preset-browser':case 'keep':openLibrary();break;
@@ -707,7 +732,7 @@ document.addEventListener('pointerover',ev=>{if(!(ev.target as Element).closest(
 document.addEventListener('pointerdown',ev=>{const target=ev.target as Element;if((assignmentTarget||assignmentGroup)&&!target.closest('#automation-assignment,[data-action="automate"],[data-action="choose-group-target"],[data-action="add-lane"]')){assignmentTarget='';assignmentGroup='';$('automation-assignment').hidden=true;}if(modesOpen&&!target.closest('#modes-panel,[data-action="modes"]')){modesOpen=false;$('modes-panel').hidden=true;document.querySelector('[data-action="modes"]')?.setAttribute('aria-expanded','false');}if(captureOpen&&!target.closest('#capture-panel,[data-action="capture-options"]')){readCapture();captureOpen=false;$('capture-panel').hidden=true;document.querySelector('[data-action="capture-options"]')?.setAttribute('aria-expanded','false');}const el=ev.target as HTMLInputElement;if(!el.closest('#stage'))pointer.active=false;if(el instanceof HTMLInputElement&&el.type==='range'&&el.dataset.bind)store.begin();});
 // Release any gesture baseline even when the input never fires a change event.
 document.addEventListener('pointerup',()=>store.finish());
-document.addEventListener('input',ev=>{const el=ev.target as HTMLInputElement;if(el.id==='expression-playhead'){let value=Number(el.value),index=0;while(index<store.document.scenes.length-1&&value>=store.document.scenes[index].duration){value-=store.document.scenes[index].duration;index++;}if(index!==sceneIndex)setScene(index);sceneElapsed=value;trackPreview=true;scenePlaying=false;needsFrame=true;transportUI();return;}if(el.id==='belt-search'){document.querySelectorAll<HTMLElement>('[data-candidate-row]').forEach(row=>row.hidden=!row.dataset.search?.includes(el.value.toLowerCase()));return;}if(el.id==='scene-save-name'){sceneNames.set(scene().id,el.value);return;}if(el.id==='placement-glyph'){glyphChoice=el.value.trim()||'O';return;}if(el.id==='mode-search'||el.id==='library-search'){
+document.addEventListener('input',ev=>{const el=ev.target as HTMLInputElement;if(el.id==='expression-playhead'){let value=Number(el.value),index=0;while(index<store.document.scenes.length-1&&value>=store.document.scenes[index].duration){value-=store.document.scenes[index].duration;index++;}if(index!==sceneIndex)setScene(index);seekWorkingScene(value);return;}if(el.id==='belt-search'){document.querySelectorAll<HTMLElement>('[data-candidate-row]').forEach(row=>row.hidden=!row.dataset.search?.includes(el.value.toLowerCase()));return;}if(el.id==='scene-save-name'){sceneNames.set(scene().id,el.value);return;}if(el.id==='placement-glyph'){glyphChoice=el.value.trim()||'O';return;}if(el.id==='mode-search'||el.id==='library-search'){
  const query=el.value.trim().toLowerCase(),selector=el.id==='mode-search'?'[data-mode-choice]':'[data-starting-card]';let count=0;
  document.querySelectorAll<HTMLElement>(selector).forEach(item=>{item.hidden=!item.dataset.search?.includes(query);if(!item.hidden)count++;});
  if(el.id==='library-search')$('library-empty').hidden=count>0;return;
@@ -833,22 +858,25 @@ function recordableTracks(){return workspace.entries.flatMap(entry=>{const subje
 function finishPropertyTake(){if(!propertyTake)return;const take=propertyTake;propertyTake=null;if(take.elapsed>0){const end=Math.min(3600,take.start+take.elapsed);for(const t of take.tracks){const value=readTrackValue(scene(),t);if(value!==undefined&&t.points.at(-1)?.time!==end)t.points.push({time:end,value});}changed(()=>{scene().propertyTakeRange={start:take.start,end};scene().propertyTracks=mergeTake(scene().propertyTracks??[],take.tracks,take.start,end);scene().duration=Math.max(scene().duration,end);});takeWindows.set(scene().id,{start:take.start,end});sceneElapsed=take.start;trackPreview=true;scenePlaying=false;toast('Property take recorded · save the scene to keep this version.');}renderAll();}
 function updatePropertyTake(now:number){const t=propertyTake;if(!t)return;if(t.sceneId!==scene().id){finishPropertyTake();return;}const remaining=Math.max(0,Math.ceil((t.armed-now)/1000));$('take-status').hidden=false;$('take-status').textContent=remaining?'Recording in '+remaining+'…':'Recording '+t.elapsed.toFixed(1)+'s · click record to stop';if(remaining)return;const elapsed=Math.min((now-t.armed)/1000,3600-t.start,t.limit??Infinity);t.elapsed=elapsed;sceneElapsed=t.start+elapsed;scenePlaying=true;if(elapsed-t.lastSample>=.05||t.lastSample<0){for(const track of t.tracks){const value=readTrackValue(scene(),track);if(value===undefined)continue;sampleTrack(track,t.start+elapsed,value,t.start+Math.max(0,t.lastSample));}t.lastSample=elapsed;}if(t.start+elapsed>=3600||t.limit!==undefined&&elapsed>=t.limit)finishPropertyTake();}
 let frames=0,lastFpsTime=performance.now(),fps=0,rafId=0;
-function tick(now:number){if(researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;rafId=requestAnimationFrame(tick);return;}updatePropertyTake(now);const rawDelta=Math.max(0,Math.min((now-lastTime)/1000,.25));lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||document.hidden||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=scene().field.params.timeScale;simTime+=delta;}
+function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;rafId=requestAnimationFrame(tick);return;}updatePropertyTake(now);const rawDelta=Math.max(0,Math.min((now-lastTime)/1000,.25));lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||document.hidden||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=scene().field.params.timeScale;simTime+=delta;}
  if(recovery.hidden&&!libraryOpen&&(!fieldPaused||needsFrame||engine.needsRender?.()||pointer.active||recorder.active||transitionDuration>0)&&now-lastStudioRender>=(physisFpsCap?1000/physisFpsCap:0)){try{engine.render(frameData(delta));needsFrame=false;lastStudioRender=now;}catch(err){nativeField?.controller.hold('native surface render failed: '+String(err));needsFrame=false;if(String(err).toLowerCase().includes('context'))recovery.hidden=false;else error(err);transportUI();}}
  const native=engine.telemetry?.();if(native){simTime=native.simTime;delta=simTime-previousTime;document.documentElement.style.setProperty('--paper',native.background);document.documentElement.style.setProperty('--ink',native.palette[0]);$('text-layers').style.opacity=String(.25+.75*native.transition);}
  // A finished property preview holds its recorded end values; the field itself
  // keeps breathing. The playhead runs only while the scene plays, and reaching
  // the scene's end stops it — the transport returns to Play.
- if(scenePlaying&&!propertyTake&&delta>0&&!libraryOpen){sceneElapsed=Math.min(scene().duration,sceneElapsed+Math.min(rawDelta,.25));
-  if(sceneElapsed>=scene().duration-.001&&!journeyPlaying){scenePlaying=false;transportUI();}}
- if(journeyPlaying&&scenePlaying&&!editing&&!libraryOpen){sceneElapsed+=Math.min(rawDelta,.25);if(sceneElapsed>=activeScene().duration){const indices=savedSceneIndices(store.document),next=indices.indexOf(sceneIndex)+1;if(next>=indices.length&&!store.document.loop){journeyPlaying=false;scenePlaying=false;sceneElapsed=0;applySceneView();renderAll();}else{setScene(indices[next%indices.length],true);fireAutomations(true);}}}
+ const transportFrame=advanceSceneTransport(store.document,sceneIndex,sceneElapsed,rawDelta,{playing:scenePlaying,savedSequence:journeyPlaying,hidden:document.hidden,libraryOpen,propertyRecording:!!propertyTake,editing,authoredSceneIds:nativeSceneTransportMaterial(nativeWorkspace?.nativeView())});
+ sceneElapsed=transportFrame.elapsed_seconds;scenePlaying=transportFrame.scene_playing;
+ const wasSequence=journeyPlaying;journeyPlaying=transportFrame.saved_sequence_playing;
+ if(transportFrame.advance_to_scene_index!==null)void advanceSavedScene(transportFrame.advance_to_scene_index);
+ else if(transportFrame.unavailable_reason){if(wasSequence)applySceneView();toast(transportFrame.unavailable_reason);renderAll();}
+ else if(transportFrame.completed){if(wasSequence){applySceneView();renderAll();}else transportUI();}
  if(transitionDuration>0){const f=clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1);$<HTMLCanvasElement>('transition-canvas').style.opacity=String(1-applyEasing(f,transitionEasing));if(f>=1){transitionDuration=0;$('transition-canvas').hidden=true;}}
  if(overlayDirty&&!libraryOpen)drawGuides();if(recorder.active){const paperScene={...activeScene(),field:{...activeScene().field,background:native?.background??scene().field.background,palette:native?.palette??scene().field.palette,params:{...scene().field.params,...native?.params}}};const copy=()=>recorder.frame(engine.canvas,paperScene,width,height,captureTransition());try{if(engine.withCleanFrame)engine.withCleanFrame(copy);else copy();}catch(err){recorder.stop();error(err);}}frames++;
  if(now-lastFpsTime>1000){fps=Math.round(frames*1000/(now-lastFpsTime));frames=0;lastFpsTime=now;}
  if(now-lastUI>33){const s=activeScene(),timing=expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying),fraction=clamp(timing.time/timing.total,0,1);$('global-time').textContent=timing.time.toFixed(1)+' / '+timing.total.toFixed(1)+'s';const playhead=$<HTMLInputElement>('expression-playhead');if(playhead&&document.activeElement!==playhead)playhead.value=String(timing.time);$('journey-progress').style.width=fraction*100+'%';document.querySelectorAll<HTMLElement>('[data-scene-progress]').forEach(e=>e.style.width=(Number(e.dataset.sceneProgress)===sceneIndex?fraction*100:0)+'%');
  const nd=engine.telemetry?.()?.drive;const ph=nd?{theta:nd.theta,phi:nd.phi,drive:nd.progress}:phases(s,simTime);document.querySelectorAll<SVGLineElement>('[data-phase]').forEach(e=>e.setAttribute('transform',`rotate(${(e.dataset.phase==='theta'?ph.theta:ph.phi)*180/Math.PI} 50 50)`));if($('drive-value'))$('drive-value').style.width=ph.drive*100+'%';
  const telemetry=engine.telemetry?.();updateAutomationRuntime(telemetry);document.querySelectorAll<HTMLElement>('[data-formation-live]').forEach(el=>{const entity=s.entities.find(v=>v.id===el.dataset.formationLive),state=telemetry?.sequences?.find((v:any)=>v.entityId===entity?.id);if(!entity||!state)return;const a=entity.sequence.steps[state.linkIndex],b=entity.sequence.steps[state.nextIndex];el.textContent=state.linkCount>1?`${a?stateLabel({...a,source:stateSource(entity,state.linkIndex)}):'State'} → ${b?stateLabel({...b,source:stateSource(entity,state.nextIndex)}):'State'} · ${Math.round(state.progress*100)}%`:'Single target';});const effectivePaper={...s,field:{...s.field,background:telemetry?.background??s.field.background,palette:telemetry?.palette??s.field.palette,params:{...s.field.params,...telemetry?.params}}};paintLivePaper(effectivePaper);const params=telemetry?.params??evaluateParameters(s,simTime);for(const panel of [$('belt-content'),$('inspector-content'),$('automation-monitor'),$('context-panel').querySelector<HTMLElement>('.context-content')??$('context-panel')])updateToolbeltValues(panel,s,params,telemetry?.config);const monitored=s.automation.find(l=>l.id===monitoredLane),live=monitored?telemetry?.live?.find((v:any)=>v.id===(monitored.nativeId??monitored.id)):undefined;if(monitored){const monitor=$('automation-monitor'),target=automationTarget(s,monitored!.target),value=target?(target.target.startsWith('field.')?params[target.key]:Number(readPath(telemetry?.config,target.path))/target.factor):live?.value;monitor.querySelector('[data-cycle-hand]')?.setAttribute('transform',`rotate(${(live?.phase??0)*360} 32 32)`);monitor.querySelector('.cycle-progress')?.setAttribute('stroke-dasharray',`${(live?.phase??0)*100} 100`);const label=monitor.querySelector('[data-cycle-value]');if(label)label.textContent=Number(value).toFixed(3);const phase=monitor.querySelector('[data-cycle-phase]');if(phase)phase.textContent=!live?'Paused':live.done?'Done':Math.round(live.phase*100)+'%';}document.querySelectorAll<HTMLElement>('[data-source-status]').forEach(el=>el.textContent=telemetry?.sourceStatus?.[el.dataset.sourceStatus!]??'');const contribution=document.querySelector<HTMLElement>('[data-focus-contribution]');if(contribution){const col=telemetry?.config?.composition;contribution.textContent=`Palette → stored entity tint (${Math.round((selectedEntity()?.tintWeight??0)*(col?.entityTintWeight??1)*100)}%) → ${telemetry?.focus?'travelling focus ('+Math.round((col?.orchestration?.focusTintWeight??0)*100)+'%)':'no focus tint'}. Selection does not retune the field.`;}document.querySelectorAll<HTMLElement>('[data-live-target]').forEach(el=>{const target=automationTarget(s,el.dataset.liveTarget!);if(!target)return;const value=target.target.startsWith('field.')?params[target.key]:readPath(telemetry?.config,target.path);el.textContent=typeof value==='number'?(target.target.startsWith('field.')?value:value/target.factor).toFixed(3):target.value.toFixed(3);});document.querySelectorAll<HTMLElement>('[data-live-param]').forEach(e=>e.textContent=(params[e.dataset.liveParam!]??0).toFixed(2));const ent=selectedEntity();if(ent){const nt=engine.telemetry?.()?.sequences.find((v:any)=>v.entityId===ent.id);const seq=nt?{from:nt.linkIndex}:sequenceAt(ent,s,simTime);document.querySelectorAll<HTMLElement>('[data-step-live]').forEach(e=>e.classList.toggle('is-playing',ent.sequence.enabled&&Number(e.dataset.stepLive)===seq.from));}
- const nf=engine.telemetry?.()?.focus;const focus=nf?{entity:{id:nf.entityId}}:engine.capabilities.kind==='production'?null:focusAt(s,simTime);document.querySelectorAll<HTMLElement>('[data-focus-entity]').forEach(e=>e.classList.toggle('is-playing',e.dataset.focusEntity===focus?.entity.id));if(recorder.active){const t=Math.floor(recorder.elapsed);$('record-time').textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');$('record-size').textContent=`${captureSettings.width}px · ${fps} render fps`;if(t>=4&&fps>0&&fps<20&&!recordPerformanceWarned){recordPerformanceWarned=true;toast('Recording is below its 30 fps target. Reduce particle allocation or output size for this device.',7000);}}lastUI=now;
+ const nf=engine.telemetry?.()?.focus;const focus=nf?{entity:{id:nf.entityId}}:engine.capabilities.kind==='production'?null:focusAt(s,simTime);document.querySelectorAll<HTMLElement>('[data-focus-entity]').forEach(e=>e.classList.toggle('is-playing',e.dataset.focusEntity===focus?.entity.id));if(recorder.active){const t=Math.floor(recorder.elapsed);$('record-time').textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');$('record-size').textContent=`${captureSettings.width}px · ${fps} render fps`;if(t>=4&&fps>0&&fps<20&&!recordPerformanceWarned){recordPerformanceWarned=true;toast('Recording is below its 30 fps target. Reduce particle allocation or output size for this device.',7000);}}nativeEditorEndpoint?.publish();lastUI=now;
  }
  rafId=requestAnimationFrame(tick);
 }
@@ -886,6 +914,7 @@ function announceHostState(){
   const state={nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
    selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,journeyPlaying,fieldPaused,libraryOpen,hostMode};
   window.parent.postMessage({v:1,kind:'oi-app-state',state},'*');
+  nativeEditorEndpoint?.publish();
  }catch{/* nothing is announced rather than a wrong position */}
 }
 function setHostMode(mode:'expressions'|'techne'){
@@ -905,20 +934,20 @@ function setHostMode(mode:'expressions'|'techne'){
 // previous field. If the kernel channel has not been announced yet it opens on
 // that announce, exactly as the boot ?expression= deep link does. Refs only —
 // the kernel document is the store, and a bad ref is refused by the owner.
-let pendingHostOpen:string|null=null,hostOpenArmed=false;
+let pendingHostOpen:{ref:string;recovery?:unknown}|null=null,hostOpenArmed=false;
 let hostThemeReadingKey='';
-function openHostExpression(ref:string){
+function openHostExpression(ref:string,recovery?:unknown){
  if(typeof ref!=='string'||!ref.startsWith('expression:'))return;
- if(kernelExpressionsAvailable()){void nativeWorkspace?.follow(ref);return;}
+ if(kernelExpressionsAvailable()){void nativeWorkspace?.follow(ref,recovery);return;}
  // Buffer the LATEST ref and arm exactly one announce listener (not one per
  // pre-ready call), so repeated posts before the channel is up converge to a
  // single last-wins open and no message listeners accumulate.
- pendingHostOpen=ref;
+ pendingHostOpen={ref,recovery};
  if(hostOpenArmed)return;
  hostOpenArmed=true;
- window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);hostOpenArmed=false;const r=pendingHostOpen;pendingHostOpen=null;if(r)void nativeWorkspace?.follow(r);}});
+ window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);hostOpenArmed=false;const r=pendingHostOpen;pendingHostOpen=null;if(r)void nativeWorkspace?.follow(r.ref,r.recovery);}});
 }
-window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const d=ev.data as {type?:string;width?:number;height?:number;right?:number;coveredRight?:number;appearance?:unknown;theme?:unknown;v?:unknown;kind?:unknown;mode?:unknown;command?:unknown;ref?:unknown;req?:unknown;target?:unknown;source?:unknown}|null;
+window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const d=ev.data as {type?:string;width?:number;height?:number;right?:number;coveredRight?:number;appearance?:unknown;theme?:unknown;v?:unknown;kind?:unknown;mode?:unknown;command?:unknown;ref?:unknown;recovery?:unknown;req?:unknown;target?:unknown;source?:unknown}|null;
  if(d&&d.type==='oi-shell-cutout'&&typeof d.width==='number'&&typeof d.height==='number'){
   if(d.appearance==='dark'||d.appearance==='light'){hostedAppearance=d.appearance;theme();}
   // The host's resolved theme reading re-derives the default expression's
@@ -936,9 +965,9 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
  if(d&&d.v===1&&d.kind==='host-mode'&&(d.mode==='expressions'||d.mode==='techne')){const world=(d as {world?:unknown}).world;if(typeof world==='string'&&world.length<=64)worldLens=world;setHostMode(d.mode);announceHostState();return;}
  if(d&&d.v===1&&d.kind==='host-command'){
   if(d.command==='interact'||d.command==='select')activateRail(d.command);
-  else if(d.command==='open-expression'&&typeof d.ref==='string'){if((d as {refresh?:unknown}).refresh===true&&kernelExpressionsAvailable())void nativeWorkspace?.refreshReference(d.ref);else openHostExpression(d.ref);}
+  else if(d.command==='open-expression'&&typeof d.ref==='string'){if((d as {refresh?:unknown}).refresh===true&&kernelExpressionsAvailable())void nativeWorkspace?.refreshReference(d.ref,d.recovery);else openHostExpression(d.ref,d.recovery);}
   else if(d.command==='lens'&&typeof (d as {lens?:unknown}).lens==='string'&&['project','canvas','timeline','journey','place','palace'].includes((d as {lens:string}).lens)){if(hostMode!=='techne')setHostMode('techne');lensStudio.select((d as {lens:LensId}).lens);}
-  else if(d.command==='refresh-expression'&&typeof d.ref==='string')void nativeWorkspace?.refreshReference(d.ref);
+  else if(d.command==='refresh-expression'&&typeof d.ref==='string')void nativeWorkspace?.refreshReference(d.ref,d.recovery);
   else if(d.command==='insert-source'&&typeof d.req==='string'){
    const req=d.req,target=d.target as {expression_ref?:unknown;revision?:unknown;scene_ref?:unknown}|undefined,source=d.source as {title?:unknown;binding?:unknown}|undefined;
    void (async()=>{
@@ -960,18 +989,19 @@ const nativeField=installNativeField(engine,()=>{fieldPaused=false;needsFrame=tr
 // Without a retaining engine there is no native producer to present; the
 // Studio nav offers no dead "Live instrument" entry for it.
 if(!nativeField)document.querySelector('[data-action="studio-section"][data-value="native"]')?.remove();
-window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name,hostMode,activeLens:lensStudio.active()}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(i:number)=>setScene(i),openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},native:()=>nativeField?.controller.reading,nativeTargets:()=>nativeField?.controller.inspectTargets(),
+window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name,hostMode,activeLens:lensStudio.active()}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(reference:string|number)=>{if(typeof reference==='string')return focusNativeSceneRef(reference);toast('Index-based Scene navigation is a compatibility call; native navigation accepts a Scene reference.');setScene(reference);},openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},native:()=>nativeField?.controller.reading,nativeTargets:()=>nativeField?.controller.inspectTargets(),
  // Acceptance probe: advance resident particle mechanics by fixed steps against
  // the targets already presented. No native request, clock or target write.
- probeSteps:(frames:number,dt:number)=>{if(!Number.isInteger(frames)||frames<1||frames>2000||!(dt>0&&dt<=.1))throw new Error('probe steps: 1–2000 frames of (0, 0.1] s');for(let i=0;i<frames;i++)engine.render(frameData(dt));needsFrame=true;return frames;},dispose:()=>{researchInstruments?.destroy();nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
-function applyNativeView(view:KernelConversion,preservePosition=false){
+ probeSteps:(frames:number,dt:number)=>{if(!Number.isInteger(frames)||frames<1||frames>2000||!(dt>0&&dt<=.1))throw new Error('probe steps: 1–2000 frames of (0, 0.1] s');for(let i=0;i<frames;i++)engine.render(frameData(dt));needsFrame=true;return frames;},dispose:()=>{sceneTransportAlive=false;sceneIntentEpoch++;nativeEditorEndpoint?.dispose();researchInstruments?.destroy();nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
+function applyNativeView(view:KernelConversion,preservePosition=false,adoptionHistory:'record'|'acknowledge'='record'){
  awaitingNativeBoot=false;
  // An opened native Expression is what the frame stands on: the entry gate
  // closes and (unless the caller keeps its position) the engine presents the
  // document's current Scene.
  const presented=presentAdoption(view);closeEntryGate();
  const oldScene=scene().id,oldCamera={...camera},oldTime=sceneElapsed,oldSelection=[...selected],oldPlaying=journeyPlaying;
- if(!preservePosition)applyJourney(view.journey,true);else {store.replace(initialiseSceneSaves(initialiseBelts(view.journey)));}
+ const acknowledgement=adoptionHistory==='acknowledge'?nativeAdoptionHistory(view,store.document):'preserve';
+ if(!preservePosition)applyJourney(view.journey,true,adoptionHistory,acknowledgement);else {const incoming=initialiseSceneSaves(initialiseBelts(view.journey));if(adoptionHistory==='acknowledge')store.acknowledge(incoming,acknowledgement);else store.replace(incoming);}
  const desired=preservePosition?oldScene:presented.sceneId;
  sceneIndex=Math.max(0,store.document.scenes.findIndex(s=>s.id===desired));
  if(preservePosition){camera=oldCamera;sceneElapsed=oldTime;selected=oldSelection.filter(id=>scene().entities.some(e=>e.id===id));journeyPlaying=oldPlaying;}
@@ -1037,6 +1067,60 @@ const workspaceCluster=masthead.querySelector('.workspace-cluster')!;workspaceCl
 const lensStudio=installLensStudio({activate:activateInstrument},mastheadCentre);
 mastheadCentre.append(workspaceCluster);
 nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!awaitingNativeBoot||store.revision!==0,snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
+const retainedEditor=createRetainedNativeEditor({
+ store,sceneId:()=>scene().id,nativeView:()=>nativeWorkspace?.nativeView(),
+ selection:()=>({entity_ids:[...selected],step_id:scene().entities.find(e=>e.id===selected[0])?.sequence.steps[stepIndex]?.id??null}),
+ nativeSelect:async(sceneId,entityId)=>await nativeWorkspace!.select(sceneId,entityId),
+ commit:async()=>await nativeWorkspace?.commit(),change:mutate=>changed(mutate),
+ afterHistory:()=>{applySceneView();markSaved();overlayDirty=true;needsFrame=true;renderAll();},
+ selectLocal:(entityId,index)=>{selected=entityId===null?[]:[entityId];stepIndex=index;overlayDirty=true;needsFrame=true;renderAll();},
+ openEditor:(editor,entityId,index)=>{
+  selected=[entityId];stepIndex=index;pointer.active=false;editing=true;
+  libraryOpen=false;presenting=false;contextKind='';beltPickerOpen=false;timelineOpen=false;shapePickerOpen=false;modesOpen=false;inspectorOpen=false;studioOpen=false;placementStep=false;cursorTool='select';tool='select';
+  if(editor==='placement'){captureOpen=false;sequenceOpen=false;placementStep=true;cursorTool='select';tool='select';camera.grid=true;renderAll();}
+  else if(editor==='source'){sequenceOpen=false;captureOpen=true;renderAll();}
+  else{captureOpen=false;sequenceOpen=true;renderAll();const layers=$('live-content').querySelector<HTMLDetailsElement>('.live-layers');if(layers){layers.open=true;layers.scrollIntoView({block:'nearest'});}}
+ },
+ standing:()=>({busy:nativeState?.busy??false,notice:nativeState?.text??null}),
+ telemetry:()=>engine.telemetry?.(),fieldPaused:()=>fieldPaused,
+ editScenes:async(request,isCurrent)=>{
+  if(sceneEditHeld)throw Error('A native Scene edit is already awaiting acknowledgement');
+  if(recorder.active)throw Error('Finish the active capture before changing Scene structure');
+  const presented=scene(),intent=sceneIntentEpoch;
+  sceneEditHeld=clone(presented);
+  const handler=createNativeSceneEditHandler({store,sceneId:()=>scene().id,intentEpoch:()=>sceneIntentEpoch,lifetime:()=>sceneTransportAlive,
+   afterSuccess:({scene_id,entity_id,selection_changed})=>{
+    sceneEditHeld=null;sceneIndex=store.document.scenes.findIndex(value=>value.id===scene_id);
+    if(sceneIndex<0)throw Error('The acknowledged Scene is absent from its native view');
+    selected=entity_id?[entity_id]:[];
+    if(selection_changed){sceneIntentEpoch++;journeyPlaying=false;scenePlaying=false;sceneElapsed=0;stepIndex=0;applySceneView();}
+    else if(sceneElapsed>scene().duration){sceneElapsed=scene().duration;scenePlaying=false;}
+    awaitingNativeBoot=false;markSaved();overlayDirty=true;needsFrame=true;renderAll();announceHostState();
+   }});
+  try{
+   const result=await nativeWorkspace!.editScenes((working,current)=>handler.edit(request,{working,isCurrent:()=>current()&&isCurrent()&&sceneTransportAlive}));
+   if(result.state==='native-acknowledged')throw new NativeSceneEditRefusal(result.error,result.native_outcome);
+  }finally{
+   sceneEditHeld=null;lastTime=performance.now();
+   if(sceneIntentEpoch===intent){const index=store.document.scenes.findIndex(value=>value.id===presented.id);if(index>=0)sceneIndex=index;}
+   markSaved();renderAll();announceHostState();
+  }
+ },
+ sceneControls:{
+  read:()=>({scene_ref:nativeWorkspace?.nativeView()?.bindings[scene().id]?.scene_ref??'',scene_elapsed_seconds:sceneElapsed,expression_time_seconds:expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying).time,scene_playing:scenePlaying,saved_sequence_playing:journeyPlaying,field_paused:fieldPaused,track_preview:trackPreview,intent_epoch:sceneIntentEpoch}),
+  recording:()=>!!propertyTake,transitionPending:()=>sceneAdvancePending,
+  focus:sceneId=>{const index=store.document.scenes.findIndex(s=>s.id===sceneId);if(index<0)throw Error('The acknowledged Scene is no longer present');if(index===sceneIndex){sceneIntentEpoch++;selected=[];stepIndex=0;renderAll();}else setScene(index);},
+  transport:action=>{if(action==='play-saved'||action==='stop-saved')setSavedScenePlay(action==='play-saved');else if(action==='pause'){sceneIntentEpoch++;scenePlaying=false;transportUI();}else{if(journeyPlaying){journeyPlaying=false;applySceneView();scenePlaying=false;}if(!scenePlaying)toggleScenePlay();else sceneIntentEpoch++;}},
+  seek:seekWorkingScene,snapshot:snapshotScene,
+ },
+});
+nativeEditorEndpoint=installNativeEditorReceiver(retainedEditor);
+async function focusNativeSceneRef(scene_ref:string){
+ const reading=retainedEditor.read();
+ if(!reading.playback)throw Error('The native Scene transport is unavailable');
+ await retainedEditor.scene({operation:'scene',basis:reading.basis,intent_epoch:reading.playback.intent_epoch,action:'focus',scene_ref},()=>sceneTransportAlive);
+ return retainedEditor.read();
+}
 // Acts & reusable material (EXPRESSION-ACT-MATERIAL-V1): roles on this Scene's
 // objects/text, save-as-reusable, the material register and act playback,
 // beside the saved-scene playback.
@@ -1052,7 +1136,7 @@ sceneBodies=installSceneBodies({
  portal:(trigger,basis)=>openScenePortal(trigger.trigger_ref,basis),
  report:message=>toast(message),
  open:ref=>{const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding){toast('Open a native Scene before opening its source.');return;}hostRequest({request:'summon',detail:{kind:'source',ref,subject:{ref:view.document.expression_ref,kind:'expression',nativeOwner:'oi',revision:view.document.revision,title:view.document.title,sceneRef:binding.scene_ref,entityRef:null,relationRef:null}}});},
- jumpToScene:sceneRef=>{const view=nativeWorkspace?.nativeView();if(!view){toast('Open a native Scene before jumping to another one.');return;}const entry=Object.entries(view.bindings).find(([,b])=>b.scene_ref===sceneRef);if(!entry){toast('That native Scene is not currently loaded in this view.');return;}const index=store.document.scenes.findIndex(s=>s.id===entry[0]);if(index<0)return;setScene(index);},
+ jumpToScene:sceneRef=>{void focusNativeSceneRef(sceneRef).catch(cause=>toast(cause instanceof Error?cause.message:String(cause)));},
 });
 blueprintHUD=installBlueprintHUD({container:blueprintHome,nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,apply:intent=>nativeWorkspace!.blueprint(intent)});
 const researchContainer=document.createElement('section');
@@ -1158,9 +1242,14 @@ async function saveNative(){
 let nativeState:import('./nativeWorkspace.js').NativeStatus|null=null;
 function showNativeStatus(state:import('./nativeWorkspace.js').NativeStatus){
  nativeState=state;
- // A background read failing before any native work exists is not a failed
- // save: attention is only for work that has an identity or an open to retry.
- const failed=state.failed&&(!!state.identity||state.retryOpen||!!state.pending);
+ // Saving can advance the acknowledged native basis without replacing the
+ // authored DocumentStore (and its useful Undo). Publish that same actual
+ // work through the existing host channel before another editor gesture.
+ const acknowledged=nativeWorkspace?.nativeView()?.document;
+ if(state.identity&&acknowledged?.expression_ref===state.identity.ref&&acknowledged.revision===state.identity.revision)announceHostState();
+ // An unsuccessful hosted opening is still a native failure. Hiding it
+ // behind an unqualified Save control would make a local preview look owned.
+ const failed=state.failed;
  const save=document.getElementById('native-save');
  if(save){const label=state.busy?'Saving…':failed?`Not saved — ${state.text}`:state.identity?`Save (⌘S) · ${state.identity.title} · revision ${state.identity.revision}`:'Save (⌘S)';save.title=label;save.setAttribute('aria-label',label);save.classList.toggle('attention',failed||!!state.pending);save.toggleAttribute('disabled',state.busy);}
  const line=document.getElementById('native-status');if(!line)return;
