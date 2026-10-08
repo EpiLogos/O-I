@@ -152,6 +152,31 @@ primitives live in `devices-b2/kit.tsx` (`b2-` classes, own injection);
 the capture → panel map and honesty notes are in
 `devices-b2/README.md`.
 
+## Device panel ports (pro — `devicespro.*`, the editing faces)
+
+The `devices-pro/` family is the third leg: **faithful visual ports that
+edit**. Five faces (Glue Compressor, Echo, Reverb, Wavetable, Operator),
+each a port of its captured panel's control topology with every control
+bound to the M3 round-trip (`devices/DevicePanel`'s proven pattern, reused
+through `devices-pro/kit.tsx`'s `useDeviceEdit`): descriptors from
+`GET /api/device-descriptors`, stored values from
+`GET /api/document/device-params`, edits POSTed per change (drag debounced
+~150 ms) with a per-control saving/saved/error mark and the server-persisted
+value adopted on response. Continuous → drag slider + knob with
+double-click numeric entry (stored units); `Discrete{labels}` → menu or
+segmented (unknown entries show the bare stored index); `Toggle` → switch.
+
+Registration is two rows per device: the full face in `right-dock` and a
+compact rack face in `bottom` (the device-chain strip). Wavetable's
+document element is `InstrumentVector` (its table is keyed `Wavetable`,
+served since `PANEL_DEVICES` gained it in `live-shell/src/api.rs`).
+Operator is the family's one local-state face — its M6 voice model is
+landed but no parameter table exists in live-dynamics yet, so it runs on
+the stored defaults and carries the model-arriving badge. Face labels are
+compact display names; each control's tooltip carries the full stored id,
+range and dossier note, and sections whose parameters are not in the stored
+tables yet render as dimmed stubs with the milestone note (honesty rule).
+
 ## Icons
 
 `icon` is raw SVG path data in a 24x24 stroke space (rendered at 14px,
