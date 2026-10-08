@@ -610,7 +610,7 @@ fn full_native_act_register_validates_fresh_performance_before_archiving_another
         .max_by_key(|scene| serde_json::to_vec(scene).unwrap().len())
         .unwrap();
     let mut oversize_changes = vec![];
-    for index in 0..4 {
+    for index in 0..16 {
         let scene_ref = format!("{WORLD}:scene:controlled-overbudget-{index}");
         oversize_changes.push(json!({"change":"scene_create","scene_ref":scene_ref,"title":"Controlled overbudget copy"}));
         oversize_changes.push(json!({"change":"scene_compose","scene_ref":scene_ref,"entity_refs":source_scene["entity_refs"]}));
@@ -624,7 +624,7 @@ fn full_native_act_register_validates_fresh_performance_before_archiving_another
         request(before["revision"].clone(), json!(oversize_changes)),
     )
     .unwrap_err();
-    assert_eq!(oversize, "Expression document exceeds 8 MiB");
+    assert_eq!(oversize, "Expression document exceeds 16 MiB");
     assert_eq!(document(&mut k), before);
     assert_eq!(admission_files(&home), stored);
     assert_eq!(
