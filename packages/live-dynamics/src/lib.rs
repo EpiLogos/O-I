@@ -11,3 +11,4 @@ pub mod reverb;
 pub mod spectrum;
 pub mod taps;
 pub mod verify;
+pub mod wavetable;

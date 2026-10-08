@@ -5,6 +5,7 @@ use live_dynamics::audio;
 use live_dynamics::echo as taps_echo;
 use live_dynamics::glue::{self, GlueParams};
 use live_dynamics::operator;
+use live_dynamics::wavetable;
 use live_dynamics::reverb::{self, ReverbParams};
 use live_dynamics::taps;
 use live_dynamics::verify;
@@ -411,6 +412,349 @@ fn operator_voice_golden_gate() {
     assert!(
         (pred_rms - got_rms).abs() <= verify::STATIC_TOLERANCE_DB,
         "OP5 steady: model {pred_rms:.2} vs render {got_rms:.2}"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Wavetable voice gate (M2, default patch). Thresholds STATED in the lane
+// brief before the model was fitted (devices/wavetable-voice.md records the
+// measured residuals against them):
+//   - steady RMS per note window (start+0.15..start+0.70): ±1.0 dB
+//   - release: the −40 dB-below-plateau crossing (20 ms RMS windows,
+//     plateau = the settled [3.60, 3.87] region) within ±25% of the
+//     render's, plus 20 ms release windows ±2.5 dB over the first 300 ms
+//     (later windows approach the dither floor and straddle the tail plunge)
+//   - harmonic profile h1..h8 (note-1 steady window, Goertzel): mean |Δ|
+//     ≤3.0 dB, floor-aware — harmonics the render reads within 8 dB of the
+//     ≈−78 dBFS dither floor are noise, not profile: the model must only sit
+//     at or below (floor + 8 dB) there, and they do not enter the mean. On
+//     M2 every h2..h8 is floor (the default patch is a pure sine), so the
+//     profile reduces to h1 + the floor guard.
+#[test]
+#[ignore]
+fn wavetable_voice_golden_gate() {
+    const STEADY_TOL_DB: f64 = 1.0;
+    const RELEASE_FRAC: f64 = 0.25;
+    const HARMONIC_MEAN_TOL_DB: f64 = 3.0;
+    const RELEASE_WIN_TOL_DB: f64 = 2.5;
+    let sr = 44100u32;
+    let note_starts = [0.0f64, 1.0, 2.0, 3.0];
+
+    let render = read_render("M2_WAVETABLE.aif");
+    let voice = wavetable::WavetableVoice::default_patch(48, sr);
+    let mut model = vec![0f32; render.samples.len()];
+    for t in note_starts {
+        // held 0.875 s; the render tail extends 1.0 s past the hold (the
+        // next note masks it after ~0.12 s, matching the render geometry)
+        let note = voice.render_note(0.875, 1.875);
+        for (i, v) in note.into_iter().enumerate() {
+            let j = (t * sr as f64) as usize + i;
+            if j < model.len() {
+                model[j] += v;
+            }
+        }
+    }
+
+    // --- steady RMS per note, ±1 dB ---
+    for (i, t) in note_starts.iter().enumerate() {
+        let a = ((t + 0.15) * sr as f64) as usize;
+        let b = ((t + 0.70) * sr as f64) as usize;
+        let got = audio::rms_db(&render.samples[a..b]);
+        let pred = audio::rms_db(&model[a..b]);
+        println!(
+            "M2-WT note {i} @ {t:4.1}s: render {got:8.2}  model {pred:8.2}  Δ {:+.2} dB",
+            pred - got
+        );
+        assert!(
+            (pred - got).abs() <= STEADY_TOL_DB,
+            "M2-WT note {i}: model {pred:.2} vs render {got:.2} (±{STEADY_TOL_DB} dB)"
+        );
+    }
+
+    // --- release: −40 dB crossing ±25%, windows ±2.5 dB to +300 ms ---
+    let plateau = |buf: &[f32]| {
+        audio::rms_db(&buf[(3.60 * sr as f64) as usize..(3.87 * sr as f64) as usize])
+    };
+    let crossing = |buf: &[f32], plateau_db: f64| -> f64 {
+        let mut t = 3.875;
+        while t < 4.8 {
+            let a = (t * sr as f64) as usize;
+            let b = a + (0.020 * sr as f64) as usize;
+            if b >= buf.len() {
+                break;
+            }
+            if audio::rms_db(&buf[a..b]) < plateau_db - 40.0 {
+                return t - 3.875;
+            }
+            t += 0.005;
+        }
+        f64::NAN
+    };
+    let got_plateau = plateau(&render.samples);
+    let got_cross = crossing(&render.samples, got_plateau);
+    let model_cross = crossing(&model, plateau(&model));
+    println!(
+        "M2-WT release: render −40 dB crossing {got_cross:.3}s, model {model_cross:.3}s \
+         (plateau {got_plateau:.2} dBFS)"
+    );
+    assert!(
+        !got_cross.is_nan() && !model_cross.is_nan(),
+        "a side never crosses −40 dB below plateau"
+    );
+    assert!(
+        (model_cross - got_cross).abs() / got_cross <= RELEASE_FRAC,
+        "M2-WT release crossing {model_cross:.3}s vs render {got_cross:.3}s (±25%)"
+    );
+    for k in 2..15usize {
+        let t0 = 3.875 + k as f64 * 0.020;
+        let a = (t0 * sr as f64) as usize;
+        let b = ((t0 + 0.020) * sr as f64) as usize;
+        let got = audio::rms_db(&render.samples[a..b]);
+        let pred = audio::rms_db(&model[a..b]);
+        if got <= got_plateau - 40.0 {
+            break;
+        }
+        println!(
+            "M2-WT release t={t0:6.3}: render {got:8.2}  model {pred:8.2}  Δ {:+.2} dB",
+            pred - got
+        );
+        assert!(
+            (pred - got).abs() <= RELEASE_WIN_TOL_DB,
+            "M2-WT release window {t0:.3}: model {pred:.2} vs render {got:.2}"
+        );
+    }
+
+    // --- harmonic profile: mean |Δ| ≤3 dB over above-floor harmonics ---
+    let f0 = 130.81278265;
+    let floor_guard_db = 8.0;
+    // the render's dither floor estimate: median of h3..h8
+    let mut floor_samples = vec![];
+    for k in 3..=8 {
+        floor_samples.push(operator::amp_to_db(operator::goertzel_amp(
+            &render.samples,
+            sr,
+            f0 * k as f64,
+            1.15,
+            1.70,
+        )));
+    }
+    floor_samples.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let floor_db = floor_samples[2]; // median of 6
+    println!("M2-WT dither floor estimate: {floor_db:.2} dBFS");
+    let mut sum = 0.0;
+    let mut count = 0;
+    for k in 1..=8u32 {
+        let got = operator::amp_to_db(operator::goertzel_amp(
+            &render.samples,
+            sr,
+            f0 * k as f64,
+            1.15,
+            1.70,
+        ));
+        let pred = operator::amp_to_db(operator::goertzel_amp(
+            &model,
+            sr,
+            f0 * k as f64,
+            1.15,
+            1.70,
+        ));
+        println!("M2-WT h{k}: render {got:8.2}  model {pred:8.2} dBFS");
+        if got <= floor_db + floor_guard_db {
+            assert!(
+                pred <= got + floor_guard_db,
+                "M2-WT h{k}: model {pred:.2} pokes above the floor guard (render {got:.2})"
+            );
+        } else {
+            sum += (pred - got).abs();
+            count += 1;
+        }
+    }
+    let mean = if count > 0 { sum / count as f64 } else { 0.0 };
+    println!("M2-WT harmonic mean |Δ| over {count} above-floor harmonics: {mean:.2} dB");
+    assert!(
+        mean <= HARMONIC_MEAN_TOL_DB,
+        "M2-WT harmonic mean {mean:.2} dB (≤{HARMONIC_MEAN_TOL_DB})"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Wavetable law gates (WV2..WV5 probes). These renders live on the probe
+// lane branch (feat/live-re-lane-15min-workload, commit 37b4daff4); the
+// gates activate wherever the renders are checked out and print a skip
+// notice otherwise. Thresholds: law deltas ±0.5 dB (steady windows) and
+// ±0.3 dB (per-harmonic), harmonic profile mean ≤3.0 dB at pos 0.5.
+#[test]
+#[ignore]
+fn wavetable_law_gates() {
+    const LAW_TOL_DB: f64 = 0.5;
+    const HARM_TOL_DB: f64 = 0.3;
+    const HARM_MEAN_TOL_DB: f64 = 3.0;
+    let sr = 44100u32;
+    let note_starts = [0.0f64, 1.0, 2.0, 3.0];
+    let f0 = 130.81278265;
+
+    let render_exists =
+        |name: &str| std::path::Path::new(RENDERS).join(name).exists();
+
+    let steady = |buf: &[f32], t: f64| {
+        let a = ((t + 0.15) * sr as f64) as usize;
+        let b = ((t + 0.70) * sr as f64) as usize;
+        audio::rms_db(&buf[a..b])
+    };
+    let baseline = read_render("M2_WAVETABLE.aif");
+    let render_model = |voice: &wavetable::WavetableVoice| {
+        let mut model = vec![0f32; baseline.samples.len()];
+        for t in note_starts {
+            let note = voice.render_note(0.875, 1.875);
+            for (i, v) in note.into_iter().enumerate() {
+                let j = (t * sr as f64) as usize + i;
+                if j < model.len() {
+                    model[j] += v;
+                }
+            }
+        }
+        model
+    };
+
+    // The LAW lives in the renders (probe − baseline); the MODEL is checked
+    // against the probe render separately (agreement ≈ the calibration bias
+    // the M2 gate measures, +0.13 dB).
+    let bias = {
+        let m = render_model(&wavetable::WavetableVoice::default_patch(48, sr));
+        steady(&m, 1.0) - steady(&baseline.samples, 1.0)
+    };
+    println!("calibration bias (model − render, baseline steady): {bias:+.2} dB");
+    let law_harmonics = |probe: &audio::Audio| -> Vec<f64> {
+        (1..=8)
+            .map(|k| {
+                operator::amp_to_db(operator::goertzel_amp(
+                    &probe.samples,
+                    sr,
+                    f0 * k as f64,
+                    1.15,
+                    1.70,
+                )) - operator::amp_to_db(operator::goertzel_amp(
+                    &baseline.samples,
+                    sr,
+                    f0 * k as f64,
+                    1.15,
+                    1.70,
+                ))
+            })
+            .collect()
+    };
+    let law_steady = |probe: &audio::Audio| -> Vec<f64> {
+        note_starts
+            .iter()
+            .map(|t| steady(&probe.samples, *t) - steady(&baseline.samples, *t))
+            .collect()
+    };
+    let agree_harmonics = |render: &audio::Audio, model: &[f32]| -> Vec<f64> {
+        (1..=8)
+            .map(|k| {
+                operator::amp_to_db(operator::goertzel_amp(
+                    model,
+                    sr,
+                    f0 * k as f64,
+                    1.15,
+                    1.70,
+                )) - operator::amp_to_db(operator::goertzel_amp(
+                    &render.samples,
+                    sr,
+                    f0 * k as f64,
+                    1.15,
+                    1.70,
+                ))
+            })
+            .collect()
+    };
+    let agree_steady = |render: &audio::Audio, model: &[f32]| -> Vec<f64> {
+        note_starts
+            .iter()
+            .map(|t| steady(model, *t) - steady(&render.samples, *t))
+            .collect()
+    };
+
+    // --- WV3: osc gain ×0.5 → every harmonic −6.02 dB (linear amplitude) ---
+    if !render_exists("WV3_OSCGAIN.aif") {
+        println!("skip WV3_OSCGAIN: render not present in this checkout");
+        return;
+    }
+    let render = read_render("WV3_OSCGAIN.aif");
+    let law = law_harmonics(&render);
+    println!("WV3 law deltas (render − baseline): {law:?}");
+    for (k, v) in law.iter().enumerate() {
+        assert!(
+            (v - (-6.0206)).abs() <= HARM_TOL_DB,
+            "WV3 h{}: law Δ {v:+.2} dB vs −6.02", k + 1
+        );
+    }
+    let mut voice = wavetable::WavetableVoice::default_patch(48, sr);
+    voice.osc1.gain = 0.5;
+    let model = render_model(&voice);
+    for (k, v) in agree_harmonics(&render, &model).iter().enumerate() {
+        assert!(
+            (v - bias).abs() <= LAW_TOL_DB,
+            "WV3 h{}: model−render {v:+.2} dB (bias {bias:+.2})", k + 1
+        );
+    }
+
+    // --- WV5: osc2 on (identical stored params) → coherent +6.02 dB ---
+    let render = read_render("WV5_OSC2ON.aif");
+    let law = law_harmonics(&render);
+    println!("WV5 law deltas (render − baseline): {law:?}");
+    for (k, v) in law.iter().enumerate() {
+        assert!(
+            (v - 6.0206).abs() <= HARM_TOL_DB,
+            "WV5 h{}: law Δ {v:+.2} dB vs coherent +6.02", k + 1
+        );
+    }
+    let mut voice = wavetable::WavetableVoice::default_patch(48, sr);
+    voice.osc2.on = true;
+    let model = render_model(&voice);
+    for (k, v) in agree_harmonics(&render, &model).iter().enumerate() {
+        assert!(
+            (v - bias).abs() <= LAW_TOL_DB,
+            "WV5 h{}: model−render {v:+.2} dB (bias {bias:+.2})", k + 1
+        );
+    }
+
+    // --- WV4: sustain 0.5012 → 0.25 → plateau −6.04 dB (linear amplitude) ---
+    let render = read_render("WV4_SUSTAIN.aif");
+    let late = |buf: &[f32]| {
+        audio::rms_db(&buf[(3.60 * sr as f64) as usize..(3.87 * sr as f64) as usize])
+    };
+    let law_delta = late(&render.samples) - late(&baseline.samples);
+    println!("WV4 law plateau delta: {law_delta:+.2} dB (−6.04)");
+    assert!(
+        (law_delta - (-6.0412)).abs() <= LAW_TOL_DB,
+        "WV4 law plateau Δ {law_delta:+.2} dB vs −6.04"
+    );
+    let mut voice = wavetable::WavetableVoice::default_patch(48, sr);
+    voice.envelope.sustain_amp = 0.25;
+    let model = render_model(&voice);
+    let agree = late(&model) - late(&render.samples);
+    println!("WV4 model−render plateau: {agree:+.2} dB");
+    assert!((agree - bias).abs() <= LAW_TOL_DB, "WV4 plateau agreement {agree:+.2}");
+
+    // --- WV2: position 0 → 0.5 swaps to frame B (timbre + −2.45 dB RMS) ---
+    let render = read_render("WV2_POS50.aif");
+    let law = law_harmonics(&render);
+    let law_s = law_steady(&render);
+    println!("WV2 law harmonic deltas: {law:?}  law steady deltas: {law_s:?}");
+    let mut voice = wavetable::WavetableVoice::default_patch(48, sr);
+    voice.osc1.wave_position = 0.5;
+    let model = render_model(&voice);
+    let agree = agree_harmonics(&render, &model);
+    let agree_s = agree_steady(&render, &model);
+    let mean: f64 = agree.iter().map(|v| v.abs()).sum::<f64>() / agree.len() as f64;
+    println!("WV2 model−render harmonic deltas: {agree:?} (mean {mean:.2})  steady: {agree_s:?}");
+    for v in &agree_s[1..] {
+        assert!((*v - bias).abs() <= LAW_TOL_DB, "WV2 steady agreement {v:+.2}");
+    }
+    assert!(
+        mean <= HARM_MEAN_TOL_DB,
+        "WV2 harmonic mean |Δ| {mean:.2} dB (≤{HARM_MEAN_TOL_DB})"
     );
 }
 
