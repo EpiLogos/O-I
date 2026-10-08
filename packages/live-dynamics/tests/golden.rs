@@ -763,7 +763,8 @@ fn wavetable_law_gates() {
     println!("WV4 model−render plateau: {agree:+.2} dB");
     assert!((agree - bias).abs() <= LAW_TOL_DB, "WV4 plateau agreement {agree:+.2}");
 
-    // --- WV2: position 0 → 0.5 swaps to frame B (timbre + −2.45 dB RMS) ---
+    // --- WV2: position 0 → 0.5 reads the 0.5·triangle + 0.5·saw segment
+    // mix (census law, rev 3; timbre + −2.43 dB RMS) ---
     let render = read_render("WV2_POS50.aif");
     let law = law_harmonics(&render);
     let law_s = law_steady(&render);
@@ -782,6 +783,224 @@ fn wavetable_law_gates() {
         mean <= HARM_MEAN_TOL_DB,
         "WV2 harmonic mean |Δ| {mean:.2} dB (≤{HARM_MEAN_TOL_DB})"
     );
+}
+
+// ---------------------------------------------------------------------------
+// Wavetable INTERIOR position law — leave-one-out gate (dossier rev 3).
+//
+// The law under test: "Basic Shapes" holds FOUR peak-normalized zero-phase
+// frames {sine | triangle | saw | square} at WavePosition {0, 1/3, 2/3, 1};
+// an interior position reads the LINEAR coherent amplitude mix of its
+// segment's bounding frames (x = 3·pos; i = min(floor x, 2); w = x − i).
+// Supersedes the 2-frame crossfade the depth probes refuted
+// (wavetable-voice.md, "Interior interpolation law").
+//
+// Thresholds STATED BEFORE the folds ran: each fold fits per-frame gain
+// scalars (ideal 1.0; LS over the training positions' above-floor
+// harmonics, signed by the ideal mix) on TWO of the three probed interior
+// positions and predicts the THIRD — held-out harmonic mean |Δ| ≤ 2.0 dB
+// over above-floor harmonics (floor −85.9 dBFS + 8 dB guard, the golden
+// gate's convention) and steady RMS within ±0.5 dB. Measured map: the
+// M2/WV6/WV2/WV7 renders (analyze_wavetable_position.py — the four renders
+// are identical except WavePosition). The gate embeds that map and needs no
+// render files; it also pins the production `frame_harmonic` to the same
+// ideal mix the folds predict with.
+#[test]
+#[ignore]
+fn wavetable_position_leave_one_out() {
+    const HARMONIC_MEAN_TOL_DB: f64 = 2.0;
+    const RMS_TOL_DB: f64 = 0.5;
+    const POS0_H1_DBFS: f64 = -23.11;
+    const STEADY_POS0_DBFS: f64 = -26.06;
+    const FLOOR_DBFS: f64 = -85.9;
+    const FLOOR_GUARD_DB: f64 = 8.0;
+    const POSITIONS: [f64; 3] = [0.25, 0.50, 0.75];
+    // measured linear ratios rel pos-0 h1 / dBFS / note-1 steady RMS
+    const LIN: [[f64; 3]; 8] = [
+        [0.85797, 0.72342, 0.79538],
+        [0.00113, 0.15295, 0.22951],
+        [0.06572, 0.05755, 0.25333],
+        [0.00069, 0.07785, 0.11677],
+        [0.02456, 0.08079, 0.16109],
+        [0.00053, 0.05370, 0.08045],
+        [0.01173, 0.03682, 0.11174],
+        [0.00047, 0.03868, 0.05791],
+    ];
+    const DBFS: [[f64; 3]; 8] = [
+        [-24.44, -25.92, -25.09],
+        [-82.06, -39.41, -35.89],
+        [-46.75, -47.90, -35.03],
+        [-86.28, -45.28, -41.76],
+        [-55.30, -44.96, -38.96],
+        [-88.68, -48.51, -44.99],
+        [-61.72, -51.78, -42.14],
+        [-89.64, -51.35, -47.85],
+    ];
+    const STEADY: [f64; 3] = [-27.36, -28.43, -26.72];
+
+    let pi = std::f64::consts::PI;
+    // reference frames (the law): signed partials of the four shapes
+    let frame_partial = |frame: usize, k: usize| -> f64 {
+        let kf = k as f64;
+        match frame {
+            0 => if k == 1 { 1.0 } else { 0.0 },
+            1 => {
+                if k % 2 == 1 {
+                    (8.0 / (pi * pi)) / (kf * kf)
+                        * (if ((k - 1) / 2).is_multiple_of(2) { 1.0 } else { -1.0 })
+                } else {
+                    0.0
+                }
+            }
+            2 => 2.0 / (pi * kf),
+            _ => if k % 2 == 1 { 4.0 / (pi * kf) } else { 0.0 },
+        }
+    };
+    let segment = |pos: f64| -> (usize, f64) {
+        let x = (3.0 * pos).clamp(0.0, 3.0);
+        let i = (x as usize).min(2);
+        (i, x - i as f64)
+    };
+    let ideal_partial = |pos: f64, k: usize| -> f64 {
+        let (i, w) = segment(pos);
+        (1.0 - w) * frame_partial(i, k) + w * frame_partial(i + 1, k)
+    };
+    // production path must BE this ideal mix
+    for &p in &POSITIONS {
+        for k in 1..=8 {
+            assert!(
+                (wavetable::frame_harmonic(p, k) - ideal_partial(p, k)).abs() < 1e-12,
+                "frame_harmonic({p}, h{k}) diverges from the census law"
+            );
+        }
+    }
+    let above_floor = |col: usize| -> Vec<usize> {
+        (0..8).filter(|&k| DBFS[k][col] > FLOOR_DBFS + FLOOR_GUARD_DB).collect()
+    };
+    // cyclic-coordinate LS on gains g1..g3 over the TRAINING positions only
+    // (targets signed by the ideal mix; the pinned frame-0 share
+    // subtracted) — exactly as the Python fit. Returns (gains, touched):
+    // a gain with no training equation stays at the ideal 1.0.
+    let fit_gains = |train: &[usize]| -> ([f64; 3], [bool; 3]) {
+        let mut touched = [false; 3];
+        for &col in train {
+            let (i, _) = segment(POSITIONS[col]);
+            if i >= 1 {
+                touched[i - 1] = true;
+            }
+            touched[i] = true;
+        }
+        let mut g = [1.0f64; 3];
+        let mut coef = [[0.0f64; 3]; 8];
+        let mut target = [0.0f64; 8];
+        for _ in 0..500 {
+            let mut changed = false;
+            for j in 0..3 {
+                let mut num = 0.0;
+                let mut den = 0.0;
+                for &col in train {
+                    let p = POSITIONS[col];
+                    let (i, w) = segment(p);
+                    for k in above_floor(col) {
+                        let kh = k + 1;
+                        let mut c = [0.0f64; 3];
+                        if i == 0 {
+                            c[0] = w * frame_partial(1, kh);
+                        } else {
+                            c[i - 1] += (1.0 - w) * frame_partial(i, kh);
+                            c[i] += w * frame_partial(i + 1, kh);
+                        }
+                        let ideal = ideal_partial(p, kh);
+                        let mag = LIN[k][col];
+                        let signed = if ideal >= 0.0 { mag } else { -mag };
+                        let pinned =
+                            if i == 0 { (1.0 - w) * frame_partial(0, kh) } else { 0.0 };
+                        target[k] = signed - pinned;
+                        coef[k] = c;
+                        let cj = c[j];
+                        if cj.abs() < 1e-15 {
+                            continue;
+                        }
+                        let rest: f64 =
+                            (0..3).filter(|&m| m != j).map(|m| c[m] * g[m]).sum();
+                        num += cj * (target[k] - rest);
+                        den += cj * cj;
+                    }
+                }
+                if den > 1e-20 {
+                    let new = (num / den).max(1e-6);
+                    if (new - g[j]).abs() > 1e-12 {
+                        changed = true;
+                    }
+                    g[j] = new;
+                }
+            }
+            if !changed {
+                break;
+            }
+        }
+        let gains = [
+            if touched[0] { g[0] } else { 1.0 },
+            if touched[1] { g[1] } else { 1.0 },
+            if touched[2] { g[2] } else { 1.0 },
+        ];
+        (gains, touched)
+    };
+    let (g_full, _) = fit_gains(&[0, 1, 2]);
+    println!(
+        "WT position LOO: full-fit gains [tri {:.4}, saw {:.4}, sqr {:.4}] (ideal 1.0)",
+        g_full[0], g_full[1], g_full[2]
+    );
+    let predict = |pos: f64, g: [f64; 3], k: usize| -> f64 {
+        let (i, w) = segment(pos);
+        let gi = if i == 0 { 1.0 } else { g[i - 1] };
+        let gj = g[i];
+        (1.0 - w) * gi * frame_partial(i, k) + w * gj * frame_partial(i + 1, k)
+    };
+    for held_col in 0..3 {
+        let held = POSITIONS[held_col];
+        let train: Vec<usize> = (0..3).filter(|&c| c != held_col).collect();
+        let (fold_gains, _) = fit_gains(&train);
+        // harmonic-profile prediction vs the measured map
+        let idx = above_floor(held_col);
+        let mut sum = 0.0;
+        let mut row = Vec::new();
+        for &k in &idx {
+            let model_db = 20.0 * predict(held, fold_gains, k + 1).abs().max(1e-9).log10();
+            let d = DBFS[k][held_col] - POS0_H1_DBFS - model_db;
+            sum += d.abs();
+            row.push(format!("h{}:{d:+.2}", k + 1));
+        }
+        let mean = sum / idx.len() as f64;
+        // steady RMS through the production render path (ideal gains — the
+        // model carries no frame gains; the LS gains are the fit's device)
+        let sr = 44100u32;
+        let steady = |pos: f64| {
+            let mut v = wavetable::WavetableVoice::default_patch(48, sr);
+            v.osc1.wave_position = pos;
+            let s = v.render_note(0.875, 1.3);
+            audio::rms_db(&s[(sr as f64 * 0.15) as usize..(sr as f64 * 0.70) as usize])
+        };
+        let pred_rms = steady(held) - steady(0.0);
+        let meas_rms = STEADY[held_col] - STEADY_POS0_DBFS;
+        println!(
+            "WT position LOO hold-out pos {held:4.2}: gains [{:.4} {:.4} {:.4}] \
+             per-hΔ {} mean |Δ| {mean:.2} dB (≤{HARMONIC_MEAN_TOL_DB}) | \
+             RMS pred {pred_rms:+.2} meas {meas_rms:+.2} Δ {:+.2} dB (±{RMS_TOL_DB})",
+            fold_gains[0], fold_gains[1], fold_gains[2],
+            row.join(" "),
+            meas_rms - pred_rms
+        );
+        assert!(
+            mean <= HARMONIC_MEAN_TOL_DB,
+            "WT LOO pos {held}: harmonic mean |Δ| {mean:.2} dB (≤{HARMONIC_MEAN_TOL_DB})"
+        );
+        assert!(
+            (meas_rms - pred_rms).abs() <= RMS_TOL_DB,
+            "WT LOO pos {held}: steady RMS Δ {:+.2} dB (±{RMS_TOL_DB})",
+            meas_rms - pred_rms
+        );
+    }
 }
 
 // ---------------------------------------------------------------------------

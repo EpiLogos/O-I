@@ -2,11 +2,19 @@
 
 **Status:** fitted + implemented + gated, revision 1 (2026-10-08); **rev 2
 same day — depth probes** (WavePosition interior frames, Slope=linear-ramp
-law, Unison Mode gate; see "Depth probes" below). Model:
-`packages/live-dynamics/src/wavetable.rs`; gate: `wavetable_voice_golden_gate`
-+ `wavetable_law_gates` in `packages/live-dynamics/tests/golden.rs`; fitting
-tool: `harness/fit_wavetable_probes.py` (per-note RMS, harmonic scans,
-h1-envelope tracking and curve fits over the M2 + WV probe renders).
+law, Unison Mode gate); **rev 3 same night — interior interpolation law
+fitted**: the frame census is CLOSED — four frames sine | triangle | saw |
+square at WavePosition {0, 1/3, 2/3, 1}, coherent linear amplitude mix
+(leave-one-out validated; see "Interior interpolation law" below).
+Model: `packages/live-dynamics/src/wavetable.rs`; gates:
+`wavetable_voice_golden_gate` + `wavetable_law_gates` +
+`wavetable_position_leave_one_out` in
+`packages/live-dynamics/tests/golden.rs`; fitting tools:
+`harness/fit_wavetable_probes.py` (per-note RMS, harmonic scans,
+h1-envelope tracking, curve fits over the M2 + WV probe renders),
+`harness/analyze_wavetable_position.py` (complex Goertzel position→harmonics
+map with phases) and `harness/fit_wavetable_position_law.py` (law fit +
+leave-one-out).
 
 Companion documents: `midi-instruments.md` (M2 baseline, WT1/WT2
 amplitude-stage probes), `mod-matrix.md` (52×13 matrix, source attribution).
@@ -67,13 +75,16 @@ key 48 (C3 = 130.81 Hz), 4-note velocity ramp (velocity flat, unrouted —
 | Osc2 sum | WV5 | **phase-coherent identical sum**: +6.02 dB on every harmonic and note — osc2 at default stored params (pos 0, detune 0, gain 1) is the same waveform, phase-aligned |
 | Sustain | WV4 | **linear amplitude**: post-decay plateau −6.04 dB = 20·log10(0.25/0.5012) exactly (render −6.04) |
 | Volume trim | WT2 (lane 4) | linear amplitude: ×0.25 → −12.04 dB exact |
-| WavePosition | WV2 | **frame swap, not a gain**: pos 0.5 reads a different table frame wholesale — h1 −2.81 dB, h2 jumps +40.8 dB (−80 → −39.4 dBFS), h3..h8 +35..+40 dB; steady RMS −2.37 dB ≈ frame-B-alone RMS ratio (−2.45 dB model, coherent-sum reading) |
+| WavePosition | WV2 | **frame swap, not a gain**: pos 0.5 reads a different table frame wholesale — h1 −2.81 dB, h2 jumps +40.8 dB (−80 → −39.4 dBFS), h3..h8 +35..+40 dB; steady RMS −2.37 dB ≈ frame-B-alone RMS ratio (−2.45 dB model, coherent-sum reading). REVISED rev 2 (2-frame crossfade refuted) and CLOSED rev 3 (frame census: pos 0.5 is the 0.5·triangle + 0.5·saw mix — see "Interior interpolation law") |
 | Pitch | M2 | equal temperament A4=440 (key 48 = 130.81 Hz, same clip model as Operator) |
 
 Frame at pos 0 is a **pure sine** (M2: h2..h8 at −80..−87 dBFS, the dither
 floor, ≥57 dB below h1). Frame at pos 0.5, relative to its own h1
 (WV2 measurement, note-1 steady window): h2 −13.49, h3 −21.98, h4 −19.36,
-h5 −19.04, h6 −22.59, h7 −25.86, h8 −25.43 dB.
+h5 −19.04, h6 −22.59, h7 −25.86, h8 −25.43 dB. (Rev 3 reading: that
+"profile B" is not a table frame — it is the 0.5·triangle + 0.5·saw
+segment mix of the census below, which reproduces every one of those
+ratios to ≤0.5 dB from the closed-form shapes.)
 
 ### Amp envelope (fitted from M2's h1 Goertzel track, note 1 decay / note 3 release)
 
@@ -132,16 +143,25 @@ decay table vs the measured M2 track).
 ## Test lines
 
 ```
-cargo test                         # lib: 37 passed; golden: 1 passed, 10 ignored
-cargo test -- --ignored            # 7 passed, 3 failed — the 3 failures
-                                   # (operator_voice [missing OP2/OP3 renders on
-                                   # main], glue_circuit_release/envelope) fail
-                                   # IDENTICALLY at HEAD without this lane's
-                                   # changes (verified by stash); they live on
-                                   # the probe branch / are glue-circuit WIP
-cargo clippy --all-targets         # 2 pre-existing warnings (audio.rs,
-                                   # glue.rs); wavetable.rs clean
+cargo test                         # lib: 42 passed (incl. the new
+                                   # position_frame_census unit test)
+cargo test -- --ignored            # 9 passed, 3 failed — the 3 failures
+                                   # (glue_circuit_release/envelope WIP +
+                                   # glue_lam_lambda_discriminator, the λ
+                                   # acceptance target) fail IDENTICALLY at
+                                   # HEAD without this lane's changes
+                                   # (verified by stash; operator_voice now
+                                   # passes — its OP2/OP3 renders are present
+                                   # untracked in this checkout)
+cargo clippy --all-targets         # 0 warnings
 ```
+
+The WV law gates skip with a printed notice when WV2–WV5 are absent; this
+lane exercised them by placing the git-recovered renders temporarily
+(`git show 37b4daff4:…` → renders/, removed after the run — renders stay
+out of the main checkout): golden gate residuals identical to rev 1
+(+0.13 dB steady, harmonic mean 0.13 dB); WV2 model−render harmonic mean
+**0.16 dB** (rev 1's 2-frame model: 0.18), steady +0.05 dB.
 
 ## Wavetable data — factory format findings + licence boundary
 
@@ -152,15 +172,18 @@ cargo clippy --all-targets         # 2 pre-existing warnings (audio.rs,
   (`.adv` presets), which this lane did **not** unpack or study.
 - Licence boundary (standing rule, backlog row: "presets contain
   wavetables: do not redistribute"): the model embeds **no factory wave
-  data**. Both frames are GENERATED — frame A is a unit sine; frame B is
-  additive re-synthesis from the eight harmonic amplitudes MEASURED off
-  the WV2 render (magnitudes only; phases unmeasured, zero-phase used —
-  RMS-level quantities are phase-independent, which is what every gate
-  checks).
-- Consequence: the model reproduces measured levels/spectra at the two
-  evidenced positions; it is NOT a byte-level reconstruction of the
-  factory table, and interior-position timbre is interpolation, not
-  measurement (Deferred).
+  data**. All frames are GENERATED — rev 1 embedded a measured 8-harmonic
+  re-synthesis of the pos-0.5 render; rev 3 replaces that with the census's
+  closed-form ideal shapes (sine/triangle/saw/square), whose count,
+  spacing, normalization and signs are what the renders measured (phases
+  included, via the complex-Goertzel map).
+- Consequence: the model reproduces measured levels/spectra at all four
+  evidenced positions (0 / 0.25 / 0.5 / 0.75 — rev 3's census law pins the
+  interior, not just the anchors); it is NOT a byte-level reconstruction of
+  the factory table. The frames are closed-form ideal shapes whose COUNT,
+  SPACING, NORMALIZATION and SIGNS are the measurement; unprobed positions
+  (e.g. pos 0.1, 0.9) are the law's interpolation, and harmonics above k=8
+  are the law's extension (Deferred row below narrows to those).
 
 ## Depth probes (2026-10-08 evening lane) — WavePosition interior, Slope, Unison
 
@@ -192,14 +215,84 @@ Harmonic profile, note-1 steady window (dBFS; `floor` = dither floor):
   −19.1/−28.0/−33.8 — same ordering, ~3.3 dB softer). Evens at the dither
   floor. pos 0.50 and 0.75 read distinct full-spectrum (saw-family) frames.
 - **"Basic Shapes" therefore holds ≥3 discrete shape frames**, and interior
-  positions swap frame content more than they crossfade two endpoints. The
-  frame census (count, spacing — sine|triangle|saw|square at thirds is the
-  natural hypothesis) and the true interpolation law stay open (backlog).
-- **Model consequence**: `wavetable.rs`'s declared linear interior
-  interpolation is now KNOWN-WRONG against measurement. No gate exercises
-  interior positions (the golden/law gates hold at pos 0/0.5 only), so the
-  suite stays green — but no interior gate may be written against the
-  linear model; the frame census lands first.
+  positions swap frame content more than they crossfade two endpoints.
+  (Rev 3 closed the census: FOUR frames — the "softness" of pos 0.25's
+  odd ratios is the 0.75 triangle mix weight, not a softer shape.)
+
+### Interior interpolation law (rev 3, same night — the census CLOSED)
+
+Fitted from the four-render position map (`analyze_wavetable_position.py`:
+complex Goertzel h1..h8, amplitude AND phase, per position) by
+`fit_wavetable_position_law.py`; implemented in `wavetable.rs` (`frames`
+module + `frame_harmonic`) and gated by
+`wavetable_position_leave_one_out`.
+
+**The law.** "Basic Shapes" holds **four peak-normalized (±1) zero-phase
+frames at WavePosition {0, 1/3, 2/3, 1}: sine | triangle | saw | square**.
+An interior position reads the **linear coherent amplitude mix of its
+segment's two bounding frames**:
+
+```
+x = 3·pos;  i = min(floor x, 2);  w = x − i
+partial_k(pos) = (1−w)·F_i[k] + w·F_{i+1}[k]     (signed, zero-phase)
+```
+
+with the shapes' natural sine-series signs — the triangle's odd harmonics
+ALTERNATE sign (h1 +, h3 −, h5 +, h7 −); saw and square are all-positive.
+
+**Phase evidence (why the mix is coherent and the signs are as stated).**
+All measured harmonics share one common linear-phase term (≈43°/harmonic +
+a 180° convention constant — a global time-offset artifact of the export);
+the demodulated residuals are ≈0° ±3.3° on every above-floor harmonic of
+every render, and stable across independent note-ons (|Δθ| ≤ 8.5° = the
+tuning-reference error). Zero-phase frames ⇒ partials sum as signed
+amplitudes. The signs are pinned by magnitude data alone, twice over:
+pos 0.5's h3 reads −47.9 dBFS — a NEAR-CANCELLATION (|2/3π − 8/9π²|/2)
+that requires the triangle's h3 to oppose the saw's, and all-positive
+signs would overshoot by +8 dB — while pos 0.75's h3 (−35.0 dBFS) requires
+the SAME saw h3 to add coherently with the square's. Directly measured:
+pos 0.25's h3/h7 phases sit 180° inverted vs pos 0.5's (triangle
+alternation), its h1/h5 in phase.
+
+**Fit residuals (full data, ideal shapes, no free parameters beyond a
+per-frame gain):** fitted gains 1.0045 / 0.9803 / 1.0181 (triangle / saw /
+square — ideal is 1.0); per-position harmonic mean |Δ| 0.22 / 0.14 /
+0.15 dB, worst single harmonic −0.52 dB (floor-contaminated component
+reads); steady RMS predictions within 0.05 dB (the non-monotonic
+−0/−1.30/−2.37/−0.66 dB RMS ladder is the frame RMS content, reproduced).
+
+**Leave-one-out validation** (thresholds STATED before the folds ran:
+held-out harmonic mean |Δ| ≤ 2.0 dB over above-floor harmonics — floor
+−85.9 dBFS + 8 dB guard; steady RMS within ±0.5 dB; frame-gain scalars
+fitted on the two training positions, an unconstrained gain stays ideal):
+
+| held out | fold gains (tri/saw/sqr) | harmonic mean \|Δ\| | RMS Δ | |
+|----------|--------------------------|---------------------|-------|-|
+| pos 0.25 | 1.0225 / 0.9708 / 1.0323 | 0.33 dB | −0.14 dB | PASS |
+| pos 0.50 | 0.9997 / 0.9686 / 1.0357 | 0.16 dB | +0.12 dB | PASS |
+| pos 0.75 | 1.0028 / 0.9879 / 1.0000 (square unconstrained) | 0.17 dB | +0.03 dB | PASS |
+
+(pos 0 is not a fold: frame 0 is the pinned sine anchor — the prediction is
+the sine itself. The Rust gate's RMS leg renders through the production
+voice at ideal gains: Δ −0.00 / +0.06 / +0.19 dB.)
+
+**Rejected alternatives** (full-data mean |Δ| over above-floor harmonics):
+the 2-frame linear crossfade 3.86 dB (pos 0.25) / 2.58 dB (pos 0.75);
+3 frames at halves 3.86 dB at pos 0.25; 5 frames at quarters with
+pure-frame reads contradicts the triangle identity itself (h3/h1 would
+read −19.1 dB, measures −22.3; RMS would read −1.76 dB, measures −1.30).
+
+**Model consequence (resolves rev 2's KNOWN-WRONG note):**
+`wavetable.rs` now implements this law (`set_position` semantics via
+`frame_harmonic(pos, k)`; harmonics above k=8 are the law's extension
+below the evidenced band). Gate residuals after the swap:
+
+- `wavetable_voice_golden_gate` (pos 0): residuals IDENTICAL to rev 1 —
+  steady Δ +0.13 dB all notes, release crossing 0.535/0.535 s, worst
+  release window +0.83 dB, harmonic mean 0.13 dB.
+- `wavetable_law_gates` at pos 0.5 (WV2, git-recovered renders placed
+  temporarily): model−render harmonic mean **0.16 dB** (the old 2-frame
+  model measured 0.18), steady agreement +0.05 dB; WV3/WV4/WV5 unchanged.
 
 ### Amp-envelope Slope semantics (WV8_SLOPE0: Slopes_Decay 0.5 → 0.0)
 
@@ -234,11 +327,11 @@ Harmonic profile, note-1 steady window (dBFS; `floor` = dither floor):
 
 ## Deferred (open, with the probe sets to answer them)
 
-- **WavePosition frame census** (REVISED by the depth probes): the 2-frame
-  linear model is refuted; the table holds ≥3 discrete shape frames.
-  Remaining: pin the frame count/spacing (pos sweep at 1/6…1/3 steps,
-  incl. pos 1.0 exterior), the true interpolation law between frames, and
-  whether "Basic Shapes" is sine|triangle|saw|square.
+- **WavePosition frame census — CLOSED (rev 3)**: four frames sine |
+  triangle | saw | square at {0, 1/3, 2/3, 1}, coherent linear amplitude
+  mix, leave-one-out validated (section above). Remaining (thin): a pos
+  sweep at fine steps (1/12) would test the segment boundaries directly;
+  harmonics above k=8 are law-extension, not measurement.
 - **Position-envelope sources**: routes 9/12 → Osc1 Pos (1.0/0.33) idle
   on this patch (output stays sine); Envelope2/3 + LFO1/2 idle values
   unverified — an Always-on Env2 or LFO probe would activate them.

@@ -96,7 +96,9 @@ peaks above −70 dBFS); E1/E7 grids match the same positions within ±1.5 ms.
   - Tap **grid**: identical with modulation and ducking on or off (±1.5 ms).
     `Modulation_AmountDelay=0.21875` at 2 Hz did **not** audibly modulate the
     synced tap times in E1 (no wobble beyond ±1.5 ms; E2's bit-identity
-    corroborates). What AmountDelay actually modulates in synced mode: open.
+    corroborates). Round 2 quantified the wobble: a deterministic LFO sweep
+    along the tap train (±1.4 ms peak-to-peak, ≈−1 dB peak smear) — see the
+    round-2 section.
   - **Filter** (HP 50 / LP 5k): the dominant level difference. Band-limiting
     the 1-sample impulse smears its peak: E8 tap1 −2.50 vs E1 −19.63 ≈ −17 dB
     of peak smear, and the first recirculation carries most of the remaining
@@ -148,10 +150,92 @@ table above for comparison):
 - **Between-tap floors**: EC1/EC2 both sit at the scanner's near-silence floor
   (−90.31 dBFS) like E8 — Reverb_Level=0 removes the tail in both, nailing
   the internal reverb as the sole between-tap energy source.
-- **Residual**: E1's remaining ≈−5.5 dB at tap1 (−19.63 vs EC1 −14.08) is
-  attributable to the modulation section (AmountDelay wobble smearing the tap
-  peak) — attributed, not proven: an EC3_MOD-only / EC4_REV-only probe pair
-  would pin it (backlog).
+- **Residual — RESOLVED (round 2, same evening; see below)**: E1's remaining
+  ≈−5.5 dB at tap1 (−19.63 vs EC1 −14.08) is **not** modulation. The round-2
+  EC3/EC4/EC5–EC7 probes decompose it exactly: −4.62 dB is the DryWet
+  crossfade (EC1 is a DryWet=1 render compared against E1 at 0.5873) and only
+  ≈−0.9 dB is modulation smear. The original "attributed to modulation"
+  reading is refuted.
+
+### Round 2 — mod, sync/free, duck (2026-10-08 late evening)
+
+Signal `impulse.wav` for EC3/EC4 (E1-based), `signals/steps-1k.wav` for the
+duck probes (0.25 s lead, −30..−3 dBFS-peak 1 kHz steps 0.5 s each, a 0 dBFS
+step, 1.5 s tail; RMS = peak − 3.01 dB). Analyzer
+`harness/analyze_ec_duck.py` (wet-pair mode for the duck gain G(t);
+`analyze_echo_taps.py taps 0.1875` + fine peak timing for the impulse sets).
+
+| Point | Pin(s) vs base | Values |
+|-------|----------------|--------|
+| EC3_NOMOD | E1 (full preset) | Modulation_AmountDelay=0, all else E1 |
+| EC4_SYNC1_16 | E1 | Delay_SyncL/R=false, Delay_TimeL/R=0.1875 (free at the measured synced hop) |
+| EC5_DUCK_TONE | E8 sections recipe | Ducking_On=true only (Filter/Mod/Reverb off), DryWet=0.5873016119, thr 0, rel 0.1 |
+| EC5B_NODUCK | EC5 | Ducking_On=false (control) |
+| EC6_WET_DUCK | EC5 | DryWet=1 (wet-only duck shape) |
+| EC6B_WET_NODUCK | EC6 | Ducking_On=false (control) |
+| EC7_DUCK_T24 | EC6 | Ducking_Threshold=−24 |
+
+**1. The −5.5 dB tap1 residual: crossfade, not modulation (E1 fully
+decomposed).** EC3 (E1 minus mod) reproduces E1's taps to ≤0.93 dB; the gap
+EC1→EC3 is exactly the wet-path gain: 20log10(0.5873) = −4.62 dB, with
+EC1×0.5873 predicting EC3's true taps to ≤0.15 dB (tap1/3/5 L, 2/4 R). Full
+tap1 chain, exact: −2.50 (E8 bare) −11.58 (filter smear) −4.62 (DryWet
+crossfade) −0.93 (mod smear) = −19.63 (E1). Corollaries: the wet path scales
+**linearly** in DryWet at this operating point (equal-power would miss by
+~0.25 dB the other way), and the reverb's contribution to tap-window peaks is
+<0.15 dB (EC3 carries Reverb_Level=0.246, EC1 none — only the between-tap
+floors differ).
+
+**2. Modulation quantified (AmountDelay=0.21875, 2 Hz synced, phase 90°).**
+Tap-peak smear mod-on vs mod-off: −0.78..−1.49 dB (mean ≈ −1.0 dB, taps
+1–6). Timing wobble is deterministic, not jitter: with mod ON, tap offsets
+from the grid progress −0.63 → +0.18 → +1.37 ms along the L taps (−0.06 →
++0.50 → +0.58 ms on R); with mod OFF all taps sit at −0.03..−0.15 ms. The
+LFO phase sweeps continuously along the tap train; peak-to-peak ≈ ±1.4 ms,
+consistent with the dossier's ±1.5 ms. What AmountDelay does NOT do in synced
+mode: change the tap grid beyond this wobble.
+
+**3. Synced/free equivalence — CLOSED at the dotted-1/16 point.** EC4 (free,
+stored 0.1875 s both channels) ≡ E1 (synced, division −4/−3, sixteenth 3,
+SyncMode 2, stored 0.125 s) at **≤0.02 dB and 0.00 ms** on all six taps —
+including the identical modulation wobble pattern, so the mod LFO anchors to
+the same clock in both modes. The synced grid at 120 BPM maps to exactly one
+free delay of 0.1875 s; no other synced-path behavior is visible at the
+output.
+
+**4. Ducking — threshold is NOT peak-referenced; at stored pins (thr 0) it
+never engages.** EC5 vs EC5B and EC6 vs EC6B: G(t) ≡ 0.00 dB through every
+step including the 0 dBFS-peak (RMS −3.0) step. A peak-sensing detector at
+thr 0 would have engaged; so the threshold acts on the signal's slow envelope
+(steady-tone-RMS consistent), stored in dB.
+
+**5. Ducking law at thr −24 (EC7 vs EC6B), 1 kHz staircase:**
+
+| input step (peak) | RMS | excess vs thr | steady GR (L/R) |
+|---|---|---|---|
+| −30 / −24 dBFS | −33 / −27 | <0 | 0.00 dB (no duck) |
+| −18 | −21 | +3 | **−3.90 / −3.90** |
+| −12 | −15 | +9 | **−8.38 / −8.38** |
+| −6 | −9 | +15 | **−13.10 / −13.10** |
+| −3 | −6 | +18 | −15.07 / **−15.44** (L contam.) |
+| 0 | −3 | +21 | (contam.) / **≈−17.8** |
+
+- Depth ≈ **0.75–0.79 dB per dB of envelope excess** above threshold (clean
+  points +3/+9/+15), sub-unity — a compressed duck, not 1:1. Top-step values
+  are lower bounds: the **unducked control itself clips at export** on the
+  −3/0 steps (up to 11.6k samples ≥32766 on L; EC7 never clips), so read
+  −15.4/−17.8 as floors, and the apparent L/R split there as an artifact
+  (clean steps agree to 0.01 dB).
+- **Detector path — resolved**: GR onset is within ≤5 ms of the input step
+  (no +0.1875 s hop lag) → the detector listens to the pre-delay/dry input
+  and the gain is applied at the output in real time (it does NOT travel
+  through the delay line with the taps).
+- **Attack**: fast, τ ≈ 15–25 ms through the 20 ms RMS window; no stored
+  attack parameter exists in the XML.
+- **Release**: amplitude-exponential recovery, τ ≈ 111 ms ≈ the stored
+  Ducking_Release 0.1 s (20 ms window smearing included); not dB-linear.
+  Stored unit = seconds.
+
 
 ## Determinism (E4 / E1b pair, per protocol)
 
@@ -175,12 +259,18 @@ estimated duration: 256.000000 sec
 - Renders: `harness/renders/E1_IMPULSE_default_v2.aif`, `E2_DELAY2X_v2.aif`,
   `E3_FB_HALF_v2.aif`, `E1b_v2.aif`, `E5_FREEMODE.aif`, `E6_FREE2X.aif`,
   `E7_FB075.aif`, `E8_BARE.aif`, sections probes `EC1_FILTER.aif`,
-  `EC2_DUCK.aif` (+ `.asd`)
+  `EC2_DUCK.aif`, round-2 probes `EC3_NOMOD.aif`, `EC4_SYNC1_16.aif`,
+  `EC5_DUCK_TONE.aif`, `EC5B_NODUCK.aif`, `EC6_WET_DUCK.aif`,
+  `EC6B_WET_NODUCK.aif`, `EC7_DUCK_T24.aif` (+ `.asd`)
 - Sets: `harness/live/e1-impulse-default.als`, `e2-delay2x.als`,
   `e3-fb-half.als`, `e1b.als`, `E5_FREEMODE.als`, `E6_FREE2X.als`,
-  `E7_FB075.als`, `E8_BARE.als`, `EC1_FILTER.als`, `EC2_DUCK.als`
-- Analyzer: `harness/analyze_echo_taps.py` (stereo broad peak scan + ±8 ms
-  windowed tap table)
+  `E7_FB075.als`, `E8_BARE.als`, `EC1_FILTER.als`, `EC2_DUCK.als`,
+  `EC3_NOMOD.als`, `EC4_SYNC1_16.als`, `EC5_DUCK_TONE.als`,
+  `EC5B_NODUCK.als`, `EC6_WET_DUCK.als`, `EC6B_WET_NODUCK.als`,
+  `EC7_DUCK_T24.als`
+- Analyzers: `harness/analyze_echo_taps.py` (stereo broad peak scan + ±8 ms
+  windowed tap table), `harness/analyze_ec_duck.py` (EC duck pair mode:
+  20 ms RMS windows, per-step means, onset, release-τ fit)
 - Preset source: `evidence/devices/Echo/preset-time-travel.xml`
 - Superseded contaminated first-pass renders: `harness/renders/contaminated-v1/`
 
@@ -197,17 +287,31 @@ estimated duration: 256.000000 sec
 - Bare-line baseline: grid exact, pure FB decay after one settling loss: **high** (E8)
 - Filter = dominant level loss (~17 dB impulse-peak smear): **high** (E8 vs E1 tap1)
 - Internal reverb = between-tap tail: **high** (−54 vs −90 dBFS floors)
-- Modulation/ducking leave the synced tap grid unchanged: **high** (grid comparison); what AmountDelay modulates: **open**
+- Modulation/ducking leave the synced tap grid unchanged: **high** (grid comparison); what AmountDelay modulates: **quantified (round 2)** — deterministic ±1.4 ms LFO wobble along the tap train, ≈−1 dB tap-peak smear
+- −5.5 dB tap1 residual = modulation: **refuted (round 2)** — −4.62 dB DryWet crossfade + ≈−0.9 dB mod smear; E1 tap1 decomposes exactly (bare −2.50 → filter −11.58 → crossfade −4.62 → mod −0.93 → −19.63)
+- Wet path linear in DryWet at 0.5873: **medium-high** (EC1×0.5873 = EC3 to ≤0.15 dB; one operating point)
+- Synced grid ≡ free 0.1875 s at 120 BPM (division −4/−3, sixteenth 3, SyncMode 2): **high** (EC4 ≡ E1 ≤0.02 dB, 0.00 ms, all six taps)
+- Ducking threshold on the slow envelope (RMS-like), stored in dB; NOT peak-referenced: **high** (0 dBFS-peak tone inert at thr 0; −27 dB RMS inert / −21 dB RMS ducked at thr −24)
+- Duck gain applied at output in real time, detector on the dry/pre-delay input: **high** (onset ≤5 ms after the step, no hop lag)
+- Duck depth ≈0.75–0.79 dB per dB excess (+3/+9/+15 clean); attack τ ≈ 15–25 ms; release τ ≈ 0.111 s ≈ stored 0.1 s: **high** (EC7 staircase; top-step depths are lower bounds — control-render clipping)
 
 ## Limitations / unverified
 
 - 44.1k/16-bit export of a 48k source: dither non-determinism (max |Δ| 2 LSB16);
   SRC ringing on a 1-sample impulse sets the direct's observed shape (−13.83 dBFS).
+- The unducked wet-only control (EC6B) exceeds full scale on the −3/0 steps of
+  the staircase (FB 0.5 tap sum at DryWet=1): those control channels clip at
+  export, so EC7's duck depths at +18/+21 dB excess are lower bounds; the
+  exact saturation curve near and beyond −18 dB GR is unmeasured.
 - Every free-mode test had the slower time at exactly 2× the faster (E1: 0.375/0.1875,
   E5: 0.5/0.25, E6: 1.0/0.5) — the pingpong topology beyond "hop = min, repeats at
   2×hop" is under-determined; a 3:1 ratio pair with TimeLink=false would pin it.
+  (EC4 pinned tL=tR — also not a discriminant for min() vs link.)
 - FB range above 1.0 (self-oscillation) untested.
-- SyncMode=2 semantics, Repitch behavior, gate/noise/wobble sections: untouched.
+- SyncMode=2 semantics beyond the dotted mapping, Repitch behavior,
+  gate/noise/wobble sections: untouched. Modulation envelope mix
+  (Modulation_EnvelopeMix) and AmountFilter paths untested; ducking depth
+  curve modeled only at 1 kHz / this preset's other pins.
 - No cross-check against the binary yet.
 
 ## Binary lane evidence (2026-10-07 — Ghidra 12.1.4, project `LiveRE`)

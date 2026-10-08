@@ -5,7 +5,8 @@
 //! `docs/research/ableton-live-12.0.25/evidence/devices/Wavetable/default.xml`;
 //! fitted constants cite the golden renders measured in
 //! `docs/research/ableton-live-12.0.25/devices/wavetable-voice.md`
-//! (M2 baseline + WV2..WV5 probes, Live 12.0.25, export 44.1 kHz/16-bit).
+//! (M2 baseline + WV2..WV5 probes + WV6/WV7 interior-position depth probes,
+//! Live 12.0.25, export 44.1 kHz/16-bit).
 //!
 //! Scope: the default patch sounds oscillator 1 alone (oscillator 2 and the
 //! sub oscillator store `On = false`); the measured output is a pure sine —
@@ -92,44 +93,86 @@ pub mod fitted {
     /// sum of two identical waveforms. The model renders osc 2 as the same
     /// oscillator function summed.
     pub const OSC2_COHERENT_SUM_DB: f64 = 6.0206;
-
-    /// Frame at WavePosition 0.5, harmonic amplitudes RELATIVE TO ITS OWN
-    /// h1, measured from the WV2_POS50 render (Goertzel, note-1 steady
-    /// window). Index k-1 = harmonic k. The position-0 frame is a pure
-    /// sine (M2: h2..h8 at the dither floor, ≥57 dB below h1) — the model's
-    /// frame A is a unit sine.
-    ///
-    /// These are MEASUREMENTS of the rendered output re-synthesized
-    /// additively; no factory wavetable data is embedded (licence rule).
-    /// Literal forms of 10^(dB/20) for the cited dB ratios.
-    pub const FRAME_B_REL: [f64; 8] = [
-        1.0,
-        0.211_592, // h2, −13.49 dB
-        0.079_616, // h3, −21.98 dB
-        0.107_647, // h4, −19.36 dB
-        0.111_686, // h5, −19.04 dB
-        0.074_216, // h6, −22.59 dB
-        0.050_933, // h7, −25.86 dB
-        0.053_518, // h8, −25.43 dB
-    ];
-    /// Frame B's h1 relative to frame A's h1: WV2 h1 reads −25.92 dBFS vs
-    /// M2's −23.11 (−2.81 dB) over the identical envelope window.
-    pub const FRAME_B_H1: f64 = 0.723_602;
 }
 
-/// Harmonic amplitude (1-based k) of the generated frame at WavePosition
-/// `pos`. Evidence anchors: pos 0 = pure sine (M2), pos 0.5 = the measured
-/// FRAME_B profile (WV2). Interior positions crossfade linearly between the
-/// two anchored frames (UNTESTED — interpolation, not measurement); positions
-/// beyond 0.5 hold frame B (extrapolation, deferred until a pos>0.5 probe
-/// exists). Harmonics above k=8 sit at the render's dither floor in both
-/// anchors and are omitted (inaudible at these levels).
+/// Frame census (rev 3 — supersedes the 2-frame model, which the depth
+/// probes REFUTED): "Basic Shapes" holds **four** discrete shape frames at
+/// WavePosition {0, 1/3, 2/3, 1} — sine | triangle | saw | square — each
+/// PEAK-normalized (±1) and zero-phase (a sine series with the shapes'
+/// natural signs; the triangle's odd harmonics ALTERNATE sign).
+///
+/// Evidence (`wavetable-voice.md` "Interior interpolation law", rev 3):
+///   - pos 0.00 = pure sine (M2: h2..h8 at the dither floor).
+///   - pos 0.25 reads odd harmonics ONLY, and its h1
+///     (0.25·1 + 0.75·8/π² = 0.8580) matches the render to 4 decimals
+///     (measured 0.85797) — the 0.75-weight triangle anchor of segment
+///     [0, 1/3] (WV6).
+///   - pos 0.50 = 0.5·triangle + 0.5·saw: h1 = (8/π² + 2/π)/2 matches WV2's
+///     0.7234 to 4 decimals, and the h3 NEAR-CANCELLATION
+///     (|2/3π − 8/9π²|/2) reproduces the measured −47.9 dBFS only with the
+///     triangle's alternating sign (all-positive signs predict +8 dB too
+///     high; the same signs must flip for pos 0.75 to fit).
+///   - pos 0.75 = 0.75·saw + 0.25·square: every harmonic within 0.4 dB of
+///     WV7 (h1 0.7958 vs 0.7954), evens from the saw alone.
+///   - Phases (analyze_wavetable_position.py): stable across notes
+///     (≤8.5° = the tuning-reference error); after removing the common
+///     linear-phase term, residuals ≈0° — frames are zero-phase and the
+///     coherent-sum mix is valid. pos 0.25's h3/h7 read 180° inverted vs
+///     pos 0.5's, directly confirming the triangle signs.
+///
+/// The frames are GENERATED (closed-form additive series) — no factory wave
+/// data is embedded (licence rule, `wavetable-voice.md`). The renders pin
+/// the CENSUS (count, spacing, shapes, signs) and the MIXING LAW; residuals
+/// per harmonic are ≤0.5 dB (floor-contaminated component reads).
+mod frames {
+    /// Signed amplitude of harmonic `k` (1-based) of frame `frame`.
+    /// Valid for every k ≥ 1 (k > 8 is the law's extension below the
+    /// evidenced band, used only for RMS sums).
+    pub fn partial(frame: usize, k: usize) -> f64 {
+        let kf = k as f64;
+        let odd = k % 2 == 1;
+        match frame {
+            0 => if k == 1 { 1.0 } else { 0.0 }, // sine
+            // triangle: odd harmonics only, ALTERNATING sign
+            1 => {
+                if odd {
+                    (8.0 / (std::f64::consts::PI * std::f64::consts::PI))
+                        / (kf * kf)
+                        * (if ((k - 1) / 2).is_multiple_of(2) { 1.0 } else { -1.0 })
+                } else {
+                    0.0
+                }
+            }
+            2 => 2.0 / (std::f64::consts::PI * kf), // sawtooth: all k
+            _ => if odd { 4.0 / (std::f64::consts::PI * kf) } else { 0.0 }, // square
+        }
+    }
+
+    /// Segment under `pos`: returns (lower frame, mix weight toward the
+    /// upper frame). `x = 3·pos`; the last segment clamps so pos 1.0 reads
+    /// the square frame exactly.
+    pub fn segment(pos: f64) -> (usize, f64) {
+        let x = (3.0 * pos).clamp(0.0, 3.0);
+        let i = (x as usize).min(2);
+        (i, x - i as f64)
+    }
+}
+
+/// Harmonic amplitude (signed, 1-based `k`) of the generated frame at
+/// WavePosition `pos`: the LINEAR-AMPLITUDE mix of the two frames bounding
+/// `pos`'s segment — `(1−w)·F_i[k] + w·F_{i+1}[k]`, coherent (zero-phase
+/// partials sum as signed amplitudes).
+///
+/// Measured-map residuals of this law: full fit mean |Δ| 0.14–0.22 dB per
+/// position; leave-one-out (fit frame-gain scalars on two interior
+/// positions, predict the third) worst fold 0.33 dB harmonic mean / 0.14 dB
+/// RMS — thresholds were ≤2 dB / ±0.5 dB (`wavetable_position_leave_one_out`
+/// gate). Harmonics above k=8 are the law's extension below the evidenced
+/// band (the probes measured k ≤ 8; higher partials sit at the render's
+/// dither floor).
 pub fn frame_harmonic(pos: f64, k: usize) -> f64 {
-    assert!((1..=8).contains(&k), "harmonic index 1..8");
-    let w = (pos * 2.0).clamp(0.0, 1.0);
-    let a = if k == 1 { 1.0 } else { 0.0 };
-    let b = fitted::FRAME_B_H1 * fitted::FRAME_B_REL[k - 1];
-    a * (1.0 - w) + b * w
+    let (i, w) = frames::segment(pos);
+    (1.0 - w) * frames::partial(i, k) + w * frames::partial(i + 1, k)
 }
 
 /// Wavetable's amp envelope as it is audible on the default patch:
@@ -325,10 +368,10 @@ mod tests {
             "osc2 Δ {d:.2} dB vs coherent +6.02");
     }
 
-    /// Position law (WV2): frame B at pos 0.5 carries the measured
-    /// harmonic profile and reads −2.45 dB RMS vs frame A (render: −2.37).
+    /// Position law (WV2): pos 0.5 = 0.5·triangle + 0.5·saw carries the
+    /// measured profile and reads −2.43 dB RMS vs frame A (render: −2.37).
     #[test]
-    fn position_frame_b_matches_wv2_ratios() {
+    fn position_half_matches_wv2_ratios() {
         let mut v = WavetableVoice::default_patch(48, SR);
         let base = v.render_note(0.875, 1.3);
         v.osc1.wave_position = 0.5;
@@ -337,11 +380,43 @@ mod tests {
             rms_db(&s[(SR as f64 * 0.15) as usize..(SR as f64 * 0.70) as usize])
         };
         let d = steady(&probe) - steady(&base);
-        assert!((d - (-2.45)).abs() <= 0.1, "pos0.5 Δ {d:.2} dB vs frame-alone −2.45");
-        // h2 rises from the dither floor to −39.4 dBFS (render WV2)
+        assert!((d - (-2.43)).abs() <= 0.1, "pos0.5 Δ {d:.2} dB vs mix −2.43");
+        // h2 rises from the dither floor to −39.4 dBFS (render WV2; the mix
+        // predicts −39.07: 0.5·(2/2π) against the −23.11 h1 anchor)
         let h2 = crate::operator::goertzel_amp(&probe, SR, 2.0 * v.freq_hz, 0.15, 0.70);
         let h2_db = amp_to_db(h2);
-        assert!((h2_db - (-39.41)).abs() <= 1.0, "frame B h2 {h2_db:.2} vs −39.41");
+        assert!((h2_db - (-39.41)).abs() <= 1.0, "pos0.5 h2 {h2_db:.2} vs −39.41");
+    }
+
+    /// Frame census (rev 3): the four anchors read their pure shape, and the
+    /// probed interior positions carry the segment-mix signature — pos 0.25
+    /// is odd-harmonics-only (sine+triangle), pos 0.75's h1 is the
+    /// 0.75·saw + 0.25·square coherent sum.
+    #[test]
+    fn position_frame_census_matches_probed_anchors() {
+        let pi = std::f64::consts::PI;
+        // anchors: pure frames at thirds
+        let h = |p: f64, k: usize| frame_harmonic(p, k);
+        assert!((h(0.0, 1) - 1.0).abs() < 1e-12 && h(0.0, 2).abs() < 1e-12,
+            "pos 0 is the unit sine");
+        assert!((h(1.0 / 3.0, 1) - 8.0 / (pi * pi)).abs() < 1e-12,
+            "pos 1/3 triangle h1");
+        assert!((h(1.0 / 3.0, 3) + (8.0 / (pi * pi)) / 9.0).abs() < 1e-12,
+            "pos 1/3 triangle h3 carries the alternating MINUS sign");
+        assert!((h(2.0 / 3.0, 1) - 2.0 / pi).abs() < 1e-12, "pos 2/3 saw h1");
+        assert!((h(1.0, 1) - 4.0 / pi).abs() < 1e-12 && h(1.0, 2).abs() < 1e-12,
+            "pos 1 square: h1 4/π, evens 0");
+        // pos 0.25 (WV6): 0.25 sine + 0.75 triangle — evens EXACTLY zero,
+        // h1 to the measured 0.85797 (render) within 0.1 dB
+        assert!(h(0.25, 2) == 0.0 && h(0.25, 4) == 0.0,
+            "pos 0.25 evens vanish (measured at the dither floor)");
+        assert!((h(0.25, 1) - 0.857_97).abs() < 0.005,
+            "pos 0.25 h1 {} vs measured 0.85797", h(0.25, 1));
+        // pos 0.75 (WV7): h1 = 0.75·(2/π) + 0.25·(4/π) = 2.5/π
+        assert!((h(0.75, 1) - 2.5 / pi).abs() < 1e-12,
+            "pos 0.75 h1 coherent saw+square sum");
+        assert!((h(0.75, 2) - 0.75 * 2.0 / (2.0 * pi)).abs() < 1e-12,
+            "pos 0.75 h2 comes from the saw alone");
     }
 
     /// Release timing (stated gate law): the envelope's −40 dB point must
