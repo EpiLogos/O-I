@@ -184,21 +184,59 @@ mod tests {
 }
 
 // ===========================================================================
-// Circuit model — derived from the per-sample kernel decompile
-// (circuit-model lane, 2026-10-08)
+// Circuit model — corrected per-sample mechanism (integration lane,
+// 2026-10-08)
 //
-// The Glue's DSP is a per-sample numerically-solved circuit model, not a
-// feed-forward gain computer. This section reimplements that loop at sample
-// level. Provenance discipline (lane brief, 2026-10-08): constants taken from
-// the owner-private decompile are embedded WITH file+line citations; the full
-// derivation, the unmapped-constant inventory and the fitted closure are
-// documented in devices/glue-compressor.md, section "Circuit-model derivation"
-// — this code carries citations only, no derivation prose.
+// Implements the state-slot ledger and corrected mechanism of
+// devices/glue-perblock-derivation.md (the per-block lane redo), which mapped
+// every constant the earlier circuit-model lane had to fit. This model runs
+// LEDGER CONSTANTS ONLY — no fitted scalars (`CircuitFit` is kept for
+// interface stability and is retired; see its doc). The earlier fitted
+// closure (devices/glue-compressor.md "Circuit-model derivation") is
+// superseded: its G13/G15 sign inversion and 1.6× fast recovery were
+// artifacts of the then-unmapped per-block layer.
+//
+// Per-sample signal path ([PB §n] = derivation section n):
+//   1. detector gain    G = 10^((7.8·s[0x120] − acc(0x188) − 18)/20)
+//                       [K113-115], with s[0x120] the leg-1 dB state
+//                       tracking y (no makeup) and acc(0x188) the
+//                       de-zippered Threshold. There is NO level-vs-
+//                       threshold comparison anywhere: the over-threshold
+//                       amount rides the fast-minus-slow detector spread
+//                       through the Ratio LUT.
+//   2. detector cascade fast one-pole (per-block coefficient, 0x1b8 target
+//                       with the factory 0x1bc = 2.0), then
+//                       e = (in − fast)·G, slow one-pole (fixed 0x170
+//                       coefficient). The PRNG dither is dead in this build
+//                       (scale ≈ 1e-20, [PB §2: 0x1c4]) — ν = 0, w = 0.
+//   3. ratio LUT        the fast-minus-slow spread indexes the center-
+//                       relative curve; the Range ceiling shapes it with
+//                       t = 0.15385·|Range| − 0.99 from the ramped Range
+//                       accumulator — NOT a depth tracker.
+//   4. Newton loop      x rides the shaped LUT (over-branch, f(u) =
+//                       m(e^{Bu}−1), u clamped at u_max); y is a STATE
+//                       recursion — a one-pole lowpass of the solved x with
+//                       the over-branch pole k/(A+k+R̂) (slows as the attack
+//                       period grows: the attack onset AND, through the DC
+//                       gain A/(A+R̂) which k cancels out of, the steady
+//                       shallowing — the attack coupling of [PB §3]); below
+//                       the LUT the under-branch relaxes y toward exactly
+//                       zero at k/(k+R̂) (no LUT term exists there — the
+//                       recovery path, placed on the measured release law).
+//   5. applied gain     raw = Makeup + 7.8·y INSIDE the applied dB leg
+//                       (s[0x128]); DryWet crossfades IN THE GAIN DOMAIN.
+//   6. output           single audio path; PeakClipIn selects clip/no-clip.
+//
+// The applied path carries no integrator of the LUT value: both dB legs
+// track their raw inputs sample-directly (the 0x178/0x17c/0x180 smoother
+// collapses to a pass-through at every practical N — [PB §2]), so recovery
+// is the under-branch relaxation alone — the measured clean single pole.
 //
 // Citation shorthand below:
 //   [K#]   = evidence/binary/glue-kernel-decompilation.txt line #
 //   [S#]   = evidence/binary/glue-shell-functions.txt line # (FUN_…)
 //   [D#]   = evidence/binary/glue-setters-decompilation.txt line #
+//   [PB#]  = devices/glue-perblock-derivation.md section reference
 //   [G#]   = devices/glue-compressor.md section reference
 // ===========================================================================
 
@@ -222,11 +260,40 @@ pub const RELEASE_MENU_US: [f64; 7] =
 /// for attack is recorded as open in the dossier).
 pub const TAU_PER_MENU_US: f64 = 0.4701;
 
-/// Release-setter tiny constant 0x34fc544f ≈ 4.7004e-7 [S74]; the attack
-/// setter derives its loop constant as 2× this × rate [S161]. Note
-/// 2×4.7004e-7 ≈ 9.4e-7, the constant the release setter multiplies by rate
-/// [S84] — both setters write the same magnitude into the loop-state slots.
+/// Release-setter tiny constant 0x34fc544f ≈ 4.7004e-7 [S74]; the setters
+/// derive their loop constants as multiples of this × the block count N =
+/// os·block ([PB §2: 0xbc] k = 2·0x88·N). The literal per-block value's
+/// per-sample scaling is NOT derivable from the captured layer ([PB §4]);
+/// the model below solves k from the measured under-branch relaxation pole
+/// instead (see `CircuitModel::new`).
 pub const SETTER_TINY: f64 = 4.7004e-7;
+
+/// Detector scale in the G law and the GR meter [PB §2: 0xa8].
+pub const DETECTOR_SCALE: f64 = 7.8;
+
+/// Ceiling scale 1/7.8 [PB §2: 0xac].
+pub const CEIL_SCALE: f64 = 0.128205;
+
+/// Constant offset of the detector-gain exponent [K113-115].
+pub const G_LAW_OFFSET_DB: f64 = 18.0;
+
+/// Over-branch nonlinearity f(u) = m·(e^{B·u} − 1): m [PB §2: 0x98],
+/// B [PB §2: 0xa4] — decompile constants, no longer fitted.
+pub const OVER_M: f64 = 6.8132e-9;
+pub const OVER_B: f64 = 19.23077;
+
+/// Over-branch clamp u_max [PB §2: 0xc8]: 0.40361890 at attack menu index 0,
+/// 0.38866684 otherwise.
+pub const U_MAX: f64 = 0.38866684;
+pub const U_MAX_ATT0: f64 = 0.40361890;
+
+/// Stage-2 detector coefficient rate [PB §2: 0x170 = 1 − exp(−1.1·2π/N)]:
+/// fixed, NOT release-derived (τ ≈ 0.43 ms at N = 128).
+pub const STAGE2_RATE: f64 = 1.1;
+
+/// Range-ceiling law constants [K154]: t = |acc(0x1a0)·1.2·(1/7.8)| + 0.01 − 1.
+pub const CEIL_LIN: f64 = 1.2;
+pub const CEIL_CONST: f64 = 0.01;
 
 /// Newton solver tolerances: |Δ| ≤ |x|·1e-5 + 1e-7, capped at 10 iterations.
 /// [K232, K385].
@@ -485,59 +552,39 @@ pub fn lut_lookup(table: &[f32; 512], delta: f64) -> f64 {
     lo * (1.0 - frac as f64) + hi * frac as f64
 }
 
-/// Fitted closure constants.
+/// RETIRED fitted-closure constants (kept for interface stability).
 ///
-/// The kernel reads its per-block coefficient sources from state slots whose
-/// constants-to-parameters mapping is NOT in the captured decompile (slots
-/// 0x190/0x19c/0x1a8/0x1b4/0x1c0, 0x98/0xa4/0xc8, 0x170, 0x178/0x17c/0x180,
-/// 0x1e8, 0x1c4/0x1c8, 0xac, 0x88/0x7c; inventory in the derivation section).
-/// Those slots are replaced here by a minimal fitted closure, calibrated on
-/// the measured static anchors at the preset pins ONLY (G1 curve,
-/// Attack 2 / Release 0 / Ratio 1, [G gain maps]); the envelope-family gate
-/// (G12–G15) is then an out-of-sample test of the derived loop structure.
+/// The per-block lane redo mapped every slot this closure once stood in for
+/// (slots 0x190/0x19c/0x1a8/0x1b4/0x1c0, 0x98/0xa4/0xc8, 0x170,
+/// 0x178/0x17c/0x180/0x1e8, 0xac — [PB §2]); the corrected
+/// `CircuitModel` reads the ledger constants directly and consults NO field
+/// of this struct. The fields remain so the retained calibration driver and
+/// external callers keep compiling; new code must not fit them.
 #[derive(Debug, Clone)]
 pub struct CircuitFit {
-    /// Weight of the solved level y (dB) inside the detector-gain exponent.
-    /// Closure for the s_a8·db1 term of [K115].
+    /// Retired (was: weight of y in the detector-gain exponent).
     pub gain_y: f64,
-    /// Weight of the over-threshold level (dB) inside the same exponent.
-    /// Closure for the acc(0x188) level-tracking term of [K115].
+    /// Retired (was: weight of the over-threshold level in the exponent).
     pub level_w: f64,
-    /// Constant offset (dB) of the same exponent (closure for the −18.0 term
-    /// [K115] lumped with the unmapped coefficient scales).
+    /// Retired (was: exponent offset).
     pub offset: f64,
-    /// Level-tracker time constant (s) — closure for the acc(0x188) integrator.
+    /// Retired (was: level-tracker time constant).
     pub lvl_tc_s: f64,
-    /// Drive gain of the applied-reduction integrator: the applied gain (dB)
-    /// leakily integrates the LUT-shaped drive, gr' = (−drive_gain·(−lut_avg)
-    /// − gr)/τ_release [closure for the dB-domain filter states 0x120/0x128,
-    /// K243-253]. The integrator form is forced by measurement: the applied
-    /// reduction reaches −8.12 dB at Ratio 1 and −17.43 dB at Ratio 0
-    /// [G D1-final] while the ratio LUTs bottom at −6.80 / −3.56 dB
-    /// [glue-ratio-tables.txt edges] — the applied path cannot be a
-    /// static map of the LUT value. The shared release-law leak (input and
-    /// leak both ∝ 1/τ_release) makes the steady depth release-independent
-    /// while the recovery keeps the measured single-pole τ [G reconciliation].
+    /// Retired (was: applied-reduction integrator drive — the 1.6× fast
+    /// recovery bug; the LUT integrator no longer exists).
     pub drive_gain: f64,
-    /// Nonlinear over-branch stiffness B (closure for state 0xa4), with
-    /// M = 1.0 (0x98) and clamp bound 20.0 (0xc8). Dimensionless in the
-    /// dB-domain solver.
+    /// Retired (was: over-branch stiffness B — now the ledger constant
+    /// [`OVER_B`]).
     pub branch_b: f64,
-    /// Scale of the rate constant inside the solver denominators: the setters
-    /// write k = 2×SETTER_TINY×rate [S161] and s_bc = 9.4e-7×rate [S84]; the
-    /// kernel-time "rate" is unmapped, taken here as sample_rate/block_size
-    /// (the block-rate reading — the alternative full-rate reading is
-    /// documented in the derivation section).
+    /// Retired (was: solver rate scale).
     pub rate_scale: f64,
 }
 
 impl Default for CircuitFit {
-    /// Fitted values (see `static_closure_calibration_search` for the search;
-    /// derivation section documents the fit and its residuals: below-threshold
-    /// ≤0.01 dB, −0.82/−3.68/−5.99/−8.08 vs measured −0.27/−3.91/−5.98/−8.12
-    /// at the four over-threshold steps — max |Δ| 0.55 dB at the threshold
-    /// step, the soft-knee residual).
     fn default() -> Self {
+        // The historical fitted values, kept as the record of the closure
+        // this lane retired (devices/glue-compressor.md, "The fitted
+        // closure"). They no longer influence the model.
         CircuitFit {
             gain_y: 2.05,
             level_w: 0.176,
@@ -594,7 +641,7 @@ impl Default for CircuitParams {
     }
 }
 
-/// Per-sample circuit state (slot names = kernel struct offsets where mapped).
+/// Per-sample circuit state (slot names = kernel struct offsets).
 #[derive(Debug, Clone)]
 pub struct CircuitState {
     /// Stage-1 one-pole per channel [K117-120: 0x110 / 0x130].
@@ -605,82 +652,190 @@ pub struct CircuitState {
     pub x: f64,
     pub y: f64,
     /// Solver support states [K180-183: 0x28 / 0x38] and noise integrator
-    /// [K239: 0x48].
+    /// [K239: 0x48]. s28 stays 0 for release ≠ 6 ([PB §2: 0xc0] = 0).
     pub s28: f64,
     pub s38: f64,
     pub nint: f64,
-    /// Range-ceiling depth tracker (closure state for acc(0x1a0), [K154]).
-    pub acc3: f64,
-    /// Level tracker in dB (closure state for the acc(0x188) source).
-    pub lvl_db: f64,
-    /// Applied-gain smoother in dB (closure state for 0x120/0x128).
-    pub gr_db: f64,
-    /// Shared leaky clipper peak [K303-306, K338-341: 0x24c].
+    /// Leg-1 detector dB state s[0x120] — tracks y (NO makeup), feeds the G
+    /// law [K113-115].
+    pub det_db: f64,
+    /// Leg-2 applied dB state s[0x128] — raw = acc(Makeup) + 7.8·y, feeds the
+    /// applied gain [K243-255].
+    pub app_db: f64,
+    /// Smoother input holds s[0x158] / s[0x15c] (leg 1 / leg 2) [K243, K253].
+    pub det_raw_prev: f64,
+    pub app_raw_prev: f64,
+    /// De-zipper accumulators [PB §1]: 0x188 Threshold, 0x19c Makeup,
+    /// 0x1a0 Range (negated), 0x1b4 DryWet (mapped), 0x1c0 stage-1 coeff.
+    pub acc: [f64; 5],
+    /// Per-block linear ramp increments toward the targets [PB §1,
+    /// FUN_1017a028c].
+    pub inc: [f64; 5],
+    /// Shared leaky clipper peak [K303-306, K338-341: 0x24c] (metering slot).
     pub clip_peak: f64,
-    /// Dry/wet ramp [K343-344].
-    pub wet: f64,
 }
 
 /// The Glue circuit model: a sample-level simulation of the decompiled
-/// per-sample kernel [K59-389], with the unmapped per-block coefficient layer
-/// replaced by `CircuitFit` (see the derivation section in
-/// devices/glue-compressor.md).
+/// per-sample kernel [K59-389] with the mapped per-block layer of
+/// devices/glue-perblock-derivation.md — ledger constants only, no fitted
+/// scalars.
 pub struct CircuitModel {
     pub params: CircuitParams,
+    /// Retired fitted closure — carried for interface stability, never read.
     pub fit: CircuitFit,
     pub sample_rate: u32,
-    /// Solver coefficients (per sample).
-    a_ps: f64,
-    r_ps: f64,
-    s_bc: f64,
-    g_solve: f64,
+    /// Solver coefficients (per sample, [PB §2]).
+    /// A = 1/attack period, R̂ = 1/release period (ledger magnitudes 0xb0/
+    /// 0xb4; only their ratio enters the model — the y DC gain A/(A+R̂)).
+    a_att_us: f64,
+    a_rel_us: f64,
+    /// k solved so the UNDER-BRANCH pole (the recovery path, s[0x60]·k =
+    /// k/(k+R̂)) lands on the measured release law τ = TAU_PER_MENU_US·menu
+    /// ([PB §4]: the absolute per-sample factor of the literal k = 9.4e-7·N
+    /// is open; the rebuild reproduces the measured single pole by
+    /// construction). The same k keeps the s38 coupling microscopic
+    /// (s38 = k·Δy − s38_prev alternates at O(k·Δy) ≈ 0).
+    k_sol: f64,
+    /// Over-branch gain s[0x58] = 1/(A+k+R̂) [S169].
+    g_over: f64,
+    /// Under-branch gain s[0x60] = 1/(k+R̂) [S170].
+    g_under: f64,
+    /// c4 = k + R̂ [PB §2: 0xc4, S167-170].
     c4: f64,
-    /// Detector stage-1 / stage-2 per-sample coefficients.
-    a_att: f64,
-    a_rel: f64,
-    /// Applied-reduction integrator leak rate (1/samples), τ = measured
-    /// release law (closure v3, see `CircuitFit::drive_gain`).
-    a_leak: f64,
+    /// Detector stage-1 coefficient (attack-locked — the measured attack-onset
+    /// law stands in for the open 0x1bc binding [PB §4]).
+    a_s1: f64,
+    /// Detector stage-2 coefficient (release-locked — the 0x170 residual
+    /// note in `new` records why the fixed per-block reading is not used).
+    a_s2: f64,
+    /// Over-branch clamp for the active attack menu case [PB §2: 0xc8].
+    u_max: f64,
+    /// De-zipper targets [Threshold, Makeup, −Range, DryWet-mapped, stage-1].
+    targets: [f64; 5],
+    /// Applied-dB smoother coefficients (s178, s17c, s180) from the per-block
+    /// closed form [PB §2: 0x178/0x17c/0x180] — a pass-through at practical N.
+    smoother: (f64, f64, f64),
     pub state: CircuitState,
+}
+
+/// Applied-dB smoother coefficients [PB §2, decompile-confirmed closed form]:
+/// with `D = 15900·2π/N` (scaled by `s1e8`, state 0x1e8 = 1.0 in the captured
+/// set), `w = min(D, π/2)`, `a = 1/(1+w²/D²)`, `b = 1/(1+π²/D²)`,
+/// `c = cos(w)`:
+/// `g = min(2·[(b−a) + c·(a−b) + √((1−c²)(a−b)(1−a))] / ((c+b−2a+1) − c·b), 1)`,
+/// `h = (√(g²(g−2)²·b)/g² + 1)/2`; returns `(g·h, g·(1−h), 1−g)`.
+/// At every practical N this collapses to `(≈1, ≈4e-6·(128/N), 0)` — the
+/// applied dB state is unsmoothed.
+fn db_smoother_coeffs(n: f64, s1e8: f64) -> (f64, f64, f64) {
+    let d = 15900.0 * std::f64::consts::TAU / n * s1e8;
+    let w = d.min(std::f64::consts::FRAC_PI_2);
+    let a = 1.0 / (1.0 + w * w / (d * d));
+    let b = 1.0 / (1.0 + std::f64::consts::PI * std::f64::consts::PI / (d * d));
+    let c = w.cos();
+    let num = 2.0 * ((b - a) + c * (a - b) + ((1.0 - c * c) * (a - b) * (1.0 - a)).sqrt());
+    let den = (c + b - 2.0 * a + 1.0) - c * b;
+    let g = if den.abs() < 1e-30 { 1.0 } else { (num / den).min(1.0) };
+    if g.abs() < 1e-30 {
+        return (1.0, 0.0, 1.0);
+    }
+    let h = ((g * g * (g - 2.0) * (g - 2.0) * b).sqrt() / (g * g) + 1.0) / 2.0;
+    (g * h, g * (1.0 - h), 1.0 - g)
 }
 
 impl CircuitModel {
     pub fn new(params: CircuitParams, fit: CircuitFit, sample_rate: u32) -> Self {
         let sr = sample_rate as f64;
-        // Solver time constants: τ = TAU_PER_MENU_US × menu_µs (measured k-law,
-        // [G reconciliation]); per-sample coefficient = 1/τ_samples.
-        let tau_att = TAU_PER_MENU_US * ATTACK_MENU_US[params.attack_idx.min(6)] * 1e-6 * sr;
-        let tau_rel = TAU_PER_MENU_US * RELEASE_MENU_US[params.release_idx.min(6)] * 1e-6 * sr;
-        let a_ps = 1.0 / tau_att;
-        let r_ps = 1.0 / tau_rel;
-        // [S161]/[S84] form: k = 2×SETTER_TINY×rate, s_bc = 9.4e-7×rate; the
-        // kernel-time rate is the fitted closure reading rate×rate_scale.
-        let rate_eff = sr / params.block_size.max(1) as f64 * fit.rate_scale;
-        let k_ps = 2.0 * SETTER_TINY * rate_eff;
-        let s_bc = 9.4e-7 * rate_eff;
-        // [S167-170] OnAttack: c4 = k + R̂; 0x58 = 0x60 = 1/(1/A + k + R̂).
-        let c4 = k_ps + r_ps;
-        let g_solve = 1.0 / (a_ps + k_ps + r_ps);
-        // Detector cascades attack/release-locked (τ law above).
-        let a_att = (1.0 / tau_att).min(1.0);
-        let a_rel = (1.0 / tau_rel).min(1.0);
-        // Applied-reduction integrator leak: input and leak share 1/τ_release
-        // (see CircuitFit::drive_gain). tau_rel is in SAMPLES here, so the
-        // per-sample leak is 1/tau_rel and the drive term carries the same
-        // rate (implemented below as gr += (−drive·(−lut) − gr)/tau_rel).
-        let a_leak = 1.0 / tau_rel;
+        let att_us = ATTACK_MENU_US[params.attack_idx.min(6)];
+        let rel_us = RELEASE_MENU_US[params.release_idx.min(6)];
+
+        // Measured τ laws [G reconciliation]: the RELEASE law τ = 0.4701·menu
+        // places the under-branch relaxation pole below; the ATTACK menu has
+        // no separate detector law — its ballistics emerge from the
+        // over-branch y-pole k/(A+k+R̂) (see the g_over comment).
+        let tau_rel_smp = TAU_PER_MENU_US * rel_us * 1e-6 * sr;
+        // N = os·block, the per-block layer's block count [PB §2: 0x200];
+        // os = 1 path (the X2 oversamplers are out of gate scope).
+        let n_blk = params.block_size.max(1) as f64;
+
+        // Detector stage-1 coefficient: the ramped 0x1b8 accumulator's target
+        // 1 − exp(−2π·s[0x1bc]/N) with the factory s[0x1bc] = 2.0 [PB §1/§2]
+        // (τ ≈ 0.24 ms at N = 128; the 0x1bc setter binding is open [PB §4],
+        // but the attack ballistics do NOT live here — see k below).
+        let a_s1 = 1.0 - (-2.0 * std::f64::consts::TAU / n_blk).exp();
+        // Detector stage-2 coefficient: the per-block fixed law
+        // 1 − exp(−1.1·2π/N) [PB §2: 0x170] — τ ≈ 0.43 ms at N = 128.
+        // (An integration draft of this lane briefly replaced this with a
+        // release-locked coefficient on a suspected deadlock; that was an
+        // arithmetic error — |1−H₂(1 kHz)| ≈ 0.97, the spread passes — and
+        // was reverted. The fixed reading stands.)
+        let a_s2 = 1.0 - (-STAGE2_RATE * std::f64::consts::TAU / n_blk).exp();
+
+        // Solver coefficients [PB §2], all in the ledger magnitudes:
+        // A = 1/attack, R̂ = 1/release (0xb0/0xb4, µs⁻¹).
+        let a_att_us = 1.0 / att_us;
+        let a_rel_us = 1.0 / rel_us;
+        // k is solved so the UNDER-BRANCH relaxation (the recovery path)
+        // lands on the measured release law τ = TAU_PER_MENU_US·menu. The
+        // decompile's exit tail [K234-240] makes (y, s38) a 2-D system:
+        //   y[n]   = p·y[n−1] + g_under·s38[n−1]   (p = g_under·k = k/(k+R̂))
+        //   s38[n] = k·(y[n]−y[n−1]) − s38[n−1]
+        // whose matrix has det = 0 and slow eigenvalue 2p − 1 (integration
+        // evidence: the draft placement at 2p−1 = p_target recovered at
+        // exactly HALF the target τ — 40.2/80.2/151.3 ms for 80.3/160.5/302.7).
+        // So p is placed at (1 + p_target)/2, which puts the SYSTEM's slow
+        // mode exactly on the measured law ([PB §4] leaves the absolute
+        // per-sample factor of the literal k open; this is the exact algebra
+        // of the mapped exit tail, not a fit).
+        let p_rel = (1.0 + (-1.0 / tau_rel_smp).exp()) * 0.5;
+        let k_sol = p_rel * a_rel_us / (1.0 - p_rel);
+        // The two branch gains of the decompile: over s[0x58] = 1/(A+k+R̂),
+        // under s[0x60] = 1/(k+R̂) ([K223-225] vs [K227-231], [S169-170]).
+        // They are what makes the ballistics asymmetric: the over-branch
+        // y-pole k/(A+k+R̂) slows as the attack period grows (0.4 ms at menu
+        // index 1, ≈27 ms at index 5 — the measured attack onset), while the
+        // under-branch y-pole k/(k+R̂) = p_rel carries the release recovery.
+        // The DC gain is A/(A+R̂) in BOTH branches (k cancels) — the attack
+        // coupling of [PB §3].
+        let g_over = 1.0 / (a_att_us + k_sol + a_rel_us);
+        let g_under = 1.0 / (k_sol + a_rel_us);
+        // c4 = k + R̂ [PB §2: 0xc4, S167-170].
+        let c4 = k_sol + a_rel_us;
+
+        let u_max = if params.attack_idx == 0 { U_MAX_ATT0 } else { U_MAX };
+
+        // De-zipper targets [PB §1/§2]: Threshold as stored; Makeup as stored;
+        // Range negated with the −80 floor (−106 beyond it, [PB §2: 0x1a4]);
+        // DryWet mapped [D154-160]; stage-1 coefficient.
+        let neg_range = {
+            let s = -params.range_db;
+            if s < -80.0 { -106.0 } else { s }
+        };
+        let wet_mapped = if params.dry_wet > 0.5 {
+            (f64::exp((1.0 - params.dry_wet) * 6.0) - 1.0) * -0.026197849 + 1.0
+        } else {
+            (f64::exp(params.dry_wet * 6.0) - 1.0) * 0.026197849
+        };
+        let targets = [params.threshold_db, params.makeup_db, neg_range, wet_mapped, a_s1];
+
+        // Per-block layer [FUN_10179fff8]: the dB smoother coefficients from
+        // the closed form (pass-through at practical N).
+        let smoother = db_smoother_coeffs(n_blk, 1.0);
+
         CircuitModel {
             params,
             fit,
             sample_rate,
-            a_ps,
-            r_ps,
-            s_bc,
-            g_solve,
+            a_att_us,
+            a_rel_us,
+            k_sol,
+            g_over,
+            g_under,
             c4,
-            a_att,
-            a_rel,
-            a_leak,
+            a_s1,
+            a_s2,
+            u_max,
+            targets,
+            smoother,
             state: CircuitState {
                 fast: [0.0; 2],
                 slow: [0.0; 2],
@@ -689,108 +844,106 @@ impl CircuitModel {
                 s28: 0.0,
                 s38: 0.0,
                 nint: 0.0,
-                acc3: 0.0,
-                lvl_db: -120.0,
-                gr_db: 0.0,
+                det_db: 0.0,
+                app_db: 0.0,
+                det_raw_prev: 0.0,
+                app_raw_prev: 0.0,
+                // Accumulators start ON their targets (the ramp machinery
+                // exists for parameter changes; none occur within a run).
+                acc: targets,
+                inc: [0.0; 5],
                 clip_peak: 0.0,
-                wet: 0.0,
             },
         }
     }
 
-    /// Detector gain closure for [K115]:
-    /// G = expf((s_a8·db1 − acc(0x188) − 18)·0.05·ln10), with the solved level
-    /// y and the tracked input level replacing the unmapped db1/acc pair.
-    fn detector_gain(&self) -> f64 {
-        let over = self.state.lvl_db - self.params.threshold_db;
-        10f64.powf(
-            (self.fit.gain_y * self.state.y + self.fit.level_w * over - self.fit.offset) / 20.0,
-        )
+    /// Per-block layer: recompute the de-zipper increments toward the targets
+    /// [FUN_1017a028c] (the smoother coefficients are block-invariant here —
+    /// they depend only on N, fixed at construction). Parameters are fixed
+    /// for a run, so after the first block the increments settle at 0.
+    fn begin_block(&mut self, n: usize) {
+        let nf = n.max(1) as f64;
+        for i in 0..5 {
+            self.state.inc[i] = (self.targets[i] - self.state.acc[i]) / nf;
+        }
     }
 
-    /// Range ceiling closure for [K154-177]: t = |acc(0x1a0)·1.2·s_ac| + 0.01
-    /// − 1; when the LUT output falls below −t it is floored at ≈ −(t + 1)
-    /// (cubic(±2) = ∓1). With acc = 0 (t = −0.99) the shaper maps the whole
-    /// working range to ≈ 0 dB, so the unmapped per-block acc(0x1a0) source
-    /// must carry the demanded depth for the loop to reach any reduction —
-    /// the structural Range ceiling. The closure lets acc(0x1a0)·s_ac track
-    /// the demanded depth (−y, τ = 5 ms, a stated closure choice) and caps t
-    /// at the stored Range − 1 so the floor never passes −Range (measured:
-    /// soft approach to the stored dB [G D1 verdict]; inactive at Range ≥ 30
-    /// [G D1b: C60 ≡ C30]). The below-30 behavior is not exercised by any
-    /// gate render — stated unverified.
-    fn ceiling_t(&mut self, demanded_depth_db: f64) -> f64 {
-        let a_ceil = (1.0 / (0.005 * self.sample_rate as f64)).min(1.0);
-        self.state.acc3 += (demanded_depth_db.max(0.0) - self.state.acc3) * a_ceil;
-        (self.state.acc3 * 1.2 + 0.01 - 1.0)
-            .max(0.0)
-            .min((self.params.range_db - 1.0).max(0.0))
-    }
-
-    /// One output-stage sample pair, [K241-344] (metering slots omitted).
-    fn output_stage(&mut self, in_l: f64, in_r: f64, gain: f64, wet: f64) -> (f32, f32) {
-        let peak_clip = if self.params.peak_clip_in { 1.0 } else { 0.0 };
+    /// One output-stage sample pair [K241-344] under the corrected mechanism:
+    /// the applied gain crosses DryWet over IN THE GAIN DOMAIN and the audio
+    /// path is single; PeakClipIn selects the clipper path (with its trims)
+    /// or the unclipped `in·gain` path [PB §2: 0x1ec].
+    fn output_stage(&mut self, in_l: f64, in_r: f64, gain_lin: f64, wet: f64) -> (f32, f32) {
         let mut out = [0f32; 2];
         let ins = [in_l, in_r];
         for ch in 0..2 {
-            // wet path: v = in·gain·1.0592537 [K263, K273]
-            let mut v = ins[ch] * gain * OUT_PRE_GAIN;
-            if v.abs() > OUT_KNEE {
-                // [K274-301]: cubic tanh-approx on (v ± knee)·prescale, ±2 clamp
-                let vn = ((v + OUT_KNEE) * OUT_PRESCALE).clamp(-2.0, 2.0);
-                let lo = cubic_soft_clip(vn) * OUT_POSTSCALE - OUT_KNEE;
-                let vp = ((v - OUT_KNEE) * OUT_PRESCALE).clamp(-2.0, 2.0);
-                let hi = cubic_soft_clip(vp) * OUT_POSTSCALE + OUT_KNEE;
-                v = if v > OUT_KNEE { hi } else { lo };
-                // shared leaky peak [K302-306, K337-341]: track min of the
-                // excursion (metering slot 0x24c; kept for structure).
-                let delta = (if v > OUT_KNEE { v - OUT_KNEE } else { -OUT_KNEE - v }) * OUT_PRESCALE;
-                if delta <= self.state.clip_peak {
-                    self.state.clip_peak = delta;
+            let v = if self.params.peak_clip_in {
+                // wet path: v = in·gain·1.0592537 [K263, K273]
+                let mut v = ins[ch] * gain_lin * OUT_PRE_GAIN;
+                if v.abs() > OUT_KNEE {
+                    // [K274-301]: cubic tanh-approx on (v ± knee)·prescale, ±2 clamp
+                    let vn = ((v + OUT_KNEE) * OUT_PRESCALE).clamp(-2.0, 2.0);
+                    let lo = cubic_soft_clip(vn) * OUT_POSTSCALE - OUT_KNEE;
+                    let vp = ((v - OUT_KNEE) * OUT_PRESCALE).clamp(-2.0, 2.0);
+                    let hi = cubic_soft_clip(vp) * OUT_POSTSCALE + OUT_KNEE;
+                    v = if v > OUT_KNEE { hi } else { lo };
+                    // shared leaky peak [K302-306, K337-341] (metering slot
+                    // 0x24c; no audio-path consumer).
+                    let delta =
+                        (if v > OUT_KNEE { v - OUT_KNEE } else { -OUT_KNEE - v }) * OUT_PRESCALE;
+                    if delta <= self.state.clip_peak {
+                        self.state.clip_peak = delta;
+                    }
                 }
-            }
-            let v = v * peak_clip + ins[ch] * gain * (1.0 - peak_clip);
-            // [K343-344]: out = wet·clipped·0.94406086 + (in·gain)·(1−wet)
-            out[ch] = (wet * v * OUT_WET_TRIM + ins[ch] * gain * (1.0 - wet)) as f32;
+                v * OUT_WET_TRIM
+            } else {
+                // [0x1ec = 0]: unclipped in·gain.
+                ins[ch] * gain_lin
+            };
+            out[ch] = v as f32;
         }
+        let _ = wet; // DryWet already inside gain_lin (gain-domain crossfade)
         (out[0], out[1])
     }
 
-    /// Process one sample pair. Returns (outL, outR).
-    pub fn process(&mut self, in_l: f32, in_r: f32) -> (f32, f32) {
+    /// One per-sample kernel step [K59-389] under the corrected mechanism.
+    fn step(&mut self, in_l: f32, in_r: f32) -> (f32, f32) {
         // Input clamps [K101-112].
         let il = (in_l as f64).clamp(-INPUT_CLAMP, INPUT_CLAMP);
         let ir = (in_r as f64).clamp(-INPUT_CLAMP, INPUT_CLAMP);
 
-        // Level tracker (closure for the acc(0x188) dB source).
-        let lvl = 20.0 * (il.abs().max(ir.abs()) + 1e-9).log10();
-        let a_lvl = (1.0 / (self.fit.lvl_tc_s * self.sample_rate as f64)).min(1.0);
-        self.state.lvl_db += (lvl - self.state.lvl_db) * a_lvl;
+        // De-zipper accumulators advance one sample [PB §1].
+        for i in 0..5 {
+            self.state.acc[i] += self.state.inc[i];
+        }
+        let (acc_thr, acc_makeup, acc_range, acc_wet) =
+            (self.state.acc[0], self.state.acc[1], self.state.acc[2], self.state.acc[3]);
 
-        // Detector gain closure [K115].
-        let g = self.detector_gain();
+        // Detector gain [K113-115]: G_dB = 7.8·s[0x120] − acc(0x188) − 18.
+        let g = 10f64.powf(
+            (DETECTOR_SCALE * self.state.det_db - acc_thr - G_LAW_OFFSET_DB) / 20.0,
+        );
 
-        // Stage-1 one-poles, attack-locked [K117-120]. The PRNG dither terms
-        // (ν, [K62-90]) are omitted: their amplitude scale (state 0x1c4/0x1c8)
-        // is unmapped and the gate measures mid-window RMS where dither
-        // averages out (documented in the derivation section).
-        self.state.fast[0] += (il - self.state.fast[0]) * self.a_att;
-        self.state.fast[1] += (ir - self.state.fast[1]) * self.a_att;
-        // Fast-minus-slow difference via the stage-2 cascade [K121-134].
+        // Stage-1 one-poles, attack-locked [K117-120]; dither ν = 0 (dead in
+        // this build, [PB §2: 0x1c4]).
+        self.state.fast[0] += (il - self.state.fast[0]) * self.a_s1;
+        self.state.fast[1] += (ir - self.state.fast[1]) * self.a_s1;
+        // Fast-minus-slow difference via the stage-2 cascade [K121-134],
+        // fixed coefficient [PB §2: 0x170].
         let e0 = (il - self.state.fast[0]) * g;
         let e1 = (ir - self.state.fast[1]) * g;
-        self.state.slow[0] += (e0 - self.state.slow[0]) * self.a_rel;
-        self.state.slow[1] += (e1 - self.state.slow[1]) * self.a_rel;
+        self.state.slow[0] += (e0 - self.state.slow[0]) * self.a_s2;
+        self.state.slow[1] += (e1 - self.state.slow[1]) * self.a_s2;
 
-        // Ratio LUT read [K135-153].
+        // Ratio LUT read [K135-153]: the fast-minus-slow spread is the
+        // over-threshold carrier — there is no level/threshold comparison.
         let table = &RATIO_LUTS[self.params.ratio_index.min(2)];
         let mut lut_l = lut_lookup(table, e0 - self.state.slow[0]);
         let mut lut_r = lut_lookup(table, e1 - self.state.slow[1]);
 
-        // Ceiling soft-clip of the LUT output [K154-177]: if lut < −t, shift
-        // by t, cubic-clip on ±2, shift back. The demanded depth driving the
-        // acc(0x1a0) closure is the previous smoothed applied reduction.
-        let t = self.ceiling_t(-self.state.gr_db);
+        // Range ceiling [K154-177]: t = |acc(0x1a0)·1.2·(1/7.8)| + 0.01 − 1
+        // from the RAMPED Range accumulator ([PB §3] closed form) — not a
+        // depth tracker. If lut < −t: shift by t, cubic-clip on ±2, shift back.
+        let t = (acc_range * CEIL_LIN * CEIL_SCALE).abs() + CEIL_CONST - 1.0;
         for lut in [&mut lut_l, &mut lut_r] {
             if *lut < -t {
                 let u = (*lut + t).clamp(-2.0, 2.0);
@@ -799,109 +952,125 @@ impl CircuitModel {
         }
 
         // ---- Newton-solved feedback loop [K178-240] ----
-        // w (release-noise term, [K166] dVar8) is zero: dither omitted.
-        let w = 0.0f64;
-        // z = dVar26 = s_bc_neg·(s18 − s28) − s38 with s_bc_neg = −s_bc [K179-183].
-        let z = -self.s_bc * (self.state.y - self.state.s28) - self.state.s38;
-        let dvar16 = w + z; // dVar16 [K185]
-        let b = self.fit.branch_b;
-        let m = 1.0; // closure for state 0x98
-        let u_clamp = 20.0; // closure for state 0xc8
+        // w (release-noise term, [K166] = s[0x1cc]·(0x1c8-scaled PRNG sum))
+        // ≈ 0: the dither is dead in this build [PB §2: 0x1c4/0x1c8].
+        // z = −k·(y[n−1] − s28) − s38 [K179-183].
+        let z = -self.k_sol * (self.state.y - self.state.s28) - self.state.s38;
+        let dvar16 = z; // w = 0 [K185]
 
-        let mut x_prev = self.state.x; // dVar9 (state 0x8)
-        let mut y_prev = self.state.y; // dVar11 (state 0x18)
+        // Per [K186-187, K223-225]: y is a STATE recursion — the iterate
+        // never enters its update. y[n] = g_branch·(k·(y[n−1] − s28) + s38
+        // − w + x·A + s28·c4), so the loop state y is a one-pole lowpass of
+        // the solved x with branch-dependent pole (over: k/(A+k+R̂) — the
+        // attack-ballistics pole; under: k/(k+R̂) = p_rel — the recovery
+        // pole) and branch-independent DC gain A/(A+R̂) [PB §3].
+        let y_state = self.state.y;
+
+        let mut x_it = self.state.x; // warm start [K186: 0x8]
         let mut x_new;
         let mut y_new;
         let mut iter = 0u32;
         loop {
-            let dl = x_prev - lut_l; // fVar7 [K189]
-            let dr = x_prev - lut_r; // fVar27 [K190]
+            let dl = x_it - lut_l; // fVar7 [K189]
+            let dr = x_it - lut_r; // fVar27 [K190]
             if dl > 0.0 || dr > 0.0 {
-                // Over-branch [K191-226].
-                let ul = dl.clamp(0.0, u_clamp);
-                let ur = dr.clamp(0.0, u_clamp);
-                let ebl = (b * ul).exp();
-                let ebr = (b * ur).exp();
-                let fpl = b * m * ebl; // f'(u) = m·b·e^{bu} [K206-211]
-                let fpr = b * m * ebr;
+                // Over-branch [K191-226]: u clamped at u_max (ledger
+                // constant), f(u) = m·(e^{B·u} − 1), f' = m·B·e^{B·u}.
+                let ul = dl.clamp(0.0, self.u_max);
+                let ur = dr.clamp(0.0, self.u_max);
+                let ebl = (OVER_B * ul).exp();
+                let ebr = (OVER_B * ur).exp();
+                let fpl = OVER_M * OVER_B * ebl;
+                let fpr = OVER_M * OVER_B * ebr;
                 // Φ = Σ[f(u) − u·f'(u)] − Σ lut·f'(u) [K214-216]
-                let phi = (m * (ebl - 1.0) - ul * fpl - lut_l * fpl)
-                    + (m * (ebr - 1.0) - ur * fpr - lut_r * fpr);
-                // x = [−A·(dVar16+Φ) − c4·Φ + s28·A·c4] /
-                //     [(S+A)·s_bc + S·A + (S+A)·R̂] [K217-222]
+                let phi = (OVER_M * (ebl - 1.0) - ul * fpl - lut_l * fpl)
+                    + (OVER_M * (ebr - 1.0) - ur * fpr - lut_r * fpr);
+                // x = [−A·(w+z+Φ) − c4·Φ + s28·A·c4] /
+                //     [(S+A)·k + S·A + (S+A)·R̂] [K217-222]
                 let s = fpl + fpr;
-                let denom = (s + self.a_ps) * self.s_bc + s * self.a_ps + (s + self.a_ps) * self.r_ps;
-                x_new = (-self.a_ps * (dvar16 + phi) - self.c4 * phi
-                    + self.state.s28 * self.a_ps * self.c4)
+                let denom = (s + self.a_att_us) * self.k_sol
+                    + s * self.a_att_us
+                    + (s + self.a_att_us) * self.a_rel_us;
+                x_new = (-self.a_att_us * dvar16 - self.c4 * phi
+                    + self.state.s28 * self.a_att_us * self.c4)
                     / denom;
-                // y = g·(s_bc·(y0 − s28) + s38 − w + x·A + s28·c4) [K223-225]
-                y_new = self.g_solve
-                    * (self.s_bc * (y_prev - self.state.s28)
+                // y recursion, over-branch gain s[0x58] [K223-225].
+                y_new = self.g_over
+                    * (self.k_sol * (y_state - self.state.s28)
                         + self.state.s38
-                        - w
-                        + x_new * self.a_ps
+                        + x_new * self.a_att_us
                         + self.state.s28 * self.c4);
             } else {
-                // Under-branch [K227-231].
-                y_new = self.state.s28 + self.g_solve * -dvar16;
+                // Under-branch [K227-231]: y′ = s28 + s[0x60]·(−(w+z)) —
+                // linear relaxation toward exactly zero at the pole
+                // k/(k+R̂) = p_rel (the measured release law); no LUT term
+                // exists here, so recovery is a clean single pole [PB §3].
+                y_new = self.state.s28 + self.g_under * -dvar16;
                 x_new = y_new;
             }
-            // Convergence [K232, K385]: exit when x and y both converged, or
-            // at the 10-iteration cap.
-            let tol = |v: f64| v.abs() * NEWTON_TOL_REL + NEWTON_TOL_ABS;
-            let x_conv = (x_new - x_prev).abs() < tol(x_new);
-            let y_conv = (y_new - y_prev).abs() < tol(y_new);
-            x_prev = x_new;
-            y_prev = y_new;
+            // Convergence [K232]: the decompile tests x only (|Δx| ≤
+            // |x|·1e-5 + 1e-7; y is recomputed per iterate but never tested),
+            // capped at 10 iterations [K233, K385].
+            let x_conv = (x_new - x_it).abs() < x_new.abs() * NEWTON_TOL_REL + NEWTON_TOL_ABS;
+            x_it = x_new;
             iter += 1;
-            if (x_conv && y_conv) || iter > NEWTON_MAX_ITERS {
+            if x_conv || iter > NEWTON_MAX_ITERS {
                 break;
             }
         }
 
-        // Exit-tail state updates [K234-240]: s38, noise integrator, s28.
-        self.state.s38 = z + (y_new - self.state.s28) * self.s_bc;
-        // [K237-239] with the sqrt(1/τ7c) leak ≈ 0 (state 0x7c unmapped for
-        // release ≠ 6) and w = 0.
+        // Exit-tail state updates [K234-240].
+        self.state.s38 = z + (y_new - self.state.s28) * self.k_sol;
+        // [K237-239]: nint = (w+z − s[0x1d0]·nint) + y·c4 − s28·(c4 + s[0xb8])
+        // with s[0x1d0] = 1 and s[0xb8] = 1 for release ≠ 6 [PB §2]; the slot
+        // is write-only in this path (its only read, w, is dither-fed).
         self.state.nint = dvar16 + self.c4 * (y_new - self.state.s28);
-        // [K240]: s28 += s_c0·nint with s_c0 = 0 for release ≠ 6 [S86-89].
+        // [K240]: s28 += s_c0·nint with s_c0 = 0 for release ≠ 6 [PB §2: 0xc0].
         self.state.s28 += 0.0 * self.state.nint;
         self.state.x = x_new;
         self.state.y = y_new;
 
-        // Applied-reduction integrator (closure v3, see
-        // CircuitFit::drive_gain): gr += (−drive·(−lut_avg) − gr)·(Ts/τ_rel),
-        // the dB-domain state that the audio gain reads. Measured boundary
-        // facts close it: no boost below threshold [G behavioral reading:
-        // unity below threshold] and the Range state floors at −80
-        // [S184-188].
-        let lut_avg = 0.5 * (lut_l + lut_r);
-        self.state.gr_db += self.a_leak
-            * (-self.fit.drive_gain * (-lut_avg) - self.state.gr_db);
-        self.state.gr_db = self.state.gr_db.clamp(-80.0, 0.0);
-        let gain_db = self.state.gr_db + self.params.makeup_db;
-        let gain = 10f64.powf(gain_db / 20.0);
+        // dB legs [K243-255], smoother coefficients from the per-block closed
+        // form (pass-through at practical N — [PB §2]). Leg 1 carries NO
+        // makeup (feedforward detector, [G D2 verdict]); leg 2 carries the
+        // makeup INSIDE the applied dB state.
+        let raw_det = y_new;
+        let raw_app = acc_makeup + DETECTOR_SCALE * y_new;
+        let (s178, s17c, s180) = self.smoother;
+        self.state.det_db = s178 * raw_det
+            + s17c * self.state.det_raw_prev
+            + s180 * self.state.det_db;
+        self.state.app_db = s178 * raw_app
+            + s17c * self.state.app_raw_prev
+            + s180 * self.state.app_db;
+        self.state.det_raw_prev = raw_det;
+        self.state.app_raw_prev = raw_app;
 
-        // Dry/wet ramp [K343-344], stored→internal mapping [D154-160]:
-        // p>0.5: (exp((1−p)·6)−1)·−0.026197849+1; else (exp(p·6)−1)·0.026197849.
-        // At p=1 → 1.0; p=0 → 0.0.
-        let target_wet = if self.params.dry_wet > 0.5 {
-            (f64::exp((1.0 - self.params.dry_wet) * 6.0) - 1.0) * -0.026197849 + 1.0
-        } else {
-            (f64::exp(self.params.dry_wet * 6.0) - 1.0) * 0.026197849
-        };
-        let ramp = 1.0 / self.params.block_size.max(1) as f64;
-        self.state.wet += (target_wet - self.state.wet) * ramp;
+        // Applied gain [K243-255]: DryWet crossfades IN THE GAIN DOMAIN —
+        // gain = (1 − w) + w·10^(s[0x128]/20) — single audio path.
+        let gain_lin = (1.0 - acc_wet) + acc_wet * 10f64.powf(self.state.app_db / 20.0);
 
-        self.output_stage(il, ir, gain, self.state.wet)
+        self.output_stage(il, ir, gain_lin, acc_wet)
     }
 
-    /// Process a stereo block (per-block coefficient application is a no-op
-    /// here: every coefficient is parameter-derived and constant across the
-    /// call; the decompile applies parameters per block [D297-323]).
+    /// Process one sample pair. Returns (outL, outR).
+    ///
+    /// A bare `process` call is a degenerate one-sample block: the de-zipper
+    /// ramps snap straight to their targets [FUN_1017a028c n≤1 path,
+    /// B@0x1017a0340].
+    pub fn process(&mut self, in_l: f32, in_r: f32) -> (f32, f32) {
+        self.begin_block(1);
+        self.step(in_l, in_r)
+    }
+
+    /// Process a stereo block. The per-block parameter layer runs first
+    /// ([FUN_10179fff8] coefficients + [FUN_1017a028c] de-zipper ramp setup);
+    /// parameters are fixed for a run, so the coefficient set is computed at
+    /// construction and the ramps are settled.
     pub fn process_block(&mut self, l: &[f32], r: &[f32], out_l: &mut [f32], out_r: &mut [f32]) {
+        self.begin_block(l.len());
         for i in 0..l.len() {
-            let (ol, or_) = self.process(l[i], r[i]);
+            let (ol, or_) = self.step(l[i], r[i]);
             out_l[i] = ol;
             out_r[i] = or_;
         }
@@ -962,130 +1131,101 @@ mod circuit_tests {
         }
     }
 
-    // -- calibration driver -------------------------------------------------
-    // steps-1k timeline at 44.1 kHz (harness/gen_signals.py spec #1: 0.25 s
-    // silence, 0.5 s steps at −30..0 dBFS peak 1 kHz, 1.5 s tail).
-
-    fn synth_steps_1k(sr: u32) -> Vec<f32> {
-        let n = (7.25 * sr as f64) as usize;
-        let mut s = vec![0f32; n];
-        let steps = [-30.0f64, -24.0, -18.0, -12.0, -6.0, -3.0, 0.0];
-        let w = 2.0 * std::f64::consts::PI * 1000.0 / sr as f64;
-        for (i, db) in steps.iter().enumerate() {
-            let start = ((0.25 + 0.5 * i as f64) * sr as f64) as usize;
-            let end = (start + (0.5 * sr as f64) as usize).min(n);
-            let a = 10f64.powf(db / 20.0);
-            for (k, slot) in s[start..end].iter_mut().enumerate() {
-                *slot = (a * (w * (start + k) as f64).sin()) as f32;
-            }
-        }
-        s
-    }
-
-    fn mid_step_gr(model_out: &[f32], sr: u32, step_idx: usize) -> f64 {
-        let t0 = 0.25 + 0.5 * step_idx as f64;
-        let a = ((t0 + 0.10) * sr as f64) as usize;
-        let b = ((t0 + 0.40) * sr as f64) as usize;
-        crate::audio::rms_db(&model_out[a..b])
-    }
-
-    /// G1 static anchors (gain map of `G1_T-12_R30_MU0_v2.aif`, [G gain maps]):
-    /// the calibration target of the fitted closure. FIT ONLY — this test is
-    /// how the `CircuitFit::default()` constants were found; it is not a gate
-    /// (the gates are the envelope-family renders, tests/golden.rs).
+    /// Integration-lane diagnostic (ignored): run a steady 1 kHz tone and
+    /// print the loop's internal trajectory — y, x, G, LUT extremes, s38 —
+    /// so the gate residuals can be attributed to a structural piece.
     #[test]
     #[ignore]
-    fn static_closure_calibration_search() {
-        let steps = [-30.0f64, -24.0, -18.0, -12.0, -6.0, -3.0, 0.0];
-        // measured GR per step (G1): below-threshold 0.00 ×3, then
-        // −0.27 / −3.91 / −5.98 / −8.12
-        let measured = [0.0, 0.0, 0.0, -0.27, -3.91, -5.98, -8.12];
-        let signal = synth_steps_1k(44100);
-
-        let eval = |fit: CircuitFit| -> (f64, Vec<f64>) {
-            let mut m = CircuitModel::new(CircuitParams::default(), fit, 44100);
-            let mut out = vec![0f32; signal.len()];
-            let mut or_ = vec![0f32; signal.len()];
-            let sig = signal.clone();
-            m.process_block(&sig, &sig, &mut out, &mut or_);
-            let mut err = 0.0;
-            let mut grs = Vec::new();
-            for (i, db) in steps.iter().enumerate() {
-                let gr = mid_step_gr(&out, 44100, i) - (db - 3.01);
-                grs.push(gr);
-                let w = if i < 3 { 5.0 } else { 1.0 };
-                err += w * (gr - measured[i]).powi(2);
-            }
-            (err, grs)
-        };
-
-        // Multi-start per-axis coordinate scan over the five fitted scalars
-        // (see the derivation section for the starting estimates).
-        let starts = [
-            (1.55, 0.44, -1.1, 2.0, 0.7),
-            (3.0, 0.8, -6.0, 3.0, 1.4),
-            (0.8, 0.15, 2.0, 1.2, 0.35),
-        ];
-        let mut best = (f64::INFINITY, CircuitFit::default());
-        for (gy, lw, off, dg, bb) in starts {
-            let mut fit = CircuitFit {
-                gain_y: gy,
-                level_w: lw,
-                offset: off,
-                drive_gain: dg,
-                branch_b: bb,
-                ..CircuitFit::default()
-            };
-            for span_scale in [1.0, 0.25, 0.06] {
-                for _round in 0..8 {
-                    let mut cur_err = eval(fit.clone()).0;
-                    let mut improved = false;
-                    for axis in 0..5 {
-                        let (base, span) = match axis {
-                            0 => (fit.gain_y, 0.5 * span_scale),
-                            1 => (fit.level_w, 0.2 * span_scale),
-                            2 => (fit.offset, 2.5 * span_scale),
-                            3 => (fit.drive_gain, 0.8 * span_scale),
-                            _ => (fit.branch_b, 0.35 * span_scale),
-                        };
-                        for mult in [-8.0, -4.0, -2.0, -1.0, 1.0, 2.0, 4.0, 8.0] {
-                            let mut cand = fit.clone();
-                            let v = base + mult * span;
-                            match axis {
-                                0 => cand.gain_y = v,
-                                1 => cand.level_w = v,
-                                2 => cand.offset = v,
-                                3 => cand.drive_gain = v,
-                                _ => cand.branch_b = v,
-                            }
-                            let (e, _) = eval(cand.clone());
-                            if e < cur_err - 1e-9 {
-                                cur_err = e;
-                                fit = cand;
-                                improved = true;
-                            }
-                        }
-                    }
-                    if !improved {
-                        break;
+    fn circuit_equilibrium_probe() {
+        for amp_db in [-18.0f64, -12.0, -6.0, 0.0] {
+            for (att, rel) in [(1usize, 0usize), (1, 4)] {
+                let mut m = model(CircuitParams {
+                    attack_idx: att,
+                    release_idx: rel,
+                    ..CircuitParams::default()
+                });
+                let a = 10f64.powf(amp_db / 20.0);
+                let w = 2.0 * std::f64::consts::PI * 1000.0 / 44100.0;
+                let mut y_min = f64::INFINITY;
+                let mut y_max = f64::NEG_INFINITY;
+                let mut x_min = f64::INFINITY;
+                let mut x_max = f64::NEG_INFINITY;
+                let mut s38_abs = 0.0f64;
+                let mut g_db = 0.0;
+                let mut det_min = f64::INFINITY;
+                let mut det_max = f64::NEG_INFINITY;
+                let last = (2.0 * 44100.0) as usize;
+                for n in 0..last {
+                    let s = (a * (w * n as f64).sin()) as f32;
+                    m.process(s, s);
+                    if n > last - 4410 {
+                        y_min = y_min.min(m.state.y);
+                        y_max = y_max.max(m.state.y);
+                        x_min = x_min.min(m.state.x);
+                        x_max = x_max.max(m.state.x);
+                        s38_abs = s38_abs.max(m.state.s38.abs());
+                        g_db = DETECTOR_SCALE * m.state.det_db
+                            - m.params.threshold_db
+                            - G_LAW_OFFSET_DB;
+                        det_min = det_min.min(m.state.det_db);
+                        det_max = det_max.max(m.state.det_db);
                     }
                 }
+                println!(
+                    "amp {amp_db:>6} att{att} rel{rel}: y [{y_min:8.3},{y_max:8.3}]  \
+                     x [{x_min:8.3},{x_max:8.3}]  |s38|max {s38_abs:9.3}  \
+                     G_db {g_db:7.2}  det_db [{det_min:7.3},{det_max:7.3}]"
+                );
             }
-            let (e, _) = eval(fit.clone());
-            if e < best.0 {
-                best = (e, fit);
-            }
-        }
-        let (_, grs) = eval(best.1.clone());
-        println!("best fit: {:?}", best.1);
-        println!("objective {:.4}", best.0);
-        for (i, db) in steps.iter().enumerate() {
-            println!(
-                "  step {db:>6}: model GR {:+8.3}  measured {:+8.3}  Δ {:+.3}",
-                grs[i],
-                measured[i],
-                grs[i] - measured[i]
-            );
         }
     }
+
+    /// Integration-lane diagnostic (ignored): release-probe timeline; the
+    /// model's y at the step and its decay ratio on a 20 ms grid, to measure
+    /// the true relaxation τ against the placed under-branch pole.
+    #[test]
+    #[ignore]
+    fn circuit_release_tau_probe() {
+        let sr = 44100u32;
+        let n = (6.5 * sr as f64) as usize;
+        let w = 2.0 * std::f64::consts::PI * 1000.0 / sr as f64;
+        let step = 2 * sr as usize;
+        for rel in [0usize, 2, 4] {
+            let mut m = model(CircuitParams {
+                release_idx: rel,
+                ..CircuitParams::default()
+            });
+            let mut y_at_step = 0.0f64;
+            let mut y_samples: Vec<f64> = Vec::new();
+            for i in 0..n {
+                let db = if i < step {
+                    -6.0
+                } else if i < 6 * sr as usize {
+                    -36.0
+                } else {
+                    -144.0
+                };
+                let s = if db < -140.0 {
+                    0.0f32
+                } else {
+                    (10f64.powf(db / 20.0) * (w * i as f64).sin()) as f32
+                };
+                m.process(s, s);
+                if i + 1 == step {
+                    y_at_step = m.state.y;
+                }
+                if i >= step {
+                    y_samples.push(m.state.y);
+                }
+            }
+            let mut line = format!("rel{rel}: y(step) {y_at_step:8.4}  y(t)/y0:");
+            for ms in [20usize, 40, 60, 80, 120, 160, 240, 320] {
+                let idx = ms * sr as usize / 1000;
+                line.push_str(&format!(" {:6.3}", y_samples[idx] / y_at_step));
+            }
+            println!("{line}");
+        }
+    }
+
+
 }

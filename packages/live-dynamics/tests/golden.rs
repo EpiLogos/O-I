@@ -785,7 +785,8 @@ fn wavetable_law_gates() {
 }
 
 // ---------------------------------------------------------------------------
-// Glue circuit-model gates (circuit-model lane, 2026-10-08)
+// Glue circuit-model gates (circuit-model lane, 2026-10-08; integration redo
+// same day — the corrected per-block-derivation mechanism)
 //
 // Thresholds STATED BEFORE the fitted closure was calibrated and before any
 // envelope render was measured with the model (see verify.rs consts and the
@@ -799,19 +800,26 @@ fn wavetable_law_gates() {
 //      their tail is silence, which is blind to gain recovery — the
 //      documented reason the release-probe signal exists
 //      (harness/gen_signals.py #5).
-// The fitted closure was calibrated ONLY on the G1 static anchors at the
-// preset pins (Attack 2 / Release 0); G13/G14/G15 are out-of-sample tests
-// of the derived loop structure. The release-τ law input (τ = 0.4701 ×
-// menu-µs) is the dossier's own measured law, so C2 is same-pin for the law
-// and end-to-end for the loop shape.
 //
-// CURRENT STATUS (2026-10-08): these gates FAIL with named residuals — the
-// attack-pin steady state is sign-inverted (device shallows with slow
-// attack, model deepens) and the model recovers ~1.6-1.7× faster than the
-// device. They are kept as the runnable record of the open residuals; see
-// devices/glue-compressor.md "Circuit-model derivation" for the structure
-// of the failure and the binary-lane work that would close it. The
-// curve-based model remains the gate of record.
+// STATUS after the integration redo (2026-10-08 — the ledger-constants
+// model of devices/glue-perblock-derivation.md, §"Integration result"): the
+// two named residuals of the fitted closure are CLOSED.
+//   - Attack coupling: the model now SHALLOWS with slow attack (the y
+//     lowpass DC gain A/(A+R̂)); G13 flips FAIL→PASS (worst 0.56 dB) and G15
+//     misses one step by 0.14 dB.
+//   - Recovery: the under-branch (y, s38) 2-D system relaxes on the measured
+//     release law; the gate's own τ metric reads model 100/180/320 ms vs
+//     render 100/180/320 ms — exact; the 1.6× fast tail is gone.
+// REMAINING residual (named, open): the fast-attack steady depth is
+// ~1.9-2.1 dB shallow at attack menu index 1 (G12/G14 over-threshold steps,
+// the C2 loud-segment level, and G15 step 2 at 1.14 dB), while the
+// slow-attack pins are exact. The residual lives in the per-sample scale of
+// the A·k feedback term of the over-branch x-solve — the term vanishes at
+// attack index 5, which is why those pins are exact. This is precisely the
+// open per-sample coefficient scaling of the per-block derivation (§4 there):
+// the ledger's µs-magnitude reading is the model's stated choice and the
+// gates keep it honest. The curve-based model (`static_gain_change_db`)
+// remains the gate of record for static behavior.
 
 fn synth_steps_long(sr: u32) -> Vec<f32> {
     // harness/gen_signals.py spec #4: 0.5 s silence, 2.5 s steps at
