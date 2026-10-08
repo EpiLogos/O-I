@@ -32,7 +32,7 @@ use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use oi_cradle_kernel::files::MaterialRouteError;
 use oi_cradle_kernel::{events::KERNEL_EVENT_TOPIC, Kernel, KernelOp, KernelOpResult};
@@ -233,11 +233,18 @@ fn main() {
         });
     println!("oi-cradle walk bridge listening on http://{bound} (topic {KERNEL_EVENT_TOPIC})");
     let recovery_diagnostics = RecoveryDiagnosticOutput::configured();
+    let peer_write_budget = std::env::var("OI_BRIDGE_WRITE_TIMEOUT_MS")
+        .ok()
+        .and_then(|value| value.parse::<u64>().ok())
+        .map(Duration::from_millis)
+        .unwrap_or(Duration::from_secs(10));
     for stream in listener.incoming() {
         let Ok(stream) = stream else { continue };
         let kernel = Arc::clone(&kernel);
         let recovery_diagnostics = recovery_diagnostics.clone();
-        std::thread::spawn(move || serve_connection(stream, &kernel, recovery_diagnostics));
+        std::thread::spawn(move || {
+            serve_connection(stream, &kernel, recovery_diagnostics, peer_write_budget)
+        });
     }
 }
 
@@ -255,7 +262,12 @@ fn serve_connection(
     mut stream: TcpStream,
     kernel: &Mutex<Kernel>,
     recovery_diagnostics: Option<Arc<RecoveryDiagnosticOutput>>,
+    peer_write_budget: Duration,
 ) {
+    // The write side is bounded (reads never time out — the bridge never
+    // initiates a close for an idle peer): a peer that stops reading cannot
+    // pin its handler thread or any other connection past this budget.
+    let _ = stream.set_write_timeout(Some(peer_write_budget));
     // Bytes read past this request's body (the next request arriving
     // in the same TCP segment) must survive to the next iteration —
     // discarding them wedged the connection forever.
@@ -277,7 +289,17 @@ fn serve_connection(
             .map(RecoveryDiagnostic::new);
         let outcome = handle_with_diagnostic(kernel, &request, diagnostic.as_ref());
         eprintln!("[bridge] -> answered {} {}", request.method, request.path);
-        respond_with_diagnostic(&mut stream, outcome, diagnostic.as_ref());
+        if respond_with_diagnostic(&mut stream, outcome, diagnostic.as_ref()).is_err() {
+            // The peer stopped reading: its write budget expired (or the
+            // socket broke). This peer's subscription ends here — alone.
+            // The emitting handlers never blocked on it (the kernel lock is
+            // released before the write), and no other connection feels it.
+            eprintln!(
+                "[bridge] peer write budget expired; subscription dropped ({})",
+                std::process::id()
+            );
+            return;
+        }
         if !request.keep_alive {
             return;
         }
@@ -806,7 +828,7 @@ fn respond_with_diagnostic(
     stream: &mut TcpStream,
     response: BridgeResponse,
     diagnostic: Option<&RecoveryDiagnostic>,
-) {
+) -> std::io::Result<()> {
     let serialization_started = diagnostic
         .filter(|trace| trace.active.get())
         .map(|_| Instant::now());
@@ -846,12 +868,15 @@ fn respond_with_diagnostic(
     let socket_started = diagnostic
         .filter(|trace| trace.active.get())
         .map(|_| Instant::now());
-    let _ = stream.write_all(headers.as_bytes());
-    let _ = stream.write_all(&body);
-    let _ = stream.flush();
+    let written = (|| {
+        stream.write_all(headers.as_bytes())?;
+        stream.write_all(&body)?;
+        stream.flush()
+    })();
     if let (Some(trace), Some(started)) = (diagnostic, socket_started) {
         trace.phase("bridge_socket_write", started);
     }
+    written
 }
 
 #[cfg(test)]
@@ -1052,7 +1077,7 @@ mod poll_channel_tests {
         std::thread::scope(|scope| {
             let server = scope.spawn(|| {
                 let (stream, _) = listener.accept().unwrap();
-                serve_connection(stream, &kernel, None);
+                serve_connection(stream, &kernel, None, Duration::from_secs(10));
             });
             let mut stream = TcpStream::connect(addr).unwrap();
             let mut reader = framed(&mut stream);
@@ -1085,6 +1110,65 @@ mod poll_channel_tests {
     /// The walk client also recycles its connection pool: fresh connections
     /// must each answer their polls framed, with the bridge ending each
     /// connection only when the peer goes away.
+    /// The Hermes fan-out law, ported (gateway-parity item 8): a peer that
+    /// vanishes mid-channel ends ALONE, and nothing else changes — healthy
+    /// polls keep answering framed, fresh peers keep being admitted, and a
+    /// write to any peer is bounded (per-connection write budget, expiry
+    /// drops that peer only), so a non-reading peer can never pin a handler
+    /// or stall another connection.
+    #[test]
+    fn a_vanishing_peer_ends_alone_and_the_channel_carries_on() {
+        let kernel = Mutex::new(Kernel::discover());
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        std::thread::scope(|scope| {
+            let server = scope.spawn(|| {
+                for _ in 0..3 {
+                    let (stream, _) = listener.accept().unwrap();
+                    scope.spawn(|| {
+                        serve_connection(stream, &kernel, None, Duration::from_millis(300));
+                    });
+                }
+            });
+
+            // Peer A: one poll, then vanishes with the answer unread in its
+            // own receive buffer — closing with unread inbound data resets
+            // the connection instead of finishing it gracefully.
+            let mut vanishing = TcpStream::connect(addr).unwrap();
+            vanishing.write_all(&get("/events")).unwrap();
+            let vanisher = scope.spawn(move || {
+                std::thread::sleep(std::time::Duration::from_millis(300));
+                drop(vanishing); // unread inbound data: close resets, not FIN
+            });
+
+            // Peer B: the channel carries on across the whole vanish window.
+            let mut healthy = TcpStream::connect(addr).unwrap();
+            let mut reader = framed(&mut healthy);
+            for poll in 0..40 {
+                reader.send(&get("/events"));
+                let (status, head, _) = reader.read_response();
+                assert_eq!(
+                    status, 410,
+                    "healthy poll {poll} must survive the vanishing peer"
+                );
+                assert!(head.to_ascii_lowercase().contains("connection: keep-alive"));
+                std::thread::sleep(std::time::Duration::from_millis(15));
+            }
+
+            // Peer C: fresh peers are still admitted afterwards.
+            let mut fresh = TcpStream::connect(addr).unwrap();
+            let mut fresh_reader = framed(&mut fresh);
+            fresh_reader.send(&get("/events"));
+            let (status, _, _) = fresh_reader.read_response();
+            assert_eq!(status, 410);
+
+            vanisher.join().unwrap();
+            drop(healthy);
+            drop(fresh);
+            server.join().unwrap();
+        });
+    }
+
     #[test]
     fn polls_across_fresh_connections_never_abort() {
         let kernel = Mutex::new(Kernel::discover());
@@ -1094,7 +1178,7 @@ mod poll_channel_tests {
             let server = scope.spawn(move || {
                 for _ in 0..25 {
                     let (stream, _) = listener.accept().unwrap();
-                    serve_connection(stream, &kernel, None);
+                    serve_connection(stream, &kernel, None, Duration::from_secs(10));
                 }
             });
             for _ in 0..25 {
@@ -1121,7 +1205,7 @@ mod poll_channel_tests {
         std::thread::scope(|scope| {
             let server = scope.spawn(|| {
                 let (stream, _) = listener.accept().unwrap();
-                serve_connection(stream, &kernel, None);
+                serve_connection(stream, &kernel, None, Duration::from_secs(10));
             });
             let mut stream = TcpStream::connect(addr).unwrap();
             stream
@@ -1151,7 +1235,7 @@ mod poll_channel_tests {
         std::thread::scope(|scope| {
             let server = scope.spawn(|| {
                 let (stream, _) = listener.accept().unwrap();
-                serve_connection(stream, &kernel, None);
+                serve_connection(stream, &kernel, None, Duration::from_secs(10));
             });
             let mut stream = TcpStream::connect(addr).unwrap();
             let mut segment = get("/event-replay?cursor=1&limit=4");
