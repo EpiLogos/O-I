@@ -331,14 +331,14 @@ export class NativeAgentController {
   await this.owner({action:"accept",profile_ref:review.profile.ref,expected_revision:review.profile.revision,expected_content_digest:review.content_digest});
   // A write acknowledgement is not sufficient. Read both the source and the
   // roster, independently, before offering session preparation.
-  const current = validateReview(await this.owner({action:"review",profile_ref:review.profile.ref}),scopeRef);
+  const acceptedReview = validateReview(await this.owner({action:"review",profile_ref:review.profile.ref}),scopeRef);
   const roster = await this.readRoster();
   const persisted = roster.profiles.find(p => p.profile.ref === review.profile.ref);
-  if (!current.accepted || current.content_digest !== review.content_digest || current.profile.revision !== review.profile.revision
-      || roster.scope !== scopeRef || persisted?.acceptance?.acceptance_ref !== current.acceptance?.acceptance_ref) {
+  if (!acceptedReview.accepted || acceptedReview.content_digest !== review.content_digest || acceptedReview.profile.revision !== review.profile.revision
+      || roster.scope !== scopeRef || persisted?.acceptance?.acceptance_ref !== acceptedReview.acceptance?.acceptance_ref) {
    throw new Error("Acceptance is not present on the exact native source and roster");
   }
-  this.set({review:current,profiles:roster.profiles});
+  this.set({review:acceptedReview,profiles:roster.profiles});
  }
  prepare = async () => {
   const {review,busy,unknown} = this.state;
