@@ -6,6 +6,7 @@ HARNESS="/Users/admin/Central/Work/O-I/docs/research/ableton-live-12.0.25/harnes
 LABEL="$1"
 ALS="$HARNESS/live/$LABEL.als"
 RENDERS="$HARNESS/renders"
+OUT="$RENDERS/$LABEL.aif"
 
 front() { osascript -e 'tell application "System Events" to get name of first process whose frontmost is true' 2>/dev/null; }
 
@@ -56,6 +57,23 @@ poll() {
                 end if
               end repeat
             end try
+            -- AX-layout drift: the prompt text can sit inside a group instead
+            -- of directly on the window; scan one level deeper before giving up
+            if modalState is "NONE" then
+              try
+                repeat with grp in (every UI element of w)
+                  try
+                    repeat with stx in (every static text of grp)
+                      if (value of stx as string) starts with "Save changes to" then
+                        set modalState to "SWAPSAVE"
+                        exit repeat
+                      end if
+                    end repeat
+                  end try
+                  if modalState is not "NONE" then exit repeat
+                end repeat
+              end try
+            end if
           end if
           if modalState is not "NONE" then exit repeat
         end repeat
@@ -77,12 +95,71 @@ accept_swap_save() {
         set nm to name of w
       end try
       if (nm as string) is "" then
+        -- the button may sit on the window or inside a group (AX drift)
+        try
+          click (first button of w whose value of attribute "AXDescription" is "Don’t Save")
+          return "clicked DontSave"
+        end try
+        try
+          repeat with grp in (every UI element of w)
+            try
+              click (first button of grp whose value of attribute "AXDescription" is "Don’t Save")
+              return "clicked DontSave (in group)"
+            end try
+          end repeat
+        end try
         try
           repeat with stx in (every static text of w)
             if (value of stx as string) starts with "Save changes to" then
-              click (first button of w whose value of attribute "AXDescription" is "Don’t Save")
-              return "clicked DontSave"
+              return "prompt found, button not found"
             end if
+          end repeat
+        end try
+        try
+          repeat with grp in (every UI element of w)
+            try
+              repeat with stx in (every static text of grp)
+                if (value of stx as string) starts with "Save changes to" then
+                  return "prompt found (in group), button not found"
+                end if
+              end repeat
+            end try
+          end repeat
+        end try
+      end if
+    end repeat
+    return "no-prompt"
+  end tell' 2>/dev/null
+}
+
+# click "No" on Live's crash-recovery prompt ("Live unexpectedly quit while
+# you were working on ..."). The built sets are never modified, so recovery is
+# never wanted on this lane; the prompt's buttons sit inside a group (AX drift).
+decline_crash_recovery() {
+  osascript -e 'tell application "System Events" to tell process "Live"
+    repeat with w in windows
+      set nm to "?"
+      try
+        set nm to name of w
+      end try
+      if (nm as string) is "" then
+        try
+          repeat with grp in (every UI element of w)
+            try
+              set txs to value of every static text of grp
+              repeat with t in txs
+                if (t as string) starts with "Live unexpectedly quit" then
+                  set bdescs to value of attribute "AXDescription" of every button of grp
+                  repeat with i from 1 to count of bdescs
+                    if item i of bdescs is "No" then
+                      click button i of grp
+                      return "declined recovery"
+                    end if
+                  end repeat
+                  return "recovery prompt found, No not found"
+                end if
+              end repeat
+            end try
           end repeat
         end try
       end if
@@ -108,6 +185,13 @@ for i in $(seq 1 150); do
     echo "  [swap prompt: $R @${i}]"
     sleep 3
     continue
+  fi
+  if [ "$F" = "Live" ] && [ "$TITLE" = "" ]; then
+    # crash-recovery prompt (unnamed dialog, no document window): decline it
+    R=$(decline_crash_recovery)
+    case "$R" in
+      declined*) echo "  [crash-recovery: $R @${i}]"; sleep 3; continue;;
+    esac
   fi
   if [ "$F" = "Live" ] && [ "$BTN" = "SAVEAS" ]; then
     # A window literally named "Save" is Live's "Save Live Set As..." panel
@@ -145,6 +229,15 @@ if [ "$LOADED" != "1" ]; then
 fi
 
 # export (driver re-guards internally before every keystroke, polls for focus)
+# stash any existing render first: the post-export check only sees "a stable
+# file", which would otherwise bless a stale artifact when the export misfires
+if [ -f "$OUT" ]; then
+  STASH="$RENDERS/.prev/$LABEL.aif"
+  mkdir -p "$RENDERS/.prev"
+  mv "$OUT" "$STASH"
+  [ -f "$OUT.asd" ] && mv "$OUT.asd" "$STASH.asd"
+  echo "  [stashed previous render -> $STASH]"
+fi
 EXP=$(osascript "$HARNESS/lane3_export.applescript" "$RENDERS")
 echo "  [export: $EXP]"
 case "$EXP" in
@@ -152,8 +245,7 @@ case "$EXP" in
   *) echo "EXPORT FAILED $LABEL"; exit 8 ;;
 esac
 
-# wait for the render file and size stability
-OUT="$RENDERS/$LABEL.aif"
+# wait for the render file and size stability; it must be NEWLY written
 done=0
 for i in $(seq 1 60); do
   sleep 5
@@ -164,5 +256,14 @@ for i in $(seq 1 60); do
     fi
   fi
 done
-[ "$done" = "1" ] || { echo "NO/INCOMPLETE RENDER for $LABEL"; exit 8; }
+if [ "$done" != "1" ]; then
+  if [ -f "$STASH" ]; then
+    mv "$STASH" "$OUT"
+    [ -f "$STASH.asd" ] && mv "$STASH.asd" "$OUT.asd"
+    echo "NO NEW RENDER for $LABEL — previous render restored in place"
+  else
+    echo "NO/INCOMPLETE RENDER for $LABEL"
+  fi
+  exit 8
+fi
 afinfo "$OUT" 2>/dev/null | grep -E "estimated duration|Data format" | head -2
