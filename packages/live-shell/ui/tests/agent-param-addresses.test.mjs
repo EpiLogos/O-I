@@ -102,6 +102,20 @@ test('every address sits on a chain device the catalogue renders', () => {
   }
 })
 
+test('the table counts exactly the rendered control set (F4, count from the table itself)', () => {
+  // The pool renders one row per address (AgentDevicePool maps
+  // agentAddressesForDevice over the selected chain device), so this count is
+  // the rendered count. The acceptance claim (AGENT-DEVICE-OWNERSHIP.md) must
+  // move with this number — it corrected 29 → 28 at verdict fault F4: the
+  // parameter-bearing controls the devices render are gateway 7 + agent 7 +
+  // skillset 4 + world 5 + git 5; admit lights are the rack's readings, not
+  // §14 addresses. Never pad the table to meet a claim.
+  const perDevice = {}
+  for (const row of TABLE) perDevice[row.deviceInstance] = (perDevice[row.deviceInstance] ?? 0) + 1
+  assert.deepEqual(perDevice, {gateway: 7, agent: 7, skillset: 4, world: 5, git: 5})
+  assert.equal(TABLE.length, 28)
+})
+
 test('the address table module stays pure (no React, no store)', async () => {
   const source = await readFile(new URL('../src/inhabitants/agentParamAddresses.ts', import.meta.url), 'utf8')
   assert.doesNotMatch(source, /react/i)
