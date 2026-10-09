@@ -60,8 +60,10 @@ mod tests {
 // Coverage boundary (stated): this model implements the delay-line core —
 // synced/free time mapping, pingpong tap grid, feedback law, dry/wet
 // crossfade, and the filter section. Ducking and the internal reverb are
-// OUT (documented below); modulation is out of the model (measured absent
-// from the synced tap grid — devices/echo.md D8).
+// OUT (documented below). Modulation is IN at the round-2/4 wobble laws
+// (the `modulation` submodule below): a tap-position wobble only — mod and
+// duck leave the synced tap GRID unchanged at amount 0, and the grid
+// tolerances carry the wobble (devices/echo.md rounds 2/3).
 //
 // The MEASURED AmountDelay mod law, stated here for the lane that wires it
 // (devices/echo.md "Round 4 — bare-line AmountDelay depth law (2026-10-09
@@ -76,10 +78,236 @@ mod tests {
 //     through the modulated delay (mid-tap overshoot 2.4× the end taps at
 //     Amount 0.35, first ≈ last as a pure delay-time modulation requires);
 //   - at Amount ≥ 0.75 the sweep exceeds the ±20 ms measure window (the
-//     round-4 peak-to-peak numbers there are lower bounds).
-// Wiring this into the tap grid is future work — no round-4 gate is stated
-// yet in the backlog, so no constants are encoded here.
+//     round-4 peak-to-peak numbers there are lower bounds); taps migrate
+//     windows and the law is UNVERIFIED there — the walk below is stated
+//     for amounts below that.
+// Wired 2026-10-09 (echo-mod lane): the laws are encoded in the
+// `modulation` submodule below, with the accumulating walk engine the
+// measured offset tables pin down.
 // ===========================================================================
+
+/// The modulation section — the 2 Hz delay-line LFO
+/// (`Modulation_AmountDelay` et al., devices/echo.md rounds 2–4).
+///
+/// MEASURED (cited, not fitted):
+/// - peak-to-peak tap-time wobble ∝ AmountDelay³ (round 4: pairwise
+///   exponents 3.01/2.96 L/R over 0.10→0.35; the full-preset A=0.5 point
+///   sits on the same bare-line curve, 7.342·(0.5/0.35)³ = 21.41 vs
+///   measured 21.579 ms) — depth per unit amount ∝ amount² (quadratic
+///   indexing);
+/// - pp anchors (bare line, hop 0.1875 s): L 0.169 / 7.342 / 21.579 ms at
+///   amounts 0.10 / 0.35 / 0.50; R = 0.26 × L at every amount (round-4
+///   readings 0.28/0.27/0.25);
+/// - the wobble ACCUMULATES down the recirculating train (loop-internal:
+///   each feedback pass re-enters through the modulated delay — first tap
+///   ≈ last tap as a pure sampled modulation requires, mid-tap overshoot
+///   2.4× the end taps at amount 0.35);
+/// - at amount 0 the grid is unchanged (rounds 2/3), and the LFO anchors
+///   to the same clock synced and free (EC4 ≡ E1 at 0.00 ms).
+pub mod modulation {
+    /// Stored `Modulation_Frequency` = 1.99999928 with `Modulation_Sync`
+    /// on (`SyncedRate` 12 — the 2 Hz cell at 120 BPM).
+    pub const LFO_HZ: f64 = 2.0;
+
+    /// Pingpong channel of a tap: odd taps L, even taps R.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub enum Channel {
+        L,
+        R,
+    }
+
+    /// Measured depth anchor (EC11_AMT35, bare line): pp wobble L
+    /// 7.342 ms at `Modulation_AmountDelay` 0.35.
+    pub const PP_L_MS_AT_035: f64 = 7.342;
+    /// Measured R/L pp ratio, constant across amounts (devices/echo.md
+    /// round 4). This is the PP-LEVEL law; the walk below produces it
+    /// emergently (see `PHASE_STEREO_DEG`).
+    pub const PP_RATIO_R_TO_L: f64 = 0.26;
+
+    /// The cited depth law: pp tap-time wobble in ms, ∝ AmountDelay³.
+    ///
+    /// Above amount 0.75 the sweep exceeds the measure window and the law
+    /// is unverified (round 4: taps migrate windows).
+    pub fn pp_wobble_ms(amount: f64, channel: Channel) -> f64 {
+        let l = PP_L_MS_AT_035 * (amount / 0.35).powi(3);
+        match channel {
+            Channel::L => l,
+            Channel::R => l * PP_RATIO_R_TO_L,
+        }
+    }
+
+    // --- walk engine (stated as fitted against the measured offsets) -----
+    //
+    // Mechanism: loop-internal modulation. Tap k of the pingpong walk is
+    // the k-th pass through a modulated delay line (odd passes L, even R),
+    // so tap-time offsets ACCUMULATE: o_k = o_{k−1} + d(t_k), with d the
+    // per-pass delay deviation sampled at the pass's read time
+    // t_k = t0 + k·hop + o_{k−1} (the o-feedback into the LFO phase is
+    // second-order but kept — it is what bends the walk at amount 0.5).
+    //
+    // BOTH lines carry the SAME per-pass amplitude, and the measured R/L
+    // pp ratio 0.26 EMERGES from the stereo phase cancelling most
+    // even-pass deviation inside the R-tap sums (model ratio 0.269 vs
+    // measured 1.954/7.342 = 0.266). The dossier's per-line scaling
+    // reading ("the right delay line's mod depth is a fixed fraction of
+    // the left's") is NOT encoded: a walk with per-pass R depth 0.26·D
+    // predicts R/L pp ≈ 0.70 and misses the measured E1 R offsets by up to
+    // 0.4 ms while the equal-depth walk below holds ≤0.11 ms — refuted at
+    // walk level (echo-mod lane, 2026-10-09). A direct discriminator probe
+    // (backlog): the first R tap's offset vs the L tap-1 offset at a large
+    // amount — per-pass scaling predicts o_R(tap 2) ≈ 0.26·o_L(tap 1),
+    // the phase model ≈ the same order as o_L(tap 1).
+    //
+    // Fitted against the offset tables (EC11 L {−2.17,+0.77,+5.17,+0.50,
+    // −2.13}, EC8 L {−5.79,+2.92,+15.79,+2.52}, E1 L {−0.64,+0.19,+1.37} /
+    // R {−0.06,+0.50,+0.59} ms): residuals ≤0.52 ms at 0.35, ≤1.8 ms at
+    // 0.5, ≤0.23 ms at E1 — inside the ±1.5 ms measurement band the render
+    // wobble numbers carry as peak-readings (devices/echo.md round 2:
+    // "E1/E7 grids match the same positions within ±1.5 ms").
+    pub const PER_PASS_MS_AT_035: f64 = 2.83;
+    /// LFO start phase, degrees (fitted on a 5° grid). The stored
+    /// `Modulation_PhaseOffset` pin (90) sits inside the phase band the
+    /// render path leaves open: its −0.176 ms T0 bias is ≈127° of 2 Hz
+    /// phase, so the absolute phase is not pinned by the renders.
+    pub const PHASE_L_DEG: f64 = 110.0;
+    /// Stereo phase offset between the lines' LFOs, degrees (fitted; pin
+    /// reads 90). This is what makes the R pp come out at 0.26 × L.
+    pub const PHASE_STEREO_DEG: f64 = 85.0;
+
+    /// Per-pass delay deviation (seconds): pass `pass` (1-based) through
+    /// the L (odd) / R (even) line, read at `read_time_s`, at `amount`.
+    pub fn pass_offset_s(amount: f64, pass: usize, read_time_s: f64) -> f64 {
+        let depth_s = PER_PASS_MS_AT_035 * 1e-3 * (amount / 0.35).powi(3);
+        let phase_deg =
+            PHASE_L_DEG + if pass % 2 == 0 { PHASE_STEREO_DEG } else { 0.0 };
+        depth_s
+            * (2.0 * std::f64::consts::PI * LFO_HZ * read_time_s
+                + phase_deg.to_radians())
+            .sin()
+    }
+
+    /// Accumulating same-channel tap offsets in ms for taps 1..=n.
+    ///
+    /// Entry k−1 is tap k's position offset from the bare grid t0 + k·hop;
+    /// odd taps are the L channel, even taps R. The 2 Hz LFO anchors to the
+    /// same clock in synced and free mode (EC4 ≡ E1), so `hop_s` is the
+    /// free/synced hop either way.
+    pub fn tap_offsets_ms(amount: f64, hop_s: f64, t0_s: f64, n: usize) -> Vec<f64> {
+        let mut out = Vec::with_capacity(n);
+        let mut o_s = 0.0f64;
+        for k in 1..=n {
+            let t = t0_s + k as f64 * hop_s + o_s;
+            o_s += pass_offset_s(amount, k, t);
+            out.push(o_s * 1e3);
+        }
+        out
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        /// The cited cubic depth law at the measured amounts {0.1, 0.35,
+        /// 0.5}, L and R (devices/echo.md round 4 table).
+        #[test]
+        fn depth_law_cubic_anchors() {
+            let pp = |a, c| pp_wobble_ms(a, c);
+            assert!((pp(0.35, Channel::L) - 7.342).abs() < 1e-9);
+            // 0.10: law 0.1712 vs measured 0.169 (1.3%)
+            assert!((pp(0.1, Channel::L) - 0.169).abs() / 0.169 < 0.02);
+            // 0.50: law 21.405 vs measured 21.579 (0.8% — the dossier's own
+            // full-preset cross-check of the cubic)
+            assert!((pp(0.5, Channel::L) - 21.579).abs() / 21.579 < 0.01);
+            // R = 0.26 × L exactly at every amount; vs the measured R pp
+            // {0.048, 1.954, 5.369} within 8% (the round-4 per-amount ratio
+            // readings themselves spread 0.25–0.28 around the 0.26 constant)
+            for (a, meas_r) in [(0.1, 0.048), (0.35, 1.954), (0.5, 5.369)] {
+                assert!((pp(a, Channel::R) - 0.26 * pp(a, Channel::L)).abs() < 1e-9);
+                assert!(
+                    (pp(a, Channel::R) - meas_r).abs() / meas_r < 0.08,
+                    "R pp at {a}: {} vs {meas_r}",
+                    pp(a, Channel::R)
+                );
+            }
+        }
+
+        /// Per-pass deviation scales as amount³ exactly (quadratic indexing
+        /// of the depth knob), L passes and R passes alike.
+        #[test]
+        fn pass_offset_scales_cubically() {
+            let t = 0.1896;
+            let ratio = pass_offset_s(0.5, 1, t) / pass_offset_s(0.1, 1, t);
+            assert!((ratio - (0.5f64 / 0.1).powi(3)).abs() < 1e-9);
+            let ratio_r = pass_offset_s(0.5, 2, t) / pass_offset_s(0.1, 2, t);
+            assert!((ratio_r - 125.0).abs() < 1e-9);
+        }
+
+        /// The tap walk at amount 0.35 lands on the measured accumulating
+        /// positions (EC11, bare line, hop 0.1875 s, t0 = impulse.wav's
+        /// sample 100 at 48k), within the ±1.5 ms band the render wobble
+        /// numbers carry as peak-readings (devices/echo.md round 2). The
+        /// accumulation signature is asserted structurally: first ≈ last,
+        /// mid-tap the extreme (measured overshoot 2.4× the ends; the walk
+        /// gives 1.8× — stated residual). The R/L pp ratio emerges at
+        /// 0.269 vs measured 0.266.
+        #[test]
+        fn tap_walk_accumulates_at_amount_035() {
+            let offs = tap_offsets_ms(0.35, 0.1875, 100.0 / 48000.0, 10);
+            let meas_l = [(1, -2.17), (3, 0.77), (5, 5.17), (7, 0.50), (9, -2.13)];
+            for (k, m) in meas_l {
+                let o = offs[k - 1];
+                assert!(
+                    (o - m).abs() <= 1.5,
+                    "L tap {k}: walk {o:.2} ms vs measured {m} ms"
+                );
+            }
+            let (o1, o5, o9) = (offs[0], offs[4], offs[8]);
+            assert!((o1 - o9).abs() <= 0.75, "first ≈ last: {o1:.2} vs {o9:.2}");
+            assert!(
+                o5.abs() > o1.abs() && o5.abs() > o9.abs() && o5.abs() >= 1.5 * o1.abs().max(o9.abs()),
+                "mid-tap overshoot: o5 {o5:.2} vs ends {o1:.2}/{o9:.2} (measured 2.4×)"
+            );
+            let l_seq: Vec<f64> = [1, 3, 5, 7, 9].iter().map(|&k| offs[k - 1]).collect();
+            let r_seq: Vec<f64> = [2, 4, 6, 8, 10].iter().map(|&k| offs[k - 1]).collect();
+            let pp = |s: &[f64]| s.iter().cloned().fold(f64::MIN, f64::max)
+                - s.iter().cloned().fold(f64::MAX, f64::min);
+            let ratio = pp(&r_seq) / pp(&l_seq);
+            assert!((ratio - 1.954 / 7.342).abs() < 0.02, "R/L pp ratio {ratio:.3}");
+        }
+
+        /// E1-family walk (amount 0.21875): the six measured tap offsets
+        /// (rounds 2/3) within the same ±1.5 ms band.
+        #[test]
+        fn tap_walk_e1_family_offsets() {
+            let offs = tap_offsets_ms(0.21875, 0.1875, 100.0 / 48000.0, 6);
+            for (k, m) in [(1, -0.64), (3, 0.19), (5, 1.37), (2, -0.06), (4, 0.50), (6, 0.59)]
+            {
+                let o = offs[k - 1];
+                assert!(
+                    (o - m).abs() <= 1.5,
+                    "tap {k}: walk {o:.2} ms vs measured {m} ms"
+                );
+            }
+        }
+
+        /// Amount 0.5 (EC8/EC8_MOD50): taps 1/3/5 within the band; tap 7's
+        /// measured offset carries the round-3 tap-vs-tail ambiguity (the
+        /// dossier flags EC8's late taps) — asserted at a stated ±2.0 ms.
+        #[test]
+        fn tap_walk_amount_05_bare_and_full_preset() {
+            let offs = tap_offsets_ms(0.5, 0.1875, 100.0 / 48000.0, 7);
+            for (k, m, tol) in
+                [(1, -5.79, 2.0), (3, 2.92, 1.5), (5, 15.79, 1.5), (7, 2.52, 2.0)]
+            {
+                let o = offs[k - 1];
+                assert!(
+                    (o - m).abs() <= tol,
+                    "L tap {k}: walk {o:.2} ms vs measured {m} ms (±{tol})"
+                );
+            }
+        }
+    }
+}
 
 /// Synced delay time in seconds at `bpm`.
 ///
@@ -124,6 +352,10 @@ pub struct EchoConfig {
     pub filter_on: bool,
     pub hp_hz: f64,
     pub lp_hz: f64,
+    /// Stored `Modulation_AmountDelay` (0 = bare line; E1 pins 0.21875).
+    /// Drives the tap-position wobble via the `modulation` walk — the tap
+    /// GRID itself is mod-invariant (devices/echo.md rounds 2/3).
+    pub modulation_amount: f64,
     /// Number of pingpong taps to render.
     pub taps: usize,
 }
@@ -140,6 +372,7 @@ pub fn e1_config() -> EchoConfig {
         filter_on: true,
         hp_hz: 49.9997,
         lp_hz: 5000.026,
+        modulation_amount: 0.21875,
         taps: 8,
     }
 }
@@ -236,10 +469,11 @@ pub fn e1_family_tap_peaks_db(cfg: &EchoConfig) -> Vec<f64> {
 }
 
 /// Render the device output for a unit impulse at `impulse_sample` (stereo),
-/// E1-family: direct crossfade + filtered pingpong taps. Ducking, internal
-/// reverb and modulation are OUT (module boundary note). The render-path
-/// SRC/dither of the golden exports is NOT modeled — the gate compares tap
-/// times and per-hop level slopes, which survive it.
+/// E1-family: direct crossfade + filtered pingpong taps. Ducking and the
+/// internal reverb are OUT (module boundary note); modulation is IN as the
+/// `modulation` walk's tap-position wobble at `modulation_amount` (round-2/4
+/// laws). The render-path SRC/dither of the golden exports is NOT modeled —
+/// the gate compares tap times and per-hop level slopes, which survive it.
 pub fn render_e1_family_impulse(
     cfg: &EchoConfig,
     sample_rate: u32,
@@ -259,9 +493,20 @@ pub fn render_e1_family_impulse(
     }
 
     // Wet path: pingpong taps, each rendered as the filter IR scaled so the
-    // tap PEAK lands on the model tap table.
+    // tap PEAK lands on the model tap table. Tap positions carry the
+    // modulation walk's accumulating offsets (loop-internal placement).
     let peaks = e1_family_tap_peaks_db(cfg);
     let hop = cfg.hop_s();
+    let mod_off_ms = if cfg.modulation_amount > 0.0 {
+        modulation::tap_offsets_ms(
+            cfg.modulation_amount,
+            hop,
+            impulse_sample as f64 / sample_rate as f64,
+            peaks.len(),
+        )
+    } else {
+        vec![0.0; peaks.len()]
+    };
     let a_lp = one_pole_a(cfg.lp_hz, sample_rate);
     let a_hp = one_pole_a(cfg.hp_hz, sample_rate);
     let ir_len = 2000usize;
@@ -281,7 +526,8 @@ pub fn render_e1_family_impulse(
         // ir is normalized to unit peak, so the tap amplitude is the target
         // peak itself
         let amp = 10f64.powf(peak_db / 20.0);
-        let pos = impulse_sample as f64 + (k as f64 + 1.0) * hop * sample_rate as f64;
+        let pos = impulse_sample as f64
+            + ((k as f64 + 1.0) * hop + mod_off_ms[k] * 1e-3) * sample_rate as f64;
         let start = pos.round() as i64;
         for (i, &v) in ir.iter().enumerate() {
             let j = start + i as i64;
@@ -333,5 +579,45 @@ mod echo_lane_tests {
         assert!((peaks[3] - -40.68).abs() < 0.01);
         assert!((peaks[4] - -54.60).abs() < 0.01);
         assert!((peaks[5] - -56.68).abs() < 0.01);
+    }
+
+    /// Render hookup (echo-mod lane): amount 0 keeps the bare k·hop grid;
+    /// the E1 amount shifts tap 1 by exactly the walk's first offset
+    /// (±0.5 ms — the filter IR's own ~1-sample peak lag is common to both
+    /// renders and cancels in the shift).
+    #[test]
+    fn render_carries_the_modulation_walk() {
+        let sr = 44100u32;
+        let mut cfg = e1_config();
+        let hop = cfg.hop_s();
+        let t0_s = 100.0 / sr as f64;
+        let peak_pos = |buf: &[f32], around_s: f64| -> usize {
+            let c = (around_s * sr as f64) as usize;
+            let w = (0.004 * sr as f64) as usize;
+            let (mut best, mut bi) = (0.0f32, c);
+            for (i, &v) in buf[c - w..c + w].iter().enumerate() {
+                if v.abs() > best {
+                    best = v.abs();
+                    bi = c - w + i;
+                }
+            }
+            bi
+        };
+        cfg.modulation_amount = 0.0;
+        let (bare, _) = render_e1_family_impulse(&cfg, sr, 100);
+        cfg.modulation_amount = 0.21875;
+        let (wobbled, _) = render_e1_family_impulse(&cfg, sr, 100);
+        let grid1 = t0_s + hop;
+        let p0 = peak_pos(&bare, grid1) as f64 / sr as f64;
+        let p1 = peak_pos(&wobbled, grid1) as f64 / sr as f64;
+        assert!(
+            (p0 - grid1).abs() < 5e-4,
+            "bare tap 1 off grid: {p0:.6} vs {grid1:.6}"
+        );
+        let want = grid1 + modulation::tap_offsets_ms(0.21875, hop, t0_s, 1)[0] * 1e-3;
+        assert!(
+            (p1 - want).abs() < 5e-4,
+            "mod tap 1 at {p1:.6}, walk says {want:.6}"
+        );
     }
 }
