@@ -1,29 +1,39 @@
-/* Inhabitant rack devices — the widget guide's tokens (§1): one palette,
-   hairlines, amber accent, lights that are readings. 11–12 px type, mono
-   values. A light is never decoration: on = the owner reports the state;
-   waiting = no illumination, the note carries the honesty. */
+/* Inhabitant rack devices — the widget guide's tokens (§1) and the icon-cut
+   specimen's device anatomy (§5): one palette, hairlines, amber accent,
+   lights that are readings, cards at chain density (never full-width grey
+   boxes). 11–12 px type, mono values. A light is never decoration: on = the
+   owner reports the state; unknown/off = no illumination at all; pending =
+   the pulsing hollow ring of uncommitted work. */
 
 :root {
   --inh-bg-0: #26292d;
   --inh-bg-1: #33363b;
   --inh-bg-2: #3f4348;
+  --inh-bg-3: #4a4e54;
   --inh-line: #24262a;
   --inh-line-strong: #3d4147;
   --inh-text: #d4d7da;
   --inh-dim: #a2a7ad;
   --inh-faint: #71767c;
   --inh-accent: #ffbe00;
+  --inh-accent-soft: rgba(255, 190, 0, 0.13);
+  --inh-sel: #7ec3e6;
+  --inh-rec: #e0523f;
+  --inh-green: #8fd0a8;
+  --inh-stall: #ff9b4a;
   --inh-paper: #f3efe4;
-  --inh-ink: #2c2a24;
+  --inh-ink: #16181b;
   --inh-mono: ui-monospace, 'SF Mono', Menlo, monospace;
 }
 
+/* ————————————————— the chain (§3.7): cards left→right, one drop zone — */
+
 .inhabitant-rack {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 8px;
+  align-items: flex-start;
   min-height: 0;
-  overflow: auto;
   padding: 4px;
   background: var(--inh-bg-1);
 }
@@ -32,10 +42,11 @@
   border: 1px solid var(--inh-line-strong);
   border-radius: 3px;
   background: var(--inh-bg-1);
-  padding: 4px;
+  padding: 4px 6px 6px;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .inhabitant-family-name {
@@ -45,44 +56,109 @@
   text-transform: uppercase;
   color: var(--inh-faint);
   padding: 0 2px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
 }
 
+.inhabitant-family-count {
+  font-family: var(--inh-mono);
+  font-size: 9px;
+  color: var(--inh-faint);
+}
+
+.inhabitant-family-chain {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+/* the chain's dashed end — it names what may dock (empty slot ≠ dead UI) */
+.inhabitant-dropz {
+  width: 158px;
+  align-self: stretch;
+  min-height: 44px;
+  border: 1px dashed var(--inh-line-strong);
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--inh-faint);
+  font-size: 11px;
+  padding: 8px;
+}
+
+/* ———————————————————————— the device card (§5 anatomy) ———————————————— */
+
 .inhabitant-device {
+  background: var(--inh-bg-2);
   border: 1px solid var(--inh-line);
   border-radius: 2px;
-  background: var(--inh-bg-2);
-  padding: 3px 6px;
+  display: flex;
+  flex-direction: column;
   font-size: 11px;
+  line-height: 1.45;
   color: var(--inh-text);
+  min-width: 0;
 }
 
 .inhabitant-device.is-waiting {
-  opacity: 0.72;
+  background: var(--inh-bg-1);
+  border-style: dashed;
 }
 
 .inhabitant-device-head {
   display: flex;
   align-items: center;
-  gap: 6px;
-  min-height: 20px;
+  gap: 5px;
+  min-height: 21px;
+  padding: 0 5px;
+  border-bottom: 1px solid var(--inh-line);
+  background: var(--inh-bg-1);
+  white-space: nowrap;
 }
 
+/* the power light — a reading: engaged = filled amber; admitted = the
+   hollow amber ring; off = a dark lamp; pending = pulsing hollow */
 .inhabitant-light {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  border: 1px solid #0007;
-  background: var(--inh-bg-0);
+  border: 2px solid var(--inh-faint);
+  background: var(--inh-bg-3);
   flex: none;
 }
 
-.inhabitant-light.is-admitted { border-color: var(--inh-line-strong); }
-.inhabitant-light.is-engaged { background: var(--inh-accent); border-color: var(--inh-accent); }
-.inhabitant-light.is-pending { animation: inhabitant-blink 1s steps(2) infinite; }
+.inhabitant-light.is-engaged {
+  background: var(--inh-accent);
+  border-color: var(--inh-accent);
+}
+
+/* the Central devices' admitted ring: the owners answered — a hollow lit
+   ring, not a filled lamp (the reading lives in the rows) */
+.inhabitant-light.is-admitted {
+  border-color: var(--inh-accent);
+  background: transparent;
+}
+
+.inhabitant-light.is-pending {
+  background: transparent;
+  border-color: var(--inh-accent);
+  animation: inhabitant-blink 1.2s steps(2) infinite;
+}
 
 @keyframes inhabitant-blink {
   50% { opacity: 0.25; }
 }
+
+.inhabitant-device-mark {
+  color: var(--inh-dim);
+  display: inline-flex;
+  flex: none;
+}
+
+.inhabitant-device-mark svg { display: block; }
 
 .inhabitant-device-title {
   font: inherit;
@@ -91,43 +167,384 @@
   background: none;
   border: none;
   padding: 0;
-  cursor: pointer;
+  cursor: default;
   text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.inhabitant-device-title:hover { color: var(--inh-accent); }
+button.inhabitant-device-title { cursor: pointer; }
+button.inhabitant-device-title:hover { color: var(--inh-accent); }
 
 .inhabitant-device-sub {
   color: var(--inh-faint);
   font-family: var(--inh-mono);
-  font-size: 10px;
+  font-size: 9.5px;
   overflow: hidden;
-  white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.inhabitant-device-save {
+.inhabitant-device-x {
   margin-left: auto;
-  color: var(--inh-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--inh-faint);
   font-size: 10px;
-  text-align: right;
-  max-width: 46%;
+  padding-left: 6px;
 }
 
-.inhabitant-device-fold {
+.inhabitant-device-fold,
+.inhabitant-device-mark-btn {
   background: none;
   border: none;
   color: var(--inh-faint);
   cursor: pointer;
-  padding: 0 2px;
+  padding: 1px;
+  display: inline-flex;
+  align-items: center;
 }
 
-.inhabitant-device-fold:hover { color: var(--inh-accent); }
+.inhabitant-device-fold:hover,
+.inhabitant-device-mark-btn:hover:not(:disabled) { color: var(--inh-accent); }
 
+.inhabitant-device-fold:disabled,
+.inhabitant-device-mark-btn:disabled { color: var(--inh-line-strong); cursor: default; }
+
+.inhabitant-device-fold svg { transition: transform 0.15s ease; }
+.inhabitant-device-fold svg.is-open { transform: rotate(180deg); }
+
+/* the honest reason line — one line in place, full text on hover */
+.inhabitant-device-note {
+  margin: 0;
+  padding: 3px 6px;
+  color: var(--inh-dim);
+  font-size: 10px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inhabitant-device.is-waiting .inhabitant-device-note { color: var(--inh-faint); }
+
+.inhabitant-device-body,
+.inhabitant-face-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 5px 6px 6px;
+  min-width: 0;
+}
+
+.inhabitant-device-body { border-top: 1px solid var(--inh-line); }
+
+/* a waiting face carries no body — declared, waiting, honest */
+
+/* ————————————————— the body's shared pieces: actions, chips, notices — */
+
+.inhabitant-body-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.inhabitant-act {
+  font: inherit;
+  font-size: 10.5px;
+  color: var(--inh-text);
+  background: var(--inh-bg-0);
+  border: 1px solid var(--inh-line-strong);
+  border-radius: 2px;
+  padding: 2px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.inhabitant-act:hover:not(:disabled) {
+  color: var(--inh-accent);
+  border-color: var(--inh-accent);
+}
+
+.inhabitant-act:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.inhabitant-quiet { color: var(--inh-faint); font-size: 10.5px; }
+
+.inhabitant-device-fault {
+  margin: 0;
+  color: var(--inh-rec);
+  font-size: 10.5px;
+}
+
+.inhabitant-device-notice {
+  margin: 0;
+  color: var(--inh-dim);
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+/* the save router's five named outcomes — each with its own visual; the
+   chip names the outcome, the title carries the owner's words verbatim */
+.inhabitant-device-save {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  max-width: 100%;
+}
+
+.inhabitant-outcome-chip {
+  font-family: var(--inh-mono);
+  font-size: 9.5px;
+  padding: 1px 7px;
+  border-radius: 2px;
+  border: 1px solid var(--inh-line-strong);
+  color: var(--inh-dim);
+  background: transparent;
+  white-space: nowrap;
+}
+
+.inhabitant-outcome-chip[data-outcome='saved'] {
+  background: var(--inh-green);
+  border-color: var(--inh-green);
+  color: #1d1f22;
+}
+
+.inhabitant-outcome-chip[data-outcome='unchanged'] {
+  color: var(--inh-faint);
+  border-style: dotted;
+}
+
+.inhabitant-outcome-chip[data-outcome='stale'] {
+  color: var(--inh-stall);
+  border-color: var(--inh-stall);
+  background: var(--inh-accent-soft);
+}
+
+.inhabitant-outcome-chip[data-outcome='conflict'] {
+  color: #1d1f22;
+  border-color: var(--inh-stall);
+  background: repeating-linear-gradient(135deg, transparent 0, transparent 4px, rgba(255, 155, 74, 0.4) 4px, rgba(255, 155, 74, 0.4) 7px);
+}
+
+.inhabitant-outcome-chip[data-outcome='refused'] {
+  color: var(--inh-rec);
+  border-color: var(--inh-rec);
+  border-style: dashed;
+}
+
+/* the instrument's standing chip (the rack header's status slot) */
+.inhabitant-standing-chip {
+  font-family: var(--inh-mono);
+  font-size: 9.5px;
+  padding: 0 6px;
+  border: 1px solid var(--inh-line-strong);
+  color: var(--inh-faint);
+  white-space: nowrap;
+}
+
+.inhabitant-standing-chip[data-ql-standing='following'] { color: var(--inh-green); border-color: var(--inh-green); }
+.inhabitant-standing-chip[data-ql-standing='held'],
+.inhabitant-standing-chip[data-ql-standing='opening'] { color: var(--inh-accent); border-color: var(--inh-accent); }
+.inhabitant-standing-chip[data-ql-standing='refusing'],
+.inhabitant-standing-chip[data-ql-standing='unavailable'] { color: var(--inh-rec); border-color: var(--inh-rec); border-style: dashed; }
+
+/* ————————————————————————— the document bodies ————————————————————— */
+
+.inhabitant-document-frame {
+  width: 100%;
+  height: 320px;
+  border: 1px solid var(--inh-line);
+  border-radius: 2px;
+  background: var(--inh-paper);
+  display: block;
+}
+
+/* the die net — the device's compact face, a reading of the die's own
+   face position (icon-cut's Day-die drawing) */
+.inhabitant-die-net {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0 3px;
+  border-bottom: 1px solid var(--inh-line);
+}
+
+.inhabitant-die-net svg { flex: none; }
+
+.inhabitant-die-net-caption {
+  font-family: var(--inh-mono);
+  font-size: 10px;
+  color: var(--inh-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inhabitant-die-turn {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 3px;
+}
+
+.inhabitant-die-turn-btn {
+  font: inherit;
+  font-size: 11px;
+  line-height: 1;
+  width: 18px;
+  height: 18px;
+  color: var(--inh-faint);
+  background: var(--inh-bg-0);
+  border: 1px solid var(--inh-line);
+  border-radius: 2px;
+  cursor: default;
+}
+
+/* ——————————————————————— the conversation body ————————————————————— */
+
+.inhabitant-conversation-figure {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0 3px;
+  border-bottom: 1px solid var(--inh-line);
+}
+
+.inhabitant-conversation-figure svg { flex: none; }
+
+.inhabitant-conversation-figure .is-bound { color: var(--inh-green); }
+.inhabitant-conversation-figure .is-absent { color: var(--inh-faint); opacity: 0.8; }
+
+.inhabitant-conversation-standing {
+  font-family: var(--inh-mono);
+  font-size: 10px;
+  color: var(--inh-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inhabitant-conversation .inhabitant-kv { border-top: none; }
+
+/* ——————————————————————— bindings & key–value rows ————————————————— */
+
+.inhabitant-kv {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 1px 8px;
+  margin: 0;
+  font-size: 10.5px;
+}
+
+.inhabitant-kv dt { color: var(--inh-faint); }
+.inhabitant-kv dd {
+  margin: 0;
+  font-family: var(--inh-mono);
+  color: var(--inh-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inhabitant-conversation button {
+  align-self: flex-start;
+}
+
+.mono { font-family: var(--inh-mono); }
+
+/* ————————————————— Central craft: the reading-row table form ————————
+   One reading per row: its boundary_op, its live standing verbatim, its
+   honoured-how note. Tabular columns, hairline rows, table density —
+   the improvement-ledger's reading-row entry, drawn. */
+
+.inhabitant-reading-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.inhabitant-reading {
+  display: grid;
+  grid-template-columns: minmax(150px, max-content) minmax(0, 1fr) minmax(0, max-content);
+  align-items: baseline;
+  gap: 8px;
+  min-height: 20px;
+  padding: 1px 2px;
+  font-size: 10.5px;
+  border-bottom: 1px solid color-mix(in srgb, var(--inh-line) 55%, transparent);
+}
+
+.inhabitant-reading:last-child { border-bottom: none; }
+.inhabitant-reading:hover { background: rgba(255, 190, 0, 0.06); }
+
+.inhabitant-reading-op {
+  font-family: var(--inh-mono);
+  font-size: 9.5px;
+  color: var(--inh-text);
+  background: var(--inh-bg-0);
+  border: 1px solid var(--inh-line-strong);
+  border-radius: 2px;
+  padding: 0 4px;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  justify-self: start;
+}
+
+.inhabitant-reading-standing {
+  color: var(--inh-dim);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+li[data-finding-kind] .inhabitant-reading-standing,
+li[data-impact-session] .inhabitant-reading-standing { white-space: normal; }
+
+.inhabitant-reading-ok { color: var(--inh-green); font-size: 10px; }
+
+.inhabitant-reading-refusal {
+  color: var(--inh-stall);
+  font-size: 10.5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+li[data-refused='true'] .inhabitant-reading-op { border-color: rgba(255, 155, 74, 0.4); }
+
+/* the honoured-how column: the tender a finding names, the receipt shape a
+   declared control would produce — right-aligned, mono, quiet */
+.inhabitant-reading-tender {
+  font-family: var(--inh-mono);
+  font-size: 9.5px;
+  color: var(--inh-faint);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 280px;
+}
+
+/* Declared, unfireable controls: the receipt a press WOULD produce is
+   readable on the control itself (ownerOperation + receiptShape), before
+   any press. Dashed border = declared; reduced weight = unfireable. */
 .inhabitant-device-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
-  padding: 3px 0;
+  padding: 2px 0;
 }
 
 .inhabitant-device-actions button {
@@ -151,75 +568,67 @@
   cursor: default;
 }
 
-.inhabitant-device-note {
-  margin: 2px 0;
-  color: var(--inh-dim);
-  font-size: 10.5px;
-  line-height: 1.4;
-}
-
-.inhabitant-device.is-waiting .inhabitant-device-note { color: var(--inh-faint); }
-
-.inhabitant-device-fault {
-  margin: 2px 0;
-  color: #e0523f;
-  font-size: 10.5px;
-}
-
-.inhabitant-device-notice {
-  margin: 2px 0;
-  color: var(--inh-dim);
-  font-size: 10.5px;
-}
-
-.inhabitant-document-body {
-  width: 100%;
-  height: 300px;
-  border: 1px solid var(--inh-line);
-  border-radius: 2px;
-  background: var(--inh-paper);
-  display: block;
-  margin-top: 3px;
-}
-
-.inhabitant-conversation-body {
-  display: flex;
+.inhabitant-tender-wrap {
+  display: inline-flex;
   flex-direction: column;
-  gap: 4px;
-  padding-top: 3px;
+  gap: 2px;
+  max-width: 560px;
 }
 
-.inhabitant-kv {
-  display: grid;
-  grid-template-columns: 84px 1fr;
-  gap: 1px 8px;
-  margin: 0;
-  font-size: 10.5px;
-}
-
-.inhabitant-kv dt { color: var(--inh-faint); }
-.inhabitant-kv dd {
-  margin: 0;
+.inhabitant-tender-receipt {
   font-family: var(--inh-mono);
-  color: var(--inh-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 9.5px;
+  color: var(--inh-faint);
+  line-height: 1.35;
+  word-break: break-word;
 }
 
-.inhabitant-conversation-body button {
-  align-self: flex-start;
-  font: inherit;
-  font-size: 10.5px;
-  color: var(--inh-text);
-  background: var(--inh-bg-0);
+.inhabitant-tender:disabled {
+  opacity: 0.62;
+  border-style: dashed;
+  cursor: default;
+  color: var(--inh-dim);
+}
+
+/* the detail craft's warp markers: the save-router's five named outcomes,
+   reached ones lit amber, the rest honest hollow */
+[data-save-router-states] [data-outcome] {
+  display: inline-block;
+  font-family: var(--inh-mono);
+  font-size: 9.5px;
   border: 1px solid var(--inh-line-strong);
   border-radius: 2px;
-  padding: 2px 7px;
-  cursor: pointer;
+  padding: 0 4px;
+  margin-right: 3px;
+  color: var(--inh-faint);
 }
 
-.inhabitant-conversation-body button:hover {
-  color: var(--inh-accent);
+[data-save-router-states] [data-outcome][data-reached='true'] {
+  background: var(--inh-accent);
   border-color: var(--inh-accent);
+  color: #1d1f22;
 }
+
+[data-detail-entries] .inhabitant-reading-standing { font-family: var(--inh-mono); }
+
+/* ————————————————————— the L7 harness page chrome ————————————————— */
+
+body { margin: 0; background: #1b1d20; font: 12px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--inh-text); }
+[data-channel-label] { padding: 6px 10px; color: var(--inh-faint); font-family: var(--inh-mono); font-size: 10px; }
+.l7-header { padding: 4px 10px; }
+.l7-header h1 { font-size: 13px; font-weight: 500; margin: 0 0 2px; }
+.l7-faults { margin: 0; color: var(--inh-faint); font-size: 10.5px; font-family: var(--inh-mono); }
+.l7-subjects { display: flex; gap: 4px; padding: 4px 10px; }
+.l7-subjects button {
+  font: inherit; font-size: 11px; color: var(--inh-dim);
+  background: var(--inh-bg-0); border: 1px solid var(--inh-line-strong);
+  border-radius: 2px; padding: 3px 8px; cursor: pointer;
+}
+.l7-subjects button.on { background: var(--inh-accent); color: #1d1f22; border-color: var(--inh-accent); }
+.l7-subjects button:hover:not(.on) { color: var(--inh-accent); }
+[data-detail-mount], .l7-devices { padding: 4px 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+
+/* the L7 page's device sections sit at readable width — the table wants
+   columns, not an endless line */
+.l7-devices > .inhabitant-device,
+[data-detail-mount] > .inhabitant-device { max-width: 1180px; }

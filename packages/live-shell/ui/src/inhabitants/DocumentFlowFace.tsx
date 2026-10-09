@@ -18,13 +18,16 @@ import {useCallback, useEffect, useRef, useState} from 'react'
  *   `stale`; the owner's own `unchanged` outcome passes through named.
  *
  * The page's own internal Save keeps its existing meaning (a portable HTML
- * copy inside the sandbox); only the host button sends writes to the owner. */
+ * copy inside the sandbox); only the host button sends writes to the owner.
+ * The strip's save outcome renders as the router's named chip — five
+ * outcomes, five visuals, detail verbatim in the title. */
 
 import {embedDocument, type QlDoc} from '../../../../../desktop/cradle/src/flow/instance'
 import {readFlowInstance, writeFlowInstance, type FlowInstance} from '../../../../../desktop/cradle/src/flow/instances'
 import {documentPayloadSource, documentScripts, useDocumentHostRead, type FrameIsland} from '../../../../../desktop/cradle/src/document/frame'
 import type {KernelTransportStatus, CentralLocation} from '../../../../../desktop/cradle/src/kernel/types'
-import {classifySaveFailure, outcomeLabel, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
+import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
+import {SaveOutcomeChip} from './inhabitantCard.tsx'
 import './inhabitantDevices.css'
 
 export interface DocumentFlowFaceProps {
@@ -32,8 +35,6 @@ export interface DocumentFlowFaceProps {
   /** The flow instance's owner location (the aperture selects the document;
    * nothing here mints a flow identity — it comes from the document). */
   readonly location: CentralLocation
-  /** Compact shows the strip only; expanded docks the body under it. */
-  readonly expanded?: boolean
 }
 
 /** The hosted copy: payload read seam + the bounded host bridge, injected
@@ -45,7 +46,7 @@ function projectFlowDocument(html: string): string {
     : withSeam
 }
 
-export function DocumentFlowFace({transport, location, expanded = false}: DocumentFlowFaceProps) {
+export function FlowFace({transport, location}: DocumentFlowFaceProps) {
   const [instance, setInstance] = useState<FlowInstance>()
   const [face, setFace] = useState<string>()
   const [failure, setFailure] = useState<string>()
@@ -56,7 +57,7 @@ export function DocumentFlowFace({transport, location, expanded = false}: Docume
   const [revision, setRevision] = useState<string>('')
   const [baselined, setBaselined] = useState(false)
   const frame = useRef<HTMLIFrameElement>(null)
-  const readIsland = useDocumentHostRead(frame, expanded)
+  const readIsland = useDocumentHostRead(frame, true)
   /** The basis the current draft was taken against; a moved basis is stale. */
   const draftBasis = useRef<string>()
   /** The first bounded read after docking — the baseline a save compares
@@ -147,7 +148,7 @@ export function DocumentFlowFace({transport, location, expanded = false}: Docume
   // last known content. The bridge is read-only by construction — the host
   // never pushes content into the sandbox.
   const refreshDraftStanding = useCallback(async () => {
-    if (!instance || !expanded || pending) return
+    if (!instance || !face || pending) return
     try {
       const doc = await captureIsland()
       if (baselineText.current === undefined) {
@@ -159,36 +160,46 @@ export function DocumentFlowFace({transport, location, expanded = false}: Docume
     } catch {
       // Absence of an answer is not a draft; the strip keeps its last state.
     }
-  }, [captureIsland, expanded, instance, markDraft, pending])
+  }, [captureIsland, face, instance, markDraft, pending])
 
   useEffect(() => {
-    if (!expanded) return
+    if (!face) return
     const timer = window.setInterval(() => void refreshDraftStanding(), 2500)
     return () => window.clearInterval(timer)
-  }, [expanded, refreshDraftStanding])
+  }, [face, refreshDraftStanding])
 
   const documentLabel = instance?.doc.meta.title || instance?.doc.meta.documentId || location.path
 
   return (
-    <article className="inhabitant-device inhabitant-document" data-document-device="ql-flow" data-save-outcome={save?.outcome ?? ''} data-dirty={dirty ? 'true' : 'false'} data-baselined={baselined ? 'true' : 'false'}>
-      <header className="inhabitant-device-head">
-        <span className={`inhabitant-light${dirty ? ' is-engaged' : ''}`} title={dirty ? 'Draft edits not yet sent to the owner' : 'No unsent draft'} />
-        <strong>Flow</strong>
-        <span className="inhabitant-device-sub">document · {documentLabel}{revision ? ` · ${revision}` : ''}</span>
-        <span className="inhabitant-device-save" role="status" aria-live="polite" data-save-outcome-label={save?.outcome ?? ''}>{outcomeLabel(save) ?? (pending ? 'waiting for the native operation…' : 'no save attempted')}</span>
-      </header>
-      <div className="inhabitant-device-actions">
-        <button type="button" data-action="save" disabled={!face || pending} onClick={() => void saveToOwner()}>Save to native source</button>
-        <button type="button" data-action="reread" disabled={pending} onClick={() => void load()}>Re-read current document</button>
+    <div
+      className="inhabitant-face-body inhabitant-document"
+      data-document-device="ql-flow"
+      data-save-outcome={save?.outcome ?? ''}
+      data-dirty={dirty ? 'true' : 'false'}
+      data-baselined={baselined ? 'true' : 'false'}
+      data-basis-revision={revision}
+    >
+      <div className="inhabitant-body-actions">
+        <button type="button" className="inhabitant-act" data-action="save" disabled={!face || pending} onClick={() => void saveToOwner()}>Save to native source</button>
+        <button type="button" className="inhabitant-act" data-action="reread" disabled={pending} onClick={() => void load()}>Re-read current document</button>
+        <span className="inhabitant-device-save" role="status" aria-live="polite" data-save-outcome-label={save?.outcome ?? ''}>
+          {save
+            ? <SaveOutcomeChip outcome={save.outcome} detail={save.detail}/>
+            : <span className="inhabitant-quiet">{pending ? 'waiting for the native operation…' : 'no save attempted'}</span>}
+        </span>
       </div>
       {failure && <p className="inhabitant-device-fault" role="alert">Flow document unavailable: {failure}</p>}
       {notice && <p className="inhabitant-device-notice" role="status">{notice}</p>}
-      {expanded && (face === undefined
-        ? <p role="status">Reading the flow instance…</p>
-        : <iframe ref={frame} className="inhabitant-document-body" title="Flow — Dialogue · Flow · Journal, the document's own form" sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" srcDoc={face}/>)}
-    </article>
+      {face === undefined
+        ? <p role="status" className="inhabitant-quiet">Reading the flow instance…</p>
+        : <iframe ref={frame} className="inhabitant-document-frame" title={`Flow — Dialogue · Flow · Journal · ${documentLabel}`} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" srcDoc={face}/>}
+    </div>
   )
 }
 
 /** The island read shape, re-exported for the fixture harness. */
 export type {FrameIsland}
+
+/** The name the manifest grammar uses (the §5.2 face kind), kept as the
+ * component's export alias for hosts that compose the face directly. */
+export {FlowFace as DocumentFlowFace}

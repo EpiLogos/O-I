@@ -29,6 +29,16 @@ export interface FamilyManifest {
 
 const admitted = new Map<FamilyManifestId, FamilyManifest>()
 
+/** Reset hooks — the door is the admission state's single owner, so a reset
+ * clears everything admitted BESIDE it too (declared extensions compose onto
+ * admitted bases; a reset that left them would compose stale extensions onto
+ * re-admitted manifests). [L9 gap fix: the test-only reset previously left
+ * the extension ledger standing.] */
+const resetHooks: (() => void)[] = []
+export function onFamilyManifestReset(hook: () => void): void {
+  resetHooks.push(hook)
+}
+
 /** Admit or replace one family manifest at the neutral door. */
 export function admitFamilyManifest(manifest: FamilyManifest): FamilyManifest {
   const prior = admitted.get(manifest.id)
@@ -47,7 +57,9 @@ export function allFamilyManifests(): FamilyManifest[] {
   return [...admitted.values()].sort((a, b) => a.id.localeCompare(b.id))
 }
 
-/** Test-only: clear the door between cases. */
+/** Test-only: clear the door between cases — the admitted manifests AND
+ * everything composed beside them. */
 export function resetFamilyManifestsForTest(): void {
   admitted.clear()
+  for (const hook of resetHooks) hook()
 }

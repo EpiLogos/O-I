@@ -22,6 +22,7 @@ import {
   type NowListRow,
 } from './centralImpactModel'
 import type {GraphReading} from '../../../../../desktop/cradle/src/knowledge/graph'
+import {KindMark} from './sdk/marks.tsx'
 import './inhabitantDevices.css'
 
 export interface CentralImpactDeviceProps {
@@ -115,6 +116,7 @@ export function CentralImpactDevice({transport, subject, expanded = false}: Cent
       data-impact-read-subject={state.reading?.subject.path ?? ''}>
       <header className="inhabitant-device-head">
         <span className={`inhabitant-light${state.reading ? ' is-admitted' : ''}`} title={state.reading ? 'The owners answered or refused — the reading stands' : 'No impact reading yet'} />
+        <span className="inhabitant-device-mark"><KindMark kind="expression" size={12} title="impact — the Central-web neighbourhood"/></span>
         <strong>Impact</strong>
         <span className="inhabitant-device-sub">{subject ? `${subject.kind} · ${subject.path}` : 'select a folder or note'}</span>
         <span className="inhabitant-device-save" role="status" data-impact-standing={state.pending ? 'reading' : state.reading ? 'read' : 'unread'}>{state.pending ? 'reading the owners…' : summary}</span>

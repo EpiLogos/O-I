@@ -31,6 +31,7 @@ import {
   type CentralSubjectBasis,
   type DayWalkReading,
 } from './centralDayNowModel'
+import {KindMark, WoodMark, isWoodKind, type WoodKind} from './sdk/marks.tsx'
 import './inhabitantDevices.css'
 
 export interface CentralDayNowDeviceProps {
@@ -62,6 +63,16 @@ export function dayLocation(groundRoot: string, dayPath: string): CentralLocatio
     root: groundRoot,
     path: dayPath,
   }
+}
+
+/** The practice of record a control's native action names, where it names
+ * one: the day-close and archive-recovery controls are carried by named
+ * skills (the METHOD marks of the cut). A control whose native action is a
+ * raw owner operation names no practice and carries no mark. */
+function controlPractice(control: {readonly nativeAction: string}): string {
+  const action = control.nativeAction.toLowerCase()
+  if (action.includes('central-day-close') || action.includes('central-archive-recovery')) return 'method'
+  return ''
 }
 
 export function CentralDayNowDevice({transport, dayPath, groundRoot = '/Users/admin/Central', expanded = false}: CentralDayNowDeviceProps) {
@@ -175,6 +186,7 @@ export function CentralDayNowDevice({transport, dayPath, groundRoot = '/Users/ad
     <article className="inhabitant-device" data-central-device="day-now" data-day={walk.walk?.day ?? ''}>
       <header className="inhabitant-device-head">
         <span className={`inhabitant-light${civil.field && !civil.field.refusal ? ' is-admitted' : ''}`} title={civil.field?.refusal ? 'The civil read was refused — see the reading' : 'The civil field stands on the kernel temporal read'} />
+        <span className="inhabitant-device-mark"><KindMark kind="day" size={12} title="day / NOW — the civil stratum"/></span>
         <strong>Day / NOW</strong>
         <span className="inhabitant-device-sub">civil stratum · {civil.field?.dayRef ?? civil.field?.refusal ? (civil.field.refusal ? 'refused' : civil.field.dayRef) : 'not read'}</span>
         <span className="inhabitant-device-save" role="status" data-daynow-standing={civil.pending || walk.pending ? 'reading' : 'read'}>
@@ -202,7 +214,12 @@ export function CentralDayNowDevice({transport, dayPath, groundRoot = '/Users/ad
           <ul className="inhabitant-reading-list" data-civil-controls>
             {CIVIL_TEMPORAL_CONTROLS.map(control => (
               <li key={control.id} className="inhabitant-reading" data-civil-control={control.id} data-admission={control.admission}>
-                <span className="inhabitant-reading-op">{control.label} → {control.nativeAction.split(' (')[0]}</span>
+                <span className="inhabitant-reading-op">
+                  {isWoodKind(controlPractice(control)) && (
+                    <WoodMark kind={controlPractice(control) as WoodKind} size={13} title={`${controlPractice(control)} of record`} />
+                  )}
+                  {' '}{control.label} → {control.nativeAction.split(' (')[0]}
+                </span>
                 <span className="inhabitant-reading-standing">{control.note}</span>
                 <span className="inhabitant-reading-tender" title={`authority: ${control.authority} · receipt: ${control.receiptShape}`}>
                   declared · authority: {control.authority.split('(')[0].trim()} · receipt: {control.receiptShape.split('+')[0].trim()}
@@ -212,10 +229,15 @@ export function CentralDayNowDevice({transport, dayPath, groundRoot = '/Users/ad
           </ul>
           <div className="inhabitant-device-actions">
             {CIVIL_TEMPORAL_CONTROLS.map(control => (
-              <button key={control.id} type="button" className="inhabitant-tender" data-tender={control.id} disabled
-                title={`${control.nativeAction} — ${control.authority}. ${control.note}`}>
-                {control.label} (declared)
-              </button>
+              <span key={control.id} className="inhabitant-tender-wrap" data-tender-wrap={control.id}>
+                <button type="button" className="inhabitant-tender" data-tender={control.id} disabled
+                  title={`${control.nativeAction} — ${control.authority}. ${control.note}`}>
+                  {control.label} (declared)
+                </button>
+                <span className="inhabitant-tender-receipt" data-tender-receipt>
+                  {control.nativeAction} · receipt: {control.receiptShape}
+                </span>
+              </span>
             ))}
           </div>
         </div>

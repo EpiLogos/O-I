@@ -33,6 +33,7 @@ import {
   type HygieneCensus,
   type HygieneFinding,
 } from './centralHygieneModel'
+import {KindMark} from './sdk/marks.tsx'
 import './inhabitantDevices.css'
 
 export interface CentralHygieneDeviceProps {
@@ -136,6 +137,7 @@ export function CentralHygieneDevice({transport, machineRead, seatPaths = [], ex
     <article className="inhabitant-device" data-central-device="ground-hygiene" data-census={state.census ? 'read' : 'unread'}>
       <header className="inhabitant-device-head">
         <span className={`inhabitant-light${state.census ? ' is-admitted' : ''}`} title={state.census ? 'The owners answered or refused — the census stands' : 'No census has been read yet'} />
+        <span className="inhabitant-device-mark"><KindMark kind="location" size={12} title="ground hygiene"/></span>
         <strong>Ground hygiene</strong>
         <span className="inhabitant-device-sub">readings · {strip}</span>
         <span className="inhabitant-device-save" role="status" data-hygiene-standing={state.pending ? 'reading' : state.census ? 'read' : 'unread'}>
@@ -172,16 +174,20 @@ export function CentralHygieneDevice({transport, machineRead, seatPaths = [], ex
           </ul>
           <div className="inhabitant-device-actions" data-hygiene-tenders>
             {HYGIENE_TENDERS.map(tender => (
-              <button
-                key={tender.id}
-                type="button"
-                className="inhabitant-tender"
-                data-tender={tender.id}
-                disabled
-                title={`${tender.ownerOperation} — ${tender.waitsFor}. Receipt: ${tender.receiptShape}`}
-              >
-                {tender.label} (declared)
-              </button>
+              <span key={tender.id} className="inhabitant-tender-wrap" data-tender-wrap={tender.id}>
+                <button
+                  type="button"
+                  className="inhabitant-tender"
+                  data-tender={tender.id}
+                  disabled
+                  title={`${tender.ownerOperation} — ${tender.waitsFor}. Receipt: ${tender.receiptShape}`}
+                >
+                  {tender.label} (declared)
+                </button>
+                <span className="inhabitant-tender-receipt" data-tender-receipt>
+                  {tender.ownerOperation} · receipt: {tender.receiptShape}
+                </span>
+              </span>
             ))}
           </div>
         </div>

@@ -1,0 +1,169 @@
+/* The QL instrument device face — the measured shell chrome (flat neutral,
+ * hairline divisions, 11–12 px type) at the instrument-card scale: named
+ * sections with small-caps labels and hairline dividers (the Technē detail
+ * row's instrument frame), the agent-shell mockup's meter grammar drawn
+ * (labelled readouts + hatched bars, each naming exactly what it reads). */
+
+.ql-instrument {
+  border-top: 1px solid var(--inh-line, #24262a);
+  color: var(--inh-text, #d4d7da);
+  font: 11px/1.45 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ql-instrument-reason {
+  margin: 0;
+  color: var(--inh-faint, #71767c);
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* named sections — the instrument frame's parameter groups */
+.ql-instrument-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 0 5px;
+  border-bottom: 1px solid color-mix(in srgb, var(--inh-line, #24262a) 60%, transparent);
+}
+
+.ql-instrument-section:last-child { border-bottom: none; }
+
+.ql-instrument-section-label {
+  margin: 0;
+  font-size: 9.5px;
+  font-weight: 400;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--inh-faint, #71767c);
+}
+
+.ql-instrument-flds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ql-instrument-fld {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 1px 6px;
+  border: 1px solid var(--inh-line-strong, #3d4147);
+  background: var(--inh-bg-0, #26292d);
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ql-instrument-fld em {
+  font-style: normal;
+  color: var(--inh-faint, #71767c);
+}
+
+/* The hatched meter bar — the mockup's .cpu grammar (kept in kind by the
+ * icon-cut specimen): a hatched track and a filled progress element. Reads
+ * are exact numbers beside every bar. */
+.ql-instrument-meters {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 420px;
+}
+
+.ql-instrument-meter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ql-instrument-meter em {
+  font-style: normal;
+  color: var(--inh-faint, #71767c);
+  width: 64px;
+  flex: none;
+}
+.ql-instrument-bar {
+  width: 84px;
+  height: 10px;
+  border: 1px solid var(--inh-line, #24262a);
+  background: repeating-linear-gradient(90deg, var(--inh-bg-0, #26292d) 0, var(--inh-bg-0, #26292d) 5px, var(--inh-line, #24262a) 5px, var(--inh-line, #24262a) 6px);
+  position: relative;
+  overflow: hidden;
+  flex: none;
+}
+.ql-instrument-bar i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(90deg, var(--inh-green, #8fd0a8) 0, var(--inh-green, #8fd0a8) 5px, transparent 5px, transparent 6px);
+}
+.ql-instrument-bar.is-discarded i { background: repeating-linear-gradient(90deg, var(--inh-stall, #ff9b4a) 0, var(--inh-stall, #ff9b4a) 5px, transparent 5px, transparent 6px); }
+.ql-instrument-bar.is-queued i { background: repeating-linear-gradient(90deg, #97b1be 0, #97b1be 5px, transparent 5px, transparent 6px); }
+.ql-instrument-meter b { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.ql-instrument-meter-law {
+  margin: 0;
+  color: var(--inh-faint, #71767c);
+  font-size: 10px;
+}
+
+.ql-instrument-standing-line {
+  margin: 0;
+  color: var(--inh-faint, #71767c);
+  font-style: italic;
+  font-size: 10.5px;
+}
+
+.ql-instrument-writes-note,
+.ql-instrument-writes-refusal {
+  margin: 0 0 2px;
+  color: var(--inh-faint, #71767c);
+  font-size: 10.5px;
+}
+.ql-instrument-writes-refusal { color: var(--inh-accent, #ffbe00); }
+
+.ql-instrument-write-row,
+.ql-instrument-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ql-instrument-btn {
+  font: inherit;
+  font-size: 10.5px;
+  color: var(--inh-text, #d4d7da);
+  background: var(--inh-bg-0, #26292d);
+  border: 1px solid var(--inh-line-strong, #3d4147);
+  border-radius: 2px;
+  padding: 2px 8px;
+}
+.ql-instrument-btn:disabled { color: var(--inh-faint, #71767c); opacity: 0.55; }
+.ql-instrument-btn:not(:disabled):hover { border-color: var(--inh-accent, #ffbe00); color: var(--inh-accent, #ffbe00); }
+.ql-instrument-btn.is-primary:not(:disabled) {
+  background: var(--inh-accent, #ffbe00);
+  border-color: var(--inh-accent, #ffbe00);
+  color: #1d1f22;
+}
+
+.ql-instrument-draft { color: var(--inh-accent, #ffbe00); display: inline-flex; gap: 6px; align-items: center; }
+.ql-instrument-outcome { margin: 0; color: var(--inh-faint, #71767c); }
+
+/* The honest refusing state: what would start the owner, disclosed. The
+   dashed card edge and the launch contract in the waiting-form grammar. */
+.ql-instrument.is-refusing { border-top-style: dashed; }
+.ql-instrument-fault { margin: 0; color: var(--inh-rec, #e0523f); }
+.ql-instrument-launch { display: flex; flex-direction: column; gap: 4px; margin: 0; }
+.ql-instrument-launch p { margin: 0; }
+.ql-instrument-launch em { font-style: normal; color: var(--inh-faint, #71767c); }
+.ql-instrument-launch ul { margin: 0; padding-left: 16px; }
+.ql-instrument-launch-owner { font-weight: 600; }
+.ql-instrument-launch code { font-family: var(--inh-mono, ui-monospace, Menlo, monospace); font-size: 10px; }
+.ql-instrument-launch-gaps { border-top: 1px solid var(--inh-line, #24262a); padding-top: 4px; }

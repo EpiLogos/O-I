@@ -8,16 +8,21 @@ import {useCallback, useEffect, useState} from 'react'
  * reading and an aperture, never a second conversation store:
  * - with a current Nara identity and an open Expression, it resolves the
  *   binding (`lookupNativeDialogue`) and discloses it verbatim — role,
- *   person, Nara, expression, provisioning standing, resume requirement;
- * - without one, it says so — absent identity is disclosed absence, the
- *   most honest state a conversation device can hold;
+ *   person, Nara, expression, provisioning standing, resume requirement —
+ *   as the guide's rowline form, each field with its admit lamp;
+ * - without one, it says so as the cut draws absence: the ghost mark
+ *   (the dashed hollow node — never a guessed fill) beside the disclosed
+ *   reason. Disclosed absence is the face's content, styled, not a blank;
  * - the pop-out rides the existing `encounter` detached kind; the full
- *   conversation surface is the encounter surface that already exists.
+ *   conversation surface is the encounter surface that already exists
+ *   (opened through its own door, the `contact` mark on the press).
  * No transcript renders here: the encounter surface owns that reading. */
 
 import {lookupNativeDialogue, type NativeDialogue} from '../../../../../desktop/cradle/src/nara/nativeDialogue'
 import {currentIdentity, type CurrentIdentity} from '../../../../../desktop/cradle/src/nara/identity/current'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+import {KindMark, isKindShape, type KindShapeName} from './sdk/marks.tsx'
+import {Icon} from './sdk/Icon.tsx'
 import './inhabitantDevices.css'
 
 export interface ConversationNaraFaceProps {
@@ -28,7 +33,6 @@ export interface ConversationNaraFaceProps {
   /** Identity handed in by the host; when absent the face reads the module's
    * current identity itself and discloses absence if neither exists. */
   readonly identity?: CurrentIdentity | null
-  readonly expanded?: boolean
 }
 
 type Standing =
@@ -39,7 +43,19 @@ type Standing =
   | {state: 'unbound'; detail: string}
   | {state: 'refused'; detail: string}
 
-export function ConversationNaraFace({transport, project, expressionRef, identity, expanded = false}: ConversationNaraFaceProps) {
+/** The mark each standing draws: bound = the agent node lit; resolving =
+ * the hollow ring mid-turn; absence = the ghost (dashed, hollow); refused =
+ * the fault colour carries it. */
+const STANDING_MARKS: Readonly<Record<Standing['state'], KindShapeName>> = Object.freeze({
+  'bound': 'agent',
+  'resolving': 'ghost',
+  'no-identity': 'ghost',
+  'no-expression': 'ghost',
+  'unbound': 'ghost',
+  'refused': 'ghost',
+})
+
+export function NaraConversationFace({transport, project, expressionRef, identity}: ConversationNaraFaceProps) {
   const [standing, setStanding] = useState<Standing>({state: expressionRef ? 'resolving' : 'no-expression'})
 
   useEffect(() => {
@@ -74,23 +90,22 @@ export function ConversationNaraFace({transport, project, expressionRef, identit
     window.dispatchEvent(new CustomEvent('oi:open-encounter', {detail: {project, expression: expressionRef}}))
   }, [expressionRef, project])
 
-  const light = standing.state === 'bound' ? ' is-engaged' : standing.state === 'resolving' ? ' is-pending' : ''
-  const lightTitle = standing.state === 'bound'
-    ? 'Dialogue binding resolved — the encounter surface holds the conversation'
-    : standing.state === 'resolving'
-      ? 'Resolving the Nara dialogue binding'
-      : 'No binding: the honest absence is the face\'s content'
+  const mark = STANDING_MARKS[standing.state]
+  const markKind = isKindShape(mark) ? mark : 'ghost'
 
   return (
-    <article className="inhabitant-device inhabitant-conversation" data-conversation-device="nara" data-standing={standing.state}>
-      <header className="inhabitant-device-head">
-        <span className={`inhabitant-light${light}`} title={lightTitle} />
-        <strong>Conversation</strong>
-        <span className="inhabitant-device-sub">oi.nara-dialogue-binding/v1</span>
-        <span className="inhabitant-device-save" role="status">{standingLabel(standing)}</span>
-      </header>
-      {expanded && <div className="inhabitant-conversation-body">
-        {standing.state === 'bound' && <dl className="inhabitant-kv" data-binding-fields>
+    <div
+      className="inhabitant-face-body inhabitant-conversation"
+      data-conversation-device="nara"
+      data-standing={standing.state}
+    >
+      <div className="inhabitant-conversation-figure" data-conversation-figure>
+        <KindMark kind={markKind} size={28} className={standing.state === 'bound' ? 'is-bound' : 'is-absent'}
+          title={standingLabel(standing)}/>
+        <span className="inhabitant-conversation-standing" data-standing-label>{standingLabel(standing)}</span>
+      </div>
+      {standing.state === 'bound' && <>
+        <dl className="inhabitant-kv" data-binding-fields>
           <dt>role</dt><dd>{standing.dialogue.role}</dd>
           <dt>person</dt><dd>{standing.dialogue.binding.person_ref}</dd>
           <dt>nara</dt><dd>{standing.dialogue.binding.nara_ref}</dd>
@@ -100,14 +115,16 @@ export function ConversationNaraFace({transport, project, expressionRef, identit
           {standing.dialogue.provisioning.resume_required !== undefined && <>
             <dt>resume</dt><dd>{String(standing.dialogue.provisioning.resume_required)}</dd>
           </>}
-        </dl>}
-        {standing.state === 'unbound' && <p className="inhabitant-device-notice">{standing.detail}</p>}
-        {standing.state === 'no-identity' && <p className="inhabitant-device-notice">No Nara identity is current. The binding waits for its person — select an identity through the identity owner; nothing is fabricated here.</p>}
-        {standing.state === 'no-expression' && <p className="inhabitant-device-notice">No expression is selected. A conversation binds to the encounter's subject — select one, and the binding resolves through its owner.</p>}
-        {standing.state === 'refused' && <p className="inhabitant-device-fault" role="alert">{standing.detail}</p>}
-        {standing.state === 'bound' && <button type="button" data-action="open-encounter" onClick={openEncounter}>Open the encounter surface</button>}
-      </div>}
-    </article>
+        </dl>
+        <button type="button" className="inhabitant-act" data-action="open-encounter" onClick={openEncounter}>
+          <Icon name="contact" size={11}/> Open the encounter surface
+        </button>
+      </>}
+      {standing.state === 'unbound' && <p className="inhabitant-device-notice">{standing.detail}</p>}
+      {standing.state === 'no-identity' && <p className="inhabitant-device-notice">No Nara identity is current. The binding waits for its person — select an identity through the identity owner; nothing is fabricated here.</p>}
+      {standing.state === 'no-expression' && <p className="inhabitant-device-notice">No expression is selected. A conversation binds to the encounter's subject — select one, and the binding resolves through its owner.</p>}
+      {standing.state === 'refused' && <p className="inhabitant-device-fault" role="alert">{standing.detail}</p>}
+    </div>
   )
 }
 
@@ -121,3 +138,7 @@ function standingLabel(standing: Standing): string {
     case 'refused': return 'refused'
   }
 }
+
+/** The name the manifest grammar uses (the §5.3 face kind), kept as the
+ * export alias for hosts that compose the face directly. */
+export {NaraConversationFace as ConversationNaraFace}

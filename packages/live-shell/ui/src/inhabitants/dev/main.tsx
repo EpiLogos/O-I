@@ -20,6 +20,33 @@ loadWorldShellFamilies()
 
 const kernelUrl = new URLSearchParams(window.location.search).get('kernel') ?? ''
 
+/** `?reading=fixture` hands the rack an owner-shaped fixture instrument
+ * reading (the same shape the L9 ql-musical-face walk binds — shaped like
+ * the native contracts, labelled as a fixture; NOT a live owner). Absent,
+ * the QL instrument face renders its honest refusing state. */
+const FIXTURE_INSTRUMENT_READING = {
+  schema: 'ql.instrument-reading/v1',
+  standing: 'following',
+  reason: null,
+  identity: {
+    event_ref: 'fixture:occasion', subject_ref: 'fixture:subject',
+    registry_revision: 'fixture:registry', geometry_ref: 'fixture:geometry',
+    material_ref: 'fixture:material', model_ref: 'fixture:model',
+  },
+  acknowledged: {generation: '4', samples_elapsed: '245760'},
+  presented: {generation: '4', samples_elapsed: '245760'},
+  audio: {
+    schema: 'ql.native-audio-receipt/v1', device_epoch: 0, device_sample_rate: 48000,
+    native_origin: '0', context_origin_seconds: 0.5, observed_context_seconds: 0.61,
+    target_context_seconds: 5.62, status: 'scheduled', muted: true, presentation_gain: 0.1,
+    scheduled_blocks: 6, discarded_blocks: 1, reason: null, interval: null,
+    standing: 'native PCM scheduled on a browser audio graph; not proof of physical speaker output (fixture reading)',
+  },
+  available: true, held: false, in_flight: false, queued_blocks: 3, queued_bytes: 4096,
+  coalesced_presentation_frames: 0, views: 1, disposed: false,
+  playback_policy: {blockFrames: 8192, leadSeconds: 0.5, lookaheadSeconds: 0.5, owner: 'fixture (embedded policy values)'},
+} as unknown
+
 const DAY = {
   project: 'o-i',
   sourceRef: 'central:path-ref:day-2026-10-09',
@@ -68,6 +95,9 @@ function App() {
     flow: FLOW,
     conversation: {project: 'o-i', expressionRef: 'fixture:expression-1'},
     projects: [{name: 'O-I', path: 'Work/O-I'}],
+    instrumentReading: new URLSearchParams(window.location.search).get('reading') === 'fixture'
+      ? FIXTURE_INSTRUMENT_READING
+      : undefined,
   })
 }
 

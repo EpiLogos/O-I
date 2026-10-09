@@ -23,7 +23,7 @@
  * components); this module only says what is admitted, and what waits. */
 
 import type {FamilyFaceDeclaration, FamilyManifest, FamilyManifestId} from './familyManifest.ts'
-import {allFamilyManifests, familyManifest} from './familyManifest.ts'
+import {allFamilyManifests, familyManifest, onFamilyManifestReset} from './familyManifest.ts'
 
 // ---------------------------------------------------------------------------
 // face kinds — the rack's residents (WORLD-SHELL-DESIGN §5.1–§5.4)
@@ -156,8 +156,11 @@ interface ComposedFamily {
 }
 
 /** Extension ledger, keyed by family id. Read-only composition source — the
- * door's admission map is never written by this module. */
+ * door's admission map is never written by this module. The door's reset
+ * clears this ledger too (a reset that left extensions standing would
+ * compose them onto re-admitted bases — the [L9 gap fix]). */
 const extensions = new Map<FamilyManifestId, ComposedFamily>()
+onFamilyManifestReset(() => extensions.clear())
 
 const sameContents = (a: unknown, b: unknown): boolean =>
   JSON.stringify(a) === JSON.stringify(b)

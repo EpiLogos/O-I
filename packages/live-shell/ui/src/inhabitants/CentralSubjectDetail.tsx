@@ -21,6 +21,7 @@ import {listFiles, readFile} from '../../../../../desktop/cradle/src/files/clien
 import type {CentralLocation, KernelTransportStatus, NativeDirectory} from '../../../../../desktop/cradle/src/kernel/types'
 import {casShort, subjectDayRef, type CentralSubjectBasis} from './centralDayNowModel'
 import {SAVE_ROUTER_OUTCOMES} from './manifest.ts'
+import {KindMark} from './sdk/marks.tsx'
 import './inhabitantDevices.css'
 
 export type CentralSubjectSelection =
@@ -112,6 +113,7 @@ export function CentralSubjectDetail({transport, subject, groundRoot = '/Users/a
     <section className="inhabitant-device" data-central-detail data-subject-selected="true" data-subject-kind={subject.kind} data-subject-path={subject.path}>
       <header className="inhabitant-device-head">
         <span className={`inhabitant-light${state.basis ? ' is-admitted' : ''}`} title={state.basis ? 'The owner disclosed the subject' : 'No reading yet'} />
+        <span className="inhabitant-device-mark"><KindMark kind="source" size={12} title="central subject"/></span>
         <strong>Central detail</strong>
         <span className="inhabitant-device-sub">{subject.kind} · {subject.path}</span>
         <span className="inhabitant-device-save" role="status" data-detail-standing={state.pending ? 'reading' : state.fault ? 'refused' : state.basis ? 'read' : 'unread'}>
