@@ -30,7 +30,7 @@ Status ledger (updated as lanes land; gate = crate passes vs golden corpus):
 | Operator | INST | ✓ | ✓ (A + B modulator) | partial | ✓ (B wired) | ✓ PASS |
 | Wavetable | INST | ✓ | ✓ (rev 4+, N=1–8) | partial | ✓ | ✓ PASS |
 | Compressor | FX | ✓ (surface module) | — | ← binary lane next | — | — |
-| Saturator | FX | ✓ (surface module) | — | — | — | — |
+| Saturator | FX | ✓ (surface module) | — | ✓ | — | — |
 | EQ Eight | FX | ✓ (surface module) | — | — | — | — |
 | Auto Filter | FX | ✓ (surface module) | — | — | — | — |
 | Utility | FX | ✓ (surface module) | — | — | — | — |
