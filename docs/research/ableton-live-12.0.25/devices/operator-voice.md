@@ -182,9 +182,11 @@ What remains open:
   envelope — and PM-vs-FM sign/phase discrimination — is not nameable from
   audio alone at these pins; needs a ratio sweep (B Coarse 2 vs A) or a
   binary cross-check. The ≈3.35 constant is two-pin evidence, not a law.
-- **`Globals/Algorithm` (0)**: unswept; which algorithm exposes B (or C/D)
-  as a carrier vs modulator is open — B-as-output-voice configurations were
-  not tested (no Algorithm pin in this lane).
+  (Three level pins now exist — see the OP10/OP11 section below; strict
+  ∝Volume is refuted at the third point.)
+- **`Globals/Algorithm`**: probed at the two factory-observed extremes
+  (0 → 7, OP11 below): acoustic null at these pins. Whether ANY index
+  changes B's role while C/D sit at the −70 dB floor is still open.
 - **Shells C/D**: untested; expected to mirror B (document structure
   identical), topology beyond A←B unverified.
 - **WaveForm labels 0..21**: unknown; OP9 pins only the extent tail (22).
@@ -203,6 +205,53 @@ Confidence:
   ladder, settles exactly across B's 400 ms decay).
 - WF22 = user wave, default sine: **high** (null render + document anchor in
   both factory presets); the full label map stays open.
+
+## Index law at a third pin + the Algorithm cell (OP10/OP11, 2026-10-09, op-alg lane)
+
+Both probes derive from OP7 by one pin each (`harness/build_lane3_alg_probes.py`,
+same ET + gzip mtime=0 convention); renders via `with_live_lock.sh` +
+`lane3_render.sh`; analyzer `harness/analyze_lane3_alg.py` (the analyze_lane1
+conventions, plus an exact J1/J0 Bessel inversion of the h2/h1 ratio and a
+90–2000 Hz Goertzel partial scan).
+
+**OP10_BV025 — `Operator.1/Volume` → 0.25 (−12.04 dB), third β point.**
+
+| pin | B Volume | h1 dBFS | h2 dBFS | h3 dBFS | β (exact J1/J0) | vs ∝Volume |
+|-----|----------|---------|---------|---------|-----------------|------------|
+| OP7 | 1.0 | −30.07 | −49.58 | −73.80 | 0.2104 | — |
+| OP8 | 0.5 | −29.95 | −55.24 | −81.67 | 0.1086 | +3.2 % |
+| OP10 | 0.25 | −29.92 | −60.71 | −85.76 | 0.0577 | +9.7 % |
+
+1. **β is near-linear in B's Volume but NOT strictly proportional.** Halving
+   the level divides β by 0.516 / 0.531 (not 0.500): h2 sits +0.27 dB (OP8)
+   then **+0.75 dB (OP10)** above the proportional prediction — outside the
+   0.01 dB level law of the render chain. A Volume-offset line,
+   **β ≈ 0.2036·V + 0.0068**, fits all three pins to ≤0.2 % — stated as a
+   reading, deliberately not fitted into the crate (zero-fitted-scalars
+   rule; the intercept is also unverifiable near the −70 dB floor, where it
+   predicts h2 ≈ −79 dBFS, at the dither floor). Steady RMS stays invariant
+   (−32.78, +0.10 vs OP7 = the M1 residual family): the Bessel energy
+   identity holds at every pin.
+2. **h3 is NOT on the J2 ladder — confirmed, and worse than leakage.**
+   h3−h2 measures −24.2 / −26.4 / −25.1 dB across the three β (nearly
+   constant) while the small-index J2 ladder predicts −25.6 / −31.3 / −36.8.
+   h3 carries a large β-independent (or different-order) component ~25 dB
+   below h2; β estimated from h3 is unusable at these pins. (OP10's h2 at
+   −60.7 dBFS is 23 dB above the M1 floor, so this is not floor-limited
+   measurement.)
+
+**OP11_ALGX — `Globals/Algorithm` 0 → 7 (B Volume 1, C/D at the −70 dB
+floor).** 7 is the only other factory-observed stored value
+(`preset-choir.xml`; params.rs has no Algorithm row — extent evidence is
+{0, 7}). Result: **acoustic null to ≤0.02 dB on every measure** — per-note
+steady RMS +0.00 ×4, h1..h4 identical (h4 −87.70 vs −87.72), the 90–2000 Hz
+partial scan reproduces every OP7 peak within 0.01 dB, and the note-1 onset
+profile (8 × 100 ms) is identical (B still drives the onset index). **No new
+fundamental, no output voice for B, no spectral shape change.** B-as-carrier
+is refuted for both factory-observed extremes. Honest limit: with C/D at the
+−70 dB floor the null cannot separate "Algorithm is sonically inert" from
+"Algorithm only re-routes the muted C/D shells" — the discriminating probe
+(Algorithm 7 with C/D raised) is a follow-up lane.
 
 ## Gate residuals (operator_voice_golden_gate, 2026-10-08)
 
