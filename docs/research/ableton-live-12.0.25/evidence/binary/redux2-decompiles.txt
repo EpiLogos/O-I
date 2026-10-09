@@ -1,0 +1,1404 @@
+// PROVENANCE: Ghidra 12.1.4 decompiles + objdump bytes, persistent project
+// LiveRE2 (~/tools/live-re/ghidra-proj2, ALREADY ANALYZED), Live.arm64
+// (Live 12.0.25, 2024-08-27_2627c43816), arm64 slice.
+// Owner-private analysis evidence. NOT FOR REDISTRIBUTION. Never enters
+// product source (packages/live-dynamics).
+// Captured 2026-10-09 (binary derivations lane: Redux/Overdrive/Erosion) via
+// BlockProbe.java / CallTargetsProbe.java / DataProbe.java / RangeListProbe.java
+// (query-only; no re-import, no analysis pass).
+// Companion dossier: devices/devices/redux-derivation.md.
+
+// Contents: the ODeviceKitDeviceProcessor<ableton::devices::redux2::Redux2Device>
+// create chain, device ctor, Init/Reset/On/OnX, every automatable-event handler,
+// and the setCallbacks lambda bodies that carry the parameter laws (decimator
+// ratio + SVF cutoff, quantizer steps/softness/dc-shift). The per-sample
+// quantize/decimate expressions run inside the async block engine (tick
+// closures selected from a runtime std::function table at context +0x1e28,
+// indexed by soft/e00/e01/dcshift) and are NOT in this capture — dossier §4.
+//
+// objdump symbolization of the lambda heads (3-instruction tail-calls; Ghidra
+// inlined the shared SVF dispatch target into the decompiles below):
+//
+//   1019269c4: ldr s0,[x1]; ldr x0,[x0]; b 0x103ae0284  (SampleRate)
+//   101926a04: ldr w1,[x1]; ldr x0,[x0]; b 0x103ae044c  (BitDepth int)
+//   target: ableton::estd::detail::variant_dispatch_alternative<9, ...
+//     dsp::FilterProtoypeAnalogSvfVisitor<dsp::StereoPair<float>, 2>,
+//     variant<FilterPrototype<...>::Wire::{Lowpass,Highpass,Bandpass,
+//     NormalizedBandpass,Allpass,LowShelf,HighShelf,Peak,Notch}> >...
+//   -> the redux2 filter tickables are Analog-SVF FilterPrototype wires.
+//
+// Const-pool decodes (DataProbe/objdump):
+//   [0x104e28078] 0.375, 0.25, 0.25, 0.0
+//   [0x104e28088] 1.0, 40000.0    (job-ctor pair; 40000 = SampleRate param max)
+//   [0x104e28090] 0.0, 10000.0    (job-ctor cutoff cap: fc = min(0.48*sr, 10000 Hz))
+//   [0x104e280a8] 87.600426, 0.011415  (87.6004 = e^4.472784 = max softness alpha)
+//   [0x104e280b0] 0.196034, 0.196034
+// NOTE: the tick-closure table, the sine table at *(0x1059a8a00) and the
+// applied-gain LUT family at 0x1059a89b8 sit in runtime-initialized __DATA
+// beyond the file-backed range — not statically decodable [B-negative].
+
+// ==== 1018c5880 — ORedux2Processor create wrapper (from create template 0x1018c5844) ====
+FUNC 1018c5880 name=FUN_1018c5880 body=144 lines=19
+
+long FUN_1018c5880(undefined8 param_1,undefined8 param_2)
+
+{
+  undefined8 uVar1;
+  long lVar2;
+  long *plVar3;
+  undefined1 uStack_35;
+  int iStack_34;
+  
+  uVar1 = func_0x00010153be8c(param_2,&iStack_34);
+  func_0x00010153be4c(uVar1,&uStack_35);
+  lVar2 = func_0x00010153ff88(0x28);
+  func_0x000101545cf4(lVar2,param_1,iStack_34 + 0x268,uStack_35);
+  plVar3 = (long *)func_0x0001018a4f7c(*(undefined8 *)(lVar2 + 0x18),param_1,param_2);
+  *plVar3 = (long)(PTR_DAT_1050a3110 + 0x10);
+  func_0x000101545e84(lVar2);
+  return lVar2;
+}
+END 1018c5880
+
+// ==== 1018a4f7c — ODeviceKitDeviceProcessor<redux2::Redux2Device> create — builds the 0x2760-byte Redux2Device, job context (0x7a0), two 0xd00-byte channel contexts, event/callback slots ====
+FUNC 1018a4f7c name=FUN_1018a4f7c body=644 lines=122
+
+long FUN_1018a4f7c(long param_1,int *param_2,undefined8 param_3)
+
+{
+  undefined *puVar1;
+  undefined *puVar2;
+  int iVar3;
+  long *plVar4;
+  undefined8 uVar5;
+  long lVar6;
+  long lStack_80;
+  undefined8 uStack_78;
+  undefined8 uStack_70;
+  undefined8 uStack_68;
+  undefined8 uStack_60;
+  uint auStack_58 [2];
+  
+  plVar4 = (long *)func_0x0001016669a8();
+  *plVar4 = (long)(PTR_DAT_1050a4608 + 0x10);
+  plVar4[6] = *(long *)(param_2 + 4);
+  plVar4[7] = 0;
+  plVar4[8] = 0;
+  plVar4[9] = 0;
+  plVar4[10] = (long)
+               PTR___ZZNK7ableton7utility8CallbackIFvPvELb0EE13kNullCallbackMUlvE_clEvENUlS2_S2_E_8__invokeES2_S2__1050c84b8
+  ;
+  plVar4[0xb] = 0;
+  plVar4[0xc] = 0;
+  func_0x0001017605cc(plVar4 + 0xd,plVar4 + 10);
+  *(undefined **)(param_1 + 0x78) = PTR_DAT_1050a4648 + 0x10;
+  *(undefined8 *)(param_1 + 0x88) = 0;
+  func_0x00010176136c(param_1 + 0x90,*(undefined8 *)(param_1 + 0x30));
+  uStack_60 = param_3;
+  func_0x000101923c50(&lStack_80,&uStack_60);
+  *(undefined **)(param_1 + 0xa0) = PTR_DAT_1050a4ca0 + 0x10;
+  *(undefined8 *)(param_1 + 0xa8) = 0;
+  *(undefined4 *)(param_1 + 0xb0) = 0;
+  if (lStack_80 != 0) {
+    LOAcquire();
+    *(int *)(lStack_80 + 0x14) = *(int *)(lStack_80 + 0x14) + 1;
+    LORelease();
+    *(long *)(param_1 + 0xa8) = lStack_80;
+    *(uint *)(param_1 + 0xb0) = (uint)uStack_78;
+    if ((lStack_80 != 0) &&
+       (lVar6 = *(long *)(lRam000000010571a5b8 + ((ulong)((uint)uStack_78 >> 0x11) & 0x7ff8)),
+       lStack_80 = lVar6 + ((ulong)((uint)uStack_78 << 4) & 0xfffff0), lVar6 != 0)) {
+      LOAcquire();
+      iVar3 = *(int *)(lStack_80 + 0x14);
+      *(int *)(lStack_80 + 0x14) = iVar3 + -1;
+      LORelease();
+      if (iVar3 == 1) {
+        auStack_58[0] = (uint)uStack_78;
+        func_0x000101557be4(auStack_58,0x18);
+      }
+    }
+  }
+  iVar3 = *param_2;
+  uStack_78 = 0;
+  lStack_80 = 0;
+  uStack_68 = 0;
+  uStack_70 = 0;
+  uVar5 = func_0x00010153fb98(0x2760,0x10);
+  uVar5 = func_0x000101924098((float)iVar3,uVar5,&lStack_80);
+  puVar1 = PTR_DAT_1050a54e8 + 0x10;
+  *(undefined8 *)(param_1 + 0xb8) = uVar5;
+  *(undefined **)(param_1 + 0xc0) = puVar1;
+  *(undefined **)(param_1 + 0xd8) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices6redux212Redux2DeviceEEvJEE14CallMemberFuncIXadL_ZNS7_19OnSampleRateChangedEvEEEEvPv_10509e138
+  ;
+  *(long *)(param_1 + 0xe0) = param_1;
+  *(undefined8 *)(param_1 + 0xe8) = 0;
+  *(undefined **)(param_1 + 0xf0) = puVar1;
+  *(undefined **)(param_1 + 0x108) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices6redux212Redux2DeviceEEvJEE14CallMemberFuncIXadL_ZNS7_14OnTempoChangedEvEEEEvPv_10509e130
+  ;
+  *(long *)(param_1 + 0x110) = param_1;
+  *(undefined8 *)(param_1 + 0x118) = 0;
+  *(undefined **)(param_1 + 0x120) = puVar1;
+  *(undefined **)(param_1 + 0x138) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices6redux212Redux2DeviceEEvJEE14CallMemberFuncIXadL_ZNS7_30OnTransportPlayingStateChangedEvEEEEvPv_10509e140
+  ;
+  *(long *)(param_1 + 0x140) = param_1;
+  *(undefined8 *)(param_1 + 0x148) = 0;
+  *(undefined **)(param_1 + 0x150) = puVar1;
+  puVar2 = 
+  PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices6redux212Redux2DeviceEEvJEE14CallMemberFuncIXadL_ZNS7_14OnBeatTimeJumpEvEEEEvPv_10509e128
+  ;
+  *(undefined **)(param_1 + 0x168) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices6redux212Redux2DeviceEEvJEE14CallMemberFuncIXadL_ZNS7_14OnBeatTimeJumpEvEEEEvPv_10509e128
+  ;
+  *(long *)(param_1 + 0x170) = param_1;
+  *(undefined8 *)(param_1 + 0x178) = 0;
+  *(undefined **)(param_1 + 0x180) = puVar1;
+  *(undefined **)(param_1 + 0x198) = puVar2;
+  *(long *)(param_1 + 0x1a0) = param_1;
+  *(undefined8 *)(param_1 + 0x1a8) = 0;
+  func_0x00010151348c(param_1 + 0x1b0);
+  func_0x000101513514(param_1 + 0x1c0);
+  puVar1 = 
+  PTR___ZZNK7ableton7utility8CallbackIFvfELb0EE13kNullCallbackMUlvE_clEvENUlPvfE_8__invokeES5_f_1050c8618
+  ;
+  *(undefined8 *)(param_1 + 0x1f0) = 0;
+  *(undefined8 *)(param_1 + 0x1f8) = 0;
+  *(undefined **)(param_1 + 0x1e8) = puVar1;
+  *(undefined4 *)(param_1 + 0x200) = 0;
+  func_0x00010152f478(param_1 + 0x208);
+  *(undefined **)(param_1 + 0x208) = PTR_DAT_1050a3b50 + 0x10;
+  *(long *)(param_1 + 0x230) = param_1;
+  *(undefined1 *)(param_1 + 0x238) = 0;
+  *(undefined1 *)(param_1 + 0x260) = 0;
+  *(undefined8 *)(param_1 + 0x1d0) = 0;
+  *(undefined8 *)(param_1 + 0x1e0) = 0;
+  *(undefined8 *)(param_1 + 0x1d8) = 0;
+  *(undefined8 *)(param_1 + 0x248) = 0;
+  *(undefined8 *)(param_1 + 0x240) = 0;
+  *(undefined1 *)(param_1 + 0x250) = 0;
+  func_0x00010151fc14();
+  iVar3 = func_0x000101521a5c();
+  *(undefined8 *)(param_1 + 0x40) = *(undefined8 *)(param_1 + 0x38);
+  FUN_1018d6b64(plVar4 + 7,(long)(iVar3 << 4));
+  return param_1;
+}
+END 1018a4f7c
+
+// ==== 101924164 — Redux2Device ctor: base + nine property sub-ctors (Sample Rate, ?, Bit Depth, Quantizer Shape, ?, Pre Filter On, Post Filter On, Post Filter) + bool callback factory + DryWet ramp object ====
+FUNC 101924164 name=FUN_101924164 body=212 lines=26
+
+long FUN_101924164(long param_1)
+
+{
+  undefined *puVar1;
+  long lVar2;
+  
+  lVar2 = func_0x0001019242e4();
+  func_0x00010192440c(lVar2 + 0x68);
+  func_0x000101924520(param_1 + 0xd0);
+  func_0x000101924614(param_1 + 0x120);
+  func_0x00010192472c(param_1 + 0x180);
+  func_0x000101924848(param_1 + 0x1d0);
+  func_0x000101924968(param_1 + 0x220);
+  func_0x000101924a88(param_1 + 0x270);
+  *(undefined8 *)(param_1 + 0x2d0) = 0;
+  puVar1 = 
+  PTR___ZN7ableton3dsp6detail21ManageFunctionFactoryIPFvRKbEE6manageEPvPKvNS1_12ManageOpCodeE_10508da78
+  ;
+  *(undefined **)(param_1 + 0x2d8) =
+       PTR___ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvbEPFvRKbEE6invokeEPvb_10508c9d0;
+  *(undefined **)(param_1 + 0x2e8) = puVar1;
+  *(undefined **)(param_1 + 0x2e0) = PTR___ZN7ableton9devicekit4noopIbEEvRKT__1050a18a8;
+  func_0x000101924ba4(param_1 + 0x2f0);
+  return param_1;
+}
+END 101924164
+
+// ==== 101924098 — Redux2Device factory (job init func_0x000103ae003c with sr, setCallbacks func_0x00010192611c) ====
+FUNC 101924098 name=FUN_101924098 body=124 lines=25
+
+long FUN_101924098(undefined4 param_1,long param_2)
+
+{
+  long lVar1;
+  long lVar2;
+  undefined8 uVar3;
+  
+  lVar2 = func_0x000101924164();
+  lVar1 = lVar2 + 0x350;
+  *(undefined8 *)(lVar2 + 0x790) = 0;
+  *(long *)(lVar2 + 0x28) = lVar1;
+  *(long *)(lVar2 + 0x90) = lVar1;
+  *(long *)(lVar2 + 0xe0) = lVar1;
+  *(long *)(lVar2 + 0x140) = lVar1;
+  *(long *)(lVar2 + 400) = lVar1;
+  *(long *)(lVar2 + 0x1e0) = lVar1;
+  *(long *)(lVar2 + 0x230) = lVar1;
+  *(long *)(lVar2 + 0x290) = lVar1;
+  *(long *)(param_2 + 0x310) = lVar1;
+  uVar3 = func_0x000103ae003c(param_1,lVar2 + 0x7a0);
+  func_0x00010192611c(uVar3,param_2);
+  *(undefined1 *)(param_2 + 0x2750) = 1;
+  return param_2;
+}
+END 101924098
+
+// ==== 101920c68 — Init trampoline — five ramp/event subscriptions into the devicekit scheduler lists ====
+FUNC 101920c68 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvP10OSchedulerEE14SProcessorFuncIXadL_ZNS6_4InitES8_EEEEPFvPvS8_EvENUlSD_S8_E_8__invokeESD_S8_ body=1 lines=67
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvP10OSchedulerEE14SProcessorFuncIXadL_ZNS6_4InitES8_EEEEPFvPvS8_EvENUlSD_S8_E_8__invokeESD_S8_
+               (long param_1)
+
+{
+  long *plVar1;
+  long lVar2;
+  long lVar3;
+  
+  func_0x000101920b4c();
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0xe8) = lVar2 + 800;
+  lVar3 = *(long *)(lVar2 + 0x328);
+  *(long *)(param_1 + 200) = lVar3;
+  *(undefined8 *)(param_1 + 0xd0) = 0;
+  plVar1 = (long *)(lVar2 + 0x330);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0xc0;
+  *(long *)(lVar2 + 0x328) = param_1 + 0xc0;
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0x118) = lVar2 + 0x260;
+  lVar3 = *(long *)(lVar2 + 0x268);
+  *(long *)(param_1 + 0xf8) = lVar3;
+  *(undefined8 *)(param_1 + 0x100) = 0;
+  plVar1 = (long *)(lVar2 + 0x270);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0xf0;
+  *(long *)(lVar2 + 0x268) = param_1 + 0xf0;
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0x148) = lVar2 + 0x290;
+  lVar3 = *(long *)(lVar2 + 0x298);
+  *(long *)(param_1 + 0x128) = lVar3;
+  *(undefined8 *)(param_1 + 0x130) = 0;
+  plVar1 = (long *)(lVar2 + 0x2a0);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0x120;
+  *(long *)(lVar2 + 0x298) = param_1 + 0x120;
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0x178) = lVar2 + 0x2d8;
+  lVar3 = *(long *)(lVar2 + 0x2e0);
+  *(long *)(param_1 + 0x158) = lVar3;
+  *(undefined8 *)(param_1 + 0x160) = 0;
+  plVar1 = (long *)(lVar2 + 0x2e8);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0x150;
+  *(long *)(lVar2 + 0x2e0) = param_1 + 0x150;
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0x1a8) = lVar2 + 0x2f0;
+  lVar3 = *(long *)(lVar2 + 0x2f8);
+  *(long *)(param_1 + 0x188) = lVar3;
+  *(undefined8 *)(param_1 + 400) = 0;
+  plVar1 = (long *)(lVar2 + 0x300);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0x180;
+  *(long *)(lVar2 + 0x2f8) = param_1 + 0x180;
+  return;
+}
+END 101920c68
+
+// ==== 101920ef4 — CalcMainSingleSample — the processor tick: Eco/async bookkeeping + tickables loop (device+0x350, count +0x790) + ring push; NOT the per-sample DSP ====
+FUNC 101920ef4 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_20CalcMainSingleSampleEvEEEEPFvPvEvENUlSB_E_8__invokeESB_ body=1 lines=92
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_20CalcMainSingleSampleEvEEEEPFvPvEvENUlSB_E_8__invokeESB_
+               (long param_1)
+
+{
+  undefined4 *puVar1;
+  undefined4 *puVar2;
+  uint uVar3;
+  uint uVar4;
+  uint *puVar5;
+  long lVar6;
+  undefined8 *puVar7;
+  long lVar8;
+  undefined4 uVar9;
+  undefined4 uVar10;
+  undefined2 uStack_48;
+  
+  if (*(char *)(param_1 + 0x201) == '\0') {
+    if (*(char *)(param_1 + 0x202) != '\0') {
+code_r0x000101920e8c:
+      if (*(char *)(param_1 + 0x203) != '\0') {
+        puVar5 = *(uint **)(param_1 + 0xa8);
+        uVar4 = puVar5[2];
+        *(undefined1 *)((long)puVar5 + (ulong)uVar4 * 2 + 0xd) = 0;
+        LOAcquire();
+        uVar3 = *puVar5;
+        *puVar5 = uVar4 << 0x10 | 1;
+        LORelease();
+        puVar5[2] = uVar3 >> 0x10;
+        *(undefined1 *)(param_1 + 0x203) = 0;
+      }
+code_r0x000101920ebc:
+      *(undefined4 *)(param_1 + 0x228) = 1;
+      func_0x00010154e720(*(undefined8 *)(param_1 + 0x30),param_1 + 0x208);
+      *(undefined1 *)(param_1 + 0x238) = 1;
+      goto code_r0x000101920ed4;
+    }
+  }
+  else {
+    lVar6 = *(long *)(param_1 + 0xb8);
+    if (*(char *)(param_1 + 0x200) == '\0') {
+      uVar4 = func_0x000103b8c3e8(lVar6 + 0x7a0);
+      uVar4 = uVar4 ^ 1;
+      uVar3 = (uint)*(byte *)(param_1 + 0x202);
+      if (uVar3 != uVar4) goto code_r0x000101920e88;
+    }
+    else {
+      uVar4 = 1;
+      uVar3 = (uint)*(byte *)(param_1 + 0x202);
+      if (*(byte *)(param_1 + 0x202) != 1) {
+code_r0x000101920e88:
+        if ((uVar4 & 1) == 0) goto code_r0x000101920e8c;
+        goto code_r0x000101920ebc;
+      }
+    }
+    if (uVar3 != 0) {
+      uStack_48 = 0;
+      puVar1 = *(undefined4 **)(param_1 + 0x1d0);
+      puVar2 = *(undefined4 **)(param_1 + 0x1d8);
+      if (*(long *)(lVar6 + 0x790) != 0) {
+        lVar8 = *(long *)(lVar6 + 0x790) << 3;
+        puVar7 = (undefined8 *)(lVar6 + 0x350);
+        do {
+          (**(code **)(*(long *)*puVar7 + 0x18))();
+          lVar8 = lVar8 + -8;
+          puVar7 = puVar7 + 1;
+        } while (lVar8 != 0);
+      }
+      uVar10 = *puVar2;
+      uVar9 = func_0x000103b8c3c0(*puVar1,lVar6 + 0x7a0);
+      *(undefined4 *)(param_1 + 0x1e0) = uVar9;
+      *(undefined4 *)(param_1 + 0x1e4) = uVar10;
+      func_0x000103b8c3e4(lVar6 + 0x7a0,&uStack_48);
+      if ((uStack_48._1_1_ != '\0') || (*(char *)(param_1 + 0x203) != '\0')) {
+        *(char *)(param_1 + 0x203) = uStack_48._1_1_;
+        puVar5 = *(uint **)(param_1 + 0xa8);
+        uVar4 = puVar5[2];
+        *(char *)((long)puVar5 + (ulong)uVar4 * 2 + 0xd) = uStack_48._1_1_;
+        LOAcquire();
+        uVar3 = *puVar5;
+        *puVar5 = uVar4 << 0x10 | 1;
+        LORelease();
+        puVar5[2] = uVar3 >> 0x10;
+      }
+      goto code_r0x000101920ed4;
+    }
+  }
+  *(undefined8 *)(param_1 + 0x1e0) = 0;
+code_r0x000101920ed4:
+  *(undefined8 *)(param_1 + 0x40) = *(undefined8 *)(param_1 + 0x38);
+  return;
+}
+END 101920ef4
+
+// ==== 101920d7c — Reset — dry/wet pair (1.0 - +0x7c4), channel buffers: bzero +0x7f0 (0x418), float vec +0xc10 (count +0x1410), int vec +0x1438 (count +0x14b8), mirrored second channel +0x14f0.. ====
+FUNC 101920d7c name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_5ResetEvEEEEPFvPvEvENUlSB_E_8__invokeESB_ body=1 lines=69
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_5ResetEvEEEEPFvPvEvENUlSB_E_8__invokeESB_
+               (long param_1)
+
+{
+  long lVar1;
+  ulong uVar2;
+  
+  lVar1 = *(long *)(param_1 + 0xb8);
+  *(float *)(lVar1 + 0x7c0) = 1.0 - *(float *)(lVar1 + 0x7c4);
+  *(undefined8 *)(lVar1 + 0x7dc) = 0;
+  *(undefined8 *)(lVar1 + 0x7d4) = 0;
+  _bzero(lVar1 + 0x7f0,0x418);
+  uVar2 = *(ulong *)(lVar1 + 0x1410);
+  if (0 < (long)uVar2) {
+    _bzero(lVar1 + 0xc10,(uVar2 - ((uVar2 & 0xfffffffffffffff) != 0)) * 0x10 + 0x10);
+  }
+  uVar2 = *(ulong *)(lVar1 + 0x14b8);
+  if (0 < (long)uVar2) {
+    _bzero(lVar1 + 0x1438,(uVar2 - ((uVar2 & 0x3fffffffffffffff) != 0)) * 4 + 4);
+  }
+  *(undefined8 *)(lVar1 + 0x1430) = 0;
+  *(undefined8 *)(lVar1 + 0x14dc) = 0;
+  *(undefined8 *)(lVar1 + 0x14d4) = 0;
+  _bzero(lVar1 + 0x14f0,0x418);
+  uVar2 = *(ulong *)(lVar1 + 0x2110);
+  if (0 < (long)uVar2) {
+    _bzero(lVar1 + 0x1910,(uVar2 - ((uVar2 & 0xfffffffffffffff) != 0)) * 0x10 + 0x10);
+  }
+  uVar2 = *(ulong *)(lVar1 + 0x21b8);
+  if (0 < (long)uVar2) {
+    _bzero(lVar1 + 0x2138,(uVar2 - ((uVar2 & 0x3fffffffffffffff) != 0)) * 4 + 4);
+  }
+  *(undefined8 *)(lVar1 + 0x2130) = 0;
+  *(undefined8 *)(lVar1 + 0x25a4) = 0;
+  *(undefined8 *)(lVar1 + 0x2454) = 0;
+  *(undefined8 *)(lVar1 + 0x244c) = 0;
+  *(undefined8 *)(lVar1 + 0x2464) = 0;
+  *(undefined8 *)(lVar1 + 0x245c) = 0;
+  *(undefined8 *)(lVar1 + 0x2474) = 0;
+  *(undefined8 *)(lVar1 + 0x246c) = 0;
+  *(undefined8 *)(lVar1 + 0x2484) = 0;
+  *(undefined8 *)(lVar1 + 0x247c) = 0;
+  *(undefined8 *)(lVar1 + 0x2494) = 0;
+  *(undefined8 *)(lVar1 + 0x248c) = 0;
+  *(undefined8 *)(lVar1 + 0x24a4) = 0;
+  *(undefined8 *)(lVar1 + 0x249c) = 0;
+  *(undefined8 *)(lVar1 + 0x24b4) = 0;
+  *(undefined8 *)(lVar1 + 0x24ac) = 0;
+  *(undefined8 *)(lVar1 + 0x24c4) = 0;
+  *(undefined8 *)(lVar1 + 0x24bc) = 0;
+  *(undefined8 *)(lVar1 + 0x2528) = 0;
+  *(undefined8 *)(lVar1 + 0x2520) = 0;
+  *(undefined8 *)(lVar1 + 0x2538) = 0;
+  *(undefined8 *)(lVar1 + 0x2530) = 0;
+  *(undefined8 *)(lVar1 + 0x2548) = 0;
+  *(undefined8 *)(lVar1 + 0x2540) = 0;
+  *(undefined8 *)(lVar1 + 0x2558) = 0;
+  *(undefined8 *)(lVar1 + 0x2550) = 0;
+  *(undefined8 *)(lVar1 + 0x2568) = 0;
+  *(undefined8 *)(lVar1 + 0x2560) = 0;
+  *(undefined8 *)(lVar1 + 0x2578) = 0;
+  *(undefined8 *)(lVar1 + 0x2570) = 0;
+  *(undefined8 *)(lVar1 + 0x2588) = 0;
+  *(undefined8 *)(lVar1 + 0x2580) = 0;
+  *(undefined8 *)(lVar1 + 0x2598) = 0;
+  *(undefined8 *)(lVar1 + 0x2590) = 0;
+  return;
+}
+END 101920d7c
+
+// ==== 101921010 — OnOn — 0x201 flag; rising edge starts the job (c3f0), connects 0xe0-byte sub-units at +0x80 (count +0x88), sets 0x202=1, fires +0x1e8 callback with 1.0 ====
+FUNC 101921010 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_4OnOnEfEEEEPFvPvfEvENUlSB_fE_8__invokeESB_f body=1 lines=58
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_4OnOnEfEEEEPFvPvfEvENUlSB_fE_8__invokeESB_f
+               (float param_1,long param_2)
+
+{
+  uint uVar1;
+  int iVar2;
+  uint uVar3;
+  long lVar4;
+  long lVar5;
+  undefined8 uVar6;
+  
+  *(bool *)(param_2 + 0x201) = param_1 != 0.0;
+  if (*(char *)(param_2 + 0x201) == '\0') {
+    if (*(char *)(param_2 + 0x202) == '\0') {
+      return;
+    }
+    uVar3 = 0;
+code_r0x000101920f68:
+    *(char *)(param_2 + 0x202) = (char)uVar3;
+    uVar6 = 0;
+  }
+  else {
+    if (*(char *)(param_2 + 0x200) == '\0') {
+      uVar1 = func_0x000103b8c3e8(*(long *)(param_2 + 0xb8) + 0x7a0);
+      uVar3 = uVar1 ^ 1;
+      if (*(byte *)(param_2 + 0x202) == uVar3) {
+        return;
+      }
+      if ((uVar1 & 1) != 0) goto code_r0x000101920f68;
+    }
+    else if (*(char *)(param_2 + 0x202) == '\x01') {
+      return;
+    }
+    func_0x000103b8c3f0(*(long *)(param_2 + 0xb8) + 0x7a0);
+    if (*(long *)(param_2 + 0x88) != 0) {
+      lVar4 = param_2 + 0x80;
+      lVar5 = *(long *)(param_2 + 0x88) * 0xe0;
+      do {
+        iVar2 = func_0x0001017608ac(lVar4);
+        if (iVar2 != 0) {
+          func_0x000101760db0(lVar4);
+        }
+        lVar4 = lVar4 + 0xe0;
+        lVar5 = lVar5 + -0xe0;
+      } while (lVar5 != 0);
+    }
+    func_0x000101551390(*(undefined8 *)(param_2 + 0x30));
+    lVar4 = *(long *)(param_2 + 0xb8);
+    func_0x00010154daa0();
+    func_0x000103b8c3f8(lVar4 + 0x7a0);
+    *(undefined1 *)(param_2 + 0x202) = 1;
+    uVar6 = 0x3f800000;
+  }
+  (**(code **)(param_2 + 0x1e8))(uVar6,*(undefined8 *)(param_2 + 0x1f0));
+  *(undefined1 *)(param_2 + 0x238) = 0;
+  return;
+}
+END 101921010
+
+// ==== 101921000 — OnX — 0x200 flag, same shape as OnOn ====
+FUNC 101921000 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_3OnXEfEEEEPFvPvfEvENUlSB_fE_8__invokeESB_f body=1 lines=58
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_3OnXEfEEEEPFvPvfEvENUlSB_fE_8__invokeESB_f
+               (float param_1,long param_2)
+
+{
+  uint uVar1;
+  int iVar2;
+  uint uVar3;
+  long lVar4;
+  long lVar5;
+  undefined8 uVar6;
+  
+  *(bool *)(param_2 + 0x200) = param_1 != 0.0;
+  if (*(char *)(param_2 + 0x201) == '\0') {
+    if (*(char *)(param_2 + 0x202) == '\0') {
+      return;
+    }
+    uVar3 = 0;
+code_r0x000101920f68:
+    *(char *)(param_2 + 0x202) = (char)uVar3;
+    uVar6 = 0;
+  }
+  else {
+    if (*(char *)(param_2 + 0x200) == '\0') {
+      uVar1 = func_0x000103b8c3e8(*(long *)(param_2 + 0xb8) + 0x7a0);
+      uVar3 = uVar1 ^ 1;
+      if (*(byte *)(param_2 + 0x202) == uVar3) {
+        return;
+      }
+      if ((uVar1 & 1) != 0) goto code_r0x000101920f68;
+    }
+    else if (*(char *)(param_2 + 0x202) == '\x01') {
+      return;
+    }
+    func_0x000103b8c3f0(*(long *)(param_2 + 0xb8) + 0x7a0);
+    if (*(long *)(param_2 + 0x88) != 0) {
+      lVar4 = param_2 + 0x80;
+      lVar5 = *(long *)(param_2 + 0x88) * 0xe0;
+      do {
+        iVar2 = func_0x0001017608ac(lVar4);
+        if (iVar2 != 0) {
+          func_0x000101760db0(lVar4);
+        }
+        lVar4 = lVar4 + 0xe0;
+        lVar5 = lVar5 + -0xe0;
+      } while (lVar5 != 0);
+    }
+    func_0x000101551390(*(undefined8 *)(param_2 + 0x30));
+    lVar4 = *(long *)(param_2 + 0xb8);
+    func_0x00010154daa0();
+    func_0x000103b8c3f8(lVar4 + 0x7a0);
+    *(undefined1 *)(param_2 + 0x202) = 1;
+    uVar6 = 0x3f800000;
+  }
+  (**(code **)(param_2 + 0x1e8))(uVar6,*(undefined8 *)(param_2 + 0x1f0));
+  *(undefined1 *)(param_2 + 0x238) = 0;
+  return;
+}
+END 101921000
+
+// ==== 101923284 — OnAutomatableFloatEvent<SampleRate> — doubles +0x38/+0x48, computed +0x30 = +8 + +12*powf(sr, +0x20), listener + notifier ====
+FUNC 101923284 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6Redux210SampleRateEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=61
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6Redux210SampleRateEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long *plVar1;
+  long *plVar2;
+  long lVar3;
+  long *plVar4;
+  long *plVar5;
+  long lVar6;
+  long *plVar7;
+  long lVar8;
+  float fVar9;
+  
+  lVar8 = *(long *)(param_2 + 0xb8);
+  *(double *)(lVar8 + 0x48) = (double)param_1;
+  *(double *)(lVar8 + 0x38) = (double)param_1;
+  *(undefined8 *)(lVar8 + 0x40) = 0;
+  fVar9 = (float)_powf(param_1,*(undefined4 *)(lVar8 + 0x20));
+  *(float *)(lVar8 + 0x30) = *(float *)(lVar8 + 8) + *(float *)(lVar8 + 0xc) * fVar9;
+  plVar2 = *(long **)(lVar8 + 0x28);
+  lVar3 = plVar2[0x88];
+  plVar4 = plVar2;
+  if (lVar3 == 0) {
+code_r0x000101923300:
+    plVar1 = plVar2 + lVar3;
+    plVar7 = plVar4 + 1;
+    plVar5 = plVar4;
+    if (plVar4 != plVar1 && plVar7 != plVar1) {
+      do {
+        plVar4 = plVar5;
+        if (*plVar7 != lVar8) {
+          plVar4 = plVar5 + 1;
+          *plVar5 = *plVar7;
+        }
+        plVar7 = plVar7 + 1;
+        plVar5 = plVar4;
+      } while (plVar7 != plVar1);
+    }
+    if (plVar4 != plVar1) {
+      plVar2[0x88] = lVar3 - ((long)plVar1 - (long)plVar4 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x000101923338. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar8 + 0x50))(lVar8 + 0x58);
+      return;
+    }
+  }
+  else {
+    lVar6 = lVar3 << 3;
+    do {
+      if (*plVar4 == lVar8) goto code_r0x000101923300;
+      plVar4 = plVar4 + 1;
+      lVar6 = lVar6 + -8;
+    } while (lVar6 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x0001019232fc. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar8 + 0x50))(lVar8 + 0x58);
+  return;
+}
+END 101923284
+
+// ==== 101923438 — OnAutomatableFloatEvent<BitDepth> — double ramp + int +0xe8 = round-half-away-from-zero(bits) ====
+FUNC 101923438 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6Redux28BitDepthEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=59
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6Redux28BitDepthEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  long *plVar3;
+  long lVar4;
+  long *plVar5;
+  long *plVar6;
+  long lVar7;
+  long *plVar8;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  *(double *)(lVar2 + 0x100) = (double)param_1;
+  *(double *)(lVar2 + 0xf0) = (double)param_1;
+  *(undefined8 *)(lVar2 + 0xf8) = 0;
+  *(int *)(lVar2 + 0xe8) = (int)((float)((uint)param_1 & 0x80000000 ^ 0x3f000000) + param_1);
+  plVar3 = *(long **)(lVar2 + 0xe0);
+  lVar4 = plVar3[0x88];
+  plVar5 = plVar3;
+  if (lVar4 == 0) {
+code_r0x0001019234a8:
+    plVar1 = plVar3 + lVar4;
+    plVar8 = plVar5 + 1;
+    plVar6 = plVar5;
+    if (plVar5 != plVar1 && plVar8 != plVar1) {
+      do {
+        plVar5 = plVar6;
+        if (*plVar8 != lVar2 + 0xd0) {
+          plVar5 = plVar6 + 1;
+          *plVar6 = *plVar8;
+        }
+        plVar8 = plVar8 + 1;
+        plVar6 = plVar5;
+      } while (plVar8 != plVar1);
+    }
+    if (plVar5 != plVar1) {
+      plVar3[0x88] = lVar4 - ((long)plVar1 - (long)plVar5 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x0001019234d8. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar2 + 0x108))(lVar2 + 0x110);
+      return;
+    }
+  }
+  else {
+    lVar7 = lVar4 << 3;
+    do {
+      if (*plVar5 == lVar2 + 0xd0) goto code_r0x0001019234a8;
+      plVar5 = plVar5 + 1;
+      lVar7 = lVar7 + -8;
+    } while (lVar7 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x0001019234a4. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar2 + 0x108))(lVar2 + 0x110);
+  return;
+}
+END 101923438
+
+// ==== 1019234fc — OnAutomatableFloatEvent<QuantizerShape> — store + notify ====
+FUNC 1019234fc name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6Redux214QuantizerShapeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=59
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6Redux214QuantizerShapeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  long *plVar3;
+  long lVar4;
+  long *plVar5;
+  long *plVar6;
+  long lVar7;
+  long *plVar8;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  *(double *)(lVar2 + 0x160) = (double)param_1;
+  *(double *)(lVar2 + 0x150) = (double)param_1;
+  *(undefined8 *)(lVar2 + 0x158) = 0;
+  *(float *)(lVar2 + 0x148) = *(float *)(lVar2 + 0x128) + *(float *)(lVar2 + 300) * param_1;
+  plVar3 = *(long **)(lVar2 + 0x140);
+  lVar4 = plVar3[0x88];
+  plVar5 = plVar3;
+  if (lVar4 == 0) {
+code_r0x000101923564:
+    plVar1 = plVar3 + lVar4;
+    plVar8 = plVar5 + 1;
+    plVar6 = plVar5;
+    if (plVar5 != plVar1 && plVar8 != plVar1) {
+      do {
+        plVar5 = plVar6;
+        if (*plVar8 != lVar2 + 0x120) {
+          plVar5 = plVar6 + 1;
+          *plVar6 = *plVar8;
+        }
+        plVar8 = plVar8 + 1;
+        plVar6 = plVar5;
+      } while (plVar8 != plVar1);
+    }
+    if (plVar5 != plVar1) {
+      plVar3[0x88] = lVar4 - ((long)plVar1 - (long)plVar5 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x000101923594. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar2 + 0x168))(lVar2 + 0x170,lVar2 + 0x148);
+      return;
+    }
+  }
+  else {
+    lVar7 = lVar4 << 3;
+    do {
+      if (*plVar5 == lVar2 + 0x120) goto code_r0x000101923564;
+      plVar5 = plVar5 + 1;
+      lVar7 = lVar7 + -8;
+    } while (lVar7 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x000101923560. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar2 + 0x168))(lVar2 + 0x170);
+  return;
+}
+END 1019234fc
+
+// ==== 1019236dc — OnAutomatableFloatEvent<QuantizerDcShift> — store + notify ====
+FUNC 1019236dc name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6Redux216QuantizerDcShiftEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=59
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6Redux216QuantizerDcShiftEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  long *plVar3;
+  long lVar4;
+  long *plVar5;
+  long *plVar6;
+  long lVar7;
+  long *plVar8;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  *(double *)(lVar2 + 0x1b0) = (double)param_1;
+  *(double *)(lVar2 + 0x1a0) = (double)param_1;
+  *(undefined8 *)(lVar2 + 0x1a8) = 0;
+  *(bool *)(lVar2 + 0x198) = 0.5 <= param_1;
+  plVar3 = *(long **)(lVar2 + 400);
+  lVar4 = plVar3[0x88];
+  plVar5 = plVar3;
+  if (lVar4 == 0) {
+code_r0x000101923744:
+    plVar1 = plVar3 + lVar4;
+    plVar8 = plVar5 + 1;
+    plVar6 = plVar5;
+    if (plVar5 != plVar1 && plVar8 != plVar1) {
+      do {
+        plVar5 = plVar6;
+        if (*plVar8 != lVar2 + 0x180) {
+          plVar5 = plVar6 + 1;
+          *plVar6 = *plVar8;
+        }
+        plVar8 = plVar8 + 1;
+        plVar6 = plVar5;
+      } while (plVar8 != plVar1);
+    }
+    if (plVar5 != plVar1) {
+      plVar3[0x88] = lVar4 - ((long)plVar1 - (long)plVar5 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x000101923774. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar2 + 0x1b8))(lVar2 + 0x1c0,lVar2 + 0x198);
+      return;
+    }
+  }
+  else {
+    lVar7 = lVar4 << 3;
+    do {
+      if (*plVar5 == lVar2 + 0x180) goto code_r0x000101923744;
+      plVar5 = plVar5 + 1;
+      lVar7 = lVar7 + -8;
+    } while (lVar7 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x000101923740. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar2 + 0x1b8))(lVar2 + 0x1c0);
+  return;
+}
+END 1019236dc
+
+// ==== 1019238c0 — OnAutomatableFloatEvent<EnablePreFilter> — double ramp + bool (0.5 <= v) +0x1e8 ====
+FUNC 1019238c0 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6Redux215EnablePreFilterEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=59
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6Redux215EnablePreFilterEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  long *plVar3;
+  long lVar4;
+  long *plVar5;
+  long *plVar6;
+  long lVar7;
+  long *plVar8;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  *(double *)(lVar2 + 0x200) = (double)param_1;
+  *(double *)(lVar2 + 0x1f0) = (double)param_1;
+  *(undefined8 *)(lVar2 + 0x1f8) = 0;
+  *(bool *)(lVar2 + 0x1e8) = 0.5 <= param_1;
+  plVar3 = *(long **)(lVar2 + 0x1e0);
+  lVar4 = plVar3[0x88];
+  plVar5 = plVar3;
+  if (lVar4 == 0) {
+code_r0x000101923928:
+    plVar1 = plVar3 + lVar4;
+    plVar8 = plVar5 + 1;
+    plVar6 = plVar5;
+    if (plVar5 != plVar1 && plVar8 != plVar1) {
+      do {
+        plVar5 = plVar6;
+        if (*plVar8 != lVar2 + 0x1d0) {
+          plVar5 = plVar6 + 1;
+          *plVar6 = *plVar8;
+        }
+        plVar8 = plVar8 + 1;
+        plVar6 = plVar5;
+      } while (plVar8 != plVar1);
+    }
+    if (plVar5 != plVar1) {
+      plVar3[0x88] = lVar4 - ((long)plVar1 - (long)plVar5 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x000101923958. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar2 + 0x208))(lVar2 + 0x210,lVar2 + 0x1e8);
+      return;
+    }
+  }
+  else {
+    lVar7 = lVar4 << 3;
+    do {
+      if (*plVar5 == lVar2 + 0x1d0) goto code_r0x000101923928;
+      plVar5 = plVar5 + 1;
+      lVar7 = lVar7 + -8;
+    } while (lVar7 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x000101923924. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar2 + 0x208))(lVar2 + 0x210);
+  return;
+}
+END 1019238c0
+
+// ==== 101923aa4 — OnAutomatableFloatEvent<EnablePostFilter> — same shape ====
+FUNC 101923aa4 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6Redux216EnablePostFilterEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=59
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6Redux216EnablePostFilterEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  long *plVar3;
+  long lVar4;
+  long *plVar5;
+  long *plVar6;
+  long lVar7;
+  long *plVar8;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  *(double *)(lVar2 + 0x250) = (double)param_1;
+  *(double *)(lVar2 + 0x240) = (double)param_1;
+  *(undefined8 *)(lVar2 + 0x248) = 0;
+  *(bool *)(lVar2 + 0x238) = 0.5 <= param_1;
+  plVar3 = *(long **)(lVar2 + 0x230);
+  lVar4 = plVar3[0x88];
+  plVar5 = plVar3;
+  if (lVar4 == 0) {
+code_r0x000101923b0c:
+    plVar1 = plVar3 + lVar4;
+    plVar8 = plVar5 + 1;
+    plVar6 = plVar5;
+    if (plVar5 != plVar1 && plVar8 != plVar1) {
+      do {
+        plVar5 = plVar6;
+        if (*plVar8 != lVar2 + 0x220) {
+          plVar5 = plVar6 + 1;
+          *plVar6 = *plVar8;
+        }
+        plVar8 = plVar8 + 1;
+        plVar6 = plVar5;
+      } while (plVar8 != plVar1);
+    }
+    if (plVar5 != plVar1) {
+      plVar3[0x88] = lVar4 - ((long)plVar1 - (long)plVar5 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x000101923b3c. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar2 + 600))(lVar2 + 0x260,lVar2 + 0x238);
+      return;
+    }
+  }
+  else {
+    lVar7 = lVar4 << 3;
+    do {
+      if (*plVar5 == lVar2 + 0x220) goto code_r0x000101923b0c;
+      plVar5 = plVar5 + 1;
+      lVar7 = lVar7 + -8;
+    } while (lVar7 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x000101923b08. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar2 + 600))(lVar2 + 0x260);
+  return;
+}
+END 101923aa4
+
+// ==== 101923b60 — OnAutomatableFloatEvent<PostFilterValue> — double ramp + affine +0x298 = +0x278 + +0x27c*v fired to the notifier ====
+FUNC 101923b60 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6Redux215PostFilterValueEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=59
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6Redux215PostFilterValueEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  long *plVar3;
+  long lVar4;
+  long *plVar5;
+  long *plVar6;
+  long lVar7;
+  long *plVar8;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  *(double *)(lVar2 + 0x2b0) = (double)param_1;
+  *(double *)(lVar2 + 0x2a0) = (double)param_1;
+  *(undefined8 *)(lVar2 + 0x2a8) = 0;
+  *(float *)(lVar2 + 0x298) = *(float *)(lVar2 + 0x278) + *(float *)(lVar2 + 0x27c) * param_1;
+  plVar3 = *(long **)(lVar2 + 0x290);
+  lVar4 = plVar3[0x88];
+  plVar5 = plVar3;
+  if (lVar4 == 0) {
+code_r0x000101923bc8:
+    plVar1 = plVar3 + lVar4;
+    plVar8 = plVar5 + 1;
+    plVar6 = plVar5;
+    if (plVar5 != plVar1 && plVar8 != plVar1) {
+      do {
+        plVar5 = plVar6;
+        if (*plVar8 != lVar2 + 0x270) {
+          plVar5 = plVar6 + 1;
+          *plVar6 = *plVar8;
+        }
+        plVar8 = plVar8 + 1;
+        plVar6 = plVar5;
+      } while (plVar8 != plVar1);
+    }
+    if (plVar5 != plVar1) {
+      plVar3[0x88] = lVar4 - ((long)plVar1 - (long)plVar5 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x000101923bf8. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar2 + 0x2b8))(lVar2 + 0x2c0,lVar2 + 0x298);
+      return;
+    }
+  }
+  else {
+    lVar7 = lVar4 << 3;
+    do {
+      if (*plVar5 == lVar2 + 0x270) goto code_r0x000101923bc8;
+      plVar5 = plVar5 + 1;
+      lVar7 = lVar7 + -8;
+    } while (lVar7 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x000101923bc4. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar2 + 0x2b8))(lVar2 + 0x2c0);
+  return;
+}
+END 101923b60
+
+// ==== 101923c1c — OnFloatEvent<EcoProcessing> — plain bool store at device+0x2d0 + noop-invoker fire ====
+FUNC 101923c1c name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model6Redux213EcoProcessingEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=14
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model6Redux213EcoProcessingEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long lVar1;
+  
+  lVar1 = *(long *)(param_2 + 0xb8);
+  *(bool *)(lVar1 + 0x2d0) = param_1 != 0.0;
+                    /* WARNING: Could not recover jumptable at 0x000101923c34. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar1 + 0x2d8))(lVar1 + 0x2e0);
+  return;
+}
+END 101923c1c
+
+// ==== 101923c38 — OnRampEvent<DryWet> — payload {float target, int rampSamples}; ramp object device+0x2f0 {+0x30 cur, +0x38 inc, +0x40 target}; affine fire +8 + +12*v ====
+FUNC 101923c38 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Redux26DryWetEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=99
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6redux212Redux2DeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Redux26DryWetEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,float *param_2)
+
+{
+  long *plVar1;
+  float fVar2;
+  undefined1 *puVar3;
+  long lVar5;
+  long *plVar6;
+  long lVar7;
+  long lVar8;
+  long *plVar9;
+  long *plVar10;
+  undefined1 *unaff_x29;
+  undefined *unaff_x30;
+  float fVar11;
+  double dVar12;
+  double dVar13;
+  double dVar14;
+  undefined1 auVar15 [16];
+  undefined1 *puVar4;
+  
+  fVar2 = param_2[1];
+  fVar11 = *param_2;
+  lVar5 = *(long *)(param_1 + 0xb8) + 0x2f0;
+  puVar3 = (undefined1 *)register0x00000008;
+  while( true ) {
+    puVar4 = puVar3 + -0x10;
+    *(undefined1 **)(puVar3 + -0x10) = unaff_x29;
+    *(undefined **)(puVar3 + -8) = unaff_x30;
+    dVar12 = (double)fVar11;
+    *(double *)(lVar5 + 0x40) = dVar12;
+    if ((long)(int)fVar2 == 0) break;
+    dVar14 = *(double *)(lVar5 + 0x38);
+    dVar13 = (dVar12 - *(double *)(lVar5 + 0x30)) / (double)(ulong)(long)(int)fVar2;
+    *(double *)(lVar5 + 0x38) = dVar13;
+    dVar12 = *(double *)(lVar5 + 0x30);
+    if (dVar13 == 0.0) goto code_r0x0001018da7d4;
+    if (dVar14 != 0.0) {
+      return;
+    }
+    lVar7 = *(long *)(lVar5 + 0x20);
+    lVar8 = *(long *)(lVar7 + 0x440);
+    if (lVar8 != 0x88) {
+      *(long *)(lVar7 + lVar8 * 8) = lVar5;
+      *(long *)(lVar7 + 0x440) = lVar8 + 1;
+      return;
+    }
+    unaff_x30 = &
+                __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus7ShapingEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+    ;
+    auVar15 = func_0x000102aa7934();
+    fVar2 = auVar15._8_8_[1];
+    fVar11 = *auVar15._8_8_;
+    lVar5 = *(long *)(auVar15._0_8_ + 0xb8) + 0x50;
+    puVar3 = puVar3 + -0x10;
+    unaff_x29 = puVar4;
+  }
+  *(double *)(lVar5 + 0x30) = dVar12;
+  *(undefined8 *)(lVar5 + 0x38) = 0;
+code_r0x0001018da7d4:
+  *(float *)(lVar5 + 0x28) = *(float *)(lVar5 + 8) + *(float *)(lVar5 + 0xc) * (float)dVar12;
+  plVar6 = *(long **)(lVar5 + 0x20);
+  lVar7 = plVar6[0x88];
+  plVar9 = plVar6;
+  if (lVar7 == 0) {
+code_r0x0001018da828:
+    plVar1 = plVar6 + lVar7;
+    plVar10 = plVar9;
+    if (plVar9 != plVar1) {
+      while (plVar10 = plVar10 + 1, plVar10 != plVar1) {
+        if (*plVar10 != lVar5) {
+          *plVar9 = *plVar10;
+          plVar9 = plVar9 + 1;
+        }
+      }
+    }
+    if (plVar9 != plVar1) {
+      plVar6[0x88] = lVar7 - ((long)plVar1 - (long)plVar9 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x0001018da87c. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar5 + 0x48))(lVar5 + 0x50);
+      return;
+    }
+  }
+  else {
+    lVar8 = lVar7 << 3;
+    do {
+      if (*plVar9 == lVar5) goto code_r0x0001018da828;
+      plVar9 = plVar9 + 1;
+      lVar8 = lVar8 + -8;
+    } while (lVar8 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x0001018da824. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar5 + 0x48))(lVar5 + 0x50);
+  return;
+}
+END 101923c38
+
+// ==== 1019269c4 — setCallbacks lambda E0 (SampleRate->decimator/SVF tickable): ratio = min(v, base-1)/base [+0x24], Nyquist v/2, SVF TPT coeff 2*sin(w/2) with w = 2pi*min(0.48*sr, exp2-lane*sr/2)/sr clamp 3.1337388, exp2 lane via int-exponent + ln2 polynomial ====
+FUNC 1019269c4 name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices6redux212Redux2Device12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model6Redux2EEEEEvRT_EUlSF_E_E6invokeEPvS4_ body=456 lines=76
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices6redux212Redux2Device12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model6Redux2EEEEEvRT_EUlSF_E_E6invokeEPvS4_
+               (long *param_1,float *param_2)
+
+{
+  float *pfVar1;
+  float fVar2;
+  float fVar3;
+  ulong uVar4;
+  float fVar5;
+  float fVar6;
+  int iVar7;
+  int iVar8;
+  undefined8 uVar9;
+  ulong uVar10;
+  
+  fVar2 = *param_2;
+  pfVar1 = (float *)*param_1;
+  pfVar1[1] = fVar2;
+  fVar3 = *pfVar1 + -1.0;
+  if (fVar2 <= fVar3) {
+    fVar3 = fVar2;
+  }
+  pfVar1[9] = fVar3 / *pfVar1;
+  fVar2 = fVar2 * 0.5;
+  pfVar1[0x717] = fVar2;
+  pfVar1[0x74c] = fVar2;
+  uVar9 = CONCAT44(pfVar1[0x718] + 127.0,pfVar1[0x74d] + 127.0);
+  uVar10 = NEON_fmax(uVar9,0,4);
+  uVar4 = NEON_fmin(uVar9,0x437f0000437f0000,4);
+  uVar4 = uVar4 ^ (uVar4 ^ uVar10) &
+                  CONCAT44(-(uint)(pfVar1[0x718] + 127.0 < 255.0),
+                           -(uint)(pfVar1[0x74d] + 127.0 < 255.0));
+  fVar3 = (float)uVar4;
+  iVar7 = (int)fVar3;
+  fVar5 = (float)(uVar4 >> 0x20);
+  iVar8 = (int)fVar5;
+  uVar9 = NEON_scvtf(CONCAT44(iVar8,iVar7),4);
+  fVar3 = fVar3 - (float)uVar9;
+  fVar5 = fVar5 - (float)((ulong)uVar9 >> 0x20);
+  uVar9 = NEON_fmov(0x3f800000,4);
+  fVar3 = ((float)uVar9 +
+          (((fVar3 * 0.013487903 + 0.0521745) * fVar3 + 0.24128748) * fVar3 + 0.6930501) * fVar3) *
+          (float)(iVar7 << 0x17) * fVar2;
+  fVar2 = ((float)((ulong)uVar9 >> 0x20) +
+          (((fVar5 * 0.013487903 + 0.0521745) * fVar5 + 0.24128748) * fVar5 + 0.6930501) * fVar5) *
+          (float)(iVar8 << 0x17) * fVar2;
+  uVar4 = CONCAT44(fVar2,fVar3);
+  fVar5 = pfVar1[0x74b] * 0.48;
+  fVar6 = pfVar1[0x716] * 0.48;
+  uVar4 = uVar4 ^ (uVar4 ^ CONCAT44(fVar6,fVar5)) &
+                  CONCAT44(-(uint)(fVar6 < fVar2),-(uint)(fVar5 < fVar3));
+  fVar2 = ((float)uVar4 * 6.2831855) / pfVar1[0x74b];
+  fVar5 = ((float)(uVar4 >> 0x20) * 6.2831855) / pfVar1[0x716];
+  fVar3 = 1.5668694;
+  if (fVar5 <= 3.1337388) {
+    fVar3 = fVar5 * 0.5;
+  }
+  fVar5 = fVar3 * fVar3;
+  fVar3 = (fVar3 * (fVar5 * -0.09652461 + 0.99999946)) /
+          ((fVar5 * 0.009981878 + -0.42986727) * fVar5 + 1.0);
+  fVar3 = fVar3 + fVar3;
+  pfVar1[0x719] = fVar3;
+  pfVar1[0x71a] = fVar3;
+  fVar3 = 1.5668694;
+  if (fVar2 <= 3.1337388) {
+    fVar3 = fVar2 * 0.5;
+  }
+  fVar2 = fVar3 * fVar3;
+  fVar3 = (fVar3 * (fVar2 * -0.09652461 + 0.99999946)) /
+          ((fVar2 * 0.009981878 + -0.42986727) * fVar2 + 1.0);
+  fVar3 = fVar3 + fVar3;
+  pfVar1[0x74e] = fVar3;
+  pfVar1[0x74f] = fVar3;
+  return;
+}
+END 1019269c4
+
+// ==== 1019269e4 — setCallbacks lambda (Jitter->tickable): raw float store at +0x30 and +0xd30 (two channel contexts) ====
+FUNC 1019269e4 name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices6redux212Redux2Device12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model6Redux2EEEEEvRT_EUlSF_E0_E6invokeEPvS4_ body=1 lines=14
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices6redux212Redux2Device12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model6Redux2EEEEEvRT_EUlSF_E0_E6invokeEPvS4_
+               (long *param_1,undefined4 *param_2)
+
+{
+  long lVar1;
+  undefined4 uVar2;
+  
+  uVar2 = *param_2;
+  lVar1 = *param_1;
+  *(undefined4 *)(lVar1 + 0x30) = uVar2;
+  *(undefined4 *)(lVar1 + 0xd30) = uVar2;
+  return;
+}
+END 1019269e4
+
+// ==== 101926a04 — setCallbacks lambda (BitDepth int->quantizer tickable): steps = float(1 << (bits-1)) [+0x1c48]; +0x1c44 = (+0x1c40 ? 0.5/steps : 0); +8 scale: bits==1 -> 0x3f004db7, bits==2 -> 0x3f353bd0 = 0.7079439, else 1.0 ====
+FUNC 101926a04 name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKiEZNS_7devices6redux212Redux2Device12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model6Redux2EEEEEvRT_EUlSF_E1_E6invokeEPvS4_ body=1 lines=32
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKiEZNS_7devices6redux212Redux2Device12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model6Redux2EEEEEvRT_EUlSF_E1_E6invokeEPvS4_
+               (long *param_1,int *param_2)
+
+{
+  uint uVar1;
+  long lVar2;
+  undefined4 uVar3;
+  undefined4 uVar4;
+  float fVar5;
+  float fVar6;
+  
+  lVar2 = *param_1;
+  uVar3 = 0x3f353bd0;
+  if (*param_2 != 2) {
+    uVar3 = 0x3f800000;
+  }
+  uVar1 = *param_2 - 1;
+  fVar5 = (float)(1 << (ulong)(uVar1 & 0x1f));
+  *(float *)(lVar2 + 0x1c48) = fVar5;
+  uVar4 = 0x3f004db7;
+  if (uVar1 != 0) {
+    uVar4 = uVar3;
+  }
+  fVar6 = 0.0;
+  if (*(char *)(lVar2 + 0x1c40) != '\0') {
+    fVar6 = 0.5 / fVar5;
+  }
+  *(float *)(lVar2 + 0x1c44) = fVar6;
+  *(undefined4 *)(lVar2 + 8) = uVar4;
+  return;
+}
+END 101926a04
+
+// ==== 101926a24 — setCallbacks lambda (QuantizerShape->quantizer tickable): soft bool +0x1c = (v > 0); alpha = 2^(v*4.472784*log2(e)) via int-exponent exp2 poly [+0x1c4c], 1/alpha [+0x1c50], log2-domain (log2(alpha)+i-127)*ln2 + 1 [+0x1c54]; callback-table re-pick (soft<<1 | e01<<3 | e00<<2) + +0x18 ====
+FUNC 101926a24 name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices6redux212Redux2Device12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model6Redux2EEEEEvRT_EUlSF_E2_E6invokeEPvS4_ body=1 lines=53
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices6redux212Redux2Device12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model6Redux2EEEEEvRT_EUlSF_E2_E6invokeEPvS4_
+               (long *param_1,float *param_2)
+
+{
+  long lVar1;
+  code *pcVar2;
+  long lVar3;
+  undefined8 *puVar4;
+  float fVar5;
+  float fVar6;
+  
+  fVar5 = *param_2;
+  lVar1 = *param_1;
+  if ((fVar5 == 0.0) != (*(char *)(lVar1 + 0x1c) == '\0')) {
+    *(bool *)(lVar1 + 0x1c) = 0.0 < fVar5;
+    lVar3 = ((ulong)(0.0 < fVar5) << 1 | (ulong)*(byte *)(lVar1 + 0x1e00) << 3 |
+            (ulong)*(byte *)(lVar1 + 0x1e01) << 2) + (long)*(int *)(lVar1 + 0x18);
+    puVar4 = (undefined8 *)(lVar1 + 0x1e28 + lVar3 * 0x18);
+    if (puVar4 != (undefined8 *)(lVar1 + 0x1e10)) {
+      if (*(code **)(lVar1 + 0x1e20) != (code *)0x0) {
+        (**(code **)(lVar1 + 0x1e20))(lVar1 + 0x1e18,0,1);
+        *(undefined8 *)(lVar1 + 0x1e10) = 0;
+        *(undefined8 *)(lVar1 + 0x1e20) = 0;
+      }
+      lVar3 = lVar1 + 0x1e28 + lVar3 * 0x18;
+      pcVar2 = *(code **)(lVar3 + 0x10);
+      if (pcVar2 != (code *)0x0) {
+        *(undefined8 *)(lVar1 + 0x1e10) = *puVar4;
+        *(code **)(lVar1 + 0x1e20) = pcVar2;
+        (*pcVar2)(lVar1 + 0x1e18,lVar3 + 8,0);
+      }
+    }
+  }
+  fVar5 = fVar5 * 4.472784 * 1.442695 + 127.0;
+  fVar6 = fVar5;
+  if (255.0 < fVar5) {
+    fVar6 = 255.0;
+  }
+  if (255.0 <= fVar5) {
+    fVar5 = fVar6;
+  }
+  fVar6 = fVar5 - (float)(int)fVar5;
+  fVar5 = ((((fVar6 * 0.013487903 + 0.0521745) * fVar6 + 0.24128748) * fVar6 + 0.6930501) * fVar6 +
+          1.0) * (float)((int)fVar5 << 0x17);
+  *(float *)(lVar1 + 0x1c4c) = fVar5;
+  *(float *)(lVar1 + 0x1c50) = 1.0 / fVar5;
+  fVar6 = (float)((uint)fVar5 & 0x7fffff | 0x3f800000) + -1.0;
+  *(float *)(lVar1 + 0x1c54) =
+       ((fVar6 * ((fVar6 * -0.038423624 + 0.3883265) * fVar6 + 2.1196218)) / (fVar6 + 1.4695246) +
+       (float)(((int)fVar5 >> 0x17) + -0x7f)) * 0.6931472 + 1.0;
+  return;
+}
+END 101926a24
+
+// ==== 101926ac4 — setCallbacks lambda (QuantizerDcShift->quantizer tickable): int +0x18 = v; callback-table re-pick ====
+FUNC 101926ac4 name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvbEZNS_7devices6redux212Redux2Device12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS5_5model6Redux2EEEEEvRT_EUlSD_E7_E6invokeEPvb body=1 lines=34
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvbEZNS_7devices6redux212Redux2Device12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS5_5model6Redux2EEEEEvRT_EUlSD_E7_E6invokeEPvb
+               (long *param_1,int param_2)
+
+{
+  long lVar1;
+  code *UNRECOVERED_JUMPTABLE;
+  long lVar2;
+  undefined8 *puVar3;
+  
+  lVar1 = *param_1;
+  *(int *)(lVar1 + 0x18) = param_2;
+  lVar2 = ((ulong)*(byte *)(lVar1 + 0x1e01) << 2 | (ulong)*(byte *)(lVar1 + 0x1e00) << 3 |
+          (ulong)*(byte *)(lVar1 + 0x1c) << 1) + (long)param_2;
+  puVar3 = (undefined8 *)(lVar1 + 0x1e28 + lVar2 * 0x18);
+  if (puVar3 != (undefined8 *)(lVar1 + 0x1e10)) {
+    if (*(code **)(lVar1 + 0x1e20) != (code *)0x0) {
+      (**(code **)(lVar1 + 0x1e20))(lVar1 + 0x1e18,0,1);
+      *(undefined8 *)(lVar1 + 0x1e10) = 0;
+      *(undefined8 *)(lVar1 + 0x1e20) = 0;
+    }
+    lVar2 = lVar1 + 0x1e28 + lVar2 * 0x18;
+    UNRECOVERED_JUMPTABLE = *(code **)(lVar2 + 0x10);
+    if (UNRECOVERED_JUMPTABLE != (code *)0x0) {
+      *(undefined8 *)(lVar1 + 0x1e10) = *puVar3;
+      *(code **)(lVar1 + 0x1e20) = UNRECOVERED_JUMPTABLE;
+                    /* WARNING: Could not recover jumptable at 0x000103ae0b0c. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (*UNRECOVERED_JUMPTABLE)(lVar1 + 0x1e18,lVar2 + 8,0);
+      return;
+    }
+  }
+  return;
+}
+END 101926ac4
+
