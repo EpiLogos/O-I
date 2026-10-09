@@ -196,9 +196,10 @@ What remains open:
 - **WaveForm labels 0..21**: unknown; OP9 pins only the extent tail (22).
   Whether a mid-extent wave changes a MODULATOR's spectrum is untested.
 - `Phase`, `Feedback`, `Fine` on shell B: untouched (0/0/0), semantics open
-  per the params.rs table. (Shell A's `Feedback` probed at 0.5 of 0..100,
-  OP14: below the −84 dBFS reading floor; the audible range and law are
-  open at larger pins.)
+  per the params.rs table. (Shell A's `Feedback` probed at 0.5 and 25 of
+  0..100 — OP14, OP15: flat to the −84 dBFS floor at both; what stays open
+  is whether the law lives on a routed shell — B feedback into A — rather
+  than the carrier, and the 26..100 stretch.)
 
 Confidence:
 
@@ -311,6 +312,30 @@ that aborted post-click on some panel states while the export landed anyway
 4.875 s, predates the length step). The driver now reads AXValue with a
 guarded fallback; OP13/OP14 exported clean (exit 0).
 
+## A feedback at the larger pin (OP15, 2026-10-09, operator-probes lane)
+
+**OP15_AFB25 — `Operator.0/Feedback` → 25, B off (the M1 voice).** The
+OP14-predicted discriminator. The set XML settles the scale question:
+Feedback's `MidiControllerRange` is Min 0 / Max 100, so Manual values sit on
+the displayed 0..100 scale — 25 is 25 %, 50× the OP14 pin (the brief's
+"stored 0..1" reading is refuted; 0.25 would have been 0.25 %, smaller than
+OP14). Built by `harness/build_op15.py` from OP7 (same ET + gzip mtime=0
+convention, verify pass asserts B off + A_fb=25); rendered via
+`with_live_lock.sh` + `lane3_render.sh` (exit 0 first attempt, 256 s);
+analyzer `harness/analyze_op15.py` (the OP14 conventions, h1..h6, plus a
+h3/h2 J2/J1 cross-check). Result: **flat M1 again** — steady RMS −0.00 ×4;
+h1 −29.91 unchanged; h2..h6 within 0.1 dB of M1's dither-floor values
+(h2 −84.02, h3 −88.36, h6 −93.24); β_h2 = 0.0039 (floor); the 90–2000 Hz
+scan returns the identical floor family peak-for-peak; the onset profile is
+byte-identical to M1. **Carrier self-feedback at Algorithm 0 does not
+enrich a plain sine at 25 % of its range: the Feedback→tone null now spans
+a 50× interval ({0.5, 25} of 0..100), to the −84 dBFS reading floor.**
+Extent-honest verdict: Feedback is either heavily rescaled below its stored
+number or inert on an unrouted carrier — the place a DX-style feedback law
+can still live is the routed path, feedback of a *modulator*: `Operator.1/
+Feedback` with B → A (OP7's audible chain) is the named next discriminator;
+an A Feedback 100 pin would seal the carrier null across the full range.
+
 ## Gate residuals (operator_voice_golden_gate, 2026-10-08)
 
 Thresholds (stated in `tests/golden.rs` before analysis): steady per-note
@@ -377,8 +402,9 @@ key 48).
 - Algorithm 0/7 nulls (OP11/OP12): **high** for these pins — the OP12 null
   holds with C/D audible (three independent render chains agree to ≤0.15 dB).
 - Shell C inert at Algorithm 0 (OP13): **high** (byte-flat M1).
-- A Feedback 0.5 subliminal (OP14): **high** at this pin only; the law above
-  it is unmeasured.
+- Carrier Feedback null at {0.5, 25} of 0..100 (OP14/OP15): **high** across
+  this 50× span, to the −84 dBFS floor; the routed-modulator case
+  (`Operator.1/Feedback`, B → A) and the 26..100 stretch are untested.
 
 ## Evidence
 
@@ -390,6 +416,9 @@ key 48).
   `OP14_AFB050.aif`; sets `harness/live/OP12_ALG7CD.als`, `OP13_OSCC.als`,
   `OP14_AFB050.als` (built by `harness/build_op_probes2.py` from OP7);
   analyzer `harness/analyze_op_probes2.py`.
+- OP15 render: `harness/renders/OP15_AFB25.aif`; set
+  `harness/live/OP15_AFB25.als` (built by `harness/build_op15.py` from
+  OP7); analyzer `harness/analyze_op15.py`.
 - Analyzers: `harness/analyze_operator.py`,
   `harness/analyze_operator_decay.py` (τ fit; self-validates on OP2);
   gate:
