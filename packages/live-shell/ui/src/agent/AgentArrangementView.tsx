@@ -1,14 +1,16 @@
 import {useEffect, useState, type CSSProperties} from 'react'
 import {sharedAxis, trackKey, type AgentSessionTrack, type TaskClip} from './agentRunModel'
 import {useAgentShell} from './AgentShellContext'
+import {RefusalCard} from './RefusalCard'
 import './agentShell.css'
 
 /**
  * The Arrangement is the run viewer: one live needle per thread at its last
- * activity on a shared time axis — absolute positions, no predicted ends.
- * Everything rendered comes from the provider's readings (tracks carry the
- * model's needles and clips); the only thing this view adds is the clock the
- * stalled ages count against.
+ * activity on a shared time axis — absolute positions, no predicted ends
+ * (a live task draws no right edge; the needle is the edge; a queued task
+ * is a dash with no length). Everything rendered comes from the provider's
+ * readings; the only thing this view adds is the clock the stalled ages
+ * count against. Geometry per the mockup's #arr.
  */
 export function AgentArrangementView({tracks, nowUnixMs, error, temporalError, onHardStop, onRetry}: {
   tracks: AgentSessionTrack[]
@@ -49,25 +51,18 @@ export function AgentArrangementView({tracks, nowUnixMs, error, temporalError, o
     const left = x(clip.startUnixMs ?? axis.startUnixMs)
     const right = clip.lastActivityUnixMs !== null ? x(clip.lastActivityUnixMs) : left
     const width = Math.max(0.4, right - left)
+    const stateClass = clip.state === 'stalled' ? 'stall' : clip.state === 'done' ? 'done' : clip.state === 'running' ? 'run' : ''
     return (
       <div
         key={`${clip.n}`}
         role="button"
         tabIndex={0}
+        className={`ac ${stateClass}`}
+        style={{'--tc': color, left: `${left}%`, width: `${width}%`} as CSSProperties}
         title={clip.disclosure ?? `${clip.title ?? 'Task'} · ${clip.state}`}
-        style={{
-          position: 'absolute',
-          top: 5,
-          bottom: 5,
-          left: `${left}%`,
-          width: `${width}%`,
-          background: clip.state === 'stalled' ? 'var(--stall)' : clip.state === 'done' ? 'var(--green)' : color,
-          // Running draws no end: fade out, no right edge.
-          backgroundImage: clip.state === 'running' ? `linear-gradient(90deg, transparent 0%, ${color} 30%)` : undefined,
-          opacity: clip.state === 'done' ? 0.75 : 1,
-          fontSize: 0,
-        } as CSSProperties}
-      />
+      >
+        {clip.title ?? 'task'}<small>{clip.state}</small>
+      </div>
     )
   }
 
@@ -76,8 +71,9 @@ export function AgentArrangementView({tracks, nowUnixMs, error, temporalError, o
     return (
       <span
         key={`q${clip.n}`}
+        className="qd"
+        style={{'--tc': color, left: `calc(${x(axis.endUnixMs - 60_000)}% + 6px)`} as CSSProperties}
         title={clip.disclosure ?? 'Queued: waiting behind the running task. No length is drawn: nobody knows how long it will take.'}
-        style={{position: 'absolute', top: 5, left: `calc(${x(axis.endUnixMs - 60_000)}% + 6px)`, color, fontSize: 10}}
       >
         ▸ {clip.title ?? 'queued'}
       </span>
@@ -107,32 +103,10 @@ export function AgentArrangementView({tracks, nowUnixMs, error, temporalError, o
     return (
       <div
         className={'needle' + (stalled ? ' stall' : '')}
-        style={{
-          position: 'absolute',
-          top: 0,
-          bottom: 0,
-          left: `${x(needle.atUnixMs)}%`,
-          width: 2,
-          background: stalled ? 'var(--stall)' : 'var(--accent)',
-        } as CSSProperties}
+        style={{'--tc': 'var(--accent)', left: `${x(needle.atUnixMs)}%`} as CSSProperties}
         title={needle.disclosure ?? `Last activity ${new Date(needle.atUnixMs).toTimeString().slice(0, 8)}`}
       >
-        <span
-          className="rd"
-          style={{
-            position: 'absolute',
-            left: 5,
-            top: 2,
-            fontSize: 9,
-            whiteSpace: 'nowrap',
-            background: '#1d1f22d8',
-            color: stalled ? 'var(--stall)' : 'var(--text)',
-            padding: '0 4px',
-            borderLeft: `2px solid ${stalled ? 'var(--stall)' : 'var(--accent)'}`,
-          }}
-        >
-          {label}
-        </span>
+        <span className="rd" style={stalled ? undefined : {borderLeftColor: 'var(--accent)'}}>{label}</span>
       </div>
     )
   }
@@ -143,67 +117,49 @@ export function AgentArrangementView({tracks, nowUnixMs, error, temporalError, o
     const stalled = track.tasks.some(clip => clip.state === 'stalled')
       || (track.group && tracks.some(item => item.parentRef === track.spaceRef && item.tasks.some(clip => clip.state === 'stalled')))
     return (
-      <div
-        key={`ahead-${key}`}
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '100px 66px 52px',
-          gap: 2,
-          padding: 2,
-          fontSize: 10,
-          alignItems: 'center',
-          borderTop: '1px solid var(--line)',
-          background: 'var(--bg-1)',
-        }}
-      >
+      <div className="ahead" key={`ahead-${key}`} style={{gridTemplateColumns: '100px 66px 52px'}}>
         <span
-          style={{
-            background: track.group ? 'var(--bg-3)' : 'var(--bg-0)',
-            color: 'var(--text)',
-            height: 16,
-            padding: '0 4px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 3,
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-            marginLeft: track.depth * 8,
-            cursor: 'pointer',
-          }}
+          className="nmc"
+          style={{'--tc': track.group ? 'var(--bg-3)' : 'var(--track-color, var(--track-default))', color: track.group ? 'var(--text)' : undefined, marginLeft: track.depth * 8} as CSSProperties}
+          role="button"
+          tabIndex={0}
           onClick={() => shell.setSelectedTrackId(key)}
+          onKeyDown={event => { if (event.key === 'Enter') shell.setSelectedTrackId(key) }}
         >
           {track.group ? '▾ ' : ''}{nameOf(track)}
         </span>
-        <span style={{color: 'var(--text-dim)', overflow: 'hidden'}} title="Model not disclosed by any native source">
-          {track.group ? 'group' : '—'}
-        </span>
-        <span style={{display: 'flex', gap: 2}}>
-          <button
-            type="button"
-            onClick={() => shell.toggleTelemetry(key)}
+        <span className="agent-dd" title="Model not disclosed by any native source"><span className="t">{track.group ? 'group' : '—'}</span></span>
+        <span className="mx">
+          <span
+            className={telemetry ? 'n' : ''}
+            role="button" tabIndex={0}
             title={telemetry ? 'Telemetry on' : 'Telemetry off'}
-            style={{height: 16, minWidth: 16, fontSize: 9, background: telemetry ? 'var(--accent)' : 'var(--bg-0)', color: telemetry ? '#21282e' : 'var(--text-dim)', border: '1px solid var(--line)', cursor: 'pointer'}}
+            onClick={() => shell.toggleTelemetry(key)}
+            onKeyDown={event => { if (event.key === 'Enter') shell.toggleTelemetry(key) }}
           >
             {index}
-          </button>
-          <button
-            type="button"
+          </span>
+          <span
+            role="button" tabIndex={0}
             title="Hard stop"
             aria-label="Hard stop"
             onClick={() => onHardStop?.(track)}
-            style={{height: 16, minWidth: 16, fontSize: 9, background: 'var(--bg-0)', color: 'var(--text-dim)', border: '1px solid var(--line)', cursor: onHardStop ? 'pointer' : 'default'}}
+            onKeyDown={event => { if (event.key === 'Enter') onHardStop?.(track) }}
+            style={{cursor: onHardStop ? 'pointer' : 'default'}}
           >
             ■
-          </button>
-          <button
-            type="button"
+          </span>
+          <span
+            role="button" tabIndex={0}
             title="Retry stalled lane"
             aria-label="Retry"
+            className={stalled ? 'n' : ''}
+            style={stalled ? {background: 'var(--stall)', color: 'var(--accent-ink)', borderColor: 'var(--stall)'} : {cursor: onRetry ? 'pointer' : 'default'}}
             onClick={() => onRetry?.(track)}
-            style={{height: 16, minWidth: 16, fontSize: 9, background: stalled ? 'var(--stall)' : 'var(--bg-0)', color: stalled ? '#1d1f22' : 'var(--text-dim)', border: '1px solid var(--line)', cursor: onRetry ? 'pointer' : 'default'}}
+            onKeyDown={event => { if (event.key === 'Enter') onRetry?.(track) }}
           >
             ↻
-          </button>
+          </span>
         </span>
       </div>
     )
@@ -211,49 +167,44 @@ export function AgentArrangementView({tracks, nowUnixMs, error, temporalError, o
 
   return (
     <div className="agent-arr" data-region="centre">
-      <p><b>Run viewer</b> — one needle per thread at its last temporal activity (`oi.temporal-events/v1`). No predicted ends: running tasks draw no right edge, queued tasks no length.</p>
-      {(error || temporalError) && <p className="native-error" role="alert">{error ?? temporalError}</p>}
-      {!tracks.length && <p className="agent-disclosed">No sessions to plot.</p>}
-      <div
-        role="separator"
-        aria-label="Time ruler"
-        style={{position: 'relative', height: 22, borderBottom: '1px solid var(--line)', fontSize: 10, color: 'var(--text-dim)'}}
-      >
-        {ticks.map((tickItem, i) => (
-          <span key={i} style={{position: 'absolute', top: 4, left: `${tickItem.left}%`, paddingLeft: 3, borderLeft: '1px solid var(--text-faint)', height: 14, lineHeight: '12px'}}>
-            {tickItem.label}
-          </span>
-        ))}
-        <span style={{position: 'absolute', top: 4, right: 4, color: 'var(--text-dim)'}}>{new Date(axisNow).toTimeString().slice(0, 8)}</span>
+      <div className="ov"><i /></div>
+      <div className="ruler">
+        <div className="ticks" aria-label="Time ruler">
+          {ticks.map((tickItem, i) => (
+            <span key={i} style={{left: `${tickItem.left}%`}}>{tickItem.label}</span>
+          ))}
+        </div>
+        <div className="rset">
+          Run viewer · all threads
+          <span style={{marginLeft: 'auto', fontFamily: 'var(--mono)', color: 'var(--text-dim)'}}>{new Date(axisNow).toTimeString().slice(0, 8)}</span>
+        </div>
       </div>
-      {tracks.map((track, index) => {
-        const key = trackKey(track)
-        const members = track.group ? tracks.filter(item => item.parentRef === track.spaceRef) : []
-        return (
-          <div key={key} style={{marginBottom: 6}}>
-            <div
-              className={'lane' + (track.depth ? ' sub' : '')}
-              style={{
-                position: 'relative',
-                minHeight: track.group ? 26 : 40,
-                background: 'var(--bg-0)',
-                borderBottom: '1px solid var(--line)',
-                marginLeft: track.depth * 8,
-                boxShadow: track.depth ? `inset ${3 * track.depth}px 0 0 var(--line)` : undefined,
-                overflow: 'hidden',
-              } as CSSProperties}
-            >
-              {track.group
-                ? members.flatMap(member => (member.tasks ?? []).map(clip => clip ? clipBar(clip, 'var(--accent)') : null))
-                : (track.tasks ?? []).map(clip => clipBar(clip, 'var(--accent)'))}
-              {!track.group && (track.tasks ?? []).map(clip => queuedMark(clip, 'var(--text-dim)'))}
-              <div style={{position: 'absolute', top: 0, bottom: 0, left: `${x(axisNow)}%`, width: 1, background: 'var(--text-faint)', opacity: 0.7}} />
-              {needleEl(track)}
+      {(error || temporalError) && (
+        <RefusalCard title="Temporal read refused" line={error ?? temporalError ?? ''} receipt={temporalError ?? error ?? null} />
+      )}
+      {!tracks.length && <p className="agent-disclosed" style={{padding: '6px 10px'}}>No sessions to plot.</p>}
+      <div style={{flex: 1, minHeight: 0}}>
+        {tracks.map((track, index) => {
+          const key = trackKey(track)
+          const members = track.group ? tracks.filter(item => item.parentRef === track.spaceRef) : []
+          return (
+            <div key={key} style={{display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 230px', borderBottom: '2px solid var(--line)'}}>
+              <div
+                className={'lane' + (track.depth ? ' sub' : '')}
+                style={{minHeight: track.group ? 26 : 40, marginLeft: track.depth * 8, boxShadow: track.depth ? `inset ${3 * track.depth}px 0 0 var(--line)` : undefined} as CSSProperties}
+              >
+                {track.group
+                  ? members.flatMap(member => (member.tasks ?? []).map(clip => clip ? clipBar(clip, 'var(--accent)') : null))
+                  : (track.tasks ?? []).map(clip => clipBar(clip, 'var(--accent)'))}
+                {!track.group && (track.tasks ?? []).map(clip => queuedMark(clip, 'var(--text-dim)'))}
+                <div className="nowline" style={{left: `${x(axisNow)}%`}} />
+                {needleEl(track)}
+              </div>
+              {readout(track, index)}
             </div>
-            {readout(track, index)}
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }

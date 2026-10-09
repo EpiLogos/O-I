@@ -5,6 +5,7 @@ import {useAgentShell} from './AgentShellContext'
 import {useWorkspace} from '../shell/workspaceContext'
 import {useHarnessBinding} from './useHarnessBinding'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {refusalLine, safeJson} from './RefusalCard'
 import './agentShell.css'
 
 const CATEGORIES = [
@@ -27,6 +28,15 @@ const CONTEXT_TILES = [
   {id: 'approvals' as const, name: 'Approvals'},
   {id: 'agents' as const, name: 'Agents'},
 ]
+
+/** The right-edge action the results header names (mockup .bhead law). */
+const RESULT_HEADER: Record<(typeof CATEGORIES)[number]['id'], string> = {
+  sess: 'State',
+  context: 'Open',
+  agents: 'Seated',
+  skillsets: 'Admitted',
+  git: 'Seat',
+}
 
 export interface BrowserRow {
   readonly key: string
@@ -109,8 +119,8 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
   const shell = useAgentShell()
   const {transport} = useWorkspace()
   const {binding} = useHarnessBinding(transport)
-  const [gatewayNote, setGatewayNote] = useState('Reading gateway…')
-  const [gitNote, setGitNote] = useState('Reading seat…')
+  const [gateway, setGateway] = useState<{line: string; receipt: string | null; refused: boolean}>({line: 'Reading gateway…', receipt: null, refused: false})
+  const [git, setGit] = useState<{line: string; receipt: string | null; refused: boolean}>({line: 'Reading seat…', receipt: null, refused: false})
   const [rosterOutcome, setRosterOutcome] = useState<KernelOutcome>(null)
   const [rosterError, setRosterError] = useState<string | null>(null)
   const [seatOutcome, setSeatOutcome] = useState<KernelOutcome>(null)
@@ -121,18 +131,22 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
     void (async () => {
       if (transport.kind === 'unavailable') {
         if (live) {
-          setGatewayNote(transport.reason ?? 'Transport unavailable')
-          setGitNote('Workcell unavailable')
+          const reason = transport.reason ?? 'Transport unavailable'
+          setGateway({line: reason, receipt: null, refused: true})
+          setGit({line: 'Workcell unavailable', receipt: null, refused: true})
           setRosterOutcome(null)
-          setRosterError(transport.reason ?? 'Transport unavailable')
+          setRosterError(reason)
           setSeatOutcome(null)
-          setSeatError(transport.reason ?? 'Transport unavailable')
+          setSeatError(reason)
         }
         return
       }
-      const gateway = await kernelOp(transport, {op: 'harness_agent_read', binding})
+      const gatewayOp = await kernelOp(transport, {op: 'harness_agent_read', binding})
       if (live) {
-        setGatewayNote(gateway.error ?? JSON.stringify(gateway.outcome).slice(0, 200))
+        const reading = !gatewayOp.error && gatewayOp.outcome?.result === 'harness_agent_reading' ? gatewayOp.outcome : null
+        setGateway(reading
+          ? {line: `binding ${reading.binding} answered — receipt holds the document`, receipt: safeJson(reading.document), refused: false}
+          : {line: refusalLine(gatewayOp.error, 'Harness gateway reading unavailable'), receipt: gatewayOp.error ? safeJson(gatewayOp.error) : null, refused: true})
       }
       // The Skillsets rows' admitted source: the roster reading the chain's
       // skillset admit light consumes (accepted profiles' skill_refs).
@@ -147,8 +161,13 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
         setSeatOutcome(seat.error ? null : seat.outcome)
         setSeatError(seat.error ?? null)
       }
-      const git = await kernelOp(transport, {op: 'git_repository_read', project: 'O-I'})
-      if (live) setGitNote(git.error ?? JSON.stringify(git.outcome).slice(0, 200))
+      const gitOp = await kernelOp(transport, {op: 'git_repository_read', project: 'O-I'})
+      if (live) {
+        const doc = gitOp.outcome?.result === 'git_repository_reading' ? gitOp.outcome.document : null
+        setGit(doc
+          ? {line: 'repository read answered — receipt holds the document', receipt: safeJson(doc), refused: false}
+          : {line: refusalLine(gitOp.error, 'git_repository_read unavailable'), receipt: gitOp.error ? safeJson(gitOp.error) : null, refused: true})
+      }
     })()
     return () => { live = false }
   }, [transport, binding])
@@ -171,16 +190,22 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
       <div className="browser-columns">
         <nav className="agent-bcats" aria-label="Browser categories">
           {CATEGORIES.map(cat => (
-            <button key={cat.id} type="button" className={'agent-bcat' + (category === cat.id ? ' on' : '')} onClick={() => setCategory(cat.id)}>{cat.label}</button>
+            <button key={cat.id} type="button" className={'agent-bcat' + (category === cat.id ? ' on' : '')} onClick={() => setCategory(cat.id)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M12 3.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17zM12 7.5v4.5l3 2.5" /></svg>
+              {cat.label}
+            </button>
           ))}
         </nav>
         <div className="browser-results">
+          <div className="agent-bfilt"><span>○ Filters</span><span>In set</span></div>
+          <div className="agent-bhead"><span>Name</span><span>{RESULT_HEADER[category]}</span></div>
           {error && <p className="native-error" role="alert">{error}</p>}
           {list.map(item => (
             <button
               key={item.key}
               type="button"
-              className="browser-item"
+              className="agent-bitem"
+              title={item.label}
               onClick={() => {
                 if (category === 'context') shell.toggleTile(item.key as typeof CONTEXT_TILES[number]['id'])
                 if (category === 'git') shell.toggleTile('diff')
@@ -190,15 +215,19 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
                 }
               }}
             >
-              <span>{item.label}</span>
-              <span className="tag">{item.meta}</span>
+              <span style={{overflow: 'hidden', textOverflow: 'ellipsis'}}>{item.label}</span>
+              <span className="st">{item.meta}</span>
             </button>
           ))}
         </div>
       </div>
       <AgentDevicePool
-        gatewayNote={gatewayNote}
-        gitNote={gitNote}
+        gatewayLine={gateway.line}
+        gatewayReceipt={gateway.receipt}
+        gatewayRefused={gateway.refused}
+        gitLine={git.line}
+        gitReceipt={git.receipt}
+        gitRefused={git.refused}
         effort={shell.effort}
         autonomy={shell.steer ? 'steer' : 'review'}
         budgetUsed={0}

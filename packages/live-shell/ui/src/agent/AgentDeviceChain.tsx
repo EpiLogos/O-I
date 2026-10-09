@@ -2,8 +2,9 @@ import {useEffect, useState} from 'react'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {useWorkspace} from '../shell/workspaceContext'
 import {useAgentShell} from './AgentShellContext'
-import {NativeAgentDeviceRack} from './NativeAgentDeviceRack'
+import {NativeAgentDeviceRack, type DeviceReading} from './NativeAgentDeviceRack'
 import {useHarnessBinding} from './useHarnessBinding'
+import {refusalLine, safeJson} from './RefusalCard'
 import './agentShell.css'
 
 type Obj = Record<string, unknown>
@@ -34,16 +35,32 @@ function rosterIdentity(data: unknown): string | null {
   return null
 }
 
+/** A short honest line for an answered harness reading: the fields it
+ * actually discloses, named — never a JSON dump. */
+function gatewayLine(doc: unknown): string {
+  if (isObj(doc)) {
+    if ('refused' in doc) {
+      const reason = isObj(doc.refused) && typeof doc.refused.message === 'string' ? doc.refused.message : undefined
+      return `the gateway refused the read${reason ? ` — ${reason}` : ''}`
+    }
+    const named = ['schema', 'binding', 'state', 'status', 'purpose', 'session_ref']
+      .map(key => (typeof doc[key] === 'string' || typeof doc[key] === 'number') ? `${key} ${String(doc[key])}` : null)
+      .filter(Boolean)
+    if (named.length) return named.join(' · ')
+  }
+  return 'answered — see the receipt for the full document'
+}
+
 /** The device chain: every admit light is a reading — the harness binding for
  * the gateway, the accepted roster for the skillset rack, the workcell status
- * for git, the write arm for the world face. A refused read names itself. */
+ * for git, the write arm for the world face. A refused read names itself and
+ * carries its receipt folded — never raw JSON on the card surface. */
 export function AgentDeviceChain({sessionRef}: {sessionRef: string | null}) {
   const {transport} = useWorkspace()
   const shell = useAgentShell()
   const {binding} = useHarnessBinding(transport)
-  const [gatewayNote, setGatewayNote] = useState('Reading gateway…')
-  const [gatewayAdmitted, setGatewayAdmitted] = useState(false)
-  const [gitNote, setGitNote] = useState('Reading seat…')
+  const [gateway, setGateway] = useState<DeviceReading>({kind: 'reading', title: 'Gateway · hermes', line: 'Reading gateway…', receipt: null})
+  const [git, setGit] = useState<DeviceReading>({kind: 'reading', title: 'Git', line: 'Reading seat…', receipt: null})
   const [gitAdmitted, setGitAdmitted] = useState(false)
   const [skillsAdmitted, setSkillsAdmitted] = useState<number | null>(null)
   const [skillsNote, setSkillsNote] = useState<string | null>('Reading roster…')
@@ -57,34 +74,31 @@ export function AgentDeviceChain({sessionRef}: {sessionRef: string | null}) {
     void (async () => {
       if (transport.kind === 'unavailable') {
         if (live) {
-          setGatewayNote(transport.reason ?? 'Transport unavailable')
-          setGatewayAdmitted(false)
-          setGitNote('Workcell unavailable')
+          setGateway({kind: 'refused', title: 'Gateway · hermes', line: transport.reason ?? 'Transport unavailable', receipt: null})
           setGitAdmitted(false)
+          setGit({kind: 'refused', title: 'Git', line: 'Workcell unavailable', receipt: null})
           setSkillsAdmitted(0)
           setSkillsNote(transport.reason ?? 'Transport unavailable')
         }
         return
       }
-      const gateway = await kernelOp(transport, {op: 'harness_agent_read', binding})
+      const gatewayOp = await kernelOp(transport, {op: 'harness_agent_read', binding})
       if (live) {
-        const gatewayOutcome = gateway.error ? null : gateway.outcome
+        const gatewayOutcome = gatewayOp.error ? null : gatewayOp.outcome
         const gatewayReading = gatewayOutcome?.result === 'harness_agent_reading' ? gatewayOutcome : null
-        setGatewayAdmitted(gatewayReading != null)
         if (!gatewayReading) {
-          setGatewayNote(gateway.error ?? 'Harness gateway reading unavailable')
+          setGateway({kind: 'refused', title: 'Gateway · hermes', line: refusalLine(gatewayOp.error, 'Harness gateway reading unavailable'), receipt: gatewayOp.error ? safeJson(gatewayOp.error) : null})
+        } else if (isObj(gatewayReading.document) && 'refused' in gatewayReading.document) {
+          setGateway({kind: 'refused', title: 'Gateway · hermes', line: gatewayLine(gatewayReading.document), receipt: safeJson(gatewayReading.document)})
         } else {
-          const doc = gatewayReading.document
-          setGatewayNote(isObj(doc) && 'refused' in doc
-            ? `Gateway refused: ${JSON.stringify(doc).slice(0, 160)}`
-            : `Binding ${gatewayReading.binding}: ${JSON.stringify(doc).slice(0, 200)}`)
+          setGateway({kind: 'reading', title: 'Gateway · hermes', line: `binding ${gatewayReading.binding} · ${gatewayLine(gatewayReading.document)}`, receipt: safeJson(gatewayReading.document)})
         }
       }
       const roster = await kernelOp(transport, {op: 'agent_definition', project: null, request: {action: 'roster'}})
       if (live) {
         if (roster.error || roster.outcome?.result !== 'agent_definition_reading') {
           setSkillsAdmitted(0)
-          setSkillsNote(roster.error ?? 'Roster reading unavailable')
+          setSkillsNote(refusalLine(roster.error, 'Roster reading unavailable'))
           setIdentityNote(null)
         } else {
           const admits = rosterAdmits(roster.outcome.data)
@@ -109,18 +123,27 @@ export function AgentDeviceChain({sessionRef}: {sessionRef: string | null}) {
         }
       }
       const seat = await kernelOp(transport, {op: 'workcell_status_read'})
-      const git = await kernelOp(transport, {op: 'git_repository_read', project: 'O-I'})
+      const gitOp = await kernelOp(transport, {op: 'git_repository_read', project: 'O-I'})
       const seatOutcome = seat.error ? null : seat.outcome
       const seatReading = seatOutcome?.result === 'workcell_status_reading' ? seatOutcome : null
       if (live) {
         setGitAdmitted(seatReading != null)
-        const seatText = seatReading
-          ? JSON.stringify(seatReading.data).slice(0, 120)
-          : seat.error ?? 'Workcell status unavailable'
-        const gitText = git.error
-          ? git.error
-          : JSON.stringify(git.outcome?.result === 'git_repository_reading' ? git.outcome.document : git.outcome).slice(0, 120)
-        setGitNote(`${seatText} · ${gitText}`)
+        const seatDoc = seatReading?.data
+        const workcellRef = isObj(seatDoc) && typeof seatDoc.workcell_ref === 'string' ? seatDoc.workcell_ref : null
+        const seatLine = seatReading
+          ? (workcellRef ? `workcell ${workcellRef}` : 'workcell status answered — no workcell_ref disclosed')
+          : refusalLine(seat.error, 'Workcell status unavailable')
+        const gitDoc = gitOp.outcome?.result === 'git_repository_reading' ? gitOp.outcome.document : null
+        const gitRef = isObj(gitDoc) && typeof gitDoc.repo_root === 'string' ? gitDoc.repo_root : null
+        const gitLine = gitOp.error
+          ? refusalLine(gitOp.error, 'git_repository_read unavailable')
+          : gitRef ? `repo ${gitRef.split('/').pop() ?? gitRef}` : 'answered — no repo_root disclosed'
+        setGit({
+          kind: seatReading && !gitOp.error ? 'reading' : 'refused',
+          title: 'Git',
+          line: `${seatLine} · ${gitLine}`,
+          receipt: safeJson({seat: seatDoc ?? seat.error ?? null, git: gitDoc ?? gitOp.error ?? null}),
+        })
       }
     })()
     return () => { live = false }
@@ -130,9 +153,8 @@ export function AgentDeviceChain({sessionRef}: {sessionRef: string | null}) {
     <div className="agent-device-chain">
       <NativeAgentDeviceRack
         sessionRef={sessionRef}
-        gatewayNote={gatewayNote}
-        gatewayAdmitted={gatewayAdmitted}
-        gitNote={gitNote}
+        gateway={gateway}
+        git={git}
         gitAdmitted={gitAdmitted}
         effort={shell.effort}
         budgetUsed={budgetUsed}

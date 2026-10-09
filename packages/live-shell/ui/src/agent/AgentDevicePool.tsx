@@ -1,7 +1,8 @@
 import {useAgentShell, type AgentDeviceId} from './AgentShellContext'
-import {agentDataI, AGENT_DATA_I} from './agentFidelity'
+import {agentDataI} from './agentFidelity'
 import {agentDeviceCatalogue, type AgentDeviceRow} from '../inhabitants/agentDeviceCatalogue'
 import {agentAddressesForDevice, type AgentParamAddress} from '../inhabitants/agentParamAddresses'
+import {RefusalCard} from './RefusalCard'
 import './agentShell.css'
 
 /** Pool-row hooks keyed like the mockup oracle (`label|function`). */
@@ -24,7 +25,7 @@ const ROW_DATA_I: Partial<Record<string, string>> = {
   model: POOL_DATA_I.model,
   'budget-used': agentDataI('Budget', 'Turns per task.'),
   input: agentDataI('Input', 'Steer the running turn, or queue.'),
-  heartbeat: AGENT_DATA_I.hb,
+  heartbeat: agentDataI('Heartbeat', 'Where Live has the metronome: running agents check in on a cadence. Each check-in moves that thread’s needle in the Arrangement; a needle that stops is a stall.'),
   autonomy: agentDataI('Autonomy', 'Suggest · Review (proposals) · Auto (lands with receipts).'),
   effort: agentDataI('Effort', 'Thinking effort per turn.'),
   'commit-policy': POOL_DATA_I.commit,
@@ -54,12 +55,16 @@ const declared = (row: AgentParamAddress): string => {
 /** Expanded device faces in the pool. Device rows derive from the admitted
  * family manifests (never a hardcoded table); each rendered row is one
  * address from the §14 table, showing its live reading, or its verbatim
- * disclosed absence — spend renders its no-writer line, never a fake fill. */
+ * disclosed absence — spend renders its no-writer line, never a fake fill.
+ * Readings sit at the mockup's .row density; refusals render as named cards
+ * with the receipt folded, never raw JSON on the surface. */
 export function AgentDevicePool({
-  gatewayNote,
-  gatewayAdmitted = false,
-  gitNote,
-  gitAdmitted = false,
+  gatewayLine,
+  gatewayReceipt = null,
+  gatewayRefused = true,
+  gitLine,
+  gitReceipt = null,
+  gitRefused = true,
   effort,
   autonomy,
   budgetUsed,
@@ -68,10 +73,12 @@ export function AgentDevicePool({
   skillsNote = null,
   identityNote = null,
 }: {
-  gatewayNote: string
-  gatewayAdmitted?: boolean
-  gitNote: string
-  gitAdmitted?: boolean
+  gatewayLine: string
+  gatewayReceipt?: string | null
+  gatewayRefused?: boolean
+  gitLine: string
+  gitReceipt?: string | null
+  gitRefused?: boolean
   effort: string
   autonomy: string
   budgetUsed: number
@@ -114,7 +121,7 @@ export function AgentDevicePool({
       <div className="poolh">
         <b>{selected.title}</b>
         <span className="tag">{selected.family}</span>
-        <span style={{marginLeft: 'auto', display: 'flex', gap: 4}}>
+        <span className="r">
           {devices.map(item => (
             <button
               key={item.id}
@@ -131,41 +138,65 @@ export function AgentDevicePool({
       </div>
       <div className="poolb">
         {selected.id === 'gateway' && (
-          <p className="agent-disclosed">{gatewayNote}{gatewayAdmitted ? '' : ' · gateway not admitted'}</p>
+          gatewayRefused
+            ? <RefusalCard title="Gateway · hermes" line={gatewayLine} receipt={gatewayReceipt} />
+            : <ReadingLine title="Gateway · hermes" line={gatewayLine} receipt={gatewayReceipt} />
         )}
         {selected.id === 'skillset' && (
           <p className="agent-disclosed">{skillsNote ?? 'Admit lights follow harness disclosure.'}</p>
         )}
         {selected.id === 'git' && (
-          <p className="agent-disclosed">{gitNote}{gitAdmitted ? '' : ' · seat status unavailable'}</p>
+          gitRefused
+            ? <RefusalCard title="Git" line={gitLine} receipt={gitReceipt} />
+            : <ReadingLine title="Git" line={gitLine} receipt={gitReceipt} />
         )}
         {selected.id === 'skillset'
           ? rows.map(row => (
             <label key={`${row.family}.${row.key}`} className="agent-pool-row" data-family={row.family}>
               <span>{rowLabel(row)}</span>
-              <span className={'native-chain-light' + ((skillsAdmitted ?? 0) > 0 ? ' is-on' : '')} aria-label={(skillsAdmitted ?? 0) > 0 ? 'admitted' : 'not admitted'} />
+              <span className="agent-disclosed">{(skillsAdmitted ?? 0) > 0 ? 'admitted' : 'not admitted'}</span>
             </label>
           ))
           : rows.map(row => {
             const value = reading(row)
             return (
-              <div key={`${row.family}.${row.key}`} className="agent-pool-row" data-family={row.family} data-i={ROW_DATA_I[row.key]} title={ROW_DATA_I[row.key]}>
-                <span>{rowLabel(row)}</span>
+              <div key={`${row.family}.${row.key}`} className="agent-row" data-family={row.family} data-i={ROW_DATA_I[row.key]} title={ROW_DATA_I[row.key]}>
+                <span className="k">{rowLabel(row)}</span>
                 {value != null
                   ? <output>{value}</output>
                   : row.disclosure
                     ? <span className="agent-disclosed">{row.disclosure}</span>
-                    : <span>{declared(row)}</span>}
+                    : <span style={{color: 'var(--text-dim)', fontSize: 10.5}}>{declared(row)}</span>}
               </div>
             )
           })}
         {selected.id === 'gateway' && (
-          <details>
+          <details className="agent-fold">
             <summary>Details</summary>
-            <p className="agent-disclosed">JSON-RPC / NDJSON. Connect attaches this session’s harness; detached sessions keep running and re-attach with session.resume. Frame monitor is the Frames dock tile.</p>
+            <div className="agent-kv"><span>Protocol</span><span>JSON-RPC / NDJSON</span></div>
+            <div className="agent-kv"><span>Connect</span><span>attaches this session’s harness; detached sessions keep running and re-attach with session.resume</span></div>
+            <div className="agent-kv"><span>Frames</span><span>the Frames dock tile is the frame monitor</span></div>
           </details>
         )}
       </div>
+    </section>
+  )
+}
+
+/** An answered reading in the pool: one styled line + folded receipt. */
+function ReadingLine({title, line, receipt}: {title: string; line: string; receipt: string | null}) {
+  return (
+    <section className="agent-refusal answered" style={{borderColor: 'var(--line-strong)', background: 'var(--bg-2)'}} role="note">
+      <div className="agent-refusal-row">
+        <b style={{color: 'var(--text)'}}>{title}</b>
+        <span className="line">{line}</span>
+      </div>
+      {receipt != null && (
+        <details>
+          <summary>Receipt</summary>
+          <pre>{receipt}</pre>
+        </details>
+      )}
     </section>
   )
 }

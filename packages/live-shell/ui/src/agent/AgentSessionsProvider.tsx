@@ -15,6 +15,7 @@ import {
 } from './agentRunModel'
 import {budgetFromReading, readEncounterTask} from './useAgentMetrics'
 import {useTemporalEvents} from './useTemporalEvents'
+import {RefusalCard} from './RefusalCard'
 
 const AGENCY_POLL_MS = 3000
 const PROJECT = 'O-I'
@@ -163,6 +164,30 @@ function AgentSessionsSource({children}: {children: ReactNode}) {
     return () => { live = false }
   }, [transport])
 
+  // Every session's task record, fetched once when the roster of sessions
+  // changes (sequentially, so the bridge never sees a pile), then the selected
+  // session re-read on the agency cadence. Without this the grid's clip slots
+  // would read empty for every track but the selected one.
+  const sessionRefs = useMemo(() => rows.map(row => row.sessionRef), [rows])
+  const fetchedRef = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    if (transport.kind === 'unavailable') return
+    let live = true
+    void (async () => {
+      for (const ref of sessionRefs) {
+        if (!live) return
+        if (fetchedRef.current.has(ref)) continue
+        fetchedRef.current.add(ref)
+        const task = await readEncounterTask(transport, PROJECT, ref)
+        if (!live) return
+        if ('reading' in task) {
+          setReadings(current => ({...current, [ref]: task.reading}))
+        }
+      }
+    })()
+    return () => { live = false }
+  }, [sessionRefs, transport])
+
   const axis = useMemo(() => sharedAxis(events, nowUnixMs), [events, nowUnixMs])
 
   const tracks = useMemo(() => buildTracks(rows, roster, {nowUnixMs}).map(track => {
@@ -202,11 +227,20 @@ function AgentSessionsSource({children}: {children: ReactNode}) {
   }), [transport, tracks, rows, roster, events, error, rosterError, temporalError, loading, refresh, refreshTemporal, selectedSessionRef, selectSession, nowUnixMs])
 
   // A named owner refusal is shell-level truth, not a view's property: the
-  // source itself discloses it at the top of whatever tree it powers, so no
-  // centre view or context consumer can swallow it.
+  // source itself discloses it at the top of whatever tree it powers — as the
+  // disclosure card (named, receipt folded), never a raw dump — so no centre
+  // view or context consumer can swallow it.
   return (
     <Ctx.Provider value={value}>
-      {rosterError && <p className="agent-disclosed" role="status" data-region="agent-disclosures">Agent roster read failed: {rosterError}</p>}
+      {rosterError && (
+        <div data-region="agent-disclosures">
+          <RefusalCard
+            title="Roster refused"
+            line={`Agent roster read failed. Central owner Action refused: ${rosterError}`}
+            receipt={rosterError}
+          />
+        </div>
+      )}
       {children}
     </Ctx.Provider>
   )

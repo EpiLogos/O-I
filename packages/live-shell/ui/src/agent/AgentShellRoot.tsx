@@ -4,6 +4,7 @@ import {AgentArrangementView} from './AgentArrangementView'
 import {AgentSessionGrid} from './AgentSessionGrid'
 import {AgentSessionsProvider, useAgentSessions} from './AgentSessionsProvider'
 import {AgentThreadView} from './AgentThreadView'
+import {RefusalCard} from './RefusalCard'
 import {trackKey} from './agentRunModel'
 import {harnessAgentControl} from './harnessAgentControl'
 import {useHarnessBinding} from './useHarnessBinding'
@@ -50,16 +51,26 @@ function AgentShellCentreBody() {
     )
   }
 
-  if (sessions.loading && !tracks.length) return (
-    <div className="agent-shell-centre" data-region="centre">
-      {(sessions.error || sessions.rosterError || sessions.temporalError) && (
-        <p className="agent-disclosed" role="status">
-          {sessions.error ?? (sessions.rosterError ? `Agent roster read failed: ${sessions.rosterError}` : sessions.temporalError)}
-        </p>
-      )}
-      <div className="view-empty" role="status">Reading agency sessions…</div>
-    </div>
-  )
+  if (sessions.loading && !tracks.length) {
+    const refusal = sessions.error ?? (sessions.rosterError
+      ? `Agent roster read failed. Central owner Action refused: ${sessions.rosterError}`
+      : sessions.temporalError)
+    return (
+      <div className="agent-shell-centre" data-region="centre" style={{flexDirection: 'column', alignItems: 'stretch', overflow: 'auto'}}>
+        {refusal && (
+          <RefusalCard
+            title={sessions.error ? 'Read failed' : 'Roster refused'}
+            line={refusal}
+            receipt={sessions.rosterError ?? sessions.error ?? sessions.temporalError ?? null}
+          />
+        )}
+        <div className="agent-empty-note" role="status" style={{flex: 'none'}}>
+          <b>Reading agency sessions…</b> The run model polls <code>agency_read</code>; tracks land here as the reading answers. Nothing is drawn that no owner has said.
+        </div>
+        <div className="view-empty" role="status">Reading agency sessions…</div>
+      </div>
+    )
+  }
 
   if (shell.centreView === 'thread') return <AgentThreadView tracks={tracks} />
   if (shell.centreView === 'arrangement') {
@@ -76,11 +87,14 @@ function AgentShellCentreBody() {
   }
   return (
     <>
-      {(controlNote || sessions.error || sessions.rosterError) && (
-        <p className="agent-disclosed" role="status">
-          {controlNote ?? sessions.error ?? `Agent roster read failed: ${sessions.rosterError}`}
-        </p>
+      {controlNote && (
+        <p className="agent-transport-note" role="status">{controlNote}</p>
       )}
+      {sessions.error && (
+        <RefusalCard title="Read failed" line={sessions.error} receipt={sessions.error} />
+      )}
+      {/* The roster refusal renders at the source (the provider, above this
+        tree) — not duplicated here. */}
       <AgentSessionGrid
         tracks={tracks}
         onHardStop={() => void runHarness('stop')}
