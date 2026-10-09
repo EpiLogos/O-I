@@ -277,3 +277,55 @@ Consequences:
   `1 + Σ amount·source` — the law this machine still follows on live rows.
 
 
+
+## Clean-boot re-render: the freeze persists, and reaches a second destination (2026-10-09 night lane)
+
+The open question after the amount ladder — is the stuck −1.0 crash-lineage
+session state that a truly clean boot would clear? — is answered: **no.
+A third fully independent instance still delivers −1.0.** Protocol: guarded
+graceful quit (osascript quit, first attempt, no prompts; no pkill),
+`CrashRecoveryInfo.cfg` and the Saved Application State removed, relaunch
+with the probe set as launch document. Sets: `WMR_*` = the `WM_*`/`midi-wm-a10`
+content with the transport loop shrunk to 11.75 beats (fast-render
+convention; content identical, analysis windows absolute-time), built by
+`harness/build_session_probes.py`.
+
+| render | route | whole-5 s RMS | verdict |
+|---|---|---|---|
+| WMR_BASE | default row (5 = 0.5) | **−26.57 dBFS** | byte-level equal to the archive WM_BASE (−26.57) — instance healthy |
+| WMR_S8 / S9 / S12 | 8/9/12 → Amp @ 1.0 | −96.3 dBFS (dither floor) | **freeze replicates on the clean boot** |
+| WM_P8_POS | 8 → Osc 1 Pos @ 1.0 (Amp pin zeroed) | −26.57 dBFS | **dither-identical to WMR_BASE** (±2 LSB, 44 % frames) |
+| WMR_A10 | 10 → Amp @ 1.0 | −28.24 / −39.46 / −28.94 / −31.08 | responds; transfer shifted (below) |
+
+- **Second destination confirmed.** The Pos row carries the default
+  9→Pos 1.0 and 12→Pos 0.33 alongside the probe 8→Pos 1.0; a frozen sum of
+  −2.33 clamps at position 0 and renders the exact sine the control renders.
+  WM_P8_POS vs WMR_BASE: max |Δ| = 2 LSB, 44 % of frames differing — the
+  same acoustic signal up to dither. The stuck source value therefore feeds
+  the position destination through the same additive row law, and Pos clamps
+  at 0 in this regime.
+- **The velocity transfer is engine-state-dependent.** WMR_A10 (route
+  10→Amp @ 1.0, the row the 18:44 render owed) reproduces the pre-crash
+  ladder's *shape* (dip at vel 96; 127 ≈ 64 > 32) but at shifted levels:
+  spread 11.22 dB tonight vs 21 dB on 2026-10-07
+  (−28.24/−39.46/−28.94/−31.08 vs −35.31/−43.27/−27.35/−48.34 dBFS at
+  vel 127/96/64/32). Source 10 = Velocity is unaffected as an attribution —
+  it still uniquely responds — but the exact transfer measured on 10-07
+  should not be modeled until the engine renders mod routes at its 10-07
+  state (or the difference is attributed).
+- **Reframing of the timeline.** The default patch already routes 9→Pos 1.0
+  and 12→Pos 0.33 — yet every M2-class render, pre- and post-crash, is a
+  static sine at position 0. The modulator engine has never shown a live
+  sweep in any render we hold; what changed after 13:28 on 2026-10-08 is the
+  source VALUE the Amp row reads (~0/inert → exactly −1.0). The 13:28
+  "audible S9" render is consistent with the pre-change value, not with a
+  live LFO. The family labels hypothesized from 13:28 (9/11 = envelope) stay
+  suspect; **the musical identities of sources 8/9/12 remain behaviorally
+  unattachable on this machine in its current engine state** — both Amp-row
+  and Pos-row probes read constants.
+- Attribution work is exhausted at the behavior level short of a
+  UI-authored set (a set whose mod routes Live's own writer laid out). If a
+  future lane opens the editor anyway: author one route by hand, save-as
+  into a scratch Project folder, and diff the writer's XML against the
+  hand-built set — the delta is the missing initialization, exactly like the
+  FollowAction `Time` anchor.

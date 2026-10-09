@@ -408,3 +408,32 @@ analyzer `harness/analyze_wv_unison.py`):
   modeled; reproduces deterministically per render.
 - **Polyphony/voice allocation**: the model renders one note at a time;
   the gate's notes are disjoint. Live stores PolyVoices=6.
+
+## Unison Amount within 0..1 — the spread law (2026-10-09 night lane)
+
+D15's open sweep below the clamp: `WV14/15/16_AMT` = WV9B (Mode 1,
+VoiceCount 3) with `Voice_Unison_Amount` Manual = 0.25/0.50/0.75
+(`build_session_probes.py`), rendered on the clean-boot instance. Fine
+Goertzel scan around h1 (±12 Hz, 0.25 Hz step, note-1 steady window),
+same method as the D15 ladder:
+
+| render | Amount | steady RMS | main lobe | resolved structure |
+|---|---|---|---|---|
+| M2 (mode 0) | — | −26.06 dBFS | 0.00 Hz (−23.3) | single line, symmetric skirt |
+| WV14 | 0.25 | −29.49 | −1.50 Hz (−19.5¢) | triplet blurred inside the window (voice spacing ±12.5¢ ≈ 0.95 Hz < 2.2 Hz resolution) |
+| WV15 | 0.50 | −26.59 | −1.25 Hz (−16.5¢) | blurred (spacing ±25¢); lobe position is beat-phase-dependent |
+| WV16 | 0.75 | −25.82 | **−2.75 Hz (−36.4¢)** | centre voice resolved at 0.00 Hz (−26.8); upper voice at +3.00 Hz |
+| WV9B | 1.00 | −25.85 | **−3.75 Hz (−50.4¢)** | centre voice at −0.25 Hz (−27.0) (D15) |
+
+**Law: spread(Amount) = ±50 cents × Amount.** Predicted outer voice at
+±50·A cents: A 0.75 → −2.81 Hz (measured −2.75, Δ 0.06 Hz); A 1.00 →
+−3.79 Hz (measured −3.75, Δ 0.04 Hz). The centre voice sits at 0 at every
+resolved amount, matching the VoiceCount-3 layout {−A·50, 0, +A·50}¢.
+Below A ≈ 0.5 the three voices fall inside the analysis window's ~2.2 Hz
+resolution and blur into one phase-dependent lobe — the −29.49 dBFS steady
+RMS at A 0.25 is a beat-phase sample, not a gain law: at resolved amounts
+RMS is Amount-invariant (−25.82/−25.85), extending D15's count-invariance
+down the Amount axis. Amount therefore scales the unison detune span
+linearly from 0; together with the clamp (>1 → 1.0) the parameter is a
+normalized 0..1 spread control. Shell model: voices at
+`k/(N−1)·2−1` · 50¢ · Amount (even spread), per D15.

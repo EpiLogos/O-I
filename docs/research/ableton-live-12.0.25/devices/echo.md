@@ -448,3 +448,46 @@ filter section and the E1-family tap model, gated by
   required: the mono mixdown halves every single-channel tap by 6 dB and lets
   the reverb floor mask the late taps (audio.rs gained
   `read_aiff_i16_channels` for this).
+
+### Round 4 — bare-line AmountDelay depth law (2026-10-09 night lane)
+
+The round-3 thin remainders (exact depth curve, E8-bare re-probe) closed
+with `EC10/11/12_AMT` = E8_BARE (filter/duck/reverb off, mod LFO 2 Hz
+synced phase 90) at `Modulation_AmountDelay` 0.10/0.35/0.75
+(`build_session_probes.py`), analyzed with the round-2/3 tap measure
+(parabolic fine peak in ±20 ms at k·0.1875 s + T0; L taps 1,3,5,7,9, R taps
+2,4,6,8,10). The measure replicates the archived round-3 numbers exactly
+(EC8_MOD50: pp L 21.579 ms / R 5.369 ms vs recorded 21.6/5.4):
+
+| render | amount | pp wobble L | pp wobble R | note |
+|---|---|---|---|---|
+| E8_BARE (archive) | 0 | 0.004 ms | 0.005 ms | taps exact on grid (interpolation noise; uniform −0.176 ms T0 bias) |
+| EC10_AMT10 | 0.10 | 0.169 ms | 0.048 ms | nearly inert |
+| EC11_AMT35 | 0.35 | 7.342 ms | 1.954 ms | clean sampled sinusoid per channel |
+| EC12_AMT75 | 0.75 | ≥31.9 ms | ≥28.3 ms | **window-clipped lower bound** — readings pinned at the ±20 ms edge |
+| EC8_MOD50 (archive) | 0.50 | 21.579 ms | 5.369 ms | full preset — sits on the bare-line curve |
+
+1. **Depth law: pp wobble ∝ Amount³.** Pairwise exponents on the bare line:
+   0.10→0.35 gives **3.01 (L) / 2.96 (R)**; the full-preset A=0.5 point
+   predicts 7.342·(0.5/0.35)³ = 21.4 ms vs measured 21.58 — the A³ law holds
+   across bare and full-preset (filter/reverb sections carry no timing
+   contribution, independently confirming round 2). Round 3's ×8.4–10.8 for
+   ×2.29 amount (exponent ≈2.8) was this same cubic through two points.
+   Implementation shape: mod depth per unit amount ∝ amount² (quadratic
+   indexing), not linear.
+2. **Stereo depth ratio is constant: R ≈ 0.26 × L at every amount**
+   (0.28 / 0.27 / 0.25 across 0.10/0.35/0.50). The right delay line's mod
+   depth is a fixed fraction of the left's — not an independent modulator.
+3. **Accumulation confirmed on the bare line.** Same-channel taps sample the
+   2 Hz LFO 90° apart (135°/hop, 270°/same-channel step), so a pure
+   delay-time modulation must read first-tap = last-tap and |values| bounded
+   by one amplitude. At A=0.35 the L sequence
+   {−2.17, +0.77, +5.17, +0.50, −2.13} ms has first ≈ last (−2.17/−2.13 ✓)
+   but the mid-tap overshoots 2.4× the end taps — the wobble amplitude
+   GROWS down the recirculating train (loop-internal modulation: each
+   feedback pass re-enters through the modulated delay). The round-3
+   "tap drift accumulates" observation is a property of the graph, not of
+   the full preset.
+4. At A=0.75 the sweep exceeds the measure window; the pp numbers are lower
+   bounds and the tap pattern aliases (taps migrate between windows). Any
+   deeper probe needs a wider window or a smaller hop.
