@@ -123,7 +123,7 @@ dependent per-note RMS, untested).
 1/2/3 = no effect · 8/12 = LFO-family (likely, unverified) · 7 = no effect
 on Amp (default-routed to Pitch at 0.0417).**
 
-## Probe attempt: 8/9/12 → Amp (2026-10-08, BLOCKED — route renders silence; mechanism isolated)
+## Probe attempt: 8/9/12 → Amp (2026-10-08, BLOCKED — route renders silence; mechanism isolated — **RESOLVED 2026-10-09, amount-ladder section at end**)
 
 The completion probes for 8/12 (and a same-spec S9 confirmation run) were
 built and driven to render. First pass (17:54–18:05) rendered digital
@@ -211,5 +211,69 @@ indefinitely; `readSavePanel` then throws on the empty read). Recovery that
 works: cancel the Save panel AND the Export panel by named clicks, then
 re-run the full `lane3_render.sh` flow — a fresh panel populates normally
 (all three evening renders after recovery used route=direct).
+
+## Mechanism RESOLVED by amount ladder (2026-10-09, lane 3 — Live owned)
+
+**Verdict: DC-push, constant identified. The modulator-family sources are
+frozen at exactly −1.0 (full-scale negative).** The Amp destination applies
+its additive law `gain = 1 + Σ amountᵢ·sourceᵢ` faithfully — so a route
+8/9/12 → Amp at amount `a` now renders at `gain = 1 − a`: audibly attenuated
+at small amounts, **exactly digital zero at amount 1.0**. Not tremolo, not a
+phase/freeze state of the destination — the source VALUE is a stuck constant.
+
+The ladder (source 8 → Amp, one pin moved per run; control = `WM_BASE`
+amount 0; velocity staircase 127/96/64/32 at C3, same as all prior probes):
+
+| amount | render | whole-5 s RMS | peak | fitted gain vs control | envelope shape |
+|--------|--------|---------------|------|------------------------|----------------|
+| 0 | WM_BASE | −26.57 dBFS | −17.13 dBFS | 1.00000 | amp-env attack–decay–sustain, 131.0 Hz C3 |
+| 0.2 | WMA8_02 | −28.50 | −19.07 | **0.80000** (−1.938 dB) | exact scaled copy of control (residual 0.047 %) |
+| 0.5 | WMA8_05 | −32.59 | −23.15 | **0.50000** (−6.021 dB) | exact scaled copy (residual 0.065 %) |
+| 1.0 | WMA8_10 | −96.32 | −90.31 (1 LSB) | **0.000000** | dither floor — digital silence |
+| 0.5 on source **12** | WMA12_05 | −32.59 | −23.15 | identical to 8@0.5 | same, within ±2 LSB dither |
+
+Evidence chain:
+
+- **Law is `1 − amount`, to five decimals.** Least-squares fit of each render
+  against the control over the 4-note region: 0.80000 and 0.50000 exactly;
+  the residual after scaling is < 0.07 % — each probe is a pure scaled copy
+  of the audible control. 100 ms RMS envelopes show **zero ripple at any
+  rate** (monotone per-note decay, sub-window profiles identical across all
+  four notes): a live 1 Hz LFO (preset: shape 0, rate ≈1 Hz, retrigger=true,
+  phase 0) would show a 1 s-period tremolo with periodic nulls at amount
+  1.0 — refuted. The 13:28 hypothesis space collapses to the DC branch.
+- **Sources 8 and 12 read the same stuck value.** WMA8_05 vs WMA12_05:
+  identical headers, 44 % of frames differ by ≤2 LSB, max |delta| 2 LSB —
+  the same signal up to dither. One shared frozen value, not two
+  independent modulator states.
+- **The destination arithmetic is intact — the −1.0 is the source value.**
+  If the Amp row computed `1 − amount` from the row alone, source 5's row
+  would follow the same law and `WT1_AMPVEL_check2` (5 = 1.0) would be
+  silent. It renders audible, and its level ratio to `WM_BASE` (5 = 0.5) is
+  0.01563 (−36.123 dB) — byte-for-byte the same doubling measurement taken
+  2026-10-07, BEFORE the 17:12 crash. The static-source row still reads a
+  live constant; only the dynamic modulator slots deliver −1.0.
+- Velocity-flat at every ladder rung (per-note spread 0.12 dB — no route 10
+  in these sets), fundamentals 131.0 Hz (+2.5 cent) at every audible rung.
+
+Consequences:
+
+- **Silence is not a special amount-1.0 pathology.** Any non-zero amount on
+  a frozen-−1.0 source attenuates by `20·log10(1 − amount)`; 1.0 is simply
+  where the line hits zero. This explains every observation: S8/S9/S12 at
+  1.0 → exact digital floor; WM_BASE (pin zeroed) → audible.
+- **Root cause narrows to the modulator engine's source output**, which has
+  delivered a constant full-scale negative value since the 17:12 crash,
+  persisting across clean boots. −1.0 is the sine LFO's minimum; the
+  envelope family has no −1.0 point (Initial/Final 0, Peak 1, Sustain 0.5).
+  Either all dynamic slots read one shared stuck bus (clock/phase freeze),
+  or 8/12 (and 9) are all LFO-family. The 13:28 family labels (9/11 =
+  "envelope-shaped") are now suspect: a retriggered 1 Hz LFO can fake an
+  attack–decay shape over a 0.875 s note. Re-labeling needs the engine
+  unfrozen (or a different-destination probe, e.g. source 8 → Osc 1 Pos).
+- Attribution of 8/9/12's *musical* identity remains open while frozen, but
+  the **shell consequence is unchanged** (expose the matrix); add: the
+  clean-room model should implement the Amp row as additive
+  `1 + Σ amount·source` — the law this machine still follows on live rows.
 
 
