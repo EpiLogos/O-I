@@ -839,3 +839,55 @@ longer than 1.2 s exists on this lineage); per-voice deltas spread up to
 0.45 dB within a render (N=6), so the gain verdict rests on the
 five-point mean trend, not single pins; VC1≡VC2 is a dither-level
 identity, not a bit identity.
+
+## VC ladder top-of-control — WV28/29, VC7/VC8 both channels (2026-10-09, wt-vc78 lane)
+
+Closes the N-extension: two more single-pin sets on the `WV9B_UNIM1.als`
+lineage (Mode 1, Amount 1.0; only `Voice_Unison_VoiceCount` changed, plus the
+FA4 Time stamp): `WV28_VC7` (3→7), `WV29_VC8` (3→8). Builder
+`build_wv_vc78_extension.py` (same ET round-trip + gzip mtime=0 method,
+verified single-pin diffs), renders `harness/renders/WV28_VC7.aif` /
+`WV29_VC8.aif` (1,036,406 bytes, 5.875 s — lineage size; both first-try under
+the lock). Analyzer: `analyze_wv28_vc78.py` — the `analyze_wv25_vc_ext.py`
+per-channel fine-Goertzel read, same windows (note-1 body [1.15, 1.85] s,
+note-3+tail [3.15, 4.35] s), per-voice gain vs the M2 solo h1.
+
+**The loader accepts 7 and 8 as real states — no clamp, no reject.** Both
+renders exist at lineage size, and both are sample-distinct from every
+archived ladder render on disk (WV13/WV25/26/27: 85.6–85.8% of samples
+differ, max ~6,000 LSB — signal, not the dither signature; the VC2/VC3
+renders are not retained, but VC8's 8-line census exceeds every lower N's
+line count, so a clamp to any N ≤ 6 is excluded by construction).
+
+- **VC8 = {−50, −35.7, −21.4, −7.1, +7.1, +21.4, +35.7, +50} cents
+  confirmed — all EIGHT lines resolved** (note-3+tail, ≤0.9¢ per voice):
+  L holds −50.6/−20.9/+7.6/+34.8, R holds −36.0/−6.6/+21.6/+49.1. No centre
+  line, exactly as an even-N ladder predicts. Pan alternation extends
+  perfectly: ascending detune L,R,L,R,L,R,L,R.
+- **VC7 = {−50, −33.3, −16.7, 0, +16.7, +33.3, +50} cents, SUPPORTED with
+  the centre trio blended.** The 1.2 s window resolves 16.7¢ ≈ 0.94 Hz
+  spacing only partially: edges and second ring pin to ≤1¢ (L −49.4/+33.8,
+  R −33.1/+50.7), while the inner trio reads as TWO elevated blend lines
+  straddling 0 — L −12.0 (−3.17 dB vs solo, ~2 dB above single-voice level),
+  R +10.1 (−3.43, same elevation). The elevation + the straddle are the
+  expected signature of the centre voice centre-panned into BOTH channels
+  (the N=5 deal) blending with its ±16.7¢ channel neighbours. Channel
+  membership matches the continued alternation L,R,L,centre,R,L,R exactly.
+- **Gain: √(2/N) holds at the top.** VC7 single lines −5.18…−5.81 (mean
+  −5.6) vs √(2/7) = −5.44; VC8's eight lines −5.04…−5.98 (mean −5.41) vs
+  √(2/8) = −6.02, the +0.6 dB reading being neighbour-blend inflation at
+  0.81 Hz spacing — same caveat class as the whole short-note ladder.
+
+**The N-extension is CLOSED: the even-spread law (N voices at
+k/(N−1)·2−1 scaled to ±50¢ × Amount), alternating hard-L/hard-R pan with the
+odd-N centre voice dual-channel, and the √(2/N) per-voice gain all hold at
+every measured N = 1, 2, 3, 4, 5, 6, 7, 8.** `Voice_Unison_VoiceCount` stores
+at least 1..8 as distinct loadable states; the UI control's full range is
+covered.
+
+Honesty marks: VC7's centre trio is a blend-level verdict (positions and
+elevations consistent with the predicted ladder; the three lines are not
+individually separated — no window longer than 1.2 s exists on this
+lineage); VC8's gain mean carries the +0.6 dB blend inflation; VC2/VC3
+render distinctness rests on the census, not bytes (those renders were not
+retained).
