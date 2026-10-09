@@ -5,7 +5,14 @@ import {candidateApplicationEnvelope, readCandidateApplicationView} from './appl
 
 export const CANDIDATE_WORKSPACE_KEY = 'oi.live-shell.candidate.workspace.v2'
 export const CANDIDATE_LEGACY_LAYOUT_KEY = 'oi.live-shell.candidate.layout.v1'
-export type ShellMode = 'audio' | 'expressions' | 'techne' | 'settings'
+/** The shell's mode cut (WORLD-SHELL-DESIGN Rev 5's rack): Live (the audio
+ * presentation) · Base·Central (the Central world context over the same
+ * book mode) · Factory · Expressions · Technē, with Settings the terminal
+ * system entry. Live and Base share the book's `base` mode — the design's
+ * §6 resolution: Central is a world context (`context.world = 'central'`),
+ * not a second mode — so a mode switch here is an encounter transition
+ * over the spine, never a fork of it. */
+export type ShellMode = 'audio' | 'base' | 'factory' | 'expressions' | 'techne' | 'settings'
 export type CandidateWorkspace = ReturnType<typeof useCandidateWorkspace>
 
 /** One imported v2 book. Audio is the candidate's presentation of Base;
@@ -13,8 +20,12 @@ export type CandidateWorkspace = ReturnType<typeof useCandidateWorkspace>
 export function useCandidateWorkspace() {
   const book = useWorkspaces({storageKey: CANDIDATE_WORKSPACE_KEY, legacyLayoutKey: CANDIDATE_LEGACY_LAYOUT_KEY})
   const storedMode = book.current.layout.mode ?? 'base'
-  const mode: ShellMode = storedMode === 'expressions' || storedMode === 'techne' || storedMode === 'settings' ? storedMode : 'audio'
-  const setMode = (next: ShellMode) => book.switchMode(next === 'audio' ? 'base' : next)
+  // Restore reads the encounter: book `base` stands in Base·Central when the
+  // world context says Central, else it is Live's audio cut (the standing
+  // reading of this candidate).
+  const mode: ShellMode = storedMode === 'expressions' || storedMode === 'techne' || storedMode === 'settings' || storedMode === 'factory' ? storedMode
+    : storedMode === 'base' && book.current.context?.world === 'central' ? 'base' : 'audio'
+  const setMode = (next: ShellMode) => book.switchMode(next === 'audio' || next === 'base' ? 'base' : next)
   const warmTrees = warmWorkspaceTrees(book.workspaces, book.current.id, storedMode)
   const applicationView = useMemo(() => readCandidateApplicationView(book.current.layout.applicationView), [book.current.layout.applicationView])
   const currentBook = useRef(book)

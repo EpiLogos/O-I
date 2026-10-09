@@ -5,6 +5,7 @@ import {useAgentShell, EFFORT_STEPS} from './AgentShellContext'
 import {startAgentVoice, stopAgentVoice} from './useAgentVoice'
 import type {DictationSession} from '../../../../../desktop/cradle/src/dictation/client'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+import {ModeModeRail, type SurfMode} from '../shell/ModeModeRail'
 import './agentShell.css'
 
 /** The transport, at the mockup's rhythm, with the icon specimen's marks
@@ -21,6 +22,8 @@ export function AgentShellTransport({
   toggleDock,
   onCentreView,
   centreView,
+  onMode,
+  mode,
   tokensIn = '—',
   tokensOut = '—',
   spendFill = null as number | null,
@@ -41,6 +44,10 @@ export function AgentShellTransport({
   toggleDock: () => void
   onCentreView: (view: 'session' | 'arrangement') => void
   centreView: 'session' | 'arrangement' | 'thread'
+  /** The mode rail (shell frame's Rev-5 rack): optional — the frame passes
+   * it so the modes stay reachable from the Factory column's transport. */
+  onMode?: (mode: SurfMode) => void
+  mode?: string
   tokensIn?: string
   tokensOut?: string
   spendFill?: number | null
@@ -134,6 +141,7 @@ export function AgentShellTransport({
         <nav className="surface-icons" aria-label="Agent working surface">
           <button type="button" id="vSession" data-i={AGENT_DATA_I.vSession} aria-pressed={centreView === 'session'} title={AGENT_TRANSPORT_TIPS.sessionTab} onClick={() => onCentreView('session')}><CutIcon name="session" size={15} /></button>
           <button type="button" id="vArr" data-i={AGENT_DATA_I.vArr} aria-pressed={centreView === 'arrangement'} title={AGENT_TRANSPORT_TIPS.arrangementTab} onClick={() => onCentreView('arrangement')}><CutIcon name="arrangement" size={15} /></button>
+          {onMode && <ModeModeRail mode={mode ?? ''} chooseMode={onMode} />}
         </nav>
       </div>
       {(shell.tapNote || shell.voiceNote || shell.captureNote) && (

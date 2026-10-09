@@ -5,6 +5,14 @@ import type {ContinuityResidency, ContinuityResources, FileResourceAccess, Resou
 import type {CentralLocation} from '../../../../../desktop/cradle/src/kernel/location'
 import type {FileResourceScope} from '../../../../../desktop/cradle/src/files/resources'
 
+/**
+ * The spine's CUT reading — audio (Live) versus the native body's cuts
+ * (Expressions, Technē). The Rev-5 modes (Base·Central, Factory) ride the
+ * continuity ShellMode above this: Base·Central is the Central world context
+ * over the audio cut, Factory presents the agency surface on the Expressions
+ * cut. This narrow union is what the native consumers key on; the frame's
+ * mode system composes on top of it (modeGrammar.ts).
+ */
 export type WorkspaceMode = 'audio' | 'expressions' | 'techne'
 
 /** Presentation readings of native work. This context never owns or saves a document. */

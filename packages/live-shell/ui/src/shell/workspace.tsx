@@ -39,7 +39,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [nativeWorks, publishWorks] = useState<WorkspaceReading['nativeWorks']>([])
   const [expressionToOpen, openExpression] = useState<WorkspaceReading['expressionToOpen']>(null)
   const requestExpression = (ref: string) => openExpression(current => ({ ref, request: (current?.request ?? 0) + 1 }))
-  const mode: WorkspaceMode = continuity.mode === 'settings' ? 'audio' : continuity.mode
+  // The spine's cut reading (see workspaceTypes): the continuity ShellMode
+  // is the Rev-5 mode; Base·Central stands on the audio cut, Factory's
+  // agency surface stands on the Expressions cut (as the agent surface
+  // always has).
+  const mode: WorkspaceMode = continuity.mode === 'expressions' || continuity.mode === 'techne'
+    ? continuity.mode
+    : continuity.mode === 'factory' ? 'expressions' : 'audio'
   const setMode = (next: WorkspaceMode) => continuity.setMode(next)
   const [transport, setTransport] = useState<KernelTransportStatus>({kind:'unavailable',reason:'Native owner configuration is loading'})
   const transportRef = useRef(transport)

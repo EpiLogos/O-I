@@ -1,0 +1,33 @@
+/* The mode system's frame CSS — the Rev-5 mode transport, the Technē lens
+   bar, and the per-mode detail strip. The transport reuses the shell's own
+   control classes (.native-control, .tempo-field, …) so the slots read as
+   the SAME slots in every mode; only these additions are new. */
+
+/* Waiting controls of the mode transport: reduced presence, honest titles
+   (the widget guide's disabled/soon law). */
+.mode-transport { display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0 }
+.mode-transport .native-control[disabled] { color: var(--text-faint); opacity: 0.82 }
+.mode-transport output { color: var(--text-dim) }
+
+/* The Technē lens bar — its own axis above the centre (never the
+   transport's, never the surf's). */
+.center-body { position: relative }
+.techne-lens-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 3; display: flex; align-items: center; gap: 3px; height: 25px; padding: 0 6px; background: var(--bg-1); border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: thin }
+.techne-lens-title { font-size: 10px; color: var(--text-faint); margin-right: 5px; flex: none }
+.techne-lens { display: flex; align-items: center; gap: 4px; height: 19px; padding: 1px 6px; font-size: 10px; background: var(--bg-0); border: 1px solid #30343a; color: var(--text-dim); white-space: nowrap; flex: none }
+.techne-lens[aria-pressed="true"] { color: var(--accent); border-color: var(--accent-dim) }
+.techne-lens[disabled] { color: var(--text-faint); opacity: 0.75; cursor: default }
+.techne-lens[disabled]:hover { background: var(--bg-0) }
+
+/* The lens bar claims the top strip; the composition residence sits below
+   it only in the Technē ground cut. */
+.center-body[data-lens-bar="true"] .composition-view { top: 25px }
+
+/* The per-mode detail strip. The residences are display:contents, so the
+   strip itself is the frame grid's chain item. */
+.mode-detail { grid-area: chain; min-height: 0; overflow: auto; background: var(--bg-1); border-top: 1px solid var(--line); display: flex; align-items: flex-start }
+/* The agency frame's grid names the detail row `ch` (the oracle areas). */
+.frame.agent-shell-frame .mode-detail { grid-area: ch }
+.mode-detail .inhabitant-rack { border: 0; flex: 1; min-width: 0 }
+.mode-detail-note { margin: 0; padding: 8px 10px; color: var(--text-dim); font-size: 11px }
+.mode-detail-note b { color: var(--text) }
