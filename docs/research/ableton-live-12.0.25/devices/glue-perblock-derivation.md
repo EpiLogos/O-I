@@ -152,7 +152,7 @@ COF = `FUN_10179fff8(state, param_block, N)` with `N = os·block`
 | 0x1e4 | per-attack ladder {1e-5, 1e-4, 3e-4, 1e-3, 3e-3, 0.01, 0.03} | SET Attack | consumer outside the captured DSP loop — open (recorded) |
 | 0x1e8 | smoother dB scale | CO (1.0) / SET `FUN_10179f96c` (0/1) | |
 | 0x1ec | **PeakClipIn** as 0.0/1.0 — output path select [K343] | SET `FUN_10179f998` | 1 → cubic soft-clipper path (×1.0592537 → clip → ×0.94406086); 0 → unclipped `in·gain` |
-| 0x200 / 0x204 | **N = os·block** and 1/N | COF | the "rate" the setters multiply — NOT the sample rate |
+| 0x200 / 0x204 | **N = os·s[0x3e0]** and 1/N | COF | the "rate" the setters multiply. **CORRECTED 2026-10-08 (§8): s[0x3e0] is NewRate's second int — the SAMPLE RATE — not the parameter block; N = os·sr (44100 at the render), pinned by the release-τ law and the ×1.40 closure. The parameter block (0x3d8 = 128) sizes only the de-zipper ramp [FUN_1017a028c].** |
 | 0x24c, 0x248 | clipper leaky peak; GR meter min-hold | kernel | metering |
 
 Consumers of Threshold (0x18c) and Range (0x1a4) are now **mapped**: both
@@ -259,6 +259,10 @@ accumulator just tracks the stored Range).
   the integration rebuild reproduces them by simulation. Block-size
   dependence of `k = 9.4e-7·N` is likewise unverified (a render pair at a
   different ParamBlockSize would decide it).
+  **CLOSED 2026-10-08 (§9): k = 9.4e-7·os·sr (N = os·s[0x3e0] = os·sr, §8
+  — the block-size question resolved with it); τ = −1/ln((k−R̂)/(k+R̂)) =
+  0.470000·menu_µs exact vs 0.4701 ± 0.0003 measured; os and sr cancel in
+  wall-clock.**
 - **The 0x1bc setter's parameter binding** (stage-1 frequency; factory 2.0,
   clamp < 20 → 2) — CLOSED 2026-10-08 (absolute-threshold lane): the only
   caller is the constructor's factory call `FUN_10179fcfc(0)`; the setter
@@ -437,3 +441,156 @@ coefficient set stands (the measured idx-5 onset pins λ ≈ 1).
   is retracted).
 - §4's "composition of the branch-switched pair relaxation" is now derived:
   the under-branch recovery mode is the 2-D (y, s38) eigenvalue 2p−1.
+
+## 8. The ×1.40 detector-tap gain — RESOLVED: it does not exist in the device (2026-10-08, bounded binary lane)
+
+The equilibrium lane's open item ("the writer/value of the ×1.40
+detector-feed gain") is closed by a capture that dissolves the question:
+**no writer sets a ×1.40 anywhere in the Glue DSP — the render-fitted gain
+was compensating a wrong N in the model's detector coefficients.**
+
+### The capture chain (what was missing)
+
+- **`FUN_10168762c`** (NewRate/Oversample follow-up; FuncProbe 0x10168762c,
+  this lane): `N = s[0x3e4]·s[0x3e0]`, then
+  `FUN_10179fff8((double)N, state, 0x80)`. **The coefficient master's N is
+  `os·s[0x3e0]` and its third argument is the constant 128** — §1/§2's
+  reading ("state, 128, os·block") had the two arguments swapped.
+- **The NewRate invoke** `0x10168f9f0` (glue-setters-decompilation.txt,
+  `SProcessorFunc<NewRate(int,int)>`): stores its **second int to
+  `s[0x3e0]`**, then calls `FUN_10168762c`. The stored value is pinned to
+  **44100 = the sample rate at the render** by the release-τ law (§9: the
+  three-menu τ ratios pin `s[0x3e0]·os = 44100 ± 30`); a 44100-sample audio
+  block is not a thing, and a block-dependent µs time constant is not a
+  design. **`N = os·sr`.** The constructor stores `s[0x3e0]` before its own
+  `FUN_10179fff8` call (B@0x10168724c → bl 0x101687328,
+  glue-perblock-disassembly.txt); NewRate overwrites at engine init.
+- **`FUN_101687798`** (FuncProbe 0x101687798, this lane — the 0x314 writer):
+  `s[0x314] = param_1` (pass-through of the stored value on OnX,
+  glue-setters-decompilation.txt 294), then re-selects the per-sample
+  callback from `s[0x3e4]` (1 → CalcMainX1, 2 → X2SideOn/SideOff by 0x31a).
+  Confirms §"Over-branch equilibrium closure": 0x314 = the oversample
+  gain = 1.0 at os off. Not the lever.
+- **`FUN_101687f10` (CalcMainX1)** (glue-perblock-decompiles.txt 255-321,
+  re-read for this lane): the kernel receives the **LINEAR** input samples —
+  `FUN_1017a07b0(inL·0x314, inR·0x314, …)` with only the optional sidechain
+  EQ (0x328 flag) between. There is **no dB conversion and no gain** on the
+  detector feed. The kernel's ±20 input clamps [K101-112] are linear-domain
+  safety clamps; the spread entering the 510.99976 index law [K135] is in
+  linear·G units, exactly as the Rust model ports it.
+- **`FUN_10179fff8`** (glue-perblock-decompiles.txt 57-117, re-read): the
+  only writers of the detector coefficients — `s[0x170] =
+  1−exp(1/N·−2π·1.1)` and the ramped 0x1b8 target `1−exp(−2π·s[0x1bc]/N)`
+  (0x1bc = 2.0 factory) — are computed from the **same N** that the setters
+  multiply (`s[0x200] = (float)N`; k = 2·s[0x88]·N). A 510.99976-scale
+  writer does not exist (the scale is a kernel immediate), and no function
+  in the captured set contains a constant near 1.4 (swept:
+  glue-perblock-disassembly/-decompiles, glue-setters-decompilation,
+  glue-shell-functions, glue-decompilation).
+
+### What N = os·sr does to the detector
+
+The stage-1/stage-2 laws `1−exp(−2π·f/N)` are poles at **f Hz** when
+N = os·sr: with 0x1bc = 2.0 and the 1.1 constant, the detector's two poles
+sit at **2.0 Hz and 1.1 Hz** (τ ≈ 80/145 ms) — an os-invariant sub-audio
+envelope highpass cascade whose difference stages are **unity at audio**.
+The model instead computed them from `n_blk = params.block_size = 128`
+(glue.rs `CircuitModel::new`), placing the poles at ≈656/369 Hz — so its
+fast-minus-slow spread **attenuates a 1 kHz probe tone by ×0.713**
+(|1−H1|·|1−H2| = 0.78368·0.91008 = 0.71321 at 1 kHz/44.1 kHz), i.e. it needs
+×**1.4021** to match the device. Every committed static cell was measured on
+1 kHz material (`steps-1k.wav`/`steps-long.wav`/`release-probe.wav`). The
+render-fitted 1.400 ± 0.005 (equilibrium lane) is that attenuation, fitted
+through the solver's nonlinearity.
+
+### The two-world check (`evidence/devices/glue_ntruth_confirm.py`)
+
+The exact port run at every committed pin family in both worlds
+(d = sim − device, dB; same pins/measures as `glue_tapgain_confirm.py`):
+
+| world | detector N | k | LUT scale | worst |d| |
+|---|---|---|---|---|
+| A (committed model) | 128 | solved from τ = 0.4701·menu | ×1.40 | 0.07 (DF1) |
+| B (device truth) | 44100 = os·sr | literal 9.4e-7·N | ×1.00 | 0.07 (DF1) |
+
+Per-cell, B matches or beats A everywhere (G2 0.03 vs 0.04, DF2 0.01 vs
+0.02, G14 0.01 vs 0.02, G1/G12 0.02 = , LAM/G13/G15 0.01 = ). **The worlds
+are equivalent at every committed cell, and B carries no fitted constant.**
+
+### Verdict and the Rust CircuitModel
+
+- The answer to the lane question is **(d) none of the above**: the ×1.40
+  is not a kernel constant, not attack/release-derived, and not per-block —
+  it is the model's detector-N error. `DETECTOR_TAP_GAIN` should retire to
+  1.0.
+- `CircuitModel::new` should compute the detector coefficients and k from
+  **`n_blk = os·sample_rate`** (gate scope: os = 1 → n_blk = sr), with
+  **k = 9.4e-7·n_blk literal** — which retires the solved `k_sol` with it
+  (§9: `k_sol`/literal = 1.000213, so the gates cannot move beyond noise).
+- The de-zipper ramp length stays the parameter block (X1 feeds
+  `FUN_1017a028c` `s[0x3e4]·s[0x3d8]` = os·128), a separate quantity from
+  the coefficient N. Gate re-runs after the change are integration-lane
+  work; the equivalence table above is the predicted outcome.
+
+## 9. The release factor 0.4701 — derived (2026-10-08, bounded binary lane)
+
+§4's first open residual (the absolute release-τ factor) closes exactly.
+The composition, from mapped constants only:
+
+**k.** The Release setter writes `k = s[0x200]·9.4e-7` itself
+(FUN_10179fb4c, glue-perblock-decompiles.txt 942-943; the Attack setter and
+FUN_10179fff8 write the same law) with `s[0x88] = 0x34fc544f` =
+**4.7e-7f exactly** (the ledger's "4.7004e-7" was a decode slip; 2·0x88 =
+9.4e-7 = the setter's literal). With §8's N = os·sr:
+`k = 9.4e-7·os·sr` = 0.0414540 at the render (os = 1, 44.1 kHz).
+
+**The recovery mode.** In the under-branch [K227-231, K234-240] with
+s28 = 0, w ≈ 0, the exit tail makes (y, s38) the 2-D system
+
+```
+y′   = (k·y + s38)/(k+R̂)
+s38′ = −R̂·(k·y + s38)/(k+R̂)  =  −R̂·y′
+```
+
+whose matrix has **det = 0** and slow eigenvalue `q = (k−R̂)/(k+R̂)` — §7's
+2p−1 with p = k/(k+R̂). The recovery envelope decays as q per kernel call;
+`τ = −1/ln q`.
+
+**The folding.** R̂ = 1/menu_µs (s[0xb4]). At the render k/R̂ =
+9.4e-7·os·sr·menu_µs ≈ 7076 (menu 0) — q → 1, and
+
+```
+τ_samples ≈ k/(2R̂) = 4.7e-7·os·sr·menu_µs
+τ_µs      = τ_samples·10⁶/(os·sr) = (9.4e-7·10⁶/2)·menu_µs = 0.47·menu_µs
+```
+
+**os and sr cancel in wall-clock** (k ∝ os·sr, the kernel rate ∝ os·sr) —
+the factor is os-invariant by construction, which refutes the "2×
+block-oversample folding" candidate; the "µs→samples conversion at 44.1k"
+candidate IS the mechanism, but through §8's N = os·sr, not through a
+block size. The exact −1/ln form (the dual-cascade pair's det = 0
+structure — the second candidate's residue) collapses the factor to
+**0.470000 at all three measured menus**:
+
+| Release | menu µs | τ predicted (ms) | factor derived | factor measured |
+|---|---|---|---|---|
+| 0 (G17) | 170689.66 | 80.224 | 0.470000 | 0.47030 |
+| 2 (G19) | 340760.88 | 160.158 | 0.470000 | 0.47032 |
+| 4 (G18) | 643902.44 | 302.634 | 0.470000 | 0.46974 |
+
+Derived 0.470000 vs measured 0.4701 ± 0.0003: inside the stated band (the
+±0.0003 scatter is the envelope-fit systematics, signed both ways across
+menus). The composition in one line: **factor = s[0x88]·10⁶ = 0.47**, the
+Release setter's tiny constant up-converted, halved by the (y, s38) pair's
+det = 0 (§7's 2p−1), made dimensionless by k = 9.4e-7·os·sr.
+
+**Consequences.** (a) The model's solved `k_sol` was already the literal k
+to 0.02% (ratio 1.000213 — it solved the same law through
+TAU_PER_MENU_US = 0.4701), which is why the C2 gate passed; with the
+literal k the placement derivation and the constant both retire.
+(b) Prediction for a gate nobody ran: Oversample ON leaves τ at
+0.47·menu_µs wall-clock (os cancels) while doubling the kernel-sample
+count — an os-pair render would confirm §8's N reading independently.
+(c) Release index 6's special constants (s[0x290] path: 0x74 = 91000,
+0x7c = 0x49371b00, 0x90 = 0x36e42b8e, s[0xc0] = 1/(s[0x90]·N)) remain
+out of scope, unchanged.

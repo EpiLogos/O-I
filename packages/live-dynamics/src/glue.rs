@@ -347,7 +347,10 @@ pub const LUT_SCALE: f64 = 510.99976;
 /// p[0x314]'s neighborhood at render time, or capture the detector input
 /// gain's setter). Render-validated, mechanism-open: adopted under the
 /// equilibrium-lane brief with this record.
-pub const DETECTOR_TAP_GAIN: f64 = 1.40;
+/// Retired to 1.0: the render-fitted ×1.40 was the model's detector-N error
+/// (os·blockSize instead of os·sample_rate — see CircuitModel::new and
+/// glue-perblock-derivation.md §8). The device carries no such gain.
+pub const DETECTOR_TAP_GAIN: f64 = 1.0;
 
 /// Cubic soft-clip polynomial used twice in the kernel (ceiling shaper and
 /// output clipper): u − u³/4 + |u|·u³/16 on a ±2 domain. [K163-164, K282-283,
@@ -797,9 +800,11 @@ impl CircuitModel {
         // no separate detector law — its ballistics emerge from the
         // over-branch y-pole k/(A+k+R̂) (see the g_over comment).
         let tau_rel_smp = TAU_PER_MENU_US * rel_us * 1e-6 * sr;
-        // N = os·block, the per-block layer's block count [PB §2: 0x200];
-        // os = 1 path (the X2 oversamplers are out of gate scope).
-        let n_blk = params.block_size.max(1) as f64;
+        // N = os·sample_rate — the coefficient master receives N as the
+        // sample count (NewRate stores sr to s[0x3e0]; FUN_10168762c computes
+        // N = s[0x3e4]·s[0x3e0] = os·sr = 44100 at the render [binary writers
+        // lane §8]). The os·blockSize reading was the ×1.40 error's source.
+        let n_blk = sample_rate as f64;
 
         // Detector stage-1 coefficient: the ramped 0x1b8 accumulator's target
         // 1 − exp(−2π·s[0x1bc]/N) with the factory s[0x1bc] = 2.0 [PB §1/§2]
