@@ -59,6 +59,37 @@ pub mod stored {
     pub const OSC_A_LEVEL_AMP: f64 = 1.0;
     /// `Globals/Volume` — device output trim (−18 dB exactly).
     pub const GLOBALS_VOLUME_AMP: f64 = 0.1258925349;
+    /// `Operator.1/Envelope/DecayTime` (ms in document; seconds here) —
+    /// shell B's factory pluck decay (`evidence/devices/Operator/
+    /// default.xml`; the dossier's OP7 section names 400 ms / −24 dB).
+    pub const OSC_B_DECAY_TIME_S: f64 = 0.4;
+    /// `Operator.1/Envelope/SustainLevel` — −24 dB.
+    pub const OSC_B_SUSTAIN_LEVEL_AMP: f64 = 0.06309572607;
+    /// `Operator.1/Envelope/ReleaseTime` (seconds).
+    pub const OSC_B_RELEASE_TIME_S: f64 = 0.4;
+    /// `Operator.1/Volume` at the factory default — −70 dB, the parameter
+    /// floor. The mute IS the floor: `IsOn` stores true on all four shells
+    /// (OP7 section, render-confirmed).
+    pub const OSC_B_LEVEL_FLOOR_AMP: f64 = 0.0003162277571;
+}
+
+/// Documented readings carried AS readings, not fits (zero-fitted-scalars
+/// rule): each is the dossier's stated reading of a measured family, kept
+/// out of the `fitted` module on purpose.
+pub mod reading {
+    /// The Osc B index law, **β ≈ 0.2036·V + 0.0068** — B's steady
+    /// modulation index against its `Volume`, read across three pins
+    /// (OP7 V=1 → β=0.2104, OP8 V=0.5 → 0.1086, OP10 V=0.25 → 0.0577,
+    /// exact J1/J0 inversions; `operator-voice.md` "Index law at a third
+    /// pin"). Fits all three pins to ≤0.2 %; strict ∝Volume is refuted at
+    /// the third point. NOT a fit into the crate: a documented reading,
+    /// and unverifiable near the −70 dB floor, where its intercept
+    /// predicts h2 ≈ −79 dBFS — at the dither floor (the dossier's own
+    /// caveat, and why the default patch keeps B modeled-off rather than
+    /// extrapolating the law to the floor value).
+    pub const BETA_PER_VOLUME: f64 = 0.2036;
+    /// See [`BETA_PER_VOLUME`].
+    pub const BETA_INTERCEPT: f64 = 0.0068;
 }
 
 /// Fitted constants (each cited to its render in `operator-voice.md`).
@@ -171,9 +202,67 @@ impl AmpEnvelope {
     }
 }
 
+/// Oscillator B as a phase-modulation modulator of A at `Globals/Algorithm`
+/// 0 (OP7/OP8/OP9 verdict, `operator-voice.md`): raising B's `Volume` added
+/// no level and no new fundamental — the sidebands on A exploded instead
+/// (h2 +34.5 dB, h3 +14.6 dB over M1) with RMS invariant, the 1:1 PM/FM
+/// pairing signature. Model: per-note carrier phase
+/// `2π f t + β(t)·sin(2π f_B t)`; f_B tracks the key at 1:1 (the OP7 scan
+/// shows h2/h3 at exact harmonics of C3); β(t) = the β law at B's Volume,
+/// scaled by B's factory pluck envelope normalized to its sustain (the
+/// onset finding: deepest index at B's envelope peak, settling across B's
+/// 400 ms decay to the steady h2_rel ≈ −19.5 dB at the −24 dB sustain —
+/// the peak index the ratio implies, β_peak ≈ 3.33, is exact stored-value
+/// arithmetic, not a fitted constant).
+#[derive(Debug, Clone)]
+pub struct OscBModulator {
+    /// `Operator.1/Volume` — linear amplitude as the modulation amount
+    /// (OP8's level law: halving moved h2 −5.66 dB; J1 ∝ β predicts −6.02).
+    pub volume: f64,
+    /// Modulator frequency (Hz) — the carrier key pitch at the factory 1:1.
+    pub freq_hz: f64,
+    /// B's own envelope drives the index (same segment topology as A's —
+    /// the shells store the same `Envelope` family).
+    pub envelope: AmpEnvelope,
+}
+
+impl OscBModulator {
+    /// B's factory shell: stored `Operator.1` values (`default.xml`) —
+    /// pluck envelope, DecayTime 400 ms, SustainLevel −24 dB, DecayLevel 1,
+    /// ReleaseTime 400 ms, attack/levels at the shared stored constants.
+    pub fn factory(freq_hz: f64, volume: f64) -> Self {
+        OscBModulator {
+            volume,
+            freq_hz,
+            envelope: AmpEnvelope {
+                attack_s: stored::ATTACK_TIME_S,
+                floor_amp: stored::RELEASE_LEVEL_AMP,
+                decay_level_amp: stored::DECAY_LEVEL_AMP,
+                decay_time_s: stored::OSC_B_DECAY_TIME_S,
+                // τ ∝ DecayTime at ≈0.120 s per 1.0 s stored (the OP2/OP6
+                // two-pin law, ±0.6 %) → 0.048 s at B's stored 400 ms.
+                decay_tau_s: fitted::DECAY_TAU_S * stored::OSC_B_DECAY_TIME_S,
+                sustain_amp: stored::OSC_B_SUSTAIN_LEVEL_AMP,
+                release_time_s: stored::OSC_B_RELEASE_TIME_S,
+            },
+        }
+    }
+
+    /// Steady modulation index at this shell's `Volume`: the documented
+    /// three-pin reading β ≈ 0.2036·V + 0.0068 (see [`reading`] — a
+    /// reading, not a fit).
+    pub fn beta_sustain(&self) -> f64 {
+        reading::BETA_PER_VOLUME * self.volume + reading::BETA_INTERCEPT
+    }
+}
+
 /// Deterministic oscillator-A voice: pure sine × amp envelope × level
 /// chain. Output peak (linear) =
 /// `RESIDUAL_GAIN × osc_a_level × envelope(t) × globals_volume`.
+/// With shell B raised (`osc_b = Some(..)`) the sine's phase carries
+/// B's PM term — the level chain and A's envelope are untouched, so the
+/// output RMS stays invariant (the Bessel energy identity; the renders'
+/// ≤0.10 dB residual is the render chain).
 #[derive(Debug, Clone)]
 pub struct OperatorVoiceA {
     pub sample_rate: u32,
@@ -181,6 +270,11 @@ pub struct OperatorVoiceA {
     pub osc_a_level: f64,
     pub globals_volume: f64,
     pub envelope: AmpEnvelope,
+    /// Oscillator B, the raised-shell modulator. `None` = the shell at its
+    /// −70 dB floor: the default patch keeps the byte-identical pure-A path
+    /// (the β reading's intercept is unverifiable at the floor, so the
+    /// crate does not extrapolate the law there).
+    pub osc_b: Option<OscBModulator>,
 }
 
 impl OperatorVoiceA {
@@ -193,7 +287,16 @@ impl OperatorVoiceA {
             osc_a_level: stored::OSC_A_LEVEL_AMP,
             globals_volume: stored::GLOBALS_VOLUME_AMP,
             envelope: AmpEnvelope::default(),
+            osc_b: None,
         }
+    }
+
+    /// The default patch with shell B raised to `volume` — the OP7 family:
+    /// `Operator.1/Volume` is the only pin (the mute is the Volume floor).
+    pub fn default_patch_with_osc_b(key: u8, sample_rate: u32, osc_b_volume: f64) -> Self {
+        let mut v = Self::default_patch(key, sample_rate);
+        v.osc_b = Some(OscBModulator::factory(v.freq_hz, osc_b_volume));
+        v
     }
 
     fn peak_gain(&self) -> f64 {
@@ -208,11 +311,33 @@ impl OperatorVoiceA {
         let mut out = vec![0f32; n];
         let w = 2.0 * std::f64::consts::PI * self.freq_hz; // rad per second
         let g = self.peak_gain();
-        for (i, slot) in out.iter_mut().enumerate() {
-            let t = i as f64 / self.sample_rate as f64;
-            let env_db = self.envelope.gain_db(t, hold_s);
-            let env = 10.0f64.powf(env_db / 20.0);
-            *slot = (g * env * (w * t).sin()) as f32;
+        match &self.osc_b {
+            Some(b) => {
+                // Raised shell: PM on the carrier — phase = w·t +
+                // β(t)·sin(wb·t), β(t) = β_law(V) × B's envelope / sustain.
+                // Energy stays in the carrier family: the RMS moves only by
+                // the intrinsic PM term 10·log10(1 − J₂(2β)) — −0.096 dB at
+                // the OP7 pin, matching the render's −0.10 dB residual
+                // (OP7 −32.87 vs M1 −32.77).
+                let wb = 2.0 * std::f64::consts::PI * b.freq_hz;
+                let beta_peak = b.beta_sustain() / b.envelope.sustain_amp;
+                for (i, slot) in out.iter_mut().enumerate() {
+                    let t = i as f64 / self.sample_rate as f64;
+                    let env_db = self.envelope.gain_db(t, hold_s);
+                    let env = 10.0f64.powf(env_db / 20.0);
+                    let b_db = b.envelope.gain_db(t, hold_s);
+                    let beta = beta_peak * 10.0f64.powf(b_db / 20.0);
+                    *slot = (g * env * (w * t + beta * (wb * t).sin()).sin()) as f32;
+                }
+            }
+            None => {
+                for (i, slot) in out.iter_mut().enumerate() {
+                    let t = i as f64 / self.sample_rate as f64;
+                    let env_db = self.envelope.gain_db(t, hold_s);
+                    let env = 10.0f64.powf(env_db / 20.0);
+                    *slot = (g * env * (w * t).sin()) as f32;
+                }
+            }
         }
         out
     }
@@ -312,5 +437,76 @@ mod tests {
     fn note_freq_key60_is_c4() {
         assert!((note_freq(60) - 261.6255653).abs() < 0.01);
         assert!((note_freq(48) - 130.8127827).abs() < 0.01);
+    }
+
+    /// OP7 signature, synthetic (no render): with shell B raised to Volume
+    /// 1.0 the voice must read as PM of A —
+    ///   - steady h2 within ±0.5 dB of the measured −19.5 dB rel carrier
+    ///     (OP7 scan: h1 −30.07 / h2 −49.58 → −19.51 dB,
+    ///     `operator-voice.md`); the model gives J1(β)/J0(β) at
+    ///     β = 0.2036·1.0 + 0.0068 = 0.2104 ≈ −19.5 dB;
+    ///   - an h3 sideband present (OP7 +14.6 dB over M1's floor);
+    ///   - the steady RMS matches the PM energy law: B does not act as a
+    ///     level knob, but sinusoidal phase modulation is not exactly
+    ///     constant-envelope — the mean square carries the intrinsic term
+    ///     10·log10(1 − J₂(2β)) = −0.096 dB at β = 0.2104, which is the
+    ///     render's own measured drop (OP7 −32.87 vs M1 −32.77 = −0.10 dB,
+    ///     the dossier's "energy-conservation residual"). Gate: model drop
+    ///     within ±0.05 dB of the PM prediction AND inside the render
+    ///     family (|drop| ≤ 0.15 dB).
+    #[test]
+    fn osc_b_raised_is_pm_modulator_op7_signature() {
+        const F0: f64 = 130.81278265;
+        let s_on = OperatorVoiceA::default_patch_with_osc_b(48, 44100, 1.0)
+            .render_note(2.0, 2.0);
+        let s_off = OperatorVoiceA::default_patch(48, 44100).render_note(2.0, 2.0);
+        // steady windows: B's 400 ms pluck fully settled
+        let h1 = amp_to_db(goertzel_amp(&s_on, 44100, F0, 1.15, 1.70));
+        let h2 = amp_to_db(goertzel_amp(&s_on, 44100, 2.0 * F0, 1.15, 1.70));
+        let h3 = amp_to_db(goertzel_amp(&s_on, 44100, 3.0 * F0, 1.15, 1.70));
+        println!("osc-B steady: h1 {h1:.2}, h2 {h2:.2} ({:+.2} rel), h3 {h3:.2} ({:+.2} rel)",
+            h2 - h1, h3 - h1);
+        assert!(
+            (h2 - h1 - (-19.5)).abs() <= 0.5,
+            "steady h2 rel carrier {:+.2} dB vs measured −19.5 (±0.5)",
+            h2 - h1
+        );
+        assert!(h3 - h1 > -60.0, "h3 {:+.2} rel h1 — no sideband family", h3 - h1);
+        // PM energy law: 10·log10(1 − J₂(2β)) — the J₂-in-2φ DC term of
+        // sin²(θ + β·sinθ) over a period (shift-invariant, so it holds in
+        // any steady window).
+        let beta = OscBModulator::factory(F0, 1.0).beta_sustain();
+        let j2 = |x: f64| x * x / 8.0 - x.powi(4) / 96.0;
+        let predicted_drop_db = 10.0 * (1.0 - j2(2.0 * beta)).log10();
+        let a = (44100.0 * 1.15) as usize;
+        let b = (44100.0 * 1.70) as usize;
+        let drop = rms_db(&s_on[a..b]) - rms_db(&s_off[a..b]);
+        println!(
+            "osc-B RMS drop: {drop:+.4} dB (PM prediction {predicted_drop_db:+.4}; \
+             render residual −0.10)"
+        );
+        assert!(
+            (drop - predicted_drop_db).abs() <= 0.05,
+            "RMS drop {drop:+.4} dB off the PM prediction {predicted_drop_db:+.4}"
+        );
+        assert!(drop.abs() <= 0.15, "RMS moved {drop:+.3} dB — outside the render family");
+    }
+
+    /// B-off byte-path guard: with the shell at `None` the render must be
+    /// bit-identical to the pre-B model — the same samples the M1/OP2–5
+    /// goldens were gated against.
+    #[test]
+    fn osc_b_none_matches_pure_sine_path() {
+        let v = OperatorVoiceA::default_patch(48, 44100);
+        let s = v.render_note(0.875, 1.5);
+        let n = s.len();
+        let w = 2.0 * std::f64::consts::PI * v.freq_hz;
+        let g = fitted::RESIDUAL_GAIN * v.osc_a_level * v.globals_volume;
+        for (i, slot) in s.iter().enumerate() {
+            let t = i as f64 / 44100.0;
+            let env = 10.0f64.powf(v.envelope.gain_db(t, 0.875) / 20.0);
+            let expect = (g * env * (w * t).sin()) as f32;
+            assert_eq!(*slot, expect, "sample {i} left the pure-A path");
+        }
     }
 }
