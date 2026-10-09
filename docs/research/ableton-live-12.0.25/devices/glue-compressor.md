@@ -1082,7 +1082,12 @@ depth. Companion simulation:
 `glue_tapgain_confirm.py`), exact port validated to ≤0.02 dB against the
 committed gate numbers and loading the LUTs from
 `evidence/binary/glue-ratio-tables.txt` (provenance-checked against the
-glue.rs copy: max|d| = 0).
+glue.rs copy: max|d| = 0). Full derivation dossier of the equilibrium
+question itself — the per-sample balance audit, the constant-ȳ
+(center-value) degeneracy proof, the piecewise-exact solver (u_max-clamp
+regime included) and the four-tier ȳ ladder —:
+`evidence/devices/glue_depth_equilibrium.md` + `glue_depth_equilibrium_sim.py`
+(depth-equilibrium lane, later the same day).
 
 ### The equilibrium, derived (and what it proves)
 

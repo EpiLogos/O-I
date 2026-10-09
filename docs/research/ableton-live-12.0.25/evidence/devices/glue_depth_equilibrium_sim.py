@@ -177,16 +177,16 @@ def coeffs_of(m):
 
 # --------------------------------------------------------- balance solver
 def solve_balance(lut, y_prev, s38, c):
-    """Unique root x of the per-sample over-branch balance with s38 kept
-    (the exact kernel map, [K214-225] with the Sum-f' cancellation):
+    """Interior root x of the per-sample over-branch balance with s38 kept
+    (the exact kernel map, [K214-225] with the Sum-f' cancellation — valid
+    while 0 < x - lut < u_max):
 
         2 m (e^{B u} - 1) = A (k y[n-1] + s38 - x (k+Rh)) / (A+k+Rh),
         u = clamp(x - lut, 0, u_max).
 
     g(x) is continuous and strictly increasing (slope A(k+Rh)/(A+k+Rh)
-    below the LUT, 2 m B e^{Bu} + that above), so the under-branch root
-    x = (k y + s38)/(k+Rh) and the over-branch interior root are found by
-    one bisection — the branch switch needs no special case."""
+    below the LUT, 2 m B e^{Bu} + that above), so one bisection finds the
+    root — the branch switch needs no special case."""
     A, Rh, k = c['a_att'], c['a_rel'], c['k']
     c4 = k + Rh
     den = A + k + Rh
@@ -210,6 +210,33 @@ def solve_balance(lut, y_prev, s38, c):
         else:
             hi = mid
     return 0.5 * (lo + hi)
+
+
+def solve_x_exact(lut, y_prev, s38, c):
+    """The kernel's per-sample solve in full — the Sum-f' balance is only
+    the INTERIOR leg of it. With both legs at the same lut (mono), the
+    fixed point of [K218-221] falls into three exhaustive regimes:
+      under    (x* <= lut):        x* = (k y + s38)/(k+Rh)   [K227-231]
+      clamped  (x* - lut >= u_max): u is pinned, so Phi and S are
+               x-independent and [K220-221] is LINEAR in x
+      interior (0 < x* - lut < u_max): the Sum-f' balance (bisection)
+    Monotonicity of the kernel map makes the classification consistent."""
+    A, Rh, k = c['a_att'], c['a_rel'], c['k']
+    c4 = k + Rh
+    den = A + k + Rh
+    um = c['u_max']
+    z = -k * y_prev - s38
+    xu = (k * y_prev + s38) / c4
+    if xu <= lut:
+        return xu
+    eum = math.exp(B * um)
+    fp = M * B * eum
+    phi_c = 2.0 * (M * (eum - 1.0) - um * fp - lut * fp)
+    s_c = 2.0 * fp
+    xc = (-A * z - (A + c4) * phi_c) / (s_c * den + A * c4)
+    if xc - lut >= um:
+        return xc
+    return solve_balance(lut, y_prev, s38, c)
 
 
 # ------------------------------------------------- full tier (per-sample G)
@@ -244,7 +271,7 @@ def equilibrium_full(peak_db, thr, rng, ratio, att_idx, rel_idx,
         slow += (e - slow) * c['a_s2']
         lut = eq.shaped_lut(tab, (e - slow) * tap, t_ceiling)
         z = -k * y - s38
-        x = solve_balance(lut, y, s38, c)
+        x = solve_x_exact(lut, y, s38, c)
         y_new = (k * y + s38 + A * x) / den
         s38 = z + k * y_new
         y = y_new
@@ -299,7 +326,7 @@ def eb_balance_audit():
     print("=" * 76)
     print("EB per-sample balance audit at the LAM pin, 0 dBFS sine (T+24):")
     print("  kernel's converged Newton solve vs the closed-form balance and")
-    print("  vs this script's bisection root of the same equation")
+    print("  vs this script's exact per-sample solve, classified by regime")
     m = AuditedModel(threshold_db=-24.0, range_db=60.0, ratio_index=1,
                      attack_idx=5, release_idx=0)
     amp = 1.0
@@ -314,20 +341,36 @@ def eb_balance_audit():
     A, Rh, k = c['a_att'], c['a_rel'], c['k']
     c4 = k + Rh
     den = A + k + Rh
-    worst_rel = worst_x = 0.0
-    n_over = 0
+    um = c['u_max']
+    worst_int = 0.0        # interior at the kernel's iterate (exit-tol slack)
+    worst_int_exact = 0.0  # interior at the exact root: the identity itself
+    worst_all = 0.0        # piecewise-exact solve vs the kernel everywhere
+    n_under = n_int = n_clamp = 0
     for (y_state, s38_state, x, lut_l) in rec:
-        bal = A * (k * y_state + s38_state - x * c4) / den
-        u = min(max(x - lut_l, 0.0), c['u_max'])
-        sf = 2.0 * M * (math.exp(B * u) - 1.0)
-        if u > 0.0:
-            n_over += 1
-            worst_rel = max(worst_rel, abs(sf - bal) / max(abs(sf), 1e-12))
-        xb = solve_balance(lut_l, y_state, s38_state, c)
-        worst_x = max(worst_x, abs(xb - x))
-    print(f"  samples audited {len(rec)} (over-branch {n_over}); "
-          f"max |Sum f - balance|/|Sum f| = {worst_rel:.2e}")
-    print(f"  max |x_bisection - x_Newton|  = {worst_x:.2e}")
+        u = x - lut_l
+        if u <= 0.0:
+            n_under += 1
+        elif u >= um:
+            n_clamp += 1
+        else:
+            n_int += 1
+            bal = A * (k * y_state + s38_state - x * c4) / den
+            sf = 2.0 * M * (math.exp(B * u) - 1.0)
+            worst_int = max(worst_int, abs(sf - bal) / max(abs(sf), 1e-12))
+            xe = solve_balance(lut_l, y_state, s38_state, c)
+            bale = A * (k * y_state + s38_state - xe * c4) / den
+            sfe = 2.0 * M * (math.exp(B * (xe - lut_l)) - 1.0)
+            worst_int_exact = max(worst_int_exact,
+                                  abs(sfe - bale) / max(abs(sfe), 1e-12))
+        xb = solve_x_exact(lut_l, y_state, s38_state, c)
+        worst_all = max(worst_all, abs(xb - x))
+    print(f"  samples audited {len(rec)}: under {n_under}, interior {n_int}, "
+          f"u_max-clamped {n_clamp}")
+    print(f"  interior at exact root:   max |Sum f - balance|/|Sum f| "
+          f"= {worst_int_exact:.2e}  (the identity itself)")
+    print(f"  interior at kernel solve: max |Sum f - balance|/|Sum f| "
+          f"= {worst_int:.2e}  (Newton exit-tol slack, [K232])")
+    print(f"  all       max |x_exact - x_Newton|       = {worst_all:.2e}")
 
 
 def ec_ladder():
@@ -349,11 +392,13 @@ def ec_ladder():
                   f"min h(x>0) = {hpos:+.3e} > 0, max h(x<0) = {hneg:+.3e} < 0"
                   f" -> unique root xbar = 0: GR identically 0)")
         for thr in (-12.0, -24.0):
+            # the committed T-12 grid tops at 0 dBFS peak = +12 over
+            overs = (6, 12) if thr == -12.0 else OVERS
             out = eq.run_model(thr, RNG, 1, att, 0, sig)
             kmap = eq.K_OF_1K_T12 if thr == -12.0 else eq.K_OF_1K
             pmap = (eq.PEAK_OF_1K_OVER_T12 if thr == -12.0
                     else eq.PEAK_OF_1K_OVER)
-            for over in OVERS:
+            for over in overs:
                 peak = thr + over
                 cyc = eq.cycle_equilibrium(peak, thr, RNG, 1, att, 0)
                 rip = eq.cycle_equilibrium(peak, thr, RNG, 1, att, 0,
@@ -369,12 +414,11 @@ def ec_ladder():
                       f"{ful - dev:+10.2f} {port - dev:+10.2f}")
                 if thr == -24.0:
                     worst_fd = max(worst_fd, abs(ful - dev))
-        for over in OVERS:
-            cov_max = max(cov_max, abs(_FULL[(5, -12.0, over)]
-                                       - _FULL[(5, -24.0, over)]))
-            cov_max = max(cov_max, abs(_FULL[(1, -12.0, over)]
-                                       - _FULL[(1, -24.0, over)]))
-    print(f"  worst |full - device| (all 8 rows): {worst_fd:.2f} dB")
+    for att in (5, 1):
+        for over in (6, 12):    # the overs both thresholds commit
+            cov_max = max(cov_max, abs(_FULL[(att, -12.0, over)]
+                                       - _FULL[(att, -24.0, over)]))
+    print(f"  worst |full - device| (all ladder rows): {worst_fd:.2f} dB")
     print("  (center column = the constant-cycle-mean substitution: GR = 0 at")
     print("   every depth — it has no compressed fixed point at all.)")
     return cov_max
@@ -398,18 +442,18 @@ def ed_residual(cov_max):
     sig = eq.steps_1k_signal()
     saved = base.LUT_SCALE
     rows = (('LAM(5) T-24/R60', -24.0, 60.0, 5, eq.K_OF_1K,
-             eq.PEAK_OF_1K_OVER, DEVICE[5]),
+             eq.PEAK_OF_1K_OVER, DEVICE[5], OVERS),
             ('G2(2)  T-24/R30', -24.0, 30.0, 2, eq.K_OF_1K,
-             eq.PEAK_OF_1K_OVER, DEVICE[1]),
+             eq.PEAK_OF_1K_OVER, DEVICE[1], OVERS),
             ('G1(2)  T-12/R30', -12.0, 30.0, 2, eq.K_OF_1K_T12,
-             eq.PEAK_OF_1K_OVER_T12, DEVICE[1]))
+             eq.PEAK_OF_1K_OVER_T12, {6: -3.91, 12: -8.12}, (6, 12)))
     worst = 0.0
     try:
         base.LUT_SCALE = 510.99976 * 1.40
-        for name, thr, rng, att, kmap, pmap, dev in rows:
+        for name, thr, rng, att, kmap, pmap, dev, overs in rows:
             out = eq.run_model(thr, rng, 1, att, 0, sig)
             ds = []
-            for over in OVERS:
+            for over in overs:
                 g = eq.gr_1k(out, kmap[over], pmap[over])
                 ds.append(g - dev[over])
             worst = max(worst, max(abs(v) for v in ds))
