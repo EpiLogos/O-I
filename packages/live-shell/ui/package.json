@@ -8,7 +8,12 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test:agent-shell-fidelity": "node --test tests/agent-shell-transport-ids.test.mjs && node tests/agent-shell-fidelity.browser.mjs"
+    "test:agent-shell-fidelity": "node --test tests/agent-shell-transport-ids.test.mjs && node tests/agent-shell-fidelity.browser.mjs",
+    "test:device-sdk": "node --test tests/device-sdk.test.mjs && node scripts/validate-devices.mjs",
+    "devices:validate": "node scripts/validate-devices.mjs",
+    "devices:gaps": "node scripts/device-gaps.mjs",
+    "devices:scaffold": "node scripts/scaffold-device.mjs",
+    "devices:sync-icons": "node scripts/sync-icons.mjs"
   },
   "dependencies": {
     "@epilogos/expressions-boundary": "file:../../expressions-boundary",

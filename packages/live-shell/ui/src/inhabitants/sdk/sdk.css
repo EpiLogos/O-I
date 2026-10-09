@@ -1,0 +1,331 @@
+/* The device SDK's face language — mapped from the shell's own tokens.
+ *
+ * Token law: every colour/spacing value here resolves an EXISTING shell
+ * token (--inh-*, the agent-shell scoped set, or the live-shell :root set);
+ * the --sdk-* block only NAMES the resolutions the controls share. A new
+ * raw value belongs in the source token block that owns it, never here. */
+
+.sdk-face {
+  --sdk-bg: var(--inh-bg-1, var(--surface, #33363b));
+  --sdk-bg-raised: var(--inh-bg-2, #3f4348);
+  --sdk-line: var(--inh-line, var(--line, #24262a));
+  --sdk-line-strong: var(--inh-line-strong, var(--line-strong, #3d4147));
+  --sdk-text: var(--inh-text, var(--text, #d4d7da));
+  --sdk-dim: var(--inh-dim, var(--text-dim, #a2a7ad));
+  --sdk-faint: var(--inh-faint, var(--text-faint, #71767c));
+  --sdk-accent: var(--inh-accent, var(--accent, #ffbe00));
+  --sdk-green: var(--green, #8fd0a8);
+  --sdk-rec: var(--rec, #e0523f);
+  --sdk-stall: var(--stall, #ff9b4a);
+  --sdk-faint-lamp: color-mix(in srgb, var(--sdk-faint) 22%, transparent);
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  background: var(--sdk-bg);
+  border: 1px solid var(--sdk-line);
+  border-radius: 4px;
+  min-width: 148px;
+  font: 11px/1.45 var(--inh-mono, var(--mono, ui-monospace, 'SF Mono', Menlo, monospace));
+  color: var(--sdk-text);
+}
+
+.sdk-face--waiting {
+  opacity: 0.82;
+}
+
+.sdk-face__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 18px;
+}
+
+.sdk-face__mark {
+  color: var(--sdk-dim);
+  flex: none;
+}
+
+.sdk-face__title {
+  margin: 0;
+  font: inherit;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sdk-face__owner {
+  margin: 0;
+  color: var(--sdk-faint);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sdk-face__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 16px;
+  padding: 0;
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: var(--sdk-dim);
+  cursor: pointer;
+}
+
+.sdk-face__action + .sdk-face__action {
+  margin-left: 0;
+}
+
+.sdk-face__action:hover,
+.sdk-face__action:focus-visible {
+  color: var(--sdk-accent);
+  border-color: var(--sdk-line-strong);
+  outline: none;
+}
+
+/* — lamps: readings, never literals — */
+
+.sdk-lamp {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--sdk-line-strong);
+  background: var(--sdk-faint-lamp);
+}
+
+.sdk-lamp--on { background: var(--sdk-green); border-color: color-mix(in srgb, var(--sdk-green) 55%, black); }
+.sdk-lamp--admit { background: var(--sdk-green); border-color: color-mix(in srgb, var(--sdk-green) 55%, black); }
+.sdk-lamp--off { background: transparent; }
+.sdk-lamp--deny { background: var(--sdk-rec); border-color: color-mix(in srgb, var(--sdk-rec) 55%, black); }
+.sdk-lamp--refusing { background: var(--sdk-rec); border-color: color-mix(in srgb, var(--sdk-rec) 55%, black); }
+.sdk-lamp--waiting { background: var(--sdk-stall); border-color: color-mix(in srgb, var(--sdk-stall) 55%, black); }
+
+/* — rows — */
+
+.sdk-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 22px;
+}
+
+.sdk-row__name {
+  color: var(--sdk-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sdk-row--dirty .sdk-row__name {
+  color: var(--sdk-accent);
+}
+
+.sdk-row--reading .sdk-chip {
+  max-width: 60%;
+}
+
+/* — scalar (knob/fader share the grammar; the well is vertical) — */
+
+.sdk-scalar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sdk-scalar__well {
+  position: relative;
+  width: 10px;
+  height: 20px;
+  background: var(--sdk-bg-raised);
+  border: 1px solid var(--sdk-line);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sdk-scalar--fader .sdk-scalar__well {
+  width: 26px;
+  height: 12px;
+}
+
+.sdk-scalar__base,
+.sdk-scalar__draft {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.sdk-scalar__base {
+  background: var(--sdk-line-strong);
+}
+
+.sdk-scalar__draft {
+  background: var(--sdk-accent);
+  opacity: 0.85;
+}
+
+.sdk-scalar:focus-visible {
+  outline: 1px solid var(--sdk-accent);
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+.sdk-scalar__value {
+  min-width: 44px;
+  padding: 1px 4px;
+  font: inherit;
+  font-size: 10px;
+  color: var(--sdk-text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: ns-resize;
+  text-align: right;
+}
+
+.sdk-scalar__value:hover:not(:disabled) {
+  border-color: var(--sdk-line-strong);
+}
+
+.sdk-scalar__value:disabled {
+  color: var(--sdk-faint);
+  cursor: default;
+}
+
+.sdk-scalar__entry {
+  width: 56px;
+  padding: 1px 4px;
+  font: inherit;
+  font-size: 10px;
+  color: var(--sdk-text);
+  background: var(--sdk-bg-raised);
+  border: 1px solid var(--sdk-accent);
+  border-radius: 2px;
+  text-align: right;
+}
+
+/* — enum / bool — */
+
+.sdk-enum {
+  padding: 1px 6px;
+  font: inherit;
+  font-size: 10px;
+  color: var(--sdk-text);
+  background: var(--sdk-bg-raised);
+  border: 1px solid var(--sdk-line-strong);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.sdk-enum:hover:not(:disabled),
+.sdk-enum:focus-visible {
+  border-color: var(--sdk-accent);
+  outline: none;
+}
+
+.sdk-enum:disabled {
+  color: var(--sdk-faint);
+  cursor: default;
+}
+
+.sdk-bool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 14px;
+  padding: 0;
+  background: var(--sdk-bg-raised);
+  border: 1px solid var(--sdk-line-strong);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.sdk-bool:disabled {
+  cursor: default;
+}
+
+.sdk-bool__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--sdk-faint-lamp);
+  border: 1px solid var(--sdk-line-strong);
+}
+
+.sdk-bool--on .sdk-bool__dot {
+  background: var(--sdk-green);
+  border-color: color-mix(in srgb, var(--sdk-green) 55%, black);
+}
+
+.sdk-bool--off .sdk-bool__dot {
+  background: transparent;
+}
+
+/* — chips, disclosure, waiting — */
+
+.sdk-chip {
+  padding: 1px 5px;
+  font-size: 10px;
+  color: var(--sdk-text);
+  background: var(--sdk-bg-raised);
+  border: 1px solid var(--sdk-line);
+  border-radius: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sdk-chip__absent {
+  font-style: normal;
+  color: var(--sdk-faint);
+}
+
+.sdk-disclosure {
+  font-size: 9.5px;
+  color: var(--sdk-faint);
+}
+
+.sdk-disclosure summary {
+  cursor: pointer;
+  letter-spacing: 0.03em;
+}
+
+.sdk-disclosure summary:hover {
+  color: var(--sdk-dim);
+}
+
+.sdk-disclosure__body {
+  display: block;
+  margin-top: 2px;
+  padding: 2px 4px;
+  font-size: 9.5px;
+  color: var(--sdk-dim);
+  background: var(--sdk-bg-raised);
+  border: 1px solid var(--sdk-line);
+  border-radius: 2px;
+  word-break: break-all;
+}
+
+.sdk-waiting {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 2px 0 0;
+  font-size: 10px;
+  color: var(--sdk-dim);
+}
