@@ -329,3 +329,43 @@ steps-1k signal). Rendered through the locked lane-3 driver; analyzed with
   tempo mismatch for Repitch's pitch-shift signature) were not rendered —
   render budget spent. Only the *transparency at 1:1* claim is strong for
   these three; the name mapping remains inferred from LOM order.
+
+## Beats discriminator with transient material (D9-continued): WB probe — 2026-10-09
+
+Testing the hypothesis left open by the modes-0/3/4 section: a transient-rich
+clip under Beats should quantize slice onsets to the beat grid — the signature
+the sine staircase could not show. Lineage: `W1_TONES.als` edit hook, clip
+sample swapped to `signals/impulse.wav` (unit impulse at source sample 100,
+48 kHz, 4 s) via `build_wb_imp.py` (`WB0_BEATS_IMP` mode 0, `WB5_CPRO_IMP`
+mode 5 control); same marker pair (0,0)+(1 s, 2 beats) pinning file tempo to
+the set tempo, transport loop shrunk to 10 beats. Rendered through the locked
+lane-3 driver (5 s exports); analyzed with `analyze_wb_imp.py`: onset = first
+sample above −40 dBFS vs the 1:1 reference 100/48000 = 2.083 ms (92.0
+samples at 44.1 kHz). Nearest 16th at 120 BPM = multiples of 125 ms —
+nearest to the source onset is 0 ms.
+
+| render | WarpMode | onset | displacement vs 1:1 | peak | nearest-16th Δ |
+|--------|----------|-------|---------------------|------|----------------|
+| WB0_BEATS_IMP | 0 | 2.063 ms | −0.020 ms | −6.15 dBFS | +2.063 ms |
+| WB5_CPRO_IMP | 5 | 2.063 ms | −0.020 ms | −6.14 dBFS | +2.063 ms |
+
+### WB verdicts (confidence: high for the measurement; the discriminator is null)
+
+- **Beats did not quantize the onset at 1:1** — displacement −0.02 ms
+  (sub-sample rounding at 44.1 kHz), identical to the Complex Pro control;
+  the predicted snap of 2.083 ms → 0 ms did not happen.
+- **Both engines engaged and are transient-transparent here**: renders
+  byte-distinct (89805 samples differ, LSB level, max |Δ| = 2), waveform a
+  single resampled spike (2–3 ms bin max 16151 vs 16152), no smear, no
+  pre/post energy above the dither LSB (−6.15 dBFS peak = the expected
+  band-limited 48k→44.1k sinc loss for a one-sample impulse, both modes).
+- **Reading**: Beats' beat-granulation is a *re-spacing* behavior — slices
+  move when the tempo mapping demands it. At the trivial 1:1 mapping (file
+  tempo pinned == set tempo) no segment needs moving, so a transient-rich
+  signal *alone* does not expose mode 0; the sine-probe conclusion survives
+  contact with a transient.
+- **Enum identity for mode 0 remains honestly null** on 1:1 evidence: this
+  probe falsifies "transient material discriminates Beats at 1:1", not the
+  LOM-order mapping. The signature that would settle it needs a mapping that
+  forces re-spacing (file tempo ≠ set tempo, or stretch ≠ 1, e.g. the
+  impulse off-grid under a tempo mismatch) — not rendered (budget spent).
