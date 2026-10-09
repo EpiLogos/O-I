@@ -365,7 +365,61 @@ nearest to the source onset is 0 ms.
   signal *alone* does not expose mode 0; the sine-probe conclusion survives
   contact with a transient.
 - **Enum identity for mode 0 remains honestly null** on 1:1 evidence: this
-  probe falsifies "transient material discriminates Beats at 1:1", not the
+  probe falsifies "transient material alone exposes Beats at 1:1", not the
   LOM-order mapping. The signature that would settle it needs a mapping that
   forces re-spacing (file tempo ≠ set tempo, or stretch ≠ 1, e.g. the
   impulse off-grid under a tempo mismatch) — not rendered (budget spent).
+
+## Beats re-spacing under 2× stretch (WB2X) — 2026-10-09
+
+The settling probe named by the WB verdicts: a mapping that *forces*
+re-spacing. Same impulse lineage (single unit impulse at source sample 100,
+48 kHz, 4 s), clip stretched 2× (`warp_edit.py <set> <mode> 2.0` on copies of
+`WB0_BEATS_IMP` / `WB5_CPRO_IMP`): the second marker now maps 1 s of source to
+4 beats (file tempo read as 240 BPM against the 120 BPM set → playback rate
+0.5), clip bounds scaled 8→16 beats; transport loop stays 10 beats (5 s
+exports — the only measurable event is the onset near 4.2 ms, and an impulse
+has no content-end duration to truncate). Renders: `WB1_BEATS_IMP2X` (mode 0),
+`WB2_CPRO_IMP2X` (mode 5 control). 2× timing reference: source onset
+2.0833 ms → 4.1667 ms (184.0 samples @44.1k). Analysis: `analyze_wb_imp.py` +
+byte-level/spike-shape scan.
+
+| render | WarpMode | onset | vs ideal 2× (4.167 ms) | peak | nearest-16th Δ |
+|--------|----------|-------|------------------------|------|----------------|
+| WB1_BEATS_IMP2X | 0 | 4.104 ms (smp 181) | −0.063 ms | −0.70 dBFS @ 4.150 ms | +4.104 ms |
+| WB2_CPRO_IMP2X | 5 | 4.104 ms (smp 181) | −0.063 ms | −0.70 dBFS @ 4.150 ms | +4.104 ms |
+
+Both renders: one spike only (6 samples above −40 dBFS, 0.11 ms extent,
+pre/post floor −96 dB = dither), peak sample 183 = 4.150 ms — the peak sits
+−0.017 ms from the ideal 2× position (the −0.063 ms onset delta is the
+−40 dBFS threshold crossing earlier up the stretched pulse's shallower edge).
+Renders byte-distinct from each other (89378 samples differ, max |Δ| = 2, LSB
+level) — both engines engaged, not a shared pass-through.
+
+### WB2X verdicts (confidence: high for the measurement; the discriminator is null again)
+
+- **Beats did not re-space the transient at 2×.** The onset scales smoothly
+  with the stretch (4.104 ms ≈ exactly 2× the 1:1 position) and is identical
+  to the Complex Pro control; the predicted snap to the nearest 16th (0 ms,
+  −4.1 ms displacement) did not happen. Grid delta +4.104 ms — the impulse
+  sits as far off the grid at 2× as it did at 1:1.
+- **Null reading, honestly stated**: either Beats' re-spacing never moves a
+  *single sub-grid* transient whose containing segment maps continuously, or
+  its transient detector did not register a 1-sample −6 dBFS impulse as a
+  slice boundary at all (detection plausibly needs a stronger/shape-ful
+  onset). This probe cannot separate those two — a transient the detector
+  actually slices on (e.g. a drum hit) is the remaining discriminator, and a
+  genuine tempo mismatch (file tempo ≠ set tempo with markers left at 1:1)
+  is the remaining mapping.
+- **Mode-0 enum identity stays inferred from LOM order** after three probes
+  (sine 1:1, transient 1:1, transient 2×): Beats has yet to show any
+  observable character distinct from the granular family on this lane's
+  signals.
+- **Observation (unexplained, both engines)**: the stretched peak is −0.70
+  dBFS — 5.45 dB *above* the 1:1 render's resampling-sinc peak (−6.15 dBFS);
+  at rate 0.5 both engines concentrate the impulse into a taller sub-0.15 ms
+  pulse rather than smearing it. Documented, not modeled.
+- **Duration note**: "duration 2×" is not measurable on an impulse (no
+  content end beyond the spike); the timing proof here is the onset scaling.
+  The clip span itself is 16 beats (verified in the edited XML); the 5 s
+  export loop truncates the trailing silence only.
