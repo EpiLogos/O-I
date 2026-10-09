@@ -113,6 +113,47 @@ recorded in their rows above. (m) Crate obligations from round 2:
 `wavetable.rs` decay → warp law (gate slope-0.5 vs goldens);
 `wavetable.rs::unison` VC2 stereo re-read; unison goldens not wired to the
 crate's #[ignore] gates (documented in the test doc comment).
+**Obligation status after rounds 3–7**: decay warp law LANED (a706bc6fc, M2
+gate +0.13 dB, unison golden gate added); VC2 CORRECTED to {−s,+s}
+(d192e1414, stereo re-read 10d9abe30); archive goldens wired —
+**the full gate suite runs 13/13 PASS on this machine** (0cd278bb3).
+
+**2026-10-09 rounds 3–7 lane additions** (parallel lanes, commits 671e2e576,
+10d9abe30, 1b4947cc3, a706bc6fc, cc2ed3889, c00589c5f, 81e43a95a, ce8c3ff27,
+50348e484, 1dcfe51d5, 1ad204ce7, 0430d1d77, d24de2144, dc61740e3,
+77350f5df, 4f553ef42, d5932f938, 0cd278bb3):
+
+- **Operator**: β vs B-Volume near-linear NOT proportional (3 points,
+  0.2036·V+0.0068 reading); Algorithm acoustic null under BOTH C/D regimes
+  (0→7, C/D muted and raised — inert at factory indices); shells C and D
+  byte-flat (modulator shells, only B routes into A at Algorithm 0);
+  Feedback sealed null 0.5→100 stored, carrier AND routed B→A
+  (`Operator.*Feedback` stored-but-unwired at these pins). **Open**: PM/FM
+  sign, β 4th point, feedback on B itself, off-factory Algorithms, WF
+  labels, Phase/Fine.
+- **Wavetable**: N-extension CLOSED (N=1..8: VC1≡VC2 — Mode 1 has no
+  single-voice layout; VC5/6/7/8 confirm spread/pan/√(2/N) laws, worst
+  blend bias 0.6 dB at VC8's 0.81 Hz spacing); gain law CLOSED
+  (√(2/N)·solo per voice, centre equal-power 1/√N per channel, channel
+  power unity — the "0.0/−1.8/−3.0" earlier row was arithmetic error);
+  crate unison gains pan + gain laws (1ad204ce7, 50 lib tests).
+- **Echo**: mod section implemented in-crate (`echo::modulation`,
+  81e43a95a) with a **walk-level dossier correction**: per-pass R=0.26·L
+  refuted — equal per-pass depths + stereo LFO phase offset (85° fitted,
+  inside the T0-bias band) reproduce the 0.26 ratio emergently and hold
+  E1's R taps ≤0.11 ms; discriminating mono-sum probe named.
+- **Reverb**: comb-structure probe NEGATIVE (smooth colored stochastic
+  tail, no sr/L grid — parametric model supported, FDN unnecessary);
+  refinements measured: HF corner FIXED ≈4.5 kHz with decay-dependent
+  two-component tail above it (model's single k=0.80 wrong in form —
+  extension stated in dossier, would also close R4's 18.7% residual);
+  stereo r0 table measured (mean 0.21 late / 0.28 early) for a future
+  stereo extension.
+- **Warp**: modes 0/3/4 load and are sample-transparent at 1:1 (enum
+  0–5 fully loadable); Beats identity probed three ways (sweep,
+  impulse-transient 1:1, impulse 2×) — all null; mode-0 identity stays
+  LOM-inferred. Named settling probes: detector-visible transient (drum
+  hit) or true tempo mismatch (SegTempo ≠ set tempo).
 
 ## Render-cycle loop-length fix (2026-10-08, lane 3 — verified)
 
