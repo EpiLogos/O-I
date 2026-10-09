@@ -58,6 +58,9 @@ Status ledger (updated as lanes land; gate = crate passes vs golden corpus):
 | Note Echo | MIDI | — | ✓ (NEGATIVE: no compiled device — M4L) | — | — | — |
 | Drift | INST | ✓ (90+ surface in decompile) | — | ✓ (devicekit, 32-voice, dispatch census) | — | — |
 | Utility | FX | ✓ (14 params) | — | ✓ (9 calc bodies, BassMono TPT law; dB/pan closed forms open) | ✓ (surface) | — |
+| Corpus | FX | ✓ (38 params, 26 presets) | — | ✓ (AAS A-framework; filter = 2-cascade Butterworth BP law; DSP engine = corpus material) | — | — |
+| Resonators | FX | ✓ (30 params) | — | ✓ (5-slot ping-pong bank, phase-compensated delay tuning, 20-calc dispatch) | — | — |
+| Hybrid Reverb | FX | ✓ (54 params) | — | ✓ (convolver+algorithmic legs, IR = sample-slot pair; tail NOT shared with Reverb) | — | — |
 | *43 more devices* | | — | — | — | — | — |
 | Warp engines ×6 | clip | ✓ (modes 0–5) | ✓ (D9 + seg90) | — | — | partial |
 | FollowAction | clip | ✓ | ✓ (anchoring) | — | — | session driver open |

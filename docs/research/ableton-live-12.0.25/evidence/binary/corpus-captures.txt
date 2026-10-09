@@ -1,0 +1,129 @@
+// PROVENANCE: Ghidra 12.1.4 decompiles + nm/objdump/strings decodes, persistent
+// project LiveRE2 (~/tools/live-re/ghidra-proj2, ALREADY ANALYZED), Live.arm64
+// (Live 12.0.25, 2024-08-27_2627c43816), arm64 slice. Query-only on the
+// canonical project (SearchProbe / StringsInRange / CallTargetsProbe /
+// BlockProbe; no re-import, no auto-analysis). The ACorpus TU was undisassembled
+// virgin territory (FuncListProbe 0x102802958..0x1028095ec TOTAL=0 pre-lane);
+// the lane disassembled that span and decompiled two functions in a SCRATCH
+// COPY of the project (~/tools/live-re/ghidra-lane-scratch/LaneScratch.gpr —
+// byte copy of LiveRE2 made 2026-10-09 for this lane; canonical project
+// untouched). No Live runs, no renders in this lane.
+// Owner-private analysis evidence. NOT FOR REDISTRIBUTION. Never enters
+// product source (packages/live-dynamics).
+// Captured 2026-10-09 (Corpus binary lane). Companion dossier:
+// devices/corpus-derivation.md.
+// Contents: (1) nm census (the whole symbol table for the Corpus family —
+// 7 entries; no devicekit processor exists); (2) ACorpus compound name table
+// (member keys mp* + display strings, contiguous 0x104900e07..0x104901173);
+// (3) the three callback thunks + their targets (FilterCascadeCountGetter =
+// literal 2); (4) ctor chain (factory stub -> FUN_1028040f4: Gain/Width/
+// "Dry Wet" registrations, OnMidiNoteRelevantChange wiring, three param
+// builders); (5) FilterCoeffGetterCallback FUN_1028040f4.. no — FUN_1028084c0
+// full decompile (2-cascade Butterworth band-pass law, exp2 polyfill);
+// (6) AAS-family symbols (AAASStringConverter<ACorpusRealValue>,
+// ACorpus::InitLfo); (7) ResonanceType/ResonatorQuality values across the 26
+// factory presets (official Core Library .adv, gunzip XML read only).
+
+// ===== nm census (family symbols; complete) =====
+0000000102802958 T __Z12SNewCompoundI7ACorpusE4TPtrI9ACompoundEv
+00000001028afc10 T __Z12SNewCompoundI11ACorpusUnitE4TPtrI9ACompoundEv
+000000010280e134 T __ZN7ableton7utility6detail13CallbackTypesI7ACorpusvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_24OnMidiNoteRelevantChangeES5_S7_EEEEvPvS5_S7_
+000000010280e140 T __ZN7ableton7utility6detail13CallbackTypesI7ACorpusbJiP20TBiquadCoeffTemplateIfEEE14CallMemberFuncIXadL_ZNS3_25FilterCoeffGetterCallbackEiS6_EEEEbPviS6_
+000000010280e144 T __ZN7ableton7utility6detail13CallbackTypesIK7ACorpusiJEE14CallMemberFuncIXadL_ZNKS3_32FilterCascadeCountGetterCallbackEvEEEEiPv
+0000000104c97b60 S _KDeviceCollision   (neighbor; no KDeviceCorpus exists — corpus residual)
+0000000104d3fd74 ? 7ACorpus            (type-name string)
+0000000104d3ff75 ? 19AAASStringConverterI16ACorpusRealValueE
+0000000104d3ff9f ? NSt3__110__function6__funcIZN7ACorpus7InitLfoEvE4$_17NS_9allocatorIS3_EEF7TStringiEEE
+
+// ===== ACorpus compound name table (StringsInRange 0x104900e07..0x104901173) =====
+// member keys (order as stored):
+// ACorpus, mpSideChain, mpResonanceType, mpResonatorQuality, mpFrequency,
+// mpDetune, mpFreqDamping, mpExcitationX, mpLfoOnOff, mpLfoType, mpLfoSync,
+// mpLfoRate, mpLfoSyncRate, mpLfoSyncRateRelativePosition, mpLfoStereoMode,
+// mpLfoSpin, mpLfoPhase, mpLfoOffset, mpLfoAmount, mpFilterOn, mpFilterMidFreq,
+// mpFilterBandWidth, mpMidiPitch, mpMidiMode, mpMidiGate, mpDrive,
+// mpStereoWidth, mpMidiNoteString, mpCentString
+// display strings (order as stored):
+// Corpus, Dry Wet, Resonance Type, Decay, Note Off Decay, Off Decay, Material,
+// Inharmonics, Opening, Ratio, Radius, Tune, Fine Transpose, Fine, Bleed,
+// PitchBend Range, Hit, Listening L, Listening R, MIDI Frequency, Last,
+// MIDI Mode, Note Off, Resonator Quality, LFO On/Off, LFO Shape, LFO Sync,
+// Phase, Spin, Phi, LFO Stereo Mode, LFO Rate, LFO Synced Rate, LFO Sync Rate,
+// LFO Spin, LFO Phase, LFO Offset, LFO Amount, Filter On/Off, Filter Mid Freq,
+// Mid Freq, Filter Width
+// (next compound table starts at ALoungeLizard, 0x104901187)
+
+// ===== callback thunks (CallTargetsProbe) =====
+== THUNK 10280e144 FilterCascadeCountGetterCallback ==
+   10280e144 mov w0,#0x2
+   10280e148 ret                      // cascade count = 2, literal [B]
+== THUNK 10280e140 FilterCoeffGetterCallback ==
+   10280e140 b 0x1028084c0            // real body FUN_1028084c0
+== THUNK 10280e134 OnMidiNoteRelevantChange ==
+   10280e134 ldr x8,[x0]
+   10280e138 ldr x3,[x8, #0x5a8]      // vtable slot +0x5a8
+   10280e13c br x3
+
+// ===== ctor chain (scratch-project decompile) =====
+// __Z12SNewCompoundI7ACorpusE... (0x102802958, 16 lines): alloc 0x610 bytes,
+// calls FUN_1028040f4 (real ctor), registers with ACompound.
+// FUN_1028040f4 (body=1284, 139 lines) key facts:
+//   - vtable install: *obj = &UNK_1053ed678 (+0x50/0x58/0x170 vtables)
+//   - func_0x000102804960(obj+0x1b8): sub-object at +0x1b8 (0x37 qwords)
+//   - member compounds default-constructed at +0x1d0..+0x590
+//     (func_0x0001022c3dd8 = string-member ctor, func_0x0001022c3d40 =
+//     value-member ctor, func_0x0001022c3e70 = enum-member ctor,
+//     func_0x00010023c5a8 = bool-member ctor)
+//   - +0x5d8 = 0xffffffff; func_0x00010280116c(+0x5e0); three range objects
+//     +0x5f8/+0x600/+0x608
+//   - display name "Corpus" registered (func_0x000100fc0898(&buf,"Corpus"))
+//   - *(obj+0x178) = 0x100000001; *(u16)(obj+0x180) = 1
+//   - three param builders: func_0x0001028049f8(obj), func_0x000102805998(obj),
+//     func_0x000102806c60(obj)
+//   - final registrations: "Gain" (0x3f000000 = 0.5f, converter block 0x1e),
+//     "Width" (0x3f800000 = 1.0f), "Dry Wet" (0x3f000000 = 0.5f)
+//   - OnMidiNoteRelevantChange subscribed to 5 observables (this+0x298/0x2c8/
+//     0x280/0x358/0x2f8 member lists)
+//   - func_0x0001028070b0(obj) tail (mod-target/visualisation wiring, body open)
+
+// ===== FilterCoeffGetterCallback FUN_1028084c0 (scratch decompile, 90 lines) =====
+// bool FUN_1028084c0(long this, uint cascade, float *coeff /*TBiquadCoeffTemplate<float>*/)
+//   sr    = func_0x000101c79560();
+//   mid   = getter(*(this+0x520));          // param: Filter Mid Freq (mapped)
+//   bend  = getter(*(this+0x538));          // param: bandwidth (octaves, mapped)
+//   x     = clamp(bend*0.5 + 127.0, 0, 255);
+//   two_x = exp2 polyfill: ((((f*0.013487903 + 0.0521745)*f + 0.24128748)*f
+//                           + 0.6930501)*f + 1.0) * floatbits((int)x << 23)
+//         // 2^frac via e^(f.ln2) Taylor; (int)x<<23 = 2^(int x - 127) as float
+//   if cascade == 1: fc = min(mid * two_x, 18000.0); tag = 1   // LP edge
+//   if cascade == 0: fc = max(mid / two_x,    50.0);  tag = 2   // HP edge
+//   if cascade >= 2: zero coeffs; return false
+//   w0 = fc * 6.2831855f; Q = 0.70710677f (1/sqrt2, Butterworth)
+//   func_0x0001022d46c8(&t, {w0, Q}, &sr);   // RBJ-style biquad calc
+//   writes 6 normalized coefficients (a0..a2/b0..b2 divided by denominator)
+//   return cascade < 2;
+
+// ===== ResonanceType / ResonatorQuality across factory presets =====
+// (Core Library/Devices/Audio Effects/Corpus/*.adv — gunzip, XML read only)
+// value 0 : Loop Rhythmic Changer, Sub Boom
+// value 1 : Loop Hollow
+// value 2 : Drum to Bass Synth, Loop Percussifier, Loop Ticking, Loop Metal Needle
+// value 3 : Loop Phase, Loop Tablamaker, Sub Kick Maker, Kick Loose/Medium/Tight,
+//           Bright Snare, Metallic Rezo, Punchy Snare
+// value 4 : Loop Move
+// value 5 : Loop Random, Panning Rezo, Phasing Flange, Pipe Resonator
+// value 6 : Loop Ping Pong, Loop Robotifier, Tubular Pan, Drum Rezo Gate,
+//           Sub Filter Boost
+// ResonatorQuality values seen: 0,1,2,3 (range 0..3 inferred from preset use)
+// Name mapping to the 7 UI types is NOT string-pinned in the binary (no
+// "String"/"Pipe"/... menu strings found for ACorpus; the Collision resonator
+// menu strings at 0x1049007fb..0x104900827 are a different device). Mapping
+// hypotheses in the dossier are graded [H].
+// Anchors: "Pipe Resonator" preset -> 5; "Tubular Pan" -> 6; tabla/kick/snare
+// (membrane family) presets -> 3.
+
+// ===== raw-asm shape notes (objdump -d Live.arm64, span 0x102802958..) =====
+// - functions use classic prologues (sub sp/stp x29,x30), NO pacibsp in this TU
+// - param-builder names pass descriptor pointers from __DATA tables
+//   (e.g. func_0x000101ea30f8(uVar10,0,0x10595dba0,&out)) — parameter display
+//   descriptors are table-driven, not inline strings
