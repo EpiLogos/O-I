@@ -1,0 +1,155 @@
+// PROVENANCE: Ghidra 12.1.4 probes (SearchProbe/FuncListProbe/StringsInRange)
+// + llvm-objdump raw-asm + custom ADRP+ADD xref scan (python, TEXT base
+// 0x100000000 = file offset), against persistent project LiveRE2
+// (~/tools/live-re/ghidra-proj2, ALREADY ANALYZED; query-only, no re-import),
+// Live.arm64 (Live 12.0.25, 2024-08-27_2627c43816), arm64 slice.
+// Owner-private analysis evidence. NOT FOR REDISTRIBUTION. Never enters
+// product source (packages/live-dynamics).
+// Captured 2026-10-09 (electric/collision binary lane). Companion dossiers:
+// devices/electric-derivation.md, devices/collision-derivation.md.
+// Official-evidence companions (read-only, quoted inline in dossiers):
+//   App-Resources/Core Library/Defaults/Instruments/Electric.adv  (gzip XML,
+//     root element <LoungeLizard>, Creator "Ableton Live 12.0.5d1")
+//   App-Resources/Core Library/Defaults/Instruments/Collision.adv (root
+//     element <Collision>)
+//
+// HEADLINE: Electric is ALoungeLizard, Collision is ACollision — old
+// A-FRAMEWORK compound devices of the same family as AUltraAnalog (analog
+// lane). ZERO Ghidra functions exist in their TUs (FuncListProbe
+// 0x1027ef000..0x102810000 TOTAL=0); SearchProbe finds no functions for any
+// AAS name. The ADRP+ADD xref scan was required for code anchors. Collision
+// additionally carries ONE symbolized devicekit processor
+// (OCollisionScaledModeProcessor) and symbolized A-member callbacks
+// (ACollisionNoise::FilterCascades etc.).
+
+// (1) SYMBOL CENSUS (nm, arm64)
+   0000000104c97b54 S _KDeviceLoungeLizard
+   00000001028095ec T __Z12SNewCompoundI13ALoungeLizardE4TPtrI9ACompoundEv
+   0000000102e04144 T __Z12SNewCompoundI17ALoungeLizardViewE4TPtrI9ACompoundEv
+   0000000102e0a708 T __ZN7ableton7utility6detail13CallbackTypesI17ALoungeLizardViewvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_15OnFingerChangedES5_S7_EEEEvPvS5_S7_
+   0000000102e0a748 T __ZN7ableton7utility6detail13CallbackTypesI17ALoungeLizardViewvJiEE14CallMemberFuncIXadL_ZNS3_13OnZoneClickedEiEEEEvPvi
+// --- Collision (all symbols) ---
+   0000000104c97b60 S _KDeviceCollision
+   00000001027fe8bc T __Z12SNewCompoundI10ACollisionE4TPtrI9ACompoundEv
+   00000001027f08d0 T __Z12SNewCompoundI13ACollisionLfoE4TPtrI9ACompoundEv
+   00000001028af554 T __Z12SNewCompoundI14ACollisionUnitE4TPtrI9ACompoundEv
+   00000001027f534c T __Z12SNewCompoundI15ACollisionNoiseE4TPtrI9ACompoundEv
+   00000001027f3638 T __Z12SNewCompoundI16ACollisionMalletE4TPtrI9ACompoundEv
+   00000001027ef5c0 T __Z12SNewCompoundI19ACollisionModTargetE4TPtrI9ACompoundEv
+   00000001027f8214 T __Z12SNewCompoundI19ACollisionResonatorE4TPtrI9ACompoundEv
+   0000000102d4f81c T __Z12SNewCompoundI20ACollisionLfoDisplayE4TPtrI9ACompoundEv
+   0000000102d4f254 T __Z12SNewCompoundI25ACollisionFilterXyControlE4TPtrI9ACompoundEv
+   00000001020cb6e8 T __Z12SNewCompoundI26ACollisionScaledModeModuleE4TPtrI9ACompoundEv
+   0000000102d4e600 T __Z12SNewCompoundI29ACollisionAdsrEnvelopeDisplayE4TPtrI9ACompoundEv
+   000000010271ff2c T __ZN23OProcessorCreateManager18SOnProcessorCreateI29OCollisionScaledModeProcessorEEvR14OThreadMessage
+   000000010280e108 T __ZN7ableton7utility6detail13CallbackTypesI15ACollisionNoisebJiP16TBiquadParameterEE14CallMemberFuncIXadL_ZNS3_15FilterParameterEiS5_EEEEbPviS5_
+   000000010280e10c T __ZN7ableton7utility6detail13CallbackTypesI15ACollisionNoiseiJEE14CallMemberFuncIXadL_ZNS3_14FilterCascadesEvEEEEiPv
+   000000010280e130 T __ZN7ableton7utility6detail13CallbackTypesI19ACollisionResonatorvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_6OnCopyES5_S7_EEEEvPvS5_S7_
+   00000001026efd74 T __ZZN6detail16TMemberFuncTypesIM29OCollisionScaledModeProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnModeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+   00000001026efd58 T __ZZN6detail16TMemberFuncTypesIM29OCollisionScaledModeProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnValueEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+
+// (2) ELECTRIC = ALoungeLizard STRING CLUSTER (StringsInRange
+//     0x1048f0000+0x30000; member keys + display names + device name)
+   // (mod-target display list 0x104901784..0x1049018d5 — shared with Collision:
+   //  No Destination, Noise Freq, Noise Volume, Res 1 Pitch, Res 1 Hit,
+   //  Res 1 Pan, Res 1 Pipe Opening, Res 2 Input, Res 2 Pitch, Res 2 Hit,
+   //  Res 2 Pan, Res 2 Pipe Opening, LFO 1 Rate, LFO 1 Depth, LFO 2 Rate,
+   //  LFO 2 Depth)
+
+// (3) ELECTRIC CODE SPANS + REGISTRATION (objdump excerpts)
+//   TU span: 0x1028095ec..0x10280d654 (SNewCompound<ALoungeLizard> .. next
+//   factory AMidiPitchReportModule; ~16.3KB, all functions anonymous).
+//   Static module registration (adrp/add xref scan + objdump):
+   Disassembly of section __TEXT,__text:
+   0000000102813034 <__ZN7ableton7utility6detail13CallbackTypesIvvJEE14CallStaticFuncIXadL_ZN9AMxDevice19SLimitationsChangedEvEEEEvPv>:
+   102814000: f0012848    	adrp	x8, 0x104d1f000 <__ZZNK5boost9typeindex14stl_type_index11pretty_nameEvE14cvr_saver_name+0xf20>
+   10281400c: 90018f17    	adrp	x23, 0x1059f4000 <dyld_stub_binder+0x1059f4000>
+   102814010: 911122f7    	add	x23, x23, #0x448
+   102814014: b0010761    	adrp	x1, 0x104901000 <dyld_stub_binder+0x104901000>
+   102814018: 91061c21    	add	x1, x1, #0x187
+   10281401c: 900142c3    	adrp	x3, 0x10506c000 <dyld_stub_binder+0x10506c000>
+   10281402c: aa1703e0    	mov	x0, x23
+   102814030: aa1603e2    	mov	x2, x22
+   102814034: 52800005    	mov	w5, #0x0                ; =0
+   102814038: 52800006    	mov	w6, #0x0                ; =0
+   10281403c: 52800007    	mov	w7, #0x0                ; =0
+   102814040: 979ff81b    	bl	0x1010120ac <__ZN7ableton7utility6detail13CallbackTypesIv7TStringJbEE14CallStaticFuncIXadL_ZN17AAbletonWebServer39SAccountBasedUnlockingAuthorizationPageEbEEEES3_Pvb+0x641c>
+//   (x1 = "ALoungeLizard" name string 0x104901187, x4 = factory body
+//    0x102809654 = SNewCompound<ALoungeLizard>+0x68, same CallStaticFunc
+//    registration idiom as the Analog lane's 0x1028cae24 block.)
+//
+// (4) DESCRIPTOR MEMBER WALK (mp* refs from ADRP+ADD scan; fixed stride
+//     0x78 between member registrations):
+   STR 0x10490116b 'Electric' <- code:0x102808eb0 code:0x10280ab24(adrp:0x10280ab20)
+   STR 0x104901187 'ALoungeLizard' <- code:0x102814018
+   STR 0x104901195 'mpKeyboardTranspose' <- code:0x10280988c
+   STR 0x1049011a9 'mpKeyboardFineTune' <- code:0x102809904 code:0x1028939f0(adrp:0x1028939ec)
+   STR 0x1049011bc 'mpKeyboardStretch' <- code:0x10280997c code:0x102893cc0(adrp:0x102893cbc)
+   STR 0x1049011ce 'mpMalletStiffness' <- code:0x1028099f4
+   STR 0x1049011e0 'mpMalletStiffnessKeyboard' <- code:0x102809a6c
+   STR 0x1049011fa 'mpMalletStiffnessVelocity' <- code:0x102809ae4
+   STR 0x104901214 'mpMalletForceStrength' <- code:0x102809b5c
+   STR 0x10490122a 'mpMalletForceKeyboard' <- code:0x102809bd4
+   STR 0x104901240 'mpMalletForceVelocity' <- code:0x102809c4c
+   STR 0x104901256 'mpMalletNoisePitch' <- code:0x102809cc4
+   STR 0x104901269 'mpMalletNoiseDecay' <- code:0x102809d3c
+   STR 0x10490127c 'mpMalletNoiseAmount' <- code:0x102809db4
+   STR 0x104901290 'mpMalletNoiseKeyboardScaling' <- code:0x102809e2c
+   STR 0x1049012ad 'mpForkReleaseTime' <- code:0x102809ea4
+   STR 0x1049012bf 'mpForkTineDecay' <- code:0x102809f1c
+   STR 0x1049012cf 'mpForkTineVolume' <- code:0x102809f94
+   STR 0x1049012e0 'mpForkTineKeyboardScaling' <- code:0x10280a00c
+   STR 0x1049012fa 'mpForkTineColor' <- code:0x10280a084
+   STR 0x10490130a 'mpForkToneBarDecay' <- code:0x10280a0fc
+   STR 0x10490131d 'mpForkToneBarVolume' <- code:0x10280a174
+   STR 0x104901331 'mpPickupSymmetry' <- code:0x10280a1ec
+   STR 0x104901342 'mpPickupDistance' <- code:0x10280a264
+   STR 0x104901353 'mpPickupModel' <- code:0x10280a2dc
+   STR 0x104901361 'mpPickupAmpIn' <- code:0x10280a354
+   STR 0x10490136f 'mpPickupAmpOut' <- code:0x10280a3cc
+   STR 0x10490137e 'mpPickupAmpKeyboardScaling' <- code:0x10280a444
+   STR 0x104901399 'mpDamperTone' <- code:0x10280a4bc
+   STR 0x1049013a6 'mpDamperAmount' <- code:0x10280a534
+   STR 0x1049013b5 'mpDamperBalance' <- code:0x10280a5ac
+   STR 0x1049013c5 'mpSelectedFinger' <- code:0x10280a628
+   STR 0x1049013d6 'mpShowModToggle' <- code:0x10280a6a4
+
+// (5) DESCRIPTOR DISPLAY-NAME WALK EXCERPTS (objdump; Polyphony default 30,
+//     Semitone max 24 default 12 — raw constants):
+   10280abd4: d00107a0    	adrp	x0, 0x104900000 <dyld_stub_binder+0x104900000>
+   10280abd8: 912dbc00    	add	x0, x0, #0xb6f
+   10280abe4: f0018a82    	adrp	x2, 0x10595d000 <dyld_stub_binder+0x10595d000>
+   10280abf4: 528003c1    	mov	w1, #0x1e               ; =30
+   10280acf4: f00107a0    	adrp	x0, 0x104901000 <dyld_stub_binder+0x104901000>
+   10280acf8: 910fcc00    	add	x0, x0, #0x3f3
+   10280ad08: 1e271001    	fmov	s1, #24.00000000
+   10280ad0c: 1e251002    	fmov	s2, #12.00000000
+   10280ad24: 52800045    	mov	w5, #0x2                ; =2
+
+// (6) ELECTRIC VIEW COMPOUND (GUI): ALoungeLizardView factory 0x102e04144,
+//     callbacks OnFingerChanged(ARemoteable,TUpdate) 0x102e0a708 and
+//     OnZoneClicked(int) 0x102e0a748 (symbol table) — the "finger"/zone
+//     model: key-zone selection state (mpSelectedFinger member in device).
+//
+// (7) NEGATIVE RESULTS (honest residuals, query-only):
+//   - FuncListProbe 0x1027ef000..0x102810000: TOTAL=0 (no functions).
+//   - Pickup Model menu entry strings: no string-pool hits referenced from
+//     the Electric TU (menu likely icon-only, same as Analog wave shapes).
+//   - Float-constant scan for bar/membrane modal ratios (1.5933, 2.1355,
+//     2.2954, 6.2667, 17.545, 2.7565, 5.4039): 0 hits — no static modal
+//     tables; runtime-computed or in anonymous code.
+//   - No per-sample callback located (corpus material, see dossier §4).
+// (8) .adv PARAMETER SURFACE (Electric.adv gunzipped; Manual = factory
+//     default, MidiControllerRange = stored range):
+//   Polyphony 30 | PitchBendRange 1 (0..1) | PerNotePitchBendRange 0 (0..48)
+//   Volume 0.7047892213 | KeyboardTranspose 12 (0..24) | KeyboardFineTune 0.5
+//   KeyboardStretch 0.5 | MalletStiffness .5 (+Keyboard .5 +Velocity .5)
+//   MalletForceStrength .5 (+Keyboard .5 +Velocity .5)
+//   MalletNoisePitch .5 MalletNoiseDecay .5 MalletNoiseAmount .5
+//   MalletNoiseKeyboardScaling .5 | ForkReleaseTime .5 ForkTineDecay .5
+//   ForkTineVolume .5 ForkTineKeyboardScaling .5 ForkTineColor .5
+//   ForkToneBarDecay .5 ForkToneBarVolume .5 | PickupSymmetry .5
+//   PickupDistance .5 PickupModel 0 (enum, no controller range)
+//   PickupAmpIn 0.4199999869 PickupAmpOut 0.4199999869
+//   PickupAmpKeyboardScaling .5 | DamperTone .5 DamperAmount .5
+//   DamperBalance .5 | On true | OverwriteProtectionNumber 3073

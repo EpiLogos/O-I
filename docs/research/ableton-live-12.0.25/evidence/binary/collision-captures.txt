@@ -1,0 +1,153 @@
+// PROVENANCE: same as electric-loungelizard-captures.txt (Ghidra 12.1.4
+// probes query-only against LiveRE2 + llvm-objdump + custom ADRP+ADD scan;
+// Live.arm64 Live 12.0.25 arm64; owner-private, NOT FOR REDISTRIBUTION).
+// Captured 2026-10-09 (collision binary lane). Companion:
+// devices/collision-derivation.md.
+//
+// (1) COMPOUND REGISTRATION BLOCK (objdump 0x102813d38..0x10281406c; one
+//     CallStaticFunc registration per compound, x1=name string,
+//     x4=factory body = SNewCompound<T>+0x68):
+   102813d44: 91072021    	add	x1, x1, #0x1c8
+   102813d58: 10edc684    	adr	x4, 0x1027ef628 <__Z12SNewCompoundI19ACollisionModTargetE4TPtrI9ACompoundEv+0x68>
+   102813d94: 9107b821    	add	x1, x1, #0x1ee
+   102813da8: 10ee5c84    	adr	x4, 0x1027f0938 <__Z12SNewCompoundI13ACollisionLfoE4TPtrI9ACompoundEv+0x68>
+   102813de4: 91103c21    	add	x1, x1, #0x40f
+   102813df0: 10efc584    	adr	x4, 0x1027f36a0 <__Z12SNewCompoundI16ACollisionMalletE4TPtrI9ACompoundEv+0x68>
+   102813e2c: 91153c21    	add	x1, x1, #0x54f
+   102813e38: 10f0abe4    	adr	x4, 0x1027f53b4 <__Z12SNewCompoundI15ACollisionNoiseE4TPtrI9ACompoundEv+0x68>
+   102813e74: 9118c421    	add	x1, x1, #0x631
+   102813e80: 10f21fe4    	adr	x4, 0x1027f827c <__Z12SNewCompoundI19ACollisionResonatorE4TPtrI9ACompoundEv+0x68>
+   102813ebc: 9126d021    	add	x1, x1, #0x9b4
+   102813ec8: 10f552e4    	adr	x4, 0x1027fe924 <__Z12SNewCompoundI10ACollisionE4TPtrI9ACompoundEv+0x68>
+   102813fc4: 91381c21    	add	x1, x1, #0xe07
+   102813fd0: 10f74f84    	adr	x4, 0x1028029c0 <__Z12SNewCompoundI7ACorpusE4TPtrI9ACompoundEv+0x68>
+   102814018: 91061c21    	add	x1, x1, #0x187
+   102814024: 10fab184    	adr	x4, 0x102809654 <__Z12SNewCompoundI13ALoungeLizardE4TPtrI9ACompoundEv+0x68>
+//   order: ACabinet, ACollisionModTarget, ACollisionLfo, ACollisionMallet,
+//   ACollisionNoise, ACollisionResonator, ACollision, (error-string block),
+//   ACorpus, ALoungeLizard, ...
+//
+// (2) SUB-COMPOUND MEMBER KEYS + DISPLAY NAMES (StringsInRange; excerpts)
+//   ACollisionMallet 0x10490040f: mpVolume mpVelToVolume mpKeyToVolume
+//     mpStiffness mpVelToStiffness mpKeyToStiffness mpNoiseAmount
+//     mpVelToNoiseAmount mpKeyToNoiseAmount mpNoiseColor
+//     ("Mallet"," Volume"," Volume < Vel"," Volume < Key"," Stiffness",
+//      " Stiffness < Vel"," Stiffness < Key"," Noise Amount",
+//      " Noise Amount < Vel"," Noise Amount < Key"," Noise Color")
+//   ACollisionNoise 0x10490054f: mpFilterType mpVelToFreq mpKeyToFreq
+//     mpEnvToFreq mpAttack mpDecay mpSustain mpRelease
+//     menu: LP HP BP LP+HP (0x1049005b9..0x1049005c6) " Filter Type"
+//   ACollisionResonator 0x104900631: mpResonatorNumber mpQuality mpTranspose
+//     mpTransposeRelativePosition mpFineTranspose mpKeyToTranspose
+//     mpStartTranspose mpVelToStartTranspose mpStartTime mpVelToDecay
+//     mpKeyToDecay mpDecayOnNoteOff mpDamp mpVelToDamp mpKeyToDamp mpRadius
+//     mpVelToRadius mpKeyToRadius mpRatio mpAmpFreq mpBleed mpInharmonics
+//     mpVelToInharmonics mpTubeOpening mpVelToTubeOpening mpHitX
+//     mpRandomToHitX mpListeningXL mpListeningXR mpPan mpKeyToPan mpCopyBang
+//   ACollision 0x1049009b4: mpMallet mpNoise mpResonator1 mpResonator2
+//     mpResonatorOrder mpLfo1 mpLfo2 mpPitchBendRange
+//     mpPitchBendRangeRelativePosition mpPitchBendTarget1 mpModWheelTarget1
+//     mpModWheelTarget2 mpChannelPressureTarget1 mpChannelPressureTarget2
+//     mpPolyphony mpPerNotePitchBendRange mpMpeCC74Target1 mpMpeCC74Target2
+//     mpPitchBendOn mpModWheelOn mpChannelPressureOn mpSlideOn
+//     mpDummyPerNotePitchBendRange mpLimiter
+//     (NOTE: Pitch Bend has Target1 only; ModWheel/Pressure/CC74 have 1+2.)
+//   ACollisionLfo 0x1049001ee: mpOnOff mpType mpRetrigger mpSync mpRate
+//     mpSyncRate mpSyncRateRelative mpKeyToRate mpPhase mpVelToAmount
+//     mpTarget1 mpTarget2
+//   ACollisionModTarget 0x1049001c8: mpTarget mpAmount
+//
+// (3) MENUS (objdump of the registration sites from the ADRP+ADD scan)
+//   Resonator Type: 7 entries, builder at 0x1027fac74..0x1027fad2c
+//     (strings 0x1049007fb..0x104900823, count w2=7 at 0x1027fad2c):
+   1027fac78: 911fec00    	add	x0, x0, #0x7fb
+   1027fac90: 91200000    	add	x0, x0, #0x800
+   1027facac: 91202000    	add	x0, x0, #0x808
+   1027facc4: 91203c00    	add	x0, x0, #0x80f
+   1027face0: 91206000    	add	x0, x0, #0x818
+   1027facf8: 91207800    	add	x0, x0, #0x81e
+   1027fad14: 91208c00    	add	x0, x0, #0x823
+   1027fad24: 912d0000    	add	x0, x0, #0xb40
+   1027fad2c: 528000e2    	mov	w2, #0x7                ; =7
+//     => Beam(0) Marimba(1) String(2) Membrane(3) Plate(4) Pipe(5) Tube(6)
+//   Resonator Quality: strings Eco Low Med High (0x10490082e..0x10490083d)
+//   LFO Type: 7 entries, builder at 0x1027f1cd0..0x1027f1d94
+//     (strings 0x10490027c..0x1049002b2, count w2=7):
+//     => Sine(0) Square(1) Triangle(2) SawUp(3) SawDown(4) Sample & Hold(5)
+//        Random Ramp(6)   [.adv default Type=0]
+//   LFO SyncRate (shared AAS list 0x10490524c..0x1049052a7, then "Hertz"):
+//     4d 4t 2d 2t 1d 1t 1/2d 1/2t 1/4d 1/4t 1/8d 1/8t 1/16d 1/16t 1/32d
+//     1/32t  (16 entries; .adv default SyncRate=4)
+//   Structure (ACollision): "1 > 2" "1 + 2" (0x104900b54/0x104900b5a,
+//     builder refs 0x1028007f0/0x102800808; .adv default 0 = series)
+//   Mod-target display list (0x104901794..0x1049018d5): No Destination,
+//     Noise Freq, Noise Volume, Res 1 Pitch, Res 1 Hit, Res 1 Pan,
+//     Res 1 Pipe Opening, Res 2 Input, Res 2 Pitch, Res 2 Hit, Res 2 Pan,
+//     Res 2 Pipe Opening, LFO 1 Rate, LFO 1 Depth, LFO 2 Rate, LFO 2 Depth
+//
+// (4) OCollisionScaledModeProcessor (devicekit, symbolized; raw-asm decode)
+//   OnValue invoke 0x1026efd58 (SProcessorFunc<OnValue(float)>):
+   1026efd58: bd002c00    	str	s0, [x0, #0x2c]
+   1026efd5c: bd403001    	ldr	s1, [x0, #0x30]
+   1026efd60: 1e200820    	fmul	s0, s1, s0
+   1026efd64: 91002001    	add	x1, x0, #0x8
+   1026efd68: bd000c00    	str	s0, [x0, #0xc]
+   1026efd6c: a9410002    	ldp	x2, x0, [x0, #0x10]
+   1026efd70: d61f0040    	br	x2
+//     s[0x2c]=v; s[0xc] = s[0x30]*v; tail-call target [0x10](this+8, ...)
+//   OnMode invoke 0x1026efd74 (SProcessorFunc<OnMode(float)>):
+   1026efd84: 1e380014    	fcvtzs	w20, s0
+   1026efd8c: 6b14011f    	cmp	w8, w20
+   1026efd94: 7100269f    	cmp	w20, #0x9
+   1026efd98: 7a441a84    	ccmp	w20, #0x4, #0x4, ne
+   1026efd9c: 1e2e1000    	fmov	s0, #1.00000000
+   1026efda0: 1e281001    	fmov	s1, #0.12500000
+   1026efda4: 1e200c20    	fcsel	s0, s1, s0, eq
+   1026efdb0: 1e210800    	fmul	s0, s0, s1
+   1026efdc0: d63f0100    	blr	x8
+//     law: mode=fcvtzs(m); if mode!=s[0x28]: s[0x30] = 0.125 iff
+//     (mode==9 || mode==4) else 1.0; s[0xc] = s[0x30]*s[0x2c]; dispatch.
+//     modes 4/9 of the mod-target enum = "Res 1 Hit"/"Res 2 Hit".
+//
+// (5) ACollisionNoise::FilterCascades (CallbackTypes invoke 0x10280e10c):
+   10280e114: f9406800    	ldr	x0, [x0, #0xd0]
+   10280e118: 97da549f    	bl	0x101ea3394 <__Z12SNewCompoundI13ATimeableEnumE4TPtrI9ACompoundEv+0x7e0>
+   10280e11c: 71000c1f    	cmp	w0, #0x3
+   10280e120: 52800028    	mov	w8, #0x1                ; =1
+   10280e124: 1a881500    	cinc	w0, w8, eq
+   10280e128: a8c17bfd    	ldp	x29, x30, [sp], #0x10
+//     law: return 1 + (FilterType()==3)  — LP+HP mode = two biquad cascades.
+//     FilterParameter(cascade, TBiquadParameter&) invoke 0x10280e108
+//     branches to 0x1027f7ef4 (per-cascade coefficient set).
+//   ACollisionResonator::OnCopy invoke 0x10280e130 -> 0x1027fb87c.
+//
+// (6) NEGATIVE RESULTS (honest residuals):
+//   - FuncListProbe 0x1027ef000..0x102810000 TOTAL=0; 0x1026ee000..0x102722000
+//     TOTAL=0 (devicekit region also unanalyzed; SProcessorFunc symbols are
+//     literal addresses so objdump suffices).
+//   - Float scan for membrane/cantilever modal ratios (1.5933, 2.1355,
+//     2.2954, 6.2667, 17.545, 2.7565, 5.4039): 0 hits — no static tables.
+//   - No per-sample render callback located.
+//
+// (7) .adv FACTORY DEFAULTS (Collision.adv gunzipped; Manual values)
+//   Mallet{On=true, Vol .5, VelToVol 0, KeyToVol 0, Stiff .5, VelToStiff 0,
+//     KeyToStiff 0, NoiseAmt .5, VelToNoiseAmt 0, KeyToNoiseAmt 0, NoiseCol .5}
+//   Noise{On=false, Vol .5, FiltType 0(LP), Freq .5, VelToFreq 0, KeyToFreq 0,
+//     EnvToFreq 0, Q 0, A 0, D 0.200000003, S 0, R 0.200000003}
+//   Resonator1{On=true, Type 0(Beam), Quality 2(Med), Transpose 0,
+//     FineTranspose 0, KeyToTranspose 1, StartTranspose 0, VelToStart 0,
+//     StartTime .5, Decay .5, VelToDecay 0, KeyToDecay 0, DecayOnNoteOff 0,
+//     Damp 0, VelToDamp 0, KeyToDamp 0, Radius .5, VelToRadius 0,
+//     KeyToRadius 0, Ratio 0, AmpFreq 0, Bleed 0, Inharmonics 0,
+//     VelToInharmonics 0, TubeOpening 1, VelToTubeOpening 0, HitX .5,
+//     RandomToHitX 0, ListeningXL 0.1000000015, ListeningXR 0.8999999762,
+//     Pan 0, KeyToPan 0, Volume .5}
+//   Resonator2{On=false, otherwise identical to Resonator1}
+//   ResonatorOrder 0 ("1 > 2")
+//   Lfo1/Lfo2{On=false, Type 0(Sine), Retrigger true, Sync 0, Rate .5,
+//     SyncRate 4, KeyToRate 0, Phase 0, Amount .5, VelToAmount 0,
+//     Target1{Target 0, Amount 2.5}, Target2{Target 0, Amount 2.5}}
+//   PitchBendRange 5 | PitchBendTarget1{0, 2.5}
+//   ModWheelTarget1/2, ChannelPressureTarget1/2, MpeCC74Target1/2 all {0, 2.5}
+//   Polyphony 2 | Retrigger false | Volume 0.7047892213
+//   PerNotePitchBendRange 48 | CurrentTab 0 | OverwriteProtectionNumber 3073
