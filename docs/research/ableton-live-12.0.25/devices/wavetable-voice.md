@@ -589,3 +589,64 @@ convex (slow-start) half of the sweep at all — slope −0.5 needs the
 negative-k branch. Attack/Release slopes are untested against this
 family (the release's rev-1 product-form fit carries the same window
 caveats; re-read with cycle peaks before reuse).
+
+## VC ladder stereo re-read — WV12/WV13, both channels CLOSED (2026-10-09, unison-stereo lane)
+
+The VoiceCount ladder (2026-10-08) was read LEFT-channel-only; after rev 4's
+WV19 stereo proof, the archived short-note VC renders were re-read in
+stereo. Analyzer: `analyze_wv_vc_stereo.py` (renders read-only from
+`~/tools/live-re/archive-20261007/renders-final/`, M2 mode-0 reference from
+`harness/renders/`): Hann-weighted fine Goertzel scan around h1 per
+channel, whole steady window per note ([k+0.15, k+0.85] s; note 3 also with
+its unmasked release tail [3.15, 4.35] s — the highest-resolution window),
+grid + parabolic refinement. **Skirt calibration from M2 (mode 0)**: the
+Hann window mirrors the h1 line ~30 dB down at ±3.3 Hz (−54.1 vs
+−23.6 dBFS) and the scan floor sits near −95/−56 dB; every sub-−50 entry
+below is that skirt. D15's "−0.50 Hz weak line (−36)" is the RECT window's
+skirt of the −50-cent voice (rect gain at Δf·T = 3.25·0.45 = −13.3 dB;
+measured −12.8) — a left-channel artifact, exactly as rev 4 anticipated.
+
+Per-channel h1 lines, note-1 steady window (offset from f0 / cents / dBFS;
+the note-3+tail window agrees to ≤0.3 cents, levels −1.6 dB from the
+release decay it includes):
+
+| render | L channel | R channel |
+|---|---|---|
+| M2 (mode 0) | +0.0¢ / −23.6 (single line) | identical |
+| WV9B (VC3) | −50.7¢ / −25.4 · +1.2¢ / −28.6 | +50.1¢ / −25.5 · +0.2¢ / −28.4 |
+| WV12 (VC2) | **−50.1¢ / −23.6 (only line)** | **+50.2¢ / −23.7 (only line)** |
+| WV13 (VC4) | **−50.1¢ / −26.6 · +16.5¢ / −26.6** | **−16.4¢ / −26.6 · +50.0¢ / −26.6** |
+
+**Verdicts.**
+
+- **VC2 = {−50, +50} cents, NOT {−50, 0}.** L holds only the −50-cent
+  voice, R only a +50.2-cent voice at the same level (−23.6/−23.7 dBFS);
+  nothing near 0 in either channel above the skirt. The crate-cited
+  "no +3.75 counterpart" was the left-channel shadow.
+- **VC4 = {−50, −16.7, +16.7, +50} cents confirmed** (within 0.3 cents of
+  the shell values) — but the pan deal is **alternating hard-L/hard-R in
+  ascending detune order, NOT pan = 2k/(N−1)−1**: voice 0 (−50¢) L-only,
+  voice 1 (−16.7¢) **R-only**, voice 2 (+16.7¢) **L-only**, voice 3 (+50¢)
+  R-only. Each voice is absent from its opposite channel below the ~−56 dB
+  scan floor (≥22 dB channel ratio → hard pan; a ±1/3 equal-power pan would
+  read only −4.77 dB). Cross-check: pan-null combinations
+  (0.5·L − (√3/2)·R and (√3/2)·L − 0.5·R, note-3+tail) put all four voices
+  within ≤0.9 dB of the hard-deal prediction {−6, −1.3, −6, −1.3} dB —
+  under the 2k/(N−1)−1 reading they would have nulled voices 1/2 outright.
+- **General pan law: voices dealt alternately hard-L/hard-R by ascending
+  detune; odd VoiceCount's middle voice sits centre (bit-identical L/R,
+  rev 4).** Observed: VC2 {L, R}, VC3 {L, centre, R}, VC4 {L, R, L, R}.
+- **Per-voice gain vs the mode-0 solo h1 (own channel): N=2 → 0.0 dB,
+  N=3 → −1.8/−1.9 dB, N=4 → −3.0 dB** — equal per-voice gains in every
+  layout. g = √(2/N)·solo fits this ladder (0.0/−1.76/−3.01) better than
+  rev 4's N^(−1/4) hypothesis (−1.5/−2.5/−3.0), but the WV19 long-note N=3
+  reading (−2.35) sits between the two: the gain law stays OPEN, both
+  candidates recorded, none fitted.
+
+**Crate verdict** (`packages/live-dynamics/src/wavetable.rs`,
+`unison::detunes_cents`): the `2 => vec![-s, 0.0]` special case is WRONG —
+VC2 is `[-s, +s]`, which the general `n =>` arm already produces; the
+special case (and its docstring justification, which cites the
+left-channel shadow) should be deleted. The module models no pans, so no
+pan change is needed there; if pans are ever modeled, use the alternating
+hard deal, not 2k/(N−1)−1. (Not edited here — another lane owns the crate.)
