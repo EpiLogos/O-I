@@ -18,6 +18,9 @@
 import {loadAgentShellFamilies} from './loadAgentShellFamilies.ts'
 import {declareFamilyExtension, inhabitantManifest, type InhabitantManifest} from './manifest.ts'
 import {quaternalLogicFamilyManifest, QUATERNAL_LOGIC_FAMILY_ID} from './quaternalLogicFamilyManifest.ts'
+// [L9 musical family] the QL field/PCM owner's instrument face — an additive
+// declared extension onto quaternal-logic; the base manifest stays verbatim.
+import {declareQlMusicalExtension} from './qlMusicalExtension.ts'
 
 export {QUATERNAL_LOGIC_FAMILY_ID}
 
@@ -122,6 +125,8 @@ export function loadWorldShellFamilies(): void {
   quaternalLogicFamilyManifest()
   declareCentralExtension()
   declareSoftwareFactoryExtension()
+  // [L9 musical family] the QL instrument face — additive, idempotent.
+  declareQlMusicalExtension()
 }
 
 /** The six world-shell product families, composed (base + extensions). */
