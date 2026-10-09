@@ -29,15 +29,23 @@ Status ledger (updated as lanes land; gate = crate passes vs golden corpus):
 | Reverb | FX | ✓ | ✓ (+refinements) | comb-probe | ✓ (stereo+HF wired) | ✓ PASS |
 | Operator | INST | ✓ | ✓ (A + B modulator) | partial | ✓ (B wired) | ✓ PASS |
 | Wavetable | INST | ✓ | ✓ (rev 4+, N=1–8) | partial | ✓ | ✓ PASS |
-| Compressor | FX | ✓ (surface module) | — | ← binary lane next | — | — |
-| Saturator | FX | ✓ (surface module) | — | ✓ | — | — |
-| EQ Eight | FX | ✓ (surface module) | — | — | — | — |
+| Compressor | FX | ✓ (25 params) | — | ✓ (log2 closed-form; LUT=corpus) | ✓ (skeleton, LUT pending) | — |
+| Saturator | FX | ✓ (17 params) | — | ✓ (chain+curve laws, type enum decoded) | — | — |
+| EQ Eight | FX | ✓ (85 params) | — | ✓ (8-band cascades, Butterworth pole-Q sets, adaptive Q) | — | — |
 | Auto Filter | FX | ✓ (surface module) | — | — | — | — |
 | Utility | FX | ✓ (surface module) | — | — | — | — |
 | Redux | FX | ✓ (surface module) | — | — | — | — |
 | Overdrive | FX | ✓ (surface module) | — | — | — | — |
 | Filter Delay | FX | ✓ (surface module) | — | — | — | — |
-| *60 more devices* | | — | — | — | — | — |
+| Auto Filter | FX | ✓ (30 params) | — | ✓ (37 callbacks, cutoff-LUT law, own detector) | — | — |
+| Delay | FX | ✓ | — | ✓ (devicekit, mapping laws, crossfade curves) | — | — |
+| Multiband Dynamics | FX | — | — | ✓ (1/2/3-band, octaves domain, crossover) | — | — |
+| Limiter | FX | — | — | ✓ (max-pyramid lookahead, ceiling law) | — | — |
+| Gate | FX | — | — | ✓ (hysteresis + dual detector) | — | — |
+| Redux | FX | ✓ (10 params) | — | ✓ (steps=2^(bits-1), softness law) | — | — |
+| Overdrive | FX | ✓ (7 params) | — | ✓ (closed-form shaper x−4/27x³, PreserveDynamics=compressor) | — | — |
+| Erosion | FX | — | — | ✓ (LCG noise + dual delay; downsampler REFUTED) | — | — |
+| *52 more devices* | | — | — | — | — | — |
 | Warp engines ×6 | clip | ✓ (modes 0–5) | ✓ (D9 + seg90) | — | — | partial |
 | FollowAction | clip | ✓ | ✓ (anchoring) | — | — | session driver open |
 | Groove pool | session | ✓ (.agr format) | partial | — | — | — |
