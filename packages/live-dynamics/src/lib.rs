@@ -11,6 +11,13 @@
 //! claims); `glue` is the render-gated exception.
 
 pub mod audio;
+pub mod phaser_flanger;
+pub mod grain_delay;
+pub mod eq_three;
+pub mod drum_buss;
+pub mod chorus_ensemble;
+pub mod channel_eq;
+pub mod beat_repeat;
 pub mod auto_filter;
 pub mod compressor;
 pub mod echo;
