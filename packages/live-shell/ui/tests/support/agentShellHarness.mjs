@@ -1,8 +1,11 @@
 /**
  * Shared harness for the agent-shell F2 fidelity suites.
  *
- * Owns the machine-bound plumbing so no suite hardcodes it:
- *   - oracle and evidence paths (env: OI_AGENT_SHELL_ORACLE, OI_FIDELITY_EVIDENCE)
+ * Owns the location plumbing so no suite hardcodes it:
+ *   - oracle and evidence paths, DERIVED from this module's own location
+ *     (the checkout layout / the Central ground), never an absolute machine
+ *     path; env overrides stay for exotic layouts
+ *     (OI_AGENT_SHELL_ORACLE, OI_FIDELITY_EVIDENCE)
  *   - esbuild bundling of a real ui entry (the same bundle the vite dev server serves)
  *   - a throwaway HTTP server that plays the axum config host: it answers
  *     `/api/config` with `kernel_bridge` so the page's readShellConfig()
@@ -19,17 +22,82 @@
 
 import assert from 'node:assert/strict'
 import {createServer} from 'node:http'
+import {existsSync, readdirSync} from 'node:fs'
 import {readFile, mkdir, writeFile} from 'node:fs/promises'
 import {createRequire} from 'node:module'
-import {join, resolve} from 'node:path'
+import {dirname, join, resolve} from 'node:path'
+import {tmpdir} from 'node:os'
 import {fileURLToPath} from 'node:url'
 
 export const ui = resolve(fileURLToPath(new URL('../..', import.meta.url)))
 export const root = resolve(ui, '../../..')
 
-export const ORACLE_DEFAULT = '/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/agent-shell-fidelity.json'
-export const EVIDENCE_LIVE_DEFAULT = '/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/agent-shell-f2-live-20261008'
-export const EVIDENCE_FIXTURE_DEFAULT = '/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/agent-shell-fixture-refusal-20261008'
+/** The Central ground root: the nearest ancestor of this checkout holding
+ * `Control/agents` (the ground's own marker). Null when the checkout stands
+ * outside any Central ground. */
+function centralGroundRoot() {
+  let dir = ui
+  for (;;) {
+    if (existsSync(join(dir, 'Control', 'agents'))) return dir
+    const parent = dirname(dir)
+    if (parent === dir) return null
+    dir = parent
+  }
+}
+
+/** First existing `<ancestor>/…parts` walking up from the ui package (a
+ * checkout standing inside the programme tree), else the Central ground's
+ * `Work/reverse-engineering/<programme>/…parts` (the programme directory is
+ * dated, so the ground's lane is scanned rather than pinned). Null when no
+ * layout supplies it — callers refuse by name; nothing machine-bound. */
+function resolveProgrammePath(...parts) {
+  let dir = ui
+  for (;;) {
+    const candidate = join(dir, ...parts)
+    if (existsSync(candidate)) return candidate
+    const parent = dirname(dir)
+    if (parent === dir) break
+    dir = parent
+  }
+  const ground = centralGroundRoot()
+  const lane = ground ? join(ground, 'Work', 'reverse-engineering') : null
+  if (lane && existsSync(lane)) {
+    for (const entry of readdirSync(lane).sort()) {
+      const candidate = join(lane, entry, ...parts)
+      if (existsSync(candidate)) return candidate
+    }
+  }
+  return null
+}
+
+export const ORACLE_DEFAULT = resolveProgrammePath('new-shell', 'agent-shell-fidelity.json')
+
+const evidenceFallback = label => {
+  const dir = join(tmpdir(), 'oi-agent-shell-evidence', label)
+  console.warn(
+    `[agentShellHarness] the programme evidence tree (new-shell/evidence) was not found from ${ui}; ` +
+    `${label} evidence defaults to ${dir}. Set OI_FIDELITY_EVIDENCE to point elsewhere.`,
+  )
+  return dir
+}
+export const EVIDENCE_LIVE_DEFAULT =
+  resolveProgrammePath('new-shell', 'evidence', 'agent-shell-f2-live-20261008') ?? evidenceFallback('live')
+export const EVIDENCE_FIXTURE_DEFAULT =
+  resolveProgrammePath('new-shell', 'evidence', 'agent-shell-fixture-refusal-20261008') ?? evidenceFallback('fixture')
+
+/** The oracle path: the env override first, then the derived programme path.
+ * Refuses BY NAME when neither supplies it — never an absolute guess. */
+export function agentShellOraclePath() {
+  const path = process.env.OI_AGENT_SHELL_ORACLE ?? ORACLE_DEFAULT
+  if (!path) {
+    throw new Error(
+      'agent-shell oracle not found: set OI_AGENT_SHELL_ORACLE, or place the programme tree ' +
+      '(new-shell/agent-shell-fidelity.json) under a Central ground Work/reverse-engineering/',
+    )
+  }
+  return path
+}
+
 export const BRIDGE_DEFAULT = process.env.OI_KERNEL_BRIDGE ?? 'http://127.0.0.1:4179'
 /** The agency project name the shell reads (AgentSessionsProvider PROJECT).
  * Override to align the harness with Central's world map when it moves. */
@@ -43,15 +111,26 @@ export const CUT_BRIDGE = 'http://127.0.0.1:9'
  * OI_STATUS_INFO_SELECTOR if that node moves. */
 export const STATUS_INFO_SELECTOR = process.env.OI_STATUS_INFO_SELECTOR ?? '[data-region="agent-status-info"]'
 
-const require = createRequire(join(root, 'desktop/cradle/package.json'))
-const esbuild = require('esbuild')
-const playwrightRuntime = process.env.OI_BROWSER_RUNTIME || 'playwright'
+// The cradle's copy of the heavy tooling, required lazily: importing this
+// module for the path helpers above must not pull esbuild or playwright.
+const requireFromCradle = () => createRequire(join(root, 'desktop/cradle/package.json'))
+let esbuildModule
+function esbuildOf() {
+  esbuildModule ??= requireFromCradle()('esbuild')
+  return esbuildModule
+}
 
 export function playwright() {
-  return require(playwrightRuntime)
+  return requireFromCradle()(process.env.OI_BROWSER_RUNTIME || 'playwright')
 }
 
 export async function loadOracle(path = process.env.OI_AGENT_SHELL_ORACLE ?? ORACLE_DEFAULT) {
+  if (!path) {
+    throw new Error(
+      'agent-shell oracle not found: set OI_AGENT_SHELL_ORACLE, or place the programme tree ' +
+      '(new-shell/agent-shell-fidelity.json) under a Central ground Work/reverse-engineering/',
+    )
+  }
   return JSON.parse(await readFile(path, 'utf8'))
 }
 
@@ -96,6 +175,7 @@ export function bundleOptions() {
 
 /** Bundle a stdin entry and return {js, css}. */
 export async function bundleEntry({contents, resolveDir, sourcefile, outfile}) {
+  const esbuild = esbuildOf()
   const bundle = await esbuild.build({
     ...bundleOptions(),
     stdin: {contents, resolveDir, sourcefile, loader: 'tsx'},

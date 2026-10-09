@@ -1,10 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
+import {agentShellOraclePath} from './support/agentShellHarness.mjs'
 
-const oraclePath = process.env.OI_AGENT_SHELL_ORACLE
-  ?? '/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/agent-shell-fidelity.json'
-const fidelity = JSON.parse(await readFile(oraclePath, 'utf8'))
+const fidelity = JSON.parse(await readFile(agentShellOraclePath(), 'utf8'))
 const css = await readFile(new URL('../src/agent/agentShell.css', import.meta.url), 'utf8')
 
 // The scoped token + geometry rule must be the first agent-shell-frame rule.

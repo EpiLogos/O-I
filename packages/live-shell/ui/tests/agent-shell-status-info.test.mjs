@@ -2,10 +2,9 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
 import {register} from 'node:module'
+import {agentShellOraclePath} from './support/agentShellHarness.mjs'
 
-const oraclePath = process.env.OI_AGENT_SHELL_ORACLE
-  ?? '/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/agent-shell-fidelity.json'
-const fidelity = JSON.parse(await readFile(oraclePath, 'utf8'))
+const fidelity = JSON.parse(await readFile(agentShellOraclePath(), 'utf8'))
 
 const root = new URL('../../../../', import.meta.url)
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
