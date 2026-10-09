@@ -170,7 +170,10 @@ pub mod fitted {
 /// stereo layout itself (rev 4: hard-L / centre / hard-R, equal-power, VC3)
 /// is gated against the render in `tests/golden.rs`
 /// (`wavetable_unison_golden_gate`, active when `WV19_LONG_UNI.aif` is
-/// present); the multi-voice RENDER path stays future work.
+/// present); the multi-voice RENDER path stays future work. The stereo pan
+/// deal and the per-voice gain law ARE exposed as the cited pure functions
+/// [`unison::voice_pan`] / [`unison::voice_gain`] below — the renderer is
+/// mono and sums no unison voices, so nothing applies them yet.
 pub mod unison {
     /// Spread edge at Amount 1.0 (round-2 layout law; the −3.75 Hz anchor
     /// voice reads −50.4 cents, exactly −spread-edge/2 at ±50-cent spread).
@@ -209,6 +212,69 @@ pub mod unison {
             .into_iter()
             .map(|c| base_hz * 2.0f64.powf(c / 1200.0))
             .collect()
+    }
+
+    /// Stereo pan of unison voice `k` (0-based, ascending detune order)
+    /// of `n`: voices deal alternately hard-Left / hard-Right — k even →
+    /// L, k odd → R — with odd N's middle voice (k = N/2) sitting centre.
+    /// Returns −1.0 (hard L), 0.0 (centre) or +1.0 (hard R); the centre
+    /// split is equal-power, −3.01 dB per channel (bit-identical L/R,
+    /// dossier rev 4).
+    ///
+    /// Citations (`wavetable-voice.md` "VC ladder stereo re-read" + "VC
+    /// ladder N-extension", both CLOSED): VC2 {L, R}, VC3 {L, C, R},
+    /// VC4 {L, R, L, R} (every voice ≥22 dB louder in its own channel,
+    /// and the pan-null cross-check puts all four voices within ≤0.9 dB
+    /// of the hard-deal prediction while the equal-spacing 2k/(N−1)−1
+    /// deal would have nulled voices 1/2 outright); VC5 {L, R, C, L, R},
+    /// VC6 {L, R, L, R, L, R}. The law holds at every measured N = 2..6.
+    /// N = 1 is this module's trivial centre-only degenerate (the
+    /// engine's VoiceCount 1 renders the VC2 ±50-cent pair — N-extension
+    /// verdict VC1 ≡ VC2).
+    ///
+    /// SCOPE: honest note — `WavetableVoice::render_note` is mono and
+    /// sums no unison voices (the default patch's Mode 0), so nothing
+    /// applies pan yet; this is the cited law for the future multi-voice
+    /// render path.
+    pub fn voice_pan(n: usize, k: usize) -> f64 {
+        assert!(k < n, "voice {k} of {n}");
+        if n % 2 == 1 && k == n / 2 {
+            return 0.0;
+        }
+        // deal index j skips the odd-N centre so the voices above it
+        // continue the L,R pairing (VC3: k=2 → R; VC5: k=3 → L, k=4 → R)
+        let j = if n % 2 == 1 && k > n / 2 { k - 1 } else { k };
+        if j % 2 == 0 { -1.0 } else { 1.0 }
+    }
+
+    /// Per-voice amplitude law (gain-law lane, CLOSED 2026-10-09): every
+    /// unison voice sounds at `√(2/N)` × the solo voice's amplitude,
+    /// equal across voices. The odd-N centre voice splits equal-power
+    /// across the stereo pair (−3.01 dB into each channel), so its
+    /// per-channel amplitude is `√(2/N)·(1/√2) = 1/√N`.
+    ///
+    /// Citations (`wavetable-voice.md` "Per-voice gain law CLOSED" + the
+    /// VC N-extension): the five-point short-note ladder measures
+    /// 0 / −1.8 / −3.0 / −4.1 / −4.7 dB vs the M2 solo h1 at N = 2..6
+    /// against the √(2/N) predictions 0 / −1.76 / −3.01 / −3.98 / −4.77
+    /// — worst mean 0.11 dB — and every channel sums to unity power
+    /// (+0.03..−0.18 dB) at every measured N. Excluded: all-voices-equal
+    /// (√(2/N) on the centre too, by 3.1 dB) and the N^(−1/4) family (by
+    /// 1.5 dB at N = 2). Honesty marks from the dossier: the hard-voice
+    /// √(2/N) is derived — measured at three N, max dev 0.08 dB; the
+    /// centre 1/√N is the channel-unity consequence confirmed at the
+    /// only odd N measured (N = 3) — **odd N > 3 is extrapolation**,
+    /// marked as such. Open caveat: the WV19 long-note lineage reads the
+    /// whole ladder ≈0.36 dB low (the 4 s note's envelope sags into
+    /// sustain; hard−centre ratio unchanged at −3.01).
+    ///
+    /// SCOPE: honest note — the renderer has no unison voice sum (see
+    /// [`voice_pan`]); `n` = 0 has no voices and returns 0.0.
+    pub fn voice_gain(n: usize) -> f64 {
+        match n {
+            0 => 0.0,
+            n => (2.0 / n as f64).sqrt(),
+        }
     }
 }
 
@@ -631,6 +697,83 @@ mod tests {
             (offset - (-3.75)).abs() <= 0.75,
             "outer voice {offset:.3} Hz off f0 vs measured −3.75"
         );
+    }
+
+    /// Unison pan + per-voice gain laws, synthetic (pure functions — no
+    /// audio; the renderer sums no unison voices yet). Pan: alternating
+    /// hard-L/hard-R by ascending detune with odd N's middle voice centre,
+    /// exactly the measured deals VC2 {L,R}, VC3 {L,C,R}, VC4 {L,R,L,R},
+    /// VC5 {L,R,C,L,R}, VC6 {L,R,L,R,L,R}. Gain: √(2/N) against the
+    /// dossier's measured ladder (worst mean 0.11 dB); the N=3 centre
+    /// voice splits equal-power (per-channel 1/√3, −4.77 dB predicted vs
+    /// −4.98/−4.79 measured); every channel sums to unity power vs the
+    /// solo channel at N = 2..6.
+    #[test]
+    fn unison_pan_and_gain_match_dossier_law() {
+        use std::f64::consts::SQRT_2;
+        // pan pattern at N = 2..6 (L = −1, C = 0, R = +1)
+        let measured: [(usize, &[f64]); 5] = [
+            (2, &[-1.0, 1.0]),
+            (3, &[-1.0, 0.0, 1.0]),
+            (4, &[-1.0, 1.0, -1.0, 1.0]),
+            (5, &[-1.0, 1.0, 0.0, -1.0, 1.0]),
+            (6, &[-1.0, 1.0, -1.0, 1.0, -1.0, 1.0]),
+        ];
+        for (n, want) in measured {
+            let got: Vec<f64> = (0..n).map(|k| unison::voice_pan(n, k)).collect();
+            assert_eq!(got, want.to_vec(), "pan deal at N={n}");
+        }
+        assert_eq!(unison::voice_pan(1, 0), 0.0, "N=1: trivial centre-only degenerate");
+
+        // per-voice gain vs the measured ladder: predicted √(2/N) in dB
+        // (exact by construction, ≤0.01) and the law's residuals against
+        // the measured means (dossier worst mean 0.11 dB)
+        let ladder: [(usize, f64, f64); 5] = [
+            // (N, predicted dB, measured mean dB)
+            (2, 0.0, -0.015), // +0.03 / −0.06
+            (3, -1.76, -1.84),
+            (4, -3.01, -2.99), // −2.98 / −3.00
+            (5, -3.98, -4.1),  // outer voices −4.06 / −4.28
+            (6, -4.77, -4.68), // −4.5..−5.0
+        ];
+        for (n, pred, meas) in ladder {
+            let law = amp_to_db(unison::voice_gain(n));
+            assert!((law - pred).abs() <= 0.01, "N={n}: gain {law:.3} dB vs √(2/N) {pred}");
+            assert!((pred - meas).abs() <= 0.15, "N={n}: law {pred} vs measured {meas}");
+        }
+
+        // centre-power split at N = 3: per-channel amplitude 1/√3
+        // (−4.77 dB; measured −4.98 / −4.79, residual ≤0.25 dB)
+        let centre_ch = unison::voice_gain(3) / SQRT_2;
+        assert!((centre_ch - 1.0 / 3.0f64.sqrt()).abs() < 1e-12, "centre = 1/√3 per channel");
+        for meas in [-4.98f64, -4.79] {
+            assert!(
+                (amp_to_db(centre_ch) - meas).abs() <= 0.25,
+                "centre channel {:.2} dB vs measured {meas}",
+                amp_to_db(centre_ch)
+            );
+        }
+
+        // channel-unity consequence: each channel sums to unity power vs
+        // the solo channel, N = 2..6 (measured +0.03..−0.18 dB)
+        for n in 2..=6usize {
+            let (mut l, mut r) = (0.0f64, 0.0f64);
+            for k in 0..n {
+                let g = unison::voice_gain(n);
+                let p = unison::voice_pan(n, k);
+                if p < 0.0 {
+                    l += g * g;
+                } else if p > 0.0 {
+                    r += g * g;
+                } else {
+                    let c = g / SQRT_2;
+                    l += c * c;
+                    r += c * c;
+                }
+            }
+            assert!((l - 1.0).abs() < 1e-12 && (r - 1.0).abs() < 1e-12,
+                "N={n}: channel power L {l} / R {r} vs unity");
+        }
     }
 
     /// Decay warp law (dossier rev 4, D16 — CLOSED): the decay segment is
