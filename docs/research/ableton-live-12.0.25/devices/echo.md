@@ -337,21 +337,34 @@ estimated duration: 256.000000 sec
   `EC5_DUCK_TONE.aif`, `EC5B_NODUCK.aif`, `EC6_WET_DUCK.aif`,
   `EC6B_WET_NODUCK.aif`, `EC7_DUCK_T24.aif`, round-3 probes
   `EC8_MOD50.aif`, `EC9_DUCK_TONE_STAIRCASE.aif`, `EC9B_NODUCK6.aif`,
-  `EC9C_DUCK_T30.aif` (+ `.asd`)
+  `EC9C_DUCK_T30.aif` (+ `.asd`); round-5 probes `EC13_THR21.aif`,
+  `EC14_THR27.aif`, `EC15_THR33.aif`, `ET1_TIMELINK.aif` (+ `.asd`);
+  the round-3 E-series renders also live in the machine archive
+  `/Users/admin/tools/live-re/archive-20261007/renders-final/` (EC9B control
+  and the −24/−30 duck renders were read from there by the round-5 analyzer)
 - Sets: `harness/live/e1-impulse-default.als`, `e2-delay2x.als`,
   `e3-fb-half.als`, `e1b.als`, `E5_FREEMODE.als`, `E6_FREE2X.als`,
   `E7_FB075.als`, `E8_BARE.als`, `EC1_FILTER.als`, `EC2_DUCK.als`,
   `EC3_NOMOD.als`, `EC4_SYNC1_16.als`, `EC5_DUCK_TONE.als`,
   `EC5B_NODUCK.als`, `EC6_WET_DUCK.als`, `EC6B_WET_NODUCK.als`,
   `EC7_DUCK_T24.als`, `EC8_MOD50.als`, `EC9_DUCK_TONE_STAIRCASE.als`,
-  `EC9B_NODUCK6.als`, `EC9C_DUCK_T30.als`
+  `EC9B_NODUCK6.als`, `EC9C_DUCK_T30.als`; round-5 probes
+  `EC13_THR21.als`, `EC14_THR27.als`, `EC15_THR33.als` (from
+  `EC9_DUCK_TONE_STAIRCASE.als`, only Ducking_Threshold moves),
+  `ET1_TIMELINK.als` (from `E5_FREEMODE.als`, TimeLink false + tR 0.4)
 - Analyzers: `harness/analyze_echo_taps.py` (stereo broad peak scan + ±8 ms
   windowed tap table), `harness/analyze_ec_duck.py` (EC duck pair mode:
   20 ms RMS windows, per-step means, onset, release-τ fit),
   `harness/analyze_ec8_wobble.py` (round 3: per-tap fine peak timing on the
   pingpong-aware same-channel trains, pp/power-law depth read-out),
   `harness/analyze_ec9_saturation.py` (round 3: settled-window GR ladder,
-  leveler read-out, onset/release)
+  leveler read-out, onset/release),
+  `harness/analyze_ec_thr_sweep.py` (round 5: five-threshold δ(thr) sweep
+  over archived + new renders, linear fit read-out, round-3 validation
+  pass), `harness/analyze_et1_timelink.py` (round 5: own-time walk grid +
+  alternative-grid refutation, E5 same-family reference),
+  `harness/build_echo_lane_probes.py` (round 5 set builder: ET round-trip,
+  gzip mtime=0)
 - Preset source: `evidence/devices/Echo/preset-time-travel.xml`
 - Superseded contaminated first-pass renders: `harness/renders/contaminated-v1/`
 
@@ -360,9 +373,9 @@ estimated duration: 256.000000 sec
 - Hop time 0.1875 s / dotted-division sync at 120 BPM: **high** (burst timing exact to ~1 ms)
 - Delay_Time inert while synced: **high** (E2 ≡ E1 at all six tap positions)
 - **Delay_Time stored unit = seconds: high** (E5/E6 free-mode: 0.25→0.250 s, 2×→2×; exact)
-- Pingpong L-first alternation, hop = min(tL,tR): **high** (E1/E5/E6)
-- Same-channel repeats at 2×hop; E1 "own-time" reading refuted: **high** (E5)
-- min() vs TimeLink force-equal on load: **open** (all tests had L = min; needs TimeLink=false)
+- Pingpong L-first alternation: **high** (E1/E5/E6). ~~hop = min(tL,tR)~~ **REVISED round 5**: that is the Delay_TimeLink=true case (locked lines); with TimeLink=false the walk alternates own times — successive gaps tR then tL, same-channel repeats at tL+tR: **high** (ET1, ratio 1.6, alternative grids empty)
+- Same-channel repeats at 2×hop; E1 "own-time" reading refuted: **high** (E5) — under TimeLink=true (= 2× the locked hop; ET1 shows the general law is tL+tR per same-channel repeat, 2×hop when locked)
+- Stored times honored with TimeLink=false: **high** (ET1: tR=0.4 honored exactly, tL/tR walk at −0.3..−1.5 ms). Whether TimeLink=true REWRITES stored values on load (vs equalizing in the engine) remains untested
 - FB = linear gain, one application per hop, 2 applications by tap 3: **high** (three-point FB table: 11.99 and 7.03 dB both = 2× predicted)
 - First two taps FB-invariant (first-pass): **high** (identical across FB 0.25/0.5/0.75)
 - Bare-line baseline: grid exact, pure FB decay after one settling loss: **high** (E8)
@@ -374,7 +387,8 @@ estimated duration: 256.000000 sec
 - Synced grid ≡ free 0.1875 s at 120 BPM (division −4/−3, sixteenth 3, SyncMode 2): **high** (EC4 ≡ E1 ≤0.02 dB, 0.00 ms, all six taps)
 - Ducking threshold on the slow envelope (RMS-like), stored in dB; NOT peak-referenced: **high** (0 dBFS-peak tone inert at thr 0; −27 dB RMS inert / −21 dB RMS ducked at thr −24)
 - Duck gain applied at output in real time, detector on the dry/pre-delay input: **high** (onset ≤5 ms after the step, no hop lag)
-- Duck STEADY depth ≈1:1 leveler to the threshold (round-3 revision of the 0.75–0.79 dB/dB reading, which was settling contamination of the 0.5 s steps): **high** (settled 2.5 s-step ladder at two thresholds, 8 cells; out_env −24.1±0.2 at thr −24, −28.8±0.25 at thr −30; no saturation through GR −26 dB; soft knee ≈1 dB shallow at +3 excess)
+- Duck STEADY depth ≈1:1 leveler (round-3 revision of the 0.75–0.79 dB/dB reading, which was settling contamination of the 0.5 s steps): **high** (settled 2.5 s-step ladder, 8 cells round 3 + 12 cells round 5; no saturation through GR −30 dB; soft knee reaches ≈2 cells)
+- δ(thr) — the leveler's effective threshold vs the stored one: **LINEAR, round 5** (five stored thresholds −21…−33: δ = −0.189·thr − 4.613, resid RMS 0.050 dB, fitted; effective threshold ≈ 0.811·thr − 4.61; round 3's two-point "0.0 at −24, +1.2 at −30" sits on this line)
 - Modulation_AmountDelay depth NOT linear in stored amount: **high** (same-tap-set pp ratio ×8.4–10.8 for ×2.286 amount; exact curve open)
 
 ## Limitations / unverified
@@ -386,10 +400,13 @@ estimated duration: 256.000000 sec
   the settled depth ladder at thr −24/−30 is exact, not floored.
 - ~~The exact saturation curve near and beyond −18 dB GR is unmeasured~~
   **RESOLVED round 3**: no saturation — steady GR tracks ≈1:1 (leveler) to
-  −26 dB GR; soft knee at +3 excess; δ(thr) offset grows at −30 (mapping open).
-- Every free-mode test had the slower time at exactly 2× the faster (E1: 0.375/0.1875,
+  −26 dB GR; soft knee at +3 excess. ~~δ(thr) offset mapping open~~
+  **RESOLVED round 5**: δ(thr) = −0.189·thr − 4.613 (fitted, −21…−33).
+- ~~Every free-mode test had the slower time at exactly 2× the faster (E1: 0.375/0.1875,
   E5: 0.5/0.25, E6: 1.0/0.5) — the pingpong topology beyond "hop = min, repeats at
-  2×hop" is under-determined; a 3:1 ratio pair with TimeLink=false would pin it.
+  2×hop" is under-determined; a 3:1 ratio pair with TimeLink=false would pin it.~~
+  **RESOLVED round 5** (ET1_TIMELINK: ratio 1.6, TimeLink=false → own-time
+  crossover walk; min() was the linked-lines special case).
   (EC4 pinned tL=tR — also not a discriminant for min() vs link.)
 - FB range above 1.0 (self-oscillation) untested.
 - SyncMode=2 semantics beyond the dotted mapping, Repitch behavior,
@@ -398,10 +415,11 @@ estimated duration: 256.000000 sec
   curve modeled only at 1 kHz / this preset's other pins.
 - AmountDelay depth curve (round 3): superlinearity measured at two amounts
   on the reverb-ON recipe — EC8's late-tap offsets carry a ±few-ms
-  tap-vs-tail ambiguity (floor −54 ≈ tap-5 level). A bare-recipe re-probe
+  tap-vs-tail ambiguity (floor −54 ≈ tap-5 level). ~~A bare-recipe re-probe
   (E8: reverb off, floor −90) at amounts 0.21875/0.5 would pin the exact
-  curve; the δ(thr) leveler offset (0.0 at −24, +1.2 at −30) wants a
-  threshold sweep. Both queued (backlog).
+  curve~~ **RESOLVED round 4** (pp ∝ Amount³). ~~the δ(thr) leveler offset
+  (0.0 at −24, +1.2 at −30) wants a threshold sweep~~ **RESOLVED round 5**
+  (linear, see the round-5 section).
 - No cross-check against the binary yet.
 
 ## Binary lane evidence (2026-10-07 — Ghidra 12.1.4, project `LiveRE`)
@@ -491,3 +509,88 @@ synced phase 90) at `Modulation_AmountDelay` 0.10/0.35/0.75
 4. At A=0.75 the sweep exceeds the measure window; the pp numbers are lower
    bounds and the tap pattern aliases (taps migrate between windows). Any
    deeper probe needs a wider window or a smaller hop.
+
+### Round 5 — δ(thr) mapping + TimeLink=false free mode (2026-10-09 echo lane)
+
+Two backlog probes on the round-2/3 lineages; builders/analyzer by the echo
+lane: `build_echo_lane_probes.py` (ET round-trip, gzip mtime=0),
+`analyze_ec_thr_sweep.py`, `analyze_et1_timelink.py` (fine parabolic peak
+per the round-2/3 method). The round-3 per-cell G values reproduce exactly
+through the new analyzer on the archived renders (validation pass built in).
+
+**1. Ducking threshold mapping — δ(thr) is LINEAR in the stored threshold
+(EC13/14/15 + archived EC9/EC9C).** Same lineage as round 3 (EC6/EC7
+recipe, steps-long.wav, 2.5 s steps, unity clip gain, 31-beat loop), only
+`Ducking_Threshold` Manual moves; the archived round-3 renders stand in as
+the −24/−30 points (control `EC9B_NODUCK6` shared by all five). Settled
+out_env = in_RMS + G over the last 1.5 s of each 2.5 s step, leveler-region
+cells only (excess ≥ +6; the soft knee reaches ≈2 cells deep, see below):
+
+| stored thr | cells (excess) | out_env (dBFS) | δ(thr) = out_env − thr |
+|---|---|---|---|
+| −21 | +12, +18 | −21.6..−21.8 | **−0.68 ± 0.12** |
+| −24 (EC9 arch.) | +9, +15, +21 | −24.1 ± 0.1 | **−0.07 ± 0.13** |
+| −27 | +12, +18, +24 | −26.5 ± 0.1 | **+0.57 ± 0.14** |
+| −30 (EC9C arch.) | +9..+27 | −29.0 ± 0.1 | **+0.99 ± 0.50** |
+| −33 | +12, +18, +24, +30 | −31.2 ± 0.3 | **+1.63 ± 0.47** |
+
+- **Mapping (fitted, 5 points, stated as fitted): δ(thr) = −0.189·thr −
+  4.613 dB** (thr in stored dB); residual RMS **0.050 dB**, max |resid|
+  0.084 dB — linear to measurement noise across −21…−33. Equivalently the
+  EFFECTIVE threshold is eff = thr + δ = **0.811·thr − 4.61 dB** (fitted):
+  the detector tracks ≈0.81× the stored value, not the stored value. δ = 0
+  crossing at stored ≈ −24.4 dB.
+- Coherence check: at stored thr 0 the fit predicts eff ≈ −4.6 dB — round
+  2's EC5/EC6 saw the −3 dBFS-RMS 0 dBFS-peak step sit inert (excess +1.6,
+  inside the knee). The "never engages at thr 0" observation was the knee,
+  not a gate.
+- The knee is deeper than round 3 read: the first-above-threshold cell
+  carries G −2.0 dB at excess ≈ 0 (thr −21), i.e. soft-knee gain reduction
+  begins at/below the stored threshold and stays ≈2 cells shallow — the
+  round-3 "+3 dB excess reads 1.1 dB shallow" and the thr-dependent reads
+  of the +9 cell are one phenomenon.
+- Per-step L>R asymmetry (+0.09…+0.75 dB after differencing) is identical
+  in all five duck renders AND the control (a lineage/render-path
+  property, grows with step level); it cancels in the differential G and
+  perturbs δ between points by <0.1 dB (different thresholds average
+  different cell subsets). Round 3's numbers are unaffected (same control).
+
+**2. TimeLink=false free mode — the lines run their OWN stored times; the
+pingpong walk alternates tR then tL; "hop = min" was the linked special
+case (ET1_TIMELINK).** E5_FREEMODE with `Delay_TimeLink` Manual → false,
+`Delay_TimeR` → 0.4 (tL stays 0.25; ratio 1.6 — first test ever with ratio
+≢ 2 and link off; loop shrunk to 10 beats). Fine-peak taps (±12 ms
+parabolic; dev within the ±1.4 ms mod-wobble band of this recipe):
+
+| tap | model (own-time walk) | ET1 measured (t−t0) | dev | level | E5 same-family ref |
+|---|---|---|---|---|---|
+| 1 L | t0+tL = 0.250 | 0.2490 | −1.02 ms | −18.63 | −18.63 (identical) |
+| 2 R | t0+tL+tR = 0.650 | 0.6485 | −1.49 | −22.99 | −23.18 (E5 R1) |
+| 3 L | t0+2tL+tR = 0.900 | 0.8987 | −1.29 | −37.70 | −37.78 (E5 L2) |
+| 4 R | t0+2tL+2tR = 1.300 | 1.2987 | −1.33 | −39.89 | −39.91 (E5 R2) |
+| 5 L | 1.550 | 1.5493 | −0.71 | −53.66 | −54.19 (E5 L3) |
+| 6 R | 1.950 | 1.9497 | −0.31 | −55.66 | −55.50 (E5 R3) |
+| 7 L | 2.200 | 2.1992 | −0.78 | −69.48 | −69.48 (E5 L4) |
+| 8 R | 2.600 | 2.5993 | −0.65 | −69.48 | −70.31 (E5 R4) |
+
+- **Verdict: the loader/engine honors tR ≠ tL with Delay_TimeLink=false**
+  — force-equal is refuted for the link-off state, and **hop is NOT
+  min(tL,tR)** in general. The pattern is a channel-crossover walk: after
+  the L tap the signal waits tR in the R line, after the R tap it waits
+  tL — successive inter-tap intervals alternate **tR, tL, tR, tL**;
+  same-channel repeats land at tL+tR. Tap LEVELS ride the number of
+  channel crossings exactly as before (tap 2 and 3 are first-pass +
+  one/two crossings; ET1's levels match E5's same-crossing-depth taps to
+  ≤0.53 dB across four FB applications).
+- The alternative hypotheses leave no trace: the min-grid R slots
+  (t0+0.50/1.00/1.50/2.00) and raw tR multiples (t0+0.40/0.80/…) hold
+  only reverb tail (−54…−90 dBFS; recipe carries Reverb_Level 0.246).
+- What "hop = min(tL,tR)" actually was: with Delay_TimeLink=true the two
+  lines are locked to one time (E1/E5/E6 all render a uniform hop), and
+  every pre-ET1 test also had the stored ratio at exactly 2, so the
+  locked hop coincided with min() AND with the R line's own value.
+  Whether TimeLink=true additionally REWRITES the stored Delay_TimeR on
+  load (vs equalizing at engine level) is the remaining untested
+  distinction — a linked set with unequal stored times, round-tripped
+  through Live's own save, would settle it (the XML on disk keeps both
+  values either way).
