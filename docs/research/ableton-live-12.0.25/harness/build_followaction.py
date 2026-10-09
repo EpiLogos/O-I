@@ -63,6 +63,9 @@ def build(src, enabled, out):
         c2.set("Id", "912" if offset else clip.get("Id"))
         c2.find("CurrentStart").set("Value", repr(offset))
         c2.find("CurrentEnd").set("Value", repr(offset + span))
+        # Time attribute == CurrentStart: the arrangement anchor the loader
+        # reads (FA4_TIME 2026-10-08 — devices/follow-action.md)
+        c2.set("Time", repr(offset))
         loop = c2.find("Loop")
         for tag in ("LoopEnd", "OutMarker", "HiddenLoopEnd"):
             loop.find(tag).set("Value", repr(span))

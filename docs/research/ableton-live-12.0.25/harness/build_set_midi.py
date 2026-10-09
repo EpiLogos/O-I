@@ -157,6 +157,11 @@ def build(preset_path, pins, notes_spec):
     end_beat = max(s + d for _, _, s, d in notes) + 2.0
 
     clip = sub(events, "MidiClip", Id="910")  # Events members carry Ids
+    # The clip element's Time ATTRIBUTE is the arrangement anchor (loader
+    # fact, FA4_TIME 2026-10-08: without it the loader defaults Time=0 and
+    # anchors the clip at arrangement 0 regardless of CurrentStart —
+    # devices/follow-action.md). The real writer writes Time == CurrentStart.
+    clip.set("Time", "0")
     sub(clip, "LomId", Value="0")
     sub(clip, "LomIdView", Value="0")
     sub(clip, "CurrentStart", Value="0")

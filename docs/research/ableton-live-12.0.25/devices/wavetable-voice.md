@@ -325,6 +325,57 @@ below the evidenced band). Gate residuals after the swap:
   signature only), and the amount→cents mapping: open (backlog; one cell
   rendered).
 
+### Unison round 2 (2026-10-08 late lane): Amount axis CLAMPS at 1.0; the voice-count knob is `Voice_Unison_VoiceCount`
+
+The brief's depth-of-unison probes pinned `Voice_Unison_Amount` to 2 and 4
+(WV10_UNI_M1_A2 / WV11_UNI_M1_A4, Mode 1, VoiceCount 3, M2 notes clip;
+analyzer `harness/analyze_wv_unison.py`):
+
+- **Both renders are dither-identical to WV9B** (max|Δ| 2 LSB16, ≈2% of
+  samples >1 LSB, 0% >8 LSB — the export-dither signature; spectra identical
+  peak-for-peak to ±0.1 dB, same AM rate). **Stored `Voice_Unison_Amount`
+  values beyond 1.0 do not exist as states**: the parameter's
+  `MidiControllerRange` is 0..1 and the loader clamps out-of-range pins to
+  1.0. "Amount" is a normalized depth, not a voice count — the earlier
+  framing ("Amount 2/4 → two-/four-voice signature") was a category error;
+  the voice number lives in `Voice_Unison_VoiceCount` (plain `Value`
+  element, stored 3).
+- **Mode-1 signature, richer map** (Amount 1.0, VoiceCount 3, note-1 steady
+  window, ±120 Hz Goertzel scan at 0.25 Hz): main lobe **f0−3.75 Hz
+  (−50.4 cents, −24.5 dBFS)**, f0 component −27.0 dBFS, sub-lobes BELOW f0 at
+  −6.75/−9.25/−11.5/−13.75/−16.0 Hz (−37.5 → −49 dB, ≈2.25 Hz spacing) and
+  weaker lobes ABOVE at +3.0/+5.5/+8.0/+10.25 Hz (−40.4 → −49.3) — the
+  unison layout is asymmetric around f0 (energy biased low). h1 AM beat rate
+  11.3 Hz. M2's (mode-0) scan shows only the symmetric ±(3–12) Hz leakage
+  skirt of the analysis window — the asymmetry is the unison discriminator.
+- VoiceCount probes (same lane, after the two brief renders were spent on the
+  clamp): `WV12_UNI_M1_VC2` / `WV13_UNI_M1_VC4` (Mode 1, Amount 1.0,
+  VoiceCount 2/4). **VoiceCount changes the state for real** (76% of samples
+  >1 LSB vs WV9B and vs each other — not dither). Line positions (±120 Hz
+  Goertzel scan, 0.45 s steady window → 2.2 Hz resolution; all offsets from
+  f0 = 130.81 Hz):
+
+| count | resolved h1 lines (Hz off f0 / dBFS) | steady RMS |
+|-------|--------------------------------------|------------|
+| VC2 (WV12) | **−3.75 (−23.2, dominant)**, −0.50 (−36.0) | −25.93 |
+| VC3 (WV9B) | **−3.75 (−24.5, dominant)**, −0.25 (−27.0), weak +3.0 (−40.4) | −25.85 |
+| VC4 (WV13) | **−3.50 (−27.0)**, **+1.00 (−26.9, comparable)** | −26.10 |
+
+- **Layout law (medium confidence): N voices evenly spread ±50 cents at
+  Amount 1.0** — predicted lines {−3.75, 0} (VC2), {−3.75, 0, +3.75} (VC3),
+  {−3.75, −1.25, +1.25, +3.75} (VC4) match every resolved line to ≤0.75 Hz
+  (residual = window-skirt pull between neighbouring lines); the −3.75 Hz
+  anchor voice is **−50.4 cents** (exactly −spread-edge/2 at ±50-cent spread),
+  reading as the fixed spread edge at Amount 1.0. The f0-centre line weakens
+  as voices symmetrise (VC4's centre cancels — no resolved line near 0), and
+  steady RMS stays count-invariant (−26.1…−25.9 dB, spread not gain).
+- **Measurement boundary**: 2.2 Hz resolution cannot separate the layout
+  from amplitude structure (the scan's own 2.25 Hz-spaced window sidelobes
+  pollute the ±6–16 Hz region in EVERY render — see M2's symmetric skirt).
+  A longer-note probe (4-beat notes → 0.5 Hz cells) resolves the layout
+  cleanly (backlog). h1-band AM maxima rates: 9.43 / 11.32 / 9.43 Hz
+  (VC2/3/4) — recorded, not yet modeled.
+
 ## Deferred (open, with the probe sets to answer them)
 
 - **WavePosition frame census — CLOSED (rev 3)**: four frames sine |
@@ -335,10 +386,13 @@ below the evidenced band). Gate residuals after the swap:
 - **Position-envelope sources**: routes 9/12 → Osc1 Pos (1.0/0.33) idle
   on this patch (output stays sine); Envelope2/3 + LFO1/2 idle values
   unverified — an Always-on Env2 or LFO probe would activate them.
-- **Unison topology** (REVISED): Mode=0 gates unison off; Mode=1 engages.
-  Remaining: VoiceCount sweep (1…8), Amount→cents mapping, mode enum
-  identities beyond the Mode-1 signature, voice layout (the measured
-  sideband energy was one-sided at the probed cell).
+- **Unison topology** (REVISED twice): Mode=0 gates unison off; Mode=1
+  engages. **Amount is normalized 0..1 (MidiControllerRange) and clamps on
+  load — values >1.0 render identically to 1.0 (WV10/WV11 dither-identical
+  to WV9B).** The voice number is `Voice_Unison_VoiceCount`. Remaining:
+  VoiceCount sweep (1…8), Amount sweep WITHIN 0..1 (0.25/0.5/0.75) for the
+  detune-cents law, mode enum identities beyond the Mode-1 signature, voice
+  layout (the measured sideband energy is biased below f0).
 - **Slope warping family** (REVISED): 0 = linear, 0.5 = one-pole τ=0.283×
   stored, endpoints invariant. Remaining: the −1…+1 sweep to pin the warp
   curve; whether Attack/Release slopes share the family.

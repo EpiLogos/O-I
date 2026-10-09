@@ -112,6 +112,10 @@ def build(preset_path, pins, signal_path):
     total_beats = beats(dur_s)
     clip.find("CurrentStart").set("Value", "0")
     clip.find("CurrentEnd").set("Value", repr(total_beats))
+    # The clip element's Time ATTRIBUTE is the arrangement anchor (loader
+    # fact, FA4_TIME 2026-10-08: without it the loader anchors at 0
+    # regardless of CurrentStart — devices/follow-action.md).
+    clip.set("Time", "0")
     sv = clip.find("SampleVolume")
     if sv is not None:
         # the template clip carries clip-gain 0.6513801813 = −3.715 dB;

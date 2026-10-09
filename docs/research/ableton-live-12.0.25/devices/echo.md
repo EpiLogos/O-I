@@ -236,6 +236,80 @@ thr 0 would have engaged; so the threshold acts on the signal's slow envelope
   Ducking_Release 0.1 s (20 ms window smearing included); not dB-linear.
   Stored unit = seconds.
 
+### Round 3 — AmountDelay depth + duck steady ladder (2026-10-08 late lane)
+
+Signal `impulse.wav` for EC8, `signals/steps-long.wav` for EC9 (0.5 s lead,
+2.5 s steps at −18/−12/−6/0 dBFS-peak 1 kHz, 4 s tail — 4× longer steps than
+round-2's steps-1k, so the GR actually settles). Analyzer for the duck:
+`harness/analyze_ec9_saturation.py` (20 ms G(t) tables, settled-window
+ladder, leveler read-out); for the wobble: `harness/analyze_ec8_wobble.py`
+(fine parabolic peak timing on the same-channel tap trains, pingpong-aware).
+
+| Point | Pin(s) vs base | Values |
+|-------|----------------|--------|
+| EC8_MOD50 | E1 (full preset) | Modulation_AmountDelay=0.5 (vs E1's stored 0.21875) |
+| EC9_DUCK_TONE_STAIRCASE | EC6/EC7 recipe | steps-long.wav, Ducking_Threshold=−24 |
+| EC9C_DUCK_T30 | EC6/EC7 recipe | steps-long.wav, Ducking_Threshold=−30 |
+| EC9B_NODUCK6 | EC6/EC7 recipe | Ducking_On=false, **clip gain SampleVolume=0.5** (−6.02 dB control — see below) |
+
+(EC6/EC7 recipe = Filter/Mod/Reverb off, DryWet=1, sync dotted-1/16, FB 0.5;
+duck renders carry unity clip gain. The −6 dB control kills EC6B's export
+clipping: the unducked FB-0.5 wet sum of the 0 dBFS step exceeded full scale
+in round 2, making the top-step depths floors; with the attenuated control
+every depth below is exact. G(t) = duck − control + 6.02 dB.)
+
+**1. Modulation_AmountDelay depth is NOT linear in the stored amount
+(EC8).** Peak-to-peak tap-time wobble over the same-channel trains
+(L k=1,3,5,7 / R k=2,4,6,8, identical LFO phases per tap across renders, so
+pp scales exactly with internal depth whatever the LFO waveform):
+
+| render | amount | pp L | pp R |
+|--------|--------|------|------|
+| EC3_NOMOD | 0 | 0.75 ms | 0.63 ms (baseline-artifact band) |
+| E1 | 0.21875 | 2.00 ms | 0.64 ms (at the artifact band) |
+| EC8_MOD50 | 0.5 | 21.58 ms | 5.37 ms |
+
+Depth ratio for an amount ratio of 2.286: ×10.8 (L) / ×8.4 (R) — strongly
+superlinear (power-law exponent ≈ 1.8–2.9 depending on channel and whether
+EC8's late taps are included; E1's per-tap offsets reproduce round 2 exactly:
+L −0.64/+0.19/+1.37, R −0.05/+0.50/+0.59 ms). At amount 0.5 the tap train
+DRIFTS down the recirculation: EC8's L taps sit at −5.79/+2.92/+15.79/+2.52 ms
+from grid (tap 5 verified a real tap by its FB-family level, −54.32 dBFS vs
+EC3's −54.60 in the same window, and by the broad peak scan). No single
+"ms-per-unit" constant exists; the E1-family ±1.5 ms grid tolerance does not
+extrapolate to higher amounts. Whether the exact curve is A², exponential or
+a UI taper, and how much of EC8's L spread is tap-vs-reverb-tail confusion
+(reverb floor −54 sits at the tap-5 level), is **open** — a clean re-probe on
+the E8 bare recipe (reverb off, floor −90) would settle it (backlog).
+
+**2. Ducking steady state is a LEVELER to the threshold — round 2's
+"0.75–0.79 dB per dB" revised (EC9 family).** Settled GR (mean over the last
+1.5 s of each 2.5 s step; round 2's 0.5 s steps never settled — attack+RMS
+window need ≈0.4 s, so its per-step means sat 0.2–1.8 dB shallow; EC7's
+numbers reproduce here as the full-step-window column):
+
+| step (peak/RMS) | excess vs −24 | GR settled (−24) | excess vs −30 | GR settled (−30) |
+|---|---|---|---|---|
+| −18 / −21 dBFS | +3 | **−4.12** | +9 | **−8.64** |
+| −12 / −15 | +9 | **−9.13** | +15 | **−13.80** |
+| −6 / −9 | +15 | **−14.90** | +21 | **−19.64** |
+| 0 / −3 | +21 | **−21.16** | +27 | **−25.93** |
+
+- Read as output envelope: out_env = in_RMS + GR = **−24.1 ± 0.2 dBFS at
+  thr −24** (excess +9…+21) and **−28.8 ± 0.25 dBFS at thr −30** (excess
+  +9…+27): in steady state the ducking drives the output envelope TO the
+  threshold — **≈1:1 gain tracking, no saturation**: the curve does not
+  flatten anywhere through GR −26 dB. Local slope −0.84 → −0.96 → −1.04
+  dB/dB climbing to 1:1.
+- **Soft knee** at low excess: +3 dB excess reads −4.12 (1.1 dB shallow of
+  the leveler line); from +9 up the leveler holds to ±0.3 dB.
+- **Threshold mapping**: the leveled output sits ≈0.0 dB above the stored
+  threshold at −24 but ≈+1.2 dB above it at −30 — the offset δ(thr) grows as
+  the threshold lowers (two cells measured; the mapping law is open).
+- Dynamics re-confirmed on the longer steps: onset ≤20 ms; release from a
+  −21 dB duck reads −9.9 dB after 0.1 s (consistent with round 2's
+  τ ≈ 111 ms exponential).
+- L/R agree to ≤0.32 dB on every settled step.
 
 ## Determinism (E4 / E1b pair, per protocol)
 
@@ -261,16 +335,23 @@ estimated duration: 256.000000 sec
   `E7_FB075.aif`, `E8_BARE.aif`, sections probes `EC1_FILTER.aif`,
   `EC2_DUCK.aif`, round-2 probes `EC3_NOMOD.aif`, `EC4_SYNC1_16.aif`,
   `EC5_DUCK_TONE.aif`, `EC5B_NODUCK.aif`, `EC6_WET_DUCK.aif`,
-  `EC6B_WET_NODUCK.aif`, `EC7_DUCK_T24.aif` (+ `.asd`)
+  `EC6B_WET_NODUCK.aif`, `EC7_DUCK_T24.aif`, round-3 probes
+  `EC8_MOD50.aif`, `EC9_DUCK_TONE_STAIRCASE.aif`, `EC9B_NODUCK6.aif`,
+  `EC9C_DUCK_T30.aif` (+ `.asd`)
 - Sets: `harness/live/e1-impulse-default.als`, `e2-delay2x.als`,
   `e3-fb-half.als`, `e1b.als`, `E5_FREEMODE.als`, `E6_FREE2X.als`,
   `E7_FB075.als`, `E8_BARE.als`, `EC1_FILTER.als`, `EC2_DUCK.als`,
   `EC3_NOMOD.als`, `EC4_SYNC1_16.als`, `EC5_DUCK_TONE.als`,
   `EC5B_NODUCK.als`, `EC6_WET_DUCK.als`, `EC6B_WET_NODUCK.als`,
-  `EC7_DUCK_T24.als`
+  `EC7_DUCK_T24.als`, `EC8_MOD50.als`, `EC9_DUCK_TONE_STAIRCASE.als`,
+  `EC9B_NODUCK6.als`, `EC9C_DUCK_T30.als`
 - Analyzers: `harness/analyze_echo_taps.py` (stereo broad peak scan + ±8 ms
   windowed tap table), `harness/analyze_ec_duck.py` (EC duck pair mode:
-  20 ms RMS windows, per-step means, onset, release-τ fit)
+  20 ms RMS windows, per-step means, onset, release-τ fit),
+  `harness/analyze_ec8_wobble.py` (round 3: per-tap fine peak timing on the
+  pingpong-aware same-channel trains, pp/power-law depth read-out),
+  `harness/analyze_ec9_saturation.py` (round 3: settled-window GR ladder,
+  leveler read-out, onset/release)
 - Preset source: `evidence/devices/Echo/preset-time-travel.xml`
 - Superseded contaminated first-pass renders: `harness/renders/contaminated-v1/`
 
@@ -293,16 +374,19 @@ estimated duration: 256.000000 sec
 - Synced grid ≡ free 0.1875 s at 120 BPM (division −4/−3, sixteenth 3, SyncMode 2): **high** (EC4 ≡ E1 ≤0.02 dB, 0.00 ms, all six taps)
 - Ducking threshold on the slow envelope (RMS-like), stored in dB; NOT peak-referenced: **high** (0 dBFS-peak tone inert at thr 0; −27 dB RMS inert / −21 dB RMS ducked at thr −24)
 - Duck gain applied at output in real time, detector on the dry/pre-delay input: **high** (onset ≤5 ms after the step, no hop lag)
-- Duck depth ≈0.75–0.79 dB per dB excess (+3/+9/+15 clean); attack τ ≈ 15–25 ms; release τ ≈ 0.111 s ≈ stored 0.1 s: **high** (EC7 staircase; top-step depths are lower bounds — control-render clipping)
+- Duck STEADY depth ≈1:1 leveler to the threshold (round-3 revision of the 0.75–0.79 dB/dB reading, which was settling contamination of the 0.5 s steps): **high** (settled 2.5 s-step ladder at two thresholds, 8 cells; out_env −24.1±0.2 at thr −24, −28.8±0.25 at thr −30; no saturation through GR −26 dB; soft knee ≈1 dB shallow at +3 excess)
+- Modulation_AmountDelay depth NOT linear in stored amount: **high** (same-tap-set pp ratio ×8.4–10.8 for ×2.286 amount; exact curve open)
 
 ## Limitations / unverified
 
 - 44.1k/16-bit export of a 48k source: dither non-determinism (max |Δ| 2 LSB16);
   SRC ringing on a 1-sample impulse sets the direct's observed shape (−13.83 dBFS).
-- The unducked wet-only control (EC6B) exceeds full scale on the −3/0 steps of
-  the staircase (FB 0.5 tap sum at DryWet=1): those control channels clip at
-  export, so EC7's duck depths at +18/+21 dB excess are lower bounds; the
-  exact saturation curve near and beyond −18 dB GR is unmeasured.
+- ~~The unducked wet-only control (EC6B) exceeds full scale on the −3/0 steps~~
+  **RESOLVED round 3**: the control carries clip gain 0.5 (EC9B_NODUCK6), so
+  the settled depth ladder at thr −24/−30 is exact, not floored.
+- ~~The exact saturation curve near and beyond −18 dB GR is unmeasured~~
+  **RESOLVED round 3**: no saturation — steady GR tracks ≈1:1 (leveler) to
+  −26 dB GR; soft knee at +3 excess; δ(thr) offset grows at −30 (mapping open).
 - Every free-mode test had the slower time at exactly 2× the faster (E1: 0.375/0.1875,
   E5: 0.5/0.25, E6: 1.0/0.5) — the pingpong topology beyond "hop = min, repeats at
   2×hop" is under-determined; a 3:1 ratio pair with TimeLink=false would pin it.
@@ -312,6 +396,12 @@ estimated duration: 256.000000 sec
   gate/noise/wobble sections: untouched. Modulation envelope mix
   (Modulation_EnvelopeMix) and AmountFilter paths untested; ducking depth
   curve modeled only at 1 kHz / this preset's other pins.
+- AmountDelay depth curve (round 3): superlinearity measured at two amounts
+  on the reverb-ON recipe — EC8's late-tap offsets carry a ±few-ms
+  tap-vs-tail ambiguity (floor −54 ≈ tap-5 level). A bare-recipe re-probe
+  (E8: reverb off, floor −90) at amounts 0.21875/0.5 would pin the exact
+  curve; the δ(thr) leveler offset (0.0 at −24, +1.2 at −30) wants a
+  threshold sweep. Both queued (backlog).
 - No cross-check against the binary yet.
 
 ## Binary lane evidence (2026-10-07 — Ghidra 12.1.4, project `LiveRE`)
