@@ -45,6 +45,13 @@ Status ledger (updated as lanes land; gate = crate passes vs golden corpus):
 | Redux | FX | ✓ (10 params) | — | ✓ (steps=2^(bits-1), softness law) | — | — |
 | Overdrive | FX | ✓ (7 params) | — | ✓ (closed-form shaper x−4/27x³, PreserveDynamics=compressor) | — | — |
 | Erosion | FX | — | — | ✓ (LCG noise + dual delay; downsampler REFUTED) | — | — |
+| Arpeggiator | MIDI | — | — | ✓ (28 setters, synced-rate table ×14 [B], Random LCG shuffle, deferred engine) | — | — |
+| Chord | MIDI | — | — | ✓ (6 slots × Shift/Degrees/Velocity/Chance, strum family, dirty recompute) | — | — |
+| Pitch | MIDI | — | — | ✓ (int semitone slots, StepUp/Down = Pitch±StepWidth clamp ±127) | — | — |
+| Scale | MIDI | — | — | ✓ (12 user-mapping ints, InternalScale stored −1-offset, global scale-list walk) | — | — |
+| Velocity | MIDI | — | — | ✓ (setters+defaults; Drive/Compand stored negated; transform open) | — | — |
+| Note Length | MIDI | — | — | ✓ (length law + 5 ms floor, own synced table ×13, release-vel decay exp law) | — | — |
+| Note Echo | MIDI | — | — | negative: no compiled device in 12.0.25 (bundled M4L [H]; evidence log) | — | — |
 | *52 more devices* | | — | — | — | — | — |
 | Warp engines ×6 | clip | ✓ (modes 0–5) | ✓ (D9 + seg90) | — | — | partial |
 | FollowAction | clip | ✓ | ✓ (anchoring) | — | — | session driver open |
