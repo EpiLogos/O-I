@@ -231,3 +231,21 @@ profile replica of `src/spectrum.rs`).
 (`evidence/binary/reverb-decompilation.txt`, owner-private). Full constant
 reconciliation **remaining work** (backlog); no decompiled claim above
 contradicts the measured IR (pre-delay 5 ms, RT60 ≈ stored DecayTime ms).
+
+## Comb-structure probe: the tail is a smooth stochastic process, not a delay grid (2026-10-09, offline, R1 archived render)
+
+The audit's named smallest probe — look for comb spacing = sr/L in the tail —
+ran as a spectrum-autocorrelation test on the R1 impulse render's tail
+(0.15–0.60 s window, 40 Hz–12 kHz band, Hann FFT, |X|² autocorrelated at
+loop-time lags 2–60 ms). **No dominant comb lag exists**: L-channel top lags
+scatter 2.0–4.4 ms at r = +0.133…+0.153, R-channel 2.4–3.8 ms at r = +0.137…+0.148
+— a short-lag positive correlation ridge (spectral smoothness of a colored
+stochastic tail), not the single sharp peak a feedback delay grid produces,
+and no lag dominance anywhere in 2–60 ms (white-noise control: |r| ≤ 0.02,
+flat as expected). Together with the dossier's own evidence (irregular tap
+times 2.97–45.8 ms, smooth 48-band spectrum, single-slope band RT60s, D5's
+RT60 ∝ DecayTime), the parametric seeded-noise model in
+`packages/live-dynamics/src/reverb.rs` is the supported shape; an FDN
+reconstruction is unnecessary at the modeled fidelity. Remaining named
+refinements: the HF second slope at DecayTime 2400 and stereo decorrelation
+(the model is mono-only).
