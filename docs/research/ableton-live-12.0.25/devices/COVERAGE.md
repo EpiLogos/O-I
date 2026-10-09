@@ -56,6 +56,10 @@ Status ledger (updated as lanes land; gate = crate passes vs golden corpus):
 | Chord / Pitch / Scale | MIDI | — | ✓ (storage model) | ✓ | — | — |
 | Velocity / Note Length | MIDI | — | ✓ (length + release-vel decay laws closed) | ✓ | — | — |
 | Note Echo | MIDI | — | ✓ (NEGATIVE: no compiled device — M4L) | — | — | — |
+| LFO (M4L) | MIDI-mod | — | ✓ (NEGATIVE device + OLfoProcessor engine law: 512-table/S&H, TPT smooth, attack fade, sync) | ✓ | — | — |
+| Envelope Follower (M4L) | audio-mod | — | ✓ (NEGATIVE: no compiled device; Shifter EF = only native namesake, law open) | ✓ | — | — |
+| MPE Control (M4L) | MIDI | — | ✓ (NEGATIVE device + native AMpeSettings zone model + MpeDecoder/Encoder/Filter/TuningSystemToMpe) | ✓ | — | — |
+| Envelope MIDI (M4L) | MIDI | — | ✓ (NEGATIVE: no compiled device — M4L) | ✓ | — | — |
 | Drift | INST | ✓ (90+ surface in decompile) | — | ✓ (devicekit, 32-voice, dispatch census) | — | — |
 | Utility | FX | ✓ (14 params) | — | ✓ (9 calc bodies, BassMono TPT law; dB/pan closed forms open) | ✓ (surface) | — |
 | Corpus | FX | ✓ (38 params, 26 presets) | — | ✓ (AAS A-framework; filter = 2-cascade Butterworth BP law; DSP engine = corpus material) | — | — |
