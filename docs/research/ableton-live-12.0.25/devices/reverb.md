@@ -358,3 +358,34 @@ above-floor regions), the 600 point is floor-clipped and its early-segment
 fits are noisy; (b) tail r0 per band — high for the estimator and windows
 stated (single render, default pin; not swept across DecayTime).
 
+## Model extension landed: HF split + stereo tail (2026-10-09, offline lane — `packages/live-dynamics/src/reverb.rs`)
+
+Both refinements above are now encoded in the model (constants cited
+in-source, measured citations marked against the model's own fits):
+
+- **HF two-component tail**: above the fixed ≈4.5 kHz corner the envelope
+  runs the slow early segment (per-band k_e 1.6 / 2.0 — model picks inside
+  the measured 1.5–2.5× envelope) breaking at the measured onsets (0.15 s
+  @600/1200, 0.34 s @2400 on 4.5–8 kHz — modeled as a linear ramp between
+  the 1200/2400 anchors; 0.21 s flat on 8 kHz+) into the true HF tail —
+  late k log-linear between the measured anchors 0.750/0.642 (4.5–8k),
+  0.742/0.5625 (8–12k), 0.742-carried/0.646 (12–16k+), flat outside
+  [1200, 2400] ms. The four HF `level_db` rows were re-fitted to the
+  unchanged R1 48-band profile under the new envelope (model fit).
+- **Stereo tail**: per-band shared + per-channel seeds mixed at
+  c = 1 − r0 (r0 = the (b) table's late column; nearest-band carry on the
+  sub-floor 20–80 / 16–20 kHz rows), shared envelope timing, fixed ±1.0 dB
+  L/R trim (model choice inside the measured ±2.7 dB spread). Per-band
+  gain normalization keeps the mono mixdown exactly at the fitted levels,
+  and the mono gate path measures the exact mixdown of the stereo model.
+  A unit test asserts the generated band r0 against the table. Remaining
+  gap: the direct + early taps are still identical in both channels
+  (r0 = 1) — the render shows the first taps decorrelated (mean r0 ≈ 0.25).
+
+**Measured residuals** (`cargo test --test golden -- --ignored reverb`,
+2026-10-09): R1 broadband 1.7%, 80–315 7.1%, 315–1250 8.3%, 1250–5000
+0.8%, **5000–16000 0.5%** (was 5.8%); R3 all bands 0.4–9.2% (unchanged
+family); **R4 5000–16000 4.7% (was 18.7%)**, R4 worst band now 1250–5000
+at 5.3% — all gates PASS with margin. Spectral at R1: mean 1.04 dB
+(tol 1.5), worst band 2.88 dB (tol 3.0). Taps: 9/9 exact, ±0.000 ms.
+
