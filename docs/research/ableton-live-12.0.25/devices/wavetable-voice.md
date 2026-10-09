@@ -641,7 +641,8 @@ release decay it includes):
   layout. g = √(2/N)·solo fits this ladder (0.0/−1.76/−3.01) better than
   rev 4's N^(−1/4) hypothesis (−1.5/−2.5/−3.0), but the WV19 long-note N=3
   reading (−2.35) sits between the two: the gain law stays OPEN, both
-  candidates recorded, none fitted.
+  candidates recorded, none fitted. **CLOSED 2026-10-09 — see the next
+  section.**
 
 **Crate verdict** (`packages/live-dynamics/src/wavetable.rs`,
 `unison::detunes_cents`): the `2 => vec![-s, 0.0]` special case is WRONG —
@@ -649,7 +650,61 @@ VC2 is `[-s, +s]`, which the general `n =>` arm already produces; the
 special case (and its docstring justification, which cites the
 left-channel shadow) should be deleted. The module models no pans, so no
 pan change is needed there; if pans are ever modeled, use the alternating
-hard deal, not 2k/(N−1)−1. (Not edited here — another lane owns the crate.)
+hard deal, not 2k/(N−1)−1. (Enacted — commit d192e1414.)
+
+## Per-voice gain law CLOSED — √(2/N) per voice, centre voice equal-power split (2026-10-09, gain-law lane)
+
+Every voice re-read on ONE footing: per-channel h1 (Hann Goertzel,
+grid+parabolic, same pattern as `analyze_wv_vc_stereo.py`) against **M2's
+h1 in the same channel**, vs-solo. Analyzer
+`harness/analyze_wv_gain_law.py` (renders read-only). WV19's long note was
+read twice: window [0.15, 0.85] s — matched to M2's note-life phase — and
+the long steady window [1.0, 3.9] s.
+
+Two confusions resolved first:
+
+- "N=2 reads 0.0, contradicting √(2/N)": no — √(2/2) = 1 → 0.0 dB is the
+  law's own prediction. The −1.50/−2.38/−3.01 prediction row quoted in the
+  brief belongs to N^(−1/4), which this ladder excludes at N=2 by 1.5 dB.
+- The WV19 "−2.35 at N=3" was never a vs-solo gain: it was the
+  within-patch outer−centre ratio, and it is stale — the committed
+  `analyze_wv19_unison_long.py` prints outer−centre −3.01 today, and the
+  phase-matched vs-solo read below reproduces the short-note ladder to
+  ≤0.1 dB.
+
+Measured law (per-channel voice counts under the proven alternating
+hard-pan deal: N=2 → 1/ch, N=3 → 2/ch, N=4 → 2/ch):
+
+| N | voice | g measured L/R (dB) | predicted | residual |
+|---|---|---|---|---|
+| 2 | hard | +0.03 / −0.06 | √(2/2) = 0.00 | ≤0.06 |
+| 3 | hard | −1.84 / −1.84 | √(2/3) = −1.76 | −0.08 |
+| 3 | centre | −4.98 / −4.79 | 1/√3 = −4.77 | −0.21 / −0.02 |
+| 4 | hard | −2.98 / −3.00 | √(2/4) = −3.01 | ≤+0.03 |
+| WV19 long, phase-matched | hard | −1.90 / −1.80 | −1.76 | ≤0.14 |
+| WV19 long, phase-matched | centre | −5.02 / −4.82 | −4.77 | ≤0.25 |
+
+**Verdict: per-voice amplitude = √(2/N) × solo; the odd-N centre voice
+splits equal-power, −3.01 dB into each channel (= 1/√N).** Equivalently:
+every channel sums to unity power vs the solo channel at every N —
+measured channel sums +0.03/−0.06 (N=2), −0.12/−0.06 (N=3), +0.03/−0.00
+(N=4), −0.18/−0.04 dB (WV19 phase window). Derived vs fitted, honestly:
+the hard-voice √(2/N) is measured directly at three N (max dev 0.08 dB) —
+derived; the centre 1/√N is the channel-unity consequence confirmed at the
+only odd N measured (N=3) — odd N>3 is extrapolation, marked as such.
+Excluded: all-voices-equal (√(2/N) on the centre too) by 3.1 dB;
+N^(−1/4) by 1.5 dB at N=2.
+
+Caveat: WV19's steady window reads ALL voices a further −0.36 dB — the
+4 s note's envelope sags ~0.25 dB into sustain (hard−centre ratio
+unchanged, −3.01). Long-window vs-solo reads are therefore ~0.3 dB low,
+which is how the stale −2.35 confusion likely arose. Residuals carry a
+≤0.2 dB L/R asymmetry (dither-level).
+
+Crate (`wavetable.rs`): unison models detunes only — "spread, not gain";
+no per-voice gain, no pan. If unison voices are ever summed in a render
+path, apply this law; unity-per-voice summing would leave channels +3.0 dB
+hot at N≥3.
 
 ## Attack/Release slope families — one warp law for all three segments (2026-10-09 day lane, rev 4)
 
