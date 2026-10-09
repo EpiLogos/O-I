@@ -1,0 +1,1101 @@
+// PROVENANCE: Ghidra 12.1.4 decompiles + nm/objdump decodes, persistent
+// project LiveRE2 (~/tools/live-re/ghidra-proj2, ALREADY ANALYZED), Live.arm64
+// (Live 12.0.25, 2024-08-27_2627c43816), arm64 slice. Query-only
+// (analyzeHeadless -process -noanalysis; no re-import; no Live runs, no
+// renders in this lane). Owner-private analysis evidence. NOT FOR
+// REDISTRIBUTION. Never enters product source (packages/live-dynamics).
+// Captured 2026-10-10 (EQ family binary lane: Channel EQ / EQ Three /
+// Drum Buss) via SearchProbe / CallTargetsProbe / BlockProbe / XrefProbe /
+// DataProbe scripts + `nm -U`/`objdump -d` on Live.arm64.
+// Companion dossiers: devices/channeleq-derivation.md (Channel EQ),
+// devices/eq3-derivation.md (EQ Three), devices/drumbuss-derivation.md
+// (Drum Buss).
+// THIS FILE: Channel EQ (ODeviceKitDeviceProcessor<ChannelEqDevice>).
+// Contents: (1) nm census (OChannelEqProcessor create, ChannelEqDevice
+// setCallbacks trampolines, model::ChannelEq parameter strings); (2) create
+// wrapper 0x1018bc138 + device-kit shell ctor FUN_1018a3e0c; (3) device ctor
+// FUN_1018d4238 (fixed SVF sections + fixed one-pole LP + tan-approx g law);
+// (4) Init / Reset / Exit / OnX / OnOn / CalcMainSingleSample;
+// (5) OnAutomatableFloatEvent<HighpassOn> + OnRampEvent<LowShelfGain> (the
+// per-sample dB ramp with exp2-fast conversion); (6) the five setCallbacks
+// float lambdas (shelf/bell coefficient rebuild laws) + bool lambda;
+// (7) OnSampleRateChanged; (8) tick helpers FUN_103b71ff0/0f0/ec.
+// NOTE: CalcMainSingleSample dispatches over the six registered components
+// (device+0x230, tick = vtable+0x18) — the per-component tick bodies are
+// virtual and NOT captured (open residual in the dossier).
+
+// ===== nm census (ChannelEq symbols) =====
+00000001056925c8 D __ZGVZN7ableton18device_definitions34DeviceDefinitionBoolParameterModelINS_7devices10channel_eq5model9ChannelEq10HighpassOnELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E15sValueConverter
+00000001056925b0 D __ZGVZN7ableton18device_definitions34DeviceDefinitionBoolParameterModelINS_7devices10channel_eq5model9ChannelEq10HighpassOnELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E16sStringConverter
+0000000105692630 D __ZGVZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq12LowShelfGainELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E15sValueConverter
+0000000105692608 D __ZGVZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq12LowShelfGainELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E16sStringConverter
+0000000105692700 D __ZGVZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq12MidFrequencyELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E15sValueConverter
+00000001056926d8 D __ZGVZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq12MidFrequencyELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E16sStringConverter
+0000000105692768 D __ZGVZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq13HighShelfGainELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E15sValueConverter
+0000000105692740 D __ZGVZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq13HighShelfGainELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E16sStringConverter
+00000001056927d0 D __ZGVZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq4GainELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E15sValueConverter
+00000001056927a8 D __ZGVZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq4GainELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E16sStringConverter
+0000000105692698 D __ZGVZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq7MidGainELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E15sValueConverter
+0000000105692670 D __ZGVZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq7MidGainELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E16sStringConverter
+00000001057df148 D __ZGVZN7ableton9devicekit26SValueConverterForPropertyINS_7devices10channel_eq5model9ChannelEq12LowShelfGainEEEP19AUserFloatConverterRKT_E11spConverter
+00000001057df188 D __ZGVZN7ableton9devicekit26SValueConverterForPropertyINS_7devices10channel_eq5model9ChannelEq12MidFrequencyEEEP19AUserFloatConverterRKT_E11spConverter
+00000001057df1a8 D __ZGVZN7ableton9devicekit26SValueConverterForPropertyINS_7devices10channel_eq5model9ChannelEq13HighShelfGainEEEP19AUserFloatConverterRKT_E11spConverter
+00000001057df1c8 D __ZGVZN7ableton9devicekit26SValueConverterForPropertyINS_7devices10channel_eq5model9ChannelEq4GainEEEP19AUserFloatConverterRKT_E11spConverter
+00000001057df168 D __ZGVZN7ableton9devicekit26SValueConverterForPropertyINS_7devices10channel_eq5model9ChannelEq7MidGainEEEP19AUserFloatConverterRKT_E11spConverter
+00000001057df138 D __ZGVZN7ableton9devicekit27SStringConverterForPropertyINS_7devices10channel_eq5model9ChannelEq10HighpassOnEEEPK16AStringConverterRKT_E11spConverter
+00000001057df158 D __ZGVZN7ableton9devicekit27SStringConverterForPropertyINS_7devices10channel_eq5model9ChannelEq12LowShelfGainEEEPK16AStringConverterRKT_E11spConverter
+00000001057df198 D __ZGVZN7ableton9devicekit27SStringConverterForPropertyINS_7devices10channel_eq5model9ChannelEq12MidFrequencyEEEPK16AStringConverterRKT_E11spConverter
+00000001057df1b8 D __ZGVZN7ableton9devicekit27SStringConverterForPropertyINS_7devices10channel_eq5model9ChannelEq13HighShelfGainEEEPK16AStringConverterRKT_E11spConverter
+00000001057df1d8 D __ZGVZN7ableton9devicekit27SStringConverterForPropertyINS_7devices10channel_eq5model9ChannelEq4GainEEEPK16AStringConverterRKT_E11spConverter
+00000001057df178 D __ZGVZN7ableton9devicekit27SStringConverterForPropertyINS_7devices10channel_eq5model9ChannelEq7MidGainEEEPK16AStringConverterRKT_E11spConverter
+00000001018bc0fc T __ZN23OProcessorCreateManager18SOnProcessorCreateI19OChannelEqProcessorEEvR14OThreadMessage
+00000001018d6278 T __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKbEZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model9ChannelEqEEEEEvRT_EUlbE_E6invokeEPvS4_
+00000001018d63d4 T __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model9ChannelEqEEEEEvRT_EUlfE0_E6invokeEPvS4_
+00000001018d64a0 T __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model9ChannelEqEEEEEvRT_EUlfE1_E6invokeEPvS4_
+00000001018d6568 T __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model9ChannelEqEEEEEvRT_EUlfE2_E6invokeEPvS4_
+00000001018d66e4 T __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model9ChannelEqEEEEEvRT_EUlfE3_E6invokeEPvS4_
+00000001018d629c T __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model9ChannelEqEEEEEvRT_EUlfE_E6invokeEPvS4_
+00000001018d6288 T __ZN7ableton3dsp6detail21ManageFunctionFactoryIZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS4_5model9ChannelEqEEEEEvRT_EUlbE_E6manageEPvPKvNS1_12ManageOpCodeE
+00000001018d648c T __ZN7ableton3dsp6detail21ManageFunctionFactoryIZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS4_5model9ChannelEqEEEEEvRT_EUlfE0_E6manageEPvPKvNS1_12ManageOpCodeE
+00000001018d6554 T __ZN7ableton3dsp6detail21ManageFunctionFactoryIZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS4_5model9ChannelEqEEEEEvRT_EUlfE1_E6manageEPvPKvNS1_12ManageOpCodeE
+00000001018d66d0 T __ZN7ableton3dsp6detail21ManageFunctionFactoryIZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS4_5model9ChannelEqEEEEEvRT_EUlfE2_E6manageEPvPKvNS1_12ManageOpCodeE
+00000001018d66f4 T __ZN7ableton3dsp6detail21ManageFunctionFactoryIZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS4_5model9ChannelEqEEEEEvRT_EUlfE3_E6manageEPvPKvNS1_12ManageOpCodeE
+00000001018d63c0 T __ZN7ableton3dsp6detail21ManageFunctionFactoryIZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS4_5model9ChannelEqEEEEEvRT_EUlfE_E6manageEPvPKvNS1_12ManageOpCodeE
+00000001018d6ad0 T __ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices10channel_eq15ChannelEqDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_14OnBeatTimeJumpEvEEEEvPv
+00000001018d69e8 T __ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices10channel_eq15ChannelEqDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_14OnTempoChangedEvEEEEvPv
+00000001018d6708 T __ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices10channel_eq15ChannelEqDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_19OnSampleRateChangedEvEEEEvPv
+00000001018d6a5c T __ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices10channel_eq15ChannelEqDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_30OnTransportPlayingStateChangedEvEEEEvPv
+00000001018d1888 T __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvP10OSchedulerEE14SProcessorFuncIXadL_ZNS6_4InitES8_EEEEPFvPvS8_EvENUlSD_S8_E_8__invokeESD_S8_
+00000001018d3c58 T __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model9ChannelEq12LowShelfGainEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+00000001018d3c88 T __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model9ChannelEq12MidFrequencyEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+00000001018d3ca0 T __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model9ChannelEq13HighShelfGainEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+00000001018d3cb8 T __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model9ChannelEq4GainEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+00000001018d3c70 T __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model9ChannelEq7MidGainEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+00000001018d241c T __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_6OnMidiES7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+00000001018d39f8 T __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9ChannelEq10HighpassOnEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+00000001018d1edc T __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_3OnXEfEEEEPFvPvfEvENUlSB_fE_8__invokeESB_f
+00000001018d1eec T __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_4OnOnEfEEEEPFvPvfEvENUlSB_fE_8__invokeESB_f
+00000001018d1dd0 T __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_20CalcMainSingleSampleEvEEEEPFvPvEvENUlSB_E_8__invokeESB_
+00000001018d1c20 T __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_4ExitEvEEEEPFvPvEvENUlSB_E_8__invokeESB_
+00000001018d1c24 T __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_5ResetEvEEEEPFvPvEvENUlSB_E_8__invokeESB_
+00000001056925b8 D __ZZN7ableton18device_definitions34DeviceDefinitionBoolParameterModelINS_7devices10channel_eq5model9ChannelEq10HighpassOnELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E15sValueConverter
+0000000105692578 D __ZZN7ableton18device_definitions34DeviceDefinitionBoolParameterModelINS_7devices10channel_eq5model9ChannelEq10HighpassOnELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E16sStringConverter
+0000000105692610 D __ZZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq12LowShelfGainELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E15sValueConverter
+00000001056925d0 D __ZZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq12LowShelfGainELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E16sStringConverter
+00000001056926e0 D __ZZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq12MidFrequencyELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E15sValueConverter
+00000001056926a0 D __ZZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq12MidFrequencyELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E16sStringConverter
+0000000105692748 D __ZZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq13HighShelfGainELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E15sValueConverter
+0000000105692708 D __ZZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq13HighShelfGainELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E16sStringConverter
+00000001056927b0 D __ZZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq4GainELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E15sValueConverter
+0000000105692770 D __ZZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq4GainELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E16sStringConverter
+0000000105692678 D __ZZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq7MidGainELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E15sValueConverter
+0000000105692638 D __ZZN7ableton18device_definitions35DeviceDefinitionFloatParameterModelINS_7devices10channel_eq5model9ChannelEq7MidGainELNS0_14CanBeAutomatedE1EE22addParameterDefinitionINS_9devicekit15PropertyIdModelIS6_vEENSA_17PropertyNameModelIS6_vEEEEvRNSt3__16vectorINS0_13ParameterInfoENSF_9allocatorISH_EEEET_T0_E16sStringConverter
+00000001057df140 D __ZZN7ableton9devicekit26SValueConverterForPropertyINS_7devices10channel_eq5model9ChannelEq12LowShelfGainEEEP19AUserFloatConverterRKT_E11spConverter
+00000001057df180 D __ZZN7ableton9devicekit26SValueConverterForPropertyINS_7devices10channel_eq5model9ChannelEq12MidFrequencyEEEP19AUserFloatConverterRKT_E11spConverter
+00000001057df1a0 D __ZZN7ableton9devicekit26SValueConverterForPropertyINS_7devices10channel_eq5model9ChannelEq13HighShelfGainEEEP19AUserFloatConverterRKT_E11spConverter
+00000001057df1c0 D __ZZN7ableton9devicekit26SValueConverterForPropertyINS_7devices10channel_eq5model9ChannelEq4GainEEEP19AUserFloatConverterRKT_E11spConverter
+00000001057df160 D __ZZN7ableton9devicekit26SValueConverterForPropertyINS_7devices10channel_eq5model9ChannelEq7MidGainEEEP19AUserFloatConverterRKT_E11spConverter
+00000001057df130 D __ZZN7ableton9devicekit27SStringConverterForPropertyINS_7devices10channel_eq5model9ChannelEq10HighpassOnEEEPK16AStringConverterRKT_E11spConverter
+00000001057df150 D __ZZN7ableton9devicekit27SStringConverterForPropertyINS_7devices10channel_eq5model9ChannelEq12LowShelfGainEEEPK16AStringConverterRKT_E11spConverter
+00000001057df190 D __ZZN7ableton9devicekit27SStringConverterForPropertyINS_7devices10channel_eq5model9ChannelEq12MidFrequencyEEEPK16AStringConverterRKT_E11spConverter
+00000001057df1b0 D __ZZN7ableton9devicekit27SStringConverterForPropertyINS_7devices10channel_eq5model9ChannelEq13HighShelfGainEEEPK16AStringConverterRKT_E11spConverter
+00000001057df1d0 D __ZZN7ableton9devicekit27SStringConverterForPropertyINS_7devices10channel_eq5model9ChannelEq4GainEEEPK16AStringConverterRKT_E11spConverter
+00000001057df170 D __ZZN7ableton9devicekit27SStringConverterForPropertyINS_7devices10channel_eq5model9ChannelEq7MidGainEEEPK16AStringConverterRKT_E11spConverter
+
+// ===== create thunk + wrapper + device-kit shell ctor =====
+== THUNK 0x1018bc0fc == (GhidraScript)  
+   containing: __ZN23OProcessorCreateManager18SOnProcessorCreateI19OChannelEqProcessorEEvR14OThreadMessage@1018bc0fc (GhidraScript)  
+   1018bc0fc sub sp,sp,#0x50 (GhidraScript)  
+   1018bc100 stp x20,x19,[sp, #0x30] (GhidraScript)  
+   1018bc104 stp x29,x30,[sp, #0x40] (GhidraScript)  
+   1018bc108 add x29,sp,#0x40 (GhidraScript)  
+   1018bc10c mov x19,x0 (GhidraScript)  
+   1018bc110 add x0,sp,#0x8 (GhidraScript)  
+   1018bc114 mov x1,x19 (GhidraScript)  
+   1018bc118 bl 0x101546e1c (GhidraScript)  
+      -> 101546e1c UNCONDITIONAL_CALL (GhidraScript)  
+   1018bc11c add x0,sp,#0x8 (GhidraScript)  
+   1018bc120 mov x1,x19 (GhidraScript)  
+   1018bc124 bl 0x1018bc138 (GhidraScript)  
+      -> 1018bc138 UNCONDITIONAL_CALL (GhidraScript)  
+   1018bc128 ldp x29,x30,[sp, #0x40] (GhidraScript)  
+   1018bc12c ldp x20,x19,[sp, #0x30] (GhidraScript)  
+   1018bc130 add sp,sp,#0x50 (GhidraScript)  
+
+FUNC 1018bc138 name=FUN_1018bc138 body=144 lines=19 (GhidraScript)  
+ (GhidraScript)  
+long FUN_1018bc138(undefined8 param_1,undefined8 param_2) (GhidraScript)  
+ (GhidraScript)  
+{ (GhidraScript)  
+  undefined8 uVar1; (GhidraScript)  
+  long lVar2; (GhidraScript)  
+  long *plVar3; (GhidraScript)  
+  undefined1 uStack_35; (GhidraScript)  
+  int iStack_34; (GhidraScript)  
+   (GhidraScript)  
+  uVar1 = func_0x00010153be8c(param_2,&iStack_34); (GhidraScript)  
+  func_0x00010153be4c(uVar1,&uStack_35); (GhidraScript)  
+  lVar2 = func_0x00010153ff88(0x28); (GhidraScript)  
+  func_0x000101545cf4(lVar2,param_1,iStack_34 + 0x268,uStack_35); (GhidraScript)  
+  plVar3 = (long *)func_0x0001018a3e0c(*(undefined8 *)(lVar2 + 0x18),param_1,param_2); (GhidraScript)  
+  *plVar3 = (long)(PTR_DAT_1050a3898 + 0x10); (GhidraScript)  
+  func_0x000101545e84(lVar2); (GhidraScript)  
+  return lVar2; (GhidraScript)  
+} (GhidraScript)  
+END 1018bc138 (GhidraScript)  
+
+FUNC 1018a3e0c name=FUN_1018a3e0c body=644 lines=122
+
+long FUN_1018a3e0c(long param_1,int *param_2,undefined8 param_3)
+
+{
+  undefined *puVar1;
+  undefined *puVar2;
+  int iVar3;
+  long *plVar4;
+  undefined8 uVar5;
+  long lVar6;
+  long lStack_80;
+  undefined8 uStack_78;
+  undefined8 uStack_70;
+  undefined8 uStack_68;
+  undefined8 uStack_60;
+  uint auStack_58 [2];
+  
+  plVar4 = (long *)func_0x0001016669a8();
+  *plVar4 = (long)(PTR_DAT_1050a45a8 + 0x10);
+  plVar4[6] = *(long *)(param_2 + 4);
+  plVar4[7] = 0;
+  plVar4[8] = 0;
+  plVar4[9] = 0;
+  plVar4[10] = (long)
+               PTR___ZZNK7ableton7utility8CallbackIFvPvELb0EE13kNullCallbackMUlvE_clEvENUlS2_S2_E_8__invokeES2_S2__1050c84b8
+  ;
+  plVar4[0xb] = 0;
+  plVar4[0xc] = 0;
+  func_0x0001017605cc(plVar4 + 0xd,plVar4 + 10);
+  *(undefined **)(param_1 + 0x78) = PTR_DAT_1050a4648 + 0x10;
+  *(undefined8 *)(param_1 + 0x88) = 0;
+  func_0x00010176136c(param_1 + 0x90,*(undefined8 *)(param_1 + 0x30));
+  uStack_60 = param_3;
+  func_0x0001018d3cd0(&lStack_80,&uStack_60);
+  *(undefined **)(param_1 + 0xa0) = PTR_DAT_1050a4c48 + 0x10;
+  *(undefined8 *)(param_1 + 0xa8) = 0;
+  *(undefined4 *)(param_1 + 0xb0) = 0;
+  if (lStack_80 != 0) {
+    LOAcquire();
+    *(int *)(lStack_80 + 0x14) = *(int *)(lStack_80 + 0x14) + 1;
+    LORelease();
+    *(long *)(param_1 + 0xa8) = lStack_80;
+    *(uint *)(param_1 + 0xb0) = (uint)uStack_78;
+    if ((lStack_80 != 0) &&
+       (lVar6 = *(long *)(lRam000000010571a5b8 + ((ulong)((uint)uStack_78 >> 0x11) & 0x7ff8)),
+       lStack_80 = lVar6 + ((ulong)((uint)uStack_78 << 4) & 0xfffff0), lVar6 != 0)) {
+      LOAcquire();
+      iVar3 = *(int *)(lStack_80 + 0x14);
+      *(int *)(lStack_80 + 0x14) = iVar3 + -1;
+      LORelease();
+      if (iVar3 == 1) {
+        auStack_58[0] = (uint)uStack_78;
+        func_0x000101557be4(auStack_58,0x18);
+      }
+    }
+  }
+  iVar3 = *param_2;
+  uStack_78 = 0;
+  lStack_80 = 0;
+  uStack_68 = 0;
+  uStack_70 = 0;
+  uVar5 = func_0x00010153fb98(0x8a0,0x10);
+  uVar5 = func_0x0001018d4238((float)iVar3,uVar5,&lStack_80);
+  puVar1 = PTR_DAT_1050a54e8 + 0x10;
+  *(undefined8 *)(param_1 + 0xb8) = uVar5;
+  *(undefined **)(param_1 + 0xc0) = puVar1;
+  *(undefined **)(param_1 + 0xd8) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices10channel_eq15ChannelEqDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_19OnSampleRateChangedEvEEEEvPv_10509dfb8
+  ;
+  *(long *)(param_1 + 0xe0) = param_1;
+  *(undefined8 *)(param_1 + 0xe8) = 0;
+  *(undefined **)(param_1 + 0xf0) = puVar1;
+  *(undefined **)(param_1 + 0x108) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices10channel_eq15ChannelEqDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_14OnTempoChangedEvEEEEvPv_10509dfb0
+  ;
+  *(long *)(param_1 + 0x110) = param_1;
+  *(undefined8 *)(param_1 + 0x118) = 0;
+  *(undefined **)(param_1 + 0x120) = puVar1;
+  *(undefined **)(param_1 + 0x138) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices10channel_eq15ChannelEqDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_30OnTransportPlayingStateChangedEvEEEEvPv_10509dfc0
+  ;
+  *(long *)(param_1 + 0x140) = param_1;
+  *(undefined8 *)(param_1 + 0x148) = 0;
+  *(undefined **)(param_1 + 0x150) = puVar1;
+  puVar2 = 
+  PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices10channel_eq15ChannelEqDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_14OnBeatTimeJumpEvEEEEvPv_10509dfa8
+  ;
+  *(undefined **)(param_1 + 0x168) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices10channel_eq15ChannelEqDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_14OnBeatTimeJumpEvEEEEvPv_10509dfa8
+  ;
+  *(long *)(param_1 + 0x170) = param_1;
+  *(undefined8 *)(param_1 + 0x178) = 0;
+  *(undefined **)(param_1 + 0x180) = puVar1;
+  *(undefined **)(param_1 + 0x198) = puVar2;
+  *(long *)(param_1 + 0x1a0) = param_1;
+  *(undefined8 *)(param_1 + 0x1a8) = 0;
+  func_0x00010151348c(param_1 + 0x1b0);
+  func_0x000101513514(param_1 + 0x1c0);
+  puVar1 = 
+  PTR___ZZNK7ableton7utility8CallbackIFvfELb0EE13kNullCallbackMUlvE_clEvENUlPvfE_8__invokeES5_f_1050c8618
+  ;
+  *(undefined8 *)(param_1 + 0x1f0) = 0;
+  *(undefined8 *)(param_1 + 0x1f8) = 0;
+  *(undefined **)(param_1 + 0x1e8) = puVar1;
+  *(undefined4 *)(param_1 + 0x200) = 0;
+  func_0x00010152f478(param_1 + 0x208);
+  *(undefined **)(param_1 + 0x208) = PTR_DAT_1050a3af0 + 0x10;
+  *(long *)(param_1 + 0x230) = param_1;
+  *(undefined1 *)(param_1 + 0x238) = 0;
+  *(undefined1 *)(param_1 + 0x260) = 0;
+  *(undefined8 *)(param_1 + 0x1d0) = 0;
+  *(undefined8 *)(param_1 + 0x1e0) = 0;
+  *(undefined8 *)(param_1 + 0x1d8) = 0;
+  *(undefined8 *)(param_1 + 0x248) = 0;
+  *(undefined8 *)(param_1 + 0x240) = 0;
+  *(undefined1 *)(param_1 + 0x250) = 0;
+  func_0x00010151fc14();
+  iVar3 = func_0x000101521a5c();
+  *(undefined8 *)(param_1 + 0x40) = *(undefined8 *)(param_1 + 0x38);
+  FUN_1018d6b64(plVar4 + 7,(long)(iVar3 << 4));
+  return param_1;
+}
+END 1018a3e0c
+
+FUNC 1018d4238 name=FUN_1018d4238 body=696 lines=248
+
+long FUN_1018d4238(float param_1,long param_2)
+
+{
+  long lVar1;
+  long lVar2;
+  undefined8 uVar3;
+  undefined1 auVar4 [16];
+  undefined8 uVar5;
+  float fVar6;
+  undefined1 auVar7 [16];
+  undefined1 auVar8 [16];
+  float fVar9;
+  float fVar10;
+  float fVar11;
+  float fVar12;
+  float fVar15;
+  float fVar16;
+  float fVar17;
+  undefined1 auVar13 [16];
+  undefined1 auVar14 [16];
+  undefined1 auVar18 [16];
+  undefined1 auVar19 [16];
+  float fVar20;
+  float fVar21;
+  float fVar22;
+  float fVar23;
+  
+  lVar2 = func_0x0001018d4504();
+  lVar1 = lVar2 + 0x230;
+  *(undefined8 *)(lVar2 + 0x670) = 0;
+  *(long *)(lVar2 + 0x10) = lVar1;
+  *(long *)(lVar2 + 0x70) = lVar1;
+  *(long *)(lVar2 + 0xd0) = lVar1;
+  *(long *)(lVar2 + 0x130) = lVar1;
+  *(long *)(lVar2 + 400) = lVar1;
+  *(long *)(lVar2 + 0x1f0) = lVar1;
+  auVar4 = NEON_fmov(0x3f800000,4);
+  uVar5 = auVar4._8_8_;
+  *(undefined8 *)(param_2 + 0x698) = uVar5;
+  uVar3 = auVar4._0_8_;
+  *(undefined8 *)(param_2 + 0x690) = uVar3;
+  *(undefined1 *)(param_2 + 0x6a0) = 0;
+  *(undefined8 *)(param_2 + 0x6b8) = 0;
+  *(undefined8 *)(param_2 + 0x6b0) = 0;
+  *(undefined8 *)(param_2 + 0x6f8) = 0;
+  *(undefined8 *)(param_2 + 0x6f0) = 0;
+  *(undefined8 *)(param_2 + 0x708) = 0;
+  *(undefined8 *)(param_2 + 0x700) = 0;
+  *(undefined8 *)(param_2 + 0x768) = 0;
+  *(undefined8 *)(param_2 + 0x760) = 0;
+  *(undefined8 *)(param_2 + 0x778) = 0;
+  *(undefined8 *)(param_2 + 0x770) = 0;
+  *(undefined4 *)(param_2 + 0x7d8) = 0x44bb8000;
+  *(undefined4 *)(param_2 + 0x7dc) = 0x44bb8000;
+  *(undefined8 *)(param_2 + 2000) = 0x44bb800044bb8000;
+  *(undefined8 *)(param_2 + 0x7e8) = uVar5;
+  *(undefined8 *)(param_2 + 0x7e0) = uVar3;
+  *(undefined8 *)(param_2 + 0x7f8) = 0;
+  *(undefined8 *)(param_2 + 0x7f0) = 0;
+  *(undefined8 *)(param_2 + 0x808) = 0;
+  *(undefined8 *)(param_2 + 0x800) = 0;
+  *(undefined8 *)(param_2 + 0x878) = 0;
+  *(undefined8 *)(param_2 + 0x870) = 0;
+  *(undefined8 *)(param_2 + 0x868) = 0;
+  *(undefined8 *)(param_2 + 0x860) = 0;
+  fVar6 = 1167.8611 / param_1;
+  *(float *)(param_2 + 0x680) = param_1;
+  auVar7._8_4_ = 0x40488f2d;
+  auVar7._0_8_ = 0x40488f2d40488f2d;
+  auVar7._12_4_ = 0x40488f2d;
+  auVar8._4_4_ = fVar6;
+  auVar8._0_4_ = fVar6;
+  auVar8._8_4_ = fVar6;
+  auVar8._12_4_ = fVar6;
+  auVar8 = NEON_fmin(auVar8,auVar7,4);
+  fVar6 = auVar8._0_4_ * 0.5;
+  fVar9 = auVar8._4_4_ * 0.5;
+  fVar10 = auVar8._8_4_ * 0.5;
+  fVar11 = auVar8._12_4_ * 0.5;
+  fVar12 = fVar6 * fVar6;
+  fVar15 = fVar9 * fVar9;
+  fVar16 = fVar10 * fVar10;
+  fVar17 = fVar11 * fVar11;
+  fVar20 = auVar4._0_4_;
+  fVar21 = auVar4._4_4_;
+  fVar22 = auVar4._8_4_;
+  fVar23 = auVar4._12_4_;
+  fVar6 = (fVar6 * (fVar12 * -0.09652461 + 0.99999946)) /
+          (fVar20 + (fVar12 * 0.009981878 + -0.42986727) * fVar12);
+  fVar9 = (fVar9 * (fVar15 * -0.09652461 + 0.99999946)) /
+          (fVar21 + (fVar15 * 0.009981878 + -0.42986727) * fVar15);
+  fVar10 = (fVar10 * (fVar16 * -0.09652461 + 0.99999946)) /
+           (fVar22 + (fVar16 * 0.009981878 + -0.42986727) * fVar16);
+  fVar11 = (fVar11 * (fVar17 * -0.09652461 + 0.99999946)) /
+           (fVar23 + (fVar17 * 0.009981878 + -0.42986727) * fVar17);
+  *(float *)(param_2 + 0x718) = fVar10 + fVar10;
+  *(float *)(param_2 + 0x71c) = fVar11 + fVar11;
+  *(float *)(param_2 + 0x710) = fVar6 + fVar6;
+  *(float *)(param_2 + 0x714) = fVar9 + fVar9;
+  *(undefined4 *)(param_2 + 0x728) = 0x3fd31c23;
+  *(undefined4 *)(param_2 + 0x72c) = 0x3fd31c23;
+  *(undefined8 *)(param_2 + 0x720) = 0x3fd31c233fd31c23;
+  *(undefined8 *)(param_2 + 0x738) = uVar5;
+  *(undefined8 *)(param_2 + 0x730) = uVar3;
+  *(undefined4 *)(param_2 + 0x748) = 0x3fd31c23;
+  *(undefined4 *)(param_2 + 0x74c) = 0x3fd31c23;
+  *(undefined8 *)(param_2 + 0x740) = 0x3fd31c233fd31c23;
+  auVar18._0_4_ = 18221.238 / param_1;
+  auVar18._4_4_ = auVar18._0_4_;
+  auVar18._8_4_ = auVar18._0_4_;
+  auVar18._12_4_ = auVar18._0_4_;
+  *(undefined8 *)(param_2 + 0x758) = uVar5;
+  *(undefined8 *)(param_2 + 0x750) = uVar3;
+  auVar8 = NEON_fmin(auVar18,auVar7,4);
+  fVar6 = auVar8._0_4_ * 0.5;
+  fVar9 = auVar8._4_4_ * 0.5;
+  fVar10 = auVar8._8_4_ * 0.5;
+  fVar11 = auVar8._12_4_ * 0.5;
+  fVar12 = fVar6 * fVar6;
+  fVar15 = fVar9 * fVar9;
+  fVar16 = fVar10 * fVar10;
+  fVar17 = fVar11 * fVar11;
+  fVar6 = (fVar6 * (fVar12 * -0.09652461 + 0.99999946)) /
+          (fVar20 + (fVar12 * 0.009981878 + -0.42986727) * fVar12);
+  fVar9 = (fVar9 * (fVar15 * -0.09652461 + 0.99999946)) /
+          (fVar21 + (fVar15 * 0.009981878 + -0.42986727) * fVar15);
+  fVar10 = (fVar10 * (fVar16 * -0.09652461 + 0.99999946)) /
+           (fVar22 + (fVar16 * 0.009981878 + -0.42986727) * fVar16);
+  fVar11 = (fVar11 * (fVar17 * -0.09652461 + 0.99999946)) /
+           (fVar23 + (fVar17 * 0.009981878 + -0.42986727) * fVar17);
+  *(float *)(param_2 + 0x818) = fVar10 + fVar10;
+  *(float *)(param_2 + 0x81c) = fVar11 + fVar11;
+  *(float *)(param_2 + 0x810) = fVar6 + fVar6;
+  *(float *)(param_2 + 0x814) = fVar9 + fVar9;
+  *(undefined4 *)(param_2 + 0x828) = 0x3fd31c23;
+  *(undefined4 *)(param_2 + 0x82c) = 0x3fd31c23;
+  *(undefined8 *)(param_2 + 0x820) = 0x3fd31c233fd31c23;
+  *(undefined8 *)(param_2 + 0x838) = uVar5;
+  *(undefined8 *)(param_2 + 0x830) = uVar3;
+  *(undefined4 *)(param_2 + 0x848) = 0x3fd31c23;
+  *(undefined4 *)(param_2 + 0x84c) = 0x3fd31c23;
+  *(undefined8 *)(param_2 + 0x840) = 0x3fd31c233fd31c23;
+  *(undefined8 *)(param_2 + 0x858) = uVar5;
+  *(undefined8 *)(param_2 + 0x850) = uVar3;
+  auVar13._0_4_ = 138230.08 / param_1;
+  auVar13._4_4_ = auVar13._0_4_;
+  auVar13._8_4_ = auVar13._0_4_;
+  auVar13._12_4_ = auVar13._0_4_;
+  auVar8 = NEON_fmin(auVar13,auVar7,4);
+  fVar6 = auVar8._0_4_ * 0.5;
+  fVar9 = auVar8._4_4_ * 0.5;
+  fVar10 = auVar8._8_4_ * 0.5;
+  fVar11 = auVar8._12_4_ * 0.5;
+  fVar12 = fVar6 * fVar6;
+  fVar15 = fVar9 * fVar9;
+  fVar16 = fVar10 * fVar10;
+  fVar17 = fVar11 * fVar11;
+  fVar6 = (fVar6 * (fVar12 * -0.09652461 + 0.99999946)) /
+          (fVar20 + (fVar12 * 0.009981878 + -0.42986727) * fVar12);
+  fVar9 = (fVar9 * (fVar15 * -0.09652461 + 0.99999946)) /
+          (fVar21 + (fVar15 * 0.009981878 + -0.42986727) * fVar15);
+  fVar10 = (fVar10 * (fVar16 * -0.09652461 + 0.99999946)) /
+           (fVar22 + (fVar16 * 0.009981878 + -0.42986727) * fVar16);
+  fVar11 = (fVar11 * (fVar17 * -0.09652461 + 0.99999946)) /
+           (fVar23 + (fVar17 * 0.009981878 + -0.42986727) * fVar17);
+  *(float *)(param_2 + 0x888) = fVar10 + fVar10;
+  *(float *)(param_2 + 0x88c) = fVar11 + fVar11;
+  *(float *)(param_2 + 0x880) = fVar6 + fVar6;
+  *(float *)(param_2 + 0x884) = fVar9 + fVar9;
+  auVar19._0_4_ = 9424.778 / param_1;
+  auVar19._4_4_ = 9424.778 / param_1;
+  auVar19._8_4_ = 9424.778 / param_1;
+  auVar19._12_4_ = 9424.778 / param_1;
+  auVar8 = NEON_fmin(auVar19,auVar7,4);
+  fVar6 = auVar8._0_4_ * 0.5;
+  fVar9 = auVar8._4_4_ * 0.5;
+  fVar10 = auVar8._8_4_ * 0.5;
+  fVar11 = auVar8._12_4_ * 0.5;
+  fVar12 = fVar6 * fVar6;
+  fVar15 = fVar9 * fVar9;
+  fVar16 = fVar10 * fVar10;
+  fVar17 = fVar11 * fVar11;
+  fVar6 = (fVar6 * (fVar12 * -0.09652461 + 0.99999946)) /
+          (fVar20 + (fVar12 * 0.009981878 + -0.42986727) * fVar12);
+  fVar9 = (fVar9 * (fVar15 * -0.09652461 + 0.99999946)) /
+          (fVar21 + (fVar15 * 0.009981878 + -0.42986727) * fVar15);
+  fVar10 = (fVar10 * (fVar16 * -0.09652461 + 0.99999946)) /
+           (fVar22 + (fVar16 * 0.009981878 + -0.42986727) * fVar16);
+  fVar11 = (fVar11 * (fVar17 * -0.09652461 + 0.99999946)) /
+           (fVar23 + (fVar17 * 0.009981878 + -0.42986727) * fVar17);
+  *(float *)(param_2 + 0x788) = fVar10 + fVar10;
+  *(float *)(param_2 + 0x78c) = fVar11 + fVar11;
+  *(float *)(param_2 + 0x780) = fVar6 + fVar6;
+  *(float *)(param_2 + 0x784) = fVar9 + fVar9;
+  *(undefined8 *)(param_2 + 0x798) = 0x4000000040000000;
+  *(undefined8 *)(param_2 + 0x790) = 0x4000000040000000;
+  *(undefined8 *)(param_2 + 0x7a8) = uVar5;
+  *(undefined8 *)(param_2 + 0x7a0) = uVar3;
+  *(undefined8 *)(param_2 + 0x7b8) = 0x4000000040000000;
+  *(undefined8 *)(param_2 + 0x7b0) = 0x4000000040000000;
+  *(undefined8 *)(param_2 + 0x7c8) = uVar5;
+  *(undefined8 *)(param_2 + 0x7c0) = uVar3;
+  auVar14._0_4_ = 502.65485 / param_1;
+  auVar14._4_4_ = 502.65485 / param_1;
+  auVar14._8_4_ = 502.65485 / param_1;
+  auVar14._12_4_ = 502.65485 / param_1;
+  auVar8 = NEON_fmin(auVar14,auVar7,4);
+  fVar6 = auVar8._0_4_ * 0.5;
+  fVar9 = auVar8._4_4_ * 0.5;
+  fVar11 = auVar8._8_4_ * 0.5;
+  fVar15 = auVar8._12_4_ * 0.5;
+  fVar10 = fVar6 * fVar6;
+  fVar12 = fVar9 * fVar9;
+  fVar16 = fVar11 * fVar11;
+  fVar17 = fVar15 * fVar15;
+  fVar6 = (fVar6 * (fVar10 * -0.09652461 + 0.99999946)) /
+          (fVar20 + (fVar10 * 0.009981878 + -0.42986727) * fVar10);
+  fVar10 = (fVar9 * (fVar12 * -0.09652461 + 0.99999946)) /
+           (fVar21 + (fVar12 * 0.009981878 + -0.42986727) * fVar12);
+  fVar12 = (fVar11 * (fVar16 * -0.09652461 + 0.99999946)) /
+           (fVar22 + (fVar16 * 0.009981878 + -0.42986727) * fVar16);
+  fVar16 = (fVar15 * (fVar17 * -0.09652461 + 0.99999946)) /
+           (fVar23 + (fVar17 * 0.009981878 + -0.42986727) * fVar17);
+  fVar6 = fVar6 + fVar6;
+  fVar10 = fVar10 + fVar10;
+  fVar12 = fVar12 + fVar12;
+  fVar16 = fVar16 + fVar16;
+  fVar9 = fVar6 + 2.0;
+  fVar11 = fVar10 + 2.0;
+  fVar15 = fVar12 + 2.0;
+  fVar17 = fVar16 + 2.0;
+  *(ulong *)(param_2 + 0x6c8) =
+       CONCAT44((fVar16 * 0.0 + 2.0) / fVar17,(fVar12 * 0.0 + 2.0) / fVar15);
+  *(ulong *)(param_2 + 0x6c0) = CONCAT44((fVar10 * 0.0 + 2.0) / fVar11,(fVar6 * 0.0 + 2.0) / fVar9);
+  auVar4._0_8_ = CONCAT44((fVar10 + -2.0) / fVar11,(fVar6 + -2.0) / fVar9);
+  auVar4._8_4_ = (fVar12 + -2.0) / fVar15;
+  auVar4._12_4_ = (fVar16 + -2.0) / fVar17;
+  *(ulong *)(param_2 + 0x6d8) =
+       CONCAT44((fVar16 * 0.0 + -2.0) / fVar17,(fVar12 * 0.0 + -2.0) / fVar15);
+  *(ulong *)(param_2 + 0x6d0) =
+       CONCAT44((fVar10 * 0.0 + -2.0) / fVar11,(fVar6 * 0.0 + -2.0) / fVar9);
+  *(long *)(param_2 + 0x6e8) = auVar4._8_8_;
+  *(undefined8 *)(param_2 + 0x6e0) = auVar4._0_8_;
+  func_0x0001018d5d20(lVar2 + 0x680,param_2);
+  *(undefined1 *)(param_2 + 0x890) = 1;
+  return param_2;
+}
+END 1018d4238
+FUNC 1018d1888 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvP10OSchedulerEE14SProcessorFuncIXadL_ZNS6_4InitES8_EEEEPFvPvS8_EvENUlSD_S8_E_8__invokeESD_S8_ body=1 lines=67
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvP10OSchedulerEE14SProcessorFuncIXadL_ZNS6_4InitES8_EEEEPFvPvS8_EvENUlSD_S8_E_8__invokeESD_S8_
+               (long param_1)
+
+{
+  long *plVar1;
+  long lVar2;
+  long lVar3;
+  
+  func_0x0001018d176c();
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0xe8) = lVar2 + 800;
+  lVar3 = *(long *)(lVar2 + 0x328);
+  *(long *)(param_1 + 200) = lVar3;
+  *(undefined8 *)(param_1 + 0xd0) = 0;
+  plVar1 = (long *)(lVar2 + 0x330);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0xc0;
+  *(long *)(lVar2 + 0x328) = param_1 + 0xc0;
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0x118) = lVar2 + 0x260;
+  lVar3 = *(long *)(lVar2 + 0x268);
+  *(long *)(param_1 + 0xf8) = lVar3;
+  *(undefined8 *)(param_1 + 0x100) = 0;
+  plVar1 = (long *)(lVar2 + 0x270);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0xf0;
+  *(long *)(lVar2 + 0x268) = param_1 + 0xf0;
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0x148) = lVar2 + 0x290;
+  lVar3 = *(long *)(lVar2 + 0x298);
+  *(long *)(param_1 + 0x128) = lVar3;
+  *(undefined8 *)(param_1 + 0x130) = 0;
+  plVar1 = (long *)(lVar2 + 0x2a0);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+END 1018d1888
+FUNC 1018d1c24 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_5ResetEvEEEEPFvPvEvENUlSB_E_8__invokeESB_ body=1 lines=28
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_5ResetEvEEEEPFvPvEvENUlSB_E_8__invokeESB_
+               (long param_1)
+
+{
+  long lVar1;
+  
+  lVar1 = *(long *)(param_1 + 0xb8);
+  *(undefined8 *)(lVar1 + 0x6b0) = 0;
+  *(undefined8 *)(lVar1 + 0x6b8) = 0;
+  *(undefined8 *)(lVar1 + 0x6f8) = 0;
+  *(undefined8 *)(lVar1 + 0x6f0) = 0;
+  *(undefined8 *)(lVar1 + 0x708) = 0;
+  *(undefined8 *)(lVar1 + 0x700) = 0;
+  *(undefined8 *)(lVar1 + 0x768) = 0;
+  *(undefined8 *)(lVar1 + 0x760) = 0;
+  *(undefined8 *)(lVar1 + 0x778) = 0;
+  *(undefined8 *)(lVar1 + 0x770) = 0;
+  *(undefined8 *)(lVar1 + 0x7f8) = 0;
+  *(undefined8 *)(lVar1 + 0x7f0) = 0;
+  *(undefined8 *)(lVar1 + 0x808) = 0;
+  *(undefined8 *)(lVar1 + 0x800) = 0;
+  *(undefined8 *)(lVar1 + 0x868) = 0;
+  *(undefined8 *)(lVar1 + 0x860) = 0;
+  *(undefined8 *)(lVar1 + 0x878) = 0;
+  *(undefined8 *)(lVar1 + 0x870) = 0;
+  return;
+}
+END 1018d1c24
+FUNC 1018d1c20 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_4ExitEvEEEEPFvPvEvENUlSB_E_8__invokeESB_ body=1 lines=167
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_4ExitEvEEEEPFvPvEvENUlSB_E_8__invokeESB_
+               (long param_1)
+
+{
+  long lVar1;
+  long lVar2;
+  long lVar3;
+  long lVar4;
+  
+  lVar1 = *(long *)(param_1 + 0x30);
+  lVar4 = param_1 + 0xc0;
+  *(undefined8 *)(param_1 + 0xe8) = 0;
+  lVar2 = *(long *)(param_1 + 200);
+  if (*(long *)(lVar1 + 800) == lVar4) {
+    *(long *)(lVar1 + 800) = lVar2;
+    lVar3 = *(long *)(lVar1 + 0x328);
+  }
+  else {
+    lVar3 = *(long *)(lVar1 + 0x328);
+  }
+  if (lVar3 == lVar4) {
+    *(long *)(lVar1 + 0x328) = lVar2;
+    if (lVar2 != 0) {
+      *(undefined8 *)(lVar2 + 0x10) = 0;
+    }
+  }
+  else {
+    *(long *)(*(long *)(param_1 + 0xd0) + 8) = lVar2;
+  }
+END 1018d1c20
+FUNC 1018d1edc name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_3OnXEfEEEEPFvPvfEvENUlSB_fE_8__invokeESB_f body=1 lines=58
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_3OnXEfEEEEPFvPvfEvENUlSB_fE_8__invokeESB_f
+               (float param_1,long param_2)
+
+{
+  uint uVar1;
+  int iVar2;
+  uint uVar3;
+  long lVar4;
+  long lVar5;
+  undefined8 uVar6;
+  
+  *(bool *)(param_2 + 0x200) = param_1 != 0.0;
+  if (*(char *)(param_2 + 0x201) == '\0') {
+    if (*(char *)(param_2 + 0x202) == '\0') {
+      return;
+    }
+    uVar3 = 0;
+code_r0x0001018d1e44:
+    *(char *)(param_2 + 0x202) = (char)uVar3;
+    uVar6 = 0;
+  }
+  else {
+    if (*(char *)(param_2 + 0x200) == '\0') {
+      uVar1 = func_0x000103b720f0(*(long *)(param_2 + 0xb8) + 0x680);
+      uVar3 = uVar1 ^ 1;
+      if (*(byte *)(param_2 + 0x202) == uVar3) {
+        return;
+      }
+      if ((uVar1 & 1) != 0) goto code_r0x0001018d1e44;
+END 1018d1edc
+FUNC 1018d1eec name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_4OnOnEfEEEEPFvPvfEvENUlSB_fE_8__invokeESB_f body=1 lines=58
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_4OnOnEfEEEEPFvPvfEvENUlSB_fE_8__invokeESB_f
+               (float param_1,long param_2)
+
+{
+  uint uVar1;
+  int iVar2;
+  uint uVar3;
+  long lVar4;
+  long lVar5;
+  undefined8 uVar6;
+  
+  *(bool *)(param_2 + 0x201) = param_1 != 0.0;
+  if (*(char *)(param_2 + 0x201) == '\0') {
+    if (*(char *)(param_2 + 0x202) == '\0') {
+      return;
+    }
+    uVar3 = 0;
+code_r0x0001018d1e44:
+    *(char *)(param_2 + 0x202) = (char)uVar3;
+    uVar6 = 0;
+  }
+  else {
+    if (*(char *)(param_2 + 0x200) == '\0') {
+      uVar1 = func_0x000103b720f0(*(long *)(param_2 + 0xb8) + 0x680);
+      uVar3 = uVar1 ^ 1;
+      if (*(byte *)(param_2 + 0x202) == uVar3) {
+        return;
+      }
+      if ((uVar1 & 1) != 0) goto code_r0x0001018d1e44;
+END 1018d1eec
+FUNC 1018d39f8 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9ChannelEq10HighpassOnEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=59
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9ChannelEq10HighpassOnEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  long *plVar3;
+  long lVar4;
+  long *plVar5;
+  long *plVar6;
+  long lVar7;
+  long *plVar8;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  *(double *)(lVar2 + 0x30) = (double)param_1;
+  *(double *)(lVar2 + 0x20) = (double)param_1;
+  *(undefined8 *)(lVar2 + 0x28) = 0;
+  *(bool *)(lVar2 + 0x18) = 0.5 <= param_1;
+  plVar3 = *(long **)(lVar2 + 0x10);
+  lVar4 = plVar3[0x88];
+  plVar5 = plVar3;
+  if (lVar4 == 0) {
+code_r0x0001018d3a5c:
+    plVar1 = plVar3 + lVar4;
+    plVar8 = plVar5 + 1;
+    plVar6 = plVar5;
+    if (plVar5 != plVar1 && plVar8 != plVar1) {
+      do {
+        plVar5 = plVar6;
+        if (*plVar8 != lVar2) {
+          plVar5 = plVar6 + 1;
+          *plVar6 = *plVar8;
+        }
+        plVar8 = plVar8 + 1;
+        plVar6 = plVar5;
+      } while (plVar8 != plVar1);
+    }
+    if (plVar5 != plVar1) {
+      plVar3[0x88] = lVar4 - ((long)plVar1 - (long)plVar5 >> 3);
+END 1018d39f8
+FUNC 1018d3c58 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model9ChannelEq12LowShelfGainEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=110
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model9ChannelEq12LowShelfGainEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (undefined8 param_1,undefined8 param_2)
+
+{
+  long lVar1;
+  long *plVar2;
+  undefined1 *puVar3;
+  long *plVar4;
+  ulong uVar5;
+  long lVar6;
+  long lVar7;
+  long *plVar8;
+  long lVar9;
+  long *plVar10;
+  undefined1 *unaff_x29;
+  code *unaff_x30;
+  float fVar11;
+  float fVar12;
+  double dVar13;
+  double dVar14;
+  double dVar15;
+  undefined1 auVar16 [16];
+  
+  auVar16._8_8_ = param_2;
+  auVar16._0_8_ = param_1;
+  while( true ) {
+    uVar5 = (ulong)(int)auVar16._8_8_[1];
+    fVar12 = *auVar16._8_8_;
+    lVar7 = *(long *)(auVar16._0_8_ + 0xb8);
+    lVar1 = lVar7 + 0x50;
+    puVar3 = (undefined1 *)((long)register0x00000008 + -0x10);
+    *(undefined1 **)((long)register0x00000008 + -0x10) = unaff_x29;
+    *(code **)((long)register0x00000008 + -8) = unaff_x30;
+    dVar13 = (double)fVar12;
+END 1018d3c58
+FUNC 1018d629c name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model9ChannelEqEEEEEvRT_EUlfE_E6invokeEPvS4_ body=1 lines=72
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model9ChannelEqEEEEEvRT_EUlfE_E6invokeEPvS4_
+               (long *param_1,float *param_2)
+
+{
+  float *pfVar1;
+  float fVar2;
+  float fVar3;
+  float fVar5;
+  float fVar6;
+  undefined1 auVar4 [16];
+  float fVar7;
+  undefined1 auVar8 [16];
+  float fVar9;
+  float fVar10;
+  float fVar11;
+  float fVar12;
+  
+  fVar2 = *param_2;
+  pfVar1 = (float *)*param_1;
+  fVar3 = fVar2;
+  if (5.6 < fVar2) {
+    fVar3 = 5.6;
+  }
+  fVar5 = fVar2;
+  if (5.6 <= fVar2) {
+    fVar5 = fVar3;
+  }
+  fVar3 = (fVar5 + -0.18) / 5.42;
+  auVar4._0_4_ = ((fVar3 * 101.0 + (1.0 - fVar3) * 201.0) * 6.2831855) / *pfVar1;
+  auVar4._4_4_ = auVar4._0_4_;
+  auVar4._8_4_ = auVar4._0_4_;
+  auVar4._12_4_ = auVar4._0_4_;
+  auVar8._8_4_ = 0x40488f2d;
+  auVar8._0_8_ = 0x40488f2d40488f2d;
+END 1018d629c
+FUNC 1018d63d4 name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model9ChannelEqEEEEEvRT_EUlfE0_E6invokeEPvS4_ body=1 lines=62
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model9ChannelEqEEEEEvRT_EUlfE0_E6invokeEPvS4_
+               (undefined8 *param_1,float *param_2)
+
+{
+  float *pfVar1;
+  float fVar2;
+  float fVar3;
+  float fVar5;
+  float fVar6;
+  undefined1 auVar4 [16];
+  float fVar7;
+  undefined1 auVar8 [16];
+  float fVar9;
+  float fVar10;
+  float fVar11;
+  float fVar12;
+  
+  fVar2 = *param_2;
+  pfVar1 = (float *)*param_1;
+  *(ulong *)(pfVar1 + 0x5a) = CONCAT44(fVar2,fVar2);
+  *(ulong *)(pfVar1 + 0x58) = CONCAT44(fVar2,fVar2);
+  fVar3 = *pfVar1;
+  auVar4._0_4_ = (pfVar1[0x54] * 6.2831855) / fVar3;
+  auVar4._4_4_ = (pfVar1[0x55] * 6.2831855) / fVar3;
+  auVar4._8_4_ = (pfVar1[0x56] * 6.2831855) / fVar3;
+  auVar4._12_4_ = (pfVar1[0x57] * 6.2831855) / fVar3;
+  auVar8._8_4_ = 0x40488f2d;
+  auVar8._0_8_ = 0x40488f2d40488f2d;
+  auVar8._12_4_ = 0x40488f2d;
+  auVar4 = NEON_fmin(auVar4,auVar8,4);
+  fVar3 = auVar4._0_4_ * 0.5;
+  fVar5 = auVar4._4_4_ * 0.5;
+  fVar6 = auVar4._8_4_ * 0.5;
+  fVar7 = auVar4._12_4_ * 0.5;
+END 1018d63d4
+FUNC 1018d64a0 name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model9ChannelEqEEEEEvRT_EUlfE1_E6invokeEPvS4_ body=1 lines=73
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model9ChannelEqEEEEEvRT_EUlfE1_E6invokeEPvS4_
+               (undefined8 *param_1,float *param_2)
+
+{
+  float *pfVar1;
+  float fVar2;
+  float fVar3;
+  float fVar6;
+  float fVar7;
+  undefined1 auVar4 [16];
+  undefined1 auVar5 [16];
+  float fVar8;
+  float fVar9;
+  float fVar10;
+  float fVar11;
+  float fVar12;
+  float fVar13;
+  float fVar14;
+  float fVar15;
+  
+  fVar2 = *param_2;
+  pfVar1 = (float *)*param_1;
+  fVar3 = *pfVar1;
+  auVar4._0_4_ = (fVar2 * 6.2831855) / fVar3;
+  auVar4._4_4_ = (fVar2 * 6.2831855) / fVar3;
+  auVar4._8_4_ = (fVar2 * 6.2831855) / fVar3;
+  auVar4._12_4_ = (fVar2 * 6.2831855) / fVar3;
+  auVar5._8_4_ = 0x40488f2d;
+  auVar5._0_8_ = 0x40488f2d40488f2d;
+  auVar5._12_4_ = 0x40488f2d;
+  auVar5 = NEON_fmin(auVar4,auVar5,4);
+  fVar3 = auVar5._0_4_ * 0.5;
+  fVar6 = auVar5._4_4_ * 0.5;
+  fVar7 = auVar5._8_4_ * 0.5;
+END 1018d64a0
+FUNC 1018d6568 name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model9ChannelEqEEEEEvRT_EUlfE2_E6invokeEPvS4_ body=1 lines=99
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model9ChannelEqEEEEEvRT_EUlfE2_E6invokeEPvS4_
+               (long *param_1,float *param_2)
+
+{
+  undefined1 auVar1 [16];
+  float *pfVar2;
+  undefined1 auVar3 [16];
+  undefined1 auVar4 [16];
+  float fVar5;
+  float fVar6;
+  float fVar8;
+  float fVar9;
+  undefined1 auVar7 [16];
+  float fVar10;
+  float fVar11;
+  float fVar12;
+  float fVar13;
+  float fVar14;
+  
+  fVar5 = *param_2;
+  pfVar2 = (float *)*param_1;
+  auVar4._0_4_ = 18221.238 / *pfVar2;
+  auVar4._4_4_ = auVar4._0_4_;
+  auVar4._8_4_ = auVar4._0_4_;
+  auVar4._12_4_ = auVar4._0_4_;
+  auVar7._8_4_ = 0x40488f2d;
+  auVar7._0_8_ = 0x40488f2d40488f2d;
+  auVar7._12_4_ = 0x40488f2d;
+  auVar7 = NEON_fmin(auVar4,auVar7,4);
+  fVar6 = auVar7._0_4_ * 0.5;
+  fVar8 = auVar7._4_4_ * 0.5;
+  fVar9 = auVar7._8_4_ * 0.5;
+  fVar10 = auVar7._12_4_ * 0.5;
+  fVar11 = fVar6 * fVar6;
+END 1018d6568
+FUNC 1018d66e4 name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model9ChannelEqEEEEEvRT_EUlfE3_E6invokeEPvS4_ body=1 lines=14
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKfEZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model9ChannelEqEEEEEvRT_EUlfE3_E6invokeEPvS4_
+               (long *param_1,undefined4 *param_2)
+
+{
+  undefined4 uVar1;
+  long lVar2;
+  
+  lVar2 = *param_1;
+  uVar1 = *param_2;
+  *(ulong *)(lVar2 + 0x18) = CONCAT44(uVar1,uVar1);
+  *(ulong *)(lVar2 + 0x10) = CONCAT44(uVar1,uVar1);
+  return;
+}
+END 1018d66e4
+FUNC 1018d6278 name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKbEZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model9ChannelEqEEEEEvRT_EUlbE_E6invokeEPvS4_ body=16 lines=8
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKbEZNS_7devices10channel_eq15ChannelEqDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS7_5model9ChannelEqEEEEEvRT_EUlbE_E6invokeEPvS4_
+               (long *param_1,undefined1 *param_2)
+
+{
+  *(undefined1 *)(*param_1 + 0x20) = *param_2;
+  return;
+}
+END 1018d6278
+FUNC 1018d1dd0 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_20CalcMainSingleSampleEvEEEEPFvPvEvENUlSB_E_8__invokeESB_ body=1 lines=96
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices10channel_eq15ChannelEqDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_20CalcMainSingleSampleEvEEEEPFvPvEvENUlSB_E_8__invokeESB_
+               (long param_1)
+
+{
+  undefined4 *puVar1;
+  undefined4 *puVar2;
+  uint uVar3;
+  uint uVar4;
+  uint *puVar5;
+  long lVar6;
+  undefined8 *puVar7;
+  long lVar8;
+  undefined4 uVar9;
+  undefined4 uVar10;
+  undefined2 uStack_50;
+  undefined4 uStack_48;
+  undefined4 uStack_44;
+  
+  if (*(char *)(param_1 + 0x201) == '\0') {
+    if (*(char *)(param_1 + 0x202) != '\0') {
+code_r0x0001018d1d3c:
+      if (*(char *)(param_1 + 0x203) != '\0') {
+        puVar5 = *(uint **)(param_1 + 0xa8);
+        uVar4 = puVar5[2];
+        *(undefined1 *)((long)puVar5 + (ulong)uVar4 * 2 + 0xd) = 0;
+        LOAcquire();
+        uVar3 = *puVar5;
+        *puVar5 = uVar4 << 0x10 | 1;
+        LORelease();
+        puVar5[2] = uVar3 >> 0x10;
+        *(undefined1 *)(param_1 + 0x203) = 0;
+      }
+code_r0x0001018d1d6c:
+      *(undefined4 *)(param_1 + 0x228) = 1;
+      func_0x00010154e720(*(undefined8 *)(param_1 + 0x30),param_1 + 0x208);
+      *(undefined1 *)(param_1 + 0x238) = 1;
+      goto code_r0x0001018d1d84;
+    }
+  }
+  else {
+    lVar6 = *(long *)(param_1 + 0xb8);
+    if (*(char *)(param_1 + 0x200) == '\0') {
+      uVar4 = func_0x000103b720f0(lVar6 + 0x680);
+      uVar4 = uVar4 ^ 1;
+      uVar3 = (uint)*(byte *)(param_1 + 0x202);
+      if (uVar3 != uVar4) goto code_r0x0001018d1d38;
+    }
+    else {
+      uVar4 = 1;
+      uVar3 = (uint)*(byte *)(param_1 + 0x202);
+      if (*(byte *)(param_1 + 0x202) != 1) {
+code_r0x0001018d1d38:
+        if ((uVar4 & 1) == 0) goto code_r0x0001018d1d3c;
+        goto code_r0x0001018d1d6c;
+      }
+    }
+    if (uVar3 != 0) {
+      uStack_50 = 0;
+      puVar1 = *(undefined4 **)(param_1 + 0x1d0);
+END 1018d1dd0
+FUNC 1018d6708 name=__ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices10channel_eq15ChannelEqDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_19OnSampleRateChangedEvEEEEvPv body=1 lines=27
+
+void __ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices10channel_eq15ChannelEqDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_19OnSampleRateChangedEvEEEEvPv
+               (long param_1)
+
+{
+  int *piVar1;
+  long lVar2;
+  long lVar3;
+  float fStack_34;
+  
+  if (*(long *)(param_1 + 0x88) != 0) {
+    lVar2 = param_1 + 0x80;
+    lVar3 = *(long *)(param_1 + 0x88) * 0xe0;
+    do {
+      func_0x000101760f48(lVar2);
+      lVar2 = lVar2 + 0xe0;
+      lVar3 = lVar3 + -0xe0;
+    } while (lVar3 != 0);
+  }
+  piVar1 = (int *)FUN_101551390(*(undefined8 *)(param_1 + 0x30));
+  fStack_34 = (float)*piVar1;
+  lVar2 = *(long *)(param_1 + 0xb8) + 0x680;
+  func_0x0001018d6794(lVar2,&fStack_34);
+  func_0x000103b720f8(lVar2);
+  func_0x0001018d176c(param_1);
+  return;
+}
+END 1018d6708
+FUNC 103b71ff0 name=FUN_103b71ff0 body=1 lines=50
+
+void FUN_103b71ff0(undefined8 param_1,undefined8 *param_2)
+
+{
+  undefined8 uVar1;
+  undefined **ppuVar2;
+  long lVar3;
+  undefined8 uStack_60;
+  undefined8 uStack_58;
+  undefined *puStack_48;
+  undefined8 auStack_40 [2];
+  undefined **ppuStack_30;
+  long lStack_28;
+  
+  lStack_28 = *(long *)PTR____stack_chk_guard_1050c86c8;
+  puStack_48 = PTR_DAT_1050b2318 + 0x10;
+  uStack_60 = *param_2;
+  uStack_58 = 0;
+  auStack_40[0] = param_1;
+  ppuStack_30 = &puStack_48;
+  func_0x000103b721f8(auStack_40,&uStack_60);
+  if (ppuStack_30 == &puStack_48) {
+    lVar3 = 4;
+    ppuVar2 = &puStack_48;
+code_r0x000103b72070:
+    (**(code **)(*ppuVar2 + lVar3 * 8))();
+  }
+  else if (ppuStack_30 != (undefined **)0x0) {
+    lVar3 = 5;
+    ppuVar2 = ppuStack_30;
+    goto code_r0x000103b72070;
+  }
+  if (*(long *)PTR____stack_chk_guard_1050c86c8 == lStack_28) {
+    return;
+  }
+  uVar1 = ___stack_chk_fail();
+  if (ppuStack_30 == &puStack_48) {
+    lVar3 = 4;
+    ppuVar2 = &puStack_48;
+  }
+  else {
+    if (ppuStack_30 == (undefined **)0x0) goto code_r0x000103b720e4;
+    lVar3 = 5;
+    ppuVar2 = ppuStack_30;
+  }
+  (**(code **)(*ppuVar2 + lVar3 * 8))();
+code_r0x000103b720e4:
+  __Unwind_Resume(uVar1);
+  return;
+}
+END 103b71ff0
+FUNC 103b720f0 name=FUN_103b720f0 body=1 lines=6
+
+undefined8 FUN_103b720f0(void)
+
+{
+  return 1;
+}
+END 103b720f0
+FUNC 103b720ec name=FUN_103b720ec body=1 lines=6
+
+void FUN_103b720ec(void)
+
+{
+  return;
+}
+END 103b720ec
