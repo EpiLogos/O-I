@@ -472,3 +472,17 @@ both against WB0's 1:1 passthrough.
   `bash with_live_lock.sh warp-seg90 bash lane3_render.sh WB3_SEG90`
   then `WB4_SEG90CP`, analysis per the discriminator above
   (onset vs 1.5625 ms; spike extent; WB3-vs-WB4 byte/spectral diff).
+
+### Seg90 mismatch — mode 0 separates (2026-10-09, coordinator render of the staged WB3/WB4 pair)
+
+The storage finding stands (segment tempo is derived from the WarpMarker
+ratio — no SegTempo field exists), and the authored mismatch (markers
+(0,0)+(1.0 s, 1.5 beats) = 90 BPM embedded vs 120 set) finally separates the
+engines: **WB4 (mode 5) onset 1.56 ms = the marker-derived ideal exactly**
+(1.5625 ms — true stretch keeps marker timing); **WB3 (mode 0) onset 2.09 ms
+(+0.53 ms off) with a +4 dB hotter spike** (−42 vs −46 dB first window) — the
+Beats-family engine re-slices on its own grid under mismatch. Both render
+4.000 s (loop-pinned). After four 1:1/2× nulls this is the first positive
+mode-0 signature: mode 0 is grid-active under tempo mismatch, mode 5 is not.
+The absolute name "Beats" stays LOM-inferred; the behavioral identity
+(grid-reslicing under mismatch) is measured.
