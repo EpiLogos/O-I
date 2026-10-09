@@ -336,6 +336,39 @@ can still live is the routed path, feedback of a *modulator*: `Operator.1/
 Feedback` with B → A (OP7's audible chain) is the named next discriminator;
 an A Feedback 100 pin would seal the carrier null across the full range.
 
+## Round 6 discriminators: the carrier null seals; shell D mirrors C (OP16/OP17, 2026-10-09, op-r6 lane)
+
+Both probes derive from OP7 by one and two pins (`harness/build_op16_17.py`,
+the build_op15 ET + gzip mtime=0 convention, each with a verify pass);
+rendered via `with_live_lock.sh` + `lane3_render.sh` (both exit 0 first
+attempt, 256 s); analyzer `harness/analyze_op16_17.py` (the OP15 conventions:
+steady RMS ×4, note-1 h1..h6 at [1.15, 1.70], β from h1/h2, 90–2000 Hz scan,
+onset profile), with OP7/OP13/OP15 carried in the family so the verdicts are
+direct comparisons.
+
+**OP16_AFB100 — `Operator.0/Feedback` → 100, B off (the M1 voice).** The
+top of the MidiControllerRange (Min 0 / Max 100 — the OP15 scale reading,
+maxed). Result: **byte-flat M1.** Steady RMS −0.00 ×4; h1 −29.91 unchanged;
+h2..h6 within 0.1 dB of M1's dither-floor values (h2 −84.02, h3 −88.38);
+β_h2 = 0.0039 (floor — the printed "self-FM cross-check" ratio reads dither,
+not signal); the scan returns the identical floor family peak-for-peak; the
+onset profile is byte-identical to M1. **The carrier-feedback null seals
+across the full stored range: {0.5, 25, 100} of 0..100, a 200× span, all
+acoustically zero on an unrouted carrier.** Feedback on a lone Algorithm-0
+carrier is inert at any stored value; only a routed-feedback pin
+(`Operator.1/Feedback`, B → A) can still carry a DX-style law.
+
+**OP17_OSCD — shell D on: `Operator.1/Volume` → the off floor,
+`Operator.2/Volume` → the off floor, `Operator.3/Volume` → 1 (Algorithm 0
+unchanged).** The exact OP13 state with D in C's seat. Result: **byte-flat
+M1** — steady RMS +0.00 ×4 (also +0.00 vs OP13); h1..h6 within 0.09 dB of
+M1 (h1 −29.91, h2 −84.04 at the dither floor); β at the floor; the scan is
+identical to M1's, peak for peak; onset byte-identical. **Shell D mirrors C,
+not B: at Algorithm 0 with A as the only carrier, D's Volume at 1.0 is
+acoustically inert — no own sine, no level change, no sidebands. Only B
+routes into A at Algorithm 0 (OP7's +34.5 dB h2 remains the sole audible
+shell signature); C and D are silent shells at these defaults.**
+
 ## Gate residuals (operator_voice_golden_gate, 2026-10-08)
 
 Thresholds (stated in `tests/golden.rs` before analysis): steady per-note
@@ -402,9 +435,12 @@ key 48).
 - Algorithm 0/7 nulls (OP11/OP12): **high** for these pins — the OP12 null
   holds with C/D audible (three independent render chains agree to ≤0.15 dB).
 - Shell C inert at Algorithm 0 (OP13): **high** (byte-flat M1).
-- Carrier Feedback null at {0.5, 25} of 0..100 (OP14/OP15): **high** across
-  this 50× span, to the −84 dBFS floor; the routed-modulator case
-  (`Operator.1/Feedback`, B → A) and the 26..100 stretch are untested.
+- Shell D inert at Algorithm 0 (OP17): **high** (byte-flat M1, ±0.09 dB
+  h1..h6, scan identical peak-for-peak) — only B routes into A at these
+  defaults.
+- Carrier Feedback null at {0.5, 25, 100} of 0..100 (OP14/OP15/OP16): **high
+  across the full stored range** (200× span, to the −84 dBFS floor); the
+  routed-modulator case (`Operator.1/Feedback`, B → A) is untested.
 
 ## Evidence
 
@@ -419,6 +455,10 @@ key 48).
 - OP15 render: `harness/renders/OP15_AFB25.aif`; set
   `harness/live/OP15_AFB25.als` (built by `harness/build_op15.py` from
   OP7); analyzer `harness/analyze_op15.py`.
+- OP16/OP17 renders: `harness/renders/OP16_AFB100.aif`,
+  `OP17_OSCD.aif`; sets `harness/live/OP16_AFB100.als`,
+  `OP17_OSCD.als` (built by `harness/build_op16_17.py` from OP7, each with
+  a verify pass); analyzer `harness/analyze_op16_17.py`.
 - Analyzers: `harness/analyze_operator.py`,
   `harness/analyze_operator_decay.py` (τ fit; self-validates on OP2);
   gate:
