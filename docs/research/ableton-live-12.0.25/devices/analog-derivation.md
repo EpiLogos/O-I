@@ -50,6 +50,12 @@ five compound factories carry symbols.
   second device-unit parameter cluster 0x102894000..0x10289e000 (no frame
   pointers at all; "Unison Voices" 0x102897bc4, "LFO SyncRate" 0x102899714,
   filter-menu builder 0x10289bec0..0x10289c070) [D anchors, §2 evidence].
+  **[CORRECTION 2026-10-09, tension lane]** this cluster is NOT Analog code:
+  it sits inside the AStringStudio TU (0x102893660..~0x1028a9880) and
+  references Tension's member keys/display names — an ADRP+ADD scan of all
+  308 Analog mp* keys over 0x102893660..0x1028a28cc returns TOTAL=0
+  (devices/tension-derivation.md §1, evidence/binary/tension-astringstudio-
+  captures.txt §6).
 - **The per-sample callback was NOT located** — honest residual (§4). The
   four decompiled megafunctions are descriptor/serializer functions (they
   reference display names and menus, not phase accumulators or coefficients).
@@ -111,7 +117,11 @@ NoiseToggle false, NoiseColor 0.5, NoiseBalance 1, NoiseLevel 0.8062
 
 ## 3. The mechanism, plainly (what the binary pins down)
 
-- **Filter menu law** [D — objdump 0x10289bf48..0x10289c054, both sites]:
+- **Filter menu law** [D — objdump 0x10289bf48..0x10289c054, both sites;
+  **site CORRECTED 2026-10-09**: that objdump anchor is AStringStudio's
+  (Tension) filter-menu builder, not an AUltraAnalog site — the 10-entry law
+  itself stands for both devices, Analog's own registration site remains to
+  be re-anchored inside 0x1028b1688..0x1028c0510]:
   a 10-entry string array is built in fixed order and registered with
   count w2=10: **0 LP12, 1 LP24, 2 BP6, 3 BP12, 4 Notch 2-pole, 5 Notch
   4-pole, 6 HP12, 7 HP24, 8 Formant 6, 9 Formant 12** (full names
@@ -153,8 +163,10 @@ NoiseToggle false, NoiseColor 0.5, NoiseBalance 1, NoiseLevel 0.8062
 ## 4. What remains open (honest residuals — corpus material)
 
 - **The render loop.** No per-sample callback located. The A-framework keeps
-  DSP in anonymous code; candidates beyond the descriptor megafunctions: the
-  no-frame-pointer unit cluster 0x102894000..0x10289e000 and unreached code
+  DSP in anonymous code; candidates beyond the descriptor megafunctions:
+  ~~the no-frame-pointer unit cluster 0x102894000..0x10289e000~~ [struck
+  2026-10-09 — that range is Tension's AStringStudio TU, see the §1
+  correction] and unreached code
   in the AUltraAnalog TU. Next lane's move: find the audio callback via the
   device-unit vtable/GOT pointers (0x105403xxx cluster) or a render-side
   distinctive constant, then close oscillator/filter/env laws.
