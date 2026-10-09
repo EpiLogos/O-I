@@ -1,0 +1,225 @@
+/* Inhabitant rack devices — the widget guide's tokens (§1): one palette,
+   hairlines, amber accent, lights that are readings. 11–12 px type, mono
+   values. A light is never decoration: on = the owner reports the state;
+   waiting = no illumination, the note carries the honesty. */
+
+:root {
+  --inh-bg-0: #26292d;
+  --inh-bg-1: #33363b;
+  --inh-bg-2: #3f4348;
+  --inh-line: #24262a;
+  --inh-line-strong: #3d4147;
+  --inh-text: #d4d7da;
+  --inh-dim: #a2a7ad;
+  --inh-faint: #71767c;
+  --inh-accent: #ffbe00;
+  --inh-paper: #f3efe4;
+  --inh-ink: #2c2a24;
+  --inh-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+.inhabitant-rack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow: auto;
+  padding: 4px;
+  background: var(--inh-bg-1);
+}
+
+.inhabitant-family {
+  border: 1px solid var(--inh-line-strong);
+  border-radius: 3px;
+  background: var(--inh-bg-1);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inhabitant-family-name {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--inh-faint);
+  padding: 0 2px;
+}
+
+.inhabitant-device {
+  border: 1px solid var(--inh-line);
+  border-radius: 2px;
+  background: var(--inh-bg-2);
+  padding: 3px 6px;
+  font-size: 11px;
+  color: var(--inh-text);
+}
+
+.inhabitant-device.is-waiting {
+  opacity: 0.72;
+}
+
+.inhabitant-device-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+}
+
+.inhabitant-light {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid #0007;
+  background: var(--inh-bg-0);
+  flex: none;
+}
+
+.inhabitant-light.is-admitted { border-color: var(--inh-line-strong); }
+.inhabitant-light.is-engaged { background: var(--inh-accent); border-color: var(--inh-accent); }
+.inhabitant-light.is-pending { animation: inhabitant-blink 1s steps(2) infinite; }
+
+@keyframes inhabitant-blink {
+  50% { opacity: 0.25; }
+}
+
+.inhabitant-device-title {
+  font: inherit;
+  font-weight: 500;
+  color: var(--inh-text);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.inhabitant-device-title:hover { color: var(--inh-accent); }
+
+.inhabitant-device-sub {
+  color: var(--inh-faint);
+  font-family: var(--inh-mono);
+  font-size: 10px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.inhabitant-device-save {
+  margin-left: auto;
+  color: var(--inh-dim);
+  font-size: 10px;
+  text-align: right;
+  max-width: 46%;
+}
+
+.inhabitant-device-fold {
+  background: none;
+  border: none;
+  color: var(--inh-faint);
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.inhabitant-device-fold:hover { color: var(--inh-accent); }
+
+.inhabitant-device-actions {
+  display: flex;
+  gap: 4px;
+  padding: 3px 0;
+}
+
+.inhabitant-device-actions button {
+  font: inherit;
+  font-size: 10.5px;
+  color: var(--inh-text);
+  background: var(--inh-bg-0);
+  border: 1px solid var(--inh-line-strong);
+  border-radius: 2px;
+  padding: 2px 7px;
+  cursor: pointer;
+}
+
+.inhabitant-device-actions button:hover:not(:disabled) {
+  color: var(--inh-accent);
+  border-color: var(--inh-accent);
+}
+
+.inhabitant-device-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.inhabitant-device-note {
+  margin: 2px 0;
+  color: var(--inh-dim);
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+.inhabitant-device.is-waiting .inhabitant-device-note { color: var(--inh-faint); }
+
+.inhabitant-device-fault {
+  margin: 2px 0;
+  color: #e0523f;
+  font-size: 10.5px;
+}
+
+.inhabitant-device-notice {
+  margin: 2px 0;
+  color: var(--inh-dim);
+  font-size: 10.5px;
+}
+
+.inhabitant-document-body {
+  width: 100%;
+  height: 300px;
+  border: 1px solid var(--inh-line);
+  border-radius: 2px;
+  background: var(--inh-paper);
+  display: block;
+  margin-top: 3px;
+}
+
+.inhabitant-conversation-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 3px;
+}
+
+.inhabitant-kv {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 1px 8px;
+  margin: 0;
+  font-size: 10.5px;
+}
+
+.inhabitant-kv dt { color: var(--inh-faint); }
+.inhabitant-kv dd {
+  margin: 0;
+  font-family: var(--inh-mono);
+  color: var(--inh-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inhabitant-conversation-body button {
+  align-self: flex-start;
+  font: inherit;
+  font-size: 10.5px;
+  color: var(--inh-text);
+  background: var(--inh-bg-0);
+  border: 1px solid var(--inh-line-strong);
+  border-radius: 2px;
+  padding: 2px 7px;
+  cursor: pointer;
+}
+
+.inhabitant-conversation-body button:hover {
+  color: var(--inh-accent);
+  border-color: var(--inh-accent);
+}
