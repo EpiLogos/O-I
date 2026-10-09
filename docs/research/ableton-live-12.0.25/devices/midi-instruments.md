@@ -88,6 +88,33 @@ as M1. Analysis `analyze_vd.py`: per-note RMS + Goertzel fundamental (note 1).
   audio alone** — the loader accepted every value 2..6 without complaint (no
   clamp/reject observed), so the valid range includes at least 0..6.
 
+## D11 — negative-amount discriminator (`VD0_NEG.aif`; 2026-10-09, night round 2 lane 1)
+
+VelDst slot0 = (Amount **−100**, Connection 0), slot1 untouched at (0,0) — the
+staged discriminator for the negative-amount case. The set is byte-identical
+to `midi-operator.als` apart from that one Amount (verified by masked-hash
+diff), so M1 is the exact baseline. Analysis: `analyze_vd.py` (the VD sweep
+convention) + `analyze_lane1.py` band identity.
+
+- Per-note RMS [start+0.15, start+0.70]: −32.77 / −32.77 / −32.77 / −32.77 —
+  **flat, spread vel127 vs vel32 = −0.00 dB**.
+- Note-1 fundamental: 131.00 Hz (−29.91 dBFS) = C3 +2.5 cent — unchanged.
+- Band identity vs M1: h1..h8 within **±0.10 dB** (dither floor); note-1
+  envelope profile identical; release tail identical.
+
+**Verdict: D11 CLOSED — the negative-amount case renders flat.** No
+velocity→level destination appears at Amount −100 on Connection 0, and the
+pin carries no static offset either (no pitch shift, no level shift — full
+spectral identity with M1). This also sharpens the M1B reading: M1B (both
+slots +100) collapsed level −48 dB and shifted pitch 130→773 Hz, but ±100 on
+slot0/Connection 0 alone is behaviorally inert in BOTH signs (this render at
+−100; the +100 sign on Connection 0 was never pinned alone) — so M1B's effect
+cannot be attributed to slot0/Connection 0 alone; slot1's Connection 1 or the
+summed pair remains the candidate carrier, still open as documented above.
+
+Confidence: **high** (single-pin byte-identical set, flat across 4:1
+velocity, band-identity ≤0.10 dB across 8 bands, pitch unmoved).
+
 ## M2 — Wavetable (InstrumentVector), default patch (`M2_WAVETABLE.aif`)
 
 | note | start (s) | velocity | stored | L RMS dBFS | R RMS dBFS |

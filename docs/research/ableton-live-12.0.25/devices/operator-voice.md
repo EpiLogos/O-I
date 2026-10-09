@@ -108,6 +108,102 @@ onset→sustain span stays exactly the stored −24.00 dB. Pinning SustainLevel
 shifts the whole voice down ≈3 dB, not just the tail: an unmodeled
 loudness-compensation stage in Operator (open item below).
 
+## Oscillator B — the modulator shell (OP7/OP8/OP9, 2026-10-09, night round 2 lane 1)
+
+First behavioral probe of a shell beyond A. Base = the M1 clip unchanged
+(`midi-operator.als`, transport loop 512 beats = the M1 render convention);
+sets derived by the ET round-trip + gzip mtime=0 convention
+(`harness/build_lane1_probes.py`, precedent `build_session_probes.py`).
+"Switching B on" in the document = raising `Operator.1/Volume`: the factory
+default stores `IsOn=true` on ALL four shells — the mute is the Volume floor
+(−70 dB), not the switch (params.rs note, now render-confirmed). 1.0 is the
+only audible pin the factory itself uses (`Operator.0/Volume` = 1). OP8/OP9
+each add ONE pin on top of OP7 (a WaveForm pin at the −70 dB floor would be
+blind — see the OP7 verdict). Analyzer: `harness/analyze_lane1.py` (the
+`analyze_wm_sources` conventions; steady window [start+0.15, start+0.70],
+Goertzel fundamental 90–180 Hz on note 1, harmonics h1..h8 over [1.15, 1.70]).
+
+| render | pin (all else untouched) | steady RMS ×4 (vel 127→32) | vs M1 |
+|--------|--------------------------|----------------------------|-------|
+| M1_OPERATOR | — (default) | −32.77 ×4 flat | — |
+| OP7_OSCB | `Operator.1/Volume` 0.0003162277571 → 1 | −32.87 ×4 flat (Δ −0.10 dB) | **no level change** |
+| OP8_OSCB050 | OP7 + `Operator.1/Volume` → 0.5 (−6.02 dB) | −32.80 ×4 flat (Δ +0.08 dB vs OP7) | **still no level change** |
+| OP9_WF22 | OP7 + `Operator.1/WaveForm` 0 → 22 | −32.87 ×4 flat (Δ +0.00 dB vs OP7) | **identical to OP7** |
+
+Harmonic scan, note-1 steady [1.15, 1.70], dBFS:
+
+| band | M1 | OP7 | Δ | OP8 | Δ vs OP7 |
+|------|-----|-----|---|-----|----------|
+| h1 (131 Hz) | −29.91 | −30.07 | −0.16 | −29.95 | +0.12 |
+| h2 (262 Hz) | −84.04 | **−49.58** | **+34.46** | −55.24 | **−5.66** |
+| h3 (393 Hz) | −88.42 | −73.80 | +14.62 | −81.67 | −7.87 |
+| h4..h8 | −90.6…−95.3 | +1.8…+2.9 vs M1 (floor) | | −0.7…−1.4 vs OP7 | |
+
+Findings:
+
+1. **Osc B is a MODULATOR of A, not a second output voice** (at `Globals/
+   Algorithm` 0). Raising B to 0 dB added no level (−0.10 dB — within the
+   energy-conservation residual) and no new fundamental (131.0 Hz C3 +2.5
+   cent, unchanged); instead the sidebands exploded: h2 +34.5 dB, h3 +14.6 dB.
+   Sidebands at exactly 2·f0/3·f0 with RMS invariant = the 1:1 PM/FM pairing
+   signature (Bessel identity keeps total energy in the carrier family).
+   The brief's "silent until its Level is raised" reading is refuted: B is
+   audible the moment its Volume leaves the floor — as spectral change on A.
+2. **B's own envelope scales the modulation index.** B's factory envelope is
+   a pluck (DecayTime 400 ms, SustainLevel 0.0630957 = −24 dB; A's is
+   1000 ms/1.0). Time-resolved note 1 (100 ms windows): at onset h1 dips to
+   −40.66 (10.9 dB below M1's h1) while h2 DOMINATES at −35.18 (+5.5 dB rel
+   h1 — deepest index at B's envelope peak), recovering over ≈300 ms to the
+   steady h2_rel = −19.5 dB as B's decay runs to its −24 dB sustain. Steady
+   small-index reading: h2/h1 → β ≈ 0.21; the J2 ladder predicts h3_rel
+   −45.0 dB, measured −43.7 (1.3 dB). If β ∝ B's linear amplitude the
+   implied index constant is ≈3.35 — a reading from two pins, deliberately
+   NOT fitted into the crate (zero-fitted-scalars rule).
+3. **B's Volume follows the linear-amplitude law as a modulation amount**
+   (OP8): halving it moved h2 −5.66 dB (J1 ∝ β predicts −6.02; residual
+   0.36 dB), β 0.212 → 0.109 (halving predicts 0.106), h1 +0.12 dB back
+   toward M1, total RMS +0.08 dB (still invariant), onset dip shallower
+   (−33.07 vs −33.68 first window). h3's −7.87 (vs −12 predicted for J2 ∝ β²)
+   is the one outlier — h3 sits 12–26 dB above the other floor bands there;
+   leakage/floor caveat, medium confidence.
+4. **`WaveForm` extent tail 22 = the user-wave page** (OP9 null as the
+   positive control it turns out to be): pinning 22 changed nothing (≤0.03
+   dB on every band, envelope + release identical). Document anchor: in the
+   factory default (WF=0) `UserHarmonics` holds only h0=1 — a sine; the
+   choir preset's WF=22 shells carry rich `UserHarmonics` (h0..h15/h64). So
+   WF22 selects the user-drawn wave, whose default content IS a sine — the
+   modulator waveform was unchanged, and the render agrees exactly.
+5. Velocity stays flat in all three renders (unrouted VelDst — consistent
+   with M1/VD sweep).
+
+What remains open:
+
+- **The index law**: β as a function of B's amplitude, shell ratio, and
+  envelope — and PM-vs-FM sign/phase discrimination — is not nameable from
+  audio alone at these pins; needs a ratio sweep (B Coarse 2 vs A) or a
+  binary cross-check. The ≈3.35 constant is two-pin evidence, not a law.
+- **`Globals/Algorithm` (0)**: unswept; which algorithm exposes B (or C/D)
+  as a carrier vs modulator is open — B-as-output-voice configurations were
+  not tested (no Algorithm pin in this lane).
+- **Shells C/D**: untested; expected to mirror B (document structure
+  identical), topology beyond A←B unverified.
+- **WaveForm labels 0..21**: unknown; OP9 pins only the extent tail (22).
+  Whether a mid-extent wave changes a MODULATOR's spectrum is untested.
+- `Phase`, `Feedback`, `Fine` on shell B: untouched (0/0/0), semantics open
+  per the params.rs table.
+
+Confidence:
+
+- B = modulator of A at Algorithm 0, not an output voice: **high** (RMS
+  invariance + spectral redistribution + onset-index behavior, consistent
+  across two level pins).
+- B's Volume = linear-amplitude modulation amount: **high at h2** (−5.66 vs
+  −6.02 dB), **medium at h3** (floor/leakage outlier noted above).
+- B's default envelope drives the onset index: **high** (time-resolved h1/h2
+  ladder, settles exactly across B's 400 ms decay).
+- WF22 = user wave, default sine: **high** (null render + document anchor in
+  both factory presets); the full label map stays open.
+
 ## Gate residuals (operator_voice_golden_gate, 2026-10-08)
 
 Thresholds (stated in `tests/golden.rs` before analysis): steady per-note
