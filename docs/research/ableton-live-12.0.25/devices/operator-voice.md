@@ -369,6 +369,32 @@ acoustically inert — no own sine, no level change, no sidebands. Only B
 routes into A at Algorithm 0 (OP7's +34.5 dB h2 remains the sole audible
 shell signature); C and D are silent shells at these defaults.**
 
+## Routed feedback seals: A Feedback 100 with B audible (OP18_AFB100R, 2026-10-09, op-fb-r lane)
+
+The last live candidate: the carrier-feedback null (OP14/15/16) was sealed
+with B muted — OP18 asks whether feedback acts through the B→A modulation
+chain. Derived from OP7_OSCB by one pin (`harness/build_op18.py`, the
+build_op16_17 ET + gzip mtime=0 convention with a verify pass):
+`Operator.0/Feedback` → 100 of 0..100, **B untouched (Volume 1, the audible
+routed pair at Algorithm 0)**. Rendered via `with_live_lock.sh` +
+`lane3_render.sh` (exit 0 first attempt, 256 s); analyzer
+`harness/analyze_op18.py` (the OP15/16 conventions: steady RMS ×4, note-1
+h1..h6 at [1.15, 1.70], β from h1/h2, 90–2000 Hz scan), with OP7 and M1
+carried in the family so the verdict is direct.
+
+Result: **flat vs OP7 — the routed null seals too.** Steady RMS −0.00 ×4;
+h1 −30.07 unchanged; h2 −49.58 (the OP7 routed-modulator signature, +34.5 dB
+over M1) unchanged; h3..h6 within 0.13 dB of OP7; β_h2 = 0.2115 identical;
+the 90–2000 Hz scan returns OP7's partial family peak-for-peak (sidebands at
+146/122/110 Hz and the rest all within 0.02 dB). No self-FM enrichment, no
+level shift, no new partials at max feedback. **At Algorithm 0 with B→A
+routing, Osc A Feedback {0 → 100} is acoustically inert — the OP14/15/16
+carrier null generalizes to the routed pair, and `Operator.*Feedback` is
+sealed as a stored-but-unwired parameter at these pins in Live 12.0.25.**
+Any DX-style feedback law in Operator would need a pin outside this grid
+(e.g. audible feedback on B itself, or an algorithm where a shell feeds
+itself before routing) — none remains in the current probe family.
+
 ## Gate residuals (operator_voice_golden_gate, 2026-10-08)
 
 Thresholds (stated in `tests/golden.rs` before analysis): steady per-note
@@ -439,8 +465,11 @@ key 48).
   h1..h6, scan identical peak-for-peak) — only B routes into A at these
   defaults.
 - Carrier Feedback null at {0.5, 25, 100} of 0..100 (OP14/OP15/OP16): **high
-  across the full stored range** (200× span, to the −84 dBFS floor); the
-  routed-modulator case (`Operator.1/Feedback`, B → A) is untested.
+  across the full stored range** (200× span, to the −84 dBFS floor); **and
+  through the routed pair** (OP18: A fb 100 with B→A audible, flat vs OP7
+  to ≤0.13 dB h1..h6, identical β and scan) — `Operator.*Feedback` sealed
+  inert at these pins; only off-grid feedback topologies (e.g. fb on B
+  itself) remain untested.
 
 ## Evidence
 
@@ -457,8 +486,11 @@ key 48).
   OP7); analyzer `harness/analyze_op15.py`.
 - OP16/OP17 renders: `harness/renders/OP16_AFB100.aif`,
   `OP17_OSCD.aif`; sets `harness/live/OP16_AFB100.als`,
-  `OP17_OSCD.als` (built by `harness/build_op16_17.py` from OP7, each with
-  a verify pass); analyzer `harness/analyze_op16_17.py`.
+  `harness/live/OP17_OSCD.als` (built by `harness/build_op16_17.py` from
+  OP7, each with a verify pass); analyzer `harness/analyze_op16_17.py`.
+- OP18 render: `harness/renders/OP18_AFB100R.aif`; set
+  `harness/live/OP18_AFB100R.als` (built by `harness/build_op18.py` from
+  OP7 with a verify pass); analyzer `harness/analyze_op18.py`.
 - Analyzers: `harness/analyze_operator.py`,
   `harness/analyze_operator_decay.py` (τ fit; self-validates on OP2);
   gate:
