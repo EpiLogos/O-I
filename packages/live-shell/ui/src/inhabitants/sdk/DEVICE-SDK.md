@@ -123,7 +123,10 @@ family's own `writers` — so a fixture can arm its fixture paths, but an
 invented setter refuses with the armed set named. `kernel:`/`<tool>:`
 paths are shape-checked; their unions live with their owners, and a path
 that names nothing is caught on first exercise. The same law runs on the
-extension path and again in the world gate.
+extension path and again in the world gate. Two families may declare the
+same writer (shell setters are global); a family may pre-arm a path no
+row exercises yet — that is the fixture boundary, disclosed here, and an
+authority-carrying writers claim is the tightening if it ever matters.
 
 A declaration that breaks the law throws at admission, naming each fault.
 

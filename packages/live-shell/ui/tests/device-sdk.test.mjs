@@ -406,11 +406,20 @@ test(`the mode alts and specimen names are carried (specimen mode rows)`, async 
   if (!SPECIMEN) throw new Error('icon-cut.html not found on this machine')
   const specimen = await readFile(SPECIMEN, 'utf8')
   const {SDK_MODE_DECLARATIONS} = await import('../src/inhabitants/sdk/modes.ts')
+  const modeRows = specimen.match(/const rows = \[[\s\S]*?\n  \];/)?.[0] ?? ''
+  assert.ok(modeRows, 'the specimen carries the mode rows')
   for (const mode of SDK_MODE_DECLARATIONS) {
     assert.ok(specimen.includes(`name:'${mode.specimenName}'`), `${mode.name}: specimen name carried`)
     assert.ok(specimen.includes(`['${mode.mark}']`) || specimen.includes(`'${mode.mark}'`), `${mode.name}: mark present in specimen`)
     if (mode.altMark) {
       assert.ok(mode.altNote && mode.altNote.length > 20, `${mode.name}: the rejected alt carries its reason`)
+      // The alt is the specimen's OWN alt row for this mode: its mark is the
+      // row's mark and its note is that row's sub text, byte-for-byte.
+      const altRow = [...modeRows.matchAll(/\['([^']+)'\s*,\s*'([a-zA-Z]+)'\s*,\s*'((?:[^'\\]|\\.)*)'\s*,\s*'([a-z]+)'\]/g)]
+        .find(([, name, mark]) => mark === mode.altMark && name.includes(mode.specimenName.split(' ')[0]))
+      assert.ok(altRow, `${mode.name}: the specimen carries the alt row for ${mode.altMark}`)
+      assert.equal(altRow[4], 'alt', `${mode.name}: the specimen rejects ${mode.altMark} (pick=alt)`)
+      assert.equal(mode.altNote, altRow[3].replace(/\\'/g, "'"), `${mode.name}: the alt note byte-matches the specimen's reason`)
     }
   }
 })
