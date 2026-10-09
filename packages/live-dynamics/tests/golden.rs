@@ -786,6 +786,167 @@ fn wavetable_law_gates() {
 }
 
 // ---------------------------------------------------------------------------
+// Wavetable unison stereo golden gate (WV19_LONG_UNI — dossier rev 4,
+// "Unison stereo layout + voice amplitudes"). Activates only when the
+// render is present in harness/renders; skip-notice otherwise (the archive
+// renders WV9B/WV12/WV13 are NOT gated — WV19 is the committed long-note
+// re-probe whose stereo reading supersedes the D15 left-channel ladder).
+//
+// VoiceCount-3 unison law: voices at {−50, 0, +50} cents × Amount (equal
+// gains), panned hard-L / centre / hard-R under an equal-power law;
+// per-channel spectrum = low voice + centre(−3.01 dB); whole-voice detune
+// (h2..h8 stay at the floor in both channels).
+//
+// Measured (dossier: Hann-weighted fine DTFT, steady window [1.0, 3.9] s):
+// −3.724 Hz = −50.00 cents at −25.72 dBFS in L ONLY (R reads −105, the
+// floor); centre +0.01 cents at −28.73 dBFS, identical in L and R;
+// +3.833 Hz = +50.00 cents at −25.72 dBFS in R only (L −110).
+//
+// Thresholds STATED from that dossier section before this gate ran; the
+// scan is the same Hann-weighted DTFT at 0.05 Hz steps (≈0.7 cents at
+// f0 = 130.81 Hz — a bare rectangular Goertzel would leak ≈−27 dB across
+// the channel-suppression check, hence the Hann weight):
+//   - outer line within ±1.0 cent of ±50; centre within ±1.0 of 0
+//   - absolute levels −25.72 / −28.73 dBFS within ±1.0 dB
+//   - centre 3.01 ±0.5 dB below the same-channel outer (equal-power pan)
+//   - opposite-channel outer suppression ≥ 60 dB (measured ≥ 80)
+//   - centre identical in L and R within 0.2 dB
+#[test]
+#[ignore]
+fn wavetable_unison_golden_gate() {
+    const NAME: &str = "WV19_LONG_UNI.aif";
+    if !std::path::Path::new(RENDERS).join(NAME).exists() {
+        println!("skip {NAME}: render not present in this checkout");
+        return;
+    }
+    const POS_TOL_CENTS: f64 = 1.0;
+    const LEVEL_TOL_DB: f64 = 1.0;
+    const CENTRE_DROP_DB: f64 = 3.01;
+    const CENTRE_DROP_TOL_DB: f64 = 0.5;
+    const CROSS_SUPPRESS_DB: f64 = 60.0;
+    const CENTRE_LR_TOL_DB: f64 = 0.2;
+    const T0: f64 = 1.0;
+    const T1: f64 = 3.9;
+
+    let bytes = std::fs::read(format!("{RENDERS}/{NAME}")).unwrap();
+    let (left, right) = audio::read_aiff_i16_channels(&bytes).unwrap();
+    let sr = left.sample_rate as f64;
+    let f0 = 130.81278265;
+
+    // Hann-weighted DTFT amplitude at `f`, coherent-sine dBFS scale
+    let line_db = |buf: &[f32], f: f64| -> f64 {
+        let n0 = (T0 * sr) as usize;
+        let n1 = ((T1 * sr) as usize).min(buf.len());
+        let n = n1 - n0;
+        let w = 2.0 * std::f64::consts::PI * f / sr;
+        // phasor rotation (no per-sample trig; orthogonal step, drift ≪ LSB)
+        let (dc, ds) = (w.cos(), w.sin());
+        let (mut c, mut s) = (1.0f64, 0.0f64);
+        let mut re = 0.0f64;
+        let mut im = 0.0f64;
+        let mut wsum = 0.0f64;
+        for (i, j) in (n0..n1).enumerate() {
+            let win = 0.5 - 0.5 * (2.0 * std::f64::consts::PI * i as f64 / n as f64).cos();
+            let x = buf[j] as f64 * win;
+            re += x * c;
+            im -= x * s;
+            wsum += win;
+            let nc = c * dc - s * ds;
+            s = c * ds + s * dc;
+            c = nc;
+        }
+        operator::amp_to_db(2.0 * (re * re + im * im).sqrt() / wsum)
+    };
+    // fine scan ±1.5 Hz around an expected line; returns (f_best, dBFS)
+    let scan = |buf: &[f32], f_expect: f64| -> (f64, f64) {
+        let mut best = (f_expect, f64::NEG_INFINITY);
+        let mut f = f_expect - 1.5;
+        while f <= f_expect + 1.5 {
+            let db = line_db(buf, f);
+            if db > best.1 {
+                best = (f, db);
+            }
+            f += 0.05;
+        }
+        best
+    };
+    let cents = |f: f64| 1200.0 * (f / f0).log2();
+
+    // expected lines from the crate's spread law: VC3, Amount 1.0 →
+    // {−50, 0, +50} cents (hard-L / centre / hard-R)
+    let v = wavetable::unison::voice_freqs_hz(f0, 3, 1.0);
+    assert_eq!(v.len(), 3, "spread law must give three VC3 voices");
+    let mut fails: Vec<String> = Vec::new();
+    for (label, ch, outer_f, other_f) in [
+        ("L", &left.samples, v[0], v[2]),
+        ("R", &right.samples, v[2], v[0]),
+    ] {
+        let (f_outer, db_outer) = scan(ch, outer_f);
+        let (f_centre, db_centre) = scan(ch, f0);
+        let (_, db_cross) = scan(ch, other_f); // the other outer must be absent
+        let suppress = db_outer - db_cross;
+        println!(
+            "{label}: outer {:+7.3} Hz ({:+6.2}¢) {db_outer:7.2} dBFS | \
+             centre {:+7.3} Hz ({:+5.2}¢) {db_centre:7.2} dBFS | \
+             opposite-outer {db_cross:7.2} dBFS ({suppress:5.1} dB down)",
+            f_outer - f0,
+            cents(f_outer),
+            f_centre - f0,
+            cents(f_centre),
+        );
+        let want_cents = if label == "L" { -50.0 } else { 50.0 };
+        if (cents(f_outer) - want_cents).abs() > POS_TOL_CENTS {
+            fails.push(format!(
+                "{label} outer at {:+.2} cents (±{POS_TOL_CENTS})",
+                cents(f_outer)
+            ));
+        }
+        if cents(f_centre).abs() > POS_TOL_CENTS {
+            fails.push(format!(
+                "{label} centre at {:+.2} cents (±{POS_TOL_CENTS})",
+                cents(f_centre)
+            ));
+        }
+        if (db_outer - (-25.72)).abs() > LEVEL_TOL_DB {
+            fails.push(format!(
+                "{label} outer level {db_outer:.2} dBFS (−25.72 ±{LEVEL_TOL_DB})"
+            ));
+        }
+        if (db_centre - (-28.73)).abs() > LEVEL_TOL_DB {
+            fails.push(format!(
+                "{label} centre level {db_centre:.2} dBFS (−28.73 ±{LEVEL_TOL_DB})"
+            ));
+        }
+        let drop = db_outer - db_centre;
+        if (drop - CENTRE_DROP_DB).abs() > CENTRE_DROP_TOL_DB {
+            fails.push(format!(
+                "{label} centre drop {drop:.2} dB (3.01 ±{CENTRE_DROP_TOL_DB})"
+            ));
+        }
+        if suppress < CROSS_SUPPRESS_DB {
+            fails.push(format!(
+                "{label} opposite-channel outer only {suppress:.1} dB down (≥{CROSS_SUPPRESS_DB})"
+            ));
+        }
+    }
+    // centre voice is bit-identical in L and R (dossier) — same level here
+    let cl = scan(&left.samples, f0).1;
+    let cr = scan(&right.samples, f0).1;
+    println!("centre L/R: {cl:.2} / {cr:.2} dBFS");
+    if (cl - cr).abs() > CENTRE_LR_TOL_DB {
+        fails.push(format!(
+            "centre L/R split {:+.2} dB (±{CENTRE_LR_TOL_DB})",
+            cl - cr
+        ));
+    }
+    assert!(
+        fails.is_empty(),
+        "WV19 unison stereo gate failed:\n  {}",
+        fails.join("\n  ")
+    );
+}
+
+// ---------------------------------------------------------------------------
 // Wavetable INTERIOR position law — leave-one-out gate (dossier rev 3).
 //
 // The law under test: "Basic Shapes" holds FOUR peak-normalized zero-phase

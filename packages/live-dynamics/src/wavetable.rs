@@ -6,7 +6,9 @@
 //! fitted constants cite the golden renders measured in
 //! `docs/research/ableton-live-12.0.25/devices/wavetable-voice.md`
 //! (M2 baseline + WV2..WV5 probes + WV6/WV7 interior-position depth probes,
-//! plus the WV9..WV16 unison probes behind the `unison` spread law,
+//! plus the WV9..WV16 unison probes behind the `unison` spread law, the
+//! WV19 long-note stereo render behind the rev-4 unison stereo layout, and
+//! the WV8/WV20/WV21 slope renders behind the rev-4 decay warp law,
 //! Live 12.0.25, export 44.1 kHz/16-bit).
 //!
 //! Scope: the default patch sounds oscillator 1 alone (oscillator 2 and the
@@ -33,6 +35,31 @@ pub fn note_freq(key: u8) -> f64 {
     440.0 * 2.0f64.powf((key as f64 - 69.0) / 12.0)
 }
 
+/// Decay-segment warp shape (dossier rev 4, D16): the remaining fraction
+/// `v(u)` of the peak→sustain drop at `u` = elapsed/stored-decay-time,
+///
+/// ```text
+/// v(u) = (e^{−k·u} − e^{−k}) / (1 − e^{−k}),   k = DECAY_WARP_C · slope
+/// ```
+///
+/// Endpoints pinned by construction (v(0) = 1, v(1) = 0 — the envelope
+/// starts at the attack peak and lands on the sustain exactly at the
+/// stored decay time, the D16 endpoint invariant); `k → 0` (slope 0) is
+/// the linear limit `v = 1 − u` (WV8: linear ramp confirmed to 0.028 dB
+/// RMS over the whole segment); `k < 0` (negative slope) is the convex
+/// slow-start branch no one-pole family can produce. Past `u = 1` the
+/// segment is over — the envelope holds the sustain (every D16 curve
+/// reaches the plateau at u = 1.00 within ≤0.15 dB).
+pub fn decay_warp(k: f64, u: f64) -> f64 {
+    if u >= 1.0 {
+        return 0.0;
+    }
+    if k.abs() < 1e-9 {
+        return 1.0 - u;
+    }
+    ((-k * u).exp() - (-k).exp()) / (1.0 - (-k).exp())
+}
+
 /// Stored document values, default patch (`default.xml`).
 pub mod stored {
     /// `Voice_Oscillator1_Gain` / `Voice_Oscillator2_Gain` (each osc's level).
@@ -54,12 +81,16 @@ pub mod stored {
     /// WV4 (Sustain 0.5012 → 0.25) moves the post-decay plateau by exactly
     /// 20·log10(0.25/0.5012) = −6.04 dB.
     pub const SUSTAIN_AMP: f64 = 0.501_187_562_9;
+    /// `Voice_Modulators_AmpEnvelope_Slopes_Decay` — stored 0.5 on the
+    /// default patch (M2 baseline; WV8 pins 0.0, WV20/WV21 pin −0.5/+1.0).
+    /// Decay-segment shape warp: 0 = linear ramp, the dossier's rev-4 warp
+    /// law interpolates the segment between the pinned endpoints
+    /// (`fitted::DECAY_WARP_C`). Attack/Release slopes are untested against
+    /// the family (dossier Deferred) — release keeps its rev-1 product form.
+    pub const DECAY_SLOPE: f64 = 0.5;
     /// `Voice_Modulators_AmpEnvelope_Slopes_{Attack,Decay,Release}` —
-    /// stored 0 / 0.5 / 0.5. NOT realized as a shape-bend in the fitted
-    /// curves (the measured decay is one-pole-like, release near-power —
-    /// see `fitted`); the Slope semantics remain an open question.
-    /// `Volume` — the device's only trim element (WT2 positive control:
-    /// ×0.25 → −12.04 dB exact).
+    /// stored 0 / 0.5 / 0.5. `Volume` — the device's only trim element
+    /// (WT2 positive control: ×0.25 → −12.04 dB exact).
     pub const VOLUME_AMP: f64 = 0.354_813_426_7;
     /// `Voice_Unison_Mode` — stored 0 = unison OFF (WV9: at Mode 0 the
     /// Amount 1.0 / VoiceCount 3 render is dither-identical to M2; Mode 1
@@ -77,17 +108,27 @@ pub mod stored {
 pub mod fitted {
     /// Fixed output scalar: rendered peak = RESIDUAL_GAIN × osc_gain ×
     /// envelope × volume, for a unit-peak frame-A (sine) oscillator.
-    /// Calibrated on M2's steady window (−26.06 dBFS, notes 1–3); held to
-    /// ±0.1 dB across the WT2 trim probe (×0.25 → −12.04 dB exact) and the
-    /// WV3/WV5 harmonic scans. Decomposition (voice-bus scalar vs
-    /// post-voice trim) is not identifiable from audio alone.
-    pub const RESIDUAL_GAIN: f64 = 0.350_899;
-    /// Decay is a one-pole APPROACH in the amplitude domain toward the
-    /// sustain level: `e(u) = s + (1−s)·exp(−t/τ)`. Fitted τ = 0.170 s
-    /// (0.283 × the stored 0.6 s decay) by least squares on M2's h1 track
-    /// (resid 0.35 dB; beats every candidate library shape, best of which
-    /// fits at 3.3 dB). The first ~40 ms are attack-transient polluted.
-    pub const DECAY_TAU_S: f64 = 0.170;
+    /// Calibrated on M2's steady window (−26.06 dBFS, notes 1–3); recalibrated
+    /// 2026-10-09 for the rev-4 warp decay (same window, same procedure — the
+    /// warp's exact u = 1 plateau settles the window ≈0.24 dB below the
+    /// one-pole's ≈1% tail; ×1.02802). Held to ±0.1 dB across the WT2 trim
+    /// probe (×0.25 → −12.04 dB exact) and the WV3/WV5 harmonic scans.
+    /// Decomposition (voice-bus scalar vs post-voice trim) is not
+    /// identifiable from audio alone.
+    pub const RESIDUAL_GAIN: f64 = 0.360_730;
+    /// Decay-segment warp rate, the dossier's ONE fitted scalar for the
+    /// curve (rev 4, D16 — `wavetable-voice.md` "Decay slope warp curve"):
+    /// `v(u) = (e^{−k·u} − e^{−k})/(1 − e^{−k})`, `k = 7.41·Slopes_Decay`,
+    /// u = t/stored-decay-time, endpoints pinned (attack peak → sustain over
+    /// the stored decay time). Fitted JOINTLY on the four slope renders
+    /// (WV20 −0.5 / WV8 0.0 / M2 0.5 / WV21 +1.0) against pinned endpoints:
+    /// residual RMS 0.036 dB overall, worst single point 0.14 dB. NOT
+    /// re-fitted here — cited as the dossier's constant. Supersedes the
+    /// rev-1 one-pole `τ = 0.170 s` reading (that fit ran on scalloped
+    /// windows with a contaminated note; the warp's k = 3.705 approximates
+    /// a one-pole λ ≈ 3.7 over the mid-segment, which is why it fitted to
+    /// 0.35 dB, but misses both pinned endpoints — dossier honesty marks).
+    pub const DECAY_WARP_C: f64 = 7.41;
     /// Release is LINEAR-TO-ZERO × EXPONENTIAL in the amplitude domain
     /// from the current level: `e(v) = e_off·(1−v)·exp(−c·v)`,
     /// v = t/0.6. Fitted c = 2.43 on M2's note-3 release track: every
@@ -125,9 +166,10 @@ pub mod fitted {
 ///
 /// NOT yet wired into [`WavetableVoice`]: every gate in this crate pins the
 /// default patch, whose stored `Voice_Unison_Mode` is 0 (unison off). The
-/// unison golden renders live in the render archive and are NOT wired to
-/// the crate's `#[ignore]` gate tests — a spectral unison gate is future
-/// work.
+/// stereo layout itself (rev 4: hard-L / centre / hard-R, equal-power, VC3)
+/// is gated against the render in `tests/golden.rs`
+/// (`wavetable_unison_golden_gate`, active when `WV19_LONG_UNI.aif` is
+/// present); the multi-voice RENDER path stays future work.
 pub mod unison {
     /// Spread edge at Amount 1.0 (round-2 layout law; the −3.75 Hz anchor
     /// voice reads −50.4 cents, exactly −spread-edge/2 at ±50-cent spread).
@@ -253,12 +295,17 @@ pub fn frame_harmonic(pos: f64, k: usize) -> f64 {
 }
 
 /// Wavetable's amp envelope as it is audible on the default patch:
-/// instant attack (stored 1 ms), one-pole decay to sustain, product-form
-/// release. The envelope value is LINEAR amplitude (WV4 law).
+/// instant attack (stored 1 ms), endpoint-pinned warp decay to the sustain
+/// over the stored decay time (`decay_warp`, rate `DECAY_WARP_C·slope`),
+/// product-form release. The envelope value is LINEAR amplitude (WV4 law).
 #[derive(Debug, Clone)]
 pub struct AmpEnvelope {
     pub attack_s: f64,
-    pub decay_tau_s: f64,
+    /// `Times_Decay` — the STORED segment length; the warp lands on the
+    /// sustain exactly here (not a τ).
+    pub decay_time_s: f64,
+    /// `Slopes_Decay` — the stored shape warp (0 = linear, 0.5 default).
+    pub decay_slope: f64,
     pub sustain_amp: f64,
     pub release_time_s: f64,
     pub release_c: f64,
@@ -268,7 +315,8 @@ impl Default for AmpEnvelope {
     fn default() -> Self {
         AmpEnvelope {
             attack_s: stored::ATTACK_TIME_S,
-            decay_tau_s: fitted::DECAY_TAU_S,
+            decay_time_s: stored::DECAY_TIME_S,
+            decay_slope: stored::DECAY_SLOPE,
             sustain_amp: stored::SUSTAIN_AMP,
             release_time_s: stored::RELEASE_TIME_S,
             release_c: fitted::RELEASE_C,
@@ -278,9 +326,10 @@ impl Default for AmpEnvelope {
 
 impl AmpEnvelope {
     /// Envelope gain (linear) at `t` seconds after note-on, note held
-    /// until `note_off_s`. Release starts from the level reached at
-    /// note-off and follows `(1−v)·exp(−c·v)`, reaching 0 exactly at the
-    /// stored release time.
+    /// until `note_off_s`. The decay segment runs peak (1.0) → sustain
+    /// over the stored decay time with the rev-4 warp shape; release
+    /// starts from the level reached at note-off and follows
+    /// `(1−v)·exp(−c·v)`, reaching 0 exactly at the stored release time.
     pub fn gain(&self, t: f64, note_off_s: f64) -> f64 {
         if t < 0.0 {
             return 0.0;
@@ -289,15 +338,19 @@ impl AmpEnvelope {
             return t / self.attack_s;
         }
         let s = self.sustain_amp;
+        let k = fitted::DECAY_WARP_C * self.decay_slope;
+        let decayed = |tt: f64| {
+            let u = (tt - self.attack_s) / self.decay_time_s;
+            s + (1.0 - s) * decay_warp(k, u)
+        };
         if t < note_off_s {
-            return s + (1.0 - s) * (-(t - self.attack_s) / self.decay_tau_s).exp();
+            return decayed(t);
         }
         let v = (t - note_off_s) / self.release_time_s;
         if v >= 1.0 {
             return 0.0;
         }
-        let at_off = s + (1.0 - s) * (-(note_off_s - self.attack_s) / self.decay_tau_s).exp();
-        at_off * (1.0 - v) * (-self.release_c * v).exp()
+        decayed(note_off_s) * (1.0 - v) * (-self.release_c * v).exp()
     }
 }
 
@@ -423,9 +476,9 @@ mod tests {
         };
         let d = late(&probe) - late(&base);
         let expect = amp_to_db(0.25 / stored::SUSTAIN_AMP);
-        // 0.5 dB law tolerance: the model's one-pole decay leaves a ≈1%
-        // unsettled transient in this window that does not scale with the
-        // sustain (0.17 dB residual, documented in wavetable-voice.md)
+        // 0.5 dB law tolerance: with the rev-4 warp decay the envelope sits
+        // ON the sustain from u = 1 (0.6 s), before this window opens — the
+        // residual headroom is release/attack-independence, not decay tail
         assert!((d - expect).abs() <= 0.5, "plateau Δ {d:.2} vs {expect:.2}");
     }
 
@@ -535,11 +588,9 @@ mod tests {
     /// s = 50·Amount, Amount > 1 must clamp to 1 (WV10/WV11 dither-identical
     /// to WV9B), and the centre voice sits at 0 wherever the layout has one.
     ///
-    /// NOT a golden gate: the unison golden renders (WV9B, WV12/WV13,
-    /// WV14/15/16) live in the render archive and are NOT wired to this
-    /// crate's `#[ignore]` gate tests — a spectral unison gate against them
-    /// is future work (devices/wavetable-voice.md, round-2 + 2026-10-09
-    /// night sections).
+    /// NOT a render gate: the stereo golden gate against
+    /// `WV19_LONG_UNI.aif` lives in `tests/golden.rs`
+    /// (`wavetable_unison_golden_gate`, dossier rev-4 stereo section).
     #[test]
     fn unison_spread_matches_dossier_law() {
         for a in [0.25, 0.75, 1.0] {
@@ -584,32 +635,72 @@ mod tests {
         );
     }
 
-    /// Decay shape: the one-pole approach tracks M2's measured h1 table
-    /// within 0.9 dB at every stated point (fit residual 0.35 dB RMS).
+    /// Decay warp law (dossier rev 4, D16 — CLOSED): the decay segment is
+    /// the endpoint-pinned exponential warp
+    /// `v(u) = (e^{−ku} − e^{−k})/(1 − e^{−k})`, `k = 7.41·Slopes_Decay`.
+    /// The table is D16's cycle-peak extraction (dB above the sustain
+    /// plateau, note 0, the only predecessor-free note) for slopes
+    /// {−0.5, 0.0, +0.5, +1.0} — checked analytically through
+    /// [`AmpEnvelope::gain`] (cycle-peak scale; no analysis-window
+    /// scalloping — the rev-4 method corrections). The dossier's own
+    /// residuals for the joint fit: RMS 0.036 dB, worst single point
+    /// 0.14 dB (slope −0.5 at u = 0.97).
     #[test]
-    fn decay_one_pole_tracks_measured_table() {
-        let v = WavetableVoice::default_patch(48, SR);
-        let s = v.render_note(2.0, 2.0);
-        // measured M2 note-1 h1 track (40 ms Goertzel windows, peak dBFS)
-        let table: [(f64, f64); 15] = [
-            (0.02, -17.79), (0.06, -18.60), (0.10, -19.92), (0.14, -20.34),
-            (0.18, -21.51), (0.22, -21.59), (0.26, -22.60), (0.30, -22.47),
-            (0.34, -23.29), (0.38, -23.08), (0.42, -23.69), (0.46, -23.52),
-            (0.50, -23.87), (0.54, -23.82), (0.58, -23.91),
+    fn decay_warp_tracks_d16_table() {
+        const WORST_TOL_DB: f64 = 0.15;
+        let table: [(f64, [(f64, f64); 6]); 4] = [
+            // (slope, [(t_ms, dB above plateau)])
+            (
+                -0.5,
+                [(25.0, 5.98), (75.0, 5.94), (150.0, 5.84), (325.0, 5.30), (500.0, 3.41), (575.0, 1.22)],
+            ),
+            (
+                0.0,
+                [(25.0, 5.82), (75.0, 5.48), (150.0, 4.87), (325.0, 3.29), (500.0, 1.36), (575.0, 0.37)],
+            ),
+            (
+                0.5,
+                [(25.0, 5.36), (75.0, 4.27), (150.0, 2.83), (325.0, 0.92), (500.0, 0.18), (575.0, 0.03)],
+            ),
+            (
+                1.0,
+                [(25.0, 4.80), (75.0, 3.02), (150.0, 1.28), (325.0, 0.15), (500.0, 0.01), (575.0, 0.00)],
+            ),
         ];
-        for (dt, want) in table {
-            // dt is note-relative (the model note starts at sample 0); the
-            // measured windows are ±20 ms Goertzel spans, first window
-            // clamped at the note-on boundary like the render analysis
-            let t0 = dt;
-            let start = (t0 - 0.02).max(0.0_f64);
-            let h1 = crate::operator::goertzel_amp(&s, SR, v.freq_hz, start, t0 + 0.02);
-            let got = amp_to_db(h1);
+        let s = stored::SUSTAIN_AMP;
+        for (slope, points) in table {
+            let env = AmpEnvelope { decay_slope: slope, ..AmpEnvelope::default() };
+            for (ms, want) in points {
+                let got = amp_to_db(env.gain(ms / 1000.0, 2.0) / s);
+                assert!(
+                    (got - want).abs() <= WORST_TOL_DB,
+                    "slope {slope} +{ms}ms: model {got:.2} dB above plateau vs render {want:.2}"
+                );
+            }
+        }
+        // endpoints pinned exactly, at every slope (D16 invariants): the
+        // envelope starts at 1.0 (peak/plateau = 1/S_STORED) right after the
+        // 1 ms attack and sits ON the sustain from u = 1 on; slope 0 is the
+        // linear limit.
+        for slope in [-0.5f64, 0.0, 0.5, 1.0] {
+            let env = AmpEnvelope { decay_slope: slope, ..AmpEnvelope::default() };
+            let peak = env.gain(stored::ATTACK_TIME_S + 1e-9, 2.0);
+            assert!((peak - 1.0).abs() < 1e-6, "slope {slope}: peak {peak}");
             assert!(
-                (got - want).abs() <= 0.9,
-                "decay +{}ms: model {got:.2} vs render {want:.2}",
-                (dt * 1000.0) as u32
+                (env.gain(stored::ATTACK_TIME_S + stored::DECAY_TIME_S + 1e-9, 2.0) - s).abs()
+                    < 1e-12,
+                "slope {slope}: plateau not exact at u = 1"
             );
         }
+        let lin = AmpEnvelope { decay_slope: 0.0, ..AmpEnvelope::default() };
+        let mid = stored::ATTACK_TIME_S + 0.5 * stored::DECAY_TIME_S;
+        let want_mid = s + (1.0 - s) * 0.5;
+        assert!((lin.gain(mid, 2.0) - want_mid).abs() < 1e-9, "slope 0 is the linear ramp");
+        assert!(
+            (decay_warp(0.0, 0.25) - 0.75).abs() < 1e-12
+                && (decay_warp(-3.705, 0.0) - 1.0).abs() < 1e-12
+                && decay_warp(-3.705, 1.0).abs() < 1e-12,
+            "decay_warp limit pins"
+        );
     }
 }
