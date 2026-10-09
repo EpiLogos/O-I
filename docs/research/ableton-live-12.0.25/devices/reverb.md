@@ -249,3 +249,112 @@ RT60 ∝ DecayTime), the parametric seeded-noise model in
 reconstruction is unnecessary at the modeled fidelity. Remaining named
 refinements: the HF second slope at DecayTime 2400 and stereo decorrelation
 (the model is mono-only).
+
+## Refinements: HF second slope + stereo decorrelation (2026-10-09, offline lane — R3/R4 committed renders + archived R1; analyzer `harness/analyze_reverb_refine.py`)
+
+Method (both parts): 10 log bands 80 Hz–16 kHz, 10 ms Hann-441/FFT-512
+blocks + 70 ms moving mean (the gate's method), per-band floor = median of
+the 4.5–6.0 s blocks, floor+3 dB exclusion, fits start at band-peak + 50 ms
+(post build-up); two-segment fits scan the breakpoint on the 10 ms grid
+(≥0.08 s per segment, minimum SSE); segments ending within 6 dB of the band
+floor are classified floor-approach (dither artifact), not second slopes.
+No Live, no new renders.
+
+### (a) HF second slope — band-decay decomposition, R3 (600) / R1 (1200) / R4 (2400)
+
+Bands **below** the corner are single-slope through the whole above-floor
+tail (two-segment scans either fail the SSE gate or land as floor-approach):
+
+| band Hz | R3 600 | R1 1200 | R4 2400 | k = RT60/stored (fitted) |
+|---|---|---|---|---|
+| 315–630 | 0.64 | 1.15–1.18 | 2.26 | 0.94–1.07 |
+| 630–1250 | floor-clipped | 1.23–1.29 | 2.30–2.41 | 0.96–1.00 |
+| 1250–2500 | 0.61 | 1.17–1.20 | 2.25 | 0.94–1.02 |
+| 2500–4500 | 0.58 | 1.04–1.07 | 1.96 | 0.82–0.97 |
+
+(consistent with the model's k table 0.89/0.94/0.87 — no change below the
+corner; R1 315–630/900–1250 single fits include a slow lead-in, late-segment
+values quoted).
+
+Bands **above** the corner show a genuine two-segment shape at every decay:
+
+| band Hz | stored | onset (s) | RT60 early | RT60 late |
+|---|---|---|---|---|
+| 4500–8000 | 600 | 0.15 | 0.97 | 0.55 (floor-clipped) |
+| 4500–8000 | 1200 | 0.15 | 3.24 | **0.90** |
+| 4500–8000 | 2400 | 0.34 | 2.72 | **1.54** |
+| 8000–12000 | 1200 | 0.21 | 1.71 | **0.89** |
+| 8000–12000 | 2400 | 0.21 | 6.01 | **1.35** |
+| 12000–16000 | 2400 | 0.21 | 3.88 | **1.55** |
+
+Derived/fitted summary:
+
+- **Corner frequency ≈ 4.5 kHz, fixed across 600/1200/2400** [derived from
+  which bands two-segment at every pin].
+- Onset of the second segment 0.15–0.34 s at all three decays — **not
+  proportional to DecayTime** [fitted].
+- Early HF segment RT60 ≈ 1.5–2.5× stored decay, scattered (short segments
+  adjacent to the build-up plateau) [fitted, medium confidence].
+- Late HF segment (the true HF tail): 0.89–0.90 s @1200 (k 0.74–0.75),
+  1.35–1.55 s @2400 (k 0.56–0.65); @600 floor-clipped, unresolvable
+  [fitted]. This is the source of the R4 5000–16000 gate residual (18.7%,
+  window 0.40–1.20 s straddles the 0.34 s crossover).
+
+**One-line law (a):** the HF second slope is a fixed-corner (≈4.5 kHz),
+decay-dependent-balance property — above the corner the envelope runs a slow
+early segment (near/above the broadband rate) that breaks at ≈0.2–0.35 s
+into the true HF tail at k ≈ 0.6–0.75 of stored decay; the early/late ratio
+is not constant, so the model's single k = 0.80 is wrong in form, not just
+in value.
+
+**Model extension suggested (one sentence):** replace the single k = 0.80
+above 4.5 kHz with a two-component HF tail — an early component near the
+broadband rate plus a steeper HF component (RT60 ≈ 0.6–0.75× stored decay)
+crossing over at ≈0.2–0.35 s — which would also close the R4 18.7% gate
+residual.
+
+### (b) Stereo decorrelation — R1 tail, per band
+
+r0 = lag-0 inter-channel correlation from 10 ms block cross-spectra
+(Re ΣX_L·conj(X_R)/√(P_L·P_R), Parseval-exact for the windowed band
+signal); coherence |ΣX_L·conj(X_R)|/√(P_L·P_R) ≈ r0 everywhere, so the
+residue is phase-aligned at lag 0, not smeared. Blocks ≤ floor+6 dB
+excluded (dither); none were — all windows fully above floor.
+
+| band Hz | taps 12–50 ms | early 80–300 ms | late 300–600 ms |
+|---|---|---|---|
+| 80–160 | +0.01 | +0.25 | +0.40 |
+| 160–315 | +0.24 | +0.23 | −0.00 |
+| 315–630 | +0.44 | +0.46 | +0.25 |
+| 630–900 | +0.30 | +0.37 | +0.17 |
+| 900–1250 | +0.37 | +0.36 | +0.37 |
+| 1250–2500 | +0.23 | +0.25 | +0.09 |
+| 2500–4500 | +0.28 | +0.32 | +0.16 |
+| 4500–8000 | +0.25 | +0.19 | +0.27 |
+| 8000–12000 | +0.25 | +0.19 | +0.26 |
+| 12000–16000 | +0.25 | +0.17 | +0.12 |
+
+- Broadband lag scan (300–600 ms window): r = **+0.248 at 0 ms**; |r| ≤ 0.07
+  at ±0.5–2 ms — decorrelated but zero inter-channel delay [fitted].
+- L/R level difference per band: ±2.7 dB, no systematic spectral trend
+  [fitted].
+- Estimator floor: r̂ scatter ≈ 1/√(BW·T) ≈ 0.03 (wide HF bands) to 0.10
+  (315–630 Hz) per 0.2–0.3 s window — observed tail values sit at or just
+  above it: the tail is largely decorrelated with a small zero-lag aligned
+  residue.
+- Taps note: window starts at 12 ms to exclude the block holding the mono
+  direct (sample 92); with the direct excluded the first taps are already
+  decorrelated (mean r0 ≈ 0.25) — Spin acts from the first reflections; the
+  direct path alone is mono.
+
+**One-line law (b):** the diffuse tail is per-band decorrelated to
+r0 ≈ 0.2 broadband (per-band 0.0–0.4, mean 0.21 late / 0.28 early), at zero
+inter-channel delay and ≤±2.7 dB level match — the numbers a stereo
+extension of the mono model must hit: independent per-channel band seeds
+under shared envelope timing, targeting this table's r0 (not 0, not 1).
+
+Confidence: (a) corner + late-segment rates — high at 1200/2400 (clean
+above-floor regions), the 600 point is floor-clipped and its early-segment
+fits are noisy; (b) tail r0 per band — high for the estimator and windows
+stated (single render, default pin; not swept across DecayTime).
+
