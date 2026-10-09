@@ -185,14 +185,20 @@ What remains open:
   (Three level pins now exist — see the OP10/OP11 section below; strict
   ∝Volume is refuted at the third point.)
 - **`Globals/Algorithm`**: probed at the two factory-observed extremes
-  (0 → 7, OP11 below): acoustic null at these pins. Whether ANY index
-  changes B's role while C/D sit at the −70 dB floor is still open.
-- **Shells C/D**: untested; expected to mirror B (document structure
-  identical), topology beyond A←B unverified.
+  (0 → 7, OP11 below; the OP12 discriminating probe with C/D audible is
+  still a null — see the OP12–OP14 section): acoustic null at these pins
+  under both C/D regimes. Whether ANY index re-routes audibly is still open
+  beyond {0, 7}.
+- **Shells C/D**: C probed at one pin (OP13: C on at 1.0, Algorithm 0) —
+  byte-flat M1; C mirrors B, a modulator shell, not an output voice. D
+  untested alone; C/D together at Algorithm 7 (OP12) contribute nothing
+  audible either.
 - **WaveForm labels 0..21**: unknown; OP9 pins only the extent tail (22).
   Whether a mid-extent wave changes a MODULATOR's spectrum is untested.
 - `Phase`, `Feedback`, `Fine` on shell B: untouched (0/0/0), semantics open
-  per the params.rs table.
+  per the params.rs table. (Shell A's `Feedback` probed at 0.5 of 0..100,
+  OP14: below the −84 dBFS reading floor; the audible range and law are
+  open at larger pins.)
 
 Confidence:
 
@@ -252,6 +258,58 @@ is refuted for both factory-observed extremes. Honest limit: with C/D at the
 −70 dB floor the null cannot separate "Algorithm is sonically inert" from
 "Algorithm only re-routes the muted C/D shells" — the discriminating probe
 (Algorithm 7 with C/D raised) is a follow-up lane.
+
+## Shells C/D, the Algorithm cell with audible C/D, and A feedback (OP12–OP14, 2026-10-09, operator-probes lane)
+
+All three probes derive from OP7 (`harness/build_op_probes2.py`, same ET +
+gzip mtime=0 convention); renders via `with_live_lock.sh` + `lane3_render.sh`
+(256 s family spec); analyzer `harness/analyze_op_probes2.py` (the
+analyze_lane1 / analyze_lane3_alg conventions: steady RMS ×4, h1..h4 at
+[1.15, 1.70], 90–2000 Hz partial scan, onset profile). The shared scan floor
+(146/122/110/154/90/168 Hz at −59…−66 dBFS) appears identically in every
+render including M1 — it is the render floor family, not probe content.
+
+**OP12_ALG7CD — the OP11 discriminating probe: `Globals/Algorithm` → 7 AND
+`Operator.2/Volume`, `Operator.3/Volume` → 0.25 each.** Result: **still a
+null, to the family residual.** Steady RMS +0.15 ×4 vs OP7 (the same
+magnitude as OP7's −0.10 voice-loudness residual vs M1); h1..h4 within
+0.13 dB of OP7 (h2 −49.54 vs −49.58); β = 0.2089 vs 0.2115 (−1.2 %); the
+partial scan adds **no peak** above the shared floor family; the onset
+profile keeps B's signature (−33.1 first 100 ms — B still drives the onset
+index). **Verdict: at Algorithm 7, C/D raised to 0.25 do not become output
+voices and do not measurably re-route the A+B pair.** C/D-as-carrier at this
+pin is excluded to the −59 dBFS scan floor. Honest extent: {0, 7} on the
+Algorithm index, C/D at one level (0.25); the null now covers "Algorithm
+re-routes audible shells" for the only two indices with stored factory
+evidence.
+
+**OP13_OSCC — shell C on: `Operator.1/Volume` → the off floor
+(0.0003162277571), `Operator.2/Volume` → 1.0.** Result: **byte-flat M1** —
+steady RMS −0.00 ×4, h1..h4 within 0.1 dB (h1 −29.91, h2 −84.00 at the
+dither floor), scan = the floor family. **Shell C at Algorithm 0 is a
+modulator shell exactly like B (OP7's verdict extends): its Volume at 1.0
+is acoustically inert when unrouted, and the expected "C adds its own sine
+/ level law vs A" does not exist at Algorithm 0.** A's −70 dB off floor
+value is confirmed as the muted-shell constant (carried by C/D in the OP7
+set).
+
+**OP14_AFB050 — Osc A self-feedback: `Operator.0/Feedback` → 0.5
+(params.rs range 0..100 → 0.5 % of scale), B off (M1 voice).** Result:
+**byte-flat M1** — RMS −0.00 ×4, h2 −84.02 vs −84.04, scan = floor family.
+**Feedback 0.5 enriches nothing above the −84 dBFS reading floor; no
+self-FM index is readable at this pin.** The pin was chosen too small for
+the 0..100 range — the discriminating follow-up is a larger fraction
+(e.g. 25 or 50), which would put h2 near the OP10 ladder where β is
+readable.
+
+Render-lane note: the committed `lane3_render_relaunch.sh` passed only the
+renders dir to `lane3_export.applescript` (whose `on run` indexes item 2
+unconditionally — argv gap, fixed 2026-10-09), and the driver's
+`stepSlider` read slider values through an unguarded `as string` coercion
+that aborted post-click on some panel states while the export landed anyway
+(both OP12 attempts exited 8 with a correct 256 s file on disk; the first,
+4.875 s, predates the length step). The driver now reads AXValue with a
+guarded fallback; OP13/OP14 exported clean (exit 0).
 
 ## Gate residuals (operator_voice_golden_gate, 2026-10-08)
 
@@ -316,6 +374,11 @@ key 48).
 - Release time-normalized dB-linear: **high** (two level regimes, ≤0.62 dB).
 - Sine purity at key 48: **high** (h2..h10 at dither floor); at key 60:
   **medium** (h2 ≈ −88 dBFS, cause open).
+- Algorithm 0/7 nulls (OP11/OP12): **high** for these pins — the OP12 null
+  holds with C/D audible (three independent render chains agree to ≤0.15 dB).
+- Shell C inert at Algorithm 0 (OP13): **high** (byte-flat M1).
+- A Feedback 0.5 subliminal (OP14): **high** at this pin only; the law above
+  it is unmeasured.
 
 ## Evidence
 
@@ -323,6 +386,10 @@ key 48).
   `OP4_TRIM025.aif`, `OP5_KEY60.aif`, `OP6_DECAY.aif` (+ `.asd`), baseline
   `M1_OPERATOR.aif`; sets `harness/live/OP2_SUSTAIN24.als` …
   `OP5_KEY60.als`, `OP6_DECAY.als`.
+- OP12–OP14 renders: `harness/renders/OP12_ALG7CD.aif`, `OP13_OSCC.aif`,
+  `OP14_AFB050.aif`; sets `harness/live/OP12_ALG7CD.als`, `OP13_OSCC.als`,
+  `OP14_AFB050.als` (built by `harness/build_op_probes2.py` from OP7);
+  analyzer `harness/analyze_op_probes2.py`.
 - Analyzers: `harness/analyze_operator.py`,
   `harness/analyze_operator_decay.py` (τ fit; self-validates on OP2);
   gate:

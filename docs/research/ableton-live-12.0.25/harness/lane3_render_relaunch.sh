@@ -88,7 +88,37 @@ done
 sleep 6
 
 # ---------- export (same hardened driver; re-guards internally) ----------
-EXP=$(osascript "$HARNESS/lane3_export.applescript" "$RENDERS")
+# argv: <rendersDir> <expectedBaseName> <loopSpec> — the driver indexes item 2
+# unconditionally, so the label must be passed (bare-dir call died with
+# "Can't get item 2 of {…}", observed 2026-10-09). Loop spec extracted from
+# the set's transport exactly as lane3_render.sh does (panel values are
+# session-persistent and do not sync to the set).
+LOOP_BEATS=$(python3 - "$ALS" <<'PYEOF'
+import gzip, sys, xml.etree.ElementTree as ET
+with gzip.open(sys.argv[1]) as f:
+    root = ET.parse(f).getroot()
+tr = root.find("LiveSet/Transport")
+lon = tr.find("LoopOn")
+ll = tr.find("LoopLength")
+if lon is not None and lon.get("Value") == "true" and ll is not None:
+    print(ll.get("Value"))
+else:
+    print("")
+PYEOF
+) || LOOP_BEATS=""
+LOOP_SPEC=""
+if [ -n "$LOOP_BEATS" ]; then
+LOOP_SPEC=$(python3 -c "
+b = $LOOP_BEATS
+bars = int(b // 4)
+rem = b - bars * 4
+beats = int(rem // 1)
+six = round((rem - beats) * 4)
+print(f'{bars} {beats} {six}')
+")
+fi
+echo "  [set loop: '${LOOP_BEATS:-off}' -> bars/beats/16ths: '${LOOP_SPEC:-untouched}']"
+EXP=$(osascript "$HARNESS/lane3_export.applescript" "$RENDERS" "$LABEL" "$LOOP_SPEC")
 echo "  [export: $EXP]"
 case "$EXP" in
   *done*) : ;;

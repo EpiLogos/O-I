@@ -104,10 +104,30 @@ on findDesc(el, depth, target)
 end findDesc
 
 -- step an AX slider to a target value with AXIncrement/AXDecrement actions
+-- the panel's slider value read can die on coercion on some elements
+-- ("Can't make value of item 11 … into type string", observed 2026-10-09) —
+-- read the AXValue attribute first, fall back to the raw value, report if
+-- both fail so the driver can return a diagnosis instead of aborting
+on readSliderVal(el)
+	tell application "System Events"
+		set v to missing value
+		try
+			set v to (value of attribute "AXValue" of el) as real
+		end try
+		if v is missing value then
+			try
+				set v to (value of el) as real
+			end try
+		end if
+		return v
+	end tell
+end readSliderVal
+
 on stepSlider(el, wantVal)
 	tell application "System Events"
 		repeat with i from 1 to 400
-			set v to (value of el as string) as real
+			set v to my readSliderVal(el)
+			if v is missing value then return "unread-value"
 			if v is wantVal then return "ok:" & v
 			if v < wantVal then
 				perform action "AXIncrement" of el
@@ -116,7 +136,7 @@ on stepSlider(el, wantVal)
 			end if
 		end repeat
 	end tell
-	return "stuck:" & ((value of el as string) as real)
+	return "stuck:" & (my readSliderVal(el) as string)
 end stepSlider
 
 on setRenderLength(w, barsW, beatsW, sixW)
