@@ -13,10 +13,35 @@ use live_dynamics::verify;
 const RENDERS: &str =
     "../../docs/research/ableton-live-12.0.25/harness/renders";
 
+/// Read-only archive of the 2026-10-07 render lane (final-pass renders).
+/// Four golden renders (G1, G6 pair, R1, E1) were pruned from
+/// harness/renders and live only here; render_path checks the live dir
+/// first, then this archive. A render present in neither keeps the
+/// skip/skip-notice semantics — absence is never turned into a failure
+/// here, the #[ignore] activation convention decides.
+const RENDER_ARCHIVE: &str = "/Users/admin/tools/live-re/archive-20261007/renders-final";
+
+/// Render lookup: harness/renders first, then the read-only archive.
+/// Returns None when the render is present in neither.
+fn render_path(name: &str) -> Option<std::path::PathBuf> {
+    [RENDERS, RENDER_ARCHIVE]
+        .iter()
+        .map(|root| std::path::Path::new(root).join(name))
+        .find(|p| p.exists())
+}
+
+fn render_exists(name: &str) -> bool {
+    render_path(name).is_some()
+}
+
+fn read_render_bytes(name: &str) -> Vec<u8> {
+    let p = render_path(name)
+        .unwrap_or_else(|| panic!("render {name} not present in {RENDERS} or {RENDER_ARCHIVE}"));
+    std::fs::read(p).unwrap()
+}
+
 fn have_renders() -> bool {
-    std::path::Path::new(RENDERS)
-        .join("G1_T-12_R30_MU0_v2.aif")
-        .exists()
+    render_exists("G1_T-12_R30_MU0_v2.aif")
 }
 
 // ---------------------------------------------------------------------------
@@ -48,7 +73,7 @@ fn model_buffer_at_direct(render: &audio::Audio, decay_ms: f64) -> Vec<f32> {
 }
 
 fn read_render(name: &str) -> audio::Audio {
-    let bytes = std::fs::read(format!("{RENDERS}/{name}")).unwrap();
+    let bytes = read_render_bytes(name);
     audio::read_aiff_i16(&bytes).unwrap()
 }
 
@@ -208,7 +233,7 @@ fn glue_golden_render_static_gate() {
         panic!("golden renders not present at {RENDERS}");
     }
     // canonical clean-chain render (master chain stripped, unity staging)
-    let bytes = std::fs::read(format!("{RENDERS}/G1_T-12_R30_MU0_v2.aif")).unwrap();
+    let bytes = read_render_bytes("G1_T-12_R30_MU0_v2.aif");
     let render = audio::read_aiff_i16(&bytes).unwrap();
     let p = GlueParams { threshold_db: -12.0, range: 30.0, ratio: 1.0, makeup_db: 0.0 };
     let result = verify::static_gate(&render, &p);
@@ -227,14 +252,8 @@ fn render_determinism_within_bound() {
         panic!("golden renders not present");
     }
     // determinism pair: identical bypass renders (G6_BYPASS_v2 / v2b)
-    let a = audio::read_aiff_i16(
-        &std::fs::read(format!("{RENDERS}/G6_BYPASS_v2.aif")).unwrap(),
-    )
-    .unwrap();
-    let b = audio::read_aiff_i16(
-        &std::fs::read(format!("{RENDERS}/G6_BYPASS_v2b.aif")).unwrap(),
-    )
-    .unwrap();
+    let a = audio::read_aiff_i16(&read_render_bytes("G6_BYPASS_v2.aif")).unwrap();
+    let b = audio::read_aiff_i16(&read_render_bytes("G6_BYPASS_v2b.aif")).unwrap();
     let d = verify::spectral_gate(&a, &b);
     println!("mean {} dB, max band {} dB", d.mean_db, d.max_band_db);
     assert!(verify::spectral_gate_passes(&d));
@@ -619,9 +638,6 @@ fn wavetable_law_gates() {
     let note_starts = [0.0f64, 1.0, 2.0, 3.0];
     let f0 = 130.81278265;
 
-    let render_exists =
-        |name: &str| std::path::Path::new(RENDERS).join(name).exists();
-
     let steady = |buf: &[f32], t: f64| {
         let a = ((t + 0.15) * sr as f64) as usize;
         let b = ((t + 0.70) * sr as f64) as usize;
@@ -815,7 +831,7 @@ fn wavetable_law_gates() {
 #[ignore]
 fn wavetable_unison_golden_gate() {
     const NAME: &str = "WV19_LONG_UNI.aif";
-    if !std::path::Path::new(RENDERS).join(NAME).exists() {
+    if !render_exists(NAME) {
         println!("skip {NAME}: render not present in this checkout");
         return;
     }
@@ -1538,7 +1554,7 @@ fn glue_lam_lambda_discriminator_gate() {
 fn echo_e1_golden_gate() {
     // Per-channel measurement: the pingpong taps alternate L/R, so the mono
     // mixdown halves every tap and lets the reverb floor mask the late ones.
-    let bytes = std::fs::read(format!("{RENDERS}/E1_IMPULSE_default_v2.aif")).unwrap();
+    let bytes = read_render_bytes("E1_IMPULSE_default_v2.aif");
     let (ch_l, ch_r) = audio::read_aiff_i16_channels(&bytes).unwrap();
     let sr = ch_l.sample_rate;
     let t0 = verify::find_direct_sample(&ch_l.samples, sr);
