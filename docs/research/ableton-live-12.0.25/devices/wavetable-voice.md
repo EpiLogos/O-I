@@ -399,12 +399,12 @@ analyzer `harness/analyze_wv_unison.py`):
   equal gains. Remaining (thin): VoiceCount sweep 1…8 WITH the stereo
   read (the D15 ladder's per-voice panning is unmeasured beyond VC3),
   mode-enum identities beyond the Mode-1 signature.
-- **Slope warping family — CLOSED at the decay segment (rev 4): the warp
-  is v(u) = (e^{−ku} − e^{−k})/(1 − e^{−k}) with k = 7.41·slope, endpoints
-  pinned, one fitted scalar, four pins, ≤0.14 dB worst** (section below).
-  Remaining (thin): whether Attack/Release slopes share the same family
-  (Release's rev-1 fit used contaminated windows too — re-read it with
-  cycle peaks before trusting c=2.43).
+- **Slope warping family — CLOSED for all three segments (rev 4): the
+  warp is v(u) = (e^{−ku} − e^{−k})/(1 − e^{−k}) with k = 7.41·slope,
+  endpoints pinned, one fitted scalar — decay at four pins, attack at
+  {0, +1.0}, release at {0, 0.5} (rev-1's release product-form c=2.43
+  superseded)** (two sections below). Remaining (thin): attack/release
+  pins beyond one non-zero each; negative attack slopes; why 7.41.
 
 - **Mod matrix destinations on the voice**: source identities beyond
   `mod-matrix.md`'s attribution (9/11 envelopes, 8/12 LFO-family) and
@@ -650,3 +650,86 @@ special case (and its docstring justification, which cites the
 left-channel shadow) should be deleted. The module models no pans, so no
 pan change is needed there; if pans are ever modeled, use the alternating
 hard deal, not 2k/(N−1)−1. (Not edited here — another lane owns the crate.)
+
+## Attack/Release slope families — one warp law for all three segments (2026-10-09 day lane, rev 4)
+
+Three renders on the M2-default lineage (base `WV8_SLOPE0.als` — itself
+the only M2-lineage set on disk; `M2_WAVETABLE.als` was never committed —
+with `Slopes_Decay` restored to the 0.5 default, so each set is a
+single-pin delta vs the M2 default patch; builder
+`build_wv_slope_lane.py`, ET round-trip + gzip mtime=0, verified 2-element
+XML diffs):
+
+| set | pin (`Voice_Modulators_AmpEnvelope_Slopes_*` Manual) | why |
+|-----|------|-----|
+| `WV22_ASLP0` | Attack 0 → 0.0 | the brief's pin — numerically the M2 default; serves as the ET control |
+| `WV23_RSLP0` | Release 0.5 → 0.0 | the k→0 limit: release predicted linear-to-zero |
+| `WV24_ASLP1` | Attack 0 → +1.0 | the informative attack probe (the default attack slope is already 0 — a 0.0 pin alone could not test the family) |
+
+Renders `harness/renders/WV22_ASLP0.aif` / `WV23_RSLP0.aif` /
+`WV24_ASLP1.aif` (1,036,406 bytes each, 5.875 s — the lineage size; all
+three first-try under the lock). Analyzer: `analyze_wv22_ar_slopes.py`.
+
+**Windows.** Attack: note 0 at file sample 0 — the carrier phase reads
+−0.0014 rad there (no engine delay), so the 1 ms ramp (44.1 samples) is
+read sample-wise by full-envelope LSQ (attack candidate × rev-4 decay law
+held at k=3.705 × free gain/phase). Release: note 3 is the only note
+whose release has no successor (loop 11.75 beats = 5.875 s; release
+3.875–4.475 s, floor-trimmed at −55 dB below plateau — dither peaks reach
+±5 LSB in the last cycles and fabricate a slow tail), per-cycle peaks.
+
+**Controls.** WV22 is dither-identical to M2 (max|Δ| 2 LSB, 2.03% >1 LSB,
+0% >8 LSB — the export-dither signature): the ET round-trip renders
+bit-equivalently and attack slope 0.0 IS the default state. WV24 differs
+from M2 in exactly 170 samples clustered at t = 0/1/2/3 s (the four
+attack ramps; max|Δ| 785 LSB) — nothing else moved. All three renders
+read identical decay probes (+5.36/+4.27/+2.83/+0.92 dB at
++25/+75/+150/+325 ms) and the −23.96 dBFS plateau.
+
+**Attack (sample-level, note 0).** M2/WV22 (slope 0): the ramp is
+**linear-in-time** — free k = +0.012 (≈0; residual 1.7 LSB = dither), and
+the readable demod columns rise 3387/3575/3763/3953/4140 at samples
+36/38/40/42/44 (~94.3/sample, full at 44.1). WV24 (slope +1.0): the
+linear model misses by 542 LSB rms on the ramp; the family
+`a(u) = 1 − v(u)` fits at **free k = +7.558 (residual 1.66 LSB = dither;
+at family k = 7.41: 1.68 LSB)** — already at 99.8% amplitude by sample 36
+where linear sits at 82%. Fitted C_attack = 7.56 ± ~0.2 vs the decay's
+7.41: the same family, same scalar within 2% at the one non-zero pin.
+
+**Release (cycle peaks, note 3).** Slope 0.0 (WV23): **linear-to-zero** —
+free k = −0.06 (residual 0.14 dB rms), the −40 dB point sits past
+u = 0.99 as linear predicts (render reaches the floor guard before it).
+Slope 0.5 (M2, re-read clean): **the decay expwarp fits — free
+k = +3.662, residual 0.268 dB rms over 81 cycles** (0.154 dB with the
+note-off quantized +2.4 ms ≈ one 128-sample audio block, k = +3.740 —
+within 1% of the family prediction 7.41·0.5 = 3.705). The rev-1 product
+form `(1−v)·e^(−cv)` on the same clean points: best c = 2.456, residual
+0.620 dB — 2.3× worse than a ONE-parameter expwarp, and a two-parameter
+variant (free exponent p = 0.84, c = 2.82) still loses (0.190 dB).
+Measured −40 dB crossing 4.4222 s vs expwarp model 4.4223 s. **The rev-1
+c = 2.43 release reading is superseded**: it was the best fit available
+to contaminated 20 ms windows, and its shape is refuted by the clean
+extraction.
+
+**Law verdict.** All three amp-envelope segments are the same
+endpoint-pinned exponential warp with one scalar:
+
+```
+v(u) = (e^(−k·u) − e^(−k)) / (1 − e^(−k)),   k = 7.41 · Slopes_<seg>
+attack:  a(u) = peak · (1 − v(u))       (rise 0 → peak)
+decay:   a(u) = sustain + (peak−sustain) · v(u)
+release: a(u) = level · v(u)            (fall level → 0 at the stored time)
+k → 0 limit = linear-in-time, measured on all three segments at slope 0
+```
+
+Honesty marks: C = 7.41 remains the one fitted scalar (fitted on the
+decay's four pins; attack's single +1.0 pin reads 7.56, release's single
+0.5 pin reads 7.32–7.48 depending on the off-instant quantization — both
+consistent with 7.41, but shared-C beyond the tested pins is inference,
+not measurement). Attack tested at slopes {0, +1.0} only — negative
+attack slopes and the attack join's linearity in slope beyond two points
+are untested. Release tested at {0, 0.5} only. The +0.4 dB mid-segment
+bow in the release residual profile (measured above model, both
+candidate families alike) is unexplained but does not discriminate the
+candidates. The family itself remains hypothesized-and-validated, not
+derived.
