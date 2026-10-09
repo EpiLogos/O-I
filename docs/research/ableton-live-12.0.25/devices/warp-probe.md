@@ -423,3 +423,52 @@ level) — both engines engaged, not a shared pass-through.
   content end beyond the spike); the timing proof here is the onset scaling.
   The clip span itself is 16 beats (verified in the edited XML); the 5 s
   export loop truncates the trailing silence only.
+
+## Segment-tempo mismatch (SEG90): storage settled, render blocked — 2026-10-09
+
+The settling probe named by the WB2X verdicts — a *genuine* tempo mismatch,
+file tempo ≠ set tempo with markers left off the 1:1 pin. Two results, one
+settled and one blocked.
+
+**Where segment tempo lives (settled, high confidence).** The clip's XML
+(`WB0_BEATS_IMP.als`) and the app-bundle Schema vocabulary
+(`/Applications/Ableton Live 12 Suite.app/Contents/App-Resources/Schema/12.0_1200*.txt`)
+agree: an AudioClip carries **no explicit SegTempo/WarpSettings field** —
+only `WarpMode` (RemoteableEnum), the `WarpMarkers` list
+(`WarpMarker SecTime`/`BeatTime`), and `SavedWarpMarkersForStretched`.
+The UI's "Seg. BPM" is *derived*: the marker-pair ratio
+`ΔBeatTime/ΔSecTime × 60`. WB0's pair `(1.0 s → 2.0 beats)` pins 120; the
+mismatch is therefore authored purely in the markers.
+
+**Probes built (verified in XML, not rendered).** `build_wb_seg90.py`
+(same ET+gzip-mtime0 pattern, W1_TONES lineage, impulse.wav): markers
+`(0,0)+(1.0 s, 1.5 beats)` embed **90 BPM** against the 120 BPM set →
+×4/3 mismatch, playback maps source t → t×0.75 (time-compression).
+File is 4.0 s → clip bounds 6.0 beats, transport loop 8.0 beats; ideal
+onset 100/48000 s × 0.75 = **1.5625 ms** (68.9 samples @44.1k).
+`WB3_SEG90.als` (WarpMode 0, Beats re-slices to the grid) and
+`WB4_SEG90CP.als` (WarpMode 5, Complex Pro control — true time-stretch at
+the same mismatch). Discriminator: spike shape at onset — a repitch-family
+response compresses the spike ×3/4 (pure resample); granular-family modes
+re-time without resampling. Family question resolved by WB3 tracking WB4
+(granular) or diverging (repitch-like); "does the mismatch wake mode 0" by
+both against WB0's 1:1 passthrough.
+
+### SEG90 verdicts (confidence: high for storage; render honestly blocked)
+
+- **Render attempts: 2, both failed, stopped per the two-failures rule.**
+  Attempt 1: driver exited 6 — Live held the previous lane's set
+  (`WB2_CPRO_IMP2X`) frontmost and the `open -a` swap never registered
+  within the poll window. Attempt 2 (the one retry): set loaded and the
+  8.0-beat loop was set, then **focus was lost before the export menu**
+  (exit 8). No `.aif` landed; nothing was killed or quit.
+- **Analysis: null — nothing to measure.** The fourth identity question for
+  mode 0 (does the mismatch change its character vs 1:1; granular or
+  repitch-family) remains **honestly null**, now after four probes
+  (sine 1:1, transient 1:1, transient 2×, mismatch-unrendered).
+- **State left resumable**: both sets are built and verified; the settled
+  storage finding removes the last authoring unknown. Each render is one
+  command when the Live window is free:
+  `bash with_live_lock.sh warp-seg90 bash lane3_render.sh WB3_SEG90`
+  then `WB4_SEG90CP`, analysis per the discriminator above
+  (onset vs 1.5625 ms; spike extent; WB3-vs-WB4 byte/spectral diff).
