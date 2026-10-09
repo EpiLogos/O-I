@@ -1,8 +1,10 @@
 import {contributionUnavailable} from './contributions'
 import {nativeDetachedBodySupported} from './detachedKinds'
 /** Receiving frame over the original native Workbench and the one continuity book. */
-import {useCallback, useEffect, useRef, useState} from 'react'
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {Workbench, GroupPane, type WorkbenchProps} from '../../../../../desktop/cradle/src/surface/Workbench'
+import {ProjectionEncounterProvider} from '../../../../../desktop/cradle/src/surface/projectionPane'
+import {createSpineEncounterBridge} from '../projections/encounterBridge'
 import {ContextMenu, type MenuState} from '../../../../../desktop/cradle/src/surface/ContextMenu'
 import {bindingDisclosures, frameDisclosures, executeFrameAction} from '../../../../../desktop/cradle/src/surface/registry'
 import {activeBindingId, detachBinding, groupsOf, makeSourceBinding, openBinding} from '../../../../../desktop/cradle/src/surface/engine'
@@ -62,6 +64,12 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
   const book = useContinuity(), workspace = useWorkspace(), kernel = useKernel()
   const latest = useRef({book, workspace, kernel})
   latest.current = {book, workspace, kernel}
+  // The encounter spine for projection panes (seam 3): one subscriber/router
+  // over this book's WorldContext + the workspace access epoch. It owns no
+  // state; the render effect below is the publication.
+  const encounterBridge = useMemo(() => createSpineEncounterBridge(latest), [])
+  const encounterSource = useMemo(() => ({bridge: encounterBridge, publish: () => encounterBridge.publish()}), [encounterBridge])
+  useEffect(() => {encounterBridge.publish()})
   const mounted = useRef(false)
   const host = useRef<HTMLElement>(null)
   const [presented, setPresented] = useState(false)
@@ -731,7 +739,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
       }
       const side = tree.layout.sidePane
       return <div className="candidate-workbench-tree" key={tree.key} hidden={!tree.presented}>
-        <Workbench {...props}/>
+        <ProjectionEncounterProvider source={encounterSource}><Workbench {...props}/></ProjectionEncounterProvider>
         {side && <aside className="candidate-workbench-side"><GroupPane {...props} pane={side} group={side} state={{...tree.layout, root: side, focusedGroupId: side.id, sidePane: undefined}} kernelDirty={ref => !!ref && !!kernel.snapshot.buffers[ref]?.dirty} openBindingMenu={(id, x, y) => {if (allowed()) menuFor(id, x, y, true)}} openFrameMenu={(x, y) => {if (allowed()) menuFor(undefined, x, y, true)}}
           insertMenu={close => <button type="button" onClick={() => {if (allowed()) executeSide('surface.open'); close()}}>New tab</button>}
           stripTools={<button type="button" disabled={!side.active} onClick={() => {if (!allowed() || !side.active) return; const id = side.active; void checkpointDocuments([id]).then(() => {if (allowed()) latest.current.book.moveSurface(id, 'tree')}).catch(report)}}>Move to centre</button>}

@@ -28,7 +28,8 @@ import { SourcesIndex } from "./SourcesIndex";
 import { DraftSurface } from "../flow/DraftSurface";
 import { FlowSurface } from "../flow/FlowSurface";
 import { FreshSurface } from "../flow/FreshSurface";
-import { contains, groupsOf, renderOrder, upperCornerGroupId } from "./engine";
+import { contains, groupsOf, isProjectionBinding, renderOrder, upperCornerGroupId } from "./engine";
+import { ProjectionSurface } from "./projectionPane";
 // Expensive bodies load on first use, not at startup: the terminal (xterm),
 // the browser attachment, Explore and its presentation renderers, the
 // knowledge graph and its layout worker, the Factory contribution and the
@@ -545,6 +546,12 @@ function SurfaceBodyImpl({
     return <ModeCentreBody binding={binding} subject={subject} conversation={conversation} host={host} onView={view=>onView(binding.id,view)} onHostedState={reading=>onHostedState?.(binding.id,reading)}/>;
   }
   if(binding.kind==="explore"||binding.kind==="presentation")return <ExploreSurface key={binding.id} binding={binding} onOpenPresentation={openPresentation} onOpenExplore={openExplore}/>;
+  // Projection pane kinds (seam 1): the body is the admitted projection
+  // module (surface/projectionModules.ts), mounted inside this pane's own
+  // retained wrapper — the pane tier's concealment keeps it mounted and
+  // stateful while hidden, which is the projections' hidden-inhabitant law.
+  // A kind with no admitted module renders the honest absence note.
+  if (isProjectionBinding(binding)) return <ProjectionSurface key={binding.id} binding={binding} />;
   if(binding.kind==="encounter")return <EncounterSurface key={binding.id} binding={binding} sourceWorldRef={(binding.view as (NonNullable<typeof binding.view> & {sourceWorldRef?: string}) | undefined)?.sourceWorldRef ?? sourceWorldRef} onView={view=>onView(binding.id,view)}/>;
   if (binding.kind === "terminal") return <TerminalSurface binding={binding} />;
   if (binding.kind === "flow") return <FlowSurface binding={binding} />;
@@ -608,6 +615,12 @@ const KIND_GLYPH: Record<string, import("../workspace/Glyph").GlyphName> = {
   "epi-logos": "wiki",
   agency: "agent",
   instrument: "instrument",
+  // Projection pane kinds (seam 1) present as the field glyph: a pane is a
+  // projection of the one World (WORLD-SHELL-DESIGN §1).
+  "projection.earth": "field",
+  "projection.timeline": "field",
+  "projection.constellation": "field",
+  "projection.expressions": "field",
 };
 
 function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBindingMenu }: TabProps) {

@@ -18,7 +18,11 @@
 // Their state stays with their owners, never copied into the arrangement.
 import {hostedSurfaceDescriptors} from '../contributions/registered-kinds.mjs';
 import {validateNativeKnowledgeContext} from '../knowledge/nativeContext.mjs';
-const SURFACE_KINDS = ['source', 'sources', 'knowledge', 'file', 'encounter', 'browser', 'terminal', 'flow', 'draft', 'blank', 'instrument', 'explore', 'presentation', 'agency', 'object', ...hostedSurfaceDescriptors.map(descriptor => descriptor.kind)];
+// Projection pane kinds (WORLD-SHELL-DESIGN §10 seam 1) — the same four the
+// surface engine declares (surface/types.ts). Kept as literals here so the
+// codec stays language-neutral and browser-testable without a TS import.
+const PROJECTION_PANE_KINDS = ['projection.earth', 'projection.timeline', 'projection.constellation', 'projection.expressions'];
+const SURFACE_KINDS = ['source', 'sources', 'knowledge', 'file', 'encounter', 'browser', 'terminal', 'flow', 'draft', 'blank', 'instrument', 'explore', 'presentation', 'agency', 'object', ...PROJECTION_PANE_KINDS, ...hostedSurfaceDescriptors.map(descriptor => descriptor.kind)];
 const ENCOUNTER_PLANES = ['Conversation', 'Activity', 'Context', 'Inspect'];
 const KNOWLEDGE_PLANES = ['graph', 'page'];
 
@@ -102,6 +106,14 @@ export function validBinding(raw) {
     ...(typeof presentationRaw.expression_ref === 'string' ? { expression_ref: presentationRaw.expression_ref } : {}),
     ...(Number.isInteger(presentationRaw.expression_revision) ? { expression_revision: presentationRaw.expression_revision } : {}),
   } : undefined;
+  // A projection pane's encounter slice (seam 1): the pane kind restated and
+  // an optional pinned subject ref. The slice is presentation state naming a
+  // spine address, never content. A missing or mistyped slice drops the
+  // slice — the pane then follows the encounter — never the binding.
+  const projectionRaw = o.projection;
+  const projection = PROJECTION_PANE_KINDS.includes(o.kind) && projectionRaw && typeof projectionRaw === 'object' && projectionRaw.kind === o.kind
+    ? {kind: projectionRaw.kind, ...(typeof projectionRaw.subject_ref === 'string' && projectionRaw.subject_ref.trim() ? {subject_ref: projectionRaw.subject_ref} : {})}
+    : undefined;
   // Compact view state is kind-scoped: the plane an encounter Surface was
   // left on, and the knowledge page/graph plane with the graph it was opened
   // from (the page's return-to-graph origin). Every part restores only when
@@ -145,7 +157,7 @@ export function validBinding(raw) {
     : undefined;
   return {
     ...(hosted ? {hosted} : {}),
-    presentation, terminal,
+    presentation, projection, terminal,
     flow: o.kind === 'flow' ? flow : undefined,
     browser,
     view: Object.keys(view).length ? view : undefined,

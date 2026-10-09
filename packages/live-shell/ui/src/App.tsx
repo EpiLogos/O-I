@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type CSSProperties, type RefObject } from 'react'
 import {useContinuity} from './continuity/workspace'
-import { ArrangementView } from './components/ArrangementView'
 import { BrowserPane } from './components/BrowserPane'
 import { WorldBrowser } from './components/WorldBrowser'
 import { OPEN_DEVICE_EVENT, PARAMETER_BROWSE_EVENT } from './components/nativeDrag'
@@ -9,7 +8,7 @@ import {NativeInputRetentionProvider,nativeInputBinding} from './components/Nati
 import { useWorkspace } from './shell/workspace'
 import { DeviceChainPanel, type DetailMode } from './components/DeviceChainPanel'
 import { RightDock } from './components/RightDock'
-import { SessionView, type SetSelection } from './components/SessionView'
+import type { SetSelection } from './components/SessionView'
 import { StatusBar } from './components/StatusBar'
 import { TransportBar } from './components/TransportBar'
 import {AgentShellProvider, useAgentShell} from './agent/AgentShellContext'
@@ -30,6 +29,7 @@ import { getPanels, type PanelContext } from './shell/panels'
 import { configureSettingsHost, openSettings, useSettingsHost } from './settings/host'
 import {createNativeContentActions, readNativeExpressionsContent} from './shell/nativeContent'
 import type {NativeCompositionViewSource} from './shell/compositionViews'
+import {TimelineProjectionResidence, timelinePresentation} from './projections/timelineResidence'
 import {NATIVE_PRESENT_EXPRESSIONS} from './native/openStudio'
 import {sameEditorBasis,type NativeEditorBasis,type NativeEditorController} from '@epilogos/expressions-boundary/editor'
 import './NativeCompositionResidence.css'
@@ -211,8 +211,15 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   }
   const chooseView = (view: string) => {
     if (view !== 'session' && view !== 'arrangement') return
+    // Session and Arrangement are presentations of ONE Timeline projection
+    // over the current work — never a mode switch (the recorded fault: these
+    // controls used to couple the presentation to the audio workspace). The
+    // audio cut presents through `tab` alone and keeps its existing props;
+    // the native cut keeps the established native.session /
+    // native.arrangement identity the receiving joins are bound to. Neither
+    // presentation rewrites the application-view identity of the other.
     presentSettings(false); setTab(view)
-    setCenterPanel(workspace.mode === 'audio' ? 'world.expressions' : `native.${view}`)
+    if (workspace.mode !== 'audio') setCenterPanel(`native.${view}`)
   }
   const [dock, setDock] = useState(restored?.dock ?? false)
   const [selection, select] = useState<SetSelection>(restored?.selection ?? { track: 0, scene: null })
@@ -307,8 +314,13 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     <main className="center"><div className={`center-body${nativeComposition && !settingsPresented ? ' native-composition-residence' : ''}${nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented?' native-editor-residence':''}`}>
       {nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented&&<div className="native-editor-return"><span>{nativeEditorReturn.editor==='source'?'Source':nativeEditorReturn.editor==='layers'?'Layers':'State placement'}</span><button onClick={returnNativeEditor}>Return to {nativeEditorReturn.centerPanel==='native.arrangement'?'Arrangement':nativeEditorReturn.centerPanel==='native.session'?'Session':'Glyph editor'}</button></div>}
       {nativeComposition && !settingsPresented && nativeProjection.error && <div className="native-composition-fault" role="alert">{nativeProjection.error}</div>}
-      <div className="inhabitant composition-view" hidden={settingsPresented || (workspace.mode === 'audio' ? tab !== 'session' : centerPanel !== 'native.session')}><SessionView set={state.set} document={deep.document} selection={selection} select={choose} colors={colors} setColor={setColor} native={nativeView('session')} compactTransport={workspace.mode === 'expressions'} /></div>
-      <div className="inhabitant composition-view" hidden={settingsPresented || (workspace.mode === 'audio' ? tab !== 'arrangement' : centerPanel !== 'native.arrangement')}><ArrangementView set={state.set} document={deep.document} selection={selection} select={choose} colors={colors} native={nativeView('arrangement')} compactTransport={workspace.mode === 'expressions'} /></div>
+      {/* One Timeline projection over the current work; Session and
+        Arrangement are its two presentations (both mount retained; which
+        stands is the encounter's, read by timelinePresentation). The native
+        prop grammar and the audio props pass through untouched. */}
+      <TimelineProjectionResidence set={state.set} document={deep.document} selection={selection} select={choose} colors={colors} setColor={setColor}
+        session={nativeView('session')} arrangement={nativeView('arrangement')} compactTransport={workspace.mode === 'expressions'}
+        presented={settingsPresented ? null : timelinePresentation(workspace.mode, tab, centerPanel)} />
       {panels.map(panel => { const Panel = panel.component; return <div className={`inhabitant${panel.id === 'world.expressions' ? ' native-stage-residence' : ''}`} hidden={panel.id === 'world.settings' ? !settingsPresented : settingsPresented || workspace.mode === 'audio' && panel.id !== 'world.knowledge' || (centerPanel !== panel.id && !(nativeComposition && panel.id === 'world.expressions'))} key={panel.id}><Panel {...ctx} /></div> })}
     </div></main>
     <div className="dock-residence" hidden={!dock || agentShell}><RightDock ctx={ctx} /></div>
