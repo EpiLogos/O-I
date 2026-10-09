@@ -1,14 +1,27 @@
 //! Clean-room rebuilds of Ableton Live device dynamics.
 //!
 //! Written from behavior documents only — see README for the binding rule.
+//!
+//! Device parameter surfaces (`auto_filter`, `compressor`, `eq8`,
+//! `filter_delay`, `overdrive`, `redux`, `saturator`, `utility`) are typed
+//! file-format facts from the official evidence XML only — no DSP, no
+//! behavior claims; each module cites its source file.
 
 pub mod audio;
+pub mod auto_filter;
+pub mod compressor;
 pub mod echo;
+pub mod eq8;
+pub mod filter_delay;
 pub mod glue;
 pub mod operator;
+pub mod overdrive;
 pub mod params;
+pub mod redux;
 pub mod reverb;
+pub mod saturator;
 pub mod spectrum;
 pub mod taps;
+pub mod utility;
 pub mod verify;
 pub mod wavetable;

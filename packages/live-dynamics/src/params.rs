@@ -6804,3 +6804,93 @@ mod tests {
         assert!((env_at_pin.sustained_release_rate_db_s() - 115.0).abs() < 0.01);
     }
 }
+
+// ===========================================================================
+// Device-surface parse-in plumbing (device-surface lane, 2026-10-09).
+//
+// The per-device surface modules (`compressor`, `saturator`, `eq8`,
+// `auto_filter`, `utility`, `redux`, `overdrive`, `filter_delay`) carry
+// `RAW_MANUAL` — the `(path, Manual value)` pairs verbatim from their
+// cited evidence XML — plus a `from_manual` constructor. These helpers
+// are the shared plumbing for that parse-in; they carry no semantics.
+
+/// One raw `(path, Manual value)` pair as it appears in the device XML.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RawManual {
+    /// Document path of the parameter element (see crate conventions).
+    pub path: &'static str,
+    /// The element's `Manual` value, verbatim.
+    pub value: &'static str,
+}
+
+impl RawManual {
+    pub const fn new(path: &'static str, value: &'static str) -> Self {
+        Self { path, value }
+    }
+}
+
+/// Failure modes of the surface parse-in.
+#[derive(Debug, Clone, PartialEq)]
+pub enum SurfaceError {
+    /// The raw table has no entry for this document path.
+    MissingEntry(String),
+    /// The raw table holds an entry the surface does not model.
+    UnexpectedEntry(String),
+    /// The stored value did not parse as the surface's kind for this path.
+    BadValue { path: String, value: String },
+}
+
+/// Look up the verbatim `Manual` string for a document path.
+pub fn lookup_manual<'a>(raw: &'a [RawManual], path: &str) -> Result<&'a str, SurfaceError> {
+    raw.iter()
+        .find(|entry| entry.path == path)
+        .map(|entry| entry.value)
+        .ok_or_else(|| SurfaceError::MissingEntry(path.to_string()))
+}
+
+/// Parse a stored boolean (`true`/`false`).
+pub fn bool_from(value: &str, path: &str) -> Result<bool, SurfaceError> {
+    match value {
+        "true" => Ok(true),
+        "false" => Ok(false),
+        other => Err(SurfaceError::BadValue {
+            path: path.to_string(),
+            value: other.to_string(),
+        }),
+    }
+}
+
+/// Parse a stored ranged (continuous) value.
+pub fn f64_from(value: &str, path: &str) -> Result<f64, SurfaceError> {
+    value.parse::<f64>().map_err(|_| SurfaceError::BadValue {
+        path: path.to_string(),
+        value: value.to_string(),
+    })
+}
+
+/// Parse a stored discrete integer (no declared range).
+pub fn i64_from(value: &str, path: &str) -> Result<i64, SurfaceError> {
+    value.parse::<i64>().map_err(|_| SurfaceError::BadValue {
+        path: path.to_string(),
+        value: value.to_string(),
+    })
+}
+
+/// Exact-coverage check: the raw table and the surface's path list describe
+/// the same entry set, with no duplicates on either side.
+pub fn check_exact_paths(raw: &[RawManual], paths: &[&str]) -> Result<(), SurfaceError> {
+    for entry in raw {
+        if !paths.contains(&entry.path) {
+            return Err(SurfaceError::UnexpectedEntry(entry.path.to_string()));
+        }
+    }
+    for path in paths {
+        let count = raw.iter().filter(|entry| entry.path == *path).count();
+        if count != 1 {
+            return Err(SurfaceError::MissingEntry(format!(
+                "{path} (found {count})"
+            )));
+        }
+    }
+    Ok(())
+}

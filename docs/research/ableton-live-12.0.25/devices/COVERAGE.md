@@ -29,10 +29,15 @@ Status ledger (updated as lanes land; gate = crate passes vs golden corpus):
 | Reverb | FX | ✓ | ✓ (+refinements) | comb-probe | ✓ (stereo+HF wired) | ✓ PASS |
 | Operator | INST | ✓ | ✓ (A + B modulator) | partial | ✓ (B wired) | ✓ PASS |
 | Wavetable | INST | ✓ | ✓ (rev 4+, N=1–8) | partial | ✓ | ✓ PASS |
-| Compressor | FX | — | — | ← binary lane next | — | — |
-| Saturator | FX | — | — | — | — | — |
-| EQ Eight | FX | — | — | — | — | — |
-| *65 more devices* | | — | — | — | — | — |
+| Compressor | FX | ✓ (surface module) | — | ← binary lane next | — | — |
+| Saturator | FX | ✓ (surface module) | — | — | — | — |
+| EQ Eight | FX | ✓ (surface module) | — | — | — | — |
+| Auto Filter | FX | ✓ (surface module) | — | — | — | — |
+| Utility | FX | ✓ (surface module) | — | — | — | — |
+| Redux | FX | ✓ (surface module) | — | — | — | — |
+| Overdrive | FX | ✓ (surface module) | — | — | — | — |
+| Filter Delay | FX | ✓ (surface module) | — | — | — | — |
+| *60 more devices* | | — | — | — | — | — |
 | Warp engines ×6 | clip | ✓ (modes 0–5) | ✓ (D9 + seg90) | — | — | partial |
 | FollowAction | clip | ✓ | ✓ (anchoring) | — | — | session driver open |
 | Groove pool | session | ✓ (.agr format) | partial | — | — | — |
