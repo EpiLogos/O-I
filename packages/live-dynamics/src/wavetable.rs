@@ -6,6 +6,7 @@
 //! fitted constants cite the golden renders measured in
 //! `docs/research/ableton-live-12.0.25/devices/wavetable-voice.md`
 //! (M2 baseline + WV2..WV5 probes + WV6/WV7 interior-position depth probes,
+//! plus the WV9..WV16 unison probes behind the `unison` spread law,
 //! Live 12.0.25, export 44.1 kHz/16-bit).
 //!
 //! Scope: the default patch sounds oscillator 1 alone (oscillator 2 and the
@@ -60,6 +61,16 @@ pub mod stored {
     /// `Volume` — the device's only trim element (WT2 positive control:
     /// ×0.25 → −12.04 dB exact).
     pub const VOLUME_AMP: f64 = 0.354_813_426_7;
+    /// `Voice_Unison_Mode` — stored 0 = unison OFF (WV9: at Mode 0 the
+    /// Amount 1.0 / VoiceCount 3 render is dither-identical to M2; Mode 1
+    /// engages unison — `wavetable-voice.md` "Unison (WV9_UNISON…)").
+    pub const UNISON_MODE: i32 = 0;
+    /// `Voice_Unison_VoiceCount` (plain `Value` element; stored 3 — the
+    /// voice-count knob, round 2).
+    pub const UNISON_VOICE_COUNT: usize = 3;
+    /// `Voice_Unison_Amount` Manual — stored 0.3000000119;
+    /// `MidiControllerRange` 0..1 (`evidence/devices/Wavetable/default.xml`).
+    pub const UNISON_AMOUNT: f64 = 0.300_000_011_9;
 }
 
 /// Fitted constants (each cited to its render in `wavetable-voice.md`).
@@ -93,6 +104,72 @@ pub mod fitted {
     /// sum of two identical waveforms. The model renders osc 2 as the same
     /// oscillator function summed.
     pub const OSC2_COHERENT_SUM_DB: f64 = 6.0206;
+}
+
+/// Unison spread law — ZERO fitted scalars; every constant below is a
+/// behavioral citation from `wavetable-voice.md`:
+///
+/// - "Unison round 2 (2026-10-08 late lane): Amount axis CLAMPS at 1.0; the
+///   voice-count knob is `Voice_Unison_VoiceCount`": N =
+///   `Voice_Unison_VoiceCount` voices evenly spread ±50 cents at Amount
+///   1.0; the layout predictions {−50, 0}¢ (VC2), {−50, 0, +50}¢ (VC3),
+///   {−50, −16.7, +16.7, +50}¢ (VC4) match every resolved Goertzel line to
+///   ≤0.75 Hz. Stored Amount values > 1 do not exist as states (WV10/WV11
+///   dither-identical to WV9B): the loader clamps to 1.0.
+/// - "Unison Amount within 0..1 — the spread law (2026-10-09 night lane)":
+///   spread(Amount) = ±50 cents × Amount (WV14/15/16: predicted outer voice
+///   ±50·A cents lands within 0.06 Hz of the resolved line); the centre
+///   voice sits at 0 at every resolved amount; steady RMS is
+///   Amount-invariant at resolved amounts (spread, not gain) and the
+///   parameter is a normalized 0..1 spread control.
+///
+/// NOT yet wired into [`WavetableVoice`]: every gate in this crate pins the
+/// default patch, whose stored `Voice_Unison_Mode` is 0 (unison off). The
+/// unison golden renders live in the render archive and are NOT wired to
+/// the crate's `#[ignore]` gate tests — a spectral unison gate is future
+/// work.
+pub mod unison {
+    /// Spread edge at Amount 1.0 (round-2 layout law; the −3.75 Hz anchor
+    /// voice reads −50.4 cents, exactly −spread-edge/2 at ±50-cent spread).
+    pub const SPREAD_CENTS: f64 = 50.0;
+
+    /// Amount is normalized 0..1; the loader clamps out-of-range pins
+    /// (round 2: >1.0 renders identically to 1.0).
+    pub fn clamp_amount(amount: f64) -> f64 {
+        amount.clamp(0.0, 1.0)
+    }
+
+    /// The voice detune set in cents relative to the played pitch,
+    /// ascending. VoiceCount 2 = {−s, 0}, 3 = {−s, 0, +s},
+    /// 4 = {−s, −s/3, +s/3, +s}, with s = 50·Amount.
+    ///
+    /// VC2's upper voice sits at the CENTRE, not at +s: the dossier's
+    /// round-2 prediction for VC2 is {−3.75, 0} Hz off f0 and the measured
+    /// WV12 lines (−3.75 dominant, −0.50 weak) carry no +3.75 counterpart
+    /// the {−s, +s} even-spread reading would predict. N ≥ 3 follows the
+    /// dossier's shell formula `k/(N−1)·2−1 · 50¢ · Amount` (2026-10-09
+    /// night section); N ≥ 5 is the law's extension (the VoiceCount 1…8
+    /// sweep is open backlog); N = 1 is the trivial centre-only voice.
+    pub fn detunes_cents(voice_count: usize, amount: f64) -> Vec<f64> {
+        let s = SPREAD_CENTS * clamp_amount(amount);
+        match voice_count {
+            0 => Vec::new(),
+            1 => vec![0.0],
+            2 => vec![-s, 0.0],
+            n => (0..n)
+                .map(|k| (k as f64 / (n - 1) as f64 * 2.0 - 1.0) * s)
+                .collect(),
+        }
+    }
+
+    /// Voice frequencies in Hz: the detune set transposed to `base_hz`
+    /// (cents are log2 — `f·2^(c/1200)`).
+    pub fn voice_freqs_hz(base_hz: f64, voice_count: usize, amount: f64) -> Vec<f64> {
+        detunes_cents(voice_count, amount)
+            .into_iter()
+            .map(|c| base_hz * 2.0f64.powf(c / 1200.0))
+            .collect()
+    }
 }
 
 /// Frame census (rev 3 — supersedes the 2-frame model, which the depth
@@ -449,6 +526,61 @@ mod tests {
             ((got - 0.875) - render_s).abs() / render_s <= 0.25,
             "model release crossing {got:.3} (rel {:.3}s) vs render {render_s:.3}s (±25%)",
             got - 0.875
+        );
+    }
+
+    /// Unison spread law, synthetic (cents only — no audio): the detune set
+    /// for VoiceCount 2/3/4 at Amounts {0.25, 0.75, 1.0} must equal the
+    /// documented layout {−s, 0} / {−s, 0, +s} / {−s, −s/3, +s/3, +s} with
+    /// s = 50·Amount, Amount > 1 must clamp to 1 (WV10/WV11 dither-identical
+    /// to WV9B), and the centre voice sits at 0 wherever the layout has one.
+    ///
+    /// NOT a golden gate: the unison golden renders (WV9B, WV12/WV13,
+    /// WV14/15/16) live in the render archive and are NOT wired to this
+    /// crate's `#[ignore]` gate tests — a spectral unison gate against them
+    /// is future work (devices/wavetable-voice.md, round-2 + 2026-10-09
+    /// night sections).
+    #[test]
+    fn unison_spread_matches_dossier_law() {
+        for a in [0.25, 0.75, 1.0] {
+            let s = unison::SPREAD_CENTS * a;
+            let close = |got: &[f64], want: &[f64]| {
+                assert_eq!(got.len(), want.len(), "voice count mismatch at amount {a}");
+                for (g, w) in got.iter().zip(want) {
+                    assert!((g - w).abs() < 1e-9, "amount {a}: {g} vs {w} cents");
+                }
+            };
+            close(&unison::detunes_cents(2, a), &[-s, 0.0]);
+            close(&unison::detunes_cents(3, a), &[-s, 0.0, s]);
+            close(&unison::detunes_cents(4, a), &[-s, -s / 3.0, s / 3.0, s]);
+        }
+        // Amount clamp (>1 → 1.0; round 2: values beyond 1 do not exist as
+        // states)
+        assert_eq!(unison::detunes_cents(3, 2.0), unison::detunes_cents(3, 1.0));
+        assert_eq!(unison::detunes_cents(3, 4.0), unison::detunes_cents(3, 1.0));
+        // centre voice fixed at 0 where the layout carries one (VC2/VC3);
+        // VC4 symmetrises with NO centre voice (round 2: "VC4's centre
+        // cancels — no resolved line near 0"). At Amount 0 the spread has
+        // collapsed — every voice reads 0 — so the no-centre reading is
+        // for amounts > 0 only.
+        for a in [0.25, 0.5, 0.75, 1.0] {
+            assert!(unison::detunes_cents(2, a).contains(&0.0));
+            assert!(unison::detunes_cents(3, a).contains(&0.0));
+            assert!(!unison::detunes_cents(4, a).contains(&0.0));
+        }
+        assert!(
+            unison::detunes_cents(4, 0.0).iter().all(|&c| c == 0.0),
+            "Amount 0 collapses the spread to the centre"
+        );
+        // the measured anchor, transposed: at Amount 1.0 / VoiceCount 3 /
+        // f0 = 130.81 Hz the dominant lower voice lands within the law's
+        // ≤0.75 Hz tolerance of WV9B's resolved −3.75 Hz (−50.4¢) line
+        // (round 2 table; 2026-10-09 night: predicted −3.79 Hz vs −3.75)
+        let f0 = 130.81;
+        let offset = unison::voice_freqs_hz(f0, 3, 1.0)[0] - f0;
+        assert!(
+            (offset - (-3.75)).abs() <= 0.75,
+            "outer voice {offset:.3} Hz off f0 vs measured −3.75"
         );
     }
 

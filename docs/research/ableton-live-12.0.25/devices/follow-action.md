@@ -133,3 +133,29 @@ crafted clips omitted the `Time` attribute** (resolved above). Recorded in
 - Builder: `harness/build_followaction.py`; FA4 built from `FA1_NEXT.als`
   by stamping `Time` (inline edit); timeline analysis inline
   (100 ms RMS windows, `analyze_ec_duck.read_aiff_stereo`)
+
+## Builders adopt the `Time` attribute (2026-10-09, offline engineering lane)
+
+All three crafted-set builders now stamp `Time` = `CurrentStart` on every
+arrangement clip they write (adoption landed with the probes-round commit
+89a66f07a; this lane verified the adoption is complete and made it
+checkable):
+
+- `build_set.py` (its single arrangement AudioClip), `build_set_midi.py`
+  (its single arrangement MidiClip), `build_followaction.py` (both clips,
+  including the duplicated second clip at a nonzero offset — the exact case
+  FA1–FA3 got wrong). The attribute format matches the real writer's census
+  forms (`"0"`, `"216"`, `"371.5"`, full-precision repr decimals): `Time` ==
+  `CurrentStart` as strings, per the template census.
+- Offline self-check: `harness/check_clip_time.py` (runs without Live; exit
+  code is the verdict). It re-proves the template census against the pinned
+  evidence set (73 arrangement clips = 56 MidiClip + 17 AudioClip, every one
+  `Time` == `CurrentStart`), then builds a MIDI set, an audio set and a
+  two-clip follow-action set into a temp dir (synthetic device preset/WAV;
+  nothing is written into `harness/live/`) and asserts every arrangement
+  clip carries `Time` == `CurrentStart` — including the nonzero-offset
+  second clip — and re-reads `FA4_TIME.als` when present.
+- Status: unchanged in kind. The stamp itself remains **loader-proven by
+  FA4_TIME only**; the self-check is structural (no render was spent, none
+  was available on this offline lane). Session-launch semantics stay
+  unprobed (section above).

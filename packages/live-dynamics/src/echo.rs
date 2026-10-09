@@ -60,8 +60,25 @@ mod tests {
 // Coverage boundary (stated): this model implements the delay-line core —
 // synced/free time mapping, pingpong tap grid, feedback law, dry/wet
 // crossfade, and the filter section. Ducking and the internal reverb are
-// OUT (documented below); modulation is out (measured absent from the
-// synced tap grid — devices/echo.md D8).
+// OUT (documented below); modulation is out of the model (measured absent
+// from the synced tap grid — devices/echo.md D8).
+//
+// The MEASURED AmountDelay mod law, stated here for the lane that wires it
+// (devices/echo.md "Round 4 — bare-line AmountDelay depth law (2026-10-09
+// night lane)"; behavioral citations, not fitted scalars):
+//   - peak-to-peak tap-time wobble ∝ AmountDelay³ (pairwise exponents
+//     3.01/2.96 on the bare line; the round-3 ×8.4–10.8 reading for a
+//     ×2.29 amount was this same cubic through two points) — mod depth per
+//     unit amount ∝ amount² (quadratic indexing), not linear;
+//   - R-channel depth = 0.26 × L, constant across amounts (one modulated
+//     line scaled, not two independent modulators);
+//   - the wobble accumulates LOOP-INTERNALLY: each feedback pass re-enters
+//     through the modulated delay (mid-tap overshoot 2.4× the end taps at
+//     Amount 0.35, first ≈ last as a pure delay-time modulation requires);
+//   - at Amount ≥ 0.75 the sweep exceeds the ±20 ms measure window (the
+//     round-4 peak-to-peak numbers there are lower bounds).
+// Wiring this into the tap grid is future work — no round-4 gate is stated
+// yet in the backlog, so no constants are encoded here.
 // ===========================================================================
 
 /// Synced delay time in seconds at `bpm`.
