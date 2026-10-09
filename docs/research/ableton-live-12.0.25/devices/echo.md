@@ -594,3 +594,21 @@ parabolic; dev within the ±1.4 ms mod-wobble band of this recipe):
   distinction — a linked set with unequal stored times, round-tripped
   through Live's own save, would settle it (the XML on disk keeps both
   values either way).
+
+### Walk-level correction to round 4's stereo reading (2026-10-09, from the crate implementation, `echo::modulation` — commit 81e43a95a)
+
+Implementing the accumulating walk exposed that round 4's "**R depth ≈ 0.26 × L
+constant**" cannot be per-pass depth scaling: per-pass R depth = 0.26·L predicts
+an R/L pp-wobble ratio ≈ 0.70 (pp grows with the sum over a differing number of
+effective depth units), and misses E1's measured R offsets outright. What
+reproduces every measured number is **equal per-pass L/R depths with the stereo
+LFO phase offset** — phase 85° fitted (the 90° pin sits inside the ±127° band
+the render's −0.176 ms T0 bias leaves open) — which yields the 0.26 pp ratio
+*emergently* (predicted 0.269 vs measured 0.266) and holds E1's R taps to
+≤0.11 ms and the EC11 ladder to ≤0.52 ms. The accumulating law
+`o_k = o_{k−1} + d(t0 + k·hop + o_{k−1})` stands; the residual on the 2.4×
+mid-tap overshoot (walk predicts 1.8×) is stated in the code. **Discriminating
+probe for the phase question** (named in `echo::modulation` docs): a mono
+sum L+R of the impulse render at amount 0.35 — per-pass scaling would show a
+two-depth structure, phase offset shows one. Recorded here so the dossier
+carries the correction, not just the crate.
