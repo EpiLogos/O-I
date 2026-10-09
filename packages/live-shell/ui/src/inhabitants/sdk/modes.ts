@@ -195,8 +195,9 @@ export function isSdkMode(candidate: string): candidate is SdkModeName {
 }
 
 // ---------------------------------------------------------------------------
-// the transport slot ontology (specimen: const SLOTS — cut mark, rejected
-// alternative, and the usage rationale, verbatim)
+// the transport slot ontology (specimen: const SLOTS — cut mark, second
+// mark per its relation (rejected alt or companion pair), and the usage
+// rationale, verbatim)
 
 export interface TransportSlot {
   readonly id: string

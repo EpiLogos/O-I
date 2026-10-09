@@ -34,13 +34,13 @@ import type {
   InhabitantFaceKind,
   InhabitantManifest,
 } from '../manifest.ts'
-import {declareFamilyExtension, validateInhabitantManifest, type FamilyExtension} from '../manifest.ts'
+import {declareFamilyExtension, familyExtensions, validateInhabitantManifest, type FamilyExtension} from '../manifest.ts'
 import type {AgentParamAddress} from '../agentParamAddresses.ts'
 import type {IconName} from './icons.ts'
 import type {DeviceFormat, SdkModeName} from './modes.ts'
 import {MODE_DEFAULT_FORMAT} from './modes.ts'
 import type {NewProductAuthority} from './products.ts'
-import {validateDeclaredFamily, validateSdkDevice} from './validate.ts'
+import {validateDeclaredFamily, validateFamilyWriters, validateSdkDevice} from './validate.ts'
 
 // ---------------------------------------------------------------------------
 // §14 parameter rows (the grammar's types live in validate.ts — the law
@@ -232,12 +232,14 @@ export interface FacePresentation {
 const presentations = new Map<FamilyManifestId, Map<string, FacePresentation>>()
 const paramRows = new Map<FamilyManifestId, SdkParamRow[]>()
 const familyProducts = new Map<FamilyManifestId, string>()
+const familyWritersRegistry = new Map<FamilyManifestId, readonly string[]>()
 const transportBindingsRegistry = new Map<FamilyManifestId, TransportBinding[]>()
 
 onFamilyManifestReset(() => {
   presentations.clear()
   paramRows.clear()
   familyProducts.clear()
+  familyWritersRegistry.clear()
   transportBindingsRegistry.clear()
 })
 
@@ -249,6 +251,7 @@ function registerFamilyArtifacts(
   declared?: {
     readonly product?: string
     readonly transport?: readonly TransportBinding[]
+    readonly writers?: readonly string[]
   },
 ): void {
   const plate = new Map(presentations.get(family) ?? [])
@@ -272,6 +275,7 @@ function registerFamilyArtifacts(
   for (const row of rows) merged.set(`${row.deviceInstance}/${row.key}`, row)
   paramRows.set(family, [...merged.values()])
   if (declared?.product) familyProducts.set(family, declared.product)
+  if (declared?.writers) familyWritersRegistry.set(family, declared.writers)
   if (declared?.transport) {
     const mergedBindings = new Map((transportBindingsRegistry.get(family) ?? []).map(binding => [`${binding.mode}/${binding.row}/${binding.face}/${binding.key}`, binding]))
     for (const binding of declared.transport) mergedBindings.set(`${binding.mode}/${binding.row}/${binding.face}/${binding.key}`, binding)
@@ -305,6 +309,11 @@ export function facesForMode(mode: SdkModeName): readonly (FacePresentation & {f
 /** The declared product carving of a family, when it declared one. */
 export function familyProduct(family: FamilyManifestId): string | undefined {
   return familyProducts.get(family)
+}
+
+/** The writers a family declared (its own armed shell paths). */
+export function familyWriters(family: FamilyManifestId): readonly string[] {
+  return familyWritersRegistry.get(family) ?? []
 }
 
 /** Every declared transport binding, family filled. */
@@ -407,6 +416,7 @@ export function admitFamily(declaration: FamilyDeclaration): AdmittedFamily {
   registerFamilyArtifacts(declaration.id, declaration.owner, declaration.devices, params, {
     ...(declaration.product ? {product: declaration.product} : {}),
     ...(declaration.transport ? {transport: declaration.transport} : {}),
+    ...(declaration.writers ? {writers: declaration.writers} : {}),
   })
   return {manifest, params}
 }
@@ -429,22 +439,35 @@ export function declareDeviceExtension(declaration: DeviceExtensionDeclaration):
   if (!base) {
     throw new Error(`Family "${declaration.family}" is not admitted; extensions compose onto an owner-admitted base, never ahead of it.`)
   }
+  // The composed shape includes the PRIOR extensions (N-F): validating
+  // base+this-extension alone would false-refuse faces whose legality a
+  // standing extension already carries (e.g. its detachedKinds).
+  const prior = familyExtensions(declaration.family)
   const composedForValidation: InhabitantManifest = {
     ...(base as InhabitantManifest),
-    faces: [...(base as InhabitantManifest).faces, ...(extension.faces ?? [])],
-    ...(declaration.detachedKinds
-      ? {detachedKinds: [...(base as InhabitantManifest).detachedKinds ?? [], ...declaration.detachedKinds]}
-      : {}),
+    faces: [
+      ...(base as InhabitantManifest).faces,
+      ...prior.flatMap(carried => carried.faces ?? []),
+      ...(extension.faces ?? []),
+    ],
+    detachedKinds: [
+      ...(base as InhabitantManifest).detachedKinds ?? [],
+      ...prior.flatMap(carried => carried.detachedKinds ?? []),
+      ...declaration.detachedKinds ?? [],
+    ],
   }
+  const rows = buildRows(declaration.family, declaration.devices)
   const faults = [
     ...declaration.devices.flatMap(device => validateSdkDevice(device)),
     ...validateInhabitantManifest(composedForValidation),
+    // The writers law at the extension layer too (N-A): the family's
+    // registered writers arm the extension's rows.
+    ...validateFamilyWriters(declaration.family, familyWriters(declaration.family), rows),
   ]
   if (faults.length) {
     throw new Error(`Extension "${declaration.id}" refuses to compose — the declaration breaks the device law:\n- ${faults.join('\n- ')}`)
   }
   const composed = declareFamilyExtension(declaration.family, extension)
-  const rows = buildRows(declaration.family, declaration.devices)
   const owner = facePresentations(declaration.family)[0]?.owner ?? declaration.family
   registerFamilyArtifacts(declaration.family, owner, declaration.devices, rows)
   return composed

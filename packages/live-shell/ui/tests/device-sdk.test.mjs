@@ -171,6 +171,23 @@ test("the extension path runs the door's validator too (the F1 escapes refuse)",
     id: 'central:qa-probe2', by: 'qa', family: 'central',
     devices: [{id: 'qa-pop', title: 'QA Pop', icon: 'form', dock: ['dock', 'pop-out']}],
   }), /breaks the device law/)
+  // The writers law runs on the extension path (N-A): an invented setter
+  // refuses even though the family itself declared honest writers.
+  assert.throws(() => sdkDefine.declareDeviceExtension({
+    id: 'central:qa-evil', by: 'qa', family: 'central',
+    devices: [{id: 'qa-evil', title: 'QA Evil', icon: 'form', params: [sdkDefine.numberParam({key: 'x', title: 'X', type: 'number', range: {min: 0, max: 1}, writePath: 'shell.setEvil'})]}],
+  }), /armed by no one/)
+  // A second extension composes when a PRIOR extension already carries the
+  // detachedKinds its pop-out face needs (N-F: the composed shape validates).
+  sdkDefine.declareDeviceExtension({
+    id: 'central:qa-pop-base', by: 'qa', family: 'central',
+    detachedKinds: ['object'],
+    devices: [],
+  })
+  sdkDefine.declareDeviceExtension({
+    id: 'central:qa-pop', by: 'qa', family: 'central',
+    devices: [{id: 'qa-pop-face', title: 'QA Pop', icon: 'form', note: 'pops through the prior extension\'s declared door', dock: ['dock', 'pop-out']}],
+  })
   // An honest extension composes, idempotently.
   const first = sdkDefine.declareDeviceExtension({
     id: 'central:qa-honest', by: 'qa', family: 'central',
@@ -185,9 +202,23 @@ test("the extension path runs the door's validator too (the F1 escapes refuse)",
 
 test('transport rows and time strata obey their laws', () => {
   door.resetFamilyManifestsForTest()
-  // Double-booking a transport row across families faults the world gate.
+  // Double-booking a transport row across families faults the world gate
+  // (the second binding lands, the gate names the double-booking).
   five.loadAgentShellFamilies()
   sdkDefine.admitFamily({...HONEST_FAMILY, transport: [{mode: 'live', row: 'tempo-signature', face: 'probe', key: 'gain'}]})
+  sdkDefine.admitFamily({...HONEST_FAMILY, id: 'acme-two', owner: 'Two', writers: ['shell.setAcmeGain'], transport: [{mode: 'live', row: 'tempo-signature', face: 'probe', key: 'gain'}]})
+  let booked = sdkValidate.validateAdmittedWorld()
+  assert.ok(booked.cross.some(fault => fault.includes('transport double-booking')), booked.cross.join(' | '))
+  door.resetFamilyManifestsForTest()
+  five.loadAgentShellFamilies()
+  sdkDefine.admitFamily({...HONEST_FAMILY, transport: [{mode: 'live', row: 'tempo-signature', face: 'probe', key: 'gain'}]})
+  // A transport binding cannot claim a waiting face's slot (N-E).
+  assert.throws(() => sdkDefine.admitFamily({
+    ...HONEST_FAMILY,
+    devices: [{...HONEST_FAMILY.devices[0], admission: 'waiting', note: 'waits for its owner'}],
+    transport: [{mode: 'live', row: 'tempo-signature', face: 'probe', key: 'gain'}],
+  }), /waiting face/)
+
   // Time strata: consuming a non-stratum refuses; contributing material is free.
   assert.throws(() => sdkDefine.admitFamily({
     ...HONEST_FAMILY, id: 'acme-time',
@@ -269,7 +300,8 @@ test('the mode ontology stands: marks are the cut’s, readouts match the specim
   }
   for (const slot of TRANSPORT_SLOTS) {
     assert.ok(icons.isIconName(slot.mark), `${slot.id}: the cut mark exists`)
-    if (slot.alt) assert.ok(icons.isIconName(slot.alt), `${slot.id}: the recorded alt exists`)
+    assert.ok(slot.relation === 'alt' || slot.relation === 'pair', `${slot.id}: relation is alt or pair`)
+    if (slot.otherMark) assert.ok(icons.isIconName(slot.otherMark), `${slot.id}: the second mark exists`)
     assert.ok(slot.rationale.length > 20, `${slot.id}: the specimen’s rationale is carried`)
   }
   // Every mode has a natural device format; every format is in the vocabulary.

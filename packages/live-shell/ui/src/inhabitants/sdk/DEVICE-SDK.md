@@ -91,6 +91,8 @@ export function loadAcmeFamily(): void {
     id: 'acme',
     owner: 'Acme Instruments',           // the disclosure law: a face names its owner
     browser: ['acme'],
+    writers: ['shell.setAcmeGain'],      // the shell paths THIS family arms (the
+                                         // writers law — see below)
     paramsGrammar: 'acme/parameter-address/v1',
     devices: [{
       id: 'probe',
@@ -112,8 +114,18 @@ export function loadAcmeFamily(): void {
 Write-path grammar: `kernel:<op>` (the kernel op union), `shell.<setter>`
 (the shell's own armed setters), or `<tool>:<command>` (a native owner's
 CLI — `workcell-cli:git commit`). **A row without a writePath IS a
-reading** — that is the grammar, not a convention. A declaration that
-breaks the law throws at admission, naming each fault.
+reading** — that is the grammar, not a convention.
+
+**The writers law:** a `shell.` path must be armed by someone. The gate
+checks it against the shell's armed setters (`ARMED_SHELL_SETTERS`,
+derived from the verified address table) and against the declaring
+family's own `writers` — so a fixture can arm its fixture paths, but an
+invented setter refuses with the armed set named. `kernel:`/`<tool>:`
+paths are shape-checked; their unions live with their owners, and a path
+that names nothing is caught on first exercise. The same law runs on the
+extension path and again in the world gate.
+
+A declaration that breaks the law throws at admission, naming each fault.
 
 Already-admitted family, new faces? Compose, never rewrite the owner's
 base:
@@ -219,14 +231,13 @@ native controls.
 - The lane's `desktop/cradle` tests carry pre-existing failures (missing
   `visuals/observations` module in this worktree) — not the SDK's; the
   owner lane owns that repair.
-- `npm run build`'s `tsc --noEmit` currently fails on PRE-EXISTING lane
-  dirt OUTSIDE the sdk tree (`src/App.tsx`, `src/components/
-  NativeTechneBrowser.tsx`, `src/components/WorldBrowser.tsx`,
-  `src/panels/expressions.tsx` — mode-union drift from another worker's
-  in-flight change). The sdk tree itself type-checks clean
-  (`npx tsc --noEmit 2>&1 | grep 'src/inhabitants/sdk'` → empty). Those
-  files' owner owns the repair; until then, judge the build by the sdk
-  filter plus `vite build`.
+- If `tsc --noEmit` reports errors OUTSIDE the sdk tree, they are the
+  lane's, not the SDK's — judge the SDK by
+  `npx tsc --noEmit 2>&1 | grep 'src/inhabitants/sdk'` (empty = clean)
+  plus `vite build`, and name the owning lane in your return. (The
+  October 2026 mode-union dirt in `App.tsx`/`WorldBrowser.tsx` was
+  repaired by its owner mid-lane; expect such dirt to come and go on a
+  shared lane.)
 - §16's four-surfaces law is schema-shaped (the manifest cannot carry a
   fifth surface), and `panelSlots` — an exposure surface §16's enumeration
   does not name — awaits an owner ruling. §14's modulation honesty

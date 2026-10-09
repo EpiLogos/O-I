@@ -21,7 +21,7 @@ import type {InhabitantManifest} from '../manifest.ts'
 import {validateInhabitantManifest} from '../manifest.ts'
 import {AGENT_SHELL_ADDRESS_TABLE} from '../agentParamAddresses.ts'
 import type {DeviceDeclaration, FamilyDeclaration, ParamInput, SdkParamRow} from './define.ts'
-import {allSdkParamRows, allTransportBindings, familyProduct} from './define.ts'
+import {allSdkParamRows, allTransportBindings, familyProduct, familyWriters} from './define.ts'
 import {isIconName} from './icons.ts'
 import {DEVICE_FORMATS, SDK_MODES, TRANSPORT_ROWS, isSdkMode} from './modes.ts'
 import {PRODUCT_IDS, isKnownProduct} from './products.ts'
@@ -155,13 +155,20 @@ export function validateSdkParam(input: ParamInput): readonly string[] {
  * `kernel:` and `<tool>:` paths are shape-checked here; their unions live
  * with their owners (kernel op union, the tool's CLI) — a path that passes
  * shape but names nothing is a fault the owner's world gate catches on
- * first exercise, and the honesty note travels on the row. */
-export function validateFamilyWriters(declaration: FamilyDeclaration, params: readonly SdkParamRow[]): readonly string[] {
+ * first exercise, and the honesty note travels on the row. The writers
+ * array itself is shape-checked too (N-G): a declaration cannot self-arm
+ * malformed paths. */
+export function validateFamilyWriters(familyId: string, writers: readonly string[] | undefined, params: readonly SdkParamRow[]): readonly string[] {
   const faults: string[] = []
-  const armed = new Set([...ARMED_SHELL_SETTERS, ...declaration.writers ?? []])
+  for (const writer of writers ?? []) {
+    if (typeof writer !== 'string' || !isWritePath(writer)) {
+      faults.push(`${familyId}: declared writer ${JSON.stringify(writer)} is not an owner path — writers are armed paths (${ARMED_SHELL_SETTERS.join(', ')} shape the set)`)
+    }
+  }
+  const armed = new Set([...ARMED_SHELL_SETTERS, ...writers ?? []])
   for (const row of params) {
     if (row.writePath?.startsWith('shell.') && !armed.has(row.writePath)) {
-      faults.push(`${declaration.id}/${row.deviceInstance}/${row.key}: writePath "${row.writePath}" is armed by no one — the shell arms ${ARMED_SHELL_SETTERS.join(', ')}; arm it in the shell first, or declare it on this family's writers (a fixture arms its own)`)
+      faults.push(`${familyId}/${row.deviceInstance}/${row.key}: writePath "${row.writePath}" is armed by no one — the shell arms ${ARMED_SHELL_SETTERS.join(', ')}; arm it in the shell first, or declare it on this family's writers (a fixture arms its own)`)
     }
   }
   return faults
@@ -191,7 +198,7 @@ export function validateDeclaredFamily(
   if (!declaration.owner.trim()) {
     faults.push(`${manifest.id}: a family names its native owner — the disclosure law`)
   }
-  faults.push(...validateFamilyWriters(declaration, params))
+  faults.push(...validateFamilyWriters(declaration.id, declaration.writers, params))
 
   // Presentations: when declared, non-empty and of the door's vocabulary;
   // mode scoping non-empty; format keys within the face's declared scope.
@@ -261,6 +268,9 @@ export function validateDeclaredFamily(
     if (device?.modes && !device.modes.includes(binding.mode)) {
       faults.push(`${manifest.id}: transport binding mode "${binding.mode}" is outside face "${binding.face}"'s mode scope`)
     }
+    if (device?.admission === 'waiting') {
+      faults.push(`${manifest.id}: transport binding addresses "${binding.face}", which is a waiting face — a Rev 5 slot cannot be claimed by an owner that has not landed`)
+    }
   }
   return faults
 }
@@ -312,6 +322,19 @@ export function validateAdmittedWorld(): WorldGateResult {
       cross.push(`transport double-booking: "${key}" is bound by families "${prior}" and "${binding.family}" — one meaning per mode's transport row`)
     } else {
       rowOwners.set(key, binding.family)
+    }
+  }
+
+  // The writers law, post-admission too (N-A's belt to admission's
+  // braces): every registered row's shell path must be armed by the shell
+  // or by its family's declared writers.
+  for (const manifest of allFamilyManifests()) {
+    const rows = allSdkParamRows().filter(row => row.family === manifest.id)
+    if (rows.length) {
+      for (const fault of validateFamilyWriters(manifest.id, familyWriters(manifest.id), rows)) {
+        const familyFaults = byFamily.get(manifest.id) ?? []
+        byFamily.set(manifest.id, [...familyFaults, fault])
+      }
     }
   }
 

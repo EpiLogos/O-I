@@ -93,7 +93,10 @@ export function load${familyPascal}Family(): void {
         note: 'Starter face: honest readings over the family\\'s own owner ops. Name the kernel ops this face reads (op <op>) and what waits for its writer.',
         params: [
           reading({key: 'readiness', title: 'Readiness', type: 'string', disclosure: 'No owner reading wired yet — this row discloses absence until the op lands.'}),
-          // A write path lands ONLY with its owner writer, e.g.:
+          // A write path lands ONLY with its owner writer, and a shell.
+          // path must be armed — by the shell, or by this family's
+          // 'writers' declaration (fixtures arm their own), e.g.:
+          // admitFamily({ ..., writers: ['shell.setLevel'], ... })
           // numberParam({key: 'level', title: 'Level', type: 'number', range: {min: 0, max: 1}, writePath: 'shell.setLevel', icon: 'form'}),
         ],
       },

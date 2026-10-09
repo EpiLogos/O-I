@@ -55,7 +55,7 @@ const iconFault = iconCheck.status !== 0 ? iconCheck.stderr.trim() : null
 const json = process.argv[2] === '--json'
 const families = door.allFamilyManifests().map(manifest => manifest.id)
 
-const faulted =
+let faulted =
   manifestFaults.size > 0 || gate.byFamily.size > 0 || gate.cross.length > 0 || iconFault !== null
 
 const payload = {

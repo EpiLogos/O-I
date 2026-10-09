@@ -153,6 +153,12 @@ function clampScalar(param: SdkParamRow, value: number): number {
   return Math.min(max, Math.max(min, value))
 }
 
+/** Reset an entry field's refusal styling (the out-of-range state). */
+const field_reset = (field: HTMLInputElement): void => {
+  field.title = ''
+  field.style.color = ''
+}
+
 /** The scalar row: drag (vertical), arrow keys, typed entry; the draft
  * handle rides beside the acknowledged one; Enter commits, Escape cancels. */
 export function ScalarParam({param, base, draft, onDraft, onCommit, onCancel, disabled, presentation = 'knob'}: ScalarParamProps) {
@@ -227,23 +233,27 @@ export function ScalarParam({param, base, draft, onDraft, onCommit, onCancel, di
             aria-label={`${param.title} — typed value${unit ? ` in ${unit}` : ''}`}
             onBlur={event => {
               const parsed = Number.parseFloat(event.currentTarget.value)
-              if (Number.isFinite(parsed)) {
-                const min = param.range?.min ?? 0
-                const max = param.range?.max ?? 1
-                if (parsed < min || parsed > max) {
-                  // The typed value is outside the declared domain: keep the
-                  // intended value visible, dispatch nothing (the editor
-                  // standard: no silent clamp or rewrite).
-                  onDraft(clampScalar(param, Number.isFinite(min) && parsed < min ? min : Math.min(max, parsed)))
-                  const field = event.currentTarget
-                  field.value = `${parsed}`
-                  field.title = `${parsed} is outside the declared range [${min}, ${max}] — not dispatched`
-                  field.style.color = 'var(--stall)'
-                  return
-                }
-                onDraft(parsed)
-                onCommit()
+              if (!Number.isFinite(parsed)) {
+                setEditing(false)
+                return
               }
+              const min = param.range?.min ?? 0
+              const max = param.range?.max ?? 1
+              if (parsed < min || parsed > max) {
+                // The typed value is outside the declared domain: the editor
+                // stays open with the intended value visible, in the stall
+                // colour, and NOTHING is dispatched or clamped (the editor
+                // standard: no silent clamp or rewrite). Fix the value or
+                // press Escape to cancel.
+                const field = event.currentTarget
+                field.title = `${parsed} is outside the declared range [${min}, ${max}] — not dispatched; fix the value or press Escape`
+                field.style.color = 'var(--stall)'
+                field.focus()
+                return
+              }
+              field_reset(event.currentTarget)
+              onDraft(parsed)
+              onCommit()
               setEditing(false)
             }}
             onKeyDown={event => {
