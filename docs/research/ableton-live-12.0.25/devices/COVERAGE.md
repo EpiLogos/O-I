@@ -44,29 +44,42 @@ Status ledger (updated as lanes land; gate = crate passes vs golden corpus):
 | Phaser-Flanger | FX | ✓ | — | ✓ (3 modes, TPT-SVF cascade closed form) | ✓ (surface) | — |
 | Filter Delay | FX | ✓ (35 params) | — | ✓ (per-band, NO cross-band feedback) | ✓ (surface) | — |
 | Grain Delay | FX | ✓ | — | ✓ (sin² window pairs, MINSTD, pitch walk) | ✓ (surface) | — |
-| Beat Repeat | FX | ✓ | — | ✓ (FIVE processors, division tables, NR-LCG chance; transient detector REFUTED) | ✓ (surface) | — |
+| Beat Repeat | FX | ✓ | — | ✓ (FIVE processors, division tables; transient detector REFUTED) | ✓ (surface) | — |
 | Channel EQ | FX | ✓ | — | ✓ (SVF shelf algebra, gain-dependent corners) | ✓ (surface) | — |
 | EQ Three | FX | ✓ | — | ✓ (Butterworth crossovers, per-band gating) | ✓ (surface) | — |
 | Drum Buss | FX | ✓ | — | ✓ (drive law closed form, boom resonator laws) | ✓ (surface) | — |
 | Pedal | FX | — | — | ✓ (Newton-Raphson Shockley diodes per type) | — | — |
 | Dynamic Tube | FX | — | — | ✓ (bias law decoded; tube LUTs = corpus) | — | — |
-| Amp | FX | — | — | ✓ (Softube bundle — mechanism only) | — | — |
-| Cabinet | FX | — | — | ✓ (Softube bundle, partitioned FFT — mechanism only) | — | — |
+| Amp | FX | — | ✓ (Softube bundle — mechanism only, DSP not ours) | — | — | — |
+| Cabinet | FX | — | ✓ (Softube bundle, partitioned FFT — mechanism only) | — | — | — |
 | Arpeggiator | MIDI | — | ✓ (rate table byte-decoded, Fisher-Yates LCG) | ✓ | — | — |
 | Chord / Pitch / Scale | MIDI | — | ✓ (storage model) | ✓ | — | — |
 | Velocity / Note Length | MIDI | — | ✓ (length + release-vel decay laws closed) | ✓ | — | — |
 | Note Echo | MIDI | — | ✓ (NEGATIVE: no compiled device — M4L) | — | — | — |
-| LFO (M4L) | MIDI-mod | — | ✓ (NEGATIVE device + OLfoProcessor engine law: 512-table/S&H, TPT smooth, attack fade, sync) | ✓ | — | — |
-| Envelope Follower (M4L) | audio-mod | — | ✓ (NEGATIVE: no compiled device; Shifter EF = only native namesake, law open) | ✓ | — | — |
-| MPE Control (M4L) | MIDI | — | ✓ (NEGATIVE device + native AMpeSettings zone model + MpeDecoder/Encoder/Filter/TuningSystemToMpe) | ✓ | — | — |
-| Envelope MIDI (M4L) | MIDI | — | ✓ (NEGATIVE: no compiled device — M4L) | ✓ | — | — |
+| LFO | MIDI | — | — | ✓ (engine LFO closed: shapes, S&H, sync) | — | — |
+| MPE Control / Envelope MIDI / Env Follower | MIDI | — | ✓ (NEGATIVE: M4L devices; native MPE machinery derived) | ✓ | — | — |
 | Drift | INST | ✓ (90+ surface in decompile) | — | ✓ (devicekit, 32-voice, dispatch census) | — | — |
-| Utility | FX | ✓ (14 params) | — | ✓ (9 calc bodies, BassMono TPT law; dB/pan closed forms open) | ✓ (surface) | — |
-| Corpus | FX | ✓ (38 params, 26 presets) | — | ✓ (AAS A-framework; filter = 2-cascade Butterworth BP law; DSP engine = corpus material) | — | — |
-| Resonators | FX | ✓ (30 params) | — | ✓ (5-slot ping-pong bank, phase-compensated delay tuning, 20-calc dispatch) | — | — |
-| Hybrid Reverb | FX | ✓ (54 params) | — | ✓ (convolver+algorithmic legs, IR = sample-slot pair; tail NOT shared with Reverb) | — | — |
-| *43 more devices* | | — | — | — | — | — |
+| Utility | FX | ✓ (14 params) | — | ✓ (9 calc bodies, BassMono TPT law) | ✓ (surface) | — |
+| Looper | FX | — | — | ✓ (full state machine, fixed-point law) | — | — |
+| Spectrum | FX | — | — | ✓ (FFT/window/block laws; analysis-only) | — | — |
+| Legacy ×5 (Chorus/Flanger/FreqShift/Phaser/Redux) | FX | — | — | ✓ (one section each, shared DSP library found) | — | — |
+| Analog | INST | ✓ (default.xml) | — | ✓ (A-framework; menus+drive shapers; render loop=corpus) | — | — |
+| Electric | INST | ✓ | — | ✓ (AAS Lounge Lizard, 32-member ledger) | — | — |
+| Collision | INST | ✓ | — | ✓ (menus decoded, 2 pinned DSP laws) | — | — |
+| Tension | INST | ✓ | — | ✓ (AStringStudio, full mp ledger 322) | — | — |
+| Meld | INST | ✓ | — | ✓ (mod matrix 50×19, 16-voice Poly) | — | — |
+| Sampler | INST | ✓ | — | ✓ (=Simpler engine, IsSimpler flag; zone model) | — | — |
+| Simpler | INST | ✓ | — | ✓ (SubOsc laws, shared warper, slicing) | — | — |
+| Impulse | INST | ✓ | — | ✓ (devicekit, 8 slots, key centers C4-C5) | — | — |
+| Vinyl Distortion | FX | — | — | ✓ (crackle resonators, pinch injection) | — | — |
+| Vocoder | FX | — | — | ✓ (geometric band law, formant tilt) | — | — |
+| Shifter | FX | — | — | ✓ (3 engine families found; 6-mode names unconfirmed) | — | — |
+| Corpus | INST | ✓ (38 params) | — | ✓ (AAS family; materials=assets, untouched) | — | — |
+| Resonators | FX | — | — | ✓ (5 slots, L/R ping-pong, tuning LUT) | — | — |
+| Hybrid Reverb | FX | ✓ (54 params) | — | ✓ (devicekit; tail NOT the Reverb engine; IRs=assets) | — | — |
+| *24 remaining slots: Max stubs ×3, External In/Audio, Tuner (no defaults) + corpus-material residuals* | | — | — | — | — | — |
 | Warp engines ×6 | clip | ✓ (modes 0–5) | ✓ (D9 + seg90) | — | — | partial |
+| Racks ×4 + mixer/scenes | rack/session | — | ✓ (racks-session-model.md, 462 lines, verified) | — | — | macro-mapping probe open |
 | FollowAction | clip | ✓ | ✓ (anchoring) | — | — | session driver open |
 | Groove pool | session | ✓ (.agr format) | partial | — | — | — |
 | Racks ×4 | rack | — | — | — | — | — |
