@@ -5,7 +5,10 @@
 //! Device parameter surfaces (`auto_filter`, `compressor`, `eq8`,
 //! `filter_delay`, `overdrive`, `redux`, `saturator`, `utility`) are typed
 //! file-format facts from the official evidence XML only — no DSP, no
-//! behavior claims; each module cites its source file.
+//! behavior claims; each module cites its source file. `compressor` in
+//! addition carries a statically decodable per-sample layer (derivation
+//! doc-cited, no fitted scalars, explicit LUT placeholders, no behavioral
+//! claims); `glue` is the render-gated exception.
 
 pub mod audio;
 pub mod auto_filter;
