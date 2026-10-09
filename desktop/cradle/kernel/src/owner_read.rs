@@ -3,11 +3,25 @@
 //! holding the ordered mutation/event queue. Admission stays with each owner.
 use crate::{flow::ReceivingRequest, CentralClient, KernelOp, KernelOpOutcome, KernelOpResult};
 use serde_json::Value;
+use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
+
+/// The temporal projection's immutable inputs, captured under the kernel
+/// lock: the ordered log's receipts as they stood at preparation, the
+/// working directory for owner discovery, and the shared horizon cache.
+/// Execution runs after the kernel mutex is released; nothing kernel-owned
+/// is reachable from here.
+pub struct TemporalReadInputs {
+    pub(crate) receipts: Vec<crate::events::KernelEventReceipt>,
+    pub(crate) cwd: PathBuf,
+    pub(crate) cache: Arc<Mutex<crate::read_cache::OwnerReadCache>>,
+}
 
 pub struct PreparedRead {
     client: CentralClient,
     world: Option<Value>,
     op: KernelOp,
+    temporal: Option<TemporalReadInputs>,
 }
 
 impl PreparedRead {
@@ -15,7 +29,20 @@ impl PreparedRead {
         client: &CentralClient,
         world: Option<Value>,
         op: &KernelOp,
+        temporal: Option<TemporalReadInputs>,
     ) -> Option<Self> {
+        // The temporal projection is all owner processes and in-memory
+        // mapping over captured inputs — it belongs outside the ordered
+        // queue like every other independent owner read. Inputs are
+        // required: without them the ordered `apply` path serves the op.
+        if matches!(op, KernelOp::TemporalEventsRead { .. }) {
+            return temporal.map(|temporal| Self {
+                client: client.clone(),
+                world,
+                op: op.clone(),
+                temporal: Some(temporal),
+            });
+        }
         match op {
             KernelOp::Receiving { request: ReceivingRequest::List { .. } | ReceivingRequest::Read { .. } | ReceivingRequest::Document { .. }, .. }
             | KernelOp::GitRepositoryRead { .. }
@@ -32,12 +59,32 @@ impl PreparedRead {
                 client: client.clone(),
                 world,
                 op: op.clone(),
+                temporal: None,
             }),
             _ => None,
         }
     }
 
     pub fn execute(self) -> Result<KernelOpOutcome, String> {
+        // The temporal projection: all owner processes over captured
+        // inputs. It runs here — never under the kernel mutex — and
+        // answers with the same document the ordered path would build.
+        if let (KernelOp::TemporalEventsRead { query }, Some(temporal)) = (&self.op, &self.temporal) {
+            let answer = crate::temporal_sources::read_field(
+                &self.client,
+                &temporal.cache,
+                &temporal.receipts,
+                temporal.cwd.clone(),
+                query,
+            )
+            .map_err(|error| error.to_string())?;
+            return Ok(KernelOpOutcome {
+                receipts: vec![],
+                result: KernelOpResult::TemporalEventsReading {
+                    document: serde_json::to_value(answer).map_err(|error| error.to_string())?,
+                },
+            });
+        }
         // Inbox reads may fan out across many project registers at startup.
         // They do not alter kernel state and must not hold up native editing.
         // Review/include/recovery retain the ordered mutation path.
@@ -177,8 +224,27 @@ mod tests {
     fn only_the_telemetry_watch_of_the_factory_family_is_prepared() {
         let client = CentralClient::discover();
         let watch: KernelOp = serde_json::from_value(serde_json::json!({"op": "factory_owner", "request": {"kind": "telemetry-watch", "state_path": "/s.json", "duration_secs": 1.0}})).unwrap();
-        assert!(PreparedRead::prepare(&client, None, &watch).is_some());
+        assert!(PreparedRead::prepare(&client, None, &watch, None).is_some());
         let status: KernelOp = serde_json::from_value(serde_json::json!({"op": "factory_owner", "request": {"kind": "telemetry-status", "state_path": "/s.json"}})).unwrap();
-        assert!(PreparedRead::prepare(&client, None, &status).is_none());
+        assert!(PreparedRead::prepare(&client, None, &status, None).is_none());
+    }
+
+    /// The temporal read is a prepared read only when its captured inputs
+    /// ride along; without them it falls to the ordered path unchanged.
+    #[test]
+    fn the_temporal_read_prepares_with_inputs_and_falls_back_without() {
+        let client = CentralClient::discover();
+        let op: KernelOp = serde_json::from_value(serde_json::json!({
+            "op": "temporal_events_read",
+            "query": {"window": {"window": "all"}}
+        }))
+        .unwrap();
+        assert!(PreparedRead::prepare(&client, None, &op, None).is_none());
+        let inputs = TemporalReadInputs {
+            receipts: Vec::new(),
+            cwd: std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from(".")),
+            cache: Arc::new(Mutex::new(crate::read_cache::OwnerReadCache::default())),
+        };
+        assert!(PreparedRead::prepare(&client, None, &op, Some(inputs)).is_some());
     }
 }

@@ -247,6 +247,9 @@ pub struct Kernel {
     encounter_refs: BTreeMap<String, (SemanticRef, focus::ProjectRef)>,
     knowledge_projects: BTreeMap<String, Option<focus::ProjectRef>>,
     reads: read_cache::OwnerReadCache,
+    // The temporal projection's answer horizon, shared by the ordered path
+    // and the prepared read that runs outside the kernel mutex.
+    temporal_reads: std::sync::Arc<std::sync::Mutex<read_cache::OwnerReadCache>>,
 }
 
 // ---------------------------------------------------------------------------
@@ -710,6 +713,11 @@ pub enum KernelOp {
     /// Workcell's own placement/status reading (`workcell status --json`),
     /// beside the Factory reads — placement is Workcell's, never the desktop's.
     WorkcellStatusRead,
+    /// The read-only temporal-events field (`oi.temporal-events/v1`) over
+    /// the streams the adapters already wire — no second store.
+    TemporalEventsRead {
+        query: temporal_events::TemporalQuery,
+    },
     /// The Agent Wiki operational projection behind one source
     /// (`aikit --json wiki projection read --file <path>`): the current body,
     /// its exact SHA-256 revision and the attributed feedback ledger. AIKit
@@ -1213,6 +1221,9 @@ pub enum KernelOpResult {
     WorkcellStatusReading {
         data: serde_json::Value,
     },
+    TemporalEventsReading {
+        document: serde_json::Value,
+    },
     /// An AIKit inhabitation reading (the envelope's `data`, verbatim) and the
     /// envelope's own warnings, carried so the renderer can name them.
     InhabitationReading {
@@ -1458,6 +1469,9 @@ impl Kernel {
             encounter_refs: BTreeMap::new(),
             knowledge_projects: BTreeMap::new(),
             reads: read_cache::OwnerReadCache::default(),
+            temporal_reads: std::sync::Arc::new(std::sync::Mutex::new(
+                read_cache::OwnerReadCache::default(),
+            )),
         }
     }
 
@@ -2261,10 +2275,22 @@ impl Kernel {
     /// Capture immutable read inputs only. Hosts execute the returned work
     /// after releasing their kernel mutex; no source or event state is cloned.
     pub fn prepare_owner_read(&mut self, op: &KernelOp) -> Option<owner_read::PreparedRead> {
+        // The temporal projection's inputs are captured here, under the
+        // kernel lock; its owner processes then run outside the ordered
+        // queue like every other independent owner read.
+        let temporal = match op {
+            KernelOp::TemporalEventsRead { .. } => Some(owner_read::TemporalReadInputs {
+                receipts: self.log.since(1),
+                cwd: std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from(".")),
+                cache: std::sync::Arc::clone(&self.temporal_reads),
+            }),
+            _ => None,
+        };
         owner_read::PreparedRead::prepare(
             &self.client,
             self.reads.get("world", read_cache::WORLD_TTL),
             op,
+            temporal,
         )
     }
 
@@ -3029,6 +3055,23 @@ impl Kernel {
                 Ok(KernelOpOutcome {
                     receipts: Vec::new(),
                     result: KernelOpResult::WorkcellStatusReading { data },
+                })
+            }
+            KernelOp::TemporalEventsRead { query } => {
+                let cwd = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
+                let answer = temporal_sources::read_field(
+                    &self.client,
+                    &self.temporal_reads,
+                    &self.log.since(1),
+                    cwd,
+                    &query,
+                )
+                .map_err(|error| error.to_string())?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::TemporalEventsReading {
+                        document: serde_json::to_value(answer).map_err(|error| error.to_string())?,
+                    },
                 })
             }
             KernelOp::WikiProjectionRead { root, path } => {

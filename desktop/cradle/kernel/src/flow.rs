@@ -404,6 +404,24 @@ impl CentralClient {
             })
     }
 
+    /// The Central owner executable itself, when the host names one
+    /// (`OI_CENTRAL_CTRL_BIN`): the same envelope law through one process
+    /// per Action instead of two (the suite wrapper's only work is
+    /// resolving and re-spawning the owner, which dominates the cost of
+    /// cheap read Actions). Absent the override this returns `None` and
+    /// the configured suite route stands — resolution never guesses a
+    /// binary the host did not name.
+    pub fn owner_direct_from_env(&self) -> Option<CentralClient> {
+        let owner = std::env::var_os("OI_CENTRAL_CTRL_BIN")
+            .map(PathBuf::from)
+            .filter(|path| path.is_file())?;
+        Some(Self::with(
+            owner,
+            self.central_root.clone(),
+            self.project_query.clone(),
+        ))
+    }
+
     // -----------------------------------------------------------------------
     // Continuous-work receiving (Wave 6E) — the owner's own revision checks
     // -----------------------------------------------------------------------
