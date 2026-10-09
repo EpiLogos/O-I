@@ -1,0 +1,416 @@
+// PROVENANCE: Ghidra 12.1.4 probes (SearchProbe/StringsInRange/RefsProbe/
+// CallClosureProbe/RangeDecompileProbe) + llvm-objdump raw-asm + custom
+// ADRP+ADD xref scan (python, TEXT base 0x100000000 = file offset), against
+// persistent project LiveRE2 (~/tools/live-re/ghidra-proj2, ALREADY ANALYZED),
+// Live.arm64 (Live 12.0.25, 2024-08-27_2627c43816), arm64 slice.
+// Owner-private analysis evidence. NOT FOR REDISTRIBUTION. Never enters
+// product source (packages/live-dynamics).
+// Captured 2026-10-09 (analog binary lane). Companion dossier:
+// devices/analog-derivation.md. Official-evidence companion:
+// evidence/devices/Analog/default.xml (gzipped Analog.adv from the installed
+// app bundle, App-Resources/Core Library/Defaults/Instruments/Analog.adv,
+// root element <UltraAnalog>, Creator="Ableton Live 12.0.5d1").
+//
+// HEADLINE: the Analog implementation is an OLD A-FRAMEWORK DEVICE with NO
+// C++ function symbols for its DSP. Only the compound factories carry
+// symbols (SNewCompound<AUltraAnalog> etc.). The ADRP+ADD xref scan was
+// REQUIRED to find code anchors (Ghidra had created ZERO functions in the
+// region and holds NO references to any Analog string).
+//
+// (1) CLASS ARCHITECTURE (symbols + class-name strings)
+//   AUltraAnalog                 device compound (root element of .adv)
+//   AUltraAnalogSignalChain      chain compound (osc+filter+amp+LFO+2 envs)
+//   AUltraAnalogSignalChain1     chain 1 (adds mpFilterToFilter2, "F1 To F2")
+//   AUltraAnalogSignalChain2     chain 2 (adds mpFilterControllee, "F2 Slave")
+//   AUltraAnalogEnvelope         ADSR-style env (FEG + AEG, 4 per device)
+//   AAnalogAdsrEnvelopeDisplay   GUI compound (env display)
+//   AAnalogPitchEnvelopeDisplay  GUI compound (per-osc pitch env = PEG)
+//   AMember<AUltraAnalogSignalChain1/2>, AMember<AUltraAnalogEnvelope>,
+//   AAASStringConverter<AUltraAnalogRealValue>   member-pointer param binding
+//   Factory symbols (nm, sorted):
+//   00000001028b1688 T __Z12SNewCompoundI12AUltraAnalogE4TPtrI9ACompoundEv
+//   00000001028c0510 T __Z12SNewCompoundI23AUltraAnalogSignalChainE4TPtrI9ACompoundEv
+//   00000001028c3d90 T __Z12SNewCompoundI24AUltraAnalogSignalChain1E4TPtrI9ACompoundEv
+//   00000001028c4404 T __Z12SNewCompoundI24AUltraAnalogSignalChain2E4TPtrI9ACompoundEv
+//   00000001028c4824 T __Z12SNewCompoundI20AUltraAnalogEnvelopeE4TPtrI9ACompoundEv
+//   00000001028c888c T __ZN7ableton7utility6detail13CallbackTypesI12AUltraAnalogvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_12OnSetRoutingES5_S7_EEEEvPvS5_S7_
+//   0000000104c97b5c S _KDeviceUltraAnalog
+
+// (2) CODE SPANS (from symbol brackets; anonymous DSP/descriptor functions
+//     live inside these spans; 412 raw prologues counted 0x1028aab24..0x1028c4ffc)
+//   0x1028b1688..0x1028c0510  SNewCompound<AUltraAnalog> TU (~64KB):
+//      anonymous functions decompiled via call closure:
+//        FUN_1028b66ec  body=16532  (1848 decl lines)  descriptor/serializer
+//        FUN_1028b30b4  body=10836  (1547)  registers mod-target display names
+//                       ("Osc 1 Pitch" ref 0x1028b3c34)
+//        FUN_1028bddf8  body=9688   (2236)
+//        FUN_1028bc614  body=6012   (1059)
+//        FUN_1028bb0b4  body=792
+//        FUN_1028b8464  body~7.5KB: registers filter-type menu ("Low-pass
+//                       24dB/oct" 0x1028b8938, "Notch 4-pole" 0x1028b89a0,
+//                       "Formant 6dB/oct" 0x1028b89f0) + drive shaper names
+//                       ("Sym1" 0x1028b8ad0, "Asym1" 0x1028b8b20)
+//   0x1028c0510..0x1028c3d90  SNewCompound<AUltraAnalogSignalChain> TU:
+//        ctor FUN_1028c1de4 (below); env Loop menu "AD-R/ADR-R/ADS-AR" refs
+//        0x1028c2d2c/0x1028c2d48/0x1028c2d60 (inside the 0x1028c2458 fn)
+//   0x1028c3d90..0x1028c4404  SNewCompound<AUltraAnalogSignalChain1>
+//   0x1028c4404..0x1028c4824  SNewCompound<AUltraAnalogSignalChain2>
+//        ("mpFilterControllee" ref 0x1028c4480)
+//   0x1028c4824..0x1028c79ac  SNewCompound<AUltraAnalogEnvelope> TU (~12.5KB)
+//   0x1028c888c..0x1028cbf80  static module registration (registers all five
+//        compound types; refs AUltraAnalog@0x1028cae2c, chain@0x1028cae74,
+//        envelope@0x1028caf54; see excerpt (5))
+//   0x102894000..0x10289e000  device-unit parameter registration cluster (no
+//        frame pointers, no prologues; "Unison Voices" 0x102897bc4, "LFO
+//        SyncRate" 0x102899714, filter menu builder 0x10289bec0..0x10289c070)
+// (3) COMPOUND REGISTRATION EXCERPT (objdump, static init at 0x1028cae24..)
+//   1028cae24: d0018978    	adrp	x24, 0x1059f8000 <dyld_stub_binder+0x1059f8000>
+//   1028cae28: 911c4318    	add	x24, x24, #0x710
+//   1028cae2c: f00101c1    	adrp	x1, 0x104905000 <dyld_stub_binder+0x104905000>
+//   1028cae30: 91340421    	add	x1, x1, #0xd01
+//   1028cae34: d0013d03    	adrp	x3, 0x10506c000 <dyld_stub_binder+0x10506c000>
+//   1028cae38: f946e863    	ldr	x3, [x3, #0xdd0]
+//   1028cae3c: 10f345a4    	adr	x4, 0x1028b16f0 <__Z12SNewCompoundI12AUltraAnalogE4TPtrI9ACompoundEv+0x68>
+//   1028cae40: d503201f    	nop
+//   1028cae44: aa1803e0    	mov	x0, x24
+//   1028cae48: aa1703e2    	mov	x2, x23
+//   1028cae4c: 52800005    	mov	w5, #0x0                ; =0
+//   1028cae50: 52800006    	mov	w6, #0x0                ; =0
+//   1028cae54: 52800007    	mov	w7, #0x0                ; =0
+//   1028cae58: 979d1c95    	bl	0x1010120ac <__ZN7ableton7utility6detail13CallbackTypesIv7TStringJbEE14CallStaticFuncIXadL_ZN17AAbletonWebServer39SAccountBasedUnlockingAuthorizationPageEbEEEES3_Pvb+0x641c>
+//   1028cae5c: aa1503e0    	mov	x0, x21
+//   1028cae60: aa1803e1    	mov	x1, x24
+//   1028cae64: aa1303e2    	mov	x2, x19
+//   1028cae68: 9469dff8    	bl	0x104342e48 <dyld_stub_binder+0x104342e48>
+//   1028cae6c: d0018978    	adrp	x24, 0x1059f8000 <dyld_stub_binder+0x1059f8000>
+//   1028cae70: 911f6318    	add	x24, x24, #0x7d8
+//   1028cae74: f00101c1    	adrp	x1, 0x104905000 <dyld_stub_binder+0x104905000>
+//   1028cae78: 913a1c21    	add	x1, x1, #0xe87
+//   1028cae7c: b0018617    	adrp	x23, 0x10598b000 <dyld_stub_binder+0x10598b000>
+//   1028cae80: 910942f7    	add	x23, x23, #0x250
+//   1028cae84: b0013d23    	adrp	x3, 0x10506f000 <dyld_stub_binder+0x10506f000>
+//   1028cae88: f9474463    	ldr	x3, [x3, #0xe88]
+//   1028cae8c: 10fab464    	adr	x4, 0x1028c0518 <__Z12SNewCompoundI23AUltraAnalogSignalChainE4TPtrI9ACompoundEv+0x8>
+//   1028cae90: d503201f    	nop
+//   1028cae94: aa1803e0    	mov	x0, x24
+//   1028cae98: aa1703e2    	mov	x2, x23
+//   1028cae9c: 52800005    	mov	w5, #0x0                ; =0
+//   1028caea0: 52800026    	mov	w6, #0x1                ; =1
+//   1028caea4: 52800007    	mov	w7, #0x0                ; =0
+//   1028caea8: 979d1c81    	bl	0x1010120ac <__ZN7ableton7utility6detail13CallbackTypesIv7TStringJbEE14CallStaticFuncIXadL_ZN17AAbletonWebServer39SAccountBasedUnlockingAuthorizationPageEbEEEES3_Pvb+0x641c>
+//   1028caeac: aa1503e0    	mov	x0, x21
+//   1028caeb0: aa1803e1    	mov	x1, x24
+//   1028caeb4: aa1303e2    	mov	x2, x19
+//   1028caeb8: 9469dfe4    	bl	0x104342e48 <dyld_stub_binder+0x104342e48>
+//   1028caebc: d0018979    	adrp	x25, 0x1059f8000 <dyld_stub_binder+0x1059f8000>
+//   1028caec0: 91228339    	add	x25, x25, #0x8a0
+//   1028caec4: 900101e1    	adrp	x1, 0x104906000 <dyld_stub_binder+0x104906000>
+//   1028caec8: 911e8421    	add	x1, x1, #0x7a1
+//   1028caecc: d0013d23    	adrp	x3, 0x105070000 <dyld_stub_binder+0x105070000>
+//   1028caed0: f940f063    	ldr	x3, [x3, #0x1e0]
+//   1028caed4: 10fc7784    	adr	x4, 0x1028c3dc4 <__Z12SNewCompoundI24AUltraAnalogSignalChain1E4TPtrI9ACompoundEv+0x34>
+//   1028caed8: d503201f    	nop
+//   1028caedc: aa1903e0    	mov	x0, x25
+//   1028caee0: aa1803e2    	mov	x2, x24
+//   1028caee4: 52800005    	mov	w5, #0x0                ; =0
+//   1028caee8: 52800006    	mov	w6, #0x0                ; =0
+//   1028caeec: 52800007    	mov	w7, #0x0                ; =0
+//   1028caef0: 979d1c6f    	bl	0x1010120ac <__ZN7ableton7utility6detail13CallbackTypesIv7TStringJbEE14CallStaticFuncIXadL_ZN17AAbletonWebServer39SAccountBasedUnlockingAuthorizationPageEbEEEES3_Pvb+0x641c>
+//   1028caef4: aa1503e0    	mov	x0, x21
+//   1028caef8: aa1903e1    	mov	x1, x25
+//   1028caefc: aa1303e2    	mov	x2, x19
+//   1028caf00: 9469dfd2    	bl	0x104342e48 <dyld_stub_binder+0x104342e48>
+//   1028caf04: d0018979    	adrp	x25, 0x1059f8000 <dyld_stub_binder+0x1059f8000>
+//   1028caf08: 9125a339    	add	x25, x25, #0x968
+//   1028caf0c: 900101e1    	adrp	x1, 0x104906000 <dyld_stub_binder+0x104906000>
+//   1028caf10: 911f5421    	add	x1, x1, #0x7d5
+//   1028caf14: d0013d23    	adrp	x3, 0x105070000 <dyld_stub_binder+0x105070000>
+//   1028caf18: f940f463    	ldr	x3, [x3, #0x1e8]
+//   1028caf1c: 10fca8e4    	adr	x4, 0x1028c4438 <__Z12SNewCompoundI24AUltraAnalogSignalChain2E4TPtrI9ACompoundEv+0x34>
+//   1028caf20: d503201f    	nop
+//   1028caf24: aa1903e0    	mov	x0, x25
+//   1028caf28: aa1803e2    	mov	x2, x24
+//   1028caf2c: 52800005    	mov	w5, #0x0                ; =0
+//   1028caf30: 52800006    	mov	w6, #0x0                ; =0
+//   1028caf34: 52800007    	mov	w7, #0x0                ; =0
+//   1028caf38: 979d1c5d    	bl	0x1010120ac <__ZN7ableton7utility6detail13CallbackTypesIv7TStringJbEE14CallStaticFuncIXadL_ZN17AAbletonWebServer39SAccountBasedUnlockingAuthorizationPageEbEEEES3_Pvb+0x641c>
+//
+// (4) CHAIN CTOR (decompile, CallClosureProbe) — SignalChain object 0x518 bytes,
+//     member compounds at +0x68/+0x80/+0x98/+0xb0/+0xc8/+0xe0/+0xf8/+0x110...
+=== FUNC 1028c1de4 body=800 lines=77 ===
+
+long FUN_1028c1de4(long param_1)
+
+{
+  undefined *puVar1;
+  undefined8 *puVar2;
+  undefined *puStack_78;
+  undefined8 uStack_70;
+  
+  puVar2 = (undefined8 *)func_0x0001010d7e38();
+  *puVar2 = &UNK_105403aa0;
+  func_0x0001022c3e70(puVar2 + 10);
+  func_0x0001022c3dd8(param_1 + 0x68);
+  func_0x0001022c3d40(param_1 + 0x80);
+  func_0x00010023c5a8(param_1 + 0x98);
+  func_0x0001022c3d40(param_1 + 0xb0);
+  func_0x00010023c5a8(param_1 + 200);
+  func_0x0001022c3dd8(param_1 + 0xe0);
+  func_0x0001022c3d40(param_1 + 0xf8);
+  func_0x0001022c3d40(param_1 + 0x110);
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3e70();
+  func_0x0001022c3dd8();
+  func_0x0001022c3dd8();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3e70();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40();
+  func_0x0001022c3e70();
+  func_0x0001022c3dd8();
+  func_0x0001022c3d40();
+  func_0x0001022c3dd8();
+  func_0x0001022c3e70();
+  func_0x0001022c3d40();
+  func_0x0001022c3d40(param_1 + 0x440);
+  func_0x0001022c3d40(param_1 + 0x458);
+  func_0x0001022c3d40(param_1 + 0x470);
+  func_0x0001022c3d40(param_1 + 0x488);
+  func_0x00010023c6d8(param_1 + 0x4a0);
+  func_0x00010023c640(param_1 + 0x4b8);
+  func_0x0001028c9c3c(param_1 + 0x4d0);
+  func_0x0001028c9c3c(param_1 + 0x4e8);
+  func_0x000101019a4c(param_1);
+  puVar1 = 
+  PTR___ZZNK7ableton7utility8CallbackIFvP11ARemoteableN16ARemoteableTypes7TUpdateEELb0EE13kNullCallbackMUlvE_clEvENUlPvS3_S5_E_8__invokeES9_S3_S5__1050c8318
+  ;
+  puStack_78 = 
+  PTR___ZZNK7ableton7utility8CallbackIFvP11ARemoteableN16ARemoteableTypes7TUpdateEELb0EE13kNullCallbackMUlvE_clEvENUlPvS3_S5_E_8__invokeES9_S3_S5__1050c8318
+  ;
+  uStack_70 = 0;
+  func_0x0001010e243c(*(undefined8 *)(param_1 + 0xa0),0xc0000000,&puStack_78);
+  func_0x0001010d6114(*(undefined8 *)(param_1 + 0xa0),1);
+  puStack_78 = puVar1;
+  uStack_70 = 0;
+  func_0x0001010e243c(*(undefined8 *)(param_1 + 0xd0),0xc0000000,&puStack_78);
+  func_0x0001010d6114(*(undefined8 *)(param_1 + 0xd0),1);
+  return param_1;
+}
+=== FUNC 1028c3e7c body=108 lines=17 ===
+//
+// (5) FILTER TYPE MENU LAW (objdump 0x10289bf48..0x10289c054):
+//     10-entry string array built at sp+0x4f0, registration call w2=10:
+//     [0] 0x10490530f Low-pass 12dB/oct   [1] 0x104905321 Low-pass 24dB/oct
+//     [2] 0x104905333 Band-pass 6dB/oct   [3] 0x104905345 Band-pass 12dB/oct
+//     [4] 0x104905358 Notch 2-pole        [5] 0x104905365 Notch 4-pole
+//     [6] 0x104905372 High-pass 12dB/oct  [7] 0x104905385 High-pass 24dB/oct
+//     [8] 0x104905398 Formant 6dB/oct     [9] 0x1049053a8 Formant 12dB/oct
+//     (short forms LP12 LP24 BP12 HP12 HP24 at 0x1049052e3..0x104905303)
+//   10289bf48: d0010340    	adrp	x0, 0x104905000 <dyld_stub_binder+0x104905000>
+//   10289bf4c: 910c3c00    	add	x0, x0, #0x30f
+//   10289bf50: 9113c3f4    	add	x20, sp, #0x4f0
+//   10289bf54: 9113c3e8    	add	x8, sp, #0x4f0
+//   10289bf58: 979c9250    	bl	0x100fc0898 <__ZN7testing8internal11MatcherBaseIRKNSt3__15tupleIJN10AFileTypes9TFileTypeEEEEE16GetDescriberImplINS9_11ValuePolicyINS0_15AnythingMatcherELb1EEEEEPKNS_25MatcherDescriberInterfaceERKS9_+0x1299c>
+//   10289bf5c: 91002288    	add	x8, x20, #0x8
+//   10289bf60: d0010340    	adrp	x0, 0x104905000 <dyld_stub_binder+0x104905000>
+//   10289bf64: 910c8400    	add	x0, x0, #0x321
+//   10289bf68: aa0803fc    	mov	x28, x8
+//   10289bf6c: f90053e8    	str	x8, [sp, #0xa0]
+//   10289bf70: 979c924a    	bl	0x100fc0898 <__ZN7testing8internal11MatcherBaseIRKNSt3__15tupleIJN10AFileTypes9TFileTypeEEEEE16GetDescriberImplINS9_11ValuePolicyINS0_15AnythingMatcherELb1EEEEEPKNS_25MatcherDescriberInterfaceERKS9_+0x1299c>
+//   10289bf74: 9113c3f4    	add	x20, sp, #0x4f0
+//   10289bf78: 91004288    	add	x8, x20, #0x10
+//   10289bf7c: d0010340    	adrp	x0, 0x104905000 <dyld_stub_binder+0x104905000>
+//   10289bf80: 910ccc00    	add	x0, x0, #0x333
+//   10289bf84: aa0803fc    	mov	x28, x8
+//   10289bf88: f9004fe8    	str	x8, [sp, #0x98]
+//   10289bf8c: 979c9243    	bl	0x100fc0898 <__ZN7testing8internal11MatcherBaseIRKNSt3__15tupleIJN10AFileTypes9TFileTypeEEEEE16GetDescriberImplINS9_11ValuePolicyINS0_15AnythingMatcherELb1EEEEEPKNS_25MatcherDescriberInterfaceERKS9_+0x1299c>
+//   10289bf90: 91006288    	add	x8, x20, #0x18
+//   10289bf94: d0010340    	adrp	x0, 0x104905000 <dyld_stub_binder+0x104905000>
+//   10289bf98: 910d1400    	add	x0, x0, #0x345
+//   10289bf9c: aa0803fc    	mov	x28, x8
+//   10289bfa0: f9004be8    	str	x8, [sp, #0x90]
+//   10289bfa4: 979c923d    	bl	0x100fc0898 <__ZN7testing8internal11MatcherBaseIRKNSt3__15tupleIJN10AFileTypes9TFileTypeEEEEE16GetDescriberImplINS9_11ValuePolicyINS0_15AnythingMatcherELb1EEEEEPKNS_25MatcherDescriberInterfaceERKS9_+0x1299c>
+//   10289bfa8: 9113c3f4    	add	x20, sp, #0x4f0
+//   10289bfac: 91008288    	add	x8, x20, #0x20
+//   10289bfb0: d0010340    	adrp	x0, 0x104905000 <dyld_stub_binder+0x104905000>
+//   10289bfb4: 910d6000    	add	x0, x0, #0x358
+//   10289bfb8: aa0803fc    	mov	x28, x8
+//   10289bfbc: f90047e8    	str	x8, [sp, #0x88]
+//   10289bfc0: 979c9236    	bl	0x100fc0898 <__ZN7testing8internal11MatcherBaseIRKNSt3__15tupleIJN10AFileTypes9TFileTypeEEEEE16GetDescriberImplINS9_11ValuePolicyINS0_15AnythingMatcherELb1EEEEEPKNS_25MatcherDescriberInterfaceERKS9_+0x1299c>
+//   10289bfc4: 9100a288    	add	x8, x20, #0x28
+//   10289bfc8: d0010340    	adrp	x0, 0x104905000 <dyld_stub_binder+0x104905000>
+//   10289bfcc: 910d9400    	add	x0, x0, #0x365
+//   10289bfd0: aa0803fc    	mov	x28, x8
+//   10289bfd4: f90043e8    	str	x8, [sp, #0x80]
+//   10289bfd8: 979c9230    	bl	0x100fc0898 <__ZN7testing8internal11MatcherBaseIRKNSt3__15tupleIJN10AFileTypes9TFileTypeEEEEE16GetDescriberImplINS9_11ValuePolicyINS0_15AnythingMatcherELb1EEEEEPKNS_25MatcherDescriberInterfaceERKS9_+0x1299c>
+//   10289bfdc: 9113c3f4    	add	x20, sp, #0x4f0
+//   10289bfe0: 9100c288    	add	x8, x20, #0x30
+//   10289bfe4: d0010340    	adrp	x0, 0x104905000 <dyld_stub_binder+0x104905000>
+//   10289bfe8: 910dc800    	add	x0, x0, #0x372
+//   10289bfec: aa0803fc    	mov	x28, x8
+//   10289bff0: f9003fe8    	str	x8, [sp, #0x78]
+//   10289bff4: 979c9229    	bl	0x100fc0898 <__ZN7testing8internal11MatcherBaseIRKNSt3__15tupleIJN10AFileTypes9TFileTypeEEEEE16GetDescriberImplINS9_11ValuePolicyINS0_15AnythingMatcherELb1EEEEEPKNS_25MatcherDescriberInterfaceERKS9_+0x1299c>
+//   10289bff8: 9100e294    	add	x20, x20, #0x38
+//   10289bffc: d0010340    	adrp	x0, 0x104905000 <dyld_stub_binder+0x104905000>
+//   10289c000: 910e1400    	add	x0, x0, #0x385
+//   10289c004: aa1403fc    	mov	x28, x20
+//   10289c008: aa1403e8    	mov	x8, x20
+//   10289c00c: 979c9223    	bl	0x100fc0898 <__ZN7testing8internal11MatcherBaseIRKNSt3__15tupleIJN10AFileTypes9TFileTypeEEEEE16GetDescriberImplINS9_11ValuePolicyINS0_15AnythingMatcherELb1EEEEEPKNS_25MatcherDescriberInterfaceERKS9_+0x1299c>
+//
+// (6) MEMBER-NAME (mp*) STRING CENSUS — the A-framework parameter binding
+//     (AMember<T>) keys; these name the state slots the same way the
+//     compressor lane's slot ledger does. Full dump in session capture;
+//     Analog block runs 0x104905d01..0x104906d97:
+//   STR 104905a66 mpShowSplashScreen (GhidraScript)  
+//   STR 104905a79 mpAlive (GhidraScript)  
+//   STR 104905d0e mpChannelPressureAmount1 (GhidraScript)  
+//   STR 104905d27 mpChannelPressureAmount2 (GhidraScript)  
+//   STR 104905d40 mpMpeCC74Amount1 (GhidraScript)  
+//   STR 104905d51 mpMpeCC74Amount2 (GhidraScript)  
+//   STR 104905d62 mpNoiseToggle (GhidraScript)  
+//   STR 104905d70 mpNoiseBalance (GhidraScript)  
+//   STR 104905d8c mpSignalChain1 (GhidraScript)  
+//   STR 104905d9b mpSignalChain2 (GhidraScript)  
+//   STR 104905daa mpSetRouting1 (GhidraScript)  
+//   STR 104905db8 mpSetRouting2 (GhidraScript)  
+//   STR 104905dc6 mpSetRouting3 (GhidraScript)  
+//   STR 104905dd4 mpSetRouting4 (GhidraScript)  
+//   STR 104905de2 mpSelectedGlobalMpeFinger (GhidraScript)  
+//   STR 104905e9f mpOscillatorToggle (GhidraScript)  
+//   STR 104905eb2 mpOscillatorWaveShape (GhidraScript)  
+//   STR 104905ec8 mpOscillatorOct (GhidraScript)  
+//   STR 104905ed8 mpOscillatorOctRelativePosition (GhidraScript)  
+//   STR 104905ef8 mpOscillatorSemi (GhidraScript)  
+//   STR 104905f09 mpOscillatorSemiRelativePosition (GhidraScript)  
+//   STR 104905f2a mpOscillatorMode (GhidraScript)  
+//   STR 104905f3b mpOscillatorEnvTime (GhidraScript)  
+//   STR 104905f4f mpOscillatorDetune (GhidraScript)  
+//   STR 104905f62 mpOscillatorModulation1 (GhidraScript)  
+//   STR 104905f7a mpOscillatorPulseWidth (GhidraScript)  
+//   STR 104905f91 mpOscillatorSubAmount (GhidraScript)  
+//   STR 104905fa7 mpOscillatorBalance (GhidraScript)  
+//   STR 104905fbb mpOscillatorEnvAmount (GhidraScript)  
+//   STR 104905fd1 mpOscillatorLFOModPitch (GhidraScript)  
+//   STR 104905fe9 mpOscillatorLFOModPW (GhidraScript)  
+//   STR 104905ffe mpOscillatorLevel (GhidraScript)  
+//   STR 104906010 mpFilterKbdCutoffMod (GhidraScript)  
+//   STR 104906025 mpFilterKbdQMod (GhidraScript)  
+//   STR 104906035 mpFilterLFOCutoffMod (GhidraScript)  
+//   STR 10490604a mpFilterEnvCutoffMod (GhidraScript)  
+//   STR 10490605f mpFilterLFOQMod (GhidraScript)  
+//   STR 10490606f mpFilterEnvQMod (GhidraScript)  
+//   STR 10490607f mpAmplifierToggle (GhidraScript)  
+//   STR 104906091 mpAmplifierKbdAmpMod (GhidraScript)  
+//   STR 1049060a6 mpAmplifierLevel (GhidraScript)  
+//   STR 1049060b7 mpAmplifierKbdPanMod (GhidraScript)  
+//   STR 1049060cc mpAmplifierPan (GhidraScript)  
+//   STR 1049060db mpAmplifierLFOAmpMod (GhidraScript)  
+//   STR 1049060f0 mpAmplifierLFOPanMod (GhidraScript)  
+//   STR 104906105 mpAmplifierEnvPanMod (GhidraScript)  
+//   STR 10490611a mpLFOGateReset (GhidraScript)  
+//   STR 104906129 mpLFOPulseWidth (GhidraScript)  
+//   STR 104906139 mpLFOPhase (GhidraScript)  
+//   STR 104906144 mpLFOName (GhidraScript)  
+//   STR 10490614e mpIsChain2 (GhidraScript)  
+//   STR 104906159 mpEnvelope (GhidraScript)  
+//   STR 1049067ba mpFilterToFilter2 (GhidraScript)  
+//   STR 1049067ee mpFilterControllee (GhidraScript)  
+//   STR 10490681f mpExponentialSlope (GhidraScript)  
+//   STR 104906832 mpLoop (GhidraScript)  
+//   STR 104906839 mpFreeRun (GhidraScript)  
+//   STR 104906843 mpLegato (GhidraScript)  
+//   STR 10490684c mpAttackMod (GhidraScript)  
+//   STR 104906858 mpAmpMod (GhidraScript)  
+//   STR 104906861 mpSustainTime (GhidraScript)  
+//   STR 10490686f mpToggleDummy (GhidraScript)  
+//   STR 104906dcd mpAreSystemPathsEnabled (GhidraScript)  
+//   STR 104906de5 mpIsCustomPathEnabled (GhidraScript)  
+//   STR 104907baa mpUid (GhidraScript)  
+//   STR 10490821c mpObsoleteProgramBag (GhidraScript)  
+//   STR 104908466 mpSignInButtonBang (GhidraScript)  
+//   STR 104908479 mpSignInStatusText (GhidraScript)  
+//   STR 104908513 mpPythonFilterType (GhidraScript)  
+//   STR 10490887f mpCurrentContentLabel (GhidraScript)  
+//   STR 104908895 mpSidebarSizeManager (GhidraScript)  
+//   STR 1049088aa mpEnableCloud (GhidraScript)  
+//   STR 1049088b8 mpEnablePush (GhidraScript)  
+//   STR 1049088c5 mpBrowserState (GhidraScript)  
+//   STR 1049088d4 mpContentSizeManager (GhidraScript)  
+//   STR 1049088e9 mpMappingSizeManager (GhidraScript)  
+//   STR 1049088fe mpIsFilterEditViewVisible (GhidraScript)  
+//   STR 104908918 mpIsInspectorViewVisible (GhidraScript)  
+//   STR 104908931 mpIsInspectorViewEnabled (GhidraScript)  
+//   STR 10490894a mpHorizKeywordsSizeManager (GhidraScript)  
+//   STR 1049089d3 mpClipTime (GhidraScript)  
+//   STR 1049089de mpRaw (GhidraScript)  
+//   STR 1049089e4 mpRawVisible (GhidraScript)  
+//   STR 1049089f1 mpEffectiveAutoPlayButtonState (GhidraScript)  
+//   STR 104908ed9 mpHistoryBackBang (GhidraScript)  
+//   STR 104908eeb mpHistoryForwardBang (GhidraScript)  
+//   STR 1049092c3 mpBrowserHead (GhidraScript)  
+//   STR 10490934a mpBrowserToolbarViewModel (GhidraScript)  
+//   STR 104909364 mpBrowserFiltersHeadViewModel (GhidraScript)  
+//   STR 104909382 mpContentViewPage (GhidraScript)  
+//   STR 104909394 mpTextOverlay (GhidraScript)  
+//   STR 1049093a2 mpAreFilterViewsAvailable (GhidraScript)  
+//   STR 1049093bc mpIsFilterViewVisible (GhidraScript)  
+//   STR 1049093d2 mpSearchIndicationViewModel (GhidraScript)  
+//   STR 1049093ee mpAreFiltersSet (GhidraScript)  
+//   STR 10490944a mpInputCode (GhidraScript)  
+//   STR 104909456 mpCanSubmit (GhidraScript)  
+//   STR 104909462 mpSubmitBang (GhidraScript)  
+//   STR 10490946f mpMessage (GhidraScript)  
+//   STR 1049097ae mpFilterViewState (GhidraScript)  
+//   STR 1049097c9 mpRowSelection (GhidraScript)  
+//   STR 1049097d8 mpLastUserRowSelection (GhidraScript)  
+//   STR 104909817 mpStatePerRoot (GhidraScript)  
+//   STR 104909826 mpDefaultFilterViewContentSplitterPosition (GhidraScript)  
+//   STR 104909851 mpFilterEditViewState (GhidraScript)  
+//
+// (7) DISPLAY-NAME CENSUS (Analog UI strings, same region): Key Stretch/Key
+//     Error/Vib On-Off/Glide/Noise/OSC n Shape|Octave|Semi|Mode|Env Time|PEG n
+//     Time|Detune|Keytrack|Pulse Width|Sub/Sync Amount|Balance|Env Initial|PEG n
+//     Amount|Pitch < LFO|PW < LFO|Level; F n Type|Drive|Freq < Key|Freq|Reso <
+//     Key|Resonance|Freq < LFO|Freq < Env|Reso < LFO|Reso < Env; AMP n On/Off|
+//     < Key|Level|Pan < Key|Pan|< LFO|Pan < LFO|Pan < Env; LFO n On/Off|Wave
+//     Shape|Sync Rate|Retrigger|Sync On/Off|Pulse Width|Speed|Phase|Delay|Fade
+//     In; AEG/FEG n Exp|Loop|Free|Legato|A < Vel|Attack|Decay|< Vel|Sustain|S
+//     Time|Rel. Live 12 mod-target display list at 0x104906e1d..0x1049070aa:
+//     per chain n: Osc n Pitch, Osc n LFO n -> Pitch, Osc n Pitch Env Depth,
+//     Osc n Pulse Width, Osc n LFO n -> Pulse Width, Osc n Sub Level, Osc n
+//     Sync Ratio, Osc n Level, Osc n Balance, Filter n Cutoff, Filter n LFO n
+//     -> Cutoff, Filter n Env -> Cutoff, Filter n Q, Filter n LFO n -> Q,
+//     Filter n Env -> Q, Amp n Volume, Amp n LFO n -> Volume, Amp n Pan,
+//     Amp n LFO n -> Pan.
+//
+// (8) ADRP+ADD XREF SCAN (python; see provenance) — anchors with hit counts:
+//     FilterEnvCutoffMod 0x101080510,0x101080954 (Drift TU, different device)
+//     sErrorLimitationNumInstrumentUltraAnalogZero 0x10109ac4c (voice-count
+//     error site, 0x394 into its fn)
+//     Sym1 0x1028b8ad0; AD-R 0x1028c2d2c; AUltraAnalog 0x1028cae2c;
+//     AUltraAnalogSignalChain 0x1028cae74; AUltraAnalogEnvelope 0x1028caf54;
+//     Unison Voices 0x102897bc4,0x1028b4830; LFO SyncRate 0x102899714;
+//     Low-pass 24dB/oct 0x10289bf60,0x1028b8938; Notch 4-pole 0x10289bfc8,
+//     0x1028b89a0; Formant 6dB/oct 0x10289c018,0x1028b89f0; Osc 1 Pitch
+//     0x1028b3c34; Poly Voices 0x1024366c0; mpFilterControllee 0x1028c4480.
+//     Ghidra held ZERO of these references (region was undisassembled); all
+//     RefsProbe queries on the strings returned TOTAL=0.
