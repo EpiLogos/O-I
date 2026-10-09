@@ -62,8 +62,9 @@ const world = await import(pathToFileURL(join(uiRoot, 'src/inhabitants/worldShel
 const sdkDefine = await import(pathToFileURL(join(uiRoot, 'src/inhabitants/sdk/define.ts')).href)
 world.loadWorldShellFamilies()
 
-// Product scope → family id on the door (the six carvings). Suite and O-I
-// records name no single family; they render with `(no family scope)`.
+// Product scope → family id. A kit-declared family's OWN product binding is
+// the law (§12); the fallback map carries the six pre-kit families whose
+// owner-authored manifests predate the binding field.
 const PRODUCT_FAMILY = {
   central: 'central',
   actuation: 'actuation',
@@ -71,6 +72,12 @@ const PRODUCT_FAMILY = {
   'software-factory': 'software-factory',
   workcell: 'workcell',
   'ql-mef': 'quaternal-logic',
+}
+
+const declaredProductFamilies = new Map()
+for (const manifest of door.allFamilyManifests()) {
+  const bound = sdkDefine.familyProduct(manifest.id)
+  if (bound) declaredProductFamilies.set(bound, manifest.id)
 }
 
 const matrix = JSON.parse(await readFile(join(root, 'suite', 'capability-matrix.json'), 'utf8'))
@@ -101,8 +108,9 @@ const rows = []
 for (const record of matrix.records ?? []) {
   if (!includeLanded && record.standing === 'landed') continue
   if (includeLanded && record.standing === 'historical') continue
-  // Family scope from the record's own product scope.
-  const familyId = PRODUCT_FAMILY[String(record.product ?? '').toLowerCase()] ?? null
+  // Family scope: the family's declared product binding, else the fallback map.
+  const productKey = String(record.product ?? '').toLowerCase()
+  const familyId = declaredProductFamilies.get(productKey) ?? PRODUCT_FAMILY[productKey] ?? null
   if (familyFilter && familyId !== familyFilter) continue
   const needs = needsByRef.get(record.id) ?? []
   const surface = familyId ? surfaceOf(familyId) : {admitted: false, faces: [], params: []}

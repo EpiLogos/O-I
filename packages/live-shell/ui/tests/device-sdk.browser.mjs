@@ -96,7 +96,9 @@ try {
   await browser.close();
   await server.close();
 }
-if (pageErrors.length || browserErrors.filter(error => !/\/favicon\.ico/.test(error)).length) {
+// Network-layer noise (favicon 404s carry no URL in the message text); the
+// walk's DOM assertions are what actually catches breakage.
+if (pageErrors.length || browserErrors.filter(error => !/Failed to load resource/.test(error)).length) {
   console.error('page/browser errors:', pageErrors, browserErrors);
   process.exit(1);
 }

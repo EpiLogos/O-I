@@ -21,8 +21,10 @@ import type {InhabitantManifest} from '../manifest.ts'
 import {validateInhabitantManifest} from '../manifest.ts'
 import {AGENT_SHELL_ADDRESS_TABLE} from '../agentParamAddresses.ts'
 import type {DeviceDeclaration, FamilyDeclaration, ParamInput, SdkParamRow} from './define.ts'
-import {allSdkParamRows} from './define.ts'
+import {allSdkParamRows, familyProduct} from './define.ts'
 import {isIconName} from './icons.ts'
+import {DEVICE_FORMATS, SDK_MODES, TRANSPORT_ROWS, isSdkMode} from './modes.ts'
+import {PRODUCT_IDS, isKnownProduct} from './products.ts'
 
 // ---------------------------------------------------------------------------
 // the parameter grammar
@@ -68,6 +70,17 @@ export function validateSdkDevice(device: DeviceDeclaration): readonly string[] 
   const waiting = device.admission === 'waiting'
   if (waiting && !device.note) claim('a waiting face names the owner it waits for (note)')
 
+  // Mode scoping and per-mode formats: the modes and shapes the ontology declares.
+  for (const mode of device.modes ?? []) {
+    if (!isSdkMode(mode)) claim(`mode "${mode}" is not one of the shell's modes (${SDK_MODES.join(' | ')})`)
+  }
+  for (const [mode, format] of Object.entries(device.formats ?? {})) {
+    if (!isSdkMode(mode)) claim(`format key "${mode}" is not one of the shell's modes (${SDK_MODES.join(' | ')})`)
+    else if (!(DEVICE_FORMATS as readonly string[]).includes(format)) {
+      claim(`format "${format}" is not in the device ontology (${DEVICE_FORMATS.join(' | ')})`)
+    }
+  }
+
   // Bodies belong to their kind (mirrored pre-admission; the composed check
   // lives in the door's validateInhabitantManifest).
   if (device.kind === 'document' && !device.document) claim('a document face declares a body (oi.document-frame/v1)')
@@ -99,8 +112,11 @@ export function validateSdkParam(input: ParamInput): readonly string[] {
   if (input.type === 'enumerated' && !(input.values?.length)) {
     faults.push("an enumerated row names its values (the owner's actual choices)")
   }
-  if (input.type !== 'number' && input.type !== 'duration' && 'range' in input && input.range) {
-    faults.push(`a ${input.type} row carries no range — ranges are the scalar domain`)
+  if (input.type !== 'number' && input.type !== 'duration') {
+    // The union only declares `range` on the scalar members; read it off the
+    // record so a mis-carried range on any other variant still faults here.
+    const carried = (input as { readonly range?: unknown }).range
+    if (carried) faults.push(`a ${input.type} row carries no range — ranges are the scalar domain`)
   }
   if ((READ_ONLY_TYPES as readonly string[]).includes(input.type) && input.writePath) {
     faults.push(`a ${input.type} row is a reading by nature — writePath pretends a writer`)
@@ -116,27 +132,16 @@ export function validateSdkParam(input: ParamInput): readonly string[] {
 // ---------------------------------------------------------------------------
 // family checks (pre-admission)
 
-/** The family law over a whole declaration: the door's manifest law plus
- * §14 coverage — every row addresses a declared face of this family. */
+/** The family law over a whole declaration: the kit's per-device checks run
+ * on the DECLARED devices (they carry everything — modes, formats, rows),
+ * plus the door's manifest law over the built shape. */
 export function validateDeclaredFamily(
   declaration: FamilyDeclaration,
   manifest: InhabitantManifest,
   params: readonly SdkParamRow[],
 ): readonly string[] {
   const faults: string[] = [
-    ...manifest.faces.flatMap(face => validateSdkDevice({
-      id: face.id,
-      title: declaration.devices.find(device => device.id === face.id)?.title ?? '',
-      icon: declaration.devices.find(device => device.id === face.id)?.icon ?? '' as DeviceDeclaration['icon'],
-      kind: face.kind,
-      note: face.note,
-      admission: face.admission,
-      presentations: face.presentations,
-      dock: face.dock,
-      document: face.document,
-      conversation: face.conversation,
-      params: declaration.devices.find(device => device.id === face.id)?.params ?? [],
-    })),
+    ...declaration.devices.flatMap(device => validateSdkDevice(device)),
     ...validateInhabitantManifest(manifest),
   ]
   const faceIds = new Set(manifest.faces.map(face => face.id))
@@ -147,6 +152,49 @@ export function validateDeclaredFamily(
   }
   if (!declaration.owner.trim()) {
     faults.push(`${manifest.id}: a family names its native owner — the disclosure law`)
+  }
+
+  // The product carving law (§12): a binding names a registered product, or
+  // claims a NEW product with its authority; an unbound family does not
+  // squat a product's name.
+  if (declaration.product !== undefined) {
+    if (!isKnownProduct(declaration.product)) {
+      if (!declaration.newProduct) {
+        faults.push(`${manifest.id}: product "${declaration.product}" is not in the registry — bind a registered product (${PRODUCT_IDS.join(' | ')}) or claim the new product through newProduct with its authority`)
+      } else if (declaration.newProduct.id !== declaration.product) {
+        faults.push(`${manifest.id}: newProduct.id "${declaration.newProduct.id}" does not match the bound product "${declaration.product}"`)
+      } else if (!declaration.newProduct.authority.trim()) {
+        faults.push(`${manifest.id}: a new-product claim names its commissioning authority (who ruled, where it stands)`)
+      }
+    } else if (declaration.newProduct) {
+      faults.push(`${manifest.id}: "${declaration.product}" is a registered product — newProduct is only for carvings the registry does not carry yet`)
+    }
+  } else if (declaration.newProduct) {
+    faults.push(`${manifest.id}: newProduct without a product binding — set product to the new product's id`)
+  } else if (isKnownProduct(manifest.id)) {
+    faults.push(`${manifest.id}: the family id names a product — bind product ("${manifest.id}") or rename; no product name squatting`)
+  }
+
+  // Transport bindings: Rev 5's table made addressable — every binding sits
+  // on a declared row, in a declared mode, addressing a declared face's §14 row.
+  for (const binding of declaration.transport ?? []) {
+    if (!isSdkMode(binding.mode)) {
+      faults.push(`${manifest.id}: transport binding mode "${binding.mode}" is not one of the shell's modes (${SDK_MODES.join(' | ')})`)
+    }
+    if (!TRANSPORT_ROWS.includes(binding.row as never)) {
+      faults.push(`${manifest.id}: transport binding row "${binding.row}" is not a transport row (${TRANSPORT_ROWS.join(' | ')})`)
+    }
+    if (!faceIds.has(binding.face)) {
+      faults.push(`${manifest.id}: transport binding addresses face "${binding.face}", which the family does not declare`)
+      continue
+    }
+    const device = declaration.devices.find(candidate => candidate.id === binding.face)
+    if (device && !device.params?.some(param => param.key === binding.key)) {
+      faults.push(`${manifest.id}: transport binding addresses "${binding.face}/${binding.key}", which carries no such §14 row`)
+    }
+    if (device?.modes && !device.modes.includes(binding.mode)) {
+      faults.push(`${manifest.id}: transport binding mode "${binding.mode}" is outside face "${binding.face}"'s mode scope`)
+    }
   }
   return faults
 }
@@ -173,6 +221,20 @@ export function validateAdmittedWorld(): WorldGateResult {
   }
 
   const cross: string[] = []
+
+  // §12: one product family per product — a declared carving is exclusive;
+  // a second family for the same product composes through extensions.
+  const productOwners = new Map<string, FamilyManifestId>()
+  for (const manifest of allFamilyManifests()) {
+    const bound = familyProduct(manifest.id)
+    if (!bound) continue
+    const prior = productOwners.get(bound)
+    if (prior) {
+      cross.push(`§12 carving: product "${bound}" is claimed by families "${prior}" and "${manifest.id}" — one product family per product; compose through the declared-extension path instead`)
+    } else {
+      productOwners.set(bound, manifest.id)
+    }
+  }
 
   // §14 uniqueness across kit rows: one owning address per (family, device, key).
   const seen = new Map<string, SdkParamRow>()

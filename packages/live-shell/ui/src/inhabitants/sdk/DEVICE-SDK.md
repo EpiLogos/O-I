@@ -17,19 +17,25 @@ laws that already stand:
 | The proven aperture `{reading, disabled, apply, captureCurrent}` | `nativeDeviceCustody.ts` | `controls.tsx` names it (`DeviceFaceAperture`), never redefines it |
 | The editor standard (identity, input law, honest state, draft vs acknowledged) | `NATIVE-EDITOR-STANDARD.md` | `controls.tsx` + `sdk.css` |
 | The icon law | `icon-cut.html` (the specimen) | `icons.ts` — GENERATED from the specimen by `scripts/sync-icons.mjs`; byte-locked by test |
-| Four surfaces and nowhere else; honesty (writePath only with a real writer; waiting faces carry no body) | WORLD-SHELL-DESIGN §16, the door's validator | `validate.ts`, run pre-admission AND as CI |
+| The mode ontology (five modes, transport slot meanings, per-mode marks and readouts, device formats) | `icon-cut.html` MODES + SLOTS + mode rows; WORLD-SHELL-DESIGN Rev 5 | `modes.ts` — readouts drift-gated against the specimen by test |
+| The product carving law (six carvings, keys held by owners, the seventh-product test) | WORLD-SHELL-DESIGN §12–13, `suite/product-capabilities.json` | `products.ts` + the `product`/`newProduct`/`transport` declaration fields, enforced by the gate |
 
 ## The modules
 
 ```
 src/inhabitants/sdk/
-├── icons.ts          GENERATED — the cut's 50 marks + renderIcon (never hand-edit)
+├── icons.ts          GENERATED — the cut's marks + renderIcon (never hand-edit)
 ├── Icon.tsx          the icon law as a component (<Icon name size title/>)
+├── modes.ts          the five modes: marks, Rev 5 transport rows and per-mode
+│                     meanings, specimen readouts, the transport-slot ontology
+│                     (cut mark · rejected alt · rationale), device formats
+├── products.ts       the six-product registry (drift-gated vs the suite catalogue)
 ├── define.ts         the authoring kit: admitFamily / declareDeviceExtension /
-│                     numberParam·stringParam·boolParam·enumParam·reading,
-│                     presentation + §14 row registries (reset with the door)
+│                     param builders, mode scoping + formats, product binding,
+│                     transport bindings, presentation + §14 registries
 ├── validate.ts       the gate: per-device checks, family checks, the world gate
-│                     (§14 uniqueness, ownership-map contradictions)
+│                     (§14 uniqueness, ownership-map contradictions, §12 carving
+│                     exclusivity, mode/format/slot/product laws)
 ├── controls.tsx      FacePlate · ScalarParam · EnumParam · BoolParam ·
 │                     ReadingRow · Lamp · Disclosure · WaitingFace ·
 │                     useFaceDrafts (base vs draft vs standing)
@@ -112,6 +118,42 @@ base:
 declareDeviceExtension({id: 'acme:world-shell', by: '<your lane>', family: 'acme',
                         devices: [/* … */], detachedKinds: ['object']})
 ```
+
+### Modes — the mode-specific plugin surface
+
+Modes are the shell's spine (no second navigation model, no mode SDK) — but
+what varies BY MODE is declarable right here, from the specimen's own
+ontology (`modes.ts`):
+
+```ts
+admitFamily({
+  id: 'acme',
+  product: 'acme-works',                    // §12 carving (newProduct for a
+                                            // NEW product, with authority)
+  transport: [                              // Rev 5's table, addressable:
+    {mode: 'factory', row: 'tempo-signature', face: 'probe', key: 'gain'},
+  ],
+  devices: [{
+    /* … */
+    modes: ['live', 'factory'],             // mode-scoped plugin
+    formats: {live: 'chain-plate', factory: 'run-viewer'},  // per-mode shape
+  }],
+})
+```
+
+- `modes.ts` carries the five modes' cut marks, the specimen's per-mode
+  transport readouts (drift-gated byte-for-byte against `icon-cut.html`),
+  Rev 5's per-mode row meanings and Session/Arrangement presentations, the
+  transport-slot ontology (cut mark · rejected alternative · rationale),
+  and the device-format vocabulary (`chain-plate`, `die`, `scene-strip`,
+  `run-viewer`, `instrument-face`, `tool-tile`) with each mode's default.
+- `facesForMode(mode)` resolves the mode-scoped plugin surface;
+  `sdkMode`, `transportSlot`, `PRODUCTS` are the lookups.
+- The gate enforces it: modes and formats must be from the ontology,
+  transport bindings must sit on real rows addressing real §14 rows, a
+  product binding must be registered (or claimed as `newProduct` with its
+  authority), one product family per product, and an unbound family does
+  not squat a product's name.
 
 **4. Compose the face** from the kit (`controls.tsx`) against the proven
 aperture — the face receives `{reading, disabled, apply, captureCurrent}`

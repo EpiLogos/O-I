@@ -25,7 +25,7 @@
  * Pure module: no view, no I/O; registries reset with the door. */
 
 import type {DevicePresentation, FamilyManifest, FamilyManifestId} from '../familyManifest.ts'
-import {admitFamilyManifest, onFamilyManifestReset} from '../familyManifest.ts'
+import {admitFamilyManifest, allFamilyManifests, onFamilyManifestReset} from '../familyManifest.ts'
 import type {
   ConversationBodyDeclaration,
   DocumentBodyDeclaration,
@@ -37,6 +37,9 @@ import type {
 import {declareFamilyExtension, type FamilyExtension} from '../manifest.ts'
 import type {AgentParamAddress} from '../agentParamAddresses.ts'
 import type {IconName} from './icons.ts'
+import type {DeviceFormat, SdkModeName} from './modes.ts'
+import {MODE_DEFAULT_FORMAT} from './modes.ts'
+import type {NewProductAuthority} from './products.ts'
 import {validateDeclaredFamily, validateSdkDevice} from './validate.ts'
 
 // ---------------------------------------------------------------------------
@@ -128,6 +131,12 @@ export interface DeviceDeclaration {
    * or it is not a face of this shell. */
   readonly icon: IconName
   readonly kind?: InhabitantFaceKind
+  /** Mode scoping — the modes this face presents in (the mode-specific
+   * plugin surface). Absent = the face presents wherever its family does. */
+  readonly modes?: readonly SdkModeName[]
+  /** Per-mode device format/shape (the mode's device ontology). Absent for
+   * a mode = that mode's default format (MODE_DEFAULT_FORMAT). */
+  readonly formats?: Partial<Record<SdkModeName, DeviceFormat>>
   /** The note the door stores: what the face reads, which owner op, what
    * waits. The honesty law lives here. */
   readonly note?: string
@@ -141,16 +150,38 @@ export interface DeviceDeclaration {
   readonly params?: readonly ParamInput[]
 }
 
+/** Rev 5's transport table made addressable: in one mode, one transport
+ * slot carries one of the family's §14 params. */
+export interface TransportBinding {
+  readonly mode: SdkModeName
+  /** The transport row (Rev 5) this binding sits on — see TRANSPORT_ROWS. */
+  readonly row: string
+  /** The addressed face's id (the §14 deviceInstance). */
+  readonly face: string
+  /** The addressed param key on that face. */
+  readonly key: string
+}
+
 export interface FamilyDeclaration {
   readonly id: FamilyManifestId
   /** The native owner this family belongs to — the disclosure law: a face
    * names its owner. */
   readonly owner: string
+  /** The product this family is the carving of (§12). Absent = a capability
+   * family serving no single product (atlas-earth). A KNOWN product id, or
+   * a NEW product claimed through `newProduct` with its authority. */
+  readonly product?: string
+  /** The authority for a NEW product carving (the seventh-product test:
+   * admitted, never special-cased — but the claim is recorded). */
+  readonly newProduct?: NewProductAuthority
   /** Browser category ids the family lists under. */
   readonly browser: readonly string[]
   readonly devices: readonly DeviceDeclaration[]
   /** The family's parameter-address grammar id (e.g. `<family>/parameter-address/v1`). */
   readonly paramsGrammar: string
+  /** The family's transport bindings — Rev 5's per-mode slot meanings that
+   * this family's params carry. */
+  readonly transport?: readonly TransportBinding[]
   readonly projections?: readonly string[]
   readonly inspectors?: readonly string[]
   readonly time?: {readonly consumes: readonly string[]; readonly contributes: readonly string[]}
@@ -183,14 +214,24 @@ export interface FacePresentation {
   readonly title: string
   readonly icon: IconName
   readonly owner: string
+  /** Mode scoping (absent = presents wherever its family does). */
+  readonly modes?: readonly SdkModeName[]
+  /** Per-mode device format (absent for a mode = that mode's default). */
+  readonly formats?: Partial<Record<SdkModeName, DeviceFormat>>
+  /** The product the family is the carving of, when declared. */
+  readonly product?: string
 }
 
 const presentations = new Map<FamilyManifestId, Map<string, FacePresentation>>()
 const paramRows = new Map<FamilyManifestId, SdkParamRow[]>()
+const familyProducts = new Map<FamilyManifestId, string>()
+const transportBindingsRegistry = new Map<FamilyManifestId, TransportBinding[]>()
 
 onFamilyManifestReset(() => {
   presentations.clear()
   paramRows.clear()
+  familyProducts.clear()
+  transportBindingsRegistry.clear()
 })
 
 function registerFamilyArtifacts(
@@ -198,10 +239,24 @@ function registerFamilyArtifacts(
   owner: string,
   devices: readonly DeviceDeclaration[],
   rows: readonly SdkParamRow[],
+  declared?: {
+    readonly product?: string
+    readonly transport?: readonly TransportBinding[]
+  },
 ): void {
   const plate = new Map(presentations.get(family) ?? [])
   for (const device of devices) {
-    plate.set(device.id, {family, faceId: device.id, title: device.title, icon: device.icon, owner})
+    const prior = plate.get(device.id)
+    plate.set(device.id, {
+      family,
+      faceId: device.id,
+      title: device.title,
+      icon: device.icon,
+      owner,
+      ...(device.modes ? {modes: device.modes} : prior?.modes ? {modes: prior.modes} : {}),
+      ...(device.formats ? {formats: device.formats} : prior?.formats ? {formats: prior.formats} : {}),
+      ...(declared?.product ? {product: declared.product} : prior?.product ? {product: prior.product} : {}),
+    })
   }
   presentations.set(family, plate)
   // Idempotent merge (loaders run freely — including from render): rows are
@@ -209,6 +264,12 @@ function registerFamilyArtifacts(
   const merged = new Map((paramRows.get(family) ?? []).map(existing => [`${existing.deviceInstance}/${existing.key}`, existing]))
   for (const row of rows) merged.set(`${row.deviceInstance}/${row.key}`, row)
   paramRows.set(family, [...merged.values()])
+  if (declared?.product) familyProducts.set(family, declared.product)
+  if (declared?.transport) {
+    const mergedBindings = new Map((transportBindingsRegistry.get(family) ?? []).map(binding => [`${binding.mode}/${binding.row}/${binding.face}/${binding.key}`, binding]))
+    for (const binding of declared.transport) mergedBindings.set(`${binding.mode}/${binding.row}/${binding.face}/${binding.key}`, binding)
+    transportBindingsRegistry.set(family, [...mergedBindings.values()])
+  }
 }
 
 /** The plate record of one face, when it was declared through the kit. */
@@ -220,6 +281,29 @@ export function facePresentation(family: FamilyManifestId, faceId: string): Face
  * is the presentation layer). */
 export function facePresentations(family: FamilyManifestId): readonly FacePresentation[] {
   return [...presentations.get(family)?.values() ?? []]
+}
+
+/** The faces that present in one mode, across all kit-declared families —
+ * the mode-scoped plugin surface. A face without mode scoping presents in
+ * every mode; the mode's default format fills absent formats. */
+export function facesForMode(mode: SdkModeName): readonly (FacePresentation & {format: DeviceFormat})[] {
+  return [...presentations.values()].flatMap(plates => [...plates.values()])
+    .filter(plate => !plate.modes || plate.modes.includes(mode))
+    .map(plate => ({
+      ...plate,
+      format: plate.formats?.[mode] ?? MODE_DEFAULT_FORMAT[mode],
+    }))
+}
+
+/** The declared product carving of a family, when it declared one. */
+export function familyProduct(family: FamilyManifestId): string | undefined {
+  return familyProducts.get(family)
+}
+
+/** Every declared transport binding, family filled. */
+export function allTransportBindings(): readonly (TransportBinding & {readonly family: FamilyManifestId})[] {
+  return [...transportBindingsRegistry.entries()]
+    .flatMap(([family, bindings]) => bindings.map(binding => ({...binding, family})))
 }
 
 /** The family's kit-registered §14 rows, in declaration order. */
@@ -296,13 +380,26 @@ export function buildFamilyDeclaration(declaration: FamilyDeclaration): {
  * presentation artifacts. Throws with the fault list when the declaration
  * breaks the law — a family that would fail the gate never reaches the door. */
 export function admitFamily(declaration: FamilyDeclaration): AdmittedFamily {
+  // §12 exclusivity speaks first (door-state law): one product family per
+  // product — a second family for a bound product composes through
+  // extensions instead, whatever else its declaration carries.
+  if (declaration.product) {
+    for (const existing of allFamilyManifests()) {
+      if (existing.id !== declaration.id && familyProduct(existing.id) === declaration.product) {
+        throw new Error(`Family "${declaration.id}" refuses to admit — §12 carving: product "${declaration.product}" is already the family "${existing.id}"'s carving; one product family per product, so compose through the declared-extension path instead.`)
+      }
+    }
+  }
   const {manifest, params} = buildFamilyDeclaration(declaration)
   const faults = validateDeclaredFamily(declaration, manifest, params)
   if (faults.length) {
     throw new Error(`Family "${declaration.id}" refuses to admit — the declaration breaks the device law:\n- ${faults.join('\n- ')}`)
   }
   admitFamilyManifest(manifest as FamilyManifest)
-  registerFamilyArtifacts(declaration.id, declaration.owner, declaration.devices, params)
+  registerFamilyArtifacts(declaration.id, declaration.owner, declaration.devices, params, {
+    ...(declaration.product ? {product: declaration.product} : {}),
+    ...(declaration.transport ? {transport: declaration.transport} : {}),
+  })
   return {manifest, params}
 }
 
@@ -326,3 +423,10 @@ export function declareDeviceExtension(declaration: DeviceExtensionDeclaration):
   registerFamilyArtifacts(declaration.family, owner, declaration.devices, rows)
   return composed
 }
+
+/** Re-export the mode layer's lookup surface for authors (one import point:
+ * `sdk/define.ts`). */
+export {SDK_MODES, SDK_MODE_DECLARATIONS, TRANSPORT_ROWS, TRANSPORT_SLOTS, DEVICE_FORMATS, MODE_DEFAULT_FORMAT, sdkMode, isSdkMode, transportSlot} from './modes.ts'
+export type {SdkModeName, SdkMode, TransportRowId, TransportSlot, DeviceFormat} from './modes.ts'
+export {PRODUCTS, product, isKnownProduct} from './products.ts'
+export type {ProductRecord, NewProductAuthority} from './products.ts'

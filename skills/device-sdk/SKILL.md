@@ -80,6 +80,13 @@ O-I docs/research/ableton-live-12.0.25/ui/UI-EVIDENCE.md  the measured chrome (d
 ## Not-do laws (binding)
 
 - No second admission path, no second registry, no parallel manifest shape.
+- Modes are the spine — no mode SDK, no mode creation by families. What
+  varies BY MODE is declared through the kit: `modes` scoping, `formats`
+  (the device ontology in `sdk/modes.ts`), and Rev 5 `transport` bindings —
+  all gate-checked against the specimen-sourced ontology.
+- A family binds its product (§12) or binds nothing; one product family per
+  product; a new product is claimed through `newProduct` with its
+  authority; no product name squatting.
 - No family name in the shell core — the seventh-product test stands.
 - No writePath without its writer; no illuminated lamp on an unknown state;
   no milestone prose on the canvas.
