@@ -272,7 +272,13 @@ accumulator just tracks the stored Range).
   6.8e-6, 0x84-pair) remain unmodeled (unchanged scope).
 - The over-branch equilibrium (how the shaped-LUT cycle mean maps to x at
   depth) is produced by the solver, not derived analytically — the
-  integration rebuild gets it by running the loop.
+  integration rebuild gets it by running the loop. **CLOSED 2026-10-08
+  (equilibrium lane): derived in closed form — the k-free cycle-mean balance
+  ⟨Σ m(e^{Bu}−1)⟩ = −x̄·A·R̂/(A+R̂) with GR = 7.8·x̄·A/(A+R̂); the corrected
+  ȳ(x)-from-tables fixed point equals the solver's output to ≤0.05 dB, and
+  the ~2 dB depth residual closed on the attack pin map + the ×1.40
+  detector-tap gain. Full derivation, tables, and gate record:
+  `glue-compressor.md` "Over-branch equilibrium closure".**
 
 ## 5. Integration-lane list (NOT this lane's work)
 
@@ -390,6 +396,11 @@ cleanly, since the term scales with the solved depth. Until then the
 curve-based model (`static_gain_change_db`) remains the gate of record for
 static behavior, and the failing C1/C2-level assertions above stay in the
 tree as the honest record.
+**SUPERSEDED 2026-10-08 (equilibrium lane): the LAM discriminator refuted
+this λ placement, and the deficit closed on the attack pin map (stored 2 →
+setter `default` case 2; stored 20 → host-clamped case 6) plus the ×1.40
+detector-tap gain — all four C1/C2/LAM gates now pass at ≤0.02 dB. Full
+record: `glue-compressor.md` "Over-branch equilibrium closure".**
 
 **LAM outcome (2026-10-08, later same day): the discriminator ran and
 exonerated the per-sample scale.** `LAM_T24_A5_R60` (the idx-5 deep-over

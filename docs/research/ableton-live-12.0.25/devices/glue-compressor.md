@@ -1068,3 +1068,133 @@ of that search is **closed**.
 Scope not modeled: Release index 6 (special constants, shell lines 63–71),
 Oversample, SideChain EQ, the PRNG dither (scale unmapped), and the
 metering-only slots (0x23c/0x240/0x244/0x248/0x258/0x260).
+
+## Over-branch equilibrium closure — the depth residual closed (2026-10-08, bounded binary+math lane)
+
+The LAM verdict homed the ~2 dB covariant depth deficit in "the λ-free
+over-branch equilibrium (shaped-LUT cycle mean → x at depth)", and the
+absolute-threshold lane's §4 noted the per-sample balance's Σf′ cancellation
+leaves `Σ m(e^{Bu}−1) = A[k·ȳ − x(k+R̂)]/(A+k+R̂)` with ȳ "treated as
+constant". This lane re-derived the equilibrium WITH the LUT cycle mean
+computed from the actual tables and tested whether it produces the missing
+depth. Companion simulation:
+`evidence/devices/glue_overbranch_equilibrium_sim.py` (+ `glue_pinmap_probe.py`,
+`glue_tapgain_confirm.py`), exact port validated to ≤0.02 dB against the
+committed gate numbers and loading the LUTs from
+`evidence/binary/glue-ratio-tables.txt` (provenance-checked against the
+glue.rs copy: max|d| = 0).
+
+### The equilibrium, derived (and what it proves)
+
+From the over-branch solve [K214-225] with s28 = 0, w ≈ 0, s38 → 0: with
+Φ = Σ_c[f(u_c) − x·f′(u_c)] (u_c + lut_c = x on the interior) and
+z = −k·y[n−1], the x·S·(A+k+R̂) terms cancel exactly and the per-sample
+identity is
+
+```
+Σ_legs m·(e^{B·u_c} − 1) = A·(k·y[n−1] − x·(k+R̂)) / (A+k+R̂)
+```
+
+Cycle-meaning it (y is a one-pole of x, so ⟨y⟩ = ⟨x⟩·A/(A+R̂) exactly, ripple
+included) gives the k-free MEAN balance
+
+```
+⟨Σ_legs m·(e^{B·u_c} − 1)⟩ = −x̄·A·R̂/(A+R̂)
+```
+
+and the applied GR is exactly 7.8·x̄·A/(A+R̂). The balance is
+threshold-free (covariance-consistent) and k-free. The corrected
+quasi-static equilibrium solves this pointwise on the shaped-LUT cycle at
+G = 10^((7.8·ȳ−T−18)/20), ȳ = x̄·A/(A+R̂), iterating to the fixed point.
+
+**Result (E3): the corrected equilibrium equals the exact time-domain port
+to ≤0.05 dB at +6..+18 over at both attack pins** (deviations ≤1.4 dB appear
+only at +21/+24 where the quasi-static cycle assumption itself frays, and
+the rippled-y variant tracks the port there). The "ȳ treated as constant"
+treatment is worth ≤0.05 dB in the deficit's home range. **The equilibrium
+derivation is therefore NOT the residual's home: the mapped law's fixed
+point — however solved — is the model's own numbers.** The task's hypothesis
+is refuted; the deficit is a law-shape difference, and the mean balance
+turns it into a measurable quantity: inverting the balance at each committed
+pin (E2), the device's exp-weighted LUT read D = x̄ − u_eff is uniformly
+~0.28–0.41 dB deeper than the model's (dD ≈ −0.28 at every fast pin,
+−0.31..−0.41 at idx 5, ≈0 at the A20 cells) — a nearly pure
+TRAJECTORY-READ-DEPTH deficit.
+
+### The two findings that close it
+
+**1. The attack pin map was wrong (binary evidence).** The Attack setter
+switches on the RAW stored value with cases {0, 1, default, 3, 4, 5, 6} —
+**there is no `case 2`**: stored Attack 2 falls to `default` = 2700 µs (menu
+index 2), not index 1 as the gates assumed
+(glue-shell-functions.txt FUN_10179f9d4). And the A20 family's stored 20 —
+outside the 0..6 controller range — is host-clamped to **case 6** before the
+device sees it: the model at case 6 × the tap gain below reproduces
+G13/G15's committed maps to 0.01 dB, while cases 5 and 2 miss by ≥0.9 dB.
+Render-side cells: stored 2 → case 2 (G1/G2/G12/G14/DF1/DF2), stored 5 →
+case 5 (LAM/GRID), stored 20 → case 6 (G7/G13/G15). (The dossier's G13 onset
+fit τ ≈ 30–40 ms sits below case 6's raw y-pole — a medium-confidence 10 ms
+window reading; the steady maps are decisive.)
+
+**2. The detector-feed trajectory carries a ×1.40 gain (render-validated,
+writer open).** With the corrected pins, ONE multiplicative gain on the
+fast-minus-slow spread before the LUT index closes every committed cell:
+
+| pin (case) | d = model − render at over-threshold steps | worst |
+|---|---|---|
+| LAM (5, T−24/R60) | −0.00/−0.01/+0.00/+0.00/−0.00 (+6..+24) | **0.01** |
+| G2 (2, T−24/R30) | +0.01/+0.02/+0.02/+0.03/+0.04 | 0.04 |
+| G1 (2, T−12/R30) | +0.01/+0.02/+0.02 (+6/+9/+12) | 0.02 |
+| DF1 (2, r0, T−24/R60) | +0.03/+0.03/+0.05/+0.04/+0.07 | 0.07 |
+| DF2 (2, r2, T−24/R60) | −0.00/+0.00/+0.01/+0.01/+0.02 | 0.02 |
+| G12 (2, R0 long) | +0.01/+0.02 | 0.02 |
+| G13 (6, T−12/R30 long) | +0.00/+0.00 | 0.00 |
+| G14 (2, R4 long) | +0.01/+0.02 | 0.02 |
+| G15 (6, R4 long) | −0.00/−0.01 | 0.01 |
+
+**Worst |Δ| = 0.07 dB across 38 cells** (two thresholds, three ranges, three
+ratio LUTs, attack cases 2/5/6, release 0/4). The value is pinned at
+1.400 ± 0.005 by the LAM five-step row (√2 excluded at −0.07). The lever is
+covariance-preserving (a detector-feed gain scales out of G·Φ — the four-cell
+grid's measured invariance is reproduced), leaves the sub-threshold rows
+exactly at unity (the under-branch attractor), and is bounded OUT of every
+mapped constant: the stage-1/2 cascade cannot exceed unity spread gain
+(0x1bc = 2.0 is the setter floor — max +0 dB, needed +2.9 dB), the G-offset
+lever is ~30× too hot (−18→−12 overshoots to −20 dB), m/B/u_max move the
+wrong way or ≤0.3 dB, and both neighbour LUT tables have the wrong shape.
+The kernel's input slot `p[0x314]` ("input × p[0x314]", [PB §1]) was traced
+and bounded out: FUN_101687798 receives it from `OnX` as the OVERSAMPLE
+factor (glue-setters-decompilation.txt line 294; store at
+glue-perblock-disassembly.txt 1016877ac) = 1.0 in the rendered set.
+
+**Open binary item (the named candidate): the writer/value of the ×1.40
+detector-feed gain** — a detector-tap scaler outside the captured functions
+(not 0x314; the ledger's §2 table has no such slot). Deciding capture: dump
+the X1 body's input-gain neighborhood at render time, or a setter-registry
+sweep for the detector-feed gain.
+
+### Adoption and gate table (glue.rs CircuitModel)
+
+`DETECTOR_TAP_GAIN = 1.40` adopted in `src/glue.rs` (applied to the LUT-index
+delta) with this record as its citation; the attack pin map documented on
+`ATTACK_MENU_US`/`CircuitParams::attack_idx`; gate pins corrected in
+`tests/golden.rs` (G12/G14 → case 2, G13/G15 → case 6, release trio → case
+2). Thresholds unchanged (±1.0 dB static, ±25% τ).
+
+| gate | before (equilibrium lane opens) | after (this lane) |
+|------|--------------------------------|-------------------|
+| C1 static Δ (worst of 16 steps, G12/G13/G14/G15) | fail +0.00/+0.27/+1.89/+2.05 (G12), +0.00/+0.40/+1.94/+2.14 (G14), +0.14 (G15) | **PASS — worst 0.02 dB** |
+| C2 release τ | pass (exact 100/180/320) | **PASS — exact** |
+| C2 loud-segment level | fail +1.89/+1.92/+1.94 | **PASS — ≤0.01 dB** |
+| LAM discriminator (T−24/R60/case 5) | fail +1.46/+1.77/+1.96/+2.10 | **PASS — worst 0.00 dB** |
+| LAM closure leg (G13 re-check) | pass (+0.56 worst, at case 5) | **PASS — 0.00 dB (at case 6)** |
+
+`cargo test`: 43 passed / 0 failed; all four glue render gates pass under
+`--ignored`. The curve-based `static_gain_change_db` remains the gate of
+record for static behavior; the CircuitModel is now render-exact at every
+committed static cell within measurement noise.
+
+Scope note: the ×1.40 is a render-derived constant pending its binary writer;
+if the deciding capture lands elsewhere, the constant's value moves with it —
+the equilibrium derivation above is unaffected (it is what made the deficit
+measurable).

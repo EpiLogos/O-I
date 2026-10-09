@@ -223,6 +223,13 @@ outside the mapped processor. If it follows Range, the ceiling region
   or a diode-set difference. The G7/G13-vs-model near-exactness at
   idx 5/T−12 (−0.12/−0.54 dB) bounds any such mechanism to be
   attack-coupled at fast attacks... or the same confound as (a).
+  **CLOSED 2026-10-08 (equilibrium lane): the G7/G13 near-exactness was the
+  confound — the A20 cells run attack case 6 (host clamp), and the deficit
+  is a uniform ×1.40 detector-feed trajectory gain closing all nine pin
+  families to ≤0.07 dB (G7's A20 pin included, at case 6). None of the
+  three candidates above survived (LUT families swap with the wrong shape;
+  detector scale/diode set bounded out). Record:
+  `glue-compressor.md` "Over-branch equilibrium closure".**
 - **The LAM verdict's relocalization stands, sharpened:** the residual's
   home is NOT in the mapped per-sample kernel at all — provably (§1). It
   is either outside `OGlueCompressorProcessor` or outside the pinned

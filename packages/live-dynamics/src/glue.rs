@@ -243,6 +243,20 @@ mod tests {
 /// Attack menu, stored index 0..=6, microseconds.
 /// [S117-155] FUN_10179f9d4 switch cases: 82, 820, 2700, 8200, 27000, 82000,
 /// 270000.
+///
+/// Stored→case map (the equilibrium lane, 2026-10-08): the setter switches on
+/// the RAW stored value with cases {0, 1, default, 3, 4, 5, 6} — there is NO
+/// `case 2`; stored 2 falls to `default` = 2700 µs (menu index 2), as would
+/// any out-of-range value that reached it. The A20 renders (stored Attack=20,
+/// outside the 0..6 controller range) pin menu index 6 instead — the model at
+/// index 6 × the detector-tap gain reproduces G13/G15's committed maps to
+/// 0.01 dB, while indices 5 and 2 miss by ≥0.9 dB — so the host parameter
+/// layer clamps stored 20 to 6 before the device sees it. The render-side
+/// committed cells are therefore: stored 2 → index 2 (G1/G2/G12/G14/DF1/DF2),
+/// stored 5 → index 5 (LAM/GRID), stored 20 → index 6 (G7/G13/G15). (The
+/// dossier's G13 onset fit τ ≈ 30–40 ms sits below index 6's raw y-pole —
+/// a medium-confidence 10 ms-window reading of a feedback-composite response;
+/// the steady-state maps are the decisive evidence.)
 pub const ATTACK_MENU_US: [f64; 7] =
     [82.0, 820.0, 2700.0, 8200.0, 27000.0, 82000.0, 270000.0];
 
@@ -308,6 +322,32 @@ pub const INPUT_CLAMP: f64 = 20.0;
 /// clamped ±255, center-relative linear interpolation between
 /// table[255+idx] and table[256+idx]. [K135-153, K1 header].
 pub const LUT_SCALE: f64 = 510.99976;
+
+/// Detector-tap gain — the one constant the equilibrium lane added (2026-10-08,
+/// devices/glue-compressor.md "Over-branch equilibrium closure"). The kernel is
+/// fed `in · p[0x314]` at the X1/X2 bodies ([PB §1] "input × p[0x314]";
+/// glue-perblock-decompiles.txt lines 283/537/578), and the captured layer
+/// pins that slot's writer as the oversample factor (FUN_101687798 receives it
+/// from `OnX`, glue-setters-decompilation.txt line 294; the store at
+/// glue-perblock-disassembly.txt 1016877ac) — 1.0 in the rendered set
+/// (Oversample false, [G Parameter pins]). The rendered device nonetheless
+/// behaves, at every pinned cell, as if the LUT-index trajectory is ×1.40
+/// deeper than the `LUT_SCALE` reading of the mapped detector chain: one
+/// multiplicative gain on the fast-minus-slow spread closes all nine committed
+/// pin families (LAM/G2/G1/G12/G13/G14/G15/DF1/DF2 — 38 cells, two thresholds,
+/// three ranges, three ratio LUTs, attack cases 2/5/6, release 0/4) to within
+/// 0.07 dB, uniformly in over-level, where the unscaled model misses by
+/// +1.5..+2.6 dB. Covariance-preserving (a detector-feed gain scales out of
+/// G·Φ — the four-cell grid's measured invariance is reproduced), and bounded
+/// OUT of every mapped constant: the stage-1/2 cascade cannot exceed unity
+/// spread gain (0x1bc = 2.0 is the setter floor), the G-offset lever is ~30×
+/// too hot, m/B/u_max move the wrong way or not at all, and the LUT tables are
+/// provenance-checked. OPEN BINARY ITEM: the writer/value of this ×1.40
+/// detector-feed gain (a slot or law outside the captured functions — dump
+/// p[0x314]'s neighborhood at render time, or capture the detector input
+/// gain's setter). Render-validated, mechanism-open: adopted under the
+/// equilibrium-lane brief with this record.
+pub const DETECTOR_TAP_GAIN: f64 = 1.40;
 
 /// Cubic soft-clip polynomial used twice in the kernel (ceiling shaper and
 /// output clipper): u − u³/4 + |u|·u³/16 on a ±2 domain. [K163-164, K282-283,
@@ -608,7 +648,10 @@ pub struct CircuitParams {
     /// Ratio: discrete index 0/1/2 selecting one of three 512-entry LUTs
     /// [D125-132 → S15-23].
     pub ratio_index: usize,
-    /// Attack menu index 0..=6 [S117-156].
+    /// Attack setter CASE 0..=6 [S117-156] — the raw switch case, NOT the
+    /// stored value: stored 2 and stored 20 both avoid `case 2` (the setter
+    /// has no case 2; see `ATTACK_MENU_US`). The committed renders map
+    /// stored 2 → case 2, stored 5 → case 5, stored 20 → case 6.
     pub attack_idx: usize,
     /// Release menu index 0..=6 (6 = special case, not modeled) [S44-72].
     pub release_idx: usize,
@@ -702,8 +745,9 @@ pub struct CircuitModel {
     g_under: f64,
     /// c4 = k + R̂ [PB §2: 0xc4, S167-170].
     c4: f64,
-    /// Detector stage-1 coefficient (attack-locked — the measured attack-onset
-    /// law stands in for the open 0x1bc binding [PB §4]).
+    /// Detector stage-1 coefficient (the ramped 0x1b8 target with the
+    /// factory 0x1bc = 2.0 — the binding CLOSED by the absolute-threshold
+    /// lane, [GLUE-ABS §2]; not attack-locked, see `new`).
     a_s1: f64,
     /// Detector stage-2 coefficient (release-locked — the 0x170 residual
     /// note in `new` records why the fixed per-block reading is not used).
@@ -936,9 +980,11 @@ impl CircuitModel {
 
         // Ratio LUT read [K135-153]: the fast-minus-slow spread is the
         // over-threshold carrier — there is no level/threshold comparison.
+        // The spread crosses the detector-tap gain first (DETECTOR_TAP_GAIN —
+        // the equilibrium lane's ×1.40, see the constant's citation).
         let table = &RATIO_LUTS[self.params.ratio_index.min(2)];
-        let mut lut_l = lut_lookup(table, e0 - self.state.slow[0]);
-        let mut lut_r = lut_lookup(table, e1 - self.state.slow[1]);
+        let mut lut_l = lut_lookup(table, (e0 - self.state.slow[0]) * DETECTOR_TAP_GAIN);
+        let mut lut_r = lut_lookup(table, (e1 - self.state.slow[1]) * DETECTOR_TAP_GAIN);
 
         // Range ceiling [K154-177]: t = |acc(0x1a0)·1.2·(1/7.8)| + 0.01 − 1
         // from the RAMPED Range accumulator ([PB §3] closed form) — not a

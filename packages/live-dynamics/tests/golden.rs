@@ -1046,6 +1046,20 @@ fn wavetable_position_leave_one_out() {
 // deficit tracks solved depth, not the coefficient scale; verdict and
 // residuals in devices/glue-compressor.md "LAM verdict". This gate stays
 // failing under #[ignore] as the honest record and the acceptance target.
+// CLOSURE (2026-10-08, equilibrium lane — devices/glue-compressor.md
+// "Over-branch equilibrium closure"): the residual is closed by the
+// equilibrium re-derivation's two findings, both now in the model:
+//   1. the ATTACK PIN MAP was wrong — the setter switch has no case 2
+//      (stored 2 → case 2/2700 µs via `default`), and the out-of-range
+//      stored 20 is host-clamped to case 6 (the A20 renders pin case 6 at
+//      0.01 dB);
+//   2. the detector-feed trajectory carries a ×1.40 gain the captured
+//      constants cannot supply (DETECTOR_TAP_GAIN in glue.rs — the writer
+//      slot is the named open binary item).
+// The gate table after closure (this run): C1 worst |Δ| 0.02 dB (all four
+// pins), C2 τ exact 100/180/320 ms + loud ≤0.01 dB, LAM worst |Δ| 0.00 dB
+// with the G13 re-check exact. The gates stay render-dependent under
+// #[ignore] per this file's convention; they now PASS.
 
 fn synth_steps_long(sr: u32) -> Vec<f32> {
     // harness/gen_signals.py spec #4: 0.5 s silence, 2.5 s steps at
@@ -1084,10 +1098,16 @@ fn glue_circuit_golden_envelope_gate() {
     let sr = 44100u32;
     let signal = synth_steps_long(sr);
     let pins: [(&str, usize, usize); 4] = [
-        ("G12_LONG.aif", 1, 0),     // Attack stored 2 → menu index 1
-        ("G13_LONG_A10.aif", 5, 0), // Attack stored 20 → menu index 5
-        ("G14_LONG_R4.aif", 1, 4),
-        ("G15_LONG_AR.aif", 5, 4),
+        // Attack pin map (equilibrium lane, 2026-10-08): the setter switch
+        // [S117-155] has NO case 2 — stored Attack 2 falls to `default`
+        // (2700 µs = case 2), and stored 20 is clamped by the host parameter
+        // layer to 6 (270000 µs) — the A20 renders' committed maps pin case 6
+        // (the model there reproduces G13/G15 to 0.01 dB; cases 5/2 miss by
+        // ≥0.9 dB). See glue.rs ATTACK_MENU_US.
+        ("G12_LONG.aif", 2, 0), // Attack stored 2 → setter default → case 2
+        ("G13_LONG_A10.aif", 6, 0), // Attack stored 20 → clamped → case 6
+        ("G14_LONG_R4.aif", 2, 4),
+        ("G15_LONG_AR.aif", 6, 4),
     ];
     let mut failures: Vec<String> = Vec::new();
     for (file, att, rel) in pins {
@@ -1183,7 +1203,8 @@ fn glue_circuit_golden_release_gate() {
         println!("== {file} (release idx {rel})");
         let render = read_render(file);
         let (tau_r, loud_r, _) = release_probe_tau(&render.samples, render.sample_rate);
-        let mut m = glue::CircuitModel::new(circuit_params(1, rel), glue::CircuitFit::default(), sr);
+        // Attack stored 2 → setter default → case 2 (see the envelope gate).
+        let mut m = glue::CircuitModel::new(circuit_params(2, rel), glue::CircuitFit::default(), sr);
         let mut out = vec![0f32; n];
         let mut out_r = vec![0f32; n];
         m.process_block(&signal, &signal, &mut out, &mut out_r);
@@ -1317,11 +1338,12 @@ fn glue_lam_lambda_discriminator_gate() {
     }
     println!("  worst |Δ| {worst:.2} dB");
 
-    // the closure condition's second leg: G13 (idx 5 shallow case, T−12/R30)
-    // must still pass — model vs G13_LONG_A10.aif on steps-long, ±1.0 dB
-    println!("== G13_LONG_A10 re-check (idx 5 shallow case, T−12/R30)");
+    // the closure condition's second leg: G13 (stored Attack 20 → case 6,
+    // T−12/R30) must still pass — model vs G13_LONG_A10.aif on steps-long,
+    // ±1.0 dB. (Pin per the setter switch + host clamp; see the envelope gate.)
+    println!("== G13_LONG_A10 re-check (stored Attack 20 → case 6, T−12/R30)");
     let long = synth_steps_long(sr);
-    let mut m13 = glue::CircuitModel::new(circuit_params(5, 0), glue::CircuitFit::default(), sr);
+    let mut m13 = glue::CircuitModel::new(circuit_params(6, 0), glue::CircuitFit::default(), sr);
     let mut out13 = vec![0f32; long.len()];
     let mut out13_r = vec![0f32; long.len()];
     m13.process_block(&long, &long, &mut out13, &mut out13_r);
