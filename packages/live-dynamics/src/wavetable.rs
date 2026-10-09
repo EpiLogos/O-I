@@ -153,7 +153,8 @@ pub mod fitted {
 /// - "Unison round 2 (2026-10-08 late lane): Amount axis CLAMPS at 1.0; the
 ///   voice-count knob is `Voice_Unison_VoiceCount`": N =
 ///   `Voice_Unison_VoiceCount` voices evenly spread ±50 cents at Amount
-///   1.0; the layout predictions {−50, 0}¢ (VC2), {−50, 0, +50}¢ (VC3),
+///   1.0; the layout predictions {−50, +50}¢ (VC2, per the stereo re-read),
+///   {−50, 0, +50}¢ (VC3),
 ///   {−50, −16.7, +16.7, +50}¢ (VC4) match every resolved Goertzel line to
 ///   ≤0.75 Hz. Stored Amount values > 1 do not exist as states (WV10/WV11
 ///   dither-identical to WV9B): the loader clamps to 1.0.
@@ -182,22 +183,19 @@ pub mod unison {
     }
 
     /// The voice detune set in cents relative to the played pitch,
-    /// ascending. VoiceCount 2 = {−s, 0}, 3 = {−s, 0, +s},
-    /// 4 = {−s, −s/3, +s/3, +s}, with s = 50·Amount.
-    ///
-    /// VC2's upper voice sits at the CENTRE, not at +s: the dossier's
-    /// round-2 prediction for VC2 is {−3.75, 0} Hz off f0 and the measured
-    /// WV12 lines (−3.75 dominant, −0.50 weak) carry no +3.75 counterpart
-    /// the {−s, +s} even-spread reading would predict. N ≥ 3 follows the
-    /// dossier's shell formula `k/(N−1)·2−1 · 50¢ · Amount` (2026-10-09
-    /// night section); N ≥ 5 is the law's extension (the VoiceCount 1…8
-    /// sweep is open backlog); N = 1 is the trivial centre-only voice.
+    /// ascending: N voices evenly spread ±s, s = 50·Amount
+    /// (`k/(N−1)·2−1 · 50¢ · Amount` — wavetable-voice.md rev 4). The
+    /// stereo re-read (wavetable-voice.md "VC ladder stereo re-read",
+    /// 2026-10-09) confirms VC2 = {−s, +s} hard-L/hard-R; the earlier
+    /// {−s, 0} special case was the −50¢ voice's window skirt read
+    /// left-channel-only, and is not modeled. N ≥ 5 is the law's
+    /// extension (the VoiceCount 1…8 sweep is open backlog); N = 1 is
+    /// the trivial centre-only voice.
     pub fn detunes_cents(voice_count: usize, amount: f64) -> Vec<f64> {
         let s = SPREAD_CENTS * clamp_amount(amount);
         match voice_count {
             0 => Vec::new(),
             1 => vec![0.0],
-            2 => vec![-s, 0.0],
             n => (0..n)
                 .map(|k| (k as f64 / (n - 1) as f64 * 2.0 - 1.0) * s)
                 .collect(),
@@ -601,7 +599,7 @@ mod tests {
                     assert!((g - w).abs() < 1e-9, "amount {a}: {g} vs {w} cents");
                 }
             };
-            close(&unison::detunes_cents(2, a), &[-s, 0.0]);
+            close(&unison::detunes_cents(2, a), &[-s, s]); // VC2 stereo re-read: hard-L/hard-R, no centre
             close(&unison::detunes_cents(3, a), &[-s, 0.0, s]);
             close(&unison::detunes_cents(4, a), &[-s, -s / 3.0, s / 3.0, s]);
         }
@@ -609,13 +607,13 @@ mod tests {
         // states)
         assert_eq!(unison::detunes_cents(3, 2.0), unison::detunes_cents(3, 1.0));
         assert_eq!(unison::detunes_cents(3, 4.0), unison::detunes_cents(3, 1.0));
-        // centre voice fixed at 0 where the layout carries one (VC2/VC3);
-        // VC4 symmetrises with NO centre voice (round 2: "VC4's centre
-        // cancels — no resolved line near 0"). At Amount 0 the spread has
-        // collapsed — every voice reads 0 — so the no-centre reading is
-        // for amounts > 0 only.
+        // centre voice fixed at 0 where the layout carries one (VC3 — odd
+        // N centres the middle voice); VC2 (stereo re-read) and VC4 carry
+        // NO centre voice (round 2: "VC4's centre cancels — no resolved
+        // line near 0"). At Amount 0 the spread has collapsed — every
+        // voice reads 0 — so the no-centre reading is for amounts > 0 only.
         for a in [0.25, 0.5, 0.75, 1.0] {
-            assert!(unison::detunes_cents(2, a).contains(&0.0));
+            assert!(!unison::detunes_cents(2, a).contains(&0.0));
             assert!(unison::detunes_cents(3, a).contains(&0.0));
             assert!(!unison::detunes_cents(4, a).contains(&0.0));
         }
