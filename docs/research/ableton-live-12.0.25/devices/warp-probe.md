@@ -161,7 +161,9 @@ not a resample.
 
 ## Limitations / unverified
 
-- Modes 0 (Beats), 3 (Repitch), 4 (Complex) untested at 1:1 and 2×.
+- Modes 0 (Beats), 3 (Repitch), 4 (Complex): 1:1 closed 2026-10-09 (see
+  below); at 2× still untested. Their 1:1 identity rests on a transient-less
+  sine — percussive / tempo-mismatch discriminators not rendered (budget).
 - Source is a pure 1 kHz staircase (+ one sweep pass) —
   intermodulation/transient character on program material is not captured.
 - Grain parameters left at template defaults (Tones 30 ms, Texture 65 ms,
@@ -289,3 +291,41 @@ keep the old 512-beat transport loop, so their next re-render should first
 rebuild with the current `build_set.py` (loop = content + 2 beats) or pass
 an explicit length; existing 256 s reference renders remain valid for
 comparison (the extra tail is dither-floor silence).
+
+## Modes 0/3/4 at 1:1 (D9-continued): Beats, Repitch, Complex — 2026-10-09
+
+Closing the last open 1:1 cells of the mode table. Lineage: `W1_TONES.als`
+copied to `WM0_BEATS` / `WM3_REPITCH` / `WM4_COMPLEX`, then
+`warp_edit.py <set> <mode>` (stretch 1, pitch 0 — the same 1:1 marker pair,
+steps-1k signal). Rendered through the locked lane-3 driver; analyzed with
+`analyze_warp.py` against the archived unity baseline `W0_UNWARPED.aif`
+(`archive-20261007/renders-final/`).
+
+| render | WarpMode | content end | factor | band mean&#124;Δ&#124; | band max&#124;Δ&#124; | quiet-step Δ |
+|--------|----------|-------------|--------|------------|-----------|--------------|
+| WM0_BEATS | 0 | 3.750 s | 1.0000 | 0.023 dB | 0.15 dB | +0.00 dB |
+| WM3_REPITCH | 3 | 3.750 s | 1.0000 | 0.027 dB | 0.16 dB | +0.00 dB |
+| WM4_COMPLEX | 4 | 3.750 s | 1.0000 | 0.028 dB | 0.11 dB | +0.00 dB |
+
+### Modes-0/3/4 verdicts (confidence: high for loadability + 1:1 transparency; medium for enum identity)
+
+- **All three modes load and render** — the flat `<WarpMode Value="N"/>`
+  enum is now confirmed for the full range 0–5; no mode refuses.
+- **At 1:1 mapping all three are measurement-transparent**: duration exact,
+  1 kHz fundamental exact (Δ −0.00 dB), band profile at the dither floor,
+  quiet-step RMS identical. Like modes 2/5, no DSP model is needed for a
+  1:1 reconstruction gate through modes 0/3/4 either.
+- **Each mode genuinely engaged**: the three renders are byte-distinct from
+  each other and from W0/W1 (md5), differing at LSB/dither level only —
+  active engines, not a shared pass-through of identical samples.
+- **Identity consistent with LOM order**: Repitch (3) at file-tempo ==
+  set-tempo is a rate-1.0 resample, i.e. exactly passthrough as observed;
+  Beats (0) and Complex (4) sit with the granular family (transparent at
+  trivial mapping). The hypothesised discriminators did not fire on this
+  signal: a sine staircase gives Beats no transients to quantize, so no
+  beat-granulation signature appears even though the engine is engaged.
+- **Identity caveat (open)**: 1:1-on-sine cannot separate Beats/Repitch/
+  Complex *character*; discriminating probes (percussive signal for Beats,
+  tempo mismatch for Repitch's pitch-shift signature) were not rendered —
+  render budget spent. Only the *transparency at 1:1* claim is strong for
+  these three; the name mapping remains inferred from LOM order.
