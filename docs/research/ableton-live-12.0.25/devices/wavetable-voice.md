@@ -788,3 +788,54 @@ bow in the release residual profile (measured above model, both
 candidate families alike) is unexplained but does not discriminate the
 candidates. The family itself remains hypothesized-and-validated, not
 derived.
+
+## VC ladder N-extension — WV25/26/27, VC1/VC5/VC6 both channels (2026-10-09, unison-stereo lane)
+
+Three single-pin sets on the `WV9B_UNIM1.als` lineage (Mode 1, Amount 1.0;
+only `Voice_Unison_VoiceCount` changed, plus the no-op FA4 Time stamp):
+`WV25_VC1` (3→1), `WV26_VC5` (3→5), `WV27_VC6` (3→6). Builder
+`build_wv_vc_extension.py` (ET round-trip + gzip mtime=0, verified single-pin
+diffs), renders `harness/renders/WV25_VC1.aif` / `WV26_VC5.aif` /
+`WV27_VC6.aif` (1,036,406 bytes, 5.875 s — lineage size; WV25 needed two
+re-tries under the lock: one no-export-panel AX flake, one owner-focus
+exit 9; WV26 one length-slider flake). Analyzer:
+`analyze_wv25_vc_ext.py` — `analyze_wv_vc_stereo.py`'s per-channel
+Hann-weighted fine Goertzel, note-1 body [1.15, 1.85] s and the
+note-3+tail window [3.15, 4.35] s; per-voice gain = level − the M2 solo
+h1 in the same window.
+
+**Verdicts.**
+
+- **VC1 ≡ VC2 — VoiceCount 1 has no single centre voice.** WV25 renders
+  {−50.1¢ L-only, +50.2¢ R-only} at 0.0 dB vs solo — the VC2 layout
+  exactly; sample comparison against the archived WV12 render shows only
+  the export-dither signature (43.8% of samples differ, max 2 LSB; the
+  WV22 control's signature). Mode 1's effective minimum layout is the
+  ±50 hard-L/R pair.
+- **VC6 = {−50, −30, −10, +10, +30, +50} cents confirmed** (≤0.8¢ per
+  voice, note-3+tail): L holds −50.8/−9.5/+30.1, R holds
+  −30.4/+10.8/+49.7 — the even-spread law generalizes to N=6.
+- **VC5 = {−50, −25, 0, +25, +50} cents, within ~1¢** (inner pair reads
+  −26.1/+26.0; the 1¢ is neighbour-blend bias at the 1.2 s window's
+  resolution — the note-1 body blends centre+inner into one line, as
+  expected at 1.9 Hz spacing). Ends pinned ±50. The even-spread law now
+  holds at every measured N: 2/3/4/5/6.
+- **Pan alternation confirmed at N=5 and N=6.** VC5 ascending detune:
+  L, R, C, L, R (centre voice: L −32.3 vs R −32.6 dBFS, near-identical;
+  opposite channels show only ≤−52 dB skirt, ≥25 dB hard-pan ratio).
+  VC6: L, R, L, R, L, R. The general deal stands: alternate hard-L/hard-R
+  by ascending detune; odd N's middle voice centre.
+- **Per-voice gain: √(2/N) SETTLED on the short-note ladder.** Measured
+  vs the M2 solo h1: N=2 0.0, N=3 −1.8/−1.9, N=4 −3.0, N=5 outer voices
+  −4.06/−4.28 (mean −4.1), N=6 −4.5..−5.0 (mean −4.68) against
+  √(2/N) = 0/−1.76/−3.01/−3.98/−4.77 — worst mean error 0.11 dB. VC5's
+  centre voice reads −7.0/−7.4 = the same engine gain with the −3.02 dB
+  equal-power centre-pan bookkeeping, i.e. all voices share one gain.
+  The single open caveat is unchanged: WV19's long-note N=3 reading
+  (−2.35) still sits off the ladder and keeps that lineage marked.
+
+Honesty marks: VC5 inner-voice offsets carry ~1¢ blend bias (no window
+longer than 1.2 s exists on this lineage); per-voice deltas spread up to
+0.45 dB within a render (N=6), so the gain verdict rests on the
+five-point mean trend, not single pins; VC1≡VC2 is a dither-level
+identity, not a bit identity.
