@@ -84,6 +84,7 @@ const HONEST_FAMILY = {
   id: 'acme',
   owner: 'Acme Instruments',
   browser: ['acme'],
+  writers: ['shell.setAcmeGain'],
   paramsGrammar: 'acme/parameter-address/v1',
   devices: [
     {
@@ -130,7 +131,7 @@ test('the gate refuses: invented icons, fake writers, broken grammars, unreachab
     [{...HONEST_FAMILY, devices: [{...HONEST_FAMILY.devices[0], icon: 'made-up-mark'}]}, 'icon'],
     [{...HONEST_FAMILY, devices: [{...HONEST_FAMILY.devices[0], params: [sdkDefine.reading({key: 'x', title: 'X', type: 'stream', writePath: 'shell.setX'})]}]}, 'reading by nature'],
     [{...HONEST_FAMILY, devices: [{...HONEST_FAMILY.devices[0], params: [sdkDefine.stringParam({key: 'x', title: 'X', type: 'string', writePath: 'make it up'})]}]}, 'owner path'],
-    [{...HONEST_FAMILY, devices: [{...HONEST_FAMILY.devices[0], params: [sdkDefine.enumParam({key: 'x', title: 'X', type: 'enumerated', values: []})]}]}, 'values'],
+    [{...HONEST_FAMILY, devices: [{...HONEST_FAMILY.devices[0], params: [sdkDefine.enumParam({key: 'x', title: 'X', type: 'enumerated', values: [], writePath: 'shell.setAcmeGain'})]}]}, 'values'],
     [{...HONEST_FAMILY, devices: [{...HONEST_FAMILY.devices[0], params: [{key: 'x', title: 'X', type: 'waveform'}]}]}, 'grammar'],
     [{...HONEST_FAMILY, devices: [{id: 'doc', title: 'Doc', icon: 'lib', kind: 'document', params: []}]}, 'declares a body'],
     [{
@@ -145,8 +146,68 @@ test('the gate refuses: invented icons, fake writers, broken grammars, unreachab
       return true
     }, `expected a refusal naming "${expected}"`)
   }
+  // A writePath the shell arms and the family does not declare refuses.
+  assert.throws(() => sdkDefine.admitFamily({
+    ...HONEST_FAMILY,
+    writers: [],
+    devices: [{...HONEST_FAMILY.devices[0]}],
+  }), /armed by no one/)
+
   // The door holds nothing the gate refused.
   assert.equal(door.familyManifest('acme'), undefined)
+})
+
+test("the extension path runs the door's validator too (the F1 escapes refuse)", () => {
+  door.resetFamilyManifestsForTest()
+  five.loadAgentShellFamilies()
+  // A waiting face carrying a document body through an extension refuses.
+  assert.throws(() => sdkDefine.declareDeviceExtension({
+    id: 'central:qa-probe', by: 'qa', family: 'central',
+    devices: [{id: 'qa-doc', title: 'QA Doc', icon: 'lib', kind: 'document', admission: 'waiting', note: 'waits',
+               document: {kind: 'x', file: 'x.html', hosting: 'oi.document-frame/v1', saveRouter: ['saved', 'unchanged', 'stale', 'conflict', 'refused'], messages: ['m']}}],
+  }), /breaks the device law/)
+  // A pop-out face without the family's detachedKinds refuses.
+  assert.throws(() => sdkDefine.declareDeviceExtension({
+    id: 'central:qa-probe2', by: 'qa', family: 'central',
+    devices: [{id: 'qa-pop', title: 'QA Pop', icon: 'form', dock: ['dock', 'pop-out']}],
+  }), /breaks the device law/)
+  // An honest extension composes, idempotently.
+  const first = sdkDefine.declareDeviceExtension({
+    id: 'central:qa-honest', by: 'qa', family: 'central',
+    devices: [{id: 'qa-face', title: 'QA Face', icon: 'form', note: 'honest readings face'}],
+  })
+  const again = sdkDefine.declareDeviceExtension({
+    id: 'central:qa-honest', by: 'qa', family: 'central',
+    devices: [{id: 'qa-face', title: 'QA Face', icon: 'form', note: 'honest readings face'}],
+  })
+  assert.equal(again, first, 're-declaration with identical contents is idempotent')
+})
+
+test('transport rows and time strata obey their laws', () => {
+  door.resetFamilyManifestsForTest()
+  // Double-booking a transport row across families faults the world gate.
+  five.loadAgentShellFamilies()
+  sdkDefine.admitFamily({...HONEST_FAMILY, transport: [{mode: 'live', row: 'tempo-signature', face: 'probe', key: 'gain'}]})
+  // Time strata: consuming a non-stratum refuses; contributing material is free.
+  assert.throws(() => sdkDefine.admitFamily({
+    ...HONEST_FAMILY, id: 'acme-time',
+    time: {consumes: ['yesterday'], contributes: []},
+  }), /locked at the top/)
+  sdkDefine.admitFamily({...HONEST_FAMILY, id: 'acme-time', time: {consumes: ['civil', 'cron'], contributes: ['tick-marks']}})
+  const gate = sdkValidate.validateAdmittedWorld()
+  assert.equal(gate.byFamily.get('acme-time')?.length ?? 0, 0)
+})
+
+test('scalar ranges carry their domain: unitless bounds, ordered bounds', () => {
+  door.resetFamilyManifestsForTest()
+  assert.throws(() => sdkDefine.admitFamily({
+    ...HONEST_FAMILY, id: 'acme-range',
+    devices: [{...HONEST_FAMILY.devices[0], params: [sdkDefine.numberParam({key: 'x', title: 'X', type: 'number', range: {min: 5, max: 1}, writePath: 'shell.setAcmeGain'})]}],
+  }), /ordered domain/)
+  assert.throws(() => sdkDefine.admitFamily({
+    ...HONEST_FAMILY, id: 'acme-range2',
+    devices: [{...HONEST_FAMILY.devices[0], params: [sdkDefine.numberParam({key: 'x', title: 'X', type: 'number', range: {unit: 'ms'}, writePath: 'shell.setAcmeGain'})]}],
+  }), /declares its domain/)
 })
 
 test('a param row that addresses an undeclared face faults the family check', () => {
@@ -286,6 +347,40 @@ test('the product carving law: bindings, new-product authority, squatting, one f
   gate = sdkValidate.validateAdmittedWorld()
   assert.equal(gate.byFamily.get('acme')?.length ?? 0, 0)
   assert.deepEqual(gate.cross, [])
+})
+
+test('the transport-slot ontology has not drifted from icon-cut.html (marks, pairing, rationale bytes)', async () => {
+  if (!SPECIMEN) throw new Error('icon-cut.html not found on this machine')
+  const specimen = await readFile(SPECIMEN, 'utf8')
+  const block = specimen.match(/const SLOTS = \[[\s\S]*?\n\];/)?.[0]
+  assert.ok(block, 'the specimen carries the SLOTS constant')
+  const entries = [...block.matchAll(/\['([^']+)','([a-zA-Z]+)','([a-zA-Z]+)','((?:[^'\\]|\\.)*)','([a-z]+)'\]/g)]
+  assert.ok(entries.length >= 12, `specimen slots parsed (${entries.length})`)
+  const {TRANSPORT_SLOTS} = await import('../src/inhabitants/sdk/modes.ts')
+  for (const [, label, mark, other, rationale, pick] of entries) {
+    const slot = TRANSPORT_SLOTS.find(candidate => candidate.label === label)
+    assert.ok(slot, `${label}: carried in the ontology`)
+    assert.equal(slot.mark, mark, `${label}: cut mark matches`)
+    assert.equal(slot.otherMark, other, `${label}: second mark matches`)
+    assert.equal(slot.relation, pick === 'pair' ? 'pair' : 'alt', `${label}: pairing matches the specimen's pick`)
+    assert.equal(slot.rationale, rationale.replace(/\\'/g, "'"), `${label}: rationale byte-matches the specimen`)
+  }
+  // The play · stop · record cell's rationale, verbatim too.
+  const {TRANSPORT_PLAY_CELL} = await import('../src/inhabitants/sdk/modes.ts')
+  assert.ok(specimen.includes(TRANSPORT_PLAY_CELL.rationale), 'the play cell rationale byte-matches')
+})
+
+test(`the mode alts and specimen names are carried (specimen mode rows)`, async () => {
+  if (!SPECIMEN) throw new Error('icon-cut.html not found on this machine')
+  const specimen = await readFile(SPECIMEN, 'utf8')
+  const {SDK_MODE_DECLARATIONS} = await import('../src/inhabitants/sdk/modes.ts')
+  for (const mode of SDK_MODE_DECLARATIONS) {
+    assert.ok(specimen.includes(`name:'${mode.specimenName}'`), `${mode.name}: specimen name carried`)
+    assert.ok(specimen.includes(`['${mode.mark}']`) || specimen.includes(`'${mode.mark}'`), `${mode.name}: mark present in specimen`)
+    if (mode.altMark) {
+      assert.ok(mode.altNote && mode.altNote.length > 20, `${mode.name}: the rejected alt carries its reason`)
+    }
+  }
 })
 
 test('the product registry matches the suite catalogue (the drift gate)', async () => {

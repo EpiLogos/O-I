@@ -71,7 +71,6 @@ if (json) {
   console.log(JSON.stringify(payload, null, 2))
 } else {
   console.log(`admitted families: ${families.join(', ')}`)
-  let faulted = false
   for (const [family, faults] of manifestFaults) {
     faulted = true
     console.error(`\n${family} (door validator):`)

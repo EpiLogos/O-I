@@ -67,6 +67,7 @@ world.loadWorldShellFamilies()
 // owner-authored manifests predate the binding field.
 const PRODUCT_FAMILY = {
   central: 'central',
+  aikit: 'ai-kit',
   actuation: 'actuation',
   'ai-kit': 'ai-kit',
   'software-factory': 'software-factory',

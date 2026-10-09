@@ -4,20 +4,25 @@
  * - icon-cut.html `const MODES` — per-mode transport readouts (drift-gated
  *   by tests/device-sdk.test.mjs against the specimen itself).
  * - icon-cut.html mode rows + transport `Mode` buttons — the cut mark per
- *   mode (`live` · `die` · `hex` · `expr` · `techne`; the alts are recorded
- *   as rejected with their reasons).
+ *   mode (`live` · `die` · `hex` · `expr` · `techne`), with the rejected
+ *   alternatives and their reasons carried on each mode (`altMark`/`altNote`)
+ *   and the specimen's own name (`specimenName`).
  * - icon-cut.html `const SLOTS` — the transport slot ontology: the cut mark
- *   per function, the rejected alternative, and the usage rationale
- *   (collisions and honest readings — the icon-usage law).
+ *   per function, its relation to the second mark (`alt` = the rejected
+ *   alternative, `pair` = the companion mark the specimen shows beside it),
+ *   and the usage rationale verbatim (collisions and honest readings — the
+ *   icon-usage law). Drift-gated by test.
  * - WORLD-SHELL-DESIGN Rev 5 ("one transport, five meanings") — the per-mode
  *   meaning of every transport slot row, and the per-mode Session/
- *   Arrangement presentations.
+ *   Arrangement presentations. Rows carried verbatim from the table; the
+ *   two cells where the table's Live column is the slot label itself are
+ *   carried as the label bytes ('tempo ‹ › · signature', '▶ ■ ● +').
  *
  * What this module makes declarable (the mode-specific plugin surface):
  * - a device face scopes itself to modes (`DeviceDeclaration.modes`);
  * - a face declares its per-mode device format/shape
  *   (`DeviceDeclaration.formats`, vocabulary below);
- * - a family binds its §14 params to transport slots per mode
+ * - a family binds its §14 params to transport rows per mode
  *   (`FamilyDeclaration.transport`) — Rev 5's table made addressable data
  *   instead of hardcoded switch-cases.
  *
@@ -49,8 +54,13 @@ export interface TransportRowMeaning {
 export interface SdkMode {
   readonly name: SdkModeName
   readonly title: string
+  /** The specimen's own name for the mode (MODES.name — drift-gated). */
+  readonly specimenName: string
   /** The mode's cut mark (icon-cut.html transport Mode buttons). */
   readonly mark: IconName
+  /** The rejected alternative mark from the specimen's mode rows, with its reason. */
+  readonly altMark?: IconName
+  readonly altNote?: string
   /** The cradle WorkspaceMode this shell mode presents as, when mapped. */
   readonly workspaceMode?: WorkspaceModeName
   /** The specimen's per-mode transport readouts, verbatim (MODES.readouts). */
@@ -74,16 +84,17 @@ export const SDK_MODE_DECLARATIONS: readonly SdkMode[] = [
   {
     name: 'live',
     title: 'Live',
+    specimenName: 'Live',
     mark: 'live',
     readouts: ['Link', 'Tap', '120.00', '4 / 4', '●◦', '1 Bar', 'C Major', '3. 1. 1', '48 kHz', '12 %'],
     sessionView: 'clips and scenes',
     arrangementView: 'the song over time',
     rows: [
       {row: 'link-tap', meaning: 'Link · Tap'},
-      {row: 'tempo-signature', meaning: 'tempo · signature'},
+      {row: 'tempo-signature', meaning: 'tempo ‹ › · signature'},
       {row: 'metronome-quantize', meaning: 'metronome · quantize'},
       {row: 'key-scale', meaning: 'key / scale'},
-      {row: 'transport', meaning: 'play · stop · record (+ append/replace)'},
+      {row: 'transport', meaning: '▶ ■ ● +'},
       {row: 'arm-capture', meaning: 'arm · re-enable · capture'},
       {row: 'punch-loop', meaning: 'punch · loop · punch'},
       {row: 'draw-keys', meaning: 'draw · keys · MIDI · kHz · CPU'},
@@ -92,7 +103,10 @@ export const SDK_MODE_DECLARATIONS: readonly SdkMode[] = [
   {
     name: 'base',
     title: 'Base · Central',
+    specimenName: 'Base',
     mark: 'die',
+    altMark: 'diamond',
+    altNote: 'What revision 5 draws. It is a clean mark and it collides with the archetype node.',
     workspaceMode: 'base',
     readouts: ['Ground', 'Stamp', 'face 3', '4 + 2', 'save', 'pause', 'Σ 500', '08 Oct · p3', 'local', 'edited'],
     sessionView: 'the day as clips: Day, Flows, Beings, Things and Goals as tracks',
@@ -111,7 +125,10 @@ export const SDK_MODE_DECLARATIONS: readonly SdkMode[] = [
   {
     name: 'factory',
     title: 'Factory',
+    specimenName: 'Factory',
     mark: 'hex',
+    altMark: 'chain',
+    altNote: 'The other option: three devices. Clearer, and it starts to look like the Session lanes.',
     workspaceMode: 'factory',
     readouts: ['Link', 'Tap', 'high', '2 / 12', 'beat', 'next tool', '142k · 38k', '212.2.7', '84 t/s', '38 %'],
     sessionView: 'sessions and tasks',
@@ -130,6 +147,7 @@ export const SDK_MODE_DECLARATIONS: readonly SdkMode[] = [
   {
     name: 'expressions',
     title: 'Expressions',
+    specimenName: 'Expressions',
     mark: 'expr',
     workspaceMode: 'expressions',
     readouts: ['Link', 'Tap', '96.00', '5 : 3', 'pulse', '1 Bar', '☿', '1 · 3.2', '60 fps', 'GPU 41'],
@@ -149,6 +167,7 @@ export const SDK_MODE_DECLARATIONS: readonly SdkMode[] = [
   {
     name: 'techne',
     title: 'Technē',
+    specimenName: 'Technē',
     mark: 'techne',
     workspaceMode: 'techne',
     readouts: ['Link 3', 'Now', '6 s', '7 / 8', 'pulse', 'arrive', 'as me', '14:37', '41 ms', '9 %'],
@@ -184,27 +203,36 @@ export interface TransportSlot {
   readonly label: string
   /** The cut mark for the function. */
   readonly mark: IconName
-  /** The rejected alternative, when the specimen records one. */
-  readonly alt?: IconName
-  /** The specimen's rationale — why the cut mark, why not the alt. */
+  /** The second mark's relation, per the specimen's pick: 'alt' = the
+   * rejected alternative (the rationale says why), 'pair' = the companion
+   * mark shown beside the cut one (a working pair, neither rejected). */
+  readonly relation: 'alt' | 'pair'
+  /** The second mark (the alt or the pair companion). */
+  readonly otherMark?: IconName
+  /** The specimen's rationale, verbatim. */
   readonly rationale: string
 }
 
 export const TRANSPORT_SLOTS: readonly TransportSlot[] = [
-  {id: 'link', label: 'Link', mark: 'link', alt: 'linkChain', rationale: 'Two nodes and a bond. A chain reads as a hyperlink. The peer count stays a numeral on the button.'},
-  {id: 'tap', label: 'Tap', mark: 'tap', alt: 'metroDots', rationale: 'A contact and a ring. The old metronome dots move to the heartbeat slot, where they already mean "pulse".'},
-  {id: 'heartbeat', label: 'Heartbeat', mark: 'metro', alt: 'metroDots', rationale: 'Pendulum for the icon. The dots remain honest at 19px, so both are drawn; the pendulum is the one that still means a metronome when the word is gone.'},
-  {id: 'follow', label: 'Follow', mark: 'follow', alt: 'direct', rationale: 'An arrow arriving at a rule: the view moves with the encounter. Off, and nothing moves you.'},
-  {id: 'arm', label: 'Arm', mark: 'arm', alt: 'cmd', rationale: 'A lever. The ⌘ mark collides with the keyboard modifier and only means "automation arm" if you already live in Live.'},
-  {id: 'hand-back', label: 'Hand back', mark: 'back', alt: 'ret', rationale: 'Arrow home into a slot. Lit in stall colour when you are holding something an agent still owns.'},
-  {id: 'capture', label: 'Capture', mark: 'cap', alt: 'capEmpty', rationale: 'A recording head, not an empty circle. Empty circles already mean "soft stop" on a clip slot.'},
-  {id: 'keys', label: 'Keys', mark: 'keys', alt: 'keysOld', rationale: 'Three keycaps. The paired bars were the old browser pane, and the browser is a globe now.'},
-  {id: 'overdub', label: 'Overdub', mark: 'plus', alt: 'od', rationale: 'The bare plus stays. It is the Live key, and at this size a plus-on-a-wedge turns to noise.'},
-  {id: 'map', label: 'Map', mark: 'map', alt: 'search', rationale: 'Two bound points. Search keeps the magnifier.'},
-  {id: 'punch-in', label: 'Punch in', mark: 'punchIn', rationale: 'In-flag and out-flag, a pair. The lightning bolt was doing neither job.'},
-  {id: 'punch-out', label: 'Punch out', mark: 'punchOut', rationale: 'In-flag and out-flag, a pair. The lightning bolt was doing neither job.'},
-  {id: 'draw', label: 'Draw', mark: 'draw', alt: 'placed', rationale: 'Pen for draw, highlight, point, and form. Beside it, the pin: placement is a different act and lives with the field marks.'},
+  {id: 'link', label: 'Link', mark: 'link', relation: 'alt', otherMark: 'linkChain', rationale: 'Two nodes and a bond. A chain reads as a hyperlink. The peer count stays a numeral on the button.'},
+  {id: 'tap', label: 'Tap', mark: 'tap', relation: 'alt', otherMark: 'metroDots', rationale: 'A contact and a ring. The old metronome dots move to the heartbeat slot, where they already mean “pulse”.'},
+  {id: 'heartbeat', label: 'Heartbeat', mark: 'metro', relation: 'alt', otherMark: 'metroDots', rationale: 'Pendulum for the icon. The dots remain honest at 19px, so both are drawn; the pendulum is the one that still means a metronome when the word is gone.'},
+  {id: 'follow', label: 'Follow', mark: 'follow', relation: 'alt', otherMark: 'direct', rationale: 'An arrow arriving at a rule: the view moves with the encounter. Off, and nothing moves you.'},
+  {id: 'arm', label: 'Arm', mark: 'arm', relation: 'alt', otherMark: 'cmd', rationale: 'A lever. The ⌘ mark collides with the keyboard modifier and only means “automation arm” if you already live in Live.'},
+  {id: 'hand-back', label: 'Hand back', mark: 'back', relation: 'alt', otherMark: 'ret', rationale: 'Arrow home into a slot. Lit in stall colour when you are holding something an agent still owns.'},
+  {id: 'capture', label: 'Capture', mark: 'cap', relation: 'alt', otherMark: 'capEmpty', rationale: 'A recording head, not an empty circle. Empty circles already mean “soft stop” on a clip slot.'},
+  {id: 'keys', label: 'Keys', mark: 'keys', relation: 'alt', otherMark: 'keysOld', rationale: 'Three keycaps. The paired bars were the old browser pane, and the browser is a globe now.'},
+  {id: 'overdub', label: 'Overdub', mark: 'plus', relation: 'alt', otherMark: 'od', rationale: 'The bare plus stays. It is the Live key, and at this size a plus-on-a-wedge turns to noise.'},
+  {id: 'map', label: 'Map', mark: 'map', relation: 'alt', otherMark: 'search', rationale: 'Two bound points. Search keeps the magnifier.'},
+  {id: 'punch', label: 'Punch', mark: 'punchIn', relation: 'pair', otherMark: 'punchOut', rationale: 'In-flag and out-flag, a pair. The lightning bolt was doing neither job.'},
+  {id: 'draw', label: 'Draw', mark: 'draw', relation: 'pair', otherMark: 'placed', rationale: 'Pen for draw, highlight, point, and form. Beside it, the pin: placement is a different act and lives with the field marks.'},
 ]
+
+/** The fixed play · stop · record group (the specimen's slotOpts cell). */
+export const TRANSPORT_PLAY_CELL = {
+  marks: ['play', 'stop', 'rec', 'loop', 'earth'] as const,
+  rationale: 'Filled keys, kept from both mockups. Loop and Earth were already SVG and stay.',
+}
 
 export function transportSlot(id: string): TransportSlot | undefined {
   return TRANSPORT_SLOTS.find(slot => slot.id === id)

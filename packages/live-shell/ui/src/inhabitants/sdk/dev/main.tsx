@@ -17,12 +17,16 @@ admitFamily({
   owner: 'Device SDK (fixture)',
   browser: ['device-sdk-demo'],
   paramsGrammar: 'device-sdk-demo/parameter-address/v1',
+  // The fixture arms its own write paths (the writers law): these are the
+  // fixture's own setters — echoed by the fixture aperture, never the
+  // shell's, and never presented as a real owner's writer.
+  writers: ['shell.setDemoGain', 'shell.setDemoTrim', 'shell.setDemoCurve', 'shell.setDemoArm'],
   devices: [
     {
       id: 'probe',
       title: 'Probe',
       icon: 'form',
-      note: 'The kit demonstration face: one scalar with a real write path (fixture-applied), an enumerated, a boolean, and honest readings.',
+      note: 'The kit demonstration face: fixture-applied rows (the fixture arms its own writers), an enumerated, a boolean, and honest readings.',
       params: [
         numberParam({key: 'gain', title: 'Gain', type: 'number', range: {min: 0, max: 2, unit: 'x'}, writePath: 'shell.setDemoGain', icon: 'form'}),
         numberParam({key: 'trim', title: 'Trim', type: 'number', range: {min: -12, max: 12, unit: 'dB'}, writePath: 'shell.setDemoTrim', icon: 'metro'}),

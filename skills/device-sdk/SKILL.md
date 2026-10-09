@@ -67,8 +67,8 @@ O-I docs/research/ableton-live-12.0.25/ui/UI-EVIDENCE.md  the measured chrome (d
 5. **Pass the gate.** `npm run test:device-sdk` (kit tests + world gate),
    then `npm run build`. Exit 0 is the floor, not the acceptance.
 
-6. **Verify like the house verifies.** Exercise the face in the dev harness
-   (`src/inhabitants/dev/` pattern), capture the running behaviour, and
+6. **Verify like the house verifies.** (`npm run devices:walk` is the kit's scripted capture) Exercise the face in the dev harness
+   (`src/inhabitants/sdk/dev/`, served by `npm run devices:dev`), capture the running behaviour, and
    name exactly what is admitted, what is exercised, and what waits. An
    editor replacing native controls owes the admission packet in
    `NATIVE-EDITOR-STANDARD.md`.

@@ -228,7 +228,20 @@ export function ScalarParam({param, base, draft, onDraft, onCommit, onCancel, di
             onBlur={event => {
               const parsed = Number.parseFloat(event.currentTarget.value)
               if (Number.isFinite(parsed)) {
-                onDraft(clampScalar(param, parsed))
+                const min = param.range?.min ?? 0
+                const max = param.range?.max ?? 1
+                if (parsed < min || parsed > max) {
+                  // The typed value is outside the declared domain: keep the
+                  // intended value visible, dispatch nothing (the editor
+                  // standard: no silent clamp or rewrite).
+                  onDraft(clampScalar(param, Number.isFinite(min) && parsed < min ? min : Math.min(max, parsed)))
+                  const field = event.currentTarget
+                  field.value = `${parsed}`
+                  field.title = `${parsed} is outside the declared range [${min}, ${max}] — not dispatched`
+                  field.style.color = 'var(--stall)'
+                  return
+                }
+                onDraft(parsed)
                 onCommit()
               }
               setEditing(false)
@@ -349,7 +362,7 @@ export function ReadingRow({param, value}: ReadingRowProps) {
       <span className="sdk-chip">
         {value === undefined || value === ''
           ? <em className="sdk-chip__absent">{param.disclosure ?? 'no reading'}</em>
-          : `${String(value)}${param.unit ? ` ${param.unit}` : ''}`}
+          : `${String(value)}${param.unit ?? param.range?.unit ? ` ${param.unit ?? param.range?.unit}` : ''}`}
       </span>
     </div>
   )

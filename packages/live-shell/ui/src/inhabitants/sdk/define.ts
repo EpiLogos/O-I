@@ -25,7 +25,7 @@
  * Pure module: no view, no I/O; registries reset with the door. */
 
 import type {DevicePresentation, FamilyManifest, FamilyManifestId} from '../familyManifest.ts'
-import {admitFamilyManifest, allFamilyManifests, onFamilyManifestReset} from '../familyManifest.ts'
+import {admitFamilyManifest, allFamilyManifests, familyManifest, onFamilyManifestReset} from '../familyManifest.ts'
 import type {
   ConversationBodyDeclaration,
   DocumentBodyDeclaration,
@@ -34,7 +34,7 @@ import type {
   InhabitantFaceKind,
   InhabitantManifest,
 } from '../manifest.ts'
-import {declareFamilyExtension, type FamilyExtension} from '../manifest.ts'
+import {declareFamilyExtension, validateInhabitantManifest, type FamilyExtension} from '../manifest.ts'
 import type {AgentParamAddress} from '../agentParamAddresses.ts'
 import type {IconName} from './icons.ts'
 import type {DeviceFormat, SdkModeName} from './modes.ts'
@@ -71,6 +71,9 @@ interface ParamInputBase {
   readonly key: string
   readonly title: string
   readonly icon?: IconName
+  /** The row's unit — carried top-level, matching the verified address
+   * table's grammar (scalar controls also read it off the range). */
+  readonly unit?: string
   /** The path the owner writes; ABSENT = the row is a reading. */
   readonly writePath?: string
   /** Verbatim disclosed absence or partial support. */
@@ -187,6 +190,10 @@ export interface FamilyDeclaration {
   readonly time?: {readonly consumes: readonly string[]; readonly contributes: readonly string[]}
   /** Observable id for modulation, or an honest null (absent = null). */
   readonly telemetry?: string | null
+  /** The `shell.<setter>` paths THIS family arms (fixture families declare
+   * their own fixture writers; real families' setters must also be armed in
+   * the shell — the gate checks both). */
+  readonly writers?: readonly string[]
 }
 
 export interface AdmittedFamily {
@@ -337,13 +344,14 @@ function buildRows(family: FamilyManifestId, devices: readonly DeviceDeclaration
 }
 
 function kitRow(family: FamilyManifestId, deviceInstance: string, input: ParamInput): SdkParamRow {
-  const {key, title, icon, writePath, disclosure, type, ...rest} = input
+  const {key, title, icon, unit, writePath, disclosure, type, ...rest} = input
   return {
     family,
     deviceInstance,
     key,
     title,
     ...(icon ? {icon} : {}),
+    ...(unit ? {unit} : {}),
     type,
     ...(type === 'enumerated' ? {values: (rest as EnumParamInput).values} : {}),
     ...(type === 'number' || type === 'duration'
@@ -404,9 +412,12 @@ export function admitFamily(declaration: FamilyDeclaration): AdmittedFamily {
 }
 
 /** Compose additive devices onto an admitted family (the extension path).
- * The family's owner-authored base stays verbatim at the door. */
+ * The family's owner-authored base stays verbatim at the door. The SAME
+ * validation-first discipline as admission: the door's manifest law runs
+ * over the COMPOSED result (base faces + extension faces) before anything
+ * composes — an extension that would leave the family failing the gate is
+ * refused with the fault list. */
 export function declareDeviceExtension(declaration: DeviceExtensionDeclaration): FamilyExtension {
-  const faults = declaration.devices.flatMap(device => validateSdkDevice(device))
   const extension: FamilyExtension = {
     id: declaration.id,
     by: declaration.by,
@@ -414,6 +425,21 @@ export function declareDeviceExtension(declaration: DeviceExtensionDeclaration):
     ...(declaration.detachedKinds ? {detachedKinds: declaration.detachedKinds} : {}),
     ...(declaration.note ? {note: declaration.note} : {}),
   }
+  const base = familyManifest(declaration.family)
+  if (!base) {
+    throw new Error(`Family "${declaration.family}" is not admitted; extensions compose onto an owner-admitted base, never ahead of it.`)
+  }
+  const composedForValidation: InhabitantManifest = {
+    ...(base as InhabitantManifest),
+    faces: [...(base as InhabitantManifest).faces, ...(extension.faces ?? [])],
+    ...(declaration.detachedKinds
+      ? {detachedKinds: [...(base as InhabitantManifest).detachedKinds ?? [], ...declaration.detachedKinds]}
+      : {}),
+  }
+  const faults = [
+    ...declaration.devices.flatMap(device => validateSdkDevice(device)),
+    ...validateInhabitantManifest(composedForValidation),
+  ]
   if (faults.length) {
     throw new Error(`Extension "${declaration.id}" refuses to compose — the declaration breaks the device law:\n- ${faults.join('\n- ')}`)
   }

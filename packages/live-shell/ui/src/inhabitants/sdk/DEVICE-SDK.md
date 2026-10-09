@@ -41,7 +41,11 @@ src/inhabitants/sdk/
 │                     useFaceDrafts (base vs draft vs standing)
 ├── sdk.css           the face language — every value resolves an existing
 │                     shell token; --sdk-* only NAMES the resolutions
+├── marks.tsx         the lane's components for the marks beyond the 24×24
+│                     dictionary (chevrons, kind shapes, wood marks) — by the
+│                     co-worker lane, consuming icons.ts
 ├── scaffold.ts       pure generator for a new family's three files
+├── dev/              the visual harness (`npm run devices:dev`, port 5207)
 └── DEVICE-SDK.md     this file
 ```
 
@@ -171,7 +175,7 @@ export function ProbeFace({aperture}: {aperture: DeviceFaceAperture}) {
     <FacePlate presentation={facePresentation('acme', 'probe')!} power="unknown">
       {/* scalar rows bind drafts.base/drafts.drafts through useFaceDrafts */}
       <ReadingRow param={row('readiness')} value={state.readiness} />
-      <Disclosure title="Probe" ref="acme:probe" owner="Acme Instruments" />
+      <Disclosure title="Probe" instanceRef="acme:probe" owner="Acme Instruments" />
     </FacePlate>
   )
 }
@@ -208,10 +212,24 @@ native controls.
   render through their own components until their owners adopt the kit.
 - `icon-cut.html` is the icon source; the roster in the new-shell lane's
   `glyph-language/` (79 marks) is a prepared, separate system — not wired
-  here. One cut, one sync (`npm run devices:sync-icons [--check]`).
+  here. One cut, one sync (`npm run devices:sync-icons -- --check` (the `--` matters: without it npm swallows the flag and the command REGENERATES instead of checking)).
 - The gap finder is a discovery join over `suite/capability-matrix.json`
   and `suite/product-capabilities.json` — deliberately a catalogue view,
   NOT another capability matrix; the sources stay authoritative.
 - The lane's `desktop/cradle` tests carry pre-existing failures (missing
   `visuals/observations` module in this worktree) — not the SDK's; the
   owner lane owns that repair.
+- `npm run build`'s `tsc --noEmit` currently fails on PRE-EXISTING lane
+  dirt OUTSIDE the sdk tree (`src/App.tsx`, `src/components/
+  NativeTechneBrowser.tsx`, `src/components/WorldBrowser.tsx`,
+  `src/panels/expressions.tsx` — mode-union drift from another worker's
+  in-flight change). The sdk tree itself type-checks clean
+  (`npx tsc --noEmit 2>&1 | grep 'src/inhabitants/sdk'` → empty). Those
+  files' owner owns the repair; until then, judge the build by the sdk
+  filter plus `vite build`.
+- §16's four-surfaces law is schema-shaped (the manifest cannot carry a
+  fifth surface), and `panelSlots` — an exposure surface §16's enumeration
+  does not name — awaits an owner ruling. §14's modulation honesty
+  ("every modulated parameter shows its modulator") has no kit surface
+  yet: the kit has no modulator field; a family that modulates must show
+  the modulator in its own face until the kit grows one.

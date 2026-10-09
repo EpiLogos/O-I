@@ -21,7 +21,7 @@ import type {InhabitantManifest} from '../manifest.ts'
 import {validateInhabitantManifest} from '../manifest.ts'
 import {AGENT_SHELL_ADDRESS_TABLE} from '../agentParamAddresses.ts'
 import type {DeviceDeclaration, FamilyDeclaration, ParamInput, SdkParamRow} from './define.ts'
-import {allSdkParamRows, familyProduct} from './define.ts'
+import {allSdkParamRows, allTransportBindings, familyProduct} from './define.ts'
 import {isIconName} from './icons.ts'
 import {DEVICE_FORMATS, SDK_MODES, TRANSPORT_ROWS, isSdkMode} from './modes.ts'
 import {PRODUCT_IDS, isKnownProduct} from './products.ts'
@@ -53,6 +53,18 @@ export function isWritePath(candidate: string): boolean {
 
 const PARAM_KEY = /^[a-z0-9][a-z0-9-]*$/
 const FACE_ID = /^[a-z0-9][a-z0-9-]*$/
+
+/** The shell setters the shell actually arms today (derived from the
+ * verified address table). A `shell.` write path must be armed here OR
+ * declared by the family itself (`FamilyDeclaration.writers` — a fixture
+ * arms its own fixture writers); anything else pretends a writer. */
+export const ARMED_SHELL_SETTERS: readonly string[] = AGENT_SHELL_ADDRESS_TABLE
+  .map(row => row.writePath)
+  .filter((path): path is string => path !== undefined && path.startsWith('shell.'))
+
+/** The locked time strata (WORLD-SHELL-DESIGN §15) — families bind these,
+ * never fork clocks. Contributions are the family's own material names. */
+export const TIME_STRATA = ['chronos', 'civil', 'cron', 'transport', 'occasion'] as const
 
 // ---------------------------------------------------------------------------
 // per-device checks (pre-admission; also used standalone by extensions)
@@ -109,8 +121,8 @@ export function validateSdkParam(input: ParamInput): readonly string[] {
   if (!(SDK_PARAM_TYPES as readonly string[]).includes(input.type)) {
     faults.push(`type "${input.type}" is not in the grammar (${SDK_PARAM_TYPES.join(' | ')}) — extend SDK_PARAM_TYPES in a reviewed change, never inline a private type`)
   }
-  if (input.type === 'enumerated' && !(input.values?.length)) {
-    faults.push("an enumerated row names its values (the owner's actual choices)")
+  if (input.type === 'enumerated' && input.writePath && !(input.values?.length)) {
+    faults.push("a writable enumerated row names its values (the owner's actual choices) — a reading may carry the type bare, as the verified map's rows do")
   }
   if (input.type !== 'number' && input.type !== 'duration') {
     // The union only declares `range` on the scalar members; read it off the
@@ -118,12 +130,38 @@ export function validateSdkParam(input: ParamInput): readonly string[] {
     const carried = (input as { readonly range?: unknown }).range
     if (carried) faults.push(`a ${input.type} row carries no range — ranges are the scalar domain`)
   }
+  if (input.type === 'number' || input.type === 'duration') {
+    const range = (input as { readonly range?: { readonly min?: number; readonly max?: number; readonly unit?: string } }).range
+    if (range?.min !== undefined && range?.max !== undefined && range.min >= range.max) {
+      faults.push(`range [${range.min}, ${range.max}] is not an ordered domain — min < max`)
+    }
+    if (range?.unit !== undefined && range.min === undefined && range.max === undefined) {
+      faults.push(`a ${input.type} row declares its domain: a unit without bounds has no domain to carry it`)
+    }
+  }
   if ((READ_ONLY_TYPES as readonly string[]).includes(input.type) && input.writePath) {
     faults.push(`a ${input.type} row is a reading by nature — writePath pretends a writer`)
   }
   if (input.writePath !== undefined) {
     if (!isWritePath(input.writePath)) {
       faults.push(`writePath "${input.writePath}" is not an owner path — use kernel:<op>, shell.<setter>, or <tool>:<command>`)
+    }
+  }
+  return faults
+}
+
+/** The writer-membership law (family level, where `writers` is known): a
+ * `shell.` path must be armed by the shell or declared by this family.
+ * `kernel:` and `<tool>:` paths are shape-checked here; their unions live
+ * with their owners (kernel op union, the tool's CLI) — a path that passes
+ * shape but names nothing is a fault the owner's world gate catches on
+ * first exercise, and the honesty note travels on the row. */
+export function validateFamilyWriters(declaration: FamilyDeclaration, params: readonly SdkParamRow[]): readonly string[] {
+  const faults: string[] = []
+  const armed = new Set([...ARMED_SHELL_SETTERS, ...declaration.writers ?? []])
+  for (const row of params) {
+    if (row.writePath?.startsWith('shell.') && !armed.has(row.writePath)) {
+      faults.push(`${declaration.id}/${row.deviceInstance}/${row.key}: writePath "${row.writePath}" is armed by no one — the shell arms ${ARMED_SHELL_SETTERS.join(', ')}; arm it in the shell first, or declare it on this family's writers (a fixture arms its own)`)
     }
   }
   return faults
@@ -152,6 +190,34 @@ export function validateDeclaredFamily(
   }
   if (!declaration.owner.trim()) {
     faults.push(`${manifest.id}: a family names its native owner — the disclosure law`)
+  }
+  faults.push(...validateFamilyWriters(declaration, params))
+
+  // Presentations: when declared, non-empty and of the door's vocabulary;
+  // mode scoping non-empty; format keys within the face's declared scope.
+  const PRESENTATIONS = ['compact', 'expanded', 'full']
+  for (const device of declaration.devices) {
+    if (device.presentations && !device.presentations.length) {
+      faults.push(`${manifest.id}/${device.id}: presentations, when declared, name at least one presentation`)
+    }
+    for (const presentation of device.presentations ?? []) {
+      if (!PRESENTATIONS.includes(presentation)) {
+        faults.push(`${manifest.id}/${device.id}: presentation "${presentation}" is not one the door carries (${PRESENTATIONS.join(' | ')})`)
+      }
+    }
+    if (device.modes && !device.modes.length) faults.push(`${manifest.id}/${device.id}: modes, when declared, name at least one mode`)
+    for (const mode of Object.keys(device.formats ?? {})) {
+      if (device.modes && !device.modes.includes(mode as never)) {
+        faults.push(`${manifest.id}/${device.id}: format key "${mode}" is outside the face's declared mode scope`)
+      }
+    }
+  }
+
+  // §15: consumed strata are the locked five; contributions are free material names.
+  for (const stratum of declaration.time?.consumes ?? []) {
+    if (!(TIME_STRATA as readonly string[]).includes(stratum)) {
+      faults.push(`${manifest.id}: time consumes "${stratum}" — strata are locked at the top (${TIME_STRATA.join(' | ')}); bind a stratum, never fork a clock`)
+    }
   }
 
   // The product carving law (§12): a binding names a registered product, or
@@ -236,6 +302,19 @@ export function validateAdmittedWorld(): WorldGateResult {
     }
   }
 
+  // Rev 5: one meaning per (mode, row) — two families binding the same
+  // transport row in the same mode is a double-booking.
+  const rowOwners = new Map<string, FamilyManifestId>()
+  for (const binding of allTransportBindings()) {
+    const key = `${binding.mode}/${binding.row}`
+    const prior = rowOwners.get(key)
+    if (prior && prior !== binding.family) {
+      cross.push(`transport double-booking: "${key}" is bound by families "${prior}" and "${binding.family}" — one meaning per mode's transport row`)
+    } else {
+      rowOwners.set(key, binding.family)
+    }
+  }
+
   // §14 uniqueness across kit rows: one owning address per (family, device, key).
   const seen = new Map<string, SdkParamRow>()
   for (const row of allSdkParamRows()) {
@@ -260,6 +339,7 @@ export function validateAdmittedWorld(): WorldGateResult {
         kit.type === row.type &&
         JSON.stringify(kit.values ?? null) === JSON.stringify(row.values ?? null) &&
         JSON.stringify(kit.range ?? null) === JSON.stringify(row.range ?? null) &&
+        (kit.unit ?? kit.range?.unit ?? undefined) === (row.unit ?? undefined) &&
         (kit.writePath ?? undefined) === (row.writePath ?? undefined)
       if (!agreed) {
         cross.push(`kit row "${row.family}/${row.deviceInstance}/${row.key}" contradicts the verified address table — the ownership map stands; align the declaration or re-verify the map`)
