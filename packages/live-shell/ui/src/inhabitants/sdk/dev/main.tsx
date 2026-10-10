@@ -21,6 +21,7 @@ admitFamily({
   // fixture's own setters — echoed by the fixture aperture, never the
   // shell's, and never presented as a real owner's writer.
   writers: ['shell.setDemoGain', 'shell.setDemoTrim', 'shell.setDemoCurve', 'shell.setDemoArm'],
+  writerAuthority: 'the SDK harness fixture — the aperture echoes these; no real owner',
   devices: [
     {
       id: 'probe',

@@ -72,6 +72,11 @@ test('every icon mark is a balanced inner-SVG fragment, and the wrapper is the s
   assert.equal(icons.isIconName('definitely-not-a-mark'), false)
 })
 
+test(`the kernel-op registry has not drifted from the kernel types`, () => {
+  const check = spawnSync(process.execPath, [join(here, '..', 'scripts', 'sync-kernel-ops.mjs'), '--check'], {encoding: 'utf8'})
+  assert.equal(check.status, 0, `sync-kernel-ops --check: ${check.stderr.trim() || check.stdout.trim()}`)
+})
+
 test('the generated icon module has not drifted from icon-cut.html', () => {
   const check = spawnSync(process.execPath, [join(here, '..', 'scripts', 'sync-icons.mjs'), '--check'], {encoding: 'utf8'})
   assert.equal(check.status, 0, `sync-icons --check: ${check.stderr.trim() || check.stdout.trim()}`)
@@ -85,6 +90,7 @@ const HONEST_FAMILY = {
   owner: 'Acme Instruments',
   browser: ['acme'],
   writers: ['shell.setAcmeGain'],
+  writerAuthority: 'SDK test fixture — arms its own gain path',
   paramsGrammar: 'acme/parameter-address/v1',
   devices: [
     {
@@ -206,7 +212,7 @@ test('transport rows and time strata obey their laws', () => {
   // (the second binding lands, the gate names the double-booking).
   five.loadAgentShellFamilies()
   sdkDefine.admitFamily({...HONEST_FAMILY, transport: [{mode: 'live', row: 'tempo-signature', face: 'probe', key: 'gain'}]})
-  sdkDefine.admitFamily({...HONEST_FAMILY, id: 'acme-two', owner: 'Two', writers: ['shell.setAcmeGain'], transport: [{mode: 'live', row: 'tempo-signature', face: 'probe', key: 'gain'}]})
+  sdkDefine.admitFamily({...HONEST_FAMILY, id: 'acme-two', owner: 'Two', writers: ['shell.setAcmeGain'], writerAuthority: 'test fixture', transport: [{mode: 'live', row: 'tempo-signature', face: 'probe', key: 'gain'}]})
   let booked = sdkValidate.validateAdmittedWorld()
   assert.ok(booked.cross.some(fault => fault.includes('transport double-booking')), booked.cross.join(' | '))
   door.resetFamilyManifestsForTest()
@@ -400,6 +406,61 @@ test('the transport-slot ontology has not drifted from icon-cut.html (marks, pai
   // The play · stop · record cell's rationale, verbatim too.
   const {TRANSPORT_PLAY_CELL} = await import('../src/inhabitants/sdk/modes.ts')
   assert.ok(specimen.includes(TRANSPORT_PLAY_CELL.rationale), 'the play cell rationale byte-matches')
+  // BOTH directions: every module slot must also exist in the specimen —
+  // a slot invented module-side without a cut in the specimen passes no gate.
+  for (const slot of TRANSPORT_SLOTS) {
+    assert.ok(
+      [...entries].some(([, label]) => label === slot.label),
+      `${slot.label}: the module's slot is cut in the specimen (no module-only ontology)`,
+    )
+  }
+  assert.equal(TRANSPORT_SLOTS.length, entries.length, 'the ontology and the specimen carry the same slot count')
+})
+
+test('write-path membership: kernel ops, known tools, and the writers authority', () => {
+  door.resetFamilyManifestsForTest()
+  // A kernel path naming no real op refuses (the union is generated from the kernel's types).
+  assert.throws(() => sdkDefine.admitFamily({
+    ...HONEST_FAMILY,
+    devices: [{...HONEST_FAMILY.devices[0], params: [sdkDefine.reading({key: 'x', title: 'X', type: 'string', writePath: 'kernel:nonexistent_op'})]}],
+  }), /names no kernel op/)
+  // An unknown tool refuses.
+  assert.throws(() => sdkDefine.admitFamily({
+    ...HONEST_FAMILY,
+    devices: [{...HONEST_FAMILY.devices[0], params: [sdkDefine.stringParam({key: 'x', title: 'X', type: 'string', writePath: 'magic-wand:do it'})]}],
+  }), /unknown tool/)
+  // Self-armed writers without an authority refuse; with one they admit.
+  assert.throws(() => sdkDefine.admitFamily({
+    ...HONEST_FAMILY, writers: ['shell.setAcmeGain'], writerAuthority: undefined,
+  }), /carry an authority/)
+  door.resetFamilyManifestsForTest()
+  five.loadAgentShellFamilies()
+  sdkDefine.admitFamily(HONEST_FAMILY) // carries its writerAuthority
+  assert.equal(sdkValidate.validateAdmittedWorld().byFamily.get('acme')?.length ?? 0, 0)
+})
+
+test('honesty laws closed: waiting faces carry no presentation data; modulation names its cause', () => {
+  door.resetFamilyManifestsForTest()
+  five.loadAgentShellFamilies()
+  // A waiting face with modes/formats refuses (dead presentation data).
+  assert.throws(() => sdkDefine.admitFamily({
+    ...HONEST_FAMILY,
+    devices: [{...HONEST_FAMILY.devices[0], admission: 'waiting', note: 'waits', modes: ['live'], formats: {live: 'chain-plate'}}],
+  }), /dead data|no modes or formats/)
+  // A modulated row names a modulator no family declares — the world gate faults it.
+  sdkDefine.admitFamily({
+    ...HONEST_FAMILY, id: 'acme-mod',
+    devices: [{...HONEST_FAMILY.devices[0], params: [
+      sdkDefine.numberParam({key: 'gain', title: 'Gain', type: 'number', range: {min: 0, max: 1}, modulatedBy: 'actuation.session.telemetry'}),
+      sdkDefine.numberParam({key: 'trim', title: 'Trim', type: 'number', range: {min: 0, max: 1}, modulatedBy: 'nowhere.at.all'}),
+    ]}],
+  })
+  const gate = sdkValidate.validateAdmittedWorld()
+  assert.ok(
+    gate.cross.some(fault => fault.includes('modulation honesty') && fault.includes('nowhere.at.all')),
+    gate.cross.join(' | '),
+  )
+  assert.ok(!gate.cross.some(fault => fault.includes('actuation.session.telemetry')), 'the real observable passes')
 })
 
 test(`the mode alts and specimen names are carried (specimen mode rows)`, async () => {

@@ -54,9 +54,14 @@ O-I docs/research/ableton-live-12.0.25/ui/UI-EVIDENCE.md  the measured chrome (d
    (`SDK_PARAM_TYPES`), `writePath` ONLY where a real owner write exists
    today (`kernel:<op>` | `shell.<setter>` | `<tool>:<command>`); a row
    without one IS a reading — add a verbatim `disclosure` when the source
-   is absent. A `shell.` path must be ARMED: by the shell, or declared on
-   the family's `writers` (a fixture arms its own fixture paths). The law
-   runs at admission, on the extension path, and in the world gate. Waiting faces name the owner they wait for and carry no body.
+   is absent. Every path is MEMBERED: a `shell.` path must be armed by
+   the shell or declared on the family's `writers` with a
+   `writerAuthority` (a fixture arms its own and names itself); a
+   `kernel:` path must name a real op (`sdk/kernelOps.ts`, generated from
+   the kernel's types); a `<tool>:` path must name a known tool. The law
+   runs at admission, on the extension path, and in the world gate.
+   Modulation honesty: a row's `modulatedBy` must name an observable some
+   admitted family declares as telemetry. Waiting faces name the owner they wait for and carry no body.
    A dishonest declaration throws at admission naming each fault — fix the
    declaration, never the gate.
 

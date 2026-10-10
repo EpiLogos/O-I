@@ -25,6 +25,7 @@ import {allSdkParamRows, allTransportBindings, familyProduct, familyWriters} fro
 import {isIconName} from './icons.ts'
 import {DEVICE_FORMATS, SDK_MODES, TRANSPORT_ROWS, isSdkMode} from './modes.ts'
 import {PRODUCT_IDS, isKnownProduct} from './products.ts'
+import {KNOWN_TOOLS, isKernelOp, isKnownTool} from './kernelOps.ts'
 
 // ---------------------------------------------------------------------------
 // the parameter grammar
@@ -82,14 +83,21 @@ export function validateSdkDevice(device: DeviceDeclaration): readonly string[] 
   const waiting = device.admission === 'waiting'
   if (waiting && !device.note) claim('a waiting face names the owner it waits for (note)')
 
-  // Mode scoping and per-mode formats: the modes and shapes the ontology declares.
+  // Mode scoping and per-mode formats: the modes and shapes the ontology
+  // declares — and a waiting face carries no presentation data at all
+  // (declared, waiting, honest: no body, no scopes, no shapes).
   for (const mode of device.modes ?? []) {
     if (!isSdkMode(mode)) claim(`mode "${mode}" is not one of the shell's modes (${SDK_MODES.join(' | ')})`)
+  }
+  if (waiting && (device.modes?.length || Object.keys(device.formats ?? {}).length)) {
+    claim('a waiting face carries no modes or formats — presentation data on a face whose owner has not landed is dead data')
   }
   for (const [mode, format] of Object.entries(device.formats ?? {})) {
     if (!isSdkMode(mode)) claim(`format key "${mode}" is not one of the shell's modes (${SDK_MODES.join(' | ')})`)
     else if (!(DEVICE_FORMATS as readonly string[]).includes(format)) {
       claim(`format "${format}" is not in the device ontology (${DEVICE_FORMATS.join(' | ')})`)
+    } else if (device.modes?.length && !device.modes.includes(mode as never)) {
+      claim(`format key "${mode}" is outside the face's declared mode scope`)
     }
   }
 
@@ -145,18 +153,29 @@ export function validateSdkParam(input: ParamInput): readonly string[] {
   if (input.writePath !== undefined) {
     if (!isWritePath(input.writePath)) {
       faults.push(`writePath "${input.writePath}" is not an owner path — use kernel:<op>, shell.<setter>, or <tool>:<command>`)
+    } else if (input.writePath.startsWith('kernel:')) {
+      const op = input.writePath.slice('kernel:'.length)
+      if (!isKernelOp(op)) {
+        faults.push(`writePath "${input.writePath}" names no kernel op — the kernel's union is KERNEL_OPS (generated from the kernel's types); pick a real op`)
+      }
+    } else if (input.writePath.includes(':') && !input.writePath.startsWith('shell.')) {
+      const tool = input.writePath.slice(0, input.writePath.indexOf(':'))
+      if (!isKnownTool(tool)) {
+        faults.push(`writePath "${input.writePath}" names an unknown tool — known native-owner tools: ${KNOWN_TOOLS.join(', ')}`)
+      }
     }
   }
   return faults
 }
 
-/** The writer-membership law (family level, where `writers` is known): a
- * `shell.` path must be armed by the shell or declared by this family.
- * `kernel:` and `<tool>:` paths are shape-checked here; their unions live
- * with their owners (kernel op union, the tool's CLI) — a path that passes
- * shape but names nothing is a fault the owner's world gate catches on
- * first exercise, and the honesty note travels on the row. The writers
- * array itself is shape-checked too (N-G): a declaration cannot self-arm
+/** The writer-membership law (family level, where `writers` is known):
+ * a `shell.` path must be armed by the shell or declared by this family
+ * WITH an authority (self-arming is a commission, not a convenience — the
+ * authority names who commissions it, a fixture names itself); a `kernel:`
+ * path must name a real op of the kernel's union (kernelOps.ts, generated
+ * from the kernel's own types); a `<tool>:` path must name a known native-
+ * owner tool (the command stays with the tool's own repository). The
+ * writers array itself is shape-checked too: a declaration cannot self-arm
  * malformed paths. */
 export function validateFamilyWriters(familyId: string, writers: readonly string[] | undefined, params: readonly SdkParamRow[]): readonly string[] {
   const faults: string[] = []
@@ -166,12 +185,30 @@ export function validateFamilyWriters(familyId: string, writers: readonly string
     }
   }
   const armed = new Set([...ARMED_SHELL_SETTERS, ...writers ?? []])
+  const selfArmed = (writers ?? []).filter(writer => !ARMED_SHELL_SETTERS.includes(writer))
+  if (selfArmed.length) {
+    const authority = FAMILY_WRITER_AUTHORITIES.get(familyId)
+    if (!authority || !authority.trim()) {
+      faults.push(`${familyId}: self-armed writers (${selfArmed.join(', ')}) carry an authority — set writerAuthority on the family (who commissions the arming; a fixture names itself)`)
+    }
+  }
   for (const row of params) {
     if (row.writePath?.startsWith('shell.') && !armed.has(row.writePath)) {
-      faults.push(`${familyId}/${row.deviceInstance}/${row.key}: writePath "${row.writePath}" is armed by no one — the shell arms ${ARMED_SHELL_SETTERS.join(', ')}; arm it in the shell first, or declare it on this family's writers (a fixture arms its own)`)
+      faults.push(`${familyId}/${row.deviceInstance}/${row.key}: writePath "${row.writePath}" is armed by no one — the shell arms ${ARMED_SHELL_SETTERS.join(', ')}; arm it in the shell first, or declare it on this family's writers with an authority`)
     }
   }
   return faults
+}
+
+/** The authorities a family declared for its self-armed writers — keyed by
+ * family, registered by the kit at admission (define.ts). */
+const FAMILY_WRITER_AUTHORITIES = new Map<string, string>()
+
+/** Register (or clear) a family's writer authority — the kit calls this at
+ * admission and the door reset clears it. Exposed for define.ts. */
+export function registerWriterAuthority(familyId: string, authority: string | undefined): void {
+  if (authority) FAMILY_WRITER_AUTHORITIES.set(familyId, authority)
+  else FAMILY_WRITER_AUTHORITIES.delete(familyId)
 }
 
 // ---------------------------------------------------------------------------
@@ -213,11 +250,6 @@ export function validateDeclaredFamily(
       }
     }
     if (device.modes && !device.modes.length) faults.push(`${manifest.id}/${device.id}: modes, when declared, name at least one mode`)
-    for (const mode of Object.keys(device.formats ?? {})) {
-      if (device.modes && !device.modes.includes(mode as never)) {
-        faults.push(`${manifest.id}/${device.id}: format key "${mode}" is outside the face's declared mode scope`)
-      }
-    }
   }
 
   // §15: consumed strata are the locked five; contributions are free material names.
@@ -322,6 +354,18 @@ export function validateAdmittedWorld(): WorldGateResult {
       cross.push(`transport double-booking: "${key}" is bound by families "${prior}" and "${binding.family}" — one meaning per mode's transport row`)
     } else {
       rowOwners.set(key, binding.family)
+    }
+  }
+
+  // §14's modulation honesty, made checkable: a row that names a modulator
+  // must name an observable some admitted family actually declares.
+  const observables = new Set<string>()
+  for (const manifest of allFamilyManifests()) {
+    if (typeof manifest.telemetry === 'string') observables.add(manifest.telemetry)
+  }
+  for (const row of allSdkParamRows()) {
+    if (row.modulatedBy && !observables.has(row.modulatedBy)) {
+      cross.push(`modulation honesty: "${row.family}/${row.deviceInstance}/${row.key}" names modulator "${row.modulatedBy}", which no admitted family declares as telemetry — nothing moves without a visible cause`)
     }
   }
 

@@ -40,7 +40,7 @@ import type {IconName} from './icons.ts'
 import type {DeviceFormat, SdkModeName} from './modes.ts'
 import {MODE_DEFAULT_FORMAT} from './modes.ts'
 import type {NewProductAuthority} from './products.ts'
-import {validateDeclaredFamily, validateFamilyWriters, validateSdkDevice} from './validate.ts'
+import {registerWriterAuthority, validateDeclaredFamily, validateFamilyWriters, validateSdkDevice} from './validate.ts'
 
 // ---------------------------------------------------------------------------
 // §14 parameter rows (the grammar's types live in validate.ts — the law
@@ -59,6 +59,8 @@ export type SdkParamRow = Omit<AgentParamAddress, 'range'> & {
   readonly title: string
   /** The control's mark from the cut, when the row renders one. */
   readonly icon?: IconName
+  /** The telemetry observable that moves this row, when modulated. */
+  readonly modulatedBy?: string
 }
 
 export interface ParamRange {
@@ -74,6 +76,10 @@ interface ParamInputBase {
   /** The row's unit — carried top-level, matching the verified address
    * table's grammar (scalar controls also read it off the range). */
   readonly unit?: string
+  /** The modulator: the telemetry observable that moves this row (§14 —
+   * every modulated parameter shows its modulator). The gate checks the
+   * observable against the admitted families' telemetry declarations. */
+  readonly modulatedBy?: string
   /** The path the owner writes; ABSENT = the row is a reading. */
   readonly writePath?: string
   /** Verbatim disclosed absence or partial support. */
@@ -194,6 +200,10 @@ export interface FamilyDeclaration {
    * their own fixture writers; real families' setters must also be armed in
    * the shell — the gate checks both). */
   readonly writers?: readonly string[]
+  /** The authority for self-armed writers — who commissions the arming; a
+   * fixture names itself. Required when `writers` carries a path the shell
+   * does not already arm. */
+  readonly writerAuthority?: string
 }
 
 export interface AdmittedFamily {
@@ -353,7 +363,7 @@ function buildRows(family: FamilyManifestId, devices: readonly DeviceDeclaration
 }
 
 function kitRow(family: FamilyManifestId, deviceInstance: string, input: ParamInput): SdkParamRow {
-  const {key, title, icon, unit, writePath, disclosure, type, ...rest} = input
+  const {key, title, icon, unit, modulatedBy, writePath, disclosure, type, ...rest} = input
   return {
     family,
     deviceInstance,
@@ -361,6 +371,7 @@ function kitRow(family: FamilyManifestId, deviceInstance: string, input: ParamIn
     title,
     ...(icon ? {icon} : {}),
     ...(unit ? {unit} : {}),
+    ...(modulatedBy ? {modulatedBy} : {}),
     type,
     ...(type === 'enumerated' ? {values: (rest as EnumParamInput).values} : {}),
     ...(type === 'number' || type === 'duration'
@@ -397,6 +408,7 @@ export function buildFamilyDeclaration(declaration: FamilyDeclaration): {
  * presentation artifacts. Throws with the fault list when the declaration
  * breaks the law — a family that would fail the gate never reaches the door. */
 export function admitFamily(declaration: FamilyDeclaration): AdmittedFamily {
+  registerWriterAuthority(declaration.id, declaration.writerAuthority)
   // §12 exclusivity speaks first (door-state law): one product family per
   // product — a second family for a bound product composes through
   // extensions instead, whatever else its declaration carries.

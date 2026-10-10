@@ -61,8 +61,9 @@ export function PopOut({size = 10, title, className, style}: MarkProps) {
 }
 
 /** A filled kind mark — the specimen's kindShape drawings (day, doc,
- * source, world, agent, ghost, …). Refuses an unknown kind loudly in
- * development by rendering nothing: a face asks for a NAMED mark. */
+ * source, world, agent, ghost, …). The type checker refuses an unknown
+ * kind (the parameter is the KindShapeName union); at runtime an unknown
+ * kind renders nothing — a face asks for a NAMED mark. */
 export function KindMark({kind, size = 14, title, className, style}: MarkProps & {readonly kind: KindShapeName}) {
   return markSvg(KIND_SHAPES[kind], size, title, className, style)
 }

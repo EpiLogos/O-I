@@ -116,17 +116,27 @@ Write-path grammar: `kernel:<op>` (the kernel op union), `shell.<setter>`
 CLI — `workcell-cli:git commit`). **A row without a writePath IS a
 reading** — that is the grammar, not a convention.
 
-**The writers law:** a `shell.` path must be armed by someone. The gate
-checks it against the shell's armed setters (`ARMED_SHELL_SETTERS`,
-derived from the verified address table) and against the declaring
-family's own `writers` — so a fixture can arm its fixture paths, but an
-invented setter refuses with the armed set named. `kernel:`/`<tool>:`
-paths are shape-checked; their unions live with their owners, and a path
-that names nothing is caught on first exercise. The same law runs on the
-extension path and again in the world gate. Two families may declare the
-same writer (shell setters are global); a family may pre-arm a path no
-row exercises yet — that is the fixture boundary, disclosed here, and an
-authority-carrying writers claim is the tightening if it ever matters.
+**The writers law:** every write path is membered. A `shell.` path must
+be armed by the shell (`ARMED_SHELL_SETTERS`, derived from the verified
+address table) or declared on the family's `writers` — and self-arming
+carries an authority (`writerAuthority`: who commissions the arming; a
+fixture names itself). A `kernel:` path must name a real op of the
+kernel's own union (`kernelOps.ts`, generated from the kernel's types by
+`scripts/sync-kernel-ops.mjs` — 78 ops, drift-gated). A `<tool>:`
+path must name a known native-owner tool (`workcell-cli`, `ctrl`,
+`aikit`, `oi`); the command stays with the tool's repository. The law
+runs at admission, on the extension path, and again in the world gate.
+
+**Modulation honesty (§14):** a row may declare `modulatedBy` — the
+telemetry observable that moves it. The gate checks the observable
+against every admitted family's telemetry declaration ("nothing moves
+without a visible cause"), and the kit's controls show the modulation on
+the row.
+
+**Panel slots** (`InhabitantPanelSlot`) are not a fifth surface: their
+slots (`center`, `right-dock`, `bottom`, `browser-section`) are positions
+WITHIN the four §16 surfaces, and the gate checks the names against the
+registry.
 
 A declaration that breaks the law throws at admission, naming each fault.
 
@@ -241,9 +251,11 @@ native controls.
   October 2026 mode-union dirt in `App.tsx`/`WorldBrowser.tsx` was
   repaired by its owner mid-lane; expect such dirt to come and go on a
   shared lane.)
-- §16's four-surfaces law is schema-shaped (the manifest cannot carry a
-  fifth surface), and `panelSlots` — an exposure surface §16's enumeration
-  does not name — awaits an owner ruling. §14's modulation honesty
-  ("every modulated parameter shows its modulator") has no kit surface
-  yet: the kit has no modulator field; a family that modulates must show
-  the modulator in its own face until the kit grows one.
+- §16's four-surfaces law is schema-shaped: the manifest cannot carry a
+  fifth surface. Panel slots are positions within the four surfaces (see
+  the writers-law section above); an exposure that genuinely needs a
+  fifth place is a §16 amendment for the owner, not an SDK escape hatch.
+- `<tool>:<command>` commands are shape-checked and their tool ids
+  membered; the command surface itself lives in each tool's repository —
+  a wrong command on a right tool is caught on first exercise, and the
+  row's disclosure carries the absence.
