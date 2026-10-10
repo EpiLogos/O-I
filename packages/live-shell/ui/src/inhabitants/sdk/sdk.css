@@ -329,3 +329,19 @@
   font-size: 10px;
   color: var(--sdk-dim);
 }
+
+/* — modulation honesty (§14): a modulated row wears its cause — */
+
+.sdk-modulator {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 4px;
+  border: 1px solid var(--sdk-accent);
+  border-radius: 50%;
+  vertical-align: 1px;
+}
+
+.sdk-scalar--modulated .sdk-scalar__draft {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--sdk-accent) 45%, transparent);
+}

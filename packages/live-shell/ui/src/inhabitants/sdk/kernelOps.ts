@@ -3,7 +3,11 @@
  * scripts/sync-kernel-ops.mjs — regenerate, never hand-edit. This is the
  * writer-membership law's registry: a `kernel:<op>` write path must name
  * one of these ops; a `<tool>:<command>` path must name one of these
- * tools. Drift is gated by tests/device-sdk.test.mjs.
+ * tools. Drift is gated by tests/device-sdk.test.mjs — against the
+ * WORKING TREE (the kernel the shell actually runs against); while a lane
+ * carries an uncommitted kernel-op addition, the generated module carries
+ * it too and a fresh HEAD checkout regenerates it identically only after
+ * that lane lands.
  *
  * Pure: no view, no store, no I/O. */
 

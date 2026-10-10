@@ -1,6 +1,6 @@
 # The Device SDK — how agents (and humans) build devices for the shell
 
-Standing: **device-sdk v1, 9 October 2026**, by `agent:zcode-device-sdk` on
+Standing: **device-sdk v1.1, 10 October 2026**, by `agent:zcode-device-sdk` on
 the standing new-shell lane. The SDK is the development loop the owner
 commissioned: point an agent at functionality — from the UX spine and the
 capability matrices, at the app, at any gap — and the agent builds the
@@ -232,9 +232,12 @@ native controls.
 ## Honest known limits
 
 - The kit's presentation registries hold kit-declared faces only; the five
-  agent-shell families and QL predate the kit — the world gate validates
-  their manifests and cross-checks the address table, but their plates
-  render through their own components until their owners adopt the kit.
+  agent-shell families, quaternal-logic and atlas-earth predate the kit —
+  the world gate validates their manifests and cross-checks the address
+  table, but their plates render through their own components. Wiring them
+  onto the kit is those families' owners' work and touches files that
+  carry other lanes' uncommitted changes today; it is not skipped, it is
+  not mine to overwrite.
 - `icon-cut.html` is the icon source; the roster in the new-shell lane's
   `glyph-language/` (79 marks) is a prepared, separate system — not wired
   here. One cut, one sync (`npm run devices:sync-icons -- --check` (the `--` matters: without it npm swallows the flag and the command REGENERATES instead of checking)).

@@ -201,9 +201,17 @@ export function ScalarParam({param, base, draft, onDraft, onCommit, onCancel, di
     }
   }
 
+  const modulated = param.modulatedBy ? ` sdk-scalar--modulated` : ''
   return (
-    <div className={`sdk-row${dirty ? ' sdk-row--dirty' : ''}`}>
-      <label className="sdk-row__name" htmlFor={inputId}>{param.title}</label>
+    <div className={`sdk-row${dirty ? ' sdk-row--dirty' : ''}${modulated}`}>
+      <label
+        className="sdk-row__name"
+        htmlFor={inputId}
+        title={param.modulatedBy ? `Modulated by ${param.modulatedBy}` : undefined}
+      >
+        {param.modulatedBy ? <span className="sdk-modulator" aria-label={`modulated by ${param.modulatedBy}`} /> : null}
+        {param.title}
+      </label>
       <div
         id={inputId}
         className={`sdk-scalar sdk-scalar--${presentation}`}
@@ -368,7 +376,10 @@ export interface ReadingRowProps {
 export function ReadingRow({param, value}: ReadingRowProps) {
   return (
     <div className="sdk-row sdk-row--reading" title={param.disclosure ?? param.title}>
-      <span className="sdk-row__name">{param.title}</span>
+      <span className="sdk-row__name">
+        {param.modulatedBy ? <span className="sdk-modulator" aria-label={`modulated by ${param.modulatedBy}`} /> : null}
+        {param.title}
+      </span>
       <span className="sdk-chip">
         {value === undefined || value === ''
           ? <em className="sdk-chip__absent">{param.disclosure ?? 'no reading'}</em>
