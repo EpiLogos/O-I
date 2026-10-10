@@ -337,6 +337,33 @@ export function sdkParamRows(family: FamilyManifestId): readonly SdkParamRow[] {
   return paramRows.get(family) ?? []
 }
 
+/** Adopt presentation artifacts (plate records + §14 rows) for an
+ * ALREADY-admitted family — the adoption loaders' door (the verified
+ * address table's rows enter the kit here; no door writes, the family's
+ * owner-authored manifest stays theirs). Validated: the rows must agree
+ * with the verified address table (they usually ARE table rows) and
+ * address faces the manifest actually declares. */
+export interface AdoptedArtifacts {
+  readonly family: FamilyManifestId
+  readonly owner: string
+  readonly presentation: FacePresentation
+  readonly rows: readonly SdkParamRow[]
+}
+
+export function registerAdoptedArtifacts(artifacts: readonly AdoptedArtifacts[]): void {
+  for (const artifact of artifacts) {
+    if (!familyManifest(artifact.family)) {
+      throw new Error(`Cannot adopt artifacts for "${artifact.family}" — the family is not admitted; owners declare first.`)
+    }
+  }
+  for (const artifact of artifacts) {
+    registerFamilyArtifacts(artifact.family, artifact.owner, [], artifact.rows)
+    const plate = new Map(presentations.get(artifact.family) ?? [])
+    plate.set(artifact.presentation.faceId, artifact.presentation)
+    presentations.set(artifact.family, plate)
+  }
+}
+
 /** Every kit-registered row, across families (rows carry their family). */
 export function allSdkParamRows(): readonly SdkParamRow[] {
   return [...paramRows.values()].flat()
@@ -489,5 +516,6 @@ export function declareDeviceExtension(declaration: DeviceExtensionDeclaration):
  * `sdk/define.ts`). */
 export {SDK_MODES, SDK_MODE_DECLARATIONS, TRANSPORT_ROWS, TRANSPORT_SLOTS, DEVICE_FORMATS, MODE_DEFAULT_FORMAT, sdkMode, isSdkMode, transportSlot} from './modes.ts'
 export type {SdkModeName, SdkMode, TransportRowId, TransportSlot, DeviceFormat} from './modes.ts'
+export {onFamilyManifestReset} from '../familyManifest.ts'
 export {PRODUCTS, product, isKnownProduct} from './products.ts'
 export type {ProductRecord, NewProductAuthority} from './products.ts'

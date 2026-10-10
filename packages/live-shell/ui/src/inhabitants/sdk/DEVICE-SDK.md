@@ -44,6 +44,9 @@ src/inhabitants/sdk/
 ├── marks.tsx         the lane's components for the marks beyond the 24×24
 │                     dictionary (chevrons, kind shapes, wood marks) — by the
 │                     co-worker lane, consuming icons.ts
+├── adoptVerifiedRows.ts  adopts the verified address table into the kit's
+│                     registries (the five agent-shell families' §14 layer,
+│                     identity with the table, no door writes)
 ├── scaffold.ts       pure generator for a new family's three files
 ├── dev/              the visual harness (`npm run devices:dev`, port 5207)
 └── DEVICE-SDK.md     this file
@@ -231,13 +234,13 @@ native controls.
 
 ## Honest known limits
 
-- The kit's presentation registries hold kit-declared faces only; the five
-  agent-shell families, quaternal-logic and atlas-earth predate the kit —
-  the world gate validates their manifests and cross-checks the address
-  table, but their plates render through their own components. Wiring them
-  onto the kit is those families' owners' work and touches files that
-  carry other lanes' uncommitted changes today; it is not skipped, it is
-  not mine to overwrite.
+- The five agent-shell families' §14 rows are IN the kit through the
+  adoption loader (`adoptVerifiedRows()` — identity with the verified
+  table, called after the families load; the racks' fidelity-bound cards
+  keep their own markup until their lane rebinds it, which is that lane's
+  deliberate refactor, not an SDK gap). Quaternal-logic and atlas-earth
+  keep their own faces; their owners adopt the kit when they take that
+  refactor on.
 - `icon-cut.html` is the icon source; the roster in the new-shell lane's
   `glyph-language/` (79 marks) is a prepared, separate system — not wired
   here. One cut, one sync (`npm run devices:sync-icons -- --check` (the `--` matters: without it npm swallows the flag and the command REGENERATES instead of checking)).

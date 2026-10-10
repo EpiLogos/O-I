@@ -417,6 +417,33 @@ test('the transport-slot ontology has not drifted from icon-cut.html (marks, pai
   assert.equal(TRANSPORT_SLOTS.length, entries.length, 'the ontology and the specimen carry the same slot count')
 })
 
+test('the verified address table adopts into the kit, identity with the map', async () => {
+  door.resetFamilyManifestsForTest()
+  five.loadAgentShellFamilies()
+  const {adoptVerifiedRows} = await import('../src/inhabitants/sdk/adoptVerifiedRows.ts')
+  adoptVerifiedRows()
+  // The kit's rows for actuation ARE the table's rows (identity).
+  const rows = sdkDefine.sdkParamRows('actuation')
+  assert.ok(rows.length >= 7, `actuation's adopted rows (${rows.length})`)
+  const effort = rows.find(row => row.deviceInstance === 'agent' && row.key === 'effort')
+  assert.equal(effort.writePath, 'shell.setEffort')
+  assert.equal(effort.title, 'Effort')
+  // The world gate stays green over the adopted layer (the ownership-map
+  // cross-check is trivially satisfied — the rows ARE the map).
+  const gate = sdkValidate.validateAdmittedWorld()
+  assert.equal(gate.byFamily.size, 0, `gate: ${[...gate.byFamily].map(([id, faults]) => `${id}: ${faults.join('; ')}`).join(' | ')}`)
+  assert.deepEqual(gate.cross, [])
+  // facesForMode resolves the chain faces in Live mode, chain-plate format.
+  const liveFaces = sdkDefine.facesForMode('live')
+  const gateway = liveFaces.find(face => face.family === 'actuation' && face.faceId === 'gateway')
+  assert.ok(gateway, 'the gateway face presents in live')
+  assert.equal(gateway.format, 'chain-plate')
+  assert.equal(gateway.owner, 'Actuation')
+  // Idempotent: a second adoption registers nothing twice.
+  adoptVerifiedRows()
+  assert.equal(sdkDefine.sdkParamRows('actuation').length, rows.length)
+})
+
 test('write-path membership: kernel ops, known tools, and the writers authority', () => {
   door.resetFamilyManifestsForTest()
   // A kernel path naming no real op refuses (the union is generated from the kernel's types).
