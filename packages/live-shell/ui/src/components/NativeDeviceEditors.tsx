@@ -7,6 +7,7 @@ import './NativeDeviceEditors.css'
 import {NativeMorphDrive} from './NativeMorphDrive'
 import {PinAffordance} from './NativePinControls'
 import {MORPH_CONTROL_PATHS} from './nativeMorphController'
+import {modulationOf, modulationView, type Modulation} from './nativeModulation'
 import {NativeColourField} from './NativeColourField'
 import {COLOUR_CONTROL_PATHS} from './nativeColourController'
 import {FIELD_FACE_MODELS} from './nativeFieldFaceModel'
@@ -50,9 +51,9 @@ const forceInputTarget=(reading:NativeEditorReading,entity:Entity,parameter:stri
 const entityInputTarget=(reading:NativeEditorReading,entity:Entity,parameter:string,family:string):NativeInputTarget=>({scope:'entity',entity_id:entity.id,entity_ref:reading.entityOccurrences[entity.id]??null,step_id:null,parameter,family,axis:null})
 
 /** Exact entry commits explicitly, so opening another disclosure retains the draft. */
-function NumberControl({label, value, binding, disabled, onCommit, automated, observed, captureCurrent, material, pin}: {
+function NumberControl({label, value, binding, disabled, onCommit, modulation, captureCurrent, material, pin}: {
   label: string; value: number; binding: Pick<NativeBinding, 'hardMin' | 'hardMax' | 'step' | 'unit'>
-  disabled: boolean; onCommit: (value: number,basis?:NativeEditorBasis) => Promise<NativeEditorReply>; automated?: boolean; observed?: number
+  disabled: boolean; onCommit: (value: number,basis?:NativeEditorBasis) => Promise<NativeEditorReply>; modulation?: Modulation | null
   captureCurrent: CaptureCurrent; material:Pick<NativeInputMaterial,'basis'|'target'>; pin?: ReactNode
 }) {
   const custody=useDeviceInputCustody(material,'text'),recovered=custody.receipt?.copy.input
@@ -84,8 +85,9 @@ function NumberControl({label, value, binding, disabled, onCommit, automated, ob
       }).catch(cause=>{if(mounted.current&&draftEpoch.current===submittedEpoch&&commitCurrent.current())setError('Retained edit · '+(cause instanceof Error?cause.message:String(cause)))}).finally(()=>{inFlight.current=false})
     }
   }
-  return <label className={`native-number ${automated ? 'is-automated' : ''}`}>
-    <span>{label}{automated && <i title="Automation drives this target">A</i>}{pin}</span>
+  const view = modulationView(modulation)
+  return <label className={`native-number ${view?.named ? 'is-automated' : ''}`}>
+    <span>{label}{view?.named && <i title={view.accessible} aria-hidden="true">A</i>}{pin}</span>
     <div><input aria-label={label} type="text" inputMode="decimal" value={text} disabled={disabled}
       onFocus={() => {focused.current = true;if(restoredFocus.current){commitCurrent.current=captureCurrent();commitTarget.current=onCommit;restoredFocus.current=false} if (!retained) {inputCustody.current=custody;original.current = value;initialText.current=short(value);inputBasis.current=material.basis; commitTarget.current = onCommit;commitCurrent.current=captureCurrent()}}}
       onChange={event => {draftEpoch.current++;setRetained(true); setText(event.target.value);try{retainText(event.target.value);setError('')}catch(cause){const message=cause instanceof Error?cause.message:String(cause);custody.aperture?.failure?.(nativeInputTargetKey(material),message);setError(message)}}}
@@ -94,7 +96,9 @@ function NumberControl({label, value, binding, disabled, onCommit, automated, ob
       <small>{binding.unit ?? ''}</small></div>
     {retained && <small className="native-retained-error">{error || 'Unsubmitted value'}<button type="button" disabled={disabled} onClick={event => {event.preventDefault(); commit()}}>Apply</button><button type="button" onClick={event => {event.preventDefault();discard()}}>Discard</button></small>}
     {!retained && error && <small role="alert" className="native-retained-error">{error}</small>}
-    {automated && observed !== undefined && <small className="native-effective">Effective {short(observed)}</small>}
+    {view && <small className="native-modulation" title={view.accessible}>
+      <span>{view.named ? 'Driven by ' : ''}{view.driven}</span> <span>Base {view.base}</span> <span className="native-effective">Effective {view.effective}</span>
+    </small>}
   </label>
 }
 
@@ -102,10 +106,10 @@ function FieldControl({reading, path, family, disabled, apply, captureCurrent}: 
   const binding = fieldBinding(path)
   if (!binding) return null
   const id = 'field.' + binding.key
-  const automated = reading.scene.automation.some(lane => lane.enabled && lane.target === id)
-  return <NumberControl material={{basis:reading.basis,target:fieldInputTarget(id,family)}} captureCurrent={captureCurrent} label={binding.label} value={baseValue(reading.scene, binding.key)} binding={binding} disabled={disabled} automated={automated}
+  return <NumberControl material={{basis:reading.basis,target:fieldInputTarget(id,family)}} captureCurrent={captureCurrent} label={binding.label} value={baseValue(reading.scene, binding.key)} binding={binding} disabled={disabled}
+    modulation={modulationOf(reading, id)}
     pin={<PinAffordance reading={reading} control={{kind: 'field', path}} label={binding.label} apply={changes => apply(changes)} />}
-    observed={reading.observation?.effectiveValues?.[id]} onCommit={(value,basis) => apply([{kind: 'parameter', target: id, value}],basis)} />
+    onCommit={(value,basis) => apply([{kind: 'parameter', target: id, value}],basis)} />
 }
 
 /** One exact-value control for an entity parameter (a suffix keyed as in entityTargets). Same custody and commit as the Force controls, for any entity family. */
@@ -115,7 +119,7 @@ export function EntityControl({reading, entity, family, suffix, label, disabled,
   if (!binding) return null
   // A frozen suffix (the model's reason, e.g. a Blueprint member's position) is disabled on its own; the other controls keep their state.
   return <NumberControl material={{basis:reading.basis,target:entityInputTarget(reading,entity,binding.target,family)}} captureCurrent={captureCurrent} label={label ?? binding.label} value={binding.value} binding={binding} disabled={disabled || !!frozen}
-    automated={reading.scene.automation.some(lane => lane.enabled && lane.target === binding.target)} observed={reading.observation?.effectiveValues?.[binding.target]}
+    modulation={modulationOf(reading, binding.target)}
     pin={<PinAffordance reading={reading} control={{kind: 'entity', entityId: entity.id, key: suffix}} label={label ?? binding.label} apply={changes => apply(changes)} />}
     onCommit={(value,basis) => apply([{kind: 'parameter', target: binding.target, value}],basis)} />
 }
@@ -263,7 +267,7 @@ function ForceEditor({reading, entity, disabled, apply, captureCurrent}: {readin
     const binding = bindings.find(item => item.key === suffix)
     if (!binding) return null
     return <NumberControl material={{basis:reading.basis,target:forceInputTarget(reading,entity,binding.target)}} captureCurrent={captureCurrent} key={suffix} label={label} value={binding.value} binding={binding} disabled={disabled || entity.locked}
-      automated={reading.scene.automation.some(lane => lane.enabled && lane.target === binding.target)} observed={reading.observation?.effectiveValues?.[binding.target]}
+      modulation={modulationOf(reading, binding.target)}
       onCommit={(value,basis) => apply([{kind: 'parameter', target: binding.target, value}],basis)} />
   }
   return <article className="native-device native-force-device">
@@ -325,16 +329,16 @@ function FieldSurface({reading, family, disabled, apply, captureCurrent}: {readi
 }
 
 export function NativeDeviceEditors({reading, request, onSelectEntity, isPresented, requested, pooled}: NativeDeviceEditorsProps) {
-  const [selected, setSelected] = useState<string | null>(null), [family, setFamily] = useState<FieldFamily>('physics'), [entityFamily, setEntityFamily] = useState<string>('force')
+  const [family, setFamily] = useState<FieldFamily>('physics'), [entityFamily, setEntityFamily] = useState<string>('force')
   const [scope, setScope] = useState<'entity' | 'field'>(reading?.selection.entity_ids.length ? 'entity' : 'field'), [busy, setBusy] = useState(false), [error, setError] = useState<string | null>(null)
   const alive = useRef(true)
   const region=useRef<HTMLElement>(null),lifetime=useRef(0)
   const cutLifetime=useRef<{cut:string;live:boolean}|null>(null)
-  const presentation=useRef({reading,scope,family,selected,isPresented})
-  presentation.current={reading,scope,family,selected,isPresented}
+  const presentation=useRef({reading,scope,family,isPresented})
+  presentation.current={reading,scope,family,isPresented}
   const pending = useRef(false)
   useEffect(() => {alive.current = true;lifetime.current++;if(cutLifetime.current)cutLifetime.current.live=true; return () => {alive.current = false;lifetime.current++;if(cutLifetime.current)cutLifetime.current.live=false}}, [])
-  const readPresentation=():NativeDevicePresentation=>{const now=presentation.current,id=now.selected??now.reading?.selection.entity_ids[0]??null;
+  const readPresentation=():NativeDevicePresentation=>{const now=presentation.current,id=now.reading?.selection.entity_ids[0]??null;
     return {epoch:lifetime.current,reading:now.reading,entity_id:id,entity_ref:id?now.reading?.entityOccurrences[id]??null:null,cut:JSON.stringify([now.reading?.basis.expression_ref,now.reading?.basis.scene_ref,now.scope,now.family,id,id?now.reading?.entityOccurrences[id]:null,now.reading?.selection.entity_ids]),
       presented:alive.current&&!!region.current?.getClientRects().length&&(now.isPresented?.()??true)}}
   const renderPresentation=readPresentation()
@@ -348,8 +352,8 @@ export function NativeDeviceEditors({reading, request, onSelectEntity, isPresent
   useEffect(()=>{if(!readPresentation().presented)renderLifetime.live=false})
   const captureCurrent:CaptureCurrent=()=>{const captured={...renderPresentation,epoch:lifetime.current};return reply=>renderLifetime.live&&currentNativeDeviceReply(captured,readPresentation(),reply)}
   useEffect(() => {
-    const selected = reading?.selection.entity_ids[0] ?? null
-    setSelected(selected); setScope(selected === null ? 'field' : 'entity')
+    const id = reading?.selection.entity_ids[0] ?? null
+    setScope(id === null ? 'field' : 'entity')
   }, [reading?.basis.scene_ref, reading?.selection.entity_ids.join('|')])
   useEffect(() => {
     if (!requested) return
@@ -368,14 +372,14 @@ export function NativeDeviceEditors({reading, request, onSelectEntity, isPresent
     finally {pending.current = false; if (alive.current) setBusy(false)}
   }
   const apply: Apply = (changes, basis) => reading ? invoke({operation: 'apply', basis: basis ?? reading.basis, changes}) : Promise.resolve({ok: false, error: 'Read the native work before editing it.'})
-  const currentEntityId = selected ?? reading?.selection.entity_ids[0]
+  const currentEntityId = reading?.selection.entity_ids[0]
   const entity = reading?.scene.entities.find(item => item.id === currentEntityId)
   if (!reading) return <section ref={region} className="native-devices-empty"><p>Open a native Expression to edit its devices.</p><button onClick={() => void invoke({operation: 'read'})} disabled={busy}>Read current work</button>{error && <p role="alert">{error}</p>}</section>
   const disabled = busy || reading.standing.pending
   const fieldEnabled = family === 'morph' ? reading.scene.engine.morphEnabled === true : family === 'colour' ? reading.scene.engine.colorEnabled !== false : FIELD_FACE_MODELS[family].enabled(reading)
   return <section ref={region} className="native-device-editors" aria-label="Native visual device editors" aria-busy={busy}>
     <div className="native-devices-toolbar">{!pooled && <div className="native-mode-buttons"><button aria-pressed={scope === 'entity'} onClick={() => setScope('entity')}>Entity</button><button aria-pressed={scope === 'field'} onClick={() => setScope('field')}>Field</button></div>}
-      {scope === 'entity' ? <><select aria-label="Device target entity" value={entity?.id ?? ''} disabled={disabled} onChange={event => {if(!captureCurrent()())return;setSelected(event.target.value); onSelectEntity?.(event.target.value)}}><option value="">Choose an object</option>{reading.scene.entities.map(item => <option key={item.id} value={item.id}>{item.name} · {item.kind === 'pin' ? 'Force' : 'Formation'}</option>)}</select>
+      {scope === 'entity' ? <><select aria-label="Device target entity" value={entity?.id ?? ''} disabled={disabled} onChange={event => {if(!captureCurrent()())return; if(event.target.value) onSelectEntity?.(event.target.value)}}><option value="">Choose an object</option>{reading.scene.entities.map(item => <option key={item.id} value={item.id}>{item.name} · {item.kind === 'pin' ? 'Force' : 'Formation'}</option>)}</select>
         {!pooled && entityFamilies().length > 1 && <div className="native-mode-buttons" aria-label="Entity device family">{entityFamilies().map(key => <button key={key} aria-pressed={entityFamily === key} onClick={() => setEntityFamily(key)}>{key === 'force' ? 'Force' : entityFaceModel(key)?.name ?? key}</button>)}</div>}</>
         :pooled ? null : <div className="native-mode-buttons">{(Object.keys(FIELD_FAMILIES) as FieldFamily[]).map(key => <button key={key} aria-pressed={family === key} onClick={() => setFamily(key)}>{FIELD_FAMILIES[key].name}</button>)}</div>}
       {!pooled && <button disabled={disabled || reading.scene.entities.length >= 32} onClick={() => apply([{kind: 'force-insert', position: {x: 0, y: 0, z: 0}}])}>+ Force</button>}

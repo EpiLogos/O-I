@@ -8,7 +8,7 @@ import {
   barMacroCreate, barMacroPoints, barMacroRack, barRangeState, barSlots, clampRangeHandle, rangeFraction, rangeValue,
   readHiddenSlots, SEED_SLOTS, writeHiddenSlots, type BarSlot, type BarToggleSpec,
 } from './nativeBarSlots'
-import {pinScopeMark} from './nativePinMode'
+import {ScopeToggle} from './NativePinControls'
 import {settle} from './nativeFieldHandleModel'
 import './NativeBarStrip.css'
 
@@ -55,10 +55,9 @@ export function BarStrip({reading, apply, run, disabled}: {reading: NativeEditor
       const parameter = barParameter(view, slot.path)
       if (!parameter) return null
       const session = sessionFor(parameter.target, parameter.target, parameter.target, parameterChange(parameter.target))
-      const scope = slot.entryId === undefined ? null : pinScopeMark(view, {kind: 'field', path: slot.path})
       return <span className="bar-slot" key={slot.id}>
         <BarValue parameter={parameter} session={session} disabled={disabled} />
-        {scope && <span className="bar-scope" title={scope === 'shared' ? "Shared across the Expression's Scenes" : 'Local to this Scene'}>{scope === 'shared' ? 'S' : 'L'}</span>}
+        {slot.entryId !== undefined && <ScopeToggle reading={view} control={{kind: 'field', path: slot.path}} apply={apply} label={parameter.label} disabled={disabled} />}
       </span>
     }
     if (slot.kind === 'toggle') return <BarToggle key={slot.id} toggle={slot.toggle} reading={view} apply={apply} disabled={disabled} />

@@ -16,9 +16,9 @@ const [model, strip, {NATIVE_BINDINGS, bindValue}, rack, boundary] = await Promi
   import('../src/components/nativeDeviceStripModel.ts'),
   import(parameters),
   import('../src/components/NativeDeviceRack.tsx'),
-  import('../../../expressions-boundary/src/nativeDeviceWidgets.ts'),
+  import('../../../expressions-boundary/src/expressionsFamilies.ts'),
 ])
-const {DEVICE_FAMILIES} = boundary
+const FAMILY_IDS = boundary.EXPRESSIONS_FAMILIES.map(family => family.id)
 
 const binding = path => {
   const found = NATIVE_BINDINGS.find(row => row.path === path)
@@ -43,16 +43,16 @@ function reading({selection = [], entities = [force()], engine = {}, palette = [
 const EXPECTED = ['physics', 'medium', 'resonance', 'contacts', 'ink', 'depth', 'relational', 'pointer', 'focus', 'morph', 'colour']
 const placed = (...families) => families.map(family => ({id: `${family}-1`, family}))
 
-test('catalogue: each Field device this shell has appears exactly once, Force is the one entity device, and every one is a DEVICE_FAMILIES entry', () => {
+test('catalogue: each Field device this shell has appears exactly once, Force is the one entity device, and every one is a declared Expressions family', () => {
   const families = model.deviceCatalogue().map(device => device.family)
   assert.equal(new Set(families).size, families.length, 'no duplicate families')
   assert.deepEqual(model.deviceCatalogue().filter(device => device.scope === 'field').map(device => device.family).sort(), [...EXPECTED].sort())
   assert.ok(model.deviceCatalogue().filter(device => device.scope === 'entity').map(device => device.family).includes('force'), 'Force is an entity device')
-  for (const family of families) assert.ok(DEVICE_FAMILIES.includes(family), `${family} is a DEVICE_FAMILIES entry`)
+  for (const family of families) assert.ok(FAMILY_IDS.includes(family), `${family} is a declared Expressions family`)
   // The glyph editor lives in its own clip surface and is never a catalogue entry.
   assert.ok(!families.includes('glyph'))
   // What the shell does not yet build a device for is exactly this list; it shrinks as devices land.
-  assert.deepEqual(DEVICE_FAMILIES.filter(family => !families.includes(family)).sort(), ['glyph'])
+  assert.deepEqual(FAMILY_IDS.filter(family => !families.includes(family)).sort(), ['glyph'])
 })
 
 test('descriptors: Field paths are real bindings, groups cover paths exactly, compact is a subset of at most four', () => {

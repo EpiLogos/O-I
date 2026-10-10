@@ -77,6 +77,13 @@ test('the Browser, chosen rack and macro rack are wired to the shared drag rules
   assert.match(search, /event\.key === 'Escape' && query/)
 })
 
+test('parameter browse opens the Parameters category and a device open is the admitted request', () => {
+  assert.equal(drag.PARAMETER_BROWSE_EVENT, 'oi:expression-browse-parameters')
+  assert.deepEqual(drag.parameterBrowsePatch(), {category: 'properties', poolOpen: true, query: ''})
+  assert.deepEqual(drag.admittedDeviceOpen({scope: 'field', family: 'physics'}), {scope: 'field', family: 'physics'})
+  assert.equal(drag.admittedDeviceOpen({scope: 'window', family: 'physics'}), null)
+})
+
 test('new browser styles use shell tokens, not literal colours', async () => {
   for (const name of ['WorldBrowser.css', 'NativeChosenControls.css', 'NativeMaterialBrowser.css']) {
     const css = await read(name)

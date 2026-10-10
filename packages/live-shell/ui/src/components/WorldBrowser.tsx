@@ -15,7 +15,7 @@ import {applyDeviceChanges} from './NativeDevicePoolView'
 import {NativeDevicePool, type DeviceRequest} from './NativeDevicePool'
 import {countLabel, deviceRows, objectRows, rowAfter, type RowKey} from './nativeBrowserModel'
 import {deviceCatalogue} from './nativeDeviceCatalogue.ts'
-import {OPEN_DEVICE_EVENT, parseOpenDevice} from './nativeDrag'
+import {OPEN_DEVICE_EVENT, PARAMETER_BROWSE_EVENT, admittedDeviceOpen, parameterBrowsePatch} from './nativeDrag'
 import './WorldBrowser.css'
 
 type BrowserCategory = 'works' | 'material' | 'objects' | 'properties' | 'devices' | 'files' | 'knowledge'
@@ -59,15 +59,15 @@ export function WorldBrowser() {
   const reportCount = useCallback((id: string, count: number) => setCounts(before => before[id] === count ? before : {...before, [id]: count}), [])
 
   useEffect(() => {
-    const browseParameters = () => {setCategory('properties'); setPoolOpen(true); setQuery('')}
-    window.addEventListener('oi:expression-browse-parameters', browseParameters)
-    return () => window.removeEventListener('oi:expression-browse-parameters', browseParameters)
+    const browseParameters = () => {const patch = parameterBrowsePatch(); setCategory(patch.category); setPoolOpen(patch.poolOpen); setQuery(patch.query)}
+    window.addEventListener(PARAMETER_BROWSE_EVENT, browseParameters)
+    return () => window.removeEventListener(PARAMETER_BROWSE_EVENT, browseParameters)
   }, [])
 
   // One open request from the rack, the parameter browser or the Devices list. It never touches the bottom rack.
   useEffect(() => {
     const openDevice = (event: Event) => {
-      const request = parseOpenDevice((event as CustomEvent<unknown>).detail)
+      const request = admittedDeviceOpen((event as CustomEvent<unknown>).detail)
       if (!request) return
       if (!deviceRef.current) deviceOpener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
       setPoolOpen(true)

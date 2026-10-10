@@ -12,7 +12,7 @@ import {NativeTakes} from './NativeTakes'
 import {dispatchOpenDevice} from './nativeDrag'
 import {createNativeContentActions, readNativeExpressionsContent} from '../shell/nativeContent'
 import type {DetailMode} from './DeviceChainPanel'
-import type {NativeDetailConfigurationFamily} from '../shell/compositionViews'
+import {openDetailSettings, toggleDetailSettings, type NativeDetailConfigurationFamily} from '../shell/compositionViews'
 import './NativeWorldDetail.css'
 
 interface NativeDetailDestinationBasis {
@@ -154,7 +154,7 @@ export function NativeWorldDetail({mode, expand, collapse, presentMode, presentN
       <span className="native-detail-title" title={reading ? `${reading.basis.expression_ref}\n${reading.basis.scene_ref}` : undefined}>{reading?.scene.name}</span>
       <span className="native-detail-actions">
         {mode==='clip'&&<><button aria-pressed={clipSurface==='scene'} onClick={()=>setClipSurface('scene')}>Scene</button><button aria-pressed={clipSurface==='glyph'} onClick={()=>setClipSurface('glyph')}>States</button><button aria-pressed={clipSurface==='takes'} onClick={()=>setClipSurface('takes')}>Takes</button></>}
-        {mode === 'device' && <><button type="button" aria-expanded={configure} title="Configure chosen controls, devices and macros" onClick={() => {const next = !configure; setConfigure(next); if (next) chooseConfiguration(configuration)}}>{configure ? 'Close settings' : 'Configure'}</button>
+        {mode === 'device' && <><button type="button" aria-expanded={configure} title="Configure chosen controls, devices and macros" onClick={() => {const next = toggleDetailSettings(configure, configuration); setConfigure(next.open); if (next.open) chooseConfiguration(next.family)}}>{configure ? 'Close settings' : 'Configure'}</button>
           {configure && <select aria-label="Editor settings family" value={configuration} onChange={event => chooseConfiguration(event.target.value as NativeDetailConfigurationFamily)}><option value="controls">Chosen controls</option><option value="device">Devices</option><option value="rack">Macros</option><option value="scene">Scene</option></select>}</>}
         <button type="button" disabled={!reading} title="Expand this editor; Return restores its previous placement" onClick={() => void deep()}>{expanded || fullscreen ? 'Return' : 'Deep edit ↗'}</button>
         <button type="button" disabled={!workspace.editor} title="Read the retained editor owner" aria-label="Refresh native editor" onClick={() => void request({operation: 'read'})}>↻</button>
@@ -169,7 +169,7 @@ export function NativeWorldDetail({mode, expand, collapse, presentMode, presentN
         <div className="native-chain-controls"><NativeChosenControls reading={reading} request={request} configure={configure && configuration === 'controls'}/></div>
         <div className="native-chain-rack"><NativeRackEditor reading={reading} request={request} configure={configure && configuration === 'rack'}/></div>
         <div className="native-chain-configuration" hidden={!configure}>
-          <nav aria-label="Native device settings"><button aria-pressed={configuration === 'controls'} onClick={() => chooseConfiguration('controls')}>Chosen controls</button><button aria-pressed={configuration === 'device'} onClick={() => chooseConfiguration('device')}>Devices</button><button aria-pressed={configuration === 'rack'} onClick={() => chooseConfiguration('rack')}>Macros</button><button aria-pressed={configuration === 'scene'} onClick={() => chooseConfiguration('scene')}>Scene</button></nav>
+          <nav aria-label="Native device settings"><button aria-pressed={configuration === 'controls'} onClick={() => {const next = openDetailSettings('controls'); setConfigure(next.open); chooseConfiguration(next.family)}}>Chosen controls</button><button aria-pressed={configuration === 'device'} onClick={() => {const next = openDetailSettings('device'); setConfigure(next.open); chooseConfiguration(next.family)}}>Devices</button><button aria-pressed={configuration === 'rack'} onClick={() => {const next = openDetailSettings('rack'); setConfigure(next.open); chooseConfiguration(next.family)}}>Macros</button><button aria-pressed={configuration === 'scene'} onClick={() => {const next = openDetailSettings('scene'); setConfigure(next.open); chooseConfiguration(next.family)}}>Scene</button></nav>
           <div className="native-settings-note" hidden={configuration !== 'controls'}>Choose properties in the browser. Reorder, bind or remove them in the chosen-control rack.</div>
           <div className="native-settings-editor native-settings-handoff" hidden={configuration !== 'device'}><p className="native-settings-note">Device settings open in the Browser pool beside the rack, so changing them never adds a widget to the rack.</p><button type="button" disabled={!reading || !devicePresented()} onClick={() => {const selected = (reading?.selection.entity_ids.length ?? 0) > 0; dispatchOpenDevice({scope: selected ? 'entity' : 'field', family: selected ? 'force' : 'physics'})}}>Open device settings</button></div>
           <div className="native-settings-editor" hidden={configuration !== 'scene'}><NativeSceneTransport source={sceneSource}/>{sceneProjectionFault&&<p role="alert">{sceneProjectionFault}</p>}</div>

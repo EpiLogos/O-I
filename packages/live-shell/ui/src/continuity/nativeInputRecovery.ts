@@ -23,6 +23,7 @@ export function privateNativeInputChanges(copy:Copy,reading:NativeEditorReading,
   if(target.family?.startsWith('colour:'))return nativeColourInputChanges(copy)
   if(input.kind==='text') {
     if(target.parameter==='glyph-source'&&target.entity_id&&target.step_id)return [{kind:'step-source',entity_id:target.entity_id,step_id:target.step_id,shape:'text',text:input.text}]
+    if(target.parameter==='formation-glyph'&&target.entity_id&&target.step_id===null)return [{kind:'formation-glyph',entity_id:target.entity_id,text:input.text}]
     if(!target.parameter||!input.text.trim()||!Number.isFinite(Number(input.text)))throw Error('This retained input needs its original editor or a finite exact parameter value')
     const prefix=target.scope==='field'?'field.':`entity:${encodeURIComponent(target.entity_id!)}:`
     if(!target.parameter.startsWith(prefix))throw Error('The retained parameter belongs to another native scope')

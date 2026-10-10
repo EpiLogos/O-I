@@ -32,7 +32,7 @@ export function validateCandidateApplicationView(raw: unknown): CandidateApplica
     else if (key === 'tab') {if (field !== 'session' && field !== 'arrangement') return null}
     else if (key === 'detailMode') {if (field !== 'clip' && field !== 'device') return null}
     else if (key === 'settingsReturn') {if (!['audio','expressions','techne'].includes(field as string)) return null}
-    else if (key === 'centerPanel') {if (typeof field !== 'string' || (field !== 'native.workbench' && !/^world\.[a-z0-9.-]{1,128}$/.test(field))) return null}
+    else if (key === 'centerPanel') {if (typeof field !== 'string' || (field !== 'native.workbench' && field !== 'native.agent' && field !== 'native.session' && field !== 'native.arrangement' && !/^world\.[a-z0-9.-]{1,128}$/.test(field))) return null}
     else if (key === 'browserWidth' || key === 'detailHeight') {if (field !== null && (typeof field !== 'number' || !Number.isFinite(field) || field < 120 || field > 16384)) return null}
     else if (key === 'selection') {
       if (!field || typeof field !== 'object' || Object.getPrototypeOf(field) !== Object.prototype) return null

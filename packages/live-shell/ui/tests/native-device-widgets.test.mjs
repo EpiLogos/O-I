@@ -27,11 +27,14 @@ export async function load(url,context,next){
 const author = new URL('desktop/cradle/expressions-app/field-studies-journeys/src/', root);
 const boundary = new URL('packages/expressions-boundary/src/', root);
 const [{kernelDocumentToJourney}, {prepareCompositionEdit}, {DocumentStore}, {createRetainedNativeEditor, installNativeEditorReceiver},
-  model, prefs, {applyNativeDeviceWidgetChanges, readNativeDeviceWidgets, DEVICE_FAMILIES}, {createNativeEditorClient}, {ExpressionsHost}] = await Promise.all([
+  model, prefs, {applyNativeDeviceWidgetChanges, readNativeDeviceWidgets}, {createNativeEditorClient}, {ExpressionsHost}, {EXPRESSIONS_FAMILIES, loadExpressionsFamilies}] = await Promise.all([
   import(new URL('kernelDocumentBridge.ts', author)), import(new URL('kernelComposition.ts', author)), import(new URL('store.ts', author)),
   import(new URL('hostEditor.ts', author)), import(new URL('model.ts', author)), import(new URL('workspacePreferences.ts', author)),
   import(new URL('nativeDeviceWidgets.ts', boundary)), import(new URL('editorHost.ts', boundary)), import(new URL('host.ts', boundary)),
+  import(new URL('expressionsFamilies.ts', boundary)),
 ]);
+loadExpressionsFamilies();
+const FAMILY_IDS = EXPRESSIONS_FAMILIES.map(family => family.id);
 const {MessageChannel} = await import('node:worker_threads');
 
 // An actual owner read-only inspection receipt (raw evidence, unchanged owner inventory).
@@ -55,11 +58,11 @@ function editor(devices) {
   return {view, store, scene, owner};
 }
 
-test('device widgets are an ordered sibling list with a closed family set and one instance per Field family', () => {
+test('device widgets are an ordered sibling list of admitted families, with one instance per Field family', () => {
   const journey = {...model.sevenCentres(), shared: shared()};
   assert.deepEqual(readNativeDeviceWidgets(journey), []);
-  assert.equal(DEVICE_FAMILIES.length, 22);
-  for (const family of DEVICE_FAMILIES) assert.deepEqual(applyNativeDeviceWidgetChanges(journey, [{kind: 'device-add', family}]).shared.devices, [{id: family + '-1', family}]);
+  assert.equal(FAMILY_IDS.length, 22);
+  for (const family of FAMILY_IDS) assert.deepEqual(applyNativeDeviceWidgetChanges(journey, [{kind: 'device-add', family}]).shared.devices, [{id: family + '-1', family}]);
 
   let next = applyNativeDeviceWidgetChanges(journey, [{kind: 'device-add', family: 'physics'}, {kind: 'device-add', family: 'glyph'}]);
   assert.deepEqual(next.shared.devices, [{id: 'physics-1', family: 'physics'}, {id: 'glyph-1', family: 'glyph'}]);

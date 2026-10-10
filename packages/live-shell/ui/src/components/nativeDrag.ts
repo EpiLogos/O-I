@@ -7,6 +7,8 @@ export const CHOSEN_MIME = 'application/x-oi-chosen-control'
 /** Window events that let keyboard actions reach the rack editor and device strip. */
 export const MAP_PARAMETER_EVENT = 'oi:native-parameter-map'
 export const OPEN_DEVICE_EVENT = 'oi:native-open-device'
+/** Chosen controls ask the Browser to show the parameter list. */
+export const PARAMETER_BROWSE_EVENT = 'oi:expression-browse-parameters'
 /** Asks the centre Expressions Studio to show a device's full panel: detail {section} (a studio section id). */
 export const OPEN_STUDIO_EVENT = 'oi:native-open-studio'
 export const DEVICE_MIME = 'application/x-oi-native-device'
@@ -105,6 +107,16 @@ export function deviceInsertIndex(x: number, cards: readonly {left: number; righ
 }
 
 /** The device-add anchor for an insertion index: null inserts first, otherwise the widget just before the gap. */
+/** The Browser state a parameter-browse event applies: Parameters category, pool open, search cleared. */
+export function parameterBrowsePatch(): {category: 'properties'; poolOpen: true; query: ''} {
+  return {category: 'properties', poolOpen: true, query: ''}
+}
+
+/** A device-open detail the Browser may admit. Null refuses the event. The caller mints the nonce. */
+export function admittedDeviceOpen(detail: unknown): {scope: 'field' | 'entity' | 'scene'; family: string} | null {
+  return parseOpenDevice(detail)
+}
+
 export function afterIdFor(index: number, ids: readonly string[]): string | null {
   if (index <= 0 || !ids.length) return null
   return ids[Math.min(index, ids.length) - 1] ?? null

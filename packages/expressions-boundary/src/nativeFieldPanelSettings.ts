@@ -3,8 +3,12 @@
  * are the source option arrays (inspector.ts, cited per key) and must agree with
  * the authored model unions; the compile-time check below fails tsc on drift.
  * Registry numeric controls (NATIVE_BINDINGS), the shared-medium/morph/colour keys
- * already admitted by nativeDeviceEdits.ts, and Scene.composition.layout are
- * not in this table. The number kind admits the engine's own depth shares, whose
+ * already admitted by nativeDeviceEdits.ts are not in this table. Scene.composition.layout
+ * is admitted as `layout` because the Arrange device records the mode it applied, as the
+ * legacy app does (app.ts 'arrange' sets s.composition.layout); the arrange batch carries
+ * it with its coordinates, so one apply is one undo step. Its option list is pinned by
+ * a test rather than the compile-time check, since model.ts types the field as string.
+ * The number kind admits the engine's own depth shares, whose
  * range is the inspector's range() call (inspector.ts:123); the validator enforces
  * finite and inclusive [min, max] only, because the inspector clamps to the range
  * but does not round to step. */
@@ -71,6 +75,9 @@ export const FIELD_PANEL_SETTINGS = {
   carryStation: {target: 'composition', type: 'boolean'},
   // Layout plane (inspector.ts:144, select 'Layout plane'). Model: Scene.composition.plane, typed as model.ts Plane.
   plane: {target: 'composition', type: 'enum', options: ['XY', 'XZ', 'YZ'] as const},
+  // Arrange mode (nativeSceneFace.arrange.ts:5 ARRANGE_LAYOUTS, the Arrangement buttons of inspector.ts:144; app.ts 'arrange' writes
+  // s.composition.layout = the button's mode). Model: Scene.composition.layout, typed string (model.ts:56). Default 'free' is not an arrange mode.
+  layout: {target: 'composition', type: 'enum', options: ['line', 'column', 'ring', 'grid', 'spiral', 'align-x', 'align-y', 'distribute-x', 'distribute-y', 'laminate'] as const},
   // Refit state sizes (inspector.ts:207, toggle 'Refit state sizes to new glyphs'). Model: EngineSettings.autoFitSizes, optional; absent reads as on (`!== false`).
   autoFitSizes: {target: 'engine', type: 'boolean'},
 } satisfies Record<string, FieldPanelSettingSpec>;

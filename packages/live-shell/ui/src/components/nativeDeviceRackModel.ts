@@ -6,6 +6,7 @@ import {entityFaceModel, type EntityCompactControl} from './nativeEntityFaceMode
 import {resolvedSound, soundChange, soundDefault, soundNumberSpec, soundWithField, SOUND_WAVEFORMS} from './nativeEntityFace.sound.ts'
 import type {SceneCompactAction} from './nativeSceneFaceModel.ts'
 import {stripToggleChanges} from './nativeDeviceStripModel'
+import {modulationOf, type Modulation} from './nativeModulation'
 
 /** Pure bottom-rack projection. The rack shows only reading.devices (the widgets the person added), joined with the catalogue.
  * No React, no commits. Expanded settings are not here: the Browser's pool opens them. */
@@ -18,6 +19,8 @@ const CATALOGUE = deviceCatalogue()
 export interface RackControl {
   path: string; label: string; unit: string; value: number
   min: number; max: number; step: number; hardMin: number; hardMax: number; scale?: 'linear' | 'log'; defaultValue: number
+  /** What moves this control's value, from the reading (nativeModulation.ts). Absent on a control that is not an automatable target (a whole-sound field). */
+  modulation?: Modulation
 }
 /** One non-registry compact control of an entity device: a whole-sound numeric field (a RackControl row) or the waveform choice. `blocked` names why it cannot be written. */
 export type RackEntityCompact =
@@ -52,7 +55,7 @@ function rackControl(reading: NativeEditorReading, path: string): RackControl | 
   return {
     path, label: binding.label, unit: binding.unit ?? '', value: baseValue(reading.scene, binding.key),
     min: binding.min, max: binding.max, step: binding.step, hardMin: binding.hardMin, hardMax: binding.hardMax,
-    scale: binding.scale, defaultValue: binding.defaultValue,
+    scale: binding.scale, defaultValue: binding.defaultValue, modulation: modulationOf(reading, 'field.' + binding.key),
   }
 }
 
@@ -63,6 +66,7 @@ function entityControl(reading: NativeEditorReading, entityId: string, suffix: s
   return {
     path: row.target, label: row.label, unit: row.unit ?? '', value: row.value,
     min: row.min, max: row.max, step: row.step, hardMin: row.hardMin, hardMax: row.hardMax, scale: row.scale, defaultValue: row.defaultValue,
+    modulation: modulationOf(reading, row.target),
   }
 }
 

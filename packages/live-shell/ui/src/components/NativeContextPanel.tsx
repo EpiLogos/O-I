@@ -19,14 +19,14 @@ function Receipt({ receipt }: { receipt: KernelReceipt }) {
 
 /** Read surfaces over the existing native owners. Agency and Day reads never
  * commission work; reading an Agent card requires selecting its disclosed ref. */
-export function NativeContextPanel({ project = 'O-I', preparedContext, agency }: { project?: string; preparedContext?: NativePreparedContextProps; agency?: NativeAgencyParticipationProps }) {
+export function NativeContextPanel({ project = 'O-I', preparedContext, agency, initialTab }: { project?: string; preparedContext?: NativePreparedContextProps; agency?: NativeAgencyParticipationProps; initialTab?: ContextTab }) {
   const id = useId()
   const hasAgency = !!agency
   const { transport, reading, selectedSource, receipts, selectSource, workspaceId, accessEpoch, sourceError, sourceReadingCurrent } = useWorkspace()
   const scopeKey = `${workspaceId}|${accessEpoch}|${project}|${JSON.stringify(transport)}`
   const currentScope = useRef(scopeKey)
   currentScope.current = scopeKey
-  const [tab, setTab] = useState<ContextTab>('context')
+  const [tab, setTab] = useState<ContextTab>(initialTab ?? 'context')
   const [refresh, setRefresh] = useState(0)
   const [agencyReading, setAgencyReading] = useState<AgencyReading | null>(null)
   const [agencyError, setAgencyError] = useState<string | null>(null)

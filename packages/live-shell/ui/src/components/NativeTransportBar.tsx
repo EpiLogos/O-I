@@ -12,6 +12,8 @@ import {NativeExpressionGuide} from './NativeExpressionGuide';
 import {BarEngineLight, BarPointerGroup, BarTools, BarValue, type BarApply} from './NativeBarControls';
 import {createLiveSession} from './nativeBarSession';
 import {PinModeToggle} from './NativePinControls';
+/** About 4 Hz: fast enough to watch a lane move, slow enough that a full reading read stays cheap. */
+export const EFFECTIVE_POLL_MS = 250;
 import {BarStrip} from './NativeBarStrip';
 import {barParameter, barPlayRoute, barResume} from './nativeBarModel';
 import './NativeTransportBar.css';
@@ -42,6 +44,19 @@ export function NativeTransportBar({source}: {source: NativeCompositionViewSourc
   const liveDeps = useRef<{run: typeof link.run; apply: (value: number) => Promise<boolean>; automated: boolean}>({run: null, apply: async () => false, automated: false});
   liveDeps.current = {run: link.run, automated: timeScale?.automated ?? false,
     apply: value => timeScale ? barApply([{kind: 'parameter', target: timeScale.target, value}]).then(reply => reply.ok, () => false) : Promise.resolve(false)};
+  // Effective values come from engine telemetry and arrive only when the owner is read. While a lane runs or a take records, read at about 4 Hz,
+  // never while the page is hidden and never over a pending edit, so base and effective stay separately current.
+  const pollLatest = useRef(source); pollLatest.current = source;
+  const polling = !!reading && !reading.standing.pending && (reading.scene.automation.some(lane => lane.enabled) || link.state?.propertyRecording === true);
+  useEffect(() => {
+    if (!polling) return;
+    const id = setInterval(() => {
+      const now = pollLatest.current;
+      if (document.hidden || !now.actions || !now.isPresented()) return;
+      void now.actions.readNow().catch(() => {});
+    }, EFFECTIVE_POLL_MS);
+    return () => clearInterval(id);
+  }, [polling]);
   const timeScaleTarget = timeScale?.target ?? null;
   const timeScaleSession = useMemo(() => timeScaleTarget ? createLiveSession(timeScaleTarget, () => liveDeps.current) : null, [timeScaleTarget]);
   const [takeMode, setTakeMode] = useState<StageTakeMode>('replace'), [takeBusy, setTakeBusy] = useState(false), [takeFault, setTakeFault] = useState<string | null>(null);

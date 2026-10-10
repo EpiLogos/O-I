@@ -2,7 +2,7 @@ import {useEffect, useRef, useState, type DragEvent, type KeyboardEvent, type Po
 import type {NativeChosenControlReading, NativeEditorBasis, NativeEditorReading, NativeEditorReply, NativeEditorRequest} from '@epilogos/expressions-boundary/editor'
 import type {NativeBinding} from '@epilogos/expressions-boundary/parameters'
 import {chosenAddChange, chosenDropReason, edgeGap, gapToIndex, reorderChange, wholeChosenOrder} from './nativeBrowserModel'
-import {CHOSEN_MIME, activeDrag, setActiveDrag} from './nativeDrag'
+import {CHOSEN_MIME, PARAMETER_BROWSE_EVENT, activeDrag, setActiveDrag} from './nativeDrag'
 import './NativeChosenControls.css'
 
 type Request = (request: NativeEditorRequest) => Promise<NativeEditorReply>
@@ -222,10 +222,10 @@ export function NativeChosenControls({reading, request, configure}: {reading: Na
   }
   return <section className="native-chosen-editor" aria-label="Chosen native controls" aria-busy={pending} data-drop={drop?.status}
     onDragOver={sectionOver} onDragLeave={sectionLeave} onDrop={sectionDrop}>
-    <header><strong>Chosen controls</strong><button disabled={!chosen?.available} onClick={() => window.dispatchEvent(new CustomEvent('oi:expression-browse-parameters'))}>+ Parameter</button></header>
+    <header><strong>Chosen controls</strong><button disabled={!chosen?.available} onClick={() => window.dispatchEvent(new CustomEvent(PARAMETER_BROWSE_EVENT))}>+ Parameter</button></header>
     {drop && <p className={`native-chosen-drop is-${drop.status}`} role="status">{drop.text}</p>}
     {!reading || !chosen?.available ? <div className="native-chosen-empty">The retained owner has not disclosed its chosen controls.</div>
-      : !objectEntries.length ? <div className="native-chosen-empty"><span>{chosen.entries.length ? 'No object parameters chosen. Field pins are in the top bar.' : 'No parameters chosen.'}</span><button onClick={() => window.dispatchEvent(new CustomEvent('oi:expression-browse-parameters'))}>Browse parameters</button></div>
+      : !objectEntries.length ? <div className="native-chosen-empty"><span>{chosen.entries.length ? 'No object parameters chosen. Field pins are in the top bar.' : 'No parameters chosen.'}</span><button onClick={() => window.dispatchEvent(new CustomEvent(PARAMETER_BROWSE_EVENT))}>Browse parameters</button></div>
       : <div className="native-chosen-grid">{objectEntries.map((entry, index) => {
         const control = chosen.controls.find(item => item.entry_id === entry.id)
         const resolved = control ?? {entry_id: entry.id, target: null, binding: null, entity_id: null, native_ref: null, base_value: null, effective_value: null, locked: false, unavailable_reason: 'The native owner has not resolved this retained declaration.'}

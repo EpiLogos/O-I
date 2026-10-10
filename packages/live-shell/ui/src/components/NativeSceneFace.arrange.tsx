@@ -3,7 +3,7 @@ import type {NativeEditorChange} from '../../../../expressions-boundary/src/edit
 import {short} from './nativeFieldFaceValues.ts'
 import {
   ARRANGE_LAYOUTS, PLANES, PREVIEW_HEIGHT, PREVIEW_WIDTH, arrangeLabel, arrangePlan, blueprintMemberIds, centreStatus, planeAxes, planeChange,
-  previewGeometry, previewMoves, quickSelect, type ArrangeLayout, type Plane, type QuickSelect,
+  previewGeometry, previewMoves, quickSelect, recordedLayout, type ArrangeLayout, type Plane, type QuickSelect,
 } from './nativeSceneFace.arrange.ts'
 import type {SceneFacePanelProps} from './nativeSceneFaceViews.tsx'
 import './NativeSceneFace.arrange.css'
@@ -13,14 +13,25 @@ const QUICK: readonly {which: QuickSelect; label: string}[] = [
 ]
 
 /** The Arrangement device's whole expanded panel. The object checklist is local: the boundary's `select` takes one entity, so checking
- * here never changes the native selection. Apply sends one batched `apply` (one `parameter` change per coordinate that moves); a plane
- * choice sends its own single `panel-setting`. Refusals from the owner are shown in a role=alert line and keep the choice for another try. */
+ * here never changes the native selection. Apply sends one batched `apply`: one `parameter` change per coordinate that moves, then the
+ * chosen mode as a `panel-setting` for Scene.composition.layout, so one undo restores both. A plane choice sends its own single
+ * `panel-setting`. The header shows the layout the Scene records (reading.scene.composition.layout), not the local preview choice.
+ * Refusals from the owner are shown in a role=alert line and keep the choice for another try. */
 export function ArrangePanel({reading, apply, disabled}: SceneFacePanelProps) {
   const entities = reading.scene.entities
   const plane = reading.scene.composition.plane
   const blueprint = blueprintMemberIds(reading.scene)
+  const sceneRef = reading.basis.scene_ref
+  const [boundScene, setBoundScene] = useState(sceneRef)
   const [checked, setChecked] = useState<ReadonlySet<string>>(() => new Set(reading.selection.entity_ids))
   const [mode, setMode] = useState<ArrangeLayout | null>(null)
+  // The checklist is a batch set, not the spine selection. A new Scene starts it from that Scene's selection.
+  if (boundScene !== sceneRef) {
+    setBoundScene(sceneRef)
+    setChecked(new Set(reading.selection.entity_ids))
+    setMode(null)
+  }
+  const recorded = recordedLayout(reading.scene)
   const [busy, setBusy] = useState(false)
   const [fault, setFault] = useState<string | null>(null)
   const inFlight = useRef(false)
@@ -32,8 +43,9 @@ export function ArrangePanel({reading, apply, disabled}: SceneFacePanelProps) {
   const preview = previewGeometry(entities, mode ? plan.ghost : [], plane)
   const currentAt = new Map(preview.current.map(mark => [mark.id, mark]))
   const moves = mode ? previewMoves(entities, plan) : []
-  const note = mode && !fault && !plan.problem && plan.movable.length && !plan.changes.length
-    ? `The checked centres already sit where ${arrangeLabel(mode)} puts them.` : null
+  const coordinateChanges = plan.changes.filter(change => change.kind === 'parameter').length
+  const note = mode && !fault && !plan.problem && plan.movable.length && !coordinateChanges
+    ? `The checked centres already sit where ${arrangeLabel(mode)} puts them. Apply still records ${arrangeLabel(mode)} as the Scene's layout.` : null
 
   // One batch per call, one in flight at a time. A refusal is shown and the checklist, mode and plane choice are kept.
   const send = async (changes: readonly NativeEditorChange[]): Promise<boolean> => {
@@ -88,7 +100,7 @@ export function ArrangePanel({reading, apply, disabled}: SceneFacePanelProps) {
     </section>
 
     <section className="native-arrange-face-section" aria-labelledby="native-arrange-arrangement-title">
-      <header><h3 id="native-arrange-arrangement-title">Arrangement</h3><span>{mode ? arrangeLabel(mode) : 'No mode chosen'}</span></header>
+      <header><h3 id="native-arrange-arrangement-title">Arrangement</h3><span>{recorded ? `Recorded: ${arrangeLabel(recorded)}` : 'No layout recorded'}</span></header>
       <span id="native-arrange-mode-title" className="native-arrange-face-caption">Arrange mode</span>
       <div className="native-arrange-face-modes" role="group" aria-labelledby="native-arrange-mode-title">
         {ARRANGE_LAYOUTS.map(layout => <button key={layout} type="button" aria-pressed={mode === layout} disabled={locked}
@@ -122,11 +134,11 @@ export function ArrangePanel({reading, apply, disabled}: SceneFacePanelProps) {
       {note && <p className="native-arrange-face-note">{note}</p>}
       <div className="native-arrange-face-actions">
         <button type="button" disabled={locked || plan.changes.length === 0}
-          title={plan.changes.length ? `Sends ${plan.changes.length} coordinate changes as one batch` : 'Choose a mode and check an unlocked centre it moves'}
+          title={plan.changes.length ? `Sends ${coordinateChanges} coordinate changes and the layout ${mode ? arrangeLabel(mode) : ''} as one batch` : 'Choose a mode and check an unlocked centre it moves'}
           onClick={() => void applyArrangement()}>{mode ? `Apply ${arrangeLabel(mode)}` : 'Apply arrangement'}</button>
         <button type="button" disabled={locked || mode === null} onClick={() => {setFault(null); setMode(null)}}>Reset preview</button>
       </div>
-      <small>Apply sends one change for each coordinate that moves, and the owner applies them together. The layout mode the app records on the Scene is not writable from the shell yet, so it is not saved here.</small>
+      <small>Apply sends one change for each coordinate that moves, then the chosen mode as the Scene's layout. The owner applies them together, so one undo restores the positions and the layout.</small>
     </section>
   </div>
 }
