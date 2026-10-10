@@ -1,0 +1,12 @@
+[package]
+name = "hermes-gateway-stub"
+version = "0.1.0"
+edition = "2021"
+description = "Clean-room Rust stub of the Hermes tui_gateway stdio JSON-RPC contract, implementing the RE'd spec for replay verification"
+
+[dependencies]
+serde_json = { version = "1", features = ["preserve_order"] }
+uuid = { version = "1", features = ["v4"] }
+
+[profile.release]
+opt-level = 2
