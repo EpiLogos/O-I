@@ -658,9 +658,17 @@ impl Client {
             .chain(SYSTEM_VERB.iter().map(|s| s.to_string()))
             .collect();
         let descriptor = match self.invoke(cwd, &reading) {
-            InvokeOutcome::Completed {exit_code,stdout,stderr} => match interpret(product_id,exit_code,&stdout,&stderr) {
-                Mount::Mounted {descriptor,..} => descriptor,
-                Mount::Failed {error} => return Err(format!("The product's settings disclosure was not admitted: {error}")),
+            InvokeOutcome::Completed {
+                exit_code,
+                stdout,
+                stderr,
+            } => match interpret(product_id, exit_code, &stdout, &stderr) {
+                Mount::Mounted { descriptor, .. } => descriptor,
+                Mount::Failed { error } => {
+                    return Err(format!(
+                        "The product's settings disclosure was not admitted: {error}"
+                    ))
+                }
             },
             InvokeOutcome::SpawnFailed(error) => {
                 return Err(format!("The suite is unavailable: {error}"))

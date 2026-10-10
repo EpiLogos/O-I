@@ -69,7 +69,8 @@ impl PreparedRead {
         // The temporal projection: all owner processes over captured
         // inputs. It runs here — never under the kernel mutex — and
         // answers with the same document the ordered path would build.
-        if let (KernelOp::TemporalEventsRead { query }, Some(temporal)) = (&self.op, &self.temporal) {
+        if let (KernelOp::TemporalEventsRead { query }, Some(temporal)) = (&self.op, &self.temporal)
+        {
             let answer = crate::temporal_sources::read_field(
                 &self.client,
                 &temporal.cache,

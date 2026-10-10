@@ -1184,7 +1184,11 @@ impl Store {
         let home = self
             .home
             .clone()
-            .or_else(|| std::env::var_os("OI_EXPRESSION_HOME").filter(|v| !v.is_empty()).map(PathBuf::from))
+            .or_else(|| {
+                std::env::var_os("OI_EXPRESSION_HOME")
+                    .filter(|v| !v.is_empty())
+                    .map(PathBuf::from)
+            })
             .or_else(|| std::env::var_os("OI_HOME").map(PathBuf::from))
             .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".oi")))
             .ok_or("Native recovery home is unavailable")?;

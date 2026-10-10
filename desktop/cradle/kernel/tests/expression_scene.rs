@@ -260,8 +260,12 @@ fn native_racks_working_saved_material_roundtrips_and_stale_cas_keeps_source() {
     let original = inspect(&mut app);
     assert_eq!(original["revision"], 3);
     assert_eq!(original["scenes"][0]["presentation"], body);
-    assert_ne!(body["scene"]["parameterRacks"], body["saved"]["parameterRacks"]);
-    let document: oi_cradle_kernel::expression::Document = serde_json::from_value(original.clone()).unwrap();
+    assert_ne!(
+        body["scene"]["parameterRacks"],
+        body["saved"]["parameterRacks"]
+    );
+    let document: oi_cradle_kernel::expression::Document =
+        serde_json::from_value(original.clone()).unwrap();
     document.validate().unwrap();
     let bytes = oi_cradle_kernel::expression_file::encode(&document).unwrap();
     let decoded = oi_cradle_kernel::expression_file::decode(&bytes).unwrap();
@@ -283,29 +287,60 @@ fn native_scene_admission_rejects_malformed_racks_in_working_and_saved_atomicall
     edit(&mut app, 2, json!([{"change":"scene_material_set", "scene_ref":"expression:craft:scene:main", "presentation":body}])).unwrap();
     let original = inspect(&mut app);
     for carrier in ["scene", "saved"] {
-        for defect in ["schema", "path", "unit", "bound", "log", "scope", "duplicate", "variation", "integer"] {
+        for defect in [
+            "schema",
+            "path",
+            "unit",
+            "bound",
+            "log",
+            "scope",
+            "duplicate",
+            "variation",
+            "integer",
+        ] {
             let mut wrong = body.clone();
             let state = &mut wrong[carrier]["parameterRacks"];
             let rack = &mut state["racks"][0];
             match defect {
                 "schema" => state["schema"] = json!("unadmitted"),
-                "path" => rack["macros"][0]["mappings"][0]["target"]["path"] = json!("forces.unknown"),
+                "path" => {
+                    rack["macros"][0]["mappings"][0]["target"]["path"] = json!("forces.unknown")
+                }
                 "unit" => rack["macros"][0]["mappings"][1]["unit"] = json!("stage units"),
                 "bound" => rack["macros"][0]["mappings"][0]["max"] = json!(1001.0),
                 "log" => rack["macros"][0]["mappings"][0]["law"] = json!("log"),
                 "scope" => rack["scope"]["entity_ref"] = json!("expression:other:entity:private"),
-                "duplicate" => {let duplicate = rack["macros"][0].clone(); rack["macros"].as_array_mut().unwrap().push(duplicate);},
+                "duplicate" => {
+                    let duplicate = rack["macros"][0].clone();
+                    rack["macros"].as_array_mut().unwrap().push(duplicate);
+                }
                 "variation" => rack["variations"][0]["values"] = json!({}),
                 _ => {
                     let mapping = &mut rack["macros"][0]["mappings"][0];
                     mapping["target"] = json!({"kind":"field", "path":"medium.gridRes"});
-                    mapping["min"] = json!(16.5); mapping["max"] = json!(128.0);
-                    rack["scope"] = json!({"kind":"field"}); rack["macros"][0]["mappings"].as_array_mut().unwrap().truncate(1);
+                    mapping["min"] = json!(16.5);
+                    mapping["max"] = json!(128.0);
+                    rack["scope"] = json!({"kind":"field"});
+                    rack["macros"][0]["mappings"]
+                        .as_array_mut()
+                        .unwrap()
+                        .truncate(1);
                 }
             }
-            let result = edit(&mut app, 3, json!([{"change":"scene_material_set", "scene_ref":"expression:craft:scene:main", "presentation":wrong}]));
-            assert!(result.is_err(), "{carrier} {defect} must be refused by native Scene admission");
-            assert_eq!(inspect(&mut app), original, "{carrier} {defect} must preserve the exact native source");
+            let result = edit(
+                &mut app,
+                3,
+                json!([{"change":"scene_material_set", "scene_ref":"expression:craft:scene:main", "presentation":wrong}]),
+            );
+            assert!(
+                result.is_err(),
+                "{carrier} {defect} must be refused by native Scene admission"
+            );
+            assert_eq!(
+                inspect(&mut app),
+                original,
+                "{carrier} {defect} must preserve the exact native source"
+            );
         }
     }
 }
@@ -317,24 +352,42 @@ fn native_rack_fork_remaps_only_occurrence_refs_in_working_and_saved_material() 
     edit(&mut app, 2, json!([{"change":"scene_material_set", "scene_ref":"expression:craft:scene:main", "presentation":body}])).unwrap();
     let original = inspect(&mut app);
     let fork = apply(&mut app, json!({"operation":"fork", "expression_ref":"expression:craft", "expected_revision":3, "new_expression_ref":"expression:rack-variant", "actor":"human:rack-fork"})).unwrap();
-    let document: oi_cradle_kernel::expression::Document = serde_json::from_value(fork["document"].clone()).unwrap();
+    let document: oi_cradle_kernel::expression::Document =
+        serde_json::from_value(fork["document"].clone()).unwrap();
     document.validate().unwrap();
     for carrier in ["scene", "saved"] {
-        let racks = &fork["document"]["scenes"][0]["presentation"][carrier]["parameterRacks"]["racks"];
+        let racks =
+            &fork["document"]["scenes"][0]["presentation"][carrier]["parameterRacks"]["racks"];
         let entity = &racks[0];
-        assert_eq!(entity["scope"]["entity_ref"], "expression:rack-variant:entity:one");
+        assert_eq!(
+            entity["scope"]["entity_ref"],
+            "expression:rack-variant:entity:one"
+        );
         for mapping in entity["macros"][0]["mappings"].as_array().unwrap() {
-            assert_eq!(mapping["target"]["entity_ref"], "expression:rack-variant:entity:one");
+            assert_eq!(
+                mapping["target"]["entity_ref"],
+                "expression:rack-variant:entity:one"
+            );
         }
         let mut expected = body[carrier]["parameterRacks"]["racks"][0].clone();
         expected["scope"]["entity_ref"] = json!("expression:rack-variant:entity:one");
         for mapping in expected["macros"][0]["mappings"].as_array_mut().unwrap() {
             mapping["target"]["entity_ref"] = json!("expression:rack-variant:entity:one");
         }
-        assert_eq!(*entity, expected, "IDs, captions, native paths, units and captured variation values remain exact");
-        assert_eq!(racks[1], body[carrier]["parameterRacks"]["racks"][1], "Field rack has no occurrence refs to remap");
+        assert_eq!(
+            *entity, expected,
+            "IDs, captions, native paths, units and captured variation values remain exact"
+        );
+        assert_eq!(
+            racks[1], body[carrier]["parameterRacks"]["racks"][1],
+            "Field rack has no occurrence refs to remap"
+        );
     }
-    assert_eq!(inspect(&mut app), original, "fork does not mutate its source Expression");
+    assert_eq!(
+        inspect(&mut app),
+        original,
+        "fork does not mutate its source Expression"
+    );
 }
 
 #[test]
@@ -342,16 +395,29 @@ fn native_entity_removal_retires_its_racks_in_both_materials_and_preserves_field
     let mut app = setup();
     let body = rack_material(&mut app);
     edit(&mut app, 2, json!([{"change":"scene_material_set", "scene_ref":"expression:craft:scene:main", "presentation":body}])).unwrap();
-    edit(&mut app, 3, json!([{"change":"entity_remove", "entity_ref":"expression:craft:entity:one"}])).unwrap();
+    edit(
+        &mut app,
+        3,
+        json!([{"change":"entity_remove", "entity_ref":"expression:craft:entity:one"}]),
+    )
+    .unwrap();
     let document = inspect(&mut app);
     assert_eq!(document["revision"], 4);
-    assert!(document["entities"].get("expression:craft:entity:one").is_none());
+    assert!(document["entities"]
+        .get("expression:craft:entity:one")
+        .is_none());
     for carrier in ["scene", "saved"] {
         let material = &document["scenes"][0]["presentation"][carrier];
         assert_eq!(material["entities"], json!([]));
-        assert_eq!(material["parameterRacks"]["racks"], json!([body[carrier]["parameterRacks"]["racks"][1].clone()]));
+        assert_eq!(
+            material["parameterRacks"]["racks"],
+            json!([body[carrier]["parameterRacks"]["racks"][1].clone()])
+        );
     }
-    serde_json::from_value::<oi_cradle_kernel::expression::Document>(document).unwrap().validate().unwrap();
+    serde_json::from_value::<oi_cradle_kernel::expression::Document>(document)
+        .unwrap()
+        .validate()
+        .unwrap();
 }
 
 #[test]
@@ -364,16 +430,38 @@ fn native_racks_survive_presentation_hide_and_reveal_without_rebinding_membershi
     hidden["scene"]["entities"] = json!([]);
     edit(&mut app, 3, json!([{"change":"scene_material_set", "scene_ref":"expression:craft:scene:main", "presentation":hidden}])).unwrap();
     let after_hide = inspect(&mut app);
-    assert_eq!(after_hide["scenes"][0]["entity_refs"], original["scenes"][0]["entity_refs"]);
+    assert_eq!(
+        after_hide["scenes"][0]["entity_refs"],
+        original["scenes"][0]["entity_refs"]
+    );
     assert_eq!(after_hide["entities"], original["entities"]);
-    assert_eq!(after_hide["scenes"][0]["presentation"]["scene"]["entities"], json!([]));
-    assert_eq!(after_hide["scenes"][0]["presentation"]["scene"]["parameterRacks"], body["scene"]["parameterRacks"]);
-    assert_eq!(after_hide["scenes"][0]["presentation"]["saved"]["parameterRacks"], body["saved"]["parameterRacks"]);
+    assert_eq!(
+        after_hide["scenes"][0]["presentation"]["scene"]["entities"],
+        json!([])
+    );
+    assert_eq!(
+        after_hide["scenes"][0]["presentation"]["scene"]["parameterRacks"],
+        body["scene"]["parameterRacks"]
+    );
+    assert_eq!(
+        after_hide["scenes"][0]["presentation"]["saved"]["parameterRacks"],
+        body["saved"]["parameterRacks"]
+    );
     let mut restarted = Application::default();
-    let reopened = apply(&mut restarted, json!({"operation":"open", "document":after_hide, "actor":"human:rack-hidden-reopen"})).unwrap();
+    let reopened = apply(
+        &mut restarted,
+        json!({"operation":"open", "document":after_hide, "actor":"human:rack-hidden-reopen"}),
+    )
+    .unwrap();
     assert_eq!(reopened["document"], after_hide);
     edit(&mut app, 4, json!([{"change":"scene_material_set", "scene_ref":"expression:craft:scene:main", "presentation":body}])).unwrap();
     let revealed = inspect(&mut app);
-    assert_eq!(revealed["scenes"][0]["entity_refs"], original["scenes"][0]["entity_refs"]);
-    assert_eq!(revealed["scenes"][0]["presentation"], original["scenes"][0]["presentation"]);
+    assert_eq!(
+        revealed["scenes"][0]["entity_refs"],
+        original["scenes"][0]["entity_refs"]
+    );
+    assert_eq!(
+        revealed["scenes"][0]["presentation"],
+        original["scenes"][0]["presentation"]
+    );
 }

@@ -817,7 +817,10 @@ pub enum KernelOp {
     /// is a named degradation on the mount, never an invented contribution.
     ConfigRegistryRead,
     ConfigCapabilitiesRead,
-    ConfigReset { setting_ref: String, scope: configuration::ConfigScope },
+    ConfigReset {
+        setting_ref: String,
+        scope: configuration::ConfigScope,
+    },
     /// `oi.config-resolution/v1` per (setting, scope): desired folded by
     /// the engine's own desired store, native axes passed through
     /// unmodified from the owner's v2 reading (09 §7). A refused pairing
@@ -1289,7 +1292,9 @@ pub enum KernelOpResult {
     ConfigRegistryReading {
         reading: configuration::RegistryReading,
     },
-    ConfigCapabilitiesReading { document: serde_json::Value },
+    ConfigCapabilitiesReading {
+        document: serde_json::Value,
+    },
     /// One resolution per requested pair, in order (09 §7 documents
     /// verbatim; refused pairings as named reconciliations).
     ConfigResolutions {
@@ -3070,7 +3075,8 @@ impl Kernel {
                 Ok(KernelOpOutcome {
                     receipts: Vec::new(),
                     result: KernelOpResult::TemporalEventsReading {
-                        document: serde_json::to_value(answer).map_err(|error| error.to_string())?,
+                        document: serde_json::to_value(answer)
+                            .map_err(|error| error.to_string())?,
                     },
                 })
             }
@@ -3283,10 +3289,17 @@ impl Kernel {
             }
             KernelOp::ConfigPlanReviewed { requests } => {
                 let root = self.world_map(false).ok();
-                let cwd = root.as_ref().and_then(|value| value["root"].as_str()).map(std::path::PathBuf::from)
+                let cwd = root
+                    .as_ref()
+                    .and_then(|value| value["root"].as_str())
+                    .map(std::path::PathBuf::from)
                     .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let (changeset, plans) = configuration::Client::discover().plan_reviewed(&cwd, &requests)?;
-                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::ConfigReviewedPlanned { changeset, plans } })
+                let (changeset, plans) =
+                    configuration::Client::discover().plan_reviewed(&cwd, &requests)?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::ConfigReviewedPlanned { changeset, plans },
+                })
             }
             KernelOp::Setup { request } => {
                 // First installation must work before Central/root discovery.
@@ -3299,22 +3312,50 @@ impl Kernel {
             }
             KernelOp::ConfigReset { setting_ref, scope } => {
                 let root = self.world_map(false).ok();
-                let cwd = root.as_ref().and_then(|value| value["root"].as_str()).map(std::path::PathBuf::from)
+                let cwd = root
+                    .as_ref()
+                    .and_then(|value| value["root"].as_str())
+                    .map(std::path::PathBuf::from)
                     .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let (changeset, owner_receipts) = configuration::Client::discover().reset(&cwd, &setting_ref, &scope)?;
-                let receipt = self.log.record(KernelEvent::ConfigurationChanged { operation:"reset_completed".into(), references:vec![setting_ref] });
-                Ok(KernelOpOutcome { receipts:vec![receipt], result:KernelOpResult::ConfigApplied {changeset, owner_receipts} })
+                let (changeset, owner_receipts) =
+                    configuration::Client::discover().reset(&cwd, &setting_ref, &scope)?;
+                let receipt = self.log.record(KernelEvent::ConfigurationChanged {
+                    operation: "reset_completed".into(),
+                    references: vec![setting_ref],
+                });
+                Ok(KernelOpOutcome {
+                    receipts: vec![receipt],
+                    result: KernelOpResult::ConfigApplied {
+                        changeset,
+                        owner_receipts,
+                    },
+                })
             }
             KernelOp::ConfigApplyReviewed { changeset, plans } => {
                 let root = self.world_map(false).ok();
-                let cwd = root.as_ref().and_then(|value| value["root"].as_str()).map(std::path::PathBuf::from)
+                let cwd = root
+                    .as_ref()
+                    .and_then(|value| value["root"].as_str())
+                    .map(std::path::PathBuf::from)
                     .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
-                let (changeset, owner_receipts) = configuration::Client::discover().apply_reviewed(&cwd, &changeset, &plans)?;
+                let (changeset, owner_receipts) =
+                    configuration::Client::discover().apply_reviewed(&cwd, &changeset, &plans)?;
                 let receipt = self.log.record(KernelEvent::ConfigurationChanged {
-                    operation: "reviewed_apply_completed".into(), references: changeset["requested"].as_array().into_iter().flatten()
-                        .filter_map(|request| request["setting_ref"].as_str().map(str::to_owned)).collect(),
+                    operation: "reviewed_apply_completed".into(),
+                    references: changeset["requested"]
+                        .as_array()
+                        .into_iter()
+                        .flatten()
+                        .filter_map(|request| request["setting_ref"].as_str().map(str::to_owned))
+                        .collect(),
                 });
-                Ok(KernelOpOutcome { receipts: vec![receipt], result: KernelOpResult::ConfigApplied { changeset, owner_receipts } })
+                Ok(KernelOpOutcome {
+                    receipts: vec![receipt],
+                    result: KernelOpResult::ConfigApplied {
+                        changeset,
+                        owner_receipts,
+                    },
+                })
             }
             KernelOp::ConfigApply { requests } => {
                 let root = self.world_map(false).ok();

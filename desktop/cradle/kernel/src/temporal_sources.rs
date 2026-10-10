@@ -22,8 +22,8 @@
 use crate::events::KernelEventLog;
 use crate::flow::{CentralClient, OwnerCallError};
 use crate::temporal_events::{
-    CivilField, EventKind, TemporalEvent, TemporalEventsAnswer, TemporalEventsError,
-    TemporalQuery, TemporalStreamSource,
+    CivilField, EventKind, TemporalEvent, TemporalEventsAnswer, TemporalEventsError, TemporalQuery,
+    TemporalStreamSource,
 };
 use serde_json::{json, Value};
 use std::path::PathBuf;
@@ -109,17 +109,18 @@ impl CentralNowListSource {
             .client
             .run_envelope("central.now.list", json!({ "project": Value::Null }))
             .map_err(|error| unavailable(STREAM, error))?;
-        if envelope.pointer("/data/automatic_agent_or_model_invocation") == Some(&Value::Bool(true)) {
+        if envelope.pointer("/data/automatic_agent_or_model_invocation") == Some(&Value::Bool(true))
+        {
             return Err(refused_reading(STREAM));
         }
-        let records =
-            envelope.pointer("/data/records")
-                .and_then(Value::as_array)
-                .ok_or_else(|| TemporalEventsError::InvalidRecord {
-                    stream: STREAM.to_string(),
-                    position: String::new(),
-                    reason: "the field reading carries no `records` array".into(),
-                })?;
+        let records = envelope
+            .pointer("/data/records")
+            .and_then(Value::as_array)
+            .ok_or_else(|| TemporalEventsError::InvalidRecord {
+                stream: STREAM.to_string(),
+                position: String::new(),
+                reason: "the field reading carries no `records` array".into(),
+            })?;
         records.iter().map(now_record_to_event).collect()
     }
 }
@@ -213,11 +214,20 @@ impl CentralThoughtsSource {
                     }),
                 )
                 .map_err(|error| unavailable(STREAM, error))?;
-            if envelope.pointer("/data/automatic_agent_or_model_invocation") == Some(&Value::Bool(true)) {
+            if envelope.pointer("/data/automatic_agent_or_model_invocation")
+                == Some(&Value::Bool(true))
+            {
                 return Err(refused_reading(STREAM));
             }
-            let directory = envelope.pointer("/data/directory").and_then(Value::as_str).unwrap_or_default();
-            for fixture in envelope.pointer("/data/fixtures").and_then(Value::as_array).unwrap_or(&Vec::new()) {
+            let directory = envelope
+                .pointer("/data/directory")
+                .and_then(Value::as_str)
+                .unwrap_or_default();
+            for fixture in envelope
+                .pointer("/data/fixtures")
+                .and_then(Value::as_array)
+                .unwrap_or(&Vec::new())
+            {
                 events.push(thought_fixture_to_event(now_ref, directory, fixture)?);
             }
         }
@@ -307,17 +317,18 @@ impl WikiReturnsPlacementSource {
                 json!({ "path": self.path, "project": Value::Null }),
             )
             .map_err(|error| unavailable(STREAM, error))?;
-        if envelope.pointer("/data/automatic_agent_or_model_invocation") == Some(&Value::Bool(true)) {
+        if envelope.pointer("/data/automatic_agent_or_model_invocation") == Some(&Value::Bool(true))
+        {
             return Err(refused_reading(STREAM));
         }
-        let entries =
-            envelope.pointer("/data/entries")
-                .and_then(Value::as_array)
-                .ok_or_else(|| TemporalEventsError::InvalidRecord {
-                    stream: STREAM.to_string(),
-                    position: self.path.clone(),
-                    reason: "the directory reading carries no `entries` array".into(),
-                })?;
+        let entries = envelope
+            .pointer("/data/entries")
+            .and_then(Value::as_array)
+            .ok_or_else(|| TemporalEventsError::InvalidRecord {
+                stream: STREAM.to_string(),
+                position: self.path.clone(),
+                reason: "the directory reading carries no `entries` array".into(),
+            })?;
         entries
             .iter()
             .filter(|entry| entry.get("kind").and_then(Value::as_str) == Some("file"))
@@ -370,7 +381,11 @@ impl<'a> KernelEventLogSource<'a> {
     }
 
     pub fn read(&self) -> Result<Vec<TemporalEvent>, TemporalEventsError> {
-        self.log.since(1).iter().map(kernel_receipt_to_event).collect()
+        self.log
+            .since(1)
+            .iter()
+            .map(kernel_receipt_to_event)
+            .collect()
     }
 }
 
@@ -398,9 +413,7 @@ pub(crate) fn kernel_receipt_to_event(
             position: format!("seq-{}", receipt.seq),
             reason: "`observed_at_unix_ms` overflows an instant".into(),
         })?
-        .map(|millis| {
-            unix_millis_instant(STREAM, &format!("seq-{}", receipt.seq), millis)
-        })
+        .map(|millis| unix_millis_instant(STREAM, &format!("seq-{}", receipt.seq), millis))
         .transpose()?;
     // A payload names its own ref when it has one; the variant name is the
     // subject otherwise.
@@ -625,10 +638,18 @@ fn list_now_refs(client: &CentralClient) -> Result<Vec<String>, TemporalEventsEr
         return Err(refused_reading(STREAM));
     }
     let empty: Vec<Value> = Vec::new();
-    let records = envelope.pointer("/data/records").and_then(Value::as_array).unwrap_or(&empty);
+    let records = envelope
+        .pointer("/data/records")
+        .and_then(Value::as_array)
+        .unwrap_or(&empty);
     Ok(records
         .iter()
-        .filter_map(|record| record.get("now_ref").and_then(Value::as_str).map(str::to_string))
+        .filter_map(|record| {
+            record
+                .get("now_ref")
+                .and_then(Value::as_str)
+                .map(str::to_string)
+        })
         .collect())
 }
 
@@ -690,11 +711,19 @@ fn read_thoughts_chunk(
                 }),
             )
             .map_err(|error| (index, unavailable(STREAM, error)))?;
-        if envelope.pointer("/data/automatic_agent_or_model_invocation") == Some(&Value::Bool(true)) {
+        if envelope.pointer("/data/automatic_agent_or_model_invocation") == Some(&Value::Bool(true))
+        {
             return Err((index, refused_reading(STREAM)));
         }
-        let directory = envelope.pointer("/data/directory").and_then(Value::as_str).unwrap_or_default();
-        for fixture in envelope.pointer("/data/fixtures").and_then(Value::as_array).unwrap_or(&Vec::new()) {
+        let directory = envelope
+            .pointer("/data/directory")
+            .and_then(Value::as_str)
+            .unwrap_or_default();
+        for fixture in envelope
+            .pointer("/data/fixtures")
+            .and_then(Value::as_array)
+            .unwrap_or(&Vec::new())
+        {
             let mapped = thought_fixture_to_event(now_ref, directory, fixture)
                 .map_err(|error| (index, error))?;
             events.push(mapped);
@@ -750,124 +779,132 @@ pub fn read_field(
         });
     }
 
-    let owner = client.owner_direct_from_env().unwrap_or_else(|| client.clone());
+    let owner = client
+        .owner_direct_from_env()
+        .unwrap_or_else(|| client.clone());
     let observed = jiff::Timestamp::now().to_string();
 
-    std::thread::scope(|scope| -> Result<TemporalEventsAnswer, TemporalEventsError> {
-        // Independent owners first: the civil field, the register listing,
-        // the wiki placement and the aikit history read beside each other.
-        let policy = scope.spawn(|| load_civil_field(&owner));
-        let now_list = scope.spawn(|| {
-            owner.run_envelope("central.now.list", json!({ "project": Value::Null }))
-        });
-        let wiki = scope.spawn(|| WikiReturnsPlacementSource::new(owner.clone()).read());
-        let aikit = scope.spawn(|| AikitHistorySource::discover(cwd.clone()).read());
-
-        // The register reading arrives first: the thought fan-out reads
-        // from it. One reading serves the refs and the clearing events —
-        // the sequential reader spawned the same Action twice.
-        const NOW_STREAM: &str = "central-now";
-        let now_envelope = now_list
-            .join()
-            .expect("now.list reader")
-            .map_err(|error| TemporalEventsError::SourceUnavailable {
-                stream: NOW_STREAM.to_string(),
-                detail: error.to_string(),
+    std::thread::scope(
+        |scope| -> Result<TemporalEventsAnswer, TemporalEventsError> {
+            // Independent owners first: the civil field, the register listing,
+            // the wiki placement and the aikit history read beside each other.
+            let policy = scope.spawn(|| load_civil_field(&owner));
+            let now_list = scope.spawn(|| {
+                owner.run_envelope("central.now.list", json!({ "project": Value::Null }))
             });
-        let now_records = match &now_envelope {
-            Ok(envelope) if envelope_refused(envelope) => {
-                Err(refused_reading(NOW_STREAM))
-            }
-            Ok(envelope) => envelope
-                .pointer("/data/records")
-                .and_then(Value::as_array)
-                .ok_or_else(|| TemporalEventsError::InvalidRecord {
+            let wiki = scope.spawn(|| WikiReturnsPlacementSource::new(owner.clone()).read());
+            let aikit = scope.spawn(|| AikitHistorySource::discover(cwd.clone()).read());
+
+            // The register reading arrives first: the thought fan-out reads
+            // from it. One reading serves the refs and the clearing events —
+            // the sequential reader spawned the same Action twice.
+            const NOW_STREAM: &str = "central-now";
+            let now_envelope = now_list.join().expect("now.list reader").map_err(|error| {
+                TemporalEventsError::SourceUnavailable {
                     stream: NOW_STREAM.to_string(),
-                    position: String::new(),
-                    reason: "the field reading carries no `records` array".into(),
+                    detail: error.to_string(),
+                }
+            });
+            let now_records = match &now_envelope {
+                Ok(envelope) if envelope_refused(envelope) => Err(refused_reading(NOW_STREAM)),
+                Ok(envelope) => envelope
+                    .pointer("/data/records")
+                    .and_then(Value::as_array)
+                    .ok_or_else(|| TemporalEventsError::InvalidRecord {
+                        stream: NOW_STREAM.to_string(),
+                        position: String::new(),
+                        reason: "the field reading carries no `records` array".into(),
+                    })
+                    .map(|records| records.to_vec()),
+                Err(error) => Err(error.clone()),
+            };
+
+            let thoughts = now_records
+                .as_ref()
+                .map(|records| {
+                    let now_refs: Vec<String> = records
+                        .iter()
+                        .filter_map(|record| {
+                            record
+                                .get("now_ref")
+                                .and_then(Value::as_str)
+                                .map(str::to_string)
+                        })
+                        .collect();
+                    let chunk = now_refs.len().div_ceil(THOUGHT_WORKERS).max(1);
+                    now_refs
+                        .chunks(chunk)
+                        .map(|part| {
+                            let client = owner.clone();
+                            let part = part.to_vec();
+                            scope.spawn(move || read_thoughts_chunk(&client, &part))
+                        })
+                        .collect::<Vec<_>>()
                 })
-                .map(|records| records.to_vec()),
-            Err(error) => Err(error.clone()),
-        };
+                .unwrap_or_default();
 
-        let thoughts = now_records
-            .as_ref()
-            .map(|records| {
-                let now_refs: Vec<String> = records
-                    .iter()
-                    .filter_map(|record| {
-                        record.get("now_ref").and_then(Value::as_str).map(str::to_string)
-                    })
-                    .collect();
-                let chunk = now_refs.len().div_ceil(THOUGHT_WORKERS).max(1);
-                now_refs
-                    .chunks(chunk)
-                    .map(|part| {
-                        let client = owner.clone();
-                        let part = part.to_vec();
-                        scope.spawn(move || read_thoughts_chunk(&client, &part))
-                    })
-                    .collect::<Vec<_>>()
-            })
-            .unwrap_or_default();
-
-        // Sequential error precedence: civil field, register reading,
-        // clearing events, thoughts (earliest failing ref), wiki
-        // placement, kernel log, aikit history.
-        let field = policy.join().expect("civil field reader")?;
-        let now_records = now_records?;
-        let now_events: Result<Vec<TemporalEvent>, TemporalEventsError> =
-            now_records.iter().map(now_record_to_event).collect();
-        let now_events = now_events?;
-        let mut thought_events = Vec::new();
-        for handle in thoughts {
-            match handle.join().expect("thought reader") {
-                Ok(mut part) => thought_events.append(&mut part),
-                Err((_, error)) => return Err(error),
+            // Sequential error precedence: civil field, register reading,
+            // clearing events, thoughts (earliest failing ref), wiki
+            // placement, kernel log, aikit history.
+            let field = policy.join().expect("civil field reader")?;
+            let now_records = now_records?;
+            let now_events: Result<Vec<TemporalEvent>, TemporalEventsError> =
+                now_records.iter().map(now_record_to_event).collect();
+            let now_events = now_events?;
+            let mut thought_events = Vec::new();
+            for handle in thoughts {
+                match handle.join().expect("thought reader") {
+                    Ok(mut part) => thought_events.append(&mut part),
+                    Err((_, error)) => return Err(error),
+                }
             }
-        }
-        let wiki_events = wiki.join().expect("wiki reader")?;
-        let kernel_events: Result<Vec<TemporalEvent>, TemporalEventsError> =
-            log_receipts.iter().map(kernel_receipt_to_event).collect();
-        let kernel_events = kernel_events?;
-        let aikit_events = aikit.join().expect("aikit reader")?;
+            let wiki_events = wiki.join().expect("wiki reader")?;
+            let kernel_events: Result<Vec<TemporalEvent>, TemporalEventsError> =
+                log_receipts.iter().map(kernel_receipt_to_event).collect();
+            let kernel_events = kernel_events?;
+            let aikit_events = aikit.join().expect("aikit reader")?;
 
-        let now_stream = Collected { name: "central-now", events: now_events };
-        let thoughts_stream = Collected {
-            name: "central-now-thoughts",
-            events: thought_events,
-        };
-        let wiki_stream = Collected { name: "wiki-returns", events: wiki_events };
-        let kernel_stream = Collected {
-            name: "kernel-event-log",
-            events: kernel_events,
-        };
-        let aikit_stream = Collected { name: "aikit-history", events: aikit_events };
-        let answer = project(
-            &[
-                &now_stream,
-                &thoughts_stream,
-                &wiki_stream,
-                &kernel_stream,
-                &aikit_stream,
-            ],
-            &field,
-            &observed,
-            query,
-        )?;
-        cache
-            .lock()
-            .expect("temporal read cache lock")
-            .put(
+            let now_stream = Collected {
+                name: "central-now",
+                events: now_events,
+            };
+            let thoughts_stream = Collected {
+                name: "central-now-thoughts",
+                events: thought_events,
+            };
+            let wiki_stream = Collected {
+                name: "wiki-returns",
+                events: wiki_events,
+            };
+            let kernel_stream = Collected {
+                name: "kernel-event-log",
+                events: kernel_events,
+            };
+            let aikit_stream = Collected {
+                name: "aikit-history",
+                events: aikit_events,
+            };
+            let answer = project(
+                &[
+                    &now_stream,
+                    &thoughts_stream,
+                    &wiki_stream,
+                    &kernel_stream,
+                    &aikit_stream,
+                ],
+                &field,
+                &observed,
+                query,
+            )?;
+            cache.lock().expect("temporal read cache lock").put(
                 cache_key,
-                serde_json::to_value(&answer).map_err(|error| {
-                    TemporalEventsError::CivilTime {
-                        reason: format!("temporal answer serialisation failed: {error}"),
-                    }
+                serde_json::to_value(&answer).map_err(|error| TemporalEventsError::CivilTime {
+                    reason: format!("temporal answer serialisation failed: {error}"),
                 })?,
             );
-        Ok(answer)
-    })
+            Ok(answer)
+        },
+    )
 }
 
 /// The envelope's automatic-reading refusal flag — one check, shared by
@@ -882,7 +919,6 @@ mod read_field_tests {
     /// counting proves the spawn economics (one register reading, bounded
     /// fan-out), and the answers prove the event identity the projection
     /// guarantees is unchanged by reading the streams in parallel.
-
     use super::*;
     use std::fmt::Write as _;
     use std::os::unix::fs::PermissionsExt;
@@ -898,10 +934,8 @@ mod read_field_tests {
         /// Paths are baked in (no process-global env), so parallel tests
         /// never share state.
         fn new(name: &str, nowlist: &str, thoughts_reply: &str) -> Self {
-            let directory = std::env::temp_dir().join(format!(
-                "oi-temporal-fake-{}-{name}",
-                std::process::id()
-            ));
+            let directory = std::env::temp_dir()
+                .join(format!("oi-temporal-fake-{}-{name}", std::process::id()));
             std::fs::create_dir_all(&directory).unwrap();
             let calls = directory.join("calls.log");
             fn write_file(
@@ -913,31 +947,43 @@ mod read_field_tests {
                 std::fs::write(&path, body).unwrap();
                 path
             }
-            let policy = write_file(&directory,
+            let policy = write_file(
+                &directory,
                 "policy.json",
                 r#"{"ok":true,"status":"success","action":"central.time.policy","data":{"policy":{"timezone":"Europe/London","day_boundary_minutes":0,"scope_ref":"control:root"},"revision":"rev-1","scope_ref":"control:root"}}"#,
             );
             let nowlist = write_file(&directory, "nowlist.json", nowlist);
             let thoughts = write_file(&directory, "thoughts.json", thoughts_reply);
-            let refused = write_file(&directory,
+            let refused = write_file(
+                &directory,
                 "refused.json",
                 r#"{"ok":true,"data":{"automatic_agent_or_model_invocation":true}}"#,
             );
-            let files = write_file(&directory,
+            let files = write_file(
+                &directory,
                 "files.json",
                 r#"{"ok":true,"data":{"entries":[{"kind":"file","name":"return.md","location":{"path":"Control/agents/wiki/returns/return.md","ref":"central:path:return-md"}}]}}"#,
             );
-            let aikit = write_file(&directory,
+            let aikit = write_file(
+                &directory,
                 "aikit.json",
                 r#"{"ok":true,"data":{"entries":[{"id":"ev-1","kind":"generation","subject":"factory/run-01","summary":"a retained report","occurred_at_unix_ms":1791428384933}]}}"#,
             );
             let script = write_file(&directory, "owner.sh", {
                 let mut body = String::from("#!/bin/bash\n");
                 // aikit shape: `-C <cwd> history --json`
-                let _ = writeln!(body, r#"if [ "$1" = "-C" ]; then cat {}; exit 0; fi"#, aikit.display());
+                let _ = writeln!(
+                    body,
+                    r#"if [ "$1" = "-C" ]; then cat {}; exit 0; fi"#,
+                    aikit.display()
+                );
                 let _ = writeln!(body, r#"echo "$4" >> {}"#, calls.display());
                 let _ = writeln!(body, r#"case "$4" in"#);
-                let _ = writeln!(body, r#"  central.time.policy) cat {} ;;"#, policy.display());
+                let _ = writeln!(
+                    body,
+                    r#"  central.time.policy) cat {} ;;"#,
+                    policy.display()
+                );
                 let _ = writeln!(body, r#"  central.now.list) cat {} ;;"#, nowlist.display());
                 let _ = writeln!(
                     body,
@@ -993,7 +1039,10 @@ mod read_field_tests {
                 )
             })
             .collect();
-        format!(r#"{{"ok":true,"data":{{"records":[{}]}}}}"#, records.join(","))
+        format!(
+            r#"{{"ok":true,"data":{{"records":[{}]}}}}"#,
+            records.join(",")
+        )
     }
 
     const THOUGHTS_REPLY: &str = r#"{"ok":true,"data":{"directory":"dir/T","fixtures":[{"file":"a.json","conforming":true,"content":"{\"utc\": \"2026-10-08T09:00:00+01:00\"}"}]}}"#;
@@ -1089,9 +1138,11 @@ mod read_field_tests {
         let owner = FakeOwner::new("cache", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
         let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
         let client = owner.client();
-        let first = read_field(&client, &cache, &[], owner.directory.clone(), &window_all()).unwrap();
+        let first =
+            read_field(&client, &cache, &[], owner.directory.clone(), &window_all()).unwrap();
         let calls_after_first = owner.calls().len();
-        let second = read_field(&client, &cache, &[], owner.directory.clone(), &window_all()).unwrap();
+        let second =
+            read_field(&client, &cache, &[], owner.directory.clone(), &window_all()).unwrap();
         assert_eq!(first, second, "a retained answer is the identical document");
         assert_eq!(
             owner.calls().len(),
@@ -1135,11 +1186,7 @@ mod read_field_tests {
 
     #[test]
     fn a_missing_register_reading_is_refused_like_the_source_refuses_it() {
-        let owner = FakeOwner::new(
-            "no-records",
-            r#"{"ok":true,"data":{}}"#,
-            THOUGHTS_REPLY,
-        );
+        let owner = FakeOwner::new("no-records", r#"{"ok":true,"data":{}}"#, THOUGHTS_REPLY);
         let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
         let error = read_field(
             &owner.client(),
