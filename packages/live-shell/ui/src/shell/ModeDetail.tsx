@@ -24,6 +24,7 @@
  * the rack renders what the manifests declare — no more.
  */
 
+import {useEffect, useState, type ReactNode} from 'react'
 import {loadWorldShellFamilies, QUATERNAL_LOGIC_FAMILY_ID} from '../inhabitants/worldShellFamilies'
 import {inhabitantManifest, type InhabitantManifest} from '../inhabitants/manifest'
 import {InhabitantRack} from '../inhabitants/inhabitantRack'
@@ -57,11 +58,38 @@ export function BaseDevicesDetail({transport}: {transport: KernelTransportStatus
 }
 
 /** Base · Document — the selected Central subject's clip-view-grade craft
- * (L7): identity, basis, and the save router's outcomes as honest rows. */
+ * (L7): identity, basis, and the save router's outcomes as honest rows.
+ * With no subject selected the designed empty state stands at device
+ * density: the document's device chips (the affordance that fills it) and
+ * the selection route named — never a bare sentence in a void. */
 export function BaseDocumentDetail({transport, subject}: {transport: KernelTransportStatus; subject: CentralSubjectSelection | null}) {
+  if (subject) {
+    return (
+      <div className="mode-detail" data-mode-detail="base-document">
+        <CentralSubjectDetail transport={transport} subject={subject} />
+      </div>
+    )
+  }
+  const deviceChips = ['Text', 'Highlight', 'Notes', 'Packet', 'Answer', 'Form device (die · participants · bindings)']
   return (
-    <div className="mode-detail" data-mode-detail="base-document">
-      <CentralSubjectDetail transport={transport} subject={subject} />
+    <div className="mode-detail" data-mode-detail="base-document" data-subject-selected="false">
+      <section className="mode-detail-frame" data-detail-empty="document" role="status">
+        <header className="mode-detail-frame-head">
+          <span className="mode-detail-frame-mark"><Icon name="detail" size={14} /></span>
+          <strong>Document</strong>
+          <span className="mode-detail-frame-sub">form · file · revision · bindings · highlights · notes · packet</span>
+        </header>
+        <p className="mode-detail-frame-note">
+          No ground material is selected. Select a folder, note or <b>day</b> in the browser's
+          <b> Files</b> or <b>Days</b> categories — the document's craft opens here: CAS identity,
+          basis, and the save router's five named outcomes.
+        </p>
+        <ul className="mode-detail-chips" aria-label="The document devices that dock here">
+          {deviceChips.map(chip => (
+            <li key={chip} className="mode-detail-chip" data-i={`${chip} device|docks on the Device side when a document is selected`}>{chip}</li>
+          ))}
+        </ul>
+      </section>
     </div>
   )
 }
@@ -77,17 +105,121 @@ export function TechneInstrumentsDetail({transport, instrumentReading}: {transpo
   )
 }
 
-/** Factory · Task log — the honest form of the selected task's tool-run log:
- * the readings the agency surface already holds, and the named wait for the
- * log's own owner (no fabricated run rows). */
-export function FactoryTaskLogDetail({taskLabel}: {taskLabel: string | null}) {
+/** Factory · Task log — the selected task's tool-run log (Rev 4's table),
+ * drawn at device density: the task's identity rows from the agency
+ * surface's own track reading, and the log column honestly declaring the
+ * read it waits for (the Factory owner's task-log read — no fabricated run
+ * rows). The agent chain (the detail's other side) is live. */
+export function FactoryTaskLogDetail({taskLabel, task}: {
+  taskLabel: string | null
+  task?: {
+    sessionRef: string
+    purpose: string | null
+    agentName: string | null
+    needleState: string | null
+  } | null
+}) {
+  const rows: {op: string; value: string | null; hint: string}[] = [
+    {op: 'session', value: task?.sessionRef ?? null, hint: 'the selected session (the agency surface\'s own reading)'},
+    {op: 'agent', value: task?.agentName ?? null, hint: 'the agent seated on the task'},
+    {op: 'status', value: task?.needleState ?? null, hint: 'the thread needle\'s state — live · stalled · idle'},
+    {op: 'attempt', value: null, hint: 'attempts come from the Factory owner (op factory_attempt_read) — declared, waiting here'},
+    {op: 'workcell', value: null, hint: 'where the work runs (op workcell_status_read) — declared, waiting here'},
+    {op: 'budget', value: null, hint: 'turns used / allowed — the track strip and the agent chain carry the live budget reading'},
+  ]
   return (
     <div className="mode-detail" data-mode-detail="factory-task-log" role="status">
-      <p className="mode-detail-note">
-        <b>Task log{taskLabel ? ` · ${taskLabel}` : ''}.</b> The selected task's tool-run log docks here —
-        the thread's tool rows are the log's material. The log leg waits for the Factory owner's
-        task-log read; the agent chain (the detail's other side) is live now.
-      </p>
+      <section className="mode-detail-frame" data-detail="task-log">
+        <header className="mode-detail-frame-head">
+          <span className="mode-detail-frame-mark"><Icon name="session" size={14} /></span>
+          <strong>Task log{taskLabel ? ` · ${taskLabel}` : ''}</strong>
+          <span className="mode-detail-frame-sub">the selected task's tool-run log</span>
+        </header>
+        <div className="mode-detail-tasklog">
+          <ul className="mode-detail-rows" aria-label="Task identity">
+            {rows.map(row => (
+              <li key={row.op} className="mode-detail-row" title={row.hint} data-i={`${row.op}|${row.hint}`}>
+                <span className="mode-detail-row-op">{row.op}</span>
+                <span className={`mode-detail-row-value${row.value ? '' : ' is-waiting'}`}>{row.value ?? 'declared, waiting'}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mode-detail-tasklog-log" aria-label="Tool-run log">
+            <p className="mode-detail-frame-note">
+              The thread's tool rows are the log's material. The log leg waits for the Factory
+              owner's task-log read; the <b>agent chain</b> (the detail's other side) is live now.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+/** Technē · Clip — the focused encounter's clip craft (Rev 4's table):
+ * identity, place and time, disclosure, typed relations, bounded
+ * constellation, source — honest rows over the one temporal reading's
+ * retained occasion, each waiting row naming its owner. */
+export function TechneClipDetail({world}: {world: WorldTimelineView | null}) {
+  const [, setTick] = useState(0)
+  useEffect(() => world?.spine.subscribe(() => setTick(value => value + 1)), [world])
+  const occasion = world?.spine.occasion() ?? null
+  const standing = occasion?.admission ?? null
+  const rows: {op: string; value: ReactNode; hint: string}[] = [
+    {
+      op: 'identity',
+      value: occasion
+        ? <span title={occasion.basis.ref}>{occasion.basis.summary?.slice(0, 72) ?? occasion.basis.ref}</span>
+        : <span className="is-waiting">no occasion retained</span>,
+      hint: occasion ? 'the retained occasion\'s subject ref — identity preserved across readings' : 'select an event in the Relation Field or the Journey — its occasion retains here',
+    },
+    {
+      op: 'place · time',
+      value: occasion?.basis.instantUnixMs != null
+        ? new Date(occasion.basis.instantUnixMs).toISOString().slice(0, 16).replace('T', ' ') + ' UTC'
+        : <span className="is-waiting">the occasion carries no civil instant</span>,
+      hint: 'the occasion\'s placed time — a retained occasion keeps its snapshot; current admission qualifies separately',
+    },
+    {
+      op: 'disclosure',
+      value: standing
+        ? <span data-admission={standing.admitted ? 'admitted' : 'refused'}>{standing.admitted ? 'admitted' : 'no longer in the reading'} — {standing.disclosure}</span>
+        : <span className="is-waiting">admission not yet qualified</span>,
+      hint: 'current admission: the occasion\'s standing against the newest reading',
+    },
+    {
+      op: 'typed relations',
+      value: <span className="is-waiting">the graph owner's reading — declared, waiting</span>,
+      hint: 'typed relations bind through the graph owner; the clip invents no edges',
+    },
+    {
+      op: 'constellation',
+      value: <span className="is-waiting">the bounded local whole — the constellation owner's</span>,
+      hint: 'the bounded constellation of the subject, as the constellation module lands',
+    },
+    {
+      op: 'source',
+      value: <span className="is-waiting">the source leg — evidence-grounded opening, declared</span>,
+      hint: 'event → source at its anchor; the source leg opens with the evidence route',
+    },
+  ]
+  return (
+    <div className="mode-detail" data-mode-detail="techne-clip">
+      <section className="mode-detail-frame" data-detail="techne-clip">
+        <header className="mode-detail-frame-head">
+          <span className="mode-detail-frame-mark"><Icon name="trav" size={14} /></span>
+          <strong>Clip</strong>
+          <span className="mode-detail-frame-sub">identity · place and time · disclosure · typed relations · constellation · source</span>
+        </header>
+        <ul className="mode-detail-rows" aria-label="Clip craft">
+          {rows.map(row => (
+            <li key={row.op} className="mode-detail-row" title={row.hint} data-i={`${row.op}|${row.hint}`}>
+              <span className="mode-detail-row-op">{row.op}</span>
+              <span className="mode-detail-row-value">{row.value}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   )
 }

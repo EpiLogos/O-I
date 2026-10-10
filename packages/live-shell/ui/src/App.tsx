@@ -34,7 +34,10 @@ import {TimelineProjectionResidence, timelinePresentation} from './projections/t
 import {useWorldTemporalReading} from './projections/useWorldTemporalReading'
 import {surfModeOf, type SurfMode} from './shell/modeGrammar'
 import type {ModeTransportReadouts} from './shell/ModeTransportBar'
-import {BaseDevicesDetail, BaseDocumentDetail, TechneInstrumentsDetail, FactoryTaskLogDetail, TechneLensBar, worldNowReadout} from './shell/ModeDetail'
+import {BaseDevicesDetail, BaseDocumentDetail, TechneInstrumentsDetail, TechneClipDetail, FactoryTaskLogDetail, TechneLensBar, worldNowReadout} from './shell/ModeDetail'
+import {ModeBrowser} from './shell/ModeBrowser'
+import {ModeCentreFrame} from './shell/ModeCentre'
+import type {CentralSubjectSelection} from './inhabitants/CentralSubjectDetail'
 import {NATIVE_PRESENT_EXPRESSIONS} from './native/openStudio'
 import {sameEditorBasis,type NativeEditorBasis,type NativeEditorController} from '@epilogos/expressions-boundary/editor'
 import './NativeCompositionResidence.css'
@@ -155,6 +158,10 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   }, [workspace.mode])
   const [detail, setDetail] = useState(restored?.detail ?? true)
   const [detailConfiguration, configureDetail] = useState<NativeDetailConfigurationIntent | null>(null)
+  // The Base mode's selected ground subject (the browser's Days/Files rows
+  // select it): the Document detail's aperture. The selection rides the
+  // frame's own state — the spine keeps the encounter, not a second store.
+  const [centralSubject, selectCentralSubject] = useState<CentralSubjectSelection | null>(null)
   const nativeComposition = (workspace.mode === 'expressions' || workspace.mode === 'techne') && (centerPanel === 'native.session' || centerPanel === 'native.arrangement')
   const nativeProjection = useMemo(() => {
     if (!workspace.editorReading) return {content: null, error: null}
@@ -244,13 +251,15 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   }
   /** Enter a surf mode (Rev 5): one encounter transition over the spine —
    * mode and world context ride the one book (the bridge publishes both);
-   * no surface closes, every resident stays mounted-concealed. */
+   * no surface closes, every resident stays mounted-concealed. The right
+   * dock is part of the frame in every mode (Rev 4): entering a ground or
+   * agency mode opens it — an opening, never a closing. */
   const chooseMode = (next: SurfMode) => {
     presentSettings(false)
     continuity.setContext(context => ({...context, world: next === 'base' ? 'central' : undefined}))
     continuity.setMode(next === 'live' ? 'audio' : next)
     if (next === 'live' || next === 'expressions') { setCenterPanel('world.expressions'); return }
-    if (next === 'base' || next === 'techne') { setCenterPanel('world.ground'); return }
+    if (next === 'base' || next === 'techne') { setCenterPanel('world.ground'); setDock(true); return }
     setCenterPanel('native.agent'); setDock(true)
   }
   const [dock, setDock] = useState(restored?.dock ?? false)
@@ -336,6 +345,11 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const worldCut = frameMode === 'base' || (frameMode === 'techne' && centerPanel === 'world.ground')
   const presented = worldCut ? (tab === 'arrangement' ? 'arrangement' as const : 'session' as const) : timelinePresentation(workspace.mode, tab, centerPanel)
   const presentedView = agentShell ? (shellCtx.centreView === 'arrangement' ? 'arrangement' as const : shellCtx.centreView === 'session' ? 'session' as const : null) : presented
+  // The centre's designed frame stands while the World cut's civil reading
+  // is absent or in flight (the empty-state law: a designed surface inside
+  // the frame, never a bare sentence in a void). The L4 presentations stay
+  // mounted beneath — residents are concealed, never closed.
+  const centreFrameUp = worldCut && worldView.source.status !== 'live' && !settingsPresented
   const modeReadouts: ModeTransportReadouts | undefined = worldCut ? {
     position: worldNowReadout(worldView),
     link: workspace.transport.kind === 'unavailable'
@@ -355,7 +369,15 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       onMode={chooseMode}
     /> : <TransportBar tempoBpm={state.set?.tempo_bpm ?? null} name={state.set?.path.split('/').pop()?.replace(/\.als$/i, '') ?? ''} mode={frameMode} view={tab} setView={chooseView} chooseMode={chooseMode} presentedView={presentedView} modeReadouts={modeReadouts} centerPanels={panels.filter(panel => panel.id !== 'world.expressions' && panel.id !== 'native.agent' && panel.navigation !== false)} activeCenter={settingsPresented ? 'world.settings' : frameMode === 'live' ? null : centerPanel} openCenter={openCenterPanel} workName={workspace.reading?.document?.name} sceneName={workspace.reading?.sceneName} nativeTransport={nativeView('expressions')} browser={browser} detail={detail} dock={dock} toggleBrowser={() => setBrowser(!browser)} toggleDetail={() => setDetail(!detail)} toggleDock={() => setDock(!dock)} />}
     <NativeInputRetentionProvider><div className="browser-residence" hidden={!browser || frameMode !== 'live' || agentShell}><BrowserPane defaultSet={config?.default_set ?? ''} ctx={ctx} /></div>
-    <div className="browser-residence" hidden={!browser || frameMode === 'live' || agentShell}><WorldBrowser /></div>
+    {/* The browser is per mode (Rev 3's left column): Live keeps the audio
+      pane, Expressions keeps the retained app's library (the parent's own
+      browser — correct per the audit); Base·Central and Technē wear the
+      grammar's categories over the families' declared entries. */}
+    <div className="browser-residence" hidden={!browser || frameMode === 'live' || agentShell}>
+      {frameMode === 'expressions'
+        ? <WorldBrowser />
+        : <ModeBrowser mode={frameMode} onSelectSubject={selectCentralSubject} selectedSubject={centralSubject} />}
+    </div>
     <div className="browser-residence" hidden={!browser || !agentShell}><AgentShellBrowser rows={agency.rows} error={agency.error} loading={agency.loading} /></div>
     {browser && <div className="browser-resizer" role="separator" aria-label="Resize browser" aria-orientation="vertical" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); resizeBrowser(Math.max(120, Math.min(viewport[0] - 320, (browserWidth ?? document.querySelector('.browser-residence:not([hidden]) .browser,.browser-residence:not([hidden]) .world-browser')?.getBoundingClientRect().width ?? 430) + (event.key === 'ArrowRight' ? 10 : -10))))} }} onPointerDown={event => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) resizeBrowser(Math.max(120, Math.min(viewport[0] - 320, event.clientX))) }} />}
     <main className="center"><div className={`center-body${nativeComposition && !settingsPresented ? ' native-composition-residence' : ''}${nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented?' native-editor-residence':''}`} data-lens-bar={frameMode === 'techne' && centerPanel === 'world.ground' && !settingsPresented ? 'true' : undefined}>
@@ -375,8 +397,15 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
         World cut rides L4's additive `world` prop only where it presents. */}
       <TimelineProjectionResidence set={state.set} document={deep.document} selection={selection} select={choose} colors={colors} setColor={setColor}
         session={worldCut ? undefined : nativeView('session')} arrangement={worldCut ? undefined : nativeView('arrangement')} compactTransport={frameMode === 'expressions'}
-        presented={settingsPresented ? null : presented}
+        presented={settingsPresented || centreFrameUp ? null : presented}
         world={worldCut ? worldView : undefined} />
+      {/* The centre's designed frame while the civil reading is absent or in
+        flight (the empty-state law): the mode's day-as-clips / Relation
+        Field / Journey surface with the disclosure INSIDE it — the L4
+        presentations stay mounted beneath, concealed, never closed. */}
+      <div className="mode-centre-residence" hidden={!centreFrameUp} data-mode-centre-residence={frameMode}>
+        {(frameMode === 'base' || frameMode === 'techne') && <ModeCentreFrame mode={frameMode} presentation={presented ?? 'session'} world={worldView} />}
+      </div>
       {panels.map(panel => { const Panel = panel.component; return <div className={`inhabitant${panel.id === 'world.expressions' ? ' native-stage-residence' : ''}`} hidden={panel.id === 'world.settings' ? !settingsPresented : settingsPresented || workspace.mode === 'audio' && panel.id !== 'world.knowledge' || (centerPanel !== panel.id && !(nativeComposition && panel.id === 'world.expressions'))} key={panel.id}><Panel {...ctx} /></div> })}
     </div></main>
     <div className="dock-residence" hidden={!dock || agentShell}><RightDock ctx={ctx} /></div>
@@ -387,13 +416,19 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       detail; Base wears the ground's Document|Devices; Technē's Device side
       is the instruments rack; Factory wears the Task log | Agent chain. */}
     <div className="detail-residence" hidden={!detail || frameMode !== 'live'}><DeviceChainPanel ctx={ctx} document={deep.document} selection={selection} mode={detailMode}/></div>
-    <div className="detail-residence" hidden={!detail || agentShell || !(frameMode === 'expressions' || (frameMode === 'techne' && detailMode === 'clip'))}><NativeWorldDetail mode={detailMode} configurationIntent={detailConfiguration} presentMode={mode=>{changeDetailMode(mode);setDetail(true)}} presentNativeEditor={presentNativeEditor} expand={() => {if(!detailExpansionReturn.current)detailExpansionReturn.current={height:detailHeight,workspaceId:workspace.workspaceId,accessEpoch:workspace.accessEpoch};resizeDetail(Math.max(120,viewport[1]-156))}} collapse={() => {const previous=detailExpansionReturn.current;detailExpansionReturn.current=null;if(previous&&previous.workspaceId===workspace.workspaceId&&previous.accessEpoch===workspace.accessEpoch)resizeDetail(previous.height)}}/></div>
-    <div className="detail-residence" hidden={!detail || !(frameMode === 'base' || (frameMode === 'techne' && detailMode === 'device'))}>{frameMode === 'base' ? (detailMode === 'clip' ? <BaseDocumentDetail transport={workspace.transport} subject={null} /> : <BaseDevicesDetail transport={workspace.transport} />) : <TechneInstrumentsDetail transport={workspace.transport} />}</div>
-    <div className="detail-residence" hidden={!detail || !agentShell || detailMode !== 'clip'}><FactoryTaskLogDetail taskLabel={factoryTask?.purpose ?? null} /></div>
+    {/* The detail row's content is per mode (Rev 4's table): Live keeps the
+      audio chain; Expressions keeps the native detail; Base wears the
+      ground's Document|Devices; Technē's Device side is the instruments
+      rack and its Clip side is the clip craft over the World cut (the
+      native detail stays for the native cut's Clip); Factory wears the
+      Task log | Agent chain. */}
+    <div className="detail-residence" hidden={!detail || agentShell || !(frameMode === 'expressions' || (frameMode === 'techne' && detailMode === 'clip' && !worldCut))}><NativeWorldDetail mode={detailMode} configurationIntent={detailConfiguration} presentMode={mode=>{changeDetailMode(mode);setDetail(true)}} presentNativeEditor={presentNativeEditor} expand={() => {if(!detailExpansionReturn.current)detailExpansionReturn.current={height:detailHeight,workspaceId:workspace.workspaceId,accessEpoch:workspace.accessEpoch};resizeDetail(Math.max(120,viewport[1]-156))}} collapse={() => {const previous=detailExpansionReturn.current;detailExpansionReturn.current=null;if(previous&&previous.workspaceId===workspace.workspaceId&&previous.accessEpoch===workspace.accessEpoch)resizeDetail(previous.height)}}/></div>
+    <div className="detail-residence" hidden={!detail || !(frameMode === 'base' || (frameMode === 'techne' && (detailMode === 'device' || (detailMode === 'clip' && worldCut))))}>{frameMode === 'base' ? (detailMode === 'clip' ? <BaseDocumentDetail transport={workspace.transport} subject={centralSubject} /> : <BaseDevicesDetail transport={workspace.transport} />) : (worldCut && detailMode === 'clip' ? <TechneClipDetail world={worldView} /> : <TechneInstrumentsDetail transport={workspace.transport} />)}</div>
+    <div className="detail-residence" hidden={!detail || !agentShell || detailMode !== 'clip'}><FactoryTaskLogDetail taskLabel={factoryTask?.purpose ?? null} task={factoryTask ? {sessionRef: factoryTask.sessionRef, purpose: factoryTask.purpose, agentName: factoryTask.agentName, needleState: factoryTask.needle?.state ?? null} : null} /></div>
     <div className="detail-residence" hidden={!detail || !agentShell || detailMode !== 'device'}><AgentShellDeviceDetail tracks={agency.tracks} /></div></NativeInputRetentionProvider>
-    {agentShell ? <AgentStatusBarBridge detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={agency.tracks[0]?.purpose ?? undefined} /> : <StatusBar detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={state.set?.tracks[selection.track]?.name} />}
+    {agentShell ? <AgentStatusBarBridge detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={agency.tracks[0]?.purpose ?? undefined} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} /> : <StatusBar detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={state.set?.tracks[selection.track]?.name} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} />}
   </>)
-  return <div ref={frameRef} style={{ ...(browserWidth === null ? {} : { '--browser-w': `${browserWidth}px` }), ...(detailHeight === null ? {} : { '--detail-h': `${detailHeight}px` }), ...(agentShell ? {'--dock-w': `${shellCtx.dockWidth}px`} : {}) } as CSSProperties} className={`frame mode-${workspace.mode}${browser ? '' : ' browser-hidden'}${detail ? '' : ' detail-hidden'}${dock ? ' dock-open' : ''}${agentShell ? ' agent-shell-frame' : ''}`} data-agent-shell={agentShell ? 'true' : undefined}>{frameBody}</div>
+  return <div ref={frameRef} style={{ ...(browserWidth === null ? {} : { '--browser-w': `${browserWidth}px` }), ...(detailHeight === null ? {} : { '--detail-h': `${detailHeight}px` }), ...(agentShell ? {'--dock-w': `${shellCtx.dockWidth}px`} : {}) } as CSSProperties} className={`frame mode-${workspace.mode}${browser ? '' : ' browser-hidden'}${detail ? '' : ' detail-hidden'}${dock ? ' dock-open' : agentShell ? ' no-dock' : ''}${agentShell ? ' agent-shell-frame' : ''}`} data-agent-shell={agentShell ? 'true' : undefined}>{frameBody}</div>
 }
 
 function AgentStatusBarBridge(props: ComponentProps<typeof StatusBar>) {

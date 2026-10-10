@@ -200,3 +200,79 @@ test('every waiting state names the mode\'s honesty note', () => {
     assert.ok(grammar.waitingNote.length > 20, `${grammar.title} names what its waiting controls wait for`)
   }
 })
+
+// ————————————————————————————————————————————————————————————————————————
+// The per-mode frame compositions (browser, centre, status) — the commission's
+// tables as data, held to Revision 3's left column, Revision 5's centre
+// meanings, and the audit's findings.
+
+test('the browser table: Live and Expressions keep their own browsers; the others declare the design\'s columns', () => {
+  // Live keeps the audio pane, Expressions the retained library — the audit
+  // holds both correct; the grammar records no categories there.
+  assert.deepEqual(MODE_GRAMMAR.live.browser, [], 'live keeps its own browser')
+  assert.deepEqual(MODE_GRAMMAR.expressions.browser, [], 'expressions keeps its own browser')
+  const byId = mode => Object.fromEntries(MODE_GRAMMAR[mode].browser.map(category => [category.id, category]))
+  // Base·Central — the mockup's Base column: Days, Flows, Beings, Things,
+  // Goals; Files, Wiki.
+  const base = byId('base')
+  assert.deepEqual(Object.keys(base), ['central-days', 'central-flows', 'central-beings', 'central-things', 'central-goals', 'central-files', 'central-wiki'])
+  assert.deepEqual(base['central-days'].group, 'Central')
+  assert.deepEqual(base['central-files'].group, 'Project')
+  // Factory — per its manifest: Sessions · Agents · Runs · Knowledge.
+  assert.deepEqual(Object.keys(byId('factory')), ['factory-sessions', 'factory-agents', 'factory-runs', 'factory-knowledge'])
+  // Technē — to-hand sources · files, then the World groups.
+  assert.deepEqual(Object.keys(byId('techne')),
+    ['techne-sources', 'techne-files', 'techne-bodies', 'techne-locations', 'techne-places', 'techne-palaces', 'techne-journeys'])
+})
+
+test('every browser category carries a cut mark, a hint, an honest state; waiting names its family', () => {
+  for (const mode of SURF_MODES) {
+    for (const category of MODE_GRAMMAR[mode].browser) {
+      assert.ok(Object.hasOwn(ICON_MARKS, category.mark), `${mode}/${category.id}: mark "${category.mark}" is an icon-cut mark`)
+      assert.ok(category.hint.length > 20, `${mode}/${category.id} names what its rows are`)
+      assert.ok(['cut', 'waiting'].includes(category.state), `${mode}/${category.id} states its admission`)
+      assert.ok(category.group.length > 0, `${mode}/${category.id} names its group`)
+      if (category.state === 'waiting') {
+        assert.ok(category.family, `${mode}/${category.id}: a waiting category names the family whose owner it waits for`)
+        assert.ok(!category.hint.includes('Expressions'), `${mode}/${category.id}: a waiting category never offers another mode's content`)
+      }
+    }
+  }
+  // The cut categories that name no family compose from the shell's own
+  // owners (the ground listing, the works list).
+  const base = Object.fromEntries(MODE_GRAMMAR.base.browser.map(category => [category.id, category]))
+  assert.equal(base['central-days'].state, 'cut')
+  assert.equal(base['central-files'].state, 'cut')
+  assert.equal(base['central-wiki'].state, 'waiting')
+})
+
+test('the centre compositions per mode × presentation carry the Rev-5 meanings', () => {
+  const EXPECT = {
+    live: ['clips and scenes', 'the song over time'],
+    base: ['day as clips', 'today on one ruler'],
+    factory: ['sessions, clips are tasks', 'the runs over time'],
+    expressions: ['scene rows', 'the scenes over time'],
+    techne: ['walk stops', 'relation field'],
+  }
+  for (const [mode, [session, arrangement]] of Object.entries(EXPECT)) {
+    const centre = MODE_GRAMMAR[mode].centre
+    assert.ok(centre.session.meaning.toLowerCase().includes(session.toLowerCase()), `${mode} centre.session: ${centre.session.meaning}`)
+    assert.ok(centre.arrangement.meaning.toLowerCase().includes(arrangement.toLowerCase()), `${mode} centre.arrangement: ${centre.arrangement.meaning}`)
+    assert.ok(centre.session.label.length > 0 && centre.arrangement.label.length > 0)
+  }
+})
+
+test('the status identity is per mode and never another mode\'s name', () => {
+  const EXPECT = {
+    live: 'Live', base: 'Central', factory: 'Factory', expressions: 'Expressions', techne: 'Technē',
+  }
+  for (const [mode, label] of Object.entries(EXPECT)) {
+    const status = MODE_GRAMMAR[mode].status
+    assert.equal(status.label, label, `${mode}'s status identity`)
+    assert.ok(status.fn.length > 10, `${mode}'s status identity names its field`)
+  }
+  // The audit's finding, held as law: Base·Central's identity line never
+  // says "Expressions".
+  const baseIdentity = JSON.stringify([MODE_GRAMMAR.base.status, MODE_GRAMMAR.base.centre])
+  assert.ok(!baseIdentity.includes('Expressions'), 'Base·Central\'s status and centre never say "Expressions"')
+})

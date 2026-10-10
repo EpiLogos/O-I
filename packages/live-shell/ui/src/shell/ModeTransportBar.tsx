@@ -20,6 +20,7 @@
  */
 
 import {MODE_GRAMMAR, slotDataI, slotMeaning, type SurfMode, type TransportSlotId} from './modeGrammar'
+import {Icon as CutIcon} from '../inhabitants/sdk/Icon'
 import './modeSurface.css'
 
 /** One real reading a mode's transport may show: the owner's value and the
@@ -49,7 +50,7 @@ export function ModeTransportBar({mode, readouts}: {mode: SurfMode; readouts?: M
       <button type="button" className="native-control" disabled {...hold('tempo')}>‹</button>
       <button type="button" className="native-control" disabled {...hold('tempo')}>›</button>
       <output className="meter-field" {...dataI('signature')} title={waiting('signature')} aria-label={meaning('signature').label}>{readout('signature').value}</output>
-      <button type="button" className="native-control" disabled {...hold('metro')}>●◦</button>
+      <button type="button" className="native-control" disabled {...hold('metro')}><CutIcon name="metroDots" size={14} /></button>
       <button type="button" className="native-control" disabled {...hold('quantize')}>{meaning('quantize').label}</button>
     </div>
     <div className="transport-scale">
@@ -59,27 +60,27 @@ export function ModeTransportBar({mode, readouts}: {mode: SurfMode; readouts?: M
     </div>
     <div className="transport-spacer" />
     <div className="transport-group transport-playback">
-      <button type="button" className="native-control" disabled {...hold('follow')}>➜</button>
+      <button type="button" className="native-control" disabled {...hold('follow')}><CutIcon name="follow" size={14} /></button>
       <output className="position-field" {...dataI('position')} title={readout('position').title} aria-label={meaning('position').label}>{readout('position').value}</output>
-      <button type="button" className="native-control transport-btn transport-play" disabled {...hold('play')} aria-label={meaning('play').label}>▶</button>
-      <button type="button" className="native-control transport-btn" disabled {...hold('stop')} aria-label={meaning('stop').label}>■</button>
-      <button type="button" className="native-control transport-btn transport-record" disabled {...hold('record')} aria-label={meaning('record').label}>●</button>
-      <button type="button" className="native-control" disabled {...hold('overdub')}>+</button>
-      <button type="button" className="native-control" disabled {...hold('arm')}>⌘</button>
-      <button type="button" className="native-control" disabled {...hold('re-enable')}>←</button>
-      <button type="button" className="native-control" disabled {...hold('capture')}>○</button>
+      <button type="button" className="native-control transport-btn transport-play" disabled {...hold('play')} aria-label={meaning('play').label}><CutIcon name="play" size={15} /></button>
+      <button type="button" className="native-control transport-btn" disabled {...hold('stop')} aria-label={meaning('stop').label}><CutIcon name="stop" size={15} /></button>
+      <button type="button" className="native-control transport-btn transport-record" disabled {...hold('record')} aria-label={meaning('record').label}><CutIcon name="rec" size={15} /></button>
+      <button type="button" className="native-control" disabled {...hold('overdub')}><CutIcon name="plus" size={13} /></button>
+      <button type="button" className="native-control" disabled {...hold('arm')}><CutIcon name="cmd" size={14} /></button>
+      <button type="button" className="native-control" disabled {...hold('re-enable')}><CutIcon name="back" size={14} /></button>
+      <button type="button" className="native-control" disabled {...hold('capture')}><CutIcon name="cap" size={14} /></button>
     </div>
     <div className="transport-loop transport-group">
       <output className="position-field" {...dataI('punch-in')} title={waiting('punch-in')} aria-label={meaning('punch-in').label}>{readout('punch-in').value}</output>
-      <button type="button" className="native-control" disabled {...hold('punch-in')}>⌁</button>
-      <button type="button" className="native-control" disabled {...hold('loop')}>↔</button>
-      <button type="button" className="native-control" disabled {...hold('punch-out')}>⌁</button>
+      <button type="button" className="native-control" disabled {...hold('punch-in')}><CutIcon name="punchIn" size={14} /></button>
+      <button type="button" className="native-control" disabled {...hold('loop')}><CutIcon name="loop" size={13} /></button>
+      <button type="button" className="native-control" disabled {...hold('punch-out')}><CutIcon name="punchOut" size={14} /></button>
       <output className="position-field" {...dataI('loop-length')} title={waiting('loop-length')} aria-label={meaning('loop-length').label}>{readout('loop-length').value}</output>
     </div>
     <div className="transport-spacer" />
     <div className="transport-system">
-      <button type="button" className="native-control" disabled {...hold('draw')}>✎</button>
-      <button type="button" className="native-control" disabled {...hold('keys')}>▥</button>
+      <button type="button" className="native-control" disabled {...hold('draw')}><CutIcon name="draw" size={14} /></button>
+      <button type="button" className="native-control" disabled {...hold('keys')}><CutIcon name="keys" size={14} /></button>
       <button type="button" className="native-control" disabled {...hold('key-map')}>{meaning('key-map').label}</button>
       <button type="button" className="native-control" disabled {...hold('midi-map')}>{meaning('midi-map').label}</button>
       <output {...dataI('rate')} title={readout('rate').title} aria-label={meaning('rate').label}>{readout('rate').value}</output>

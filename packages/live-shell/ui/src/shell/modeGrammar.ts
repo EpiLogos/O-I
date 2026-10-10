@@ -64,6 +64,54 @@ export interface DetailPair {
   readonly device: PresentationMeaning
 }
 
+// ————————————————————————————————————————————————————————————————————————
+// The per-mode frame compositions — browser, centre, status — as declared
+// data (the commission: browser/centre/detail/status join the grammar; no
+// per-mode conditional sprawl in components). The CATEGORIES are the
+// grammar's data (Revision 3's left-column table, mode by mode); their
+// ENTRIES are not invented here — the frame composes them through the
+// families' declared surfaces (§12/§16): the L7 central browser categories,
+// the L4 temporal reading, the ground listing. `cut` names a category whose
+// rows compose from a landed owner today; `waiting` names one the owner has
+// not landed — the browser draws it as a designed empty category that names
+// its owner, never another mode's content.
+
+export interface ModeBrowserCategory {
+  readonly id: string
+  readonly label: string
+  /** The category column's group heading (the mockup's column groups:
+   * Central / Project / To hand / World / Views). */
+  readonly group: string
+  /** The icon-cut mark the category wears. */
+  readonly mark: IconName
+  /** What the category's rows are. */
+  readonly hint: string
+  /** The family whose declared surface carries the entries (§12); absent
+   * when the rows are the shell's own (the ground listing). */
+  readonly family?: string
+  /** `cut`: rows compose from a landed owner. `waiting`: the owner has not
+   * landed — the designed empty category names it. */
+  readonly state: 'cut' | 'waiting'
+}
+
+/** The mode's centre composition, per presentation: the designed frame the
+ * centre holds when the mode's material is not (yet) readable — header,
+ * structure, affordance — and the honest disclosure inside it. The readable
+ * presentation composes through the landed adapters (L4's) and needs no
+ * frame of its own. */
+export interface CentreComposition {
+  readonly label: string
+  readonly meaning: string
+}
+
+/** The mode's status identity: what the status bar's subject line names in
+ * this mode — never another mode's name (the audit: Base·Central must not
+ * say "Expressions"). */
+export interface ModeStatusIdentity {
+  readonly label: string
+  readonly fn: string
+}
+
 export interface SurfModeGrammar {
   readonly name: SurfMode
   readonly title: string
@@ -76,6 +124,15 @@ export interface SurfModeGrammar {
   readonly arrangement: PresentationMeaning
   /** Revision 4's table: the detail row's pair in this mode. */
   readonly detail: DetailPair
+  /** Revision 5 + Revision 3: the mode's left-browser categories (the
+   * frame composes their entries through the families' declared surfaces). */
+  readonly browser: readonly ModeBrowserCategory[]
+  /** The centre's designed frame per presentation, for the state where the
+   * mode's material is not readable yet (the empty-state law: a DESIGNED
+   * surface, never a bare sentence in a void). */
+  readonly centre: {readonly session: CentreComposition; readonly arrangement: CentreComposition}
+  /** The status bar's identity in this mode. */
+  readonly status: ModeStatusIdentity
   /** Revision 5, first table: every transport slot's meaning here, in the
    * fixed shell order (TRANSPORT_SLOT_IDS). */
   readonly transport: readonly SlotMeaning[]
@@ -117,6 +174,15 @@ const live: SurfModeGrammar = {
     clip: {label: 'Clip', meaning: 'the clip in focus'},
     device: {label: 'Device', meaning: 'the track\'s device chain'},
   },
+  // Live keeps its own browser (the audio BrowserPane) and its own centre —
+  // the audio cut's compositions; the grammar records the identity, the
+  // frame composes nothing new here.
+  browser: [],
+  centre: {
+    session: {label: 'Session', meaning: 'clips and scenes'},
+    arrangement: {label: 'Arrangement', meaning: 'the song over time'},
+  },
+  status: {label: 'Live', fn: 'the music surface — the set and its transport'},
   transport: [
     {id: 'link', label: 'Link', fn: 'join the set\'s clock with Link peers'},
     {id: 'tap', label: 'Tap', fn: 'tap tempo'},
@@ -161,6 +227,32 @@ const base: SurfModeGrammar = {
     clip: {label: 'Document', meaning: 'form, file, revision, bindings; highlights; notes; packet'},
     device: {label: 'Devices', meaning: 'Text · Highlight · Notes · Packet · Answer · the form devices (the ground\'s family docks here)'},
   },
+  // The mockup's Base column (Rev 3): Central — Days, Flows, Beings, Things,
+  // Goals; Project — Files, Wiki. Entries compose through the central
+  // family's declared surfaces: L7's browser categories + the L4 civil
+  // reading for Days, the ground listing for Files.
+  browser: [
+    {id: 'central-days', label: 'Days', group: 'Central', mark: 'die', family: 'central', state: 'cut',
+      hint: 'The civil calendar: a day per row, its record beneath — rows from the kernel\'s temporal read (L4) and the day records.'},
+    {id: 'central-flows', label: 'Flows', group: 'Central', mark: 'trav', family: 'central', state: 'waiting',
+      hint: 'The flow documents (Dialogue · Flow · Journal). The Flow document device is declared; the flow listing\'s owner read is not landed — designed empty until it is.'},
+    {id: 'central-beings', label: 'Beings', group: 'Central', mark: 'bind', family: 'central', state: 'waiting',
+      hint: 'Beings with their bindings (world, subject, office, sources). The oi-beings form\'s owner has not landed its listing read — designed empty until it is.'},
+    {id: 'central-things', label: 'Things', group: 'Central', mark: 'chain', family: 'central', state: 'waiting',
+      hint: 'Things with their bindings. The oi-things form\'s owner has not landed its listing read — designed empty until it is.'},
+    {id: 'central-goals', label: 'Goals', group: 'Central', mark: 'direct', family: 'central', state: 'waiting',
+      hint: 'The goals lane of the day. The goals listing\'s owner read is not landed — designed empty until it is.'},
+    {id: 'central-files', label: 'Files', group: 'Project', mark: 'detail',
+      state: 'cut',
+      hint: 'The ground\'s listing — folders and notes as rows; selecting one opens its craft in the Document detail.'},
+    {id: 'central-wiki', label: 'Wiki', group: 'Project', mark: 'lib', family: 'central', state: 'waiting',
+      hint: 'The wiki projects through its Expression owner (§6); the projection read does not answer in every boot — designed empty, named.'},
+  ],
+  centre: {
+    session: {label: 'Day · Session', meaning: 'the day as clips — Day, Flows, Beings, Things, Goals as tracks; documents and entries as clips'},
+    arrangement: {label: 'Today', meaning: 'today on one ruler'},
+  },
+  status: {label: 'Central', fn: 'the ground — the day as clips, documents and entries'},
   transport: [
     {id: 'link', label: 'Ground sync', fn: 'the frame follows the ground\'s carrier (the kernel link)'},
     {id: 'tap', label: 'Stamp Now', fn: 'stamp Now into the open document'},
@@ -205,6 +297,24 @@ const factory: SurfModeGrammar = {
     clip: {label: 'Task log', meaning: 'the selected task\'s tool-run log'},
     device: {label: 'Agent chain', meaning: 'gateway → agent → skills → world → git'},
   },
+  // The Factory browser composes through the agency surface's own browser
+  // (AgentShellBrowser — the landed Factory column); the grammar records the
+  // mode's category identity so the frame and the surface cannot drift.
+  browser: [
+    {id: 'factory-sessions', label: 'Sessions', group: 'Work', mark: 'session', family: 'software-factory', state: 'cut',
+      hint: 'The working sessions — one row per session, tracks are sessions, clips are tasks.'},
+    {id: 'factory-agents', label: 'Agents', group: 'Work', mark: 'bind', family: 'software-factory', state: 'cut',
+      hint: 'The agent population — who is seated, running, stalled.'},
+    {id: 'factory-runs', label: 'Runs', group: 'Work', mark: 'arrangement', family: 'software-factory', state: 'cut',
+      hint: 'The run viewer — attempts and their task trees as temporal material.'},
+    {id: 'factory-knowledge', label: 'Knowledge', group: 'Ground', mark: 'search', family: 'software-factory', state: 'cut',
+      hint: 'The knowledge route — skills and sources the sessions can admit.'},
+  ],
+  centre: {
+    session: {label: 'Sessions', meaning: 'tracks are sessions, clips are tasks'},
+    arrangement: {label: 'Run viewer', meaning: 'one lane per thread — the runs over time'},
+  },
+  status: {label: 'Factory', fn: 'sessions and tasks — the agency desk'},
   transport: [
     {id: 'link', label: 'Peers', fn: 'link the shell\'s sessions to agents in other harnesses and machines (one ledger, one clock)'},
     {id: 'tap', label: 'Ping', fn: 'ask every running agent for a status line now; answers land in the Agents tile'},
@@ -249,6 +359,14 @@ const expressions: SurfModeGrammar = {
     clip: {label: 'Scene', meaning: 'sequence, durations, bindings'},
     device: {label: 'Studio', meaning: 'the engine\'s own controls'},
   },
+  // Expressions keeps the retained app's browser (the Expressions library —
+  // the audit holds it correct); the grammar records the identity.
+  browser: [],
+  centre: {
+    session: {label: 'Scene rows', meaning: 'scene rows — the walk of the working set'},
+    arrangement: {label: 'Scenes over time', meaning: 'the scenes over time — source timing on one axis'},
+  },
+  status: {label: 'Expressions', fn: 'the living field — the retained body'},
   transport: [
     {id: 'link', label: 'Field sync', fn: 'sync the frame with the field carrier'},
     {id: 'tap', label: 'Tap', fn: 'tap tempo for the field'},
@@ -293,6 +411,34 @@ const techne: SurfModeGrammar = {
     clip: {label: 'Clip', meaning: 'identity, place and time, disclosure, typed relations, bounded constellation, source'},
     device: {label: 'Instruments', meaning: 'the six lenses — the focused lens\'s instrument expanded, the others folded; clicking one opens it on the focused pane'},
   },
+  // The mockup's Technē column (Rev 3): To hand — sources, files; World —
+  // bodies, locations, earth places, palaces, journeys. Sources and Files
+  // compose from landed owners; the World groups wait for theirs — drawn as
+  // designed empty categories that name their owners, never another mode's
+  // content.
+  browser: [
+    {id: 'techne-sources', label: 'Sources', group: 'To hand', mark: 'form',
+      state: 'cut',
+      hint: 'Sources to hand — the open works, openable in an instrument; rows from the retained app\'s own work list.'},
+    {id: 'techne-files', label: 'Files', group: 'To hand', mark: 'detail',
+      state: 'cut',
+      hint: 'Reference files from the ground\'s listing — add a reference to the lens from here.'},
+    {id: 'techne-bodies', label: 'Bodies', group: 'World', mark: 'earth', family: 'quaternal-logic', state: 'waiting',
+      hint: 'The field\'s bodies — your planet and the Worlds around it. The Earth projection\'s adapter is the family\'s to land (the atlas port refused the merge) — designed empty until it is.'},
+    {id: 'techne-locations', label: 'Locations', group: 'World', mark: 'placed', family: 'quaternal-logic', state: 'waiting',
+      hint: 'Placed artefacts and their anchors. Waits for the Earth projection\'s owner — designed empty, named.'},
+    {id: 'techne-places', label: 'Places', group: 'World', mark: 'map', family: 'quaternal-logic', state: 'waiting',
+      hint: 'Earth places — the Atlas port\'s surface. Waits for the Places owner — designed empty, named.'},
+    {id: 'techne-palaces', label: 'Palaces', group: 'World', mark: 'palace', family: 'quaternal-logic', state: 'waiting',
+      hint: 'Palaces — M5′ as locations you enter. Waits for the Palace owner — designed empty, named.'},
+    {id: 'techne-journeys', label: 'Journeys', group: 'World', mark: 'journey', family: 'quaternal-logic', state: 'waiting',
+      hint: 'Journeys — the walk stops (place · occasion · artefact · narration). Waits for the journey owner — designed empty, named.'},
+  ],
+  centre: {
+    session: {label: 'M3′ Journey', meaning: 'walk stops — place · occasion · artefact · narration'},
+    arrangement: {label: 'M2′ Relation Field', meaning: 'the Relation Field — authored history beside development on one non-linear ruler with the declared break into today'},
+  },
+  status: {label: 'Technē', fn: 'the six lenses over one encounter'},
   transport: [
     {id: 'link', label: 'Field carrier', fn: 'join the World to the shared field carrier; off, the same grammar runs over the local ground'},
     {id: 'tap', label: 'Back to Now', fn: 'snap the occasion back to Now'},
@@ -354,4 +500,18 @@ export function slotDataI(meaning: SlotMeaning): string {
 export function detailPairOf(mode: string): DetailPair | null {
   const surf = surfModeOf(mode)
   return surf ? MODE_GRAMMAR[surf].detail : null
+}
+
+/** The mode's left-browser categories (empty when the mode keeps its own
+ * browser — Live's audio pane, Expressions' retained library). */
+export function browserCategoriesOf(mode: string): readonly ModeBrowserCategory[] {
+  const surf = surfModeOf(mode)
+  return surf ? MODE_GRAMMAR[surf].browser : []
+}
+
+/** The status identity of the mode the spine stands in (null outside the
+ * five — the caller keeps its own reading there). */
+export function statusIdentityOf(mode: string): ModeStatusIdentity | null {
+  const surf = surfModeOf(mode)
+  return surf ? MODE_GRAMMAR[surf].status : null
 }
