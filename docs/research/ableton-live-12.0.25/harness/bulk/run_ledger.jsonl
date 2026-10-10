@@ -49,3 +49,195 @@
 {"label": "BULK-drift-default-m1-velocity", "status": "rendered", "seconds": 61, "note": "ok"}
 {"label": "BULK-drift-pin-cyclingenvelope-ratio-min", "status": "rendered", "seconds": 60, "note": "ok"}
 {"label": "BULK-drift-pin-filter-frequency-min", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-drift-pin-filter-hipassfrequency-min", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-drift-pin-cyclingenvelope-ratio-max", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-drift-pin-filter-frequency-max", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-electric-default-m1-velocity", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-electric-pin-damperamount-min", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-electric-pin-forktinevolume-min", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-electric-pin-forktonebarvolume-min", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-electric-pin-damperamount-max", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-electric-pin-forktinevolume-max", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-impulse-default-m1-velocity", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-auto-filter-default-impulse-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-auto-filter-default-sweep-20-20k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-auto-filter-default-steps-1k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-auto-filter-pin-cutoff-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-auto-filter-pin-drive-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-auto-filter-pin-lfoamount-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-auto-filter-pin-cutoff-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-auto-filter-pin-drive-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-compressor-default-impulse-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-compressor-default-sweep-20-20k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-compressor-default-steps-1k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-compressor-pin-expansionratio-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-compressor-pin-gain-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-compressor-pin-ratio-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-compressor-pin-expansionratio-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-compressor-pin-gain-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-eq-eight-default-impulse-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-eq-eight-default-sweep-20-20k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-eq-eight-default-steps-1k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-eq-eight-pin-globalgain-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-eq-eight-pin-globalgain-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-eq-eight-pin-globalgain-mid", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-saturator-default-impulse-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-saturator-default-sweep-20-20k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-saturator-default-steps-1k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-saturator-pin-basedrive-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-saturator-pin-colordepth-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-saturator-pin-colorfrequency-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-saturator-pin-basedrive-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-saturator-pin-colordepth-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-utility-default-impulse-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-utility-default-sweep-20-20k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-utility-default-steps-1k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-utility-pin-bassmonofrequency-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-utility-pin-gain-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-utility-pin-legacygain-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-utility-pin-bassmonofrequency-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-utility-pin-gain-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-analog-default-m1-velocity", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-analog-pin-channelpressureamount1-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-analog-pin-channelpressureamount2-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-analog-pin-mpecc74amount1-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-analog-pin-channelpressureamount1-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-analog-pin-channelpressureamount2-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-collision-default-m1-velocity", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-collision-pin-volume-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-collision-pin-volume-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-collision-pin-volume-mid", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-drift-default-m1-velocity", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-drift-pin-cyclingenvelope-ratio-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-drift-pin-filter-frequency-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-drift-pin-filter-hipassfrequency-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-drift-pin-cyclingenvelope-ratio-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-drift-pin-filter-frequency-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-electric-default-m1-velocity", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-electric-pin-damperamount-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-electric-pin-forktinevolume-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-electric-pin-forktonebarvolume-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-electric-pin-damperamount-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-electric-pin-forktinevolume-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-impulse-default-m1-velocity", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-impulse-pin-decaydrive-0-min", "status": "skipped-focus", "seconds": 1624, "note": "exit9 after 3 retries:  [re-issuing open (3) @75; title='' sheet='NONE'] [TIMEOUT waiting for 'BULK-impulse-pin-decaydrive-0-min'; title=] SKIP BULK-impulse-pin-decaydrive-0-min: load unverifiable (AX flake) — not export"}
+{"label": "BULK-impulse-pin-decaydrive-1-min", "status": "skipped-focus", "seconds": 1627, "note": "exit9 after 3 retries:  [re-issuing open (3) @75; title='' sheet='NONE'] [TIMEOUT waiting for 'BULK-impulse-pin-decaydrive-1-min'; title=] SKIP BULK-impulse-pin-decaydrive-1-min: load unverifiable (AX flake) — not export"}
+{"label": "BULK-impulse-pin-decaydrive-2-min", "status": "skipped-focus", "seconds": 1622, "note": "exit9 after 3 retries:  [re-issuing open (3) @75; title='' sheet='NONE'] [TIMEOUT waiting for 'BULK-impulse-pin-decaydrive-2-min'; title=] SKIP BULK-impulse-pin-decaydrive-2-min: load unverifiable (AX flake) — not export"}
+{"label": "BULK-impulse-pin-decaydrive-0-max", "status": "skipped-focus", "seconds": 1624, "note": "exit9 after 3 retries:  [re-issuing open (3) @75; title='' sheet='NONE'] [TIMEOUT waiting for 'BULK-impulse-pin-decaydrive-0-max'; title=] SKIP BULK-impulse-pin-decaydrive-0-max: load unverifiable (AX flake) — not export"}
+{"label": "BULK-auto-filter-default-impulse-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-auto-filter-default-sweep-20-20k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-auto-filter-default-steps-1k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-auto-filter-pin-cutoff-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-auto-filter-pin-drive-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-auto-filter-pin-lfoamount-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-auto-filter-pin-cutoff-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-auto-filter-pin-drive-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-compressor-default-impulse-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-compressor-default-sweep-20-20k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-compressor-default-steps-1k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-compressor-pin-expansionratio-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-compressor-pin-gain-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-compressor-pin-ratio-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-compressor-pin-expansionratio-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-compressor-pin-gain-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-eq-eight-default-impulse-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-eq-eight-default-sweep-20-20k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-eq-eight-default-steps-1k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-eq-eight-pin-globalgain-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-eq-eight-pin-globalgain-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-eq-eight-pin-globalgain-mid", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-saturator-default-impulse-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-saturator-default-sweep-20-20k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-saturator-default-steps-1k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-saturator-pin-basedrive-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-saturator-pin-colordepth-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-saturator-pin-colorfrequency-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-saturator-pin-basedrive-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-saturator-pin-colordepth-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-utility-default-impulse-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-utility-default-sweep-20-20k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-utility-default-steps-1k-wav", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-utility-pin-bassmonofrequency-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-utility-pin-gain-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-utility-pin-legacygain-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-utility-pin-bassmonofrequency-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-utility-pin-gain-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-analog-default-m1-velocity", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-analog-pin-channelpressureamount1-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-analog-pin-channelpressureamount2-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-analog-pin-mpecc74amount1-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-analog-pin-channelpressureamount1-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-analog-pin-channelpressureamount2-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-collision-default-m1-velocity", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-collision-pin-volume-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-collision-pin-volume-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-collision-pin-volume-mid", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-drift-default-m1-velocity", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-drift-pin-cyclingenvelope-ratio-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-drift-pin-filter-frequency-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-drift-pin-filter-hipassfrequency-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-drift-pin-cyclingenvelope-ratio-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-drift-pin-filter-frequency-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-electric-default-m1-velocity", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-electric-pin-damperamount-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-electric-pin-forktinevolume-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-electric-pin-forktonebarvolume-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-electric-pin-damperamount-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-electric-pin-forktinevolume-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-impulse-default-m1-velocity", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-impulse-pin-decaydrive-0-min", "status": "rendered", "seconds": 71, "note": "ok"}
+{"label": "BULK-impulse-pin-decaydrive-1-min", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-impulse-pin-decaydrive-2-min", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-impulse-pin-decaydrive-0-max", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-impulse-pin-decaydrive-1-max", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-meld-default-m1-velocity", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-meld-pin-meldvoice-drive-min", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-meld-pin-meldvoice-enginea-filter-frequency-min", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-meld-pin-meldvoice-enginea-volume-min", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-meld-pin-meldvoice-drive-max", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-meld-pin-meldvoice-enginea-filter-frequency-max", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-operator-default-m1-velocity", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-sampler-default-m1-velocity", "status": "failed", "seconds": 328, "note": "exit8:  [stashed previous render -> /Users/admin/Central/Work/O-I/docs/research/ableton-live-12.0.25/harness/renders/.prev/BULK-sampler-default-m1-velocity.aif] [export: NO-EXPORT-PANEL (menu click did not o"}
+{"label": "BULK-simpler-default-m1-velocity", "status": "failed", "seconds": 412, "note": "exit8:  [set loop: '11.75' -> bars/beats/16ths: '2 3 3'] [export: FOCUS-LOST at export panel] EXPORT FAILED BULK-simpler-default-m1-velocity "}
+{"label": "BULK-tension-default-m1-velocity", "status": "rendered", "seconds": 230, "note": "ok"}
+{"label": "BULK-tension-pin-bodylevel-min", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-tension-pin-filtercutofffrequency-min", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-tension-pin-filtercutofffrequencyenvmod-min", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-tension-pin-bodylevel-max", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-tension-pin-filtercutofffrequency-max", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-wavetable-default-m1-velocity", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-wavetable-pin-voice-filter1-drive-min", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-wavetable-pin-voice-filter1-frequency-min", "status": "rendered", "seconds": 142, "note": "ok"}
+{"label": "BULK-wavetable-pin-voice-filter1-resonance-min", "status": "rendered", "seconds": 82, "note": "ok"}
+{"label": "BULK-wavetable-pin-voice-filter1-drive-max", "status": "rendered", "seconds": 81, "note": "ok"}
+{"label": "BULK-wavetable-pin-voice-filter1-frequency-max", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-amp-default-impulse-wav", "status": "rendered", "seconds": 256, "note": "ok"}
+{"label": "BULK-amp-default-sweep-20-20k-wav", "status": "rendered", "seconds": 291, "note": "ok"}
+{"label": "BULK-amp-default-steps-1k-wav", "status": "failed", "seconds": 490, "note": "exit8:  [stashed previous render -> /Users/admin/Central/Work/O-I/docs/research/ableton-live-12.0.25/harness/renders/.prev/BULK-amp-default-steps-1k-wav.aif] [export: NO-EXPORT-PANEL (menu click did not open"}
+{"label": "BULK-amp-pin-gain-min", "status": "rendered", "seconds": 138, "note": "ok"}
+{"label": "BULK-amp-pin-volume-min", "status": "rendered", "seconds": 225, "note": "ok"}
+{"label": "BULK-amp-pin-drywet-min", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-amp-pin-gain-max", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-amp-pin-volume-max", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-auto-pan-default-impulse-wav", "status": "rendered", "seconds": 80, "note": "ok"}
+{"label": "BULK-auto-pan-default-sweep-20-20k-wav", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-auto-pan-default-steps-1k-wav", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-beat-repeat-default-impulse-wav", "status": "rendered", "seconds": 62, "note": "ok"}
+{"label": "BULK-beat-repeat-default-sweep-20-20k-wav", "status": "rendered", "seconds": 61, "note": "ok"}
+{"label": "BULK-beat-repeat-default-steps-1k-wav", "status": "rendered", "seconds": 61, "note": "ok"}
+{"label": "BULK-beat-repeat-pin-bandwidth-min", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-beat-repeat-pin-dampvolume-min", "status": "rendered", "seconds": 72, "note": "ok"}
+{"label": "BULK-beat-repeat-pin-midfreq-min", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-beat-repeat-pin-bandwidth-max", "status": "rendered", "seconds": 100, "note": "ok"}
+{"label": "BULK-beat-repeat-pin-dampvolume-max", "status": "rendered", "seconds": 69, "note": "ok"}
+{"label": "BULK-cabinet-default-impulse-wav", "status": "failed", "seconds": 411, "note": "exit8: /Users/admin/Central/Work/O-I/docs/research/ableton-live-12.0.25/harness/lane3_export.applescript:6828:6879: execution error: System Events got an error: Can’t get window Export Audio/Video of proce"}
+{"label": "BULK-cabinet-default-sweep-20-20k-wav", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-cabinet-default-steps-1k-wav", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-cabinet-pin-drywet-min", "status": "failed", "seconds": 255, "note": "exit8:  [stashed previous render -> /Users/admin/Central/Work/O-I/docs/research/ableton-live-12.0.25/harness/renders/.prev/BULK-cabinet-pin-drywet-min.aif] [export: NO-EXPORT-PANEL (menu click did not open i"}
+{"label": "BULK-cabinet-pin-drywet-max", "status": "failed", "seconds": 338, "note": "exit8:  [stashed previous render -> /Users/admin/Central/Work/O-I/docs/research/ableton-live-12.0.25/harness/renders/.prev/BULK-cabinet-pin-drywet-max.aif] [export: LENGTH-STEP-FAILED (unread-value unread-va"}
+{"label": "BULK-cabinet-pin-drywet-mid", "status": "rendered", "seconds": 380, "note": "ok"}
+{"label": "BULK-channel-eq-default-impulse-wav", "status": "rendered", "seconds": 61, "note": "ok"}
+{"label": "BULK-channel-eq-default-sweep-20-20k-wav", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-channel-eq-default-steps-1k-wav", "status": "rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-channel-eq-pin-gain-min", "status": "rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-channel-eq-pin-highshelfgain-min", "status": "rendered", "seconds": 60, "note": "ok"}
