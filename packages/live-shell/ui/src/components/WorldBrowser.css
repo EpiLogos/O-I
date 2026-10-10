@@ -1,0 +1,77 @@
+.world-browser.world-browser-categories {
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.world-browser-categories [hidden] { display:none !important }
+.world-browser-categories .world-browser-search { flex:0 0 auto; padding:4px 4px 5px; border-bottom:1px solid var(--line) }
+.world-browser-main { display:grid; grid-template-columns:minmax(82px,31%) minmax(0,1fr); min-height:0; flex:1 }
+.world-category-list { min-width:0; overflow:auto; background:var(--bg-1); border-right:1px solid var(--line) }
+.world-category-list h3 { padding:7px 6px 4px; color:var(--text-dim) }
+.world-category-list button { display:flex; align-items:center; gap:5px; min-height:23px; width:100%; padding:2px 6px; background:transparent; text-align:left; font-size:11px }
+.world-category-list button span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.world-category-list button[aria-pressed=true] { background:var(--accent); color:var(--bg-0) }
+.world-category-list button:focus-visible,.world-browser-results button:focus-visible { outline:1px solid var(--accent); outline-offset:-1px }
+.world-browser-results { min-width:0; min-height:0; overflow:auto; background:var(--bg-2) }
+.world-browser-results>section { padding:3px }
+.world-browser-categories .world-works { padding:0; border:0 }
+.world-browser-categories .world-works h3 { margin:0; padding:5px 7px; height:24px; border-bottom:1px solid var(--line) }
+.world-browser-categories .native-empty,.world-browser-categories .native-error { margin:7px; font-size:11px; line-height:1.45; overflow-wrap:anywhere }
+.world-context-pool { flex:0 0 30%; min-height:112px; max-height:270px; display:flex; flex-direction:column; border-top:4px solid var(--line); background:var(--bg-1) }
+.world-context-pool>header { flex:0 0 24px; display:flex; align-items:center; border-bottom:1px solid var(--line) }
+.world-context-pool>header>button { min-height:23px; padding:2px 6px; background:transparent; font-size:11px; text-align:left; width:100% }
+.world-pool-body { overflow:auto; min-height:0; flex:1 }
+.world-browser-categories.pool-collapsed .world-context-pool { flex-basis:24px; min-height:24px }
+.world-property-filters { display:flex; flex-wrap:wrap; gap:4px; padding:4px; border-bottom:1px solid var(--line) }
+.world-property-filters>div { display:flex; flex:1; gap:2px }
+.world-property-filters button { flex:1; min-height:21px; font-size:10px; padding:1px 4px }
+.world-property-filters button[aria-pressed=true] { background:var(--accent); color:var(--bg-0) }
+.world-property-filters>select { width:100%; height:21px; font-size:10px; min-width:0 }
+.world-property-preview { padding:7px; display:flex; flex-direction:column; gap:5px; font-size:11px; min-width:0 }
+.world-property-preview>strong { font-size:11px; font-weight:500; overflow-wrap:anywhere }
+.world-property-value { display:flex; align-items:baseline; gap:8px }
+.world-property-value output { font-variant-numeric:tabular-nums; font-size:16px }
+.world-property-value span { color:var(--text-dim); font-size:10px }
+.world-property-preview dl { display:grid; grid-template-columns:auto minmax(0,1fr); gap:3px 9px; margin:0; font-size:10px }
+.world-property-preview dt { color:var(--text-dim) }
+.world-property-preview dd { margin:0; font-variant-numeric:tabular-nums; overflow-wrap:anywhere }
+.world-property-preview label { display:flex; align-items:center; gap:7px; flex-wrap:wrap }
+.world-property-preview select { min-width:0; max-width:100%; flex:1; font-size:10px }
+.world-property-preview details { font-size:10px; color:var(--text-dim) }
+.world-property-preview details p { margin:4px 0; line-height:1.4 }
+.world-property-pin { align-self:flex-start; font-size:11px; min-height:23px; padding:2px 8px }
+.world-file-context { padding:7px; font-size:11px }
+.world-file-context strong { font-weight:500 }
+.world-file-context p { overflow-wrap:anywhere; color:var(--text-dim); margin:5px 0 }
+.world-file-context button { min-height:23px; font-size:11px }
+.world-browser-results .native-material-browser { border:0; padding:4px }
+.world-browser-results .native-material-browser header { min-height:22px }
+.world-pool-body .native-material-preview { padding:7px; margin:0; border:0; gap:5px; font-size:11px }
+.world-pool-body .native-material-preview input,.world-pool-body .native-material-preview select { min-width:0; font-size:11px }
+.world-pool-body .native-material-preview fieldset { margin:4px 0; border-color:var(--line) }
+@media(max-width:760px) {
+  .world-browser-main { grid-template-columns:75px minmax(0,1fr) }
+  .world-category-list button { gap:3px; padding:2px 3px; font-size:10px }
+  .world-browser-categories .world-file-row { padding:2px 3px; font-size:10px }
+  .world-context-pool { flex-basis:36%; min-height:100px }
+}
+
+/* Browser search, counts and keyboard rows */
+.world-browser-searchrow { display:flex; align-items:center; gap:6px; flex:0 0 auto; padding:4px 4px 5px; border-bottom:1px solid var(--line) }
+.world-browser-categories .world-browser-searchrow .world-browser-search { flex:1 1 auto; min-width:0; padding:0; border:0 }
+.world-browser-count { flex:0 0 auto; max-width:45%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; color:var(--text-dim) }
+.world-browser-preview { margin:6px 7px; font-size:11px; line-height:1.4; color:var(--text-dim); overflow-wrap:anywhere }
+.world-work-row.previewed { outline:1px dashed var(--accent); outline-offset:-1px }
+.world-browser-results [data-browser-row]:focus-visible { outline:1px solid var(--accent); outline-offset:-1px }
+/* Parameter groups, rows and detail actions */
+.world-property-groups,.world-property-rows { list-style:none; margin:0; padding:0 }
+.world-property-group { display:flex; align-items:center; gap:5px; width:100%; min-height:23px; padding:2px 6px; background:var(--bg-3); color:var(--text); font-size:10px; text-align:left; border:0; border-bottom:1px solid var(--line) }
+.world-property-group small { margin-left:auto; font-size:9px; color:var(--text-dim) }
+.world-property-group:focus-visible { outline:1px solid var(--accent); outline-offset:-1px }
+.world-property-row { cursor:grab; min-height:22px }
+.world-property-row:active { cursor:grabbing }
+.world-property-actions { display:flex; flex-wrap:wrap; gap:4px }
+.world-property-actions button { min-height:22px; font-size:11px; padding:2px 6px }
+.world-property-hint { font-size:10px; line-height:1.35; color:var(--text-dim); overflow-wrap:anywhere }
+.world-property-preview code { font-size:10px; overflow-wrap:anywhere }
+/* Drag image chip (created at drag start, removed on the next tick) */
+.native-drag-chip { position:fixed; top:-200px; left:-200px; padding:2px 7px; border:1px solid var(--accent); border-radius:2px; background:var(--bg-1); color:var(--text); font:11px var(--font-ui); white-space:nowrap; pointer-events:none }
+@media(max-width:700px) { .world-browser-count { max-width:38% } }

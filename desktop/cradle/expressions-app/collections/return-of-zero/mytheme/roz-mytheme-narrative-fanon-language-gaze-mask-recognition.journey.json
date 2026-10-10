@@ -36,13 +36,18 @@
           "#c9a227",
           "#4a4e55"
         ],
-        "material": "round",
+        "material": "ink",
         "params": {
           "pointerStrength": 0.4,
           "speed": 0.5,
           "circulation": -0.15,
           "dispersion": 0.1,
-          "turbulence": 0.2
+          "turbulence": 0.2,
+          "contrast": 0.9,
+          "grain": 0.055,
+          "roundness": 0.45,
+          "softness": 0.12,
+          "halo": 0.08
         }
       },
       "entities": [
@@ -190,8 +195,8 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The acquired tongue",
-          "italic": "Access arrives carrying a measure he did not institute.",
+          "title": "Speaking opens access and installs a measure",
+          "italic": "He speaks in a field that has already valued his manner of appearing.",
           "body": "",
           "x": 0.03,
           "y": 0.04,
@@ -250,13 +255,18 @@
           "#c9a227",
           "#4a4e55"
         ],
-        "material": "round",
+        "material": "ink",
         "params": {
           "pointerStrength": 0.4,
           "speed": 0.5,
           "circulation": -0.15,
           "dispersion": 0.1,
-          "turbulence": 0.2
+          "turbulence": 0.2,
+          "contrast": 0.9,
+          "grain": 0.055,
+          "roundness": 0.45,
+          "softness": 0.12,
+          "halo": 0.08
         }
       },
       "entities": [
@@ -450,7 +460,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The hail",
+          "title": "The body returns from a gaze that precedes it",
           "italic": "The whole body returns through the skin it is seen as.",
           "body": "",
           "x": 0.03,
@@ -500,7 +510,10 @@
         "pointerMode": "attract",
         "pointerClick": "shove",
         "pointerClickStrength": 0.3,
-        "pointerClickRadius": 0.3
+        "pointerClickRadius": 0.3,
+        "morphEnabled": true,
+        "trajectory": "quantumInterference",
+        "driveShape": "smooth"
       },
       "field": {
         "background": "#eceae2",
@@ -516,7 +529,10 @@
           "speed": 0.4,
           "circulation": 0.1,
           "dispersion": 0.05,
-          "turbulence": 0.12
+          "turbulence": 0.12,
+          "opacity": 0.88,
+          "halo": 0.06,
+          "zConfinement": 0.7
         }
       },
       "entities": [
@@ -527,7 +543,7 @@
           "position": {
             "x": 0.05,
             "y": -0.32,
-            "z": 0.0
+            "z": 0.28
           },
           "size": {
             "x": 0.22,
@@ -575,7 +591,7 @@
           "position": {
             "x": 0.55,
             "y": -0.46,
-            "z": 0.0
+            "z": -0.24
           },
           "size": {
             "x": 0.18,
@@ -623,7 +639,7 @@
           "position": {
             "x": -0.5,
             "y": -0.26,
-            "z": 0.0
+            "z": 0.1
           },
           "size": {
             "x": 0.1,
@@ -665,7 +681,7 @@
           "position": {
             "x": -0.5,
             "y": -0.52,
-            "z": 0.0
+            "z": -0.12
           },
           "size": {
             "x": 0.1,
@@ -706,7 +722,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The white mask",
+          "title": "The mask becomes an inward criterion",
           "italic": "What opens the door begins to administer the life inside.",
           "body": "",
           "x": 0.03,
@@ -726,12 +742,12 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
+        "thetaRate": 0.05,
+        "phiRate": 0.08,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
-        "depth": 1,
+        "depth": 1.1,
         "dwell": 0.3
       },
       "automation": []
@@ -756,7 +772,10 @@
         "pointerMode": "attract",
         "pointerClick": "shove",
         "pointerClickStrength": 0.3,
-        "pointerClickRadius": 0.3
+        "pointerClickRadius": 0.3,
+        "morphEnabled": true,
+        "trajectory": "quantumInterference",
+        "driveShape": "smooth"
       },
       "field": {
         "background": "#eceae2",
@@ -772,7 +791,10 @@
           "speed": 0.4,
           "circulation": 0.1,
           "dispersion": 0.05,
-          "turbulence": 0.12
+          "turbulence": 0.12,
+          "opacity": 0.88,
+          "halo": 0.06,
+          "zConfinement": 0.7
         }
       },
       "entities": [
@@ -831,7 +853,7 @@
           "position": {
             "x": 0.05,
             "y": -0.1,
-            "z": 0.0
+            "z": 0.22
           },
           "size": {
             "x": 0.16,
@@ -915,7 +937,7 @@
           "position": {
             "x": -0.55,
             "y": -0.46,
-            "z": 0.0
+            "z": -0.15
           },
           "size": {
             "x": 0.1,
@@ -956,7 +978,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Recognition",
+          "title": "Recognition must change the relation that distributes it",
           "italic": "The terms must become answerable to the person they concern.",
           "body": "",
           "x": 0.03,
@@ -976,12 +998,12 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
+        "thetaRate": 0.05,
+        "phiRate": 0.08,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
-        "depth": 1,
+        "depth": 1.1,
         "dwell": 0.3
       },
       "automation": []
@@ -1021,7 +1043,10 @@
           "pointerStrength": 0.25,
           "speed": 0.35,
           "circulation": 0.12,
-          "dispersion": 0.06
+          "dispersion": 0.06,
+          "roundness": 0.98,
+          "softness": 0.25,
+          "halo": 0.1
         }
       },
       "entities": [
@@ -1289,7 +1314,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Available to answer",
+          "title": "The historical person remains available to answer",
           "italic": "The person exceeds the image; the encounter is still open.",
           "body": "",
           "x": 0.03,
@@ -1320,5 +1345,8 @@
       "automation": []
     }
   ],
-  "updatedAt": "2026-10-07T00:00:00.000Z"
+  "updatedAt": "2026-10-07T00:00:00.000Z",
+  "notes": [
+    "2026-10-07 deepen pass (agent/o-i-20261007-1639, lane 2): the material made alive and deep. MORPH: one slow turning clock (theta 0.05 / phi 0.08, depth 1.1) authored across the porcelain pair — the mask settling onto the face it formats and the relation turning toward answerability are one interior motion of the criterion working beneath the visible; the institutional grey pair stays clockless and matte (contrast 0.9, grain 0.055 — the world that decided before he arrived). DEPTH: #3 the mask now stands as a worn layer in z — the white mask at +0.28 in front of the face it formats, and beneath it at −0.24 not flesh but another social contour (no untouched essence); #4 recognition: the white standard raised to z +0.22, governing the two participants from above their plane, the scales of the changed relation at −0.15; zConfinement 0.7 authored. PARTICLE PROPS: grey pair flat and coarse; porcelain pair fine and halosmall (opacity 0.88, halo 0.06); the open page warm and open (roundness 0.98, softness 0.25, halo 0.1). TITLES set to the record's own lines: Speaking opens access and installs a measure; The body returns from a gaze that precedes it; The mask becomes an inward criterion; Recognition must change the relation that distributes it; The historical person remains available to answer. Still pairs held: the grey pair and the porcelain pair each rest unchanged."
+  ]
 }

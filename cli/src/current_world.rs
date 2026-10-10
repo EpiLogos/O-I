@@ -265,7 +265,7 @@ pub fn live_current_world() -> Result<CurrentWorldReading, String> {
         .find(|surface| surface.id == "workcell" && surface_present(surface))
     {
         if let Some(executable) = workcell.resolved.as_deref() {
-            match workcell_status(executable) {
+            match workcell_status(executable, machine.workcell_ref.as_deref()) {
                 Ok((workcell_ref, health)) => {
                     if let Some(bound) = machine.workcell_ref.as_deref() {
                         if bound != workcell_ref {
@@ -463,9 +463,15 @@ fn central_machine_binding(root: &Path, role: &str) -> Result<Option<(String, St
     Ok(Some((relative, reference.to_owned())))
 }
 
-fn workcell_status(executable: &str) -> Result<(String, Option<String>), String> {
+fn workcell_status(
+    executable: &str,
+    bound_workcell_ref: Option<&str>,
+) -> Result<(String, Option<String>), String> {
+    let bound_workcell_ref = bound_workcell_ref
+        .filter(|reference| !reference.trim().is_empty())
+        .ok_or("current Workcell status requires the native current-machine Workcell binding")?;
     let output = Command::new(executable)
-        .args(["--json", "status"])
+        .args(["--workcell-ref", bound_workcell_ref, "--json", "status"])
         .stdin(Stdio::null())
         .output()
         .map_err(|error| format!("failed to read current Workcell status: {error}"))?;
@@ -481,8 +487,13 @@ fn workcell_status(executable: &str) -> Result<(String, Option<String>), String>
         .get("workcell_ref")
         .and_then(Value::as_str)
         .filter(|reference| !reference.trim().is_empty())
-        .unwrap_or(DEFAULT_LOCAL_WORKCELL_REF)
+        .ok_or("current Workcell status did not disclose a valid Workcell reference")?
         .to_owned();
+    if workcell_ref != bound_workcell_ref {
+        return Err(format!(
+            "current Workcell status belongs to {workcell_ref}, not requested {bound_workcell_ref}"
+        ));
+    }
     let health = value
         .get("health")
         .and_then(Value::as_str)

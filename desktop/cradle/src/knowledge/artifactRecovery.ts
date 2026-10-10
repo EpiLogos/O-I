@@ -3,7 +3,7 @@ import type {ExpressionDocument} from '../expression/types';
 import {requireSavedExpression} from './expressionSaveReceipt';
 import {listFiles, readFile} from '../files/client';
 import {ACTOR, type ApplyKernel} from './construction';
-import {expressionOperation, sameComposition, type ArtifactReturn} from './constructionProjection';
+import {expressionOperation, inspectCompositionFile, sameComposition, type ArtifactReturn} from './constructionProjection';
 
 /** An exact pending author operation, not an extra source store. Keep the
  * intended document until the native file is confirmed, including after a
@@ -39,10 +39,9 @@ export async function inspectArtifactSave(transport: KernelTransportStatus, inte
   }
   const file = await readFile(transport, location);
   if (!sameComposition(file.location, location) || typeof file.revision !== 'string' || !file.revision) throw new Error('The pending artifact reading was redirected or has no native revision. Keep the exact save pending.');
-  let document: unknown;
-  try {document = JSON.parse(file.content);} catch {return {state: 'conflict', detail: 'The destination contains another kind of file. Nothing has been overwritten.'};}
-  if (!sameComposition(document, intent.document)) return {state: 'conflict', detail: 'The destination does not match the retained composition. Keep the pending operation and inspect the other file.'};
-  return {state: 'saved', artifact: {file, document: intent.document}};
+  const inspected = await inspectCompositionFile(transport, file);
+  if (!sameComposition(inspected.document, intent.document)) return {state: 'conflict', detail: 'The destination does not match the retained composition. Keep the pending operation and inspect the other file.'};
+  return {state: 'saved', artifact: inspected};
 }
 
 export async function performArtifactSave(transport: KernelTransportStatus, intent: ArtifactSaveIntent, apply?: ApplyKernel): Promise<ArtifactReturn> {
@@ -75,11 +74,7 @@ export async function readSavedArtifact(transport: KernelTransportStatus, held: 
   const file = await readFile(transport, held.location);
   if (!sameComposition(file.location, held.location)) throw new Error('The saved artifact reading was redirected. Return remains pending at its original location.');
   if (file.revision !== held.revision) throw new Error('The saved Expression file has changed. Its previous Return will not be replayed against different bytes.');
-  let document: Partial<ExpressionDocument>;
-  try {document = JSON.parse(file.content);} catch {throw new Error('The saved artifact is no longer an Expression document.');}
-  if (!document || document.schema !== 'oi.expression/v1' || document.expression_ref !== held.expression_ref
-    || !Number.isSafeInteger(document.revision) || Number(document.revision) < 1
-    || !Array.isArray(document.scenes) || !document.entities || typeof document.entities !== 'object' || Array.isArray(document.entities)
-    || !document.relations || typeof document.relations !== 'object' || Array.isArray(document.relations)) throw new Error('The saved file no longer names the recorded Expression.');
-  return {file, document: document as ExpressionDocument};
+  const inspected = await inspectCompositionFile(transport, file);
+  if (inspected.document.expression_ref !== held.expression_ref) throw new Error('The saved file no longer names the recorded Expression.');
+  return inspected;
 }

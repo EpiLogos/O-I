@@ -31,17 +31,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.9,
+          "roundness": 0.9,
+          "softness": 0.18,
+          "irregularity": 0.4,
+          "elongation": 0.05,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.91,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.15,
           "speed": 0.5,
           "circulation": 0.45,
           "turbulence": 0.14,
@@ -51,8 +51,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.2,
+          "grain": 0.04,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -142,22 +142,7 @@
                   "z": 0
                 },
                 "text": "event",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.36,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.65,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-r06a-address-s3",
@@ -169,22 +154,7 @@
                   "z": 0
                 },
                 "text": "reading",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.36,
-                    "y": 0.4
-                  },
-                  "rotation": 0,
-                  "tint": "#638c69",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -393,9 +363,9 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Central",
+          "title": "The intelligible ground a Life carries from one encounter into another",
           "italic": "",
-          "body": "What is carried must remain answerable to what arrives.",
+          "body": "Central: meaningful continuity.",
           "x": 0.04,
           "y": 0.58,
           "width": 330,
@@ -413,8 +383,8 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.08,
-        "phiRate": 0.13,
+        "thetaRate": 0.12,
+        "phiRate": 0.06,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
@@ -428,7 +398,10 @@
         "pointerMode": "vortex",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.9,
-        "pointerClickRadius": 0.42
+        "pointerClickRadius": 0.42,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine"
       }
     },
     {
@@ -456,17 +429,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.94,
+          "roundness": 0.93,
+          "softness": 0.12,
+          "irregularity": 0.26,
+          "elongation": 0.14,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.96,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.09,
           "speed": 0.55,
           "circulation": 0.5,
           "turbulence": 0.16,
@@ -477,7 +450,7 @@
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
           "depth": 0.12,
-          "grain": 0.035,
+          "grain": 0.028,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -567,22 +540,7 @@
                   "z": 0
                 },
                 "text": "instruction",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.36
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.65,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-r06a-passage-s3",
@@ -594,22 +552,7 @@
                   "z": 0
                 },
                 "text": "act",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.38,
-                    "y": 0.42
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -962,7 +905,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Actuation",
+          "title": "Actuation is living articulation",
           "italic": "",
           "body": "A weighted field collapses into one act.",
           "x": 0.04,
@@ -1007,9 +950,9 @@
       "duration": 18,
       "transition": 1.5,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
+        "mode": "3d",
+        "yaw": 0.3,
+        "pitch": 0.2,
         "zoom": 1,
         "panX": 0,
         "panY": 0
@@ -1025,17 +968,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.88,
+          "roundness": 0.85,
+          "softness": 0.22,
+          "irregularity": 0.45,
+          "elongation": 0.08,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.9,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.18,
           "speed": 0.45,
           "circulation": 0.4,
           "turbulence": 0.12,
@@ -1045,8 +988,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.5,
+          "grain": 0.045,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -1106,7 +1049,7 @@
                 "position": {
                   "x": 0.02,
                   "y": -0.28,
-                  "z": 0
+                  "z": 0.25
                 },
                 "text": "exists",
                 "shape": "text",
@@ -1133,25 +1076,10 @@
                 "position": {
                   "x": 0.02,
                   "y": -0.17,
-                  "z": 0
+                  "z": 0.15
                 },
                 "text": "available",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.48,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-r06a-climb-s3",
@@ -1160,25 +1088,10 @@
                 "position": {
                   "x": 0.02,
                   "y": -0.06,
-                  "z": 0
+                  "z": 0.05
                 },
                 "text": "relevant",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.56,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-r06a-climb-s4",
@@ -1187,25 +1100,10 @@
                 "position": {
                   "x": 0.02,
                   "y": 0.05,
-                  "z": 0
+                  "z": -0.05
                 },
                 "text": "permitted",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.64,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-r06a-climb-s5",
@@ -1214,25 +1112,10 @@
                 "position": {
                   "x": 0.02,
                   "y": 0.16,
-                  "z": 0
+                  "z": -0.15
                 },
                 "text": "selected",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.72,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-r06a-climb-s6",
@@ -1241,25 +1124,10 @@
                 "position": {
                   "x": 0.02,
                   "y": 0.27,
-                  "z": 0
+                  "z": -0.25
                 },
                 "text": "operative",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#638c69",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -1271,7 +1139,7 @@
           "position": {
             "x": 0.14,
             "y": -0.28,
-            "z": 0
+            "z": 0.25
           },
           "size": {
             "x": 0.3,
@@ -1328,7 +1196,7 @@
           "position": {
             "x": 0.14,
             "y": -0.17,
-            "z": 0
+            "z": 0.15
           },
           "size": {
             "x": 0.3,
@@ -1385,7 +1253,7 @@
           "position": {
             "x": 0.14,
             "y": -0.06,
-            "z": 0
+            "z": 0.05
           },
           "size": {
             "x": 0.3,
@@ -1442,7 +1310,7 @@
           "position": {
             "x": 0.14,
             "y": 0.05,
-            "z": 0
+            "z": -0.05
           },
           "size": {
             "x": 0.3,
@@ -1499,7 +1367,7 @@
           "position": {
             "x": 0.14,
             "y": 0.16,
-            "z": 0
+            "z": -0.15
           },
           "size": {
             "x": 0.3,
@@ -1556,7 +1424,7 @@
           "position": {
             "x": 0.14,
             "y": 0.27,
-            "z": 0
+            "z": -0.25
           },
           "size": {
             "x": 0.3,
@@ -1612,7 +1480,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Potency",
+          "title": "Capacity is not identical with possession",
           "italic": "",
           "body": "Exists is not yet operative; the ladder is climbed.",
           "x": 0.04,
@@ -1657,9 +1525,9 @@
       "duration": 16,
       "transition": 1.5,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
+        "mode": "3d",
+        "yaw": 0.3,
+        "pitch": 0.2,
         "zoom": 1,
         "panX": 0,
         "panY": 0
@@ -1675,17 +1543,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.88,
+          "roundness": 0.85,
+          "softness": 0.22,
+          "irregularity": 0.45,
+          "elongation": 0.08,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.9,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.18,
           "speed": 0.45,
           "circulation": 0.4,
           "turbulence": 0.12,
@@ -1695,8 +1563,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.5,
+          "grain": 0.045,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -1756,7 +1624,7 @@
                 "position": {
                   "x": -0.3,
                   "y": 0.28,
-                  "z": 0
+                  "z": 0.24
                 },
                 "text": "intention",
                 "shape": "text",
@@ -1783,25 +1651,10 @@
                 "position": {
                   "x": -0.34,
                   "y": -0.08,
-                  "z": 0
+                  "z": 0.24
                 },
                 "text": "resistance",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.34
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-r06a-forged-s3",
@@ -1810,25 +1663,10 @@
                 "position": {
                   "x": 0.32,
                   "y": 0.26,
-                  "z": 0
+                  "z": 0.24
                 },
                 "text": "precipitate",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.34
-                  },
-                  "rotation": 0,
-                  "tint": "#c67c46",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -1840,7 +1678,7 @@
           "position": {
             "x": 0.14,
             "y": 0,
-            "z": 0
+            "z": 0.3
           },
           "size": {
             "x": 0.2,
@@ -1897,7 +1735,7 @@
           "position": {
             "x": 0.14,
             "y": 0,
-            "z": 0
+            "z": 0.0
           },
           "size": {
             "x": 0.42,
@@ -1954,7 +1792,7 @@
           "position": {
             "x": 0.14,
             "y": 0,
-            "z": 0
+            "z": -0.3
           },
           "size": {
             "x": 0.62,
@@ -2011,7 +1849,7 @@
           "position": {
             "x": -0.34,
             "y": -0.14,
-            "z": 0
+            "z": 0.3
           },
           "size": {
             "x": 0.12,
@@ -2065,7 +1903,7 @@
                 "position": {
                   "x": 0.14,
                   "y": 0,
-                  "z": 0
+                  "z": -0.3
                 },
                 "text": "",
                 "shape": "disc",
@@ -2094,9 +1932,9 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Transformation",
+          "title": "Intention enters actuality, encounters resistance and returns as changed form",
           "italic": "",
-          "body": "Intention meets resistance and returns changed.",
+          "body": "Software Factory is transformation.",
           "x": 0.04,
           "y": 0.58,
           "width": 330,
@@ -2157,17 +1995,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.85,
+          "roundness": 0.78,
+          "softness": 0.26,
+          "irregularity": 0.52,
+          "elongation": 0.1,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.87,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.22,
           "speed": 0.42,
           "circulation": 0.35,
           "turbulence": 0.1,
@@ -2177,8 +2015,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.4,
+          "grain": 0.05,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -2522,7 +2360,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Situated existence",
+          "title": "The concrete here in which a Life finds itself",
           "italic": "",
           "body": "Every act is somewhere, and the somewhere answers.",
           "x": 0.04,
@@ -2585,17 +2423,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.85,
+          "roundness": 0.78,
+          "softness": 0.26,
+          "irregularity": 0.52,
+          "elongation": 0.1,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.87,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.22,
           "speed": 0.42,
           "circulation": 0.35,
           "turbulence": 0.1,
@@ -2605,8 +2443,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.4,
+          "grain": 0.05,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -2692,22 +2530,7 @@
                 "transition": 1.5,
                 "position": null,
                 "text": "differentiating",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.32,
-                    "y": 0.36
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.55,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-r06a-whole-s3",
@@ -2715,22 +2538,7 @@
                 "transition": 1.5,
                 "position": null,
                 "text": "whole",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.42,
-                    "y": 0.42
-                  },
-                  "rotation": 0,
-                  "tint": "#a590b0",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -3083,9 +2891,9 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Transcendent relation",
+          "title": "Unity differentiates without ceasing to be whole",
           "italic": "",
-          "body": "The whole differentiates and does not cease to be whole.",
+          "body": "The culmination of the six offices.",
           "x": 0.04,
           "y": 0.58,
           "width": 330,

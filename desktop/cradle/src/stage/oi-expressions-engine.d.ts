@@ -8,7 +8,7 @@
 
 interface Window {
   /** The engine's designed injection seam (field-studies-journeys/src/engine.ts). */
-  OI_ENGINE_FACTORY?: (canvas: HTMLCanvasElement) => unknown;
+  OI_ENGINE_FACTORY?: import('../../expressions-app/field-studies-journeys/src/engine').EngineFactory;
 }
 
 declare module "@epilogos/oi-design-system/expressions-engine/shell/camera.mjs" {

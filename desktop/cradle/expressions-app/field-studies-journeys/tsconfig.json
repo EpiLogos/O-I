@@ -9,6 +9,8 @@
       "DOM.Iterable"
     ],
     "strict": true,
+    "allowJs": true,
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "noEmit": true,
     "jsx": "react-jsx",
@@ -40,6 +42,7 @@
   },
   "include": [
     "src/**/*.ts",
-    "src/**/*.tsx"
+    "src/**/*.tsx",
+    "../../src/**/*.d.ts"
   ]
 }

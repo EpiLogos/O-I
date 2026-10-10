@@ -1,0 +1,67 @@
+.native-device-rack{display:flex;flex-direction:column;min-width:0;background:var(--bg-2);color:var(--text);font-size:11px}
+.native-device-rack-row{display:flex;align-items:flex-start;gap:8px;min-width:0;padding:8px;overflow:hidden}
+/* The widget list is the scroller; the contextual Force card and + Device stay fixed beside it, so nothing is ever covered. */
+.native-rack-widgets{display:flex;align-items:stretch;gap:8px;flex:1 1 0;min-width:0;overflow-x:auto;overflow-y:hidden;margin:0;padding:0 0 4px;list-style:none}
+.native-rack-widgets>li{display:flex;flex:0 0 auto;min-width:0}
+.native-rack-empty{margin:0;padding:12px 4px;align-self:center;color:var(--text-dim);font-size:11px;line-height:1.4}
+.native-rack-card{display:flex;flex-direction:column;width:176px;min-width:0;border:1px solid var(--line);border-radius:3px;background:var(--bg-1);overflow:hidden}
+.native-rack-card.is-folded{width:auto;min-width:64px;max-width:176px}
+.native-rack-card.is-unavailable{width:auto;min-width:176px;border-style:dashed}
+.native-rack-head{display:flex;align-items:center;gap:2px;height:22px;padding:0 4px 0 0;background:var(--bg-3);border-bottom:1px solid var(--line)}
+.native-rack-card.is-folded .native-rack-head{border-bottom:0}
+.native-rack-card button,.native-rack-add,.native-rack-menu button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer}
+.native-rack-card button:focus-visible,.native-rack-add:focus-visible,.native-rack-menu button:focus-visible,.native-rack-grip:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.native-rack-light{position:relative;flex:0 0 auto;width:22px;height:22px}
+.native-rack-light::before{content:'';position:absolute;left:7px;top:7px;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:inset 0 0 0 1px var(--line)}
+.native-rack-light.is-off::before{background:var(--text-faint)}
+.native-rack-light.is-unknown::before{background:transparent;box-shadow:inset 0 0 0 1px var(--text-dim)}
+.native-rack-light:disabled{cursor:default}
+.native-rack-fold,.native-rack-grip,.native-rack-remove{flex:0 0 auto;width:16px;height:22px;font-size:9px;opacity:.75}
+.native-rack-grip{display:inline-flex;align-items:center;justify-content:center;cursor:grab}
+.native-rack-title{flex:1 1 auto;min-width:0;height:22px;padding:0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;font-weight:600}
+.native-rack-family{padding:0 4px;font:10px ui-monospace,SFMono-Regular,monospace}
+.native-rack-note{flex:1 1 auto;min-width:0;color:var(--text-dim);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.native-rack-body{display:flex;flex-direction:column;gap:6px;padding:6px 8px 8px;min-width:0}
+.native-rack-summary{margin:0;font:10px/1.35 ui-monospace,SFMono-Regular,monospace;color:var(--text-dim);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
+.native-rack-controls{display:flex;flex-direction:column;gap:4px;min-width:0}
+.native-rack-control{display:flex;flex-direction:column;min-width:0}
+.native-rack-label{overflow:hidden;color:var(--text-dim);font-size:9px;line-height:1.3;white-space:nowrap;text-overflow:ellipsis}
+.native-rack-control-row{display:flex;align-items:center;gap:6px;min-width:0}
+.native-rack-bar{flex:0 0 auto;width:96px;height:18px;overflow:visible}
+.native-rack-track{stroke:var(--line-strong);stroke-width:2;stroke-linecap:round;pointer-events:none}
+.native-rack-fill{stroke:var(--accent-dim);stroke-width:2;stroke-linecap:round;pointer-events:none}
+.native-rack-value{min-width:0;overflow:hidden;color:var(--text);font:10px ui-monospace,SFMono-Regular,monospace;white-space:nowrap;text-overflow:ellipsis}
+.native-rack-add-wrap{position:relative;flex:0 0 auto;align-self:flex-start}
+.native-rack-add{height:22px;padding:0 8px;border:1px solid var(--line);border-radius:2px;background:var(--bg-3);color:var(--text);font:inherit;font-size:10px;white-space:nowrap}
+.native-rack-add:disabled{opacity:.45;cursor:default}
+.native-rack-add[aria-expanded=true]{background:var(--accent);color:var(--bg-0);border-color:var(--accent)}
+.native-rack-menu{position:fixed;z-index:50;display:flex;flex-direction:column;min-width:200px;max-height:60vh;overflow-y:auto;padding:3px;border:1px solid var(--line-strong);border-radius:3px;background:var(--bg-1);box-shadow:0 4px 12px var(--line)}
+.native-rack-menuitem{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:4px 6px;text-align:left}
+.native-rack-menuitem:hover,.native-rack-menuitem:focus-visible{background:var(--bg-3)}
+.native-rack-menuitem-name{font-size:11px;color:var(--text)}
+.native-rack-menuitem-note{font-size:9px;color:var(--text-dim);overflow-wrap:anywhere}
+.native-rack-error{margin:0;padding:3px 8px;border-top:1px solid var(--line);color:var(--rec);font-size:10px;line-height:1.35;white-space:normal;overflow-wrap:anywhere}
+/* Insertion line while a catalogue row is dragged over the rack */
+.native-rack-gap{flex:0 0 3px;align-self:stretch;margin:0 -2px;background:var(--accent);border-radius:2px;pointer-events:none}
+/* Entity and scene rows: target line, sound steppers and select, scene action buttons, Retry/Discard for a refused entity value */
+.native-rack-target{margin:0;font-size:10px;line-height:1.35;color:var(--text);overflow-wrap:anywhere}
+.native-rack-modulation{margin:0;font-size:10px;line-height:1.35;color:var(--text-dim);overflow-wrap:anywhere}
+.native-rack-modulation .native-rack-mark{color:var(--accent)}
+.native-rack-target.is-empty{color:var(--text-dim)}
+.native-rack-bar{touch-action:none;cursor:pointer}
+.native-rack-bar[aria-disabled=true]{cursor:default;opacity:.55}
+.native-rack-bar:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.native-rack-knob{fill:var(--accent);stroke:none;pointer-events:none}
+.native-rack-stepper{gap:4px}
+.native-rack-card .native-rack-step,.native-rack-card .native-rack-held-action,.native-rack-card .native-rack-action{height:20px;padding:0 6px;border:1px solid var(--line);border-radius:2px;background:var(--bg-3);color:var(--text);font:inherit;font-size:10px;white-space:nowrap}
+.native-rack-card .native-rack-step{width:20px;padding:0}
+.native-rack-step:disabled,.native-rack-held-action:disabled,.native-rack-action:disabled,.native-rack-number:disabled,.native-rack-select:disabled{opacity:.45;cursor:default}
+.native-rack-step:focus-visible,.native-rack-held-action:focus-visible,.native-rack-action:focus-visible,.native-rack-number:focus-visible,.native-rack-select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.native-rack-number,.native-rack-select{min-width:0;height:20px;border:1px solid var(--line);border-radius:2px;background:var(--bg-0);color:var(--text);font:10px ui-monospace,SFMono-Regular,monospace}
+.native-rack-number{width:72px;padding:0 4px}
+.native-rack-number[aria-invalid=true]{border-color:var(--rec)}
+.native-rack-select{width:100%;padding:0 4px}
+.native-rack-problem{margin:0;color:var(--rec);font-size:10px}
+.native-rack-held{display:flex;align-items:center;gap:4px;min-width:0}
+.native-rack-actions{display:flex;flex-wrap:wrap;gap:4px;min-width:0}
+.native-rack-card .native-rack-action{max-width:100%;overflow:hidden;text-overflow:ellipsis}

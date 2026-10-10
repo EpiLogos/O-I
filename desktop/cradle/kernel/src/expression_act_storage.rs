@@ -14,7 +14,10 @@ use std::io::{self, Write};
 pub(crate) const SCHEMA: &str = "oi.expression-act-storage/v1";
 const EDITION: &str = "oi.expression-act-edition/v1";
 const MAX_PARTS: usize = 8192;
-pub(crate) const EXPANDED_BYTES: usize = DOCUMENT_BYTES;
+/// The legacy v1 expanded-Act bound is deliberately unchanged: complete
+/// legacy histories refuse here by design — retained-performance custody
+/// (material-v2) carries larger scales through its own packed budgets.
+pub(crate) const EXPANDED_BYTES: usize = 8 * 1024 * 1024;
 /// Serialized expanded weight, not a measurement or promise of heap RSS.
 pub(crate) const LIVE_BYTES: usize = 64 * 1024 * 1024;
 
@@ -666,7 +669,7 @@ pub(crate) fn decode(bytes: &[u8], available: usize) -> Result<Act, String> {
             size -= 1;
         }
         if size > DOCUMENT_BYTES {
-            return Err("Expanded edition exceeds 8 MiB before cloning".into());
+            return Err("Expanded edition exceeds the document allowance before cloning".into());
         }
         editions.push((index, size, edition));
     }

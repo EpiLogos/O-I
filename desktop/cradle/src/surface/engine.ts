@@ -233,6 +233,67 @@ export function makeSourceBinding(
 }
 
 // ---------------------------------------------------------------------------
+// projection pane bindings — seam 1 (WORLD-SHELL-DESIGN §10.1)
+
+const PROJECTION_TITLES: Record<string, string> = {
+  "projection.earth": "Earth",
+  "projection.timeline": "Timeline",
+  "projection.constellation": "Constellation",
+  "projection.expressions": "Expressions",
+};
+
+/** True when the binding is a projection pane (its kind names a projection).
+ * A plain string test on the kind — the kinds are additive, and hosts may
+ * hold bindings restored before this module was imported. */
+export function isProjectionBinding(
+  binding: Pick<SurfaceBinding, "kind">,
+): boolean {
+  return binding.kind.startsWith("projection.");
+}
+
+/**
+ * A projection pane binding: kind + the subject it was opened on. The
+ * instance identity is kind + subject_ref — the SAME subject through the
+ * SAME projection reactivates its existing pane (one instance, never a
+ * duplicate body), and a DIFFERENT subject mints a new instance, which is
+ * how two panes hold two projections of one subject side by side. An absent
+ * subject_ref names the following pane (it follows the encounter); only one
+ * following pane per kind exists.
+ */
+export function makeProjectionBinding(
+  state: LayoutState,
+  kind: import("./types").ProjectionPaneKind,
+  opts: {subject_ref?: string; subject_title?: string} = {},
+): SurfaceBinding {
+  const existing = Object.values(state.surfaces).find(
+    (b) => b.kind === kind && b.projection?.subject_ref === opts.subject_ref,
+  );
+  if (existing) return existing;
+  const base = PROJECTION_TITLES[kind] ?? kind;
+  const title = opts.subject_title ? `${base} · ${opts.subject_title}` : base;
+  return {
+    id: crypto.randomUUID(),
+    kind,
+    title,
+    projection: {kind, ...(opts.subject_ref ? {subject_ref: opts.subject_ref} : {})},
+  };
+}
+
+/**
+ * Open a projection as a pane: mint (or reactivate) the binding and open it
+ * in the focused group — the ordinary `openBinding` path, so split, move,
+ * pin, close and retention all carry over untouched.
+ */
+export function openProjectionPane(
+  state: LayoutState,
+  kind: import("./types").ProjectionPaneKind,
+  opts: {subject_ref?: string; subject_title?: string} = {},
+): LayoutState {
+  const binding = makeProjectionBinding(state, kind, opts);
+  return openBinding(state, binding);
+}
+
+// ---------------------------------------------------------------------------
 // operations
 
 export function openBinding(

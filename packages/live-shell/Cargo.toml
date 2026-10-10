@@ -8,11 +8,10 @@ description = "Live shell — dev server surface (M2 skeleton): JSON API + minim
 axum = "0.7"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+sha2 = "0.10"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "process"] }
 tower-http = { version = "0.5", features = ["fs"] }
 live-set = { path = "../live-set" }
-live-dynamics = { path = "../live-dynamics" }
-live-engine = { path = "../live-engine", features = ["realtime"] }
 
 [dev-dependencies]
 tower = { version = "0.4", features = ["util"] }

@@ -150,37 +150,37 @@ const STAGE_KEY = "oi-cradle.book.stage.v1";
 interface StageSlot { previous?: string; candidate?: string; at?: number }
 interface StageJournal { version: 1; slots: Record<string, StageSlot> }
 
-const readJournal = (): StageJournal => {
+const readJournal = (journalKey = STAGE_KEY): StageJournal => {
   try {
-    const journal = JSON.parse(localStorage.getItem(STAGE_KEY) ?? "null");
+    const journal = JSON.parse(localStorage.getItem(journalKey) ?? "null");
     return journal && typeof journal === "object" && journal.version === 1 && journal.slots && typeof journal.slots === "object" ? journal as StageJournal : { version: 1, slots: {} };
   } catch { return { version: 1, slots: {} }; }
 };
-const writeJournal = (journal: StageJournal): void => { localStorage.setItem(STAGE_KEY, JSON.stringify(journal)); };
+const writeJournal = (journal: StageJournal, journalKey = STAGE_KEY): void => { localStorage.setItem(journalKey, JSON.stringify(journal)); };
 
 /** Put the candidate bytes in the stage slot. Storage errors propagate:
  * a save that cannot be staged surfaces through the caller's save-error
  * path — it must never be swallowed into a silent partial publication. */
-export function stageCheckpoint(key: string, raw: string): void {
+export function stageCheckpoint(key: string, raw: string, journalKey = STAGE_KEY): void {
   if (typeof raw !== "string") throw new Error("A checkpoint candidate is the raw serialized string");
-  const journal = readJournal();
+  const journal = readJournal(journalKey);
   journal.slots[key] = { ...journal.slots[key], candidate: raw, at: Date.now() };
-  writeJournal(journal);
+  writeJournal(journal,journalKey);
 }
 
 /** Promote the staged candidate to `previous` (the last-known-good slot)
  * and clear the stage. Committing with nothing staged is an honest no-op. */
-export function commitCheckpoint(key: string): void {
-  const journal = readJournal();
+export function commitCheckpoint(key: string, journalKey = STAGE_KEY): void {
+  const journal = readJournal(journalKey);
   const slot = journal.slots[key];
   if (!slot?.candidate) return;
   journal.slots[key] = { previous: slot.candidate, at: Date.now() };
-  writeJournal(journal);
+  writeJournal(journal,journalKey);
 }
 
 /** The last successfully published bytes for `key`, or null when no
  * publication has ever committed. Reads the journal only — never the live
  * key — so a damaged live book cannot poison the good copy. */
-export function lastKnownGood(key: string): string | null {
-  return readJournal().slots[key]?.previous ?? null;
+export function lastKnownGood(key: string, journalKey = STAGE_KEY): string | null {
+  return readJournal(journalKey).slots[key]?.previous ?? null;
 }

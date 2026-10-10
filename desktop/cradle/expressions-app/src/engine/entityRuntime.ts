@@ -36,7 +36,6 @@ import {
   SequenceLink,
   SequenceState,
   layoutPartitions,
-  resolveSequence,
   effectiveLinks,
   MAX_FORMATIONS,
 } from './fieldModel';
@@ -90,8 +89,6 @@ export class EntityRuntime {
   private sampler: GlyphSampler;
   public bakeGeneration = 0;
   private currentPlane: Composition['plane'] = 'vertical';
-  private texW = 0;
-  private texH = 0;
   private particleCount = 0;
   private dataA: Float32Array = new Float32Array(0);
   private dataB: Float32Array = new Float32Array(0);
@@ -146,8 +143,6 @@ export class EntityRuntime {
   // ------------------------------------------------------------------ allocation
   public allocate(particleCount: number, texW: number, texH: number) {
     this.disposeTextures();
-    this.texW = texW;
-    this.texH = texH;
     this.particleCount = particleCount;
     this.connections.resize(particleCount);
     this.dataA = new Float32Array(texW * texH * 4);
@@ -428,7 +423,7 @@ export class EntityRuntime {
   }
 
   /** A layer's candidate pool: its loaded image/ASCII source, else its shape. */
-  private layerCandidates(e: Entity, layer: EntityLayer, custom: Candidate[] | undefined, fontFamily?: string, fontWeight?: string | number): Candidate[] {
+  private layerCandidates(e: Entity, layer: EntityLayer, fontFamily?: string, fontWeight?: string | number): Candidate[] {
     return this.customCandidates.get(e.id+':'+layer.id)
       ?? this.candidatesFor(layer.shape, fontFamily, fontWeight);
   }
@@ -463,7 +458,7 @@ export class EntityRuntime {
         const per = Math.floor((p.end-p.start)/layers.length);
         const reach = Math.max(...layers.map(l=>Math.abs(l.z)),0);
         layers.forEach((layer,k)=>{
-          const pool = this.presetPool(body,this.layerCandidates(e,layer,custom,fontFamily,fontWeight),this.customCandidates.has(e.id+':'+layer.id)).map(c=>{
+          const pool = this.presetPool(body,this.layerCandidates(e,layer,fontFamily,fontWeight),this.customCandidates.has(e.id+':'+layer.id)).map(c=>{
             const ls=Math.max(.001,layer.scale??1);
             return {...c,x:c.x*ls,y:c.y*ls,...(c.hz===undefined?{}:{hz:c.hz*ls})};
           });

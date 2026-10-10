@@ -157,5 +157,18 @@
   "actor": "zcode craft lane 2",
   "law": "campaign-evidence/2026-10-07-expression-rework/REWORK-PROTOCOL.md",
   "note": "Re-craft pass: every scene drawn (ascii figures, geometry, travelling tints); stage text stripped to scene name and one line; stillness held between scenes 0-1 and 3-4; the changing sun and projection animated only in scene 3."
+ },
+ "deepen_pass": {
+  "date": "2026-10-07",
+  "actor": "zcode deepen lane 2",
+  "law": "campaign-evidence/2026-10-07-expression-rework/REWORK-PROTOCOL.md, 'The deepen pass'",
+  "note": [
+   "DEPTH — two scenes stand in 3d and z is the room the image appears inside: #3 projection spreads the changed sun, the window, the changing cast, the invested viewer and the atlas complement down the interior's depth (z −0.4 to +0.35) — the display is encountered from a position inside a volume, not read off a plane; #5→0 return holds the returned window, the enfolded ring and the returned viewer at distinct depths — recognition comes back to the aperture from within the room it lit.",
+   "MORPH — the light scenes morph on the authored quantumInterference trajectory (drive sine, theta 0.08/0.05): light through a made aperture is interference — the spectrum implicated in the white light, not painted on it; the projection and return morph on vortexSpiral (drive triangle, theta 0.05/0.09): the changing sun sweeping the interior as the day turns, disclosing the construction.",
+   "ALIVE — three physics profiles: the dark light block's haloed field (halo 0.2, softness 0.25, grain 0.03) held across aperture/spectrum — the journey's rest; the seams scene in daylight print (material print — the glass as made matter: panes, lead cames, opaque mosaic; roundness 0.4, softness 0.08); the projection block's depth field (irregularity 0.3, softness 0.2, zConfinement 0.7) held across projection/return — a rest.",
+   "STEP-SCALE — no text-changing step carries objectState.size; the projection's two sequences animate tint and form only.",
+   "TITLES — every scene title is the record's own section heading, quoted exactly: 'Light entering a made aperture' (#0), 'The spectrum implicated in the light' (#1), 'Colour acquires a passage; the joins stay visible' (#2), 'The image appears inside the room' (#3), 'Recognition returns to the aperture' (#5→0). No metadata on the stage.",
+   "PAGE FIDELITY — #0 originating light, rose window, light shaft, the cast pratibimba, the viewer, B/p; #1 white light, the pane's differentiating office, six local colours; #2 pane grid, lead cames between neighbours, the opaque mosaic, the bent passage, MEF; #3 changed sun, constructed window, changing projection, invested viewer, the contextual turn, the atlas complement; #5→0 the returned rose window, the enfolded implicate ring, the returned viewer, the lattice window, the inert mirror kept distinct, ↺. Each scene answers to its page."
+  ]
  }
 }

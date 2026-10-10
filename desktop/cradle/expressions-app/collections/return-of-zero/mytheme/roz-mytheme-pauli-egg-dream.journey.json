@@ -26,7 +26,10 @@
         "pointerMode": "attract",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.3,
-        "pointerClickRadius": 0.3
+        "pointerClickRadius": 0.3,
+        "morphEnabled": true,
+        "trajectory": "linear",
+        "driveShape": "smooth"
       },
       "field": {
         "background": "#101318",
@@ -42,7 +45,9 @@
           "speed": 0.35,
           "circulation": 0.1,
           "dispersion": 0.05,
-          "turbulence": 0.08
+          "turbulence": 0.08,
+          "grain": 0.03,
+          "halo": 0.1
         }
       },
       "entities": [
@@ -238,7 +243,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Background physics",
+          "title": "A physicist meets his concepts in a dream",
           "italic": "Concepts arrive in dreams, unbidden and qualitative.",
           "body": "",
           "x": 0.03,
@@ -258,12 +263,12 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
+        "thetaRate": 0.07,
+        "phiRate": 0.12,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
-        "depth": 1,
+        "depth": 1.1,
         "dwell": 0.3
       },
       "automation": []
@@ -288,7 +293,10 @@
         "pointerMode": "attract",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.3,
-        "pointerClickRadius": 0.3
+        "pointerClickRadius": 0.3,
+        "morphEnabled": true,
+        "trajectory": "linear",
+        "driveShape": "smooth"
       },
       "field": {
         "background": "#101318",
@@ -304,7 +312,9 @@
           "speed": 0.35,
           "circulation": 0.1,
           "dispersion": 0.05,
-          "turbulence": 0.08
+          "turbulence": 0.08,
+          "grain": 0.03,
+          "halo": 0.1
         }
       },
       "entities": [
@@ -546,7 +556,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The egg divides itself",
+          "title": "The first division happens before the dreamer intervenes",
           "italic": "One has become two; each remains an egg.",
           "body": "",
           "x": 0.03,
@@ -566,12 +576,12 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.1,
+        "thetaRate": 0.07,
+        "phiRate": 0.12,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
-        "depth": 1,
+        "depth": 1.1,
         "dwell": 0.3
       },
       "automation": []
@@ -611,7 +621,10 @@
           "pointerStrength": 0.35,
           "speed": 0.4,
           "circulation": 0.12,
-          "dispersion": 0.05
+          "dispersion": 0.05,
+          "softness": 0.3,
+          "halo": 0.16,
+          "zConfinement": 0.75
         }
       },
       "entities": [
@@ -622,7 +635,7 @@
           "position": {
             "x": -0.25,
             "y": -0.16,
-            "z": 0.0
+            "z": -0.3
           },
           "size": {
             "x": 0.22,
@@ -670,7 +683,7 @@
           "position": {
             "x": 0.05,
             "y": -0.36,
-            "z": 0.0
+            "z": 0.3
           },
           "size": {
             "x": 0.2,
@@ -718,7 +731,7 @@
           "position": {
             "x": 0.5,
             "y": -0.42,
-            "z": 0.0
+            "z": 0.1
           },
           "size": {
             "x": 0.22,
@@ -766,7 +779,7 @@
           "position": {
             "x": 0.65,
             "y": -0.2,
-            "z": 0.0
+            "z": 0.15
           },
           "size": {
             "x": 0.1,
@@ -808,7 +821,7 @@
           "position": {
             "x": -0.58,
             "y": -0.46,
-            "z": 0.0
+            "z": -0.15
           },
           "size": {
             "x": 0.12,
@@ -855,7 +868,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "In his own hand",
+          "title": "The dreamer finds what is in his own hand",
           "italic": "Divided, both remain whole.",
           "body": "",
           "x": 0.03,
@@ -920,7 +933,9 @@
           "pointerStrength": 0.35,
           "speed": 0.45,
           "circulation": -0.2,
-          "dispersion": 0.05
+          "dispersion": 0.05,
+          "elongation": 0.06,
+          "contrast": 0.92
         }
       },
       "entities": [
@@ -1116,7 +1131,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Eggs become expressions",
+          "title": "Four eggs become a relation",
           "italic": "The cosine holds; the imaginary term changes sign.",
           "body": "",
           "x": 0.03,
@@ -1176,12 +1191,14 @@
           "#6b5d4a",
           "#8a2f2b"
         ],
-        "material": "round",
+        "material": "ink",
         "params": {
           "pointerStrength": 0.3,
           "speed": 0.35,
           "circulation": 0.15,
-          "dispersion": 0.04
+          "dispersion": 0.04,
+          "contrast": 0.97,
+          "grain": 0.025
         }
       },
       "entities": [
@@ -1405,8 +1422,8 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "He speaks",
-          "italic": "The formula vanishes; a circle appears.",
+          "title": "The formula vanishes and a circle appears",
+          "italic": "Speech enters at the end.",
           "body": "",
           "x": 0.03,
           "y": 0.04,
@@ -1471,7 +1488,9 @@
           "speed": 0.32,
           "circulation": 0.08,
           "dispersion": 0.04,
-          "turbulence": 0.05
+          "turbulence": 0.05,
+          "opacity": 0.85,
+          "halo": 0.12
         }
       },
       "entities": [
@@ -1751,7 +1770,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The conscious part",
+          "title": "Pauli reads the part played by consciousness",
           "italic": "Noticing and dividing what he already holds.",
           "body": "",
           "x": 0.03,
@@ -1817,7 +1836,9 @@
           "speed": 0.32,
           "circulation": 0.08,
           "dispersion": 0.04,
-          "turbulence": 0.05
+          "turbulence": 0.05,
+          "opacity": 0.85,
+          "halo": 0.12
         }
       },
       "entities": [
@@ -2007,7 +2028,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Received, then participated",
+          "title": "Conscious participation changes the received image",
           "italic": "Seven pictures; four eggs of two origins.",
           "body": "",
           "x": 0.03,
@@ -2038,5 +2059,8 @@
       "automation": []
     }
   ],
-  "updatedAt": "2026-10-07T00:00:00.000Z"
+  "updatedAt": "2026-10-07T00:00:00.000Z",
+  "notes": [
+    "2026-10-07 deepen pass (agent/o-i-20261007-1639, lane 2): the material made alive and deep. MORPH: the study-night pair breathes on one clock (theta 0.07 / phi 0.12, depth 1.1) — the ground state quietly pulsing before and as the egg divides itself, the dream already at work before the dreamer notices. DEPTH: the blue scene now stands in true z — pictures 1–2 (the spontaneous pair) recede to −0.3, the blue-shelled egg in his own hand comes nearest the viewer at +0.3, the division he performs at +0.1: the dream's depth ordered by where the observer stands; zConfinement 0.75 authored. PARTICLE PROPS: study night fine-grained (grain 0.03, halo 0.1); blue shell sheened (softness 0.3, halo 0.16); slate expressions drawn into rows (elongation 0.06, contrast 0.92); the light page crisp (contrast 0.97, grain 0.025); late night dimmed to reading-lamp opacity (0.85, halo 0.12) across commentary and return. TITLES set to the record's own lines: A physicist meets his concepts in a dream; The first division happens before the dreamer intervenes; The dreamer finds what is in his own hand; Four eggs become a relation; The formula vanishes and a circle appears; Pauli reads the part played by consciousness; Conscious participation changes the received image. Still pairs held: the study-night pair and the late-night pair each rest unchanged."
+  ]
 }

@@ -33,13 +33,14 @@
  * this file — `composition.ts` carries the pure-logic proof, and
  * `kernel/tests/palace_composition_native.rs` carries the native proof.
  */
-import React,{useEffect,useMemo,useState} from 'react';
+import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {createRoot,type Root} from 'react-dom/client';
 import {
  discoverRegions,planRegions,regionSceneRef,
  type PalaceChange,type PalaceDocumentSnapshot,type PalaceRegionSpec,
 } from '../../../src/techne/m0m5/palace/composition';
 import type {KernelConversion} from './kernelDocumentBridge.js';
+import {palaceInstrumentBasis,samePalaceInstrumentBasis,assertPalaceSource,samePalaceComposition} from './palaceInstrumentBasis';
 import './palaceInstrument.css';
 
 export interface PalaceKernelExpression {expression_ref:string;title:string;revision:number}
@@ -55,6 +56,10 @@ export type PalaceComposeResult =
 export interface PalaceInstrumentHost {
  nativeView:()=>KernelConversion|undefined;
  sceneId:()=>string;
+ authoredRevision:()=>number;
+ /** The retained author's transaction/pending/draft standing. A native
+  * revision alone cannot qualify uncommitted stage or source changes. */
+ canCompose:()=>boolean;
  listExpressions:()=>Promise<PalaceKernelExpression[]>;
  readExpression:(ref:string)=>Promise<PalaceDocumentSnapshot&{title:string}>;
  /** Executes one native `edit` carrying exactly the Change list `planRegions`
@@ -73,17 +78,21 @@ const DEFAULT_REGION='Palace';
 interface RegionDraft {name:string;scene_ref:string|null;member:PalaceRegionSpec['member']}
 
 function PalacePanel({host,doc,onMessage}:{host:PalaceInstrumentHost;doc:PalaceDocumentSnapshot&{title:string};onMessage:(text:string)=>void}) {
+ const [draftDoc,setDraftDoc]=useState(doc);
+ const [draftAuthoredRevision,setDraftAuthoredRevision]=useState(()=>host.authoredRevision());
+ const lifetime=useRef({live:true,generation:0});
+ useEffect(()=>{lifetime.current.live=true;return()=>{lifetime.current.live=false;lifetime.current.generation++;};},[]);
  const initial=useMemo(()=>{
-  const found=discoverRegions(doc);
+  const found=discoverRegions(draftDoc);
   return found.length>0?found:[{name:DEFAULT_REGION,scene_ref:null,member:null} as PalaceRegionSpec];
- },[doc.expression_ref,doc.revision]);
+ },[draftDoc.expression_ref,draftDoc.revision]);
  const [regions,setRegions]=useState<RegionDraft[]>(initial);
  const [removed,setRemoved]=useState<string[]>([]);
  const [eligible,setEligible]=useState<PalaceKernelExpression[]>([]);
  const [busy,setBusy]=useState(false);
  const [newRegion,setNewRegion]=useState('');
 
- useEffect(()=>{let live=true;void host.listExpressions().then(list=>{if(live)setEligible(list.filter(entry=>entry.expression_ref!==doc.expression_ref));}).catch(error=>onMessage(error instanceof Error?error.message:String(error)));return()=>{live=false;};},[doc.expression_ref]);
+ useEffect(()=>{let live=true;void host.listExpressions().then(list=>{if(live)setEligible(list.filter(entry=>entry.expression_ref!==doc.expression_ref));}).catch(error=>{if(live)onMessage(error instanceof Error?error.message:String(error));});return()=>{live=false;};},[doc.expression_ref]);
 
  const containedRefs=useMemo(()=>new Set(regions.flatMap(region=>region.member?[region.member.expression_ref]:[])),[regions]);
 
@@ -136,34 +145,51 @@ function PalacePanel({host,doc,onMessage}:{host:PalaceInstrumentHost;doc:PalaceD
   setRemoved(current=>current.includes(name)?current:[...current,name]);
  }
  function cancel(){
-  setRegions(initial);setRemoved([]);
+  const current=host.nativeView();
+  if(!current||current.document.expression_ref!==doc.expression_ref||current.document.revision!==doc.revision){onMessage('Refresh the Palace before discarding this draft; the displayed source is no longer current.');return;}
+  const found=discoverRegions(doc);
+  setDraftDoc(doc);setRegions(found.length?found:[{name:DEFAULT_REGION,scene_ref:null,member:null}]);setRemoved([]);
+  setDraftAuthoredRevision(host.authoredRevision());
   onMessage('Cancelled — no mutation.');
  }
  async function save(){
-  const changes=planRegions(doc,regions,removed);
+  if(busy)return;
+  const current=host.nativeView();
+  if(!host.canCompose()||host.authoredRevision()!==draftAuthoredRevision||!current||current.document.expression_ref!==draftDoc.expression_ref||current.document.revision!==draftDoc.revision){onMessage('This Palace changed or has pending authored work after the draft began. Your draft is retained; refresh and Revert only when you intend to discard it.');return;}
+  const proposed=regions.map(region=>({...region,member:region.member?{...region.member}:null}));
+  let changes:ReturnType<typeof planRegions>;
+  try{changes=planRegions(draftDoc,proposed,[...removed]);}
+  catch(error){onMessage(error instanceof Error?error.message:String(error));return;}
   if(!changes){onMessage('Nothing to save — the composition already matches the native document.');return;}
+  const generation=++lifetime.current.generation;
+  const alive=()=>lifetime.current.live&&lifetime.current.generation===generation&&host.nativeView()?.document.expression_ref===draftDoc.expression_ref;
   setBusy(true);
   try{
-   const result=await host.composeExpression({expression_ref:doc.expression_ref,expected_revision:doc.revision,changes});
+   const result=await host.composeExpression({expression_ref:draftDoc.expression_ref,expected_revision:draftDoc.revision,changes});
+   if(!alive())return;
    if(!result.ok){onMessage(`Not saved: ${result.reason}`);return;}
+   if(result.document.expression_ref!==draftDoc.expression_ref||!Number.isSafeInteger(result.document.revision)||result.document.revision<=draftDoc.revision){onMessage('The Palace owner returned another source or an invalid revision. Your original draft is retained.');return;}
+   const adoptedRevision=host.nativeView()?.document.revision;
+   if(adoptedRevision!==draftDoc.revision&&adoptedRevision!==result.document.revision){onMessage('A newer Palace change arrived while this result was returning. The native result and your original draft are retained; refresh to inspect them.');return;}
    const readback=discoverRegions(result.document);
-   const proposedByName=new Map(regions.map(region=>[region.name,region.member?.expression_ref??null]));
-   const matches=readback.length===regions.length&&readback.every(region=>proposedByName.get(region.name)===(region.member?.expression_ref??null));
-   setRegions(readback.length>0?readback:regions);
+   const matches=samePalaceComposition(proposed,readback);
+   if(!matches){onMessage(`The owner returned revision ${result.document.revision}, but its regions or guided order differ. Your draft is retained; refresh to inspect the native result.`);return;}
+   setDraftDoc({...result.document,title:doc.title});setDraftAuthoredRevision(host.authoredRevision());setRegions(readback);
    setRemoved([]);
-   onMessage(matches?`Composition saved — revision ${result.document.revision}; readback confirms the same composition.`:`Saved at revision ${result.document.revision}; reopen to verify the exact composition.`);
-  }catch(error){onMessage(error instanceof Error?error.message:String(error));}
-  finally{setBusy(false);}
+   onMessage(`Composition saved — revision ${result.document.revision}; readback confirms the regions and guided order.`);
+  }catch(error){if(alive())onMessage(error instanceof Error?error.message:String(error));}
+  finally{if(lifetime.current.live&&lifetime.current.generation===generation)setBusy(false);}
  }
 
  return <div className="palace-panel" role="region" aria-label="M5′ Palace">
   <header className="palace-header">
    <p className="control-note">Regions of {doc.title}</p>
    <div className="palace-header-actions">
-    <button type="button" disabled={busy} onClick={()=>void save()}>Save composition</button>
+    <button type="button" disabled={busy||doc.revision>draftDoc.revision} onClick={()=>void save()}>Save composition</button>
     <button type="button" disabled={busy} onClick={cancel}>Revert</button>
    </div>
   </header>
+  {doc.revision>draftDoc.revision&&<p role="status">This draft began at revision {draftDoc.revision}. The owner now discloses revision {doc.revision}; your input is retained. Revert explicitly takes the current composition.</p>}
   <div className="palace-body">
    <section className="palace-regions" aria-label="Regions and guided path">
     {regions.map((region,index)=>
@@ -171,9 +197,9 @@ function PalacePanel({host,doc,onMessage}:{host:PalaceInstrumentHost;doc:PalaceD
       <div className="palace-region-head">
        <h3>{region.name}</h3>
        <div className="palace-region-controls">
-        <button type="button" disabled={index===0} onClick={()=>moveRegion(region.name,-1)} aria-label={`Move ${region.name} earlier in the guided path`}>↑</button>
-        <button type="button" disabled={index===regions.length-1} onClick={()=>moveRegion(region.name,1)} aria-label={`Move ${region.name} later in the guided path`}>↓</button>
-        <button type="button" disabled={regions.length<=1} onClick={()=>removeRegion(region.name)}>Remove region</button>
+        <button type="button" disabled={busy||index===0} onClick={()=>moveRegion(region.name,-1)} aria-label={`Move ${region.name} earlier in the guided path`}>↑</button>
+        <button type="button" disabled={busy||index===regions.length-1} onClick={()=>moveRegion(region.name,1)} aria-label={`Move ${region.name} later in the guided path`}>↓</button>
+        <button type="button" disabled={busy||regions.length<=1} onClick={()=>removeRegion(region.name)}>Remove region</button>
        </div>
       </div>
       {region.member
@@ -181,15 +207,15 @@ function PalacePanel({host,doc,onMessage}:{host:PalaceInstrumentHost;doc:PalaceD
          <p className="palace-primary-note">Contained Expression (native Scene body, Portal-openable):</p>
          <div className="palace-region-members"><span className="palace-ref">{region.member.title||region.member.expression_ref}</span>
           <span className="palace-member-controls">
-           <button type="button" onClick={()=>host.openExpression(region.member!.expression_ref)}>Open</button>
-           <button type="button" onClick={()=>removeMember(region.name)}>Remove</button>
+           <button type="button" disabled={busy} onClick={()=>host.openExpression(region.member!.expression_ref)}>Open</button>
+           <button type="button" disabled={busy} onClick={()=>removeMember(region.name)}>Remove</button>
           </span></div>
         </div>
        :<p className="palace-empty">No contained Expression yet — add one from the eligible list.</p>}
      </div>)}
     <div className="palace-add-region">
-     <label>New region<input value={newRegion} onChange={e=>setNewRegion(e.target.value)} maxLength={80} placeholder="Region name"/></label>
-     <button type="button" disabled={!newRegion.trim()} onClick={addRegion}>Add region</button>
+     <label>New region<input disabled={busy} value={newRegion} onChange={e=>setNewRegion(e.target.value)} maxLength={80} placeholder="Region name"/></label>
+     <button type="button" disabled={busy||!newRegion.trim()} onClick={addRegion}>Add region</button>
     </div>
    </section>
    <section className="palace-eligible" aria-label="Eligible native Expressions">
@@ -202,12 +228,12 @@ function PalacePanel({host,doc,onMessage}:{host:PalaceInstrumentHost;doc:PalaceD
       return <li key={entry.expression_ref}>
        <span className="palace-ref">{entry.title||entry.expression_ref}</span>
        <span className="palace-member-controls">
-        <button type="button" onClick={()=>host.openExpression(entry.expression_ref)}>Open</button>
+        <button type="button" disabled={busy} onClick={()=>host.openExpression(entry.expression_ref)}>Open</button>
         {composed
          ?<button type="button" disabled>Composed</button>
          :openRegion
-          ?<button type="button" onClick={()=>addTo(openRegion.name,entry.expression_ref,entry.title)}>{`Add to ${openRegion.name}`}</button>
-          :<button type="button" onClick={()=>addAsNewRegion(entry.expression_ref,entry.title)} title="Every region already holds one Expression">Add as new region</button>}
+          ?<button type="button" disabled={busy} onClick={()=>addTo(openRegion.name,entry.expression_ref,entry.title)}>{`Add to ${openRegion.name}`}</button>
+          :<button type="button" disabled={busy} onClick={()=>addAsNewRegion(entry.expression_ref,entry.title)} title="Every region already holds one Expression">Add as new region</button>}
        </span>
       </li>;
      })}
@@ -237,14 +263,17 @@ export function installPalaceInstrument(host:PalaceInstrumentHost,home:HTMLEleme
  function unmount(){root?.unmount();root=null;if(mount)mount.replaceChildren();}
  async function load(){
   const generation=++epoch;
-  const view=host.nativeView();
+  const view=host.nativeView(),sceneId=host.sceneId();
   if(!view){message('Open a native Expression before entering the Palace.');unmount();return;}
   try{
+   const basis=palaceInstrumentBasis(view,sceneId);
    const doc=await host.readExpression(view.document.expression_ref);
-   if(generation!==epoch||destroyed)return;
+   if(generation!==epoch||destroyed||!open_)return;
+   if(!samePalaceInstrumentBasis(basis,host.nativeView(),host.sceneId()))throw Error('The native Palace changed while its reading was returning');
+   assertPalaceSource(doc,basis);
    ensureMount();
    root??=createRoot(mount!);
-   root.render(<PalacePanel host={host} doc={doc} onMessage={message}/>);
+   root.render(<PalacePanel key={doc.expression_ref} host={host} doc={doc} onMessage={message}/>);
   }catch(error){if(generation!==epoch||destroyed)return;message(error instanceof Error?error.message:String(error));}
  }
  async function close_(){

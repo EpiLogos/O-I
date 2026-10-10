@@ -145,6 +145,7 @@
   "the Soter — called also Christ, Logos and Everything, because he comes from all": "The Soter: the collective fruit whose common origin gives the Aeons' contributions a consequence beyond their restored rest.",
   "Achamoth in darkness and vacuity — formless, like an untimely birth": "Outside the Pleroma: the expelled enthymesis without form in darkness and vacuity — the lower Sophia of the subsequent story.",
   "the first formation — according to substance; the odour of immortality left behind": "The first formation: the Christ extends beyond Stauros, gives her form according to substance, then withdraws, leaving an odour of immortality.",
+  "the second formation — according to intelligence; she meets his coming": "The second formation: the Soter comes with his angels; she first veils herself before their splendour, then receives strength and meets his coming — formed according to intelligence, her passions healed into substrates.",
   "the affects becoming substrates — tears to liquid, smile to lucid, grief to corporeal; fear to the psychic": "Affective cosmogenesis: tears give liquid substance, remembered light makes her smile and the lucid arise, grief yields the corporeal; conversion generates the psychic order.",
   "Horos stops her crossing back — the cry of Iao at the barred passage": "The barred passage: her attempt to cross back is stopped by Horos; the report associates the exclamation Iao with that barrier.",
   "the spiritual offspring — conceived in the likeness of the Soter's angels": "The spiritual seed: freed of her passions, she looks upon the Soter's angels and conceives offspring in their likeness — a different origin from the material and psychic substrates.",
@@ -163,5 +164,17 @@
   "actor": "zcode craft lane 2",
   "law": "campaign-evidence/2026-10-07-expression-rework/REWORK-PROTOCOL.md",
   "note": "Re-craft pass: the reported whole drawn — the four conjunctions with their Decad and Duodecad branches and the comprehending Nous; Sophia's brightening reach, the Horos bar, the excluded enthymesis and the kept variant; the teaching Christ, descending Spirit, gathering contributions and the Soter; formless Achamoth, the first formation, affect-substrates, the barred return, angelic seed; the hidden mother, the maker at his bench, seven heavens, element marks and the skinned human; the turning bridal rings, the intermediate place, the self-consuming fire, the Offered comparison. Four-ground colour journey; stillness held Pleroma-to-crisis and Achamoth-to-Demiurge."
+ },
+ "deepen_pass": {
+  "date": "2026-10-07",
+  "actor": "zcode deepen lane 2",
+  "law": "campaign-evidence/2026-10-07-expression-rework/REWORK-PROTOCOL.md, 'The deepen pass'",
+  "note": [
+   "DEPTH — m-val-5-return stands in 3d (view.mode 3d, yaw 0.42 / pitch 0.3, field depth 0.4, zConfinement 0.6). The third dimension is the return's simultaneous destinations, not a later chapter: the founding comparison kept nearest the viewer (z +0.3 — the comparison is ours to weigh, Offered, human-amplified: no), the bridal union at the viewing plane (z 0), the Demiurge's intermediate dwelling deeper (z −0.2), fire deepest (z −0.35) where matter ends. gravityZ drifts the field toward the union; the bridal chamber's own force turns attract (the union gathering); pointer attract/pulse.",
+   "MORPH — the same scene's morph is the union's slow toroidal turning (toroidalHopf, law theta, rates 0.12/0.07, morph depth 1.4): the two turning rings of bride and bridegroom carrying the whole field around the chamber.",
+   "ALIVE — four physics profiles travel the story: the fullness round and quiet (roundness 0.95, softness 0.15, halo 0.13); thanksgiving softened (roundness 0.85, softness 0.28, halo 0.2); the passions-into-substrates pressed like print (material print, irregularity 0.5, grain 0.06, elongation 0.1) and held identical through the Demiurge's ordering — the journey's second rest; the bridal field softest and most haloed (softness 0.34, halo 0.24, opacity 0.85). Stillness kept Pleroma-to-crisis and Achamoth-to-Demiurge; motion where the record moves.",
+   "STEP-SCALE — no text-changing step carries objectState.size; the running sequences animate tint and rotation only (their texts never change).",
+   "PAGE FIDELITY — scene #3 now draws both formations its title names: the first (substance) and the second (intelligence, gold — she meets his coming), beside the formless Achamoth, the affect-substrates, the barred passage and the angelic seed. Every scene title is the record's own section line; no metadata on the stage."
+  ]
  }
 }

@@ -6,8 +6,10 @@
  * same way — see ui/PANELS.md.
  */
 
-import './inspector'
-import './clock'
-import './devices'
-import './devices-b2'
-import './devices-pro'
+import './context'
+import './expressions'
+import './knowledge'
+import './settings'
+
+import './workbench'
+import './agentShell'

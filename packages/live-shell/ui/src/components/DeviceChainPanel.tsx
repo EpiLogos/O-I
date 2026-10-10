@@ -1,102 +1,22 @@
-import { useEffect, useState } from 'react'
-
-import type { SetSummary } from '../shell/useSet'
+import type { PanelContext } from '../shell/panels'
 import { getPanels } from '../shell/panels'
+import { displayDeviceName, type SetDocument } from '../shell/document'
+import type { SetSelection } from './SessionView'
 import { Icon } from './Icon'
-
-/**
- * Bottom device-chain panel: per-track device names from the opened set as
- * chain tiles (real data). The parameters area is an honest stub — device
- * editing lands M3 — and additionally renders 'bottom'-slot panels.
- */
-
-const KIND_LABEL: Record<string, string> = {
-  audio: 'aud',
-  midi: 'midi',
-  return: 'ret',
-  master: 'mst',
+export type DetailMode = 'clip' | 'device'
+function Value({ label, value }: { label: string; value?: string }) {
+  return <label className="clip-value"><span>{label}</span><input readOnly value={value ?? '—'} aria-label={label} title={value === undefined ? 'Value not disclosed by the document owner' : `${label} · read-only native document value`} /></label>
 }
-
-export function DeviceChainPanel({ set }: { set: SetSummary | null }) {
-  const [selected, setSelected] = useState(0)
-
-  useEffect(() => {
-    setSelected(0)
-  }, [set])
-
-  const track = set && selected < set.tracks.length ? set.tracks[selected] : null
-  const bottomPanels = getPanels('bottom')
-
-  return (
-    <section className="chain">
-      <div className="chain-main">
-        <div className="chain-tracks">
-          {set ? (
-            set.tracks.map((t, i) => (
-              <button
-                key={i}
-                type="button"
-                className={'chain-track-btn' + (i === selected ? ' chain-track-btn-active' : '')}
-                onClick={() => setSelected(i)}
-                title={`${t.name} — ${t.devices.length} device${t.devices.length === 1 ? '' : 's'}`}
-              >
-                <span className="track-kind">{KIND_LABEL[t.kind]}</span>
-                {t.name}
-              </button>
-            ))
-          ) : (
-            <span className="chain-empty">no set open</span>
-          )}
-        </div>
-
-        <div className="chain-tiles">
-          {track ? (
-            track.devices.length > 0 ? (
-              track.devices.map((d, i) => (
-                <div
-                  key={i}
-                  className="device-tile"
-                  title={`${d} — hosted with its live-dynamics model at M3 (device hosting)`}
-                >
-                  <Icon name="device" size={13} />
-                  <span className="device-tile-name">{d}</span>
-                  <span className="tag">M3</span>
-                </div>
-              ))
-            ) : (
-              <span className="chain-empty">no devices on “{track.name}”</span>
-            )
-          ) : (
-            <span className="chain-empty">
-              device chains appear here from the opened set
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="chain-side">
-        <div className="chain-params-stub" title="Device parameter editing lands M3 (device hosting — Glue/Echo/Reverb wired to live-dynamics)">
-          <span className="micro-label">parameters</span>
-          <span className="chain-params-text">
-            {track && track.devices.includes('GlueCompressor')
-              ? 'Glue Compressor parameters land M3'
-              : 'device editing lands M3'}
-            {' — Glue Compressor · Echo · Reverb wire to live-dynamics models'}
-          </span>
-        </div>
-        {bottomPanels.map((p) => {
-          const BottomPanel = p.component
-          return (
-            <BottomPanel
-              key={p.id}
-              set={set}
-              loading={false}
-              error={null}
-              openSet={() => {}}
-            />
-          )
-        })}
-      </div>
-    </section>
-  )
+export function DeviceChainPanel({ ctx, document, selection, mode }: { ctx: PanelContext; document: SetDocument | null; selection: SetSelection; mode: DetailMode }) {
+  const track = ctx.set?.tracks[selection.track]
+  const deep = document?.tracks[selection.track]
+  const clip = selection.clip === undefined ? undefined : deep?.arrangementClips[selection.clip]
+  const sessionClip = selection.scene === null ? null : deep?.sessionSlots[String(selection.scene)]
+  const name = clip?.name ?? sessionClip
+  return <section className="chain" aria-label="Detail panel">
+    {mode === 'clip' ? !name && !clip ? <div className="detail-no-selection">No clip selected.</div> : <><aside className="clip-inspector"><div className="clip-section-title"><span className="clip-color-chip" />{name || 'Clip'}</div><details open><summary>Clip</summary><div className="clip-values-pair"><Value label="Start" value={clip?.start.toString()} /><Value label="End" value={clip?.end.toString()} /></div><button disabled title="Duplicate requires the document editing owner">Duplicate</button><button disabled title="Loop writing requires native document editing">▣ Loop</button><div className="clip-values-pair"><Value label="Position" value={clip?.start.toString()} /><Value label="Length" value={clip ? (clip.end - clip.start).toString() : undefined} /></div><div className="clip-values-pair"><Value label="Signature" /><Value label="Groove" /></div><span className="clip-subheading">Scale</span><div className="clip-values-pair"><Value label="Root" /><Value label="Mode" /></div></details><details><summary>Launch</summary><Value label="Launch mode" /></details><details open><summary>Pitch &amp; Time</summary><button disabled title="Note editing requires native clip notes">Fit to Scale</button><button disabled title="Note editing requires native clip notes">Invert</button><Value label="Transpose" /><div className="clip-values-pair"><button disabled>×2</button><button disabled>÷2</button></div></details></aside>
+      <div className="note-editor"><div className="note-toolbar"><button disabled>Fold</button><button disabled>Scale</button><label><input type="checkbox" disabled />Highlight Scale</label><span>{clip?.kind === 'audio' ? 'Audio' : 'Notes'}</span><output>{track?.name}</output></div><div className="note-ruler">{Array.from({ length: 20 }, (_, i) => <span key={i}>{Math.floor((clip?.start ?? 0) / 4) + i + 1}</span>)}</div><div className="note-grid"><div className="note-keyboard">{['C5', 'C4', 'C3', 'C2', 'C1', 'C0', 'C−1', 'C−2'].map(note => <span key={note}>{note}</span>)}</div><div className="note-grid-body" title="Note and waveform contents are not yet disclosed by the document owner" /></div><div className="velocity-lane"><span>Velocity</span><div /></div></div></>
+      : <><div className="device-chain-surface">{track?.devices.map((name, i) => { const device = deep?.devices[i]; return <section key={i} className="device-tile"><div className="device-title"><span className="device-power" title="Device enable state not disclosed">●</span><Icon name="device" size={12} />{displayDeviceName(name)}<span>▾</span></div><div className="device-parameters">{device?.params.map(parameter => <label key={parameter.id} className="device-parameter" title={`${parameter.id}${parameter.min === undefined ? '' : ` · range ${parameter.min}–${parameter.max}`}`}><span>{parameter.id.replaceAll('/', ' › ')}</span><input aria-label={`${displayDeviceName(name)} ${parameter.id}`} value={parameter.value} readOnly title="Lossless document reading · parameter editing awaits native owner" /></label>)}{!device?.params.length && <div className="device-empty" title="No parameters disclosed by the native document">—</div>}</div></section> })}{track && !track.devices.length && <div className="detail-no-selection">No devices on this track.</div>}</div></>}
+    {getPanels('bottom').map(panel => { const Panel = panel.component; return <div className="chain-side" key={panel.id}><Panel {...ctx} /></div> })}
+  </section>
 }

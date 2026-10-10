@@ -48,7 +48,7 @@ export function detectTransport(): KernelTransportStatus {
   };
 }
 
-async function tauriInvoke<T>(command: string, args: Record<string, unknown>): Promise<T> {
+export async function tauriInvoke<T>(command: string, args: Record<string, unknown>): Promise<T> {
   const core = await import("@tauri-apps/api/core");
   return core.invoke<T>(command, args);
 }
@@ -225,6 +225,7 @@ export async function subscribeTopic(
   onReceipt: (receipt: KernelReceipt) => void,
   onResync?: (page: KernelEventReplay, lifetime: {signal: AbortSignal; isCurrent: () => boolean}) => Promise<void> | void,
   onError?: (error: string) => void,
+  onHealthy?: () => void,
 ): Promise<TopicSubscription | null> {
   if (transport.kind === "unavailable") return null;
   let cursor = 1, generation: string | undefined, stopped = false, paused = false;
@@ -234,6 +235,7 @@ export async function subscribeTopic(
   let retryDelay = 250;
   let read: AbortController | undefined;
   let unlisten: (() => void) | undefined;
+  let unhealthy = false;
   const schedule = (delay: number) => {
     requested = true;
     if (stopped || paused || active || timer !== undefined) return;
@@ -266,6 +268,7 @@ export async function subscribeTopic(
         read = undefined;
         generation = page.generation; cursor = page.next_seq;
         retryDelay = 250;
+        if (unhealthy) { unhealthy = false; onHealthy?.(); }
         if (!page.has_more) break;
         if (pages === 7) requested = true;
       }
@@ -276,7 +279,7 @@ export async function subscribeTopic(
         onError?.(String(error));
         return;
       }
-      if (current()) onError?.(String(error));
+      if (current()) { unhealthy = true; onError?.(String(error)); }
     } finally {
       read = undefined;
       active = false;

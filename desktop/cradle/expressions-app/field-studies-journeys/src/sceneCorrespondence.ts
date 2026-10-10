@@ -75,6 +75,13 @@ export function mergeScenePage(whole: Scene, edited: Scene, loaded: ReadonlySet<
   }
   const selected = new Map(result.entities.map(entity => [entity.id, entity]));
   const retained = new Map(hidden.map(entity => [entity.id, entity]));
+  for (const rack of whole.parameterRacks?.racks ?? []) {
+    const entityRef = rack.scope.kind === 'entity' ? rack.scope.entity_ref : undefined;
+    if (entityRef && (!loaded.has(entityRef) || !whole.entities.some(entity => entity.id === entityRef))) {
+      const current = result.parameterRacks?.racks.find(value => value.id === rack.id);
+      if (!sameSceneData(current,rack)) throw new Error('An unloaded native entity retains this rack; retain it unchanged or reconcile the whole before editing it');
+    }
+  }
   // Keep the authored visible order and preserve every unloaded occurrence.
   result.entities = [...result.entities, ...hidden.filter(entity => !selected.has(entity.id))];
   const unseen = (value: RecordValue): boolean => typeof value.entityId === 'string' && retained.has(value.entityId);

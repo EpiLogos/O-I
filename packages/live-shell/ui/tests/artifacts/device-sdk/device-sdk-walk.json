@@ -1,0 +1,36 @@
+{
+  "schema": "oi.device-sdk-walk/v1",
+  "recorded_at": "2026-10-10T23:07:00.974Z",
+  "channel": "scripted-playwright (computer use blocked machine-wide)",
+  "url": "http://127.0.0.1:5207/",
+  "steps": [
+    {
+      "name": "plate renders",
+      "detail": "title=\"Probe\", owner=\"Device SDK (fixture)\", marks=4"
+    },
+    {
+      "name": "scalar drag → draft",
+      "detail": "value 0.75 x → draft shown dirty"
+    },
+    {
+      "name": "commit acknowledges",
+      "detail": "standing=idle, no dirty rows"
+    },
+    {
+      "name": "enum cycles",
+      "detail": "value=exp"
+    },
+    {
+      "name": "waiting card honest",
+      "detail": "Waits for the demo owner's second device op (fixture of the waiting law)."
+    },
+    {
+      "name": "captures written",
+      "detail": "/Users/admin/Central/Work/O-I/packages/live-shell/ui/tests/artifacts/device-sdk/captures"
+    }
+  ],
+  "browserErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "pageErrors": []
+}

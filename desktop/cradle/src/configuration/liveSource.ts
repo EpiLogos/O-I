@@ -13,15 +13,13 @@
  * errors, reconciliation statuses) and is handed to the generic
  * projection unchanged.
  *
- * The one piece of session state kept here is the binding from each
- * owner-minted plan (`plan_digest`) to the request that produced it, so
- * an apply carries the SAME requested values to the engine. That is not
- * a desired store — desired state lives only in the engine.
+ * Session state retains the coordinator-admitted ChangeSet beside the
+ * exact owner plans shown for review. Apply carries that batch unchanged;
+ * desired state and durable replay records remain in the native engine.
  */
 
 import type {
   ChangeSetDocument,
-  ConfigErrorDocument,
   ConfigResolution,
   PlanDocument,
   ProfileDocument,
@@ -49,8 +47,13 @@ import type {
 export type OpCall = (op: KernelOp) => Promise<{ outcome: KernelOutcome | null; error?: string }>;
 
 export function createLiveConfigPlaneSource(call: OpCall): ConfigPlaneSource {
-  // plan_digest → the request that produced it (this session's plans).
-  const plannedRequests = new Map<string, ChangeRequest>();
+  // Admission belongs to the native coordinator. This bounded session cache
+  // only retains the exact returned batch while its plans are being reviewed.
+  const batches = new Map<string, { changeset: ChangeSetDocument; rawPlans: string[]; expires: number }>();
+  const planBatches = new WeakMap<PlanDocument, string>();
+  const retireExpired = () => {
+    for (const [id, batch] of batches) if (batch.expires <= Date.now()) batches.delete(id);
+  };
   let settings: Promise<Record<string, SettingSpec>> | null = null;
 
   function unwrap<T extends KernelOpResult>(sent: { outcome: KernelOutcome | null; error?: string }, expected: T["result"], what: string): T {
@@ -126,39 +129,40 @@ export function createLiveConfigPlaneSource(call: OpCall): ConfigPlaneSource {
     },
 
     async plan(requests: ChangeRequest[]): Promise<PlanBundle> {
-      const outcome = unwrap<any>(
-        await call({ op: "config_plan", requests: requests.map(toWireRequest) }),
-        "config_planned",
-        "planning",
+      if (!requests.length || requests.length > 128) throw new Error("reviewed planning requires between one and 128 requests");
+      const outcome = unwrap<Extract<KernelOpResult, { result: "config_reviewed_planned" }>>(
+        await call({ op: "config_plan_reviewed", requests: requests.map(toWireRequest) }),
+        "config_reviewed_planned",
+        "planning the reviewed batch",
       );
-      const plans = outcome.plans as PlanDocument[];
-      for (const plan of plans) {
-        const request = requests.find(
-          (candidate) => candidate.setting_ref === plan.setting_ref && compactScope(candidate.scope) === compactScope(plan.scope),
-        );
-        if (request && plan.plan_digest) plannedRequests.set(plan.plan_digest, request);
+      const { changeset, plans } = outcome;
+      if (changeset?.schema !== "oi.config-changeset/v1" || !changeset.changeset_id?.startsWith("cs-")
+          || !Array.isArray(changeset.operations) || changeset.operations.length !== requests.length
+          || !Array.isArray(plans) || plans.length !== requests.length) {
+        throw new Error("reviewed planning did not return the complete admitted native batch");
       }
-      return { plans, errors: outcome.errors as ConfigErrorDocument[] };
+      retireExpired();
+      const expires = Math.min(Date.now() + 15 * 60_000, ...plans.map(plan => plan.expires_at_unix_ms ?? Infinity));
+      batches.set(changeset.changeset_id, { changeset: structuredClone(changeset), rawPlans: plans.map(plan => JSON.stringify(plan)), expires });
+      while (batches.size > 8) batches.delete(batches.keys().next().value!);
+      for (const plan of plans) planBatches.set(plan, changeset.changeset_id);
+      return { plans, errors: [] };
     },
 
     async apply(plans: PlanDocument[]): Promise<ChangeSetDocument> {
-      const requests: ChangeRequest[] = [];
-      for (const plan of plans) {
-        const request = plan.plan_digest ? plannedRequests.get(plan.plan_digest) : undefined;
-        if (!request) {
-          throw new Error(
-            `no request is bound to plan ${plan.plan_id} (${plan.setting_ref}) in this session; plan the change again before applying`,
-          );
-        }
-        requests.push(request);
+      retireExpired();
+      const id = plans.length ? planBatches.get(plans[0]) : undefined;
+      const batch = id ? batches.get(id) : undefined;
+      if (!batch || plans.length !== batch.rawPlans.length || plans.some((plan, index) =>
+          planBatches.get(plan) !== id || JSON.stringify(plan) !== batch.rawPlans[index])) {
+        throw new Error("the complete admitted review batch is unavailable or changed; review the change again before applying");
       }
-      if (requests.length === 0) throw new Error("an apply carries at least one planned change");
-      const outcome = unwrap<any>(
-        await call({ op: "config_apply", requests: requests.map(toWireRequest) }),
+      const outcome = unwrap<Extract<KernelOpResult, { result: "config_applied" }>>(
+        await call({ op: "config_apply_reviewed", changeset: structuredClone(batch.changeset), plans }),
         "config_applied",
-        "applying",
+        "applying the reviewed batch",
       );
-      return outcome.changeset as ChangeSetDocument;
+      return outcome.changeset;
     },
 
     async listProfiles() {

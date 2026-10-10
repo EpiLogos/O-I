@@ -117,9 +117,7 @@ const DEFAULT_CONFIG = {
     thermalJitter: 0,
     maxSpeed: 35e3,
     zConfinement: 1,
-    timeScale: 1,
-    vortex3d: 0,
-    dispersion3d: 0
+    timeScale: 1
   },
   interaction: {
     radius: 180,

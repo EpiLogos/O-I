@@ -26,6 +26,9 @@ export interface HostedSurfaceDescriptor {
  * context never travels through this contract. */
 export interface HostedHostContext {
   project?: string;
+  sourceWorldRef?: string;
+  current?: () => boolean;
+  unavailable?: string;
   accompanying?: {ref: string; project: string; space: string};
   openEncounter?: (row: EncounterRow) => void | Promise<void>;
   newEncounter?: () => void;

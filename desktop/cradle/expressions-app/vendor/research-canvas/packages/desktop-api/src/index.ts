@@ -1721,24 +1721,17 @@ type TauriInvoke = <T>(
   args?: Record<string, unknown>
 ) => Promise<T>;
 
-declare global {
-  interface Window {
-    __TAURI_INTERNALS__?: {
-      invoke: TauriInvoke;
-    };
-  }
-}
-
 function invokeTauri<T>(
   command: string,
   args?: Record<string, unknown>
 ): Promise<T> {
-  const invoke = window.__TAURI_INTERNALS__?.invoke;
-  if (!invoke) {
+  const internals = window.__TAURI_INTERNALS__;
+  const invoke = internals && typeof internals === 'object' && 'invoke' in internals ? internals.invoke : undefined;
+  if (typeof invoke !== 'function') {
     return Promise.reject(new Error("Tauri runtime is unavailable"));
   }
 
-  return invoke<T>(command, args);
+  return (invoke as TauriInvoke)<T>(command, args);
 }
 
 function isTauriRuntime() {

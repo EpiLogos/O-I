@@ -168,9 +168,24 @@ export class EngineSurface {
     this.element = element;
     this.onError = onError;
     const factory = window.OI_ENGINE_FACTORY;
-    this.adapter = factory
-      ? (factory(canvas) as ProductionAdapter)
-      : new ProductionAdapter(canvas);
+    if (factory) {
+      const candidate = factory(canvas);
+      // The standalone editor's factory permits smaller adapters. The global
+      // Stage requires the retained field capabilities before taking ownership.
+      const required = ['render', 'resize', 'needsRender', 'telemetry', 'command',
+        'inspect', 'inspectResources', 'projectNative', 'withCleanFrame', 'capture',
+        'retainedTargetPort', 'updateRetainedPresentation', 'setExpressionBindings',
+        'hitTestExpression', 'expressionBindingSnapshot', 'checkpointRetainedField',
+        'restoreRetainedField', 'onRetainedRecoveryRequired', 'releaseRetainedField', 'dispose'];
+      const retained = (value: unknown): value is ProductionAdapter => !!value
+        && typeof value === 'object' && required.every(key => typeof (value as Record<string, unknown>)[key] === 'function');
+      if (!retained(candidate) || candidate.canvas !== canvas
+        || candidate.capabilities.kind !== 'production' || !candidate.capabilities.runtimeCheckpoints) {
+        candidate.dispose();
+        throw Error('The Stage engine factory did not provide the retained production field');
+      }
+      this.adapter = candidate;
+    } else this.adapter = new ProductionAdapter(canvas);
     const pointerTarget = window;
     const move = (event: PointerEvent) => {
       const element = this.element;

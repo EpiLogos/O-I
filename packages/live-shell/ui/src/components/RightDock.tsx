@@ -13,16 +13,6 @@ export function RightDock({ ctx }: { ctx: PanelContext }) {
   const panels = getPanels('right-dock')
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
 
-  if (panels.length === 0) {
-    return (
-      <aside className="dock">
-        <p className="dock-empty">
-          no panels registered — this dock is the panel registry surface
-          (<code>slot: 'right-dock'</code>). See <code>ui/PANELS.md</code>.
-        </p>
-      </aside>
-    )
-  }
 
   return (
     <aside className="dock">

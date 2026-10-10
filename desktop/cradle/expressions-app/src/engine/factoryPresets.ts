@@ -19,13 +19,6 @@ export interface FactoryPreset {
 }
 
 
-interface SavedState {
-  id: string;
-  name: string;
-  timestamp: number;
-  config: PointCloudConfig;
-}
-
 export const FACTORY_PRESETS: FactoryPreset[] = [
   {
     id: 'toroidal_hopf_conjugate',

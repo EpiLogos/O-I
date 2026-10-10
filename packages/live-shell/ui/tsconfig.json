@@ -12,7 +12,9 @@
     "isolatedModules": true,
     "useDefineForClassFields": true,
     "skipLibCheck": true,
+    "allowJs": true,
+    "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["src"]
+  "include": ["src", "../../../desktop/cradle/src/**/*.d.ts"]
 }

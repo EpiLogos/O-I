@@ -267,11 +267,15 @@ export type KernelOp =
   // product semantics. Documents cross verbatim; refused states come back
   // as named data.
   | { op: "config_registry_read" }
+  | { op: "config_capabilities_read" }
+  | { op: "config_reset"; setting_ref: string; scope: ConfigScopeWire }
   | { op: "config_resolutions_read"; pairs: ConfigPairWire[] }
   | { op: "config_desired_hold"; request: ConfigRequestWire }
   | { op: "config_desired_discard"; setting_ref: string; scope: ConfigScopeWire }
   | { op: "config_plan"; requests: ConfigRequestWire[] }
+  | { op: "config_plan_reviewed"; requests: ConfigRequestWire[] }
   | { op: "config_apply"; requests: ConfigRequestWire[] }
+  | { op: "config_apply_reviewed"; changeset: ChangeSetDocumentWire; plans: unknown[] }
   | { op: "profile_list" }
   | { op: "profile_read"; profile_ref: string }
   | { op: "profile_use_plan"; profile_ref: string }
@@ -384,6 +388,7 @@ export type KernelOp =
     }
   | { op: "surface_close"; surface_id: string }
   | { op: "surface_focus"; surface_id: string }
+  | { op: "temporal_events_read"; query: { subject?: string; window: { window: string; from_unix_ms: number; to_unix_ms: number } } }
   // ES1/ES4 expression-world operations (kernel `expression_world.rs`):
   // shared selection/deictic context, Surface portals, ExpressiveActs and
   // bounded local-whole bindings over exact native refs.
@@ -393,6 +398,7 @@ export type KernelOp =
  * The Rust seam serialises `{ receipts, #[serde(flatten)] result }`, so on
  * the wire the tag and the payload sit flat beside `receipts`. */
 export type KernelOpResult =
+  | { result: "temporal_events_reading"; document: { events?: unknown[] } }
   | {result:"hosted_native";source_world_ref:string;owner_generation:string;outcome:KernelOutcome}
   | {result:"file_last_reading";recovery:RetainedFileRecovery}
   | {result:"dictation_reading";stipulation:DictationStipulation}
@@ -434,9 +440,11 @@ export type KernelOpResult =
   // states as named data (see `configuration.rs` in the kernel crate).
   | { result: "config_registry_reading"; reading: { schema: string; observed_at_unix_ms: number; mounts: ConfigurationMountState[]; composition?: import("../configuration/composition").RegistryComposition | null } }
   | { result: "config_resolutions"; resolutions: ConfigResolutionWire[] }
+  | { result: "config_capabilities_reading"; document: { schema: "oi.config-capabilities/v1"; reviewed_apply: boolean; owner_plan_passthrough: boolean; native_reset: boolean; reset_basis: string } }
   | { result: "config_desired_held"; entry: unknown }
   | { result: "config_desired_discarded"; document: unknown }
   | { result: "config_planned"; plans: PlanDocumentWire[]; errors: ConfigErrorWire[] }
+  | { result: "config_reviewed_planned"; changeset: ChangeSetDocumentWire; plans: PlanDocumentWire[] }
   | { result: "config_applied"; changeset: ChangeSetDocumentWire; owner_receipts: ReceiptDocumentWire[] }
   | { result: "profile_listing"; active_profile_ref: string | null; profiles: ProfileDocumentWire[]; degraded?: { profile_ref: string; reason: string }[] }
   | { result: "profile_reading"; profile: unknown }

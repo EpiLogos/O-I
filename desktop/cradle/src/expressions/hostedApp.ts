@@ -510,6 +510,22 @@ export interface HostedAppState {
   journeyPlaying?: boolean;
   fieldPaused?: boolean;
   libraryOpen?: boolean;
+  /** A silent live video is recording; Present is on. Read-only readings for the shell's stage toolbar. */
+  recording?: boolean;
+  presenting?: boolean;
+  /** The application's runtime automation loop flag (not a document value). Read-only for the shell's Automation loop control. */
+  automationLoop?: boolean;
+  /** A property take is recording its chosen controls; the shell's Record control reads it. The name is not `recording`, which is the silent video. */
+  propertyRecording?: boolean;
+  /** The Scene's recorded property tracks are playing in the legacy scene clock. */
+  propertyPreview?: boolean;
+  /** Parameters a manual live gesture holds off their automation; 0 or absent when none. Runtime state in the frame. */
+  automationHeld?: number;
+  /** The take mode the next property take starts in (append: next section; replace: last take). */
+  takeMode?: 'append' | 'replace';
+  /** The frame's camera framing and tool readings only; the camera and the tool stay application-local. tool is the active rail tool, repeatPins the pin placement mode, videoTake whether a stopped recording is held for saving. */
+  stage?: {mode: '2d' | '3d'; grid: boolean; snap: boolean; guides: boolean;
+    tool?: 'select' | 'interact' | 'pin' | 'text' | 'formation' | 'orbit'; repeatPins?: boolean; videoTake?: boolean};
   hostMode?: HostedAppMode;
 }
 

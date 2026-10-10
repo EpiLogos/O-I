@@ -13,11 +13,11 @@ pub fn handle<R: Runtime>(app: &AppHandle<R>, request: &Request<Vec<u8>>) -> Res
         if resolver.iter().any(|(name, _)| name.trim_start_matches('/') == key) {
             return resolver.get(key.to_owned()).map(|asset| (asset.bytes, "bundled"));
         }
-        #[cfg(debug_assertions)]
+        #[cfg(all(debug_assertions, not(feature = "native_shell")))]
         {
             return oi_cradle_kernel::application_asset::read_development_asset(key).map(|bytes| (bytes, "development-build"));
         }
-        #[cfg(not(debug_assertions))]
+        #[cfg(any(not(debug_assertions), feature = "native_shell"))]
         None
     })
 }

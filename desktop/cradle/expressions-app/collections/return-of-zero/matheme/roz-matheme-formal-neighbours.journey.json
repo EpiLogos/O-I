@@ -40,7 +40,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.1,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.03,
+     "halo": 0.1,
+     "roundness": 0.97,
+     "softness": 0.12,
+     "irregularity": 0.22,
+     "elongation": 0.03
     }
    },
    "engine": {
@@ -221,7 +227,7 @@
     {
      "id": "fn-von-neumann-ordinals-t",
      "kicker": "",
-     "title": "Von Neumann ordinals",
+     "title": "The first enclosure changes the count",
      "italic": "Successor keeps predecessor.",
      "body": "",
      "x": 0.03,
@@ -286,7 +292,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.1,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.03,
+     "halo": 0.1,
+     "roundness": 0.97,
+     "softness": 0.12,
+     "irregularity": 0.22,
+     "elongation": 0.03
     }
    },
    "engine": {
@@ -469,7 +481,7 @@
     {
      "id": "fn-division-pluralisms-t",
      "kicker": "",
-     "title": "Division pluralisms",
+     "title": "The inverse has a domain",
      "italic": "Zero ends the inverse's domain.",
      "body": "",
      "x": 0.03,
@@ -534,7 +546,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.1,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.03,
+     "halo": 0.1,
+     "roundness": 0.97,
+     "softness": 0.12,
+     "irregularity": 0.22,
+     "elongation": 0.03
     }
    },
    "engine": {
@@ -700,7 +718,7 @@
     {
      "id": "fn-sheffer-stroke-t",
      "kicker": "",
-     "title": "The Sheffer stroke",
+     "title": "Repeating an input earns negation",
      "italic": "One operation, every Boolean function.",
      "body": "",
      "x": 0.03,
@@ -765,7 +783,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.14,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.04,
+     "halo": 0.16,
+     "roundness": 0.92,
+     "softness": 0.24,
+     "irregularity": 0.38,
+     "elongation": 0.05
     }
    },
    "engine": {
@@ -948,7 +972,7 @@
     {
      "id": "fn-laws-of-form-varela-t",
      "kicker": "",
-     "title": "Crossing and re-entry",
+     "title": "A boundary changes where a mark acts",
      "italic": "Calling, crossing — arrangement acts.",
      "body": "",
      "x": 0.03,
@@ -1013,7 +1037,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.14,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.04,
+     "halo": 0.16,
+     "roundness": 0.92,
+     "softness": 0.24,
+     "irregularity": 0.38,
+     "elongation": 0.05
     }
    },
    "engine": {
@@ -1196,7 +1226,7 @@
     {
      "id": "fn-russell-types-t",
      "kicker": "",
-     "title": "Russell's types",
+     "title": "Restriction acts before evaluation",
      "italic": "The totality cannot test itself.",
      "body": "",
      "x": 0.03,
@@ -1261,7 +1291,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.14,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.04,
+     "halo": 0.16,
+     "roundness": 0.92,
+     "softness": 0.24,
+     "irregularity": 0.38,
+     "elongation": 0.05
     }
    },
    "engine": {
@@ -1444,7 +1480,7 @@
     {
      "id": "fn-godel-incompleteness-t",
      "kicker": "",
-     "title": "Gödel incompleteness",
+     "title": "Consistency becomes an internal sentence",
      "italic": "True in ℕ, unprovable in T.",
      "body": "",
      "x": 0.03,
@@ -1509,7 +1545,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.11,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.035,
+     "halo": 0.12,
+     "roundness": 0.95,
+     "softness": 0.16,
+     "irregularity": 0.3,
+     "elongation": 0.04
     }
    },
    "engine": {
@@ -1734,7 +1776,7 @@
     {
      "id": "fn-fde-catuskoti-t",
      "kicker": "",
-     "title": "FDE and catuṣkoṭi",
+     "title": "The diamond has a direction",
      "italic": "Two supports, four corners.",
      "body": "",
      "x": 0.03,
@@ -1799,7 +1841,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.11,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.035,
+     "halo": 0.12,
+     "roundness": 0.95,
+     "softness": 0.16,
+     "irregularity": 0.3,
+     "elongation": 0.04
     }
    },
    "engine": {
@@ -2066,7 +2114,7 @@
     {
      "id": "fn-crt-z6-t",
      "kicker": "",
-     "title": "Two by three",
+     "title": "Six as two by three",
      "italic": "Six residues, one product.",
      "body": "",
      "x": 0.03,
@@ -2131,7 +2179,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.11,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.035,
+     "halo": 0.12,
+     "roundness": 0.95,
+     "softness": 0.16,
+     "irregularity": 0.3,
+     "elongation": 0.04
     }
    },
    "engine": {
@@ -2462,7 +2516,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.13,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.05,
+     "halo": 0.18,
+     "roundness": 0.9,
+     "softness": 0.28,
+     "irregularity": 0.42,
+     "elongation": 0.07
     }
    },
    "engine": {
@@ -2687,7 +2747,7 @@
     {
      "id": "fn-grothendieck-group-loss-t",
      "kicker": "",
-     "title": "Group completion",
+     "title": "Construct formal differences",
      "italic": "Completion demands cancellation.",
      "body": "",
      "x": 0.03,
@@ -2752,7 +2812,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.13,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.05,
+     "halo": 0.18,
+     "roundness": 0.9,
+     "softness": 0.28,
+     "irregularity": 0.42,
+     "elongation": 0.07
     }
    },
    "engine": {
@@ -3019,7 +3085,7 @@
     {
      "id": "fn-kauffman-iterants-t",
      "kicker": "",
-     "title": "Iterants",
+     "title": "An alternation has two views",
      "italic": "Alternation read from either phase.",
      "body": "",
      "x": 0.03,
@@ -3084,7 +3150,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.13,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.05,
+     "halo": 0.18,
+     "roundness": 0.9,
+     "softness": 0.28,
+     "irregularity": 0.42,
+     "elongation": 0.07
     }
    },
    "engine": {
@@ -3341,7 +3413,7 @@
     {
      "id": "fn-cross-ratio-t",
      "kicker": "",
-     "title": "Cross-ratio",
+     "title": "Under fractional-linear transformation",
      "italic": "Six differences, one invariant.",
      "body": "",
      "x": 0.03,
@@ -3379,10 +3451,10 @@
    "duration": 9,
    "transition": 1.5,
    "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
+    "mode": "3d",
+    "yaw": 0.42,
+    "pitch": 0.32,
+    "zoom": 0.95,
     "panX": 0,
     "panY": 0
    },
@@ -3405,8 +3477,11 @@
      "frequency": 220,
      "dominance": 0,
      "excitation": 0.6,
-     "depth": 0.16,
-     "zConfinement": 1
+     "depth": 0.38,
+     "zConfinement": 0.75,
+     "halo": 0.2,
+     "softness": 0.3,
+     "grain": 0.045
     }
    },
    "engine": {
@@ -3417,7 +3492,12 @@
     "pointerClickStrength": 1.3,
     "pointerClickRadius": 0.45,
     "resonanceEnabled": false,
-    "morphEnabled": false
+    "morphEnabled": true,
+    "trajectory": "toroidalHopf",
+    "driveShape": "smooth",
+    "depthPerspective": true,
+    "vortex3d": 0.3,
+    "dispersion3d": 0.08
    },
    "entities": [
     {
@@ -3469,7 +3549,7 @@
      "position": {
       "x": 0.05,
       "y": 0.05,
-      "z": 0
+      "z": -0.1
      },
      "size": {
       "x": 2.4,
@@ -3591,7 +3671,7 @@
      "position": {
       "x": 1.3,
       "y": -0.34,
-      "z": 0
+      "z": 0.32
      },
      "size": {
       "x": 0.4,
@@ -3631,7 +3711,7 @@
     {
      "id": "fn-qubit-bloch-sphere-t",
      "kicker": "",
-     "title": "Bloch sphere",
+     "title": "The ball of mixed states",
      "italic": "Pure states ring; mixings fill.",
      "body": "",
      "x": 0.03,
@@ -3653,13 +3733,13 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.08,
-    "phiRate": 0.13,
+    "law": "theta",
+    "thetaRate": 0.18,
+    "phiRate": 0.02,
     "thetaOffset": 0,
     "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
-    "dwell": 0.3
+    "depth": 0.7,
+    "dwell": 0.4
    }
   },
   {
@@ -3696,7 +3776,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.16,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.04,
+     "halo": 0.15,
+     "roundness": 0.93,
+     "softness": 0.2,
+     "irregularity": 0.32,
+     "elongation": 0.05
     }
    },
    "engine": {
@@ -3959,10 +4045,10 @@
    "duration": 9,
    "transition": 1.5,
    "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
+    "mode": "3d",
+    "yaw": -0.35,
+    "pitch": 0.38,
+    "zoom": 0.95,
     "panX": 0,
     "panY": 0
    },
@@ -3985,8 +4071,11 @@
      "frequency": 220,
      "dominance": 0,
      "excitation": 0.6,
-     "depth": 0.16,
-     "zConfinement": 1
+     "depth": 0.34,
+     "zConfinement": 0.78,
+     "halo": 0.2,
+     "softness": 0.3,
+     "grain": 0.045
     }
    },
    "engine": {
@@ -3997,7 +4086,12 @@
     "pointerClickStrength": 1.3,
     "pointerClickRadius": 0.45,
     "resonanceEnabled": false,
-    "morphEnabled": false
+    "morphEnabled": true,
+    "trajectory": "toroidalHopf",
+    "driveShape": "sine",
+    "depthPerspective": true,
+    "vortex3d": 0.35,
+    "dispersion3d": 0.08
    },
    "entities": [
     {
@@ -4091,7 +4185,7 @@
      "position": {
       "x": 0.05,
       "y": 0.1,
-      "z": 0
+      "z": 0.05
      },
      "size": {
       "x": 1.7,
@@ -4133,7 +4227,7 @@
      "position": {
       "x": 0.05,
       "y": 0.07,
-      "z": 0
+      "z": -0.45
      },
      "size": {
       "x": 2.7,
@@ -4253,7 +4347,7 @@
     {
      "id": "fn-quaternion-q8-t",
      "kicker": "",
-     "title": "Q8 and rotation",
+     "title": "Let unit quaternions act on three-space",
      "italic": "Order turns k to −k.",
      "body": "",
      "x": 0.03,
@@ -4275,13 +4369,13 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.08,
-    "phiRate": 0.13,
+    "law": "product",
+    "thetaRate": 0.11,
+    "phiRate": 0.17,
     "thetaOffset": 0,
     "phiOffset": 0,
-    "law": "theta",
     "depth": 1,
-    "dwell": 0.3
+    "dwell": 0.25
    }
   },
   {
@@ -4318,7 +4412,13 @@
      "dominance": 0,
      "excitation": 0.6,
      "depth": 0.12,
-     "zConfinement": 1
+     "zConfinement": 1,
+     "grain": 0.04,
+     "halo": 0.14,
+     "roundness": 0.9,
+     "softness": 0.22,
+     "irregularity": 0.36,
+     "elongation": 0.05
     }
    },
    "engine": {
@@ -4533,7 +4633,7 @@
     {
      "id": "fn-calculus-infinity-dx-t",
      "kicker": "",
-     "title": "Local rate, constant",
+     "title": "The constant is the only freedom",
      "italic": "Rate kept; a value selects.",
      "body": "",
      "x": 0.03,
@@ -4571,10 +4671,10 @@
    "duration": 9,
    "transition": 1.5,
    "view": {
-    "mode": "2d",
-    "yaw": 0,
-    "pitch": 0,
-    "zoom": 1,
+    "mode": "3d",
+    "yaw": 0.2,
+    "pitch": 0.45,
+    "zoom": 0.95,
     "panX": 0,
     "panY": 0
    },
@@ -4597,8 +4697,12 @@
      "frequency": 220,
      "dominance": 0,
      "excitation": 0.6,
-     "depth": 0.12,
-     "zConfinement": 1
+     "depth": 0.3,
+     "zConfinement": 0.8,
+     "halo": 0.18,
+     "irregularity": 0.5,
+     "elongation": 0.12,
+     "softness": 0.26
     }
    },
    "engine": {
@@ -4609,7 +4713,12 @@
     "pointerClickStrength": 1.3,
     "pointerClickRadius": 0.45,
     "resonanceEnabled": false,
-    "morphEnabled": false
+    "morphEnabled": true,
+    "trajectory": "vortexSpiral",
+    "driveShape": "smooth",
+    "depthPerspective": true,
+    "vortex3d": 0.55,
+    "dispersion3d": 0.12
    },
    "entities": [
     {
@@ -4741,7 +4850,7 @@
      "position": {
       "x": -0.7,
       "y": -0.42,
-      "z": 0
+      "z": 0.28
      },
      "size": {
       "x": 0.45,
@@ -4783,7 +4892,7 @@
      "position": {
       "x": 0.75,
       "y": -0.42,
-      "z": 0
+      "z": -0.28
      },
      "size": {
       "x": 0.45,
@@ -4825,7 +4934,7 @@
      "position": {
       "x": 1.3,
       "y": -0.32,
-      "z": 0
+      "z": 0.42
      },
      "size": {
       "x": 0.32,
@@ -4865,7 +4974,7 @@
     {
      "id": "fn-chaos-attractors-t",
      "kicker": "",
-     "title": "Attractors and basins",
+     "title": "Attractors, basins and a bifurcation",
      "italic": "One basin becomes two.",
      "body": "",
      "x": 0.03,
@@ -4887,12 +4996,12 @@
     "frequencyDriver": "manual"
    },
    "morph": {
-    "thetaRate": 0.08,
-    "phiRate": 0.13,
+    "law": "theta",
+    "thetaRate": 0.12,
+    "phiRate": 0.07,
     "thetaOffset": 0,
     "phiOffset": 0,
-    "law": "theta",
-    "depth": 1,
+    "depth": 1.1,
     "dwell": 0.3
    }
   }

@@ -2,6 +2,7 @@
 fn main() {
     tauri_build::try_build(tauri_build::Attributes::new().app_manifest(
         tauri_build::AppManifest::new().commands(&[
+            "live_shell_read", "live_shell_config", "live_shell_checkpoint_reply", "live_shell_request_close",
             "expression_walk_observation", "terminal_attach","terminal_poll","terminal_input","terminal_resize","terminal_checkpoint","terminal_reconcile", "browser_attach", "browser_control", "browser_reconcile", "choose_central_folder", "arrangement_menu", "kernel_op", "kernel_event_log",
             "window_detach", "window_binding", "window_redock", "window_redock_surface", "window_focus_subject", "window_focus_main",
         ]),

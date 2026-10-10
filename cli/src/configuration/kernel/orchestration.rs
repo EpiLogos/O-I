@@ -450,6 +450,134 @@ pub fn execute_changeset(
     changeset: &mut crate::configuration::changeset::ChangeSet,
     now_unix_ms: u64,
 ) -> Result<ExecuteReport, KernelError> {
+    execute_changeset_inner(registry, gateway, store, changeset, now_unix_ms, None)
+}
+
+/// Replay the exact reviewed owner plans. Validate the complete association
+/// before any owner mutation; value/domain and stale-basis checks stay native.
+pub fn execute_reviewed_changeset(
+    registry: &OwnerRegistry,
+    gateway: &OwnerGateway<'_>,
+    store: Option<&ConfigurationStore>,
+    changeset: &mut crate::configuration::changeset::ChangeSet,
+    now_unix_ms: u64,
+    plans: &[Value],
+) -> Result<ExecuteReport, KernelError> {
+    changeset.validate().map_err(KernelError::internal)?;
+    let store = store.ok_or_else(|| {
+        KernelError::new(
+            ErrorCode::InvalidValue,
+            "reviewed application requires the coordinator's admitted ChangeSet record",
+        )
+    })?;
+    let held = store
+        .load_changeset(&changeset.changeset_id)
+        .map_err(KernelError::internal)?
+        .ok_or_else(|| {
+            KernelError::new(
+                ErrorCode::InvalidValue,
+                "reviewed ChangeSet identity was not admitted; review a new batch",
+            )
+        })?;
+    if !same_review_basis(&held, changeset) {
+        return Err(KernelError::new(
+            ErrorCode::InvalidValue,
+            "reviewed ChangeSet identity or request basis differs from its admitted record",
+        ));
+    }
+    if plans.is_empty() || plans.len() != changeset.operations.len() {
+        return Err(KernelError::new(
+            ErrorCode::InvalidValue,
+            "reviewed plans must cover every operation exactly once",
+        ));
+    }
+    let mut owners = Vec::new();
+    for (op, raw) in changeset.operations.iter().zip(plans) {
+        let document =
+            super::wire::PlanDocument::parse(raw.clone()).map_err(KernelError::internal)?;
+        resolve_setting_address(registry, &op.setting_ref, &op.scope)?;
+        if op.kind != OperationKind::Apply
+            || document.setting_ref != op.setting_ref
+            || document.scope != op.scope
+            || op.plan_digest.as_deref() != Some(document.plan_digest.as_str())
+            || op.plan_ref.as_deref() != Some(document.plan_id.as_str())
+        {
+            return Err(KernelError::new(
+                ErrorCode::InvalidValue,
+                "reviewed plan identity/scope/digest does not match the requested operation",
+            ));
+        }
+        if document
+            .expires_at_unix_ms
+            .is_some_and(|expires| expires < now_unix_ms)
+        {
+            return Err(KernelError::new(
+                ErrorCode::PlanExpired,
+                "reviewed owner plan has expired; review a new plan",
+            ));
+        }
+        owners.push(super::transport::OwnerPlan {
+            document,
+            raw: raw.clone(),
+        });
+    }
+    // Evolving state comes from the record, never caller-supplied status.
+    // Successful replay dispatches the same key to the owner for no_op;
+    // a failed operation remains terminal under the native contract.
+    *changeset = held;
+    for operation in &mut changeset.operations {
+        if operation.status != OperationStatus::Failed {
+            operation.status = OperationStatus::Validated;
+            operation.receipt_ref = None;
+            operation.error = None;
+        }
+    }
+    changeset.verification = None;
+    changeset.status = crate::configuration::derive_changeset_status(&changeset.operations, None);
+    execute_changeset_inner(
+        registry,
+        gateway,
+        Some(store),
+        changeset,
+        now_unix_ms,
+        Some(&owners),
+    )
+}
+
+/// Compare only the admitted identity and review basis. Receipt and
+/// verification transitions are recorded independently of that basis.
+fn same_review_basis(held: &ChangeSet, supplied: &ChangeSet) -> bool {
+    held.schema == supplied.schema
+        && held.changeset_id == supplied.changeset_id
+        && held.created_at_unix_ms == supplied.created_at_unix_ms
+        && held.profile_ref == supplied.profile_ref
+        && held.authority == supplied.authority
+        && held.requested == supplied.requested
+        && held.operations.len() == supplied.operations.len()
+        && held
+            .operations
+            .iter()
+            .zip(&supplied.operations)
+            .all(|(left, right)| {
+                left.op_id == right.op_id
+                    && left.depends_on == right.depends_on
+                    && left.owner_ref == right.owner_ref
+                    && left.setting_ref == right.setting_ref
+                    && left.scope == right.scope
+                    && left.kind == right.kind
+                    && left.plan_digest == right.plan_digest
+                    && left.plan_ref == right.plan_ref
+            })
+}
+
+fn execute_changeset_inner(
+    registry: &OwnerRegistry,
+    gateway: &OwnerGateway<'_>,
+    store: Option<&ConfigurationStore>,
+    changeset: &mut crate::configuration::changeset::ChangeSet,
+    now_unix_ms: u64,
+    reviewed: Option<&[super::transport::OwnerPlan]>,
+) -> Result<ExecuteReport, KernelError> {
     changeset.validate().map_err(KernelError::internal)?;
     let requested_changes = changeset.requested.clone();
     let changeset_id = changeset.changeset_id.clone();
@@ -529,14 +657,24 @@ pub fn execute_changeset(
         }
         match op.kind {
             OperationKind::Apply => {
-                run_apply_operation(
-                    registry,
-                    gateway,
-                    &changeset_id,
-                    op,
-                    &requested,
-                    &mut receipts,
-                );
+                if let Some(plans) = reviewed {
+                    apply_plan(
+                        gateway,
+                        &changeset_id,
+                        op,
+                        plans[position].clone(),
+                        &mut receipts,
+                    );
+                } else {
+                    run_apply_operation(
+                        registry,
+                        gateway,
+                        &changeset_id,
+                        op,
+                        &requested,
+                        &mut receipts,
+                    );
+                }
             }
             OperationKind::Reset => {
                 run_reset_operation(gateway, &changeset_id, op, &mut receipts);
@@ -1196,6 +1334,15 @@ pub fn plan_request(
     gateway: &OwnerGateway<'_>,
     requested: &RequestedChange,
 ) -> Result<PlanDocument, KernelError> {
+    plan_owner_request(registry, gateway, requested).map(|plan| plan.document)
+}
+
+/// Preserve the complete owner-minted body, not only the known wire fields.
+pub fn plan_owner_request(
+    registry: &OwnerRegistry,
+    gateway: &OwnerGateway<'_>,
+    requested: &RequestedChange,
+) -> Result<super::transport::OwnerPlan, KernelError> {
     let (registered, owner) =
         resolve_setting_address(registry, &requested.setting_ref, &requested.scope)?;
     let spec = &registered.spec;
@@ -1232,7 +1379,6 @@ pub fn plan_request(
     }
     gateway
         .plan(&owner, &request)
-        .map(|owner_plan| owner_plan.document)
         .map_err(|error| KernelError::new(error.code(), error.message()))
 }
 

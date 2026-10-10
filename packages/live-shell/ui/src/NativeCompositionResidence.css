@@ -1,0 +1,27 @@
+.center-body.native-composition-residence {
+  display: grid;
+  grid-template-rows: minmax(0, 3fr) minmax(0, 2fr);
+  overflow: hidden;
+}
+.native-composition-residence > .composition-view,
+.native-composition-residence > .native-stage-residence {
+  position: relative;
+  inset: auto;
+  height: auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.native-composition-residence > .native-stage-residence {
+  border-top: 1px solid var(--line-strong);
+}
+.native-composition-fault {
+  position: absolute;
+  z-index: 2;
+  padding: 4px 7px;
+  color: #f3b4a0;
+  background: var(--bg-0);
+}
+.center-body.native-editor-residence>.inhabitant {top:30px;height:calc(100% - 30px)}
+.native-editor-return {position:absolute;top:0;left:0;right:0;height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 9px;background:var(--bg-1);border-bottom:1px solid var(--border);font-size:11px}
+.native-editor-return button {padding:3px 8px}

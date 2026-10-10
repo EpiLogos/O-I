@@ -31,17 +31,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.9,
-          "softness": 0.18,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.89,
+          "roundness": 0.86,
+          "softness": 0.2,
+          "irregularity": 0.42,
+          "elongation": 0.06,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.91,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.16,
+          "halo": 0.18,
           "speed": 0.48,
           "circulation": 0.42,
           "turbulence": 0.14,
@@ -51,8 +51,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.35,
+          "grain": 0.042,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -256,22 +256,7 @@
                   "z": 0
                 },
                 "text": "unknown",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.34
-                  },
-                  "rotation": 0,
-                  "tint": "#9a7ab0",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-cc2-c33-3-s3",
@@ -283,22 +268,7 @@
                   "z": 0
                 },
                 "text": "known",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.34
-                  },
-                  "rotation": 0,
-                  "tint": "#e9e2d4",
-                  "tintWeight": 0.68,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -309,7 +279,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Image",
+          "title": "Force given a carrier",
           "italic": "the image draws interpretation in",
           "body": "",
           "x": 0.04,
@@ -389,17 +359,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.9,
-          "softness": 0.18,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.89,
+          "roundness": 0.86,
+          "softness": 0.2,
+          "irregularity": 0.42,
+          "elongation": 0.06,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.91,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.16,
+          "halo": 0.18,
           "speed": 0.48,
           "circulation": 0.42,
           "turbulence": 0.14,
@@ -409,8 +379,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.35,
+          "grain": 0.042,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -614,22 +584,7 @@
                   "z": 0
                 },
                 "text": "X",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#9a7ab0",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-cc2-c34-3-s3",
@@ -641,22 +596,7 @@
                   "z": 0
                 },
                 "text": "x",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#e9e2d4",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -667,7 +607,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Individuation",
+          "title": "Differentiated indivisibility",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -730,17 +670,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.9,
-          "softness": 0.18,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.89,
+          "roundness": 0.86,
+          "softness": 0.2,
+          "irregularity": 0.42,
+          "elongation": 0.06,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.91,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.16,
+          "halo": 0.18,
           "speed": 0.48,
           "circulation": 0.42,
           "turbulence": 0.14,
@@ -750,8 +690,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.35,
+          "grain": 0.042,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -996,7 +936,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Selfing",
+          "title": "An activity of appropriation",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -1059,17 +999,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.9,
-          "softness": 0.18,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.89,
+          "roundness": 0.86,
+          "softness": 0.2,
+          "irregularity": 0.42,
+          "elongation": 0.06,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.91,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.16,
+          "halo": 0.18,
           "speed": 0.48,
           "circulation": 0.42,
           "turbulence": 0.14,
@@ -1079,8 +1019,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.35,
+          "grain": 0.042,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -1336,7 +1276,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Complexio",
+          "title": "Opposites distinct within one relation",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -1399,17 +1339,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.94,
+          "roundness": 0.92,
+          "softness": 0.13,
+          "irregularity": 0.26,
+          "elongation": 0.14,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.95,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.08,
-          "halo": 0.13,
+          "halo": 0.1,
           "speed": 0.42,
           "circulation": 0.35,
           "turbulence": 0.1,
@@ -1419,8 +1359,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.4,
+          "grain": 0.03,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -1654,22 +1594,7 @@
                   "z": 0
                 },
                 "text": "world-picture",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#e6e8e2",
-                  "tintWeight": 0.5,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-cc2-c37-4-s2",
@@ -1681,22 +1606,7 @@
                   "z": 0
                 },
                 "text": "world-model",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#5898a4",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-cc2-c37-4-s3",
@@ -1708,22 +1618,7 @@
                   "z": 0
                 },
                 "text": "world-atlas",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.32
-                  },
-                  "rotation": 0,
-                  "tint": "#e6e8e2",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -1734,7 +1629,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "World atlas",
+          "title": "World ≠ world-model",
           "italic": "views in relation, never totalised",
           "body": "",
           "x": 0.04,
@@ -1797,17 +1692,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.94,
+          "roundness": 0.92,
+          "softness": 0.13,
+          "irregularity": 0.26,
+          "elongation": 0.14,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.95,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.08,
-          "halo": 0.13,
+          "halo": 0.1,
           "speed": 0.42,
           "circulation": 0.35,
           "turbulence": 0.1,
@@ -1817,8 +1712,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.4,
+          "grain": 0.03,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -2017,7 +1912,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Bimba",
+          "title": "Original and situated display",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -2080,17 +1975,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.94,
+          "roundness": 0.92,
+          "softness": 0.13,
+          "irregularity": 0.26,
+          "elongation": 0.14,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.95,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.08,
-          "halo": 0.13,
+          "halo": 0.1,
           "speed": 0.42,
           "circulation": 0.35,
           "turbulence": 0.1,
@@ -2100,8 +1995,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.4,
+          "grain": 0.03,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -2357,7 +2252,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Framework",
+          "title": "Epistemic mediation made inspectable",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -2420,17 +2315,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.94,
+          "roundness": 0.92,
+          "softness": 0.13,
+          "irregularity": 0.26,
+          "elongation": 0.14,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.95,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0.08,
-          "halo": 0.13,
+          "halo": 0.1,
           "speed": 0.42,
           "circulation": 0.35,
           "turbulence": 0.1,
@@ -2440,8 +2335,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.4,
+          "grain": 0.03,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -2868,7 +2763,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Judgment",
+          "title": "An inspectable articulation",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -2931,17 +2826,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.86,
+          "roundness": 0.8,
+          "softness": 0.25,
+          "irregularity": 0.5,
+          "elongation": 0.05,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.88,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.22,
           "speed": 0.4,
           "circulation": 0.3,
           "turbulence": 0.08,
@@ -2951,8 +2846,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.45,
+          "grain": 0.05,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -3266,7 +3161,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Internality",
+          "title": "The mediating constitution",
           "italic": "real, investigable, between",
           "body": "",
           "x": 0.04,
@@ -3329,17 +3224,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.86,
+          "roundness": 0.8,
+          "softness": 0.25,
+          "irregularity": 0.5,
+          "elongation": 0.05,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.88,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.22,
           "speed": 0.4,
           "circulation": 0.3,
           "turbulence": 0.08,
@@ -3349,8 +3244,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.45,
+          "grain": 0.05,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -3611,22 +3506,7 @@
                   "z": 0
                 },
                 "text": "contribution",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.65,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-cc2-c42-4-s3",
@@ -3638,22 +3518,7 @@
                   "z": 0
                 },
                 "text": "reception",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#7d95a8",
-                  "tintWeight": 0.75,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-cc2-c42-4-s4",
@@ -3665,22 +3530,7 @@
                   "z": 0
                 },
                 "text": "condition",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#7d95a8",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-cc2-c42-4-s5",
@@ -3692,22 +3542,7 @@
                   "z": 0
                 },
                 "text": "act",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -3718,7 +3553,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Co-internality",
+          "title": "Reciprocal constitution without merger",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -3798,17 +3633,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.86,
+          "roundness": 0.8,
+          "softness": 0.25,
+          "irregularity": 0.5,
+          "elongation": 0.05,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.88,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.22,
           "speed": 0.4,
           "circulation": 0.3,
           "turbulence": 0.08,
@@ -3818,8 +3653,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.45,
+          "grain": 0.05,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -4023,22 +3858,7 @@
                   "z": 0
                 },
                 "text": "(m′,θ′,Eθ′)",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.3,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#7d95a8",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -4049,7 +3869,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Vimarśa",
+          "title": "Where the difference entered",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -4129,17 +3949,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.86,
+          "roundness": 0.8,
+          "softness": 0.25,
+          "irregularity": 0.5,
+          "elongation": 0.05,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.88,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.22,
           "speed": 0.4,
           "circulation": 0.3,
           "turbulence": 0.08,
@@ -4149,8 +3969,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.45,
+          "grain": 0.05,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -4437,7 +4257,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Thrownness",
+          "title": "Thrownness as situated inheritance",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -4500,17 +4320,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.86,
+          "roundness": 0.8,
+          "softness": 0.25,
+          "irregularity": 0.5,
+          "elongation": 0.05,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.88,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.22,
           "speed": 0.4,
           "circulation": 0.3,
           "turbulence": 0.08,
@@ -4520,8 +4340,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.45,
+          "grain": 0.05,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -4751,7 +4571,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Parity",
+          "title": "Which relation can change",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -4814,17 +4634,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.98,
-          "softness": 0.08,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.9,
+          "roundness": 0.88,
+          "softness": 0.18,
+          "irregularity": 0.38,
+          "elongation": 0.1,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.92,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.15,
           "speed": 0.36,
           "circulation": 0.3,
           "turbulence": 0.08,
@@ -4834,8 +4654,8 @@
           "pointerStrength": 0.4,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.35,
+          "grain": 0.038,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -5080,7 +4900,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Cultivation",
+          "title": "Tending an enacted paradigm",
           "italic": "the apparatus itself tended",
           "body": "",
           "x": 0.04,
@@ -5143,17 +4963,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.98,
-          "softness": 0.08,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.9,
+          "roundness": 0.88,
+          "softness": 0.18,
+          "irregularity": 0.38,
+          "elongation": 0.1,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.92,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.15,
           "speed": 0.36,
           "circulation": 0.3,
           "turbulence": 0.08,
@@ -5163,8 +4983,8 @@
           "pointerStrength": 0.4,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.35,
+          "grain": 0.038,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -5368,22 +5188,7 @@
                   "z": 0
                 },
                 "text": "interpretation",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.6,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-cc2-c47-3-s3",
@@ -5395,22 +5200,7 @@
                   "z": 0
                 },
                 "text": "world-model",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#eee9d9",
-                  "tintWeight": 0.7,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-cc2-c47-3-s4",
@@ -5422,22 +5212,7 @@
                   "z": 0
                 },
                 "text": "evaluator/gauge",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#638c69",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-cc2-c47-3-s5",
@@ -5449,22 +5224,7 @@
                   "z": 0
                 },
                 "text": "commission",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#638c69",
-                  "tintWeight": 0.9,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -5475,7 +5235,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Deference",
+          "title": "What this source changes",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -5538,17 +5298,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.98,
-          "softness": 0.08,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.9,
+          "roundness": 0.88,
+          "softness": 0.18,
+          "irregularity": 0.38,
+          "elongation": 0.1,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.92,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.15,
           "speed": 0.36,
           "circulation": 0.3,
           "turbulence": 0.08,
@@ -5558,8 +5318,8 @@
           "pointerStrength": 0.4,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.35,
+          "grain": 0.038,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -5816,7 +5576,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Trust",
+          "title": "Reliance already acts",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -5880,16 +5640,16 @@
           "size": 2.8,
           "sizeBias": 1.6,
           "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "roundness": 0.9,
+          "softness": 0.16,
+          "irregularity": 0.32,
+          "elongation": 0.12,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.94,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.12,
           "speed": 0.44,
           "circulation": 0.36,
           "turbulence": 0.1,
@@ -5899,8 +5659,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.4,
+          "grain": 0.034,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -6157,7 +5917,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The two ones",
+          "title": "Source-unity and manifest-unity",
           "italic": "two offices of one relation",
           "body": "",
           "x": 0.04,
@@ -6177,8 +5937,8 @@
         "frequencyDriver": "manual"
       },
       "morph": {
-        "thetaRate": 0.06,
-        "phiRate": 0.04,
+        "thetaRate": 0.17,
+        "phiRate": 0.07,
         "thetaOffset": 0,
         "phiOffset": 0,
         "law": "theta",
@@ -6192,7 +5952,10 @@
         "pointerMode": "vortex",
         "pointerClick": "pulse",
         "pointerClickStrength": 0.9,
-        "pointerClickRadius": 0.42
+        "pointerClickRadius": 0.42,
+        "morphEnabled": true,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine"
       }
     },
     {
@@ -6221,16 +5984,16 @@
           "size": 2.8,
           "sizeBias": 1.6,
           "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "roundness": 0.9,
+          "softness": 0.16,
+          "irregularity": 0.32,
+          "elongation": 0.12,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.94,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.12,
           "speed": 0.44,
           "circulation": 0.36,
           "turbulence": 0.1,
@@ -6240,8 +6003,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.4,
+          "grain": 0.034,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -6502,22 +6265,7 @@
                   "z": 0
                 },
                 "text": "Syn",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.24,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#638c69",
-                  "tintWeight": 0.75,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -6528,7 +6276,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Dia, syn",
+          "title": "sym-ballein",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -6592,16 +6340,16 @@
           "size": 2.8,
           "sizeBias": 1.6,
           "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "roundness": 0.9,
+          "softness": 0.16,
+          "irregularity": 0.32,
+          "elongation": 0.12,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.94,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.12,
           "speed": 0.44,
           "circulation": 0.36,
           "turbulence": 0.1,
@@ -6611,8 +6359,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.4,
+          "grain": 0.034,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -6857,7 +6605,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Epi-logos",
+          "title": "Articulation returned to inquiry",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -6921,16 +6669,16 @@
           "size": 2.8,
           "sizeBias": 1.6,
           "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "roundness": 0.9,
+          "softness": 0.16,
+          "irregularity": 0.32,
+          "elongation": 0.12,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.94,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.12,
           "speed": 0.44,
           "circulation": 0.36,
           "turbulence": 0.1,
@@ -6940,8 +6688,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.4,
+          "grain": 0.034,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -7163,7 +6911,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Reframing",
+          "title": "Changes the containing relation",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -7226,17 +6974,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.88,
+          "roundness": 0.83,
+          "softness": 0.23,
+          "irregularity": 0.46,
+          "elongation": 0.07,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.9,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.15,
+          "halo": 0.19,
           "speed": 0.42,
           "circulation": 0.34,
           "turbulence": 0.1,
@@ -7246,8 +6994,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.35,
+          "grain": 0.046,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -7477,7 +7225,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Office",
+          "title": "Answerable to the labour",
           "italic": "capacity exercised from an entrusted office",
           "body": "",
           "x": 0.04,
@@ -7540,17 +7288,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.88,
+          "roundness": 0.83,
+          "softness": 0.23,
+          "irregularity": 0.46,
+          "elongation": 0.07,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.9,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.15,
+          "halo": 0.19,
           "speed": 0.42,
           "circulation": 0.34,
           "turbulence": 0.1,
@@ -7560,8 +7308,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.35,
+          "grain": 0.046,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -7988,7 +7736,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Commons",
+          "title": "Set terms, refuse, revise, reconnect",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -8051,17 +7799,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.88,
+          "roundness": 0.83,
+          "softness": 0.23,
+          "irregularity": 0.46,
+          "elongation": 0.07,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.9,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.15,
+          "halo": 0.19,
           "speed": 0.42,
           "circulation": 0.34,
           "turbulence": 0.1,
@@ -8071,8 +7819,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.35,
+          "grain": 0.046,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -8337,22 +8085,7 @@
                   "z": 0
                 },
                 "text": "exteriorise",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.28,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#f0e6d8",
-                  "tintWeight": 0.55,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-cc2-c55-4-s2",
@@ -8364,22 +8097,7 @@
                   "z": 0
                 },
                 "text": "measure",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.28,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-cc2-c55-4-s3",
@@ -8391,22 +8109,7 @@
                   "z": 0
                 },
                 "text": "return",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.28,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#638c69",
-                  "tintWeight": 0.85,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -8417,7 +8120,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The mirror",
+          "title": "The mirror that moves first",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -8497,17 +8200,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.88,
+          "roundness": 0.83,
+          "softness": 0.23,
+          "irregularity": 0.46,
+          "elongation": 0.07,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.9,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.15,
+          "halo": 0.19,
           "speed": 0.42,
           "circulation": 0.34,
           "turbulence": 0.1,
@@ -8517,8 +8220,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.35,
+          "grain": 0.046,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -8717,7 +8420,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Compassion",
+          "title": "Loving sensitivity to origins",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -8762,9 +8465,9 @@
       "duration": 14,
       "transition": 1.9,
       "view": {
-        "mode": "2d",
-        "yaw": 0,
-        "pitch": 0,
+        "mode": "3d",
+        "yaw": 0.3,
+        "pitch": 0.16,
         "zoom": 1,
         "panX": 0,
         "panY": 0
@@ -8780,17 +8483,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.91,
+          "roundness": 0.89,
+          "softness": 0.17,
+          "irregularity": 0.38,
+          "elongation": 0.09,
           "orientation": 0,
-          "contrast": 0.95,
+          "contrast": 0.92,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.14,
           "speed": 0.4,
           "circulation": 0.32,
           "turbulence": 0.09,
@@ -8800,8 +8503,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.5,
+          "grain": 0.036,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -8830,7 +8533,7 @@
           "position": {
             "x": -0.22,
             "y": -0.12,
-            "z": 0
+            "z": 0.24
           },
           "size": {
             "x": 0.16,
@@ -8887,7 +8590,7 @@
           "position": {
             "x": 0.06,
             "y": -0.12,
-            "z": 0
+            "z": 0.08
           },
           "size": {
             "x": 0.16,
@@ -8944,7 +8647,7 @@
           "position": {
             "x": -0.22,
             "y": 0.12,
-            "z": 0
+            "z": -0.08
           },
           "size": {
             "x": 0.16,
@@ -9001,7 +8704,7 @@
           "position": {
             "x": 0.06,
             "y": 0.12,
-            "z": 0
+            "z": -0.24
           },
           "size": {
             "x": 0.16,
@@ -9089,7 +8792,7 @@
                 "position": {
                   "x": -0.22,
                   "y": -0.12,
-                  "z": 0
+                  "z": 0.24
                 },
                 "text": "",
                 "shape": "disc",
@@ -9116,7 +8819,7 @@
                 "position": {
                   "x": 0.06,
                   "y": -0.12,
-                  "z": 0
+                  "z": 0.08
                 },
                 "text": "",
                 "shape": "disc",
@@ -9143,7 +8846,7 @@
                 "position": {
                   "x": -0.22,
                   "y": 0.12,
-                  "z": 0
+                  "z": -0.08
                 },
                 "text": "",
                 "shape": "disc",
@@ -9170,7 +8873,7 @@
                 "position": {
                   "x": 0.06,
                   "y": 0.12,
-                  "z": 0
+                  "z": -0.24
                 },
                 "text": "",
                 "shape": "disc",
@@ -9199,7 +8902,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Agentworld",
+          "title": "Positions, artifacts, memories, permissions",
           "italic": "acts become conditions",
           "body": "",
           "x": 0.04,
@@ -9279,17 +8982,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.91,
+          "roundness": 0.89,
+          "softness": 0.17,
+          "irregularity": 0.38,
+          "elongation": 0.09,
           "orientation": 0,
-          "contrast": 0.95,
+          "contrast": 0.92,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.14,
           "speed": 0.4,
           "circulation": 0.32,
           "turbulence": 0.09,
@@ -9299,8 +9002,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.5,
+          "grain": 0.036,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -9556,7 +9259,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "The face",
+          "title": "A humanly recognisable face",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -9619,17 +9322,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.91,
+          "roundness": 0.89,
+          "softness": 0.17,
+          "irregularity": 0.38,
+          "elongation": 0.09,
           "orientation": 0,
-          "contrast": 0.95,
+          "contrast": 0.92,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.14,
           "speed": 0.4,
           "circulation": 0.32,
           "turbulence": 0.09,
@@ -9639,8 +9342,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.5,
+          "grain": 0.036,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -9999,7 +9702,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Culture",
+          "title": "Answerable to unconscious relations",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -10062,17 +9765,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.91,
+          "roundness": 0.89,
+          "softness": 0.17,
+          "irregularity": 0.38,
+          "elongation": 0.09,
           "orientation": 0,
-          "contrast": 0.95,
+          "contrast": 0.92,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.14,
           "speed": 0.4,
           "circulation": 0.32,
           "turbulence": 0.09,
@@ -10082,8 +9785,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.5,
+          "grain": 0.036,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -10385,7 +10088,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Dependence",
+          "title": "The dependence of determinate being",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -10448,17 +10151,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.94,
+          "roundness": 0.93,
+          "softness": 0.12,
+          "irregularity": 0.24,
+          "elongation": 0.16,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.96,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.1,
           "speed": 0.5,
           "circulation": 0.45,
           "turbulence": 0.16,
@@ -10468,8 +10171,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.5,
+          "grain": 0.028,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -10646,22 +10349,7 @@
                   "z": 0
                 },
                 "text": "Matheme",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#efe9f4",
-                  "tintWeight": 0.75,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-cc2-c61-3-s2",
@@ -10673,22 +10361,7 @@
                   "z": 0
                 },
                 "text": "Mytheme",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#9a7ab0",
-                  "tintWeight": 0.8,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               },
               {
                 "id": "ent-cc2-c61-3-s3",
@@ -10700,22 +10373,7 @@
                   "z": 0
                 },
                 "text": "Episteme",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.26,
-                    "y": 0.3
-                  },
-                  "rotation": 0,
-                  "tint": "#a94138",
-                  "tintWeight": 0.75,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -10726,7 +10384,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Symbolon",
+          "title": "These passages held together",
           "italic": "one matter, three registers",
           "body": "",
           "x": 0.04,
@@ -10789,17 +10447,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.94,
+          "roundness": 0.93,
+          "softness": 0.12,
+          "irregularity": 0.24,
+          "elongation": 0.16,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.96,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.1,
           "speed": 0.5,
           "circulation": 0.45,
           "turbulence": 0.16,
@@ -10809,8 +10467,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.5,
+          "grain": 0.028,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -11123,7 +10781,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Planetary",
+          "title": "Mediation becomes infrastructural",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -11186,17 +10844,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.94,
+          "roundness": 0.93,
+          "softness": 0.12,
+          "irregularity": 0.24,
+          "elongation": 0.16,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.96,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.1,
           "speed": 0.5,
           "circulation": 0.45,
           "turbulence": 0.16,
@@ -11206,8 +10864,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.5,
+          "grain": 0.028,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -11609,22 +11267,7 @@
                   "z": 0
                 },
                 "text": "quantum",
-                "shape": "text",
-                "objectState": {
-                  "size": {
-                    "x": 0.28,
-                    "y": 0.28
-                  },
-                  "rotation": 0,
-                  "tint": "#9a7ab0",
-                  "tintWeight": 0.75,
-                  "force": {
-                    "kind": "attract",
-                    "strength": 0,
-                    "radius": 0.45,
-                    "spin": 0
-                  }
-                }
+                "shape": "text"
               }
             ]
           }
@@ -11635,7 +11278,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Pros hen",
+          "title": "True in its relation",
           "italic": "",
           "body": "",
           "x": 0.04,
@@ -11698,17 +11341,17 @@
           "count": 62000,
           "size": 2.8,
           "sizeBias": 1.6,
-          "opacity": 0.92,
-          "roundness": 0.95,
-          "softness": 0.15,
-          "irregularity": 0.35,
-          "elongation": 0.04,
+          "opacity": 0.94,
+          "roundness": 0.93,
+          "softness": 0.12,
+          "irregularity": 0.24,
+          "elongation": 0.16,
           "orientation": 0,
-          "contrast": 0.93,
+          "contrast": 0.96,
           "densityScale": 1,
           "densityPhase": 0.3,
           "edgeWeight": 0,
-          "halo": 0.13,
+          "halo": 0.1,
           "speed": 0.5,
           "circulation": 0.45,
           "turbulence": 0.16,
@@ -11718,8 +11361,8 @@
           "pointerStrength": 0.8,
           "pointerRadius": 0.23,
           "pointerFalloff": 2,
-          "depth": 0.12,
-          "grain": 0.035,
+          "depth": 0.5,
+          "grain": 0.028,
           "snapRigidity": 1,
           "densityTether": 1,
           "curlDepth": 0.2,
@@ -11964,7 +11607,7 @@
           "id": "stage",
           "visible": true,
           "kicker": "",
-          "title": "Paradox",
+          "title": "Pressure on containing relations",
           "italic": "",
           "body": "",
           "x": 0.04,

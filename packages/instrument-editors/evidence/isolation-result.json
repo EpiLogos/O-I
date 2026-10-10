@@ -1,0 +1,217 @@
+{
+  "shipped_bridge": "desktop/cradle/kernel/target/debug/walk-bridge",
+  "native_home": "packages/instrument-editors/evidence/native",
+  "initial_home": "/Users/admin/.oi",
+  "reason": "The shipped 2026-10-07 11:55 bridge predates OI_EXPRESSION_HOME. OI_HOME is supported by this binary; both variables are now supplied. No current-source compiled producer claim.",
+  "owned_records": [
+    {
+      "id": "expression:instrument-editor-30f1ec21-01dd-4260-9cb6-1356ee32870a",
+      "previous_revision": 2373,
+      "isolated_revision": 7,
+      "value_sha256": "7e773f3bc600014a82e2eed4046159eba0cae4c81a9ce3381d21fc26158ceb03"
+    },
+    {
+      "id": "expression:modulation-editor-a8ff8b10-1a55-4de0-856e-b00714339baf",
+      "previous_revision": 2415,
+      "isolated_revision": 8,
+      "value_sha256": "a7dd55e4f8fb88f09c46b072d51d702bc83cfd1a3dec31abdf41e6aee7066150"
+    },
+    {
+      "id": "expression:instrument-editor-75e8c92f-9677-4129-8cc1-5a2f79c52f0b",
+      "previous_revision": 2747,
+      "isolated_revision": 5,
+      "value_sha256": "ab0721274583995466fd7f472bf566c05e0c7f9dbece32745a427808b2f92aaa"
+    },
+    {
+      "id": "expression:modulation-editor-c66070a6-680e-4854-ac80-8d68ec76f066",
+      "previous_revision": 2346,
+      "isolated_revision": 9,
+      "value_sha256": "88bc9eb637ac642910b5641fadb7312eb8b6ddbba29e3cab7ebc177fa011d77c"
+    },
+    {
+      "id": "expression:modulation-editor-240f043c-a2ed-453a-859f-551bd92cac0b",
+      "previous_revision": 2764,
+      "isolated_revision": 3,
+      "value_sha256": "8c103ea5f36ca6d0e35be47a80d0b94be1c43a0c6bc827f9f9425fa6b159fb08"
+    },
+    {
+      "id": "expression:research-editor-97d777ff-d386-4443-b6f0-354fe1e8d715",
+      "previous_revision": 2761,
+      "isolated_revision": 6,
+      "value_sha256": "9388292ab6f66ebbc9b8a805b81240b86b5e623f9eafd4799dfb39e00e9c3c9a"
+    },
+    {
+      "id": "expression:instrument-editor-bb697767-fc2c-4cfa-962a-9893c0b4df2f",
+      "previous_revision": 2567,
+      "isolated_revision": 10,
+      "value_sha256": "d0d89148fcce201ca67a8f006aaeec9e25cbe2297be8a2aa5f82c475cae4e9e6"
+    },
+    {
+      "id": "expression:instrument-editor-fce61e6c-a27d-4f88-9497-df16bd050879",
+      "previous_revision": 2698,
+      "isolated_revision": 11,
+      "value_sha256": "f6d24098ded4a53235db671cc494fafc42b8252a8c110548c8c1d4828d6943dd"
+    },
+    {
+      "id": "expression:research-editor-bdcb5650-410e-43bf-855b-728da77a1a8b",
+      "previous_revision": 2739,
+      "isolated_revision": 4,
+      "value_sha256": "ea62757086cdcd0ab4579f161303e01ff5689055d23e81e1385f1f781712cbec"
+    },
+    {
+      "id": "expression:research-editor-df2c3afb-c229-4b4e-8805-d7c69e4c40cd",
+      "previous_revision": 2624,
+      "isolated_revision": 12,
+      "value_sha256": "9ca0ff1305cdcf147a40c3b7380ab76eaf23853fc5fb4cc0b2588539e7c14cbc"
+    },
+    {
+      "id": "expression:modulation-editor-f87e3d95-e3ae-4226-8429-a681dc7e8bf1",
+      "previous_revision": 2312,
+      "isolated_revision": 13,
+      "value_sha256": "ccb3b8bff190093b1414dc938bd3f8d8ae225512ea2a9f40c974487479740b60"
+    },
+    {
+      "id": "expression:modulation-editor-2156caa4-11a8-435a-b1f3-d752152ef277",
+      "previous_revision": 2335,
+      "isolated_revision": 14,
+      "value_sha256": "72b77892b18cacd4223f5657a3fe098c4226106811c4d4a4e534b26cd5a6114c"
+    },
+    {
+      "id": "expression:modulation-editor-6965014d-6621-4b6e-823f-5cb69e0ef1f2",
+      "previous_revision": 2580,
+      "isolated_revision": 15,
+      "value_sha256": "c387692dbcfc6f2f2afa12156ca89da03c539088ff02580e123e31f4bf661325"
+    },
+    {
+      "id": "expression:instrument-member-75e245c2-f11a-4d3e-bfce-063240a2d71d",
+      "previous_revision": 2680,
+      "isolated_revision": 16,
+      "value_sha256": "802ceb37f6cb4d90632e8f7ece031d3304cbdcdef50eeb538761a4100693ed92"
+    },
+    {
+      "id": "expression:modulation-editor-b841a6d2-03d5-43ea-aea8-8fc6ebdf9597",
+      "previous_revision": 2236,
+      "isolated_revision": 17,
+      "value_sha256": "ea1936654c808ef6d8ff4b2fe59432f27d70e46634447bcc32f41be138df4700"
+    },
+    {
+      "id": "expression:instrument-editor-37db4daa-86b6-4b26-9035-647b9a14b3e0",
+      "previous_revision": 2760,
+      "isolated_revision": 1,
+      "value_sha256": "e844307296145b0af0bc796730e3826f3578f9d26f131a91818f0d0c7981f77b"
+    },
+    {
+      "id": "expression:instrument-member-b5cbecc1-2332-4d54-af1a-696199ab8285",
+      "previous_revision": 2611,
+      "isolated_revision": 18,
+      "value_sha256": "e1db555e03d49cb719103f707ca5e204efeb6e0d06b45ad13f8fed0ccbe738bc"
+    },
+    {
+      "id": "expression:instrument-editor-956c9679-befd-4d09-b4fa-07123f493568",
+      "previous_revision": 2610,
+      "isolated_revision": 19,
+      "value_sha256": "e20391bcbcf40834c1a02a4827869590eac036fe87dd48366ff1f085b6347499"
+    },
+    {
+      "id": "expression:instrument-member-3681f3ac-fa9f-4320-a49e-6770ee856541",
+      "previous_revision": 2724,
+      "isolated_revision": 2,
+      "value_sha256": "8baec74dda7d37e0a3d778c758ed75e5c9bb400a7c94b9c8eb0824d628f9932c"
+    },
+    {
+      "id": "expression:modulation-editor-a79eeb86-e86a-41a2-bb02-dfea8fd1d262",
+      "previous_revision": 2472,
+      "isolated_revision": 20,
+      "value_sha256": "69bb644da0e5ff19604d921476b546c11fbca61234353fe29462929e1f46c547"
+    },
+    {
+      "id": "expression:modulation-editor-999fd66d-dea1-4673-8f87-3eaa7071f44a",
+      "previous_revision": 2712,
+      "isolated_revision": 21,
+      "value_sha256": "96202f18c7cfd98c30023c5eb9ca21ee45d123d7a5bed0649fd3f5e94c33e298"
+    },
+    {
+      "id": "expression:modulation-editor-e3376ea1-d1e0-4b6a-aa6f-3dca2724c8e2",
+      "previous_revision": 2622,
+      "isolated_revision": 22,
+      "value_sha256": "2d7203136274722eeacb208bf4d19a859e44956dd9c4d094c9353a2927d7e015"
+    },
+    {
+      "id": "expression:instrument-editor-6890dbb4-ab07-4da4-9460-196494cedb61",
+      "previous_revision": 2311,
+      "isolated_revision": 23,
+      "value_sha256": "931018d8c8008b6ae49efb902085f8f9faccbf9609216d8e3bd4607163a064a6"
+    },
+    {
+      "id": "expression:instrument-editor-5cf291c9-5af6-4192-8b66-40b31d51ea7a",
+      "previous_revision": 2720,
+      "isolated_revision": 24,
+      "value_sha256": "487ee2495bab204528dec52ff79fbea4b889a39ec73365b3305fc084c3e7654a"
+    },
+    {
+      "id": "expression:instrument-editor-cb51e27f-387c-48ce-b0d6-e038580a13c7",
+      "previous_revision": 2679,
+      "isolated_revision": 25,
+      "value_sha256": "2842d0737668525c249b542a7f97deb1e44271fb6093331de8404cd7575999a2"
+    },
+    {
+      "id": "expression:research-editor-da3e51eb-a8f0-412f-aa32-8d38d8c7f4c3",
+      "previous_revision": 2695,
+      "isolated_revision": 26,
+      "value_sha256": "c9dfb994bad40902609b7f9eba1eaef7b69957ecfc9f06a1f0184546118a169f"
+    },
+    {
+      "id": "expression:instrument-editor-e92777e7-2c6b-41f7-ad72-94d5dadfaf30",
+      "previous_revision": 2336,
+      "isolated_revision": 27,
+      "value_sha256": "6bfc1cce65d8fe3b3fcc0365dc4fe71e886e60ed4a570e1d8828dd26456a497e"
+    },
+    {
+      "id": "expression:modulation-editor-6c8f7dea-a0d4-4c94-91d2-a3c72405a954",
+      "previous_revision": 2693,
+      "isolated_revision": 28,
+      "value_sha256": "dcebabca74200cbd3c2cbb102b812ec863903a45838e6075884ad6334b18e1a1"
+    },
+    {
+      "id": "expression:instrument-member-a26332aa-9653-45f9-bbd0-9c80af767ef2",
+      "previous_revision": 2699,
+      "isolated_revision": 29,
+      "value_sha256": "35f7385efb4cd4b76e6d7e96a6f5a2ec94b5a22c99d71cd3610d74039304a411"
+    },
+    {
+      "id": "expression:research-editor-4846e948-fbde-48a8-b512-05414f14f068",
+      "previous_revision": 2558,
+      "isolated_revision": 30,
+      "value_sha256": "ac87305414d31730d4c97309b78ca6c864928a8e2479f41e44a45e84ae7b3b28"
+    },
+    {
+      "id": "expression:modulation-editor-c4e234d8-8e76-4aa9-b628-878752a5bf6d",
+      "previous_revision": 2380,
+      "isolated_revision": 31,
+      "value_sha256": "22c1ad43e25145af6fbec9c12cd7750b43bf5ad36e697568fe11baac7593136f"
+    },
+    {
+      "id": "expression:instrument-editor-442d4b13-4f87-4917-8a46-9fe9ba942d78",
+      "previous_revision": 2473,
+      "isolated_revision": 32,
+      "value_sha256": "b0deed7bb6aa1f66123674c041f869297c89c939ac050639bd594740a6edc434"
+    },
+    {
+      "id": "expression:research-editor-7db538fd-beb8-4a70-8150-ac8f3ff1ccbf",
+      "previous_revision": 2714,
+      "isolated_revision": 33,
+      "value_sha256": "dd2a0e2764e74a1969abbc211ff3f913c828831dbda575998746d9c104cf1bc9"
+    }
+  ],
+  "owned_native_journals_moved": 33,
+  "protected_existing_records": 163,
+  "protected_existing_records_unchanged": 163,
+  "confirmed": [
+    "all33 journals in this packet’s exclusive controlled namespace durably preserved",
+    "native CAS copy and exact value readback at actual isolated disk location",
+    "only copied owned journals removed from original home through exact native CAS",
+    "owner bridge4180 never used or changed"
+  ],
+  "native_home_override": "OI_HOME plus OI_EXPRESSION_HOME",
+  "old_list_boundary": "Old reader cannot list a newer compact owner record; exact read/remove of owned old-format records succeeded. No unrelated record format was changed."
+}

@@ -65,3 +65,56 @@ the failure this pass exists to remove. **No yantra.**
   movement, a colour, a held silence — that carries the record. Word-labels
   arranged in a layout is what the last four passes produced; it is what
   "fails" means here.
+
+---
+
+# The deepen pass (second movement, 2026-10-07)
+
+The craft pass drew the corpus; this pass gives it depth, motion and voice.
+Four laws on top of everything standing. The gate now checks them.
+
+## 1. The step-scale law — the squish fix
+
+A sequence step that **changes the text** must NOT carry `objectState.size`.
+The engine auto-fits every glyph — `'o-i'` growing into `'vocation'` must not
+inherit `'o-i'`'s box. (323 inherited sizes were removed mechanically; keep it
+that way.) WRONG:
+
+```json
+{"id":"st-2","text":"vocation","shape":"text","hold":2,"transition":1,
+ "objectState":{"size":{"x":0.22,"y":0.22},"tint":"#c9a227"}}
+```
+
+RIGHT:
+
+```json
+{"id":"st-2","text":"vocation","shape":"text","hold":2,"transition":1,
+ "objectState":{"tint":"#c9a227"}}
+```
+
+Animate position, rotation, tint, force across steps — never inherit size
+across a text change.
+
+## 2. Depth
+
+≥1 scene per journey stands in 3d — `view.mode:"3d"`, entities distributed in
+z, a depth/volume setting authored — and the craft note says what the third
+dimension MEANS there. (22 of 474 essay scenes stand in 3d today; the product
+corpus has zero.)
+
+## 3. The material is alive
+
+Across the journey: at least one morph scene (`engine.morphEnabled` with an
+authored morph law/trajectory — toroidalHopf, drive shapes, theta/phi rates),
+≥3 distinct physics profiles (`field.params` states), and particle props that
+vary (material, grain, halo, opacity, roundness, softness, irregularity,
+elongation, contrast). Rest is still lawful: vary across the journey, hold
+within rests.
+
+## 4. Text names the scene — and the scene answers to its page
+
+Every scene carries a title: the record's own line for that move, quoted or
+near-quoted from the source record. Journey stage words: ≥24, ≤160. The scene
+must represent what its PAGE says — read the record first; the title, the
+drawn forms and the binding's `source_ref` all answer to it. A beautiful
+composition that isn't the record's move is a new failure mode, not craft.

@@ -1,5 +1,6 @@
 import {stateLabel,stateSource} from './sourceState';
 import type {Entity} from './model';
+import type {DeviceWidget} from './sharedSettings';
 
 export type BeltEntry = {id:string;key:string;scope:'field'|'selected'|'named';entityId?:string;sceneId?:string;journeyId?:string};
 export interface WorkspacePreferences {version:1;appearance:'scene'|'dark'|'light';entries:BeltEntry[]}
@@ -15,6 +16,13 @@ export function validateWorkspace(value:unknown):WorkspacePreferences {
  const ids=new Set<string>();
  for(const e of v.entries){if(!e||typeof e.id!=='string'||ids.has(e.id)||typeof e.key!=='string'||!['field','selected','named'].includes(e.scope)||e.scope==='named'&&[e.entityId,e.sceneId,e.journeyId].some(x=>typeof x!=='string'||!x))throw new Error('Invalid toolbelt binding');ids.add(e.id);}
  return structuredClone(v);
+}
+/** Shared device widgets use the identity bounds the kernel admits (expression_scene.rs). */
+export function validateDeviceWidgets(value:unknown):DeviceWidget[]{
+ if(!Array.isArray(value)||value.length>64)throw new Error('Device widgets require a bounded list of 64 entries');
+ const ids=new Set<string>();
+ for(const d of value){if(!d||typeof d!=='object'||Object.keys(d).length!==2||typeof d.id!=='string'||[...d.id].length<1||[...d.id].length>128||typeof d.family!=='string'||!/^[a-z0-9-]{1,64}$/.test(d.family)||ids.has(d.id))throw new Error('Invalid device widget');ids.add(d.id);}
+ return structuredClone(value) as DeviceWidget[];
 }
 export function moveBeltEntry(entries:BeltEntry[],id:string,offset:number){const i=entries.findIndex(e=>e.id===id),j=i+offset;if(i<0||j<0||j>=entries.length)return false;[entries[i],entries[j]]=[entries[j],entries[i]];return true;}
 export function formationSummary(e:Entity):string {

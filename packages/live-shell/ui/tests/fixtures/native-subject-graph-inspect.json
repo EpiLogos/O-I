@@ -1,0 +1,3662 @@
+{
+  "captured_at": "2026-10-08T00:51:19.111Z",
+  "endpoint": "http://127.0.0.1:4180/op",
+  "request": {
+    "op": "expression",
+    "request": {
+      "operation": "inspect",
+      "expression_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a"
+    }
+  },
+  "http_status": 200,
+  "response": {
+    "ok": true,
+    "outcome": {
+      "data": {
+        "dirty": true,
+        "document": {
+          "collections": [],
+          "entities": {
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:n945c6fcf0381fa0b70c34945d711835f.22f59ceb17e977279ee30031807492bb.0": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:n945c6fcf0381fa0b70c34945d711835f.22f59ceb17e977279ee30031807492bb.0",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.2
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 0
+                },
+                "y": {
+                  "automation": null,
+                  "value": 360
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [
+                  {
+                    "action_ref": "aikit:knowledge:read",
+                    "authority_requirement": "read",
+                    "target_ref": "wiki:node:root/ta-onta-and-the-thought-stream"
+                  }
+                ],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  },
+                  {
+                    "availability": "available",
+                    "ref": "wiki:node:root/ta-onta-and-the-thought-stream",
+                    "revision": "1"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:source:control:root:Control/agents/wiki/returns/ta-onta-and-the-thought-stream-2026-09-16.md",
+                    "revision": "1"
+                  }
+                ],
+                "subject_ref": "wiki:node:root/ta-onta-and-the-thought-stream"
+              },
+              "title": "The beings, the thought stream, and who owns what"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:n945c6fcf0381fa0b70c34945d711835f.90baeb2caaa993e8216c6b968cc3cb7c.0": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:n945c6fcf0381fa0b70c34945d711835f.90baeb2caaa993e8216c6b968cc3cb7c.0",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.2
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 0
+                },
+                "y": {
+                  "automation": null,
+                  "value": -360
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [
+                  {
+                    "action_ref": "aikit:knowledge:read",
+                    "authority_requirement": "read",
+                    "target_ref": "wiki:node:staged/propose-not-write"
+                  }
+                ],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  },
+                  {
+                    "availability": "available",
+                    "ref": "wiki:node:staged/propose-not-write",
+                    "revision": "1"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "staging/propose-not-write",
+                    "revision": "1"
+                  }
+                ],
+                "subject_ref": "wiki:node:staged/propose-not-write"
+              },
+              "title": "You may propose"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o03f43227c41b31b3a89c57f9a5c413d7": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o03f43227c41b31b3a89c57f9a5c413d7",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.24
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": -130.17000000000002
+                },
+                "y": {
+                  "automation": null,
+                  "value": -270.28999999999996
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:documentation-audit-2026-09-06",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:documentation-audit-2026-09-06"
+              },
+              "title": "documentation audit 2026 09 06"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o0d293c83c991c7d7d51bc2b1263515f3": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o0d293c83c991c7d7d51bc2b1263515f3",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.24
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": -292.48
+                },
+                "y": {
+                  "automation": null,
+                  "value": 66.76
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:personal",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:personal"
+              },
+              "title": "personal"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o22b7d0e98acbec5da423263f0126b5b9": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o22b7d0e98acbec5da423263f0126b5b9",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.24
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 130.17000000000002
+                },
+                "y": {
+                  "automation": null,
+                  "value": 270.28999999999996
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:Actuation",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:Actuation"
+              },
+              "title": "Actuation"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o5985f3319fe6463d7d874273411f9ba1": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o5985f3319fe6463d7d874273411f9ba1",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.24
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 234.55
+                },
+                "y": {
+                  "automation": null,
+                  "value": -187.04999999999998
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:Point-Cloud-Demo",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:Point-Cloud-Demo"
+              },
+              "title": "Point Cloud Demo"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o6244ab745d15fb480ac264ae76074824": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o6244ab745d15fb480ac264ae76074824",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.24
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 0
+                },
+                "y": {
+                  "automation": null,
+                  "value": -300
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:ai-kit",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:ai-kit"
+              },
+              "title": "ai kit"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o6db0386672752a32dc9e7598004b4e36": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o6db0386672752a32dc9e7598004b4e36",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.24
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 130.17000000000002
+                },
+                "y": {
+                  "automation": null,
+                  "value": -270.28999999999996
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:Workcell",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:Workcell"
+              },
+              "title": "Workcell"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.24
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 0
+                },
+                "y": {
+                  "automation": null,
+                  "value": 300
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  },
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:root",
+                    "revision": "50"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:node:identity",
+                    "revision": "50"
+                  }
+                ],
+                "subject_ref": "central:wiki:root"
+              },
+              "title": "Central"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oba8d8e886b95d094737b6bbed816e538": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oba8d8e886b95d094737b6bbed816e538",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.24
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": -130.17000000000002
+                },
+                "y": {
+                  "automation": null,
+                  "value": 270.28999999999996
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:wiki-continuity-2026-09-06",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:wiki-continuity-2026-09-06"
+              },
+              "title": "wiki continuity 2026 09 06"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:obb3271ede8d3662158990d4f74f3fefd": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:obb3271ede8d3662158990d4f74f3fefd",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.24
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": -234.55
+                },
+                "y": {
+                  "automation": null,
+                  "value": -187.04999999999998
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:epi",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:epi"
+              },
+              "title": "epi"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:obcb6e396f9f4b762680002ec7c7d1a46": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:obcb6e396f9f4b762680002ec7c7d1a46",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.24
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 292.48
+                },
+                "y": {
+                  "automation": null,
+                  "value": -66.76
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:O-I",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:O-I"
+              },
+              "title": "O I"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oc524c2f08e4f0b5c5f71e4663b47f2e0": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oc524c2f08e4f0b5c5f71e4663b47f2e0",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.24
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 234.55
+                },
+                "y": {
+                  "automation": null,
+                  "value": 187.04999999999998
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:Central",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:Central"
+              },
+              "title": "Central"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:od34bc31453547110a974ed9a96e7e304": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:od34bc31453547110a974ed9a96e7e304",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.24
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": -292.48
+                },
+                "y": {
+                  "automation": null,
+                  "value": -66.76
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:legacy",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:legacy"
+              },
+              "title": "legacy"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:odb4f3739b9ccc095d58a044387e6fb09": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:odb4f3739b9ccc095d58a044387e6fb09",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.24
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": -234.55
+                },
+                "y": {
+                  "automation": null,
+                  "value": 187.04999999999998
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:projects",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:projects"
+              },
+              "title": "projects"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oe748b3df11dbeaf3e954a2b12ac8162f": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oe748b3df11dbeaf3e954a2b12ac8162f",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.24
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 292.48
+                },
+                "y": {
+                  "automation": null,
+                  "value": 66.76
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:Factory",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:Factory"
+              },
+              "title": "Factory"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w03f43227c41b31b3a89c57f9a5c413d7": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w03f43227c41b31b3a89c57f9a5c413d7",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.28
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 0
+                },
+                "y": {
+                  "automation": null,
+                  "value": 0
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:documentation-audit-2026-09-06",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:documentation-audit-2026-09-06"
+              },
+              "title": "documentation audit 2026 09 06"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w0d293c83c991c7d7d51bc2b1263515f3": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w0d293c83c991c7d7d51bc2b1263515f3",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.28
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 0
+                },
+                "y": {
+                  "automation": null,
+                  "value": 0
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:personal",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:personal"
+              },
+              "title": "personal"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w22b7d0e98acbec5da423263f0126b5b9": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w22b7d0e98acbec5da423263f0126b5b9",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.28
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 0
+                },
+                "y": {
+                  "automation": null,
+                  "value": 0
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:Actuation",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:Actuation"
+              },
+              "title": "Actuation"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w5985f3319fe6463d7d874273411f9ba1": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w5985f3319fe6463d7d874273411f9ba1",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.28
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 0
+                },
+                "y": {
+                  "automation": null,
+                  "value": 0
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:Point-Cloud-Demo",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:Point-Cloud-Demo"
+              },
+              "title": "Point Cloud Demo"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w6244ab745d15fb480ac264ae76074824": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w6244ab745d15fb480ac264ae76074824",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.28
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 0
+                },
+                "y": {
+                  "automation": null,
+                  "value": 0
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:ai-kit",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:ai-kit"
+              },
+              "title": "ai kit"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w6db0386672752a32dc9e7598004b4e36": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w6db0386672752a32dc9e7598004b4e36",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.28
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 0
+                },
+                "y": {
+                  "automation": null,
+                  "value": 0
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:Workcell",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:Workcell"
+              },
+              "title": "Workcell"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w945c6fcf0381fa0b70c34945d711835f": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w945c6fcf0381fa0b70c34945d711835f",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.28
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 0
+                },
+                "y": {
+                  "automation": null,
+                  "value": 0
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  },
+                  {
+                    "availability": "available",
+                    "ref": "wiki:node:identity",
+                    "revision": "1"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:node:identity",
+                    "revision": "50"
+                  }
+                ],
+                "subject_ref": "wiki:node:identity"
+              },
+              "title": "Central"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:wba8d8e886b95d094737b6bbed816e538": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:wba8d8e886b95d094737b6bbed816e538",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.28
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 0
+                },
+                "y": {
+                  "automation": null,
+                  "value": 0
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:wiki-continuity-2026-09-06",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:wiki-continuity-2026-09-06"
+              },
+              "title": "wiki continuity 2026 09 06"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:wbb3271ede8d3662158990d4f74f3fefd": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:wbb3271ede8d3662158990d4f74f3fefd",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.28
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 0
+                },
+                "y": {
+                  "automation": null,
+                  "value": 0
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:epi",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:epi"
+              },
+              "title": "epi"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:wbcb6e396f9f4b762680002ec7c7d1a46": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:wbcb6e396f9f4b762680002ec7c7d1a46",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.28
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 0
+                },
+                "y": {
+                  "automation": null,
+                  "value": 0
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:O-I",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:O-I"
+              },
+              "title": "O I"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:wc524c2f08e4f0b5c5f71e4663b47f2e0": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:wc524c2f08e4f0b5c5f71e4663b47f2e0",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.28
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 0
+                },
+                "y": {
+                  "automation": null,
+                  "value": 0
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:Central",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:Central"
+              },
+              "title": "Central"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:wd34bc31453547110a974ed9a96e7e304": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:wd34bc31453547110a974ed9a96e7e304",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.28
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 0
+                },
+                "y": {
+                  "automation": null,
+                  "value": 0
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:legacy",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:legacy"
+              },
+              "title": "legacy"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:wdb4f3739b9ccc095d58a044387e6fb09": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:wdb4f3739b9ccc095d58a044387e6fb09",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.28
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 0
+                },
+                "y": {
+                  "automation": null,
+                  "value": 0
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:projects",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:projects"
+              },
+              "title": "projects"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:we748b3df11dbeaf3e954a2b12ac8162f": {
+              "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:we748b3df11dbeaf3e954a2b12ac8162f",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "●"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 0.28
+                },
+                "shape": {
+                  "automation": null,
+                  "value": "disc"
+                },
+                "x": {
+                  "automation": null,
+                  "value": 0
+                },
+                "y": {
+                  "automation": null,
+                  "value": 0
+                },
+                "z": {
+                  "automation": null,
+                  "value": 0
+                }
+              },
+              "revision": 1,
+              "subject": {
+                "actions": [],
+                "native_owner": "wiki",
+                "presentation_role": "thing",
+                "readings": [
+                  {
+                    "availability": "available",
+                    "ref": "wiki:Control/agents/wiki/wiki.json",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "sources": [
+                  {
+                    "availability": "available",
+                    "ref": "central:wiki:project:Factory",
+                    "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+                  }
+                ],
+                "subject_ref": "central:wiki:project:Factory"
+              },
+              "title": "Factory"
+            }
+          },
+          "expression_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+          "presentation": {
+            "description": "",
+            "loop": true,
+            "schema": "oi.journey-properties/v1",
+            "shared": {
+              "pointer": {
+                "engine.pointerClick": "pulse",
+                "engine.pointerClickRadius": 0.45,
+                "engine.pointerClickStrength": 2.2,
+                "engine.pointerMode": "repel",
+                "field.params.native_interaction__velocityInfluence": 1,
+                "field.params.pointerFalloff": 2,
+                "field.params.pointerRadius": 0.23,
+                "field.params.pointerStrength": 0.8
+              },
+              "toolbelt": [
+                {
+                  "id": "shared-0",
+                  "key": "timeScale",
+                  "scope": "field"
+                },
+                {
+                  "id": "shared-1",
+                  "key": "recovery",
+                  "scope": "field"
+                },
+                {
+                  "id": "shared-2",
+                  "key": "native_fluid__viscosity",
+                  "scope": "field"
+                },
+                {
+                  "id": "shared-3",
+                  "key": "turbulence",
+                  "scope": "field"
+                },
+                {
+                  "id": "shared-4",
+                  "key": "sequence.transition",
+                  "scope": "selected"
+                },
+                {
+                  "id": "shared-5",
+                  "key": "native_morphProgress",
+                  "scope": "field"
+                }
+              ],
+              "values": {}
+            }
+          },
+          "profiles": [],
+          "provenance": [
+            {
+              "availability": "available",
+              "ref": "wiki:Control/agents/wiki/wiki.json",
+              "revision": "central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+            },
+            {
+              "availability": "available",
+              "ref": "oi:wiki-presentation",
+              "revision": "2"
+            },
+            {
+              "availability": "available",
+              "ref": "wiki:relations:central:wiki:root",
+              "revision": "27 edges at wiki basis central.content-fnv1a64/v1:4032:93ef4fbbc4c189a7"
+            }
+          ],
+          "refinements": [],
+          "relations": {
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r046d46269bda27fa5619c8804945fc76": {
+              "binding_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r046d46269bda27fa5619c8804945fc76",
+              "from_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+              "native_owner": "provider/semantic-wiki/sqlite",
+              "provenance": [
+                {
+                  "availability": "available",
+                  "ref": "provider/semantic-wiki/sqlite",
+                  "revision": "50"
+                },
+                {
+                  "availability": "available",
+                  "ref": "wiki:relation-type:child-space",
+                  "revision": "50"
+                }
+              ],
+              "relation": {
+                "availability": "available",
+                "ref": "wiki:relation-observation:e4b9564692c37e926ef13c78c1c7f6b6",
+                "revision": "50"
+              },
+              "to_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:od34bc31453547110a974ed9a96e7e304"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r0f70018ea898173286ba74086d62671e": {
+              "binding_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r0f70018ea898173286ba74086d62671e",
+              "from_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+              "native_owner": "provider/semantic-wiki/sqlite",
+              "provenance": [
+                {
+                  "availability": "available",
+                  "ref": "provider/semantic-wiki/sqlite",
+                  "revision": "50"
+                },
+                {
+                  "availability": "available",
+                  "ref": "wiki:relation-type:child-space",
+                  "revision": "50"
+                }
+              ],
+              "relation": {
+                "availability": "available",
+                "ref": "wiki:relation-observation:dd161869119a7a1d8168e5e75ef3f2b9",
+                "revision": "50"
+              },
+              "to_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oe748b3df11dbeaf3e954a2b12ac8162f"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r2c894d45f144a749815ecddb70438795": {
+              "binding_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r2c894d45f144a749815ecddb70438795",
+              "from_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+              "native_owner": "provider/semantic-wiki/sqlite",
+              "provenance": [
+                {
+                  "availability": "available",
+                  "ref": "provider/semantic-wiki/sqlite",
+                  "revision": "50"
+                },
+                {
+                  "availability": "available",
+                  "ref": "wiki:relation-type:child-space",
+                  "revision": "50"
+                }
+              ],
+              "relation": {
+                "availability": "available",
+                "ref": "wiki:relation-observation:dc632cba05c503de15ad81ac4885d5ca",
+                "revision": "50"
+              },
+              "to_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:obb3271ede8d3662158990d4f74f3fefd"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r40f1141e26819d82e1cfca48e1fd54ee": {
+              "binding_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r40f1141e26819d82e1cfca48e1fd54ee",
+              "from_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+              "native_owner": "provider/semantic-wiki/sqlite",
+              "provenance": [
+                {
+                  "availability": "available",
+                  "ref": "provider/semantic-wiki/sqlite",
+                  "revision": "50"
+                },
+                {
+                  "availability": "available",
+                  "ref": "wiki:relation-type:child-space",
+                  "revision": "50"
+                }
+              ],
+              "relation": {
+                "availability": "available",
+                "ref": "wiki:relation-observation:218fcc97e7379aeb1ffae2a1b17406a7",
+                "revision": "50"
+              },
+              "to_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:odb4f3739b9ccc095d58a044387e6fb09"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r50c345bfa423a5cbdc5dc45119c21e0f": {
+              "binding_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r50c345bfa423a5cbdc5dc45119c21e0f",
+              "from_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+              "native_owner": "provider/semantic-wiki/sqlite",
+              "provenance": [
+                {
+                  "availability": "available",
+                  "ref": "provider/semantic-wiki/sqlite",
+                  "revision": "50"
+                },
+                {
+                  "availability": "available",
+                  "ref": "wiki:relation-type:child-space",
+                  "revision": "50"
+                }
+              ],
+              "relation": {
+                "availability": "available",
+                "ref": "wiki:relation-observation:bba2a04235a8b576470b219c17b232f2",
+                "revision": "50"
+              },
+              "to_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o0d293c83c991c7d7d51bc2b1263515f3"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r58b1fea7d66ed513fcb86879168b4217": {
+              "binding_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r58b1fea7d66ed513fcb86879168b4217",
+              "from_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+              "native_owner": "provider/semantic-wiki/sqlite",
+              "provenance": [
+                {
+                  "availability": "available",
+                  "ref": "provider/semantic-wiki/sqlite",
+                  "revision": "50"
+                },
+                {
+                  "availability": "available",
+                  "ref": "wiki:relation-type:child-space",
+                  "revision": "50"
+                }
+              ],
+              "relation": {
+                "availability": "available",
+                "ref": "wiki:relation-observation:d64a97bad9317c068ff37b2839f352ea",
+                "revision": "50"
+              },
+              "to_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o6244ab745d15fb480ac264ae76074824"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r5da1ed8a8da9647e9089fb885386a11a": {
+              "binding_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r5da1ed8a8da9647e9089fb885386a11a",
+              "from_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+              "native_owner": "provider/semantic-wiki/sqlite",
+              "provenance": [
+                {
+                  "availability": "available",
+                  "ref": "provider/semantic-wiki/sqlite",
+                  "revision": "50"
+                },
+                {
+                  "availability": "available",
+                  "ref": "wiki:relation-type:child-space",
+                  "revision": "50"
+                }
+              ],
+              "relation": {
+                "availability": "available",
+                "ref": "wiki:relation-observation:12742af3f20062ef129448e9c1ec4f23",
+                "revision": "50"
+              },
+              "to_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:obcb6e396f9f4b762680002ec7c7d1a46"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r7ddcd56112b608459cab668b7869ea11": {
+              "binding_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r7ddcd56112b608459cab668b7869ea11",
+              "from_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+              "native_owner": "provider/semantic-wiki/sqlite",
+              "provenance": [
+                {
+                  "availability": "available",
+                  "ref": "provider/semantic-wiki/sqlite",
+                  "revision": "50"
+                },
+                {
+                  "availability": "available",
+                  "ref": "wiki:relation-type:child-space",
+                  "revision": "50"
+                }
+              ],
+              "relation": {
+                "availability": "available",
+                "ref": "wiki:relation-observation:39d2d3c34059169f508836753c95df73",
+                "revision": "50"
+              },
+              "to_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oc524c2f08e4f0b5c5f71e4663b47f2e0"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r8690a20a25f20dfee53086a86d3dc93a": {
+              "binding_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r8690a20a25f20dfee53086a86d3dc93a",
+              "from_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+              "native_owner": "provider/semantic-wiki/sqlite",
+              "provenance": [
+                {
+                  "availability": "available",
+                  "ref": "provider/semantic-wiki/sqlite",
+                  "revision": "50"
+                },
+                {
+                  "availability": "available",
+                  "ref": "wiki:relation-type:child-space",
+                  "revision": "50"
+                }
+              ],
+              "relation": {
+                "availability": "available",
+                "ref": "wiki:relation-observation:6a983ee5cc3648b9c7b0a3fb847fb315",
+                "revision": "50"
+              },
+              "to_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oba8d8e886b95d094737b6bbed816e538"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r99ea258110750885a792c75bc46a3991": {
+              "binding_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:r99ea258110750885a792c75bc46a3991",
+              "from_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+              "native_owner": "provider/semantic-wiki/sqlite",
+              "provenance": [
+                {
+                  "availability": "available",
+                  "ref": "provider/semantic-wiki/sqlite",
+                  "revision": "50"
+                },
+                {
+                  "availability": "available",
+                  "ref": "wiki:relation-type:child-space",
+                  "revision": "50"
+                }
+              ],
+              "relation": {
+                "availability": "available",
+                "ref": "wiki:relation-observation:6d6a30f1668585bd4038b43fd93ad4c1",
+                "revision": "50"
+              },
+              "to_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o22b7d0e98acbec5da423263f0126b5b9"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:rc16bfc4c289c5ee0dfbe1ffae741a97c": {
+              "binding_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:rc16bfc4c289c5ee0dfbe1ffae741a97c",
+              "from_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+              "native_owner": "provider/semantic-wiki/sqlite",
+              "provenance": [
+                {
+                  "availability": "available",
+                  "ref": "provider/semantic-wiki/sqlite",
+                  "revision": "50"
+                },
+                {
+                  "availability": "available",
+                  "ref": "wiki:relation-type:child-space",
+                  "revision": "50"
+                }
+              ],
+              "relation": {
+                "availability": "available",
+                "ref": "wiki:relation-observation:05d3a851e936a85d4869bdbb278ca441",
+                "revision": "50"
+              },
+              "to_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o03f43227c41b31b3a89c57f9a5c413d7"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:rcda894a099d975ac59d29cd6a763e8f0": {
+              "binding_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:rcda894a099d975ac59d29cd6a763e8f0",
+              "from_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+              "native_owner": "provider/semantic-wiki/sqlite",
+              "provenance": [
+                {
+                  "availability": "available",
+                  "ref": "provider/semantic-wiki/sqlite",
+                  "revision": "50"
+                },
+                {
+                  "availability": "available",
+                  "ref": "wiki:relation-type:child-space",
+                  "revision": "50"
+                }
+              ],
+              "relation": {
+                "availability": "available",
+                "ref": "wiki:relation-observation:6e28147596d447a9e0cbb48341615f45",
+                "revision": "50"
+              },
+              "to_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o6db0386672752a32dc9e7598004b4e36"
+            },
+            "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:rff48521fa55aab8bfd8a2ba1728a574f": {
+              "binding_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:relation:rff48521fa55aab8bfd8a2ba1728a574f",
+              "from_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+              "native_owner": "provider/semantic-wiki/sqlite",
+              "provenance": [
+                {
+                  "availability": "available",
+                  "ref": "provider/semantic-wiki/sqlite",
+                  "revision": "50"
+                },
+                {
+                  "availability": "available",
+                  "ref": "wiki:relation-type:child-space",
+                  "revision": "50"
+                }
+              ],
+              "relation": {
+                "availability": "available",
+                "ref": "wiki:relation-observation:3d3cff29feefa5e533c2788b9f32d7d9",
+                "revision": "50"
+              },
+              "to_entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o5985f3319fe6463d7d874273411f9ba1"
+            }
+          },
+          "representations": [],
+          "revision": 173,
+          "scenes": [
+            {
+              "body": null,
+              "entity_refs": [
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o22b7d0e98acbec5da423263f0126b5b9",
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oc524c2f08e4f0b5c5f71e4663b47f2e0",
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oe748b3df11dbeaf3e954a2b12ac8162f",
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:obcb6e396f9f4b762680002ec7c7d1a46",
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o5985f3319fe6463d7d874273411f9ba1",
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o6db0386672752a32dc9e7598004b4e36",
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o6244ab745d15fb480ac264ae76074824",
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o03f43227c41b31b3a89c57f9a5c413d7",
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:obb3271ede8d3662158990d4f74f3fefd",
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:od34bc31453547110a974ed9a96e7e304",
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o0d293c83c991c7d7d51bc2b1263515f3",
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:odb4f3739b9ccc095d58a044387e6fb09",
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oba8d8e886b95d094737b6bbed816e538"
+              ],
+              "presentation": {
+                "saved": {
+                  "automation": [],
+                  "character": "An arrangement, waiting to happen.",
+                  "composition": {
+                    "carryStation": false,
+                    "carryTint": true,
+                    "focus": "parallel",
+                    "focusDuration": 4,
+                    "frequencyDriver": "manual",
+                    "layout": "free",
+                    "plane": "XY"
+                  },
+                  "duration": 12,
+                  "engine": {
+                    "autoFitSizes": true,
+                    "autoOscillate": true,
+                    "autoSweep": false,
+                    "backgroundMode": "solid",
+                    "collisionEnabled": false,
+                    "collisionMode": "obstacle",
+                    "colorEnabled": true,
+                    "colorMode": "linearGradient",
+                    "dotShape": "circle",
+                    "driveShape": "sine",
+                    "focusOrder": "listed",
+                    "fontFamily": "system-ui, -apple-system, sans-serif",
+                    "fontWeight": 900,
+                    "grainProfile": true,
+                    "mediumDimension": "2D",
+                    "mediumEnabled": false,
+                    "mediumPlane": "vertical",
+                    "morphEnabled": false,
+                    "pairwiseEnabled": false,
+                    "paletteSource": "custom",
+                    "pointerClick": "pulse",
+                    "pointerClickRadius": 0.45,
+                    "pointerClickStrength": 2.2,
+                    "pointerMode": "repel",
+                    "relationalEnabled": false,
+                    "relationalMode": "orbital",
+                    "resonanceEnabled": true,
+                    "resonatorMode": "resonator",
+                    "sweepDirection": "ascent",
+                    "trajectory": "toroidalHopf"
+                  },
+                  "entities": [
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "Central",
+                      "position": {
+                        "x": 0,
+                        "y": 0.75,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o22b7d0e98acbec5da423263f0126b5b9",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "Actuation",
+                      "position": {
+                        "x": 0.325425,
+                        "y": 0.6757249999999999,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o22b7d0e98acbec5da423263f0126b5b9",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oc524c2f08e4f0b5c5f71e4663b47f2e0",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "Central",
+                      "position": {
+                        "x": 0.586375,
+                        "y": 0.46762499999999996,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oc524c2f08e4f0b5c5f71e4663b47f2e0",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oe748b3df11dbeaf3e954a2b12ac8162f",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "Factory",
+                      "position": {
+                        "x": 0.7312000000000001,
+                        "y": 0.16690000000000002,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oe748b3df11dbeaf3e954a2b12ac8162f",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:obcb6e396f9f4b762680002ec7c7d1a46",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "O I",
+                      "position": {
+                        "x": 0.7312000000000001,
+                        "y": -0.16690000000000002,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:obcb6e396f9f4b762680002ec7c7d1a46",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o5985f3319fe6463d7d874273411f9ba1",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "Point Cloud Demo",
+                      "position": {
+                        "x": 0.586375,
+                        "y": -0.46762499999999996,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o5985f3319fe6463d7d874273411f9ba1",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o6db0386672752a32dc9e7598004b4e36",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "Workcell",
+                      "position": {
+                        "x": 0.325425,
+                        "y": -0.6757249999999999,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o6db0386672752a32dc9e7598004b4e36",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o6244ab745d15fb480ac264ae76074824",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "ai kit",
+                      "position": {
+                        "x": 0,
+                        "y": -0.75,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o6244ab745d15fb480ac264ae76074824",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o03f43227c41b31b3a89c57f9a5c413d7",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "documentation audit 2026 09 06",
+                      "position": {
+                        "x": -0.325425,
+                        "y": -0.6757249999999999,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o03f43227c41b31b3a89c57f9a5c413d7",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:obb3271ede8d3662158990d4f74f3fefd",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "epi",
+                      "position": {
+                        "x": -0.586375,
+                        "y": -0.46762499999999996,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:obb3271ede8d3662158990d4f74f3fefd",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:od34bc31453547110a974ed9a96e7e304",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "legacy",
+                      "position": {
+                        "x": -0.7312000000000001,
+                        "y": -0.16690000000000002,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:od34bc31453547110a974ed9a96e7e304",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o0d293c83c991c7d7d51bc2b1263515f3",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "personal",
+                      "position": {
+                        "x": -0.7312000000000001,
+                        "y": 0.16690000000000002,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o0d293c83c991c7d7d51bc2b1263515f3",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:odb4f3739b9ccc095d58a044387e6fb09",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "projects",
+                      "position": {
+                        "x": -0.586375,
+                        "y": 0.46762499999999996,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:odb4f3739b9ccc095d58a044387e6fb09",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oba8d8e886b95d094737b6bbed816e538",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "wiki continuity 2026 09 06",
+                      "position": {
+                        "x": -0.325425,
+                        "y": 0.6757249999999999,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oba8d8e886b95d094737b6bbed816e538",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    }
+                  ],
+                  "field": {
+                    "background": "#f4f2eb",
+                    "material": "ink",
+                    "palette": [
+                      "#252720",
+                      "#252720"
+                    ],
+                    "params": {
+                      "circulation": 1,
+                      "contrast": 0.93,
+                      "count": 62000,
+                      "curlDepth": 0.2,
+                      "densityPhase": 0.3,
+                      "densityScale": 1,
+                      "densityTether": 1,
+                      "depth": 0.12,
+                      "dispersion": 0.09,
+                      "dominance": 0,
+                      "edgeWeight": 0,
+                      "elongation": 0.04,
+                      "excitation": 0.6,
+                      "frequency": 220,
+                      "grain": 0.035,
+                      "gravityFalloff": 2,
+                      "gravitySoftening": 0.1,
+                      "gravityX": 0,
+                      "gravityY": 0,
+                      "gravityZ": 0,
+                      "halo": 0.13,
+                      "irregularity": 0.35,
+                      "opacity": 0.92,
+                      "orientation": 0,
+                      "pointerFalloff": 2,
+                      "pointerRadius": 0.23,
+                      "pointerStrength": 0.8,
+                      "quadraticDrag": 0.2,
+                      "recovery": 1.1,
+                      "roundness": 0.95,
+                      "size": 2.8,
+                      "sizeBias": 1.6,
+                      "snapRigidity": 1,
+                      "softness": 0.15,
+                      "speed": 0.7,
+                      "speedLimit": 3,
+                      "swirlRadius": 0.4,
+                      "thermalJitter": 0,
+                      "timeScale": 1,
+                      "turbulence": 0.22,
+                      "turbulenceScale": 1.2,
+                      "vortexRadius": 0.4,
+                      "zConfinement": 1
+                    }
+                  },
+                  "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:scene:overview",
+                  "morph": {
+                    "depth": 1,
+                    "dwell": 0.3,
+                    "law": "theta",
+                    "phiOffset": 0,
+                    "phiRate": 0.13,
+                    "thetaOffset": 0,
+                    "thetaRate": 0.08
+                  },
+                  "name": "Central — wiki overview",
+                  "text": [],
+                  "toolbelt": [
+                    {
+                      "id": "speed",
+                      "key": "timeScale",
+                      "scope": "field"
+                    },
+                    {
+                      "id": "spring",
+                      "key": "recovery",
+                      "scope": "field"
+                    },
+                    {
+                      "id": "viscosity",
+                      "key": "native_fluid__viscosity",
+                      "scope": "field"
+                    },
+                    {
+                      "id": "flow",
+                      "key": "turbulence",
+                      "scope": "field"
+                    },
+                    {
+                      "id": "transition",
+                      "key": "sequence.transition",
+                      "scope": "selected"
+                    },
+                    {
+                      "id": "blend",
+                      "key": "native_morphProgress",
+                      "scope": "field"
+                    }
+                  ],
+                  "transition": 1.5,
+                  "view": {
+                    "mode": "2d",
+                    "panX": 0,
+                    "panY": 0,
+                    "pitch": 0,
+                    "yaw": 0,
+                    "zoom": 1
+                  }
+                },
+                "scene": {
+                  "automation": [],
+                  "character": "An arrangement, waiting to happen.",
+                  "composition": {
+                    "carryStation": false,
+                    "carryTint": true,
+                    "focus": "parallel",
+                    "focusDuration": 4,
+                    "frequencyDriver": "manual",
+                    "layout": "free",
+                    "plane": "XY"
+                  },
+                  "duration": 12,
+                  "engine": {
+                    "autoFitSizes": true,
+                    "autoOscillate": true,
+                    "autoSweep": false,
+                    "backgroundMode": "solid",
+                    "collisionEnabled": false,
+                    "collisionMode": "obstacle",
+                    "colorEnabled": true,
+                    "colorMode": "linearGradient",
+                    "dotShape": "circle",
+                    "driveShape": "sine",
+                    "focusOrder": "listed",
+                    "fontFamily": "system-ui, -apple-system, sans-serif",
+                    "fontWeight": 900,
+                    "grainProfile": true,
+                    "mediumDimension": "2D",
+                    "mediumEnabled": false,
+                    "mediumPlane": "vertical",
+                    "morphEnabled": false,
+                    "pairwiseEnabled": false,
+                    "paletteSource": "custom",
+                    "pointerClick": "pulse",
+                    "pointerClickRadius": 0.45,
+                    "pointerClickStrength": 2.2,
+                    "pointerMode": "repel",
+                    "relationalEnabled": true,
+                    "relationalMode": "orbital",
+                    "resonanceEnabled": false,
+                    "resonatorMode": "resonator",
+                    "sweepDirection": "ascent",
+                    "templateDimension": "3D",
+                    "trajectory": "toroidalHopf"
+                  },
+                  "entities": [
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "Central",
+                      "position": {
+                        "x": -0.7800000000000001,
+                        "y": 1.08,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o22b7d0e98acbec5da423263f0126b5b9",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "Actuation",
+                      "position": {
+                        "x": 1.5702421230769008,
+                        "y": 1.0915542025339662,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o22b7d0e98acbec5da423263f0126b5b9",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oc524c2f08e4f0b5c5f71e4663b47f2e0",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "Central",
+                      "position": {
+                        "x": 1.4113749999999998,
+                        "y": 0.35762499999999997,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oc524c2f08e4f0b5c5f71e4663b47f2e0",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oe748b3df11dbeaf3e954a2b12ac8162f",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "Factory",
+                      "position": {
+                        "x": 1.1112,
+                        "y": 0.22190000000000001,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oe748b3df11dbeaf3e954a2b12ac8162f",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:obcb6e396f9f4b762680002ec7c7d1a46",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "O I",
+                      "position": {
+                        "x": 0.9562,
+                        "y": -0.1469,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:obcb6e396f9f4b762680002ec7c7d1a46",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o5985f3319fe6463d7d874273411f9ba1",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "Point Cloud Demo",
+                      "position": {
+                        "x": 0.7463749999999999,
+                        "y": -0.9476249999999999,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o5985f3319fe6463d7d874273411f9ba1",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o6db0386672752a32dc9e7598004b4e36",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "Workcell",
+                      "position": {
+                        "x": 0.5854250000000001,
+                        "y": -1.245725,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o6db0386672752a32dc9e7598004b4e36",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o6244ab745d15fb480ac264ae76074824",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "ai kit",
+                      "position": {
+                        "x": 0.175,
+                        "y": -1.185,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o6244ab745d15fb480ac264ae76074824",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o03f43227c41b31b3a89c57f9a5c413d7",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "documentation audit 2026 09 06",
+                      "position": {
+                        "x": -0.255425,
+                        "y": -1.225725,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o03f43227c41b31b3a89c57f9a5c413d7",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:obb3271ede8d3662158990d4f74f3fefd",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "epi",
+                      "position": {
+                        "x": -0.9413749999999999,
+                        "y": -0.632625,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:obb3271ede8d3662158990d4f74f3fefd",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:od34bc31453547110a974ed9a96e7e304",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "legacy",
+                      "position": {
+                        "x": -0.7312000000000001,
+                        "y": -0.16690000000000002,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:od34bc31453547110a974ed9a96e7e304",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o0d293c83c991c7d7d51bc2b1263515f3",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "personal",
+                      "position": {
+                        "x": -0.7312000000000001,
+                        "y": 0.16690000000000002,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o0d293c83c991c7d7d51bc2b1263515f3",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:odb4f3739b9ccc095d58a044387e6fb09",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "projects",
+                      "position": {
+                        "x": -0.586375,
+                        "y": 0.46762499999999996,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:odb4f3739b9ccc095d58a044387e6fb09",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    },
+                    {
+                      "force": {
+                        "kind": "none",
+                        "radius": 0.45,
+                        "spin": 0,
+                        "strength": 0
+                      },
+                      "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oba8d8e886b95d094737b6bbed816e538",
+                      "kind": "formation",
+                      "locked": false,
+                      "name": "wiki continuity 2026 09 06",
+                      "position": {
+                        "x": -0.325425,
+                        "y": 0.6757249999999999,
+                        "z": 0
+                      },
+                      "rotation": 0,
+                      "scale": 0.24,
+                      "sequence": {
+                        "clock": "seconds",
+                        "enabled": false,
+                        "steps": [
+                          {
+                            "hold": 3,
+                            "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:oba8d8e886b95d094737b6bbed816e538",
+                            "position": null,
+                            "shape": "disc",
+                            "text": "●",
+                            "transition": 1
+                          }
+                        ]
+                      },
+                      "shape": "disc",
+                      "share": 1,
+                      "size": {
+                        "x": 0.65,
+                        "y": 0.86
+                      },
+                      "station": null,
+                      "text": "●",
+                      "tint": "#252720",
+                      "tintWeight": 0
+                    }
+                  ],
+                  "field": {
+                    "background": "#f4f2eb",
+                    "material": "ink",
+                    "palette": [
+                      "#252720",
+                      "#252720"
+                    ],
+                    "params": {
+                      "circulation": 1,
+                      "contrast": 0.93,
+                      "count": 62000,
+                      "curlDepth": 0.2,
+                      "densityPhase": 0.3,
+                      "densityScale": 1,
+                      "densityTether": 1,
+                      "depth": 0.12,
+                      "dispersion": 0.09,
+                      "dominance": 0.51,
+                      "edgeWeight": 0,
+                      "elongation": 0.04,
+                      "excitation": 0.6,
+                      "frequency": 477,
+                      "grain": 0.035,
+                      "gravityFalloff": 2,
+                      "gravitySoftening": 0.1,
+                      "gravityX": 0,
+                      "gravityY": 0,
+                      "gravityZ": 0,
+                      "halo": 0.13,
+                      "irregularity": 0.35,
+                      "native_cymatics__boundaryStrength": 12.7,
+                      "native_cymatics__driveScale": 2.1,
+                      "native_cymatics__modeCount": 63,
+                      "native_cymatics__plateSize": 210,
+                      "native_relational__attractorCount": 2,
+                      "native_relational__attractorGravity": 31.9,
+                      "native_relational__orbitSpeed": -2.6,
+                      "native_relational__wanderSpeed": 1.65,
+                      "opacity": 0.92,
+                      "orientation": 0,
+                      "pointerFalloff": 2,
+                      "pointerRadius": 0.23,
+                      "pointerStrength": 0.8,
+                      "quadraticDrag": 0.2,
+                      "recovery": 1.1,
+                      "roundness": 0.95,
+                      "size": 2.8,
+                      "sizeBias": 1.6,
+                      "snapRigidity": 1,
+                      "softness": 0.15,
+                      "speed": 0.7,
+                      "speedLimit": 3,
+                      "swirlRadius": 0.4,
+                      "thermalJitter": 0,
+                      "timeScale": 1,
+                      "turbulence": 0.22,
+                      "turbulenceScale": 1.2,
+                      "vortexRadius": 0.4,
+                      "zConfinement": 1
+                    }
+                  },
+                  "id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:scene:overview",
+                  "morph": {
+                    "depth": 1,
+                    "dwell": 0.3,
+                    "law": "theta",
+                    "phiOffset": 0,
+                    "phiRate": 0.13,
+                    "thetaOffset": 0,
+                    "thetaRate": 3.4
+                  },
+                  "name": "Central — wiki overview",
+                  "text": [],
+                  "toolbelt": [
+                    {
+                      "id": "speed",
+                      "key": "timeScale",
+                      "scope": "field"
+                    },
+                    {
+                      "id": "spring",
+                      "key": "recovery",
+                      "scope": "field"
+                    },
+                    {
+                      "id": "viscosity",
+                      "key": "native_fluid__viscosity",
+                      "scope": "field"
+                    },
+                    {
+                      "id": "flow",
+                      "key": "turbulence",
+                      "scope": "field"
+                    },
+                    {
+                      "id": "transition",
+                      "key": "sequence.transition",
+                      "scope": "selected"
+                    },
+                    {
+                      "id": "blend",
+                      "key": "native_morphProgress",
+                      "scope": "field"
+                    }
+                  ],
+                  "transition": 1.5,
+                  "view": {
+                    "mode": "2d",
+                    "panX": 0,
+                    "panY": 0,
+                    "pitch": 0,
+                    "yaw": 0,
+                    "zoom": 1
+                  }
+                },
+                "schema": "oi.journey-scene/v1"
+              },
+              "revision": 171,
+              "scene_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:scene:overview",
+              "title": "Central — wiki overview",
+              "triggers": []
+            },
+            {
+              "body": null,
+              "entity_refs": [
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w945c6fcf0381fa0b70c34945d711835f",
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:n945c6fcf0381fa0b70c34945d711835f.22f59ceb17e977279ee30031807492bb.0",
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:n945c6fcf0381fa0b70c34945d711835f.90baeb2caaa993e8216c6b968cc3cb7c.0"
+              ],
+              "revision": 1,
+              "scene_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:scene:c945c6fcf0381fa0b70c34945d711835f",
+              "title": "Central",
+              "triggers": []
+            },
+            {
+              "body": null,
+              "entity_refs": [
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w22b7d0e98acbec5da423263f0126b5b9"
+              ],
+              "revision": 1,
+              "scene_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:scene:c22b7d0e98acbec5da423263f0126b5b9",
+              "title": "Actuation",
+              "triggers": []
+            },
+            {
+              "body": null,
+              "entity_refs": [
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:wc524c2f08e4f0b5c5f71e4663b47f2e0"
+              ],
+              "revision": 1,
+              "scene_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:scene:cc524c2f08e4f0b5c5f71e4663b47f2e0",
+              "title": "Central",
+              "triggers": []
+            },
+            {
+              "body": null,
+              "entity_refs": [
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:we748b3df11dbeaf3e954a2b12ac8162f"
+              ],
+              "revision": 1,
+              "scene_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:scene:ce748b3df11dbeaf3e954a2b12ac8162f",
+              "title": "Factory",
+              "triggers": []
+            },
+            {
+              "body": null,
+              "entity_refs": [
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:wbcb6e396f9f4b762680002ec7c7d1a46"
+              ],
+              "revision": 1,
+              "scene_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:scene:cbcb6e396f9f4b762680002ec7c7d1a46",
+              "title": "O I",
+              "triggers": []
+            },
+            {
+              "body": null,
+              "entity_refs": [
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w5985f3319fe6463d7d874273411f9ba1"
+              ],
+              "revision": 1,
+              "scene_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:scene:c5985f3319fe6463d7d874273411f9ba1",
+              "title": "Point Cloud Demo",
+              "triggers": []
+            },
+            {
+              "body": null,
+              "entity_refs": [
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w6db0386672752a32dc9e7598004b4e36"
+              ],
+              "revision": 1,
+              "scene_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:scene:c6db0386672752a32dc9e7598004b4e36",
+              "title": "Workcell",
+              "triggers": []
+            },
+            {
+              "body": null,
+              "entity_refs": [
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w6244ab745d15fb480ac264ae76074824"
+              ],
+              "revision": 1,
+              "scene_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:scene:c6244ab745d15fb480ac264ae76074824",
+              "title": "ai kit",
+              "triggers": []
+            },
+            {
+              "body": null,
+              "entity_refs": [
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w03f43227c41b31b3a89c57f9a5c413d7"
+              ],
+              "revision": 1,
+              "scene_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:scene:c03f43227c41b31b3a89c57f9a5c413d7",
+              "title": "documentation audit 2026 09 06",
+              "triggers": []
+            },
+            {
+              "body": null,
+              "entity_refs": [
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:wbb3271ede8d3662158990d4f74f3fefd"
+              ],
+              "revision": 1,
+              "scene_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:scene:cbb3271ede8d3662158990d4f74f3fefd",
+              "title": "epi",
+              "triggers": []
+            },
+            {
+              "body": null,
+              "entity_refs": [
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:wd34bc31453547110a974ed9a96e7e304"
+              ],
+              "revision": 1,
+              "scene_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:scene:cd34bc31453547110a974ed9a96e7e304",
+              "title": "legacy",
+              "triggers": []
+            },
+            {
+              "body": null,
+              "entity_refs": [
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:w0d293c83c991c7d7d51bc2b1263515f3"
+              ],
+              "revision": 1,
+              "scene_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:scene:c0d293c83c991c7d7d51bc2b1263515f3",
+              "title": "personal",
+              "triggers": []
+            },
+            {
+              "body": null,
+              "entity_refs": [
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:wdb4f3739b9ccc095d58a044387e6fb09"
+              ],
+              "revision": 1,
+              "scene_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:scene:cdb4f3739b9ccc095d58a044387e6fb09",
+              "title": "projects",
+              "triggers": []
+            },
+            {
+              "body": null,
+              "entity_refs": [
+                "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:wba8d8e886b95d094737b6bbed816e538"
+              ],
+              "revision": 1,
+              "scene_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:scene:cba8d8e886b95d094737b6bbed816e538",
+              "title": "wiki continuity 2026 09 06",
+              "triggers": []
+            }
+          ],
+          "schema": "oi.expression/v1",
+          "selection": {
+            "entity_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:entity:o945c6fcf0381fa0b70c34945d711835f",
+            "scene_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a:scene:overview"
+          },
+          "title": "Central — wiki local whole"
+        },
+        "dynamic_state": "not_restored",
+        "file": null,
+        "saved_revision": null,
+        "state": "ready"
+      },
+      "result": "expression"
+    }
+  }
+}

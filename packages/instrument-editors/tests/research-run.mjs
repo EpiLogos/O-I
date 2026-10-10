@@ -1,0 +1,3 @@
+import {build} from '../../../desktop/cradle/node_modules/esbuild/lib/main.js';
+import {writeFile,unlink} from 'node:fs/promises';
+for(const name of ['research-model.test.mjs','research-receiver.test.mjs','research-native.test.mjs']){const entry=new URL(name,import.meta.url),compiled=new URL(`research-compiled-${process.pid}-${name}`,import.meta.url);try{const result=await build({entryPoints:[entry.pathname],tsconfig:new URL('../tsconfig.json',import.meta.url).pathname,bundle:true,format:'esm',platform:'node',write:false,logLevel:'error'});await writeFile(compiled,result.outputFiles[0].text);await import(compiled.href);}finally{await unlink(compiled).catch(()=>{});}}

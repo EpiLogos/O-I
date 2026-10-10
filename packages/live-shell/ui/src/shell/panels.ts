@@ -13,6 +13,8 @@ import type { SetSummary } from './useSet'
 
 /** Where in the frame a panel renders. */
 export type PanelSlot =
+  /** Persistent application inhabitants in the main working surface. */
+  | 'center'
   /** Right-hand dock, stacked collapsible cards. */
   | 'right-dock'
   /** Bottom device-chain area, beside the chain tiles. */
@@ -31,17 +33,19 @@ export interface PanelContext {
 }
 
 export interface PanelRegistration {
-  /** Stable namespaced id, e.g. "core.inspector" or "astra.groove". */
+  /** Stable namespaced id, e.g. "native.context" or "astra.groove". */
   id: string
   /** Display title in the panel header. */
   title: string
-  /** Optional 24x24 SVG path data (stroke space), drawn at 14px. */
+  /** Optional original glyph name from components/Icon.tsx, drawn at 14px. */
   icon?: string
   /** Where the panel docks. */
   slot: PanelSlot
   component: ComponentType<PanelContext>
   /** Lower renders first within a slot (default 100). */
   order?: number
+  /** Open through Browser/context actions without adding a fixed mode button. */
+  navigation?: boolean
   /** One-line description, surfaced as the header tooltip. */
   note?: string
 }

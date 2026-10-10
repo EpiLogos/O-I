@@ -1,0 +1,19 @@
+.native-colour-field{min-width:0;color:var(--text,#d8dbdf)}
+.native-colour-field>header,.native-colour-palette>header{display:flex;justify-content:space-between;gap:10px;font-size:12px;margin-bottom:8px}
+.native-colour-field header span,.native-colour-field p{font-size:11px;color:var(--text-secondary,#a1a6ad)}
+.native-colour-settings{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px}
+.native-colour-setting label,.native-colour-background label,.native-colour-preset label,.native-colour-atmosphere label{display:flex;align-items:center;gap:8px;font-size:11px}
+.native-colour-atmosphere{margin-bottom:8px}.native-colour-atmosphere select{min-width:0}
+.native-colour-layout{display:grid;grid-template-columns:minmax(180px,.8fr) minmax(220px,1.2fr);gap:12px}
+.native-colour-geometry svg{width:100%;height:auto;display:block;background:var(--surface,#151719);border:1px solid var(--border,#35383d);touch-action:none}
+.native-colour-geometry svg text{font:10px system-ui;fill:var(--text-secondary,#a1a6ad)}
+.native-colour-plane,.native-colour-grid{fill:none;stroke:var(--border,#3b3f45);stroke-width:.8}
+.native-colour-direction{stroke:var(--accent,#d5b176);stroke-width:2}
+.native-colour-handle{fill:var(--accent,#d5b176);stroke:var(--surface,#151719);stroke-width:2;cursor:grab}
+.native-colour-swatches{display:flex;margin-bottom:8px;border:1px solid var(--border,#35383d)}
+.native-colour-swatches span{flex:1;min-height:28px;padding:4px;font:10px system-ui;color:white;text-shadow:0 1px 2px black}
+.native-colour-stops{display:grid;gap:4px;margin-bottom:7px}
+.native-colour-stops>div{display:flex;align-items:center;gap:4px}.native-colour-stops label{display:flex;align-items:center;gap:6px;font-size:11px;flex:1}.native-colour-stops input,.native-colour-background input{min-width:0;max-width:120px;font-family:monospace}
+.native-colour-background,.native-colour-preset{margin-top:12px}.native-colour-field p{margin:5px 0 8px}
+.native-colour-actions{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.native-colour-paper{display:flex;align-items:center;gap:8px;font-size:11px;margin:6px 0}.native-colour-paper select{min-width:0;max-width:100%}
+@media(max-width:680px){.native-colour-layout{grid-template-columns:1fr}}

@@ -1,0 +1,13 @@
+.native-takes { display: grid; gap: 8px; padding: 8px 0; min-width: 0; }
+.native-takes-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.native-takes-title { margin: 0; font-size: 13px; font-weight: 600; }
+.native-takes-count, .native-takes-note, .native-takes-empty { font-size: 12px; opacity: .75; margin: 0; }
+.native-takes-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.native-take-row { display: grid; grid-template-columns: minmax(96px, 1fr) minmax(120px, 2fr) auto; align-items: center; gap: 8px; min-width: 0; }
+.native-take-name { display: grid; min-width: 0; }
+.native-take-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.native-take-name small { font-size: 11px; opacity: .7; }
+.native-take-envelope { width: 100%; height: 36px; overflow: visible; }
+.native-take-envelope path { fill: none; stroke: currentColor; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.native-takes-refusal { color: var(--danger, #b3261e); font-size: 12px; margin: 0; }
+@media (max-width: 520px) { .native-take-row { grid-template-columns: 1fr auto; } .native-take-envelope { grid-column: 1 / -1; } }

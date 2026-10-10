@@ -159,5 +159,18 @@
   "actor": "zcode craft lane 2",
   "law": "campaign-evidence/2026-10-07-expression-rework/REWORK-PROTOCOL.md",
   "note": "Re-craft pass: the series drawn — enclosed bay Village, copied room, Rover bobbing, recalled helicopter, the designation as seven-segment six; election poster, 58, Green Dome, bunting, chess pawn; embryo room, masked assembly, ape mask over the identical face, rising rocket, the automatic London door; the asymmetric count as seven-segment 2s, 6 and a ghost 1 with its tally; the open road, diverging escapees, scales, vacant seat. Dusk-day-dark colour journey; stillness held across finale, count and return."
+ },
+ "deepen_pass": {
+  "date": "2026-10-07",
+  "actor": "zcode deepen lane 2",
+  "law": "campaign-evidence/2026-10-07-expression-rework/REWORK-PROTOCOL.md, 'The deepen pass'",
+  "note": [
+   "DEPTH — three scenes stand in 3d and z is the Village's enclosure layered around its one question: #2 finale sinks the embryo room and the masked assembly deep (z −0.35/−0.15), lifts the unmasked face and the London door forward (z +0.25/+0.1) — the unmasking reads inside-out; #3 count holds Number Two's office, the held person and the withheld One on a vertical (z +0.2/−0.35/−0.1) — the answer deepest; #5→0 return puts the open road forward (z +0.2) with the vacant seat behind — escape without the throne.",
+   "MORPH — the three finale-block scenes morph on the authored toroidalHopf trajectory with pulse drive (theta 0.12/0.12 — the family's tightest clock): the Village's complete enclosure circling the question it wants answered, pulsing with the interrogation's pressure and the rocket's countdown.",
+   "ALIVE — three physics profiles and two materials: the arrival's cold coastal field (grain 0.05, opacity 0.94); the Village's day-world in print (material print — the picturesque facade as manufactured publicity, roundness 0.45, softness 0.25); the finale block's darker irregular field (halo 0.14, irregularity 0.35, zConfinement 0.75) held across finale/count/return — the journey's rest.",
+   "STEP-SCALE — no text-changing step carries objectState.size; the running sequence animates tint only.",
+   "TITLES — every scene title is the record's own line: 'The resignation that becomes an address' (#0 heading), 'A whole world for obtaining one answer' (#1 heading), 'Beneath the ape mask, a face identical to his own' (the record's own sentence at the unmasking), 'Two names Six while One remains unanswerable' (#3 heading), 'Return without inheriting the hidden throne' (#5→0 heading). No metadata on the stage.",
+   "PAGE FIDELITY — #0 the picturesque Village, the copied room, Rover, the helicopter brought back, the designation Number Six; #1 the publicity campaign, Number Fifty-Eight, the Green Dome, the election as resistance, the human chess piece; #2 the embryo room's week of observing, the masked assembly, the outer mask and ape mask, the identical face, the rocket countdown, the door opening automatically; #3 Number Two's office thrice, Number Six held, Number One withheld, the count that includes it; #5→0 the open road, the escapees diverging, the count returned, the vacant seat. Each scene answers to its page."
+  ]
  }
 }

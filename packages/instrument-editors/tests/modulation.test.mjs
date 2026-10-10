@@ -1,0 +1,13 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {modulationPreview} from '../src/modulation/preview.ts';
+import {blankScene} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model.ts';
+import {automationTargets} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeParameters.ts';
+import {evaluateLane,createAutomationRuntime} from '../../../desktop/cradle/expressions-app/src/engine/automation.ts';
+const scene=blankScene('Native modulation test');
+scene.automation=[{id:'proof-source',enabled:true,target:automationTargets(scene)[0].target,type:'lfo',wave:'sine',min:0,max:1,rate:.25,phase:0,blend:'replace',duration:2,delay:0,loop:'once',easing:'smooth',firedAt:null}];
+test('source preview uses native mapping and actual sine/square phase',()=>{const before=JSON.stringify(scene);const sine=modulationPreview(scene,'proof-source',{},9);assert.equal(sine.samples[0].normalized,.5);const square=modulationPreview(scene,'proof-source',{wave:'square'},9);assert.equal(square.samples[0].normalized,1);assert.equal(JSON.stringify(scene),before,'preview never changes the native authored Scene');const runtime=createAutomationRuntime();for(const sample of sine.samples)assert.equal(sample.value,evaluateLane({...sine.native,enabled:true},sample.time,runtime).value);});
+test('one-shot native delay/easing/repeat apply to source preview',()=>{const preview=modulationPreview(scene,'proof-source',{type:'ramp',duration:2,delay:1,easing:'easeIn',loop:'once'},11);assert.equal(preview.samples[0].normalized,0);assert.equal(preview.samples.at(-1).normalized,1);assert.equal(preview.horizon,5);assert.equal(preview.samples[3].normalized,.015625);});
+test('bound missing/following sources and preview budgets refuse instead of inventing a source',()=>{assert.throws(()=>modulationPreview(scene,'missing'),/absent/);assert.throws(()=>modulationPreview(scene,'proof-source',{},5000),/budget/);const linked=structuredClone(scene);linked.automation.push({...linked.automation[0],id:'follower',syncWith:'proof-source'});assert.throws(()=>modulationPreview(linked,'follower'),/leader/);});
+
+import {modulationInputPatch} from '../src/modulation/input.ts';
+test('incomplete native decimal input survives and never becomes a zero edit',()=>{const inputs={rate:'-',phase:''};assert.throws(()=>modulationInputPatch({},inputs),/retained/);assert.deepEqual(inputs,{rate:'-',phase:''});assert.deepEqual(modulationInputPatch({enabled:false},{rate:'1.25e-2',phase:'-.5'}),{enabled:false,rate:.0125,phase:-.5});assert.throws(()=>modulationInputPatch({}, {rate:'Infinity'}),/finite/);});

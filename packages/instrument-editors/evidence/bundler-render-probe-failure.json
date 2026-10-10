@@ -1,0 +1,99 @@
+{
+  "schema": "oi.instrument-editor.bundler-conformance/v1",
+  "receiver_vite": "6.4.4",
+  "checks": [
+    {
+      "name": "shell singleton react",
+      "resolved": "packages/live-shell/ui/node_modules/react/index.js"
+    },
+    {
+      "name": "shell singleton react/jsx-runtime",
+      "resolved": "packages/live-shell/ui/node_modules/react/jsx-runtime.js"
+    },
+    {
+      "name": "shell singleton react-dom/client",
+      "resolved": "packages/live-shell/ui/node_modules/react-dom/client.js"
+    },
+    {
+      "name": "preserved native alias react",
+      "resolved": "desktop/cradle/expressions-app/node_modules/react/index.js"
+    },
+    {
+      "name": "preserved native alias react/jsx-runtime",
+      "resolved": "desktop/cradle/expressions-app/node_modules/react/jsx-runtime.js"
+    },
+    {
+      "name": "preserved native alias react-dom/client",
+      "resolved": "desktop/cradle/expressions-app/node_modules/react-dom/client.js"
+    },
+    {
+      "name": "complete worker route and optimizer protection",
+      "receivers": 2
+    }
+  ],
+  "errors": [],
+  "native_claims": false,
+  "console": [],
+  "passed": false,
+  "failure": "TimeoutError: page.waitForFunction: Timeout 30000ms exceeded.",
+  "browser": {
+    "workerURL": "blob:http://127.0.0.1:5173/579197f8-9bab-4ac9-bcd0-79effbfd1b98",
+    "loaded": true,
+    "styleLoaded": true,
+    "sourceLoaded": true,
+    "bounds": [
+      [
+        -31.640624999999716,
+        -19.808054128090617
+      ],
+      [
+        31.640624999999716,
+        19.80805412808658
+      ]
+    ],
+    "rendered": [
+      {
+        "id": 0,
+        "properties": {
+          "revision": 1
+        },
+        "geometry": null
+      }
+    ],
+    "source": [
+      {
+        "id": 0,
+        "properties": {
+          "revision": 1
+        },
+        "geometry": null
+      },
+      {
+        "id": 0,
+        "properties": {
+          "revision": 1
+        },
+        "geometry": null
+      },
+      {
+        "id": 0,
+        "properties": {
+          "revision": 1
+        },
+        "geometry": null
+      },
+      {
+        "id": 0,
+        "properties": {
+          "revision": 1
+        },
+        "geometry": null
+      }
+    ],
+    "errors": [],
+    "canvas": {
+      "width": 720,
+      "height": 460
+    }
+  }
+}
