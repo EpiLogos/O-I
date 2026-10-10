@@ -7,18 +7,27 @@ import type {NativeSceneAction} from '../shell/nativeContent'
 import {NativeSceneTransport} from './NativeSceneTransport'
 import {playingState, sceneDuration, stopRequest} from './nativeScenePlayback'
 import {sceneStanding} from './nativeSceneList'
+import {WorldTimelinePresentation} from '../projections/worldTimelinePresentation'
+import type {WorldTimelineView} from '../projections/useWorldTemporalReading'
+import {LiveSessionEmpty} from '../shell/live/LiveEmptyStates'
 import './NativeCompositionViews.css'
 export type SetSelection = { track: number; scene: number | null; clip?: number }
-export function SessionView({ set, document, selection, select, colors, setColor, native, compactTransport }: {
+export function SessionView({ set, document, selection, select, colors, setColor, native, compactTransport, world }: {
   set: SetSummary | null; document: SetDocument | null; selection: SetSelection; select: (value: SetSelection) => void
   colors: string[]; setColor: (track: number, value: string) => void
   native?: NativeCompositionViewSource
   /** The header transport bar is present: the in-view Scene transport keeps only what the bar lacks. */
   compactTransport?: boolean
+  /** The World cut (seam 5): the Timeline projection presenting World
+   * material — day, run and conversation tracks over the kernel's temporal
+   * read. Additive on the L1 pattern; the native cut keeps absolute
+   * precedence and the audio props are untouched. */
+  world?: WorldTimelineView
 }) {
   const source: CompositionViewSource = native ?? {owner: 'live-set', set, document}
   if (source.owner === 'expressions') return <NativeSessionContent source={source} compactTransport={compactTransport}/>
-  if (!set) return <div className="view-empty">Open a Live set from the browser.</div>
+  if (world) return <WorldTimelinePresentation view={world} presentation="session" />
+  if (!set) return <LiveSessionEmpty />
   const indexed = set.tracks.map((track, index) => ({ track, index }))
   const master = indexed.find(({ track }) => track.kind === 'master')
   const returns = indexed.filter(({ track }) => track.kind === 'return')

@@ -28,8 +28,13 @@ const RAILS = [{path: 'material.sizeBias', y: 22}, {path: 'material.roundness', 
 const rail = (y: number): HandleGeometry => ({origin: {x: 204, y}, dir: {x: 1, y: 0}, length: 142})
 const binding = (path: string) => NATIVE_BINDINGS.find(row => row.path === path)
 
+export type ParticleStyle = 'ink' | 'print' | 'round'
+export function particleStyle(material: string | undefined): ParticleStyle {
+  return material === 'print' || material === 'round' ? material : 'ink'
+}
 export interface InkSample {
-  grain: boolean; square: boolean; min: number; max: number; sizeBias: number; opacity: number; roundness: number; softness: number
+  grain: boolean; square: boolean; style: ParticleStyle
+  min: number; max: number; sizeBias: number; opacity: number; roundness: number; softness: number
   irregularity: number; elongation: number; orientation: number; contrast: number; densityScale: number; densityPhase: number; edgeWeight: number; halo: number
 }
 export interface InkLaw {size: number; angle: number; stretch: number; alpha: number; round: number; irregular: number; feather: number; hash: number}
@@ -50,7 +55,11 @@ export function inkMarkLaw(s: InkSample, index: number, x: number, y: number): I
   const rnd = s.grain ? Math.pow(hash, Math.max(0.1, s.sizeBias)) : hash
   const dens = s.grain ? Math.pow(density, mix(0.35, 3, clamp01(s.contrast))) : density
   // Stipple size (particleShaders.ts:179), speed term omitted at rest (speed 0).
-  let size = mix(s.min, s.max, rnd * 0.8 + dens * 0.2) * mix(0.7, 1.35, rnd) * mix(0.5, 1.15, dens)
+  let size = s.style === 'print'
+    ? mix(s.min * 0.4, s.max, Math.pow(Math.max(0.0001, dens), 1.25))
+    : mix(s.min, s.max, rnd * 0.8 + dens * 0.2) * mix(0.7, 1.35, rnd) * mix(0.5, 1.15, dens)
+  // Rounded is the coarser round dot of the app's particle card (styles.css grain-swatch.round), still stipple in the shader.
+  if (s.style === 'round') size *= 1.35
   if (s.grain) {
     // Density band over position and edge emphasis on sparse marks (particleShaders.ts:339-342).
     const band = 0.7 + 0.3 * Math.sin(x * 0.01 * s.densityScale + Math.sin(y * 0.013 * s.densityScale) + s.densityPhase)
@@ -107,9 +116,9 @@ export function inkSwatch(s: InkSample): InkMark[] {
   })
 }
 
-function readSample(read: Record<string, number>, grain: boolean, square: boolean): InkSample {
+function readSample(read: Record<string, number>, grain: boolean, square: boolean, style: ParticleStyle): InkSample {
   return {
-    grain, square, min: read['particleSize.min'], max: read['particleSize.max'], sizeBias: read['material.sizeBias'], opacity: read['material.opacity'],
+    grain, square, style, min: read['particleSize.min'], max: read['particleSize.max'], sizeBias: read['material.sizeBias'], opacity: read['material.opacity'],
     roundness: read['material.roundness'], softness: read['material.softness'], irregularity: read['material.irregularity'],
     elongation: read['material.elongation'], orientation: read['material.orientation'], contrast: read['material.contrast'],
     densityScale: read['material.densityScale'], densityPhase: read['material.densityPhase'], edgeWeight: read['material.edgeWeight'], halo: read['material.halo'],
@@ -125,7 +134,8 @@ export const inkFaceView: FieldFaceView = {
       read[path] = v
     }
     const grain = reading.scene.engine.grainProfile !== false, square = reading.scene.engine.dotShape === 'square'
-    const marks = inkSwatch(readSample(read, grain, square))
+    const style = particleStyle(reading.scene.field.material)
+    const marks = inkSwatch(readSample(read, grain, square, style))
     const handle = (path: string, geometry: HandleGeometry, shape?: 'bar', gated = false) => <NativeFieldHandle key={path} reading={reading} path={path} family={family}
       geometry={geometry} disabled={disabled || gated} apply={apply} captureCurrent={captureCurrent} onDraft={setDraft} shape={shape} />
     const minBinding = binding('particleSize.min'), maxBinding = binding('particleSize.max')
@@ -137,7 +147,9 @@ export const inkFaceView: FieldFaceView = {
         <path d={m.outer} className="ink-mark" style={{fillOpacity: m.outerAlpha}} />
         {m.inner && <path d={m.inner} className="ink-mark" style={{fillOpacity: m.innerAlpha}} />}
       </g>)}
-      <text x={SWATCH.x + 4} y="96" className="native-graph-label">{grain ? 'Marks · engine law · fixed sample' : 'Classic profile · dot shape, no grain'}</text>
+      <text x={SWATCH.x + 4} y="96" className="native-graph-label">{grain
+        ? `Particles · ${style === 'print' ? 'Print halftone' : style === 'round' ? 'Rounded dots' : 'Ink stipple'} · engine law`
+        : `Particles · classic profile · ${square ? 'square' : 'circle'} dots`}</text>
       <path d="M12 118H180" className="ink-track" />
       {barActive && <path d={`M${barActive.x1} 118H${barActive.x2}`} className="ink-active" />}
       <text x="8" y="106" className="native-graph-label">Size range {short(read['particleSize.min'])}–{short(read['particleSize.max'])} px · log</text>
@@ -226,8 +238,8 @@ export function InkMaterial({reading, disabled, apply}: {reading: Pick<NativeEdi
     try {setError(refusalOf(await apply([materialChange(value)])))}
     catch (cause) {setError(cause instanceof Error ? cause.message : String(cause))}
   }
-  return <div className="ink-material" role="group" aria-label="Field material">
-    <span>Material</span>
+  return <div className="ink-material" role="group" aria-label="Particle style">
+    <span>Particle style</span>
     {FIELD_MATERIAL_CARDS.map(card => <button key={card.value} type="button" aria-pressed={current === card.value} disabled={disabled}
       onClick={() => void choose(card.value)}>{card.label}</button>)}
     {error && <p role="alert" className="ink-note">{error}</p>}

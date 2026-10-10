@@ -43,6 +43,14 @@ export function pinScopeMark(reading: NativeEditorReading, control: PinControl):
   return reading.sharedTargets?.includes('field.' + key) ? 'shared' : 'local'
 }
 
+/** The shared-setting change that flips a Field control between Expression-shared and Scene-local, or null when it cannot be shared. */
+export function scopeFlipChange(reading: NativeEditorReading, control: PinControl): NativeEditorChange | null {
+  if (control.kind !== 'field') return null
+  const key = fieldKey(control.path), target = key === undefined ? undefined : 'field.' + key
+  if (!target || !sharedFieldBinding(target)) return null
+  return sharedSettingChange(target, reading.sharedTargets?.includes(target) !== true)
+}
+
 /** What one pin click sends. `invertShared` is the modifier key: it flips Expression-shared versus Scene-local for this pin only. */
 export function planPin(reading: NativeEditorReading, control: PinControl, mode: Pick<PinState, 'destination' | 'shared'>, invertShared = false): PinPlan {
   const existing = pinnedEntry(reading, control)

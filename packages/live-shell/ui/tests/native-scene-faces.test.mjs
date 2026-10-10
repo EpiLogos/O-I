@@ -41,7 +41,7 @@ const [catalogue, rack, models, text, scene, registry, pool, sceneEdits, materia
   import('../src/components/NativeDevicePoolView.tsx'),
   import(new URL('packages/expressions-boundary/src/sceneEdits.ts', root)),
   import(new URL('packages/expressions-boundary/src/sceneMaterialEdits.ts', root)),
-  import(new URL('packages/expressions-boundary/src/nativeDeviceWidgets.ts', root)),
+  import(new URL('packages/expressions-boundary/src/expressionsFamilies.ts', root)),
   import(new URL('model.ts', author)),
   import(new URL('kernelDocumentBridge.ts', author)),
 ])
@@ -54,7 +54,7 @@ const {sceneFaceView, SCENE_FACE_VIEWS} = registry
 const {NativeDevicePoolView} = pool
 const {prepareNativeSceneEdit} = sceneEdits
 const {applyNativeSceneTextChanges, TEXT_LAYER_BUDGET} = materialEdits
-const {DEVICE_FAMILIES} = widgets
+const FAMILY_IDS = widgets.EXPRESSIONS_FAMILIES.map(family => family.id)
 const {blankJourney, clone} = journeyModel
 const {kernelDocumentToJourney} = bridge
 const {
@@ -121,9 +121,9 @@ test('the scene registry declares scene and text, each with a name, title-only g
   assert.equal(SCENE_FACE_MODELS.text.studio, 'text')
 })
 
-test('scene families are admitted device families of the boundary, and the planned ones are too', () => {
-  for (const family of ['scene', 'text', 'body', 'blueprint', 'arrange']) assert.ok(DEVICE_FAMILIES.includes(family), `${family} is a DEVICE_FAMILIES entry`)
-  for (const family of Object.keys(SCENE_FACE_MODELS)) assert.ok(DEVICE_FAMILIES.includes(family))
+test('scene families are declared Expressions families of the boundary, and the planned ones are too', () => {
+  for (const family of ['scene', 'text', 'body', 'blueprint', 'arrange']) assert.ok(FAMILY_IDS.includes(family), `${family} is a declared Expressions family`)
+  for (const family of Object.keys(SCENE_FACE_MODELS)) assert.ok(FAMILY_IDS.includes(family))
 })
 
 test('the catalogue carries scene-scope entries with no parameters, no light and no toggle', () => {

@@ -321,6 +321,7 @@ export type KernelOp =
   | {op:"factory_attempt_task_read";state_path:string;run_ref:string;task_ref:string;limit?:number;cursor?:unknown}
   | {op:"factory_owner";request:{kind:string;[field:string]:unknown}}
   | {op:"workcell_status_read"}
+  | {op:"temporal_events_read";query?:{window?:{window:"all"}|{window:"day";day_ref:string}|{window:"between";from_unix_ms:number;to_unix_ms:number};kind?:string;subject?:string;stream?:string}}
   /** World inhabitation (WORLD-INHABITATION-V1 §4): AIKit's population,
    * joined whoami and Refocus readings, schema-checked and bounded by a
    * timeout in the kernel; a failure is an error the renderer names. */
@@ -467,6 +468,7 @@ export type KernelOpResult =
   | { result:"factory_attempt_task_list_reading";data:unknown }
   | { result:"factory_attempt_task_reading";data:unknown }
   | { result:"workcell_status_reading";data:unknown }
+  | { result:"temporal_events_reading";document:unknown }
   | { result:"inhabitation_reading";data:unknown;warnings?:unknown[] }
   | { result:"wiki_projection_reading";data:unknown }
   | { result:"wiki_projection_sources_reading";data:unknown }

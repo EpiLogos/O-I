@@ -34,6 +34,7 @@ import {SessionView, type SetSelection} from '../components/SessionView'
 import type {NativeCompositionViewSource} from '../shell/compositionViews'
 import type {SetDocument} from '../shell/document'
 import type {SetSummary} from '../shell/useSet'
+import type {WorldTimelineView} from './useWorldTemporalReading'
 import {PROJECTION_TIMELINE_KIND, timelinePresentation, type TimelinePresentation} from './timelinePresentation'
 
 export {PROJECTION_TIMELINE_KIND, timelinePresentation}
@@ -53,15 +54,20 @@ export interface TimelineResidenceProps {
   compactTransport: boolean
   /** The presented presentation per the encounter; null = both concealed. */
   presented: TimelinePresentation | null
+  /** The World cut (L4 seam 5): World material as tracks over the kernel's
+   * temporal read. Additive — the native cut keeps absolute precedence
+   * inside each view, and with the prop absent every existing byte of the
+   * DOM/CSS contract is unchanged. */
+  world?: WorldTimelineView
 }
 
-export function TimelineProjectionResidence({set, document, selection, select, colors, setColor, session, arrangement, compactTransport, presented}: TimelineResidenceProps) {
+export function TimelineProjectionResidence({set, document, selection, select, colors, setColor, session, arrangement, compactTransport, presented, world}: TimelineResidenceProps) {
   return <Fragment>
     <div className="inhabitant composition-view" data-projection-kind={PROJECTION_TIMELINE_KIND} data-projection-presentation="session" hidden={presented !== 'session'}>
-      <SessionView set={set} document={document} selection={selection} select={select} colors={colors} setColor={setColor} native={session} compactTransport={compactTransport} />
+      <SessionView set={set} document={document} selection={selection} select={select} colors={colors} setColor={setColor} native={session} compactTransport={compactTransport} world={world} />
     </div>
     <div className="inhabitant composition-view" data-projection-kind={PROJECTION_TIMELINE_KIND} data-projection-presentation="arrangement" hidden={presented !== 'arrangement'}>
-      <ArrangementView set={set} document={document} selection={selection} select={select} colors={colors} native={arrangement} compactTransport={compactTransport} />
+      <ArrangementView set={set} document={document} selection={selection} select={select} colors={colors} native={arrangement} compactTransport={compactTransport} world={world} />
     </div>
   </Fragment>
 }

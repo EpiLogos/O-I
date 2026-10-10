@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Projection seam harness — spine · panes · module boundary</title>
+<style>
+/* Tokens from the shell styles (agent-shell-mockup provenance 45e15ed8b). */
+:root{
+  --bg-0:#26292d; --bg-1:#33363b; --bg-2:#3f4348; --bg-3:#4a4e54; --surface:#43464c;
+  --line:#24262a; --line-strong:#3d4147;
+  --text:#d4d7da; --text-dim:#a2a7ad; --text-faint:#71767c;
+  --accent:#ffbe00; --accent-soft:rgba(255,190,0,.13);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#1b1d20;overflow:hidden}
+body{font:12px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:var(--text);background:var(--bg-2);border:1px solid var(--line-strong);border-radius:2px;padding:3px 9px;cursor:pointer}
+button:hover{color:var(--accent);border-color:var(--accent)}
+#app{display:grid;width:100%;height:100%;grid-template-rows:44px minmax(0,1fr)}
+.spine-bar{display:flex;align-items:center;gap:8px;padding:0 10px;background:var(--bg-1);border-bottom:3px solid var(--line)}
+.spine-bar .label{color:var(--text-faint);font-size:10px;letter-spacing:.06em;text-transform:uppercase}
+.spine-bar .reading{font-family:ui-monospace,'SF Mono',Menlo,monospace;color:var(--text-dim)}
+.spine-bar .gap{flex:1}
+.monitors{display:flex;gap:14px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11px;color:var(--text-faint)}
+.monitors b{color:var(--text-dim);font-weight:500}
+.tree{position:relative;display:flex;min-height:0}
+.split{display:flex;min-width:0;min-height:0;flex:1}
+.split[data-dir="h"]{flex-direction:row}
+.split[data-dir="v"]{flex-direction:column}
+.group{position:relative;display:flex;flex-direction:column;flex:1;min-width:0;min-height:0;border:1px solid var(--line-strong);background:var(--bg-1);margin:4px;border-radius:3px;overflow:hidden}
+.group.focused{border-color:var(--accent)}
+.tab-strip{display:flex;gap:2px;padding:3px 4px;background:var(--bg-0);border-bottom:1px solid var(--line)}
+.tab-strip button{border:none;background:none;padding:2px 8px;font-size:11px;color:var(--text-faint);border-radius:2px 2px 0 0}
+.tab-strip button.active{background:var(--bg-2);color:var(--accent)}
+.bodies{position:relative;flex:1;min-height:0}
+.pane-body{position:absolute;inset:0}
+.pane-conceal{position:absolute;right:6px;top:4px;z-index:5;font-size:10px;padding:1px 6px}
+</style>
+</head>
+<body>
+<div id="app"><div id="root" style="display:contents"></div></div>
+<script type="module" src="./main.ts"></script>
+</body>
+</html>

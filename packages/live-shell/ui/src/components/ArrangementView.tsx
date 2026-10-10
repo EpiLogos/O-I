@@ -10,13 +10,21 @@ import {NativeArrangementTimeline, arrangementEditEffect, type ArrangementEdit} 
 import {NativeArrangementAbsences} from './nativeArrangementAbsences'
 import type {NativeGlyphClipSource} from '../shell/nativeContent'
 import type {NativeEditorReply} from '../../../../expressions-boundary/src/editor'
+import {WorldTimelinePresentation} from '../projections/worldTimelinePresentation'
+import type {WorldTimelineView} from '../projections/useWorldTemporalReading'
+import {LiveArrangementEmpty} from '../shell/live/LiveEmptyStates'
 import './NativeCompositionViews.css'
 import './nativeArrangement.css'
-export function ArrangementView({ set, document, selection, select, colors, native, compactTransport }: {
+export function ArrangementView({ set, document, selection, select, colors, native, compactTransport, world }: {
   set: SetSummary | null; document: SetDocument | null; selection: SetSelection; select: (value: SetSelection) => void; colors: string[]
   native?: NativeCompositionViewSource
   /** The header transport bar is present: the in-view Scene transport keeps only what the bar lacks. */
   compactTransport?: boolean
+  /** The World cut (seam 5): the Timeline projection presenting World
+   * material on the integrated ruler — the single navigation surface, no
+   * second scrub bar. Additive on the L1 pattern; the native cut keeps
+   * absolute precedence and the audio props are untouched. */
+  world?: WorldTimelineView
 }) {
   const [offset, setOffset] = useState(0)
   const [zoom, setZoom] = useState(1)
@@ -40,7 +48,8 @@ export function ArrangementView({ set, document, selection, select, colors, nati
   }, [lastBeat, laneWidth, scale])
   const source: CompositionViewSource = native ?? {owner: 'live-set', set, document}
   if (source.owner === 'expressions') return <NativeSourceArrangement source={source} compactTransport={compactTransport}/>
-  if (!set) return <div className="view-empty">Open a Live set from the browser.</div>
+  if (world) return <WorldTimelinePresentation view={world} presentation="arrangement" />
+  if (!set) return <LiveArrangementEmpty />
   const visibleBeats = Math.min(lastBeat, laneWidth / scale)
   const clampOffset = (value: number, nextScale = scale) => Math.max(0, Math.min(Math.max(0, lastBeat - laneWidth / nextScale), value))
   const move = (value: number) => setOffset(clampOffset(value))

@@ -186,8 +186,17 @@ export async function bundleEntry({contents, resolveDir, sourcefile, outfile}) {
   return {js, css}
 }
 
+/** Inline-module safety: an inline <script> breaks on `</script` AND on
+ * `<!--` (the tokenizer's script-data-escaped state) — a bundle carrying a
+ * `<!--` literal (e.g. documentDeviceModel's flow-document decoder) silently
+ * never evaluates. Both sequences are defused with escapes that preserve the
+ * runtime values. [L9 gap fix: only `</script` was escaped before.] */
+export function inlineModuleSafe(js) {
+  return js.replace(/<\/script/g, '<\\/script').replace(/<!--/g, '\\x3C!--')
+}
+
 export function shellHtml({js, css}) {
-  return `<!doctype html><html><head><meta charset="utf-8"><style>${css}</style></head><body><div id="root"></div><script type="module">${js.replace(/<\/script/g, '<\\/script')}</script></body></html>`
+  return `<!doctype html><html><head><meta charset="utf-8"><style>${css}</style></head><body><div id="root"></div><script type="module">${inlineModuleSafe(js)}</script></body></html>`
 }
 
 // ---------------------------------------------------------------------------
@@ -393,9 +402,15 @@ export async function runFixtureHarness({evidence}) {
       assert.equal(await page.evaluate(() => window.__agentShellFixture === true), true)
     })
     await checker.check('unavailable transport disclosed in the browser device pool', async () => {
+      // The refusal renders as the disclosure card (named, receipt folded);
+      // the reason must appear on the card or the kv line — never swallowed.
       await page.waitForFunction(() => {
-        const el = document.querySelector('.agent-device-pool .agent-disclosed')
-        return !!el && el.textContent.includes('kernel not attached')
+        const pool = document.querySelector('.agent-device-pool')
+        if (!pool) return false
+        const card = pool.querySelector('[data-refusal], .agent-refusal')
+        const line = pool.querySelector('.agent-disclosed')
+        return (!!card && card.textContent.includes('kernel not attached'))
+          || (!!line && line.textContent.includes('kernel not attached'))
       }, undefined, {timeout: 8000})
     })
     await checker.check('unavailable transport disclosed in the context dock tile', async () => {

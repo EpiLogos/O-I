@@ -218,3 +218,13 @@ test('end to end: a field pin lands in Journey.shared.toolbelt, and its unpin re
   const unpinned = applyNativeChosenControlChanges(pinned, sceneId, unpin.changes, [], {})
   assert.deepEqual(unpinned.shared.toolbelt, before)
 })
+
+test('the scope mark flips a shareable Field control between shared and local, and offers nothing for the rest', () => {
+  const shareable = NATIVE_BINDINGS.find(item => sharedFieldBinding('field.' + item.key))
+  const unshareable = NATIVE_BINDINGS.find(item => !sharedFieldBinding('field.' + item.key))
+  const reading = shared => ({chosenControls: {available: true, entries: [], controls: []}, selection: {entity_ids: []}, sharedTargets: shared})
+  assert.deepEqual(pins.scopeFlipChange(reading([]), {kind: 'field', path: shareable.path}), {kind: 'shared-setting', target: 'field.' + shareable.key, shared: true}, 'a local control is shared')
+  assert.deepEqual(pins.scopeFlipChange(reading(['field.' + shareable.key]), {kind: 'field', path: shareable.path}), {kind: 'shared-setting', target: 'field.' + shareable.key, shared: false}, 'a shared control goes local')
+  assert.equal(pins.scopeFlipChange(reading([]), {kind: 'entity', entityId: 'e1', key: 'scale'}), null, 'an object control has no share switch')
+  if (unshareable) assert.equal(pins.scopeFlipChange(reading([]), {kind: 'field', path: unshareable.path}), null, 'a pointer-bucket parameter cannot be shared')
+})

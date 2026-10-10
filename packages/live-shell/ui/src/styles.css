@@ -12,8 +12,8 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .tag { font-size:10px; color:var(--text-dim) }
 .frame { height:100%; display:grid; grid-template-columns:var(--browser-w) minmax(0,1fr) 0px; grid-template-rows:var(--transport-h) minmax(0,1fr) var(--detail-h) 28px; grid-template-areas:'transport transport transport' 'browser center dock' 'chain chain dock' 'status status status' }
 .frame.browser-hidden { grid-template-columns:0 minmax(0,1fr) 0 }
-.frame.dock-open { grid-template-columns:var(--browser-w) minmax(0,1fr) 260px }
-.frame.browser-hidden.dock-open { grid-template-columns:0 minmax(0,1fr) 260px }
+.frame.dock-open { grid-template-columns:var(--browser-w) minmax(0,1fr) var(--dock-w, 260px) }
+.frame.browser-hidden.dock-open { grid-template-columns:0 minmax(0,1fr) var(--dock-w, 260px) }
 .frame.detail-hidden { grid-template-rows:var(--transport-h) minmax(0,1fr) 0 28px }
 .transport { grid-area:transport; display:flex; flex-direction:column }
 .set-title { height:20px; text-align:center; color:var(--text-dim); font-weight:600; overflow:hidden; white-space:nowrap; text-overflow:ellipsis }

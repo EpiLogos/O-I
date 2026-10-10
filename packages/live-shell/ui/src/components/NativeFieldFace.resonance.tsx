@@ -154,8 +154,8 @@ function switches({reading, disabled, apply}: FieldFaceSwitchContext) {
       <ul className="native-resonance-unavailable">
         <li>Station ticks (inspector.ts:128; app.ts:724): not writable from the shell yet. One tap writes field.params.frequency to a solved station Hz, sets Scene.composition.frequencyDriver to manual and clears EngineSettings.autoSweep.</li>
         <li>Automation per control (automate button, Take manual control; inspector.ts paramControl; app.ts:723): not writable from the shell yet on this control. Lanes are written from the Automation device; Take manual control (app.ts:726) is a direct base write outside native history and is not admitted.</li>
-        <li>Share across expression per control (globe button; app.ts:721): not writable from the shell yet on this control. The Parameters browser shares the selected Field parameter (shared-setting, Share across Expression or Use local value).</li>
-        <li>Toolbelt star per control (inspector.ts paramControl; app.ts:725): not writable from the shell yet on this control. The star wrote a per-browser workspace pin; Add to toolbelt in the Parameters browser writes the Expression's chosen controls.</li>
+        <li>Share across expression (globe button; app.ts:721): on a pinned Field control the S/L mark writes one shared-setting. The Parameters browser offers the same change as Share across Expression or Use local value.</li>
+        <li>Toolbelt star (inspector.ts paramControl; app.ts:725): Map mode puts a pin on this control. Pinning writes the Expression's chosen controls, the same list Add to toolbelt writes.</li>
         <li>Live drive readout (inspector.ts:126, data-resonance-live): not writable from the shell yet. It is engine telemetry, not part of the reading; read it on the Stage.</li>
       </ul>
       </details>

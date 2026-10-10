@@ -162,7 +162,9 @@ export type NativeGlyphChange =
   | {kind: 'step-insert'; entity_id: string; after_step_id: string | null; source?: Entity['source']; shape?: SequenceStep['shape']; text?: string}
   | {kind: 'step-duplicate'; entity_id: string; step_id: string}
   | {kind: 'step-remove'; entity_id: string; step_ids: string[]}
-  | {kind: 'step-order'; entity_id: string; step_ids: string[]};
+  | {kind: 'step-order'; entity_id: string; step_ids: string[]}
+  /** The formation's base glyph (the app's native-glyph base edit): text is trimmed to 1–120 characters, refused while locked or a blueprint member (nativeFormations.ts validateFormationGlyph). */
+  | {kind: 'formation-glyph'; entity_id: string; text: string};
 /** Formation add (nativeFormations.ts). 'text' is Glyph or word; the add picker offers no yantra or cymatic. */
 export type NativeFormationShape = 'text' | 'ring' | 'disc' | 'triangle' | 'square';
 export type NativeFormationChange = {kind: 'formation-add'; title?: string; shape?: NativeFormationShape; text?: string; position?: Vec3};
