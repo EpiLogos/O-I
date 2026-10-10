@@ -7,11 +7,15 @@
 //! are typed file-format facts from the official evidence XML only — no
 //! DSP, no behavior claims; each module cites its source file (`erosion`
 //! cites its binary derivation document; no evidence XML is unpacked for
-//! it yet). `compressor`, `overdrive`, `redux` and `erosion` in addition
+//! it yet). `compressor`, `overdrive`, `redux`, `erosion`, `gate` and
+//! `limiter` in addition
 //! carry a statically decodable per-sample layer (derivation doc-cited, no
 //! fitted scalars, explicit LUT placeholders, no behavioral claims);
 //! `eq8`, `auto_filter` and `filter_delay` carry the statically decodable
 //! coefficient/law layer of their derivations under the same posture;
+//! `utility`'s per-sample section (legacy calc bodies, DC blocker,
+//! BassMono SVF) follows the same derivation-cited rule with the
+//! gain/pan/width transfer fn-pointers marked corpus-pending;
 //! `glue` is the render-gated exception.
 
 pub mod audio;
@@ -28,7 +32,9 @@ pub mod echo;
 pub mod eq8;
 pub mod erosion;
 pub mod filter_delay;
+pub mod gate;
 pub mod glue;
+pub mod limiter;
 pub mod operator;
 pub mod overdrive;
 pub mod params;
