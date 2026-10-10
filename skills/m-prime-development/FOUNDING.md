@@ -69,6 +69,42 @@ its ecology like this:
    own method).
 8. **The register**: the NOW returns and the landing receipts.
 
+## The first test of the blueprint — the Hermes arc, read both ways
+
+The founding was commissioned alongside an audit of the Hermes gateway
+reverse-engineering (`Control/agents/now/flows/hermes-gateway-re-20261007/`),
+and the two arcs are the pattern's proof pair:
+
+| Ecology element | Device SDK (this domain) | Hermes gateway RE |
+| --- | --- | --- |
+| Specimen / law | specimen + design law + standards, cited by every gate | A1/A2/A3 specs + parity table, finished and evidence-cited |
+| Registry | generated, drift-locked (icons, kernel ops) | replay vectors + captures — flow-local |
+| Gate | refuses at admission, world gate in CI | gate1–3 executable, PASS — flow-local, no product gate |
+| Tool | one command per loop step | drivers + stub exist; rebuild recorded once |
+| Method | SKILL.md, founded from the arc | **none** — the verified loop lives only in the flow folder |
+| Register | NOW returns at both registers, landing receipts | root-register only; the O-I project return never filed |
+| Knowledge home | cross-referenced from the SDK's own law | wiki return filed but **unpromoted** — not addressable |
+
+**The verdict was PARTIAL, and the shape of the failure is the teaching:**
+the contract itself converged hard — four merged PRs carry Hermes
+vocabulary verbatim in product source (`protocol.rs`'s capabilities rule,
+the refuse-to-write config law, the fan-out invariant, the temporal-event
+system) — but the continuation of that work depends on re-reading one
+flow folder. Strong praxis, unfounded method: the work landed without its
+ecology, so its knowledge evaporates on the lane's clock instead of
+compounding.
+
+**The Hermes domain is the first candidate for founding by this
+blueprint.** Its checklist, from the audit: promote the wiki return
+`hermes-gateway-contract-2026-10-07.md` through inclusion (owner act);
+found the contract-convergence method encoding the verified loop
+(capture → replay vectors → stub gate → delta watch → spec update →
+backlog row → landing); give the stub and replay vectors a repo home as
+CI-checkable fixtures; add the drift lock (a Hermes upstream update must
+fail a gate, not rot a spec); wire the delta watch to an owner; land the
+`feat/restore-gateway-ops` blocker in ai-kit (another repo's lane). Until
+then, this section stands as the recorded state of that domain's ecology.
+
 ## Founding a new ecology (the blueprint)
 
 When a new domain emerges — its work recurring, its knowledge scattering:
