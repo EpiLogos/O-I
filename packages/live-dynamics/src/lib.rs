@@ -10,6 +10,8 @@
 //! it yet). `compressor`, `overdrive`, `redux` and `erosion` in addition
 //! carry a statically decodable per-sample layer (derivation doc-cited, no
 //! fitted scalars, explicit LUT placeholders, no behavioral claims);
+//! `eq8`, `auto_filter` and `filter_delay` carry the statically decodable
+//! coefficient/law layer of their derivations under the same posture;
 //! `glue` is the render-gated exception.
 
 pub mod audio;
