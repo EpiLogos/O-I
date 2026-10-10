@@ -146,3 +146,17 @@ export function serialiseQlDoc(doc: unknown): string {
     .replace(/\u2028/g, "\\u2028")
     .replace(/\u2029/g, "\\u2029");
 }
+
+/** Payload formatting/object key order do not author a document edit; arrays
+ * and JSON values retain their original semantic order and identity. */
+export function sameDocumentPayload(a:string|null|undefined,b:string|null|undefined):boolean {
+ if(typeof a!=='string'||typeof b!=='string')return false;
+ if(a===b)return true;
+ const equal=(x:unknown,y:unknown):boolean=>{
+  if(x===y)return true;
+  if(Array.isArray(x)&&Array.isArray(y))return x.length===y.length&&x.every((value,index)=>equal(value,y[index]));
+  if(x&&y&&typeof x==='object'&&typeof y==='object'&&!Array.isArray(x)&&!Array.isArray(y)){const left=x as Record<string,unknown>,right=y as Record<string,unknown>,keys=Object.keys(left);return keys.length===Object.keys(right).length&&keys.every(key=>Object.hasOwn(right,key)&&equal(left[key],right[key]));}
+  return false;
+ };
+ try{return equal(JSON.parse(a),JSON.parse(b));}catch{return false;}
+}

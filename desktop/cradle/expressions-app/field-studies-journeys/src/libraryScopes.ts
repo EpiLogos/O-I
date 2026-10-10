@@ -139,7 +139,6 @@ export function installNativeLibraryInteractions():void {
 }
 
 type KernelFill={state:'absent'|'error'|'empty'|'rows';rows:KernelExpressionListing[]};
-type KernelState=KernelFill['state'];
 
 function kernelListHTML(fill:KernelFill):string {
   const {state,rows}=fill;

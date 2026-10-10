@@ -1,0 +1,129 @@
+/* Central family devices (L7) — the hygiene, impact and day/now craft.
+   Composes on the inhabitant rack's tokens (inhabitantDevices.css — same
+   palette, same light law); this file only adds the reading/tender rows the
+   Central devices render. A refusal is styled as what it is: the owner's
+   own words, visible, never hidden and never decorated. */
+
+.inhabitant-device-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 3px;
+  border-top: 1px solid var(--inh-line);
+  padding-top: 3px;
+}
+
+.inhabitant-reading-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.inhabitant-reading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  min-height: 17px;
+  padding: 1px 2px;
+  font-size: 10.5px;
+  border-radius: 2px;
+}
+
+.inhabitant-reading:hover { background: rgba(255, 190, 0, 0.06); }
+
+.inhabitant-reading-op {
+  flex: none;
+  font-family: var(--inh-mono);
+  font-size: 9.5px;
+  color: var(--inh-text);
+  background: var(--inh-bg-0);
+  border: 1px solid var(--inh-line-strong);
+  border-radius: 2px;
+  padding: 0 4px;
+  max-width: 340px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inhabitant-reading-standing {
+  color: var(--inh-dim);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+li[data-finding-kind] .inhabitant-reading-standing,
+li[data-impact-session] .inhabitant-reading-standing { white-space: normal; }
+
+.inhabitant-reading-ok { color: #8fd0a8; font-size: 10px; }
+
+.inhabitant-reading-refusal {
+  color: #ff9b4a;
+  font-size: 10.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+li[data-refused='true'] .inhabitant-reading-op { border-color: #ff9b4a66; }
+
+.inhabitant-reading-tender {
+  margin-left: auto;
+  color: var(--inh-faint);
+  font-size: 9.5px;
+  font-family: var(--inh-mono);
+  text-align: right;
+}
+
+.inhabitant-tender:disabled {
+  opacity: 0.5;
+  border-style: dashed;
+  cursor: default;
+}
+
+.mono { font-family: var(--inh-mono); }
+
+/* The detail craft's warp markers: the save-router's five named outcomes,
+   reached ones lit amber, the rest honest hollow. */
+[data-save-router-states] [data-outcome] {
+  display: inline-block;
+  font-family: var(--inh-mono);
+  font-size: 9.5px;
+  border: 1px solid var(--inh-line-strong);
+  border-radius: 2px;
+  padding: 0 4px;
+  margin-right: 3px;
+  color: var(--inh-faint);
+}
+
+[data-save-router-states] [data-outcome][data-reached='true'] {
+  background: var(--inh-accent);
+  border-color: var(--inh-accent);
+  color: #1d1f22;
+}
+
+[data-detail-entries] .inhabitant-reading-standing { font-family: var(--inh-mono); }
+
+/* The L7 harness page (dev-central-l7) — minimal chrome, the devices are
+   the content. */
+body { margin: 0; background: #1b1d20; font: 12px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--inh-text); }
+[data-channel-label] { padding: 6px 10px; color: var(--inh-faint); font-family: var(--inh-mono); font-size: 10px; }
+.l7-header { padding: 4px 10px; }
+.l7-header h1 { font-size: 13px; font-weight: 500; margin: 0 0 2px; }
+.l7-faults { margin: 0; color: var(--inh-faint); font-size: 10.5px; font-family: var(--inh-mono); }
+.l7-subjects { display: flex; gap: 4px; padding: 4px 10px; }
+.l7-subjects button {
+  font: inherit; font-size: 11px; color: var(--inh-dim);
+  background: var(--inh-bg-0); border: 1px solid var(--inh-line-strong);
+  border-radius: 2px; padding: 3px 8px; cursor: pointer;
+}
+.l7-subjects button.on { background: var(--inh-accent); color: #1d1f22; border-color: var(--inh-accent); }
+.l7-subjects button:hover:not(.on) { color: var(--inh-accent); }
+[data-detail-mount], .l7-devices { padding: 4px 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+

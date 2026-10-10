@@ -289,7 +289,17 @@ pub fn default_socket_path() -> Result<std::path::PathBuf, String> {
         .map(std::path::PathBuf::from)
         .unwrap_or_else(|| std::path::PathBuf::from(home).join(".local/share"))
         .join("org.epilogos.oi.cradle");
-    let endpoint = choose_endpoint(&directory, &std::env::temp_dir());
+    socket_path_for_directory(&directory)
+}
+
+/// Resolve an explicitly selected native profile through the same endpoint
+/// names, short-path fallback and private fallback-parent preparation as the
+/// ordinary desktop. Callers still prepare a short profile directory itself.
+#[cfg(unix)]
+pub fn socket_path_for_directory(
+    directory: &std::path::Path,
+) -> Result<std::path::PathBuf, String> {
+    let endpoint = choose_endpoint(directory, &std::env::temp_dir());
     if endpoint != directory.join("expression.sock") {
         if let Some(parent) = endpoint.parent() {
             std::fs::create_dir_all(parent)
@@ -366,10 +376,154 @@ mod endpoint_tests {
     use super::*;
 
     #[test]
+    fn two_private_directories_serve_separate_real_expression_owners() {
+        use std::os::unix::fs::{FileTypeExt, MetadataExt, PermissionsExt};
+        use std::sync::{Arc, Mutex};
+
+        let root = std::env::temp_dir().join(format!(
+            "oi-expression-endpoint-{}-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos(),
+            "private-ground-".repeat(4)
+        ));
+        std::fs::create_dir(&root).unwrap();
+        std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let directories = [root.join("profile-a"), root.join("profile-b")];
+        for directory in &directories {
+            std::fs::create_dir(directory).unwrap();
+            std::fs::set_permissions(directory, std::fs::Permissions::from_mode(0o700)).unwrap();
+        }
+        let paths = directories.map(|directory| socket_path_for_directory(&directory).unwrap());
+        assert_ne!(paths[0], paths[1]);
+        assert!(paths.iter().all(|path| path.as_os_str().len() < 100));
+        let parent_a = paths[0].parent().unwrap();
+        let parent_b = paths[1].parent().unwrap();
+        // Exercise the real short-path/private-parent branch, using long real
+        // profile directories instead of an artificial socket carrier.
+        assert!(!paths[0].starts_with(&root));
+        assert!(!paths[1].starts_with(&root));
+        struct Ground(Vec<std::path::PathBuf>);
+        impl Drop for Ground {
+            fn drop(&mut self) {
+                for directory in &self.0 {
+                    let _ = std::fs::remove_dir_all(directory);
+                }
+            }
+        }
+        let _ground = Ground(vec![parent_a.to_owned(), parent_b.to_owned(), root.clone()]);
+        let uid: u32 = std::str::from_utf8(
+            &std::process::Command::new("/usr/bin/id")
+                .arg("-u")
+                .output()
+                .unwrap()
+                .stdout,
+        )
+        .unwrap()
+        .trim()
+        .parse()
+        .unwrap();
+        for parent in [parent_a, parent_b] {
+            let metadata = std::fs::symlink_metadata(parent).unwrap();
+            assert!(metadata.is_dir() && !metadata.file_type().is_symlink());
+            assert_eq!(metadata.uid(), uid);
+            assert_eq!(metadata.permissions().mode() & 0o777, 0o700);
+        }
+        let canary_a = parent_a.join("retained-owner-file");
+        let canary_b = parent_b.join("retained-owner-file");
+        std::fs::write(&canary_a, b"owner-a retained bytes").unwrap();
+        std::fs::write(&canary_b, b"owner-b retained bytes").unwrap();
+        let serve_owner = |path: &std::path::Path| {
+            let application = Arc::new(Mutex::new(crate::expression::Application::default()));
+            let client = crate::flow::CentralClient::discover();
+            serve(path, move |request| {
+                application
+                    .lock()
+                    .map_err(|_| "Expression owner lock unavailable")?
+                    .apply(&client, request)
+                    .map(|(reading, _)| reading)
+            })
+            .unwrap()
+        };
+        let server_a = serve_owner(&paths[0]);
+        let server_b = serve_owner(&paths[1]);
+        for path in &paths {
+            let metadata = std::fs::symlink_metadata(path).unwrap();
+            assert!(metadata.file_type().is_socket());
+            assert_eq!(metadata.uid(), uid);
+            assert_eq!(metadata.permissions().mode() & 0o777, 0o600);
+        }
+        let request = |reference: &str, title: &str| {
+            serde_json::json!({"operation":"create","expression_ref":reference,
+                "title":title,"actor":"human:socket-owner-test"})
+        };
+        assert_eq!(
+            call(&paths[0], &request("expression:endpoint-a", "Owner A")).unwrap()["ok"],
+            true
+        );
+        assert_eq!(
+            call(&paths[1], &request("expression:endpoint-b", "Owner B")).unwrap()["ok"],
+            true
+        );
+        let list = serde_json::json!({"operation":"list"});
+        let a = call(&paths[0], &list).unwrap();
+        let b = call(&paths[1], &list).unwrap();
+        assert_eq!(a["outcome"]["schema"], "oi.expression-list/v1");
+        assert_eq!(b["outcome"]["schema"], "oi.expression-list/v1");
+        assert_eq!(a["outcome"]["expressions"].as_array().unwrap().len(), 1);
+        assert_eq!(b["outcome"]["expressions"].as_array().unwrap().len(), 1);
+        assert_eq!(
+            a["outcome"]["expressions"][0]["expression_ref"],
+            "expression:endpoint-a"
+        );
+        assert_eq!(
+            b["outcome"]["expressions"][0]["expression_ref"],
+            "expression:endpoint-b"
+        );
+        let inventory = |parent: &std::path::Path| {
+            let mut entries = std::fs::read_dir(parent)
+                .unwrap()
+                .map(|entry| {
+                    let entry = entry.unwrap();
+                    let metadata = std::fs::symlink_metadata(entry.path()).unwrap();
+                    (
+                        entry.file_name(),
+                        metadata.ino(),
+                        metadata.uid(),
+                        metadata.permissions().mode(),
+                    )
+                })
+                .collect::<Vec<_>>();
+            entries.sort();
+            entries
+        };
+        let other_inventory = inventory(parent_b);
+        assert_eq!(
+            socket_path_for_directory(&root.join("profile-a")).unwrap(),
+            paths[0]
+        );
+        assert_eq!(inventory(parent_b), other_inventory);
+        drop(server_a);
+        assert!(!paths[0].exists());
+        assert_eq!(std::fs::read(&canary_a).unwrap(), b"owner-a retained bytes");
+        assert_eq!(inventory(parent_b), other_inventory);
+        assert_eq!(call(&paths[1], &list).unwrap(), b);
+        assert_eq!(std::fs::read(&canary_b).unwrap(), b"owner-b retained bytes");
+        drop(server_b);
+        assert!(!paths[1].exists());
+    }
+
+    #[test]
     fn a_short_home_keeps_its_own_endpoint() {
         let directory = std::path::Path::new("/Users/someone/Library/epilogos");
         assert_eq!(
             choose_endpoint(directory, std::path::Path::new("/tmp")),
+            directory.join("expression.sock")
+        );
+        assert_eq!(
+            socket_path_for_directory(directory).unwrap(),
             directory.join("expression.sock")
         );
     }

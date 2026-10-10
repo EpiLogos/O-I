@@ -25,6 +25,8 @@ import {
 } from '../../../src/techne/m0m5/timeline/relations';
 import {lanesFromReading,type TimelineLane} from '../../../src/techne/m0m5/timeline/lanes';
 import {STANDING_LEGEND,type StandingVisual} from '../../../src/techne/m0m5/timeline/standing';
+import type {TechneTimeAxis,TimeAxisScope} from '../../../src/techne/m0m5/timeline/timeAxis';
+import {relationFieldState} from '../../../src/techne/m0m5/timeline/state';
 import './relationFieldView.css';
 
 // ---------------------------------------------------------------------------
@@ -124,6 +126,7 @@ export interface RelationFieldViewProps{
  reading:TechneReading;
  width?:number;
  initialMode?:RelationFieldMode;
+ timeAxis?:TechneTimeAxis;
  /** Selecting a relation routes through the SAME native selection path as
   * Canvas (`host.select(sceneId,null,bindingRef)`). Only called for a
   * relation carrying a native `relation_ref` (never for a derived,
@@ -136,13 +139,15 @@ export interface RelationFieldViewProps{
 
 const LANE_Y={dated:56,undated:150};
 
-export function RelationFieldView({reading,width=720,initialMode='relations',onSelectRelation,onOpenMember}:RelationFieldViewProps){
+export function RelationFieldView({reading,width=720,initialMode='relations',timeAxis,onSelectRelation,onOpenMember}:RelationFieldViewProps){
  const [mode,setMode]=useState<RelationFieldMode>(initialMode);
  const [standingFilter,setStandingFilter]=useState<ReadonlySet<StandingVisual>>(new Set());
  const [selected,setSelected]=useState<RelationEdge|null>(null);
  const field=useMemo(()=>relationField(reading),[reading]);
- const availability=useMemo(()=>projectionAvailability(reading),[reading]);
+ const availability=useMemo(()=>projectionAvailability(reading,timeAxis),[reading,timeAxis]);
+ const fieldState=useMemo(()=>relationFieldState(reading,mode,null,timeAxis?.window),[reading,mode,timeAxis]);
  const dated=useMemo(()=>datedParticipants(field),[field]);
+ const timeScopes=useMemo(()=>new Map(fieldState.relations.map(relation=>[relation.id,relation.time_scope])),[fieldState]);
 
  const toggleStanding=(visual:StandingVisual)=>{
   setStandingFilter(prev=>{
@@ -163,13 +168,13 @@ export function RelationFieldView({reading,width=720,initialMode='relations',onS
  const body=(()=>{
   if(mode==='phase'){
    const layout=phaseLayout(reading,field);
-   return <PhasePanel layout={layout} onSelectEdge={selectEdge} selected={selected}/>;
+   return <PhasePanel layout={layout} onSelectEdge={selectEdge} selected={selected} axis={timeAxis} timeScopes={timeScopes}/>;
   }
   if(mode==='activity'){
-   return <ActivityPanel layout={activityLayout(reading)}/>;
+   return <ActivityPanel layout={activityLayout(reading)} axis={timeAxis}/>;
   }
   const layout=arcLayoutForMode(field,mode,width,standingFilter);
-  return <ArcPanel layout={layout} onSelectEdge={selectEdge} onOpenMember={onOpenMember} selected={selected}/>;
+  return <ArcPanel layout={layout} onSelectEdge={selectEdge} onOpenMember={onOpenMember} selected={selected} timeScopes={timeScopes}/>;
  })();
 
  return <div className="relation-field-view">
@@ -177,8 +182,8 @@ export function RelationFieldView({reading,width=720,initialMode='relations',onS
    {RELATION_FIELD_MODES.map(m=>{
     const a=availabilityFor(m);
     return <button key={m} type="button" role="tab" aria-selected={mode===m} aria-pressed={mode===m}
-     disabled={a?!a.available:false} title={a?.reason??undefined}
-     onClick={()=>{setMode(m);setSelected(null);}}>{MODE_LABEL[m]}{a?.count?` · ${a.count}`:''}</button>;
+     disabled={a?!a.available:false} title={a?.reason??(a?.window_scope?`${a.window_scope.out_of_scope} outside the shared window · ${a.window_scope.unresolved} unresolved · ${a.window_scope.unpositioned} unpositioned`:undefined)}
+     onClick={()=>{setMode(m);setSelected(null);}}>{MODE_LABEL[m]}{a?.count?` · ${a.count}`:''}{a?.window_scope?.out_of_scope?` (${a.window_scope.out_of_scope} outside)`:''}</button>;
    })}
   </div>
   <div className="relation-field-filters" aria-label="Standing filter">
@@ -190,12 +195,12 @@ export function RelationFieldView({reading,width=720,initialMode='relations',onS
    {standingFilter.size>0&&<button type="button" onClick={clearStandingFilter}>Clear</button>}
   </div>
   <div className="relation-field-body">{body}</div>
-  {selected&&<RelationDetail edge={selected} onOpenMember={onOpenMember} onClose={()=>setSelected(null)}/>}
+  {selected&&<RelationDetail edge={selected} scope={timeScopes.get(selected.id)} onOpenMember={onOpenMember} onClose={()=>setSelected(null)}/>}
   <p className="relation-field-note">{dated.size} dated member{dated.size===1?'':'s'} · {field.participants.length-dated.size} undated — nothing here invents a date.</p>
  </div>;
 }
 
-function ArcPanel({layout,onSelectEdge,onOpenMember,selected}:{layout:RelationFieldArcLayout;onSelectEdge:(edge:RelationEdge)=>void;onOpenMember?:(ref:string)=>void;selected:RelationEdge|null}){
+function ArcPanel({layout,onSelectEdge,onOpenMember,selected,timeScopes}:{layout:RelationFieldArcLayout;onSelectEdge:(edge:RelationEdge)=>void;onOpenMember?:(ref:string)=>void;selected:RelationEdge|null;timeScopes:ReadonlyMap<string,TimeAxisScope>}){
  if(!layout.edges.length)return <p className="relation-field-empty">No relations in this projection (after the current standing filter).</p>;
  const xOf=new Map(layout.nodes.map(n=>[n.ref,n]));
  const height=Math.max(LANE_Y.undated+40,200);
@@ -212,8 +217,10 @@ function ArcPanel({layout,onSelectEdge,onOpenMember,selected}:{layout:RelationFi
    const controlY=Math.min(fromY,toY)-lift;
    const d=`M ${from.x} ${fromY} Q ${midX} ${controlY} ${to.x} ${toY}`;
    const isSelected=selected?.id===edge.id;
+   const scope=timeScopes.get(edge.id);
    return <path key={edge.id} d={d} tabIndex={0} role="button"
-    aria-label={`${edge.relation}: ${edge.from_ref} to ${edge.to_ref}, ${edge.standing_visual}${edge.temporal.state==='dated'?', dated':edge.temporal.state==='unresolved'?', unresolved date':''}`}
+    aria-label={`${edge.relation}: ${edge.from_ref} to ${edge.to_ref}, ${edge.standing_visual}${scope?`, ${scope.state}`:''}${edge.temporal.state==='dated'?', dated':edge.temporal.state==='unresolved'?', unresolved date':''}`}
+    data-time-scope={scope?.state} opacity={scope?.state==='out-of-scope'&&!isSelected?0.35:undefined}
     className={`relation-field-edge relation-field-standing-${edge.standing_visual}${isSelected?' relation-field-edge-selected':''}`}
     onClick={()=>onSelectEdge(edge)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onSelectEdge(edge);}}}/>;
   })}
@@ -224,7 +231,7 @@ function ArcPanel({layout,onSelectEdge,onOpenMember,selected}:{layout:RelationFi
  </svg>;
 }
 
-function PhasePanel({layout,onSelectEdge,selected}:{layout:RelationFieldPhaseLayout;onSelectEdge:(edge:RelationEdge)=>void;selected:RelationEdge|null}){
+function PhasePanel({layout,onSelectEdge,selected,axis,timeScopes}:{layout:RelationFieldPhaseLayout;onSelectEdge:(edge:RelationEdge)=>void;selected:RelationEdge|null;axis?:TechneTimeAxis;timeScopes:ReadonlyMap<string,TimeAxisScope>}){
  const positioned=layout.bands.filter(b=>b.fromMs!==null);
  const min=positioned.length?Math.min(...positioned.map(b=>b.fromMs as number)):0;
  const max=positioned.length?Math.max(...positioned.map(b=>b.toMs??b.fromMs as number)):min+1;
@@ -232,11 +239,11 @@ function PhasePanel({layout,onSelectEdge,selected}:{layout:RelationFieldPhaseLay
  return <div className="relation-field-phase">
   {layout.bands.length===0&&layout.cycles.length===0&&<p className="relation-field-empty">No validity intervals and no transformation cycles are disclosed — no phase is fabricated.</p>}
   {layout.bands.length>0&&<div className="relation-field-phase-bands">
-   {layout.bands.map(band=><div key={band.id} className="relation-field-phase-band-row" title={band.uncertainty??undefined}>
+   {layout.bands.map((band,index)=><div key={band.id} className="relation-field-phase-band-row" data-time-scope={axis?.bands[index]?.scope.state} title={[band.uncertainty,band.temporal_problem,axis?.bands[index]?.scope.state].filter(Boolean).join(" · ")||undefined}>
     <span className="relation-field-phase-band-id">{band.facet_ref??band.id}</span>
-    {band.fromMs===null?<span className="relation-field-phase-band-unpositioned">no wall-clock position disclosed</span>:
+    {band.fromMs===null?<span className="relation-field-phase-band-unpositioned">{band.temporal_problem?`Unresolved · ${band.temporal_problem}`:'no wall-clock position disclosed'}</span>:
      <div className="relation-field-phase-band-track"><span className="relation-field-phase-band-fill" style={{left:`${((band.fromMs-min)/span)*100}%`,width:`${Math.max(1,(((band.toMs??max)-band.fromMs)/span)*100)}%`}}/></div>}
-    {band.toMs===null&&band.fromMs!==null&&<span className="relation-field-phase-band-open">open-ended</span>}
+    {band.toMs===null&&band.fromMs!==null&&<span className="relation-field-phase-band-open">open-ended</span>}{axis?.bands[index]?.scope.state==='out-of-scope'&&<span>Outside window</span>}
    </div>)}
   </div>}
   {layout.cycles.length>0&&<div className="relation-field-phase-cycles">
@@ -244,24 +251,24 @@ function PhasePanel({layout,onSelectEdge,selected}:{layout:RelationFieldPhaseLay
    {layout.cycles.map((cycle,index)=><p key={index} className="relation-field-phase-cycle">
     {cycle.map((edge,i)=><span key={edge.id}>
      {i>0&&' → '}
-     <button type="button" className={`relation-field-cycle-edge relation-field-standing-${edge.standing_visual}${selected?.id===edge.id?' relation-field-edge-selected':''}`} onClick={()=>onSelectEdge(edge)}>{edge.from_ref} —{edge.relation}→ {edge.to_ref}</button>
+     <button type="button" title={timeScopes.get(edge.id)?.state} data-time-scope={timeScopes.get(edge.id)?.state} className={`relation-field-cycle-edge relation-field-standing-${edge.standing_visual}${selected?.id===edge.id?' relation-field-edge-selected':''}`} onClick={()=>onSelectEdge(edge)}>{edge.from_ref} —{edge.relation}→ {edge.to_ref}</button>
     </span>)}
    </p>)}
   </div>}
  </div>;
 }
 
-function ActivityPanel({layout}:{layout:RelationFieldActivityLayout}){
+function ActivityPanel({layout,axis}:{layout:RelationFieldActivityLayout;axis?:TechneTimeAxis}){
  if(!layout.lanes.length)return <p className="relation-field-empty">No DAY / NOW / session / run continuity facets are disclosed.</p>;
  return <div className="relation-field-activity">
   {layout.lanes.map(lane=><div key={lane.id} className="relation-field-activity-lane">
    <span className="relation-field-activity-lane-label">{lane.label}{lane.ref?` · ${lane.ref}`:''}</span>
-   <span className="relation-field-activity-lane-count">{lane.items.length} item{lane.items.length===1?'':'s'}</span>
+   <span className="relation-field-activity-lane-count">{lane.items.length} item{lane.items.length===1?'':'s'}{axis&&` · ${lane.items.filter(item=>axis.events.some(event=>(event.facet_ref??event.derived_ref)===item.id&&event.scope.state==='out-of-scope')).length} outside window`}</span>
   </div>)}
  </div>;
 }
 
-function RelationDetail({edge,onOpenMember,onClose}:{edge:RelationEdge;onOpenMember?:(ref:string)=>void;onClose:()=>void}){
+function RelationDetail({edge,scope,onOpenMember,onClose}:{edge:RelationEdge;scope?:TimeAxisScope;onOpenMember?:(ref:string)=>void;onClose:()=>void}){
  const standing=STANDING_LEGEND.find(l=>l.visual===edge.standing_visual);
  return <div className="relation-field-detail" role="group" aria-label="Selected relation">
   <header><h4>{edge.relation}</h4><button type="button" onClick={onClose} aria-label="Close relation detail">Close</button></header>
@@ -274,6 +281,7 @@ function RelationDetail({edge,onOpenMember,onClose}:{edge:RelationEdge;onOpenMem
    <dt>Identity</dt><dd>{edge.derived_id?'derived (no native relation_ref disclosed)':edge.id}</dd>
    <dt>Standing</dt><dd className={`relation-field-standing-${edge.standing_visual}`}>{standing?.label}{edge.standing_verbatim?` · "${edge.standing_verbatim}"`:''}</dd>
    <dt>Occurrence</dt><dd>{edge.temporal.state==='dated'?'dated':edge.temporal.state==='trans-temporal'?'trans-temporal (no temporal qualification disclosed)':`unresolved${edge.temporal.problem?` — ${edge.temporal.problem}`:''}`}</dd>
+   {scope&&<><dt>Shared window</dt><dd>{scope.state}{scope.state==='unresolved'?` · ${scope.reason}`:''}</dd></>}
    {edge.source_ref&&<><dt>Source</dt><dd>{edge.source_ref}</dd></>}
    {edge.evidence_refs.length>0&&<><dt>Evidence</dt><dd>{edge.evidence_refs.join(', ')}</dd></>}
    {edge.derivation_ref&&<><dt>Derivation</dt><dd>{edge.derivation_ref}</dd></>}

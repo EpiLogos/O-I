@@ -1,0 +1,5 @@
+.candidate-knowledge {display:flex;flex-direction:column;height:100%;min-height:0;overflow:hidden;background:var(--oi-surface, #202020);color:var(--oi-text, #ddd)}
+.candidate-knowledge > .knowledge-surface {flex:1;min-height:0}
+.candidate-knowledge-return {display:flex;align-items:center;gap:12px;padding:8px 12px;border-bottom:1px solid var(--oi-border, #444)}
+.candidate-knowledge-return span {overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.candidate-knowledge > [role=alert], .candidate-knowledge > [role=status] {margin:12px}

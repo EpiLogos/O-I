@@ -7,15 +7,15 @@
 
 import { clearSavedDraft, writeDraft } from "../workspace/drafts";
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
   type ReactNode,
 } from "react";
+import {KernelApiProvider} from './KernelContext';
+export {KernelApiProvider, useKernel} from './KernelContext';
 import { emitExpressionCue } from "../stage/cues";
 import {
   detectTransport,
@@ -54,6 +54,8 @@ export interface KernelApi {
   boot: KernelBootState;
   /** The first real state read has returned (success or failure). */
   stateSettled: boolean;
+  /** Read-only disclosure of this owner's existing native operation gate. */
+  operationReady: boolean;
   snapshot: KernelSnapshotState;
   receipts: KernelReceipt[];
   listing: SourceListingState | null;
@@ -85,16 +87,30 @@ const EMPTY_SNAPSHOT: KernelSnapshotState = { focus: {}, surfaces: {}, buffers: 
 // view changes must not retain another session-long copy in every window.
 const VIEW_RECEIPT_LIMIT = 256;
 
-const KernelContext = createContext<KernelApi | null>(null);
-
-export function useKernel(): KernelApi {
-  const context = useContext(KernelContext);
-  if (!context) throw new Error("useKernel outside KernelProvider");
-  return context;
+export interface KernelProviderProps {
+  children: ReactNode;
+  transport?: KernelTransportStatus;
+  operationEpoch?: string;
+  onReceipts?: (receipts: KernelReceipt[]) => void;
+  onAccessRetired?: () => void;
+  onResync?: NonNullable<Parameters<typeof subscribeTopic>[2]>;
+  onSubscriptionError?: (error: string) => void;
+  onSubscriptionHealthy?: () => void;
 }
-
-export function KernelProvider(props: { children: ReactNode }) {
-  const transport = useMemo(detectTransport, []);
+export function KernelProvider(props: KernelProviderProps) {
+  const transport = useMemo(() => props.transport ?? detectTransport(), [props.transport]);
+  const callbacks = useRef(props); callbacks.current = props;
+  const epochKey = JSON.stringify([props.operationEpoch, transport]);
+  const ownerEpoch = useRef({key: epochKey, generation: 0});
+  const operationAdmission = useRef(false);
+  const [operationReady, setOperationReady] = useState(false);
+  const publishOperationAdmission = useCallback((ready: boolean) => {
+    operationAdmission.current = ready; setOperationReady(ready);
+  }, []);
+  if (ownerEpoch.current.key !== epochKey) {
+    ownerEpoch.current = {key: epochKey, generation: ownerEpoch.current.generation + 1};
+    operationAdmission.current = false;
+  }
   const [boot, setBoot] = useState<KernelBootState>(transport.kind === "unavailable" ? { phase: "transport-unavailable", detail: transport.reason } : STARTING_BOOT);
   // BOOT-00: the window overlay's own gate. It settles the moment the
   // first `KernelOp::State` resolves (success or error) — independent of
@@ -113,16 +129,24 @@ export function KernelProvider(props: { children: ReactNode }) {
   // masked a real transport failure as "the state read did not serve".
   // Diagnostics read `lastOpError()` and always name the truth.
   const lastOpError = useRef<string | null>(null);
+  const opErrorRevision = useRef(0);
+  const subscriptionError = useRef<{message: string; revision: number} | null>(null);
   const reportOpError = useCallback((value: string | null) => {
+    ++opErrorRevision.current;
     lastOpError.current = value;
     setOpError(value);
   }, []);
   const dismissOpError = useCallback(() => reportOpError(null), [reportOpError]);
   const seenSeq = useRef(0);
+  const deliveredSeq = useRef(0);
+  const receiptOwner = useRef<string | null>(null);
   const applySerial = useRef(Promise.resolve());
 
   const admitReceipts = useCallback((incoming: KernelReceipt[]) => {
     if (incoming.length === 0) return;
+    const delivered = incoming.filter(receipt => receipt.seq > deliveredSeq.current);
+    for (const receipt of delivered) deliveredSeq.current = Math.max(deliveredSeq.current, receipt.seq);
+    if (delivered.length) callbacks.current.onReceipts?.(delivered);
     setReceipts((held) => {
       const known = new Set(held.map((receipt) => receipt.seq));
       const fresh = incoming.filter((receipt) => receipt.seq > seenSeq.current || !known.has(receipt.seq));
@@ -162,10 +186,14 @@ export function KernelProvider(props: { children: ReactNode }) {
 
   const apply = useCallback(
     async (op: KernelOp): Promise<KernelOutcome | null> => {
+      if (epochKey !== ownerEpoch.current.key) {reportOpError('This operation captured retired owner access. Your work remains open.'); return null;}
+      const origin = ownerEpoch.current.generation;
       // Serialise ops through one queue so seq order and buffer state stay
       // deterministic under rapid typing.
       const run = applySerial.current.then(async () => {
+        if (!operationAdmission.current || origin !== ownerEpoch.current.generation) {reportOpError('The operation belongs to retired owner access. Your work remains open.'); return null;}
         const call = await kernelOp(transport, op);
+        if (!operationAdmission.current || origin !== ownerEpoch.current.generation) {reportOpError('The owner changed while the operation was in progress. Reread its result before continuing.'); return null;}
         reportOpError(call.error ?? null);
         if ("source_ref" in op && op.source_ref && op.op.startsWith("source_")) {
           const ref = op.source_ref;
@@ -199,23 +227,28 @@ export function KernelProvider(props: { children: ReactNode }) {
       applySerial.current = run.then(() => undefined, () => undefined);
       return run;
     },
-    [merge, transport, reportOpError],
+    [merge, transport, reportOpError, epochKey],
   );
 
   const refreshListing = useCallback(async () => {
+    if (epochKey !== ownerEpoch.current.key) return;
+    const origin = ownerEpoch.current.generation;
+    if (!operationAdmission.current) return;
     const call = await kernelOp(transport, { op: "sources_list" });
+    if (!operationAdmission.current || origin !== ownerEpoch.current.generation) return;
     if (call.outcome && call.outcome.result === "sources_listed") {
       merge(call.outcome);
       setListingError(null);
     } else {
       setListingError(call.error ?? "the listing did not serve");
     }
-  }, [merge, transport]);
+  }, [merge, transport, epochKey]);
 
   const openSource = useCallback(
     async (sourceRef: SourceRef, surfaceId: string) => {
-      await apply({ op: "surface_open", surface_id: surfaceId, kind: "source", source_ref: sourceRef, title: sourceRef });
-      await apply({ op: "source_open", source_ref: sourceRef });
+      const origin = ownerEpoch.current.generation;
+      if (!await apply({ op: "surface_open", surface_id: surfaceId, kind: "source", source_ref: sourceRef, title: sourceRef }) || origin !== ownerEpoch.current.generation) return;
+      if (!await apply({ op: "source_open", source_ref: sourceRef }) || origin !== ownerEpoch.current.generation) return;
       await apply({ op: "surface_focus", surface_id: surfaceId });
     },
     [apply],
@@ -280,12 +313,23 @@ export function KernelProvider(props: { children: ReactNode }) {
   // once by cursor (the command the unit requires the host to expose).
   useEffect(() => {
     let alive = true;
+    const origin = ownerEpoch.current.generation;
+    publishOperationAdmission(false);
+    if (receiptOwner.current !== epochKey) {
+      receiptOwner.current = epochKey;
+      seenSeq.current = 0;
+      deliveredSeq.current = 0;
+      setReceipts([]);
+    }
+    const current = () => alive && origin === ownerEpoch.current.generation;
     let subscription: { unsubscribe: () => void } | null = null;
+    let resync: ReturnType<typeof setTimeout> | null = null;
     void (async () => {
       const initial = await kernelOp(transport, { op: "state" });
-      if (!alive) return;
+      if (!current()) return;
       if (initial.outcome && initial.outcome.result === "state") {
         merge(initial.outcome);
+        publishOperationAdmission(true);
       }
       setStateSettled(true);
       // BOOT-00/02/03/04: the boot phase, derived only from the transport,
@@ -298,7 +342,7 @@ export function KernelProvider(props: { children: ReactNode }) {
       } else {
         setBoot({ phase: "starting", detail: "Checking Central ground…" });
         const groundCall = await kernelOp(transport, { op: "ground", request: { action: "status" } });
-        if (alive) {
+        if (current()) {
           if (groundCall.error || groundCall.outcome?.result !== "ground_reading") {
             setBoot({ phase: "ground-inaccessible", detail: groundCall.error ?? "Central's ground status could not be read" });
           } else {
@@ -307,7 +351,7 @@ export function KernelProvider(props: { children: ReactNode }) {
               setBoot({ phase: "ground-unrecognised", detail: "No default Central selected" });
             } else {
               const recognizeCall = await kernelOp(transport, { op: "ground", request: { action: "recognize", path: personalGround } });
-              if (alive) {
+              if (current()) {
                 const recognized = recognizeCall.outcome?.result === "ground_reading" ? (recognizeCall.outcome.reading as Record<string, unknown>) : undefined;
                 const access = recognized?.access as { readable?: boolean; searchable?: boolean } | undefined;
                 if (recognizeCall.error || !recognized || recognized.outcome !== "recognized" || !access?.readable || !access?.searchable) {
@@ -327,41 +371,66 @@ export function KernelProvider(props: { children: ReactNode }) {
       // through the subscription below; the backlog never blocks the boot.
       try {
         const backlog = await eventsSince(transport, 1);
-        if (alive) admitReceipts(backlog);
+        if (current()) admitReceipts(backlog);
       } catch {
-        if (alive) admitReceipts([]);
+        if (current()) admitReceipts([]);
       }
       // Other native windows share this kernel, so pushed receipts mean this
       // window's pulled state may be behind. The re-pull is coalesced: a
       // burst of receipts is one trailing `state` read, not one per receipt
       // (every read is a process spawn on the shared kernel seam).
-      let resync: ReturnType<typeof setTimeout> | null = null;
       const requestResync = () => {
         if (resync) clearTimeout(resync);
         resync = setTimeout(() => {
           resync = null;
           if (!alive) return;
-          void kernelOp(transport, { op: "state" }).then(call => { if (alive && call.outcome) merge(call.outcome); });
+          const generation = ownerEpoch.current.generation;
+          void kernelOp(transport, { op: "state" }).then(call => { if (alive && operationAdmission.current && generation === ownerEpoch.current.generation && call.outcome) merge(call.outcome); });
         }, 200);
       };
       subscription = await subscribeTopic(transport, (receipt) => {
         if (!alive) return;
         admitReceipts([receipt]);
         if (transport.kind === "tauri") requestResync();
-      });
+      }, async (page, lifetime) => {
+        if (!alive || !lifetime.isCurrent()) return;
+        ++ownerEpoch.current.generation;
+        publishOperationAdmission(false);
+        callbacks.current.onAccessRetired?.();
+        const call = await kernelOp(transport, {op: 'world_read'}, lifetime.signal);
+        if (!alive || !lifetime.isCurrent()) return;
+        if (call.error || call.outcome?.result !== 'world_read') throw Error(call.error ?? 'The native World did not return its recovery snapshot');
+        merge(call.outcome);
+        seenSeq.current = page.latest_seq;
+        deliveredSeq.current = page.latest_seq;
+        setReceipts([]);
+        await callbacks.current.onResync?.(page, lifetime);
+        if (alive && lifetime.isCurrent()) publishOperationAdmission(true);
+      }, error => {if (alive) {reportOpError(error); subscriptionError.current = {message: error, revision: opErrorRevision.current}; callbacks.current.onSubscriptionError?.(error);}},
+      () => {if (alive) {
+        // A qualified replay clears its own transport failure only. A newer
+        // operation refusal remains available for the human to inspect.
+        if (subscriptionError.current !== null && opErrorRevision.current === subscriptionError.current.revision && lastOpError.current === subscriptionError.current.message) reportOpError(null);
+        subscriptionError.current = null;
+        callbacks.current.onSubscriptionHealthy?.();
+      }});
       if (!alive) subscription?.unsubscribe();
     })();
     return () => {
       alive = false;
+      publishOperationAdmission(false);
+      ++ownerEpoch.current.generation;
+      if (resync) clearTimeout(resync);
       subscription?.unsubscribe();
     };
-  }, [admitReceipts, merge, transport]);
+  }, [admitReceipts, merge, transport, epochKey, publishOperationAdmission]);
 
   const api: KernelApi = useMemo(
     () => ({
       transport,
       boot,
       stateSettled,
+      operationReady: operationReady && operationAdmission.current,
       snapshot,
       receipts,
       listing,
@@ -385,6 +454,7 @@ export function KernelProvider(props: { children: ReactNode }) {
       transport,
       boot,
       stateSettled,
+      operationReady,
       snapshot,
       receipts,
       listing,
@@ -437,5 +507,5 @@ export function KernelProvider(props: { children: ReactNode }) {
     emitExpressionCue({ kind: "app.opening", label: "Opening your world", detail: boot.detail });
   }, [stateSettled, boot.detail]);
 
-  return <KernelContext.Provider value={api}>{props.children}</KernelContext.Provider>;
+  return <KernelApiProvider value={api}>{props.children}</KernelApiProvider>;
 }

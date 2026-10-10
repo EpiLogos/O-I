@@ -4714,6 +4714,17 @@ impl Kernel {
                 let mut next = act.clone();
                 let loaded =
                     self.world_gesture_material(&next, role.as_deref(), material.as_ref())?;
+                if let Some(select) = &material {
+                    if let Some(pin) = &select.revision {
+                        if pin != &loaded.revision {
+                            let reference = select
+                                .file_ref
+                                .clone()
+                                .or(select.expression_ref.clone());
+                            return Ok(drift("gesture", &reference, pin, &loaded.revision));
+                        }
+                    }
+                }
                 let (scene_ref, body_role) = Self::gesture_scene(
                     &loaded,
                     &gesture,

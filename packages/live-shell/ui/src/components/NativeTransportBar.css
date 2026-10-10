@@ -1,0 +1,88 @@
+/* Expressions transport in the shell bar. Shell tokens only; no native colour. */
+.native-transport{display:flex;align-items:center;flex:1 1 auto;min-width:0;overflow:hidden}
+.native-transport-row{display:flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0;white-space:nowrap}
+.native-transport-group{display:inline-flex;align-items:center;gap:2px;flex:none}
+.native-transport button{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border:1px solid var(--line);border-radius:3px;background:var(--bg-2);color:var(--text);font-size:11px;line-height:1}
+.native-transport button[aria-pressed=true]{background:var(--bg-3);color:var(--accent);border-color:var(--accent)}
+.native-transport button:disabled{opacity:.4;cursor:default}
+.native-transport-name{display:inline-block;min-width:64px;max-width:160px;overflow:hidden;text-overflow:ellipsis;font-size:11px;color:var(--text);padding:0 4px}
+.native-transport-scrub{flex:1 1 120px;min-width:72px;max-width:300px;height:22px;margin:0;padding:0;accent-color:var(--accent);background:transparent;border:0;cursor:pointer}
+.native-transport-scrub:disabled{opacity:.4;cursor:default}
+.native-transport-scrub:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
+.native-transport-time{display:inline-flex;flex-direction:column;flex:none;line-height:1.15;font-variant-numeric:tabular-nums}
+.native-transport-time small{color:var(--text-dim);font-size:9px}
+.native-transport-time output{font-size:11px}
+.native-transport-physics{flex:none;font-size:10px;color:var(--text-dim)}
+.native-transport-physics[data-held=true]{color:var(--accent)}
+.native-transport-record{color:var(--text-dim)}
+.native-transport-fault{margin:0;font-size:11px;color:var(--accent)}
+.native-transport-notice{font-size:11px;color:var(--text-dim)}
+/* The Arrangement Loop chip is a toggle of the same owner value the transport shows. */
+.native-composition .nar-chip.nar-loop{background:none;cursor:pointer;font:inherit;font-size:10px;line-height:20px}
+.native-composition .nar-chip.nar-loop[aria-pressed=true]{color:var(--accent);border-style:solid;border-color:var(--accent)}
+.native-composition .nar-chip.nar-loop:disabled{opacity:.4;cursor:default}
+
+/* Top bar controls (NativeBarControls.tsx). The bar is a size container: wide, every group sits inline; narrow, the Scene and save
+ * group folds behind the overflow button and the tool rail shows single letters (full names stay as accessible names). */
+.native-transport{container-type:inline-size;container-name:bar;overflow:visible}
+.native-transport input[type=text],.native-transport select{height:22px;border:1px solid var(--line);border-radius:3px;background:var(--bg-2);color:var(--text);font-size:11px;padding:0 4px}
+.native-transport select{max-width:104px}
+.native-transport input:focus-visible,.native-transport select:focus-visible,.native-transport button:focus-visible{outline:1px solid var(--accent);outline-offset:1px}
+.bar-value{display:inline-flex;align-items:center;gap:4px;flex:none;font-size:11px;position:relative}
+.bar-value-name{cursor:ew-resize;color:var(--text-dim);user-select:none;touch-action:none;padding:2px}
+.bar-value[data-automated=true] .bar-value-name{color:var(--accent)}
+.bar-value input{width:54px;font-variant-numeric:tabular-nums;text-align:right}
+.bar-value-effective{color:var(--text-dim);font-size:10px;font-variant-numeric:tabular-nums}
+.bar-value-fault,.bar-fault{position:absolute;top:100%;left:0;z-index:40;padding:2px 6px;border:1px solid var(--accent);border-radius:3px;background:var(--bg-2);color:var(--accent);font-size:10px;white-space:normal;width:max-content;max-width:240px}
+.bar-tools,.bar-pointer{display:inline-flex;align-items:center;gap:2px;flex:none;position:relative}
+.bar-tools{padding:1px;border:1px solid var(--line);border-radius:4px}
+.native-transport .bar-tool{border-color:transparent;background:transparent}
+.bar-tool-abbr{display:none}
+.bar-engine{display:inline-flex;align-items:center;gap:4px;flex:none;font-size:10px;color:var(--text-dim)}
+.bar-engine i{width:8px;height:8px;border-radius:50%;border:1px solid var(--text-dim);background:transparent}
+.bar-engine[data-kind=running] i{background:var(--text-dim)}
+.bar-engine[data-kind=held] i{border-color:var(--accent)}
+.bar-engine[data-kind=recording]{color:var(--accent)}
+.bar-engine[data-kind=recording] i{background:var(--accent);border-color:var(--accent)}
+.native-transport-overflow{display:contents}
+.native-transport-more{display:none!important}
+.native-transport-more-panel{display:contents}
+@container bar (max-width: 1180px) {
+  .native-transport-overflow{order:9;display:block;position:relative;flex:none;margin-left:auto}
+  .native-transport-more{display:inline-grid!important}
+  .native-transport-more-panel{display:none;position:absolute;right:0;top:calc(100% + 4px);z-index:40;flex-direction:column;align-items:flex-start;gap:6px;padding:8px;min-width:240px;border:1px solid var(--line);border-radius:4px;background:var(--bg-2);box-shadow:0 6px 18px rgb(0 0 0/.35)}
+  .native-transport-overflow[data-open=true] .native-transport-more-panel{display:flex}
+  .native-transport-more-panel .native-transport-scrub{max-width:none;width:100%}
+}
+@container bar (max-width: 760px) {
+  .bar-tool-full{display:none}
+  .bar-tool-abbr{display:inline}
+  .native-transport-row{gap:4px}
+  .bar-value input{width:46px}
+  .bar-engine{font-size:0}
+  .bar-engine i{font-size:10px}
+  .native-transport-take-mode{max-width:72px}
+}
+
+/* Order places the secondary controls beside the ones they belong with while the panel is inline (display:contents). */
+.native-transport-take-mode{order:0}
+.native-transport-take{order:1}
+.bar-tools,.bar-pointer,.bar-engine{order:2}
+.native-transport-more-panel > :not(.native-transport-take-mode){order:3}
+.native-transport-row{position:relative}
+@container bar (max-width: 760px) {
+  /* A tool-options strip under the bar: the pointer group keeps its place in the flow of the work without taking bar width. */
+  .bar-pointer{position:absolute;order:9;left:0;top:calc(100% + 36px);z-index:40;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--bg-2);box-shadow:0 6px 18px rgb(0 0 0/.35)}
+}
+
+/* Automation recording: A arms, the dot lights while a take records, the orange return button exists only while something is held off its automation. */
+.native-transport-take{display:inline-flex;align-items:center;gap:2px}
+.native-transport .native-transport-arm[aria-pressed=true]{color:var(--accent);border-color:var(--accent)}
+.native-transport .native-transport-record[aria-pressed=true]{color:#e5484d;border-color:#e5484d;background:var(--bg-3)}
+.native-transport .native-transport-resume{color:#f0a030;border-color:#f0a030;background:var(--bg-3)}
+@media (prefers-reduced-motion:no-preference){.native-transport .native-transport-record[aria-pressed=true]{animation:bar-take-pulse 1.2s ease-in-out infinite}}
+@keyframes bar-take-pulse{50%{opacity:.55}}
+
+/* Second row: the pinned-controls strip. The section becomes a column so the pins sit under the transport row. */
+.native-transport{flex-direction:column;align-items:stretch;justify-content:center;gap:4px}
+.native-transport-pins{min-width:0}

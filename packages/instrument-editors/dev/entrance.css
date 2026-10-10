@@ -1,0 +1,3 @@
+html,body,#root{height:100%;margin:0;background:#27292d;color:#e4e5e6;font:12px system-ui}main{max-width:1440px;margin:auto;padding:16px}h1{font-size:18px;margin:0}header p{color:#aeb1b6}.editor-workbench{height:620px;border:1px solid #686b71;resize:both;overflow:auto}.instrument-frame{height:100%;box-sizing:border-box}.instrument-content{min-height:0;flex:1}.instrument-frame--folded{height:32px}.instrument-content>*{height:100%}pre{white-space:pre-wrap;overflow-wrap:anywhere}aside{border:1px solid #686b71;padding:12px}
+
+.editor-slot{height:100%}.editor-slot[hidden]{display:none!important}nav{display:flex;gap:6px;margin:10px 0}nav button{color:inherit;background:#41454b;border:1px solid #62656a;padding:5px 10px}nav button[aria-pressed=true]{color:#ffbe00}

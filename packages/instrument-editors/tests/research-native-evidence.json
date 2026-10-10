@@ -1,0 +1,462 @@
+{
+  "bridge": "http://127.0.0.1:4186",
+  "before": {
+    "collections": [],
+    "entities": {},
+    "expression_ref": "expression:research-editor-aabc77b3-e462-4b37-8bb2-eed4f6bdc6b3",
+    "profiles": [],
+    "provenance": [],
+    "refinements": [],
+    "relations": {},
+    "representations": [],
+    "revision": 1,
+    "scenes": [
+      {
+        "body": null,
+        "entity_refs": [],
+        "revision": 1,
+        "scene_ref": "expression:research-editor-aabc77b3-e462-4b37-8bb2-eed4f6bdc6b3:scene:main",
+        "title": "Main",
+        "triggers": []
+      }
+    ],
+    "schema": "oi.expression/v1",
+    "selection": {
+      "entity_ref": null,
+      "scene_ref": "expression:research-editor-aabc77b3-e462-4b37-8bb2-eed4f6bdc6b3:scene:main"
+    },
+    "title": "Research editor native presentation proof"
+  },
+  "refusal": {
+    "error": "Invalid or unbounded research Scene material",
+    "ok": false
+  },
+  "afterRefusal": {
+    "collections": [],
+    "entities": {},
+    "expression_ref": "expression:research-editor-aabc77b3-e462-4b37-8bb2-eed4f6bdc6b3",
+    "profiles": [],
+    "provenance": [],
+    "refinements": [],
+    "relations": {},
+    "representations": [],
+    "revision": 1,
+    "scenes": [
+      {
+        "body": null,
+        "entity_refs": [],
+        "revision": 1,
+        "scene_ref": "expression:research-editor-aabc77b3-e462-4b37-8bb2-eed4f6bdc6b3:scene:main",
+        "title": "Main",
+        "triggers": []
+      }
+    ],
+    "schema": "oi.expression/v1",
+    "selection": {
+      "entity_ref": null,
+      "scene_ref": "expression:research-editor-aabc77b3-e462-4b37-8bb2-eed4f6bdc6b3:scene:main"
+    },
+    "title": "Research editor native presentation proof"
+  },
+  "retainedInput": [
+    {
+      "key": "viewport:timeline",
+      "pending": 0,
+      "error": "Invalid or unbounded research Scene material"
+    }
+  ],
+  "pendingPublications": [
+    {
+      "draft": true,
+      "operations": [
+        {
+          "key": "viewport:timeline",
+          "pending": 1
+        }
+      ]
+    },
+    {
+      "draft": true,
+      "operations": [
+        {
+          "key": "viewport:timeline",
+          "pending": 0,
+          "error": "Invalid or unbounded research Scene material"
+        }
+      ]
+    }
+  ],
+  "historicalReadback": {
+    "collections": [],
+    "entities": {},
+    "expression_ref": "expression:research-editor-aabc77b3-e462-4b37-8bb2-eed4f6bdc6b3",
+    "profiles": [],
+    "provenance": [],
+    "refinements": [],
+    "relations": {},
+    "representations": [],
+    "revision": 2,
+    "scenes": [
+      {
+        "body": null,
+        "entity_refs": [],
+        "presentation": {
+          "saved": {
+            "automation": [],
+            "character": "An arrangement, waiting to happen.",
+            "composition": {
+              "carryStation": false,
+              "carryTint": true,
+              "focus": "parallel",
+              "focusDuration": 4,
+              "frequencyDriver": "manual",
+              "layout": "free",
+              "plane": "XY"
+            },
+            "duration": 12,
+            "engine": {
+              "autoFitSizes": true,
+              "autoOscillate": true,
+              "autoSweep": false,
+              "backgroundMode": "solid",
+              "collisionEnabled": false,
+              "collisionMode": "obstacle",
+              "colorEnabled": true,
+              "colorMode": "linearGradient",
+              "dotShape": "circle",
+              "driveShape": "sine",
+              "focusOrder": "listed",
+              "fontFamily": "system-ui, -apple-system, sans-serif",
+              "fontWeight": 900,
+              "grainProfile": true,
+              "mediumDimension": "2D",
+              "mediumEnabled": false,
+              "mediumPlane": "vertical",
+              "morphEnabled": false,
+              "pairwiseEnabled": false,
+              "paletteSource": "custom",
+              "pointerClick": "pulse",
+              "pointerClickRadius": 0.45,
+              "pointerClickStrength": 2.2,
+              "pointerMode": "repel",
+              "relationalEnabled": false,
+              "relationalMode": "orbital",
+              "resonanceEnabled": true,
+              "resonatorMode": "resonator",
+              "sweepDirection": "ascent",
+              "trajectory": "toroidalHopf"
+            },
+            "entities": [],
+            "field": {
+              "background": "#f4f2eb",
+              "material": "ink",
+              "palette": [
+                "#252720",
+                "#252720"
+              ],
+              "params": {
+                "circulation": 1,
+                "contrast": 0.93,
+                "count": 62000,
+                "curlDepth": 0.2,
+                "densityPhase": 0.3,
+                "densityScale": 1,
+                "densityTether": 1,
+                "depth": 0.12,
+                "dispersion": 0.09,
+                "dominance": 0,
+                "edgeWeight": 0,
+                "elongation": 0.04,
+                "excitation": 0.6,
+                "frequency": 220,
+                "grain": 0.035,
+                "gravityFalloff": 2,
+                "gravitySoftening": 0.1,
+                "gravityX": 0,
+                "gravityY": 0,
+                "gravityZ": 0,
+                "halo": 0.13,
+                "irregularity": 0.35,
+                "opacity": 0.92,
+                "orientation": 0,
+                "pointerFalloff": 2,
+                "pointerRadius": 0.23,
+                "pointerStrength": 0.8,
+                "quadraticDrag": 0.2,
+                "recovery": 1.1,
+                "roundness": 0.95,
+                "size": 2.8,
+                "sizeBias": 1.6,
+                "snapRigidity": 1,
+                "softness": 0.15,
+                "speed": 0.7,
+                "speedLimit": 3,
+                "swirlRadius": 0.4,
+                "thermalJitter": 0,
+                "timeScale": 1,
+                "turbulence": 0.22,
+                "turbulenceScale": 1.2,
+                "vortexRadius": 0.4,
+                "zConfinement": 1
+              }
+            },
+            "id": "expression:research-editor-aabc77b3-e462-4b37-8bb2-eed4f6bdc6b3:scene:main",
+            "morph": {
+              "depth": 1,
+              "dwell": 0.3,
+              "law": "theta",
+              "phiOffset": 0,
+              "phiRate": 0.13,
+              "thetaOffset": 0,
+              "thetaRate": 0.08
+            },
+            "name": "Main",
+            "research": {
+              "cards": {},
+              "schema": "oi.research-scene/v1",
+              "strokes": [],
+              "timeline": {},
+              "views": {
+                "place": {
+                  "x": 23,
+                  "y": 41,
+                  "zoom": 4
+                },
+                "timeline": {
+                  "x": 1910,
+                  "y": 0,
+                  "zoom": 12
+                }
+              }
+            },
+            "text": [],
+            "toolbelt": [
+              {
+                "id": "speed",
+                "key": "timeScale",
+                "scope": "field"
+              },
+              {
+                "id": "spring",
+                "key": "recovery",
+                "scope": "field"
+              },
+              {
+                "id": "viscosity",
+                "key": "native_fluid__viscosity",
+                "scope": "field"
+              },
+              {
+                "id": "flow",
+                "key": "turbulence",
+                "scope": "field"
+              },
+              {
+                "id": "transition",
+                "key": "sequence.transition",
+                "scope": "selected"
+              },
+              {
+                "id": "blend",
+                "key": "native_morphProgress",
+                "scope": "field"
+              }
+            ],
+            "transition": 1.5,
+            "view": {
+              "mode": "2d",
+              "panX": 0,
+              "panY": 0,
+              "pitch": 0,
+              "yaw": 0,
+              "zoom": 1
+            }
+          },
+          "scene": {
+            "automation": [],
+            "character": "An arrangement, waiting to happen.",
+            "composition": {
+              "carryStation": false,
+              "carryTint": true,
+              "focus": "parallel",
+              "focusDuration": 4,
+              "frequencyDriver": "manual",
+              "layout": "free",
+              "plane": "XY"
+            },
+            "duration": 12,
+            "engine": {
+              "autoFitSizes": true,
+              "autoOscillate": true,
+              "autoSweep": false,
+              "backgroundMode": "solid",
+              "collisionEnabled": false,
+              "collisionMode": "obstacle",
+              "colorEnabled": true,
+              "colorMode": "linearGradient",
+              "dotShape": "circle",
+              "driveShape": "sine",
+              "focusOrder": "listed",
+              "fontFamily": "system-ui, -apple-system, sans-serif",
+              "fontWeight": 900,
+              "grainProfile": true,
+              "mediumDimension": "2D",
+              "mediumEnabled": false,
+              "mediumPlane": "vertical",
+              "morphEnabled": false,
+              "pairwiseEnabled": false,
+              "paletteSource": "custom",
+              "pointerClick": "pulse",
+              "pointerClickRadius": 0.45,
+              "pointerClickStrength": 2.2,
+              "pointerMode": "repel",
+              "relationalEnabled": false,
+              "relationalMode": "orbital",
+              "resonanceEnabled": true,
+              "resonatorMode": "resonator",
+              "sweepDirection": "ascent",
+              "trajectory": "toroidalHopf"
+            },
+            "entities": [],
+            "field": {
+              "background": "#f4f2eb",
+              "material": "ink",
+              "palette": [
+                "#252720",
+                "#252720"
+              ],
+              "params": {
+                "circulation": 1,
+                "contrast": 0.93,
+                "count": 62000,
+                "curlDepth": 0.2,
+                "densityPhase": 0.3,
+                "densityScale": 1,
+                "densityTether": 1,
+                "depth": 0.12,
+                "dispersion": 0.09,
+                "dominance": 0,
+                "edgeWeight": 0,
+                "elongation": 0.04,
+                "excitation": 0.6,
+                "frequency": 220,
+                "grain": 0.035,
+                "gravityFalloff": 2,
+                "gravitySoftening": 0.1,
+                "gravityX": 0,
+                "gravityY": 0,
+                "gravityZ": 0,
+                "halo": 0.13,
+                "irregularity": 0.35,
+                "opacity": 0.92,
+                "orientation": 0,
+                "pointerFalloff": 2,
+                "pointerRadius": 0.23,
+                "pointerStrength": 0.8,
+                "quadraticDrag": 0.2,
+                "recovery": 1.1,
+                "roundness": 0.95,
+                "size": 2.8,
+                "sizeBias": 1.6,
+                "snapRigidity": 1,
+                "softness": 0.15,
+                "speed": 0.7,
+                "speedLimit": 3,
+                "swirlRadius": 0.4,
+                "thermalJitter": 0,
+                "timeScale": 1,
+                "turbulence": 0.22,
+                "turbulenceScale": 1.2,
+                "vortexRadius": 0.4,
+                "zConfinement": 1
+              }
+            },
+            "id": "expression:research-editor-aabc77b3-e462-4b37-8bb2-eed4f6bdc6b3:scene:main",
+            "morph": {
+              "depth": 1,
+              "dwell": 0.3,
+              "law": "theta",
+              "phiOffset": 0,
+              "phiRate": 0.13,
+              "thetaOffset": 0,
+              "thetaRate": 0.08
+            },
+            "name": "Main",
+            "research": {
+              "cards": {},
+              "schema": "oi.research-scene/v1",
+              "strokes": [],
+              "timeline": {},
+              "views": {
+                "place": {
+                  "x": 23,
+                  "y": 41,
+                  "zoom": 4
+                },
+                "timeline": {
+                  "x": 1910,
+                  "y": 0,
+                  "zoom": 12
+                }
+              }
+            },
+            "text": [],
+            "toolbelt": [
+              {
+                "id": "speed",
+                "key": "timeScale",
+                "scope": "field"
+              },
+              {
+                "id": "spring",
+                "key": "recovery",
+                "scope": "field"
+              },
+              {
+                "id": "viscosity",
+                "key": "native_fluid__viscosity",
+                "scope": "field"
+              },
+              {
+                "id": "flow",
+                "key": "turbulence",
+                "scope": "field"
+              },
+              {
+                "id": "transition",
+                "key": "sequence.transition",
+                "scope": "selected"
+              },
+              {
+                "id": "blend",
+                "key": "native_morphProgress",
+                "scope": "field"
+              }
+            ],
+            "transition": 1.5,
+            "view": {
+              "mode": "2d",
+              "panX": 0,
+              "panY": 0,
+              "pitch": 0,
+              "yaw": 0,
+              "zoom": 1
+            }
+          },
+          "schema": "oi.journey-scene/v1"
+        },
+        "revision": 2,
+        "scene_ref": "expression:research-editor-aabc77b3-e462-4b37-8bb2-eed4f6bdc6b3:scene:main",
+        "title": "Main",
+        "triggers": []
+      }
+    ],
+    "schema": "oi.expression/v1",
+    "selection": {
+      "entity_ref": null,
+      "scene_ref": "expression:research-editor-aabc77b3-e462-4b37-8bb2-eed4f6bdc6b3:scene:main"
+    },
+    "title": "Research editor native presentation proof"
+  },
+  "scope": "Controlled native presentation proof; no chronology/map rendered acceptance"
+}

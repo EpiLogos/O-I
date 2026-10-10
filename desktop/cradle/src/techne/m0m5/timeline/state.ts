@@ -33,6 +33,8 @@ import {
   type RelationProjectionMode,
 } from "./relations.ts";
 
+import {timeAxisEventScope, type TimeAxisScope} from "./timeAxis.ts";
+
 export const RELATION_FIELD_STATE_SCHEMA = "ql.techne.relation-field-state/v1";
 
 export interface RelationStateEntry {
@@ -48,6 +50,7 @@ export interface RelationStateEntry {
     facet_ref: string | null;
     problem: string | null;
   };
+  time_scope: TimeAxisScope;
   source_ref: string | null;
   evidence_refs: string[];
   derivation_ref: string | null;
@@ -110,6 +113,9 @@ export function relationFieldState(
         facet_ref: edge.temporal.facet_ref,
         problem: edge.temporal.problem,
       },
+      time_scope: edge.temporal.state === "trans-temporal" ? {state: "unpositioned"}
+        : edge.temporal.state === "unresolved" ? {state: "unresolved", reason: edge.temporal.problem ?? "The temporal qualification is unresolved"}
+        : timeAxisEventScope(reading.temporal!.find(facet => facet.facet_ref === edge.temporal.facet_ref)!, timeWindow),
       source_ref: edge.source_ref,
       evidence_refs: [...edge.evidence_refs],
       derivation_ref: edge.derivation_ref,

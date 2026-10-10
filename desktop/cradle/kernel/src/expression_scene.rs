@@ -126,6 +126,7 @@ pub fn validate(
         "propertyTakeRange",
         "toolbelt",
         "propertyTracks",
+        "parameterRacks",
         "pointerScope",
         "research",
         "epiWorld",
@@ -200,6 +201,10 @@ pub fn validate(
     for layer in presentation.scene["text"].as_array().unwrap() {
         role_slot(layer)?;
     }
+    // Scope follows native membership across hide/reveal and member paging.
+    // Presentation visibility never rebinds or retires an installed rack.
+    let rack_members = scene.entity_refs.iter().map(String::as_str).collect();
+    crate::expression_parameter_rack::validate(&presentation.scene, &rack_members)?;
     if let Some(world) = material.get("epiWorld") {
         // A retained native reading, never a replacement for the Scene or its
         // reset material. Exact source authority is re-read on reception.
@@ -612,6 +617,7 @@ pub fn fork(presentation: &mut Presentation, old: &str, new: &str) {
 /// mapping returns `None` to keep a ref. Source refs, evidence and caption
 /// text are never rewritten. Shared by native fork and act performance.
 pub fn remap_refs(material: &mut Value, remap: &dyn Fn(&str) -> Option<String>) {
+    crate::expression_parameter_rack::remap_refs(material, remap);
     let map = |value: &mut Value| {
         if let Some(next) = value.as_str().and_then(remap) {
             *value = Value::String(next);
@@ -759,6 +765,7 @@ pub fn set_parameter(presentation: &mut Presentation, reference: &str, key: &str
 /// knowledge relations; those remain owned by the source system.
 pub fn remove_entity(presentation: &mut Presentation, reference: &str) {
     for material in std::iter::once(&mut presentation.scene).chain(presentation.saved.iter_mut()) {
+        crate::expression_parameter_rack::remove_entity(material, reference);
         if let Some(entities) = material.get_mut("entities").and_then(Value::as_array_mut) {
             entities.retain(|entity| entity["id"] != reference);
         }
@@ -795,6 +802,39 @@ pub fn remove_entity(presentation: &mut Presentation, reference: &str) {
     }
 }
 
+/// Device widgets are an ordered list of identities in the shared Expression
+/// properties. The kernel admits only that bounded identity shape; the shell
+/// owns the closed family vocabulary and its instance rules.
+fn device_widgets(value: &Value) -> Result<(), String> {
+    let entries = value
+        .as_array()
+        .filter(|entries| entries.len() <= 64)
+        .ok_or_else(|| "Shared device widgets require a bounded list of 64 entries".to_string())?;
+    let mut ids = BTreeSet::new();
+    for entry in entries {
+        let fields = object(entry, "Shared device widget")?;
+        let (Some(id), Some(family)) = (
+            fields.get("id").and_then(Value::as_str),
+            fields.get("family").and_then(Value::as_str),
+        ) else {
+            return Err("Shared device widget requires string id and family".into());
+        };
+        if fields.len() != 2
+            || !(1..=128).contains(&id.chars().count())
+            || !(1..=64).contains(&family.len())
+            || !family
+                .bytes()
+                .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-')
+        {
+            return Err("Shared device widget is outside its identity bounds".into());
+        }
+        if !ids.insert(id) {
+            return Err("Shared device widget identities must be unique".into());
+        }
+    }
+    Ok(())
+}
+
 /// Expression-wide properties of the existing Journey authoring model. Scenes
 /// stay in Document.scenes; this contains no duplicate Scene or subject store.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -818,7 +858,7 @@ impl Composition {
             let fields = object(shared, "Shared authoring properties")?;
             if fields
                 .keys()
-                .any(|key| !["toolbelt", "values", "pointer"].contains(&key.as_str()))
+                .any(|key| !["toolbelt", "values", "pointer", "devices"].contains(&key.as_str()))
             {
                 return Err("Unknown shared authoring property".into());
             }
@@ -837,6 +877,9 @@ impl Composition {
                 .is_some_and(|values| values.len() <= 2048)
             {
                 return Err("Shared toolbelt requires a bounded entry list".into());
+            }
+            if let Some(devices) = fields.get("devices") {
+                device_widgets(devices)?;
             }
         }
         Ok(())
@@ -857,5 +900,67 @@ impl Composition {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Composition;
+    use serde_json::{json, Value};
+
+    fn composition(shared: Value) -> Composition {
+        Composition {
+            schema: "oi.journey-properties/v1".into(),
+            description: String::new(),
+            loop_playback: true,
+            shared: Some(shared),
+        }
+    }
+
+    #[test]
+    fn shared_device_widgets_admit_only_the_bounded_ordered_identity_list() {
+        let with_devices = |devices: Value| json!({"toolbelt": [], "values": {}, "pointer": {}, "devices": devices});
+        assert!(
+            composition(json!({"toolbelt": [], "values": {}, "pointer": {}}))
+                .validate()
+                .is_ok()
+        );
+        assert!(composition(with_devices(json!([]))).validate().is_ok());
+        assert!(composition(with_devices(json!([
+            {"id": "physics-1", "family": "physics"},
+            {"id": "force-2", "family": "force"}
+        ])))
+        .validate()
+        .is_ok());
+
+        let oversized: Vec<Value> = (0..65)
+            .map(|index| json!({"id": format!("force-{index}"), "family": "force"}))
+            .collect();
+        let refused = [
+            json!({"id": "physics-1", "family": "physics"}),
+            json!([{"id": "a", "family": "physics"}, {"id": "a", "family": "force"}]),
+            json!([{"id": "a", "family": "physics", "extra": true}]),
+            json!([{"id": "a"}]),
+            json!([{"id": 1, "family": "physics"}]),
+            json!([{"id": "", "family": "physics"}]),
+            json!([{"id": "x".repeat(129), "family": "physics"}]),
+            json!([{"id": "a", "family": "Physics"}]),
+            json!([{"id": "a", "family": "phys ics"}]),
+            json!([{"id": "a", "family": ""}]),
+            json!([{"id": "a", "family": "x".repeat(65)}]),
+            Value::Array(oversized),
+        ];
+        for devices in refused {
+            assert!(
+                composition(with_devices(devices.clone()))
+                    .validate()
+                    .is_err(),
+                "accepted {devices}"
+            );
+        }
+
+        let mut unknown = with_devices(json!([]));
+        unknown["authority"] = json!("write-anywhere");
+        assert!(composition(unknown).validate().is_err());
     }
 }

@@ -15,6 +15,10 @@
       "0/1/2": {
         "label": "Central + Actuation + AIKit",
         "products": ["central", "actuation", "ai-kit"]
+      },
+      "full-suite": {
+        "label": "Central + Actuation + AIKit + Software Factory + Workcell + Quaternal Logic",
+        "products": ["central", "actuation", "ai-kit", "software-factory", "workcell", "quaternal-logic"]
       }
     }
   },

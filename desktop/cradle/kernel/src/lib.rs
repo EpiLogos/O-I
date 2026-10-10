@@ -51,6 +51,7 @@ pub mod expression_blueprint;
 pub mod expression_carrier;
 pub mod expression_file;
 pub mod expression_material;
+pub mod expression_parameter_rack;
 pub mod expression_performance;
 pub mod expression_performance_act;
 pub mod expression_performance_assets;
@@ -246,6 +247,9 @@ pub struct Kernel {
     encounter_refs: BTreeMap<String, (SemanticRef, focus::ProjectRef)>,
     knowledge_projects: BTreeMap<String, Option<focus::ProjectRef>>,
     reads: read_cache::OwnerReadCache,
+    // The temporal projection's answer horizon, shared by the ordered path
+    // and the prepared read that runs outside the kernel mutex.
+    temporal_reads: std::sync::Arc<std::sync::Mutex<read_cache::OwnerReadCache>>,
 }
 
 // ---------------------------------------------------------------------------
@@ -709,6 +713,11 @@ pub enum KernelOp {
     /// Workcell's own placement/status reading (`workcell status --json`),
     /// beside the Factory reads — placement is Workcell's, never the desktop's.
     WorkcellStatusRead,
+    /// The read-only temporal-events field (`oi.temporal-events/v1`) over
+    /// the streams the adapters already wire — no second store.
+    TemporalEventsRead {
+        query: temporal_events::TemporalQuery,
+    },
     /// The Agent Wiki operational projection behind one source
     /// (`aikit --json wiki projection read --file <path>`): the current body,
     /// its exact SHA-256 revision and the attributed feedback ledger. AIKit
@@ -807,6 +816,11 @@ pub enum KernelOp {
     /// `SystemCompositionRead` discovers. A failed or non-conforming read
     /// is a named degradation on the mount, never an invented contribution.
     ConfigRegistryRead,
+    ConfigCapabilitiesRead,
+    ConfigReset {
+        setting_ref: String,
+        scope: configuration::ConfigScope,
+    },
     /// `oi.config-resolution/v1` per (setting, scope): desired folded by
     /// the engine's own desired store, native axes passed through
     /// unmodified from the owner's v2 reading (09 §7). A refused pairing
@@ -830,12 +844,21 @@ pub enum KernelOp {
     ConfigPlan {
         requests: Vec<configuration::ConfigRequest>,
     },
+    /// Admit one complete batch before the caller reviews its owner plans.
+    ConfigPlanReviewed {
+        requests: Vec<configuration::ConfigRequest>,
+    },
     /// Apply the requests under ONE client-minted ChangeSet (09 §8) through
     /// `oi config apply`: the engine validates, orchestrates the owner
     /// verbs, takes the re-read verification (09 §9) and persists; the
     /// executed ChangeSet and owner-minted receipts cross back verbatim.
     ConfigApply {
         requests: Vec<configuration::ConfigRequest>,
+    },
+    /// Exact reviewed owner plans; legacy request application remains explicit.
+    ConfigApplyReviewed {
+        changeset: serde_json::Value,
+        plans: Vec<serde_json::Value>,
     },
     /// The stored `oi.profile/v1` documents beside the explicit active
     /// mark (09 §12).
@@ -1201,6 +1224,9 @@ pub enum KernelOpResult {
     WorkcellStatusReading {
         data: serde_json::Value,
     },
+    TemporalEventsReading {
+        document: serde_json::Value,
+    },
     /// An AIKit inhabitation reading (the envelope's `data`, verbatim) and the
     /// envelope's own warnings, carried so the renderer can name them.
     InhabitationReading {
@@ -1266,6 +1292,9 @@ pub enum KernelOpResult {
     ConfigRegistryReading {
         reading: configuration::RegistryReading,
     },
+    ConfigCapabilitiesReading {
+        document: serde_json::Value,
+    },
     /// One resolution per requested pair, in order (09 §7 documents
     /// verbatim; refused pairings as named reconciliations).
     ConfigResolutions {
@@ -1284,6 +1313,11 @@ pub enum KernelOpResult {
     ConfigPlanned {
         plans: Vec<serde_json::Value>,
         errors: Vec<serde_json::Value>,
+    },
+    /// The admitted ChangeSet beside the complete raw owner-plan batch.
+    ConfigReviewedPlanned {
+        changeset: serde_json::Value,
+        plans: Vec<serde_json::Value>,
     },
     /// The executed ChangeSet beside the owner-minted receipts (09 §8/§9),
     /// verbatim. `owner_receipts` — not `receipts` — so the field never
@@ -1440,6 +1474,9 @@ impl Kernel {
             encounter_refs: BTreeMap::new(),
             knowledge_projects: BTreeMap::new(),
             reads: read_cache::OwnerReadCache::default(),
+            temporal_reads: std::sync::Arc::new(std::sync::Mutex::new(
+                read_cache::OwnerReadCache::default(),
+            )),
         }
     }
 
@@ -2243,10 +2280,22 @@ impl Kernel {
     /// Capture immutable read inputs only. Hosts execute the returned work
     /// after releasing their kernel mutex; no source or event state is cloned.
     pub fn prepare_owner_read(&mut self, op: &KernelOp) -> Option<owner_read::PreparedRead> {
+        // The temporal projection's inputs are captured here, under the
+        // kernel lock; its owner processes then run outside the ordered
+        // queue like every other independent owner read.
+        let temporal = match op {
+            KernelOp::TemporalEventsRead { .. } => Some(owner_read::TemporalReadInputs {
+                receipts: self.log.since(1),
+                cwd: std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from(".")),
+                cache: std::sync::Arc::clone(&self.temporal_reads),
+            }),
+            _ => None,
+        };
         owner_read::PreparedRead::prepare(
             &self.client,
             self.reads.get("world", read_cache::WORLD_TTL),
             op,
+            temporal,
         )
     }
 
@@ -2435,6 +2484,7 @@ impl Kernel {
             | KernelOp::CompositionRead { .. }
             | KernelOp::SystemCompositionRead
             | KernelOp::ConfigRegistryRead
+            | KernelOp::ConfigCapabilitiesRead
             | KernelOp::ConfigResolutionsRead { .. } => self
                 .prepare_owner_read(&op)
                 .ok_or("Cannot prepare owner disclosure")?
@@ -3012,6 +3062,24 @@ impl Kernel {
                     result: KernelOpResult::WorkcellStatusReading { data },
                 })
             }
+            KernelOp::TemporalEventsRead { query } => {
+                let cwd = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
+                let answer = temporal_sources::read_field(
+                    &self.client,
+                    &self.temporal_reads,
+                    &self.log.since(1),
+                    cwd,
+                    &query,
+                )
+                .map_err(|error| error.to_string())?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::TemporalEventsReading {
+                        document: serde_json::to_value(answer)
+                            .map_err(|error| error.to_string())?,
+                    },
+                })
+            }
             KernelOp::WikiProjectionRead { root, path } => {
                 let aikit = std::env::var_os("OI_AIKIT_BIN")
                     .map(std::path::PathBuf::from)
@@ -3219,6 +3287,20 @@ impl Kernel {
                     result: KernelOpResult::ConfigPlanned { plans, errors },
                 })
             }
+            KernelOp::ConfigPlanReviewed { requests } => {
+                let root = self.world_map(false).ok();
+                let cwd = root
+                    .as_ref()
+                    .and_then(|value| value["root"].as_str())
+                    .map(std::path::PathBuf::from)
+                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
+                let (changeset, plans) =
+                    configuration::Client::discover().plan_reviewed(&cwd, &requests)?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::ConfigReviewedPlanned { changeset, plans },
+                })
+            }
             KernelOp::Setup { request } => {
                 // First installation must work before Central/root discovery.
                 let cwd = std::env::current_dir().map_err(|e| e.to_string())?;
@@ -3226,6 +3308,53 @@ impl Kernel {
                 Ok(KernelOpOutcome {
                     receipts: Vec::new(),
                     result: KernelOpResult::SetupReading { data },
+                })
+            }
+            KernelOp::ConfigReset { setting_ref, scope } => {
+                let root = self.world_map(false).ok();
+                let cwd = root
+                    .as_ref()
+                    .and_then(|value| value["root"].as_str())
+                    .map(std::path::PathBuf::from)
+                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
+                let (changeset, owner_receipts) =
+                    configuration::Client::discover().reset(&cwd, &setting_ref, &scope)?;
+                let receipt = self.log.record(KernelEvent::ConfigurationChanged {
+                    operation: "reset_completed".into(),
+                    references: vec![setting_ref],
+                });
+                Ok(KernelOpOutcome {
+                    receipts: vec![receipt],
+                    result: KernelOpResult::ConfigApplied {
+                        changeset,
+                        owner_receipts,
+                    },
+                })
+            }
+            KernelOp::ConfigApplyReviewed { changeset, plans } => {
+                let root = self.world_map(false).ok();
+                let cwd = root
+                    .as_ref()
+                    .and_then(|value| value["root"].as_str())
+                    .map(std::path::PathBuf::from)
+                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
+                let (changeset, owner_receipts) =
+                    configuration::Client::discover().apply_reviewed(&cwd, &changeset, &plans)?;
+                let receipt = self.log.record(KernelEvent::ConfigurationChanged {
+                    operation: "reviewed_apply_completed".into(),
+                    references: changeset["requested"]
+                        .as_array()
+                        .into_iter()
+                        .flatten()
+                        .filter_map(|request| request["setting_ref"].as_str().map(str::to_owned))
+                        .collect(),
+                });
+                Ok(KernelOpOutcome {
+                    receipts: vec![receipt],
+                    result: KernelOpResult::ConfigApplied {
+                        changeset,
+                        owner_receipts,
+                    },
                 })
             }
             KernelOp::ConfigApply { requests } => {

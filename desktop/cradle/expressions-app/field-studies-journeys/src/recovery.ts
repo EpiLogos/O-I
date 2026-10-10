@@ -1,6 +1,11 @@
 import {Journey,validateJourney} from './model';
-import {hostedRecovery,nativeRead,nativeWrite,nativeList,nativeFind,nativeRemove} from './nativeRecovery.js';
+import {hostedRecovery,nativeRead,nativeWrite,nativeList,nativeFind,nativeRemove,recoveryScope,recoveryBindingForDraft,acceptRecoveryDraft,validateNativeRecoveryBasis,acceptNativeRecoveryBasis} from './nativeRecovery.js';
+import type {RecoveryBinding,RecoveryScope} from './nativeRecovery.js';
 import {Camera} from './camera';
+import {validateWorkingRecord} from './nativeWorking.js';
+import {sameSceneData} from './sceneCorrespondence.js';
+import {preserveRecoveryLibraryCopies} from './recoveryLibrary.js';
+import type {RecoveryRecord} from '../../../src/expressions/recoveryTypes';
 import {TransportState,validateTransport} from '../../src/engine/transportState';
 export const SESSION_KEY='oi.expression-session.v1';
 export interface SessionState {version:1;journeyId:string;sceneId:string;selected:string[];stepIndex:number;sceneElapsed:number;simTime:number;playing:boolean;journeyPlaying:boolean;camera:Camera;transport?:TransportState;scenePlaying?:boolean;fieldPaused?:boolean}
@@ -49,10 +54,44 @@ function recoveryStore(name:string):Promise<RecoveryStore>{
  if(idbBroken)return Promise.resolve(localStorageBacked(name));
  return db().then(database=>idbBacked(database,name)).catch(()=>{idbBroken=true;return localStorageBacked(name);});
 }
-export async function writeDraft(j:Journey){const value=validateJourney(j);if(hostedRecovery())return nativeWrite('draft',j.id,value);(await recoveryStore('drafts')).put(j.id,value);}
-export async function readDraft(id:string){if(hostedRecovery()){const row=await nativeRead('draft',id);return row?validateJourney(row.value):undefined;}const row=await (await recoveryStore('drafts')).get(id);return row?validateJourney(row):undefined;}
-export async function readDrafts(){if(hostedRecovery()){const rows=await nativeList('draft');const values:Journey[]=[];for(const row of rows){const draft=await readDraft(row.id);if(draft)values.push(draft);}return values;}const rows=await (await recoveryStore('drafts')).all();return rows.flatMap(value=>{try{return [validateJourney(value)];}catch{return [];}});}
-export async function removeDraft(id:string){if(hostedRecovery())return nativeRemove('draft',id);await (await recoveryStore('drafts')).delete(id);}
+export async function writeDraft(j:Journey,scope?:RecoveryScope){const value=validateJourney(j);if(hostedRecovery())return nativeWrite('draft',j.id,value,scope??recoveryBindingForDraft(j.id).scope);await (await recoveryStore('drafts')).put(j.id,value);}
+export async function readDraft(id:string,scope?:RecoveryScope){if(hostedRecovery()){const row=await nativeRead('draft',id,scope??recoveryBindingForDraft(id).scope);return row?validateJourney(row.value):undefined;}const row=await (await recoveryStore('drafts')).get(id);return row?validateJourney(row):undefined;}
+export async function readDrafts(scope?:RecoveryScope){if(hostedRecovery()){const rows=await nativeList('draft',scope??recoveryScope());const values:Journey[]=[];for(const row of rows){const draft=await readDraft(row.id,row.scope);if(draft)values.push(draft);}return values;}const rows=await (await recoveryStore('drafts')).all();return rows.flatMap(value=>{try{return [validateJourney(value)];}catch{return [];}});}
+export async function removeDraft(id:string,scope?:RecoveryScope){if(hostedRecovery())return nativeRemove('draft',id,scope??recoveryBindingForDraft(id).scope);await (await recoveryStore('drafts')).delete(id);}
+
+/** Read only the host-selected checkpoint address. A same-ref duplicate is
+ * not permission to choose another scope, revision or authoring draft. */
+export async function readBoundWorkingDraft(binding:RecoveryBinding){
+ if(!hostedRecovery())throw new Error('The selected recovery address requires its native host');
+ const row=await nativeRead('checkpoint',binding.checkpoint_id,binding.scope);
+ if(!row)throw new Error('The selected native working checkpoint is absent');
+ const draftId=acceptRecoveryDraft(binding,row),raw=row.value as import('./nativeWorking').NativeWorkingRecord;
+ const draft=await nativeRead('draft',draftId,binding.scope);
+ const journey=draft?validateJourney(draft.value):validateJourney(raw.view!.journey);
+ const record=validateWorkingRecord(raw,journey);
+ return {record,journey,recoveryRecords:[row,...(draft?[draft]:[])]};
+}
+/** Content and revisions are one explicit receiving act. Browsing the records
+ * does not authorise overwriting an open draft or the owner's newer copy. */
+export function acceptWorkingRecoveryBasis(recovered:{record:unknown;journey:Journey;recoveryRecords?:RecoveryRecord[]},current:()=>boolean):void {
+ const record=validateWorkingRecord(recovered.record,recovered.journey);
+ if(recovered.recoveryRecords){
+  const checkpoints=recovered.recoveryRecords.filter(row=>row.kind==='checkpoint'),drafts=recovered.recoveryRecords.filter(row=>row.kind==='draft');
+  if(checkpoints.length!==1||drafts.length>1)throw new Error('Recover one exact checkpoint and its acknowledged draft');
+  const checkpoint=checkpoints[0],raw=checkpoint.value as import('./nativeWorking').NativeWorkingRecord,draft=drafts[0];
+  if(draft&&(draft.scope!==checkpoint.scope||draft.id!==raw.draft_id))throw new Error('The recovered draft does not belong to its exact checkpoint');
+  const journey=draft?validateJourney(draft.value):validateJourney(raw.view!.journey);
+  const acknowledged=validateWorkingRecord(raw,journey);
+  // Conversion regenerates this projection timestamp; authored draft and
+  // receipt bytes still compare exactly, including their own timestamps.
+  if(record.view&&acknowledged.view)record.view.journey.updatedAt=acknowledged.view.journey.updatedAt;
+  if(!sameSceneData(record,acknowledged)||!sameSceneData(recovered.journey,journey))throw new Error('The recovered working material differs from its actual owner reading; both copies were retained');
+  if(typeof current!=='function'||!current())throw new Error('The selected recovery adoption is no longer current; all working copies were retained');
+  validateNativeRecoveryBasis(recovered.recoveryRecords,current);
+  preserveRecoveryLibraryCopies(recovered.journey);
+  acceptNativeRecoveryBasis(recovered.recoveryRecords,current);
+ }
+}
 
 /** Desktop checkpoints live with the native recovery owner; standalone
  * artifacts share their existing browser draft database.

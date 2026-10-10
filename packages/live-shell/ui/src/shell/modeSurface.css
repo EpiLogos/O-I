@@ -1,0 +1,148 @@
+/* The mode system's frame CSS — the Rev-5 mode transport, the Technē lens
+   bar, and the per-mode detail strip. The transport reuses the shell's own
+   control classes (.native-control, .tempo-field, …) so the slots read as
+   the SAME slots in every mode; only these additions are new. */
+
+/* The mode rail at narrow widths: the agent transport's slot groups alone
+   exceed the 760px frame, which pushed the surface row (Session|Arrangement
+   beside the mode icons — Rev 5's placement) past the right edge where the
+   rail was mounted but invisible. The row re-flows: it scrolls, and the
+   surface row pins to the right edge so the rail stays reachable in every
+   mode (the guide's narrow law: the grid re-flows, nothing is crammed). */
+@media (max-width: 760px) {
+  .transport-controls { overflow-x: auto; scrollbar-width: thin }
+  .transport .surface-icons { position: sticky; right: 2px; margin-left: 2px; background: var(--bg-0); box-shadow: -6px 0 6px -4px var(--bg-0) }
+}
+
+/* Waiting controls of the mode transport: reduced presence, honest titles
+   (the widget guide's disabled/soon law). */
+.mode-transport { display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0 }
+.mode-transport .native-control[disabled] { color: var(--text-faint); opacity: 0.82 }
+.mode-transport output { color: var(--text-dim) }
+
+/* The Technē lens bar — its own axis above the centre (never the
+   transport's, never the surf's). */
+.center-body { position: relative }
+.techne-lens-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 3; display: flex; align-items: center; gap: 3px; height: 25px; padding: 0 6px; background: var(--bg-1); border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: thin }
+.techne-lens-title { font-size: 10px; color: var(--text-faint); margin-right: 5px; flex: none }
+.techne-lens { display: flex; align-items: center; gap: 4px; height: 19px; padding: 1px 6px; font-size: 10px; background: var(--bg-0); border: 1px solid #30343a; color: var(--text-dim); white-space: nowrap; flex: none }
+.techne-lens[aria-pressed="true"] { color: var(--accent); border-color: var(--accent-dim) }
+.techne-lens[disabled] { color: var(--text-faint); opacity: 0.75; cursor: default }
+.techne-lens[disabled]:hover { background: var(--bg-0) }
+
+/* The lens bar claims the top strip; the composition residence sits below
+   it only in the Technē ground cut. */
+.center-body[data-lens-bar="true"] .composition-view { top: 25px }
+
+/* The per-mode detail strip. The residences are display:contents, so the
+   strip itself is the frame grid's chain item. */
+.mode-detail { grid-area: chain; min-height: 0; overflow: auto; background: var(--bg-1); border-top: 1px solid var(--line); display: flex; align-items: flex-start }
+/* The agency frame's grid names the detail row `ch` (the oracle areas). */
+.frame.agent-shell-frame .mode-detail { grid-area: ch }
+.mode-detail .inhabitant-rack { border: 0; flex: 1; min-width: 0 }
+.mode-detail-note { margin: 0; padding: 8px 10px; color: var(--text-dim); font-size: 11px }
+.mode-detail-note b { color: var(--text) }
+
+/* ——— the per-mode centre frame (the empty-state law: a DESIGNED surface,
+   never a bare sentence in a void) ——— */
+.mode-centre-residence { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 2; background: var(--bg-2) }
+.mode-centre-residence[hidden] { display: none }
+.center-body[data-lens-bar="true"] .mode-centre-residence { top: 25px }
+.mode-centre { height: 100%; display: flex; flex-direction: column; min-height: 0 }
+.mode-centre-head { flex: none; display: flex; align-items: baseline; gap: 8px; padding: 7px 10px 6px; border-bottom: 1px solid var(--line); background: var(--bg-1) }
+.mode-centre-head strong { font-size: 11px; color: var(--text) }
+.mode-centre-meaning { font-size: 10px; color: var(--text-dim); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.mode-centre-read { margin-left: auto; font-size: 10px; color: var(--text-faint); white-space: nowrap }
+.mode-centre-read[data-reading-state="reading"] { color: var(--accent-dim) }
+.mode-centre-read[data-reading-state="live"] { color: var(--text-dim) }
+.mode-centre-structure { flex: 1; min-height: 0; overflow: auto; padding: 8px }
+.mode-centre-note { margin: 6px 2px; font-size: 10px; color: var(--text-faint) }
+
+/* Base · Session — the day as clips: the five track columns. */
+.mode-centre-day { display: flex; gap: 6px; align-items: stretch }
+.mode-centre-track { flex: 1 1 0; min-width: 96px; display: flex; flex-direction: column; gap: 4px }
+.mode-centre-track-head { flex: none; height: 22px; display: flex; align-items: center; padding: 0 7px; background: var(--bg-1); border: 1px solid var(--line); border-bottom: 2px solid var(--line-strong); font-size: 11px; color: var(--text-dim) }
+.mode-centre-cell { min-height: 26px; border: 1px solid var(--line); background: var(--bg-1); text-align: left; padding: 0 6px; font-size: 10px; color: var(--text-dim); overflow: hidden }
+.mode-centre-cell-named { color: var(--text-faint); white-space: nowrap; text-overflow: ellipsis; line-height: 24px }
+.mode-centre-cell:not(button) { cursor: default }
+.mode-centre-cell-void { opacity: .45 }
+button.mode-centre-cell:hover { background: var(--bg-0); color: var(--text-dim) }
+
+/* Base · Arrangement — today on one ruler. */
+.mode-centre-ruler { display: flex; flex-direction: column; gap: 6px }
+.mode-centre-ruler-row { position: relative; height: 20px; border-bottom: 2px solid var(--line-strong) }
+.mode-centre-tick { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--line); font-size: 9px; color: var(--text-faint) }
+.mode-centre-tick i { position: absolute; top: 2px; left: 3px; font-style: normal; white-space: nowrap }
+.mode-centre-tick[data-hour="6"] { left: 10% } .mode-centre-tick[data-hour="9"] { left: 26% } .mode-centre-tick[data-hour="12"] { left: 42% }
+.mode-centre-tick[data-hour="15"] { left: 58% } .mode-centre-tick[data-hour="18"] { left: 74% } .mode-centre-tick[data-hour="21"] { left: 90% }
+.mode-centre-ruler-lane { min-height: 44px; border: 1px dashed var(--line-strong); display: grid; place-content: center }
+.mode-centre-ruler-note { font-size: 10px; color: var(--text-faint); padding: 4px 8px }
+
+/* Technē · Session — the M3′ Journey: walk stops as rows. */
+.mode-centre-journey { display: flex; flex-direction: column; gap: 4px }
+.mode-centre-journey-heads, .mode-centre-journey-row { display: grid; grid-template-columns: 88px repeat(5, minmax(84px, 1fr)); gap: 4px }
+.mode-centre-journey-row { align-items: stretch }
+.mode-centre-stop-chip { display: inline-flex; align-items: center; padding: 0 6px; font-size: 10px; color: var(--text-dim); background: var(--bg-1); border: 1px solid var(--line) }
+
+/* Technē · Arrangement — the M2′ Relation Field surface. */
+.mode-centre-relation { display: flex; flex-direction: column; gap: 6px }
+.mode-centre-lens-row { display: flex; gap: 4px; padding-bottom: 4px; border-bottom: 1px solid var(--line) }
+.mode-centre-lens { padding: 2px 8px; font-size: 10px; color: var(--text-dim); background: var(--bg-1); border: 1px solid var(--line) }
+.mode-centre-relation-row { display: grid; grid-template-columns: 128px minmax(140px, 1fr) minmax(80px, 220px); gap: 8px; align-items: center; min-height: 30px; border: 1px solid var(--line); background: var(--bg-1); padding: 2px 7px }
+.mode-centre-relation-name { font-size: 11px; color: var(--text) }
+.mode-centre-relation-note { font-size: 10px; color: var(--text-dim); min-width: 0 }
+.mode-centre-relation-lane { height: 10px; border-left: 1px dashed var(--line-strong); background: repeating-linear-gradient(90deg, transparent 0 11px, var(--line) 11px 12px) }
+
+/* The unread-reading disclosure — a styled component INSIDE the frame. */
+.mode-centre-disclosure { flex: none; margin: 0 8px 8px; padding: 7px 9px; border: 1px solid var(--line-strong); border-left: 3px solid var(--accent-dim); background: var(--bg-1); font-size: 11px; color: var(--text-dim); line-height: 1.45 }
+.mode-centre-disclosure b { color: var(--text) }
+.mode-centre-disclosure-reason { color: var(--text-faint) }
+
+/* ——— the per-mode browser (the grammar's categories over the families'
+   declared entries; reuses the world-browser's own classes for density) ——— */
+.mode-browser .mode-browser-rows ul { list-style: none; margin: 0; padding: 0 }
+.mode-browser-row { width: 100%; display: flex; align-items: center; gap: 6px; min-height: 23px; padding: 2px 6px; text-align: left; font-size: 11px }
+.mode-browser-row:hover { background: var(--bg-3) }
+.mode-browser-row.selected { color: var(--accent) }
+.mode-browser-row span:nth-child(2) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.mode-browser-row-meta { flex: none; font-size: 10px; color: var(--text-faint) }
+.mode-browser-row-meta.mono, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace }
+.mode-browser-crumbs { display: flex; align-items: center; gap: 2px; padding: 4px 6px; border-bottom: 1px solid var(--line); font-size: 10px; color: var(--text-dim); flex-wrap: wrap }
+.mode-browser-crumbs button { padding: 1px 4px }
+.mode-browser-crumbs button:hover { background: var(--bg-3) }
+.mode-browser-crumbs button[aria-current="location"] { color: var(--accent) }
+.mode-browser-empty { margin: 7px; border: 1px solid var(--line-strong); background: var(--bg-1); padding: 0 0 7px }
+.mode-browser-empty-head { display: flex; align-items: center; gap: 7px; padding: 6px 8px; border-bottom: 1px solid var(--line); background: var(--bg-0) }
+.mode-browser-empty-mark { display: grid; place-items: center; color: var(--text-dim) }
+.mode-browser-empty-head strong { font-size: 11px }
+.mode-browser-empty-state { margin-left: auto; font-size: 9px; letter-spacing: .04em; color: var(--text-faint); border: 1px dashed var(--line-strong); padding: 1px 5px; white-space: nowrap }
+.mode-browser-empty-owner { margin: 7px 8px 4px; font-size: 11px; color: var(--text-dim); line-height: 1.45 }
+.mode-browser-empty-read { margin: 4px 8px 0; font-size: 10px; color: var(--text-faint); line-height: 1.45 }
+.mode-browser-empty-read b { color: var(--text-dim) }
+.mode-browser-waiting-dot { width: 5px; height: 5px; flex: none; border: 1px dashed var(--text-faint); margin-left: auto }
+.mode-browser-context { padding: 7px 8px; font-size: 11px; color: var(--text-dim); line-height: 1.45 }
+.mode-browser-context strong { color: var(--text); font-weight: 500 }
+.mode-browser-context p { margin: 3px 0 0 }
+.mode-browser-fault { margin: 7px; padding: 6px 8px; border: 1px solid var(--rec); color: #f3b4a0; font-size: 11px; background: var(--bg-1) }
+
+/* ——— the per-mode detail frames (device density, the guide's §3.7 chain
+   anatomy scaled to the strip) ——— */
+.mode-detail-frame { width: min(100%, 980px); border: 1px solid var(--line-strong); background: var(--bg-1); margin: 6px; align-self: flex-start }
+.mode-detail-frame-head { display: flex; align-items: center; gap: 7px; padding: 5px 8px; border-bottom: 1px solid var(--line); background: var(--bg-0) }
+.mode-detail-frame-mark { display: grid; place-items: center; color: var(--text-dim) }
+.mode-detail-frame-head strong { font-size: 11px }
+.mode-detail-frame-sub { font-size: 10px; color: var(--text-faint); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.mode-detail-frame-note { margin: 7px 8px; font-size: 11px; color: var(--text-dim); line-height: 1.45 }
+.mode-detail-frame-note b { color: var(--text) }
+.mode-detail-chips { list-style: none; display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0 8px 8px }
+.mode-detail-chip { font-size: 10px; color: var(--text-dim); background: var(--bg-2); border: 1px solid var(--line-strong); padding: 2px 7px }
+.mode-detail-rows { list-style: none; margin: 0; padding: 4px 8px; display: grid; gap: 2px }
+.mode-detail-row { display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 8px; min-height: 21px; align-items: baseline }
+.mode-detail-row-op { font-size: 10px; color: var(--text-faint) }
+.mode-detail-row-value { font-size: 11px; color: var(--text-dim); min-width: 0; overflow-wrap: anywhere }
+.mode-detail-row-value.is-waiting, .mode-detail-row-value .is-waiting { color: var(--text-faint); font-style: italic }
+.mode-detail-row-value[data-admission="admitted"] { color: var(--text) }
+.mode-detail-row-value[data-admission="refused"] { color: var(--text-faint) }
+.mode-detail-tasklog { display: grid; grid-template-columns: minmax(220px, 2fr) minmax(200px, 3fr); gap: 0 }
+.mode-detail-tasklog-log { border-left: 1px solid var(--line); min-height: 96px }
+@media (max-width: 1000px) { .mode-detail-tasklog { grid-template-columns: 1fr } .mode-detail-tasklog-log { border-left: 0; border-top: 1px solid var(--line) } }

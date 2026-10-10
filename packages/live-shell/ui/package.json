@@ -1,0 +1,34 @@
+{
+  "name": "live-shell-ui",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Live shell application frame (M2): browser / session / arrangement / device chain / panel dock over the axum JSON API",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test:agent-shell-fidelity": "node --test tests/agent-shell-transport-ids.test.mjs && node tests/agent-shell-fidelity.browser.mjs",
+    "test:device-sdk": "node --test tests/device-sdk.test.mjs && node scripts/validate-devices.mjs",
+    "devices:validate": "node scripts/validate-devices.mjs",
+    "devices:gaps": "node scripts/device-gaps.mjs",
+    "devices:scaffold": "node scripts/scaffold-device.mjs",
+    "devices:sync-icons": "node scripts/sync-icons.mjs",
+    "devices:sync-kernel-ops": "node scripts/sync-kernel-ops.mjs",
+    "devices:walk": "node tests/device-sdk.browser.mjs",
+    "devices:dev": "vite --config src/inhabitants/sdk/dev/vite.config.mjs"
+  },
+  "dependencies": {
+    "@epilogos/expressions-boundary": "file:../../expressions-boundary",
+    "@tauri-apps/api": "2.11.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.8.0",
+    "vite": "^6.0.0"
+  }
+}

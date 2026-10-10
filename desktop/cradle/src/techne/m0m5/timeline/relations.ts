@@ -254,8 +254,12 @@ export function edgesForProjection(edges: readonly RelationEdge[], mode: Relatio
 // Per-projection availability — capability honesty for the mode bar
 // ---------------------------------------------------------------------------
 
+import type {TechneTimeAxis, TimeAxisScope} from "./timeAxis.ts";
+
 export interface ProjectionAvailability {
   mode: RelationProjectionMode;
+  /** Native facts stay available; these counts report the declared window. */
+  window_scope?: {in_scope: number; out_of_scope: number; unresolved: number; unpositioned: number};
   available: boolean;
   /** Edge/facet count when available. */
   count: number | null;
@@ -266,7 +270,9 @@ export interface ProjectionAvailability {
 const CONTINUITY_KINDS: readonly string[] = ["day", "now", "session", "run"];
 
 /** Availability of every projection over one reading, from its actual data. */
-export function projectionAvailability(reading: TechneReading): ProjectionAvailability[] {
+export function projectionAvailability(reading: TechneReading, axis?: TechneTimeAxis): ProjectionAvailability[] {
+  if (axis && (axis.subject_ref !== reading.subject.subject_ref || axis.reading_ref !== reading.reading_ref
+    || axis.snapshot_revision !== (reading.snapshot?.revision ?? null))) throw Error("Projection availability requires this exact shared-time reading");
   const field = relationField(reading);
   const temporal = reading.temporal ?? [];
   const continuityCount = temporal.filter((facet) => CONTINUITY_KINDS.includes(facet.kind)).length;
@@ -282,7 +288,20 @@ export function projectionAvailability(reading: TechneReading): ProjectionAvaila
     { mode: "phase", available: validityFacets.length > 0 || cycles.length > 0, count: validityFacets.length + cycles.length || null, reason: validityFacets.length === 0 && cycles.length === 0 ? "no validity intervals and no transformation cycles are disclosed — no phase is fabricated" : null },
     { mode: "activity", available: continuityCount > 0, count: continuityCount || null, reason: continuityCount === 0 ? "no DAY / NOW / session / run continuity facets are disclosed" : null },
   ];
-  return modes;
+  if (!axis) return modes;
+  const relationScope = new Map(axis.relations.map(row => [row.relation_ref ?? row.derived_ref!, row.scope]));
+  const scopesOf = (edges: readonly RelationEdge[]) => edges.flatMap(edge => relationScope.has(edge.id) ? [relationScope.get(edge.id)!] : []);
+  const countScopes = (scopes: TimeAxisScope[]) => ({
+    in_scope: scopes.filter(scope => scope.state === "in-scope" || scope.state === "unbounded").length,
+    out_of_scope: scopes.filter(scope => scope.state === "out-of-scope").length,
+    unresolved: scopes.filter(scope => scope.state === "unresolved").length,
+    unpositioned: scopes.filter(scope => scope.state === "unpositioned").length,
+  });
+  return modes.map(entry => ({...entry, window_scope: countScopes(entry.mode === "timeline"
+    ? [...axis.events.map(row => row.scope), ...scopesOf(field.edges.filter(edge => edge.temporal.state === "dated"))]
+    : entry.mode === "activity" ? axis.events.filter(row => CONTINUITY_KINDS.includes(row.kind)).map(row => row.scope)
+    : entry.mode === "phase" ? [...axis.bands.map(row => row.scope), ...scopesOf(cycles.flat())]
+    : scopesOf(edgesForProjection(field.edges, entry.mode)))}));
 }
 
 // ---------------------------------------------------------------------------
@@ -377,6 +396,7 @@ export function transformationCycles(edges: readonly RelationEdge[]): RelationEd
 export interface PhaseBand {
   /** The facet's ref (or derived stable id), verbatim-first. */
   id: string;
+  temporal_problem?: string;
   facet_ref: string | null;
   fromMs: number | null;
   toMs: number | null;
@@ -390,8 +410,13 @@ export function phasesFromFacets(temporal: readonly TechneTemporalFacet[]): Phas
   return temporal
     .filter((facet) => facet.kind === "valid")
     .map((facet, index) => {
-      const span = facetRange(facet);
+      let span; let temporal_problem: string | undefined;
+      try {span = facetRange(facet);} catch (error) {
+        span = {positioned: false, fromMs: null, toMs: null};
+        temporal_problem = error instanceof Error ? error.message : String(error);
+      }
       return {
+        ...(temporal_problem ? {temporal_problem} : {}),
         id: facet.facet_ref ?? `derived:techne:phase[${index}]`,
         facet_ref: facet.facet_ref ?? null,
         fromMs: span.fromMs,

@@ -181,27 +181,37 @@ async function readNames(transport: KernelTransportStatus, scope: Scope, discove
 
 /** Re-read one run (its run, journey and workflow inspection) — the Run
  * page's own read on open and after an act. */
-export async function readRunEntry(transport: KernelTransportStatus, key: string): Promise<RunEntry | undefined> {
+export function captureRunEntryRead(read:()=>DeskReading|undefined,key:string,current?:()=>boolean):()=>boolean {
+  const original=read(),entry=original?.runs[key];
+  return()=>!!entry&&read()===original&&read()?.runs[key]===entry&&(!current||current());
+}
+export async function readRunEntry(transport: KernelTransportStatus, key: string, current?:()=>boolean): Promise<RunEntry | undefined> {
   const entry = reading?.runs[key];
   if (!entry) return undefined;
+  const belongs=captureRunEntryRead(()=>reading,key,current);
+  if(!belongs())return undefined;
   const source = entry.card.source;
   const [run, journey] = await Promise.all([
     readRun(transport, source.statePath, entry.run.runRef),
     entry.card.journeyRef ? readJourney(transport, source.statePath, entry.card.journeyRef).catch(() => entry.journey) : Promise.resolve(entry.journey),
   ]);
+  if(!belongs())return undefined;
   let inspection: WorkflowInspection | undefined;
   let inspectionError: string | undefined;
   let inspectionPartial: string | undefined;
   const positions = readFactoryInhabitation(transport, source.statePath, entry.run.runRef);
   try { const whole = await inspectWorkflow(transport, source.statePath, entry.run.runRef); inspection = whole.inspection; inspectionPartial = whole.partial; }
   catch (error) { inspectionError = errorWords(error); }
+  if(!belongs())return undefined;
   const base: RunEntry = {card: deskCard(source, run, journey, inspection), run, journey, inspection, inspectionError, ...(inspectionPartial ? {inspectionPartial} : {})};
   const positionsRead = await positions;
+  if(!belongs())return undefined;
   // Factory's current work for the Positions holding this run, re-read with it.
   const held = positionsRead.state === "read" ? positionsInCustody(positionsRead.data) : [];
   const work = {...(reading?.currentWork?.[source.statePath] ?? {}), ...Object.fromEntries(await Promise.all(held.map(ref => readCurrentWork(transport, source.statePath, ref).then(answer => [ref, answer] as const))))};
+  if(!belongs())return undefined;
   const next = withInhabitation(base, positionsRead, {names: reading?.names, work, runs: reading?.runs});
-  if (reading?.runs[key]) {
+  if (belongs()&&reading) {
     reading = {...reading, runs: {...reading.runs, [key]: next}};
     emit();
   }

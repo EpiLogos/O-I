@@ -1,0 +1,991 @@
+{
+  "collections": [],
+  "entities": {
+    "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph": {
+      "entity_ref": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph",
+      "parameters": {
+        "glyph": {
+          "automation": null,
+          "value": "O"
+        }
+      },
+      "revision": 2,
+      "subject": null,
+      "title": "Layered source-bearing glyph"
+    }
+  },
+  "expression_ref": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a",
+  "profiles": [],
+  "provenance": [],
+  "refinements": [],
+  "relations": {},
+  "representations": [],
+  "revision": 6,
+  "scenes": [
+    {
+      "body": null,
+      "entity_refs": [
+        "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph"
+      ],
+      "presentation": {
+        "saved": {
+          "automation": [],
+          "character": "An arrangement, waiting to happen.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 12,
+          "engine": {
+            "autoFitSizes": false,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "solid",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "Georgia, \"Times New Roman\", serif",
+            "fontWeight": 700,
+            "grainProfile": true,
+            "mediumDimension": "2D",
+            "mediumEnabled": true,
+            "mediumPlane": "vertical",
+            "morphEnabled": false,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "resonator",
+            "sweepDirection": "ascent",
+            "trajectory": "toroidalHopf"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "none",
+                "radius": 0.15811388300841897,
+                "spin": 0,
+                "strength": -0.5
+              },
+              "id": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph",
+              "kind": "formation",
+              "locked": false,
+              "name": "Layered source-bearing glyph",
+              "position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "rotation": 0,
+              "scale": 1,
+              "sequence": {
+                "clock": "seconds",
+                "easing": "kineticSnap",
+                "enabled": true,
+                "impulse": 1.1,
+                "jitter": 0.12,
+                "order": "pingpong",
+                "phaseOffset": 0.17,
+                "rateMul": 1.2,
+                "sourcesVersion": 1,
+                "steps": [
+                  {
+                    "hold": 1.25,
+                    "holdOverride": true,
+                    "id": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph",
+                    "layers": [
+                      {
+                        "id": "layer:ascii-inner",
+                        "scale": 0.7,
+                        "source": {
+                          "ascii": {
+                            "fontSize": 32,
+                            "text": "x+x"
+                          },
+                          "kind": "ascii"
+                        },
+                        "text": "inner",
+                        "z": -0.15
+                      },
+                      {
+                        "id": "layer:ascii-image",
+                        "scale": 0.9,
+                        "source": {
+                          "image": {
+                            "dataUrl": "data:image/png;base64,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",
+                            "invert": false,
+                            "mode": "silhouette",
+                            "name": "Actual native O:I icon PNG",
+                            "scale": 1.1,
+                            "threshold": 0.35
+                          },
+                          "kind": "image"
+                        },
+                        "text": "image layer",
+                        "z": 0.2
+                      }
+                    ],
+                    "name": "ASCII glyph",
+                    "objectState": {
+                      "force": {
+                        "kind": "vortex",
+                        "radius": 0.2810913475705226,
+                        "spin": -0.7,
+                        "strength": 1.7000000000000002
+                      },
+                      "normalized": true,
+                      "rotation": 17,
+                      "scale": 1.3,
+                      "size": {
+                        "x": 0.8,
+                        "y": 1.2
+                      },
+                      "tint": "#336699",
+                      "tintWeight": 0.6
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "source": {
+                      "ascii": {
+                        "fontSize": 48,
+                        "invert": false,
+                        "text": "  /\\\n /++\\\n/____\\"
+                      },
+                      "kind": "ascii"
+                    },
+                    "text": "ASCII source",
+                    "transition": 0.35,
+                    "transitionOverride": true
+                  },
+                  {
+                    "hold": 2.5,
+                    "holdOverride": true,
+                    "id": "step-f3f51cd9-a7d5-46cf-8b94-8f90d9be4b37",
+                    "layers": [
+                      {
+                        "id": "layer:image-text",
+                        "scale": 1.1,
+                        "text": "outer",
+                        "z": 0.4
+                      }
+                    ],
+                    "name": "Actual native O:I icon PNG",
+                    "objectState": {
+                      "force": {
+                        "kind": "vortex",
+                        "radius": 0.2810913475705226,
+                        "spin": -0.7,
+                        "strength": 1.7000000000000002
+                      },
+                      "normalized": true,
+                      "rotation": 17,
+                      "scale": 1.3,
+                      "size": {
+                        "x": 0.8,
+                        "y": 1.2
+                      },
+                      "tint": "#336699",
+                      "tintWeight": 0.6
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "source": {
+                      "image": {
+                        "dataUrl": "data:image/png;base64,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",
+                        "invert": false,
+                        "mode": "silhouette",
+                        "name": "Actual native O:I icon PNG",
+                        "scale": 1.1,
+                        "threshold": 0.35
+                      },
+                      "kind": "image"
+                    },
+                    "text": "Image source",
+                    "transition": 0.75,
+                    "transitionOverride": true
+                  },
+                  {
+                    "hold": 0.45,
+                    "holdOverride": true,
+                    "id": "step-3fd6cb14-ce90-45e8-b3cb-21052b4083fd",
+                    "layers": [],
+                    "objectState": {
+                      "force": {
+                        "kind": "repel",
+                        "radius": 0.5621826951410452,
+                        "spin": 0.25,
+                        "strength": -1
+                      },
+                      "normalized": true,
+                      "rotation": -33,
+                      "scale": 0.85,
+                      "size": {
+                        "x": 1.1,
+                        "y": 0.6
+                      },
+                      "tint": "#aa6633",
+                      "tintWeight": 0.4
+                    },
+                    "position": {
+                      "x": 0.4,
+                      "y": -0.2,
+                      "z": 0.7
+                    },
+                    "shape": "text",
+                    "text": "Return",
+                    "transition": 1.05,
+                    "transitionOverride": true
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.65,
+                "y": 0.86
+              },
+              "source": {
+                "ascii": {
+                  "fontSize": 48,
+                  "invert": false,
+                  "text": "  /\\\n /++\\\n/____\\"
+                },
+                "kind": "ascii"
+              },
+              "station": null,
+              "text": "O",
+              "tint": "#252720",
+              "tintWeight": 0
+            }
+          ],
+          "field": {
+            "background": "#f4f2eb",
+            "material": "ink",
+            "palette": [
+              "#252720",
+              "#252720"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.93,
+              "count": 62000,
+              "curlDepth": 0.2,
+              "densityPhase": 0.3,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.09,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.6,
+              "frequency": 220,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.13,
+              "irregularity": 0.35,
+              "native_medium__pressure": 5,
+              "opacity": 0.92,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.95,
+              "size": 2.8,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.7,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.22,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:scene:main",
+          "morph": {
+            "depth": 1,
+            "dwell": 0.3,
+            "law": "theta",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.08
+          },
+          "name": "Main",
+          "parameterRacks": {
+            "racks": [
+              {
+                "excluded": [
+                  "macro:swirl"
+                ],
+                "id": "rack:glyph-influence",
+                "macros": [
+                  {
+                    "id": "macro:influence",
+                    "mappings": [
+                      {
+                        "id": "mapping:strength",
+                        "law": "linear",
+                        "max": 4,
+                        "min": -2,
+                        "target": {
+                          "entity_ref": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph",
+                          "kind": "entity",
+                          "path": "forces.strength"
+                        },
+                        "unit": "scalar"
+                      },
+                      {
+                        "id": "mapping:radius",
+                        "law": "log",
+                        "max": 2000,
+                        "min": 20,
+                        "target": {
+                          "entity_ref": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph",
+                          "kind": "entity",
+                          "path": "forces.radius"
+                        },
+                        "unit": "px"
+                      }
+                    ],
+                    "name": "Influence",
+                    "value": 0.25
+                  },
+                  {
+                    "id": "macro:swirl",
+                    "mappings": [
+                      {
+                        "id": "mapping:spin",
+                        "law": "linear",
+                        "max": -0.8,
+                        "min": 0.8,
+                        "target": {
+                          "entity_ref": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph",
+                          "kind": "entity",
+                          "path": "forces.spin"
+                        },
+                        "unit": "scalar"
+                      }
+                    ],
+                    "name": "Swirl",
+                    "value": 0.5
+                  }
+                ],
+                "schema": "oi.parameter-rack/v1",
+                "scope": {
+                  "entity_ref": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph",
+                  "kind": "entity"
+                },
+                "title": "Native influence",
+                "variations": [
+                  {
+                    "excluded": [
+                      "macro:swirl"
+                    ],
+                    "id": "variation:quiet",
+                    "name": "Quiet source state",
+                    "values": {
+                      "macro:influence": 0.25,
+                      "macro:swirl": 0.5
+                    }
+                  }
+                ]
+              },
+              {
+                "excluded": [],
+                "id": "rack:field-medium",
+                "macros": [
+                  {
+                    "id": "macro:pressure",
+                    "mappings": [
+                      {
+                        "id": "mapping:pressure",
+                        "law": "linear",
+                        "max": 20,
+                        "min": 0,
+                        "target": {
+                          "kind": "field",
+                          "path": "medium.pressure"
+                        },
+                        "unit": "scalar"
+                      }
+                    ],
+                    "name": "Pressure",
+                    "value": 0.25
+                  }
+                ],
+                "schema": "oi.parameter-rack/v1",
+                "scope": {
+                  "kind": "field"
+                },
+                "title": "Field medium",
+                "variations": [
+                  {
+                    "excluded": [],
+                    "id": "variation:light",
+                    "name": "Light medium",
+                    "values": {
+                      "macro:pressure": 0.25
+                    }
+                  }
+                ]
+              }
+            ],
+            "schema": "oi.parameter-racks/v1"
+          },
+          "text": [],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 1.5,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        },
+        "scene": {
+          "automation": [],
+          "character": "An arrangement, waiting to happen.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 12,
+          "engine": {
+            "autoFitSizes": false,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "solid",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "Georgia, \"Times New Roman\", serif",
+            "fontWeight": 700,
+            "grainProfile": true,
+            "mediumDimension": "2D",
+            "mediumEnabled": true,
+            "mediumPlane": "vertical",
+            "morphEnabled": false,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "resonator",
+            "sweepDirection": "ascent",
+            "trajectory": "toroidalHopf"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "none",
+                "radius": 1.9905358527674866,
+                "spin": 0,
+                "strength": 2.8000000000000007
+              },
+              "id": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph",
+              "kind": "formation",
+              "locked": false,
+              "name": "Layered source-bearing glyph",
+              "position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "rotation": 0,
+              "scale": 1,
+              "sequence": {
+                "clock": "seconds",
+                "easing": "kineticSnap",
+                "enabled": true,
+                "impulse": 1.1,
+                "jitter": 0.12,
+                "order": "pingpong",
+                "phaseOffset": 0.17,
+                "rateMul": 1.2,
+                "sourcesVersion": 1,
+                "steps": [
+                  {
+                    "hold": 1.25,
+                    "holdOverride": true,
+                    "id": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph",
+                    "layers": [
+                      {
+                        "id": "layer:ascii-inner",
+                        "scale": 0.7,
+                        "source": {
+                          "ascii": {
+                            "fontSize": 32,
+                            "text": "x+x"
+                          },
+                          "kind": "ascii"
+                        },
+                        "text": "inner",
+                        "z": -0.15
+                      },
+                      {
+                        "id": "layer:ascii-image",
+                        "scale": 0.9,
+                        "source": {
+                          "image": {
+                            "dataUrl": "data:image/png;base64,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",
+                            "invert": false,
+                            "mode": "silhouette",
+                            "name": "Actual native O:I icon PNG",
+                            "scale": 1.1,
+                            "threshold": 0.35
+                          },
+                          "kind": "image"
+                        },
+                        "text": "image layer",
+                        "z": 0.2
+                      }
+                    ],
+                    "name": "ASCII glyph",
+                    "objectState": {
+                      "force": {
+                        "kind": "vortex",
+                        "radius": 3.5387304049199764,
+                        "spin": -0.7,
+                        "strength": 5.000000000000001
+                      },
+                      "normalized": true,
+                      "rotation": 17,
+                      "scale": 1.3,
+                      "size": {
+                        "x": 0.8,
+                        "y": 1.2
+                      },
+                      "tint": "#336699",
+                      "tintWeight": 0.6
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "source": {
+                      "ascii": {
+                        "fontSize": 48,
+                        "invert": false,
+                        "text": "  /\\\n /++\\\n/____\\"
+                      },
+                      "kind": "ascii"
+                    },
+                    "text": "ASCII source",
+                    "transition": 0.35,
+                    "transitionOverride": true
+                  },
+                  {
+                    "hold": 3.75,
+                    "holdOverride": true,
+                    "id": "step-f3f51cd9-a7d5-46cf-8b94-8f90d9be4b37",
+                    "layers": [
+                      {
+                        "id": "layer:image-text",
+                        "scale": 1.1,
+                        "text": "outer",
+                        "z": 0.4
+                      }
+                    ],
+                    "name": "Actual native O:I icon PNG",
+                    "objectState": {
+                      "force": {
+                        "kind": "vortex",
+                        "radius": 3.5387304049199764,
+                        "spin": -0.7,
+                        "strength": 5.000000000000001
+                      },
+                      "normalized": true,
+                      "rotation": 17,
+                      "scale": 1.3,
+                      "size": {
+                        "x": 0.8,
+                        "y": 1.2
+                      },
+                      "tint": "#336699",
+                      "tintWeight": 0.6
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "source": {
+                      "image": {
+                        "dataUrl": "data:image/png;base64,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",
+                        "invert": false,
+                        "mode": "silhouette",
+                        "name": "Actual native O:I icon PNG",
+                        "scale": 1.1,
+                        "threshold": 0.35
+                      },
+                      "kind": "image"
+                    },
+                    "text": "Image source",
+                    "transition": 0.75,
+                    "transitionOverride": true
+                  },
+                  {
+                    "hold": 0.45,
+                    "holdOverride": true,
+                    "id": "step-3fd6cb14-ce90-45e8-b3cb-21052b4083fd",
+                    "layers": [],
+                    "objectState": {
+                      "force": {
+                        "kind": "repel",
+                        "radius": 7.077460809839953,
+                        "spin": 0.25,
+                        "strength": 2.3000000000000007
+                      },
+                      "normalized": true,
+                      "rotation": -33,
+                      "scale": 0.85,
+                      "size": {
+                        "x": 1.1,
+                        "y": 0.6
+                      },
+                      "tint": "#aa6633",
+                      "tintWeight": 0.4
+                    },
+                    "position": {
+                      "x": 0.4,
+                      "y": -0.2,
+                      "z": 0.7
+                    },
+                    "shape": "text",
+                    "text": "Return",
+                    "transition": 1.05,
+                    "transitionOverride": true
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.65,
+                "y": 0.86
+              },
+              "source": {
+                "ascii": {
+                  "fontSize": 48,
+                  "invert": false,
+                  "text": "  /\\\n /++\\\n/____\\"
+                },
+                "kind": "ascii"
+              },
+              "station": null,
+              "text": "O",
+              "tint": "#252720",
+              "tintWeight": 0
+            }
+          ],
+          "field": {
+            "background": "#f4f2eb",
+            "material": "ink",
+            "palette": [
+              "#252720",
+              "#252720"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.93,
+              "count": 62000,
+              "curlDepth": 0.2,
+              "densityPhase": 0.3,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.09,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.6,
+              "frequency": 220,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.13,
+              "irregularity": 0.35,
+              "native_medium__pressure": 14,
+              "opacity": 0.92,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.95,
+              "size": 2.8,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.7,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.22,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:scene:main",
+          "morph": {
+            "depth": 1,
+            "dwell": 0.3,
+            "law": "theta",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.08
+          },
+          "name": "Main",
+          "parameterRacks": {
+            "racks": [
+              {
+                "excluded": [
+                  "macro:swirl"
+                ],
+                "id": "rack:glyph-influence",
+                "macros": [
+                  {
+                    "id": "macro:influence",
+                    "mappings": [
+                      {
+                        "id": "mapping:strength",
+                        "law": "linear",
+                        "max": 4,
+                        "min": -2,
+                        "target": {
+                          "entity_ref": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph",
+                          "kind": "entity",
+                          "path": "forces.strength"
+                        },
+                        "unit": "scalar"
+                      },
+                      {
+                        "id": "mapping:radius",
+                        "law": "log",
+                        "max": 2000,
+                        "min": 20,
+                        "target": {
+                          "entity_ref": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph",
+                          "kind": "entity",
+                          "path": "forces.radius"
+                        },
+                        "unit": "px"
+                      }
+                    ],
+                    "name": "Influence",
+                    "value": 0.8
+                  },
+                  {
+                    "id": "macro:swirl",
+                    "mappings": [
+                      {
+                        "id": "mapping:spin",
+                        "law": "linear",
+                        "max": -0.8,
+                        "min": 0.8,
+                        "target": {
+                          "entity_ref": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph",
+                          "kind": "entity",
+                          "path": "forces.spin"
+                        },
+                        "unit": "scalar"
+                      }
+                    ],
+                    "name": "Swirl",
+                    "value": 0.5
+                  }
+                ],
+                "schema": "oi.parameter-rack/v1",
+                "scope": {
+                  "entity_ref": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph",
+                  "kind": "entity"
+                },
+                "title": "Native influence",
+                "variations": [
+                  {
+                    "excluded": [
+                      "macro:swirl"
+                    ],
+                    "id": "variation:quiet",
+                    "name": "Quiet source state",
+                    "values": {
+                      "macro:influence": 0.25,
+                      "macro:swirl": 0.5
+                    }
+                  }
+                ]
+              },
+              {
+                "excluded": [],
+                "id": "rack:field-medium",
+                "macros": [
+                  {
+                    "id": "macro:pressure",
+                    "mappings": [
+                      {
+                        "id": "mapping:pressure",
+                        "law": "linear",
+                        "max": 20,
+                        "min": 0,
+                        "target": {
+                          "kind": "field",
+                          "path": "medium.pressure"
+                        },
+                        "unit": "scalar"
+                      }
+                    ],
+                    "name": "Pressure",
+                    "value": 0.7
+                  }
+                ],
+                "schema": "oi.parameter-rack/v1",
+                "scope": {
+                  "kind": "field"
+                },
+                "title": "Field medium",
+                "variations": [
+                  {
+                    "excluded": [],
+                    "id": "variation:light",
+                    "name": "Light medium",
+                    "values": {
+                      "macro:pressure": 0.25
+                    }
+                  }
+                ]
+              }
+            ],
+            "schema": "oi.parameter-racks/v1"
+          },
+          "text": [],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 1.5,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        },
+        "schema": "oi.journey-scene/v1"
+      },
+      "revision": 6,
+      "scene_ref": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:scene:main",
+      "title": "Main",
+      "triggers": []
+    }
+  ],
+  "schema": "oi.expression/v1",
+  "selection": {
+    "entity_ref": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph",
+    "scene_ref": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:scene:main"
+  },
+  "title": "Rich Glyph and native parameter rack · file proof"
+}

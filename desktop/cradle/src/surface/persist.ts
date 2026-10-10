@@ -9,7 +9,7 @@
  */
 
 // @ts-ignore -- language-neutral layout codec, unit-tested in tests/workspace-continuity.test.mjs.
-import { validBinding, validPane } from "./layout-codec.mjs";
+import { validApplicationView, validBinding, validPane } from "./layout-codec.mjs";
 import { contains, groupsOf, reconcileLayout } from "./engine";
 import { isTabPresentation, isWorkspaceMode, WORKSPACE_MODES } from "../workspace/mode";
 import {
@@ -26,6 +26,8 @@ const KEY = "oi-cradle.layout.v1";
 
 const asBinding = (raw: unknown): SurfaceBinding | null => (validBinding as (raw: unknown) => SurfaceBinding | null)(raw);
 const asPane = (raw: unknown, surfaces: Record<SurfaceId, SurfaceBinding>): Pane | null => (validPane as (raw: unknown, surfaces: Record<SurfaceId, SurfaceBinding>) => Pane | null)(raw, surfaces);
+export const decodeApplicationView = (raw: unknown): LayoutState["applicationView"] =>
+  (validApplicationView as (value: unknown) => LayoutState["applicationView"])(raw);
 
 export function loadLayout(): LayoutState {
   try {
@@ -38,6 +40,7 @@ export function loadLayout(): LayoutState {
 export function decodeLayout(value: unknown): LayoutState {
   try {
     const parsed = value as Record<string, unknown>;
+    const applicationView = decodeApplicationView(parsed.applicationView);
     const surfaces: Record<SurfaceId, SurfaceBinding> = {};
     if (parsed.surfaces && typeof parsed.surfaces === "object") {
       for (const value of Object.values(parsed.surfaces)) {
@@ -87,7 +90,7 @@ export function decodeLayout(value: unknown): LayoutState {
     const detached = Array.isArray(parsed.detached) ? parsed.detached.filter((d): d is NonNullable<LayoutState["detached"]>[number] => !!d && typeof d === "object" && typeof d.surfaceId === "string" && !!surfaces[d.surfaceId] && typeof d.groupId === "string" && Number.isInteger(d.index) && d.index >= 0 && typeof d.pinned === "boolean") : [];
     if (!root) {
       // Austere rest: no chrome, depth clamped, nothing carried visually.
-      return { ...freshLayout(), mode, settingsReturnMode, panelPlanes, modeRegions, accompanying, detached, sidePane, subjectPlanes, windowBounds, surfaces, closedStack, agencyDepth: depth, rightDepth: AGENCY_DEPTHS.includes(parsed.rightDepth as AgencyDepth) ? parsed.rightDepth as AgencyDepth : "strip", leftWidth: typeof parsed.leftWidth === "number" ? Math.max(200, Math.min(600, parsed.leftWidth)) : 260, rightWidth: typeof parsed.rightWidth === "number" ? Math.max(240, Math.min(720, parsed.rightWidth)) : 320 };
+      return { ...freshLayout(), applicationView, mode, settingsReturnMode, panelPlanes, modeRegions, accompanying, detached, sidePane, subjectPlanes, windowBounds, surfaces, closedStack, agencyDepth: depth, rightDepth: AGENCY_DEPTHS.includes(parsed.rightDepth as AgencyDepth) ? parsed.rightDepth as AgencyDepth : "strip", leftWidth: typeof parsed.leftWidth === "number" ? Math.max(200, Math.min(600, parsed.leftWidth)) : 260, rightWidth: typeof parsed.rightWidth === "number" ? Math.max(240, Math.min(720, parsed.rightWidth)) : 320 };
     }
     let focusedGroupId =
       typeof parsed.focusedGroupId === "string" && contains(root, parsed.focusedGroupId)
@@ -96,6 +99,7 @@ export function decodeLayout(value: unknown): LayoutState {
     if (!groupsOf(root).some((g) => g.id === focusedGroupId))
       focusedGroupId = groupsOf(root)[0].id;
     const state: LayoutState = {
+      applicationView,
       mode, settingsReturnMode, panelPlanes, modeRegions,
       accompanying,
       sidePane,

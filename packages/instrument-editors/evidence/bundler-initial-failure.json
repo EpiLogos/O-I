@@ -1,0 +1,40 @@
+{
+  "schema": "oi.instrument-editor.bundler-conformance/v1",
+  "receiver_vite": "6.4.4",
+  "checks": [
+    {
+      "name": "shell singleton react",
+      "resolved": "packages/live-shell/ui/node_modules/react/index.js"
+    },
+    {
+      "name": "shell singleton react/jsx-runtime",
+      "resolved": "packages/live-shell/ui/node_modules/react/jsx-runtime.js"
+    },
+    {
+      "name": "shell singleton react-dom/client",
+      "resolved": "packages/live-shell/ui/node_modules/react-dom/client.js"
+    },
+    {
+      "name": "preserved native alias react",
+      "resolved": "desktop/cradle/expressions-app/node_modules/react/index.js"
+    },
+    {
+      "name": "preserved native alias react/jsx-runtime",
+      "resolved": "desktop/cradle/expressions-app/node_modules/react/jsx-runtime.js"
+    },
+    {
+      "name": "preserved native alias react-dom/client",
+      "resolved": "desktop/cradle/expressions-app/node_modules/react-dom/client.js"
+    },
+    {
+      "name": "complete worker route and optimizer protection",
+      "receivers": 2
+    }
+  ],
+  "errors": [
+    "SyntaxError: The requested module '/@fs/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/node_modules/maplibre-gl/dist/maplibre-gl.mjs' does not provide an export named 'default'"
+  ],
+  "native_claims": false,
+  "passed": false,
+  "failure": "TimeoutError: page.waitForFunction: Timeout 120000ms exceeded."
+}

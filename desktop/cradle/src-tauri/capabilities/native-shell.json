@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "native-shell",
+  "description": "Qualified native shell candidate reads for the bundled main and registered detached webviews.",
+  "permissions": ["allow-live-shell-read", "allow-live-shell-config", "allow-live-shell-checkpoint-reply", "allow-live-shell-request-close"],
+  "webviews": ["main", "surface-*"]
+}

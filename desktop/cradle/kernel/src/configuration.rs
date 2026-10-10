@@ -349,6 +349,37 @@ impl Client {
         Self { executable }
     }
 
+    pub fn capabilities(&self, cwd: &Path) -> Result<Value, String> {
+        self.expect_document(
+            cwd,
+            &["config".into(), "capabilities".into(), "--json".into()],
+            None,
+        )
+    }
+
+    pub fn reset(
+        &self,
+        cwd: &Path,
+        setting_ref: &str,
+        scope: &ConfigScope,
+    ) -> Result<(Value, Vec<Value>), String> {
+        let answer = self.expect_document(
+            cwd,
+            &[
+                "config".into(),
+                "reset".into(),
+                setting_ref.into(),
+                scope.compact(),
+                "--json".into(),
+            ],
+            None,
+        )?;
+        Ok((
+            answer["changeset"].clone(),
+            answer["receipts"].as_array().cloned().unwrap_or_default(),
+        ))
+    }
+
     fn invoke(&self, cwd: &Path, args: &[String], stdin: Option<&Value>) -> InvokeOutcome {
         let mut command = Command::new(&self.executable);
         command
@@ -576,7 +607,7 @@ impl Client {
             (Some(value), _) => serde_json::to_string(value).unwrap_or_default(),
             (None, Some(secret)) => secret.ref_.clone(),
             (None, None) => {
-                return Err("internal: a hold carries a value or a secret reference".to_owned())
+                return Err("internal: a hold carries a value or a secret reference".to_owned());
             }
         };
         let args = vec![
@@ -607,8 +638,8 @@ impl Client {
     // plan / apply (09 §6, §8, §9)
     // -----------------------------------------------------------------------
 
-    /// Owner-native plans, request by request. Never mutates anything: a
-    /// refused request is its own error document inside the bundle.
+    /// Owner-native plans, request by request. Native owner state is unchanged;
+    /// the coordinator admits each batch. A refused request keeps its own error.
     pub fn plan(&self, cwd: &Path, requests: &[ConfigRequest]) -> (Vec<Value>, Vec<Value>) {
         let mut plans = Vec::new();
         let mut errors = Vec::new();
@@ -641,6 +672,43 @@ impl Client {
         (plans, errors)
     }
 
+    /// One admitted review batch, including the coordinator-held identity.
+    pub fn plan_reviewed(
+        &self,
+        cwd: &Path,
+        requests: &[ConfigRequest],
+    ) -> Result<(Value, Vec<Value>), String> {
+        if requests.is_empty() || requests.len() > 128 {
+            return Err("reviewed planning requires between one and 128 requests".into());
+        }
+        let request = requests_changeset(requests);
+        let args = vec![
+            "config".into(),
+            "plan".into(),
+            "--request-file".into(),
+            "-".into(),
+            "--json".into(),
+        ];
+        let document = self.expect_document(cwd, &args, Some(&request))?;
+        if document["schema"] != "oi.config-plan-set/v1" {
+            return Err("reviewed planning did not return the native plan-set contract".into());
+        }
+        let changeset = document
+            .get("changeset")
+            .filter(|value| value.is_object())
+            .cloned()
+            .ok_or("reviewed planning omitted the admitted ChangeSet")?;
+        let plans = document
+            .get("plans")
+            .and_then(Value::as_array)
+            .cloned()
+            .ok_or("reviewed planning omitted its owner plans")?;
+        if plans.len() != requests.len() || changeset["changeset_id"] != request["changeset_id"] {
+            return Err("reviewed planning returned an incomplete or replaced batch".into());
+        }
+        Ok((changeset, plans))
+    }
+
     /// Apply one ChangeSet: the engine assembles, orchestrates the owner
     /// verbs, verifies by re-read and persists; the executed ChangeSet and
     /// the owner-minted receipts come back verbatim.
@@ -650,43 +718,37 @@ impl Client {
         requests: &[ConfigRequest],
     ) -> Result<(Value, Vec<Value>), String> {
         if requests.is_empty() {
-            return Err("internal: an apply carries at least one requested change".to_owned());
+            return Err("internal: an apply carries at least one requested change".into());
         }
-        let changeset_id = mint_changeset_id();
-        let requested: Vec<Value> = requests
-            .iter()
-            .map(ConfigRequest::requested_value)
-            .collect();
-        let operations: Vec<Value> = requests
-            .iter()
-            .enumerate()
-            .map(|(index, request)| {
-                json!({
-                    "op_id": format!("op-{}", index + 1),
-                    "owner_ref": request.owner_ref(),
-                    "setting_ref": request.setting_ref,
-                    "scope": { "scope_kind": request.scope.scope_kind, "scope_ref": request.scope.scope_ref },
-                    "kind": "apply",
-                    "status": "planned",
-                })
-            })
-            .collect();
-        let document = json!({
-            "schema": CHANGEST_SCHEMA,
-            "changeset_id": changeset_id,
-            "created_at_unix_ms": now_ms(),
-            "requested": requested,
-            "operations": operations,
-            "status": "planned",
-        });
+        self.apply_document(cwd, &requests_changeset(requests))
+    }
+
+    /// Carry the complete admitted ChangeSet verbatim; reconstruction would
+    /// change its review basis even when its requested values were equal.
+    pub fn apply_reviewed(
+        &self,
+        cwd: &Path,
+        changeset: &Value,
+        plans: &[Value],
+    ) -> Result<(Value, Vec<Value>), String> {
+        if changeset["schema"] != CHANGEST_SCHEMA || plans.is_empty() || plans.len() > 128 {
+            return Err("reviewed application requires the complete admitted native batch".into());
+        }
+        self.apply_document(
+            cwd,
+            &json!({"schema":"oi.config-plan-set/v1","changeset":changeset,"plans":plans}),
+        )
+    }
+
+    fn apply_document(&self, cwd: &Path, document: &Value) -> Result<(Value, Vec<Value>), String> {
         let args = vec![
-            "config".to_owned(),
-            "apply".to_owned(),
-            "--request-file".to_owned(),
-            "-".to_owned(),
-            "--json".to_owned(),
+            "config".into(),
+            "apply".into(),
+            "--request-file".into(),
+            "-".into(),
+            "--json".into(),
         ];
-        let envelope = self.expect_document(cwd, &args, Some(&document))?;
+        let envelope = self.expect_document(cwd, &args, Some(document))?;
         let changeset = envelope.get("changeset").cloned().unwrap_or(Value::Null);
         let receipts = envelope
             .get("receipts")
@@ -866,7 +928,7 @@ impl Client {
                         (None, None) => {
                             return Err(format!(
                                 "internal: the edit op for `{setting_ref}` carries a value or a secret reference"
-                            ))
+                            ));
                         }
                     }
                     args.push(scope.compact());
@@ -1066,7 +1128,7 @@ fn mount(
                     return degraded(
                         "the discovery answer is not JSON".to_owned(),
                         error.to_string(),
-                    )
+                    );
                 }
             };
             if document.get("schema").and_then(Value::as_str) != Some(CONTRIBUTION_SCHEMA) {
@@ -1242,20 +1304,22 @@ fn degraded_resolution(pair: &ConfigPair, status: &str, reason: &str) -> Value {
 /// identity, one requested change, one planned operation, derived status.
 /// The engine re-derives everything addressable from `requested`.
 fn request_changeset(request: &ConfigRequest) -> Value {
-    let changeset_id = mint_changeset_id();
+    requests_changeset(std::slice::from_ref(request))
+}
+
+fn requests_changeset(requests: &[ConfigRequest]) -> Value {
     json!({
         "schema": CHANGEST_SCHEMA,
-        "changeset_id": changeset_id,
+        "changeset_id": mint_changeset_id(),
         "created_at_unix_ms": now_ms(),
-        "requested": [request.requested_value()],
-        "operations": [{
-            "op_id": "op-1",
+        "requested": requests.iter().map(ConfigRequest::requested_value).collect::<Vec<_>>(),
+        "operations": requests.iter().enumerate().map(|(index, request)| json!({
+            "op_id": format!("op-{}", index + 1),
             "owner_ref": request.owner_ref(),
             "setting_ref": request.setting_ref,
             "scope": { "scope_kind": request.scope.scope_kind, "scope_ref": request.scope.scope_ref },
-            "kind": "apply",
-            "status": "planned",
-        }],
+            "kind": "apply", "status": "planned",
+        })).collect::<Vec<_>>(),
         "status": "planned",
     })
 }
