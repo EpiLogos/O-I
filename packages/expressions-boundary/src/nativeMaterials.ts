@@ -201,6 +201,12 @@ export function createNativeMaterialController(host: NativeMaterialHost) {
       const act=readNativeActResult(raw,{act_ref,expression_ref:captured.basis.expression_ref,material_contract});
       return act;
     },
+    async readNow(): Promise<NativeActList> {
+      const captured=captureReadBasis(host.reading());
+      const raw=await host.worldRequest({operation:'act_list',expression_ref:captured.basis.expression_ref});
+      retainReadBasis(captured);
+      return readNativeActList(raw,captured.basis.expression_ref);
+    },
     async listActs(): Promise<NativeActList> {
       const captured=captureReadBasis(host.reading());
       const raw=await host.worldRequest({operation:'act_list',expression_ref:captured.basis.expression_ref});

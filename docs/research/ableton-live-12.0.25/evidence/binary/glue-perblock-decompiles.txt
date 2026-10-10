@@ -1,0 +1,1097 @@
+// PROVENANCE: Ghidra 12.1.4 decompiles, fresh project LiveRE2 (imported -noanalysis from /Users/admin/tools/live-re/Live.arm64, Live 12.0.25).
+// Owner-private analysis evidence. NOT FOR REDISTRIBUTION. Never enters product source (packages/live-dynamics).
+// Captured 2026-10-08 via BlockProbe.java at known addresses (glue per-block lane redo).
+// Functions: FUN_1017a028c (ramp setup), FUN_10179fff8 (coefficient master), FUN_10179fcdc (Range shell),
+// FUN_1017a05f0 (block driver), FUN_101687f10 (CalcMainX1), FUN_1016880b0 (CalcMainX2SideOn),
+// FUN_10168882c (CalcMainX2SideOff), FUN_10179fb4c (OnRelease shell), FUN_10179f64c (state init).
+// NOTE: decompiles from an unanalyzed program: some call targets show as func_0x...; data pool refs as _UNK_.
+
+// REPORT: Execute script: BlockProbe.java '0x1017a028c:80,0x10179fff8:130,0x10179fcdc:30,0x1017a05f0:120,0x101687f10:90'  (HeadlessAnalyzer)  
+// SCRIPT: /Users/admin/tools/live-re/scripts/BlockProbe.java (HeadlessAnalyzer)  
+// BlockProbe.java> FUNC 1017a028c name=FUN_1017a028c body=1 lines=44  
+// BlockProbe.java>   
+// BlockProbe.java> void FUN_1017a028c(long param_1,int param_2)  
+// BlockProbe.java>   
+// BlockProbe.java> {  
+// BlockProbe.java>   float fVar1;  
+// BlockProbe.java>   float fVar2;  
+// BlockProbe.java>   float fVar3;  
+// BlockProbe.java>   float fVar4;  
+// BlockProbe.java>   float fVar5;  
+// BlockProbe.java>   float fVar6;  
+// BlockProbe.java>     
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x244) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x23c) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x249) = 0;  
+// BlockProbe.java>   *(undefined4 *)(param_1 + 0x244) = 0x41a00000;  
+// BlockProbe.java>   if (param_2 < 1) {  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x188) = *(undefined4 *)(param_1 + 0x18c);  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x194) = *(undefined4 *)(param_1 + 0x198);  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x1a0) = *(undefined4 *)(param_1 + 0x1a4);  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x1ac) = *(undefined4 *)(param_1 + 0x1b0);  
+// BlockProbe.java>     fVar2 = (float)_expf(*(float *)(param_1 + 0x1bc) * *(float *)(param_1 + 0x204) * -6.2831855);  
+// BlockProbe.java>     *(float *)(param_1 + 0x1b8) = 1.0 - fVar2;  
+// BlockProbe.java>     fVar2 = 0.0;  
+// BlockProbe.java>     fVar3 = 0.0;  
+// BlockProbe.java>     fVar4 = 0.0;  
+// BlockProbe.java>     fVar5 = 0.0;  
+// BlockProbe.java>     fVar6 = 0.0;  
+// BlockProbe.java>   }  
+// BlockProbe.java>   else {  
+// BlockProbe.java>     fVar6 = 1.0 / (float)param_2;  
+// BlockProbe.java>     fVar1 = (float)_expf(*(float *)(param_1 + 0x1bc) * *(float *)(param_1 + 0x204) * -6.2831855);  
+// BlockProbe.java>     fVar2 = fVar6 * (*(float *)(param_1 + 0x18c) - *(float *)(param_1 + 0x188));  
+// BlockProbe.java>     fVar3 = fVar6 * (*(float *)(param_1 + 0x198) - *(float *)(param_1 + 0x194));  
+// BlockProbe.java>     fVar4 = fVar6 * (*(float *)(param_1 + 0x1a4) - *(float *)(param_1 + 0x1a0));  
+// BlockProbe.java>     fVar5 = fVar6 * (*(float *)(param_1 + 0x1b0) - *(float *)(param_1 + 0x1ac));  
+// BlockProbe.java>     fVar6 = fVar6 * ((1.0 - fVar1) - *(float *)(param_1 + 0x1b8));  
+// BlockProbe.java>   }  
+// BlockProbe.java>   *(float *)(param_1 + 400) = fVar2;  
+// BlockProbe.java>   *(float *)(param_1 + 0x19c) = fVar3;  
+// BlockProbe.java>   *(float *)(param_1 + 0x1a8) = fVar4;  
+// BlockProbe.java>   *(float *)(param_1 + 0x1b4) = fVar5;  
+// BlockProbe.java>   *(float *)(param_1 + 0x1c0) = fVar6;  
+// BlockProbe.java>   return;  
+// BlockProbe.java> }  
+// BlockProbe.java> END 1017a028c  
+// BlockProbe.java> FUNC 10179fff8 name=FUN_10179fff8 body=1 lines=59  
+// BlockProbe.java>   
+// BlockProbe.java> void FUN_10179fff8(double param_1,long param_2,int param_3)  
+// BlockProbe.java>   
+// BlockProbe.java> {  
+// BlockProbe.java>   float fVar1;  
+// BlockProbe.java>   float fVar2;  
+// BlockProbe.java>   double dVar3;  
+// BlockProbe.java>   double dVar4;  
+// BlockProbe.java>   double dVar5;  
+// BlockProbe.java>   double dVar6;  
+// BlockProbe.java>   undefined1 auVar7 [16];  
+// BlockProbe.java>   float fVar8;  
+// BlockProbe.java>     
+// BlockProbe.java>   if ((*(double *)(param_2 + 0x1f0) != param_1) || (*(int *)(param_2 + 0x208) != param_3)) {  
+// BlockProbe.java>     dVar4 = 1.0 / param_1;  
+// BlockProbe.java>     *(double *)(param_2 + 0x1f0) = param_1;  
+// BlockProbe.java>     *(double *)(param_2 + 0x1f8) = dVar4;  
+// BlockProbe.java>     fVar8 = (float)param_1;  
+// BlockProbe.java>     *(float *)(param_2 + 0x200) = fVar8;  
+// BlockProbe.java>     *(float *)(param_2 + 0x204) = (float)dVar4;  
+// BlockProbe.java>     *(int *)(param_2 + 0x208) = param_3;  
+// BlockProbe.java>     dVar3 = (double)_exp(dVar4 * -6.2831854820251465 * 1.1);  
+// BlockProbe.java>     *(double *)(param_2 + 0x170) = 1.0 - dVar3;  
+// BlockProbe.java>     *(undefined4 *)(param_2 + 0x1c4) = 0x1e059196;  
+// BlockProbe.java>     *(float *)(param_2 + 0x1c8) = SQRT(fVar8 * 0.25 * 2.2675737e-05) * 1e-07;  
+// BlockProbe.java>     fVar1 = (float)_sinf((float)dVar4 * 3.1415927 * 5.25);  
+// BlockProbe.java>     *(float *)(param_2 + 0x1d4) = fVar1 + fVar1;  
+// BlockProbe.java>     *(undefined4 *)(param_2 + 0x1d8) = 0x3fc00000;  
+// BlockProbe.java>     fVar1 = (*(float *)(param_2 + 0x88) + *(float *)(param_2 + 0x88)) * fVar8;  
+// BlockProbe.java>     *(float *)(param_2 + 0xbc) = fVar1;  
+// BlockProbe.java>     *(undefined4 *)(param_2 + 0xc0) = 0;  
+// BlockProbe.java>     if (*(char *)(param_2 + 0x290) != '\0') {  
+// BlockProbe.java>       *(float *)(param_2 + 0xc0) = 1.0 / (*(float *)(param_2 + 0x90) * fVar8);  
+// BlockProbe.java>     }  
+// BlockProbe.java>     fVar2 = fVar1 + *(float *)(param_2 + 0xb4);  
+// BlockProbe.java>     *(float *)(param_2 + 0xc4) = fVar2;  
+// BlockProbe.java>     *(double *)(param_2 + 0x58) =  
+// BlockProbe.java>          (double)(1.0 / (fVar1 + *(float *)(param_2 + 0xb0) + *(float *)(param_2 + 0xb4)));  
+// BlockProbe.java>     *(double *)(param_2 + 0x60) = (double)(1.0 / fVar2);  
+// BlockProbe.java>     dVar4 = (6.283185307179586 / (double)fVar8) * 15900.0;  
+// BlockProbe.java>     dVar3 = (double)NEON_fminnm(dVar4,0x3ff921fb54442d18);  
+// BlockProbe.java>     auVar7 = NEON_fmov(0x3ff0000000000000,8);  
+// BlockProbe.java>     dVar5 = auVar7._0_8_ / ((dVar3 * dVar3) / (dVar4 * dVar4) + auVar7._0_8_);  
+// BlockProbe.java>     dVar4 = auVar7._8_8_ / (9.869604401089358 / (dVar4 * dVar4) + auVar7._8_8_);  
+// BlockProbe.java>     dVar3 = (double)_cos();  
+// BlockProbe.java>     dVar6 = (dVar4 - dVar5) + dVar3 * (dVar5 - dVar4) +  
+// BlockProbe.java>             SQRT((1.0 - dVar3 * dVar3) * (dVar5 - dVar4) * -(dVar5 + -1.0));  
+// BlockProbe.java>     dVar3 = (dVar6 + dVar6) / ((dVar3 + dVar4 + dVar5 * -2.0 + 1.0) - dVar3 * dVar4);  
+// BlockProbe.java>     if (1.0 < dVar3) {  
+// BlockProbe.java>       dVar3 = 1.0;  
+// BlockProbe.java>     }  
+// BlockProbe.java>     dVar4 = (SQRT(dVar3 * dVar3 * (dVar3 + -2.0) * (dVar3 + -2.0) * dVar4) / (dVar3 * dVar3) + 1.0)  
+// BlockProbe.java>             * 0.5;  
+// BlockProbe.java>     *(float *)(param_2 + 0x178) = (float)(dVar3 * dVar4);  
+// BlockProbe.java>     *(float *)(param_2 + 0x17c) = (float)(dVar3 * (1.0 - dVar4));  
+// BlockProbe.java>     *(float *)(param_2 + 0x180) = (float)(1.0 - dVar3);  
+// BlockProbe.java>   }  
+// BlockProbe.java>   return;  
+// BlockProbe.java> }  
+// BlockProbe.java> END 10179fff8  
+// BlockProbe.java> FUNC 10179fcdc name=FUN_10179fcdc body=1 lines=13  
+// BlockProbe.java>   
+// BlockProbe.java> void FUN_10179fcdc(float param_1,long param_2)  
+// BlockProbe.java>   
+// BlockProbe.java> {  
+// BlockProbe.java>   float fVar1;  
+// BlockProbe.java>     
+// BlockProbe.java>   fVar1 = -106.0;  
+// BlockProbe.java>   if (-80.0 <= param_1) {  
+// BlockProbe.java>     fVar1 = param_1;  
+// BlockProbe.java>   }  
+// BlockProbe.java>   *(float *)(param_2 + 0x1a4) = fVar1;  
+// BlockProbe.java>   return;  
+// BlockProbe.java> }  
+// BlockProbe.java> END 10179fcdc  
+// BlockProbe.java> FUNC 1017a05f0 name=FUN_1017a05f0 body=1 lines=137  
+// BlockProbe.java>   
+// BlockProbe.java> /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */  
+// BlockProbe.java>   
+// BlockProbe.java> void FUN_1017a05f0(long param_1,long param_2,long param_3,undefined4 *param_4,undefined4 *param_5,  
+// BlockProbe.java>                   uint param_6)  
+// BlockProbe.java>   
+// BlockProbe.java> {  
+// BlockProbe.java>   ulong uVar1;  
+// BlockProbe.java>   float fVar2;  
+// BlockProbe.java>   uint uVar3;  
+// BlockProbe.java>   uint uVar6;  
+// BlockProbe.java>   undefined8 uVar4;  
+// BlockProbe.java>   ulong uVar5;  
+// BlockProbe.java>   float fVar7;  
+// BlockProbe.java>   uint uVar8;  
+// BlockProbe.java>   float fVar9;  
+// BlockProbe.java>   uint uVar10;  
+// BlockProbe.java>   float fVar11;  
+// BlockProbe.java>   double dVar12;  
+// BlockProbe.java>   float fVar13;  
+// BlockProbe.java>   double dVar14;  
+// BlockProbe.java>   double dVar15;  
+// BlockProbe.java>   double dVar16;  
+// BlockProbe.java>     
+// BlockProbe.java>   if (*(float *)(param_1 + 0x184) == 0.0) {  
+// BlockProbe.java>     return;  
+// BlockProbe.java>   }  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x244) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x23c) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x249) = 0;  
+// BlockProbe.java>   *(undefined4 *)(param_1 + 0x244) = 0x41a00000;  
+// BlockProbe.java>   if ((int)param_6 < 1) {  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x188) = *(undefined4 *)(param_1 + 0x18c);  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x194) = *(undefined4 *)(param_1 + 0x198);  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x1a0) = *(undefined4 *)(param_1 + 0x1a4);  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x1ac) = *(undefined4 *)(param_1 + 0x1b0);  
+// BlockProbe.java>     fVar2 = (float)_expf(*(float *)(param_1 + 0x1bc) * *(float *)(param_1 + 0x204) * -6.2831855);  
+// BlockProbe.java>     *(float *)(param_1 + 0x1b8) = 1.0 - fVar2;  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 400) = 0;  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x19c) = 0;  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x1a8) = 0;  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x1b4) = 0;  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x1c0) = 0;  
+// BlockProbe.java>   }  
+// BlockProbe.java>   else {  
+// BlockProbe.java>     fVar9 = 1.0 / (float)(int)param_6;  
+// BlockProbe.java>     fVar2 = (float)_expf(*(float *)(param_1 + 0x1bc) * *(float *)(param_1 + 0x204) * -6.2831855);  
+// BlockProbe.java>     *(float *)(param_1 + 400) = fVar9 * (*(float *)(param_1 + 0x18c) - *(float *)(param_1 + 0x188));  
+// BlockProbe.java>     *(float *)(param_1 + 0x19c) =  
+// BlockProbe.java>          fVar9 * (*(float *)(param_1 + 0x198) - *(float *)(param_1 + 0x194));  
+// BlockProbe.java>     *(float *)(param_1 + 0x1a8) =  
+// BlockProbe.java>          fVar9 * (*(float *)(param_1 + 0x1a4) - *(float *)(param_1 + 0x1a0));  
+// BlockProbe.java>     *(float *)(param_1 + 0x1b4) =  
+// BlockProbe.java>          fVar9 * (*(float *)(param_1 + 0x1b0) - *(float *)(param_1 + 0x1ac));  
+// BlockProbe.java>     *(float *)(param_1 + 0x1c0) = fVar9 * ((1.0 - fVar2) - *(float *)(param_1 + 0x1b8));  
+// BlockProbe.java>     uVar1 = (ulong)param_6;  
+// BlockProbe.java>     do {  
+// BlockProbe.java>       func_0x0001017a07b0(*param_4,*param_5,param_1,param_2,param_3);  
+// BlockProbe.java>       param_3 = param_3 + 4;  
+// BlockProbe.java>       param_2 = param_2 + 4;  
+// BlockProbe.java>       uVar1 = uVar1 - 1;  
+// BlockProbe.java>       param_5 = param_5 + 1;  
+// BlockProbe.java>       param_4 = param_4 + 1;  
+// BlockProbe.java>     } while (uVar1 != 0);  
+// BlockProbe.java>   }  
+// BlockProbe.java>   uVar3 = (int)_UNK_104cd0a30 + (int)*(undefined8 *)(param_1 + 0xf8) * (int)_UNK_104cd0a28;  
+// BlockProbe.java>   uVar6 = (int)((ulong)_UNK_104cd0a30 >> 0x20) +  
+// BlockProbe.java>           (int)((ulong)*(undefined8 *)(param_1 + 0xf8) >> 0x20) *  
+// BlockProbe.java>           (int)((ulong)_UNK_104cd0a28 >> 0x20);  
+// BlockProbe.java>   *(ulong *)(param_1 + 0xf8) = CONCAT44(uVar6,uVar3);  
+// BlockProbe.java>   uVar8 = (int)_UNK_104cd0a40 + (int)*(undefined8 *)(param_1 + 0x100) * (int)_UNK_104cd0a38;  
+// BlockProbe.java>   uVar10 = (int)((ulong)_UNK_104cd0a40 >> 0x20) +  
+// BlockProbe.java>            (int)((ulong)*(undefined8 *)(param_1 + 0x100) >> 0x20) *  
+// BlockProbe.java>            (int)((ulong)_UNK_104cd0a38 >> 0x20);  
+// BlockProbe.java>   *(ulong *)(param_1 + 0x100) = CONCAT44(uVar10,uVar8);  
+// BlockProbe.java>   fVar11 = *(float *)(param_1 + 0x1c4);  
+// BlockProbe.java>   fVar13 = fVar11 * ((float)(uVar3 >> 9 | 0x40000000) + -3.0 +  
+// BlockProbe.java>                     (float)(uVar6 >> 9 | 0x40000000) + -3.0);  
+// BlockProbe.java>   fVar9 = (float)(int)param_6;  
+// BlockProbe.java>   fVar2 = *(float *)(param_1 + 0x204);  
+// BlockProbe.java>   fVar7 = *(float *)(param_1 + 0x280) + fVar2 * fVar9;  
+// BlockProbe.java>   *(float *)(param_1 + 0x280) = fVar7;  
+// BlockProbe.java>   dVar16 = (double)*(float *)(param_1 + 0x248);  
+// BlockProbe.java>   dVar14 = *(double *)(param_1 + 0x278);  
+// BlockProbe.java>   if (dVar14 <= dVar16) {  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x280) = 0;  
+// BlockProbe.java>     *(float *)(param_1 + 0x284) = *(float *)(param_1 + 0x248);  
+// BlockProbe.java>   }  
+// BlockProbe.java>   else {  
+// BlockProbe.java>     if (0.5 <= fVar7) {  
+// BlockProbe.java>       fVar2 = fVar9 * -6.2831855 * fVar2;  
+// BlockProbe.java>       fVar9 = (float)_expf(fVar2);  
+// BlockProbe.java>       dVar16 = ((dVar16 - dVar14) + (double)fVar13) * (double)(1.0 - fVar9);  
+// BlockProbe.java>       goto code_r0x0001017a0514;  
+// BlockProbe.java>     }  
+// BlockProbe.java>     dVar16 = (double)*(float *)(param_1 + 0x284);  
+// BlockProbe.java>   }  
+// BlockProbe.java>   fVar2 = fVar9 * -6.2831855 * fVar2;  
+// BlockProbe.java>   fVar9 = (float)_expf(fVar2 * 9.0);  
+// BlockProbe.java>   dVar16 = (double)fVar13 + (dVar16 - dVar14) * (double)(1.0 - fVar9);  
+// BlockProbe.java> code_r0x0001017a0514:  
+// BlockProbe.java>   *(double *)(param_1 + 0x278) = dVar14 + dVar16;  
+// BlockProbe.java>   uVar4 = NEON_fmov(0xc0400000,4);  
+// BlockProbe.java>   dVar12 = *(double *)(param_1 + 0x268);  
+// BlockProbe.java>   dVar15 = (double)*(float *)(param_1 + 0x24c) - dVar12;  
+// BlockProbe.java>   fVar9 = 50.0;  
+// BlockProbe.java>   if (dVar15 <= 0.0) {  
+// BlockProbe.java>     fVar9 = 10.0;  
+// BlockProbe.java>   }  
+// BlockProbe.java>   fVar2 = (float)_expf(fVar2 * fVar9);  
+// BlockProbe.java>   dVar12 = dVar12 + (double)fVar13 + dVar15 * (double)(1.0 - fVar2);  
+// BlockProbe.java>   *(double *)(param_1 + 0x268) = dVar12;  
+// BlockProbe.java>   dVar12 = *(double *)(param_1 + 0x270) +  
+// BlockProbe.java>            (double)(fVar11 * ((float)(uVar8 >> 9 | 0x40000000) + (float)uVar4 +  
+// BlockProbe.java>                              (float)(uVar10 >> 9 | 0x40000000) + (float)((ulong)uVar4 >> 0x20))) +  
+// BlockProbe.java>            (dVar12 - *(double *)(param_1 + 0x270)) * (double)(1.0 - fVar2);  
+// BlockProbe.java>   *(double *)(param_1 + 0x270) = dVar12;  
+// BlockProbe.java>   uVar5 = *(ulong *)(param_1 + 0x20c);  
+// BlockProbe.java>   uVar1 = *(ulong *)(param_1 + 0x23c);  
+// BlockProbe.java>   *(ulong *)(param_1 + 0x20c) =  
+// BlockProbe.java> END 1017a05f0  
+// BlockProbe.java> FUNC 101687f10 name=FUN_101687f10 body=1 lines=65  
+// BlockProbe.java>   
+// BlockProbe.java> void FUN_101687f10(long param_1)  
+// BlockProbe.java>   
+// BlockProbe.java> {  
+// BlockProbe.java>   float *pfVar1;  
+// BlockProbe.java>   float *pfVar2;  
+// BlockProbe.java>   float *pfVar3;  
+// BlockProbe.java>   float *pfVar4;  
+// BlockProbe.java>   float fVar5;  
+// BlockProbe.java>   float fVar6;  
+// BlockProbe.java>   float fVar7;  
+// BlockProbe.java>   float fVar8;  
+// BlockProbe.java>   float fVar9;  
+// BlockProbe.java>   float fVar10;  
+// BlockProbe.java>   float fVar11;  
+// BlockProbe.java>   double dVar12;  
+// BlockProbe.java>     
+// BlockProbe.java>   dVar12 = *(double *)(param_1 + 0x3c0);  
+// BlockProbe.java>   *(double *)(param_1 + 0x3c0) = dVar12 + *(double *)(param_1 + 0x3c8);  
+// BlockProbe.java>   pfVar3 = *(float **)(param_1 + 0x30);  
+// BlockProbe.java>   pfVar1 = *(float **)(param_1 + 0x38);  
+// BlockProbe.java>   pfVar4 = *(float **)(param_1 + 0x40);  
+// BlockProbe.java>   pfVar2 = *(float **)(param_1 + 0x48);  
+// BlockProbe.java>   if (*(char *)(param_1 + 0x319) != '\0') {  
+// BlockProbe.java>     FUN_1017a028c(param_1 + 0x68,*(int *)(param_1 + 0x3e4) * *(int *)(param_1 + 0x3d8));  
+// BlockProbe.java>     *(undefined1 *)(param_1 + 0x319) = 0;  
+// BlockProbe.java>   }  
+// BlockProbe.java>   fVar5 = *(float *)(param_1 + 0x314);  
+// BlockProbe.java>   fVar11 = *pfVar4 * fVar5;  
+// BlockProbe.java>   fVar10 = fVar5 * *pfVar2;  
+// BlockProbe.java>   if (*(char *)(param_1 + 0x328) != '\0') {  
+// BlockProbe.java>     fVar6 = fVar11 * *(float *)(param_1 + 0x368);  
+// BlockProbe.java>     fVar7 = fVar6 + *(float *)(param_1 + 0x3a8) + *(float *)(param_1 + 0x3b0) * -2.0;  
+// BlockProbe.java>     fVar9 = *(float *)(param_1 + 0x3ac);  
+// BlockProbe.java>     fVar8 = *(float *)(param_1 + 0x3b0) + fVar9 * *(float *)(param_1 + 0x360) +  
+// BlockProbe.java>             fVar7 * *(float *)(param_1 + 0x364);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3b0) = fVar8;  
+// BlockProbe.java>     fVar7 = fVar9 + fVar9 * *(float *)(param_1 + 0x358) + fVar7 * *(float *)(param_1 + 0x35c);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3ac) = fVar7;  
+// BlockProbe.java>     *(float *)(param_1 + 0x3a8) = fVar6;  
+// BlockProbe.java>     fVar11 = fVar7 * *(float *)(param_1 + 0x370) + fVar11 * *(float *)(param_1 + 0x36c) +  
+// BlockProbe.java>              fVar8 * *(float *)(param_1 + 0x374);  
+// BlockProbe.java>     fVar6 = fVar10 * *(float *)(param_1 + 0x368);  
+// BlockProbe.java>     fVar7 = fVar6 + *(float *)(param_1 + 0x3b4) + *(float *)(param_1 + 0x3bc) * -2.0;  
+// BlockProbe.java>     fVar9 = *(float *)(param_1 + 0x3b8);  
+// BlockProbe.java>     fVar8 = *(float *)(param_1 + 0x3bc) + fVar9 * *(float *)(param_1 + 0x360) +  
+// BlockProbe.java>             fVar7 * *(float *)(param_1 + 0x364);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3bc) = fVar8;  
+// BlockProbe.java>     fVar7 = fVar9 + fVar9 * *(float *)(param_1 + 0x358) + fVar7 * *(float *)(param_1 + 0x35c);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3b8) = fVar7;  
+// BlockProbe.java>     *(float *)(param_1 + 0x3b4) = fVar6;  
+// BlockProbe.java>     fVar10 = *(float *)(param_1 + 0x370) * fVar7 + fVar10 * *(float *)(param_1 + 0x36c) +  
+// BlockProbe.java>              fVar8 * *(float *)(param_1 + 0x374);  
+// BlockProbe.java>   }  
+// BlockProbe.java>   pfVar4 = (float *)(param_1 + 0x50);  
+// BlockProbe.java>   *pfVar4 = fVar5 * *pfVar3;  
+// BlockProbe.java>   fVar6 = (float)dVar12;  
+// BlockProbe.java>   pfVar3 = (float *)(param_1 + 0x54);  
+// BlockProbe.java>   *pfVar3 = fVar5 * *pfVar1;  
+// BlockProbe.java>   func_0x0001017a07b0(fVar11,fVar10,param_1 + 0x68,pfVar4,pfVar3);  
+// BlockProbe.java>   *pfVar4 = (1.0 - fVar6) * *pfVar4 + fVar11 * fVar6;  
+// BlockProbe.java>   *pfVar3 = (1.0 - fVar6) * *pfVar3 + fVar10 * fVar6;  
+// BlockProbe.java>   *(int *)(param_1 + 0x310) = *(int *)(param_1 + 0x310) + 1;  
+// BlockProbe.java>   return;  
+// BlockProbe.java> }  
+// BlockProbe.java> END 101687f10  
+// REPORT: Save succeeded for processed file: /Live.arm64 (HeadlessAnalyzer)  
+
+// ===== probe 2 =====
+// REPORT: Execute script: BlockProbe.java '0x1016880b0:300,0x10168882c:250'  (HeadlessAnalyzer)  
+// SCRIPT: /Users/admin/tools/live-re/scripts/BlockProbe.java (HeadlessAnalyzer)  
+// BlockProbe.java> FUNC 1016880b0 name=FUN_1016880b0 body=1 lines=589  
+// BlockProbe.java>   
+// BlockProbe.java> void FUN_1016880b0(long param_1)  
+// BlockProbe.java>   
+// BlockProbe.java> {  
+// BlockProbe.java>   ulong uVar1;  
+// BlockProbe.java>   long *plVar2;  
+// BlockProbe.java>   undefined4 *puVar3;  
+// BlockProbe.java>   uint uVar4;  
+// BlockProbe.java>   uint uVar5;  
+// BlockProbe.java>   undefined4 uVar6;  
+// BlockProbe.java>   undefined8 *puVar7;  
+// BlockProbe.java>   int iVar8;  
+// BlockProbe.java>   long lVar9;  
+// BlockProbe.java>   long *plVar10;  
+// BlockProbe.java>   long lVar11;  
+// BlockProbe.java>   undefined8 *extraout_x8;  
+// BlockProbe.java>   long lVar12;  
+// BlockProbe.java>   long lVar13;  
+// BlockProbe.java>   long lVar14;  
+// BlockProbe.java>   uint uVar15;  
+// BlockProbe.java>   uint uVar16;  
+// BlockProbe.java>   int iVar17;  
+// BlockProbe.java>   ulong uVar18;  
+// BlockProbe.java>   long lVar19;  
+// BlockProbe.java>   int iVar20;  
+// BlockProbe.java>   ulong uVar21;  
+// BlockProbe.java>   undefined8 *puVar22;  
+// BlockProbe.java>   ulong uVar24;  
+// BlockProbe.java>   ulong uVar25;  
+// BlockProbe.java>   float fVar26;  
+// BlockProbe.java>   float fVar27;  
+// BlockProbe.java>   float fVar28;  
+// BlockProbe.java>   float fVar29;  
+// BlockProbe.java>   float fVar30;  
+// BlockProbe.java>   float fVar31;  
+// BlockProbe.java>   float fVar32;  
+// BlockProbe.java>   float fVar33;  
+// BlockProbe.java>   float fVar34;  
+// BlockProbe.java>   float fVar35;  
+// BlockProbe.java>   float fVar36;  
+// BlockProbe.java>   float fVar37;  
+// BlockProbe.java>   float fVar38;  
+// BlockProbe.java>   float fVar39;  
+// BlockProbe.java>   float fVar40;  
+// BlockProbe.java>   float fVar41;  
+// BlockProbe.java>   float fVar42;  
+// BlockProbe.java>   float fVar43;  
+// BlockProbe.java>   float fVar44;  
+// BlockProbe.java>   undefined1 auVar45 [16];  
+// BlockProbe.java>   long lStack_190;  
+// BlockProbe.java>   undefined8 *puStack_188;  
+// BlockProbe.java>   undefined8 *puStack_180;  
+// BlockProbe.java>   undefined8 uStack_178;  
+// BlockProbe.java>   ulong uStack_170;  
+// BlockProbe.java>   long lStack_168;  
+// BlockProbe.java>   ulong uStack_160;  
+// BlockProbe.java>   ulong uStack_158;  
+// BlockProbe.java>   long lStack_150;  
+// BlockProbe.java>   long lStack_148;  
+// BlockProbe.java>   undefined1 **ppuStack_140;  
+// BlockProbe.java>   undefined *puStack_138;  
+// BlockProbe.java>   undefined8 uStack_128;  
+// BlockProbe.java>   undefined8 uStack_120;  
+// BlockProbe.java>   long lStack_118;  
+// BlockProbe.java>   ulong uStack_110;  
+// BlockProbe.java>   ulong uStack_108;  
+// BlockProbe.java>   ulong uStack_100;  
+// BlockProbe.java>   ulong uStack_f8;  
+// BlockProbe.java>   ulong uStack_f0;  
+// BlockProbe.java>   ulong uStack_e8;  
+// BlockProbe.java>   ulong uStack_e0;  
+// BlockProbe.java>   ulong uStack_d8;  
+// BlockProbe.java>   ulong uStack_d0;  
+// BlockProbe.java>   ulong uStack_c8;  
+// BlockProbe.java>   long lStack_c0;  
+// BlockProbe.java>   long lStack_b8;  
+// BlockProbe.java>   undefined1 *puStack_b0;  
+// BlockProbe.java>   undefined *puStack_a8;  
+// BlockProbe.java>   float fStack_98;  
+// BlockProbe.java>   float fStack_94;  
+// BlockProbe.java>   float fStack_90;  
+// BlockProbe.java>   float fStack_8c;  
+// BlockProbe.java>   undefined8 uStack_88;  
+// BlockProbe.java>   undefined8 uStack_80;  
+// BlockProbe.java>   long lStack_78;  
+// BlockProbe.java>   undefined8 *puVar23;  
+// BlockProbe.java>     
+// BlockProbe.java>   lVar14 = 0;  
+// BlockProbe.java>   lStack_78 = *(long *)PTR____stack_chk_guard_1050c86c8;  
+// BlockProbe.java>   uStack_88 = 0;  
+// BlockProbe.java>   uStack_80 = 0;  
+// BlockProbe.java>   puVar3 = *(undefined4 **)(param_1 + 0x38);  
+// BlockProbe.java>   uVar4 = *(uint *)(param_1 + 0x800);  
+// BlockProbe.java>   lVar9 = param_1 + 0x400;  
+// BlockProbe.java>   *(undefined4 *)(lVar9 + ((ulong)uVar4 & 0xff) * 4) = **(undefined4 **)(param_1 + 0x30);  
+// BlockProbe.java>   iVar17 = (int)((ulong)uVar4 & 0xff);  
+// BlockProbe.java>   uVar5 = *(uint *)(param_1 + 0xc18);  
+// BlockProbe.java>   lVar11 = param_1 + 0x818;  
+// BlockProbe.java>   *(undefined4 *)(lVar11 + ((ulong)uVar5 & 0xff) * 4) = *puVar3;  
+// BlockProbe.java>   iVar20 = (int)((ulong)uVar5 & 0xff);  
+// BlockProbe.java>   lVar12 = *(long *)(param_1 + 1000);  
+// BlockProbe.java>   fVar26 = 0.0;  
+// BlockProbe.java>   iVar8 = 0xff;  
+// BlockProbe.java>   fVar29 = 0.0;  
+// BlockProbe.java>   do {  
+// BlockProbe.java>     fVar31 = *(float *)(lVar12 + 4 + lVar14 * 4);  
+// BlockProbe.java>     fVar29 = fVar29 + (*(float *)(lVar9 + ((ulong)(iVar17 + (int)lVar14 + 0xc1) & 0xff) * 4) +  
+// BlockProbe.java>                       *(float *)(lVar9 + ((ulong)(uint)(iVar17 + iVar8) & 0xff) * 4)) * fVar31;  
+// BlockProbe.java>     fVar26 = fVar26 + (*(float *)(lVar11 + ((ulong)(iVar20 + (int)lVar14 + 0xc1) & 0xff) * 4) +  
+// BlockProbe.java>                       *(float *)(lVar11 + ((ulong)(uint)(iVar20 + iVar8) & 0xff) * 4)) * fVar31;  
+// BlockProbe.java>     uVar24 = lVar14 + 1;  
+// BlockProbe.java>     lVar14 = lVar14 + 2;  
+// BlockProbe.java>     iVar8 = iVar8 + -2;  
+// BlockProbe.java>   } while (uVar24 < 0x1e);  
+// BlockProbe.java>   lVar14 = 0;  
+// BlockProbe.java>   fVar32 = *(float *)(lVar12 + 0x80);  
+// BlockProbe.java>   fVar36 = *(float *)(lVar9 + (ulong)(uVar4 + 0xe0 & 0xff) * 4);  
+// BlockProbe.java>   fVar31 = *(float *)(lVar11 + (ulong)(uVar5 + 0xe0 & 0xff) * 4);  
+// BlockProbe.java>   uVar15 = iVar17 + 1U & 0xff;  
+// BlockProbe.java>   *(undefined4 *)(lVar9 + (ulong)uVar15 * 4) = 0;  
+// BlockProbe.java>   *(uint *)(param_1 + 0x800) = uVar15 + 1;  
+// BlockProbe.java>   uVar15 = iVar20 + 1U & 0xff;  
+// BlockProbe.java>   *(undefined4 *)(lVar11 + (ulong)uVar15 * 4) = 0;  
+// BlockProbe.java>   *(uint *)(param_1 + 0xc18) = uVar15 + 1;  
+// BlockProbe.java>   uVar15 = uVar5 + 1 & 0xff;  
+// BlockProbe.java>   uVar16 = uVar4 + 1 & 0xff;  
+// BlockProbe.java>   fStack_90 = 0.0;  
+// BlockProbe.java>   iVar8 = 0xff;  
+// BlockProbe.java>   fStack_8c = 0.0;  
+// BlockProbe.java>   do {  
+// BlockProbe.java>     fVar33 = *(float *)(lVar12 + 4 + lVar14 * 4);  
+// BlockProbe.java>     fStack_8c = fStack_8c +  
+// BlockProbe.java>                 (*(float *)(lVar9 + ((ulong)(uVar16 + (int)lVar14 + 0xc1) & 0xff) * 4) +  
+// BlockProbe.java>                 *(float *)(lVar9 + ((ulong)(uVar16 + iVar8) & 0xff) * 4)) * fVar33;  
+// BlockProbe.java>     fStack_90 = fStack_90 +  
+// BlockProbe.java>                 (*(float *)(lVar11 + ((ulong)(uVar15 + (int)lVar14 + 0xc1) & 0xff) * 4) +  
+// BlockProbe.java>                 *(float *)(lVar11 + ((ulong)(uVar15 + iVar8) & 0xff) * 4)) * fVar33;  
+// BlockProbe.java>     uVar24 = lVar14 + 1;  
+// BlockProbe.java>     lVar14 = lVar14 + 2;  
+// BlockProbe.java>     iVar8 = iVar8 + -2;  
+// BlockProbe.java>   } while (uVar24 < 0x1e);  
+// BlockProbe.java>   lVar14 = 0;  
+// BlockProbe.java>   fStack_8c = fStack_8c +  
+// BlockProbe.java>               *(float *)(lVar9 + (ulong)(uVar4 + 0xe1 & 0xff) * 4) * *(float *)(lVar12 + 0x80);  
+// BlockProbe.java>   fStack_90 = fStack_90 +  
+// BlockProbe.java>               *(float *)(lVar11 + (ulong)(uVar5 + 0xe1 & 0xff) * 4) * *(float *)(lVar12 + 0x80);  
+// BlockProbe.java>   puVar3 = *(undefined4 **)(param_1 + 0x48);  
+// BlockProbe.java>   uVar4 = *(uint *)(param_1 + 0x1870);  
+// BlockProbe.java>   lVar9 = param_1 + 0x1470;  
+// BlockProbe.java>   *(undefined4 *)(lVar9 + ((ulong)uVar4 & 0xff) * 4) = **(undefined4 **)(param_1 + 0x40);  
+// BlockProbe.java>   iVar17 = (int)((ulong)uVar4 & 0xff);  
+// BlockProbe.java>   uVar5 = *(uint *)(param_1 + 0x1c88);  
+// BlockProbe.java>   lVar11 = param_1 + 0x1888;  
+// BlockProbe.java>   *(undefined4 *)(lVar11 + ((ulong)uVar5 & 0xff) * 4) = *puVar3;  
+// BlockProbe.java>   iVar20 = (int)((ulong)uVar5 & 0xff);  
+// BlockProbe.java>   lVar12 = *(long *)(param_1 + 0x1458);  
+// BlockProbe.java>   fVar33 = 0.0;  
+// BlockProbe.java>   iVar8 = 0xff;  
+// BlockProbe.java>   fVar30 = 0.0;  
+// BlockProbe.java>   do {  
+// BlockProbe.java>     fVar34 = *(float *)(lVar12 + 4 + lVar14 * 4);  
+// BlockProbe.java>     fVar30 = fVar30 + (*(float *)(lVar9 + ((ulong)(iVar17 + (int)lVar14 + 0xc1) & 0xff) * 4) +  
+// BlockProbe.java>                       *(float *)(lVar9 + ((ulong)(uint)(iVar17 + iVar8) & 0xff) * 4)) * fVar34;  
+// BlockProbe.java>     fVar33 = fVar33 + (*(float *)(lVar11 + ((ulong)(iVar20 + (int)lVar14 + 0xc1) & 0xff) * 4) +  
+// BlockProbe.java>                       *(float *)(lVar11 + ((ulong)(uint)(iVar20 + iVar8) & 0xff) * 4)) * fVar34;  
+// BlockProbe.java>     uVar24 = lVar14 + 1;  
+// BlockProbe.java>     lVar14 = lVar14 + 2;  
+// BlockProbe.java>     iVar8 = iVar8 + -2;  
+// BlockProbe.java>   } while (uVar24 < 0x1e);  
+// BlockProbe.java>   lVar14 = 0;  
+// BlockProbe.java>   fVar35 = *(float *)(lVar12 + 0x80);  
+// BlockProbe.java>   fVar37 = *(float *)(lVar9 + (ulong)(uVar4 + 0xe0 & 0xff) * 4);  
+// BlockProbe.java>   fVar34 = *(float *)(lVar11 + (ulong)(uVar5 + 0xe0 & 0xff) * 4);  
+// BlockProbe.java>   uVar15 = iVar17 + 1U & 0xff;  
+// BlockProbe.java>   *(undefined4 *)(lVar9 + (ulong)uVar15 * 4) = 0;  
+// BlockProbe.java>   *(uint *)(param_1 + 0x1870) = uVar15 + 1;  
+// BlockProbe.java>   uVar15 = iVar20 + 1U & 0xff;  
+// BlockProbe.java>   *(undefined4 *)(lVar11 + (ulong)uVar15 * 4) = 0;  
+// BlockProbe.java>   *(uint *)(param_1 + 0x1c88) = uVar15 + 1;  
+// BlockProbe.java>   uVar15 = uVar5 + 1 & 0xff;  
+// BlockProbe.java>   uVar16 = uVar4 + 1 & 0xff;  
+// BlockProbe.java>   fVar39 = 0.0;  
+// BlockProbe.java>   iVar8 = 0xff;  
+// BlockProbe.java>   fVar40 = 0.0;  
+// BlockProbe.java>   do {  
+// BlockProbe.java>     fVar27 = *(float *)(lVar12 + 4 + lVar14 * 4);  
+// BlockProbe.java>     fVar40 = fVar40 + (*(float *)(lVar9 + ((ulong)(uVar16 + (int)lVar14 + 0xc1) & 0xff) * 4) +  
+// BlockProbe.java>                       *(float *)(lVar9 + ((ulong)(uVar16 + iVar8) & 0xff) * 4)) * fVar27;  
+// BlockProbe.java>     fVar39 = fVar39 + (*(float *)(lVar11 + ((ulong)(uVar15 + (int)lVar14 + 0xc1) & 0xff) * 4) +  
+// BlockProbe.java>                       *(float *)(lVar11 + ((ulong)(uVar15 + iVar8) & 0xff) * 4)) * fVar27;  
+// BlockProbe.java>     uVar24 = lVar14 + 1;  
+// BlockProbe.java>     lVar14 = lVar14 + 2;  
+// BlockProbe.java>     iVar8 = iVar8 + -2;  
+// BlockProbe.java>   } while (uVar24 < 0x1e);  
+// BlockProbe.java>   fVar42 = *(float *)(lVar12 + 0x80);  
+// BlockProbe.java>   fVar43 = *(float *)(lVar9 + (ulong)(uVar4 + 0xe1 & 0xff) * 4);  
+// BlockProbe.java>   fVar27 = *(float *)(lVar11 + (ulong)(uVar5 + 0xe1 & 0xff) * 4);  
+// BlockProbe.java>   fVar41 = (float)*(double *)(param_1 + 0x3c0);  
+// BlockProbe.java>   *(double *)(param_1 + 0x3c0) = *(double *)(param_1 + 0x3c0) + *(double *)(param_1 + 0x3c8);  
+// BlockProbe.java>   lVar9 = param_1 + 0x68;  
+// BlockProbe.java>   if (*(char *)(param_1 + 0x319) != '\0') {  
+// BlockProbe.java>     fStack_98 = fVar27;  
+// BlockProbe.java>     fStack_94 = fVar41;  
+// BlockProbe.java>     FUN_1017a028c(lVar9,*(int *)(param_1 + 0x3e4) * *(int *)(param_1 + 0x3d8));  
+// BlockProbe.java>     *(undefined1 *)(param_1 + 0x319) = 0;  
+// BlockProbe.java>     fVar27 = fStack_98;  
+// BlockProbe.java>     fVar41 = fStack_94;  
+// BlockProbe.java>   }  
+// BlockProbe.java>   fVar44 = 1.0 - fVar41;  
+// BlockProbe.java>   fVar28 = *(float *)(param_1 + 0x314);  
+// BlockProbe.java>   fVar30 = (fVar30 + fVar37 * fVar35) * fVar28;  
+// BlockProbe.java>   fVar33 = fVar28 * (fVar33 + fVar34 * fVar35);  
+// BlockProbe.java>   if (*(char *)(param_1 + 0x328) != '\0') {  
+// BlockProbe.java>     fVar34 = fVar30 * *(float *)(param_1 + 0x368);  
+// BlockProbe.java>     fVar35 = fVar34 + *(float *)(param_1 + 0x3a8) + *(float *)(param_1 + 0x3b0) * -2.0;  
+// BlockProbe.java>     fVar38 = *(float *)(param_1 + 0x3ac);  
+// BlockProbe.java>     fVar37 = *(float *)(param_1 + 0x3b0) + fVar38 * *(float *)(param_1 + 0x360) +  
+// BlockProbe.java>              fVar35 * *(float *)(param_1 + 0x364);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3b0) = fVar37;  
+// BlockProbe.java>     fVar35 = fVar38 + fVar38 * *(float *)(param_1 + 0x358) + fVar35 * *(float *)(param_1 + 0x35c);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3ac) = fVar35;  
+// BlockProbe.java>     *(float *)(param_1 + 0x3a8) = fVar34;  
+// BlockProbe.java>     fVar30 = fVar35 * *(float *)(param_1 + 0x370) + fVar30 * *(float *)(param_1 + 0x36c) +  
+// BlockProbe.java>              fVar37 * *(float *)(param_1 + 0x374);  
+// BlockProbe.java>     fVar34 = fVar33 * *(float *)(param_1 + 0x368);  
+// BlockProbe.java>     fVar35 = fVar34 + *(float *)(param_1 + 0x3b4) + *(float *)(param_1 + 0x3bc) * -2.0;  
+// BlockProbe.java>     fVar38 = *(float *)(param_1 + 0x3b8);  
+// BlockProbe.java>     fVar37 = *(float *)(param_1 + 0x3bc) + fVar38 * *(float *)(param_1 + 0x360) +  
+// BlockProbe.java>              fVar35 * *(float *)(param_1 + 0x364);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3bc) = fVar37;  
+// BlockProbe.java>     fVar35 = fVar38 + fVar38 * *(float *)(param_1 + 0x358) + fVar35 * *(float *)(param_1 + 0x35c);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3b8) = fVar35;  
+// BlockProbe.java>     *(float *)(param_1 + 0x3b4) = fVar34;  
+// BlockProbe.java>     fVar33 = *(float *)(param_1 + 0x370) * fVar35 + fVar33 * *(float *)(param_1 + 0x36c) +  
+// BlockProbe.java>              fVar37 * *(float *)(param_1 + 0x374);  
+// BlockProbe.java>   }  
+// BlockProbe.java>   fVar40 = fVar40 + fVar43 * fVar42;  
+// BlockProbe.java>   fVar39 = fVar39 + fVar27 * fVar42;  
+// BlockProbe.java>   uStack_80._0_4_ = fVar28 * (fVar29 + fVar36 * fVar32);  
+// BlockProbe.java>   uStack_88._0_4_ = fVar28 * (fVar26 + fVar31 * fVar32);  
+// BlockProbe.java>   func_0x0001017a07b0(fVar30,fVar33,lVar9,&uStack_80,&uStack_88);  
+// BlockProbe.java>   uStack_80 = CONCAT44(uStack_80._4_4_,fVar44 * (float)uStack_80 + fVar30 * fVar41);  
+// BlockProbe.java>   uStack_88 = CONCAT44(uStack_88._4_4_,fVar44 * (float)uStack_88 + fVar33 * fVar41);  
+// BlockProbe.java>   *(int *)(param_1 + 0x310) = *(int *)(param_1 + 0x310) + 1;  
+// BlockProbe.java>   uVar24 = (ulong)&uStack_80 | 4;  
+// BlockProbe.java>   uVar25 = (ulong)&uStack_88 | 4;  
+// BlockProbe.java>   if (*(char *)(param_1 + 0x319) != '\0') {  
+// BlockProbe.java>     FUN_1017a028c(lVar9,*(int *)(param_1 + 0x3e4) * *(int *)(param_1 + 0x3d8));  
+// BlockProbe.java>     *(undefined1 *)(param_1 + 0x319) = 0;  
+// BlockProbe.java>   }  
+// BlockProbe.java>   fVar26 = *(float *)(param_1 + 0x314);  
+// BlockProbe.java>   fVar31 = fVar40 * fVar26;  
+// BlockProbe.java>   fVar29 = fVar26 * fVar39;  
+// BlockProbe.java>   if (*(char *)(param_1 + 0x328) != '\0') {  
+// BlockProbe.java>     fVar32 = fVar31 * *(float *)(param_1 + 0x368);  
+// BlockProbe.java>     fVar36 = fVar32 + *(float *)(param_1 + 0x3a8) + *(float *)(param_1 + 0x3b0) * -2.0;  
+// BlockProbe.java>     fVar30 = *(float *)(param_1 + 0x3ac);  
+// BlockProbe.java>     fVar33 = *(float *)(param_1 + 0x3b0) + fVar30 * *(float *)(param_1 + 0x360) +  
+// BlockProbe.java>              fVar36 * *(float *)(param_1 + 0x364);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3b0) = fVar33;  
+// BlockProbe.java>     fVar36 = fVar30 + fVar30 * *(float *)(param_1 + 0x358) + fVar36 * *(float *)(param_1 + 0x35c);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3ac) = fVar36;  
+// BlockProbe.java>     *(float *)(param_1 + 0x3a8) = fVar32;  
+// BlockProbe.java>     fVar31 = fVar36 * *(float *)(param_1 + 0x370) + fVar31 * *(float *)(param_1 + 0x36c) +  
+// BlockProbe.java>              fVar33 * *(float *)(param_1 + 0x374);  
+// BlockProbe.java>     fVar32 = fVar29 * *(float *)(param_1 + 0x368);  
+// BlockProbe.java>     fVar36 = fVar32 + *(float *)(param_1 + 0x3b4) + *(float *)(param_1 + 0x3bc) * -2.0;  
+// BlockProbe.java>     fVar30 = *(float *)(param_1 + 0x3b8);  
+// BlockProbe.java>     fVar33 = *(float *)(param_1 + 0x3bc) + fVar30 * *(float *)(param_1 + 0x360) +  
+// BlockProbe.java>              fVar36 * *(float *)(param_1 + 0x364);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3bc) = fVar33;  
+// BlockProbe.java>     fVar36 = fVar30 + fVar30 * *(float *)(param_1 + 0x358) + fVar36 * *(float *)(param_1 + 0x35c);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3b8) = fVar36;  
+// BlockProbe.java>     *(float *)(param_1 + 0x3b4) = fVar32;  
+// BlockProbe.java>     fVar29 = *(float *)(param_1 + 0x370) * fVar36 + fVar29 * *(float *)(param_1 + 0x36c) +  
+// BlockProbe.java>              fVar33 * *(float *)(param_1 + 0x374);  
+// BlockProbe.java>   }  
+// BlockProbe.java>   uStack_80._4_4_ = fVar26 * fStack_8c;  
+// BlockProbe.java>   uStack_88._4_4_ = fVar26 * fStack_90;  
+// BlockProbe.java>   func_0x0001017a07b0(fVar31,fVar29,lVar9,uVar24,uVar25);  
+// BlockProbe.java>   lVar14 = 0;  
+// BlockProbe.java>   fVar26 = fVar44 * uStack_80._4_4_ + fVar31 * fVar41;  
+// BlockProbe.java>   fVar32 = fVar44 * uStack_88._4_4_ + fVar29 * fVar41;  
+// BlockProbe.java>   uStack_80 = CONCAT44(fVar26,(float)uStack_80);  
+// BlockProbe.java>   uStack_88 = CONCAT44(fVar32,(float)uStack_88);  
+// BlockProbe.java>   *(int *)(param_1 + 0x310) = *(int *)(param_1 + 0x310) + 1;  
+// BlockProbe.java>   uVar4 = *(uint *)(param_1 + 0x1038);  
+// BlockProbe.java>   lVar11 = param_1 + 0xc38;  
+// BlockProbe.java>   uVar18 = (ulong)uVar4 & 0xff;  
+// BlockProbe.java>   *(float *)(lVar11 + uVar18 * 4) = (float)uStack_80;  
+// BlockProbe.java>   uVar5 = *(uint *)(param_1 + 0x1450);  
+// BlockProbe.java>   lVar12 = param_1 + 0x1050;  
+// BlockProbe.java>   uVar21 = (ulong)uVar5 & 0xff;  
+// BlockProbe.java>   *(float *)(lVar12 + uVar21 * 4) = (float)uStack_88;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x50) = 0;  
+// BlockProbe.java>   lVar19 = *(long *)(param_1 + 0xc20);  
+// BlockProbe.java>   fVar36 = 0.0;  
+// BlockProbe.java>   iVar8 = 0xff;  
+// BlockProbe.java>   fVar33 = 0.0;  
+// BlockProbe.java>   do {  
+// BlockProbe.java> END 1016880b0  
+// BlockProbe.java> FUNC 10168882c name=FUN_10168882c body=1 lines=307  
+// BlockProbe.java>   
+// BlockProbe.java> void FUN_10168882c(long param_1)  
+// BlockProbe.java>   
+// BlockProbe.java> {  
+// BlockProbe.java>   ulong uVar1;  
+// BlockProbe.java>   long *plVar2;  
+// BlockProbe.java>   undefined4 *puVar3;  
+// BlockProbe.java>   uint uVar4;  
+// BlockProbe.java>   uint uVar5;  
+// BlockProbe.java>   undefined4 uVar6;  
+// BlockProbe.java>   undefined8 *puVar7;  
+// BlockProbe.java>   int iVar8;  
+// BlockProbe.java>   long lVar9;  
+// BlockProbe.java>   long *plVar10;  
+// BlockProbe.java>   long lVar11;  
+// BlockProbe.java>   undefined8 *extraout_x8;  
+// BlockProbe.java>   long lVar12;  
+// BlockProbe.java>   long lVar13;  
+// BlockProbe.java>   uint uVar14;  
+// BlockProbe.java>   uint uVar15;  
+// BlockProbe.java>   ulong uVar16;  
+// BlockProbe.java>   int iVar17;  
+// BlockProbe.java>   long lVar18;  
+// BlockProbe.java>   int iVar19;  
+// BlockProbe.java>   ulong uVar20;  
+// BlockProbe.java>   undefined8 *puVar21;  
+// BlockProbe.java>   float fVar23;  
+// BlockProbe.java>   float fVar24;  
+// BlockProbe.java>   float fVar25;  
+// BlockProbe.java>   float fVar26;  
+// BlockProbe.java>   float fVar27;  
+// BlockProbe.java>   float fVar28;  
+// BlockProbe.java>   float fVar29;  
+// BlockProbe.java>   float fVar30;  
+// BlockProbe.java>   float fVar31;  
+// BlockProbe.java>   float fVar32;  
+// BlockProbe.java>   float fVar33;  
+// BlockProbe.java>   float fVar34;  
+// BlockProbe.java>   float fVar35;  
+// BlockProbe.java>   float fVar36;  
+// BlockProbe.java>   undefined1 auVar37 [16];  
+// BlockProbe.java>   long lStack_f0;  
+// BlockProbe.java>   undefined8 *puStack_e8;  
+// BlockProbe.java>   undefined8 *puStack_e0;  
+// BlockProbe.java>   undefined8 uStack_d8;  
+// BlockProbe.java>   ulong uStack_d0;  
+// BlockProbe.java>   long lStack_c8;  
+// BlockProbe.java>   ulong uStack_c0;  
+// BlockProbe.java>   ulong uStack_b8;  
+// BlockProbe.java>   long lStack_b0;  
+// BlockProbe.java>   long lStack_a8;  
+// BlockProbe.java>   undefined1 *puStack_a0;  
+// BlockProbe.java>   undefined *puStack_98;  
+// BlockProbe.java>   undefined8 uStack_88;  
+// BlockProbe.java>   undefined8 uStack_80;  
+// BlockProbe.java>   long lStack_78;  
+// BlockProbe.java>   undefined8 *puVar22;  
+// BlockProbe.java>     
+// BlockProbe.java>   lVar13 = 0;  
+// BlockProbe.java>   lStack_78 = *(long *)PTR____stack_chk_guard_1050c86c8;  
+// BlockProbe.java>   uStack_88 = 0;  
+// BlockProbe.java>   uStack_80 = 0;  
+// BlockProbe.java>   puVar3 = *(undefined4 **)(param_1 + 0x38);  
+// BlockProbe.java>   uVar4 = *(uint *)(param_1 + 0x800);  
+// BlockProbe.java>   lVar9 = param_1 + 0x400;  
+// BlockProbe.java>   *(undefined4 *)(lVar9 + ((ulong)uVar4 & 0xff) * 4) = **(undefined4 **)(param_1 + 0x30);  
+// BlockProbe.java>   iVar17 = (int)((ulong)uVar4 & 0xff);  
+// BlockProbe.java>   uVar5 = *(uint *)(param_1 + 0xc18);  
+// BlockProbe.java>   lVar11 = param_1 + 0x818;  
+// BlockProbe.java>   *(undefined4 *)(lVar11 + ((ulong)uVar5 & 0xff) * 4) = *puVar3;  
+// BlockProbe.java>   iVar19 = (int)((ulong)uVar5 & 0xff);  
+// BlockProbe.java>   lVar12 = *(long *)(param_1 + 1000);  
+// BlockProbe.java>   fVar23 = 0.0;  
+// BlockProbe.java>   iVar8 = 0xff;  
+// BlockProbe.java>   fVar25 = 0.0;  
+// BlockProbe.java>   do {  
+// BlockProbe.java>     fVar26 = *(float *)(lVar12 + 4 + lVar13 * 4);  
+// BlockProbe.java>     fVar25 = fVar25 + (*(float *)(lVar9 + ((ulong)(iVar17 + (int)lVar13 + 0xc1) & 0xff) * 4) +  
+// BlockProbe.java>                       *(float *)(lVar9 + ((ulong)(uint)(iVar17 + iVar8) & 0xff) * 4)) * fVar26;  
+// BlockProbe.java>     fVar23 = fVar23 + (*(float *)(lVar11 + ((ulong)(iVar19 + (int)lVar13 + 0xc1) & 0xff) * 4) +  
+// BlockProbe.java>                       *(float *)(lVar11 + ((ulong)(uint)(iVar19 + iVar8) & 0xff) * 4)) * fVar26;  
+// BlockProbe.java>     uVar16 = lVar13 + 1;  
+// BlockProbe.java>     lVar13 = lVar13 + 2;  
+// BlockProbe.java>     iVar8 = iVar8 + -2;  
+// BlockProbe.java>   } while (uVar16 < 0x1e);  
+// BlockProbe.java>   lVar13 = 0;  
+// BlockProbe.java>   fVar27 = *(float *)(lVar12 + 0x80);  
+// BlockProbe.java>   fVar28 = *(float *)(lVar9 + (ulong)(uVar4 + 0xe0 & 0xff) * 4);  
+// BlockProbe.java>   fVar26 = *(float *)(lVar11 + (ulong)(uVar5 + 0xe0 & 0xff) * 4);  
+// BlockProbe.java>   uVar14 = iVar17 + 1U & 0xff;  
+// BlockProbe.java>   *(undefined4 *)(lVar9 + (ulong)uVar14 * 4) = 0;  
+// BlockProbe.java>   *(uint *)(param_1 + 0x800) = uVar14 + 1;  
+// BlockProbe.java>   uVar14 = iVar19 + 1U & 0xff;  
+// BlockProbe.java>   *(undefined4 *)(lVar11 + (ulong)uVar14 * 4) = 0;  
+// BlockProbe.java>   *(uint *)(param_1 + 0xc18) = uVar14 + 1;  
+// BlockProbe.java>   uVar14 = uVar5 + 1 & 0xff;  
+// BlockProbe.java>   uVar15 = uVar4 + 1 & 0xff;  
+// BlockProbe.java>   fVar31 = 0.0;  
+// BlockProbe.java>   iVar8 = 0xff;  
+// BlockProbe.java>   fVar32 = 0.0;  
+// BlockProbe.java>   do {  
+// BlockProbe.java>     fVar24 = *(float *)(lVar12 + 4 + lVar13 * 4);  
+// BlockProbe.java>     fVar32 = fVar32 + (*(float *)(lVar9 + ((ulong)(uVar15 + (int)lVar13 + 0xc1) & 0xff) * 4) +  
+// BlockProbe.java>                       *(float *)(lVar9 + ((ulong)(uVar15 + iVar8) & 0xff) * 4)) * fVar24;  
+// BlockProbe.java>     fVar31 = fVar31 + (*(float *)(lVar11 + ((ulong)(uVar14 + (int)lVar13 + 0xc1) & 0xff) * 4) +  
+// BlockProbe.java>                       *(float *)(lVar11 + ((ulong)(uVar14 + iVar8) & 0xff) * 4)) * fVar24;  
+// BlockProbe.java>     uVar16 = lVar13 + 1;  
+// BlockProbe.java>     lVar13 = lVar13 + 2;  
+// BlockProbe.java>     iVar8 = iVar8 + -2;  
+// BlockProbe.java>   } while (uVar16 < 0x1e);  
+// BlockProbe.java>   fVar33 = *(float *)(lVar12 + 0x80);  
+// BlockProbe.java>   fVar35 = *(float *)(lVar9 + (ulong)(uVar4 + 0xe1 & 0xff) * 4);  
+// BlockProbe.java>   fVar36 = *(float *)(lVar11 + (ulong)(uVar5 + 0xe1 & 0xff) * 4);  
+// BlockProbe.java>   fVar24 = (float)*(double *)(param_1 + 0x3c0);  
+// BlockProbe.java>   *(double *)(param_1 + 0x3c0) = *(double *)(param_1 + 0x3c0) + *(double *)(param_1 + 0x3c8);  
+// BlockProbe.java>   lVar9 = param_1 + 0x68;  
+// BlockProbe.java>   if (*(char *)(param_1 + 0x319) != '\0') {  
+// BlockProbe.java>     FUN_1017a028c(lVar9,*(int *)(param_1 + 0x3e4) * *(int *)(param_1 + 0x3d8));  
+// BlockProbe.java>     *(undefined1 *)(param_1 + 0x319) = 0;  
+// BlockProbe.java>   }  
+// BlockProbe.java>   fVar30 = 1.0 - fVar24;  
+// BlockProbe.java>   fVar28 = (fVar25 + fVar28 * fVar27) * *(float *)(param_1 + 0x314);  
+// BlockProbe.java>   fVar26 = *(float *)(param_1 + 0x314) * (fVar23 + fVar26 * fVar27);  
+// BlockProbe.java>   fVar23 = fVar26;  
+// BlockProbe.java>   fVar25 = fVar28;  
+// BlockProbe.java>   if (*(char *)(param_1 + 0x328) != '\0') {  
+// BlockProbe.java>     fVar23 = fVar28 * *(float *)(param_1 + 0x368);  
+// BlockProbe.java>     fVar25 = fVar23 + *(float *)(param_1 + 0x3a8) + *(float *)(param_1 + 0x3b0) * -2.0;  
+// BlockProbe.java>     fVar34 = *(float *)(param_1 + 0x3ac);  
+// BlockProbe.java>     fVar27 = *(float *)(param_1 + 0x3b0) + fVar34 * *(float *)(param_1 + 0x360) +  
+// BlockProbe.java>              fVar25 * *(float *)(param_1 + 0x364);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3b0) = fVar27;  
+// BlockProbe.java>     fVar25 = fVar34 + fVar34 * *(float *)(param_1 + 0x358) + fVar25 * *(float *)(param_1 + 0x35c);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3ac) = fVar25;  
+// BlockProbe.java>     *(float *)(param_1 + 0x3a8) = fVar23;  
+// BlockProbe.java>     fVar25 = fVar25 * *(float *)(param_1 + 0x370) + fVar28 * *(float *)(param_1 + 0x36c) +  
+// BlockProbe.java>              fVar27 * *(float *)(param_1 + 0x374);  
+// BlockProbe.java>     fVar23 = fVar26 * *(float *)(param_1 + 0x368);  
+// BlockProbe.java>     fVar27 = fVar23 + *(float *)(param_1 + 0x3b4) + *(float *)(param_1 + 0x3bc) * -2.0;  
+// BlockProbe.java>     fVar29 = *(float *)(param_1 + 0x3b8);  
+// BlockProbe.java>     fVar34 = *(float *)(param_1 + 0x3bc) + fVar29 * *(float *)(param_1 + 0x360) +  
+// BlockProbe.java>              fVar27 * *(float *)(param_1 + 0x364);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3bc) = fVar34;  
+// BlockProbe.java>     fVar27 = fVar29 + fVar29 * *(float *)(param_1 + 0x358) + fVar27 * *(float *)(param_1 + 0x35c);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3b8) = fVar27;  
+// BlockProbe.java>     *(float *)(param_1 + 0x3b4) = fVar23;  
+// BlockProbe.java>     fVar23 = *(float *)(param_1 + 0x370) * fVar27 + fVar26 * *(float *)(param_1 + 0x36c) +  
+// BlockProbe.java>              fVar34 * *(float *)(param_1 + 0x374);  
+// BlockProbe.java>   }  
+// BlockProbe.java>   uStack_80._0_4_ = fVar28;  
+// BlockProbe.java>   uStack_88._0_4_ = fVar26;  
+// BlockProbe.java>   func_0x0001017a07b0(fVar25,fVar23,lVar9,&uStack_80,&uStack_88);  
+// BlockProbe.java>   uStack_80 = CONCAT44(uStack_80._4_4_,fVar30 * (float)uStack_80 + fVar25 * fVar24);  
+// BlockProbe.java>   uStack_88 = CONCAT44(uStack_88._4_4_,fVar30 * (float)uStack_88 + fVar23 * fVar24);  
+// BlockProbe.java>   *(int *)(param_1 + 0x310) = *(int *)(param_1 + 0x310) + 1;  
+// BlockProbe.java>   if (*(char *)(param_1 + 0x319) != '\0') {  
+// BlockProbe.java>     FUN_1017a028c(lVar9,*(int *)(param_1 + 0x3e4) * *(int *)(param_1 + 0x3d8));  
+// BlockProbe.java>     *(undefined1 *)(param_1 + 0x319) = 0;  
+// BlockProbe.java>   }  
+// BlockProbe.java>   fVar26 = (fVar32 + fVar35 * fVar33) * *(float *)(param_1 + 0x314);  
+// BlockProbe.java>   fVar27 = *(float *)(param_1 + 0x314) * (fVar31 + fVar36 * fVar33);  
+// BlockProbe.java>   fVar23 = fVar27;  
+// BlockProbe.java>   fVar25 = fVar26;  
+// BlockProbe.java>   if (*(char *)(param_1 + 0x328) != '\0') {  
+// BlockProbe.java>     fVar23 = fVar26 * *(float *)(param_1 + 0x368);  
+// BlockProbe.java>     fVar25 = fVar23 + *(float *)(param_1 + 0x3a8) + *(float *)(param_1 + 0x3b0) * -2.0;  
+// BlockProbe.java>     fVar31 = *(float *)(param_1 + 0x3ac);  
+// BlockProbe.java>     fVar28 = *(float *)(param_1 + 0x3b0) + fVar31 * *(float *)(param_1 + 0x360) +  
+// BlockProbe.java>              fVar25 * *(float *)(param_1 + 0x364);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3b0) = fVar28;  
+// BlockProbe.java>     fVar25 = fVar31 + fVar31 * *(float *)(param_1 + 0x358) + fVar25 * *(float *)(param_1 + 0x35c);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3ac) = fVar25;  
+// BlockProbe.java>     *(float *)(param_1 + 0x3a8) = fVar23;  
+// BlockProbe.java>     fVar25 = fVar25 * *(float *)(param_1 + 0x370) + fVar26 * *(float *)(param_1 + 0x36c) +  
+// BlockProbe.java>              fVar28 * *(float *)(param_1 + 0x374);  
+// BlockProbe.java>     fVar23 = fVar27 * *(float *)(param_1 + 0x368);  
+// BlockProbe.java>     fVar28 = fVar23 + *(float *)(param_1 + 0x3b4) + *(float *)(param_1 + 0x3bc) * -2.0;  
+// BlockProbe.java>     fVar32 = *(float *)(param_1 + 0x3b8);  
+// BlockProbe.java>     fVar31 = *(float *)(param_1 + 0x3bc) + fVar32 * *(float *)(param_1 + 0x360) +  
+// BlockProbe.java>              fVar28 * *(float *)(param_1 + 0x364);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3bc) = fVar31;  
+// BlockProbe.java>     fVar28 = fVar32 + fVar32 * *(float *)(param_1 + 0x358) + fVar28 * *(float *)(param_1 + 0x35c);  
+// BlockProbe.java>     *(float *)(param_1 + 0x3b8) = fVar28;  
+// BlockProbe.java>     *(float *)(param_1 + 0x3b4) = fVar23;  
+// BlockProbe.java>     fVar23 = *(float *)(param_1 + 0x370) * fVar28 + fVar27 * *(float *)(param_1 + 0x36c) +  
+// BlockProbe.java>              fVar31 * *(float *)(param_1 + 0x374);  
+// BlockProbe.java>   }  
+// BlockProbe.java>   uStack_80._4_4_ = fVar26;  
+// BlockProbe.java>   uStack_88._4_4_ = fVar27;  
+// BlockProbe.java>   func_0x0001017a07b0(fVar25,fVar23,lVar9,(ulong)&uStack_80 | 4,(ulong)&uStack_88 | 4);  
+// BlockProbe.java>   lVar13 = 0;  
+// BlockProbe.java>   fVar25 = fVar30 * uStack_80._4_4_ + fVar25 * fVar24;  
+// BlockProbe.java>   fVar23 = fVar30 * uStack_88._4_4_ + fVar23 * fVar24;  
+// BlockProbe.java>   uStack_80 = CONCAT44(fVar25,(float)uStack_80);  
+// BlockProbe.java>   uStack_88 = CONCAT44(fVar23,(float)uStack_88);  
+// BlockProbe.java>   *(int *)(param_1 + 0x310) = *(int *)(param_1 + 0x310) + 1;  
+// BlockProbe.java>   uVar4 = *(uint *)(param_1 + 0x1038);  
+// BlockProbe.java>   lVar11 = param_1 + 0xc38;  
+// BlockProbe.java>   uVar16 = (ulong)uVar4 & 0xff;  
+// BlockProbe.java>   *(float *)(lVar11 + uVar16 * 4) = (float)uStack_80;  
+// BlockProbe.java>   uVar5 = *(uint *)(param_1 + 0x1450);  
+// BlockProbe.java>   lVar12 = param_1 + 0x1050;  
+// BlockProbe.java>   uVar20 = (ulong)uVar5 & 0xff;  
+// BlockProbe.java>   *(float *)(lVar12 + uVar20 * 4) = (float)uStack_88;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x50) = 0;  
+// BlockProbe.java>   lVar18 = *(long *)(param_1 + 0xc20);  
+// BlockProbe.java>   fVar26 = 0.0;  
+// BlockProbe.java>   iVar8 = 0xff;  
+// BlockProbe.java>   fVar27 = 0.0;  
+// BlockProbe.java>   do {  
+// BlockProbe.java>     fVar27 = fVar27 + (*(float *)(lVar11 + ((ulong)((int)uVar16 + (int)lVar13 + 0xc1) & 0xff) * 4) +  
+// BlockProbe.java>                       *(float *)(lVar11 + ((ulong)(uint)((int)uVar16 + iVar8) & 0xff) * 4)) *  
+// BlockProbe.java>                       *(float *)(lVar18 + 4 + lVar13 * 4);  
+// BlockProbe.java>     *(float *)(param_1 + 0x50) = fVar27;  
+// BlockProbe.java>     fVar26 = fVar26 + (*(float *)(lVar12 + ((ulong)((int)uVar20 + (int)lVar13 + 0xc1) & 0xff) * 4) +  
+// BlockProbe.java>                       *(float *)(lVar12 + ((ulong)(uint)((int)uVar20 + iVar8) & 0xff) * 4)) *  
+// BlockProbe.java>                       *(float *)(lVar18 + 4 + lVar13 * 4);  
+// BlockProbe.java>     *(float *)(param_1 + 0x54) = fVar26;  
+// BlockProbe.java>     uVar1 = lVar13 + 1;  
+// BlockProbe.java>     lVar13 = lVar13 + 2;  
+// BlockProbe.java>     iVar8 = iVar8 + -2;  
+// BlockProbe.java>   } while (uVar1 < 0x1e);  
+// BlockProbe.java>   *(float *)(param_1 + 0x50) =  
+// BlockProbe.java>        fVar27 + *(float *)(lVar11 + (ulong)(uVar4 + 0xe0 & 0xff) * 4) * *(float *)(lVar18 + 0x80);  
+// BlockProbe.java>   *(float *)(param_1 + 0x54) =  
+// BlockProbe.java>        fVar26 + *(float *)(lVar12 + (ulong)(uVar5 + 0xe0 & 0xff) * 4) * *(float *)(lVar18 + 0x80);  
+// BlockProbe.java>   uVar16 = uVar16 + 1 & 0xff;  
+// BlockProbe.java>   *(float *)(lVar11 + uVar16 * 4) = fVar25;  
+// BlockProbe.java>   uVar20 = uVar20 + 1 & 0xff;  
+// BlockProbe.java>   *(float *)(lVar12 + uVar20 * 4) = fVar23;  
+// BlockProbe.java>   *(int *)(param_1 + 0x1038) = (int)uVar16 + 1;  
+// BlockProbe.java>   *(int *)(param_1 + 0x1450) = (int)uVar20 + 1;  
+// BlockProbe.java>   if (*(long *)PTR____stack_chk_guard_1050c86c8 != lStack_78) {  
+// BlockProbe.java>     auVar37 = ___stack_chk_fail();  
+// BlockProbe.java>     puStack_98 = &DAT_101688de4;  
+// BlockProbe.java>     uStack_d8 = 0;  
+// BlockProbe.java>     puStack_e0 = (undefined8 *)0x0;  
+// BlockProbe.java>     lStack_c8 = 0;  
+// BlockProbe.java>     uStack_d0 = 0;  
+// BlockProbe.java>     puStack_e8 = (undefined8 *)0x0;  
+// BlockProbe.java>     lStack_f0 = 0;  
+// BlockProbe.java>     uVar6 = *auVar37._0_8_;  
+// BlockProbe.java>     uStack_c0 = (ulong)&uStack_88 | 4;  
+// BlockProbe.java>     uStack_b8 = (ulong)&uStack_80 | 4;  
+// BlockProbe.java>     lStack_b0 = lVar9;  
+// BlockProbe.java>     lStack_a8 = param_1;  
+// BlockProbe.java>     puStack_a0 = &stack0xfffffffffffffff0;  
+// BlockProbe.java>     func_0x000101690ae0(&lStack_f0);  
+// BlockProbe.java>     puVar3 = (undefined4 *)  
+// BlockProbe.java>              (*(long *)((long)puStack_e8 + (lStack_c8 + uStack_d0 >> 5 & 0x7fffffffffffff8)) +  
+// BlockProbe.java> END 10168882c  
+// REPORT: Save succeeded for processed file: /Live.arm64 (HeadlessAnalyzer)  
+
+// ===== probe 3 =====
+// REPORT: Execute script: BlockProbe.java '0x10179fb4c:110,0x10179f64c:150'  (HeadlessAnalyzer)  
+// SCRIPT: /Users/admin/tools/live-re/scripts/BlockProbe.java (HeadlessAnalyzer)  
+// BlockProbe.java> FUNC 10179fb4c name=FUN_10179fb4c body=1 lines=66  
+// BlockProbe.java>   
+// BlockProbe.java> /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */  
+// BlockProbe.java>   
+// BlockProbe.java> void FUN_10179fb4c(long param_1,int param_2)  
+// BlockProbe.java>   
+// BlockProbe.java> {  
+// BlockProbe.java>   bool bVar1;  
+// BlockProbe.java>   float fVar2;  
+// BlockProbe.java>   float fVar3;  
+// BlockProbe.java>     
+// BlockProbe.java>   if (*(int *)(param_1 + 0x1e0) == param_2) {  
+// BlockProbe.java>     return;  
+// BlockProbe.java>   }  
+// BlockProbe.java>   *(undefined1 *)(param_1 + 0x290) = 0;  
+// BlockProbe.java>   *(int *)(param_1 + 0x1e0) = param_2;  
+// BlockProbe.java>   switch(param_2) {  
+// BlockProbe.java>   case 0:  
+// BlockProbe.java>     fVar2 = 170689.66;  
+// BlockProbe.java>     break;  
+// BlockProbe.java>   case 1:  
+// BlockProbe.java>     fVar2 = 249579.84;  
+// BlockProbe.java>     break;  
+// BlockProbe.java>   case 2:  
+// BlockProbe.java>     fVar2 = 340760.88;  
+// BlockProbe.java>     break;  
+// BlockProbe.java>   case 3:  
+// BlockProbe.java>     fVar2 = 478756.47;  
+// BlockProbe.java>     break;  
+// BlockProbe.java>   case 4:  
+// BlockProbe.java>     fVar2 = 643902.44;  
+// BlockProbe.java>     break;  
+// BlockProbe.java>   default:  
+// BlockProbe.java>     fVar2 = 880000.0;  
+// BlockProbe.java>     break;  
+// BlockProbe.java>   case 6:  
+// BlockProbe.java>     bVar1 = false;  
+// BlockProbe.java>     *(undefined1 *)(param_1 + 0x290) = 1;  
+// BlockProbe.java>     fVar2 = 91000.0;  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x74) = 0x47b1bc00;  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x7c) = 0x49371b00;  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x90) = 0x36e42b8e;  
+// BlockProbe.java>     *(undefined8 *)(param_1 + 0x84) = _UNK_104cd0a20;  
+// BlockProbe.java>     goto code_r0x00010179fbe0;  
+// BlockProbe.java>   }  
+// BlockProbe.java>   *(float *)(param_1 + 0x74) = fVar2;  
+// BlockProbe.java>   *(undefined4 *)(param_1 + 0x88) = 0x34fc544f;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x28) = 0;  
+// BlockProbe.java>   bVar1 = true;  
+// BlockProbe.java> code_r0x00010179fbe0:  
+// BlockProbe.java>   fVar2 = 1.0 / fVar2;  
+// BlockProbe.java>   fVar3 = 1.0 / *(float *)(param_1 + 0x7c);  
+// BlockProbe.java>   *(float *)(param_1 + 0xb4) = fVar2;  
+// BlockProbe.java>   *(float *)(param_1 + 0xb8) = fVar3;  
+// BlockProbe.java>   *(float *)(param_1 + 0x1cc) = SQRT(fVar2);  
+// BlockProbe.java>   *(float *)(param_1 + 0x1d0) = SQRT(fVar3);  
+// BlockProbe.java>   fVar3 = *(float *)(param_1 + 0x200) * 9.4e-07;  
+// BlockProbe.java>   *(float *)(param_1 + 0xbc) = fVar3;  
+// BlockProbe.java>   *(undefined4 *)(param_1 + 0xc0) = 0;  
+// BlockProbe.java>   if (!bVar1) {  
+// BlockProbe.java>     *(float *)(param_1 + 0xc0) = 1.0 / (*(float *)(param_1 + 0x200) * *(float *)(param_1 + 0x90));  
+// BlockProbe.java>   }  
+// BlockProbe.java>   *(float *)(param_1 + 0xc4) = fVar2 + fVar3;  
+// BlockProbe.java>   *(double *)(param_1 + 0x58) = (double)(1.0 / (fVar2 + fVar3 + *(float *)(param_1 + 0xb0)));  
+// BlockProbe.java>   *(double *)(param_1 + 0x60) = (double)(1.0 / (fVar2 + fVar3));  
+// BlockProbe.java>   return;  
+// BlockProbe.java> }  
+// BlockProbe.java> END 10179fb4c  
+// BlockProbe.java> FUNC 10179f64c name=FUN_10179f64c body=1 lines=141  
+// BlockProbe.java>   
+// BlockProbe.java> /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */  
+// BlockProbe.java>   
+// BlockProbe.java> void FUN_10179f64c(long param_1)  
+// BlockProbe.java>   
+// BlockProbe.java> {  
+// BlockProbe.java>   int iVar1;  
+// BlockProbe.java>   int iVar2;  
+// BlockProbe.java>   undefined8 uVar3;  
+// BlockProbe.java>   undefined8 uVar4;  
+// BlockProbe.java>   float fVar5;  
+// BlockProbe.java>   undefined8 uVar6;  
+// BlockProbe.java>   float fVar7;  
+// BlockProbe.java>   undefined1 auVar8 [16];  
+// BlockProbe.java>     
+// BlockProbe.java>   uVar4 = _UNK_104cd09a0;  
+// BlockProbe.java>   uVar3 = _UNK_104cd0998;  
+// BlockProbe.java>   uVar6 = _UNK_104cd0990;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0xe0) = _UNK_104cd09a8;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0xd8) = uVar4;  
+// BlockProbe.java>   uVar4 = _UNK_104cd09b0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0xf0) = _UNK_104cd09b8;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0xe8) = uVar4;  
+// BlockProbe.java>   *(undefined1 *)(param_1 + 0x290) = 0;  
+// BlockProbe.java>   auVar8 = NEON_fmov(0x3ff0000000000000,8);  
+// BlockProbe.java>   *(long *)(param_1 + 0x1f8) = auVar8._8_8_;  
+// BlockProbe.java>   *(long *)(param_1 + 0x1f0) = auVar8._0_8_;  
+// BlockProbe.java>   auVar8 = NEON_fmov(0x3f800000,4);  
+// BlockProbe.java>   *(long *)(param_1 + 0x78) = auVar8._8_8_;  
+// BlockProbe.java>   *(long *)(param_1 + 0x70) = auVar8._0_8_;  
+// BlockProbe.java>   *(long *)(param_1 + 0x88) = auVar8._8_8_;  
+// BlockProbe.java>   *(long *)(param_1 + 0x80) = auVar8._0_8_;  
+// BlockProbe.java>   uVar4 = _UNK_104cd09c0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x98) = _UNK_104cd09c8;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x90) = uVar4;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0xa8) = uVar3;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0xa0) = uVar6;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 400) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x188) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x1a0) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x198) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x1b0) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x1a8) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x1bc) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x1b4) = 0;  
+// BlockProbe.java>   iVar1 = iRam00000001059b5500 * 0xb9c86e1 + 0x361d6eaf;  
+// BlockProbe.java>   iVar2 = iVar1 * 0xb9c86e1 + 0x361d6eaf;  
+// BlockProbe.java>   *(int *)(param_1 + 0xf8) = iVar1;  
+// BlockProbe.java>   *(int *)(param_1 + 0xfc) = iVar2;  
+// BlockProbe.java>   iVar1 = iVar2 * 0xb9c86e1 + 0x361d6eaf;  
+// BlockProbe.java>   *(int *)(param_1 + 0x100) = iVar1;  
+// BlockProbe.java>   iRam00000001059b5500 = iVar1 * 0xb9c86e1 + 0x361d6eaf;  
+// BlockProbe.java>   *(int *)(param_1 + 0x104) = iRam00000001059b5500;  
+// BlockProbe.java>   uVar6 = _UNK_104cdec50;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x180) = _UNK_104cdec58;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x178) = uVar6;  
+// BlockProbe.java>   *(undefined2 *)(param_1 + 0x291) = 1;  
+// BlockProbe.java>   *(undefined4 *)(param_1 + 0x1ec) = 0;  
+// BlockProbe.java>   *(undefined4 *)(param_1 + 0x198) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x1dc) = _UNK_104cc7430;  
+// BlockProbe.java>   uVar6 = _UNK_104cd09d0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0xd0) = _UNK_104cd09d8;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 200) = uVar6;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x1e4) = _UNK_104cd0a10;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x68) = 0x4528c0004528c000;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0xb0) = _UNK_104cd0a18;  
+// BlockProbe.java>   fVar5 = *(float *)(param_1 + 0x200);  
+// BlockProbe.java>   fVar7 = fVar5 + fVar5;  
+// BlockProbe.java>   *(float *)(param_1 + 0xbc) = fVar7;  
+// BlockProbe.java>   *(undefined4 *)(param_1 + 0xc0) = 0;  
+// BlockProbe.java>   *(double *)(param_1 + 0x58) = (double)(1.0 / (fVar7 + 0.00037037037 + 1.0));  
+// BlockProbe.java>   *(float *)(param_1 + 0xc4) = fVar7 + 1.0;  
+// BlockProbe.java>   *(double *)(param_1 + 0x60) = (double)(1.0 / (fVar7 + 1.0));  
+// BlockProbe.java>   if (*(int *)(param_1 + 0x1e0) != 3) {  
+// BlockProbe.java>     *(undefined1 *)(param_1 + 0x290) = 0;  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x1e0) = 3;  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x74) = 0x48e9c48f;  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x88) = 0x34fc544f;  
+// BlockProbe.java>     *(undefined8 *)(param_1 + 0x28) = 0;  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0xb4) = 0x360c2c5c;  
+// BlockProbe.java>     fVar7 = 1.0 / *(float *)(param_1 + 0x7c);  
+// BlockProbe.java>     *(undefined4 *)(param_1 + 0x1cc) = 0x3abd6e82;  
+// BlockProbe.java>     *(float *)(param_1 + 0x1d0) = SQRT(fVar7);  
+// BlockProbe.java>     fVar5 = fVar5 * 9.4e-07;  
+// BlockProbe.java>     *(float *)(param_1 + 0xb8) = fVar7;  
+// BlockProbe.java>     *(float *)(param_1 + 0xbc) = fVar5;  
+// BlockProbe.java>     *(float *)(param_1 + 0xc4) = fVar5 + 2.0887446e-06;  
+// BlockProbe.java>     *(double *)(param_1 + 0x58) = (double)(1.0 / (fVar5 + 0.00037037037 + 2.0887446e-06));  
+// BlockProbe.java>     *(double *)(param_1 + 0x60) = (double)(1.0 / (fVar5 + 2.0887446e-06));  
+// BlockProbe.java>   }  
+// BlockProbe.java>   *(undefined **)(param_1 + 0x288) = &UNK_104cd1280;  
+// BlockProbe.java>   *(undefined4 *)(param_1 + 0x188) = 0;  
+// BlockProbe.java>   uVar6 = NEON_fmov(0x3f800000,4);  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x1ac) = uVar6;  
+// BlockProbe.java>   fVar5 = *(float *)(param_1 + 0x204) * -6.2831855;  
+// BlockProbe.java>   fVar5 = (float)_expf(fVar5 + fVar5);  
+// BlockProbe.java>   *(float *)(param_1 + 0x1b8) = 1.0 - fVar5;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 400) = 0;  
+// BlockProbe.java>   uVar6 = _UNK_104cd09e0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x1a4) = _UNK_104cd09e8;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x19c) = uVar6;  
+// BlockProbe.java>   *(undefined4 *)(param_1 + 0x1b4) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x1bc) = _UNK_104d27080;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x214) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x20c) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x219) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x10) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 8) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x20) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x18) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x30) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x28) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x40) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x38) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x50) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x48) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x118) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x110) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x128) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x120) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x138) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x130) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x148) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x140) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x158) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x150) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x168) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x160) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x270) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x268) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x280) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x278) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x260) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 600) = 0;  
+// BlockProbe.java>   *(undefined4 *)(param_1 + 0x214) = 0x41a00000;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x22c) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x224) = 0;  
+// BlockProbe.java>   *(undefined8 *)(param_1 + 0x231) = 0;  
+// BlockProbe.java>   *(undefined4 *)(param_1 + 0x22c) = 0x41a00000;  
+// BlockProbe.java>   return;  
+// BlockProbe.java> }  
+// BlockProbe.java> END 10179f64c  
+// REPORT: Save succeeded for processed file: /Live.arm64 (HeadlessAnalyzer)  

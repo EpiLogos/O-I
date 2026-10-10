@@ -30,7 +30,7 @@ async function extractOps() {
   const block = source.slice(start)
   const end = block.indexOf('export type KernelOpResult')
   if (end < 0) throw new Error('the KernelOp union is unterminated')
-  const ops = [...block.slice(0, end).matchAll(/\{op:"([a-z_]+)"/g)].map(match => match[1])
+  const ops = [...block.slice(0, end).matchAll(/\{\s*op:\s*"([a-z_]+)"/g)].map(match => match[1])
   if (!ops.length) throw new Error('no kernel ops parsed from the union')
   return ops
 }

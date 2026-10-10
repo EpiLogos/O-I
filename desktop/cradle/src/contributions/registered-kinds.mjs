@@ -67,7 +67,7 @@ export const hostedSurfaceDescriptors = [
     "owner": "software-factory",
     "region": "canvas",
     "retention": "mounted",
-    "revision": 2,
+    "revision": 3,
     "title": "Factory"
   },
   {

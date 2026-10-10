@@ -162,12 +162,10 @@ export type NativeGlyphChange =
   | {kind: 'step-insert'; entity_id: string; after_step_id: string | null; source?: Entity['source']; shape?: SequenceStep['shape']; text?: string}
   | {kind: 'step-duplicate'; entity_id: string; step_id: string}
   | {kind: 'step-remove'; entity_id: string; step_ids: string[]}
-  | {kind: 'step-order'; entity_id: string; step_ids: string[]}
-  /** The formation's base glyph (the app's native-glyph base edit): text is trimmed to 1–120 characters, refused while locked or a blueprint member (nativeFormations.ts validateFormationGlyph). */
-  | {kind: 'formation-glyph'; entity_id: string; text: string};
+  | {kind: 'step-order'; entity_id: string; step_ids: string[]};
 /** Formation add (nativeFormations.ts). 'text' is Glyph or word; the add picker offers no yantra or cymatic. */
 export type NativeFormationShape = 'text' | 'ring' | 'disc' | 'triangle' | 'square';
-export type NativeFormationChange = {kind: 'formation-add'; title?: string; shape?: NativeFormationShape; text?: string; position?: Vec3};
+export type NativeFormationChange = {kind: 'formation-add'; title?: string; shape?: NativeFormationShape; text?: string; position?: Vec3} | {kind: 'formation-glyph'; entity_id: string; text: string};
 /** Whole-object operations on one Scene entity (nativeFormations.ts applyNativeObjectChanges). Duplicate copies the app's duplicate; remove is the app's Delete, refused while locked or a blueprint member. */
 export type NativeObjectChange = {kind: 'entity-duplicate'; entity_id: string} | {kind: 'entity-remove'; entity_id: string};
 export type NativeEditorChange = NativeDeviceChange | NativeGlyphChange | NativeRackChange | NativeChosenControlChange | NativeDeviceWidgetChange | NativeSceneTextChange | NativeAutomationChange | NativeFoldChange | NativeFormationChange | NativeObjectChange | NativeTrackChange;

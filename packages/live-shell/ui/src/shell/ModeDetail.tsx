@@ -117,6 +117,8 @@ export function FactoryTaskLogDetail({taskLabel, task}: {
     purpose: string | null
     agentName: string | null
     needleState: string | null
+    tasks?: readonly unknown[]
+    budget?: { used: number | null; max: number | null }
   } | null
 }) {
   const rows: {op: string; value: string | null; hint: string}[] = [

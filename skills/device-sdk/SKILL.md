@@ -5,12 +5,6 @@ description: "METHOD: Build a device/plugin for the shell — find the functiona
 
 # Device SDK — the loop for building shell devices
 
-> This Skill is the device-work specialization of the domain method:
-> [../m-prime-development/SKILL.md](../m-prime-development/SKILL.md) holds
-> the full domain loop (orient, claim, gaps, declare, build, prove, break,
-> land, return) and [../m-prime-development/FOUNDING.md](../m-prime-development/FOUNDING.md)
-> holds the ecology-of-law founding this SDK instantiates.
-
 Use this Skill when the work is making a device/plugin/instrument face for
 the shell — new functionality, a gap in existing functionality, or moving a
 native capability onto the rack — for any family (the six products, or a

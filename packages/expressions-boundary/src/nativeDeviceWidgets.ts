@@ -4,8 +4,10 @@
  * one DocumentStore change, committed through the existing composition_set path. */
 import type {NativeDeviceWidget, NativeDeviceWidgetChange} from './editor';
 import {clone, validateJourney, type Journey} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
-import {admittedFamily} from './familyAdmission';
 
+export const DEVICE_FAMILIES = ['glyph', 'physics', 'pointer', 'relational', 'medium', 'contacts', 'morph', 'focus', 'colour', 'ink', 'depth', 'resonance', 'automation', 'formation', 'force', 'scene', 'sound', 'meaning', 'text', 'body', 'blueprint', 'arrange'] as const;
+/** Only these families may hold more than one instance; every other family is a single instance. */
+const REPEATABLE: ReadonlySet<string> = new Set(['force', 'formation']);
 const MAX_DEVICES = 64;
 
 /** The retained ordered device list, as a reading. Absent means none. */
@@ -28,9 +30,8 @@ export function applyNativeDeviceWidgetChanges(document: Journey, changes: reado
   };
   for (const change of changes) {
     if (change.kind === 'device-add') {
-      const admission = admittedFamily(change.family);
-      if (!admission) throw Error('Choose a defined device family');
-      if (!admission.repeatable && devices.some(d => d.family === change.family)) throw Error('This device is already placed in the Scene');
+      if (typeof change.family !== 'string' || !(DEVICE_FAMILIES as readonly string[]).includes(change.family)) throw Error('Choose a defined device family');
+      if (!REPEATABLE.has(change.family) && devices.some(d => d.family === change.family)) throw Error('This device is already placed in the Scene');
       if (devices.length >= MAX_DEVICES) throw Error('The device list is full');
       const device: NativeDeviceWidget = {id: mint(change.family), family: change.family};
       if (change.after_id === undefined) devices.push(device);

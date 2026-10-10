@@ -1,0 +1,126 @@
+// PROVENANCE: static census (nm -U, strings -a -t d, otool -l, plutil) of the
+// Softube DSP bundle Live 12.0.25 loads for the Cabinet device, plus
+// Live-side enum strings (live_strings.txt excerpts) and .adv XML defaults.
+// Owner-private analysis evidence. NOT FOR REDISTRIBUTION. Never enters
+// product source (packages/live-dynamics). NO IR AUDIO DATA is reproduced or
+// extracted here — storage MECHANISM names only (per the lane instruction).
+// Captured 2026-10-09 (amp/cabinet binary lane). Companion dossier:
+// devices/cabinet-derivation.md.
+== bundle identity ==
+{
+  "CFBundleDevelopmentRegion" => "English"
+  "CFBundleExecutable" => "Cabinet"
+  "CFBundleGetInfoString" => "(c) 2021 Softube - All rights reserved"
+  "CFBundleIdentifier" => "com.softube.Cabinet"
+  "CFBundleInfoDictionaryVersion" => "6.0"
+  "CFBundlePackageType" => "BNDL"
+  "CFBundleShortVersionString" => "1.2.3"
+  "CFBundleSignature" => "????"
+  "CFBundleVersion" => "1.2.3"
+}
+
+== file ==
+/Applications/Ableton Live 12 Suite.app/Contents/App-Resources/Devices/Mac/Cabinet.bundle/Contents/MacOS/Cabinet: Mach-O universal binary with 2 architectures: [x86_64:Mach-O 64-bit dynamically linked shared library x86_64] [arm64]
+/Applications/Ableton Live 12 Suite.app/Contents/App-Resources/Devices/Mac/Cabinet.bundle/Contents/MacOS/Cabinet (for architecture x86_64):	Mach-O 64-bit dynamically linked shared library x86_64
+/Applications/Ableton Live 12 Suite.app/Contents/App-Resources/Devices/Mac/Cabinet.bundle/Contents/MacOS/Cabinet (for architecture arm64):	Mach-O 64-bit dynamically linked shared library arm64
+
+== exported ABI (arm64) ==
+0000000000002c84 T _CreateInstanceU
+0000000000002e24 T _DestroyInstanceU
+0000000000002f00 T _GetPlugInfoU
+0000000000002ec4 T _SetSampleRateU
+000000000001dfe4 T _SoftubeVSTCallback
+
+== engine/FFT symbols (arm64) ==
+000000000002128c T __Z18FftProcessFunctionPvP19SoftubeProcessInfoTb
+00000000000212b0 T __Z21GetFftProcessFunctionv
+0000000000029af8 T __ZN11CSoftubeAmp12ProcessMultiEPPdS1_idS1_iiPvS2_
+0000000000029060 T __ZN11CSoftubeAmp12ProcessMultiEPPfS1_ifS1_iiPvS2_
+0000000000029054 T __ZN11CSoftubeAmp14SetNumChannelsEii
+0000000000028e34 T __ZN11CSoftubeAmp18GetPublicParameterEi
+0000000000027944 T __ZN11CSoftubeAmp4InitEv
+0000000000028874 T __ZN11CSoftubeAmp8SetAmpNrEi
+000000000002e820 T __ZN11CSoftubeFFT11ApplyWindowENS_10WindowTypeEi
+000000000002e1bc T __ZN11CSoftubeFFT11NeedsReinitEPv
+000000000002e154 T __ZN11CSoftubeFFT11SetDefaultsEv
+000000000002e694 T __ZN11CSoftubeFFT13SetSmoothSizeEi
+000000000002eddc T __ZN11CSoftubeFFT14GetDisplayDataEiPf
+000000000002eec0 T __ZN11CSoftubeFFT14HasDisplayDataEv
+000000000002ea4c T __ZN11CSoftubeFFT15MakeDisplayDataEv
+000000000002e6b4 T __ZN11CSoftubeFFT16SetTimeAvgFactorEff
+000000000002e24c T __ZN11CSoftubeFFT4InitEiiiiiff
+000000000002e714 T __ZN11CSoftubeFFT5InputEiPKd
+000000000002e79c T __ZN11CSoftubeFFT5InputEiPKf
+000000000002e8ac T __ZN11CSoftubeFFT7ExecuteEv
+
+== __TEXT/__DATA_CONST/__DATA section layout (sizes in hex) ==
+  segname __TEXT
+  sectname __text
+   segname __TEXT
+      addr 0x0000000000002c54
+      size 0x0000000000116238
+  sectname __stubs
+   segname __TEXT
+      addr 0x0000000000118e8c
+      size 0x0000000000000b34
+  sectname __stub_helper
+   segname __TEXT
+      addr 0x00000000001199c0
+      size 0x0000000000000b10
+  sectname __objc_methlist
+   segname __TEXT
+      addr 0x000000000011a4d0
+      size 0x0000000000000040
+  sectname __gcc_except_tab
+   segname __TEXT
+      addr 0x000000000011a510
+      size 0x000000000000339c
+  sectname __const
+   segname __TEXT
+      addr 0x000000000011d8b0
+      size 0x0000000000013d2c
+  sectname __cstring
+   segname __TEXT
+      addr 0x00000000001315e0
+      size 0x0000000000000a1c
+  sectname __objc_methname
+   segname __TEXT
+      addr 0x0000000000131ffc
+      size 0x00000000000005b0
+  sectname __objc_classname
+   segname __TEXT
+      addr 0x00000000001325ac
+      size 0x0000000000000030
+  sectname __objc_methtype
+   segname __TEXT
+      addr 0x00000000001325dc
+
+== cab data-set name strings (file offsets; names only, no data) ==
+1253034 1x12n44a
+1253043 MicrophoneType
+1253058 MicrophonePosition
+1253077 1x12n48a
+1253086 1x12n88a
+1253095 1x12n96a
+1253104 1x12n176a
+1253114 1x12n192a
+1253124 2x12n44a
+1253133 2x12n48a
+1253142 2x12n88a
+1253151 2x12n96a
+1253160 2x12n176a
+1253170 2x12n192a
+1253180 4x10n44a
+1253189 4x10n48a
+1253198 4x10n88a
+1253207 4x10n96a
+1253216 4x10n176a
+1253226 4x10n192a
+1253236 4x10Bassn44a
+1253249 4x10Bassn48a
+
+== mic/param strings ==
+1252996 end
+1253034 1x12n44a
+1253043 MicrophoneType
+1253058 MicrophonePosition

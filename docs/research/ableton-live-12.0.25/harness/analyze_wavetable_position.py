@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+"""Position→harmonics map for the Wavetable interior law (depth lane, rev 3).
+
+Complex Goertzel h1..h8 (amplitude AND phase) on the four position renders —
+M2 (pos 0), WV6 (pos 0.25), WV2 (pos 0.5), WV7 (pos 0.75) — everything else
+identical (same notes clip, single-pin edits; wavetable-voice.md).
+
+Phase convention: for x[n] = A·sin(2πk f0 (t−t_on) + θ_k) the analysis
+reports θ_k (degrees). A zero-phase frame (pure sine series, all harmonics
+sin(kωt)) reads θ_k ≈ 0 on every harmonic; a sign flip in a frame partial
+reads |θ| ≈ 180°. Stability is checked by repeating the measurement on notes
+1 and 2 (independent note-ons — the oscillator phase restarts per note).
+
+WV2 lives only on the probe branch (licence discipline) — git-recovered to
+/tmp/wv-interp/ like the dossier's provenance section documents.
+
+Outputs the table the fit (fit_wavetable_position_law.py) consumes.
+"""
+import math
+import os
+import subprocess
+import sys
+
+sys.path.insert(0, __file__.rsplit("/", 1)[0])
+from analyze_render import read_aiff, rms_db
+
+RATE = 44100.0
+C3 = 130.81278265
+RENDERS = __file__.rsplit("/", 1)[0] + "/renders/"
+SCRATCH = "/tmp/wv-interp/"
+FILES = [
+    ("pos0.00", "M2_WAVETABLE.aif"),
+    ("pos0.25", "WV6_POS25.aif"),
+    ("pos0.50", "WV2_POS50.aif"),
+    ("pos0.75", "WV7_POS75.aif"),
+]
+
+
+def goertzel_c(x, rate, f, t0, t1, t_on):
+    """Complex amplitude: X = 2/N · Σ x[n]·e^{-iω(t−t_on)}; (amp, theta_rad).
+
+    For x = A·sin(ω(t−t_on) + θ):  X ≈ A·e^{i(θ − π/2)}·(leakage≈1), so
+    amp = |X|, theta = arg(X) + π/2  (θ = 0 for a zero-phase sin partial,
+    phase referenced to the NOTE-ON instant, not the window).
+    """
+    s, e = int(t0 * rate), int(t1 * rate)
+    n = e - s
+    w = 2.0 * math.pi * f / rate
+    wc = w * (s / rate - t_on)
+    re = im = 0.0
+    for i, v in enumerate(x[s:e]):
+        ang = wc + w * i
+        re += v * math.cos(ang)
+        im -= v * math.sin(ang)
+    amp = 2.0 * math.sqrt(re * re + im * im) / n
+    theta = math.atan2(im, re) + math.pi / 2.0
+    # wrap to [−180, 180]
+    theta = (theta + math.pi) % (2 * math.pi) - math.pi
+    return amp, theta
+
+
+def db(a):
+    return 20 * math.log10(max(a, 1e-12) / 32768.0)
+
+
+def main():
+    if not os.path.exists(SCRATCH + "WV2_POS50.aif"):
+        os.makedirs(SCRATCH, exist_ok=True)
+        blob = ("37b4daff4:docs/research/ableton-live-12.0.25/"
+                "harness/renders/WV2_POS50.aif")
+        root = __file__.rsplit("/docs/", 1)[0]
+        with open(SCRATCH + "WV2_POS50.aif", "wb") as fh:
+            fh.write(subprocess.run(["git", "show", blob], cwd=root,
+                                    capture_output=True, check=True).stdout)
+
+    out = {}
+    for label, fname in FILES:
+        path = RENDERS + fname if os.path.exists(RENDERS + fname) else SCRATCH + fname
+        rate, bits, x = read_aiff(path)
+        assert rate == RATE, path
+        row = {"file": fname}
+        for k in range(1, 9):
+            a1, th1 = goertzel_c(x, rate, C3 * k, 1.15, 1.70, 1.0)
+            a2, th2 = goertzel_c(x, rate, C3 * k, 2.15, 2.70, 2.0)
+            row[k] = (db(a1), math.degrees(th1), db(a2), math.degrees(th2))
+        notes = []
+        for start in (0.0, 1.0, 2.0, 3.0):
+            s, e = int((start + 0.15) * rate), int((start + 0.70) * rate)
+            seg = x[s:e]
+            acc = sum(v * v for v in seg) / len(seg)
+            notes.append(10 * math.log10(max(acc, 1e-14) / 32768.0 ** 2))
+        row["steady"] = notes
+        out[label] = row
+
+    ref = 10 ** (out["pos0.00"][1][0] / 20.0)  # pos-0 h1 linear = model unit
+    print("== position→harmonics map (note-1 steady window [1.15,1.70])")
+    print("   amplitude dBFS + phase θ (deg, 0 = sin-phase at note-on)")
+    for label, _ in FILES:
+        r = out[label]
+        print(f"-- {label} ({r['file']})  steady RMS "
+              + " ".join(f"{v:7.2f}" for v in r["steady"]))
+        for k in range(1, 9):
+            a1, t1, a2, t2 = r[k]
+            rel = a1 - out["pos0.00"][1][0]
+            print(f"   h{k}: {a1:8.2f} dBFS  rel-pos0 {rel:+7.2f} dB "
+                  f"({10 ** (rel / 20.0):7.4f} lin)  θ1 {t1:+7.1f}°  "
+                  f"| note2 {a2:8.2f} dBFS θ2 {t2:+7.1f}°")
+
+    print("\n== phase stability (note 1 vs note 2, |Δθ| max per render)")
+    for label, _ in FILES:
+        d = max(abs(out[label][k][1] - out[label][k][3]) for k in range(1, 9))
+        print(f"   {label}: max |Δθ| {d:6.1f}°")
+
+    print("\n== linear ratios rel pos-0 h1 (the fit's input), note 1")
+    print("   pos    " + "".join(f"      h{k:d}      " for k in range(1, 9)))
+    for label, _ in FILES:
+        lin = [10 ** ((out[label][k][0] - out["pos0.00"][1][0]) / 20.0)
+               for k in range(1, 9)]
+        ph = [out[label][k][1] for k in range(1, 9)]
+        print(f"   {label} " + "".join(f"{v:11.5f} " for v in lin))
+        print(f"   θ(deg) " + "".join(f"{v:11.1f} " for v in ph))
+
+    with open("/tmp/wv-interp/position_map.py", "w") as fh:
+        fh.write("# generated by analyze_wavetable_position.py\n")
+        fh.write("MAP = {\n")
+        for label, _ in FILES:
+            lin = [10 ** ((out[label][k][0] - out["pos0.00"][1][0]) / 20.0)
+                   for k in range(1, 9)]
+            ph = [out[label][k][1] for k in range(1, 9)]
+            absdb = [out[label][k][0] for k in range(1, 9)]
+            fh.write(f'    "{label}": {{"lin": {lin!r}, "phase_deg": {ph!r}, '
+                     f'"dbfs": {absdb!r}, "steady": {out[label]["steady"]!r}}},\n')
+        fh.write("}\n")
+    print("\n(wrote /tmp/wv-interp/position_map.py)")
+
+
+if __name__ == "__main__":
+    main()

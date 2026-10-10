@@ -1179,15 +1179,6 @@
       "owner_lane": "gateway-parity-convergence",
       "reason": "Implementation added; canonical verb routing proven at the kernel crate level. Native UX acceptance evidence still required before verification.",
       "scenarios": []
-    },
-    {
-      "op": "temporal_events_read",
-      "native_owner": "kernel/src/temporal_sources.rs",
-      "spec_ref": "agent shell arrangement needles; civil temporal field over now, thoughts, wiki returns, kernel log, aikit history",
-      "status": "unverified",
-      "owner_lane": "agent-native-live-shell",
-      "reason": "Kernel route wired for live-shell arrangement needles; native UX acceptance evidence still required before verification.",
-      "scenarios": []
     }
  ]
 }

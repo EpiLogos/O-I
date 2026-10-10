@@ -1,5 +1,5 @@
 import {EDITOR_CHANNEL, sameEditorBasis, type NativeDeviceChange, type NativeEditorReading, type NativeEditorReply, type NativeEditorRequest, type NativeGlyphChange, type NativeChosenControlChange, type NativeDeviceWidgetChange, type NativeAutomationChange, type NativeFormationChange, type NativeObjectChange, type NativeTrackChange} from '../../../../../packages/expressions-boundary/src/editor';
-import {applyNativeFormationChanges, applyNativeObjectChanges, validateFormationGlyph} from '../../../../../packages/expressions-boundary/src/nativeFormations';
+import {applyNativeFormationChanges, applyNativeObjectChanges} from '../../../../../packages/expressions-boundary/src/nativeFormations';
 import {readNativeChosenControls, applyNativeChosenControlChanges} from '../../../../../packages/expressions-boundary/src/chosenControls';
 import {readNativeDeviceWidgets, applyNativeDeviceWidgetChanges} from '../../../../../packages/expressions-boundary/src/nativeDeviceWidgets';
 import {applyNativeDeviceChanges, readNativeDeviceEffectiveValues} from '../../../../../packages/expressions-boundary/src/nativeDeviceEdits';
@@ -14,9 +14,8 @@ import type {NativeFoldChange} from '../../../../../packages/expressions-boundar
 import type {NativeRackChange, NativeRackTarget} from '../../../../../packages/expressions-boundary/src/nativeRackSchema';
 import {clone, uid, validateJourney, type Journey} from './model';
 import {appendFormationState} from './formationAuthoring';
-import {capturedStepState, refitEntityForGlyph, refitStepForGlyph, refitStepForText, refitStepForSource, refitFormationForFont} from './stateSizing';
+import {capturedStepState, refitStepForText, refitStepForSource, refitFormationForFont} from './stateSizing';
 import {preserveLayerStates, setStateSource, useStateShape} from './sourceState';
-import {applyGlyph} from './nativeFeatures';
 import {syncHeldState} from './workspacePreferences';
 import type {DocumentStore} from './store';
 import type {KernelConversion} from './kernelDocumentBridge';
@@ -29,9 +28,6 @@ import {validateBlueprintIntent} from '../../../../../packages/expressions-bound
 import {blueprintTransformIntent} from './blueprintHUD';
 import {prepareBlueprintEdit, type BlueprintIntent} from './nativeBlueprint';
 import {readSceneBlueprint} from './kernelExpressions';
-import {loadExpressionsFamilies} from '../../../../../packages/expressions-boundary/src/expressionsFamilies';
-
-loadExpressionsFamilies();
 
 function finite(value: number, min: number, max: number, label: string) {
   if (!Number.isFinite(value) || value < min || value > max) throw Error(`${label} must be between ${min} and ${max}`);
@@ -63,17 +59,6 @@ export function applyNativeGlyphChanges(document: Journey, sceneId: string, chan
         if (effective.engine.autoFitSizes === false || previous[index].fontFamily === font.fontFamily && previous[index].fontWeight === font.fontWeight) return;
         for (const entity of source.entities) if (entity.kind === 'formation' && !entity.locked) refitFormationForFont(entity,previous[index],font);
       });
-      continue;
-    }
-    if (change.kind === 'formation-glyph') {
-      // The app's native-glyph base edit (app.ts case 'native-glyph', base): the formation's own glyph, mirrored onto its only state.
-      const {entity: base, text} = validateFormationGlyph(scene, change);
-      const font = {fontFamily: scene.engine.fontFamily, fontWeight: scene.engine.fontWeight};
-      useStateShape(base, 0); base.layers = []; setStateSource(base, 0, undefined); applyGlyph(base, null, text);
-      if (scene.engine.autoFitSizes !== false) {
-        refitEntityForGlyph(base, text, font);
-        if (base.sequence.steps.length === 1) refitStepForGlyph(base, 0, text, font);
-      }
       continue;
     }
     const e = scene.entities.find(entity => entity.id === change.entity_id);
@@ -368,7 +353,7 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
       }
       let next=options.store.document;
       const deviceKinds=new Set(['parameter','force-mode','field-setting','morph-setting','colour-setting','colour-palette','colour-background','colour-preset','force-insert','panel-setting','route-order','entity-setting','entity-sound','entity-semantic','semantic-field-setting','field-material','ink-mode']);
-      const family=(kind:string)=>kind.startsWith('device-')?'widget':kind.startsWith('chosen-')?'chosen':kind.startsWith('rack-')?'rack':kind.startsWith('automation-')?'automation':kind.startsWith('track-')?'track':kind.startsWith('text-layer-')?'text':kind==='formation-glyph'?'glyph':kind.startsWith('formation-')?'formation':kind==='entity-duplicate'||kind==='entity-remove'?'object':kind==='state-fold'?'fold':deviceKinds.has(kind)?'device':'glyph';
+      const family=(kind:string)=>kind.startsWith('device-')?'widget':kind.startsWith('chosen-')?'chosen':kind.startsWith('rack-')?'rack':kind.startsWith('automation-')?'automation':kind.startsWith('track-')?'track':kind.startsWith('text-layer-')?'text':kind.startsWith('formation-')?'formation':kind==='entity-duplicate'||kind==='entity-remove'?'object':kind==='state-fold'?'fold':deviceKinds.has(kind)?'device':'glyph';
       const authorizeTarget=(target:NativeRackTarget)=>{
         if(target.kind==='entity'&&['x','y','z'].includes(target.path)) {
           const occurrence=binding.occurrences.find(o=>o.entity_ref===target.entity_ref);

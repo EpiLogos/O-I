@@ -321,7 +321,6 @@ export type KernelOp =
   | {op:"factory_attempt_task_read";state_path:string;run_ref:string;task_ref:string;limit?:number;cursor?:unknown}
   | {op:"factory_owner";request:{kind:string;[field:string]:unknown}}
   | {op:"workcell_status_read"}
-  | {op:"temporal_events_read";query?:{window?:{window:"all"}|{window:"day";day_ref:string}|{window:"between";from_unix_ms:number;to_unix_ms:number};kind?:string;subject?:string;stream?:string}}
   /** World inhabitation (WORLD-INHABITATION-V1 §4): AIKit's population,
    * joined whoami and Refocus readings, schema-checked and bounded by a
    * timeout in the kernel; a failure is an error the renderer names. */
@@ -389,6 +388,7 @@ export type KernelOp =
     }
   | { op: "surface_close"; surface_id: string }
   | { op: "surface_focus"; surface_id: string }
+  | { op: "temporal_events_read"; query: { subject?: string; window: { window: string; from_unix_ms: number; to_unix_ms: number } } }
   // ES1/ES4 expression-world operations (kernel `expression_world.rs`):
   // shared selection/deictic context, Surface portals, ExpressiveActs and
   // bounded local-whole bindings over exact native refs.
@@ -398,6 +398,7 @@ export type KernelOp =
  * The Rust seam serialises `{ receipts, #[serde(flatten)] result }`, so on
  * the wire the tag and the payload sit flat beside `receipts`. */
 export type KernelOpResult =
+  | { result: "temporal_events_reading"; document: { events?: unknown[] } }
   | {result:"hosted_native";source_world_ref:string;owner_generation:string;outcome:KernelOutcome}
   | {result:"file_last_reading";recovery:RetainedFileRecovery}
   | {result:"dictation_reading";stipulation:DictationStipulation}
@@ -468,7 +469,6 @@ export type KernelOpResult =
   | { result:"factory_attempt_task_list_reading";data:unknown }
   | { result:"factory_attempt_task_reading";data:unknown }
   | { result:"workcell_status_reading";data:unknown }
-  | { result:"temporal_events_reading";document:unknown }
   | { result:"inhabitation_reading";data:unknown;warnings?:unknown[] }
   | { result:"wiki_projection_reading";data:unknown }
   | { result:"wiki_projection_sources_reading";data:unknown }

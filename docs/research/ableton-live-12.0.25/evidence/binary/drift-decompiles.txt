@@ -1,0 +1,3518 @@
+// PROVENANCE: Ghidra 12.1.4 decompiles + nm decodes, persistent project
+// LiveRE2 (~/tools/live-re/ghidra-proj2, ALREADY ANALYZED), Live.arm64
+// (Live 12.0.25, 2024-08-27_2627c43816), arm64 slice. Query-only (no
+// re-import; no Live runs, no renders in this lane). Owner-private analysis
+// evidence. NOT FOR REDISTRIBUTION. Never enters product source
+// (packages/live-dynamics).
+// Captured 2026-10-10 (binary derivation lane, Drift+Utility) via
+// BlockProbe/DataProbe/SearchProbe scripts + `nm -U` on Live.arm64.
+// Companion dossier: devices/drift-derivation.md.
+// Contents: (1) nm census of the Drift surface (SProcessorFunc trampolines =
+// the 90+ property-event setters, devicekit model surface, voice-manager /
+// voice-mode-handler / TickerSwitcher instantiations, runtime-built statics);
+// (2) create chain + shell CalcMain + OnMidi + Init/Reset/Exit; (3) the DSP
+// tick FUN_1018f0d38 (32-frame sub-block loop) + ticker re-select + event
+// pump + per-sample render wrapper; (4) Global/Mixer/PitchMod/ModMatrix
+// setters; (5) Osc/Filter/CyclingEnvelope/Envelope1/2/Lfo setters (event-ring
+// recorder pattern); (6) representative model-side apply bodies (Filter
+// Frequency 606-line, Lfo Rate, CycEnv Time, Env1 Attack, Osc2 Detune,
+// Filter Resonance) + DataProbe dumps of the runtime-built statics (all
+// zero-init in file: panningGains/sMaxDetuneFactors/modeGain/referenceLevel/
+// kZeroRange/kInvScalingFactor/sRandom + EnumItems guards) + mode-name
+// string region.
+
+// ======== (1) nm CENSUS (SProcessorFunc trampolines, ODeviceKitDeviceProcessor<DriftDevice>) ========
+00000001018f087c void (*)(OScheduler*)>::SProcessorFunc<&Init(OScheduler*)>())(void*, OScheduler*)::'lambda'(void*, OScheduler*)::__invoke(void*, OScheduler*)
+00000001018fe7d0 void (*)(void*)>::SProcessorFunc<&void OnRampEvent<Oscillator1, Oscillator1::Type>(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+00000001018fe930 void (*)(void*)>::SProcessorFunc<&void OnRampEvent<Oscillator1, Oscillator1::Shape>(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+00000001018ff4b0 void (*)(void*)>::SProcessorFunc<&void OnRampEvent<Oscillator2, Oscillator2::Type>(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+00000001018ff610 void (*)(void*)>::SProcessorFunc<&void OnRampEvent<Oscillator2, Oscillator2::Detune>(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+0000000101901ce8 void (*)(void*)>::SProcessorFunc<&void OnRampEvent<CyclingEnvelope, CyclingEnvelope::Mode>(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+00000001018fc5a4 void (*)(void*)>::SProcessorFunc<&void OnRampEvent<Lfo, Lfo::Mode>(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+00000001018fd8e8 void (*)(void*)>::SProcessorFunc<&void OnRampEvent<Lfo, Lfo::Shape>(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+00000001018fcc90 void (*)(void*)>::SProcessorFunc<&void OnRampEvent<Lfo, Lfo::Amount>(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+00000001019007c4 void (*)(void*)>::SProcessorFunc<&void OnRampEvent<Mixer, Mixer::NoiseLevel>(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+00000001018fff54 void (*)(void*)>::SProcessorFunc<&void OnRampEvent<Mixer, Mixer::OscillatorGain1>(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+00000001019000b4 void (*)(void*)>::SProcessorFunc<&void OnRampEvent<Mixer, Mixer::OscillatorGain2>(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+00000001018fadb8 void (*)(void*)>::SProcessorFunc<&void OnRampEvent<Filter, Filter::Type>(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+00000001018fa5f8 void (*)(void*)>::SProcessorFunc<&void OnRampEvent<Filter, Filter::Frequency>(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+00000001018fa758 void (*)(void*)>::SProcessorFunc<&void OnRampEvent<Filter, Filter::Resonance>(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+0000000101903e2c void (*)(void*)>::SProcessorFunc<&void OnRampEvent<Global, Global::Envelope2Mode>(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+00000001019043e4 void (*)(void*)>::SProcessorFunc<&void OnRampEvent<Global, Global::MonoVoiceDepth>(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+00000001019037c4 void (*)(void*)>::SProcessorFunc<&void OnRampEvent<Global, Global::ResetOscillatorPhase>(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+0000000101904d9c void (*)(void*)>::SProcessorFunc<&void OnRampEvent<Global, Global::Volume>(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+00000001018f8eb0 void (*)(void*)>::SProcessorFunc<&OnScaleAndTuning(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+00000001018f8d68 void (*)(void*)>::SProcessorFunc<&OnMidi(void*)>())(void*, void*)::'lambda'(void*, void*)::__invoke(void*, void*)
+00000001018feae4 void (*)(float)>::SProcessorFunc<&void OnFloatEvent<Oscillator1, Oscillator1::ShapeModSource>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018ff95c void (*)(float)>::SProcessorFunc<&void OnFloatEvent<PitchModulation, PitchModulation::Source1>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018ff988 void (*)(float)>::SProcessorFunc<&void OnFloatEvent<PitchModulation, PitchModulation::Source2>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001019028b8 void (*)(float)>::SProcessorFunc<&void OnFloatEvent<ModulationMatrix, ModulationMatrix::Source1>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001019028e4 void (*)(float)>::SProcessorFunc<&void OnFloatEvent<ModulationMatrix, ModulationMatrix::Source2>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101902910 void (*)(float)>::SProcessorFunc<&void OnFloatEvent<ModulationMatrix, ModulationMatrix::Source3>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101902d68 void (*)(float)>::SProcessorFunc<&void OnFloatEvent<ModulationMatrix, ModulationMatrix::Target1>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101902d94 void (*)(float)>::SProcessorFunc<&void OnFloatEvent<ModulationMatrix, ModulationMatrix::Target2>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101902dc0 void (*)(float)>::SProcessorFunc<&void OnFloatEvent<ModulationMatrix, ModulationMatrix::Target3>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fd938 void (*)(float)>::SProcessorFunc<&void OnFloatEvent<Lfo, Lfo::ModSource>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fb398 void (*)(float)>::SProcessorFunc<&void OnFloatEvent<Filter, Filter::ModSource1>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fb3c4 void (*)(float)>::SProcessorFunc<&void OnFloatEvent<Filter, Filter::ModSource2>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001019045f0 void (*)(float)>::SProcessorFunc<&void OnFloatEvent<Global, Global::VoiceCount>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101904460 void (*)(float)>::SProcessorFunc<&void OnFloatEvent<Global, Global::SerialNumber>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101904434 void (*)(float)>::SProcessorFunc<&void OnFloatEvent<Global, Global::PitchBendRange>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101904f50 void (*)(float)>::SProcessorFunc<&void OnFloatEvent<Global, Global::VisualizationOn>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101903e7c void (*)(float)>::SProcessorFunc<&void OnFloatEvent<Global, Global::VoiceMode>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fe77c void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Oscillator1, Oscillator1::Type>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fec20 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Oscillator1, Oscillator1::ShapeMod>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fea90 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Oscillator1, Oscillator1::Transpose>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018ff45c void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Oscillator2, Oscillator2::Type>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018ff770 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Oscillator2, Oscillator2::Transpose>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101902274 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<CyclingEnvelope, CyclingEnvelope::SyncedRate>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+000000010190253c void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<CyclingEnvelope, CyclingEnvelope::Hold>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101901c94 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<CyclingEnvelope, CyclingEnvelope::Mode>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101901e48 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<CyclingEnvelope, CyclingEnvelope::Rate>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101902110 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<CyclingEnvelope, CyclingEnvelope::Time>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101901fac void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<CyclingEnvelope, CyclingEnvelope::Ratio>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001019023d8 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<CyclingEnvelope, CyclingEnvelope::MidPoint>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018ffac4 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<PitchModulation, PitchModulation::Amount1>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018ffc28 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<PitchModulation, PitchModulation::Amount2>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101902a4c void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<ModulationMatrix, ModulationMatrix::Amount1>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101902bb0 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<ModulationMatrix, ModulationMatrix::Amount2>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101902d14 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<ModulationMatrix, ModulationMatrix::Amount3>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fcb2c void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Lfo, Lfo::SyncedRate>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fc550 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Lfo, Lfo::Mode>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fc704 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Lfo, Lfo::Rate>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fc9cc void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Lfo, Lfo::Time>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fc868 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Lfo, Lfo::Ratio>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fd894 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Lfo, Lfo::Shape>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fda74 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Lfo, Lfo::ModAmount>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fdd50 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Lfo, Lfo::Retrigger>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101900388 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Mixer, Mixer::OscillatorOn1>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101900660 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Mixer, Mixer::OscillatorOn2>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101900924 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Mixer, Mixer::NoiseOn>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fb1e0 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Filter, Filter::ModAmount1>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fb344 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Filter, Filter::ModAmount2>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fbc04 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Filter, Filter::NoiseThrough>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018faf18 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Filter, Filter::HiPassFrequency>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fb668 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Filter, Filter::OscillatorThrough1>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fb934 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Filter, Filter::OscillatorThrough2>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fad64 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Filter, Filter::Type>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018fb07c void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Filter, Filter::Tracking>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+000000010190459c void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Global, Global::DriftDepth>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101903dd8 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Global, Global::Envelope2Mode>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101904ad4 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Global, Global::NotePitchBend>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101903fb8 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Global, Global::PolyVoiceDepth>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+000000010190411c void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Global, Global::StereoVoiceDepth>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101904280 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Global, Global::UnisonVoiceDepth>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101903770 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Global, Global::ResetOscillatorPhase>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101904c38 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Global, Global::Glide>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101904850 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Global, Global::Legato>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101904efc void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Global, Global::Transpose>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101903404 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Global, Global::VolVelMod>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101900d84 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Envelope1, detail::Envelope::Decay>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101900c20 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Envelope1, detail::Envelope::Attack>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101900ee8 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Envelope1, detail::Envelope::Release>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+000000010190104c void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Envelope1, detail::Envelope::Sustain>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001019014ac void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Envelope2, detail::Envelope::Decay>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101901348 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Envelope2, detail::Envelope::Attack>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101901610 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Envelope2, detail::Envelope::Release>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+0000000101901774 void (*)(float)>::SProcessorFunc<&void OnAutomatableFloatEvent<Envelope2, detail::Envelope::Sustain>(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018f8b04 void (*)(float)>::SProcessorFunc<&OnOn(float)>())(void*, float)::'lambda'(void*, float)::__invoke(void*, float)
+00000001018f8a28 void (*)(int)>::SProcessorFunc<&NewMaxBufferSize(int)>())(void*, int)::'lambda'(void*, int)::__invoke(void*, int)
+00000001018f8a24 void (*)(int)>::SProcessorFunc<&CalcMain(int)>())(void*, int)::'lambda'(void*, int)::__invoke(void*, int)
+00000001018f098c void (*)()>::SProcessorFunc<&Exit()>())(void*)::'lambda'(void*)::__invoke(void*)
+00000001018f0990 void (*)()>::SProcessorFunc<&Reset()>())(void*)::'lambda'(void*)::__invoke(void*)
+// ... (full mangled list via: nm -U Live.arm64 | grep DeviceKitDeviceProcessorIN7ableton7devices5drift)
+
+// ======== (1b) nm CENSUS (blocks::drift DSP surface, deduplicated) ========
+000000010571b220 __ZZN7ableton6blocks5drift20MonoVoiceModeHandlerINSt3__15arrayINS1_15DriftVoiceBlockELm8EEEE11startVoicesERKNS0_8NoteDataEE13noteTranspose
+000000010571b230 __ZZN7ableton6blocks5drift20MonoVoiceModeHandlerINSt3__15arrayINS1_15DriftVoiceBlockELm8EEEE13setVoiceDepthEfE8modeGain
+00000001057dfa30 __ZZN7ableton6blocks5drift6detail22cyclingEnvelopeQuarticINS_3dsp3VecIfLm4EEEEET_RKS7_E10kZeroRange
+00000001057dfa50 __ZZN7ableton6blocks5drift6detail22cyclingEnvelopeQuarticINS_3dsp3VecIfLm4EEEEET_RKS7_E17kInvScalingFactor
+00000001057e0d38 __ZZN7ableton6blocks5drift14generateSerialEiE7sRandom
+000000010581cce8 __ZZN7ableton6blocks5drift22UnisonVoiceModeHandlerINSt3__15arrayINS1_15DriftVoiceBlockELm8EEELm32EE13setVoiceDepthEfE8modeGain
+000000010581ccf8 __ZZN7ableton6blocks5drift22UnisonVoiceModeHandlerINSt3__15arrayINS1_15DriftVoiceBlockELm8EEELm32EE13setVoiceDepthEfE12panningGains
+000000010581cd20 __ZZN7ableton6blocks5drift22UnisonVoiceModeHandlerINSt3__15arrayINS1_15DriftVoiceBlockELm8EEELm32EE13setVoiceDepthEfE17sMaxDetuneFactors
+000000010581cde8 __ZZN7ableton6blocks5drift15computeNoteGainEfE14referenceLevel
+// ======== (1c) nm CENSUS (TickerSwitcher per-voice dispatch: osc1type x osc2type x filtertype x 3 bools over DriftVoiceBlock; entry count and value ranges from the mangled template args) ========
+1568
+
+// ======== (2) BlockProbe: create chain 0x1018bd204/0x1018bd240, shell
+// CalcMain 0x1018f8a24, OnMidi 0x1018f8d68, Init/Reset/Exit, Global/Mixer/
+// PitchMod/ModMatrix setters ========
+openjdk version "21.0.12.1" 2026-08-18
+OpenJDK Runtime Environment Homebrew (build 21.0.12.1)
+OpenJDK 64-Bit Server VM Homebrew (build 21.0.12.1, mixed mode)
+INFO  Using log config file: jar:file:/Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Framework/Generic/lib/Generic.jar!/generic.log4j.xml (LoggingInitialization)  
+INFO  Using log file: /Users/admin/Library/ghidra/ghidra_12.1.4_PUBLIC/application.log (LoggingInitialization)  
+INFO  Loading user preferences: /Users/admin/Library/ghidra/ghidra_12.1.4_PUBLIC/preferences (Preferences)  
+INFO  Searching for classes... (ClassSearcher)  
+INFO  Class search complete (304 ms) (ClassSearcher)  
+INFO  Initializing SSL Context (DefaultSSLContextInitializer)  
+INFO  Initializing Random Number Generator... (SecureRandomFactory)  
+INFO  Random Number Generator initialization complete: NativePRNGNonBlocking (SecureRandomFactory)  
+INFO  Trust manager disabled, cacerts have not been set (DefaultTrustManagerFactory)  
+INFO  Headless startup complete (786 ms) (AnalyzeHeadless)  
+INFO  Class searcher loaded 59 extension points (20 false positives) (ClassSearcher)  
+INFO  HEADLESS Script Paths:
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/Atmel/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/DATA/ghidra_scripts
+    /Users/admin/tools/live-re/scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/Base/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Debug/Debugger-rmi-trace/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/DecompilerDependent/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/FunctionID/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/BSim/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/BytePatterns/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/PyGhidra/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/GnuDemangler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/MicrosoftCodeAnalyzer/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/Decompiler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/JVM/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/PDB/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/FileFormats/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/VersionTracking/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Debug/Debugger/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/PIC/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/WildcardAssembler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/SystemEmulation/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/SwiftDemangler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/8051/ghidra_scripts (HeadlessAnalyzer)  
+INFO  HEADLESS: execution starts (HeadlessAnalyzer)  
+INFO  Opening existing project: /Users/admin/tools/live-re/ghidra-proj2/LiveRE2 (HeadlessAnalyzer)  
+INFO  Opening project: /Users/admin/tools/live-re/ghidra-proj2/LiveRE2 (HeadlessProject)  
+INFO  REPORT: Processing project file: /Live.arm64 (HeadlessAnalyzer)  
+INFO  REPORT: Execute script: BlockProbe.java '0x1018bd204:700,0x1018f8a24:900,0x1018f8d68:500,0x1018f087c:400,0x1018f0990:150,0x1018f098c:100,0x1903e7c:300,0x19045f0:250,0x1904280:300,0x1903fb8:250,0x19043e4:250,0x190411c:250,0x190459c:200,0x1904d9c:250,0x1903404:250,0x1904c38:250,0x1904ad4:250,0x18fff54:250,0x19000b4:250,0x19007c4:250,0x1900388:150,0x1900924:150,0x18ffac4:250,0x18ff95c:200,0x1902a4c:250,0x19028b8:200,0x1902d68:250'  (HeadlessAnalyzer)  
+INFO  SCRIPT: /Users/admin/tools/live-re/scripts/BlockProbe.java (HeadlessAnalyzer)  
+FUNC 1018bd204 name=__ZN23OProcessorCreateManager18SOnProcessorCreateI15ODriftProcessorEEvR14OThreadMessage body=1 lines=11
+
+void __ZN23OProcessorCreateManager18SOnProcessorCreateI15ODriftProcessorEEvR14OThreadMessage
+               (undefined8 param_1)
+
+{
+  undefined1 auStack_48 [40];
+  
+  func_0x000101546e1c(auStack_48,param_1);
+  func_0x0001018bd240(auStack_48,param_1);
+  return;
+}
+END 1018bd204
+FUNC 1018f8a24 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFviEE14SProcessorFuncIXadL_ZNS6_8CalcMainEiEEEEPFvPviEvENUlSB_iE_8__invokeESB_i body=1 lines=180
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFviEE14SProcessorFuncIXadL_ZNS6_8CalcMainEiEEEEPFvPviEvENUlSB_iE_8__invokeESB_i
+               (long param_1,undefined8 param_2)
+
+{
+  uint uVar1;
+  int iVar2;
+  int *piVar3;
+  int *piVar4;
+  int *piVar5;
+  uint *puVar6;
+  char cVar7;
+  uint *puVar8;
+  uint uVar9;
+  long lVar10;
+  int *piStack_d0;
+  long lStack_c8;
+  int *piStack_c0;
+  long lStack_b8;
+  long lStack_b0;
+  long lStack_a8;
+  undefined8 *puStack_a0;
+  char *pcStack_98;
+  char cStack_89;
+  undefined8 uStack_88;
+  undefined8 uStack_80;
+  undefined8 uStack_78;
+  char cStack_70;
+  undefined8 *puStack_68;
+  int *piStack_60;
+  char cStack_58;
+  
+  puStack_68 = (undefined8 *)(param_1 + 0x1b0);
+  iVar2 = (int)param_2;
+  if (*(int *)(param_1 + 0x1b8) == 1) {
+    piVar3 = (int *)0x1059a4600;
+    if ((undefined8 *)*puStack_68 == (undefined8 *)0x0) {
+code_r0x0001018f0a28:
+      lVar10 = *(long *)(param_1 + 0xb8);
+      cVar7 = *(char *)(param_1 + 0x201);
+    }
+    else {
+      piVar5 = *(int **)*puStack_68;
+      if (piVar5 != (int *)0x0) {
+        piVar3 = piVar5;
+      }
+      lVar10 = *(long *)(param_1 + 0xb8);
+      cVar7 = *(char *)(param_1 + 0x201);
+    }
+  }
+  else {
+    if (1 < *(int *)(param_1 + 0x1b8)) {
+      piVar3 = (int *)func_0x00010150fe38(puStack_68,param_2);
+      goto code_r0x0001018f0a28;
+    }
+    piStack_60 = (int *)0x1059a4600;
+    lVar10 = *(long *)(param_1 + 0xb8);
+    cVar7 = *(char *)(param_1 + 0x201);
+    piVar3 = piStack_60;
+  }
+  piStack_60 = piVar3;
+  if (cVar7 == '\0') {
+    cStack_58 = '\0';
+    *(undefined1 *)(param_1 + 0x202) = 0;
+    *(undefined8 *)(param_1 + 0x1c0) = 0;
+    if ((*(long *)(lVar10 + 0xae1e0) != 0) || (*(char *)(lVar10 + 0xae1f0) != '\0')) {
+      piStack_d0 = (int *)&uStack_88;
+      func_0x0001018f7c1c(&piStack_d0,lVar10 + 0x9a1d0);
+    }
+    *(long *)(lVar10 + 0xae1e0) = 0;
+    *(long *)(lVar10 + 0xae1e8) = *(long *)(lVar10 + 0xae1e8) + (long)iVar2;
+    *(undefined1 *)(lVar10 + 0xae1f0) = 0;
+    if (((*(char *)(lVar10 + 0xae220) != '\0') &&
+        (*(ulong *)(lVar10 + 0xae218) <= (ulong)(long)iVar2)) &&
+       (func_0x000103b76ee4(lVar10,lVar10 + 0xae1f8), *(char *)(lVar10 + 0xae220) != '\0')) {
+      *(undefined1 *)(lVar10 + 0xae220) = 0;
+    }
+    goto code_r0x0001018f0c80;
+  }
+  cStack_58 = '\0';
+  if (*(char *)(param_1 + 0x202) == '\0') {
+    *(undefined1 *)(lVar10 + 0xafc70) = 1;
+    *(undefined1 *)(param_1 + 0x202) = 1;
+  }
+  uStack_88._0_1_ = 0;
+  cStack_70 = '\0';
+  cStack_89 = '\x01';
+  piVar4 = (int *)func_0x00010150fa00(2,param_2);
+  lStack_a8 = param_1 + 0x38;
+  piVar5 = (int *)0x1059a6620;
+  if (piVar4 != (int *)0x0) {
+    piVar5 = piVar4;
+  }
+  lStack_c8 = *(long *)(piVar3 + 2) + 0x10;
+  piStack_d0 = piVar3 + 4;
+  piStack_c0 = piVar5 + 4;
+  lStack_b8 = *(long *)(piVar5 + 2) + 0x10;
+  lStack_b0 = (long)iVar2;
+  puStack_a0 = &uStack_88;
+  pcStack_98 = &cStack_89;
+  func_0x0001018f0d38(lVar10,&piStack_d0);
+  if (cStack_89 == '\0') {
+    if (piVar5 != (int *)0x1059a6620) {
+      LOAcquire();
+      iVar2 = *piVar5;
+      *piVar5 = iVar2 + -1;
+      LORelease();
+      if (iVar2 == 1) {
+        func_0x00010150fddc(piVar5);
+      }
+    }
+    *(undefined8 *)(param_1 + 0x1c0) = 0;
+joined_r0x0001018f0bc0:
+    if (cStack_70 != '\0') goto code_r0x0001018f0bdc;
+code_r0x0001018f0c34:
+    if (*(char *)(param_1 + 0x203) != '\0') {
+      *(char *)(param_1 + 0x203) = cStack_70;
+      puVar6 = *(uint **)(param_1 + 0xa8);
+      uVar9 = puVar6[2];
+      puVar8 = puVar6 + (ulong)uVar9 * 7;
+      cVar7 = '\0';
+      goto code_r0x0001018f0c58;
+    }
+  }
+  else {
+    if (piVar5 == (int *)0x1059a6620) {
+      *(undefined8 *)(param_1 + 0x1c0) = 0;
+      *(undefined8 *)(param_1 + 0x1c0) = 0;
+    }
+    else {
+      if (0 < *(int *)(param_1 + 0x1c8)) {
+        LOAcquire();
+        *piVar5 = *piVar5 + *(int *)(param_1 + 0x1c8) + -1;
+        LORelease();
+        *(int **)(param_1 + 0x1c0) = piVar4;
+        goto joined_r0x0001018f0bc0;
+      }
+      LOAcquire();
+      iVar2 = *piVar5;
+      *piVar5 = iVar2 + -1;
+      LORelease();
+      if (iVar2 == 1) {
+        func_0x00010150fddc(piVar5);
+      }
+      *(undefined8 *)(param_1 + 0x1c0) = 0;
+    }
+    if (cStack_70 == '\0') goto code_r0x0001018f0c34;
+code_r0x0001018f0bdc:
+    *(char *)(param_1 + 0x203) = cStack_70;
+    puVar6 = *(uint **)(param_1 + 0xa8);
+    uVar9 = puVar6[2];
+    puVar8 = puVar6 + (ulong)uVar9 * 7;
+    *(undefined8 *)(puVar8 + 5) = uStack_80;
+    *(ulong *)(puVar8 + 3) = CONCAT71(uStack_88._1_7_,(undefined1)uStack_88);
+    *(undefined8 *)(puVar8 + 7) = uStack_78;
+    cVar7 = cStack_70;
+code_r0x0001018f0c58:
+    *(char *)(puVar8 + 9) = cVar7;
+    LOAcquire();
+    uVar1 = *puVar6;
+    *puVar6 = uVar9 << 0x10 | 1;
+    LORelease();
+    puVar6[2] = uVar1 >> 0x10;
+  }
+  *(undefined8 *)(param_1 + 0x40) = *(undefined8 *)(param_1 + 0x38);
+  if (cStack_58 != '\0') {
+    return;
+  }
+code_r0x0001018f0c80:
+  if (piStack_60 != (int *)0x1059a4600) {
+    LOAcquire();
+    iVar2 = *piStack_60;
+    *piStack_60 = iVar2 + -1;
+    LORelease();
+    if (iVar2 == 1) {
+      func_0x00010150fddc();
+    }
+  }
+  return;
+}
+END 1018f8a24
+FUNC 1018f8d68 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_6OnMidiES7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=173
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_6OnMidiES7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (undefined8 param_1,undefined8 param_2)
+
+{
+  ulong uVar1;
+  long lVar2;
+  ulong uVar3;
+  uint uVar4;
+  char cVar5;
+  int iVar6;
+  long lVar7;
+  undefined4 *puVar8;
+  long lVar9;
+  undefined8 uVar10;
+  long unaff_x19;
+  undefined8 unaff_x20;
+  long *unaff_x21;
+  long lVar11;
+  ulong unaff_x22;
+  undefined8 unaff_x23;
+  undefined8 unaff_x24;
+  undefined1 *unaff_x29;
+  code *unaff_x30;
+  float fVar12;
+  undefined4 uVar13;
+  float fVar14;
+  ulong unaff_d8;
+  undefined8 unaff_d9;
+  undefined1 auVar15 [16];
+  
+  auVar15._8_8_ = param_2;
+  auVar15._0_8_ = param_1;
+  while( true ) {
+    puVar8 = auVar15._8_8_;
+    lVar7 = auVar15._0_8_;
+    *(undefined8 *)((long)register0x00000008 + -0x50) = unaff_d9;
+    *(ulong *)((long)register0x00000008 + -0x48) = unaff_d8;
+    *(undefined8 *)((long)register0x00000008 + -0x40) = unaff_x24;
+    *(undefined8 *)((long)register0x00000008 + -0x38) = unaff_x23;
+    *(ulong *)((long)register0x00000008 + -0x30) = unaff_x22;
+    *(long **)((long)register0x00000008 + -0x28) = unaff_x21;
+    *(undefined8 *)((long)register0x00000008 + -0x20) = unaff_x20;
+    *(long *)((long)register0x00000008 + -0x18) = unaff_x19;
+    *(undefined1 **)((long)register0x00000008 + -0x10) = unaff_x29;
+    *(code **)((long)register0x00000008 + -8) = unaff_x30;
+    unaff_x29 = (undefined1 *)((long)register0x00000008 + -0x10);
+    iVar6 = func_0x0001015f16a0(puVar8);
+    if (iVar6 == 0) break;
+    unaff_x20 = func_0x000101551c8c(*(undefined8 *)(lVar7 + 0x30));
+    switch(*puVar8) {
+    case 1:
+      lVar9 = 0;
+      uVar13 = puVar8[9];
+      uVar10 = *(undefined8 *)(puVar8 + 6);
+      *(undefined4 *)((long)register0x00000008 + -0x78) = puVar8[8];
+      *(undefined4 *)((long)register0x00000008 + -0x74) = uVar13;
+      *(undefined8 *)((long)register0x00000008 + -0x70) = uVar10;
+      *(undefined8 *)((long)register0x00000008 + -0x68) = 0;
+      *(undefined1 *)((long)register0x00000008 + -0x60) = 1;
+      cVar5 = *(char *)(lVar7 + 0x201);
+      break;
+    case 2:
+      uVar13 = puVar8[9];
+      uVar10 = *(undefined8 *)(puVar8 + 6);
+      *(undefined4 *)((long)register0x00000008 + -0x78) = puVar8[8];
+      *(undefined4 *)((long)register0x00000008 + -0x74) = uVar13;
+      lVar9 = 1;
+      goto code_r0x0001018f8c64;
+    case 3:
+      uVar4 = puVar8[6];
+      unaff_x22 = (ulong)uVar4;
+      fVar14 = (float)puVar8[7];
+      unaff_d8 = (ulong)(uint)fVar14;
+      fVar12 = (float)func_0x000100d0076c();
+      if (fVar14 == fVar12) {
+        uVar13 = func_0x000100d00500(puVar8[6]);
+      }
+      else {
+        uVar13 = puVar8[7];
+      }
+      *(uint *)((long)register0x00000008 + -0x78) = uVar4;
+      *(undefined4 *)((long)register0x00000008 + -0x74) = uVar13;
+      lVar9 = 2;
+      *(undefined8 *)((long)register0x00000008 + -0x68) = 2;
+      *(undefined1 *)((long)register0x00000008 + -0x60) = 1;
+      cVar5 = *(char *)(lVar7 + 0x201);
+      break;
+    default:
+      goto code_r0x0001018f8d44;
+    case 6:
+      lVar9 = 2;
+      *(undefined8 *)((long)register0x00000008 + -0x78) = 0x7b;
+      *(undefined8 *)((long)register0x00000008 + -0x68) = 2;
+      *(undefined1 *)((long)register0x00000008 + -0x60) = 1;
+      cVar5 = *(char *)(lVar7 + 0x201);
+      goto joined_r0x0001018f8c00;
+    case 8:
+      uVar4 = puVar8[6];
+      unaff_x22 = (ulong)uVar4;
+      fVar14 = (float)puVar8[7];
+      unaff_d8 = (ulong)(uint)fVar14;
+      fVar12 = (float)func_0x000100d0076c();
+      if (fVar14 == fVar12) {
+        uVar13 = func_0x000100d00500(puVar8[6]);
+      }
+      else {
+        uVar13 = puVar8[7];
+      }
+      uVar10 = *(undefined8 *)(puVar8 + 10);
+      *(uint *)((long)register0x00000008 + -0x78) = uVar4;
+      *(undefined4 *)((long)register0x00000008 + -0x74) = uVar13;
+      lVar9 = 3;
+code_r0x0001018f8c64:
+      *(undefined8 *)((long)register0x00000008 + -0x70) = uVar10;
+      *(long *)((long)register0x00000008 + -0x68) = lVar9;
+      *(undefined1 *)((long)register0x00000008 + -0x60) = 1;
+      cVar5 = *(char *)(lVar7 + 0x201);
+joined_r0x0001018f8c00:
+      if (cVar5 != '\0') goto code_r0x0001018f8c78;
+      goto code_r0x0001018f8d44;
+    }
+    if (cVar5 == '\0') {
+      return;
+    }
+code_r0x0001018f8c78:
+    unaff_x21 = (long *)(lVar7 + 0x38);
+    lVar11 = *unaff_x21;
+    lVar2 = *(long *)(lVar7 + 0x40);
+    if ((ulong)(lVar2 - lVar11) < (ulong)(*(long *)(lVar7 + 0x48) - lVar11)) {
+      lVar11 = (long)(int)unaff_x20;
+      *(undefined8 *)((long)register0x00000008 + -0x88) = 0xffffffffffffffff;
+      (**(code **)(&UNK_105298f10 + lVar9 * 8))
+                ((undefined1 *)((long)register0x00000008 + -0x58),
+                 (undefined1 *)((long)register0x00000008 + -0x98),
+                 (undefined1 *)((long)register0x00000008 + -0x78));
+      uVar1 = *(ulong *)(lVar7 + 0x40);
+      uVar3 = *(ulong *)(lVar7 + 0x48);
+      *(long *)((long)register0x00000008 + -0x80) = lVar11;
+      if (uVar1 < uVar3) {
+        *(undefined8 *)(uVar1 + 0x10) = 0xffffffffffffffff;
+        if (*(long *)((long)register0x00000008 + -0x88) != -1) {
+          (**(code **)(&UNK_105298ec8 + *(long *)((long)register0x00000008 + -0x88) * 8))
+                    ((undefined1 *)((long)register0x00000008 + -0x58),uVar1,
+                     (undefined1 *)((long)register0x00000008 + -0x98));
+          lVar11 = *(long *)((long)register0x00000008 + -0x80);
+        }
+        *(long *)(uVar1 + 0x18) = lVar11;
+        *(ulong *)(lVar7 + 0x40) = uVar1 + 0x20;
+        return;
+      }
+      func_0x0001018d21e0(unaff_x21,(undefined1 *)((long)register0x00000008 + -0x98));
+      return;
+    }
+    if (lVar11 != lVar2) {
+      *(undefined8 *)(lVar2 + -0x20) = 0x7b;
+      if (*(long *)(lVar2 + -0x10) != 2) {
+        *(undefined8 *)(lVar2 + -0x10) = 2;
+      }
+      *(undefined8 *)(lVar2 + -8) = 0;
+      return;
+    }
+    func_0x0001042fa52c();
+    unaff_x30 = 
+    __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_6OnMidiES7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+    ;
+    auVar15 = func_0x000100234a18();
+    register0x00000008 = (BADSPACEBASE *)((long)register0x00000008 + -0xa0);
+    unaff_x19 = lVar7;
+  }
+code_r0x0001018f8d44:
+  return;
+}
+END 1018f8d68
+FUNC 1018f087c name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvP10OSchedulerEE14SProcessorFuncIXadL_ZNS6_4InitES8_EEEEPFvPvS8_EvENUlSD_S8_E_8__invokeESD_S8_ body=1 lines=67
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvP10OSchedulerEE14SProcessorFuncIXadL_ZNS6_4InitES8_EEEEPFvPvS8_EvENUlSD_S8_E_8__invokeESD_S8_
+               (long param_1)
+
+{
+  long *plVar1;
+  long lVar2;
+  long lVar3;
+  
+  func_0x0001018f0770();
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0xe8) = lVar2 + 800;
+  lVar3 = *(long *)(lVar2 + 0x328);
+  *(long *)(param_1 + 200) = lVar3;
+  *(undefined8 *)(param_1 + 0xd0) = 0;
+  plVar1 = (long *)(lVar2 + 0x330);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0xc0;
+  *(long *)(lVar2 + 0x328) = param_1 + 0xc0;
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0x118) = lVar2 + 0x260;
+  lVar3 = *(long *)(lVar2 + 0x268);
+  *(long *)(param_1 + 0xf8) = lVar3;
+  *(undefined8 *)(param_1 + 0x100) = 0;
+  plVar1 = (long *)(lVar2 + 0x270);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0xf0;
+  *(long *)(lVar2 + 0x268) = param_1 + 0xf0;
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0x148) = lVar2 + 0x290;
+  lVar3 = *(long *)(lVar2 + 0x298);
+  *(long *)(param_1 + 0x128) = lVar3;
+  *(undefined8 *)(param_1 + 0x130) = 0;
+  plVar1 = (long *)(lVar2 + 0x2a0);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0x120;
+  *(long *)(lVar2 + 0x298) = param_1 + 0x120;
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0x178) = lVar2 + 0x2d8;
+  lVar3 = *(long *)(lVar2 + 0x2e0);
+  *(long *)(param_1 + 0x158) = lVar3;
+  *(undefined8 *)(param_1 + 0x160) = 0;
+  plVar1 = (long *)(lVar2 + 0x2e8);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0x150;
+  *(long *)(lVar2 + 0x2e0) = param_1 + 0x150;
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0x1a8) = lVar2 + 0x2f0;
+  lVar3 = *(long *)(lVar2 + 0x2f8);
+  *(long *)(param_1 + 0x188) = lVar3;
+  *(undefined8 *)(param_1 + 400) = 0;
+  plVar1 = (long *)(lVar2 + 0x300);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0x180;
+  *(long *)(lVar2 + 0x2f8) = param_1 + 0x180;
+  return;
+}
+END 1018f087c
+FUNC 1018f0990 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_5ResetEvEEEEPFvPvEvENUlSB_E_8__invokeESB_ body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_5ResetEvEEEEPFvPvEvENUlSB_E_8__invokeESB_
+               (long param_1)
+
+{
+  *(undefined1 *)(*(long *)(param_1 + 0xb8) + 0xafc70) = 1;
+  return;
+}
+END 1018f0990
+FUNC 1018f098c name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_4ExitEvEEEEPFvPvEvENUlSB_E_8__invokeESB_ body=1 lines=167
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_4ExitEvEEEEPFvPvEvENUlSB_E_8__invokeESB_
+               (long param_1)
+
+{
+  long lVar1;
+  long lVar2;
+  long lVar3;
+  long lVar4;
+  
+  lVar1 = *(long *)(param_1 + 0x30);
+  lVar4 = param_1 + 0xc0;
+  *(undefined8 *)(param_1 + 0xe8) = 0;
+  lVar2 = *(long *)(param_1 + 200);
+  if (*(long *)(lVar1 + 800) == lVar4) {
+    *(long *)(lVar1 + 800) = lVar2;
+    lVar3 = *(long *)(lVar1 + 0x328);
+  }
+  else {
+    lVar3 = *(long *)(lVar1 + 0x328);
+  }
+  if (lVar3 == lVar4) {
+    *(long *)(lVar1 + 0x328) = lVar2;
+    if (lVar2 != 0) {
+      *(undefined8 *)(lVar2 + 0x10) = 0;
+    }
+  }
+  else {
+    *(long *)(*(long *)(param_1 + 0xd0) + 8) = lVar2;
+  }
+  lVar2 = *(long *)(param_1 + 0xd0);
+  if (*(long *)(lVar1 + 0x330) == lVar4) {
+    *(long *)(lVar1 + 0x330) = lVar2;
+    if (lVar2 != 0) {
+      *(undefined8 *)(lVar2 + 8) = 0;
+    }
+  }
+  else {
+    *(long *)(*(long *)(param_1 + 200) + 0x10) = lVar2;
+  }
+  lVar4 = param_1 + 0xf0;
+  *(undefined8 *)(param_1 + 0x118) = 0;
+  lVar2 = *(long *)(param_1 + 0xf8);
+  if (*(long *)(lVar1 + 0x260) == lVar4) {
+    *(long *)(lVar1 + 0x260) = lVar2;
+    lVar3 = *(long *)(lVar1 + 0x268);
+  }
+  else {
+    lVar3 = *(long *)(lVar1 + 0x268);
+  }
+  if (lVar3 == lVar4) {
+    *(long *)(lVar1 + 0x268) = lVar2;
+    if (lVar2 != 0) {
+      *(undefined8 *)(lVar2 + 0x10) = 0;
+    }
+  }
+  else {
+    *(long *)(*(long *)(param_1 + 0x100) + 8) = lVar2;
+  }
+  lVar2 = *(long *)(param_1 + 0x100);
+  if (*(long *)(lVar1 + 0x270) == lVar4) {
+    *(long *)(lVar1 + 0x270) = lVar2;
+    if (lVar2 != 0) {
+      *(undefined8 *)(lVar2 + 8) = 0;
+    }
+  }
+  else {
+    *(long *)(*(long *)(param_1 + 0xf8) + 0x10) = lVar2;
+  }
+  lVar4 = param_1 + 0x120;
+  *(undefined8 *)(param_1 + 0x148) = 0;
+  lVar2 = *(long *)(param_1 + 0x128);
+  if (*(long *)(lVar1 + 0x290) == lVar4) {
+    *(long *)(lVar1 + 0x290) = lVar2;
+    lVar3 = *(long *)(lVar1 + 0x298);
+  }
+  else {
+    lVar3 = *(long *)(lVar1 + 0x298);
+  }
+  if (lVar3 == lVar4) {
+    *(long *)(lVar1 + 0x298) = lVar2;
+    if (lVar2 != 0) {
+      *(undefined8 *)(lVar2 + 0x10) = 0;
+    }
+  }
+  else {
+    *(long *)(*(long *)(param_1 + 0x130) + 8) = lVar2;
+  }
+  lVar2 = *(long *)(param_1 + 0x130);
+  if (*(long *)(lVar1 + 0x2a0) == lVar4) {
+    *(long *)(lVar1 + 0x2a0) = lVar2;
+    if (lVar2 != 0) {
+      *(undefined8 *)(lVar2 + 8) = 0;
+    }
+  }
+  else {
+    *(long *)(*(long *)(param_1 + 0x128) + 0x10) = lVar2;
+  }
+  lVar4 = param_1 + 0x150;
+  *(undefined8 *)(param_1 + 0x178) = 0;
+END 1018f098c
+NO FUNCTION AT 01903e7c
+NO FUNCTION AT 019045f0
+NO FUNCTION AT 01904280
+NO FUNCTION AT 01903fb8
+NO FUNCTION AT 019043e4
+NO FUNCTION AT 0190411c
+NO FUNCTION AT 0190459c
+NO FUNCTION AT 01904d9c
+NO FUNCTION AT 01903404
+NO FUNCTION AT 01904c38
+NO FUNCTION AT 01904ad4
+NO FUNCTION AT 018fff54
+NO FUNCTION AT 019000b4
+NO FUNCTION AT 019007c4
+NO FUNCTION AT 01900388
+NO FUNCTION AT 01900924
+NO FUNCTION AT 018ffac4
+NO FUNCTION AT 018ff95c
+NO FUNCTION AT 01902a4c
+NO FUNCTION AT 019028b8
+NO FUNCTION AT 01902d68
+INFO  REPORT: Save succeeded for processed file: /Live.arm64 (HeadlessAnalyzer)  
+
+// ======== (2b) BlockProbe: Global/Mixer/PitchMod/ModMatrix setters (corrected addresses) ========
+openjdk version "21.0.12.1" 2026-08-18
+OpenJDK Runtime Environment Homebrew (build 21.0.12.1)
+OpenJDK 64-Bit Server VM Homebrew (build 21.0.12.1, mixed mode)
+INFO  Using log config file: jar:file:/Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Framework/Generic/lib/Generic.jar!/generic.log4j.xml (LoggingInitialization)  
+INFO  Using log file: /Users/admin/Library/ghidra/ghidra_12.1.4_PUBLIC/application.log (LoggingInitialization)  
+INFO  Loading user preferences: /Users/admin/Library/ghidra/ghidra_12.1.4_PUBLIC/preferences (Preferences)  
+INFO  Searching for classes... (ClassSearcher)  
+INFO  Class search complete (528 ms) (ClassSearcher)  
+INFO  Initializing SSL Context (DefaultSSLContextInitializer)  
+INFO  Initializing Random Number Generator... (SecureRandomFactory)  
+INFO  Random Number Generator initialization complete: NativePRNGNonBlocking (SecureRandomFactory)  
+INFO  Trust manager disabled, cacerts have not been set (DefaultTrustManagerFactory)  
+INFO  Headless startup complete (1038 ms) (AnalyzeHeadless)  
+INFO  Class searcher loaded 59 extension points (20 false positives) (ClassSearcher)  
+INFO  HEADLESS Script Paths:
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/Atmel/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/DATA/ghidra_scripts
+    /Users/admin/tools/live-re/scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/Base/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Debug/Debugger-rmi-trace/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/DecompilerDependent/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/FunctionID/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/BSim/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/BytePatterns/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/PyGhidra/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/GnuDemangler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/MicrosoftCodeAnalyzer/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/Decompiler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/JVM/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/PDB/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/FileFormats/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/VersionTracking/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Debug/Debugger/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/PIC/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/WildcardAssembler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/SystemEmulation/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/SwiftDemangler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/8051/ghidra_scripts (HeadlessAnalyzer)  
+INFO  HEADLESS: execution starts (HeadlessAnalyzer)  
+INFO  Opening existing project: /Users/admin/tools/live-re/ghidra-proj2/LiveRE2 (HeadlessAnalyzer)  
+INFO  Opening project: /Users/admin/tools/live-re/ghidra-proj2/LiveRE2 (HeadlessProject)  
+INFO  REPORT: Processing project file: /Live.arm64 (HeadlessAnalyzer)  
+INFO  REPORT: Execute script: BlockProbe.java '0x101903e7c:300,0x1019045f0:250,0x101904280:300,0x101903fb8:250,0x1019043e4:250,0x10190411c:250,0x10190459c:200,0x101904d9c:250,0x101903404:250,0x101904c38:250,0x101904ad4:250,0x1018fff54:250,0x1019000b4:250,0x1019007c4:250,0x101900388:150,0x101900924:150,0x1018ffac4:250,0x1018ff95c:200,0x101902a4c:250,0x1019028b8:200,0x101902d68:250'  (HeadlessAnalyzer)  
+INFO  SCRIPT: /Users/admin/tools/live-re/scripts/BlockProbe.java (HeadlessAnalyzer)  
+FUNC 101903e7c name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model6GlobalENSD_9VoiceModeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model6GlobalENSD_9VoiceModeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  byte *pbVar1;
+  long lVar2;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  pbVar1 = (byte *)(lVar2 + 0x9d7e8);
+  if ((uint)*pbVar1 != ((int)param_1 & 0xffU)) {
+    *pbVar1 = (byte)(int)param_1;
+    *(undefined1 *)(lVar2 + 0x9d7e9) = 1;
+  }
+  return;
+}
+END 101903e7c
+FUNC 1019045f0 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model6GlobalENSD_10VoiceCountEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model6GlobalENSD_10VoiceCountEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  byte *pbVar1;
+  long lVar2;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  pbVar1 = (byte *)(lVar2 + 0x9dcd8);
+  if ((uint)*pbVar1 != ((int)param_1 & 0xffU)) {
+    *pbVar1 = (byte)(int)param_1;
+    *(undefined1 *)(lVar2 + 0x9dcd9) = 1;
+  }
+  return;
+}
+END 1019045f0
+FUNC 101904280 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6GlobalENSD_16UnisonVoiceDepthEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6GlobalENSD_16UnisonVoiceDepthEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x000101904170(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 101904280
+FUNC 101903fb8 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6GlobalENSD_14PolyVoiceDepthEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6GlobalENSD_14PolyVoiceDepthEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x000101903ea8(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 101903fb8
+FUNC 1019043e4 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6GlobalENSE_14MonoVoiceDepthEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=17
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6GlobalENSE_14MonoVoiceDepthEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,undefined4 *param_2)
+
+{
+  int iVar1;
+  undefined4 auStack_38 [2];
+  long lStack_30;
+  long lStack_28;
+  
+  iVar1 = func_0x000101551c8c(*(undefined8 *)(param_1 + 0x30));
+  lStack_28 = (long)iVar1;
+  lStack_30 = (long)(int)param_2[1];
+  auStack_38[0] = *param_2;
+  func_0x0001019042d4(*(undefined8 *)(param_1 + 0xb8),auStack_38);
+  return;
+}
+END 1019043e4
+FUNC 10190411c name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6GlobalENSD_16StereoVoiceDepthEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6GlobalENSD_16StereoVoiceDepthEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x00010190400c(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 10190411c
+FUNC 10190459c name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6GlobalENSD_10DriftDepthEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6GlobalENSD_10DriftDepthEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x00010190448c(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 10190459c
+FUNC 101904d9c name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6GlobalENSE_6VolumeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=17
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6GlobalENSE_6VolumeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,undefined4 *param_2)
+
+{
+  int iVar1;
+  undefined4 auStack_38 [2];
+  long lStack_30;
+  long lStack_28;
+  
+  iVar1 = func_0x000101551c8c(*(undefined8 *)(param_1 + 0x30));
+  lStack_28 = (long)iVar1;
+  lStack_30 = (long)(int)param_2[1];
+  auStack_38[0] = *param_2;
+  func_0x000101904c8c(*(undefined8 *)(param_1 + 0xb8),auStack_38);
+  return;
+}
+END 101904d9c
+FUNC 101903404 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6GlobalENSD_9VolVelModEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6GlobalENSD_9VolVelModEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001019032f4(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 101903404
+FUNC 101904c38 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6GlobalENSD_5GlideEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6GlobalENSD_5GlideEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x000101904b28(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 101904c38
+FUNC 101904ad4 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6GlobalENSD_13NotePitchBendEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6GlobalENSD_13NotePitchBendEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001019049c4(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 101904ad4
+FUNC 1018fff54 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model5MixerENSE_15OscillatorGain1EEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=17
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model5MixerENSE_15OscillatorGain1EEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,undefined4 *param_2)
+
+{
+  int iVar1;
+  undefined4 auStack_38 [2];
+  long lStack_30;
+  long lStack_28;
+  
+  iVar1 = func_0x000101551c8c(*(undefined8 *)(param_1 + 0x30));
+  lStack_28 = (long)iVar1;
+  lStack_30 = (long)(int)param_2[1];
+  auStack_38[0] = *param_2;
+  func_0x0001018ffe44(*(undefined8 *)(param_1 + 0xb8),auStack_38);
+  return;
+}
+END 1018fff54
+FUNC 1019000b4 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model5MixerENSE_15OscillatorGain2EEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=17
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model5MixerENSE_15OscillatorGain2EEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,undefined4 *param_2)
+
+{
+  int iVar1;
+  undefined4 auStack_38 [2];
+  long lStack_30;
+  long lStack_28;
+  
+  iVar1 = func_0x000101551c8c(*(undefined8 *)(param_1 + 0x30));
+  lStack_28 = (long)iVar1;
+  lStack_30 = (long)(int)param_2[1];
+  auStack_38[0] = *param_2;
+  func_0x0001018fffa4(*(undefined8 *)(param_1 + 0xb8),auStack_38);
+  return;
+}
+END 1019000b4
+FUNC 1019007c4 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model5MixerENSE_10NoiseLevelEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=17
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model5MixerENSE_10NoiseLevelEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,undefined4 *param_2)
+
+{
+  int iVar1;
+  undefined4 auStack_38 [2];
+  long lStack_30;
+  long lStack_28;
+  
+  iVar1 = func_0x000101551c8c(*(undefined8 *)(param_1 + 0x30));
+  lStack_28 = (long)iVar1;
+  lStack_30 = (long)(int)param_2[1];
+  auStack_38[0] = *param_2;
+  func_0x0001019006b4(*(undefined8 *)(param_1 + 0xb8),auStack_38);
+  return;
+}
+END 1019007c4
+FUNC 101900388 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model5MixerENSD_13OscillatorOn1EEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model5MixerENSD_13OscillatorOn1EEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x000101900278(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 101900388
+FUNC 101900924 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model5MixerENSD_7NoiseOnEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model5MixerENSD_7NoiseOnEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x000101900814(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 101900924
+FUNC 1018ffac4 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model15PitchModulationENSD_7Amount1EEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model15PitchModulationENSD_7Amount1EEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001018ff9b4(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 1018ffac4
+FUNC 1018ff95c name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model15PitchModulationENSD_7Source1EEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model15PitchModulationENSD_7Source1EEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  byte *pbVar1;
+  long lVar2;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  pbVar1 = (byte *)(lVar2 + 0x9bb58);
+  if ((uint)*pbVar1 != ((int)param_1 & 0xffU)) {
+    *pbVar1 = (byte)(int)param_1;
+    *(undefined1 *)(lVar2 + 0x9bb59) = 1;
+  }
+  return;
+}
+END 1018ff95c
+FUNC 101902a4c name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model16ModulationMatrixENSD_7Amount1EEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model16ModulationMatrixENSD_7Amount1EEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x00010190293c(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 101902a4c
+FUNC 1019028b8 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model16ModulationMatrixENSD_7Source1EEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model16ModulationMatrixENSD_7Source1EEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  byte *pbVar1;
+  long lVar2;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  pbVar1 = (byte *)(lVar2 + 0x9d1f8);
+  if ((uint)*pbVar1 != ((int)param_1 & 0xffU)) {
+    *pbVar1 = (byte)(int)param_1;
+    *(undefined1 *)(lVar2 + 0x9d1f9) = 1;
+  }
+  return;
+}
+END 1019028b8
+FUNC 101902d68 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model16ModulationMatrixENSD_7Target1EEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model16ModulationMatrixENSD_7Target1EEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  byte *pbVar1;
+  long lVar2;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  pbVar1 = (byte *)(lVar2 + 0x9d4e8);
+  if ((uint)*pbVar1 != ((int)param_1 & 0xffU)) {
+    *pbVar1 = (byte)(int)param_1;
+    *(undefined1 *)(lVar2 + 0x9d4e9) = 1;
+  }
+  return;
+}
+END 101902d68
+INFO  REPORT: Save succeeded for processed file: /Live.arm64 (HeadlessAnalyzer)  
+
+// ======== (3) BlockProbe: DSP tick FUN_1018f0d38, ticker re-select, catch-up ========
+openjdk version "21.0.12.1" 2026-08-18
+OpenJDK Runtime Environment Homebrew (build 21.0.12.1)
+OpenJDK 64-Bit Server VM Homebrew (build 21.0.12.1, mixed mode)
+INFO  Using log config file: jar:file:/Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Framework/Generic/lib/Generic.jar!/generic.log4j.xml (LoggingInitialization)  
+INFO  Using log file: /Users/admin/Library/ghidra/ghidra_12.1.4_PUBLIC/application.log (LoggingInitialization)  
+INFO  Loading user preferences: /Users/admin/Library/ghidra/ghidra_12.1.4_PUBLIC/preferences (Preferences)  
+INFO  Searching for classes... (ClassSearcher)  
+INFO  Class search complete (830 ms) (ClassSearcher)  
+INFO  Initializing SSL Context (DefaultSSLContextInitializer)  
+INFO  Initializing Random Number Generator... (SecureRandomFactory)  
+INFO  Random Number Generator initialization complete: NativePRNGNonBlocking (SecureRandomFactory)  
+INFO  Trust manager disabled, cacerts have not been set (DefaultTrustManagerFactory)  
+INFO  Headless startup complete (1828 ms) (AnalyzeHeadless)  
+INFO  Class searcher loaded 59 extension points (20 false positives) (ClassSearcher)  
+INFO  HEADLESS Script Paths:
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/Atmel/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/DATA/ghidra_scripts
+    /Users/admin/tools/live-re/scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/Base/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Debug/Debugger-rmi-trace/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/DecompilerDependent/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/FunctionID/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/BSim/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/BytePatterns/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/PyGhidra/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/GnuDemangler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/MicrosoftCodeAnalyzer/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/Decompiler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/JVM/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/PDB/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/FileFormats/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/VersionTracking/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Debug/Debugger/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/PIC/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/WildcardAssembler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/SystemEmulation/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/SwiftDemangler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/8051/ghidra_scripts (HeadlessAnalyzer)  
+INFO  HEADLESS: execution starts (HeadlessAnalyzer)  
+INFO  Opening existing project: /Users/admin/tools/live-re/ghidra-proj2/LiveRE2 (HeadlessAnalyzer)  
+INFO  Opening project: /Users/admin/tools/live-re/ghidra-proj2/LiveRE2 (HeadlessProject)  
+INFO  REPORT: Processing project file: /Live.arm64 (HeadlessAnalyzer)  
+INFO  REPORT: Execute script: BlockProbe.java '0x1018bd240:900,0x1018f0d38:2600,0x103b76ee4:200'  (HeadlessAnalyzer)  
+INFO  SCRIPT: /Users/admin/tools/live-re/scripts/BlockProbe.java (HeadlessAnalyzer)  
+FUNC 1018bd240 name=FUN_1018bd240 body=1 lines=19
+
+long FUN_1018bd240(undefined8 param_1,undefined8 param_2)
+
+{
+  undefined8 uVar1;
+  long lVar2;
+  long *plVar3;
+  undefined1 uStack_35;
+  int iStack_34;
+  
+  uVar1 = func_0x00010153be8c(param_2,&iStack_34);
+  func_0x00010153be4c(uVar1,&uStack_35);
+  lVar2 = func_0x00010153ff88(0x28);
+  func_0x000101545cf4(lVar2,param_1,iStack_34 + 0x268,uStack_35);
+  plVar3 = (long *)func_0x0001018a4bd4(*(undefined8 *)(lVar2 + 0x18),param_1,param_2);
+  *plVar3 = (long)(PTR_DAT_1050a2f00 + 0x10);
+  func_0x000101545e84(lVar2);
+  return lVar2;
+}
+END 1018bd240
+FUNC 1018f0d38 name=FUN_1018f0d38 body=1 lines=169
+
+void FUN_1018f0d38(undefined1 param_1 [16],undefined4 param_2,long param_3,long param_4)
+
+{
+  undefined8 *puVar1;
+  long lVar2;
+  long lVar3;
+  int iVar4;
+  undefined8 uVar5;
+  undefined8 uVar6;
+  long lVar7;
+  long lVar8;
+  long lVar9;
+  ulong uVar10;
+  ulong uVar11;
+  ulong uVar12;
+  ulong uVar13;
+  long *plVar14;
+  ulong uVar15;
+  undefined8 *puVar16;
+  ulong uVar17;
+  undefined4 *puVar18;
+  undefined4 *puVar19;
+  long lVar20;
+  long lVar21;
+  undefined4 *puVar22;
+  undefined4 *puVar23;
+  undefined4 uVar24;
+  undefined1 auVar25 [16];
+  long lStack_c0;
+  undefined1 auStack_98 [16];
+  undefined8 *puStack_88;
+  undefined1 *puStack_80;
+  ulong uStack_78;
+  undefined8 **appuStack_70 [2];
+  
+  func_0x0001018f110c();
+  uVar13 = *(ulong *)(param_4 + 0x20);
+  if (uVar13 != 0) {
+    lStack_c0 = 0;
+    uVar17 = 0;
+    puVar1 = (undefined8 *)(param_3 + 0xaf828);
+    lVar8 = *(long *)(param_3 + 0xae1e0);
+    lVar21 = **(long **)(param_4 + 0x28);
+    lVar3 = (*(long **)(param_4 + 0x28))[1];
+    puVar18 = *(undefined4 **)(param_4 + 0x10);
+    puVar22 = *(undefined4 **)(param_4 + 0x18);
+    lVar7 = param_3 + 0x9e1e0;
+    do {
+      uVar10 = uVar13 - uVar17;
+      if (0x1f < uVar10) {
+        uVar10 = 0x20;
+      }
+      auVar25 = func_0x0001036c32e4(lVar7,lVar8,uVar17,0x20);
+      lVar9 = auVar25._8_8_;
+      lVar20 = auVar25._0_8_;
+      lVar2 = lVar20 + lVar9 * 0x20;
+      auStack_98 = auVar25;
+      func_0x0001018f4464(lVar20,lVar2,(lVar9 << 5) >> 5);
+      if (lVar9 != 0) {
+        uVar11 = lVar9 - 1U & 0x7ffffffffffffff;
+        if (2 < uVar11) {
+          uVar11 = uVar11 + 1;
+          uVar12 = uVar11 & 0xffffffffffffffc;
+          plVar14 = (long *)(lVar20 + 0x58);
+          uVar15 = uVar12;
+          do {
+            plVar14[-8] = plVar14[-8] - uVar17;
+            plVar14[-4] = plVar14[-4] - uVar17;
+            *plVar14 = *plVar14 - uVar17;
+            plVar14[4] = plVar14[4] - uVar17;
+            plVar14 = plVar14 + 0x10;
+            uVar15 = uVar15 - 4;
+          } while (uVar15 != 0);
+          lVar20 = lVar20 + uVar12 * 0x20;
+          if (uVar11 == uVar12) goto code_r0x0001018f0ef8;
+        }
+        do {
+          *(ulong *)(lVar20 + 0x18) = *(long *)(lVar20 + 0x18) - uVar17;
+          lVar20 = lVar20 + 0x20;
+        } while (lVar20 != lVar2);
+      }
+code_r0x0001018f0ef8:
+      puStack_80 = auStack_98;
+      appuStack_70[0] = &puStack_88;
+      puStack_88 = (undefined8 *)(param_3 + 0x9a1d0);
+      uStack_78 = uVar10;
+      func_0x0001018f49d0(appuStack_70);
+      uVar6 = auStack_98._8_8_;
+      uVar5 = auStack_98._0_8_;
+      iVar4 = *(int *)(param_3 + 0x9e1d4);
+      if (*(int *)(param_3 + 0xaf824) != iVar4) {
+        *(undefined8 *)(param_3 + 0xafc68) = 0;
+        puStack_88 = (undefined8 *)auStack_98;
+        auStack_98._0_8_ = puVar1;
+        func_0x0001018f5a48(&puStack_88,param_3 + 0xae228,(undefined8 *)(param_3 + 0x9a1d0));
+        *(int *)(param_3 + 0xaf824) = iVar4;
+      }
+      if (*(long *)(param_3 + 0xafc68) != 0) {
+        lVar20 = *(long *)(param_3 + 0xafc68) << 3;
+        puVar16 = puVar1;
+        do {
+          (**(code **)(*(long *)*puVar16 + 0x10))((long *)*puVar16,0);
+          lVar20 = lVar20 + -8;
+          puVar16 = puVar16 + 1;
+        } while (lVar20 != 0);
+      }
+      func_0x000103b76f70(param_3);
+      if (*(char *)(param_3 + 0xafc70) != '\0') {
+        func_0x000103b76eec(param_3);
+        *(undefined1 *)(param_3 + 0xafc70) = 0;
+      }
+      lVar20 = uVar5 + uVar6 * 0x20;
+      if (uVar10 != 0) {
+        uVar10 = 0;
+        uVar13 = uVar13 + lStack_c0;
+        puVar19 = puVar18;
+        puVar23 = puVar22;
+        if (0x1f < uVar13) {
+          uVar13 = 0x20;
+        }
+        do {
+          if ((*(char *)(param_3 + 0xae220) != '\0') &&
+             (*(ulong *)(param_3 + 0xae218) <= uVar10 + uVar17)) {
+            func_0x000103b76ee4(param_3,param_3 + 0xae1f8);
+            if (*(char *)(param_3 + 0xae220) != '\0') {
+              *(undefined1 *)(param_3 + 0xae220) = 0;
+            }
+          }
+          lVar2 = lVar21;
+          if (*(long *)(param_3 + 0xafc68) != 0) {
+            lVar21 = *(long *)(param_3 + 0xafc68) << 3;
+            puVar16 = puVar1;
+            do {
+              (**(code **)(*(long *)*puVar16 + 0x18))();
+              lVar21 = lVar21 + -8;
+              puVar16 = puVar16 + 1;
+            } while (lVar21 != 0);
+          }
+          for (; (lVar21 = lVar3, lVar2 != lVar3 &&
+                 (lVar21 = lVar2, *(ulong *)(lVar2 + 0x18) == uVar10 + uVar17));
+              lVar2 = lVar2 + 0x20) {
+            func_0x000103b76f74(param_3,lVar2);
+          }
+          uVar24 = func_0x000103b76e20(param_3);
+          puVar18 = puVar19 + 1;
+          *puVar19 = uVar24;
+          puVar22 = puVar23 + 1;
+          *puVar23 = param_2;
+          uVar10 = uVar10 + 1;
+          puVar19 = puVar18;
+          puVar23 = puVar22;
+        } while (uVar10 != uVar13);
+      }
+      lVar8 = lVar7 + (lVar8 * 0x20 - lVar20) >> 5;
+      uVar17 = uVar17 + 0x20;
+      uVar13 = *(ulong *)(param_4 + 0x20);
+      lStack_c0 = lStack_c0 + -0x20;
+      lVar7 = lVar20;
+    } while (uVar17 < uVar13);
+  }
+  func_0x000103b76e74(param_3,*(undefined8 *)(param_4 + 0x30));
+  **(undefined1 **)(param_4 + 0x38) = *(undefined1 *)(param_3 + 0x9a1b9);
+  lVar21 = *(long *)(param_4 + 0x20);
+  *(long *)(param_3 + 0xae1e0) = 0;
+  *(long *)(param_3 + 0xae1e8) = *(long *)(param_3 + 0xae1e8) + lVar21;
+  *(undefined1 *)(param_3 + 0xae1f0) = 1;
+  return;
+}
+END 1018f0d38
+FUNC 103b76ee4 name=FUN_103b76ee4 body=1 lines=7
+
+void FUN_103b76ee4(long param_1,undefined8 *param_2)
+
+{
+  *(undefined8 *)(param_1 + 8) = *param_2;
+  return;
+}
+END 103b76ee4
+INFO  REPORT: Execute script: DataProbe.java '0x10581cce8' '0x10581ccf0' '0x10581cd20' '0x10581cde8' '0x10571b220' '0x10571b230' '0x1057dfa30' '0x1057dfa50' '0x1057e0d38' '0x1057e10d0' '0x1057e11b0' '0x1057e1400' '0x1057e0f40' '0x1057e1020' '0x1057e0dd0' '0x1057e1710'  (HeadlessAnalyzer)  
+INFO  SCRIPT: /Users/admin/tools/live-re/scripts/DataProbe.java (HeadlessAnalyzer)  
+INFO  DataProbe.java> == memory at 10581cce8 (64 bytes from -16) ==
+INFO  DataProbe.java> 10581ccd8: 00000001036bdd00  le64=x00dd6b0301000000
+INFO  DataProbe.java> 10581cce0: 0000000000000000  le64=x0000000000000000
+INFO  DataProbe.java> 10581cce8: 0000000000000000  le64=x0000000000000000
+INFO  DataProbe.java> 10581ccf0: 0000000000000000  le64=x0000000000000000
+INFO  DataProbe.java> 10581ccf8: 0000000000000000  le64=x0000000000000000
+INFO  DataProbe.java> 10581cd00: 0000000000000000  le64=x0000000000000000
+INFO  DataProbe.java> 10581cd08: 0000000000000000  le64=x0000000000000000
+INFO  DataProbe.java> 10581cd10: 0000000000000000  le64=x0000000000000000
+INFO  DataProbe.java> == xrefs to 0x10581ccf0 (no-fn) ==
+INFO  DataProbe.java>   Entry Point EXTERNAL in <no-function>
+INFO  DataProbe.java>   105077828 DATA in <no-function>
+INFO  DataProbe.java>   total: 2
+INFO  DataProbe.java> == xrefs to 0x10581cd20 (no-fn) ==
+INFO  DataProbe.java>   Entry Point EXTERNAL in <no-function>
+INFO  DataProbe.java>   1050c5668 DATA in <no-function>
+INFO  DataProbe.java>   total: 2
+INFO  DataProbe.java> == xrefs to 0x10581cde8 (no-fn) ==
+INFO  DataProbe.java>   Entry Point EXTERNAL in <no-function>
+INFO  DataProbe.java>   1050c5640 DATA in <no-function>
+INFO  DataProbe.java>   total: 2
+INFO  DataProbe.java> == xrefs to 0x10571b220 (no-fn) ==
+INFO  DataProbe.java>   Entry Point EXTERNAL in <no-function>
+INFO  DataProbe.java>   1050c5648 DATA in <no-function>
+INFO  DataProbe.java>   total: 2
+INFO  DataProbe.java> == xrefs to 0x10571b230 (no-fn) ==
+INFO  DataProbe.java>   Entry Point EXTERNAL in <no-function>
+INFO  DataProbe.java>   1050c5650 DATA in <no-function>
+INFO  DataProbe.java>   total: 2
+INFO  DataProbe.java> == xrefs to 0x1057dfa30 (no-fn) ==
+INFO  DataProbe.java>   Entry Point EXTERNAL in <no-function>
+INFO  DataProbe.java>   1050c5680 DATA in <no-function>
+INFO  DataProbe.java>   total: 2
+INFO  DataProbe.java> == xrefs to 0x1057dfa50 (no-fn) ==
+INFO  DataProbe.java>   Entry Point EXTERNAL in <no-function>
+INFO  DataProbe.java>   1050c5688 DATA in <no-function>
+INFO  DataProbe.java>   total: 2
+INFO  DataProbe.java> == xrefs to 0x1057e0d38 (no-fn) ==
+INFO  DataProbe.java>   Entry Point EXTERNAL in <no-function>
+INFO  DataProbe.java>   1050c5638 DATA in <no-function>
+INFO  DataProbe.java>   total: 2
+INFO  DataProbe.java> == xrefs to 0x1057e10d0 (no-fn) ==
+INFO  DataProbe.java>   Entry Point EXTERNAL in <no-function>
+INFO  DataProbe.java>   105077a08 DATA in <no-function>
+INFO  DataProbe.java>   total: 2
+INFO  DataProbe.java> == xrefs to 0x1057e11b0 (no-fn) ==
+INFO  DataProbe.java>   Entry Point EXTERNAL in <no-function>
+INFO  DataProbe.java>   105077a18 DATA in <no-function>
+INFO  DataProbe.java>   total: 2
+INFO  DataProbe.java> == xrefs to 0x1057e1400 (no-fn) ==
+INFO  DataProbe.java>   Entry Point EXTERNAL in <no-function>
+INFO  DataProbe.java>   105077a28 DATA in <no-function>
+INFO  DataProbe.java>   total: 2
+INFO  DataProbe.java> == xrefs to 0x1057e0f40 (no-fn) ==
+INFO  DataProbe.java>   Entry Point EXTERNAL in <no-function>
+INFO  DataProbe.java>   105077a38 DATA in <no-function>
+INFO  DataProbe.java>   total: 2
+INFO  DataProbe.java> == xrefs to 0x1057e1020 (no-fn) ==
+INFO  DataProbe.java>   Entry Point EXTERNAL in <no-function>
+INFO  DataProbe.java>   105077a48 DATA in <no-function>
+INFO  DataProbe.java>   total: 2
+INFO  DataProbe.java> == xrefs to 0x1057e0dd0 (no-fn) ==
+INFO  DataProbe.java>   Entry Point EXTERNAL in <no-function>
+INFO  DataProbe.java>   105077a58 DATA in <no-function>
+INFO  DataProbe.java>   total: 2
+INFO  DataProbe.java> == xrefs to 0x1057e1710 (no-fn) ==
+INFO  DataProbe.java>   Entry Point EXTERNAL in <no-function>
+INFO  DataProbe.java>   105077a68 DATA in <no-function>
+INFO  DataProbe.java>   total: 2
+INFO  REPORT: Save succeeded for processed file: /Live.arm64 (HeadlessAnalyzer)  
+
+// ======== (4) BlockProbe: Osc/Filter/CyclingEnvelope/Envelope1/2/Lfo setters ========
+openjdk version "21.0.12.1" 2026-08-18
+OpenJDK Runtime Environment Homebrew (build 21.0.12.1)
+OpenJDK 64-Bit Server VM Homebrew (build 21.0.12.1, mixed mode)
+INFO  Using log config file: jar:file:/Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Framework/Generic/lib/Generic.jar!/generic.log4j.xml (LoggingInitialization)  
+INFO  Using log file: /Users/admin/Library/ghidra/ghidra_12.1.4_PUBLIC/application.log (LoggingInitialization)  
+INFO  Loading user preferences: /Users/admin/Library/ghidra/ghidra_12.1.4_PUBLIC/preferences (Preferences)  
+INFO  Searching for classes... (ClassSearcher)  
+INFO  Class search complete (516 ms) (ClassSearcher)  
+INFO  Initializing SSL Context (DefaultSSLContextInitializer)  
+INFO  Initializing Random Number Generator... (SecureRandomFactory)  
+INFO  Random Number Generator initialization complete: NativePRNGNonBlocking (SecureRandomFactory)  
+INFO  Trust manager disabled, cacerts have not been set (DefaultTrustManagerFactory)  
+INFO  Headless startup complete (999 ms) (AnalyzeHeadless)  
+INFO  Class searcher loaded 59 extension points (20 false positives) (ClassSearcher)  
+INFO  HEADLESS Script Paths:
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/Atmel/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/DATA/ghidra_scripts
+    /Users/admin/tools/live-re/scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/Base/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Debug/Debugger-rmi-trace/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/DecompilerDependent/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/FunctionID/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/BSim/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/BytePatterns/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/PyGhidra/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/GnuDemangler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/MicrosoftCodeAnalyzer/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/Decompiler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/JVM/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/PDB/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/FileFormats/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/VersionTracking/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Debug/Debugger/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/PIC/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/WildcardAssembler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/SystemEmulation/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/SwiftDemangler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/8051/ghidra_scripts (HeadlessAnalyzer)  
+INFO  HEADLESS: execution starts (HeadlessAnalyzer)  
+INFO  Opening existing project: /Users/admin/tools/live-re/ghidra-proj2/LiveRE2 (HeadlessAnalyzer)  
+INFO  Opening project: /Users/admin/tools/live-re/ghidra-proj2/LiveRE2 (HeadlessProject)  
+INFO  REPORT: Processing project file: /Live.arm64 (HeadlessAnalyzer)  
+INFO  REPORT: Execute script: BlockProbe.java '0x1018fe7d0:400,0x1018fe930:300,0x1018feae4:250,0x1018fe77c:250,0x1018fea90:250,0x1018fec20:250,0x1018ff4b0:250,0x1018ff610:250,0x1018ff770:200,0x1018fadb8:400,0x1018fa5f8:400,0x1018fa758:400,0x1018fb07c:300,0x1018faf18:250,0x1018fb1e0:250,0x1018fb398:200,0x1018fbc04:150,0x1018fb668:150,0x101901ce8:400,0x101901e48:400,0x101902110:400,0x1019023d8:300,0x10190253c:250,0x101901fac:300,0x101902274:250,0x101900c20:400,0x101900d84:400,0x10190104c:250,0x101900ee8:400,0x101901348:250,0x1018fc550:300,0x1018fd8e8:300,0x1018fc704:400,0x1018fc9cc:300,0x1018fc868:250,0x1018fcb2c:250,0x1018fdd50:200,0x1018fda74:250,0x1018fcc90:200,0x1018fd938:200'  (HeadlessAnalyzer)  
+INFO  SCRIPT: /Users/admin/tools/live-re/scripts/BlockProbe.java (HeadlessAnalyzer)  
+FUNC 1018fe7d0 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model11Oscillator1ENSE_4TypeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=17
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model11Oscillator1ENSE_4TypeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,undefined4 *param_2)
+
+{
+  int iVar1;
+  undefined4 auStack_38 [2];
+  long lStack_30;
+  long lStack_28;
+  
+  iVar1 = func_0x000101551c8c(*(undefined8 *)(param_1 + 0x30));
+  lStack_28 = (long)iVar1;
+  lStack_30 = (long)(int)param_2[1];
+  auStack_38[0] = *param_2;
+  func_0x0001018fe66c(*(undefined8 *)(param_1 + 0xb8),auStack_38);
+  return;
+}
+END 1018fe7d0
+FUNC 1018fe930 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model11Oscillator1ENSE_5ShapeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=17
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model11Oscillator1ENSE_5ShapeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,undefined4 *param_2)
+
+{
+  int iVar1;
+  undefined4 auStack_38 [2];
+  long lStack_30;
+  long lStack_28;
+  
+  iVar1 = func_0x000101551c8c(*(undefined8 *)(param_1 + 0x30));
+  lStack_28 = (long)iVar1;
+  lStack_30 = (long)(int)param_2[1];
+  auStack_38[0] = *param_2;
+  func_0x0001018fe820(*(undefined8 *)(param_1 + 0xb8),auStack_38);
+  return;
+}
+END 1018fe930
+FUNC 1018feae4 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model11Oscillator1ENSD_14ShapeModSourceEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model11Oscillator1ENSD_14ShapeModSourceEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  byte *pbVar1;
+  long lVar2;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  pbVar1 = (byte *)(lVar2 + 0x9b750);
+  if ((uint)*pbVar1 != ((int)param_1 & 0xffU)) {
+    *pbVar1 = (byte)(int)param_1;
+    *(undefined1 *)(lVar2 + 0x9b751) = 1;
+  }
+  return;
+}
+END 1018feae4
+FUNC 1018fe77c name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model11Oscillator1ENSD_4TypeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model11Oscillator1ENSD_4TypeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001018fe66c(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 1018fe77c
+FUNC 1018fea90 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model11Oscillator1ENSD_9TransposeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model11Oscillator1ENSD_9TransposeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001018fe980(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 1018fea90
+FUNC 1018fec20 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model11Oscillator1ENSD_8ShapeModEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model11Oscillator1ENSD_8ShapeModEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001018feb10(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 1018fec20
+FUNC 1018ff4b0 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model11Oscillator2ENSE_4TypeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=17
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model11Oscillator2ENSE_4TypeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,undefined4 *param_2)
+
+{
+  int iVar1;
+  undefined4 auStack_38 [2];
+  long lStack_30;
+  long lStack_28;
+  
+  iVar1 = func_0x000101551c8c(*(undefined8 *)(param_1 + 0x30));
+  lStack_28 = (long)iVar1;
+  lStack_30 = (long)(int)param_2[1];
+  auStack_38[0] = *param_2;
+  func_0x0001018ff34c(*(undefined8 *)(param_1 + 0xb8),auStack_38);
+  return;
+}
+END 1018ff4b0
+FUNC 1018ff610 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model11Oscillator2ENSE_6DetuneEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=17
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model11Oscillator2ENSE_6DetuneEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,undefined4 *param_2)
+
+{
+  int iVar1;
+  undefined4 auStack_38 [2];
+  long lStack_30;
+  long lStack_28;
+  
+  iVar1 = func_0x000101551c8c(*(undefined8 *)(param_1 + 0x30));
+  lStack_28 = (long)iVar1;
+  lStack_30 = (long)(int)param_2[1];
+  auStack_38[0] = *param_2;
+  func_0x0001018ff500(*(undefined8 *)(param_1 + 0xb8),auStack_38);
+  return;
+}
+END 1018ff610
+FUNC 1018ff770 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model11Oscillator2ENSD_9TransposeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model11Oscillator2ENSD_9TransposeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001018ff660(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 1018ff770
+FUNC 1018fadb8 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6FilterENSE_4TypeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=17
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6FilterENSE_4TypeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,undefined4 *param_2)
+
+{
+  int iVar1;
+  undefined4 auStack_38 [2];
+  long lStack_30;
+  long lStack_28;
+  
+  iVar1 = func_0x000101551c8c(*(undefined8 *)(param_1 + 0x30));
+  lStack_28 = (long)iVar1;
+  lStack_30 = (long)(int)param_2[1];
+  auStack_38[0] = *param_2;
+  func_0x0001018fac54(*(undefined8 *)(param_1 + 0xb8),auStack_38);
+  return;
+}
+END 1018fadb8
+FUNC 1018fa5f8 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6FilterENSE_9FrequencyEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=17
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6FilterENSE_9FrequencyEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,undefined4 *param_2)
+
+{
+  int iVar1;
+  undefined4 auStack_38 [2];
+  long lStack_30;
+  long lStack_28;
+  
+  iVar1 = func_0x000101551c8c(*(undefined8 *)(param_1 + 0x30));
+  lStack_28 = (long)iVar1;
+  lStack_30 = (long)(int)param_2[1];
+  auStack_38[0] = *param_2;
+  func_0x0001018f950c(*(undefined8 *)(param_1 + 0xb8),auStack_38);
+  return;
+}
+END 1018fa5f8
+FUNC 1018fa758 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6FilterENSE_9ResonanceEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=17
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6FilterENSE_9ResonanceEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,undefined4 *param_2)
+
+{
+  int iVar1;
+  undefined4 auStack_38 [2];
+  long lStack_30;
+  long lStack_28;
+  
+  iVar1 = func_0x000101551c8c(*(undefined8 *)(param_1 + 0x30));
+  lStack_28 = (long)iVar1;
+  lStack_30 = (long)(int)param_2[1];
+  auStack_38[0] = *param_2;
+  func_0x0001018fa648(*(undefined8 *)(param_1 + 0xb8),auStack_38);
+  return;
+}
+END 1018fa758
+FUNC 1018fb07c name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6FilterENSD_8TrackingEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6FilterENSD_8TrackingEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001018faf6c(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 1018fb07c
+FUNC 1018faf18 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6FilterENSD_15HiPassFrequencyEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6FilterENSD_15HiPassFrequencyEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001018fae08(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 1018faf18
+FUNC 1018fb1e0 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6FilterENSD_10ModAmount1EEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6FilterENSD_10ModAmount1EEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001018fb0d0(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 1018fb1e0
+FUNC 1018fb398 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model6FilterENSD_10ModSource1EEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model6FilterENSD_10ModSource1EEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  byte *pbVar1;
+  long lVar2;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  pbVar1 = (byte *)(lVar2 + 0x9a898);
+  if ((uint)*pbVar1 != ((int)param_1 & 0xffU)) {
+    *pbVar1 = (byte)(int)param_1;
+    *(undefined1 *)(lVar2 + 0x9a899) = 1;
+  }
+  return;
+}
+END 1018fb398
+FUNC 1018fbc04 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6FilterENSD_12NoiseThroughEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6FilterENSD_12NoiseThroughEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001018fbaf4(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 1018fbc04
+FUNC 1018fb668 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6FilterENSD_18OscillatorThrough1EEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6FilterENSD_18OscillatorThrough1EEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001018fb558(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 1018fb668
+FUNC 101901ce8 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model15CyclingEnvelopeENSE_4ModeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=17
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model15CyclingEnvelopeENSE_4ModeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,undefined4 *param_2)
+
+{
+  int iVar1;
+  undefined4 auStack_38 [2];
+  long lStack_30;
+  long lStack_28;
+  
+  iVar1 = func_0x000101551c8c(*(undefined8 *)(param_1 + 0x30));
+  lStack_28 = (long)iVar1;
+  lStack_30 = (long)(int)param_2[1];
+  auStack_38[0] = *param_2;
+  func_0x000101901b84(*(undefined8 *)(param_1 + 0xb8),auStack_38);
+  return;
+}
+END 101901ce8
+FUNC 101901e48 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model15CyclingEnvelopeENSD_4RateEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model15CyclingEnvelopeENSD_4RateEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x000101901d38(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 101901e48
+FUNC 101902110 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model15CyclingEnvelopeENSD_4TimeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model15CyclingEnvelopeENSD_4TimeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x000101902000(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 101902110
+FUNC 1019023d8 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model15CyclingEnvelopeENSD_8MidPointEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model15CyclingEnvelopeENSD_8MidPointEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001019022c8(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 1019023d8
+FUNC 10190253c name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model15CyclingEnvelopeENSD_4HoldEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model15CyclingEnvelopeENSD_4HoldEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x00010190242c(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 10190253c
+FUNC 101901fac name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model15CyclingEnvelopeENSD_5RatioEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model15CyclingEnvelopeENSD_5RatioEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x000101901e9c(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 101901fac
+FUNC 101902274 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model15CyclingEnvelopeENSD_10SyncedRateEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model15CyclingEnvelopeENSD_10SyncedRateEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x000101902164(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 101902274
+FUNC 101900c20 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9Envelope1ENSC_6detail8Envelope6AttackEEEEvfEEEEPFvPvfEvENUlSH_fE_8__invokeESH_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9Envelope1ENSC_6detail8Envelope6AttackEEEEvfEEEEPFvPvfEvENUlSH_fE_8__invokeESH_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x000101900b10(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 101900c20
+FUNC 101900d84 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9Envelope1ENSC_6detail8Envelope5DecayEEEEvfEEEEPFvPvfEvENUlSH_fE_8__invokeESH_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9Envelope1ENSC_6detail8Envelope5DecayEEEEvfEEEEPFvPvfEvENUlSH_fE_8__invokeESH_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x000101900c74(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 101900d84
+FUNC 10190104c name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9Envelope1ENSC_6detail8Envelope7SustainEEEEvfEEEEPFvPvfEvENUlSH_fE_8__invokeESH_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9Envelope1ENSC_6detail8Envelope7SustainEEEEvfEEEEPFvPvfEvENUlSH_fE_8__invokeESH_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x000101900f3c(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 10190104c
+FUNC 101900ee8 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9Envelope1ENSC_6detail8Envelope7ReleaseEEEEvfEEEEPFvPvfEvENUlSH_fE_8__invokeESH_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9Envelope1ENSC_6detail8Envelope7ReleaseEEEEvfEEEEPFvPvfEvENUlSH_fE_8__invokeESH_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x000101900dd8(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 101900ee8
+FUNC 101901348 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9Envelope2ENSC_6detail8Envelope6AttackEEEEvfEEEEPFvPvfEvENUlSH_fE_8__invokeESH_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9Envelope2ENSC_6detail8Envelope6AttackEEEEvfEEEEPFvPvfEvENUlSH_fE_8__invokeESH_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x000101901238(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 101901348
+FUNC 1018fc550 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_4ModeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_4ModeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001018fc440(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 1018fc550
+FUNC 1018fd8e8 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model3LfoENSE_5ShapeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=17
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model3LfoENSE_5ShapeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,undefined4 *param_2)
+
+{
+  int iVar1;
+  undefined4 auStack_38 [2];
+  long lStack_30;
+  long lStack_28;
+  
+  iVar1 = func_0x000101551c8c(*(undefined8 *)(param_1 + 0x30));
+  lStack_28 = (long)iVar1;
+  lStack_30 = (long)(int)param_2[1];
+  auStack_38[0] = *param_2;
+  func_0x0001018fd784(*(undefined8 *)(param_1 + 0xb8),auStack_38);
+  return;
+}
+END 1018fd8e8
+FUNC 1018fc704 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_4RateEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_4RateEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001018fc5f4(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 1018fc704
+FUNC 1018fc9cc name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_4TimeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_4TimeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001018fc8bc(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 1018fc9cc
+FUNC 1018fc868 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_5RatioEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_5RatioEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001018fc758(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 1018fc868
+FUNC 1018fcb2c name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_10SyncedRateEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_10SyncedRateEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001018fca20(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 1018fcb2c
+FUNC 1018fdd50 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_9RetriggerEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_9RetriggerEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001018fdc40(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 1018fdd50
+FUNC 1018fda74 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_9ModAmountEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_9ModAmountEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (undefined4 param_1,long param_2)
+
+{
+  undefined4 auStack_48 [2];
+  undefined8 uStack_40;
+  ulong uStack_38;
+  
+  uStack_38 = func_0x000101551c8c(*(undefined8 *)(param_2 + 0x30));
+  uStack_38 = uStack_38 & 0xffffffff;
+  uStack_40 = 0;
+  auStack_48[0] = param_1;
+  func_0x0001018fd964(*(undefined8 *)(param_2 + 0xb8),auStack_48);
+  return;
+}
+END 1018fda74
+FUNC 1018fcc90 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model3LfoENSE_6AmountEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=17
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model3LfoENSE_6AmountEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,undefined4 *param_2)
+
+{
+  int iVar1;
+  undefined4 auStack_38 [2];
+  long lStack_30;
+  long lStack_28;
+  
+  iVar1 = func_0x000101551c8c(*(undefined8 *)(param_1 + 0x30));
+  lStack_28 = (long)iVar1;
+  lStack_30 = (long)(int)param_2[1];
+  auStack_38[0] = *param_2;
+  func_0x0001018fcb80(*(undefined8 *)(param_1 + 0xb8),auStack_38);
+  return;
+}
+END 1018fcc90
+FUNC 1018fd938 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model3LfoENSD_9ModSourceEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=16
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model3LfoENSD_9ModSourceEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  byte *pbVar1;
+  long lVar2;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  pbVar1 = (byte *)(lVar2 + 0x9b260);
+  if ((uint)*pbVar1 != ((int)param_1 & 0xffU)) {
+    *pbVar1 = (byte)(int)param_1;
+    *(undefined1 *)(lVar2 + 0x9b261) = 1;
+  }
+  return;
+}
+END 1018fd938
+INFO  REPORT: Save succeeded for processed file: /Live.arm64 (HeadlessAnalyzer)  
+
+// ======== (5) BlockProbe + DataProbe + SearchProbe: per-sample render
+// FUN_103b76e20, per-block FUN_103b76f70, event pump FUN_1018f49d0, model-side
+// apply bodies (Filter::Frequency/Resonance, Lfo::Rate, CyclingEnvelope::Time,
+// Envelope1::Attack, Oscillator2::Detune), channel-mode name strings, and
+// SearchProbe for VoiceModeHandler/computeNoteGain/cyclingEnvelopeQuartic
+// function symbols (none exported — laws live in internal functions). ========
+openjdk version "21.0.12.1" 2026-08-18
+OpenJDK Runtime Environment Homebrew (build 21.0.12.1)
+OpenJDK 64-Bit Server VM Homebrew (build 21.0.12.1, mixed mode)
+INFO  Using log config file: jar:file:/Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Framework/Generic/lib/Generic.jar!/generic.log4j.xml (LoggingInitialization)  
+INFO  Using log file: /Users/admin/Library/ghidra/ghidra_12.1.4_PUBLIC/application.log (LoggingInitialization)  
+INFO  Loading user preferences: /Users/admin/Library/ghidra/ghidra_12.1.4_PUBLIC/preferences (Preferences)  
+INFO  Searching for classes... (ClassSearcher)  
+INFO  Class search complete (538 ms) (ClassSearcher)  
+INFO  Initializing SSL Context (DefaultSSLContextInitializer)  
+INFO  Initializing Random Number Generator... (SecureRandomFactory)  
+INFO  Random Number Generator initialization complete: NativePRNGNonBlocking (SecureRandomFactory)  
+INFO  Trust manager disabled, cacerts have not been set (DefaultTrustManagerFactory)  
+INFO  Headless startup complete (1130 ms) (AnalyzeHeadless)  
+INFO  Class searcher loaded 59 extension points (20 false positives) (ClassSearcher)  
+INFO  HEADLESS Script Paths:
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/Atmel/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/DATA/ghidra_scripts
+    /Users/admin/tools/live-re/scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/Base/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Debug/Debugger-rmi-trace/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/DecompilerDependent/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/FunctionID/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/BSim/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/BytePatterns/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/PyGhidra/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/GnuDemangler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/MicrosoftCodeAnalyzer/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/Decompiler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/JVM/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/PDB/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/FileFormats/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/VersionTracking/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Debug/Debugger/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/PIC/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/WildcardAssembler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/SystemEmulation/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Features/SwiftDemangler/ghidra_scripts
+    /Users/admin/tools/ghidra_12.1.4_PUBLIC/Ghidra/Processors/8051/ghidra_scripts (HeadlessAnalyzer)  
+INFO  HEADLESS: execution starts (HeadlessAnalyzer)  
+INFO  Opening existing project: /Users/admin/tools/live-re/ghidra-proj2/LiveRE2 (HeadlessAnalyzer)  
+INFO  Opening project: /Users/admin/tools/live-re/ghidra-proj2/LiveRE2 (HeadlessProject)  
+INFO  REPORT: Processing project file: /Live.arm64 (HeadlessAnalyzer)  
+INFO  REPORT: Execute script: BlockProbe.java '0x103b76e20:900,0x103b76f70:400,0x1018f49d0:400,0x1018f5a48:600,0x1018f950c:400,0x1018fc5f4:400,0x101902000:400,0x101900b10:400,0x1018ff500:300,0x1018fa648:300,0x1018feb10:300,0x1018fe820:300'  (HeadlessAnalyzer)  
+INFO  SCRIPT: /Users/admin/tools/live-re/scripts/BlockProbe.java (HeadlessAnalyzer)  
+FUNC 103b76e20 name=FUN_103b76e20 body=1 lines=12
+
+undefined4 FUN_103b76e20(long param_1)
+
+{
+  byte bVar1;
+  undefined4 uVar2;
+  
+  uVar2 = func_0x0001036fc518();
+  bVar1 = func_0x0001036fc5a0(param_1);
+  *(byte *)(param_1 + 0x9a1b9) = *(byte *)(param_1 + 0x9a1b9) | bVar1;
+  return uVar2;
+}
+END 103b76e20
+FUNC 103b76f70 name=FUN_103b76f70 body=1 lines=6
+
+void FUN_103b76f70(void)
+
+{
+  return;
+}
+END 103b76f70
+FUNC 1018f49d0 name=FUN_1018f49d0 body=1 lines=168
+
+void FUN_1018f49d0(undefined8 *param_1,long param_2)
+
+{
+  long lVar1;
+  long lVar2;
+  int iVar3;
+  int iVar4;
+  int iVar5;
+  long *plVar6;
+  long lVar7;
+  long lStack_60;
+  long lStack_58;
+  long lStack_50;
+  undefined1 *puStack_48;
+  
+  puStack_48 = (undefined1 *)&lStack_60;
+  plVar6 = (long *)*param_1;
+  lVar1 = *plVar6;
+  lStack_58 = plVar6[1];
+  lStack_50 = plVar6[2];
+  iVar3 = *(int *)(param_2 + 0x9bc);
+  lStack_60 = param_2;
+  func_0x0001018f4de8(&puStack_48);
+  if (*(int *)(param_2 + 0x9bc) != iVar3) {
+    *(int *)(lVar1 + 0x4004) = *(int *)(lVar1 + 0x4004) + 1;
+  }
+  lStack_60 = param_2 + 0x9c8;
+  plVar6 = (long *)*param_1;
+  lVar1 = *plVar6;
+  lStack_58 = plVar6[1];
+  lStack_50 = plVar6[2];
+  iVar3 = *(int *)(param_2 + 0x128c);
+  puStack_48 = (undefined1 *)&lStack_60;
+  func_0x0001018f52a0(&puStack_48);
+  if (*(int *)(param_2 + 0x128c) != iVar3) {
+    *(int *)(lVar1 + 0x4004) = *(int *)(lVar1 + 0x4004) + 1;
+  }
+  lStack_60 = param_2 + 0x1298;
+  plVar6 = (long *)*param_1;
+  lVar1 = *plVar6;
+  lStack_58 = plVar6[1];
+  lStack_50 = plVar6[2];
+  iVar3 = *(int *)(param_2 + 0x1684);
+  puStack_48 = (undefined1 *)&lStack_60;
+  func_0x0001018f5430(&puStack_48);
+  if (*(int *)(param_2 + 0x1684) != iVar3) {
+    *(int *)(lVar1 + 0x4004) = *(int *)(lVar1 + 0x4004) + 1;
+  }
+  plVar6 = (long *)*param_1;
+  lVar1 = *plVar6;
+  lVar2 = plVar6[1];
+  lVar7 = plVar6[2];
+  iVar3 = *(int *)(param_2 + 0x197c);
+  iVar4 = func_0x0001018f4fa0(param_2 + 0x1690,lVar2,lVar7);
+  if (iVar4 == 1) {
+    *(int *)(param_2 + 0x197c) = *(int *)(param_2 + 0x197c) + 1;
+  }
+  iVar4 = func_0x0001018f4fa0(param_2 + 0x1788,lVar2,lVar7);
+  if (iVar4 == 1) {
+    *(int *)(param_2 + 0x197c) = *(int *)(param_2 + 0x197c) + 1;
+  }
+  iVar5 = func_0x0001018f4fa0(param_2 + 0x1880,lVar2,lVar7);
+  iVar4 = *(int *)(param_2 + 0x197c);
+  if (iVar5 == 1) {
+    iVar4 = iVar4 + 1;
+    *(int *)(param_2 + 0x197c) = iVar4;
+  }
+  if (iVar4 != iVar3) {
+    *(int *)(lVar1 + 0x4004) = *(int *)(lVar1 + 0x4004) + 1;
+  }
+  plVar6 = (long *)*param_1;
+  lVar1 = *plVar6;
+  lVar2 = plVar6[1];
+  lVar7 = plVar6[2];
+  iVar3 = *(int *)(param_2 + 0x1b84);
+  iVar4 = func_0x0001018f4fa0(param_2 + 0x1990,lVar2,lVar7);
+  if (iVar4 == 1) {
+    *(int *)(param_2 + 0x1b84) = *(int *)(param_2 + 0x1b84) + 1;
+  }
+  iVar5 = func_0x0001018f4fa0(param_2 + 0x1a88,lVar2,lVar7);
+  iVar4 = *(int *)(param_2 + 0x1b84);
+  if (iVar5 == 1) {
+    iVar4 = iVar4 + 1;
+    *(int *)(param_2 + 0x1b84) = iVar4;
+  }
+  if (iVar4 != iVar3) {
+    *(int *)(lVar1 + 0x4004) = *(int *)(lVar1 + 0x4004) + 1;
+  }
+  lStack_60 = param_2 + 0x1b90;
+  plVar6 = (long *)*param_1;
+  lVar1 = *plVar6;
+  lStack_58 = plVar6[1];
+  lStack_50 = plVar6[2];
+  iVar3 = *(int *)(param_2 + 0x2164);
+  puStack_48 = (undefined1 *)&lStack_60;
+  func_0x0001018f54f8(&puStack_48);
+  if (*(int *)(param_2 + 0x2164) != iVar3) {
+    *(int *)(lVar1 + 0x4004) = *(int *)(lVar1 + 0x4004) + 1;
+  }
+  lStack_60 = param_2 + 0x2170;
+  plVar6 = (long *)*param_1;
+  lVar1 = *plVar6;
+  lStack_58 = plVar6[1];
+  lStack_50 = plVar6[2];
+  iVar3 = *(int *)(param_2 + 0x2554);
+  puStack_48 = (undefined1 *)&lStack_60;
+  func_0x0001018f5610(&puStack_48);
+  if (*(int *)(param_2 + 0x2554) != iVar3) {
+    *(int *)(lVar1 + 0x4004) = *(int *)(lVar1 + 0x4004) + 1;
+  }
+  lStack_60 = param_2 + 0x2560;
+  plVar6 = (long *)*param_1;
+  lVar1 = *plVar6;
+  lStack_58 = plVar6[1];
+  lStack_50 = plVar6[2];
+  iVar3 = *(int *)(param_2 + 0x2944);
+  puStack_48 = (undefined1 *)&lStack_60;
+  func_0x0001018f5610(&puStack_48);
+  if (*(int *)(param_2 + 0x2944) != iVar3) {
+    *(int *)(lVar1 + 0x4004) = *(int *)(lVar1 + 0x4004) + 1;
+  }
+  lStack_60 = param_2 + 0x2950;
+  plVar6 = (long *)*param_1;
+  lVar1 = *plVar6;
+  lStack_58 = plVar6[1];
+  lStack_50 = plVar6[2];
+  iVar3 = *(int *)(param_2 + 0x301c);
+  puStack_48 = (undefined1 *)&lStack_60;
+  func_0x0001018f56d8(&puStack_48);
+  if (*(int *)(param_2 + 0x301c) != iVar3) {
+    *(int *)(lVar1 + 0x4004) = *(int *)(lVar1 + 0x4004) + 1;
+  }
+  plVar6 = (long *)*param_1;
+  lVar1 = *plVar6;
+  lVar2 = plVar6[1];
+  lVar7 = plVar6[2];
+  iVar3 = *(int *)(param_2 + 0x3324);
+  iVar4 = func_0x0001018f4fa0(param_2 + 0x3030,lVar2,lVar7);
+  if (iVar4 == 1) {
+    *(int *)(param_2 + 0x3324) = *(int *)(param_2 + 0x3324) + 1;
+  }
+  iVar4 = func_0x0001018f4fa0(param_2 + 0x3128,lVar2,lVar7);
+  if (iVar4 == 1) {
+    *(int *)(param_2 + 0x3324) = *(int *)(param_2 + 0x3324) + 1;
+  }
+  iVar5 = func_0x0001018f4fa0(param_2 + 0x3220,lVar2,lVar7);
+  iVar4 = *(int *)(param_2 + 0x3324);
+  if (iVar5 == 1) {
+    iVar4 = iVar4 + 1;
+    *(int *)(param_2 + 0x3324) = iVar4;
+  }
+  if (iVar4 != iVar3) {
+    *(int *)(lVar1 + 0x4004) = *(int *)(lVar1 + 0x4004) + 1;
+  }
+  lStack_60 = param_2 + 0x3330;
+  plVar6 = (long *)*param_1;
+  lVar1 = *plVar6;
+  lStack_58 = plVar6[1];
+  lStack_50 = plVar6[2];
+  iVar3 = *(int *)(param_2 + 0x3ff4);
+  puStack_48 = (undefined1 *)&lStack_60;
+  func_0x0001018f5818(&puStack_48);
+  if (*(int *)(param_2 + 0x3ff4) != iVar3) {
+    *(int *)(lVar1 + 0x4004) = *(int *)(lVar1 + 0x4004) + 1;
+  }
+  return;
+}
+END 1018f49d0
+FUNC 1018f5a48 name=FUN_1018f5a48 body=1 lines=30
+
+void FUN_1018f5a48(undefined8 *param_1,long param_2,long param_3)
+
+{
+  undefined8 uStack_38;
+  
+  uStack_38 = *param_1;
+  func_0x0001018f5ba4(&uStack_38);
+  uStack_38 = *param_1;
+  func_0x0001018f6170(&uStack_38,param_2 + 0x330,param_3 + 0x9c8);
+  uStack_38 = *param_1;
+  func_0x0001018f6608(&uStack_38,param_2 + 0x5f8,param_3 + 0x1298);
+  uStack_38 = *param_1;
+  func_0x0001018f67e0(&uStack_38,param_2 + 0x740,param_3 + 0x1690);
+  uStack_38 = *param_1;
+  func_0x0001018f69a0(&uStack_38,param_2 + 0x828,param_3 + 0x1988);
+  uStack_38 = *param_1;
+  func_0x0001018f6b24(&uStack_38,param_2 + 0x930,param_3 + 0x1b90);
+  uStack_38 = *param_1;
+  func_0x0001018f6ef4(&uStack_38,param_2 + 0xad0,param_3 + 0x2170);
+  uStack_38 = *param_1;
+  func_0x0001018f6ef4(&uStack_38,param_2 + 0xc30,param_3 + 0x2560);
+  uStack_38 = *param_1;
+  func_0x0001018f70e0(&uStack_38,param_2 + 0xd90,param_3 + 0x2950);
+  uStack_38 = *param_1;
+  func_0x0001018f7464(&uStack_38,param_2 + 0xfb0,param_3 + 0x3028);
+  uStack_38 = *param_1;
+  func_0x0001018f768c(&uStack_38,param_2 + 0x1198,param_3 + 0x3330);
+  return;
+}
+END 1018f5a48
+FUNC 1018f950c name=FUN_1018f950c body=1 lines=606
+
+/* WARNING: Possible PIC construction at 0x0001018f95c0: Changing call to branch */
+/* WARNING: Removing unreachable block (ram,0x0001018f95c4) */
+/* WARNING: Removing unreachable block (ram,0x0001018f95d0) */
+/* WARNING: Removing unreachable block (ram,0x0001018f9618) */
+/* WARNING: Type propagation algorithm not settling */
+
+void FUN_1018f950c(long param_1,float *param_2)
+
+{
+  long *plVar1;
+  long *plVar2;
+  ulong uVar3;
+  long lVar4;
+  long lVar5;
+  long *plVar6;
+  long *plVar7;
+  long *plVar8;
+  long lVar9;
+  long lVar10;
+  long lVar11;
+  double dVar12;
+  undefined4 auStack_858 [2];
+  long *plStack_850;
+  undefined4 uStack_848;
+  long *plStack_840;
+  undefined4 uStack_838;
+  long *plStack_830;
+  undefined4 uStack_828;
+  long *plStack_820;
+  undefined4 uStack_818;
+  long *plStack_810;
+  undefined4 uStack_808;
+  long *plStack_800;
+  undefined4 uStack_7f8;
+  long *plStack_7f0;
+  undefined4 uStack_7e8;
+  long *plStack_7e0;
+  undefined4 uStack_7d8;
+  long *plStack_7d0;
+  undefined4 uStack_7c8;
+  long *plStack_7c0;
+  undefined4 uStack_7b8;
+  long *plStack_7b0;
+  undefined4 uStack_7a8;
+  long *plStack_7a0;
+  undefined4 uStack_798;
+  long *plStack_790;
+  undefined4 uStack_788;
+  long *plStack_780;
+  undefined4 uStack_778;
+  long *plStack_770;
+  undefined4 uStack_768;
+  long *plStack_760;
+  undefined4 uStack_758;
+  long *plStack_750;
+  undefined4 uStack_748;
+  long *plStack_740;
+  undefined4 uStack_738;
+  long *plStack_730;
+  undefined4 uStack_728;
+  long *plStack_720;
+  undefined4 uStack_718;
+  long *plStack_710;
+  undefined4 uStack_708;
+  long *plStack_700;
+  undefined4 uStack_6f8;
+  long *plStack_6f0;
+  undefined4 uStack_6e8;
+  long *plStack_6e0;
+  undefined4 uStack_6d8;
+  long *plStack_6d0;
+  undefined4 uStack_6c8;
+  long *plStack_6c0;
+  undefined4 uStack_6b8;
+  long *plStack_6b0;
+  undefined4 uStack_6a8;
+  long *plStack_6a0;
+  undefined4 uStack_698;
+  long *plStack_690;
+  undefined4 uStack_688;
+  long *plStack_680;
+  undefined4 uStack_678;
+  long *plStack_670;
+  undefined4 uStack_668;
+  long *plStack_660;
+  undefined4 uStack_658;
+  long *plStack_650;
+  undefined4 uStack_648;
+  long *plStack_640;
+  undefined4 uStack_638;
+  long *plStack_630;
+  undefined4 uStack_628;
+  long *plStack_620;
+  undefined4 uStack_618;
+  long *plStack_610;
+  undefined4 uStack_608;
+  long *plStack_600;
+  undefined4 uStack_5f8;
+  long *plStack_5f0;
+  undefined4 uStack_5e8;
+  long *plStack_5e0;
+  undefined4 uStack_5d8;
+  long *plStack_5d0;
+  undefined4 uStack_5c8;
+  long *plStack_5c0;
+  undefined4 uStack_5b8;
+  long *plStack_5b0;
+  undefined4 uStack_5a8;
+  long *plStack_5a0;
+  undefined4 uStack_598;
+  long *plStack_590;
+  undefined4 uStack_588;
+  long *plStack_580;
+  undefined4 uStack_578;
+  long *plStack_570;
+  undefined4 uStack_568;
+  long *plStack_560;
+  undefined4 uStack_558;
+  long *plStack_550;
+  undefined4 uStack_548;
+  long *plStack_540;
+  undefined4 uStack_538;
+  long *plStack_530;
+  undefined4 uStack_528;
+  long *plStack_520;
+  undefined4 uStack_518;
+  long *plStack_510;
+  undefined4 uStack_508;
+  long *plStack_500;
+  undefined4 uStack_4f8;
+  long *plStack_4f0;
+  undefined4 uStack_4e8;
+  long *plStack_4e0;
+  undefined4 uStack_4d8;
+  long *plStack_4d0;
+  undefined4 uStack_4c8;
+  long *plStack_4c0;
+  undefined4 uStack_4b8;
+  long *plStack_4b0;
+  undefined4 uStack_4a8;
+  long *plStack_4a0;
+  undefined4 uStack_498;
+  long *plStack_490;
+  undefined4 uStack_488;
+  long *plStack_480;
+  undefined4 uStack_478;
+  long *plStack_470;
+  undefined4 uStack_468;
+  long *plStack_460;
+  undefined4 uStack_458;
+  long *plStack_450;
+  undefined4 uStack_448;
+  long *plStack_440;
+  undefined4 uStack_438;
+  long *plStack_430;
+  undefined4 uStack_428;
+  long *plStack_420;
+  undefined4 uStack_418;
+  long *plStack_410;
+  undefined4 uStack_408;
+  long *plStack_400;
+  undefined4 uStack_3f8;
+  long *plStack_3f0;
+  undefined4 uStack_3e8;
+  long *plStack_3e0;
+  undefined4 uStack_3d8;
+  long *plStack_3d0;
+  undefined4 uStack_3c8;
+  long *plStack_3c0;
+  undefined4 uStack_3b8;
+  long *plStack_3b0;
+  undefined4 uStack_3a8;
+  long *plStack_3a0;
+  undefined4 uStack_398;
+  long *plStack_390;
+  undefined4 uStack_388;
+  long *plStack_380;
+  undefined4 uStack_378;
+  long *plStack_370;
+  undefined4 uStack_368;
+  long *plStack_360;
+  undefined4 uStack_358;
+  long *plStack_350;
+  undefined4 uStack_348;
+  long *plStack_340;
+  undefined4 uStack_338;
+  long *plStack_330;
+  undefined4 uStack_328;
+  long *plStack_320;
+  undefined4 uStack_318;
+  long *plStack_310;
+  undefined4 uStack_308;
+  long *plStack_300;
+  undefined4 uStack_2f8;
+  long *plStack_2f0;
+  undefined4 uStack_2e8;
+  long *plStack_2e0;
+  undefined4 uStack_2d8;
+  long *plStack_2d0;
+  undefined4 uStack_2c8;
+  long *plStack_2c0;
+  undefined4 uStack_2b8;
+  long *plStack_2b0;
+  undefined4 uStack_2a8;
+  long *plStack_2a0;
+  undefined4 uStack_298;
+  long *plStack_290;
+  undefined4 uStack_288;
+  long *plStack_280;
+  undefined4 uStack_278;
+  long *plStack_270;
+  undefined4 uStack_268;
+  long *plStack_260;
+  undefined4 uStack_258;
+  long *plStack_250;
+  undefined4 uStack_248;
+  long *plStack_240;
+  undefined4 uStack_238;
+  long *plStack_230;
+  undefined4 uStack_228;
+  long *plStack_220;
+  undefined4 uStack_218;
+  long *plStack_210;
+  undefined4 uStack_208;
+  long *plStack_200;
+  undefined4 uStack_1f8;
+  long *plStack_1f0;
+  undefined4 uStack_1e8;
+  long *plStack_1e0;
+  undefined4 uStack_1d8;
+  long *plStack_1d0;
+  undefined4 uStack_1c8;
+  long *plStack_1c0;
+  undefined4 uStack_1b8;
+  long *plStack_1b0;
+  undefined4 uStack_1a8;
+  long *plStack_1a0;
+  undefined4 uStack_198;
+  long *plStack_190;
+  undefined4 uStack_188;
+  long *plStack_180;
+  undefined4 uStack_178;
+  long *plStack_170;
+  undefined4 uStack_168;
+  long *plStack_160;
+  undefined4 uStack_158;
+  long *plStack_150;
+  undefined4 uStack_148;
+  long *plStack_140;
+  undefined4 uStack_138;
+  long *plStack_130;
+  undefined4 uStack_128;
+  long *plStack_120;
+  undefined4 uStack_118;
+  long *plStack_110;
+  undefined4 uStack_108;
+  long *plStack_100;
+  undefined4 uStack_f8;
+  long *plStack_f0;
+  undefined4 uStack_e8;
+  long *plStack_e0;
+  undefined4 uStack_d8;
+  long *plStack_d0;
+  undefined4 uStack_c8;
+  long *plStack_c0;
+  undefined4 uStack_b8;
+  long *plStack_b0;
+  undefined4 uStack_a8;
+  long *plStack_a0;
+  undefined4 uStack_98;
+  long *plStack_90;
+  undefined4 uStack_88;
+  long *plStack_80;
+  undefined4 uStack_78;
+  long *plStack_70;
+  undefined4 uStack_68;
+  
+  uVar3 = *(long *)(param_2 + 4) + *(long *)(param_1 + 0xae1e8);
+  if (uVar3 < *(ulong *)(param_1 + 0x9a280)) {
+    dVar12 = (double)(uVar3 - *(long *)(param_1 + 0x9a278)) /
+             (double)(*(ulong *)(param_1 + 0x9a280) - *(long *)(param_1 + 0x9a278));
+    dVar12 = *(double *)(param_1 + 0x9a290) * dVar12 +
+             *(double *)(param_1 + 0x9a288) * (1.0 - dVar12);
+  }
+  else {
+    dVar12 = *(double *)(param_1 + 0x9a290);
+  }
+  *(ulong *)(param_1 + 0x9a278) = uVar3;
+  *(ulong *)(param_1 + 0x9a280) = *(long *)(param_2 + 2) + uVar3;
+  *(double *)(param_1 + 0x9a288) = dVar12;
+  *(double *)(param_1 + 0x9a290) = (double)*param_2;
+  *(undefined1 *)(param_1 + 0x9a298) = 0;
+  plVar1 = (long *)(param_1 + 0x9e1e0);
+  lVar4 = *(long *)(param_1 + 0xae1e0);
+  if (lVar4 != 0x800) {
+    lVar5 = *(long *)(param_2 + 4);
+    lVar10 = *(long *)(param_2 + 2);
+    lVar9 = *(long *)param_2;
+    plVar1 = plVar1 + lVar4 * 4;
+    *plVar1 = *(long *)(param_1 + 0x9a258);
+    plVar1[2] = lVar10;
+    plVar1[1] = lVar9;
+    plVar1[3] = lVar5;
+    *(long *)(param_1 + 0xae1e0) = lVar4 + 1;
+    return;
+  }
+  plVar2 = (long *)(param_1 + 0xae1e0);
+  if (*plVar2 != 0) {
+    plStack_850 = plVar1 + *plVar2 * 4;
+    auStack_858[0] = 0;
+    uStack_848 = 0;
+    plStack_840 = plStack_850;
+    uStack_838 = 0;
+    plStack_830 = plStack_850;
+    uStack_828 = 0;
+    plStack_820 = plStack_850;
+    uStack_818 = 0;
+    plStack_810 = plStack_850;
+    uStack_808 = 0;
+    plStack_800 = plStack_850;
+    uStack_7f8 = 0;
+    plStack_7f0 = plStack_850;
+    uStack_7e8 = 0;
+    plStack_7e0 = plStack_850;
+    uStack_7d8 = 0;
+    plStack_7d0 = plStack_850;
+    uStack_7c8 = 0;
+    plStack_7c0 = plStack_850;
+    uStack_7b8 = 0;
+    plStack_7b0 = plStack_850;
+    uStack_7a8 = 0;
+    plStack_7a0 = plStack_850;
+    uStack_798 = 0;
+    plStack_790 = plStack_850;
+    uStack_788 = 0;
+    plStack_780 = plStack_850;
+    uStack_778 = 0;
+    plStack_770 = plStack_850;
+    uStack_768 = 0;
+    plStack_760 = plStack_850;
+    uStack_758 = 0;
+    plStack_750 = plStack_850;
+    uStack_748 = 0;
+    plStack_740 = plStack_850;
+    uStack_738 = 0;
+    plStack_730 = plStack_850;
+    uStack_728 = 0;
+    plStack_720 = plStack_850;
+    uStack_718 = 0;
+    plStack_710 = plStack_850;
+    uStack_708 = 0;
+    plStack_700 = plStack_850;
+    uStack_6f8 = 0;
+    plStack_6f0 = plStack_850;
+    uStack_6e8 = 0;
+    plStack_6e0 = plStack_850;
+    uStack_6d8 = 0;
+    plStack_6d0 = plStack_850;
+    uStack_6c8 = 0;
+    plStack_6c0 = plStack_850;
+    uStack_6b8 = 0;
+    plStack_6b0 = plStack_850;
+    uStack_6a8 = 0;
+    plStack_6a0 = plStack_850;
+    uStack_698 = 0;
+    plStack_690 = plStack_850;
+    uStack_688 = 0;
+    plStack_680 = plStack_850;
+    uStack_678 = 0;
+    plStack_670 = plStack_850;
+    uStack_668 = 0;
+    plStack_660 = plStack_850;
+    uStack_658 = 0;
+    plStack_650 = plStack_850;
+    uStack_648 = 0;
+    plStack_640 = plStack_850;
+    uStack_638 = 0;
+    plStack_630 = plStack_850;
+    uStack_628 = 0;
+    plStack_620 = plStack_850;
+    uStack_618 = 0;
+    plStack_610 = plStack_850;
+    uStack_608 = 0;
+    plStack_600 = plStack_850;
+    uStack_5f8 = 0;
+    plStack_5f0 = plStack_850;
+    uStack_5e8 = 0;
+    plStack_5e0 = plStack_850;
+    uStack_5d8 = 0;
+    plStack_5d0 = plStack_850;
+    uStack_5c8 = 0;
+    plStack_5c0 = plStack_850;
+    uStack_5b8 = 0;
+    plStack_5b0 = plStack_850;
+    uStack_5a8 = 0;
+    plStack_5a0 = plStack_850;
+    uStack_598 = 0;
+    plStack_590 = plStack_850;
+    uStack_588 = 0;
+END 1018f950c
+FUNC 1018fc5f4 name=FUN_1018fc5f4 body=1 lines=65
+
+void FUN_1018fc5f4(long param_1,float *param_2)
+
+{
+  long *plVar1;
+  ulong uVar2;
+  undefined8 *puVar3;
+  long lVar4;
+  long lVar5;
+  undefined8 uVar6;
+  undefined8 uVar7;
+  undefined4 extraout_s0;
+  double dVar8;
+  undefined8 uVar9;
+  undefined8 uVar10;
+  undefined4 auStack_98 [2];
+  undefined8 uStack_90;
+  ulong uStack_88;
+  
+  plVar1 = (long *)(param_1 + 0xae1e0);
+  uVar2 = *(long *)(param_2 + 4) + *(long *)(param_1 + 0xae1e8);
+  if (uVar2 < *(ulong *)(param_1 + 0x9ad40)) {
+    dVar8 = (double)(uVar2 - *(long *)(param_1 + 0x9ad38)) /
+            (double)(*(ulong *)(param_1 + 0x9ad40) - *(long *)(param_1 + 0x9ad38));
+    dVar8 = *(double *)(param_1 + 0x9ad50) * dVar8 + *(double *)(param_1 + 0x9ad48) * (1.0 - dVar8);
+  }
+  else {
+    dVar8 = *(double *)(param_1 + 0x9ad50);
+  }
+  *(ulong *)(param_1 + 0x9ad38) = uVar2;
+  *(ulong *)(param_1 + 0x9ad40) = *(long *)(param_2 + 2) + uVar2;
+  *(double *)(param_1 + 0x9ad48) = dVar8;
+  *(double *)(param_1 + 0x9ad50) = (double)*param_2;
+  *(undefined1 *)(param_1 + 0x9ad58) = 0;
+  lVar4 = param_1 + 0x9e1e0;
+  uVar7 = *(undefined8 *)(param_1 + 0x9ad18);
+  lVar5 = *plVar1;
+  if (lVar5 == 0x800) {
+    func_0x0001018f961c(lVar4);
+    lVar5 = *plVar1;
+    if (lVar5 == 0x800) {
+      func_0x0001018f9b10(lVar4);
+      lVar5 = *plVar1;
+      if (lVar5 == 0x800) {
+        lVar4 = func_0x000102aa7934();
+        uStack_88 = func_0x000101551c8c(*(undefined8 *)(lVar4 + 0x30));
+        uStack_88 = uStack_88 & 0xffffffff;
+        uStack_90 = 0;
+        auStack_98[0] = extraout_s0;
+        FUN_1018fc5f4(*(undefined8 *)(lVar4 + 0xb8),auStack_98);
+        return;
+      }
+    }
+  }
+  uVar6 = *(undefined8 *)(param_2 + 4);
+  uVar10 = *(undefined8 *)(param_2 + 2);
+  uVar9 = *(undefined8 *)param_2;
+  puVar3 = (undefined8 *)(lVar4 + lVar5 * 0x20);
+  *puVar3 = uVar7;
+  puVar3[2] = uVar10;
+  puVar3[1] = uVar9;
+  puVar3[3] = uVar6;
+  *plVar1 = lVar5 + 1;
+  return;
+}
+END 1018fc5f4
+FUNC 101902000 name=FUN_101902000 body=1 lines=65
+
+void FUN_101902000(long param_1,float *param_2)
+
+{
+  long *plVar1;
+  ulong uVar2;
+  undefined8 *puVar3;
+  long lVar4;
+  long lVar5;
+  undefined8 uVar6;
+  undefined8 uVar7;
+  undefined4 extraout_s0;
+  double dVar8;
+  undefined8 uVar9;
+  undefined8 uVar10;
+  undefined4 auStack_98 [2];
+  undefined8 uStack_90;
+  ulong uStack_88;
+  
+  plVar1 = (long *)(param_1 + 0xae1e0);
+  uVar2 = *(long *)(param_2 + 4) + *(long *)(param_1 + 0xae1e8);
+  if (uVar2 < *(ulong *)(param_1 + 0x9ceb8)) {
+    dVar8 = (double)(uVar2 - *(long *)(param_1 + 0x9ceb0)) /
+            (double)(*(ulong *)(param_1 + 0x9ceb8) - *(long *)(param_1 + 0x9ceb0));
+    dVar8 = *(double *)(param_1 + 0x9cec8) * dVar8 + *(double *)(param_1 + 0x9cec0) * (1.0 - dVar8);
+  }
+  else {
+    dVar8 = *(double *)(param_1 + 0x9cec8);
+  }
+  *(ulong *)(param_1 + 0x9ceb0) = uVar2;
+  *(ulong *)(param_1 + 0x9ceb8) = *(long *)(param_2 + 2) + uVar2;
+  *(double *)(param_1 + 0x9cec0) = dVar8;
+  *(double *)(param_1 + 0x9cec8) = (double)*param_2;
+  *(undefined1 *)(param_1 + 0x9ced0) = 0;
+  lVar4 = param_1 + 0x9e1e0;
+  uVar7 = *(undefined8 *)(param_1 + 0x9ce90);
+  lVar5 = *plVar1;
+  if (lVar5 == 0x800) {
+    func_0x0001018f961c(lVar4);
+    lVar5 = *plVar1;
+    if (lVar5 == 0x800) {
+      func_0x0001018f9b10(lVar4);
+      lVar5 = *plVar1;
+      if (lVar5 == 0x800) {
+        lVar4 = func_0x000102aa7934();
+        uStack_88 = func_0x000101551c8c(*(undefined8 *)(lVar4 + 0x30));
+        uStack_88 = uStack_88 & 0xffffffff;
+        uStack_90 = 0;
+        auStack_98[0] = extraout_s0;
+        FUN_101902000(*(undefined8 *)(lVar4 + 0xb8),auStack_98);
+        return;
+      }
+    }
+  }
+  uVar6 = *(undefined8 *)(param_2 + 4);
+  uVar10 = *(undefined8 *)(param_2 + 2);
+  uVar9 = *(undefined8 *)param_2;
+  puVar3 = (undefined8 *)(lVar4 + lVar5 * 0x20);
+  *puVar3 = uVar7;
+  puVar3[2] = uVar10;
+  puVar3[1] = uVar9;
+  puVar3[3] = uVar6;
+  *plVar1 = lVar5 + 1;
+  return;
+}
+END 101902000
+FUNC 101900b10 name=FUN_101900b10 body=1 lines=65
+
+void FUN_101900b10(long param_1,float *param_2)
+
+{
+  long *plVar1;
+  ulong uVar2;
+  undefined8 *puVar3;
+  long lVar4;
+  long lVar5;
+  undefined8 uVar6;
+  undefined8 uVar7;
+  undefined4 extraout_s0;
+  double dVar8;
+  undefined8 uVar9;
+  undefined8 uVar10;
+  undefined4 auStack_98 [2];
+  undefined8 uStack_90;
+  ulong uStack_88;
+  
+  plVar1 = (long *)(param_1 + 0xae1e0);
+  uVar2 = *(long *)(param_2 + 4) + *(long *)(param_1 + 0xae1e8);
+  if (uVar2 < *(ulong *)(param_1 + 0x9c3f0)) {
+    dVar8 = (double)(uVar2 - *(long *)(param_1 + 0x9c3e8)) /
+            (double)(*(ulong *)(param_1 + 0x9c3f0) - *(long *)(param_1 + 0x9c3e8));
+    dVar8 = *(double *)(param_1 + 640000) * dVar8 + *(double *)(param_1 + 0x9c3f8) * (1.0 - dVar8);
+  }
+  else {
+    dVar8 = *(double *)(param_1 + 640000);
+  }
+  *(ulong *)(param_1 + 0x9c3e8) = uVar2;
+  *(ulong *)(param_1 + 0x9c3f0) = *(long *)(param_2 + 2) + uVar2;
+  *(double *)(param_1 + 0x9c3f8) = dVar8;
+  *(double *)(param_1 + 640000) = (double)*param_2;
+  *(undefined1 *)(param_1 + 0x9c408) = 0;
+  lVar4 = param_1 + 0x9e1e0;
+  uVar7 = *(undefined8 *)(param_1 + 0x9c3c8);
+  lVar5 = *plVar1;
+  if (lVar5 == 0x800) {
+    func_0x0001018f961c(lVar4);
+    lVar5 = *plVar1;
+    if (lVar5 == 0x800) {
+      func_0x0001018f9b10(lVar4);
+      lVar5 = *plVar1;
+      if (lVar5 == 0x800) {
+        lVar4 = func_0x000102aa7934();
+        uStack_88 = func_0x000101551c8c(*(undefined8 *)(lVar4 + 0x30));
+        uStack_88 = uStack_88 & 0xffffffff;
+        uStack_90 = 0;
+        auStack_98[0] = extraout_s0;
+        FUN_101900b10(*(undefined8 *)(lVar4 + 0xb8),auStack_98);
+        return;
+      }
+    }
+  }
+  uVar6 = *(undefined8 *)(param_2 + 4);
+  uVar10 = *(undefined8 *)(param_2 + 2);
+  uVar9 = *(undefined8 *)param_2;
+  puVar3 = (undefined8 *)(lVar4 + lVar5 * 0x20);
+  *puVar3 = uVar7;
+  puVar3[2] = uVar10;
+  puVar3[1] = uVar9;
+  puVar3[3] = uVar6;
+  *plVar1 = lVar5 + 1;
+  return;
+}
+END 101900b10
+FUNC 1018ff500 name=FUN_1018ff500 body=1 lines=76
+
+void FUN_1018ff500(long param_1,float *param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  ulong uVar3;
+  undefined8 *puVar4;
+  int iVar5;
+  long lVar6;
+  undefined8 uVar7;
+  undefined8 uVar8;
+  double dVar9;
+  undefined8 uVar10;
+  undefined8 uVar11;
+  undefined1 auVar12 [16];
+  undefined4 auStack_88 [2];
+  long lStack_80;
+  long lStack_78;
+  long lStack_70;
+  float *pfStack_68;
+  undefined1 *puStack_60;
+  code *pcStack_58;
+  
+  plVar1 = (long *)(param_1 + 0xae1e0);
+  uVar3 = *(long *)(param_2 + 4) + *(long *)(param_1 + 0xae1e8);
+  if (uVar3 < *(ulong *)(param_1 + 0x9ba08)) {
+    dVar9 = (double)(uVar3 - *(long *)(param_1 + 0x9ba00)) /
+            (double)(*(ulong *)(param_1 + 0x9ba08) - *(long *)(param_1 + 0x9ba00));
+    dVar9 = *(double *)(param_1 + 0x9ba18) * dVar9 + *(double *)(param_1 + 0x9ba10) * (1.0 - dVar9);
+  }
+  else {
+    dVar9 = *(double *)(param_1 + 0x9ba18);
+  }
+  *(ulong *)(param_1 + 0x9ba00) = uVar3;
+  *(ulong *)(param_1 + 0x9ba08) = *(long *)(param_2 + 2) + uVar3;
+  *(double *)(param_1 + 0x9ba10) = dVar9;
+  *(double *)(param_1 + 0x9ba18) = (double)*param_2;
+  *(undefined1 *)(param_1 + 0x9ba20) = 0;
+  lVar2 = param_1 + 0x9e1e0;
+  uVar8 = *(undefined8 *)(param_1 + 0x9b9e0);
+  lVar6 = *plVar1;
+  if (lVar6 == 0x800) {
+    func_0x0001018f961c(lVar2);
+    lVar6 = *plVar1;
+    if (lVar6 == 0x800) {
+      func_0x0001018f9b10(lVar2);
+      lVar6 = *plVar1;
+      if (lVar6 == 0x800) {
+        auVar12 = func_0x000102aa7934();
+        pcStack_58 = 
+        __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model11Oscillator2ENSE_6DetuneEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+        ;
+        lStack_70 = lVar2;
+        pfStack_68 = param_2;
+        puStack_60 = &stack0xfffffffffffffff0;
+        iVar5 = func_0x000101551c8c(*(undefined8 *)(auVar12._0_8_ + 0x30));
+        lStack_78 = (long)iVar5;
+        lStack_80 = (long)(int)auVar12._8_8_[1];
+        auStack_88[0] = *auVar12._8_8_;
+        FUN_1018ff500(*(undefined8 *)(auVar12._0_8_ + 0xb8),auStack_88);
+        return;
+      }
+    }
+  }
+  uVar7 = *(undefined8 *)(param_2 + 4);
+  uVar11 = *(undefined8 *)(param_2 + 2);
+  uVar10 = *(undefined8 *)param_2;
+  puVar4 = (undefined8 *)(lVar2 + lVar6 * 0x20);
+  *puVar4 = uVar8;
+  puVar4[2] = uVar11;
+  puVar4[1] = uVar10;
+  puVar4[3] = uVar7;
+  *plVar1 = lVar6 + 1;
+  return;
+}
+END 1018ff500
+FUNC 1018fa648 name=FUN_1018fa648 body=1 lines=76
+
+void FUN_1018fa648(long param_1,float *param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  ulong uVar3;
+  undefined8 *puVar4;
+  int iVar5;
+  long lVar6;
+  undefined8 uVar7;
+  undefined8 uVar8;
+  double dVar9;
+  undefined8 uVar10;
+  undefined8 uVar11;
+  undefined1 auVar12 [16];
+  undefined4 auStack_88 [2];
+  long lStack_80;
+  long lStack_78;
+  long lStack_70;
+  float *pfStack_68;
+  undefined1 *puStack_60;
+  code *pcStack_58;
+  
+  plVar1 = (long *)(param_1 + 0xae1e0);
+  uVar3 = *(long *)(param_2 + 4) + *(long *)(param_1 + 0xae1e8);
+  if (uVar3 < *(ulong *)(param_1 + 0x9a378)) {
+    dVar9 = (double)(uVar3 - *(long *)(param_1 + 0x9a370)) /
+            (double)(*(ulong *)(param_1 + 0x9a378) - *(long *)(param_1 + 0x9a370));
+    dVar9 = *(double *)(param_1 + 0x9a388) * dVar9 + *(double *)(param_1 + 0x9a380) * (1.0 - dVar9);
+  }
+  else {
+    dVar9 = *(double *)(param_1 + 0x9a388);
+  }
+  *(ulong *)(param_1 + 0x9a370) = uVar3;
+  *(ulong *)(param_1 + 0x9a378) = *(long *)(param_2 + 2) + uVar3;
+  *(double *)(param_1 + 0x9a380) = dVar9;
+  *(double *)(param_1 + 0x9a388) = (double)*param_2;
+  *(undefined1 *)(param_1 + 0x9a390) = 0;
+  lVar2 = param_1 + 0x9e1e0;
+  uVar8 = *(undefined8 *)(param_1 + 0x9a350);
+  lVar6 = *plVar1;
+  if (lVar6 == 0x800) {
+    func_0x0001018f961c(lVar2);
+    lVar6 = *plVar1;
+    if (lVar6 == 0x800) {
+      func_0x0001018f9b10(lVar2);
+      lVar6 = *plVar1;
+      if (lVar6 == 0x800) {
+        auVar12 = func_0x000102aa7934();
+        pcStack_58 = 
+        __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6FilterENSE_9ResonanceEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+        ;
+        lStack_70 = lVar2;
+        pfStack_68 = param_2;
+        puStack_60 = &stack0xfffffffffffffff0;
+        iVar5 = func_0x000101551c8c(*(undefined8 *)(auVar12._0_8_ + 0x30));
+        lStack_78 = (long)iVar5;
+        lStack_80 = (long)(int)auVar12._8_8_[1];
+        auStack_88[0] = *auVar12._8_8_;
+        FUN_1018fa648(*(undefined8 *)(auVar12._0_8_ + 0xb8),auStack_88);
+        return;
+      }
+    }
+  }
+  uVar7 = *(undefined8 *)(param_2 + 4);
+  uVar11 = *(undefined8 *)(param_2 + 2);
+  uVar10 = *(undefined8 *)param_2;
+  puVar4 = (undefined8 *)(lVar2 + lVar6 * 0x20);
+  *puVar4 = uVar8;
+  puVar4[2] = uVar11;
+  puVar4[1] = uVar10;
+  puVar4[3] = uVar7;
+  *plVar1 = lVar6 + 1;
+  return;
+}
+END 1018fa648
+FUNC 1018feb10 name=FUN_1018feb10 body=1 lines=65
+
+void FUN_1018feb10(long param_1,float *param_2)
+
+{
+  long *plVar1;
+  ulong uVar2;
+  undefined8 *puVar3;
+  long lVar4;
+  long lVar5;
+  undefined8 uVar6;
+  undefined8 uVar7;
+  undefined4 extraout_s0;
+  double dVar8;
+  undefined8 uVar9;
+  undefined8 uVar10;
+  undefined4 auStack_98 [2];
+  undefined8 uStack_90;
+  ulong uStack_88;
+  
+  plVar1 = (long *)(param_1 + 0xae1e0);
+  uVar2 = *(long *)(param_2 + 4) + *(long *)(param_1 + 0xae1e8);
+  if (uVar2 < *(ulong *)(param_1 + 0x9b808)) {
+    dVar8 = (double)(uVar2 - *(long *)(param_1 + 0x9b800)) /
+            (double)(*(ulong *)(param_1 + 0x9b808) - *(long *)(param_1 + 0x9b800));
+    dVar8 = *(double *)(param_1 + 0x9b818) * dVar8 + *(double *)(param_1 + 0x9b810) * (1.0 - dVar8);
+  }
+  else {
+    dVar8 = *(double *)(param_1 + 0x9b818);
+  }
+  *(ulong *)(param_1 + 0x9b800) = uVar2;
+  *(ulong *)(param_1 + 0x9b808) = *(long *)(param_2 + 2) + uVar2;
+  *(double *)(param_1 + 0x9b810) = dVar8;
+  *(double *)(param_1 + 0x9b818) = (double)*param_2;
+  *(undefined1 *)(param_1 + 0x9b820) = 0;
+  lVar4 = param_1 + 0x9e1e0;
+  uVar7 = *(undefined8 *)(param_1 + 0x9b7e0);
+  lVar5 = *plVar1;
+  if (lVar5 == 0x800) {
+    func_0x0001018f961c(lVar4);
+    lVar5 = *plVar1;
+    if (lVar5 == 0x800) {
+      func_0x0001018f9b10(lVar4);
+      lVar5 = *plVar1;
+      if (lVar5 == 0x800) {
+        lVar4 = func_0x000102aa7934();
+        uStack_88 = func_0x000101551c8c(*(undefined8 *)(lVar4 + 0x30));
+        uStack_88 = uStack_88 & 0xffffffff;
+        uStack_90 = 0;
+        auStack_98[0] = extraout_s0;
+        FUN_1018feb10(*(undefined8 *)(lVar4 + 0xb8),auStack_98);
+        return;
+      }
+    }
+  }
+  uVar6 = *(undefined8 *)(param_2 + 4);
+  uVar10 = *(undefined8 *)(param_2 + 2);
+  uVar9 = *(undefined8 *)param_2;
+  puVar3 = (undefined8 *)(lVar4 + lVar5 * 0x20);
+  *puVar3 = uVar7;
+  puVar3[2] = uVar10;
+  puVar3[1] = uVar9;
+  puVar3[3] = uVar6;
+  *plVar1 = lVar5 + 1;
+  return;
+}
+END 1018feb10
+FUNC 1018fe820 name=FUN_1018fe820 body=1 lines=76
+
+void FUN_1018fe820(long param_1,float *param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  ulong uVar3;
+  undefined8 *puVar4;
+  int iVar5;
+  long lVar6;
+  undefined8 uVar7;
+  undefined8 uVar8;
+  double dVar9;
+  undefined8 uVar10;
+  undefined8 uVar11;
+  undefined1 auVar12 [16];
+  undefined4 auStack_88 [2];
+  long lStack_80;
+  long lStack_78;
+  long lStack_70;
+  float *pfStack_68;
+  undefined1 *puStack_60;
+  code *pcStack_58;
+  
+  plVar1 = (long *)(param_1 + 0xae1e0);
+  uVar3 = *(long *)(param_2 + 4) + *(long *)(param_1 + 0xae1e8);
+  if (uVar3 < *(ulong *)(param_1 + 0x9b610)) {
+    dVar9 = (double)(uVar3 - *(long *)(param_1 + 0x9b608)) /
+            (double)(*(ulong *)(param_1 + 0x9b610) - *(long *)(param_1 + 0x9b608));
+    dVar9 = *(double *)(param_1 + 0x9b620) * dVar9 + *(double *)(param_1 + 0x9b618) * (1.0 - dVar9);
+  }
+  else {
+    dVar9 = *(double *)(param_1 + 0x9b620);
+  }
+  *(ulong *)(param_1 + 0x9b608) = uVar3;
+  *(ulong *)(param_1 + 0x9b610) = *(long *)(param_2 + 2) + uVar3;
+  *(double *)(param_1 + 0x9b618) = dVar9;
+  *(double *)(param_1 + 0x9b620) = (double)*param_2;
+  *(undefined1 *)(param_1 + 0x9b628) = 0;
+  lVar2 = param_1 + 0x9e1e0;
+  uVar8 = *(undefined8 *)(param_1 + 0x9b5e8);
+  lVar6 = *plVar1;
+  if (lVar6 == 0x800) {
+    func_0x0001018f961c(lVar2);
+    lVar6 = *plVar1;
+    if (lVar6 == 0x800) {
+      func_0x0001018f9b10(lVar2);
+      lVar6 = *plVar1;
+      if (lVar6 == 0x800) {
+        auVar12 = func_0x000102aa7934();
+        pcStack_58 = 
+        __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5drift11DriftDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model11Oscillator1ENSE_5ShapeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+        ;
+        lStack_70 = lVar2;
+        pfStack_68 = param_2;
+        puStack_60 = &stack0xfffffffffffffff0;
+        iVar5 = func_0x000101551c8c(*(undefined8 *)(auVar12._0_8_ + 0x30));
+        lStack_78 = (long)iVar5;
+        lStack_80 = (long)(int)auVar12._8_8_[1];
+        auStack_88[0] = *auVar12._8_8_;
+        FUN_1018fe820(*(undefined8 *)(auVar12._0_8_ + 0xb8),auStack_88);
+        return;
+      }
+    }
+  }
+  uVar7 = *(undefined8 *)(param_2 + 4);
+  uVar11 = *(undefined8 *)(param_2 + 2);
+  uVar10 = *(undefined8 *)param_2;
+  puVar4 = (undefined8 *)(lVar2 + lVar6 * 0x20);
+  *puVar4 = uVar8;
+  puVar4[2] = uVar11;
+  puVar4[1] = uVar10;
+  puVar4[3] = uVar7;
+  *plVar1 = lVar6 + 1;
+  return;
+}
+END 1018fe820
+INFO  REPORT: Execute script: DataProbe.java '0x1047f1f89' '0x10492a291' '0x1047f1f8e' '0x1048faf3c'  (HeadlessAnalyzer)  
+INFO  SCRIPT: /Users/admin/tools/live-re/scripts/DataProbe.java (HeadlessAnalyzer)  
+== memory at 1047f1f89 (64 bytes from -16) ==
+1047f1f79: 0029293631202c31  le64=x312c203136292900
+1047f1f81: 006e776f44007055  le64=x557000446f776e00
+1047f1f89: 676952007466654c  le64=x4c65667400526967
+1047f1f91: 745379654b007468  le64=x6874004b65795374
+1047f1f99: 65537000676e6972  le64=x72696e6700705365
+1047f1fa1: 466e6f697463656c  le64=x6c656374696f6e46
+1047f1fa9: 69443e2d656d6172  le64=x72616d652d3e4469
+1047f1fb1: 4b646579616c7073  le64=x73706c617965644b
+== xrefs to 0x10492a291 (no-fn) ==
+  total: 0
+== xrefs to 0x1047f1f8e (no-fn) ==
+  total: 0
+== xrefs to 0x1048faf3c (no-fn) ==
+  total: 0
+INFO  REPORT: Execute script: SearchProbe.java 'VoiceModeHandler' '5' '40'  (HeadlessAnalyzer)  
+INFO  SCRIPT: /Users/admin/tools/live-re/scripts/SearchProbe.java (HeadlessAnalyzer)  
+== STRING HITS: 'VoiceModeHandler' ==
+STR 105b2109e len=122 : __ZGVZN7ableton6blocks5drift20MonoVoiceModeHandlerINSt3__15arrayINS1_15DriftVoiceBlockELm8EEEE13setVoiceDepthEfE8modeGain
+STR 105b2111a len=134 : __ZGVZN7ableton6blocks5drift22UnisonVoiceModeHandlerINSt3__15arrayINS1_15DriftVoiceBlockELm8EEELm32EE13setVoiceDepthEfE12panningGains
+STR 105b211a2 len=139 : __ZGVZN7ableton6blocks5drift22UnisonVoiceModeHandlerINSt3__15arrayINS1_15DriftVoiceBlockELm8EEELm32EE13setVoiceDepthEfE17sMaxDetuneFactors
+STR 105b2122f len=129 : __ZGVZN7ableton6blocks5drift22UnisonVoiceModeHandlerINSt3__15arrayINS1_15DriftVoiceBlockELm8EEELm32EE13setVoiceDepthEfE8modeGain
+STR 10617dc98 len=139 : __ZZN7ableton6blocks5drift20MonoVoiceModeHandlerINSt3__15arrayINS1_15DriftVoiceBlockELm8EEEE11startVoicesERKNS0_8NoteDataEE13noteTranspose
+... string cap 5
+TOTAL_STRING_HITS=5
+== FUNCTION NAME HITS: 'VoiceModeHandler' ==
+TOTAL_FUNC_HITS=0
+INFO  REPORT: Execute script: SearchProbe.java 'computeNoteGain' '5' '20'  (HeadlessAnalyzer)  
+INFO  SCRIPT: /Users/admin/tools/live-re/scripts/SearchProbe.java (HeadlessAnalyzer)  
+== STRING HITS: 'computeNoteGain' ==
+STR 105b2105b len=65 : __ZGVZN7ableton6blocks5drift15computeNoteGainEfE14referenceLevel
+STR 10617dc57 len=63 : __ZZN7ableton6blocks5drift15computeNoteGainEfE14referenceLevel
+STR 106224723 len=36 : 5computeNoteGainEfE14referenceLevel
+STR 1064bc2c7 len=36 : 5computeNoteGainEfE14referenceLevel
+STR 106d6e69b len=65 : __ZGVZN7ableton6blocks5drift15computeNoteGainEfE14referenceLevel
+   <- 106bf7b48 refType=DATA (no function)
+   <- 106c8abc4 refType=DATA (no function)
+... string cap 5
+TOTAL_STRING_HITS=5
+== FUNCTION NAME HITS: 'computeNoteGain' ==
+TOTAL_FUNC_HITS=0
+INFO  REPORT: Execute script: SearchProbe.java 'cyclingEnvelopeQuartic' '5' '20'  (HeadlessAnalyzer)  
+INFO  SCRIPT: /Users/admin/tools/live-re/scripts/SearchProbe.java (HeadlessAnalyzer)  
+== STRING HITS: 'cyclingEnvelopeQuartic' ==
+STR 105b212b2 len=102 : __ZGVZN7ableton6blocks5drift6detail22cyclingEnvelopeQuarticINS_3dsp3VecIfLm4EEEEET_RKS7_E10kZeroRange
+STR 105b2131a len=109 : __ZGVZN7ableton6blocks5drift6detail22cyclingEnvelopeQuarticINS_3dsp3VecIfLm4EEEEET_RKS7_E17kInvScalingFactor
+STR 10617df33 len=100 : __ZZN7ableton6blocks5drift6detail22cyclingEnvelopeQuarticINS_3dsp3VecIfLm4EEEEET_RKS7_E10kZeroRange
+STR 10617df9b len=107 : __ZZN7ableton6blocks5drift6detail22cyclingEnvelopeQuarticINS_3dsp3VecIfLm4EEEEET_RKS7_E17kInvScalingFactor
+STR 10622475d len=63 : 6detail22cyclingEnvelopeQuarticINS_3dsp3VecIfLm4EEEEET_RKS7_E1
+... string cap 5
+TOTAL_STRING_HITS=5
+== FUNCTION NAME HITS: 'cyclingEnvelopeQuartic' ==
+TOTAL_FUNC_HITS=0
+INFO  REPORT: Save succeeded for processed file: /Live.arm64 (HeadlessAnalyzer)  

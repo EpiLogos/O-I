@@ -1,0 +1,152 @@
+// PROVENANCE: Ghidra 12.1.4 decompiles + nm decodes, persistent project
+// LiveRE2 (~/tools/live-re/ghidra-proj2, ALREADY ANALYZED), Live.arm64
+// (Live 12.0.25, 2024-08-27_2627c43816), arm64 slice. Query-only
+// (analyzeHeadless -process -noanalysis; no re-import; no Live runs, no
+// renders in this lane). Owner-private analysis evidence. NOT FOR
+// REDISTRIBUTION. Never enters product source (packages/live-dynamics).
+// Captured 2026-10-09 (Resonators binary lane) via SearchProbe / CallTargetsProbe
+// / BlockProbe / StringsInRange + `nm -U` on Live.arm64.
+// Companion dossier: devices/resonators-derivation.md.
+// Contents: (1) nm census (SProcessorFunc trampoline table, 56 callbacks);
+// (2) AResonator compound name table (mp* keys + display strings);
+// (3) NewRate body (FUN at 0x1019ac4c0 — inline thunk); (4) Init
+// FUN_10199d058 (shared slot recompute, inlined into setters); (5) Reset
+// FUN_10199d2b8; (6) CalcMainWithReset (0x1019acb98) — active-slot list build;
+// (7) CalcIn0Res0Mono0 (0x1019ac184) and CalcIn0Res0Mono4 (0x1019ac4a8) — the
+// per-sample tick shape; (8) setter slot-map (OnInFilterOn/Freq/Mode,
+// OnResMode/Decay/Const/Color); (9) default values from the factory preset
+// "Berlin.adv" (official Core Library evidence, gunzip XML read only).
+
+// ===== nm census (OResonatorProcessor; thunk address -> callback) =====
+00000001018c3664 SOnProcessorCreate<OResonatorProcessor>
+00000001019ac184 CalcIn0Res0Mono0     00000001019ac258 CalcIn1Res0Mono0
+00000001019ac25c CalcIn0Res1Mono0     00000001019ac370 CalcIn1Res1Mono0
+00000001019ac374 CalcIn0Res0Mono1     00000001019ac47c CalcIn1Res0Mono1
+00000001019ac480 CalcIn0Res1Mono1     00000001019ac484 CalcIn1Res1Mono1
+00000001019ac488 CalcIn0Res0Mono2     00000001019ac48c CalcIn1Res0Mono2
+00000001019ac490 CalcIn0Res1Mono2     00000001019ac494 CalcIn1Res1Mono2
+00000001019ac498 CalcIn0Res0Mono3     00000001019ac49c CalcIn1Res0Mono3
+00000001019ac4a0 CalcIn0Res1Mono3     00000001019ac4a4 CalcIn1Res1Mono3
+00000001019ac4a8 CalcIn0Res0Mono4     00000001019ac4ac CalcIn1Res0Mono4
+00000001019ac4b0 CalcIn0Res1Mono4     00000001019ac4b4 CalcIn1Res1Mono4
+00000001019ac4b8 Init(OScheduler*)    00000001019ac4bc Reset
+00000001019ac4c0 NewRate(int,int)
+00000001019ac570 OnInFilterOn  00000001019ac578 OnInFilterFreq
+00000001019ac580 OnInFilterMode
+00000001019ac58c OnResMode     00000001019ac594 OnResDecay
+00000001019ac59c OnResConst    00000001019ac5a4 OnResColor
+00000001019ac5ac OnResOn1      00000001019ac5b4 OnResNote
+00000001019ac5bc OnResTune1    00000001019ac5c4 OnResGain1
+00000001019ac608 OnResOn2      00000001019ac610 OnResPitch2
+00000001019ac65c OnResTune2    00000001019ac6a8 OnResGain2
+00000001019ac6f4 OnResOn3      00000001019ac6fc OnResPitch3
+00000001019ac748 OnResTune3    00000001019ac794 OnResGain3
+00000001019ac7e0 OnResOn4      00000001019ac7e8 OnResPitch4
+00000001019ac834 OnResTune4    00000001019ac880 OnResGain4
+00000001019ac8cc OnResOn5      00000001019ac8d4 OnResPitch5
+00000001019ac920 OnResTune5    00000001019ac96c OnResGain5
+00000001019ac9b8 OnWidth       00000001019ac9e4 OnDryWet
+00000001019acaac OnGlobalGain  00000001019acb78 OnOn
+00000001019acb88 OnX           00000001019acb98 CalcMainWithReset
+// CalcIn* bodies are INLINE in their thunks (the SProcessorFunc invoke IS the
+// per-sample tick; no separate dispatcher body). Init/Reset tail-call
+// FUN_10199d058 / FUN_10199d2b8.
+
+// ===== AResonator compound name table (StringsInRange 0x1048f881a..) =====
+// AResonator: mpInFilterOn, mpInFilterFreq, mpInFilterMode, mpResMode,
+// mpResDecay, mpResConst, mpResColor, mpResOn1, mpResNote,
+// mpResNoteScrollPosition, mpResTune1, mpResGain1, mpResOn2, mpResPitch2,
+// mpResTune2, mpResGain2, ... mpResOn5, mpResPitch5, mpResTune5, mpResGain5
+// display strings: Global Gain, I On, I Note, I Tune, I Gain, II On, II Pitch,
+// II Tune, II Gain, III ..., IV ..., V ...
+// (band 1 = NOTE band (MIDI), bands 2..5 = PITCH bands; 5 slots total)
+// device class string "Resonators" at 0x104867bc7 (device-name table);
+
+// ===== NewRate (0x1019ac4c0, second int = sample rate Hz) =====
+//   *(this+0xa8) = 0;
+//   this->0x454 = sr * 0.001f;                       // sr in kHz
+//   this->0x3d0 = (int)(sr*0.001f*300.0f + 1.0f);    // 300 ms delay capacity
+//   this->0x358 = this->0x394 = 1.0f/sr;
+//   func_0x00010199c3ac(sr, this+0xb0);  // five slot objects re-inited with sr:
+//   func_0x00010199c3ac(sr, this+0x130); //   slots at 0xb0/0x130/0x1b0/0x230/0x2b0
+//   func_0x00010199c3ac(sr, this+0x1b0); //   (0x80 bytes each)
+//   func_0x00010199c3ac(sr, this+0x230);
+//   func_0x00010199c3ac(sr, this+0x2b0);
+//   func_0x00010199d608(this);           // shared recompute
+//   *(this+8) = *(this+0x3d0);           // ring size = capacity
+//   tail-call *(code**)(this+0x10)(capacity, this+0x18);  // delay-line resize
+// const decode: 0x3a83126f = 0.00099904 (0.001 within float rounding),
+//               0x43960000 = 300.0f
+
+// ===== Init FUN_10199d058 (shared slot recompute; inlined into
+// OnResMode/OnResDecay/OnResConst/OnResColor) — key facts =====
+// input-filter biquad build (coeffs this+0x36c..0x380):
+//   w = min(1/sr * 188.49556, 3.1101768);   // 2*pi*30 / sr, capped below Nyquist
+//   sincosf -> sin/cos; alpha = sin/0.2 (Q = 0.1)
+//   RBJ highpass-form coefficients, normalized by 1/(1+alpha)
+// allpass bank this+0x100..0x114 (6 coeffs): w = min(fLUT*2pi*  (this+0x128),
+//   3.1101768), Q = 0.3 (sin/0.6), RBJ form
+// pitch -> frequency law (per slot values read at 0x408/0x40c/0x3f4):
+//   note_eff = note + cents*0.01 + 24 + (111 - note) * (color*0.75 + 24)*0.01
+//   idx      = note_eff*5 + 1381.8816        // 5 LUT steps per semitone
+//   f        = LUT0x1059a89a8[idx] + LUT0x1059a89b0[idx]*frac(idx)
+//              (runtime-built table, 0x960/4 = 2400 float entries; value above
+//               the table clamps to last entry)          // corpus material
+// delay-line tuning with allpass phase compensation:
+//   phase = atan2f((a*d - b*c)/den, (c*d + a*b)/den)   // complex allpass phase
+//   delay_samples(this+0xb8) = sr_ms * 1000/(f - f*phase/-2pi)
+//   smoothing: if old == 0 -> jump, else 100-step ramp (this+0xc4 = 100,
+//   this+0xcc = (new-old)/100)
+// decay coefficient this+0xb4 = (2*decay-1) * (1 - 1/(<shape>^2*5e-05*<fq>+1))
+//   with decay = this+0x3ec; the <shape> leg = 0.5 - this+0x3f8*0.5 when
+//   this+0x3f0 == 1.0 else sqrt(f)*12 (ResConst branch)   // see dossier
+// this+0xbc = this+0x410 * 0.5   (slot gain * 0.5)
+
+// ===== Reset FUN_10199d2b8 =====
+// zeroes per-slot filter states (0x348..0x390), delay/allpass states
+// (0x118/0x120, 0x198/0x1a0, ...), decay state 0xb4 = 0, gain-hold 0xbc = 1.0f,
+// delay read state 0xc8/0xc0, per-slot state resets FUN_1016d3ab0(0xd0/0x150/...).
+
+// ===== CalcMainWithReset (0x1019acb98) — active-slot list build =====
+//   tick callback table invoked at *(this+0x3c8); countdown this+0x3d4
+//   slots ON flags (stored as 1.0/0.0 floats): slot1 0x404, slot2 0x414,
+//     slot3 0x424, slot4 0x434, slot5 0x444
+//   active slots appended to a tick list at this+0x30..0x90, entries
+//     {slot*, bufA*, bufB*}: slot1 -> 0xb0 with bufs 0x3a8/0x3b0 (L pair),
+//     slot2 -> 0x130 with bufs 0x3ac/0x3b4 (R pair), slot3 -> 0x1b0 (L bufs),
+//     slot4 -> 0x230 (R bufs), slot5 -> 0x2b0 (L bufs)
+//   ALTERNATING L/R buffer pairing per slot (ping-pong band placement)
+//   final dispatch select: uVar9 = (uint)(InFilterOn(0x3dc) == 1.0) — one axis
+//   of the CalcIn{0,1}Res{0,1}Mono{0..4} selection
+
+// ===== CalcIn0Res0Mono0 (0x1019ac184) — per-sample tick shape =====
+//   stereo DF1 biquad on inputs (*(0x98), *(0xa0)) with coeffs 0x36c..0x382,
+//     states L 0x388/0x38c/0x390, R 0x398/0x39c/0x3a0  (the In filter)
+//   results -> 0x3a8 (L) / 0x3ac (R); 0x3b0 pair = 0
+//   Mono0 = no active extra slots: out = width-matrix of dry only:
+//     0xa8 = 0x3c0*0 + 0x3b8*inL; 0xac = ... (dry gain 0x3b8, width 0x3c0/0x3c4)
+// ===== CalcIn0Res0Mono4 (0x1019ac4a8) =====
+//   same input biquad, then 4 slot ticks: func_0x00010199e6bc(entry0..3) with
+//   entries {slot, bufA, bufB} from 0x30..0x90
+//   out L = 0x3b4*0x3c4 + 0x3c0*0x3b0 + 0x3b8*inL  (wet cross-pan + dry)
+
+// ===== setter slot-map =====
+// OnInFilterOn  -> this+0x3dc; rebuilds input-filter bank 0x330..0x36c via
+//                  switch(this+0x3e4) [InFilterMode], w = Freq(0x3e0)*2pi/sr(0x358)
+// OnInFilterFreq-> this+0x3e0 (same rebuild)
+// OnInFilterMode-> this+0x3e4 (menu; switch cases rebuild 0x330 bank)
+// OnResMode     -> this+0x3e8 (+1000) then shared slot recompute (Init body)
+// OnResDecay    -> this+0x3ec  then shared recompute
+// OnResConst    -> this+0x3f0  then shared recompute
+// OnResColor    -> this+0x3f4  then shared recompute
+
+// ===== defaults (factory preset "Resonators/Berlin.adv", XML read only) =====
+// InFilterOn=false  InFilterFreq=50   [50..8000 Hz]  InFilterMode=1
+// ResMode=true      ResDecay=76.98    [0..100]
+// ResConst=false    ResColor=85.71    [0..100]
+// Width=1 [0..1]     DryWet=0.492      [0..1]   GlobalGain=5.238 [-15..15 dB]
+// ResOn1=true       ResNote=43        [12..84]  ResTune1=0 [-50..50 ct]
+// ResGain1=1        [0.00031622799..1.99526203] (= -70..+6 dB, 10^(dB/20))
+// ResPitch2..5      [-24..24 st]
+// ResonanceType-equivalent: none (single resonator family; ResMode is the
+// mode axis, stored BOOL in XML)
