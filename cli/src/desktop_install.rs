@@ -1170,13 +1170,34 @@ pub fn plan_update(
     require_native_app_resources(staged, &previous)?;
     verify_owned_receipt(&previous)?;
     let old_footprint_path = Path::new(&previous.payload_root).join("footprint.json");
-    if file_sha256(&old_footprint_path)? != previous.footprint_sha256 { return Err("installed footprint byte basis changed".into()); }
-    let old_footprint = load_footprint(&fs::read_to_string(old_footprint_path).map_err(|e| e.to_string())?)?;
-    let old_target = old_footprint.targets.get(&previous.target).ok_or("installed footprint has no native target")?;
-    if old_footprint.app_id != previous.app_id || old_footprint.managed_root != staged.footprint.managed_root
-        || data_root.join(&old_footprint.managed_root).join(&previous.version).display().to_string() != previous.payload_root
-        || old_target.shim || old_target.registrations.len() != 1 || old_target.registrations[0].kind != "macos-app-copy"
-        || !previous.owned_resources.iter().any(|r| r.kind == "macos-app-copy" && r.path == expand_tilde(&old_target.registrations[0].path, home).display().to_string()) {
+    if file_sha256(&old_footprint_path)? != previous.footprint_sha256 {
+        return Err("installed footprint byte basis changed".into());
+    }
+    let old_footprint =
+        load_footprint(&fs::read_to_string(old_footprint_path).map_err(|e| e.to_string())?)?;
+    let old_target = old_footprint
+        .targets
+        .get(&previous.target)
+        .ok_or("installed footprint has no native target")?;
+    if old_footprint.app_id != previous.app_id
+        || old_footprint.managed_root != staged.footprint.managed_root
+        || data_root
+            .join(&old_footprint.managed_root)
+            .join(&previous.version)
+            .display()
+            .to_string()
+            != previous.payload_root
+        || old_target.shim
+        || old_target.registrations.len() != 1
+        || old_target.registrations[0].kind != "macos-app-copy"
+        || !previous.owned_resources.iter().any(|r| {
+            r.kind == "macos-app-copy"
+                && r.path
+                    == expand_tilde(&old_target.registrations[0].path, home)
+                        .display()
+                        .to_string()
+        })
+    {
         return Err("installed footprint does not bind the receipt-owned resources".into());
     }
     if previous.backing.requested != backing_id {
@@ -1709,8 +1730,11 @@ pub fn commit_remove(
 ) -> Result<RemovedDesktopReceipt, String> {
     let _lifecycle_lock = desktop_lifecycle_lock(data_root)?;
     refuse_pending_update(data_root)?;
-    let current = load_installed_receipt(data_root)?.ok_or("Desktop receipt disappeared before removal")?;
-    if serde_json::to_value(&current).map_err(|e| e.to_string())? != serde_json::to_value(receipt).map_err(|e| e.to_string())? {
+    let current =
+        load_installed_receipt(data_root)?.ok_or("Desktop receipt disappeared before removal")?;
+    if serde_json::to_value(&current).map_err(|e| e.to_string())?
+        != serde_json::to_value(receipt).map_err(|e| e.to_string())?
+    {
         return Err("Desktop receipt changed before removal; replan".into());
     }
 
@@ -2185,11 +2209,25 @@ mod tests {
     fn native_footprint_names_full_suite_without_replacing_smaller_backings() {
         let footprint = load_embedded_footprint().unwrap();
         assert_eq!(footprint.backing.default, "0/1/2");
-        assert_eq!(footprint.backing.options["0/1"].products, ["central", "actuation"]);
-        assert_eq!(footprint.backing.options["0/1/2"].products, ["central", "actuation", "ai-kit"]);
-        assert_eq!(footprint.backing.options["full-suite"].products, [
-            "central", "actuation", "ai-kit", "software-factory", "workcell", "quaternal-logic",
-        ]);
+        assert_eq!(
+            footprint.backing.options["0/1"].products,
+            ["central", "actuation"]
+        );
+        assert_eq!(
+            footprint.backing.options["0/1/2"].products,
+            ["central", "actuation", "ai-kit"]
+        );
+        assert_eq!(
+            footprint.backing.options["full-suite"].products,
+            [
+                "central",
+                "actuation",
+                "ai-kit",
+                "software-factory",
+                "workcell",
+                "quaternal-logic",
+            ]
+        );
     }
 
     #[test]
