@@ -1,0 +1,208 @@
+[
+ {
+  "name": "startup-ping",
+  "request": {
+   "jsonrpc": "2.0",
+   "method": "ping",
+   "params": {},
+   "id": "r1"
+  },
+  "expected_response_matches": {
+   "jsonrpc": "2.0",
+   "id": "r1",
+   "result": {
+    "pong": true
+   }
+  },
+  "volatile_fields": []
+ },
+ {
+  "name": "gateway.capabilities",
+  "request": {
+   "jsonrpc": "2.0",
+   "method": "gateway.capabilities",
+   "params": {},
+   "id": "r2"
+  },
+  "expected_response_matches": {
+   "jsonrpc": "2.0",
+   "id": "r2",
+   "result": {
+    "per_session_exclusive_submit": true
+   }
+  },
+  "volatile_fields": []
+ },
+ {
+  "name": "session.list-empty-home",
+  "request": {
+   "jsonrpc": "2.0",
+   "method": "session.list",
+   "params": {
+    "query": "",
+    "limit": 10
+   },
+   "id": "r3"
+  },
+  "expected_response_matches": {
+   "jsonrpc": "2.0",
+   "id": "r3",
+   "result": {
+    "sessions": []
+   }
+  },
+  "volatile_fields": []
+ },
+ {
+  "name": "config.get-empty-key-error",
+  "request": {
+   "jsonrpc": "2.0",
+   "method": "config.get",
+   "params": {},
+   "id": "r4"
+  },
+  "expected_response_matches": {
+   "jsonrpc": "2.0",
+   "id": "r4",
+   "error": {
+    "code": 4002,
+    "message": "unknown config key: "
+   }
+  },
+  "volatile_fields": []
+ },
+ {
+  "name": "setup.status",
+  "request": {
+   "jsonrpc": "2.0",
+   "method": "setup.status",
+   "params": {},
+   "id": "r5"
+  },
+  "expected_response_matches": {
+   "jsonrpc": "2.0",
+   "id": "r5",
+   "result": {
+    "provider_configured": true
+   }
+  },
+  "volatile_fields": [],
+  "note": "provider_configured depends on inherited env credentials; isolated home alone does not force false"
+ },
+ {
+  "name": "system.battery",
+  "request": {
+   "jsonrpc": "2.0",
+   "method": "system.battery",
+   "params": {},
+   "id": "r6"
+  },
+  "expected_response_matches": {
+   "jsonrpc": "2.0",
+   "id": "r6",
+   "result": {
+    "available": true,
+    "percent": "<volatile>",
+    "plugged": "<volatile>",
+    "category": "good"
+   }
+  },
+  "volatile_fields": [
+   "result.percent",
+   "result.plugged"
+  ]
+ },
+ {
+  "name": "session.most_recent-empty",
+  "request": {
+   "jsonrpc": "2.0",
+   "method": "session.most_recent",
+   "params": {},
+   "id": "r7"
+  },
+  "expected_response_matches": {
+   "jsonrpc": "2.0",
+   "id": "r7",
+   "result": {
+    "session_id": null
+   }
+  },
+  "volatile_fields": []
+ },
+ {
+  "name": "unknown-method",
+  "request": {
+   "jsonrpc": "2.0",
+   "method": "bogus.method.definitely_not_real",
+   "params": {},
+   "id": "r8"
+  },
+  "expected_response_matches": {
+   "jsonrpc": "2.0",
+   "id": "r8",
+   "error": {
+    "code": -32601,
+    "message": "unknown method: bogus.method.definitely_not_real"
+   }
+  },
+  "volatile_fields": []
+ },
+ {
+  "name": "bad-params-nonobject",
+  "request": {
+   "jsonrpc": "2.0",
+   "method": "session.list",
+   "params": "not-an-object",
+   "id": "r9"
+  },
+  "expected_response_matches": {
+   "jsonrpc": "2.0",
+   "id": "r9",
+   "error": {
+    "code": -32602,
+    "message": "invalid params: expected an object"
+   }
+  },
+  "volatile_fields": []
+ },
+ {
+  "name": "session.delete-missing-id",
+  "request": {
+   "jsonrpc": "2.0",
+   "method": "session.delete",
+   "params": {},
+   "id": "r10"
+  },
+  "expected_response_matches": {
+   "jsonrpc": "2.0",
+   "id": "r10",
+   "error": {
+    "code": 4006,
+    "message": "session_id required"
+   }
+  },
+  "volatile_fields": []
+ },
+ {
+  "name": "free_tier.status-fresh-home",
+  "request": {
+   "jsonrpc": "2.0",
+   "method": "free_tier.status",
+   "params": {},
+   "id": "r11"
+  },
+  "expected_response_matches": {
+   "jsonrpc": "2.0",
+   "id": "r11",
+   "result": {
+    "has_guest": false,
+    "enabled": false,
+    "available": false,
+    "notice_pending": false,
+    "model": "nous/welcome",
+    "label": "Nous \u00b7 free tier"
+   }
+  },
+  "volatile_fields": []
+ }
+]
