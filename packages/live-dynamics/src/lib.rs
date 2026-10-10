@@ -3,12 +3,14 @@
 //! Written from behavior documents only — see README for the binding rule.
 //!
 //! Device parameter surfaces (`auto_filter`, `compressor`, `eq8`,
-//! `filter_delay`, `overdrive`, `redux`, `saturator`, `utility`) are typed
-//! file-format facts from the official evidence XML only — no DSP, no
-//! behavior claims; each module cites its source file. `compressor` in
-//! addition carries a statically decodable per-sample layer (derivation
-//! doc-cited, no fitted scalars, explicit LUT placeholders, no behavioral
-//! claims); `glue` is the render-gated exception.
+//! `filter_delay`, `erosion`, `overdrive`, `redux`, `saturator`, `utility`)
+//! are typed file-format facts from the official evidence XML only — no
+//! DSP, no behavior claims; each module cites its source file (`erosion`
+//! cites its binary derivation document; no evidence XML is unpacked for
+//! it yet). `compressor`, `overdrive`, `redux` and `erosion` in addition
+//! carry a statically decodable per-sample layer (derivation doc-cited, no
+//! fitted scalars, explicit LUT placeholders, no behavioral claims);
+//! `glue` is the render-gated exception.
 
 pub mod audio;
 pub mod phaser_flanger;
@@ -22,6 +24,7 @@ pub mod auto_filter;
 pub mod compressor;
 pub mod echo;
 pub mod eq8;
+pub mod erosion;
 pub mod filter_delay;
 pub mod glue;
 pub mod operator;
