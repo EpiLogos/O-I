@@ -1,4 +1,6 @@
-//! Phaser-Flanger (PhaserNew) — typed parameter surface (file-format facts only, no DSP).
+//! Phaser-Flanger (PhaserNew) — typed parameter surface (file-format facts)
+//! plus the statically decodable per-sample layer (binary-derivation laws,
+//! no fitted scalars, no behavioral claims).
 //!
 //! Source (official evidence, licensed app bundle copy):
 //! `docs/research/ableton-live-12.0.25/evidence/devices/PhaserFlanger/preset-doubler-default.xml` —
@@ -15,6 +17,12 @@
 //! `Modulation_Frequency2`, `CenterFrequency` and `SafeBassFrequency` are Hz
 //! by the crate name rule; the delay-time parameters store bare numerics
 //! (units unclaimed).
+//!
+//! The per-sample layer below implements `devices/phaser-derivation.md`
+//! §3–§4 [D]/[B] claims only (LFO phase/wrap and envelope laws, the shared
+//! 2^x exponent assembly, the notch/feedback coefficient laws, the mode
+//! scales); its open residuals are named placeholders citing the
+//! derivation's §5, and nothing there claims parity (COVERAGE row empty).
 
 use crate::params::{bool_from, f64_from, i64_from, lookup_manual, RawManual, SurfaceError};
 /// Phaser-Flanger (XML root `PhaserNew`) surface — flat tags; the XML
@@ -334,5 +342,289 @@ fn defaults_parse_in_and_ranges_are_sane() {
             *lo <= v && v <= *hi,
             "{path}: default {v} outside [{lo}, {hi}]"
         );
+    }
+}
+
+// ===========================================================================
+// Per-sample layer — statically decodable only (binary-derivation lane,
+// 2026-10-11)
+//
+// Implements devices/phaser-derivation.md §3–§4 [D]/[B] claims:
+//   1. StereoLfo tick: the stereo phase pair advances by the increment pair
+//      and wraps by select (`phase ≥ 1 → phase − 1`) — branchless sawtooth
+//      [D §3]
+//   2. envelope follower: tracks |in| with the attack coefficient when
+//      rising, the release coefficient when falling [D §3 law shape]
+//   3. the shared 2^x exponent assembly [B §4]: exponent clamped [0, 255],
+//      int part ×2²³, fraction through the mantissa cubic
+//      `((0.013487903·t + 0.0521745)t + 0.24128748)t + 0.6930501`
+//   4. mode 0 (Phaser): `v = mod·4.0`, blend q → `a = 2^(v·(1−q)+127)`,
+//      `b = 2^(v·q+127)`; notch ratio `F = base·b` (floor 0.01), coefficient
+//      `ω = base·a·2π/sr` (min 3.14096, ×0.5, rational-tanh, ×2, ×0.5 →
+//      `k = tanh(min(ω, 3.14096)/2)`); TPT-SVF `g1 = k/(k(F+k)+1)`;
+//      closed-form feedback `y = (fb1·fb2·acc + in)/(1 − fb1·fb2·den)`
+//      [D §4 / B constants]
+//   5. mode 1 (Flanger) delay scale `2^(mod·(−3.0)+127)`; mode 2 (Doubler)
+//      `2^(v·0.5+127)` floored 1.0; common tail `delay = min(scale, cap)`
+//      [D §4]
+//
+// NOT implemented (residuals, derivation §5): the StereoLfo shape function
+// (waveform table, Spin, DutyCycle, LfoBlend, PhaseOffset — named
+// placeholder below); the per-notch base arrays' setter laws
+// (CenterFrequency/Spread → obj[0x570/0x580]) [H]; the second factor of the
+// feedback product [H]; the Flanger tap interpolation, the Doubler
+// snapshot internals and the InvertWet site. Nothing here claims parity
+// (COVERAGE row empty).
+// ===========================================================================
+
+/// StereoLfo phase wrap [D §3: `phase ≥ 1 → phase − 1`].
+pub const LFO_PHASE_WRAP: f64 = 1.0;
+/// Mantissa cubic of the shared 2^x assembly [B §4], coefficients c3..c0.
+pub const EXP2_MANTISSA_POLY: [f64; 4] = [0.013487903, 0.0521745, 0.24128748, 0.6930501];
+/// Assembly exponent clamp [B §4: clamp [0, 255]].
+pub const EXP2_EXPONENT_CLAMP: (f64, f64) = (0.0, 255.0);
+/// Mode-0 modulation scale [D §4: `v = mod4 · 4.0`].
+pub const PHASER_MOD_SCALE: f64 = 4.0;
+/// Mode-1 flanger delay slope [B §4: `2^(mod4·(−3.0) + 127)`].
+pub const FLANGER_MOD_SLOPE: f64 = -3.0;
+/// Mode-2 doubler scale slope [D §4: `2^(v·0.5 + 127)`].
+pub const DOUBLER_MOD_SLOPE: f64 = 0.5;
+/// Notch frequency-ratio floor [D §4.3: `floor 0.01`].
+pub const NOTCH_RATIO_FLOOR: f64 = 0.01;
+/// ω clamp [B §4.3: min with 3.14096 (0x40488f2d)].
+pub const NOTCH_OMEGA_CLAMP: f64 = 3.14096;
+/// Doubler delay scale floor [D §4: `floor 1.0`].
+pub const DOUBLER_SCALE_FLOOR: f64 = 1.0;
+/// Mode-handler asin-tracker smoother seed [B §2: `0.25·0.15643427`
+/// (0.15643427 = sin 9°), printed as 0.03910857].
+pub const TRACKER_SEED: f64 = 0.25 * 0.15643427;
+
+/// StereoLfo phase tick [D §3]: advance the phase, then the branchless
+/// sawtooth wrap (a single subtract-select — increments ≤ 1 by
+/// construction, so one select suffices).
+pub fn lfo_phase_tick(phase: f64, increment: f64) -> f64 {
+    let p = phase + increment;
+    if p >= LFO_PHASE_WRAP {
+        p - LFO_PHASE_WRAP
+    } else {
+        p
+    }
+}
+
+/// Envelope-follower tick [D §3 law shape]: one-pole toward `|in|` with the
+/// attack coefficient while rising, the release coefficient while falling.
+/// The coefficients themselves are the object's attack/release ramp values
+/// at +0x6f0/+0x700 [H — not decoded; the rising/falling selection is D].
+pub fn env_follower_tick(state: f64, level: f64, attack_coeff: f64, release_coeff: f64) -> f64 {
+    let c = if level > state { attack_coeff } else { release_coeff };
+    c * state + (1.0 - c) * level
+}
+
+/// The mantissa cubic of the 2^x assembly [B §4], evaluated at the
+/// fraction `t` (c3..c0 Horner form).
+pub fn exp2_mantissa_poly(t: f64) -> f64 {
+    ((EXP2_MANTISSA_POLY[0] * t + EXP2_MANTISSA_POLY[1]) * t + EXP2_MANTISSA_POLY[2]) * t
+        + EXP2_MANTISSA_POLY[3]
+}
+
+/// The shared 2^x exponent assembly [B §4]: clamp the exponent to [0, 255],
+/// split int part `E` and fraction `t`, and assemble the float bits
+/// `(E << 23) + round(t·poly(t)·2²³)` — value `2^(E−127)·(1 + t·poly(t))`.
+/// Reading note: the derivation transcribes the mantissa term as
+/// `t·poly(t)` (the fraction times the cubic above); with that term the
+/// assembly is 2^u to ≤4e-6 relative (the cubic's own fit error). The
+/// clamp's upper bound 255 is the f32 exponent field's end, so u = 255
+/// assembles to +∞ (mechanical consequence, kept).
+pub fn exp2_assembly(exponent: f64) -> f32 {
+    let u = exponent.clamp(EXP2_EXPONENT_CLAMP.0, EXP2_EXPONENT_CLAMP.1);
+    let int_part = u.floor();
+    let t = u - int_part;
+    let mantissa = (t * exp2_mantissa_poly(t) * f64::from(1u32 << 23)).round() as u32;
+    f32::from_bits(((int_part as u32) << 23) + mantissa)
+}
+
+/// Mode-0 exponent pair [D §4.1–2]: `v = mod·4.0`; `a = 2^(v·(1−q)+127)`,
+/// `b = 2^(v·q+127)` (`q` the blend weight obj[0x1cc+i]).
+pub fn phaser_exp_pair(modulation: f64, blend: f64) -> (f64, f64) {
+    let v = modulation * PHASER_MOD_SCALE;
+    (
+        f64::from(exp2_assembly(v * (1.0 - blend) + 127.0)),
+        f64::from(exp2_assembly(v * blend + 127.0)),
+    )
+}
+
+/// Notch frequency ratio [D §4.3]: `F = base·b`, floored at 0.01.
+pub fn notch_frequency_ratio(base_freq: f64, b: f64) -> f64 {
+    (base_freq * b).max(NOTCH_RATIO_FLOOR)
+}
+
+/// Notch coefficient ω [D §4.3]: `base_omega·a·2π/sr`, clamped at 3.14096.
+pub fn notch_omega(base_omega: f64, a: f64, sample_rate: f64) -> f64 {
+    (base_omega * a * 2.0 * std::f64::consts::PI / sample_rate).min(NOTCH_OMEGA_CLAMP)
+}
+
+/// Notch coefficient k [D §4.3]: the ×0.5, rational-tanh, ×2, ×0.5
+/// sequence cancels to `k = tanh(min(ω, 3.14096)/2)`. The binary's
+/// rational tanh approximation is not transcribed [H]; std `tanh` is the
+/// mathematical target it stands in for.
+pub fn notch_k(omega: f64) -> f64 {
+    (omega.min(NOTCH_OMEGA_CLAMP) * 0.5).tanh()
+}
+
+/// TPT-SVF coefficient [B §4.3]: `g1 = k/(k(F+k)+1)`.
+pub fn tpt_g1(k: f64, f_ratio: f64) -> f64 {
+    k / (k * (f_ratio + k) + 1.0)
+}
+
+/// Closed-form feedback re-entry [D §4.3]:
+/// `y = (fb1·fb2·acc + in)/(1 − fb1·fb2·den)`.
+pub fn closed_form_feedback(acc: f64, input: f64, fb1: f64, fb2: f64, den: f64) -> f64 {
+    let fb = fb1 * fb2;
+    (fb * acc + input) / (1.0 - fb * den)
+}
+
+/// Mode-1 flanger delay scale [B §4]: `2^(mod·(−3.0) + 127)`.
+pub fn flanger_delay_scale(modulation: f64) -> f64 {
+    f64::from(exp2_assembly(modulation * FLANGER_MOD_SLOPE + 127.0))
+}
+
+/// Mode-2 doubler delay scale [D §4]: `2^(v·0.5 + 127)`, floored at 1.0.
+pub fn doubler_delay_scale(v: f64) -> f64 {
+    f64::from(exp2_assembly(v * DOUBLER_MOD_SLOPE + 127.0)).max(DOUBLER_SCALE_FLOOR)
+}
+
+/// Common tail [D §4]: `delay = min(scale, max-delay cap)`.
+pub fn capped_delay(scale: f64, max_delay: f64) -> f64 {
+    scale.min(max_delay)
+}
+
+/// PLACEHOLDER, EXPLICIT (derivation §5 open — "The StereoLfo shape
+/// function ... resolves only to the phase/wrap law + the enum storage site
+/// until that cluster is decoded"): the waveform table, Spin, DutyCycle,
+/// LfoBlend and PhaseOffset application. This placeholder is the identity on
+/// the phase pair — with it the model applies NO waveform shape, and the
+/// mode scalars enter only through the laws above.
+pub fn stereo_lfo_shape_placeholder(phase_pair: (f64, f64)) -> (f64, f64) {
+    phase_pair
+}
+
+#[cfg(test)]
+mod per_sample_tests {
+    use super::*;
+
+    /// StereoLfo phase wrap [D §3]: advance-then-select sawtooth.
+    #[test]
+    fn lfo_phase_wrap() {
+        assert_eq!(lfo_phase_tick(0.5, 0.25), 0.75);
+        assert!((lfo_phase_tick(0.9, 0.2) - 0.1).abs() < 1e-15);
+        assert_eq!(lfo_phase_tick(0.0, 1.0), 0.0, "exact lap wraps to 0");
+        // A single subtract-select: an increment past one lap leaves
+        // phase ≥ 1 (increments are ≤ 1 by construction in the binary).
+        assert_eq!(lfo_phase_tick(0.0, 2.5), 1.5);
+        // Repeated ticks stay in [0, 1).
+        let mut p = 0.0;
+        for _ in 0..1000 {
+            p = lfo_phase_tick(p, 0.013);
+            assert!((0.0..1.0).contains(&p));
+        }
+    }
+
+    /// Envelope follower [D §3]: rising uses the attack coefficient, falling
+    /// the release coefficient; level == state holds.
+    #[test]
+    fn envelope_follower_attack_release() {
+        assert_eq!(env_follower_tick(0.0, 1.0, 0.5, 0.9), 0.5);
+        assert!((env_follower_tick(0.5, 0.2, 0.5, 0.9) - 0.47).abs() < 1e-15);
+        assert_eq!(env_follower_tick(0.3, 0.3, 0.5, 0.9), 0.3, "steady state holds");
+        // A full attack coefficient (0.0) snaps to the level.
+        assert_eq!(env_follower_tick(0.0, 0.7, 0.0, 0.9), 0.7);
+    }
+
+    /// The 2^x exponent assembly [B §4]: exact at integer exponents,
+    /// 2^u within the cubic's fit error, monotone, clamped [0, 255].
+    #[test]
+    fn exp2_assembly_exact_at_integers_and_clamped() {
+        assert_eq!(exp2_assembly(127.0), 1.0);
+        assert_eq!(exp2_assembly(128.0), 2.0);
+        assert_eq!(exp2_assembly(130.0), 8.0);
+        assert_eq!(exp2_assembly(124.0), 0.125);
+        // Fractional: the assembly is 2^u to the cubic's fit error.
+        for u in [128.5_f64, 127.25, 129.75, 125.125] {
+            let got = f64::from(exp2_assembly(u));
+            let want = 2.0f64.powf(u - 127.0);
+            assert!(
+                (got - want).abs() / want < 5e-6,
+                "u={u}: {got} vs {want}"
+            );
+        }
+        assert_eq!(exp2_mantissa_poly(0.0), 0.6930501);
+        assert!((exp2_mantissa_poly(1.0) - 1.0).abs() < 2e-8);
+        // Monotone over the clamp range.
+        let mut prev = f64::from(exp2_assembly(100.0));
+        let mut u = 100.0;
+        while u < 140.0 {
+            u += 0.37;
+            let next = f64::from(exp2_assembly(u));
+            assert!(next >= prev, "monotone at u={u}");
+            prev = next;
+        }
+        // Clamp: below 0 pins to 2^0; above 255 pins to the f32 exponent
+        // field's end (255 → +∞, a mechanical consequence of the assembly).
+        assert_eq!(exp2_assembly(-10.0), exp2_assembly(0.0));
+        assert_eq!(exp2_assembly(300.0), exp2_assembly(255.0));
+        assert!(exp2_assembly(255.0).is_infinite());
+    }
+
+    /// Mode-0 notch coefficient laws [D §4.3, B constants]: the exponent
+    /// pair, the ratio floor, the ω clamp and the g1 form.
+    #[test]
+    fn notch_coefficient_laws() {
+        // q = 0: a = 2^v, b = 1 (exponent pair at blend 0).
+        let (a, b) = phaser_exp_pair(0.25, 0.0);
+        assert!((a - 2.0).abs() < 5e-6, "a {a}");
+        assert_eq!(b, 1.0);
+        // q = 1: a = 1, b = 2^v.
+        let (a1, b1) = phaser_exp_pair(0.25, 1.0);
+        assert_eq!(a1, 1.0);
+        assert!((b1 - 2.0).abs() < 5e-6, "b {b1}");
+
+        assert_eq!(notch_frequency_ratio(1.0, 1e-6), NOTCH_RATIO_FLOOR);
+        assert_eq!(notch_frequency_ratio(100.0, 2.0), 200.0);
+
+        // ω = base·a·2π/sr, clamped at 3.14096.
+        let omega = notch_omega(1.0, 1.0, 48_000.0);
+        assert!((omega - 2.0 * std::f64::consts::PI / 48_000.0).abs() < 1e-18);
+        assert_eq!(notch_omega(1.0, 1e6, 48_000.0), NOTCH_OMEGA_CLAMP);
+
+        // k = tanh(min(ω, 3.14096)/2); g1 = k/(k(F+k)+1).
+        assert_eq!(notch_k(0.0), 0.0);
+        assert!((notch_k(10.0) - (NOTCH_OMEGA_CLAMP * 0.5).tanh()).abs() < 1e-15);
+        assert_eq!(tpt_g1(1.0, 1.0), 1.0 / 3.0);
+        assert_eq!(tpt_g1(0.0, 5.0), 0.0);
+    }
+
+    /// Closed-form feedback [D §4.3]: fb1·fb2 = 0 → the dry input passes;
+    /// hand-computed point at fb = 0.25, den = 0.5.
+    #[test]
+    fn closed_form_feedback_law() {
+        assert_eq!(closed_form_feedback(1.0, 0.5, 0.0, 0.0, 0.5), 0.5);
+        let y = closed_form_feedback(1.0, 0.5, 0.5, 0.5, 0.5);
+        assert!((y - 0.75 / 0.875).abs() < 1e-15, "y {y}");
+    }
+
+    /// Mode scales [D §4]: flanger 2^(mod·−3), doubler 2^(v·0.5) floored,
+    /// and the common min-with-cap tail.
+    #[test]
+    fn mode_scales_and_cap() {
+        assert_eq!(flanger_delay_scale(0.0), 1.0);
+        assert_eq!(flanger_delay_scale(1.0), 0.125);
+        assert_eq!(flanger_delay_scale(-1.0), 8.0);
+        assert_eq!(doubler_delay_scale(-1.0), DOUBLER_SCALE_FLOOR, "floored");
+        assert!((doubler_delay_scale(1.0) - 2.0f64.sqrt()).abs() < 5e-6);
+        assert_eq!(capped_delay(8.0, 2.5), 2.5);
+        assert_eq!(capped_delay(1.5, 2.5), 1.5);
+        // The mode-handler tracker seed [B §2]: 0.25·sin 9°, printed by the
+        // derivation as 0.03910857.
+        assert!((TRACKER_SEED - 0.03910857).abs() < 1e-8);
     }
 }
