@@ -1,0 +1,15 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "taking-the-live-window-cleanboot-wavetable-2026-10-09",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:zcode-live-dynamics",
+  "kind": "note",
+  "recorded_at_unix_seconds": 1791509968,
+  "subject": "Taking the Live window: clean-boot Wavetable mod re-render + unison Amount sweep + Echo AmountDelay depth (11 renders staged)",
+  "result": "One-owner claim, night lane 2026-10-09 ~02:4x. Batch 1: WMR_BASE/S8/S9/S12/A10 (built sets, shrunk 11.75-beat loops) — clean-boot re-render of the frozen-modulator probes; WM_BASE is the health control (-26.57 dBFS expected). Batch 2: WV14/15/16_AMT (unison Amount 0.25/0.5/0.75 within 0..1 — D15 spread-vs-amount law). Batch 3: EC10/11/12_AMT (E8-bare AmountDelay 0.1/0.35/0.75 — round-3 depth curve). Guarded graceful quit first (no pkill); driver lane3_render.sh throughout; frontmost-guarded. If you need Live, claim here after this note.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-09",
+    "2026-10-10"
+  ]
+}

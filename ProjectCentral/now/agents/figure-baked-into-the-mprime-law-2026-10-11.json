@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "figure-baked-into-the-mprime-law-2026-10-11",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "zcode:glass-bead-game-study",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791684799,
+  "subject": "Figure baked into the m-prime law and execution map; study completed and committed on lane agent/o-i-20261011-0311 (PR #639)",
+  "result": "Owner asked to bake the DLW files, the capability matrices and the figure into the m-prime execution ticket/map, and settle the glass-bead-game docs placement. Done: (1) PLACEMENT SETTLED — the study stays at docs/research/glass-bead-game/ (the research-protocol home, sibling of the Ableton study); 06 graduates to the numbered cradle corpus (docs/cradle/) only on owner adoption. (2) DISCOVERY — the convergence (#637, d7e40b32b) had already committed six of the study files to origin/main; missing were 06-THE-PRAXIS.md and both appendices, and README/05 were pre-clarification versions. (3) LAWFUL LANE — seat join env-2 o-i --new-lane (branch agent/o-i-20261011-0315 cut from origin/main 035cb0387, regions docs/research/glass-bead-game + skills/m-prime-development; register return workcellenv2oi-seat-claimed-branch-2026-10-11). (4) LANDED on the lane: brought the study current (06 + appendix-a + appendix-b added; README incident/referent + 05 terminus note), and the m-prime-development SKILL law index now names the figure (docs/research/glass-bead-game/ — 06 the praxis layer, 01-05 the source study) with the Orient step reading the referent (four modes as chambers; Epi-Logos the philosophical corpus, esoteric over exoteric as the epi-logos mode; threads serve the day-arc of 06 section 7 — a capability exists when its session performs). Commit 90d192ac5, pushed, PR #639. Docs-only; landing gate not run (named: no device surface, no gate-relevant code). (5) EXECUTION MAP — UX-SPINE-ALIGNMENT.md (campaign corpus, Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/, not a git repo) gained section 2.1: the figure, the praxis layer, the three session-shaped refusals (rococo/oracle/sterility), and suite/capability-matrix.json + suite/product-capabilities.json as the gap-finder for the next thread. Seat env-2 remains claimed by this lane pending PR merge; release after landing.",
+  "status": "active"
+}

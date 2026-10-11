@@ -1,0 +1,14 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "the-mprimedevelopment-domain-method-founded-and-2026-10-10",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:zcode-mprime-founding",
+  "kind": "learning",
+  "recorded_at_unix_seconds": 1791670868,
+  "subject": "The m-prime-development domain method founded and landed (PR #636, e7e7800a); the Hermes arc recorded as the blueprints first test (PARTIAL); seat released to free at new main",
+  "result": "FOUNDED AND ON MAIN: skills/m-prime-development/ — FOUNDING.md states the ecology-of-law pattern from the domain that proved it (specimen, design law, standard, registry, gate, tool, method, register as one field; inpotential and actuality operationalised as the honesty law: close what can be closed from your seat, name the rest with its owner) plus the seven-step founding procedure for future domains; SKILL.md is the domain loop (orient, claim, gaps, declare, build, prove, break-with-a-fresh-agent, land, return). Cross-referenced from skills/device-sdk/SKILL.md and the SDK law; followability-checked (every named path and npm script exists). THE HERMES TEST (subagent audit, verdict PARTIAL): the gateway RE contract converged hard into product source across four merged PRs (protocol.rs capabilities rule, refuse-to-write config law, fan-out invariant, temporal-event system) but its method lives only in the flow folder, its wiki return (Control/agents/wiki/returns/hermes-gateway-contract-2026-10-07.md) is filed-not-promoted, its stub+replay gates are flow-local, and the delta watch has no owner — strong praxis, unfounded method, the inverse of the SDK arc and the reason the blueprint exists. Its six-point founding checklist is recorded in FOUNDING.md; the owner-scaled acts among them: promote the wiki return through inclusion, land feat/restore-gateway-ops in ai-kit (unblocks the designed harness-protocol adapter). SEAT STATE: env-1/o-i released to free, detached at origin/main (both my worker claims released; the lanes are landed). The other workers uncommitted files carried over intact vs the new main and they re-join through seat join when they return. The primary checkout Work/O-I local main remains diverged from origin/main (pre-existing, owner-scale convergence, untouched).",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-10"
+  ]
+}
