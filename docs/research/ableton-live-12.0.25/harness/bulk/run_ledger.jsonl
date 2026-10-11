@@ -997,3 +997,21 @@
 {"label": "BULK-sampler-default-m1-velocity", "status": "rendered", "seconds": 0, "note": "restored from driver stash: silent by design (empty SampleParts; see gaps.md)"}
 {"label": "BULK-sampler-loaded-steps", "status": "rendered", "seconds": 0, "note": "loaded steps-1k.wav, -46.78 dBFS"}
 {"label": "BULK-simpler-loaded-steps", "status": "rendered", "seconds": 0, "note": "loaded steps-1k.wav, -56.51 dBFS"}
+{"label": "BULK-saturator-pin-basedrive-max", "status": "repair-rendered", "seconds": 71, "note": "ok"}
+{"label": "BULK-saturator-pin-basedrive-min", "status": "repair-rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-saturator-pin-colordepth-max", "status": "repair-rendered", "seconds": 61, "note": "ok"}
+{"label": "BULK-saturator-pin-colordepth-min", "status": "repair-rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-saturator-pin-colorfrequency-min", "status": "repair-rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-saturator-probe-predrive-max", "status": "repair-rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-saturator-probe-postclip-on", "status": "repair-rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-saturator-probe-basedrive-env", "status": "repair-rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-auto-filter-pin-lfoamount-min", "status": "repair-rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-chorus-ensemble-pin-highpassfrequency-min", "status": "repair-rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-vinyl-distortion-pin-craclevolume-min", "status": "repair-rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-wavetable-pin-voice-filter1-resonance-min", "status": "repair-rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-drift-pin-filter-hipassfrequency-min", "status": "repair-rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-drift-pin-filter-frequency-max", "status": "repair-rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-vocoder-pin-levelgate-min", "status": "repair-rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-beat-repeat-pin-dampvolume-min", "status": "repair-rendered", "seconds": 60, "note": "ok"}
+{"label": "BULK-legacy-frequency-shifter-pin-amount-max", "status": "repair-rendered", "seconds": 59, "note": "ok"}
+{"label": "BULK-pin-repair-batch", "status": "done", "seconds": 1027, "note": "pin-quality lane: 108/273 pins dither-identical (maxdelta<=2 LSB) in the original audit = 43 vacuous (silent carrier) + 65 inert (no-op-value family [41 pins total] + section gates + excitation limits + saturator colour defect + legacy Flanger); 6 no-op pins read live on render variance alone. Builder adjust_defaults repaired 41 no-op values in place (labels stable). 17 repair renders all ok: 8 measure clearly live (3 flipped from inert: chorus-ensemble HP 1969 LSB, vinyl crackle 4976, wavetable resonance 13), 1 excitation-inert (auto-filter LFO). Probes: saturator predrive-max LIVE 28148; postclip-on 2; basedrive-env 2 => saturator colour/structural stored state not applied at load (cause class d)"}
