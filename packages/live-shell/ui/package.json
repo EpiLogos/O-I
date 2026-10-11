@@ -16,6 +16,7 @@
     "devices:sync-icons": "node scripts/sync-icons.mjs",
     "devices:sync-kernel-ops": "node scripts/sync-kernel-ops.mjs",
     "devices:walk": "node tests/device-sdk.browser.mjs",
+    "devices:walk:live": "node tests/live-device-walk.browser.mjs",
     "devices:dev": "vite --config src/inhabitants/sdk/dev/vite.config.mjs"
   },
   "dependencies": {

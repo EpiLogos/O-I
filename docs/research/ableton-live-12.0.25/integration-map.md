@@ -308,11 +308,19 @@ result:
    the SDK face-kit capture walk (vite on `127.0.0.1:5207`, playwright;
    asserts the plate's mark/title/owner, scalar drag → retained draft, Enter
    acknowledges, the enum cycles, the waiting card names its owner; captures
-   to `tests/artifacts/device-sdk/`). **There is no live-mode device-panel
-   walk yet** — the round should add one (pattern:
-   `tests/support/agentShellHarness.mjs` `launchShell` + a fixture server
-   answering the three device endpoints). The closest frame-level coverage
-   today is `tests/live-mode-place.test.mjs` (the DeviceChainPanel read-only
+   to `tests/artifacts/device-sdk/`). **The live-mode device walk landed
+   2026-10-11**: `npm run devices:walk:live`
+   (`tests/live-device-walk.browser.mjs`) runs the real App frame in live
+   mode against a local fixture owner (`tests/support/liveDeviceFixture.mjs`
+   — Compressor2 + Overdrive + Redux2, the round's faces) answering
+   `/api/set` and the three M3 endpoints; it opens the device detail from
+   the status bar's Device toggle, asserts the three faces' rows (lossless
+   values, stored units, the honest "not stored" row), edits Overdrive Tone
+   through the POST route and cross-checks the persisted write from Node
+   (owner re-read + POST log); receipt
+   `tests/artifacts/live-device-walk/live-device-walk.json` (6 steps PASS,
+   no browser/page errors). The closest frame-level coverage remains
+   `tests/live-mode-place.test.mjs` (the DeviceChainPanel read-only
    laws) and `tests/mode-grammar.test.mjs`.
 7. Rust side: `cd packages/live-dynamics && cargo test` (unit), and
    `cargo test -- --ignored` for the golden gate when
