@@ -199,26 +199,43 @@ pub const RANGES: &[(&str, f64, f64)] = &[
 // §4; all runtime-initialized __DATA, not statically decodable [B-negative]):
 //   - `drive_gain_lut_placeholder`: stands in for the runtime dB→linear LUT
 //     `LUT_global[0x1059a89c0][dB·0.05]` (derivation §1 OnPreDrive/OnPostDrive)
-//     with the plain conversion 10^(dB/20). EXPLICIT residual — the real
-//     mapping is uncaptured and is NOT claimed.
+//     with the plain conversion 10^(dB/20). EXPLICIT residual — the BULK
+//     corpus contains no PreDrive/PostDrive pin (all 8 saturator sets store
+//     drive 0), so the real mapping is uncaptured and is NOT claimed.
 //   - `ShaperTable::identity_placeholder`: stands in for the stock curve
-//     tables (UI 0→factory(5), 1→factory(1), 2→factory(2), 3→factory(3),
+//     tables for Types 1–5 (UI 1→factory(1), 2→factory(2), 3→factory(3),
 //     4→factory(4), 5→factory(0) [D §3]) AND the post-clip Analog Clip table
-//     (factory(5) at 0x4d0 [D §1]) with the IDENTITY curve y = x — i.e. with
-//     placeholders in place this model saturates NOTHING. Same posture as the
-//     Compressor's GR-LUT identity placeholder: the missing piece is pinned
-//     by the corpus, not fitted away.
+//     (factory(5) at 0x4d0 [D §1]) with the IDENTITY curve y = x.
+// PINNED BY THE BULK CORPUS (gate wave, 2026-10-11):
+//   - Type 0's curve: the default Type is Analog Clip (factory(5)), and
+//     `BULK-saturator-default-steps-1k-wav.aif` reads the curve pointwise —
+//     [`analog_clip_curve`] is the fitted odd law (identity to |x| ≈ 0.71,
+//     then the measured knee), wired into Type 0 via
+//     [`stock_shaper_table`] / [`ShaperTable::analog_clip`].
+//   - `pre_dc_filter`: FALSE — the BULK ALS serializes
+//     `<PreDcFilter Value="false" />` on every saturator set (the runtime
+//     default the [B] const pool could not settle; corpus-pinned here).
+//   - The corpus pin renders (BaseDrive ±36, ColorDepth ±24,
+//     ColorFrequency 30) are DSP-INERT: all five pin files render
+//     dither-identical to the default (max |Δ| ≤ 2 LSB across both
+//     channels) despite the pin values existing in the ALS — so the corpus
+//     does NOT pin the color shelf laws or their LUTs; the shelf-law tests
+//     remain the only evidence there. Impulse/sweep renders exercise the
+//     4× oversampler (the corpus default serializes
+//     `<Oversampling Value="1" />`), which this model does not implement —
+//     no impulse gate is claimed.
 //
 // NOT modeled (residuals, derivation §4): 4x oversampling (resampler design
-// not captured [H]); the Dynamic-family trailing DC blocker (0x4a0, R 0.999 —
-// dispatch-vs-collection mismatch [H]); live OnShaperTable crossfade
-// (4099-sample length [D], machinery not needed without table streaming);
-// the table processor's scheduling (table SIZE is open — [`SHAPER_TABLE_SIZE`]
-// is a structure constant, not a captured value). Per-channel state split is
-// [D-shape]: separate L/R input/output pointers and L/R meters exist (§2), the
-// derivation itemizes one biquad-group set. The `pre_dc_filter` runtime
-// default is not captured (no XML element on the surface) — model-side choice.
-// No behavioral renders ran in the source lane; nothing here claims parity.
+// not captured [H] — and corpus-serialized ON at default); the Dynamic-family
+// trailing DC blocker (0x4a0, R 0.999 — dispatch-vs-collection mismatch [H]);
+// live OnShaperTable crossfade (4099-sample length [D], machinery not needed
+// without table streaming); the table processor's scheduling (table SIZE is
+// open — [`SHAPER_TABLE_SIZE`] is a structure constant, not a captured value).
+// Per-channel state split is [D-shape]: separate L/R input/output pointers and
+// L/R meters exist (§2), the derivation itemizes one biquad-group set. No
+// behavioral claim beyond the two pinned items above; the BULK static-map
+// gate (`tests/golden.rs::saturator_bulk_static_map_gate`) is the acceptance
+// test for the pinned curve.
 // ===========================================================================
 
 /// DC blocker stage-1 R at the 44.1 kHz reference [B: ctor 0x180 group].
@@ -413,14 +430,97 @@ pub fn depth_post(params: &SaturatorParams, sample_rate: u32) -> Biquad {
 
 /// Drive/PostDrive dB→gain stand-in: plain `10^(dB/20)`.
 ///
-/// PLACEHOLDER, EXPLICIT: the runtime replaces this with the global dB→linear
-/// LUT `LUT_global[0x1059a89c0]`, indexed `dB·0.05` [D §1 OnPreDrive/
+/// PLACEHOLDER, EXPLICIT — CORPUS-UNPINNABLE AS OF 2026-10-11 (gate wave):
+/// the runtime replaces this with the global dB→linear LUT
+/// `LUT_global[0x1059a89c0]`, indexed `dB·0.05` [D §1 OnPreDrive/
 /// OnPostDrive] — runtime-initialized __DATA, contents uncaptured
-/// ([B-negative], derivation §4). Nothing here claims the LUT's mapping; the
-/// identity of this function in source is the marker to grep for when the
-/// corpus lands.
+/// ([B-negative], derivation §4). The 2026-10-10 BULK corpus contains NO
+/// PreDrive or PostDrive pin: every `BULK-saturator-*.als` stores
+/// PreDrive 0 / PostDrive 0 (verified across all 8 sets), and the five
+/// parameter pins that DO exist (BaseDrive ±36, ColorDepth ±24,
+/// ColorFrequency 30) render dither-identical to the default (see
+/// [`SaturatorModel`] corpus note) — so the corpus carries no information
+/// about this LUT. Nothing here claims the LUT's mapping; the identity of
+/// this function in source is the marker to grep for when a PreDrive-pin
+/// render lands.
 pub fn drive_gain_lut_placeholder(db: f64) -> f64 {
     10f64.powf(db / 20.0)
+}
+
+/// The Analog Clip stock-curve deviation law — CORPUS-PINNED 2026-10-11
+/// (gate wave) from `BULK-saturator-default-steps-1k-wav.aif`.
+///
+/// Measurement: the default-Type (0 = Analog Clip, `factory(5)` [D §3])
+/// chain at the corpus defaults is drive 0 dB, ColorOn with 0 dB BaseDrive /
+/// 0 dB ColorDepth (both shelf pairs coefficient-exact passthrough — pinned
+/// by the crate's own shelf tests), PreDcFilter **false** (the BULK ALS
+/// serializes `<PreDcFilter Value="false" />`), out = SHAPER[in] (DryWet 1,
+/// PostDrive 0). The steps render (0.25 s lead + 7 × 0.5 s of a 1 kHz sine
+/// at −30…0 dBFS, `harness/gen_signals.py` #1) therefore reads the shaper
+/// pointwise: the recovered scatter f(x) (phase-aligned per the render,
+/// normalized to f(x)=x on the exactly-unity steps 0–5) is identity to
+/// |x| ≈ 0.71 within ±0.002, then compresses smoothly; the fitted odd
+/// deviation δ(x) = C·(x − K)^P (x ≥ K) has max |residual| ≤ 0.0012 against
+/// the 47 measured anchors (`ANALOG_CLIP_MEASURED`, reconstruction
+/// documented in `devices/saturator-derivation.md` §5 "corpus pinning").
+///
+/// Measured endpoint: f(1.0) = 0.9013 (−0.90 dB pointwise); the render's
+/// steady-state 1 kHz gains are exactly 0.00 dB on steps 0–5 and −0.45 dB
+/// RMS / −0.454 dB fundamental at the 0 dBFS step — the pinned curve
+/// reproduces those within the gate's 0.5 dB (see
+/// `tests/golden.rs::saturator_bulk_static_map_gate`).
+///
+/// Residual: |x| > 1 is NOT constrained by the corpus (every saturator set
+/// peaks at 1.0); the output is clamped at ±f(1) there (a bounded "clip"
+/// reading of the curve family — a stated model-side choice, no claim
+/// beyond ±1).
+pub const ANALOG_CLIP_KNEE: f64 = 0.71;
+/// Deviation coefficient (fitted, see [`ANALOG_CLIP_KNEE`]).
+pub const ANALOG_CLIP_C: f64 = 0.92782;
+/// Deviation exponent (fitted).
+pub const ANALOG_CLIP_P: f64 = 1.81;
+
+/// The measured Analog Clip curve anchors (x, f(x)), x ∈ [0, 1] — the
+/// corpus pointwise measurement backing the fit ([`analog_clip_curve`]);
+/// kept as evidence so the fit's residual is checkable in-crate.
+pub const ANALOG_CLIP_MEASURED: &[(f64, f64)] = &[
+    (0.7225, 0.72212),
+    (0.7425, 0.74010),
+    (0.7625, 0.75686),
+    (0.7800, 0.77232),
+    (0.7975, 0.78647),
+    (0.8150, 0.79933),
+    (0.8300, 0.81093),
+    (0.8450, 0.82141),
+    (0.8600, 0.83088),
+    (0.8750, 0.83947),
+    (0.8875, 0.84730),
+    (0.8950, 0.85096),
+    (0.9075, 0.85782),
+    (0.9250, 0.86702),
+    (0.9400, 0.87495),
+    (0.9500, 0.87953),
+    (0.9625, 0.88537),
+    (0.9750, 0.89141),
+    (0.9875, 0.89585),
+    (1.0000, 0.90127),
+];
+
+/// The Analog Clip transfer, corpus-pinned (see [`ANALOG_CLIP_KNEE`]):
+/// odd-symmetric, identity below the knee, `x − C·(x−K)^P` above it, with
+/// the output clamped at ±f(1) outside ±1 (unconstrained-by-corpus bound,
+/// stated in [`ANALOG_CLIP_KNEE`]).
+pub fn analog_clip_curve(x: f64) -> f64 {
+    let ax = x.abs();
+    let at_one = 1.0 - ANALOG_CLIP_C * (1.0 - ANALOG_CLIP_KNEE).powf(ANALOG_CLIP_P);
+    let y = if ax <= ANALOG_CLIP_KNEE {
+        ax
+    } else if ax <= 1.0 {
+        ax - ANALOG_CLIP_C * (ax - ANALOG_CLIP_KNEE).powf(ANALOG_CLIP_P)
+    } else {
+        at_one
+    };
+    x.signum() * y
 }
 
 /// The OnPreDrive de-zipper [D §1, transcribed]: payload {drive_dB,
@@ -467,6 +567,23 @@ impl ShaperTable {
             let x = SHAPER_DOMAIN_MIN
                 + (SHAPER_DOMAIN_MAX - SHAPER_DOMAIN_MIN) * i as f64 / SHAPER_TABLE_SIZE as f64;
             data.push(x as f32);
+        }
+        ShaperTable { data }
+    }
+
+    /// The Analog Clip stock curve (UI Type 0 → `factory(5)` [D §3]) — the
+    /// corpus-pinned table: every entry samples [`analog_clip_curve`] over
+    /// the domain [−10, +10] (the same table-object shape as the identity
+    /// placeholder). Corner-steepness note: the default 4096-entry table
+    /// spacing (≈0.0049) resolves the knee [0.71, 1.0] with ~60 entries.
+    /// With this table in place the Type-0 model is the default-chain model
+    /// the BULK gate exercises.
+    pub fn analog_clip() -> Self {
+        let mut data = Vec::with_capacity(SHAPER_TABLE_SIZE + 1);
+        for i in 0..=SHAPER_TABLE_SIZE {
+            let x = SHAPER_DOMAIN_MIN
+                + (SHAPER_DOMAIN_MAX - SHAPER_DOMAIN_MIN) * i as f64 / SHAPER_TABLE_SIZE as f64;
+            data.push(analog_clip_curve(x) as f32);
         }
         ShaperTable { data }
     }
@@ -600,11 +717,12 @@ pub struct SaturatorModel {
     /// Working DC-blocker R values [D §1 NewRate: R^(44100/sr)].
     pub dc_r1: f64,
     pub dc_r2: f64,
-    /// Runtime default not captured (no XML element on the parameter surface);
-    /// model-side choice, marked in the section header.
+    /// PreDcFilter stage gate [D §1 slot 0x54; corpus-pinned FALSE — every
+    /// BULK saturator ALS serializes `<PreDcFilter Value="false" />`].
     pub pre_dc_filter: bool,
-    /// Active shaper table (slot 0x1b0): identity placeholder for stock types
-    /// 0–5, the Type-6 curve law for Type 6.
+    /// Active shaper table (slot 0x1b0): the corpus-pinned Analog Clip curve
+    /// for Type 0 ([`ShaperTable::analog_clip`]), identity placeholders for
+    /// the other stock types, the Type-6 curve law for Type 6.
     pub shaper: ShaperTable,
     /// Post-clip table (slot 0x4d0 = factory(5) [D §1]) — identity placeholder.
     pub post_clip_table: ShaperTable,
@@ -619,6 +737,17 @@ pub struct SaturatorModel {
     ch: [ChannelState; 2],
 }
 
+/// The shaper table for a stock drive type: Type 0 (Analog Clip) is
+/// corpus-pinned ([`ShaperTable::analog_clip`]); the other stock types
+/// (1–5) remain explicit identity placeholders ([B-negative] contents).
+fn stock_shaper_table(params: &SaturatorParams) -> ShaperTable {
+    match stock_table_factory_index(params.drive_type) {
+        Some(_) if params.drive_type == 0 => ShaperTable::analog_clip(),
+        Some(_) => ShaperTable::identity_placeholder(),
+        None => build_user_table(params.wave_shaper),
+    }
+}
+
 impl SaturatorModel {
     /// Build from the surface at a sample rate: color coefficients from the
     /// shelf laws [D §3], DC Rs rescaled [D §1 NewRate], drive at 0 dB unity,
@@ -626,10 +755,7 @@ impl SaturatorModel {
     pub fn new(params: SaturatorParams, sample_rate: u32) -> Self {
         let drive_gain = drive_gain_lut_placeholder(params.pre_drive);
         let post_gain = drive_gain_lut_placeholder(params.post_drive);
-        let shaper = match stock_table_factory_index(params.drive_type) {
-            Some(_) => ShaperTable::identity_placeholder(),
-            None => build_user_table(params.wave_shaper),
-        };
+        let shaper = stock_shaper_table(&params);
         SaturatorModel {
             dc_r1: dc_block_r_work(DC_BLOCK_R1_44K, sample_rate),
             dc_r2: dc_block_r_work(DC_BLOCK_R2_44K, sample_rate),
@@ -639,7 +765,7 @@ impl SaturatorModel {
             post_d: depth_post(&params, sample_rate),
             params,
             sample_rate,
-            pre_dc_filter: true,
+            pre_dc_filter: false,
             shaper,
             post_clip_table: ShaperTable::identity_placeholder(),
             drive_gain,
@@ -677,10 +803,7 @@ impl SaturatorModel {
         self.post_d = depth_post(&self.params, self.sample_rate);
         self.dc_r1 = dc_block_r_work(DC_BLOCK_R1_44K, self.sample_rate);
         self.dc_r2 = dc_block_r_work(DC_BLOCK_R2_44K, self.sample_rate);
-        self.shaper = match stock_table_factory_index(self.params.drive_type) {
-            Some(_) => ShaperTable::identity_placeholder(),
-            None => build_user_table(self.params.wave_shaper),
-        };
+        self.shaper = stock_shaper_table(&self.params);
     }
 
     /// The stock chain [D §3]:
@@ -1091,7 +1214,8 @@ mod dsp_tests {
         assert!((t.lookup(100.0) - 5.0).abs() < 1e-4);
     }
 
-    /// Stock tables and post-clip are the EXPLICIT identity placeholders
+    /// Stock tables: Type 0 is the corpus-pinned Analog Clip curve; types
+    /// 1–5 and post-clip remain EXPLICIT identity placeholders
     /// ([B-negative] contents; see [`ShaperTable::identity_placeholder`]),
     /// and the Type enum + registry mapping hold [B §2/D §3].
     #[test]
@@ -1112,7 +1236,15 @@ mod dsp_tests {
             vec![Some(1), Some(2), Some(3), Some(4), Some(0)]
         );
         assert_eq!(stock_table_factory_index(6), None, "Type 6 = user table");
-        for t in 0..6i64 {
+        // Type 0 carries the pinned Analog Clip curve.
+        let m = SaturatorModel::new(DEFAULTS, SR);
+        for &v in &[-10.0, -3.7, -0.5, 0.3, 0.5, 0.8, 1.0, 2.5, 10.0] {
+            assert!(
+                (m.shaper.lookup(v) - analog_clip_curve(v)).abs() < 1e-3,
+                "type 0: pinned curve diverges at {v}"
+            );
+        }
+        for t in 1..6i64 {
             let mut p = DEFAULTS;
             p.drive_type = t;
             let m = SaturatorModel::new(p, SR);
@@ -1129,16 +1261,66 @@ mod dsp_tests {
         }
     }
 
-    /// Structure check, no gate claim: with the identity placeholders, 0 dB
-    /// drive, 0 dB color and Type 0, the chain is the input — exact with the
-    /// DC filter off; with it on, the two-blocker response matches the
-    /// closed-form cascade within 0.05 dB (and the lane's ±0.5 dB unity
-    /// window) at 1 kHz.
+    /// The pinned Analog Clip curve vs the corpus measurement: every
+    /// `ANALOG_CLIP_MEASURED` anchor within the fit's stated 0.002 band; the
+    /// curve is identity to the knee (the exactly-unity steps 0–5), odd,
+    /// bounded at f(1) beyond ±1, and monotone.
+    #[test]
+    fn analog_clip_curve_matches_measured_anchors() {
+        let mut worst = 0.0f64;
+        for (x, f) in ANALOG_CLIP_MEASURED {
+            worst = worst.max((analog_clip_curve(*x) - f).abs());
+        }
+        assert!(worst <= 0.002, "anchor residual {worst} > 0.002");
+        for &x in &[0.0, 0.1, 0.3, 0.5, 0.6, 0.708, ANALOG_CLIP_KNEE] {
+            assert_eq!(analog_clip_curve(x), x, "identity below the knee at {x}");
+            assert_eq!(analog_clip_curve(-x), -analog_clip_curve(x), "odd at {x}");
+        }
+        let f1 = analog_clip_curve(1.0);
+        assert!((f1 - 0.90127).abs() < 1e-4, "f(1) = {f1}");
+        assert_eq!(analog_clip_curve(10.0), f1, "bounded beyond ±1");
+        assert_eq!(analog_clip_curve(-10.0), -f1);
+        let mut prev = 0.0;
+        let mut x = 0.0;
+        while x <= 4.0 {
+            let y = analog_clip_curve(x);
+            assert!(y >= prev - 1e-12, "non-monotone at {x}");
+            prev = y;
+            x += 0.005;
+        }
+        // 1 kHz forward check at the corpus's 0 dBFS step: the pinned curve
+        // reads −0.45 dB RMS (the BULK render's measured value).
+        let sr = 44100u32;
+        let w = std::f64::consts::TAU * 1000.0 / f64::from(sr);
+        let n = 8820;
+        let mut acc = 0.0;
+        let mut acc_in = 0.0;
+        for i in 0..n {
+            let x = (w * i as f64).sin();
+            let y = analog_clip_curve(x);
+            acc += y * y;
+            acc_in += x * x;
+        }
+        let gain_db = 10.0 * (acc / acc_in).log10();
+        assert!(
+            (gain_db - (-0.45)).abs() <= 0.1,
+            "0 dBFS model RMS gain {gain_db:.3} vs render −0.45"
+        );
+    }
+
+    /// Structure check, no gate claim: with the identity placeholders
+    /// (Type 1 — Type 0 now carries the corpus-pinned Analog Clip curve),
+    /// 0 dB drive, 0 dB color and the DC filter off, the chain is the
+    /// input — exact; with the DC filter on, the two-blocker response
+    /// matches the closed-form cascade within 0.05 dB (and the lane's
+    /// ±0.5 dB unity window) at 1 kHz.
     #[test]
     fn chain_is_identity_through_placeholder_tables() {
         let w = std::f64::consts::TAU * 1000.0 / f64::from(SR);
         let run = |pre_dc: bool| -> f64 {
             let mut m = SaturatorModel::new(DEFAULTS, SR);
+            m.params.drive_type = 1; // identity placeholder curve
+            m.refresh();
             m.pre_dc_filter = pre_dc;
             let mut peak_in = 0.0f64;
             let mut peak_out = 0.0f64;
@@ -1233,12 +1415,14 @@ mod dsp_tests {
         assert!((m.drive_gain - drive_gain_lut_placeholder(20.0)).abs() < 1e-9);
     }
 
-    /// Meter tap [D §2: |driven_in − wet|]: with the identity table and color
-    /// off it reads the shaper's effect — zero; through the 0.5x Type-6 table
-    /// it reads |driven − wet| directly.
+    /// Meter tap [D §2: |driven_in − wet|]: with an identity table (Type 1)
+    /// and color off it reads the shaper's effect — zero; through the 0.5x
+    /// Type-6 table it reads |driven − wet| directly.
     #[test]
     fn meter_is_driven_minus_wet() {
         let mut m = SaturatorModel::new(DEFAULTS, SR);
+        m.params.drive_type = 1; // identity placeholder curve
+        m.refresh();
         m.params.color_on = false;
         m.pre_dc_filter = false;
         m.set_pre_drive(6.0, 0);

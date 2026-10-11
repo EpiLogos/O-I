@@ -1626,3 +1626,550 @@ fn echo_e1_golden_gate() {
         assert!((m - p).abs() <= 1.0, "E1 hop slope {}: render {m:.2} vs model {p:.2}", k + 1);
     }
 }
+
+// ---------------------------------------------------------------------------
+// GATE WAVE (2026-10-11): saturation/distortion + EQ devices vs the BULK
+// corpus (435 renders, harness/renders/BULK-*.aif; the complete bulk run).
+//
+// Thresholds restate the backlog's verify gate ("The verify gate", common
+// definition): static transfer ≤0.5 dB per step vs the golden map; spectral
+// ≤1.0 dB mean / 3.0 dB band; the 16-bit dither floor is out of scope
+// (observed max |Δ| = 2 LSB on this corpus's re-render pairs).
+//
+// Corpus parameters are read from the committed sets (harness/live/*.als —
+// parsed 2026-10-11), NOT from the crate DEFAULTS: the bulk harness pinned
+// each device's `Core Library/Defaults/.../*.adv`, which differs from some
+// of the crate's cited preset dumps (e.g. Overdrive's corpus default is
+// MidFreq 2593.96533 / BandWidth 6.34375 / Drive 60 / DryWet 25 /
+// Tone 39.6825409 / PreserveDynamics 0.349999994, whereas the crate's
+// cited Distort.adv reads 1596.93 / 9 / 100 / 100 / 50 / 1).
+//
+// Per-device status and named residuals:
+//   - Saturator: curve corpus-pinned (saturator.rs `analog_clip_curve`);
+//     static-map + sweep gates below. The five parameter PIN renders
+//     (BaseDrive ±36 / ColorDepth ±24 / ColorFrequency 30) are DSP-inert in
+//     the corpus (all dither-identical to the default — see the tripwire in
+//     the static gate), and the corpus has NO PreDrive/PostDrive pin, so the
+//     runtime dB→linear LUT (0x1059a89c0) stays a placeholder. The impulse
+//     renders exercise the 4× oversampler (corpus default serializes
+//     `<Oversampling Value="1" />`) which the model does not implement —
+//     no impulse gate.
+//   - EQ Eight: GlobalGain pins only (bands at 0 dB / disabled in the
+//     corpus default). Gate below. The per-band record→biquad partition is
+//     [H] in the derivation and no band-coefficient pins exist — no
+//     band-transfer gate is possible from this corpus.
+//   - Redux: DryWet-0 passthrough + identical-parameter re-render
+//     consistency gates below; the per-sample quantize/decimate/soft
+//     expressions are runtime tick closures (derivation §4) — no parity
+//     gate.
+//   - Filter Delay: delay-time law gate below (three free-time bands in the
+//     corpus default). The BandWidth-LUT ratio pin was ATTEMPTED from the
+//     bandwidth pin IRs (spectral fit of the band-pass edges) and did NOT
+//     converge (fit rms ≫ the 1.0 dB band convention) — recorded as
+//     corpus-pending, no pin taken.
+//   - Overdrive: static-map gate below — RUNS AND FAILS as the honest
+//     record + acceptance target (the model's named residuals: PD gain LUT
+//     0x1059a89b8, Tone tilt LUT +0x820, shelf stage — all identity/absent).
+//   - Auto Filter: cutoff pins are live (probe below); the modern-engine
+//     coefficient law + cutoff LUT (0x1059a89a8) are not modeled — no
+//     parity gate.
+// ---------------------------------------------------------------------------
+
+/// harness/gen_signals.py #1: 0.25 s silence, 7 × 0.5 s steps at
+/// −30/−24/−18/−12/−6/−3/0 dBFS peak (1 kHz), 1.5 s tail.
+fn synth_steps_1k(sr: u32) -> Vec<f32> {
+    let n = (0.25 * sr as f64) as usize
+        + 7 * (0.5 * sr as f64) as usize
+        + (1.5 * sr as f64) as usize;
+    let mut s = vec![0f32; n];
+    let w = 2.0 * std::f64::consts::PI * 1000.0 / sr as f64;
+    for (i, db) in [-30.0f64, -24.0, -18.0, -12.0, -6.0, -3.0, 0.0].iter().enumerate() {
+        let start = ((0.25 + 0.5 * i as f64) * sr as f64) as usize;
+        let end = (start + (0.5 * sr as f64) as usize).min(n);
+        let a = 10f64.powf(db / 20.0);
+        for (k, slot) in s[start..end].iter_mut().enumerate() {
+            *slot = (a * (w * (start + k) as f64).sin()) as f32;
+        }
+    }
+    s
+}
+
+fn step_window_rms_db(buf: &[f32], sr: u32, k: usize) -> f64 {
+    let t0 = 0.25 + 0.5 * k as f64;
+    let a = ((t0 + 0.10) * sr as f64) as usize;
+    let b = ((t0 + 0.40) * sr as f64) as usize;
+    audio::rms_db(&buf[a..b.min(buf.len())])
+}
+
+#[test]
+#[ignore]
+fn saturator_bulk_static_map_gate() {
+    const NAME: &str = "BULK-saturator-default-steps-1k-wav.aif";
+    if !render_exists(NAME) {
+        println!("skip {NAME}: render not present in this checkout");
+        return;
+    }
+    // Tripwire for the corpus's saturator pin defect: the five pin renders
+    // must stay dither-identical to the default (they carry NO pin
+    // information — see the section header). If a future corpus re-render
+    // makes them differ, this forced re-look fires.
+    let names = [
+        "BULK-saturator-default-impulse-wav.aif",
+        "BULK-saturator-pin-basedrive-max.aif",
+        "BULK-saturator-pin-basedrive-min.aif",
+        "BULK-saturator-pin-colordepth-max.aif",
+        "BULK-saturator-pin-colordepth-min.aif",
+        "BULK-saturator-pin-colorfrequency-min.aif",
+    ];
+    let mut rendered: Vec<Vec<f32>> = Vec::new();
+    for n in names {
+        if render_exists(n) {
+            rendered.push(read_render(n).samples);
+        }
+    }
+    for pair in rendered.windows(2) {
+        let d = pair[0]
+            .iter()
+            .zip(&pair[1])
+            .map(|(a, b)| (a - b).abs())
+            .fold(0.0f32, f32::max);
+        assert!(
+            d <= 1.2e-4,
+            "saturator pin render no longer dither-identical to default (max |Δ| {d}) — \
+             the corpus pin defect may be fixed; pin/gate the colour laws now"
+        );
+    }
+    println!(
+        "corpus tripwire: {} saturator pin renders dither-identical to default (max |Δ| ≤ 2 LSB)",
+        rendered.len() - 1
+    );
+
+    // Static map: the default-chain model (Type 0 pinned curve, drive 0 dB,
+    // colour at 0 dB = coefficient-exact passthrough, PreDcFilter false per
+    // the serialized default) on the same steps signal at the render rate.
+    let render = read_render(NAME);
+    let sr = render.sample_rate;
+    let mut m = live_dynamics::saturator::SaturatorModel::new(
+        live_dynamics::saturator::DEFAULTS,
+        sr,
+    );
+    let signal = synth_steps_1k(sr);
+    let mut out = vec![0f32; signal.len()];
+    for (i, x) in signal.iter().enumerate() {
+        let (ol, _) = m.process(*x, *x);
+        out[i] = ol;
+    }
+    let mut worst = 0.0f64;
+    let mut failures: Vec<String> = Vec::new();
+    for (k, db) in [-30.0f64, -24.0, -18.0, -12.0, -6.0, -3.0, 0.0].iter().enumerate() {
+        let got = step_window_rms_db(&render.samples, sr, k);
+        let pred = step_window_rms_db(&out, sr, k);
+        let d = pred - got;
+        worst = worst.max(d.abs());
+        println!(
+            "step {k} ({db:+5.0} dBFS): render {got:8.2}  model {pred:8.2}  Δ {d:+.2} dB (tol ±0.5)"
+        );
+        if d.abs() > 0.5 {
+            failures.push(format!("step {k}: model {pred:.2} vs render {got:.2}"));
+        }
+    }
+    println!("saturator static map: worst |Δ| {worst:.2} dB");
+    assert!(
+        failures.is_empty(),
+        "saturator bulk static gate failed:\n  {}",
+        failures.join("\n  ")
+    );
+}
+
+#[test]
+#[ignore]
+fn saturator_bulk_sweep_gate() {
+    const NAME: &str = "BULK-saturator-default-sweep-20-20k-wav.aif";
+    if !render_exists(NAME) {
+        println!("skip {NAME}: render not present in this checkout");
+        return;
+    }
+    // sweep-20-20k: 3 s exponential 20 Hz → 20 kHz at 0.5 amplitude + tail
+    // (harness/gen_signals.py #2). Through the default chain the pinned
+    // curve is identity (|x| ≤ 0.5 < knee) and the colour pair is 0 dB —
+    // the model path is the resampled input. Compare 12 sliding windows
+    // across the sweep; the window ratio is the static gain at that band
+    // (±1.0 dB, the spectral-mean convention).
+    let render = read_render(NAME);
+    let sr = render.sample_rate as f64;
+    let (f0, f1, dur) = (20.0f64, 20000.0f64, 3.0f64);
+    let k = (f1 / f0).ln();
+    let sweep = |t: f64| -> f64 {
+        0.5 * (2.0 * std::f64::consts::PI * f0 * dur / k * ((k * t / dur).exp() - 1.0)).sin()
+    };
+    let mut worst = 0.0f64;
+    let mut failures: Vec<String> = Vec::new();
+    for w in 0..12usize {
+        let t0 = 0.05 + w as f64 * 0.24;
+        let t1 = t0 + 0.20;
+        let a = (t0 * sr) as usize;
+        let b = (t1 * sr) as usize;
+        let mut num = 0.0f64;
+        let mut den = 0.0f64;
+        for i in a..b {
+            num += f64::from(render.samples[i]).powi(2);
+            den += sweep(i as f64 / sr).powi(2);
+        }
+        let d = 10.0 * (num / den).log10();
+        worst = worst.max(d.abs());
+        println!(
+            "window t {:4.2}–{:4.2} s ({:5.0}–{:5.0} Hz): gain {d:+.2} dB (tol ±1.0)",
+            t0,
+            t1,
+            f0 * (k * t0 / dur).exp(),
+            f0 * (k * t1 / dur).exp()
+        );
+        if d.abs() > 1.0 {
+            failures.push(format!("window {w} ({t0:.2} s): {d:+.2} dB"));
+        }
+    }
+    println!("saturator sweep: worst |Δ| {worst:.2} dB");
+    assert!(failures.is_empty(), "saturator sweep gate failed:\n  {}", failures.join("\n  "));
+}
+
+#[test]
+#[ignore]
+fn eq8_bulk_globalgain_gate() {
+    let (def, util, gmin, gmax) = (
+        "BULK-eq-eight-default-impulse-wav.aif",
+        "BULK-utility-default-impulse-wav.aif",
+        "BULK-eq-eight-pin-globalgain-min.aif",
+        "BULK-eq-eight-pin-globalgain-max.aif",
+    );
+    if !(render_exists(def) && render_exists(util) && render_exists(gmin) && render_exists(gmax)) {
+        println!("skip eq8 globalgain gate: renders not present in this checkout");
+        return;
+    }
+    // The corpus default: band A a 0 dB Low Shelf @ 30 Hz, band B off,
+    // GlobalGain 0 → the static chain is unity (the Utility default render
+    // is the corpus's own unity reference). The EQ Eight model path for
+    // this configuration is `global_gain_linear(0, ms=false)`.
+    let d = read_render(def).samples;
+    let u = read_render(util).samples;
+    let peak = |b: &[f32]| -> f64 {
+        f64::from(b.iter().fold(0.0f32, |m, v| m.max(v.abs())))
+    };
+    let gain0 = 20.0 * (peak(&d) / peak(&u)).log10();
+    println!("EQ8 default vs Utility (unity ref): {gain0:+.3} dB (model 0, tol ±0.5)");
+    assert!(
+        (gain0 - 20.0 * live_dynamics::eq8::global_gain_linear(0.0, false).log10()).abs() <= 0.5,
+        "EQ8 default chain not unity vs the corpus reference"
+    );
+
+    // GlobalGain −12: the whole IR scales by exactly 10^(−12/20) (measured
+    // on the peak: 0.12381 / 0.49292 = −12.000 dB).
+    let m = read_render(gmin).samples;
+    let gain_min = 20.0 * (peak(&m) / peak(&d)).log10();
+    let model_min =
+        20.0 * live_dynamics::eq8::global_gain_linear(-12.0, false).log10();
+    println!("GlobalGain −12: render {gain_min:+.3} dB  model {model_min:+.3} dB (tol ±0.2)");
+    assert!((gain_min - model_min).abs() <= 0.2, "GlobalGain −12 law off");
+
+    // GlobalGain +12: the +12 dB copy CLIPS at the 16-bit export ceiling
+    // (peak 0.99997 = full scale); gate the law on the unclipped region
+    // (samples where the default IR is ≤ 0.2 → +12 copy ≤ 0.8 < ceiling).
+    let x = read_render(gmax).samples;
+    let mut num = 0.0f64;
+    let mut den = 0.0f64;
+    for i in 0..d.len() {
+        if f64::from(d[i].abs()) <= 0.2 && f64::from(d[i].abs()) > 1e-4 {
+            num += f64::from(x[i]).powi(2);
+            den += f64::from(d[i]).powi(2);
+        }
+    }
+    let gain_max = 10.0 * (num / den).log10();
+    let model_max = 20.0 * live_dynamics::eq8::global_gain_linear(12.0, false).log10();
+    println!(
+        "GlobalGain +12: render {gain_max:+.3} dB (unclipped region)  model {model_max:+.3} dB (tol ±0.2); \
+         clipped peak {:.5} (expect ≈1.0)",
+        peak(&x)
+    );
+    assert!((gain_max - model_max).abs() <= 0.2, "GlobalGain +12 law off");
+    assert!(peak(&x) >= 0.9999, "the +12 render did not reach the export ceiling");
+}
+
+#[test]
+#[ignore]
+fn redux_bulk_drywet_and_pin_consistency_gate() {
+    let (def, util, dry0, bd_min, bd_max) = (
+        "BULK-redux-default-impulse-wav.aif",
+        "BULK-utility-default-impulse-wav.aif",
+        "BULK-redux-pin-drywet-min.aif",
+        "BULK-redux-pin-bitdepth-min.aif",
+        "BULK-redux-pin-bitdepth-max.aif",
+    );
+    if !(render_exists(def) && render_exists(util) && render_exists(dry0) && render_exists(bd_min) && render_exists(bd_max)) {
+        println!("skip redux gate: renders not present in this checkout");
+        return;
+    }
+    let maxdiff = |a: &[f32], b: &[f32]| -> f64 {
+        a.iter()
+            .zip(b)
+            .map(|(x, y)| f64::from((x - y).abs()))
+            .fold(0.0f64, f64::max)
+    };
+    let d = read_render(def).samples;
+    let u = read_render(util).samples;
+    let x0 = read_render(dry0).samples;
+    let xm = read_render(bd_min).samples;
+    let x_max = read_render(bd_max).samples;
+
+    // DryWet 0 → the raw input (the corpus's Utility default render).
+    let d0 = maxdiff(&x0, &u);
+    println!("Redux DryWet 0 vs Utility (raw passthrough): max |Δ| {d0:.6} (tol 1e-4)");
+    assert!(d0 <= 1e-4, "Redux DryWet-0 passthrough off: {d0}");
+
+    // BitDepth pin at the default value (1) → identical parameters →
+    // dither-identical render (corpus self-consistency).
+    let dm = maxdiff(&d, &xm);
+    println!("Redux BitDepth 1 (pin = default) re-render: max |Δ| {dm:.6} (tol 1e-4)");
+    assert!(dm <= 1e-4, "identical-parameter renders differ: {dm}");
+
+    // BitDepth 16 pin is LIVE (the IR changes) — no parity claim, but the
+    // pin must not be inert.
+    let d_max = maxdiff(&d, &x_max);
+    println!("Redux BitDepth 16 pin liveness: max |Δ| {d_max:.5} (must be > 1e-3)");
+    assert!(d_max > 1e-3, "BitDepth pin inert: {d_max}");
+    // RESIDUAL (no gate): the per-sample quantize/decimate/soft expressions
+    // live in runtime tick closures (redux-derivation §4) and the crate's
+    // soft/decimate laws are placeholders — nothing here predicts the
+    // BitDepth-16 IR.
+}
+
+#[test]
+#[ignore]
+fn filterdelay_bulk_delay_time_gate() {
+    const NAME: &str = "BULK-filter-delay-default-impulse-wav.aif";
+    const UTIL: &str = "BULK-utility-default-impulse-wav.aif";
+    if !(render_exists(NAME) && render_exists(UTIL)) {
+        println!("skip {NAME}: render not present in this checkout");
+        return;
+    }
+    // The corpus default (BULK-filter-delay-default ALS): three bands, all
+    // free-time (IsBeatSync false), DryVolume 0.8032414317 —
+    //   band 1: MidFreq 1014.30896, BW 2.09375, DelayTime 18.71875 ms,
+    //           FB 0, Pan −1 (hard L), Volume 1
+    //   band 2: MidFreq 155.883896, BW 3.421875, DelayTime 64.984375 ms,
+    //           FB 0.4126984179, Pan 0, Volume 0.3853087127
+    //   band 3: MidFreq 1732.05359, BW 2.359375, DelayTime 31.515625 ms,
+    //           FB 0, Pan +1 (hard R), Volume 1
+    // Thresholds (stated): per-tap onset index within ±6 samples of
+    // direct + delay_samples (the crate's sr_kHz·ms law; the band filter's
+    // group delay rides the onset), tap PEAK within ±8; dry level within
+    // ±0.5 dB of input × DryVolume; channel routing as the pans demand
+    // (opposite channel ≤ 1/10 of the tap peak); band-2 recirculation at
+    // k× the delay with monotone decay.
+    use live_dynamics::filter_delay;
+    let (l, r) = audio::read_aiff_i16_channels(&read_render_bytes(NAME)).unwrap();
+    let u = read_render(UTIL).samples; // unity chain → the harness impulse
+    let sr = l.sample_rate;
+    let direct = verify::find_direct_sample(&l.samples, sr);
+    let direct_util = verify::find_direct_sample(&u, sr);
+    assert_eq!(direct, direct_util, "direct alignment differs from the unity render");
+    let dry_vol = 0.8032414317f64;
+    let dry_gain =
+        20.0 * (f64::from(l.samples[direct]) / f64::from(u[direct_util])).log10();
+    println!(
+        "dry direct: render {:.5} = input {:.5} × DryVolume → {dry_gain:+.3} dB (tol ±0.5)",
+        l.samples[direct],
+        u[direct_util]
+    );
+    assert!(
+        (dry_gain - 20.0 * dry_vol.log10()).abs() <= 0.5,
+        "DryVolume law off: {dry_gain:+.3} dB vs {:.3}",
+        20.0 * dry_vol.log10()
+    );
+
+    let tap = |buf: &[f32], expected: usize, tol_pk: usize| -> (usize, usize, f32) {
+        let a = expected.saturating_sub(25);
+        let b = (expected + tol_pk + 25).min(buf.len());
+        let pk = (a..b).fold(a, |m, i| if buf[i].abs() > buf[m].abs() { i } else { m });
+        let thr = 0.02 * buf[pk].abs();
+        let onset = (a..=pk).find(|&i| buf[i].abs() > thr).unwrap_or(pk);
+        (onset, pk, buf[pk])
+    };
+    let mut failures: Vec<String> = Vec::new();
+    // First-tap metric: the ONSET pins the delay time (measured: floor of
+    // direct + delay_samples within ±1 for all three bands); the PEAK sits
+    // at onset + the band filter's group delay (measured +3 samples for the
+    // 1 kHz band, +12 for the 156 Hz band) — tolerances state both.
+    let cases: [(&str, &[f32], &[f32], f64, f64); 3] = [
+        // band, own channel, other channel, delay ms, other/own ratio bound
+        ("band 1 (18.71875 ms, hard L)", &l.samples, &r.samples, 18.71875, 0.1),
+        ("band 3 (31.515625 ms, hard R)", &r.samples, &l.samples, 31.515625, 0.1),
+        ("band 2 (64.984375 ms, centre)", &l.samples, &r.samples, 64.984375, 1.2),
+    ];
+    for (label, ch, other, ms, ratio_bound) in cases {
+        let want = direct + filter_delay::delay_samples(ms, sr).round() as usize;
+        let (onset, pk, val) = tap(ch, want, 16);
+        let (_, _, other_val) = tap(other, want, 16);
+        println!(
+            "{label}: onset {onset} / peak {pk} (expected {want}), peak value {val:+.5}, \
+             other-channel peak {other_val:+.5}"
+        );
+        if (onset as i64 - want as i64).abs() > 3 {
+            failures.push(format!("{label}: onset {onset} vs expected {want}"));
+        }
+        if (pk as i64 - want as i64).abs() > 16 {
+            failures.push(format!("{label}: peak {pk} vs expected {want}"));
+        }
+        if f64::from(other_val.abs()) > ratio_bound * f64::from(val.abs()) {
+            failures.push(format!("{label}: other channel {other_val} too loud"));
+        }
+    }
+    // Band 2 (centre) sits in both channels equally at the tap (±0.5 dB).
+    let want2 = direct + filter_delay::delay_samples(64.984375, sr).round() as usize;
+    let (_, _, v_l) = tap(&l.samples, want2, 16);
+    let (_, _, v_r) = tap(&r.samples, want2, 16);
+    let lr = 20.0 * (f64::from(v_l.abs()) / f64::from(v_r.abs())).log10();
+    println!("band 2 centre L/R: {v_l:+.5} / {v_r:+.5} → {lr:+.2} dB (tol ±0.5)");
+    if lr.abs() > 0.5 {
+        failures.push(format!("band 2 L/R imbalance {lr:+.2} dB"));
+    }
+    // Band-2 recirculation (FB 0.4126984179): the echo train repeats at
+    // ≈ the band's delay. The k=2 echo (−72 dB, well above the floor)
+    // pins the INTERVAL: peak within ±80 samples of 2×delay and the
+    // k=1→k=2 interval within ±40 of the 64.98 ms delay (measured +36 and
+    // +21 — the residual is the band filter's per-pass group delay).
+    // k=3 sits at ≈ −79 dB next to the floor and its ring has several
+    // near-equal lobes (measured maxima at +52 and +103): recorded, not
+    // asserted — it carries no stable statistic.
+    let want_delay = filter_delay::delay_samples(64.984375, sr);
+    let prev_peak = want2;
+    let mut prev_val = v_r.abs();
+    for k in 2..=3usize {
+        let want = direct + (want_delay * k as f64).round() as usize;
+        let (_, pk, val) = tap(&r.samples, want, 80);
+        println!("band 2 echo k={k}: peak {pk} (expected {want}) value {val:+.5}");
+        if k == 2 {
+            if (pk as i64 - want as i64).abs() > 80 {
+                failures.push(format!("band 2 echo k={k}: peak {pk} vs {want}"));
+            }
+            let interval = pk as f64 - prev_peak as f64;
+            if (interval - want_delay).abs() > 40.0 {
+                failures.push(format!(
+                    "band 2 echo k={k}: interval {interval} vs {want_delay:.0}"
+                ));
+            }
+        }
+        if val.abs() >= prev_val {
+            failures.push(format!("band 2 echo k={k} did not decay"));
+        }
+        prev_val = val.abs();
+    }
+    println!("filter-delay taps: {} failure(s)", failures.len());
+    assert!(failures.is_empty(), "filter-delay delay-time gate failed:\n  {}", failures.join("\n  "));
+}
+
+#[test]
+#[ignore]
+fn overdrive_bulk_static_map_gate() {
+    // STATUS: FAILS — honest record + acceptance target (cf. the glue LAM
+    // precedent in this file). The crate model at the corpus parameters
+    // lacks the three tables the Overdrive derivation names as runtime
+    // __DATA ([B-negative], §4): the PreserveDynamics gain LUT
+    // (0x1059a89b8), the Tone tilt LUT (+0x820), and the BandWidth
+    // shelf-gain LUT (the shelf stage is not wired). Run with
+    // `cargo test -- --ignored overdrive_bulk_static_map_gate` and read the
+    // per-step deltas as the residual structure.
+    use live_dynamics::overdrive::{OverdriveModel, OverdriveParams};
+    const NAME: &str = "BULK-overdrive-default-steps-1k-wav.aif";
+    if !render_exists(NAME) {
+        println!("skip {NAME}: render not present in this checkout");
+        return;
+    }
+    let render = read_render(NAME);
+    let sr = render.sample_rate;
+    // Corpus default read from BULK-overdrive-default-steps-1k-wav.als.
+    let params = OverdriveParams {
+        on: true,
+        mid_freq: 2593.96533,
+        band_width: 6.34375,
+        drive: 60.0,
+        dry_wet: 25.0,
+        tone: 39.6825409,
+        preserve_dynamics: 0.349999994,
+    };
+    let mut m = OverdriveModel::new(params, sr);
+    let signal = synth_steps_1k(sr);
+    let mut out = vec![0f32; signal.len()];
+    for (i, x) in signal.iter().enumerate() {
+        let (ol, _) = m.process(*x, *x);
+        out[i] = ol;
+    }
+    let mut worst = 0.0f64;
+    let mut failures: Vec<String> = Vec::new();
+    for (k, db) in [-30.0f64, -24.0, -18.0, -12.0, -6.0, -3.0, 0.0].iter().enumerate() {
+        let got = step_window_rms_db(&render.samples, sr, k);
+        let pred = step_window_rms_db(&out, sr, k);
+        let d = pred - got;
+        worst = worst.max(d.abs());
+        println!(
+            "step {k} ({db:+5.0} dBFS): render {got:8.2}  model {pred:8.2}  Δ {d:+.2} dB (tol ±0.5)"
+        );
+        if d.abs() > 0.5 {
+            failures.push(format!("step {k}: model {pred:.2} vs render {got:.2}"));
+        }
+    }
+    println!("overdrive static map: worst |Δ| {worst:.2} dB (residual: PD gain LUT + tone LUT + shelf missing)");
+    assert!(
+        failures.is_empty(),
+        "overdrive bulk static gate FAILED (honest record — model residuals open):\n  {}",
+        failures.join("\n  ")
+    );
+}
+
+#[test]
+#[ignore]
+fn autofilter_bulk_cutoff_probe() {
+    // No parity gate: the modern-engine coefficient law and the runtime
+    // cutoff LUT (0x1059a89a8, 2400 entries) are corpus-pending [B-negative]
+    // and unmodeled here. This probe records the pins' liveness: stored
+    // cutoff 127 (default) → 20 (min) / 135 (max) moves the impulse IR;
+    // the min pin's response collapses and DELAYS (the near-DC filter's
+    // group delay), the max pin brightens. Model side: only the pre-LUT
+    // cutoff law (`event_cutoff`) exists — asserted separately.
+    let (def, cmin, cmax) = (
+        "BULK-auto-filter-default-impulse-wav.aif",
+        "BULK-auto-filter-pin-cutoff-min.aif",
+        "BULK-auto-filter-pin-cutoff-max.aif",
+    );
+    if !(render_exists(def) && render_exists(cmin) && render_exists(cmax)) {
+        println!("skip auto-filter probe: renders not present in this checkout");
+        return;
+    }
+    let peak_at = |name: &str| -> (usize, f64) {
+        let s = read_render(name).samples;
+        let (i, v) = s
+            .iter()
+            .enumerate()
+            .fold((0usize, 0.0f32), |(mi, mv), (i, v)| {
+                if v.abs() > mv {
+                    (i, v.abs())
+                } else {
+                    (mi, mv)
+                }
+            });
+        (i, f64::from(v))
+    };
+    let (i_d, d) = peak_at(def);
+    let (i_n, n) = peak_at(cmin);
+    let (i_x, x) = peak_at(cmax);
+    println!(
+        "auto-filter impulse peaks: default {d:.5}@{i_d}, cutoff 20 {n:.5}@{i_n} \
+         ({:+.1} dB), cutoff 135 {x:.5}@{i_x} ({:+.1} dB)",
+        20.0 * (n / d).log10(),
+        20.0 * (x / d).log10()
+    );
+    assert!(n < d / 16.0, "cutoff-min pin inert or not collapsing");
+    assert!(x > d, "cutoff-max pin inert");
+    assert!(i_n > i_d + 200, "cutoff-min group delay not visible (filter identity?)");
+    // Pre-LUT cutoff law [D] sanity (the model's only cutoff-path claim):
+    let e = live_dynamics::auto_filter::event_cutoff(127.0, 0.0, 0.0, 0.0, 0.0, 135.0);
+    assert_eq!(e, 127.0, "event_cutoff must pass the unmodulated stored cutoff");
+}

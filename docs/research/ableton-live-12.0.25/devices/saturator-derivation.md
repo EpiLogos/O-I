@@ -246,3 +246,51 @@ count].
   them alone.
 - No behavioral claim of any grade is made; the golden-render corpus for
   Saturator does not exist yet (COVERAGE row).
+
+## 6. Corpus pinning (gate wave, 2026-10-11 — the BULK renders)
+
+The 2026-10-10 BULK run (435 renders, complete) contains the first
+behavioral Saturator corpus: `BULK-saturator-default-{impulse,steps-1k,
+sweep-20-20k}-wav.aif` plus five parameter pins (BaseDrive ±36,
+ColorDepth ±24, ColorFrequency 30), all impulse renders. Findings against
+the derivation:
+
+- **Corpus serialization (new facts).** Every `BULK-saturator-*.als`
+  writes `<PreDcFilter Value="false" />` (the runtime default the [B] const
+  pool could not settle — the PreDc stages are OFF at factory settings) and
+  `<Oversampling Value="1" />` (the 4× path is ON at factory settings; the
+  impulse renders include its response). The ALS parameter values otherwise
+  match the crate surface exactly (ColorWidth 0.3000000119, etc.).
+- **Analog Clip curve PINNED.** At the corpus defaults (Type 0 → factory(5),
+  drive 0 dB, colour 0 dB = coefficient-exact passthrough, PreDc off,
+  DryWet 1) the static chain is out = CLIP[in], and the steps render reads
+  the curve pointwise. Measured static map: exactly 0.00 dB on steps
+  −30…−3 dBFS (RMS and fundamental, ≤0.001 dB), −0.45 dB RMS / −0.454 dB
+  fundamental at 0 dBFS (odd harmonics h3 −28.7, h5 −36.5 dB rel; evens at
+  the floor). The recovered pointwise curve (analyzer:
+  `harness/analyze_saturator_curve.py`) is identity to |x| ≈ 0.71 within
+  ±0.002, then compresses smoothly to f(1) = 0.9013; the fitted odd knee
+  δ(x) = 0.92782·(x−0.71)^1.81 has max residual 0.00117 over the measured
+  anchors (wired as `ANALOG_CLIP_*` + `analog_clip_curve` in `saturator.rs`;
+  the gate `tests/golden.rs::saturator_bulk_static_map_gate` reads worst
+  |Δ| 0.00 dB/step and `saturator_bulk_sweep_gate` worst 0.04 dB). |x| > 1
+  is unconstrained by the corpus (every set peaks at 1.0) — the model
+  clamps at f(1) there as a stated choice.
+- **The five pin renders are DSP-INERT (corpus defect).** BaseDrive
+  ±36 / ColorDepth ±24 / ColorFrequency 30 exist in the ALS files, yet all
+  five pin renders are dither-identical to the default (pairwise max |Δ|
+  ≤ 2 LSB across both channels; each file separately re-rendered for
+  ~60 s per the run ledger). Conclusion: this corpus does NOT pin the
+  colour shelf laws or their LUT — and no PreDrive/PostDrive pin exists in
+  any BULK set (all eight store drive 0), so the dB→linear LUT
+  (0x1059a89c0) remains unpinned. A tripwire in the static gate fails
+  loudly if a future re-render makes the pins live.
+- **Impulse residual.** The impulse renders carry the 4× oversampler's
+  response (unknown design, §4) on top of the curve — the crate model does
+  not implement it and runs NO impulse gate; the default impulse IR
+  (0.3033 peak with a ~20.7 kHz decaying tail vs the unity chain's 0.4929)
+  is recorded in the gate file as the oversampler residual.
+
+Gate status: `saturator_bulk_static_map_gate` PASS (worst 0.00 dB),
+`saturator_bulk_sweep_gate` PASS (worst 0.04 dB); colour-law, drive-LUT and
+impulse gates remain blocked by the corpus defects named above.

@@ -322,3 +322,24 @@ and audition weights 0x3ff0/0x3ff4 = −1.0 for band types 2..5, else 0.0
   summing: **low/medium** — graded inline, do not build on them alone.
 - No behavioral claim of any grade is made; the golden-render corpus for
   EQ Eight does not exist yet (COVERAGE row empty).
+
+## 6. Corpus status (gate wave, 2026-10-11)
+
+BULK corpus: `BULK-eq-eight-default-*` (ALS: GlobalGain 0, Mode serialized
+2, band A a 0 dB Low Shelf @ 30 Hz, band B off) + three GlobalGain impulse
+pins (0/±12). Findings:
+
+- The default render is UNITY: peak 0.49292, identical to the Utility
+  default render (0.49289) — so the serialized Mode 2 chain is
+  gain-transparent on correlated input (no M/S half-gain loss observed;
+  the record does not distinguish whether the ×0.5 half-gain law sits on
+  the encode or decode side).
+- GlobalGain −12 scales the whole IR by exactly −12.000 dB
+  (0.12381/0.49292); the +12 copy measures +12.000 dB on its unclipped
+  region and CLIPS at the 16-bit export ceiling (peak 0.99997). Gate
+  `tests/golden.rs::eq8_bulk_globalgain_gate` PASS (model
+  `global_gain_linear(db, ms=false)`).
+- No band-coefficient pins exist in the corpus (all bands at 0 dB /
+  disabled), so the per-band transfer and the [H] record→biquad partition
+  remain ungated; the no-halving observation above is recorded from the
+  default IR comparison.

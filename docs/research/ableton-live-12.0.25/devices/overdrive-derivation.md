@@ -181,3 +181,23 @@ center [H-minor]).
   **low/medium** — graded inline, do not build on them alone.
 - No behavioral claim of any grade is made; the golden-render corpus for
   Overdrive does not exist yet (COVERAGE row empty).
+
+## 6. Corpus status (gate wave, 2026-10-11)
+
+The BULK corpus has `BULK-overdrive-default-{impulse,steps-1k,sweep}`
+plus five impulse-render pins (Drive 100/0, BandWidth 9/0.5, MidFreq 50).
+Corpus default read from the ALS (NOT the crate's cited Distort.adv):
+MidFreq 2593.96533, BandWidth 6.34375, Drive 60, DryWet 25,
+Tone 39.6825409, PreserveDynamics 0.349999994 — all pins verified LIVE
+(render diffs ≫ dither).
+
+Measured steps static map (1 kHz staircase): +10.6/+9.2/+6.1/+3.4/+2.2/
++2.0/+1.1 dB. The crate model at the corpus params (shaper per-phase,
+fixed 320 Hz tone one-pole, sin-mix dry/wet, PreserveDynamics threshold
+law with the identity LUT placeholder, no shelf stage) lands 1.0–2.0 dB
+QUIET of the render at every step — worst 2.03 dB — with the deficit
+concentrating at mid steps (the missing runtime tables: PD gain LUT
+0x1059a89b8, Tone tilt +0x820, BandWidth shelf-gain LUT). The gate
+`tests/golden.rs::overdrive_bulk_static_map_gate` asserts the 0.5 dB/step
+convention and stays FAILING under #[ignore] as the honest record + the
+acceptance target; no tuning was applied.
