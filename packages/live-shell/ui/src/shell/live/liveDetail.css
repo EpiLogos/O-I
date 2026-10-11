@@ -1,0 +1,30 @@
+/*
+ * Live's detail pair — the Clip | Device faces' additive skin
+ * (live-mode-place lane). The panel's own classes (`.device-tile`,
+ * `.device-parameter`, `.clip-inspector`, `.note-editor`) stay in
+ * styles.css; what lives here is the standard's compact-face additions and
+ * the designed empty frames: domain label, precise inline value, disclosed
+ * range — read-only, honest about what the document does not carry.
+ */
+
+/* The designed empty frame fills the chain's width and hugs its content —
+   the detail row's density stays the rack's (a short face, not a stretch). */
+.detail-empty-frame { flex: 1; display: flex; min-height: 0; overflow: auto; align-items: flex-start }
+.detail-empty-frame .mode-detail-frame { flex: 1; width: auto; margin: 8px; align-self: flex-start }
+.device-chain-surface .detail-empty-frame { flex: 1 }
+
+/* The compact parameter face: the document's own name (never prettified
+   into a fake human label), the lossless value inline, the disclosed range
+   beneath when the document supplies one. */
+.device-parameter { display: flex; flex-direction: column; gap: 1px }
+.device-parameter-name { color: var(--text-dim); overflow-wrap: anywhere; font-size: 9px }
+.device-parameter .device-parameter-range {
+  color: var(--text-faint); font-size: 8.5px; letter-spacing: .02em;
+}
+.device-parameter input { text-align: left }
+
+/* Density data hook (short performance rack vs taller clip editor): the
+   panel marks which face stands; the frame's own height remains the
+   session's remembered detail height (the study's law — each face keeps
+   its own working density through the user's resize). */
+.chain[data-detail-density='clip'] .note-editor { min-height: 0 }

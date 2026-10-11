@@ -21,6 +21,8 @@
 
 import {MODE_GRAMMAR, slotDataI, slotMeaning, type SurfMode, type TransportSlotId} from './modeGrammar'
 import {Icon as CutIcon} from '../inhabitants/sdk/Icon'
+import {transportBindingForSlot, transportBindingRow} from '../inhabitants/sdk/define'
+import type {SdkModeName} from '../inhabitants/sdk/modes'
 import './modeSurface.css'
 
 /** One real reading a mode's transport may show: the owner's value and the
@@ -32,13 +34,28 @@ export function ModeTransportBar({mode, readouts}: {mode: SurfMode; readouts?: M
   const grammar = MODE_GRAMMAR[mode]
   const meaning = (id: TransportSlotId) => slotMeaning(mode, id)
   const dataI = (id: TransportSlotId) => ({'data-i': slotDataI(meaning(id))})
+  // The ligaments' honesty at the slot grain: a slot a family has BOUND to
+  // a §14 row names that binding in its waiting line (the owner op and its
+  // standing), instead of the generic waiting note. Unbound slots keep the
+  // designed waiting state verbatim.
+  const boundLine = (id: TransportSlotId): string | null => {
+    const binding = transportBindingForSlot(mode as SdkModeName, id)
+    if (!binding) return null
+    const row = transportBindingRow(binding)
+    const op = row?.writePath ?? row?.disclosure ?? 'its owner operation'
+    return `${meaning(id).label} — ${meaning(id).fn}. Bound by the ${binding.family} family to ${binding.face}/${binding.key} (owner op: ${op}); the control waits for its owner's wiring.`
+  }
   const waiting = (id: TransportSlotId) => {
+    const bound = boundLine(id)
+    if (bound) return bound
     const slot = meaning(id)
     return `${slot.label} — ${slot.fn}. Not wired here yet: ${grammar.waitingNote}`
   }
   const hold = (id: TransportSlotId) => ({...dataI(id), title: waiting(id), 'aria-label': meaning(id).label, 'aria-disabled': true} as const)
+  const readoutTitle = (id: TransportSlotId, fallbackTitle?: string): string =>
+    boundLine(id) ?? readouts?.[id]?.title ?? fallbackTitle ?? waiting(id)
   const readout = (id: TransportSlotId, fallbackTitle?: string): ModeTransportReadout =>
-    readouts?.[id] ?? {value: '—', title: fallbackTitle ?? waiting(id)}
+    readouts?.[id] ?? {value: '—', title: readoutTitle(id, fallbackTitle)}
 
   return <div className="mode-transport" data-mode-transport={mode} role="group" aria-label={`${grammar.title} transport`}>
     <div className="transport-group">
@@ -50,7 +67,7 @@ export function ModeTransportBar({mode, readouts}: {mode: SurfMode; readouts?: M
       <button type="button" className="native-control" disabled {...hold('tempo')}>‹</button>
       <button type="button" className="native-control" disabled {...hold('tempo')}>›</button>
       <output className="meter-field" {...dataI('signature')} title={waiting('signature')} aria-label={meaning('signature').label}>{readout('signature').value}</output>
-      <button type="button" className="native-control" disabled {...hold('metro')}><CutIcon name="metroDots" size={14} /></button>
+      <button type="button" className="native-control" disabled {...hold('metro')}><CutIcon name="metro" size={14} /></button>
       <button type="button" className="native-control" disabled {...hold('quantize')}>{meaning('quantize').label}</button>
     </div>
     <div className="transport-scale">
@@ -66,7 +83,7 @@ export function ModeTransportBar({mode, readouts}: {mode: SurfMode; readouts?: M
       <button type="button" className="native-control transport-btn" disabled {...hold('stop')} aria-label={meaning('stop').label}><CutIcon name="stop" size={15} /></button>
       <button type="button" className="native-control transport-btn transport-record" disabled {...hold('record')} aria-label={meaning('record').label}><CutIcon name="rec" size={15} /></button>
       <button type="button" className="native-control" disabled {...hold('overdub')}><CutIcon name="plus" size={13} /></button>
-      <button type="button" className="native-control" disabled {...hold('arm')}><CutIcon name="cmd" size={14} /></button>
+      <button type="button" className="native-control" disabled {...hold('arm')}><CutIcon name="arm" size={14} /></button>
       <button type="button" className="native-control" disabled {...hold('re-enable')}><CutIcon name="back" size={14} /></button>
       <button type="button" className="native-control" disabled {...hold('capture')}><CutIcon name="cap" size={14} /></button>
     </div>

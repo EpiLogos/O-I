@@ -1,0 +1,30 @@
+{
+  "schema": "oi.agent-native-p0-captures/v1",
+  "lane": "zcode:agent-native-p0",
+  "dispatched_by": "zcode:world-shell-orchestrator",
+  "at": "2026-10-10T23:52:23.576Z",
+  "stage": "the real AgentShellTransport over the real family admission + verified-table adoption + P0 batch; the setter bridge mounted; the local kernel answers harness_agent_control with a canned owner outcome",
+  "observations": [
+    "1920x1200: mounted",
+    "1920x1200: bound slot (factory/tempo → effort) FIRED — note: ↳ configure → state configured",
+    "1920x1200: heartbeat REFUSED with its owner op named — note: ↳ Refused — Heartbeat is presentation-state: its owner op is the cron-stratum cadence (WO-A3) — the gateway's check-in schedule. No harness control carries it; scheduling it shell-side would be a family scheduler, which §15 forbids.",
+    "1920x1200: no uncaught page errors",
+    "700x900: mounted",
+    "700x900: bound slot (factory/tempo → effort) FIRED — note: ↳ configure → state configured",
+    "700x900: heartbeat REFUSED with its owner op named — note: ↳ Refused — Heartbeat is presentation-state: its owner op is the cron-stratum cadence (WO-A3) — the gateway's check-in schedule. No harness control carries it; scheduling it shell-side would be a family scheduler, which §15 forbids.",
+    "700x900: no uncaught page errors"
+  ],
+  "faults": [],
+  "captures": [
+    "p0-fired-1920x1200.png",
+    "p0-refused-1920x1200.png",
+    "p0-fired-700x900.png",
+    "p0-refused-700x900.png"
+  ],
+  "receipts": {
+    "1920x1200-fired-effort": "↳ configure → state configured",
+    "1920x1200-refused-heartbeat": "↳ Refused — Heartbeat is presentation-state: its owner op is the cron-stratum cadence (WO-A3) — the gateway's check-in schedule. No harness control carries it; scheduling it shell-side would be a family scheduler, which §15 forbids.",
+    "700x900-fired-effort": "↳ configure → state configured",
+    "700x900-refused-heartbeat": "↳ Refused — Heartbeat is presentation-state: its owner op is the cron-stratum cadence (WO-A3) — the gateway's check-in schedule. No harness control carries it; scheduling it shell-side would be a family scheduler, which §15 forbids."
+  }
+}

@@ -32,7 +32,7 @@ export async function load(url,context,next){
 
 const {MODE_GRAMMAR, SURF_MODES, TRANSPORT_SLOT_IDS, slotMeaning, slotDataI, surfModeOf, detailPairOf} = await import('../src/shell/modeGrammar.ts')
 const {SDK_MODE_DECLARATIONS} = await import('../src/inhabitants/sdk/modes.ts')
-const {ICON_MARKS} = await import('../src/inhabitants/sdk/icons.ts')
+const {ICON_MARKS, KIND_SHAPES} = await import('../src/inhabitants/sdk/icons.ts')
 
 test('the surf carries the five Rev-5 modes in order, each with its icon-cut mark', () => {
   assert.deepEqual([...SURF_MODES], ['live', 'base', 'factory', 'expressions', 'techne'])
@@ -275,4 +275,33 @@ test('the status identity is per mode and never another mode\'s name', () => {
   // says "Expressions".
   const baseIdentity = JSON.stringify([MODE_GRAMMAR.base.status, MODE_GRAMMAR.base.centre])
   assert.ok(!baseIdentity.includes('Expressions'), 'Base·Central\'s status and centre never say "Expressions"')
+})
+
+test('the browser rail: categories wear the cut\'s kind marks where the specimen assigns them', () => {
+  // icon-cut §7 "Browser rail": the world categories borrow the filled kind
+  // marks — Days day, Flows doc, Beings agent, Things source, Goals
+  // archetype, Files doc, Wiki source, Sessions run, Bodies world, Places
+  // place, Palaces palace.
+  const RAIL = {
+    base: {
+      'central-days': 'day', 'central-flows': 'doc', 'central-beings': 'agent',
+      'central-things': 'source', 'central-goals': 'archetype', 'central-files': 'doc', 'central-wiki': 'source',
+    },
+    factory: {'factory-sessions': 'run', 'factory-agents': 'agent', 'factory-runs': 'run'},
+    techne: {
+      'techne-files': 'doc', 'techne-bodies': 'world', 'techne-locations': 'location',
+      'techne-places': 'place', 'techne-palaces': 'palace', 'techne-journeys': 'journey',
+    },
+  }
+  for (const [mode, rail] of Object.entries(RAIL)) {
+    for (const category of MODE_GRAMMAR[mode].browser) {
+      const expected = rail[category.id]
+      if (!expected) {
+        assert.equal(category.kindMark, undefined, `${mode}/${category.id}: the rail is silent — the mono mark stands`)
+        continue
+      }
+      assert.equal(category.kindMark, expected, `${mode}/${category.id} wears the rail's "${expected}" kind mark`)
+      assert.ok(Object.hasOwn(KIND_SHAPES, expected), `${mode}/${category.id}: "${expected}" is a cut kind mark`)
+    }
+  }
 })

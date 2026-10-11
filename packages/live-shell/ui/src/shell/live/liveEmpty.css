@@ -1,0 +1,47 @@
+/*
+ * Live's designed empty states — the presentation frames' additive skin
+ * (live-mode-place lane). The frames reuse the presentations' own classes
+ * (`.session-*`, `.arrange-*`, styled in styles.css) so the density IS the
+ * presentations'; only the empty-state-specific pieces live here. The
+ * disclosure bar and the dead-slot/lane styling name the affordance that
+ * would fill the frame — never fabricated content, never interaction.
+ */
+
+.live-empty { flex-direction: column }
+
+/* The disclosure INSIDE the frame: what stands here, and what fills it. */
+.live-empty-disclosure {
+  flex: none; display: flex; align-items: baseline; gap: 8px;
+  padding: 5px 10px; border-bottom: 1px solid var(--line);
+  background: var(--bg-1); font-size: 11px; color: var(--text-dim);
+}
+.live-empty-disclosure strong { color: var(--text); font-weight: 500; font-size: 11px }
+.live-empty-disclosure b { color: var(--text); font-weight: 500 }
+
+/* The session frame's ready grid fills the rest of the presentation. */
+.live-empty[data-live-empty='session'] .live-empty-grid { flex: 1; display: flex; min-height: 0 }
+.live-empty .session-track { border-right: 2px solid var(--line) }
+.live-empty .clip-slot.live-empty-slot { cursor: default; color: var(--line) }
+.live-empty .clip-slot.live-empty-slot:hover { background: transparent }
+.live-empty .track-header { color: #21282e }
+.live-empty .session-main .track-header { color: var(--text-dim); background: var(--bg-0) }
+.live-empty .scene-label { cursor: default }
+.live-empty .track-stop { color: var(--text-faint) }
+
+/* The arrangement frame's ready lanes and overview strip. */
+.live-empty-overview { display: grid; place-items: center }
+.live-empty-overview-note { font-size: 10px; color: var(--text-faint) }
+.live-empty .arrange-ruler span { flex: none; text-align: left; padding: 2px 4px; font-size: 10px }
+.live-empty .arrange-lane.live-empty-lane { cursor: default; min-height: 44px; border-bottom: 1px solid var(--line) }
+.live-empty .arrange-row { min-height: 44px }
+.live-empty .arrange-track-identity { padding: 4px 6px }
+.live-empty-track-name {
+  display: inline-block; padding: 1px 6px; font-size: 10px; color: #21282e;
+  background: var(--track-color, var(--bg-3)); border-radius: 2px;
+}
+
+/* At the audit's narrow width the disclosure wraps and the grid keeps the
+   measured slot width (styles.css owns the media geometry). */
+@media (max-width: 760px) {
+  .live-empty-disclosure { flex-direction: column; gap: 2px; font-size: 10px }
+}

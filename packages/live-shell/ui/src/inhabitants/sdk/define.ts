@@ -36,11 +36,12 @@ import type {
 } from '../manifest.ts'
 import {declareFamilyExtension, familyExtensions, validateInhabitantManifest, type FamilyExtension} from '../manifest.ts'
 import type {AgentParamAddress} from '../agentParamAddresses.ts'
+import {deriveAgentDeviceRows} from '../agentDeviceCatalogue.ts'
 import type {IconName} from './icons.ts'
-import type {DeviceFormat, SdkModeName} from './modes.ts'
-import {MODE_DEFAULT_FORMAT} from './modes.ts'
+import type {DeviceFormat, SdkModeName, TransportSlotId} from './modes.ts'
+import {MODE_DEFAULT_FORMAT, transportTargetSlots} from './modes.ts'
 import type {NewProductAuthority} from './products.ts'
-import {registerWriterAuthority, validateDeclaredFamily, validateFamilyWriters, validateSdkDevice} from './validate.ts'
+import {registerWriterAuthority, validateDeclaredFamily, validateFamilyWriters, validateSdkDevice, validateTransportBindings} from './validate.ts'
 
 // ---------------------------------------------------------------------------
 // §14 parameter rows (the grammar's types live in validate.ts — the law
@@ -160,10 +161,14 @@ export interface DeviceDeclaration {
 }
 
 /** Rev 5's transport table made addressable: in one mode, one transport
- * slot carries one of the family's §14 params. */
+ * slot carries one of the family's §14 params. `row` names a transport row
+ * (the coarse Rev-5 shape, `TRANSPORT_ROWS`) or a single slot id (the fine
+ * addressing, `TRANSPORT_SLOT_IDS` — the shell bar's 28 slots); the gate
+ * normalizes both onto slot occupancy so one meaning per slot holds. */
 export interface TransportBinding {
   readonly mode: SdkModeName
-  /** The transport row (Rev 5) this binding sits on — see TRANSPORT_ROWS. */
+  /** The transport row — or slot id — this binding sits on (see
+   * TRANSPORT_ROWS / TRANSPORT_SLOT_IDS). */
   readonly row: string
   /** The addressed face's id (the §14 deviceInstance). */
   readonly face: string
@@ -285,7 +290,13 @@ function registerFamilyArtifacts(
   for (const row of rows) merged.set(`${row.deviceInstance}/${row.key}`, row)
   paramRows.set(family, [...merged.values()])
   if (declared?.product) familyProducts.set(family, declared.product)
-  if (declared?.writers) familyWritersRegistry.set(family, declared.writers)
+  // Writers ACCUMULATE per family: adoption artifacts land in pieces (the
+  // graph tools', the time control's), and a later artifact must not
+  // unarm an earlier one's writers.
+  if (declared?.writers) {
+    const merged = new Set([...(familyWritersRegistry.get(family) ?? []), ...declared.writers])
+    familyWritersRegistry.set(family, [...merged])
+  }
   if (declared?.transport) {
     const mergedBindings = new Map((transportBindingsRegistry.get(family) ?? []).map(binding => [`${binding.mode}/${binding.row}/${binding.face}/${binding.key}`, binding]))
     for (const binding of declared.transport) mergedBindings.set(`${binding.mode}/${binding.row}/${binding.face}/${binding.key}`, binding)
@@ -342,12 +353,27 @@ export function sdkParamRows(family: FamilyManifestId): readonly SdkParamRow[] {
  * address table's rows enter the kit here; no door writes, the family's
  * owner-authored manifest stays theirs). Validated: the rows must agree
  * with the verified address table (they usually ARE table rows) and
- * address faces the manifest actually declares. */
+ * address faces the manifest actually declares.
+ *
+ * The P0 adoption door (2026-10-11): an artifact may also carry the
+ * family's `writers` (+ `writerAuthority` — the same self-arming law as
+ * admission) and its `transport` bindings. Both run the SAME validation
+ * the admission path runs — the writers law (`validateFamilyWriters` over
+ * the artifact's own rows) and the binding law (target, face, row, mode) —
+ * before anything registers, so an adoption that would fail the world gate
+ * never lands. */
 export interface AdoptedArtifacts {
   readonly family: FamilyManifestId
   readonly owner: string
   readonly presentation: FacePresentation
   readonly rows: readonly SdkParamRow[]
+  /** The `shell.<setter>` paths this adoption arms for the family. */
+  readonly writers?: readonly string[]
+  /** Who commissions the arming (required when writers carry paths the
+   * shell does not already arm). */
+  readonly writerAuthority?: string
+  /** Rev-5 transport bindings the adoption declares (row or slot ids). */
+  readonly transport?: readonly TransportBinding[]
 }
 
 export function registerAdoptedArtifacts(artifacts: readonly AdoptedArtifacts[]): void {
@@ -356,12 +382,76 @@ export function registerAdoptedArtifacts(artifacts: readonly AdoptedArtifacts[])
       throw new Error(`Cannot adopt artifacts for "${artifact.family}" — the family is not admitted; owners declare first.`)
     }
   }
+  // The writers authority speaks before the law reads it (the admission
+  // path's own order): self-armed writers are legal only under a named
+  // commission, so the authority registers first and the writers law
+  // judges with it standing.
   for (const artifact of artifacts) {
-    registerFamilyArtifacts(artifact.family, artifact.owner, [], artifact.rows)
+    if (artifact.writerAuthority) registerWriterAuthority(artifact.family, artifact.writerAuthority)
+  }
+  // Validate BEFORE registering (the admission discipline, at the adoption
+  // door): writers law and binding law over the artifact's own rows PLUS
+  // the rows the family already carries — a binding may address a row the
+  // verified table adopted earlier (effort, heartbeat), and the writers
+  // law judges the family's whole registered row set either way.
+  for (const artifact of artifacts) {
+    const standingRows = paramRows.get(artifact.family) ?? []
+    const rowsForLaw = [...standingRows, ...artifact.rows]
+    const writerFaults = validateFamilyWriters(artifact.family, artifact.writers, rowsForLaw)
+    if (writerFaults.length) {
+      throw new Error(`Adoption for "${artifact.family}" refuses — the writers law:\n- ${writerFaults.join('\n- ')}`)
+    }
+    for (const fault of validateTransportBindings(artifact.family, artifact.transport ?? [], rowsForLaw, familyManifest(artifact.family)!, faceInstanceOf(artifact.family))) {
+      throw new Error(`Adoption for "${artifact.family}" refuses — the transport binding law:\n- ${fault}`)
+    }
+  }
+  for (const artifact of artifacts) {
+    registerFamilyArtifacts(artifact.family, artifact.owner, [], artifact.rows, {
+      ...(artifact.writers ? {writers: artifact.writers} : {}),
+      ...(artifact.transport ? {transport: artifact.transport} : {}),
+    })
     const plate = new Map(presentations.get(artifact.family) ?? [])
     plate.set(artifact.presentation.faceId, artifact.presentation)
     presentations.set(artifact.family, plate)
   }
+}
+
+/** The binding that occupies one mode's slot, family filled — the mode
+ * bar's lookup (the slot's declared meaning carries a §14 param when a
+ * binding — row or slot shaped — covers it). Undefined = the slot is
+ * unbound (its waiting state is honest). */
+export function transportBindingForSlot(mode: SdkModeName, slot: string): (TransportBinding & {readonly family: FamilyManifestId}) | undefined {
+  for (const binding of allTransportBindings()) {
+    if (binding.mode !== mode) continue
+    if (transportTargetSlots(binding.row).includes(slot as TransportSlotId)) return binding
+  }
+  return undefined
+}
+
+/** The §14 row a binding addresses, resolved through the kit's registries
+ * (the binding addresses the FACE; the row may be addressed by the chain
+ * instance that face composes — the same mapping the binding law uses). */
+export function transportBindingRow(binding: TransportBinding & {readonly family: FamilyManifestId}): SdkParamRow | undefined {
+  const rows = sdkParamRows(binding.family)
+  const direct = rows.find(row => row.deviceInstance === binding.face && row.key === binding.key)
+  if (direct) return direct
+  const instance = faceInstanceOf(binding.family)(binding.face) ?? binding.face
+  return rows.find(row => row.deviceInstance === instance && row.key === binding.key)
+}
+
+/** The face→chain-instance resolver for the agent chain's faces: a §14 row
+ * is addressed by the chain instance (`agent`, `gateway`, …) while a
+ * transport binding addresses the composing face (`harness-model`, …).
+ * Derived from the same catalogue the adoption loader maps rows with —
+ * one mapping, not two. */
+function faceInstanceOf(family: FamilyManifestId): (faceId: string) => string | undefined {
+  const byFace = new Map<string, string>()
+  for (const slot of deriveAgentDeviceRows(allFamilyManifests())) {
+    for (const face of slot.faces) {
+      if (face.family === family) byFace.set(face.faceId, slot.id)
+    }
+  }
+  return faceId => byFace.get(faceId)
 }
 
 /** Every kit-registered row, across families (rows carry their family). */
@@ -514,8 +604,8 @@ export function declareDeviceExtension(declaration: DeviceExtensionDeclaration):
 
 /** Re-export the mode layer's lookup surface for authors (one import point:
  * `sdk/define.ts`). */
-export {SDK_MODES, SDK_MODE_DECLARATIONS, TRANSPORT_ROWS, TRANSPORT_SLOTS, DEVICE_FORMATS, MODE_DEFAULT_FORMAT, sdkMode, isSdkMode, transportSlot} from './modes.ts'
-export type {SdkModeName, SdkMode, TransportRowId, TransportSlot, DeviceFormat} from './modes.ts'
+export {SDK_MODES, SDK_MODE_DECLARATIONS, TRANSPORT_ROWS, TRANSPORT_SLOTS, TRANSPORT_SLOT_IDS, TRANSPORT_ROW_SLOTS, DEVICE_FORMATS, MODE_DEFAULT_FORMAT, sdkMode, isSdkMode, isTransportTarget, transportSlot, transportTargetSlots} from './modes.ts'
+export type {SdkModeName, SdkMode, TransportRowId, TransportSlotId, TransportSlot, DeviceFormat} from './modes.ts'
 export {onFamilyManifestReset} from '../familyManifest.ts'
 export {PRODUCTS, product, isKnownProduct} from './products.ts'
 export type {ProductRecord, NewProductAuthority} from './products.ts'

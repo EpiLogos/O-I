@@ -5,6 +5,13 @@ import type {NativeContentActions, NativeExpressionsContent, NativeGlyphClipSour
 
 /** Presentation of an existing owner; no document, transport, or clock lives here. */
 export type NativeDetailConfigurationFamily = 'controls' | 'device' | 'rack' | 'scene';
+/** Opening settings keeps the family. Choosing a settings button opens that family. */
+export function toggleDetailSettings(open: boolean, family: NativeDetailConfigurationFamily): {open: boolean; family: NativeDetailConfigurationFamily} {
+  return {open: !open, family}
+}
+export function openDetailSettings(family: NativeDetailConfigurationFamily): {open: true; family: NativeDetailConfigurationFamily} {
+  return {open: true, family}
+}
 export interface NativeCompositionViewSource {
   owner: 'expressions';
   content: NativeExpressionsContent | null;

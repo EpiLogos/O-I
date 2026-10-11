@@ -1,8 +1,11 @@
 import {useRef} from 'react'
 import {CutIcon} from './agentIcons'
 import {AGENT_DATA_I, AGENT_TRANSPORT_TIPS} from './agentFidelity'
-import {useAgentShell, EFFORT_STEPS} from './AgentShellContext'
+import {useAgentShell, EFFORT_STEPS, QUANTIZE_STEPS} from './AgentShellContext'
 import {startAgentVoice, stopAgentVoice} from './useAgentVoice'
+import {useHarnessBinding} from './useHarnessBinding'
+import {useShellSetterBridge} from './shellSetterBridge'
+import {shellSetter} from '../inhabitants/sdk/shellSetters'
 import type {DictationSession} from '../../../../../desktop/cradle/src/dictation/client'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {ModeModeRail, type SurfMode} from '../shell/ModeModeRail'
@@ -11,7 +14,13 @@ import './agentShell.css'
 /** The transport, at the mockup's rhythm, with the icon specimen's marks
  * (icon-cut.html ruling): Link/Tap/Follow/Arm/Hand-back/Capture/Loop drawn
  * monoline; Play/Stop/Record the filled keys; ‹ › and Σ stay the mockup's
- * own characters; the heartbeat takes the pendulum. */
+ * own characters; the heartbeat takes the pendulum.
+ *
+ * The agent-native P0 ligaments' UI face (2026-10-11): the bound controls
+ * (effort, heartbeat, steer mode, interrupt timing, write arm) route
+ * through the shell setters' honest wiring (`shellSetterBridge`) — each
+ * press carries the value to its traced destination and the owner's
+ * answer or the named refusal renders on the note line. */
 export function AgentShellTransport({
   title,
   browser,
@@ -61,11 +70,25 @@ export function AgentShellTransport({
 }) {
   const shell = useAgentShell()
   const voiceSession = useRef<DictationSession | null>(null)
+  const {binding} = useHarnessBinding(transport)
+  const {receipt} = useShellSetterBridge(shell, transport, binding)
+  // Route through the registered setter when the bridge is mounted
+  // (presentation + dispatch + receipt in one place); fall back to the
+  // bare shell setter (presentation only) when the bridge is absent —
+  // the degraded state is the old honest one, not a fake receipt.
+  const setter = (path: string) => shellSetter(path)
   const stepEffort = (dir: -1 | 1) => {
     const i = EFFORT_STEPS.indexOf(shell.effort)
     const next = EFFORT_STEPS[Math.max(0, Math.min(EFFORT_STEPS.length - 1, i + dir))]
-    shell.setEffort(next)
+    setter('shell.setEffort')?.(next)
   }
+  const cycleQuantize = () => {
+    const next = QUANTIZE_STEPS[(QUANTIZE_STEPS.indexOf(shell.quantize) + 1) % QUANTIZE_STEPS.length]
+    setter('shell.setQuantize')?.(next)
+  }
+  const toggleSteer = () => setter('shell.setSteer')?.(!shell.steer)
+  const toggleHeartbeat = () => setter('shell.setHeartbeat')?.(!shell.heartbeat)
+  const toggleWriteArm = () => setter('shell.setWriteArm')?.(!shell.writeArm)
   const tap = () => {
     const line = `Tap ${new Date().toISOString()} · ${shell.heartbeat ? 'heartbeat on' : 'heartbeat off'}`
     shell.setTapNote(line)
@@ -100,6 +123,9 @@ export function AgentShellTransport({
     shell.recordCapture('capture-start')
     shell.setCaptureNote('Capture on — shell actions land as a skill example.')
   }
+  const receiptLine = receipt
+    ? (receipt.kind === 'fired' ? `↳ ${receipt.note}` : `↳ Refused — ${receipt.reason}`)
+    : null
   return (
     <header className="transport agent-shell-transport" data-region="transport">
       <div className="set-title"><b>{title}</b></div>
@@ -111,8 +137,8 @@ export function AgentShellTransport({
           <button type="button" className="agent-fld" id="effort" data-i={AGENT_DATA_I.effort} title={AGENT_TRANSPORT_TIPS.effort}><span>{shell.effort}</span></button>
           <button type="button" className="agent-nc" id="effDn" data-i={AGENT_DATA_I.effDn} title={AGENT_TRANSPORT_TIPS.effortDn} onClick={() => stepEffort(-1)}>‹</button><button type="button" className="agent-nc" id="effUp" data-i={AGENT_DATA_I.effUp} title={AGENT_TRANSPORT_TIPS.effortUp} onClick={() => stepEffort(1)}>›</button>
           <span className="agent-fld" id="budget" data-i={AGENT_DATA_I.budget} title={AGENT_TRANSPORT_TIPS.budget}>{budgetLabel}</span>
-          <button type="button" className={'agent-nc' + (shell.heartbeat ? ' on' : '')} id="hb" data-i={AGENT_DATA_I.hb} title={AGENT_TRANSPORT_TIPS.heartbeat} onClick={() => shell.setHeartbeat(!shell.heartbeat)}><CutIcon name="metro" size={14} /></button>
-          <button type="button" className="agent-nc" id="quantize" data-i={AGENT_DATA_I.quantize} title={AGENT_TRANSPORT_TIPS.quantize} onClick={shell.cycleQuantize}>{shell.quantize} ▾</button>
+          <button type="button" className={'agent-nc' + (shell.heartbeat ? ' on' : '')} id="hb" data-i={AGENT_DATA_I.hb} title={AGENT_TRANSPORT_TIPS.heartbeat} onClick={toggleHeartbeat}><CutIcon name="metro" size={14} /></button>
+          <button type="button" className="agent-nc" id="quantize" data-i={AGENT_DATA_I.quantize} title={AGENT_TRANSPORT_TIPS.quantize} onClick={cycleQuantize}>{shell.quantize} ▾</button>
         </div>
         <div className="transport-group" style={{marginLeft: 14}}>
           <button type="button" className="agent-nc" id="tokScope" data-i={AGENT_DATA_I.tokScope} title={AGENT_TRANSPORT_TIPS.tokens} onClick={shell.cycleTokenScope}>Σ {shell.tokenScope}</button>
@@ -126,8 +152,8 @@ export function AgentShellTransport({
           <button type="button" className={'agent-tbtn play' + (running ? ' on' : '')} id="play" data-i={AGENT_DATA_I.play} title={AGENT_TRANSPORT_TIPS.run} disabled={controlBusy} onClick={onRun}><CutIcon name="play" size={15} /></button>
           <button type="button" className="agent-tbtn" id="stop" data-i={AGENT_DATA_I.stop} title={AGENT_TRANSPORT_TIPS.stop} disabled={controlBusy} onClick={onStop}><CutIcon name="stop" size={15} /></button>
           <button type="button" className={'agent-tbtn rec' + (shell.voiceArmed ? ' on' : '')} id="rec" data-i={AGENT_DATA_I.rec} title={AGENT_TRANSPORT_TIPS.voice} onClick={() => void toggleVoice()}><CutIcon name="rec" size={15} /></button>
-          <button type="button" className={'agent-nc' + (shell.steer ? ' on' : '')} id="od" data-i={AGENT_DATA_I.od} title={AGENT_TRANSPORT_TIPS.steer} onClick={() => shell.setSteer(!shell.steer)}><CutIcon name="plus" size={12} /></button>
-          <button type="button" className={'agent-nc' + (shell.writeArm ? ' on' : '')} id="arm" data-i={AGENT_DATA_I.arm} title={AGENT_TRANSPORT_TIPS.writeArm} onClick={() => shell.setWriteArm(!shell.writeArm)}><CutIcon name="arm" size={14} /></button>
+          <button type="button" className={'agent-nc' + (shell.steer ? ' on' : '')} id="od" data-i={AGENT_DATA_I.od} title={AGENT_TRANSPORT_TIPS.steer} onClick={toggleSteer}><CutIcon name="plus" size={12} /></button>
+          <button type="button" className={'agent-nc' + (shell.writeArm ? ' on' : '')} id="arm" data-i={AGENT_DATA_I.arm} title={AGENT_TRANSPORT_TIPS.writeArm} onClick={toggleWriteArm}><CutIcon name="arm" size={14} /></button>
           <button type="button" className={'agent-nc' + (shell.handBackLit ? ' warn' : '')} data-i={AGENT_DATA_I.handBack} title={AGENT_TRANSPORT_TIPS.handBack} onClick={() => shell.setHandBackLit(false)}><CutIcon name="back" size={14} /></button>
           <button type="button" className={'agent-nc' + (shell.capturing ? ' on' : '')} id="capture" data-i={AGENT_DATA_I.capture} title={AGENT_TRANSPORT_TIPS.capture} onClick={toggleCapture}><CutIcon name="cap" size={14} /></button>
           <button type="button" className={'agent-nc' + (shell.loopOn ? ' on' : '')} id="loop" data-i={AGENT_DATA_I.loop} title={AGENT_TRANSPORT_TIPS.loop} onClick={() => shell.setLoopOn(!shell.loopOn)}><CutIcon name="loop" size={13} /></button>
@@ -144,8 +170,10 @@ export function AgentShellTransport({
           {onMode && <ModeModeRail mode={mode ?? ''} chooseMode={onMode} />}
         </nav>
       </div>
-      {(shell.tapNote || shell.voiceNote || shell.captureNote) && (
-        <p className="agent-transport-note" role="status">{shell.voiceNote ?? shell.captureNote ?? shell.tapNote}</p>
+      {(receiptLine || shell.tapNote || shell.voiceNote || shell.captureNote) && (
+        <p className="agent-transport-note" role="status">
+          {receiptLine ?? shell.voiceNote ?? shell.captureNote ?? shell.tapNote}
+        </p>
       )}
     </header>
   )

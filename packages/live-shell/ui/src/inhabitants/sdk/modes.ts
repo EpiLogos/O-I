@@ -80,6 +80,60 @@ export const TRANSPORT_ROWS = [
 ] as const
 export type TransportRowId = (typeof TRANSPORT_ROWS)[number]
 
+// ---------------------------------------------------------------------------
+// slot-level addressing (agent-native P0 ligament, 2026-10-11) — Rev 5's
+// table made addressable at the SLOT grain: a binding may sit on a whole
+// row (the coarse Rev-5 shape) or on one slot of the mode bar (the shell
+// frame's own fixed slot order, `shell/modeGrammar.ts` TRANSPORT_SLOT_IDS —
+// the same 28 slots in the same places in every mode). The two tables are
+// held together by tests/mode-grammar.test.mjs so neither can drift from
+// the design; this module owns the ROW→SLOT decomposition so the
+// double-booking gate can normalize both shapes onto slots.
+
+/** The fixed transport slot order of the shell bar — identical bytes to
+ * `shell/modeGrammar.ts`'s TRANSPORT_SLOT_IDS (drift-gated by test). */
+export const TRANSPORT_SLOT_IDS = [
+  'link', 'tap',
+  'tempo', 'signature',
+  'metro', 'quantize',
+  'key', 'root', 'scale',
+  'follow', 'position',
+  'play', 'stop', 'record', 'overdub', 'arm', 're-enable', 'capture',
+  'punch-in', 'loop', 'punch-out', 'loop-length',
+  'draw', 'keys', 'key-map', 'midi-map', 'rate', 'cpu',
+] as const
+export type TransportSlotId = (typeof TRANSPORT_SLOT_IDS)[number]
+
+/** Which slots each transport row covers, in bar order. `transport` covers
+ * the playback group's full run (follow · position · the four keys), per
+ * Rev 5's rendering of the row in every mode. */
+export const TRANSPORT_ROW_SLOTS: Readonly<Record<TransportRowId, readonly TransportSlotId[]>> = Object.freeze({
+  'link-tap': ['link', 'tap'],
+  'tempo-signature': ['tempo', 'signature'],
+  'metronome-quantize': ['metro', 'quantize'],
+  'key-scale': ['key', 'root', 'scale'],
+  transport: ['follow', 'position', 'play', 'stop', 'record', 'overdub'],
+  'arm-capture': ['arm', 're-enable', 'capture'],
+  'punch-loop': ['punch-in', 'loop', 'punch-out', 'loop-length'],
+  'draw-keys': ['draw', 'keys', 'key-map', 'midi-map', 'rate', 'cpu'],
+})
+
+/** A binding's `row` field names a transport row (the coarse Rev-5 shape)
+ * or one slot id (the fine addressing the agent-native P0 ligament added).
+ * Anything else is not a target the mode bar carries. */
+export function isTransportTarget(candidate: string): candidate is TransportRowId | TransportSlotId {
+  return (TRANSPORT_ROWS as readonly string[]).includes(candidate)
+    || (TRANSPORT_SLOT_IDS as readonly string[]).includes(candidate)
+}
+
+/** The slots a binding target occupies: a row binding occupies all of the
+ * row's slots; a slot binding occupies exactly itself. The double-booking
+ * gate normalizes onto this occupancy (one meaning per occupied slot). */
+export function transportTargetSlots(rowOrSlot: string): readonly TransportSlotId[] {
+  if ((TRANSPORT_SLOT_IDS as readonly string[]).includes(rowOrSlot)) return [rowOrSlot as TransportSlotId]
+  return TRANSPORT_ROW_SLOTS[rowOrSlot as TransportRowId] ?? []
+}
+
 export const SDK_MODE_DECLARATIONS: readonly SdkMode[] = [
   {
     name: 'live',

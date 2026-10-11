@@ -34,11 +34,13 @@ import {SessionView, type SetSelection} from '../components/SessionView'
 import type {NativeCompositionViewSource} from '../shell/compositionViews'
 import type {SetDocument} from '../shell/document'
 import type {SetSummary} from '../shell/useSet'
-import type {WorldTimelineView} from './useWorldTemporalReading'
 import {PROJECTION_TIMELINE_KIND, timelinePresentation, type TimelinePresentation} from './timelinePresentation'
 
 export {PROJECTION_TIMELINE_KIND, timelinePresentation}
 export type {TimelinePresentation}
+
+import {WorldTimelinePresentation} from './worldTimelinePresentation'
+import type {WorldTimelineView} from './useWorldTemporalReading'
 
 export interface TimelineResidenceProps {
   set: SetSummary | null
@@ -54,20 +56,20 @@ export interface TimelineResidenceProps {
   compactTransport: boolean
   /** The presented presentation per the encounter; null = both concealed. */
   presented: TimelinePresentation | null
-  /** The World cut (L4 seam 5): World material as tracks over the kernel's
-   * temporal read. Additive — the native cut keeps absolute precedence
-   * inside each view, and with the prop absent every existing byte of the
-   * DOM/CSS contract is unchanged. */
+  /** The World cut's reading over the kernel's temporal read; undefined =
+   * the civil field is unread — the frame holds its designed empty state. */
   world?: WorldTimelineView
 }
 
 export function TimelineProjectionResidence({set, document, selection, select, colors, setColor, session, arrangement, compactTransport, presented, world}: TimelineResidenceProps) {
+  const worldCutView = world
   return <Fragment>
+    {worldCutView && <WorldTimelinePresentation view={worldCutView} presentation={presented ?? 'session'} />}
     <div className="inhabitant composition-view" data-projection-kind={PROJECTION_TIMELINE_KIND} data-projection-presentation="session" hidden={presented !== 'session'}>
-      <SessionView set={set} document={document} selection={selection} select={select} colors={colors} setColor={setColor} native={session} compactTransport={compactTransport} world={world} />
+      <SessionView set={set} document={document} selection={selection} select={select} colors={colors} setColor={setColor} native={session} compactTransport={compactTransport} />
     </div>
     <div className="inhabitant composition-view" data-projection-kind={PROJECTION_TIMELINE_KIND} data-projection-presentation="arrangement" hidden={presented !== 'arrangement'}>
-      <ArrangementView set={set} document={document} selection={selection} select={select} colors={colors} native={arrangement} compactTransport={compactTransport} world={world} />
+      <ArrangementView set={set} document={document} selection={selection} select={select} colors={colors} native={arrangement} compactTransport={compactTransport} />
     </div>
   </Fragment>
 }
