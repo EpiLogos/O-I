@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent Shell Mockup</title>
+<style>
+/* Tokens and frame geometry from packages/live-shell/ui/src/styles.css (env-1 seat,
+   45e15ed8b). Revision 4: tileable context dock + 2×2 launcher, thread view in
+   the centre, per-thread needles, git device, stepped nesting. */
+:root{
+  --bg-0:#26292d; --bg-1:#33363b; --bg-2:#3f4348; --bg-3:#4a4e54; --surface:#43464c;
+  --line:#24262a; --line-strong:#3d4147;
+  --text:#d4d7da; --text-dim:#a2a7ad; --text-faint:#71767c;
+  --accent:#ffbe00; --accent-soft:rgba(255,190,0,.13); --sel:#7ec3e6; --rec:#e0523f; --green:#8fd0a8; --stall:#ff9b4a;
+  --fizz:#5cc6b4; --honey:#e2a35e; --bumble:#d985a6; --drone:#8fbfb6;
+  --mono:ui-monospace,'SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#1b1d20;overflow:hidden}
+body{font:12px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input{font:inherit;color:inherit}
+.fit{position:absolute;left:50%;top:50%;transform-origin:center}
+svg{display:block}
+.frame{--dock-w:300px;width:1920px;height:1200px;display:grid;background:var(--bg-1);padding:0 6px;
+  grid-template-columns:400px minmax(0,1fr) var(--dock-w);grid-template-rows:64px minmax(0,1fr) 300px 28px;
+  grid-template-areas:"tp tp tp" "br ct dk" "ch ch dk" "sb sb sb"}
+.frame.no-browser{grid-template-columns:0 minmax(0,1fr) var(--dock-w)}
+.frame.no-dock{grid-template-columns:400px minmax(0,1fr) 0}
+.frame.no-browser.no-dock{grid-template-columns:0 minmax(0,1fr) 0}
+.frame.no-detail{grid-template-rows:64px minmax(0,1fr) 0 28px}
+.mono{font-family:var(--mono)} .dim{color:var(--text-dim)} .faint{color:var(--text-faint)}
+@keyframes blink{50%{opacity:.25}}
+
+/* ================= transport ================= */
+.tp{grid-area:tp;margin:0 -6px;padding:3px 10px 8px;border-bottom:3px solid var(--line);display:flex;flex-direction:column}
+.title{height:18px;text-align:center;font-size:12px;color:var(--text-dim)} .title b{color:var(--text);font-weight:500}
+.ctl{flex:1;display:flex;align-items:center;gap:7px}
+.g{display:flex;align-items:center;gap:2px;white-space:nowrap}
+.nc{height:19px;min-width:17px;padding:1px 4px;background:var(--bg-0);border:1px solid #30343a;line-height:14px;font-size:10px;color:var(--text-dim);display:flex;align-items:center;gap:3px}
+.nc:hover{color:var(--text)} .nc.on{background:var(--accent);color:#1d1f22;border-color:var(--accent)} .nc.warn{color:var(--stall)}
+.fld{height:19px;padding:2px 6px;font-size:10px;background:var(--bg-0);color:var(--text);display:flex;align-items:center;gap:4px;font-family:var(--mono)}
+.fld small{font-size:8.5px;color:var(--text-faint)}
+.tbtn{width:20px;height:22px;display:grid;place-items:center;color:var(--text-dim)}
+.tbtn.play{color:var(--accent)} .tbtn.rec{color:#c9c8ad}
+.tbtn.on.play{color:#1d1f22;background:var(--accent)} .tbtn.on.rec{color:var(--rec)}
+.sp{flex:1;min-width:4px}
+.cpu{width:33px;height:17px;border:1px solid var(--line);background:repeating-linear-gradient(90deg,var(--bg-0) 0,var(--bg-0) 9px,var(--line) 9px,var(--line) 10px);position:relative;overflow:hidden}
+.cpu i{position:absolute;left:0;top:0;bottom:0;width:38%;background:repeating-linear-gradient(90deg,#8fd0a8 0,#8fd0a8 9px,transparent 9px,transparent 10px)}
+.surf{display:flex;gap:6px;align-items:center;margin-left:6px}
+.surf button{color:var(--text-dim);width:22px;height:22px;display:grid;place-items:center} .surf button.on{color:var(--accent)} .surf button.soon{opacity:.45}
+.chrome{width:20px;height:20px;display:grid;place-items:center;color:var(--text-dim)} .chrome.on{color:var(--accent)}
+
+/* ================= browser ================= */
+.br{grid-area:br;min-width:0;min-height:0;display:flex;flex-direction:column;background:var(--bg-1);border:1px solid var(--line-strong);border-right:4px solid var(--line);border-radius:3px 0 0 3px;overflow:hidden;margin-top:4px}
+.bsearch{display:flex;height:25px;flex:none;padding:2px;gap:1px;border-bottom:1px solid var(--line)}
+.bsearch span{width:20px;display:grid;place-items:center;color:var(--text-faint)}
+.bsearch div{flex:1;background:var(--bg-0);color:var(--text-faint);font-size:11px;padding:2px 6px}
+.bcols{display:flex;flex:1;min-height:0}
+.bcats{width:112px;flex:none;border-right:1px solid var(--line);padding:0 3px;font-size:11px;overflow:hidden}
+.bcats h6{font-weight:400;font-size:10.5px;color:var(--text-faint);padding:6px 3px 2px}
+.bcat{display:flex;align-items:center;gap:6px;padding:2px 3px;color:var(--text-dim);cursor:default;border-radius:2px}
+.bcat.on{background:var(--bg-3);color:var(--text)} .bcat svg{width:11px;height:11px;flex:none}
+.bres{flex:1;min-width:0;background:var(--bg-2);display:flex;flex-direction:column}
+.bfilt{height:21px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:2px 5px;color:var(--text-dim);font-size:10px;background:var(--bg-1)}
+.bhead{display:flex;justify-content:space-between;height:20px;background:var(--bg-0);padding:2px 5px;font-size:10px;color:var(--text-dim)}
+.bitem{height:23px;display:flex;align-items:center;gap:6px;padding:2px 5px;color:var(--text-dim);font-size:11px;cursor:grab;white-space:nowrap}
+.bitem:hover{background:var(--bg-3);color:var(--text)}
+.bitem .st{margin-left:auto;font-size:10px;color:var(--text-faint)}
+.bitem .sdk{font-size:8.5px;border:1px solid var(--line-strong);padding:0 3px;color:var(--sel)}
+.pool{height:46%;min-height:85px;display:flex;flex-direction:column;border-top:5px solid var(--line);background:var(--bg-2)}
+.poolh{height:22px;display:flex;align-items:center;gap:6px;padding:0 6px;background:var(--bg-1);border-bottom:1px solid var(--line);font-size:11px;flex:none}
+.poolh .r{margin-left:auto;color:var(--text-faint);font-size:10px}
+.poolb{flex:1;overflow:auto;padding:4px 0 8px}
+.sec{padding:6px 8px 2px;font-size:10px;color:var(--text-faint);display:flex;justify-content:space-between}
+.row{display:grid;grid-template-columns:78px minmax(0,1fr);align-items:center;gap:6px;padding:2px 8px;font-size:11px;min-height:22px}
+.row .k{color:var(--text-dim)}
+.seg{display:flex;border:1px solid var(--line);width:max-content;max-width:100%}
+.seg button{padding:1px 7px;font-size:10px;color:var(--text-dim);background:var(--bg-1);border-right:1px solid var(--line);height:17px}
+.seg button:last-child{border-right:none} .seg button.on{background:var(--accent);color:#1d1f22}
+.tgl{display:flex;align-items:center;gap:6px;padding:2px 8px;font-size:11px;min-height:22px;cursor:default}
+.tgl .lt{width:9px;height:9px;border-radius:50%;border:1px solid #0007;background:var(--bg-0);flex:none;cursor:pointer}
+.tgl .lt.on{background:var(--accent)} .tgl .r{margin-left:auto;font-size:10px;color:var(--text-faint)} .tgl.off{color:var(--text-faint)}
+.slider{height:5px;background:var(--bg-0);position:relative;flex:1} .slider i{position:absolute;left:0;top:0;bottom:0;background:var(--accent)}
+.fold{display:flex;align-items:center;gap:5px;padding:6px 8px;font-size:10.5px;color:var(--text-faint);cursor:pointer;border-top:1px solid var(--line);margin-top:6px}
+.fold .tri{font-size:8px;width:8px} .foldb{display:none} .foldb.open{display:block}
+.kv{display:grid;grid-template-columns:78px 1fr;padding:1px 8px;font-size:10.5px;color:var(--text-dim)}
+.kv span:last-child{font-family:var(--mono);color:var(--text)}
+
+/* ================= centre ================= */
+.ct{grid-area:ct;min-width:0;min-height:0;margin:4px 4px 4px 0;background:var(--bg-2);border:1px solid var(--line-strong);position:relative;overflow:hidden}
+.view{position:absolute;inset:0;display:none}.view.on{display:flex}
+#session{flex-direction:row}
+.tracks{display:flex;flex:none}
+.trk{flex:none;display:flex;flex-direction:column;border-right:2px solid var(--line);background:var(--bg-2);position:relative}
+.trk.muted .thd{filter:saturate(.25) brightness(.8)}
+.rails{position:absolute;left:0;top:0;bottom:0;pointer-events:none;z-index:2;display:flex}
+.rails i{width:3px;height:100%;margin-right:1px;opacity:.9}
+.thd{height:26px;flex:none;display:flex;align-items:center;gap:4px;padding:3px 4px;border-bottom:2px solid var(--line);font-size:10px;color:#21282e;font-weight:500;background:var(--tc);white-space:nowrap;overflow:hidden;cursor:default}
+.thd .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.trk.d1 .thd,.trk.d2 .thd{font-size:9.5px;font-weight:400}
+.trk.grp .thd{background:linear-gradient(var(--tc),var(--tc)) top/100% 21px no-repeat,#2c3034;border-bottom:2px solid var(--tc);padding-bottom:7px}
+.trk.sel .thd{box-shadow:inset 0 0 0 1px #ffffffb0}
+.thd .gf{font-size:8px;width:10px;cursor:pointer}
+.slots{flex:1;min-height:0;background:var(--bg-2)}
+.cs{height:26px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:4px;padding:0 4px;font-size:10px;position:relative;cursor:default}
+.cs .sg{width:9px;height:9px;border:1px solid var(--line);flex:none;cursor:pointer}
+.cs:hover .sg{border-color:var(--text-faint)}
+.cs.clip{background:var(--tc);color:#252a2d}
+.cs.clip .tri{width:0;height:0;border-left:7px solid #252a2dbb;border-top:4.5px solid transparent;border-bottom:4.5px solid transparent;flex:none;cursor:pointer}
+.cs.clip .n{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:1}
+.cs.done{opacity:.55}
+.cs.run .tri{animation:blink 1s steps(2) infinite} .cs.queued .tri{animation:blink .35s steps(2) infinite}
+.cs.stall{background:repeating-linear-gradient(135deg,var(--tc) 0,var(--tc) 7px,#ff9b4a55 7px,#ff9b4a55 9px)}
+.cs.stall .tri{border-left-color:var(--stall)}
+.cs .pg{position:absolute;left:0;bottom:0;height:2px;background:#252a2dbb}
+.cs .op{font-size:9px;opacity:0;padding:0 2px;cursor:pointer} .cs.clip:hover .op{opacity:.9}
+.cs.selc{box-shadow:inset 0 0 0 1px var(--accent)}
+.cs.recs{background:var(--rec);color:#fff}
+.cs.grp{background:var(--bg-1);padding:3px 4px;gap:2px}
+.cs.grp i{height:100%;flex:1;background:var(--tc);opacity:.85} .cs.grp i.e{background:transparent} .cs.grp i.s{background:var(--stall)}
+.stoprow{height:22px;flex:none;display:flex;align-items:center;gap:3px;padding:0 4px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.stoprow .hs{width:18px;height:16px;display:grid;place-items:center;background:var(--bg-0);border:1px solid var(--line);cursor:pointer}
+.stoprow .hs i{width:8px;height:8px;background:var(--text-dim)}
+.stoprow .rt{width:18px;height:16px;display:grid;place-items:center;background:var(--bg-0);border:1px solid var(--line);color:var(--text-faint);font-size:11px;cursor:pointer}
+.stoprow .rt.lit{background:var(--stall);color:#1d1f22;border-color:var(--stall);animation:blink 1.2s steps(2) infinite}
+.stoprow .tc{width:18px;height:10px;background:var(--tc);margin-left:auto}
+.strip{height:228px;flex:none;display:flex;flex-direction:column;padding:4px 4px 5px;gap:2px;font-size:10px;color:var(--text-dim)}
+.strip .lb{font-size:9.5px;color:var(--text-faint);margin-top:2px}
+.dd{height:16px;border:1px solid var(--line);background:var(--bg-1);color:var(--text);display:flex;align-items:center;gap:4px;padding:0 3px;font-size:10px;white-space:nowrap;overflow:hidden}
+.dd .t{flex:1;overflow:hidden;text-overflow:ellipsis} .dd::after{content:'▾';font-size:8px;color:var(--text-faint)}
+.mon{display:flex;gap:2px}
+.mon span{border:1px solid var(--line);background:var(--bg-1);padding:0 3px;height:14px;line-height:12px;font-size:9px;color:var(--text-faint);cursor:pointer}
+.mon span.on{background:var(--accent);color:#1d1f22}
+.vol{display:flex;gap:5px;flex:1;margin-top:5px;min-height:0}
+.mc{width:28px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.num{height:20px;width:24px;display:grid;place-items:center;background:var(--accent);color:#292c31;font-weight:500;font-size:11px;cursor:pointer}
+.num.off{background:var(--bg-0);color:var(--text-faint)}
+.sbtn{width:24px;height:13px;font-size:9px;border:1px solid var(--line);background:var(--bg-1);display:grid;place-items:center;color:var(--text-dim);cursor:pointer}
+.sbtn.arm.on{background:var(--rec);color:#fff;border-color:var(--rec)}
+.ctxv{width:28px;height:13px;border:1px solid var(--line);background:var(--bg-1);border-radius:8px;font-size:8.5px;text-align:center;color:var(--text-faint);line-height:11px}
+.fcol{flex:1;display:flex;gap:3px;height:100%;position:relative}
+.rail{width:4px;height:100%;background:#202327;border:1px solid #17191b;position:relative;flex:none}
+.rail i{position:absolute;left:0;right:0;bottom:0;background:var(--green)}
+.cap{position:absolute;left:-4px;width:12px;height:7px;background:var(--text-dim);border:1px solid #17191b}
+.scale{display:flex;flex-direction:column;justify-content:space-between;height:100%;font-size:8px;color:var(--text-faint);line-height:8px}
+.main{width:96px;flex:none;border-left:1px solid var(--line);background:var(--bg-2);display:flex;flex-direction:column}
+.main .cs{background:var(--bg-2);color:var(--text-dim)}
+.main .cs .tri{width:0;height:0;border-left:7px solid var(--text-faint);border-top:4.5px solid transparent;border-bottom:4.5px solid transparent}
+.gapfill{flex:1;background:var(--bg-2)}
+
+/* arrangement */
+#arr{flex-direction:column}
+.ov{height:14px;flex:none;border-bottom:1px solid var(--line);background:var(--bg-1);position:relative}
+.ov i{position:absolute;top:2px;bottom:2px;border:1px solid var(--text-faint);left:62%;width:30%}
+.ruler{height:22px;flex:none;display:grid;grid-template-columns:minmax(0,1fr) 230px;border-bottom:1px solid var(--line)}
+.ticks{position:relative;font-size:10px;color:var(--text-dim);overflow:hidden}
+.ticks span{position:absolute;top:4px;padding-left:3px;border-left:1px solid var(--text-faint);height:14px;line-height:12px}
+.rset{display:flex;align-items:center;gap:6px;padding:0 6px;font-size:10px;color:var(--text-faint);border-left:1px solid var(--line)}
+.arows{flex:1;overflow:auto;position:relative}
+.arow{display:grid;grid-template-columns:minmax(0,1fr) 230px;border-bottom:2px solid var(--line);min-height:30px}
+.lane{position:relative;background:var(--bg-2);overflow:hidden}
+.lane.sub{background-color:#3a3e43}
+.ac{position:absolute;top:3px;bottom:3px;background:var(--tc);border:1px solid #0004;color:#22282c;font-size:10px;padding:1px 4px;overflow:hidden;white-space:nowrap;cursor:default}
+.ac small{display:block;font-size:9px;opacity:.7}
+.ac.done{opacity:.6}
+.ac.run{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 30px),#0007)}
+.ac.stall{background:repeating-linear-gradient(135deg,var(--tc) 0,var(--tc) 6px,#00000026 6px,#00000026 9px)}
+.ac.selc{box-shadow:0 0 0 1px var(--accent)}
+.qd{position:absolute;top:8px;bottom:8px;border:1px dashed var(--tc);color:var(--text-dim);font-size:9.5px;padding:0 5px;white-space:nowrap;display:flex;align-items:center;background:#00000018}
+.ev{position:absolute;top:3px;bottom:3px;background:var(--bg-1);border-left:2px solid var(--tc);font-size:9.5px;color:var(--text-dim);padding:0 4px;white-space:nowrap;overflow:hidden;line-height:15px;cursor:pointer;width:112px}
+.ev:hover{color:var(--text);background:var(--bg-3);z-index:2}
+.needle{position:absolute;top:0;bottom:0;width:2px;background:var(--tc);z-index:3;pointer-events:none;box-shadow:0 0 0 1px #0006}
+.needle.stall{background:var(--stall)}
+.needle .rd{position:absolute;left:5px;top:2px;font-size:9px;font-family:var(--mono);white-space:nowrap;background:#1d1f22d8;color:var(--text);padding:0 4px;border-left:2px solid var(--tc)}
+.needle.stall .rd{border-left-color:var(--stall);color:var(--stall)}
+.needle.left .rd{left:auto;right:5px;border-left:none;border-right:2px solid var(--stall)}
+.nowline{position:absolute;top:0;bottom:0;width:1px;background:#ffffff28;pointer-events:none;z-index:1}
+.ahead{background:var(--bg-1);border-left:1px solid var(--line);display:grid;grid-template-columns:100px 66px 52px;gap:2px;padding:2px;font-size:10px;align-content:start}
+.ahead .nmc{background:var(--tc);color:#21282e;height:16px;padding:0 4px;display:flex;align-items:center;gap:3px;white-space:nowrap;overflow:hidden;font-weight:500;cursor:default}
+.ahead .lname{grid-column:1/3;color:var(--text-faint);height:16px;line-height:16px}
+.ahead .mx{display:flex;gap:2px}
+.ahead .mx span{height:16px;min-width:16px;padding:0 3px;font-size:9px;display:grid;place-items:center;background:var(--bg-0);border:1px solid var(--line);cursor:pointer}
+.ahead .mx span.n{background:var(--accent);color:#21282e}
+
+/* thread view */
+#thread{flex-direction:column;background:var(--bg-1)}
+.th-h{height:30px;flex:none;display:flex;align-items:center;gap:8px;padding:0 10px;background:var(--bg-2);border-bottom:1px solid var(--line);font-size:11.5px}
+.th-h .back{color:var(--text-dim)} .th-h .back:hover{color:var(--text)}
+.th-h .r{margin-left:auto;display:flex;gap:4px}
+.th-b{flex:1;display:flex;min-height:0}.th-b .tmain{flex:1}
+.tree{padding:3px 0;background:var(--bg-1)}
+.sfilt{display:flex;gap:2px;padding:4px 6px;border-bottom:1px solid var(--line)}
+.tnode{display:flex;align-items:center;gap:6px;height:28px;padding-right:8px;font-size:11px;cursor:pointer;white-space:nowrap}
+.tnode:hover{background:var(--bg-2)} .tnode.on{background:var(--bg-3)}
+.tnode .st{margin-left:auto;font-size:9.5px;color:var(--text-faint)}
+.tnode .rails{position:static;height:28px;flex:none}
+.tnode .rails i{margin-right:4px}
+.tnode.tk{height:21px;font-size:10.5px;color:var(--text-dim)} .tnode.tk.cur{color:var(--accent)}
+.tmain{display:flex;flex-direction:column;min-height:0;background:var(--surface)}
+.msgs{flex:1;overflow:auto;padding:16px 40px 10px;display:flex;flex-direction:column;gap:9px}
+.taskdiv{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--text-faint);margin:6px 0 2px;max-width:900px}
+.taskdiv::after{content:'';flex:1;height:1px;background:var(--line-strong)}
+.taskdiv b{color:#21282e;background:var(--tc);font-weight:500;padding:1px 6px;font-size:10px}
+.m{display:grid;grid-template-columns:24px 1fr;gap:10px;max-width:900px}
+.m .w{font-size:10.5px;color:var(--text-dim);margin-bottom:1px} .m .w b{color:var(--text);font-weight:600;margin-right:6px}
+.m .t{font-size:13px;line-height:1.5}
+.toolrow{margin-left:34px;max-width:866px;border:1px solid var(--line);background:var(--bg-1);font-family:var(--mono);font-size:11px;color:var(--text-dim);cursor:pointer}
+.toolrow .h{display:flex;gap:8px;align-items:center;padding:3px 8px}
+.toolrow .h .k{color:var(--text);background:var(--bg-0);padding:0 4px;border:1px solid var(--line)}
+.toolrow .h .x{margin-left:auto;color:var(--text-faint)}
+.toolrow .o{display:none;border-top:1px solid var(--line);padding:5px 8px;white-space:pre;background:var(--bg-0)}
+.toolrow.open .o{display:block}
+.toolrow .lnk{color:var(--sel)}
+.ok{color:var(--green)} .bad{color:#e3806f}
+.steer{color:var(--accent);font-size:10.5px;margin-top:3px}
+.card{margin-top:6px;border:1px solid var(--line);background:var(--bg-1);max-width:560px}
+.card .ch2{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:11.5px}
+.card .cf{display:flex;gap:6px;padding:7px 10px}
+.stallcard{margin-left:34px;max-width:640px;border:1px solid var(--stall);background:#ff9b4a14;padding:8px 10px;font-size:12px}
+.stallcard .cf{display:flex;gap:6px;margin-top:6px}
+.bt{height:20px;padding:0 9px;font-size:10.5px;background:var(--bg-2);border:1px solid var(--line)}
+.bt.pri{background:var(--accent);border-color:var(--accent);color:#1d1f22}
+.bt.warn{background:var(--stall);border-color:var(--stall);color:#1d1f22}
+.workline{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-dim);padding:0 40px 6px}
+.workline i{width:7px;height:7px;border-radius:50%;animation:blink 1.2s infinite}
+.composer{margin:0 40px 12px;border:1px solid var(--line-strong);background:var(--bg-1);display:flex;align-items:center;gap:10px;padding:9px 12px;max-width:900px}
+.composer .ph{flex:1;color:var(--text-faint);font-size:12.5px}
+.composer .k{font-size:10px;color:var(--text-faint);font-family:var(--mono)}
+.wave{display:none;gap:2px;align-items:center;height:14px;flex:1}
+.wave i{width:3px;height:14px;background:var(--rec);animation:wv .9s ease-in-out infinite}
+@keyframes wv{50%{transform:scaleY(.3)}}
+.voice .wave{display:flex} .voice .ph{display:none}
+
+/* ================= detail ================= */
+.ch{grid-area:ch;min-width:0;min-height:0;display:flex;gap:4px;padding-bottom:4px;padding-right:4px}
+.dpane{flex:1;min-width:0;display:none;border:1px solid var(--line);background:var(--bg-1)} .dpane.on{display:flex}
+.chain{flex:1;display:flex;gap:6px;padding:8px;overflow:hidden;align-items:stretch}
+.dev{background:var(--bg-2);border:1px solid var(--line);display:flex;flex-direction:column;flex:none}
+.dev.sel{outline:1px solid var(--accent);outline-offset:-1px}
+.dh{height:21px;display:flex;align-items:center;gap:5px;padding:0 5px;border-bottom:1px solid var(--line);font-size:11px;cursor:default;white-space:nowrap}
+.dh .pw{width:10px;height:10px;border-radius:50%;border:2px solid var(--accent);flex:none;cursor:pointer} .dh .pw.off{border-color:var(--text-faint)}
+.dh .x{margin-left:auto;display:flex;gap:7px;color:var(--text-faint);font-size:10px} .dh .x span{cursor:pointer} .dh .x span:hover{color:var(--text)}
+.db{flex:1;display:flex;gap:8px;padding:7px;min-height:0}
+.dev.folded{width:24px} .dev.folded .dh{writing-mode:vertical-rl;height:auto;flex:1;border:none;padding:6px 0;justify-content:flex-start;gap:7px;align-items:center;width:22px}
+.vis{background:var(--bg-0);border:1px solid var(--line);position:relative;overflow:hidden;flex:none}
+.knobs{display:grid;grid-template-columns:repeat(2,64px);gap:6px 2px;align-content:start}
+.knob{display:flex;flex-direction:column;align-items:center;gap:1px;cursor:ns-resize;user-select:none}
+.knob .kl{font-size:9.5px;color:var(--text-dim);white-space:nowrap} .knob .kv{font-size:9.5px;font-family:var(--mono);color:var(--text)}
+.tog{display:flex;flex-direction:column;align-items:center;gap:3px}
+.tog .kl{font-size:9.5px;color:var(--text-dim)}
+.tog .tg{display:flex;border:1px solid var(--line)}
+.tog .tg span{font-size:9.5px;padding:1px 5px;background:var(--bg-0);color:var(--text-faint);cursor:pointer} .tog .tg span.on{background:var(--accent);color:#1d1f22}
+.rack{display:flex;gap:0}
+.rack .chains{width:150px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;padding-right:6px}
+.chainrow{display:flex;align-items:center;gap:6px;height:22px;padding:0 5px;background:var(--bg-1);border:1px solid var(--line);font-size:10.5px;cursor:default}
+.chainrow .lt{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;cursor:pointer;margin-left:auto}
+.chainrow.offc{color:var(--text-faint)} .chainrow.offc .lt{background:var(--bg-0);border:1px solid var(--text-faint)}
+.chainrow .md{font-size:9px;color:var(--text-faint);margin-left:auto}
+.macros{display:grid;grid-template-columns:repeat(2,62px);gap:6px 2px;padding-left:8px;align-content:start}
+.dropz{width:150px;flex:none;border:1px dashed var(--line-strong);display:flex;align-items:center;justify-content:center;text-align:center;color:var(--text-faint);font-size:11px;padding:10px}
+.cprops{width:210px;flex:none;border-right:1px solid var(--line);overflow:auto;font-size:11px}
+.cph{height:21px;display:flex;align-items:center;gap:6px;padding:0 6px;background:var(--tc);color:#21282e;font-weight:500}
+.cpsec{border-bottom:1px solid var(--line)}
+.cpsec .t{height:21px;display:flex;align-items:center;gap:6px;padding:0 6px;color:var(--text-dim);font-size:10.5px;cursor:pointer;background:var(--bg-2)}
+.cpsec .b{padding:5px 6px;display:none;gap:4px;flex-direction:column} .cpsec.open .b{display:flex} .cpsec .b .kv{padding:0}
+.log{flex:1;min-width:0;display:flex;flex-direction:column}
+.logbar{height:24px;flex:none;display:flex;align-items:center;gap:4px;padding:0 6px;border-bottom:1px solid var(--line);background:var(--bg-2);font-size:10.5px}
+.logbar .r{margin-left:auto;color:var(--text-faint)}
+.lines{flex:1;overflow:auto;padding:4px 0;font-size:11.5px}
+.ln{display:grid;grid-template-columns:62px 18px 1fr;gap:6px;padding:2px 10px;align-items:start;cursor:default}
+.ln:hover{background:#ffffff08}
+.ln .tm{font-family:var(--mono);font-size:10px;color:var(--text-faint);padding-top:2px}
+.ln .tool{font-family:var(--mono);font-size:10.5px;color:var(--text-dim);display:flex;gap:8px;align-items:center}
+.ln .tool .k{color:var(--text);background:var(--bg-0);padding:0 4px;border:1px solid var(--line)}
+.lines.folded .ln.msg{display:none}
+
+/* ================= context dock: tiles + launcher ================= */
+.dk{grid-area:dk;min-height:0;min-width:0;display:flex;flex-direction:column;border-left:4px solid var(--line);margin-top:4px;position:relative;background:var(--bg-1)}
+.grip{position:absolute;left:-7px;top:0;bottom:0;width:9px;cursor:ew-resize;z-index:5}
+.grip:hover{background:#ffbe0033}
+.tilesh{height:24px;flex:none;display:flex;align-items:center;gap:6px;padding:0 6px;background:var(--bg-2);border-bottom:1px solid var(--line);font-size:11px}
+.tilesh .r{margin-left:auto;display:flex;gap:3px}
+.tiles{flex:1;min-height:0;overflow:auto;padding:5px;display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:5px;align-content:start}
+.tile{border:1px solid var(--line);background:var(--bg-1);display:flex;flex-direction:column;min-width:0}
+.tlh{height:24px;display:flex;align-items:center;gap:5px;padding:0 6px;background:var(--bg-2);font-size:11px;border-bottom:1px solid var(--line)}
+.tlh .t{flex:1} .tlh .x{color:var(--text-faint);font-size:10px;display:flex;gap:7px} .tlh .x span{cursor:pointer} .tlh .x span:hover{color:var(--text)}
+.tlb{position:relative;overflow:hidden}
+.launch{height:300px;flex:none;border-top:5px solid var(--line);display:flex;flex-direction:column;background:var(--bg-2);margin-bottom:4px}
+.launch.folded{height:30px}
+.lh{height:25px;flex:none;display:flex;align-items:center;gap:5px;padding:0 5px;background:var(--bg-1);border-bottom:1px solid var(--line);font-size:11px}
+.lh input{flex:1;min-width:0;height:18px;background:var(--bg-0);border:1px solid var(--line);padding:0 6px;font-size:10.5px;color:var(--text);outline:none}
+.lh .f{color:var(--text-faint);cursor:pointer;width:16px;text-align:center}
+.lgrid{flex:1;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));grid-auto-rows:126px;gap:5px;padding:5px}
+.lcell{border:1px solid var(--line);background:var(--bg-1);display:flex;flex-direction:column;cursor:pointer;position:relative;min-width:0}
+.lcell:hover{border-color:var(--text-faint)} .lcell.on{border-color:var(--accent)}
+.lcell .pv{flex:1;background:var(--bg-0);margin:4px;position:relative;overflow:hidden}
+.lcell .nm{height:20px;display:flex;align-items:center;gap:5px;padding:0 6px;font-size:10.5px}
+.lcell .nm .s{margin-left:auto;font-size:9px;color:var(--sel)}
+.lcell .dot{position:absolute;top:7px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.hive{position:relative;height:200px;background:radial-gradient(ellipse at 50% 60%,#3b4046 0,#30343a 70%);overflow:hidden}
+.hive .bee{position:absolute;cursor:pointer;text-align:center;font-size:9.5px;color:var(--text-dim)}
+.hive .bee .lab{white-space:nowrap;margin-top:-2px} .hive .bee.sel .lab{color:var(--accent)} .hive .bee.muted{opacity:.35}
+.hl{display:flex;align-items:center;gap:6px;padding:2px 6px;font-size:10.5px;cursor:default}
+.hl .d{width:6px;height:6px;border-radius:50%;flex:none}
+.term{font-family:var(--mono);font-size:10px;line-height:1.5;padding:6px;color:var(--text-dim);background:#1f2124;height:200px;overflow:hidden}
+.term .p{color:var(--fizz)} .term .o{color:var(--green)}
+.ftree{padding:4px 6px;font-family:var(--mono);font-size:10px;line-height:1.75;color:var(--text-dim)}
+.ftree .fm{color:var(--accent)} .ftree .a{color:var(--fizz)}
+.web{padding:8px} .web .u{font-family:var(--mono);font-size:9.5px;color:var(--sel);margin-bottom:6px}
+.web .pg{background:var(--bg-0);border:1px solid var(--line);padding:8px;color:var(--text-dim);line-height:1.5} .web .pg b{color:var(--text);display:block;margin-bottom:3px}
+.web .pg mark{background:var(--accent-soft);color:var(--text)}
+.ctxpin{display:flex;align-items:center;gap:6px;padding:3px 6px;font-size:9.5px;color:var(--text-faint);border-bottom:1px solid var(--line)}
+
+/* ================= status ================= */
+.sb{grid-area:sb;margin:0 -6px;border-top:1px solid var(--line);background:var(--bg-1);display:flex;align-items:center;gap:10px;padding:0 8px;color:var(--text-dim);font-size:11px;min-width:0}
+.sb .i{width:16px;height:16px;border-radius:50%;background:var(--bg-3);display:grid;place-items:center;font-size:10px;flex:none}
+.sb .info{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:var(--bg-0);padding:2px 8px;height:20px}
+.sb .info b{color:var(--text);font-weight:500;margin-right:6px}
+.sb .tg{display:flex;gap:2px}
+.sb .tg button{padding:1px 8px;color:var(--text-dim);display:flex;gap:4px;align-items:center;height:20px;border:1px solid var(--line)}
+.sb .tg button.on{color:var(--accent)}
+
+/* sprites */
+.bee-s .wing{transform-box:fill-box;transform-origin:50% 100%}
+.bee-s.working .wing{animation:flap .12s infinite alternate}
+.bee-s.working .bodyg{animation:bob 1.4s ease-in-out infinite}
+.bee-s.idle .bodyg{animation:breathe 3.2s ease-in-out infinite}
+@keyframes flap{to{transform:scaleY(.35)}} @keyframes bob{50%{transform:translateY(-1.5px)}} @keyframes breathe{50%{transform:translateY(.6px)}}
+.form{transform-box:fill-box;transform-origin:center} .form.spin{animation:spin 14s linear infinite} @keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="fit" id="fit"><div class="frame" id="frame">
+
+<!-- ================= TRANSPORT — every control has an agent function ================= -->
+<header class="tp">
+  <div class="title"><b>Flight Path</b> — Release Cut</div>
+  <div class="ctl">
+    <button class="chrome on" id="tBrowser" data-i="Browser|Show or hide the browser (⌘⌥B).">▥</button>
+    <div class="g">
+      <button class="nc" data-i="Link|Joins these sessions to agents in other harnesses and on other machines (Mac, Omarchy): one ledger, one clock. 2 peers.">Link</button>
+      <button class="nc" id="tap" data-i="Tap · ping|Asks every running agent for a status line now instead of at the next heartbeat. Answers land in the Agents tile.">Tap</button>
+      <button class="fld" id="effort" data-i="Effort|Where Live has tempo: how hard the armed session thinks per turn (low → max). Each task can override it."><span id="effV">high</span></button>
+      <button class="nc" id="effDn" data-i="Effort −|One step less effort.">‹</button><button class="nc" id="effUp" data-i="Effort +|One step more effort.">›</button>
+      <span class="fld" data-i="Budget|Where Live has the time signature: turns used / allowed for the selected session.">2 / 12</span>
+      <button class="nc on" id="hb" data-i="Heartbeat|Where Live has the metronome: running agents check in on a cadence. Each check-in moves that thread’s needle in the Arrangement; a needle that stops is a stall.">●◦</button>
+      <button class="nc" data-i="Interrupt quantize|Where Live has launch quantization: how fast Stop and Steer land — now · next tool · next turn.">next tool ▾</button>
+    </div>
+    <div class="g" style="margin-left:14px">
+      <button class="nc" id="tokScope" data-i="Tokens|Where Live has key and scale: a token counter. Click to switch what it counts — selected session · group · everything open.">Σ</button>
+      <span class="fld" data-i="Tokens in|Tokens read by the counted sessions."><small>in</small><span id="tokIn">142k</span></span>
+      <span class="fld" data-i="Tokens out|Tokens written by the counted sessions."><small>out</small><span id="tokOut">38k</span></span>
+    </div>
+    <div class="sp"></div>
+    <div class="g">
+      <button class="nc on" id="follow" data-i="Follow|The Arrangement scrolls with the live needles and Context tiles follow what the selected agent touches. Off: nothing moves your view.">➜</button>
+      <span class="fld" data-i="Position|Where Live shows bars.beats.sixteenths: task . turn . step of the selected session.">212 . 2 . 7</span>
+      <button class="tbtn play on" id="play" data-i="Run|Live’s Play. Launches the selected task, or every queued one. Enter in a composer is the same press."><svg width="15" height="15" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg></button>
+      <button class="tbtn" id="stop" data-i="Stop all|Once: every running agent pauses at the next quantize point and keeps context. Twice: turns are cancelled and unlanded writes return to basis. Per-session hard stop sits on each track."><svg width="15" height="15" viewBox="0 0 24 24"><path d="M6 6h12v12H6z" fill="currentColor"/></svg></button>
+      <button class="tbtn rec" id="rec" data-i="Voice|Live’s Record. Records speech into a new task clip on the armed track, or into the open thread’s composer."><svg width="15" height="15" viewBox="0 0 24 24"><path d="M12 5.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13z" fill="currentColor"/></svg></button>
+      <button class="nc on" id="od" data-i="Steer · overdub|On: what you send while an agent runs steers the running turn. Off: it queues as the next task.">+</button>
+      <button class="nc" id="arm" data-i="Write arm|Live’s automation arm. Off: writes arrive as proposals. On: writes inside each world device land directly, with a receipt.">⌘</button>
+      <button class="nc warn" data-i="Hand back|Live’s re-enable automation. Lit: you edited something an agent holds (HeroShot physics, Honey). Press to hand it back.">←</button>
+      <button class="nc" data-i="Capture|Live’s session record. Records what you do by hand into a new clip on the armed track — a worked example an agent can learn as a skill.">○</button>
+    </div>
+    <div class="g">
+      <span class="fld faint" data-i="Write window · in|Punch-in: no writes before this step (here: until the plan is approved).">plan ✓</span>
+      <button class="nc" data-i="Punch in|Turns the write window’s start on or off.">⌁</button>
+      <button class="nc" id="loop" data-i="Loop|The selected task repeats until its stop condition or cap — a routine."><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3.5l3.5 3.5-3.5 3.5M20.5 7H8.5a5 5 0 0 0-5 5M7 20.5L3.5 17 7 13.5M3.5 17h12a5 5 0 0 0 5-5"/></svg></button>
+      <button class="nc" data-i="Punch out|Writes stop after this step (here: before deploy).">⌁</button>
+      <span class="fld faint" data-i="Write window · out|Punch-out step, or the loop cap when Loop is on.">deploy</span>
+    </div>
+    <div class="sp"></div>
+    <div class="g">
+      <button class="nc" data-i="Point|Live’s draw mode. Mark the stage or any tile; the armed agent receives the mark as a reference.">✎</button>
+      <button class="nc" data-i="Keys|Live’s computer keyboard: number keys launch task rows, letters fire rack macros, Space runs.">▥</button>
+      <button class="nc" data-i="Earth view (planned)|The Earth / Solar-System projection of the World. The button holds its place; the projection is still to be built."><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c3 3 3 14 0 17M12 3.5c-3 3-3 14 0 17"/></svg></button>
+      <button class="nc" data-i="Map|Live’s MIDI map. Bind a key, pad or spoken phrase to any control — ‘Fizz, retry’.">Map</button>
+      <span class="fld" data-i="Throughput|Where Live shows sample rate: tokens per second across running agents.">84 t/s</span>
+      <span class="fld" data-i="Context|Where Live shows CPU load: the selected session’s context-window fill.">38 %</span>
+      <span class="cpu" data-i="Spend|Where Live’s CPU meter sits: session spend against its cap."><i></i></span>
+    </div>
+    <nav class="surf">
+      <button class="on" id="vSession" data-i="Session · Tab|Tracks are sessions, clips are tasks."><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4v16M12 4v16M19 4v16"/></svg></button>
+      <button id="vArr" data-i="Arrangement · Tab|The run viewer: sessions over time, one live needle per thread."><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h16"/></svg></button>
+      <button class="soon" data-i="Expressions|The native Expressions application (outside this mockup)."><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10zM12 10v4M10 12h4"/></svg></button>
+      <button class="soon" data-i="Technē|Knowledge and instruments (outside this mockup)."><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 5h4v4H5zM15 15h4v4h-4zM15 4h5v5h-5zM4 15h5v5H4zM9 7h6M7 9v6M9 17h6M17 9v6"/></svg></button>
+      <button class="soon" data-i="Workbench|Native sources and sessions (outside this mockup)."><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3.5l8.5 8.5-8.5 8.5L3.5 12z"/></svg></button>
+    </nav>
+    <button class="chrome on" id="tDetail" data-i="Detail|Show or hide the device/clip detail (⌘⌥L).">▤</button>
+    <button class="chrome on" id="tDock" data-i="Context dock|Show or hide the context dock: tiles above, launcher below."><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 7a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v2"/></svg></button>
+  </div>
+</header>
+
+<!-- ================= BROWSER ================= -->
+<aside class="br" id="br">
+  <div class="bsearch"><span>‹</span><span>›</span><div>Search (⌘F)</div></div>
+  <div class="bcols">
+    <nav class="bcats" id="bcats"></nav>
+    <div class="bres">
+      <div class="bfilt"><span>○ Filters</span><span>In set</span></div>
+      <div class="bhead"><span>Name</span><span id="bheadR">Seated</span></div>
+      <div id="bitems" style="overflow:auto;flex:1"></div>
+    </div>
+  </div>
+  <section class="pool">
+    <div class="poolh"><span id="pIcon"></span><b id="pName" style="font-weight:500"></b><span class="r" id="pKind"></span></div>
+    <div class="poolb" id="pool"></div>
+  </section>
+</aside>
+
+<!-- ================= CENTRE ================= -->
+<main class="ct">
+  <section class="view on" id="session"><div class="tracks" id="tracks"></div><div class="gapfill"></div><div class="main" id="mainCol"></div></section>
+  <section class="view" id="arr">
+    <div class="ov"><i></i></div>
+    <div class="ruler"><div class="ticks" id="ticks"></div><div class="rset" id="arrScope"></div></div>
+    <div class="arows" id="arows"></div>
+  </section>
+  <section class="view" id="thread"></section>
+  <section class="view" id="gw" style="flex-direction:column;background:var(--bg-1)"></section>
+</main>
+
+<!-- ================= CONTEXT DOCK ================= -->
+<aside class="dk" id="dk">
+  <div class="grip" id="grip" data-i="Resize|Drag left to give the context more room; tiles reflow into columns."></div>
+  <div class="tilesh"><span>Context</span><span class="faint" id="tileCount"></span>
+    <span class="r"><button class="nc" id="wider" data-i="Wider|Grow the dock leftwards for richer compositions; Session/Arrangement give up width.">⇤</button><button class="nc" id="narrower" data-i="Narrower|Shrink the dock back.">⇥</button></span></div>
+  <div class="tiles" id="tiles"></div>
+  <section class="launch" id="launch">
+    <div class="lh"><span class="f" id="lfold" data-i="Fold|Fold the launcher to its search bar; tiles take the height.">▾</span><input id="lsearch" placeholder="Open context… terminal, files, web"><span class="f" id="lmore" data-i="Library|The full context library is also in the browser under Context, where SDK widgets appear too.">⋯</span></div>
+    <div class="lgrid" id="lgrid"></div>
+  </section>
+</aside>
+
+<!-- ================= DETAIL ================= -->
+<section class="ch" id="ch">
+  <div class="dpane on" id="paneDev"><div class="chain" id="chain"></div></div>
+  <div class="dpane" id="paneClip"></div>
+</section>
+
+<!-- ================= STATUS ================= -->
+<footer class="sb">
+  <span class="i">i</span>
+  <div class="info" id="info"><b>Info</b>Hover anything to read what it does. Double-click a task clip (or its ↗) to open the thread.</div>
+  <span id="counts"></span>
+  <span id="sTrack" style="color:var(--text)"></span>
+  <div class="tg"><button id="tgClip">▢ Clip</button><button id="tgDev" class="on">◷ Device</button></div>
+</footer>
+
+</div></div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+/* ======================= data ======================= */
+const AUT=['Suggest','Review','Auto'], EFF=['low','med','high','xhigh','max'];
+const A={
+  fizz:{name:'Fizz',hex:'#5cc6b4',role:'porting engineer',model:'opus-5.5',harness:'buzz-acp',aut:1,eff:2,used:2,max:12,input:'steer',state:'working',doing:'editing portPlan.ts'},
+  scout:{name:'explore',hex:'#8fbfb6',role:'subagent',model:'haiku-5.5',harness:'buzz-acp',aut:0,eff:1,used:3,max:4,input:'queue',state:'done',doing:'returned 22 widgets',sub:1},
+  tester:{name:'test',hex:'#8fbfb6',role:'subagent',model:'haiku-5.5',harness:'buzz-acp',aut:1,eff:1,used:2,max:6,input:'queue',state:'working',doing:'pnpm test --all · 31/48',sub:1},
+  fixgen:{name:'fixture-gen',hex:'#a8c9c2',role:'sub-subagent',model:'haiku-5.5',harness:'buzz-acp',aut:1,eff:0,used:1,max:3,input:'queue',state:'stalled',doing:'no output for 2m 10s',sub:1},
+  honey:{name:'Honey',hex:'#e2a35e',role:'capture & finish',model:'grok-4',harness:'grok',aut:1,eff:1,used:0,max:8,input:'queue',state:'held',doing:'held — you edited HeroShot'},
+  bumble:{name:'Bumble',hex:'#d985a6',role:'reviewer',model:'sonnet-5.5',harness:'claude-agent-acp',aut:0,eff:3,used:5,max:20,input:'steer',state:'idle',doing:'idle · next: review port plan'}
+};
+/* tracks = sessions; clips = atomic tasks; depth = nesting (group → its sessions → what they spawned) */
+const T=[
+  {id:'g1',group:1,depth:0,name:'Port bridge-2',agent:'fizz',c:'#5cc6b4',open:true,kids:1,subModel:'haiku-5.5 ×3',tel:true},
+  {id:'lead',parent:'g1',depth:1,name:'Fizz · lead',agent:'fizz',c:'#5cc6b4',arm:true,watch:'In',meter:.62,fad:.35,ctx:38,tel:true,
+    clips:[{n:'re-plan port',s:'done'},{n:'map field → plan',s:'run',p:.55},{n:'drop old captures',s:'queued'}]},
+  {id:'explore',parent:'g1',depth:1,name:'explore',agent:'scout',c:'#8fbfb6',watch:'Auto',meter:0,fad:.2,ctx:21,tel:true,clips:[null,{n:'survey widget tree',s:'done'}]},
+  {id:'test',parent:'g1',depth:1,name:'test',agent:'tester',c:'#8fbfb6',watch:'Auto',meter:.4,fad:.25,ctx:17,tel:true,open:true,kids:1,clips:[null,{n:'widget tests --all',s:'run',p:.64}]},
+  {id:'fixture',parent:'test',depth:2,name:'fixture-gen',agent:'fixgen',c:'#a8c9c2',watch:'Auto',meter:0,fad:.15,ctx:6,tel:true,stalled:true,clips:[null,{n:'generate fixtures',s:'stall'}]},
+  {id:'honey',depth:0,name:'Capture pass',agent:'honey',c:'#e2a35e',watch:'Auto',meter:0,fad:.5,ctx:9,tel:true,clips:[{n:'tune physics',s:'done'},{n:'capture pass',s:'stopped'},null]},
+  {id:'bumble',depth:0,name:'Review #482',agent:'bumble',c:'#d985a6',watch:'Off',meter:.08,fad:.6,ctx:44,tel:false,clips:[{n:'review #482',s:'done'},null,{n:'review port plan',s:'stopped'}]},
+  {id:'ground',depth:0,name:'Ground states',agent:null,c:'#97b1be',watch:'Off',meter:0,fad:.5,tel:true,clips:[{n:'state 1',s:'stopped',plain:1},{n:'state 2',s:'stopped',plain:1}]}
+];
+const ROWS=['1 plan','2 port','3 polish','4','5','6','7','8'];
+const CUT = {
+  'port-widgets': { edge:'M2 7.2H5.6V4.4H10.4V7.2H14V13.6H2Z', whole:'M2 7.2H5.6V4.4H10.4V7.2H14V13.6H2Z M7.3 8.5 6.4 11.8H8.2L7.6 8.5Z' },
+  'capture-plan': { edge:'M1.2 3.4H14.8V6.4H10V13.4H6V6.4H1.2Z', whole:'M1.2 3.4H14.8V6.4H10V13.4H6V6.4H1.2Z M6.5 8H9.5V9.3H6.5Z M6.5 10.6H9.5V11.9H6.5Z' },
+  'diff-grammar': { edge:'M2.4 2.4H13.6L8 14.2Z', whole:'M2.4 2.4H13.6L8 14.2Z M5.2 4.5H6.7L7.2 10.4H6Z M9.3 4.5H10.8L9.8 10.4H8.6Z' },
+  'review': { edge:'M8 1.5a6.5 6.5 0 1 0 .01 0z', whole:'M8 1.5a6.5 6.5 0 1 0 .01 0zM8 4.7a3.3 3.3 0 1 0 .01 0zM8 6.4a1.6 1.6 0 1 1-.01 0z' },
+  'tune-physics': { edge:'M5.4 1.4H10.6V14.6H5.4Z', whole:'M5.4 1.4H10.6V14.6H5.4Z M5.4 4.2H10.6V5.6H5.4Z M5.4 7.4H10.6V8.8H5.4Z M5.4 10.6H10.6V12H5.4Z' },
+  'deploy': { edge:'M6.7 14.2V6.4L8 1.5 9.3 6.4V14.2Z', whole:'M6.7 14.2V6.4L8 1.5 9.3 6.4V14.2Z M7.55 12.2V6.9L8 5.5 8.45 6.9V12.2Z' },
+  'test-depth': { edge:'M6.9 1.5H9.1V8H12.8V14.4H3.2V8H6.9Z', whole:'M6.9 1.5H9.1V8H12.8V14.4H3.2V8H6.9Z M7.55 2.5H8.45V7.1H7.55Z M4.6 10.2 7.8 13.3 7 13.6 3.9 10.6Z' },
+  'correlate': { edge:'M1.3 5.8H6.2V1.4H9.8V5.8H14.7V10.2H9.8V14.6H6.2V10.2H1.3Z', whole:'M1.3 5.8H6.2V1.4H9.8V5.8H14.7V10.2H9.8V14.6H6.2V10.2H1.3Z M2.3 7.3H13.7V8.7H2.3Z' },
+  'vault-read': { edge:'M2.2 8.4 3.4 5.2 6.6 3.8 10.4 4.4 13.8 6.6 14.6 9.6 13.2 13.4 8.2 14.6 3.2 13.2 1.6 10.2Z', whole:'M2.2 8.4 3.4 5.2 6.6 3.8 10.4 4.4 13.8 6.6 14.6 9.6 13.2 13.4 8.2 14.6 3.2 13.2 1.6 10.2Z M8.8 5.6 7.2 8.8 9.6 12.8 8.4 13.1 6.1 9 7.7 5.8Z' },
+  'gazetteer': { edge:'M1.2 12.4H14.8V14.6H1.2Z M2.2 12.4 3.6 6.2 5 12.4Z M6.4 12.4 8 4.8 9.6 12.4Z M11 12.4 12.5 6.8 14 12.4Z', whole:'M1.2 12.4H14.8V14.6H1.2Z M2.2 12.4 3.6 6.2 5 12.4Z M6.4 12.4 8 4.8 9.6 12.4Z M11 12.4 12.5 6.8 14 12.4Z M7.55 7.4 7.2 11.4H8.6L8.25 7.4Z' },
+  'expressions.produce': { edge:'M7.2 7.2 8 1.3 8.8 7.2 12.4 7.2 12.4 8.8 13.4 8.8 13.4 14.4 2.6 14.4 2.6 8.8 3.6 8.8 3.6 7.2Z', whole:'M7.2 7.2 8 1.3 8.8 7.2 12.4 7.2 12.4 8.8 13.4 8.8 13.4 14.4 2.6 14.4 2.6 8.8 3.6 8.8 3.6 7.2Z M7.65 6.2 8 3.2 8.35 6.2Z M5.2 10.5 8.2 13.5 7.4 13.7 4.6 10.8Z' }
+};
+CUT['review-pr'] = CUT.review;
+const glyph = (k, col='currentColor', s=11, state='whole') => {
+  const g = CUT[k];
+  if(!g) return '';
+  if(state==='outline') return `<svg width="${s}" height="${s}" viewBox="0 0 16 16" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="miter"><path d="${g.edge}"/></svg>`;
+  return `<svg width="${s}" height="${s}" viewBox="0 0 16 16"><path d="${g.whole}" fill="${col}" fill-rule="evenodd"/></svg>`;
+};
+let S={track:'lead',dev:'agent',clip:'lead:1',view:'session',bottom:'device',fold:false,thread:'lead',tokScope:0,follow:true,
+  tiles:['sessions','term','files'],sfilt:'all',launchFold:false,q:''};
+const G={harness:'hermes',rev:'20f7ef4d',transport:'ws',epoch:'3f2a91c4',seq:1284,peers:2,ring:212,ringMax:512,submit:'exclusive',appr:'ask',stall:90,state:'ready',hbAge:4};
+const FRAMES=[['14:31:58','lead','prompt.submit','{text:"Map the Bridge 2 field…"} → streaming'],['14:32:01','lead','tool.start','Read scenes/bridge2/field.json'],['14:32:09','lead','tool.start','Spawn explore'],
+ ['14:32:44','lead','message.complete','status: ok'],['14:32:51','lead','prompt.submit','steer · queued'],['14:33:07','lead','approval.request','port plan · choices once/session/always/deny'],
+ ['14:33:52','test','tool.start','Spawn fixture-gen'],['14:33:57','fixture','tool.start','Bash gen-fixtures'],['14:34:30','test','tool.progress','pnpm test --all 31/48'],['14:36:00','gw','hb','active_turns 2 · progress 1284'],['14:36:10','lead','message.delta','“…settle physics through the Scene rack”']];
+const FCOL={'message.delta':'var(--sel)','message.complete':'var(--green)','tool.start':'var(--accent)','tool.progress':'var(--text-dim)','approval.request':'var(--stall)','prompt.submit':'var(--text)','hb':'var(--text-faint)','gateway.ready':'var(--green)','session.interrupt':'#e3806f','subagent.steer':'var(--accent)'};
+const frameLine=f=>`<span class="faint">${f[0].slice(3)}</span> <span style="color:${FCOL[f[2]]||'var(--text-dim)'}">${f[2]}</span> <span class="faint">${f[1]==='gw'?'gateway':tr(f[1])?tr(f[1]).name:f[1]}</span> ${f[3]}`;
+let NOW=36.2; // minutes past 14:00; advances live
+const LAST={lead:()=>NOW,test:()=>NOW,fixture:()=>34.62,explore:()=>32.7}; // each thread's last activity = its needle
+
+/* ======================= sprites ======================= */
+function bee(k,size=34,opts={}){const a=A[k];const st=opts.state||a.state;const sub=a.sub;
+  const eyes=['idle','held','stalled'].includes(st)?'<path d="M17.5 16.5h2.4M22.3 16.5h2.4" stroke="#1d1f22" stroke-width="1.2"/>':'<circle cx="18.7" cy="16.3" r="1.25" fill="#1d1f22"/><circle cx="23.5" cy="16.3" r="1.25" fill="#1d1f22"/>';
+  return `<svg class="bee-s ${st==='working'?'working':st==='idle'||st==='held'?'idle':''}" width="${size}" height="${size}" viewBox="0 0 40 40" style="${sub?'transform:scale(.82)':''}">
+   <g class="bodyg"><ellipse class="wing" cx="15" cy="11" rx="4.5" ry="6.5" fill="#e9f3f5" fill-opacity=".55" stroke="#ffffff55"/>
+    <ellipse class="wing" cx="23" cy="10" rx="4" ry="6" fill="#e9f3f5" fill-opacity=".45" stroke="#ffffff55" style="animation-delay:.06s"/>
+    <ellipse cx="18" cy="24" rx="11" ry="9" fill="${a.hex}"/><path d="M13 16.5q-1 7.5 0 15M18 15.2q-1.2 8.8 0 17.6" stroke="#1d1f22" stroke-width="2.6" fill="none" stroke-opacity=".8"/>
+    <circle cx="23" cy="18" r="6" fill="${a.hex}"/>${eyes}${sub?'':'<path d="M21 12.5q-1-4-3.5-5M25 12.5q1.5-4 4-4.5" stroke="#1d1f22" stroke-width="1" fill="none"/>'}<path d="M7 24l-3 1" stroke="#1d1f22" stroke-width="1.6"/></g>
+   ${st==='held'?'<circle cx="33" cy="8" r="5" fill="#ff9b4a"/><path d="M33 5v3.5M33 10.3v.6" stroke="#1d1f22" stroke-width="1.6"/>':''}
+   ${st==='stalled'?'<circle cx="33" cy="8" r="5" fill="#ff9b4a"/><path d="M30.5 8h.1M33 8h.1M35.5 8h.1" stroke="#1d1f22" stroke-width="1.8" stroke-linecap="round"/>':''}
+   ${st==='done'?'<circle cx="33" cy="8" r="5" fill="#8fd0a8"/><path d="M30.6 8l1.8 1.8 3.2-3.4" stroke="#1d1f22" stroke-width="1.4" fill="none"/>':''}</svg>`}
+function form(k,size=90){const a=A[k];const n=a.state==='working'?44:18;let d='';
+  for(let i=0;i<n;i++){const t=i/n*Math.PI*2,r=size*.30+size*.09*Math.sin(3*t+k.length),x=size/2+r*Math.cos(t),y=size/2+r*Math.sin(t);
+    d+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(1+((i*7)%3)*.45).toFixed(2)}" fill="${a.hex}" fill-opacity="${(.35+((i*5)%4)*.15).toFixed(2)}"/>`}
+  return `<g class="form ${a.state==='working'?'spin':''}">${d}</g>`}
+const youAv='<span style="display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#c9cdd1;color:#1d1f22;font-size:9.5px;font-weight:700">A</span>';
+
+/* ======================= primitives ======================= */
+function arc(a0,a1,r=11,c=15){const p=a=>[c+r*Math.sin(a*Math.PI/180),c-r*Math.cos(a*Math.PI/180)];const[x0,y0]=p(a0),[x1,y1]=p(a1);
+  return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${a1-a0>180?1:0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`}
+function knob(key,label,v,disp,col='var(--accent)',info=''){const a=-135+270*Math.max(.001,Math.min(1,v));
+  return `<div class="knob" data-knob="${key}" data-i="${label}|${info}"><span class="kl">${label}</span>
+   <svg width="30" height="30" viewBox="0 0 30 30"><path d="${arc(-135,135)}" stroke="var(--bg-0)" stroke-width="3" fill="none"/><path d="${arc(-135,a)}" stroke="${col}" stroke-width="3" fill="none"/>
+   <circle cx="15" cy="15" r="6.5" fill="var(--bg-3)"/><line x1="15" y1="15" x2="${(15+6.5*Math.sin(a*Math.PI/180)).toFixed(2)}" y2="${(15-6.5*Math.cos(a*Math.PI/180)).toFixed(2)}" stroke="var(--text)" stroke-width="1.5"/></svg>
+   <span class="kv">${disp}</span></div>`}
+const tr=id=>T.find(t=>t.id===id);
+const trAgent=t=>t&&t.agent?A[t.agent]:null;
+const ancestors=t=>{const out=[];let p=t&&t.parent;while(p){const pt=tr(p);out.unshift(pt);p=pt.parent}return out};
+const descendants=t=>T.filter(o=>ancestors(o).includes(t));
+const railsHtml=t=>{const an=ancestors(t);return an.length?`<span class="rails">${an.map(a=>`<i style="background:${a.c}"></i>`).join('')}</span>`:''};
+const visible=t=>ancestors(t).every(a=>a.open);
+const fmt=m=>{let mm=Math.floor(m),ss=Math.round((m-mm)*60);if(ss===60){mm++;ss=0}return `14:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`};
+const leadOf=t=>t.group?'lead':t.id;
+
+/* ======================= browser ======================= */
+const CATS=[['Collections',[['Favorites','fav']]],['Library',[['All','all'],['Agents','agents'],['Agentsets','sets'],['Skillsets','skillsets'],['Worlds','worlds'],['Context','context'],['Git','git'],['Models','models']]],['Places',[['Central','pl'],['Work','pl'],['Sessions','sess']]]];
+let bcat='context';
+function renderBrowser(){
+  $('#bcats').innerHTML=CATS.map(([h,items])=>`<h6>${h}</h6>`+items.map(([n,k])=>`<div class="bcat ${k===bcat?'on':''}" data-bcat="${k}">${k==='fav'?'<span style="width:8px;height:8px;background:var(--rec)"></span>':`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17zM12 7.5v4.5l3 2.5"/></svg>`}${n}</div>`).join('')).join('');
+  let h='';$('#bheadR').textContent=bcat==='context'?'Open':bcat==='sess'?'State':'Seated';
+  if(bcat==='context')h=CTX.map(c=>`<div class="bitem" data-tile="${c.id}" data-i="${c.name}|${c.desc} Click to open it as a tile in the dock.">${c.ico}${c.name}${c.sdk?'<span class="sdk">SDK</span>':''}<span class="st">${S.tiles.includes(c.id)?'● open':''}</span></div>`).join('')+`<div class="bitem faint" data-i="Curate|Save a composition of tiles as a context preset; SDK widgets install here.">+ Save current tiles as preset…</div>`;
+  else if(bcat==='agents')h=['fizz','honey','bumble'].map(k=>`<div class="bitem" data-agent="${k}" data-i="${A[k].name}|Drag onto a track to seat it as that session’s agent.">${bee(k,22,{state:'idle'})}${A[k].name}<span class="st">${A[k].role}</span></div>`).join('')+`<div class="bitem faint">+ Mint agent…</div>`;
+  else if(bcat==='skillsets')h=[['Porting',['port-widgets','capture-plan','diff-grammar']],['Review',['review-pr','diff-grammar']],['Physics tuning',['tune-physics','test-depth']],['Ship',['deploy','test-depth']]].map(([n,sk])=>`<div class="bitem" data-i="Skillset · ${n}|A rack of skills; drop it on a session’s chain."><span style="display:flex;gap:2px">${sk.map(s=>glyph(s)).join('')}</span>${n}<span class="st">${sk.length}</span></div>`).join('');
+  else if(bcat==='git')h=['Git · seat (env-1)','Git · read-only','Git · PR lane'].map(n=>`<div class="bitem" data-i="Git device|Drop on a chain: the session commits through it.">⎇ ${n}</div>`).join('');
+  else if(bcat==='sess')h=T.filter(t=>t.agent&&!t.group).map(t=>`<div class="bitem" data-thread="${t.id}" style="padding-left:${5+t.depth*12}px" data-i="${t.name}|Open its thread in the main space.">${bee(t.agent,18)}${t.name}<span class="st">${trAgent(t).state}</span></div>`).join('');
+  else h=`<div class="bitem faint">—</div>`;
+  $('#bitems').innerHTML=h;
+}
+
+/* ======================= tier 2: expanded ======================= */
+function renderPool(){
+  const t=tr(S.track);let icon='',name='',kind='',h='';
+  if(S.track==='main'){name='Main';kind='global';h=`<div class="sec">Gateways, Ledger and Approvals live on Main.</div>`}
+  else if(S.dev==='gw'){icon='⇄';name='Gateway · '+G.harness;kind='gateway · expanded';
+    h=`<div class="row"><span class="k">Harness</span><div class="dd" style="width:190px"><span class="t">hermes · tui_gateway · ${G.rev}</span></div></div>
+     <div class="row"><span class="k">Transport</span><div class="seg">${['stdio','ws','remote'].map(x=>`<button class="${G.transport===x?'on':''}" data-gwt="${x}">${x}</button>`).join('')}</div></div>
+     <div class="row"><span class="k">Auth</span><div class="seg"><button class="${G.transport==='stdio'?'on':''}">trusted</button><button class="${G.transport==='ws'?'on':''}">token</button><button class="${G.transport==='remote'?'on':''}">30 s ticket</button></div></div>
+     <div class="row"><span class="k">Reach</span><div class="dd" style="width:190px"><span class="t">${G.transport==='remote'?'Workcell · frank (composed)':'local-ipc (shipped)'}</span></div></div>
+     <div class="row"><span class="k">Submit</span><div class="seg"><button class="${G.submit==='exclusive'?'on':''}" data-gws="exclusive">one at a time</button><button class="${G.submit==='queue'?'on':''}" data-gws="queue">queue ≤ 32</button></div></div>
+     <div class="row"><span class="k">Approvals</span><div class="seg">${['ask','session','always'].map(x=>`<button class="${G.appr===x?'on':''}" data-gwa="${x}">${x}</button>`).join('')}</div></div>
+     <div class="row"><span class="k">Stall after</span><div class="seg">${[30,90,300,1800].map(x=>`<button class="${G.stall===x?'on':''}" data-gwst="${x}">${x<120?x+' s':x/60+' m'}</button>`).join('')}</div></div>
+     <div class="row"><span class="k">Auto-continue</span><div class="seg"><button class="on">on · ≤15 m</button><button>off</button></div></div>
+     <div class="row"><span class="k">Frames</span><button class="bt" data-gwfull="1" style="width:max-content">Open frame monitor ↗</button></div>
+     <div class="fold" data-fold="fGW"><span class="tri">▶</span>Details</div><div class="foldb" id="fGW">
+      <div class="kv"><span>Protocol</span><span>JSON-RPC 2.0 · NDJSON</span></div><div class="kv"><span>Surface</span><span>225 methods · 34 events</span></div><div class="kv"><span>Capabilities</span><span>exclusive-submit ✓</span></div>
+      <div class="kv"><span>Epoch</span><span>${G.epoch}</span></div><div class="kv"><span>Replay</span><span>${G.ring}/${G.ringMax} ev</span></div><div class="kv"><span>Restart guard</span><span>3 / 60 s</span></div><div class="kv"><span>Config law</span><span>reads degrade · writes refuse</span></div><div class="kv"><span>Contract</span><span>hermes-gateway-re A1–A3</span></div></div>`}
+  else if(S.dev==='git'){icon='⎇';name='Git · port/bridge-2';kind='git · expanded';
+    h=`<div class="row"><span class="k">Branch</span><div class="dd" style="width:170px"><span class="t">agent/port-bridge-2</span></div></div>
+     <div class="row"><span class="k">Seat</span><div class="dd" style="width:170px"><span class="t">env-1 · o-i</span></div></div>
+     <div class="row"><span class="k">Commit</span><div class="seg"><button>per turn</button><button class="on">per task</button><button>manual</button></div></div>
+     <div class="row"><span class="k">Push</span><div class="seg"><button class="on">off</button><button>on land</button><button>always</button></div></div>
+     <div class="row"><span class="k">Land as</span><div class="seg"><button class="on">draft PR</button><button>PR</button><button>merge</button></div></div>
+     <div class="row"><span class="k">Checks</span><span class="mono" style="font-size:10.5px">2 / 3 <span class="ok">✓</span> · 1 running</span></div>
+     <div class="fold" data-fold="fG"><span class="tri">▶</span>Details</div><div class="foldb" id="fG"><div class="kv"><span>Base</span><span>main @ 45e15ed</span></div><div class="kv"><span>Remote</span><span>origin</span></div><div class="kv"><span>Guard</span><span>seat guard on</span></div></div>`}
+  else if(S.dev==='agent'&&trAgent(t)){const a=trAgent(t);icon=bee(t.agent,20);name=a.name;kind='agent · expanded';
+    h=`<div class="row"><span class="k">Autonomy</span><div class="seg">${['Suggest','Review','Autonomous'].map((x,i)=>`<button class="${i===a.aut?'on':''}" data-aut="${i}">${x}</button>`).join('')}</div></div>
+     <div class="row"><span class="k">Effort</span><div class="seg">${EFF.map((x,i)=>`<button class="${i===a.eff?'on':''}" data-eff="${i}">${x}</button>`).join('')}</div></div>
+     <div class="row"><span class="k">Input</span><div class="seg"><button class="${a.input==='steer'?'on':''}" data-input="steer">steer</button><button class="${a.input==='queue'?'on':''}" data-input="queue">queue</button></div></div>
+     <div class="row"><span class="k">Budget</span><div style="display:flex;gap:6px;align-items:center"><div class="slider"><i style="width:${a.used/a.max*100}%"></i></div><span class="mono" style="font-size:10px">${a.used}/${a.max}</span></div></div>
+     <div class="row"><span class="k">Stall after</span><div class="seg"><button>30 s</button><button class="on">90 s</button><button>5 m</button></div></div>
+     <div class="row"><span class="k">On stall</span><div class="seg"><button class="on">ask</button><button>retry ×1</button><button>stop</button></div></div>
+     <div class="fold" data-fold="fA"><span class="tri">▶</span>Details</div>
+     <div class="foldb" id="fA"><div class="kv"><span>Role</span><span>${a.role}</span></div><div class="kv"><span>Harness</span><span>${a.harness}</span></div><div class="kv"><span>Model</span><span>${a.model}</span></div><div class="kv"><span>Memory</span><span>session-scoped</span></div><div class="kv"><span>Profile</span><span>r15 · accepted</span></div></div>`}
+  else if(S.dev==='skills'){icon=glyph('port-widgets','var(--text)',12);name='Porting';kind='skillset · expanded';
+    h=`<div class="sec"><span>Skills</span><span>admit</span></div>`+[['port-widgets',1],['capture-plan',1],['diff-grammar',1],['review-pr',0]].map(([s,on])=>`<div class="tgl ${on?'':'off'}">${glyph(s,on?'var(--text)':'var(--text-faint)',11,on?'whole':'outline')}${s}<span class="lt ${on?'on':''}" style="margin-left:auto" data-skill="${s}"></span></div>`).join('')+
+     `<div class="sec">Macros</div><div class="row"><span class="k">Thoroughness</span><div class="slider"><i style="width:62%"></i></div></div><div class="row"><span class="k">Test depth</span><div class="slider"><i style="width:40%"></i></div></div>
+     <div class="fold" data-fold="fS"><span class="tri">▶</span>Details</div><div class="foldb" id="fS"><div class="kv"><span>Steward</span><span>o-i</span></div><div class="kv"><span>Revision</span><span>r7</span></div></div>`}
+  else if(S.dev==='world'){icon='◍';name='bridge-2';kind='world · expanded';
+    h=`<div class="sec"><span>Reads</span></div>`+[['this scene',1],['registers:physics',1],['old captures',0],['whole expression',0]].map(([n,on])=>`<div class="tgl ${on?'':'off'}">${n}<span class="lt ${on?'on':''}" style="margin-left:auto"></span></div>`).join('')+
+     `<div class="sec"><span>Writes</span></div>`+[['placement',1],['layers',1],['properties',1],['transport',0]].map(([n,on])=>`<div class="tgl ${on?'':'off'}">${n}<span class="lt ${on?'on':''}" style="margin-left:auto"></span></div>`).join('')+
+     `<div class="fold" data-fold="fW"><span class="tri">▶</span>Details</div><div class="foldb" id="fW"><div class="kv"><span>Scope</span><span>scene:bridge-2</span></div><div class="kv"><span>Basis</span><span>r15 → r17</span></div></div>`}
+  else if(S.dev==='agentset'){icon='⬡';name='Port crew';kind='agentset · expanded';
+    h=`<div class="sec"><span>Members</span><span>model</span></div>`+[['fizz','lead',0],['scout','explore',0],['tester','test',0],['fixgen','fixture-gen',1]].map(([k,r,d])=>`<div class="tgl" style="padding-left:${8+d*14}px">${bee(k,20)}${r}<span class="r"><span class="dd" style="width:92px"><span class="t">${A[k].model}</span></span></span></div>`).join('')+
+     `<div class="row"><span class="k">Max parallel</span><div class="seg"><button>1</button><button class="on">2</button><button>4</button></div></div><div class="row"><span class="k">Max depth</span><div class="seg"><button>1</button><button class="on">2</button><button>3</button></div></div>`}
+  else {name=t?t.name:'';h=`<div class="sec">No agent seated. Drop one from the browser.</div>`}
+  $('#pIcon').innerHTML=icon;$('#pName').textContent=name;$('#pKind').textContent=kind;$('#pool').innerHTML=h;
+}
+
+/* ======================= session ======================= */
+const W=t=>t.group?132:[124,118,110][t.depth];
+function renderSession(){let h='';
+  for(const t of T){if(!visible(t))continue;const a=trAgent(t);const sel=S.track===t.id;
+    h+=`<div class="trk d${t.depth} ${t.group?'grp':''} ${sel?'sel':''} ${t.tel?'':'muted'}" style="--tc:${t.c};width:${W(t)}px">${railsHtml(t)}
+     <div class="thd" data-track="${t.id}" style="padding-left:${4+ancestors(t).length*4}px" data-i="${t.name}|${t.group?'A group: the lead and every session it spawned. Fold to collapse; its slots show the children’s tasks.':t.depth===2?'A subagent’s subagent. The stepped rails at its left show how deep it sits.':t.parent?'A session in the group. Double-click a clip to open its thread.':'A session. Its clips are tasks.'}">
+      ${t.kids?`<span class="gf" data-gfold="${t.id}">${t.open?'▼':'▶'}</span>`:''}${t.group?`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#21282e" stroke-width="2.4"><path d="M3 6h18M3 12h18M3 18h18"/></svg>`:''}
+      <span class="nm">${t.name}</span>${a&&!t.group?`<span style="margin:-6px -3px -6px 0">${bee(t.agent,22)}</span>`:''}</div><div class="slots">`;
+    for(let i=0;i<8;i++){
+      if(t.group){const kids=descendants(t).map(o=>o.clips?.[i]);if(kids.some(Boolean))h+=`<div class="cs grp" data-i="Group slot|The children’s tasks in this row; launching fires them all. Amber = stalled.">${kids.map(c=>`<i class="${c?(c.s==='stall'?'s':''):'e'}" style="${c&&c.s==='run'?'opacity:1':''}"></i>`).join('')}</div>`;else h+=`<div class="cs"><span class="sg"></span></div>`;continue}
+      const c=(t.clips||[])[i];
+      if(t.recSlot===i)h+=`<div class="cs clip recs"><span class="tri" style="border-left-color:#fff"></span><span class="n">● listening…</span></div>`;
+      else if(c)h+=`<div class="cs clip ${c.s} ${S.clip===t.id+':'+i?'selc':''}" data-clip="${t.id}:${i}" data-i="${c.plain?'Clip|An ordinary Scene state; agents and native material share the grid.':'Task · '+c.n+'|Click: its log below. Double-click or ↗: open the thread in the main space. Triangle: run. '+({done:'Finished.',run:'Running.',queued:'Queued.',stopped:'Ready.',stall:'Stalled — no output past the stall limit.'}[c.s])}"><span class="tri"></span><span class="n">${c.n}</span>${c.plain?'':'<span class="op" data-open="1">↗</span>'}${c.s==='run'?`<span class="pg" style="width:${c.p*100}%"></span>`:''}</div>`;
+      else h+=`<div class="cs" ${a?'data-i="Empty slot|Its square stops the session after the current task (soft stop). Double-click to write a task; arm and press ● to speak one."':''}><span class="sg" ${a?`data-soft="${t.id}"`:''}></span></div>`}
+    const lit=t.stalled||(t.group&&descendants(t).some(o=>o.stalled))||(t.kids&&!t.group&&descendants(t).some(o=>o.stalled));
+    h+=`</div><div class="stoprow">${a||t.group?`<span class="hs" data-hard="${t.id}" data-i="Hard stop|Stops ${t.group?'the group and every session in it':'this session'} now — mid-tool if needed — and keeps what was written as a draft."><i></i></span><span class="rt ${lit?'lit':''}" data-retry="${t.id}" data-i="Retry|Restarts a stalled or failed task from its last good step, same basis.${lit?' Lit: a lane in here has stalled.':''}">↻</span>`:''}<span class="tc"></span></div>`;
+    h+=strip(t)+`</div>`}
+  $('#tracks').innerHTML=h;
+  $('#mainCol').innerHTML=`<div class="thd" data-track="main" style="--tc:var(--bg-3);color:var(--text);${S.track==='main'?'box-shadow:inset 0 0 0 1px #ffffffb0':''}" data-i="Main|The whole work: Ledger and Approvals live on its chain.">Main</div><div class="slots">${ROWS.map(r=>`<div class="cs" data-i="Row · ${r}|Launch the row: fires every task in it across sessions — a batch."><span class="tri"></span>${r}</div>`).join('')}</div>
+   <div class="stoprow"><span class="hs" data-i="Stop all|Same as transport Stop."><i></i></span></div>
+   <div class="strip"><span class="lb">Approvals</span><div class="dd" style="color:var(--accent)"><span class="t">◆ 2 waiting</span></div><span class="lb">Stalled</span><div class="dd" style="color:var(--stall)" data-thread="fixture"><span class="t">${T.filter(o=>o.stalled).length} · ${T.filter(o=>o.stalled).map(o=>o.name).join(', ')||'none'}</span></div><span class="lb">Ledger</span><div class="dd"><span class="t">212 tasks</span></div>
+   <div class="vol"><div class="mc"><span class="num" data-i="Main telemetry|Everything into the dock and the ledger stream.">M</span></div><div class="fcol"><div class="rail"><i style="height:48%"></i></div><div class="rail"><span class="cap" style="bottom:70%"></span></div></div></div></div>`;
+}
+function strip(t){const a=trAgent(t);
+  if(t.group)return `<div class="strip"><span class="lb">Lead</span><div class="dd"><span class="t">${A.fizz.name} · ${A.fizz.model}</span></div>
+    <span class="lb">Subagent model</span><div class="dd" data-i="Subagent model|Default model for everything this group spawns; a member’s strip can override it."><span class="t">${t.subModel}</span></div>
+    <span class="lb">Parallel · depth</span><div class="mon"><span>1</span><span class="on">2</span><span>4</span><span style="margin-left:4px" class="on">d2</span></div>
+    <div class="vol"><div class="mc"><span class="num ${t.tel?'':'off'}" data-tel="${t.id}" data-i="Telemetry|Live’s track activator, on the number: the whole group as a context source. Off: it keeps running but stops feeding the dock, the ledger stream and other agents’ context.">1</span><span class="sbtn">S</span></div><div class="fcol"><div class="rail"><i style="height:${t.tel?55:0}%"></i></div><div class="rail"><span class="cap" style="bottom:40%"></span></div><div class="scale"><span>12</span><span>8</span><span>4</span><span>0</span></div></div></div></div>`;
+  return `<div class="strip">
+   <span class="lb">Agent</span><div class="dd"><span class="t">${a?a.name:'—'}</span></div>
+   <span class="lb">Model</span><div class="dd" data-i="Model|This session’s model. Subagents can run a different one."><span class="t">${a?a.model:'—'}</span></div>
+   <span class="lb">Watch</span><div class="mon" data-i="Watch|Live’s monitor. In: always stream this session into the dock. Auto: when armed or selected. Off: never.">${['In','Auto','Off'].map(w=>`<span class="${t.watch===w?'on':''}" data-watch="${t.id}:${w}">${w}</span>`).join('')}</div>
+   <div class="vol"><div class="mc"><span class="num ${t.tel?'':'off'}" data-tel="${t.id}" data-i="Telemetry · context source|Live’s track activator. On: this session feeds the dock, the ledger stream and other agents’ context. Off: it keeps working, silently.">${T.indexOf(t)}</span>
+     <span class="sbtn" data-i="Solo|Only soloed sessions may run.">S</span>${a?`<span class="sbtn arm ${t.arm?'on':''}" data-arm="${t.id}" data-i="Arm|Who you are talking to: voice and the composer send here.">●</span>`:''}
+     ${a?`<span class="ctxv" data-i="Context|Context-window fill.">${t.ctx}%</span>`:''}</div>
+     <div class="fcol" data-i="Activity · budget|Meter: live activity (empty when telemetry is off). Fader: this session’s share of the budget, in turns."><div class="rail"><i style="height:${t.tel?t.meter*100:0}%"></i></div><div class="rail"><span class="cap" style="bottom:${t.fad*100}%"></span></div><div class="scale"><span>12</span><span>8</span><span>4</span><span>0</span></div></div></div></div>`}
+
+/* ======================= arrangement: one needle per thread, no predicted ends ======================= */
+let T0=31.6,T1=38.1;
+const X=m=>((Math.min(Math.max(m,T0),T1)-T0)/(T1-T0)*100).toFixed(3)+'%';
+const RUNS={lead:[['re-plan port',28.2,30.4,'done'],['map field → plan',31.97,'live','run']],explore:[['survey widget tree',32.15,32.7,'done']],
+  test:[['widget tests --all',33.1,'live','run']],fixture:[['generate fixtures',33.9,'live','stall']],honey:[['tune physics',28.4,29.6,'done']],bumble:[['review #482',29.0,31.0,'done']],ground:[]};
+const QUEUE={lead:['drop old captures'],honey:['capture pass'],bumble:['review port plan']};
+const LANES={lead:[['Messages',[['plan · 3 beats',32.6],['steer heard',32.86],['proposal ◆',33.12]]],['Files',[['read field.json',32.02],['edit portPlan.ts ×2',32.87]]],
+  ['Terminal',[['pnpm test bridge2 ✓',33.03]]],['Web',[['widgets API docs',32.5]]],['Graph',[['bridge-2 neighbours',32.07]]]],
+  test:[['Terminal',[['pnpm test --all',33.2]]],['Files',[['read 14 specs',33.15]]]],fixture:[['Terminal',[['gen-fixtures · waiting',33.95]]]],explore:[['Files',[['walk view tree',32.2]]]]};
+function needle(t,label=true){const f=LAST[t.id];if(!f)return '';const m=f();const st=t.stalled;const ago=Math.max(0,Math.round((NOW-m)*60));
+  const txt=st?`stalled ${Math.floor(ago/60)}m ${String(ago%60).padStart(2,'0')}s`:m<NOW-.02?'done':trAgent(t).doing.split('·').pop().trim();
+  return `<div class="needle ${st?'stall':''}" style="left:${X(m)};--tc:${t.c}">${label?`<span class="rd">${trAgent(t).name} · ${txt}</span>`:''}</div>`}
+function renderArr(){
+  if(S.follow&&NOW>T1-.7){const w=T1-T0;T1=NOW+.7;T0=T1-w}
+  let tk='';for(let m=Math.ceil(T0*2)/2;m<T1;m+=.5)tk+=`<span style="left:${X(m)}">${m%1?':30':fmt(m).slice(0,5)}</span>`;$('#ticks').innerHTML=tk;
+  const sel=tr(S.track);const focus=S.track==='main'||!sel?null:(sel.group?sel:ancestors(sel)[0]||sel);
+  $('#arrScope').innerHTML=`Run viewer · ${focus?focus.name:'all'}<span style="margin-left:auto;color:var(--text-dim)" class="mono">${fmt(NOW)}</span>`;
+  let h='';
+  for(const t of T){if(!visible(t))continue;const a=trAgent(t);const inFocus=focus&&(t===focus||ancestors(t).includes(focus));const expanded=inFocus&&LANES[t.id];
+    const indent=ancestors(t).length*8;
+    if(t.group){h+=`<div class="arow" style="--tc:${t.c};min-height:26px"><div class="lane">${descendants(t).flatMap(o=>(RUNS[o.id]||[]).map(r=>[...r,o])).map(([n,s,e,st,o])=>`<div class="ac ${st}" style="--tc:${o.c};left:${X(s)};width:calc(${X(e==='live'?LAST[o.id]():e)} - ${X(s)});top:5px;bottom:5px;font-size:0;padding:0"></div>`).join('')}<div class="nowline" style="left:${X(NOW)}"></div></div>
+      <div class="ahead"><span class="nmc" data-track="${t.id}"><span data-gfold="${t.id}" style="font-size:8px;cursor:pointer">${t.open?'▼':'▶'}</span>${t.name}</span><div class="dd"><span class="t">group</span></div><div class="mx"><span class="${t.tel?'n':''}" data-tel="${t.id}">1</span><span data-hard="${t.id}">■</span><span data-retry="${t.id}" style="${descendants(t).some(o=>o.stalled)?'background:var(--stall);color:#1d1f22':''}">↻</span></div></div></div>`;continue}
+    const end=r=>r[2]==='live'?LAST[t.id]():r[2];
+    h+=`<div class="arow" style="--tc:${t.c};min-height:${t.parent?36:46}px"><div class="lane ${t.parent?'sub':''}">${(RUNS[t.id]||[]).filter(r=>end(r)>T0).map(r=>{const [n,s,,st]=r;const i=(t.clips||[]).findIndex(c=>c&&c.n===n);
+        return `<div class="ac ${st} ${S.clip===t.id+':'+i?'selc':''}" data-clip="${t.id}:${i}" style="left:${X(s)};width:calc(${X(end(r))} - ${X(s)})" data-i="Task · ${n}|${st==='run'?'Running — no end is drawn; its needle is the live edge.':st==='stall'?'Stalled: the needle stopped where its output stopped.':'Done.'} Double-click to open the thread.">${n}<small>${st==='run'?'running':st==='stall'?'stalled':'done'}</small></div>`}).join('')}
+      ${(QUEUE[t.id]||[]).map((q,i)=>`<div class="qd" style="--tc:${t.c};left:calc(${X(LAST[t.id]?LAST[t.id]():Math.max(T0,NOW-.1))} + ${t.stalled?8:130+i*110}px)" data-i="Queued|Waiting behind the running task. No length is drawn: nobody knows how long it will take.">▸ ${q}</div>`).join('')}
+      <div class="nowline" style="left:${X(NOW)}"></div>${needle(t)}</div>
+     <div class="ahead"><span class="nmc" data-track="${t.id}" style="margin-left:${indent}px;${indent?`box-shadow:-3px 0 0 ${tr(t.parent).c}`:''}">${a?bee(t.agent,16):''}${t.name}</span><div class="dd"><span class="t">${a?a.model:'—'}</span></div><div class="mx"><span class="${t.tel?'n':''}" data-tel="${t.id}">${T.indexOf(t)}</span>${a?`<span data-hard="${t.id}">■</span><span data-retry="${t.id}" style="${t.stalled?'background:var(--stall);color:#1d1f22':''}">↻</span>`:''}</div></div></div>`;
+    if(expanded)for(const [ln,evs] of LANES[t.id])h+=`<div class="arow" style="--tc:${t.c};min-height:22px"><div class="lane sub">${evs.map(([n,s])=>`<div class="ev" style="left:${X(s)}" data-tilejump="${ln}" data-i="${ln} · ${n}|An event inside the task. Click: open it in a ${ln} tile.">${n}</div>`).join('')}${needle(t,false)}</div>
+      <div class="ahead"><span class="lname" style="padding-left:${indent+16}px">${ln}</span></div></div>`}
+  $('#arows').innerHTML=h;
+}
+
+/* ======================= thread view (main space) ======================= */
+const THREADS={
+ lead:[['task','re-plan port','done'],['you','14:28:10','Re-plan the port around the new capture.'],['fizz','14:30:20','Re-planned; receipt #212.'],
+  ['task','map field → plan','run'],['you','14:31:58','<b>Map the Bridge 2 field into the port plan.</b> Keep Honey’s tuned physics — same look.','● voice'],
+  ['tool','fizz','14:32:01','Read','scenes/bridge2/field.json <span class="faint">3.1k</span>','{ "scene": "bridge-2", "objects": 14, "physics": "tuned·r15" … }'],
+  ['tool','fizz','14:32:04','Graph','bridge-2 neighbours <span class="faint">14 nodes</span>','bridge-2 → HeroShot, Ground, capture-list, physics:r15 …'],
+  ['spawn','fizz','14:32:09','explore','haiku · “survey the widget tree”'],
+  ['tool','fizz','14:32:30','Fetch','widgets API docs <span class="faint">docs.o-i/widgets</span>'],
+  ['fizz','14:32:44','Three beats: <b>compose</b> the view tree as widgets · <b>settle</b> physics through the Scene rack, no retuning · <b>hand off</b> placement to Honey.'],
+  ['you','14:32:51','Also drop the old capture list from your reads.','<div class="steer">↳ steer · heard at next tool</div>'],
+  ['tool','fizz','14:32:52','Edit','portPlan.ts <span class="ok">+42</span> <span class="bad">−7</span>','+ export const plan = beats([compose, settle, handOff])\n- const legacy = captureList.map(…)'],
+  ['tool','fizz','14:33:02','Bash','pnpm test bridge2 <span class="ok">✓ 12 passed</span>','PASS bridge2/plan.test.ts (12)\nTime: 2.1 s'],
+  ['spawn','fizz','14:33:05','test','haiku · “full widget tests”'],
+  ['prop','fizz','14:33:07'],['task','drop old captures','queued']],
+ explore:[['back','lead','14:32:09'],['task','survey widget tree','done'],['tool','scout','14:32:12','Glob','widgets/**/*.tsx <span class="faint">22 files</span>'],['tool','scout','14:32:25','Graph','widget deps <span class="faint">31 edges</span>'],['scout','14:32:40','22 widgets; 3 are platform-bound (notify, haptics, share).']],
+ test:[['back','lead','14:33:05'],['task','widget tests --all','run'],['tool','tester','14:33:09','Read','14 spec files'],['spawn','tester','14:33:52','fixture-gen','haiku · “generate missing fixtures”'],['tool','tester','14:34:30','Bash','pnpm test --all <span style="color:var(--accent)">running 31/48</span>','PASS widgets/compose.test.ts (9)\nPASS widgets/settle.test.ts (11)\nRUNS widgets/handoff.test.ts …']],
+ fixture:[['back','test','14:33:52'],['task','generate fixtures','stall'],['tool','fixgen','14:33:57','Bash','gen-fixtures --widgets handoff <span class="faint">no output</span>','Generating handoff fixtures…\n? Overwrite existing fixtures/handoff.json (y/N)'],['stall']],
+ honey:[['task','tune physics','done'],['you','14:28:20','Tune HeroShot physics — softer landing.'],['honey','14:29:30','Tuned; proposal approved (#210).'],['task','capture pass','stopped']],
+ bumble:[['task','review #482','done'],['bumble','14:30:58','Two comments on #482; no blockers.'],['task','review port plan','stopped']]};
+function threadTree(){let h='';const f=S.sfilt||'all';const keep=t=>f==='all'||(f==='running'?trAgent(t).state==='working':trAgent(t).state==='stalled');
+  for(const t of T){if(!t.agent)continue;if(!visible(t)&&!t.group)continue;if(!t.group&&!keep(t))continue;
+    if(t.group){h+=`<div class="tnode" style="padding-left:8px;color:var(--text-dim)" data-gfold="${t.id}" data-i="Group|Fold or unfold the crew.">${t.open?'▼':'▶'} ${t.name}<span class="st">${descendants(t).length}</span></div>`;continue}
+    const a=trAgent(t);
+    h+=`<div class="tnode ${S.thread===t.id?'on':''}" data-thread="${t.id}" style="padding-left:${8+(t.depth?0:0)}px" data-i="${t.name}|${a.doing}">${railsHtml(t)}${bee(t.agent,20)}${t.name}<span class="st" style="${a.state==='stalled'?'color:var(--stall)':a.state==='working'?'color:var(--accent)':''}">${a.state}</span></div>`;
+    if(S.thread===t.id)(t.clips||[]).forEach((c,i)=>{if(c)h+=`<div class="tnode tk ${c.s==='run'||c.s==='stall'?'cur':''}" data-clip="${t.id}:${i}" style="padding-left:${40+ancestors(t).length*4}px">▸ ${c.n}</div>`})}
+  return h}
+function renderThread(){const t=tr(S.thread);const a=trAgent(t);const L=THREADS[S.thread]||[];const who=k=>k==='you'?youAv:bee(k,22);
+  const crumbs=[...ancestors(t),t].map(x=>`<span data-thread="${leadOf(x)}" style="cursor:pointer">${x.name}</span>`).join('<span class="faint"> › </span>');
+  let m='';
+  for(const e of L){const k=e[0];
+    if(k==='task')m+=`<div class="taskdiv" style="--tc:${t.c}"><b>${e[1]}</b>${{done:'done',run:'running',queued:'queued',stopped:'ready',stall:'stalled'}[e[2]]}</div>`;
+    else if(k==='back')m+=`<div class="toolrow" data-thread="${e[1]}" style="margin-left:0"><div class="h"><span class="k">↖</span>spawned by <span class="lnk">${tr(e[1]).name}</span> at ${e[2]} — open the parent thread</div></div>`;
+    else if(k==='tool')m+=`<div class="toolrow" data-toggle="1"><div class="h"><span>${bee(e[1],16)}</span><span class="faint">${e[2]}</span><span class="k">${e[3]}</span>${e[4]}<span class="x">${e[5]?'▸':''}</span></div>${e[5]?`<div class="o">${e[5]}</div>`:''}</div>`;
+    else if(k==='spawn'){const target=T.find(x=>x.name===e[3]);m+=`<div class="toolrow" data-thread="${target.id}"><div class="h"><span>${bee(e[1],16)}</span><span class="faint">${e[2]}</span><span class="k">Spawn</span><span class="lnk">${e[3]} ↗</span> ${e[4]}<span class="x" style="${trAgent(target).state==='stalled'?'color:var(--stall)':''}">${trAgent(target).state}</span></div></div>`}
+    else if(k==='prop')m+=`<div class="m"><div>${bee('fizz',22)}</div><div><div class="w"><b>Fizz</b>${e[2]}</div><div class="card"><div class="ch2"><b>Proposal</b><span class="faint">port plan · 2 files</span><span class="faint" style="margin-left:auto">draft → review</span></div><div class="cf"><button class="bt pri">Approve</button><button class="bt">Changes…</button><button class="bt" data-tile="diff">Diff</button></div></div></div></div>`;
+    else if(k==='stall')m+=`<div class="stallcard"><b style="color:var(--stall)">Stalled · no output since ${fmt(34.62)}.</b> The last tool is waiting on an overwrite prompt it will never get an answer to.<div class="cf"><button class="bt warn" data-retry="fixture">↻ Retry with --yes</button><button class="bt" data-hard="fixture">■ Hard stop</button><button class="bt">Steer…</button><button class="bt" data-thread="test">↖ Tell test</button></div></div>`;
+    else m+=`<div class="m"><div>${who(k)}</div><div><div class="w"><b>${k==='you'?'Alex':A[k].name}</b>${e[1]}</div><div class="t">${e[2]}</div>${e[3]?`<div class="faint" style="font-size:10.5px">${e[3]}</div>`:''}</div></div>`}
+  $('#thread').innerHTML=`<div class="th-h"><button class="back" data-back="1">‹ Session</button><span class="faint">|</span>${bee(t.agent,20)}${crumbs}
+    <span class="faint" style="margin-left:8px;font-size:10.5px">${a.model} · ${a.used}/${a.max} turns</span>
+    <span class="r"><button class="nc" data-hard="${t.id}" data-i="Hard stop|Stop this session now.">■ stop</button><button class="nc ${t.stalled?'warn':''}" data-retry="${t.id}" data-i="Retry|Restart the stalled task from its last good step.">↻ retry</button><button class="nc" id="toArr" data-i="Runs|See this thread among its siblings over time.">☰ runs</button></span></div>
+   <div class="th-b">
+    <div class="tmain"><div class="msgs">${m}</div>
+     ${a.state==='working'?`<div class="workline"><i style="background:${a.hex}"></i>${a.name} · ${a.doing}</div>`:''}
+     <div class="composer ${$('#rec').classList.contains('on')?'voice':''}" id="composer"><span class="ph">Message ${a.name} — Enter ▶ runs · ⌥Enter + steers · Esc ■ stops</span><div class="wave">${'<i></i>'.repeat(9)}</div><span class="k">● voice</span></div></div></div>`;
+}
+
+/* ======================= detail: device chain ======================= */
+function agentDev(k){const a=A[k];return `<div class="dev ${S.dev==='agent'?'sel':''}" data-dev="agent" style="width:268px">
+  <div class="dh" data-i="${a.name} · agent|Compact. Click: expand in the pool. ↗: open its thread full."><span class="pw ${a.state==='held'?'off':''}" data-i="Power|The agent on, or benched."></span><b style="font-weight:500">${a.name}</b><span class="faint" style="font-size:10px">${a.model}</span><span class="x"><span data-full="1">↗</span><span>▾</span></span></div>
+  <div class="db"><div class="vis" style="width:112px;height:112px"><svg width="112" height="112" viewBox="0 0 112 112" style="position:absolute;inset:0">${form(k,112)}</svg><div style="position:absolute;left:36px;top:34px">${bee(k,40)}</div>
+    <div class="mono" style="position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:9px;color:var(--text-dim)">${a.used}/${a.max} · ${a.state}</div></div>
+   <div class="knobs">${knob('aut','Autonomy',a.aut/2,AUT[a.aut],a.hex,'Suggest · Review (proposals) · Auto (lands with receipts).')}${knob('eff','Effort',a.eff/4,EFF[a.eff],a.hex,'Thinking effort per turn.')}
+    ${knob('bud','Budget',a.max/24,a.max+' turns',a.hex,'Turns per task.')}<div class="tog" data-i="Input|Steer the running turn, or queue."><span class="kl">Input</span><div class="tg"><span class="${a.input==='steer'?'on':''}" data-input="steer">steer</span><span class="${a.input==='queue'?'on':''}" data-input="queue">queue</span></div></div></div></div></div>`}
+function skillRack(){return `<div class="dev ${S.dev==='skills'?'sel':''}" data-dev="skills" style="width:318px">
+  <div class="dh" data-i="Skillset rack · Porting|Skills as chains (light = admitted); macros steer several at once."><span class="pw"></span>▤ Porting<span class="x"><span>▾</span></span></div>
+  <div class="db rack"><div class="chains">${[['port-widgets',1],['capture-plan',1],['diff-grammar',1],['review-pr',0]].map(([s,o])=>`<div class="chainrow ${o?'':'offc'}">${glyph(s,o?'var(--text)':'var(--text-faint)',11,o?'whole':'outline')}${s}<span class="lt" data-skill="${s}"></span></div>`).join('')}</div>
+   <div class="macros">${knob('m1','Thorough',.62,'62%','var(--accent)','How exhaustive the rack’s skills are.')}${knob('m2','Test depth',.4,'unit+','var(--accent)','How deep they test.')}${knob('m3','Reach',.3,'scene','var(--accent)','How far beyond the world device they look.')}${knob('m4','Risk',.2,'low','var(--accent)','How bold before asking.')}</div></div></div>`}
+const foldedRack=(n,g)=>`<div class="dev folded" data-i="${n} (folded)|A device folded to its title, as in Live."><div class="dh"><span class="pw"></span>${g?glyph(g,'var(--text)',11):'⎇'}${n}</div></div>`;
+function worldDev(){return `<div class="dev ${S.dev==='world'?'sel':''}" data-dev="world" style="width:236px">
+  <div class="dh" data-i="World · bridge-2|What the session may read (teal) and write (amber)."><span class="pw"></span>◍ World<span class="x"><span>▾</span></span></div>
+  <div class="db"><div class="vis" style="width:104px;height:104px"><svg width="104" height="104" viewBox="0 0 112 112"><circle cx="56" cy="56" r="48" fill="none" stroke="var(--line-strong)" stroke-dasharray="2 3"/><circle cx="56" cy="56" r="33" fill="none" stroke="var(--text-faint)"/><circle cx="56" cy="56" r="18" fill="none" stroke="var(--text-dim)"/>
+    <path d="M56 23A33 33 0 1 1 25 67" fill="none" stroke="var(--fizz)" stroke-width="5" stroke-opacity=".75"/><path d="M56 38A18 18 0 0 1 72 64" fill="none" stroke="var(--accent)" stroke-width="5"/></svg></div>
+   <div class="knobs" style="grid-template-columns:104px;justify-items:center">${knob('w1','Reach',.35,'scene','var(--fizz)','object → scene → expression → Central.')}
+    <div class="tog" data-i="Write mode|propose · draft · direct (direct needs Write arm)."><span class="kl">Writes</span><div class="tg"><span>prop</span><span class="on">draft</span><span>dir</span></div></div></div></div></div>`}
+function gwDev(folded){if(folded)return `<div class="dev folded" data-dev="gw" data-i="Gateway (folded)|This session rides its lead’s Hermes gateway connection."><div class="dh"><span class="pw"></span>⇄ Gateway · via lead</div></div>`;
+  const live=Object.values(A).filter(a=>a.state==='working').length;const ringPct=G.ring/G.ringMax;
+  return `<div class="dev ${S.dev==='gw'?'sel':''}" data-dev="gw" style="width:262px">
+  <div class="dh" data-i="Gateway · hermes|Where the session runs: the harness connection (Hermes tui_gateway, JSON-RPC over stdio or WebSocket). Frames flow along the link; the ring is the replay buffer; the outer pulse is the heartbeat."><span class="pw ${G.state==='ready'?'':'off'}" data-i="Connect|Attach or detach this session’s transport. Detached sessions keep running in the harness and are re-attached with session.resume."></span>⇄ Gateway<span class="faint" style="font-size:10px">${G.harness} · ${G.transport}</span><span class="x"><span data-gwfull="1" title="frame monitor">↗</span><span>▾</span></span></div>
+  <div class="db"><div class="vis" style="width:120px;height:112px" data-i="Link|Left: the shell. Right: the harness. Dots are frames in flight (rate follows live turns). Arc: replay ring ${G.ring}/${G.ringMax} events. Readout: epoch and last seq — a new epoch means the gateway restarted and the shell re-syncs.">
+   <svg width="120" height="112" viewBox="0 0 120 112">
+    <circle cx="94" cy="50" r="22" fill="none" stroke="var(--bg-3)" stroke-width="3"/>
+    <path d="${arcAt(94,50,22,-150,-150+300*ringPct)}" fill="none" stroke="var(--sel)" stroke-width="3"/>
+    <circle cx="94" cy="50" r="27" fill="none" stroke="var(--green)" stroke-opacity=".5"><animate attributeName="r" values="26;31;26" dur="2.5s" repeatCount="indefinite"/><animate attributeName="stroke-opacity" values=".6;0;.6" dur="2.5s" repeatCount="indefinite"/></circle>
+    <rect x="8" y="38" width="26" height="24" rx="3" fill="var(--bg-3)"/><text x="21" y="54" text-anchor="middle" font-size="8" fill="var(--text-dim)">shell</text>
+    <text x="94" y="53" text-anchor="middle" font-size="8.5" fill="var(--text)">${G.harness}</text>
+    <line x1="34" y1="50" x2="72" y2="50" stroke="var(--line-strong)" stroke-width="2"/>
+    ${Array.from({length:Math.max(1,live)},(_,i)=>`<circle r="2.4" fill="var(--sel)"><animateMotion dur="${1.6+i*.4}s" begin="${i*.5}s" repeatCount="indefinite" path="M72 50 L34 50"/></circle>`).join('')}
+    <circle r="2" fill="var(--accent)"><animateMotion dur="3.2s" repeatCount="indefinite" path="M34 50 L72 50"/></circle>
+    <text x="60" y="94" text-anchor="middle" font-size="8.5" fill="var(--text-dim)" font-family="ui-monospace,monospace">epoch ${G.epoch.slice(0,4)} · seq ${G.seq}</text>
+    <text x="60" y="106" text-anchor="middle" font-size="8.5" fill="var(--text-faint)" font-family="ui-monospace,monospace">${G.peers} peers · hb ${G.hbAge}s</text></svg></div>
+   <div style="display:flex;flex-direction:column;gap:7px;align-items:center">
+    <div class="tog" data-i="Transport|stdio (spawned child, trusted) · ws (token / 30 s ticket at the upgrade) · remote (through Workcell’s address book)."><span class="kl">Transport</span><div class="tg">${['stdio','ws','remote'].map(x=>`<span class="${G.transport===x?'on':''}" data-gwt="${x}">${x}</span>`).join('')}</div></div>
+    <div class="tog" data-i="Approvals|Default answer to approval.request: ask you each time · allow for this session · always. Deny is always yours to give."><span class="kl">Approvals</span><div class="tg">${['ask','session','always'].map(x=>`<span class="${G.appr===x?'on':''}" data-gwa="${x}">${x}</span>`).join('')}</div></div>
+    ${knob('gstall','Stall after',G.stall/300,G.stall+' s','var(--sel)','The gateway’s stall watcher: no progress for this long with work pending marks the lane stalled (retry lights).')}</div></div></div>`}
+function gatewaysRack(){return `<div class="dev ${S.dev==='gw'?'sel':''}" data-dev="gw" style="width:380px">
+  <div class="dh" data-i="Gateways|Every gateway this work can reach, as chains. Three are named alike: Hermes’ tui_gateway, AIKit’s agency gateway and Actuation’s gateway on frank. Each row states its standing, never assumed."><span class="pw"></span>⇄ Gateways<span class="x"><span data-gwfull="1">↗</span><span>▾</span></span></div>
+  <div class="db rack"><div class="chains" style="width:250px">${[['hermes · tui_gateway','ws · local','ready','var(--green)'],['aikit · agency-gateway','local-ipc','ready','var(--green)'],['actuation · frank','tailnet :7788','composed','var(--accent)'],['remote carrier','Workcell','refused','var(--text-faint)']].map(([n,tp,st,c])=>`<div class="chainrow" style="height:26px"><span style="width:7px;height:7px;border-radius:50%;background:${c};flex:none"></span>${n}<span class="md">${tp} · ${st}</span></div>`).join('')}</div>
+   <div class="macros" style="grid-template-columns:62px">${knob('gfan','Fan-out',.4,'2 peers','var(--sel)','Observers allowed per session; a slow peer loses only its own subscription.')}</div></div></div>`}
+function arcAt(cx,cy,r,a0,a1){const p=a=>[cx+r*Math.sin(a*Math.PI/180),cy-r*Math.cos(a*Math.PI/180)];const[x0,y0]=p(a0),[x1,y1]=p(a1);return `M${x0.toFixed(1)} ${y0.toFixed(1)}A${r} ${r} 0 ${a1-a0>180?1:0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`}
+function renderGw(){const sel=S.gwFilter||'all';const F=FRAMES.filter(f=>sel==='all'||f[1]===sel||(sel==='lead'&&f[1]==='gw'));
+  $('#gw').innerHTML=`<div class="th-h"><button class="back" data-back="1">‹ Session</button><span class="faint">|</span>⇄ <b style="font-weight:500">Gateway · ${G.harness}</b><span class="faint" style="font-size:10.5px">upstream ${G.rev} · ${G.transport} · epoch ${G.epoch} · seq ${G.seq}</span>
+    <span class="r">${['all','lead','test','fixture'].map(f=>`<button class="nc ${sel===f?'on':''}" data-gwf="${f}">${f==='all'?'all sessions':tr(f).name}</button>`).join('')}</span></div>
+   <div style="flex:1;display:grid;grid-template-columns:minmax(0,1fr) 300px;min-height:0">
+    <div class="term" style="height:auto;font-size:11px;line-height:1.7;padding:10px 14px;overflow:auto" data-i="Frame monitor|Live’s MIDI monitor for agents: every frame the gateway sends or receives, per session, in order. Use it to see exactly what a stalled lane last did.">${F.map(frameLine).join('<br>')}<br><span style="animation:blink 1s steps(2) infinite">▌</span></div>
+    <div style="border-left:1px solid var(--line);overflow:auto;background:var(--bg-1)">
+     <div class="sec"><span>Readiness</span><span>probe</span></div>
+     ${[['state db','ok · query-only probe'],['config','ok · reads degrade, writes refuse'],['model','opus-5.5 configured'],['disk','62 % used'],['gateway','running'],['remote carrier','refused · loopback only']].map(([k,v])=>`<div class="kv"><span>${k}</span><span>${v}</span></div>`).join('')}
+     <div class="sec"><span>Liveness</span></div>
+     ${[['heartbeat','15 s · last '+G.hbAge+' s ago'],['loop witness','answers'],['restart guard','3 boots / 60 s'],['auto-continue','≤ 15 min · 2 tries']].map(([k,v])=>`<div class="kv"><span>${k}</span><span>${v}</span></div>`).join('')}
+     <div class="sec"><span>Replay</span></div>
+     <div class="kv"><span>ring</span><span>${G.ring} / ${G.ringMax} ev · 4 MiB</span></div><div class="kv"><span>on new epoch</span><span>reset cursor, refetch</span></div>
+     <div class="sec"><span>Upstream</span></div>
+     <div class="kv"><span>watching</span><span>hermes ${G.rev}</span></div><div class="kv"><span>on update</span><span>delta event + diff</span></div>
+    </div></div>`}
+function gitDev(){return `<div class="dev ${S.dev==='git'?'sel':''}" data-dev="git" style="width:262px">
+  <div class="dh" data-i="Git|The session’s repository seat. The diagram is the branch against main; the pulsing hollow dot is uncommitted work."><span class="pw"></span>⎇ Git<span class="faint" style="font-size:10px">port/bridge-2</span><span class="x"><span>▾</span></span></div>
+  <div class="db"><div class="vis" style="width:112px;height:104px"><svg width="112" height="104" viewBox="0 0 112 104">
+    <line x1="8" y1="74" x2="104" y2="74" stroke="var(--text-faint)" stroke-width="2"/>${[16,40].map(x=>`<circle cx="${x}" cy="74" r="4" fill="var(--text-faint)"/>`).join('')}
+    <path d="M40 74 C52 74 52 40 64 40 L100 40" stroke="var(--fizz)" stroke-width="2" fill="none"/>${[64,78].map(x=>`<circle cx="${x}" cy="40" r="4" fill="var(--fizz)"/>`).join('')}
+    <circle cx="94" cy="40" r="4.5" fill="none" stroke="var(--accent)" stroke-width="2"><animate attributeName="r" values="4.5;6;4.5" dur="1.6s" repeatCount="indefinite"/></circle>
+    <text x="56" y="22" text-anchor="middle" font-size="9" fill="var(--text-dim)" font-family="ui-monospace,monospace">+42 −25 · 2 files</text><text x="56" y="94" text-anchor="middle" font-size="9" fill="var(--text-faint)" font-family="ui-monospace,monospace">main · ahead 2</text></svg></div>
+   <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+    <div class="tog" data-i="Commit|When the agent commits: per turn · per task · manual."><span class="kl">Commit</span><div class="tg"><span>turn</span><span class="on">task</span><span>man</span></div></div>
+    <div class="tog" data-i="Push|off · on land."><span class="kl">Push</span><div class="tg"><span class="on">off</span><span>land</span></div></div>
+    <button class="bt" data-i="Land|Open a draft PR from this branch (checks 2/3 ✓).">⇪ Land</button></div></div></div>`}
+function agentsetRack(){return `<div class="dev ${S.dev==='agentset'?'sel':''}" data-dev="agentset" style="width:344px">
+  <div class="dh" data-i="Agentset · Port crew|One chain per member, nested as spawned, each with its model. Click a member to open its thread."><span class="pw"></span>⬡ Port crew<span class="x"><span>▾</span></span></div>
+  <div class="db rack"><div class="chains" style="width:196px">${[['fizz','lead',0,'lead'],['scout','explore',0,'explore'],['tester','test',0,'test'],['fixgen','fixture-gen',1,'fixture']].map(([k,r,d,id])=>`<div class="chainrow" style="height:28px;margin-left:${d*12}px;${A[k].state==='stalled'?'border-color:var(--stall)':''}" data-thread="${id}">${bee(k,22)}${r}<span class="md">${A[k].model.replace('-5.5','')}</span></div>`).join('')}</div>
+   <div class="macros">${knob('p1','Fan-out',.5,'2','var(--accent)','How many subagents run at once.')}${knob('p2','Depth',.66,'2','var(--accent)','How deep subagents may spawn.')}${knob('p3','Hand-back',.7,'summary','var(--accent)','What children return: raw · digest · summary.')}</div></div></div>`}
+function nativeDev(n){return `<div class="dev" style="width:200px"><div class="dh"><span class="pw"></span>${n}<span class="x"><span>▾</span></span></div><div class="db"><div class="vis" style="width:80px;height:80px"></div>${knob('n1','Amount',.5,'0.50','var(--text-dim)')}</div></div>`}
+function renderChain(){const t=tr(S.track);let h='';
+  if(S.track==='main')h=gatewaysRack()+`<div class="dev" style="width:300px"><div class="dh"><span class="pw"></span>Ledger</div><div class="db" style="flex-direction:column;gap:4px;font-size:11px">${[['fizz','map field → plan','running'],['tester','widget tests','31/48'],['fixgen','generate fixtures',A.fixgen.state],['bumble','review #482','done']].map(([k,n,s])=>`<div style="display:flex;gap:6px;align-items:center">${bee(k,20)}<span style="flex:1">${n}</span><span class="mono faint" style="font-size:10px">${s}</span></div>`).join('')}</div></div>
+    <div class="dev" style="width:280px"><div class="dh"><span class="pw"></span>Approvals ◆ 2</div><div class="db" style="flex-direction:column;gap:6px;font-size:11px"><div style="display:flex;align-items:center;gap:6px">${bee('fizz',20)}<span style="flex:1">port plan · 2 files</span><button class="bt pri">Approve</button></div><div style="display:flex;align-items:center;gap:6px">${bee('honey',20)}<span style="flex:1">deploy build</span><button class="bt">Open</button></div></div></div>`;
+  else if(t.group)h=gwDev()+agentsetRack()+skillRack()+worldDev()+gitDev();
+  else if(t.agent){h=gwDev(!!t.parent&&t.id!=='lead')+agentDev(t.agent);if(t.id==='lead')h+=skillRack()+foldedRack('Review','review-pr')+worldDev()+gitDev();else if(t.parent)h+=foldedRack('Porting','port-widgets')+worldDev()+foldedRack('Git · shared with lead');else h+=foldedRack(t.agent==='bumble'?'Review':'Physics',t.agent==='bumble'?'review-pr':'tune-physics')+worldDev()+gitDev()}
+  else h=nativeDev('Medium')+nativeDev('Depth');
+  h+=`<div class="dropz" data-i="Drop zone|Gateways, agents, skillsets, worlds, git. Left to right: through → who → how → where → lands.">Drop gateways, agents, skillsets, worlds or git here</div>`;
+  $('#chain').innerHTML=h;
+}
+
+/* ======================= detail: clip view ======================= */
+function renderClip(){const [tid,i]=S.clip.split(':');const t=tr(tid);const c=t.clips[+i];const a=trAgent(t);
+  const L=(THREADS[tid]||[]).filter(e=>!['task','back','prop','stall'].includes(e[0]));
+  $('#paneClip').innerHTML=`<div class="cprops" style="--tc:${t.c}"><div class="cph">${a?bee(t.agent,16):''}${c.n}</div>
+   <div class="cpsec open"><div class="t" data-sec>▼ Task</div><div class="b"><div class="kv"><span>Session</span><span>${t.name}</span></div><div class="kv"><span>Status</span><span>${{run:'running',done:'done',queued:'queued',stopped:'ready',stall:'stalled'}[c.s]}</span></div></div></div>
+   <div class="cpsec"><div class="t" data-sec>▶ Launch</div><div class="b"><div class="seg"><button class="on">once</button><button>hold</button><button>loop</button></div></div></div>
+   <div class="cpsec open"><div class="t" data-sec data-i="Then|Live’s follow action, as hand-off.">▼ Then</div><div class="b"><div class="dd"><span class="t">hand off → Capture pass</span></div></div></div>
+   <div class="cpsec open"><div class="t" data-sec data-i="Output style|Per-task override of how the agent writes: register and form.">▼ Output style</div><div class="b"><div class="seg"><button class="on">plain</button><button>warm</button><button>terse</button></div><div class="seg"><button class="on">technical</button><button>narrative</button><button>list</button></div></div></div>
+   <div class="cpsec"><div class="t" data-sec>▶ Overrides</div><div class="b"><div class="kv"><span>Effort</span><span>inherit</span></div><div class="kv"><span>Autonomy</span><span>inherit</span></div></div></div></div>
+  <div class="log"><div class="logbar"><button class="nc ${S.fold?'on':''}" id="foldBtn" data-i="Fold|Tools only.">Fold</button><button class="nc" data-i="Steers|Highlight where steering was heard.">Steers</button><button class="nc on" data-open="1" data-i="Open thread|Open this session’s thread in the main space.">Open thread ↗</button><span class="r">${L.length} entries</span></div>
+   <div class="lines ${S.fold?'folded':''}">${L.map(e=>e[0]==='tool'||e[0]==='spawn'?`<div class="ln"><span class="tm">${e[2]}</span><span>${bee(e[1],18)}</span><div class="tool"><span class="k">${e[0]==='spawn'?'Spawn':e[3]}</span>${e[0]==='spawn'?e[3]+' · '+e[4]:e[4]}</div></div>`:`<div class="ln msg"><span class="tm">${e[1]}</span><span>${e[0]==='you'?youAv:bee(e[0],18)}</span><div>${e[2]}</div></div>`).join('')}</div></div>`;
+}
+
+/* ======================= context dock: tiles + launcher ======================= */
+const CTX=[
+ {id:'sessions',name:'Sessions',ico:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h6M8 12h8M8 19h8M6 5v14"/></svg>',desc:'Every session and subagent, nested as spawned. Click to open its thread in the main space.'},
+ {id:'frames',name:'Frames',ico:'⇄',desc:'The gateway’s live event frames for the selected session.'},
+ {id:'agents',name:'Agents',ico:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 7a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM3 20v-2a6 6 0 0 1 12 0v2"/></svg>',desc:'The hive: every agent and subagent, live.'},
+ {id:'term',name:'Terminal',ico:'<span class="mono" style="font-size:10px">&gt;_</span>',desc:'The running sessions’ shells, live.'},
+ {id:'files',name:'Files',ico:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3.5 6.5a1 1 0 0 1 1-1h5l2 2.5h8a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z"/></svg>',desc:'Files read and modified in this run.'},
+ {id:'web',name:'Web',ico:'◍',desc:'Pages the agent fetched, with what it used highlighted.'},
+ {id:'graph',name:'Graph',ico:'⊹',desc:'The knowledge-graph neighbourhood in play.'},
+ {id:'diff',name:'Diff',ico:'±',desc:'Uncommitted and proposed changes.'},
+ {id:'ledger',name:'Ledger',ico:'≡',desc:'Every task with its receipt.'},
+ {id:'appr',name:'Approvals',ico:'◆',desc:'Proposals waiting for you.'},
+ {id:'wiki',name:'Wiki',ico:'▦',desc:'Central wiki pages inside the world’s reads.'},
+ {id:'cal',name:'Calendar',ico:'▣',desc:'An SDK widget: what is due around this work.',sdk:1}];
+function tileBody(id){const t=tr(S.track);const ag=t&&t.agent?trAgent(t).name:'Fizz';
+  if(id==='sessions')return `<div class="sfilt">${['all','running','stalled'].map(f=>`<button class="nc ${S.sfilt===f?'on':''}" data-sfilt="${f}">${f}</button>`).join('')}<span class="faint" style="margin-left:auto;font-size:10px;align-self:center">${T.filter(o=>o.agent&&!o.group).length} sessions</span></div><div class="tree">${threadTree()}</div>`;
+  if(id==='frames')return `<div class="term" style="height:180px">${FRAMES.slice(-11).map(frameLine).join('<br>')}</div>`;
+  if(id==='agents'){const HV=[['fizz',100,52,'lead'],['scout',36,118,'explore'],['tester',130,118,'test'],['fixgen',184,150,'fixture'],['honey',26,18,'honey'],['bumble',200,18,'bumble']];
+    return `<div class="hive"><svg width="270" height="200" style="position:absolute;inset:0"><path d="M122 92 L58 132 M122 92 L152 132 M156 142 L204 162" stroke="var(--fizz)" stroke-opacity=".35" stroke-dasharray="3 3" fill="none"/><g transform="translate(77 28)" opacity=".5">${form('fizz',90)}</g></svg>
+     ${HV.map(([k,x,y,id])=>{const tt=tr(id);return `<div class="bee ${S.track===id?'sel':''} ${tt.tel?'':'muted'}" data-track="${id}" style="left:${x}px;top:${y}px" data-i="${A[k].name}|${A[k].doing}. Click: select its session · double-click: open its thread.">${bee(k,A[k].sub?32:42)}<div class="lab">${A[k].name}</div></div>`}).join('')}</div>
+     ${['fizz','tester','fixgen','honey'].map(k=>{const a=A[k];const col={working:'var(--accent)',held:'var(--stall)',stalled:'var(--stall)',idle:'var(--text-faint)',done:'var(--green)'}[a.state];return `<div class="hl"><span class="d" style="background:${col}"></span><b style="font-weight:500;width:72px">${a.name}</b><span class="dim" style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${a.doing}</span></div>`}).join('')}`}
+  if(id==='term')return `<div class="ctxpin"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent)"></span>following ${ag} · live</div><div class="term"><span class="p">fizz@bridge-2 $</span> pnpm test bridge2<br><span class="o">PASS</span> bridge2/plan.test.ts (12)<br><span class="p">test $</span> pnpm test --all<br><span class="o">PASS</span> widgets/compose.test.ts (9)<br><span class="o">PASS</span> widgets/settle.test.ts (11)<br>RUNS widgets/handoff.test.ts …<br><span class="p">fixture-gen $</span> gen-fixtures --widgets handoff<br>${A.fixgen.state==='stalled'?'? Overwrite fixtures/handoff.json (y/N) <span style="color:var(--stall)">▌ waiting</span>':'<span class="o">wrote 6 fixtures</span>'}<br><span style="color:var(--accent)">31 / 48</span><span style="animation:blink 1s steps(2) infinite">▌</span></div>`;
+  if(id==='files')return `<div class="ftree">▾ scenes/bridge2<br>&nbsp;&nbsp;<span class="fm">M</span> portPlan.ts <span class="faint">+42 −7</span><br>&nbsp;&nbsp;<span class="fm">M</span> captureList.ts <span class="faint">−18</span><br>&nbsp;&nbsp;&nbsp;&nbsp;field.json <span class="a">◂ read</span><br>▸ widgets <span class="faint">14 read</span><br>▸ fixtures <span style="color:var(--stall)">◂ blocked</span></div>`;
+  if(id==='web')return `<div class="web"><div class="u">docs.o-i/widgets#compose</div><div class="pg"><b>Composing widgets</b>A view tree ports as <mark>one widget per region</mark>; platform calls stay behind adapters…</div></div>`;
+  if(id==='graph'){const N=[[135,90,'bridge-2',1],[60,40,'HeroShot'],[210,40,'Ground'],[55,145,'capture-list',2],[215,140,'physics r15'],[135,22,'portPlan.ts',3],[135,165,'widgets']];
+    return `<svg width="270" height="190" viewBox="0 0 270 190">${N.slice(1).map(([x,y])=>`<line x1="135" y1="90" x2="${x}" y2="${y}" stroke="var(--line-strong)"/>`).join('')}${N.map(([x,y,n,c])=>`<circle cx="${x}" cy="${y}" r="${c===1?9:6}" fill="${c===1?'var(--fizz)':c===2?'none':c===3?'var(--accent)':'var(--bg-3)'}" stroke="${c===2?'var(--text-faint)':'none'}" stroke-dasharray="2 2"/><text x="${x}" y="${y+(y>90?17:-10)}" text-anchor="middle" font-size="9" fill="var(--text-dim)">${n}</text>`).join('')}</svg>`}
+  if(id==='diff')return `<div class="term" style="height:110px"><span class="faint">portPlan.ts</span><br><span class="o">+ export const plan = beats([compose, settle, handOff])</span><br><span style="color:#e3806f">- const legacy = captureList.map(…)</span><br><span class="faint">captureList.ts −18</span></div>`;
+  if(id==='ledger')return `<div style="padding:6px;font-size:10.5px;color:var(--text-dim);line-height:1.8">#212 re-plan port · landed<br>#211 review #482 · comment<br>#210 tune physics · approved</div>`;
+  if(id==='appr')return `<div style="padding:6px;display:flex;flex-direction:column;gap:6px;font-size:11px"><div style="display:flex;align-items:center;gap:6px">${bee('fizz',20)}<span style="flex:1">port plan · 2 files</span><button class="bt pri">Approve</button></div></div>`;
+  return `<div style="padding:10px;color:var(--text-faint);font-size:11px">${CTX.find(c=>c.id===id).desc}</div>`}
+function preview(id){const p={sessions:`<div style="padding:6px;display:flex;flex-direction:column;gap:3px;font-size:8.5px;color:var(--text-dim)"><div style="display:flex;gap:4px;align-items:center">${bee('fizz',14)}Fizz · lead</div><div style="display:flex;gap:4px;align-items:center;padding-left:8px;border-left:2px solid var(--fizz)">${bee('tester',14)}test</div><div style="display:flex;gap:4px;align-items:center;padding-left:16px;border-left:2px solid var(--fizz);color:var(--stall)">${bee('fixgen',14)}fixture-gen</div></div>`,
+  frames:`<div class="mono" style="font-size:8.5px;padding:5px;color:var(--text-dim);line-height:1.5"><span style="color:var(--sel)">message.delta</span><br><span style="color:var(--accent)">tool.start</span> Edit<br>hb · 15s<br><span style="color:var(--stall)">approval.request</span></div>`,agents:`<svg width="100%" height="100%" viewBox="0 0 120 70"><g transform="translate(30 0) scale(.75)">${form('fizz',90)}</g></svg><div style="position:absolute;left:42px;top:12px">${bee('fizz',30)}</div><div style="position:absolute;left:10px;top:30px">${bee('tester',22)}</div><div style="position:absolute;right:8px;top:32px">${bee('fixgen',22)}</div>`,
+  term:`<div class="mono" style="font-size:8.5px;padding:5px;color:var(--text-dim);line-height:1.5"><span style="color:var(--fizz)">$</span> pnpm test<br><span style="color:var(--green)">PASS</span> plan (12)<br>RUNS handoff…<br><span style="color:var(--stall)">? (y/N) ▌</span></div>`,
+  files:`<div class="mono" style="font-size:8.5px;padding:5px;color:var(--text-dim);line-height:1.6">▾ bridge2<br>&nbsp;<span style="color:var(--accent)">M</span> portPlan.ts<br>&nbsp;<span style="color:var(--accent)">M</span> captureList.ts<br>&nbsp;&nbsp;field.json</div>`,
+  web:`<div style="padding:6px"><div style="color:var(--sel);font-family:var(--mono);font-size:8.5px">docs.o-i/widgets</div><div style="margin-top:5px;height:5px;background:var(--bg-3);width:80%"></div><div style="margin-top:3px;height:5px;background:var(--accent-soft);width:60%"></div><div style="margin-top:3px;height:5px;background:var(--bg-3);width:70%"></div></div>`,
+  graph:`<svg width="100%" height="100%" viewBox="0 0 120 70"><g stroke="var(--line-strong)"><line x1="60" y1="35" x2="25" y2="15"/><line x1="60" y1="35" x2="95" y2="15"/><line x1="60" y1="35" x2="25" y2="58"/><line x1="60" y1="35" x2="95" y2="58"/></g><circle cx="60" cy="35" r="6" fill="var(--fizz)"/>${[[25,15],[95,15],[25,58],[95,58]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="4" fill="var(--bg-3)"/>`).join('')}</svg>`,
+  diff:`<div class="mono" style="font-size:8.5px;padding:5px;line-height:1.6"><span style="color:var(--green)">+ plan = beats(…)</span><br><span style="color:#e3806f">- legacy = …</span><br><span style="color:#e3806f">- captureList</span></div>`}[id];
+  return p||`<div style="display:grid;place-items:center;height:100%;font-size:20px;color:var(--text-faint)">${CTX.find(c=>c.id===id).ico}</div>`}
+function renderDock(){
+  $('#tiles').innerHTML=S.tiles.map(id=>{const c=CTX.find(x=>x.id===id);return `<section class="tile"><div class="tlh">${c.ico}<span class="t">${c.name}</span><span class="x"><span data-i="Pin|Stop following; keep this view.">⌖</span><span data-tclose="${id}" data-i="Close|Close the tile; it stays in the launcher.">✕</span></span></div><div class="tlb">${tileBody(id)}</div></section>`}).join('')||`<div class="faint" style="padding:12px;font-size:11px">Open context from the launcher below.</div>`;
+  $('#tileCount').textContent=`${S.tiles.length} open`;
+  const q=S.q.toLowerCase();
+  $('#lgrid').innerHTML=CTX.filter(c=>!q||c.name.toLowerCase().includes(q)||c.desc.toLowerCase().includes(q)).map(c=>`<div class="lcell ${S.tiles.includes(c.id)?'on':''}" data-tile="${c.id}" data-i="${c.name}|${c.desc} Click to open or close it above.${c.sdk?' Provided through the SDK.':''}"><div class="pv">${preview(c.id)}</div><div class="nm">${c.ico}${c.name}<span class="s">${c.sdk?'SDK':''}</span></div>${S.tiles.includes(c.id)?'<span class="dot"></span>':''}</div>`).join('');
+  $('#launch').classList.toggle('folded',S.launchFold);$('#lfold').textContent=S.launchFold?'▴':'▾';
+}
+
+/* ======================= render ======================= */
+function render(){
+  renderBrowser();renderPool();renderSession();renderArr();renderChain();renderClip();renderDock();if(S.view==='thread')renderThread();
+  if(S.view==='gw')renderGw();
+  for(const v of ['session','arr','thread','gw'])$('#'+v).classList.toggle('on',S.view===v);
+  $('#vSession').classList.toggle('on',S.view==='session');$('#vArr').classList.toggle('on',S.view==='arr');
+  $('#paneDev').classList.toggle('on',S.bottom==='device');$('#paneClip').classList.toggle('on',S.bottom==='clip');
+  $('#tgDev').classList.toggle('on',S.bottom==='device');$('#tgClip').classList.toggle('on',S.bottom==='clip');
+  const t=tr(S.track);$('#sTrack').textContent=S.track==='main'?'Main':t.name;$('#effV').textContent=EFF[(trAgent(t)||A.fizz).eff];
+  const st=T.filter(o=>o.stalled).length;$('#counts').innerHTML=`${T.filter(x=>x.agent&&!x.group).length} sessions · ${Object.values(A).filter(a=>a.state==='working').length} running${st?` · <span style="color:var(--stall)">${st} stalled</span>`:''}`;
+}
+function selectTrack(id){S.track=id;const t=tr(id);S.dev=id==='main'?null:t&&t.group?'agentset':'agent';S.bottom='device';
+  if(t&&t.agent&&!t.group){S.thread=id;const i=(t.clips||[]).findIndex(c=>c&&(c.s==='run'||c.s==='stall'));if(i>=0)S.clip=id+':'+i}}
+function openThread(id){const t=tr(leadOf(tr(id)));S.thread=t.id;S.track=t.id;S.dev='agent';S.bottom='device';const i=(t.clips||[]).findIndex(c=>c&&(c.s==='run'||c.s==='stall'));if(i>=0&&!S.clip.startsWith(t.id+':'))S.clip=t.id+':'+i;S.view='thread';render()}
+function stopLive(o,state,doing){(o.clips||[]).forEach(c=>{if(c&&['run','queued','stall'].includes(c.s))c.s='stopped'});if(o.agent){const a=trAgent(o);a.state=state;a.doing=doing}
+  const m=NOW;if(LAST[o.id])LAST[o.id]=()=>m;RUNS[o.id]=(RUNS[o.id]||[]).map(r=>r[2]==='live'?[r[0],r[1],m,'done']:r);o.stalled=false;
+  if(THREADS[o.id])THREADS[o.id]=THREADS[o.id].filter(e=>e[0]!=='stall')}
+
+/* ======================= interaction ======================= */
+let last={k:null,t:0};
+const dbl=k=>{const now=Date.now();const hit=last.k===k&&now-last.t<420;last={k,t:now};return hit};
+document.addEventListener('click',e=>{const el=e.target;const q=s=>el.closest(s);let x;
+  if(x=q('[data-gfold]')){const g=tr(x.dataset.gfold);g.open=!g.open;render();return}
+  if(x=q('[data-fold]')){const b=document.getElementById(x.dataset.fold);b.classList.toggle('open');x.querySelector('.tri').textContent=b.classList.contains('open')?'▼':'▶';return}
+  if(x=q('[data-sec]')){const s=x.parentElement;s.classList.toggle('open');x.textContent=x.textContent.replace(/^[▶▼]/,s.classList.contains('open')?'▼':'▶');return}
+  if(x=q('[data-toggle]')){x.classList.toggle('open');return}
+  if(x=q('[data-tclose]')){S.tiles=S.tiles.filter(i=>i!==x.dataset.tclose);renderDock();renderBrowser();return}
+  if(x=q('[data-tile]')){const id=x.dataset.tile;S.tiles=S.tiles.includes(id)&&!x.classList.contains('bt')?S.tiles.filter(i=>i!==id):[...new Set([...S.tiles,id])];renderDock();renderBrowser();return}
+  if(x=q('[data-tilejump]')){const id={Files:'files',Terminal:'term',Web:'web',Graph:'graph',Messages:'agents'}[x.dataset.tilejump];S.tiles=[id,...S.tiles.filter(i=>i!==id)];renderDock();return}
+  if(q('#lfold')){S.launchFold=!S.launchFold;renderDock();return}
+  if(q('#lmore')){bcat='context';renderBrowser();return}
+  if(q('#wider')){setDock(Math.min(900,dockW()+260));return} if(q('#narrower')){setDock(Math.max(300,dockW()-260));return}
+  if(x=q('[data-tel]')){const t=tr(x.dataset.tel);t.tel=!t.tel;descendants(t).forEach(o=>o.tel=t.tel);render();return}
+  if(x=q('[data-retry]')){const t=tr(x.dataset.retry);const list=[t,...descendants(t)].filter(o=>o.stalled);
+    list.forEach(o=>{o.stalled=false;const a=trAgent(o);a.state='working';a.doing='retrying with --yes';o.clips.forEach(c=>{if(c&&c.s==='stall'){c.s='run';c.p=.05}});LAST[o.id]=()=>NOW;
+      RUNS[o.id]=(RUNS[o.id]||[]).map(r=>r[3]==='stall'?[r[0],r[1],'live','run']:r);FRAMES.push([fmt(NOW),o.id,'session.interrupt','retry from last good step'],[fmt(NOW),o.id,'prompt.submit','gen-fixtures --yes']);THREADS[o.id]=THREADS[o.id].filter(e=>e[0]!=='stall').concat([['tool',o.agent,fmt(NOW),'Bash','gen-fixtures --widgets handoff --yes <span style="color:var(--accent)">running</span>']])});
+    if(!list.length)$('#info').innerHTML='<b>Retry</b>Nothing here has stalled or failed.';render();return}
+  if(x=q('[data-hard]')){const t=tr(x.dataset.hard);[t,...descendants(t)].forEach(o=>stopLive(o,'idle','hard-stopped · draft kept'));render();return}
+  if(x=q('[data-soft]')){const a=trAgent(tr(x.dataset.soft));a.doing='stopping after this task';render();return}
+  if(x=q('[data-thread]')){openThread(x.dataset.thread);return}
+  if(x=q('[data-input]')){const a=trAgent(tr(S.track));if(a){a.input=x.dataset.input;render()}return}
+  if(x=q('[data-aut]')){trAgent(tr(S.track)).aut=+x.dataset.aut;render();return}
+  if(x=q('[data-eff]')){trAgent(tr(S.track)).eff=+x.dataset.eff;render();return}
+  if(x=q('[data-skill]')){const row=x.closest('.chainrow,.tgl');row.classList.toggle(row.classList.contains('chainrow')?'offc':'off');x.classList.toggle('on');return}
+  if(x=q('[data-watch]')){const [id,w]=x.dataset.watch.split(':');tr(id).watch=w;renderSession();return}
+  if(x=q('[data-arm]')){const t=tr(x.dataset.arm);if(!e.metaKey)T.forEach(o=>{if(o!==t)o.arm=false});t.arm=!t.arm;render();return}
+  if(q('[data-full]')){openThread(S.track);return}
+  if(q('[data-gwfull]')){S.view='gw';S.gwFilter=S.track==='main'||!tr(S.track)||tr(S.track).group?'all':leadOf(tr(S.track));S.dev='gw';render();return}
+  if(x=q('[data-gwf]')){S.gwFilter=x.dataset.gwf;renderGw();return}
+  if(x=q('[data-gwt]')){G.transport=x.dataset.gwt;render();return}
+  if(x=q('[data-gwa]')){G.appr=x.dataset.gwa;render();return}
+  if(x=q('[data-gws]')){G.submit=x.dataset.gws;render();return}
+  if(x=q('[data-gwst]')){G.stall=+x.dataset.gwst;render();return}
+  if(x=q('[data-sfilt]')){S.sfilt=x.dataset.sfilt;renderDock();return}
+  if(x=q('[data-open]')){const c=q('[data-clip]');if(c)S.clip=c.dataset.clip;openThread(S.clip.split(':')[0]);return}
+  if(x=q('[data-clip]')){const k=x.dataset.clip;const [tid,i]=k.split(':');if(+i<0)return;
+    if(dbl('c'+k)){S.clip=k;openThread(tid);return}
+    const c=tr(tid).clips[+i];if(el.classList.contains('tri')&&!c.plain)c.s=c.s==='run'?'stopped':'queued';
+    S.track=tid;S.clip=k;S.bottom='clip';if(S.view==='thread'){S.thread=tid}render();return}
+  if(x=q('[data-dev]')){S.dev=x.dataset.dev;S.bottom='device';renderChain();renderPool();return}
+  if(x=q('[data-track]')){const id=x.dataset.track;if(dbl('t'+id)&&id!=='main'){openThread(id);return}selectTrack(id);render();return}
+  if(x=q('[data-agent]')){const t=T.find(o=>o.agent===x.dataset.agent&&!o.group);if(t){selectTrack(t.id);render()}return}
+  if(x=q('[data-bcat]')){bcat=x.dataset.bcat;renderBrowser();return}
+  if(q("[data-back]")){S.view='session';render();return} if(q('#toArr')){S.view='arr';render();return}
+  if(q('#vSession')){S.view='session';render();return} if(q('#vArr')){S.view='arr';render();return}
+  if(q('#tgClip')){S.bottom='clip';render();return} if(q('#tgDev')){S.bottom='device';render();return}
+  if(x=q('#tBrowser')){$('#frame').classList.toggle('no-browser');x.classList.toggle('on');return}
+  if(x=q('#tDock')){$('#frame').classList.toggle('no-dock');x.classList.toggle('on');return}
+  if(x=q('#tDetail')){$('#frame').classList.toggle('no-detail');x.classList.toggle('on');return}
+  if(q('#effort')){const a=trAgent(tr(S.track))||A.fizz;a.eff=(a.eff+1)%5;render();return}
+  if(q('#effUp')){const a=trAgent(tr(S.track))||A.fizz;a.eff=Math.min(4,a.eff+1);render();return}
+  if(q('#effDn')){const a=trAgent(tr(S.track))||A.fizz;a.eff=Math.max(0,a.eff-1);render();return}
+  if(q('#tap')){Object.values(A).forEach(a=>{if(a.state==='working'&&!/pinged/.test(a.doing))a.doing+=' · pinged '+fmt(NOW).slice(3)});renderDock();if(S.view==='arr')renderArr();return}
+  if(q('#tokScope')){S.tokScope=(S.tokScope+1)%3;$('#tokIn').textContent=['142k','186k','311k'][S.tokScope];$('#tokOut').textContent=['38k','51k','74k'][S.tokScope];$('#info').innerHTML=`<b>Tokens</b>counting ${['the selected session','the whole group','everything open'][S.tokScope]}`;return}
+  if(x=q('#rec')){x.classList.toggle('on');const on=x.classList.contains('on');const t=T.find(o=>o.arm);
+    if(S.view!=='thread'&&t){if(on)t.recSlot=[0,1,2,3,4,5,6,7].find(i=>!t.clips[i]);else if(t.recSlot!=null){t.clips[t.recSlot]={n:'new task (voice)',s:'queued'};t.recSlot=null}}
+    render();return}
+  if(q('#stop')){$('#play').classList.remove('on');T.forEach(t=>{if(t.agent&&!t.group&&['working'].includes(trAgent(t).state))stopLive(t,'idle','paused at next tool · context kept')});render();return}
+  if(x=q('#follow')){x.classList.toggle('on');S.follow=x.classList.contains('on');return}
+  if(x=q('#play,#od,#arm,#hb,#loop')){x.classList.toggle('on');return}
+});
+document.addEventListener('input',e=>{if(e.target.id==='lsearch'){S.q=e.target.value;renderDock()}});
+document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(e.key==='Tab'){e.preventDefault();S.view=S.view==='arr'?'session':'arr';render()}});
+/* knobs + dock grip */
+let drag=null;
+document.addEventListener('mousedown',e=>{const k=e.target.closest('[data-knob]');if(k){drag={k:k.dataset.knob,y:e.clientY,acc:0,a:trAgent(tr(S.track))||(k.dataset.knob==='gstall'?A.fizz:null)};e.preventDefault();return}
+  if(e.target.id==='grip'){drag={grip:1,x:e.clientX,w:dockW()};e.preventDefault()}});
+document.addEventListener('mousemove',e=>{if(!drag)return;const sc=parseFloat($('#fit').dataset.s||1);
+  if(drag.grip){setDock(Math.max(260,Math.min(900,drag.w+(drag.x-e.clientX)/sc)));return}
+  if(!drag.a)return;drag.acc+=drag.y-e.clientY;drag.y=e.clientY;
+  while(Math.abs(drag.acc)>=14){const d=Math.sign(drag.acc);drag.acc-=d*14;const a=drag.a;
+    if(drag.k==='aut')a.aut=Math.min(2,Math.max(0,a.aut+d));if(drag.k==='eff')a.eff=Math.min(4,Math.max(0,a.eff+d));if(drag.k==='gstall'){G.stall=Math.min(300,Math.max(30,G.stall+30*d));render();continue}if(drag.k==='bud')a.max=Math.min(24,Math.max(Math.max(a.used,2),a.max+2*d));render()}});
+document.addEventListener('mouseup',()=>drag=null);
+const dockW=()=>parseInt(getComputedStyle($('#frame')).getPropertyValue('--dock-w'))||300;
+function setDock(w){$('#frame').style.setProperty('--dock-w',Math.round(w)+'px');renderDock();if(S.view==='arr')renderArr()}
+document.addEventListener('mouseover',e=>{const el=e.target.closest('[data-i]');if(!el)return;const [t,p]=el.dataset.i.split('|');$('#info').innerHTML=`<b>${t}</b>${p||''}`});
+function fit(){const s=Math.min(innerWidth/1920,innerHeight/1200);$('#fit').dataset.s=s;$('#fit').style.transform=`translate(-50%,-50%) scale(${s})`}
+addEventListener('resize',fit);fit();render();
+/* live clock: each running thread's needle advances (×3 speed); a stalled needle stays where output stopped */
+setInterval(()=>{if(!$('#play').classList.contains('on'))return;NOW+=3/60;
+  T.forEach(t=>(t.clips||[]).forEach(c=>{if(c&&c.s==='run')c.p=(c.p+.008)%1}));
+  G.seq+=Object.values(A).filter(a=>a.state==='working').length;G.ring=Math.min(G.ringMax,G.ring+1);G.hbAge=(G.hbAge+3)%15;
+  const tick=Math.round(NOW*20)%4;FRAMES.push([fmt(NOW),['lead','test','gw','lead'][tick],['message.delta','tool.progress','hb','message.delta'][tick],['“…hand off placement to Honey”','pnpm test --all '+(31+Math.round((NOW-36.2)*4))+'/48','active_turns 2 · progress '+G.seq,'“…no retuning”'][tick]]);
+  if(S.view==='gw')renderGw();if(S.tiles.includes('frames'))renderDock();
+  if(S.view==='arr')renderArr();
+  $$('.cs.run .pg').forEach(p=>{const [tid,i]=p.parentElement.dataset.clip.split(':');p.style.width=tr(tid).clips[+i].p*100+'%'})},1000);
+</script>
+</body>
+</html>
