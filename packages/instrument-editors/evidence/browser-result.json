@@ -1,0 +1,23 @@
+{
+  "component": {
+    "componentText": "Instrument editors\n\nActual native owners · controlled test compositions for native editing · no field engine or native Surface relocation adapter in this entrance\n\nground-unrecognised No default Central selected\n\nProject / Graph\nCanvas\nTimeline\nPlaces\nModulation\nJourney\nPalace\n▾\nProject / Graph\nRoot knowledge\nPin\n↙\n⋯\n\nThe current host has not supplied its Surface relocation adapter\n\nSource\nWiki\nKnowledge\nAvailable field\nQuery\nRead\nFit\n+\n−\nGather constellation\nSource reading\nOpen CentralOpen You may proposeOpen User identityOpen The beings, the thought stream, and who owns whatOpen A place provider reconciles like the floorOpen A delivered lane that leaves the installed cut is lost work\nFilter graph\n6 matches · 6 of 6 disclosed subjects\n6 subjects · 10 relations",
+    "confirmed": [
+      "actual native Wiki graph read",
+      "compact/full same component",
+      "fold/reopen full depth",
+      "missing native popout adapter exact refusal"
+    ],
+    "unverified": [
+      "native Surface relocation",
+      "popout/redock",
+      "processing lifecycle"
+    ]
+  },
+  "candidate": {
+    "url": "http://127.0.0.1:8787/app/",
+    "verified": false,
+    "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8787/app/\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:8787/app/\", waiting until \"domcontentloaded\"\u001b[22m\n"
+  },
+  "errors": [],
+  "failure": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8787/app/\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:8787/app/\", waiting until \"domcontentloaded\"\u001b[22m\n"
+}

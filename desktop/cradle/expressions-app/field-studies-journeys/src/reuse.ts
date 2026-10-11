@@ -141,10 +141,22 @@ export function materialFileName(title:string):string{
  return (title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'material')+'.expression.json';
 }
 
+/** A Scene reusable form addressed by the open native Scene ref. The scenes reading
+ * rows resolve that ref to its journey Scene id; buildReuse maps the id back to the
+ * native ref, so the fork/reuse_set/save_as path is the existing saveReusable one. */
+export function sceneReuseForm(title:string,sceneRef:string,rows:readonly {scene_ref:string;local_scene_id:string|null}[]):ReuseForm{
+ const name=title.trim();
+ if(!name||name.length>256)throw new Error('Give the reusable material a title (up to 256 characters).');
+ const entrySceneId=rows.find(row=>row.scene_ref===sceneRef)?.local_scene_id;
+ if(!entrySceneId)throw new Error('Open a native Scene before saving it as reusable: this Scene has no native binding.');
+ return {kind:'scene',title:name,states:{},gestures:{},entrySceneId,playback:[],
+  associations:{workflow_keys:[],task_types:[],skill_set_refs:[],skill_refs:[],event_families:[]}};
+}
+
 // --- binding rows for selecting saved material into an act --------------
 
-export interface BindingInput {role:string;accepts:RoleAccepts;character_ref?:string;state?:string;label?:string;glyph?:string;text?:string;value?:number}
-export interface ActBinding {kind:'agent'|'object'|'text'|'value';character_ref?:string;state?:string;label?:string;glyph?:string;text?:string;value?:number}
+export interface BindingInput {role:string;accepts:RoleAccepts;character_ref?:string;character_revision?:string;state?:string;label?:string;glyph?:string;text?:string;value?:number}
+export interface ActBinding {kind:'agent'|'object'|'text'|'value';character_ref?:string;character_revision?:string;state?:string;label?:string;glyph?:string;text?:string;value?:number}
 /** Turn filled binding rows into act bindings and captions. Empty rows stay
  * unbound — the material's authored placeholder performs. */
 export function actBindings(rows:BindingInput[]):{bindings:Record<string,ActBinding>;captions:Record<string,string>}{
@@ -155,6 +167,7 @@ export function actBindings(rows:BindingInput[]):{bindings:Record<string,ActBind
   if(row.accepts==='value'){if(row.value!==undefined&&Number.isFinite(row.value))bindings[row.role]={kind:'value',value:row.value};continue;}
   const b:ActBinding={kind:row.accepts};
   if(row.character_ref?.trim())b.character_ref=row.character_ref.trim();
+  if(row.character_revision?.trim()){if(!b.character_ref)throw new Error('A character revision needs its exact source.');b.character_revision=row.character_revision.trim();}
   if(row.state?.trim()){if(!validName(row.state.trim()))throw new Error(`"${row.state}" is not a state name.`);b.state=row.state.trim();}
   if(row.label?.trim())b.label=row.label.trim();
   if(row.glyph?.trim())b.glyph=row.glyph.trim();

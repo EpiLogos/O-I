@@ -1,0 +1,166 @@
+{
+  "schema": "oi.native-techne-integration-source-basis/v1",
+  "standing": "agent-source-bound-integration-packet",
+  "candidate_head": "214df508973b49b88b59465e2b47e98cd5919f59",
+  "candidate_branch": "agent/o-i-20261007-1639",
+  "files": [
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/techne/TechneCentre.tsx",
+      "sha256": "678521d17cbed5256f6c6eaa2846812618b280c60abcf71227405bd93cecc290",
+      "bytes": 5321
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/techne/wikiNativeExpression.ts",
+      "sha256": "6f3ab918bc48b44f1b8974c1db1fce2df5b684fdda1091326d0b86617cf6a3b2",
+      "bytes": 18497
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/techne/wikiProjectionStore.ts",
+      "sha256": "c3debe823bbd8d8a864e28d1de90b52010042f0681514e3e566786a22836c7dd",
+      "bytes": 24699
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/techne/wikiReadingProvider.ts",
+      "sha256": "815eb8ed385262fd943003f7ff91b70ec173a5c4609d6789a0ff574f10f830ca",
+      "bytes": 27480
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/knowledge/KnowledgeSurface.tsx",
+      "sha256": "5a67b65a359df0ed3c117cc7de41ade3a2767771ed36f9066b18b30311ef3618",
+      "bytes": 25046
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/knowledge/GraphCanvas.tsx",
+      "sha256": "2038fda5bce3cf22a710e0b74895cbd01958431346e5c396d326c463d5521240",
+      "bytes": 17050
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/knowledge/useLayout.ts",
+      "sha256": "fb6ef2c04574681320ce420093cdb02f4fec4362acf6db8d96898a47b067c806",
+      "bytes": 3048
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/knowledge/graph.ts",
+      "sha256": "e27f981f7c39cd81faf422509174401c769ce055a07f462b6c9a1f1333f795cc",
+      "bytes": 4061
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/knowledge/techneHandoff.ts",
+      "sha256": "e43132a54a0784c334c0ab2241ffabcdaff069bd5b2a89d3f7bff3ae6d34e1b1",
+      "bytes": 3099
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/researchInstruments.tsx",
+      "sha256": "4d5ba7bd4070148691b0ec183de8b796bfdf8e1b429c5814e4d4706a413cd266",
+      "bytes": 64226
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/palaceInstrument.tsx",
+      "sha256": "044b6972898bef37a35b032290f3eee016938d02426bd492ab096a648df543ef",
+      "bytes": 14167
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/src/engine/paramRegistry.ts",
+      "sha256": "2098755fd3533980667799a0073e58f3b2d3e90511b1386fe2273961238c3abb",
+      "bytes": 19058
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeParameters.ts",
+      "sha256": "b1756eaf9b2d05e753137f4a950a43e3a122ccf45506a987f72b854774a0c65c",
+      "bytes": 9729
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts",
+      "sha256": "c6521e8a31e9a37168c260379f125ea9d3f7956ee2fda04fef3454d2f14d3124",
+      "bytes": 34466
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorkspace.ts",
+      "sha256": "a65dd32bfbba47996c160bf876826f4cf127c11c9ba1569d1eb065deae88e6af",
+      "bytes": 29398
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/surfaces.json",
+      "sha256": "609e061de9a0701dac18c946a2af56dd4bc083729eaad1f0983af249330adf67",
+      "bytes": 16594
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/suite/native-protocol.json",
+      "sha256": "99c2f871b876ddaee486a387d81d931b404632d405bfee7b3e5087d66891a8fc",
+      "bytes": 917
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/techne.ts",
+      "sha256": "ae45c96a6e95f12c0a7f6e66a5e48d0b15f9467239cb24028033639e250f8da9",
+      "bytes": 7606
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/knowledge.ts",
+      "sha256": "7288f066422e48b2e0d2b49bac2687093b5790ebc2235086a98de8c605d44989",
+      "bytes": 1022
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/parameters.ts",
+      "sha256": "3dc1eec345121d712bf399e6d83c23b281c3cc542f6208a8fa0e208faa379ffe",
+      "bytes": 1047
+    }
+  ],
+  "governing_sources": [
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/PROGRAMME.md",
+      "sha256": "9f6ae346bd4ee6dc33054ca62c1f8660ea4890135fda5c9e3d7fa869562fd5ac",
+      "bytes": 11721
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/CONVERGENCE.md",
+      "sha256": "d01c755d4e65c17f8eaa63ad7ed435e04f01d57d79350e26a4e638d4c4a18753",
+      "bytes": 9124
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/lane-1-canvas-graph/TARGET-SET.md",
+      "sha256": "4960817ce7c089a316557d8a8ff75c92f1e7ae6c2183d77438aedf3917e73aa2",
+      "bytes": 24423
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/lane-2-timeline/TARGET-SET.md",
+      "sha256": "57e02c638cf4c5cae2ae249036041baf8673b205be53c42cec7586925854ea45",
+      "bytes": 32161
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/lane-3-expressions-editor/TARGET-SET.md",
+      "sha256": "714c1402f9bbf205d7f14620af36051fecfe774f49194f850d326a9da2e66d55",
+      "bytes": 47051
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/lane-4-world-places/TARGET-SET.md",
+      "sha256": "ad3f6425c6fef711a550d2e57d2a3894313673dd9187b43af6aff0101e790e25",
+      "bytes": 23201
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/lane-5-journey-palace/TARGET-SET.md",
+      "sha256": "b9e2f560e9bae343d1e0c9cb6e96b33b8cfe037d4ca4e258c8941e5526b8f1eb",
+      "bytes": 41833
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/lane-7-app-structure/STRUCTURE.md",
+      "sha256": "4a35d9b529877b6e46ada302299393b5c84f7f1d8d37b072388b42e1ce5162cb",
+      "bytes": 33399
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/NATIVE-EDITOR-STANDARD.md",
+      "sha256": "c62acf9dd4e879c07ab59fb1e0e1afe3fe0636b1dd4cf4e4a9aa5987645a77ab",
+      "bytes": 17031
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/KERNEL-STATE-FOUNDATION.md",
+      "sha256": "580684f4428b57416f64be797db49ac2e19e04a33938ef6e0dd11a34908f8b3e",
+      "bytes": 11112
+    }
+  ],
+  "acquisition": {
+    "native_domain_logic": "B: existing O-I source/package imports",
+    "new_routing_exports": "D: remaining host integration",
+    "reference_code_entered": false
+  },
+  "verification_grade": "B: real native owner and transport acceptance; visual acceptance belongs to parent computer-use replay"
+}

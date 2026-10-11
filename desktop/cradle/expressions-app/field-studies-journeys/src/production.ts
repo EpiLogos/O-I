@@ -51,7 +51,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  resize(width:number,height:number,pixelRatio:number){this.width=width;this.height=height;this.dpr=pixelRatio;}
  private configuration(frame:EngineFrame):PointCloudConfig{
   const {toolbelt,propertyTracks,...renderScene}=frame.scene;
-  const sig=frame.authoringRevision===undefined?JSON.stringify(renderScene):frame.scene.id+':'+frame.authoringRevision;
+  const sig=frame.authoringRevision===undefined?JSON.stringify(renderScene):frame.scene.id+':'+frame.authoringRevision+':'+(frame.liveRevision??0);
   if(sig!==this.signature){
    const config=toNativeConfig(frame.scene);
    if(this.engine&&this.sceneId!==frame.scene.id){this.duration=frame.delta>0?frame.scene.transition:0;this.from=this.duration>0?this.evaluated:null;this.transitionStart=this.engine.inspectState().simTime;}

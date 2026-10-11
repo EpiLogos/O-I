@@ -293,6 +293,9 @@ export async function nativeSubjectBytesRequest(ref:string):Promise<NativeSubjec
  * and source projection; no shell workspace or renderer file path supplies scope. */
 export interface TechneSceneReadingRequest {expression_ref:string;revision:number;scene_ref:string;facet?:'relation-semantics'|'node-metadata'|'scene-relations'}
 export const readTechneReading = (request:TechneSceneReadingRequest): Promise<unknown> => call("techne-reading", {request}, 45000);
+/** Session presentation action; the host's existing DisclosureSession owns
+ * its declared window. Nothing is saved into the Expression by this route. */
+export const techneTimeWindowRequest = (request:import('../../../../../packages/expressions-boundary/src/timeWindow').NativeTimeWindowRequest):Promise<unknown> => call('techne-time-window',{request},30000);
 
 export const techneWorldRequest = (request: {operation:'list'}|{operation:'open';register:string}): Promise<unknown> => call('techne-world', {request}, 120000);
 

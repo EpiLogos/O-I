@@ -1,0 +1,17 @@
+{
+  "expression_ref": "expression:instrument-editor-429994c4-0e36-4c4e-899d-a4cc4d198d8d",
+  "checkpoint_id": "expression:instrument-editor-429994c4-0e36-4c4e-899d-a4cc4d198d8d",
+  "revision": 5,
+  "selected_entity": "expression:instrument-editor-429994c4-0e36-4c4e-899d-a4cc4d198d8d:entity:entity-95a14319-d444-4042-a63f-ef7f33fbf2e2",
+  "confirmed": [
+    "second native occurrence restored from actual journal",
+    "read and refused requests cannot clear another operation lease",
+    "history, Scene opening and modulation refuse overlapping native composition",
+    "one exact native composition and matching native journal",
+    "open gesture refuses before native dispatch",
+    "actual pending authored input blocks composition without a native write",
+    "native acknowledgement and Undo advance authoring revision",
+    "unavailable Scene transport refused instead of falsely acknowledged",
+    "Field selection actually clears native focus and advances its journal"
+  ]
+}

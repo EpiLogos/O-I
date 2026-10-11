@@ -1,0 +1,30 @@
+.native-focus-ruler{fill:none;stroke:var(--text-dim,#b8bbb9);stroke-width:.8}
+.native-focus-track{fill:var(--bg-2,#2a2d31);stroke:var(--line,#292c31);stroke-width:.6}
+.native-focus-hatch-line{stroke:var(--text,#e0e0dc);stroke-width:1;opacity:.55}
+.native-focus-glide-base{opacity:.35}
+.native-focus-glide{opacity:.9}
+.native-focus-parked{opacity:.4}
+.native-focus-seg-label{font-size:8px;fill:var(--text,#e0e0dc);paint-order:stroke;stroke:var(--bg-0,#3f4348);stroke-width:2px}
+.native-focus-switches{display:flex;flex-direction:column;gap:10px;padding:8px 10px}
+.native-focus-switches section{display:flex;flex-direction:column;gap:6px;min-width:0}
+.native-focus-switches h4{margin:0;font-size:10px;font-weight:600;letter-spacing:.02em;color:var(--text-dim,#b8bbb9)}
+.native-focus-switches label{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px}
+.native-focus-switches input{accent-color:var(--accent,#ffbe00)}
+.native-focus-switches select{min-height:22px;max-width:100%}
+.native-focus-note{margin:0;font-size:9px;opacity:.65}
+.native-focus-route{display:flex;flex-direction:column;gap:4px}
+.native-focus-route ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.native-focus-route li{position:relative;display:grid;grid-template-columns:20px 10px minmax(0,1fr) 22px 22px;align-items:center;gap:6px;min-height:24px;padding:2px 4px;border:1px solid transparent;border-radius:3px;cursor:grab}
+.native-focus-route li:focus-visible{outline:2px solid var(--accent,#ffbe00);outline-offset:1px}
+.native-focus-route li.is-idle{opacity:.5}
+.native-focus-route li.is-dragging{opacity:.35}
+.native-focus-route li.is-drop-before::before,.native-focus-route li.is-drop-after::after{content:"";position:absolute;left:0;right:0;height:2px;background:var(--accent,#ffbe00)}
+.native-focus-route li.is-drop-before::before{top:-2px}
+.native-focus-route li.is-drop-after::after{bottom:-2px}
+.native-focus-route-number{font-size:10px;text-align:right;opacity:.7}
+.native-focus-route-swatch{display:block;width:10px;height:10px;border-radius:2px;border:1px solid var(--line,#292c31)}
+.native-focus-route-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+.native-focus-route-name small{opacity:.7}
+.native-focus-route button{min-width:22px;min-height:22px;padding:0;font-size:10px}
+.native-focus-route button:disabled{opacity:.35}
+@media (prefers-reduced-motion: reduce){.native-focus-route li{transition:none}}

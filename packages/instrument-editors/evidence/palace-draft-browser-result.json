@@ -1,0 +1,36 @@
+{
+  "expression_ref": "expression:instrument-editor-0368824a-a6d7-4969-88ee-2cafabddf830",
+  "controlled_native": true,
+  "errors": [],
+  "unsubmitted_name_basis_retained": true,
+  "refused_save_retains_composition": true,
+  "native_after_refusal": {
+    "collections": [],
+    "entities": {},
+    "expression_ref": "expression:instrument-editor-0368824a-a6d7-4969-88ee-2cafabddf830",
+    "profiles": [],
+    "provenance": [],
+    "refinements": [],
+    "relations": {},
+    "representations": [],
+    "revision": 9,
+    "scenes": [
+      {
+        "body": null,
+        "entity_refs": [],
+        "revision": 9,
+        "scene_ref": "expression:instrument-editor-0368824a-a6d7-4969-88ee-2cafabddf830:scene:main",
+        "title": "Externally advanced controlled Palace r8",
+        "triggers": []
+      }
+    ],
+    "schema": "oi.expression/v1",
+    "selection": {
+      "entity_ref": null,
+      "scene_ref": "expression:instrument-editor-0368824a-a6d7-4969-88ee-2cafabddf830:scene:main"
+    },
+    "title": "Instrument editor native proof"
+  },
+  "explicit_revert_adopts_current_basis": true,
+  "passed": true
+}

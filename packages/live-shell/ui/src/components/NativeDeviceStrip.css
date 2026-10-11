@@ -1,0 +1,18 @@
+.native-chain-device{flex:0 0 auto;display:flex;flex-direction:column;width:176px;min-width:0;border:1px solid var(--line);border-radius:3px;background:var(--bg-1);overflow:hidden;font-size:11px;color:var(--text)}
+.native-chain-device.is-folded{width:auto;min-width:64px;max-width:176px}
+.native-chain-head{display:flex;align-items:center;gap:2px;height:22px;padding:0 6px 0 0;background:var(--bg-3);border-bottom:1px solid var(--line)}
+.native-chain-device.is-folded .native-chain-head{border-bottom:0}
+.native-chain-device button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer}
+.native-chain-device button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.native-chain-light{position:relative;flex:0 0 auto;width:22px;height:22px}
+.native-chain-light::before{content:'';position:absolute;left:7px;top:7px;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:inset 0 0 0 1px var(--line)}
+.native-chain-light.is-off::before{background:var(--text-faint)}
+.native-chain-light.is-unknown::before{background:transparent;box-shadow:inset 0 0 0 1px var(--text-dim)}
+.native-chain-fold{flex:0 0 auto;width:16px;height:22px;font-size:9px;opacity:.7}
+.native-chain-title{flex:1 1 auto;min-width:0;height:22px;padding:0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;font-weight:600}
+.native-chain-body{display:flex;flex-direction:column;gap:6px;padding:6px 8px 8px;min-width:0}
+.native-chain-summary{margin:0;font:10px/1.35 ui-monospace,SFMono-Regular,monospace;color:var(--text-dim);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
+.native-chain-modes{display:flex;gap:2px}
+.native-chain-mode{flex:1 1 0;min-width:0;min-height:22px;padding:3px 0;overflow:hidden;border:1px solid var(--line);border-radius:2px;background:var(--bg-3);text-transform:capitalize;font-size:9px;text-align:center}
+.native-chain-mode[aria-pressed=true]{background:var(--accent);color:var(--bg-0);border-color:var(--accent)}
+.native-chain-mode:disabled{opacity:.45;cursor:default}

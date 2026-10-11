@@ -3,7 +3,7 @@ import {restoreFactsCheckpoints,retainFactsCheckpoint,type FactsCheckpoint} from
 import {emphasizeGraph} from './graphEmphasis';
 import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
-import type {KnowledgeAddress,KnowledgeReading} from "../kernel/types";
+import type {KnowledgeReading} from "../kernel/types";
 import type {SurfaceBinding} from "../surface/types";
 import {knowledge} from "./client";
 import type {WikiAnchor,WikiNavigate} from "./wikiDocument";
@@ -15,6 +15,7 @@ import {accommodate,unaccommodate} from "./camera";
 import {GraphFilters} from "./GraphFilters";
 import {filterGraph,restoreGraphFilters,restoreSavedGraphViews,type GraphFilters as GraphFilterState,type SavedGraphView} from "./filters";
 import {GraphCanvas} from "./GraphCanvas";
+import {appendGraphVisit,applySavedGraphView,isUnresolvedGraphNode,projectUnresolvedGraph,unresolvedAssociationsAllowed,unresolvedGraphAssociations,openGraphVisit,returnGraphVisit,selectGraphVisit,restoreGraphReturn,type GraphVisit} from "./graphNavigation";
 import {useLayout} from "./useLayout";
 import {openSubjectInTechne} from "./techneHandoff";
 import {NodeDetails,ReadingBody,type OpenKnowledge} from "./NodeDetails";
@@ -29,9 +30,10 @@ import {Loading} from "../shared/Loading";
 import "./knowledge.css";
 import "./filters.css";
 import {Glyph} from "../workspace/Glyph";
+import {resolveNativeGraphFocus, type NativeKnowledgeContext} from './nativeFocus';
 
 type Camera={zoom:number;x:number;y:number};
-type Visit={query:string;selected?:string;camera:Camera;overviewCamera?:Camera;filters?:GraphFilterState;pageAddress?:KnowledgeAddress;pageTitle?:string;pageAnchor?:WikiAnchor;scroll?:number};
+type Visit=GraphVisit;
 type Travel={facts?:Record<string,FactsCheckpoint>;factsRecovery?:{message:string;raw:unknown};visits:Visit[];index:number;saved?:SavedGraphView[];construction?:ConstructionCheckpoint;constructionRecovery?:{message:string;raw:unknown}};
 const origin=():Camera=>({zoom:1,x:0,y:0});
 function restore(id:string):Travel {
@@ -39,13 +41,13 @@ function restore(id:string):Travel {
     const saved=JSON.parse(localStorage.getItem(`oi-cradle.knowledge-travel.v1:${id}`)??"null");
     if(saved?.facts){try{saved.facts=restoreFactsCheckpoints(saved.facts);}catch(error){saved.factsRecovery={message:String(error),raw:saved.facts};delete saved.facts;}}
     if(saved?.construction){try{saved.construction=restoreConstructionCheckpoint(saved.construction);}catch(error){saved.constructionRecovery={message:String(error),raw:saved.construction};delete saved.construction;}}
-    if(saved&&Array.isArray(saved.visits)&&saved.visits.length>0&&saved.visits.length<=32&&Number.isInteger(saved.index)&&saved.index>=0&&saved.index<saved.visits.length&&saved.visits.every((v:Visit)=>typeof v.query==="string"&&(v.selected===undefined||typeof v.selected==="string")&&v.camera&&[v.camera.zoom,v.camera.x,v.camera.y].every(Number.isFinite)&&v.camera.zoom>=.15&&v.camera.zoom<=4&&(!v.overviewCamera||([v.overviewCamera.zoom,v.overviewCamera.x,v.overviewCamera.y].every(Number.isFinite)&&v.overviewCamera.zoom>=.15&&v.overviewCamera.zoom<=4))))return {...saved,visits:saved.visits.map((visit:Visit)=>({...visit,pageAddress:visit.pageAddress&&['source','wiki','project-map'].includes(visit.pageAddress.kind)&&typeof visit.pageAddress.value==='string'?visit.pageAddress:undefined,pageTitle:typeof visit.pageTitle==='string'?visit.pageTitle:undefined,scroll:typeof visit.scroll==='number'&&Number.isFinite(visit.scroll)&&visit.scroll>=0?visit.scroll:0,pageAnchor:visit.pageAnchor&&typeof visit.pageAnchor==='object'?visit.pageAnchor:undefined})),saved:restoreSavedGraphViews(saved.saved)};
+    if(saved&&Array.isArray(saved.visits)&&saved.visits.length>0&&saved.visits.length<=32&&Number.isInteger(saved.index)&&saved.index>=0&&saved.index<saved.visits.length&&saved.visits.every((v:Visit)=>typeof v.query==="string"&&(v.selected===undefined||typeof v.selected==="string")&&v.camera&&[v.camera.zoom,v.camera.x,v.camera.y].every(Number.isFinite)&&v.camera.zoom>=.15&&v.camera.zoom<=4&&(!v.overviewCamera||([v.overviewCamera.zoom,v.overviewCamera.x,v.overviewCamera.y].every(Number.isFinite)&&v.overviewCamera.zoom>=.15&&v.overviewCamera.zoom<=4))))return {...saved,visits:saved.visits.map((visit:Visit)=>({...visit,detail:visit.detail===true&&typeof visit.selected==='string',detailReturn:restoreGraphReturn(visit.detailReturn),pageAddress:visit.pageAddress&&['source','wiki','project-map'].includes(visit.pageAddress.kind)&&typeof visit.pageAddress.value==='string'?visit.pageAddress:undefined,pageTitle:typeof visit.pageTitle==='string'?visit.pageTitle:undefined,scroll:typeof visit.scroll==='number'&&Number.isFinite(visit.scroll)&&visit.scroll>=0?visit.scroll:0,pageAnchor:visit.pageAnchor&&typeof visit.pageAnchor==='object'?visit.pageAnchor:undefined})),saved:restoreSavedGraphViews(saved.saved)};
     const camera=JSON.parse(localStorage.getItem(`oi-cradle.knowledge-view.v1:${id}`)??"null");
     if(camera&&[camera.zoom,camera.x,camera.y].every(Number.isFinite)&&camera.zoom>=.15&&camera.zoom<=4)return {visits:[{query:"",camera}],index:0};
   }catch{/* Invalid view state never alters an owner reading. */}
   return {visits:[{query:"",camera:origin()}],index:0};
 }
-export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpen:OpenKnowledge}) {
+export function KnowledgeSurface({binding,onOpen,nativeContext}: {binding:SurfaceBinding;onOpen:OpenKnowledge;nativeContext?:NativeKnowledgeContext}) {
   const {transport}=useKernel();
   const [travel,setTravel]=useState(()=>restore(binding.id));
   const visit=travel.visits[travel.index];
@@ -90,17 +92,31 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
   const focusContent=useRef(false);
   const [extent,setExtent]=useState({width:800,height:520});
   const detailGeometry=useDetailGeometry(binding.id,extent);
-  const isGraph=binding.address?.kind==="wiki"&&binding.view?.knowledgePlane!=="page";
+  const isGraph=binding.view?.knowledgePlane==='graph'||binding.address?.kind==="wiki"&&binding.view?.knowledgePlane!=="page";
+  const [nativeFocusError,setNativeFocusError]=useState<string>();
+  // A retained travel already has the person's focus and camera. Receiving
+  // the origin again on remount must not overwrite their subsequent travel.
+  const nativeFocusApplied=useRef<string|undefined>(visit.selected&&nativeContext?.subject_ref?JSON.stringify([binding.id,nativeContext.subject_ref,nativeContext.native_owner]):undefined);
   const grouped=useMemo(()=>subjects(model),[model]);
-  const nodes=useMemo(()=>grouped.map(s=>s.node),[grouped]);
-  const visibleModel=useMemo(()=>model?{...model,nodes}:undefined,[model,nodes]);
+  const visibleModel=useMemo(()=>model?projectUnresolvedGraph({...model,nodes:grouped.map(s=>s.node)}):undefined,[model,grouped]);
+  const nodes=useMemo(()=>visibleModel?.nodes??[],[visibleModel]);
   const emphasis=useMemo(()=>emphasizeGraph(nodes,filters.emphasis),[nodes,filters.emphasis]);
   const filtered=useMemo(()=>visibleModel?filterGraph(visibleModel,filters,visit.selected):undefined,[visibleModel,filters,visit.selected]);
   const displayedModel=useMemo(()=>visibleModel&&filtered?{...visibleModel,nodes:filtered.nodes,edges:filtered.edges}:undefined,[visibleModel,filtered]);
-  const focused=useMemo(()=>neighbourhood(displayedModel,visit.selected),[displayedModel,visit.selected]);
+  const unresolvedAssociations=useMemo(()=>unresolvedAssociationsAllowed(filters)?unresolvedGraphAssociations(displayedModel?.nodes??[]):[],[displayedModel,filters]);
+  const focused=useMemo(()=>{const refs=neighbourhood(displayedModel,visit.selected);for(const link of unresolvedAssociations)if(link.source===visit.selected||link.ghost===visit.selected){refs.add(link.source);refs.add(link.ghost);}return refs;},[displayedModel,visit.selected,unresolvedAssociations]);
   // All owner disclosures remain inspectable; filtering never changes layout topology.
   const layout=useLayout(visibleModel);
   const positions=layout.points;
+  useEffect(()=>{
+    if(!isGraph||!model||busy||!nativeContext?.subject_ref)return;
+    const identity=JSON.stringify([binding.id,nativeContext.subject_ref,nativeContext.native_owner]);
+    if(nativeFocusApplied.current===identity)return;
+    const focus=resolveNativeGraphFocus(model,nativeContext);
+    if(focus.state!=='found'){setNativeFocusError(focus.detail);return;}
+    setNativeFocusError(undefined);nativeFocusApplied.current=identity;setDetailNode(undefined);
+    setTravel(current=>appendGraphVisit(current,selectGraphVisit(current.visits[current.index],focus.node.ref)));
+  },[isGraph,model,busy,binding.id,nativeContext?.subject_ref,nativeContext?.native_owner]);
   const [techne,setTechne]=useState<{ref:string;pending:boolean;failure?:string}>();
   const openTechne=useCallback(async(node:GraphNode)=>{
     setTechne({ref:node.ref,pending:true});
@@ -110,11 +126,12 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
   const displayedPositions=useMemo(()=>{const byRef=new Map(nodes.map((node,i)=>[node.ref,positions[i]]));return filtered?.nodes.map(node=>byRef.get(node.ref)!)??[];},[nodes,positions,filtered]);
   const changeFilters=(value:GraphFilterState)=>setTravel(t=>({...t,visits:t.visits.map((v,i)=>i===t.index?{...v,filters:restoreGraphFilters(value)}:v)}));
   const saveViews=(saved:SavedGraphView[])=>setTravel(t=>({...t,saved:restoreSavedGraphViews(saved)}));
+  const applyView=(saved:SavedGraphView)=>{if(saved.camera)setDetailNode(undefined);const point=positions[nodes.findIndex(node=>node.ref===saved.focus)]??{x:400,y:260};setTravel(t=>appendGraphVisit(t,applySavedGraphView(t.visits[t.index],saved,{point,extent})));};
   const region=detailNode?freeGraphRegion(detailGeometry.rect,extent):visit.selected?{x:0,y:0,...extent}:undefined;
   const anchor=positions[nodes.findIndex(node=>node.ref===visit.selected)]??{x:400,y:260};
   const presentation=region?accommodate(camera,anchor,region,extent):camera;
   const setCamera=(change:(camera:Camera)=>Camera)=>setTravel(t=>({...t,visits:t.visits.map((v,i)=>i===t.index?{...v,camera:change(v.camera)}:v)}));
-  const push=(next:Visit)=>setTravel(t=>{const visits=[...t.visits.slice(0,t.index+1),next].slice(-32);return {...t,visits,index:visits.length-1};});
+  const push=(next:Visit)=>setTravel(t=>appendGraphVisit(t,next));
   const back=(delta:number)=>{setDetailNode(undefined);focusContent.current=true;setTravel(t=>({...t,index:Math.max(0,Math.min(t.visits.length-1,t.index+delta))}));};
   useEffect(()=>{const release=(event:Event)=>{if(event instanceof StorageEvent?event.key!==`oi-cradle.knowledge-travel.v1:${binding.id}`:(event as CustomEvent).detail!==binding.id)return;setDetailNode(undefined);setTravel(restore(binding.id));};window.addEventListener("oi:graph-release",release);window.addEventListener("storage",release);return()=>{window.removeEventListener("oi:graph-release",release);window.removeEventListener("storage",release);};},[binding.id]);
   const latestTravel=useRef(travel);latestTravel.current=travel;
@@ -136,8 +153,9 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
     void loadGraph(transport,binding.project,visit.query,value=>{setModel(value.reading);setBusy(value.pending.length>0);},{shared:filters.shared,fresh,signal:controller.signal});
     return()=>controller.abort();
   },[isGraph,binding.project,visit.query,generation,transport,filters.shared]);
-  const selectedNode=detailNode??nodes.find(n=>n.ref===visit.selected);
-  const selectedAddress=useMemo(()=>isGraph?(selectedNode?graphAddress(selectedNode):undefined):(visit.pageAddress??binding.address),[isGraph,selectedNode,binding.address,visit.pageAddress]);
+  const locus=nodes.find(node=>node.ref===visit.selected&&!isUnresolvedGraphNode(node));
+  const selectedNode=detailNode??locus;
+  const selectedAddress=useMemo(()=>isGraph?(selectedNode&&!isUnresolvedGraphNode(selectedNode)?graphAddress(selectedNode):undefined):(visit.pageAddress??binding.address),[isGraph,selectedNode,binding.address,visit.pageAddress]);
   const readKey=JSON.stringify([binding.project,selectedAddress,selectedNode?.native_owner]);
   const lastReadKey=useRef<string>();
   useEffect(()=>{
@@ -159,20 +177,40 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
     return()=>{active=false;controller.abort();};
   },[readKey,generation,transport]);
   useEffect(()=>{if(focusContent.current&&(reading||readError)){focusContent.current=false;content.current?.focus({preventScroll:true});}},[reading,readError]);
-  const open=useCallback((node:GraphNode)=>{if(node.frame_ref){setConstructionFrame(node.frame_ref);setConstructionOpen(true);}else if(model?.formations?.some(form=>form.ref===node.ref)){setConstructionFrame(node.ref);setConstructionOpen(true);}setDetailNode(node);setTravel(t=>{const visits=[...t.visits.slice(0,t.index+1),{...t.visits[t.index],selected:node.ref,overviewCamera:t.visits[t.index].overviewCamera??t.visits[t.index].camera,camera:{...t.visits[t.index].camera,zoom:Math.max(.75,t.visits[t.index].camera.zoom),x:0,y:0}}].slice(-32);return {...t,visits,index:visits.length-1};});},[model]);
+  const select=useCallback((node:GraphNode)=>{
+    if(isUnresolvedGraphNode(node))return;
+    setDetailNode(undefined);
+    const point=positions[nodes.findIndex(value=>value.ref===node.ref)];
+    if(!point)return;
+    setTravel(t=>{
+      const current=t.visits[t.index];if(current.selected===node.ref&&!current.detail)return t;
+      // Picking keeps the rendered camera stable, so the second click of a
+      // double-click still addresses the same subject under the pointer.
+      const selected=selectGraphVisit(current,node.ref);
+      selected.camera=unaccommodate(presentation,point,{x:0,y:0,...extent},extent);
+      return appendGraphVisit(t,selected);
+    });
+  },[positions,nodes,presentation,extent]);
+  const open=useCallback((node:GraphNode)=>{if(isUnresolvedGraphNode(node))return;if(node.frame_ref){setConstructionFrame(node.frame_ref);setConstructionOpen(true);}else if(model?.formations?.some(form=>form.ref===node.ref)){setConstructionFrame(node.ref);setConstructionOpen(true);}setDetailNode(node);setTravel(t=>appendGraphVisit(t,openGraphVisit(t.visits[t.index],node.ref)));},[model]);
+  useEffect(()=>{
+    if(!isGraph)return;
+    if(!visit.detail){setDetailNode(undefined);return;}
+    setDetailNode(current=>nodes.find(node=>node.ref===visit.selected&&!isUnresolvedGraphNode(node))
+      ??(current?.ref===visit.selected?current:visit.pageAddress&&visit.selected?{ref:visit.selected,label:visit.pageTitle??visit.selected,kind:visit.pageAddress.kind==='source'?'file':'knowledge-subject',address:visit.pageAddress,native_owner:'ai-kit',provenance:{source:'aikit.knowledge.read'},actions:[]}:undefined));
+  },[isGraph,travel.index,visit.detail,visit.selected,visit.pageAddress,visit.pageTitle,nodes]);
   const navigate:WikiNavigate=(address,title,anchor)=>{
     focusContent.current=true;
     if(isGraph){
       const found=nodes.find(node=>node.ref===address.value);
       const node:GraphNode=found??{ref:address.value,label:title,kind:address.kind==="source"?"file":"knowledge-subject",address,native_owner:"ai-kit",provenance:{source:"aikit.knowledge.read"},actions:[]};
-      setDetailNode(node);push({...visit,selected:node.ref,pageAnchor:anchor});
+      setDetailNode(node);push({...openGraphVisit(visit,node.ref),pageAddress:address,pageTitle:title,pageAnchor:anchor});
     }else{
       const previous={...visit,pageAddress:visit.pageAddress??binding.address,pageTitle:visit.pageTitle??binding.title,scroll:content.current?.scrollTop??0};
       setTravel(t=>{const all=t.visits.slice(0,t.index+1);all[t.index]=previous;all.push({...visit,pageAddress:address,pageTitle:title,pageAnchor:anchor,scroll:0});const visits=all.slice(-32);return {...t,visits,index:visits.length-1};});
     }
   };
   useEffect(()=>{if(!isGraph&&reading&&content.current&&!visit.pageAnchor)content.current.scrollTop=visit.scroll??0;},[reading?.resource,travel.index]);
-  const release=()=>{if(!visit.selected&&!detailNode)return;setDetailNode(undefined);push({...visit,selected:undefined,camera:visit.overviewCamera??visit.camera,overviewCamera:undefined});};
+  const release=()=>{if(!visit.selected&&!detailNode)return;setDetailNode(undefined);push(returnGraphVisit(visit));};
   const related=detailNode?model?.edges.filter(e=>e.from_ref===detailNode.ref||e.to_ref===detailNode.ref)??[]:[];
   const commitCamera=(next:{zoom:number;x:number;y:number})=>{const camera=region?unaccommodate(next,anchor,region,extent):next;const current=latestTravel.current;const updated={...current,visits:current.visits.map((v,i)=>i===current.index?{...v,camera}:v)};latestTravel.current=updated;setTravel(updated);persist();};
 
@@ -189,14 +227,14 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
     <WikiFactsProvider transport={transport} project={binding.project} checkpoints={travel.facts??{}} onCheckpoint={saveFactsCheckpoint} onSaved={()=>setGeneration(n=>n+1)}>
     {travel.factsRecovery&&<details><summary>Show raw retained time/place recovery</summary><p role="alert">{travel.factsRecovery.message}</p><pre>{JSON.stringify(travel.factsRecovery.raw,null,2)}</pre></details>}
     {travel.constructionRecovery&&<details className="knowledge-raw"><summary>Recover retained constellation draft</summary><p role="alert">{travel.constructionRecovery.message}</p><pre>{JSON.stringify(travel.constructionRecovery.raw,null,2)}</pre></details>}
-    {busy&&<Loading label="Reading graph inputs…" scope="inline"/>}{error&&<p role="alert">{error}</p>}{layout.error&&<p role="alert">{layout.error}</p>}
+    {busy&&<Loading label="Reading graph inputs…" scope="inline"/>}{error&&<p role="alert">{error}</p>}{nativeFocusError&&<p role="alert">{nativeFocusError}</p>}{layout.error&&<p role="alert">{layout.error}</p>}
     {isGraph&&<div className="knowledge-graph" ref={graph} data-focused={Boolean(visit.selected)} data-detail-open={Boolean(detailNode)} data-dense={nodes.length>80}>
-      <GraphCanvas emphasis={emphasis} nodes={filtered?.nodes??nodes} positions={displayedPositions} model={displayedModel} camera={presentation} selected={visit.selected} focused={focused} contextual={filtered?.contextual} labels={filters.labels} arrows={filters.arrows} minZoom={.15} maxZoom={4} onCamera={commitCamera} onDragNode={(ref,world)=>{if(ref&&world)layout.dragNode(ref,world.x,world.y);else if(!ref)layout.releaseNode();}} onOpen={open} onClear={release}/>
-      {visibleModel&&filtered&&<GraphFilters reading={visibleModel} result={filtered} filters={filters} selected={visit.selected} onChange={changeFilters} saved={travel.saved??[]} onSave={saveViews}/>}
+      <GraphCanvas unresolvedAssociations={unresolvedAssociations} emphasis={emphasis} nodes={filtered?.nodes??nodes} positions={displayedPositions} model={displayedModel} camera={presentation} selected={visit.selected} focused={focused} contextual={filtered?.contextual} labels={filters.labels} arrows={filters.arrows} minZoom={.15} maxZoom={4} onCamera={commitCamera} onDragNode={(ref,world)=>{if(ref&&world)layout.dragNode(ref,world.x,world.y);else if(!ref)layout.releaseNode();}} onSelect={select} onOpen={open} onTechne={openTechne} onClear={release}/>
+      {visibleModel&&filtered&&<GraphFilters reading={visibleModel} result={filtered} filters={filters} camera={presentation} selected={visit.selected} onChange={changeFilters} saved={travel.saved??[]} onSave={saveViews} onApply={applyView}/>}
       {filtered?.nodes.length===0&&<p className="knowledge-graph-empty" role="status">{filtered.localFocusMissing?"Select a subject before using the local view.":"No subjects match these filters."}</p>}
       <div className="knowledge-zoom" role="group" aria-label="Graph view"><button className="oi-tool" aria-label="Zoom out" onClick={()=>setCamera(c=>({...c,zoom:Math.max(.15,c.zoom/1.2)}))}><Glyph name="minus" size={13}/></button><span aria-label="Graph zoom">{Math.round(camera.zoom*100)}%</span><button className="oi-tool" aria-label="Zoom in" onClick={()=>setCamera(c=>({...c,zoom:Math.min(4,c.zoom*1.2)}))}><Glyph name="plus" size={13}/></button><button className="oi-tool" aria-label="Fit graph to view" title="Fit graph to view" onClick={fitView}><Glyph name="expand" size={13}/></button><span className="knowledge-control-hint">Pinch to zoom · two fingers to pan</span></div>
-      {model&&visit.selected&&nodes.find(node=>node.ref===visit.selected)&&<div className="knowledge-expression-bar" style={detailNode&&region?{left:region.x+8,top:region.y+8,right:extent.width-region.x-region.width+8,bottom:extent.height-region.y-region.height+8}:undefined}><div className="knowledge-expression-selection oi-action-group"><button className="oi-action" aria-pressed={pins.includes(visit.selected)} onClick={()=>setPins(current=>current.includes(visit.selected!)?current.filter(ref=>ref!==visit.selected):[...current,visit.selected!])}>{pins.includes(visit.selected)?"Unpin subject":"Pin subject"}</button><button className="oi-action" aria-pressed={follow} onClick={()=>setFollow(value=>!value)}>{follow?"Following locus":"Follow locus"}</button></div><KnowledgeExpression surface={binding.id} project={binding.project} address={graphAddress(nodes.find(node=>node.ref===visit.selected)!)} locus={nodes.find(node=>node.ref===visit.selected)!} pins={pins.flatMap(ref=>nodes.find(node=>node.ref===ref)??[])} follow={follow}/></div>}
-      {detailNode&&<NodeDetails readingProps={{transport,project:binding.project,binding,onNavigate:navigate,anchor:visit.pageAnchor,onSelectSource:receivePassage}} node={detailNode} reading={reading?.resource===(graphAddress(detailNode)?.value??detailNode.ref)?reading:undefined} hosted={hosted&&isHostedNode(detailNode)&&(hosted.state==="unavailable"||hosted.ref===detailNode.ref)?hosted:undefined} error={readError} project={binding.project} onClose={release} onPromote={()=>setDetailNode(undefined)} onOpen={(address,title,project,placement)=>onOpen(address,title,project,placement,binding.id)} onTechne={openTechne} techneFailure={techne?.ref===detailNode.ref?techne.failure:undefined} technePending={techne?.ref===detailNode.ref&&techne.pending} disclosures={grouped.find(s=>s.node.ref===detailNode.ref)?.disclosures??[detailNode]} related={related.map(edge=>({edge,node:nodes.find(n=>n.ref===(edge.from_ref===detailNode.ref?edge.to_ref:edge.from_ref))}))} onRelated={open} native={transport.kind==="tauri"} rect={detailGeometry.rect} extent={extent} onGeometry={detailGeometry.change} storageError={detailGeometry.storageError} transport={transport} onActionDispatched={()=>setGeneration(n=>n+1)}/>}
+      {model&&visit.selected&&locus&&<div className="knowledge-expression-bar" style={detailNode&&region?{left:region.x+8,top:region.y+8,right:extent.width-region.x-region.width+8,bottom:extent.height-region.y-region.height+8}:undefined}><div className="knowledge-expression-selection oi-action-group"><button className="oi-action" aria-pressed={pins.includes(visit.selected)} onClick={()=>setPins(current=>current.includes(visit.selected!)?current.filter(ref=>ref!==visit.selected):[...current,visit.selected!])}>{pins.includes(visit.selected)?"Unpin subject":"Pin subject"}</button><button className="oi-action" aria-pressed={follow} onClick={()=>setFollow(value=>!value)}>{follow?"Following locus":"Follow locus"}</button></div><KnowledgeExpression surface={binding.id} project={binding.project} address={graphAddress(locus)} locus={locus} pins={pins.flatMap(ref=>nodes.find(node=>node.ref===ref&&!isUnresolvedGraphNode(node))??[])} follow={follow}/></div>}
+      {detailNode&&<NodeDetails readingProps={{transport,project:binding.project,binding,onNavigate:navigate,anchor:visit.pageAnchor,onSelectSource:receivePassage}} node={detailNode} reading={reading?.resource===(graphAddress(detailNode)?.value??detailNode.ref)?reading:undefined} hosted={hosted&&isHostedNode(detailNode)&&(hosted.state==="unavailable"||hosted.ref===detailNode.ref)?hosted:undefined} error={readError} project={binding.project} onClose={release} onPromote={()=>{setDetailNode(undefined);push(returnGraphVisit(visit));}} onOpen={(address,title,project,placement)=>onOpen(address,title,project,placement,binding.id)} onTechne={openTechne} techneFailure={techne?.ref===detailNode.ref?techne.failure:undefined} technePending={techne?.ref===detailNode.ref&&techne.pending} disclosures={grouped.find(s=>s.node.ref===detailNode.ref)?.disclosures??[detailNode]} related={related.map(edge=>({edge,node:nodes.find(n=>n.ref===(edge.from_ref===detailNode.ref?edge.to_ref:edge.from_ref))}))} onRelated={open} native={transport.kind==="tauri"} rect={detailGeometry.rect} extent={extent} onGeometry={detailGeometry.change} storageError={detailGeometry.storageError} transport={transport} onActionDispatched={()=>setGeneration(n=>n+1)}/>}
     </div>}
     {model&&<div className="knowledge-inputs">{Object.values(model.inputs).filter(input=>input.state!=="available").map((input,i)=><details key={i} open={input.state==="unavailable"}><summary>{input.owner_operation==="shared-field.projection"?"Shared Field":input.owner_operation} · {input.state}</summary><p role="status">{input.owner_operation} — {input.detail}</p></details>)}</div>}
     {!isGraph&&<article className="knowledge-content oi-scroll" ref={content} tabIndex={-1} aria-label="Selected node content"><div className="knowledge-page-heading"><h1>{visit.pageTitle??binding.title}</h1>{selectedAddress&&reading&&<KnowledgeExpression surface={binding.id} project={binding.project} address={selectedAddress} locus={{ref:reading.resource,label:visit.pageTitle??binding.title,kind:"knowledge-subject",native_owner:reading.provider,provenance:{source:reading.authority,revision:reading.revision},actions:[]}} pins={[]} follow={false}/>} {selectedAddress?.kind==="wiki"&&<WikiFactsButton reference={selectedAddress.value}/>} {selectedAddress?.kind==="wiki"&&<button className="oi-action" onClick={()=>void onOpen(selectedAddress!,visit.pageTitle??binding.title,binding.project,"tab").catch(e=>setReadError(String(e)))}>Show in graph ↗</button>}</div>{readError?<p role="alert">{readError}</p>:reading?<ReadingBody reading={reading} transport={transport} project={binding.project} binding={{...binding,title:visit.pageTitle??binding.title}} onNavigate={navigate} anchor={visit.pageAnchor} onSelectSource={receivePassage}/>:<p role="status">Reading content…</p>}</article>}

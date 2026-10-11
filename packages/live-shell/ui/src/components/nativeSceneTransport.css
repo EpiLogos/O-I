@@ -1,0 +1,21 @@
+/* Scene transport scrubber, time domains and the session playing/standing markers. */
+/* Two-class selector: NativeCompositionViews.css sets nowrap on the bare class and loads later. */
+.native-scene-transport .native-scene-controls{flex-wrap:wrap;row-gap:3px}
+.native-scene-controls button{min-height:22px}
+.native-scene-controls .native-scene-scrub{flex:1 1 120px;min-width:80px;height:22px;margin:0;padding:0;accent-color:var(--accent);background:transparent;border:0;cursor:pointer}
+.native-scene-controls .native-scene-scrub:disabled{opacity:.4;cursor:default}
+.native-scene-controls .native-scene-scrub:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
+.native-scene-time,.native-expression-time{display:inline-flex;flex-direction:column;line-height:1.15;white-space:nowrap;font-variant-numeric:tabular-nums}
+.native-scene-time small,.native-expression-time small{color:var(--text-dim);font-size:9px}
+.native-scene-controls output{font-size:11px}
+.native-composition .native-scene-master .track-header{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.native-composition .native-scene-master .native-play-state{display:inline-flex;align-items:center;gap:4px;margin-left:auto;font-size:9px;color:var(--text-dim);white-space:nowrap}
+.native-play-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--text-faint)}
+.native-play-dot.is-playing{background:var(--accent);animation:native-play-pulse 1.2s ease-in-out infinite}
+@keyframes native-play-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@media (prefers-reduced-motion: reduce){.native-play-dot.is-playing{animation:none}}
+.native-composition .native-scene-master .scene-label.is-playing{box-shadow:inset 2px 0 0 var(--accent)}
+.native-composition .native-scene-master .native-source-controls button{min-height:22px}
+.native-composition .native-scene-master .native-standing{flex-basis:100%;font-size:9px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.native-composition .native-scene-master .native-standing[data-tone=edited]{color:var(--accent)}
+.native-composition .native-scene-master .native-standing[data-tone=saved]{color:var(--text)}

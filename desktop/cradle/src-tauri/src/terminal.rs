@@ -12,6 +12,9 @@ use std::{
 use tauri::{AppHandle, Manager, Webview};
 static LEASE: AtomicU64 = AtomicU64::new(1);
 const LIMIT: usize = 1024 * 1024;
+#[cfg(feature = "native_shell")]
+#[path = "terminal_reading.rs"]
+mod terminal_reading;
 #[derive(Default)]
 pub struct Terminals(Mutex<BTreeMap<String, Arc<Session>>>);
 struct Session {
@@ -19,12 +22,18 @@ struct Session {
     io: Mutex<Io>,
     output: Mutex<Output>,
     wake: Condvar,
+    #[cfg(feature = "native_shell")]
+    archive: Mutex<Option<terminal_reading::Store>>,
 }
 struct Io {
     master: Box<dyn MasterPty + Send>,
     writer: Box<dyn Write + Send>,
     child: Box<dyn Child + Send + Sync>,
     cwd: String,
+    #[cfg(feature = "native_shell")]
+    cwd_standing: String,
+    #[cfg(feature = "native_shell")]
+    command: Option<Vec<String>>,
 }
 struct Output {
     bytes: VecDeque<u8>,
@@ -37,6 +46,8 @@ struct Output {
     closed: bool,
     eof: bool,
     reaped: bool,
+    #[cfg(feature = "native_shell")]
+    recovered: Option<terminal_reading::Reading>,
 }
 #[derive(Serialize)]
 pub struct Attachment {
@@ -44,6 +55,11 @@ pub struct Attachment {
     seq: u64,
     snapshot: String,
     cwd: String,
+    durable: bool,
+    #[cfg(feature = "native_shell")]
+    cwd_standing: String,
+    #[cfg(feature = "native_shell")]
+    archived: Option<terminal_reading::Reading>,
 }
 #[derive(Serialize)]
 pub struct Batch {
@@ -68,6 +84,15 @@ fn size(s: Size) -> Result<PtySize, String> {
     })
 }
 fn trusted(view: &Webview) -> Result<(), String> {
+    #[cfg(feature = "native_shell")]
+    {
+        let window = view
+            .app_handle()
+            .get_webview_window(view.label())
+            .ok_or("Candidate terminal window is unavailable")?;
+        return crate::native_shell::admit_candidate_webview(&window);
+    }
+    #[cfg(not(feature = "native_shell"))]
     if view.label() == "main" || view.label().starts_with("surface-") {
         Ok(())
     } else {
@@ -189,6 +214,10 @@ fn start(
             writer,
             child,
             cwd: cwd.to_string_lossy().into(),
+            #[cfg(feature = "native_shell")]
+            cwd_standing: "launch-directory".into(),
+            #[cfg(feature = "native_shell")]
+            command: carried.clone(),
         }),
         output: Mutex::new(Output {
             bytes: VecDeque::new(),
@@ -201,8 +230,12 @@ fn start(
             closed: false,
             eof: false,
             reaped: false,
+            #[cfg(feature = "native_shell")]
+            recovered: None,
         }),
         wake: Condvar::new(),
+        #[cfg(feature = "native_shell")]
+        archive: Mutex::new(None),
     });
     let receive = row.clone();
     std::thread::spawn(move || {
@@ -243,6 +276,8 @@ fn attach_session(
         io.master.resize(dimensions).map_err(|e| e.to_string())?;
         io.cwd.clone()
     };
+    #[cfg(feature = "native_shell")]
+    let cwd_standing = row.io.lock().map_err(|_| "Terminal unavailable")?.cwd_standing.clone();
     let mut out = row.output.lock().map_err(|_| "Terminal unavailable")?;
     if out.closed {
         return Err("Terminal is closed".into());
@@ -254,6 +289,11 @@ fn attach_session(
         seq: out.checkpoint,
         snapshot: out.snapshot.clone(),
         cwd,
+        durable: cfg!(feature = "native_shell"),
+        #[cfg(feature = "native_shell")]
+        cwd_standing,
+        #[cfg(feature = "native_shell")]
+        archived: out.recovered.clone(),
     })
 }
 fn validate_lease(out: &Output, host: &str, lease: u64) -> Result<(), String> {
@@ -338,7 +378,145 @@ fn checkpoint_session(
     out.base = seq;
     out.checkpoint = seq;
     out.snapshot = snapshot;
+    #[cfg(feature = "native_shell")]
+    {
+        out.recovered = None;
+    }
     row.wake.notify_all();
+    Ok(())
+}
+#[cfg(feature = "native_shell")]
+fn archive_store(app: &AppHandle) -> Result<terminal_reading::Store, String> {
+    terminal_reading::Store::new(
+        &app.path()
+            .app_data_dir()
+            .map_err(|error| error.to_string())?,
+        crate::native_shell::terminal_profile_scope()?,
+    )
+}
+#[cfg(feature = "native_shell")]
+fn owned_store(row: &Arc<Session>) -> Result<terminal_reading::Store, String> {
+    row.archive
+        .lock()
+        .map_err(|_| "Terminal recovery owner unavailable")?
+        .clone()
+        .ok_or("This native terminal has no admitted archive profile".into())
+}
+#[cfg(feature = "native_shell")]
+fn secure_session(
+    row: &Arc<Session>,
+    store: &terminal_reading::Store,
+    id: &str,
+    checkpoint: Option<(&str, u64, u64, String)>,
+) -> Result<(), String> {
+    let _gate = row.gate.lock().map_err(|_| "Terminal unavailable")?;
+    let mut io = row.io.lock().map_err(|_| "Terminal unavailable")?;
+    let mut out = row.output.lock().map_err(|_| "Terminal unavailable")?;
+    let (seq, snapshot) = if let Some((host, lease, seq, snapshot)) = checkpoint {
+        validate_lease(&out, host, lease)?;
+        if seq < out.checkpoint || seq > out.end {
+            return Err("Invalid terminal checkpoint".into());
+        }
+        (seq, Some(snapshot))
+    } else {
+        (out.checkpoint, None)
+    };
+    if io
+        .child
+        .try_wait()
+        .map_err(|error| error.to_string())?
+        .is_some()
+    {
+        if io.cwd_standing == "observed-process-cwd" {
+            io.cwd_standing = "last-observed-process-cwd".into();
+        }
+    } else if let Some(pid) = io.child.process_id() {
+        io.cwd = terminal_reading::process_cwd(pid)?;
+        io.cwd_standing = "observed-process-cwd".into();
+    }
+    let (screen, snapshot_seq, mut tails) = match (&snapshot, &out.recovered) {
+        (Some(screen), _) => (screen.clone(), seq, Vec::new()),
+        (None, Some(reading)) => (
+            reading.screen.clone(),
+            reading.snapshot_seq,
+            reading.tails.clone(),
+        ),
+        (None, None) => (out.snapshot.clone(), seq, Vec::new()),
+    };
+    let bytes = out
+        .bytes
+        .iter()
+        .skip((seq - out.base) as usize)
+        .copied()
+        .collect::<Vec<_>>();
+    if !bytes.is_empty() {
+        tails.push(terminal_reading::Tail {
+            from_seq: seq,
+            to_seq: out.end,
+            bytes,
+        });
+    }
+    let reading = terminal_reading::Reading {
+        schema: "oi.cradle.terminal-reading/v1".into(),
+        surface_id: id.into(),
+        profile_scope: store.profile(),
+        command: io.command.clone(),
+        cwd: io.cwd.clone(),
+        cwd_standing: io.cwd_standing.clone(),
+        screen,
+        snapshot_seq,
+        tails,
+        recorded_unix_ms: std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_err(|error| error.to_string())?
+            .as_millis()
+            .try_into()
+            .map_err(|_| "Terminal recovery timestamp overflow")?,
+    };
+    store.put(&reading)?;
+    // Only an acknowledged native write permits the ordinary in-memory
+    // checkpoint to release consumed bytes. Archive cursors are never leased.
+    if let Some(snapshot) = snapshot {
+        let consumed = (seq - out.base) as usize;
+        out.bytes.drain(..consumed);
+        out.base = seq;
+        out.checkpoint = seq;
+        out.snapshot = snapshot;
+        out.recovered = None;
+        row.wake.notify_all();
+    }
+    Ok(())
+}
+#[cfg(feature = "native_shell")]
+pub(crate) fn checkpoint_all(app: &AppHandle) -> Result<(), String> {
+    let rows = app
+        .state::<Terminals>()
+        .0
+        .lock()
+        .map_err(|_| "Terminal state unavailable")?
+        .iter()
+        .map(|(id, row)| (id.clone(), row.clone()))
+        .collect::<Vec<_>>();
+    if rows.len() > 64 {
+        return Err("Too many owned terminals for a bounded application checkpoint".into());
+    }
+    for (id, row) in &rows {
+        let store = owned_store(row)?;
+        secure_session(row, &store, id, None).map_err(|error| {
+            format!("Terminal {id} could not secure its archived reading: {error}")
+        })?;
+    }
+    let owner = app.state::<Terminals>();
+    let current = owner.0.lock().map_err(|_| "Terminal state unavailable")?;
+    if current.len() != rows.len()
+        || rows.iter().any(|(id, row)| {
+            !current
+                .get(id)
+                .is_some_and(|present| Arc::ptr_eq(row, present))
+        })
+    {
+        return Err("Owned terminal membership changed during application close; retry after the workspace settles".into());
+    }
     Ok(())
 }
 fn close_session(row: &Arc<Session>) -> Result<(), String> {
@@ -401,7 +579,26 @@ pub async fn terminal_attach(
                 .or_else(|| std::env::var("OI_CENTRAL_ROOT").ok())
                 .or_else(|| std::env::var("HOME").ok())
                 .ok_or("Choose a terminal directory")?;
+            #[cfg(feature = "native_shell")]
+            let store = archive_store(&app)?;
+            #[cfg(feature = "native_shell")]
+            let archived = store.load(&id, &command)?;
+            #[cfg(feature = "native_shell")]
+            let cwd = archived
+                .as_ref()
+                .map(|reading| reading.cwd.clone())
+                .unwrap_or(cwd);
             let row = start(cwd, dimensions, command)?;
+            #[cfg(feature = "native_shell")]
+            {
+                row.output
+                    .lock()
+                    .map_err(|_| "Terminal unavailable")?
+                    .recovered = archived;
+                *row.archive
+                    .lock()
+                    .map_err(|_| "Terminal recovery owner unavailable")? = Some(store);
+            }
             rows.insert(id, row.clone());
             row
         }
@@ -457,10 +654,28 @@ pub async fn terminal_checkpoint(
     lease: u64,
     seq: u64,
     snapshot: String,
+    persist: Option<bool>,
 ) -> Result<(), String> {
     trusted(&webview)?;
     if snapshot.len() > 8 * 1024 * 1024 {
         return Err("Terminal screen snapshot is too large".into());
+    }
+    if persist.unwrap_or(false) {
+        #[cfg(feature = "native_shell")]
+        {
+            let row = session(&app, &id)?;
+            let store = owned_store(&row)?;
+            let host = webview.label().to_owned();
+            return tauri::async_runtime::spawn_blocking(move || {
+                secure_session(&row, &store, &id, Some((&host, lease, seq, snapshot)))
+            })
+            .await
+            .map_err(|error| error.to_string())?;
+        }
+        #[cfg(not(feature = "native_shell"))]
+        {
+            return Err("This host has no durable candidate terminal reading owner".into());
+        }
     }
     checkpoint_session(&session(&app, &id)?, webview.label(), lease, seq, snapshot)
 }
@@ -488,6 +703,13 @@ pub async fn terminal_reconcile(
     drop(rows);
     let mut failed = Vec::new();
     for (id, row) in closing {
+        #[cfg(feature = "native_shell")]
+        if let Err(error) =
+            owned_store(&row).and_then(|store| secure_session(&row, &store, &id, None))
+        {
+            failed.push((id, row, error));
+            continue;
+        }
         if let Err(error) = close_session(&row) {
             failed.push((id, row, error));
         }

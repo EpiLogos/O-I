@@ -1,0 +1,17 @@
+/* Devices category: one catalogue row per device, with its activator light and a keyboard-reachable add. */
+.native-device-browser{min-width:0}
+.native-device-rows{list-style:none;margin:0;padding:0}
+.native-device-row-item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:4px;border-bottom:1px solid var(--line);padding-right:4px}
+.native-device-row{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0;min-height:30px;padding:3px 6px;text-align:left;font:inherit;font-size:11px;color:var(--text);background:transparent;border:0;cursor:pointer}
+.native-device-row[aria-pressed=true]{background:var(--bg-3);box-shadow:inset 2px 0 0 var(--accent)}
+.native-device-row:focus-visible{outline:1px solid var(--accent);outline-offset:-1px}
+.native-device-row-main{display:flex;align-items:center;gap:6px;min-width:0;max-width:100%}
+.native-device-row-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.native-device-row-mark{flex:0 0 auto;padding:0 4px;font-size:9px;color:var(--accent);border:1px solid var(--accent);border-radius:2px}
+.native-device-row-summary{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--text-dim)}
+.native-device-row-light{flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:inset 0 0 0 1px var(--line)}
+.native-device-row-light.is-off{background:var(--text-faint)}
+.native-device-row-light.is-unknown{background:transparent;box-shadow:inset 0 0 0 1px var(--text-dim)}
+.native-device-add{min-height:22px;padding:0 6px;font:inherit;font-size:10px;color:var(--text);background:var(--bg-3);border:1px solid var(--line);border-radius:2px;white-space:nowrap;cursor:pointer}
+.native-device-add:disabled{opacity:.45;cursor:default}
+.native-device-add:focus-visible{outline:1px solid var(--accent);outline-offset:-1px}

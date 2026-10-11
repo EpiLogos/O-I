@@ -45,8 +45,8 @@ test('real kernel bounds replay by count/bytes and recovers actual owner state a
     });
   };
   const pass=(name,evidence)=>receipt.checks.push({name,passed:true,evidence});
-  const waitFor=async(predicate)=>{
-    const end=Date.now()+10000;
+  const waitFor=async(predicate,timeout=10000)=>{
+    const end=Date.now()+timeout;
     while(!predicate()){assert.ok(Date.now()<end,'Native replay observation timed out');await new Promise(resolve=>setTimeout(resolve,20));}
   };
   try{
@@ -79,15 +79,26 @@ test('real kernel bounds replay by count/bytes and recovers actual owner state a
     const state=await nativeOp(transport,{op:'state'});assert.equal(state.outcome?.snapshot.surfaces[surface].title,'Count 1099');
     pass('Count eviction keeps exactly1024 strictly ordered events and actual current owner state',{oldest_seq:expired.oldest_seq,latest_seq:1100,retained_count:total,retained_bytes:retainedBytes});
 
-    const observed=[],resyncs=[],errors=[];
+    const observed=[],resyncs=[],errors=[];let healthy=0;
     subscription=await subscribeTopic(transport,entry=>observed.push(entry),async page=>{
       const read=await nativeOp(transport,{op:'state'});assert.equal(read.outcome?.result,'state',read.error);
       assert.equal(read.outcome.snapshot.surfaces[surface].title,'Count 1099');
       resyncs.push({generation:page.generation,next_seq:page.next_seq,owner_title:read.outcome.snapshot.surfaces[surface].title});
-    },error=>errors.push(error));
+    },error=>errors.push(error),()=>healthy++);
     assert.ok(subscription);await waitFor(()=>resyncs.length===1);
     const afterResync=await open('After actual owner resync');await waitFor(()=>observed.length===1);
     assert.deepEqual(observed,afterResync.receipts);assert.deepEqual(errors,[]);
+    assert.equal(healthy,0,'An initial successful page must not invent a recovery');
+    // Suspend this test-owned genuine bridge: exercise the production timeout
+    // and cursor-preserving retry over a real socket, with no injected page.
+    assert.ok(child.kill('SIGSTOP'));
+    try {await waitFor(()=>errors.length>0,20000);assert.equal(healthy,0);}
+    finally {child.kill('SIGCONT');}
+    await waitFor(()=>healthy===1);
+    const recovered=await nativeReplay(transport,observed[0].seq+1,generation);
+    assert.equal(recovered.generation,generation);assert.equal(recovered.resync_required,false);
+    assert.deepEqual(recovered.receipts,[]);
+    pass('Real transport interruption recovers only after a qualified same-owner page',{errors,healthy,generation});
     subscription.unsubscribe();subscription=undefined;
     pass('Production subscriber awaits an actual owner read after loss, then consumes the next exact receipt',{resyncs,post_resync_seq:observed[0].seq});
 

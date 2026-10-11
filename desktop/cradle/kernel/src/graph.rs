@@ -368,7 +368,7 @@ pub fn assemble_selected(
                             ref_id: space["ref"].as_str().unwrap_or_default().to_owned(),
                             kind: "wiki-space".into(),
                             label: space["title"].as_str().unwrap_or_default().to_owned(),
-                            native_owner: "central".into(),
+                            native_owner: "wiki".into(),
                             provenance: GraphProvenance {
                                 source: wiki_action.to_owned(),
                                 revision,
@@ -384,7 +384,7 @@ pub fn assemble_selected(
                             ref_id: node["ref"].as_str().unwrap_or_default().to_owned(),
                             kind: "wiki-node".into(),
                             label: node["title"].as_str().unwrap_or_default().to_owned(),
-                            native_owner: "central".into(),
+                            native_owner: "wiki".into(),
                             provenance: GraphProvenance {
                                 source: wiki_action.to_owned(),
                                 revision,

@@ -1,0 +1,31 @@
+{
+  "schema": "techne.new-shell.source-snapshots/v1",
+  "recorded_at": "2026-10-08T07:42:34.083043+00:00",
+  "relation": "Exact documentation snapshots; governing campaign and executed evidence remain at the source location",
+  "sources": [
+    {
+      "source": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/UI-UX-CONVERGENCE-STUDY.md",
+      "snapshot": "docs/research/techne/new-shell/UI-UX-CONVERGENCE-STUDY.md",
+      "sha256": "e82e06d855dbfe805fe3311e3fbbe42a01d109ef43717b6ccc792ecf52116753",
+      "bytes": 16412
+    },
+    {
+      "source": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/NATIVE-EDITOR-STANDARD.md",
+      "snapshot": "docs/research/techne/new-shell/NATIVE-EDITOR-STANDARD.md",
+      "sha256": "f4076c30d4aa005a6fe6d14164db3278545ec2f553c008e7d7d62f9909dc04dc",
+      "bytes": 22003
+    },
+    {
+      "source": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/KERNEL-STATE-FOUNDATION.md",
+      "snapshot": "docs/research/techne/new-shell/KERNEL-STATE-FOUNDATION.md",
+      "sha256": "1859c20704e94243646948e6946a338e6be4fa23cd66ec5abe54c6cc08eaeef8",
+      "bytes": 15536
+    },
+    {
+      "source": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/EXPRESSIONS-FEATURE-MAP.md",
+      "snapshot": "docs/research/techne/new-shell/EXPRESSIONS-FEATURE-MAP.md",
+      "sha256": "64569b5303ba1cb6df6db0db64cb32eb874c86d0c702a604a3c058f827b05cc1",
+      "bytes": 13540
+    }
+  ]
+}

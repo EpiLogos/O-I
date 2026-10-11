@@ -39,6 +39,8 @@ fn material_saves_into_the_register_and_is_discovered_and_performed() {
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_nanos();
+    let act_store = std::env::temp_dir().join(format!("oi-live-material-acts-{stamp}"));
+    k.attach_act_store(&act_store).unwrap();
     let r = format!("expression:live-character-{stamp}");
     let body = format!("{r}:entity:body");
     let idle = format!("{r}:scene:main");
@@ -62,7 +64,7 @@ fn material_saves_into_the_register_and_is_discovered_and_performed() {
             "entities":[{"id":body,"kind":"formation","role":"self","name":"Live","text":"✶","shape":"text","tint":"#123456","position":{"x":0,"y":0,"z":0},"rotation":0}],
             "text":[],"automation":[]}}},
         {"change":"reuse_set","reuse":{"schema":"oi.expression-reuse/v1","kind":"character","title":"Live character",
-            "roles":[{"role":"self","accepts":"agent","entity_ref":body}],"states":{"idle":idle},"preview_state":"idle",
+            "roles":[{"role":"self","accepts":"agent","entity_ref":body}],"states":{"idle":idle},"gestures":{"nod":{"scene_ref":idle,"role":"self"}},"preview_state":"idle",
             "associations":{"workflow_keys":[format!("live-{stamp}")]}}}]}),
     );
     assert_eq!(data["state"], "ready", "{data}");
@@ -118,6 +120,64 @@ fn material_saves_into_the_register_and_is_discovered_and_performed() {
             .as_str()
             .unwrap()
             .starts_with("central.content-"));
+        // Change the saved material through the real Central save owner after
+        // discovery. An exact gesture pin must refuse before changing either
+        // the live target or the durable act; a refreshed pin can then perform.
+        let listed_revision = rows[0]["revision"].clone();
+        let edited = expression(
+            &mut k,
+            json!({"operation":"edit","expression_ref":r,"expected_revision":3,"actor":"agent:lane-b","changes":[{"change":"rename","title":"Live character changed after listing"}]}),
+        );
+        let rewritten = expression(
+            &mut k,
+            json!({"operation":"save","expression_ref":r,"expected_revision":edited["document"]["revision"],"location":saved["file"]["location"],"expected_file_revision":saved["file"]["revision"],
+            "actor":"agent:lane-b","actor_kind":"agent"}),
+        );
+        assert_eq!(rewritten["state"], "saved", "{rewritten}");
+        let before_target = expression(
+            &mut k,
+            json!({"operation":"inspect","expression_ref":target}),
+        )["document"]
+            .clone();
+        let before_act = world(
+            &mut k,
+            json!({"operation":"act_inspect","act_ref":format!("act:live-{stamp}")}),
+        )["act"]
+            .clone();
+        let occupant = before_act["role_entities"]["self"].clone();
+        let refused = world(
+            &mut k,
+            json!({"operation":"act_gesture","act_ref":format!("act:live-{stamp}"),"actor":"a","gesture":"nod","entity_ref":occupant,
+            "expected_revision":before_target["revision"],"expected_act_revision":before_act["revision"],"material":{"file_ref":file_ref,"revision":listed_revision}}),
+        );
+        assert_eq!(refused["state"], "material_revision_changed", "{refused}");
+        assert_eq!(refused["material"], "gesture");
+        assert_eq!(
+            expression(
+                &mut k,
+                json!({"operation":"inspect","expression_ref":target})
+            )["document"],
+            before_target
+        );
+        let mut fresh = Kernel::discover();
+        fresh.attach_act_store(&act_store).unwrap();
+        assert_eq!(
+            world(
+                &mut fresh,
+                json!({"operation":"act_inspect","act_ref":format!("act:live-{stamp}")})
+            )["act"],
+            before_act
+        );
+        let accepted = world(
+            &mut k,
+            json!({"operation":"act_gesture","act_ref":format!("act:live-{stamp}"),"actor":"a","gesture":"nod","entity_ref":occupant,
+            "expected_revision":before_target["revision"],"expected_act_revision":before_act["revision"],"material":{"file_ref":file_ref,"revision":rewritten["file"]["revision"]}}),
+        );
+        assert_eq!(accepted["state"], "act_performed", "{accepted}");
+        assert_eq!(
+            accepted["passage"]["revision"],
+            rewritten["file"]["revision"]
+        );
         // The saved material closes and frees its slot; acts still read it by file ref.
         let closed = expression(
             &mut k,
@@ -131,6 +191,7 @@ fn material_saves_into_the_register_and_is_discovered_and_performed() {
         assert_eq!(again["state"], "act_performed", "{again}");
     }));
     let _ = std::fs::remove_file(&path);
+    let _ = std::fs::remove_dir_all(&act_store);
     if let Err(panic) = outcome {
         std::panic::resume_unwind(panic);
     }

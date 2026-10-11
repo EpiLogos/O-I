@@ -1,0 +1,1096 @@
+// PROVENANCE: same as vinyldistortion-decompiles.txt (header there).
+// THIS FILE: Shifter — ODeviceKitDeviceProcessor<ShifterDevice> and the
+// ableton::blocks::shifter DSP block (block internals carry NO named
+// symbols -- reached through the devicekit trampolines and lambda thunks).
+// Contents: (1) symbol map (SymProbe "Shifter", FrequencyShifter excluded);
+// (2) Init 0x10195de80 (listener-list wiring of five model observables into
+// processor slots 0xc0/0xf0/0x120/0x150/0x180); CalcMainSingleSample
+// 0x10195e144 (main-thread tick, buffer gate 0x7ff counter, NOT the audio
+// path); (3) OnAutomatableFloatEvent<Global::ShifterMode> 0x10196158c (mode
+// double -> block+0xbb0/0xbc0, rounded int -> block+0xba8, listener list
+// +0xba0, virtual dispatch *(block+0xbc8)); OnFloatEvent<Global::PitchMode>
+// 0x101961668 (int -> block+0xbe0, virtual *(block+0xbe8)); OnRampEvent
+// <Pitch::WindowSize> 0x10195fecc (double ramp state at block+0x500-slot
+// list, step = (target-current)/rampsamples, pow-law curve at +0x20, 
+// target write via *(lVar3+8)+*(lVar3+0xc)*pow(x, +0x20)); (4) the
+// ShifterModes connect-lambda 0x10196c3b0 (block init: ints -1 at +0x310/
+// +0x314, 1.0f quads at +0x5c0, sub-objects ctor'd at block+0x320 and
+// +0x470 via 0x103b13d30, buffer vector cleared, mode->window select:
+// mode==2 ? window 0 : window 3 into FUN_10179afd0 at block+0xc, engine
+// std::function installed at block+0x680 by 0x103b121ac) and PitchModes
+// lambda 0x10196c3d0 (int -> block+0x240); (5) engine selector 0x103b121ac:
+// mode 0 -> thunk pair {0x103b131fc,0x103b13208}, mode 1 ->
+// {0x103b1321c,0x103b13248}, mode 2 -> {0x103b1325c|0x103b1329c,
+// 0x103b13288|0x103b132c8} split by bool at block+0x24; (6) engine bodies:
+// mode-0 0x103b10b28 (phase-accumulator pitch rotator: wrap-delta phase
+// add with slew 0x8c, nested process 0x103b10518), mode-1 0x103b14b30
+// (stereo complex-rotate + cubic soft-clip x - (4/27)x^3 clamp +-1.5),
+// mode-2 0x103b14aa4 (stereo complex-rotate only); window shaper
+// FUN_10179afd0 (four window types: 1-x, sin-polynomial hump, cos hump
+// via sincos poly 0.99999833/-0.16664949/0.008304825/-0.00018284567,
+// sqrt(1-x)); buffer-gate helper 0x103b9eedc (capacity 0x7ff = 2047).
+// NOT RESOLVED IN THIS CAPTURE (graded in the dossier): the six UI mode
+// names (no strings in the binary; enum names live in devicekit model
+// metadata), the main granular/spectral engines behind ShifterModes 0..5
+// (the +0x680 std::function engines captured here are the ModBasedShifting
+// ring/SSB stage), Delay/EnvelopeFollower/Lfo runtime bodies, block ctor
+// tail 0x103b11bf4, and the virtual dispatch targets *(block+0xbc8)/(0xbe8).
+
+SYM 10195de80 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvP10OSchedulerEE14SProcessorFuncIXadL_ZNS6_4InitES8_EEEEPFvPvS8_EvENUlSD_S8_E_8__invokeESD_S8_  
+SYM 10195df90 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_4ExitEvEEEEPFvPvEvENUlSB_E_8__invokeESB_  
+SYM 10195df94 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_5ResetEvEEEEPFvPvEvENUlSB_E_8__invokeESB_  
+SYM 10195e144 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_20CalcMainSingleSampleEvEEEEPFvPvEvENUlSB_E_8__invokeESB_  
+SYM 10195e25c Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_3OnXEfEEEEPFvPvfEvENUlSB_fE_8__invokeESB_f  
+SYM 10195e26c Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_4OnOnEfEEEEPFvPvfEvENUlSB_fE_8__invokeESB_f  
+SYM 10195e4d8 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_6OnMidiES7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 10195e934 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model3LfoENSE_6AmountEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 10195e948 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_11AmountPitchEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f  
+SYM 10195f514 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_8WaveformEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f  
+SYM 10195f5d8 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model3LfoENSE_8WaveformEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 10195f708 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_6SyncOnEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f  
+SYM 10195f97c Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model3LfoENSE_6RateHzEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 10195f994 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_10SyncedRateEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f  
+SYM 10195fb74 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model3LfoENSD_6SpinOnEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f  
+SYM 10195fc30 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model3LfoENSE_11PhaseOffsetEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 10195fc48 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model3LfoENSE_10SpinAmountEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 10195fc60 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model3LfoENSE_6OffsetEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 10195fc78 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model3LfoENSE_7SHWidthEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 10195fc90 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model3LfoENSE_9DutyCycleEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 10195fdf0 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model5PitchENSD_6CoarseEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f  
+SYM 10195feb4 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model5PitchENSE_4FineEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 10195fecc Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model5PitchENSE_10WindowSizeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 10196018c Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model16ModBasedShiftingENSE_4FineEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 1019601a4 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model16ModBasedShiftingENSE_6FShiftENSF_6CoarseEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 101960304 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model16ModBasedShiftingENSE_7RingModENSF_6CoarseEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 10196031c Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model16ModBasedShiftingENSD_7RingModENSE_5DriveEEEEvfEEEEPFvPvfEvENUlSG_fE_8__invokeESG_f  
+SYM 1019603d8 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model16ModBasedShiftingENSE_7RingModENSF_11DriveAmountEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 1019604e8 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model9MidiPitchENSD_14PitchBendRangeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f  
+SYM 101960500 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9MidiPitchENSD_5GlideEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f  
+SYM 1019607d4 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model16EnvelopeFollowerENSD_2OnEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f  
+SYM 101960890 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model16EnvelopeFollowerENSE_6AttackEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 1019608a8 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model16EnvelopeFollowerENSE_7ReleaseEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 1019608c0 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model16EnvelopeFollowerENSE_8AmountHzEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 1019608d8 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model16EnvelopeFollowerENSD_11AmountPitchEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f  
+SYM 101960bb0 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model5DelayENSD_2OnEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f  
+SYM 101960d88 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model5DelayENSD_6SyncOnEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f  
+SYM 101960e44 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model5DelayENSE_11TimeSecondsEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 101960e5c Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model5DelayENSD_10SyncedTimeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f  
+SYM 101960f20 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model5DelayENSE_8FeedbackEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 10196158c Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6GlobalENSD_11ShifterModeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f  
+SYM 101961650 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6GlobalENSE_11ShifterModeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 101961668 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model6GlobalENSD_9PitchModeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f  
+SYM 101961680 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6GlobalENSE_4ToneEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 1019617b4 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6GlobalENSD_4WideEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f  
+SYM 101961870 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6GlobalENSE_6DryWetEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_  
+SYM 10196c754 Label : __ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices7shifter13ShifterDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_19OnSampleRateChangedEvEEEEvPv  
+SYM 10196c890 Label : __ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices7shifter13ShifterDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_14OnTempoChangedEvEEEEvPv  
+SYM 10196c908 Label : __ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices7shifter13ShifterDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_30OnTransportPlayingStateChangedEvEEEEvPv  
+(... full setter-trampoline inventory continues in the session capture; addresses in the dossier.)
+
+openjdk version "21.0.12.1" 2026-08-18
+OpenJDK Runtime Environment Homebrew (build 21.0.12.1)
+OpenJDK 64-Bit Server VM Homebrew (build 21.0.12.1, mixed mode)
+INFO  Using log config file: jar:file:/opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Framework/Generic/lib/Generic.jar!/generic.log4j.xml (LoggingInitialization)  
+INFO  Using log file: /Users/admin/Library/ghidra/ghidra_12.1.4_PUBLIC/application.log (LoggingInitialization)  
+INFO  Loading user preferences: /Users/admin/Library/ghidra/ghidra_12.1.4_PUBLIC/preferences (Preferences)  
+INFO  Searching for classes... (ClassSearcher)  
+INFO  Class search complete (517 ms) (ClassSearcher)  
+INFO  Initializing SSL Context (DefaultSSLContextInitializer)  
+INFO  Initializing Random Number Generator... (SecureRandomFactory)  
+INFO  Random Number Generator initialization complete: NativePRNGNonBlocking (SecureRandomFactory)  
+INFO  Trust manager disabled, cacerts have not been set (DefaultTrustManagerFactory)  
+INFO  Headless startup complete (1010 ms) (AnalyzeHeadless)  
+INFO  Class searcher loaded 59 extension points (20 false positives) (ClassSearcher)  
+INFO  HEADLESS Script Paths:
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/GnuDemangler/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Processors/JVM/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Processors/PIC/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/PyGhidra/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Debug/Debugger/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/WildcardAssembler/ghidra_scripts
+    /Users/admin/tools/live-re/scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/PDB/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/MicrosoftCodeAnalyzer/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Debug/Debugger-rmi-trace/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/VersionTracking/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/FunctionID/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/BytePatterns/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/DecompilerDependent/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/BSim/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/SwiftDemangler/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/Decompiler/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/SystemEmulation/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Processors/DATA/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/Base/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/FileFormats/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Processors/8051/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Processors/Atmel/ghidra_scripts (HeadlessAnalyzer)  
+INFO  HEADLESS: execution starts (HeadlessAnalyzer)  
+INFO  Opening existing project: /Users/admin/tools/live-re/ghidra-proj2/LiveRE2 (HeadlessAnalyzer)  
+INFO  Opening project: /Users/admin/tools/live-re/ghidra-proj2/LiveRE2 (HeadlessProject)  
+INFO  REPORT: Processing project file: /Live.arm64 (HeadlessAnalyzer)  
+INFO  REPORT: Execute script: BlockProbe '0x10195de80:400,0x10195e144:500,0x10196158c:200,0x101961668:200,0x10196c3b0:150,0x10196c3d0:150,0x10195fecc:200'  (HeadlessAnalyzer)  
+INFO  SCRIPT: /Users/admin/tools/live-re/scripts/BlockProbe.java (HeadlessAnalyzer)  
+FUNC 10195de80 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvP10OSchedulerEE14SProcessorFuncIXadL_ZNS6_4InitES8_EEEEPFvPvS8_EvENUlSD_S8_E_8__invokeESD_S8_ body=1 lines=67
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvP10OSchedulerEE14SProcessorFuncIXadL_ZNS6_4InitES8_EEEEPFvPvS8_EvENUlSD_S8_E_8__invokeESD_S8_
+               (long param_1)
+
+{
+  long *plVar1;
+  long lVar2;
+  long lVar3;
+  
+  func_0x00010195dd58();
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0xe8) = lVar2 + 800;
+  lVar3 = *(long *)(lVar2 + 0x328);
+  *(long *)(param_1 + 200) = lVar3;
+  *(undefined8 *)(param_1 + 0xd0) = 0;
+  plVar1 = (long *)(lVar2 + 0x330);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0xc0;
+  *(long *)(lVar2 + 0x328) = param_1 + 0xc0;
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0x118) = lVar2 + 0x260;
+  lVar3 = *(long *)(lVar2 + 0x268);
+  *(long *)(param_1 + 0xf8) = lVar3;
+  *(undefined8 *)(param_1 + 0x100) = 0;
+  plVar1 = (long *)(lVar2 + 0x270);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0xf0;
+  *(long *)(lVar2 + 0x268) = param_1 + 0xf0;
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0x148) = lVar2 + 0x290;
+  lVar3 = *(long *)(lVar2 + 0x298);
+  *(long *)(param_1 + 0x128) = lVar3;
+  *(undefined8 *)(param_1 + 0x130) = 0;
+  plVar1 = (long *)(lVar2 + 0x2a0);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0x120;
+  *(long *)(lVar2 + 0x298) = param_1 + 0x120;
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0x178) = lVar2 + 0x2d8;
+  lVar3 = *(long *)(lVar2 + 0x2e0);
+  *(long *)(param_1 + 0x158) = lVar3;
+  *(undefined8 *)(param_1 + 0x160) = 0;
+  plVar1 = (long *)(lVar2 + 0x2e8);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0x150;
+  *(long *)(lVar2 + 0x2e0) = param_1 + 0x150;
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0x1a8) = lVar2 + 0x2f0;
+  lVar3 = *(long *)(lVar2 + 0x2f8);
+  *(long *)(param_1 + 0x188) = lVar3;
+  *(undefined8 *)(param_1 + 400) = 0;
+  plVar1 = (long *)(lVar2 + 0x300);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0x180;
+  *(long *)(lVar2 + 0x2f8) = param_1 + 0x180;
+  return;
+}
+END 10195de80
+FUNC 10195e144 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_20CalcMainSingleSampleEvEEEEPFvPvEvENUlSB_E_8__invokeESB_ body=1 lines=99
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_20CalcMainSingleSampleEvEEEEPFvPvEvENUlSB_E_8__invokeESB_
+               (long param_1)
+
+{
+  undefined4 *puVar1;
+  undefined4 *puVar2;
+  long lVar3;
+  uint uVar4;
+  uint uVar5;
+  uint *puVar6;
+  long lVar7;
+  undefined8 *puVar8;
+  long lVar9;
+  undefined4 uVar10;
+  undefined4 uVar11;
+  undefined2 uStack_48;
+  
+  if (*(char *)(param_1 + 0x201) == '\0') {
+    if (*(char *)(param_1 + 0x202) != '\0') {
+code_r0x00010195e0dc:
+      if (*(char *)(param_1 + 0x203) != '\0') {
+        puVar6 = *(uint **)(param_1 + 0xa8);
+        uVar5 = puVar6[2];
+        *(undefined1 *)((long)puVar6 + (ulong)uVar5 * 2 + 0xd) = 0;
+        LOAcquire();
+        uVar4 = *puVar6;
+        *puVar6 = uVar5 << 0x10 | 1;
+        LORelease();
+        puVar6[2] = uVar4 >> 0x10;
+        *(undefined1 *)(param_1 + 0x203) = 0;
+      }
+code_r0x00010195e10c:
+      *(undefined4 *)(param_1 + 0x228) = 1;
+      func_0x00010154e720(*(undefined8 *)(param_1 + 0x30),param_1 + 0x208);
+      *(undefined1 *)(param_1 + 0x238) = 1;
+      goto code_r0x00010195e124;
+    }
+  }
+  else {
+    lVar7 = *(long *)(param_1 + 0xb8);
+    if (*(char *)(param_1 + 0x200) == '\0') {
+      uVar5 = func_0x000103b9eedc(lVar7 + 0x1160);
+      uVar5 = uVar5 ^ 1;
+      uVar4 = (uint)*(byte *)(param_1 + 0x202);
+      if (uVar4 != uVar5) goto code_r0x00010195e0d8;
+    }
+    else {
+      uVar5 = 1;
+      uVar4 = (uint)*(byte *)(param_1 + 0x202);
+      if (*(byte *)(param_1 + 0x202) != 1) {
+code_r0x00010195e0d8:
+        if ((uVar5 & 1) == 0) goto code_r0x00010195e0dc;
+        goto code_r0x00010195e10c;
+      }
+    }
+    if (uVar4 != 0) {
+      uStack_48 = 0;
+      puVar1 = *(undefined4 **)(param_1 + 0x1d0);
+      puVar2 = *(undefined4 **)(param_1 + 0x1d8);
+      if (*(long *)(lVar7 + 0x1158) != 0) {
+        lVar9 = *(long *)(lVar7 + 0x1158) << 3;
+        puVar8 = (undefined8 *)(lVar7 + 0xd18);
+        do {
+          (**(code **)(*(long *)*puVar8 + 0x18))();
+          lVar9 = lVar9 + -8;
+          puVar8 = puVar8 + 1;
+        } while (lVar9 != 0);
+      }
+      lVar3 = *(long *)(param_1 + 0x40);
+      lVar7 = lVar7 + 0x1160;
+      for (lVar9 = *(long *)(param_1 + 0x38); (lVar9 != lVar3 && (*(long *)(lVar9 + 0x18) == 0));
+          lVar9 = lVar9 + 0x20) {
+        func_0x000103b9eef0(lVar7,lVar9);
+      }
+      uVar11 = *puVar2;
+      uVar10 = func_0x000103b9eeb4(*puVar1,lVar7);
+      *(undefined4 *)(param_1 + 0x1e0) = uVar10;
+      *(undefined4 *)(param_1 + 0x1e4) = uVar11;
+      func_0x000103b9eed8(lVar7,&uStack_48);
+      if ((uStack_48._1_1_ != '\0') || (*(char *)(param_1 + 0x203) != '\0')) {
+        *(char *)(param_1 + 0x203) = uStack_48._1_1_;
+        puVar6 = *(uint **)(param_1 + 0xa8);
+        uVar5 = puVar6[2];
+        *(char *)((long)puVar6 + (ulong)uVar5 * 2 + 0xd) = uStack_48._1_1_;
+        LOAcquire();
+        uVar4 = *puVar6;
+        *puVar6 = uVar5 << 0x10 | 1;
+        LORelease();
+        puVar6[2] = uVar4 >> 0x10;
+      }
+      goto code_r0x00010195e124;
+    }
+  }
+  *(undefined8 *)(param_1 + 0x1e0) = 0;
+code_r0x00010195e124:
+  *(undefined8 *)(param_1 + 0x40) = *(undefined8 *)(param_1 + 0x38);
+  return;
+}
+END 10195e144
+FUNC 10196158c name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6GlobalENSD_11ShifterModeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=59
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model6GlobalENSD_11ShifterModeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  long *plVar3;
+  long lVar4;
+  long *plVar5;
+  long *plVar6;
+  long lVar7;
+  long *plVar8;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  *(double *)(lVar2 + 0xbc0) = (double)param_1;
+  *(double *)(lVar2 + 0xbb0) = (double)param_1;
+  *(undefined8 *)(lVar2 + 3000) = 0;
+  *(int *)(lVar2 + 0xba8) = (int)((float)((uint)param_1 & 0x80000000 ^ 0x3f000000) + param_1);
+  plVar3 = *(long **)(lVar2 + 0xba0);
+  lVar4 = plVar3[0x88];
+  plVar5 = plVar3;
+  if (lVar4 == 0) {
+code_r0x0001019615fc:
+    plVar1 = plVar3 + lVar4;
+    plVar8 = plVar5 + 1;
+    plVar6 = plVar5;
+    if (plVar5 != plVar1 && plVar8 != plVar1) {
+      do {
+        plVar5 = plVar6;
+        if (*plVar8 != lVar2 + 0xb90) {
+          plVar5 = plVar6 + 1;
+          *plVar6 = *plVar8;
+        }
+        plVar8 = plVar8 + 1;
+        plVar6 = plVar5;
+      } while (plVar8 != plVar1);
+    }
+    if (plVar5 != plVar1) {
+      plVar3[0x88] = lVar4 - ((long)plVar1 - (long)plVar5 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x00010196162c. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar2 + 0xbc8))(lVar2 + 0xbd0,lVar2 + 0xba8);
+      return;
+    }
+  }
+  else {
+    lVar7 = lVar4 << 3;
+    do {
+      if (*plVar5 == lVar2 + 0xb90) goto code_r0x0001019615fc;
+      plVar5 = plVar5 + 1;
+      lVar7 = lVar7 + -8;
+    } while (lVar7 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x0001019615f8. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar2 + 0xbc8))(lVar2 + 0xbd0);
+  return;
+}
+END 10196158c
+FUNC 101961668 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model6GlobalENSD_9PitchModeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=14
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model6GlobalENSD_9PitchModeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long lVar1;
+  
+  lVar1 = *(long *)(param_2 + 0xb8);
+  *(int *)(lVar1 + 0xbe0) = (int)param_1;
+                    /* WARNING: Could not recover jumptable at 0x00010196167c. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar1 + 0xbe8))(lVar1 + 0xbf0);
+  return;
+}
+END 101961668
+FUNC 10196c3b0 name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKNS_6blocks7shifter12ShifterModesEEZNS_7devices7shifter13ShifterDevice14connectToModelINS_9devicekit29TickableSampleRateDeviceModelINSA_5model7ShifterEEEEEvRT_EUlSI_E9_E6invokeEPvS7_ body=1 lines=44
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKNS_6blocks7shifter12ShifterModesEEZNS_7devices7shifter13ShifterDevice14connectToModelINS_9devicekit29TickableSampleRateDeviceModelINSA_5model7ShifterEEEEEvRT_EUlSI_E9_E6invokeEPvS7_
+               (undefined1 param_1 [16],int param_2,undefined8 *param_3,int *param_4)
+
+{
+  int *piVar1;
+  ulong uVar2;
+  undefined4 uVar3;
+  int iVar4;
+  undefined1 auVar5 [16];
+  
+  piVar1 = (int *)*param_3;
+  *piVar1 = *param_4;
+  piVar1[0xc4] = -1;
+  piVar1[0xc5] = -1;
+  piVar1[0xb4] = 0;
+  piVar1[0xb8] = 0;
+  piVar1[0xb9] = 0;
+  auVar5 = NEON_fmov(0x3f800000,4);
+  *(long *)(piVar1 + 0x172) = auVar5._8_8_;
+  *(long *)(piVar1 + 0x170) = auVar5._0_8_;
+  piVar1[0x176] = 0;
+  piVar1[0x177] = 0;
+  piVar1[0x175] = 0;
+  piVar1[0x174] = 0;
+  func_0x000103b13d30(piVar1 + 200);
+  func_0x000103b13d30(piVar1 + 0x11c);
+  piVar1[0x80] = 1;
+  piVar1[0x81] = 0;
+  uVar2 = *(long *)(piVar1 + 0xa2) - *(long *)(piVar1 + 0xa0);
+  if (0 < (long)uVar2) {
+    _bzero(*(long *)(piVar1 + 0xa0),((uVar2 >> 3) - (ulong)(7 < uVar2)) * 8 + 8);
+  }
+  piVar1[0x89] = piVar1[0x8a];
+  func_0x000103b121ac(piVar1);
+  uVar3 = 0;
+  if (*piVar1 != 2) {
+    uVar3 = 3;
+  }
+  iVar4 = FUN_10179afd0(piVar1 + 3,uVar3);
+  piVar1[1] = iVar4;
+  piVar1[2] = param_2;
+  return;
+}
+END 10196c3b0
+FUNC 10196c3d0 name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvNS_6blocks7shifter10PitchModesEEZNS_7devices7shifter13ShifterDevice14connectToModelINS_9devicekit29TickableSampleRateDeviceModelINS8_5model7ShifterEEEEEvRT_EUlSG_E10_E6invokeEPvS5_ body=1 lines=8
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvNS_6blocks7shifter10PitchModesEEZNS_7devices7shifter13ShifterDevice14connectToModelINS_9devicekit29TickableSampleRateDeviceModelINS8_5model7ShifterEEEEEvRT_EUlSG_E10_E6invokeEPvS5_
+               (long *param_1,undefined4 param_2)
+
+{
+  *(undefined4 *)(*param_1 + 0x240) = param_2;
+  return;
+}
+END 10196c3d0
+FUNC 10195fecc name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model5PitchENSE_10WindowSizeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=104
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model5PitchENSE_10WindowSizeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,float *param_2)
+
+{
+  long *plVar1;
+  undefined1 *puVar2;
+  long lVar3;
+  long *plVar4;
+  long lVar5;
+  long lVar6;
+  long *plVar7;
+  long *plVar8;
+  long unaff_x19;
+  undefined8 unaff_x20;
+  undefined1 *unaff_x29;
+  code *unaff_x30;
+  float fVar9;
+  float fVar10;
+  double dVar11;
+  double dVar12;
+  double dVar13;
+  undefined1 auVar14 [16];
+  
+  fVar9 = param_2[1];
+  fVar10 = *param_2;
+  puVar2 = (undefined1 *)register0x00000008;
+  lVar5 = *(long *)(param_1 + 0xb8) + 0x500;
+  while( true ) {
+    lVar3 = lVar5;
+    *(undefined8 *)(puVar2 + -0x20) = unaff_x20;
+    *(long *)(puVar2 + -0x18) = unaff_x19;
+    *(undefined1 **)(puVar2 + -0x10) = unaff_x29;
+    *(code **)(puVar2 + -8) = unaff_x30;
+    unaff_x29 = puVar2 + -0x10;
+    dVar11 = (double)fVar10;
+    *(double *)(lVar3 + 0x48) = dVar11;
+    if ((long)(int)fVar9 == 0) break;
+    dVar13 = *(double *)(lVar3 + 0x40);
+    dVar12 = (dVar11 - *(double *)(lVar3 + 0x38)) / (double)(ulong)(long)(int)fVar9;
+    *(double *)(lVar3 + 0x40) = dVar12;
+    dVar11 = *(double *)(lVar3 + 0x38);
+    if (dVar12 == 0.0) goto code_r0x0001018da918;
+    if (dVar13 != 0.0) {
+      return;
+    }
+    lVar5 = *(long *)(lVar3 + 0x28);
+    lVar6 = *(long *)(lVar5 + 0x440);
+    if (lVar6 != 0x88) {
+      *(long *)(lVar5 + lVar6 * 8) = lVar3;
+      *(long *)(lVar5 + 0x440) = lVar6 + 1;
+      return;
+    }
+    unaff_x30 = 
+    __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus4RateEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+    ;
+    auVar14 = func_0x000102aa7934();
+    fVar9 = auVar14._8_8_[1];
+    fVar10 = *auVar14._8_8_;
+    puVar2 = puVar2 + -0x20;
+    lVar5 = *(long *)(auVar14._0_8_ + 0xb8) + 0xb0;
+    unaff_x19 = lVar3;
+  }
+  *(double *)(lVar3 + 0x38) = dVar11;
+  *(undefined8 *)(lVar3 + 0x40) = 0;
+code_r0x0001018da918:
+  fVar9 = (float)_powf((float)dVar11,*(undefined4 *)(lVar3 + 0x20));
+  *(float *)(lVar3 + 0x30) = *(float *)(lVar3 + 8) + *(float *)(lVar3 + 0xc) * fVar9;
+  plVar4 = *(long **)(lVar3 + 0x28);
+  lVar5 = plVar4[0x88];
+  plVar7 = plVar4;
+  if (lVar5 == 0) {
+code_r0x0001018da978:
+    plVar1 = plVar4 + lVar5;
+    plVar8 = plVar7;
+    if (plVar7 != plVar1) {
+      while (plVar8 = plVar8 + 1, plVar8 != plVar1) {
+        if (*plVar8 != lVar3) {
+          *plVar7 = *plVar8;
+          plVar7 = plVar7 + 1;
+        }
+      }
+    }
+    if (plVar7 != plVar1) {
+      plVar4[0x88] = lVar5 - ((long)plVar1 - (long)plVar7 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x0001018da9d0. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar3 + 0x50))(lVar3 + 0x58);
+      return;
+    }
+  }
+  else {
+    lVar6 = lVar5 << 3;
+    do {
+      if (*plVar7 == lVar3) goto code_r0x0001018da978;
+      plVar7 = plVar7 + 1;
+      lVar6 = lVar6 + -8;
+    } while (lVar6 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x0001018da974. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar3 + 0x50))(lVar3 + 0x58);
+  return;
+}
+END 10195fecc
+INFO  REPORT: Save succeeded for processed file: /Live.arm64 (HeadlessAnalyzer)  
+openjdk version "21.0.12.1" 2026-08-18
+OpenJDK Runtime Environment Homebrew (build 21.0.12.1)
+OpenJDK 64-Bit Server VM Homebrew (build 21.0.12.1, mixed mode)
+INFO  Using log config file: jar:file:/opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Framework/Generic/lib/Generic.jar!/generic.log4j.xml (LoggingInitialization)  
+INFO  Using log file: /Users/admin/Library/ghidra/ghidra_12.1.4_PUBLIC/application.log (LoggingInitialization)  
+INFO  Loading user preferences: /Users/admin/Library/ghidra/ghidra_12.1.4_PUBLIC/preferences (Preferences)  
+INFO  Searching for classes... (ClassSearcher)  
+INFO  Class search complete (304 ms) (ClassSearcher)  
+INFO  Initializing SSL Context (DefaultSSLContextInitializer)  
+INFO  Initializing Random Number Generator... (SecureRandomFactory)  
+INFO  Random Number Generator initialization complete: NativePRNGNonBlocking (SecureRandomFactory)  
+INFO  Trust manager disabled, cacerts have not been set (DefaultTrustManagerFactory)  
+INFO  Headless startup complete (791 ms) (AnalyzeHeadless)  
+INFO  Class searcher loaded 59 extension points (20 false positives) (ClassSearcher)  
+INFO  HEADLESS Script Paths:
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/GnuDemangler/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Processors/JVM/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Processors/PIC/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/PyGhidra/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Debug/Debugger/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/WildcardAssembler/ghidra_scripts
+    /Users/admin/tools/live-re/scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/PDB/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/MicrosoftCodeAnalyzer/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Debug/Debugger-rmi-trace/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/VersionTracking/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/FunctionID/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/BytePatterns/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/DecompilerDependent/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/BSim/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/SwiftDemangler/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/Decompiler/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/SystemEmulation/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Processors/DATA/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/Base/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/FileFormats/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Processors/8051/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Processors/Atmel/ghidra_scripts (HeadlessAnalyzer)  
+INFO  HEADLESS: execution starts (HeadlessAnalyzer)  
+INFO  Opening existing project: /Users/admin/tools/live-re/ghidra-proj2/LiveRE2 (HeadlessAnalyzer)  
+INFO  Opening project: /Users/admin/tools/live-re/ghidra-proj2/LiveRE2 (HeadlessProject)  
+INFO  REPORT: Processing project file: /Live.arm64 (HeadlessAnalyzer)  
+INFO  REPORT: Execute script: BlockProbe '0x10179afd0:200,0x103b13d30:150,0x103b121ac:250,0x103b9eedc:60,0x103b9eeb4:120,0x103b9eed8:120,0x103b9eef0:120'  (HeadlessAnalyzer)  
+INFO  SCRIPT: /Users/admin/tools/live-re/scripts/BlockProbe.java (HeadlessAnalyzer)  
+FUNC 10179afd0 name=FUN_10179afd0 body=1 lines=64
+
+float FUN_10179afd0(float *param_1,undefined4 param_2)
+
+{
+  bool bVar1;
+  float fVar2;
+  float fVar3;
+  undefined8 uVar4;
+  float fVar5;
+  
+  switch(param_2) {
+  default:
+    return 1.0 - *param_1;
+  case 1:
+    break;
+  case 2:
+    fVar2 = (*param_1 * 2.0 + -1.0) * 1.5707964;
+    fVar3 = fVar2 * fVar2;
+    fVar3 = fVar2 * (((fVar3 * -0.00018284567 + 0.008304825) * fVar3 + -0.16664949) * fVar3 +
+                    0.99999833) * 0.5 + 0.5;
+    fVar2 = fVar3;
+    if (fVar3 <= 0.0) {
+      fVar2 = 0.0;
+    }
+    bVar1 = 1.0 <= fVar3;
+    if (1.0 < fVar3) {
+      fVar3 = 1.0;
+    }
+    if (bVar1) {
+      fVar2 = fVar3;
+    }
+    fVar3 = (1.0 - fVar2) * 1.5707964;
+    fVar2 = fVar3 * fVar3;
+    fVar3 = fVar3 * (((fVar2 * -0.00018284567 + 0.008304825) * fVar2 + -0.16664949) * fVar2 +
+                    0.99999833);
+    fVar2 = fVar3;
+    if (fVar3 <= 0.0) {
+      fVar2 = 0.0;
+    }
+    uVar4 = NEON_fmov(0x3f800000,4);
+    fVar5 = 1.0;
+    if (fVar3 <= (float)((ulong)uVar4 >> 0x20)) {
+      fVar5 = fVar3;
+    }
+    if (1.0 <= fVar3) {
+      fVar2 = fVar5;
+    }
+    return fVar2;
+  case 3:
+    return SQRT(1.0 - *param_1);
+  }
+  fVar2 = (*param_1 + -0.5) * 3.1415927;
+  fVar3 = fVar2 * fVar2;
+  fVar2 = fVar2 * (((fVar3 * -0.00018284567 + 0.008304825) * fVar3 + -0.16664949) * fVar3 +
+                  0.99999833) * -0.5 + 0.5;
+  fVar3 = fVar2;
+  if (1.0 < fVar2) {
+    fVar3 = 1.0;
+  }
+  if (1.0 <= fVar2) {
+    fVar2 = fVar3;
+  }
+  return fVar2;
+}
+END 10179afd0
+FUNC 103b13d30 name=FUN_103b13d30 body=1 lines=40
+
+void FUN_103b13d30(undefined8 *param_1)
+
+{
+  param_1[0x28] = 0;
+  param_1[0x29] = 0;
+  param_1[1] = 0;
+  *param_1 = 0;
+  param_1[3] = 0;
+  param_1[2] = 0;
+  param_1[5] = 0;
+  param_1[4] = 0;
+  param_1[7] = 0;
+  param_1[6] = 0;
+  param_1[0xb] = 0;
+  param_1[10] = 0;
+  param_1[0xd] = 0;
+  param_1[0xc] = 0;
+  param_1[0xf] = 0;
+  param_1[0xe] = 0;
+  param_1[0x11] = 0;
+  param_1[0x10] = 0;
+  param_1[0x15] = 0;
+  param_1[0x14] = 0;
+  param_1[0x17] = 0;
+  param_1[0x16] = 0;
+  param_1[0x19] = 0;
+  param_1[0x18] = 0;
+  param_1[0x1b] = 0;
+  param_1[0x1a] = 0;
+  param_1[0x1f] = 0;
+  param_1[0x1e] = 0;
+  param_1[0x21] = 0;
+  param_1[0x20] = 0;
+  param_1[0x23] = 0;
+  param_1[0x22] = 0;
+  param_1[0x25] = 0;
+  param_1[0x24] = 0;
+  return;
+}
+END 103b13d30
+FUNC 103b121ac name=FUN_103b121ac body=1 lines=102
+
+void FUN_103b121ac(undefined1 param_1 [16],int param_2,int *param_3)
+
+{
+  bool bVar1;
+  undefined8 uVar2;
+  int *piVar3;
+  undefined4 uVar4;
+  int iVar5;
+  undefined *puStack_40;
+  int *piStack_38;
+  code *pcStack_30;
+  long lStack_28;
+  
+  lStack_28 = *(long *)PTR____stack_chk_guard_1050c86c8;
+  iVar5 = *param_3;
+  if (iVar5 == 2) {
+    bVar1 = (char)param_3[9] != '\0';
+    puStack_40 = &DAT_103b1329c;
+    if (bVar1) {
+      puStack_40 = &DAT_103b1325c;
+    }
+    pcStack_30 = (code *)&DAT_103b132c8;
+    if (bVar1) {
+      pcStack_30 = (code *)&DAT_103b13288;
+    }
+    piStack_38 = param_3;
+    if (&puStack_40 != (undefined **)(param_3 + 0x1a0)) {
+      if (*(code **)(param_3 + 0x1a4) != (code *)0x0) {
+        (**(code **)(param_3 + 0x1a4))(param_3 + 0x1a2,0,1);
+        param_3[0x1a0] = 0;
+        param_3[0x1a1] = 0;
+        param_3[0x1a4] = 0;
+        param_3[0x1a5] = 0;
+        if (pcStack_30 == (code *)0x0) goto code_r0x000103b123c0;
+      }
+      *(undefined **)(param_3 + 0x1a0) = puStack_40;
+      *(code **)(param_3 + 0x1a4) = pcStack_30;
+      (*pcStack_30)(param_3 + 0x1a2,&piStack_38,0);
+      if (pcStack_30 == (code *)0x0) goto code_r0x000103b123c0;
+    }
+    (*pcStack_30)(&piStack_38,0,1);
+  }
+  else if (iVar5 == 1) {
+    pcStack_30 = (code *)&DAT_103b13248;
+    puStack_40 = &DAT_103b1321c;
+    piStack_38 = param_3;
+    if (&puStack_40 != (undefined **)(param_3 + 0x1a0)) {
+      if (*(code **)(param_3 + 0x1a4) != (code *)0x0) {
+        (**(code **)(param_3 + 0x1a4))(param_3 + 0x1a2,0,1);
+        param_3[0x1a0] = 0;
+        param_3[0x1a1] = 0;
+        param_3[0x1a4] = 0;
+        param_3[0x1a5] = 0;
+        if (pcStack_30 == (code *)0x0) goto code_r0x000103b123c0;
+      }
+      *(undefined **)(param_3 + 0x1a0) = puStack_40;
+      *(code **)(param_3 + 0x1a4) = pcStack_30;
+      (*pcStack_30)(param_3 + 0x1a2,&piStack_38,0);
+      if (pcStack_30 == (code *)0x0) goto code_r0x000103b123c0;
+    }
+    (*pcStack_30)(&piStack_38,0,1);
+  }
+  else if (iVar5 == 0) {
+    pcStack_30 = (code *)&DAT_103b13208;
+    puStack_40 = &DAT_103b131fc;
+    piStack_38 = param_3;
+    if (&puStack_40 != (undefined **)(param_3 + 0x1a0)) {
+      if (*(code **)(param_3 + 0x1a4) != (code *)0x0) {
+        (**(code **)(param_3 + 0x1a4))(param_3 + 0x1a2,0,1);
+        param_3[0x1a0] = 0;
+        param_3[0x1a1] = 0;
+        param_3[0x1a4] = 0;
+        param_3[0x1a5] = 0;
+        if (pcStack_30 == (code *)0x0) goto code_r0x000103b123c0;
+      }
+      *(undefined **)(param_3 + 0x1a0) = puStack_40;
+      *(code **)(param_3 + 0x1a4) = pcStack_30;
+      (*pcStack_30)(param_3 + 0x1a2,&piStack_38,0);
+      if (pcStack_30 == (code *)0x0) goto code_r0x000103b123c0;
+    }
+    (*pcStack_30)(&piStack_38,0,1);
+  }
+code_r0x000103b123c0:
+  if (*(long *)PTR____stack_chk_guard_1050c86c8 != lStack_28) {
+    ___stack_chk_fail();
+    func_0x000100234a18();
+    func_0x000100234a18();
+    uVar2 = func_0x000100234a18();
+    func_0x000103b115cc(&puStack_40);
+    piVar3 = (int *)__Unwind_Resume(uVar2);
+    uVar4 = 0;
+    if (*piVar3 != 2) {
+      uVar4 = 3;
+    }
+    iVar5 = FUN_10179afd0(piVar3 + 3,uVar4);
+    piVar3[1] = iVar5;
+    piVar3[2] = param_2;
+    return;
+  }
+  return;
+}
+END 103b121ac
+FUNC 103b9eedc name=FUN_103b9eedc body=1 lines=6
+
+bool FUN_103b9eedc(long param_1)
+
+{
+  return 0x7ff < *(ulong *)(param_1 + 0x310);
+}
+END 103b9eedc
+FUNC 103b9eeb4 name=FUN_103b9eeb4 body=1 lines=12
+
+void FUN_103b9eeb4(undefined4 param_1,undefined4 param_2,undefined8 param_3)
+
+{
+  undefined4 uStack_18;
+  undefined4 uStack_14;
+  
+  uStack_18 = param_1;
+  uStack_14 = param_2;
+  func_0x000103b11bf4(param_3,&uStack_18);
+  return;
+}
+END 103b9eeb4
+FUNC 103b9eed8 name=FUN_103b9eed8 body=1 lines=6
+
+void FUN_103b9eed8(void)
+
+{
+  return;
+}
+END 103b9eed8
+FUNC 103b9eef0 name=FUN_103b9eef0 body=1 lines=38
+
+void FUN_103b9eef0(undefined8 param_1,long param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  long *extraout_x1;
+  int *piVar3;
+  ulong uVar4;
+  float fVar5;
+  undefined8 uStack_28;
+  undefined8 uStack_20;
+  undefined1 auStack_18 [8];
+  
+  uStack_28 = param_1;
+  uStack_20 = param_1;
+  if (*(long *)(param_2 + 0x10) != -1) {
+    (**(code **)(&UNK_1055f1338 + *(long *)(param_2 + 0x10) * 8))(auStack_18,&uStack_28,param_2);
+    return;
+  }
+  plVar1 = (long *)___cxa_allocate_exception(8);
+  *plVar1 = (long)(PTR_DAT_1050ae268 + 0x10);
+  piVar3 = (int *)PTR_DAT_105095938;
+  ___cxa_throw(plVar1,&UNK_1050feec8);
+  lVar2 = *extraout_x1;
+  fVar5 = (float)*piVar3;
+  uVar4 = (ulong)(*(float *)(lVar2 + 0x274) * *(float *)(lVar2 + 0x278));
+  *(float *)(lVar2 + 0x254) = fVar5;
+  *(ulong *)(lVar2 + 0x268) = uVar4;
+  if ((1 < uVar4) && (*(float *)(lVar2 + 0x250) != fVar5)) {
+    *(ulong *)(lVar2 + 0x260) = uVar4 - 1;
+    *(float *)(lVar2 + 600) = (fVar5 - *(float *)(lVar2 + 0x250)) / (float)(uVar4 - 1);
+    return;
+  }
+  *(float *)(lVar2 + 0x250) = fVar5;
+  *(undefined8 *)(lVar2 + 0x260) = 0;
+  return;
+}
+END 103b9eef0
+INFO  REPORT: Save succeeded for processed file: /Live.arm64 (HeadlessAnalyzer)  
+openjdk version "21.0.12.1" 2026-08-18
+OpenJDK Runtime Environment Homebrew (build 21.0.12.1)
+OpenJDK 64-Bit Server VM Homebrew (build 21.0.12.1, mixed mode)
+INFO  Using log config file: jar:file:/opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Framework/Generic/lib/Generic.jar!/generic.log4j.xml (LoggingInitialization)  
+INFO  Using log file: /Users/admin/Library/ghidra/ghidra_12.1.4_PUBLIC/application.log (LoggingInitialization)  
+INFO  Loading user preferences: /Users/admin/Library/ghidra/ghidra_12.1.4_PUBLIC/preferences (Preferences)  
+INFO  Searching for classes... (ClassSearcher)  
+INFO  Class search complete (519 ms) (ClassSearcher)  
+INFO  Initializing SSL Context (DefaultSSLContextInitializer)  
+INFO  Initializing Random Number Generator... (SecureRandomFactory)  
+INFO  Random Number Generator initialization complete: NativePRNGNonBlocking (SecureRandomFactory)  
+INFO  Trust manager disabled, cacerts have not been set (DefaultTrustManagerFactory)  
+INFO  Headless startup complete (1051 ms) (AnalyzeHeadless)  
+INFO  Class searcher loaded 59 extension points (20 false positives) (ClassSearcher)  
+INFO  HEADLESS Script Paths:
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/GnuDemangler/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Processors/JVM/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Processors/PIC/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/PyGhidra/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Debug/Debugger/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/WildcardAssembler/ghidra_scripts
+    /Users/admin/tools/live-re/scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/PDB/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/MicrosoftCodeAnalyzer/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Debug/Debugger-rmi-trace/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/VersionTracking/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/FunctionID/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/BytePatterns/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/DecompilerDependent/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/BSim/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/SwiftDemangler/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/Decompiler/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/SystemEmulation/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Processors/DATA/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/Base/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Features/FileFormats/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Processors/8051/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.1.4/libexec/Ghidra/Processors/Atmel/ghidra_scripts (HeadlessAnalyzer)  
+INFO  HEADLESS: execution starts (HeadlessAnalyzer)  
+INFO  Opening existing project: /Users/admin/tools/live-re/ghidra-proj2/LiveRE2 (HeadlessAnalyzer)  
+INFO  Opening project: /Users/admin/tools/live-re/ghidra-proj2/LiveRE2 (HeadlessProject)  
+INFO  REPORT: Processing project file: /Live.arm64 (HeadlessAnalyzer)  
+INFO  REPORT: Execute script: BlockProbe '0x103b10b28:300,0x103b14b30:300,0x103b14aa4:300,0x103b115cc:300'  (HeadlessAnalyzer)  
+INFO  SCRIPT: /Users/admin/tools/live-re/scripts/BlockProbe.java (HeadlessAnalyzer)  
+FUNC 103b10b28 name=FUN_103b10b28 body=1 lines=33
+
+undefined4 FUN_103b10b28(undefined1 param_1 [16],undefined4 param_2,long param_3)
+
+{
+  undefined4 uVar1;
+  float fVar2;
+  float fVar3;
+  float fVar4;
+  
+  if (*(char *)(param_3 + 8) == '\0') goto code_r0x000103b10ba8;
+  fVar2 = *(float *)(param_3 + 0x30);
+  fVar3 = fVar2 - *(float *)(param_3 + 0xa0);
+  if (fVar3 <= 0.5) {
+    if (fVar3 < -0.5) {
+      fVar4 = 1.0;
+      goto code_r0x000103b10b78;
+    }
+  }
+  else {
+    fVar4 = -1.0;
+code_r0x000103b10b78:
+    fVar3 = fVar3 + fVar4;
+  }
+  if (0.0001 < ABS(fVar3)) {
+    fVar2 = *(float *)(param_3 + 0xa0) + *(float *)(param_3 + 0x8c) * fVar3;
+    fVar2 = fVar2 - (float)(int)fVar2;
+  }
+  *(float *)(param_3 + 0xa0) = fVar2;
+code_r0x000103b10ba8:
+  uVar1 = func_0x000103b10518(param_3 + 0x10);
+  func_0x000103b10518(param_2,param_3 + 0x80);
+  return uVar1;
+}
+END 103b10b28
+FUNC 103b14b30 name=FUN_103b14b30 body=1 lines=78
+
+void FUN_103b14b30(long param_1,undefined8 *param_2)
+
+{
+  float fVar1;
+  float fVar2;
+  float *pfVar3;
+  float fVar4;
+  float fVar6;
+  float fVar7;
+  undefined1 auVar5 [16];
+  float fVar8;
+  undefined1 auVar9 [16];
+  undefined1 auVar10 [16];
+  float fVar11;
+  float fVar12;
+  float fVar13;
+  float fVar14;
+  float fVar15;
+  float fVar16;
+  float fVar17;
+  float fVar18;
+  float fVar19;
+  float fVar20;
+  float fVar21;
+  float fVar22;
+  undefined8 uStack0000000000000010;
+  undefined8 uStack0000000000000018;
+  
+  auVar5 = *(undefined1 (*) [16])(param_1 + 0x10);
+  auVar9._0_8_ = CONCAT44((float)((ulong)*param_2 >> 0x20) * auVar5._4_4_,
+                          (float)*param_2 * auVar5._0_4_);
+  auVar9._8_4_ = auVar5._8_4_ * 0.0;
+  auVar9._12_4_ = auVar5._12_4_ * 0.0;
+  uStack0000000000000018 = auVar9._8_8_;
+  uStack0000000000000010 = auVar9._0_8_;
+  auVar5 = func_0x000103b13e4c(*(undefined8 *)(param_1 + 0x20),&stack0x00000010);
+  auVar9 = NEON_fmov(0x3fc00000,4);
+  auVar5 = NEON_fmin(auVar5,auVar9,4);
+  auVar10 = NEON_fmov(0xbfc00000,4);
+  auVar5 = NEON_fmax(auVar5,auVar10,4);
+  fVar4 = auVar5._0_4_;
+  fVar6 = auVar5._4_4_;
+  fVar7 = auVar5._8_4_;
+  fVar8 = auVar5._12_4_;
+  pfVar3 = *(float **)(param_1 + 0x30);
+  fVar1 = *pfVar3;
+  fVar2 = pfVar3[2];
+  fVar15 = (float)*(undefined8 *)(pfVar3 + 8);
+  fVar16 = (float)((ulong)*(undefined8 *)(pfVar3 + 8) >> 0x20);
+  fVar17 = (float)*(undefined8 *)(pfVar3 + 10);
+  fVar18 = (float)((ulong)*(undefined8 *)(pfVar3 + 10) >> 0x20);
+  fVar11 = (float)*(undefined8 *)(pfVar3 + 4);
+  fVar19 = (float)*(undefined8 *)(pfVar3 + 0xc);
+  fVar12 = (float)((ulong)*(undefined8 *)(pfVar3 + 4) >> 0x20);
+  fVar20 = (float)((ulong)*(undefined8 *)(pfVar3 + 0xc) >> 0x20);
+  fVar13 = (float)*(undefined8 *)(pfVar3 + 6);
+  fVar21 = (float)*(undefined8 *)(pfVar3 + 0xe);
+  fVar14 = (float)((ulong)*(undefined8 *)(pfVar3 + 6) >> 0x20);
+  fVar22 = (float)((ulong)*(undefined8 *)(pfVar3 + 0xe) >> 0x20);
+  *(ulong *)(pfVar3 + 2) =
+       CONCAT44(pfVar3[3] * fVar18 - fVar14 * fVar22,fVar2 * fVar17 - fVar13 * fVar21);
+  *(ulong *)pfVar3 = CONCAT44(pfVar3[1] * fVar16 - fVar12 * fVar20,fVar1 * fVar15 - fVar11 * fVar19)
+  ;
+  pfVar3[6] = fVar17 * fVar13 + fVar2 * fVar21;
+  pfVar3[7] = fVar18 * fVar14 + pfVar3[3] * fVar22;
+  pfVar3[4] = fVar15 * fVar11 + fVar1 * fVar19;
+  pfVar3[5] = fVar16 * fVar12 + pfVar3[1] * fVar20;
+  pfVar3 = *(float **)(param_1 + 0x30);
+  auVar5._0_4_ = *pfVar3 * (fVar4 - fVar4 * fVar4 * fVar4 * 0.14814815);
+  auVar5._4_4_ = pfVar3[1] * (fVar6 - fVar6 * fVar6 * fVar6 * 0.14814815);
+  auVar5._8_4_ = pfVar3[2] * (fVar7 - fVar7 * fVar7 * fVar7 * 0.14814815);
+  auVar5._12_4_ = pfVar3[3] * (fVar8 - fVar8 * fVar8 * fVar8 * 0.14814815);
+  auVar5 = NEON_fmin(auVar5,auVar9,4);
+  NEON_fmax(auVar5,auVar10,4);
+  func_0x000103b13ecc(*(undefined8 *)(param_1 + 0x28));
+  return;
+}
+END 103b14b30
+FUNC 103b14aa4 name=FUN_103b14aa4 body=1 lines=51
+
+void FUN_103b14aa4(long param_1,undefined8 *param_2)
+
+{
+  undefined8 *puVar1;
+  float fVar2;
+  float fVar3;
+  float fVar4;
+  float fVar5;
+  float fVar6;
+  float fVar7;
+  float fVar8;
+  float fVar9;
+  float fVar10;
+  float fVar11;
+  float fVar12;
+  float fVar13;
+  float fVar14;
+  float fVar15;
+  float fVar16;
+  float fVar17;
+  undefined8 uStack0000000000000010;
+  undefined8 uStack0000000000000018;
+  
+  uStack0000000000000010 = *param_2;
+  uStack0000000000000018 = 0;
+  func_0x000103b13e4c(*(undefined8 *)(param_1 + 0x20),&stack0x00000010);
+  puVar1 = *(undefined8 **)(param_1 + 0x30);
+  fVar2 = (float)*puVar1;
+  fVar10 = (float)puVar1[4];
+  fVar3 = (float)((ulong)*puVar1 >> 0x20);
+  fVar11 = (float)((ulong)puVar1[4] >> 0x20);
+  fVar4 = (float)puVar1[1];
+  fVar12 = (float)puVar1[5];
+  fVar5 = (float)((ulong)puVar1[1] >> 0x20);
+  fVar13 = (float)((ulong)puVar1[5] >> 0x20);
+  fVar6 = (float)puVar1[2];
+  fVar14 = (float)puVar1[6];
+  fVar7 = (float)((ulong)puVar1[2] >> 0x20);
+  fVar15 = (float)((ulong)puVar1[6] >> 0x20);
+  fVar8 = (float)puVar1[3];
+  fVar16 = (float)puVar1[7];
+  fVar9 = (float)((ulong)puVar1[3] >> 0x20);
+  fVar17 = (float)((ulong)puVar1[7] >> 0x20);
+  puVar1[1] = CONCAT44(fVar5 * fVar13 - fVar9 * fVar17,fVar4 * fVar12 - fVar8 * fVar16);
+  *puVar1 = CONCAT44(fVar3 * fVar11 - fVar7 * fVar15,fVar2 * fVar10 - fVar6 * fVar14);
+  puVar1[3] = CONCAT44(fVar13 * fVar9 + fVar5 * fVar17,fVar12 * fVar8 + fVar4 * fVar16);
+  puVar1[2] = CONCAT44(fVar11 * fVar7 + fVar3 * fVar15,fVar10 * fVar6 + fVar2 * fVar14);
+  func_0x000103b13ecc(*(undefined8 *)(param_1 + 0x28));
+  return;
+}
+END 103b14aa4
+FUNC 103b115cc name=FUN_103b115cc body=1 lines=11
+
+undefined8 * FUN_103b115cc(undefined8 *param_1)
+
+{
+  if ((code *)param_1[2] != (code *)0x0) {
+    (*(code *)param_1[2])(param_1 + 1,0,1);
+    *param_1 = 0;
+    param_1[2] = 0;
+  }
+  return param_1;
+}
+END 103b115cc
+INFO  REPORT: Save succeeded for processed file: /Live.arm64 (HeadlessAnalyzer)  

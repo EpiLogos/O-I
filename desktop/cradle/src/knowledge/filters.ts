@@ -1,5 +1,7 @@
 import type {GraphNode, GraphEdge, GraphReading} from './graph';
 import {restoreEmphasisGroups, type EmphasisGroup} from './graphEmphasis';
+import {isUnresolvedGraphNode, restoreGraphCamera, unresolvedAssociationsAllowed, unresolvedGraphAssociations} from './graphNavigation';
+import type {Camera} from './camera';
 
 export interface GraphFilters {
   text: string;
@@ -11,6 +13,7 @@ export interface GraphFilters {
   families: string[];
   tags: string[];
   isolated: boolean;
+  unresolved: boolean;
   context: 'structure' | 'matches';
   labels: 'automatic' | 'all' | 'focus';
   arrows: boolean;
@@ -18,7 +21,7 @@ export interface GraphFilters {
   collapsed: string[];
   emphasis: EmphasisGroup[];
 }
-export const defaultGraphFilters = (): GraphFilters => ({text: '', scope: 'field', depth: 1, direction: 'both', kinds: [], relations: [], families: [], tags: [], isolated: true, context: 'structure', labels: 'automatic', arrows: false, shared: false, collapsed: [], emphasis: []});
+export const defaultGraphFilters = (): GraphFilters => ({text: '', scope: 'field', depth: 1, direction: 'both', kinds: [], relations: [], families: [], tags: [], isolated: true, unresolved: true, context: 'structure', labels: 'automatic', arrows: false, shared: false, collapsed: [], emphasis: []});
 const strings = (value: unknown, max = 64): string[] => Array.isArray(value) ? [...new Set(value.filter((item): item is string => typeof item === 'string' && item.length <= 256))].slice(0, max) : [];
 /** Decode view state, never source metadata. Invalid preferences do not make a
  * whole workspace unrestorable, and unknown keys confer no native effects. */
@@ -32,7 +35,7 @@ export function restoreGraphFilters(value: unknown): GraphFilters {
     depth: Number.isInteger(v.depth) ? Math.max(0, Math.min(8, v.depth!)) : 1,
     direction: v.direction === 'incoming' || v.direction === 'outgoing' ? v.direction : 'both',
     kinds: strings(v.kinds), relations: strings(v.relations), families: strings(v.families), tags: strings(v.tags),
-    isolated: v.isolated !== false, context: v.context === 'matches' ? 'matches' : 'structure',
+    isolated: v.isolated !== false, unresolved: v.unresolved !== false, context: v.context === 'matches' ? 'matches' : 'structure',
     collapsed: Array.isArray(v.collapsed) ? [...new Set(v.collapsed.filter((ref): ref is string => typeof ref === 'string' && ref.length > 0 && ref.length <= 4096))].slice(0,256) : [],
     emphasis: restoreEmphasisGroups(v.emphasis),
     labels: v.labels === 'all' || v.labels === 'focus' ? v.labels : 'automatic', arrows: v.arrows === true, shared: v.shared === true,
@@ -65,10 +68,20 @@ export function filterGraph(reading: GraphReading, filters: GraphFilters, focus?
   for (const edge of reading.edges) {
     // Count admitted incident assertions even when a target is outside this
     // bounded reading. Filtered-out neighbours do not turn a node into an orphan.
-    degree.add(edge.from_ref); degree.add(edge.to_ref);
+    // A3 self-loops remain native edges but do not connect a subject to a peer.
+    if (edge.from_ref !== edge.to_ref) {degree.add(edge.from_ref); degree.add(edge.to_ref);}
     if (!allowedEdge(edge)) continue;
     if (filters.direction !== 'incoming') add(edge.from_ref, edge.to_ref);
     if (filters.direction !== 'outgoing') add(edge.to_ref, edge.from_ref);
+  }
+  // View-only phantom links participate in local scope, never the native edge
+  // result. Their sources are already exact refs from the owner's link cache.
+  if (unresolvedAssociationsAllowed(filters)) {
+    for (const link of unresolvedGraphAssociations(reading.nodes)) {
+      degree.add(link.source); degree.add(link.ghost);
+      if (filters.direction !== 'incoming') add(link.source, link.ghost);
+      if (filters.direction !== 'outgoing') add(link.ghost, link.source);
+    }
   }
   const localFocusMissing = filters.scope === 'local' && (!focus || !byRef.has(focus));
   let scope = new Set(byRef.keys());
@@ -87,6 +100,7 @@ export function filterGraph(reading: GraphReading, filters: GraphFilters, focus?
   const needle = filters.text.trim().toLocaleLowerCase();
   const matches = new Set<string>();
   for (const [ref, node] of byRef) {
+    if (isUnresolvedGraphNode(node) && !filters.unresolved) continue;
     if (!scope.has(ref) || (!filters.isolated && !degree.has(ref))) continue;
     if (filters.kinds.length && !filters.kinds.includes(node.kind)) continue;
     if (filters.tags.length && !filters.tags.every(tag => node.tags?.includes(tag))) continue;
@@ -133,7 +147,12 @@ export function filterGraph(reading: GraphReading, filters: GraphFilters, focus?
   return {nodes, edges, matches, contextual, counts: {matched: matches.size, context: contextual.size, displayed: shown.size, admitted: byRef.size, hidden: byRef.size - shown.size}, partialFormations, localFocusMissing, collapsedSubjects, collapsedFormations, foldedEdges};
 }
 
-export interface SavedGraphView {name: string; filters: GraphFilters}
+export interface SavedGraphView {name: string; filters: GraphFilters; camera?: Camera; focus?: string}
+export function captureSavedGraphView(name: string, filters: GraphFilters, camera: Camera, focus?: string): SavedGraphView {
+  const restored = restoreGraphCamera(camera);
+  if (!restored) throw Error('Save a graph view with a finite camera.');
+  return {name: name.trim().slice(0, 80), filters: restoreGraphFilters(structuredClone(filters)), camera: restored, ...(focus ? {focus} : {})};
+}
 export function restoreSavedGraphViews(value: unknown): SavedGraphView[] {
   if (!Array.isArray(value)) return [];
   const names = new Set<string>();
@@ -142,6 +161,8 @@ export function restoreSavedGraphViews(value: unknown): SavedGraphView[] {
     const name = item.name.trim().slice(0, 80);
     if (!name || names.has(name)) return [];
     names.add(name);
-    return [{name, filters: restoreGraphFilters(item.filters)}];
+    const camera = restoreGraphCamera(item.camera);
+    const focus = typeof item.focus === 'string' && item.focus.length > 0 ? item.focus : undefined;
+    return [{name, filters: restoreGraphFilters(item.filters), ...(camera ? {camera, ...(focus ? {focus} : {})} : {})}];
   }).slice(0, 12);
 }

@@ -1,0 +1,55 @@
+/* Automation device panel. Shell tokens only; amber (--accent) marks focus, the selected lane and an active handle. */
+.native-automation-face {display: grid; gap: 12px; color: var(--text); font-size: 12px}
+.native-automation-face-section {display: grid; gap: 8px; padding: 10px; background: var(--bg-1); border: 1px solid var(--line); border-radius: 6px; min-width: 0}
+.native-automation-face-section > header, .native-automation-face-picker > header {display: flex; align-items: baseline; justify-content: space-between; gap: 8px}
+.native-automation-face-section h3, .native-automation-face-picker h4, .native-automation-face-monitor h4 {margin: 0; font-size: 12px; font-weight: 600}
+.native-automation-face-picker h5 {margin: 4px 0 0; font-size: 11px; font-weight: 600; color: var(--text-dim)}
+.native-automation-face-section > header > span, .native-automation-face-monitor > header > span {color: var(--text-dim); font-size: 11px}
+.native-automation-face-actions {display: flex; flex-wrap: wrap; gap: 6px}
+.native-automation-face button, .native-automation-face select, .native-automation-face input {font: inherit; color: inherit}
+.native-automation-face button {min-height: 22px; padding: 3px 8px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; cursor: pointer}
+.native-automation-face button:disabled {opacity: .5; cursor: default}
+.native-automation-face button:focus-visible, .native-automation-face input:focus-visible, .native-automation-face select:focus-visible,
+.native-automation-face [role='slider']:focus-visible {outline: 2px solid var(--accent); outline-offset: 1px}
+.native-automation-face-groups {list-style: none; margin: 0; padding: 0; display: grid; gap: 6px}
+.native-automation-face-groups ol {list-style: none; margin: 0; padding: 0; display: grid; gap: 4px}
+.native-automation-face-row {display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px; align-items: center; min-width: 0}
+.native-automation-face-row.is-nested {padding-left: 18px; border-left: 2px solid var(--line)}
+.native-automation-face-row.is-dragging {opacity: .5}
+.native-automation-face-lane {display: grid; gap: 2px; text-align: left; min-width: 0; width: 100%}
+.native-automation-face-lane small {color: var(--text-dim); font-size: 11px; overflow-wrap: anywhere}
+.native-automation-face-lane[aria-pressed='true'] {border-color: var(--accent)}
+.native-automation-face-run {display: inline-flex; align-items: center; gap: 4px; min-height: 22px; color: var(--text-dim); white-space: nowrap}
+.native-automation-face-order {display: inline-flex; align-items: center; gap: 4px}
+.native-automation-face-order small {color: var(--text-dim); font-size: 11px; white-space: nowrap}
+.native-automation-face-empty, .native-automation-face small, .native-automation-face figcaption, .native-automation-face-note, .native-automation-face-disclosure, .native-automation-face-monitor p {color: var(--text-dim); font-size: 11px; line-height: 1.4; margin: 0}
+.native-automation-face-form {display: grid; gap: 8px}
+.native-automation-face-figure {margin: 0; display: grid; gap: 4px}
+.native-automation-face-plot {position: relative; width: 100%; aspect-ratio: 5 / 2; background: var(--bg-0); border: 1px solid var(--line); border-radius: 4px; box-sizing: border-box; user-select: none; touch-action: none}
+.native-automation-face-svg {position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden}
+.native-automation-face-svg .band {fill: var(--accent); opacity: .12}
+.native-automation-face-svg .axis {stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke}
+.native-automation-face-svg .curve {fill: none; stroke: var(--text); stroke-width: 1.5; vector-effect: non-scaling-stroke}
+.native-automation-face-axis {position: absolute; left: 4px; font-size: 10px; color: var(--text-dim); pointer-events: none; font-variant-numeric: tabular-nums}
+.native-automation-face-axis.is-top {top: 2px}
+.native-automation-face-axis.is-bottom {bottom: 2px}
+.native-automation-face-handle {position: absolute; width: 22px; height: 22px; box-sizing: border-box; transform: translate(-50%, -50%); border-radius: 50%; background: var(--accent); border: 1px solid var(--bg-0); cursor: grab}
+.native-automation-face-handle[aria-disabled='true'] {opacity: .4; cursor: default}
+.native-automation-face-pair {display: grid; grid-template-columns: 1fr 1fr; gap: 8px}
+.native-automation-face-field {display: grid; gap: 3px; min-width: 0}
+.native-automation-face-field > span {color: var(--text-dim); font-size: 11px}
+.native-automation-face-field input, .native-automation-face-field select {min-height: 22px; padding: 3px 6px; background: var(--bg-0); border: 1px solid var(--line); border-radius: 4px; min-width: 0; width: 100%; box-sizing: border-box}
+.native-automation-face-field input[aria-invalid='true'] {border-color: var(--accent)}
+.native-automation-face-bounds {color: var(--accent); font-size: 11px}
+.native-automation-face-picker {display: grid; gap: 8px; padding: 8px; border: 1px dashed var(--line); border-radius: 6px}
+.native-automation-face-picker ul {list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 220px; overflow: auto}
+.native-automation-face-picker li button {width: 100%; text-align: left}
+.native-automation-face-monitor {display: grid; gap: 6px; padding-top: 6px; border-top: 1px solid var(--line)}
+.native-automation-face-monitor > header {display: flex; align-items: baseline; justify-content: space-between; gap: 8px}
+.native-automation-face-values {display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0}
+.native-automation-face-values dt {color: var(--text-dim); font-size: 11px}
+.native-automation-face-values dd {margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere}
+.native-automation-face-fault {display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--accent)}
+.native-automation-face-fault p {margin: 0; flex-basis: 100%}
+@media (max-width: 720px) {.native-automation-face-values {grid-template-columns: 1fr}}
+@media (prefers-reduced-motion: reduce) {.native-automation-face * {transition: none !important; animation: none !important}}

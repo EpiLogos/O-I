@@ -1,0 +1,23 @@
+/* Scene body and Jump trigger device panel. Shell tokens only; amber (--accent) marks focus and the refusal line. */
+.native-body-face {display: grid; gap: 12px; color: var(--text); font-size: 12px}
+.native-body-face-section {display: grid; gap: 8px; padding: 10px; background: var(--bg-1); border: 1px solid var(--line); border-radius: 6px; min-width: 0}
+.native-body-face-section > header {display: flex; align-items: baseline; justify-content: space-between; gap: 8px}
+.native-body-face-section h3 {margin: 0; font-size: 12px; font-weight: 600}
+.native-body-face-section > header > span {color: var(--text-dim); font-size: 11px}
+.native-body-face button, .native-body-face select, .native-body-face input {font: inherit; color: inherit}
+.native-body-face button {min-height: 22px; padding: 3px 8px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; justify-self: start}
+.native-body-face button:disabled {opacity: .5; cursor: default}
+.native-body-face button:focus-visible, .native-body-face input:focus-visible, .native-body-face select:focus-visible {outline: 2px solid var(--accent); outline-offset: 1px}
+.native-body-face-current {margin: 0; overflow-wrap: anywhere}
+.native-body-face-form {display: grid; gap: 8px}
+.native-body-face-pair {display: grid; grid-template-columns: 1fr 1fr; gap: 8px}
+.native-body-face-field {display: grid; gap: 3px; min-width: 0}
+.native-body-face-field > span {color: var(--text-dim); font-size: 11px}
+.native-body-face-field input, .native-body-face-field select {min-height: 22px; padding: 3px 6px; background: var(--bg-0); border: 1px solid var(--line); border-radius: 4px; min-width: 0; width: 100%; box-sizing: border-box}
+.native-body-face-triggers {list-style: none; margin: 0; padding: 0; display: grid; gap: 4px}
+.native-body-face-triggers li {display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center; overflow-wrap: anywhere}
+.native-body-face-empty, .native-body-face-reason, .native-body-face-budget {color: var(--text-dim); font-size: 11px; line-height: 1.4}
+.native-body-face-problem {color: var(--accent); font-size: 11px}
+.native-body-face-fault {display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--accent)}
+.native-body-face-fault p {margin: 0; flex-basis: 100%}
+@media (prefers-reduced-motion: reduce) {.native-body-face * {transition: none !important; animation: none !important}}

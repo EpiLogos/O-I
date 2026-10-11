@@ -70,9 +70,15 @@ impl NativePerformanceSourceAsset {
         // A payload carrying its source context binds that context and
         // occasion at admission: the matching-label transfer of a complete
         // record between occasions refuses here.
-        if let Some(witness) = asset.native_bundle.get("source_context").filter(|w| w.get("context").is_some()) {
-            if witness["context"] != serde_json::to_value(&asset.context).map_err(|e| e.to_string())?
-                || witness.get("original_occasion") != Some(&basis.m4_episode.clone().unwrap_or(Value::Null))
+        if let Some(witness) = asset
+            .native_bundle
+            .get("source_context")
+            .filter(|w| w.get("context").is_some())
+        {
+            if witness["context"]
+                != serde_json::to_value(&asset.context).map_err(|e| e.to_string())?
+                || witness.get("original_occasion")
+                    != Some(&basis.m4_episode.clone().unwrap_or(Value::Null))
             {
                 return Err(
                     "native source context/occasion differs from the admitting basis".into(),
@@ -304,14 +310,22 @@ impl NativePerformanceSourceAsset {
     /// payloads admit and are judged on disclosure (requires_private_
     /// disclosure, require_source_context) — never at admission.
     fn verify_receiving_payload_digests(&self) -> Result<(), String> {
-        let bundle = self.native_bundle.as_object().ok_or("native source bundle absent")?;
+        let bundle = self
+            .native_bundle
+            .as_object()
+            .ok_or("native source bundle absent")?;
         let Some(current) = bundle.get("current_receiving").filter(|v| v.is_object()) else {
             return Ok(()); // no receiving record: the original World contract
         };
-        let Some(witness) = current.get("source_payload_context").filter(|v| v.is_object()) else {
+        let Some(witness) = current
+            .get("source_payload_context")
+            .filter(|v| v.is_object())
+        else {
             return Ok(());
         };
-        let inputs = bundle.get("receiving_source_inputs").unwrap_or(&Value::Null);
+        let inputs = bundle
+            .get("receiving_source_inputs")
+            .unwrap_or(&Value::Null);
         let admission = current.get("native_admission").unwrap_or(&Value::Null);
         for (name, value) in [
             ("source_inputs_sha256", inputs),

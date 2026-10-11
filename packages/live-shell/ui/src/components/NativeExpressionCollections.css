@@ -1,0 +1,10 @@
+/* Read-only Expression collections in the Expressions browser. Shell tokens only. */
+.native-expression-collections{display:grid;gap:10px;padding:4px 0}
+.world-collection h3{margin:4px 0;font-size:11px;font-weight:600;color:var(--text-dim)}
+.world-collection ul{list-style:none;margin:0;padding:0}
+.world-collection-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;align-items:center;padding:4px 6px;border-bottom:1px solid var(--line)}
+.world-collection-name{font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.world-collection-description{grid-column:1;font-size:10px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.world-collection-row button{grid-row:1 / span 2;grid-column:2;font-size:11px;padding:0 8px;height:22px;border:1px solid var(--line);border-radius:3px;background:var(--bg-2);color:var(--text)}
+.world-collection-row button:disabled{opacity:.45;cursor:default}
+.world-collection-reason{margin:2px 0 0;font-size:10px}

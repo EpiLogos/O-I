@@ -24,8 +24,9 @@ import {useKernel} from "../../kernel/KernelProvider";
 import type {KernelTransportStatus} from "../../kernel/types";
 import {encounter,type JournalPage} from "../../encounter/client";
 import {tapeFromJournal,type JournalEventLike,type Tape} from "./model";
+import {assertAgentSessionPage,journalReceiverKey} from "../receiverScope";
 
-export interface JournalBinding {project:string;ref:string}
+export interface JournalBinding {project:string;ref:string;sourceWorldRef?:string}
 export interface JournalReading {
  events:JournalEventLike[];
  /** The first complete read reached the journal's end. */
@@ -59,7 +60,8 @@ class JournalReader {
    do{
     this.again=false;
     for(;;){
-     const page=await encounter<JournalPage>(this.transport,this.binding.project,{action:"read",agent_session:this.binding.ref,after:this.after,limit:PAGE});
+     const page=await encounter<JournalPage>(this.transport,this.binding.project,{action:"read",agent_session:this.binding.ref,after:this.after,limit:PAGE},this.binding.sourceWorldRef);
+     assertAgentSessionPage(page,this.binding.ref);
      if(page.events.length){
       const now=Date.now();
       if(this.state.complete)for(const event of page.events)if(!this.seen.has(event.cursor))this.seen.set(event.cursor,now);
@@ -76,21 +78,21 @@ class JournalReader {
 }
 
 const readers=new Map<string,JournalReader>();
-const keyOf=(binding:JournalBinding)=>`${binding.project}:${binding.ref}`;
+export const journalBindingKey=journalReceiverKey;
 const noSubscribe=()=>()=>{};
 const noSnapshot=()=>undefined;
 
 export function useEncounterJournal(binding:JournalBinding|undefined,trigger?:unknown):JournalReading|undefined {
  const kernel=useKernel();
- const project=binding?.project,ref=binding?.ref;
+ const project=binding?.project,ref=binding?.ref,sourceWorldRef=binding?.sourceWorldRef;
  const reader=useMemo(()=>{
   if(project===undefined||!ref)return undefined;
-  const key=keyOf({project,ref});
+  const key=journalBindingKey(kernel.transport,{project,ref,sourceWorldRef});
   let held=readers.get(key);
-  if(!held){held=new JournalReader(kernel.transport,{project,ref});readers.set(key,held);}
+  if(!held){held=new JournalReader(kernel.transport,{project,ref,sourceWorldRef});readers.set(key,held);}
   held.bind(kernel.transport);
   return held;
- },[kernel.transport,project,ref]);
+ },[kernel.transport,project,ref,sourceWorldRef]);
  useEffect(()=>{if(reader)void reader.pull();},[reader,trigger]);
  return useSyncExternalStore(reader?reader.subscribe:noSubscribe,reader?reader.snapshot:noSnapshot);
 }
@@ -103,7 +105,8 @@ export function useTape(binding:JournalBinding|undefined,trigger?:unknown):{tape
 
 /** One exact journal event by cursor — how an object page re-reads a tool
  *  call or message from the owner instead of carrying a copy. */
-export async function readJournalEvent(transport:KernelTransportStatus,project:string,ref:string,cursor:number):Promise<JournalEventLike|undefined> {
- const page=await encounter<JournalPage>(transport,project,{action:"read",agent_session:ref,after:Math.max(0,cursor-1),limit:1});
+export async function readJournalEvent(transport:KernelTransportStatus,project:string,ref:string,cursor:number,sourceWorldRef?:string):Promise<JournalEventLike|undefined> {
+ const page=await encounter<JournalPage>(transport,project,{action:"read",agent_session:ref,after:Math.max(0,cursor-1),limit:1},sourceWorldRef);
+ assertAgentSessionPage(page,ref);
  return page.events.find(event=>event.cursor===cursor);
 }

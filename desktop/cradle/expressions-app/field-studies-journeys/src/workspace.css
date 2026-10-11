@@ -564,3 +564,10 @@ body.library-open #lens-chooser{display:none!important}
 .object-symbol .shape-mark{width:60%;height:60%;color:var(--tint,currentColor)}
 
 body:not(.research-active) #tool-rail [data-research-only]{display:none!important}
+
+/* Keep focused file actions clear of the sticky Library header in a compact
+ * retained Stage. A very short view lets the header scroll with its content. */
+#library-page{scroll-padding-top:100px}
+#library-page button,#library-page input{scroll-margin-top:100px}
+@media(max-width:760px){#library-page{scroll-padding-top:80px}#library-page button,#library-page input{scroll-margin-top:80px}}
+@media(max-height:260px){.library-header{position:relative}#library-page{scroll-padding-top:8px}#library-page button,#library-page input{scroll-margin-top:8px}}

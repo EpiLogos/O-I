@@ -24,6 +24,8 @@ export interface NaraChannelOwner {
   project: () => string;
   /** The host's current native scene announcement, never the request's ref. */
   expression: () => {expression_ref: string; revision: number} | null;
+  isCurrent?: () => boolean;
+  retainSelectionOnDispose?: boolean;
 }
 type ObjectValue = Record<string, unknown>;
 function object(value: unknown): ObjectValue {
@@ -171,6 +173,8 @@ function request(value: unknown): NaraInstrumentRequest {
 
 export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTransportStatus, owner: NaraChannelOwner): () => void {
   let live = true, epoch = 0, selectionGeneration = 0, mutating = false, selectedRef: string | null = null;
+  if (owner.retainSelectionOnDispose) selectedRef = currentIdentity()?.selection_ref ?? null;
+  const accessCurrent = () => live && (owner.isCurrent?.() ?? true);
   let voiceGeneration = 0;
   const interrupted = {nara: 0, epii: 0};
   const seen = new Set<number>();
@@ -205,10 +209,10 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
     const current = currentIdentity();
     if (selectedRef && current?.selection_ref === selectedRef) clearCurrentIdentity(current.reading.person_ref);
     selectedRef = null;
-    if (wasSelected && live) frame.contentWindow?.postMessage({v: 1, kind: 'oi-nara-identity-released'}, '*');
+    if (wasSelected && accessCurrent()) frame.contentWindow?.postMessage({v: 1, kind: 'oi-nara-identity-released'}, '*');
   };
   const announce = () => {
-    if (live) frame.contentWindow?.postMessage({v: 1, kind: 'oi-kernel-channel', channel: NARA_INSTRUMENT_CHANNEL}, '*');
+    if (accessCurrent()) frame.contentWindow?.postMessage({v: 1, kind: 'oi-kernel-channel', channel: NARA_INSTRUMENT_CHANNEL}, '*');
   };
   const loaded = () => {epoch++; release(); calculated.clear(); seen.clear(); mutating = false; announce();};
   const execute = async (r: NaraInstrumentRequest, requireEpoch: () => void): Promise<NaraInstrumentReply> => {
@@ -351,7 +355,7 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
         // retries its closure before admitting any replacement lease.
         if (voice?.closing) {await closeVoice(); requireCurrent();}
         if (voice) throw new Error('Close the current voice connection before opening another.');
-        const basis = await currentTurnBasis(transport, dialogue, identity, expression.expression_ref); requireCurrent();
+        const basis = await currentTurnBasis(transport, dialogue, identity, expression.expression_ref, requireCurrent); requireCurrent();
         if (basis.document.revision !== expression.revision) throw new Error('Refresh the selected centre before opening voice.');
         const result = await nativeVoice(transport, project, {operation: 'open', binding: {...dialogue.binding, operation: 'lookup'}, context: basis.context});
         try {requireCurrent();} catch (error) {
@@ -383,7 +387,7 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
     }
     if(r.operation==='epii_inspect'||r.operation==='epii_accept'){
       if(!dialogue)throw Error('The native Epii inquiry session is unavailable.');
-      if(r.operation==='epii_accept')await currentTurnBasis(transport,dialogue,identity,expression.expression_ref);requireCurrent();
+      if(r.operation==='epii_accept')await currentTurnBasis(transport,dialogue,identity,expression.expression_ref,requireCurrent);requireCurrent();
       const result=await nativeEpii(transport,project,{operation:r.operation==='epii_inspect'?'inspect':'accept',
         binding:{...dialogue.binding,expected_revision:identity.source.revision},answer_block_id:r.answer_block_id,
         ...(r.operation==='epii_accept'?{focus_ref:r.focus_ref}:{})} as import('../nara/epiiTypes').NativeEpiiRequest);
@@ -434,7 +438,7 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
     }
     if (r.operation === 'send' || r.operation === 'epii_delegate') {
       dialogue ??= await acquireNativeDialogue(transport, project, identity, expression.expression_ref, r.role); requireCurrent();
-      const basis = await currentTurnBasis(transport, dialogue, identity, expression.expression_ref); requireCurrent();
+      const basis = await currentTurnBasis(transport, dialogue, identity, expression.expression_ref, requireCurrent); requireCurrent();
       if (basis.document.revision !== expression.revision) throw new Error('The selected centre or relation changed before this turn. Refresh and review it.');
       let turnText=nativeTurnText(r.question,basis,r.role);
       if(r.operation==='epii_delegate'){
@@ -482,13 +486,13 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
     return state;
   };
   const handler = async (event: MessageEvent) => {
-    if (!live || event.source !== frame.contentWindow || event.data?.v !== 1) return;
+    if (!accessCurrent() || event.source !== frame.contentWindow || event.data?.v !== 1) return;
     if (event.data.kind === 'oi-kernel-hello') {announce(); return;}
     if (event.data.kind !== NARA_INSTRUMENT_CHANNEL) return;
     const req = event.data.req;
     if (!Number.isSafeInteger(req) || req < 1) return;
     const at = epoch, windowAtRequest = frame.contentWindow;
-    const current = () => live && epoch === at && frame.contentWindow === windowAtRequest;
+    const current = () => accessCurrent() && epoch === at && frame.contentWindow === windowAtRequest;
     const requireEpoch = () => {if (!current()) throw new Error('The Nara instrument frame changed before the operation finished.');};
     const respond = (payload: {ok: true; data: NaraInstrumentReply} | {ok: false; error: string}) => {
       if (current()) windowAtRequest?.postMessage({v: 1, kind: `${NARA_INSTRUMENT_CHANNEL}-result`, req, ...payload}, event.origin === 'null' ? '*' : event.origin);
@@ -513,5 +517,8 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
     finally {if (held && current()) mutating = false;}
   };
   window.addEventListener('message', handler); frame.addEventListener('load', loaded); announce();
-  return () => {live = false; epoch++; release(); calculated.clear(); seen.clear(); window.removeEventListener('message', handler); frame.removeEventListener('load', loaded);};
+  return () => {live = false; epoch++;
+    if (owner.retainSelectionOnDispose) {selectionGeneration++; voiceGeneration++; review = null; disposeVoice(); selectedRef = null;}
+    else release();
+    calculated.clear(); seen.clear(); window.removeEventListener('message', handler); frame.removeEventListener('load', loaded);};
 }

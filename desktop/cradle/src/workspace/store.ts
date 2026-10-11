@@ -159,6 +159,20 @@ export function moveWorkspaceSurface(workspace:Workspace,surfaceId:string,into:'
   }
   return {...workspace,layout,modeLayouts:Object.fromEntries(Object.entries(workspace.modeLayouts??{}).map(([mode,saved])=>[mode,strip(saved)]))};
 }
+/** An asynchronous view/checkpoint update returns to its originating binding,
+ * including a hidden mode. It never changes the selected tree or focus. */
+export function updateWorkspaceBinding(workspace: Workspace, surfaceId: string, change: (binding: import("../surface/types").SurfaceBinding) => import("../surface/types").SurfaceBinding): Workspace {
+  const layouts = [workspace.layout,...Object.values(workspace.modeLayouts ?? {})];
+  const owners = layouts.filter(layout => layout.surfaces[surfaceId]);
+  if (!owners.length) return workspace; // Explicitly closed while the request ran.
+  if (owners.length !== 1) throw Error("The Surface has more than one stored binding owner");
+  const original = owners[0].surfaces[surfaceId], next = change(original);
+  if (next.id !== original.id) throw Error("A checkpoint cannot change its Surface identity");
+  if (original.ref && !original.pending && next.ref !== original.ref) throw Error("A checkpoint cannot replace its native subject");
+  const write = (layout: LayoutState) => layout === owners[0] ? {...layout,surfaces:{...layout.surfaces,[surfaceId]:next}} : layout;
+  if (owners[0] === workspace.layout) return {...workspace,layout:write(workspace.layout)};
+  return {...workspace,modeLayouts:Object.fromEntries(Object.entries(workspace.modeLayouts ?? {}).map(([mode,layout]) => [mode,write(layout)]))};
+}
 /**
  * Book versions. v1: one pane tree per workspace (`layout`), with optional
  * presentation fields decoded leniently. v2 (this writer): per-mode trees —
@@ -170,8 +184,18 @@ export function moveWorkspaceSurface(workspace:Workspace,surfaceId:string,into:'
  * rest on its next save), so the version is bumped; a v1-only build meeting a
  * v2 book retains it byte-exact through the recovery path, never overwrites.
  */
-interface WorkspaceBook { version: 2; active: string; workspaces: Workspace[] }
+export interface WorkspaceBook { version: 2; active: string; workspaces: Workspace[] }
 const KEY = "oi-cradle.workspaces.v1";
+export interface WorkspaceStorageOptions { storageKey?: string; legacyLayoutKey?: string | null }
+export function workspaceStorageNamespace(options: WorkspaceStorageOptions = {}) {
+  const key = options.storageKey ?? KEY;
+  if (!key || key.length > 256) throw Error("Choose a bounded workspace storage namespace");
+  const candidate = key !== KEY;
+  return {key, legacyKey: options.legacyLayoutKey === undefined ? (candidate ? null : "oi-cradle.layout.v1") : options.legacyLayoutKey,
+    journalKey: candidate ? `${key}.stage` : "oi-cradle.book.stage.v1",
+    recovery: {pointer: candidate ? `${key}.recovery.latest` : "oi-cradle.recovery.latest", prefix: candidate ? `${key}.recovery.` : "oi-cradle.recovery."},
+    draftPrefix: candidate ? `${key}.unplaced-draft:` : "oi-cradle.unplaced-draft.v1:"};
+}
 function scopeLegacyIds(layout:LayoutState,workspaceId:string,all=false):LayoutState {
   const id=(value:string)=>all||/^s[0-9]+$/.test(value)?`${workspaceId}:${value}`:value;
   const pane=(p:import("../surface/types").Pane):import("../surface/types").Pane=>p.type==="split"?{...p,children:p.children.map(pane)}:{...p,tabs:p.tabs.map(id),pinned:p.pinned.map(id),active:p.active?id(p.active):null};
@@ -184,13 +208,13 @@ function scopeLegacyIds(layout:LayoutState,workspaceId:string,all=false):LayoutS
  * carried into an unsaved-writing surface so it is actually restored and
  * visible, rather than surviving as a field nothing renders.
  */
-function carryLegacyWriting(workspace: Workspace): Workspace {
+function carryLegacyWriting(workspace: Workspace, draftPrefix = "oi-cradle.unplaced-draft.v1:"): Workspace {
   const text = typeof workspace.writing === "string" ? workspace.writing : "";
   if (!text.trim()) return workspace;
   const held = Object.values(workspace.layout.surfaces).some(binding => binding.kind === "draft");
   if (held) return workspace;
   const id = `${workspace.id}:carried-writing`;
-  try { localStorage.setItem(`oi-cradle.unplaced-draft.v1:${id}`, JSON.stringify({ text, at: Date.now() })); }
+  try { localStorage.setItem(`${draftPrefix}${id}`, JSON.stringify({ text, at: Date.now() })); }
   catch { return workspace; }
   const binding = { id, kind: "draft", title: "Draft", project: workspace.project };
   const layout = openBinding(workspace.layout, binding);
@@ -237,7 +261,7 @@ const initialLayout = (): LayoutState => ({ ...freshLayout(), agencyDepth: "pane
  * recovery is progressive (workspace-continuity WF1): a damaged binding or
  * view record is dropped and named while its valid siblings restore — only
  * a record nothing restorable survives empties the workspace and names why. */
-function restoreWorkspace(w: Workspace): {workspace: Workspace; notes: string[]} {
+function restoreWorkspace(w: Workspace, draftPrefix?: string): {workspace: Workspace; notes: string[]} {
   const notes: string[] = [];
   try {
     if (typeof w.id !== "string" || typeof w.name !== "string" || typeof w.writing !== "string" || (w.project !== undefined && typeof w.project !== "string")) throw new Error("Invalid workspace record");
@@ -262,7 +286,7 @@ function restoreWorkspace(w: Workspace): {workspace: Workspace; notes: string[]}
       if (state.mode !== undefined && !["chats", "files", "wiki"].includes(state.mode)) throw new Error("Invalid project mode");
       return [ref, { expanded: state.expanded, scroll: state.scroll, directories: state.directories, mode: state.mode ?? "files", locationPath: state.locationPath }];
     }));
-    return {workspace: carryLegacyWriting({ projectNavigation, centralFiles: w.centralFiles === true, id: w.id, name: w.name, project: w.project, writing: w.writing, writingMode: false, layout, modeLayouts, context: decodeWorldContext(w.context), recentPlaces: decodeRecentPlaces(w.recentPlaces), lastVisitedAt: typeof w.lastVisitedAt === "number" ? w.lastVisitedAt : undefined }), notes};
+    return {workspace: carryLegacyWriting({ projectNavigation, centralFiles: w.centralFiles === true, id: w.id, name: w.name, project: w.project, writing: w.writing, writingMode: false, layout, modeLayouts, context: decodeWorldContext(w.context), recentPlaces: decodeRecentPlaces(w.recentPlaces), lastVisitedAt: typeof w.lastVisitedAt === "number" ? w.lastVisitedAt : undefined }, draftPrefix), notes};
   } catch (error) {
     // The record still names itself when its name is readable; its
     // identifier survives only when it is a string no healthy workspace
@@ -275,9 +299,9 @@ function restoreWorkspace(w: Workspace): {workspace: Workspace; notes: string[]}
 interface LoadedBook { book: WorkspaceBook; quarantine: string[] }
 /** The parsed book restored record by record (the per-workspace quarantine
  * law plus the progressive notes beneath it). */
-function restoreBook(parsed: {version?: unknown; active?: unknown; workspaces?: unknown}): LoadedBook {
+function restoreBook(parsed: {version?: unknown; active?: unknown; workspaces?: unknown}, draftPrefix?: string): LoadedBook {
   if ((parsed.version !== 1 && parsed.version !== 2) || !Array.isArray(parsed.workspaces)) throw new Error("Unrecognized workspace format");
-  const restored = (parsed.workspaces as Workspace[]).map(restoreWorkspace);
+  const restored = (parsed.workspaces as Workspace[]).map(w => restoreWorkspace(w,draftPrefix));
   const quarantine = restored.flatMap(result => result.notes);
   // Identifier uniqueness is repaired, never fatal: a colliding record
   // (quarantined or duplicated) mints its own id so no workspace shadows
@@ -301,20 +325,21 @@ function restoreBook(parsed: {version?: unknown; active?: unknown; workspaces?: 
   const active = workspaces.some((w: Workspace) => w.id === parsed.active) ? parsed.active as string : workspaces[0].id;
   return { book: { version: 2, active, workspaces: workspaces.map(w => w.id === active ? { ...w, lastVisitedAt: Date.now() } : w) }, quarantine };
 }
-function load(): LoadedBook {
+export function loadWorkspaceBook(options: WorkspaceStorageOptions = {}): LoadedBook {
+  const {key: KEY, legacyKey, journalKey, draftPrefix} = workspaceStorageNamespace(options);
   const raw = localStorage.getItem(KEY);
   if (raw) {
     try {
-      return restoreBook(JSON.parse(raw));
+      return restoreBook(JSON.parse(raw),draftPrefix);
     } catch (error) {
       // A truncated or otherwise unreadable book never discards the last
       // committed copy (WF1): the staged journal's previous slot opens,
       // naming the substitution; only when no journal copy exists does the
       // original error stand and the protected recovery path take over.
-      const good = lastKnownGood(KEY);
+      const good = lastKnownGood(KEY,journalKey);
       if (good) {
         try {
-          const outcome = restoreBook(JSON.parse(good));
+          const outcome = restoreBook(JSON.parse(good),draftPrefix);
           outcome.quarantine = [`The saved workspace record could not be read (${error instanceof Error ? error.message : String(error)}); the last committed copy was opened instead.`, ...outcome.quarantine];
           return outcome;
         } catch { /* the journal copy is no better — the original error stands */ }
@@ -322,7 +347,7 @@ function load(): LoadedBook {
       throw error;
     }
   }
-  const legacyRaw=localStorage.getItem("oi-cradle.layout.v1");
+  const legacyRaw=legacyKey ? localStorage.getItem(legacyKey) : null;
   let legacy=initialLayout();
   if(legacyRaw){
     const parsed=JSON.parse(legacyRaw);legacy=decodeWorkspaceLayout(parsed);
@@ -330,7 +355,14 @@ function load(): LoadedBook {
   }
   return { book: stampActiveVisited({ version: 2, active: "root", workspaces: [{ id: "root", name: "Central", writing: "", layout: { ...initialLayout(), ...(legacy.root ? scopeLegacyIds(legacy,"root") : {}) } }] }), quarantine: [] };
 }
-export function useWorkspaces() {
+export function useWorkspaces(options: WorkspaceStorageOptions = {}) {
+  const namespace = useRef(workspaceStorageNamespace(options)).current;
+  const requested = workspaceStorageNamespace(options);
+  if (requested.key !== namespace.key || requested.legacyKey !== namespace.legacyKey) throw Error("A mounted workspace cannot change its persistence namespace");
+  const {key: KEY, legacyKey, journalKey, recovery: recoveryNamespace, draftPrefix} = namespace;
+  const load = () => loadWorkspaceBook(options);
+  const preserve = (key: string, reason: string) => preservePresentation(key,reason,recoveryNamespace);
+  const latest = () => latestRecovery(recoveryNamespace);
   // Save-path errors and per-workspace quarantine notes are separate
   // lifecycles that surface through the ONE footer message system: a
   // successful save clears only its own error; the quarantine note stands
@@ -353,11 +385,11 @@ export function useWorkspaces() {
     try {
       const outcome = load();
       if (outcome.quarantine.length) {
-        try { preservePresentation(KEY, outcome.quarantine.join(" ")); } catch { /* the note still names what happened */ }
+        try { preserve(KEY, outcome.quarantine.join(" ")); } catch { /* the note still names what happened */ }
         setQuarantine(outcome.quarantine.join(" "));
       }
       return outcome.book;
-    } catch(error) { try{const record=preservePresentation(localStorage.getItem(KEY)?KEY:"oi-cradle.layout.v1",String(error));setRecovery({reason:String(error),key:record.key});}catch{setRecovery({reason:"Recovery data could not be copied. Original workspace storage is protected."});} return stampActiveVisited({ version: 2, active: "root", workspaces: [{ id: "root", name: "Central", writing: "", layout: initialLayout() }] }); }
+    } catch(error) { try{const record=preserve(localStorage.getItem(KEY)?KEY:(legacyKey ?? KEY),String(error));setRecovery({reason:String(error),key:record.key});}catch{setRecovery({reason:"Recovery data could not be copied. Original workspace storage is protected."});} return stampActiveVisited({ version: 2, active: "root", workspaces: [{ id: "root", name: "Central", writing: "", layout: initialLayout() }] }); }
   });
   useEffect(() => { publishArrangement(book); }, [book]);
   const current = book.workspaces.find(w => w.id === book.active)!;
@@ -377,21 +409,22 @@ export function useWorkspaces() {
   const dirty = useRef(false);
   const writeTimer = useRef<number | undefined>(undefined);
   const recoveryRef = useRef(recovery); recoveryRef.current = recovery;
-  const flushNow = () => {
+  const flushNow = (): boolean => {
     if (writeTimer.current !== undefined) { window.clearTimeout(writeTimer.current); writeTimer.current = undefined; }
-    if (!dirty.current) return;
-    dirty.current = false;
+    if (!dirty.current) return true;
     const pending = held.current;
     // A corrupt store is retained for recovery, never overwritten by fallback.
-    if (pending.active === "recovery" || (recoveryRef.current && !recoveryRef.current.key)) { setSaveError("Saved workspaces could not be restored. The original data has been retained."); return; }
+    if (pending.active === "recovery" || (recoveryRef.current && !recoveryRef.current.key)) { setSaveError("Saved workspaces could not be restored. The original data has been retained."); return false; }
     try {
       const raw = JSON.stringify(pending);
-      stageCheckpoint(KEY, raw);
+      stageCheckpoint(KEY, raw,journalKey);
       localStorage.setItem(KEY, raw);
-      commitCheckpoint(KEY);
+      commitCheckpoint(KEY,journalKey);
+      dirty.current = false;
       setSaveError(null);
+      return true;
     }
-    catch { setSaveError("Workspace changes could not be saved on this device."); }
+    catch { setSaveError("Workspace changes could not be saved on this device."); return false; }
   };
   useEffect(() => {
     dirty.current = true;
@@ -468,9 +501,14 @@ export function useWorkspaces() {
       return withRecentPlace(next,{kind:"directory",label,path,project:w.project,projectRef});
     })
   }));
-  const windowBounds = (workspaceId:string,surfaceId:string,bounds:import("../surface/types").NativeWindowBounds) => setBook(b=>({...b,workspaces:b.workspaces.map(w=>w.id===workspaceId&&w.layout.surfaces[surfaceId]?{...w,layout:{...w.layout,windowBounds:{...w.layout.windowBounds,[surfaceId]:bounds}}}:w)}));
-  const replaceSurface=(workspaceId:string,binding:import("../surface/types").SurfaceBinding)=>setBook(book=>({...book,workspaces:book.workspaces.map(w=>w.id===workspaceId&&w.layout.surfaces[binding.id]?{...w,layout:{...w.layout,surfaces:{...w.layout.surfaces,[binding.id]:binding}}}:w)}));
-  const surfaceView=(workspaceId:string,id:string,view:NonNullable<import("../surface/types").SurfaceBinding["view"]>)=>setBook(book=>({...book,workspaces:book.workspaces.map(w=>w.id===workspaceId&&w.layout.surfaces[id]?{...w,layout:{...w.layout,surfaces:{...w.layout.surfaces,[id]:{...w.layout.surfaces[id],view}}}}:w)}));
+  const windowBounds = (workspaceId:string,surfaceId:string,bounds:import("../surface/types").NativeWindowBounds) => setBook(b=>({...b,workspaces:b.workspaces.map(w=>{
+    if(w.id!==workspaceId)return w;
+    const write=(layout:import("../surface/types").LayoutState)=>layout.surfaces[surfaceId]&&layout.detached?.some(entry=>entry.surfaceId===surfaceId)?{...layout,windowBounds:{...layout.windowBounds,[surfaceId]:bounds}}:layout;
+    const layout=write(w.layout),modeLayouts=w.modeLayouts?Object.fromEntries(Object.entries(w.modeLayouts).map(([mode,saved])=>[mode,write(saved)])) as Workspace['modeLayouts']:undefined;
+    return layout===w.layout&&(!w.modeLayouts||Object.entries(w.modeLayouts).every(([mode,saved])=>modeLayouts?.[mode as keyof typeof modeLayouts]===saved))?w:{...w,layout,...(modeLayouts?{modeLayouts}:{})};
+  })}));
+  const replaceSurface=(workspaceId:string,binding:import("../surface/types").SurfaceBinding)=>setBook(book=>({...book,workspaces:book.workspaces.map(w=>w.id===workspaceId?updateWorkspaceBinding(w,binding.id,()=>binding):w)}));
+  const surfaceView=(workspaceId:string,id:string,view:NonNullable<import("../surface/types").SurfaceBinding["view"]>)=>setBook(book=>({...book,workspaces:book.workspaces.map(w=>w.id===workspaceId?updateWorkspaceBinding(w,id,binding=>({...binding,view})):w)}));
   /** The hosted engine's checkpoint (surface/types.ts `engine`), named by
    * workspace like every presentation write. The binding may stand in the
    * active mode's tree or in a waiting tree's `modeLayouts` (a hidden
@@ -485,28 +523,33 @@ export function useWorkspaces() {
     const modeLayouts=Object.fromEntries(Object.entries(w.modeLayouts).map(([mode,layout])=>[mode,write(layout)])) as Workspace["modeLayouts"];
     return {...w,modeLayouts};
   })}));
-  const redock = (workspaceId:string,surfaceId:string) => setBook(b=>({...b,workspaces:b.workspaces.map(w=>w.id===workspaceId?{...w,layout:redockBinding(w.layout,surfaceId)}:w)}));
+  const redock = (workspaceId:string,surfaceId:string) => setBook(b=>({...b,workspaces:b.workspaces.map(w=>{
+    if(w.id!==workspaceId)return w;
+    const write=(layout:import("../surface/types").LayoutState)=>layout.detached?.some(entry=>entry.surfaceId===surfaceId)?redockBinding(layout,surfaceId):layout;
+    const layout=write(w.layout),modeLayouts=w.modeLayouts?Object.fromEntries(Object.entries(w.modeLayouts).map(([mode,saved])=>[mode,write(saved)])) as Workspace['modeLayouts']:undefined;
+    return layout===w.layout&&(!w.modeLayouts||Object.entries(w.modeLayouts).every(([mode,saved])=>modeLayouts?.[mode as keyof typeof modeLayouts]===saved))?w:{...w,layout,...(modeLayouts?{modeLayouts}:{})};
+  })}));
   /** One click, one reload (owner ruling 2026-09-19): retry the load from
    * the protected storage; success clears the standing message, failure
    * re-reports through the same footer path. Pending coalesced state is
    * flushed FIRST — the retry must read what was actually done, not what
    * had been written when the timer last fired. */
-  const reload=()=>{flushNow();try{const outcome=load();setBook(outcome.book);setRecovery(null);setSaveError(null);if(outcome.quarantine.length){try{preservePresentation(KEY,outcome.quarantine.join(" "));}catch{}setQuarantine(outcome.quarantine.join(" "));}else setQuarantine(null);}catch(error){try{const record=preservePresentation(localStorage.getItem(KEY)?KEY:"oi-cradle.layout.v1",String(error));setRecovery({reason:String(error),key:record.key});}catch{setRecovery({reason:"Recovery data could not be copied. Original workspace storage is protected."});}}};
+  const reload=()=>{if(!flushNow())return;try{const outcome=load();setBook(outcome.book);setRecovery(null);setSaveError(null);if(outcome.quarantine.length){try{preserve(KEY,outcome.quarantine.join(" "));}catch{}setQuarantine(outcome.quarantine.join(" "));}else setQuarantine(null);}catch(error){try{const record=preserve(localStorage.getItem(KEY)?KEY:(legacyKey ?? KEY),String(error));setRecovery({reason:String(error),key:record.key});}catch{setRecovery({reason:"Recovery data could not be copied. Original workspace storage is protected."});}}};
   const startFresh=()=>{if(recovery&&!recovery.key)return;setBook(stampActiveVisited({version:2,active:"root",workspaces:[{id:"root",name:"Central",writing:"",layout:initialLayout()}]}));setRecovery(null);};
   const recoverAvailable=()=>{
-    const saved=latestRecovery();if(!saved)return;
+    const saved=latest();if(!saved)return;
     try {
-      const raw=JSON.parse(saved.raw);const candidates=Array.isArray(raw.workspaces)?raw.workspaces:saved.sourceKey==="oi-cradle.layout.v1"?[{name:"Recovered arrangement",layout:raw}]:[];
+      const raw=JSON.parse(saved.raw);const candidates=Array.isArray(raw.workspaces)?raw.workspaces:saved.sourceKey===legacyKey?[{name:"Recovered arrangement",layout:raw}]:[];
       const restored:Workspace[]=candidates.filter((w:unknown)=>w&&typeof w==="object").map((w:Workspace,index:number)=>{
         const id=crypto.randomUUID();
         const projectNavigation=Object.fromEntries(Object.entries(w.projectNavigation??{}).filter(([,state])=>state&&typeof state.expanded==="boolean"&&Number.isFinite(state.scroll)&&state.scroll>=0).map(([ref,state])=>[ref,{expanded:state.expanded,scroll:state.scroll,mode:state.mode&&["chats","files","wiki"].includes(state.mode)?state.mode:"chats",directories:Array.isArray(state.directories)?state.directories.filter(path=>typeof path==="string"):undefined,locationPath:typeof state.locationPath==="string"?state.locationPath:undefined}]));
-        return carryLegacyWriting({id,name:typeof w.name==="string"?w.name:`Recovered ${index+1}`,project:typeof w.project==="string"?w.project:undefined,centralFiles:w.centralFiles===true,projectNavigation,recentPlaces:decodeRecentPlaces(w.recentPlaces),writing:typeof w.writing==="string"?w.writing:"",writingMode:false,layout:scopeLegacyIds(decodeWorkspaceLayout(w.layout),id,true)});
+        return carryLegacyWriting({id,name:typeof w.name==="string"?w.name:`Recovered ${index+1}`,project:typeof w.project==="string"?w.project:undefined,centralFiles:w.centralFiles===true,projectNavigation,recentPlaces:decodeRecentPlaces(w.recentPlaces),writing:typeof w.writing==="string"?w.writing:"",writingMode:false,layout:scopeLegacyIds(decodeWorkspaceLayout(w.layout),id,true)},draftPrefix);
       });
       if(!restored.length){setSaveError("No complete workspace records could be recovered. The original bytes remain retained.");return;}
       setBook(book=>stampActiveVisited({version:2,active:restored[0].id,workspaces:[...book.workspaces.filter(workspace=>workspace.id!=="recovery"||!!workspace.writing),...restored]}));setRecovery(null);
     }catch{setSaveError("The retained data is not readable as workspace records. It remains preserved for recovery.");}
   };
-  const showRecovery=()=>{const saved=latestRecovery();if(saved)setRecovery({reason:saved.reason,key:saved.key});else setNotice("There is no retained workspace recovery record on this device.");};
+  const showRecovery=()=>{const saved=latest();if(saved)setRecovery({reason:saved.reason,key:saved.key});else setNotice("There is no retained workspace recovery record on this device.");};
   const error=[quarantine,saveError,notice].filter(Boolean).join(" ")||null;
-  return { switchMode, moveSurface, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, rememberPlace, setProjectNavigation, browseAll, windowBounds, redock, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); setNotice(null); } };
+  return { flushCheckpoint: flushNow, storageNamespace: namespace, switchMode, moveSurface, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, rememberPlace, setProjectNavigation, browseAll, windowBounds, redock, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); setNotice(null); } };
 }

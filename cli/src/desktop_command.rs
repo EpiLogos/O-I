@@ -25,6 +25,8 @@ fn command_desktop(args: &[OsString]) -> Result<i32, String> {
                                   adopt a packaged Desktop bundle; recognition\n\
                                   precedes mutation (--plan mutates nothing),\n\
                                   the receipt records what the installer owns\n\
+  oi desktop update --bundle PATH [--sha256 HEX] [--backing ID] [--plan] [--json]\n\
+  oi desktop recover [--plan] [--json]\n\
   oi desktop remove [--plan] [--json]\n\
                                   remove only receipt-owned resources; the\n\
                                   world, its ground and its products stay intact\n\
@@ -45,6 +47,8 @@ native menu."
     }
     match values.as_slice() {
         ["install", rest @ ..] => return command_desktop_install(rest),
+        ["update", rest @ ..] => return command_desktop_update(rest),
+        ["recover", rest @ ..] => return command_desktop_recover(rest),
         ["remove", rest @ ..] => return command_desktop_remove(rest),
         ["status", rest @ ..] => return command_desktop_status(rest),
         _ => {}
@@ -320,6 +324,67 @@ fn recorded_desktop_bundle(data_root: &Path, host_target: &str) -> Result<PathBu
             .map_err(|error| format!("cannot write bundle checksum sidecar: {error}"))?;
     }
     Ok(archive)
+}
+
+fn command_desktop_update(args: &[&str]) -> Result<i32, String> {
+    let options = parse_desktop_install_options(args)?;
+    if options.replace_foreign {
+        return Err("Desktop update never replaces foreign resources".into());
+    }
+    let data_root = oi_data_root()?;
+    let home = desktop_home()?;
+    let host_target = platform_target()?;
+    let bundle_path = match &options.bundle {
+        Some(path) => path.clone(),
+        None => recorded_desktop_bundle(&data_root, host_target)?,
+    };
+    let staging_root = if options.plan_only {
+        env::temp_dir()
+    } else {
+        data_root.join("cache")
+    };
+    let staged = oi_cli::desktop_install::stage_bundle(
+        &bundle_path,
+        options.sha256.as_deref(),
+        host_target,
+        &staging_root,
+    )?;
+    let installed = oi_cli::desktop_install::load_installed_receipt(&data_root)?
+        .ok_or("no installed Desktop receipt to update")?;
+    let backing = options.backing.unwrap_or(installed.backing.requested);
+    let plan = oi_cli::desktop_install::plan_update(
+        &staged,
+        &data_root,
+        &home,
+        &backing,
+        &desktop_product_probe,
+    )?;
+    if options.plan_only {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&plan).map_err(|e| e.to_string())?
+        );
+        return Ok(0);
+    }
+    let receipt = oi_cli::desktop_install::commit_update(staged, &plan, &home)?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&receipt).map_err(|e| e.to_string())?
+    );
+    Ok(0)
+}
+
+fn command_desktop_recover(args: &[&str]) -> Result<i32, String> {
+    if args.iter().any(|a| !matches!(*a, "--plan" | "--json")) {
+        return Err("usage: oi desktop recover [--plan] [--json]".into());
+    }
+    let result =
+        oi_cli::desktop_install::recover_update(&oi_data_root()?, args.contains(&"--plan"))?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&result).map_err(|e| e.to_string())?
+    );
+    Ok(0)
 }
 
 fn command_desktop_remove(args: &[&str]) -> Result<i32, String> {

@@ -1,0 +1,11 @@
+/* Relational forces diagram: shell tokens only. Static drawing; nothing animates (reduced motion is respected by construction). */
+.native-relational-path{fill:none;stroke:var(--accent,#b8bd60);stroke-width:1;stroke-dasharray:3 3;opacity:.8}
+.native-relational-path.is-chaos{stroke-dasharray:none;opacity:.7}
+.native-relational-pair{fill:none;stroke:var(--accent,#b8bd60);stroke-width:.7;opacity:.5}
+.native-relational-centre{fill:var(--accent,#b8bd60);stroke:#181818;stroke-width:1}
+.native-relational-swirl{fill:none;stroke:var(--accent,#b8bd60);stroke-width:.8;stroke-dasharray:2 2;opacity:.7}
+.native-relational-arrow{fill:none;stroke:var(--text,#ddd);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.native-relational-curve{fill:none;stroke:var(--accent,#b8bd60);stroke-width:1.5;stroke-linejoin:round}
+.native-relational-knee{fill:none;stroke:var(--text-dim,#888);stroke-width:.7;stroke-dasharray:2 3}
+.native-relational-gated{opacity:.3}
+.native-relational-off{fill:var(--text-dim,#999);font:9px ui-monospace,SFMono-Regular,monospace}

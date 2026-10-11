@@ -5,13 +5,15 @@ import {kernelOp} from '../kernel/bridge';
 import type {KernelTransportStatus} from '../kernel/types';
 import type {Change,ExpressionDocument,ExpressionRequest,ExpressionResult,Relation} from '../expression/types';
 import {projectWikiExpression,readWikiRegister,wikiRegistersFrom,type WikiProjection,type WikiRegister} from './wikiExpression';
-import {ensureWikiProjection,getWikiProjectionState,setWikiProjectionRegisters,setWikiProjectionRegister,subscribeWikiProjection,wikiProjectionOpening,wikiProjectionDocumentReady,wikiProjectionDocumentFocused,wikiProjectionKernelUnavailable,wikiProjectionDrift,refreshWikiProjectionReading} from './wikiProjectionStore';
+import {captureWikiProjectionAccess,ensureWikiProjection,getWikiProjectionState,setWikiProjectionRegisters,setWikiProjectionRegister,subscribeWikiProjection,wikiProjectionOpening,wikiProjectionDocumentReady,wikiProjectionDocumentFocused,wikiProjectionKernelUnavailable,wikiProjectionDrift,refreshWikiProjectionReading,wikiProjectionReadingPending} from './wikiProjectionStore';
 
 export interface WikiNativeExpression {document:ExpressionDocument;projection:WikiProjection;drift?:string}
 export interface WikiNativeFocus {sceneRef:string;entityRef:string|null;relationRef?:string|null}
 const ACTOR='human:techne-instrument-0';
 const flights=new Map<string,Promise<WikiNativeExpression>>();
 const focusQueue=new Map<string,Promise<WikiNativeExpression>>();
+export interface WikiNativeAccess {identity:string;current:()=>boolean}
+const requireAccess=(access:WikiNativeAccess)=>{if(!access.current())throw Error('The native Wiki owner access changed; its work was retained');};
 
 /** Populate only from the kernel navigator's actual project disclosure. */
 export function publishWikiNativeRegisters(projects:readonly {name:string;path:string}[]):readonly WikiRegister[]{
@@ -33,11 +35,11 @@ async function expression(transport:KernelTransportStatus,request:ExpressionRequ
  if(result.error||result.outcome?.result!=='expression')throw Error(result.error??'The native Expression owner returned no result');
  return result.outcome.data as ExpressionResult;
 }
-function projectionReady(transport:KernelTransportStatus,register:WikiRegister):Promise<WikiProjection>{
+function projectionReady(transport:KernelTransportStatus,register:WikiRegister,access:WikiNativeAccess):Promise<WikiProjection>{
  return new Promise((resolve,reject)=>{
   let done=false;let unsubscribe=()=>{};
   const finish=(error?:Error,projection?:WikiProjection)=>{if(done)return;done=true;clearTimeout(timer);unsubscribe();if(error)reject(error);else resolve(projection!);};
-  const check=()=>{const standing=getWikiProjectionState().standings[register.key];if(!standing)return;if(standing.phase==='unavailable')finish(Error(standing.reason));else if(standing.phase==='absent')finish(Error('This register has no Wiki reading to project'));else if('projection'in standing&&standing.projection)finish(undefined,standing.projection);};
+  const check=()=>{if(!access.current()){finish(Error('The native Wiki owner access changed'));return;}const standing=getWikiProjectionState().standings[register.key];if(!standing)return;if(standing.readingInvalidated){if(!wikiProjectionReadingPending(register.key))finish(Error(standing.phase==='drift'||standing.phase==='unavailable'?standing.reason:'The source reading changed; refresh it before opening another native composition'));return;}if(standing.phase==='unavailable')finish(Error(standing.reason));else if(standing.phase==='absent')finish(Error('This register has no Wiki reading to project'));else if('projection'in standing&&standing.projection)finish(undefined,standing.projection);};
   const timer=setTimeout(()=>finish(Error('The native Wiki reading did not complete; the hosted work was retained')),120000);
   unsubscribe=subscribeWikiProjection(check);ensureWikiProjection(register,transport);check();
  });
@@ -52,46 +54,55 @@ function accepted(register:WikiRegister,projection:WikiProjection,document:Expre
 }
 /** Inspect/list before open. A standing native generation always wins over a
  * fresh derived projection, including its authored edits and current Scene. */
-export function ensureWikiNativeExpression(transport:KernelTransportStatus,register:WikiRegister):Promise<WikiNativeExpression>{
- const key=JSON.stringify([transport,register]);const existing=flights.get(key);if(existing)return existing;
+export function ensureWikiNativeExpression(transport:KernelTransportStatus,register:WikiRegister,access:WikiNativeAccess=captureWikiProjectionAccess()):Promise<WikiNativeExpression>{
+ const requested=access,owner=captureWikiProjectionAccess();
+ access={identity:JSON.stringify([owner.identity,requested.identity]),current:()=>owner.current()&&requested.current()};
+ requireAccess(access);
+ const key=JSON.stringify([transport,register,access.identity]);const existing=flights.get(key);if(existing)return existing;
  const pending=(async()=>{
   try{
-   const projection=await projectionReady(transport,register),ref=projection.document.expression_ref;
+   const projection=await projectionReady(transport,register,access),ref=projection.document.expression_ref;
+   requireAccess(access);
    wikiProjectionOpening(register.key);
    const listed=await expression(transport,{operation:'list'});
+   requireAccess(access);
    if(!Array.isArray(listed.expressions))throw Error('Native Expression inventory is unavailable');
    let data:ExpressionResult;
-   if(listed.expressions.some(row=>row.expression_ref===ref))data=await expression(transport,{operation:'inspect',expression_ref:ref});
+   if(listed.expressions.some(row=>row.expression_ref===ref)){data=await expression(transport,{operation:'inspect',expression_ref:ref});requireAccess(access);}
    else{
     data=await expression(transport,{operation:'open',document:projection.document,actor:ACTOR});
-    if(data.state==='revision_conflict')data=await expression(transport,{operation:'inspect',expression_ref:ref});
+    requireAccess(access);
+    if(data.state==='revision_conflict'){data=await expression(transport,{operation:'inspect',expression_ref:ref});requireAccess(access);}
    }
    if(!data.document)throw Error('The native Expression owner returned no document');
+   requireAccess(access);
    return accepted(register,projection,data.document);
-  }catch(error){wikiProjectionKernelUnavailable(register.key,String(error instanceof Error?error.message:error));throw error;}
+  }catch(error){if(access.current())wikiProjectionKernelUnavailable(register.key,String(error instanceof Error?error.message:error));throw error;}
  })();flights.set(key,pending);void pending.finally(()=>{if(flights.get(key)===pending)flights.delete(key);}).catch(()=>undefined);return pending;
 }
 /** Native focus only; actual rendering is refreshed by the hosted engine's
  * existing native workspace under its unsaved-work guard. */
 export function focusWikiNativeExpression(transport:KernelTransportStatus,register:WikiRegister,focus:WikiNativeFocus):Promise<WikiNativeExpression>{
- const key=JSON.stringify([transport,register]);
+ const access=captureWikiProjectionAccess();requireAccess(access);
+ const key=JSON.stringify([transport,register,access.identity]);
  // Serialize across mounted host lifetimes, not just one React effect. An old
  // request may finish, but cannot retry over a newer selection after cleanup.
  const prior=focusQueue.get(key);
- const pending=(prior?prior.catch(()=>undefined):Promise.resolve()).then(()=>applyNativeFocus(transport,register,focus));
+ const pending=(prior?prior.catch(()=>undefined):Promise.resolve()).then(()=>{requireAccess(access);return applyNativeFocus(transport,register,focus,access);});
  focusQueue.set(key,pending);
  void pending.finally(()=>{if(focusQueue.get(key)===pending)focusQueue.delete(key);}).catch(()=>undefined);
  return pending;
 }
-async function applyNativeFocus(transport:KernelTransportStatus,register:WikiRegister,focus:WikiNativeFocus):Promise<WikiNativeExpression>{
- let prepared=await ensureWikiNativeExpression(transport,register);
+async function applyNativeFocus(transport:KernelTransportStatus,register:WikiRegister,focus:WikiNativeFocus,access:WikiNativeAccess):Promise<WikiNativeExpression>{
+ let prepared=await ensureWikiNativeExpression(transport,register,access);requireAccess(access);
  for(let attempt=0;attempt<2;attempt++){
   const document=prepared.document,scene=document.scenes.find(row=>row.scene_ref===focus.sceneRef);
   if(!scene||focus.entityRef&&!scene.entity_refs.includes(focus.entityRef))throw Error('This selection is not a member of the current native Scene');
   if(focus.relationRef){const relation=document.relations[focus.relationRef];if(!relation||!scene.entity_refs.includes(relation.from_entity_ref)||!scene.entity_refs.includes(relation.to_entity_ref))throw Error('This relation is not in the current native Scene');}
   const change:Change=focus.relationRef?{change:'relation_focus',scene_ref:focus.sceneRef,binding_ref:focus.relationRef}:{change:'focus',scene_ref:focus.sceneRef,entity_ref:focus.entityRef};
   const data=await expression(transport,{operation:'edit',expression_ref:document.expression_ref,expected_revision:document.revision,actor:ACTOR,changes:[change]});
-  if(data.state==='revision_conflict'&&attempt===0){const current=await expression(transport,{operation:'inspect',expression_ref:document.expression_ref});if(!current.document)throw Error('The changed native composition could not be read');prepared=accepted(register,prepared.projection,current.document);continue;}
+  requireAccess(access);
+  if(data.state==='revision_conflict'&&attempt===0){const current=await expression(transport,{operation:'inspect',expression_ref:document.expression_ref});requireAccess(access);if(!current.document)throw Error('The changed native composition could not be read');prepared=accepted(register,prepared.projection,current.document);continue;}
   if(!data.document)throw Error('The native focus was not acknowledged');
   if(data.document.expression_ref!==document.expression_ref)throw Error('The native focus redirected the Expression');
   wikiProjectionDocumentFocused(register.key,data.document);return {...prepared,document:data.document};
@@ -106,7 +117,8 @@ async function applyNativeFocus(transport:KernelTransportStatus,register:WikiReg
  * overview body, focused — one additive edit that leaves every authored
  * Scene, body and relation as it stands. Idempotent when the Scene exists. */
 export async function seatWikiConstellation(transport:KernelTransportStatus,register:WikiRegister,sceneRef:string):Promise<WikiNativeExpression>{
- let prepared=await ensureWikiNativeExpression(transport,register);
+ const access=captureWikiProjectionAccess();requireAccess(access);
+ let prepared=await ensureWikiNativeExpression(transport,register,access);requireAccess(access);
  for(let attempt=0;attempt<2;attempt++){
   const {document,projection}=prepared;
   if(document.scenes.some(row=>row.scene_ref===sceneRef))return prepared;
@@ -126,7 +138,8 @@ export async function seatWikiConstellation(transport:KernelTransportStatus,regi
   if(document.scenes.some(row=>row.scene_ref===projection.overviewSceneRef))seat(projection.overviewSceneRef,constellation.overviewEntityRef);
   changes.push({change:'focus',scene_ref:sceneRef,entity_ref:null});
   const data=await expression(transport,{operation:'edit',expression_ref:document.expression_ref,expected_revision:document.revision,actor:ACTOR,changes});
-  if(data.state==='revision_conflict'&&attempt===0){const current=await expression(transport,{operation:'inspect',expression_ref:document.expression_ref});if(!current.document)throw Error('The changed native composition could not be read');prepared=accepted(register,projection,current.document);continue;}
+  requireAccess(access);
+  if(data.state==='revision_conflict'&&attempt===0){const current=await expression(transport,{operation:'inspect',expression_ref:document.expression_ref});requireAccess(access);if(!current.document)throw Error('The changed native composition could not be read');prepared=accepted(register,projection,current.document);continue;}
   if(!data.document)throw Error('The native composition did not accept the new constellation');
   if(data.document.expression_ref!==document.expression_ref)throw Error('The native edit redirected the Expression');
   return accepted(register,projection,data.document);

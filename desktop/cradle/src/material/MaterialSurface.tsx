@@ -1,19 +1,19 @@
 import {IconTabStrip} from "../workspace/primitives/IconTabStrip";
-import {readDraft} from "../workspace/drafts";
-import {useCallback,useEffect,useMemo,useRef,useState} from "react";
+import {readDraft,readPageDraft,writePageDraft,clearPageDraft,pageDraftHtml,samePageOwner,samePageLocation,type HeldPageDraft} from "../workspace/drafts";
+import {useCallback,useEffect,useMemo,useRef,useState,useSyncExternalStore} from "react";
 import {Loading} from "../shared/Loading";
 import {useKernel} from "../kernel/KernelProvider";
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
 import type {SurfaceBinding} from "../surface/types";
-import {acquireFileReading,acquireFileBytes} from "../files/resources";
+import {acquireFileReading,acquireFileBytes,captureFileResourceAccess,fileResourceHostGeneration,subscribeResources,invalidateFile,type FileResourceScope} from "../files/resources";
 import {FileSurface} from "../files/FileSurface";
 import {materialCapabilities,type MaterialFormat} from "./detect";
 import {renderMarkdown} from "./markdown";
 import "./material.css";
 import pageContextScript from "../context/page-context.js?raw";
-import {documentScripts, useDocumentHostRead, type FrameIsland} from "../document/frame";
+import {documentScripts, documentPayloadSource, useDocumentHostRead, registerDocumentCheckpoint, type FrameIsland} from "../document/frame";
 import {useMaterialContext} from "../context/PageContext";
-import {readDocumentIdentity,islandSpan,FAMILY_LABEL} from "../document/identity";
+import {readDocumentIdentity,islandSpan,sameDocumentPayload,FAMILY_LABEL} from "../document/identity";
 import {saveDocumentPayload,type DocumentSaveOutcome} from "../document/hostSave";
 import {waitingReturnsForSource} from "../document/returns";
 import {EditorButton,EditorFrame} from "../editor/EditorChrome";
@@ -80,8 +80,14 @@ function imageMimeFor(path: string, mimeHint: string | null): string {
  * new acquisition generation). Acquisitions go through the shared broker
  * (`files/resources`), so the open path's read and this renderer's join into
  * one owner round trip. */
-export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; format: MaterialFormat }) {
+export function MaterialSurface({ binding, format, onView }: { binding: SurfaceBinding; format: MaterialFormat; onView?:(view:NonNullable<SurfaceBinding["view"]>)=>void }) {
   const { transport } = useKernel();
+  const ownerEpoch=useSyncExternalStore(subscribeResources,fileResourceHostGeneration,fileResourceHostGeneration);
+  const nativeSubject=JSON.stringify([binding.ref,binding.location,transport,ownerEpoch]);
+  const currentSubject=useRef(nativeSubject);currentSubject.current=nativeSubject;
+  const capture=()=>{const access=captureFileResourceAccess(transport);return()=>access.current()&&currentSubject.current===nativeSubject;};
+  const dirtyPage=useRef(false);
+  const [nativeError,setNativeError]=useState<string>();
   const viewKey = materialViewKey(binding.id);
   // The person's Rendered|Source choice and preview zoom persist per binding.
   // A first mount with nothing usable saved opens Rendered, the faithful
@@ -117,12 +123,19 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   useEffect(() => { try { localStorage.setItem(viewKey, encodeMaterialViewPrefs({view, zoom})); } catch { /* Optional presentation state; never source authority. */ } }, [viewKey,view,zoom]);
   const [textContent, setTextContent] = useState<string>();
   const [textRevision, setTextRevision] = useState<string>();
+  // Canonical revalidation and an editable document instance are different
+  // layers. Updating the reading must never rewrite a live iframe's srcDoc.
+  const [htmlDocument,setHtmlDocument]=useState<{generation:number;content:string;savedContent:string;revision:string;location:CentralLocation;scope:FileResourceScope|null;restored?:boolean;srcDoc:boolean;frameUrl?:string;baseHref:string}>();
+  const htmlBasis=htmlDocument?.generation===generation?htmlDocument:undefined;
+  const retainedBasis=useRef(htmlBasis);retainedBasis.current=htmlBasis;
+  const localReadTicket=useRef(0);
+  const lastSecuredPage=useRef<string>();
   const [draftContent,setDraftContent]=useState<string>();
   const [draftBase,setDraftBase]=useState<string>();
   useEffect(()=>{let timer:ReturnType<typeof setTimeout>|undefined;
     const read=()=>{const draft=binding.ref?readDraft(binding.ref):undefined;setDraftContent(draft?.content);setDraftBase(draft?.base_revision);};
     const change=(event:Event)=>{if((event as CustomEvent).detail?.ref!==binding.ref)return;clearTimeout(timer);timer=setTimeout(read,150);};read();
-    const acquired=(event:Event)=>{const detail=(event as CustomEvent).detail;if(detail?.ref!==binding.ref||typeof detail.reading?.content!=="string"||typeof detail.reading?.revision!=="string")return;setTextContent(detail.reading.content);setTextRevision(detail.reading.revision);read();};
+    const acquired=(event:Event)=>{const detail=(event as CustomEvent).detail;if(detail?.ref!==binding.ref||typeof detail.reading?.content!=="string"||typeof detail.reading?.revision!=="string")return;if(dirtyPage.current){setNativeError("A newer native reading is available. The page's unsaved edits remain on their original revision.");return;}setTextContent(detail.reading.content);setTextRevision(detail.reading.revision);read();};
     window.addEventListener("oi:file-draft-changed",change);window.addEventListener("oi:file-reading-changed",acquired);return()=>{clearTimeout(timer);window.removeEventListener("oi:file-draft-changed",change);window.removeEventListener("oi:file-reading-changed",acquired);};
   },[binding.ref]);
   const previewSource=draftContent!==undefined&&draftBase===textRevision?draftContent:textContent;
@@ -137,11 +150,13 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
 
   // Document identity (DOCUMENT-SURFACE.md): what the crafted document is,
   // from its own payload island — never from the filename.
-  const identity = useMemo(() => (format === "html" ? readDocumentIdentity(previewSource) : undefined), [format, previewSource]);
+  const displayedSource=htmlBasis?.savedContent??previewSource;
+  const displayedRevision=htmlBasis?.revision??textRevision;
+  const identity = useMemo(() => (format === "html" ? readDocumentIdentity(displayedSource) : undefined), [format, displayedSource]);
   const savedIslandText = useMemo(() => {
-    if (identity?.payload !== "ql-doc" || textContent === undefined) return undefined;
-    return islandSpan(textContent, "ql-doc")?.text ?? null;
-  }, [identity?.payload, textContent]);
+    if (identity?.payload !== "ql-doc" || displayedSource === undefined) return undefined;
+    return islandSpan(displayedSource, "ql-doc")?.text ?? null;
+  }, [identity?.payload, displayedSource]);
   const [frameIsland, setFrameIsland] = useState<FrameIsland>();
   const [docSave, setDocSave] = useState<{busy: true} | {busy: false; outcome: DocumentSaveOutcome}>();
   // What the owner disclosed about the saved source at last acquisition:
@@ -149,19 +164,53 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   // ordinary write authority exists at all.
   const [readingMeta, setReadingMeta] = useState<{sourceRef: string | null; writeAvailable: boolean; writeReason: string | null}>();
   const readIsland = useDocumentHostRead(htmlFrame, identity?.payload === "ql-doc");
-  // The page's own live payload, polled while the frame is up: the page
-  // rewrites its island as the person edits, so the island text IS the
-  // page's dirty state — no second editing model is invented here.
-  useEffect(() => {
-    if (identity?.payload !== "ql-doc" || loadState.frameLoaded !== generation) return;
-    let live = true;
-    const poll = () => { void readIsland().then(value => { if (live && value) setFrameIsland(value); }); };
-    poll();
-    const timer = setInterval(poll, 2500);
-    return () => { live = false; clearInterval(timer); };
-  }, [identity?.payload, loadState.frameLoaded, generation, readIsland]);
+  // Local recovery reads the real frame even when native services retire.
+  // Native mutation authority is deliberately absent from this checkpoint.
+  const securePage=useCallback((value:FrameIsland|null,basis:NonNullable<typeof htmlBasis>,frame:HTMLIFrameElement)=>{
+    const current=retainedBasis.current;
+    if(htmlFrame.current!==frame||!current||current.generation!==basis.generation||!samePageLocation(current.location,basis.location)||!samePageOwner(current.scope,basis.scope))throw Error('The originating document frame or subject changed before its local checkpoint.');
+    if(!value||typeof value.text!=='string')throw Error('The real page did not disclose its current payload; keep its view open.');
+    const document=readDocumentIdentity(current.savedContent);
+    if(document?.payload!=='ql-doc'||value.documentId!==document.documentId)throw Error('The observed page identity differs from its pinned native document; keep its view open.');
+    const saved=islandSpan(current.savedContent,'ql-doc')?.text;
+    setFrameIsland(value);
+    dirtyPage.current=!sameDocumentPayload(value.text,saved);
+    if(sameDocumentPayload(value.text,saved)){clearPageDraft(current.location.ref,lastSecuredPage.current??value.text,current.location,current.scope);lastSecuredPage.current=undefined;return;}
+    const copy:HeldPageDraft={schema:'oi.cradle.page-working-copy/v1',location:current.location,scope:current.scope,base_revision:current.revision,saved_content:current.savedContent,frame_content:current.content,document,island:{text:value.text,revision:value.revision,documentId:value.documentId}};
+    writePageDraft(current.location.ref,copy);lastSecuredPage.current=value.text;
+  },[]);
+  const checkpointPage=useCallback(async()=>{
+    const basis=retainedBasis.current,frame=htmlFrame.current;
+    if(!basis||readDocumentIdentity(basis.savedContent)?.payload!=='ql-doc')return;
+    if(!frame)throw Error('The owned document frame is unavailable for its final local checkpoint.');
+    const ticket=++localReadTicket.current;
+    const value=await readIsland();
+    if(ticket!==localReadTicket.current)throw Error('The page changed during its checkpoint; its view remains retained.');
+    securePage(value,basis,frame);
+  },[readIsland,securePage]);
+  useEffect(()=>{
+    if(identity?.payload!=='ql-doc'||loadState.frameLoaded!==generation)return;
+    let live=true;
+    const observe=()=>{void checkpointPage().catch(error=>{if(live)setNativeError(String(error));});};
+    const changed=(event:MessageEvent)=>{
+      const frame=htmlFrame.current,basis=retainedBasis.current,value=event.data;
+      if(!live||!frame||!basis||event.source!==frame.contentWindow||value?.type!=='oi:document-host-changed')return;
+      ++localReadTicket.current;
+      try{securePage(value.result,basis,frame);}catch(error){setNativeError(String(error));}
+    };
+    observe();const timer=setInterval(observe,2500);
+    // Observation notifications improve the poll bound when carried by the
+    // actual page protocol; the read-only fallback supports older native hosts.
+    window.addEventListener('message',changed);
+
+    const hide=()=>observe();window.addEventListener('pagehide',hide);
+    const visibility=()=>{if(document.visibilityState==='hidden')observe();};document.addEventListener('visibilitychange',visibility);
+    return()=>{live=false;clearInterval(timer);window.removeEventListener('message',changed);window.removeEventListener('pagehide',hide);document.removeEventListener('visibilitychange',visibility);};
+  },[binding.id,identity?.payload,loadState.frameLoaded,generation,checkpointPage,securePage]);
+  useEffect(()=>identity?.payload==='ql-doc'&&htmlBasis ? registerDocumentCheckpoint(binding.id,checkpointPage) : undefined,[binding.id,identity?.payload,htmlBasis?.generation,checkpointPage]);
   const pageDirty = identity?.payload === "ql-doc"
-    && frameIsland?.text != null && savedIslandText != null && frameIsland.text !== savedIslandText;
+    && frameIsland?.text != null && savedIslandText != null && !sameDocumentPayload(frameIsland.text,savedIslandText);
+  dirtyPage.current=!!pageDirty;
   const docWritable = !!location && textRevision !== undefined
     && (!!readingMeta?.sourceRef || readingMeta?.writeAvailable !== false);
   // Returns beside the document: what the native receiving field holds
@@ -171,34 +220,47 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
     const sourceRef = readingMeta?.sourceRef;
     if (!sourceRef) return;
     let live = true;
-    const read = () => void waitingReturnsForSource(transport, binding.project ?? null, sourceRef).then(count => { if (live) setWaitingReturns(count); });
+    let current:()=>boolean;try{current=capture();}catch{return;}
+    const read = () => {if(!current())return;void waitingReturnsForSource(transport, binding.project ?? null, sourceRef).then(count => { if (live&&current()) setWaitingReturns(count); }).catch(error=>{if(live&&current())setNativeError(String(error));});};
     read();
     const focus = () => { if (document.visibilityState === "visible") read(); };
     window.addEventListener("focus", focus);
     const timer = setInterval(focus, 60_000);
     return () => { live = false; window.removeEventListener("focus", focus); clearInterval(timer); };
-  }, [transport, binding.project, readingMeta?.sourceRef]);
+  }, [nativeSubject, binding.project, readingMeta?.sourceRef]);
   const saveDocument = () => {
-    if (docSave?.busy || !identity || identity.payload !== "ql-doc" || !location || textRevision === undefined) return;
+    if (docSave?.busy || !identity || identity.payload !== "ql-doc" || !location || displayedRevision === undefined) return;
+    let current:()=>boolean;try{current=capture();if(!current())throw Error("The document's native owner is unavailable");}catch(error){setNativeError(String(error));return;}
+    const basis=retainedBasis.current,access=captureFileResourceAccess(transport).access;
+    if(basis&&(!samePageLocation(basis.location,location)||!samePageOwner(basis.scope,access?.scope??null))){setNativeError('This page belongs to a different retained native owner scope. Its local edits remain intact.');return;}
     setDocSave({busy: true});
     void (async () => {
       try {
         const value = await readIsland();
+        if(!current())throw Error("The document's originating native subject has retired");
         const islandText = typeof value?.text === "string" && value.text.length > 0 ? value.text : undefined;
         if (!islandText) throw new Error("This page did not answer the document host; nothing was saved.");
+        const observedBasis=retainedBasis.current,frame=htmlFrame.current;
+        if(observedBasis&&frame)securePage(value,observedBasis,frame);
         const result = await saveDocumentPayload(transport, {
           location, project: binding.project, identity,
-          basisFileRevision: textRevision, frameIslandText: islandText,
+          basisFileRevision: displayedRevision, frameIslandText: islandText,
+          isCurrent:current,
         });
+        if(!current())return;
         setDocSave({busy: false, outcome: result.outcome});
         if (result.outcome.state === "saved" && result.reading) {
           // The frame already holds what was saved; refresh the canonical
           // layer and revision stamps without remounting it.
           setTextContent(result.reading.content);
           setTextRevision(result.reading.revision);
+          const saved=result.reading;
+          const previous=retainedBasis.current;
+          if(previous?.generation===generation){const next={...previous,savedContent:saved.content,revision:saved.revision};retainedBasis.current=next;setHtmlDocument(next);}
+          clearPageDraft(location.ref,islandText,location,basis?.scope??null);
         }
       } catch (error) {
-        setDocSave({busy: false, outcome: {state: "refused", detail: String(error)}});
+        if(current())setDocSave({busy: false, outcome: {state: "refused", detail: String(error)}});
       }
     })();
   };
@@ -209,7 +271,8 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   // identity never flaps.
   const renderedBaseUrl = useMemo(() => (location ? materialUrl(transport, location) : undefined), [transport, location]);
   const bridgeBaseHref = useMemo(() => (location ? materialUrl(transport, location, "") ?? "" : ""), [transport, location]);
-  const bridgeHtmlDocument = useMemo(() => (format === "html" && previewSource !== undefined ? injectBase(previewSource, bridgeBaseHref) : ""), [format, previewSource, bridgeBaseHref]);
+  const frameSource=htmlBasis?.content??previewSource;
+  const bridgeHtmlDocument = useMemo(() => (format === "html" && frameSource !== undefined ? injectBase(frameSource, htmlBasis?.baseHref??bridgeBaseHref) : ""), [format, frameSource, htmlBasis?.baseHref, bridgeBaseHref]);
   const markdownHtmlDocument = useMemo(() => (format === "markdown" && previewSource !== undefined ? markdownDocument(previewSource, relative => location ? materialUrl(transport, location, relative) ?? "" : "") : ""), [format, previewSource, transport, location]);
 
   useEffect(() => {
@@ -220,7 +283,9 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
     // holds its first owner acquisition until first presentation;
     // everPresented only ever turns on, so a live surface is never reset.
     if (!everPresented) return;
-    beginLoad(generation);
+    const retained=textContent!==undefined||imageDataUrl!==undefined||disposition!==undefined;
+    let current:()=>boolean;try{current=capture();}catch(error){setNativeError(String(error));if(!retained)observeLoad(generation,{kind:"failed",error:String(error)});return;}
+    if(!retained)beginLoad(generation);
     setPdfFailedGeneration(-1);
     if (!location) {
       observeLoad(generation, {kind: "failed", error: "The saved file location is unavailable"});
@@ -234,55 +299,80 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
         // again; an unchanged cached reading IS the same revision, so the
         // broker's cache hit is correctness, not staleness.
         const reading = await acquireFileReading(transport, location);
-        if (live) {
+        if (live&&current()) {
+          if(dirtyPage.current&&reading.revision!==textRevision){setNativeError("The native file changed. Unsaved page edits remain on their original revision; compare or save them before reloading.");return;}
           setTextContent(reading.content);
           setTextRevision(reading.revision);
+          if(format==='html'){
+            const scope=captureFileResourceAccess(transport).access?.scope??null;
+            const local=readPageDraft(reading.location.ref);
+            const admitted=local&&samePageLocation(local.location,reading.location)&&samePageOwner(local.scope,scope);
+            const existing=retainedBasis.current;
+            if(existing?.generation!==generation){
+              const sourceDraft=readDraft(reading.location.ref),sourcePreview=sourceDraft?.base_revision===reading.revision?sourceDraft.content:reading.content;
+              const nativeFrame={frameUrl:materialUrl(transport,reading.location),baseHref:materialUrl(transport,reading.location,'')??''};
+              const next=admitted?{generation,content:pageDraftHtml(local),savedContent:local.saved_content,revision:local.base_revision,location:local.location,scope:local.scope,restored:true,srcDoc:true,...nativeFrame}:{generation,content:sourcePreview,savedContent:reading.content,revision:reading.revision,location:reading.location,scope,srcDoc:transport.kind!=='tauri'||sourcePreview!==reading.content||readDocumentIdentity(sourcePreview)?.payload==='ql-doc',...nativeFrame};
+              retainedBasis.current=next;setHtmlDocument(next);
+              if(admitted){lastSecuredPage.current=local.island.text;setFrameIsland(local.island);dirtyPage.current=true;setNativeError(reading.revision===local.base_revision?'Unsaved page working copy restored from this device.':'The page working copy remains on its retained basis; the native file has advanced. Compare or explicitly save before replacing it.');}
+              else if(local)setNativeError('A page working copy for another native owner scope remains on this device. This view reads the current owner separately.');
+            }
+          }
           setReadingMeta({sourceRef: reading.source?.ref ?? null, writeAvailable: reading.operations?.write?.available !== false, writeReason: reading.operations?.write?.reason ?? null});
         }
       } else if (format === "unsupported") {
         const reading = await acquireFileBytes(transport, location);
-        if (live) setDisposition({ byte_len: reading.byte_len, mime_hint: reading.mime_hint });
+        if (live&&current()) setDisposition({ byte_len: reading.byte_len, mime_hint: reading.mime_hint });
       } else if (format === "image" && transport.kind === "bridge") {
         // The dev-only bridge is plain HTTP: a `data:` URL avoids a second
         // origin/CORS surface for what is otherwise a walk-only transport.
         const reading = await acquireFileBytes(transport, location);
-        if (live) setImageDataUrl(`data:${imageMimeFor(location.path, reading.mime_hint)};base64,${reading.content_base64}`);
+        if (live&&current()) setImageDataUrl(`data:${imageMimeFor(location.path, reading.mime_hint)};base64,${reading.content_base64}`);
       }
       // image/tauri and pdf/either transport need no separate read: their
       // element's `src` addresses the material URL directly.
     };
-    void run()
-      .catch(error => { if (live) observeLoad(generation, {kind: "failed", error: String(error)}); })
-      .finally(() => { if (live) observeLoad(generation, {kind: "ready"}); });
+    void run().then(()=>{if(live&&current()){if(!dirtyPage.current&&!readPageDraft(location.ref))setNativeError(undefined);observeLoad(generation,{kind:"ready"});}})
+      .catch(error => { if (live&&current()){setNativeError(String(error));if(!retained)observeLoad(generation, {kind: "failed", error: String(error)});} });
     return () => { live = false; };
-  }, [transport, location, format, generation, beginLoad, observeLoad, everPresented]);
+  }, [nativeSubject, location, format, generation, beginLoad, observeLoad, everPresented]);
+  useEffect(()=>{setDocSave(previous=>previous?.busy?{busy:false,outcome:{state:"refused",detail:"The native connection changed. Your page edits were retained; review the saved basis before retrying."}}:previous);},[ownerEpoch]);
+  const reload=()=>{void(async()=>{
+    let current:()=>boolean;try{current=capture();}catch(error){setNativeError(String(error));return;}
+    if(identity?.payload==="ql-doc"){
+      const island=await readIsland();if(!current())return;
+      if(!island||typeof island.text!=="string"){setNativeError("The page did not disclose its current payload. It has been retained; retry before releasing it.");return;}
+      const basis=retainedBasis.current,frame=htmlFrame.current;if(basis&&frame)securePage(island,basis,frame);
+      if(!sameDocumentPayload(island.text,savedIslandText)){setFrameIsland(island);setNativeError("Unsaved page edits are retained. Save or resolve them before reloading this preview.");return;}
+    }else if(pageDirty)return;
+    if(!current())return;if(location)invalidateFile(location);setGeneration(value=>value+1);
+  })().catch(error=>{if(currentSubject.current===nativeSubject)setNativeError(String(error));});};
 
   const showToggle = materialCapabilities(format).split;
   const zoomable = ["html","markdown","image"].includes(format);
   const tools = view !== "source" ? <div className="material-tools">
     {zoomable && <select aria-label="Preview zoom" value={zoom} onChange={e=>setZoom(Number(e.target.value))}>{MATERIAL_ZOOM_STEPS.map(value=><option key={value} value={value}>{Math.round(value*100)}%</option>)}</select>}
-    <button type="button" aria-label="Reload preview" title="Reload from the file owner" disabled={busy} onClick={()=>setGeneration(value=>value+1)}><Glyph name="refresh" size={12}/></button>
+    <button type="button" aria-label="Reload preview" title="Reload from the file owner" disabled={busy} onClick={reload}><Glyph name="refresh" size={12}/></button>
   </div> : null;
   if (!location) return <p role="alert" className="source-note">The saved file location is unavailable</p>;
 
   const baseUrl = renderedBaseUrl;
   const imageSrc = transport.kind === "bridge" ? imageDataUrl : baseUrl;
-  const personalPage=useMemo(()=>{if(format!=="html"||!textContent||!textRevision)return undefined;try{const parsed=readPage(textContent);return parsed.page.expression?parsed:undefined;}catch{return undefined;}},[format,textContent,textRevision]);
+  const personalPage=useMemo(()=>{if(format!=="html"||!displayedSource||!displayedRevision)return undefined;try{const parsed=readPage(displayedSource);return parsed.page.expression?parsed:undefined;}catch{return undefined;}},[format,displayedSource,displayedRevision]);
   const receiveHostedState=useCallback((state:PageExpressionHostedState)=>setHostedExpression(state),[]);
   useEffect(()=>setPageExpressionInvalidated(false),[generation,textRevision]);
   useEffect(()=>{
     const frame=htmlFrame.current;
-    if(format!=="html"||!frame||loadState.frameLoaded!==generation||!personalPage||!textRevision||!hostedExpression)return;
+    if(format!=="html"||!frame||loadState.frameLoaded!==generation||!personalPage||!displayedRevision||!hostedExpression)return;
     const expression=personalPage.page.expression,frameGeneration=String(generation);
-    const exact=hostedExpression.pageRef===(binding.ref??binding.id)&&hostedExpression.fileRevision===textRevision&&hostedExpression.documentId===(personalPage.meta.documentId??null)&&hostedExpression.documentRevision===personalPage.meta.revision&&hostedExpression.expressionRef===expression.expression_ref&&hostedExpression.expressionRevision===expression.expression_revision;
-    const sourceExact=frame.dataset.fileRevision===textRevision&&frame.dataset.generation===frameGeneration&&(transport.kind==="tauri"?frame.getAttribute("src")===baseUrl:frame.hasAttribute("srcdoc"));
+    const exact=hostedExpression.pageRef===(binding.ref??binding.id)&&hostedExpression.fileRevision===displayedRevision&&hostedExpression.documentId===(personalPage.meta.documentId??null)&&hostedExpression.documentRevision===personalPage.meta.revision&&hostedExpression.expressionRef===expression.expression_ref&&hostedExpression.expressionRevision===expression.expression_revision;
+    const sourceExact=frame.dataset.fileRevision===displayedRevision&&frame.dataset.generation===frameGeneration&&(!htmlBasis?.srcDoc?frame.getAttribute("src")===htmlBasis?.frameUrl:frame.hasAttribute("srcdoc"));
     if(!exact||!sourceExact)return;
     const token=crypto.randomUUID();let disposed=false;
     const receive=(event:MessageEvent)=>{const value=event.data;if(disposed||event.source!==frame.contentWindow||value?.token!==token||value.generation!==generation||value.page?.document_id!==hostedExpression.documentId||value.page?.revision!==hostedExpression.documentRevision||value.expression?.ref!==hostedExpression.expressionRef||value.expression?.revision!==hostedExpression.expressionRevision)return;if(value.type==="oi:page-expression-host-invalidated"){setPageExpressionInvalidated(true);return;}if(value.type!=="oi:page-expression-host-response")return;if(value.accepted!==true&&hostedExpression.live)setHostedExpression(previous=>previous&&{...previous,live:false});};
     window.addEventListener("message",receive);
     frame.contentWindow?.postMessage({type:"oi:page-expression-host",token,generation,live:hostedExpression.live,page:{document_id:hostedExpression.documentId,revision:hostedExpression.documentRevision},expression:{ref:hostedExpression.expressionRef,revision:hostedExpression.expressionRevision}},"*");
     return()=>{disposed=true;window.removeEventListener("message",receive);};
-  },[format,loadState.frameLoaded,personalPage,textRevision,hostedExpression,generation,binding.ref,binding.id,transport.kind,baseUrl]);
+  },[format,loadState.frameLoaded,personalPage,displayedRevision,hostedExpression,generation,binding.ref,binding.id,transport.kind,baseUrl]);
 
   // The source view mounts the real FileSurface editor — AFTER every hook,
   // so toggling views never changes this component's hook count. (The early
@@ -290,14 +380,14 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   // subtree on the hook mismatch and the error boundary remounted it
   // straight back into the rendered view — the toggle could never stick.)
   return <div className="material-composition" data-view={view}>
-    {(sourceVisited||view!=="rendered")&&<div className="material-source-pane" hidden={view==="rendered"}><FileSurface binding={binding} forceSource leadingTools={<MaterialToggle view={view} onChange={setView}/>}/></div>}
+    {(sourceVisited||view!=="rendered")&&<div className="material-source-pane" hidden={view==="rendered"}><FileSurface binding={binding} forceSource onView={onView} leadingTools={<MaterialToggle view={view} onChange={setView}/>}/></div>}
     <div className="material-preview-pane" hidden={view==="source"}>
   <EditorFrame className="material-surface" label={`Material ${binding.title}`}
     toolbar={null} presentationTools={<>{showToggle&&<MaterialToggle view={view} onChange={setView}/>} {tools}</>}
-    footer={<><span className="editor-path" title={`Central / ${location.path}`}>Central / {location.path}</span><span>{FORMAT_LABEL[format]}{unsavedPreview?" · unsaved preview":""}</span>{zoomable&&<span>{Math.round(zoom*100)}%</span>}{identity&&<span className="editor-path" title={identity.templateRef?`Template ${identity.templateRef}`:undefined}>{FAMILY_LABEL[identity.family]??identity.label}{identity.documentRevision!=null?` · r${identity.documentRevision}`:""}{pageDirty?" · unsaved on the page":""}</span>}{docSave&&!docSave.busy&&<span role={docSave.outcome.state==="saved"||docSave.outcome.state==="unchanged"?"status":"alert"}>{docSave.outcome.state==="saved"?"Saved":docSave.outcome.state==="unchanged"?"Already saved":docSave.outcome.detail}</span>}{waitingReturns?<span role="status" title="Material returned against this document is waiting in the Inbox">{waitingReturns} waiting return{waitingReturns===1?"":"s"}</span>:null}<EditorButton disabled={busy} onClick={()=>setGeneration(value=>value+1)}>Reload</EditorButton>{identity?.payload==="ql-doc"&&<EditorButton disabled={docSave?.busy===true||!docWritable} onClick={saveDocument} title={docWritable?undefined:readingMeta?.writeReason??"No write authority for this document"}>{docSave?.busy?"Saving…":"Save"}</EditorButton>}</>}
+    footer={<><span className="editor-path" title={`Central / ${location.path}`}>Central / {location.path}</span><span>{FORMAT_LABEL[format]}{unsavedPreview?" · unsaved preview":""}</span>{zoomable&&<span>{Math.round(zoom*100)}%</span>}{identity&&<span className="editor-path" title={identity.templateRef?`Template ${identity.templateRef}`:undefined}>{FAMILY_LABEL[identity.family]??identity.label}{identity.documentRevision!=null?` · r${identity.documentRevision}`:""}{pageDirty?" · unsaved on the page":""}</span>}{docSave&&!docSave.busy&&<span role={docSave.outcome.state==="saved"||docSave.outcome.state==="unchanged"?"status":"alert"}>{docSave.outcome.state==="saved"?(docSave.outcome.readback==="verified"?"Saved":"Saved · updated reading unavailable"):docSave.outcome.state==="unchanged"?"Already saved":docSave.outcome.detail}</span>}{waitingReturns?<span role="status" title="Material returned against this document is waiting in the Inbox">{waitingReturns} waiting return{waitingReturns===1?"":"s"}</span>:null}<EditorButton disabled={busy} onClick={reload}>Reload</EditorButton>{identity?.payload==="ql-doc"&&<EditorButton disabled={docSave?.busy===true||!docWritable} onClick={saveDocument} title={docWritable?undefined:readingMeta?.writeReason??"No write authority for this document"}>{docSave?.busy?"Saving…":"Save"}</EditorButton>}</>}
   >
     <div ref={containerRef} className="material-rendered-content" data-suspended={suspended || undefined} aria-busy={!showing && !loadError}>
-    {loadError && <p role="alert" className="source-note">{loadError} <button type="button" onClick={()=>setGeneration(value=>value+1)}>Retry</button></p>}
+    {(nativeError||loadError) && <p role="alert" className="source-note">{nativeError??loadError} <button type="button" onClick={reload}>Retry</button></p>}
     {!loadError && !showing && <Loading label="Reading material…" scope="surface"/>}
     {!loadError && showing && format === "html" && <div className="material-viewport" data-preview-zoom={zoom}><div className="material-scaled" style={{width:`${100/zoom}%`,height:`${100/zoom}%`,transform:`scale(${zoom})`}}>{(
       // allow-downloads serves the document's own "Save HTML copy" — a
@@ -307,11 +397,11 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
       // The source below is never a function of suspension: conceal keeps
       // this exact node and its stable revision-bound document; only
       // `key={generation}` — a committed replacement — ever remounts it.
-      transport.kind === "tauri" && !unsavedPreview
-        ? <iframe ref={htmlFrame} onLoad={()=>markFrameLoaded(generation)} data-page-context data-file-revision={textRevision} data-generation={generation} className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" key={generation} src={baseUrl} />
-        : <iframe ref={htmlFrame} onLoad={()=>markFrameLoaded(generation)} data-page-context data-file-revision={textRevision} data-generation={generation} className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" key={generation} srcDoc={bridgeHtmlDocument} />
+      htmlBasis && !htmlBasis.srcDoc
+        ? <iframe ref={htmlFrame} onLoad={()=>markFrameLoaded(generation)} data-page-context data-file-revision={displayedRevision} data-generation={generation} className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" key={generation} src={htmlBasis.frameUrl} />
+        : <iframe ref={htmlFrame} onLoad={()=>markFrameLoaded(generation)} data-page-context data-file-revision={displayedRevision} data-generation={generation} className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" key={generation} srcDoc={bridgeHtmlDocument} />
     )}</div></div>}
-    {!loadError&&showing&&personalPage&&textRevision&&!pageExpressionInvalidated&&<PageExpression page={personalPage} fileRevision={textRevision} pageRef={binding.ref??binding.id} onHostedState={receiveHostedState}/>}
+    {!loadError&&showing&&personalPage&&displayedRevision&&!pageExpressionInvalidated&&<PageExpression page={personalPage} fileRevision={displayedRevision} pageRef={binding.ref??binding.id} onHostedState={receiveHostedState}/>}
     {!loadError && showing && format === "markdown" && <div className="material-viewport" data-preview-zoom={zoom}><div className="material-scaled" style={{width:`${100/zoom}%`,height:`${100/zoom}%`,transform:`scale(${zoom})`}}>
       <iframe data-page-context data-file-revision={textRevision} data-working-copy={unsavedPreview} key={generation} className="material-frame" title={binding.title} sandbox="allow-scripts" srcDoc={markdownHtmlDocument} />
     </div></div>}
@@ -368,6 +458,7 @@ function MaterialToggle({ view, onChange }: { view: MaterialView; onChange: (vie
  * the `oi-material://` URL directly — the document never passes through
  * this function there. */
 function injectBase(html: string, baseHref: string | undefined): string {
+  html=documentPayloadSource(html);
   const base = `${baseHref?`<base href="${baseHref.replace(/"/g, "&quot;")}">`:""}${documentScripts}`;
   if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, match => `${match}${base}`);
   return `${base}${html}`;

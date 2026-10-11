@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent Device Mockup</title>
+<style>
+/* Shell tokens copied from packages/live-shell/ui/src/styles.css — the
+   measured Live base: flat warm grey chrome, one amber accent, user colours
+   as the semantic layer. Agents take the place of user/track colours. */
+:root{
+  --bg-0:#26292d; --bg-1:#33363b; --bg-2:#3f4348; --bg-3:#4a4e54; --surface:#43464c;
+  --line:#24262a; --line-strong:#3d4147;
+  --text:#d4d7da; --text-dim:#a2a7ad; --text-faint:#71767c;
+  --accent:#ffbe00; --accent-dim:#8f6f14; --accent-soft:rgba(255,190,0,.13);
+  --rec:#e0523f; --sel:#7ec3e6;
+  --fizz:#5cc6b4; --honey:#e2a35e; --bumble:#d985a6; --wiki:#9aa8e6; --ground:#8c9198;
+  --font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --mono:ui-monospace,'SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#1c1e21;overflow:hidden}
+body{font:12px/1.4 var(--font-ui);color:var(--text);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+.fit{position:absolute;left:50%;top:50%;transform-origin:center}
+.app{width:1920px;height:1200px;display:grid;background:var(--bg-0);
+  grid-template-columns:330px 1fr;grid-template-rows:40px 1fr 236px 24px;
+  grid-template-areas:"tp tp" "br ct" "br bt" "sb sb";gap:1px}
+.micro{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-faint)}
+.mono{font-family:var(--mono)}
+
+/* ---------- transport ---------- */
+.tp{grid-area:tp;background:var(--bg-2);display:flex;align-items:center;padding:0 10px;gap:6px;border-bottom:1px solid var(--line)}
+.tp .grp{display:flex;align-items:center;gap:4px}
+.tp .sp{flex:1}
+.tb{height:24px;min-width:24px;padding:0 7px;border-radius:2px;background:var(--bg-1);border:1px solid var(--line);
+  color:var(--text-dim);display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;white-space:nowrap}
+.tb:hover{background:var(--bg-3);color:var(--text)}
+.tb.on{color:#1d1f22;background:var(--accent);border-color:var(--accent)}
+.tb.rec.on{background:var(--rec);border-color:var(--rec);color:#fff}
+.tb.lit{color:var(--accent)}
+.tb.warn{color:#ff8a3d;border-color:#7a4a25}
+.field{height:24px;padding:0 8px;border-radius:2px;background:var(--bg-0);border:1px solid var(--line);
+  display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--text)}
+.field small{font-family:var(--font-ui);font-size:9px;color:var(--text-faint);letter-spacing:.06em;text-transform:uppercase}
+.tdiv{width:1px;height:20px;background:var(--line);margin:0 6px}
+.meter{width:56px;height:8px;background:var(--bg-0);border:1px solid var(--line);position:relative}
+.meter i{position:absolute;left:0;top:0;bottom:0;background:var(--text-dim)}
+.badge{font-size:10px;color:#1d1f22;background:var(--accent);border-radius:7px;padding:0 5px;font-weight:600}
+svg.ic{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1.6}
+svg.icf{width:11px;height:11px;fill:currentColor}
+
+/* ---------- browser ---------- */
+.br{grid-area:br;min-width:0;overflow:hidden;background:var(--bg-1);display:grid;grid-template-rows:28px 300px 1fr 96px;min-height:0}
+.search{margin:4px 6px;background:var(--bg-0);border:1px solid var(--line);border-radius:2px;color:var(--text-faint);
+  font-size:11px;padding:2px 8px;display:flex;align-items:center}
+.lib{display:grid;grid-template-columns:118px minmax(0,1fr);border-bottom:1px solid var(--line);min-height:0}
+.cats{border-right:1px solid var(--line);padding:4px 0;overflow:hidden}
+.cats .h{padding:6px 10px 3px}
+.cat{display:flex;align-items:center;gap:7px;padding:2px 10px;color:var(--text-dim);font-size:11.5px;cursor:default}
+.cat.on{background:var(--bg-3);color:var(--text)}
+.cat .sq{width:8px;height:8px;border-radius:1px;border:1px solid var(--text-faint)}
+.res{overflow:hidden;padding:4px 0}
+.res .h{display:flex;justify-content:space-between;padding:3px 10px;border-bottom:1px solid var(--line);margin-bottom:3px}
+.ri{display:flex;align-items:center;gap:8px;padding:3px 10px;font-size:11.5px;cursor:grab}
+.ri:hover{background:var(--bg-2)}
+.ri .dot{width:9px;height:9px;border-radius:50%}
+.ri .sub{margin-left:auto;max-width:90px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:10px;color:var(--text-faint)}
+.ri.sel{background:var(--bg-3)}
+.ri.mint{color:var(--text-faint)}
+
+/* pool = tier 2 host */
+.pool{background:var(--bg-0);display:flex;flex-direction:column;min-height:0;border-bottom:1px solid var(--line)}
+.pool-h{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg-1);border-bottom:1px solid var(--line)}
+.pool-h .nm{font-weight:600}
+.pool-h .tier{margin-left:auto}
+.pool-b{overflow:auto;padding:4px 0 10px;flex:1}
+.grp-t{display:flex;align-items:center;justify-content:space-between;padding:8px 10px 4px}
+.prow{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:center;gap:8px;padding:3px 10px;font-size:11px}
+.prow .k{color:var(--text-dim)}
+.seg{display:flex;border:1px solid var(--line);border-radius:2px;overflow:hidden;width:max-content}
+.seg button{padding:2px 7px;font-size:10.5px;color:var(--text-dim);background:var(--bg-1);border-right:1px solid var(--line)}
+.seg button:last-child{border-right:none}
+.seg button.on{background:var(--accent);color:#1d1f22}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:10.5px;padding:1px 7px;border-radius:2px;background:var(--bg-2);color:var(--text);border:1px solid var(--line)}
+.chip.off{color:var(--text-faint);text-decoration:line-through;background:transparent}
+.chip.add{color:var(--text-faint);background:transparent;border-style:dashed;border-color:var(--line-strong)}
+.val{font-family:var(--mono);font-size:10.5px;color:var(--text)}
+.slider{height:6px;background:var(--bg-2);border-radius:1px;position:relative;width:100%}
+.slider i{position:absolute;left:0;top:0;bottom:0;background:var(--accent)}
+.flow{display:grid;grid-template-columns:1fr 18px 64px 18px 1fr;align-items:center;gap:2px;padding:6px 10px 2px}
+.flow .box{border:1px solid var(--line-strong);border-radius:2px;padding:4px 6px;font-size:10px;color:var(--text-dim);text-align:center;background:var(--bg-1)}
+.flow .ag{border-color:currentColor;color:var(--text);font-weight:600}
+.flow svg{width:18px;height:10px;stroke:var(--text-faint);fill:none}
+
+/* info view (Live bottom-left) */
+.info{padding:8px 10px;background:var(--bg-1);overflow:hidden}
+.info b{display:block;font-size:11.5px;margin-bottom:3px}
+.info p{font-size:11px;color:var(--text-dim);line-height:1.45}
+
+/* ---------- centre ---------- */
+.ct{grid-area:ct;background:var(--surface);position:relative;min-width:0;min-height:0;overflow:hidden}
+.view{position:absolute;inset:0;display:none}
+.view.on{display:flex}
+
+/* session */
+#session{flex-direction:column}
+.sgrid{flex:1;display:flex;min-height:0}
+.trk{width:132px;border-right:1px solid var(--line);display:flex;flex-direction:column;flex:none}
+.trk.ret{width:112px}
+.thd{height:22px;display:flex;align-items:center;padding:0 6px;font-size:11px;color:#1d1f22;font-weight:500;
+  border-bottom:1px solid var(--line);cursor:default;white-space:nowrap;overflow:hidden;gap:5px}
+.thd .kind{font-size:9px;opacity:.65;margin-left:auto}
+.trk.sel .thd{box-shadow:inset 0 0 0 1px #fff8}
+.slot{height:26px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 5px;gap:5px;
+  background:var(--bg-1);font-size:10.5px;cursor:default;position:relative}
+.slot .sb{width:9px;height:9px;border:1px solid var(--text-faint);border-radius:1px;flex:none}
+.slot.clip{color:#1d1f22}
+.slot.clip .tri{width:0;height:0;border-left:7px solid #1d1f22aa;border-top:4.5px solid transparent;border-bottom:4.5px solid transparent;flex:none}
+.slot.clip.done{opacity:.55}
+.slot.clip .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot.playing .tri{border-left-color:#1d1f22;animation:blink 1s steps(2) infinite}
+.slot.queued .tri{animation:blink .35s steps(2) infinite}
+.slot .prog{position:absolute;left:0;bottom:0;height:2px;background:#1d1f22aa}
+.slot.selc{outline:1px solid #fff;outline-offset:-1px;z-index:1}
+.slot.rec{background:var(--rec);color:#fff}
+.slot.rec .tri{border-left-color:#fff}
+@keyframes blink{50%{opacity:.2}}
+.trk .fill{flex:1;background:var(--bg-1);opacity:.55}
+.stoprow{height:24px;display:flex;align-items:center;justify-content:center;background:var(--bg-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.stopb{width:10px;height:10px;background:var(--text-faint);border-radius:1px}
+.mix{height:178px;background:var(--bg-2);padding:5px 6px;display:flex;flex-direction:column;gap:4px}
+.mix .lab{font-size:9.5px;color:var(--text-faint)}
+.dd{height:18px;background:var(--bg-0);border:1px solid var(--line);font-size:10px;color:var(--text);
+  display:flex;align-items:center;justify-content:space-between;padding:0 4px;border-radius:2px;white-space:nowrap;overflow:hidden}
+.dd::after{content:'▾';color:var(--text-faint);font-size:8px;margin-left:4px}
+.mixlow{display:flex;gap:6px;margin-top:2px;flex:1}
+.sends{display:flex;flex-direction:column;align-items:center;gap:1px}
+.btns{display:flex;flex-direction:column;gap:3px;align-items:center}
+.tact{width:26px;height:16px;background:var(--accent);color:#1d1f22;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;border-radius:1px}
+.tact.off{background:var(--bg-0);color:var(--text-faint)}
+.sbtn{width:26px;height:15px;background:var(--bg-0);border:1px solid var(--line);font-size:9px;display:flex;align-items:center;justify-content:center;color:var(--text-dim);border-radius:1px}
+.sbtn.arm.on{background:var(--rec);color:#fff;border-color:var(--rec)}
+.sbtn.solo.on{background:var(--sel);color:#1d1f22}
+.fader{display:flex;gap:3px;align-items:stretch;margin-left:auto}
+.mtr{width:5px;background:var(--bg-0);position:relative;border:1px solid var(--line)}
+.mtr i{position:absolute;left:0;right:0;bottom:0;background:var(--green,#8fd0a8)}
+.ftrack{width:8px;position:relative}
+.ftrack::before{content:'';position:absolute;left:3px;width:2px;top:0;bottom:0;background:var(--bg-0)}
+.fcap{position:absolute;left:0;width:8px;height:12px;background:var(--text-dim);border-radius:1px}
+.scenes{width:118px;border-left:1px solid var(--line);display:flex;flex-direction:column;flex:none}
+.scenes .slot{background:var(--bg-2);color:var(--text-dim)}
+.scenes .slot .tri{width:0;height:0;border-left:7px solid var(--text-faint);border-top:4.5px solid transparent;border-bottom:4.5px solid transparent}
+.gap{flex:1}
+
+/* full studio */
+.lane{height:34px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--bg-1);border-bottom:1px solid var(--line)}
+.cells{flex:1;display:grid;grid-template-columns:repeat(12,1fr);gap:3px;height:16px}
+.cells div{background:var(--bg-0);border:1px solid var(--line);border-radius:1px;position:relative;display:flex;align-items:center;gap:3px;padding:0 4px}
+.cells div.u{background:var(--fizz);border-color:transparent}
+.cells div.c{background:transparent;border-color:var(--accent)}
+.cells div i{width:2px;height:8px;background:#1d1f22a0}
+.cells div.c i{background:var(--accent)}
+.cells div .stm{position:absolute;top:-6px;left:40%;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--accent)}
+
+#studio{flex-direction:column;background:var(--bg-1)}
+.st-h{height:32px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--bg-2);border-bottom:1px solid var(--line)}
+.back{display:flex;align-items:center;gap:5px;color:var(--text-dim);font-size:11px}
+.back:hover{color:var(--text)}
+.st-b{flex:1;display:grid;grid-template-columns:250px 1fr;min-height:0}
+.acts{border-right:1px solid var(--line);background:var(--bg-1);padding:6px 0}
+.act{display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:11.5px;cursor:default}
+.act.on{background:var(--bg-3)}
+.act .s{margin-left:auto;font-size:10px;color:var(--text-faint)}
+.thread{display:flex;flex-direction:column;min-height:0;background:var(--surface)}
+.msgs{flex:1;overflow:auto;padding:22px 48px;display:flex;flex-direction:column;gap:16px;max-width:980px}
+.m{display:grid;grid-template-columns:26px 1fr;gap:10px}
+.av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:#1d1f22}
+.m .w{font-size:11px;color:var(--text-dim);margin-bottom:2px}
+.m .w b{color:var(--text);font-weight:600;margin-right:6px}
+.m .t{font-size:13px;line-height:1.5}
+.steer{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:var(--accent);margin-top:5px}
+.plan{margin-top:6px;display:grid;gap:3px;font-size:12.5px;color:var(--text-dim);padding-left:12px;border-left:2px solid var(--line-strong)}
+.plan b{color:var(--text);font-weight:500}
+.card{margin-top:8px;border:1px solid var(--line);background:var(--bg-1);border-radius:3px;max-width:560px}
+.card .ch{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:11.5px}
+.card .ch .r{margin-left:auto}
+.card .cb{padding:6px 10px;font-family:var(--mono);font-size:11px;color:var(--text-dim);display:grid;gap:2px}
+.card .cb span.a{color:#8fd0a8}.card .cb span.d{color:#e3806f}
+.card .cf{display:flex;gap:6px;padding:7px 10px;border-top:1px solid var(--line)}
+.bt{height:22px;padding:0 10px;border-radius:2px;background:var(--bg-2);border:1px solid var(--line);font-size:11px}
+.bt.pri{background:var(--accent);color:#1d1f22;border-color:var(--accent)}
+.working{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-dim);padding:0 48px 8px}
+.working i{width:7px;height:7px;border-radius:50%;animation:blink 1.2s infinite}
+.composer{margin:0 48px 14px;border:1px solid var(--line-strong);background:var(--bg-1);border-radius:3px;display:flex;align-items:center;gap:10px;padding:9px 12px;max-width:884px}
+.composer .ph{flex:1;color:var(--text-faint);font-size:12.5px}
+.composer .k{font-size:10px;color:var(--text-faint);font-family:var(--mono)}
+.wave{display:none;gap:2px;align-items:center;height:16px;flex:1}
+.wave i{width:3px;background:var(--rec);border-radius:1px;animation:wv .9s ease-in-out infinite}
+@keyframes wv{50%{transform:scaleY(.3)}}
+.voice .wave{display:flex}.voice .ph{display:none}
+
+/* ---------- bottom detail ---------- */
+.bt-area{grid-area:bt;background:var(--bg-1);display:flex;min-width:0;overflow:hidden}
+.chain{display:flex;gap:1px;padding:6px;align-items:stretch;overflow:hidden;flex:1}
+.dev{background:var(--bg-2);border:1px solid var(--line);border-radius:2px;display:flex;flex-direction:column;flex:none}
+.dev .dh{height:20px;display:flex;align-items:center;gap:6px;padding:0 6px;background:var(--bg-3);font-size:11px;cursor:default}
+.dev.sel .dh{background:var(--accent);color:#1d1f22}
+.dev .light{width:8px;height:8px;border-radius:50%;border:1px solid #0006;flex:none}
+.dev .light.on{background:var(--accent)}
+.dev.sel .light.on{background:#1d1f22}
+.dev .light.hollow{background:transparent;border-color:var(--text-faint)}
+.dev .dh .x{margin-left:auto;display:flex;gap:6px;opacity:.75}
+.dev .dbody{flex:1;display:flex;gap:8px;padding:8px}
+.knobs{display:grid;grid-template-columns:repeat(2,58px);gap:6px 4px;align-content:start}
+.knob{display:flex;flex-direction:column;align-items:center;gap:1px;cursor:ns-resize;user-select:none}
+.knob .kl{font-size:9.5px;color:var(--text-dim)}
+.knob .kv{font-size:10px;font-family:var(--mono);color:var(--text)}
+.knob svg{width:30px;height:30px}
+.toggle{display:flex;flex-direction:column;align-items:center;gap:3px}
+.toggle .tg{display:flex;border:1px solid var(--line);border-radius:2px;overflow:hidden}
+.toggle .tg span{font-size:9.5px;padding:2px 5px;background:var(--bg-0);color:var(--text-faint);cursor:pointer}
+.toggle .tg span.on{background:var(--accent);color:#1d1f22}
+.diag{background:var(--bg-0);border:1px solid var(--line);border-radius:2px}
+.drop{width:200px;flex:none;border:1px dashed var(--line-strong);border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-faint);font-size:11px;text-align:center;padding:10px}
+
+/* clip view */
+.clipv{display:none;flex:1;gap:1px;padding:6px}
+.clipv.on{display:flex}
+.chain.off{display:none}
+.cbox{background:var(--bg-2);border:1px solid var(--line);border-radius:2px;display:flex;flex-direction:column}
+.cbox .dh{height:20px;display:flex;align-items:center;padding:0 6px;background:var(--bg-3);font-size:11px;gap:6px}
+.cbox .cbb{padding:8px;display:grid;gap:6px;font-size:11px}
+.prompt{flex:1;background:var(--bg-0);border:1px solid var(--line);border-radius:2px;padding:10px 12px;font-size:12.5px;line-height:1.55;color:var(--text)}
+.prompt .ref{font-family:var(--mono);font-size:11px;color:var(--sel)}
+
+/* status */
+.sb{grid-area:sb;background:var(--bg-2);display:flex;align-items:center;gap:12px;padding:0 10px;font-size:11px;color:var(--text-dim)}
+.sb .sp{flex:1}
+.sb .tg{display:flex;gap:2px}
+.sb .tg button{padding:1px 8px;border-radius:2px;color:var(--text-dim)}
+.sb .tg button.on{color:var(--accent)}
+.legendbtn{color:var(--text-faint)}
+</style>
+</head>
+<body>
+<div class="fit" id="fit"><div class="app">
+
+<!-- ================= TRANSPORT ================= -->
+<header class="tp">
+  <div class="grp">
+    <button class="tb lit" data-info="Link · shared field|Ableton Link syncs tempo between apps. Here it joins this session's agents to other harness sessions on the fabric (Mac ↔ Omarchy) so they share one act ledger and one clock. The number is the count of linked peers.">Link <span style="color:var(--text)">2</span></button>
+    <button class="field" data-info="Effort|Where Live has tempo. How hard the armed agent thinks per turn: low · med · high · xhigh · max. Drag up/down like the tempo field; Tap cycles it. It is a property of the act, so each clip can override it." id="effortField"><small>effort</small><span id="effortVal">high</span></button>
+    <button class="field" data-info="Budget|Where Live has the time signature. Turns used / turns allowed for the selected act, and wall-clock. When it runs out the agent stops at the next quantize point and asks — it never silently continues."><small>budget</small>2/12 · 14m</button>
+    <button class="tb" id="hb" data-info="Heartbeat|Where Live has the metronome. On: running agents emit a check-in on a fixed cadence (Configure sets the period), visible as a tick in the Ledger on Main. Off: they only report at turn boundaries."><svg class="ic" viewBox="0 0 12 12"><path d="M1 6h2.5l1.5-3 2 6 1.5-3H11"/></svg></button>
+    <button class="tb" data-info="Interrupt quantize|Where Live has global launch quantization. How quickly Stop and Steer take effect: Now (cut mid-tool), Next tool (default — let the running tool finish), Next turn. A clip can override this, exactly as clips override launch quantize.">⟂ next tool ▾</button>
+  </div>
+  <div class="sp"></div>
+  <div class="grp">
+    <button class="tb" id="follow" data-info="Follow|Live's Follow keeps the playhead in view. Here the centre follows the running agent's cursor: the Scene, Object or file it is touching comes into view as it moves. Off by default so the agent never moves your view uninvited.">
+      <svg class="ic" viewBox="0 0 12 12"><path d="M2 6h7M6 3l3 3-3 3"/></svg></button>
+    <div class="field" data-info="Act position|Where Live shows bars.beats.sixteenths: act . turn . step of whatever is running on the selected track. Here: act 212, turn 2, step 7 (a tool call).">212 . 2 . 7</div>
+    <button class="tb on" id="play" data-info="Run|Live's Play. Launches the selected act — or every queued act if none is selected — on its agent. It is the send key: Enter in a composer is the same as pressing it. While lit, something is running."><svg class="icf" viewBox="0 0 12 12"><path d="M3 2l7 4-7 4z"/></svg></button>
+    <button class="tb" id="stop" data-info="Stop · interrupt|Live's Stop. Once: running agents pause at the next interrupt-quantize point (next tool, by default) and keep their context. Twice: the turn is cancelled and uncommitted work goes back to its basis revision — just as a second Stop in Live returns the playhead to 1.1.1."><svg class="icf" viewBox="0 0 12 12"><rect x="2.5" y="2.5" width="7" height="7"/></svg></button>
+    <button class="tb rec" id="rec" data-info="Voice|Live's Record. With a track armed (● on its mixer strip), pressing it opens the microphone and records your speech into a new act clip on the armed track — exactly as recording into an empty Session slot makes a new clip. Release (or press again) to stop; Run sends it."><svg class="icf" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4"/></svg></button>
+    <button class="tb on" id="od" data-info="Steer (overdub)|Live's MIDI overdub layers new notes over what is playing. On: anything you type or say while an agent is running steers the running turn in place (it hears it at the next tool boundary). Off: your input queues as the next act instead. This is the steer/queue switch.">+</button>
+    <button class="tb" id="arm" data-info="Write arm|Live's automation arm: when on, moving a control writes automation. Here it arms agents' writes. Off (default): every write arrives as a proposal you approve. On: writes inside each act's write-routing land directly, with a receipt in the Ledger."><svg class="ic" viewBox="0 0 12 12"><path d="M1 9l3-4 3 2 4-5"/></svg></button>
+    <button class="tb warn" data-info="Hand back|Live's Re-enable Automation lights when you move an automated control by hand. Here it lights when you edit something an agent holds (you changed HeroShot's physics while Honey owned it). The agent's hold is suspended; press to hand control back."><svg class="ic" viewBox="0 0 12 12"><path d="M3 4h5a2.5 2.5 0 010 5H4M3 4l2-2M3 4l2 2"/></svg></button>
+    <button class="tb" data-info="Capture → skill|Live's Capture MIDI keeps what you just played even though you weren't recording. Here it takes the last run of things you did by hand and offers it as a skill proposal, which appears under Skills in the browser for review.">capture</button>
+    <div class="tdiv"></div>
+    <button class="tb" id="loop" data-info="Loop|Live's loop switch. On: the selected act repeats until its stop condition is met or its budget runs out (a /loop-style routine). The loop length beside it is the iteration cap."><svg class="ic" viewBox="0 0 12 12"><path d="M3 4h6l-1.5-1.5M9 8H3l1.5 1.5"/></svg></button>
+    <div class="field" data-info="Loop cap|Maximum iterations for a looped act.">× 4</div>
+  </div>
+  <div class="sp"></div>
+  <div class="grp">
+    <button class="tb" data-info="Approvals|A persistent global device. The count of proposals waiting for you across every track. Clicking selects Main, where the Approvals device lives. Never hidden, never buried in a thread." id="apprBtn">◆ <span class="badge">2</span></button>
+    <div class="field" data-info="Context|Where Live has the CPU meter. How full the armed agent's context window is, and session spend. Above ~80% the agent proposes a compaction before its next act." style="gap:6px"><small>ctx</small><div class="meter"><i style="width:38%"></i></div>38%</div>
+    <div class="tdiv"></div>
+    <button class="tb" data-info="Map mode|Live's Key/MIDI map. Click any agent control, then a key, pad or voice phrase, to bind it. ‘Fizz, steer’ can be a voice binding just like a MIDI note.">KEY</button>
+    <button class="tb" data-info="Session / Arrangement|Session (here) is where acts are launched. Arrangement is the ledger as a timeline: every act that ran, on its track, at the time it ran, with its receipts.">▤ ☰</button>
+  </div>
+</header>
+
+<!-- ================= BROWSER ================= -->
+<aside class="br">
+  <div class="search">⌕&nbsp; Search (⌘F)</div>
+  <div class="lib">
+    <div class="cats">
+      <div class="micro h">Collections</div>
+      <div class="cat"><span class="sq" style="background:var(--rec);border:none"></span>Favorites</div>
+      <div class="micro h">Library</div>
+      <div class="cat on" data-info="Agents|Central's accepted agent profiles. Drag one onto a track to seat it as a device on that track's chain. Seating is membership — the same gesture as dropping an instrument.">Agents</div>
+      <div class="cat" data-info="Teams|Saved racks of agents — a device group that seats several agents on one track with a shared macro set.">Teams</div>
+      <div class="cat" data-info="Skills|Skills are the agent's plug-ins. Drop one on an agent device to admit it for that act.">Skills</div>
+      <div class="cat" data-info="Harnesses|The runtimes behind an agent device (buzz-acp, goose, claude-agent-acp, codex-acp, custom). Like a plug-in format: the device face stays the same whichever one is behind it.">Harnesses</div>
+      <div class="cat">Devices</div>
+      <div class="cat">Properties</div>
+      <div class="cat">Works</div>
+      <div class="micro h">Places</div>
+      <div class="cat">Central</div>
+      <div class="cat">O-I</div>
+    </div>
+    <div class="res">
+      <div class="h"><span class="micro">Name</span><span class="micro">Seated</span></div>
+      <div class="ri" data-agent="fizz"><span class="dot" style="background:var(--fizz)"></span>Fizz<span class="sub">bridge-2</span></div>
+      <div class="ri" data-agent="honey"><span class="dot" style="background:var(--honey)"></span>Honey<span class="sub">HeroShot</span></div>
+      <div class="ri" data-agent="bumble"><span class="dot" style="background:var(--bumble)"></span>Bumble<span class="sub">A · Review</span></div>
+      <div class="ri"><span class="dot" style="background:#8a8fe0"></span>Nara<span class="sub">—</span></div>
+      <div class="ri"><span class="dot" style="background:#9bc46a"></span>Wren<span class="sub">—</span></div>
+      <div class="ri mint" data-info="Mint agent|Create a new agent: say what it is for, review the proposed profile, accept it into Central. Then it appears here like any other.">+ Mint agent…</div>
+    </div>
+  </div>
+
+  <!-- tier 2: expanded -->
+  <section class="pool">
+    <div class="pool-h">
+      <span class="dot" id="pDot" style="width:9px;height:9px;border-radius:50%;background:var(--fizz)"></span>
+      <span class="nm" id="pName">Fizz</span><span style="color:var(--text-faint);font-size:11px" id="pRole">porting engineer</span>
+      <span class="micro tier">expanded</span>
+    </div>
+    <div class="pool-b" id="pool"></div>
+  </section>
+
+  <div class="info" id="info"><b>Info</b><p>Hover any control to see what it does. Click a device title to expand it here; double-click (or ↗) to open it full in the centre. Tab returns to Session.</p></div>
+</aside>
+
+<!-- ================= CENTRE ================= -->
+<main class="ct">
+  <section class="view on" id="session"><div class="sgrid" id="sgrid"></div></section>
+
+  <section class="view" id="studio">
+    <div class="st-h">
+      <button class="back" id="backBtn"><svg class="ic" viewBox="0 0 12 12"><path d="M8 2L4 6l4 4"/></svg>Session</button>
+      <span style="color:var(--text-faint)">/</span><span>bridge-2</span><span style="color:var(--text-faint)">/</span>
+      <span class="dot" style="width:9px;height:9px;border-radius:50%;background:var(--fizz)"></span><b>Fizz</b>
+      <span class="micro" style="margin-left:6px">full</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--text-dim)">act 212 · turn 2 of 12 · act with review</span>
+    </div>
+    <div class="lane" data-info="Turn lane|The full-size form of the ring on the compact device: one cell per turn in the budget, each turn's tool steps as ticks, the steer marked where it was heard. Click a turn to read just that part of the thread.">
+      <span class="micro" style="width:58px">turns</span>
+      <div class="cells" id="cells"></div>
+      <span class="val" style="color:var(--text-dim)">2 / 12</span>
+    </div>
+    <div class="st-b">
+      <div class="acts">
+        <div class="micro" style="padding:4px 12px 6px">Acts on bridge-2</div>
+        <div class="act" style="color:var(--text-dim)"><span class="dot" style="width:8px;height:8px;border-radius:2px;background:var(--fizz);opacity:.5"></span>re-plan port<span class="s">done</span></div>
+        <div class="act on"><span class="dot" style="width:8px;height:8px;border-radius:2px;background:var(--fizz)"></span>map field → plan<span class="s" style="color:var(--accent)">running</span></div>
+        <div class="act"><span class="dot" style="width:8px;height:8px;border-radius:2px;background:var(--fizz)"></span>drop old captures<span class="s">queued</span></div>
+        <div class="act" style="color:var(--text-faint)">+ new act</div>
+      </div>
+      <div class="thread">
+        <div class="msgs">
+          <div class="m"><div class="av" style="background:#c9cdd1">A</div><div>
+            <div class="w"><b>Alex</b>14:31</div>
+            <div class="t">Map the Bridge 2 field into the port plan. Keep Honey's tuned physics — same look.</div></div></div>
+          <div class="m"><div class="av" style="background:var(--fizz)">F</div><div>
+            <div class="w"><b>Fizz</b>14:32 · reads this scene + registers:physics</div>
+            <div class="t">Three beats:</div>
+            <div class="plan"><div><b>1 · Compose</b> — port the view tree to widgets; platform boundary stays clean.</div>
+              <div><b>2 · Settle</b> — re-bind tuned physics through the Scene rack, no retuning.</div>
+              <div><b>3 · Hand off</b> — thin adapters only; placement goes to Honey.</div></div></div></div>
+          <div class="m"><div class="av" style="background:#c9cdd1">A</div><div>
+            <div class="w"><b>Alex</b>14:32</div>
+            <div class="t">Also drop the old capture list from your reads.</div>
+            <div class="steer">↳ steered — heard at next tool</div></div></div>
+          <div class="m"><div class="av" style="background:var(--fizz)">F</div><div>
+            <div class="w"><b>Fizz</b>14:33</div>
+            <div class="t">Done — reads updated. First pass is ready for you.</div>
+            <div class="card"><div class="ch"><b>Proposal</b><span style="color:var(--text-faint)">port plan · first pass</span><span class="r micro">draft → review</span></div>
+              <div class="cb"><div>scenes/bridge2/portPlan.ts <span class="a">+42</span> <span class="d">−7</span></div>
+                <div>scenes/bridge2/captureList.ts <span class="d">−18</span></div></div>
+              <div class="cf"><button class="bt pri">Approve</button><button class="bt">Changes…</button><button class="bt" style="margin-left:auto">Open diff</button></div></div>
+          </div></div>
+        </div>
+        <div class="working"><i style="background:var(--fizz)"></i>Fizz is working · beat 2 of 3 · next tool in ~4s</div>
+        <div class="composer" id="composer"><span class="ph">Message Fizz — Enter runs ▶ · ⌥Enter steers + · Esc stops ■</span>
+          <div class="wave"><i></i><i style="animation-delay:.1s"></i><i style="animation-delay:.2s"></i><i style="animation-delay:.3s"></i><i style="animation-delay:.15s"></i><i style="animation-delay:.25s"></i><i style="animation-delay:.05s"></i><i style="animation-delay:.35s"></i></div>
+          <span class="k">● voice</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ================= BOTTOM DETAIL ================= -->
+<section class="bt-area">
+  <div class="chain" id="chain"></div>
+  <div class="clipv" id="clipv"></div>
+</section>
+
+<!-- ================= STATUS ================= -->
+<footer class="sb">
+  <span id="status">bridge-2 · Scene · Fizz seated · write standing: proposals</span>
+  <span class="sp"></span>
+  <span>6 tracks · 3 agents · 2 acts running</span>
+  <div class="tg"><button id="tgClip">Clip</button><button id="tgDev" class="on">Device</button></div>
+</footer>
+
+</div></div>
+
+<script>
+const $=s=>document.querySelector(s);
+/* ---------------- data ---------------- */
+const AUT=['Suggest','Act w/ review','Autonomous'], EFF=['low','med','high','xhigh','max'];
+const agents={
+  fizz:{name:'Fizz',color:'var(--fizz)',role:'porting engineer',harness:'buzz-acp · goose',aut:1,eff:2,used:2,max:12,steer:'steer',state:'working',
+    reads:[['this scene',1],['registers:physics',1],['old captures',0],['whole expression',0]],
+    writes:[['placement',1],['layers',1],['properties',1],['transport',0]],mode:'draft → review',
+    skills:[['port-widgets',1],['capture-plan',1],['review-pr',0]],escal:'@alex',runtime:'goose · local pool',memory:'scene-scoped',hb:'300s'},
+  honey:{name:'Honey',color:'var(--honey)',role:'capture & finish',harness:'buzz-acp · grok',aut:1,eff:1,used:0,max:8,steer:'queue',state:'held',
+    reads:[['this object',1],['physics',1],['whole scene',0]],
+    writes:[['properties',1],['placement',1],['source',0]],mode:'proposal',
+    skills:[['capture-pass',1],['tune-physics',1]],escal:'@alex',runtime:'grok · remote',memory:'object-scoped',hb:'off'},
+  bumble:{name:'Bumble',color:'var(--bumble)',role:'reviewer',harness:'claude-agent-acp',aut:0,eff:3,used:5,max:20,steer:'steer',state:'idle',
+    reads:[['sent work',1],['governance',1]],
+    writes:[['comments',1],['approvals',0]],mode:'comment only',
+    skills:[['review-pr',1],['diff-grammar',1]],escal:'human',runtime:'claude · remote',memory:'review ledger',hb:'600s'}
+};
+const tracks=[
+  {id:'bridge2',name:'bridge-2',kind:'Scene',color:'var(--fizz)',agent:'fizz',devs:['Colour Field','Physics'],
+    clips:[{n:'re-plan port',s:'done'},{n:'map field → plan',s:'playing',p:.4},{n:'drop old captures',s:'queued'}],reads:'scene+registers',writes:'draft → A',sa:.85,sb:.3,arm:true,meter:.62,fad:.35},
+  {id:'hero',name:'HeroShot',kind:'Object',color:'var(--honey)',agent:'honey',devs:['Pointer','Focus'],
+    clips:[null,{n:'capture pass',s:'stopped'},{n:'tune physics',s:'stopped'}],reads:'object+physics',writes:'proposal → A',sa:1,sb:.2,meter:.05,fad:.6},
+  {id:'ground',name:'Ground',kind:'Object',color:'#8c9198',agent:null,devs:['Medium','Depth'],
+    clips:[{n:'state 1',s:'stopped',plain:1},{n:'state 2',s:'stopped',plain:1}],reads:'—',writes:'Main',sa:0,sb:0,meter:0,fad:.5},
+  {id:'bridge3',name:'bridge-3',kind:'Scene',color:'#7fa6d8',agent:null,devs:['Resonance'],clips:[],reads:'—',writes:'Main',sa:0,sb:0,meter:0,fad:.5},
+  {id:'review',name:'A · Review',kind:'return',ret:1,color:'var(--bumble)',agent:'bumble',devs:[],clips:[],reads:'sends',writes:'Main',meter:.3,fad:.5},
+  {id:'wiki',name:'B · Wiki',kind:'return',ret:1,color:'var(--wiki)',agent:null,devs:['Wiki return'],clips:[],reads:'sends',writes:'Main',meter:.1,fad:.5},
+];
+const SCENES=['1 plan','2 port','3 polish','4','5','6'];
+let sel={track:'bridge2',dev:'agent',clip:null,view:'session',bottom:'device'};
+
+/* ---------------- primitives ---------------- */
+function arc(a0,a1,r=11,c=15){const p=a=>[c+r*Math.sin(a*Math.PI/180),c-r*Math.cos(a*Math.PI/180)];
+  const [x0,y0]=p(a0),[x1,y1]=p(a1);return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${a1-a0>180?1:0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`}
+function knob(key,label,v,disp,color='var(--accent)'){const a=-135+270*Math.max(.001,v);
+  return `<div class="knob" data-knob="${key}" data-info="${label}|${KINFO[key]||''}"><span class="kl">${label}</span>
+  <svg viewBox="0 0 30 30"><path d="${arc(-135,135)}" stroke="var(--bg-0)" stroke-width="3" fill="none"/>
+  <path d="${arc(-135,a)}" stroke="${color}" stroke-width="3" fill="none"/>
+  <circle cx="15" cy="15" r="6.5" fill="var(--bg-3)"/><line x1="15" y1="15" x2="${(15+6.5*Math.sin(a*Math.PI/180)).toFixed(2)}" y2="${(15-6.5*Math.cos(a*Math.PI/180)).toFixed(2)}" stroke="var(--text)" stroke-width="1.5"/></svg>
+  <span class="kv">${disp}</span></div>`}
+const KINFO={
+  aut:'Autonomy, the same parameter as in the expanded panel and the act. Suggest: only talks. Act w/ review: writes arrive as proposals. Autonomous: writes land inside its routing, with receipts (still needs Write arm in the transport).',
+  eff:'Effort per turn for this agent. Inherits the transport Effort unless set here.',
+  bud:'Turns allowed for the current act. The ring in the diagram shows used/allowed.',
+  steer:'What your input does while this agent is running: steer the running turn, or queue as the next act.'};
+
+/* agent diagram: ring of turn ticks (budget), filled = used; centre = state */
+function agentDiag(a){const n=a.max,ticks=[];for(let i=0;i<n;i++){const ang=-150+300*i/(n-1),r0=31,r1=37,
+  s=Math.sin(ang*Math.PI/180),c=Math.cos(ang*Math.PI/180);
+  const used=i<a.used,cur=i===a.used&&a.state==='working';
+  ticks.push(`<line x1="${(44+r0*s).toFixed(1)}" y1="${(44-r0*c).toFixed(1)}" x2="${(44+r1*s).toFixed(1)}" y2="${(44-r1*c).toFixed(1)}" stroke="${used?a.color:cur?'var(--accent)':'var(--bg-3)'}" stroke-width="3" stroke-linecap="round">${cur?'<animate attributeName="opacity" values="1;.2;1" dur="1.2s" repeatCount="indefinite"/>':''}</line>`)}
+  const autR=[14,19,24][a.aut];
+  return `<svg class="diag" width="88" height="100" viewBox="0 0 88 100">${ticks.join('')}
+   <circle cx="44" cy="44" r="${autR}" fill="none" stroke="${a.color}" stroke-opacity=".35" stroke-width="1" stroke-dasharray="${a.aut===0?'2 3':a.aut===1?'6 3':'none'}"/>
+   <circle cx="44" cy="44" r="9" fill="${a.state==='working'?a.color:'var(--bg-3)'}"/>
+   <text x="44" y="94" text-anchor="middle" font-size="8.5" fill="var(--text-dim)" font-family="ui-monospace,monospace">${a.used}/${a.max} · ${a.state}</text></svg>`}
+
+function nativeDiag(name){ // small honest-looking placeholders for native devices
+  const p={'Colour Field':'<rect x="6" y="40" width="76" height="10" fill="url(#g1)"/><circle cx="30" cy="45" r="4" fill="var(--accent)"/>',
+   'Physics':'<path d="M8 60 Q30 20 44 44 T80 30" stroke="var(--text-dim)" fill="none"/><circle cx="44" cy="44" r="3.5" fill="var(--accent)"/>',
+   'Pointer':'<circle cx="44" cy="44" r="22" stroke="var(--text-dim)" fill="none" stroke-dasharray="3 3"/><circle cx="44" cy="44" r="3.5" fill="var(--accent)"/>',
+   'Focus':'<line x1="10" y1="44" x2="78" y2="44" stroke="var(--text-faint)"/><rect x="32" y="30" width="24" height="28" stroke="var(--text-dim)" fill="none"/>',
+   'Medium':'<path d="M8 50 C25 30 45 70 80 40" stroke="var(--text-dim)" fill="none"/>',
+   'Depth':'<path d="M14 64 L44 20 L74 64Z" stroke="var(--text-dim)" fill="none"/>',
+   'Resonance':'<path d="M8 44 Q18 20 28 44 T48 44 T68 44 T80 44" stroke="var(--text-dim)" fill="none"/>',
+   'Wiki return':'<rect x="20" y="24" width="48" height="40" stroke="var(--text-dim)" fill="none"/><line x1="28" y1="36" x2="60" y2="36" stroke="var(--text-faint)"/><line x1="28" y1="46" x2="52" y2="46" stroke="var(--text-faint)"/>'}[name]||'';
+  return `<svg class="diag" width="88" height="88" viewBox="0 0 88 88"><defs><linearGradient id="g1"><stop offset="0" stop-color="#d0457a"/><stop offset=".5" stop-color="#5a6be0"/><stop offset="1" stop-color="#3fc28b"/></linearGradient></defs>${p}</svg>`}
+
+/* ---------------- session view ---------------- */
+function renderSession(){
+  const g=$('#sgrid');let h='';
+  for(const t of tracks){
+    h+=`<div class="trk ${t.ret?'ret':''} ${sel.track===t.id?'sel':''}" data-track="${t.id}">
+      <div class="thd" style="background:${t.color}" data-info="${t.name} · ${t.kind}|A track is a scope: ${t.ret?'a return — work sent from other tracks passes through it':'everything launched here acts on this '+t.kind}. ${t.agent?agents[t.agent].name+' is seated on its chain.':'No agent seated — drag one from the browser.'}">
+        ${t.agent?`<span style="width:7px;height:7px;border-radius:50%;background:#1d1f22"></span>`:''}${t.name}<span class="kind">${t.ret?'':t.kind}</span></div>`;
+    for(let i=0;i<6;i++){const c=(t.clips||[])[i];
+      if(t.ret){h+=`<div class="slot"></div>`;continue}
+      if(c){const isSel=sel.clip===t.id+':'+i;
+        h+=`<div class="slot clip ${c.s} ${isSel?'selc':''}" data-clip="${t.id}:${i}" style="background:${t.color}" data-info="${c.plain?'Clip|An ordinary Scene state clip — agents and native material share the grid.':'Act · '+c.n+'|A clip is an act: a prompt plus its settings. Click the triangle to run it on '+(t.agent?agents[t.agent].name:'the seated agent')+'; click the clip to edit it in the Clip view below. '+({done:'Finished — its receipt is in the Ledger.',playing:'Running now.',queued:'Queued — will start at the next quantize point.',stopped:'Ready.'}[c.s])}">
+          <span class="tri"></span><span class="nm">${c.n}</span>${c.s==='playing'?`<span class="prog" style="width:${c.p*100}%"></span>`:''}</div>`}
+      else if(t.recSlot===i){h+=`<div class="slot clip rec" data-info="Recording|Your voice is being recorded into a new act on this armed track."><span class="tri"></span><span class="nm">● listening…</span></div>`}
+      else h+=`<div class="slot" ${t.agent?`data-info="Empty slot|Double-click to write a new act here, or arm the track and press ● to speak one."`:''}>${t.agent?'<span class="sb"></span>':''}</div>`}
+    h+=`<div class="fill"></div><div class="stoprow" data-info="Stop track|Interrupts only this track's agent, quantized like the transport Stop."><span class="stopb"></span></div>
+      <div class="mix">
+        <span class="lab">Reads from</span><div class="dd" data-info="Reads from|Live's input routing (Audio From). The agent's knowledge bounds: what it may read. Expand the device for the full list.">${t.reads}</div>
+        <span class="lab">Writes to</span><div class="dd" data-info="Writes to|Live's output routing (Audio To). Where the agent's writes go: straight to the work, or as drafts to the A · Review return.">${t.writes}</div>
+        <div class="mixlow">
+          ${t.ret?'':`<div class="sends">${knob('sa','A',t.sa||0,'',t.sa?'var(--bumble)':'var(--bg-3)').replace('data-info="A|"','data-info="Send A · Review|How much of this track\'s work passes through the Review return (Bumble). Full: every write is reviewed. Zero: none."')}</div>`}
+          <div class="btns"><span class="tact ${t.agent||t.ret?'':'off'}" data-info="Activator|Live's track activator. Off: the agent on this track is benched — it keeps its acts and memory but runs nothing.">${t.ret?(t.id==='review'?'A':'B'):tracks.indexOf(t)+1}</span>
+            <span class="sbtn solo" data-info="Solo|Only soloed tracks' agents may run; everyone else holds at the next quantize point. For when you want one agent alone in the work.">S</span>
+            ${t.ret?'':`<span class="sbtn arm ${t.arm?'on':''}" data-arm="${t.id}" data-info="Arm|The armed track is who you're talking to. The ● in the transport records your voice into a new act here; composer input goes here too. Several tracks can be armed (⌘-click) to address a team.">●</span>`}</div>
+          <div class="fader" data-info="Budget fader · activity meter|Fader: the share of the session budget this track may spend. Meter: live activity (tokens per second) of its agent.">
+            <div class="mtr"><i style="height:${t.meter*100}%;${t.meter>0?'':'display:none'}"></i></div>
+            <div class="ftrack"><span class="fcap" style="bottom:${t.fad*100}%"></span></div></div>
+        </div></div></div>`;
+  }
+  h+=`<div class="gap" style="background:var(--surface)"></div>`;
+  h+=`<div class="scenes"><div class="thd" style="background:${sel.track==='main'?'var(--bg-3)':'var(--bg-2)'};color:var(--text);${sel.track==='main'?'box-shadow:inset 0 0 0 1px #fff8':''}" data-track="main" data-info="Main|The whole work. Global devices live on its chain: the Ledger (every act, receipts, heartbeats) and Approvals.">Main</div>`;
+  SCENES.forEach(s=>h+=`<div class="slot" data-info="Scene · ${s}|Launch a row: fires every act in it at once, across tracks. A scene is a batch — plan, then port, then polish."><span class="tri"></span>${s}</div>`);
+  h+=`<div class="fill" style="background:var(--bg-2)"></div><div class="stoprow" data-info="Stop all|Same as the transport Stop."><span class="stopb"></span></div>
+    <div class="mix"><span class="lab">Ledger</span><div class="dd" style="justify-content:flex-start;gap:6px">212 acts · 2 ◆</div>
+    <div class="mixlow"><div class="btns"><span class="tact">M</span></div><div class="fader"><div class="mtr"><i style="height:48%"></i></div><div class="ftrack"><span class="fcap" style="bottom:70%"></span></div></div></div></div></div>`;
+  g.innerHTML=h;
+}
+
+/* ---------------- bottom: device chain ---------------- */
+function nativeDev(name){return `<div class="dev" data-info="${name}|A native Expressions device in its compact form: activator, live diagram, its four chosen controls. Agents sit on the same chain as these.">
+  <div class="dh"><span class="light on"></span>${name}<span class="x">↗</span></div>
+  <div class="dbody">${nativeDiag(name)}<div class="knobs">${knob('n1','Amount',.55,'0.55','var(--text-dim)')}${knob('n2','Rate',.3,'0.30','var(--text-dim)')}</div></div></div>`}
+function agentDev(key){const a=agents[key];const on=sel.dev==='agent';
+  return `<div class="dev ${on?'sel':''}" data-dev="agent" style="width:322px" data-info="${a.name} · agent device|Compact. Click the title to expand it in the browser pool; double-click or ↗ to open it full in the centre — the same live parameters at three sizes.">
+   <div class="dh"><span class="light ${a.state==='idle'||a.state==='working'?'on':'on'}" data-info="Activator|On: ${a.name} may run acts on this track. Off: benched."></span><b>${a.name}</b>
+     <span style="font-size:9.5px;opacity:.7">${a.harness}</span><span class="x"><span data-act="expand" title="expand">▤</span><span data-act="full" title="open full">↗</span></span></div>
+   <div class="dbody">${agentDiag(a)}
+     <div class="knobs">${knob('aut','Autonomy',a.aut/2,AUT[a.aut].replace('Act w/ review','Review'),a.color)}${knob('eff','Effort',a.eff/4,EFF[a.eff],a.color)}
+       ${knob('bud','Budget',a.max/24,a.max+' turns',a.color)}
+       <div class="toggle" data-info="Steer / Queue|${KINFO.steer}"><span class="kl" style="font-size:9.5px;color:var(--text-dim)">Input</span>
+         <div class="tg"><span class="${a.steer==='steer'?'on':''}" data-steer="steer">steer</span><span class="${a.steer==='queue'?'on':''}" data-steer="queue">queue</span></div></div></div></div></div>`}
+function globalDevs(){return `
+  <div class="dev sel" style="width:300px" data-info="Ledger · global device|Lives on Main so it is always somewhere fixed. Every act across the work: running, queued, done, blocked; heartbeats tick here; receipts open from here."><div class="dh"><span class="light on"></span><b>Ledger</b><span class="x">↗</span></div>
+   <div class="dbody" style="flex-direction:column;gap:6px;font-size:11px">
+     ${[['Fizz','map field → plan','running','var(--fizz)'],['Honey','capture pass','held — hand back','var(--honey)'],['Bumble','review #482','idle','var(--bumble)'],['Fizz','re-plan port','done · receipt','var(--fizz)']].map(r=>`<div style="display:flex;gap:8px;align-items:center"><span style="width:7px;height:7px;border-radius:50%;background:${r[3]}"></span><b style="width:52px">${r[0]}</b><span style="flex:1;color:var(--text-dim)">${r[1]}</span><span class="mono" style="font-size:10px;color:var(--text-faint)">${r[2]}</span></div>`).join('')}
+   </div></div>
+  <div class="dev" style="width:300px" data-info="Approvals · global device|Every proposal waiting for you, from any track, in one fixed place. Approving here is the same act as approving the card in the agent's thread."><div class="dh"><span class="light on"></span><b>Approvals</b><span class="badge" style="margin-left:4px">2</span><span class="x">↗</span></div>
+   <div class="dbody" style="flex-direction:column;gap:8px;font-size:11px">
+     <div style="display:flex;align-items:center;gap:8px"><span style="width:7px;height:7px;border-radius:50%;background:var(--fizz)"></span><span style="flex:1">port plan · 2 files</span><button class="bt pri" style="height:20px">Approve</button></div>
+     <div style="display:flex;align-items:center;gap:8px"><span style="width:7px;height:7px;border-radius:50%;background:var(--honey)"></span><span style="flex:1">deploy Bridge 2 build</span><button class="bt" style="height:20px">Open</button></div>
+   </div></div>`}
+function renderChain(){
+  const c=$('#chain');const t=tracks.find(x=>x.id===sel.track);let h='';
+  if(sel.track==='main'){h=globalDevs()+`<div class="drop"><span>Drop a global device here</span><span style="font-size:10px">(Observer, Budget, Schedule…)</span></div>`}
+  else{ if(t.agent) h+=agentDev(t.agent);
+    t.devs.forEach(d=>h+=nativeDev(d));
+    h+=`<div class="drop" data-info="Drop zone|Drop an agent, a team or a native device. Agents and devices share one chain; order is just layout here — an agent acts on the whole track's scope."><span>${t.agent?'Drop devices or skills here':'Drop an agent here to seat it on '+t.name}</span></div>`}
+  c.innerHTML=h;
+}
+
+/* ---------------- bottom: clip view (the act) ---------------- */
+function renderClip(){
+  const [tid,i]=(sel.clip||'bridge2:1').split(':');const t=tracks.find(x=>x.id===tid);const c=t.clips[+i]||{n:'new act',s:'stopped'};
+  const a=t.agent?agents[t.agent]:null;
+  $('#clipv').innerHTML=`
+   <div class="cbox" style="width:230px"><div class="dh" style="background:${t.color};color:#1d1f22"><b>Act</b>&nbsp;${c.n}</div>
+    <div class="cbb"><div class="prow" style="padding:0"><span class="k">Scope</span><span class="val">${t.name} · ${t.kind}</span></div>
+     <div class="prow" style="padding:0"><span class="k">Agent</span><span class="val">${a?a.name:'—'}</span></div>
+     <div class="prow" style="padding:0"><span class="k">Status</span><span class="val">${c.s}</span></div>
+     <div class="prow" style="padding:0" data-info="Basis|The revision the act was written against. If the work moves on, the act says so before writing."><span class="k">Basis</span><span class="val">r15 → r17</span></div></div></div>
+   <div class="cbox" style="width:250px"><div class="dh"><b>Launch</b></div>
+    <div class="cbb">
+     <div class="prow" style="padding:0" data-info="Launch mode|Live's Trigger/Gate/Toggle. Once: runs to done. Hold: runs while you hold the pad/key — a ‘think while I talk’ mode. Loop: repeats until its stop condition."><span class="k">Mode</span><div class="seg"><button class="on">once</button><button>hold</button><button>loop</button></div></div>
+     <div class="prow" style="padding:0" data-info="Follow action|Live's follow actions, as hand-off. When this act ends: stop, run the next act on this track, or hand to another agent's track. This is how a chain of agents is composed without a workflow editor."><span class="k">Then</span><span class="val">hand off → HeroShot (Honey)</span></div>
+     <div class="prow" style="padding:0" data-info="Act overrides|An act can override its agent's device settings — like clip envelopes over track automation. Blank means inherit."><span class="k">Overrides</span><span class="val" style="color:var(--text-faint)">effort: inherit · autonomy: inherit</span></div>
+     <div class="prow" style="padding:0"><span class="k">Quantize</span><span class="val">global (next tool)</span></div></div></div>
+   <div class="cbox" style="flex:1"><div class="dh"><b>Prompt</b><span style="margin-left:auto;font-size:10px;color:var(--text-dim)">recorded by voice · 14:31 · editable</span></div>
+    <div class="cbb" style="flex:1;display:flex"><div class="prompt">Map the Bridge 2 field into the port plan. Keep Honey's tuned physics — same look.<br><br>
+      <span class="ref">@scene:bridge-2</span> &nbsp;<span class="ref">@register:physics</span> &nbsp;<span style="color:var(--text-faint)">— drop refs from the browser to bind them</span></div></div></div>`;
+}
+
+/* ---------------- tier 2: expanded panel ---------------- */
+function renderPool(){
+  const t=tracks.find(x=>x.id===sel.track);const key=t&&t.agent;const pool=$('#pool');
+  if(!key){$('#pName').textContent=sel.track==='main'?'Main':t.name;$('#pRole').textContent='';$('#pDot').style.background=sel.track==='main'?'var(--text-dim)':t.color;
+    pool.innerHTML=`<div style="padding:16px 12px;color:var(--text-faint);font-size:11.5px">${sel.track==='main'?'Ledger and Approvals are compact-only here; ↗ opens either full in the centre.':'No agent seated on this track. The selected native device expands here when you click its title.'}</div>`;return}
+  const a=agents[key];$('#pName').textContent=a.name;$('#pRole').textContent=a.role;$('#pDot').style.background=a.color;
+  const chips=l=>l.map(([n,on])=>`<span class="chip ${on?'':'off'}">${n}</span>`).join('')+'<span class="chip add">+</span>';
+  pool.innerHTML=`
+   <div class="flow" style="color:${a.color}" data-info="Routing|The device's routing at a glance: what it reads from, who it is, where its writes go. Edit either side below.">
+     <div class="box">${a.reads.filter(r=>r[1]).length} reads</div><svg viewBox="0 0 18 10"><path d="M1 5h14M12 2l3 3-3 3"/></svg>
+     <div class="box ag">${a.name}</div><svg viewBox="0 0 18 10"><path d="M1 5h14M12 2l3 3-3 3"/></svg><div class="box">${a.mode}</div></div>
+   <div class="grp-t"><span class="micro">Autonomy</span></div>
+   <div class="prow"><span class="k">Level</span><div class="seg" id="autSeg">${['Suggest','Review','Autonomous'].map((x,i)=>`<button class="${i===a.aut?'on':''}" data-aut="${i}">${x}</button>`).join('')}</div></div>
+   <div class="prow"><span class="k">Effort</span><div class="seg" id="effSeg">${EFF.map((x,i)=>`<button class="${i===a.eff?'on':''}" data-eff="${i}">${x}</button>`).join('')}</div></div>
+   <div class="prow"><span class="k">Escalates to</span><span class="val">${a.escal}</span></div>
+   <div class="grp-t"><span class="micro">Reads · knowledge</span></div>
+   <div class="prow" style="grid-template-columns:1fr"><div class="chips">${chips(a.reads)}</div></div>
+   <div class="grp-t"><span class="micro">Writes · projection</span><span class="val" style="color:var(--text-dim)">${a.mode}</span></div>
+   <div class="prow" style="grid-template-columns:1fr"><div class="chips">${chips(a.writes)}</div></div>
+   <div class="grp-t"><span class="micro">Skills</span></div>
+   <div class="prow" style="grid-template-columns:1fr"><div class="chips">${chips(a.skills)}</div></div>
+   <div class="grp-t"><span class="micro">Budget</span></div>
+   <div class="prow"><span class="k">Turns</span><div style="display:flex;align-items:center;gap:8px"><div class="slider"><i style="width:${a.used/a.max*100}%"></i></div><span class="val">${a.used}/${a.max}</span></div></div>
+   <div class="prow"><span class="k">Wall clock</span><span class="val">14m / 40m</span></div>
+   <div class="grp-t"><span class="micro">Runtime</span></div>
+   <div class="prow"><span class="k">Harness</span><span class="val">${a.harness}</span></div>
+   <div class="prow"><span class="k">Model</span><span class="val">${a.runtime}</span></div>
+   <div class="prow"><span class="k">Memory</span><span class="val">${a.memory}</span></div>
+   <div class="prow"><span class="k">Heartbeat</span><span class="val">${a.hb}</span></div>`;
+}
+
+/* ---------------- full: turn lane ---------------- */
+function renderLane(){const a=agents.fizz;let h='';for(let i=0;i<a.max;i++){const u=i<a.used,c=i===a.used;
+  const steps=u?[4,3][i]||3:c?3:0;h+=`<div class="${u?'u':c?'c':''}">${'<i></i>'.repeat(steps)}${c?'<span class="stm"></span>':''}</div>`}$('#cells').innerHTML=h}
+/* ---------------- render all ---------------- */
+function render(){
+  renderSession();renderChain();renderPool();renderClip();renderLane();
+  $('#chain').classList.toggle('off',sel.bottom!=='device');$('#clipv').classList.toggle('on',sel.bottom==='clip');
+  $('#tgClip').classList.toggle('on',sel.bottom==='clip');$('#tgDev').classList.toggle('on',sel.bottom==='device');
+  $('#session').classList.toggle('on',sel.view==='session');$('#studio').classList.toggle('on',sel.view==='studio');
+  const t=tracks.find(x=>x.id===sel.track);
+  $('#status').textContent=sel.track==='main'?'Main · global devices: Ledger, Approvals':`${t.name} · ${t.kind}${t.agent?' · '+agents[t.agent].name+' seated':' · no agent'} · write standing: ${$('#arm').classList.contains('on')?'direct with receipt':'proposals'}`;
+}
+
+/* ---------------- interaction ---------------- */
+document.addEventListener('click',e=>{
+  const el=e.target;
+  const st=el.closest('[data-steer]');if(st){const k=tracks.find(x=>x.id===sel.track).agent;agents[k].steer=st.dataset.steer;render();return}
+  const au=el.closest('[data-aut]');if(au){agents[tracks.find(x=>x.id===sel.track).agent].aut=+au.dataset.aut;render();return}
+  const ef=el.closest('[data-eff]');if(ef){agents[tracks.find(x=>x.id===sel.track).agent].eff=+ef.dataset.eff;render();return}
+  const ac=el.closest('[data-act]');if(ac){if(ac.dataset.act==='full'){sel.view='studio'}sel.dev='agent';render();return}
+  const ar=el.closest('[data-arm]');if(ar){const t=tracks.find(x=>x.id===ar.dataset.arm);if(!e.metaKey)tracks.forEach(x=>{if(x!==t)x.arm=false});t.arm=!t.arm;render();return}
+  const cl=el.closest('[data-clip]');if(cl){const [tid,i]=cl.dataset.clip.split(':');sel.track=tid;sel.clip=cl.dataset.clip;
+    if(el.classList.contains('tri')){const c=tracks.find(x=>x.id===tid).clips[+i];if(!c.plain)c.s=c.s==='playing'?'stopped':'queued'}
+    sel.bottom='clip';render();return}
+  const dv=el.closest('[data-dev]');if(dv){const now=Date.now();if(now-(window._lastDev||0)<350){sel.view='studio'}window._lastDev=now;
+    if(el.closest('[data-knob]'))return;sel.dev='agent';sel.bottom='device';render();return}
+  const tr=el.closest('[data-track]');if(tr){sel.track=tr.dataset.track;sel.bottom='device';sel.clip=null;render();return}
+  const ag=el.closest('[data-agent]');if(ag){const t=tracks.find(x=>x.agent===ag.dataset.agent);if(t){sel.track=t.id;sel.bottom='device';render()}return}
+  if(el.closest('#apprBtn')){sel.track='main';sel.bottom='device';sel.view='session';render();return}
+  if(el.closest('#backBtn')){sel.view='session';render();return}
+  if(el.closest('#tgClip')){sel.bottom='clip';if(!sel.clip)sel.clip='bridge2:1';render();return}
+  if(el.closest('#tgDev')){sel.bottom='device';render();return}
+  if(el.closest('#effortField')){const t=tracks.find(x=>x.id===sel.track);const a=t&&t.agent?agents[t.agent]:agents.fizz;a.eff=(a.eff+1)%5;$('#effortVal').textContent=EFF[a.eff];render();return}
+  const tb=el.closest('.tb');if(tb){
+    if(tb.id==='rec'){tb.classList.toggle('on');const on=tb.classList.contains('on');
+      const armed=tracks.find(x=>x.arm);if(armed){if(on){const free=[0,1,2,3,4,5].find(i=>!armed.clips[i]);armed.recSlot=free}else{if(armed.recSlot!=null){armed.clips[armed.recSlot]={n:'new act (voice)',s:'queued'};armed.recSlot=null}}}
+      $('#composer').classList.toggle('voice',on);render();return}
+    if(['play','od','arm','hb','loop','follow'].includes(tb.id)){tb.classList.toggle('on');
+      if(tb.id==='play'&&!tb.classList.contains('on'))tracks.forEach(t=>t.clips.forEach(c=>{if(c&&c.s==='playing')c.s='stopped'}));render();return}
+    if(tb.id==='stop'){$('#play').classList.remove('on');tracks.forEach(t=>t.clips.forEach(c=>{if(c&&(c.s==='playing'||c.s==='queued'))c.s='stopped'}));agents.fizz.state='paused';render();return}
+  }
+});
+document.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();sel.view=sel.view==='session'?'studio':'session';render()}});
+/* knob drag: one parameter, three presentations */
+let drag=null;
+document.addEventListener('mousedown',e=>{const k=e.target.closest('[data-knob]');if(!k)return;const t=tracks.find(x=>x.id===sel.track);if(!t||!t.agent)return;drag={k:k.dataset.knob,y:e.clientY,a:agents[t.agent],acc:0};e.preventDefault()});
+document.addEventListener('mousemove',e=>{if(!drag)return;drag.acc+=drag.y-e.clientY;drag.y=e.clientY;const step=14;
+  while(Math.abs(drag.acc)>=step){const d=Math.sign(drag.acc);drag.acc-=d*step;const a=drag.a;
+    if(drag.k==='aut')a.aut=Math.min(2,Math.max(0,a.aut+d));if(drag.k==='eff')a.eff=Math.min(4,Math.max(0,a.eff+d));if(drag.k==='bud')a.max=Math.min(24,Math.max(Math.max(a.used,2),a.max+d*2));render()}});
+document.addEventListener('mouseup',()=>drag=null);
+/* info view */
+document.addEventListener('mouseover',e=>{const el=e.target.closest('[data-info]');if(!el)return;const [t,p]=el.dataset.info.split('|');if(!p)return;$('#info').innerHTML=`<b>${t}</b><p>${p}</p>`});
+/* fit */
+function fit(){const s=Math.min(innerWidth/1920,innerHeight/1200);$('#fit').style.transform=`translate(-50%,-50%) scale(${s})`}
+addEventListener('resize',fit);fit();render();
+/* running clip progress */
+setInterval(()=>{tracks.forEach(t=>t.clips.forEach(c=>{if(c&&c.s==='playing'&&$('#play').classList.contains('on')){c.p=(c.p+.01)%1}}));
+  document.querySelectorAll('.slot.playing .prog').forEach(p=>{const [tid,i]=p.parentElement.dataset.clip.split(':');p.style.width=tracks.find(x=>x.id===tid).clips[+i].p*100+'%'})},400);
+</script>
+</body>
+</html>

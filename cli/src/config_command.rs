@@ -10,10 +10,12 @@
 /// `OI_CONFIG_SURFACE_FIXTURES=<suite/configuration/cases>` binds the
 /// fixture-backed in-memory surface, which is also what the C5 tests drive.
 use oi_cli::config_surface::{
-    AppliedChange, ChangeRequest, ConfigSurface, ListedSetting, OwnerContribution, ProfileSurface,
-    SurfaceError, SurfaceResult, expect_schema, parse_scope_argument,
+    expect_schema, parse_scope_argument, AppliedChange, ChangeRequest, ConfigSurface,
+    ListedSetting, OwnerContribution, ProfileSurface, SurfaceError, SurfaceResult,
 };
-use oi_cli::configuration::{ChangeSet, ErrorCode, Resolution, Scope, ValueKind, derive_changeset_status};
+use oi_cli::configuration::{
+    derive_changeset_status, ChangeSet, ErrorCode, Resolution, Scope, ValueKind,
+};
 use std::rc::Rc;
 
 fn command_config(args: &[OsString]) -> Result<i32, String> {
@@ -31,26 +33,42 @@ fn command_config(args: &[OsString]) -> Result<i32, String> {
         return Ok(0);
     }
     let (subcommand, rest) = (values[0].as_str(), &values[1..]);
-    let (json, positional) = split_config_flags(rest, &["--request-file", "--changeset", "--title", "--description"])?;
-    let (config, _profiles) = bind_config_surfaces()?;
+    let (json, positional) = split_config_flags(
+        rest,
+        &["--request-file", "--changeset", "--title", "--description"],
+    )?;
+    // Bind only for the selected command. Native capability discovery and unknown
+    // commands do not need to probe every owner or read Current World.
+    let config = || bind_config_surfaces().map(|(config, _profiles)| config);
     let outcome: SurfaceResult<ConfigCommandOutcome> = match subcommand {
-        "list" => config_list(&*config, json),
-        "show" => config_show(&*config, &positional, json),
-        "resolve" => config_resolve_many(&*config, rest, json),
-        "get" => config_get(&*config, &positional, json),
-        "set" => config_set(&*config, &positional, json),
-        "hold" => config_hold(&*config, &positional, json),
-        "discard" => config_discard(&*config, &positional, json),
-        "reset" => config_reset(&*config, &positional, json),
-        "diff" => config_diff(&*config, json),
-        "plan" => config_plan(&*config, rest, json),
-        "apply" => config_apply(&*config, rest, json),
-        "doctor" => config_doctor(&*config, json),
-        "receipts" => config_receipts(&*config, rest, json),
+        "capabilities" => {
+            let reviewed_apply = if env::var_os("OI_CONFIG_SURFACE_FIXTURES")
+                .filter(|value| !value.is_empty())
+                .is_some()
+            {
+                config()?.reviewed_apply_available()
+            } else {
+                oi_cli::kernel_surface::KernelSurface::reviewed_apply_capability()
+            };
+            config_capabilities(reviewed_apply)
+        }
+        "list" => config_list(&*config()?, json),
+        "show" => config_show(&*config()?, &positional, json),
+        "resolve" => config_resolve_many(&*config()?, rest, json),
+        "get" => config_get(&*config()?, &positional, json),
+        "set" => config_set(&*config()?, &positional, json),
+        "hold" => config_hold(&*config()?, &positional, json),
+        "discard" => config_discard(&*config()?, &positional, json),
+        "reset" => config_reset(&*config()?, &positional, json),
+        "diff" => config_diff(&*config()?, json),
+        "plan" => config_plan(&*config()?, rest, json),
+        "apply" => config_apply(&*config()?, rest, json),
+        "doctor" => config_doctor(&*config()?, json),
+        "receipts" => config_receipts(&*config()?, rest, json),
         other => {
             return Err(format!(
                 "unknown `oi config` command {other:?}; see `oi config --help`"
-            ))
+            ));
         }
     };
     match outcome {
@@ -60,9 +78,12 @@ fn command_config(args: &[OsString]) -> Result<i32, String> {
             }
             if json {
                 if let Some(document) = outcome.document {
-                    println!("{}", serde_json::to_string_pretty(&document).map_err(|error| {
-                        format!("cannot encode the {subcommand} result: {error}")
-                    })?);
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&document).map_err(|error| {
+                            format!("cannot encode the {subcommand} result: {error}")
+                        })?
+                    );
                 }
             }
             Ok(outcome.exit_code)
@@ -79,8 +100,26 @@ pub struct ConfigCommandOutcome {
     pub exit_code: i32,
 }
 
-fn config_outcome(plain: Option<String>, document: Option<serde_json::Value>) -> SurfaceResult<ConfigCommandOutcome> {
-    Ok(ConfigCommandOutcome { plain, document, exit_code: 0 })
+fn config_outcome(
+    plain: Option<String>,
+    document: Option<serde_json::Value>,
+) -> SurfaceResult<ConfigCommandOutcome> {
+    Ok(ConfigCommandOutcome {
+        plain,
+        document,
+        exit_code: 0,
+    })
+}
+
+fn config_capabilities(reviewed_apply: bool) -> SurfaceResult<ConfigCommandOutcome> {
+    config_outcome(
+        Some("Native configuration: reviewed owner plans and native reset".into()),
+        Some(serde_json::json!({
+            "schema":"oi.config-capabilities/v1", "reviewed_apply":reviewed_apply,
+            "owner_plan_passthrough":reviewed_apply, "native_reset":true,
+            "reset_basis":"owner-native; UI reading preflight is not atomic compare-and-swap",
+        })),
+    )
 }
 
 /// Split `--json` and flag/value pairs from positionals, per the CLI's
@@ -114,8 +153,7 @@ fn split_config_flags(
 type BoundSurfaces = (Rc<dyn ConfigSurface>, Rc<dyn ProfileSurface>);
 
 fn bind_config_surfaces() -> Result<BoundSurfaces, String> {
-    if let Some(dir) = env::var_os("OI_CONFIG_SURFACE_FIXTURES").filter(|value| !value.is_empty())
-    {
+    if let Some(dir) = env::var_os("OI_CONFIG_SURFACE_FIXTURES").filter(|value| !value.is_empty()) {
         let surface = Rc::new(
             oi_cli::fixture_surface::FixtureSurface::from_cases_dir(Path::new(&dir)).map_err(
                 |error| format!("the fixture configuration surface is invalid: {error}"),
@@ -125,9 +163,13 @@ fn bind_config_surfaces() -> Result<BoundSurfaces, String> {
     }
     let catalogue = oi_cli::product_command::product_command_catalogue()?;
     let mut programs = resolve_product_executables(&catalogue.products)?;
-    let surface = Rc::new(oi_cli::kernel_surface::KernelSurface::open_with_product_resolver(|product| {
-        programs.remove(&product.id).ok_or_else(|| format!("No native executable resolved for {}", product.id))
-    })?);
+    let surface = Rc::new(
+        oi_cli::kernel_surface::KernelSurface::open_with_product_resolver(|product| {
+            programs
+                .remove(&product.id)
+                .ok_or_else(|| format!("No native executable resolved for {}", product.id))
+        })?,
+    );
     let config: Rc<dyn ConfigSurface> = surface.clone();
     let profiles: Rc<dyn ProfileSurface> = surface;
     Ok((config, profiles))
@@ -153,10 +195,7 @@ fn config_listing_map(
     Ok((config.discover()?, config.list()?))
 }
 
-fn find_listed<'a>(
-    listed: &'a [ListedSetting],
-    setting_ref: &str,
-) -> Option<&'a ListedSetting> {
+fn find_listed<'a>(listed: &'a [ListedSetting], setting_ref: &str) -> Option<&'a ListedSetting> {
     listed
         .iter()
         .find(|entry| entry.setting.setting_ref == setting_ref)
@@ -295,15 +334,17 @@ fn read_request_document(path: &str) -> Result<Value, String> {
 
 fn parse_request_document(document: &Value) -> SurfaceResult<ChangeSet> {
     expect_schema(document, oi_cli::configuration::CHANGSET_SCHEMA)?;
-    let changeset: ChangeSet = serde_json::from_value(document.clone())
-        .map_err(|error| {
-            SurfaceError::new(
-                ErrorCode::UnsupportedSchema,
-                format!("the request is not a change-set document: {error}"),
-            )
-        })?;
+    let changeset: ChangeSet = serde_json::from_value(document.clone()).map_err(|error| {
+        SurfaceError::new(
+            ErrorCode::UnsupportedSchema,
+            format!("the request is not a change-set document: {error}"),
+        )
+    })?;
     changeset.validate().map_err(|error| {
-        SurfaceError::new(ErrorCode::UnsupportedSchema, format!("invalid request: {error}"))
+        SurfaceError::new(
+            ErrorCode::UnsupportedSchema,
+            format!("invalid request: {error}"),
+        )
     })?;
     Ok(changeset)
 }
@@ -376,9 +417,10 @@ fn config_list(config: &dyn ConfigSurface, json: bool) -> SurfaceResult<ConfigCo
                         // with its reason; an owner that disclosed no
                         // availability at all reads `unknown`, never assumed.
                         let (state, reason) = match &contribution.availability {
-                            Some(availability) => {
-                                (wire_string(&availability.state), availability.reason.clone())
-                            }
+                            Some(availability) => (
+                                wire_string(&availability.state),
+                                availability.reason.clone(),
+                            ),
                             None => ("unknown".to_owned(), None),
                         };
                         (
@@ -391,7 +433,9 @@ fn config_list(config: &dyn ConfigSurface, json: bool) -> SurfaceResult<ConfigCo
                             contribution.owner.owner_ref.clone(),
                         )
                     }
-                    OwnerContribution::Unavailable { owner_ref, reason, .. } => (
+                    OwnerContribution::Unavailable {
+                        owner_ref, reason, ..
+                    } => (
                         serde_json::json!({
                             "owner_ref": owner_ref,
                             "state": "unavailable",
@@ -470,9 +514,10 @@ fn config_list(config: &dyn ConfigSurface, json: bool) -> SurfaceResult<ConfigCo
                 // The owner's own probed availability (07 §4.7), never a
                 // literal; an undisclosed availability reads `unknown`.
                 let (state, reason) = match &contribution.availability {
-                    Some(availability) => {
-                        (wire_string(&availability.state), availability.reason.clone())
-                    }
+                    Some(availability) => (
+                        wire_string(&availability.state),
+                        availability.reason.clone(),
+                    ),
                     None => ("unknown".to_owned(), None),
                 };
                 let reason_suffix = reason
@@ -505,13 +550,19 @@ fn config_list(config: &dyn ConfigSurface, json: bool) -> SurfaceResult<ConfigCo
                             setting.setting_ref,
                             wire_string(&setting.value_schema.kind),
                             if setting.writable { "" } else { " read-only" },
-                            if setting.profileable { "" } else { " not-profileable" },
+                            if setting.profileable {
+                                ""
+                            } else {
+                                " not-profileable"
+                            },
                             wire_string(&setting.effect.kind),
                         ));
                     }
                 }
             }
-            OwnerContribution::Unavailable { owner_ref, reason, .. } => {
+            OwnerContribution::Unavailable {
+                owner_ref, reason, ..
+            } => {
                 let standing = standing_of(owner_ref);
                 let standing_note = match standing {
                     oi_cli::current_world::CompositionStanding::Absent => {
@@ -529,18 +580,46 @@ fn config_list(config: &dyn ConfigSurface, json: bool) -> SurfaceResult<ConfigCo
 }
 
 /// Batch desktop reads cross once; owner-native resolution semantics stay here.
-fn config_resolve_many(config: &dyn ConfigSurface, args: &[String], json: bool) -> SurfaceResult<ConfigCommandOutcome> {
-    let path = config_flag_value(args, "--request-file").ok_or_else(|| SurfaceError::new(ErrorCode::InvalidValue, "usage: oi config resolve --request-file <path|-> --json"))?;
-    let value = read_request_document(&path).map_err(|error| SurfaceError::new(ErrorCode::InvalidValue, error))?;
+fn config_resolve_many(
+    config: &dyn ConfigSurface,
+    args: &[String],
+    json: bool,
+) -> SurfaceResult<ConfigCommandOutcome> {
+    let path = config_flag_value(args, "--request-file").ok_or_else(|| {
+        SurfaceError::new(
+            ErrorCode::InvalidValue,
+            "usage: oi config resolve --request-file <path|-> --json",
+        )
+    })?;
+    let value = read_request_document(&path)
+        .map_err(|error| SurfaceError::new(ErrorCode::InvalidValue, error))?;
     #[derive(serde::Deserialize)]
-    struct Pair { setting_ref: String, scope: Scope }
-    let pairs: Vec<Pair> = serde_json::from_value(value).map_err(|error| SurfaceError::new(ErrorCode::InvalidValue, error.to_string()))?;
-    let pairs: Vec<_> = pairs.into_iter().map(|pair| (pair.setting_ref, pair.scope)).collect();
-    let resolutions: Vec<Value> = config.resolve_many(&pairs).into_iter().map(|result| match result {
-        Ok(resolution) => serde_json::to_value(resolution).expect("resolution is serializable"),
-        Err(error) => serde_json::to_value(error.document()).expect("error is serializable"),
-    }).collect();
-    config_outcome(if json { None } else { Some(format!("{} configuration resolutions", resolutions.len())) }, Some(serde_json::json!({"schema":"oi.config-resolutions/v1", "resolutions":resolutions})))
+    struct Pair {
+        setting_ref: String,
+        scope: Scope,
+    }
+    let pairs: Vec<Pair> = serde_json::from_value(value)
+        .map_err(|error| SurfaceError::new(ErrorCode::InvalidValue, error.to_string()))?;
+    let pairs: Vec<_> = pairs
+        .into_iter()
+        .map(|pair| (pair.setting_ref, pair.scope))
+        .collect();
+    let resolutions: Vec<Value> = config
+        .resolve_many(&pairs)
+        .into_iter()
+        .map(|result| match result {
+            Ok(resolution) => serde_json::to_value(resolution).expect("resolution is serializable"),
+            Err(error) => serde_json::to_value(error.document()).expect("error is serializable"),
+        })
+        .collect();
+    config_outcome(
+        if json {
+            None
+        } else {
+            Some(format!("{} configuration resolutions", resolutions.len()))
+        },
+        Some(serde_json::json!({"schema":"oi.config-resolutions/v1", "resolutions":resolutions})),
+    )
 }
 
 fn config_show(
@@ -555,7 +634,7 @@ fn config_show(
             return Err(SurfaceError::new(
                 ErrorCode::Internal,
                 "usage: oi config show <setting-ref> [scope] [--json]",
-            ))
+            ));
         }
     };
     let scope = match decide_scope(&config.list()?, &setting_ref, scope_argument.as_deref()) {
@@ -566,9 +645,10 @@ fn config_show(
     if json {
         return config_outcome(
             None,
-            Some(serde_json::to_value(&resolution).map_err(|error| {
-                SurfaceError::new(ErrorCode::Internal, error.to_string())
-            })?),
+            Some(
+                serde_json::to_value(&resolution)
+                    .map_err(|error| SurfaceError::new(ErrorCode::Internal, error.to_string()))?,
+            ),
         );
     }
     config_outcome(Some(plain_resolution_line(&resolution)), None)
@@ -586,7 +666,7 @@ fn config_get(
             return Err(SurfaceError::new(
                 ErrorCode::Internal,
                 "usage: oi config get <setting-ref> [scope] [--json]",
-            ))
+            ));
         }
     };
     let listed = config.list()?;
@@ -626,8 +706,7 @@ fn config_get(
         // Secret-kind settings surface the reference and never a material
         // value (09 §14); the `value` key is absent, not redacted-partial.
         if is_secret {
-            if let Some(reference) = desired.and_then(|desired| desired.secret_reference.clone())
-            {
+            if let Some(reference) = desired.and_then(|desired| desired.secret_reference.clone()) {
                 document["secret_reference"] = serde_json::json!({ "ref": reference.ref_ });
             }
         } else if let Some(value) = value {
@@ -683,7 +762,7 @@ fn config_set(
             return Err(SurfaceError::new(
                 ErrorCode::Internal,
                 "usage: oi config set <setting-ref> <value> [scope] [--json]",
-            ))
+            ));
         }
     };
     let listed = config.list()?;
@@ -717,9 +796,10 @@ fn config_set(
     if json {
         return config_outcome(
             None,
-            Some(serde_json::to_value(&changeset).map_err(|error| {
-                SurfaceError::new(ErrorCode::Internal, error.to_string())
-            })?),
+            Some(
+                serde_json::to_value(&changeset)
+                    .map_err(|error| SurfaceError::new(ErrorCode::Internal, error.to_string()))?,
+            ),
         );
     }
     let requested = &changeset.requested[0];
@@ -731,7 +811,9 @@ fn config_set(
     config_outcome(
         Some(format!(
             "ChangeSet {} planned: {} @ {} → {subject}; apply with `oi config apply --request-file -` (pipe the --json document)",
-            changeset.changeset_id, setting_ref, requested.scope.compact()
+            changeset.changeset_id,
+            setting_ref,
+            requested.scope.compact()
         )),
         None,
     )
@@ -753,7 +835,7 @@ fn config_hold(
             return Err(SurfaceError::new(
                 ErrorCode::Internal,
                 "usage: oi config hold <setting-ref> <value|secret-reference> [scope] [--json]",
-            ))
+            ));
         }
     };
     let listed = config.list()?;
@@ -787,9 +869,10 @@ fn config_hold(
     if json {
         return config_outcome(
             None,
-            Some(serde_json::to_value(&held).map_err(|error| {
-                SurfaceError::new(ErrorCode::Internal, error.to_string())
-            })?),
+            Some(
+                serde_json::to_value(&held)
+                    .map_err(|error| SurfaceError::new(ErrorCode::Internal, error.to_string()))?,
+            ),
         );
     }
     let subject = held
@@ -820,7 +903,7 @@ fn config_discard(
             return Err(SurfaceError::new(
                 ErrorCode::Internal,
                 "usage: oi config discard <setting-ref> [scope] [--json]",
-            ))
+            ));
         }
     };
     let scope = match decide_scope(&config.list()?, &setting_ref, scope_argument.as_deref()) {
@@ -865,7 +948,7 @@ fn config_reset(
             return Err(SurfaceError::new(
                 ErrorCode::Internal,
                 "usage: oi config reset <setting-ref> [scope] [--json]",
-            ))
+            ));
         }
     };
     let scope = match decide_scope(&config.list()?, &setting_ref, scope_argument.as_deref()) {
@@ -876,9 +959,10 @@ fn config_reset(
     if json {
         return config_outcome(
             None,
-            Some(apply_envelope(&applied).map_err(|error| {
-                SurfaceError::new(ErrorCode::Internal, error.to_string())
-            })?),
+            Some(
+                apply_envelope(&applied)
+                    .map_err(|error| SurfaceError::new(ErrorCode::Internal, error.to_string()))?,
+            ),
         );
     }
     config_outcome(
@@ -924,7 +1008,10 @@ fn config_diff(config: &dyn ConfigSurface, json: bool) -> SurfaceResult<ConfigCo
         );
     }
     if resolutions.is_empty() {
-        return config_outcome(Some("No O:I desired state is held; nothing to diff.".to_owned()), None);
+        return config_outcome(
+            Some("No O:I desired state is held; nothing to diff.".to_owned()),
+            None,
+        );
     }
     let text = resolutions
         .iter()
@@ -939,43 +1026,64 @@ fn config_plan(
     args: &[String],
     json: bool,
 ) -> SurfaceResult<ConfigCommandOutcome> {
-    let request_file = config_flag_value(args, "--request-file")
-        .ok_or_else(|| SurfaceError::new(ErrorCode::Internal, "usage: oi config plan --request-file <path|-> [--json]"))?;
-    let document = read_request_document(&request_file).map_err(|error| {
-        SurfaceError::new(ErrorCode::Internal, error.to_string())
+    let request_file = config_flag_value(args, "--request-file").ok_or_else(|| {
+        SurfaceError::new(
+            ErrorCode::Internal,
+            "usage: oi config plan --request-file <path|-> [--json]",
+        )
     })?;
+    let document = read_request_document(&request_file)
+        .map_err(|error| SurfaceError::new(ErrorCode::Internal, error.to_string()))?;
     let changeset = parse_request_document(&document)?;
-    let requests = change_requests_from_changeset(&changeset)?;
-    let mut plans = Vec::new();
-    let mut operations = changeset.operations.clone();
-    for (index, request) in requests.iter().enumerate() {
-        let plan = config.plan(request)?;
-        if let Some(operation) = operations.get_mut(index) {
-            operation.plan_digest = Some(plan.plan_digest.clone());
-            operation.plan_ref = Some(plan.plan_id.clone());
-            operation.status = oi_cli::configuration::OperationStatus::Validated;
+    let (planned, owner_plans) = if config.reviewed_apply_available() {
+        config.plan_reviewed(&changeset)?
+    } else {
+        let requests = change_requests_from_changeset(&changeset)?;
+        let mut owner_plans = Vec::new();
+        let mut operations = changeset.operations.clone();
+        for (index, request) in requests.iter().enumerate() {
+            let raw = config.plan_raw(request)?;
+            let plan: oi_cli::config_surface::ConfigPlan = serde_json::from_value(raw.clone())
+                .map_err(|error| {
+                    SurfaceError::new(ErrorCode::UnsupportedSchema, error.to_string())
+                })?;
+            owner_plans.push(raw);
+            if let Some(operation) = operations.get_mut(index) {
+                operation.plan_digest = Some(plan.plan_digest.clone());
+                operation.plan_ref = Some(plan.plan_id.clone());
+                operation.status = oi_cli::configuration::OperationStatus::Validated;
+            }
         }
-        plans.push(plan);
-    }
-    let planned = ChangeSet {
-        schema: changeset.schema,
-        changeset_id: changeset.changeset_id,
-        created_at_unix_ms: changeset.created_at_unix_ms,
-        profile_ref: changeset.profile_ref,
-        requested: changeset.requested,
-        status: derive_changeset_status(&operations, None),
-        operations,
-        verification: None,
-        authority: changeset.authority,
+        let planned = ChangeSet {
+            schema: changeset.schema,
+            changeset_id: changeset.changeset_id,
+            created_at_unix_ms: changeset.created_at_unix_ms,
+            profile_ref: changeset.profile_ref,
+            requested: changeset.requested,
+            status: derive_changeset_status(&operations, None),
+            operations,
+            verification: None,
+            authority: changeset.authority,
+        };
+        planned.validate().map_err(|error| {
+            SurfaceError::new(
+                ErrorCode::Internal,
+                format!("planned ChangeSet is invalid: {error}"),
+            )
+        })?;
+        (planned, owner_plans)
     };
-    planned.validate().map_err(|error| {
-        SurfaceError::new(ErrorCode::Internal, format!("planned ChangeSet is invalid: {error}"))
-    })?;
+    let plans = owner_plans
+        .iter()
+        .cloned()
+        .map(serde_json::from_value::<oi_cli::config_surface::ConfigPlan>)
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| SurfaceError::new(ErrorCode::UnsupportedSchema, error.to_string()))?;
     if json {
         let document = serde_json::json!({
             "schema": "oi.config-plan-set/v1",
             "changeset": planned,
-            "plans": plans,
+            "plans": owner_plans,
         });
         return config_outcome(None, Some(document));
     }
@@ -1015,16 +1123,37 @@ fn config_apply(
     let changeset_override = config_flag_value(args, "--changeset");
     let document = read_request_document(&request_file)
         .map_err(|error| SurfaceError::new(ErrorCode::Internal, error.to_string()))?;
-    let mut changeset = parse_request_document(&document)?;
+    let reviewed = document["schema"] == "oi.config-plan-set/v1";
+    let mut changeset = parse_request_document(if reviewed {
+        &document["changeset"]
+    } else {
+        &document
+    })?;
+    if reviewed && changeset_override.is_some() {
+        return Err(SurfaceError::new(
+            ErrorCode::InvalidValue,
+            "a reviewed ChangeSet keeps its original identity; --changeset is not permitted",
+        ));
+    }
     if let Some(changeset_id) = changeset_override {
         changeset.changeset_id = changeset_id;
     }
     let requests = change_requests_from_changeset(&changeset)?;
-    let applied = config.apply(
-        &changeset.changeset_id,
-        &requests,
-        changeset.profile_ref.as_deref(),
-    )?;
+    let applied = if reviewed {
+        let plans = document["plans"].as_array().ok_or_else(|| {
+            SurfaceError::new(
+                ErrorCode::UnsupportedSchema,
+                "reviewed plan set has no plans",
+            )
+        })?;
+        config.apply_reviewed(&changeset, plans)?
+    } else {
+        config.apply(
+            &changeset.changeset_id,
+            &requests,
+            changeset.profile_ref.as_deref(),
+        )?
+    };
     if json {
         let envelope = apply_envelope(&applied)
             .map_err(|error| SurfaceError::new(ErrorCode::Internal, error.to_string()))?;

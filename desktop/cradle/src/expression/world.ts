@@ -54,11 +54,16 @@ export interface MaterialSelect {file_ref?:string;expression_ref?:string;revisio
 export interface ActMaterial {file_ref?:string;expression_ref?:string;revision?:string;scene_ref?:string}
 export interface Transition {duration?:number;easing?:string}
 export interface EventBasis {family:string;source:string;event_ref:string;occurrence?:string|number}
-export interface Passage {index:number;kind:PassageKind;/** immutable native edition retained by act_perform; never current writable state */edition?:ExpressionDocument;file_ref?:string;/** material addressed as an open Expression */expression_ref?:string;revision?:string;scene_ref?:string;/** the live Expression/Scene performed into */target_ref?:string;target_scene_ref?:string;field?:string;state?:string;role?:string;gesture?:string;bindings?:ActBindings;captions?:Record<string,string>;transition?:Transition;event_basis?:EventBasis;operation?:string;native_ref?:string;text?:string;value?:number;summary?:string;mode:ActMode;at_unix_ms:number;/** later fills of the same text role absorbed in place */coalesced?:number}
+export type ActMaterialContract='oi.expression-act-material/v2';
+/** Native immutable edition handle; position is a passage index, never seconds. */
+export interface RetainedPerformanceEdition {schema:'oi.expression-act-performance-edition/v1';index:number;expression_ref:string;revision:number;expanded_document_sha256:string;expanded_bytes:number}
+export interface Passage {index:number;kind:PassageKind;/** immutable native edition retained by act_perform; never current writable state */edition?:ExpressionDocument;performance_edition?:RetainedPerformanceEdition;file_ref?:string;/** material addressed as an open Expression */expression_ref?:string;revision?:string;scene_ref?:string;/** the live Expression/Scene performed into */target_ref?:string;target_scene_ref?:string;field?:string;state?:string;role?:string;gesture?:string;bindings?:ActBindings;captions?:Record<string,string>;transition?:Transition;event_basis?:EventBasis;operation?:string;native_ref?:string;text?:string;value?:number;summary?:string;mode:ActMode;at_unix_ms:number;/** later fills of the same text role absorbed in place */coalesced?:number}
 export interface Continuation {from:ActMode;to:ActMode;instrument_ref?:string;expression_ref?:string;at:number}
 export interface WorldAct {
  act_ref:string;expression_ref:string;summary:string;actor:string;activity_ref?:string;
  phase:ActPhase;basis_revision:number;revision:number;mode:ActMode;
+ /** Absent for legacy material-v1; read only from the actual native Act. */
+ material_contract?:ActMaterialContract;
  cast:CastMember[];subject_ref?:string;instrument_ref?:string;material?:ActMaterial;
  bindings:ActBindings;selection?:string;position?:number;sequence:Passage[];
  continuations:Continuation[];return_ref?:string;result?:string;
@@ -112,6 +117,8 @@ export type WorldRequest =
  | ({operation:"act_play";act_ref:string;actor:string;material:MaterialSelect;bindings?:ActBindings;captions?:Record<string,string>;from?:number;expected_revision?:number}&ActGuard)
  | {operation:"act_archive";act_ref:string;actor:string}
  | {operation:"act_inspect";act_ref:string}
+ | {operation:"act_retained_inspect";act_ref:string}
+ | {operation:"act_retained_edition";act_ref:string;expected_act_revision:number;position:number}
  | {operation:"act_list";mode?:ActMode;expression_ref?:string;phase?:ActPhase};
 
 /** Structured act outcome. Refusals come back as data too:
@@ -154,6 +161,9 @@ export const actSeek=(t:KernelTransportStatus|WorldCall,input:Req<"act_seek">)=>
 export const actPlay=(t:KernelTransportStatus|WorldCall,input:Req<"act_play">)=>call<ActOutcome>(t,{operation:"act_play",...input});
 export const actArchive=(t:KernelTransportStatus|WorldCall,input:Req<"act_archive">)=>call<ActOutcome>(t,{operation:"act_archive",...input});
 export const actInspect=(t:KernelTransportStatus|WorldCall,act_ref:string)=>call<ActOutcome>(t,{operation:"act_inspect",act_ref});
+export interface RetainedActEdition {state:"act_retained_edition";material_contract:ActMaterialContract;act_ref:string;act_revision:number;position:number;document:ExpressionDocument}
+export const actRetainedInspect=(t:KernelTransportStatus|WorldCall,act_ref:string)=>call<ActOutcome>(t,{operation:"act_retained_inspect",act_ref});
+export const actRetainedEdition=(t:KernelTransportStatus|WorldCall,input:Req<"act_retained_edition">)=>call<RetainedActEdition>(t,{operation:"act_retained_edition",...input});
 /** Act summaries (no sequence; `passages` counts it) — `act_inspect` reads one act whole. */
 export type ActSummary=Pick<WorldAct,"act_ref"|"expression_ref"|"summary"|"actor"|"phase"|"mode"|"revision"|"basis_revision"|"cast"|"subject_ref"|"instrument_ref"|"material"|"position"|"return_ref"|"updated_at_unix_ms"|"archived">&{passages:number};
 export const actList=(t:KernelTransportStatus|WorldCall,input:Req<"act_list">={})=>call<{state:"acts";acts:ActSummary[];persistent:boolean;store_errors:string[]}>(t,{operation:"act_list",...input});

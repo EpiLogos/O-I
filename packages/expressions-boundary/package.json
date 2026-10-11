@@ -1,0 +1,26 @@
+{
+  "name": "@epilogos/expressions-boundary",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Portable hosting boundary for the existing O:I Expressions application and its deep mode.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./cradle": "./src/cradle.ts",
+    "./continuation": "./src/continuation.ts",
+    "./techne": "./src/techne.ts",
+    "./knowledge": "./src/knowledge.ts",
+    "./runtime": "./src/runtime.ts",
+    "./parameters": "./src/parameters.ts",
+    "./editor": "./src/editor.ts",
+    "./editor-host": "./src/editorHost.ts",
+    "./scenes": "./src/scenes.ts",
+    "./scene-edits": "./src/sceneEdits.ts",
+    "./time-window": "./src/timeWindow.ts"
+  },
+  "scripts": {
+    "test": "node tests/run-tests.mjs",
+    "test:native": "node --experimental-strip-types --import ../../desktop/cradle/tests/ts-register.mjs tests/native-owner-acceptance.mjs",
+    "check": "node ../../desktop/cradle/node_modules/typescript/bin/tsc -p tsconfig.json"
+  }
+}

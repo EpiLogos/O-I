@@ -1,0 +1,35 @@
+/* Arrangement device panel. Shell tokens only; amber (--accent) marks the chosen mode, focus, refusals and the ghost marks. */
+.native-arrange-face {display: grid; gap: 12px; color: var(--text); font-size: 12px}
+.native-arrange-face-section {display: grid; gap: 8px; padding: 10px; background: var(--bg-1); border: 1px solid var(--line); border-radius: 6px; min-width: 0}
+.native-arrange-face-section > header {display: flex; align-items: baseline; justify-content: space-between; gap: 8px}
+.native-arrange-face-section h3 {margin: 0; font-size: 12px; font-weight: 600}
+.native-arrange-face-section > header > span {color: var(--text-dim); font-size: 11px}
+.native-arrange-face button, .native-arrange-face select {font: inherit; color: inherit}
+.native-arrange-face button {min-height: 22px; padding: 3px 8px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; cursor: pointer}
+.native-arrange-face button:disabled, .native-arrange-face select:disabled {opacity: .5; cursor: default}
+.native-arrange-face button:focus-visible, .native-arrange-face select:focus-visible, .native-arrange-face input:focus-visible {outline: 2px solid var(--accent); outline-offset: 1px}
+.native-arrange-face-quick, .native-arrange-face-modes, .native-arrange-face-actions {display: flex; flex-wrap: wrap; gap: 6px}
+.native-arrange-face-modes button[aria-pressed='true'] {border-color: var(--accent); color: var(--accent)}
+.native-arrange-face-caption {color: var(--text-dim); font-size: 11px}
+.native-arrange-face-objects {list-style: none; margin: 0; padding: 0; display: grid; gap: 4px}
+.native-arrange-face-objects li {display: grid; gap: 2px; min-width: 0}
+.native-arrange-face-row {display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 22px; padding: 2px 4px; border-radius: 4px; cursor: pointer}
+.native-arrange-face-row.is-disabled {color: var(--text-dim); cursor: default}
+.native-arrange-face-row input {width: 16px; height: 16px; margin: 0}
+.native-arrange-face-kind {font-size: 10px; padding: 1px 5px; border: 1px solid var(--line); border-radius: 3px; color: var(--text-dim)}
+.native-arrange-face-name {overflow: hidden; text-overflow: ellipsis; white-space: nowrap}
+.native-arrange-face-at {color: var(--text-dim); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap}
+.native-arrange-face small, .native-arrange-face-empty, .native-arrange-face-moves {color: var(--text-dim); font-size: 11px; line-height: 1.4}
+.native-arrange-face-moves {margin: 0; padding-left: 16px; font-variant-numeric: tabular-nums}
+.native-arrange-face-field {display: grid; gap: 3px; min-width: 0}
+.native-arrange-face-field > span {color: var(--text-dim); font-size: 11px}
+.native-arrange-face-field select {min-height: 22px; padding: 3px 6px; background: var(--bg-0); border: 1px solid var(--line); border-radius: 4px; width: 100%; box-sizing: border-box}
+.native-arrange-face-plane {width: 100%; height: auto; background: var(--bg-0); border: 1px solid var(--line); border-radius: 4px; box-sizing: border-box}
+.native-arrange-face-plane .axis {stroke: var(--line); stroke-width: 1}
+.native-arrange-face-plane .axis-label {fill: var(--text-dim); font-size: 10px}
+.native-arrange-face-plane .mark-current {fill: var(--text-dim)}
+.native-arrange-face-plane .mark-ghost {fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 3 2}
+.native-arrange-face-plane .ghost-path {stroke: var(--accent); stroke-width: 1; opacity: .6}
+.native-arrange-face-alert {margin: 0; color: var(--accent)}
+.native-arrange-face-note {margin: 0; color: var(--text-dim); font-size: 11px}
+@media (prefers-reduced-motion: reduce) {.native-arrange-face * {transition: none !important; animation: none !important}}

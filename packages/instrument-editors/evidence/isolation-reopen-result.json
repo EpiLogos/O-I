@@ -1,0 +1,37 @@
+{
+  "reopened": [
+    {
+      "expression_ref": "expression:instrument-editor-37db4daa-86b6-4b26-9035-647b9a14b3e0",
+      "revision": 8,
+      "sha256": "275fa5022c50d059799df81b513ff29ee178ce12020a049f90fbe77a65513165"
+    },
+    {
+      "expression_ref": "expression:instrument-member-3681f3ac-fa9f-4320-a49e-6770ee856541",
+      "revision": 2,
+      "sha256": "f7e59193f5a4bfef99b96ba6ca4fc96c1a5b0f570b86b8c6df0c9bee550962d4"
+    },
+    {
+      "expression_ref": "expression:modulation-editor-240f043c-a2ed-453a-859f-551bd92cac0b",
+      "revision": 14,
+      "sha256": "62b565a1075bb6ca0bd8263dd2a26f79d0f32223a4080c3b2cf39cc00e8783a2"
+    },
+    {
+      "expression_ref": "expression:research-editor-bdcb5650-410e-43bf-855b-728da77a1a8b",
+      "revision": 1,
+      "sha256": "721aaeace12b5a13cef7a01991ae3496c04467a925105d0ff7432f9b8c9a3b03"
+    },
+    {
+      "expression_ref": "expression:instrument-editor-75e8c92f-9677-4129-8cc1-5a2f79c52f0b",
+      "revision": 5,
+      "sha256": "599f37ec66049b47fb30746f9ee482a4d6fdbf3d5018cbe15f2ec891980bf0a5"
+    },
+    {
+      "expression_ref": "expression:research-editor-97d777ff-d386-4443-b6f0-354fe1e8d715",
+      "revision": 1,
+      "sha256": "55ac30afe7d5019bdb66efe46fccca217b633648fcb9ec785f9f302531de8dbd"
+    }
+  ],
+  "confirmed": [
+    "six transferred native documents reopen exactly from actual isolated journals"
+  ]
+}

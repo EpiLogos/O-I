@@ -1,0 +1,4 @@
+.navigation-minimap{position:absolute;right:var(--oi-space-3,12px);bottom:calc(var(--oi-space-4,16px) + 46px);z-index:4;width:160px;height:104px;border:1px solid var(--oi-hairline,var(--line));border-radius:var(--oi-shell-radius,4px);background:var(--oi-canvas-ground,var(--panel));touch-action:none;cursor:crosshair;box-shadow:var(--oi-shadow-menu);opacity:.8}
+.navigation-minimap:hover,.navigation-minimap:focus-visible{opacity:1}
+.navigation-minimap:focus-visible{outline:2px solid var(--oi-focus,var(--accent));outline-offset:2px}
+@media(max-width:600px){.navigation-minimap{width:118px;height:80px}}

@@ -14,10 +14,12 @@ const ACT: &str = "act:controlled-epi-world-editions";
 struct Home(PathBuf);
 impl Home {
     fn new() -> Self {
-        Self(std::env::temp_dir().join(
-            format!("oi-act-world-{}-{}", std::process::id(),
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()),
-        ))
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static NEXT: AtomicU64 = AtomicU64::new(0);
+        // Parallel tests in this binary start inside one clock tick. A
+        // timestamped path collides, and the act-store lock then times out.
+        let n = NEXT.fetch_add(1, Ordering::Relaxed);
+        Self(std::env::temp_dir().join(format!("oi-act-world-{}-{}", std::process::id(), n)))
     }
     fn record(&self, reference: &str) -> PathBuf {
         ActStore::at_home(&self.0)
@@ -610,7 +612,7 @@ fn full_native_act_register_validates_fresh_performance_before_archiving_another
         .max_by_key(|scene| serde_json::to_vec(scene).unwrap().len())
         .unwrap();
     let mut oversize_changes = vec![];
-    for index in 0..4 {
+    for index in 0..16 {
         let scene_ref = format!("{WORLD}:scene:controlled-overbudget-{index}");
         oversize_changes.push(json!({"change":"scene_create","scene_ref":scene_ref,"title":"Controlled overbudget copy"}));
         oversize_changes.push(json!({"change":"scene_compose","scene_ref":scene_ref,"entity_refs":source_scene["entity_refs"]}));
@@ -624,7 +626,7 @@ fn full_native_act_register_validates_fresh_performance_before_archiving_another
         request(before["revision"].clone(), json!(oversize_changes)),
     )
     .unwrap_err();
-    assert_eq!(oversize, "Expression document exceeds 8 MiB");
+    assert_eq!(oversize, "Expression document exceeds 16 MiB");
     assert_eq!(document(&mut k), before);
     assert_eq!(admission_files(&home), stored);
     assert_eq!(

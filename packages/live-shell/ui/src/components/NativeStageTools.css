@@ -1,0 +1,14 @@
+.native-stage-tools {display: flex; flex-wrap: wrap; align-items: center; gap: var(--oi-space-2, 8px); padding: var(--oi-space-1, 4px) var(--oi-space-2, 8px); font-size: 12px}
+.native-stage-group {display: inline-flex; gap: 2px; padding: 2px; border-radius: 6px; background: color-mix(in srgb, currentColor 6%, transparent)}
+.native-stage-tools button {font: inherit; padding: 3px 8px; border: 0; border-radius: 4px; background: transparent; color: inherit; cursor: pointer}
+.native-stage-tools button[aria-pressed="true"] {background: color-mix(in srgb, currentColor 16%, transparent); font-weight: 600}
+.native-stage-tools button:focus-visible {outline: 2px solid currentColor; outline-offset: 1px}
+.native-stage-tools button:disabled {opacity: .45; cursor: default}
+.native-stage-menu {position: relative}
+.native-stage-menu > summary {cursor: pointer; padding: 3px 8px; border-radius: 4px; list-style: none}
+.native-stage-menu[open] > .native-stage-menu-items {position: absolute; z-index: 5; display: grid; gap: 2px; min-width: 180px; padding: 4px; border-radius: 6px; background: var(--oi-surface, #fff); box-shadow: 0 6px 18px rgb(0 0 0 / .18)}
+.native-stage-menu-items button {text-align: left}
+.native-stage-note {margin: 0; opacity: .75}
+.native-stage-refusal {margin: 0; color: var(--oi-danger, #b3261e)}
+.native-stage-options label {display: flex; align-items: center; gap: 6px; white-space: nowrap}
+.native-stage-options select {font: inherit}

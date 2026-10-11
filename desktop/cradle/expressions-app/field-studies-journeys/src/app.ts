@@ -19,6 +19,7 @@ import {entityTargets} from './nativeParameters';
 import {recordRecent,recentJourneys} from './recentWork';
 import {installPanelResize} from './panelResize';
 import {initialiseSceneSaves,sceneSaveState,saveScene,nextSceneFrom,restoreScene,savedSceneIndices,sceneParameterChanges} from './sceneWorkflow';
+import {advanceSceneTransport,nativeSceneTransportMaterial} from './sceneTransport';
 import {liveWorkspaceHTML} from './liveWorkspace';
 import {defaultWorkspace,validateWorkspace,WORKSPACE_KEY,moveBeltEntry,syncHeldState} from './workspacePreferences';
 import {physisHost,installPhysis,saveDesktopCapture,type DesktopScene} from './physis';
@@ -37,6 +38,9 @@ import {importDocuments,nativeExport,nativeChakras,checkNativeLimits} from './na
 import {baseValue,NATIVE_BINDINGS,nativeBinding,automationTarget,automationTargets,bindValue,pruneAutomation,WORLD_SCALE} from './nativeParameters.js';
 import {inspectorHTML,InspectorContext} from './inspector.js';
 import {sourceVisual,describeAnalysis} from './sourcePreview.js';
+import {isStudioSection,studioPlacement,type StudioSection} from './studioSections.js';
+import {LiveOverrides} from './liveOverrides.js';
+import {STAGE_COMMANDS,readStageRequest,stageReplyMessage,stageRefusal,type StageCommand,type StageCaptureSettings} from './stageCommands.js';
 import {DEFAULT_SOURCE_THRESHOLD} from '../../src/engine/sourceSampling';
 import {PARAMETERS,parameter} from './registry.js';
 import {evaluateParameters,phases,sequenceAt,focusAt,arrange,reorderFocus} from './timeline.js';
@@ -51,9 +55,21 @@ import {hostedRecovery} from './nativeRecovery.js';
 import {entryGateHTML} from './entryGate.js';
 import {AUTHORED_CHAKRA_STARTER,STANDING_LABEL} from './centreStanding.js';
 import {installNativeWorkspace,type NativeSubject} from './nativeWorkspace.js';
+import {createRetainedNativeEditor,installNativeEditorReceiver,NativeSceneEditRefusal} from './hostEditor.js';
+import {createSourceEditorSelection} from './sourceEditorSelection.js';
+import {readLayerDisclosure,restoreLayerDisclosure} from './layerDisclosure.js';
+import {formationFromSpec,formationStateNudge} from './formationPlacement.js';
+import {createNativeSceneEditHandler} from '../../../../../packages/expressions-boundary/src/sceneEdits';
+import {prepareNativeSceneMaterialEdit, sceneMaterialReadRequirement} from '../../../../../packages/expressions-boundary/src/sceneMaterialEdits';
+import {nativeAdoptionHistory} from './nativeAdoption.js';
+import {sameEditorBasis} from '../../../../../packages/expressions-boundary/src/editor';
+import {createNativeMaterialController} from '../../../../../packages/expressions-boundary/src/nativeMaterials';
+import {requestNativeMaterialEditor} from '../../../../../packages/expressions-boundary/src/materialEditor';
+import {worldRequest} from './worldChannel';
 import {installLensStudio,type LensId} from './lensStudio.js';
 import {installResearchInstruments} from './researchInstruments.js';
 import {installPalaceInstrument} from './palaceInstrument.js';
+import {installJourneyInstrument} from './journeyInstrument.js';
 import {installNaraInstrument} from './naraInstrument.js';
 import {naraFormGeometry} from './naraFormField.js';
 import type {NativeM3Reading} from '../../../src/nara/nativeM3';
@@ -87,6 +103,7 @@ const recovery=document.createElement('section');recovery.id='engine-recovery';r
 let recentIds:string[]=[];try{const raw=JSON.parse(localStorage.getItem('oi.recent-work.v1')??'[]');if(Array.isArray(raw))recentIds=raw.filter((v):v is string=>typeof v==='string');}catch{}
 function rememberWork(id:string){recentIds=recordRecent(recentIds,id);try{localStorage.setItem('oi.recent-work.v1',JSON.stringify(recentIds));}catch{}}
 let workspace=defaultWorkspace(),workspaceStorageError=false;
+let nativeEditorEndpoint:ReturnType<typeof installNativeEditorReceiver>|undefined;
 try{const saved=localStorage.getItem(WORKSPACE_KEY);if(saved)workspace=validateWorkspace(JSON.parse(saved));}catch{workspaceStorageError=true;}
 const sceneNames=new Map<string,string>();
 let monitoredLane='';let monitorMode:MonitorMode='cycle';let monitorDocked=false;let assignmentTarget='',assignmentGroup='';let beltPickerOpen=false;const pendingBelt=new Set<string>();let contextKind:''|'objects'|'text'|'pointer'='';
@@ -118,14 +135,15 @@ let studioScroll=0,automationLoop=false;let automationPhase:'idle'|'waiting'|'ru
 // Physis hosted mode: the service's quality state throttles this studio too,
 // so the level you pick is the level you feel while authoring.
 let physisFpsCap=0,physisPixelRatio:null|number=null,physisParticleCap=0,physisRatioApplied=0,lastStudioRender=0;
-let libraryOpen=false,librarySection:'collection'|'about'='collection',modesOpen=false,captureOpen=false;
+let libraryOpen=false,librarySection:'collection'|'about'='collection',modesOpen=false,captureOpen=false,sourceEditorEpoch=0;
 let railKey:RailItem='interact',railExpanded=false;let cursorTool:'interact'|'select'='interact';
 const featured=featuredExpressions(),starters=startingPoints();
 const covers=new Map<string,string>();
 const sessionExpressions=new Map<string,Journey>();
 // Camera controls stay off the HUD: the field is zoomed by scroll/pinch and
 // each instrument carries its own view tools. The orbit widget is not mounted.
-const scene=()=>store.document.scenes[sceneIndex]??store.document.scenes[0];
+let sceneEditHeld:Scene|null=null;
+const scene=()=>sceneEditHeld??store.document.scenes[sceneIndex]??store.document.scenes[0];
 const activeScene=()=>effectiveScene(store.document,journeyPlaying?store.document.savedScenes?.[scene().id]??scene():scene());
 const selectedEntity=()=>scene().entities.find(e=>e.id===selected[0]);
 const currentText=()=>scene().text.find(t=>t.id===textId)??scene().text[0];
@@ -225,7 +243,7 @@ function setHint(){let h='';if(placementStep)h=`Place link ${stepIndex+1} on the
 function saveWorkspace(){store.change(()=>{store.document.shared!.toolbelt=clone(workspace.entries);});markSaved();try{localStorage.setItem(WORKSPACE_KEY,JSON.stringify(workspace));workspaceStorageError=false;}catch{workspaceStorageError=true;}}
 function liveContext():InspectorContext{return {scene:effectiveScene(store.document,scene()),journey:store.document,selected,textId,tab,motionTab,stepIndex,preview:false,search:'',supported:[...engine.capabilities.parameters],pinned:workspace.entries.filter(v=>v.scope==='field').map(v=>v.key)};}
 function renderContext(){const host=$('context-panel');host.hidden=!contextKind||presenting||libraryOpen;if(!contextKind)return;const title=contextKind==='objects'?'Objects in this scene':contextKind==='text'?'Page text':'Pointer';const ctx={...liveContext(),tab:contextKind==='objects'?'objects':contextKind==='text'?'scene':'field'} as InspectorContext;const content=document.createElement('div');content.innerHTML=inspectorHTML(ctx);if(contextKind==='objects')content.querySelector('[data-detail="arrange"]')?.remove();if(contextKind==='text'||contextKind==='pointer'){const group=content.querySelector('[data-detail="'+(contextKind==='text'?'page-text':'pointer')+'"]');if(group){(group as HTMLDetailsElement).open=true;content.replaceChildren(group);}}host.innerHTML='<header><h2>'+title+'</h2><button data-action="close-context" aria-label="Close local controls">×</button></header><div class="context-content">'+content.innerHTML+'</div>';}
-function renderLive(){const parts=liveWorkspaceHTML(liveContext(),workspace);const secondary=tool==='pin'||studioOpen||timelineOpen||modesOpen||captureOpen||beltPickerOpen||!!contextKind||shapePickerOpen;$('live-workspace').hidden=!sequenceOpen||secondary||presenting||libraryOpen;$('toolbelt-panel').hidden=!beltOpen||presenting||libraryOpen;$('toolbelt-button').setAttribute('aria-expanded',String(!$('toolbelt-panel').hidden));for(const [id,html] of [['live-content',parts.sequence],['belt-content',parts.controls]]){const host=$(id),scroll=host.scrollTop,openGlyphs=Array.from(host.querySelectorAll<HTMLDetailsElement>('[data-glyph-category][open]')).map(d=>d.dataset.glyphCategory),libraryExpanded=host.querySelector<HTMLDetailsElement>('.glyph-tree')?.open;host.innerHTML=html;if(libraryExpanded){const tree=host.querySelector<HTMLDetailsElement>('.glyph-tree');if(tree)tree.open=true;}host.querySelectorAll<HTMLDetailsElement>('[data-glyph-category]').forEach(d=>d.open=openGlyphs.includes(d.dataset.glyphCategory));host.scrollTop=scroll;}$('belt-picker').hidden=!beltPickerOpen||libraryOpen;if(beltPickerOpen)$('belt-picker').innerHTML=pickerHTML(scene(),workspace.entries,pendingBelt);const evaluated=engine.telemetry?.();updateToolbeltValues($('belt-content'),scene(),evaluated?.params??scene().field.params,evaluated?.config);renderContext();if(!$('context-panel').hidden)void refreshSourcePreviews($('context-panel'));if(!$('live-workspace').hidden)void refreshSourcePreviews($('live-content'));const chooser=$('automation-assignment');chooser.hidden=!assignmentTarget&&!assignmentGroup;if(!chooser.hidden)chooser.innerHTML=assignmentHTML(scene(),assignmentTarget,assignmentGroup);const monitor=$('automation-monitor');monitor.hidden=!scene().automation.length||!beltOpen||presenting||libraryOpen;document.documentElement.style.setProperty('--automation-height',monitor.hidden?'0px':'160px');if(!monitor.hidden){if(!scene().automation.some(l=>l.id===monitoredLane))monitoredLane=scene().automation[0].id;const belt=$('toolbelt-panel');if(monitorDocked){if(monitor.parentElement!==belt)belt.appendChild(monitor);monitor.classList.add('docked');}else{if(monitor.parentElement!==document.body)document.body.appendChild(monitor);monitor.classList.remove('docked');}monitor.innerHTML=monitorHTML(scene(),monitoredLane,monitorMode);}document.querySelector('.instrument')?.classList.toggle('expanded',timelineOpen);}
+function renderLive(){const parts=liveWorkspaceHTML(liveContext(),workspace);const secondary=tool==='pin'||studioOpen||timelineOpen||modesOpen||captureOpen||beltPickerOpen||!!contextKind||shapePickerOpen;$('live-workspace').hidden=!sequenceOpen||secondary||presenting||libraryOpen;$('toolbelt-panel').hidden=!beltOpen||presenting||libraryOpen;$('toolbelt-button').setAttribute('aria-expanded',String(!$('toolbelt-panel').hidden));for(const [id,html] of [['live-content',parts.sequence],['belt-content',parts.controls]]){const host=$(id),scroll=host.scrollTop,openGlyphs=Array.from(host.querySelectorAll<HTMLDetailsElement>('[data-glyph-category][open]')).map(d=>d.dataset.glyphCategory),libraryExpanded=host.querySelector<HTMLDetailsElement>('.glyph-tree')?.open,layerDisclosure=readLayerDisclosure(host.querySelector<HTMLDetailsElement>('.live-layers'));host.innerHTML=html;restoreLayerDisclosure(host.querySelector<HTMLDetailsElement>('.live-layers'),layerDisclosure);if(libraryExpanded){const tree=host.querySelector<HTMLDetailsElement>('.glyph-tree');if(tree)tree.open=true;}host.querySelectorAll<HTMLDetailsElement>('[data-glyph-category]').forEach(d=>d.open=openGlyphs.includes(d.dataset.glyphCategory));host.scrollTop=scroll;}$('belt-picker').hidden=!beltPickerOpen||libraryOpen;if(beltPickerOpen)$('belt-picker').innerHTML=pickerHTML(scene(),workspace.entries,pendingBelt);const evaluated=engine.telemetry?.();updateToolbeltValues($('belt-content'),scene(),evaluated?.params??scene().field.params,evaluated?.config);renderContext();if(!$('context-panel').hidden)void refreshSourcePreviews($('context-panel'));if(!$('live-workspace').hidden)void refreshSourcePreviews($('live-content'));const chooser=$('automation-assignment');chooser.hidden=!assignmentTarget&&!assignmentGroup;if(!chooser.hidden)chooser.innerHTML=assignmentHTML(scene(),assignmentTarget,assignmentGroup);const monitor=$('automation-monitor');monitor.hidden=!scene().automation.length||!beltOpen||presenting||libraryOpen;document.documentElement.style.setProperty('--automation-height',monitor.hidden?'0px':'160px');if(!monitor.hidden){if(!scene().automation.some(l=>l.id===monitoredLane))monitoredLane=scene().automation[0].id;const belt=$('toolbelt-panel');if(monitorDocked){if(monitor.parentElement!==belt)belt.appendChild(monitor);monitor.classList.add('docked');}else{if(monitor.parentElement!==document.body)document.body.appendChild(monitor);monitor.classList.remove('docked');}monitor.innerHTML=monitorHTML(scene(),monitoredLane,monitorMode);}document.querySelector('.instrument')?.classList.toggle('expanded',timelineOpen);}
 // Docking swaps the studio's anchor side, so a width/height transition would teleport it: invert the layout change, then play the transform back.
 function flipPanel(el:HTMLElement,mutate:()=>void){el.style.transition='none';el.style.transform='';const a=el.getBoundingClientRect();mutate();const b=el.getBoundingClientRect(),dx=a.left-b.left,dy=a.top-b.top,sx=b.width?a.width/b.width:1,sy=b.height?a.height/b.height:1;if(!b.width||!b.height||(!dx&&!dy&&Math.abs(sx-1)<.002&&Math.abs(sy-1)<.002)){el.style.transition='';return;}const done=(ev:TransitionEvent)=>{if(ev.target!==el||ev.propertyName!=='transform')return;el.removeEventListener('transitionend',done);el.style.transition='';el.style.transformOrigin='';};el.addEventListener('transitionend',done);el.style.transformOrigin='top left';el.style.transform=`translate(${dx}px,${dy}px) scale(${sx},${sy})`;void el.offsetWidth;el.style.transition='transform .25s cubic-bezier(.2,.8,.2,1)';el.style.transform='';}
 function setStudio(open:boolean){pointer.active=false;if(open)journeyPlaying=false;studioOpen=open;inspectorOpen=open;editing=open||cursorTool==='select';renderAll();}
@@ -269,7 +287,8 @@ function updateAutomationRuntime(telemetry:any){const running=automationRunning(
 /** Scene transport: play runs this scene's playhead through its duration and fires
  *  every one-shot automation it carries; pause holds the playhead. The field's own
  *  motion — physics and morph — is never touched from here. */
-function toggleScenePlay(){if(scenePlaying){scenePlaying=false;transportUI();return;}
+let sceneIntentEpoch=0,sceneAdvancePending=false,sceneTransportAlive=true;
+function toggleScenePlay(){sceneIntentEpoch++;if(scenePlaying){scenePlaying=false;transportUI();return;}
  fieldPaused=false;
  const s=scene();if(journeyPlaying){journeyPlaying=false;applySceneView();}
  const fromTop=sceneElapsed<=.001||sceneElapsed>=s.duration-.001;
@@ -297,10 +316,28 @@ function activateRail(next:RailItem){
  renderAll();
 }
 function applySceneView(){const v=activeScene().view;if(v)Object.assign(camera,cameraForSceneView(v,width,height,camera));}
-function setScene(index:number,automatic=false){if(propertyTake)finishPropertyTake();trackPreview=false;pointer.active=false;if(index<0)index=store.document.scenes.length-1;if(index>=store.document.scenes.length)index=0;if(index===sceneIndex&&!automatic)return;
+function setScene(index:number,automatic=false){if(!automatic)sceneIntentEpoch++;if(propertyTake)finishPropertyTake();trackPreview=false;pointer.active=false;if(index<0)index=store.document.scenes.length-1;if(index>=store.document.scenes.length)index=0;if(index===sceneIndex&&!automatic)return;
  if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'){const c=$<HTMLCanvasElement>('transition-canvas');c.width=engine.canvas.width;c.height=engine.canvas.height;c.getContext('2d')!.drawImage(engine.canvas,0,0);transitionBackground=scene().field.background;c.style.background=transitionBackground;c.style.opacity='1';c.hidden=false;transitionStart=simTime;transitionDuration=store.document.scenes[index].transition;transitionEasing='linear';transitionSceneId=store.document.scenes[index].id;}else{transitionDuration=0;$('transition-canvas').hidden=true;}
 
  sceneIndex=index;if(!automatic)journeyPlaying=false;applySceneView();sceneElapsed=0;selected=[];textId=scene().text[0]?.id??null;saveSession();placementStep=false;shapePickerOpen=false;if(!automatic)journeyPlaying=false;renderAll();void researchInstruments?.refresh();}
+/** Saved playback uses the existing frame playhead; native location changes
+ * wait for its exact owner acknowledgement before the next Scene is rendered. */
+async function advanceSavedScene(index:number){if(sceneAdvancePending||!sceneTransportAlive)return;const view=nativeWorkspace?.nativeView(),target=store.document.scenes[index],targetRef=target&&view?.bindings[target.id]?.scene_ref;
+ if(!view){setScene(index,true);fireAutomations(true);return;}
+ if(!targetRef){scenePlaying=false;journeyPlaying=false;toast('The next saved Scene has no native occurrence basis.');renderAll();return;}
+ const originalId=scene().id,version=store.revision,intent=sceneIntentEpoch;sceneAdvancePending=true;scenePlaying=false;
+ try{if(await nativeWorkspace!.select(target.id,null)!=='applied')throw Error('Saved Scene transition was superseded or refused by the native owner');
+  const next=nativeWorkspace?.nativeView();if(!sceneTransportAlive||!next||store.transactionOpen||scene().id!==originalId||store.revision!==version||sceneIntentEpoch!==intent||!journeyPlaying
+   ||next.document.expression_ref!==view.document.expression_ref||next.document.revision<view.document.revision||next.document.revision>view.document.revision+1
+   ||next.document.selection?.scene_ref!==targetRef||next.document.selection.entity_ref!==null)throw Error('New work arrived during the saved Scene transition; its current target was retained');
+  sceneIntentEpoch++;scenePlaying=true;setScene(index,true);fireAutomations(true);
+ }catch(cause){if(!sceneTransportAlive)return;if(sceneIntentEpoch===intent&&scene().id===originalId){scenePlaying=false;journeyPlaying=false;applySceneView();}toast(cause instanceof Error?cause.message:String(cause));renderAll();}
+ finally{sceneAdvancePending=false;}
+}
+function setSavedScenePlay(playing:boolean){sceneIntentEpoch++;journeyPlaying=playing;if(journeyPlaying){fieldPaused=false;scenePlaying=true;editing=false;inspectorOpen=false;timelineOpen=false;selected=[];cursorTool='interact';tool='interact';shapePickerOpen=false;placementStep=false;if(!store.document.savedScenes?.[scene().id])sceneIndex=savedSceneIndices(store.document)[0];sceneElapsed=0;fireAutomations(true);}applySceneView();renderAll();}
+function seekWorkingScene(seconds:number){sceneIntentEpoch++;sceneElapsed=seconds;trackPreview=true;scenePlaying=false;journeyPlaying=false;applySceneView();needsFrame=true;transportUI();}
+function snapshotScene(input:{action:'save-snapshot';name:string;next:boolean}|{action:'restore-snapshot'}){const s=scene();sceneIntentEpoch++;if(input.action==='restore-snapshot'){sceneNames.delete(s.id);changed(()=>{if(!restoreScene(store.document,s.id))throw Error('This Scene has no saved snapshot');});return;}
+ changed(()=>{s.view={...s.view,mode:camera.mode,yaw:camera.yaw,pitch:camera.pitch,zoom:camera.zoom,panX:camera.panX/width,panY:camera.panY/height};delete s.view.nativeCamera;saveScene(store.document,s,input.name);sceneNames.delete(s.id);if(input.next){const next=nextSceneFrom(store.document,s);sceneIndex=store.document.scenes.indexOf(next);selected=[];stepIndex=0;sceneElapsed=0;}});}
 function selectEntity(id:string,multi=false){cursorTool='select';pointer.active=false;railKey='select';railExpanded=true;if(multi){selected=selected.includes(id)?selected.filter(x=>x!==id):[...selected,id];}else selected=[id];editing=true;inspectorOpen=false;contextKind='objects';tab='objects';studioSection='formations';tool='select';shapePickerOpen=false;journeyPlaying=false;stepIndex=0;renderAll();}
 function semanticBindingFor(s:Scene,entityId:string):SemanticBinding|undefined{return s.semanticField?.bindings.find(b=>b.carriers.some(c=>c.kind==='entity'&&c.id===entityId));}
 function defaultSemanticColor():SemanticColorCoupling{return{enabled:true,colorSource:'canonical',gain:1,radius:{source:'force'},falloff:'gaussian',metric:'compositionPlane',blend:'weighted',activation:'constant'};}
@@ -417,12 +454,14 @@ let blueprintHUD:ReturnType<typeof installBlueprintHUD>|undefined;
 // Studio-owned homes for instrument controls (re-parented, never re-rendered).
 const blueprintHome=document.createElement('div');blueprintHome.className='blueprint-home';
 const palaceHome=document.createElement('div');palaceHome.className='palace-home';
+const journeyHome=document.createElement('div');journeyHome.className='journey-reading-home';journeyHome.hidden=true;$('app').append(journeyHome);
 const placesHome=document.createElement('div');placesHome.className='places-home';
 const canvasHome=document.createElement('div');canvasHome.className='canvas-home';
 // A blank boot frame is not a new chosen work. Retain the host's native
 // reference until recovery succeeds or the user explicitly opens a draft.
 let awaitingNativeBoot=startsWithNativeReference;
 let researchInstruments:ReturnType<typeof installResearchInstruments>|undefined;
+let journeyInstrument:ReturnType<typeof installJourneyInstrument>|undefined;
 // A deliberate peek at the live field while a research instrument stays mounted
 // and active: the engine renders only while the person is looking at it.
 let researchPreview=false;
@@ -441,10 +480,10 @@ async function loadJourney(j:Journey){
  // Keep the gate and departing work intact if backup or navigation fails.
  closeEntryGate();
 }
-function applyJourney(j:Journey,native=false){journeyNavigation++;if(!native){awaitingNativeBoot=false;void nativeWorkspace?.changed(j);}if(propertyTake)finishPropertyTake();trackPreview=false;rememberWork(j.id);studioOpen=false;j.scenes.forEach(checkNativeLimits);sessionExpressions.set(store.document.id,clone(store.document));sessionExpressions.set(j.id,clone(j));try{if(!deletedLibraryIds.has(store.document.id))saveToLibrary(store.document);}catch{toast('The previous expression is retained in Undo; browser storage is unavailable. Export it before closing this page.',6500);}store.replace(initialiseSceneSaves(initialiseBelts(j)));store.document.updatedAt=j.updatedAt;sceneIndex=0;selected=[];camera=defaultCamera();applySceneView();transitionDuration=0;$('transition-canvas').hidden=true;sceneElapsed=0;journeyPlaying=false;editing=false;inspectorOpen=false;timelineOpen=false;cursorTool='interact';tool='interact';railKey='interact';railExpanded=false;shapePickerOpen=false;closeDialogs();libraryOpen=false;modesOpen=false;try{history.replaceState(null,'',location.pathname+location.search);}catch{}markSaved();renderAll();}
+function applyJourney(j:Journey,native=false,adoptionHistory:'record'|'acknowledge'='record',acknowledgement:'preserve'|'retire'='preserve'){journeyNavigation++;if(!native){awaitingNativeBoot=false;void nativeWorkspace?.changed(j);}if(propertyTake)finishPropertyTake();trackPreview=false;rememberWork(j.id);studioOpen=false;j.scenes.forEach(checkNativeLimits);sessionExpressions.set(store.document.id,clone(store.document));sessionExpressions.set(j.id,clone(j));try{if(!deletedLibraryIds.has(store.document.id))saveToLibrary(store.document);}catch{toast('The previous expression is retained in Undo; browser storage is unavailable. Export it before closing this page.',6500);}if(native&&adoptionHistory==='acknowledge'&&store.document.id===j.id)store.acknowledge(initialiseSceneSaves(initialiseBelts(j)),acknowledgement);else store.replace(initialiseSceneSaves(initialiseBelts(j)));store.document.updatedAt=j.updatedAt;sceneIndex=0;selected=[];camera=defaultCamera();applySceneView();transitionDuration=0;$('transition-canvas').hidden=true;sceneElapsed=0;journeyPlaying=false;editing=false;inspectorOpen=false;timelineOpen=false;cursorTool='interact';tool='interact';railKey='interact';railExpanded=false;shapePickerOpen=false;closeDialogs();libraryOpen=false;modesOpen=false;try{history.replaceState(null,'',location.pathname+location.search);}catch{}markSaved();renderAll();}
 function openKeep(){captureOpen=!captureOpen;modesOpen=false;pointer.active=false;
  if(captureOpen){inspectorOpen=false;contextKind='';timelineOpen=false;beltPickerOpen=false;shapePickerOpen=false;}renderAll();}
-function renderImageSuite(){readCapture();if(!selectedEntity()){const e=scene().entities.find(e=>e.kind==='formation');if(e)selected=[e.id];} $('capture-panel').innerHTML=`<header><h3>Image suite</h3>${ib('capture-options','close','Close image suite')}</header>${imageSuiteHTML(scene(),selected[0],stepIndex)}<details class="image-output"><summary>Capture output settings</summary><div class="two-col"><label class="control"><span>Output size</span><select id="capture-width"><option value="1280">1280</option><option value="1440">1440</option><option value="1920">1920</option><option value="3840">3840 · PNG</option></select></label><label class="control"><span>Frame</span><select id="capture-aspect"><option value="stage">Current stage</option><option value="16:9">16:9</option><option value="1:1">1:1</option><option value="9:16">9:16</option></select></label></div><label class="toggle-row"><span>Include page text</span><input id="capture-text" type="checkbox" ${captureSettings.includeText?'checked':''}><i></i></label><label class="toggle-row"><span>Transparent PNG</span><input id="capture-transparent" type="checkbox" ${captureSettings.transparent?'checked':''}><i></i></label><p class="control-note">Clean artwork only. Aspect changes centre-crop the current view. Silent live video requests 30 fps; 2-minute / 128 MB limit.</p></details>`;
+function renderImageSuite(){sourceEditorEpoch++;readCapture();if(!selectedEntity()){const e=scene().entities.find(e=>e.kind==='formation');if(e)selected=[e.id];} $('capture-panel').innerHTML=`<header><h3>Image suite</h3>${ib('capture-options','close','Close image suite')}</header>${imageSuiteHTML(scene(),selected[0],stepIndex)}<details class="image-output"><summary>Capture output settings</summary><div class="two-col"><label class="control"><span>Output size</span><select id="capture-width"><option value="1280">1280</option><option value="1440">1440</option><option value="1920">1920</option><option value="3840">3840 · PNG</option></select></label><label class="control"><span>Frame</span><select id="capture-aspect"><option value="stage">Current stage</option><option value="16:9">16:9</option><option value="1:1">1:1</option><option value="9:16">9:16</option></select></label></div><label class="toggle-row"><span>Include page text</span><input id="capture-text" type="checkbox" ${captureSettings.includeText?'checked':''}><i></i></label><label class="toggle-row"><span>Transparent PNG</span><input id="capture-transparent" type="checkbox" ${captureSettings.transparent?'checked':''}><i></i></label><p class="control-note">Clean artwork only. Aspect changes centre-crop the current view. Silent live video requests 30 fps; 2-minute / 128 MB limit.</p></details>`;
  $<HTMLSelectElement>('capture-width').value=String(captureSettings.width);$<HTMLSelectElement>('capture-aspect').value=captureSettings.aspect;void refreshSourcePreviews($('capture-panel'));}
 function readCapture(){if(!$('capture-width'))return;captureSettings.width=Number($<HTMLSelectElement>('capture-width').value);captureSettings.aspect=$<HTMLSelectElement>('capture-aspect').value as CaptureSettings['aspect'];captureSettings.includeText=$<HTMLInputElement>('capture-text').checked;captureSettings.transparent=$<HTMLInputElement>('capture-transparent').checked;}
 function openAbout(){openLibrary('about');}
@@ -459,7 +498,7 @@ async function exportArtifact(){let style=document.getElementById('shell-style')
 function captureTransition():CaptureTransition|undefined{if(engine.capabilities.kind==='production')return undefined;return transitionDuration>0?{canvas:$<HTMLCanvasElement>('transition-canvas'),alpha:1-clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1),background:transitionBackground}:undefined;}
 async function captureImage(){readCapture();engine.render(frameData(0));const out=createOutput(captureSettings,width,height);if(!engine.capture)throw new Error('This renderer does not support native-resolution capture.');const pixels=engine.capture(out.width,out.height);paintNativeCapture(out,pixels,{...scene(),field:{...scene().field,background:engine.telemetry?.()?.background??scene().field.background,palette:engine.telemetry?.()?.palette??scene().field.palette,params:{...scene().field.params,...engine.telemetry?.()?.params}}},captureSettings,width,height);const blob=await png(out),name=slug(scene().name)+'.png';if(await saveDesktopCapture(blob,name,desktopSource(),{...captureSettings,width:out.width,height:out.height}))toast('Image saved to the Physis library.');else{download(blob,name);toast(`Captured ${out.width} × ${out.height} native pixels, without resetting the field.`);}}
 function startRecording(){if(recorder.active){recorder.stop();return;}recordingSource=desktopSource();readCapture();captureSettings.width=Math.min(captureSettings.width,engine.canvas.width,1920);recordingSettings={...captureSettings};recordPerformanceWarned=false;if(fieldPaused){fieldPaused=false;renderAll();}const start=()=>recorder.start(engine.canvas,scene(),captureSettings,width,height,captureTransition());if(engine.withCleanFrame)engine.withCleanFrame(start);else start();closeDialogs();captureOpen=false;renderAll();$('recording-badge').hidden=false;$('record-size').textContent=`${captureSettings.width}px · 30 fps target`;toast('Recording the clean scene. Perform, play the expression, then stop.',3300);}
-recorder.onStop=(blob,mime)=>{transportUI();$('recording-badge').hidden=true;if(currentVideo)URL.revokeObjectURL(currentVideo.url);currentVideo={blob,mime,url:URL.createObjectURL(blob),source:recordingSource??desktopSource(),settings:recordingSettings??captureSettings};$('video-dialog').innerHTML=`${modalCloseButton()}<p class="eyebrow">A PERFORMANCE, KEPT</p><h2>Let it play<br><em>once more.</em></h2><video id="recording-review" preload="auto" controls playsinline style="width:100%;border-radius:8px" src="${currentVideo.url}"></video><p class="capture-footnote">${mime.split(';')[0]} · ${(blob.size/1024/1024).toFixed(1)} MB · silent live capture</p><div class="button-row"><button class="primary" data-action="save-video">${icon('download')} Save recording</button><button class="secondary" data-action="close-dialog">Return to the field</button></div>`;$<HTMLDialogElement>('video-dialog').showModal();};recorder.onError=err=>{transportUI();$('recording-badge').hidden=true;error(err);};recorder.onLimit=m=>toast(m,6500);
+recorder.onStop=(blob,mime)=>{transportUI();announceHostState();$('recording-badge').hidden=true;if(currentVideo)URL.revokeObjectURL(currentVideo.url);currentVideo={blob,mime,url:URL.createObjectURL(blob),source:recordingSource??desktopSource(),settings:recordingSettings??captureSettings};$('video-dialog').innerHTML=`${modalCloseButton()}<p class="eyebrow">A PERFORMANCE, KEPT</p><h2>Let it play<br><em>once more.</em></h2><video id="recording-review" preload="auto" controls playsinline style="width:100%;border-radius:8px" src="${currentVideo.url}"></video><p class="capture-footnote">${mime.split(';')[0]} · ${(blob.size/1024/1024).toFixed(1)} MB · silent live capture</p><div class="button-row"><button class="primary" data-action="save-video">${icon('download')} Save recording</button><button class="secondary" data-action="close-dialog">Return to the field</button></div>`;$<HTMLDialogElement>('video-dialog').showModal();};recorder.onError=err=>{transportUI();announceHostState();$('recording-badge').hidden=true;error(err);};recorder.onLimit=m=>toast(m,6500);
 function addLane(target='field.dispersion',syncWith?:string){if(!target.startsWith('field.')&&!target.startsWith('entity:'))target='field.'+target;const p=automationTarget(scene(),target);if(!p||!Number.isFinite(p.value))return;editing=true;inspectorOpen=true;tab='motion';motionTab='automation';if(scene().automation.some(l=>l.target===target)){renderAll();return;}
  const newId=uid('lane');detailState.set('automation-'+(syncWith??newId),true);const span=(p.max-p.min)*.1,low=clamp(p.value-span,p.hardMin,p.hardMax),high=clamp(p.value+span,p.hardMin,p.hardMax);
  changed(()=>{scene().automation.push({id:newId,...(syncWith?{syncWith}:{}),enabled:true,target,type:'lfo',wave:'sine',min:low,max:high,rate:.08,phase:0,blend:'replace',duration:4,delay:0,loop:'once',firedAt:null});if(target==='field.frequency')scene().composition.frequencyDriver='automation';});}
@@ -480,8 +519,8 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'studio-section':studioSection=el.dataset.value!;instrumentOffered=true;tab=['formations','layout'].includes(studioSection)?'objects':['sequence','motion','focus','automation'].includes(studioSection)?'motion':['scene','text'].includes(studioSection)?'scene':'field';motionTab=studioSection==='automation'?'automation':studioSection==='motion'?'morph':studioSection==='focus'?'focus':'sequence';search='';$<HTMLInputElement>('control-search').value='';renderAll();$('inspector-content').scrollTop=0;break;
  case 'quick-guide':$<HTMLDialogElement>('guide-dialog').showModal();break;
  case 'sequence-panel':timelineOpen=false;beltPickerOpen=false;modesOpen=false;captureOpen=false;sequenceOpen=!sequenceOpen;if(sequenceOpen){inspectorOpen=false;contextKind='';}renderAll();break;
- case 'save-scene':case 'save-next':{if(propertyTake)finishPropertyTake();const name=$<HTMLInputElement>('scene-save-name').value;if(name.trim().length===0){toast('Give the scene a name first.');break;}if(el.dataset.action==='save-next'&&store.document.scenes.length>=64){toast('An expression can contain up to 64 scenes.');break;}changed(()=>{s.view={...s.view,mode:camera.mode,yaw:camera.yaw,pitch:camera.pitch,zoom:camera.zoom,panX:camera.panX/width,panY:camera.panY/height};delete s.view.nativeCamera;saveScene(store.document,s,name);sceneNames.delete(s.id);if(el.dataset.action==='save-next'){const next=nextSceneFrom(store.document,s);sceneIndex=store.document.scenes.indexOf(next);}});toast('Scene saved to your browser library'+(el.dataset.action==='save-next'?' · next draft ready.':'.'));break;}
- case 'restore-scene':sceneNames.delete(s.id);changed(()=>{restoreScene(store.document,s.id);});break;
+ case 'save-scene':case 'save-next':{if(propertyTake)finishPropertyTake();const name=$<HTMLInputElement>('scene-save-name').value;if(name.trim().length===0){toast('Give the scene a name first.');break;}if(el.dataset.action==='save-next'&&store.document.scenes.length>=64){toast('An expression can contain up to 64 scenes.');break;}snapshotScene({action:'save-snapshot',name,next:el.dataset.action==='save-next'});toast('Scene saved to your browser library'+(el.dataset.action==='save-next'?' · next draft ready.':'.'));break;}
+ case 'restore-scene':snapshotScene({action:'restore-snapshot'});break;
  case 'toolbelt':if(propertyTake)finishPropertyTake();beltOpen=!beltOpen;if(beltOpen){studioOpen=false;inspectorOpen=false;}renderAll();break;
  case 'browse-controls':pendingBelt.clear();beltPickerOpen=true;inspectorOpen=false;contextKind='';timelineOpen=false;modesOpen=false;captureOpen=false;renderAll();$('belt-search').focus();break;
  case 'close-belt-picker':beltPickerOpen=false;pendingBelt.clear();renderAll();break;
@@ -573,7 +612,7 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'previous':setScene(sceneIndex-1);break;case 'next':setScene(sceneIndex+1);break;
  case 'choose-scene':setScene(Number(el.dataset.index));break;
  case 'toggle-play':toggleScenePlay();break;
- case 'play-journey':if(!journeyPlaying&&!savedSceneIndices(store.document).length){timelineOpen=true;renderAll();toast('Save your first scene before playing the scene strip.');break;}journeyPlaying=!journeyPlaying;if(journeyPlaying){fieldPaused=false;scenePlaying=true;editing=false;inspectorOpen=false;timelineOpen=false;selected=[];cursorTool='interact';tool='interact';shapePickerOpen=false;placementStep=false;if(!store.document.savedScenes?.[scene().id])sceneIndex=savedSceneIndices(store.document)[0];sceneElapsed=0;fireAutomations(true);}applySceneView();renderAll();break;
+ case 'play-journey':if(!journeyPlaying&&!savedSceneIndices(store.document).length){timelineOpen=true;renderAll();toast('Save your first scene before playing the scene strip.');break;}setSavedScenePlay(!journeyPlaying);break;
  case 'present':presenting=true;selected=[];shapePickerOpen=false;renderAll();break;
  case 'exit-present':presenting=false;renderAll();break;
  case 'library':case 'preset-browser':case 'keep':openLibrary();break;
@@ -707,7 +746,7 @@ document.addEventListener('pointerover',ev=>{if(!(ev.target as Element).closest(
 document.addEventListener('pointerdown',ev=>{const target=ev.target as Element;if((assignmentTarget||assignmentGroup)&&!target.closest('#automation-assignment,[data-action="automate"],[data-action="choose-group-target"],[data-action="add-lane"]')){assignmentTarget='';assignmentGroup='';$('automation-assignment').hidden=true;}if(modesOpen&&!target.closest('#modes-panel,[data-action="modes"]')){modesOpen=false;$('modes-panel').hidden=true;document.querySelector('[data-action="modes"]')?.setAttribute('aria-expanded','false');}if(captureOpen&&!target.closest('#capture-panel,[data-action="capture-options"]')){readCapture();captureOpen=false;$('capture-panel').hidden=true;document.querySelector('[data-action="capture-options"]')?.setAttribute('aria-expanded','false');}const el=ev.target as HTMLInputElement;if(!el.closest('#stage'))pointer.active=false;if(el instanceof HTMLInputElement&&el.type==='range'&&el.dataset.bind)store.begin();});
 // Release any gesture baseline even when the input never fires a change event.
 document.addEventListener('pointerup',()=>store.finish());
-document.addEventListener('input',ev=>{const el=ev.target as HTMLInputElement;if(el.id==='expression-playhead'){let value=Number(el.value),index=0;while(index<store.document.scenes.length-1&&value>=store.document.scenes[index].duration){value-=store.document.scenes[index].duration;index++;}if(index!==sceneIndex)setScene(index);sceneElapsed=value;trackPreview=true;scenePlaying=false;needsFrame=true;transportUI();return;}if(el.id==='belt-search'){document.querySelectorAll<HTMLElement>('[data-candidate-row]').forEach(row=>row.hidden=!row.dataset.search?.includes(el.value.toLowerCase()));return;}if(el.id==='scene-save-name'){sceneNames.set(scene().id,el.value);return;}if(el.id==='placement-glyph'){glyphChoice=el.value.trim()||'O';return;}if(el.id==='mode-search'||el.id==='library-search'){
+document.addEventListener('input',ev=>{const el=ev.target as HTMLInputElement;if(el.id==='expression-playhead'){let value=Number(el.value),index=0;while(index<store.document.scenes.length-1&&value>=store.document.scenes[index].duration){value-=store.document.scenes[index].duration;index++;}if(index!==sceneIndex)setScene(index);seekWorkingScene(value);return;}if(el.id==='belt-search'){document.querySelectorAll<HTMLElement>('[data-candidate-row]').forEach(row=>row.hidden=!row.dataset.search?.includes(el.value.toLowerCase()));return;}if(el.id==='scene-save-name'){sceneNames.set(scene().id,el.value);return;}if(el.id==='placement-glyph'){glyphChoice=el.value.trim()||'O';return;}if(el.id==='mode-search'||el.id==='library-search'){
  const query=el.value.trim().toLowerCase(),selector=el.id==='mode-search'?'[data-mode-choice]':'[data-starting-card]';let count=0;
  document.querySelectorAll<HTMLElement>(selector).forEach(item=>{item.hidden=!item.dataset.search?.includes(query);if(!item.hidden)count++;});
  if(el.id==='library-search')$('library-empty').hidden=count>0;return;
@@ -724,8 +763,7 @@ document.addEventListener('change',ev=>{const el=ev.target as HTMLInputElement|H
  if(el.id==='keep-placing')keepPlacing=(el as HTMLInputElement).checked;
  if(el.id==='working-depth'){const v=Number(el.value);if(Number.isFinite(v))camera.depth=clamp(v,-10,10);renderAll();}
  if(el.id==='working-plane'){camera.plane=el.value as Camera['plane'];if(camera.mode==='2d')facePlane(camera);renderAll();}
- if(el.dataset.action==='source-entity'){selected=[el.value];stepIndex=0;renderAll();}
- if(el.dataset.action==='source-step'){stepIndex=Number(el.value);const e=selectedEntity();if(e&&!e.sequence.enabled&&!e.sequence.manual)changed(()=>syncHeldState(e,stepIndex));else renderAll();}
+ if(el.dataset.action==='source-entity'||el.dataset.action==='source-step')void selectSourceState(el as HTMLSelectElement);
  if(el.dataset.action==='source-kind'){const e=selectedEntity();if(e&&!e.locked)changed(()=>{useStateShape(e,stepIndex);setStateSource(e,stepIndex,el.value==='ascii'?{kind:'ascii',ascii:{text:'O  :  I',fontFamily:'monospace',fontSize:32}}:el.value==='image'?{kind:'image',image:{mode:'luminance',threshold:DEFAULT_SOURCE_THRESHOLD,invert:false,scale:1}}:undefined);if(scene().engine.autoFitSizes!==false){if(e.sequence.steps[stepIndex]?.source)refitStepForSource(e,stepIndex);else refitStepForGlyph(e,stepIndex,e.sequence.steps[stepIndex].text,{fontFamily:scene().engine.fontFamily,fontWeight:scene().engine.fontWeight});}syncHeldState(e,stepIndex);});}
  if(el.id==='monitor-lane'){monitoredLane=el.value;renderAll();return;}if(el.id==='workspace-appearance'){workspace.appearance=el.value as typeof workspace.appearance;saveWorkspace();renderAll();}
  if(el.dataset.action==='sequence-mode'){const id=el.closest<HTMLElement>('[data-entity-id]')?.dataset.entityId;const entity=scene().entities.find(v=>v.id===id);if(entity&&!entity.locked)changed(()=>{entity.sequence.enabled=el.value==='play';entity.sequence.manual=el.value==='manual';if(el.value==='hold')syncHeldState(entity,stepIndex);if(el.value==='manual'){scene().engine.autoOscillate=false;scene().engine.morphEnabled=true;}});}
@@ -746,7 +784,7 @@ document.addEventListener('keydown',ev=>{if(ev.defaultPrevented)return;const el=
  if(ev.key===' '){ev.preventDefault();toggleScenePlay();needsFrame=true;return;}
  const shortcuts:Record<string,string>={e:'edit',p:'tool-pin',v:'tool-select',i:'tool-interact',a:'tool-formation',t:'tool-text',o:'tool-orbit',g:'grid',f:presenting?'exit-present':'present'};
  if(shortcuts[ev.key.toLowerCase()]){ev.preventDefault();void action(shortcuts[ev.key.toLowerCase()],el);return;}
- if(ev.key.startsWith('Arrow')){ev.preventDefault();if(editing&&selected.length){if(selected.some(id=>blueprintMember(scene(),id))){toast('Use Blueprint to move the whole shape.');return;}const amount=ev.shiftKey?.1:.01;changed(()=>scene().entities.filter(e=>selected.includes(e.id)&&!e.locked).forEach(e=>{if(ev.key==='ArrowLeft')e.position.x-=amount;if(ev.key==='ArrowRight')e.position.x+=amount;if(ev.key==='ArrowUp')e.position.y+=amount;if(ev.key==='ArrowDown')e.position.y-=amount;e.position.x=clamp(e.position.x,-50,50);e.position.y=clamp(e.position.y,-50,50);}));}else if(ev.key==='ArrowLeft')setScene(sceneIndex-1);else if(ev.key==='ArrowRight')setScene(sceneIndex+1);}
+ if(ev.key.startsWith('Arrow')){ev.preventDefault();if(editing&&selected.length){if(selected.some(id=>blueprintMember(scene(),id))){toast('Use Blueprint to move the whole shape.');return;}const amount=ev.shiftKey?.1:.01;if(placementStep){const entity=selectedEntity(),step=entity?.sequence.steps[stepIndex];if(!entity||!step||entity.locked)return;const view=nativeWorkspace?.nativeView(),occurrence=view?.bindings[scene().id]?.occurrences.find(row=>row.view_entity_id===entity.id);if(view&&!occurrence){toast('The selected formation has no current native occurrence');return;}if(occurrence&&(view!.document.entities[occurrence.entity_ref] as {pinned?:boolean})?.pinned){toast('Unpin the native occurrence before moving it');return;}const position=formationStateNudge(entity,step.id,ev.key,amount);if(position)changed(()=>{const current=scene().entities.find(row=>row.id===entity.id)?.sequence.steps.find(row=>row.id===step.id);if(current)current.position=position;});return;}changed(()=>scene().entities.filter(e=>selected.includes(e.id)&&!e.locked).forEach(e=>{if(ev.key==='ArrowLeft')e.position.x-=amount;if(ev.key==='ArrowRight')e.position.x+=amount;if(ev.key==='ArrowUp')e.position.y+=amount;if(ev.key==='ArrowDown')e.position.y-=amount;e.position.x=clamp(e.position.x,-50,50);e.position.y=clamp(e.position.y,-50,50);}));}else if(ev.key==='ArrowLeft')setScene(sceneIndex-1);else if(ev.key==='ArrowRight')setScene(sceneIndex+1);}
  if((ev.key==='Delete'||ev.key==='Backspace')&&editing&&selected.length){ev.preventDefault();deleteEntities();}
 });
 $<HTMLInputElement>('source-file').addEventListener('change',async ev=>{const input=ev.target as HTMLInputElement,file=input.files?.[0],id=sourceUploadEntityId;if(!file||!id)return;try{if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>8_000_000)throw new Error('Use a PNG, JPEG or WebP smaller than 8 MB.');const url=await new Promise<string>((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=()=>reject(new Error('Image file could not be read'));r.readAsDataURL(file);});const s=store.document.scenes.find(s=>s.id===id.sceneId),e=s?.entities.find(e=>e.id===id.entityId);if(!s||!e||e.locked)return;
@@ -782,7 +820,7 @@ $('stage').addEventListener('pointerdown',ev=>{if((ev.target as HTMLElement).clo
   if(tool==='interact'){const w=positionAt(ev);pointer={active:true,world:w};firePointerClick(w);return;}
   if(tool==='pin'||tool==='formation'){
    if(scene().entities.length>=32){toast('A scene holds up to 32 formations and pins.');return;}
-   const p=positionAt(ev),newEntity=tool==='pin'?pin(p):entity(glyphChoice==='O'?'New formation':glyphChoice,glyphChoice,p);if(tool==='formation'){newEntity.shape=shapeChoice;newEntity.sequence.steps[0].shape=shapeChoice;if(shapeChoice==='text'&&scene().engine.autoFitSizes!==false){const font={fontFamily:scene().engine.fontFamily,fontWeight:scene().engine.fontWeight};refitEntityForGlyph(newEntity,glyphChoice,font);refitStepForGlyph(newEntity,0,glyphChoice,font);}}
+   const p=positionAt(ev),newEntity=tool==='pin'?pin(p):tool==='formation'?formationFromSpec({title:glyphChoice==='O'?'New formation':glyphChoice,shape:shapeChoice,text:glyphChoice,position:p},scene().engine):entity(glyphChoice==='O'?'New formation':glyphChoice,glyphChoice,p);
    changed(()=>{scene().entities.push(newEntity);selected=[newEntity.id];},false);if(!(tool==='pin'?pinRepeat:keepPlacing)){cursorTool='select';tool='select';shapePickerOpen=false;inspectorOpen=true;tab='objects';}renderAll();showCoordinates(p);return;
   }
   if(tool==='text'||contextKind==='text'&&tool==='select'){const layerEl=(ev.target as HTMLElement).closest<HTMLElement>('[data-text-id]');const t=scene().text.find(t=>t.id===layerEl?.dataset.textId);if(t){textId=t.id;contextKind='text';store.begin();drag={kind:'text',id:t.id,startX:ev.clientX,startY:ev.clientY,startWorld:{x:0,y:0,z:0},positions:new Map(),initialRadius:0,cam:{...camera},layer:clone(t),pan:false};$('stage').setPointerCapture(ev.pointerId);renderInspector();ev.preventDefault();}return;}
@@ -819,36 +857,42 @@ function drawGuides(){const svg=$('guides');svg.setAttribute('viewBox',`0 0 ${wi
  svg.innerHTML=markup;overlayDirty=false;
 }
 function resize(){width=innerWidth;height=innerHeight;engine.resize(width,height,physisPixelRatio??(devicePixelRatio||1));renderText();renderLive();overlayDirty=true;needsFrame=true;}
-function frameData(delta:number):EngineFrame{const base=activeScene();
+// Live parameter channel (stageCommands.ts 'live'): transient drag values and automation holds, runtime only. A Scene change ends both.
+const liveOverrides=new LiveOverrides();let liveSceneId='';
+function syncLiveScene(id:string){if(liveSceneId===id)return;liveSceneId=id;const held=liveOverrides.resume();const dragged=liveOverrides.releaseDrags();if(held||dragged)queueMicrotask(announceHostState);}
+function frameData(delta:number):EngineFrame{const base=activeScene();syncLiveScene(base.id);
  // Recorded takes override base values while the playhead moves; the revision
  // term follows the playhead so the engine rebuilds only when authored content
  // actually changes instead of hashing the whole document every frame.
  const tracksActive=(journeyPlaying||trackPreview)&&!propertyTake&&!!base.propertyTracks?.length;
- const current=effectiveScene(store.document,tracksActive?evaluateTracks(base,sceneElapsed):base);
+ const current=liveOverrides.apply(effectiveScene(store.document,tracksActive?evaluateTracks(base,sceneElapsed):base));
  const evidenceProjection=privateEvidenceField?.project(nativeWorkspace?.nativeView(),base.id)??null;
  let formationGeometryProjection:import('../../src/engine/formationGeometryProjection').FormationGeometryProjection|null=null;
  if(privateFormReading){try{formationGeometryProjection=naraFormGeometry(privateFormReading,nativeWorkspace?.nativeView(),base.id);}catch{privateFormReading=null;}}
- return {formationGeometryProjection,localizedResonanceProjection:evidenceProjection?privateEvidenceField?.resonance:null,forceEmitterProjection:evidenceProjection,entitySoundProjection:evidenceProjection?privateEvidenceField?.sound:undefined,connections:nativeConnectionRows[base.id],selectedConnection:nativeSelectedRelation,scene:current,scaffold:editing&&!presenting&&guidesVisible?current.view.nativeScaffold??'off':'off',simTime,delta,params:(()=>{const p=engine.capabilities.kind==='production'?current.field.params:evaluateParameters(current,simTime);return physisParticleCap&&p.count>physisParticleCap?{...p,count:physisParticleCap}:p;})(),camera,pointer,selectedIds:editing&&!presenting&&guidesVisible?selected:[],authoringRevision:store.revision*1e7+(tracksActive?1+Math.floor(sceneElapsed*60):0)};}
+ return {formationGeometryProjection,localizedResonanceProjection:evidenceProjection?privateEvidenceField?.resonance:null,forceEmitterProjection:evidenceProjection,entitySoundProjection:evidenceProjection?privateEvidenceField?.sound:undefined,connections:nativeConnectionRows[base.id],selectedConnection:nativeSelectedRelation,scene:current,scaffold:editing&&!presenting&&guidesVisible?current.view.nativeScaffold??'off':'off',simTime,delta,params:(()=>{const p=engine.capabilities.kind==='production'?current.field.params:evaluateParameters(current,simTime);return physisParticleCap&&p.count>physisParticleCap?{...p,count:physisParticleCap}:p;})(),camera,pointer,selectedIds:editing&&!presenting&&guidesVisible?selected:[],authoringRevision:store.revision*1e7+(tracksActive?1+Math.floor(sceneElapsed*60):0),liveRevision:liveOverrides.version};}
 function recordableTracks(){return workspace.entries.flatMap(entry=>{const subject=entry.scope==='selected'?(selectedEntity()??scene().entities.find(e=>e.kind==='formation')):scene().entities.find(e=>e.id===entry.entityId);const bind=entry.scope==='field'?PARAMETERS.find(p=>p.key===entry.key)?.bind:subject?entityTargets(scene()).find(t=>t.entityId===subject.id&&t.key===entry.key)?.bind:undefined;if(!bind)return [];const track:PropertyTrack={id:uid('track'),bind,entityId:entry.scope==='field'?undefined:subject?.id,points:[]};return isShared(store.document,scene(),bind)||readTrackValue(scene(),track)===undefined?[]:[track];});}
-function finishPropertyTake(){if(!propertyTake)return;const take=propertyTake;propertyTake=null;if(take.elapsed>0){const end=Math.min(3600,take.start+take.elapsed);for(const t of take.tracks){const value=readTrackValue(scene(),t);if(value!==undefined&&t.points.at(-1)?.time!==end)t.points.push({time:end,value});}changed(()=>{scene().propertyTakeRange={start:take.start,end};scene().propertyTracks=mergeTake(scene().propertyTracks??[],take.tracks,take.start,end);scene().duration=Math.max(scene().duration,end);});takeWindows.set(scene().id,{start:take.start,end});sceneElapsed=take.start;trackPreview=true;scenePlaying=false;toast('Property take recorded · save the scene to keep this version.');}renderAll();}
-function updatePropertyTake(now:number){const t=propertyTake;if(!t)return;if(t.sceneId!==scene().id){finishPropertyTake();return;}const remaining=Math.max(0,Math.ceil((t.armed-now)/1000));$('take-status').hidden=false;$('take-status').textContent=remaining?'Recording in '+remaining+'…':'Recording '+t.elapsed.toFixed(1)+'s · click record to stop';if(remaining)return;const elapsed=Math.min((now-t.armed)/1000,3600-t.start,t.limit??Infinity);t.elapsed=elapsed;sceneElapsed=t.start+elapsed;scenePlaying=true;if(elapsed-t.lastSample>=.05||t.lastSample<0){for(const track of t.tracks){const value=readTrackValue(scene(),track);if(value===undefined)continue;sampleTrack(track,t.start+elapsed,value,t.start+Math.max(0,t.lastSample));}t.lastSample=elapsed;}if(t.start+elapsed>=3600||t.limit!==undefined&&elapsed>=t.limit)finishPropertyTake();}
+function finishPropertyTake(){if(!propertyTake)return;const take=propertyTake;propertyTake=null;if(take.elapsed>0){const end=Math.min(3600,take.start+take.elapsed);for(const t of take.tracks){const value=liveOverrides.valueForBind(t.bind)??readTrackValue(scene(),t);if(value!==undefined&&t.points.at(-1)?.time!==end)t.points.push({time:end,value});}changed(()=>{scene().propertyTakeRange={start:take.start,end};scene().propertyTracks=mergeTake(scene().propertyTracks??[],take.tracks,take.start,end);scene().duration=Math.max(scene().duration,end);});takeWindows.set(scene().id,{start:take.start,end});sceneElapsed=take.start;trackPreview=true;scenePlaying=false;toast('Property take recorded · save the scene to keep this version.');}renderAll();announceHostState();}
+function updatePropertyTake(now:number){const t=propertyTake;if(!t)return;if(t.sceneId!==scene().id){finishPropertyTake();return;}const remaining=Math.max(0,Math.ceil((t.armed-now)/1000));$('take-status').hidden=false;$('take-status').textContent=remaining?'Recording in '+remaining+'…':'Recording '+t.elapsed.toFixed(1)+'s · click record to stop';if(remaining)return;const elapsed=Math.min((now-t.armed)/1000,3600-t.start,t.limit??Infinity);t.elapsed=elapsed;sceneElapsed=t.start+elapsed;scenePlaying=true;if(elapsed-t.lastSample>=.05||t.lastSample<0){for(const track of t.tracks){const value=liveOverrides.valueForBind(track.bind)??readTrackValue(scene(),track);if(value===undefined)continue;sampleTrack(track,t.start+elapsed,value,t.start+Math.max(0,t.lastSample));}t.lastSample=elapsed;}if(t.start+elapsed>=3600||t.limit!==undefined&&elapsed>=t.limit)finishPropertyTake();}
 let frames=0,lastFpsTime=performance.now(),fps=0,rafId=0;
-function tick(now:number){if(researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;rafId=requestAnimationFrame(tick);return;}updatePropertyTake(now);const rawDelta=Math.max(0,Math.min((now-lastTime)/1000,.25));lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||document.hidden||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=scene().field.params.timeScale;simTime+=delta;}
+function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;rafId=requestAnimationFrame(tick);return;}updatePropertyTake(now);const rawDelta=Math.max(0,Math.min((now-lastTime)/1000,.25));lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||document.hidden||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=liveOverrides.valueForBind('field.params.timeScale')??scene().field.params.timeScale;simTime+=delta;}
  if(recovery.hidden&&!libraryOpen&&(!fieldPaused||needsFrame||engine.needsRender?.()||pointer.active||recorder.active||transitionDuration>0)&&now-lastStudioRender>=(physisFpsCap?1000/physisFpsCap:0)){try{engine.render(frameData(delta));needsFrame=false;lastStudioRender=now;}catch(err){nativeField?.controller.hold('native surface render failed: '+String(err));needsFrame=false;if(String(err).toLowerCase().includes('context'))recovery.hidden=false;else error(err);transportUI();}}
  const native=engine.telemetry?.();if(native){simTime=native.simTime;delta=simTime-previousTime;document.documentElement.style.setProperty('--paper',native.background);document.documentElement.style.setProperty('--ink',native.palette[0]);$('text-layers').style.opacity=String(.25+.75*native.transition);}
  // A finished property preview holds its recorded end values; the field itself
  // keeps breathing. The playhead runs only while the scene plays, and reaching
  // the scene's end stops it — the transport returns to Play.
- if(scenePlaying&&!propertyTake&&delta>0&&!libraryOpen){sceneElapsed=Math.min(scene().duration,sceneElapsed+Math.min(rawDelta,.25));
-  if(sceneElapsed>=scene().duration-.001&&!journeyPlaying){scenePlaying=false;transportUI();}}
- if(journeyPlaying&&scenePlaying&&!editing&&!libraryOpen){sceneElapsed+=Math.min(rawDelta,.25);if(sceneElapsed>=activeScene().duration){const indices=savedSceneIndices(store.document),next=indices.indexOf(sceneIndex)+1;if(next>=indices.length&&!store.document.loop){journeyPlaying=false;scenePlaying=false;sceneElapsed=0;applySceneView();renderAll();}else{setScene(indices[next%indices.length],true);fireAutomations(true);}}}
+ const transportFrame=advanceSceneTransport(store.document,sceneIndex,sceneElapsed,rawDelta,{playing:scenePlaying,savedSequence:journeyPlaying,hidden:document.hidden,libraryOpen,propertyRecording:!!propertyTake,editing,authoredSceneIds:nativeSceneTransportMaterial(nativeWorkspace?.nativeView())});
+ sceneElapsed=transportFrame.elapsed_seconds;scenePlaying=transportFrame.scene_playing;
+ const wasSequence=journeyPlaying;journeyPlaying=transportFrame.saved_sequence_playing;
+ if(transportFrame.advance_to_scene_index!==null)void advanceSavedScene(transportFrame.advance_to_scene_index);
+ else if(transportFrame.unavailable_reason){if(wasSequence)applySceneView();toast(transportFrame.unavailable_reason);renderAll();}
+ else if(transportFrame.completed){if(wasSequence){applySceneView();renderAll();}else transportUI();}
  if(transitionDuration>0){const f=clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1);$<HTMLCanvasElement>('transition-canvas').style.opacity=String(1-applyEasing(f,transitionEasing));if(f>=1){transitionDuration=0;$('transition-canvas').hidden=true;}}
  if(overlayDirty&&!libraryOpen)drawGuides();if(recorder.active){const paperScene={...activeScene(),field:{...activeScene().field,background:native?.background??scene().field.background,palette:native?.palette??scene().field.palette,params:{...scene().field.params,...native?.params}}};const copy=()=>recorder.frame(engine.canvas,paperScene,width,height,captureTransition());try{if(engine.withCleanFrame)engine.withCleanFrame(copy);else copy();}catch(err){recorder.stop();error(err);}}frames++;
  if(now-lastFpsTime>1000){fps=Math.round(frames*1000/(now-lastFpsTime));frames=0;lastFpsTime=now;}
  if(now-lastUI>33){const s=activeScene(),timing=expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying),fraction=clamp(timing.time/timing.total,0,1);$('global-time').textContent=timing.time.toFixed(1)+' / '+timing.total.toFixed(1)+'s';const playhead=$<HTMLInputElement>('expression-playhead');if(playhead&&document.activeElement!==playhead)playhead.value=String(timing.time);$('journey-progress').style.width=fraction*100+'%';document.querySelectorAll<HTMLElement>('[data-scene-progress]').forEach(e=>e.style.width=(Number(e.dataset.sceneProgress)===sceneIndex?fraction*100:0)+'%');
  const nd=engine.telemetry?.()?.drive;const ph=nd?{theta:nd.theta,phi:nd.phi,drive:nd.progress}:phases(s,simTime);document.querySelectorAll<SVGLineElement>('[data-phase]').forEach(e=>e.setAttribute('transform',`rotate(${(e.dataset.phase==='theta'?ph.theta:ph.phi)*180/Math.PI} 50 50)`));if($('drive-value'))$('drive-value').style.width=ph.drive*100+'%';
  const telemetry=engine.telemetry?.();updateAutomationRuntime(telemetry);document.querySelectorAll<HTMLElement>('[data-formation-live]').forEach(el=>{const entity=s.entities.find(v=>v.id===el.dataset.formationLive),state=telemetry?.sequences?.find((v:any)=>v.entityId===entity?.id);if(!entity||!state)return;const a=entity.sequence.steps[state.linkIndex],b=entity.sequence.steps[state.nextIndex];el.textContent=state.linkCount>1?`${a?stateLabel({...a,source:stateSource(entity,state.linkIndex)}):'State'} → ${b?stateLabel({...b,source:stateSource(entity,state.nextIndex)}):'State'} · ${Math.round(state.progress*100)}%`:'Single target';});const effectivePaper={...s,field:{...s.field,background:telemetry?.background??s.field.background,palette:telemetry?.palette??s.field.palette,params:{...s.field.params,...telemetry?.params}}};paintLivePaper(effectivePaper);const params=telemetry?.params??evaluateParameters(s,simTime);for(const panel of [$('belt-content'),$('inspector-content'),$('automation-monitor'),$('context-panel').querySelector<HTMLElement>('.context-content')??$('context-panel')])updateToolbeltValues(panel,s,params,telemetry?.config);const monitored=s.automation.find(l=>l.id===monitoredLane),live=monitored?telemetry?.live?.find((v:any)=>v.id===(monitored.nativeId??monitored.id)):undefined;if(monitored){const monitor=$('automation-monitor'),target=automationTarget(s,monitored!.target),value=target?(target.target.startsWith('field.')?params[target.key]:Number(readPath(telemetry?.config,target.path))/target.factor):live?.value;monitor.querySelector('[data-cycle-hand]')?.setAttribute('transform',`rotate(${(live?.phase??0)*360} 32 32)`);monitor.querySelector('.cycle-progress')?.setAttribute('stroke-dasharray',`${(live?.phase??0)*100} 100`);const label=monitor.querySelector('[data-cycle-value]');if(label)label.textContent=Number(value).toFixed(3);const phase=monitor.querySelector('[data-cycle-phase]');if(phase)phase.textContent=!live?'Paused':live.done?'Done':Math.round(live.phase*100)+'%';}document.querySelectorAll<HTMLElement>('[data-source-status]').forEach(el=>el.textContent=telemetry?.sourceStatus?.[el.dataset.sourceStatus!]??'');const contribution=document.querySelector<HTMLElement>('[data-focus-contribution]');if(contribution){const col=telemetry?.config?.composition;contribution.textContent=`Palette → stored entity tint (${Math.round((selectedEntity()?.tintWeight??0)*(col?.entityTintWeight??1)*100)}%) → ${telemetry?.focus?'travelling focus ('+Math.round((col?.orchestration?.focusTintWeight??0)*100)+'%)':'no focus tint'}. Selection does not retune the field.`;}document.querySelectorAll<HTMLElement>('[data-live-target]').forEach(el=>{const target=automationTarget(s,el.dataset.liveTarget!);if(!target)return;const value=target.target.startsWith('field.')?params[target.key]:readPath(telemetry?.config,target.path);el.textContent=typeof value==='number'?(target.target.startsWith('field.')?value:value/target.factor).toFixed(3):target.value.toFixed(3);});document.querySelectorAll<HTMLElement>('[data-live-param]').forEach(e=>e.textContent=(params[e.dataset.liveParam!]??0).toFixed(2));const ent=selectedEntity();if(ent){const nt=engine.telemetry?.()?.sequences.find((v:any)=>v.entityId===ent.id);const seq=nt?{from:nt.linkIndex}:sequenceAt(ent,s,simTime);document.querySelectorAll<HTMLElement>('[data-step-live]').forEach(e=>e.classList.toggle('is-playing',ent.sequence.enabled&&Number(e.dataset.stepLive)===seq.from));}
- const nf=engine.telemetry?.()?.focus;const focus=nf?{entity:{id:nf.entityId}}:engine.capabilities.kind==='production'?null:focusAt(s,simTime);document.querySelectorAll<HTMLElement>('[data-focus-entity]').forEach(e=>e.classList.toggle('is-playing',e.dataset.focusEntity===focus?.entity.id));if(recorder.active){const t=Math.floor(recorder.elapsed);$('record-time').textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');$('record-size').textContent=`${captureSettings.width}px · ${fps} render fps`;if(t>=4&&fps>0&&fps<20&&!recordPerformanceWarned){recordPerformanceWarned=true;toast('Recording is below its 30 fps target. Reduce particle allocation or output size for this device.',7000);}}lastUI=now;
+ const nf=engine.telemetry?.()?.focus;const focus=nf?{entity:{id:nf.entityId}}:engine.capabilities.kind==='production'?null:focusAt(s,simTime);document.querySelectorAll<HTMLElement>('[data-focus-entity]').forEach(e=>e.classList.toggle('is-playing',e.dataset.focusEntity===focus?.entity.id));if(recorder.active){const t=Math.floor(recorder.elapsed);$('record-time').textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');$('record-size').textContent=`${captureSettings.width}px · ${fps} render fps`;if(t>=4&&fps>0&&fps<20&&!recordPerformanceWarned){recordPerformanceWarned=true;toast('Recording is below its 30 fps target. Reduce particle allocation or output size for this device.',7000);}}nativeEditorEndpoint?.publish();lastUI=now;
  }
  rafId=requestAnimationFrame(tick);
 }
@@ -884,8 +928,9 @@ function announceHostState(){
  try{
   const s=scene(),view=nativeWorkspace?.nativeView(),binding=view?.bindings[s.id];
   const state={nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
-   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,journeyPlaying,fieldPaused,libraryOpen,hostMode};
+   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,journeyPlaying,fieldPaused,libraryOpen,hostMode,recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo}};
   window.parent.postMessage({v:1,kind:'oi-app-state',state},'*');
+  nativeEditorEndpoint?.publish();
  }catch{/* nothing is announced rather than a wrong position */}
 }
 function setHostMode(mode:'expressions'|'techne'){
@@ -894,7 +939,7 @@ function setHostMode(mode:'expressions'|'techne'){
  document.body.classList.toggle('oi-host-techne',mode==='techne');
  renderRail();
  lensStudio.setMode(mode);
- if(mode==='expressions'){researchInstruments?.close();palaceInstrument.close();setInstrumentSurface(null);}else activateInstrument(lensStudio.active());
+ if(mode==='expressions'){researchInstruments?.close();palaceInstrument.close();journeyInstrument?.close();journeyHome.hidden=true;setInstrumentSurface(null);}else activateInstrument(lensStudio.active());
  renderAll();
 }
 // Open an existing native Expression the host asked for at runtime — a
@@ -905,20 +950,116 @@ function setHostMode(mode:'expressions'|'techne'){
 // previous field. If the kernel channel has not been announced yet it opens on
 // that announce, exactly as the boot ?expression= deep link does. Refs only —
 // the kernel document is the store, and a bad ref is refused by the owner.
-let pendingHostOpen:string|null=null,hostOpenArmed=false;
+let pendingHostOpen:{ref:string;recovery?:unknown}|null=null,hostOpenArmed=false;
 let hostThemeReadingKey='';
-function openHostExpression(ref:string){
+function openHostExpression(ref:string,recovery?:unknown){
  if(typeof ref!=='string'||!ref.startsWith('expression:'))return;
- if(kernelExpressionsAvailable()){void nativeWorkspace?.follow(ref);return;}
+ if(kernelExpressionsAvailable()){void nativeWorkspace?.follow(ref,recovery);return;}
  // Buffer the LATEST ref and arm exactly one announce listener (not one per
  // pre-ready call), so repeated posts before the channel is up converge to a
  // single last-wins open and no message listeners accumulate.
- pendingHostOpen=ref;
+ pendingHostOpen={ref,recovery};
  if(hostOpenArmed)return;
  hostOpenArmed=true;
- window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);hostOpenArmed=false;const r=pendingHostOpen;pendingHostOpen=null;if(r)void nativeWorkspace?.follow(r);}});
+ window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);hostOpenArmed=false;const r=pendingHostOpen;pendingHostOpen=null;if(r)void nativeWorkspace?.follow(r.ref,r.recovery);}});
 }
-window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const d=ev.data as {type?:string;width?:number;height?:number;right?:number;coveredRight?:number;appearance?:unknown;theme?:unknown;v?:unknown;kind?:unknown;mode?:unknown;command?:unknown;ref?:unknown;req?:unknown;target?:unknown;source?:unknown}|null;
+// Stage controls the shell drives (stageCommands.ts). Each runs the application's
+// own action body; the file download or picker stays here, in the frame's gesture.
+function stageCaptureSettings(settings?:StageCaptureSettings){
+ if(!settings)return;
+ if(settings.width!==undefined)captureSettings.width=settings.width;
+ if(settings.aspect!==undefined)captureSettings.aspect=settings.aspect;
+ if(settings.includeText!==undefined)captureSettings.includeText=settings.includeText;
+ if(settings.transparent!==undefined)captureSettings.transparent=settings.transparent;
+ // readCapture() copies the Image suite's controls back over captureSettings, so the controls follow the request.
+ const width=document.getElementById('capture-width') as HTMLSelectElement|null,aspect=document.getElementById('capture-aspect') as HTMLSelectElement|null;
+ const text=document.getElementById('capture-text') as HTMLInputElement|null,transparent=document.getElementById('capture-transparent') as HTMLInputElement|null;
+ if(width&&settings.width!==undefined)width.value=String(settings.width);
+ if(aspect&&settings.aspect!==undefined)aspect.value=settings.aspect;
+ if(text&&settings.includeText!==undefined)text.checked=settings.includeText;
+ if(transparent&&settings.transparent!==undefined)transparent.checked=settings.transparent;
+}
+async function runStageCommand(command:StageCommand){
+ const body=document.body;
+ switch(command.command){
+  case 'view':await action(command.action,body);break;
+  case 'present':await action(command.on?'present':'exit-present',body);break;
+  case 'export':await action({json:'export-json',native:'export-native',html:'export-artifact'}[command.format],body);break;
+  case 'import':await action('import',body);break;
+  case 'live':
+   // The streamed set returns before the announce below: it writes no document and must not trigger a shell read at 20 Hz.
+   if(command.action==='set'){liveOverrides.setDrag(command.target,command.value);needsFrame=true;return;}
+   if(command.action==='release'){if(liveOverrides.releaseDrags())needsFrame=true;break;}
+   if(!scene().automation.some(lane=>lane.target===command.target&&lane.enabled))throw new Error('No enabled automation drives this parameter, so there is nothing to hold.');
+   liveOverrides.hold(command.target,command.value);needsFrame=true;break;
+  case 'automation':
+   // Resume hands every manually held parameter back to its automation (runtime only; no document change).
+   if(command.action==='resume'){if(!liveOverrides.resume())throw new Error('No parameter is held off its automation.');needsFrame=true;break;}
+   // Play runs the one-shot ramps that are enabled now (the app's fireAutomations); loop sets the runtime loop flag, which is not a document value.
+   if(command.action==='play'){if(!oneShotGroups(scene()).length)throw new Error('This scene has no enabled one-shot automation to play. Enable a one-shot group first.');fireAutomations();break;}
+   automationLoop=command.on;if(automationLoop&&!fieldPaused&&!automationRunning())fireAutomations(true);renderAll();break;
+  case 'capture':
+   if(command.mediaKind==='png'){stageCaptureSettings(command.settings);await action('capture-image',body);break;}
+   // record-video toggles, so a start while recording and a stop while idle are refused here, not flipped.
+   if(command.action==='stop'){if(!recorder.active)throw new Error('No recording is running.');await action('stop-record',body);break;}
+   // The take is saved by the application's own save-video body. Without Physis that body downloads, and a download needs a click inside this frame: the take opens for review there instead.
+   if(command.action==='save'){
+    if(!currentVideo)throw new Error('No recording take to save.');
+    if(!physisHost()){$<HTMLDialogElement>('video-dialog').showModal();throw new Error('The take is open for review. Choose Save recording there: a download needs a click inside the application.');}
+    await action('save-video',body);break;
+   }
+   if(recorder.active)throw new Error('A recording is already running.');
+   stageCaptureSettings(command.settings);await action('record-video',body);break;
+  case 'tool':
+   // Rail tools toggle, so choosing the active pin tool keeps it; a repeat change must never switch placement off.
+   if(!(command.tool==='pin'&&tool==='pin'))activateRail(command.tool);
+   if(command.repeat!==undefined){if(tool!=='pin')throw new Error('Repeat applies to the Pin tool only.');pinRepeat=command.repeat;setHint();}
+   break;
+  case 'engine': {
+   const refusal=stageRefusal(command);if(refusal)throw new Error(refusal);
+   if(!engine.command)throw new Error('This field takes no runtime commands in this application.');
+   // Reset runs the engine body directly: the shell's two-step confirmation is the gesture, so the application's own confirm dialog is not opened.
+   if(command.action==='reset'){engine.command({type:'reset-field'});needsFrame=true;break;}
+   await action({disperse:'native-disperse','reset-phases':'native-reset-phases',recover:'native-recover'}[command.action],body);break;
+  }
+  case 'take': {
+   // record-properties toggles, so start and stop are each checked here and never flipped. Refusals reuse the application's own messages.
+   if(command.action==='stop'){if(!propertyTake)throw new Error('No property take is recording.');await action('record-properties',body);break;}
+   if(propertyTake)throw new Error('A property take is already recording.');
+   if(recorder.active)throw new Error('Stop the video recording before a property take.');
+   if(sceneEditHeld||researchInstruments?.active())throw new Error('Finish the open Scene edit or research instrument before a property take.');
+   if(!recordableTracks().length)throw new Error('Add local numeric properties to the toolbelt. Shared overrides must be made local before recording.');
+   if(appendTake!==(command.mode==='append'))await action('take-mode',body);
+   await action('record-properties',body);
+   if(!propertyTake)throw new Error('This scene has reached its one-hour duration limit.');
+   break;
+  }
+  case 'tracks':
+   // take-mode and preview-tracks toggle, so each command sets the state it names and never flips it.
+   if(command.action==='preview'){
+    if(propertyTake)throw new Error('Finish the property take before previewing its tracks.');
+    if(!scene().propertyTracks?.length)throw new Error('This scene has no recorded property tracks.');
+    if(!trackPreview)await action('preview-tracks',body);
+   }else if(trackPreview)await action('preview-tracks',body);
+   break;
+ }
+ announceHostState();
+}
+async function answerStageCommand(raw:Record<string,unknown>){
+ const parsed=readStageRequest(raw);
+ if(!parsed){if(Number.isSafeInteger(raw.req)&&Number(raw.req)>0)window.parent.postMessage(stageReplyMessage(Number(raw.req),{ok:false,error:'This stage command is outside the shell vocabulary'}),'*');return;}
+ const {req,command}=parsed;
+ try{await runStageCommand(command);window.parent.postMessage(stageReplyMessage(req,{ok:true},command),'*');}
+ catch(error){window.parent.postMessage(stageReplyMessage(req,{ok:false,error:error instanceof Error?error.message:String(error)},command),'*');}
+}
+// The host's open-studio command opens a section with the nav button's own
+// placement (studioPlacement) and state; the Inspector opens only when closed.
+function openStudioSection(section:StudioSection){
+ const placed=studioPlacement(section);
+ if(!inspectorOpen||!editing)edit(true,placed.tab);
+ studioSection=section;instrumentOffered=true;tab=placed.tab;motionTab=placed.motionTab;search='';$<HTMLInputElement>('control-search').value='';renderAll();$('inspector-content').scrollTop=0;
+}
+window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const d=ev.data as {type?:string;width?:number;height?:number;right?:number;coveredRight?:number;appearance?:unknown;theme?:unknown;v?:unknown;kind?:unknown;mode?:unknown;command?:unknown;ref?:unknown;recovery?:unknown;req?:unknown;target?:unknown;source?:unknown}|null;
  if(d&&d.type==='oi-shell-cutout'&&typeof d.width==='number'&&typeof d.height==='number'){
   if(d.appearance==='dark'||d.appearance==='light'){hostedAppearance=d.appearance;theme();}
   // The host's resolved theme reading re-derives the default expression's
@@ -936,9 +1077,9 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
  if(d&&d.v===1&&d.kind==='host-mode'&&(d.mode==='expressions'||d.mode==='techne')){const world=(d as {world?:unknown}).world;if(typeof world==='string'&&world.length<=64)worldLens=world;setHostMode(d.mode);announceHostState();return;}
  if(d&&d.v===1&&d.kind==='host-command'){
   if(d.command==='interact'||d.command==='select')activateRail(d.command);
-  else if(d.command==='open-expression'&&typeof d.ref==='string'){if((d as {refresh?:unknown}).refresh===true&&kernelExpressionsAvailable())void nativeWorkspace?.refreshReference(d.ref);else openHostExpression(d.ref);}
+  else if(d.command==='open-expression'&&typeof d.ref==='string'){if((d as {refresh?:unknown}).refresh===true&&kernelExpressionsAvailable())void nativeWorkspace?.refreshReference(d.ref,d.recovery);else openHostExpression(d.ref,d.recovery);}
   else if(d.command==='lens'&&typeof (d as {lens?:unknown}).lens==='string'&&['project','canvas','timeline','journey','place','palace'].includes((d as {lens:string}).lens)){if(hostMode!=='techne')setHostMode('techne');lensStudio.select((d as {lens:LensId}).lens);}
-  else if(d.command==='refresh-expression'&&typeof d.ref==='string')void nativeWorkspace?.refreshReference(d.ref);
+  else if(d.command==='refresh-expression'&&typeof d.ref==='string')void nativeWorkspace?.refreshReference(d.ref,d.recovery);
   else if(d.command==='insert-source'&&typeof d.req==='string'){
    const req=d.req,target=d.target as {expression_ref?:unknown;revision?:unknown;scene_ref?:unknown}|undefined,source=d.source as {title?:unknown;binding?:unknown}|undefined;
    void (async()=>{
@@ -951,6 +1092,13 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
     }catch(error){window.parent.postMessage({v:1,kind:'host-insertion-result',req,ok:false,error:error instanceof Error?error.message:String(error)},'*');}
    })();
   }
+  else if(d.command==='open-studio'){
+   const section=(d as {section?:unknown}).section;
+   const offered=isStudioSection(section)&&!!document.querySelector(`[data-action="studio-section"][data-value="${section}"]`);
+   if(isStudioSection(section)&&offered){openStudioSection(section);announceHostState();window.parent.postMessage({v:1,kind:'host-command-result',command:'open-studio',ok:true,section},'*');}
+   else window.parent.postMessage({v:1,kind:'host-command-result',command:'open-studio',ok:false,error:isStudioSection(section)?'This Studio section is not offered in this application cut':'Unknown Expressions Studio section'},'*');
+  }
+  else if(typeof d.command==='string'&&(STAGE_COMMANDS as readonly string[]).includes(d.command))void answerStageCommand(d as Record<string,unknown>);
   else console.warn('[oi] refused host command: '+String(d.command));
   return;
  }
@@ -960,23 +1108,24 @@ const nativeField=installNativeField(engine,()=>{fieldPaused=false;needsFrame=tr
 // Without a retaining engine there is no native producer to present; the
 // Studio nav offers no dead "Live instrument" entry for it.
 if(!nativeField)document.querySelector('[data-action="studio-section"][data-value="native"]')?.remove();
-window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name,hostMode,activeLens:lensStudio.active()}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(i:number)=>setScene(i),openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},native:()=>nativeField?.controller.reading,nativeTargets:()=>nativeField?.controller.inspectTargets(),
+window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name,hostMode,activeLens:lensStudio.active()}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(reference:string|number)=>{if(typeof reference==='string')return focusNativeSceneRef(reference);toast('Index-based Scene navigation is a compatibility call; native navigation accepts a Scene reference.');setScene(reference);},openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},native:()=>nativeField?.controller.reading,nativeTargets:()=>nativeField?.controller.inspectTargets(),
  // Acceptance probe: advance resident particle mechanics by fixed steps against
  // the targets already presented. No native request, clock or target write.
- probeSteps:(frames:number,dt:number)=>{if(!Number.isInteger(frames)||frames<1||frames>2000||!(dt>0&&dt<=.1))throw new Error('probe steps: 1–2000 frames of (0, 0.1] s');for(let i=0;i<frames;i++)engine.render(frameData(dt));needsFrame=true;return frames;},dispose:()=>{researchInstruments?.destroy();nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
-function applyNativeView(view:KernelConversion,preservePosition=false){
+ probeSteps:(frames:number,dt:number)=>{if(!Number.isInteger(frames)||frames<1||frames>2000||!(dt>0&&dt<=.1))throw new Error('probe steps: 1–2000 frames of (0, 0.1] s');for(let i=0;i<frames;i++)engine.render(frameData(dt));needsFrame=true;return frames;},dispose:()=>{sceneTransportAlive=false;sceneIntentEpoch++;nativeEditorEndpoint?.dispose();researchInstruments?.destroy();nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
+function applyNativeView(view:KernelConversion,preservePosition=false,adoptionHistory:'record'|'acknowledge'='record'){
  awaitingNativeBoot=false;
  // An opened native Expression is what the frame stands on: the entry gate
  // closes and (unless the caller keeps its position) the engine presents the
  // document's current Scene.
  const presented=presentAdoption(view);closeEntryGate();
  const oldScene=scene().id,oldCamera={...camera},oldTime=sceneElapsed,oldSelection=[...selected],oldPlaying=journeyPlaying;
- if(!preservePosition)applyJourney(view.journey,true);else {store.replace(initialiseSceneSaves(initialiseBelts(view.journey)));}
+ const acknowledgement=adoptionHistory==='acknowledge'?nativeAdoptionHistory(view,store.document):'preserve';
+ if(!preservePosition)applyJourney(view.journey,true,adoptionHistory,acknowledgement);else {const incoming=initialiseSceneSaves(initialiseBelts(view.journey));if(adoptionHistory==='acknowledge')store.acknowledge(incoming,acknowledgement);else store.replace(incoming);}
  const desired=preservePosition?oldScene:presented.sceneId;
  sceneIndex=Math.max(0,store.document.scenes.findIndex(s=>s.id===desired));
  if(preservePosition){camera=oldCamera;sceneElapsed=oldTime;selected=oldSelection.filter(id=>scene().entities.some(e=>e.id===id));journeyPlaying=oldPlaying;}
  else {applySceneView();const nativeRef=view.document.selection?.entity_ref;const occurrence=view.bindings[scene().id]?.occurrences.find(o=>o.entity_ref===nativeRef);selected=occurrence?[occurrence.view_entity_id]:[];}
- markSaved();renderAll();announceHostState();void researchInstruments?.refresh();
+ markSaved();renderAll();announceHostState();void researchInstruments?.refresh();void journeyInstrument?.refresh();void palaceInstrument.refresh();
 }
 // The M0′–M5′ Lens Studio stands on the SAME native construction the native
 // workspace holds; refreshing it when the construction changes keeps the
@@ -1014,6 +1163,8 @@ function activateInstrument(lens:LensId){
  else researchInstruments?.close();
  if(lens==='project'){sequenceOpen=false;timelineOpen=false;inspectorOpen=false;contextKind='';beltPickerOpen=false;}
  if(lens==='journey'){sequenceOpen=false;timelineOpen=true;inspectorOpen=false;contextKind='';beltPickerOpen=false;}
+ journeyHome.hidden=lens!=='journey';
+ if(lens==='journey')void journeyInstrument?.open();else journeyInstrument?.close();
  if(lens==='place'){editing=true;inspectorOpen=true;contextKind='';tab='field';studioSection='places';}
  if(lens==='palace'){if(propertyTake)finishPropertyTake();editing=true;inspectorOpen=true;contextKind='';tab='field';studioSection='palace';void palaceInstrument.open();}
  else palaceInstrument.close();
@@ -1037,6 +1188,112 @@ const workspaceCluster=masthead.querySelector('.workspace-cluster')!;workspaceCl
 const lensStudio=installLensStudio({activate:activateInstrument},mastheadCentre);
 mastheadCentre.append(workspaceCluster);
 nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!awaitingNativeBoot||store.revision!==0,snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
+const retainedEditor=createRetainedNativeEditor({
+ store,sceneId:()=>scene().id,nativeView:()=>nativeWorkspace?.nativeView(),
+ selection:()=>({entity_ids:[...selected],step_id:scene().entities.find(e=>e.id===selected[0])?.sequence.steps[stepIndex]?.id??null}),
+ nativeSelect:async(sceneId,entityId)=>await nativeWorkspace!.select(sceneId,entityId),
+ commit:async()=>await nativeWorkspace?.commit(),change:mutate=>changed(mutate),
+ afterHistory:()=>{applySceneView();markSaved();overlayDirty=true;needsFrame=true;renderAll();},
+ selectLocal:(entityId,index)=>{selected=entityId===null?[]:[entityId];stepIndex=index;overlayDirty=true;needsFrame=true;renderAll();},
+ openEditor:(editor,entityId,index)=>{
+  selected=[entityId];stepIndex=index;pointer.active=false;editing=true;
+  libraryOpen=false;presenting=false;contextKind='';beltPickerOpen=false;timelineOpen=false;shapePickerOpen=false;modesOpen=false;inspectorOpen=false;studioOpen=false;placementStep=false;cursorTool='select';tool='select';
+  if(editor==='placement'){captureOpen=false;sequenceOpen=false;placementStep=true;cursorTool='select';tool='select';camera.grid=true;renderAll();}
+  else if(editor==='source'){sequenceOpen=false;captureOpen=true;renderAll();}
+  else{captureOpen=false;sequenceOpen=true;renderAll();const layers=$('live-content').querySelector<HTMLDetailsElement>('.live-layers');if(layers){layers.open=true;layers.scrollIntoView({block:'nearest'});}}
+ },
+ standing:()=>({busy:nativeState?.busy??false,notice:nativeState?.text??null}),
+ telemetry:()=>engine.telemetry?.(),fieldPaused:()=>fieldPaused,
+ editScenes:async(request,isCurrent)=>{
+  if(sceneEditHeld)throw Error('A native Scene edit is already awaiting acknowledgement');
+  if(recorder.active)throw Error('Finish the active capture before changing Scene structure');
+  const presented=scene(),intent=sceneIntentEpoch;
+  sceneEditHeld=clone(presented);
+  const handler=createNativeSceneEditHandler({store,sceneId:()=>scene().id,intentEpoch:()=>sceneIntentEpoch,lifetime:()=>sceneTransportAlive,
+   afterSuccess:({scene_id,entity_id,selection_changed})=>{
+    sceneEditHeld=null;sceneIndex=store.document.scenes.findIndex(value=>value.id===scene_id);
+    if(sceneIndex<0)throw Error('The acknowledged Scene is absent from its native view');
+    selected=entity_id?[entity_id]:[];
+    if(selection_changed){sceneIntentEpoch++;journeyPlaying=false;scenePlaying=false;sceneElapsed=0;stepIndex=0;applySceneView();}
+    else if(sceneElapsed>scene().duration){sceneElapsed=scene().duration;scenePlaying=false;}
+    awaitingNativeBoot=false;markSaved();overlayDirty=true;needsFrame=true;renderAll();announceHostState();
+   }});
+  try{
+   const result=await nativeWorkspace!.editScenes((working,current)=>handler.edit(request,{working,isCurrent:()=>current()&&isCurrent()&&sceneTransportAlive}));
+   if(result.state==='native-acknowledged')throw new NativeSceneEditRefusal(result.error,result.native_outcome);
+  }finally{
+   sceneEditHeld=null;lastTime=performance.now();
+   if(sceneIntentEpoch===intent){const index=store.document.scenes.findIndex(value=>value.id===presented.id);if(index>=0)sceneIndex=index;}
+   markSaved();renderAll();announceHostState();
+  }
+ },
+ // Scene body and jump-trigger receiver (O:I #352): one gesture, one native edit. A body the host can resolve is read first (text or
+ // image, as the inspector reads it); the planner then runs inside nativeWorkspace.edit against the flushed view, whose revision is the CAS.
+ editSceneMaterial:async(request,isCurrent)=>{
+  if(recorder.active)throw Error('Finish the active capture before changing Scene material');
+  const requirement=sceneMaterialReadRequirement(request.intent);
+  if(requirement.kind==='refuse')throw Error(requirement.problem);
+  if(!nativeWorkspace?.nativeView())throw Error('Open this Scene as a native Expression first.');
+  const resolved=requirement.kind==='read'?await prepareNativeSceneBody(requirement.carrier,requirement.subject_ref,requirement.span):undefined;
+  if(!isCurrent())throw Error('The Scene changed while its material was read. Review the current Scene and choose again.');
+  let label='';
+  await nativeWorkspace!.edit(current=>{
+   if(!isCurrent())throw Error('The Scene changed before its material was written. Nothing was written.');
+   const plan=prepareNativeSceneMaterialEdit(current,request.basis,request.intent,resolved);
+   label=plan.label;
+   return plan.changes;
+  });
+  toast(`${label}.`);
+ },
+ // Blueprint receiver (O:I #352): the host already validated and preflighted one fully resolved BlueprintIntent; the same
+ // nativeWorkspace.blueprint call the blueprint HUD uses submits it, so the captured revision CAS and adoption law are unchanged.
+ editBlueprint:async(intent,isCurrent)=>{
+  if(recorder.active)throw Error('Finish the active capture before changing the blueprint');
+  if(!nativeWorkspace?.nativeView())throw Error('Open this Scene as a native Expression first.');
+  if(!isCurrent())throw Error('The Scene changed before its blueprint was written. Nothing was written.');
+  await nativeWorkspace!.blueprint(intent);
+  toast('Blueprint updated.');
+ },
+ sceneControls:{
+  read:()=>({scene_ref:nativeWorkspace?.nativeView()?.bindings[scene().id]?.scene_ref??'',scene_elapsed_seconds:sceneElapsed,expression_time_seconds:expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying).time,scene_playing:scenePlaying,saved_sequence_playing:journeyPlaying,field_paused:fieldPaused,track_preview:trackPreview,intent_epoch:sceneIntentEpoch}),
+  recording:()=>!!propertyTake,transitionPending:()=>sceneAdvancePending,
+  focus:sceneId=>{const index=store.document.scenes.findIndex(s=>s.id===sceneId);if(index<0)throw Error('The acknowledged Scene is no longer present');if(index===sceneIndex){sceneIntentEpoch++;selected=[];stepIndex=0;renderAll();}else setScene(index);},
+  transport:action=>{if(action==='play-saved'||action==='stop-saved')setSavedScenePlay(action==='play-saved');else if(action==='pause'){sceneIntentEpoch++;scenePlaying=false;transportUI();}else{if(journeyPlaying){journeyPlaying=false;applySceneView();scenePlaying=false;}if(!scenePlaying)toggleScenePlay();else sceneIntentEpoch++;}},
+  seek:seekWorkingScene,snapshot:snapshotScene,
+ },
+});
+const sourceSelection=createSourceEditorSelection({
+ context:()=>({owner:retainedEditor,nativeOwner:nativeWorkspace??null,navigation:journeyNavigation,sourceEpoch:sourceEditorEpoch,
+  visible:sceneTransportAlive&&!document.hidden&&!presenting&&!libraryOpen
+   &&!window.frameElement?.closest('[hidden],[inert]')
+   &&(captureOpen&&!$('capture-panel').hidden||sequenceOpen&&!$('live-workspace').hidden),reading:retainedEditor.read()}),
+ select:(request,isCurrent)=>retainedEditor.select(request,isCurrent),
+});
+async function selectSourceState(el:HTMLSelectElement){
+ const source=el.closest('#capture-panel,#live-content');if(!source||source.closest('[hidden],[inert]'))return;
+ const entity=el.dataset.action==='source-entity'?scene().entities.find(row=>row.id===el.value&&row.kind==='formation'):selectedEntity();
+ const index=el.dataset.action==='source-step'?Number(el.value):0,step=Number.isInteger(index)&&index>=0?entity?.sequence.steps[index]:undefined;
+ const epoch=sourceEditorEpoch,previous=el.dataset.action==='source-entity'?selected[0]??'':String(stepIndex);
+ try{if(!entity||!step)throw Error('This stable source state is no longer present');await sourceSelection.select(entity.id,step.id);}
+ catch(cause){if(sceneTransportAlive&&sourceEditorEpoch===epoch&&el.isConnected&&!source.closest('[hidden],[inert]')){el.value=previous;toast(cause instanceof Error?cause.message:String(cause));}}
+}
+const materialEditor=createNativeMaterialController({
+ reading:retainedEditor.read,journey:()=>store.document,nativeView:()=>nativeWorkspace?.nativeView(),
+ flush:async()=>{if(!await nativeWorkspace?.commit())throw Error(nativeState?.text??'The native material destination could not be committed');},
+ expressionRequest:nativeExpressionRequest,worldRequest:request=>worldRequest({...request}),
+ advance:basis=>{
+  if(!sameEditorBasis(retainedEditor.read().basis,basis))return Promise.resolve(false);
+  return nativeWorkspace?.advance(()=>{const current=retainedEditor.read().basis;return current.expression_ref===basis.expression_ref&&current.scene_ref===basis.scene_ref&&current.authored_revision===basis.authored_revision;})??Promise.resolve(false);
+ },
+ transition:actTransition,
+});
+nativeEditorEndpoint=installNativeEditorReceiver({...retainedEditor,material:request=>requestNativeMaterialEditor(materialEditor,request,()=>retainedEditor.read().basis)});
+async function focusNativeSceneRef(scene_ref:string){
+ const reading=retainedEditor.read();
+ if(!reading.playback)throw Error('The native Scene transport is unavailable');
+ await retainedEditor.scene({operation:'scene',basis:reading.basis,intent_epoch:reading.playback.intent_epoch,action:'focus',scene_ref},()=>sceneTransportAlive);
+ return retainedEditor.read();
+}
 // Acts & reusable material (EXPRESSION-ACT-MATERIAL-V1): roles on this Scene's
 // objects/text, save-as-reusable, the material register and act playback,
 // beside the saved-scene playback.
@@ -1052,7 +1309,7 @@ sceneBodies=installSceneBodies({
  portal:(trigger,basis)=>openScenePortal(trigger.trigger_ref,basis),
  report:message=>toast(message),
  open:ref=>{const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding){toast('Open a native Scene before opening its source.');return;}hostRequest({request:'summon',detail:{kind:'source',ref,subject:{ref:view.document.expression_ref,kind:'expression',nativeOwner:'oi',revision:view.document.revision,title:view.document.title,sceneRef:binding.scene_ref,entityRef:null,relationRef:null}}});},
- jumpToScene:sceneRef=>{const view=nativeWorkspace?.nativeView();if(!view){toast('Open a native Scene before jumping to another one.');return;}const entry=Object.entries(view.bindings).find(([,b])=>b.scene_ref===sceneRef);if(!entry){toast('That native Scene is not currently loaded in this view.');return;}const index=store.document.scenes.findIndex(s=>s.id===entry[0]);if(index<0)return;setScene(index);},
+ jumpToScene:sceneRef=>{void focusNativeSceneRef(sceneRef).catch(cause=>toast(cause instanceof Error?cause.message:String(cause)));},
 });
 blueprintHUD=installBlueprintHUD({container:blueprintHome,nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,apply:intent=>nativeWorkspace!.blueprint(intent)});
 const researchContainer=document.createElement('section');
@@ -1114,11 +1371,22 @@ researchInstruments=installResearchInstruments({
 const palaceSnapshot=(raw:unknown):PalaceDocumentSnapshot&{title:string}=>{const doc=raw as {expression_ref:string;revision:number;title?:string;scenes?:{scene_ref:string;title?:string;body?:{carrier?:string;subject_ref?:string}|null;triggers?:{trigger_ref:string;target?:{kind?:string;subject_ref?:string}}[]}[]};return {expression_ref:doc.expression_ref,revision:doc.revision,title:doc.title??doc.expression_ref,scenes:(doc.scenes??[]).map(scene=>({scene_ref:scene.scene_ref,title:scene.title??'',body:scene.body?{carrier:scene.body.carrier,subject_ref:scene.body.subject_ref}:null,triggers:(scene.triggers??[]).map(trigger=>({trigger_ref:trigger.trigger_ref,target:trigger.target?{kind:trigger.target.kind,subject_ref:trigger.target.subject_ref}:undefined}))}))};};
 const palaceInstrument=installPalaceInstrument({
  nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,
+ authoredRevision:()=>store.revision,
+ canCompose:()=>{const reading=retainedEditor.read();return !store.transactionOpen&&!reading.standing.pending&&!reading.standing.dirty;},
  listExpressions:()=>listKernelExpressions(),
  readExpression:async ref=>palaceSnapshot(await readKernelExpression(ref)),
  composeExpression:async({expression_ref,expected_revision,changes})=>{const data=await nativeExpressionRequest({operation:'edit',expression_ref,expected_revision,actor:'human:techne-palace',changes}) as {state?:string;current_revision?:number;document?:unknown}|null;if(data?.state==='revision_conflict')return {ok:false,reason:`This Palace changed elsewhere (now revision ${data.current_revision}). Nothing was saved; reopen it and try again.`};if(!data?.document||data.state!=='ready')return {ok:false,reason:`The Expression owner did not accept the composition (${String(data?.state)}).`};return {ok:true,document:palaceSnapshot(data.document)};},
  openExpression:ref=>{void nativeWorkspace?.open(ref);},
 },palaceHome);
+journeyInstrument=installJourneyInstrument({nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,read:readTechneReading,
+ focusScene:async input=>{
+  const view=nativeWorkspace?.nativeView(),reading=retainedEditor.read();
+  if(!view||view.document.expression_ref!==input.expression_ref||view.document.revision!==input.revision
+   ||view.bindings[scene().id]?.scene_ref!==input.scene_ref||store.transactionOpen||reading.standing.pending||reading.standing.dirty)
+   throw Error('The native Journey source changed or has unacknowledged authored work.');
+  return await focusNativeSceneRef(input.target_scene_ref);
+ },
+},journeyHome);
 lensStudio.setMode(hostMode);
 (document.querySelector('#workspace-menu') as HTMLElement)?.insertAdjacentHTML('beforeend',ib('deep-home','home','Epii home','data-techne-only')+ib('deep-verso','wiki','Verso — the subject\u2019s account and sources','data-techne-only'));
 // Save is the primary act: it stays in the masthead at every width, outside
@@ -1139,7 +1407,7 @@ const naraInstrument=installNaraInstrument({nativeView:()=>nativeWorkspace?.nati
  }});
 if(qs.get('nara')==='1')naraInstrument.open();
 const disposeFieldStudies=window.__FIELD_STUDIES__.dispose;
-window.__FIELD_STUDIES__.dispose=()=>{naraInstrument.destroy();disposeFieldStudies();};
+window.__FIELD_STUDIES__.dispose=()=>{naraInstrument.destroy();journeyInstrument?.destroy();palaceInstrument.destroy();disposeFieldStudies();};
 // A hosted deep link (the app's own ?journey/?scene idiom): open a named
 // expression from the browser library, the featured set or the starters —
 // the Technè M0 instrument opens onto the Epii face this way
@@ -1158,9 +1426,14 @@ async function saveNative(){
 let nativeState:import('./nativeWorkspace.js').NativeStatus|null=null;
 function showNativeStatus(state:import('./nativeWorkspace.js').NativeStatus){
  nativeState=state;
- // A background read failing before any native work exists is not a failed
- // save: attention is only for work that has an identity or an open to retry.
- const failed=state.failed&&(!!state.identity||state.retryOpen||!!state.pending);
+ // Saving can advance the acknowledged native basis without replacing the
+ // authored DocumentStore (and its useful Undo). Publish that same actual
+ // work through the existing host channel before another editor gesture.
+ const acknowledged=nativeWorkspace?.nativeView()?.document;
+ if(state.identity&&acknowledged?.expression_ref===state.identity.ref&&acknowledged.revision===state.identity.revision)announceHostState();
+ // An unsuccessful hosted opening is still a native failure. Hiding it
+ // behind an unqualified Save control would make a local preview look owned.
+ const failed=state.failed;
  const save=document.getElementById('native-save');
  if(save){const label=state.busy?'Saving…':failed?`Not saved — ${state.text}`:state.identity?`Save (⌘S) · ${state.identity.title} · revision ${state.identity.revision}`:'Save (⌘S)';save.title=label;save.setAttribute('aria-label',label);save.classList.toggle('attention',failed||!!state.pending);save.toggleAttribute('disabled',state.busy);}
  const line=document.getElementById('native-status');if(!line)return;

@@ -1,0 +1,16 @@
+/* Expressions guide popover, anchored under the transport. Shell tokens only. */
+/* Fixed, because the transport bar clips its own overflow. */
+.native-expression-guide{position:fixed;z-index:20;top:56px;right:12px;width:min(440px,calc(100vw - 24px));max-height:70vh;overflow:auto;margin:0;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:var(--bg-2);color:var(--text);box-shadow:0 6px 24px rgba(0,0,0,.35);font-size:11px;line-height:1.45}
+.native-expression-guide:focus{outline:1px solid var(--accent);outline-offset:2px}
+.native-expression-guide header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.native-expression-guide h2{margin:8px 0 4px;font-size:12px}
+.native-expression-guide h3{margin:6px 0 2px;font-size:11px;color:var(--text-dim)}
+.native-expression-guide article p,.native-expression-guide > p{margin:0 0 4px}
+.native-expression-guide-standing{color:var(--text-dim);font-size:10px}
+.native-expression-guide-keys{margin:0}
+.native-expression-guide-keys div{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:6px;padding:2px 0}
+.native-expression-guide-keys dt{margin:0}
+.native-expression-guide-keys dd{margin:0}
+.native-expression-guide-keys small{color:var(--text-dim)}
+.native-expression-guide kbd{font-size:10px;padding:0 4px;border:1px solid var(--line);border-radius:3px;white-space:nowrap}
+.native-expression-guide button{font-size:14px;line-height:1;padding:0 6px;border:1px solid var(--line);border-radius:3px;background:none;color:var(--text)}

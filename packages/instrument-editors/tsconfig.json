@@ -1,0 +1,81 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "allowJs": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "react": [
+        "../../desktop/cradle/node_modules/@types/react"
+      ],
+      "react/jsx-runtime": [
+        "../../desktop/cradle/node_modules/@types/react/jsx-runtime"
+      ],
+      "react-dom": [
+        "../../desktop/cradle/node_modules/@types/react-dom"
+      ],
+      "react-dom/*": [
+        "../../desktop/cradle/node_modules/@types/react-dom/*"
+      ],
+      "@research-canvas/schema": [
+        "../../desktop/cradle/expressions-app/vendor/research-canvas/packages/schema/src/index.ts"
+      ],
+      "@research-canvas/domain": [
+        "../../desktop/cradle/expressions-app/vendor/research-canvas/packages/domain/src/index.ts"
+      ],
+      "@research-canvas/desktop-api": [
+        "../../desktop/cradle/expressions-app/vendor/research-canvas/packages/desktop-api/src/index.ts"
+      ],
+      "@research-canvas/geography": [
+        "../../desktop/cradle/expressions-app/vendor/research-canvas/packages/geography/src/index.ts"
+      ],
+      "@research-canvas/viewers": [
+        "../../desktop/cradle/expressions-app/vendor/research-canvas/packages/viewers/src/index.ts"
+      ],
+      "@research-canvas/node-document": [
+        "../../desktop/cradle/expressions-app/vendor/research-canvas/packages/node-document/src/index.ts"
+      ],
+      "@research-canvas/exporter": [
+        "../../desktop/cradle/expressions-app/vendor/research-canvas/browserExporter.ts"
+      ],
+      "maplibre-gl": [
+        "../../desktop/cradle/expressions-app/node_modules/maplibre-gl"
+      ],
+      "d3-force": [
+        "../../desktop/cradle/node_modules/@types/d3-force"
+      ],
+      "d3-selection": [
+        "../../desktop/cradle/node_modules/@types/d3-selection"
+      ],
+      "d3-zoom": [
+        "../../desktop/cradle/node_modules/@types/d3-zoom"
+      ],
+      "react-markdown": [
+        "../../desktop/cradle/node_modules/react-markdown"
+      ],
+      "remark-gfm": [
+        "../../desktop/cradle/node_modules/remark-gfm"
+      ],
+      "@tauri-apps/api/*": [
+        "../../desktop/cradle/node_modules/@tauri-apps/api/*"
+      ]
+    },
+    "resolveJsonModule": true
+  },
+  "include": [
+    "src",
+    "dev",
+    "../../desktop/cradle/src/**/*.d.ts"
+  ]
+}

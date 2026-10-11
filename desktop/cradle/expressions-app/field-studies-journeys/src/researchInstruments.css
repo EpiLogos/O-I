@@ -145,3 +145,6 @@
 #research-inspector .research-inspector-content>label input[type=number]{width:56px}
 #research-inspector .card-close{margin-left:auto;padding:2px;border:0;background:none}
 #instrument-tools .research-pager{color:var(--ui-muted);font:10px/1 var(--sans);padding:0 2px;white-space:nowrap}
+
+.research-minimap-toggle{position:absolute;right:12px;bottom:12px;z-index:4;background:var(--panel);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:inherit;cursor:pointer}
+.research-minimap-toggle:focus-visible{outline:2px solid var(--accent)}

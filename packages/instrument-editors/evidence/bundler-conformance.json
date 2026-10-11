@@ -1,0 +1,62 @@
+{
+  "schema": "oi.instrument-editor.bundler-conformance/v1",
+  "receiver_vite": "6.4.4",
+  "checks": [
+    {
+      "name": "shell singleton react",
+      "resolved": "packages/live-shell/ui/node_modules/react/index.js"
+    },
+    {
+      "name": "shell singleton react/jsx-runtime",
+      "resolved": "packages/live-shell/ui/node_modules/react/jsx-runtime.js"
+    },
+    {
+      "name": "shell singleton react-dom/client",
+      "resolved": "packages/live-shell/ui/node_modules/react-dom/client.js"
+    },
+    {
+      "name": "preserved native alias react",
+      "resolved": "desktop/cradle/expressions-app/node_modules/react/index.js"
+    },
+    {
+      "name": "preserved native alias react/jsx-runtime",
+      "resolved": "desktop/cradle/expressions-app/node_modules/react/jsx-runtime.js"
+    },
+    {
+      "name": "preserved native alias react-dom/client",
+      "resolved": "desktop/cradle/expressions-app/node_modules/react-dom/client.js"
+    },
+    {
+      "name": "complete worker route and optimizer protection",
+      "receivers": 2
+    },
+    {
+      "name": "actual offline MapLibre worker",
+      "rendered_initial": true,
+      "set_data_revision": 2,
+      "resize": true,
+      "removed": true,
+      "external_requests": []
+    }
+  ],
+  "errors": [],
+  "native_claims": false,
+  "console": [],
+  "worker": {
+    "url_scheme": "blob",
+    "features": [
+      {
+        "id": 7,
+        "properties": {
+          "revision": 2
+        },
+        "coordinates": [
+          20.0006103515625,
+          10.001310360636921
+        ]
+      }
+    ],
+    "errors": []
+  },
+  "passed": true
+}

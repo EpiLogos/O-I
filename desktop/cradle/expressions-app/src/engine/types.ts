@@ -547,6 +547,8 @@ export interface PointCloudConfig {
   backgroundMode?: BackgroundAtmosphereMode; // Direct background atmosphere mode override
   backgroundGlowIntensity?: number;  // Direct background glow intensity override
   style: 'stipple' | 'halftone';     // Ink stipple vs matrix halftone
+  /** The Scene material the author chose when it has no render difference of its own ('round' renders as ink). Carried so a native round trip keeps the choice; the engine never reads it. */
+  authoredMaterial?: 'round';
   dotShape?: 'circle' | 'square';    // Crisp circular stipple vs typographic square grid
   particleSize: { min: number; max: number };
   fluid: PointCloudFluidConfig;

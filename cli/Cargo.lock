@@ -787,6 +787,7 @@ dependencies = [
  "base64",
  "brotli",
  "getrandom 0.3.4",
+ "jiff",
  "libc",
  "serde",
  "serde_json",

@@ -3,7 +3,7 @@ import {PARAM_REGISTRY,entityParamDefs} from '../../src/engine/paramRegistry';
 import {DEFAULT_CONFIG} from '../../src/engine/fieldDefaults';
 import {readPath} from '../../src/engine/automation';
 import {automationGroups} from './automationLinks';
-import type {Scene} from './model';
+import type {Entity, Scene} from './model';
 export const WORLD_SCALE = 400;
 export interface NativeBinding {path:string;key:string;bind:string;factor:number;label:string;group:string;min:number;max:number;hardMin:number;hardMax:number;step:number;unit?:string;note?:string;defaultValue:number;scale?:'linear'|'log'}
 const aliases:Record<string,[string,number?,string?]>={
@@ -51,15 +51,27 @@ export function bindValue(scene:Scene,path:string,value:unknown){
 
 export interface AutomationTarget extends NativeBinding {target:string;entityId?:string;value:number}
 /** Entity automation is addressed by stable ID in documents, resolved to an index only at the native boundary. */
+/** Formation fields the Objects panel writes that entityParamDefs omits (inspector.ts entityControls, formation branch). Bounds, steps and units are the inspector's own numeric()/range() arguments (inspector.ts:179, :181, :182); each hard limit equals the model validator's bound (model.ts entity validation). Authored values, not world positions, so factor is 1. */
+const FORMATION_TARGET_DEFS=[
+ {suffix:'size.x',label:'Width',unit:'stage units',min:.001,max:100,hardMin:.001,hardMax:100,step:.01},
+ {suffix:'size.y',label:'Height',unit:'stage units',min:.001,max:100,hardMin:.001,hardMax:100,step:.01},
+ {suffix:'rotation',label:'Rotation',unit:'degrees',min:-180,max:180,hardMin:-36000,hardMax:36000,step:1},
+ {suffix:'share',label:'Particle share',unit:'relative weight',min:0,max:10,hardMin:0,hardMax:1000,step:.1},
+];
+function formationTargets(e:Entity,index:number):AutomationTarget[]{
+ if(e.kind!=='formation')return [];
+ const label=e.name&&e.name.trim()?e.name.trim():`Entity ${index+1}`;
+ return FORMATION_TARGET_DEFS.map(d=>{const value=Number(readPath(e,d.suffix));return {path:`entities.${index}.${d.suffix}`,key:d.suffix,bind:'entity.'+d.suffix,factor:1,label:`${label} · ${d.label}`,group:'entity',unit:d.unit,target:'entity:'+encodeURIComponent(e.id)+':'+d.suffix,entityId:e.id,min:d.min,max:d.max,hardMin:d.hardMin,hardMax:d.hardMax,step:d.step,defaultValue:value,value};});
+}
 export function entityTargets(scene:Scene):AutomationTarget[]{
- return scene.entities.flatMap((e,index)=>entityParamDefs(index,e).filter(p=>e.kind==='formation'||!p.path.endsWith('.scale')&&!p.path.includes('.sequence.')&&!p.path.endsWith('.tintWeight')).map(p=>{
+ return scene.entities.flatMap((e,index)=>[...entityParamDefs(index,e).filter(p=>e.kind==='formation'||!p.path.endsWith('.scale')&&!p.path.includes('.sequence.')&&!p.path.endsWith('.tintWeight')).map(p=>{
   const suffix=p.path.replace(/^entities\.\d+\./,''),factor=['x','y','z','forces.radius'].includes(suffix)?WORLD_SCALE:1;
   const local=['x','y','z'].includes(suffix)?'position.'+suffix:suffix.replace(/^forces\./,'force.');
   let value=readPath(e,local);if(typeof value!=='number'){value=readPath(e.native,suffix);if(typeof value==='number')value/=factor;}
   if(typeof value!=='number')value=suffix==='scale'||suffix==='sequence.rateMul'?1:suffix==='sequence.hold'?e.sequence.steps[0]?.hold??3:suffix==='sequence.transition'?e.sequence.steps[0]?.transition??1:0;
 
-  return {...p,key:suffix,bind:'entity.'+local,factor,group:'entity',target:'entity:'+encodeURIComponent(e.id)+':'+suffix,entityId:e.id,min:p.min/factor,max:p.max/factor,hardMin:p.hardMin/factor,hardMax:p.hardMax/factor,step:p.step/factor,defaultValue:Number(value),value:Number(value)};
- }));
+  return {...p,key:suffix,bind:'entity.'+local,factor,unit:factor===WORLD_SCALE?'stage units':p.unit,group:'entity',target:'entity:'+encodeURIComponent(e.id)+':'+suffix,entityId:e.id,min:p.min/factor,max:p.max/factor,hardMin:p.hardMin/factor,hardMax:p.hardMax/factor,step:p.step/factor,defaultValue:Number(value),value:Number(value)};
+ }),...formationTargets(e,index)]);
 }
 export function automationTarget(scene:Scene,target:string):AutomationTarget|undefined{
  if(target.startsWith('field.')){const b=nativeBinding(target.slice(6));return b?{...b,target,value:baseValue(scene,b.key)}:undefined;}

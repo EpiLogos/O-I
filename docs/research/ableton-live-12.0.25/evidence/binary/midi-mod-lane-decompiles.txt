@@ -1,0 +1,2777 @@
+// PROVENANCE: Ghidra 12.1.4 decompiles + string/symbol searches + raw data
+// reads, persistent project LiveRE2 (~/tools/live-re/ghidra-proj2, ALREADY
+// ANALYZED), Live.arm64 (Live 12.0.25, 2024-08-27_2627c43816), arm64 slice.
+// Query-only probes (ModLaneProbe/2/3/4, lane-local scripts over the shared
+// SearchProbe/SymProbe/BlockProbe pattern), no re-import, no Live runs, no
+// renders. Owner-private analysis evidence. NOT FOR REDISTRIBUTION. Never
+// enters product source (packages/live-dynamics).
+// Captured 2026-10-09/10 (MIDI-mod binary lane). Companion dossiers:
+// devices/lfo-derivation.md, devices/envelopefollower-derivation.md,
+// devices/mpecontrol-derivation.md, devices/envelopemidi-derivation.md.
+// Contents: (1) existence searches for LFODevice / EnvelopeFollowerDevice /
+// MPEControlDevice / EnvelopeMIDIDevice — ALL NEGATIVE, the four devices are
+// bundled Max for Live .amxd files (browser-name pool + on-disk bundle
+// listing); (2) the native machinery the lane found instead: OLfoProcessor
+// (engine LFO: shape LUTs / S&H / smooth / attack / sync), the MPE machinery
+// (AMpeSettings zone model, MpeSettingsDialog, MpeDecoder / MpeEncoder /
+// MpeFilter / TuningSystemToMpe processors), and the Shifter device's native
+// EnvelopeFollower model surface. Shape-LUT table region 0x1059a89f0.. is
+// NOT file-backed (MemoryAccessException) — runtime-built, same finding as
+// the Compressor lane's 0x1059a89b8 LUT [B-negative].
+
+===================== §1 EXISTENCE SEARCHES (ModLaneProbe) =====================
+== (1)+(2) NEEDLE SEARCH ==
+-- NEEDLE 'lfodevice' --
+  STRINGS_TOTAL=0
+  SYMBOLS_TOTAL=0
+-- NEEDLE 'envelopefollower' --
+  STR 1048f078d len=18 : AEnvelopeFollower
+  STR 1048f11d7 len=19 : mpEnvelopeFollower
+  STR 104926e3d len=22 : AEnvelopeFollowerView
+  STR 105a71f7d len=57 : __Z12SNewCompoundI17AEnvelopeFollowerE4TPtrI9ACompoundEv
+  STR 105a7b25c len=61 : __Z12SNewCompoundI21AEnvelopeFollowerViewE4TPtrI9ACompoundEv
+  STR 105b31405 len=154 : __ZGVZN7ableton9devicekit26SValueConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower11AmountPitchEEEP19AUse...
+  STR 105b314a1 len=148 : __ZGVZN7ableton9devicekit26SValueConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower6AttackEEEP19AUserFloat...
+  STR 105b31537 len=149 : __ZGVZN7ableton9devicekit26SValueConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower7ReleaseEEEP19AUserFloa...
+  STR 105b315ce len=150 : __ZGVZN7ableton9devicekit26SValueConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower8AmountHzEEEP19AUserFlo...
+  STR 105b437fe len=153 : __ZGVZN7ableton9devicekit27SStringConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower11AmountPitchEEEPK16AS...
+  STR 105b43899 len=143 : __ZGVZN7ableton9devicekit27SStringConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower2OnEEEPK16AStringConve...
+  STR 105b4392a len=147 : __ZGVZN7ableton9devicekit27SStringConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower6AttackEEEPK16AStringC...
+  STR 105b439bf len=148 : __ZGVZN7ableton9devicekit27SStringConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower7ReleaseEEEPK16AString...
+  STR 105b43a55 len=149 : __ZGVZN7ableton9devicekit27SStringConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower8AmountHzEEEPK16AStrin...
+  STR 1060e5fe7 len=242 : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessor...
+  STR 1060e60db len=243 : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessor...
+  STR 1060e61d0 len=244 : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessor...
+  STR 1060e76fa len=250 : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorF...
+  STR 1060e77f6 len=240 : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorF...
+  STR 106190b72 len=152 : __ZZN7ableton9devicekit26SValueConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower11AmountPitchEEEP19AUserF...
+  STR 106190c0c len=146 : __ZZN7ableton9devicekit26SValueConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower6AttackEEEP19AUserFloatCo...
+  STR 106190ca0 len=147 : __ZZN7ableton9devicekit26SValueConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower7ReleaseEEEP19AUserFloatC...
+  STR 106190d35 len=148 : __ZZN7ableton9devicekit26SValueConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower8AmountHzEEEP19AUserFloat...
+  STR 1061a2b5f len=151 : __ZZN7ableton9devicekit27SStringConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower11AmountPitchEEEPK16AStr...
+  STR 1061a2bf8 len=141 : __ZZN7ableton9devicekit27SStringConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower2OnEEEPK16AStringConvert...
+  ...cap 25 strings
+  STRINGS_TOTAL=25
+  SYM 1019607d4 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventI...
+  SYM 101960890 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model...
+  SYM 1019608a8 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model...
+  SYM 1019608c0 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model...
+  SYM 1019608d8 Label : __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventI...
+  SYM 10222b304 Label : __Z12SNewCompoundI17AEnvelopeFollowerE4TPtrI9ACompoundEv
+  SYM 102d7a21c Label : __Z12SNewCompoundI21AEnvelopeFollowerViewE4TPtrI9ACompoundEv
+  SYM 1057e6f88 Label : __ZZN7ableton9devicekit27SStringConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower2OnEEEPK16AStringConverterRKT_E11spConverter
+  SYM 1057e6f90 Label : __ZGVZN7ableton9devicekit27SStringConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower2OnEEEPK16AStringConverterRKT_E11spConverter
+  SYM 1057e6f98 Label : __ZZN7ableton9devicekit26SValueConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower6AttackEEEP19AUserFloatConverterRKT_E11spConverter
+  SYM 1057e6fa0 Label : __ZGVZN7ableton9devicekit26SValueConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower6AttackEEEP19AUserFloatConverterRKT_E11spConverter
+  SYM 1057e6fa8 Label : __ZZN7ableton9devicekit27SStringConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower6AttackEEEPK16AStringConverterRKT_E11spConverter
+  SYM 1057e6fb0 Label : __ZGVZN7ableton9devicekit27SStringConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower6AttackEEEPK16AStringConverterRKT_E11spConverter
+  SYM 1057e6fb8 Label : __ZZN7ableton9devicekit26SValueConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower7ReleaseEEEP19AUserFloatConverterRKT_E11spConverter
+  SYM 1057e6fc0 Label : __ZGVZN7ableton9devicekit26SValueConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower7ReleaseEEEP19AUserFloatConverterRKT_E11spConverter
+  SYM 1057e6fc8 Label : __ZZN7ableton9devicekit27SStringConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower7ReleaseEEEPK16AStringConverterRKT_E11spConverter
+  SYM 1057e6fd0 Label : __ZGVZN7ableton9devicekit27SStringConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower7ReleaseEEEPK16AStringConverterRKT_E11spConverter
+  SYM 1057e6fd8 Label : __ZZN7ableton9devicekit26SValueConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower8AmountHzEEEP19AUserFloatConverterRKT_E11spConverter
+  SYM 1057e6fe0 Label : __ZGVZN7ableton9devicekit26SValueConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower8AmountHzEEEP19AUserFloatConverterRKT_E11spConverter
+  SYM 1057e6fe8 Label : __ZZN7ableton9devicekit27SStringConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower8AmountHzEEEPK16AStringConverterRKT_E11spConverter
+  SYM 1057e6ff0 Label : __ZGVZN7ableton9devicekit27SStringConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower8AmountHzEEEPK16AStringConverterRKT_E11spConverter
+  SYM 1057e6ff8 Label : __ZZN7ableton9devicekit26SValueConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower11AmountPitchEEEP19AUserFloatConverterRKT_E11spConverter
+  SYM 1057e7000 Label : __ZGVZN7ableton9devicekit26SValueConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower11AmountPitchEEEP19AUserFloatConverterRKT_E11spConverter
+  SYM 1057e7008 Label : __ZZN7ableton9devicekit27SStringConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower11AmountPitchEEEPK16AStringConverterRKT_E11spConverter
+  SYM 1057e7010 Label : __ZGVZN7ableton9devicekit27SStringConverterForPropertyINS_7devices7shifter5model16EnvelopeFollower11AmountPitchEEEPK16AStringConverterRKT_E11spConverter
+  SYMBOLS_TOTAL=25
+-- NEEDLE 'mpecontrol' --
+  STRINGS_TOTAL=0
+  SYMBOLS_TOTAL=0
+-- NEEDLE 'envelopemidi' --
+  STRINGS_TOTAL=0
+  SYMBOLS_TOTAL=0
+-- NEEDLE 'envelope midi' --
+  STR 10490b7e4 len=14 : Envelope MIDI
+  STRINGS_TOTAL=1
+  SYMBOLS_TOTAL=0
+-- NEEDLE 'mpe control' --
+  STR 10490b7f2 len=12 : MPE Control
+  STRINGS_TOTAL=1
+  SYMBOLS_TOTAL=0
+-- NEEDLE 'moddevice' --
+
+===================== §2 BROWSER DEVICE-NAME POOL (ModLaneProbe2 A) =====================
+== (A) BROWSER DEVICE-NAME POOL 0x10490b300..0x10490be00 ==
+  STR 10490b302 : Sounds|Guitar & Plucked
+  STR 10490b31a : Mallets
+  STR 10490b322 : Sounds|Mallets
+  STR 10490b331 : Sounds|Pad
+  STR 10490b33c : Piano &amp; Keys
+  STR 10490b34d : Sounds|Piano & Keys
+  STR 10490b361 : Strings
+  STR 10490b369 : Sounds|Strings
+  STR 10490b378 : Synth Keys
+  STR 10490b383 : Sounds|Piano & Keys|Synth
+  STR 10490b39d : Synth Lead
+  STR 10490b3a8 : Sounds|Lead
+  STR 10490b3b4 : Synth Rhythmic
+  STR 10490b3c3 : Sounds|Voice
+  STR 10490b3d0 : Winds
+  STR 10490b3d6 : Sounds|Woodwind
+  STR 10490b3e6 : Amp Simulation
+  STR 10490b3f5 : Devices|Amp Simulation
+  STR 10490b40c : Clean Delay
+  STR 10490b418 : Devices|Delay
+  STR 10490b426 : Distortion
+  STR 10490b431 : Devices|Distortion
+  STR 10490b444 : Devices|Filter
+  STR 10490b453 : Hall
+  STR 10490b458 : Devices|Reverb
+  STR 10490b467 : Mixing &amp; Mastering
+  STR 10490b47e : Devices|Dynamics
+  STR 10490b48f : Modulated Delay
+  STR 10490b49f : Modulation &amp; Rhythmic
+  STR 10490b4b9 : Devices|Modulation
+  STR 10490b4cc : Vintage Delay
+  STR 10490b4da : {0}{1}
+  STR 10490b4e1 : Browser: can't create browser query registry: 
+  STR 10490b510 : Browser: failed to create async query hub
+  STR 10490b53b : Couldn't close database connection: 
+  STR 10490b560 : sOsDownloadableLivePacksLabel
+  STR 10490b57e : sOsDownloadableLivePacksLabelPlural
+  STR 10490b5a2 : sOsDownloadableUpdatedLivePacksLabel
+  STR 10490b5c7 : sOsDownloadableUpdatedLivePacksLabelPlural
+  STR 10490b5f2 : sOsUpdatingDownloadableLivePacks
+  STR 10490b613 : sErrorUpdatingDownloadableLivePacksFailed
+  STR 10490b63d : sErrorDownloadableLivePacksUnvailable
+  STR 10490b663 : sOsUnlockDownloadableLivePacksCommand
+  STR 10490b689 : sOsGrooves
+  STR 10490b694 : image
+  STR 10490b69a : template-song
+  STR 10490b6a8 : tuning
+  STR 10490b6af : video
+  STR 10490b6b5 : max-patch
+  STR 10490b6bf : audio-fx
+  STR 10490b6c8 : midi-fx
+  STR 10490b6d0 : plugin-au2
+  STR 10490b6db : plugin-au3
+  STR 10490b6e6 : plugin-vst
+  STR 10490b6f1 : plugin-vst3
+  STR 10490b6fd : max-midi-generator
+  STR 10490b710 : max-midi-transformation
+  STR 10490b728 : keyword
+  STR 10490b730 : itemtype
+  STR 10490b739 : creator
+  STR 10490b741 : devtype
+  STR 10490b749 : devarch
+  STR 10490b751 : max-note-algorithm
+  STR 10490b764 : local-filters
+  STR 10490b772 : DS Clang
+  STR 10490b77b : DS Clap
+  STR 10490b783 : DS Cymbal
+  STR 10490b78d : DS FM
+  STR 10490b793 : DS HH
+  STR 10490b799 : DS Kick
+  STR 10490b7a1 : DS Sampler
+  STR 10490b7ac : DS Snare
+  STR 10490b7b5 : DS Tom
+  STR 10490b7bc : Auto Pan 
+  STR 10490b7c6 : Align Delay
+  STR 10490b7d2 : Envelope Follower
+  STR 10490b7e4 : Envelope MIDI
+  STR 10490b7f2 : MPE Control
+  STR 10490b7fe : Note Echo
+  STR 10490b808 : Random 
+  STR 10490b810 : Expression Control
+  STR 10490b823 : MIDI Monitor
+  STR 10490b830 : Shaper MIDI
+  STR 10490b83c : browser: can't open database: 
+  STR 10490b85b : _Feature.SimilarFilesCacheCapacityMB
+  STR 10490b880 : TrackGroupId/Value
+  STR 10490b893 : Name/Value
+  STR 10490b89e : SampleRef/FileRef/Name
+  STR 10490b8b5 : Updates
+  STR 10490b8bd : Available Packs
+  STR 10490b8cd : ALocalTransferInputFieldModal
+  STR 10490b8eb : mpInputText
+  STR 10490b8f7 : LLocalTransferInputFieldModal
+  STR 10490b915 : sDialogOkButtonText
+  STR 10490b929 : sDialogCancelButtonText
+  STR 10490b941 : Dialogs/LocalTransferInputDialog
+  STR 10490b962 : LabelTextField
+  STR 10490b971 : TPreHearScheduler
+  STR 10490b983 : sStatusCorruptFileFound
+  STR 10490b99b : Misc/MidiPreHear.adv
+  STR 10490b9b0 : APresetExportPolicy
+  STR 10490b9c4 : TPushRemoteContent
+  STR 10490b9d7 : sDialogFetch
+  STR 10490b9e4 : sErrorUnzip
+  STR 10490b9f0 : sDialogUpload
+  STR 10490b9fe : sDialogCreateNewFolder
+  STR 10490ba15 : sDialogCreateNewFolderLabel
+  STR 10490ba31 : sDialogDeleteFileOrFolder
+  STR 10490ba4b : sDialogDeleteFileOrFolderTitle
+  STR 10490ba6a : sDialogCollectAndSaveContinueTransfer
+  STR 10490ba90 : sDialogCollectAndSaveStopTransfer
+  STR 10490bab2 : sDialogUploadOverwrite
+  STR 10490bac9 : sDialogUploadStopTransfer
+  STR 10490bae3 : sDialogUploadKeepBoth
+  STR 10490baf9 : UploadAsync for 
+  STR 10490bb0a :  failed on list: 
+  STR 10490bb1c :  failed on delete: 
+  STR 10490bb30 :  failed on upload: 
+  STR 10490bb44 : Creating a new folder under 
+  STR 10490bb61 : Deleting item 
+  STR 10490bb70 : Renaming entry 
+  STR 10490bb80 : TPushRemoteContentAuthenticator
+  STR 10490bba0 : sErrorTooManySubmitRequests
+  STR 10490bbbc : sErrorInvalidSecretCode
+  STR 10490bbd4 : checking if authentication is required with device: 
+  STR 10490bc09 : Request Challenge
+  STR 10490bc1b : ARankFieldView
+  STR 10490bc2a : no record found
+  STR 10490bc3a : %0D
+  STR 10490bc3e : TFetchEntriesRecursive for 
+  STR 10490bc5a : WarnRemoteContentCollectAndSaveBeforeUpload
+  STR 10490bc86 : Found previous paired state record for 
+  STR 10490bcae : Found previous paired device for 
+  STR 10490bcd0 : Corrupt paired state record
+  STR 10490bcec : Setting the pairing state: 
+  STR 10490bd08 : Moving entry 
+  STR 10490bd16 : authentication is required
+  STR 10490bd31 : authentication check has failed with error message: 
+  STR 10490bd66 : Challenge requesting failed: 
+  STR 10490bd84 : authentication is complete with device: 
+  STR 10490bdad : Bad secret submitted: 
+  STR 10490bdc4 : Too many submit secret requests: 
+  STR 10490bde6 : Secret submitting failed: 
+
+--- EnvelopeFollower compound xrefs (ModLaneProbe2 B) ---
+== (B) AEnvelopeFollower compound xrefs ==
+  -- xrefs to SNewCompound<AEnvelopeFollower> @10222b304 --
+    Entry Point EXTERNAL in <no-fn>
+    10506e0e0 DATA in <no-fn>
+    106bac89e DATA in <no-fn>
+  -- xrefs to SNewCompound<AEnvelopeFollowerView> @102d7a21c --
+    Entry Point EXTERNAL in <no-fn>
+    10506f438 DATA in <no-fn>
+    106bbf696 DATA in <no-fn>
+
+===================== §3 PROCESSOR-CREATE REGISTRY (367 classes, ModLaneProbe §3) =====================
+REGISTRY_TOTAL_DECORATED_LINES=368
+  REG 0OMpeDecoderProcessor
+  REG 0OMpeEncoderProcessor
+  REG 0OTimeToMidiProcessor
+  REG 13OLfoProcessor
+  REG 15OStereoEventLfo
+  REG 19OAudioNoteProcessor
+  REG 19OMpeFilterProcessor
+  REG 2OEventToAudioProcessor
+  REG 31OStereoLfoQuantizeTypeProcessor
+  REG 32OMidiModulationSplitterProcessor
+  REG 33OAudioNoteVoiceAllocatorProcessor
+  REG 38OStereoEventLfoOffsetAndPhaseProcessor
+  REG 4OAutoPanLfoTypeProcessor
+  REG 4OSignalAnalyzerProcessor
+  REG 4OStereoLfoType2Processor
+  REG 4OWarperEnvelopeProcessor
+  REG 7OAudioNoteEnvelopeProcessor
+  REG 7OAutoFilterLfoTypeProcessor
+  REG 7OSimplerLfoControlProcessor
+  REG 7OTuningSystemToMpeProcessor
+  REG 8OEventToAudioBufferProcessor
+  REG 8OOperatorLfoControlProcessor
+  REG 8OStereoEventLfoRateProcessor
+  REG 8OStereoEventLfoSpinProcessor
+(full 367-entry registry captured in the lane session log; MIDI-mod-relevant rows above)
+
+===================== §4 MPE SYMBOL + STRING CENSUS (ModLaneProbe2 C) =====================
+== (C1) SYMBOLS containing 'Mpe' ==
+  SYM 101603aa4 Label : __ZZN6detail16TMemberFuncTypesIM27OTuningSystemToMpeProcessorFvP10OSchedulerEE14SProcessorFuncIXadL_ZNS1_4InitES3_EEEEPFvPvS3_EvENUlS8_S3_E_8__invokeES8_S3_
+  SYM 101603b54 Label : __ZZN6detail16TMemberFuncTypesIM27OTuningSystemToMpeProcessorFvvEE14SProcessorFuncIXadL_ZNS1_4ExitEvEEEEPFvPvEvENUlS6_E_8__invokeES6_
+  SYM 101603c08 Label : __ZZN6detail16TMemberFuncTypesIM27OTuningSystemToMpeProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+  SYM 101603c0c Label : __ZZN6detail16TMemberFuncTypesIM27OTuningSystemToMpeProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnTunedEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 101603c24 Label : __ZZN6detail16TMemberFuncTypesIM27OTuningSystemToMpeProcessorFvfEE14SProcessorFuncIXadL_ZNS1_16OnPitchBendRangeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 101603c40 Label : __ZZN6detail16TMemberFuncTypesIM27OTuningSystemToMpeProcessorFvfEE14SProcessorFuncIXadL_ZNS1_16OnPitchBendOnOffEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 101605200 Label : __ZN7ableton4estd6detail28variant_dispatch_alternativeILm0ENS0_7variantIJN27OTuningSystemToMpeProcessor12TDelayedNoteENS4_14TForwardedNoteEEE27move_constructor_dispatcher...
+  SYM 10160525c Label : __ZN7ableton4estd6detail28variant_dispatch_alternativeILm1ENS0_7variantIJN27OTuningSystemToMpeProcessor12TDelayedNoteENS4_14TForwardedNoteEEE27move_constructor_dispatcher...
+  SYM 101605278 Label : __ZN7ableton4estd6detail28variant_dispatch_alternativeILm0ENS0_7variantIJN27OTuningSystemToMpeProcessor12TDelayedNoteENS4_14TForwardedNoteEEE26move_assignment_dispatcherE...
+  SYM 1016054c0 Label : __ZN7ableton4estd6detail28variant_dispatch_alternativeILm1ENS0_7variantIJN27OTuningSystemToMpeProcessor12TDelayedNoteENS4_14TForwardedNoteEEE26move_assignment_dispatcherE...
+  SYM 101605508 Label : __ZN7ableton4estd6detail28variant_dispatch_alternativeILm0ENS0_7variantIJN27OTuningSystemToMpeProcessor12TDelayedNoteENS4_14TForwardedNoteEEE15swap_dispatcherEJRS7_S9_EEE...
+  SYM 101605728 Label : __ZN7ableton4estd6detail28variant_dispatch_alternativeILm1ENS0_7variantIJN27OTuningSystemToMpeProcessor12TDelayedNoteENS4_14TForwardedNoteEEE15swap_dispatcherEJRS7_S9_EEE...
+  SYM 101609b04 Label : __ZN23OProcessorCreateManager18SOnProcessorCreateI27OTuningSystemToMpeProcessorEEvR14OThreadMessage
+  SYM 101625d24 Label : __ZZN6detail16TMemberFuncTypesIM17OMidiOutProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_7OnInMpeES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+  SYM 1016d6428 Label : __ZZN6detail16TMemberFuncTypesIM20OMpeDecoderProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+  SYM 1016d642c Label : __ZZN6detail16TMemberFuncTypesIM20OMpeDecoderProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnResetEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 1016d6470 Label : __ZZN6detail16TMemberFuncTypesIM20OMpeDecoderProcessorFvP20OPointerEventOutPortiEE14SProcessorFuncIXadL_ZNS1_20BeforeDisconnectMidiES3_iEEEEPFvPvS3_iEvENUlS8_S3_iE_8__inv...
+  SYM 1016d6534 Label : __ZZN6detail16TMemberFuncTypesIM20OMpeEncoderProcessorFvP10OSchedulerEE14SProcessorFuncIXadL_ZNS1_12NewSchedulerES3_EEEEPFvPvS3_EvENUlS8_S3_E_8__invokeES8_S3_
+  SYM 1016d653c Label : __ZZN6detail16TMemberFuncTypesIM20OMpeEncoderProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+  SYM 1016d6540 Label : __ZZN6detail16TMemberFuncTypesIM20OMpeEncoderProcessorFvP20OPointerEventOutPortiEE14SProcessorFuncIXadL_ZNS1_16BeforeDisconnectES3_iEEEEPFvPvS3_iEvENUlS8_S3_iE_8__invokeE...
+  SYM 1016e412c Label : __ZZN6detail16TMemberFuncTypesIM19OMpeFilterProcessorFvP10OSchedulerEE14SProcessorFuncIXadL_ZNS1_12NewSchedulerES3_EEEEPFvPvS3_EvENUlS8_S3_E_8__invokeES8_S3_
+  SYM 1016e4134 Label : __ZZN6detail16TMemberFuncTypesIM19OMpeFilterProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+  SYM 1016e4138 Label : __ZZN6detail16TMemberFuncTypesIM19OMpeFilterProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnResetBangEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 1016e7678 Label : __ZZN6detail16TMemberFuncTypesIM19OFilterModProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnMpePitchBendEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 1016e7804 Label : __ZZN6detail16TMemberFuncTypesIM19OFilterModProcessorFvfEE14SProcessorFuncIXadL_ZNS1_17OnMpePitchBendAmtEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 1017b3bf0 Label : __ZZN6detail16TMemberFuncTypesIM27OSimplerLfoControlProcessorFvfEE14SProcessorFuncIXadL_ZNS1_20OnMpePitchBendSignalEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 1017b3cd4 Label : __ZZN6detail16TMemberFuncTypesIM27OSimplerLfoControlProcessorFvfEE14SProcessorFuncIXadL_ZNS1_20OnMpePitchBendAmountEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 1018c1b20 Label : __ZN23OProcessorCreateManager18SOnProcessorCreateI20OMpeDecoderProcessorEEvR14OThreadMessage
+  SYM 1018c1bf8 Label : __ZN23OProcessorCreateManager18SOnProcessorCreateI20OMpeEncoderProcessorEEvR14OThreadMessage
+  SYM 1018c1cd0 Label : __ZN23OProcessorCreateManager18SOnProcessorCreateI19OMpeFilterProcessorEEvR14OThreadMessage
+  SYM 101a844c8 Label : __ZZN6detail16TMemberFuncTypesIM24OMultiSampleModProcessorFvfEE14SProcessorFuncIXadL_ZNS1_20OnMpePitchBendAmountEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 101a844cc Label : __ZZN6detail16TMemberFuncTypesIM24OMultiSampleModProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnMpePitchBendEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 101b54fc0 Label : __Z12SNewCompoundI16AMpeFilterModuleE4TPtrI9ACompoundEv
+  SYM 101d8b7a0 Label : __Z12SNewCompoundI17AMpeDecoderModuleE4TPtrI9ACompoundEv
+  SYM 101d8bbc0 Label : __Z12SNewCompoundI17AMpeEncoderModuleE4TPtrI9ACompoundEv
+  SYM 101d8c00c Label : __Z12SNewCompoundI12AMpeSettingsE4TPtrI9ACompoundEv
+  SYM 101d8d028 Label : __ZN7ableton7utility6detail13CallbackTypesI12AMpeSettingsvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_18OnUndoFlankChangedES5_S7_EEEEvPvS5_S7_
+  SYM 101e07648 Label : __ZN7ableton7utility6detail13CallbackTypesI20ARoutableMidiOutUnitvJEE14CallMemberFuncIXadL_ZNS3_20OnMpeSettingsChangedEvEEEEvPv
+  SYM 101f16aac Label : __Z12SNewCompoundI22ATuningSystemToMpeUnitE4TPtrI9ACompoundEv
+  SYM 1026fb05c Label : __ZZN6detail16TMemberFuncTypesIM18OMxDeviceProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_9OnMpeMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+  SYM 10270f5e4 Label : __ZZN6detail16TMemberFuncTypesIM20OPluginProcessorBaseFvPvEE14SProcessorFuncIXadL_ZNS1_9OnMpeMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+  SYM 10286d8cc Label : __ZN7ableton7utility6detail13CallbackTypesI13AMxDeviceUnitvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_19OnMpeEnabledChangedES5_S7_EEEEvPvS5_S...
+  SYM 10286d9cc Label : __ZN7ableton7utility6detail13CallbackTypesI13LPluginDevicevJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_19OnMpeEnabledChangedES5_S7_EEEEvPvS5_S...
+  SYM 10286da78 Label : __ZN7ableton7utility6detail13CallbackTypesI13LPluginDevicevJEE14CallMemberFuncIXadL_ZNS3_20OnMpeSettingsChangedEvEEEEvPv
+  SYM 1028a2cb8 Label : __ZN7ableton7utility6detail13CallbackTypesI11APluginUnitvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_19OnMpeEnabledChangedES5_S7_EEEEvPvS5_S7_
+  SYM 1028a2cbc Label : __ZN7ableton7utility6detail13CallbackTypesI11APluginUnitvJEE14CallMemberFuncIXadL_ZNS3_20OnMpeSettingsChangedEvEEEEvPv
+  SYM 1028ae49c Label : __Z12SNewCompoundI28AThirdPartyMpeInstrumentUnitE4TPtrI9ACompoundEv
+  SYM 1028aefb0 Label : __Z12SNewCompoundI35AGenericThirdPartyMpeInstrumentUnitE4TPtrI9ACompoundEv
+  SYM 102c7b984 Label : __Z12SNewCompoundI18AMpeSettingsDialogE4TPtrI9ACompoundEv
+  SYM 102c877c4 Label : __ZN7ableton7utility6detail13CallbackTypesI18AMpeSettingsDialogvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_21OnZoneTypeEnumChangedES5_S7_EEEE...
+  SYM 102c87924 Label : __ZN7ableton7utility6detail13CallbackTypesI18AMpeSettingsDialogvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_29OnFirstNoteChannelEnumChangedES5...
+  SYM 102c8797c Label : __ZN7ableton7utility6detail13CallbackTypesI18AMpeSettingsDialogvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_28OnLastNoteChannelEnumChangedES5_...
+  SYM 102c879d4 Label : __ZN7ableton7utility6detail13CallbackTypesI18AMpeSettingsDialogvJEE14CallMemberFuncIXadL_ZNS3_29OnFirstNoteChannelListCreatedEvEEEEvPv
+  SYM 102c879d8 Label : __ZN7ableton7utility6detail13CallbackTypesI18AMpeSettingsDialogvJEE14CallMemberFuncIXadL_ZNS3_28OnLastNoteChannelListCreatedEvEEEEvPv
+  SYM 102c879dc Label : __ZN7ableton7utility6detail13CallbackTypesI18AMpeSettingsDialogvJ9TUserDataEE14CallMemberFuncIXadL_ZNS3_4OnOkES4_EEEEvPvS4_
+  SYM 102c879e0 Label : __ZN7ableton7utility6detail13CallbackTypesI18AMpeSettingsDialogvJ9TUserDataEE14CallMemberFuncIXadL_ZNS3_8OnCancelES4_EEEEvPvS4_
+  SYM 102c87a04 Label : __ZN7ableton7utility6detail13CallbackTypesI18AMpeSettingsDialogvJ9TUserDataEE14CallMemberFuncIXadL_ZNS3_15OnBackToDefaultES4_EEEEvPvS4_
+  SYM 102e50290 Label : __ZN7ableton7utility6detail13CallbackTypesI13AMxDeviceViewvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_19OnMpeEnabledChangedES5_S7_EEEEvPvS5_S...
+  SYM 102e50850 Label : __ZN7ableton7utility6detail13CallbackTypesI33APluginDeviceViewTitleBarControlsvJEE14CallMemberFuncIXadL_ZNS3_11OnToggleMpeEvEEEEvPv
+  SYM 102e50854 Label : __ZN7ableton7utility6detail13CallbackTypesI33APluginDeviceViewTitleBarControlsvJEE14CallMemberFuncIXadL_ZNS3_13OnMpeSettingsEvEEEEvPv
+  SYM 102e5092c Label : __ZN7ableton7utility6detail13CallbackTypesI33APluginDeviceViewTitleBarControlsvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_19OnMpeEnabledChang...
+  SYM 106cb88c3 Label : s___Z12SNewCompoundI12AMpeSettings_106cb88c3
+  SYM 106cbfa0b Label : s___Z12SNewCompoundI16AMpeFilterMo_106cbfa0b
+  SYM 106cc19db Label : s___Z12SNewCompoundI17AMpeDecoderM_106cc19db
+  SYM 106cc1a14 Label : s___Z12SNewCompoundI17AMpeEncoderM_106cc1a14
+  SYM 106cc408a Label : s___Z12SNewCompoundI18AMpeSettings_106cc408a
+  SYM_TOTAL=66
+== (C2) STRINGS containing 'Mpe' ==
+  STR 1047e6024 len=81 : ^I select the (Notes|Sample|Envelopes|MPE) view mode in the clip content header$
+  STR 1047e6075 len=96 : ^the (Notes|Sample|Envelopes|MPE) selector should( not)? be visible in the clip content header$
+  STR 1047e653e len=37 : the current clip content view is MPE
+  STR 1047ebe4a len=4 : MPE
+  STR 104823332 len=6 : MPEG4
+  STR 104823355 len=5 : MPEG
+  STR 104837710 len=11 : CLD_DUMPED
+  STR 104849da6 len=6 : AMPER
+  STR 104849e67 len=11 : AMPEREQUAL
+  STR 104889d74 len=13 : MPEG 4 Audio
+  STR 104889d81 len=6 : Mpeg4
+  STR 104889daa len=19 : MPEG Audio Layer-3
+  STR 104889eb4 len=19 : MPEG 4 Audio/Video
+  STR 104889eea len=17 : MPEG Media Video
+  STR 1048970cc len=31 : MPE Slide (Sound Controller 5)
+  STR 1048b217c len=18 : MPEG format error
+  STR 1048c61d9 len=28 : OTuningSystemToMpeProcessor
+  STR 1048c61f5 len=35 : OTuningSystemToMpeProcessor.Create
+  STR 1048c80c8 len=10 : OutputMpe
+  STR 1048c8633 len=11 : MpeSlideFb
+  STR 1048c863e len=15 : MpePitchBendFb
+  STR 1048ca242 len=21 : OMpeDecoderProcessor
+  STR 1048ca257 len=28 : OMpeDecoderProcessor.Create
+  STR 1048ca273 len=21 : OMpeEncoderProcessor
+  STR 1048ca288 len=28 : OMpeEncoderProcessor.Create
+  STR 1048ca2a4 len=20 : OMpeFilterProcessor
+  STR 1048ca2b8 len=27 : OMpeFilterProcessor.Create
+  STR 1048d033f len=7 : , MPE=
+  STR 1048d06b2 len=12 : mpMpeModeOn
+  STR 1048d0baf len=15 : sDialogTextMpe
+  STR 1048d1386 len=23 : sInfoTextHeaderMpeMode
+  STR 1048d139d len=17 : sInfoTextMpeMode
+  STR 1048d2d51 len=17 : AMpeFilterModule
+  STR 1048d92a5 len=38 : _MpeThinningValueDomainAggressiveness
+  STR 1048ddf68 len=13 : MidiMeterMpe
+  STR 1048dedb8 len=18 : AMpeDecoderModule
+  STR 1048dedca len=18 : AMpeEncoderModule
+  STR 1048deddc len=13 : AMpeSettings
+  STR 1048e0c46 len=13 : /MpeSettings
+  STR 1048e0c68 len=5 : /MPE
+  STR 1048e236e len=6 : InMpe
+  STR 1048e5468 len=23 : ATuningSystemToMpeUnit
+  STR 1048e549d len=18 : TuningSystemToMpe
+  STR 1048ea224 len=18 : RecorderMpeFilter
+  STR 1048ea384 len=17 : CaptureMpeFilter
+  STR 1048ea609 len=12 : MpeSettings
+  STR 1048ea615 len=16 : MPE Settings...
+  STR 1048f1f85 len=10 : MpeFilter
+  STR 1048f34cf len=23 : mpCopyMatrixTabMPEAToB
+  STR 1048f34e6 len=23 : mpCopyMatrixTabMPEBToA
+  STR 1048f3577 len=21 : mpClearMatrixTabMPEA
+  STR 1048f358c len=21 : mpClearMatrixTabMPEB
+  STR 1048f9af4 len=19 : MpePitchBendSignal
+  STR 1048f9eaf len=13 : MpePitchBend
+  STR 1048f9ebc len=19 : MpePitchBendAmount
+  STR 1048fa146 len=18 : MpePitchBendRange
+  STR 1048fa3ad len=16 : MpePitchBendAmt
+  STR 1048fa764 len=9 : MpeSlide
+  STR 1048fbe76 len=13 : IsMpeEnabled
+  STR 1048ffde6 len=24 : AuPlugin.GetSupportsMpe
+  STR 104900ac8 len=17 : mpMpeCC74Target1
+  STR 104900ad9 len=17 : mpMpeCC74Target2
+  STR 104902073 len=14 : GetMpeEnabled
+  STR 1049023fe len=14 : SetMpeEnabled
+  STR 1049028ba len=11 : MpeDecoder
+  STR 104902e83 len=13 : mpMpeEnabled
+  STR 104902f06 len=9 : MPE Mode
+  STR 1049038f5 len=31 : OPlugin.NotifyPluginMpeEnabled
+  STR 104903eac len=12 : mMpeEnabled
+  STR 104903eb8 len=14 : mpMpeSettings
+  STR 104904270 len=11 : MpeEncoder
+  STR 10490427b len=10 : InMpeMidi
+  STR 104904299 len=13 : AuxMpeFilter
+  STR 104905bcf len=29 : AThirdPartyMpeInstrumentUnit
+  STR 104905c4e len=36 : AGenericThirdPartyMpeInstrumentUnit
+  STR 104905d40 len=17 : mpMpeCC74Amount1
+  STR 104905d51 len=17 : mpMpeCC74Amount2
+  STR 104905de2 len=26 : mpSelectedGlobalMpeFinger
+  STR 10490b7f2 len=12 : MPE Control
+  STR 1049240e4 len=19 : AMpeSettingsDialog
+  STR 104924133 len=31 : sManeuverTextChangeMpeSettings
+  STR 104924152 len=26 : Dialogs/MpeSettingsDialog
+  STR 1049243dc len=15 : MPE Lower Zone
+  STR 1049243eb len=15 : MPE Upper Zone
+  STR 10492abdd len=24 : mpMpePitchBendRangeText
+  STR 10492abf5 len=20 : mpMpePitchBendRange
+  STR 10492b7d9 len=38 : sInfoTextHeaderModPitchByMpePitchBend
+  STR 10492b7ff len=32 : sInfoTextModPitchByMpePitchBend
+  STR 10492b81f len=24 : sInfoTextHeaderMpeSlide
+  STR 10492b837 len=18 : sInfoTextMpeSlide
+  STR 10492b849 len=28 : sInfoTextHeaderMpePitchBend
+  STR 10492b865 len=22 : sInfoTextMpePitchBend
+  STR 10492b892 len=22 : sInfoTextMpeSlideText
+  STR 10492b8a8 len=26 : sInfoTextMpePitchBendText
+  STR 10492dc61 len=26 : sManeuverToggleMpeEnabled
+  STR 10492dc7b len=21 : sMenuEntryMpeEnabled
+  STR 10492dc90 len=26 : sInfoTextHeaderMpeEnabled
+  STR 10492dcaa len=20 : sInfoTextMpeEnabled
+  STR 10492dcbe len=22 : sMenuEntryMpeSettings
+  STR 10492dcd4 len=27 : sInfoTextHeaderMpeSettings
+  STR 10492dcef len=21 : sInfoTextMpeSettings
+  STR 10492f7c7 len=9 : MPELabel
+  STR 10494bcde len=14 : _MpeLineWidth
+  STR 10494c67e len=21 : _MpeBreakpointRadius
+  STR 10494c693 len=17 : _MpeOutlineWidth
+  STR 10494d69c len=21 : _MpeOverlayLightness
+  STR 10494d6b1 len=22 : _MpeOverlaySaturation
+  STR 10494d6c7 len=17 : _MpeOverlayAlpha
+  STR 105a575ba len=17 : _AVFileTypeMPEG4
+  STR 105a69128 len=52 : __Z12SNewCompoundI12AMpeSettingsE4TPtrI9ACompoundEv
+  STR 105a7069e len=56 : __Z12SNewCompoundI16AMpeFilterModuleE4TPtrI9ACompoundEv
+  STR 105a7278e len=57 : __Z12SNewCompoundI17AMpeDecoderModuleE4TPtrI9ACompoundEv
+  STR 105a727c9 len=57 : __Z12SNewCompoundI17AMpeEncoderModuleE4TPtrI9ACompoundEv
+  STR 105a74f95 len=58 : __Z12SNewCompoundI18AMpeSettingsDialogE4TPtrI9ACompoundEv
+  STR 105a7ebb6 len=62 : __Z12SNewCompoundI22ATuningSystemToMpeUnitE4TPtrI9ACompoundEv
+  STR 105a86df6 len=68 : __Z12SNewCompoundI28AThirdPartyMpeInstrumentUnitE4TPtrI9ACompoundEv
+  STR 105a89db7 len=75 : __Z12SNewCompoundI35AGenericThirdPartyMpeInstrumentUnitE4TPtrI9ACompoundEv
+  STR 105b5f9de len=92 : __ZN23OProcessorCreateManager18SOnProcessorCreateI19OMpeFilterProcessorEEvR14OThreadMessage
+  STR 105b601a0 len=93 : __ZN23OProcessorCreateManager18SOnProcessorCreateI20OMpeDecoderProcessorEEvR14OThreadMessage
+  STR 105b601ff len=93 : __ZN23OProcessorCreateManager18SOnProcessorCreateI20OMpeEncoderProcessorEEvR14OThreadMessage
+  ...cap
+  STR_TOTAL=120
+
+===================== §5 OLFO PROCESSOR SYMBOLS (ModLaneProbe2 D) =====================
+== (D1) OLfoProcessor symbols ==
+  SYM 1017b4008 Label : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvvEE14SProcessorFuncIXadL_ZNS1_4ExitEvEEEEPFvPvEvENUlS6_E_8__invokeES6_
+  SYM 1017b4010 Label : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFviiEE14SProcessorFuncIXadL_ZNS1_7NewRateEiiEEEEPFvPviiEvENUlS6_iiE_8__invokeES6_ii
+  SYM 1017b4014 Label : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnIsOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 1017b4018 Label : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_8OnNoteOnES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+  SYM 1017b401c Label : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnStopEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 1017b404c Label : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnTypeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 1017b4138 Label : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnFreqES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+  SYM 1017b413c Label : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnRetriggerEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 1017b4154 Label : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnPhaseEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 1017b41c8 Label : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnOffsetEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 1017b41e0 Label : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnWidthEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 1017b41e8 Label : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnAttackEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 1017b4284 Label : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnSmoothEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 1017b438c Label : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_12OnResolutionEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  SYM 1017b4454 Label : __ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_18OnEventTableStereoEvEEEEvPv
+  SYM 1017b4458 Label : __ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_13OnEventSHMonoEvEEEEvPv
+  SYM 1017b445c Label : __ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_16OnEventTableMonoEvEEEEvPv
+  SYM 1017b4460 Label : __ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_15OnEventSHStereoEvEEEEvPv
+  SYM 1018bf9d4 Label : __ZN23OProcessorCreateManager18SOnProcessorCreateI13OLfoProcessorEEvR14OThreadMessage
+  TOTAL=19
+== (D2) strings 'LfoProcessor' ==
+  STR 1048f9aaa : OLfoProcessor.ForceMono
+  STR 105b5d99d : __ZN23OProcessorCreateManager18SOnProcessorCreateI13OLfoProcessorEEvR14OThreadMessage
+  STR 105edbacb : __ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_13OnEventSHMonoEvEEEEvPv
+  STR 105edbb3f : __ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_15OnEventSHStereoEvEEEEvPv
+  STR 105edbbb5 : __ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_16OnEventTableMonoEvEEEEvPv
+  STR 105edbc2c : __ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_18OnEventTableStereoEvEEEEvPv
+  STR 106013e79 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnFreqES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+  STR 106013f02 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_8OnNoteOnES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+  STR 106013f8d : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnRetriggerEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 106014012 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_12OnResolutionEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 106014098 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnIsOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 106014117 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnStopEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 106014196 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnTypeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 106014215 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnPhaseEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 106014295 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnWidthEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 106014315 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnAttackEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 106014396 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnOffsetEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 106014417 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnSmoothEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 106014498 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFviiEE14SProcessorFuncIXadL_ZNS1_7NewRateEiiEEEEPFvPviiEvENUlS6_iiE_8__invokeES6_ii
+  STR 10601451d : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvvEE14SProcessorFuncIXadL_ZNS1_4ExitEvEEEEPFvPvEvENUlS6_E_8__invokeES6_
+  STR 10623f19c : LfoProcessorEEvR14OThreadMessage
+  STR 1063839ea : OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_1
+  STR 106430027 : LfoProcessorFv
+  STR 106da8456 : __ZN23OProcessorCreateManager18SOnProcessorCreateI13OLfoProcessorEEvR14OThreadMessage
+  STR 10711e7f6 : __ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_13OnEventSHMonoEvEEEEvPv
+  STR 10711e868 : __ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_15OnEventSHStereoEvEEEEvPv
+  STR 10711e8dc : __ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_16OnEventTableMonoEvEEEEvPv
+  STR 10711e951 : __ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_18OnEventTableStereoEvEEEEvPv
+  STR 1072552bd : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnFreqES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+  STR 107255344 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_8OnNoteOnES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+  STR 1072553cd : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnRetriggerEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 107255450 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_12OnResolutionEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 1072554d4 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnIsOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 107255551 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnStopEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 1072555ce : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnTypeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 10725564b : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnPhaseEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 1072556c9 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnWidthEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 107255747 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnAttackEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 1072557c6 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnOffsetEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 107255845 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnSmoothEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+  STR 1072558c4 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFviiEE14SProcessorFuncIXadL_ZNS1_7NewRateEiiEEEEPFvPviiEvENUlS6_iiE_8__invokeES6_ii
+  STR 107255947 : __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvvEE14SProcessorFuncIXadL_ZNS1_4ExitEvEEEEPFvPvEvENUlS6_E_8__invokeES6_
+
+===================== §6 OLFO DECOMPILES (ModLaneProbe3 + round-4 wrapper) =====================
+FUNC 1018bf9d4 name=__ZN23OProcessorCreateManager18SOnProcessorCreateI13OLfoProcessorEEvR14OThreadMessage body=1 lines=11
+
+void __ZN23OProcessorCreateManager18SOnProcessorCreateI13OLfoProcessorEEvR14OThreadMessage
+               (undefined8 param_1)
+
+{
+  undefined1 auStack_48 [40];
+  
+  func_0x000101546e1c(auStack_48,param_1);
+  func_0x0001018bfa10(auStack_48,param_1);
+  return;
+}
+END 1018bf9d4
+FUNC 1017b4010 name=__ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFviiEE14SProcessorFuncIXadL_ZNS1_7NewRateEiiEEEEPFvPviiEvENUlS6_iiE_8__invokeES6_ii body=1 lines=87
+
+void __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFviiEE14SProcessorFuncIXadL_ZNS1_7NewRateEiiEEEEPFvPviiEvENUlS6_iiE_8__invokeES6_ii
+               (long param_1,undefined8 param_2,int param_3)
+
+{
+  int iVar1;
+  float fVar2;
+  double dVar3;
+  float fVar4;
+  float fVar5;
+  float fVar6;
+  double dVar7;
+  float fVar8;
+  
+  fVar8 = (float)param_3;
+  *(float *)(param_1 + 0x44) = fVar8;
+  *(undefined8 *)(param_1 + 0xa8) = 0;
+  dVar3 = (double)param_3 / (double)(long)*(int *)(param_1 + 0x98);
+  dVar7 = 512.0 / dVar3;
+  *(double *)(param_1 + 0xb0) = dVar7;
+  fVar6 = *(float *)(param_1 + 0x90);
+  if (*(float *)(param_1 + 0x8c) <= *(float *)(param_1 + 0x90)) {
+    fVar6 = *(float *)(param_1 + 0x8c);
+  }
+  *(float *)(param_1 + 0x88) = fVar8;
+  *(float *)(param_1 + 0x8c) = fVar6;
+  *(double *)(param_1 + 0xa0) = dVar7 * (double)fVar6;
+  fVar2 = (float)dVar3;
+  fVar6 = fVar2 * 0.499;
+  fVar4 = *(float *)(param_1 + 0x94) * 10.0 + (1.0 - *(float *)(param_1 + 0x94)) * 400.0;
+  if (fVar4 <= fVar6) {
+    fVar6 = fVar4;
+  }
+  fVar5 = 3.1415927;
+  if (1.0 <= fVar4) {
+    fVar5 = fVar6 * 3.1415927;
+  }
+  fVar6 = (float)_tanf(fVar5 / fVar2);
+  fVar2 = 1.0 / fVar6 + 1.0;
+  fVar4 = 1.0 / fVar2;
+END 1017b4010
+FUNC 1017b4014 name=__ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnIsOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=60
+
+void __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnIsOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  char cVar1;
+  float fVar2;
+  
+  *(bool *)(param_2 + 0x29) = param_1 != 0.0;
+  if (param_1 != 0.0) {
+    func_0x0001017a7654(param_2);
+    if (*(char *)(param_2 + 0x2a) == '\0') {
+      return;
+    }
+    *(undefined4 *)(param_2 + 0x14c) = 0;
+    *(undefined4 *)(param_2 + 0x144) = 0;
+    *(float *)(param_2 + 0x148) = 1.0 / *(float *)(param_2 + 0x140);
+    func_0x0001018846c8(param_2 + 8);
+    (**(code **)(param_2 + 0x68))(0x3f800000,*(undefined8 *)(param_2 + 0x70));
+    if (*(char *)(param_2 + 0x28) == '\0') {
+      func_0x0001017a5910(param_2 + 0x80,param_2 + 0x48);
+      func_0x0001017a5910(param_2 + 0xe0,param_2 + 0x4c);
+      cVar1 = *(char *)(param_2 + 0x40);
+    }
+    else {
+      func_0x0001017a5910(param_2 + 0x80,param_2 + 0x48);
+      *(undefined4 *)(param_2 + 0x4c) = *(undefined4 *)(param_2 + 0x48);
+      cVar1 = *(char *)(param_2 + 0x40);
+    }
+    if ((cVar1 != '\0') && ((float)*(int *)(param_2 + 0x14c) < *(float *)(param_2 + 0x140))) {
+      fVar2 = *(float *)(param_2 + 0x144);
+      *(float *)(param_2 + 0x144) = fVar2 + *(float *)(param_2 + 0x148);
+      *(float *)(param_2 + 0x48) = fVar2 * *(float *)(param_2 + 0x48);
+      *(float *)(param_2 + 0x4c) = fVar2 * *(float *)(param_2 + 0x4c);
+      *(int *)(param_2 + 0x14c) = *(int *)(param_2 + 0x14c) + 1;
+    }
+                    /* WARNING: Could not recover jumptable at 0x0001017a763c. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+    (**(code **)(param_2 + 0x50))(*(undefined8 *)(param_2 + 0x58),param_2 + 0x48);
+    return;
+END 1017b4014
+FUNC 1017b4018 name=__ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_8OnNoteOnES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_ body=1 lines=59
+
+void __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_8OnNoteOnES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+               (long param_1)
+
+{
+  char cVar1;
+  long lVar2;
+  float fVar3;
+  
+  *(undefined1 *)(param_1 + 0x2a) = 1;
+  if (*(char *)(param_1 + 0x29) == '\0') {
+    return;
+  }
+  *(undefined4 *)(param_1 + 0x14c) = 0;
+  *(undefined4 *)(param_1 + 0x144) = 0;
+  *(float *)(param_1 + 0x148) = 1.0 / *(float *)(param_1 + 0x140);
+  if (*(char *)(param_1 + 0x2b) != '\0') {
+    func_0x0001017a7654(param_1);
+    if (*(long *)(param_1 + 0xb8) == 0) {
+      fVar3 = (float)FUN_100d0b76c();
+      *(float *)(param_1 + 0xdc) = fVar3 * 2.0 + -1.0;
+      lVar2 = *(long *)(param_1 + 0x118);
+    }
+    else {
+      lVar2 = *(long *)(param_1 + 0x118);
+    }
+    if (lVar2 == 0) {
+      fVar3 = (float)FUN_100d0b76c();
+      *(float *)(param_1 + 0x13c) = fVar3 * 2.0 + -1.0;
+      cVar1 = *(char *)(param_1 + 0x28);
+      goto joined_r0x0001017a7834;
+    }
+  }
+  cVar1 = *(char *)(param_1 + 0x28);
+joined_r0x0001017a7834:
+  if (cVar1 == '\0') {
+    func_0x0001017a5910(param_1 + 0x80,param_1 + 0x48);
+    func_0x0001017a5910(param_1 + 0xe0,param_1 + 0x4c);
+    cVar1 = *(char *)(param_1 + 0x40);
+  }
+END 1017b4018
+FUNC 1017b401c name=__ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnStopEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=43
+
+void __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnStopEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (long param_1)
+
+{
+  long lVar1;
+  long lVar2;
+  long lVar3;
+  
+  *(undefined1 *)(param_1 + 0x2a) = 0;
+  (**(code **)(param_1 + 0x68))(0,*(undefined8 *)(param_1 + 0x70));
+  if (*(char *)(param_1 + 0x20) != '\0') {
+    *(undefined1 *)(param_1 + 0x20) = 0;
+    lVar1 = *(long *)(param_1 + 0x18);
+    lVar3 = *(long *)(*(long *)(param_1 + 0x10) + (ulong)*(uint *)(param_1 + 8) * 8 + 8);
+    lVar2 = *(long *)(lVar1 + 0x10);
+    if (*(long *)(lVar3 + 0x50) == lVar1) {
+      *(long *)(lVar3 + 0x50) = lVar2;
+      if (lVar2 != 0) {
+        *(undefined8 *)(lVar2 + 0x18) = 0;
+      }
+    }
+    else {
+      *(long *)(*(long *)(lVar1 + 0x18) + 0x10) = lVar2;
+    }
+    lVar2 = *(long *)(lVar1 + 0x18);
+    if (*(long *)(lVar3 + 0x58) == lVar1) {
+      *(long *)(lVar3 + 0x58) = lVar2;
+      if (lVar2 != 0) {
+        *(undefined8 *)(lVar2 + 0x10) = 0;
+      }
+    }
+    else {
+      *(long *)(*(long *)(lVar1 + 0x10) + 0x18) = lVar2;
+    }
+    if ((*(long *)(lVar3 + 0x50) == 0) && (*(char *)(lVar3 + 0x38) != '\0')) {
+      func_0x00010154eab8(*(undefined8 *)(lVar3 + 0x28),lVar3);
+      *(undefined1 *)(lVar3 + 0x38) = 0;
+      return;
+    }
+END 1017b401c
+FUNC 1017b404c name=__ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnTypeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=76
+
+void __ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnTypeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  long lVar1;
+  long lVar2;
+  undefined8 *puVar3;
+  long lVar4;
+  long lVar5;
+  float fVar6;
+  undefined8 uVar7;
+  
+  *(int *)(param_2 + 0x38) = (int)param_1;
+  puVar3 = (undefined8 *)0x1059a8a20;
+  switch((int)param_1) {
+  case 0:
+    puVar3 = (undefined8 *)0x1059a8a00;
+    break;
+  case 1:
+    puVar3 = (undefined8 *)0x1059a8a08;
+    break;
+  case 2:
+    puVar3 = (undefined8 *)0x1059a8a10;
+    break;
+  case 3:
+    puVar3 = (undefined8 *)0x1059a8a18;
+    break;
+  case 4:
+    break;
+  case 5:
+    *(undefined8 *)(param_2 + 0xb8) = 0;
+    *(undefined8 *)(param_2 + 0x118) = 0;
+    fVar6 = (float)(*(double *)(param_2 + 0x108) * 0.001953125);
+    goto code_r0x0001017b40e8;
+  default:
+    goto code_r0x0001017b40c4;
+  }
+  uVar7 = *puVar3;
+  *(undefined8 *)(param_2 + 0xb8) = uVar7;
+END 1017b404c
+FUNC 1017b4138 name=__ZZN6detail16TMemberFuncTypesIM13OLfoProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnFreqES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_ body=1 lines=78
+
+
+--- OLfo event callbacks (cont.) ---
+FUNC 1017b4454 name=__ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_18OnEventTableStereoEvEEEEvPv body=1 lines=77
+
+void __ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_18OnEventTableStereoEvEEEEvPv
+               (long param_1)
+
+{
+  float *pfVar1;
+  long lVar2;
+  uint uVar3;
+  double dVar4;
+  float fVar5;
+  float fVar6;
+  float fVar7;
+  float fVar8;
+  
+  lVar2 = FUN_101551390(*(undefined8 *)(param_1 + 0x80));
+  dVar4 = *(double *)(param_1 + 0xa0) + *(double *)(param_1 + 0xa8);
+  uVar3 = (uint)dVar4;
+  dVar4 = dVar4 - (double)(int)uVar3;
+  uVar3 = uVar3 & 0x1ff;
+  pfVar1 = (float *)(*(long *)(param_1 + 0xb8) + (ulong)uVar3 * 4);
+  fVar5 = *pfVar1;
+  fVar6 = (fVar5 + (pfVar1[1] - fVar5) * (float)dVar4) * *(float *)(param_1 + 200);
+  fVar7 = (*(float *)(param_1 + 0xd0) + fVar6) -
+          *(float *)(param_1 + 0xd8) * *(float *)(param_1 + 0xcc);
+  fVar5 = fVar7;
+  if (1.0 < fVar7) {
+    fVar5 = 1.0;
+  }
+  fVar8 = -1.0;
+  if (-1.0 <= fVar7) {
+    fVar8 = fVar5;
+  }
+  *(float *)(param_1 + 0x48) = fVar8;
+  *(undefined8 *)(param_1 + 0xc0) = *(undefined8 *)(lVar2 + 0x90);
+  *(double *)(param_1 + 0xa8) = dVar4 + (double)uVar3;
+  *(float *)(param_1 + 0xd4) = *(float *)(param_1 + 0xd0);
+  *(float *)(param_1 + 0xd0) = fVar6;
+  *(float *)(param_1 + 0xd8) = fVar7;
+  *(float *)(param_1 + 0xdc) = fVar8;
+  lVar2 = FUN_101551390(*(undefined8 *)(param_1 + 0xe0));
+END 1017b4454
+FUNC 1017b4458 name=__ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_13OnEventSHMonoEvEEEEvPv body=1 lines=51
+
+/* WARNING: Removing unreachable block (ram,0x0001017a841c) */
+
+void __ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_13OnEventSHMonoEvEEEEvPv
+               (long param_1)
+
+{
+  long lVar1;
+  float fVar2;
+  double dVar3;
+  float fVar4;
+  
+  lVar1 = FUN_101551390(*(undefined8 *)(param_1 + 0x80));
+  *(undefined8 *)(param_1 + 0xc0) = *(undefined8 *)(lVar1 + 0x90);
+  dVar3 = *(double *)(param_1 + 0xa0) + *(double *)(param_1 + 0xa8);
+  *(double *)(param_1 + 0xa8) = dVar3;
+  if (256.0 <= dVar3) {
+    *(double *)(param_1 + 0xa8) = dVar3 + -256.0;
+    fVar2 = (float)FUN_100d0b76c();
+    fVar2 = fVar2 * 2.0 + -1.0;
+  }
+  else {
+    fVar2 = *(float *)(param_1 + 0xdc);
+  }
+  fVar2 = *(float *)(param_1 + 200) * fVar2;
+  fVar4 = *(float *)(param_1 + 0xd0);
+  *(float *)(param_1 + 0xd4) = fVar4;
+  *(float *)(param_1 + 0xd0) = fVar2;
+  fVar4 = (fVar4 + fVar2) - *(float *)(param_1 + 0xd8) * *(float *)(param_1 + 0xcc);
+  *(float *)(param_1 + 0xd8) = fVar4;
+  fVar2 = -1.0;
+  if (-1.0 <= fVar4) {
+    fVar2 = fVar4;
+  }
+  *(float *)(param_1 + 0xdc) = fVar2;
+  *(float *)(param_1 + 0x48) = fVar2;
+  *(float *)(param_1 + 0x4c) = fVar2;
+  if ((*(char *)(param_1 + 0x40) != '\0') &&
+     ((float)*(int *)(param_1 + 0x14c) < *(float *)(param_1 + 0x140))) {
+    fVar4 = *(float *)(param_1 + 0x144);
+END 1017b4458
+FUNC 1017b445c name=__ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_16OnEventTableMonoEvEEEEvPv body=1 lines=51
+
+/* WARNING: Removing unreachable block (ram,0x0001017a82fc) */
+
+void __ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_16OnEventTableMonoEvEEEEvPv
+               (long param_1)
+
+{
+  float *pfVar1;
+  long lVar2;
+  uint uVar3;
+  float fVar4;
+  double dVar5;
+  float fVar6;
+  float fVar7;
+  
+  lVar2 = FUN_101551390(*(undefined8 *)(param_1 + 0x80));
+  dVar5 = *(double *)(param_1 + 0xa0) + *(double *)(param_1 + 0xa8);
+  uVar3 = (uint)dVar5;
+  dVar5 = dVar5 - (double)(int)uVar3;
+  uVar3 = uVar3 & 0x1ff;
+  pfVar1 = (float *)(*(long *)(param_1 + 0xb8) + (ulong)uVar3 * 4);
+  fVar4 = *pfVar1;
+  fVar6 = (fVar4 + (pfVar1[1] - fVar4) * (float)dVar5) * *(float *)(param_1 + 200);
+  fVar7 = (*(float *)(param_1 + 0xd0) + fVar6) -
+          *(float *)(param_1 + 0xd8) * *(float *)(param_1 + 0xcc);
+  fVar4 = -1.0;
+  if (-1.0 <= fVar7) {
+    fVar4 = fVar7;
+  }
+  *(float *)(param_1 + 0x48) = fVar4;
+  *(undefined8 *)(param_1 + 0xc0) = *(undefined8 *)(lVar2 + 0x90);
+  *(double *)(param_1 + 0xa8) = dVar5 + (double)uVar3;
+  *(float *)(param_1 + 0xd4) = *(float *)(param_1 + 0xd0);
+  *(float *)(param_1 + 0xd0) = fVar6;
+  *(float *)(param_1 + 0xd8) = fVar7;
+  *(float *)(param_1 + 0xdc) = fVar4;
+  *(float *)(param_1 + 0x4c) = fVar4;
+  if ((*(char *)(param_1 + 0x40) != '\0') &&
+     ((float)*(int *)(param_1 + 0x14c) < *(float *)(param_1 + 0x140))) {
+    fVar6 = *(float *)(param_1 + 0x144);
+END 1017b445c
+FUNC 1017b4460 name=__ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_15OnEventSHStereoEvEEEEvPv body=1 lines=84
+
+/* WARNING: Removing unreachable block (ram,0x0001017a8178) */
+
+void __ZN7ableton7utility6detail13CallbackTypesI13OLfoProcessorvJEE14CallMemberFuncIXadL_ZNS3_15OnEventSHStereoEvEEEEvPv
+               (long param_1)
+
+{
+  long lVar1;
+  float fVar2;
+  double dVar3;
+  float fVar4;
+  float fVar5;
+  float fVar6;
+  float fVar7;
+  float fVar8;
+  
+  lVar1 = FUN_101551390(*(undefined8 *)(param_1 + 0x80));
+  *(undefined8 *)(param_1 + 0xc0) = *(undefined8 *)(lVar1 + 0x90);
+  dVar3 = *(double *)(param_1 + 0xa0) + *(double *)(param_1 + 0xa8);
+  *(double *)(param_1 + 0xa8) = dVar3;
+  if (256.0 <= dVar3) {
+    *(double *)(param_1 + 0xa8) = dVar3 + -256.0;
+    fVar2 = (float)FUN_100d0b76c();
+    fVar2 = fVar2 * 2.0 + -1.0;
+  }
+  else {
+    fVar2 = *(float *)(param_1 + 0xdc);
+  }
+  fVar2 = *(float *)(param_1 + 200) * fVar2;
+  fVar4 = *(float *)(param_1 + 0xd0);
+  *(float *)(param_1 + 0xd4) = fVar4;
+  *(float *)(param_1 + 0xd0) = fVar2;
+  fVar4 = (fVar4 + fVar2) - *(float *)(param_1 + 0xd8) * *(float *)(param_1 + 0xcc);
+  *(float *)(param_1 + 0xd8) = fVar4;
+  fVar2 = -1.0;
+  if (-1.0 <= fVar4) {
+    fVar2 = fVar4;
+  }
+  *(float *)(param_1 + 0xdc) = fVar2;
+  lVar1 = FUN_101551390(*(undefined8 *)(param_1 + 0xe0));
+END 1017b4460
+
+--- create wrapper (round 4) ---
+FUNC 1018bfa10 name=FUN_1018bfa10 body=1 lines=17
+
+long FUN_1018bfa10(undefined8 param_1,undefined8 param_2)
+
+{
+  undefined8 uVar1;
+  long lVar2;
+  undefined1 uStack_35;
+  int iStack_34;
+  
+  uVar1 = func_0x00010153be8c(param_2,&iStack_34);
+  func_0x00010153be4c(uVar1,&uStack_35);
+  lVar2 = func_0x00010153ff88(0x28);
+  func_0x000101545cf4(lVar2,param_1,iStack_34 + 0x150,uStack_35);
+  func_0x0001017a7478(*(undefined8 *)(lVar2 + 0x18),param_1,param_2);
+  func_0x000101545e84(lVar2);
+  return lVar2;
+}
+END 1018bfa10
+
+===================== §7 MPE DECOMPILES (ModLaneProbe3/4) =====================
+--- creates + MpeFilter OnMidi/OnResetBang + BeforeDisconnectMidi ---
+FUNC 1018c1b20 name=__ZN23OProcessorCreateManager18SOnProcessorCreateI20OMpeDecoderProcessorEEvR14OThreadMessage body=1 lines=11
+
+void __ZN23OProcessorCreateManager18SOnProcessorCreateI20OMpeDecoderProcessorEEvR14OThreadMessage
+               (undefined8 param_1)
+
+{
+  undefined1 auStack_48 [40];
+  
+  func_0x000101546e1c(auStack_48,param_1);
+  func_0x0001018c1b5c(auStack_48,param_1);
+  return;
+}
+END 1018c1b20
+FUNC 1016d6428 name=__ZZN6detail16TMemberFuncTypesIM20OMpeDecoderProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_ body=1 lines=869
+
+void __ZZN6detail16TMemberFuncTypesIM20OMpeDecoderProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+               (long param_1,undefined4 *param_2)
+
+{
+  undefined8 *puVar1;
+  uint uVar2;
+  undefined8 uVar3;
+  undefined8 uVar4;
+  ulong uVar5;
+  ulong uVar6;
+  long lVar7;
+  long lVar8;
+  float fVar9;
+  undefined4 uVar10;
+  int iVar11;
+  int iVar12;
+  int iVar13;
+  int iVar14;
+  int iVar15;
+  int iVar16;
+  int iVar17;
+  int iVar18;
+  int iVar19;
+  int iVar20;
+  int iVar21;
+  int iVar22;
+  int iVar23;
+  int iVar24;
+  int iVar25;
+  int iVar26;
+  int iVar27;
+  int iVar28;
+  int iVar29;
+  int iVar30;
+  int iVar31;
+  int iVar32;
+  int iVar33;
+  int iVar34;
+  int iVar35;
+END 1016d6428
+FUNC 1016d6470 name=__ZZN6detail16TMemberFuncTypesIM20OMpeDecoderProcessorFvP20OPointerEventOutPortiEE14SProcessorFuncIXadL_ZNS1_20BeforeDisconnectMidiES3_iEEEEPFvPvS3_iEvENUlS8_S3_iE_8__invokeES8_S3_i body=1 lines=38
+
+void __ZZN6detail16TMemberFuncTypesIM20OMpeDecoderProcessorFvP20OPointerEventOutPortiEE14SProcessorFuncIXadL_ZNS1_20BeforeDisconnectMidiES3_iEEEEPFvPvS3_iEvENUlS8_S3_iE_8__invokeES8_S3_i
+               (long param_1,undefined8 param_2,ulong param_3)
+
+{
+  undefined8 *puVar1;
+  bool bVar2;
+  long lVar3;
+  long lVar4;
+  long lVar5;
+  long lVar6;
+  undefined1 auStack_80 [48];
+  
+  lVar6 = param_1 + 0x28;
+  lVar4 = 0;
+  do {
+    lVar5 = 0;
+    do {
+      lVar3 = *(long *)(lVar6 + lVar5 * 8);
+      if (lVar3 != -1) {
+        func_0x0001015f1948(0x42800000,auStack_80,lVar5,lVar4,lVar3,*(undefined4 *)(param_1 + 0xc));
+        puVar1 = (undefined8 *)(param_1 + 0x10);
+        if (*(long *)(param_1 + 0x20) != 0) {
+          puVar1 = (undefined8 *)
+                   (*(long *)(param_1 + 0x20) +
+                    (-(param_3 >> 0x1f & 1) & 0xfffffff000000000 | (param_3 & 0xffffffff) << 4) + 8)
+          ;
+        }
+        (*(code *)*puVar1)(puVar1[1],auStack_80);
+      }
+      lVar5 = lVar5 + 1;
+    } while (lVar5 != 0x80);
+    lVar6 = lVar6 + 0x400;
+    bVar2 = lVar4 != 0xf;
+    lVar4 = lVar4 + 1;
+  } while (bVar2);
+  return;
+}
+END 1016d6470
+FUNC 1018c1bf8 name=__ZN23OProcessorCreateManager18SOnProcessorCreateI20OMpeEncoderProcessorEEvR14OThreadMessage body=1 lines=11
+
+void __ZN23OProcessorCreateManager18SOnProcessorCreateI20OMpeEncoderProcessorEEvR14OThreadMessage
+               (undefined8 param_1)
+
+{
+  undefined1 auStack_48 [40];
+  
+  func_0x000101546e1c(auStack_48,param_1);
+  func_0x0001018c1c34(auStack_48,param_1);
+  return;
+}
+END 1018c1bf8
+FUNC 1016d653c name=__ZZN6detail16TMemberFuncTypesIM20OMpeEncoderProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_ body=1 lines=330
+
+void __ZZN6detail16TMemberFuncTypesIM20OMpeEncoderProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+               (long param_1,long *param_2)
+
+{
+  int iVar1;
+  uint uVar2;
+  long *plVar3;
+  int iVar4;
+  uint uVar5;
+  undefined4 uVar6;
+  long lVar7;
+  long lVar8;
+  ulong uVar9;
+  long lVar10;
+  ulong uVar11;
+  long *plVar12;
+  long lVar13;
+  int *piVar14;
+  uint *puVar15;
+  int *piVar16;
+  long lVar17;
+  long *plVar18;
+  long *unaff_x19;
+  long unaff_x20;
+  int *piVar19;
+  ulong unaff_x21;
+  undefined8 unaff_x22;
+  undefined1 *unaff_x29;
+  undefined *unaff_x30;
+  undefined1 auVar20 [16];
+  undefined1 auStack_88 [40];
+  long lStack_60;
+  long lStack_58;
+  long lStack_50;
+  long lStack_48;
+  long lStack_40;
+  long lStack_38;
+  
+  auVar20._8_8_ = param_2;
+END 1016d653c
+FUNC 1018c1cd0 name=__ZN23OProcessorCreateManager18SOnProcessorCreateI19OMpeFilterProcessorEEvR14OThreadMessage body=1 lines=11
+
+void __ZN23OProcessorCreateManager18SOnProcessorCreateI19OMpeFilterProcessorEEvR14OThreadMessage
+               (undefined8 param_1)
+
+{
+  undefined1 auStack_48 [40];
+  
+  func_0x000101546e1c(auStack_48,param_1);
+  func_0x0001018c1d0c(auStack_48,param_1);
+  return;
+}
+END 1018c1cd0
+FUNC 1016e4134 name=__ZZN6detail16TMemberFuncTypesIM19OMpeFilterProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_ body=1 lines=77
+
+void __ZZN6detail16TMemberFuncTypesIM19OMpeFilterProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+               (long param_1,undefined4 *param_2)
+
+{
+  long lVar1;
+  undefined8 uVar2;
+  undefined4 *puVar3;
+  code *pcVar4;
+  ulong uVar5;
+  ulong uVar6;
+  ulong uVar7;
+  undefined4 auStack_70 [8];
+  undefined1 auStack_50 [16];
+  
+  switch(*param_2) {
+  case 1:
+    puVar3 = auStack_70;
+    lVar1 = FUN_101551390(*(undefined8 *)(param_1 + 0x438));
+    if (*(long *)(param_1 + 0x418) != *(long *)(lVar1 + 0x90)) {
+      *(long *)(param_1 + 0x418) = *(long *)(lVar1 + 0x90);
+      *(undefined8 *)(param_1 + 0x410) = 0;
+      *(undefined8 *)(param_1 + 0x408) = 0;
+    }
+    uVar5 = (ulong)(uint)param_2[8];
+    uVar6 = (ulong)((uint)param_2[8] >> 6);
+    if (*(long *)(param_1 + 8 + uVar5 * 8) == -1) {
+      uVar7 = 1L << (uVar5 & 0x3f);
+    }
+    else {
+      uVar7 = 1L << (uVar5 & 0x3f);
+      if ((*(ulong *)(param_1 + uVar6 * 8 + 0x408) & uVar7) != 0) {
+        return;
+      }
+      func_0x0001015eb38c(auStack_70,param_2);
+      (**(code **)(param_1 + 0x420))(*(undefined8 *)(param_1 + 0x428),auStack_70);
+    }
+    lVar1 = param_1 + uVar6 * 8;
+    *(ulong *)(lVar1 + 0x408) = *(ulong *)(lVar1 + 0x408) | uVar7;
+    *(undefined8 *)(param_1 + 8 + uVar5 * 8) = *(undefined8 *)(param_2 + 6);
+END 1016e4134
+FUNC 1016e4138 name=__ZZN6detail16TMemberFuncTypesIM19OMpeFilterProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnResetBangEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=11
+
+void __ZZN6detail16TMemberFuncTypesIM19OMpeFilterProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnResetBangEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (long param_1)
+
+{
+  _memset(param_1 + 8,0xff,0x400);
+  *(undefined8 *)(param_1 + 0x410) = 0;
+  *(undefined8 *)(param_1 + 0x408) = 0;
+  *(undefined8 *)(param_1 + 0x418) = 0xffffffffffffffff;
+  return;
+}
+END 1016e4138
+FUNC 101609b04 name=__ZN23OProcessorCreateManager18SOnProcessorCreateI27OTuningSystemToMpeProcessorEEvR14OThreadMessage body=1 lines=11
+
+void __ZN23OProcessorCreateManager18SOnProcessorCreateI27OTuningSystemToMpeProcessorEEvR14OThreadMessage
+               (undefined8 param_1)
+
+{
+  undefined1 auStack_48 [40];
+  
+  func_0x000101546e1c(auStack_48,param_1);
+  func_0x000101609b40(auStack_48,param_1);
+  return;
+}
+
+--- TuningSystemToMpe Init/OnTuned/OnPitchBendRange + AMpeSettings ctor + dialog callbacks ---
+FUNC 101603aa4 name=__ZZN6detail16TMemberFuncTypesIM27OTuningSystemToMpeProcessorFvP10OSchedulerEE14SProcessorFuncIXadL_ZNS1_4InitES3_EEEEPFvPvS3_EvENUlS8_S3_E_8__invokeES8_S3_ body=1 lines=25
+
+void __ZZN6detail16TMemberFuncTypesIM27OTuningSystemToMpeProcessorFvP10OSchedulerEE14SProcessorFuncIXadL_ZNS1_4InitES3_EEEEPFvPvS3_EvENUlS8_S3_E_8__invokeES8_S3_
+               (long *param_1)
+
+{
+  int iVar1;
+  
+  if (((bRam00000001058e79e8 & 1) == 0) && (iVar1 = ___cxa_guard_acquire(0x1058e79e8), iVar1 != 0))
+  {
+    puRam00000001058e7a20 = &UNK_1052874f0;
+    uRam00000001058e7a28 = 0;
+    uRam00000001058e7a30 = 0;
+    puRam00000001058e7a38 = PTR_DAT_1050a55b0 + 0x10;
+    uRam00000001058e7a40 = 0;
+    uRam00000001058e7a48 = 0;
+    uRam00000001058e7a50 = 0;
+    ___cxa_atexit(&DAT_101601d48,0x1058e7a20,0x100000000);
+    ___cxa_guard_release(0x1058e79e8);
+  }
+  (**(code **)(puRam00000001058e7a20 + 0x10))(0x1058e7a20,param_1 + 0x468b);
+                    /* WARNING: Could not recover jumptable at 0x000101603af4. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(*param_1 + 0x18))(param_1);
+  return;
+}
+END 101603aa4
+FUNC 101603c08 name=__ZZN6detail16TMemberFuncTypesIM27OTuningSystemToMpeProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_ body=1 lines=341
+
+void __ZZN6detail16TMemberFuncTypesIM27OTuningSystemToMpeProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+               (long param_1,int *param_2)
+
+{
+  undefined1 *puVar1;
+  int iVar2;
+  undefined4 uVar3;
+  long *plVar4;
+  undefined8 *puVar5;
+  long lVar6;
+  long lVar7;
+  long *plVar8;
+  long lVar9;
+  long lVar10;
+  undefined8 *unaff_x19;
+  long *unaff_x20;
+  long *plVar11;
+  long *unaff_x21;
+  long unaff_x22;
+  undefined1 *unaff_x29;
+  undefined *unaff_x30;
+  float extraout_s0;
+  undefined8 uVar12;
+  undefined8 uVar13;
+  undefined8 uVar14;
+  undefined4 uVar15;
+  undefined8 unaff_d8;
+  undefined8 unaff_d9;
+  undefined1 auVar16 [16];
+  undefined1 auStack_50 [8];
+  int *piStack_48;
+  long lStack_40;
+  long **pplStack_38;
+  int *piStack_30;
+  long lStack_28;
+  long *plStack_20;
+  undefined1 auStack_18 [8];
+  
+  auVar16._8_8_ = param_2;
+END 101603c08
+FUNC 101603c0c name=__ZZN6detail16TMemberFuncTypesIM27OTuningSystemToMpeProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnTunedEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM27OTuningSystemToMpeProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnTunedEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(bool *)(param_2 + 0x23418) = param_1 != 0.0;
+  return;
+}
+END 101603c0c
+FUNC 101603c24 name=__ZZN6detail16TMemberFuncTypesIM27OTuningSystemToMpeProcessorFvfEE14SProcessorFuncIXadL_ZNS1_16OnPitchBendRangeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=45
+
+void __ZZN6detail16TMemberFuncTypesIM27OTuningSystemToMpeProcessorFvfEE14SProcessorFuncIXadL_ZNS1_16OnPitchBendRangeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  int iVar1;
+  long lVar2;
+  long lVar3;
+  float fVar4;
+  float fVar5;
+  float fVar6;
+  undefined1 auStack_90 [48];
+  
+  *(float *)(param_2 + 0x2341c) = param_1 / 48.0;
+  if (*(long *)(param_2 + 0x23410) != 0) {
+    lVar3 = *(long *)(param_2 + 0x23410) * 0x468;
+    lVar2 = param_2;
+    do {
+      if ((*(long *)(lVar2 + 0x470) == 1) && (fVar5 = *(float *)(lVar2 + 0x20), fVar5 != 0.0)) {
+        fVar6 = *(float *)(lVar2 + 0x1c);
+        if (((bRam00000001058e79f8 & 1) == 0) &&
+           (iVar1 = ___cxa_guard_acquire(0x1058e79f8), iVar1 != 0)) {
+          fVar4 = (float)func_0x000100d00558(0xfffffffe);
+          fRam00000001058e79f4 = (float)func_0x000100d0056c(0xfffffffe);
+          fRam00000001058e79f0 = fVar4;
+          ___cxa_guard_release(0x1058e79f8);
+        }
+        fVar6 = fVar6 + *(float *)(param_2 + 0x2341c) * fVar5;
+        fVar5 = fRam00000001058e79f4;
+        if (fVar6 <= fRam00000001058e79f4) {
+          fVar5 = fVar6;
+        }
+        fVar4 = fRam00000001058e79f0;
+        if (fRam00000001058e79f0 <= fVar6) {
+          fVar4 = fVar5;
+        }
+        func_0x0001015f1bcc(fVar4,auStack_90,0xfffffffe,0xffffffff,*(undefined8 *)(lVar2 + 0x10));
+        (**(code **)(param_2 + 0x23420))(*(undefined8 *)(param_2 + 0x23428),auStack_90);
+      }
+      lVar2 = lVar2 + 0x468;
+END 101603c24
+FUNC 101d8c00c name=__Z12SNewCompoundI12AMpeSettingsE4TPtrI9ACompoundEv body=1 lines=16
+
+void __Z12SNewCompoundI12AMpeSettingsE4TPtrI9ACompoundEv(long *param_1)
+
+{
+  long lVar1;
+  long lVar2;
+  
+  lVar1 = func_0x000100e23568(0xa0);
+  lVar2 = func_0x000101d8c308();
+  if (lVar2 != 0) {
+    *(int *)(lVar1 + 8) = *(int *)(lVar1 + 8) + 1;
+  }
+  func_0x000101016264(lVar1);
+  *param_1 = lVar1;
+  return;
+}
+END 101d8c00c
+FUNC 102c877c4 name=__ZN7ableton7utility6detail13CallbackTypesI18AMpeSettingsDialogvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_21OnZoneTypeEnumChangedES5_S7_EEEEvPvS5_S7_ body=1 lines=104
+
+void __ZN7ableton7utility6detail13CallbackTypesI18AMpeSettingsDialogvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_21OnZoneTypeEnumChangedES5_S7_EEEEvPvS5_S7_
+               (long param_1)
+
+{
+  code *pcVar1;
+  int iVar2;
+  undefined **ppuVar3;
+  undefined8 uVar4;
+  undefined8 uVar5;
+  undefined8 uVar6;
+  long lVar7;
+  undefined8 uVar8;
+  undefined1 auStack_d8 [56];
+  undefined *apuStack_68 [3];
+  undefined **ppuStack_50;
+  undefined *apuStack_48 [3];
+  undefined **ppuStack_30;
+  long lStack_28;
+  
+  lStack_28 = *(long *)PTR____stack_chk_guard_1050c86c8;
+  apuStack_68[0] = PTR_DAT_1050b0de8 + 0x10;
+  ppuStack_50 = apuStack_68;
+  ppuVar3 = apuStack_48;
+  apuStack_48[0] = apuStack_68[0];
+  ppuStack_30 = ppuVar3;
+  iVar2 = func_0x0001010dfb50(*(undefined8 *)(param_1 + 0x218));
+  if (iVar2 == 0) {
+    func_0x0001010dfb94(*(undefined8 *)(param_1 + 0x230),1);
+    uVar6 = 0;
+code_r0x000102c7c700:
+    (**(code **)(**(long **)(param_1 + 0x230) + 0x198))(*(long **)(param_1 + 0x230),uVar6,0);
+    uVar6 = 1;
+code_r0x000102c7c718:
+    (**(code **)(**(long **)(param_1 + 0x248) + 0x198))(*(long **)(param_1 + 0x248),uVar6,0);
+  }
+  else {
+    if (iVar2 == 1) {
+      (**(code **)(**(long **)(param_1 + 0x230) + 0x198))(*(long **)(param_1 + 0x230),1,0);
+      func_0x0001010dfb94(*(undefined8 *)(param_1 + 0x248),0xe);
+END 102c877c4
+FUNC 102c87924 name=__ZN7ableton7utility6detail13CallbackTypesI18AMpeSettingsDialogvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_29OnFirstNoteChannelEnumChangedES5_S7_EEEEvPvS5_S7_ body=1 lines=22
+
+void __ZN7ableton7utility6detail13CallbackTypesI18AMpeSettingsDialogvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_29OnFirstNoteChannelEnumChangedES5_S7_EEEEvPvS5_S7_
+               (long param_1)
+
+{
+  int iVar1;
+  int iVar2;
+  undefined8 uVar3;
+  long lVar4;
+  
+  iVar1 = func_0x0001010dfb50(*(undefined8 *)(param_1 + 0x248));
+  iVar2 = func_0x0001010dfb50(*(undefined8 *)(param_1 + 0x230));
+  if (iVar1 < iVar2) {
+    lVar4 = *(long *)(param_1 + 0x248);
+    uVar3 = func_0x0001010dfb50(*(undefined8 *)(param_1 + 0x230));
+                    /* WARNING: Could not recover jumptable at 0x0001010dfba0. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+    (**(code **)(lVar4 + 0xb8))(*(undefined8 *)(lVar4 + 0xc0),lVar4,uVar3);
+    return;
+  }
+  return;
+}
+END 102c87924
+FUNC 102c8797c name=__ZN7ableton7utility6detail13CallbackTypesI18AMpeSettingsDialogvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_28OnLastNoteChannelEnumChangedES5_S7_EEEEvPvS5_S7_ body=1 lines=22
+
+void __ZN7ableton7utility6detail13CallbackTypesI18AMpeSettingsDialogvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_28OnLastNoteChannelEnumChangedES5_S7_EEEEvPvS5_S7_
+               (long param_1)
+
+{
+  int iVar1;
+  int iVar2;
+  undefined8 uVar3;
+  long lVar4;
+  
+  iVar1 = func_0x0001010dfb50(*(undefined8 *)(param_1 + 0x230));
+  iVar2 = func_0x0001010dfb50(*(undefined8 *)(param_1 + 0x248));
+  if (iVar2 < iVar1) {
+    lVar4 = *(long *)(param_1 + 0x230);
+    uVar3 = func_0x0001010dfb50(*(undefined8 *)(param_1 + 0x248));
+                    /* WARNING: Could not recover jumptable at 0x0001010dfba0. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+    (**(code **)(lVar4 + 0xb8))(*(undefined8 *)(lVar4 + 0xc0),lVar4,uVar3);
+    return;
+  }
+  return;
+}
+END 102c8797c
+
+--- helper: RNG FUN_100d0b76c + clock FUN_101551390 ---
+FUNC 100d0b76c name=FUN_100d0b76c body=152 lines=16
+
+float FUN_100d0b76c(void)
+
+{
+  int iVar1;
+  
+  if ((iRam000000010588bf28 == 0) && (iVar1 = func_0x000100d0b574(), iRam000000010588bf28 == 0)) {
+    iRam000000010588bf28 = iVar1;
+  }
+  iVar1 = iRam000000010588bf28 * 0xbc8f + (iRam000000010588bf28 / 0xadc8) * -0x7fffffff;
+  iRam000000010588bf28 = iVar1 + 0x7fffffff;
+  if (0 < iVar1) {
+    iRam000000010588bf28 = iVar1;
+  }
+  return (float)iRam000000010588bf28 / 2.1474836e+09;
+}
+END 100d0b76c
+FUNC 101551390 name=FUN_101551390 body=276 lines=56
+
+undefined8 FUN_101551390(long param_1)
+
+{
+  int iVar1;
+  int iVar2;
+  int *piVar3;
+  long lVar4;
+  long lVar5;
+  double dVar6;
+  
+  lVar5 = param_1;
+  if (**(int **)(param_1 + 0x1a0) == 0) {
+    while (lVar4 = lVar5, piVar3 = *(int **)(lVar4 + 0x1a0), *piVar3 != 1) {
+      lVar5 = *(long *)(lVar4 + 0x210);
+      if (*(long *)(lVar4 + 0x210) == 0) {
+        iVar1 = *(int *)(lVar4 + 0x18);
+        iVar2 = **(int **)(lVar4 + 0x20);
+        *(int *)(lVar4 + 0x18) = iVar2;
+        lVar5 = (long)iVar1 - (long)iVar2;
+        *(int *)(lVar4 + 0x168) = *(int *)(lVar4 + 0x168) + (int)lVar5;
+        lVar5 = *(long *)(lVar4 + 0x170) + lVar5;
+        *(long *)(lVar4 + 0x170) = lVar5;
+        dVar6 = *(double *)(lVar4 + 0x188) +
+                *(double *)(lVar4 + 0x110) * (double)(lVar5 - *(long *)(lVar4 + 0x180));
+        *(double *)(lVar4 + 0x160) = dVar6;
+        if (*(char *)(lVar4 + 0x148) != '\0') {
+          *(double *)(lVar4 + 0x150) = dVar6;
+          *(double *)(lVar4 + 0x158) = dVar6;
+        }
+        if ((0 < *(int *)(lVar4 + 0x414)) && (lVar5 = *(long *)(lVar4 + 0x220), lVar5 != 0)) {
+          iVar1 = *(int *)(*(long *)(lVar4 + 400) + 0x88);
+          do {
+            if (*(char *)(lVar5 + 0x419) != '\0') {
+              iVar2 = *(int *)(lVar5 + 0x168);
+              *(int *)(lVar5 + 0x168) = iVar1;
+              lVar4 = *(long *)(lVar5 + 0x170) + ((long)iVar1 - (long)iVar2);
+              *(long *)(lVar5 + 0x170) = lVar4;
+              dVar6 = *(double *)(lVar5 + 0x188) +
+                      *(double *)(lVar5 + 0x110) * (double)(lVar4 - *(long *)(lVar5 + 0x180));
+              *(double *)(lVar5 + 0x160) = dVar6;
+              if (*(char *)(lVar5 + 0x148) != '\0') {
+                *(double *)(lVar5 + 0x150) = dVar6;
+                *(double *)(lVar5 + 0x158) = dVar6;
+              }
+            }
+            lVar5 = *(long *)(lVar5 + 8);
+          } while (lVar5 != 0);
+        }
+        *piVar3 = 1;
+        return *(undefined8 *)(param_1 + 400);
+      }
+    }
+  }
+  return *(undefined8 *)(param_1 + 400);
+}
+END 101551390
+
+--- MpeDecoder::OnMidi FULL (869 lines) ---
+FUNC 1016d6428 name=__ZZN6detail16TMemberFuncTypesIM20OMpeDecoderProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_ body=1 lines=869
+
+void __ZZN6detail16TMemberFuncTypesIM20OMpeDecoderProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+               (long param_1,undefined4 *param_2)
+
+{
+  undefined8 *puVar1;
+  uint uVar2;
+  undefined8 uVar3;
+  undefined8 uVar4;
+  ulong uVar5;
+  ulong uVar6;
+  long lVar7;
+  long lVar8;
+  float fVar9;
+  undefined4 uVar10;
+  int iVar11;
+  int iVar12;
+  int iVar13;
+  int iVar14;
+  int iVar15;
+  int iVar16;
+  int iVar17;
+  int iVar18;
+  int iVar19;
+  int iVar20;
+  int iVar21;
+  int iVar22;
+  int iVar23;
+  int iVar24;
+  int iVar25;
+  int iVar26;
+  int iVar27;
+  int iVar28;
+  int iVar29;
+  int iVar30;
+  int iVar31;
+  int iVar32;
+  int iVar33;
+  int iVar34;
+  int iVar35;
+  int iVar36;
+  int iVar37;
+  int iVar38;
+  int iVar39;
+  int iVar40;
+  int iVar41;
+  int iVar42;
+  int iVar43;
+  int iVar44;
+  int iVar45;
+  int iVar46;
+  int iVar47;
+  int iVar48;
+  int iVar49;
+  int iVar50;
+  int iVar51;
+  int iVar52;
+  int iVar53;
+  int iVar54;
+  int iVar55;
+  int iVar56;
+  int iVar57;
+  int iVar58;
+  int iVar59;
+  int iVar60;
+  int iVar61;
+  int iVar62;
+  int iVar63;
+  int iVar64;
+  int iVar65;
+  int iVar66;
+  int iVar67;
+  int iVar68;
+  int iVar69;
+  int iVar70;
+  int iVar71;
+  int iVar72;
+  int iVar73;
+  int iVar74;
+  int iVar75;
+  int iVar76;
+  int iVar77;
+  int iVar78;
+  int iVar79;
+  int iVar80;
+  int iVar81;
+  int iVar82;
+  int iVar83;
+  int iVar84;
+  int iVar85;
+  int iVar86;
+  int iVar87;
+  int iVar88;
+  int iVar89;
+  int iVar90;
+  int iVar91;
+  int iVar92;
+  int iVar93;
+  int iVar94;
+  int iVar95;
+  int iVar96;
+  int iVar97;
+  int iVar98;
+  int iVar99;
+  int iVar100;
+  int iVar101;
+  int iVar102;
+  int iVar103;
+  int iVar104;
+  int iVar105;
+  int iVar106;
+  int iVar107;
+  int iVar108;
+  int iVar109;
+  int iVar110;
+  int iVar111;
+  int iVar112;
+  int iVar113;
+  int iVar114;
+  int iVar115;
+  int iVar116;
+  int iVar117;
+  int iVar118;
+  int iVar119;
+  int iVar120;
+  int iVar121;
+  int iVar122;
+  float fVar123;
+  undefined1 auStack_a0 [48];
+  undefined1 auStack_70 [16];
+  undefined1 auStack_60 [16];
+  undefined1 auStack_50 [16];
+  
+  switch(*param_2) {
+  case 1:
+    if (*(long *)(param_1 + 0x28 + (ulong)(uint)param_2[5] * 0x400 + (ulong)(uint)param_2[8] * 8) !=
+        -1) {
+      func_0x0001015eb38c(auStack_70,param_2);
+      func_0x0001015f17c0(auStack_70,*(undefined4 *)(param_1 + 0xc));
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_70);
+    }
+    uVar3 = func_0x00010153e188();
+    uVar2 = param_2[5];
+    *(undefined8 *)(param_1 + 0x28 + (ulong)uVar2 * 0x400 + (ulong)(uint)param_2[8] * 8) = uVar3;
+    lVar8 = param_1 + (ulong)uVar2 * 4;
+    *(int *)(lVar8 + 0x60e8) = *(int *)(lVar8 + 0x60e8) + 1;
+    if (*(char *)(param_1 + 8) == '\0') {
+      func_0x0001015f18a8(auStack_70,param_2,uVar3);
+      func_0x0001015f17c0(auStack_70,*(undefined4 *)(param_1 + 0xc));
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_70);
+    }
+    else {
+      lVar8 = param_1 + (ulong)(uint)param_2[5] * 0x20c;
+      puVar1 = (undefined8 *)(lVar8 + 0x4028);
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4098) == 3.4028235e+38);
+      iVar28 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4098) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x40a0) == 3.4028235e+38);
+      iVar57 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x40a0) >> 0x20) == 3.4028235e+38);
+      iVar14 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar43 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x40d8) == 3.4028235e+38);
+      iVar29 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x40d8) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x40e0) == 3.4028235e+38);
+      iVar58 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x40e0) >> 0x20) == 3.4028235e+38);
+      iVar15 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar44 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4118) == 3.4028235e+38);
+      iVar30 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4118) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4120) == 3.4028235e+38);
+      iVar59 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4120) >> 0x20) == 3.4028235e+38);
+      iVar16 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar45 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4158) == 3.4028235e+38);
+      iVar31 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4158) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4160) == 3.4028235e+38);
+      iVar60 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4160) >> 0x20) == 3.4028235e+38);
+      iVar17 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar46 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4198) == 3.4028235e+38);
+      iVar32 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4198) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x41a0) == 3.4028235e+38);
+      iVar61 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x41a0) >> 0x20) == 3.4028235e+38);
+      iVar18 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar47 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x41d8) == 3.4028235e+38);
+      iVar33 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x41d8) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x41e0) == 3.4028235e+38);
+      iVar62 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x41e0) >> 0x20) == 3.4028235e+38);
+      iVar19 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar48 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4218) == 3.4028235e+38);
+      iVar34 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4218) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4220) == 3.4028235e+38);
+      iVar63 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4220) >> 0x20) == 3.4028235e+38);
+      iVar20 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar49 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4088) == 3.4028235e+38);
+      iVar35 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4088) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4090) == 3.4028235e+38);
+      iVar64 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4090) >> 0x20) == 3.4028235e+38);
+      iVar21 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar50 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x40c8) == 3.4028235e+38);
+      iVar36 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x40c8) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x40d0) == 3.4028235e+38);
+      iVar65 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x40d0) >> 0x20) == 3.4028235e+38);
+      iVar22 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar51 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4108) == 3.4028235e+38);
+      iVar37 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4108) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4110) == 3.4028235e+38);
+      iVar66 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4110) >> 0x20) == 3.4028235e+38);
+      iVar23 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar52 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4148) == 3.4028235e+38);
+      iVar38 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4148) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4150) == 3.4028235e+38);
+      iVar67 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4150) >> 0x20) == 3.4028235e+38);
+      iVar24 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar53 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4188) == 3.4028235e+38);
+      iVar39 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4188) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4190) == 3.4028235e+38);
+      iVar68 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4190) >> 0x20) == 3.4028235e+38);
+      iVar25 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar54 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x41c8) == 3.4028235e+38);
+      iVar40 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x41c8) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x41d0) == 3.4028235e+38);
+      iVar69 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x41d0) >> 0x20) == 3.4028235e+38);
+      iVar26 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar55 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4208) == 3.4028235e+38);
+      iVar41 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4208) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4210) == 3.4028235e+38);
+      iVar70 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4210) >> 0x20) == 3.4028235e+38);
+      iVar27 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar56 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4078) == 3.4028235e+38);
+      iVar102 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4078) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4080) == 3.4028235e+38);
+      iVar116 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4080) >> 0x20) == 3.4028235e+38);
+      iVar95 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar109 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                         CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                  CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x40b8) == 3.4028235e+38);
+      iVar103 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x40b8) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x40c0) == 3.4028235e+38);
+      iVar117 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x40c0) >> 0x20) == 3.4028235e+38);
+      iVar96 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar110 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                         CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                  CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x40f8) == 3.4028235e+38);
+      iVar104 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x40f8) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4100) == 3.4028235e+38);
+      iVar118 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4100) >> 0x20) == 3.4028235e+38);
+      iVar97 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar111 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                         CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                  CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4138) == 3.4028235e+38);
+      iVar105 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4138) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4140) == 3.4028235e+38);
+      iVar119 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4140) >> 0x20) == 3.4028235e+38);
+      iVar98 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar112 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                         CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                  CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4178) == 3.4028235e+38);
+      iVar106 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4178) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4180) == 3.4028235e+38);
+      iVar120 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4180) >> 0x20) == 3.4028235e+38);
+      iVar99 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar113 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                         CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                  CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x41b8) == 3.4028235e+38);
+      iVar107 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x41b8) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x41c0) == 3.4028235e+38);
+      iVar121 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x41c0) >> 0x20) == 3.4028235e+38);
+      iVar100 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                         CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                  CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar114 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                         CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                  CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x41f8) == 3.4028235e+38);
+      iVar108 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x41f8) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4200) == 3.4028235e+38);
+      iVar122 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4200) >> 0x20) == 3.4028235e+38);
+      iVar101 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                         CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                  CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar115 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                         CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                  CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4068) == 3.4028235e+38);
+      iVar77 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4068) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4070) == 3.4028235e+38);
+      iVar89 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4070) >> 0x20) == 3.4028235e+38);
+      iVar71 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar83 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x40a8) == 3.4028235e+38);
+      iVar78 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x40a8) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x40b0) == 3.4028235e+38);
+      iVar90 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x40b0) >> 0x20) == 3.4028235e+38);
+      iVar72 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar84 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x40e8) == 3.4028235e+38);
+      iVar79 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x40e8) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x40f0) == 3.4028235e+38);
+      iVar91 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x40f0) >> 0x20) == 3.4028235e+38);
+      iVar73 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar85 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4128) == 3.4028235e+38);
+      iVar80 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4128) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4130) == 3.4028235e+38);
+      iVar92 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4130) >> 0x20) == 3.4028235e+38);
+      iVar74 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar86 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4168) == 3.4028235e+38);
+      iVar81 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4168) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x4170) == 3.4028235e+38);
+      iVar93 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x4170) >> 0x20) == 3.4028235e+38);
+      iVar75 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar87 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x41a8) == 3.4028235e+38);
+      iVar82 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x41a8) >> 0x20) == 3.4028235e+38);
+      iVar42 = -(uint)((float)*(undefined8 *)(lVar8 + 0x41b0) == 3.4028235e+38);
+      iVar94 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x41b0) >> 0x20) == 3.4028235e+38);
+      iVar76 = CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)));
+      iVar88 = CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)));
+      iVar13 = -(uint)((float)*(undefined8 *)(lVar8 + 0x41e8) == 3.4028235e+38);
+      iVar42 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x41e8) >> 0x20) == 3.4028235e+38);
+      iVar11 = -(uint)((float)*(undefined8 *)(lVar8 + 0x41f0) == 3.4028235e+38);
+      iVar12 = -(uint)((float)((ulong)*(undefined8 *)(lVar8 + 0x41f0) >> 0x20) == 3.4028235e+38);
+      iVar11 = CONCAT13(~(byte)((uint)iVar11 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar11 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar11 >> 8),~(byte)iVar11)));
+      iVar13 = ((((((((uint)(~-((float)*(undefined8 *)(lVar8 + 0x4058) == 3.4028235e+38) & 1) -
+                     iVar14) - iVar15) - iVar16) - iVar17) - iVar18) - iVar19) - iVar20) +
+               ((((((((uint)(~-((float)*(undefined8 *)(lVar8 + 0x4048) == 3.4028235e+38) & 1) -
+                     iVar21) - iVar22) - iVar23) - iVar24) - iVar25) - iVar26) - iVar27) +
+               ((((((((uint)(~-((float)*(undefined8 *)(lVar8 + 0x4038) == 3.4028235e+38) & 1) -
+                     iVar95) - iVar96) - iVar97) - iVar98) - iVar99) - iVar100) - iVar101) +
+               ((((((((uint)(~-((float)*puVar1 == 3.4028235e+38) & 1) - iVar71) - iVar72) - iVar73)
+                  - iVar74) - iVar75) - iVar76) -
+               CONCAT13(~(byte)((uint)iVar13 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar13 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar13 >> 8),~(byte)iVar13)))) +
+               ((((((((uint)(~-((float)((ulong)*(undefined8 *)(lVar8 + 0x4058) >> 0x20) ==
+                               3.4028235e+38) & 1) -
+                     (int)(CONCAT17(~(byte)((uint)iVar28 >> 0x18),
+                                    CONCAT16(~(byte)((uint)iVar28 >> 0x10),
+                                             CONCAT15(~(byte)((uint)iVar28 >> 8),
+                                                      CONCAT14(~(byte)iVar28,iVar14)))) >> 0x20)) -
+                    (int)(CONCAT17(~(byte)((uint)iVar29 >> 0x18),
+                                   CONCAT16(~(byte)((uint)iVar29 >> 0x10),
+                                            CONCAT15(~(byte)((uint)iVar29 >> 8),
+                                                     CONCAT14(~(byte)iVar29,iVar15)))) >> 0x20)) -
+                   (int)(CONCAT17(~(byte)((uint)iVar30 >> 0x18),
+                                  CONCAT16(~(byte)((uint)iVar30 >> 0x10),
+                                           CONCAT15(~(byte)((uint)iVar30 >> 8),
+                                                    CONCAT14(~(byte)iVar30,iVar16)))) >> 0x20)) -
+                  (int)(CONCAT17(~(byte)((uint)iVar31 >> 0x18),
+                                 CONCAT16(~(byte)((uint)iVar31 >> 0x10),
+                                          CONCAT15(~(byte)((uint)iVar31 >> 8),
+                                                   CONCAT14(~(byte)iVar31,iVar17)))) >> 0x20)) -
+                 (int)(CONCAT17(~(byte)((uint)iVar32 >> 0x18),
+                                CONCAT16(~(byte)((uint)iVar32 >> 0x10),
+                                         CONCAT15(~(byte)((uint)iVar32 >> 8),
+                                                  CONCAT14(~(byte)iVar32,iVar18)))) >> 0x20)) -
+                (int)(CONCAT17(~(byte)((uint)iVar33 >> 0x18),
+                               CONCAT16(~(byte)((uint)iVar33 >> 0x10),
+                                        CONCAT15(~(byte)((uint)iVar33 >> 8),
+                                                 CONCAT14(~(byte)iVar33,iVar19)))) >> 0x20)) -
+               (int)(CONCAT17(~(byte)((uint)iVar34 >> 0x18),
+                              CONCAT16(~(byte)((uint)iVar34 >> 0x10),
+                                       CONCAT15(~(byte)((uint)iVar34 >> 8),
+                                                CONCAT14(~(byte)iVar34,iVar20)))) >> 0x20)) +
+               ((((((((uint)(~-((float)((ulong)*(undefined8 *)(lVar8 + 0x4048) >> 0x20) ==
+                               3.4028235e+38) & 1) -
+                     (int)(CONCAT17(~(byte)((uint)iVar35 >> 0x18),
+                                    CONCAT16(~(byte)((uint)iVar35 >> 0x10),
+                                             CONCAT15(~(byte)((uint)iVar35 >> 8),
+                                                      CONCAT14(~(byte)iVar35,iVar21)))) >> 0x20)) -
+                    (int)(CONCAT17(~(byte)((uint)iVar36 >> 0x18),
+                                   CONCAT16(~(byte)((uint)iVar36 >> 0x10),
+                                            CONCAT15(~(byte)((uint)iVar36 >> 8),
+                                                     CONCAT14(~(byte)iVar36,iVar22)))) >> 0x20)) -
+                   (int)(CONCAT17(~(byte)((uint)iVar37 >> 0x18),
+                                  CONCAT16(~(byte)((uint)iVar37 >> 0x10),
+                                           CONCAT15(~(byte)((uint)iVar37 >> 8),
+                                                    CONCAT14(~(byte)iVar37,iVar23)))) >> 0x20)) -
+                  (int)(CONCAT17(~(byte)((uint)iVar38 >> 0x18),
+                                 CONCAT16(~(byte)((uint)iVar38 >> 0x10),
+                                          CONCAT15(~(byte)((uint)iVar38 >> 8),
+                                                   CONCAT14(~(byte)iVar38,iVar24)))) >> 0x20)) -
+                 (int)(CONCAT17(~(byte)((uint)iVar39 >> 0x18),
+                                CONCAT16(~(byte)((uint)iVar39 >> 0x10),
+                                         CONCAT15(~(byte)((uint)iVar39 >> 8),
+                                                  CONCAT14(~(byte)iVar39,iVar25)))) >> 0x20)) -
+                (int)(CONCAT17(~(byte)((uint)iVar40 >> 0x18),
+                               CONCAT16(~(byte)((uint)iVar40 >> 0x10),
+                                        CONCAT15(~(byte)((uint)iVar40 >> 8),
+                                                 CONCAT14(~(byte)iVar40,iVar26)))) >> 0x20)) -
+               (int)(CONCAT17(~(byte)((uint)iVar41 >> 0x18),
+                              CONCAT16(~(byte)((uint)iVar41 >> 0x10),
+                                       CONCAT15(~(byte)((uint)iVar41 >> 8),
+                                                CONCAT14(~(byte)iVar41,iVar27)))) >> 0x20)) +
+               ((((((((uint)(~-((float)((ulong)*(undefined8 *)(lVar8 + 0x4038) >> 0x20) ==
+                               3.4028235e+38) & 1) -
+                     (int)(CONCAT17(~(byte)((uint)iVar102 >> 0x18),
+                                    CONCAT16(~(byte)((uint)iVar102 >> 0x10),
+                                             CONCAT15(~(byte)((uint)iVar102 >> 8),
+                                                      CONCAT14(~(byte)iVar102,iVar95)))) >> 0x20)) -
+                    (int)(CONCAT17(~(byte)((uint)iVar103 >> 0x18),
+                                   CONCAT16(~(byte)((uint)iVar103 >> 0x10),
+                                            CONCAT15(~(byte)((uint)iVar103 >> 8),
+                                                     CONCAT14(~(byte)iVar103,iVar96)))) >> 0x20)) -
+                   (int)(CONCAT17(~(byte)((uint)iVar104 >> 0x18),
+                                  CONCAT16(~(byte)((uint)iVar104 >> 0x10),
+                                           CONCAT15(~(byte)((uint)iVar104 >> 8),
+                                                    CONCAT14(~(byte)iVar104,iVar97)))) >> 0x20)) -
+                  (int)(CONCAT17(~(byte)((uint)iVar105 >> 0x18),
+                                 CONCAT16(~(byte)((uint)iVar105 >> 0x10),
+                                          CONCAT15(~(byte)((uint)iVar105 >> 8),
+                                                   CONCAT14(~(byte)iVar105,iVar98)))) >> 0x20)) -
+                 (int)(CONCAT17(~(byte)((uint)iVar106 >> 0x18),
+                                CONCAT16(~(byte)((uint)iVar106 >> 0x10),
+                                         CONCAT15(~(byte)((uint)iVar106 >> 8),
+                                                  CONCAT14(~(byte)iVar106,iVar99)))) >> 0x20)) -
+                (int)(CONCAT17(~(byte)((uint)iVar107 >> 0x18),
+                               CONCAT16(~(byte)((uint)iVar107 >> 0x10),
+                                        CONCAT15(~(byte)((uint)iVar107 >> 8),
+                                                 CONCAT14(~(byte)iVar107,iVar100)))) >> 0x20)) -
+               (int)(CONCAT17(~(byte)((uint)iVar108 >> 0x18),
+                              CONCAT16(~(byte)((uint)iVar108 >> 0x10),
+                                       CONCAT15(~(byte)((uint)iVar108 >> 8),
+                                                CONCAT14(~(byte)iVar108,iVar101)))) >> 0x20)) +
+               ((((((((uint)(~-((float)((ulong)*puVar1 >> 0x20) == 3.4028235e+38) & 1) -
+                     (int)(CONCAT17(~(byte)((uint)iVar77 >> 0x18),
+                                    CONCAT16(~(byte)((uint)iVar77 >> 0x10),
+                                             CONCAT15(~(byte)((uint)iVar77 >> 8),
+                                                      CONCAT14(~(byte)iVar77,iVar71)))) >> 0x20)) -
+                    (int)(CONCAT17(~(byte)((uint)iVar78 >> 0x18),
+                                   CONCAT16(~(byte)((uint)iVar78 >> 0x10),
+                                            CONCAT15(~(byte)((uint)iVar78 >> 8),
+                                                     CONCAT14(~(byte)iVar78,iVar72)))) >> 0x20)) -
+                   (int)(CONCAT17(~(byte)((uint)iVar79 >> 0x18),
+                                  CONCAT16(~(byte)((uint)iVar79 >> 0x10),
+                                           CONCAT15(~(byte)((uint)iVar79 >> 8),
+                                                    CONCAT14(~(byte)iVar79,iVar73)))) >> 0x20)) -
+                  (int)(CONCAT17(~(byte)((uint)iVar80 >> 0x18),
+                                 CONCAT16(~(byte)((uint)iVar80 >> 0x10),
+                                          CONCAT15(~(byte)((uint)iVar80 >> 8),
+                                                   CONCAT14(~(byte)iVar80,iVar74)))) >> 0x20)) -
+                 (int)(CONCAT17(~(byte)((uint)iVar81 >> 0x18),
+                                CONCAT16(~(byte)((uint)iVar81 >> 0x10),
+                                         CONCAT15(~(byte)((uint)iVar81 >> 8),
+                                                  CONCAT14(~(byte)iVar81,iVar75)))) >> 0x20)) -
+                (int)(CONCAT17(~(byte)((uint)iVar82 >> 0x18),
+                               CONCAT16(~(byte)((uint)iVar82 >> 0x10),
+                                        CONCAT15(~(byte)((uint)iVar82 >> 8),
+                                                 CONCAT14(~(byte)iVar82,iVar76)))) >> 0x20)) -
+               CONCAT13(~(byte)((uint)iVar42 >> 0x18),
+                        CONCAT12(~(byte)((uint)iVar42 >> 0x10),
+                                 CONCAT11(~(byte)((uint)iVar42 >> 8),~(byte)iVar42)))) +
+               ((((((((uint)(~-((float)*(undefined8 *)(lVar8 + 0x4060) == 3.4028235e+38) & 1) -
+                     iVar43) - iVar44) - iVar45) - iVar46) - iVar47) - iVar48) - iVar49) +
+               ((((((((uint)(~-((float)*(undefined8 *)(lVar8 + 0x4050) == 3.4028235e+38) & 1) -
+                     iVar50) - iVar51) - iVar52) - iVar53) - iVar54) - iVar55) - iVar56) +
+               ((((((((uint)(~-((float)*(undefined8 *)(lVar8 + 0x4040) == 3.4028235e+38) & 1) -
+                     iVar109) - iVar110) - iVar111) - iVar112) - iVar113) - iVar114) - iVar115) +
+               ((((((((uint)(~-((float)*(undefined8 *)(lVar8 + 0x4030) == 3.4028235e+38) & 1) -
+                     iVar83) - iVar84) - iVar85) - iVar86) - iVar87) - iVar88) - iVar11) +
+               ((((((((uint)(~-((float)((ulong)*(undefined8 *)(lVar8 + 0x4060) >> 0x20) ==
+                               3.4028235e+38) & 1) -
+                     (int)(CONCAT17(~(byte)((uint)iVar57 >> 0x18),
+                                    CONCAT16(~(byte)((uint)iVar57 >> 0x10),
+                                             CONCAT15(~(byte)((uint)iVar57 >> 8),
+                                                      CONCAT14(~(byte)iVar57,iVar43)))) >> 0x20)) -
+                    (int)(CONCAT17(~(byte)((uint)iVar58 >> 0x18),
+                                   CONCAT16(~(byte)((uint)iVar58 >> 0x10),
+                                            CONCAT15(~(byte)((uint)iVar58 >> 8),
+                                                     CONCAT14(~(byte)iVar58,iVar44)))) >> 0x20)) -
+                   (int)(CONCAT17(~(byte)((uint)iVar59 >> 0x18),
+                                  CONCAT16(~(byte)((uint)iVar59 >> 0x10),
+                                           CONCAT15(~(byte)((uint)iVar59 >> 8),
+                                                    CONCAT14(~(byte)iVar59,iVar45)))) >> 0x20)) -
+                  (int)(CONCAT17(~(byte)((uint)iVar60 >> 0x18),
+                                 CONCAT16(~(byte)((uint)iVar60 >> 0x10),
+                                          CONCAT15(~(byte)((uint)iVar60 >> 8),
+                                                   CONCAT14(~(byte)iVar60,iVar46)))) >> 0x20)) -
+                 (int)(CONCAT17(~(byte)((uint)iVar61 >> 0x18),
+                                CONCAT16(~(byte)((uint)iVar61 >> 0x10),
+                                         CONCAT15(~(byte)((uint)iVar61 >> 8),
+                                                  CONCAT14(~(byte)iVar61,iVar47)))) >> 0x20)) -
+                (int)(CONCAT17(~(byte)((uint)iVar62 >> 0x18),
+                               CONCAT16(~(byte)((uint)iVar62 >> 0x10),
+                                        CONCAT15(~(byte)((uint)iVar62 >> 8),
+                                                 CONCAT14(~(byte)iVar62,iVar48)))) >> 0x20)) -
+               (int)(CONCAT17(~(byte)((uint)iVar63 >> 0x18),
+                              CONCAT16(~(byte)((uint)iVar63 >> 0x10),
+                                       CONCAT15(~(byte)((uint)iVar63 >> 8),
+                                                CONCAT14(~(byte)iVar63,iVar49)))) >> 0x20)) +
+               ((((((((uint)(~-((float)((ulong)*(undefined8 *)(lVar8 + 0x4050) >> 0x20) ==
+                               3.4028235e+38) & 1) -
+                     (int)(CONCAT17(~(byte)((uint)iVar64 >> 0x18),
+                                    CONCAT16(~(byte)((uint)iVar64 >> 0x10),
+                                             CONCAT15(~(byte)((uint)iVar64 >> 8),
+                                                      CONCAT14(~(byte)iVar64,iVar50)))) >> 0x20)) -
+                    (int)(CONCAT17(~(byte)((uint)iVar65 >> 0x18),
+                                   CONCAT16(~(byte)((uint)iVar65 >> 0x10),
+                                            CONCAT15(~(byte)((uint)iVar65 >> 8),
+                                                     CONCAT14(~(byte)iVar65,iVar51)))) >> 0x20)) -
+                   (int)(CONCAT17(~(byte)((uint)iVar66 >> 0x18),
+                                  CONCAT16(~(byte)((uint)iVar66 >> 0x10),
+                                           CONCAT15(~(byte)((uint)iVar66 >> 8),
+                                                    CONCAT14(~(byte)iVar66,iVar52)))) >> 0x20)) -
+                  (int)(CONCAT17(~(byte)((uint)iVar67 >> 0x18),
+                                 CONCAT16(~(byte)((uint)iVar67 >> 0x10),
+                                          CONCAT15(~(byte)((uint)iVar67 >> 8),
+                                                   CONCAT14(~(byte)iVar67,iVar53)))) >> 0x20)) -
+                 (int)(CONCAT17(~(byte)((uint)iVar68 >> 0x18),
+                                CONCAT16(~(byte)((uint)iVar68 >> 0x10),
+                                         CONCAT15(~(byte)((uint)iVar68 >> 8),
+                                                  CONCAT14(~(byte)iVar68,iVar54)))) >> 0x20)) -
+                (int)(CONCAT17(~(byte)((uint)iVar69 >> 0x18),
+                               CONCAT16(~(byte)((uint)iVar69 >> 0x10),
+                                        CONCAT15(~(byte)((uint)iVar69 >> 8),
+                                                 CONCAT14(~(byte)iVar69,iVar55)))) >> 0x20)) -
+               (int)(CONCAT17(~(byte)((uint)iVar70 >> 0x18),
+                              CONCAT16(~(byte)((uint)iVar70 >> 0x10),
+                                       CONCAT15(~(byte)((uint)iVar70 >> 8),
+                                                CONCAT14(~(byte)iVar70,iVar56)))) >> 0x20)) +
+               ((((((((uint)(~-((float)((ulong)*(undefined8 *)(lVar8 + 0x4040) >> 0x20) ==
+                               3.4028235e+38) & 1) -
+                     (int)(CONCAT17(~(byte)((uint)iVar116 >> 0x18),
+                                    CONCAT16(~(byte)((uint)iVar116 >> 0x10),
+                                             CONCAT15(~(byte)((uint)iVar116 >> 8),
+                                                      CONCAT14(~(byte)iVar116,iVar109)))) >> 0x20))
+                    - (int)(CONCAT17(~(byte)((uint)iVar117 >> 0x18),
+                                     CONCAT16(~(byte)((uint)iVar117 >> 0x10),
+                                              CONCAT15(~(byte)((uint)iVar117 >> 8),
+                                                       CONCAT14(~(byte)iVar117,iVar110)))) >> 0x20))
+                   - (int)(CONCAT17(~(byte)((uint)iVar118 >> 0x18),
+                                    CONCAT16(~(byte)((uint)iVar118 >> 0x10),
+                                             CONCAT15(~(byte)((uint)iVar118 >> 8),
+                                                      CONCAT14(~(byte)iVar118,iVar111)))) >> 0x20))
+                  - (int)(CONCAT17(~(byte)((uint)iVar119 >> 0x18),
+                                   CONCAT16(~(byte)((uint)iVar119 >> 0x10),
+                                            CONCAT15(~(byte)((uint)iVar119 >> 8),
+                                                     CONCAT14(~(byte)iVar119,iVar112)))) >> 0x20)) -
+                 (int)(CONCAT17(~(byte)((uint)iVar120 >> 0x18),
+                                CONCAT16(~(byte)((uint)iVar120 >> 0x10),
+                                         CONCAT15(~(byte)((uint)iVar120 >> 8),
+                                                  CONCAT14(~(byte)iVar120,iVar113)))) >> 0x20)) -
+                (int)(CONCAT17(~(byte)((uint)iVar121 >> 0x18),
+                               CONCAT16(~(byte)((uint)iVar121 >> 0x10),
+                                        CONCAT15(~(byte)((uint)iVar121 >> 8),
+                                                 CONCAT14(~(byte)iVar121,iVar114)))) >> 0x20)) -
+               (int)(CONCAT17(~(byte)((uint)iVar122 >> 0x18),
+                              CONCAT16(~(byte)((uint)iVar122 >> 0x10),
+                                       CONCAT15(~(byte)((uint)iVar122 >> 8),
+                                                CONCAT14(~(byte)iVar122,iVar115)))) >> 0x20)) +
+               ((((((((uint)(~-((float)((ulong)*(undefined8 *)(lVar8 + 0x4030) >> 0x20) ==
+                               3.4028235e+38) & 1) -
+                     (int)(CONCAT17(~(byte)((uint)iVar89 >> 0x18),
+                                    CONCAT16(~(byte)((uint)iVar89 >> 0x10),
+                                             CONCAT15(~(byte)((uint)iVar89 >> 8),
+                                                      CONCAT14(~(byte)iVar89,iVar83)))) >> 0x20)) -
+                    (int)(CONCAT17(~(byte)((uint)iVar90 >> 0x18),
+                                   CONCAT16(~(byte)((uint)iVar90 >> 0x10),
+                                            CONCAT15(~(byte)((uint)iVar90 >> 8),
+                                                     CONCAT14(~(byte)iVar90,iVar84)))) >> 0x20)) -
+                   (int)(CONCAT17(~(byte)((uint)iVar91 >> 0x18),
+                                  CONCAT16(~(byte)((uint)iVar91 >> 0x10),
+                                           CONCAT15(~(byte)((uint)iVar91 >> 8),
+                                                    CONCAT14(~(byte)iVar91,iVar85)))) >> 0x20)) -
+                  (int)(CONCAT17(~(byte)((uint)iVar92 >> 0x18),
+                                 CONCAT16(~(byte)((uint)iVar92 >> 0x10),
+                                          CONCAT15(~(byte)((uint)iVar92 >> 8),
+                                                   CONCAT14(~(byte)iVar92,iVar86)))) >> 0x20)) -
+                 (int)(CONCAT17(~(byte)((uint)iVar93 >> 0x18),
+                                CONCAT16(~(byte)((uint)iVar93 >> 0x10),
+                                         CONCAT15(~(byte)((uint)iVar93 >> 8),
+                                                  CONCAT14(~(byte)iVar93,iVar87)))) >> 0x20)) -
+                (int)(CONCAT17(~(byte)((uint)iVar94 >> 0x18),
+                               CONCAT16(~(byte)((uint)iVar94 >> 0x10),
+                                        CONCAT15(~(byte)((uint)iVar94 >> 8),
+                                                 CONCAT14(~(byte)iVar94,iVar88)))) >> 0x20)) -
+               (int)(CONCAT17(~(byte)((uint)iVar12 >> 0x18),
+                              CONCAT16(~(byte)((uint)iVar12 >> 0x10),
+                                       CONCAT15(~(byte)((uint)iVar12 >> 8),
+                                                CONCAT14(~(byte)iVar12,iVar11)))) >> 0x20));
+      if (*(float *)(lVar8 + 0x4228) != 3.4028235e+38) {
+        iVar13 = iVar13 + 1;
+      }
+      if (*(float *)(lVar8 + 0x422c) != 3.4028235e+38) {
+        iVar13 = iVar13 + 1;
+      }
+      if (*(float *)(lVar8 + 0x4230) != 3.4028235e+38) {
+        iVar13 = iVar13 + 1;
+      }
+      func_0x0001015f18dc(auStack_70,param_2,uVar3,iVar13);
+      func_0x0001015f17c0(auStack_70,*(undefined4 *)(param_1 + 0xc));
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_70);
+      lVar8 = 0;
+      do {
+        if (*(float *)((long)puVar1 + lVar8 * 4) != 3.4028235e+38) {
+          uVar4 = func_0x000100d00744(lVar8);
+          func_0x0001015f1ef0(*(undefined4 *)((long)puVar1 + lVar8 * 4),auStack_a0,param_2,uVar4,
+                              uVar3);
+          (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_a0);
+        }
+        lVar8 = lVar8 + 1;
+      } while (lVar8 != 0x83);
+    }
+    return;
+  case 2:
+    uVar6 = (ulong)(uint)param_2[5];
+    lVar8 = param_1 + uVar6 * 0x400 + 0x28;
+    lVar7 = *(long *)(lVar8 + (ulong)(uint)param_2[8] * 8);
+    if (lVar7 == -1) {
+      return;
+    }
+    *(undefined8 *)(lVar8 + (ulong)(uint)param_2[8] * 8) = 0xffffffffffffffff;
+    lVar8 = param_1 + 0x60e8;
+    iVar13 = *(int *)(lVar8 + uVar6 * 4);
+    if (0 < iVar13) {
+      *(int *)(lVar8 + uVar6 * 4) = iVar13 + -1;
+      if (*(int *)(lVar8 + (ulong)(uint)param_2[5] * 4) == 0) {
+        _memset_pattern16(param_1 + (ulong)(uint)param_2[5] * 0x20c + 0x4028,&UNK_104d16fe0,0x20c);
+      }
+    }
+    func_0x0001015f1990(auStack_60,param_2,lVar7);
+    func_0x0001015f17c0(auStack_60,*(undefined4 *)(param_1 + 0xc));
+    (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_60);
+    return;
+  case 3:
+    if ((*(char *)(param_1 + 8) != '\0') && (param_2[5] != 0)) {
+      uVar6 = func_0x000100d00714(param_2[6]);
+      fVar123 = (float)param_2[7];
+      fVar9 = (float)func_0x000100d0076c();
+      if (fVar123 == fVar9) {
+        uVar10 = func_0x000100d00500(param_2[6]);
+      }
+      else {
+        uVar10 = param_2[7];
+      }
+      uVar5 = (ulong)(uint)param_2[5];
+      *(undefined4 *)(param_1 + uVar5 * 0x20c + (uVar6 & 0xffffffff) * 4 + 0x4028) = uVar10;
+      if (0 < *(int *)(param_1 + uVar5 * 4 + 0x60e8)) {
+        lVar8 = 0;
+        do {
+          if (*(long *)(param_1 + uVar5 * 0x400 + 0x28 + lVar8) != -1) {
+            func_0x0001015f1ca8(auStack_70,param_2);
+            (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_70);
+          }
+          lVar8 = lVar8 + 8;
+        } while (lVar8 != 0x400);
+      }
+      return;
+    }
+                    /* WARNING: Could not recover jumptable at 0x0001016d46b4. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+    (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),param_2);
+    return;
+  case 6:
+    func_0x0001016d3ea8(param_1);
+  default:
+                    /* WARNING: Could not recover jumptable at 0x0001016d4204. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+    (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),param_2);
+    return;
+  case 7:
+    break;
+  case 8:
+    return;
+  }
+  if (*(char *)(param_1 + 8) == '\0') {
+    if (*(long *)(param_1 + (ulong)(uint)param_2[5] * 0x400 + (ulong)(uint)param_2[8] * 8 + 0x28) ==
+        -1) {
+      return;
+    }
+    func_0x0001015f1bcc(param_2[9],auStack_50,0xffffffff);
+    (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_50);
+    if (*(char *)(param_1 + 8) == '\0') {
+      return;
+    }
+  }
+  if (param_2[5] == 0) {
+    uVar6 = (ulong)(uint)param_2[8];
+    if (*(long *)(param_1 + uVar6 * 8 + 0x28) != -1) {
+      func_0x0001015f1bcc(param_2[9],auStack_50,0xffffffff,0);
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_50);
+      uVar6 = (ulong)(uint)param_2[8];
+    }
+    if (*(long *)(param_1 + uVar6 * 8 + 0x428) != -1) {
+      func_0x0001015f1bcc(param_2[9],auStack_50,0xffffffff,1);
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_50);
+      uVar6 = (ulong)(uint)param_2[8];
+    }
+    if (*(long *)(param_1 + uVar6 * 8 + 0x828) != -1) {
+      func_0x0001015f1bcc(param_2[9],auStack_50,0xffffffff,2);
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_50);
+      uVar6 = (ulong)(uint)param_2[8];
+    }
+    if (*(long *)(param_1 + uVar6 * 8 + 0xc28) != -1) {
+      func_0x0001015f1bcc(param_2[9],auStack_50,0xffffffff,3);
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_50);
+      uVar6 = (ulong)(uint)param_2[8];
+    }
+    if (*(long *)(param_1 + uVar6 * 8 + 0x1028) != -1) {
+      func_0x0001015f1bcc(param_2[9],auStack_50,0xffffffff,4);
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_50);
+      uVar6 = (ulong)(uint)param_2[8];
+    }
+    if (*(long *)(param_1 + uVar6 * 8 + 0x1428) != -1) {
+      func_0x0001015f1bcc(param_2[9],auStack_50,0xffffffff,5);
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_50);
+      uVar6 = (ulong)(uint)param_2[8];
+    }
+    if (*(long *)(param_1 + uVar6 * 8 + 0x1828) != -1) {
+      func_0x0001015f1bcc(param_2[9],auStack_50,0xffffffff,6);
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_50);
+      uVar6 = (ulong)(uint)param_2[8];
+    }
+    if (*(long *)(param_1 + uVar6 * 8 + 0x1c28) != -1) {
+      func_0x0001015f1bcc(param_2[9],auStack_50,0xffffffff,7);
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_50);
+      uVar6 = (ulong)(uint)param_2[8];
+    }
+    if (*(long *)(param_1 + uVar6 * 8 + 0x2028) != -1) {
+      func_0x0001015f1bcc(param_2[9],auStack_50,0xffffffff,8);
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_50);
+      uVar6 = (ulong)(uint)param_2[8];
+    }
+    if (*(long *)(param_1 + uVar6 * 8 + 0x2428) != -1) {
+      func_0x0001015f1bcc(param_2[9],auStack_50,0xffffffff,9);
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_50);
+      uVar6 = (ulong)(uint)param_2[8];
+    }
+    if (*(long *)(param_1 + uVar6 * 8 + 0x2828) != -1) {
+      func_0x0001015f1bcc(param_2[9],auStack_50,0xffffffff,10);
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_50);
+      uVar6 = (ulong)(uint)param_2[8];
+    }
+    if (*(long *)(param_1 + uVar6 * 8 + 0x2c28) != -1) {
+      func_0x0001015f1bcc(param_2[9],auStack_50,0xffffffff,0xb);
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_50);
+      uVar6 = (ulong)(uint)param_2[8];
+    }
+    if (*(long *)(param_1 + uVar6 * 8 + 0x3028) != -1) {
+      func_0x0001015f1bcc(param_2[9],auStack_50,0xffffffff,0xc);
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_50);
+      uVar6 = (ulong)(uint)param_2[8];
+    }
+    if (*(long *)(param_1 + uVar6 * 8 + 0x3428) != -1) {
+      func_0x0001015f1bcc(param_2[9],auStack_50,0xffffffff,0xd);
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_50);
+      uVar6 = (ulong)(uint)param_2[8];
+    }
+    if (*(long *)(param_1 + uVar6 * 8 + 0x3828) != -1) {
+      func_0x0001015f1bcc(param_2[9],auStack_50,0xffffffff,0xe);
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_50);
+      uVar6 = (ulong)(uint)param_2[8];
+    }
+    if (*(long *)(param_1 + uVar6 * 8 + 0x3c28) != -1) {
+      func_0x0001015f1bcc(param_2[9],auStack_50,0xffffffff,0xf);
+      (**(code **)(param_1 + 0x10))(*(undefined8 *)(param_1 + 0x18),auStack_50);
+      return;
+    }
+  }
+  return;
+}
+END 1016d6428
+
+--- MpeEncoder::OnMidi FULL ---
+FUNC 1016d653c name=__ZZN6detail16TMemberFuncTypesIM20OMpeEncoderProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_ body=1 lines=330
+
+void __ZZN6detail16TMemberFuncTypesIM20OMpeEncoderProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+               (long param_1,long *param_2)
+
+{
+  int iVar1;
+  uint uVar2;
+  long *plVar3;
+  int iVar4;
+  uint uVar5;
+  undefined4 uVar6;
+  long lVar7;
+  long lVar8;
+  ulong uVar9;
+  long lVar10;
+  ulong uVar11;
+  long *plVar12;
+  long lVar13;
+  int *piVar14;
+  uint *puVar15;
+  int *piVar16;
+  long lVar17;
+  long *plVar18;
+  long *unaff_x19;
+  long unaff_x20;
+  int *piVar19;
+  ulong unaff_x21;
+  undefined8 unaff_x22;
+  undefined1 *unaff_x29;
+  undefined *unaff_x30;
+  undefined1 auVar20 [16];
+  undefined1 auStack_88 [40];
+  long lStack_60;
+  long lStack_58;
+  long lStack_50;
+  long lStack_48;
+  long lStack_40;
+  long lStack_38;
+  
+  auVar20._8_8_ = param_2;
+  auVar20._0_8_ = param_1;
+  switch((int)*param_2) {
+  case 1:
+    break;
+  case 2:
+    plVar3 = &lStack_60;
+    unaff_x29 = &stack0xfffffffffffffff0;
+    plVar18 = (long *)(param_1 + 0x108);
+    lVar8 = *(long *)(param_1 + 0x1508);
+    plVar12 = plVar18;
+    if (lVar8 == 0) {
+code_r0x0001016d5678:
+      if (plVar12 != plVar18 + lVar8 * 5) {
+        puVar15 = (uint *)(plVar12 + 1);
+        unaff_x21 = (ulong)*puVar15;
+        if (plVar12 != plVar18 + lVar8 * 5 + -5) {
+          if (lVar8 == 0) {
+            unaff_x30 = &DAT_1016d5758;
+            auVar20 = func_0x000101999fd0("vector::at out of range");
+            goto code_r0x0001016d5758;
+          }
+          lVar17 = *plVar12;
+          *plVar12 = plVar18[lVar8 * 5 + -5];
+          plVar18[lVar8 * 5 + -5] = lVar17;
+          lStack_58 = plVar12[2];
+          lStack_60 = *(long *)puVar15;
+          lStack_48 = plVar12[4];
+          lStack_50 = plVar12[3];
+          lVar17 = plVar18[lVar8 * 5 + -4];
+          lVar10 = plVar18[lVar8 * 5 + -1];
+          lVar7 = plVar18[lVar8 * 5 + -2];
+          plVar12[2] = plVar18[lVar8 * 5 + -3];
+          *(long *)puVar15 = lVar17;
+          plVar12[4] = lVar10;
+          plVar12[3] = lVar7;
+          plVar18[lVar8 * 5 + -3] = lStack_58;
+          plVar18[lVar8 * 5 + -4] = lStack_60;
+          plVar18[lVar8 * 5 + -1] = lStack_48;
+          plVar18[lVar8 * 5 + -2] = lStack_50;
+          lVar8 = *(long *)(param_1 + 0x1508);
+        }
+        *(long *)(param_1 + 0x1508) = lVar8 + -1;
+        lVar8 = param_1 + unaff_x21 * 0x10;
+        *(int *)(lVar8 + 8) = *(int *)(lVar8 + 8) + -1;
+        lVar17 = FUN_101551390(*(undefined8 *)(param_1 + 0x3350));
+        *(undefined8 *)(lVar8 + 0x10) = *(undefined8 *)(lVar17 + 0x90);
+        lStack_58 = param_2[1];
+        lStack_60 = *param_2;
+        lStack_48 = param_2[3];
+        lStack_50 = param_2[2];
+        lStack_38 = param_2[5];
+        lStack_40 = param_2[4];
+        func_0x0001015f1758(&lStack_60,unaff_x21);
+        (**(code **)(param_1 + 0x3338))(*(undefined8 *)(param_1 + 0x3340),&lStack_60);
+        func_0x000101664624(param_1 + 0x1510,param_2[3]);
+        return;
+      }
+    }
+    else {
+      lVar17 = lVar8 * 0x28;
+      do {
+        if (*plVar12 == param_2[3]) goto code_r0x0001016d5678;
+        plVar12 = plVar12 + 5;
+        lVar17 = lVar17 + -0x28;
+      } while (lVar17 != 0);
+    }
+    return;
+  case 6:
+    *(undefined8 *)(param_1 + 0x1508) = 0;
+    *(undefined4 *)(param_1 + 8) = 0;
+    *(undefined8 *)(param_1 + 0x10) = 0x8000000000000000;
+    *(undefined4 *)(param_1 + 0x18) = 0;
+    *(undefined8 *)(param_1 + 0x20) = 0x8000000000000000;
+    *(undefined4 *)(param_1 + 0x28) = 0;
+    *(undefined8 *)(param_1 + 0x30) = 0x8000000000000000;
+    *(undefined4 *)(param_1 + 0x38) = 0;
+    *(undefined8 *)(param_1 + 0x40) = 0x8000000000000000;
+    *(undefined4 *)(param_1 + 0x48) = 0;
+    *(undefined8 *)(param_1 + 0x50) = 0x8000000000000000;
+    *(undefined4 *)(param_1 + 0x58) = 0;
+    *(undefined8 *)(param_1 + 0x60) = 0x8000000000000000;
+    *(undefined4 *)(param_1 + 0x68) = 0;
+    *(undefined8 *)(param_1 + 0x70) = 0x8000000000000000;
+    *(undefined4 *)(param_1 + 0x78) = 0;
+    *(undefined8 *)(param_1 + 0x80) = 0x8000000000000000;
+    *(undefined4 *)(param_1 + 0x88) = 0;
+    *(undefined8 *)(param_1 + 0x90) = 0x8000000000000000;
+    *(undefined4 *)(param_1 + 0x98) = 0;
+    *(undefined8 *)(param_1 + 0xa0) = 0x8000000000000000;
+    *(undefined4 *)(param_1 + 0xa8) = 0;
+    *(undefined8 *)(param_1 + 0xb0) = 0x8000000000000000;
+    *(undefined4 *)(param_1 + 0xb8) = 0;
+    *(undefined8 *)(param_1 + 0xc0) = 0x8000000000000000;
+    *(undefined4 *)(param_1 + 200) = 0;
+    *(undefined8 *)(param_1 + 0xd0) = 0x8000000000000000;
+    *(undefined4 *)(param_1 + 0xd8) = 0;
+    *(undefined8 *)(param_1 + 0xe0) = 0x8000000000000000;
+    *(undefined4 *)(param_1 + 0xe8) = 0;
+    *(undefined8 *)(param_1 + 0xf0) = 0x8000000000000000;
+    *(undefined8 *)(param_1 + 0x100) = 0x8000000000000000;
+    *(undefined4 *)(param_1 + 0xf8) = 0;
+    func_0x00010166461c(param_1 + 0x1510);
+    _memset_pattern16(param_1 + 0x3138,&UNK_104de2540,0x200);
+  default:
+    iVar4 = func_0x0001015f16a0(param_2);
+    if (iVar4 != 0) {
+      uVar6 = 0;
+      if (*(int *)(param_1 + 0x3358) != 0) {
+        if (*(int *)(param_1 + 0x3358) != 1) {
+          return;
+        }
+        uVar6 = 0xf;
+      }
+      func_0x0001015f1758(param_2,uVar6);
+    }
+                    /* WARNING: Could not recover jumptable at 0x0001016d5384. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+    (**(code **)(param_1 + 0x3338))(*(undefined8 *)(param_1 + 0x3340),param_2);
+    return;
+  case 8:
+    plVar3 = (long *)register0x00000008;
+    param_2 = unaff_x19;
+    param_1 = unaff_x20;
+code_r0x0001016d5758:
+    lVar17 = auVar20._8_8_;
+    lVar8 = auVar20._0_8_;
+    *(undefined8 *)((long)plVar3 + -0x30) = unaff_x22;
+    *(ulong *)((long)plVar3 + -0x28) = unaff_x21;
+    *(long *)((long)plVar3 + -0x20) = param_1;
+    *(long **)((long)plVar3 + -0x18) = param_2;
+    *(undefined1 **)((long)plVar3 + -0x10) = unaff_x29;
+    *(undefined **)((long)plVar3 + -8) = unaff_x30;
+    plVar18 = (long *)(lVar8 + 0x108);
+    lVar7 = *(long *)(lVar17 + 0x28);
+    lVar10 = *(long *)(lVar8 + 0x1508);
+    plVar12 = plVar18;
+    if (lVar10 == 0) {
+code_r0x0001016d57b0:
+      if (plVar12 != plVar18 + lVar10 * 5) {
+        func_0x0001015f1af8((undefined1 *)((long)plVar3 + -0x58),lVar17,(int)plVar12[1]);
+        (**(code **)(lVar8 + 0x3338))
+                  (*(undefined8 *)(lVar8 + 0x3340),(undefined1 *)((long)plVar3 + -0x58));
+        uVar5 = func_0x000100d00714(*(undefined4 *)(lVar17 + 0x18));
+        if (0x82 < uVar5) {
+          lVar7 = func_0x000100315b2c("bitset set argument out of range");
+          *(long *)((long)plVar3 + -0x80) = lVar17;
+          *(long *)((long)plVar3 + -0x78) = lVar8;
+          *(undefined1 **)((long)plVar3 + -0x70) = (undefined1 *)((long)plVar3 + -0x10);
+          *(undefined **)((long)plVar3 + -0x68) = &DAT_1016d5844;
+          *(undefined8 *)(lVar7 + 0x1508) = 0;
+          *(undefined4 *)(lVar7 + 8) = 0;
+          *(undefined8 *)(lVar7 + 0x10) = 0x8000000000000000;
+          *(undefined4 *)(lVar7 + 0x18) = 0;
+          *(undefined8 *)(lVar7 + 0x20) = 0x8000000000000000;
+          *(undefined4 *)(lVar7 + 0x28) = 0;
+          *(undefined8 *)(lVar7 + 0x30) = 0x8000000000000000;
+          *(undefined4 *)(lVar7 + 0x38) = 0;
+          *(undefined8 *)(lVar7 + 0x40) = 0x8000000000000000;
+          *(undefined4 *)(lVar7 + 0x48) = 0;
+          *(undefined8 *)(lVar7 + 0x50) = 0x8000000000000000;
+          *(undefined4 *)(lVar7 + 0x58) = 0;
+          *(undefined8 *)(lVar7 + 0x60) = 0x8000000000000000;
+          *(undefined4 *)(lVar7 + 0x68) = 0;
+          *(undefined8 *)(lVar7 + 0x70) = 0x8000000000000000;
+          *(undefined4 *)(lVar7 + 0x78) = 0;
+          *(undefined8 *)(lVar7 + 0x80) = 0x8000000000000000;
+          *(undefined4 *)(lVar7 + 0x88) = 0;
+          *(undefined8 *)(lVar7 + 0x90) = 0x8000000000000000;
+          *(undefined4 *)(lVar7 + 0x98) = 0;
+          *(undefined8 *)(lVar7 + 0xa0) = 0x8000000000000000;
+          *(undefined4 *)(lVar7 + 0xa8) = 0;
+          *(undefined8 *)(lVar7 + 0xb0) = 0x8000000000000000;
+          *(undefined4 *)(lVar7 + 0xb8) = 0;
+          *(undefined8 *)(lVar7 + 0xc0) = 0x8000000000000000;
+          *(undefined4 *)(lVar7 + 200) = 0;
+          *(undefined8 *)(lVar7 + 0xd0) = 0x8000000000000000;
+          *(undefined4 *)(lVar7 + 0xd8) = 0;
+          *(undefined8 *)(lVar7 + 0xe0) = 0x8000000000000000;
+          *(undefined4 *)(lVar7 + 0xe8) = 0;
+          *(undefined8 *)(lVar7 + 0xf0) = 0x8000000000000000;
+          *(undefined8 *)(lVar7 + 0x100) = 0x8000000000000000;
+          *(undefined4 *)(lVar7 + 0xf8) = 0;
+          func_0x00010166461c(lVar7 + 0x1510);
+                    /* WARNING: Could not recover jumptable at 0x000104343d14. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+          (*(code *)PTR__memset_pattern16_105682610)(lVar7 + 0x3138,&UNK_104de2540,0x200);
+          return;
+        }
+        uVar11 = (ulong)(uVar5 >> 3) & 0x1ffffff8;
+        *(ulong *)((long)plVar12 + uVar11 + 0x10) =
+             *(ulong *)((long)plVar12 + uVar11 + 0x10) | 1L << ((ulong)uVar5 & 0x3f);
+        lVar7 = *(long *)(lVar17 + 0x28);
+      }
+    }
+    else {
+      lVar13 = lVar10 * 0x28;
+      do {
+        if (*plVar12 == lVar7) goto code_r0x0001016d57b0;
+        plVar12 = plVar12 + 5;
+        lVar13 = lVar13 + -0x28;
+      } while (lVar13 != 0);
+    }
+    func_0x000101664498(lVar8 + 0x1510,lVar7);
+    return;
+  }
+  uVar5 = *(uint *)(param_2 + 4);
+  uVar9 = (ulong)uVar5;
+  uVar2 = *(uint *)(param_1 + 0x3138 + uVar9 * 4);
+  uVar11 = (ulong)uVar2;
+  if ((uVar2 == 0x80000000) || (*(int *)(param_1 + uVar11 * 0x10 + 8) != 0)) {
+    lVar8 = param_1 + 8;
+    iVar4 = *(int *)(param_1 + 0x335c);
+    piVar19 = (int *)(lVar8 + (long)iVar4 * 0x10);
+    iVar1 = *(int *)(param_1 + 0x3360);
+    if (piVar19 != (int *)(lVar8 + (long)iVar1 * 0x10 + 0x10) && iVar4 != iVar1) {
+      piVar16 = (int *)((long)iVar4 * 0x10 + param_1 + 0x18);
+      lVar17 = (long)iVar1 * 0x10 + (long)iVar4 * -0x10;
+      piVar14 = piVar19;
+      do {
+        piVar19 = piVar16;
+        if (((*piVar14 <= *piVar16) && (piVar19 = piVar14, *piVar16 <= *piVar14)) &&
+           (piVar19 = piVar16, *(long *)(piVar14 + 2) <= *(long *)(piVar16 + 2))) {
+          piVar19 = piVar14;
+        }
+        piVar16 = piVar16 + 4;
+        lVar17 = lVar17 + -0x10;
+        piVar14 = piVar19;
+      } while (lVar17 != 0);
+    }
+    uVar11 = (ulong)((long)piVar19 - lVar8) >> 4;
+    lVar8 = *(long *)(param_1 + 0x1508);
+  }
+  else {
+    lVar8 = *(long *)(param_1 + 0x1508);
+  }
+  if (lVar8 == 0x80) {
+    return;
+  }
+  plVar3 = (long *)(param_1 + 0x108);
+  plVar18 = plVar3;
+  if (lVar8 == 0) {
+code_r0x0001016d54dc:
+    if (plVar18 != plVar3 + lVar8 * 5) goto code_r0x0001016d5508;
+  }
+  else {
+    lVar17 = lVar8 * 0x28;
+    do {
+      if (*plVar18 == param_2[3]) goto code_r0x0001016d54dc;
+      plVar18 = plVar18 + 5;
+      lVar17 = lVar17 + -0x28;
+    } while (lVar17 != 0);
+  }
+  plVar3[lVar8 * 5] = param_2[3];
+  *(int *)(plVar3 + lVar8 * 5 + 1) = (int)uVar11;
+  *(uint *)((long)plVar3 + lVar8 * 0x28 + 0xc) = uVar5;
+  plVar3[lVar8 * 5 + 3] = 0;
+  plVar3[lVar8 * 5 + 4] = 0;
+  plVar3[lVar8 * 5 + 2] = 0;
+  *(long *)(param_1 + 0x1508) = lVar8 + 1;
+  uVar9 = (ulong)*(uint *)(param_2 + 4);
+code_r0x0001016d5508:
+  piVar19 = (int *)(param_1 + (uVar11 & 0xffffffff) * 0x10 + 8);
+  *piVar19 = *piVar19 + 1;
+  *(int *)(param_1 + 0x3138 + uVar9 * 4) = (int)uVar11;
+  lStack_58 = param_2[1];
+  lStack_60 = *param_2;
+  lStack_48 = param_2[3];
+  lStack_50 = param_2[2];
+  lStack_38 = param_2[5];
+  lStack_40 = param_2[4];
+  func_0x0001015f1758(&lStack_60,uVar11);
+  iVar4 = func_0x0001015f1630(&lStack_60);
+  if (iVar4 == 0) {
+    if (*piVar19 == 1) {
+      func_0x000100d00500(0xfffffffe);
+      func_0x0001015f1a28(auStack_88,0xfffffffe,uVar11);
+      (**(code **)(param_1 + 0x3338))(*(undefined8 *)(param_1 + 0x3340),auStack_88);
+      func_0x000100d00500(0xffffffff);
+      func_0x0001015f1a28(auStack_88,0xffffffff,uVar11);
+      (**(code **)(param_1 + 0x3338))(*(undefined8 *)(param_1 + 0x3340),auStack_88);
+      func_0x000100d00500(0x4a);
+      func_0x0001015f1a28(auStack_88,0x4a,uVar11);
+      (**(code **)(param_1 + 0x3338))(*(undefined8 *)(param_1 + 0x3340),auStack_88);
+    }
+    (**(code **)(param_1 + 0x3338))(*(undefined8 *)(param_1 + 0x3340),&lStack_60);
+    return;
+  }
+  func_0x00010166422c(param_1 + 0x1510,&lStack_60);
+  return;
+}
+END 1016d653c
+
+--- AMpeSettings ctor FULL (round 4) ---
+FUNC 101d8c308 name=FUN_101d8c308 body=1 lines=41
+
+long FUN_101d8c308(long param_1)
+
+{
+  undefined *puVar1;
+  undefined8 *puVar2;
+  undefined *puStack_60;
+  long lStack_58;
+  
+  puVar2 = (undefined8 *)func_0x000101016210();
+  *puVar2 = &UNK_10530eaf0;
+  func_0x00010023c5a8(puVar2 + 5);
+  func_0x00010023c5a8(param_1 + 0x40);
+  func_0x00010023c5a8(param_1 + 0x58);
+  func_0x00010023c640(param_1 + 0x70);
+  *(undefined8 *)(param_1 + 0x88) = 0;
+  *(undefined8 *)(param_1 + 0x90) = 0;
+  *(undefined8 *)(param_1 + 0x98) = 0;
+  func_0x000101019a4c(param_1);
+  puVar1 = 
+  PTR___ZZNK7ableton7utility8CallbackIFvP11ARemoteableN16ARemoteableTypes7TUpdateEELb0EE13kNullCallbackMUlvE_clEvENUlPvS3_S5_E_8__invokeES9_S3_S5__1050c8318
+  ;
+  puStack_60 = 
+  PTR___ZZNK7ableton7utility8CallbackIFvP11ARemoteableN16ARemoteableTypes7TUpdateEELb0EE13kNullCallbackMUlvE_clEvENUlPvS3_S5_E_8__invokeES9_S3_S5__1050c8318
+  ;
+  lStack_58 = 0;
+  func_0x0001010e243c(*(undefined8 *)(param_1 + 0x30),0,&puStack_60);
+  puStack_60 = puVar1;
+  lStack_58 = 0;
+  func_0x0001010e243c(*(undefined8 *)(param_1 + 0x48),1,&puStack_60);
+  puStack_60 = puVar1;
+  lStack_58 = 0;
+  func_0x0001010e243c(*(undefined8 *)(param_1 + 0x60),0xf,&puStack_60);
+  puStack_60 = 
+  PTR___ZN7ableton7utility6detail13CallbackTypesI12AMpeSettingsvJP11ARemoteableN16ARemoteableTypes7TUpdateEEE14CallMemberFuncIXadL_ZNS3_18OnUndoFlankChangedES5_S7_EEEEvPvS5_S7__105096870
+  ;
+  lStack_58 = param_1;
+  func_0x0001010dc2e8(*(undefined8 *)(param_1 + 0x78),0,&puStack_60);
+  func_0x0001010d870c(*(undefined8 *)(param_1 + 0x78),1);
+  return param_1;
+}
+END 101d8c308
+
+===================== §8 ON-DISK BUNDLE (filesystem, no Live run) =====================
+$ ls -la "/Applications/Ableton Live 12 Suite.app/Contents/App-Resources/Builtin/Devices"
+-rw-r--r-- 1 admin admin 295929 Aug 26  2024 Audio Effects/Envelope Follower/Ableton Folder Info/Envelope Follower.amxd
+-rw-r--r-- 1 admin admin 357488 Aug 26  2024 Audio Effects/LFO/Ableton Folder Info/LFO.amxd
+-rw-r--r-- 1 admin admin 310267 Aug 26  2024 MIDI Effects/Envelope MIDI/Ableton Folder Info/Envelope MIDI.amxd
+-rw-r--r-- 1 admin admin 508119 Aug 26  2024 MIDI Effects/MPE Control/Ableton Folder Info/MPE Control.amxd
+$ file (both sampled): "data" (Max for Live packed patcher format — NOT decoded in this lane)
+Build-date note: Aug 26 2024 matches the Live 12.0.25 binary's own build stamp.
+CONCLUSION [D]: all four lane devices ship as bundled Max for Live .amxd
+patchers under App-Resources/Builtin/Devices; their DSP is not in Live.arm64.
+
+===================== §9 SHAPE-LUT REGION READ FAILURE [B-negative] =====================
+ERROR REPORT SCRIPT ERROR: ghidra.program.model.mem.MemoryAccessException:
+  Unable to read bytes at ram:1059a89f0
+(OLfoProcessor Type table pointers 0x1059a8a00..0x1059a8a20 target the same
+ runtime-built __DATA region as the Compressor lane's GR/makeup LUT at
+ 0x1059a89b8 — built at startup, not statically decodable.)
+
+===================== §10 BARE-'LFO' STRING IDENTIFICATION =====================
+SearchProbe 'LFO' (cap 600): exactly one short-name candidate,
+  STR 104928cba len=4 : LFO   — neighbors:
+  STR 104928cca : 'LFO Frequency ' ; STR 104928cd9 : 'AOperatorLfoDetailView' ;
+  STR 104928cf0 : 'mpLfoTarget'  → Operator's LFO section UI strings, NOT a
+  browser device-name pool entry. No 'LFO' M4L-device name in the captured
+  pool segment (the LFO device's presence rests on the on-disk LFO.amxd, §8).

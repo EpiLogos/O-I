@@ -659,17 +659,17 @@ impl Client {
             .collect();
         let descriptor = match self.invoke(cwd, &reading) {
             InvokeOutcome::Completed {
-                exit_code: 0,
+                exit_code,
                 stdout,
-                ..
-            } => serde_json::from_str::<Value>(&stdout)
-                .map_err(|_| "The product's settings disclosure is unreadable")?,
-            InvokeOutcome::Completed { stderr, .. } => {
-                return Err(format!(
-                    "The product's settings disclosure could not be read: {}",
-                    stderr.trim()
-                ))
-            }
+                stderr,
+            } => match interpret(product_id, exit_code, &stdout, &stderr) {
+                Mount::Mounted { descriptor, .. } => descriptor,
+                Mount::Failed { error } => {
+                    return Err(format!(
+                        "The product's settings disclosure was not admitted: {error}"
+                    ))
+                }
+            },
             InvokeOutcome::SpawnFailed(error) => {
                 return Err(format!("The suite is unavailable: {error}"))
             }
@@ -684,7 +684,7 @@ impl Client {
                 .unwrap_or("The product has no native operation for this action yet")
                 .to_owned());
         }
-        if action["exposure"]["ui"] == false {
+        if action["exposure"]["ui"].as_bool() != Some(true) {
             return Err("The product does not offer this action to the app".into());
         }
         let native = action["native_path"]

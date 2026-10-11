@@ -110,6 +110,38 @@ let state: WikiProjectionState = {
   revision: 0,
 };
 const listeners = new Set<() => void>();
+interface WikiOwnerAccess {scope: string; epoch: string; isCurrent: () => boolean}
+let ownerAccess: WikiOwnerAccess | null = null;
+let managedAccess = false;
+let accessGeneration = 0;
+const warmWorlds = new Map<string, WikiProjectionState>();
+/** Access belongs to the native World, independently of disposable apertures.
+ * Existing standings and native documents remain the single projection model. */
+export function configureWikiProjectionAccess(scope: string, epoch: string, isCurrent: () => boolean) {
+  if (!scope || !epoch) throw Error('Wiki projection access needs its native scope and owner epoch');
+  const changed = ownerAccess?.scope !== scope || ownerAccess?.epoch !== epoch;
+  if (ownerAccess?.scope !== scope) {
+    if (ownerAccess) {warmWorlds.delete(ownerAccess.scope); warmWorlds.set(ownerAccess.scope, state);}
+    state = warmWorlds.get(scope) ?? {...state, registers: [], standings: {}, request: null,
+      selection: {registerKey: null, expressionRef: null, sceneRef: null, entityRef: null, subjectRef: null}};
+    warmWorlds.delete(scope);
+    while (warmWorlds.size > 2) warmWorlds.delete(warmWorlds.keys().next().value!);
+  }
+  managedAccess = true;
+  ownerAccess = {scope, epoch, isCurrent};
+  if (!changed) return;
+  ++accessGeneration;
+  rereadGenerations.clear(); rereadsInFlight.clear(); appliedWikiReceiptSeq = 0;
+  state = {...state, request: null, standings: Object.fromEntries(Object.entries(state.standings).map(([key, standing]) =>
+    [key, standing.phase === 'reading' ? {phase: 'idle'} : {...standing, readingInvalidated: true}])), revision: state.revision + 1};
+  emit();
+}
+export function retireWikiProjectionAccess() {managedAccess = true; ++accessGeneration; emit();}
+export function captureWikiProjectionAccess() {
+  const generation = accessGeneration, access = ownerAccess;
+  return {identity: JSON.stringify([access?.scope, access?.epoch, generation]),
+    current: () => generation === accessGeneration && (!managedAccess || !!access?.isCurrent())};
+}
 const emit = () => { for (const listener of [...listeners]) listener(); };
 const mutate = (patch: (current: WikiProjectionState) => Partial<WikiProjectionState>) => {
   state = {...state, ...patch(state), revision: state.revision + 1};
@@ -186,20 +218,25 @@ export function setWikiProjectionRegister(registerKey: string) {
  * centre and the navigator's opened regions both call this — the second
  * caller finds the standing already there. */
 export function ensureWikiProjection(register: WikiRegister, transport: KernelTransportStatus) {
+  const access = captureWikiProjectionAccess();
+  if (!access.current()) return;
   const existing = state.standings[register.key];
-  if (existing && existing.phase !== "idle") return;
+  if (existing && existing.phase !== "idle") {
+    if (existing.readingInvalidated && !rereadsInFlight.has(register.key)) void rereadWikiRegister(register, transport, true);
+    return;
+  }
   const generation = (rereadGenerations.get(register.key) ?? 0) + 1;
   rereadGenerations.set(register.key, generation);
   setStanding(register.key, {phase: "reading"});
   void (async () => {
     try {
       const reading = await readWikiRegister(transport, register);
-      if (rereadGenerations.get(register.key) !== generation) return;
+      if (!access.current() || rereadGenerations.get(register.key) !== generation) return;
       if (reading.state === "absent") { setStanding(register.key, {phase: "absent"}); return; }
       if (reading.state === "unavailable") { setStanding(register.key, {phase: "unavailable", reason: reading.reason}); return; }
       setStanding(register.key, {phase: "projected", reading, projection: projectWikiExpression(reading)});
     } catch (cause) {
-      if (rereadGenerations.get(register.key) !== generation) return;
+      if (!access.current() || rereadGenerations.get(register.key) !== generation) return;
       setStanding(register.key, {phase: "unavailable", reason: text(cause)});
     }
   })();
@@ -219,10 +256,18 @@ export function wikiReadingOf(standing: RegisterStanding | undefined): ReadyRead
  * instrument switches return synchronously cached material; restored native
  * documents can initialize their proven register once. */
 export function ensureWikiProjectionReading(register: WikiRegister, transport: KernelTransportStatus): Promise<ReadyReading> {
+  const access = captureWikiProjectionAccess();
   return new Promise((resolve, reject) => {
     let done = false;
     let unsubscribe = () => {};
+    const finish = (error?: string, reading?: ReadyReading) => {
+      if (done) return;
+      done = true; clearTimeout(timer); unsubscribe();
+      if (error) reject(new Error(error)); else resolve(reading!);
+    };
+    const timer = setTimeout(() => finish('The native Wiki reading did not finish; its work was retained'), 120_000);
     const check = () => {
+      if (!access.current()) {finish('The native Wiki owner access changed; its work was retained'); return;}
       const standing = state.standings[register.key];
       if (!standing || standing.phase === "idle" || standing.phase === "reading") return;
       // A re-read in flight (an explicit refresh, or the receipt a native
@@ -234,15 +279,14 @@ export function ensureWikiProjectionReading(register: WikiRegister, transport: K
       else if (standing.phase === "absent") error = "This register has no Wiki reading";
       const reading = wikiReadingOf(standing);
       if (!error && !reading) error = "The native projection has no retained source reading";
-      if (done) return;
-      done = true; unsubscribe();
-      if (error) reject(new Error(error)); else resolve(reading!);
+      finish(error, reading);
     };
     unsubscribe = subscribeWikiProjection(check);
     ensureWikiProjection(register, transport);
     check();
   });
 }
+export const wikiProjectionReadingPending = (registerKey: string) => rereadsInFlight.has(registerKey);
 
 /** Explicit source refresh reuses the existing receipt-driven owner path.
  * It does not replace or edit the native Expression document. */
@@ -373,17 +417,20 @@ export function applyWikiProjectionReceipt(
  * that no longer has a basis, and a failed re-read under a standing document
  * is named as drift rather than silently keeping a currentness claim. */
 async function rereadWikiRegister(register: WikiRegister, transport: KernelTransportStatus, preserveDocument = false) {
+  const access = captureWikiProjectionAccess();
+  if (!access.current()) throw Error('The Wiki owner access is retired; its work was retained');
   const generation = (rereadGenerations.get(register.key) ?? 0) + 1;
   rereadGenerations.set(register.key, generation);
   rereadsInFlight.set(register.key, (rereadsInFlight.get(register.key) ?? 0) + 1);
-  try { await rereadWikiRegisterOnce(register, transport, preserveDocument, generation); }
+  try { await rereadWikiRegisterOnce(register, transport, preserveDocument, generation, access.current); }
   finally {
+    if (!access.current()) return;
     const left = (rereadsInFlight.get(register.key) ?? 1) - 1;
     if (left > 0) rereadsInFlight.set(register.key, left); else rereadsInFlight.delete(register.key);
     emit();
   }
 }
-async function rereadWikiRegisterOnce(register: WikiRegister, transport: KernelTransportStatus, preserveDocument: boolean, generation: number) {
+async function rereadWikiRegisterOnce(register: WikiRegister, transport: KernelTransportStatus, preserveDocument: boolean, generation: number, current: () => boolean) {
   const previous = state.standings[register.key];
   if (previous) setStanding(register.key, {...previous, readingInvalidated: true});
   let fresh: WikiRegisterReading;
@@ -397,7 +444,7 @@ async function rereadWikiRegisterOnce(register: WikiRegister, transport: KernelT
   try {
     const standing = state.standings[register.key];
     if (!standing || standing.phase === "idle") return;
-    if (rereadGenerations.get(register.key) !== generation) return;
+    if (!current() || rereadGenerations.get(register.key) !== generation) return;
     if (fresh.state === "absent") { setStanding(register.key, {phase: "absent"}); return; }
     if (fresh.state === "unavailable") {
       if (standing.phase === "ready" || standing.phase === "drift") {

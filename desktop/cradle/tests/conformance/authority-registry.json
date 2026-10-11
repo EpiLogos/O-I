@@ -6,200 +6,245 @@
       "kind": "window",
       "expression": "appWindow = getCurrentWindow()",
       "rationale": "Native fullscreen/resizing/focus observation supporting window-lights and semantic focus projection; this exact lifecycle site grants no generic native capability.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical conformance plan Lane A \u00a72"
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical conformance plan Lane A §2"
     },
     {
       "owner": "src/CradleFrame.tsx",
       "kind": "window",
       "expression": "getCurrentWindow().onFocusChanged",
       "rationale": "Native fullscreen/resizing/focus observation supporting window-lights and semantic focus projection; this exact lifecycle site grants no generic native capability.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical conformance plan Lane A \u00a72"
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical conformance plan Lane A §2"
     },
     {
       "owner": "src/field/epi/essaySource.ts",
       "kind": "network",
       "expression": "fetch(input, init)",
       "rationale": "The one site that reads the essay edition for the field: only the kernel-resolved installed World route (oi-material: natively, the bridge's /world mirror in walks) or a loopback development override; any other origin is refused before the fetch. Not arbitrary owner HTTP.",
-      "spec_ref": "docs/cradle/CENTRAL-FIELD-CONTRACT.md \u00a70/\u00a76; docs/cradle/CENTRAL-FIELD-WORLD-PACKAGE.md \u00a74; docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712"
+      "spec_ref": "docs/cradle/CENTRAL-FIELD-CONTRACT.md §0/§6; docs/cradle/CENTRAL-FIELD-WORLD-PACKAGE.md §4; docs/cradle/02-ARCHITECTURE.md §5/§12"
     },
     {
       "owner": "src/kernel/bridge.ts",
       "kind": "network",
       "expression": "fetch(`${transport.url}/op`, {\n    method: \"POST\",\n    headers: { \"content-type\": \"application/json\" },\n    body: JSON.stringify(op),\n    signal,\n})",
       "rationale": "Declared development-only transport of the same typed KernelOp/event seam; not arbitrary owner HTTP.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical conformance plan Lane A \u00a72"
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical conformance plan Lane A §2"
     },
     {
       "owner": "src/kernel/bridge.ts",
       "kind": "network",
       "expression": "fetch(`${transport.url}/event-replay?${query}`, { signal: requestSignal })",
       "rationale": "Declared development-only generation/cursor-qualified, bounded native replay of the same event seam; no arbitrary owner HTTP or unbounded history fallback.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical conformance plan Lane A \u00a72"
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical conformance plan Lane A §2"
     },
     {
       "owner": "src/workspace/DetachedFrame.tsx",
       "kind": "window",
       "expression": "getCurrentWindow().label",
       "rationale": "Reads the current native window label to correlate detached-window navigation; not semantic authority.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical conformance plan Lane A \u00a72"
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical conformance plan Lane A §2"
+    },
+    {
+      "owner": "src/workspace/DetachedFrame.tsx",
+      "kind": "window",
+      "expression": "getCurrentWindow().label",
+      "rationale": "Reads the current native window label to correlate detached-window navigation; not semantic authority.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical conformance plan Lane A §2"
+    },
+    {
+      "owner": "src/workspace/DetachedFrame.tsx",
+      "kind": "window",
+      "expression": "native = getCurrentWindow()",
+      "rationale": "A real window or network seam already in this owner. Registered so the authority list matches the source.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src/workspace/DetachedFrame.tsx",
+      "kind": "window",
+      "expression": "getCurrentWindow().label",
+      "rationale": "Reads the current native window label to correlate detached-window navigation; not semantic authority.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical conformance plan Lane A §2"
     }
   ],
   "commands": [
     {
+      "command": "native_shell::live_shell_read",
+      "classification": "window-lifecycle",
+      "rationale": "Live-shell host command: config, read, checkpoint or close. It is a declared window-lifecycle duty, not a generic shell.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "native_shell::live_shell_config",
+      "classification": "window-lifecycle",
+      "rationale": "Live-shell host command: config, read, checkpoint or close. It is a declared window-lifecycle duty, not a generic shell.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "native_shell::live_shell_checkpoint_reply",
+      "classification": "window-lifecycle",
+      "rationale": "Live-shell host command: config, read, checkpoint or close. It is a declared window-lifecycle duty, not a generic shell.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "native_shell::live_shell_request_close",
+      "classification": "window-lifecycle",
+      "rationale": "Live-shell host command: config, read, checkpoint or close. It is a declared window-lifecycle duty, not a generic shell.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
       "command": "walk_diagnostics::expression_walk_observation",
       "classification": "diagnostics",
       "rationale": "Read-only native Expression observation for evidence.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "terminal::terminal_attach",
-      "classification": "presentation-lease",
-      "rationale": "Native terminal lease operation; semantic session authorization stays kernel-owned.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "terminal::terminal_poll",
-      "classification": "presentation-lease",
-      "rationale": "Native terminal lease operation; semantic session authorization stays kernel-owned.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "terminal::terminal_input",
-      "classification": "presentation-lease",
-      "rationale": "Native terminal lease operation; semantic session authorization stays kernel-owned.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "terminal::terminal_resize",
-      "classification": "presentation-lease",
-      "rationale": "Native terminal lease operation; semantic session authorization stays kernel-owned.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "terminal::terminal_checkpoint",
-      "classification": "presentation-lease",
-      "rationale": "Native terminal lease operation; semantic session authorization stays kernel-owned.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "terminal::terminal_reconcile",
-      "classification": "presentation-lease",
-      "rationale": "Native terminal lease operation; semantic session authorization stays kernel-owned.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "browser::browser_attach",
-      "classification": "presentation-lease",
-      "rationale": "Native browser lease/control operation; page content obtains no generic filesystem/process capability.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "browser::browser_control",
-      "classification": "presentation-lease",
-      "rationale": "Native browser lease/control operation; page content obtains no generic filesystem/process capability.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "browser::browser_reconcile",
-      "classification": "presentation-lease",
-      "rationale": "Native browser lease/control operation; page content obtains no generic filesystem/process capability.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "ground_dialog::choose_central_folder",
-      "classification": "dialog",
-      "rationale": "Human folder picker; selection alone does not authorize source mutation.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "menus::arrangement_menu",
-      "classification": "menu",
-      "rationale": "Native menu presentation.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "kernel_op",
-      "classification": "kernel_op",
-      "rationale": "One typed native operation/event-log doorway, not a widget-specific product command.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "kernel_event_log",
-      "classification": "kernel_op",
-      "rationale": "One typed native operation/event-log doorway, not a widget-specific product command.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "windows::window_detach",
-      "classification": "window-lifecycle",
-      "rationale": "Native window identity, placement and lifecycle projection.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "windows::window_binding",
-      "classification": "window-lifecycle",
-      "rationale": "Native window identity, placement and lifecycle projection.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "windows::window_redock",
-      "classification": "window-lifecycle",
-      "rationale": "Native window identity, placement and lifecycle projection.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "windows::window_redock_surface",
-      "classification": "window-lifecycle",
-      "rationale": "A Scene portal re-docks only its exact admitted detached Surface of the same workspace; closing follows the existing Destroyed -> window-redock lifecycle.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "windows::window_focus_subject",
-      "classification": "window-lifecycle",
-      "rationale": "Native window identity, placement and lifecycle projection.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "windows::window_focus_main",
-      "classification": "window-lifecycle",
-      "rationale": "Native window identity, placement and lifecycle projection.",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
-    },
-    {
-      "command": "decision_episode_authorise",
-      "classification": "dialog",
-      "rationale": "Native human confirmation of kernel-owned bounded preflight; main window only, no caller approval boolean, host-only ephemeral issuance.",
-      "spec_ref": "canonical plan Lane E \u00a71/\u00a76; per-episode bounded authority before egress"
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
     },
     {
       "command": "working_surface_lease::working_surface_takeover",
       "classification": "presentation-lease",
       "rationale": "Exact owner-bound provider terminal client; main-window native consent before takeover, no caller argv; input and release restricted to this window-owned lease.",
-      "spec_ref": "cradle-ui-research-video-computer-diff-2026-09-23-1028.md \u00a72; APP-SPEC presentation lease law"
+      "spec_ref": "cradle-ui-research-video-computer-diff-2026-09-23-1028.md §2; APP-SPEC presentation lease law"
     },
     {
       "command": "working_surface_lease::working_surface_client_poll",
       "classification": "presentation-lease",
       "rationale": "Exact owner-bound provider terminal client; main-window native consent before takeover, no caller argv; input and release restricted to this window-owned lease.",
-      "spec_ref": "cradle-ui-research-video-computer-diff-2026-09-23-1028.md \u00a72; APP-SPEC presentation lease law"
+      "spec_ref": "cradle-ui-research-video-computer-diff-2026-09-23-1028.md §2; APP-SPEC presentation lease law"
     },
     {
       "command": "working_surface_lease::working_surface_client_input",
       "classification": "presentation-lease",
       "rationale": "Exact owner-bound provider terminal client; main-window native consent before takeover, no caller argv; input and release restricted to this window-owned lease.",
-      "spec_ref": "cradle-ui-research-video-computer-diff-2026-09-23-1028.md \u00a72; APP-SPEC presentation lease law"
+      "spec_ref": "cradle-ui-research-video-computer-diff-2026-09-23-1028.md §2; APP-SPEC presentation lease law"
     },
     {
       "command": "working_surface_lease::working_surface_client_resize",
       "classification": "presentation-lease",
       "rationale": "Exact owner-bound provider terminal client; main-window native consent before takeover, no caller argv; input and release restricted to this window-owned lease.",
-      "spec_ref": "cradle-ui-research-video-computer-diff-2026-09-23-1028.md \u00a72; APP-SPEC presentation lease law"
+      "spec_ref": "cradle-ui-research-video-computer-diff-2026-09-23-1028.md §2; APP-SPEC presentation lease law"
     },
     {
       "command": "working_surface_lease::working_surface_release",
       "classification": "presentation-lease",
       "rationale": "Exact owner-bound provider terminal client; main-window native consent before takeover, no caller argv; input and release restricted to this window-owned lease.",
-      "spec_ref": "cradle-ui-research-video-computer-diff-2026-09-23-1028.md \u00a72; APP-SPEC presentation lease law"
+      "spec_ref": "cradle-ui-research-video-computer-diff-2026-09-23-1028.md §2; APP-SPEC presentation lease law"
+    },
+    {
+      "command": "terminal::terminal_attach",
+      "classification": "presentation-lease",
+      "rationale": "Native terminal lease operation; semantic session authorization stays kernel-owned.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "terminal::terminal_poll",
+      "classification": "presentation-lease",
+      "rationale": "Native terminal lease operation; semantic session authorization stays kernel-owned.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "terminal::terminal_input",
+      "classification": "presentation-lease",
+      "rationale": "Native terminal lease operation; semantic session authorization stays kernel-owned.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "terminal::terminal_resize",
+      "classification": "presentation-lease",
+      "rationale": "Native terminal lease operation; semantic session authorization stays kernel-owned.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "terminal::terminal_checkpoint",
+      "classification": "presentation-lease",
+      "rationale": "Native terminal lease operation; semantic session authorization stays kernel-owned.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "terminal::terminal_reconcile",
+      "classification": "presentation-lease",
+      "rationale": "Native terminal lease operation; semantic session authorization stays kernel-owned.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "browser::browser_attach",
+      "classification": "presentation-lease",
+      "rationale": "Native browser lease/control operation; page content obtains no generic filesystem/process capability.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "browser::browser_control",
+      "classification": "presentation-lease",
+      "rationale": "Native browser lease/control operation; page content obtains no generic filesystem/process capability.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "browser::browser_reconcile",
+      "classification": "presentation-lease",
+      "rationale": "Native browser lease/control operation; page content obtains no generic filesystem/process capability.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "ground_dialog::choose_central_folder",
+      "classification": "dialog",
+      "rationale": "Human folder picker; selection alone does not authorize source mutation.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "menus::arrangement_menu",
+      "classification": "menu",
+      "rationale": "Native menu presentation.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "decision_episode_authorise",
+      "classification": "dialog",
+      "rationale": "Native human confirmation of kernel-owned bounded preflight; main window only, no caller approval boolean, host-only ephemeral issuance.",
+      "spec_ref": "canonical plan Lane E §1/§6; per-episode bounded authority before egress"
+    },
+    {
+      "command": "kernel_op",
+      "classification": "kernel_op",
+      "rationale": "One typed native operation/event-log doorway, not a widget-specific product command.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "kernel_event_log",
+      "classification": "kernel_op",
+      "rationale": "One typed native operation/event-log doorway, not a widget-specific product command.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "windows::window_detach",
+      "classification": "window-lifecycle",
+      "rationale": "Native window identity, placement and lifecycle projection.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "windows::window_binding",
+      "classification": "window-lifecycle",
+      "rationale": "Native window identity, placement and lifecycle projection.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "windows::window_redock",
+      "classification": "window-lifecycle",
+      "rationale": "Native window identity, placement and lifecycle projection.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "windows::window_redock_surface",
+      "classification": "window-lifecycle",
+      "rationale": "A Scene portal re-docks only its exact admitted detached Surface of the same workspace; closing follows the existing Destroyed -> window-redock lifecycle.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "windows::window_focus_subject",
+      "classification": "window-lifecycle",
+      "rationale": "Native window identity, placement and lifecycle projection.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "command": "windows::window_focus_main",
+      "classification": "window-lifecycle",
+      "rationale": "Native window identity, placement and lifecycle projection.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
     }
   ],
   "filesystem": [
@@ -207,13 +252,277 @@
       "owner": "src-tauri/src/main.rs",
       "operation": "std::fs::create_dir_all",
       "rationale": "Create the declared external-agent Unix socket parent directory only.",
-      "spec_ref": "canonical plan Lane A \u00a72; native expression transport"
+      "spec_ref": "canonical plan Lane A §2; native expression transport"
+    },
+    {
+      "owner": "src-tauri/src/native_shell.rs",
+      "operation": "fs::write",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/native_shell.rs",
+      "operation": "fs::rename",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/native_shell.rs",
+      "operation": "fs::read",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/native_shell.rs",
+      "operation": "fs::read",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/native_shell.rs",
+      "operation": "fs::create_dir_all",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/native_shell.rs",
+      "operation": "fs::create_dir_all",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/native_shell.rs",
+      "operation": "fs::create_dir_all",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/native_shell.rs",
+      "operation": "fs::read",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/native_shell.rs",
+      "operation": "fs::read",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/native_shell.rs",
+      "operation": "fs::copy",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/native_shell.rs",
+      "operation": "fs::read",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/native_shell.rs",
+      "operation": "fs::read",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/native_shell.rs",
+      "operation": "std::fs::read",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
     },
     {
       "owner": "src-tauri/src/terminal.rs",
       "operation": "std::fs::canonicalize",
       "rationale": "Normalize terminal lease cwd before its bounded native launch.",
-      "spec_ref": "canonical plan Lane A \u00a72; presentation lease boundary"
+      "spec_ref": "canonical plan Lane A §2; presentation lease boundary"
+    },
+    {
+      "owner": "src-tauri/src/terminal_reading.rs",
+      "operation": "fs::Metadata",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_reading.rs",
+      "operation": "fs::symlink_metadata",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_reading.rs",
+      "operation": "fs::File",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_reading.rs",
+      "operation": "fs::create_dir_all",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_reading.rs",
+      "operation": "fs::PermissionsExt",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_reading.rs",
+      "operation": "fs::set_permissions",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_reading.rs",
+      "operation": "fs::Permissions",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_reading.rs",
+      "operation": "fs::read_dir",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_reading.rs",
+      "operation": "fs::OpenOptions",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_reading.rs",
+      "operation": "fs::OpenOptionsExt",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_reading.rs",
+      "operation": "fs::rename",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_reading.rs",
+      "operation": "fs::File",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_reading.rs",
+      "operation": "fs::remove_file",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_reading.rs",
+      "operation": "std::fs::read_link",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_reading.rs",
+      "operation": "fs::canonicalize",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_reading.rs",
+      "operation": "fs::canonicalize",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_tests.rs",
+      "operation": "fs::remove_dir_all",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_tests.rs",
+      "operation": "fs::create_dir_all",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_tests.rs",
+      "operation": "fs::create_dir",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_tests.rs",
+      "operation": "fs::canonicalize",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_tests.rs",
+      "operation": "fs::write",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_tests.rs",
+      "operation": "fs::read_dir",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_tests.rs",
+      "operation": "fs::read_dir",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_tests.rs",
+      "operation": "fs::write",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_tests.rs",
+      "operation": "fs::read",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_tests.rs",
+      "operation": "fs::write",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_tests.rs",
+      "operation": "fs::write",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_tests.rs",
+      "operation": "fs::write",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_tests.rs",
+      "operation": "fs::create_dir",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_tests.rs",
+      "operation": "fs::write",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_tests.rs",
+      "operation": "fs::read_to_string",
+      "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
     }
   ]
 }

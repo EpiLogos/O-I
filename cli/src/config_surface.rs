@@ -477,6 +477,38 @@ pub trait ConfigSurface {
     /// Owner-native plan for one requested change. No mutation.
     fn plan(&self, request: &ChangeRequest) -> SurfaceResult<ConfigPlan>;
 
+    fn reviewed_apply_available(&self) -> bool {
+        false
+    }
+
+    /// Exact owner document, including fields only its owner understands.
+    fn plan_raw(&self, request: &ChangeRequest) -> SurfaceResult<Value> {
+        serde_json::to_value(self.plan(request)?)
+            .map_err(|error| SurfaceError::new(ErrorCode::Internal, error.to_string()))
+    }
+
+    /// Admit the complete batch in the coordinator before returning it for review.
+    /// Raw owner plans retain fields outside O:I's projection vocabulary.
+    fn plan_reviewed(&self, _changeset: &ChangeSet) -> SurfaceResult<(ChangeSet, Vec<Value>)> {
+        Err(SurfaceError::new(
+            ErrorCode::UnsupportedSetting,
+            "this surface does not support reviewed batch admission",
+        ))
+    }
+
+    /// Apply previously reviewed plans without asking owners to mint replacements.
+    /// A surface without this capability refuses; legacy apply is not equivalent.
+    fn apply_reviewed(
+        &self,
+        _changeset: &ChangeSet,
+        _plans: &[Value],
+    ) -> SurfaceResult<AppliedChange> {
+        Err(SurfaceError::new(
+            ErrorCode::UnsupportedSetting,
+            "this surface does not support reviewed-plan application",
+        ))
+    }
+
     /// Execute a ChangeSet: validate → plan → owner-native apply → re-read
     /// verification, per-operation truth throughout, records the desired
     /// entries in O:I-owned state, and replays idempotently under the

@@ -31,6 +31,7 @@ import { facetRange } from "./scale";
 export type TimelineLaneOwner = "day" | "now" | "session" | "run" | "events";
 
 export interface TimelineItem {
+  temporal_problem?: string;
   /** The facet's own ref when the reading supplies one; otherwise a derived
    * stable id (position in the reading), deterministic across identical
    * readings — fit for `focus_refs`, never passed off as a native ref. */
@@ -93,8 +94,13 @@ function derivedItemId(index: number): string {
 }
 
 function toItem(facet: TechneTemporalFacet, index: number, laneId: string): TimelineItem {
-  const span = facetRange(facet);
+  let span; let temporal_problem: string | undefined;
+  try {span = facetRange(facet);} catch (error) {
+    span = {positioned: false, fromMs: null, toMs: null};
+    temporal_problem = error instanceof Error ? error.message : String(error);
+  }
   return {
+    ...(temporal_problem ? {temporal_problem} : {}),
     id: facet.facet_ref ?? derivedItemId(index),
     facet_ref: facet.facet_ref ?? null,
     kind: facet.kind,

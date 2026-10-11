@@ -1,0 +1,38 @@
+/* Page text device panel. Shell tokens only; amber (--accent) marks focus and the selected layer. */
+.native-text-face {display: grid; gap: 12px; color: var(--text); font-size: 12px}
+.native-text-face-section {display: grid; gap: 8px; padding: 10px; background: var(--bg-1); border: 1px solid var(--line); border-radius: 6px; min-width: 0}
+.native-text-face-section > header {display: flex; align-items: baseline; justify-content: space-between; gap: 8px}
+.native-text-face-section h3 {margin: 0; font-size: 12px; font-weight: 600}
+.native-text-face-section > header > span {color: var(--text-dim); font-size: 11px}
+.native-text-face-actions {display: flex; flex-wrap: wrap; gap: 6px}
+.native-text-face button, .native-text-face select, .native-text-face input, .native-text-face textarea {font: inherit; color: inherit}
+.native-text-face button {min-height: 22px; padding: 3px 8px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 4px; cursor: pointer}
+.native-text-face button:disabled {opacity: .5; cursor: default}
+.native-text-face button:focus-visible, .native-text-face input:focus-visible, .native-text-face select:focus-visible, .native-text-face textarea:focus-visible {outline: 2px solid var(--accent); outline-offset: 1px}
+.native-text-face-layers {list-style: none; margin: 0; padding: 0; display: grid; gap: 4px}
+.native-text-face-layers li {display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center}
+.native-text-face-layer {display: flex; justify-content: space-between; gap: 8px; text-align: left; width: 100%}
+.native-text-face-layer.is-selected, .native-text-face-layer[aria-pressed='true'] {border-color: var(--accent)}
+.native-text-face-layer small {color: var(--text-dim)}
+.native-text-face-show {display: inline-flex; align-items: center; gap: 4px; color: var(--text-dim); min-height: 22px}
+.native-text-face-empty, .native-text-face small {color: var(--text-dim); font-size: 11px; line-height: 1.4}
+.native-text-face-form {display: grid; gap: 8px}
+.native-text-face-pair {display: grid; grid-template-columns: 1fr 1fr; gap: 8px}
+.native-text-face-field {display: grid; gap: 3px; min-width: 0}
+.native-text-face-field > span {color: var(--text-dim); font-size: 11px}
+.native-text-face-field input, .native-text-face-field textarea, .native-text-face-field select {min-height: 22px; padding: 3px 6px; background: var(--bg-0); border: 1px solid var(--line); border-radius: 4px; min-width: 0; width: 100%; box-sizing: border-box}
+.native-text-face-field textarea {resize: vertical}
+.native-text-face-field input[aria-invalid='true'], .native-text-face-field textarea[aria-invalid='true'] {border-color: var(--accent)}
+.native-text-face-bounds {color: var(--accent); font-size: 11px}
+.native-text-face-page {position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; container-type: inline-size; background: var(--bg-0); border: 1px solid var(--line); border-radius: 4px; box-sizing: border-box}
+.native-text-face-box {position: absolute; box-sizing: border-box; padding: 2px 3px; color: var(--text); white-space: normal; overflow-wrap: anywhere; line-height: 1.1; outline: 1px dashed transparent}
+.native-text-face-box.is-selected {outline-color: var(--accent)}
+.native-text-face-box.is-past {opacity: .6}
+.native-text-face-line {display: block}
+.native-text-face-box em {display: block; font-style: italic}
+.native-text-face-handle {position: absolute; width: 22px; height: 22px; min-height: 22px; padding: 0; transform: translate(-50%, -50%); border-radius: 50%; background: var(--accent); border: 1px solid var(--bg-0); cursor: grab; touch-action: none}
+.native-text-face-handle:disabled {cursor: default}
+.native-text-face-readout {margin: 0; font-variant-numeric: tabular-nums; color: var(--text-dim)}
+.native-text-face-fault {display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--accent)}
+.native-text-face-fault p {margin: 0; flex-basis: 100%}
+@media (prefers-reduced-motion: reduce) {.native-text-face * {transition: none !important; animation: none !important}}

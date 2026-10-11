@@ -34,16 +34,32 @@ export interface FacetSpan {
 
 const UNIT_MS = { second: 1_000, minute: 60_000, hour: 3_600_000, day: 86_400_000 };
 
-const OFFSET_PATTERN = /(?:[Zz]|[+-]\d{2}:?\d{2})$/;
+/** Date.UTC remaps years 0–99 to 1900–1999. setUTCFullYear retains
+ * the native astronomical year, while preserving calendar carry arithmetic. */
+function utcCalendar(year: number, month = 0, day = 1, hour = 0, minute = 0, second = 0, millisecond = 0): number {
+  const date = new Date(0);
+  date.setUTCFullYear(year, month, day);
+  date.setUTCHours(hour, minute, second, millisecond);
+  return date.getTime();
+}
 
-/** Parse one contract timestamp to epoch ms. A timestamp without an offset
- * suffix is read as UTC (deterministic; Date.parse alone would read the
- * host's local zone). */
+/** Parse disclosed ISO calendar dates/timestamps in their own offset frame.
+ * Reduced dates expand only for comparison; source strings and precision stay
+ * unchanged. Ambiguous strings and impossible dates remain unresolved. */
 export function parseTimestamp(instant: string): number {
-  const value = OFFSET_PATTERN.test(instant) ? instant : `${instant}Z`;
-  const ms = Date.parse(value);
-  if (Number.isNaN(ms)) throw new Error(`not a timestamp: ${instant}`);
-  return ms;
+  const match = instant.match(/^([+-]\d{6}|\d{4})(?:-(\d{2})(?:-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?(Z|[+-]\d{2}:?\d{2})?)?)?)?$/i);
+  const invalid = () => {throw new Error(`not a timestamp: ${instant}`);};
+  if (!match || match[1] === '-000000') return invalid();
+  const year = Number(match[1]), month = Number(match[2] ?? 1), day = Number(match[3] ?? 1);
+  const hour = Number(match[4] ?? 0), minute = Number(match[5] ?? 0), second = Number(match[6] ?? 0);
+  const millisecond = Number(((match[7] ?? '') + '000').slice(0, 3));
+  const zone = match[8]?.match(/^([+-])(\d{2}):?(\d{2})$/);
+  if (month < 1 || month > 12 || day < 1 || day > 31 || hour > 23 || minute > 59 || second > 59
+    || zone && (Number(zone[2]) > 23 || Number(zone[3]) > 59)) return invalid();
+  const local = utcCalendar(year, month - 1, day, hour, minute, second, millisecond), date = new Date(local);
+  if (!Number.isFinite(local) || date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return invalid();
+  const epoch = local - instantOffsetMs(instant);
+  return Number.isFinite(epoch) && Number.isFinite(new Date(epoch).getTime()) ? epoch : invalid();
 }
 
 /** The UTC offset a timestamp itself declares, in ms (e.g. `+01:00` → 3_600_000). */
@@ -61,15 +77,15 @@ function truncateToLocal(localMs: number, precision: TechneTemporalPrecision): n
   const mo = d.getUTCMonth();
   const da = d.getUTCDate();
   switch (precision) {
-    case "millennium": return Date.UTC(Math.floor(y / 1000) * 1000, 0, 1);
-    case "century": return Date.UTC(Math.floor(y / 100) * 100, 0, 1);
-    case "decade": return Date.UTC(Math.floor(y / 10) * 10, 0, 1);
-    case "year": return Date.UTC(y, 0, 1);
-    case "month": return Date.UTC(y, mo, 1);
-    case "day": return Date.UTC(y, mo, da);
-    case "hour": return Date.UTC(y, mo, da, d.getUTCHours());
-    case "minute": return Date.UTC(y, mo, da, d.getUTCHours(), d.getUTCMinutes());
-    case "second": return Date.UTC(y, mo, da, d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds());
+    case "millennium": return utcCalendar(Math.floor(y / 1000) * 1000, 0, 1);
+    case "century": return utcCalendar(Math.floor(y / 100) * 100, 0, 1);
+    case "decade": return utcCalendar(Math.floor(y / 10) * 10, 0, 1);
+    case "year": return utcCalendar(y, 0, 1);
+    case "month": return utcCalendar(y, mo, 1);
+    case "day": return utcCalendar(y, mo, da);
+    case "hour": return utcCalendar(y, mo, da, d.getUTCHours());
+    case "minute": return utcCalendar(y, mo, da, d.getUTCHours(), d.getUTCMinutes());
+    case "second": return utcCalendar(y, mo, da, d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds());
     case "subsecond": return localMs;
   }
 }
@@ -79,11 +95,11 @@ function addOneUnit(localMs: number, precision: TechneTemporalPrecision): number
   if (precision === "millennium" || precision === "century" || precision === "decade" || precision === "year") {
     const d = new Date(localMs);
     const years = precision === "millennium" ? 1000 : precision === "century" ? 100 : precision === "decade" ? 10 : 1;
-    return Date.UTC(d.getUTCFullYear() + years, d.getUTCMonth(), d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds(), d.getUTCMilliseconds());
+    return utcCalendar(d.getUTCFullYear() + years, d.getUTCMonth(), d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds(), d.getUTCMilliseconds());
   }
   if (precision === "month") {
     const d = new Date(localMs);
-    return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1);
+    return utcCalendar(d.getUTCFullYear(), d.getUTCMonth() + 1, 1);
   }
   if (precision === "day") return localMs + UNIT_MS.day;
   if (precision === "hour") return localMs + UNIT_MS.hour;
@@ -244,11 +260,11 @@ export function ticksForDomain(domain: TimeRange, options?: { offsetMs?: number;
       const start = new Date(boundary);
       const monthIndex = start.getUTCFullYear() * 12 + start.getUTCMonth();
       const alignedIndex = Math.floor(monthIndex / step) * step;
-      boundary = Date.UTC(Math.floor(alignedIndex / 12), alignedIndex % 12, 1);
+      boundary = utcCalendar(Math.floor(alignedIndex / 12), alignedIndex % 12, 1);
     } else {
       const yearMultiple = unit === "millennium" ? 1000 * step : unit === "century" ? 100 * step : unit === "decade" ? 10 * step : step;
       const startYear = new Date(boundary).getUTCFullYear();
-      boundary = Date.UTC(startYear - (((startYear % yearMultiple) + yearMultiple) % yearMultiple), 0, 1);
+      boundary = utcCalendar(startYear - (((startYear % yearMultiple) + yearMultiple) % yearMultiple), 0, 1);
     }
     for (let guard = 0; guard <= 400 && boundary <= localTo; guard += 1) {
       if (boundary >= localFrom) push(boundary, unit);
@@ -273,9 +289,9 @@ export function ticksForDomain(domain: TimeRange, options?: { offsetMs?: number;
 /** Advance an aligned calendar boundary by N units of the precision. */
 function advanceCalendar(localMs: number, unit: TechneTemporalPrecision, multiple: number): number {
   const d = new Date(localMs);
-  if (unit === "month") return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + multiple, 1);
+  if (unit === "month") return utcCalendar(d.getUTCFullYear(), d.getUTCMonth() + multiple, 1);
   const years = (unit === "millennium" ? 1000 : unit === "century" ? 100 : unit === "decade" ? 10 : 1) * multiple;
-  return Date.UTC(d.getUTCFullYear() + years, d.getUTCMonth(), 1);
+  return utcCalendar(d.getUTCFullYear() + years, d.getUTCMonth(), 1);
 }
 
 /** Linear time→pixel projection over one view. Pure. */

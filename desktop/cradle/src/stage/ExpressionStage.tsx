@@ -26,15 +26,15 @@
  * particle buffers.
  */
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
   type ReactNode,
 } from "react";
+import {ExpressionStageApiProvider} from './StageContext';
+export {ExpressionStageApiProvider, useExpressionStage} from './StageContext';
 import type {ExpressionOptions, FormName} from "@epilogos/oi-design-system/expression";
 import "@epilogos/oi-design-system/expression.css";
 import { useVisuals } from "../visuals/ParticleExpression";
@@ -124,14 +124,6 @@ export interface ExpressionStageApi {
   /** Bounded dev/walk diagnostics: presentations, recent cues, engine
    * capabilities, and the native cue controller's bounded counters. */
   inspect(): Record<string, unknown>;
-}
-
-const StageContext = createContext<ExpressionStageApi | null>(null);
-
-export function useExpressionStage(): ExpressionStageApi {
-  const stage = useContext(StageContext);
-  if (!stage) throw new Error("useExpressionStage outside ExpressionStageProvider");
-  return stage;
 }
 
 const CUE_LOG_LIMIT = 32;
@@ -468,5 +460,5 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
     inspect,
   }), [present, retainedLease, capture, emit, express, updateHandle, releaseHandle, focusSelection, surfaceError, inspect]);
 
-  return <StageContext.Provider value={api}>{children}</StageContext.Provider>;
+  return <ExpressionStageApiProvider value={api}>{children}</ExpressionStageApiProvider>;
 }

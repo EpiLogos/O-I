@@ -18,6 +18,32 @@ export type SurfaceId = string;
 /** Split direction: 'h' = children side-by-side, 'v' = children stacked. */
 export type PaneDir = "h" | "v";
 
+/**
+ * Projection pane kinds (WORLD-SHELL-DESIGN §10 seam 1): the World is always
+ * encountered through a projection, and a projection is opened as a pane.
+ * These are additive body kinds of the existing pane engine — they change no
+ * operation, no retention law and no mode logic. The pane tier's retention
+ * already keeps every open tab's body mounted-concealed, which is exactly the
+ * projections' hidden-inhabitant requirement: returning to a pane restores
+ * its actual camera, selection and temporal state.
+ *
+ * Each kind is mounted by an admitted projection module through the contract
+ * in `surface/projectionModules.ts` — the engine knows the kinds, the host
+ * admits the bodies. Two panes can hold two projections of the same subject
+ * side by side: the instance identity is kind + subject (see
+ * `makeProjectionBinding`), never the pane.
+ */
+export const PROJECTION_PANE_KINDS = [
+  "projection.earth",
+  "projection.timeline",
+  "projection.constellation",
+  "projection.expressions",
+] as const;
+export type ProjectionPaneKind = (typeof PROJECTION_PANE_KINDS)[number];
+export function isProjectionPaneKind(kind: string): kind is ProjectionPaneKind {
+  return (PROJECTION_PANE_KINDS as readonly string[]).includes(kind);
+}
+
 /** Keyboard direction for focus/move operations. */
 export type Dir = "left" | "right" | "up" | "down";
 
@@ -65,7 +91,7 @@ export interface SurfaceBinding extends SurfacePresentationBinding {
    * the session runs instead of the login shell. */
   terminal?: {cwd?:string;command?:string[]};
   flow?: {flowRef:string;path:string};
-  view?: {constructionFrame?:{ref:string;requestId:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect";
+  view?: {fileHistory?:{open:boolean;revision?:string;expectedRevision?:string};constructionFrame?:{ref:string;requestId:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";nativeKnowledge?:import('../knowledge/nativeFocus').NativeKnowledgeContext;encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect";
     /** The field's presentation state (field/model.ts `FieldPersisted`, plus the encounters of other worlds): restored with the layout, never a source. */
     field?: import("../field/model").FieldPersisted & {others?: Record<string, import("../field/model").FieldPersisted>}};
   /** The hosted engine's checkpoint (MODE-ENGINE-STATE-PERSISTENCE §7.2):
@@ -82,6 +108,14 @@ export interface SurfaceBinding extends SurfacePresentationBinding {
    * Expression refs it was opened with — presentation state naming semantic
    * addresses, never a cloned remote payload. `ref` is the hosted entry ref. */
   presentation?: {world_ref:string;field_ref?:string;projection_ref?:string;projection_revision?:number;presentation_ref?:string;presentation_revision?:number;expression_ref?:string;expression_revision?:number};
+  /** A projection pane's own slice of the encounter (seam 1): the pane kind
+   * and the subject it was opened on, if any. Plain serialisable presentation
+   * state — the subject ref names the spine's selection, never a copy of it;
+   * the binding carries no projection content. Absent subject_ref = the pane
+   * follows the encounter (WorldContext.subject); a present subject_ref pins
+   * the pane (its own `Follow` off), which is how two panes hold two
+   * projections of one subject. */
+  projection?: {kind: ProjectionPaneKind; subject_ref?: string};
 }
 
 /** A tab group: one tab strip + the surface it presents. */
@@ -116,8 +150,17 @@ export interface SplitPane {
 export type Pane = TabGroupPane | SplitPane;
 
 export interface NativeWindowBounds { x: number; y: number; width: number; height: number }
+export type ApplicationViewJson = null | boolean | number | string | ApplicationViewJson[] | {[key: string]: ApplicationViewJson};
+export interface ApplicationViewEnvelope {
+  schema: "oi.application-view/v1";
+  version: 1;
+  app_id: string;
+  /** Bounded application presentation only; native subjects stay in bindings. */
+  payload: {[key: string]: ApplicationViewJson};
+}
 
 export interface LayoutState {
+  applicationView?: ApplicationViewEnvelope;
   focusedTabId?: SurfaceId;
   /** null = austere rest (law 12: rest is *what is on screen*). */
   root: Pane | null;

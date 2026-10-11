@@ -1,10 +1,9 @@
-import {asciiLayout} from '../../src/engine/asciiLayout';
-import {computeInkField, summarizeAnalysis, SOURCE_WORK_MAX, type SourceAnalysis, type InternalMode} from '../../src/engine/sourceSampling';
+import {summarizeAnalysis, SOURCE_WORK_MAX, type SourceAnalysis, type InternalMode} from '../../src/engine/sourceSampling';
 import {GlyphSampler} from '../../src/engine/GlyphSampler';
 
-/** UI-side mirror of the engine's source pipeline: analysis + WYSIWYG preview.
- * The same normalization law runs twice (engine bake, panel preview) by design:
- * the preview shows exactly what the formation will sample.
+/** Analysis and front projection of the engine's actual sampled source pool.
+ * Sampling, threshold recovery, mode shaping and polarity remain producer-owned.
+ * This is source geometry; the entity's body and Field material apply later.
  */
 
 export interface SourceVisual {
@@ -58,39 +57,58 @@ async function decodePayload(payload: string): Promise<{ data: Uint8ClampedArray
 	return { data: drawn.data, width: w, height: h };
 }
 
-/** Renders the ink field over the scene paper — the truth of what will be sampled. */
-function renderPreview(
-	ink: ReturnType<typeof computeInkField>,
+export interface SampledPreview {
+	width: number;
+	height: number;
+	pixels: Uint8ClampedArray;
+	/** Actual source coordinates; the image never stretches either axis. */
+	bounds: {x0: number; y0: number; x1: number; y1: number} | null;
+	worldUnitsPerPixel: number;
+}
+
+/** Project actual sampled cells, with y up in source space. A 400-unit frame
+ * retains smaller authored source scales; larger sources expand it uniformly
+ * so every candidate remains visible. Collisions retain the strongest sample.
+ * No inferred contour, inversion or threshold is introduced here. */
+export function sampledSourcePreviewPixels(
+	candidates: readonly {x: number; y: number; density: number}[],
 	theme: SourceTheme,
 	maxSide = 260
-): string {
-	const { x0, y0, x1, y1 } = ink.crop;
-	const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
-	const fit = Math.min(1, maxSide / Math.max(cw, ch));
-	const w = Math.max(2, Math.round(cw * fit));
-	const h = Math.max(2, Math.round(ch * fit));
+): SampledPreview {
+	const side = Number.isFinite(maxSide) ? Math.max(2, Math.min(512, Math.floor(maxSide))) : 260;
+	let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+	for (const candidate of candidates) {
+		if (!Number.isFinite(candidate.x) || !Number.isFinite(candidate.y) || !Number.isFinite(candidate.density)) throw new Error('Source preview received a non-finite sampled candidate.');
+		x0 = Math.min(x0, candidate.x); y0 = Math.min(y0, candidate.y);
+		x1 = Math.max(x1, candidate.x); y1 = Math.max(y1, candidate.y);
+	}
+	const half = candidates.length ? Math.max(200, Math.abs(x0), Math.abs(y0), Math.abs(x1), Math.abs(y1)) : 200;
+	const worldUnitsPerPixel = 2 * half / (side - 1);
+	const strength = new Float32Array(side * side);
+	for (const candidate of candidates) {
+		const x = Math.max(0, Math.min(side - 1, Math.round((candidate.x + half) / worldUnitsPerPixel)));
+		const y = Math.max(0, Math.min(side - 1, Math.round((half - candidate.y) / worldUnitsPerPixel)));
+		const index = y * side + x;
+		strength[index] = Math.max(strength[index], Math.max(0, Math.min(1, candidate.density)));
+	}
+	const pixels = new Uint8ClampedArray(side * side * 4), paper = parseHex(theme.paper), mark = parseHex(theme.ink);
+	for (let index = 0; index < strength.length; index++) {
+		const offset = index * 4, density = strength[index];
+		for (let channel = 0; channel < 3; channel++) pixels[offset + channel] = Math.round(paper[channel] + (mark[channel] - paper[channel]) * density);
+		pixels[offset + 3] = 255;
+	}
+	return {width: side, height: side, pixels, bounds: candidates.length ? {x0,y0,x1,y1} : null, worldUnitsPerPixel};
+}
+
+function renderPreview(candidates: readonly {x: number; y: number; density: number}[], theme: SourceTheme): string {
+	const preview = sampledSourcePreviewPixels(candidates, theme);
 	const canvas = document.createElement('canvas');
-	canvas.width = w;
-	canvas.height = h;
+	canvas.width = preview.width;
+	canvas.height = preview.height;
 	const ctx = canvas.getContext('2d');
 	if (!ctx) return '';
-	ctx.fillStyle = theme.paper;
-	ctx.fillRect(0, 0, w, h);
-	const out = ctx.getImageData(0, 0, w, h);
-	const paper = parseHex(theme.paper);
-	const mark = parseHex(theme.ink);
-	for (let y = 0; y < h; y++) {
-		const sy = Math.min(ink.height - 1, y0 + Math.floor(y / fit));
-		for (let x = 0; x < w; x++) {
-			const sx = Math.min(ink.width - 1, x0 + Math.floor(x / fit));
-			const strength = Math.pow(ink.ink[sy * ink.width + sx], 0.85);
-			const o = (y * w + x) * 4;
-			out.data[o] = Math.round(paper[0] + (mark[0] - paper[0]) * strength);
-			out.data[o + 1] = Math.round(paper[1] + (mark[1] - paper[1]) * strength);
-			out.data[o + 2] = Math.round(paper[2] + (mark[2] - paper[2]) * strength);
-			out.data[o + 3] = 255;
-		}
-	}
+	const out = ctx.createImageData(preview.width, preview.height);
+	out.data.set(preview.pixels);
 	ctx.putImageData(out, 0, 0);
 	return canvas.toDataURL('image/png');
 }
@@ -119,10 +137,11 @@ export async function sourceVisual(
 
 	sampler ??= new GlyphSampler();
 	let analysis: SourceAnalysis;
-	let field: ReturnType<typeof computeInkField> | null = null;
+	let candidates: {x: number; y: number; density: number}[];
 	if (kind === 'ascii') {
 		const sampled = sampler.rasterizeAscii(payload, { fontFamily: opts.fontFamily, fontSize: opts.fontSize, invert: opts.invert });
 		analysis = sampled.analysis;
+		candidates = sampled.candidates;
 	} else {
 		const decoded = await decodePayload(payload);
 		const imageData = new ImageData(new Uint8ClampedArray(decoded.data), decoded.width, decoded.height);
@@ -133,37 +152,14 @@ export async function sourceVisual(
 			scale: opts.scale,
 		});
 		analysis = sampled.analysis;
-		field = computeInkField(decoded.data, decoded.width, decoded.height, { mode: opts.mode, threshold: opts.threshold, invert: opts.invert });
+		candidates = sampled.candidates;
 	}
 	const visual: SourceVisual = {
 		analysis,
-		previewDataUrl: field ? renderPreview(field, theme) : asciiPreview(payload, opts, theme),
+		previewDataUrl: renderPreview(candidates, theme),
 	};
 	inner.set(innerKey, visual);
 	return visual;
-}
-
-/** ASCII preview rasterizes the drawing itself and shows ink coverage directly. */
-function asciiPreview(payload: string, opts: SourceVisualOptions, theme: SourceTheme): string {
-	const canvas = document.createElement('canvas');
-	const maxSide = 260;
-	canvas.width = maxSide;
-	canvas.height = maxSide;
-	const ctx = canvas.getContext('2d', { willReadFrequently: true });
-	if (!ctx) return '';
-	const {lines,fontSize,charWidth,lineHeight}=asciiLayout(payload,maxSide,maxSide,opts.fontSize);
-	const maxLen=Math.max(1,...lines.map(l=>Array.from(l).length));
-	ctx.font = `bold ${fontSize}px ${opts.fontFamily || '"Fira Code", "Courier New", Courier, monospace'}`;
-	ctx.textAlign = 'left';
-	ctx.textBaseline = 'middle';
-	ctx.fillStyle = theme.ink;
-	const startX = (maxSide - maxLen * fontSize * 0.6) / 2;
-	const startY = (maxSide - lines.length * lineHeight) / 2 + lineHeight / 2;
-	ctx.fillStyle = theme.paper;
-	ctx.fillRect(0, 0, maxSide, maxSide);
-	ctx.fillStyle = theme.ink;
-	lines.forEach((line, r) => ctx.fillText(line, startX, startY + r * lineHeight));
-	return canvas.toDataURL('image/png');
 }
 
 /** Panel-facing one-liner: what was detected, distinct from the engine status line. */

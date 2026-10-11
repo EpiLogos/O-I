@@ -1,0 +1,12 @@
+/* Scene device panel: the hosted NativeSceneEditor keeps its own styles; this only frames its sections and the Expression title. */
+.native-scene-face {display: grid; gap: 12px; color: var(--text); font-size: 12px}
+.native-scene-face-section {display: grid; gap: 8px; padding: 10px; background: var(--bg-1); border: 1px solid var(--line); border-radius: 6px; min-width: 0}
+.native-scene-face-section h3 {margin: 0; font-size: 12px; font-weight: 600}
+.native-scene-face-field {display: grid; gap: 3px; min-width: 0}
+.native-scene-face-field > span {color: var(--text-dim); font-size: 11px}
+.native-scene-face-field input, .native-scene-face-field textarea {min-height: 22px; padding: 3px 6px; background: var(--bg-0); color: var(--text); border: 1px solid var(--line); border-radius: 4px; width: 100%; box-sizing: border-box; font: inherit}
+.native-scene-face-field textarea {resize: vertical}
+.native-scene-face-field input:focus-visible, .native-scene-face-field textarea:focus-visible {outline: 2px solid var(--accent); outline-offset: 1px}
+.native-scene-face-field input[aria-invalid='true'], .native-scene-face-field textarea[aria-invalid='true'] {border-color: var(--accent)}
+.native-scene-face-fault {margin: 0; color: var(--accent); font-size: 11px}
+.native-scene-face-disclosure {margin: 0; color: var(--text-dim); font-size: 11px; line-height: 1.4}

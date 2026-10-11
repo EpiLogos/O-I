@@ -36,6 +36,7 @@ import {
   togglePin,
 } from "./engine";
 import {clampTabListWidth, type TabPresentation} from "../workspace/mode";
+import {PROJECTION_PANE_KINDS} from "./types";
 import type {
   ActionArg,
   ActionDisclosure,
@@ -56,9 +57,12 @@ export interface MenuContext {
  * invented. 'source' and 'sources' (U0.4) are real frame-managed kinds;
  * the frame's own operations (close/split/pin) apply to them. The owner's
  * own canonical Actions arrive with the owner-seam units — none are
- * fabricated here (law 4).
+ * fabricated here (law 4). Projection pane kinds (WORLD-SHELL-DESIGN §10
+ * seam 1) are frame-managed the same way: a projection pane is opened,
+ * split beside/below, tiled four-fold, moved and closed by the frame's own
+ * grammar; its content actions belong to its module, never the frame.
  */
-const FRAME_DISCLOSED_KINDS = new Set(["source", "sources", "knowledge", "file", "encounter", "system", "browser", "terminal", "flow", "blank", "factory", "instrument", "explore", "presentation", "expressions", "techne", "epi-logos", "nara-identity", "agency"]);
+const FRAME_DISCLOSED_KINDS = new Set(["source", "sources", "knowledge", "file", "encounter", "system", "browser", "terminal", "flow", "blank", "factory", "instrument", "explore", "presentation", "expressions", "techne", "epi-logos", "nara-identity", "agency", ...PROJECTION_PANE_KINDS]);
 
 /** Actions disclosed for one binding (its tab / its content right-click). */
 export function bindingDisclosures(

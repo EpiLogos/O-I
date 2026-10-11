@@ -1,4 +1,4 @@
-import {useEffect,useState} from "react";
+import {useEffect,useState,type ReactNode} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {kernelOp} from "../kernel/bridge";
 import {Loading} from "../shared/Loading";
@@ -17,7 +17,7 @@ interface Recognition {
 /** One disclosed recognition fact: a human label and its value. The
  * recognition's own fields rendered as components — never a raw dump
  * (owner ruling 2026-09-22: everything renders as a real component). */
-function RecognitionFact({label,children}:{label:string;children:React.ReactNode}) {
+function RecognitionFact({label,children}:{label:string;children:ReactNode}) {
   return <div className="ground-fact"><dt>{label}</dt><dd>{children}</dd></div>;
 }
 

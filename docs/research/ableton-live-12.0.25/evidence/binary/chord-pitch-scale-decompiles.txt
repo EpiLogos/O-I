@@ -1,0 +1,1084 @@
+// PROVENANCE: Ghidra 12.1.4 decompiles + raw data decodes, persistent project
+// LiveRE2 (~/tools/live-re/ghidra-proj2, ALREADY ANALYZED), Live.arm64
+// (Live 12.0.25, 2024-08-27_2627c43816), arm64 slice. Query-only probes
+// (SymProbe/BlockProbe/DataProbe), no re-import. Owner-private analysis
+// evidence. NOT FOR REDISTRIBUTION. Never enters product source
+// (packages/live-dynamics).
+// Captured 2026-10-09 (MIDI-effects binary lane). Companion dossier:
+// devices/chord-derivation.md.
+// Contents: Chord = OMidiChordProcessor, Pitch = OMidiPitcherProcessor,
+// Scale = OMidiScaleProcessor. (1) symbol tables; (2) per-device ctors
+// (create chain SOnProcessorCreate -> builder -> ctor); (3) ALL parameter
+// setter bodies (exact); (4) default const-pool decodes; (5) the shared
+// ScaleAndTuning walk of the global scale list. NOTE: these three devices
+// have NO OnMidiEvent thunk — MIDI enters through the shared
+// OMidiFxShellProcessor (OnMidi at 0x1016cd5b0, captured in
+// arpeggiator-decompiles.txt context); the per-device note-transform
+// functions are not symbolized (see dossier residuals).
+
+== (1) SYMBOL TABLES ==
+SYM 1016cd330 Label : 19OMidiChordProcessorFvvEE14SProcessorFuncIXadL_ZNS1_4ExitEvEEEEPFvPvEvENUlS6_E_8__invokeES6_
+SYM 1016cd364 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnShift1EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd378 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_20OnShiftScaleDegrees1EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd38c Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnVelocity1EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd394 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_9OnChance1EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd39c Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnShift2EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd3b0 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_20OnShiftScaleDegrees2EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd3c4 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnVelocity2EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd3cc Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_9OnChance2EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd3d4 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnShift3EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd3e8 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_20OnShiftScaleDegrees3EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd3fc Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnVelocity3EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd404 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_9OnChance3EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd40c Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnShift4EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd420 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_20OnShiftScaleDegrees4EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd434 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnVelocity4EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd43c Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_9OnChance4EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd444 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnShift5EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd458 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_20OnShiftScaleDegrees5EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd46c Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnVelocity5EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd474 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_9OnChance5EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd47c Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnShift6EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd490 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_20OnShiftScaleDegrees6EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd4a4 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnVelocity6EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd4ac Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_9OnChance6EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd4b4 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnStrumEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd4f8 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnStrumTensionEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd50c Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_16OnStrumCrescendoEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd520 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_33OnPlayDuplicateNotesWhenStrummingEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd538 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_35OnSendPerNoteEventsToGeneratedNotesEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd548 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_10OnLearningEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd558 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnUseScalesEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd570 Label : 19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_4OnOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd580 Label : 19OMidiChordProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_16OnScaleAndTuningES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+SYM 1018c07f8 Label : 19OMidiChordProcessor
+SYM 1016cd820 Label : 21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnLowestEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd82c Label : 21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnRangeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd838 Label : 21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnRangeModeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd844 Label : 21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnPitchEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd850 Label : 21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_19OnPitchScaleDegreesEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd85c Label : 21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnStepWidthEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd868 Label : 21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_23OnStepWidthScaleDegreesEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd874 Label : 21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnStepUpEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd878 Label : 21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_10OnStepDownEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd87c Label : 21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUseSongScaleEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd88c Label : 21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_4OnOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016cd89c Label : 21OMidiPitcherProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_16OnScaleAndTuningES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+SYM 1018c1120 Label : 21OMidiPitcherProcessor
+SYM 1019604e8 Label : 25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model9MidiPitchENSD_14PitchBendRangeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+SYM 101960500 Label : 25ODeviceKitDeviceProcessorIN7ableton7devices7shifter13ShifterDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9MidiPitchENSD_5GlideEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+SYM 10198e5c0 Label : 25ODeviceKitDeviceProcessorIN7ableton7devices9transmute15TransmuteDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model9MidiPitchENSD_8MidiGateEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+SYM 10198e5ec Label : 25ODeviceKitDeviceProcessorIN7ableton7devices9transmute15TransmuteDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model9MidiPitchENSD_12MonoPolyModeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+SYM 10198e618 Label : 25ODeviceKitDeviceProcessorIN7ableton7devices9transmute15TransmuteDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model9MidiPitchENSD_9PolyphonyEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+SYM 10198e754 Label : 25ODeviceKitDeviceProcessorIN7ableton7devices9transmute15TransmuteDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9MidiPitchENSD_9TransposeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+SYM 10198e7a8 Label : 25ODeviceKitDeviceProcessorIN7ableton7devices9transmute15TransmuteDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model9MidiPitchENSD_14PitchBendRangeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+SYM 10198e8e4 Label : 25ODeviceKitDeviceProcessorIN7ableton7devices9transmute15TransmuteDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9MidiPitchENSD_5GlideEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+SYM 1026effc0 Label : 25OMidiPitchReportProcessorFvfEE14SProcessorFuncIXadL_ZNS1_4OnOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1026effd0 Label : 25OMidiPitchReportProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_6OnMidiES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+SYM 1027201a8 Label : 25OMidiPitchReportProcessor
+SYM 1016d6124 Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnBaseEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d6130 Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_15OnInternalScaleEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d6154 Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUseSongScaleEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d6164 Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnTransposeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d6170 Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_4OnOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d6180 Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnRangeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d618c Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnLowestEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d6198 Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnFoldEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d61a8 Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping0EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d61b4 Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping1EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d61c0 Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping2EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d61cc Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping3EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d61d8 Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping4EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d61e4 Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping5EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d61f0 Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping6EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d61fc Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping7EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d6208 Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping8EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d6214 Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping9EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d6220 Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_15OnUserMapping10EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d622c Label : 19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_15OnUserMapping11EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d6238 Label : 19OMidiScaleProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_16OnScaleAndTuningES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+SYM 1018c147c Label : 19OMidiScaleProcessor
+SYM 1016d63a8 Label : 22OMidiVelocityProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnOperationEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d63b4 Label : 22OMidiVelocityProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnDriveEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d63c0 Label : 22OMidiVelocityProcessorFvfEE14SProcessorFuncIXadL_ZNS1_9OnCompandEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d63cc Label : 22OMidiVelocityProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnMinOutEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d63d8 Label : 22OMidiVelocityProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnMaxOutEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d63e4 Label : 22OMidiVelocityProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnLowestEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d63ec Label : 22OMidiVelocityProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnRangeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d63f4 Label : 22OMidiVelocityProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnRandomEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d63fc Label : 22OMidiVelocityProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnModeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1016d6418 Label : 22OMidiVelocityProcessorFvfEE14SProcessorFuncIXadL_ZNS1_4OnOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 1018c17d0 Label : 22OMidiVelocityProcessor
+SYM 10184bb64 Label : 24OMidiNoteLengthProcessorFvP10OSchedulerEE14SProcessorFuncIXadL_ZNS1_4InitES3_EEEEPFvPvS3_EvENUlS8_S3_E_8__invokeES8_S3_
+SYM 10184bbe0 Label : 24OMidiNoteLengthProcessorFvvEE14SProcessorFuncIXadL_ZNS1_4ExitEvEEEEPFvPvEvENUlS6_E_8__invokeES6_
+SYM 10184bc3c Label : 24OMidiNoteLengthProcessorFvvEE14SProcessorFuncIXadL_ZNS1_5ResetEvEEEEPFvPvEvENUlS6_E_8__invokeES6_
+SYM 10184bcb4 Label : 24OMidiNoteLengthProcessorFvfEE14SProcessorFuncIXadL_ZNS1_4OnOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 10184bd10 Label : 24OMidiNoteLengthProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnModeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 10184bd20 Label : 24OMidiNoteLengthProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnLatchEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 10184bd38 Label : 24OMidiNoteLengthProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnSyncStateEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 10184bd48 Label : 24OMidiNoteLengthProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnSyncedLengthEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 10184bd64 Label : 24OMidiNoteLengthProcessorFvfEE14SProcessorFuncIXadL_ZNS1_12OnTimeLengthEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 10184bd70 Label : 24OMidiNoteLengthProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnGateEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 10184bd8c Label : 24OMidiNoteLengthProcessorFvfEE14SProcessorFuncIXadL_ZNS1_9OnBalanceEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 10184bd94 Label : 24OMidiNoteLengthProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnDecayTimeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 10184bd9c Label : 24OMidiNoteLengthProcessorFvfEE14SProcessorFuncIXadL_ZNS1_15OnDecayKeyScaleEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+SYM 10184bda4 Label : 24OMidiNoteLengthProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_11OnMidiEventES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+SYM 1018c1048 Label : 24OMidiNoteLengthProcessor
+
+== (2) CTORS: Chord FUN_1016c5c04, Pitch FUN_1016cbd64, Scale FUN_1016d1b70 ==
+FUNC 1016c5c04 name=FUN_1016c5c04 body=1 lines=103
+
+undefined8 * FUN_1016c5c04(undefined8 *param_1,int *param_2,undefined8 param_3)
+
+{
+  undefined *puVar1;
+  long lVar2;
+  undefined8 *puVar3;
+  undefined8 uVar4;
+  undefined1 auVar5 [16];
+  undefined8 uVar6;
+  undefined1 auStack_50 [8];
+  undefined1 auStack_48 [8];
+  
+  puVar3 = (undefined8 *)func_0x0001016669a8();
+  *puVar3 = &UNK_10528b848;
+  _bzero(puVar3 + 6,0xc08);
+  func_0x0001016cf3d4(puVar3 + 6,auStack_50);
+  param_1[0x187] =
+       PTR___ZZNK7ableton7utility8CallbackIFvPvELb0EE13kNullCallbackMUlvE_clEvENUlS2_S2_E_8__invokeES2_S2__1050c84b8
+  ;
+  param_1[0x189] = 0;
+  param_1[0x188] = 0;
+  *param_1 = &UNK_10528b7f8;
+  *(float *)(param_1 + 0x18a) = (float)*param_2;
+  param_1[0x18b] = *(undefined8 *)(param_2 + 4);
+  *(undefined1 *)(param_1 + 0x18c) = 0;
+  param_1[0x19b] = 0;
+  *(undefined4 *)(param_1 + 0x19c) = 0;
+  *(undefined1 *)((long)param_1 + 0xce4) = 0;
+  *(undefined8 *)((long)param_1 + 0xccc) = 0;
+  *(undefined8 *)((long)param_1 + 0xcc4) = 0;
+  param_1[0x19d] = 7;
+  param_1[0x19f] = 0;
+  param_1[0x19e] = 0;
+  uVar4 = __Znwm(0x1c);
+  param_1[0x19f] = uVar4;
+  *(undefined1 *)(param_1 + 0x1a0) = 1;
+  *(undefined4 *)((long)param_1 + 0xd04) = 0;
+  param_1[0x1a1] = 0x80;
+  param_1[0x1a3] = 0;
+  param_1[0x1a2] = 0;
+  uVar4 = __Znwm(0x2000);
+  param_1[0x1a3] = uVar4;
+  _bzero(param_1 + 0x1a4,0x21010);
+  func_0x000101a7f7f0(param_1 + 0x1a5,auStack_48);
+  _bzero(param_1 + 0x43a6,0x808);
+  FUN_101548968(param_1 + 0x44a7);
+  puVar1 = 
+  PTR___ZZNK7ableton7utility8CallbackIFvfELb0EE13kNullCallbackMUlvE_clEvENUlPvfE_8__invokeES5_f_1050c8618
+  ;
+  param_1[0x44a8] =
+       PTR___ZZNK7ableton7utility8CallbackIFvfELb0EE13kNullCallbackMUlvE_clEvENUlPvfE_8__invokeES5_f_1050c8618
+  ;
+  param_1[0x44a9] = 0;
+  param_1[0x44aa] = 0;
+  param_1[0x44ab] = puVar1;
+  param_1[0x44ac] = 0;
+  param_1[0x44ad] = 0;
+  param_1[0x44ae] = puVar1;
+  param_1[0x44af] = 0;
+  param_1[0x44b0] = 0;
+  param_1[0x44b1] = puVar1;
+  param_1[0x44b2] = 0;
+  param_1[0x44b3] = 0;
+  param_1[0x44b4] = puVar1;
+  param_1[0x44b5] = 0;
+  param_1[0x44b6] = 0;
+  param_1[0x44b7] = puVar1;
+  param_1[0x44b8] = 0;
+  param_1[0x44b9] = 0;
+  param_1[0x44c8] = 0;
+  *(undefined4 *)(param_1 + 0x44c9) = 0xffffffff;
+  func_0x00010153be8c(param_3,param_1 + 0x44c9);
+  _memset_pattern16((long)param_1 + 0xc64,&UNK_104d0e070,0x18);
+  *(undefined8 *)((long)param_1 + 0xc7c) = 0;
+  *(undefined8 *)((long)param_1 + 0xc84) = 0;
+  auVar5 = NEON_fmov(0x3f800000,4);
+  uVar6 = auVar5._8_8_;
+  *(undefined8 *)((long)param_1 + 0xc9c) = uVar6;
+  uVar4 = auVar5._0_8_;
+  *(undefined8 *)((long)param_1 + 0xc94) = uVar4;
+  *(undefined8 *)((long)param_1 + 0xc8c) = 0;
+  *(undefined8 *)((long)param_1 + 0xcac) = uVar6;
+  *(undefined8 *)((long)param_1 + 0xca4) = uVar4;
+  *(undefined8 *)((long)param_1 + 0xcbc) = uVar6;
+  *(undefined8 *)((long)param_1 + 0xcb4) = uVar4;
+  puVar3 = (undefined8 *)func_0x00010153ff88(0x48);
+  uVar4 = *(undefined8 *)(param_2 + 4);
+  func_0x00010152f478();
+  *puVar3 = &UNK_10528b7c0;
+  puVar3[5] = uVar4;
+  puVar3[6] = param_1;
+  *(undefined1 *)(puVar3 + 7) = 0;
+  LOAcquire();
+  lVar2 = puVar3[1];
+  puVar3[1] = lVar2 + 1;
+  LORelease();
+  if (param_1[0x1a4] != 0) {
+    func_0x00010153ffa8(lVar2);
+  }
+  param_1[0x1a4] = puVar3;
+  return param_1;
+}
+END 1016c5c04
+FUNC 1016cbd64 name=FUN_1016cbd64 body=1 lines=38
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+undefined8 * FUN_1016cbd64(undefined8 *param_1,undefined8 param_2,undefined8 param_3)
+
+{
+  undefined8 uVar1;
+  undefined8 *puVar2;
+  undefined1 auStack_38 [8];
+  
+  puVar2 = (undefined8 *)func_0x0001016669a8();
+  *puVar2 = &UNK_10528b848;
+  _bzero(puVar2 + 6,0xc08);
+  func_0x0001016cf3d4(puVar2 + 6,auStack_38);
+  param_1[0x187] =
+       PTR___ZZNK7ableton7utility8CallbackIFvPvELb0EE13kNullCallbackMUlvE_clEvENUlS2_S2_E_8__invokeES2_S2__1050c84b8
+  ;
+  param_1[0x189] = 0;
+  param_1[0x188] = 0;
+  *param_1 = &UNK_10528b990;
+  uVar1 = _UNK_104ccaa30;
+  param_1[0x18b] = _UNK_104ccaa38;
+  param_1[0x18a] = uVar1;
+  param_1[0x18c] = _UNK_104d58930;
+  *(undefined4 *)(param_1 + 0x18d) = 7;
+  *(undefined1 *)((long)param_1 + 0xc6c) = 1;
+  _bzero(param_1 + 400,0x808);
+  *(undefined8 *)((long)param_1 + 0xc76) = 0;
+  param_1[0x18e] = 0;
+  param_1[0x291] =
+       PTR___ZZNK7ableton7utility8CallbackIFvfELb0EE13kNullCallbackMUlvE_clEvENUlPvfE_8__invokeES5_f_1050c8618
+  ;
+  param_1[0x293] = 0;
+  param_1[0x292] = 0;
+  *(undefined4 *)(param_1 + 0x294) = 0xffffffff;
+  func_0x00010153be8c(param_3,param_1 + 0x294);
+  return param_1;
+}
+END 1016cbd64
+FUNC 1016d1b70 name=FUN_1016d1b70 body=1 lines=76
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+long FUN_1016d1b70(long param_1)
+
+{
+  undefined8 uVar1;
+  undefined *puVar2;
+  undefined8 *puVar3;
+  
+  puVar3 = (undefined8 *)func_0x0001016c5ab4();
+  *puVar3 = &UNK_10528bc48;
+  *(undefined4 *)(puVar3 + 0x18a) = 1;
+  *(undefined1 *)((long)puVar3 + 0xc54) = 0;
+  *(undefined1 *)(puVar3 + 0x18b) = 0;
+  *(undefined2 *)((long)puVar3 + 0xc5c) = 0;
+  puVar3[0x18c] = 0x1058f00e0;
+  uVar1 = _UNK_104cfb890;
+  puVar3[0x18e] = _UNK_104cfb898;
+  puVar3[0x18d] = uVar1;
+  *(undefined1 *)(puVar3 + 399) = 0;
+  *(undefined1 *)((long)puVar3 + 0xcac) = 0;
+  puVar2 = 
+  PTR___ZZNK7ableton7utility8CallbackIFvfELb0EE13kNullCallbackMUlvE_clEvENUlPvfE_8__invokeES5_f_1050c8618
+  ;
+  puVar3[0x196] =
+       PTR___ZZNK7ableton7utility8CallbackIFvfELb0EE13kNullCallbackMUlvE_clEvENUlPvfE_8__invokeES5_f_1050c8618
+  ;
+  puVar3[0x198] = 0;
+  puVar3[0x197] = 0;
+  puVar3[0x199] = puVar2;
+  puVar3[0x19b] = 0;
+  puVar3[0x19a] = 0;
+  puVar3[0x19c] = puVar2;
+  puVar3[0x19e] = 0;
+  puVar3[0x19d] = 0;
+  puVar3[0x19f] = puVar2;
+  puVar3[0x1a1] = 0;
+  puVar3[0x1a0] = 0;
+  puVar3[0x1a2] = puVar2;
+  puVar3[0x1a3] = 0;
+  puVar3[0x1a4] = 0;
+  puVar3[0x1a5] = puVar2;
+  puVar3[0x1a6] = 0;
+  puVar3[0x1a7] = 0;
+  puVar3[0x1a8] = puVar2;
+  puVar3[0x1a9] = 0;
+  puVar3[0x1aa] = 0;
+  puVar3[0x1ab] = puVar2;
+  puVar3[0x1ac] = 0;
+  puVar3[0x1ad] = 0;
+  puVar3[0x1ae] = puVar2;
+  puVar3[0x1b0] = 0;
+  puVar3[0x1af] = 0;
+  puVar3[0x1b1] = puVar2;
+  puVar3[0x1b3] = 0;
+  puVar3[0x1b2] = 0;
+  puVar3[0x1b4] = puVar2;
+  puVar3[0x1b5] = 0;
+  puVar3[0x1b6] = 0;
+  puVar3[0x1b7] = puVar2;
+  puVar3[0x1b8] = 0;
+  puVar3[0x1b9] = 0;
+  puVar3[0x1ba] = puVar2;
+  puVar3[0x1bb] = 0;
+  puVar3[0x1bc] = 0;
+  puVar3[0x1bd] = puVar2;
+  puVar3[0x1be] = 0;
+  puVar3[0x1bf] = 0;
+  puVar3[0x1c0] = puVar2;
+  puVar3[0x1c2] = 0;
+  puVar3[0x1c1] = 0;
+  func_0x000103b521fc();
+  _memset_pattern16(param_1 + 0xc7c,&UNK_104d0e070,0x30);
+  return param_1;
+}
+END 1016d1b70
+
+== (3) CHORD SETTERS (exact bodies) ==
+FUNC 1016cd330 name=__ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvvEE14SProcessorFuncIXadL_ZNS1_4ExitEvEEEEPFvPvEvENUlS6_E_8__invokeES6_ body=1 lines=14
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvvEE14SProcessorFuncIXadL_ZNS1_4ExitEvEEEEPFvPvEvENUlS6_E_8__invokeES6_
+               (long param_1)
+
+{
+  long lVar1;
+  
+  lVar1 = *(long *)(param_1 + 0xd20);
+  if (*(char *)(lVar1 + 0x38) != '\0') {
+    func_0x00010154eab8(*(undefined8 *)(lVar1 + 0x28),lVar1);
+    *(undefined1 *)(lVar1 + 0x38) = 0;
+  }
+  return;
+}
+END 1016cd330
+FUNC 1016cd364 name=__ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnShift1EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=9
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnShift1EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc64) = (int)param_1;
+  *(undefined1 *)(param_2 + 0xd00) = 1;
+  return;
+}
+END 1016cd364
+FUNC 1016cd378 name=__ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_20OnShiftScaleDegrees1EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=9
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_20OnShiftScaleDegrees1EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc7c) = (int)param_1;
+  *(undefined1 *)(param_2 + 0xd00) = 1;
+  return;
+}
+END 1016cd378
+FUNC 1016cd38c name=__ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnVelocity1EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnVelocity1EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (undefined4 param_1,long param_2)
+
+{
+  *(undefined4 *)(param_2 + 0xc94) = param_1;
+  return;
+}
+END 1016cd38c
+FUNC 1016cd394 name=__ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_9OnChance1EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_9OnChance1EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (undefined4 param_1,long param_2)
+
+{
+  *(undefined4 *)(param_2 + 0xcac) = param_1;
+  return;
+}
+END 1016cd394
+FUNC 1016cd4b4 name=__ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnStrumEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=30
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnStrumEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  float fVar1;
+  float fVar2;
+  float fVar3;
+  
+  fVar1 = *(float *)(param_2 + 0xcc4);
+  fVar2 = 1.0;
+  if (fVar1 == 0.0 || fVar1 < 0.0) {
+    fVar2 = -1.0;
+  }
+  fVar3 = 0.0;
+  if (fVar1 != 0.0) {
+    fVar3 = fVar2;
+  }
+  fVar1 = 1.0;
+  if (param_1 == 0.0 || param_1 < 0.0) {
+    fVar1 = -1.0;
+  }
+  fVar2 = 0.0;
+  if (param_1 != 0.0) {
+    fVar2 = fVar1;
+  }
+  *(byte *)(param_2 + 0xd00) = *(byte *)(param_2 + 0xd00) | fVar3 != fVar2;
+  *(float *)(param_2 + 0xcc4) = param_1;
+  return;
+}
+END 1016cd4b4
+FUNC 1016cd4f8 name=__ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnStrumTensionEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnStrumTensionEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(float *)(param_2 + 0xcc8) = param_1 / 100.0;
+  return;
+}
+END 1016cd4f8
+FUNC 1016cd50c name=__ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_16OnStrumCrescendoEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_16OnStrumCrescendoEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(float *)(param_2 + 0xccc) = param_1 / 100.0;
+  return;
+}
+END 1016cd50c
+FUNC 1016cd520 name=__ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_33OnPlayDuplicateNotesWhenStrummingEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=9
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_33OnPlayDuplicateNotesWhenStrummingEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(bool *)(param_2 + 0xcd0) = param_1 != 0.0;
+  *(undefined1 *)(param_2 + 0xd00) = 1;
+  return;
+}
+END 1016cd520
+FUNC 1016cd538 name=__ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_35OnSendPerNoteEventsToGeneratedNotesEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_35OnSendPerNoteEventsToGeneratedNotesEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(bool *)(param_2 + 0xcd1) = param_1 != 0.0;
+  return;
+}
+END 1016cd538
+FUNC 1016cd548 name=__ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_10OnLearningEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_10OnLearningEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(bool *)(param_2 + 0xcd2) = param_1 != 0.0;
+  return;
+}
+END 1016cd548
+FUNC 1016cd558 name=__ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnUseScalesEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=9
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnUseScalesEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(bool *)(param_2 + 0xce4) = param_1 != 0.0;
+  *(undefined1 *)(param_2 + 0xd00) = 1;
+  return;
+}
+END 1016cd558
+FUNC 1016cd570 name=__ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_4OnOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvfEE14SProcessorFuncIXadL_ZNS1_4OnOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(bool *)(param_2 + 0xc60) = param_1 != 0.0;
+  return;
+}
+END 1016cd570
+FUNC 1016cd580 name=__ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_16OnScaleAndTuningES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_ body=1 lines=19
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiChordProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_16OnScaleAndTuningES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+               (long param_1,long *param_2)
+
+{
+  undefined8 *puVar1;
+  undefined8 uVar2;
+  
+  puVar1 = (undefined8 *)*param_2;
+  *(bool *)(param_1 + 0xcd3) = param_2[1] != 0;
+  if (puVar1 != (undefined8 *)0x0) {
+    uVar2 = *puVar1;
+    *(undefined4 *)(param_1 + 0xce0) = *(undefined4 *)(puVar1 + 1);
+    *(undefined8 *)(param_1 + 0xcd8) = uVar2;
+    return;
+  }
+  *(undefined8 *)(param_1 + 0xcd8) = 0;
+  return;
+}
+END 1016cd580
+
+== (4) PITCH SETTERS (exact bodies) ==
+FUNC 1016cd820 name=__ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnLowestEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnLowestEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc58) = (int)param_1;
+  return;
+}
+END 1016cd820
+FUNC 1016cd82c name=__ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnRangeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnRangeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc5c) = (int)param_1;
+  return;
+}
+END 1016cd82c
+FUNC 1016cd838 name=__ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnRangeModeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnRangeModeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc60) = (int)param_1;
+  return;
+}
+END 1016cd838
+FUNC 1016cd844 name=__ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnPitchEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnPitchEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc50) = (int)param_1;
+  return;
+}
+END 1016cd844
+FUNC 1016cd850 name=__ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_19OnPitchScaleDegreesEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_19OnPitchScaleDegreesEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc54) = (int)param_1;
+  return;
+}
+END 1016cd850
+FUNC 1016cd85c name=__ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnStepWidthEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnStepWidthEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc64) = (int)param_1;
+  return;
+}
+END 1016cd85c
+FUNC 1016cd868 name=__ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_23OnStepWidthScaleDegreesEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_23OnStepWidthScaleDegreesEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc68) = (int)param_1;
+  return;
+}
+END 1016cd868
+FUNC 1016cd874 name=__ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnStepUpEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=43
+
+void __ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnStepUpEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (long param_1)
+
+{
+  int iVar1;
+  undefined4 uVar2;
+  long lStack_40;
+  undefined8 uStack_38;
+  
+  if (*(char *)(param_1 + 0xc7c) == '\0') {
+    iVar1 = *(int *)(param_1 + 0xc64) + *(int *)(param_1 + 0xc50);
+    if (0x7f < iVar1) {
+      iVar1 = 0x80;
+    }
+    if (iVar1 < -0x7f) {
+      iVar1 = -0x80;
+    }
+    *(int *)(param_1 + 0xc50) = (int)(float)iVar1;
+    uVar2 = func_0x000100d0d468();
+    func_0x0001015544b0(&lStack_40,0x1058f00a8,uVar2,0x100500,0);
+    func_0x00010153b9d0(uStack_38,*(undefined4 *)(param_1 + 0x14a0));
+    func_0x00010153b9d0(uStack_38,*(undefined4 *)(param_1 + 0xc64));
+    (**(code **)(lStack_40 + 0x10))(&lStack_40);
+  }
+  else {
+    iVar1 = *(int *)(param_1 + 0xc68) + *(int *)(param_1 + 0xc54);
+    if (0x1d < iVar1) {
+      iVar1 = 0x1e;
+    }
+    if (iVar1 < -0x1d) {
+      iVar1 = -0x1e;
+    }
+    *(int *)(param_1 + 0xc54) = (int)(float)iVar1;
+    uVar2 = func_0x000100d0d468();
+    func_0x0001015544b0(&lStack_40,0x1058f00b8,uVar2,0x100500,0);
+    func_0x00010153b9d0(uStack_38,*(undefined4 *)(param_1 + 0x14a0));
+    func_0x00010153b9d0(uStack_38,*(undefined4 *)(param_1 + 0xc68));
+    (**(code **)(lStack_40 + 0x10))(&lStack_40);
+  }
+  func_0x0001015549c8(&lStack_40);
+  return;
+}
+END 1016cd874
+FUNC 1016cd878 name=__ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_10OnStepDownEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=43
+
+void __ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_10OnStepDownEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (long param_1)
+
+{
+  int iVar1;
+  undefined4 uVar2;
+  long lStack_40;
+  undefined8 uStack_38;
+  
+  if (*(char *)(param_1 + 0xc7c) == '\0') {
+    iVar1 = *(int *)(param_1 + 0xc50) - *(int *)(param_1 + 0xc64);
+    if (0x7f < iVar1) {
+      iVar1 = 0x80;
+    }
+    if (iVar1 < -0x7f) {
+      iVar1 = -0x80;
+    }
+    *(int *)(param_1 + 0xc50) = (int)(float)iVar1;
+    uVar2 = func_0x000100d0d468();
+    func_0x0001015544b0(&lStack_40,0x1058f00a8,uVar2,0x100500,0);
+    func_0x00010153b9d0(uStack_38,*(undefined4 *)(param_1 + 0x14a0));
+    func_0x00010153b9d0(uStack_38,-*(int *)(param_1 + 0xc64));
+    (**(code **)(lStack_40 + 0x10))(&lStack_40);
+  }
+  else {
+    iVar1 = *(int *)(param_1 + 0xc54) - *(int *)(param_1 + 0xc68);
+    if (0x1d < iVar1) {
+      iVar1 = 0x1e;
+    }
+    if (iVar1 < -0x1d) {
+      iVar1 = -0x1e;
+    }
+    *(int *)(param_1 + 0xc54) = (int)(float)iVar1;
+    uVar2 = func_0x000100d0d468();
+    func_0x0001015544b0(&lStack_40,0x1058f00b8,uVar2,0x100500,0);
+    func_0x00010153b9d0(uStack_38,*(undefined4 *)(param_1 + 0x14a0));
+    func_0x00010153b9d0(uStack_38,-*(int *)(param_1 + 0xc68));
+    (**(code **)(lStack_40 + 0x10))(&lStack_40);
+  }
+  func_0x0001015549c8(&lStack_40);
+  return;
+}
+END 1016cd878
+FUNC 1016cd87c name=__ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUseSongScaleEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUseSongScaleEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(bool *)(param_2 + 0xc7c) = param_1 != 0.0;
+  return;
+}
+END 1016cd87c
+FUNC 1016cd88c name=__ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_4OnOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvfEE14SProcessorFuncIXadL_ZNS1_4OnOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(bool *)(param_2 + 0xc7d) = param_1 != 0.0;
+  return;
+}
+END 1016cd88c
+FUNC 1016cd89c name=__ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_16OnScaleAndTuningES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_ body=1 lines=19
+
+void __ZZN6detail16TMemberFuncTypesIM21OMidiPitcherProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_16OnScaleAndTuningES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+               (long param_1,long *param_2)
+
+{
+  undefined8 *puVar1;
+  undefined8 uVar2;
+  
+  puVar1 = (undefined8 *)*param_2;
+  *(bool *)(param_1 + 0xc6c) = param_2[1] != 0;
+  if (puVar1 != (undefined8 *)0x0) {
+    uVar2 = *puVar1;
+    *(undefined4 *)(param_1 + 0xc78) = *(undefined4 *)(puVar1 + 1);
+    *(undefined8 *)(param_1 + 0xc70) = uVar2;
+    return;
+  }
+  *(undefined8 *)(param_1 + 0xc70) = 0;
+  return;
+}
+END 1016cd89c
+
+== (5) SCALE SETTERS (exact bodies) ==
+FUNC 1016d6124 name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnBaseEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnBaseEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc50) = (int)param_1;
+  return;
+}
+END 1016d6124
+FUNC 1016d6130 name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_15OnInternalScaleEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=13
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_15OnInternalScaleEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  if (0 < (int)param_1) {
+    *(int *)(param_2 + 0xc54) = (int)param_1 + -1;
+    *(undefined1 *)(param_2 + 0xc58) = 1;
+    return;
+  }
+  *(undefined1 *)(param_2 + 0xc58) = 0;
+  return;
+}
+END 1016d6130
+FUNC 1016d6154 name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUseSongScaleEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUseSongScaleEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(bool *)(param_2 + 0xc5d) = param_1 != 0.0;
+  return;
+}
+END 1016d6154
+FUNC 1016d6164 name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnTransposeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnTransposeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc6c) = (int)param_1;
+  return;
+}
+END 1016d6164
+FUNC 1016d6170 name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_4OnOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_4OnOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(bool *)(param_2 + 0xc78) = param_1 != 0.0;
+  return;
+}
+END 1016d6170
+FUNC 1016d6180 name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnRangeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnRangeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc70) = (int)param_1;
+  return;
+}
+END 1016d6180
+FUNC 1016d618c name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnLowestEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_8OnLowestEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc74) = (int)param_1;
+  return;
+}
+END 1016d618c
+FUNC 1016d6198 name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnFoldEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnFoldEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(bool *)(param_2 + 0xcac) = param_1 != 0.0;
+  return;
+}
+END 1016d6198
+FUNC 1016d61a8 name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping0EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping0EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc7c) = (int)param_1;
+  return;
+}
+END 1016d61a8
+FUNC 1016d61b4 name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping1EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping1EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc80) = (int)param_1;
+  return;
+}
+END 1016d61b4
+FUNC 1016d61c0 name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping2EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping2EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc84) = (int)param_1;
+  return;
+}
+END 1016d61c0
+FUNC 1016d61cc name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping3EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping3EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc88) = (int)param_1;
+  return;
+}
+END 1016d61cc
+FUNC 1016d61d8 name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping4EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping4EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc8c) = (int)param_1;
+  return;
+}
+END 1016d61d8
+FUNC 1016d61e4 name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping5EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping5EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc90) = (int)param_1;
+  return;
+}
+END 1016d61e4
+FUNC 1016d61f0 name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping6EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping6EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc94) = (int)param_1;
+  return;
+}
+END 1016d61f0
+FUNC 1016d61fc name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping7EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping7EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc98) = (int)param_1;
+  return;
+}
+END 1016d61fc
+FUNC 1016d6208 name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping8EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping8EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xc9c) = (int)param_1;
+  return;
+}
+END 1016d6208
+FUNC 1016d6214 name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping9EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_14OnUserMapping9EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xca0) = (int)param_1;
+  return;
+}
+END 1016d6214
+FUNC 1016d6220 name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_15OnUserMapping10EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_15OnUserMapping10EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xca4) = (int)param_1;
+  return;
+}
+END 1016d6220
+FUNC 1016d622c name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_15OnUserMapping11EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=8
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvfEE14SProcessorFuncIXadL_ZNS1_15OnUserMapping11EfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  *(int *)(param_2 + 0xca8) = (int)param_1;
+  return;
+}
+END 1016d622c
+FUNC 1016d6238 name=__ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_16OnScaleAndTuningES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_ body=1 lines=51
+
+void __ZZN6detail16TMemberFuncTypesIM19OMidiScaleProcessorFvPvEE14SProcessorFuncIXadL_ZNS1_16OnScaleAndTuningES2_EEEEPFvS2_S2_EvENUlS2_S2_E_8__invokeES2_S2_
+               (long param_1,long *param_2)
+
+{
+  undefined8 *puVar1;
+  undefined8 uVar2;
+  long lVar3;
+  long lVar4;
+  long lVar5;
+  float fVar6;
+  
+  puVar1 = (undefined8 *)*param_2;
+  *(bool *)(param_1 + 0xc5c) = param_2[1] != 0;
+  if (puVar1 == (undefined8 *)0x0) {
+    *(undefined8 *)(param_1 + 0xc60) = 0x1058f00e0;
+    (**(code **)(param_1 + 0xcc8))(0xbf800000,*(undefined8 *)(param_1 + 0xcd0));
+                    /* WARNING: Could not recover jumptable at 0x0001016d1c9c. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+    (**(code **)(param_1 + 0xce0))(0,*(undefined8 *)(param_1 + 0xce8));
+    return;
+  }
+  *(undefined8 *)(param_1 + 0xc60) = *puVar1;
+  *(undefined4 *)(param_1 + 0xc68) = *(undefined4 *)(puVar1 + 1);
+  uVar2 = func_0x000103b521fc();
+  lVar3 = func_0x000103b51cb4();
+  lVar4 = func_0x000103b51cb4(uVar2);
+  lVar4 = lVar4 + 0xaf0;
+  lVar5 = lVar3;
+  if (lVar3 != lVar4) {
+    do {
+      lVar5 = lVar3;
+      if (lVar3 + 0x18 == *(long *)(param_1 + 0xc60)) break;
+      lVar3 = lVar3 + 0x50;
+      lVar5 = lVar4;
+    } while (lVar3 != lVar4);
+  }
+  lVar4 = func_0x000103b51cb4(uVar2);
+  if (lVar5 == lVar4 + 0xaf0) {
+    fVar6 = -1.0;
+  }
+  else {
+    lVar4 = func_0x000103b51cb4(uVar2);
+    fVar6 = (float)((lVar5 - lVar4 >> 4) * -0x3333333333333333);
+  }
+  (**(code **)(param_1 + 0xcc8))(fVar6,*(undefined8 *)(param_1 + 0xcd0));
+                    /* WARNING: Could not recover jumptable at 0x0001016d1ccc. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(param_1 + 0xce0))((float)*(int *)(param_1 + 0xc68),*(undefined8 *)(param_1 + 0xce8));
+  return;
+}
+END 1016d6238
+
+== (6) CONST-POOL DEFAULTS [B] (DataProbe; hex column is byte-reversed, le64 column is authoritative) ==
+== memory at 104d0e060 (64 bytes from -16) ==
+104d0e050: 0000000000000000  le64=x0000000000000000
+104d0e058: 0000000000000000  le64=x0000000000000000
+104d0e060: 706d6f6320746f6e  le64=x6e6f7420636f6d70
+104d0e068: 0000646573736572  le64=x7265737365640000
+104d0e070: 0000000100000001  le64=x0100000001000000
+104d0e078: 0000000100000001  le64=x0100000001000000
+104d0e080: 64617461666d7420  le64=x20746d6661746164
+104d0e088: 0000000112091d00  le64=x001d091201000000
+== memory at 104ccaa28 (64 bytes from -16) ==
+104ccaa18: 000000100000000c  le64=x0c00000010000000
+104ccaa20: 00000040ffffffff  le64=xffffffff40000000
+104ccaa28: 0000010000000080  le64=x8000000000010000
+104ccaa30: 0000000000000000  le64=x0000000000000000
+104ccaa38: 0000007f00000000  le64=x000000007f000000
+104ccaa40: 321f262b1f231000  le64=x0010231f2b261f32
+104ccaa48: 7373267373731900  le64=x0019737373267373
+104ccaa50: 1d12181212120500  le64=x000512121218121d
+== memory at 104d58928 (64 bytes from -16) ==
+104d58918: 0000000000000000  le64=x0000000000000000
+104d58920: 0000000000000001  le64=x0100000000000000
+104d58928: 0000001800000000  le64=x0000000018000000
+104d58930: 0000000c00000000  le64=x000000000c000000
+104d58938: 4168737550543631  le64=x3136545075736841
+104d58940: 6f5070696c467070  le64=x7070466c6970506f
+104d58948: 7375505438007472  le64=x7274003854507573
+104d58950: 5436310069704168  le64=x6841706900313654
+== memory at 104ccad68 (64 bytes from -16) ==
+104ccad58: 0000000000000000  le64=x0000000000000000
+104ccad60: 0000000000000000  le64=x0000000000000000
+104ccad68: 4300000000000000  le64=x0000000000000043
+104ccad70: 3f8000003f800000  le64=x0000803f0000803f
+104ccad78: 000000003f800000  le64=x0000803f00000000
+104ccad80: 0000000000000000  le64=x0000000000000000
+104ccad88: 0000000043000000  le64=x0000004300000000
+104ccad90: 3e8a3d713ac49ba6  le64=xa69bc43a713d8a3e
+
+  DECODES:
+  Chord Shift1-6 defaults (memset_pattern16 from 0x104d0e070, 0x18 B):
+    0x104d0e070: le64=x0100000001000000 x2 -> six int32 = 1
+  Pitch ctor defaults: 0x104ccaa30 -> Pitch(+0xc50)=0;
+    0x104ccaa38 -> {Lowest(+0xc58)=0, Range(+0xc5c)=127};
+    0x104d58930 -> {RangeMode(+0xc60)=0, StepWidth(+0xc64)=12}
+  Velocity ctor defaults (for reference, velocity dossier):
+    0x104ccad70 {1.0f,1.0f} -> Lowest pair; 0x104ccad78 {0.0f,1.0f} -> Random/Drive;
+    0x104ccad80 {0.0f,1.0f} -> Compand/Lowest-copy; 0x104ccad88 {0.0f,128.0f} -> MaxOut-copy/MinOut;
+    +0xc8c <- 0x43000000 (128.0f = Range)
+  NoteLength ctor defaults: 0x104cdbb30 double 4.0 -> SyncedLength(+0x50)='1/1';
+    0x104cdbb38 double 100.0 -> TimeLength(+0x58) ms; ctor Gate(+0x60)=1.0;
+    0x104cdbb50 {0.0f, 60000.0f} -> Balance(+0x68)=0, DecayTime(+0x6c)=60000 (off);
+    +0x70 DecayKeyScale = 0
+
+== (7) NOTELENGTH SYNCED-LENGTH TABLE 0x10571ae40 {double beats, char* name} x13 (PairDump [B]) ==
+PAIRS 10571ae40 count=20
+[00] 1047aedfd -> 0.0000000000  "0"
+[01] 1048c8aa5 -> 0.0625000000  "1/64"
+[02] 1048c8148 -> 0.0833333333  "1/48"
+[03] 1047f94e5 -> 0.1250000000  "1/32"
+[04] 1048c814d -> 0.1666666667  "1/24"
+[05] 1047f94cf -> 0.2500000000  "1/16"
+[06] 1048c8152 -> 0.3333333333  "1/12"
+[07] 1047f94bd -> 0.5000000000  "1/8"
+[08] 1048c8157 -> 0.6666666667  "1/6"
+[09] 1047f94b9 -> 1.0000000000  "1/4"
+[10] 1048c815b -> 1.3333333333  "1/3"
+[11] 1048e7fa0 -> 2.0000000000  "1/2"
+[12] 1048c88fe -> 4.0000000000  "1/1"
+[13] 00000000 -> 0.0000000000  ""
+[14] 00000000 -> 0.0000000000  ""
+[15] 00000000 -> 0.0000000000  ""
+[16] 3f450dcd3f0fa42f -> 0.0000002132  ""
+[17] 3ed8a5a03e0bd324 -> 0.0054434100  ""
+[18] 3f7ce1893f6e7989 -> 0.0014045259  ""
+[19] 3f5bed393f2c2c14 -> 0.0000014431  ""
+
+== (8) CHORD/SCALE ADDITIONAL STRINGS (devicekit/push-model names seen near the family) ==
+  0x1048f6e40..0x1048f6ecd: 'Crescendo', AMidiChordUnit, AMidiChordModule,
+  AMidiChordModule.LearnChord, IsScaleDegrees, Velocity1..Velocity6
+  (StringsInRange capture, arpeggiator evidence file section 10 pool)
+  0x1048c7e35..0x1048c7f1c: ShiftScaleDegrees1..6, Chance1..6, StrumTension,
+  StrumCrescendo, PlayDuplicateNotesWhenStrumming, Learning (flip property names)
+  Scale device global default scale object pointer: 0x1058f00e0 (Scale ctor);
+  scale-list walk: entries stride 0x50, first member at +0x18 (ScaleAndTuning setters)

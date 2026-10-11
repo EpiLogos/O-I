@@ -1,0 +1,12 @@
+.native-field-handle{cursor:grab;outline:none}
+.native-field-handle:active,.native-field-handle.is-dragging{cursor:grabbing}
+.native-field-handle[aria-disabled=true]{cursor:default;opacity:.45}
+.native-field-handle-hit{fill:transparent;stroke:none}
+.native-field-handle-mark{fill:var(--accent,#b8bd60);stroke:#181818;stroke-width:1.5}
+.native-field-handle.is-ring .native-field-handle-mark{fill:none;stroke:var(--accent,#b8bd60);stroke-width:2.5}
+.native-field-handle.is-bar .native-field-handle-mark{fill:none;stroke:var(--accent,#b8bd60);stroke-width:3;stroke-linecap:round}
+.native-field-handle-focus{fill:none;stroke:var(--accent,#ffbe00);stroke-width:1.2;opacity:0}
+.native-field-handle:focus-visible .native-field-handle-focus,.native-field-handle.is-dragging .native-field-handle-focus{opacity:1}
+.native-field-handle:focus-visible .native-field-handle-mark,.native-field-handle.is-dragging .native-field-handle-mark{stroke:var(--accent,#ffbe00);stroke-width:2}
+.native-field-handle-halo{fill:none;stroke:#dec38d;stroke-width:1;stroke-dasharray:2 2}
+.native-field-handle-hint{fill:#dec38d;font:9px ui-monospace,SFMono-Regular,monospace;pointer-events:none}

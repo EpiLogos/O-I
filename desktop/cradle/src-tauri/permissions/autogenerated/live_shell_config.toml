@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-live-shell-config"
+description = "Enables the live_shell_config command without any pre-configured scope."
+commands.allow = ["live_shell_config"]
+
+[[permission]]
+identifier = "deny-live-shell-config"
+description = "Denies the live_shell_config command without any pre-configured scope."
+commands.deny = ["live_shell_config"]

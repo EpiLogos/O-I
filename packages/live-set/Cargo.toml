@@ -1,0 +1,9 @@
+[package]
+name = "live-set"
+version = "0.1.0"
+edition = "2021"
+description = "Document engine for the Live shell: typed read/write of the Live document family (.als/.adv/.adg), per session-model.md"
+
+[dependencies]
+flate2 = "1"
+quick-xml = "0.36"

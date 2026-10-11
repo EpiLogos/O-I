@@ -3,9 +3,8 @@ import type { EvaluatedEntityPose } from '../entityPose';
 import type { ForceEmitterState, RelationalCarrierState } from '../forceRuntime';
 import { CHAKRA_BY_ID } from './chakraSemantics';
 import { mapChakrasToAnchors } from './chakraProfile';
-import type { SemanticBinding, SemanticFieldConfig, SemanticFieldState, SpatialColorFieldState } from './semanticTypes';
+import type { SemanticFieldConfig, SemanticFieldState, SpatialColorFieldState } from './semanticTypes';
 
-const clamp01=(v:number)=>Math.max(0,Math.min(1,v));
 const clamp=(v:number,a:number,b:number)=>Math.max(a,Math.min(b,v));
 
 interface CarrierSample {id:string;position:{x:number;y:number;z:number};speed:number;forceStrength:number;forceSpin:number;forceRadius:number;entityTint?:string;}

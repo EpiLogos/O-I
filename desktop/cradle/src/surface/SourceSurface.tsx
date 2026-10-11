@@ -15,6 +15,7 @@ import {TextEditor,EditorCommands,type EditorHandle} from "../editor/lazy";
 
 import { useEffect, useRef, useState } from "react";
 import { readDraft, writeDraft } from "../workspace/drafts";
+import {registerDocumentCheckpoint} from '../document/frame';
 import { SourceHistory } from "./SourceHistory";
 import { SharedFieldMaterial } from "../receiving/SharedFieldMaterial";
 import { DayDieFace } from "../receiving/DayDieFace";
@@ -82,6 +83,18 @@ export function SourceSurface(props: SourceSurfaceProps) {
   // back to a stale clean layer.
   const lastSynced = useRef<string | null>(null);
   const pendingEdits = useRef(0);
+  const sourceOrigin=useRef(binding.ref);
+  const sourceCheckpoint=useRef({ref:binding.ref,buffer});sourceCheckpoint.current={ref:binding.ref,buffer};
+  useEffect(()=>registerDocumentCheckpoint(binding.id,async()=>{
+    const held=sourceCheckpoint.current;if(!held.ref)return;
+    if(held.ref!==sourceOrigin.current)throw Error("This retained source changed identity before its local checkpoint. Keep its view open.");
+    const native=held.buffer,draft=initialDraft.current;
+    const content=lastSynced.current??draft?.content??native?.content;
+    if(content===undefined)return;
+    if(!native){if(draft)writeDraft(held.ref,draft);return;}
+    const base=lastSynced.current===null&&draft?draft:{base_revision:native.base_revision,saved_content:native.saved_content};
+    if(content!==base.saved_content||native.dirty)writeDraft(held.ref,{content,base_revision:base.base_revision,saved_content:base.saved_content});
+  }),[binding.id]);
   useEffect(() => {
     if (!buffer) return;
     if (pendingEdits.current > 0) return;
@@ -196,17 +209,20 @@ export function SourceSurface(props: SourceSurfaceProps) {
     >
       {draftError && <p role="alert">{draftError}</p>}
       {error && <p className="source-note" role="alert">{error}</p>}
-      {dayDocument&&<div hidden={!dieView} style={{height:"100%",minHeight:0}}><DayDieFace payload={dayDocument.template_payload} revision={buffer.base_revision} sourceRef={binding.ref} documentId={dayDocument.document_id??""} fields={dayDocument.fields??[]} project={dayProject}/></div>}
-      {documentView&&<div hidden={view!=="rendered"} style={{height:"100%",minHeight:0}}><SourceDocumentHost binding={binding} text={text} bufferDirty={buffer.dirty} conflicted={saveFailed} onComposeSave={async composed=>{
+      {dayDocument&&<div hidden={!dieView} style={{height:"100%",minHeight:0}}><DayDieFace bindingId={binding.id} payload={dayDocument.template_payload} revision={buffer.base_revision} sourceRef={binding.ref} documentId={dayDocument.document_id??""} fields={dayDocument.fields??[]} project={dayProject}/></div>}
+      {documentView&&<div hidden={view!=="rendered"} style={{height:"100%",minHeight:0}}><SourceDocumentHost binding={binding} text={text} savedContent={buffer.saved_content} baseRevision={buffer.base_revision} bufferDirty={buffer.dirty} conflicted={saveFailed} onComposeSave={async (composed,isCurrent)=>{
           // The page save is one ordered act: surface bookkeeping, the
           // buffer edit, then the CAS save — awaited, never racing.
+          if(!isCurrent())throw Error('The originating source owner retired before composing Save.');
           setText(composed);
           lastSynced.current=composed;
           pendingEdits.current+=1;
           try{
             if(binding.ref){try{writeDraft(binding.ref,{content:composed,base_revision:buffer.base_revision,saved_content:buffer.saved_content});setDraftError(null);}catch{setDraftError("This draft could not be saved on this device. Keep this window open until the source is saved.");}}
             await kernel.editBuffer(binding.ref!,composed);
+            if(!isCurrent()||lastSynced.current!==composed)throw Error('The source changed while composing page Save; both working copies remain retained.');
             await kernel.saveSource(binding.ref!);
+            if(!isCurrent())throw Error('The originating source owner retired after Save; verify native readback before clearing local edits.');
           }finally{pendingEdits.current-=1;}
         }}/></div>}
       {historyOpen && <SourceHistory sourceRef={binding.ref} revision={buffer.conflict?.current_revision ?? buffer.base_revision} />}

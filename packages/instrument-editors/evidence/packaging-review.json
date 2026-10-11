@@ -1,0 +1,497 @@
+{
+  "schema": "oi.instrument-editor.packaging-review/v1",
+  "reviewer": {
+    "role": "independent internal worker",
+    "model": "gpt-6.1-sol",
+    "implemented_reviewed_files": false
+  },
+  "reviewed_at": "2026-10-08T09:35:52.190692+00:00",
+  "reviewed_sources": [
+    {
+      "path": "packages/instrument-editors/src/receiving/vite.mjs",
+      "sha256": "4bab890b2a2a5624d21db4dc4e96f687ab07cff0ebd99c4349949c105c6b6dff"
+    },
+    {
+      "path": "packages/instrument-editors/build.config.mjs",
+      "sha256": "5960e74743c1cecb6f19c4452d447eb2a6ae417b73cca8ea7463b3fa9f94b0d4"
+    },
+    {
+      "path": "packages/instrument-editors/package.json",
+      "sha256": "0c882284bbec12e9bb5c5f14d2c9e7b16b1fb30d2748093eb0e235fd7def5f84"
+    },
+    {
+      "path": "packages/instrument-editors/dev/vite.config.mjs",
+      "sha256": "42dd040fec650fbeba439b1923bd6100130c108ca168ce202206c80b2d093b3e"
+    }
+  ],
+  "source_basis": [
+    "packages/live-shell/ui/vite.config.ts",
+    "desktop/cradle/expressions-app/vite.config.ts",
+    "desktop/cradle/vite.config.ts",
+    "desktop/cradle/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js",
+    "desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/psychogeographic/renderer.ts"
+  ],
+  "confirmed": [
+    {
+      "claim": "Package exposes production source editors, receiving panels/contributions and ./vite integration without a dev entrance import",
+      "basis": "package.json exports, src/index.ts, src/receiving/panels.tsx; panels imports shell extension types only"
+    },
+    {
+      "claim": "Research aliases address actual in-tree source owners rather than substitutes",
+      "basis": "Six @research-canvas source aliases and browserExporter match native Expressions configuration"
+    },
+    {
+      "claim": "d3 aliases resolve actual installed modules at configuration load",
+      "basis": "createRequire.resolve fallback paths; parent production build configuration loaded successfully"
+    },
+    {
+      "claim": "Worker bundling recipe is adopted from native Expressions",
+      "basis": "Same complete esbuild bundle:true/browser/iife/es2022/minify worker recipe; current exact alias repairs source routing. Original emitted worker failure is retained separately."
+    },
+    {
+      "claim": "Direct production source files do not import controlled evidence/dev entrance or contain test bridge/admin-home literals",
+      "basis": "Source-only static scan",
+      "hits": []
+    },
+    {
+      "claim": "Library build keeps React external and disables Cradle walk entry",
+      "basis": "build.config.mjs external regex and __CRADLE_WALK__:false; actual pre-repair output imports React externally and has no scanned walk entry literal."
+    },
+    {
+      "claim": "Reusable receiving adapter preserves host aliases and host optimizer exclusions",
+      "basis": "Current vite.mjs source plus actual installed Vite mergeConfigRecursively/mergeAlias implementation; standalone configs disclose cradle React root."
+    },
+    {
+      "claim": "An existing shell can import production source exports and the ./vite helper without the dev entrance",
+      "basis": "Package source export targets and real receiving plugin; no dev import needed. Actual existing-shell editor registration/mount/build remains unverified here."
+    }
+  ],
+  "defects": [
+    {
+      "id": "worker-alias-routing",
+      "severity": "P1",
+      "status": "source-repaired-parent-runtime-conformance-passed",
+      "finding": "MapLibre string prefix alias rewrites its ?url worker before custom pre-plugin matching, bypassing the complete offline worker bundler.",
+      "basis": [
+        "receiving/vite.mjs alias maplibre-gl and bare-only resolveId",
+        "native renderer.ts:2 imports worker query",
+        "installed Vite alias plugin at231/235 rewrites then recursively resolves; alias plugin precedes prePlugins at48644-48647"
+      ],
+      "repair": "Use an exact /^maplibre-gl$/ alias or recognize the actual rewritten worker path.",
+      "current_repair_review": {
+        "basis": "receiving/vite.mjs uses /^maplibre-gl$/; the native worker query remains unaliased and matches resolveId. Same native bundle:true browser/IIFE worker load retained.",
+        "runtime_status": "Actual shell Vite resolution and real offline MapLibre worker browser update/resize passed in parent evidence.",
+        "runtime_evidence": "packages/instrument-editors/evidence/bundler-conformance.json; independently inspected test and result, not rerun by reviewer."
+      }
+    },
+    {
+      "id": "host-react-runtime",
+      "severity": "P2",
+      "status": "source-repaired-parent-runtime-conformance-passed",
+      "finding": "Plugin canonical React aliases override receiving host aliases. Native Expressions owns React19.3.0 while cradle owns18.3.1; current live-shell18 matches but adding plugin to Expressions changes its runtime.",
+      "basis": [
+        "native Expressions vite.config.ts React aliases",
+        "installed package versions18.3.1 and19.3.0",
+        "installed Vite mergeAlias17460 gives returned aliases precedence and runConfigHook66998 merges plugin return"
+      ],
+      "repair": "Adopt/preserve receiving host canonical React/react-dom paths, including subpaths; align peer range with actual supported receiving contract.",
+      "current_repair_review": {
+        "basis": "hasAlias preserves the receiving config React/react-dom aliases. Otherwise actual package.json resolution uses reactRoot or receiving config.root. Both standalone configs explicitly use cradle; the actual native Expressions string aliases cover JSX/client subpaths.",
+        "runtime_status": "Actual shell root resolves one React/jsx/client identity; native aliases retained. Full React19 editor support remains unproven/outside ^18.3.1 peer contract.",
+        "runtime_evidence": "packages/instrument-editors/evidence/bundler-conformance.json; independently inspected test and result, not rerun by reviewer."
+      }
+    },
+    {
+      "id": "optimizer-worker-protection",
+      "severity": "P2",
+      "status": "source-repaired-parent-runtime-conformance-passed",
+      "finding": "Reusable plugin omits MapLibre dependency optimizer exclusions present only in dev config; an existing receiving shell does not inherit the known worker protection.",
+      "basis": "dev/vite.config.mjs excludes maplibre-gl and worker query; reusable config returns only resolve",
+      "repair": "Include necessary worker optimizer exclusions in production receiving plugin without replacing receiver entries.",
+      "current_repair_review": {
+        "basis": "Reusable plugin returns optimizeDeps.exclude for MapLibre and exact worker query. Installed Vite mergeConfigRecursively concatenates existing and returned arrays at17438-17440, preserving receiver exclusions.",
+        "runtime_status": "Actual shell Vite resolution and real offline MapLibre worker browser update/resize passed in parent evidence.",
+        "runtime_evidence": "packages/instrument-editors/evidence/bundler-conformance.json; independently inspected test and result, not rerun by reviewer."
+      }
+    }
+  ],
+  "parent_build": {
+    "session": 59100,
+    "log": "/tmp/oi-editor-production-import.log",
+    "completion_observed": true,
+    "status": "completed-pre-repair-build",
+    "emitted_output_present": true,
+    "warnings_observed": [
+      "Ignored use client directives in adopted xyflow/tiptap/Mantine modules",
+      "Removed misplaced PURE comments in zod"
+    ],
+    "modules_transformed": 1948,
+    "reported_duration": "33m39s",
+    "process_exit_code_independently_polled": false,
+    "output_sizes": [
+      {
+        "path": "packages/instrument-editors/dist/maplibre-gl-CqQJm6Bv.js",
+        "bytes": 1422562
+      },
+      {
+        "path": "packages/instrument-editors/dist/instrument-editors.js",
+        "bytes": 684
+      },
+      {
+        "path": "packages/instrument-editors/dist/index-Cqo76AjV.js",
+        "bytes": 5283877
+      },
+      {
+        "path": "packages/instrument-editors/dist/native-D-bZ0OKf.js",
+        "bytes": 668441
+      },
+      {
+        "path": "packages/instrument-editors/dist/module-CnqjwKgs.js",
+        "bytes": 133000
+      },
+      {
+        "path": "packages/instrument-editors/dist/TextEditor-DoaBNnUf.js",
+        "bytes": 1240639
+      },
+      {
+        "path": "packages/instrument-editors/dist/style.css",
+        "bytes": 919968
+      },
+      {
+        "path": "packages/instrument-editors/dist/assets/layout.worker-DXYBx3rt.js",
+        "bytes": 40440
+      }
+    ]
+  },
+  "unverified": [
+    "Actual existing-shell editor registration/mount build (conformance tests resolver and real worker, not editor registration)",
+    "Full editor React19 support (alias preservation alone is not support)",
+    "Latest whole-package strict typecheck/build: parent reports shared Minimap filename case collision; native UI owner repair acknowledged, final results not yet claimed"
+  ],
+  "execution_scope": {
+    "heavy_builds_started": 0,
+    "native_mutations": 0,
+    "browser_runs": 0,
+    "shared_source_edits": 0,
+    "receipt_only": true
+  },
+  "conclusion": "All three packaging defects have source repairs and actual parent runtime conformance independently inspected. Earlier fixed-adapter production build passed; original worker/probe failures remain attributed separately. Palace private-input refresh gap is repaired and its real controlled-native browser regression passes with exact refused-write readback. Latest whole-package strict/build remains unverified due the reported shared filename collision; no broader source/runtime acceptance is inferred.",
+  "original_review": {
+    "reviewed_at": "2026-10-08T08:44:08.405399+00:00",
+    "reviewed_sources": [
+      {
+        "path": "packages/instrument-editors/src/receiving/vite.mjs",
+        "sha256": "10bad2bd62bc0cbc3c0c97b1cc096ca312ae1dc2b2d47054fec39dc5e204a77c"
+      },
+      {
+        "path": "packages/instrument-editors/build.config.mjs",
+        "sha256": "9f7256f2374ba9ebe787518b4773835fa8a44d0d53610b414973aef95af2d101"
+      },
+      {
+        "path": "packages/instrument-editors/package.json",
+        "sha256": "0c882284bbec12e9bb5c5f14d2c9e7b16b1fb30d2748093eb0e235fd7def5f84"
+      },
+      {
+        "path": "packages/instrument-editors/dev/vite.config.mjs",
+        "sha256": "a3fe9d093cee3587e22abd7925348c24ec979e36d6eb1ceaa7012688db4977e8"
+      }
+    ],
+    "defects": [
+      {
+        "id": "worker-alias-routing",
+        "severity": "P1",
+        "status": "reported-to-parent",
+        "finding": "MapLibre string prefix alias rewrites its ?url worker before custom pre-plugin matching, bypassing the complete offline worker bundler.",
+        "basis": [
+          "receiving/vite.mjs alias maplibre-gl and bare-only resolveId",
+          "native renderer.ts:2 imports worker query",
+          "installed Vite alias plugin at231/235 rewrites then recursively resolves; alias plugin precedes prePlugins at48644-48647"
+        ],
+        "repair": "Use an exact /^maplibre-gl$/ alias or recognize the actual rewritten worker path."
+      },
+      {
+        "id": "host-react-runtime",
+        "severity": "P2",
+        "status": "reported-to-parent",
+        "finding": "Plugin canonical React aliases override receiving host aliases. Native Expressions owns React19.3.0 while cradle owns18.3.1; current live-shell18 matches but adding plugin to Expressions changes its runtime.",
+        "basis": [
+          "native Expressions vite.config.ts React aliases",
+          "installed package versions18.3.1 and19.3.0",
+          "installed Vite mergeAlias17460 gives returned aliases precedence and runConfigHook66998 merges plugin return"
+        ],
+        "repair": "Adopt/preserve receiving host canonical React/react-dom paths, including subpaths; align peer range with actual supported receiving contract."
+      },
+      {
+        "id": "optimizer-worker-protection",
+        "severity": "P2",
+        "status": "reported-to-parent",
+        "finding": "Reusable plugin omits MapLibre dependency optimizer exclusions present only in dev config; an existing receiving shell does not inherit the known worker protection.",
+        "basis": "dev/vite.config.mjs excludes maplibre-gl and worker query; reusable config returns only resolve",
+        "repair": "Include necessary worker optimizer exclusions in production receiving plugin without replacing receiver entries."
+      }
+    ]
+  },
+  "original_worker_output_failure": {
+    "file": "packages/instrument-editors/dist/index-Cqo76AjV.js",
+    "artifact_sha256": "2f64477dc81e082b47a2aa73b4dbac1426e307be8b3c7986e2416323f94459cc",
+    "data_url_offset": 4324667,
+    "decoded_bytes": 19063,
+    "imports": [
+      "./maplibre-gl-shared.mjs"
+    ],
+    "status": "pre-repair-failure-preserved",
+    "finding": "Raw data URL worker contains a relative shared-module import; this is not a complete offline worker bundle."
+  },
+  "emitted_output_review": {
+    "scope": "Existing pre-repair parent production build; not a new build of repaired source.",
+    "js_files_scanned": 7,
+    "excluded_literal_patterns": [
+      "/Users/admin",
+      "modulation-native-result",
+      "native-result.json",
+      "expression:modulation-editor-",
+      "__cradle.walk",
+      "127.0.0.1:4186",
+      "127.0.0.1:4298"
+    ],
+    "excluded_literal_hits": [],
+    "external_react_imports": [
+      "react",
+      "react-dom",
+      "react-dom/client",
+      "react/jsx-runtime"
+    ],
+    "claim": "No scanned native-home, dev-evidence or controlled bridge literals; actual React imports are external. The original worker payload failed independently as recorded."
+  },
+  "followup_sources": [
+    {
+      "path": "packages/instrument-editors/tests/bundler-run.mjs",
+      "sha256": "b519254804297f59d8a9a51d119625c2da70fd009485ae28d5520d2b53643aa5"
+    },
+    {
+      "path": "packages/instrument-editors/evidence/bundler-conformance.json",
+      "sha256": "8034413c068ea69809c0c3668f3464da7d762fe9ba4e517f268a813799acb729"
+    },
+    {
+      "path": "packages/instrument-editors/evidence/bundler-initial-failure.json",
+      "sha256": "2d2919cc9cd11b1b9521068a6cf8dab24193125222c1121084dac31d1c576bf0"
+    },
+    {
+      "path": "packages/instrument-editors/evidence/bundler-render-probe-failure.json",
+      "sha256": "8a6cbaec5903f940173a12d8dda227c9872d310a27e98bd5a7534746471ca5c3"
+    },
+    {
+      "path": "packages/instrument-editors/dev/nativeWorkbench.ts",
+      "sha256": "c54e1bb37da8e197fccc79d5dca9bc6441c1ff4e97b6a2f5cdfb169fcc605c73"
+    },
+    {
+      "path": "packages/instrument-editors/dev/nativeRecovery.ts",
+      "sha256": "e66085b4e3ccfc93529bb02557827919dfc3ce894e040a9aae9b771e22a9161a"
+    },
+    {
+      "path": "packages/instrument-editors/src/palace/PalaceEditor.tsx",
+      "sha256": "63a999b92cddae76f7cea8cd0af727578f0b733df2455904fcbc9caa4d54776c"
+    },
+    {
+      "path": "desktop/cradle/expressions-app/field-studies-journeys/src/palaceInstrument.tsx",
+      "sha256": "dd0c0b3ceb48ec1f14492bf4c99d3b64496b537cb9818ab432ea90f37b2673dc"
+    },
+    {
+      "path": "desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts",
+      "sha256": "8bd18b9bb699b43ea6790d696871b5a3e7dacac6406248aaa11e3c7808f4745d"
+    },
+    {
+      "path": "desktop/cradle/expressions-app/field-studies-journeys/src/store.ts",
+      "sha256": "81a8d6e282b2813780e95f678e21b925a9c807dd0e65e48d9260d57c4742bba1"
+    }
+  ],
+  "parent_conformance_review": {
+    "path": "packages/instrument-editors/evidence/bundler-conformance.json",
+    "independently_rerun": false,
+    "reviewed_runner": "packages/instrument-editors/tests/bundler-run.mjs",
+    "actual_receiving_vite": "6.4.4",
+    "passed": true,
+    "errors": [],
+    "checks": [
+      {
+        "name": "shell singleton react",
+        "resolved": "packages/live-shell/ui/node_modules/react/index.js"
+      },
+      {
+        "name": "shell singleton react/jsx-runtime",
+        "resolved": "packages/live-shell/ui/node_modules/react/jsx-runtime.js"
+      },
+      {
+        "name": "shell singleton react-dom/client",
+        "resolved": "packages/live-shell/ui/node_modules/react-dom/client.js"
+      },
+      {
+        "name": "preserved native alias react",
+        "resolved": "desktop/cradle/expressions-app/node_modules/react/index.js"
+      },
+      {
+        "name": "preserved native alias react/jsx-runtime",
+        "resolved": "desktop/cradle/expressions-app/node_modules/react/jsx-runtime.js"
+      },
+      {
+        "name": "preserved native alias react-dom/client",
+        "resolved": "desktop/cradle/expressions-app/node_modules/react-dom/client.js"
+      },
+      {
+        "name": "complete worker route and optimizer protection",
+        "receivers": 2
+      },
+      {
+        "name": "actual offline MapLibre worker",
+        "rendered_initial": true,
+        "set_data_revision": 2,
+        "resize": true,
+        "removed": true,
+        "external_requests": []
+      }
+    ],
+    "native_claims": false,
+    "scope": "Real receiving-shell Vite resolution plus real browser MapLibre GeoJSON worker setData/resize/remove. Controlled mathematical points, not native source facets. Native React19 alias preservation is tested; full editor React19 support is not."
+  },
+  "conformance_failure_attribution": [
+    {
+      "path": "packages/instrument-editors/evidence/bundler-initial-failure.json",
+      "attribution": "Conformance probe used an unsupported MapLibre default import; the actual mature renderer uses a namespace dynamic import. Preserved probe failure, not a production renderer regression."
+    },
+    {
+      "path": "packages/instrument-editors/evidence/bundler-render-probe-failure.json",
+      "attribution": "Probe awaited a feature ID not present in its earlier rendered fixture. The retained diagnostic shows loaded source and rendered feature; final explicit id7 fixture passes. Preserved probe failure separately from initial production worker routing failure."
+    }
+  ],
+  "fixed_production_build_review": {
+    "log": "/tmp/oi-editor-production-import-fixed.log",
+    "completion_observed": true,
+    "duration": "2m49s",
+    "independently_built": false,
+    "output_sizes": [
+      {
+        "path": "packages/instrument-editors/dist/maplibre-gl-CqQJm6Bv.js",
+        "bytes": 1422562
+      },
+      {
+        "path": "packages/instrument-editors/dist/instrument-editors.js",
+        "bytes": 684
+      },
+      {
+        "path": "packages/instrument-editors/dist/native-D-bZ0OKf.js",
+        "bytes": 668441
+      },
+      {
+        "path": "packages/instrument-editors/dist/module-CnqjwKgs.js",
+        "bytes": 133000
+      },
+      {
+        "path": "packages/instrument-editors/dist/style.css",
+        "bytes": 919968
+      },
+      {
+        "path": "packages/instrument-editors/dist/index-CQuzQAzZ.js",
+        "bytes": 5771716
+      },
+      {
+        "path": "packages/instrument-editors/dist/TextEditor-vwEM4KRY.js",
+        "bytes": 1240639
+      },
+      {
+        "path": "packages/instrument-editors/dist/assets/layout.worker-DXYBx3rt.js",
+        "bytes": 40440
+      }
+    ],
+    "excluded_literal_hits": [],
+    "external_react_imports": [
+      "react",
+      "react-dom",
+      "react-dom/client",
+      "react/jsx-runtime"
+    ],
+    "note": "Earlier parent build retained above. This completed repaired-adapter build predates the new Palace host-stamp changes; final strict/test/build results are parent-owned and pending in this review."
+  },
+  "palace_followup_review": {
+    "scope": "Independent source review; no tests/browser/native mutations run by reviewer.",
+    "confirmed": [
+      "authoredRevision uses real DocumentStore.revision, including acknowledge/Undo rather than native revision alone",
+      "canCompose excludes receiving lease, NativeWorking busy/pending, DocumentStore transaction and real prepareCompositionEdit differences",
+      "composeExpression rechecks actual basis/transaction/pending/diff before native dispatch within one private receiving lease",
+      "nativeRecovery validates exact Expression, guarded advanceClean identity/revision and exact acknowledged native document before DocumentStore.acknowledge",
+      "Palace region draft retains authoring stamp and checks canCompose plus stamp before and after fresh native read"
+    ],
+    "defects": [
+      {
+        "id": "palace-unsubmitted-room-name-rebase",
+        "severity": "P2",
+        "status": "source-repaired-parent-real-native-browser-regression-passed",
+        "path": "packages/instrument-editors/src/palace/PalaceEditor.tsx",
+        "line": 26,
+        "finding": "Refresh refuses rebasing only when state.current.dirty. A typed, unsubmitted newName is a private draft but dirty remains false. A revision-driven fresh read can silently adopt new basis/authoredRevision while retaining the name; subsequent Add/Save escapes the stale-author stamp refusal.",
+        "reproduction": "Type room name without Add; advance native/store revision and trigger props.revision refresh; then Add and Save.",
+        "required_repair": "Retain newName in the current state guard and preserve its captured authoring stamp until explicit discard/Revert.",
+        "original_status": "reported-to-parent",
+        "repair_review": "Current state ref retains newName; refresh protects dirty or any typed name and discloses source/author advancement without rebasing. Revert is available for either draft and clears name only after successful exact Expression reread.",
+        "runtime_evidence": "packages/instrument-editors/evidence/palace-draft-browser-result.json",
+        "independently_rerun": false
+      }
+    ]
+  },
+  "palace_draft_repair_verification": {
+    "basis": [
+      {
+        "path": "packages/instrument-editors/src/palace/PalaceEditor.tsx",
+        "sha256": "63a999b92cddae76f7cea8cd0af727578f0b733df2455904fcbc9caa4d54776c"
+      },
+      {
+        "path": "packages/instrument-editors/tests/palace-draft-visual.mjs",
+        "sha256": "866bafa813bc1da2a123410af8fc7077aae87fe61eeb8eb283200bff088ca66a"
+      },
+      {
+        "path": "packages/instrument-editors/evidence/palace-draft-browser-result.json",
+        "sha256": "f725be7edbfbde018e1bb5b1e656fe8a9f6fe5630767ecc6159a4592c06dfe67"
+      }
+    ],
+    "review_type": "Independent source and actual parent evidence inspection; no rerun or native mutation by reviewer",
+    "controlled_native": true,
+    "expression_ref": "expression:instrument-editor-0368824a-a6d7-4969-88ee-2cafabddf830",
+    "actual_native_revision_after_external_rename": 9,
+    "native_document_after_refusal": {
+      "collections": [],
+      "entities": {},
+      "expression_ref": "expression:instrument-editor-0368824a-a6d7-4969-88ee-2cafabddf830",
+      "profiles": [],
+      "provenance": [],
+      "refinements": [],
+      "relations": {},
+      "representations": [],
+      "revision": 9,
+      "scenes": [
+        {
+          "body": null,
+          "entity_refs": [],
+          "revision": 9,
+          "scene_ref": "expression:instrument-editor-0368824a-a6d7-4969-88ee-2cafabddf830:scene:main",
+          "title": "Externally advanced controlled Palace r8",
+          "triggers": []
+        }
+      ],
+      "schema": "oi.expression/v1",
+      "selection": {
+        "entity_ref": null,
+        "scene_ref": "expression:instrument-editor-0368824a-a6d7-4969-88ee-2cafabddf830:scene:main"
+      },
+      "title": "Instrument editor native proof"
+    },
+    "passed": true,
+    "errors": [],
+    "checks": [
+      "actual native scene_rename acknowledgement and inspect advances exact controlled Expression revision",
+      "typed room name and old source basis survive hide/reopen refresh",
+      "source-stale Save refuses and exact complete native document remains unchanged",
+      "explicit Revert clears input and adopts current reread source basis without a native mutation"
+    ],
+    "source_revision_limit": "Passed browser regression applies to PalaceEditor hash recorded here. It does not establish latest full-package typecheck/build or React19 support.",
+    "earlier_test_failure_attribution": "Parent reported initial Save refusal predicate inspected only the first status node; final reviewed runner checks all status nodes and actual result passes. This was a test predicate issue, preserved separately from the repaired Palace private-input defect."
+  }
+}

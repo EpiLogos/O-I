@@ -7,7 +7,7 @@ import {chromium} from 'playwright';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const document = readFileSync(new URL('../../../docs/cradle/01-DESIGN.md', import.meta.url), 'utf8');
 const source = readFileSync(new URL('../src/editor/TextEditor.tsx', import.meta.url), 'utf8');
-const server = await createServer({root, appType: 'custom', server: {host: '127.0.0.1', port: 0}, logLevel: 'error'});
+const server = await createServer({root, appType: 'custom', server: {host: '127.0.0.1', port: 0, strictPort: false}, logLevel: 'error'});
 server.middlewares.use('/editor-appearance', async (_, response) => {
   response.setHeader('content-type', 'text/html');
   response.end(await server.transformIndexHtml('/editor-appearance', '<body class="oi-desktop"><div id="root" style="height:950px;display:flex"></div><script type="module" src="/tests/text-editor-page.tsx"></script></body>'));

@@ -1,0 +1,6 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": { "types": ["vite/client"] },
+  "include": ["./**/*.ts", "./**/*.tsx", "../panels/settings.tsx", "../**/*.d.ts", "../../../../../desktop/cradle/src/**/*.d.ts"],
+  "exclude": ["./**/*.test.mjs"]
+}

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>live-shell</title>
+<style>
+  :root { color-scheme: dark; }
+  body { background:#141416; color:#d8d8dc; font:14px/1.5 ui-monospace,monospace; margin:0; padding:2rem; }
+  h1 { font-size:15px; letter-spacing:.2em; text-transform:uppercase; color:#8f8f96; }
+  input { width:44ch; background:#1d1d21; border:1px solid #333; color:#eee; padding:.4rem; }
+  button { background:#2d2d33; border:1px solid #444; color:#eee; padding:.4rem .8rem; cursor:pointer; }
+  table { border-collapse:collapse; margin-top:1rem; min-width:60%; }
+  td, th { border:1px solid #2a2a2e; padding:.3rem .7rem; text-align:left; }
+  th { color:#9a9aa2; font-weight:normal; text-transform:uppercase; font-size:12px; }
+  .err { color:#e06c60; margin-top:1rem; }
+  .meta { color:#9a9aa2; margin-top:.6rem; }
+</style>
+</head>
+<body>
+<h1>live-shell — document inspector (M2 skeleton)</h1>
+<p>
+  <input id="p" placeholder="absolute path to .als" value="__DEFAULT_SET__">
+  <button onclick="load()">open</button>
+</p>
+<div class="meta" id="meta"></div>
+<table id="t" hidden><thead><tr><th>kind</th><th>name</th><th>devices</th></tr></thead><tbody></tbody></table>
+<div class="err" id="e" hidden></div>
+<script>
+async function load() {
+  const p = document.getElementById('p').value.trim();
+  const meta = document.getElementById('meta'), t = document.getElementById('t'),
+        tb = t.querySelector('tbody'), e = document.getElementById('e');
+  e.hidden = true; tb.innerHTML = '';
+  try {
+    const r = await fetch('/api/summary?path=' + encodeURIComponent(p));
+    const j = await r.json();
+    if (j.error) { e.textContent = j.error; e.hidden = false; t.hidden = true; return; }
+    meta.textContent = `tempo ${j.tempo_bpm} bpm · ${j.scene_count} scenes · ${j.arrangement_clips} arrangement clips`;
+    for (const tr of j.tracks) {
+      const row = tb.insertRow();
+      row.insertCell().textContent = tr.kind;
+      row.insertCell().textContent = tr.name;
+      row.insertCell().textContent = tr.devices.join(' › ') || '—';
+    }
+    t.hidden = false;
+  } catch (err) { e.textContent = String(err); e.hidden = false; }
+}
+if (document.getElementById('p').value) load();
+</script>
+</body>
+</html>

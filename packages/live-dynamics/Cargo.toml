@@ -1,0 +1,7 @@
+[package]
+name = "live-dynamics"
+version = "0.1.0"
+edition = "2021"
+description = "Clean-room rebuilds of Ableton Live device dynamics, written from behavior documents only"
+
+[dependencies]

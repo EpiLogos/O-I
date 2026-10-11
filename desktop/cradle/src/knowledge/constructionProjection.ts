@@ -86,6 +86,18 @@ export function sameComposition(a: unknown, b: unknown): boolean {
 }
 export interface ArtifactReturn {file: NativeFileReading; document: ExpressionDocument; returned?: SavedConstruction}
 
+/** Decode through the existing native file owner. The ordinary file may be
+ * the lossless image dictionary envelope; its storage JSON is not the live
+ * composition. CAS pins this second read without mounting or touching it. */
+export async function inspectCompositionFile(transport: KernelTransportStatus, file: NativeFileReading): Promise<ArtifactReturn> {
+  const result = await expressionOperation(transport, {operation: 'inspect_file', location: file.location, expected_file_revision: file.revision});
+  if (result.state !== 'ready' || !result.document || !result.file
+    || result.file.revision !== file.revision || !sameComposition(result.file.location, file.location)) {
+    throw Error('The native file decoder did not return the exact inspected file. Keep its pending save and inspect the owner result.');
+  }
+  return {file, document: result.document};
+}
+
 /** Save the actual current working composition, not a copied scene or metadata
  * pretending to be an artifact. Attachment remains a separately retryable act. */
 export async function saveCompositionFile(transport: KernelTransportStatus, document: ExpressionDocument, destination: {parent: CentralLocation; name: string; operation_ref: string} | {location: CentralLocation; revision: string}, apply?: ApplyKernel): Promise<ArtifactReturn> {
@@ -97,8 +109,9 @@ export async function saveCompositionFile(transport: KernelTransportStatus, docu
   requireSavedExpression(result);
   const file = await readFile(transport, result.file.location);
   if (file.revision !== result.file.revision) throw new Error('The saved artifact changed before readback. Its save is not replayed automatically.');
-  if (!sameComposition(JSON.parse(file.content), current.document)) throw new Error('The saved file does not match the intended composition. Inspect it before Return.');
-  return {file, document: current.document};
+  const inspected = await inspectCompositionFile(transport, file);
+  if (!sameComposition(inspected.document, current.document)) throw new Error('The saved file does not match the intended composition. Inspect it before Return.');
+  return inspected;
 }
 /** Prepare the exact Return separately so the containing surface can retain
  * its native operation identity before dispatch, just as it does for a save. */
@@ -162,9 +175,9 @@ export async function reopenComposition(transport: KernelTransportStatus, item: 
   if (!location || location.schema !== 'central.path-ref/v1' || !location.ref || !location.root || typeof location.path !== 'string') throw new Error('This older Return has no native artifact location. Open its source file to resume the composition.');
   const reading = await readFile(transport, location);
   if (reading.revision !== item.source.source_revision) throw new Error('The returned artifact has changed. Open and review its current source before replacing the recorded composition.');
-  const native = JSON.parse(reading.content) as Partial<ExpressionDocument>;
+  const {document: native} = await inspectCompositionFile(transport, reading);
   if (native.schema !== 'oi.expression/v1' || native.expression_ref !== item.reference || String(native.revision) !== item.revision) throw new Error('The returned file no longer names this exact Expression revision.');
-  const result = await expressionOperation(transport, {operation: 'open_file', location, actor: ACTOR}, apply);
-  if (!result.document || result.document.expression_ref !== item.reference) throw new Error('The Expression owner did not reopen the returned file.');
+  const result = await expressionOperation(transport, {operation: 'open_file', location, expected_file_revision: reading.revision, actor: ACTOR}, apply);
+  if (!result.document || !sameComposition(result.document, native)) throw new Error('The Expression owner did not reopen the exact returned file.');
   return result.document;
 }

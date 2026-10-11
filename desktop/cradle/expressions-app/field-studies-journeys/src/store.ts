@@ -14,6 +14,13 @@ export class DocumentStore {
  change(fn:(doc:Journey)=>void){this.begin();try{fn(this.document);this.mutated=true;this.finish();}catch(error){if(this.baseline)this.document=this.baseline;this.baseline=null;this.touch();throw error;}}
  undo(){this.finish();const d=this.undoStack.pop();if(!d)return false;this.redoStack.push(clone(this.document));this.document=d;this.touch();return true;}
  redo(){const d=this.redoStack.pop();if(!d)return false;this.undoStack.push(clone(this.document));this.document=d;this.touch();return true;}
+ /** Adopt the same native work's acknowledged projection without recording a
+  * human edit. An acknowledgement must not sit above the gesture in Undo. */
+ acknowledge(doc:Journey,history:'preserve'|'retire'='preserve'){
+  if(this.transactionOpen)throw new Error('Uncommitted authoring is retained; finish the gesture before adopting native state.');
+  if(doc.id!==this.document.id)throw new Error('The acknowledgement belongs to another document.');
+  this.document=clone(doc);if(history==='retire'){this.undoStack=[];this.redoStack=[];}this.touch();
+ }
  replace(doc:Journey){this.change(()=>{this.document=clone(doc);});}
 }
 export interface LibraryRead {journeys:Journey[];errors:string[];raw:unknown[];blocked:boolean}

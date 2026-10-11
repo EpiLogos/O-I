@@ -284,10 +284,14 @@ export class NativeWorking {
   const epoch=this.begin();
   try{
    const document=readDocument(await this.ports.expression({operation:'inspect',expression_ref:record.view.document.expression_ref}),record.view.document.expression_ref);
+   if(epoch!==this.epoch||!accept())throw new Error('The work changed while the newer native revision was returning; its basis was kept');
    if(document.revision<=record.view.document.revision)return clone(record.view);
    const view=connectionView(record.view,document);
    if(epoch!==this.epoch||!accept())throw new Error('The work changed while the newer native revision was returning; its basis was kept');
-   await this.persist({...record,view},epoch);
+   const advanced={...record,view};
+   await this.ports.checkpoint(record.draft_id,clone(advanced));
+   if(epoch!==this.epoch||!accept())throw new Error('The work changed while the newer native checkpoint was returning; its basis was kept');
+   this.record=clone(advanced);
    return clone(view);
   }finally{this.inFlight=false;}
  }

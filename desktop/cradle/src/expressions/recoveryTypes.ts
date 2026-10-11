@@ -1,6 +1,12 @@
 /** Private working copies, never canonical files or publication authority. */
 export type RecoveryScope = "expressions" | "techne";
 export type RecoveryKind = "draft" | "checkpoint";
+/** Selected native recovery address. Presentation mode never changes it. */
+export interface RecoveryBinding {
+  scope: RecoveryScope;
+  checkpoint_id: string;
+  expression_ref: string;
+}
 export type ExpressionRecoveryRequest =
   | {operation: "read"; scope: RecoveryScope; kind: RecoveryKind; id: string}
   | {operation: "list"; scope: RecoveryScope; kind: RecoveryKind}

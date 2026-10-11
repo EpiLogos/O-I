@@ -13,24 +13,26 @@ import {IconTabStrip} from "../../../workspace/primitives/IconTabStrip";
  * cast, goal and work in the Run's act, its timeline, object panels), with
  * the legs/attempts table beneath it.
  */
-import {useEffect, useState, type ReactNode, useRef, lazy, Suspense} from "react";
+import {useEffect, useState, type ReactNode, useRef, useId, lazy, Suspense} from "react";
 import {useKernel} from "../../../kernel/KernelProvider";
 import {Glyph} from "../../../workspace/Glyph";
 import {formatRelativeTime} from "../../../shared/relativeTime";
 import {MenuButton, type MenuRow} from "./MenuButton";
 import {errorWords, readRunEntry, rememberRunTab as rememberTab, rememberedRunTab, runEntry, useDeskReading, type RunEntry} from "./deskStore";
-import {inspectTelemetry, type TelemetryInspection} from "./factoryReads";
+import {factoryOwner, readRun, inspectTelemetry, type TelemetryInspection} from "./factoryReads";
+import {actionSubjectReading, actionSubjectRefusal, FACTORY_ACTION_ADMISSION_MISSING, mergeActionSubjectRead, sameActionTarget, type RunActionTarget, type RunActionSubjectDraft} from "./runActionSubject";
 import {RUN_STATE_GLYPH, RUN_STATE_WORD, splitActions, type RunAction} from "./runModel";
 import {RunMap} from "./RunMap";
 import {RunLive} from "./RunLive";
 import {RunHandoff} from "./RunHandoff";
+import {RunMaterial} from './RunMaterial';
 import {RunTrajectory} from "./RunTrajectory";
 import {RunSignalLink} from "../sensing/RunSignalLink";
 import {RunLiveExpression} from "../live/RunLiveExpression";
 
 const ComputerView=lazy(()=>import("../ComputerView").then(module=>({default:module.ComputerView})));
-export type RunTab = "map" | "trajectory" | "live" | "computer" | "handoff";
-const TABS: {key: RunTab; label: string}[] = [{key: "map", label: "Map"}, {key: "trajectory", label: "Trajectory"}, {key: "live", label: "Live"}, {key:"computer",label:"Computer"}, {key: "handoff", label: "Handoff"}];
+export type RunTab = "map" | "trajectory" | "live" | "computer" | "material" | "handoff";
+const TABS: {key: RunTab; label: string}[] = [{key: "map", label: "Map"}, {key: "trajectory", label: "Trajectory"}, {key: "live", label: "Live"}, {key:"computer",label:"Computer"}, {key:'material',label:'Material'}, {key: "handoff", label: "Handoff"}];
 const isRunTab = (value: string | undefined): value is RunTab => TABS.some(tab => tab.key === value);
 /** Open a Run's page on a given tab (a Tasks conversation's Live). */
 export function rememberRunTab(runKey: string, tab: RunTab) { rememberTab(runKey, tab); }
@@ -48,6 +50,8 @@ export function gitBasisOf(telemetry: TelemetryInspection | undefined): {branch?
 }
 
 export interface RunPageHost {
+  /** Original retained owner/workspace/presentation gate. No owner admission. */
+  current?:()=>boolean;
   /** Open the conversation carried by a session (Tasks). */
   onOpenConversation?: (sessionRef: string) => void;
   /** Start a conversation from a prompt — it never launches on its own. */
@@ -77,27 +81,39 @@ export function RunPage({runKey, onBack, host}: {runKey: string; onBack: () => v
   const [telemetry, setTelemetry] = useState<TelemetryInspection>();
   const [raw, setRaw] = useState(false);
   const [acting, setActing] = useState<string>();
+  const [actionDraft, setActionDraft] = useState<RunActionSubjectDraft>();
+  const actionEpoch = useRef(0);
+  const actionAdmissionId = useId();
+  const actionContext = useRef({runKey, transport: kernel.transport});
+  actionContext.current = {runKey, transport: kernel.transport};
 
   // A page that has closed stops its read chain: leaving the Run page before
   // the run read answers must not send the telemetry read afterwards.
   const alive = useRef(true);
+  const readEpoch=useRef(0),latestRead=useRef({runKey,transport:kernel.transport,host});
+  latestRead.current={runKey,transport:kernel.transport,host};
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  useEffect(() => { actionEpoch.current++; setActionDraft(undefined); setActing(undefined); }, [runKey, kernel.transport, entry?.card.source.statePath, entry?.card.source.projectRef, entry?.run.runRef]);
   const reread = async () => {
+    const epoch=++readEpoch.current,original=host.current,capturedKey=runKey,transport=kernel.transport;
+    const current=()=>alive.current&&readEpoch.current===epoch&&latestRead.current.runKey===capturedKey&&latestRead.current.transport===transport
+      &&(!original||original())&&(!latestRead.current.host.current||latestRead.current.host.current());
+    if(!current())return;
     setReading("reading");
     try {
-      const next = await readRunEntry(kernel.transport, runKey);
-      if (!alive.current) return;
+      const next = await readRunEntry(transport, capturedKey,current);
+      if (!current()) return;
       setReading(next ? "read" : "refused");
       if (!next) setError("This run is no longer in the Desk's reading.");
       const telemetryRef = next?.inspection?.telemetry?.[0]?.telemetryRef;
       if (next && telemetryRef) {
-        const reading = await inspectTelemetry(kernel.transport, next.card.source.statePath, telemetryRef).catch(() => undefined);
-        if (alive.current) setTelemetry(reading);
+        const reading = await inspectTelemetry(transport, next.card.source.statePath, telemetryRef).catch(() => undefined);
+        if (current()) setTelemetry(reading);
       }
-    } catch (reason) { if (alive.current) { setReading("refused"); setError(errorWords(reason)); } }
+    } catch (reason) { if (current()) { setReading("refused"); setError(errorWords(reason)); } }
   };
   useEffect(() => { void reread(); /* the page's own read on open */ // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [runKey]);
+  }, [runKey,kernel.transport]);
   useEffect(() => { rememberTab(runKey, tab); }, [runKey, tab]);
   // A Live open requested while this page is already showing the run.
   useEffect(() => { const remembered = rememberedRunTab(runKey); if (isRunTab(remembered) && remembered !== tab) setTab(remembered); // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -115,12 +131,34 @@ export function RunPage({runKey, onBack, host}: {runKey: string; onBack: () => v
     basis?.branch && <span key="git">branch {basis.branch}{basis.clean === undefined ? "" : basis.clean ? " (clean)" : " (dirty)"}</span>,
   ].filter(Boolean);
 
-  const invoke = async (action: RunAction) => {
-    // The owner's action projection is invoked with its own request contract;
-    // the desktop never fabricates a subject — the applicable subject refs
-    // are the owner's.
-    host.onMessage?.(`${action.label}: the owner's action request needs a subject the desktop does not choose (${(action.applicableSubjectRefs ?? []).length} applicable).`);
-    setActing(undefined);
+  const readActionSubjects = async (target: RunActionTarget) => {
+    const epoch = ++actionEpoch.current, transport = kernel.transport, capturedKey = runKey,original=host.current;
+    const current = () => {
+      const retained = runEntry(capturedKey);
+      return alive.current && epoch === actionEpoch.current && actionContext.current.runKey === capturedKey && actionContext.current.transport === transport
+        &&(!original||original())&&(!latestRead.current.host.current||latestRead.current.host.current())
+        && retained?.run.runRef === target.runRef && retained.card.source.statePath === target.statePath && retained.card.source.projectRef === target.projectRef;
+    };
+    if(!current())return;
+    setActing(target.actionRef);
+    setActionDraft(draft => draft && sameActionTarget(draft.target, target) ? {...draft, error: undefined} : draft);
+    try {
+      const listed = await factoryOwner(transport, {kind: "action-list", state_path: target.statePath, project_ref: target.projectRef, run_ref: target.runRef});
+      if (!current()) return;
+      const nativeRun = await readRun(transport, target.statePath, target.runRef);
+      if (!current()) return;
+      const reading = actionSubjectReading(target, listed, nativeRun);
+      // Update only the owner reading: a subject chosen while the asynchronous
+      // read was pending remains the person's uncommitted selection.
+      setActionDraft(draft => draft && sameActionTarget(draft.target, target) ? mergeActionSubjectRead(draft, reading) : draft);
+    } catch (reason) {
+      if (current()) setActionDraft(draft => draft && sameActionTarget(draft.target, target) ? {...draft, error: errorWords(reason)} : draft);
+    } finally { if (current()) setActing(undefined); }
+  };
+  const invoke = (action: RunAction) => {
+    const target = {statePath: card.source.statePath, projectRef: card.source.projectRef, runRef: run.runRef, actionRef: action.actionRef};
+    setActionDraft(draft => draft && sameActionTarget(draft.target, target) ? draft : {target, label: action.label, selected: ""});
+    void readActionSubjects(target);
   };
   const copyRef = () => { void navigator.clipboard?.writeText(run.runRef).then(() => host.onMessage?.("Run reference copied."), () => host.onMessage?.("The clipboard refused the run reference.")); };
   const menu: MenuRow[] = [
@@ -144,6 +182,26 @@ export function RunPage({runKey, onBack, host}: {runKey: string; onBack: () => v
         <MenuButton ariaLabel="More run actions" className="oi-action frun-more" label={<Glyph name="more" size={14}/>} rows={menu}/>
       </div>
     </header>
+    {actionDraft && <section className="fhandoff-section" aria-label={`Action — ${actionDraft.label}`} data-run-action-subject={actionDraft.target.actionRef}>
+      <h2>{actionDraft.label}</h2>
+      <label>Subject <select aria-label="Factory action subject" value={actionDraft.selected}
+        onChange={event => setActionDraft(draft => draft ? {...draft, selected: event.target.value} : draft)}>
+        <option value="">Choose a subject…</option>
+        {actionDraft.selected && !actionDraft.reading?.subjects.some(subject => subject.ref === actionDraft.selected)
+          && <option value={actionDraft.selected}>{actionDraft.selected} — no longer in the current reading</option>}
+        {actionDraft.reading?.subjects.map(subject => <option key={subject.ref} value={subject.ref}>{subject.label} — {subject.ref}</option>)}
+      </select></label>
+      {acting === actionDraft.target.actionRef && <p role="status">Reading Factory's applicable subjects…</p>}
+      {actionDraft.error && <p role="alert">Factory refused the action reading: {actionDraft.error}</p>}
+      {actionDraft.reading && <>
+        <p className="frun-note">Factory revision {actionDraft.reading.factoryStateRevision} · Run revision {actionDraft.reading.runRevision}</p>
+        {actionSubjectRefusal(actionDraft.reading, actionDraft.selected) && <p role="status">{actionSubjectRefusal(actionDraft.reading, actionDraft.selected)}</p>}
+      </>}
+      <p id={actionAdmissionId} role="status">{FACTORY_ACTION_ADMISSION_MISSING}</p>
+      <button type="button" className="oi-action oi-action-primary" disabled aria-describedby={actionAdmissionId}>{actionDraft.label}</button>{" "}
+      <button type="button" className="oi-action" disabled={acting === actionDraft.target.actionRef} onClick={() => void readActionSubjects(actionDraft.target)}>Read again</button>{" "}
+      <button type="button" className="oi-action" onClick={() => { actionEpoch.current++; setActionDraft(undefined); setActing(undefined); }}>Close action</button>
+    </section>}
     <RunSignalLink runKey={runKey} entry={entry} onBack={onBack}/>
     <IconTabStrip aria-label="Run views" items={TABS.map(entry=>({id:entry.key,label:entry.label,icon:entry.key==="map"?"graph":entry.key==="trajectory"?"history":entry.key==="live"?"factory":"file"}))} current={tab} onSelect={id=>setTab(id as typeof tab)}/>
     {reading === "reading" && !entry.inspection && !entry.inspectionError && <p className="frun-note" role="status">Reading this run…</p>}
@@ -156,6 +214,7 @@ export function RunPage({runKey, onBack, host}: {runKey: string; onBack: () => v
         <RunLive entry={entry} runKey={runKey} host={host} primary={primary} onPrimary={primary ? () => void invoke(primary) : undefined} telemetry={telemetry}/>
       </RunLiveExpression>}
       {tab === "computer" && <Suspense fallback={<p>Opening Computer…</p>}><ComputerView entry={entry}/></Suspense>}
+      {tab === 'material' && <RunMaterial key={runKey} entry={entry} host={host}/>}
       {tab === "handoff" && <RunHandoff entry={entry} host={host} onRecognised={() => void reread()}/>}
     </section>
     {raw && <details className="frun-raw" open>

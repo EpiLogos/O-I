@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useRef,useState} from "react";
+import {useCallback,useEffect,useMemo,useRef,useState,useSyncExternalStore} from "react";
 import {DOCUMENT_FORMS,resolveDocumentForm} from "../flow/documentForms";
 import {readFile} from "../files/client";
 import {useKernel} from "../kernel/KernelProvider";
@@ -6,14 +6,22 @@ import {receiving} from "./client";
 import type {CentralLocation} from "../kernel/types";
 import {DayFormSession,isObject,projectDieDocument,unmappedChanges,validateDocumentBasis,type DayDocumentField,pointerValue,type FormBasis} from "../central/dayForm";
 import "./receiving.css";
+import {captureFileResourceAccess,fileResourceHostGeneration,subscribeResources,type FileResourceScope} from '../files/resources';
+import {registerDocumentCheckpoint} from '../document/frame';
+import {readDayPageDraft,writeDayPageDraft,clearDayPageDraft,samePageOwner} from '../workspace/drafts';
 export {projectDieDocument} from "../central/dayForm";
 export type {DayDocumentField} from "../central/dayForm";
 const DIE_SHELL=DOCUMENT_FORMS.find(form=>form.kind==="document-42"&&form.file==="ql-daily-die.html");
 
 /** The real original editor, never an app-owned replacement. A message from
  * the sandbox may stage material but never authorizes a native write. */
-export function DayDieFace({payload,revision,sourceRef,documentId,fields,project}:{payload:unknown;revision:string;sourceRef:string;documentId:string;fields:DayDocumentField[];project:string|null}) {
+export function DayDieFace({payload,revision,sourceRef,documentId,fields,project,bindingId}:{bindingId?:string;payload:unknown;revision:string;sourceRef:string;documentId:string;fields:DayDocumentField[];project:string|null}) {
  const kernel=useKernel();
+ const ownerEpoch=useSyncExternalStore(subscribeResources,fileResourceHostGeneration,fileResourceHostGeneration);
+ const heldOwner=useRef<FileResourceScope|null>();
+ const template=useRef<{location:CentralLocation;revision:string;content:string}>();
+ const localObserver=useRef<()=>void>(()=>{});
+ const checkpointFlight=useRef<Promise<void>>();
  const session=useMemo(()=>new DayFormSession({sourceRef,documentId,revision,payload,fields}),[sourceRef,documentId,project]);
  const [face,setFace]=useState<string>();
  const [failure,setFailure]=useState<string>();
@@ -49,9 +57,19 @@ export function DayDieFace({payload,revision,sourceRef,documentId,fields,project
   window.addEventListener("beforeunload",warn);return()=>window.removeEventListener("beforeunload",warn);
  },[session]);
  useEffect(()=>{
-  let alive=true;setFace(undefined);setFailure(undefined);setReview(undefined);setDirty(false);
+  let alive=true;setFailure(undefined);
+  if(shell.current)return;
+  setFace(undefined);setReview(undefined);setDirty(false);
   (async()=>{
    try {
+    const access=captureFileResourceAccess(kernel.transport);
+    const recovered=readDayPageDraft(sourceRef);
+    if(recovered&&recovered.basis.documentId===documentId&&samePageOwner(recovered.scope,access.access?.scope??null)){
+      session.basis=recovered.basis;session.stage(recovered.snapshot);session.observe({sourceRef,documentId,revision,payload,fields});
+      const restored=projectDieDocument(recovered.template.content,recovered.snapshot);if(!restored)throw Error('The retained original Day frame cannot be reconstructed.');
+      if(alive&&access.current()){heldOwner.current=recovered.scope;template.current=recovered.template;shell.current=recovered.template.content;setFace(restored);setDirty(true);setMessage('Original Day edits restored from this device on their retained native basis. Native Save remains explicit.');}
+      return;
+    }
     const retained=isObject(payload)?payload._oi_form_source:undefined;
     let location:CentralLocation;
     if(retained!==undefined){
@@ -63,16 +81,17 @@ export function DayDieFace({payload,revision,sourceRef,documentId,fields,project
     }
     const original=await readFile(kernel.transport,location);
     if(isObject(retained)&&original.revision!==retained.revision)throw new Error("The retained original form changed. Review that source revision; a different shell is not substituted silently.");
+    if(!access.current())throw Error('The original Day template owner retired before admission.');
     const projected=projectDieDocument(original.content,session.basis.payload);
     if(!projected)throw new Error("Original editor snapshot seam is unavailable; its source remains intact");
-    if(alive){shell.current=original.content;setFace(projected);}
+    if(alive&&access.current()){heldOwner.current=access.access?.scope??null;template.current={location:original.location,revision:original.revision,content:original.content};shell.current=original.content;setFace(projected);}
    } catch(error){if(alive)setFailure(String(error));}
   })();return()=>{alive=false;};
- },[session,kernel.transport]);
+ },[session,kernel.transport,ownerEpoch]);
  useEffect(()=>{
   const receive=(event:MessageEvent)=>{
    if(event.source!==frame.current?.contentWindow||!isObject(event.data)||event.data.source!=="oi-cradle-die-face")return;
-   if(event.data.type==="dirty"){session.markDirty();editEpoch.current++;setDirty(true);return;}
+   if(event.data.type==="dirty"){session.markDirty();editEpoch.current++;setDirty(true);localObserver.current();return;}
    const held=snapshot.current;
    if(!held||event.data.nonce!==held.nonce)return;
    if(event.data.type!=="snapshot"&&event.data.type!=="snapshot-error")return;
@@ -89,13 +108,38 @@ export function DayDieFace({payload,revision,sourceRef,documentId,fields,project
   snapshot.current={nonce,resolve,reject,timer};
   frame.current.contentWindow.postMessage({source:"oi-day-host",type:"snapshot",nonce},"*");
  });
+ const checkpoint=useCallback(()=>{
+  if(checkpointFlight.current)return checkpointFlight.current;
+  const flight=(async()=>{
+   if(!session.edited&&session.draft===undefined&&!session.busy)return;
+   if(!session.active||heldOwner.current===undefined||!template.current)throw Error('The owned original Day frame is unavailable for its final checkpoint.');
+   const node=frame.current,epoch=editEpoch.current,original=template.current,value=await capture();
+   if(!session.active||frame.current!==node||template.current!==original||epoch!==editEpoch.current)throw Error('The original Day changed during its local checkpoint; its view remains retained.');
+   session.stage(value);
+   writeDayPageDraft({schema:'oi.cradle.native-day-working-copy/v1',scope:heldOwner.current??null,basis:session.basis,template:original,snapshot:value});
+  })();
+  checkpointFlight.current=flight;void flight.finally(()=>{if(checkpointFlight.current===flight)checkpointFlight.current=undefined;}).catch(()=>{});
+  return flight;
+ },[session]);
+ localObserver.current=()=>{void checkpoint().catch(error=>{if(session.active)setMessage(String(error));});};
+ useEffect(()=>{
+  const unregister=registerDocumentCheckpoint(bindingId??sourceRef,checkpoint);
+  const timer=setInterval(()=>localObserver.current(),2500),hide=()=>localObserver.current();
+  window.addEventListener('pagehide',hide);const visibility=()=>{if(document.visibilityState==='hidden')hide();};document.addEventListener('visibilitychange',visibility);
+  return()=>{unregister();clearInterval(timer);window.removeEventListener('pagehide',hide);document.removeEventListener('visibilitychange',visibility);};
+ },[bindingId,sourceRef,checkpoint]);
+ const nativeCurrent=()=>{const access=captureFileResourceAccess(kernel.transport);if(!samePageOwner(heldOwner.current??null,access.access?.scope??null))throw Error('This original Day belongs to another retained native owner scope.');return()=>session.active&&access.current();};
  const save=async()=>{
   setPending(true);setMessage(undefined);
   try {
-   const next=await capture();const epoch=editEpoch.current;session.stage(next);setUnmapped(unmappedChanges(session.basis,next));
-   await session.save(input=>receiving(kernel.transport,project,{kind:"mutate-field",...input}));
-   if(!session.active)return;
+   const current=nativeCurrent();if(!current())throw Error('The native Day owner is unavailable.');
+   const next=await capture();if(!current())throw Error('The native Day owner retired before Save.');const epoch=editEpoch.current;session.stage(next);setUnmapped(unmappedChanges(session.basis,next));
+   if(template.current)writeDayPageDraft({schema:'oi.cradle.native-day-working-copy/v1',scope:heldOwner.current??null,basis:session.basis,template:template.current,snapshot:next});
+   await session.save(async input=>{if(!current())throw Error('The native Day owner retired before field mutation.');const result=await receiving(kernel.transport,project,{kind:'mutate-field',...input});if(!current())throw Error('The native Day owner retired after field mutation; verify its readback.');return result;});
+   if(!current())return;
    await kernel.rereadSource(sourceRef);
+   if(!current())return;
+   if(editEpoch.current===epoch&&!unmappedChanges(session.basis,next).length)clearDayPageDraft(sourceRef,next,heldOwner.current??null);
    if(editEpoch.current!==epoch)session.markDirty();
    setDirty(session.edited||session.draft!==undefined);setMessage("Native Save acknowledged; source, document and exact revision matched. Unmapped changes remain only in the original form.");
   } catch(error){if(session.active)setMessage(`Save not completed: ${String(error)}. No automatic replay; retained draft and source need review.`);}
@@ -104,14 +148,17 @@ export function DayDieFace({payload,revision,sourceRef,documentId,fields,project
  const readForReview=async()=>{
   setPending(true);setMessage(undefined);
   try {
+   const current=nativeCurrent();if(!current())throw Error('The native Day owner is unavailable.');
    if(dirty&&!session.draft)session.stage(await capture());
+   if(!current())throw Error('The native Day owner retired before review.');
    const value=await receiving(kernel.transport,project,{kind:"document",source_ref:sourceRef,document_id:documentId});
-   if(session.active)setReview(validateDocumentBasis(value,sourceRef,documentId));
+   if(current())setReview(validateDocumentBasis(value,sourceRef,documentId));
   }catch(error){if(session.active)setMessage(String(error));}
   finally{if(session.active){setPending(false);}}
  };
  const discardToReview=()=>{
   if(!review||!shell.current)return;
+  const local=readDayPageDraft(sourceRef);if(local)clearDayPageDraft(sourceRef,local.snapshot,heldOwner.current??null);
   session.draft=undefined;session.edited=false;session.basis=review;session.blocked=undefined;
   setFace(projectDieDocument(shell.current,review.payload)??undefined);setDirty(false);setReview(undefined);setMessage("Explicitly reopened the reviewed native source; no source was overwritten.");refresh();
  };

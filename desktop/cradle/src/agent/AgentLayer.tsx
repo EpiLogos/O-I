@@ -1,6 +1,6 @@
 import {useChosenAgent} from "../agency/selection";
 import {canonicalPlane} from "../workspace/planeRegistry";
-import {lazy,Suspense,useCallback,useEffect,useMemo,useRef,useState, type ReactNode} from "react";
+import {lazy,Suspense,useCallback,useEffect,useMemo,useRef,useState, type ReactNode,type SyntheticEvent} from "react";
 // The Expression composer reaches the engine projection; it loads with the Composition plane, not with the agent layer.
 const ExpressionView=lazy(()=>import("../expression/ExpressionView").then((module)=>({default:module.ExpressionView})));
 // The developer preview (chat/preview.dev.tsx): the same production chat
@@ -25,6 +25,8 @@ import {useAgentIdentity} from "./chat/AgentIdentity";
 import {factsFromBinding} from "./chat/harness";
 import {CHAT_PREVIEW_EVENT,isChatPreviewDetail} from "./chat/previewGate";
 import {useTape} from "./tape/journal";
+import {captureAgentReceiver,assertAgentSessionPage,readNativeSessionProfile} from "./receiverScope";
+import {nativeAgentOwner} from "../agency/nativeAgentClient";
 import type {TapeFocus} from "./tape/Tape";
 import {useAgentRoster,type RosterAgent} from "../agency/roster";
 import {holdHanded,interceptObjectOpens,openObject,type ObjectRef} from "./objects/registry";
@@ -34,6 +36,7 @@ import {PanelTop,type PanelTab} from "./panel/PanelTop";
 import {AvatarPresence,type PanelAgent,type PanelPresence} from "./panel/AvatarMenu";
 import {ActivityTab} from "./panel/ActivityTab";
 import {AgentsTab} from "./panel/AgentsTab";
+import {NativeAgentLauncher} from "../agency/NativeAgentLauncher";
 import "./agent.css";
 import "./panel/panel.css";
 
@@ -69,6 +72,15 @@ export interface AgentSubject {
 export interface AgentExtraPlane { id: string; label: string; body: ReactNode }
 export interface AgentLayerProps {
   project?: string;
+  sourceWorldRef?: string;
+  /** Existing retained host's exact owner/workspace/presentation lifetime. */
+  current?: () => boolean;
+  /** Factory centre's existing conversation, rather than its side-panel curation. */
+  conversation?: boolean;
+  prepareAgents?: boolean;
+  onProvision?: (project: string,preferredBodyRef?:string) => Promise<AgentAccompanying>;
+  /** Existing host route may retain/open the acknowledged Encounter binding. */
+  onChoose?: (row:EncounterRow,current?:()=>boolean) => Promise<void>;
   subject: AgentSubject;
   history?: ReactNode;
   historyAvailable: boolean;
@@ -100,11 +112,15 @@ export interface AgentLayerProps {
 const BUILT_IN:Record<string,string>={Chat:"Chat",Activity:"Activity",Agents:"Agents"};
 const KEPT_PLANES=["Chat","Activity","Agents"] as const;
 
-export function AgentLayer({project:projectProp, subject, accompanying, onAccompanying, full, onFull, mode="base", extraPlanes, preferredBodyRef, plane: controlledPlane, onPlane, onError, onOpenConversation, onBringBack, onOpenSubject, resolveSurface}: AgentLayerProps) {
+export function AgentLayer({project:projectProp,sourceWorldRef,current,conversation=false,prepareAgents=false,onProvision,onChoose, subject, accompanying, onAccompanying, full, onFull, mode="base", extraPlanes, preferredBodyRef, plane: controlledPlane, onPlane, onError, onOpenConversation, onBringBack, onOpenSubject, resolveSurface}: AgentLayerProps) {
   const kernel = useKernel();
-  const curation = MODE_CURATION[mode].panel;
+  const baseCuration = MODE_CURATION[mode].panel;
+  const curation = conversation?{...baseCuration,planes:["Chat","Activity","Agents","context"],extra:["context"],conversationInCentre:false}:baseCuration;
   const scope = useScope();
   const project = projectProp ?? scopeProject(scope);
+  const host=useRef<HTMLElement>(null);
+  const mounted=useRef(false);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
   // --- developer preview ----------------------------------------------------
   const [preview,setPreview]=useState(false);
   useEffect(()=>{
@@ -129,21 +145,28 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
   const requested=canonicalPlane(controlledPlane??ownPlane??"");
   const resting=requested&&offered.some(entry=>entry.id===requested)?requested:offered[0]?.id??"Chat";
   const plane=visiting??resting;
+  const latestReceiver=useRef({project,sourceWorldRef,accompanying,mode,plane,transport:kernel.transport,current});
+  latestReceiver.current={project,sourceWorldRef,accompanying,mode,plane,transport:kernel.transport,current};
+  const captureReceiver=()=>captureAgentReceiver(()=>({...latestReceiver.current,mounted:mounted.current,visible:!!host.current?.getClientRects().length,current:latestReceiver.current.current?.()!==false}));
+  const guard=(event:SyntheticEvent)=>{if(!captureReceiver()()){event.preventDefault();event.stopPropagation();}};
   const select=useCallback((id:string)=>{setVisiting(undefined);setOwnPlane(id);onPlane?.(id);},[onPlane]);
   const show=useCallback((id:string)=>{if(offered.some(entry=>entry.id===id))select(id);else setVisiting(id);},[offered,select]);
   const visited=useRef(new Set<string>());visited.current.add(plane);
 
   // --- the one session and its tape ---------------------------------------
-  const session=useEncounterSession(accompanying?{project:accompanying.project,ref:accompanying.ref,space:accompanying.space}:undefined);
+  const session=useEncounterSession(accompanying?{project:accompanying.project,ref:accompanying.ref,space:accompanying.space,sourceWorldRef}:undefined);
   const sessionState=session?.state;
   const expression=useMemo(()=>expressionReadingOf(sessionState),[sessionState?.status,sessionState?.reading,sessionState?.pending]);
-  const {tape,reading:journal}=useTape(accompanying?{project:accompanying.project,ref:accompanying.ref}:undefined,sessionState?.reading);
+  const {tape,reading:journal}=useTape(accompanying?{project:accompanying.project,ref:accompanying.ref,sourceWorldRef}:undefined,sessionState?.reading);
   const binding=useMemo(()=>{const events=journal?.events??[];for(let index=events.length-1;index>=0;index--){const event=events[index].event as {kind?:string};if(event?.kind==="binding")return event as {protocol?:unknown;effective_launch_argv?:unknown};}return undefined;},[journal?.events]);
   const connectionFacts=useMemo(()=>factsFromBinding(binding),[binding]);
   /** An artifact chip opens the file the turn changed: the provider's path,
    *  resolved against the session's working directory, located in Central. */
   const openArtifact=useCallback(async(path:string)=>{
+    const belongs=captureReceiver();
     try{
+      if(!belongs())return;
+      if(sourceWorldRef)throw new Error("This native World has not disclosed a qualified artifact file-opening operation; the provider path was not opened in local Central.");
       const cwd=typeof (binding as {cwd?:unknown}|undefined)?.cwd==="string"?(binding as {cwd:string}).cwd:undefined;
       const absolute=path.startsWith("/")?path:cwd?`${cwd.replace(/\/+$/,"")}/${path}`:path;
       const bare=(value:string)=>value.replace(/^\/private(?=\/)/,"");
@@ -152,11 +175,12 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
       const relative=bare(absolute).slice(bare(root).replace(/\/+$/,"").length+1);
       const slash=relative.lastIndexOf("/");
       const directory=await listFiles(kernel.transport,slash<0?"":relative.slice(0,slash));
+      if(!belongs())return;
       const entry=directory.entries.find(candidate=>candidate.kind==="file"&&candidate.name===relative.slice(slash+1));
       if(!entry)throw new Error(`Central lists no ${relative} any more.`);
       onOpenSubject?.({title:entry.name,location:entry.location as CentralLocation});
-    }catch(error){onError?.(error instanceof Error?error.message:String(error));}
-  },[binding,kernel.snapshot.navigator,kernel.transport,onOpenSubject,onError]);
+    }catch(error){if(belongs())onError?.(error instanceof Error?error.message:String(error));}
+  },[binding,kernel.snapshot.navigator,kernel.transport,onOpenSubject,onError,sourceWorldRef]);
   const [focus,setFocus]=useState<TapeFocus>();
   /** Choosing the Activity tab afresh resumes following the newest event. */
   const [followToken,setFollowToken]=useState(0);
@@ -169,13 +193,14 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
   // --- the Expression summon: Composition, full (unchanged) -----------------
   useEffect(()=>{
     if(mode==="expressions"||mode==="techne")return;
-    const summon=(event:Event)=>{const ref=(event as CustomEvent<{expressionRef?:string}>).detail?.expressionRef;if(ref!==undefined&&!ref.startsWith("expression:"))return;if(ref)setCompositionRef(ref);show("Composition");if(!full)onFull();};
+    const summon=(event:Event)=>{if(!captureReceiver()()||sourceWorldRef)return;const ref=(event as CustomEvent<{expressionRef?:string}>).detail?.expressionRef;if(ref!==undefined&&!ref.startsWith("expression:"))return;if(ref)setCompositionRef(ref);show("Composition");if(!full)onFull();};
     window.addEventListener(EXPRESSION_COMPOSE_EVENT,summon);return()=>window.removeEventListener(EXPRESSION_COMPOSE_EVENT,summon);
   },[mode,full,onFull,show]);
 
   // --- Inspect opens the object (D1): the older hand-off seam lands on a page
   useEffect(()=>{
     const take=(event:Event)=>{
+      if(!captureReceiver()()||latestReceiver.current.sourceWorldRef)return;
       const detail=(event as CustomEvent<unknown>).detail;
       if(!isPanelInspectDetail(detail))return;
       const ref=panelInspectKey(detail);
@@ -187,10 +212,9 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
 
   // --- P18: narrow — the panel is an overlay drawer; a page opened from it
   // opens as a detail layer in place, with Back; Escape steps one layer.
-  const host=useRef<HTMLElement>(null);
   const [detail,setDetail]=useState<ObjectRef>();
   useEffect(()=>interceptObjectOpens(open=>{
-    if(open.popOut||window.innerWidth>760||!host.current?.offsetParent)return false;
+    if(!captureReceiver()()||latestReceiver.current.sourceWorldRef||open.popOut||window.innerWidth>760||!host.current?.offsetParent)return false;
     setDetail(open.object);return true;
   }),[]);
   useEffect(()=>{
@@ -202,24 +226,32 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
   // --- choosing a conversation: the existing start/read pair -----------------
   const [titles,setTitles]=useState<Record<string,string>>({});
   const learnTitles=useCallback((rows:EncounterRow[])=>setTitles(held=>{const next={...held};let changed=false;for(const row of rows)if(next[row.ref]!==row.title){next[row.ref]=row.title;changed=true;}return changed?next:held;}),[]);
-  const choose = async (row: EncounterRow) => {
+  const choose = async (row: EncounterRow,originCurrent?:()=>boolean) => {
+    const receiverCurrent=captureReceiver();const belongs=()=>receiverCurrent()&&originCurrent?.()!==false;
+    if(!belongs()||choosing)return;
+    const target={...row};
+    if(project!==undefined&&target.project!==project){onError?.("Select a conversation in the disclosed Project context.");return;}
     setChoosing(true);
     try {
-      await encounter(kernel.transport, row.project, {action: "start"});
-      await encounter(kernel.transport, row.project, {action: "read", agent_session: row.ref, after: 0, limit: 1});
-      const value={ref: row.ref, project: row.project, space: row.space};
-      learnTitles([row]);
+      if(onChoose){await onChoose(target,belongs);return;}
+      await encounter(kernel.transport, target.project, {action: "start"},sourceWorldRef);
+      if(!belongs())return;
+      const page=await encounter(kernel.transport, target.project, {action: "read", agent_session: target.ref, after: 0, limit: 1},sourceWorldRef);
+      if(!belongs())return;
+      assertAgentSessionPage(page,target.ref);
+      const value={ref: target.ref, project: target.project, space: target.space};
+      learnTitles([target]);
       onAccompanying(value);
       if(!curation.conversationInCentre&&offered.some(entry=>entry.id==="Chat"))select("Chat");
     } catch (e) {
-      if(onError)onError(String(e));else console.error(e);
-    } finally {setChoosing(false);}
+      if(belongs()){if(onError)onError(String(e));else console.error(e);}
+    } finally {if(mounted.current)setChoosing(false);}
   };
   const choosePreparedRef=useRef(choose);choosePreparedRef.current=choose;
   useEffect(()=>{
     const take=(event:Event)=>{
       const row=(event as CustomEvent<EncounterRow>).detail;
-      if(!row||typeof row.project!=="string"||typeof row.ref!=="string"||!row.ref.startsWith("agent-session/")||typeof row.space!=="string"||!row.space.startsWith("session-space/"))return;
+      if(latestReceiver.current.current||!captureReceiver()()||latestReceiver.current.sourceWorldRef||!row||row.project!==latestReceiver.current.project||typeof row.ref!=="string"||!row.ref.startsWith("agent-session/")||typeof row.space!=="string"||!row.space.startsWith("session-space/"))return;
       void choosePreparedRef.current(row);
     };
     window.addEventListener("oi:agent-session-prepared",take);
@@ -232,15 +264,29 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
   // or a chosen agent to name.
   const [rosterWanted,setRosterWanted]=useState(false);
   useEffect(()=>{if(plane==="Agents"||chosenRef)setRosterWanted(true);},[plane,chosenRef]);
-  const roster=useAgentRoster(project,rosterWanted);
+  const roster=useAgentRoster(project,rosterWanted&&!sourceWorldRef);
   // The roster is read again whenever the Agents tab is chosen: new agents
   // created elsewhere (Agency, another window) appear without a restart.
   const reread=roster.retry;
-  useEffect(()=>{if(plane==="Agents"&&rosterWanted)reread();},[plane,reread,rosterWanted]);
+  useEffect(()=>{if(plane==="Agents"&&rosterWanted&&!sourceWorldRef)reread();},[plane,reread,rosterWanted,sourceWorldRef]);
   const chooseAgent=(agent:RosterAgent)=>setChosenRef(agent.ref);
-  const chosen=roster.agents.find(agent=>agent.ref===chosenRef);
-  const identity=useAgentIdentity("World",!chosen);
-  const agent:PanelAgent=chosen?{name:chosen.name,ref:chosen.ref,purpose:chosen.purpose}:{name:identity.state==="read"?identity.name:"World",image:identity.image,ref:undefined};
+  const desired=sourceWorldRef?undefined:roster.agents.find(agent=>agent.ref===chosenRef);
+  const [nativeProfile,setNativeProfile]=useState<ReturnType<typeof readNativeSessionProfile>>();
+  const [nativeProfileError,setNativeProfileError]=useState<string>();
+  useEffect(()=>{
+    let active=true;
+    setNativeProfile(undefined);setNativeProfileError(undefined);
+    if(!accompanying||current?.()===false)return;
+    const origin=accompanying;
+    const belongs=captureAgentReceiver(()=>({...latestReceiver.current,mode:"native-agent-source",plane:"native-agent-source",mounted:mounted.current,visible:!!host.current?.getClientRects().length,current:latestReceiver.current.current?.()!==false}));
+    void nativeAgentOwner(kernel.transport,origin.project,sourceWorldRef)({action:"session",agent_session:origin.ref})
+      .then(value=>{if(active&&belongs()){setNativeProfile(readNativeSessionProfile(value,origin));}})
+      .catch(error=>{if(active&&belongs())setNativeProfileError(String(error));});
+    return()=>{active=false;};
+  },[kernel.transport,sourceWorldRef,accompanying?.project,accompanying?.ref,accompanying?.space]);
+  const chosen=desired&&nativeProfile?.ref===desired.ref&&nativeProfile.revision===desired.revision?desired:undefined;
+  const identity=useAgentIdentity("World",!nativeProfile&&!sourceWorldRef&&!accompanying);
+  const agent:PanelAgent=nativeProfile?{name:nativeProfile.name??"Unnamed native Agent",ref:nativeProfile.ref,purpose:nativeProfile.purpose}:{name:identity.state==="read"?identity.name:"World",image:identity.image,ref:undefined};
   const status=sessionState?.status;
   const permissionsPending=!!sessionState?.reading?.permissions?.length;
   const presence:PanelPresence=sessionState?.unreachable||status?.error?"unavailable":permissionsPending?"attention":status?.state==="TurnInFlight"||status?.state==="InterruptRequested"?"working":"idle";
@@ -260,10 +306,12 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
   </section>;
 
   const lastSeen=sessionState?.reconnecting?.lastSeenAt;
-  return <section ref={host} className="agent-layer" aria-label="Accompanying agent" data-full={full} data-mode={mode} data-plane={plane} data-presence={presence} data-agent-session-ref={expression.agentSessionRef} data-owner-state={expression.state} data-owner-activity-block={expression.latestOwnerActivity?.blockId}>
+  return <section ref={host} className="agent-layer" aria-label="Accompanying agent" onClickCapture={guard} onKeyDownCapture={guard} onSubmitCapture={guard} data-full={full} data-mode={mode} data-plane={plane} data-presence={presence} data-agent-session-ref={expression.agentSessionRef} data-owner-state={expression.state} data-owner-activity-block={expression.latestOwnerActivity?.blockId}>
     <PanelTop tabs={nav} current={plane} onSelect={id=>{setDetail(undefined);if(id==="Activity"&&plane!=="Activity")setFollowToken(token=>token+1);select(id);}} full={full} onFull={onFull} onPromote={accompanying&&!promoted&&!curation.conversationInCentre&&onOpenConversation?()=>onOpenConversation(accompanying):undefined}
       avatar={<AvatarPresence agent={agent} presence={presence} bypass={bypass} onOpenAgents={()=>{setRosterWanted(true);select(offered.some(entry=>entry.id==="Agents")?"Agents":plane);}}/>}/>
     {lastSeen!==undefined&&<span className="panel-reconnect" role="status" aria-label="Reconnecting — draft kept" title="Reconnecting — draft kept"/>}
+    {desired&&!chosen&&<p className="panel-line" role="status">Selected definition: {desired.name}. Prepare and choose its native session to change the companion; the current conversation was retained.</p>}
+    {nativeProfileError&&<p className="panel-line" role="status">Native Agent source unavailable: {nativeProfileError}</p>}
     {sessionState?.unreachable&&<p className="panel-line" role="status" data-line="unreachable">Agents aren&apos;t reachable here right now. Your files, flows and this draft still work here.</p>}
     {bypass&&plane==="Chat"&&!promoted&&<p className="panel-line panel-bypass" role="status" data-line="bypass">Bypass permissions is on for this session: {agent.name} acts without asking. <button type="button" className="oi-action" onClick={()=>{const ask=sessionState?.mode.reading?.mode_observation?.available_modes.find(option=>modeClass(option.id)==="ask");if(ask&&session)void session.actions.selectMode(ask.id);}}>Back to Ask</button></p>}
     <div className="agent-body">
@@ -274,19 +322,29 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
         return <div key={name} className="agent-plane-host" hidden={hidden} style={hidden?{display:"none"}:undefined}>
           {name==="Chat"&&(promoted&&accompanying
             ?<p className="panel-promoted" data-line="promoted"><span>Open in the centre</span> — <button type="button" className="oi-action" onClick={()=>onBringBack?.(accompanying)}>Bring back</button></p>
-            :<AgentChat variant="plane" session={session} accompanying={accompanying} project={project??accompanying?.project} agentName={agent.name} identity={chosen?{name:chosen.name,ref:chosen.ref,description:chosen.purpose,state:"read"}:undefined} situating="" sessionTitle={accompanying?titles[accompanying.ref]:undefined} choosing={choosing}
+            :<AgentChat variant={conversation?"centre":"plane"} session={session} accompanying={accompanying} project={project??accompanying?.project} agentName={agent.name} identity={nativeProfile?{name:agent.name,ref:nativeProfile.ref,description:nativeProfile.purpose,state:"read"}:undefined} situating="" sessionTitle={accompanying?titles[accompanying.ref]:undefined} choosing={choosing}
             subject={{title:subject.title,location:subject.location}} resolveSurface={resolveSurface} onMessage={onError??(message=>console.error(message))}
             tape={tape} onOpenActivity={offered.some(entry=>entry.id==="Activity")?openActivity:undefined} connectionFacts={connectionFacts} onArtifact={path=>void openArtifact(path)}
             onNewChat={()=>onAccompanying(undefined)} onChoose={choose}
             onProvision={async provisionProject=>{
+              const belongs=captureReceiver();
+              if(!belongs())throw new Error("The conversation presentation retired before provisioning.");
+              if(onProvision){
+                const value=await onProvision(provisionProject,preferredBodyRef);
+                if(!belongs())throw new Error("The conversation presentation retired after native provisioning; inspect its owner before selecting it.");
+                if(value.project!==provisionProject||!value.ref||!value.space)throw new Error("The provisioned conversation has a different native destination.");
+                onAccompanying(value);return;
+              }
+              if(sourceWorldRef)throw new Error("This native World has not disclosed a qualified conversation provisioning operation.");
               const provisioned=await encounterProvision(kernel.transport,provisionProject,preferredBodyRef);
-              const value={ref:provisioned.agent_session,project:provisionProject,space:provisioned.space};
-              learnTitles([{ref:provisioned.agent_session,project:provisionProject,space:provisioned.space,title:provisioned.space}]);
+              if(!belongs())throw new Error("The native conversation was provisioned, but its presentation retired; inspect the retained owner before choosing it.");
+              const value={ref:provisioned.agent_session,project:provisioned.project,space:provisioned.space};
+              learnTitles([{ref:provisioned.agent_session,project:provisioned.project,space:provisioned.space,title:provisioned.space}]);
               onAccompanying(value);
               if(offered.some(entry=>entry.id==="Chat"))select("Chat");
             }}/>)}
           {name==="Activity"&&<ActivityTab key={accompanying?.ref??"none"} session={session} tape={tape} reading={journal} focus={focus} followToken={followToken} onChat={offered.some(entry=>entry.id==="Chat")?()=>select("Chat"):undefined}/>}
-          {name==="Agents"&&<AgentsTab project={project} roster={roster} boundRef={chosen?.ref} boundPresence={accompanying?presence:undefined} onMessage={agentChosen=>{chooseAgent(agentChosen);select(offered.some(entry=>entry.id==="Chat")?"Chat":plane);}}/>}
+          {name==="Agents"&&<>{prepareAgents&&<NativeAgentLauncher project={project} sourceWorldRef={sourceWorldRef} current={()=>captureReceiver()()&&latestReceiver.current.plane==="Agents"} onChoose={choose}/>}<>{sourceWorldRef?<p className="panel-line" role="status">This native World has not disclosed its Position and Agent roster. Local Central participation was not substituted.</p>:<AgentsTab project={project} roster={roster} boundRef={chosen?.ref} boundPresence={accompanying?presence:undefined} onMessage={agentChosen=>{chooseAgent(agentChosen);select(offered.some(entry=>entry.id==="Chat")?"Chat":plane);}}/>}</></>}
         </div>;
       })}
       {plane==="Composition"&&!detail&&<Suspense fallback={null}><ExpressionView key={compositionRef??"expression-composition"} initialExpressionRef={compositionRef??(subject.ref?.startsWith("expression:")?subject.ref:undefined)}/></Suspense>}

@@ -32,7 +32,7 @@ import {
   MediumConfig,
   CollisionConfig,
 } from './types';
-import { DEFAULT_CONFIG, DEFAULT_COLOR_CONFIG, DEFAULT_TOROIDAL_CONFIG } from './PointCloudField';
+import { DEFAULT_CONFIG, DEFAULT_COLOR_CONFIG, DEFAULT_TOROIDAL_CONFIG } from './fieldDefaults';
 import { createDefaultChakraConfig } from './chakraSystem';
 import { isLightHex } from './colorPalettes';
 import { migrateLegacyFieldConfig } from './fieldModel';

@@ -1,0 +1,147 @@
+// PROVENANCE: Ghidra 12.1.4 decompiles + nm/objdump decodes, persistent
+// project LiveRE2 (~/tools/live-re/ghidra-proj2, ALREADY ANALYZED), Live.arm64
+// (Live 12.0.25, 2024-08-27_2627c43816), arm64 slice. Query-only
+// (analyzeHeadless -process -noanalysis; no re-import; no Live runs, no
+// renders in this lane). Owner-private analysis evidence. NOT FOR
+// REDISTRIBUTION. Never enters product source (packages/live-dynamics).
+// Captured 2026-10-09 (Hybrid Reverb binary lane) via nm/strings census +
+// BlockProbe on OHybridProcessor / ODeviceKitDeviceProcessor<HybridDevice>
+// callbacks and ableton::blocks::hybrid::Hybrid ticks + official evidence
+// "Core Library/Defaults/Audio Effects/Hybrid Reverb.adv" (gunzip XML read
+// only) + factory IR folder census (ls only — file CONTENTS never read;
+// factory IRs are assets, mechanism only per lane contract).
+// Companion dossier: devices/hybridreverb-derivation.md.
+
+// ===== namespace census (the architecture in one table) =====
+// device processor: ODeviceKitDeviceProcessor<ableton::devices::hybrid::HybridDevice>
+//   (SOnProcessorCreate<16OHybridProcessor> 0x1018be5fc; callbacks registered
+//    via HybridDevice::setCallbacks<TickableRealtimeModel<model::Hybrid>>)
+// DSP engine:      ableton::blocks::hybrid::Hybrid        (tick object)
+// convolver:       ableton::blocks::hybrid::HybridConvolver (opaque; only a
+//                  pointer-const callback + noop symbolized — internals
+//                  anonymous, corpus material)
+// enums/handles:   blocks::hybrid::{HybridRouting, HybridReverbType,
+//                  HybridEqFilterType}
+// model (flip):    ableton::push_live_model::HybridReverbDevice with
+//                  ir_file_index, ir_category_index, ir_time_shaping_on,
+//                  ir_decay_time, ir_attack_time, ir_size_factor,
+//                  ir_file_list, ir_category_list representatives
+//                  (0x10427e758..0x10427eaa0)
+// THE CLASSIC REVERB IS A DIFFERENT ENGINE: devices::reverb::ReverbDevice +
+// TickableSampleRateDeviceModel + blocks::reverb::{Reverb (TickerSwitcher),
+// ReverbHighFilterType, ReverbSizeSmoothingMode}, processor OReverbProcessor
+// (0x1018c37cc). NO shared tick/convolver symbol between the two families
+// [D — separate namespaces, separate device classes, separate model types].
+
+// ===== OHybridProcessor / HybridDevice callback families (nm, partial) =====
+00000001017b457c Init(OScheduler*)      00000001017b468c Exit
+00000001017b4690 Reset                  00000001017ba570 CalcMain(int)
+00000001017ba574 NewMaxBufferSize(int)  00000001017ba690 OnOn(float)
+00000001017ba8f4 OnMidi(...)
+// PreDelay: OnAutomatableFloatEvent<PreDelay,Sync> 0x1017bb028,
+//   OnRampEvent<PreDelay,Time> 0x1017bb190, <..,Sixteenth> 0x1017bb2f4,
+//   <..,FeedbackTime> 0x1017bb45c, <..,FeedbackSixteenth> 0x1017bb5c0
+// Convolution (IR time shaping — all OnFloatEvent, all write engine+slot and
+//   set the engine dirty byte):
+//   IrPostProcessingOn 0x1017bb7ac, IrAttackTime 0x1017bb7dc,
+//   IrDecayTime 0x1017bb804, IrSize 0x1017bb82c
+// Algorithm: OnAutomatableFloatEvent<Algorithm,Type> 0x1017bc0b8,
+//   OnRampEvent<Algorithm,Type> 0x1017bc10c, Delay 0x1017bc270,
+//   Freeze 0x1017bc3d4, FreezeIn 0x1017bc53c, Decay 0x1017bc6a4,
+//   Size 0x1017bc808, Damping 0x1017bc96c, Diffusion 0x1017bcad0,
+//   Modulation 0x1017bcc34, Shape 0x1017bcd98, BassMultiplier 0x1017bcefc,
+//   BassCrossover 0x1017bd060, Shimmer 0x1017bd1c4 (+ Tides/Prism/Quartz
+//   property converters in the model layer; Algorithm_Type range 0..1 in
+//   12.0 — the Tides/Prism/Quartz modes are dormant in this build)
+// engine-topology callbacks (setCallbacks lambdas): #4 HybridConvolver* const&
+//   swap, #5 HybridReverbType, #30/#40 HybridEqFilterType, #45 HybridRouting
+
+// ===== engine state facts (blocks::hybrid::Hybrid, object via this+0xb8) =====
+// +0x1b18     managed object (FadeReader family — dsp::blocks::
+//             FadeReader<StereoPair<float>> referenced by the tick)
+// +0x21e8/0x21f4/0x21f8/0x2200  crossfade/blend state (fade in progress)
+// +0x3cd0     convolution branch state
+// +0x57c0/0x57c4/0x57c8  freeze detection: magnitude threshold, last magnitude,
+//             run-length counter (tickSerial compares |L|+|R| sums against it)
+// +0x5d08/0x5d09  IrPostProcessingOn bool + dirty byte (OnFloatEvent bodies):
+//   OnFloatEvent<IrPostProcessingOn>(v, this):
+//     e = *(this+0xb8); if ((bool)*(e+0x5d08) != (v != 0)) { *(e+0x5d08) = v!=0;
+//     *(e+0x5d09) = 1; }            // dirty flag -> IR re-shape on audio thread
+//   (IrAttackTime/IrDecayTime/IrSize bodies share the shape — same class of
+//   write, slots adjacent; only IrPostProcessingOn captured in full)
+
+// ===== tick topology (ableton::blocks::hybrid::Hybrid) =====
+// tickParallel<bool,bool>(StereoPair<float>) 0x103acb480/0x103acb65c/0x103acb834
+// tickSerial<bool,bool>(StereoPair<float>)  0x103acb9f4/0x103acbbcc/0x103acbda0
+// 3 instantiations each of a 2-bool family (convolution-active x algorithmic-
+// active axes; fourth combination absent — at least one branch always runs).
+// tickSerial<0,0> (0x103acbda0, 189 lines decompiled) shows:
+//   - fade/blend value at 0x21f4/0x21f8 with +-1.0 clamping (smoothed
+//     ConvoAlgoBlend travel), fed through dsp::blocks::FadeReader<StereoPair>
+//     tick (lambda factories at 0x105084e20/0x10508da98)
+//   - convolution branch call func_0x000103acb064(fade, this+0x3cd0, ...)
+//   - second branch value func_0x000103acb064(fade, this+0x2200, ...)
+//   - freeze bookkeeping: |a|+|b| against 0x57c0 threshold, last-value
+//     comparison 0x57c4, run counter 0x57c8 (Freeze hold logic)
+// per-sample algorithmic + convolution legs run as block ticks under
+// CalcMain(int) (0x1017ba570; body type-propagation-mangled, calls into
+// 0x103b82a7c in the hybrid TU region — the block driver).
+
+// ===== HybridDevice::Init(OScheduler*) 0x1017b457c =====
+// observer/list wiring only: links the processor into five model lists at
+// model+0x260/0x290/0x2d8/0x2f0/... (pre-delay/eq/algorithm/notification
+// lists) and stores scheduler-side links at this+0xc0..0x1a8. No DSP constants.
+
+// ===== official surface: Defaults/Audio Effects/Hybrid Reverb.adv =====
+// root element <Hybrid>; Creator "Ableton Live 12.0.5d1".
+// Parameters (Manual defaults; [MidiControllerRange] where declared):
+//   On=true
+//   PreDelay_Sync=false  PreDelay_Time=0.01000000164 [0..4 s]
+//   PreDelay_Sixteenth=2 [0..16]  PreDelay_FeedbackTime=0 [0..0.95]
+//   PreDelay_FeedbackSixteenth=0 [0..0.95]
+//   Algorithm_Type=0 [0..1]      Algorithm_Delay=0 [0..1]
+//   Algorithm_Freeze=false       Algorithm_FreezeIn=false
+//   Algorithm_Decay=3.5 [0.1..60] Algorithm_Size=0.5 [0..1]
+//   Algorithm_Damping=0.5 [0..1]  Algorithm_Diffusion=1 [0..1]
+//   Algorithm_Modulation=0.5 [0..1] Algorithm_Shape=0.5 [0..1]
+//   Algorithm_BassMultiplier=1 [0.25..4]
+//   Algorithm_BassCrossover=440 [80..1000]
+//   Algorithm_Shimmer=0.5 [0..1]  Algorithm_PitchShift=12 [-12..12]
+//   Algorithm_TidesAmount=0.5 [0..1]  Algorithm_TidesRate=22 [0..29]
+//   Algorithm_TidesWaveform=0.5 [0..1] Algorithm_TidesPhaseOffset=90 [0..180]
+//   Algorithm_Quartz_LowDamping=0.5 [0..1] Algorithm_Quartz_Distance=0.5 [0..1]
+//   Algorithm_Prism_HighMultiplier=1 [0.1..5] Algorithm_Prism_LowMultiplier=1
+//   [0.1..5] Algorithm_Prism_CrossoverFrequency=800 [400..5500]
+//   Algorithm_Prism_Sixth=0 [0..1] Algorithm_Prism_Seventh=0 [0..1]
+//   Eq_On=true   Eq_PreAlgo=false
+//   Eq_LowBandType=0  Eq_LowBandFrequency=80 [20..20000]
+//   Eq_LowBandGain=1 [0.25..4]   Eq_LowBandSlope=1 [0..9]
+//   Eq_Peak1Frequency=700 [20..20000]  Eq_Peak1Gain=1 [0.25..4]
+//   Eq_Peak1Q=0.7071067691 [0.1..4]
+//   Eq_Peak2Frequency=1500            Eq_Peak2Gain=1     Eq_Peak2Q=0.7071067691
+//   Eq_HighBandType=1  Eq_HighBandFrequency=5000  Eq_HighBandGain=1 [0.25..4]
+//   Eq_HighBandSlope=4 [0..9]
+//   Send=1 [0..1]  Routing=1 [0..1]  ConvoAlgoBlend=0.5 [0..1]
+//   Vintage=0 [0..4]  StereoWidth=1 [0..2]  BassMono=false  DryWet=0.5 [0..1]
+// IR storage (the loading mechanism, from the same XML):
+//   <ImpulseResponseHandler><SampleSlot> + <SampleSlotTrueStereo> — two
+//   SampleRefs pointing at ordinary audio files:
+//     Samples/Hybrid/ImpulseResponses/Hybrid_Early_Reflections_Ableton Studio
+//     Backwards L.aif (DefaultDuration 12556, DefaultSampleRate 44100)
+//     ...Backwards R.aif (true-stereo right leg)
+//   i.e. the IR rides the SAME sample-slot sample-reference mechanism as
+//   Simpler/Sampler; L and R are separate mono files (SampleSlotTrueStereo).
+// Factory IR census: App-Resources/Builtin/Samples/Hybrid/ImpulseResponses/
+//   = 245 files (.aif/.wav, L/R pairs, category prefixes like
+//   Hybrid_Bigger_Spaces_*, Hybrid_Early_Reflections_*). File contents NOT
+//   read (assets; mechanism only).
+
+// ===== open in this lane =====
+// - HybridConvolver internals (partition sizes, FFT schedule, wet-delay
+//   handling) — anonymous code, corpus material
+// - the algorithmic tail's internal topology (tank/delay network) and the
+//   Vintage-DDLT stage — anonymous code in the 0x103acxxxx region
+// - which of tickSerial/tickParallel the Routing enum selects per value
+// - Eq band coefficient build (HybridEqFilterType -> biquads), PreDelay delay
+//   line law, the BassMono/mono-maker and StereoWidth matrix placement
+// - IR time-shaping math (attack/decay/size application to the loaded file)

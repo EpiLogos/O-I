@@ -1,0 +1,1180 @@
+// PROVENANCE: Ghidra 12.1.4 decompiles + nm decodes, persistent project
+// LiveRE2 (~/tools/live-re/ghidra-proj2, ALREADY ANALYZED), Live.arm64
+// (Live 12.0.25, 2024-08-27_2627c43816), arm64 slice. Query-only
+// (analyzeHeadless -process -noanalysis; no re-import; no Live runs, no
+// renders in this lane). Owner-private analysis evidence. NOT FOR
+// REDISTRIBUTION. Never enters product source (packages/live-dynamics).
+// Captured 2026-10-09 (phaser-flanger binary lane) via SearchProbe/
+// BlockProbe/DataProbe scripts + `nm` on Live.arm64.
+// Companion dossier: devices/phaser-derivation.md.
+// Contents: (1) nm census (Phaser device trampolines incl. full Modulation
+// LFO surface, blocks::phaser factories); (2) create wrapper chain;
+// (3) PhaserFlangerMode handler 0x1018915a0 (state wipe + flanger flag +
+// seed consts); (4) CalcMainSingleSample (shell) + DSP tail 0x103b8b500
+// (envelope LPF bank + SVF/asin tracker + peak latch); (5) main chain
+// 0x103b8bb74 (mode-dispatched allpass/delay engine); (6) LFO tick
+// 0x103b8c010 + status; (7) verdicts.
+
+======== (1) nm CENSUS ========
+00000001018c2fa4 SOnProcessorCreate<OPhaserNewProcessor>
+00000001018c2ed0 SOnProcessorCreate<OPhaserProcessor>          (legacy Phaser)
+00000001018bde84 SOnProcessorCreate<OFlangerProcessor>         (legacy Flanger)
+
+-- PhaserDevice SProcessorFunc trampolines (member -> invoke addr) --
+10188567c Init(OScheduler*)
+10188578c Exit()
+101885790 Reset()
+101885984 CalcMainSingleSample()
+101885a90 OnX(float)
+101885aa0 OnOn(float)
+101885d0c OnMidi(void*)
+-- model::Phaser ramps (OnRampEvent<P>) --
+101887818? Mode | 101887834-area OnRampEvent<Notches> (int)
+1018878f8 FlangerDelayTime   101887910 DoublerDelayTime
+10188792c? (Unused)          1018879e4 CenterFrequency
+1018879fc Spread             101887a14 Feedback
+101887a2c Warmth             101887a44 SafeBassFrequency
+101887b94? InvertWet (OnAutomatableFloatEvent)  101887c50 OutputGain
+101887c68 DryWet
+-- model::Modulation (LFO section) trampolines --
+1018867c4 OnRampEvent<Modulation::Amount>
+101886948/101886a0c Waveform (OnAutomatableFloatEvent + OnRampEvent, enum blocks::StereoLfoWaveform; invoke 0x101890f28 stores enum at dsp+0x678)
+101886a24 Frequency   101886b64 Frequency2
+101886e1c Sync        101887044 Sync2
+101887100 SyncedRate  1018871c4 SyncedRate2
+101887288 PhaseOffset 1018872a0 SpinEnabled (bool)  10188735c Spin
+101887374 DutyCycle   10188738c LfoBlend
+1018874e4 EnvelopeEnabled (bool)  1018875a0 EnvelopeAmount
+1018875b8 EnvelopeAttack          1018875d0 EnvelopeRelease
+101887758/101887781c Mode (automatable + ramp)
+101887b94 InvertWet  101887c80 OnFloatEvent<VisualizationOn>
+
+-- blocks::phaser / setCallbacks factories --
+10188cc94 devicekit::noop<PhaserFlangerMode>
+10188cd38 InvokeFunctionFactory<void(const PhaserFlangerMode&), PhaserFlangerMode*>
+101890f28 InvokeFunctionFactory<void(const blocks::StereoLfoWaveform&), ...>::invoke  (stores dsp+0x678)
+1018915a0 InvokeFunctionFactory<void(const PhaserFlangerMode&), lambda in Phaser::setCallbacks>::invoke  <-- MODE HANDLER
+
+======== (2) CREATE WRAPPER CHAIN ========
+FUNC 1018c2fa4 name=__ZN23OProcessorCreateManager18SOnProcessorCreateI19OPhaserNewProcessorEEvR14OThreadMessage body=1 lines=11
+
+void __ZN23OProcessorCreateManager18SOnProcessorCreateI19OPhaserNewProcessorEEvR14OThreadMessage
+               (undefined8 param_1)
+
+{
+  undefined1 auStack_48 [40];
+  
+  func_0x000101546e1c(auStack_48,param_1);
+  func_0x0001018c2fe0(auStack_48,param_1);
+  return;
+}
+END 1018c2fa4
+FUNC 1018c2fe0 name=FUN_1018c2fe0 body=1 lines=17
+
+long FUN_1018c2fe0(undefined8 param_1,undefined8 param_2)
+
+{
+  undefined8 uVar1;
+  long lVar2;
+  undefined1 uStack_35;
+  int iStack_34;
+  
+  uVar1 = func_0x00010153be8c(param_2,&iStack_34);
+  func_0x00010153be4c(uVar1,&uStack_35);
+  lVar2 = func_0x00010153ff88(0x28);
+  func_0x000101545cf4(lVar2,param_1,iStack_34 + 0x268,uStack_35);
+  func_0x0001018805d8(*(undefined8 *)(lVar2 + 0x18),param_1,param_2);
+  func_0x000101545e84(lVar2);
+  return lVar2;
+}
+END 1018c2fe0
+-------- construction FUN_1018805d8 -> FUN_101880274 (head) --------
+FUNC 1018805d8 name=FUN_1018805d8 body=1 lines=10
+
+void FUN_1018805d8(void)
+
+{
+  long *plVar1;
+  
+  plVar1 = (long *)func_0x000101880274();
+  *plVar1 = (long)(PTR_DAT_1050a3918 + 0x10);
+  return;
+}
+END 1018805d8
+FUNC 101880274 name=FUN_101880274 body=1 lines=122
+
+long FUN_101880274(long param_1,int *param_2,undefined8 param_3)
+
+{
+  undefined *puVar1;
+  undefined *puVar2;
+  int iVar3;
+  long *plVar4;
+  undefined8 uVar5;
+  long lVar6;
+  long lStack_80;
+  undefined8 uStack_78;
+  undefined8 uStack_70;
+  undefined8 uStack_68;
+  undefined8 uStack_60;
+  uint auStack_58 [2];
+  
+  plVar4 = (long *)func_0x0001016669a8();
+  *plVar4 = (long)(PTR_DAT_1050a4600 + 0x10);
+  plVar4[6] = *(long *)(param_2 + 4);
+  plVar4[7] = 0;
+  plVar4[8] = 0;
+  plVar4[9] = 0;
+  plVar4[10] = (long)
+               PTR___ZZNK7ableton7utility8CallbackIFvPvELb0EE13kNullCallbackMUlvE_clEvENUlS2_S2_E_8__invokeES2_S2__1050c84b8
+  ;
+  plVar4[0xb] = 0;
+  plVar4[0xc] = 0;
+  func_0x0001017605cc(plVar4 + 0xd,plVar4 + 10);
+  *(undefined **)(param_1 + 0x78) = PTR_DAT_1050a4648 + 0x10;
+  *(undefined8 *)(param_1 + 0x88) = 0;
+  func_0x00010176136c(param_1 + 0x90,*(undefined8 *)(param_1 + 0x30));
+  uStack_60 = param_3;
+  func_0x000101887c9c(&lStack_80,&uStack_60);
+  *(undefined **)(param_1 + 0xa0) = PTR_DAT_1050a4c98 + 0x10;
+  *(undefined8 *)(param_1 + 0xa8) = 0;
+  *(undefined4 *)(param_1 + 0xb0) = 0;
+  if (lStack_80 != 0) {
+    LOAcquire();
+    *(int *)(lStack_80 + 0x30) = *(int *)(lStack_80 + 0x30) + 1;
+    LORelease();
+    *(long *)(param_1 + 0xa8) = lStack_80;
+    *(uint *)(param_1 + 0xb0) = (uint)uStack_78;
+    if ((lStack_80 != 0) &&
+       (lVar6 = *(long *)(lRam000000010571a5b8 + ((ulong)((uint)uStack_78 >> 0x11) & 0x7ff8)),
+       lStack_80 = lVar6 + ((ulong)((uint)uStack_78 << 4) & 0xfffff0), lVar6 != 0)) {
+      LOAcquire();
+      iVar3 = *(int *)(lStack_80 + 0x30);
+      *(int *)(lStack_80 + 0x30) = iVar3 + -1;
+      LORelease();
+      if (iVar3 == 1) {
+        auStack_58[0] = (uint)uStack_78;
+        func_0x000101557be4(auStack_58,0x34);
+      }
+    }
+  }
+  iVar3 = *param_2;
+  uStack_78 = 0;
+  lStack_80 = 0;
+  uStack_68 = 0;
+  uStack_70 = 0;
+  uVar5 = func_0x00010153fb98(0x1780,0x10);
+  uVar5 = func_0x00010188801c((float)iVar3,uVar5,&lStack_80);
+  puVar1 = PTR_DAT_1050a54e8 + 0x10;
+  *(undefined8 *)(param_1 + 0xb8) = uVar5;
+  *(undefined **)(param_1 + 0xc0) = puVar1;
+  *(undefined **)(param_1 + 0xd8) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices6phaser6PhaserEEvJEE14CallMemberFuncIXadL_ZNS7_19OnSampleRateChangedEvEEEEvPv_10509e118
+  ;
+  *(long *)(param_1 + 0xe0) = param_1;
+  *(undefined8 *)(param_1 + 0xe8) = 0;
+  *(undefined **)(param_1 + 0xf0) = puVar1;
+  *(undefined **)(param_1 + 0x108) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices6phaser6PhaserEEvJEE14CallMemberFuncIXadL_ZNS7_14OnTempoChangedEvEEEEvPv_10509e110
+  ;
+  *(long *)(param_1 + 0x110) = param_1;
+  *(undefined8 *)(param_1 + 0x118) = 0;
+  *(undefined **)(param_1 + 0x120) = puVar1;
+  *(undefined **)(param_1 + 0x138) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices6phaser6PhaserEEvJEE14CallMemberFuncIXadL_ZNS7_30OnTransportPlayingStateChangedEvEEEEvPv_10509e120
+  ;
+  *(long *)(param_1 + 0x140) = param_1;
+  *(undefined8 *)(param_1 + 0x148) = 0;
+  *(undefined **)(param_1 + 0x150) = puVar1;
+  puVar2 = 
+  PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices6phaser6PhaserEEvJEE14CallMemberFuncIXadL_ZNS7_14OnBeatTimeJumpEvEEEEvPv_10509e108
+  ;
+  *(undefined **)(param_1 + 0x168) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices6phaser6PhaserEEvJEE14CallMemberFuncIXadL_ZNS7_14OnBeatTimeJumpEvEEEEvPv_10509e108
+  ;
+  *(long *)(param_1 + 0x170) = param_1;
+  *(undefined8 *)(param_1 + 0x178) = 0;
+  *(undefined **)(param_1 + 0x180) = puVar1;
+  *(undefined **)(param_1 + 0x198) = puVar2;
+  *(long *)(param_1 + 0x1a0) = param_1;
+  *(undefined8 *)(param_1 + 0x1a8) = 0;
+  func_0x00010151348c(param_1 + 0x1b0);
+  func_0x000101513514(param_1 + 0x1c0);
+  puVar1 = 
+  PTR___ZZNK7ableton7utility8CallbackIFvfELb0EE13kNullCallbackMUlvE_clEvENUlPvfE_8__invokeES5_f_1050c8618
+  ;
+  *(undefined8 *)(param_1 + 0x1f0) = 0;
+  *(undefined8 *)(param_1 + 0x1f8) = 0;
+  *(undefined **)(param_1 + 0x1e8) = puVar1;
+  *(undefined4 *)(param_1 + 0x200) = 0;
+  func_0x00010152f478(param_1 + 0x208);
+  *(undefined **)(param_1 + 0x208) = PTR_DAT_1050a3b48 + 0x10;
+  *(long *)(param_1 + 0x230) = param_1;
+  *(undefined1 *)(param_1 + 0x238) = 0;
+  *(undefined1 *)(param_1 + 0x260) = 0;
+  *(undefined8 *)(param_1 + 0x1d0) = 0;
+  *(undefined8 *)(param_1 + 0x1e0) = 0;
+  *(undefined8 *)(param_1 + 0x1d8) = 0;
+  *(undefined8 *)(param_1 + 0x248) = 0;
+  *(undefined8 *)(param_1 + 0x240) = 0;
+  *(undefined1 *)(param_1 + 0x250) = 0;
+  func_0x00010151fc14();
+  iVar3 = func_0x000101521a5c();
+  *(undefined8 *)(param_1 + 0x40) = *(undefined8 *)(param_1 + 0x38);
+  FUN_1018d6b64(plVar4 + 7,(long)(iVar3 << 4));
+  return param_1;
+}
+END 101880274
+
+VERDICT: same device-kit shell as Chorus (param block at shell+0x268,
+DSP object pointer at shell+0xb8). Mode-switch handler (3) zeroes the DSP
+state block int[0xc..0x540] (= bytes 0x30..0x1500) => DSP object >= 0x1508
+bytes; calc state references reach int 0x20c (byte 0x830).
+
+======== (3) PhaserFlangerMode HANDLER (0x1018915a0) ========
+FUNC 1018915a0 name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKNS_6blocks6phaser17PhaserFlangerModeEEZNS_7devices6phaser6Phaser12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINSA_5model6PhaserEEEEEvRT_EUlS5_E_E6invokeEPvS7_ body=1 lines=40
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKNS_6blocks6phaser17PhaserFlangerModeEEZNS_7devices6phaser6Phaser12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINSA_5model6PhaserEEEEEvRT_EUlS5_E_E6invokeEPvS7_
+               (undefined8 *param_1,int *param_2)
+
+{
+  int iVar1;
+  ulong uVar2;
+  int *piVar3;
+  undefined1 auVar4 [16];
+  
+  iVar1 = *param_2;
+  piVar3 = (int *)*param_1;
+  if (*piVar3 != iVar1) {
+    *piVar3 = iVar1;
+    *(bool *)(piVar3 + 0x1c2) = iVar1 == 1;
+    _bzero(piVar3 + 0xc,0x540);
+    uVar2 = *(long *)(piVar3 + 0x172) - *(long *)(piVar3 + 0x170);
+    if (0 < (long)uVar2) {
+      _bzero(*(long *)(piVar3 + 0x170),((uVar2 >> 4) - (ulong)(0xf < uVar2)) * 0x10 + 0x10);
+    }
+    piVar3[0x1e2] = 0;
+    piVar3[0x1e3] = 0;
+    piVar3[0x1e0] = 0;
+    piVar3[0x1e1] = 0;
+    piVar3[0x1de] = 0;
+    piVar3[0x1df] = 0;
+    piVar3[0x1dc] = 0;
+    piVar3[0x1dd] = 0;
+    auVar4 = NEON_fmov(0x3e800000,4);
+    *(ulong *)(piVar3 + 0x1e6) = CONCAT44(auVar4._12_4_ * 0.15643427,auVar4._8_4_ * 0.15643427);
+    *(ulong *)(piVar3 + 0x1e4) = CONCAT44(auVar4._4_4_ * 0.15643427,auVar4._0_4_ * 0.15643427);
+    piVar3[0x20c] = -1;
+    piVar3[0x20d] = -1;
+    piVar3[0x1f2] = 0;
+    piVar3[499] = 0;
+    piVar3[0x1f0] = 0;
+    piVar3[0x1f1] = 0;
+  }
+  return;
+}
+END 1018915a0
+
+VERDICTS [D]:
+- obj->mode (int at +0) = m; byte at int-offset 0x1c2 (0x708) = (m == 1)
+  => MODE 1 = FLANGER (bool flag).
+- state wipe: ints 0xc..0x540 zeroed (bytes 0x30..0x1500) -- all notches,
+  LFO, envelope, delay state reset on every mode change.
+- seed: 4 floats = 0.25 * 0.15643427 = 0.03910857 written at ints
+  0x1e4..0x1e7 (bytes 0x790..0x79c) -- the asin-tracker smoother states.
+- ints 0x20c/0x20d (0x830/0x834) = -1 (peak-hold counters = "never");
+  ints 0x1dc..0x1e3, 0x1f0..0x1f2, [499] zeroed.
+- 0.15643427 = sin(9 deg); seed = 0.25*sin(9 deg) [B].
+
+======== (4) SHELL CALC + DSP TAIL ========
+FUNC 101885984 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6phaser6PhaserEEFvvEE14SProcessorFuncIXadL_ZNS6_20CalcMainSingleSampleEvEEEEPFvPvEvENUlSB_E_8__invokeESB_ body=1 lines=106
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6phaser6PhaserEEFvvEE14SProcessorFuncIXadL_ZNS6_20CalcMainSingleSampleEvEEEEPFvPvEvENUlSB_E_8__invokeESB_
+               (long param_1)
+
+{
+  undefined4 *puVar1;
+  undefined4 *puVar2;
+  uint uVar3;
+  uint uVar4;
+  uint *puVar5;
+  uint *puVar6;
+  long lVar7;
+  undefined8 *puVar8;
+  long lVar9;
+  undefined4 uVar10;
+  undefined4 uVar11;
+  undefined1 uStack_50;
+  undefined7 uStack_4f;
+  char cStack_48;
+  
+  if (*(char *)(param_1 + 0x201) == '\0') {
+    if (*(char *)(param_1 + 0x202) != '\0') {
+code_r0x000101885894:
+      if (*(char *)(param_1 + 0x203) != '\0') {
+        puVar6 = *(uint **)(param_1 + 0xa8);
+        uVar4 = puVar6[2];
+        *(undefined1 *)(puVar6 + (ulong)uVar4 * 3 + 5) = 0;
+        LOAcquire();
+        uVar3 = *puVar6;
+        *puVar6 = uVar4 << 0x10 | 1;
+        LORelease();
+        puVar6[2] = uVar3 >> 0x10;
+        *(undefined1 *)(param_1 + 0x203) = 0;
+      }
+code_r0x0001018858c8:
+      *(undefined4 *)(param_1 + 0x228) = 1;
+      func_0x00010154e720(*(undefined8 *)(param_1 + 0x30),param_1 + 0x208);
+      *(undefined1 *)(param_1 + 0x238) = 1;
+      goto code_r0x000101885920;
+    }
+  }
+  else {
+    lVar7 = *(long *)(param_1 + 0xb8);
+    if (*(char *)(param_1 + 0x200) == '\0') {
+      uVar4 = func_0x000103b8b7c8(lVar7 + 0xf10);
+      uVar4 = uVar4 ^ 1;
+      uVar3 = (uint)*(byte *)(param_1 + 0x202);
+      if (uVar3 != uVar4) goto code_r0x000101885890;
+    }
+    else {
+      uVar4 = 1;
+      uVar3 = (uint)*(byte *)(param_1 + 0x202);
+      if (*(byte *)(param_1 + 0x202) != 1) {
+code_r0x000101885890:
+        if ((uVar4 & 1) == 0) goto code_r0x000101885894;
+        goto code_r0x0001018858c8;
+      }
+    }
+    if (uVar3 != 0) {
+      uStack_50 = 0;
+      cStack_48 = '\0';
+      puVar1 = *(undefined4 **)(param_1 + 0x1d0);
+      puVar2 = *(undefined4 **)(param_1 + 0x1d8);
+      if (*(long *)(lVar7 + 0xf08) != 0) {
+        lVar9 = *(long *)(lVar7 + 0xf08) << 3;
+        puVar8 = (undefined8 *)(lVar7 + 0xac8);
+        do {
+          (**(code **)(*(long *)*puVar8 + 0x18))();
+          lVar9 = lVar9 + -8;
+          puVar8 = puVar8 + 1;
+        } while (lVar9 != 0);
+      }
+      uVar11 = *puVar2;
+      uVar10 = func_0x000103b8b500(*puVar1,lVar7 + 0xf10);
+      *(undefined4 *)(param_1 + 0x1e0) = uVar10;
+      *(undefined4 *)(param_1 + 0x1e4) = uVar11;
+      func_0x000103b8bb4c(lVar7 + 0xf10,&uStack_50);
+      if (cStack_48 == '\0') {
+        if (*(char *)(param_1 + 0x203) == '\0') goto code_r0x000101885920;
+        cStack_48 = '\0';
+        *(undefined1 *)(param_1 + 0x203) = 0;
+        puVar5 = *(uint **)(param_1 + 0xa8);
+        uVar4 = puVar5[2];
+        puVar6 = puVar5 + (ulong)uVar4 * 3 + 3;
+      }
+      else {
+        *(char *)(param_1 + 0x203) = cStack_48;
+        puVar5 = *(uint **)(param_1 + 0xa8);
+        uVar4 = puVar5[2];
+        puVar6 = puVar5 + (ulong)uVar4 * 3 + 3;
+        *(ulong *)puVar6 = CONCAT71(uStack_4f,uStack_50);
+      }
+      *(char *)(puVar6 + 2) = cStack_48;
+      LOAcquire();
+      uVar3 = *puVar5;
+      *puVar5 = uVar4 << 0x10 | 1;
+      LORelease();
+      puVar5[2] = uVar3 >> 0x10;
+      goto code_r0x000101885920;
+    }
+  }
+  *(undefined8 *)(param_1 + 0x1e0) = 0;
+code_r0x000101885920:
+  *(undefined8 *)(param_1 + 0x40) = *(undefined8 *)(param_1 + 0x38);
+  return;
+}
+END 101885984
+FUNC 103b8b500 name=FUN_103b8b500 body=1 lines=201
+
+void FUN_103b8b500(float param_1,undefined1 param_2 [16],long param_3)
+
+{
+  long lVar1;
+  undefined4 uVar2;
+  float fVar3;
+  float extraout_s0;
+  float fVar6;
+  float extraout_var;
+  float fVar7;
+  float extraout_var_00;
+  undefined1 auVar4 [16];
+  float fVar8;
+  undefined1 auVar5 [16];
+  float extraout_var_01;
+  float fVar9;
+  float fVar12;
+  undefined1 auVar10 [16];
+  undefined1 auVar11 [16];
+  float fVar13;
+  float fVar15;
+  float fVar16;
+  undefined1 auVar14 [16];
+  float fVar17;
+  float fVar18;
+  float fVar19;
+  float fVar20;
+  float fVar21;
+  float fVar22;
+  float fVar23;
+  float fVar24;
+  float fVar25;
+  float fVar26;
+  float fVar27;
+  float fVar28;
+  float fVar29;
+  float fStack_68;
+  float fStack_64;
+  float fStack_58;
+  float fStack_54;
+  undefined8 uStack_50;
+  undefined8 uStack_48;
+  undefined8 uStack_40;
+  undefined8 uStack_38;
+  undefined8 uStack_30;
+  undefined8 uStack_28;
+  
+  fStack_54 = param_2._0_4_;
+  fStack_58 = param_1;
+  uVar2 = func_0x000103b8c010(param_3 + 0x640,&fStack_58);
+  *(undefined4 *)(param_3 + 0x820) = uVar2;
+  *(int *)(param_3 + 0x824) = param_2._0_4_;
+  uStack_30 = CONCAT44(param_2._0_4_,uVar2);
+  uStack_28 = 0;
+  fVar3 = *(float *)(param_3 + 0x728);
+  auVar4._0_4_ = (*(float *)(param_3 + 0x7e0) * 6.2831855) / fVar3;
+  auVar4._4_4_ = (*(float *)(param_3 + 0x7e4) * 6.2831855) / fVar3;
+  auVar4._8_4_ = (*(float *)(param_3 + 0x7e8) * 6.2831855) / fVar3;
+  auVar4._12_4_ = (*(float *)(param_3 + 0x7ec) * 6.2831855) / fVar3;
+  auVar10._8_4_ = 0x40488f2d;
+  auVar10._0_8_ = 0x40488f2d40488f2d;
+  auVar10._12_4_ = 0x40488f2d;
+  auVar4 = NEON_fmin(auVar4,auVar10,4);
+  fVar3 = auVar4._0_4_ * 0.5;
+  fVar6 = auVar4._4_4_ * 0.5;
+  fVar7 = auVar4._8_4_ * 0.5;
+  fVar8 = auVar4._12_4_ * 0.5;
+  fVar18 = fVar3 * fVar3;
+  fVar19 = fVar6 * fVar6;
+  fVar20 = fVar7 * fVar7;
+  fVar21 = fVar8 * fVar8;
+  auVar10 = NEON_fmov(0x3f800000,4);
+  fStack_68 = auVar10._8_4_;
+  fStack_64 = auVar10._12_4_;
+  fVar9 = auVar10._0_4_;
+  fVar12 = auVar10._4_4_;
+  fVar3 = (fVar3 * (fVar18 * -0.09652461 + 0.99999946)) /
+          (fVar9 + (fVar18 * 0.009981878 + -0.42986727) * fVar18);
+  fVar6 = (fVar6 * (fVar19 * -0.09652461 + 0.99999946)) /
+          (fVar12 + (fVar19 * 0.009981878 + -0.42986727) * fVar19);
+  fVar7 = (fVar7 * (fVar20 * -0.09652461 + 0.99999946)) /
+          (fStack_68 + (fVar20 * 0.009981878 + -0.42986727) * fVar20);
+  fVar8 = (fVar8 * (fVar21 * -0.09652461 + 0.99999946)) /
+          (fStack_64 + (fVar21 * 0.009981878 + -0.42986727) * fVar21);
+  fVar3 = fVar3 + fVar3;
+  fVar6 = fVar6 + fVar6;
+  fVar7 = fVar7 + fVar7;
+  fVar8 = fVar8 + fVar8;
+  auVar4 = *(undefined1 (*) [16])(param_3 + 0x7f0);
+  fVar18 = auVar4._0_4_;
+  fVar19 = auVar4._4_4_;
+  fVar20 = auVar4._8_4_;
+  fVar21 = auVar4._12_4_;
+  fVar3 = (fStack_58 - fVar18) * (fVar3 / (fVar3 + 2.0));
+  fVar6 = (fStack_54 - fVar19) * (fVar6 / (fVar6 + 2.0));
+  fVar7 = (0.0 - fVar20) * (fVar7 / (fVar7 + 2.0));
+  fVar8 = (0.0 - fVar21) * (fVar8 / (fVar8 + 2.0));
+  auVar14._0_8_ = CONCAT44(fVar19 + fVar6,fVar18 + fVar3);
+  auVar14._8_4_ = fVar20 + fVar7;
+  auVar14._12_4_ = fVar21 + fVar8;
+  *(float *)(param_3 + 0x7f8) = fVar20 + fVar7 + fVar7;
+  *(float *)(param_3 + 0x7fc) = fVar21 + fVar8 + fVar8;
+  *(float *)(param_3 + 0x7f0) = fVar18 + fVar3 + fVar3;
+  *(float *)(param_3 + 0x7f4) = fVar19 + fVar6 + fVar6;
+  auVar5._0_8_ = CONCAT44(fStack_54 - (fVar19 + fVar6),fStack_58 - (fVar18 + fVar3));
+  auVar5._8_4_ = 0.0 - auVar14._8_4_;
+  auVar5._12_4_ = 0.0 - auVar14._12_4_;
+  uStack_48 = auVar14._8_8_;
+  uStack_38 = auVar5._8_8_;
+  uStack_50 = auVar14._0_8_;
+  uStack_40 = auVar5._0_8_;
+  func_0x000103b8bb74(param_3,&uStack_40,&uStack_30);
+  fVar3 = *(float *)(param_3 + 0x750) * 0.5;
+  fVar7 = *(float *)(param_3 + 0x754) * 0.5;
+  fVar18 = *(float *)(param_3 + 0x758) * 0.5;
+  fVar20 = *(float *)(param_3 + 0x75c) * 0.5;
+  fVar6 = fVar3 / (fVar3 * (fVar3 + 1.4142135) + fVar9);
+  fVar8 = fVar7 / (fVar7 * (fVar7 + 1.4142135) + fVar12);
+  fVar19 = fVar18 / (fVar18 * (fVar18 + 1.4142135) + fStack_68);
+  fVar21 = fVar20 / (fVar20 * (fVar20 + 1.4142135) + fStack_64);
+  fVar22 = (float)*(undefined8 *)(param_3 + 0x780);
+  fVar23 = (float)((ulong)*(undefined8 *)(param_3 + 0x780) >> 0x20);
+  fVar24 = (float)*(undefined8 *)(param_3 + 0x788);
+  fVar25 = (float)((ulong)*(undefined8 *)(param_3 + 0x788) >> 0x20);
+  fVar26 = (float)*(undefined8 *)(param_3 + 0x770);
+  fVar27 = (float)((ulong)*(undefined8 *)(param_3 + 0x770) >> 0x20);
+  fVar28 = (float)*(undefined8 *)(param_3 + 0x778);
+  fVar29 = (float)((ulong)*(undefined8 *)(param_3 + 0x778) >> 0x20);
+  fVar13 = ((extraout_s0 - fVar22) - (fVar3 + 1.4142135) * fVar26) * fVar6;
+  fVar15 = ((extraout_var - fVar23) - (fVar7 + 1.4142135) * fVar27) * fVar8;
+  fVar16 = ((extraout_var_00 - fVar24) - (fVar18 + 1.4142135) * fVar28) * fVar19;
+  fVar17 = ((extraout_var_01 - fVar25) - (fVar20 + 1.4142135) * fVar29) * fVar21;
+  fVar6 = (fVar26 + fVar3 * (extraout_s0 - fVar22)) * fVar6;
+  fVar8 = (fVar27 + fVar7 * (extraout_var - fVar23)) * fVar8;
+  fVar19 = (fVar28 + fVar18 * (extraout_var_00 - fVar24)) * fVar19;
+  fVar21 = (fVar29 + fVar20 * (extraout_var_01 - fVar25)) * fVar21;
+  *(float *)(param_3 + 0x778) = fVar28 + fVar16 + fVar16;
+  *(float *)(param_3 + 0x77c) = fVar29 + fVar17 + fVar17;
+  *(float *)(param_3 + 0x770) = fVar26 + fVar13 + fVar13;
+  *(float *)(param_3 + 0x774) = fVar27 + fVar15 + fVar15;
+  *(float *)(param_3 + 0x788) = fVar24 + fVar19 + fVar19;
+  *(float *)(param_3 + 0x78c) = fVar25 + fVar21 + fVar21;
+  *(float *)(param_3 + 0x780) = fVar22 + fVar6 + fVar6;
+  *(float *)(param_3 + 0x784) = fVar23 + fVar8 + fVar8;
+  auVar4 = NEON_fmov(0x40800000,4);
+  auVar11._0_4_ = (fVar22 + fVar6) * auVar4._0_4_ + 0.1;
+  auVar11._4_4_ = (fVar23 + fVar8) * auVar4._4_4_ + 0.1;
+  auVar11._8_4_ = (fVar24 + fVar19) * auVar4._8_4_ + 0.1;
+  auVar11._12_4_ = (fVar25 + fVar21) * auVar4._12_4_ + 0.1;
+  auVar4 = NEON_fmov(0xbf800000,4);
+  auVar4 = NEON_fmax(auVar11,auVar4,4);
+  auVar4 = NEON_fmin(auVar4,auVar10,4);
+  fVar3 = auVar4._0_4_ * 1.5707964;
+  fVar6 = auVar4._4_4_ * 1.5707964;
+  fVar7 = auVar4._8_4_ * 1.5707964;
+  fVar8 = auVar4._12_4_ * 1.5707964;
+  fVar18 = fVar3 * fVar3;
+  fVar19 = fVar6 * fVar6;
+  fVar20 = fVar7 * fVar7;
+  fVar21 = fVar8 * fVar8;
+  auVar4 = NEON_fmov(0x3e800000,4);
+  fVar3 = fVar3 * (((fVar18 * -0.00018284567 + 0.008304825) * fVar18 + -0.16664949) * fVar18 +
+                  0.99999833) * auVar4._0_4_;
+  fVar6 = fVar6 * (((fVar19 * -0.00018284567 + 0.008304825) * fVar19 + -0.16664949) * fVar19 +
+                  0.99999833) * auVar4._4_4_;
+  fVar13 = (float)*(undefined8 *)(param_3 + 0x790);
+  fVar15 = (float)((ulong)*(undefined8 *)(param_3 + 0x790) >> 0x20);
+  fVar16 = (float)*(undefined8 *)(param_3 + 0x798);
+  fVar17 = (float)((ulong)*(undefined8 *)(param_3 + 0x798) >> 0x20);
+  fVar18 = (*(float *)(param_3 + 0x760) / (*(float *)(param_3 + 0x760) + 2.0)) * (fVar3 - fVar13);
+  fVar19 = (*(float *)(param_3 + 0x764) / (*(float *)(param_3 + 0x764) + 2.0)) * (fVar6 - fVar15);
+  fVar7 = (*(float *)(param_3 + 0x768) / (*(float *)(param_3 + 0x768) + 2.0)) *
+          (fVar7 * (((fVar20 * -0.00018284567 + 0.008304825) * fVar20 + -0.16664949) * fVar20 +
+                   0.99999833) * auVar4._8_4_ - fVar16);
+  fVar8 = (*(float *)(param_3 + 0x76c) / (*(float *)(param_3 + 0x76c) + 2.0)) *
+          (fVar8 * (((fVar21 * -0.00018284567 + 0.008304825) * fVar21 + -0.16664949) * fVar21 +
+                   0.99999833) * auVar4._12_4_ - fVar17);
+  *(float *)(param_3 + 0x798) = fVar16 + fVar7 + fVar7;
+  *(float *)(param_3 + 0x79c) = fVar17 + fVar8 + fVar8;
+  *(float *)(param_3 + 0x790) = fVar13 + fVar18 + fVar18;
+  *(float *)(param_3 + 0x794) = fVar15 + fVar19 + fVar19;
+  if ((float)*(undefined8 *)(param_3 + 0x828) <
+      ABS((float)uStack_50 +
+          extraout_s0 * (fVar9 - *(float *)(param_3 + 0x740)) +
+          *(float *)(param_3 + 0x740) * (fVar3 - (fVar13 + fVar18))) ||
+      (float)((ulong)*(undefined8 *)(param_3 + 0x828) >> 0x20) <
+      ABS(uStack_50._4_4_ +
+          extraout_var * (fVar12 - *(float *)(param_3 + 0x744)) +
+          *(float *)(param_3 + 0x744) * (fVar6 - (fVar15 + fVar19)))) {
+    lVar1 = 0;
+  }
+  else {
+    if (*(long *)(param_3 + 0x830) == -1) {
+      return;
+    }
+    lVar1 = *(long *)(param_3 + 0x830) + 1;
+  }
+  *(long *)(param_3 + 0x830) = lVar1;
+  return;
+}
+END 103b8b500
+FUNC 103b8b7c8 name=FUN_103b8b7c8 body=1 lines=6
+
+bool FUN_103b8b7c8(long param_1)
+
+{
+  return *(ulong *)(param_1 + 0x600) <= *(ulong *)(param_1 + 0x830);
+}
+END 103b8b7c8
+FUNC 103b8bb4c name=FUN_103b8bb4c body=1 lines=11
+
+void FUN_103b8bb4c(long param_1,undefined8 *param_2)
+
+{
+  if ((*(char *)(param_1 + 0x858) != '\0') &&
+     (*param_2 = *(undefined8 *)(param_1 + 0x820), *(char *)(param_2 + 1) == '\0')) {
+    *(undefined1 *)(param_2 + 1) = 1;
+    return;
+  }
+  return;
+}
+END 103b8bb4c
+
+TAIL VERDICTS [D]:
+- DSP object at shell+0xb8; per sample: LFO tick func_0x000103b8c010
+  (state dsp+0x640) -> 4-float mod vector; process tail func_0x103b8b500
+  (in pair, status*, dsp+0xf10 region view);
+  enabled query func_0x000103b8b7c8: hold counter (0x830) vs threshold
+  (0x600) => device-not-silent; status copy under byte 0x858.
+- b500 stage 1: FOUR one-pole coefficients from floats dsp+0x7e0/0x7e4/
+  0x7e8/0x7ec: w = min(c*2*pi/sr, 3.14096) [0x40488f2d], *0.5, rational
+  tanh (same constants as chorus), *2 => g; TPT one-poles with k=g/(g+2)
+  on states dsp+0x7f0..0x7fc (inputs: L, R, 0, 0 -- asymmetric LPFs).
+- b500 stage 2: 4-channel TPT SVF (Butterworth sqrt2 form) coefficients
+  from dsp+0x750..0x75c, band+low states 0x770..0x78f; then
+  u = clamp((band+low)*4 + 0.1, [-1,1]) * pi/2; asin-series (coeffs
+  -0.00018284567, 0.008304825, -0.16664949, 0.99999833, *0.25);
+  one-pole smooth (k = c/(c+2), coeffs 0x760..0x76c) into 0x790..0x79c.
+- b500 stage 3: peak latch: |mix estimate| vs dsp+0x828 thresholds;
+  counter dsp+0x830 reset/increment (hold/peak meter law).
+
+======== (5) MAIN CHAIN (0x103b8bb74) ========
+FUNC 103b8bb74 name=FUN_103b8bb74 body=1 lines=422
+
+void FUN_103b8bb74(int *param_1,float *param_2,float *param_3)
+
+{
+  undefined1 auVar1 [16];
+  undefined1 auVar2 [16];
+  long lVar3;
+  long lVar4;
+  int *piVar5;
+  float *pfVar6;
+  float extraout_s0;
+  float extraout_var;
+  float extraout_var_00;
+  undefined1 auVar7 [16];
+  undefined1 auVar8 [16];
+  float extraout_var_01;
+  float fVar9;
+  float fVar12;
+  float fVar13;
+  float fVar14;
+  undefined1 auVar10 [16];
+  undefined1 auVar11 [16];
+  undefined1 auVar15 [16];
+  undefined1 auVar16 [16];
+  undefined1 auVar17 [16];
+  float fVar18;
+  float fVar21;
+  float fVar22;
+  undefined1 auVar19 [16];
+  float fVar23;
+  undefined1 auVar20 [16];
+  undefined1 auVar24 [16];
+  undefined1 auVar25 [16];
+  float fVar26;
+  float fVar30;
+  float fVar31;
+  undefined1 auVar27 [16];
+  undefined1 auVar28 [16];
+  float fVar32;
+  undefined1 auVar29 [16];
+  int iVar33;
+  float fVar34;
+  int iVar35;
+  float fVar36;
+  int iVar37;
+  float fVar38;
+  int iVar39;
+  float fVar40;
+  float fVar41;
+  float fVar44;
+  float fVar45;
+  undefined1 auVar42 [16];
+  undefined1 auVar43 [16];
+  float fVar46;
+  int iVar47;
+  float fVar48;
+  float fVar49;
+  int iVar50;
+  float fVar51;
+  float fVar52;
+  int iVar53;
+  float fVar54;
+  float fVar55;
+  int iVar56;
+  float fVar57;
+  float fVar58;
+  undefined1 auVar59 [16];
+  float fVar60;
+  float fVar61;
+  float fVar62;
+  float fVar63;
+  undefined8 uStack_30;
+  undefined8 uStack_28;
+  
+  iVar33 = *param_1;
+  if (iVar33 == 2) {
+    *(undefined8 *)(param_1 + 0x17e) = *(undefined8 *)(param_1 + 0x1ee);
+    *(undefined8 *)(param_1 + 0x17c) = *(undefined8 *)(param_1 + 0x1ec);
+    auVar59 = NEON_fmov(0x3f800000,4);
+    fVar9 = (auVar59._0_4_ - (float)param_1[500]) * (float)param_1[0x1f0] +
+            (float)param_1[500] * *param_3;
+    fVar12 = (auVar59._4_4_ - (float)param_1[0x1f5]) * (float)param_1[0x1f1] +
+             (float)param_1[0x1f5] * param_3[1];
+    fVar13 = (auVar59._8_4_ - (float)param_1[0x1f6]) * (float)param_1[0x1f2] +
+             (float)param_1[0x1f6] * param_3[2];
+    fVar14 = (auVar59._12_4_ - (float)param_1[0x1f7]) * (float)param_1[499] +
+             (float)param_1[0x1f7] * param_3[3];
+    param_1[0x1f2] = (int)fVar13;
+    param_1[499] = (int)fVar14;
+    param_1[0x1f0] = (int)fVar9;
+    param_1[0x1f1] = (int)fVar12;
+    auVar19._0_4_ = fVar9 * 0.5 + 127.0;
+    auVar19._4_4_ = fVar12 * 0.5 + 127.0;
+    auVar19._8_4_ = fVar13 * 0.5 + 127.0;
+    auVar19._12_4_ = fVar14 * 0.5 + 127.0;
+    auVar19 = NEON_fmax(auVar19,ZEXT816(0),4);
+    auVar16._8_4_ = 0x437f0000;
+    auVar16._0_8_ = 0x437f0000437f0000;
+    auVar16._12_4_ = 0x437f0000;
+    auVar19 = NEON_fmin(auVar19,auVar16,4);
+    auVar17._0_4_ = (int)auVar19._0_4_;
+    auVar17._4_4_ = (int)auVar19._4_4_;
+    auVar17._8_4_ = (int)auVar19._8_4_;
+    auVar17._12_4_ = (int)auVar19._12_4_;
+    auVar28 = NEON_scvtf(auVar17,4);
+    fVar9 = auVar19._0_4_ - auVar28._0_4_;
+    fVar12 = auVar19._4_4_ - auVar28._4_4_;
+    fVar13 = auVar19._8_4_ - auVar28._8_4_;
+    fVar14 = auVar19._12_4_ - auVar28._12_4_;
+    auVar19 = *(undefined1 (*) [16])(param_1 + 0x17c);
+    auVar28._0_4_ =
+         auVar19._0_4_ *
+         (auVar59._0_4_ +
+         (((fVar9 * 0.013487903 + 0.0521745) * fVar9 + 0.24128748) * fVar9 + 0.6930501) * fVar9) *
+         (float)(auVar17._0_4_ << 0x17);
+    auVar28._4_4_ =
+         auVar19._4_4_ *
+         (auVar59._4_4_ +
+         (((fVar12 * 0.013487903 + 0.0521745) * fVar12 + 0.24128748) * fVar12 + 0.6930501) * fVar12)
+         * (float)(auVar17._4_4_ << 0x17);
+    auVar28._8_4_ =
+         auVar19._8_4_ *
+         (auVar59._8_4_ +
+         (((fVar13 * 0.013487903 + 0.0521745) * fVar13 + 0.24128748) * fVar13 + 0.6930501) * fVar13)
+         * (float)(auVar17._8_4_ << 0x17);
+    auVar28._12_4_ =
+         auVar19._12_4_ *
+         (auVar59._12_4_ +
+         (((fVar14 * 0.013487903 + 0.0521745) * fVar14 + 0.24128748) * fVar14 + 0.6930501) * fVar14)
+         * (float)(auVar17._12_4_ << 0x17);
+    auVar19 = NEON_fmax(auVar28,auVar59,4);
+  }
+  else {
+    if (iVar33 != 1) {
+      if (iVar33 != 0) {
+        return;
+      }
+      lVar3 = *(long *)(param_1 + 8);
+      if (lVar3 != 0) {
+        auVar19 = NEON_fmov(0x40800000,4);
+        fVar18 = *param_3 * auVar19._0_4_;
+        fVar21 = param_3[1] * auVar19._4_4_;
+        fVar22 = param_3[2] * auVar19._8_4_;
+        fVar23 = param_3[3] * auVar19._12_4_;
+        auVar15 = NEON_fmov(0x3f800000,4);
+        fVar9 = auVar15._0_4_;
+        fVar12 = auVar15._4_4_;
+        fVar13 = auVar15._8_4_;
+        fVar14 = auVar15._12_4_;
+        auVar27._0_4_ = fVar18 * (fVar9 - (float)param_1[0x1cc]) + 127.0;
+        auVar27._4_4_ = fVar21 * (fVar12 - (float)param_1[0x1cd]) + 127.0;
+        auVar27._8_4_ = fVar22 * (fVar13 - (float)param_1[0x1ce]) + 127.0;
+        auVar27._12_4_ = fVar23 * (fVar14 - (float)param_1[0x1cf]) + 127.0;
+        auVar19 = ZEXT816(0);
+        auVar28 = NEON_fmax(auVar27,auVar19,4);
+        auVar42._8_4_ = 0x437f0000;
+        auVar42._0_8_ = 0x437f0000437f0000;
+        auVar42._12_4_ = 0x437f0000;
+        auVar28 = NEON_fmin(auVar28,auVar42,4);
+        iVar47 = (int)auVar28._0_4_;
+        iVar50 = (int)auVar28._4_4_;
+        iVar53 = (int)auVar28._8_4_;
+        iVar56 = (int)auVar28._12_4_;
+        auVar2._4_4_ = iVar50;
+        auVar2._0_4_ = iVar47;
+        auVar2._8_4_ = iVar53;
+        auVar2._12_4_ = iVar56;
+        auVar59 = NEON_scvtf(auVar2,4);
+        fVar26 = auVar28._0_4_ - auVar59._0_4_;
+        fVar30 = auVar28._4_4_ - auVar59._4_4_;
+        fVar31 = auVar28._8_4_ - auVar59._8_4_;
+        fVar32 = auVar28._12_4_ - auVar59._12_4_;
+        auVar24._0_4_ = (float)param_1[0x1cc] * fVar18 + 127.0;
+        auVar24._4_4_ = (float)param_1[0x1cd] * fVar21 + 127.0;
+        auVar24._8_4_ = (float)param_1[0x1ce] * fVar22 + 127.0;
+        auVar24._12_4_ = (float)param_1[0x1cf] * fVar23 + 127.0;
+        auVar28 = NEON_fmax(auVar24,auVar19,4);
+        auVar28 = NEON_fmin(auVar28,auVar42,4);
+        iVar33 = (int)auVar28._0_4_;
+        iVar35 = (int)auVar28._4_4_;
+        iVar37 = (int)auVar28._8_4_;
+        iVar39 = (int)auVar28._12_4_;
+        auVar59._4_4_ = iVar35;
+        auVar59._0_4_ = iVar33;
+        auVar59._8_4_ = iVar37;
+        auVar59._12_4_ = iVar39;
+        auVar59 = NEON_scvtf(auVar59,4);
+        fVar18 = auVar28._0_4_ - auVar59._0_4_;
+        fVar21 = auVar28._4_4_ - auVar59._4_4_;
+        fVar22 = auVar28._8_4_ - auVar59._8_4_;
+        fVar23 = auVar28._12_4_ - auVar59._12_4_;
+        auVar25._0_4_ =
+             (float)*(undefined8 *)(param_1 + 0x160) *
+             (fVar9 + (((fVar18 * 0.013487903 + 0.0521745) * fVar18 + 0.24128748) * fVar18 +
+                      0.6930501) * fVar18) * (float)(iVar33 << 0x17);
+        auVar25._4_4_ =
+             (float)((ulong)*(undefined8 *)(param_1 + 0x160) >> 0x20) *
+             (fVar12 + (((fVar21 * 0.013487903 + 0.0521745) * fVar21 + 0.24128748) * fVar21 +
+                       0.6930501) * fVar21) * (float)(iVar35 << 0x17);
+        auVar25._8_4_ =
+             (float)*(undefined8 *)(param_1 + 0x162) *
+             (fVar13 + (((fVar22 * 0.013487903 + 0.0521745) * fVar22 + 0.24128748) * fVar22 +
+                       0.6930501) * fVar22) * (float)(iVar37 << 0x17);
+        auVar25._12_4_ =
+             (float)((ulong)*(undefined8 *)(param_1 + 0x162) >> 0x20) *
+             (fVar14 + (((fVar23 * 0.013487903 + 0.0521745) * fVar23 + 0.24128748) * fVar23 +
+                       0.6930501) * fVar23) * (float)(iVar39 << 0x17);
+        auVar29._0_4_ =
+             ((float)*(undefined8 *)(param_1 + 0x15c) *
+              (fVar9 + (((fVar26 * 0.013487903 + 0.0521745) * fVar26 + 0.24128748) * fVar26 +
+                       0.6930501) * fVar26) * (float)(iVar47 << 0x17) * 6.2831855) /
+             (float)*(undefined8 *)(param_1 + 4);
+        auVar29._4_4_ =
+             ((float)((ulong)*(undefined8 *)(param_1 + 0x15c) >> 0x20) *
+              (fVar12 + (((fVar30 * 0.013487903 + 0.0521745) * fVar30 + 0.24128748) * fVar30 +
+                        0.6930501) * fVar30) * (float)(iVar50 << 0x17) * 6.2831855) /
+             (float)((ulong)*(undefined8 *)(param_1 + 4) >> 0x20);
+        auVar29._8_4_ =
+             ((float)*(undefined8 *)(param_1 + 0x15e) *
+              (fVar13 + (((fVar31 * 0.013487903 + 0.0521745) * fVar31 + 0.24128748) * fVar31 +
+                        0.6930501) * fVar31) * (float)(iVar53 << 0x17) * 6.2831855) /
+             (float)*(undefined8 *)(param_1 + 6);
+        auVar29._12_4_ =
+             ((float)((ulong)*(undefined8 *)(param_1 + 0x15e) >> 0x20) *
+              (fVar14 + (((fVar32 * 0.013487903 + 0.0521745) * fVar32 + 0.24128748) * fVar32 +
+                        0.6930501) * fVar32) * (float)(iVar56 << 0x17) * 6.2831855) /
+             (float)((ulong)*(undefined8 *)(param_1 + 6) >> 0x20);
+        auVar1._8_4_ = 0x40488f2d;
+        auVar1._0_8_ = 0x40488f2d40488f2d;
+        auVar1._12_4_ = 0x40488f2d;
+        auVar28 = NEON_fmin(auVar29,auVar1,4);
+        fVar18 = auVar28._0_4_ * 0.5;
+        fVar21 = auVar28._4_4_ * 0.5;
+        fVar22 = auVar28._8_4_ * 0.5;
+        fVar23 = auVar28._12_4_ * 0.5;
+        fVar26 = fVar18 * fVar18;
+        fVar30 = fVar21 * fVar21;
+        fVar31 = fVar22 * fVar22;
+        fVar32 = fVar23 * fVar23;
+        fVar18 = (fVar18 * (fVar26 * -0.09652461 + 0.99999946)) /
+                 (fVar9 + (fVar26 * 0.009981878 + -0.42986727) * fVar26);
+        fVar21 = (fVar21 * (fVar30 * -0.09652461 + 0.99999946)) /
+                 (fVar12 + (fVar30 * 0.009981878 + -0.42986727) * fVar30);
+        fVar22 = (fVar22 * (fVar31 * -0.09652461 + 0.99999946)) /
+                 (fVar13 + (fVar31 * 0.009981878 + -0.42986727) * fVar31);
+        fVar23 = (fVar23 * (fVar32 * -0.09652461 + 0.99999946)) /
+                 (fVar14 + (fVar32 * 0.009981878 + -0.42986727) * fVar32);
+        auVar43._8_4_ = 0x3c23d70a;
+        auVar43._0_8_ = 0x3c23d70a3c23d70a;
+        auVar43._12_4_ = 0x3c23d70a;
+        auVar28 = NEON_fmax(auVar25,auVar43,4);
+        fVar41 = fVar9 / auVar28._0_4_;
+        fVar44 = fVar12 / auVar28._4_4_;
+        fVar45 = fVar13 / auVar28._8_4_;
+        fVar46 = fVar14 / auVar28._12_4_;
+        fVar18 = (fVar18 + fVar18) * 0.5;
+        fVar21 = (fVar21 + fVar21) * 0.5;
+        fVar22 = (fVar22 + fVar22) * 0.5;
+        fVar23 = (fVar23 + fVar23) * 0.5;
+        fVar26 = fVar41 + fVar18;
+        fVar30 = fVar44 + fVar21;
+        fVar31 = fVar45 + fVar22;
+        fVar32 = fVar46 + fVar23;
+        fVar34 = fVar18 / (fVar18 * fVar26 + fVar9);
+        fVar36 = fVar21 / (fVar21 * fVar30 + fVar12);
+        fVar38 = fVar22 / (fVar22 * fVar31 + fVar13);
+        fVar40 = fVar23 / (fVar23 * fVar32 + fVar14);
+        fVar48 = fVar41 * (fVar34 + fVar34);
+        fVar51 = fVar44 * (fVar36 + fVar36);
+        fVar54 = fVar45 * (fVar38 + fVar38);
+        fVar57 = fVar46 * (fVar40 + fVar40);
+        auVar28 = NEON_fmov(0xbf800000,4);
+        lVar4 = lVar3 + -1;
+        piVar5 = param_1 + lVar3 * 8 + 8;
+        do {
+          fVar49 = auVar15._4_4_;
+          fVar52 = auVar15._8_4_;
+          fVar55 = auVar15._12_4_;
+          auVar20._0_4_ =
+               auVar19._0_4_ +
+               auVar15._0_4_ *
+               ((fVar41 + fVar41) * (fVar26 * fVar34 + auVar28._0_4_) * (float)piVar5[-4] +
+               fVar48 * (float)*(undefined8 *)piVar5);
+          auVar20._4_4_ =
+               auVar19._4_4_ +
+               fVar49 * ((fVar44 + fVar44) * (fVar30 * fVar36 + auVar28._4_4_) * (float)piVar5[-3] +
+                        fVar51 * (float)((ulong)*(undefined8 *)piVar5 >> 0x20));
+          auVar20._8_4_ =
+               auVar19._8_4_ +
+               fVar52 * ((fVar45 + fVar45) * (fVar31 * fVar38 + auVar28._8_4_) * (float)piVar5[-2] +
+                        fVar54 * (float)*(undefined8 *)(piVar5 + 2));
+          auVar20._12_4_ =
+               auVar19._12_4_ +
+               fVar55 * ((fVar46 + fVar46) * (fVar32 * fVar40 + auVar28._12_4_) * (float)piVar5[-1]
+                        + fVar57 * (float)((ulong)*(undefined8 *)(piVar5 + 2) >> 0x20));
+          auVar15._0_4_ = (fVar9 - fVar48) * auVar15._0_4_;
+          auVar15._4_4_ = (fVar12 - fVar51) * fVar49;
+          auVar15._8_4_ = (fVar13 - fVar54) * fVar52;
+          auVar15._12_4_ = (fVar14 - fVar57) * fVar55;
+          lVar4 = lVar4 + -1;
+          piVar5 = piVar5 + -8;
+          auVar19 = auVar20;
+        } while (lVar4 != -1);
+        lVar4 = 0;
+        auVar19 = NEON_fmov(0x3f800000,4);
+        fVar9 = ((float)param_1[0x168] * (float)param_1[0x164] * auVar20._0_4_ +
+                (float)*(undefined8 *)param_2) /
+                (auVar19._0_4_ - (float)param_1[0x168] * (float)param_1[0x164] * auVar15._0_4_);
+        fVar12 = ((float)param_1[0x169] * (float)param_1[0x165] * auVar20._4_4_ +
+                 (float)((ulong)*(undefined8 *)param_2 >> 0x20)) /
+                 (auVar19._4_4_ - (float)param_1[0x169] * (float)param_1[0x165] * auVar15._4_4_);
+        fVar13 = ((float)param_1[0x16a] * (float)param_1[0x166] * auVar20._8_4_ +
+                 (float)*(undefined8 *)(param_2 + 2)) /
+                 (auVar19._8_4_ - (float)param_1[0x16a] * (float)param_1[0x166] * auVar15._8_4_);
+        fVar14 = ((float)param_1[0x16b] * (float)param_1[0x167] * auVar20._12_4_ +
+                 (float)((ulong)*(undefined8 *)(param_2 + 2) >> 0x20)) /
+                 (auVar19._12_4_ - (float)param_1[0x16b] * (float)param_1[0x167] * auVar15._12_4_);
+        pfVar6 = (float *)(param_1 + 0x10);
+        do {
+          fVar48 = pfVar6[-4];
+          fVar51 = pfVar6[-3];
+          fVar54 = pfVar6[-2];
+          fVar57 = pfVar6[-1];
+          fVar49 = fVar9 - *pfVar6;
+          fVar52 = fVar12 - pfVar6[1];
+          fVar55 = fVar13 - pfVar6[2];
+          fVar58 = fVar14 - pfVar6[3];
+          fVar60 = fVar34 * (fVar49 - fVar26 * fVar48);
+          fVar61 = fVar36 * (fVar52 - fVar30 * fVar51);
+          fVar62 = fVar38 * (fVar55 - fVar31 * fVar54);
+          fVar63 = fVar40 * (fVar58 - fVar32 * fVar57);
+          fVar49 = fVar34 * (fVar48 + fVar18 * fVar49);
+          fVar52 = fVar36 * (fVar51 + fVar21 * fVar52);
+          fVar55 = fVar38 * (fVar54 + fVar22 * fVar55);
+          fVar58 = fVar40 * (fVar57 + fVar23 * fVar58);
+          pfVar6[-2] = fVar54 + fVar62 + fVar62;
+          pfVar6[-1] = fVar57 + fVar63 + fVar63;
+          pfVar6[-4] = fVar48 + fVar60 + fVar60;
+          pfVar6[-3] = fVar51 + fVar61 + fVar61;
+          pfVar6[2] = pfVar6[2] + fVar55 + fVar55;
+          pfVar6[3] = pfVar6[3] + fVar58 + fVar58;
+          *pfVar6 = *pfVar6 + fVar49 + fVar49;
+          pfVar6[1] = pfVar6[1] + fVar52 + fVar52;
+          fVar9 = fVar9 - (fVar41 + fVar41) * (fVar48 + fVar60);
+          fVar12 = fVar12 - (fVar44 + fVar44) * (fVar51 + fVar61);
+          fVar13 = fVar13 - (fVar45 + fVar45) * (fVar54 + fVar62);
+          fVar14 = fVar14 - (fVar46 + fVar46) * (fVar57 + fVar63);
+          lVar4 = lVar4 + 1;
+          pfVar6 = pfVar6 + 8;
+        } while (lVar3 != lVar4);
+        return;
+      }
+      NEON_fmov(0x3f800000,4);
+      return;
+    }
+    *(undefined8 *)(param_1 + 0x17e) = *(undefined8 *)(param_1 + 0x1ea);
+    *(undefined8 *)(param_1 + 0x17c) = *(undefined8 *)(param_1 + 0x1e8);
+    auVar19 = NEON_fmov(0xc0400000,4);
+    auVar7._0_4_ = *param_3 * auVar19._0_4_ + 127.0;
+    auVar7._4_4_ = param_3[1] * auVar19._4_4_ + 127.0;
+    auVar7._8_4_ = param_3[2] * auVar19._8_4_ + 127.0;
+    auVar7._12_4_ = param_3[3] * auVar19._12_4_ + 127.0;
+    auVar19 = NEON_fmax(auVar7,ZEXT816(0),4);
+    auVar10._8_4_ = 0x437f0000;
+    auVar10._0_8_ = 0x437f0000437f0000;
+    auVar10._12_4_ = 0x437f0000;
+    auVar19 = NEON_fmin(auVar19,auVar10,4);
+    auVar11._0_4_ = (int)auVar19._0_4_;
+    auVar11._4_4_ = (int)auVar19._4_4_;
+    auVar11._8_4_ = (int)auVar19._8_4_;
+    auVar11._12_4_ = (int)auVar19._12_4_;
+    auVar28 = NEON_scvtf(auVar11,4);
+    fVar9 = auVar19._0_4_ - auVar28._0_4_;
+    fVar12 = auVar19._4_4_ - auVar28._4_4_;
+    fVar13 = auVar19._8_4_ - auVar28._8_4_;
+    fVar14 = auVar19._12_4_ - auVar28._12_4_;
+    auVar19 = NEON_fmov(0x3f800000,4);
+    auVar8._0_4_ = (float)param_1[0x17c] *
+                   (auVar19._0_4_ +
+                   (((fVar9 * 0.013487903 + 0.0521745) * fVar9 + 0.24128748) * fVar9 + 0.6930501) *
+                   fVar9) * (float)(auVar11._0_4_ << 0x17);
+    auVar8._4_4_ = (float)param_1[0x17d] *
+                   (auVar19._4_4_ +
+                   (((fVar12 * 0.013487903 + 0.0521745) * fVar12 + 0.24128748) * fVar12 + 0.6930501)
+                   * fVar12) * (float)(auVar11._4_4_ << 0x17);
+    auVar8._8_4_ = (float)param_1[0x17e] *
+                   (auVar19._8_4_ +
+                   (((fVar13 * 0.013487903 + 0.0521745) * fVar13 + 0.24128748) * fVar13 + 0.6930501)
+                   * fVar13) * (float)(auVar11._8_4_ << 0x17);
+    auVar8._12_4_ =
+         (float)param_1[0x17f] *
+         (auVar19._12_4_ +
+         (((fVar14 * 0.013487903 + 0.0521745) * fVar14 + 0.24128748) * fVar14 + 0.6930501) * fVar14)
+         * (float)(auVar11._12_4_ << 0x17);
+    auVar19 = NEON_fmax(auVar8,auVar19,4);
+  }
+  auVar19 = NEON_fmin(auVar19,*(undefined1 (*) [16])(param_1 + 0x184),4);
+  uStack_28 = auVar19._8_8_;
+  uStack_30 = auVar19._0_8_;
+  func_0x000103b8c100(param_1 + 0x170,&uStack_30);
+  fVar9 = (float)param_1[0x18c];
+  fVar12 = (float)param_1[0x18d];
+  fVar13 = (float)param_1[399];
+  fVar14 = (float)param_1[0x188];
+  fVar18 = (float)param_1[0x189];
+  fVar21 = (float)param_1[0x18b];
+  fVar22 = *param_2;
+  fVar23 = param_2[1];
+  fVar26 = param_2[2];
+  fVar30 = param_2[3];
+  lVar3 = *(long *)(param_1 + 0x178);
+  if (lVar3 == 0) {
+    lVar3 = *(long *)(param_1 + 0x176);
+  }
+  *(long *)(param_1 + 0x178) = lVar3 + -1;
+  lVar3 = *(long *)(param_1 + 0x170) + lVar3 * 0x10;
+  *(float *)(lVar3 + -8) = fVar26 + extraout_var_00 * (float)param_1[0x18e] * (float)param_1[0x18a];
+  *(float *)(lVar3 + -4) = fVar30 + extraout_var_01 * fVar13 * fVar21;
+  *(float *)(lVar3 + -0x10) = fVar22 + extraout_s0 * fVar9 * fVar14;
+  *(float *)(lVar3 + -0xc) = fVar23 + extraout_var * fVar12 * fVar18;
+  return;
+}
+END 103b8bb74
+
+MAIN CHAIN VERDICTS [D]:
+- param_3 = the 4-float LFO/env vector; mode = *param_1 (PhaserFlangerMode).
+- MODE 0 (Phaser): n = *(long*)(obj+8) = NOTCH COUNT.
+  * v = in4 * 4.0;  q = obj[0x1cc..0x1cf] (per-channel blend weights)
+  * a = 2^(v*(1-q) + 127)  (clamp [0,255], int<<23 exponent assembly,
+    mantissa poly 0.013487903/0.0521745/0.24128748/0.6930501)
+  * b = 2^(v*q + 127)      (same form)
+  * notch base F_i = obj_float[0x160..0x163] * b   (>= 0.01 via max)
+  * notch coefficient = (obj_float[0x15c..0x15f] * a * 2*pi) / sr_pair
+    (sr pair at obj+4/+6)  -- radians/sample per notch per channel
+  * min with 3.14096, *0.5, rational tanh, *2, *0.5 => k; TPT-SVF
+    g1 = k/(k*(F+k)+1) per notch
+  * CASCADE, iterated BACKWARDS (last notch first): acc_i =
+    acc_{i+1} + s_i * (2*g1_i*(F_i*g1_i - 1) * x_{i+1} + 2*F_i*g1_i^2 * y_i)
+    with per-notch state pair (x_i at obj+0x40+32i region, y_i at +16)
+    -- 4 channels wide (2 channel-pairs).
+  * FEEDBACK (closed form): y = (fb1*fb2*acc + in) / (1 - fb1*fb2*den)
+    with fb weights obj[0x164..0x167] * obj[0x168..0x16b] (4 channels),
+    den = final stage-state sum; then FORWARD state-update loop per notch
+    (TPT integrators, band s1/s2 + low states).
+- MODE 1 (Flanger): delay target pair obj[0x1e8..0x1eb] -> obj[0x17c..0x17f];
+  scale = 2^(in4 * -3.0 + 127) (0xc0400000), clamp [0,255], same 2^x
+  assembly; >= 1 via max  [B: -3.0 slope on the mod vector].
+- MODE 2 (Doubler): crossfade stored obj[0x1f0..0x1f7] with input by
+  obj[500] weights; scale = 2^(v*0.5 + 127), clamp, >= 1.
+- OTHER modes: return (no-op).
+- COMMON TAIL: delay = min(scale_result, obj_float[0x184..0x187]) (the
+  max-delay cap = FlangerDelayTime/DoublerDelayTime domain);
+  func_0x000103b8c100(obj+0x170 ints = 0x5c0 bytes, &delays) then the
+  backward-indexing ring write (read idx obj+0x176/0x178 long, decrement,
+  0x10-byte slots): stored = in + wet * fb1 * fb2 per channel pair
+  (wet fb products obj[0x188..0x18f]).
+
+======== (6) LFO TICK (0x103b8c010, state dsp+0x640) ========
+FUNC 103b8c010 name=FUN_103b8c010 body=1 lines=42
+
+void FUN_103b8c010(long param_1,undefined8 *param_2)
+
+{
+  float fVar1;
+  float fVar2;
+  undefined8 uVar3;
+  undefined8 uVar4;
+  float fVar5;
+  float fVar6;
+  float fVar7;
+  float fVar8;
+  ulong uVar9;
+  float fVar10;
+  
+  fVar1 = (float)*(undefined8 *)(param_1 + 0x88) + (float)*(undefined8 *)(param_1 + 0x90);
+  fVar2 = (float)((ulong)*(undefined8 *)(param_1 + 0x88) >> 0x20) +
+          (float)((ulong)*(undefined8 *)(param_1 + 0x90) >> 0x20);
+  uVar4 = NEON_fmov(0x3f800000,4);
+  fVar5 = (float)((ulong)uVar4 >> 0x20);
+  uVar3 = NEON_fmov(0xbf800000,4);
+  *(ulong *)(param_1 + 0x88) =
+       CONCAT44(fVar2,fVar1) ^
+       (CONCAT44(fVar2,fVar1) ^ CONCAT44(fVar2 + (float)((ulong)uVar3 >> 0x20),fVar1 + (float)uVar3)
+       ) & CONCAT44(-(uint)(fVar5 <= fVar2),-(uint)((float)uVar4 <= fVar1));
+  func_0x0001020debdc();
+  NEON_fmov(0x40800000,4);
+  fVar1 = ABS((float)*param_2);
+  fVar2 = ABS((float)((ulong)*param_2 >> 0x20));
+  fVar6 = (float)*(undefined8 *)(param_1 + 0xa0);
+  fVar7 = (float)((ulong)*(undefined8 *)(param_1 + 0xa0) >> 0x20);
+  uVar9 = *(ulong *)(param_1 + 0xc0) ^
+          (*(ulong *)(param_1 + 0xc0) ^ *(ulong *)(param_1 + 0xb0)) &
+          CONCAT44(-(uint)(fVar7 < fVar2),-(uint)(fVar6 < fVar1));
+  fVar8 = (float)uVar9;
+  fVar10 = (float)(uVar9 >> 0x20);
+  *(ulong *)(param_1 + 0xa0) =
+       CONCAT44(fVar2 * fVar10 + fVar7 * (fVar5 - fVar10),
+                fVar1 * fVar8 + fVar6 * ((float)uVar4 - fVar8));
+  NEON_fmov(0xc0400000,4);
+  return;
+}
+END 103b8c010
+FUNC 103b8c100 name=FUN_103b8c100 body=1 lines=7
+
+void FUN_103b8c100(void)
+
+{
+  NEON_fmov(0x3fc00000,4);
+  return;
+}
+END 103b8c100
+
+VERDICTS [D]:
+- phase pair (+0x88) += inc pair (+0x90); wrap: phase = phase >= 1 ?
+  phase - 1 : phase (select, no branch). ONE LFO, stereo phase pair.
+- envelope follower: state (+0xa0 pair) = |in| vs state, select attack
+  coef (+0xb0 pair) when in > state else release coef (+0xc0 pair).
+- intermediate call func_0x0001020debdc (shared StereoLfo cluster,
+  0x1020d....) with args not recovered by the decompiler [shape stage];
+  NEON constants 4.0 and -3.0 materialized (the mode scalars of (5)).
+- delay-line helper func_0x103b8c100: NEON const 1.5 (0x3fc00000).
+
+======== (7) VERDICTS ========
+- Phaser-Flanger = OPhaserNewProcessor / devices::phaser::Phaser /
+  blocks::phaser::PhaserFlangerMode. Modes: 0 = Phaser (notch count from
+  obj+8), 1 = Flanger (bool at 0x708; delay-depth engine), 2 = Doubler.
+  The legacy OPhaserProcessor / OFlangerProcessor remain in the binary.
+- Allpass engine: per-notch 2^x-shaped TPT-SVF coefficient, tanh-bounded,
+  closed-form global feedback, backward cascade + forward state update.
+- LFO: phase accumulator + wrap, stereo PhaseOffset pair, Spin, DutyCycle,
+  LfoBlend, dual-frequency (Frequency/Frequency2) and synced rates in the
+  model surface; waveform enum blocks::StereoLfoWaveform stored at dsp+0x678.
+  The waveform SHAPING function (0x1020d.... cluster, shared with
+  AutoPan/AutoFilter LFOs) NOT captured this lane [open].
+- NOT captured: per-ramp DSP slot bases for phaser params (same ramp
+  pattern as chorus; assignment open), Notches int setter law, Init/Reset
+  bodies, Warmth/SafeBassFrequency/Spread application sites, OutputGain/
+  DryWet application, the Flanger delay-line tap interpolation.

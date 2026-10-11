@@ -115,15 +115,19 @@ test('production live source forwards plan, desired and apply through real typed
     wire.push(structuredClone(op));
     if(op.op==='config_registry_read') return {outcome:{result:'config_registry_reading',reading:await h.source.readRegistry()}};
     if(op.op==='config_resolutions_read') return {outcome:{result:'config_resolutions',resolutions:await h.source.readResolutions(op.pairs)}};
-    if(op.op==='config_plan') return {outcome:{result:'config_planned',...await h.source.plan(op.requests)}};
+    if(op.op==='config_plan_reviewed'){
+      const plans=op.requests.map((request,index)=>({schema:'oi.config-plan/v1',plan_id:`plan-${index}`,plan_digest:`digest-${index}`,setting_ref:request.setting_ref,scope:request.scope,changes:[],expected_effect:{kind:'value-change'}}));
+      const changeset={schema:'oi.config-changeset/v1',changeset_id:'cs-live-1',status:'verified',operations:op.requests.map(()=>({}))};
+      return {outcome:{result:'config_reviewed_planned',changeset,plans}};
+    }
     if(op.op==='config_desired_hold'){await h.source.holdDesired(op.request);return {outcome:{result:'config_desired_held',entry:{}}};}
-    if(op.op==='config_apply') return {outcome:{result:'config_applied',changeset:await h.source.apply([])}};
+    if(op.op==='config_apply_reviewed') return {outcome:{result:'config_applied',changeset:{...op.changeset,status:'verified'}}};
     if(op.op==='config_receipts') return {outcome:{result:'config_receipts',document:{receipts:[]}}};
     throw Error(`Unexpected operation ${op.op}`);
   });
   const controller=new SetupFlowController(live,[model],settings);await controller.start(true);controller.authorise(true);await controller.apply();
   assert.equal(controller.getSnapshot().changeset.status,'verified');
-  assert.deepEqual(wire.filter(op=>op.op==='config_apply')[0].requests,[{...model,secret_reference:null}]);
-  assert.equal(wire.filter(op=>op.op==='config_apply').length,1);
+  assert.deepEqual(wire.filter(op=>op.op==='config_plan_reviewed')[0].requests,[{...model,secret_reference:null}]);
+  assert.equal(wire.filter(op=>op.op==='config_apply_reviewed').length,1);
   const disconnected=new SetupFlowController(createLiveConfigPlaneSource(async()=>({outcome:null,error:'disconnected'})),[model],settings);await disconnected.start(true);disconnected.authorise(true);await disconnected.apply();assert.equal(disconnected.canApply(),false);assert.match(disconnected.getSnapshot().error,/Discovery/);
 });

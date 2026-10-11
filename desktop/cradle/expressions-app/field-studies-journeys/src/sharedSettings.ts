@@ -3,7 +3,9 @@ import {BeltEntry,defaultWorkspace} from './workspacePreferences';
 import {NATIVE_BINDINGS,bindValue} from './nativeParameters';
 import {readPath} from '../../src/engine/automation';
 export const POINTER_PATHS=['engine.pointerMode','engine.pointerClick','engine.pointerClickStrength','engine.pointerClickRadius',...NATIVE_BINDINGS.filter(b=>b.group==='pointer').map(b=>b.bind)];
-export type SharedSettings={toolbelt:BeltEntry[];values:Record<string,number|string|boolean>;pointer:Record<string,number|string|boolean>};
+/** Device widgets: an ordered sibling list of identities; absent means none. */
+export type DeviceWidget={id:string;family:string};
+export type SharedSettings={toolbelt:BeltEntry[];values:Record<string,number|string|boolean>;pointer:Record<string,number|string|boolean>;devices?:DeviceWidget[]};
 export function initialiseShared(j:Journey){if(!j.shared){const seen=new Set<string>(),entries:BeltEntry[]=[];for(const scene of j.scenes)for(const entry of scene.toolbelt??defaultWorkspace().entries){const key=[entry.scope,entry.key,entry.entityId??''].join(':');if(!seen.has(key)){seen.add(key);entries.push({...clone(entry),id:'shared-'+entries.length});}}j.shared={toolbelt:entries,values:{},pointer:{}};for(const path of POINTER_PATHS){const binding=NATIVE_BINDINGS.find(b=>b.bind===path),v=readPath(j.scenes[0],path)??(binding?binding.defaultValue:undefined);if(typeof v==='number'||typeof v==='string'||typeof v==='boolean')j.shared.pointer[path]=v;}}return j;}
 export function globalPath(path:string){return /^(field\.(params\.[\w]+|background|material)|engine\.[\w]+|morph\.[\w]+|composition\.[\w]+)$/.test(path)&&!path.split('.').some(k=>['__proto__','constructor','prototype'].includes(k));}
 export function isShared(j:Journey,s:Scene,path:string){return !!j.shared&&(Object.hasOwn(j.shared.values,path)||s.pointerScope!=='local'&&POINTER_PATHS.includes(path));}
