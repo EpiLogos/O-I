@@ -63,7 +63,8 @@ O-I docs/research/ableton-live-12.0.25/ui/UI-EVIDENCE.md  the measured chrome (d
    is absent. Every path is MEMBERED: a `shell.` path must be armed by
    the shell or declared on the family's `writers` with a
    `writerAuthority` (a fixture arms its own and names itself); a
-   `kernel:` path must name a real op (`sdk/kernelOps.ts`, generated from
+   `kernel:` path must name a real op
+   (`packages/live-shell/ui/src/inhabitants/sdk/kernelOps.ts`, generated from
    the kernel's types); a `<tool>:` path must name a known tool. The law
    runs at admission, on the extension path, and in the world gate.
    Modulation honesty: a row's `modulatedBy` must name an observable some
@@ -95,7 +96,8 @@ O-I docs/research/ableton-live-12.0.25/ui/UI-EVIDENCE.md  the measured chrome (d
 - No second admission path, no second registry, no parallel manifest shape.
 - Modes are the spine — no mode SDK, no mode creation by families. What
   varies BY MODE is declared through the kit: `modes` scoping, `formats`
-  (the device ontology in `sdk/modes.ts`), and Rev 5 `transport` bindings —
+  (the device ontology in `packages/live-shell/ui/src/inhabitants/sdk/modes.ts`),
+  and Rev 5 `transport` bindings —
   all gate-checked against the specimen-sourced ontology.
 - A family binds its product (§12) or binds nothing; one product family per
   product; a new product is claimed through `newProduct` with its
