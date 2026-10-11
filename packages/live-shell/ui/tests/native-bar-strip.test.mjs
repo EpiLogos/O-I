@@ -118,7 +118,7 @@ test('a Field-pinned control renders after the seed with its scope mark', () => 
   assert.notEqual(expected, null, 'the pinned path is a shareable Field parameter')
   assert.ok(byLabel(markup, 'input', 'Gravity X'), 'the pinned control renders')
   assert.ok(markup.indexOf('aria-label="Gravity X"') > markup.indexOf('aria-label="Ink Opacity"'), 'the pin follows the seed')
-  assert.match(markup, new RegExp(`class="bar-scope"[^>]*>${expected === 'shared' ? 'S' : 'L'}<`))
+  assert.match(markup, new RegExp(`class="pin-scope"[^>]*>${expected === 'shared' ? 'S' : 'L'}<`))
 })
 
 test('a pin that duplicates a seed path renders once', () => {

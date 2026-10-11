@@ -1,0 +1,827 @@
+// PROVENANCE: Ghidra 12.1.4 decompiles + objdump bytes, persistent project
+// LiveRE2 (~/tools/live-re/ghidra-proj2, ALREADY ANALYZED), Live.arm64
+// (Live 12.0.25, 2024-08-27_2627c43816), arm64 slice.
+// Owner-private analysis evidence. NOT FOR REDISTRIBUTION. Never enters
+// product source (packages/live-dynamics).
+// Captured 2026-10-09 (binary derivations lane: Redux/Overdrive/Erosion) via
+// BlockProbe.java / CallTargetsProbe.java / DataProbe.java / RangeListProbe.java
+// (query-only; no re-import, no analysis pass).
+// Companion dossier: devices/devices/erosion-derivation.md.
+
+// Contents: the full OErosionProcessor create chain, ctor, all three per-sample
+// calc bodies (Noise / Sinus / WideNoise — a noise- or sine-modulated dual
+// delay line), every setter (RBJ bandpass + depth laws), NewRate/Reset/OnOn,
+// and the LCG seed helper. There is NO downsample/sample-and-hold stage in
+// this processor — the 512 constants are the sine-table length (phase wrap
+// & 0x1ff) and its bookkeeping.
+// NOTE: the 512-entry sine table (global pointer at 0x1059a8a00, runtime-
+// initialized) is beyond the file-backed range — contents not statically
+// decodable [B-negative].
+
+// ==== 1018bd820 — OErosionProcessor create wrapper (param block shell+0x150) ====
+FUNC 1018bd820 name=FUN_1018bd820 body=128 lines=17
+
+long FUN_1018bd820(undefined8 param_1,undefined8 param_2)
+
+{
+  undefined8 uVar1;
+  long lVar2;
+  undefined1 uStack_35;
+  int iStack_34;
+  
+  uVar1 = func_0x00010153be8c(param_2,&iStack_34);
+  func_0x00010153be4c(uVar1,&uStack_35);
+  lVar2 = func_0x00010153ff88(0x28);
+  func_0x000101545cf4(lVar2,param_1,iStack_34 + 0x150,uStack_35);
+  func_0x00010167422c(*(undefined8 *)(lVar2 + 0x18),param_1,param_2);
+  func_0x000101545e84(lVar2);
+  return lVar2;
+}
+END 1018bd820
+
+// ==== 10167422c — OErosionProcessor ctor (thunk; real body 0x10167408c) — two rings func_0x0001016d3a14 sized int(2*40*sr_ms) = 80 ms (+0x48 sub / +0x78), 512/sr +0xb0, phase +0xa8 = *0, FLT_MAX fills, 1/sr +0xe8/+0x114, sr_kHz +0x120, LCG init +0x118, +0x138 = 1.0 ====
+FUNC 10167422c name=thunk_FUN_10167408c body=4 lines=57
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+long thunk_FUN_10167408c(long param_1,int *param_2)
+
+{
+  undefined4 uVar1;
+  long *plVar2;
+  long *plVar3;
+  int iVar4;
+  float fVar5;
+  
+  plVar2 = (long *)func_0x0001016669a8();
+  plVar3 = plVar2 + 9;
+  *plVar2 = (long)(PTR_DAT_1050a3348 + 0x10);
+  func_0x0001016d39f8(plVar3);
+  func_0x0001016d39f8(param_1 + 0x78);
+  *(undefined8 *)(param_1 + 0xf4) = 0x7f7fffff7f7fffff;
+  *(undefined8 *)(param_1 + 0xec) = 0x7f7fffff7f7fffff;
+  *(undefined4 *)(param_1 + 0xac) = 0;
+  *(undefined8 *)(param_1 + 0xb8) = uRam00000001059a8a00;
+  iVar4 = *param_2;
+  fVar5 = 512.0 / (float)iVar4;
+  *(float *)(param_1 + 0xb0) = fVar5;
+  *(float *)(param_1 + 0xa8) = fVar5 * 0.0;
+  *(undefined8 *)(param_1 + 200) = 0x7f7fffff7f7fffff;
+  *(undefined8 *)(param_1 + 0xc0) = 0x7f7fffff7f7fffff;
+  *(undefined8 *)(param_1 + 0xd0) = 0x7f7fffff7f7fffff;
+  *(undefined8 *)(param_1 + 0xe0) = 0;
+  *(undefined8 *)(param_1 + 0xd8) = 0;
+  *(float *)(param_1 + 0xe8) = 1.0 / (float)iVar4;
+  iVar4 = *param_2;
+  *(undefined8 *)(param_1 + 0xfc) = 0x7f7fffff7f7fffff;
+  *(undefined8 *)(param_1 + 0x104) = 0;
+  *(undefined8 *)(param_1 + 0x10c) = 0;
+  *(float *)(param_1 + 0x114) = 1.0 / (float)iVar4;
+  func_0x000101548968(param_1 + 0x118);
+  *(undefined4 *)(param_1 + 0x11c) = 0;
+  *(undefined4 *)(param_1 + 0x124) = 0;
+  *(undefined8 *)(param_1 + 0x128) = 0;
+  *(undefined8 *)(param_1 + 0x148) = 0;
+  *(undefined8 *)(param_1 + 0x38) = 0;
+  *(undefined8 *)(param_1 + 0x40) = 0;
+  *(undefined8 *)(param_1 + 0x30) = 0;
+  iVar4 = *param_2;
+  *(float *)(param_1 + 0x120) = (float)iVar4 * 0.001;
+  *(undefined8 *)(param_1 + 0x130) = _UNK_104cc8b70;
+  *(undefined8 *)(param_1 + 0x138) = 0x3f800000;
+  *(undefined2 *)(param_1 + 0x140) = 0;
+  fVar5 = (float)iVar4 * 0.001 * 40.0;
+  func_0x0001016d3a14(plVar3,(int)(fVar5 + fVar5));
+  fVar5 = *(float *)(param_1 + 0x120) * 40.0;
+  func_0x0001016d3a14(param_1 + 0x78,(int)(fVar5 + fVar5));
+  uVar1 = func_0x0001016d3ac4(plVar3);
+  *(undefined4 *)(param_1 + 8) = uVar1;
+  return param_1;
+}
+END 10167422c
+
+// ==== 10167afa8 — MainCalcNoise — LCG state +0x118: s = s*0x19660d + 0x3c6ef35f; noise = float(s&0x7fffff|0x3f800000)*2 - 3 (uniform [-1,1]); BandQ biquad (+0xc0 coeffs, +0xd8..+0xe4 states); delay = +0x124 + +0x11c*y clamped >= 1; two rings (L +0x58/0x70, R +0x88/0xa0) write input **(0x30)/**(0x38), linear-interp read at write-int(delay), outputs +0x40/+0x44 ====
+FUNC 10167afa8 name=__ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_13MainCalcNoiseEvEEEEPFvPvEvENUlS6_E_8__invokeES6_ body=1 lines=68
+
+void __ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_13MainCalcNoiseEvEEEEPFvPvEvENUlS6_E_8__invokeES6_
+               (long param_1)
+
+{
+  uint uVar1;
+  float *pfVar2;
+  undefined4 *puVar3;
+  float *pfVar4;
+  float *pfVar5;
+  int iVar6;
+  float fVar7;
+  float fVar8;
+  float fVar9;
+  float fVar10;
+  
+  uVar1 = *(int *)(param_1 + 0x118) * 0x19660d + 0x3c6ef35f;
+  fVar7 = (float)(uVar1 & 0x7fffff | 0x3f800000) * 2.0 + -3.0;
+  fVar9 = *(float *)(param_1 + 0xd8);
+  fVar10 = *(float *)(param_1 + 0xe0);
+  *(uint *)(param_1 + 0x118) = uVar1;
+  fVar8 = ((*(float *)(param_1 + 0xc4) * fVar9 + fVar7 * *(float *)(param_1 + 0xc0) +
+           *(float *)(param_1 + 0xdc) * *(float *)(param_1 + 200)) -
+          fVar10 * *(float *)(param_1 + 0xd0)) -
+          *(float *)(param_1 + 0xe4) * *(float *)(param_1 + 0xd4);
+  *(float *)(param_1 + 0xd8) = fVar7;
+  *(float *)(param_1 + 0xdc) = fVar9;
+  *(float *)(param_1 + 0xe0) = fVar8;
+  *(float *)(param_1 + 0xe4) = fVar10;
+  fVar7 = *(float *)(param_1 + 0x124) + *(float *)(param_1 + 0x11c) * fVar8;
+  if (fVar7 <= 1.0) {
+    fVar7 = 1.0;
+  }
+  puVar3 = *(undefined4 **)(param_1 + 0x58);
+  *puVar3 = **(undefined4 **)(param_1 + 0x30);
+  iVar6 = (int)fVar7;
+  pfVar5 = (float *)(puVar3 + -(long)iVar6);
+  pfVar4 = *(float **)(param_1 + 0x48);
+  if (pfVar5 < pfVar4) {
+    pfVar5 = pfVar5 + *(int *)(param_1 + 0x70);
+  }
+  pfVar2 = pfVar5 + -1;
+  if (pfVar2 < pfVar4) {
+    pfVar2 = pfVar2 + *(int *)(param_1 + 0x70);
+  }
+  *(float *)(param_1 + 0x40) = *pfVar5 + (fVar7 - (float)iVar6) * (*pfVar2 - *pfVar5);
+  if ((float *)(puVar3 + 1) != *(float **)(param_1 + 0x50)) {
+    pfVar4 = (float *)(puVar3 + 1);
+  }
+  *(float **)(param_1 + 0x58) = pfVar4;
+  puVar3 = *(undefined4 **)(param_1 + 0x88);
+  *puVar3 = **(undefined4 **)(param_1 + 0x38);
+  pfVar5 = (float *)(puVar3 + -(long)iVar6);
+  pfVar4 = *(float **)(param_1 + 0x78);
+  if (pfVar5 < pfVar4) {
+    pfVar5 = pfVar5 + *(int *)(param_1 + 0xa0);
+  }
+  pfVar2 = pfVar5 + -1;
+  if (pfVar2 < pfVar4) {
+    pfVar2 = pfVar2 + *(int *)(param_1 + 0xa0);
+  }
+  *(float *)(param_1 + 0x44) = *pfVar5 + (fVar7 - (float)iVar6) * (*pfVar2 - *pfVar5);
+  if ((float *)(puVar3 + 1) != *(float **)(param_1 + 0x80)) {
+    pfVar4 = (float *)(puVar3 + 1);
+  }
+  *(float **)(param_1 + 0x88) = pfVar4;
+  return;
+}
+END 10167afa8
+
+// ==== 10167afb0 — MainCalcSinus — phase +0xac steps by +0xa8, wraps & 0x1ff (512-entry table at *+0xb8); s = lerp(table[i], table[i+1], frac); delay = +0x124 + +0x11c*s; same dual-ring read ====
+FUNC 10167afb0 name=__ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_13MainCalcSinusEvEEEEPFvPvEvENUlS6_E_8__invokeES6_ body=1 lines=55
+
+void __ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_13MainCalcSinusEvEEEEPFvPvEvENUlS6_E_8__invokeES6_
+               (long param_1)
+
+{
+  float *pfVar1;
+  undefined4 *puVar2;
+  float *pfVar3;
+  float *pfVar4;
+  int iVar5;
+  float fVar6;
+  float fVar7;
+  
+  fVar6 = *(float *)(param_1 + 0xa8) + *(float *)(param_1 + 0xac);
+  *(float *)(param_1 + 0xac) = (fVar6 - (float)(int)fVar6) + (float)((int)fVar6 & 0x1ffU);
+  pfVar4 = (float *)(*(long *)(param_1 + 0xb8) + (ulong)((int)fVar6 & 0x1ffU) * 4);
+  fVar7 = *pfVar4;
+  fVar6 = *(float *)(param_1 + 0x124) +
+          *(float *)(param_1 + 0x11c) * (fVar7 + (pfVar4[1] - fVar7) * (fVar6 - (float)(int)fVar6));
+  puVar2 = *(undefined4 **)(param_1 + 0x58);
+  *puVar2 = **(undefined4 **)(param_1 + 0x30);
+  iVar5 = (int)fVar6;
+  pfVar4 = (float *)(puVar2 + -(long)iVar5);
+  pfVar3 = *(float **)(param_1 + 0x48);
+  if (pfVar4 < pfVar3) {
+    pfVar4 = pfVar4 + *(int *)(param_1 + 0x70);
+  }
+  pfVar1 = pfVar4 + -1;
+  if (pfVar1 < pfVar3) {
+    pfVar1 = pfVar1 + *(int *)(param_1 + 0x70);
+  }
+  fVar6 = fVar6 - (float)iVar5;
+  *(float *)(param_1 + 0x40) = *pfVar4 + fVar6 * (*pfVar1 - *pfVar4);
+  if ((float *)(puVar2 + 1) != *(float **)(param_1 + 0x50)) {
+    pfVar3 = (float *)(puVar2 + 1);
+  }
+  *(float **)(param_1 + 0x58) = pfVar3;
+  puVar2 = *(undefined4 **)(param_1 + 0x88);
+  *puVar2 = **(undefined4 **)(param_1 + 0x38);
+  pfVar4 = (float *)(puVar2 + -(long)iVar5);
+  pfVar3 = *(float **)(param_1 + 0x78);
+  if (pfVar4 < pfVar3) {
+    pfVar4 = pfVar4 + *(int *)(param_1 + 0xa0);
+  }
+  pfVar1 = pfVar4 + -1;
+  if (pfVar1 < pfVar3) {
+    pfVar1 = pfVar1 + *(int *)(param_1 + 0xa0);
+  }
+  *(float *)(param_1 + 0x44) = *pfVar4 + fVar6 * (*pfVar1 - *pfVar4);
+  if ((float *)(puVar2 + 1) != *(float **)(param_1 + 0x80)) {
+    pfVar3 = (float *)(puVar2 + 1);
+  }
+  *(float **)(param_1 + 0x88) = pfVar3;
+  return;
+}
+END 10167afb0
+
+// ==== 10167afac — MainCalcWideNoise — two LCG steps per sample (two independent noises); two biquads (coeffs +0xc0 / +0xec groups); independent per-channel delay = +0x124 + +0x11c*y_L/R ====
+FUNC 10167afac name=__ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_17MainCalcWideNoiseEvEEEEPFvPvEvENUlS6_E_8__invokeES6_ body=1 lines=79
+
+void __ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_17MainCalcWideNoiseEvEEEEPFvPvEvENUlS6_E_8__invokeES6_
+               (long param_1)
+
+{
+  uint uVar1;
+  undefined4 *puVar2;
+  float *pfVar3;
+  float *pfVar4;
+  float *pfVar5;
+  float fVar6;
+  float fVar7;
+  float fVar8;
+  
+  uVar1 = *(int *)(param_1 + 0x118) * 0x19660d + 0x3c6ef35f;
+  fVar6 = (float)(uVar1 & 0x7fffff | 0x3f800000) * 2.0 + -3.0;
+  uVar1 = uVar1 * 0x19660d + 0x3c6ef35f;
+  fVar7 = (float)(uVar1 & 0x7fffff | 0x3f800000) * 2.0 + -3.0;
+  *(uint *)(param_1 + 0x118) = uVar1;
+  fVar8 = ((*(float *)(param_1 + 0xc4) * *(float *)(param_1 + 0xd8) +
+            fVar6 * *(float *)(param_1 + 0xc0) +
+           *(float *)(param_1 + 0xdc) * *(float *)(param_1 + 200)) -
+          *(float *)(param_1 + 0xe0) * *(float *)(param_1 + 0xd0)) -
+          *(float *)(param_1 + 0xe4) * *(float *)(param_1 + 0xd4);
+  *(float *)(param_1 + 0xdc) = *(float *)(param_1 + 0xd8);
+  *(float *)(param_1 + 0xd8) = fVar6;
+  *(float *)(param_1 + 0xe4) = *(float *)(param_1 + 0xe0);
+  *(float *)(param_1 + 0xe0) = fVar8;
+  fVar6 = ((*(float *)(param_1 + 0xf0) * *(float *)(param_1 + 0x104) +
+            fVar7 * *(float *)(param_1 + 0xec) +
+           *(float *)(param_1 + 0x108) * *(float *)(param_1 + 0xf4)) -
+          *(float *)(param_1 + 0x10c) * *(float *)(param_1 + 0xfc)) -
+          *(float *)(param_1 + 0x110) * *(float *)(param_1 + 0x100);
+  *(float *)(param_1 + 0x108) = *(float *)(param_1 + 0x104);
+  *(float *)(param_1 + 0x104) = fVar7;
+  *(float *)(param_1 + 0x110) = *(float *)(param_1 + 0x10c);
+  *(float *)(param_1 + 0x10c) = fVar6;
+  fVar7 = *(float *)(param_1 + 0x124) + *(float *)(param_1 + 0x11c) * fVar8;
+  fVar6 = *(float *)(param_1 + 0x124) + *(float *)(param_1 + 0x11c) * fVar6;
+  if (fVar7 <= 1.0) {
+    fVar7 = 1.0;
+  }
+  puVar2 = *(undefined4 **)(param_1 + 0x58);
+  *puVar2 = **(undefined4 **)(param_1 + 0x30);
+  pfVar4 = (float *)(puVar2 + -(long)(int)fVar7);
+  pfVar3 = *(float **)(param_1 + 0x48);
+  if (pfVar4 < pfVar3) {
+    pfVar4 = pfVar4 + *(int *)(param_1 + 0x70);
+  }
+  if (fVar6 <= 1.0) {
+    fVar6 = 1.0;
+  }
+  pfVar5 = pfVar4 + -1;
+  if (pfVar5 < pfVar3) {
+    pfVar5 = pfVar5 + *(int *)(param_1 + 0x70);
+  }
+  *(float *)(param_1 + 0x40) = *pfVar4 + (fVar7 - (float)(int)fVar7) * (*pfVar5 - *pfVar4);
+  if ((float *)(puVar2 + 1) != *(float **)(param_1 + 0x50)) {
+    pfVar3 = (float *)(puVar2 + 1);
+  }
+  *(float **)(param_1 + 0x58) = pfVar3;
+  puVar2 = *(undefined4 **)(param_1 + 0x88);
+  *puVar2 = **(undefined4 **)(param_1 + 0x38);
+  pfVar4 = (float *)(puVar2 + -(long)(int)fVar6);
+  pfVar3 = *(float **)(param_1 + 0x78);
+  if (pfVar4 < pfVar3) {
+    pfVar4 = pfVar4 + *(int *)(param_1 + 0xa0);
+  }
+  pfVar5 = pfVar4 + -1;
+  if (pfVar5 < pfVar3) {
+    pfVar5 = pfVar5 + *(int *)(param_1 + 0xa0);
+  }
+  *(float *)(param_1 + 0x44) = *pfVar4 + (fVar6 - (float)(int)fVar6) * (*pfVar5 - *pfVar4);
+  if ((float *)(puVar2 + 1) != *(float **)(param_1 + 0x80)) {
+    pfVar3 = (float *)(puVar2 + 1);
+  }
+  *(float **)(param_1 + 0x88) = pfVar3;
+  return;
+}
+END 10167afac
+
+// ==== 10167af08 — OnMode — +0x13c = mode; depth +0x11c: mode<2 -> (200/sqrt(Freq))*Amplitude * sr_kHz(+0x120) * 0.0008; mode2 -> sr_kHz * Amplitude * 0.0008; ring/biquad clears; calc re-pick (3-entry tables 0x105289d10/…d28; WithReset variants while crossfading) ====
+FUNC 10167af08 name=__ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnModeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=132
+
+/* WARNING: Possible PIC construction at 0x000101674dac: Changing call to branch */
+/* WARNING: Removing unreachable block (ram,0x000101674db0) */
+
+void __ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnModeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  undefined1 *puVar1;
+  undefined4 uVar2;
+  long lVar3;
+  undefined *puVar4;
+  undefined *puVar5;
+  undefined *puVar6;
+  undefined *puVar7;
+  undefined8 *puVar8;
+  float *pfVar9;
+  long lVar10;
+  int iVar11;
+  undefined1 *unaff_x29;
+  undefined *unaff_x30;
+  float fVar12;
+  
+  *(int *)(param_2 + 0x13c) = (int)param_1;
+  if ((uint)(int)param_1 < 2) {
+    fVar12 = *(float *)(param_2 + 0x138) * (200.0 / SQRT(*(float *)(param_2 + 0x130)));
+    pfVar9 = (float *)(param_2 + 0x120);
+  }
+  else {
+    pfVar9 = (float *)(param_2 + 0x138);
+    fVar12 = *(float *)(param_2 + 0x120);
+  }
+  *(float *)(param_2 + 0x11c) = fVar12 * *pfVar9 * 0.0008;
+  func_0x000101674424(param_2);
+  puVar1 = &stack0xfffffffffffffff0;
+  if ((*(char *)(param_2 + 0x141) == '\0') || (*(char *)(param_2 + 0x140) == '\0')) {
+    puVar8 = *(undefined8 **)(param_2 + 0x148);
+    puVar7 = (undefined *)0x0;
+  }
+  else {
+    lVar3 = func_0x000101543b04(*(undefined8 *)(param_2 + 0x148));
+    if (lVar3 == 0) {
+      func_0x0001016d3acc(param_2 + 0x48);
+      func_0x0001016d3acc(param_2 + 0x78);
+      puVar7 = (undefined *)0x0;
+      *(undefined8 *)(param_2 + 0xd8) = 0;
+      *(undefined8 *)(param_2 + 0xe0) = 0;
+      *(undefined8 *)(param_2 + 0x104) = 0;
+      *(undefined8 *)(param_2 + 0x10c) = 0;
+      puVar8 = *(undefined8 **)(param_2 + 0x148);
+      if (*(uint *)(param_2 + 0x13c) < 3) {
+        puVar7 = *(undefined **)(&UNK_105289d28 + (long)(int)*(uint *)(param_2 + 0x13c) * 8);
+      }
+      unaff_x30 = &UNK_101674db0;
+      register0x00000008 = (BADSPACEBASE *)&stack0xffffffffffffffd0;
+      unaff_x29 = puVar1;
+    }
+    else {
+      if (*(int *)(param_2 + 300) == 0) {
+code_r0x000101674d28:
+        puVar8 = *(undefined8 **)(param_2 + 0x148);
+        if (*(uint *)(param_2 + 0x13c) < 3) {
+          puVar7 = *(undefined **)(&UNK_105289d10 + (long)(int)*(uint *)(param_2 + 0x13c) * 8);
+          goto SUB_101543a80;
+        }
+      }
+      else {
+        puVar4 = (undefined *)func_0x000101543b04(*(undefined8 *)(param_2 + 0x148));
+        puVar7 = 
+        PTR___ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_22MainCalcNoiseWithResetEvEEEEPFvPvEvENUlS6_E_8__invokeES6__1050b9070
+        ;
+        if (((puVar4 != 
+              PTR___ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_22MainCalcNoiseWithResetEvEEEEPFvPvEvENUlS6_E_8__invokeES6__1050b9070
+             ) && (puVar5 = (undefined *)func_0x000101543b04(*(undefined8 *)(param_2 + 0x148)),
+                  puVar4 = 
+                  PTR___ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_26MainCalcWideNoiseWithResetEvEEEEPFvPvEvENUlS6_E_8__invokeES6__1050b9080
+                  , puVar5 != 
+                    PTR___ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_26MainCalcWideNoiseWithResetEvEEEEPFvPvEvENUlS6_E_8__invokeES6__1050b9080
+                  )) &&
+           (puVar6 = (undefined *)func_0x000101543b04(*(undefined8 *)(param_2 + 0x148)),
+           puVar5 = 
+           PTR___ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_22MainCalcSinusWithResetEvEEEEPFvPvEvENUlS6_E_8__invokeES6__1050b9078
+           , puVar6 != 
+             PTR___ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_22MainCalcSinusWithResetEvEEEEPFvPvEvENUlS6_E_8__invokeES6__1050b9078
+           )) {
+          if ((*(int *)(param_2 + 300) != 0) &&
+             (((puVar6 = (undefined *)func_0x000101543b04(*(undefined8 *)(param_2 + 0x148)),
+               puVar6 == puVar7 ||
+               (puVar7 = (undefined *)func_0x000101543b04(*(undefined8 *)(param_2 + 0x148)),
+               puVar7 == puVar4)) ||
+              (puVar7 = (undefined *)func_0x000101543b04(*(undefined8 *)(param_2 + 0x148)),
+              puVar7 == puVar5)))) {
+            return;
+          }
+          goto code_r0x000101674d28;
+        }
+        puVar8 = *(undefined8 **)(param_2 + 0x148);
+        if (*(uint *)(param_2 + 0x13c) < 3) {
+          puVar7 = *(undefined **)(&UNK_105289d28 + (long)(int)*(uint *)(param_2 + 0x13c) * 8);
+          goto SUB_101543a80;
+        }
+      }
+      puVar7 = (undefined *)0x0;
+    }
+  }
+SUB_101543a80:
+  *(undefined1 **)((long)register0x00000008 + -0x10) = unaff_x29;
+  *(undefined **)((long)register0x00000008 + -8) = unaff_x30;
+  *puVar8 = puVar7;
+  lVar3 = puVar8[1];
+  lVar10 = *(long *)(lVar3 + 0x18) + (long)*(int *)(puVar8 + 2) * 0x18;
+  if (*(undefined **)(lVar10 + 8) == puVar7) {
+    return;
+  }
+  if (puVar7 == (undefined *)0x0) {
+    iVar11 = -1;
+    puVar4 = PTR___ZZN10OProcessor16SNoCalcAudioFuncEvENUlPvE_8__invokeES0__1050b3e98;
+  }
+  else {
+    puVar4 = puVar7;
+    if (*(undefined **)(lVar10 + 8) != (undefined *)0x0) goto LAB_101543ae0;
+    iVar11 = 1;
+  }
+  *(int *)(lVar3 + 0x34) = *(int *)(lVar3 + 0x34) + iVar11;
+LAB_101543ae0:
+  *(undefined **)(lVar10 + 8) = puVar7;
+  uVar2 = *(undefined4 *)(lVar10 + 0x10);
+  *(undefined **)((long)register0x00000008 + -0x18) = puVar4;
+  func_0x00010151e6d0(*(undefined8 *)(lVar3 + 0x28),uVar2,
+                      (undefined1 *)((long)register0x00000008 + -0x18));
+  return;
+}
+END 10167af08
+
+// ==== 10167ae50 — OnFreq — +0x130 = Freq; depth law recompute; mode<2: RBJ bandpass on BOTH biquads: w = 2pi*Freq/sr clamp 2.984513, alpha = sin(w)*sinh(BandQ*0.3465736*w/sin(w)), b0 = alpha/(1+alpha), b1 = 0, b2 = -b0, a1 = -2cos(w)/(1+alpha), a2 = (1-alpha)/(1+alpha); mode2: sine LFO phase +0xa8 = Freq * (512/sr) ====
+FUNC 10167ae50 name=__ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnFreqEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=63
+
+void __ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvfEE14SProcessorFuncIXadL_ZNS1_6OnFreqEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  float *pfVar1;
+  float fVar2;
+  float fVar3;
+  float fVar4;
+  float fVar5;
+  float fVar6;
+  
+  *(float *)(param_2 + 0x130) = param_1;
+  if (*(uint *)(param_2 + 0x13c) < 2) {
+    fVar5 = (200.0 / SQRT(param_1)) * *(float *)(param_2 + 0x138);
+    pfVar1 = (float *)(param_2 + 0x120);
+  }
+  else {
+    pfVar1 = (float *)(param_2 + 0x138);
+    fVar5 = *(float *)(param_2 + 0x120);
+  }
+  *(float *)(param_2 + 0x11c) = fVar5 * *pfVar1 * 0.0008;
+  fVar5 = *(float *)(param_2 + 0x130);
+  if (*(uint *)(param_2 + 0x13c) < 2) {
+    fVar6 = *(float *)(param_2 + 0x134);
+    fVar4 = 6.2831855;
+    fVar2 = fVar5 * 6.2831855 * *(float *)(param_2 + 0xe8);
+    if (2.984513 < fVar2) {
+      fVar2 = 2.984513;
+    }
+    fVar3 = (float)___sincosf_stret(fVar2);
+    fVar6 = fVar6 * 0.3465736;
+    fVar2 = (float)_sinhf((fVar6 * fVar2) / fVar3);
+    fVar2 = fVar2 * fVar3;
+    fVar3 = 1.0 / (fVar2 + 1.0);
+    *(float *)(param_2 + 0xc0) = fVar2 * fVar3;
+    *(undefined4 *)(param_2 + 0xc4) = 0;
+    *(float *)(param_2 + 200) = -(fVar2 * fVar3);
+    *(float *)(param_2 + 0xcc) = fVar3;
+    *(float *)(param_2 + 0xd0) = fVar4 * -2.0 * fVar3;
+    *(float *)(param_2 + 0xd4) = (1.0 - fVar2) * fVar3;
+    fVar4 = fVar5 * 6.2831855 * *(float *)(param_2 + 0x114);
+    if (2.984513 < fVar4) {
+      fVar4 = 2.984513;
+    }
+    fVar2 = (float)___sincosf_stret(fVar4);
+    fVar4 = (float)_sinhf((fVar6 * fVar4) / fVar2);
+    fVar4 = fVar4 * fVar2;
+    fVar2 = 1.0 / (fVar4 + 1.0);
+    *(float *)(param_2 + 0xec) = fVar4 * fVar2;
+    *(undefined4 *)(param_2 + 0xf0) = 0;
+    *(float *)(param_2 + 0xf4) = -(fVar4 * fVar2);
+    *(float *)(param_2 + 0xf8) = fVar2;
+    *(float *)(param_2 + 0xfc) = fVar3 * -2.0 * fVar2;
+    *(float *)(param_2 + 0x100) = (1.0 - fVar4) * fVar2;
+    *(float *)(param_2 + 0x11c) =
+         *(float *)(param_2 + 0x120) * (200.0 / SQRT(fVar5)) * *(float *)(param_2 + 0x138) * 0.0008;
+  }
+  else {
+    *(float *)(param_2 + 0xa8) = fVar5 * *(float *)(param_2 + 0xb0);
+  }
+  return;
+}
+END 10167ae50
+
+// ==== 10167aeb0 — OnAmplitude — depth law recompute only ====
+FUNC 10167aeb0 name=__ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnAmplitudeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=19
+
+void __ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvfEE14SProcessorFuncIXadL_ZNS1_11OnAmplitudeEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  float *pfVar1;
+  
+  *(float *)(param_2 + 0x138) = param_1;
+  if (*(uint *)(param_2 + 0x13c) < 2) {
+    param_1 = (200.0 / SQRT(*(float *)(param_2 + 0x130))) * param_1;
+    pfVar1 = (float *)(param_2 + 0x120);
+  }
+  else {
+    pfVar1 = (float *)(param_2 + 0x138);
+    param_1 = *(float *)(param_2 + 0x120);
+  }
+  *(float *)(param_2 + 0x11c) = param_1 * *pfVar1 * 0.0008;
+  return;
+}
+END 10167aeb0
+
+// ==== 10167aea8 — OnBandQ — +0x134 = value; same RBJ bandpass recompute (both biquads); mode2 branch: +0xa8 = Freq*512/sr ====
+FUNC 10167aea8 name=__ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnBandQEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=53
+
+void __ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvfEE14SProcessorFuncIXadL_ZNS1_7OnBandQEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (undefined4 param_1,long param_2)
+
+{
+  float fVar1;
+  float fVar2;
+  float fVar3;
+  float fVar4;
+  float fVar5;
+  
+  *(undefined4 *)(param_2 + 0x134) = param_1;
+  fVar4 = *(float *)(param_2 + 0x130);
+  if (*(uint *)(param_2 + 0x13c) < 2) {
+    fVar5 = *(float *)(param_2 + 0x134);
+    fVar3 = 6.2831855;
+    fVar1 = fVar4 * 6.2831855 * *(float *)(param_2 + 0xe8);
+    if (2.984513 < fVar1) {
+      fVar1 = 2.984513;
+    }
+    fVar2 = (float)___sincosf_stret(fVar1);
+    fVar5 = fVar5 * 0.3465736;
+    fVar1 = (float)_sinhf((fVar5 * fVar1) / fVar2);
+    fVar1 = fVar1 * fVar2;
+    fVar2 = 1.0 / (fVar1 + 1.0);
+    *(float *)(param_2 + 0xc0) = fVar1 * fVar2;
+    *(undefined4 *)(param_2 + 0xc4) = 0;
+    *(float *)(param_2 + 200) = -(fVar1 * fVar2);
+    *(float *)(param_2 + 0xcc) = fVar2;
+    *(float *)(param_2 + 0xd0) = fVar3 * -2.0 * fVar2;
+    *(float *)(param_2 + 0xd4) = (1.0 - fVar1) * fVar2;
+    fVar3 = fVar4 * 6.2831855 * *(float *)(param_2 + 0x114);
+    if (2.984513 < fVar3) {
+      fVar3 = 2.984513;
+    }
+    fVar1 = (float)___sincosf_stret(fVar3);
+    fVar3 = (float)_sinhf((fVar5 * fVar3) / fVar1);
+    fVar3 = fVar3 * fVar1;
+    fVar1 = 1.0 / (fVar3 + 1.0);
+    *(float *)(param_2 + 0xec) = fVar3 * fVar1;
+    *(undefined4 *)(param_2 + 0xf0) = 0;
+    *(float *)(param_2 + 0xf4) = -(fVar3 * fVar1);
+    *(float *)(param_2 + 0xf8) = fVar1;
+    *(float *)(param_2 + 0xfc) = fVar2 * -2.0 * fVar1;
+    *(float *)(param_2 + 0x100) = (1.0 - fVar3) * fVar1;
+    *(float *)(param_2 + 0x11c) =
+         *(float *)(param_2 + 0x120) * (200.0 / SQRT(fVar4)) * *(float *)(param_2 + 0x138) * 0.0008;
+  }
+  else {
+    *(float *)(param_2 + 0xa8) = fVar4 * *(float *)(param_2 + 0xb0);
+  }
+  return;
+}
+END 10167aea8
+
+// ==== 10167ae4c — NewRate — +0x120 = sr_kHz; rings resized int(2*40*sr_ms); +0x128 = capacity; phase-preserving sine rescale; +0xe8 = +0x114 = 1/sr; base delay +0x124 = sr_kHz*5 (5 ms); depth recompute; callback re-pick ====
+FUNC 10167ae4c name=__ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFviiEE14SProcessorFuncIXadL_ZNS1_7NewRateEiiEEEEPFvPviiEvENUlS6_iiE_8__invokeES6_ii body=1 lines=46
+
+void __ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFviiEE14SProcessorFuncIXadL_ZNS1_7NewRateEiiEEEEPFvPviiEvENUlS6_iiE_8__invokeES6_ii
+               (long param_1,undefined8 param_2,int param_3)
+
+{
+  undefined4 uVar1;
+  float fVar2;
+  float fVar3;
+  float fVar4;
+  
+  fVar4 = (float)param_3;
+  *(float *)(param_1 + 0x120) = fVar4 * 0.001;
+  fVar2 = fVar4 * 0.001 * 40.0;
+  func_0x0001016d3a14(param_1 + 0x48,(int)(fVar2 + fVar2));
+  fVar2 = *(float *)(param_1 + 0x120) * 40.0;
+  func_0x0001016d3a14(param_1 + 0x78,(int)(fVar2 + fVar2));
+  uVar1 = func_0x0001016d3ac4(param_1 + 0x48);
+  *(undefined4 *)(param_1 + 0x128) = uVar1;
+  if (*(float *)(param_1 + 0xb0) == 0.0) {
+    fVar2 = 0.0;
+  }
+  else {
+    fVar2 = *(float *)(param_1 + 0xa8) / *(float *)(param_1 + 0xb0);
+  }
+  *(float *)(param_1 + 0xb0) = 512.0 / fVar4;
+  *(float *)(param_1 + 0xa8) = (512.0 / fVar4) * fVar2;
+  *(float *)(param_1 + 0xe8) = 1.0 / fVar4;
+  *(float *)(param_1 + 0x114) = 1.0 / fVar4;
+  fVar2 = *(float *)(param_1 + 0x120);
+  *(float *)(param_1 + 0x124) = fVar2 * 5.0;
+  if (*(uint *)(param_1 + 0x13c) < 2) {
+    fVar4 = *(float *)(param_1 + 0x138) * (200.0 / SQRT(*(float *)(param_1 + 0x130)));
+    fVar3 = fVar2;
+  }
+  else {
+    fVar3 = *(float *)(param_1 + 0x138);
+    fVar4 = fVar2;
+  }
+  *(float *)(param_1 + 0x11c) = fVar3 * fVar4 * 0.0008;
+  func_0x000101674424(param_1);
+  *(int *)(param_1 + 8) = *(int *)(param_1 + 0x128);
+                    /* WARNING: Could not recover jumptable at 0x0001016669a4. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(param_1 + 0x10))((float)*(int *)(param_1 + 0x128),*(undefined8 *)(param_1 + 0x18));
+  return;
+}
+END 10167ae4c
+
+// ==== 10167ad9c — Reset — rings cleared func_0x0001016d3ab0, biquad states zeroed, base delay 5 ms, depth recompute, outputs primed to current inputs ====
+FUNC 10167ad9c name=__ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_5ResetEvEEEEPFvPvEvENUlS6_E_8__invokeES6_ body=1 lines=31
+
+void __ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_5ResetEvEEEEPFvPvEvENUlS6_E_8__invokeES6_
+               (long param_1)
+
+{
+  float fVar1;
+  float fVar2;
+  float fVar3;
+  
+  func_0x0001016d3ab0(param_1 + 0x48);
+  func_0x0001016d3ab0(param_1 + 0x78);
+  *(undefined8 *)(param_1 + 0xd8) = 0;
+  *(undefined8 *)(param_1 + 0xe0) = 0;
+  *(undefined8 *)(param_1 + 0x104) = 0;
+  *(undefined8 *)(param_1 + 0x10c) = 0;
+  fVar1 = *(float *)(param_1 + 0x120);
+  *(float *)(param_1 + 0x124) = fVar1 * 5.0;
+  if (*(uint *)(param_1 + 0x13c) < 2) {
+    fVar2 = *(float *)(param_1 + 0x138) * (200.0 / SQRT(*(float *)(param_1 + 0x130)));
+    fVar3 = fVar1;
+  }
+  else {
+    fVar3 = *(float *)(param_1 + 0x138);
+    fVar2 = fVar1;
+  }
+  *(float *)(param_1 + 0x11c) = fVar3 * fVar2 * 0.0008;
+  func_0x000101674424(param_1);
+  *(undefined4 *)(param_1 + 0x40) = **(undefined4 **)(param_1 + 0x30);
+  *(undefined4 *)(param_1 + 0x44) = **(undefined4 **)(param_1 + 0x38);
+  return;
+}
+END 10167ad9c
+
+// ==== 10167af88 — OnOn — +0x140 = enable; rising edge (with X) clears rings + biquad states and re-picks the calc (mode table; WithReset crossfade while running) ====
+FUNC 10167af88 name=__ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvfEE14SProcessorFuncIXadL_ZNS1_4OnOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f body=1 lines=120
+
+/* WARNING: Possible PIC construction at 0x000101674dac: Changing call to branch */
+/* WARNING: Removing unreachable block (ram,0x000101674db0) */
+
+void __ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvfEE14SProcessorFuncIXadL_ZNS1_4OnOnEfEEEEPFvPvfEvENUlS6_fE_8__invokeES6_f
+               (float param_1,long param_2)
+
+{
+  undefined1 *puVar1;
+  undefined4 uVar2;
+  long lVar3;
+  undefined *puVar4;
+  undefined *puVar5;
+  undefined *puVar6;
+  undefined *puVar7;
+  undefined8 *puVar8;
+  long lVar9;
+  int iVar10;
+  undefined1 *unaff_x29;
+  undefined *unaff_x30;
+  
+  *(bool *)(param_2 + 0x140) = param_1 != 0.0;
+  puVar1 = &stack0xfffffffffffffff0;
+  if ((*(char *)(param_2 + 0x141) == '\0') || (*(char *)(param_2 + 0x140) == '\0')) {
+    puVar8 = *(undefined8 **)(param_2 + 0x148);
+    puVar7 = (undefined *)0x0;
+  }
+  else {
+    lVar3 = func_0x000101543b04(*(undefined8 *)(param_2 + 0x148));
+    if (lVar3 == 0) {
+      func_0x0001016d3acc(param_2 + 0x48);
+      func_0x0001016d3acc(param_2 + 0x78);
+      puVar7 = (undefined *)0x0;
+      *(undefined8 *)(param_2 + 0xd8) = 0;
+      *(undefined8 *)(param_2 + 0xe0) = 0;
+      *(undefined8 *)(param_2 + 0x104) = 0;
+      *(undefined8 *)(param_2 + 0x10c) = 0;
+      puVar8 = *(undefined8 **)(param_2 + 0x148);
+      if (*(uint *)(param_2 + 0x13c) < 3) {
+        puVar7 = *(undefined **)(&UNK_105289d28 + (long)(int)*(uint *)(param_2 + 0x13c) * 8);
+      }
+      unaff_x30 = &UNK_101674db0;
+      register0x00000008 = (BADSPACEBASE *)&stack0xffffffffffffffd0;
+      unaff_x29 = puVar1;
+    }
+    else {
+      if (*(int *)(param_2 + 300) == 0) {
+code_r0x000101674d28:
+        puVar8 = *(undefined8 **)(param_2 + 0x148);
+        if (*(uint *)(param_2 + 0x13c) < 3) {
+          puVar7 = *(undefined **)(&UNK_105289d10 + (long)(int)*(uint *)(param_2 + 0x13c) * 8);
+          goto SUB_101543a80;
+        }
+      }
+      else {
+        puVar4 = (undefined *)func_0x000101543b04(*(undefined8 *)(param_2 + 0x148));
+        puVar7 = 
+        PTR___ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_22MainCalcNoiseWithResetEvEEEEPFvPvEvENUlS6_E_8__invokeES6__1050b9070
+        ;
+        if (((puVar4 != 
+              PTR___ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_22MainCalcNoiseWithResetEvEEEEPFvPvEvENUlS6_E_8__invokeES6__1050b9070
+             ) && (puVar5 = (undefined *)func_0x000101543b04(*(undefined8 *)(param_2 + 0x148)),
+                  puVar4 = 
+                  PTR___ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_26MainCalcWideNoiseWithResetEvEEEEPFvPvEvENUlS6_E_8__invokeES6__1050b9080
+                  , puVar5 != 
+                    PTR___ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_26MainCalcWideNoiseWithResetEvEEEEPFvPvEvENUlS6_E_8__invokeES6__1050b9080
+                  )) &&
+           (puVar6 = (undefined *)func_0x000101543b04(*(undefined8 *)(param_2 + 0x148)),
+           puVar5 = 
+           PTR___ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_22MainCalcSinusWithResetEvEEEEPFvPvEvENUlS6_E_8__invokeES6__1050b9078
+           , puVar6 != 
+             PTR___ZZN6detail16TMemberFuncTypesIM17OErosionProcessorFvvEE14SProcessorFuncIXadL_ZNS1_22MainCalcSinusWithResetEvEEEEPFvPvEvENUlS6_E_8__invokeES6__1050b9078
+           )) {
+          if ((*(int *)(param_2 + 300) != 0) &&
+             (((puVar6 = (undefined *)func_0x000101543b04(*(undefined8 *)(param_2 + 0x148)),
+               puVar6 == puVar7 ||
+               (puVar7 = (undefined *)func_0x000101543b04(*(undefined8 *)(param_2 + 0x148)),
+               puVar7 == puVar4)) ||
+              (puVar7 = (undefined *)func_0x000101543b04(*(undefined8 *)(param_2 + 0x148)),
+              puVar7 == puVar5)))) {
+            return;
+          }
+          goto code_r0x000101674d28;
+        }
+        puVar8 = *(undefined8 **)(param_2 + 0x148);
+        if (*(uint *)(param_2 + 0x13c) < 3) {
+          puVar7 = *(undefined **)(&UNK_105289d28 + (long)(int)*(uint *)(param_2 + 0x13c) * 8);
+          goto SUB_101543a80;
+        }
+      }
+      puVar7 = (undefined *)0x0;
+    }
+  }
+SUB_101543a80:
+  *(undefined1 **)((long)register0x00000008 + -0x10) = unaff_x29;
+  *(undefined **)((long)register0x00000008 + -8) = unaff_x30;
+  *puVar8 = puVar7;
+  lVar3 = puVar8[1];
+  lVar9 = *(long *)(lVar3 + 0x18) + (long)*(int *)(puVar8 + 2) * 0x18;
+  if (*(undefined **)(lVar9 + 8) == puVar7) {
+    return;
+  }
+  if (puVar7 == (undefined *)0x0) {
+    iVar10 = -1;
+    puVar4 = PTR___ZZN10OProcessor16SNoCalcAudioFuncEvENUlPvE_8__invokeES0__1050b3e98;
+  }
+  else {
+    puVar4 = puVar7;
+    if (*(undefined **)(lVar9 + 8) != (undefined *)0x0) goto LAB_101543ae0;
+    iVar10 = 1;
+  }
+  *(int *)(lVar3 + 0x34) = *(int *)(lVar3 + 0x34) + iVar10;
+LAB_101543ae0:
+  *(undefined **)(lVar9 + 8) = puVar7;
+  uVar2 = *(undefined4 *)(lVar9 + 0x10);
+  *(undefined **)((long)register0x00000008 + -0x18) = puVar4;
+  func_0x00010151e6d0(*(undefined8 *)(lVar3 + 0x28),uVar2,
+                      (undefined1 *)((long)register0x00000008 + -0x18));
+  return;
+}
+END 10167af88
+
+// ==== 101548968 — LCG seed helper — if global 0x1059a8a28: seed = global 0x10571a5b0 then global *= 0x41a7 (deterministic sequence); else func_0x000100d0b66c() (entropy) ====
+FUNC 101548968 name=FUN_101548968 body=92 lines=15
+
+int * FUN_101548968(int *param_1)
+
+{
+  int iVar1;
+  
+  if (cRam00000001059a8a28 != '\0') {
+    *param_1 = iRam000000010571a5b0;
+    iRam000000010571a5b0 = iRam000000010571a5b0 * 0x41a7;
+    return param_1;
+  }
+  iVar1 = func_0x000100d0b66c();
+  *param_1 = iVar1;
+  return param_1;
+}
+END 101548968
+

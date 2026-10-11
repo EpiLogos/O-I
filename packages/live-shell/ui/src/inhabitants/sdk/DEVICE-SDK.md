@@ -1,6 +1,6 @@
 # The Device SDK — how agents (and humans) build devices for the shell
 
-Standing: **device-sdk v1.1, 10 October 2026**, by `agent:zcode-device-sdk` on
+Standing: **device-sdk v1.1, 10 October 2026**, by `agent:zcode-device-sdk` on — the worked example of the domain's ecology of law (`skills/m-prime-development/FOUNDING.md`); the domain loop lives at `skills/m-prime-development/SKILL.md`.
 the standing new-shell lane. The SDK is the development loop the owner
 commissioned: point an agent at functionality — from the UX spine and the
 capability matrices, at the app, at any gap — and the agent builds the

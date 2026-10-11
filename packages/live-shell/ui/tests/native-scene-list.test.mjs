@@ -6,7 +6,7 @@ import {register} from 'node:module'
 // Production model source in memory, same loader as the sibling native tests.
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`import ts from ${JSON.stringify(compiler)};import {readFile} from 'node:fs/promises';export async function load(url,context,next){if(url.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export {}'};if(!url.endsWith('.ts')&&!url.endsWith('.tsx'))return next(url,context);return {format:'module',shortCircuit:true,source:ts.transpileModule(await readFile(new URL(url),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX},fileName:new URL(url).pathname}).outputText};}`)}`, import.meta.url)
-const {reorderScenes, dropSlotTarget, addSceneIntent, addSceneBlock, sceneStanding, SCENE_LIMIT} = await import('../src/components/nativeSceneList.ts')
+const {reorderScenes, dropSlotTarget, addSceneIntent, addSceneBlock, sceneStanding, sceneSnapshotRequest, SCENE_LIMIT} = await import('../src/components/nativeSceneList.ts')
 
 const ORDER = ['scene:a', 'scene:b', 'scene:c', 'scene:d']
 
@@ -72,6 +72,13 @@ test('addSceneBlock refuses an incomplete order and the 64-Scene bound', () => {
   assert.equal(addSceneBlock(63, true), null, 'the 64th Scene is admitted')
   assert.match(addSceneBlock(64, true), /up to 64/)
   assert.match(addSceneBlock(3, false), /complete Scene order/)
+})
+
+test('restore sends one restore-snapshot, and capture sends the presented title', () => {
+  const basis = {expression_ref: 'expr:1', revision: 2, scene_ref: 'scene:a', authored_revision: 3}
+  assert.deepEqual(sceneSnapshotRequest(basis, 4, 'restore-snapshot', 'Ignored', true), {operation: 'scene', basis, intent_epoch: 4, action: 'restore-snapshot'})
+  assert.deepEqual(sceneSnapshotRequest(basis, 4, 'save-snapshot', 'Verse', false), {operation: 'scene', basis, intent_epoch: 4, action: 'save-snapshot', name: 'Verse', next: false})
+  assert.deepEqual(sceneSnapshotRequest(basis, 4, 'save-snapshot', 'Verse', true).next, true)
 })
 
 test('sceneStanding claims Saved only when the owner reports it', () => {

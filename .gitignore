@@ -51,3 +51,8 @@ ProjectCentral/agents/now/
 # vercel git-integration build artifacts
 /.vercel
 /.publication-sources
+
+# live-shell ui build artifacts
+packages/live-shell/ui/node_modules/
+packages/live-shell/ui/ui-dist/
+packages/live-shell/live-shell/ui/node_modules/

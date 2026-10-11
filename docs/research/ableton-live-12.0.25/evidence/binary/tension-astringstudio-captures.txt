@@ -1,0 +1,150 @@
+// PROVENANCE: same method as analog-decompiles.txt / electric-loungelizard-captures.txt
+// (llvm-objdump raw-asm + custom ADRP+ADD xref scan, /tmp/adrp_scan.py reused;
+// TEXT base 0x100000000 = file offset 0; Live.arm64 Live 12.0.25 arm64;
+// owner-private, NOT FOR REDISTRIBUTION). Captured 2026-10-09 (tension binary
+// lane). Companion: devices/tension-derivation.md. Official XML evidence:
+// evidence/devices/Tension/default.xml (factory Tension.adv, root <StringStudio>,
+// Creator "Ableton Live 12.0.5d1").
+//
+// (0) CLASS IDENTITY (nm + strings)
+//   __Z12SNewCompoundI13AStringStudioE4TPtrI9ACompoundEv  T 0x102893660
+//   __ZN...CallbackTypesI13AStringStudiobJiP16TBiquadParameterEE...CallMemberFunc...
+//       ...OnStringStudio...FilterBiquadParamEiS5_   T 0x1028a2dc8
+//   STR 0x104904370 'AStringStudio'   (registration name string)
+//   STR 0x10486794e 'StringStudio'    (.adv root-tag name, device-type registry)
+//   STR 0x104901174 'Tension'         (display name)
+//   GUI compounds: SNewCompoundI23ATensionFilterXyControlE @0x102d4d898,
+//   SNewCompoundI27ATensionAdsrEnvelopeDisplayE @0x102d4ce38.
+//   NOTE: AStrumAlgorithm/OnStrumTension (0x102d3e2c0 / 0x1016cd4f8) is the
+//   MIDI-tools strum "Tension" amount, NOT this device.
+//
+// (1) COMPOUND REGISTRATION (objdump; one CallStaticFunc, x0=ctx 0x1059f7db0,
+//     x1=name 0x104904370 "AStringStudio", x3=[got 0x10506d108],
+//     x4=factory = SNewCompound<AStringStudio>+0x68):
+   1028a97e8: f00102c1    	adrp	x1, 0x104904000
+   1028a97ec: 910dc021    	add	x1, x1, #0x370      ; "AStringStudio"
+   1028a97fc: f9408463    	ldr	x3, [x3, #0x108]
+   1028a9800: 10f4f644    	adr	x4, 0x1028936c8 <__Z12SNewCompoundI13AStringStudioE4TPtrI9ACompoundEv+0x68>
+//
+// (2) TU SPAN: 0x102893660 (factory) .. ~0x1028a9880 (registration init tail).
+//   Member walk (mp* refs, ~0x78 stride): 0x102893810 (mpOctave) ..
+//   0x1028969bc (mpSlideRange2). Display walk: 0x102897b80 ("Keyboard Fine
+//   Tune") .. 0x10289a4c4 ("Body Mix"). Menu builders: 0x10289b600..0x10289c240.
+//   Mod-target list: 0x10289c308..0x10289c45c. Secondary display walks
+//   ("Exciter ..." names): 0x10289acac..0x10289ae8c and 0x10289dcec..0x10289de44.
+//   Large anonymous blocks follow (bl targets land at 0x1028a487c..0x1028a78a4+).
+//
+// (3) MEMBER-KEY CENSUS (strtable 0x10490437e..0x104904af4, all reffed inside
+//     the TU; ADRP+ADD scan TOTAL=322 strings, 0 misses):
+//   mpOctave mpOctaveRelativePosition mpKeyboardPriority mpKeyboardUnisonToggle
+//   mpKeyboardUnison mpKeyboardDetune mpKeyboardUnisonDelay mpKeyboardError
+//   mpVibrato{Toggle,Speed,FadeIn,Amount,Error,Delay,ModWheel}
+//   mpPortamento{Toggle,Proportional,Legato} + mpPortamentoTime
+//     (mpPortamentoTime lives at 0x104928f69 in a shared cluster, reffed at
+//     0x102894170 between Toggle 0x1028940f8 and Proportional 0x1028941e8;
+//     the mp-key list is 1:1 with the XML surface after all)
+//   mpGeoExcitator{Position,Absolute,KbdModulation,VelModulation}
+//   mpGeoDamper{Position,Absolute,KbdModulation,VelModulation}
+//   mpExcitator{Toggle,Type,ParameterX,ParameterXKbdMod,ParameterXVelMod,
+//     Stiffness,StiffnessKbdMod,StiffnessVelMod,Velocity,VelocityKbdMod,
+//     VelocityVelMod,Damping}
+//   mpPickup{Toggle,Position}
+//   mpDamper{Toggle,Mass,MassKbdMod,Stiffness,StiffnessKbdMod,Velocity,
+//     VelocityKbdMod,Damping,Gated}
+//   mpString{Damping,DampingKbdMod,Decay,DecayKbdMod,DecayRatio,Inharmonicity}
+//   mpTermination{Toggle,FingerStiffness,FingerForce,FingerForceKbdMod,
+//     FingerForceVelMod,FretStiffness}
+//   mpLFO{Toggle,WaveShape,Sync,SyncToggle,Delay,Speed,FadeIn}
+//   mpFilter{Toggle,CutoffFrequency,CutoffFrequencyKbdMod,CutoffFrequencyLFOMod,
+//     CutoffFrequencyEnvMod,QFactor,QFactorKbdMod,QFactorLFOMod,QFactorEnvMod,
+//     EnvelopeToggle,EnvelopeAttack,EnvelopeDecay,EnvelopeSustain,
+//     EnvelopeRelease,EnvelopeAttackMod,EnvelopeAmpMod}
+//   mpBody{Toggle,Type,Size,Decay,LowCut,HighCut,Level,Mix}
+//   mpChannelPressureRange{1,2} mpSlideTarget{1,2} mpSlideRange{1,2}
+//
+// (4) MENU LAWS (objdump; adder 0x100fc0898, registrar 0x100234db8(x0,x1,w2)):
+//   EXCITATOR TYPE (built 0x10289b604..0x10289b65c, w2=4 @0x10289b66c,
+//       attached to descriptor global 0x10595e868; conditional on global
+//       0x10595e700, cbz 0x10289b5fc):
+//     0 Bow(0x104904dce) 1 Hammer(0x104904dd2) 2 Hammer (bouncing)(0x104904dd9)
+//     3 Plectrum(0x104904deb)
+//   LFO WAVE SHAPE (built 0x10289b6d0..0x10289b744, w2=5 @0x10289b754):
+//     0 Sine(0x104900281) 1 Tri(0x1048cc0ae) 2 Rect(0x1048cc0d1)
+//     3 Random 1(0x10490522b) 4 Random 2(0x104905234)
+//   SYNC RATE (built 0x10289b8c4..0x10289bb1c, w2=0x18=24 @0x10289bb34,
+//       attached to 0x10595e8b0) — 8 Tension-cluster strings interleaved with
+//       8 strings from a shared AAS pool:
+//     0 "4d"(0x10490524c) 1 "4"(0x1048f155a) 2 "4t"(0x10490524f)
+//     3 "2d" 4 "2"(0x1047d6c7a) 5 "2t" 6 "1d" 7 ""(0x1047c5020c, whole note)
+//     8 "1t" 9 "1/2d" 10 "1/2"(0x1048e7fa0) 11 "1/2t" 12 "1/4d"
+//     13 "1/4"(0x1047f94b9) 14 "1/4t" 15 "1/8d" 16 "1/8"(0x1047f94bd) 17 "1/8t"
+//     18 "1/16d" 19 "1/16"(0x1047f94cf) 20 "1/16t" 21 "1/32d"
+//     22 "1/32"(0x1047f94e5) 23 "1/32t"
+//   LFO SPEED UNIT (built 0x10289bcac..0x10289bcc4, w2=2 @0x10289bcdc):
+//     0 Hertz(0x1049052a1) 1 Beat(0x1048b0ca0)
+//   FILTER TYPE short names (built 0x10289bdb0..0x10289be9c, w2=10 @0x10289beb4):
+//     0 LP12 1 LP24 2 BP6 3 BP12 4 N2P 5 N4P 6 HP12 7 HP24 8 F6 9 F12
+//   FILTER TYPE long names (built 0x10289bf4c..0x10289c038): Low-pass 12dB/oct,
+//     Low-pass 24dB/oct, Band-pass 6dB/oct, Band-pass 12dB/oct, Notch 2-pole,
+//     Notch 4-pole, High-pass 12dB/oct, High-pass 24dB/oct, Formant 6dB/oct,
+//     Formant 12dB/oct (same 10, order parallel to the short list)
+//   BODY TYPE (built 0x10289c0e8..0x10289c140, w2=4 @0x10289c150):
+//     0 Piano(0x10490558d) 1 Guitar(0x104905593) 2 Violin(0x10490559a)
+//     3 Generic(0x1049055a1)
+//   BODY SIZE (built 0x10289c1b8..0x10289c228, w2=5 @0x10289c23c):
+//     0 XS(0x1049055b3) 1 S(0x1047bb61a) 2 M(0x1047bb616) 3 L(0x1047bb614)
+//     4 XL(0x1049055b6)
+//   (an additional 5-entry INT menu, entries w0=0,2,1,4,5 via 0x1027d9598,
+//   w2=5 @0x10289b858, conditional on global 0x10595e710 — binding open)
+//
+// (5) MOD-TARGET DISPLAY LIST (built 0x10289c308..0x10289c44c, w2=13
+//     @0x10289c45c, attached to 0x10595e958):
+//     0 None(0x1047b8b8c) 1 Voice Volume 2 Vibrato Amount 3 Vibrato Speed
+//     4 Unison Detune 5 String Inharmon. 6 LFO Rate(0x1049010ac) 7 F. Cutoff
+//     8 F. Cut. LFO Depth 9 F. Cut. Env Depth 10 F. Q 11 F. Q LFO Depth
+//     12 F. Q Env Depth
+//   XML MPE routing (defaults): ChannelPressureTarget1=5 Range1=0.25;
+//     ChannelPressureTarget2=0 Range2=0.5; SlideTarget1/2=0 Range 0.5.
+//     (target index ↔ list entry: [H] — no decode of the target-id mapping)
+//
+// (6) ANALOG-LANE ATTRIBUTION CORRECTION [D]:
+//   ADRP+ADD scan of ANALOG member keys (0x104905d01..0x104906d97, 308 strings)
+//   over 0x102893660..0x1028a28cc: TOTAL_STRINGS_REFFED=0.
+//   The "second device-unit parameter cluster 0x102894000..0x10289e000" and the
+//   "filter-menu builder 0x10289bec0..0x10289c070" cited in
+//   devices/analog-derivation.md §1, and the filter-menu objdump anchor
+//   0x10289bf48..0x10289c054 cited in its §3, are INSIDE the AStringStudio TU
+//   (0x102893660..0x1028a9880) and reference Tension's member keys/display
+//   names. They are Tension code, not AUltraAnalog code.
+//
+// (7) DEFAULT SURFACE (evidence/devices/Tension/default.xml; Manual values):
+//   Polyphony 4; PitchBendRange 2; Octave 0; Transpose 0; KeyboardFineTune 0.5;
+//   KeyboardPriority 0; KeyboardUnisonToggle false; KeyboardUnison 0;
+//   KeyboardDetune 0; KeyboardUnisonDelay 0.5; KeyboardStretch 0.5;
+//   KeyboardError 0; VibratoToggle false, VibratoSpeed 0.5, VibratoFadeIn 0.5,
+//   VibratoAmount 0.5, VibratoError 0.5, VibratoDelay 0.5, VibratoModWheel 0.5;
+//   PortamentoToggle false, PortamentoTime 0.5, PortamentoProportional false,
+//   PortamentoLegato false;
+//   GeoExcitatorPosition 0.5, GeoExcitatorAbsolute false, Kbd/VelMod 0;
+//   GeoDamperPosition 0.5, GeoDamperAbsolute false, Kbd/VelMod 0;
+//   ExcitatorToggle true, ExcitatorType 3 (Plectrum), ExcitatorParameterX 0.5,
+//   ExcitatorStiffness 0.5, ExcitatorVelocity 0.5, ExcitatorDamping 0.5,
+//   all Exc *KbdMod/*VelMod 0;
+//   PickupToggle false, PickupPosition 0.5;
+//   DamperToggle false, DamperMass 0.5, DamperStiffness 0.5, DamperVelocity 0.5,
+//   DamperDamping 0.5, DamperGated false, all Damper *KbdMod 0;
+//   StringDamping 0.5, StringDampingKbdMod 0, StringDecay 1, StringDecayKbdMod 0,
+//   StringDecayRatio 0.5, StringInharmonicity 0.5;
+//   TerminationToggle false, TerminationFingerStiffness 0.5,
+//   TerminationFingerForce 0.5, its Kbd/VelMod 0, TerminationFretStiffness 0.5;
+//   LFOToggle false, LFOWaveShape 0 (Sine), LFOSync 13, LFOSyncToggle 0,
+//   LFODelay 0.5, LFOSpeed 0.5, LFOFadeIn 0.5;
+//   FilterToggle true, FilterType 1 (LP24), FilterCutoffFrequency 1,
+//   FilterQFactor 0, all Kbd/LFO/Env mods 0;
+//   FilterEnvelopeToggle false, Attack 0, Decay 0.5, Sustain 0.5, Release 0.5,
+//   AttackMod 0, AmpMod 0;
+//   BodyToggle false, BodyType 0 (Piano), BodySize 2 (M), BodyDecay 0,
+//   BodyLowCut 0, BodyHighCut 0, BodyLevel 0.7049999833, BodyMix 0.5;
+//   PerNotePitchBendRange 48; CurrentTab 0.
+//   Member keys ↔ XML names match 1:1 after the mp prefix (incl.
+//   PortamentoTime via the shared key string).

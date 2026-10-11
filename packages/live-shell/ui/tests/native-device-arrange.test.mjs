@@ -32,7 +32,7 @@ export async function load(u, c, n) {
 }`)}`, import.meta.url)
 
 const author = new URL('desktop/cradle/expressions-app/field-studies-journeys/src/', root)
-const [arrange, models, views, boundaryEdits, panelSettings, model, catalogue] = await Promise.all([
+const [arrange, models, views, boundaryEdits, panelSettings, model, catalogue, bridge] = await Promise.all([
   import('../src/components/nativeSceneFace.arrange.ts'),
   import('../src/components/nativeSceneFaceModel.ts'),
   import('../src/components/nativeSceneFaceViews.tsx'),
@@ -40,12 +40,13 @@ const [arrange, models, views, boundaryEdits, panelSettings, model, catalogue] =
   import(new URL('packages/expressions-boundary/src/nativeFieldPanelSettings.ts', root)),
   import(new URL('model.ts', author)),
   import('../src/components/nativeDeviceCatalogue.ts'),
+  import(new URL('nativeBridge.ts', author)),
 ])
 const {deviceCatalogue} = catalogue
 const {ArrangePanel} = await import('../src/components/NativeSceneFace.arrange.tsx')
 const {
   ARRANGE_CHANGE_BUDGET, ARRANGE_LAYOUTS, PLANES, PREVIEW_HEIGHT, PREVIEW_WIDTH, arrangeFaceModel, arrangeLabel, arrangePlan, arrangedPositions,
-  blueprintMemberIds, centreStatus, entityAxisTarget, planeAxes, planeChange, previewGeometry, previewMoves, quickSelect,
+  blueprintMemberIds, centreStatus, entityAxisTarget, layoutChange, planeAxes, planeChange, previewGeometry, previewMoves, quickSelect, recordedLayout,
 } = arrange
 const {SCENE_FACE_MODELS} = models
 const {sceneFaceView} = views
@@ -163,7 +164,7 @@ test('locked and Blueprint members are never moved, and the panel says why', () 
   assert.equal(quickSelect(entities, 'none', blueprint).size, 0)
 })
 
-test('one apply is one batch of parameter changes, one per coordinate that moves', () => {
+test('one apply is one batch: a parameter per coordinate that moves, then the recorded layout', () => {
   const entities = [
     centre('a b', 'Spaced', 'formation', at(0.3, 0.4, 0.5)),
     centre('c/d', 'Slash', 'formation', at(0.3, 0.4, 0.5)),
@@ -171,7 +172,8 @@ test('one apply is one batch of parameter changes, one per coordinate that moves
   ]
   const plan = arrangePlan(entities, new Set(['a b', 'c/d', 'e']), new Set(), 'line', 'XY')
   assert.equal(plan.problem, null)
-  assert.ok(plan.changes.every(change => change.kind === 'parameter'), 'only entity position parameters')
+  const coordinates = plan.changes.slice(0, -1)
+  assert.ok(coordinates.every(change => change.kind === 'parameter'), 'only entity position parameters before the layout')
   // line on three centres: x = -0.9, 0, 0.9; y = 0 for each. The z axis never moves on the XY plane.
   assert.deepEqual(plan.changes, [
     {kind: 'parameter', target: 'entity:a%20b:x', value: -0.9},
@@ -180,13 +182,82 @@ test('one apply is one batch of parameter changes, one per coordinate that moves
     {kind: 'parameter', target: 'entity:c%2Fd:y', value: 0},
     {kind: 'parameter', target: 'entity:e:x', value: 0.9},
     {kind: 'parameter', target: 'entity:e:y', value: 0},
-  ])
-  assert.equal(new Set(plan.changes.map(change => change.target)).size, plan.changes.length, 'no target is written twice')
+    {kind: 'panel-setting', key: 'layout', value: 'line'},
+  ], 'the recorded layout is the last change of the same batch')
+  assert.equal(new Set(coordinates.map(change => change.target)).size, coordinates.length, 'no coordinate is written twice')
   assert.equal(entityAxisTarget('a b', 'x'), 'entity:a%20b:x')
-  // Unchanged coordinates are not sent: a lone centre already at the line's origin (x = 0, y = 0) contributes nothing.
+  // A lone centre already at the line's origin (x = 0, y = 0) moves nothing, but the mode is still recorded, as the app does.
   const placed = arrangePlan([centre('p', 'Placed', 'formation', at(0, 0, 0))], new Set(['p']), new Set(), 'line', 'XY')
-  assert.deepEqual(placed.changes, [], 'already where line puts a lone centre, so there is nothing to apply')
+  assert.deepEqual(placed.changes, [layoutChange('line')], 'no coordinate moves, so the batch is the layout alone')
   assert.equal(placed.problem, null)
+})
+
+test('the layout change is one admitted panel setting for every mode and every mode is recorded in the same batch', () => {
+  assert.deepEqual(layoutChange('align-x'), {kind: 'panel-setting', key: 'layout', value: 'align-x'})
+  for (const layout of ARRANGE_LAYOUTS) {
+    const plan = arrangePlan([centre('a', 'A', 'formation', at(0.3, 0.2, 0.1)), centre('b', 'B', 'pin', at(-0.4, 0.5, 0.6))],
+      new Set(['a', 'b']), new Set(), layout, 'YZ')
+    assert.deepEqual(plan.changes.at(-1), layoutChange(layout), layout)
+    assert.equal(plan.changes.filter(change => change.kind === 'panel-setting').length, 1, `${layout} records one layout`)
+  }
+  // The batch budget counts the layout too. On line, 127 centres at (0.1, 1) each move x and y: 254 coordinates plus the layout is 255, which fits.
+  // 128 centres give 256 coordinates plus the layout, which the boundary would refuse, so the panel refuses before any send.
+  const fits = Array.from({length: 127}, (_, i) => centre(`f${i}`, `F${i}`, 'formation', at(0.1, 1, 0)))
+  const ok = arrangePlan(fits, new Set(fits.map(e => e.id)), new Set(), 'line', 'XY')
+  assert.equal(ok.problem, null)
+  assert.equal(ok.changes.length, 255)
+  assert.deepEqual(ok.changes.at(-1), layoutChange('line'))
+  const over = arrangePlan(fits.concat(centre('f127', 'F127', 'formation', at(0.1, 1, 0))), new Set(fits.map(e => e.id).concat('f127')), new Set(), 'line', 'XY')
+  assert.deepEqual(over.changes, [])
+  assert.match(over.problem, /moves 256 coordinates and records its layout in the same batch; one batch holds 256 changes/)
+})
+
+test('the arrange batch is one apply: the layout and the positions move together, and no other call records the mode', () => {
+  const journey = sevenCentres()
+  const scene = journey.scenes[0]
+  const ids = new Set(scene.entities.map(e => e.id))
+  for (const layout of ARRANGE_LAYOUTS) {
+    const plan = arrangePlan(scene.entities, ids, new Set(), layout, 'XY')
+    const whole = applyNativeDeviceChanges(journey, scene.id, [...plan.changes], {})
+    const after = whole.scenes[0]
+    assert.equal(after.composition.layout, layout, `${layout} recorded`)
+    for (const ghost of plan.ghost) {
+      const moved = after.entities.find(e => e.id === ghost.id)
+      for (const axis of ['x', 'y', 'z']) assert.equal(moved.position[axis], ghost.position[axis], `${layout} ${ghost.id} ${axis}`)
+    }
+    // Without the layout change the same positions move but the mode is not recorded: the layout is carried by this batch alone.
+    const coordinates = plan.changes.slice(0, -1)
+    if (coordinates.length) {
+      const positionsOnly = applyNativeDeviceChanges(journey, scene.id, coordinates, {})
+      assert.equal(positionsOnly.scenes[0].composition.layout, journey.scenes[0].composition.layout, `${layout} not recorded without the batch layout`)
+    }
+  }
+  assert.equal(journey.scenes[0].composition.layout, 'column', 'the caller document is not mutated')
+})
+
+test('toNativeConfig reports the recorded arrange mode as composition.layoutName', () => {
+  const journey = sevenCentres()
+  const scene = journey.scenes[0]
+  const ids = new Set(scene.entities.map(e => e.id))
+  for (const layout of ['ring', 'laminate', 'distribute-y']) {
+    const next = applyNativeDeviceChanges(journey, scene.id, [...arrangePlan(scene.entities, ids, new Set(), layout, 'XY').changes], {})
+    assert.equal(bridge.toNativeConfig(next.scenes[0]).composition.layoutName, layout, layout)
+  }
+})
+
+test('the arrangement header shows the layout the Scene records, not the local preview choice', () => {
+  const entities = [centre('f1', 'Ring form', 'formation', at(0.1, 0.2, 0))]
+  const render = layout => {
+    const base = reading(entities)
+    const shown = {...base, scene: {...base.scene, composition: {...base.scene.composition, layout}}}
+    return renderToStaticMarkup(createElement(ArrangePanel, {
+      reading: shown, request: async () => ({ok: true, reading: shown}), disabled: false, apply: async () => ({ok: true, reading: shown}),
+    }))
+  }
+  assert.match(render('align-x'), /<h3 id="native-arrange-arrangement-title">Arrangement<\/h3><span>Recorded: align x<\/span>/)
+  assert.match(render('free'), /<span>No layout recorded<\/span>/)
+  assert.equal(recordedLayout({composition: {layout: 'ring'}}), 'ring')
+  assert.equal(recordedLayout({composition: {layout: 'free'}}), null)
 })
 
 test('plane choice is one admitted panel-setting change', () => {
@@ -236,7 +307,7 @@ test('the change budget refuses a batch over the boundary limit before any send'
   const many = Array.from({length: 130}, (_, i) => centre(`m${i}`, `M${i}`, 'formation', at(0.1, 1, 0)))
   const plan = arrangePlan(many, new Set(many.map(e => e.id)), new Set(), 'line', 'XY')
   assert.deepEqual(plan.changes, [])
-  assert.match(plan.problem, /260 coordinates; one change holds 256/)
+  assert.match(plan.problem, /moves 260 coordinates and records its layout in the same batch; one batch holds 256 changes/)
 })
 
 test('the batch the panel builds is admitted by the boundary and moves the centres it names', () => {

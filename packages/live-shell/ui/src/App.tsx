@@ -7,7 +7,7 @@ import { NativeWorldDetail, type NativeDetailConfigurationIntent } from './compo
 import {NativeInputRetentionProvider,nativeInputBinding} from './components/NativeInputRetention'
 import { useWorkspace } from './shell/workspace'
 import { DeviceChainPanel, type DetailMode } from './components/DeviceChainPanel'
-import { RightDock } from './components/RightDock'
+import { ModeContextDock } from './shell/ModeContextDock'
 import type { SetSelection } from './components/SessionView'
 import { StatusBar } from './components/StatusBar'
 import { TransportBar } from './components/TransportBar'
@@ -408,7 +408,10 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       </div>
       {panels.map(panel => { const Panel = panel.component; return <div className={`inhabitant${panel.id === 'world.expressions' ? ' native-stage-residence' : ''}`} hidden={panel.id === 'world.settings' ? !settingsPresented : settingsPresented || workspace.mode === 'audio' && panel.id !== 'world.knowledge' || (centerPanel !== panel.id && !(nativeComposition && panel.id === 'world.expressions'))} key={panel.id}><Panel {...ctx} /></div> })}
     </div></main>
-    <div className="dock-residence" hidden={!dock || agentShell}><RightDock ctx={ctx} /></div>
+    {/* Rev 4's dock per mode: the mode context dock (tiles above, launcher
+      below, the wedge that dies with the toggle) carries the non-agency
+      modes; the agency surface keeps its own dock. */}
+    <div className="dock-residence" hidden={!dock || agentShell}><ModeContextDock mode={frameMode} world={worldView} transport={workspace.transport} subject={centralSubject} /></div>
     <div className="dock-residence" hidden={!dock || !agentShell}><AgentContextDock /></div>
     {detail && <div className="detail-resizer" role="separator" aria-label="Resize detail" aria-orientation="horizontal" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {event.preventDefault(); resizeDetail(Math.max(120, Math.min(viewport[1] - 240, (detailHeight ?? document.querySelector('.detail-residence:not([hidden]) .chain,.detail-residence:not([hidden]) .native-world-detail')?.getBoundingClientRect().height ?? 330) + (event.key === 'ArrowUp' ? 10 : -10))))} }} onPointerDown={event => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) resizeDetail(Math.max(120, Math.min(viewport[1] - 240, viewport[1] - 28 - event.clientY))) }} />}
     {/* The detail row's content is per mode (Rev 4's table): Live keeps the
@@ -424,7 +427,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
       Task log | Agent chain. */}
     <div className="detail-residence" hidden={!detail || agentShell || !(frameMode === 'expressions' || (frameMode === 'techne' && detailMode === 'clip' && !worldCut))}><NativeWorldDetail mode={detailMode} configurationIntent={detailConfiguration} presentMode={mode=>{changeDetailMode(mode);setDetail(true)}} presentNativeEditor={presentNativeEditor} expand={() => {if(!detailExpansionReturn.current)detailExpansionReturn.current={height:detailHeight,workspaceId:workspace.workspaceId,accessEpoch:workspace.accessEpoch};resizeDetail(Math.max(120,viewport[1]-156))}} collapse={() => {const previous=detailExpansionReturn.current;detailExpansionReturn.current=null;if(previous&&previous.workspaceId===workspace.workspaceId&&previous.accessEpoch===workspace.accessEpoch)resizeDetail(previous.height)}}/></div>
     <div className="detail-residence" hidden={!detail || !(frameMode === 'base' || (frameMode === 'techne' && (detailMode === 'device' || (detailMode === 'clip' && worldCut))))}>{frameMode === 'base' ? (detailMode === 'clip' ? <BaseDocumentDetail transport={workspace.transport} subject={centralSubject} /> : <BaseDevicesDetail transport={workspace.transport} />) : (worldCut && detailMode === 'clip' ? <TechneClipDetail world={worldView} /> : <TechneInstrumentsDetail transport={workspace.transport} />)}</div>
-    <div className="detail-residence" hidden={!detail || !agentShell || detailMode !== 'clip'}><FactoryTaskLogDetail taskLabel={factoryTask?.purpose ?? null} task={factoryTask ? {sessionRef: factoryTask.sessionRef, purpose: factoryTask.purpose, agentName: factoryTask.agentName, needleState: factoryTask.needle?.state ?? null} : null} /></div>
+    <div className="detail-residence" hidden={!detail || !agentShell || detailMode !== 'clip'}><FactoryTaskLogDetail taskLabel={factoryTask?.purpose ?? null} task={factoryTask ? {sessionRef: factoryTask.sessionRef, purpose: factoryTask.purpose, agentName: factoryTask.agentName, needleState: factoryTask.needle?.state ?? null, tasks: factoryTask.tasks, budget: factoryTask.budget} : null} /></div>
     <div className="detail-residence" hidden={!detail || !agentShell || detailMode !== 'device'}><AgentShellDeviceDetail tracks={agency.tracks} /></div></NativeInputRetentionProvider>
     {agentShell ? <AgentStatusBarBridge detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={agency.tracks[0]?.purpose ?? undefined} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} /> : <StatusBar detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={state.set?.tracks[selection.track]?.name} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} />}
   </>)

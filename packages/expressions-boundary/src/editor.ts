@@ -167,7 +167,7 @@ export type NativeGlyphChange =
   | {kind: 'formation-glyph'; entity_id: string; text: string};
 /** Formation add (nativeFormations.ts). 'text' is Glyph or word; the add picker offers no yantra or cymatic. */
 export type NativeFormationShape = 'text' | 'ring' | 'disc' | 'triangle' | 'square';
-export type NativeFormationChange = {kind: 'formation-add'; title?: string; shape?: NativeFormationShape; text?: string; position?: Vec3};
+export type NativeFormationChange = {kind: 'formation-add'; title?: string; shape?: NativeFormationShape; text?: string; position?: Vec3} | {kind: 'formation-glyph'; entity_id: string; text: string};
 /** Whole-object operations on one Scene entity (nativeFormations.ts applyNativeObjectChanges). Duplicate copies the app's duplicate; remove is the app's Delete, refused while locked or a blueprint member. */
 export type NativeObjectChange = {kind: 'entity-duplicate'; entity_id: string} | {kind: 'entity-remove'; entity_id: string};
 export type NativeEditorChange = NativeDeviceChange | NativeGlyphChange | NativeRackChange | NativeChosenControlChange | NativeDeviceWidgetChange | NativeSceneTextChange | NativeAutomationChange | NativeFoldChange | NativeFormationChange | NativeObjectChange | NativeTrackChange;

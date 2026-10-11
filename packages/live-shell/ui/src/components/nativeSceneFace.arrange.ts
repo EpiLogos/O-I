@@ -19,6 +19,11 @@ export const ARRANGE_CHANGE_BUDGET = 256
 export const entityAxisTarget = (entityId: string, axis: Axis): string => `entity:${encodeURIComponent(entityId)}:${axis}`
 /** The layout plane as one admitted panel setting (nativeFieldPanelSettings.ts FIELD_PANEL_SETTINGS.plane). */
 export const planeChange = (plane: Plane): NativeEditorChange => ({kind: 'panel-setting', key: 'plane', value: plane})
+/** The chosen arrange mode as one admitted panel setting (nativeFieldPanelSettings.ts FIELD_PANEL_SETTINGS.layout = Scene.composition.layout). */
+export const layoutChange = (layout: ArrangeLayout): NativeEditorChange => ({kind: 'panel-setting', key: 'layout', value: layout})
+/** The arrange mode the Scene records, or null when it records none (the model default is 'free'). */
+export const recordedLayout = (scene: Pick<Scene, 'composition'>): ArrangeLayout | null =>
+  (ARRANGE_LAYOUTS as readonly string[]).includes(scene.composition.layout) ? scene.composition.layout as ArrangeLayout : null
 
 /** The Scene's blueprint members by entity id (blueprintGeometry.ts blueprintMember reads the same field). */
 export const blueprintMemberIds = (scene: Pick<Scene, 'composition'>): ReadonlySet<string> =>
@@ -86,7 +91,8 @@ export interface ArrangePlan {
   movable: readonly string[]
   /** Where the chosen mode puts each movable centre. Empty when no mode is chosen. */
   ghost: readonly Centre[]
-  /** The one batch Apply sends: one `parameter` change per coordinate that moves. Empty when nothing would move or a problem blocks it. */
+  /** The one batch Apply sends: one `parameter` change per coordinate that moves, then the recorded layout as one `panel-setting`
+   * (app.ts 'arrange' records the mode even when no coordinate moves). Empty when no centre is checked or a problem blocks it. */
   changes: readonly NativeEditorChange[]
   /** A refusal to show before any send, or null. */
   problem: string | null
@@ -99,15 +105,17 @@ export function arrangePlan(entities: readonly Entity[], checked: ReadonlySet<st
   const moving = entities.filter(entity => checked.has(entity.id) && centreStatus(entity, blueprint).movable)
   if (!moving.length) return {movable: [], ghost: [], changes: [], problem: 'Check at least one unlocked centre to arrange.'}
   const ghost = arrangedPositions(moving, layout, plane)
-  const changes: NativeEditorChange[] = []
+  const coordinates: NativeEditorChange[] = []
   moving.forEach((entity, i) => {
     for (const axis of ['x', 'y', 'z'] as const) {
       const value = ghost[i].position[axis]
-      if (value !== entity.position[axis]) changes.push({kind: 'parameter', target: entityAxisTarget(entity.id, axis), value})
+      if (value !== entity.position[axis]) coordinates.push({kind: 'parameter', target: entityAxisTarget(entity.id, axis), value})
     }
   })
+  // The recorded layout rides in the same batch, so one apply moves the centres and records the mode as one undo step.
+  const changes: NativeEditorChange[] = [...coordinates, layoutChange(layout)]
   const problem = changes.length > ARRANGE_CHANGE_BUDGET
-    ? `This arrangement moves ${changes.length} coordinates; one change holds ${ARRANGE_CHANGE_BUDGET}. Check fewer centres.` : null
+    ? `This arrangement moves ${coordinates.length} coordinates and records its layout in the same batch; one batch holds ${ARRANGE_CHANGE_BUDGET} changes. Check fewer centres.` : null
   return {movable: moving.map(entity => entity.id), ghost, changes: problem ? [] : changes, problem}
 }
 

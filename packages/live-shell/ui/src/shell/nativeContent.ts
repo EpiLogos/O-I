@@ -159,6 +159,9 @@ export function createNativeContentActions(content: NativeExpressionsContent, co
     listActs(): Promise<NativeEditorReply> {
       return controller.request({operation:'material',basis,action:'list-acts'});
     },
+    readNow(): Promise<NativeEditorReply> {
+      return controller.request({operation:'material',basis,action:'list-acts'});
+    },
     inspectAct(act_ref:string,material_contract?:ActMaterialContract): Promise<NativeEditorReply> {
       if(!act_ref.trim())return refuse('Choose an exact native performance');
       return controller.request({operation:'material',basis,action:'inspect',act_ref,...(material_contract?{material_contract}:{})});

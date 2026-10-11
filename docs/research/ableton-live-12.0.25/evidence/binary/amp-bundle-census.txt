@@ -1,0 +1,204 @@
+// PROVENANCE: static census (nm -U, strings -a -t d, otool -l, plutil) of the
+// Softube DSP bundle Live 12.0.25 loads for the Amp device, plus Live-side
+// symbols (nm -U Live.arm64, device-registry string) and .adv XML defaults.
+// Owner-private analysis evidence. NOT FOR REDISTRIBUTION. Never enters
+// product source (packages/live-dynamics). NO IR/model DATA is reproduced
+// here — mechanism names and symbol addresses only.
+// Captured 2026-10-09 (amp/cabinet binary lane). Companion dossier:
+// devices/amp-derivation.md (+ devices/cabinet-derivation.md for the pair).
+== bundle identity ==
+{
+  "CFBundleDevelopmentRegion" => "English"
+  "CFBundleExecutable" => "Amplifier"
+  "CFBundleGetInfoString" => "(c) 2021 Softube - All rights reserved"
+  "CFBundleIdentifier" => "com.softube.Amplifier"
+  "CFBundleInfoDictionaryVersion" => "6.0"
+  "CFBundlePackageType" => "BNDL"
+  "CFBundleShortVersionString" => "1.2.3"
+  "CFBundleSignature" => "????"
+  "CFBundleVersion" => "1.2.3"
+}
+
+== file ==
+/Applications/Ableton Live 12 Suite.app/Contents/App-Resources/Devices/Mac/Amp.bundle/Contents/MacOS/Amplifier: Mach-O universal binary with 2 architectures: [x86_64:Mach-O 64-bit dynamically linked shared library x86_64] [arm64]
+/Applications/Ableton Live 12 Suite.app/Contents/App-Resources/Devices/Mac/Amp.bundle/Contents/MacOS/Amplifier (for architecture x86_64):	Mach-O 64-bit dynamically linked shared library x86_64
+/Applications/Ableton Live 12 Suite.app/Contents/App-Resources/Devices/Mac/Amp.bundle/Contents/MacOS/Amplifier (for architecture arm64):	Mach-O 64-bit dynamically linked shared library arm64
+
+== exported ABI (arm64) ==
+0000000000003100 T _CreateInstanceU
+00000000000032a0 T _DestroyInstanceU
+000000000000337c T _GetPlugInfoU
+0000000000003340 T _SetSampleRateU
+000000000001f314 T _SoftubeVSTCallback
+0000000000007068 T __Z18CreateProductHWMapi
+
+== CSoftubeAmp / AmpRoom engine methods (arm64, demangled stems) ==
+CSoftubeAmp10IsBypassedEv
+CSoftubeAmp10SyncMultiCEPPfS
+CSoftubeAmp11PluginEventEiPvf
+CSoftubeAmp11ResetStatesEv
+CSoftubeAmp12GetMemLengthEi
+CSoftubeAmp12IsProcessingEv
+CSoftubeAmp12ProcessMultiEPPdS
+CSoftubeAmp12ProcessMultiEPPfS
+CSoftubeAmp13GetSampleRateEv
+CSoftubeAmp14IsOutputSilentEv
+CSoftubeAmp14SetNumChannelsEii
+CSoftubeAmp16RestoreDenormalsEj
+CSoftubeAmp16TurnDenormalsOffEv
+CSoftubeAmp17SetParamValueBitsEi
+CSoftubeAmp18GetPublicParameterEi
+CSoftubeAmp18SetInputsConnectedEPbi
+CSoftubeAmp19SetOutputsConnectedEPbi
+CSoftubeAmp22GetSharedReadMemLengthEi
+CSoftubeAmp23GetSharedWriteMemLengthEi
+CSoftubeAmp4InitEv
+CSoftubeAmp6SetBPMEf
+CSoftubeAmp7IsMutedEv
+CSoftubeAmp7SetMuteEb
+CSoftubeAmp8DSPAsyncEbiiiiPv
+CSoftubeAmp8GetMeterEi
+CSoftubeAmp8SetAmpNrEi
+CSoftubeAmp9GetMemoryEi
+CSoftubeAmp9GetMemoryEii
+CSoftubeAmp9SetBypassEb
+CSoftubeAmpC
+CSoftubeAmpD
+CSoftubeAmpRoom
+CSoftubeAmpRoom10GetNumAmpsEv
+CSoftubeAmpRoom11IsAmpSwitchEi
+CSoftubeAmpRoom12GetNumMetersEv
+CSoftubeAmpRoom12GetNumParamsEv
+CSoftubeAmpRoom12GetParameterEi
+CSoftubeAmpRoom14SetNumChannelsEii
+CSoftubeAmpRoom15GetNumParamsAllEv
+CSoftubeAmpRoom15GetNumParamsAmpEi
+CSoftubeAmpRoom15GetParamNameStrEii
+CSoftubeAmpRoom15GetParamUnitStrEii
+CSoftubeAmpRoom15PrintParametersEv
+CSoftubeAmpRoom16GetEffectMessageEv
+CSoftubeAmpRoom16GetParamStrValueEiNSt
+CSoftubeAmpRoom16GetParamValueStrEii
+CSoftubeAmpRoom16GetParamValueStrEiif
+CSoftubeAmpRoom18SetParamFloatValueEif
+CSoftubeAmpRoom22GetAllMeterFloatValuesEv
+CSoftubeAmpRoom4InitEv
+CSoftubeAmpRoom56kC
+CSoftubeAmpRoom8GetMeterEi
+CSoftubeAmpRoomC
+CSoftubeAmpRoomD
+CSoftubeAmpRoomNative
+CSoftubeAmpRoomNativeC
+CSoftubeEngine10EngineTypeEi
+CSoftubeEngine10GetAmpRoomEv
+CSoftubeEngine10GetFFTDataEPfS
+CSoftubeEngine10GetIFFTcfgEv
+
+== amp model / rate data-set name strings (file offsets; NOT extracted) ==
+1416498 AC30Cleann44a
+1416552 AC30Cleann48a
+1416566 AC30Cleann88a
+1416580 AC30Cleann96a
+1416594 AC30Cleann176a
+1416609 AC30Cleann192a
+1416624 AC30Crunchyn44a
+1416640 AC30Crunchyn48a
+1416656 AC30Crunchyn88a
+1416672 AC30Crunchyn96a
+1416688 AC30Crunchyn176a
+1416705 AC30Crunchyn192a
+1416722 DualRectHeavyn44a
+1416740 DualRectHeavyn48a
+1416758 DualRectHeavyn88a
+1416776 DualRectHeavyn96a
+1416794 DualRectHeavyn176a
+1416813 DualRectHeavyn192a
+1416832 DualRectLeadn44a
+1416849 DualRectLeadn48a
+1416866 DualRectLeadn88a
+1416883 DualRectLeadn96a
+1416900 DualRectLeadn176a
+1416918 DualRectLeadn192a
+1416936 Plexin44a
+1416946 Plexin48a
+1416956 Plexin88a
+1416966 Plexin96a
+1416976 Plexin176a
+1416987 Plexin192a
+1416998 SilverTwinn44a
+1417013 SilverTwinn48a
+1417028 SilverTwinn88a
+1417043 SilverTwinn96a
+1417058 SilverTwinn176a
+1417074 SilverTwinn192a
+1417090 SimmsWattsBassn44a
+1417109 SimmsWattsBassn48a
+1417128 SimmsWattsBassn88a
+1417147 SimmsWattsBassn96a
+1417166 SimmsWattsBassn176a
+1417186 SimmsWattsBassn192a
+
+== parameter-name strings near the param table (offset 1416512 region) ==
+1416498 AC30Cleann44a
+1416512 Bass
+1416517 Middle
+1416524 Treble
+1416531 Presence
+1416540 Gain
+1416545 Volume
+1416552 AC30Cleann48a
+1416566 AC30Cleann88a
+1416580 AC30Cleann96a
+1416594 AC30Cleann176a
+1416609 AC30Cleann192a
+
+== Softube paths / support strings ==
+/Library/Application Support/Softube
+/Library/Application Support/Softube/
+/Library/Application Support/Softube/ApolloMaps
+/Library/Application Support/Softube/Data/
+/Library/Application Support/Softube/Presets/
+/Library/Application Support/Softube/SSX
+/Softube
+
+== LIVE-SIDE (both dossiers) ==
+-- device-registry string 0x1048a4b13 (Live.arm64 file off 0x48a4b13):
+   Device,AbletonDevice,...,ThirdPartyDevice,Amp,Cabinet,...,Tube,UltraAnalog,Vinyl,Vocoder
+-- string '.bundle' exists in Live.arm64 (path suffix builder); no literal 'Amp.bundle'/'Cabinet.bundle'
+-- SOnProcessorCreate census (Ghidra SymProbe, 368 instantiations): NO Amp/Cabinet processor
+   exists in Live.arm64 (vs OPedalProcessor 0x1018c2d98, OTubeProcessor 0x1018c5088)
+-- Live UI enum strings (live_strings.txt lines 181870-181886):
+   1x12
+   2x12
+   4x12
+   4x10
+   4x10 Bass
+   Cabinet Type
+   Microphone Type
+   Dynamic
+   Condenser
+   Near On-Axis
+   Near Off-Axis
+   Microphone Position
+   Dual Mono
+   ACollisionModTarget
+   mpTarget
+   mpAmount
+   ACollisionLfo
+-- Amp UI enum strings (lines ~181772): mpAmpType region:
+   checkSizeConstraint
+   AAmp
+   mpAmpType
+   mpBass
+   mpMiddle
+   mpTreble
+   mpPresence
+   Lead
+   Heavy
+   Amp Type
+   Middle
+   Presence
+   TAuDeviceFactory
+-- .adv XML defaults:
+   Amp/Bass Roundup.adv: AmpType Manual="6"  (of 0..6)
+   Cabinet/1x12 Cab.adv: CabinetType="0", MicrophoneTypeSwitch="false", MicrophonePosition="0"

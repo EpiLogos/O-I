@@ -92,6 +92,26 @@ test('the kundalini starter runs as two steps through the runner and leaves no u
   assert.ok(after.sequence.steps.every(s => s.position !== null), 'every new state is placed')
 })
 
+test('a blueprint member is refused before any batch: the row says why, nothing is sent, the states stay', async () => {
+  const heart = glyphFormation('Heart', 'O'); heart.sequence.steps = [
+    {id: 'old-a', text: 'A', shape: 'text', layers: [], hold: 2, transition: 1, position: {x: 0.1, y: 0.2, z: 0}},
+    {id: 'old-b', text: 'B', shape: 'text', layers: [], hold: 2, transition: 1, position: null}]
+  const fixture = owner([heart], {selected: [heart.id]})
+  // The reading's presented blueprint names the formation as a member (the owner refuses its position writes).
+  const reading = fixture.read()
+  const blueprinted = {...reading, nativeScene: {scene_ref: 'scene', body: null, triggers: [], blueprint: {members: [{entity_ref: heart.id}]}}}
+  const before = sequenceView(reading.scene.entities.find(e => e.id === heart.id))
+  assert.throws(() => starters.kundaliniSequenceChanges(blueprinted, heart.id), /Release the blueprint before editing a member position\./)
+  assert.match(starters.starterRows(blueprinted).find(row => row.id === 'kundalini').reason, /Release the blueprint/)
+  const sent = []
+  const request = async (changes, basis) => {sent.push(changes); return fixture.request(changes, basis)}
+  const result = await starters.runStarter([r => starters.kundaliniSequenceChanges(r, heart.id), r => starters.kundaliniPlacementChanges(r, heart.id)],
+    blueprinted, request)
+  assert.deepEqual(result, {ok: false, error: 'Release the blueprint before editing a member position.'})
+  assert.equal(sent.length, 0, 'no batch is sent for a refused placement')
+  assert.deepEqual(sequenceView(fixture.read().scene.entities.find(e => e.id === heart.id)), before)
+})
+
 test('each chain preset reproduces the app applyChain on the selected formation in one batch', async () => {
   for (const preset of features.CHAIN_PRESETS) {
     const heart = glyphFormation('Heart', 'O'); heart.sequence.hold = 5; heart.sequence.transition = 4

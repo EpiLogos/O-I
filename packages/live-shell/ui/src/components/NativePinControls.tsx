@@ -1,6 +1,6 @@
 import {useEffect, useState, type MouseEvent} from 'react'
 import type {NativeEditorChange, NativeEditorReading, NativeEditorReply} from '../../../../expressions-boundary/src/editor'
-import {pinnedEntry, pinScopeMark, planPin, setPinMode, usePinMode, type PinControl, type PinDestination} from './nativePinMode'
+import {pinnedEntry, pinScopeMark, planPin, scopeFlipChange, setPinMode, usePinMode, type PinControl, type PinDestination} from './nativePinMode'
 import './NativePinControls.css'
 
 const reasonOf = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
@@ -37,6 +37,20 @@ export function PinModeToggle() {
   </div>
 }
 
+/** The scope mark of a pinned Field control, as the control's own share switch (the legacy globe): S is shared across the Expression's Scenes,
+ * L is local to this Scene. One click is one shared-setting change. Absent for a parameter that cannot be shared. */
+export function ScopeToggle({reading, control, apply, label, disabled = false}: {reading: NativeEditorReading; control: PinControl; apply: PinApply; label: string; disabled?: boolean}) {
+  const mark = pinScopeMark(reading, control), [fault, setFault] = useState<string | null>(null)
+  const change = scopeFlipChange(reading, control)
+  if (!mark || !change) return null
+  return <span className="pin-scope-wrap">
+    <button type="button" className="pin-scope" aria-pressed={mark === 'shared'} disabled={disabled || reading.standing.pending} aria-label={`${label}: ${mark === 'shared' ? 'shared across the Expression' : 'local to this Scene'}`}
+      title={mark === 'shared' ? `${label} is shared across the Expression and overrides each Scene's own value. Click to make it local to this Scene.` : `${label} is local to this Scene. Click to share it across the Expression (that suspends this Scene's automation of it).`}
+      onClick={() => {setFault(null); void apply([change]).then(reply => {if (!reply.ok) setFault(reply.error)}, cause => setFault(reasonOf(cause)))}}>{mark === 'shared' ? 'S' : 'L'}</button>
+    {fault && <small role="alert" className="pin-fault">{fault}</small>}
+  </span>
+}
+
 /** The pin on one parameter control. Absent unless Pin mode is on. One click is one admitted change transaction (one undo step). */
 export function PinAffordance({reading, control, apply, label}: {reading: NativeEditorReading; control: PinControl; apply: PinApply; label: string}) {
   const mode = usePinMode()
@@ -53,7 +67,7 @@ export function PinAffordance({reading, control, apply, label}: {reading: Native
   return <span className="pin-affordance">
     <button type="button" className="pin-button" aria-label={`${pinned ? 'Unpin' : 'Pin'} ${label}`} aria-pressed={pinned} disabled={busy || reading.standing.pending}
       title={pinned ? `${label} is pinned. Click to unpin it.` : `Pin ${label}. Alt-click flips Shared and Local for this pin.`} onClick={click}>{pinned ? '★' : '☆'}</button>
-    {pinned && mark && <span className="pin-scope" title={mark === 'shared' ? 'Shared across the Expression’s Scenes' : 'Local to this Scene'}>{mark === 'shared' ? 'S' : 'L'}</span>}
+    {pinned && mark && <ScopeToggle reading={reading} control={control} apply={apply} label={label} />}
     {fault && <small role="alert" className="pin-fault">{fault}</small>}
   </span>
 }

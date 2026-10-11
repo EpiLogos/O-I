@@ -84,10 +84,10 @@ test('each fold is one admitted change, carrying the chosen destination, playbac
   assert.deepEqual(Object.keys(FOLD_MODE_LABELS), [...FOLD_MODES])
 })
 
-test('the Material row marks the Scene’s own material and sends one field-material change per card', async () => {
+test('the particle style row marks Ink, Print or Rounded and sends one field-material change per card', async () => {
   const reading = {scene: {field: {material: 'print'}}}
   const html = renderToStaticMarkup(h(InkMaterial, {reading, disabled: false, apply: async () => ({ok: true})}))
-  assert.match(html, /<div class="ink-material" role="group" aria-label="Field material"><span>Material<\/span>/)
+  assert.match(html, /<div class="ink-material" role="group" aria-label="Particle style"><span>Particle style<\/span>/)
   assert.match(html, /<button type="button" aria-pressed="false">Ink<\/button>/)
   assert.match(html, /<button type="button" aria-pressed="true">Print<\/button>/)
   assert.match(html, /<button type="button" aria-pressed="false">Rounded<\/button>/)

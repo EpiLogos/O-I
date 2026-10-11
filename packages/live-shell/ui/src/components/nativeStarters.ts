@@ -54,9 +54,16 @@ export function chainStepChanges(reading: NativeEditorReading | null, entityId: 
   return replaceStates(live, settings, target.sequence.steps.map(step => step.text))
 }
 
-/** Kundalini rising sequence on the selected formation, first step: the seven seed syllables replace its states. */
+/** Kundalini rising sequence on the selected formation, first step: the seven seed syllables replace its states.
+ * The two steps stay two applies: the owner cannot place a state that the same batch creates (step-insert carries no
+ * position and no id), so the second step is the only place positions are written. The owner refuses a position
+ * write on a blueprint member (hostEditor.ts checkPosition), after this batch has committed. So a blueprint member is
+ * refused here, before anything is sent. A pinned occurrence is not visible in the reading, so that refusal can still
+ * land after this batch; see the report for the limitation. */
 export function kundaliniSequenceChanges(reading: NativeEditorReading | null, entityId: string | undefined): NativeEditorChange[] {
   const live = formationFor(reading, entityId)
+  if (reading?.nativeScene?.blueprint?.members.some(member => member.entity_ref === live.id))
+    refuse('Release the blueprint before editing a member position.')
   const target = clone(live)
   applyKundaliniSequence(target)
   const settings: NativeSequenceSettings = {enabled: true, clock: 'seconds', order: 'loop'}

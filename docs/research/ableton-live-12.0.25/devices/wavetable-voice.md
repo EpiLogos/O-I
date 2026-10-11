@@ -1,0 +1,893 @@
+# Wavetable voice model — fit + implement fold (Live 12.0.25, offline lane)
+
+**Status:** fitted + implemented + gated, revision 1 (2026-10-08); **rev 2
+same day — depth probes** (WavePosition interior frames, Slope=linear-ramp
+law, Unison Mode gate); **rev 3 same night — interior interpolation law
+fitted**: the frame census is CLOSED — four frames sine | triangle | saw |
+square at WavePosition {0, 1/3, 2/3, 1}, coherent linear amplitude mix
+(leave-one-out validated; see "Interior interpolation law" below).
+**Rev 4 (2026-10-09 day lane): unison STEREO layout + amplitude law
+(WV19), decay slope warp curve closed at four pins (WV20/WV21)** — the
+two sections at the bottom supersede parts of the depth-probe readings
+noted in place.
+Model: `packages/live-dynamics/src/wavetable.rs`; gates:
+`wavetable_voice_golden_gate` + `wavetable_law_gates` +
+`wavetable_position_leave_one_out` in
+`packages/live-dynamics/tests/golden.rs`; fitting tools:
+`harness/fit_wavetable_probes.py` (per-note RMS, harmonic scans,
+h1-envelope tracking, curve fits over the M2 + WV probe renders),
+`harness/analyze_wavetable_position.py` (complex Goertzel position→harmonics
+map with phases) and `harness/fit_wavetable_position_law.py` (law fit +
+leave-one-out).
+
+Companion documents: `midi-instruments.md` (M2 baseline, WT1/WT2
+amplitude-stage probes), `mod-matrix.md` (52×13 matrix, source attribution).
+
+## Data provenance — where the renders came from
+
+The WV2–WV5 renders were **not present in the main checkout**: they were
+committed on the probe lane branch `feat/live-re-lane-15min-workload`
+(commit `37b4daff4`, "live-dynamics: 15-minute retained-performance
+workload", together with the Operator fold and probe sets). This lane ran
+offline (no Live), so the four `.aif` files were recovered from git objects
+(`git show 37b4daff4:<path>`) into a scratch directory and analyzed there;
+the primary checkout stayed on `main` and no render binaries were added to
+it. The `wavetable_law_gates` test skips with a printed notice when the
+renders are absent and activates wherever they are checked out.
+
+## Probe sets (stored-value deltas vs the M2 default patch)
+
+Confirmed by parsing each `.als` (gzip XML); single-pin edits, everything
+else identical to the default patch:
+
+| set | pin | stored → |
+|-----|-----|----------|
+| WV2_POS50 | `Voice_Oscillator1_Wavetables_WavePosition` | 0 → 0.5 |
+| WV3_OSCGAIN | `Voice_Oscillator1_Gain` | 1 → 0.5 |
+| WV4_SUSTAIN | `Voice_Modulators_AmpEnvelope_Sustain` | 0.5011875629 → 0.25 |
+| WV5_OSC2ON | `Voice_Oscillator2_On` | false → true |
+
+Baseline M2: Osc1 on (pos 0, gain 1), Osc2/Sub off, AmpEnv A=0.001 s
+D=0.6 s S=0.5011875629 R=0.6 s (slopes 0/0.5/0.5), Volume 0.3548134267,
+key 48 (C3 = 130.81 Hz), 4-note velocity ramp (velocity flat, unrouted —
+`midi-instruments.md`).
+
+## Voice architecture (from the XML census)
+
+- Two wavetable oscillators (per-osc: On, Pitch Transpose/Detune,
+  WavePosition, Effect1/2 + EffectMode, Pan, Gain) + sub oscillator
+  (On, Tone, Transpose, Gain) + two state-variable filters (both
+  routings; Filter1 on in the default patch at 20479.998 Hz ≈ wide open,
+  Res 0 — near-transparent, `midi-instruments.md` M2 note) + amp
+  envelope + Env2/Env3 + LFO1/LFO2 + unison (Amount 0.3 stored, no
+  audible unison in the output — see Deferred).
+- Amplitude chain, as fitted: `Σ_on osc_gain · envelope · frame(pos)`,
+  then device `Volume`, then a fixed residual scalar. Level knobs are
+  **linear amplitude** (three independent confirmations below).
+- Modulation: 52 destinations × 13 sources (`mod-matrix.md`). The
+  default patch's live routes: 9→Osc1 Pos 1.0, 12→Osc1 Pos 0.33,
+  8→Osc1 Warp 0.07, 5→Amp 0.5, 7→Pitch 0.0417, 11→Pitch 1.0. Despite
+  the position routes, the rendered output stays at the position-0 frame
+  (h2 at the dither floor through every note window — the routed sources
+  idle at ≈0 on this patch; Envelope2/LFO idle values unverified).
+
+## Fitted laws (each cited to its render)
+
+| law | evidence | result |
+|-----|----------|--------|
+| Osc gain | WV3 | **linear amplitude**: −6.02 dB on every harmonic (law deltas −6.02±0.05 dB, h1..h8) |
+| Osc2 sum | WV5 | **phase-coherent identical sum**: +6.02 dB on every harmonic and note — osc2 at default stored params (pos 0, detune 0, gain 1) is the same waveform, phase-aligned |
+| Sustain | WV4 | **linear amplitude**: post-decay plateau −6.04 dB = 20·log10(0.25/0.5012) exactly (render −6.04) |
+| Volume trim | WT2 (lane 4) | linear amplitude: ×0.25 → −12.04 dB exact |
+| WavePosition | WV2 | **frame swap, not a gain**: pos 0.5 reads a different table frame wholesale — h1 −2.81 dB, h2 jumps +40.8 dB (−80 → −39.4 dBFS), h3..h8 +35..+40 dB; steady RMS −2.37 dB ≈ frame-B-alone RMS ratio (−2.45 dB model, coherent-sum reading). REVISED rev 2 (2-frame crossfade refuted) and CLOSED rev 3 (frame census: pos 0.5 is the 0.5·triangle + 0.5·saw mix — see "Interior interpolation law") |
+| Pitch | M2 | equal temperament A4=440 (key 48 = 130.81 Hz, same clip model as Operator) |
+
+Frame at pos 0 is a **pure sine** (M2: h2..h8 at −80..−87 dBFS, the dither
+floor, ≥57 dB below h1). Frame at pos 0.5, relative to its own h1
+(WV2 measurement, note-1 steady window): h2 −13.49, h3 −21.98, h4 −19.36,
+h5 −19.04, h6 −22.59, h7 −25.86, h8 −25.43 dB. (Rev 3 reading: that
+"profile B" is not a table frame — it is the 0.5·triangle + 0.5·saw
+segment mix of the census below, which reproduces every one of those
+ratios to ≤0.5 dB from the closed-form shapes.)
+
+### Amp envelope (fitted from M2's h1 Goertzel track, note 1 decay / note 3 release)
+
+- **Attack** (stored 1 ms): linear rise, unmeasurable at 44.1 k/16-bit
+  (44 samples); sonically irrelevant at this pin.
+- **Decay** (stored 0.6 s): **one-pole amplitude approach** to the
+  sustain: `e(t) = s + (1−s)·exp(−t/τ)`, **τ = 0.170 s** (0.283 × stored).
+  Least-squares residual 0.35 dB; beats every library shape in
+  `fit_wavetable_env.py` (best of those: 3.3 dB). The stored Slope=0.5
+  does NOT surface as an S-bend here (open question, Deferred).
+- **Release** (stored 0.6 s): **linear-to-zero × exponential**
+  `e(v) = e_off·(1−v)·exp(−c·v)`, v = t/0.6, **c = 2.43**. Every 20 ms
+  window from +60 to +580 ms lands within 0.7 dB of the render; the
+  (1−v) factor takes the envelope exactly to zero at the stored release
+  time, matching the render's plunge into the dither floor at ≈0.6 s.
+  A bare power tail (best single-p fit p=2.3) manages only 3.2 dB worst
+  window error — the product form is decisively better. −40 dB crossing:
+  546 ms model vs 547 ms render.
+- **Sustain** = linear amplitude (WV4 law above).
+
+### Residual gain
+
+`RESIDUAL_GAIN = 0.350899`: output peak = RESIDUAL_GAIN × osc_gain ×
+envelope × volume for a unit-peak frame-A oscillator. Calibrated on M2's
+steady window; decomposition (voice-bus scalar vs post-voice trim) is not
+identifiable from audio alone (same honesty note as Operator's
+RESIDUAL_GAIN).
+
+## Golden gate (thresholds STATED in the brief before the model was fitted)
+
+`wavetable_voice_golden_gate` vs `M2_WAVETABLE.aif` — measured residuals:
+
+- steady RMS per note ±1.0 dB → **Δ +0.13 dB on all four notes**
+  (note 0's first-voice startup quirk included)
+- release ±25% → **−40 dB crossing 0.535 s model vs 0.535 s render**;
+  20 ms release windows ±2.5 dB → **worst +0.83 dB** over +40..+280 ms
+- harmonic profile mean ≤3.0 dB (floor-aware: harmonics within 8 dB of
+  the −85.9 dBFS dither-floor estimate are noise, not profile — the model
+  must only sit at/below floor+8 dB there) → **mean |Δ| 0.13 dB** (h1);
+  h2..h8 all within 0.3 dB of the render's floor readings
+
+`wavetable_law_gates` (WV renders; skip-notice when absent, exercised this
+session against the git-recovered renders):
+
+- WV3 law −6.02±0.05 dB per harmonic; model−render within bias±0.13
+- WV5 law +6.02±0.06 dB per harmonic; model−render within bias±0.15
+- WV4 law plateau −6.04 dB exact; model−render +0.24 dB (the one-pole's
+  ≈1% unsettled transient at 0.7 s does not scale with sustain —
+  documented residual, also covered by the ±0.5 dB unit gate)
+- WV2 model−render harmonic mean |Δ| **0.18 dB**; steady agreement +0.04 dB
+
+Unit gates in `wavetable.rs` cover the same laws without renders (level
+pair, sustain law, osc2 coherence, frame-B ratios, release crossing,
+decay table vs the measured M2 track).
+
+## Test lines
+
+```
+cargo test                         # lib: 42 passed (incl. the new
+                                   # position_frame_census unit test)
+cargo test -- --ignored            # 9 passed, 3 failed — the 3 failures
+                                   # (glue_circuit_release/envelope WIP +
+                                   # glue_lam_lambda_discriminator, the λ
+                                   # acceptance target) fail IDENTICALLY at
+                                   # HEAD without this lane's changes
+                                   # (verified by stash; operator_voice now
+                                   # passes — its OP2/OP3 renders are present
+                                   # untracked in this checkout)
+cargo clippy --all-targets         # 0 warnings
+```
+
+The WV law gates skip with a printed notice when WV2–WV5 are absent; this
+lane exercised them by placing the git-recovered renders temporarily
+(`git show 37b4daff4:…` → renders/, removed after the run — renders stay
+out of the main checkout): golden gate residuals identical to rev 1
+(+0.13 dB steady, harmonic mean 0.13 dB); WV2 model−render harmonic mean
+**0.16 dB** (rev 1's 2-frame model: 0.18), steady +0.05 dB.
+
+## Wavetable data — factory format findings + licence boundary
+
+- The device preset (`evidence/devices/Wavetable/default.xml`) carries
+  only `SpriteName1/2 = "Basic Shapes"` and **empty** `UserSprite1/2`
+  (`<Value />`) — no wave data in the document; `UseRawUserWavetable1/2 =
+  false`. The actual factory wavetables live in Live's Core Library
+  (`.adv` presets), which this lane did **not** unpack or study.
+- Licence boundary (standing rule, backlog row: "presets contain
+  wavetables: do not redistribute"): the model embeds **no factory wave
+  data**. All frames are GENERATED — rev 1 embedded a measured 8-harmonic
+  re-synthesis of the pos-0.5 render; rev 3 replaces that with the census's
+  closed-form ideal shapes (sine/triangle/saw/square), whose count,
+  spacing, normalization and signs are what the renders measured (phases
+  included, via the complex-Goertzel map).
+- Consequence: the model reproduces measured levels/spectra at all four
+  evidenced positions (0 / 0.25 / 0.5 / 0.75 — rev 3's census law pins the
+  interior, not just the anchors); it is NOT a byte-level reconstruction of
+  the factory table. The frames are closed-form ideal shapes whose COUNT,
+  SPACING, NORMALIZATION and SIGNS are the measurement; unprobed positions
+  (e.g. pos 0.1, 0.9) are the law's interpolation, and harmonics above k=8
+  are the law's extension (Deferred row below narrows to those).
+
+## Depth probes (2026-10-08 evening lane) — WavePosition interior, Slope, Unison
+
+Three deferred questions probed with single-pin sets (builder
+`build_set_midi.py`, same M2 notes clip; renders WV6/WV7/WV8/WV9/WV9B +
+`.asd` in `harness/renders/`, sets in `harness/live/`). WV2 was again
+git-recovered from `feat/live-re-lane-15min-workload` to a scratch path for
+the comparison (same procedure as the provenance section). Analyzer:
+`harness/analyze_lane_b1.py`.
+
+### WavePosition interior points (WV6 pos 0.25, WV7 pos 0.75)
+
+Harmonic profile, note-1 steady window (dBFS; `floor` = dither floor):
+
+| pos | h1 | h2 | h3 | h4 | h5 | h6 | h7 | h8 | steady RMS |
+|-----|----|----|----|----|----|----|----|----|------------|
+| 0.00 (M2) | −23.11 | floor | floor | floor | floor | floor | floor | floor | −26.06 |
+| 0.25 (WV6) | −24.44 | floor | −46.75 | floor | −55.30 | floor | −61.72 | floor | −27.36 |
+| 0.50 (WV2) | −25.92 | −39.41 | −47.90 | −45.28 | −44.96 | −48.51 | −51.78 | −51.35 | −28.43 |
+| 0.75 (WV7) | −25.09 | −35.89 | −35.03 | −41.76 | −38.96 | −44.99 | −42.14 | −47.85 | −26.72 |
+
+- **The two-frame linear-crossfade model is REFUTED.** Against the
+  amplitude-linear prediction from frames {pos 0, pos 0.5}: at pos 0.25 the
+  predicted frame-B evens are absent (h2 measured at floor, predicted
+  ≈−51 dBFS) while h3/h5/h7 sit +12.8/+1.5/+1.7 dB ABOVE prediction; at
+  pos 0.75 every harmonic sits +6.0…+15.3 dB above prediction.
+- **pos 0.25 reads an odd-harmonics-only frame** (triangle family):
+  h3/h1 = −22.3 dB, h5/h1 = −30.9, h7/h1 = −37.3 (ideal triangle:
+  −19.1/−28.0/−33.8 — same ordering, ~3.3 dB softer). Evens at the dither
+  floor. pos 0.50 and 0.75 read distinct full-spectrum (saw-family) frames.
+- **"Basic Shapes" therefore holds ≥3 discrete shape frames**, and interior
+  positions swap frame content more than they crossfade two endpoints.
+  (Rev 3 closed the census: FOUR frames — the "softness" of pos 0.25's
+  odd ratios is the 0.75 triangle mix weight, not a softer shape.)
+
+### Interior interpolation law (rev 3, same night — the census CLOSED)
+
+Fitted from the four-render position map (`analyze_wavetable_position.py`:
+complex Goertzel h1..h8, amplitude AND phase, per position) by
+`fit_wavetable_position_law.py`; implemented in `wavetable.rs` (`frames`
+module + `frame_harmonic`) and gated by
+`wavetable_position_leave_one_out`.
+
+**The law.** "Basic Shapes" holds **four peak-normalized (±1) zero-phase
+frames at WavePosition {0, 1/3, 2/3, 1}: sine | triangle | saw | square**.
+An interior position reads the **linear coherent amplitude mix of its
+segment's two bounding frames**:
+
+```
+x = 3·pos;  i = min(floor x, 2);  w = x − i
+partial_k(pos) = (1−w)·F_i[k] + w·F_{i+1}[k]     (signed, zero-phase)
+```
+
+with the shapes' natural sine-series signs — the triangle's odd harmonics
+ALTERNATE sign (h1 +, h3 −, h5 +, h7 −); saw and square are all-positive.
+
+**Phase evidence (why the mix is coherent and the signs are as stated).**
+All measured harmonics share one common linear-phase term (≈43°/harmonic +
+a 180° convention constant — a global time-offset artifact of the export);
+the demodulated residuals are ≈0° ±3.3° on every above-floor harmonic of
+every render, and stable across independent note-ons (|Δθ| ≤ 8.5° = the
+tuning-reference error). Zero-phase frames ⇒ partials sum as signed
+amplitudes. The signs are pinned by magnitude data alone, twice over:
+pos 0.5's h3 reads −47.9 dBFS — a NEAR-CANCELLATION (|2/3π − 8/9π²|/2)
+that requires the triangle's h3 to oppose the saw's, and all-positive
+signs would overshoot by +8 dB — while pos 0.75's h3 (−35.0 dBFS) requires
+the SAME saw h3 to add coherently with the square's. Directly measured:
+pos 0.25's h3/h7 phases sit 180° inverted vs pos 0.5's (triangle
+alternation), its h1/h5 in phase.
+
+**Fit residuals (full data, ideal shapes, no free parameters beyond a
+per-frame gain):** fitted gains 1.0045 / 0.9803 / 1.0181 (triangle / saw /
+square — ideal is 1.0); per-position harmonic mean |Δ| 0.22 / 0.14 /
+0.15 dB, worst single harmonic −0.52 dB (floor-contaminated component
+reads); steady RMS predictions within 0.05 dB (the non-monotonic
+−0/−1.30/−2.37/−0.66 dB RMS ladder is the frame RMS content, reproduced).
+
+**Leave-one-out validation** (thresholds STATED before the folds ran:
+held-out harmonic mean |Δ| ≤ 2.0 dB over above-floor harmonics — floor
+−85.9 dBFS + 8 dB guard; steady RMS within ±0.5 dB; frame-gain scalars
+fitted on the two training positions, an unconstrained gain stays ideal):
+
+| held out | fold gains (tri/saw/sqr) | harmonic mean \|Δ\| | RMS Δ | |
+|----------|--------------------------|---------------------|-------|-|
+| pos 0.25 | 1.0225 / 0.9708 / 1.0323 | 0.33 dB | −0.14 dB | PASS |
+| pos 0.50 | 0.9997 / 0.9686 / 1.0357 | 0.16 dB | +0.12 dB | PASS |
+| pos 0.75 | 1.0028 / 0.9879 / 1.0000 (square unconstrained) | 0.17 dB | +0.03 dB | PASS |
+
+(pos 0 is not a fold: frame 0 is the pinned sine anchor — the prediction is
+the sine itself. The Rust gate's RMS leg renders through the production
+voice at ideal gains: Δ −0.00 / +0.06 / +0.19 dB.)
+
+**Rejected alternatives** (full-data mean |Δ| over above-floor harmonics):
+the 2-frame linear crossfade 3.86 dB (pos 0.25) / 2.58 dB (pos 0.75);
+3 frames at halves 3.86 dB at pos 0.25; 5 frames at quarters with
+pure-frame reads contradicts the triangle identity itself (h3/h1 would
+read −19.1 dB, measures −22.3; RMS would read −1.76 dB, measures −1.30).
+
+**Model consequence (resolves rev 2's KNOWN-WRONG note):**
+`wavetable.rs` now implements this law (`set_position` semantics via
+`frame_harmonic(pos, k)`; harmonics above k=8 are the law's extension
+below the evidenced band). Gate residuals after the swap:
+
+- `wavetable_voice_golden_gate` (pos 0): residuals IDENTICAL to rev 1 —
+  steady Δ +0.13 dB all notes, release crossing 0.535/0.535 s, worst
+  release window +0.83 dB, harmonic mean 0.13 dB.
+- `wavetable_law_gates` at pos 0.5 (WV2, git-recovered renders placed
+  temporarily): model−render harmonic mean **0.16 dB** (the old 2-frame
+  model measured 0.18), steady agreement +0.05 dB; WV3/WV4/WV5 unchanged.
+
+### Amp-envelope Slope semantics (WV8_SLOPE0: Slopes_Decay 0.5 → 0.0)
+
+- **The sustain plateau is invariant**: −23.96 dBFS in both renders (notes 1
+  and 3, late pre-release windows). The slope warps the decay segment
+  between pinned endpoints (attack peak → sustain); it changes no level.
+- **slope 0.0 = a straight LINEAR-amplitude ramp** from peak to sustain over
+  the stored decay time: dB-above-sustain +5.41 measured vs +5.44 linear at
+  t=75 ms, +3.32 vs +3.26 at t=325 ms (≤0.1 dB both points).
+- slope 0.5 = the dossier's fitted one-pole (τ = 0.170 s): +4.16 measured vs
+  +4.30 model at 75 ms.
+- Reading: **stored slope = shape warp on the segment** — 0 = linear,
+  0.5 ≈ one-pole exponential. The warping family (−1…+1 sweep, and whether
+  release/attack slopes share it) stays open (backlog).
+
+### Unison (WV9_UNISON: Amount 0.3 → 1.0 at Mode 0; WV9B_UNIM1: Mode 0 → 1)
+
+- **`Voice_Unison_Mode = 0` means unison OFF.** At Mode 0 the Amount=1.0 /
+  VoiceCount=3 render is dither-identical to M2 (max|Δ| 2 LSB16, 2.03% of
+  samples >1 LSB — export-dither level). Amount and VoiceCount are inert
+  while the mode gate is 0. (This also explains the stored patch's "no
+  audible unison".)
+- **Mode 1 engages unison** (signature at Mode 1 / Amount 1.0 / VoiceCount
+  3): the h1 partial splits — main sideband lobe at f0−3.8 Hz (peak
+  −24.70 dBFS vs M2's h1 −23.11), f0 component −27.7 dBFS, minor lobes at
+  −1.0/−5/−6.5 Hz, nothing strong above f0 within ±12 Hz; h2…h8 stay at the
+  floor (unison detunes whole voices; frame A is a pure sine). Steady RMS
+  +0.21 dB.
+- Voice-count/spacing law, the mode enum identities (1 = classic-family by
+  signature only), and the amount→cents mapping: open (backlog; one cell
+  rendered).
+
+### Unison round 2 (2026-10-08 late lane): Amount axis CLAMPS at 1.0; the voice-count knob is `Voice_Unison_VoiceCount`
+
+The brief's depth-of-unison probes pinned `Voice_Unison_Amount` to 2 and 4
+(WV10_UNI_M1_A2 / WV11_UNI_M1_A4, Mode 1, VoiceCount 3, M2 notes clip;
+analyzer `harness/analyze_wv_unison.py`):
+
+- **Both renders are dither-identical to WV9B** (max|Δ| 2 LSB16, ≈2% of
+  samples >1 LSB, 0% >8 LSB — the export-dither signature; spectra identical
+  peak-for-peak to ±0.1 dB, same AM rate). **Stored `Voice_Unison_Amount`
+  values beyond 1.0 do not exist as states**: the parameter's
+  `MidiControllerRange` is 0..1 and the loader clamps out-of-range pins to
+  1.0. "Amount" is a normalized depth, not a voice count — the earlier
+  framing ("Amount 2/4 → two-/four-voice signature") was a category error;
+  the voice number lives in `Voice_Unison_VoiceCount` (plain `Value`
+  element, stored 3).
+- **Mode-1 signature, richer map** (Amount 1.0, VoiceCount 3, note-1 steady
+  window, ±120 Hz Goertzel scan at 0.25 Hz): main lobe **f0−3.75 Hz
+  (−50.4 cents, −24.5 dBFS)**, f0 component −27.0 dBFS, sub-lobes BELOW f0 at
+  −6.75/−9.25/−11.5/−13.75/−16.0 Hz (−37.5 → −49 dB, ≈2.25 Hz spacing) and
+  weaker lobes ABOVE at +3.0/+5.5/+8.0/+10.25 Hz (−40.4 → −49.3) — the
+  unison layout is asymmetric around f0 (energy biased low). h1 AM beat rate
+  11.3 Hz. M2's (mode-0) scan shows only the symmetric ±(3–12) Hz leakage
+  skirt of the analysis window — the asymmetry is the unison discriminator.
+- VoiceCount probes (same lane, after the two brief renders were spent on the
+  clamp): `WV12_UNI_M1_VC2` / `WV13_UNI_M1_VC4` (Mode 1, Amount 1.0,
+  VoiceCount 2/4). **VoiceCount changes the state for real** (76% of samples
+  >1 LSB vs WV9B and vs each other — not dither). Line positions (±120 Hz
+  Goertzel scan, 0.45 s steady window → 2.2 Hz resolution; all offsets from
+  f0 = 130.81 Hz):
+
+| count | resolved h1 lines (Hz off f0 / dBFS) | steady RMS |
+|-------|--------------------------------------|------------|
+| VC2 (WV12) | **−3.75 (−23.2, dominant)**, −0.50 (−36.0) | −25.93 |
+| VC3 (WV9B) | **−3.75 (−24.5, dominant)**, −0.25 (−27.0), weak +3.0 (−40.4) | −25.85 |
+| VC4 (WV13) | **−3.50 (−27.0)**, **+1.00 (−26.9, comparable)** | −26.10 |
+
+- **Layout law (medium confidence): N voices evenly spread ±50 cents at
+  Amount 1.0** — predicted lines {−3.75, 0} (VC2), {−3.75, 0, +3.75} (VC3),
+  {−3.75, −1.25, +1.25, +3.75} (VC4) match every resolved line to ≤0.75 Hz
+  (residual = window-skirt pull between neighbouring lines); the −3.75 Hz
+  anchor voice is **−50.4 cents** (exactly −spread-edge/2 at ±50-cent spread),
+  reading as the fixed spread edge at Amount 1.0. The f0-centre line weakens
+  as voices symmetrise (VC4's centre cancels — no resolved line near 0), and
+  steady RMS stays count-invariant (−26.1…−25.9 dB, spread not gain).
+- **Measurement boundary**: 2.2 Hz resolution cannot separate the layout
+  from amplitude structure (the scan's own 2.25 Hz-spaced window sidelobes
+  pollute the ±6–16 Hz region in EVERY render — see M2's symmetric skirt).
+  A longer-note probe (4-beat notes → 0.5 Hz cells) resolves the layout
+  cleanly (backlog). h1-band AM maxima rates: 9.43 / 11.32 / 9.43 Hz
+  (VC2/3/4) — recorded, not yet modeled.
+
+## Deferred (open, with the probe sets to answer them)
+
+- **WavePosition frame census — CLOSED (rev 3)**: four frames sine |
+  triangle | saw | square at {0, 1/3, 2/3, 1}, coherent linear amplitude
+  mix, leave-one-out validated (section above). Remaining (thin): a pos
+  sweep at fine steps (1/12) would test the segment boundaries directly;
+  harmonics above k=8 are law-extension, not measurement.
+- **Position-envelope sources**: routes 9/12 → Osc1 Pos (1.0/0.33) idle
+  on this patch (output stays sine); Envelope2/3 + LFO1/2 idle values
+  unverified — an Always-on Env2 or LFO probe would activate them.
+- **Unison topology** (REVISED three times — see the rev-4 WV19 section
+  below): Mode=0 gates unison off; Mode=1 engages. **Amount is normalized
+  0..1 (MidiControllerRange) and clamps on load — values >1.0 render
+  identically to 1.0 (WV10/WV11 dither-identical to WV9B).** The voice
+  number is `Voice_Unison_VoiceCount`. Spread = ±50¢ × Amount; voices are
+  STEREO-SPREAD (rev 4: hard-L / centre / hard-R at VoiceCount 3) with
+  equal gains. Remaining (thin): VoiceCount sweep 1…8 WITH the stereo
+  read (the D15 ladder's per-voice panning is unmeasured beyond VC3),
+  mode-enum identities beyond the Mode-1 signature.
+- **Slope warping family — CLOSED for all three segments (rev 4): the
+  warp is v(u) = (e^{−ku} − e^{−k})/(1 − e^{−k}) with k = 7.41·slope,
+  endpoints pinned, one fitted scalar — decay at four pins, attack at
+  {0, +1.0}, release at {0, 0.5} (rev-1's release product-form c=2.43
+  superseded)** (two sections below). Remaining (thin): attack/release
+  pins beyond one non-zero each; negative attack slopes; why 7.41.
+
+- **Mod matrix destinations on the voice**: source identities beyond
+  `mod-matrix.md`'s attribution (9/11 envelopes, 8/12 LFO-family) and
+  all non-Amp destinations are uncensus'd.
+- **Filters**: Filter1 wide open (20479.998 Hz, Res 0) — near-transparent
+  on this patch; filter models are their own lane.
+- **Sub oscillator**: off by default (Gain stores 0.5012); tone/transpose
+  behavior unmeasured.
+- **Per-render first-voice startup quirk** (+0.12 dB on note 0): not
+  modeled; reproduces deterministically per render.
+- **Polyphony/voice allocation**: the model renders one note at a time;
+  the gate's notes are disjoint. Live stores PolyVoices=6.
+
+## Unison Amount within 0..1 — the spread law (2026-10-09 night lane)
+
+D15's open sweep below the clamp: `WV14/15/16_AMT` = WV9B (Mode 1,
+VoiceCount 3) with `Voice_Unison_Amount` Manual = 0.25/0.50/0.75
+(`build_session_probes.py`), rendered on the clean-boot instance. Fine
+Goertzel scan around h1 (±12 Hz, 0.25 Hz step, note-1 steady window),
+same method as the D15 ladder:
+
+| render | Amount | steady RMS | main lobe | resolved structure |
+|---|---|---|---|---|
+| M2 (mode 0) | — | −26.06 dBFS | 0.00 Hz (−23.3) | single line, symmetric skirt |
+| WV14 | 0.25 | −29.49 | −1.50 Hz (−19.5¢) | triplet blurred inside the window (voice spacing ±12.5¢ ≈ 0.95 Hz < 2.2 Hz resolution) |
+| WV15 | 0.50 | −26.59 | −1.25 Hz (−16.5¢) | blurred (spacing ±25¢); lobe position is beat-phase-dependent |
+| WV16 | 0.75 | −25.82 | **−2.75 Hz (−36.4¢)** | centre voice resolved at 0.00 Hz (−26.8); upper voice at +3.00 Hz |
+| WV9B | 1.00 | −25.85 | **−3.75 Hz (−50.4¢)** | centre voice at −0.25 Hz (−27.0) (D15) |
+
+**Law: spread(Amount) = ±50 cents × Amount.** Predicted outer voice at
+±50·A cents: A 0.75 → −2.81 Hz (measured −2.75, Δ 0.06 Hz); A 1.00 →
+−3.79 Hz (measured −3.75, Δ 0.04 Hz). The centre voice sits at 0 at every
+resolved amount, matching the VoiceCount-3 layout {−A·50, 0, +A·50}¢.
+Below A ≈ 0.5 the three voices fall inside the analysis window's ~2.2 Hz
+resolution and blur into one phase-dependent lobe — the −29.49 dBFS steady
+RMS at A 0.25 is a beat-phase sample, not a gain law: at resolved amounts
+RMS is Amount-invariant (−25.82/−25.85), extending D15's count-invariance
+down the Amount axis. Amount therefore scales the unison detune span
+linearly from 0; together with the clamp (>1 → 1.0) the parameter is a
+normalized 0..1 spread control. Shell model: voices at
+`k/(N−1)·2−1` · 50¢ · Amount (even spread), per D15.
+
+## Unison stereo layout + voice amplitudes — D15 long-note re-probe CLOSED (2026-10-09 day lane, rev 4)
+
+`WV19_LONG_UNI` = WV9B_UNIM1 (Mode 1, VoiceCount 3, Amount 1.0) with the
+4-note staircase replaced by ONE 8-beat note (velocity 1.0, the v5 note
+serialization with `NoteIdGenerator/NextId = 1`), transport loop 18 beats
+(render 9.0 s; builder `build_wv_lane2.py`, ET round-trip + gzip mtime=0,
+clip `Time` attribute stamped per FA4_TIME). Render
+`harness/renders/WV19_LONG_UNI.aif` (1,587,654 bytes, 9.00 s). Analyzer:
+`analyze_wv19_unison_long.py` — Hann-weighted fine DTFT scan around h1
+over the steady window [1.0, 3.9] s (2.9 s → ~0.35 Hz), 0.005 Hz line
+refinement, per-channel.
+
+**The decisive fact: unison voices are SPREAD IN STEREO.** Every earlier
+D15 reading analyzed the LEFT channel only (`read_aiff` returns L). With
+both channels read, VoiceCount 3 resolves as:
+
+| line (offset from f0 = 130.8128 Hz) | cents | level | channel |
+|---|---|---|---|
+| −3.724 Hz | **−50.00** | −25.72 dBFS | L only (R reads −105, the floor) |
+| +0.000 Hz | +0.01 | −28.73 dBFS | **both channels identically** |
+| +3.833 Hz | **+50.00** | −25.72 dBFS | R only (L reads −110, the floor) |
+
+- **Offsets: exactly ±50.00 cents** — the spread law's edge values
+  measured at 0.005 Hz resolution, no window-skirt pull.
+- **Voice gains are EQUAL; the layout is hard-L / centre / hard-R under an
+  equal-power pan law.** The centre voice reads 3.01 dB below the outers
+  in EACH channel (−28.73 vs −25.72; equal-power pan predicts 3.01), and
+  the centre is bit-identical in L and R. The outers are strictly
+  single-channel (≥80 dB below in the opposite channel).
+- **D15's "asymmetric layout, energy biased below f0, weak +voice" is
+  REFUTED as a left-channel artifact.** The "+3.0 Hz weak lobe (−40.4)" in
+  the 2.2 Hz-resolution ladder was the short Hann window's skirt of the
+  strong low voice; at 0.35 Hz resolution the +voice is absent from L
+  because it lives in R. The same re-read applies to the VC2/VC4 ladder
+  lines (stereo re-read pending).
+- **Beat pattern confirms the spacing law**: tracking the outer line with
+  0.40 s windows, the L-channel envelope beats at 3.74 Hz (predicted
+  |Δf| = 3.724 Hz) and R at 3.84 Hz (predicted 3.832); envelope depth
+  −2.7/−2.6 dB vs the window-skirt coupling prediction 2.6 dB
+  (W(Δf) = |sinc| ≈ 0.21, centre/outer = 0.707). The 7.56 Hz outer-outer
+  beat is absent by construction (the outers never share a channel).
+- **Per-voice gain vs the solo patch** (both readings are sustain-window
+  h1 amplitudes, M2 = −23.37 dBFS left): each unison voice reads −2.35 dB
+  below the solo voice per channel. Equal-power panning of N=3 equal
+  voices with per-voice power = solo/√3 (gain = solo·3^(−1/4)) predicts
+  −2.50 dB — inside 0.15 dB of the measurement, offered as a hypothesis,
+  NOT a fitted law (identifying it needs the VoiceCount ladder re-read in
+  stereo).
+- Short-window RMS readings of unison renders are beat-phase samples
+  (the two co-channel voices at ratio √2 swing the band amplitude
+  15.3 dB between extremes over the 3.7 Hz beat); WV19's 2.9 s window
+  averages ~10 beat periods → −26.97 dBFS per channel is the true mean
+  (WV9B's 0.45 s note-1 window read −25.85 on a constructive phase).
+
+**VoiceCount-3 unison law (supersedes the D15 reading):** voices at
+{−50, 0, +50} cents × Amount, equal gains, panned hard-L / centre /
+hard-R (equal-power); per-channel spectrum = low voice + centre(−3.01 dB);
+whole-voice detune (h2..h8 stay at the floor in both channels, −137 dBFS
+line readings).
+
+## Decay slope warp curve — D16 CLOSED (2026-10-09 day lane, rev 4)
+
+`WV20_SLOPE_M05` / `WV21_SLOPE_P1` = WV8_SLOPE0 lineage (verified
+single-pin diffs of the ET round-trip) with
+`Voice_Modulators_AmpEnvelope_Slopes_Decay` Manual = −0.5 / +1.0 (the
+path check the brief asked for: the param is
+`Voice_Modulators_AmpEnvelope_Slopes_Decay`, `Manual` child; WV8 stores
+0.0, M2 stores 0.5). Renders `harness/renders/WV20_SLOPE_M05.aif` /
+`WV21_SLOPE_P1.aif` (1,036,406 bytes each, 5.875 s; WV21 needed one retry
+— its first export attempt died on an AppleScript AX flake, "can't get
+window Export Audio/Video", no dialog involved; the single re-run under
+the lock rendered clean). Analyzer: `analyze_wv20_slope_warp.py`.
+
+**Method corrections that this closure depends on** (both artifacts
+poisoned the earlier depth-probe readings):
+
+1. **Window scalloping**: Goertzel/DTFT windows of non-integer cycle
+   count (0.65–1.3 cycles, the earlier 5–10 ms reads) scallop ±1–2 dB
+   depending on where the tone's phase falls in the window — enough to
+   fabricate or hide envelope-shape families. Clean extractors: per-cycle
+   peak (rising zero-crossing to rising zero-crossing, cycle max — used
+   here) or integer-cycle RMS windows.
+2. **Predecessor release tails**: the M2 clip's notes are 0.125 s apart
+   with 0.6 s releases — every note's decay overlaps the previous note's
+   release tail (a same-frequency phasor of up to ~0.2 amplitude through
+   ~80% of the segment), bending the measured shape. **Note 0 is the only
+   clean note** (no predecessor); all decay extraction below uses note 0.
+
+**Endpoint invariants (four pins, cycle-peak scale):** plateau
+−23.96 dBFS in ALL FOUR renders (peak-scaled; −26.97 dBFS RMS-scaled —
+the dossier's older −23.96 readings were peak-scaled, hence the 3.01 dB
+with the RMS numbers elsewhere); every curve reaches the plateau at
+u = 1.00 (t = stored decay 0.6 s) within ≤0.15 dB. **Peak/plateau =
+1/S_STORED exactly**: the clean (note-0, slow-start) first-cycle reading
+is 5.99 dB above plateau vs 20·log10(1/0.5012) = 6.02 — the stored
+sustain is a linear amplitude ratio (the rev-1 WV4 law), and the envelope
+starts at 1.0 relative to the sustain's 0.5012. Fast-start curves read
+the peak low within the first cycles (5.94/5.76/5.55 dB at slopes
+0/0.5/1.0) — a reading artifact, not a level law.
+
+**The warp curve** (dB above plateau at the D16-style probe points, note
+0, cycle peaks):
+
+| slope | +25 ms | +75 ms | +150 ms | +325 ms | +500 ms | +575 ms |
+|-------|--------|--------|---------|---------|---------|---------|
+| −0.5 (WV20) | +5.98 | +5.94 | +5.84 | +5.30 | +3.41 | +1.22 |
+| 0.0 (WV8) | +5.82 | +5.48 | +4.87 | +3.29 | +1.36 | +0.37 |
+| 0.5 (M2) | +5.36 | +4.27 | +2.83 | +0.92 | +0.18 | +0.03 |
+| +1.0 (WV21) | +4.80 | +3.02 | +1.28 | +0.15 | +0.01 | +0.00 |
+
+**Law verdict.** The decay segment is an **endpoint-pinned exponential
+warp of the remaining fraction, with warp rate linear in the stored
+slope**:
+
+```
+v(u) = (e^(−k·u) − e^(−k)) / (1 − e^(−k)),   u = t / stored_decay
+k = 7.41 · Slopes_Decay                      (k → 0 limit: v = 1 − u)
+a(t) = sustain + (peak − sustain) · v(u),    peak = sustain / S_STORED
+```
+
+One fitted scalar total (C = 7.41, fitted jointly on all four renders
+against pinned endpoints): residual RMS 0.036 dB overall —
+0.052 / 0.028 / 0.023 / 0.034 dB for slopes −0.5 / 0.0 / 0.5 / +1.0,
+worst single point 0.14 dB (slope −0.5 at u = 0.97, the knee of the
+convex curve where one cycle straddles the sharpest bend). Slope 0.0
+lands on the k→0 linear limit to 0.028 dB RMS over the whole segment —
+D16's linear-ramp reading CONFIRMED by clean extraction (the analyzer's D16-point
+cross-check, +5.54 dB at u=0.125 and +3.37 dB at u=0.542, sits 0.10/0.11
+dB above the pure ramp — within the ±1-LSB cycle-peak quantization).
+Honesty marks: the expwarp FAMILY was hypothesized and tested, not
+derived from first principles; C's internal origin (why 7.41) is open;
+the linear-in-slope join is validated at four points including both
+extremes and 0, and the −1.0 endpoint is extrapolation. Supersedes the
+rev-1/rev-2 "slope 0.5 = one-pole τ=0.170 s" reading: that fit ran on
+scalloped windows with a contaminated note and a free peak anchor; the
+expwarp at k = 3.70 does approximate a one-pole λ ≈ 3.7 (τ ≈ 0.16 s)
+over the mid-segment, which is why the old number fitted to 0.35 dB, but
+it misses both pinned endpoints, and no one-pole family can produce the
+convex (slow-start) half of the sweep at all — slope −0.5 needs the
+negative-k branch. Attack/Release slopes are untested against this
+family (the release's rev-1 product-form fit carries the same window
+caveats; re-read with cycle peaks before reuse).
+
+## VC ladder stereo re-read — WV12/WV13, both channels CLOSED (2026-10-09, unison-stereo lane)
+
+The VoiceCount ladder (2026-10-08) was read LEFT-channel-only; after rev 4's
+WV19 stereo proof, the archived short-note VC renders were re-read in
+stereo. Analyzer: `analyze_wv_vc_stereo.py` (renders read-only from
+`~/tools/live-re/archive-20261007/renders-final/`, M2 mode-0 reference from
+`harness/renders/`): Hann-weighted fine Goertzel scan around h1 per
+channel, whole steady window per note ([k+0.15, k+0.85] s; note 3 also with
+its unmasked release tail [3.15, 4.35] s — the highest-resolution window),
+grid + parabolic refinement. **Skirt calibration from M2 (mode 0)**: the
+Hann window mirrors the h1 line ~30 dB down at ±3.3 Hz (−54.1 vs
+−23.6 dBFS) and the scan floor sits near −95/−56 dB; every sub-−50 entry
+below is that skirt. D15's "−0.50 Hz weak line (−36)" is the RECT window's
+skirt of the −50-cent voice (rect gain at Δf·T = 3.25·0.45 = −13.3 dB;
+measured −12.8) — a left-channel artifact, exactly as rev 4 anticipated.
+
+Per-channel h1 lines, note-1 steady window (offset from f0 / cents / dBFS;
+the note-3+tail window agrees to ≤0.3 cents, levels −1.6 dB from the
+release decay it includes):
+
+| render | L channel | R channel |
+|---|---|---|
+| M2 (mode 0) | +0.0¢ / −23.6 (single line) | identical |
+| WV9B (VC3) | −50.7¢ / −25.4 · +1.2¢ / −28.6 | +50.1¢ / −25.5 · +0.2¢ / −28.4 |
+| WV12 (VC2) | **−50.1¢ / −23.6 (only line)** | **+50.2¢ / −23.7 (only line)** |
+| WV13 (VC4) | **−50.1¢ / −26.6 · +16.5¢ / −26.6** | **−16.4¢ / −26.6 · +50.0¢ / −26.6** |
+
+**Verdicts.**
+
+- **VC2 = {−50, +50} cents, NOT {−50, 0}.** L holds only the −50-cent
+  voice, R only a +50.2-cent voice at the same level (−23.6/−23.7 dBFS);
+  nothing near 0 in either channel above the skirt. The crate-cited
+  "no +3.75 counterpart" was the left-channel shadow.
+- **VC4 = {−50, −16.7, +16.7, +50} cents confirmed** (within 0.3 cents of
+  the shell values) — but the pan deal is **alternating hard-L/hard-R in
+  ascending detune order, NOT pan = 2k/(N−1)−1**: voice 0 (−50¢) L-only,
+  voice 1 (−16.7¢) **R-only**, voice 2 (+16.7¢) **L-only**, voice 3 (+50¢)
+  R-only. Each voice is absent from its opposite channel below the ~−56 dB
+  scan floor (≥22 dB channel ratio → hard pan; a ±1/3 equal-power pan would
+  read only −4.77 dB). Cross-check: pan-null combinations
+  (0.5·L − (√3/2)·R and (√3/2)·L − 0.5·R, note-3+tail) put all four voices
+  within ≤0.9 dB of the hard-deal prediction {−6, −1.3, −6, −1.3} dB —
+  under the 2k/(N−1)−1 reading they would have nulled voices 1/2 outright.
+- **General pan law: voices dealt alternately hard-L/hard-R by ascending
+  detune; odd VoiceCount's middle voice sits centre (bit-identical L/R,
+  rev 4).** Observed: VC2 {L, R}, VC3 {L, centre, R}, VC4 {L, R, L, R}.
+- **Per-voice gain vs the mode-0 solo h1 (own channel): N=2 → 0.0 dB,
+  N=3 → −1.8/−1.9 dB, N=4 → −3.0 dB** — equal per-voice gains in every
+  layout. g = √(2/N)·solo fits this ladder (0.0/−1.76/−3.01) better than
+  rev 4's N^(−1/4) hypothesis (−1.5/−2.5/−3.0), but the WV19 long-note N=3
+  reading (−2.35) sits between the two: the gain law stays OPEN, both
+  candidates recorded, none fitted. **CLOSED 2026-10-09 — see the next
+  section.**
+
+**Crate verdict** (`packages/live-dynamics/src/wavetable.rs`,
+`unison::detunes_cents`): the `2 => vec![-s, 0.0]` special case is WRONG —
+VC2 is `[-s, +s]`, which the general `n =>` arm already produces; the
+special case (and its docstring justification, which cites the
+left-channel shadow) should be deleted. The module models no pans, so no
+pan change is needed there; if pans are ever modeled, use the alternating
+hard deal, not 2k/(N−1)−1. (Enacted — commit d192e1414.)
+
+## Per-voice gain law CLOSED — √(2/N) per voice, centre voice equal-power split (2026-10-09, gain-law lane)
+
+Every voice re-read on ONE footing: per-channel h1 (Hann Goertzel,
+grid+parabolic, same pattern as `analyze_wv_vc_stereo.py`) against **M2's
+h1 in the same channel**, vs-solo. Analyzer
+`harness/analyze_wv_gain_law.py` (renders read-only). WV19's long note was
+read twice: window [0.15, 0.85] s — matched to M2's note-life phase — and
+the long steady window [1.0, 3.9] s.
+
+Two confusions resolved first:
+
+- "N=2 reads 0.0, contradicting √(2/N)": no — √(2/2) = 1 → 0.0 dB is the
+  law's own prediction. The −1.50/−2.38/−3.01 prediction row quoted in the
+  brief belongs to N^(−1/4), which this ladder excludes at N=2 by 1.5 dB.
+- The WV19 "−2.35 at N=3" was never a vs-solo gain: it was the
+  within-patch outer−centre ratio, and it is stale — the committed
+  `analyze_wv19_unison_long.py` prints outer−centre −3.01 today, and the
+  phase-matched vs-solo read below reproduces the short-note ladder to
+  ≤0.1 dB.
+
+Measured law (per-channel voice counts under the proven alternating
+hard-pan deal: N=2 → 1/ch, N=3 → 2/ch, N=4 → 2/ch):
+
+| N | voice | g measured L/R (dB) | predicted | residual |
+|---|---|---|---|---|
+| 2 | hard | +0.03 / −0.06 | √(2/2) = 0.00 | ≤0.06 |
+| 3 | hard | −1.84 / −1.84 | √(2/3) = −1.76 | −0.08 |
+| 3 | centre | −4.98 / −4.79 | 1/√3 = −4.77 | −0.21 / −0.02 |
+| 4 | hard | −2.98 / −3.00 | √(2/4) = −3.01 | ≤+0.03 |
+| WV19 long, phase-matched | hard | −1.90 / −1.80 | −1.76 | ≤0.14 |
+| WV19 long, phase-matched | centre | −5.02 / −4.82 | −4.77 | ≤0.25 |
+
+**Verdict: per-voice amplitude = √(2/N) × solo; the odd-N centre voice
+splits equal-power, −3.01 dB into each channel (= 1/√N).** Equivalently:
+every channel sums to unity power vs the solo channel at every N —
+measured channel sums +0.03/−0.06 (N=2), −0.12/−0.06 (N=3), +0.03/−0.00
+(N=4), −0.18/−0.04 dB (WV19 phase window). Derived vs fitted, honestly:
+the hard-voice √(2/N) is measured directly at three N (max dev 0.08 dB) —
+derived; the centre 1/√N is the channel-unity consequence confirmed at the
+only odd N measured (N=3) — odd N>3 is extrapolation, marked as such.
+Excluded: all-voices-equal (√(2/N) on the centre too) by 3.1 dB;
+N^(−1/4) by 1.5 dB at N=2.
+
+Caveat: WV19's steady window reads ALL voices a further −0.36 dB — the
+4 s note's envelope sags ~0.25 dB into sustain (hard−centre ratio
+unchanged, −3.01). Long-window vs-solo reads are therefore ~0.3 dB low,
+which is how the stale −2.35 confusion likely arose. Residuals carry a
+≤0.2 dB L/R asymmetry (dither-level).
+
+Crate (`wavetable.rs`): unison models detunes only — "spread, not gain";
+no per-voice gain, no pan. If unison voices are ever summed in a render
+path, apply this law; unity-per-voice summing would leave channels +3.0 dB
+hot at N≥3.
+
+## Attack/Release slope families — one warp law for all three segments (2026-10-09 day lane, rev 4)
+
+Three renders on the M2-default lineage (base `WV8_SLOPE0.als` — itself
+the only M2-lineage set on disk; `M2_WAVETABLE.als` was never committed —
+with `Slopes_Decay` restored to the 0.5 default, so each set is a
+single-pin delta vs the M2 default patch; builder
+`build_wv_slope_lane.py`, ET round-trip + gzip mtime=0, verified 2-element
+XML diffs):
+
+| set | pin (`Voice_Modulators_AmpEnvelope_Slopes_*` Manual) | why |
+|-----|------|-----|
+| `WV22_ASLP0` | Attack 0 → 0.0 | the brief's pin — numerically the M2 default; serves as the ET control |
+| `WV23_RSLP0` | Release 0.5 → 0.0 | the k→0 limit: release predicted linear-to-zero |
+| `WV24_ASLP1` | Attack 0 → +1.0 | the informative attack probe (the default attack slope is already 0 — a 0.0 pin alone could not test the family) |
+
+Renders `harness/renders/WV22_ASLP0.aif` / `WV23_RSLP0.aif` /
+`WV24_ASLP1.aif` (1,036,406 bytes each, 5.875 s — the lineage size; all
+three first-try under the lock). Analyzer: `analyze_wv22_ar_slopes.py`.
+
+**Windows.** Attack: note 0 at file sample 0 — the carrier phase reads
+−0.0014 rad there (no engine delay), so the 1 ms ramp (44.1 samples) is
+read sample-wise by full-envelope LSQ (attack candidate × rev-4 decay law
+held at k=3.705 × free gain/phase). Release: note 3 is the only note
+whose release has no successor (loop 11.75 beats = 5.875 s; release
+3.875–4.475 s, floor-trimmed at −55 dB below plateau — dither peaks reach
+±5 LSB in the last cycles and fabricate a slow tail), per-cycle peaks.
+
+**Controls.** WV22 is dither-identical to M2 (max|Δ| 2 LSB, 2.03% >1 LSB,
+0% >8 LSB — the export-dither signature): the ET round-trip renders
+bit-equivalently and attack slope 0.0 IS the default state. WV24 differs
+from M2 in exactly 170 samples clustered at t = 0/1/2/3 s (the four
+attack ramps; max|Δ| 785 LSB) — nothing else moved. All three renders
+read identical decay probes (+5.36/+4.27/+2.83/+0.92 dB at
++25/+75/+150/+325 ms) and the −23.96 dBFS plateau.
+
+**Attack (sample-level, note 0).** M2/WV22 (slope 0): the ramp is
+**linear-in-time** — free k = +0.012 (≈0; residual 1.7 LSB = dither), and
+the readable demod columns rise 3387/3575/3763/3953/4140 at samples
+36/38/40/42/44 (~94.3/sample, full at 44.1). WV24 (slope +1.0): the
+linear model misses by 542 LSB rms on the ramp; the family
+`a(u) = 1 − v(u)` fits at **free k = +7.558 (residual 1.66 LSB = dither;
+at family k = 7.41: 1.68 LSB)** — already at 99.8% amplitude by sample 36
+where linear sits at 82%. Fitted C_attack = 7.56 ± ~0.2 vs the decay's
+7.41: the same family, same scalar within 2% at the one non-zero pin.
+
+**Release (cycle peaks, note 3).** Slope 0.0 (WV23): **linear-to-zero** —
+free k = −0.06 (residual 0.14 dB rms), the −40 dB point sits past
+u = 0.99 as linear predicts (render reaches the floor guard before it).
+Slope 0.5 (M2, re-read clean): **the decay expwarp fits — free
+k = +3.662, residual 0.268 dB rms over 81 cycles** (0.154 dB with the
+note-off quantized +2.4 ms ≈ one 128-sample audio block, k = +3.740 —
+within 1% of the family prediction 7.41·0.5 = 3.705). The rev-1 product
+form `(1−v)·e^(−cv)` on the same clean points: best c = 2.456, residual
+0.620 dB — 2.3× worse than a ONE-parameter expwarp, and a two-parameter
+variant (free exponent p = 0.84, c = 2.82) still loses (0.190 dB).
+Measured −40 dB crossing 4.4222 s vs expwarp model 4.4223 s. **The rev-1
+c = 2.43 release reading is superseded**: it was the best fit available
+to contaminated 20 ms windows, and its shape is refuted by the clean
+extraction.
+
+**Law verdict.** All three amp-envelope segments are the same
+endpoint-pinned exponential warp with one scalar:
+
+```
+v(u) = (e^(−k·u) − e^(−k)) / (1 − e^(−k)),   k = 7.41 · Slopes_<seg>
+attack:  a(u) = peak · (1 − v(u))       (rise 0 → peak)
+decay:   a(u) = sustain + (peak−sustain) · v(u)
+release: a(u) = level · v(u)            (fall level → 0 at the stored time)
+k → 0 limit = linear-in-time, measured on all three segments at slope 0
+```
+
+Honesty marks: C = 7.41 remains the one fitted scalar (fitted on the
+decay's four pins; attack's single +1.0 pin reads 7.56, release's single
+0.5 pin reads 7.32–7.48 depending on the off-instant quantization — both
+consistent with 7.41, but shared-C beyond the tested pins is inference,
+not measurement). Attack tested at slopes {0, +1.0} only — negative
+attack slopes and the attack join's linearity in slope beyond two points
+are untested. Release tested at {0, 0.5} only. The +0.4 dB mid-segment
+bow in the release residual profile (measured above model, both
+candidate families alike) is unexplained but does not discriminate the
+candidates. The family itself remains hypothesized-and-validated, not
+derived.
+
+## VC ladder N-extension — WV25/26/27, VC1/VC5/VC6 both channels (2026-10-09, unison-stereo lane)
+
+Three single-pin sets on the `WV9B_UNIM1.als` lineage (Mode 1, Amount 1.0;
+only `Voice_Unison_VoiceCount` changed, plus the no-op FA4 Time stamp):
+`WV25_VC1` (3→1), `WV26_VC5` (3→5), `WV27_VC6` (3→6). Builder
+`build_wv_vc_extension.py` (ET round-trip + gzip mtime=0, verified single-pin
+diffs), renders `harness/renders/WV25_VC1.aif` / `WV26_VC5.aif` /
+`WV27_VC6.aif` (1,036,406 bytes, 5.875 s — lineage size; WV25 needed two
+re-tries under the lock: one no-export-panel AX flake, one owner-focus
+exit 9; WV26 one length-slider flake). Analyzer:
+`analyze_wv25_vc_ext.py` — `analyze_wv_vc_stereo.py`'s per-channel
+Hann-weighted fine Goertzel, note-1 body [1.15, 1.85] s and the
+note-3+tail window [3.15, 4.35] s; per-voice gain = level − the M2 solo
+h1 in the same window.
+
+**Verdicts.**
+
+- **VC1 ≡ VC2 — VoiceCount 1 has no single centre voice.** WV25 renders
+  {−50.1¢ L-only, +50.2¢ R-only} at 0.0 dB vs solo — the VC2 layout
+  exactly; sample comparison against the archived WV12 render shows only
+  the export-dither signature (43.8% of samples differ, max 2 LSB; the
+  WV22 control's signature). Mode 1's effective minimum layout is the
+  ±50 hard-L/R pair.
+- **VC6 = {−50, −30, −10, +10, +30, +50} cents confirmed** (≤0.8¢ per
+  voice, note-3+tail): L holds −50.8/−9.5/+30.1, R holds
+  −30.4/+10.8/+49.7 — the even-spread law generalizes to N=6.
+- **VC5 = {−50, −25, 0, +25, +50} cents, within ~1¢** (inner pair reads
+  −26.1/+26.0; the 1¢ is neighbour-blend bias at the 1.2 s window's
+  resolution — the note-1 body blends centre+inner into one line, as
+  expected at 1.9 Hz spacing). Ends pinned ±50. The even-spread law now
+  holds at every measured N: 2/3/4/5/6.
+- **Pan alternation confirmed at N=5 and N=6.** VC5 ascending detune:
+  L, R, C, L, R (centre voice: L −32.3 vs R −32.6 dBFS, near-identical;
+  opposite channels show only ≤−52 dB skirt, ≥25 dB hard-pan ratio).
+  VC6: L, R, L, R, L, R. The general deal stands: alternate hard-L/hard-R
+  by ascending detune; odd N's middle voice centre.
+- **Per-voice gain: √(2/N) SETTLED on the short-note ladder.** Measured
+  vs the M2 solo h1: N=2 0.0, N=3 −1.8/−1.9, N=4 −3.0, N=5 outer voices
+  −4.06/−4.28 (mean −4.1), N=6 −4.5..−5.0 (mean −4.68) against
+  √(2/N) = 0/−1.76/−3.01/−3.98/−4.77 — worst mean error 0.11 dB. VC5's
+  centre voice reads −7.0/−7.4 = the same engine gain with the −3.02 dB
+  equal-power centre-pan bookkeeping, i.e. all voices share one gain.
+  The single open caveat is unchanged: WV19's long-note N=3 reading
+  (−2.35) still sits off the ladder and keeps that lineage marked.
+
+Honesty marks: VC5 inner-voice offsets carry ~1¢ blend bias (no window
+longer than 1.2 s exists on this lineage); per-voice deltas spread up to
+0.45 dB within a render (N=6), so the gain verdict rests on the
+five-point mean trend, not single pins; VC1≡VC2 is a dither-level
+identity, not a bit identity.
+
+## VC ladder top-of-control — WV28/29, VC7/VC8 both channels (2026-10-09, wt-vc78 lane)
+
+Closes the N-extension: two more single-pin sets on the `WV9B_UNIM1.als`
+lineage (Mode 1, Amount 1.0; only `Voice_Unison_VoiceCount` changed, plus the
+FA4 Time stamp): `WV28_VC7` (3→7), `WV29_VC8` (3→8). Builder
+`build_wv_vc78_extension.py` (same ET round-trip + gzip mtime=0 method,
+verified single-pin diffs), renders `harness/renders/WV28_VC7.aif` /
+`WV29_VC8.aif` (1,036,406 bytes, 5.875 s — lineage size; both first-try under
+the lock). Analyzer: `analyze_wv28_vc78.py` — the `analyze_wv25_vc_ext.py`
+per-channel fine-Goertzel read, same windows (note-1 body [1.15, 1.85] s,
+note-3+tail [3.15, 4.35] s), per-voice gain vs the M2 solo h1.
+
+**The loader accepts 7 and 8 as real states — no clamp, no reject.** Both
+renders exist at lineage size, and both are sample-distinct from every
+archived ladder render on disk (WV13/WV25/26/27: 85.6–85.8% of samples
+differ, max ~6,000 LSB — signal, not the dither signature; the VC2/VC3
+renders are not retained, but VC8's 8-line census exceeds every lower N's
+line count, so a clamp to any N ≤ 6 is excluded by construction).
+
+- **VC8 = {−50, −35.7, −21.4, −7.1, +7.1, +21.4, +35.7, +50} cents
+  confirmed — all EIGHT lines resolved** (note-3+tail, ≤0.9¢ per voice):
+  L holds −50.6/−20.9/+7.6/+34.8, R holds −36.0/−6.6/+21.6/+49.1. No centre
+  line, exactly as an even-N ladder predicts. Pan alternation extends
+  perfectly: ascending detune L,R,L,R,L,R,L,R.
+- **VC7 = {−50, −33.3, −16.7, 0, +16.7, +33.3, +50} cents, SUPPORTED with
+  the centre trio blended.** The 1.2 s window resolves 16.7¢ ≈ 0.94 Hz
+  spacing only partially: edges and second ring pin to ≤1¢ (L −49.4/+33.8,
+  R −33.1/+50.7), while the inner trio reads as TWO elevated blend lines
+  straddling 0 — L −12.0 (−3.17 dB vs solo, ~2 dB above single-voice level),
+  R +10.1 (−3.43, same elevation). The elevation + the straddle are the
+  expected signature of the centre voice centre-panned into BOTH channels
+  (the N=5 deal) blending with its ±16.7¢ channel neighbours. Channel
+  membership matches the continued alternation L,R,L,centre,R,L,R exactly.
+- **Gain: √(2/N) holds at the top.** VC7 single lines −5.18…−5.81 (mean
+  −5.6) vs √(2/7) = −5.44; VC8's eight lines −5.04…−5.98 (mean −5.41) vs
+  √(2/8) = −6.02, the +0.6 dB reading being neighbour-blend inflation at
+  0.81 Hz spacing — same caveat class as the whole short-note ladder.
+
+**The N-extension is CLOSED: the even-spread law (N voices at
+k/(N−1)·2−1 scaled to ±50¢ × Amount), alternating hard-L/hard-R pan with the
+odd-N centre voice dual-channel, and the √(2/N) per-voice gain all hold at
+every measured N = 1, 2, 3, 4, 5, 6, 7, 8.** `Voice_Unison_VoiceCount` stores
+at least 1..8 as distinct loadable states; the UI control's full range is
+covered.
+
+Honesty marks: VC7's centre trio is a blend-level verdict (positions and
+elevations consistent with the predicted ladder; the three lines are not
+individually separated — no window longer than 1.2 s exists on this
+lineage); VC8's gain mean carries the +0.6 dB blend inflation; VC2/VC3
+render distinctness rests on the census, not bytes (those renders were not
+retained).

@@ -10,7 +10,7 @@ import {automationFrameReason, hasOneShotLeader, pauseAllChanges, playAllChanges
 import {
   BLEND_LABELS, EASING_LABELS, LOOP_LABELS, TYPE_LABELS, WAVE_LABELS, addLaneChange, addLaneProblem, admittedTargets, dragLaneIds, effectiveLane, effectiveReadout,
   handleFrame, handlePosition, handleStep, handleValue, laneCurve, laneFieldBounds, laneFieldLabel, laneFieldStep, laneGroups, laneLine, laneRole,
-  laneValuesChange, linkLaneChange, moveLaneIds, orderLanesChange, parseLaneNumber, removeLaneChange, targetLabel, valueFraction,
+  MONITOR_TRACE_LIMIT, laneValuesChange, linkLaneChange, monitorTrace, moveLaneIds, orderLanesChange, parseLaneNumber, removeLaneChange, targetLabel, valueFraction,
   type Lane, type LaneGroup, type LaneHandle, type LaneNumber, type LaneRole,
 } from './nativeSceneFace.automation.ts'
 import './NativeSceneFace.automation.css'

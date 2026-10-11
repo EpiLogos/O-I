@@ -1,0 +1,1482 @@
+// PROVENANCE: Ghidra 12.1.4 decompiles + nm decodes, persistent project
+// LiveRE2 (~/tools/live-re/ghidra-proj2, ALREADY ANALYZED), Live.arm64
+// (Live 12.0.25, 2024-08-27_2627c43816), arm64 slice. Query-only (no
+// re-import; no Live runs, no renders in this lane). Owner-private analysis
+// evidence. NOT FOR REDISTRIBUTION. Never enters product source
+// (packages/live-dynamics).
+// Captured 2026-10-10 (delay binary lane) via SearchProbe/BlockProbe/
+// DataProbe scripts + `nm -U` on Live.arm64. Companion dossier:
+// devices/delay-derivation.md.
+// Contents: (1) nm census (devicekit DelayDevice surface + blocks::delay);
+// (2) create wrapper chain + ctor; (3) CalcMainSingleSample; (4) key event
+// setters (SmoothingMode / BeatDelayTimes / CompatibilityType / DryWetMode /
+// PingPong / Freeze / times); (5) const-pool and static-data verdicts.
+
+======== (1) nm CENSUS (devicekit DelayDevice + model surface) ========
+5model10Modulation10AmountTime
+5model10Modulation12AmountFilter
+5model10Modulation9Frequency
+5model5Delay10DryWetModeEE
+5model5Delay10DryWetModeEEEEvfEEEEPFvPvfEvENUlSF
+5model5Delay10DryWetModeELNS
+5model5Delay13EcoProcessingEEEEvfEEEEPFvPvfEvENUlSF
+5model5Delay13EcoProcessingEEEPK
+5model5Delay13EcoProcessingELNS
+5model5Delay6DryWetEEEEvS
+5model5Delay6DryWetEEEP
+5model5Delay6DryWetEEEPK
+5model5Delay6DryWetELNS
+5model5Delay6FreezeEEEEvfEEEEPFvPvfEvENUlSF
+5model5Delay6FreezeEEEPK
+5model5Delay6FreezeELNS
+5model5Delay8FeedbackEEEEvS
+5model5Delay8FeedbackEEEP
+5model5Delay8FeedbackEEEPK
+5model5Delay8FeedbackELNS
+5model5DelayEEEEEvRT
+5model6Filter2On
+5model6Filter9Bandwidth
+5model6Filter9Frequency
+5model9DelayLine13SmoothingMode
+5model9DelayLine16SimpleDelayTimeL
+5model9DelayLine16SimpleDelayTimeR
+5model9DelayLine16SyncedSixteenthL
+5model9DelayLine16SyncedSixteenthR
+5model9DelayLine17CompatibilityMode
+5model9DelayLine18PingPongDelayTimeL
+5model9DelayLine18PingPongDelayTimeR
+5model9DelayLine4Link
+5model9DelayLine5SyncL
+5model9DelayLine5SyncR
+5model9DelayLine5TimeL
+5model9DelayLine5TimeR
+5model9DelayLine7OffsetL
+5model9DelayLine7OffsetR
+5model9DelayLine8PingPong
+
+
+======== (2) CREATE WRAPPER + CTOR + CALMAINSAMPLE ============
+FUNC 1018c56cc name=__ZN23OProcessorCreateManager18SOnProcessorCreateI15ODelayProcessorEEvR14OThreadMessage body=1 lines=11
+
+void __ZN23OProcessorCreateManager18SOnProcessorCreateI15ODelayProcessorEEvR14OThreadMessage
+               (undefined8 param_1)
+
+{
+  undefined1 auStack_48 [40];
+  
+  func_0x000101546e1c(auStack_48,param_1);
+  func_0x0001018c5708(auStack_48,param_1);
+  return;
+}
+END 1018c56cc
+FUNC 1018df8c4 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_20CalcMainSingleSampleEvEEEEPFvPvEvENUlSB_E_8__invokeESB_ body=1 lines=92
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_20CalcMainSingleSampleEvEEEEPFvPvEvENUlSB_E_8__invokeESB_
+               (long param_1)
+
+{
+  undefined4 *puVar1;
+  undefined4 *puVar2;
+  uint uVar3;
+  uint uVar4;
+  uint *puVar5;
+  long lVar6;
+  undefined8 *puVar7;
+  long lVar8;
+  undefined4 uVar9;
+  undefined4 uVar10;
+  undefined2 uStack_48;
+  
+  if (*(char *)(param_1 + 0x201) == '\0') {
+    if (*(char *)(param_1 + 0x202) != '\0') {
+code_r0x0001018df85c:
+      if (*(char *)(param_1 + 0x203) != '\0') {
+        puVar5 = *(uint **)(param_1 + 0xa8);
+        uVar4 = puVar5[2];
+        *(undefined1 *)((long)puVar5 + (ulong)uVar4 * 2 + 0xd) = 0;
+        LOAcquire();
+        uVar3 = *puVar5;
+        *puVar5 = uVar4 << 0x10 | 1;
+        LORelease();
+        puVar5[2] = uVar3 >> 0x10;
+        *(undefined1 *)(param_1 + 0x203) = 0;
+      }
+code_r0x0001018df88c:
+      *(undefined4 *)(param_1 + 0x228) = 1;
+      func_0x00010154e720(*(undefined8 *)(param_1 + 0x30),param_1 + 0x208);
+      *(undefined1 *)(param_1 + 0x238) = 1;
+      goto code_r0x0001018df8a4;
+    }
+  }
+  else {
+    lVar6 = *(long *)(param_1 + 0xb8);
+    if (*(char *)(param_1 + 0x200) == '\0') {
+      uVar4 = func_0x000103b724b8(lVar6 + 0xd28);
+      uVar4 = uVar4 ^ 1;
+      uVar3 = (uint)*(byte *)(param_1 + 0x202);
+      if (uVar3 != uVar4) goto code_r0x0001018df858;
+    }
+    else {
+      uVar4 = 1;
+      uVar3 = (uint)*(byte *)(param_1 + 0x202);
+      if (*(byte *)(param_1 + 0x202) != 1) {
+code_r0x0001018df858:
+        if ((uVar4 & 1) == 0) goto code_r0x0001018df85c;
+        goto code_r0x0001018df88c;
+      }
+    }
+    if (uVar3 != 0) {
+      uStack_48 = 0;
+      puVar1 = *(undefined4 **)(param_1 + 0x1d0);
+      puVar2 = *(undefined4 **)(param_1 + 0x1d8);
+      if (*(long *)(lVar6 + 0xd20) != 0) {
+        lVar8 = *(long *)(lVar6 + 0xd20) << 3;
+        puVar7 = (undefined8 *)(lVar6 + 0x8e0);
+        do {
+          (**(code **)(*(long *)*puVar7 + 0x18))();
+          lVar8 = lVar8 + -8;
+          puVar7 = puVar7 + 1;
+        } while (lVar8 != 0);
+      }
+      uVar10 = *puVar2;
+      uVar9 = func_0x000103b72444(*puVar1,lVar6 + 0xd28);
+      *(undefined4 *)(param_1 + 0x1e0) = uVar9;
+      *(undefined4 *)(param_1 + 0x1e4) = uVar10;
+      func_0x000103b724b4(lVar6 + 0xd28,&uStack_48);
+      if ((uStack_48._1_1_ != '\0') || (*(char *)(param_1 + 0x203) != '\0')) {
+        *(char *)(param_1 + 0x203) = uStack_48._1_1_;
+        puVar5 = *(uint **)(param_1 + 0xa8);
+        uVar4 = puVar5[2];
+        *(char *)((long)puVar5 + (ulong)uVar4 * 2 + 0xd) = uStack_48._1_1_;
+        LOAcquire();
+        uVar3 = *puVar5;
+        *puVar5 = uVar4 << 0x10 | 1;
+        LORelease();
+        puVar5[2] = uVar3 >> 0x10;
+      }
+      goto code_r0x0001018df8a4;
+    }
+  }
+  *(undefined8 *)(param_1 + 0x1e0) = 0;
+code_r0x0001018df8a4:
+  *(undefined8 *)(param_1 + 0x40) = *(undefined8 *)(param_1 + 0x38);
+  return;
+}
+END 1018df8c4
+FUNC 1018df638 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvP10OSchedulerEE14SProcessorFuncIXadL_ZNS6_4InitES8_EEEEPFvPvS8_EvENUlSD_S8_E_8__invokeESD_S8_ body=1 lines=67
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvP10OSchedulerEE14SProcessorFuncIXadL_ZNS6_4InitES8_EEEEPFvPvS8_EvENUlSD_S8_E_8__invokeESD_S8_
+               (long param_1)
+
+{
+  long *plVar1;
+  long lVar2;
+  long lVar3;
+  
+  func_0x0001018df51c();
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0xe8) = lVar2 + 800;
+  lVar3 = *(long *)(lVar2 + 0x328);
+  *(long *)(param_1 + 200) = lVar3;
+  *(undefined8 *)(param_1 + 0xd0) = 0;
+  plVar1 = (long *)(lVar2 + 0x330);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0xc0;
+  *(long *)(lVar2 + 0x328) = param_1 + 0xc0;
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0x118) = lVar2 + 0x260;
+  lVar3 = *(long *)(lVar2 + 0x268);
+  *(long *)(param_1 + 0xf8) = lVar3;
+  *(undefined8 *)(param_1 + 0x100) = 0;
+  plVar1 = (long *)(lVar2 + 0x270);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0xf0;
+  *(long *)(lVar2 + 0x268) = param_1 + 0xf0;
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0x148) = lVar2 + 0x290;
+  lVar3 = *(long *)(lVar2 + 0x298);
+  *(long *)(param_1 + 0x128) = lVar3;
+  *(undefined8 *)(param_1 + 0x130) = 0;
+  plVar1 = (long *)(lVar2 + 0x2a0);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0x120;
+  *(long *)(lVar2 + 0x298) = param_1 + 0x120;
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0x178) = lVar2 + 0x2d8;
+  lVar3 = *(long *)(lVar2 + 0x2e0);
+  *(long *)(param_1 + 0x158) = lVar3;
+  *(undefined8 *)(param_1 + 0x160) = 0;
+  plVar1 = (long *)(lVar2 + 0x2e8);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0x150;
+  *(long *)(lVar2 + 0x2e0) = param_1 + 0x150;
+  lVar2 = *(long *)(param_1 + 0x30);
+  *(long *)(param_1 + 0x1a8) = lVar2 + 0x2f0;
+  lVar3 = *(long *)(lVar2 + 0x2f8);
+  *(long *)(param_1 + 0x188) = lVar3;
+  *(undefined8 *)(param_1 + 400) = 0;
+  plVar1 = (long *)(lVar2 + 0x300);
+  if (lVar3 != 0) {
+    plVar1 = (long *)(lVar3 + 0x10);
+  }
+  *plVar1 = param_1 + 0x180;
+  *(long *)(lVar2 + 0x2f8) = param_1 + 0x180;
+  return;
+}
+END 1018df638
+
+======== (2b) SHELL CTOR WRAPPER + KEY LAMBDAS ============
+FUNC 1018c5708 name=FUN_1018c5708 body=1 lines=19
+
+long FUN_1018c5708(undefined8 param_1,undefined8 param_2)
+
+{
+  undefined8 uVar1;
+  long lVar2;
+  long *plVar3;
+  undefined1 uStack_35;
+  int iStack_34;
+  
+  uVar1 = func_0x00010153be8c(param_2,&iStack_34);
+  func_0x00010153be4c(uVar1,&uStack_35);
+  lVar2 = func_0x00010153ff88(0x28);
+  func_0x000101545cf4(lVar2,param_1,iStack_34 + 0x268,uStack_35);
+  plVar3 = (long *)func_0x0001018a46f4(*(undefined8 *)(lVar2 + 0x18),param_1,param_2);
+  *plVar3 = (long)(PTR_DAT_1050a2ef8 + 0x10);
+  func_0x000101545e84(lVar2);
+  return lVar2;
+}
+END 1018c5708
+FUNC 1018efde0 name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKNS_6blocks5delay13SmoothingModeEEZNS_7devices5delay11DelayDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINSA_5model5DelayEEEEEvRT_EUlSI_E_E6invokeEPvS7_ body=1 lines=12
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKNS_6blocks5delay13SmoothingModeEEZNS_7devices5delay11DelayDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINSA_5model5DelayEEEEEvRT_EUlSI_E_E6invokeEPvS7_
+               (long *param_1,undefined4 *param_2)
+
+{
+  long lVar1;
+  
+  lVar1 = *param_1;
+  *(undefined4 *)(lVar1 + 0x1a10) = *param_2;
+  *(undefined1 *)(lVar1 + 0x1a44) = 1;
+  return;
+}
+END 1018efde0
+FUNC 1018f006c name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKNS_6blocks5delay14BeatDelayTimesEEZNS_7devices5delay11DelayDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINSA_5model5DelayEEEEEvRT_EUlSI_E11_E6invokeEPvS7_ body=1 lines=14
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKNS_6blocks5delay14BeatDelayTimesEEZNS_7devices5delay11DelayDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINSA_5model5DelayEEEEEvRT_EUlSI_E11_E6invokeEPvS7_
+               (long *param_1,undefined4 *param_2)
+
+{
+  ulong uVar1;
+  long lVar2;
+  
+  lVar2 = *param_1;
+  uVar1 = func_0x000103b72644(lVar2,*param_2);
+  *(float *)(lVar2 + 0x1a20) = (float)uVar1;
+  *(undefined1 *)(lVar2 + 0x1a44) = 1;
+  return;
+}
+END 1018f006c
+FUNC 1018f001c name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvNS_7devices5delay5model17CompatibilityTypeEEZNS4_11DelayDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS5_5DelayEEEEEvRT_EUlSE_E10_E6invokeEPvS6_ body=1 lines=13
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvNS_7devices5delay5model17CompatibilityTypeEEZNS4_11DelayDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS5_5DelayEEEEEvRT_EUlSE_E10_E6invokeEPvS6_
+               (long *param_1,int param_2)
+
+{
+  long lVar1;
+  
+  lVar1 = *param_1;
+  *(int *)(lVar1 + 0x1a40) = param_2;
+  func_0x0001036e5a34(lVar1,param_2 != 0);
+  *(undefined1 *)(lVar1 + 0x1a44) = 1;
+  return;
+}
+END 1018f001c
+FUNC 1018f0294 name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvNS_6blocks5delay10DryWetModeEEZNS_7devices5delay11DelayDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS8_5model5DelayEEEEEvRT_EUlSG_E24_E6invokeEPvS5_ body=1 lines=19
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvNS_6blocks5delay10DryWetModeEEZNS_7devices5delay11DelayDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINS8_5model5DelayEEEEEvRT_EUlSG_E24_E6invokeEPvS5_
+               (undefined1 param_1 [16],undefined4 param_2,long *param_3,int param_4)
+
+{
+  long lVar1;
+  undefined4 uVar2;
+  
+  lVar1 = *param_3;
+  *(int *)(lVar1 + 0x74) = param_4;
+  uVar2 = 1;
+  if (param_4 != 0) {
+    uVar2 = 2;
+  }
+  uVar2 = func_0x00010179afd0(lVar1 + 0x78,uVar2);
+  *(undefined4 *)(lVar1 + 0x80) = uVar2;
+  *(undefined4 *)(lVar1 + 0x84) = param_2;
+  return;
+}
+END 1018f0294
+
+======== (2c) DELAYDEVICE CTOR + TIME/MODE CONVERTER LAWS ============
+FUNC 1018a46f4 name=FUN_1018a46f4 body=1 lines=119
+
+long FUN_1018a46f4(long param_1,int *param_2,undefined8 param_3)
+
+{
+  undefined *puVar1;
+  undefined *puVar2;
+  int iVar3;
+  long *plVar4;
+  long lVar5;
+  long lStack_90;
+  undefined8 uStack_88;
+  undefined8 uStack_80;
+  undefined8 uStack_78;
+  undefined8 uStack_70;
+  uint auStack_68 [2];
+  
+  plVar4 = (long *)func_0x0001016669a8();
+  *plVar4 = (long)(PTR_DAT_1050a45e0 + 0x10);
+  plVar4[6] = *(long *)(param_2 + 4);
+  plVar4[7] = 0;
+  plVar4[8] = 0;
+  plVar4[9] = 0;
+  plVar4[10] = (long)
+               PTR___ZZNK7ableton7utility8CallbackIFvPvELb0EE13kNullCallbackMUlvE_clEvENUlS2_S2_E_8__invokeES2_S2__1050c84b8
+  ;
+  plVar4[0xb] = 0;
+  plVar4[0xc] = 0;
+  func_0x0001017605cc(plVar4 + 0xd,plVar4 + 10);
+  *(undefined **)(param_1 + 0x78) = PTR_DAT_1050a4648 + 0x10;
+  *(undefined8 *)(param_1 + 0x88) = 0;
+  func_0x00010176136c(param_1 + 0x90,*(undefined8 *)(param_1 + 0x30));
+  uStack_70 = param_3;
+  func_0x0001018e7de4(&lStack_90,&uStack_70);
+  *(undefined **)(param_1 + 0xa0) = PTR_DAT_1050a4c78 + 0x10;
+  *(undefined8 *)(param_1 + 0xa8) = 0;
+  *(undefined4 *)(param_1 + 0xb0) = 0;
+  if (lStack_90 != 0) {
+    LOAcquire();
+    *(int *)(lStack_90 + 0x14) = *(int *)(lStack_90 + 0x14) + 1;
+    LORelease();
+    *(long *)(param_1 + 0xa8) = lStack_90;
+    *(uint *)(param_1 + 0xb0) = (uint)uStack_88;
+    if ((lStack_90 != 0) &&
+       (lVar5 = *(long *)(lRam000000010571a5b8 + ((ulong)((uint)uStack_88 >> 0x11) & 0x7ff8)),
+       lStack_90 = lVar5 + ((ulong)((uint)uStack_88 << 4) & 0xfffff0), lVar5 != 0)) {
+      LOAcquire();
+      iVar3 = *(int *)(lStack_90 + 0x14);
+      *(int *)(lStack_90 + 0x14) = iVar3 + -1;
+      LORelease();
+      if (iVar3 == 1) {
+        auStack_68[0] = (uint)uStack_88;
+        func_0x000101557be4(auStack_68,0x18);
+      }
+    }
+  }
+  uStack_70 = CONCAT44(uStack_70._4_4_,(float)*param_2);
+  uStack_88 = 0;
+  lStack_90 = 0;
+  uStack_78 = 0;
+  uStack_80 = 0;
+  func_0x0001018e8200(param_1 + 0xb8,&uStack_70,&lStack_90);
+  puVar1 = PTR_DAT_1050a54e8 + 0x10;
+  *(undefined **)(param_1 + 0xc0) = puVar1;
+  *(undefined **)(param_1 + 0xd8) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices5delay11DelayDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_19OnSampleRateChangedEvEEEEvPv_10509e098
+  ;
+  *(long *)(param_1 + 0xe0) = param_1;
+  *(undefined8 *)(param_1 + 0xe8) = 0;
+  *(undefined **)(param_1 + 0xf0) = puVar1;
+  *(undefined **)(param_1 + 0x108) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices5delay11DelayDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_14OnTempoChangedEvEEEEvPv_10509e090
+  ;
+  *(long *)(param_1 + 0x110) = param_1;
+  *(undefined8 *)(param_1 + 0x118) = 0;
+  *(undefined **)(param_1 + 0x120) = puVar1;
+  *(undefined **)(param_1 + 0x138) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices5delay11DelayDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_30OnTransportPlayingStateChangedEvEEEEvPv_10509e0a0
+  ;
+  *(long *)(param_1 + 0x140) = param_1;
+  *(undefined8 *)(param_1 + 0x148) = 0;
+  *(undefined **)(param_1 + 0x150) = puVar1;
+  puVar2 = 
+  PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices5delay11DelayDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_14OnBeatTimeJumpEvEEEEvPv_10509e088
+  ;
+  *(undefined **)(param_1 + 0x168) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices5delay11DelayDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_14OnBeatTimeJumpEvEEEEvPv_10509e088
+  ;
+  *(long *)(param_1 + 0x170) = param_1;
+  *(undefined8 *)(param_1 + 0x178) = 0;
+  *(undefined **)(param_1 + 0x180) = puVar1;
+  *(undefined **)(param_1 + 0x198) = puVar2;
+  *(long *)(param_1 + 0x1a0) = param_1;
+  *(undefined8 *)(param_1 + 0x1a8) = 0;
+  func_0x00010151348c(param_1 + 0x1b0);
+  func_0x000101513514(param_1 + 0x1c0);
+  puVar1 = 
+  PTR___ZZNK7ableton7utility8CallbackIFvfELb0EE13kNullCallbackMUlvE_clEvENUlPvfE_8__invokeES5_f_1050c8618
+  ;
+  *(undefined8 *)(param_1 + 0x1f0) = 0;
+  *(undefined8 *)(param_1 + 0x1f8) = 0;
+  *(undefined **)(param_1 + 0x1e8) = puVar1;
+  *(undefined4 *)(param_1 + 0x200) = 0;
+  func_0x00010152f478(param_1 + 0x208);
+  *(undefined **)(param_1 + 0x208) = PTR_DAT_1050a3b28 + 0x10;
+  *(long *)(param_1 + 0x230) = param_1;
+  *(undefined1 *)(param_1 + 0x238) = 0;
+  *(undefined1 *)(param_1 + 0x260) = 0;
+  *(undefined8 *)(param_1 + 0x1d0) = 0;
+  *(undefined8 *)(param_1 + 0x1e0) = 0;
+  *(undefined8 *)(param_1 + 0x1d8) = 0;
+  *(undefined8 *)(param_1 + 0x248) = 0;
+  *(undefined8 *)(param_1 + 0x240) = 0;
+  *(undefined1 *)(param_1 + 0x250) = 0;
+  func_0x00010151fc14();
+  iVar3 = func_0x000101521a5c();
+  *(undefined8 *)(param_1 + 0x40) = *(undefined8 *)(param_1 + 0x38);
+  func_0x0001018d6b64(plVar4 + 7,(long)(iVar3 << 4));
+  return param_1;
+}
+END 1018a46f4
+FUNC 103b72644 name=FUN_103b72644 body=1 lines=6
+
+undefined8 FUN_103b72644(undefined8 param_1,uint param_2)
+
+{
+  return *(undefined8 *)(&UNK_104e2b620 + (ulong)param_2 * 8);
+}
+END 103b72644
+FUNC 1036e5a34 name=FUN_1036e5a34 body=1 lines=41
+
+void FUN_1036e5a34(long param_1,int param_2)
+
+{
+  ulong uVar1;
+  code *UNRECOVERED_JUMPTABLE;
+  long lVar2;
+  undefined8 *puVar3;
+  
+  *(char *)(param_1 + 0xf4) = (char)param_2;
+  uVar1 = 4;
+  if (param_2 == 0) {
+    uVar1 = 0;
+  }
+  if (*(byte *)(param_1 + 0x7c) != 0) {
+    uVar1 = 4;
+  }
+  lVar2 = ((uVar1 | (ulong)(~(uint)*(byte *)(param_1 + 0x7c) << 7) & 0x80 |
+            (ulong)*(byte *)(param_1 + 0x1e0) << 6 | (ulong)*(byte *)(param_1 + 0x1e1) << 5) +
+           (long)*(int *)(param_1 + 100) * 8 | (ulong)*(byte *)(param_1 + 0x60) << 1) +
+          (ulong)*(byte *)(param_1 + 0xb8);
+  puVar3 = (undefined8 *)(param_1 + 0x208 + lVar2 * 0x18);
+  if (puVar3 != (undefined8 *)(param_1 + 0x1f0)) {
+    if (*(code **)(param_1 + 0x200) != (code *)0x0) {
+      (**(code **)(param_1 + 0x200))(param_1 + 0x1f8,0,1);
+      *(undefined8 *)(param_1 + 0x1f0) = 0;
+      *(undefined8 *)(param_1 + 0x200) = 0;
+    }
+    lVar2 = param_1 + 0x208 + lVar2 * 0x18;
+    UNRECOVERED_JUMPTABLE = *(code **)(lVar2 + 0x10);
+    if (UNRECOVERED_JUMPTABLE != (code *)0x0) {
+      *(undefined8 *)(param_1 + 0x1f0) = *puVar3;
+      *(code **)(param_1 + 0x200) = UNRECOVERED_JUMPTABLE;
+                    /* WARNING: Could not recover jumptable at 0x0001036e5b08. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (*UNRECOVERED_JUMPTABLE)(param_1 + 0x1f8,lVar2 + 8,0);
+      return;
+    }
+  }
+  return;
+}
+END 1036e5a34
+FUNC 1018f00bc name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKNS_6blocks5delay14BeatDelayTimesEEZNS_7devices5delay11DelayDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINSA_5model5DelayEEEEEvRT_EUlSI_E12_E6invokeEPvS7_ body=1 lines=14
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKNS_6blocks5delay14BeatDelayTimesEEZNS_7devices5delay11DelayDevice12setCallbacksINS_9devicekit29TickableSampleRateDeviceModelINSA_5model5DelayEEEEEvRT_EUlSI_E12_E6invokeEPvS7_
+               (long *param_1,undefined4 *param_2)
+
+{
+  ulong uVar1;
+  long lVar2;
+  
+  lVar2 = *param_1;
+  uVar1 = FUN_103b72644(lVar2,*param_2);
+  *(float *)(lVar2 + 0x1a24) = (float)uVar1;
+  *(undefined1 *)(lVar2 + 0x1a44) = 1;
+  return;
+}
+END 1018f00bc
+FUNC 10179afd0 name=FUN_10179afd0 body=1 lines=64
+
+float FUN_10179afd0(float *param_1,undefined4 param_2)
+
+{
+  bool bVar1;
+  float fVar2;
+  float fVar3;
+  undefined8 uVar4;
+  float fVar5;
+  
+  switch(param_2) {
+  default:
+    return 1.0 - *param_1;
+  case 1:
+    break;
+  case 2:
+    fVar2 = (*param_1 * 2.0 + -1.0) * 1.5707964;
+    fVar3 = fVar2 * fVar2;
+    fVar3 = fVar2 * (((fVar3 * -0.00018284567 + 0.008304825) * fVar3 + -0.16664949) * fVar3 +
+                    0.99999833) * 0.5 + 0.5;
+    fVar2 = fVar3;
+    if (fVar3 <= 0.0) {
+      fVar2 = 0.0;
+    }
+    bVar1 = 1.0 <= fVar3;
+    if (1.0 < fVar3) {
+      fVar3 = 1.0;
+    }
+    if (bVar1) {
+      fVar2 = fVar3;
+    }
+    fVar3 = (1.0 - fVar2) * 1.5707964;
+    fVar2 = fVar3 * fVar3;
+    fVar3 = fVar3 * (((fVar2 * -0.00018284567 + 0.008304825) * fVar2 + -0.16664949) * fVar2 +
+                    0.99999833);
+    fVar2 = fVar3;
+    if (fVar3 <= 0.0) {
+      fVar2 = 0.0;
+    }
+    uVar4 = NEON_fmov(0x3f800000,4);
+    fVar5 = 1.0;
+    if (fVar3 <= (float)((ulong)uVar4 >> 0x20)) {
+      fVar5 = fVar3;
+    }
+    if (1.0 <= fVar3) {
+      fVar2 = fVar5;
+    }
+    return fVar2;
+  case 3:
+    return SQRT(1.0 - *param_1);
+  }
+  fVar2 = (*param_1 + -0.5) * 3.1415927;
+  fVar3 = fVar2 * fVar2;
+  fVar2 = fVar2 * (((fVar3 * -0.00018284567 + 0.008304825) * fVar3 + -0.16664949) * fVar3 +
+                  0.99999833) * -0.5 + 0.5;
+  fVar3 = fVar2;
+  if (1.0 < fVar2) {
+    fVar3 = 1.0;
+  }
+  if (1.0 <= fVar2) {
+    fVar2 = fVar3;
+  }
+  return fVar2;
+}
+END 10179afd0
+
+======== (3) SYNCED-TIME TABLE + TRANSPORT CALLBACKS + MODEL INIT ============
+FUNC 1018e8200 name=FUN_1018e8200 body=1 lines=43
+
+long * FUN_1018e8200(long *param_1,undefined4 *param_2)
+
+{
+  long lVar1;
+  long lVar2;
+  long lVar3;
+  undefined4 uVar4;
+  
+  lVar2 = func_0x00010153fb98(0x2778,0x10);
+  uVar4 = *param_2;
+  lVar3 = func_0x0001018e82e8();
+  lVar1 = lVar3 + 0x8e0;
+  *(long *)(lVar3 + 0x10) = lVar1;
+  *(long *)(lVar3 + 0x60) = lVar1;
+  *(long *)(lVar3 + 0xb0) = lVar1;
+  *(long *)(lVar3 + 0x100) = lVar1;
+  *(long *)(lVar3 + 0x150) = lVar1;
+  *(long *)(lVar3 + 0x1b8) = lVar1;
+  *(long *)(lVar3 + 0x220) = lVar1;
+  *(long *)(lVar3 + 0x280) = lVar1;
+  *(long *)(lVar3 + 0x2e0) = lVar1;
+  *(long *)(lVar3 + 0x340) = lVar1;
+  *(long *)(lVar3 + 0x3a0) = lVar1;
+  *(long *)(lVar3 + 0x3f0) = lVar1;
+  *(long *)(lVar3 + 0x440) = lVar1;
+  *(long *)(lVar3 + 0x4a0) = lVar1;
+  *(long *)(lVar3 + 0x500) = lVar1;
+  *(long *)(lVar3 + 0x580) = lVar1;
+  *(long *)(lVar3 + 0x5d0) = lVar1;
+  *(long *)(lVar3 + 0x620) = lVar1;
+  *(long *)(lVar3 + 0x680) = lVar1;
+  *(long *)(lVar3 + 0x6e0) = lVar1;
+  *(long *)(lVar3 + 0x740) = lVar1;
+  *(long *)(lVar3 + 0x7a0) = lVar1;
+  *(long *)(lVar3 + 0x800) = lVar1;
+  *(long *)(lVar3 + 0x860) = lVar1;
+  *(undefined8 *)(lVar2 + 0xd20) = 0;
+  func_0x0001018ee654(uVar4,lVar3 + 0xd28,lVar2);
+  *(undefined1 *)(lVar2 + 0x2770) = 1;
+  *param_1 = lVar2;
+  return param_1;
+}
+END 1018e8200
+FUNC 1018d6b64 name=FUN_1018d6b64 body=1 lines=126
+
+void FUN_1018d6b64(long *param_1,ulong param_2)
+
+{
+  undefined *puVar1;
+  int *piVar2;
+  int iVar3;
+  long lVar4;
+  long *plVar5;
+  long *plVar6;
+  long lVar7;
+  long lVar8;
+  long lVar9;
+  long lVar10;
+  long lVar11;
+  long lVar12;
+  long lVar13;
+  undefined4 auStack_98 [2];
+  undefined1 auStack_68 [8];
+  
+  lVar7 = *param_1;
+  if ((ulong)(param_1[2] - lVar7 >> 5) < param_2) {
+    if (param_2 >> 0x3b != 0) {
+      func_0x0001018d2380(param_1);
+      func_0x000100234a18();
+      plVar5 = (long *)func_0x000100234a18();
+      *plVar5 = (long)(PTR_DAT_1050a45a8 + 0x10);
+      if (plVar5[0x48] != 0) {
+        func_0x00010153ffa8();
+      }
+      plVar5[0x41] = (long)(PTR_DAT_1050a6a38 + 0x10);
+      func_0x00010153f844(plVar5[0x3f]);
+      plVar5[0x3f] = 0;
+      func_0x0001015134d0(plVar5 + 0x36);
+      puVar1 = PTR_DAT_1050a2748 + 0x10;
+      plVar5[0x30] = (long)puVar1;
+      plVar5[0x2a] = (long)puVar1;
+      plVar5[0x24] = (long)puVar1;
+      plVar5[0x1e] = (long)puVar1;
+      lVar7 = plVar5[0x17];
+      plVar5[0x17] = 0;
+      plVar5[0x18] = (long)puVar1;
+      if (lVar7 != 0) {
+        func_0x0001018d5bc8();
+        func_0x00010153fbec();
+      }
+      plVar5[0x14] = (long)(PTR_DAT_1050a4c48 + 0x10);
+      if (plVar5[0x15] != 0) {
+        lVar8 = *(long *)(lRam000000010571a5b8 +
+                         ((ulong)(*(uint *)(plVar5 + 0x16) >> 0x11) & 0x7ff8));
+        lVar7 = lVar8 + ((ulong)(*(uint *)(plVar5 + 0x16) << 4) & 0xfffff0);
+        plVar5[0x15] = lVar7;
+        if (lVar8 != 0) {
+          piVar2 = (int *)(lVar7 + 0x14);
+          LOAcquire();
+          iVar3 = *piVar2;
+          *piVar2 = iVar3 + -1;
+          LORelease();
+          if (iVar3 == 1) {
+            auStack_98[0] = (undefined4)plVar5[0x16];
+            func_0x000101557be4(auStack_98,0x18);
+          }
+          *(undefined4 *)(plVar5 + 0x16) = 0;
+          plVar5[0x15] = 0;
+        }
+      }
+      plVar5[0xf] = (long)(PTR_DAT_1050a4648 + 0x10);
+      lVar7 = plVar5[0x11];
+      if (lVar7 != 0) {
+        plVar6 = plVar5 + 0x10;
+        do {
+          lVar7 = lVar7 + -1;
+          lVar8 = func_0x000101760850(plVar6);
+          plVar6 = (long *)(lVar8 + 0xe0);
+        } while (lVar7 != 0);
+      }
+      func_0x00010153f844(plVar5[0xc]);
+      plVar5[0xc] = 0;
+      lVar7 = plVar5[7];
+      if (lVar7 != 0) {
+        plVar5[8] = lVar7;
+        func_0x00010153fc08(lVar7,plVar5[9] - lVar7);
+      }
+      *plVar5 = (long)(PTR_DAT_1050a30d0 + 0x10);
+      func_0x00010153f844(plVar5[4]);
+      plVar5[4] = 0;
+      func_0x0001015401b8(plVar5);
+      return;
+    }
+    lVar8 = param_1[1];
+    lVar10 = param_2 * 0x20;
+    lVar4 = func_0x00010153fc00(lVar10);
+    lVar7 = lVar4 + (lVar8 - lVar7);
+    lVar8 = *param_1;
+    lVar9 = param_1[1];
+    lVar11 = lVar7;
+    if (lVar9 == lVar8) {
+      *param_1 = lVar7;
+      param_1[1] = lVar7;
+      lVar7 = param_1[2];
+      param_1[2] = lVar4 + lVar10;
+    }
+    else {
+      do {
+        lVar13 = lVar11 + -0x20;
+        lVar12 = lVar9 + -0x20;
+        *(undefined8 *)(lVar11 + -0x10) = 0xffffffffffffffff;
+        if (*(long *)(lVar9 + -0x10) != -1) {
+          (**(code **)(&UNK_105298ec8 + *(long *)(lVar9 + -0x10) * 8))(auStack_68,lVar13,lVar12);
+        }
+        *(undefined8 *)(lVar11 + -8) = *(undefined8 *)(lVar9 + -8);
+        lVar9 = lVar12;
+        lVar11 = lVar13;
+      } while (lVar12 != lVar8);
+      lVar9 = *param_1;
+      *param_1 = lVar13;
+      param_1[1] = lVar7;
+      lVar7 = param_1[2];
+      param_1[2] = lVar4 + lVar10;
+    }
+    if (lVar9 != 0) {
+      func_0x00010153fc08(lVar9,lVar7 - lVar9);
+    }
+  }
+  return;
+}
+END 1018d6b64
+== memory at 104e2b620 (64 bytes from -16) ==
+104e2b610: 455f546c55454545  le64=x454545556c545f45
+104e2b618: 000000000000005f  le64=x5f00000000000000
+104e2b620: 0000000000000001  le64=x0100000000000000
+104e2b628: 0000000000000002  le64=x0200000000000000
+104e2b630: 0000000000000003  le64=x0300000000000000
+104e2b638: 0000000000000004  le64=x0400000000000000
+104e2b640: 0000000000000005  le64=x0500000000000000
+104e2b648: 0000000000000006  le64=x0600000000000000
+
+== nm: transport callback wrappers ==
+OnBeatTimeJumpEvEEEEvPv
+OnSampleRateChangedEvEEEEvPv
+OnTempoChangedEvEEEEvPv
+OnTransportPlayingStateChangedEvEEEEvPv
+
+======== (4) PARAMETER EVENT SETTERS (representative) ============
+FUNC 1018e7304 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9DelayLineENSD_16SyncedSixteenthLEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=59
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9DelayLineENSD_16SyncedSixteenthLEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  long *plVar3;
+  long lVar4;
+  long *plVar5;
+  long *plVar6;
+  long lVar7;
+  long *plVar8;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  *(double *)(lVar2 + 0x410) = (double)param_1;
+  *(double *)(lVar2 + 0x400) = (double)param_1;
+  *(undefined8 *)(lVar2 + 0x408) = 0;
+  *(int *)(lVar2 + 0x3f8) = (int)((float)((uint)param_1 & 0x80000000 ^ 0x3f000000) + param_1);
+  plVar3 = *(long **)(lVar2 + 0x3f0);
+  lVar4 = plVar3[0x88];
+  plVar5 = plVar3;
+  if (lVar4 == 0) {
+code_r0x0001018e7374:
+    plVar1 = plVar3 + lVar4;
+    plVar8 = plVar5 + 1;
+    plVar6 = plVar5;
+    if (plVar5 != plVar1 && plVar8 != plVar1) {
+      do {
+        plVar5 = plVar6;
+        if (*plVar8 != lVar2 + 0x3e0) {
+          plVar5 = plVar6 + 1;
+          *plVar6 = *plVar8;
+        }
+        plVar8 = plVar8 + 1;
+        plVar6 = plVar5;
+      } while (plVar8 != plVar1);
+    }
+    if (plVar5 != plVar1) {
+      plVar3[0x88] = lVar4 - ((long)plVar1 - (long)plVar5 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x0001018e73a4. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar2 + 0x418))(lVar2 + 0x420,lVar2 + 0x3f8);
+      return;
+    }
+  }
+  else {
+    lVar7 = lVar4 << 3;
+    do {
+      if (*plVar5 == lVar2 + 0x3e0) goto code_r0x0001018e7374;
+      plVar5 = plVar5 + 1;
+      lVar7 = lVar7 + -8;
+    } while (lVar7 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x0001018e7370. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar2 + 0x418))(lVar2 + 0x420);
+  return;
+}
+END 1018e7304
+FUNC 1018e6768 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9DelayLineENSD_5TimeLEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=61
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9DelayLineENSD_5TimeLEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long *plVar1;
+  long *plVar2;
+  long lVar3;
+  long *plVar4;
+  long *plVar5;
+  long lVar6;
+  long *plVar7;
+  long lVar8;
+  float fVar9;
+  
+  lVar8 = *(long *)(param_2 + 0xb8);
+  *(double *)(lVar8 + 0x1d8) = (double)param_1;
+  *(double *)(lVar8 + 0x1c8) = (double)param_1;
+  *(undefined8 *)(lVar8 + 0x1d0) = 0;
+  fVar9 = (float)_powf(param_1,*(undefined4 *)(lVar8 + 0x1b0));
+  *(float *)(lVar8 + 0x1c0) = *(float *)(lVar8 + 0x198) + *(float *)(lVar8 + 0x19c) * fVar9;
+  plVar2 = *(long **)(lVar8 + 0x1b8);
+  lVar3 = plVar2[0x88];
+  plVar4 = plVar2;
+  if (lVar3 == 0) {
+code_r0x0001018e67ec:
+    plVar1 = plVar2 + lVar3;
+    plVar7 = plVar4 + 1;
+    plVar5 = plVar4;
+    if (plVar4 != plVar1 && plVar7 != plVar1) {
+      do {
+        plVar4 = plVar5;
+        if (*plVar7 != lVar8 + 400) {
+          plVar4 = plVar5 + 1;
+          *plVar5 = *plVar7;
+        }
+        plVar7 = plVar7 + 1;
+        plVar5 = plVar4;
+      } while (plVar7 != plVar1);
+    }
+    if (plVar4 != plVar1) {
+      plVar2[0x88] = lVar3 - ((long)plVar1 - (long)plVar4 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x0001018e6824. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar8 + 0x1e0))(lVar8 + 0x1e8,lVar8 + 0x1c0);
+      return;
+    }
+  }
+  else {
+    lVar6 = lVar3 << 3;
+    do {
+      if (*plVar4 == lVar8 + 400) goto code_r0x0001018e67ec;
+      plVar4 = plVar4 + 1;
+      lVar6 = lVar6 + -8;
+    } while (lVar6 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x0001018e67e8. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar8 + 0x1e0))(lVar8 + 0x1e8);
+  return;
+}
+END 1018e6768
+FUNC 1018e6aa0 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9DelayLineENSD_18PingPongDelayTimeLEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=59
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9DelayLineENSD_18PingPongDelayTimeLEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  long *plVar3;
+  long lVar4;
+  long *plVar5;
+  long *plVar6;
+  long lVar7;
+  long *plVar8;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  *(double *)(lVar2 + 0x360) = (double)param_1;
+  *(double *)(lVar2 + 0x350) = (double)param_1;
+  *(undefined8 *)(lVar2 + 0x358) = 0;
+  *(float *)(lVar2 + 0x348) = *(float *)(lVar2 + 0x328) + *(float *)(lVar2 + 0x32c) * param_1;
+  plVar3 = *(long **)(lVar2 + 0x340);
+  lVar4 = plVar3[0x88];
+  plVar5 = plVar3;
+  if (lVar4 == 0) {
+code_r0x0001018e6b08:
+    plVar1 = plVar3 + lVar4;
+    plVar8 = plVar5 + 1;
+    plVar6 = plVar5;
+    if (plVar5 != plVar1 && plVar8 != plVar1) {
+      do {
+        plVar5 = plVar6;
+        if (*plVar8 != lVar2 + 800) {
+          plVar5 = plVar6 + 1;
+          *plVar6 = *plVar8;
+        }
+        plVar8 = plVar8 + 1;
+        plVar6 = plVar5;
+      } while (plVar8 != plVar1);
+    }
+    if (plVar5 != plVar1) {
+      plVar3[0x88] = lVar4 - ((long)plVar1 - (long)plVar5 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x0001018e6b38. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar2 + 0x368))(lVar2 + 0x370,lVar2 + 0x348);
+      return;
+    }
+  }
+  else {
+    lVar7 = lVar4 << 3;
+    do {
+      if (*plVar5 == lVar2 + 800) goto code_r0x0001018e6b08;
+      plVar5 = plVar5 + 1;
+      lVar7 = lVar7 + -8;
+    } while (lVar7 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x0001018e6b04. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar2 + 0x368))(lVar2 + 0x370);
+  return;
+}
+END 1018e6aa0
+FUNC 1018e6074 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9DelayLineENSD_4LinkEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=59
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9DelayLineENSD_4LinkEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  long *plVar3;
+  long lVar4;
+  long *plVar5;
+  long *plVar6;
+  long lVar7;
+  long *plVar8;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  *(double *)(lVar2 + 0x80) = (double)param_1;
+  *(double *)(lVar2 + 0x70) = (double)param_1;
+  *(undefined8 *)(lVar2 + 0x78) = 0;
+  *(bool *)(lVar2 + 0x68) = 0.5 <= param_1;
+  plVar3 = *(long **)(lVar2 + 0x60);
+  lVar4 = plVar3[0x88];
+  plVar5 = plVar3;
+  if (lVar4 == 0) {
+code_r0x0001018e60dc:
+    plVar1 = plVar3 + lVar4;
+    plVar8 = plVar5 + 1;
+    plVar6 = plVar5;
+    if (plVar5 != plVar1 && plVar8 != plVar1) {
+      do {
+        plVar5 = plVar6;
+        if (*plVar8 != lVar2 + 0x50) {
+          plVar5 = plVar6 + 1;
+          *plVar6 = *plVar8;
+        }
+        plVar8 = plVar8 + 1;
+        plVar6 = plVar5;
+      } while (plVar8 != plVar1);
+    }
+    if (plVar5 != plVar1) {
+      plVar3[0x88] = lVar4 - ((long)plVar1 - (long)plVar5 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x0001018e610c. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar2 + 0x88))(lVar2 + 0x90);
+      return;
+    }
+  }
+  else {
+    lVar7 = lVar4 << 3;
+    do {
+      if (*plVar5 == lVar2 + 0x50) goto code_r0x0001018e60dc;
+      plVar5 = plVar5 + 1;
+      lVar7 = lVar7 + -8;
+    } while (lVar7 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x0001018e60d8. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar2 + 0x88))(lVar2 + 0x90);
+  return;
+}
+END 1018e6074
+FUNC 1018e6254 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9DelayLineENSD_8PingPongEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=59
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9DelayLineENSD_8PingPongEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  long *plVar3;
+  long lVar4;
+  long *plVar5;
+  long *plVar6;
+  long lVar7;
+  long *plVar8;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  *(double *)(lVar2 + 0xd0) = (double)param_1;
+  *(double *)(lVar2 + 0xc0) = (double)param_1;
+  *(undefined8 *)(lVar2 + 200) = 0;
+  *(bool *)(lVar2 + 0xb8) = 0.5 <= param_1;
+  plVar3 = *(long **)(lVar2 + 0xb0);
+  lVar4 = plVar3[0x88];
+  plVar5 = plVar3;
+  if (lVar4 == 0) {
+code_r0x0001018e62bc:
+    plVar1 = plVar3 + lVar4;
+    plVar8 = plVar5 + 1;
+    plVar6 = plVar5;
+    if (plVar5 != plVar1 && plVar8 != plVar1) {
+      do {
+        plVar5 = plVar6;
+        if (*plVar8 != lVar2 + 0xa0) {
+          plVar5 = plVar6 + 1;
+          *plVar6 = *plVar8;
+        }
+        plVar8 = plVar8 + 1;
+        plVar6 = plVar5;
+      } while (plVar8 != plVar1);
+    }
+    if (plVar5 != plVar1) {
+      plVar3[0x88] = lVar4 - ((long)plVar1 - (long)plVar5 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x0001018e62ec. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar2 + 0xd8))(lVar2 + 0xe0);
+      return;
+    }
+  }
+  else {
+    lVar7 = lVar4 << 3;
+    do {
+      if (*plVar5 == lVar2 + 0xa0) goto code_r0x0001018e62bc;
+      plVar5 = plVar5 + 1;
+      lVar7 = lVar7 + -8;
+    } while (lVar7 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x0001018e62b8. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar2 + 0xd8))(lVar2 + 0xe0);
+  return;
+}
+END 1018e6254
+FUNC 1018e6480 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9DelayLineENSD_5SyncLEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=59
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9DelayLineENSD_5SyncLEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  long *plVar3;
+  long lVar4;
+  long *plVar5;
+  long *plVar6;
+  long lVar7;
+  long *plVar8;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  *(double *)(lVar2 + 0x120) = (double)param_1;
+  *(double *)(lVar2 + 0x110) = (double)param_1;
+  *(undefined8 *)(lVar2 + 0x118) = 0;
+  *(bool *)(lVar2 + 0x108) = 0.5 <= param_1;
+  plVar3 = *(long **)(lVar2 + 0x100);
+  lVar4 = plVar3[0x88];
+  plVar5 = plVar3;
+  if (lVar4 == 0) {
+code_r0x0001018e64e8:
+    plVar1 = plVar3 + lVar4;
+    plVar8 = plVar5 + 1;
+    plVar6 = plVar5;
+    if (plVar5 != plVar1 && plVar8 != plVar1) {
+      do {
+        plVar5 = plVar6;
+        if (*plVar8 != lVar2 + 0xf0) {
+          plVar5 = plVar6 + 1;
+          *plVar6 = *plVar8;
+        }
+        plVar8 = plVar8 + 1;
+        plVar6 = plVar5;
+      } while (plVar8 != plVar1);
+    }
+    if (plVar5 != plVar1) {
+      plVar3[0x88] = lVar4 - ((long)plVar1 - (long)plVar5 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x0001018e6518. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar2 + 0x128))(lVar2 + 0x130,lVar2 + 0x108);
+      return;
+    }
+  }
+  else {
+    lVar7 = lVar4 << 3;
+    do {
+      if (*plVar5 == lVar2 + 0xf0) goto code_r0x0001018e64e8;
+      plVar5 = plVar5 + 1;
+      lVar7 = lVar7 + -8;
+    } while (lVar7 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x0001018e64e4. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar2 + 0x128))(lVar2 + 0x130);
+  return;
+}
+END 1018e6480
+FUNC 1018e76cc name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9DelayLineENSD_7OffsetLEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=59
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9DelayLineENSD_7OffsetLEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  long *plVar3;
+  long lVar4;
+  long *plVar5;
+  long *plVar6;
+  long lVar7;
+  long *plVar8;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  *(double *)(lVar2 + 0x4c0) = (double)param_1;
+  *(double *)(lVar2 + 0x4b0) = (double)param_1;
+  *(undefined8 *)(lVar2 + 0x4b8) = 0;
+  *(float *)(lVar2 + 0x4a8) = *(float *)(lVar2 + 0x488) + *(float *)(lVar2 + 0x48c) * param_1;
+  plVar3 = *(long **)(lVar2 + 0x4a0);
+  lVar4 = plVar3[0x88];
+  plVar5 = plVar3;
+  if (lVar4 == 0) {
+code_r0x0001018e7734:
+    plVar1 = plVar3 + lVar4;
+    plVar8 = plVar5 + 1;
+    plVar6 = plVar5;
+    if (plVar5 != plVar1 && plVar8 != plVar1) {
+      do {
+        plVar5 = plVar6;
+        if (*plVar8 != lVar2 + 0x480) {
+          plVar5 = plVar6 + 1;
+          *plVar6 = *plVar8;
+        }
+        plVar8 = plVar8 + 1;
+        plVar6 = plVar5;
+      } while (plVar8 != plVar1);
+    }
+    if (plVar5 != plVar1) {
+      plVar3[0x88] = lVar4 - ((long)plVar1 - (long)plVar5 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x0001018e7764. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar2 + 0x4c8))(lVar2 + 0x4d0,lVar2 + 0x4a8);
+      return;
+    }
+  }
+  else {
+    lVar7 = lVar4 << 3;
+    do {
+      if (*plVar5 == lVar2 + 0x480) goto code_r0x0001018e7734;
+      plVar5 = plVar5 + 1;
+      lVar7 = lVar7 + -8;
+    } while (lVar7 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x0001018e7730. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar2 + 0x4c8))(lVar2 + 0x4d0);
+  return;
+}
+END 1018e76cc
+FUNC 1018e7874 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model5Delay6FreezeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=59
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model5Delay6FreezeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  long *plVar3;
+  long lVar4;
+  long *plVar5;
+  long *plVar6;
+  long lVar7;
+  long *plVar8;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  *(double *)(lVar2 + 0x5f0) = (double)param_1;
+  *(double *)(lVar2 + 0x5e0) = (double)param_1;
+  *(undefined8 *)(lVar2 + 0x5e8) = 0;
+  *(bool *)(lVar2 + 0x5d8) = 0.5 <= param_1;
+  plVar3 = *(long **)(lVar2 + 0x5d0);
+  lVar4 = plVar3[0x88];
+  plVar5 = plVar3;
+  if (lVar4 == 0) {
+code_r0x0001018e78dc:
+    plVar1 = plVar3 + lVar4;
+    plVar8 = plVar5 + 1;
+    plVar6 = plVar5;
+    if (plVar5 != plVar1 && plVar8 != plVar1) {
+      do {
+        plVar5 = plVar6;
+        if (*plVar8 != lVar2 + 0x5c0) {
+          plVar5 = plVar6 + 1;
+          *plVar6 = *plVar8;
+        }
+        plVar8 = plVar8 + 1;
+        plVar6 = plVar5;
+      } while (plVar8 != plVar1);
+    }
+    if (plVar5 != plVar1) {
+      plVar3[0x88] = lVar4 - ((long)plVar1 - (long)plVar5 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x0001018e790c. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar2 + 0x5f8))(lVar2 + 0x600,lVar2 + 0x5d8);
+      return;
+    }
+  }
+  else {
+    lVar7 = lVar4 << 3;
+    do {
+      if (*plVar5 == lVar2 + 0x5c0) goto code_r0x0001018e78dc;
+      plVar5 = plVar5 + 1;
+      lVar7 = lVar7 + -8;
+    } while (lVar7 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x0001018e78d8. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar2 + 0x5f8))(lVar2 + 0x600);
+  return;
+}
+END 1018e7874
+FUNC 1018e785c name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model5Delay8FeedbackEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=99
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model5Delay8FeedbackEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,float *param_2)
+
+{
+  long *plVar1;
+  float fVar2;
+  undefined1 *puVar3;
+  long lVar5;
+  long *plVar6;
+  long lVar7;
+  long lVar8;
+  long *plVar9;
+  long *plVar10;
+  undefined1 *unaff_x29;
+  undefined *unaff_x30;
+  float fVar11;
+  double dVar12;
+  double dVar13;
+  double dVar14;
+  undefined1 auVar15 [16];
+  undefined1 *puVar4;
+  
+  fVar2 = param_2[1];
+  fVar11 = *param_2;
+  lVar5 = *(long *)(param_1 + 0xb8) + 0x560;
+  puVar3 = (undefined1 *)register0x00000008;
+  while( true ) {
+    puVar4 = puVar3 + -0x10;
+    *(undefined1 **)(puVar3 + -0x10) = unaff_x29;
+    *(undefined **)(puVar3 + -8) = unaff_x30;
+    dVar12 = (double)fVar11;
+    *(double *)(lVar5 + 0x40) = dVar12;
+    if ((long)(int)fVar2 == 0) break;
+    dVar14 = *(double *)(lVar5 + 0x38);
+    dVar13 = (dVar12 - *(double *)(lVar5 + 0x30)) / (double)(ulong)(long)(int)fVar2;
+    *(double *)(lVar5 + 0x38) = dVar13;
+    dVar12 = *(double *)(lVar5 + 0x30);
+    if (dVar13 == 0.0) goto code_r0x0001018da7d4;
+    if (dVar14 != 0.0) {
+      return;
+    }
+    lVar7 = *(long *)(lVar5 + 0x20);
+    lVar8 = *(long *)(lVar7 + 0x440);
+    if (lVar8 != 0x88) {
+      *(long *)(lVar7 + lVar8 * 8) = lVar5;
+      *(long *)(lVar7 + 0x440) = lVar8 + 1;
+      return;
+    }
+    unaff_x30 = &
+                __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus7ShapingEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+    ;
+    auVar15 = func_0x000102aa7934();
+    fVar2 = auVar15._8_8_[1];
+    fVar11 = *auVar15._8_8_;
+    lVar5 = *(long *)(auVar15._0_8_ + 0xb8) + 0x50;
+    puVar3 = puVar3 + -0x10;
+    unaff_x29 = puVar4;
+  }
+  *(double *)(lVar5 + 0x30) = dVar12;
+  *(undefined8 *)(lVar5 + 0x38) = 0;
+code_r0x0001018da7d4:
+  *(float *)(lVar5 + 0x28) = *(float *)(lVar5 + 8) + *(float *)(lVar5 + 0xc) * (float)dVar12;
+  plVar6 = *(long **)(lVar5 + 0x20);
+  lVar7 = plVar6[0x88];
+  plVar9 = plVar6;
+  if (lVar7 == 0) {
+code_r0x0001018da828:
+    plVar1 = plVar6 + lVar7;
+    plVar10 = plVar9;
+END 1018e785c
+FUNC 1018e5f44 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model9DelayLineENSE_13SmoothingModeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=129
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model9DelayLineENSE_13SmoothingModeEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,float *param_2)
+
+{
+  float fVar1;
+  double dVar2;
+  double dVar3;
+  long lVar4;
+  long lVar5;
+  long lVar6;
+  long *plVar7;
+  long *plVar8;
+  long *plVar9;
+  long *plVar10;
+  long *plVar11;
+  float extraout_s0;
+  double dVar12;
+  
+  fVar1 = param_2[1];
+  lVar4 = *(long *)(param_1 + 0xb8);
+  dVar2 = (double)*param_2;
+  *(double *)(lVar4 + 0x30) = dVar2;
+  if ((long)(int)fVar1 == 0) {
+    *(double *)(lVar4 + 0x20) = dVar2;
+    *(undefined8 *)(lVar4 + 0x28) = 0;
+  }
+  else {
+    dVar12 = *(double *)(lVar4 + 0x28);
+    dVar3 = (dVar2 - *(double *)(lVar4 + 0x20)) / (double)(ulong)(long)(int)fVar1;
+    *(double *)(lVar4 + 0x28) = dVar3;
+    dVar2 = *(double *)(lVar4 + 0x20);
+    if (dVar3 != 0.0) {
+      if (dVar12 != 0.0) {
+        return;
+      }
+      lVar5 = *(long *)(lVar4 + 0x10);
+      lVar6 = *(long *)(lVar5 + 0x440);
+      if (lVar6 != 0x88) {
+        *(long *)(lVar5 + lVar6 * 8) = lVar4;
+        *(long *)(lVar5 + 0x440) = lVar6 + 1;
+        return;
+      }
+      lVar4 = func_0x000102aa7934();
+      lVar4 = *(long *)(lVar4 + 0xb8);
+      *(double *)(lVar4 + 0x30) = (double)extraout_s0;
+      *(double *)(lVar4 + 0x20) = (double)extraout_s0;
+      *(undefined8 *)(lVar4 + 0x28) = 0;
+      *(int *)(lVar4 + 0x18) =
+           (int)((float)((uint)extraout_s0 & 0x80000000 ^ 0x3f000000) + extraout_s0);
+      plVar7 = *(long **)(lVar4 + 0x10);
+      lVar5 = plVar7[0x88];
+      plVar8 = plVar7;
+      if (lVar5 == 0) {
+code_r0x0001018da720:
+        plVar10 = plVar7 + lVar5;
+        plVar11 = plVar8 + 1;
+        plVar9 = plVar8;
+        if (plVar8 != plVar10 && plVar11 != plVar10) {
+          do {
+            plVar8 = plVar9;
+            if (*plVar11 != lVar4) {
+              plVar8 = plVar9 + 1;
+              *plVar9 = *plVar11;
+            }
+            plVar11 = plVar11 + 1;
+            plVar9 = plVar8;
+          } while (plVar11 != plVar10);
+        }
+        if (plVar8 != plVar10) {
+END 1018e5f44
+FUNC 1018e7db0 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model5Delay10DryWetModeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=14
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_12OnFloatEventIJNS4_5model5Delay10DryWetModeEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long lVar1;
+  
+  lVar1 = *(long *)(param_2 + 0xb8);
+  *(int *)(lVar1 + 0x8a0) = (int)param_1;
+                    /* WARNING: Could not recover jumptable at 0x0001018e7dc4. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar1 + 0x8a8))(lVar1 + 0x8b0);
+  return;
+}
+END 1018e7db0
+FUNC 1018e6928 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9DelayLineENSD_16SimpleDelayTimeLEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f body=1 lines=59
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices5delay11DelayDeviceEEFvfEE14SProcessorFuncIXadL_ZNS6_23OnAutomatableFloatEventIJNS4_5model9DelayLineENSD_16SimpleDelayTimeLEEEEvfEEEEPFvPvfEvENUlSF_fE_8__invokeESF_f
+               (float param_1,long param_2)
+
+{
+  long *plVar1;
+  long lVar2;
+  long *plVar3;
+  long lVar4;
+  long *plVar5;
+  long *plVar6;
+  long lVar7;
+  long *plVar8;
+  
+  lVar2 = *(long *)(param_2 + 0xb8);
+  *(double *)(lVar2 + 0x2a0) = (double)param_1;
+  *(double *)(lVar2 + 0x290) = (double)param_1;
+  *(undefined8 *)(lVar2 + 0x298) = 0;
+  *(float *)(lVar2 + 0x288) = *(float *)(lVar2 + 0x268) + *(float *)(lVar2 + 0x26c) * param_1;
+  plVar3 = *(long **)(lVar2 + 0x280);
+  lVar4 = plVar3[0x88];
+  plVar5 = plVar3;
+  if (lVar4 == 0) {
+code_r0x0001018e6990:
+    plVar1 = plVar3 + lVar4;
+    plVar8 = plVar5 + 1;
+    plVar6 = plVar5;
+    if (plVar5 != plVar1 && plVar8 != plVar1) {
+      do {
+        plVar5 = plVar6;
+        if (*plVar8 != lVar2 + 0x260) {
+          plVar5 = plVar6 + 1;
+          *plVar6 = *plVar8;
+        }
+        plVar8 = plVar8 + 1;
+        plVar6 = plVar5;
+      } while (plVar8 != plVar1);
+    }
+    if (plVar5 != plVar1) {
+      plVar3[0x88] = lVar4 - ((long)plVar1 - (long)plVar5 >> 3);
+                    /* WARNING: Could not recover jumptable at 0x0001018e69c0. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+      (**(code **)(lVar2 + 0x2a8))(lVar2 + 0x2b0,lVar2 + 0x288);
+      return;
+    }
+  }
+  else {
+    lVar7 = lVar4 << 3;
+    do {
+      if (*plVar5 == lVar2 + 0x260) goto code_r0x0001018e6990;
+      plVar5 = plVar5 + 1;
+      lVar7 = lVar7 + -8;
+    } while (lVar7 != 0);
+  }
+                    /* WARNING: Could not recover jumptable at 0x0001018e698c. Too many branches */
+                    /* WARNING: Treating indirect jump as call */
+  (**(code **)(lVar2 + 0x2a8))(lVar2 + 0x2b0);
+  return;
+}
+END 1018e6928

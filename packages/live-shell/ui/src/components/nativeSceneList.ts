@@ -41,6 +41,12 @@ export function addSceneBlock(count: number, orderComplete: boolean): string | n
   return null;
 }
 
+/** One Scene snapshot request. Restore carries no name. Capture records the presented title; Save & next also asks for the following Scene. */
+export function sceneSnapshotRequest(basis: {expression_ref: string; revision: number; scene_ref: string; authored_revision: number}, intentEpoch: number, action: 'save-snapshot' | 'restore-snapshot', name = '', next = false) {
+  if (action === 'restore-snapshot') return {operation: 'scene' as const, basis, intent_epoch: intentEpoch, action};
+  return {operation: 'scene' as const, basis, intent_epoch: intentEpoch, action, name, next};
+}
+
 export interface SceneStanding {
   label: string;
   tone: 'saved' | 'edited' | 'draft' | 'snapshot' | 'unknown';

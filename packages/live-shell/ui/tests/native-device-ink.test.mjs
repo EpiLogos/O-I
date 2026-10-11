@@ -36,7 +36,7 @@ function reading(values = {}, engine = {}) {
 }
 const bindingOf = path => NATIVE_BINDINGS.find(row => row.path === path)
 const close = (actual, expected, eps = 1e-9) => assert.ok(Math.abs(actual - expected) <= eps, `${actual} != ${expected}`)
-const SAMPLE = {grain: true, square: false, min: 0.16, max: 1.6, sizeBias: 1, opacity: 1, roundness: 1, softness: 0, irregularity: 0, elongation: 0,
+const SAMPLE = {grain: true, square: false, style: 'ink', min: 0.16, max: 1.6, sizeBias: 1, opacity: 1, roundness: 1, softness: 0, irregularity: 0, elongation: 0,
   orientation: 0, contrast: 0, densityScale: 1, densityPhase: 0, edgeWeight: 0, halo: 0.6}
 
 test('the device is registered under ink in the model and view registries', () => {
@@ -131,8 +131,9 @@ test('swatch: eighteen marks, the largest filling its cell, each with an outer c
 })
 
 // SSR fixture: the device's own reading with the fixture values written through their bindings.
-const render = (values = {}, engine = {}) => {
+const render = (values = {}, engine = {}, material = 'ink') => {
   const fixture = reading({'material.roundness': 0.6, 'particleSize.min': 0.16, 'particleSize.max': 1.6, 'particleCount': 5000, ...values}, engine)
+  fixture.scene.field.material = material
   const override = Object.fromEntries(Object.entries(values))
   const ctx = {reading: fixture, graphValue: 0, position: 0, value: path => override[path] ?? baseValue(fixture.scene, bindingOf(path).key),
     family: 'ink', disabled: false, apply: () => {throw Error('SSR must not dispatch')}, captureCurrent: () => () => false, setDraft: () => {}}
@@ -160,11 +161,13 @@ test('SSR: the swatch changes when a sampled parameter changes, and it is not a 
 
 test('SSR: grain off gates the material rows with a reason and draws the classic profile', () => {
   const html = render({}, {grainProfile: false})
-  assert.match(html, /Classic profile/)
+  assert.match(html, /classic profile/)
   assert.match(html, /Elongation [^<]*· off/)
   assert.match(html, /Peripheral Ink [^<]*· off/)
   assert.doesNotMatch(render(), /· off/, 'with grain on no row is gated')
-  assert.match(render(), /Marks · engine law/)
+  assert.match(render(), /Ink stipple/)
+  assert.notEqual(render({}, {}, 'ink'), render({}, {}, 'print'), 'Print uses the halftone size law')
+  assert.notEqual(render({}, {}, 'ink'), render({}, {}, 'round'), 'Rounded draws the coarser round dot')
 })
 
 test('SSR: a missing reading value states what is missing and draws no marks', () => {

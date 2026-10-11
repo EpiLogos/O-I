@@ -5,6 +5,7 @@ import {sourceVisual} from '../../../../../desktop/cradle/expressions-app/field-
 import {stateSource} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/sourceState';
 import {FONT_OPTIONS, CUSTOM_SENTINEL, resolveFontOption} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/fontCatalog';
 import {WORLD_SCALE} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeParameters';
+import {blueprintMember} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/blueprintGeometry';
 import {readNativeGlyphTiming} from '../shell/nativeContent';
 import {useNativeInputRetention} from '../continuity/nativeInputContext';
 import {glyphInputMaterial} from '../continuity/glyphInputMaterial';
@@ -122,6 +123,8 @@ export function GlyphSequenceEditor({reading,request,compact=false,onExpand,draf
   const [customFont,setCustomFont]=useState(false);
   const [optionAlert,setOptionAlert]=useState<string|null>(null), refusal=useRef<string|null>(null);
   const [textDraft,setTextDraft]=useState<{value:string;initial:string;entity_id:string;entity_ref:string|null;step_id:string;basis:NativeEditorReading['basis'];inputReceipt?:PrivateNativeInputReceipt}|null>(null), [timingDraft,setTimingDraft]=useState<{id:string;hold:number;transition:number}|null>(null);
+  /** The formation's own glyph: one retained draft, addressed to the formation it was typed for. */
+  const [formationDraft,setFormationDraft]=useState<{value:string;initial:string;entity_id:string;entity_ref:string|null;basis:NativeEditorReading['basis'];inputReceipt?:PrivateNativeInputReceipt}|null>(null);
   const localDrafts=useRef(new Map<string,RetainedGlyphInput>()),draftValues=drafts??localDrafts.current;
   const lifetime=useRef({mounted:false,epoch:0}),residence=useRef<HTMLElement>(null),latest=useRef({reading,isPresented});latest.current={reading,isPresented};
   useEffect(()=>{lifetime.current.mounted=true;lifetime.current.epoch++;return()=>{lifetime.current.mounted=false;lifetime.current.epoch++}},[]);
@@ -197,6 +200,33 @@ export function GlyphSequenceEditor({reading,request,compact=false,onExpand,draf
       }
     }catch(cause){if(shown())setFault(cause instanceof Error?cause.message:String(cause))}
   }
+  /** Formation glyph drafts follow the state glyph's custody: the typed text is retained as private input for this formation until applied or discarded. */
+  function changeFormationGlyph(value:string) {
+    const captured:NonNullable<typeof formationDraft>=formationDraft??{value,initial:e.text,entity_id:e.id,entity_ref:r.entityOccurrences[e.id]??null,basis:{...r.basis}};
+    const next={...captured,value};
+    const material:NativeInputMaterial={basis:captured.basis,target:{scope:'entity',entity_id:captured.entity_id,entity_ref:captured.entity_ref,step_id:null,parameter:'formation-glyph',family:'glyph:formation',axis:null},input:{kind:'text',text:value,initial:captured.initial}};
+    if(inputAperture)try {
+      next.inputReceipt=inputAperture.owner.retain(material,inputAperture.current,captured.inputReceipt);
+      inputAperture.failure?.(nativeInputTargetKey(material),null);
+      inputAperture.changed();
+    }catch(cause){const error=cause instanceof Error?cause.message:String(cause);inputAperture.failure?.(nativeInputTargetKey(material),error);setFault(`Input recovery failed · ${error}`)}
+    setFormationDraft(next);
+  }
+  function discardFormationGlyph() {
+    if(formationDraft?.inputReceipt&&inputAperture)try{inputAperture.owner.clear(formationDraft.inputReceipt,inputAperture.current);inputAperture.changed()}catch(cause){setFault(cause instanceof Error?cause.message:String(cause))}
+    setFormationDraft(null);
+  }
+  /** One formation-glyph change per apply; Enter or the button sends it, Escape discards it. A refusal reaches the status line. */
+  async function replaceFormationGlyph() {
+    const draft=formationDraft;if(!draft||draft.entity_id!==e.id)return;
+    try {
+      const changes:NativeEditorChange[]=draft.inputReceipt?privateNativeInputChanges(draft.inputReceipt.copy,r):[{kind:'formation-glyph',entity_id:draft.entity_id,text:draft.value}];
+      if(await apply(changes,draft.basis)) {
+        if(draft.inputReceipt&&inputAperture){inputAperture.owner.clear(draft.inputReceipt,inputAperture.current);inputAperture.changed()}
+        setFormationDraft(current=>current===draft?null:current);
+      }
+    }catch(cause){if(shown())setFault(cause instanceof Error?cause.message:String(cause))}
+  }
   async function settle(operation:NativeEditorRequest,targetStep:string|null=k.id) {if(!shown()||isPresented?.()===false)return;const epoch=lifetime.current.epoch,ticket=++tickets.current;setPending(true);try{const result=await request(operation);if(epoch===lifetime.current.epoch&&ticket===tickets.current&&shown()&&isPresented?.()!==false&&currentGlyphReply(r,latest.current.reading,result,e.id,result.ok?targetStep:k.id))setFault(result.ok?null:result.error)}catch(error){const message=error instanceof Error?error.message:String(error);if(epoch===lifetime.current.epoch&&ticket===tickets.current&&shown()&&isPresented?.()!==false&&currentGlyphReply(r,latest.current.reading,{ok:false,error:message},e.id,k.id))setFault(message)}finally{if(epoch===lifetime.current.epoch&&ticket===tickets.current&&shown())setPending(false)}}
   async function history(operation:'undo'|'redo'|'save') {await settle({operation,basis:r.basis})}
   function select(id:string,range=false) {
@@ -245,6 +275,9 @@ export function GlyphSequenceEditor({reading,request,compact=false,onExpand,draf
   const curve=Array.from({length:65},(_,i)=>`${i? 'L':'M'}${i*2},${62-applyEasing(i/64,sequence.easing??'smoothstep')*60}`).join(' ');
   const editOverrides=(patch:Partial<NonNullable<SequenceStep['objectState']>>)=>k.objectState?apply([{kind:'step-overrides',entity_id:e.id,step_id:k.id,operation:'capture',values:{...k.objectState,...patch}}]):Promise.resolve(false);
   const layers=k.layers??e.layers??[];
+  /** Why the formation's own glyph cannot change now; null when it can. The native validator states the same reasons. */
+  const formationBlocked=e.locked?'Unlock this formation before changing its shape.':blueprintMember(r.scene,e.id)?'Release the blueprint before changing one of its members.':null;
+  const ownFormationDraft=formationDraft?.entity_id===e.id?formationDraft:null;
   const src=k.source, sourceKind=sourceKindOf(src), sourceLoaded=src?.kind==='image'&&!!src.image.dataUrl, autoFit=r.scene.engine.autoFitSizes!==false;
   const refit=planGlyphRefit(e,{fontFamily:r.scene.engine.fontFamily,fontWeight:r.scene.engine.fontWeight});
   /** One step-source per commit. A refusal names its reason in the editor's role=alert line. */
@@ -269,6 +302,12 @@ export function GlyphSequenceEditor({reading,request,compact=false,onExpand,draf
       {sequence.manual&&<ExactValue label="Manual blend · cycles" value={r.scene.morph.thetaOffset} min={-1000} max={1000} disabled={locked} onCommit={value=>apply([{kind:'parameter',target:'field.thetaOffset',value}])}/>}
       {sequence.clock==='morph'&&<ExactValue label="Field dwell · ratio" value={r.scene.morph.dwell} min={0} max={1} disabled={locked} onCommit={value=>apply([{kind:'parameter',target:'field.morphDwell',value}])}/>}
       <span className="glyph-runtime">{sequence.clock==='morph'?`${timing.axis_duration} morph cycles · ${total.toFixed(2)} s stored · effective dwell ${(timing.states[0]?.axis_hold??0).toFixed(2)}`:`${total.toFixed(2)} s authored`}{progress?` · state ${progress.linkIndex+1} · ${(progress.progress*100).toFixed(0)}%`:''}</span>
+    </div>
+    <div className="glyph-formation-base">
+      <label className="glyph-formation-glyph"><span>Formation glyph</span><input aria-label="Formation glyph" value={ownFormationDraft?.value??e.text} disabled={locked||formationBlocked!==null||(formationDraft!==null&&!ownFormationDraft)} title={formationBlocked??undefined}
+        onChange={event=>changeFormationGlyph(event.target.value)} onKeyDown={event=>{if(event.key==='Enter'){event.preventDefault();void replaceFormationGlyph()}if(event.key==='Escape')discardFormationGlyph()}}/></label>
+      <button disabled={locked||formationBlocked!==null||!ownFormationDraft} title={formationBlocked??(ownFormationDraft?undefined:'Type a new formation glyph first')} onClick={()=>void replaceFormationGlyph()}>Set formation glyph</button>
+      {formationBlocked?<small role="note">{formationBlocked}</small>:formationDraft&&!ownFormationDraft&&<small role="note">A retained formation glyph draft belongs to another formation; select it to apply or discard.</small>}
     </div>
     <div className="glyph-timeline" role="listbox" aria-label="Glyph states" aria-multiselectable="true" onKeyDown={event=>{if(event.key==='Delete'&&!locked){event.preventDefault();void apply([{kind:'step-remove',entity_id:e.id,step_ids:selected.length?selected:[k.id]}])}if(event.altKey&&['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();move(event.key==='ArrowLeft'?-1:1)}}}>
       {sequence.steps.map((step,index)=>{const state=timing.states[index],hold=timingDraft?.id===step.id?timingDraft.hold:state.axis_hold,transition=timingDraft?.id===step.id?timingDraft.transition:state.axis_transition,duration=hold+transition;return <div key={step.id} className={`glyph-block${(selected.length?selected.includes(step.id):k.id===step.id)?' selected':''}${progress?.linkIndex===index?' observed':''}`} role="option" aria-label={`${step.name??step.text}: hold ${hold}, transition ${transition} ${sequence.clock==='morph'?'morph cycles':'seconds'}${duration===0?' · zero duration · native minimum period 0.05 seconds':''}`} title={duration===0?'Zero authored duration · native minimum period 0.05 seconds':undefined} aria-selected={selected.length?selected.includes(step.id):k.id===step.id} tabIndex={0} style={{width:duration===0?2:duration*pixelsPerSecond,minWidth:0}}

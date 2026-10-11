@@ -1,7 +1,7 @@
 import {useEffect, useRef, useState} from 'react';
 import {sameEditorBasis, type NativeEditorReading, type NativeEditorReply, type NativeEditorRequest} from '@epilogos/expressions-boundary/editor';
 import type {NativeSceneEditIntent} from '@epilogos/expressions-boundary/scene-edits';
-import {SCENE_LIMIT, SCENE_REF_MIME, addSceneBlock, addSceneIntent, dropSlotTarget, reorderScenes, sceneStanding} from './nativeSceneList';
+import {SCENE_LIMIT, SCENE_REF_MIME, addSceneBlock, addSceneIntent, dropSlotTarget, reorderScenes, sceneSnapshotRequest, sceneStanding} from './nativeSceneList';
 import {loopBlock, loopIntent} from './nativeScenePlayback';
 import './NativeSceneEditor.css';
 
@@ -61,7 +61,7 @@ export function NativeSceneEditor({reading, request}: {reading: NativeEditorRead
   // Every reorder is one request carrying the full ordered ref array.
   const reorderTo=(ref:string,to:number)=>{const next=reorderScenes(order,order.indexOf(ref),to);if(!next||!reorderReady)return;focusRef.current=ref;void edit({operation:'reorder',scene_refs:next}).then(ok=>{if(!ok&&focusRef.current===ref)focusRef.current=null})};
   const endDrag=()=>{dragRef.current=null;setDrag(null)};
-  const snapshot=(action:'save-snapshot'|'restore-snapshot',next=false)=>void send({operation:'scene',basis:{...r.basis},intent_epoch:r.playback!.intent_epoch,...(action==='save-snapshot'?{action,name:row.title,next}:{action})});
+  const snapshot=(action:'save-snapshot'|'restore-snapshot',next=false)=>void send(sceneSnapshotRequest({...r.basis}, r.playback!.intent_epoch, action, row.title, next));
   const standing=sceneStanding(row),nextBlock=scenes.working_order.length>=SCENE_LIMIT?'An expression can contain up to 64 Scenes':null;
   const addBlock=addSceneBlock(order.length,complete),loopReason=loopBlock({ready,savedAvailable:scenes.timing.saved.available});
   return <div className="native-scene-editor" aria-label="Scene clip details">

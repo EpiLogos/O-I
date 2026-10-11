@@ -19,4 +19,7 @@
 .native-device-editors{container-type:inline-size;container-name:native-devices}
 @container native-devices (max-width:600px){.native-force-layout,.native-field-layout{grid-template-columns:1fr;gap:8px}.native-control-grid,.native-field-layout .native-control-grid{grid-template-columns:repeat(2,minmax(80px,1fr))}.native-field-surface svg,.native-force-surface svg{width:100%;height:auto;max-height:none}}
 @container native-devices (max-width:360px){.native-control-grid,.native-field-layout .native-control-grid{grid-template-columns:1fr}.native-medium-switches{flex-wrap:wrap;gap:6px 12px}}
+.native-number>.native-modulation{display:block;margin-top:2px;font-size:10px;line-height:1.35;white-space:normal;color:var(--text-dim);opacity:1}
+.native-number.is-automated>span i{color:var(--accent);font-style:normal}
+.native-number>.native-modulation .native-effective{color:var(--accent)}
 

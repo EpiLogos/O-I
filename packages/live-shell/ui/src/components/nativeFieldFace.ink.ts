@@ -14,7 +14,7 @@ export const weightChange = (fontWeight: number): NativeGlyphChange => ({kind: '
  * then the Mark profile group (inspector.ts:122): count, min size and the material group, with its nested Glyph sampling.
  * paperGrain is the Colour panel's (paramRegistry 'Paper'), so it is not here. */
 export const inkFaceModel: FieldFaceModel = {
-  name: 'Mark profile',
+  name: 'Particles',
   paths: [
     'particleSize.max', 'material.opacity',
     'particleCount', 'particleSize.min', 'material.sizeBias', 'material.roundness', 'material.softness', 'material.irregularity',

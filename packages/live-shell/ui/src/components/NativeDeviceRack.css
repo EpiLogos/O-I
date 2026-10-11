@@ -45,6 +45,8 @@
 .native-rack-gap{flex:0 0 3px;align-self:stretch;margin:0 -2px;background:var(--accent);border-radius:2px;pointer-events:none}
 /* Entity and scene rows: target line, sound steppers and select, scene action buttons, Retry/Discard for a refused entity value */
 .native-rack-target{margin:0;font-size:10px;line-height:1.35;color:var(--text);overflow-wrap:anywhere}
+.native-rack-modulation{margin:0;font-size:10px;line-height:1.35;color:var(--text-dim);overflow-wrap:anywhere}
+.native-rack-modulation .native-rack-mark{color:var(--accent)}
 .native-rack-target.is-empty{color:var(--text-dim)}
 .native-rack-bar{touch-action:none;cursor:pointer}
 .native-rack-bar[aria-disabled=true]{cursor:default;opacity:.55}

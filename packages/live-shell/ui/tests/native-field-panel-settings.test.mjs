@@ -35,6 +35,7 @@ const SOURCE_OPTIONS = {
   relationalMode: ['orbital', 'nbody', 'chaos'], // inspector.ts:134
   frequencyDriver: ['manual', 'focus', 'automation'], // inspector.ts:127
   plane: ['XY', 'XZ', 'YZ'], // inspector.ts:144 (Scene.composition.plane, 'Layout plane')
+  layout: ['line', 'column', 'ring', 'grid', 'spiral', 'align-x', 'align-y', 'distribute-x', 'distribute-y', 'laminate'], // inspector.ts:144 Arrangement buttons (Scene.composition.layout); nativeSceneFace.arrange.ts:5
   sweepDirection: ['ascent', 'descent', 'pingpong'], // inspector.ts:131
   templateDimension: ['2D', '3D'], // inspector.ts:132
   resonatorMode: ['resonator', 'template'], // inspector.ts:133
@@ -272,4 +273,21 @@ test('a toggled-shared depth share writes the Expression bucket, not the Scene',
   assert.equal(toggled.scenes[0].engine.vortex3d, 0.5, 'the caller document is not mutated')
   assert.equal(next.scenes[0].engine.vortex3d, 0.5, 'the Scene keeps its own value while shared')
   assert.equal(readField(next, 'vortex3d'), 0.2)
+})
+
+test('layout admits exactly the Arrange device modes in the app order, and refuses any other string', async () => {
+  const {ARRANGE_LAYOUTS} = await import('../src/components/nativeSceneFace.arrange.ts')
+  assert.equal(FIELD_PANEL_SETTINGS.layout.target, 'composition')
+  assert.equal(FIELD_PANEL_SETTINGS.layout.type, 'enum')
+  assert.deepEqual([...FIELD_PANEL_SETTINGS.layout.options], [...ARRANGE_LAYOUTS])
+  const journey = journeyWith(), before = structuredClone(journey)
+  for (const mode of ARRANGE_LAYOUTS) {
+    const next = apply(journey, [panel('layout', mode)])
+    assert.equal(readField(next, 'layout'), mode, mode)
+    assert.equal(next.scenes[0].composition.layout, mode, 'written at Scene.composition.layout')
+    assert.deepEqual(next.scenes[0].engine, before.scenes[0].engine, 'writes only the composition')
+  }
+  for (const bad of ['free', 'Line', 'align x', 'align_x', 'grid ', '', 'laminate.', 1, true, null, undefined])
+    assert.throws(() => apply(journey, [panel('layout', bad)]), /admitted native Field panel setting/, String(bad))
+  assert.deepEqual(journey, before, 'the caller document is not mutated')
 })

@@ -1,0 +1,1702 @@
+// PROVENANCE: Ghidra 12.1.4 decompiles + nm decodes, persistent project
+// LiveRE2 (~/tools/live-re/ghidra-proj2, ALREADY ANALYZED), Live.arm64
+// (Live 12.0.25, 2024-08-27_2627c43816), arm64 slice. Query-only
+// (analyzeHeadless -process -noanalysis; no re-import; no Live runs, no
+// renders in this lane). Owner-private analysis evidence. NOT FOR
+// REDISTRIBUTION. Never enters product source (packages/live-dynamics).
+// Captured 2026-10-09 (chorus-ensemble binary lane) via SearchProbe/
+// BlockProbe/DataProbe/RefsProbe scripts + `nm` on Live.arm64.
+// Companion dossier: devices/chorus-derivation.md.
+// Contents: (1) nm census (ChorusDevice trampolines, model params,
+// blocks::chorus mode lambdas); (2) create wrapper chain + shell ctor;
+// (3) DSP-object init (FUN_1036e2a5c) + ctor FUN_1018db2d0 + alloc
+// FUN_1018db3a8; (4) mode->parameters dispatcher (connectToModel lambda,
+// 0x1018dece4) + const-pool decodes; (5) CalcMainSingleSample (shell) +
+// process FUN_1036e32a8 + voice bank FUN_1036e385c + side stages
+// FUN_1036e3668/FUN_1036e3af4; (6) ramp-event setters (Rate/Shaping/
+// Width/Warmth/DryWet/Amount/Feedback); (7) verdicts.
+
+======== (1) nm CENSUS ========
+-- OProcessorCreateManager::SOnProcessorCreate<OChorus2Processor> --
+00000001018bc348 T __ZN23OProcessorCreateManager18SOnProcessorCreateI17OChorus2ProcessorEEvR14OThreadMessage
+
+-- ChorusDevice SProcessorFunc trampoline census (member -> invoke addr) --
+1018d6f68 Init(OScheduler*)
+1018d7078 Exit()
+1018d707c Reset()
+1018d71f4 CalcMainSingleSample()
+1018d7300 OnX(float)
+1018d7310 OnOn(float)
+1018d757c OnMidi(void*)
+1018da774 OnRampEvent<model::Chorus::Mode>
+1018da8a8 OnRampEvent<model::Chorus::Shaping>
+1018daa00 OnRampEvent<model::Chorus::Rate>
+1018daa18 OnRampEvent<model::Chorus::Amount>
+1018daa30 OnRampEvent<model::Chorus::Feedback>
+1018dac78 OnRampEvent<model::Chorus::VibratoOffset>
+1018dae8c OnRampEvent<model::Chorus::HighpassFrequency>
+1018daea4 OnRampEvent<model::Chorus::Width>
+1018daebc OnRampEvent<model::Chorus::Warmth>
+1018daec4? OnRampEvent<model::Chorus::DryWet> (invoke 1018daeec)
+1018daed4 OnRampEvent<model::Chorus::OutputGain>
+1018da6b4 OnAutomatableFloatEvent<InvertFeedback|HighpassEnabled> (one of two)
+1018dabbc OnAutomatableFloatEvent<InvertFeedback|HighpassEnabled> (other)
+1018dadd0 OnAutomatableFloatEvent<Mode>
+
+-- model::Chorus parameter surface (nm, unique) --
+Amount DryWet Feedback HighpassEnabled HighpassFrequency InvertFeedback
+Mode(LChorus2) OutputGain Rate Shaping VibratoOffset Warmth Width
+
+-- blocks::chorus exported lambdas --
+1021bc104 InvokeFunctionFactory<StereoPair<float>(const&,float,ulong)
+           ChorusModeParameters::mDelayTimeScaling>::invoke
+1021bc124 ... getClassicModeParameters lambda ::invoke
+1021bc1b0 ... getVibratoModeParameters lambda ::invoke
+1021bc17c ... getEnsembleModeParameters lambda ::invoke
+1018dca94 InvokeFunctionFactory<void(const ChorusModes&)>::invoke (generic)
+1018dece4 ... ChorusDevice::connectToModel mode lambda ::invoke  <-- MODE TABLE
+1018dc798 devicekit::noop<ChorusModes>
+
+======== (2) CREATE WRAPPER CHAIN + SHELL ========
+FUNC 1018bc348 name=__ZN23OProcessorCreateManager18SOnProcessorCreateI17OChorus2ProcessorEEvR14OThreadMessage body=1 lines=11
+
+void __ZN23OProcessorCreateManager18SOnProcessorCreateI17OChorus2ProcessorEEvR14OThreadMessage
+               (undefined8 param_1)
+
+{
+  undefined1 auStack_48 [40];
+  
+  func_0x000101546e1c(auStack_48,param_1);
+  func_0x0001018bc384(auStack_48,param_1);
+  return;
+}
+END 1018bc348
+
+-------- inner wrapper FUN_1018bc384 --------
+FUNC 1018bc384 name=FUN_1018bc384 body=1 lines=19
+
+long FUN_1018bc384(undefined8 param_1,undefined8 param_2)
+
+{
+  undefined8 uVar1;
+  long lVar2;
+  long *plVar3;
+  undefined1 uStack_35;
+  int iStack_34;
+  
+  uVar1 = func_0x00010153be8c(param_2,&iStack_34);
+  func_0x00010153be4c(uVar1,&uStack_35);
+  lVar2 = func_0x00010153ff88(0x28);
+  func_0x000101545cf4(lVar2,param_1,iStack_34 + 0x268,uStack_35);
+  plVar3 = (long *)func_0x0001018a4344(*(undefined8 *)(lVar2 + 0x18),param_1,param_2);
+  *plVar3 = (long)(PTR_DAT_1050a3320 + 0x10);
+  func_0x000101545e84(lVar2);
+  return lVar2;
+}
+END 1018bc384
+
+-------- construction FUN_1018a4344 (shell + DSP object 0xb50) --------
+FUNC 1018a4344 name=FUN_1018a4344 body=1 lines=122
+
+long FUN_1018a4344(long param_1,int *param_2,undefined8 param_3)
+
+{
+  undefined *puVar1;
+  undefined *puVar2;
+  int iVar3;
+  long *plVar4;
+  undefined8 uVar5;
+  long lVar6;
+  long lStack_80;
+  undefined8 uStack_78;
+  undefined8 uStack_70;
+  undefined8 uStack_68;
+  undefined8 uStack_60;
+  uint auStack_58 [2];
+  
+  plVar4 = (long *)func_0x0001016669a8();
+  *plVar4 = (long)(PTR_DAT_1050a45f0 + 0x10);
+  plVar4[6] = *(long *)(param_2 + 4);
+  plVar4[7] = 0;
+  plVar4[8] = 0;
+  plVar4[9] = 0;
+  plVar4[10] = (long)
+               PTR___ZZNK7ableton7utility8CallbackIFvPvELb0EE13kNullCallbackMUlvE_clEvENUlS2_S2_E_8__invokeES2_S2__1050c84b8
+  ;
+  plVar4[0xb] = 0;
+  plVar4[0xc] = 0;
+  func_0x0001017605cc(plVar4 + 0xd,plVar4 + 10);
+  *(undefined **)(param_1 + 0x78) = PTR_DAT_1050a4648 + 0x10;
+  *(undefined8 *)(param_1 + 0x88) = 0;
+  func_0x00010176136c(param_1 + 0x90,*(undefined8 *)(param_1 + 0x30));
+  uStack_60 = param_3;
+  func_0x0001018daf04(&lStack_80,&uStack_60);
+  *(undefined **)(param_1 + 0xa0) = PTR_DAT_1050a4c88 + 0x10;
+  *(undefined8 *)(param_1 + 0xa8) = 0;
+  *(undefined4 *)(param_1 + 0xb0) = 0;
+  if (lStack_80 != 0) {
+    LOAcquire();
+    *(int *)(lStack_80 + 0x14) = *(int *)(lStack_80 + 0x14) + 1;
+    LORelease();
+    *(long *)(param_1 + 0xa8) = lStack_80;
+    *(uint *)(param_1 + 0xb0) = (uint)uStack_78;
+    if ((lStack_80 != 0) &&
+       (lVar6 = *(long *)(lRam000000010571a5b8 + ((ulong)((uint)uStack_78 >> 0x11) & 0x7ff8)),
+       lStack_80 = lVar6 + ((ulong)((uint)uStack_78 << 4) & 0xfffff0), lVar6 != 0)) {
+      LOAcquire();
+      iVar3 = *(int *)(lStack_80 + 0x14);
+      *(int *)(lStack_80 + 0x14) = iVar3 + -1;
+      LORelease();
+      if (iVar3 == 1) {
+        auStack_58[0] = (uint)uStack_78;
+        func_0x000101557be4(auStack_58,0x18);
+      }
+    }
+  }
+  iVar3 = *param_2;
+  uStack_78 = 0;
+  lStack_80 = 0;
+  uStack_68 = 0;
+  uStack_70 = 0;
+  uVar5 = func_0x00010153fb98(0xb50,0x10);
+  uVar5 = func_0x0001018db2d0((float)iVar3,uVar5,&lStack_80);
+  puVar1 = PTR_DAT_1050a54e8 + 0x10;
+  *(undefined8 *)(param_1 + 0xb8) = uVar5;
+  *(undefined **)(param_1 + 0xc0) = puVar1;
+  *(undefined **)(param_1 + 0xd8) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices6chorus12ChorusDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_19OnSampleRateChangedEvEEEEvPv_10509e0d8
+  ;
+  *(long *)(param_1 + 0xe0) = param_1;
+  *(undefined8 *)(param_1 + 0xe8) = 0;
+  *(undefined **)(param_1 + 0xf0) = puVar1;
+  *(undefined **)(param_1 + 0x108) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices6chorus12ChorusDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_14OnTempoChangedEvEEEEvPv_10509e0d0
+  ;
+  *(long *)(param_1 + 0x110) = param_1;
+  *(undefined8 *)(param_1 + 0x118) = 0;
+  *(undefined **)(param_1 + 0x120) = puVar1;
+  *(undefined **)(param_1 + 0x138) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices6chorus12ChorusDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_30OnTransportPlayingStateChangedEvEEEEvPv_10509e0e0
+  ;
+  *(long *)(param_1 + 0x140) = param_1;
+  *(undefined8 *)(param_1 + 0x148) = 0;
+  *(undefined **)(param_1 + 0x150) = puVar1;
+  puVar2 = 
+  PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices6chorus12ChorusDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_14OnBeatTimeJumpEvEEEEvPv_10509e0c8
+  ;
+  *(undefined **)(param_1 + 0x168) =
+       PTR___ZN7ableton7utility6detail13CallbackTypesI25ODeviceKitDeviceProcessorINS_7devices6chorus12ChorusDeviceEEvJEE14CallMemberFuncIXadL_ZNS7_14OnBeatTimeJumpEvEEEEvPv_10509e0c8
+  ;
+  *(long *)(param_1 + 0x170) = param_1;
+  *(undefined8 *)(param_1 + 0x178) = 0;
+  *(undefined **)(param_1 + 0x180) = puVar1;
+  *(undefined **)(param_1 + 0x198) = puVar2;
+  *(long *)(param_1 + 0x1a0) = param_1;
+  *(undefined8 *)(param_1 + 0x1a8) = 0;
+  func_0x00010151348c(param_1 + 0x1b0);
+  func_0x000101513514(param_1 + 0x1c0);
+  puVar1 = 
+  PTR___ZZNK7ableton7utility8CallbackIFvfELb0EE13kNullCallbackMUlvE_clEvENUlPvfE_8__invokeES5_f_1050c8618
+  ;
+  *(undefined8 *)(param_1 + 0x1f0) = 0;
+  *(undefined8 *)(param_1 + 0x1f8) = 0;
+  *(undefined **)(param_1 + 0x1e8) = puVar1;
+  *(undefined4 *)(param_1 + 0x200) = 0;
+  func_0x00010152f478(param_1 + 0x208);
+  *(undefined **)(param_1 + 0x208) = PTR_DAT_1050a3b38 + 0x10;
+  *(long *)(param_1 + 0x230) = param_1;
+  *(undefined1 *)(param_1 + 0x238) = 0;
+  *(undefined1 *)(param_1 + 0x260) = 0;
+  *(undefined8 *)(param_1 + 0x1d0) = 0;
+  *(undefined8 *)(param_1 + 0x1e0) = 0;
+  *(undefined8 *)(param_1 + 0x1d8) = 0;
+  *(undefined8 *)(param_1 + 0x248) = 0;
+  *(undefined8 *)(param_1 + 0x240) = 0;
+  *(undefined1 *)(param_1 + 0x250) = 0;
+  func_0x00010151fc14();
+  iVar3 = func_0x000101521a5c();
+  *(undefined8 *)(param_1 + 0x40) = *(undefined8 *)(param_1 + 0x38);
+  FUN_1018d6b64(plVar4 + 7,(long)(iVar3 << 4));
+  return param_1;
+}
+END 1018a4344
+
+VERDICT: FUN_1018a4344 builds the device-kit processor shell; DSP object
+(0xb50 bytes) allocated and constructed by FUN_1018db2d0 -> FUN_1018db3a8
+(alloc) + FUN_1036e2a5c(sr, obj) (state init) at obj+0x918; 13 delay-line
+read pointers at obj+0x10..0x490 all seeded to obj+0x4d0 (sample buffer).
+Shell register hooks: OnSampleRateChanged / OnTempoChanged /
+OnTransportPlayingStateChanged / OnBeatTimeJump callback pairs at
+shell+0xd8..0x1a8; ramp event lists linked in Init (0x1018d6f68).
+
+======== (3) DSP OBJECT CTOR + INIT ========
+-------- FUN_1018db2d0 (ctor), FUN_1018db3a8 (alloc) --------
+FUNC 1018db2d0 name=FUN_1018db2d0 body=1 lines=29
+
+long FUN_1018db2d0(undefined4 param_1,long param_2)
+
+{
+  long lVar1;
+  long lVar2;
+  undefined8 uVar3;
+  
+  lVar2 = func_0x0001018db3a8();
+  lVar1 = lVar2 + 0x4d0;
+  *(long *)(lVar2 + 0x10) = lVar1;
+  *(long *)(lVar2 + 0x70) = lVar1;
+  *(long *)(lVar2 + 0xd8) = lVar1;
+  *(long *)(lVar2 + 0x138) = lVar1;
+  *(long *)(lVar2 + 0x198) = lVar1;
+  *(long *)(lVar2 + 0x1e8) = lVar1;
+  *(long *)(lVar2 + 0x248) = lVar1;
+  *(long *)(lVar2 + 0x298) = lVar1;
+  *(long *)(lVar2 + 0x300) = lVar1;
+  *(long *)(lVar2 + 0x360) = lVar1;
+  *(long *)(lVar2 + 0x3c8) = lVar1;
+  *(long *)(lVar2 + 0x430) = lVar1;
+  *(long *)(lVar2 + 0x490) = lVar1;
+  *(undefined8 *)(param_2 + 0x910) = 0;
+  uVar3 = func_0x0001036e2a5c(param_1,lVar2 + 0x918);
+  func_0x0001018de2e4(uVar3,param_2);
+  *(undefined1 *)(param_2 + 0xb48) = 1;
+  return param_2;
+}
+END 1018db2d0
+FUNC 1018db3a8 name=FUN_1018db3a8 body=1 lines=21
+
+long FUN_1018db3a8(long param_1)
+
+{
+  long lVar1;
+  
+  lVar1 = func_0x0001018db56c();
+  func_0x0001018db620(lVar1 + 0x50);
+  func_0x0001018db728(param_1 + 0xb0);
+  func_0x0001018db820(param_1 + 0x118);
+  func_0x0001018db908(param_1 + 0x178);
+  func_0x0001018db9f4(param_1 + 0x1d8);
+  func_0x0001018dbb44(param_1 + 0x228);
+  func_0x0001018dbc64(param_1 + 0x288);
+  func_0x0001018dbd8c(param_1 + 0x2d8);
+  func_0x0001018dbeac(param_1 + 0x340);
+  func_0x0001018dbf9c(param_1 + 0x3a0);
+  func_0x0001018dc084(param_1 + 0x408);
+  func_0x0001018dc19c(param_1 + 0x470);
+  return param_1;
+}
+END 1018db3a8
+
+-------- FUN_1036e2a5c (state init, sr arg) --------
+FUNC 1036e2a5c name=FUN_1036e2a5c body=1 lines=123
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+undefined1 * FUN_1036e2a5c(undefined8 param_1,undefined1 *param_2)
+
+{
+  ulong uVar1;
+  undefined8 uVar2;
+  undefined *puVar3;
+  float fVar4;
+  float fVar5;
+  undefined8 uVar6;
+  float fVar7;
+  float fVar8;
+  float fVar9;
+  undefined8 uStack_78;
+  undefined8 uStack_70;
+  undefined8 uStack_68;
+  undefined8 uStack_60;
+  undefined8 uStack_58;
+  undefined8 uStack_50;
+  undefined8 uStack_48;
+  undefined8 uStack_40;
+  undefined8 uStack_38;
+  
+  *param_2 = 1;
+  *(undefined8 *)(param_2 + 0x10) = 0;
+  *(undefined8 *)(param_2 + 8) = 0;
+  fVar4 = (float)param_1;
+  *(undefined8 *)(param_2 + 0x20) = 0;
+  *(undefined8 *)(param_2 + 0x18) = 0;
+  *(undefined8 *)(param_2 + 0x28) = 0;
+  *(undefined4 *)(param_2 + 1) = 0;
+  param_2[5] = 0;
+  func_0x00010179acc0(param_2 + 8,(long)(fVar4 * 0.05));
+  func_0x0001036e3ec4(param_1,&uStack_78);
+  *(undefined8 *)(param_2 + 0x58) = uStack_50;
+  *(undefined8 *)(param_2 + 0x50) = uStack_58;
+  *(undefined8 *)(param_2 + 0x68) = uStack_40;
+  *(undefined8 *)(param_2 + 0x60) = uStack_48;
+  *(undefined8 *)(param_2 + 0x70) = uStack_38;
+  *(undefined8 *)(param_2 + 0x38) = uStack_70;
+  *(undefined8 *)(param_2 + 0x30) = uStack_78;
+  *(undefined8 *)(param_2 + 0x48) = uStack_60;
+  *(undefined8 *)(param_2 + 0x40) = uStack_68;
+  *(undefined8 *)(param_2 + 0x90) = uStack_60;
+  *(undefined8 *)(param_2 + 0x88) = uStack_68;
+  *(undefined8 *)(param_2 + 0xa0) = uStack_50;
+  *(undefined8 *)(param_2 + 0x98) = uStack_58;
+  *(undefined8 *)(param_2 + 0xb0) = uStack_40;
+  *(undefined8 *)(param_2 + 0xa8) = uStack_48;
+  *(undefined8 *)(param_2 + 0xb8) = uStack_38;
+  *(undefined8 *)(param_2 + 0x80) = uStack_70;
+  *(undefined8 *)(param_2 + 0x78) = uStack_78;
+  *(undefined8 *)(param_2 + 0xe8) = uStack_50;
+  *(undefined8 *)(param_2 + 0xe0) = uStack_58;
+  *(undefined8 *)(param_2 + 0xf8) = uStack_40;
+  *(undefined8 *)(param_2 + 0xf0) = uStack_48;
+  *(undefined8 *)(param_2 + 200) = uStack_70;
+  *(undefined8 *)(param_2 + 0xc0) = uStack_78;
+  *(undefined8 *)(param_2 + 0xd8) = uStack_60;
+  *(undefined8 *)(param_2 + 0xd0) = uStack_68;
+  *(undefined8 *)(param_2 + 0x100) = uStack_38;
+  *(undefined8 *)(param_2 + 0x108) = 0x358637bd358637bd;
+  *(undefined8 *)(param_2 + 0x110) = 0xffffffffffffffff;
+  *(undefined8 *)(param_2 + 0x120) = 0;
+  *(undefined8 *)(param_2 + 0x118) = 0;
+  *(undefined8 *)(param_2 + 0x130) = 0;
+  *(undefined8 *)(param_2 + 0x128) = 0;
+  uVar2 = _UNK_104e24648;
+  uVar6 = _UNK_104e24640;
+  *(undefined8 *)(param_2 + 0x140) = 0;
+  *(undefined8 *)(param_2 + 0x138) = 0;
+  *(undefined8 *)(param_2 + 0x150) = uVar2;
+  *(undefined8 *)(param_2 + 0x148) = uVar6;
+  *(undefined8 *)(param_2 + 0x158) = 0;
+  *(undefined8 *)(param_2 + 0x160) = 1;
+  puVar3 = 
+  PTR___ZN7ableton3dsp6detail21InvokeFunctionFactoryIFNS0_10StereoPairIfEERKS4_fmENS_6blocks6chorus20ChorusModeParameters17mDelayTimeScalingMUlS6_fmE_EE6invokeEPvS6_fm_1050855a8
+  ;
+  *(undefined8 *)(param_2 + 0x168) = 0x4080000000010100;
+  *(undefined **)(param_2 + 0x170) = puVar3;
+  *(undefined **)(param_2 + 0x180) =
+       PTR___ZN7ableton3dsp6detail21ManageFunctionFactoryINS_6blocks6chorus20ChorusModeParameters17mDelayTimeScalingMUlRKNS0_10StereoPairIfEEfmE_EE6manageEPvPKvNS1_12ManageOpCodeE_10508d3b0
+  ;
+  fVar5 = (float)_UNK_104e245d8;
+  uVar1 = (ulong)_UNK_104e245d8 >> 0x20;
+  *(undefined8 *)(param_2 + 400) = 0;
+  *(undefined8 *)(param_2 + 0x188) = 0;
+  *(undefined8 *)(param_2 + 0x1a0) = 0;
+  *(undefined8 *)(param_2 + 0x198) = 0;
+  uVar6 = NEON_fmin(CONCAT44((float)uVar1 / fVar4,fVar5 / fVar4),0x40488f2d40488f2d,4);
+  fVar5 = (float)uVar6 * 0.5;
+  fVar7 = (float)((ulong)uVar6 >> 0x20) * 0.5;
+  fVar8 = fVar5 * fVar5;
+  fVar9 = fVar7 * fVar7;
+  uVar6 = NEON_fmov(0x3f800000,4);
+  fVar5 = (fVar5 * (fVar8 * -0.09652461 + 0.99999946)) /
+          ((float)uVar6 + (fVar8 * 0.009981878 + -0.42986727) * fVar8);
+  fVar7 = (fVar7 * (fVar9 * -0.09652461 + 0.99999946)) /
+          ((float)((ulong)uVar6 >> 0x20) + (fVar9 * 0.009981878 + -0.42986727) * fVar9);
+  fVar5 = fVar5 + fVar5;
+  fVar7 = fVar7 + fVar7;
+  *(float *)(param_2 + 0x1a8) = fVar5;
+  *(float *)(param_2 + 0x1ac) = fVar5;
+  *(float *)(param_2 + 0x1b0) = fVar7;
+  *(float *)(param_2 + 0x1b4) = fVar7;
+  *(undefined8 *)(param_2 + 0x1b8) = 0;
+  *(undefined8 *)(param_2 + 0x1c0) = 0;
+  *(undefined8 *)(param_2 + 0x1c8) = 0x3d20304e3d20304e;
+  uVar6 = _UNK_104ccd360;
+  *(undefined8 *)(param_2 + 0x1d8) = _UNK_104ccd368;
+  *(undefined8 *)(param_2 + 0x1d0) = uVar6;
+  *(float *)(param_2 + 0x1e0) = fVar4;
+  *(undefined8 *)(param_2 + 0x1e4) = _UNK_104d1f020;
+  *(undefined8 *)(param_2 + 500) = 0;
+  *(undefined8 *)(param_2 + 0x1ec) = 0;
+  *(undefined4 *)(param_2 + 0x1fc) = 0x3f800000;
+  *(undefined8 *)(param_2 + 0x200) = 0;
+  *(undefined4 *)(param_2 + 0x220) = 0;
+END 1036e2a5c
+
+INIT VERDICTS [D]:
+- obj[0]=1 (enabled byte); delay capacity = sr*0.05 s (func_0x00010179acc0
+  with sr*0.05 at obj+0x08 block) => 50 ms max modulated delay.
+- obj+0x30/0x78/0xc0: three 0x48-byte voice slots, contents copied from
+  func_0x0001036e3ec4(sr,...) output (voice template).
+- obj+0x108 = 1.0e-6f pair (0x358637bd x2).
+- obj+0x148..0x168: default mode-parameter record (voices=1, provider =
+  ChorusModeParameters::mDelayTimeScaling, flags word 0x00010100 | 4.0f).
+- obj+0x1a8..0x1b4: c = min( (31.41, 42411.7)/sr , (pi, pi) ) * 0.5, then
+  c*=(c*c*(-0.09652461)+0.99999946) / (1 + (c*c*0.009981878-0.42986727)*c*c)
+  (rational tanh form), then *2 ; stored L,L / R,R  [B constants; semantic H]
+- obj+0x1c8 = 0.03901f pair (0x3d20304e x2); obj+0x1e0 = sr (float);
+  obj+0x1ec = 0; obj+0x1fc = 1.0f; obj+0x220 = mode = 0 (Classic).
+- const pool reads: 0x104e245d8 = (31.41f, 42411.7f); 0x104e24640/48 =
+  default parameter pair (shared by all modes at +0x130/+0x138).
+
+======== (4) MODE TABLE (connectToModel lambda 0x1018dece4) ========
+FUNC 1018dece4 name=__ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKNS_6blocks6chorus11ChorusModesEEZNS_7devices6chorus12ChorusDevice14connectToModelINS_9devicekit29TickableSampleRateDeviceModelINSA_5model6ChorusEEEEEvRT_EUlSI_E_E6invokeEPvS7_ body=1 lines=195
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+void __ZN7ableton3dsp6detail21InvokeFunctionFactoryIFvRKNS_6blocks6chorus11ChorusModesEEZNS_7devices6chorus12ChorusDevice14connectToModelINS_9devicekit29TickableSampleRateDeviceModelINSA_5model6ChorusEEEEEvRT_EUlSI_E_E6invokeEPvS7_
+               (undefined8 *param_1,int *param_2)
+
+{
+  undefined8 *puVar1;
+  int iVar2;
+  char cVar3;
+  undefined1 *puVar4;
+  undefined8 uVar5;
+  undefined1 *puVar6;
+  undefined8 *puVar7;
+  undefined1 *puVar8;
+  ulong uVar9;
+  undefined4 uVar10;
+  undefined8 uStack_c0;
+  undefined8 uStack_b8;
+  undefined8 uStack_b0;
+  undefined8 uStack_a8;
+  undefined8 uStack_a0;
+  undefined8 uStack_98;
+  undefined8 uStack_90;
+  undefined8 uStack_88;
+  undefined8 uStack_80;
+  undefined8 uStack_78;
+  undefined8 uStack_70;
+  undefined *puStack_68;
+  undefined1 auStack_60 [8];
+  code *pcStack_58;
+  long lStack_48;
+  
+  iVar2 = *param_2;
+  puVar4 = (undefined1 *)*param_1;
+  lStack_48 = *(long *)PTR____stack_chk_guard_1050c86c8;
+  *(int *)(puVar4 + 0x220) = iVar2;
+  if (iVar2 == 0) {
+    uStack_b0 = 0;
+    uStack_b8 = _UNK_104e24600;
+    uStack_c0 = _UNK_104e245f8;
+    uStack_a0 = _UNK_104e24648;
+    uStack_a8 = _UNK_104e24640;
+    uStack_88 = _UNK_104e24618;
+    uStack_90 = _UNK_104e24610;
+    uStack_70 = 0x4080000000010100;
+    puStack_68 = 
+    PTR___ZN7ableton3dsp6detail21InvokeFunctionFactoryIFNS0_10StereoPairIfEERKS4_fmEZNS_6blocks6chorus24getClassicModeParametersEvEUlS6_fmE_E6invokeEPvS6_fm_1050855b0
+    ;
+    pcStack_58 = (code *)
+                 PTR___ZN7ableton3dsp6detail21ManageFunctionFactoryIZNS_6blocks6chorus24getClassicModeParametersEvEUlRKNS0_10StereoPairIfEEfmE_E6manageEPvPKvNS1_12ManageOpCodeE_1050941e0
+    ;
+    uStack_80 = 0;
+    uStack_78 = 2;
+  }
+  else if (iVar2 == 1) {
+    uStack_b8 = _UNK_104e24630;
+    uStack_c0 = _UNK_104e24628;
+    uStack_b0 = _UNK_104e24638;
+    uStack_a0 = _UNK_104e24648;
+    uStack_a8 = _UNK_104e24640;
+    uStack_88 = _UNK_104e24660;
+    uStack_90 = _UNK_104e24658;
+    pcStack_58 = (code *)
+                 PTR___ZN7ableton3dsp6detail21ManageFunctionFactoryIZNS_6blocks6chorus25getEnsembleModeParametersEvEUlRKNS0_10StereoPairIfEEfmE_E6manageEPvPKvNS1_12ManageOpCodeE_1050941f0
+    ;
+    uStack_80 = 0x3f0000003f000000;
+    uStack_78 = 3;
+    uStack_70 = 0x4080000000010101;
+    puStack_68 = 
+    PTR___ZN7ableton3dsp6detail21InvokeFunctionFactoryIFNS0_10StereoPairIfEERKS4_fmEZNS_6blocks6chorus25getEnsembleModeParametersEvEUlS6_fmE_E6invokeEPvS6_fm_1050855c0
+    ;
+  }
+  else if (iVar2 == 2) {
+    uStack_88 = _UNK_104e24648;
+    uStack_90 = _UNK_104e24640;
+    uStack_80 = 0;
+    uStack_78 = 1;
+    uStack_a0 = 0;
+    uStack_b0 = 0;
+    uStack_a8 = 0;
+    uStack_b8 = _UNK_104e24678;
+    uStack_c0 = _UNK_104e24670;
+    puStack_68 = 
+    PTR___ZN7ableton3dsp6detail21InvokeFunctionFactoryIFNS0_10StereoPairIfEERKS4_fmEZNS_6blocks6chorus24getVibratoModeParametersEvEUlS6_fmE_E6invokeEPvS6_fm_1050855b8
+    ;
+    pcStack_58 = (code *)
+                 PTR___ZN7ableton3dsp6detail21ManageFunctionFactoryIZNS_6blocks6chorus24getVibratoModeParametersEvEUlRKNS0_10StereoPairIfEEfmE_E6manageEPvPKvNS1_12ManageOpCodeE_1050941e8
+    ;
+    uStack_70 = 0x42c8000001000000;
+  }
+  else {
+    uStack_b8 = 0;
+    uStack_c0 = 0;
+    uStack_a8 = 0;
+    uStack_b0 = 0;
+    uStack_a0 = 0;
+    uStack_88 = _UNK_104e24648;
+    uStack_90 = _UNK_104e24640;
+    uStack_80 = 0;
+    uStack_78 = 1;
+    uStack_70 = 0x4080000000010100;
+    puStack_68 = 
+    PTR___ZN7ableton3dsp6detail21InvokeFunctionFactoryIFNS0_10StereoPairIfEERKS4_fmENS_6blocks6chorus20ChorusModeParameters17mDelayTimeScalingMUlS6_fmE_EE6invokeEPvS6_fm_1050855a8
+    ;
+    pcStack_58 = (code *)
+                 PTR___ZN7ableton3dsp6detail21ManageFunctionFactoryINS_6blocks6chorus20ChorusModeParameters17mDelayTimeScalingMUlRKNS0_10StereoPairIfEEfmE_EE6manageEPvPKvNS1_12ManageOpCodeE_10508d3b0
+    ;
+  }
+  uStack_98 = 0;
+  puVar1 = (undefined8 *)(puVar4 + 0x118);
+  *(undefined8 *)(puVar4 + 0x168) = uStack_70;
+  *(undefined8 *)(puVar4 + 0x140) = 0;
+  *(undefined8 *)(puVar4 + 0x138) = uStack_a0;
+  *(undefined8 *)(puVar4 + 0x150) = uStack_88;
+  *(undefined8 *)(puVar4 + 0x148) = uStack_90;
+  *(undefined8 *)(puVar4 + 0x160) = uStack_78;
+  *(undefined8 *)(puVar4 + 0x158) = uStack_80;
+  *(undefined8 *)(puVar4 + 0x120) = uStack_b8;
+  *puVar1 = uStack_c0;
+  *(undefined8 *)(puVar4 + 0x130) = uStack_a8;
+  *(undefined8 *)(puVar4 + 0x128) = uStack_b0;
+  if (&uStack_c0 != puVar1) {
+    if (*(code **)(puVar4 + 0x180) != (code *)0x0) {
+      (**(code **)(puVar4 + 0x180))(puVar4 + 0x178,0,1);
+      *(undefined8 *)(puVar4 + 0x170) = 0;
+      *(undefined8 *)(puVar4 + 0x180) = 0;
+      if (pcStack_58 == (code *)0x0) goto code_r0x0001036e2cb4;
+    }
+    *(undefined **)(puVar4 + 0x170) = puStack_68;
+    *(code **)(puVar4 + 0x180) = pcStack_58;
+    (*pcStack_58)(puVar4 + 0x178,auStack_60,0);
+    if (pcStack_58 == (code *)0x0) goto code_r0x0001036e2cb4;
+  }
+  (*pcStack_58)(auStack_60,0,1);
+  pcStack_58 = (code *)0x0;
+code_r0x0001036e2cb4:
+  if (*(long *)(puVar4 + 0x160) != 0) {
+    uVar9 = 0;
+    puVar6 = puVar4 + 0x30;
+    puVar7 = puVar1;
+    do {
+      func_0x0001036e3f14(*(undefined4 *)(puVar4 + 0x16c),puVar6);
+      func_0x0001036e4064(puVar6);
+      func_0x0001036e3ffc(puVar6,puVar7);
+      uVar9 = uVar9 + 1;
+      puVar7 = puVar7 + 1;
+      puVar6 = puVar6 + 0x48;
+    } while (uVar9 < *(ulong *)(puVar4 + 0x160));
+  }
+  puVar4[2] = puVar4[0x169];
+  *puVar4 = puVar4[0x16a];
+  if (*(int *)(puVar4 + 0x220) == 2) {
+    uStack_c0 = CONCAT44((float)((ulong)*(undefined8 *)(puVar4 + 0x118) >> 0x20) *
+                         *(float *)(puVar4 + 0x1ec),
+                         (float)*(undefined8 *)(puVar4 + 0x118) * *(float *)(puVar4 + 0x1ec));
+    func_0x0001036e3ffc(puVar4 + 0x30,&uStack_c0);
+    cVar3 = puVar4[0x16b];
+  }
+  else {
+    uStack_c0 = *puVar1;
+    func_0x0001036e3ffc(puVar4 + 0x30,&uStack_c0);
+    cVar3 = puVar4[0x16b];
+  }
+  if (cVar3 == '\0') {
+    uVar10 = 0;
+  }
+  else {
+    uVar10 = *(undefined4 *)(puVar4 + 500);
+  }
+  func_0x0001036e4008(uVar10,puVar4 + 0x30);
+  if (*(long *)PTR____stack_chk_guard_1050c86c8 != lStack_48) {
+    ___stack_chk_fail();
+    uVar5 = func_0x000100234a18();
+    func_0x0001021b6244(&uStack_c0);
+    puVar4 = (undefined1 *)__Unwind_Resume(uVar5);
+    if (*(long *)(puVar4 + 0x160) != 0) {
+      uVar9 = 0;
+      puVar6 = puVar4 + 0x118;
+      puVar8 = puVar4 + 0x30;
+      do {
+        func_0x0001036e3f14(*(undefined4 *)(puVar4 + 0x16c),puVar8);
+        func_0x0001036e4064(puVar8);
+        func_0x0001036e3ffc(puVar8,puVar6);
+        uVar9 = uVar9 + 1;
+        puVar8 = puVar8 + 0x48;
+        puVar6 = puVar6 + 8;
+      } while (uVar9 < *(ulong *)(puVar4 + 0x160));
+    }
+    puVar4[2] = puVar4[0x169];
+    *puVar4 = puVar4[0x16a];
+    return;
+  }
+  return;
+}
+END 1018dece4
+
+CONST POOL DECODES [B] (little-endian floats):
+104e245d0: "LE2EE" (string)                 104e245d8: 31.4139f, 42411.69f
+104e245e0: 1.5f, 0.5f | 1.5f, 0.5f          104e245e8: 0.25f, 0.25f (hi half;
+           read as uVar11/uVar12 interp-tap weights in FUN_1036e385c)
+104e245f0: 0.0025f, 0.0f  (2.5 ms const, also read by FUN_1036e3668 singleton)
+104e245f8: 0.25f, 0.0f   <- Classic voice0 phase pair (L,R)
+104e24600: 0.0f, 0.25f   <- Classic voice1 phase pair (L,R)
+104e24610: 0.5f, 0.5f    104e24618: 0.5f, 0.5f  <- Classic Amount-ramp
+           current/inc defaults (+0x148/+0x150)
+104e24628: 0.0f, 0.0f    <- Ensemble voice0 phase pair
+(104e24630/38 = Ensemble voice1/voice2 phase pairs -- in the pool region
+ [B-negative: not separately dumped this lane])
+104e24640/48: shared default parameter pair (all modes, +0x130/+0x138)
+104e24670/78: Vibrato voice0 phase pair
+
+MODE TABLE VERDICT [D]:
+mode 0 Classic   : voices=2, provider=getClassicModeParameters lambda,
+                   flags=0x00010100, 4.0f; voice phases (0.25,0)/(0,0.25);
+                   Amount ramp current/inc (0.5,0.5)/(0.5,0.5); param pair
+                   from 104e24640/48.
+mode 1 Ensemble  : voices=3, provider=getEnsembleModeParameters lambda,
+                   flags=0x00010101, 4.0f; voice0 phase (0,0), voice1/2 from
+                   104e24630/38; +0x158 (Amount target) hardcoded (0.5,0.5);
+                   Amount current/inc from 104e24658/60.
+mode 2 Vibrato   : voices=1, provider=getVibratoModeParameters lambda,
+                   flags=0x00000000, 100.0f; voice0 phase from 104e24670/78;
+                   special tail: both channel delay scales multiplied by
+                   *(float*)(obj+0x1ec) before the voice bank (else raw pair).
+default          : voices=1, provider=ChorusModeParameters::mDelayTimeScaling.
+Per voice i: func_0x0001036e3f14(flags_word, voice); func_0x0001036e4064
+(voice); func_0x0001036e3ffc(voice, &phasePair)  (stride 0x48, base +0x30).
+
+======== (5) CALC + PROCESS + VOICE BANK + SIDE STAGES ========
+-------- CalcMainSingleSample invoke 0x1018d71f4 (shell) --------
+FUNC 1018d71f4 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_20CalcMainSingleSampleEvEEEEPFvPvEvENUlSB_E_8__invokeESB_ body=1 lines=92
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvvEE14SProcessorFuncIXadL_ZNS6_20CalcMainSingleSampleEvEEEEPFvPvEvENUlSB_E_8__invokeESB_
+               (long param_1)
+
+{
+  undefined4 *puVar1;
+  undefined4 *puVar2;
+  uint uVar3;
+  uint uVar4;
+  uint *puVar5;
+  long lVar6;
+  undefined8 *puVar7;
+  long lVar8;
+  undefined4 uVar9;
+  undefined4 uVar10;
+  undefined2 uStack_48;
+  
+  if (*(char *)(param_1 + 0x201) == '\0') {
+    if (*(char *)(param_1 + 0x202) != '\0') {
+code_r0x0001018d718c:
+      if (*(char *)(param_1 + 0x203) != '\0') {
+        puVar5 = *(uint **)(param_1 + 0xa8);
+        uVar4 = puVar5[2];
+        *(undefined1 *)((long)puVar5 + (ulong)uVar4 * 2 + 0xd) = 0;
+        LOAcquire();
+        uVar3 = *puVar5;
+        *puVar5 = uVar4 << 0x10 | 1;
+        LORelease();
+        puVar5[2] = uVar3 >> 0x10;
+        *(undefined1 *)(param_1 + 0x203) = 0;
+      }
+code_r0x0001018d71bc:
+      *(undefined4 *)(param_1 + 0x228) = 1;
+      func_0x00010154e720(*(undefined8 *)(param_1 + 0x30),param_1 + 0x208);
+      *(undefined1 *)(param_1 + 0x238) = 1;
+      goto code_r0x0001018d71d4;
+    }
+  }
+  else {
+    lVar6 = *(long *)(param_1 + 0xb8);
+    if (*(char *)(param_1 + 0x200) == '\0') {
+      uVar4 = func_0x000103b72430(lVar6 + 0x918);
+      uVar4 = uVar4 ^ 1;
+      uVar3 = (uint)*(byte *)(param_1 + 0x202);
+      if (uVar3 != uVar4) goto code_r0x0001018d7188;
+    }
+    else {
+      uVar4 = 1;
+      uVar3 = (uint)*(byte *)(param_1 + 0x202);
+      if (*(byte *)(param_1 + 0x202) != 1) {
+code_r0x0001018d7188:
+        if ((uVar4 & 1) == 0) goto code_r0x0001018d718c;
+        goto code_r0x0001018d71bc;
+      }
+    }
+    if (uVar3 != 0) {
+      uStack_48 = 0;
+      puVar1 = *(undefined4 **)(param_1 + 0x1d0);
+      puVar2 = *(undefined4 **)(param_1 + 0x1d8);
+      if (*(long *)(lVar6 + 0x910) != 0) {
+        lVar8 = *(long *)(lVar6 + 0x910) << 3;
+        puVar7 = (undefined8 *)(lVar6 + 0x4d0);
+        do {
+          (**(code **)(*(long *)*puVar7 + 0x18))();
+          lVar8 = lVar8 + -8;
+          puVar7 = puVar7 + 1;
+        } while (lVar8 != 0);
+      }
+      uVar10 = *puVar2;
+      uVar9 = func_0x000103b72408(*puVar1,lVar6 + 0x918);
+      *(undefined4 *)(param_1 + 0x1e0) = uVar9;
+      *(undefined4 *)(param_1 + 0x1e4) = uVar10;
+      func_0x000103b7242c(lVar6 + 0x918,&uStack_48);
+      if ((uStack_48._1_1_ != '\0') || (*(char *)(param_1 + 0x203) != '\0')) {
+        *(char *)(param_1 + 0x203) = uStack_48._1_1_;
+        puVar5 = *(uint **)(param_1 + 0xa8);
+        uVar4 = puVar5[2];
+        *(char *)((long)puVar5 + (ulong)uVar4 * 2 + 0xd) = uStack_48._1_1_;
+        LOAcquire();
+        uVar3 = *puVar5;
+        *puVar5 = uVar4 << 0x10 | 1;
+        LORelease();
+        puVar5[2] = uVar3 >> 0x10;
+      }
+      goto code_r0x0001018d71d4;
+    }
+  }
+  *(undefined8 *)(param_1 + 0x1e0) = 0;
+code_r0x0001018d71d4:
+  *(undefined8 *)(param_1 + 0x40) = *(undefined8 *)(param_1 + 0x38);
+  return;
+}
+END 1018d71f4
+-------- FUN_1036e32a8 (process) --------
+FUNC 1036e32a8 name=FUN_1036e32a8 body=1 lines=156
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+void FUN_1036e32a8(char *param_1,float *param_2)
+
+{
+  bool bVar1;
+  bool bVar2;
+  ulong uVar3;
+  long lVar4;
+  ulong uVar5;
+  float *pfVar6;
+  float *pfVar7;
+  ulong uVar8;
+  float fVar9;
+  float fVar10;
+  float fVar11;
+  ulong uVar12;
+  undefined8 uVar13;
+  float fVar14;
+  float fStack_80;
+  float fStack_7c;
+  undefined8 uStack_78;
+  undefined8 auStack_70 [4];
+  undefined8 auStack_50 [3];
+  float fStack_38;
+  float fStack_34;
+  
+  if (param_1[1] == '\0') {
+    uVar12 = *(ulong *)param_2;
+  }
+  else {
+    fVar9 = (float)*(undefined8 *)(param_1 + 0x208);
+    fVar10 = (float)((ulong)*(undefined8 *)(param_1 + 0x208) >> 0x20);
+    fVar11 = (float)*(undefined8 *)(param_1 + 0x200);
+    fVar14 = (float)((ulong)*(undefined8 *)(param_1 + 0x200) >> 0x20);
+    fVar9 = (fVar9 / (fVar9 + 2.0)) * ((float)*(ulong *)param_2 - fVar11);
+    fVar10 = (fVar10 / (fVar10 + 2.0)) * ((float)(*(ulong *)param_2 >> 0x20) - fVar14);
+    *(ulong *)(param_1 + 0x200) = CONCAT44(fVar14 + fVar10 + fVar10,fVar11 + fVar9 + fVar9);
+    uVar12 = CONCAT44((fVar14 + fVar10) * (float)((ulong)*(undefined8 *)(param_1 + 0x210) >> 0x20) +
+                      ((float)(*(ulong *)param_2 >> 0x20) - (fVar14 + fVar10)) *
+                      (float)((ulong)*(undefined8 *)(param_1 + 0x218) >> 0x20),
+                      (fVar11 + fVar9) * (float)*(undefined8 *)(param_1 + 0x210) +
+                      ((float)*(ulong *)param_2 - (fVar11 + fVar9)) *
+                      (float)*(undefined8 *)(param_1 + 0x218));
+  }
+  fVar9 = ((float)uVar12 + (float)(uVar12 >> 0x20)) * 0.5;
+  auStack_50[1] = *(undefined8 *)(param_1 + 400);
+  auStack_50[0] = *(undefined8 *)(param_1 + 0x188);
+  auStack_50[2] = *(undefined8 *)(param_1 + 0x198);
+  auStack_70[1] = *(undefined8 *)(param_1 + 0x138);
+  auStack_70[0] = *(undefined8 *)(param_1 + 0x130);
+  auStack_70[2] = *(undefined8 *)(param_1 + 0x140);
+  uVar3 = *(ulong *)(param_1 + 0x160);
+  if (uVar3 == 0) {
+    fVar10 = 0.0;
+    fVar11 = 0.0;
+  }
+  else {
+    if (uVar3 < 0x10) {
+      uVar5 = 0;
+      fVar10 = 0.0;
+      fVar11 = 0.0;
+    }
+    else {
+      uVar5 = uVar3 & 0xfffffffffffffff0;
+      pfVar6 = (float *)&stack0xffffffffffffffd0;
+      pfVar7 = (float *)&stack0xfffffffffffffff0;
+      fVar11 = 0.0;
+      fVar10 = 0.0;
+      uVar8 = uVar5;
+      do {
+        fVar11 = fVar11 + pfVar7[-0xf] * pfVar6[-0xf] + pfVar7[-0xd] * pfVar6[-0xd] +
+                 pfVar7[-0xb] * pfVar6[-0xb] + pfVar7[-9] * pfVar6[-9] + pfVar7[-7] * pfVar6[-7] +
+                 pfVar7[-5] * pfVar6[-5] + pfVar7[-3] * pfVar6[-3] + pfVar7[-1] * pfVar6[-1] +
+                 pfVar7[1] * pfVar6[1] + pfVar7[3] * pfVar6[3] + pfVar7[5] * pfVar6[5] +
+                 pfVar7[7] * pfVar6[7] + pfVar7[9] * pfVar6[9] + pfVar7[0xb] * pfVar6[0xb] +
+                 pfVar7[0xd] * pfVar6[0xd] + pfVar7[0xf] * pfVar6[0xf];
+        fVar10 = fVar10 + pfVar7[-0x10] * pfVar6[-0x10] + pfVar7[-0xe] * pfVar6[-0xe] +
+                 pfVar7[-0xc] * pfVar6[-0xc] + pfVar7[-10] * pfVar6[-10] + pfVar7[-8] * pfVar6[-8] +
+                 pfVar7[-6] * pfVar6[-6] + pfVar7[-4] * pfVar6[-4] + pfVar7[-2] * pfVar6[-2] +
+                 *pfVar7 * *pfVar6 + pfVar7[2] * pfVar6[2] + pfVar7[4] * pfVar6[4] +
+                 pfVar7[6] * pfVar6[6] + pfVar7[8] * pfVar6[8] + pfVar7[10] * pfVar6[10] +
+                 pfVar7[0xc] * pfVar6[0xc] + pfVar7[0xe] * pfVar6[0xe];
+        pfVar6 = pfVar6 + 0x20;
+        pfVar7 = pfVar7 + 0x20;
+        uVar8 = uVar8 - 0x10;
+      } while (uVar8 != 0);
+      if (uVar3 == uVar5) goto code_r0x0001036e354c;
+    }
+    do {
+      fVar10 = fVar10 + (float)auStack_50[uVar5] * (float)auStack_70[uVar5];
+      fVar11 = fVar11 + (float)((ulong)auStack_50[uVar5] >> 0x20) *
+                        (float)((ulong)auStack_70[uVar5] >> 0x20);
+      uVar5 = uVar5 + 1;
+    } while (uVar3 != uVar5);
+  }
+code_r0x0001036e354c:
+  uVar3 = CONCAT44(fVar9,fVar9) ^
+          (CONCAT44(fVar9,fVar9) ^ uVar12) &
+          CONCAT44(-(uint)((int)((uint)(param_1[0x168] == '\0') << 0x1f) < 0),
+                   -(uint)((int)((uint)(param_1[0x168] == '\0') << 0x1f) < 0));
+  fStack_38 = fVar10;
+  fStack_34 = fVar11;
+  if (param_1[4] != '\0') {
+    fVar10 = (float)func_0x0001036e3668(param_1,&fStack_38);
+    fVar11 = (float)uVar12;
+  }
+  uVar13 = *(undefined8 *)(param_1 + 0x1d0);
+  uStack_78 = CONCAT44((float)(uVar3 >> 0x20) + fVar11 * (float)((ulong)uVar13 >> 0x20),
+                       (float)uVar3 + fVar10 * (float)uVar13);
+  fStack_80 = (float)func_0x0001036e385c(param_1,&uStack_78);
+  fStack_7c = (float)uVar13;
+  if (param_1[2] != '\0') {
+    fVar9 = (fStack_80 + fStack_7c) * 0.5;
+    fStack_7c = (fStack_80 - fStack_7c) * 0.5 * *(float *)(param_1 + 0x1e8);
+    fStack_80 = fVar9 + fStack_7c;
+    fStack_7c = fVar9 - fStack_7c;
+  }
+  if (param_1[3] != '\0') {
+    fStack_80 = (float)func_0x0001036e3af4(param_1 + 0x1a0,&fStack_80);
+  }
+  if (*param_1 == '\0') {
+    fStack_80 = fStack_80 * *(float *)(param_1 + 0x1d8);
+    fStack_7c = fStack_7c * *(float *)(param_1 + 0x1dc);
+  }
+  else {
+    fStack_80 = *param_2 * *(float *)(param_1 + 0x1f8) +
+                fStack_80 * *(float *)(param_1 + 0x1d8) * *(float *)(param_1 + 0x1fc);
+    fStack_7c = param_2[1] * *(float *)(param_1 + 0x1f8) +
+                fStack_7c * *(float *)(param_1 + 0x1dc) * *(float *)(param_1 + 0x1fc);
+  }
+  fStack_7c = ABS(fStack_7c);
+  fVar9 = *(float *)(param_1 + 0x10c);
+  bVar1 = false;
+  bVar2 = true;
+  if (ABS(fStack_80) <= *(float *)(param_1 + 0x108)) {
+    bVar1 = false;
+    bVar2 = true;
+    if (!NAN(fStack_7c) && !NAN(fVar9)) {
+      bVar1 = fStack_7c == fVar9;
+      bVar2 = fVar9 <= fStack_7c;
+    }
+  }
+  if (!bVar2 || bVar1) {
+    if (*(long *)(param_1 + 0x110) == -1) {
+      return;
+    }
+    lVar4 = *(long *)(param_1 + 0x110) + 1;
+  }
+  else {
+    lVar4 = 0;
+  }
+  *(long *)(param_1 + 0x110) = lVar4;
+  return;
+}
+END 1036e32a8
+-------- FUN_1036e385c (voice bank / interpolated read) --------
+FUNC 1036e385c name=FUN_1036e385c body=1 lines=138
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+void FUN_1036e385c(undefined1 param_1 [16],float param_2,long param_3,undefined8 *param_4)
+
+{
+  long lVar1;
+  ulong uVar2;
+  ulong uVar3;
+  ulong uVar4;
+  ulong uVar5;
+  ulong uVar6;
+  ulong uVar7;
+  ulong uVar8;
+  ulong uVar9;
+  long lVar10;
+  undefined8 uVar11;
+  undefined8 uVar12;
+  long lVar13;
+  long lVar14;
+  ulong uVar15;
+  float fVar16;
+  float fVar17;
+  float fVar18;
+  long lVar19;
+  float fVar20;
+  float fVar21;
+  undefined1 auVar22 [16];
+  float fVar23;
+  ulong uVar24;
+  float fVar25;
+  float fVar26;
+  float fVar27;
+  float fVar28;
+  undefined8 uVar29;
+  float fVar30;
+  undefined4 uStack_68;
+  float fStack_64;
+  
+  lVar13 = *(long *)(param_3 + 0x28);
+  if (lVar13 == 0) {
+    lVar13 = *(long *)(param_3 + 0x20);
+  }
+  *(long *)(param_3 + 0x28) = lVar13 + -1;
+  *(undefined8 *)(*(long *)(param_3 + 8) + lVar13 * 8 + -8) = *param_4;
+  uVar12 = _UNK_104e245e8;
+  uVar11 = _UNK_104e245e0;
+  if (*(long *)(param_3 + 0x160) != 0) {
+    uVar15 = 0;
+    fVar18 = 0.0;
+    lVar13 = 0x30;
+    uVar29 = NEON_fmov(0x3f800000,4);
+    do {
+      uStack_68 = func_0x0001036e406c(param_3 + lVar13);
+      fStack_64 = param_2;
+      fVar16 = (float)(**(code **)(param_3 + 0x170))
+                                (*(undefined4 *)(param_3 + 0x1f0),param_3 + 0x178,&uStack_68,uVar15)
+      ;
+      uVar8 = *(ulong *)(param_3 + 0x20);
+      fVar20 = (float)uVar8 + -2.0;
+      lVar14 = *(long *)(param_3 + 8);
+      fVar16 = fVar16 * *(float *)(param_3 + 0x1e0);
+      param_2 = param_2 * *(float *)(param_3 + 0x1e0);
+      uVar24 = NEON_fmax(CONCAT44(param_2,fVar16),uVar29,4);
+      uVar9 = CONCAT44(param_2,fVar16) ^
+              (CONCAT44(param_2,fVar16) ^ CONCAT44(fVar20,fVar20)) &
+              CONCAT44(-(uint)(fVar20 < param_2),-(uint)(fVar20 < fVar16));
+      lVar1 = param_3 + uVar15 * 8;
+      uVar9 = uVar9 ^ (uVar9 ^ uVar24) &
+                      CONCAT44(-(uint)(param_2 < fVar20),-(uint)(fVar16 < fVar20));
+      fVar16 = (float)uVar9;
+      fVar20 = (float)(uVar9 >> 0x20);
+      lVar10 = (long)fVar16;
+      lVar19 = (long)fVar20;
+      auVar22._8_8_ = lVar19;
+      auVar22._0_8_ = lVar10;
+      auVar22 = NEON_ucvtf(auVar22,8);
+      uVar9 = *(long *)(param_3 + 0x28) + lVar10;
+      uVar24 = 0;
+      if (uVar8 <= uVar9 - 1) {
+        uVar24 = uVar8;
+      }
+      uVar2 = 0;
+      if (uVar8 <= uVar9) {
+        uVar2 = uVar8;
+      }
+      uVar4 = 0;
+      if (uVar8 <= uVar9 + 1) {
+        uVar4 = uVar8;
+      }
+      uVar3 = 0;
+      if (uVar8 <= uVar9 + 2) {
+        uVar3 = uVar8;
+      }
+      fVar17 = *(float *)(lVar14 + (uVar9 - uVar24) * 8 + -8);
+      uVar24 = *(long *)(param_3 + 0x28) + lVar19;
+      fVar23 = *(float *)(lVar14 + (uVar9 - uVar4) * 8 + 8);
+      uVar4 = 0;
+      if (uVar8 <= uVar24 - 1) {
+        uVar4 = uVar8;
+      }
+      uVar5 = 0;
+      if (uVar8 <= uVar24) {
+        uVar5 = uVar8;
+      }
+      uVar6 = 0;
+      if (uVar8 <= uVar24 + 1) {
+        uVar6 = uVar8;
+      }
+      uVar7 = 0;
+      if (uVar8 <= uVar24 + 2) {
+        uVar7 = uVar8;
+      }
+      fVar21 = *(float *)(lVar14 + (uVar24 - uVar6) * 8 + 0xc);
+      fVar25 = *(float *)(lVar14 + (uVar24 - uVar4) * 8 + -4);
+      fVar30 = *(float *)(lVar14 + (uVar9 - uVar2) * 8);
+      fVar28 = *(float *)(lVar14 + (uVar24 - uVar5) * 8 + 4);
+      fVar26 = (fVar23 - fVar17) * 0.5;
+      fVar27 = (fVar21 - fVar25) * 0.5;
+      fVar23 = (fVar30 - fVar23) * (float)uVar11 +
+               (*(float *)(lVar14 + (uVar9 - uVar3) * 8 + 0x10) - fVar17) * (float)uVar12;
+      fVar21 = (*(float *)(lVar14 + (uVar24 - uVar7) * 8 + 0x14) - fVar25) *
+               (float)((ulong)uVar11 >> 0x20) + (fVar28 - fVar21) * (float)((ulong)uVar12 >> 0x20);
+      fVar16 = (float)((double)fVar16 - auVar22._0_8_);
+      fVar20 = (float)((double)fVar20 - auVar22._8_8_);
+      fVar30 = fVar30 + (fVar26 + (((fVar26 + (fVar17 - fVar30)) - fVar23) + fVar23 * fVar16) *
+                                  fVar16) * fVar16;
+      *(ulong *)(lVar1 + 0x188) =
+           CONCAT44(fVar28 + (fVar27 + (((fVar27 + (fVar25 - fVar28)) - fVar21) + fVar21 * fVar20) *
+                                       fVar20) * fVar20,fVar30);
+      fVar18 = fVar18 + fVar30 * (float)*(undefined8 *)(lVar1 + 0x148);
+      uVar15 = uVar15 + 1;
+      lVar13 = lVar13 + 0x48;
+      param_2 = fVar18;
+    } while (uVar15 < *(ulong *)(param_3 + 0x160));
+  }
+  return;
+}
+END 1036e385c
+-------- FUN_1036e3668 (pre-bank gain stage) --------
+FUNC 1036e3668 name=FUN_1036e3668 body=1 lines=50
+
+void FUN_1036e3668(undefined8 param_1,undefined8 *param_2)
+
+{
+  float fVar1;
+  float fVar3;
+  ulong uVar2;
+  int iVar4;
+  int iVar5;
+  ulong uVar6;
+  undefined8 uVar7;
+  float fVar8;
+  float fVar9;
+  undefined4 uStack_24;
+  
+  if (((bRam000000010596e800 & 1) == 0) && (iVar4 = ___cxa_guard_acquire(0x10596e800), iVar4 != 0))
+  {
+    uStack_24 = func_0x0001036e3d74(&UNK_104e245f0);
+    uRam000000010596e7f8 = func_0x0001036e3d74(&uStack_24);
+    ___cxa_guard_release(0x10596e800);
+  }
+  fVar1 = 127.0 - ABS((float)*param_2 * 0.5287 + 0.0025) * 2.88539;
+  fVar3 = 127.0 - ABS((float)((ulong)*param_2 >> 0x20) * 0.5287 + 0.0025) * 2.88539;
+  uVar7 = CONCAT44(fVar3,fVar1);
+  uVar6 = NEON_fmax(uVar7,0,4);
+  uVar2 = NEON_fmin(uVar7,0x437f0000437f0000,4);
+  uVar2 = uVar2 ^ (uVar2 ^ uVar6) & CONCAT44(-(uint)(fVar3 < 255.0),-(uint)(fVar1 < 255.0));
+  fVar1 = (float)uVar2;
+  iVar4 = (int)fVar1;
+  fVar3 = (float)(uVar2 >> 0x20);
+  iVar5 = (int)fVar3;
+  uVar7 = NEON_scvtf(CONCAT44(iVar5,iVar4),4);
+  fVar1 = fVar1 - (float)uVar7;
+  fVar3 = fVar3 - (float)((ulong)uVar7 >> 0x20);
+  uVar7 = NEON_fmov(0x3f800000,4);
+  fVar8 = (float)uVar7;
+  fVar9 = (float)((ulong)uVar7 >> 0x20);
+  fVar1 = (fVar8 + (((fVar1 * 0.013487903 + 0.0521745) * fVar1 + 0.24128748) * fVar1 + 0.6930501) *
+                   fVar1) * (float)(iVar4 << 0x17);
+  fVar3 = (fVar9 + (((fVar3 * 0.013487903 + 0.0521745) * fVar3 + 0.24128748) * fVar3 + 0.6930501) *
+                   fVar3) * (float)(iVar5 << 0x17);
+  fVar1 = 127.0 - ABS((fVar8 - fVar1) / (fVar1 + fVar8)) * 2.88539;
+  fVar3 = 127.0 - ABS((fVar9 - fVar3) / (fVar3 + fVar9)) * 2.88539;
+  uVar7 = CONCAT44(fVar3,fVar1);
+  uVar6 = NEON_fmax(uVar7,0,4);
+  uVar2 = NEON_fmin(uVar7,0x437f0000437f0000,4);
+  uVar2 = uVar2 ^ (uVar2 ^ uVar6) & CONCAT44(-(uint)(fVar3 < 255.0),-(uint)(fVar1 < 255.0));
+  NEON_scvtf(CONCAT44((int)(float)(uVar2 >> 0x20),(int)(float)uVar2),4);
+  return;
+}
+END 1036e3668
+-------- FUN_1036e3af4 (post filter + asin-smoother) --------
+FUNC 1036e3af4 name=FUN_1036e3af4 body=1 lines=94
+
+void FUN_1036e3af4(long param_1,undefined8 *param_2)
+
+{
+  undefined1 (*pauVar1) [12];
+  float fVar2;
+  undefined8 uVar3;
+  ulong uVar4;
+  float fVar8;
+  undefined1 auVar5 [16];
+  undefined1 auVar6 [16];
+  undefined1 auVar7 [16];
+  float fVar9;
+  float fVar11;
+  undefined1 auVar10 [16];
+  float fVar12;
+  float fVar13;
+  float fVar16;
+  undefined8 uVar14;
+  ulong uVar15;
+  float fVar17;
+  undefined8 uVar18;
+  float fVar19;
+  float fVar20;
+  float fVar21;
+  float fVar22;
+  float fVar23;
+  undefined1 auVar24 [16];
+  
+  fVar2 = (float)*(undefined8 *)(param_1 + 8) * 0.5;
+  fVar8 = (float)((ulong)*(undefined8 *)(param_1 + 8) >> 0x20) * 0.5;
+  uVar18 = NEON_fmov(0x3f800000,4);
+  fVar13 = (float)((ulong)uVar18 >> 0x20);
+  fVar12 = fVar2 / (fVar2 * (fVar2 + 1.4142135) + (float)uVar18);
+  fVar16 = fVar8 / (fVar8 * (fVar8 + 1.4142135) + fVar13);
+  pauVar1 = (undefined1 (*) [12])(param_1 + 0x18);
+  fVar20 = (float)*(undefined8 *)(param_1 + 0x20);
+  fVar21 = (float)((ulong)*(undefined8 *)(param_1 + 0x20) >> 0x20);
+  fVar17 = (float)*(undefined8 *)*pauVar1;
+  fVar19 = (float)((ulong)*(undefined8 *)*pauVar1 >> 0x20);
+  auVar6._12_4_ = fVar21;
+  auVar6._0_12_ = *pauVar1;
+  auVar24._12_4_ = fVar21;
+  auVar24._0_12_ = *pauVar1;
+  auVar24 = NEON_ext(auVar6,auVar24,8,1);
+  fVar22 = (float)*param_2 - auVar24._0_4_;
+  fVar23 = (float)((ulong)*param_2 >> 0x20) - auVar24._4_4_;
+  fVar9 = (fVar2 + 1.4142135) * fVar17;
+  fVar11 = (fVar8 + 1.4142135) * fVar19;
+  auVar10._0_4_ = fVar2 * fVar22 - fVar9;
+  auVar10._4_4_ = fVar8 * fVar23 - fVar11;
+  auVar10._8_4_ = fVar22 - fVar9;
+  auVar10._12_4_ = fVar23 - fVar11;
+  auVar5._0_4_ = fVar2 * fVar22 + fVar17;
+  auVar5._4_4_ = fVar8 * fVar23 + fVar19;
+  auVar5._8_4_ = fVar22 + fVar20;
+  auVar5._12_4_ = fVar23 + fVar21;
+  auVar6 = NEON_ext(auVar10,auVar5,8,1);
+  auVar7._0_4_ = fVar12 * auVar6._0_4_;
+  auVar7._4_4_ = fVar16 * auVar6._4_4_;
+  auVar7._8_4_ = fVar12 * auVar6._8_4_;
+  auVar7._12_4_ = fVar16 * auVar6._12_4_;
+  auVar6 = NEON_ext(auVar7,auVar7,8,1);
+  *(float *)(param_1 + 0x20) = fVar20 + auVar7._8_4_ + auVar7._8_4_;
+  *(float *)(param_1 + 0x24) = fVar21 + auVar7._12_4_ + auVar7._12_4_;
+  *(float *)(param_1 + 0x18) = fVar17 + auVar7._0_4_ + auVar7._0_4_;
+  *(float *)(param_1 + 0x1c) = fVar19 + auVar7._4_4_ + auVar7._4_4_;
+  uVar3 = NEON_fmov(0x40800000,4);
+  fVar2 = (auVar24._0_4_ + auVar6._0_4_) * (float)uVar3 + 0.1;
+  fVar8 = (auVar24._4_4_ + auVar6._4_4_) * (float)((ulong)uVar3 >> 0x20) + 0.1;
+  uVar3 = CONCAT44(fVar8,fVar2);
+  uVar14 = NEON_fmov(0xbf800000,4);
+  uVar15 = NEON_fmax(uVar3,uVar14,4);
+  uVar4 = NEON_fmin(uVar3,uVar18,4);
+  uVar4 = uVar4 ^ (uVar4 ^ uVar15) &
+                  CONCAT44(-(uint)(fVar8 < fVar13),-(uint)(fVar2 < (float)uVar18));
+  fVar2 = (float)uVar4 * 1.5707964;
+  fVar8 = (float)(uVar4 >> 0x20) * 1.5707964;
+  fVar9 = fVar2 * fVar2;
+  fVar12 = fVar8 * fVar8;
+  uVar3 = NEON_fmov(0x3e800000,4);
+  fVar11 = (float)*(undefined8 *)(param_1 + 0x10);
+  fVar16 = (float)((ulong)*(undefined8 *)(param_1 + 0x10) >> 0x20);
+  fVar13 = (float)*(undefined8 *)(param_1 + 0x28);
+  fVar17 = (float)((ulong)*(undefined8 *)(param_1 + 0x28) >> 0x20);
+  fVar2 = (fVar11 / (fVar11 + 2.0)) *
+          (fVar2 * (((fVar9 * -0.00018284567 + 0.008304825) * fVar9 + -0.16664949) * fVar9 +
+                   0.99999833) * (float)uVar3 - fVar13);
+  fVar8 = (fVar16 / (fVar16 + 2.0)) *
+          (fVar8 * (((fVar12 * -0.00018284567 + 0.008304825) * fVar12 + -0.16664949) * fVar12 +
+                   0.99999833) * (float)((ulong)uVar3 >> 0x20) - fVar17);
+  *(ulong *)(param_1 + 0x28) = CONCAT44(fVar17 + fVar8 + fVar8,fVar13 + fVar2 + fVar2);
+  return;
+}
+END 1036e3af4
+
+CALC VERDICTS [D]:
+- Shell calc gates on bytes +0x200 (device on), +0x201/0x202 (ramp state),
+  +0x203 (reset pending); drains the message ring at shell+0xa8; per sample:
+  outL = FUN_103b72408(*inL_ptr, inR, dspObj) (pair processed inside);
+  status byte = FUN_103b7242c(dspObj) -> shell+0x203.
+- FUN_1036e32a8: optional one-pole smooth of the input pair
+  s += k*(x-s), k = g/(g+2); mid = (L+R)/2; Ensemble (flags byte != 0)
+  replaces BOTH modulator inputs by the mono mid; dot product stage over
+  voices (weights obj+0x188+8i x obj+0x130+8i) selects a stereo-voice sum;
+  FUN_1036e385c runs the modulated voice bank and returns the wet pair;
+  width: M/S with side gain *(float*)(obj+0x1e8) when obj[2];
+  FUN_1036e3af4(obj+0x1a0) post filter when obj[3];
+  dry/wet: wet-only mode multiplies wet by obj+0x1d8/+0x1dc; mixed mode
+  out = dry*obj+0x1f8 + wet*obj+0x1d8|dc * obj+0x1fc; meter tail: peak
+  latch vs obj+0x108/+0x10c thresholds, hold counter at obj+0x110.
+- FUN_1036e385c (voice bank): backward-writing ring (base obj+0x8, index
+  obj+0x28, capacity obj+0x20, 8-byte stereo slots); per voice:
+  phase = func_0x0001036e406c(voice); delayPair =
+  (*(*(obj+0x170)))(obj+0x1f0, obj+0x178, &phase, voiceIndex)  (the mode
+  provider call); delay *= sr (obj+0x1e0); clamp to [1, cap-2] samples;
+  4-point cubic (Catmull-Rom form, taps int-1..int+2, 0.5-weighted
+  derivatives, weights from 104e245e0/0x104e245e8 (0.5/0.25));
+  per-voice delayed pair stored at obj+0x188+8i; serial accumulate
+  acc += delayedL * *(float*)(obj+0x148+8i) (feedback across voices).
+- FUN_1036e3668 (run when obj[4]): per channel
+  a = 127 - |x*0.5287 + 0.0025| * 2.88539, clamp [0,255], int+frac;
+  2^int via mantissa poly (0.013487903, 0.0521745, 0.24128748, 0.6930501)
+  * 2^(int<<23) float-bit assembly; then b = 127 - |(1-y)/(1+y)| * 2.88539
+  clamp [0,255] -> second 2^x assembly. Static singleton from 104e245f0
+  (2.5 ms). Semantic [H] (gain-shaping law, exact role open).
+- FUN_1036e3af4 (run when obj[3]): per channel g = c/(c*(c+sqrt2)+1) with
+  c = coefficient*0.5 from obj+0x1a8 pair (TPT/SVF-form LPF); state
+  integrators obj+0x1b8..0x1c4; then u = clamp((s1+s2)*4 + 0.1, [-1,1]) *
+  pi/2; asin-series u*(((-0.00018284567*u^2+0.008304825)*u^2-0.16664949)*u^2
+  +0.99999833)*0.25; one-pole smooth k=g/(g+2) into obj+0x1c8 pair.
+  Semantic [H] (filter + pitch/level tracker candidate).
+
+======== (6) RAMP-EVENT SETTERS (OnRampEvent<P> invoke bodies) ========
+FUNC 1018daa00 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus4RateEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=102
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus4RateEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (undefined8 param_1,undefined8 param_2)
+
+{
+  long lVar1;
+  long *plVar2;
+  long *plVar3;
+  ulong uVar4;
+  long lVar5;
+  long lVar6;
+  long *plVar7;
+  long lVar8;
+  long *plVar9;
+  long unaff_x19;
+  undefined8 unaff_x20;
+  undefined1 *unaff_x29;
+  code *unaff_x30;
+  float fVar10;
+  double dVar11;
+  double dVar12;
+  double dVar13;
+  undefined1 auVar14 [16];
+  
+  auVar14._8_8_ = param_2;
+  auVar14._0_8_ = param_1;
+  while( true ) {
+    uVar4 = (ulong)(int)auVar14._8_8_[1];
+    fVar10 = *auVar14._8_8_;
+    lVar6 = *(long *)(auVar14._0_8_ + 0xb8);
+    lVar1 = lVar6 + 0xb0;
+    *(undefined8 *)((long)register0x00000008 + -0x20) = unaff_x20;
+    *(long *)((long)register0x00000008 + -0x18) = unaff_x19;
+    *(undefined1 **)((long)register0x00000008 + -0x10) = unaff_x29;
+    *(code **)((long)register0x00000008 + -8) = unaff_x30;
+    unaff_x29 = (undefined1 *)((long)register0x00000008 + -0x10);
+    dVar11 = (double)fVar10;
+    *(double *)(lVar6 + 0xf8) = dVar11;
+    if (uVar4 == 0) break;
+    dVar13 = *(double *)(lVar6 + 0xf0);
+    dVar12 = (dVar11 - *(double *)(lVar6 + 0xe8)) / (double)uVar4;
+    *(double *)(lVar6 + 0xf0) = dVar12;
+    dVar11 = *(double *)(lVar6 + 0xe8);
+    if (dVar12 == 0.0) goto code_r0x0001018da918;
+    if (dVar13 != 0.0) {
+      return;
+    }
+    lVar6 = *(long *)(lVar6 + 0xd8);
+    lVar5 = *(long *)(lVar6 + 0x440);
+    if (lVar5 != 0x88) {
+      *(long *)(lVar6 + lVar5 * 8) = lVar1;
+      *(long *)(lVar6 + 0x440) = lVar5 + 1;
+      return;
+    }
+    unaff_x30 = 
+    __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus4RateEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+    ;
+    auVar14 = func_0x000102aa7934();
+    register0x00000008 = (BADSPACEBASE *)((long)register0x00000008 + -0x20);
+    unaff_x19 = lVar1;
+END 1018daa00
+FUNC 1018da8a8 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus7ShapingEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=98
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus7ShapingEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (undefined8 param_1,undefined8 param_2)
+
+{
+  long lVar1;
+  long *plVar2;
+  undefined1 *puVar3;
+  long *plVar4;
+  ulong uVar5;
+  long lVar6;
+  long lVar7;
+  long *plVar8;
+  long lVar9;
+  long *plVar10;
+  undefined1 *unaff_x29;
+  code *unaff_x30;
+  float fVar11;
+  double dVar12;
+  double dVar13;
+  double dVar14;
+  undefined1 auVar15 [16];
+  
+  auVar15._8_8_ = param_2;
+  auVar15._0_8_ = param_1;
+  while( true ) {
+    uVar5 = (ulong)(int)auVar15._8_8_[1];
+    fVar11 = *auVar15._8_8_;
+    lVar7 = *(long *)(auVar15._0_8_ + 0xb8);
+    lVar1 = lVar7 + 0x50;
+    puVar3 = (undefined1 *)((long)register0x00000008 + -0x10);
+    *(undefined1 **)((long)register0x00000008 + -0x10) = unaff_x29;
+    *(code **)((long)register0x00000008 + -8) = unaff_x30;
+    dVar12 = (double)fVar11;
+    *(double *)(lVar7 + 0x90) = dVar12;
+    if (uVar5 == 0) break;
+    dVar14 = *(double *)(lVar7 + 0x88);
+    dVar13 = (dVar12 - *(double *)(lVar7 + 0x80)) / (double)uVar5;
+    *(double *)(lVar7 + 0x88) = dVar13;
+    dVar12 = *(double *)(lVar7 + 0x80);
+    if (dVar13 == 0.0) goto code_r0x0001018da7d4;
+    if (dVar14 != 0.0) {
+      return;
+    }
+    lVar7 = *(long *)(lVar7 + 0x70);
+    lVar6 = *(long *)(lVar7 + 0x440);
+    if (lVar6 != 0x88) {
+      *(long *)(lVar7 + lVar6 * 8) = lVar1;
+      *(long *)(lVar7 + 0x440) = lVar6 + 1;
+      return;
+    }
+    unaff_x30 = 
+    __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus7ShapingEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+    ;
+    auVar15 = func_0x000102aa7934();
+    register0x00000008 = (BADSPACEBASE *)((long)register0x00000008 + -0x10);
+    unaff_x29 = puVar3;
+  }
+  *(double *)(lVar7 + 0x80) = dVar12;
+  *(undefined8 *)(lVar7 + 0x88) = 0;
+END 1018da8a8
+FUNC 1018daea4 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus5WidthEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=99
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus5WidthEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,float *param_2)
+
+{
+  long *plVar1;
+  float fVar2;
+  undefined1 *puVar3;
+  long lVar5;
+  long *plVar6;
+  long lVar7;
+  long lVar8;
+  long *plVar9;
+  long *plVar10;
+  undefined1 *unaff_x29;
+  code *unaff_x30;
+  float fVar11;
+  double dVar12;
+  double dVar13;
+  double dVar14;
+  undefined1 auVar15 [16];
+  undefined1 *puVar4;
+  
+  fVar2 = param_2[1];
+  fVar11 = *param_2;
+  lVar5 = *(long *)(param_1 + 0xb8) + 0x340;
+  puVar3 = (undefined1 *)register0x00000008;
+  while( true ) {
+    puVar4 = puVar3 + -0x10;
+    *(undefined1 **)(puVar3 + -0x10) = unaff_x29;
+    *(code **)(puVar3 + -8) = unaff_x30;
+    dVar12 = (double)fVar11;
+    *(double *)(lVar5 + 0x40) = dVar12;
+    if ((long)(int)fVar2 == 0) break;
+    dVar14 = *(double *)(lVar5 + 0x38);
+    dVar13 = (dVar12 - *(double *)(lVar5 + 0x30)) / (double)(ulong)(long)(int)fVar2;
+    *(double *)(lVar5 + 0x38) = dVar13;
+    dVar12 = *(double *)(lVar5 + 0x30);
+    if (dVar13 == 0.0) goto code_r0x0001018da7d4;
+    if (dVar14 != 0.0) {
+      return;
+    }
+    lVar7 = *(long *)(lVar5 + 0x20);
+    lVar8 = *(long *)(lVar7 + 0x440);
+    if (lVar8 != 0x88) {
+      *(long *)(lVar7 + lVar8 * 8) = lVar5;
+      *(long *)(lVar7 + 0x440) = lVar8 + 1;
+      return;
+    }
+    unaff_x30 = 
+    __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus7ShapingEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+    ;
+    auVar15 = func_0x000102aa7934();
+    fVar2 = auVar15._8_8_[1];
+    fVar11 = *auVar15._8_8_;
+    lVar5 = *(long *)(auVar15._0_8_ + 0xb8) + 0x50;
+    puVar3 = puVar3 + -0x10;
+    unaff_x29 = puVar4;
+  }
+  *(double *)(lVar5 + 0x30) = dVar12;
+END 1018daea4
+FUNC 1018daebc name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus6WarmthEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=104
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus6WarmthEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,float *param_2)
+
+{
+  long *plVar1;
+  undefined1 *puVar2;
+  long lVar3;
+  long *plVar4;
+  long lVar5;
+  long lVar6;
+  long *plVar7;
+  long *plVar8;
+  long unaff_x19;
+  undefined8 unaff_x20;
+  undefined1 *unaff_x29;
+  code *unaff_x30;
+  float fVar9;
+  float fVar10;
+  double dVar11;
+  double dVar12;
+  double dVar13;
+  undefined1 auVar14 [16];
+  
+  fVar9 = param_2[1];
+  fVar10 = *param_2;
+  puVar2 = (undefined1 *)register0x00000008;
+  lVar5 = *(long *)(param_1 + 0xb8) + 0x3a0;
+  while( true ) {
+    lVar3 = lVar5;
+    *(undefined8 *)(puVar2 + -0x20) = unaff_x20;
+    *(long *)(puVar2 + -0x18) = unaff_x19;
+    *(undefined1 **)(puVar2 + -0x10) = unaff_x29;
+    *(code **)(puVar2 + -8) = unaff_x30;
+    unaff_x29 = puVar2 + -0x10;
+    dVar11 = (double)fVar10;
+    *(double *)(lVar3 + 0x48) = dVar11;
+    if ((long)(int)fVar9 == 0) break;
+    dVar13 = *(double *)(lVar3 + 0x40);
+    dVar12 = (dVar11 - *(double *)(lVar3 + 0x38)) / (double)(ulong)(long)(int)fVar9;
+    *(double *)(lVar3 + 0x40) = dVar12;
+    dVar11 = *(double *)(lVar3 + 0x38);
+    if (dVar12 == 0.0) goto code_r0x0001018da918;
+    if (dVar13 != 0.0) {
+      return;
+    }
+    lVar5 = *(long *)(lVar3 + 0x28);
+    lVar6 = *(long *)(lVar5 + 0x440);
+    if (lVar6 != 0x88) {
+      *(long *)(lVar5 + lVar6 * 8) = lVar3;
+      *(long *)(lVar5 + 0x440) = lVar6 + 1;
+      return;
+    }
+    unaff_x30 = 
+    __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus4RateEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+    ;
+    auVar14 = func_0x000102aa7934();
+    fVar9 = auVar14._8_8_[1];
+    fVar10 = *auVar14._8_8_;
+    puVar2 = puVar2 + -0x20;
+END 1018daebc
+FUNC 1018daeec name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus6DryWetEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=99
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus6DryWetEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,float *param_2)
+
+{
+  long *plVar1;
+  float fVar2;
+  undefined1 *puVar3;
+  long lVar5;
+  long *plVar6;
+  long lVar7;
+  long lVar8;
+  long *plVar9;
+  long *plVar10;
+  undefined1 *unaff_x29;
+  code *unaff_x30;
+  float fVar11;
+  double dVar12;
+  double dVar13;
+  double dVar14;
+  undefined1 auVar15 [16];
+  undefined1 *puVar4;
+  
+  fVar2 = param_2[1];
+  fVar11 = *param_2;
+  lVar5 = *(long *)(param_1 + 0xb8) + 0x470;
+  puVar3 = (undefined1 *)register0x00000008;
+  while( true ) {
+    puVar4 = puVar3 + -0x10;
+    *(undefined1 **)(puVar3 + -0x10) = unaff_x29;
+    *(code **)(puVar3 + -8) = unaff_x30;
+    dVar12 = (double)fVar11;
+    *(double *)(lVar5 + 0x40) = dVar12;
+    if ((long)(int)fVar2 == 0) break;
+    dVar14 = *(double *)(lVar5 + 0x38);
+    dVar13 = (dVar12 - *(double *)(lVar5 + 0x30)) / (double)(ulong)(long)(int)fVar2;
+    *(double *)(lVar5 + 0x38) = dVar13;
+    dVar12 = *(double *)(lVar5 + 0x30);
+    if (dVar13 == 0.0) goto code_r0x0001018da7d4;
+    if (dVar14 != 0.0) {
+      return;
+    }
+    lVar7 = *(long *)(lVar5 + 0x20);
+    lVar8 = *(long *)(lVar7 + 0x440);
+    if (lVar8 != 0x88) {
+      *(long *)(lVar7 + lVar8 * 8) = lVar5;
+      *(long *)(lVar7 + 0x440) = lVar8 + 1;
+      return;
+    }
+    unaff_x30 = 
+    __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus7ShapingEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+    ;
+    auVar15 = func_0x000102aa7934();
+    fVar2 = auVar15._8_8_[1];
+    fVar11 = *auVar15._8_8_;
+    lVar5 = *(long *)(auVar15._0_8_ + 0xb8) + 0x50;
+    puVar3 = puVar3 + -0x10;
+    unaff_x29 = puVar4;
+  }
+  *(double *)(lVar5 + 0x30) = dVar12;
+END 1018daeec
+FUNC 1018daa18 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus6AmountEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=99
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus6AmountEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,float *param_2)
+
+{
+  long *plVar1;
+  float fVar2;
+  undefined1 *puVar3;
+  long lVar5;
+  long *plVar6;
+  long lVar7;
+  long lVar8;
+  long *plVar9;
+  long *plVar10;
+  undefined1 *unaff_x29;
+  code *unaff_x30;
+  float fVar11;
+  double dVar12;
+  double dVar13;
+  double dVar14;
+  undefined1 auVar15 [16];
+  undefined1 *puVar4;
+  
+  fVar2 = param_2[1];
+  fVar11 = *param_2;
+  lVar5 = *(long *)(param_1 + 0xb8) + 0x118;
+  puVar3 = (undefined1 *)register0x00000008;
+  while( true ) {
+    puVar4 = puVar3 + -0x10;
+    *(undefined1 **)(puVar3 + -0x10) = unaff_x29;
+    *(code **)(puVar3 + -8) = unaff_x30;
+    dVar12 = (double)fVar11;
+    *(double *)(lVar5 + 0x40) = dVar12;
+    if ((long)(int)fVar2 == 0) break;
+    dVar14 = *(double *)(lVar5 + 0x38);
+    dVar13 = (dVar12 - *(double *)(lVar5 + 0x30)) / (double)(ulong)(long)(int)fVar2;
+    *(double *)(lVar5 + 0x38) = dVar13;
+    dVar12 = *(double *)(lVar5 + 0x30);
+    if (dVar13 == 0.0) goto code_r0x0001018da7d4;
+    if (dVar14 != 0.0) {
+      return;
+    }
+    lVar7 = *(long *)(lVar5 + 0x20);
+    lVar8 = *(long *)(lVar7 + 0x440);
+    if (lVar8 != 0x88) {
+      *(long *)(lVar7 + lVar8 * 8) = lVar5;
+      *(long *)(lVar7 + 0x440) = lVar8 + 1;
+      return;
+    }
+    unaff_x30 = 
+    __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus7ShapingEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+    ;
+    auVar15 = func_0x000102aa7934();
+    fVar2 = auVar15._8_8_[1];
+    fVar11 = *auVar15._8_8_;
+    lVar5 = *(long *)(auVar15._0_8_ + 0xb8) + 0x50;
+    puVar3 = puVar3 + -0x10;
+    unaff_x29 = puVar4;
+  }
+  *(double *)(lVar5 + 0x30) = dVar12;
+END 1018daa18
+FUNC 1018daa30 name=__ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus8FeedbackEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_ body=1 lines=99
+
+void __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus8FeedbackEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+               (long param_1,float *param_2)
+
+{
+  long *plVar1;
+  float fVar2;
+  undefined1 *puVar3;
+  long lVar5;
+  long *plVar6;
+  long lVar7;
+  long lVar8;
+  long *plVar9;
+  long *plVar10;
+  undefined1 *unaff_x29;
+  code *unaff_x30;
+  float fVar11;
+  double dVar12;
+  double dVar13;
+  double dVar14;
+  undefined1 auVar15 [16];
+  undefined1 *puVar4;
+  
+  fVar2 = param_2[1];
+  fVar11 = *param_2;
+  lVar5 = *(long *)(param_1 + 0xb8) + 0x178;
+  puVar3 = (undefined1 *)register0x00000008;
+  while( true ) {
+    puVar4 = puVar3 + -0x10;
+    *(undefined1 **)(puVar3 + -0x10) = unaff_x29;
+    *(code **)(puVar3 + -8) = unaff_x30;
+    dVar12 = (double)fVar11;
+    *(double *)(lVar5 + 0x40) = dVar12;
+    if ((long)(int)fVar2 == 0) break;
+    dVar14 = *(double *)(lVar5 + 0x38);
+    dVar13 = (dVar12 - *(double *)(lVar5 + 0x30)) / (double)(ulong)(long)(int)fVar2;
+    *(double *)(lVar5 + 0x38) = dVar13;
+    dVar12 = *(double *)(lVar5 + 0x30);
+    if (dVar13 == 0.0) goto code_r0x0001018da7d4;
+    if (dVar14 != 0.0) {
+      return;
+    }
+    lVar7 = *(long *)(lVar5 + 0x20);
+    lVar8 = *(long *)(lVar7 + 0x440);
+    if (lVar8 != 0x88) {
+      *(long *)(lVar7 + lVar8 * 8) = lVar5;
+      *(long *)(lVar7 + 0x440) = lVar8 + 1;
+      return;
+    }
+    unaff_x30 = 
+    __ZZN6detail16TMemberFuncTypesIM25ODeviceKitDeviceProcessorIN7ableton7devices6chorus12ChorusDeviceEEFvPvEE14SProcessorFuncIXadL_ZNS6_11OnRampEventIJNS4_5model6Chorus7ShapingEEEEvS7_EEEEPFvS7_S7_EvENUlS7_S7_E_8__invokeES7_S7_
+    ;
+    auVar15 = func_0x000102aa7934();
+    fVar2 = auVar15._8_8_[1];
+    fVar11 = *auVar15._8_8_;
+    lVar5 = *(long *)(auVar15._0_8_ + 0xb8) + 0x50;
+    puVar3 = puVar3 + -0x10;
+    unaff_x29 = puVar4;
+  }
+  *(double *)(lVar5 + 0x30) = dVar12;
+END 1018daa30
+
+RAMP LAW VERDICT [D] (generic, per ramp object at dsp+BASE):
+  target(+0x40) = value; if steps != 0: inc(+0x38) = (value - current(+0x30))
+  / steps; else current(+0x30) = value, inc(+0x38) = 0. Registration token
+  appended into the event list (cap 0x88 slots) at obj+0x440.
+  Bases: Shaping +0x50, Rate +0xb0, Amount +0x118, Feedback +0x178,
+  Width +0x340, Warmth +0x3a0, DryWet +0x470 (decompiled); VibratoOffset/
+  HighpassFrequency/Mode/OutputGain bases +0x1d8/+0x228/+0x288/+0x2d8/
+  +0x408 among the FUN_1018db3a8 sub-ctors [assignment H: 5 bases, 4
+  confirmed ramp params + Mode crossfade].
+
+======== (7) VERDICTS ========
+- Device/processor: OChorus2Processor / ChorusDevice / blocks::chorus DSP
+  object; NOT the pre-12 OChorusProcessor (still present in the binary).
+- Three modes (LChorus2 enum): 0 Classic, 1 Ensemble, 2 Vibrato; voices
+  2/3/1; Ensemble forces mono modulator; Vibrato scales delay by obj+0x1ec.
+- Interpolation: 4-point cubic on an 8-byte-slot stereo ring, 50 ms cap.
+- Parameter transport: ramp objects (double current/inc/target) for the 10
+  continuous params; bools via OnAutomatableFloatEvent; mode switch rebuilds
+  the parameter record and per-voice phases from the const pool.
+- NOT captured this lane: func_0x0001036e3ec4 (voice template), the mode
+  provider lambda math bodies (NEON stubs, raw-asm decode pending), the
+  HighpassFrequency->coefficient site, OutputGain/DryWet application beyond
+  the mix law, Reset/Exit bodies, and the meter tail semantics.

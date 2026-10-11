@@ -1,0 +1,184 @@
+// PROVENANCE: same method as the other binary-lane captures (nm census +
+// llvm-objdump + ADRP+ADD scan + XML parse of the factory Meld.adv; Live.arm64
+// Live 12.0.25 arm64; owner-private, NOT FOR REDISTRIBUTION). Captured
+// 2026-10-09 (meld binary lane). Companion: devices/meld-derivation.md.
+// Official XML evidence: evidence/devices/Meld/default.xml (root
+// <InstrumentMeld>, Creator "Ableton Live 12.0.5d1").
+//
+// (1) CLASS INVENTORY (nm)
+//   A-framework compounds (SNewCompound<T>+0x68 factories):
+//     AInstrumentMeld              T 0x10233c210   (registered @0x102413c74)
+//     AInstrumentMeldModule        T 0x102415408   (registered @0x1024b4dec)
+//     AMeldEnvelopeDisplay         T 0x102e19c40
+//     AMeldModulationDisplay       T 0x102e17484
+//     AMeldEnvelopeViewProxy       T 0x1024d76ec
+//     AMeldModViewProxy            T 0x1024d89a0
+//     AMeldModulationConnections   T 0x1024d4f64
+//     AMeldOrderedControlManager   T 0x102e19674
+//     AMeldModSourceIndicatorBar   T 0x102e1a30c
+//     AMeldModulationMatrixListView T 0x102e1b314
+//   Devicekit DSP processor:
+//     ODeviceKitDeviceProcessor<ableton::devices::meld::MeldDevice>
+//       — 217 SProcessorFunc instantiations (nm census), incl.
+//         Init(OScheduler*)                 trampoline 0x101810e78
+//         OnRampEvent<path>                 90 instantiations
+//         OnTempoChanged 0x10183ce8c, OnSampleRateChanged 0x10183ce88,
+//         OnBeatTimeJump 0x10183cf70, OnTransportPlayingStateChanged 0x10183cf00
+//     OMeldProcessor.SetAllModulationValues / SetModulationValue  (strings
+//       0x1048f4b82 / 0x1048f4ba8 — processor operation names)
+//   DSP blocks (namespace ableton::devices::meld / ableton::blocks):
+//     devices::meld::ModulationMatrix  — invoke factory 0x10183cc00/4/10
+//       (`void(const ModulationMatrix* const*)`)
+//     blocks::Poly<16, devices::meld::MeldPolyVoiceAdaptor,
+//       voicestealing::StealOldest>    — factories 0x103b55488..0x103b55494
+//     blocks::meld::SyncMode           — LFO sync enum
+//     devicekit::TickableRealtimeModel<meld::model::MeldVoice> + PropertyCombiner
+//     devicekit::CombinedProperty<{Retrigger, Rate, SyncedRate, Sync,
+//       UnifiedRateModulation}> per LFO (schedule-callback factories
+//       0x103b64a18..0x103b64ad4)
+//   Push/flip model:
+//     ableton::push_live_model::MeldDevice (poly_voices, unison_voices,
+//       mono_poly, selected_engine, filters_linked, modulation_matrix_a,
+//       modulation_matrix_b, modulations, selected_modulation_id)
+//     flip::Class<push_live_model::MeldDevice/MeldModulationMatrix>
+//   Model namespace (devices::meld::model): Meld, MeldVoice{EngineA, EngineB,
+//     EngineBDelay, Drive, VoiceSpreadAmount, LimiterOn, LinkAmpEnvelopes,
+//     UseScale}, MeldVoiceEngine{Oscillator{Pitch{Keytracking,Transpose,
+//     TransposeScaleDegrees,TransposeOctaves,Detune}, OscillatorType, Macro1,
+//     Macro2, UseScale}, Filter{On, FilterType, Frequency, Macro1, Macro2,
+//     UseScale}, Lfo1{GeneratorType, Sync, Retrigger, Rate, SyncedRate,
+//     PhaseOffset, GeneratorMacro1/2, Transformer1/2Type, Transformer1/2Macro},
+//     Lfo2{Waveform, Sync, Retrigger, Rate, SyncedRate, PhaseOffset},
+//     ToneFilter, Pan, Volume, AmpEnvelope{Times{Attack,Decay,Release},
+//     Slopes{Attack,Decay,Release}, Sustain, LoopMode}, FilterEnvelope{...same
+//     + Values{Initial,Peak,Sustain,Final}}, GlideMode, GlideTime},
+//     MeldEnvelopeTimes{Attack,Decay,Release}, Pitch, AmpEnvelope.
+//   Shared enum-property registration ids: LInstrumentMeld (string 0x1048f37d4)
+//     via AWorldTimeableEnumProperty<...>::Init<...,LInstrumentMeld>.
+//
+// (2) MOD MATRIX (from the factory Meld.adv, ModulationConnections element):
+//   50 blocks `<ModulationConnectionsForMeld Id="50".."99">`, 13 sources in
+//   Wavetable — here **19 sources per destination**:
+//   ModulationAmounts.0 .. ModulationAmounts.18 (19 entries — count [D]).
+//   Destinations (TargetName / TargetId), 25 per engine, A then B:
+//     A/B Detune           MeldVoice_Engine{A,B}_Oscillator_Pitch_Detune
+//     A/B Pitch Mod        ..._Pitch_ContinuousPitchModulation
+//     A/B Pitch Quant      ..._Pitch_QuantizedPitchModulation
+//     A/B Osc Macro 1/2    ..._Oscillator_Macro{1,2}
+//     A/B Filter Freq      ..._Filter_Frequency
+//     A/B Filter Macro 1/2 ..._Filter_Macro{1,2}
+//     A/B LFO 1 Rate       ..._Lfo1_UnifiedRateModulation
+//     A/B LFO 1 Macro 1/2  ..._Lfo1_GeneratorMacro{1,2}
+//     A/B LFO 1 FX 1 Macro ..._Lfo1_Transformer1Macro
+//     A/B LFO 1 FX 2 Macro ..._Lfo1_Transformer2Macro
+//     A/B LFO 2 Rate       ..._Lfo2_UnifiedRateModulation
+//     A/B Amp Attack/Decay/Release/Sustain  ..._AmpEnvelope_{Times_*,Sustain}
+//     A/B Mod Attack/Decay/Release/Sustain  ..._FilterEnvelope_{Times_Attack,
+//       Times_Decay,Times_Release,Values_Sustain}   ("Mod env" = the device's
+//       FilterEnvelope; UI label "Mod", XML path FilterEnvelope)
+//     A/B Tone Filter      ..._ToneFilter
+//     A/B Pan              ..._Pan
+//     A/B Volume           ..._AmpModulation
+//   (Ids 50..73 = engine A rows 0..24 in the order above; 75..99 = engine B.)
+//   Default routes (non-zero ModulationAmounts, from evidence/Meld/default.xml):
+//     Id 50 A Detune      <- src 18  +0.5
+//     Id 51 A Pitch Mod   <- src 12  +0.1458333284
+//     Id 51 A Pitch Mod   <- src 13  +1.0
+//     Id 73 A Pan         <- src 18  +0.5
+//     Id 74 A Volume      <- src 10  +0.5
+//     Id 75 B Detune      <- src 18  -0.5
+//     Id 76 B Pitch Mod   <- src 12  +0.1458333284
+//     Id 76 B Pitch Mod   <- src 13  +1.0
+//     Id 98 B Pan         <- src 18  -0.5
+//     Id 99 B Volume      <- src 10  +0.5
+//   Source identities: NMeld::SGetModSourceIdentifiers() /
+//   NMeld::SGetModSourceIdentifierMap() exist (static-local arrays at
+//   0x1057fc940 / 0x1057e2aa0, guards 0x1057fc9d8 / 0x1057e2ab8) but the name
+//   arrays are runtime-initialized and no static string refs were decoded in
+//   this lane — the 19 identities are an explicit residual.
+//
+// (3) OSCILLATOR TYPES (strings + sInfoText keys, 0x1048f3862..0x1048f46aa):
+//   info keys (per type + Macro1/Macro2): Nonexistent, BasicShapes,
+//   DualBasicShapes, NoisyShapes, SquareSync, Square5th, Sub, SwarmSine,
+//   SwarmTriangle, SwarmSaw, SwarmSquare, HarmonicFm, FoldFm, Squelch,
+//   SimpleFm, Chip, ShepardsPi, Tarp, Extratone, FilteredNoise, NoiseLoop,
+//   BitGrunge, Crackle, Rain, Bubble  → 24 real types.
+//   Display names (cluster 0x1048f457b..0x1048f46aa): Basic Shapes, Noisy
+//   Shapes, Square Sync, Square 5th, Swarm Sine (♭♯), Swarm Triangle (♭♯),
+//   Swarm Saw (♭♯), Swarm Square (♭♯), Harmonic Fm, Fold Fm, Squelch,
+//   Simple Fm, Chip (♭♯), Shepard's Pi, Tarp, Extratone, Noise Loop, Filtered
+//   Noise, Bitgrunge, Crackle, Rain, Bubble.
+//   Assertion string: `list.size() == int(OscillatorType::count)` (0x1048f4959)
+//   header: shared/dsp/BlocksLib/include/ableton/blocks/devices/meld/OscillatorsFwd.hpp
+//   Macro param names (per type): Rough, Freq 1, Freq 2, 5th Amt, P Width,
+//   Motion, Env Amt, Narrow, Mult, Intensity ("$1 Osc" template 0x1048f4909).
+//
+// (4) FILTER TYPES (strings 0x1048f3eec..0x1048f437b + display cluster
+//   0x1048f46db..0x1048f4794):
+//   info keys: Nonexistent, Svf12db, Svf24db, Lowpass, Highpass, Bandpass,
+//   Dfm, SwitchedResistorLp, Filther, EqPeak, EqNotch, Phaser, Redux, Vowel,
+//   Comb(+M1/M2), CombInverted(+M1/M2), PlateResonator(+M1/M2),
+//   MembraneResonator(+M1/M2) → 17 real types.
+//   Display names: SVF 12dB, SVF 24dB, LP 12dB MS2, HP 12dB MS2, BP 12dB OSR,
+//   LP Crunch 12dB, LP Switched Res, Filther, Eq Peak, Eq Notch, Vowel,
+//   Comb +, Comb -, Plate Resonator (♭♯), Membrane Resonator (♭♯).
+//   (Phaser/Redux display entries not located in this cluster — residual.)
+//   Assertion: `list.size() == int(FilterType::count)` (0x1048f4a09);
+//   header: .../meld/FiltersFwd.hpp. Macro names: Lofi, Boost, Feedb, Crush,
+//   Damp ("$1 Filter" template 0x1048f49db; display "L-B-H-N" 0x1048f49e5).
+//
+// (5) LFO MODULATORS (0x1048f4a83..0x1048f4b76):
+//   ModGeneratorType names found: Fold, Step (+ L1/L2/Steps/Pulses = euclid
+//   params); assertion `list.size() == int(ModGeneratorType::count)`
+//   (0x1048f4aa9); header .../meld/ModulatorsFwd.hpp. Full generator list
+//   residual (menu registration site not decoded this lane).
+//   ModTransformerType display names (0x1048f47d0..0x1048f486b): FX 1 Type /
+//   Attenuverter, Skew Unipolar, Skew Bipolar, Unipolarizer, Quantizer,
+//   Independent S&H, Clipper, Fade In, Slew Down, Slew Up, Slew Up & Down,
+//   Trig Env, Comparator (short forms Attenuv./Unipol./Skew Uni/Skew Bi/
+//   Ind. S&H/Slew Dwn/Slew U&D). Assertion
+//   `list.size() == int(ModTransformerType::count)` (0x1048f4b3a).
+//   XML defaults: Lfo1 GeneratorType 0, Transformer1Type 2, Transformer2Type
+//   11, SyncedRate 15; Lfo2 Waveform 0, SyncedRate 12, Retrigger false.
+//
+// (6) AInstrumentMeldModule GUI member ledger (mp* cluster
+//   0x1048f328e..0x1048f37af):
+//   mp{AmpEnvelope,FilterEnvelope}{A,B}ViewProxy + mp{Linked{Amp,Filter}
+//   Envelope}BViewProxy; mpMod{A,B}ViewProxy; mpSelectedEngineFinger;
+//   mpModulationConnections; mpShowNoteValuesForFilterFreq{A,B};
+//   mp{Dynamic,Full}ModMatrixViewProxy{A,B};
+//   mpCopyMatrix{AToB,BToA} + per-tab variants Tab{Matrix,MIDI,MPE}{AToB,BToA};
+//   mpClearMatrix{A,B} + per-tab variants; mpNoop; mpSelectedLcdTab;
+//   mpNavigateTo{Envelopes,Lfos}{A,B}Bang;
+//   mp{Osc,Filter}Macro{1,2}Name{A,B}; mpModGeneratorMacro{1,2}Name{A,B};
+//   mpModTransformer{1,2}MacroName{A,B}; mpEngine{A,B}LevelMeter;
+//   mpLimiterEngagedLedState; mpIsFollowingScaleMediator.
+//   Tabs/maneuver strings: "LFOs" (0x1048f37c8), "Matrix" (0x1048f37cd);
+//   sManeuverText{ClearMatrix,CopyMatrix,CopyAToB,CopyBToA}; error string
+//   "Invalid Meld matrix in document." (0x1048f3841).
+//
+// (7) DEFAULT SURFACE (evidence/devices/Meld/default.xml, Manual values):
+//   Global: On true; Volume 0.5011858344; MonoPoly 1; MonoLegato true;
+//   PolyVoices 5; UnisonVoices 0; MeldVoice_Drive 0; LimiterOn false;
+//   LinkAmpEnvelopes false; UseScale false; VoiceSpreadAmount 0;
+//   EngineBDelay 0.
+//   Per engine (A; B identical): On true; Oscillator Pitch Keytracking true,
+//   Transpose/TransposeScaleDegrees/TransposeOctaves/Detune 0;
+//   OscillatorType 0; Osc Macro1/2 0; UseScale true;
+//   Filter On true, FilterType 0, Frequency 20479.998, Macro1/2 0, UseScale
+//   true; Lfo1 GeneratorType 0, Sync 0, Retrigger true, Rate 1, SyncedRate 15,
+//   PhaseOffset 0, GeneratorMacro1/2 0, Transformer1Type 2, Transformer1Macro
+//   0, Transformer2Type 11, Transformer2Macro 0; Lfo2 Waveform 0, Sync 0,
+//   Rate 6.00000048, SyncedRate 12, Retrigger false, PhaseOffset 0;
+//   AmpEnvelope Times Attack 0.001 / Decay 0.6 / Release 0.05, Slopes Attack 0
+//   / Decay 0.5 / Release 0.5, Sustain 1, LoopMode 0;
+//   FilterEnvelope same Times/Slopes + Values Initial 0 / Peak 1 / Sustain 0 /
+//   Final 0, LoopMode 0; ToneFilter 0; Pan 0; Volume -3 dB; GlideMode 0;
+//   GlideTime 0.
+//
+// (8) INTERESTING SYM FACTS
+//   CombinedProperty schedule-callback signature per LFO:
+//     (bool retrig, float rate, int syncedRate, blocks::meld::SyncMode, float
+//      unifiedRateModulation) — [D from mangled InvokeFunctionFactory type]
+//   Lfo UnifiedRateModulation is a derived (combined) property — the matrix
+//     destination "LFO n Rate" targets it [D symbol, H semantics].

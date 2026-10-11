@@ -210,8 +210,16 @@ test('actual resident SSR displays exact native membership and authored states w
   for(const html of [session,arrangement])assert.doesNotMatch(html,/MIDI From|Audio From|Launch scene|track-stop|arrange-loop-brace|Arm requires/);
   assert.equal(requests.length,0);
 });
-test('existing audio empty-state route remains unchanged when no native owner is supplied',()=>{
-  for(const Component of [SessionView,ArrangementView])assert.equal(renderToStaticMarkup(React.createElement(Component,audioProps)),'<div class="view-empty">Open a Live set from the browser.</div>');
+test('existing audio empty-state route remains the DESIGNED empty state when no native owner is supplied',()=>{
+  // The audio cut's empty route was the bare sentence `view-empty`; the
+  // live lane's designed empty states replaced it (the empty-state law).
+  // The guard now holds the DESIGNED state: a styled disclosure inside the
+  // frame, never a floating sentence — and no native content appears.
+  for(const Component of [SessionView,ArrangementView]){
+    const out=renderToStaticMarkup(React.createElement(Component,audioProps));
+    assert.match(out,/live-empty-disclosure/,'the designed empty disclosure stands');
+    assert.ok(!out.includes('native.session')&&!out.includes('data-scene-ref'),'no native content without a native owner');
+  }
 });
 
 // Execute the exact production presentation closures. Setter observations

@@ -203,9 +203,11 @@ test('switch options are the admitted option lists of the boundary, never invent
 test('unavailable controls are disclosed with the reason, never rendered as dead controls', () => {
   const html = renderToStaticMarkup(createElement('div', null, resonanceFaceView.switches({reading: reading({engine: LIVE}), disabled: false, apply: stub().apply})))
   const disclosures = html.match(/not writable from the shell yet/g) ?? []
-  assert.equal(disclosures.length, 5)
+  assert.equal(disclosures.length, 3, 'station ticks, per-control automation, and the live drive readout stay disclosed')
   assert.match(html, /Station ticks \(inspector\.ts:128/)
   assert.match(html, /field\.params\.frequency/)
+  assert.match(html, /S\/L mark writes one shared-setting/)
+  assert.match(html, /Map mode puts a pin on this control/)
 })
 
 test('the standby reasons name the source that owns the drive', () => {

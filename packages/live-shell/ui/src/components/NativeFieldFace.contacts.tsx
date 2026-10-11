@@ -90,7 +90,7 @@ export const contactsFaceView: FieldFaceView = {
       <path d="M20 122H170M12 110V30M190 122H330M350 100V30" className="native-axis" />
       <path d="M180 14V118" className="native-axis" />
 
-      <text x="8" y="12" className="native-graph-label">{glyphOn ? `Glyph walls · ${vessel ? 'vessel' : 'obstacle'}` : 'Glyph walls off · boundary not solved'}</text>
+      <text x="8" y="12" className="native-graph-label">{glyphOn ? `Glyph walls · ${vessel ? 'vessel' : 'obstacle'} · ellipse, not a glyph` : 'Glyph walls off · boundary not solved'}</text>
       <g opacity={glyphOn ? 1 : 0.32}>
         <path d={bandPath} fillRule="evenodd" fill="var(--accent,#bdc060)" fillOpacity={0.16} />
         <ellipse className="native-medium-boundary" cx={GLYPH.cx} cy={GLYPH.cy} rx={GLYPH.rx} ry={GLYPH.ry} pathLength={100}

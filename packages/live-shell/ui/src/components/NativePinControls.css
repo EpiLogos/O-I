@@ -8,7 +8,11 @@
 .pin-button[aria-pressed=true]{color:var(--accent);border-color:var(--accent)}
 .pin-button:focus-visible{outline:1px solid var(--accent);outline-offset:1px}
 .pin-button:disabled{opacity:.4;cursor:default}
-.pin-scope{font-size:9px;color:var(--text-dim);border:1px solid var(--line);border-radius:2px;padding:0 3px}
+.pin-scope-wrap{position:relative;display:inline-flex}
+.pin-scope{min-width:22px;height:22px;font-size:10px;color:var(--text-dim);background:var(--bg-2);border:1px solid var(--line);border-radius:3px;padding:0 3px;cursor:pointer}
+.pin-scope[aria-pressed=true]{color:var(--accent);border-color:var(--accent)}
+.pin-scope:focus-visible{outline:1px solid var(--accent);outline-offset:1px}
+.pin-scope:disabled{opacity:.4;cursor:default}
 .pin-fault{position:absolute;top:100%;left:0;z-index:40;padding:2px 6px;border:1px solid var(--accent);border-radius:3px;background:var(--bg-2);color:var(--accent);font-size:10px;width:max-content;max-width:240px;white-space:normal}
 .world-property-rows > li{display:flex;align-items:center}
 .world-property-rows > li > .world-property-row{flex:1 1 auto;min-width:0}

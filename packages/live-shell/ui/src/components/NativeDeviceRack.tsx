@@ -10,6 +10,7 @@ import {DEVICE_MIME, afterIdFor, deviceInsertIndex, parseDeviceDrag} from './nat
 import {activatorChanges, addableDevices, deviceAddChange, deviceNote, deviceOrderChange, deviceRemoveChange, entitySoundControlChange, rackWidgets, reorderWidgetIds,
   LOCKED_OBJECT_NOTE, entityParameterChange, type RackControl, type RackDevice, type RackWidget} from './nativeDeviceRackModel'
 import {nativeDeviceSvgPoint, type Apply, type CaptureCurrent} from './nativeDeviceCustody'
+import {modulationView, type Modulation} from './nativeModulation'
 import './NativeDeviceRack.css'
 
 export interface NativeDeviceRackProps {
@@ -157,7 +158,7 @@ function RackWidgetView({widget, index, reading, locked, apply, captureCurrent, 
       {widget.locked && <p className="native-rack-target is-empty">{LOCKED_OBJECT_NOTE}</p>}
       {blocked && !widget.locked && <p className="native-rack-target is-empty">{blocked}</p>}
       {widget.compact.length > 0 && <div className="native-rack-controls">{widget.compact.map(control => widget.scope === 'entity'
-        ? <EntityScrub key={control.path} binding={control} value={control.value} disabled={off} submit={value => apply([entityParameterChange(control.path, value)])}/>
+        ? <EntityScrub key={control.path} binding={control} value={control.value} modulation={control.modulation} disabled={off} submit={value => apply([entityParameterChange(control.path, value)])}/>
         : <CompactControl key={control.path} control={control} family={widget.family} reading={reading} disabled={off} apply={apply} captureCurrent={captureCurrent}/>)}</div>}
       {widget.entityCompact.length > 0 && <div className="native-rack-controls">{widget.entityCompact.map(row => {
         const disabledRow = off || row.blocked !== null
@@ -188,7 +189,17 @@ function CompactControl({control, family, reading, disabled, apply, captureCurre
       </svg>
       <output className="native-rack-value">{short(shown)}{control.unit ? ` ${control.unit}` : ''}</output>
     </div>
+    <ModulationLine modulation={control.modulation}/>
   </div>
+}
+
+/** The modulation disclosure of one compact control: its source names, base and effective, as the model's view gives them. Nothing renders when nothing modulates it. */
+function ModulationLine({modulation}: {modulation?: Modulation | null}) {
+  const view = modulationView(modulation)
+  if (!view) return null
+  return <p className="native-rack-modulation" role="group" aria-label={view.accessible} title={view.accessible}>
+    <span className="native-rack-mark" aria-hidden="true">A </span>{view.named ? 'Driven by ' : ''}{view.driven} · Base {view.base} · Effective {view.effective}
+  </p>
 }
 
 /** A committed entity value the owner has not acknowledged yet. The control holds it until the reply: an ok clears it, a refusal keeps it for Retry or Discard.
@@ -217,7 +228,7 @@ function HeldNotice({label, refused, disabled, retry, discard}: {label: string; 
 
 /** An entity mini bar (96x18, the Field bar's geometry). A drag keeps a LOCAL value and commits ONE apply on release; Escape cancels the drag.
  * Arrows (x10 with Shift), PageUp/PageDown and Home (the binding default) each commit one apply. A click without a move commits nothing. */
-function EntityScrub({binding, value, disabled, submit}: {binding: HandleBinding; value: number; disabled: boolean; submit: (value: number) => Promise<NativeEditorReply>}) {
+function EntityScrub({binding, value, modulation, disabled, submit}: {binding: HandleBinding; value: number; modulation?: Modulation; disabled: boolean; submit: (value: number) => Promise<NativeEditorReply>}) {
   const held = useHeldCommit<number>(submit), [dragging, setDragging] = useState<number | null>(null)
   const gesture = useRef<{pointer: number; offset: number; value: number; moved: boolean} | null>(null), element = useRef<SVGSVGElement>(null)
   const shown = dragging ?? held.held ?? value, end = handlePosition(binding, BAR, shown)
@@ -273,6 +284,7 @@ function EntityScrub({binding, value, disabled, submit}: {binding: HandleBinding
       </svg>
       <output className="native-rack-value">{short(shown)}{binding.unit ? ` ${binding.unit}` : ''}</output>
     </div>
+    <ModulationLine modulation={modulation}/>
     <HeldNotice label={binding.label} refused={held.refused} disabled={disabled} retry={held.retry} discard={held.discard}/>
   </div>
 }
