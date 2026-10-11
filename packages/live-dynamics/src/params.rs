@@ -6376,13 +6376,1564 @@ pub const REDUX: &[ParamDesc] = &[
     },
 ];
 
+/// Gate (document element `Gate`) parameter table.
+///
+/// Sources: `evidence/devices/Gate/preset-flipside.xml` — factory preset
+/// "Flipside" (first file in the device folder; unpacked from the licensed
+/// app bundle's Core Library this round), element names, `Manual` values
+/// and `MidiControllerRange` extents. No behavior-dossier semantics are
+/// claimed here beyond the XML's own; the nested `SideChain`/`SideChainEq`
+/// hubs use document paths exactly as the XML nests them. Discrete rows
+/// carry `?` labels and observed lower-bound extents (the preset XML stores
+/// bare integers, no menu structure). `Live8LegacyMode` stores as a bare
+/// attribute (no `Manual` child) and is not an automatable parameter — not
+/// a table row.
+pub const GATE: &[ParamDesc] = &[
+    ParamDesc {
+        id: "On",
+        ui_name: "On",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "on/off, stored 0..1 (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "Threshold",
+        ui_name: "Threshold",
+        stored_min: 0.009999999776,
+        stored_max: 1.41253757,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "amplitude-shaped stored extent (0.01..1.4125 — the top bound is \
+                the +3 dB amplitude 1.41254); no dB unit claimed in this table; \
+                the cited preset stores 0.3090295196",
+    },
+    ParamDesc {
+        id: "Attack",
+        ui_name: "Attack",
+        stored_min: 0.01999999955,
+        stored_max: 150.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0.02..150 (time-shaped, unit unclaimed); the cited \
+                preset stores 0.6426851749",
+    },
+    ParamDesc {
+        id: "Hold",
+        ui_name: "Hold",
+        stored_min: 1.0,
+        stored_max: 1500.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 1..1500 (time-shaped, unit unclaimed); the cited \
+                preset stores 131.037094",
+    },
+    ParamDesc {
+        id: "Release",
+        ui_name: "Release",
+        stored_min: 0.1000000015,
+        stored_max: 750.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0.1..750 (time-shaped, unit unclaimed); the cited \
+                preset stores 30.9820957",
+    },
+    ParamDesc {
+        id: "Return",
+        ui_name: "Return",
+        stored_min: 0.0,
+        stored_max: 24.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..24 (hysteresis return amount; no unit claimed); \
+                the cited preset stores 0",
+    },
+    ParamDesc {
+        id: "Gain",
+        ui_name: "Gain",
+        stored_min: -75.0,
+        stored_max: 0.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent −75..0 (attenuation span; no linear/dB claim); the \
+                cited preset stores -75",
+    },
+    ParamDesc {
+        id: "SideChain/OnOff",
+        ui_name: "Side Chain On/Off",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "external sidechain on/off (bool element in the preset XML); the \
+                cited preset stores false",
+    },
+    ParamDesc {
+        id: "SideChain/RoutedInput/Volume",
+        ui_name: "Side Chain Routed Input Volume",
+        stored_min: 0.0003162277571,
+        stored_max: 15.8489332,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "amplitude-shaped stored extent (0.000316..15.849) for the routed \
+                sidechain input; the cited preset stores 1",
+    },
+    ParamDesc {
+        id: "SideChain/DryWet",
+        ui_name: "Side Chain Dry/Wet",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "sidechain crossfade; the cited preset stores 1",
+    },
+    ParamDesc {
+        id: "SideListen",
+        ui_name: "Side Listen",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "side listen on/off (bool element in the preset XML); the cited \
+                preset stores false",
+    },
+    ParamDesc {
+        id: "SideChainEq/On",
+        ui_name: "Side Chain EQ On",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "sidechain-EQ on/off (bool element in the preset XML); the cited \
+                preset stores false",
+    },
+    ParamDesc {
+        id: "SideChainEq/Mode",
+        ui_name: "Side Chain EQ Mode",
+        stored_min: 0.0,
+        stored_max: 4.0,
+        unit: "",
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?", "?", "?"],
+        },
+        notes: "bare integer element — no menu structure or labels stored in the \
+                XML; only stored 4 observed across the cited evidence — extent \
+                is an observed lower bound (the app menu may extend it)",
+    },
+    ParamDesc {
+        id: "SideChainEq/Freq",
+        ui_name: "Side Chain EQ Freq",
+        stored_min: 30.0,
+        stored_max: 15000.0,
+        unit: "Hz",
+        kind: ParamKind::Continuous,
+        notes: "Hz by the crate name rule; the cited preset stores 800",
+    },
+    ParamDesc {
+        id: "SideChainEq/Q",
+        ui_name: "Side Chain EQ Q",
+        stored_min: 0.1000000015,
+        stored_max: 12.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0.1..12; the cited preset stores 0.7071067691",
+    },
+    ParamDesc {
+        id: "SideChainEq/Gain",
+        ui_name: "Side Chain EQ Gain",
+        stored_min: -15.0,
+        stored_max: 15.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent ±15; no unit claim here; the cited preset stores 0",
+    },
+    ParamDesc {
+        id: "FlipMode",
+        ui_name: "Flip Mode",
+        stored_min: 0.0,
+        stored_max: 0.0,
+        unit: "",
+        kind: ParamKind::Discrete { labels: &["?"] },
+        notes: "bare integer element — no menu structure or labels stored in the \
+                XML; only stored 0 observed across the cited evidence — extent \
+                is an observed lower bound (the app menu may extend it)",
+    },
+    ParamDesc {
+        id: "LookAhead",
+        ui_name: "Look Ahead",
+        stored_min: 0.0,
+        stored_max: 0.0,
+        unit: "",
+        kind: ParamKind::Discrete { labels: &["?"] },
+        notes: "bare integer element — no menu structure or labels stored in the \
+                XML; only stored 0 observed across the cited evidence — extent \
+                is an observed lower bound (the app menu may extend it)",
+    },
+];
+
+/// Erosion (document element `Erosion`) parameter table.
+///
+/// Sources: `evidence/devices/Erosion/preset-hiss.xml` — factory preset
+/// "Hiss" (first file in the device folder; unpacked from the licensed app
+/// bundle's Core Library this round), element names, `Manual` values and
+/// `MidiControllerRange` extents. No behavior-dossier semantics are claimed
+/// here beyond the XML's own; `Freq` is Hz by the crate name rule, and the
+/// `Mode` selector's extent is the observed lower bound (a bare integer in
+/// the XML, no menu structure). The device has no DryWet parameter — no row
+/// exists for one in the source.
+pub const EROSION: &[ParamDesc] = &[
+    ParamDesc {
+        id: "On",
+        ui_name: "On",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "on/off, stored 0..1 (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "Mode",
+        ui_name: "Mode",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        notes: "bare integer element — no menu structure or labels stored in the \
+                XML; only stored 1 observed across the cited evidence — extent \
+                is an observed lower bound (the app menu may extend it)",
+    },
+    ParamDesc {
+        id: "Freq",
+        ui_name: "Freq",
+        stored_min: 300.0,
+        stored_max: 18000.0,
+        unit: "Hz",
+        kind: ParamKind::Continuous,
+        notes: "Hz by the crate name rule; the cited preset stores 15971.8662",
+    },
+    ParamDesc {
+        id: "Amplitude",
+        ui_name: "Amplitude",
+        stored_min: 0.0,
+        stored_max: 200.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..200 (percent-shaped; semantics unmeasured in \
+                this table); the cited preset stores 144.695465",
+    },
+    ParamDesc {
+        id: "BandQ",
+        ui_name: "Band Q",
+        stored_min: 0.1000000015,
+        stored_max: 2.5,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0.1..2.5; the cited preset stores 0.4636665881",
+    },
+];
+
+/// Limiter (document element `Limiter`) parameter table.
+///
+/// Sources: `evidence/devices/Limiter/preset-fast.xml` — factory preset
+/// "Fast" (first file in the device folder; unpacked from the licensed app
+/// bundle's Core Library this round), element names, `Manual` values and
+/// `MidiControllerRange` extents. No behavior-dossier semantics are claimed
+/// here beyond the XML's own; `Lookahead` is a bare integer selector whose
+/// extent is the observed lower bound.
+pub const LIMITER: &[ParamDesc] = &[
+    ParamDesc {
+        id: "On",
+        ui_name: "On",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "on/off, stored 0..1 (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "Gain",
+        ui_name: "Gain",
+        stored_min: -24.0,
+        stored_max: 24.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent ±24 (the crate's limiter constants name this range \
+                in dB; unit not claimed in this table); the cited preset stores 0.5",
+    },
+    ParamDesc {
+        id: "Ceiling",
+        ui_name: "Ceiling",
+        stored_min: -24.0,
+        stored_max: 0.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent −24..0 (ceiling-shaped; the crate's limiter \
+                default names −0.3); the cited preset stores -0.3000000119",
+    },
+    ParamDesc {
+        id: "Release",
+        ui_name: "Release",
+        stored_min: 0.009999999776,
+        stored_max: 3000.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0.01..3000 (time-shaped — the crate's limiter \
+                constants name ms; unit not claimed in this table); the cited \
+                preset stores 0.2460452169",
+    },
+    ParamDesc {
+        id: "AutoRelease",
+        ui_name: "Auto Release",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "auto-release on/off (bool element in the preset XML); the cited \
+                preset stores false",
+    },
+    ParamDesc {
+        id: "LinkChannels",
+        ui_name: "Link Channels",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "channel linking on/off (bool element in the preset XML); the \
+                cited preset stores true",
+    },
+    ParamDesc {
+        id: "Lookahead",
+        ui_name: "Lookahead",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        notes: "bare integer element — no menu structure or labels stored in the \
+                XML; only stored 1 observed across the cited evidence — extent \
+                is an observed lower bound (the app menu may extend it)",
+    },
+];
+
+/// Filter Delay (document element `FilterDelay`) parameter table.
+///
+/// Sources: `evidence/devices/FilterDelay/preset-ambidel.xml` — factory
+/// preset "Ambidel" (the file the `filter_delay` module's typed surface
+/// cites), element names, `Manual` values and `MidiControllerRange` extents.
+/// No behavior-dossier semantics are claimed here beyond the XML's own and
+/// the module's surface notes: the three numbered delay lines carry the line
+/// number as a tag suffix (`On1`..`Volume3` — kept verbatim as ids), `MidFreq`
+/// is Hz by the crate name rule, and per-line time parameters store bare
+/// numerics (units unclaimed). `BeatDelayEnum*` are bare-integer selectors —
+/// observed lower-bound extents.
+pub const FILTER_DELAY: &[ParamDesc] = &[
+    ParamDesc {
+        id: "On",
+        ui_name: "On",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "on/off, stored 0..1 (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "On1",
+        ui_name: "On 1",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "line-1 on/off (bool element in the preset XML); the cited preset \
+                stores true",
+    },
+    ParamDesc {
+        id: "FilterOn1",
+        ui_name: "Filter On 1",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "line-1 filter on/off (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "MidFreq1",
+        ui_name: "Mid Freq 1",
+        stored_min: 50.0,
+        stored_max: 18000.0,
+        unit: "Hz",
+        kind: ParamKind::Continuous,
+        notes: "Hz by the crate name rule (the module's surface note); the cited \
+                preset stores 1014.30896",
+    },
+    ParamDesc {
+        id: "BandWidth1",
+        ui_name: "Band Width 1",
+        stored_min: 0.5,
+        stored_max: 9.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0.5..9; semantics unmeasured in this table; the \
+                cited preset stores 2.09375",
+    },
+    ParamDesc {
+        id: "DelayTimeSwitch1",
+        ui_name: "Delay Time Switch 1",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "line-1 free-time/sync switch (bool element in the preset XML); \
+                the cited preset stores false",
+    },
+    ParamDesc {
+        id: "BeatDelayEnum1",
+        ui_name: "Beat Delay Enum 1",
+        stored_min: 0.0,
+        stored_max: 0.0,
+        unit: "",
+        kind: ParamKind::Discrete { labels: &["?"] },
+        notes: "bare integer element — no menu structure or labels stored in the \
+                XML; only stored 0 observed across the cited evidence — extent \
+                is an observed lower bound (the app menu may extend it)",
+    },
+    ParamDesc {
+        id: "BeatDelayOffset1",
+        ui_name: "Beat Delay Offset 1",
+        stored_min: -0.3330000043,
+        stored_max: 0.3330000043,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent ±0.333 (beat-offset shaped); the cited preset \
+                stores 0.01040625013",
+    },
+    ParamDesc {
+        id: "DelayTime1",
+        ui_name: "Delay Time 1",
+        stored_min: 1.0,
+        stored_max: 999.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 1..999 (bare numeric — the module's surface note \
+                leaves the unit unclaimed); the cited preset stores 18.71875",
+    },
+    ParamDesc {
+        id: "Feedback1",
+        ui_name: "Feedback 1",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..1; the cited preset stores 0",
+    },
+    ParamDesc {
+        id: "Pan1",
+        ui_name: "Pan 1",
+        stored_min: -1.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent −1..1 (full-left..full-right); the cited preset \
+                stores -1",
+    },
+    ParamDesc {
+        id: "Volume1",
+        ui_name: "Volume 1",
+        stored_min: 0.0003162277571,
+        stored_max: 1.99526238,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "amplitude-shaped stored extent (0.000316..1.995); the cited \
+                preset stores 1",
+    },
+    ParamDesc {
+        id: "On2",
+        ui_name: "On 2",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "line-2 on/off (bool element in the preset XML); the cited preset \
+                stores true",
+    },
+    ParamDesc {
+        id: "FilterOn2",
+        ui_name: "Filter On 2",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "line-2 filter on/off (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "MidFreq2",
+        ui_name: "Mid Freq 2",
+        stored_min: 50.0,
+        stored_max: 18000.0,
+        unit: "Hz",
+        kind: ParamKind::Continuous,
+        notes: "Hz by the crate name rule (the module's surface note); the cited \
+                preset stores 155.883896",
+    },
+    ParamDesc {
+        id: "BandWidth2",
+        ui_name: "Band Width 2",
+        stored_min: 0.5,
+        stored_max: 9.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0.5..9; semantics unmeasured in this table; the \
+                cited preset stores 3.421875",
+    },
+    ParamDesc {
+        id: "DelayTimeSwitch2",
+        ui_name: "Delay Time Switch 2",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "line-2 free-time/sync switch (bool element in the preset XML); \
+                the cited preset stores false",
+    },
+    ParamDesc {
+        id: "BeatDelayEnum2",
+        ui_name: "Beat Delay Enum 2",
+        stored_min: 0.0,
+        stored_max: 0.0,
+        unit: "",
+        kind: ParamKind::Discrete { labels: &["?"] },
+        notes: "bare integer element — no menu structure or labels stored in the \
+                XML; only stored 0 observed across the cited evidence — extent \
+                is an observed lower bound (the app menu may extend it)",
+    },
+    ParamDesc {
+        id: "BeatDelayOffset2",
+        ui_name: "Beat Delay Offset 2",
+        stored_min: -0.3330000043,
+        stored_max: 0.3330000043,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent ±0.333 (beat-offset shaped); the cited preset \
+                stores 0",
+    },
+    ParamDesc {
+        id: "DelayTime2",
+        ui_name: "Delay Time 2",
+        stored_min: 1.0,
+        stored_max: 999.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 1..999 (bare numeric — the module's surface note \
+                leaves the unit unclaimed); the cited preset stores 64.984375",
+    },
+    ParamDesc {
+        id: "Feedback2",
+        ui_name: "Feedback 2",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..1; the cited preset stores 0.4126984179",
+    },
+    ParamDesc {
+        id: "Pan2",
+        ui_name: "Pan 2",
+        stored_min: -1.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent −1..1 (full-left..full-right); the cited preset \
+                stores 0",
+    },
+    ParamDesc {
+        id: "Volume2",
+        ui_name: "Volume 2",
+        stored_min: 0.0003162277571,
+        stored_max: 1.99526238,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "amplitude-shaped stored extent (0.000316..1.995); the cited \
+                preset stores 0.3853087127",
+    },
+    ParamDesc {
+        id: "On3",
+        ui_name: "On 3",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "line-3 on/off (bool element in the preset XML); the cited preset \
+                stores true",
+    },
+    ParamDesc {
+        id: "FilterOn3",
+        ui_name: "Filter On 3",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "line-3 filter on/off (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "MidFreq3",
+        ui_name: "Mid Freq 3",
+        stored_min: 50.0,
+        stored_max: 18000.0,
+        unit: "Hz",
+        kind: ParamKind::Continuous,
+        notes: "Hz by the crate name rule (the module's surface note); the cited \
+                preset stores 1732.05359",
+    },
+    ParamDesc {
+        id: "BandWidth3",
+        ui_name: "Band Width 3",
+        stored_min: 0.5,
+        stored_max: 9.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0.5..9; semantics unmeasured in this table; the \
+                cited preset stores 2.359375",
+    },
+    ParamDesc {
+        id: "DelayTimeSwitch3",
+        ui_name: "Delay Time Switch 3",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "line-3 free-time/sync switch (bool element in the preset XML); \
+                the cited preset stores false",
+    },
+    ParamDesc {
+        id: "BeatDelayEnum3",
+        ui_name: "Beat Delay Enum 3",
+        stored_min: 0.0,
+        stored_max: 0.0,
+        unit: "",
+        kind: ParamKind::Discrete { labels: &["?"] },
+        notes: "bare integer element — no menu structure or labels stored in the \
+                XML; only stored 0 observed across the cited evidence — extent \
+                is an observed lower bound (the app menu may extend it)",
+    },
+    ParamDesc {
+        id: "BeatDelayOffset3",
+        ui_name: "Beat Delay Offset 3",
+        stored_min: -0.3330000043,
+        stored_max: 0.3330000043,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent ±0.333 (beat-offset shaped); the cited preset \
+                stores -0.01040625013",
+    },
+    ParamDesc {
+        id: "DelayTime3",
+        ui_name: "Delay Time 3",
+        stored_min: 1.0,
+        stored_max: 999.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 1..999 (bare numeric — the module's surface note \
+                leaves the unit unclaimed); the cited preset stores 31.515625",
+    },
+    ParamDesc {
+        id: "Feedback3",
+        ui_name: "Feedback 3",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..1; the cited preset stores 0",
+    },
+    ParamDesc {
+        id: "Pan3",
+        ui_name: "Pan 3",
+        stored_min: -1.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent −1..1 (full-left..full-right); the cited preset \
+                stores 1",
+    },
+    ParamDesc {
+        id: "Volume3",
+        ui_name: "Volume 3",
+        stored_min: 0.0003162277571,
+        stored_max: 1.99526238,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "amplitude-shaped stored extent (0.000316..1.995); the cited \
+                preset stores 1",
+    },
+    ParamDesc {
+        id: "DryVolume",
+        ui_name: "Dry Volume",
+        stored_min: 0.0003162277571,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "amplitude-shaped stored extent (0.000316..1.0) for the dry path; \
+                the cited preset stores 0.8032414317",
+    },
+];
+
+/// Beat Repeat (document element `BeatRepeat`) parameter table.
+///
+/// Sources: `evidence/devices/BeatRepeat/preset-airpusher.xml` — factory
+/// preset "Airpusher" (the file the `beat_repeat` module's typed surface
+/// cites), element names, `Manual` values and `MidiControllerRange` extents.
+/// No behavior-dossier semantics are claimed here beyond the XML's own and
+/// the module's surface notes: `BlockTripplets` keeps its XML spelling,
+/// `MidFreq` is Hz by the crate name rule, and the grid/gate steppers that
+/// declare a range (Interval, Offset, Grid, GridChance, Gate, BasePitch) are
+/// modeled Continuous with a quantize note. `GridChanceType` and `MixType`
+/// are bare-integer selectors — observed lower-bound extents.
+pub const BEAT_REPEAT: &[ParamDesc] = &[
+    ParamDesc {
+        id: "On",
+        ui_name: "On",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "on/off, stored 0..1 (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "Chance",
+        ui_name: "Chance",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..1; the cited preset stores 0.700787425",
+    },
+    ParamDesc {
+        id: "Interval",
+        ui_name: "Interval",
+        stored_min: 0.0,
+        stored_max: 7.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "integer stepper over the division menu (declared range 0..7) — \
+                modeled Continuous with a quantize note; the cited preset \
+                stores 2",
+    },
+    ParamDesc {
+        id: "Offset",
+        ui_name: "Offset",
+        stored_min: 0.0,
+        stored_max: 15.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "integer stepper over the trigger-grid menu (declared range \
+                0..15) — modeled Continuous with a quantize note; the cited \
+                preset stores 0",
+    },
+    ParamDesc {
+        id: "Grid",
+        ui_name: "Grid",
+        stored_min: 0.0,
+        stored_max: 15.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "integer stepper over the grid menu (declared range 0..15) — \
+                modeled Continuous with a quantize note; the cited preset \
+                stores 7",
+    },
+    ParamDesc {
+        id: "BlockTripplets",
+        ui_name: "Block Tripplets",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "block triplets on/off (bool element in the preset XML; XML tag \
+                spelling `BlockTripplets` kept verbatim); the cited preset \
+                stores true",
+    },
+    ParamDesc {
+        id: "GridChance",
+        ui_name: "Grid Chance",
+        stored_min: 0.0,
+        stored_max: 10.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "integer stepper over the chance-grid menu (declared range \
+                0..10) — modeled Continuous with a quantize note; the cited \
+                preset stores 3",
+    },
+    ParamDesc {
+        id: "GridChanceType",
+        ui_name: "Grid Chance Type",
+        stored_min: 0.0,
+        stored_max: 2.0,
+        unit: "",
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?"],
+        },
+        notes: "bare integer element — no menu structure or labels stored in the \
+                XML; only stored 2 observed across the cited evidence — extent \
+                is an observed lower bound (the app menu may extend it)",
+    },
+    ParamDesc {
+        id: "Gate",
+        ui_name: "Gate",
+        stored_min: 0.0,
+        stored_max: 18.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "integer stepper over the repeat-duration menu (declared range \
+                0..18) — modeled Continuous with a quantize note; the cited \
+                preset stores 8",
+    },
+    ParamDesc {
+        id: "DampVolume",
+        ui_name: "Damp Volume",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..1; the cited preset stores 0",
+    },
+    ParamDesc {
+        id: "DampPitch",
+        ui_name: "Damp Pitch",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..1; the cited preset stores 0.6377952695",
+    },
+    ParamDesc {
+        id: "BasePitch",
+        ui_name: "Base Pitch",
+        stored_min: 0.0,
+        stored_max: 12.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "integer stepper over the pitch menu (declared range 0..12 — the \
+                extent collapses to the single stored value in this preset); \
+                the cited preset stores 12",
+    },
+    ParamDesc {
+        id: "MixType",
+        ui_name: "Mix Type",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        notes: "bare integer element — no menu structure or labels stored in the \
+                XML; only stored 1 observed across the cited evidence — extent \
+                is an observed lower bound (the app menu may extend it)",
+    },
+    ParamDesc {
+        id: "WetLevel",
+        ui_name: "Wet Level",
+        stored_min: 0.00031622799,
+        stored_max: 1.99526203,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "amplitude-shaped stored extent (0.000316..1.995); the cited \
+                preset stores 1",
+    },
+    ParamDesc {
+        id: "FilterOn",
+        ui_name: "Filter On",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "wet-filter on/off (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "MidFreq",
+        ui_name: "Mid Freq",
+        stored_min: 50.0,
+        stored_max: 18000.0,
+        unit: "Hz",
+        kind: ParamKind::Continuous,
+        notes: "Hz by the crate name rule (the module's surface note); the cited \
+                preset stores 3864.98828",
+    },
+    ParamDesc {
+        id: "BandWidth",
+        ui_name: "Band Width",
+        stored_min: 0.5,
+        stored_max: 9.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0.5..9; semantics unmeasured in this table; the \
+                cited preset stores 4.484375",
+    },
+    ParamDesc {
+        id: "InstantRepeat",
+        ui_name: "Instant Repeat",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "instant-repeat on/off (bool element in the preset XML); the \
+                cited preset stores false",
+    },
+];
+
+/// Channel EQ (document element `ChannelEq`) parameter table.
+///
+/// Sources: `evidence/devices/ChannelEQ/preset-boom-capture.xml` — factory
+/// preset "Boom Capture" (the file the `channel_eq` module's typed surface
+/// cites), element names, `Manual` values and `MidiControllerRange` extents.
+/// No behavior-dossier semantics are claimed here beyond the XML's own and
+/// the module's surface notes: the shelf/mid/output gains store
+/// amplitude-shaped extents, and `MidFrequency` is Hz by the crate name rule.
+pub const CHANNEL_EQ: &[ParamDesc] = &[
+    ParamDesc {
+        id: "On",
+        ui_name: "On",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "on/off, stored 0..1 (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "HighpassOn",
+        ui_name: "Highpass On",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "highpass on/off (bool element in the preset XML); the cited \
+                preset stores false",
+    },
+    ParamDesc {
+        id: "LowShelfGain",
+        ui_name: "Low Shelf Gain",
+        stored_min: 0.1800000072,
+        stored_max: 5.60000134,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "amplitude-shaped stored extent (0.18..5.6); the cited preset \
+                stores 4.15796185",
+    },
+    ParamDesc {
+        id: "MidGain",
+        ui_name: "Mid Gain",
+        stored_min: 0.25,
+        stored_max: 4.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "amplitude-shaped stored extent (0.25..4); the cited preset \
+                stores 0.5138325095",
+    },
+    ParamDesc {
+        id: "MidFrequency",
+        ui_name: "Mid Frequency",
+        stored_min: 119.999985,
+        stored_max: 7500.00049,
+        unit: "Hz",
+        kind: ParamKind::Continuous,
+        notes: "Hz by the crate name rule (the module's surface note); the cited \
+                preset stores 119.999985",
+    },
+    ParamDesc {
+        id: "HighShelfGain",
+        ui_name: "High Shelf Gain",
+        stored_min: 0.1800000072,
+        stored_max: 5.60000134,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "amplitude-shaped stored extent (0.18..5.6); the cited preset \
+                stores 0.535472393",
+    },
+    ParamDesc {
+        id: "Gain",
+        ui_name: "Gain",
+        stored_min: 0.25,
+        stored_max: 4.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "amplitude-shaped stored extent (0.25..4) — the device output \
+                gain; the cited preset stores 1.05609536",
+    },
+];
+
+/// EQ Three (document element `FilterEQ3`) parameter table.
+///
+/// Sources: `evidence/devices/EQThree/preset-boost-hihats.xml` — factory
+/// preset "Boost HiHats" (the file the `eq_three` module's typed surface
+/// cites), element names, `Manual` values and `MidiControllerRange` extents.
+/// No behavior-dossier semantics are claimed here beyond the XML's own and
+/// the module's surface notes: the band gains store amplitude-shaped
+/// extents, and `FreqLo`/`FreqHi` are Hz by the crate name rule. `Slope` is
+/// a bare-integer selector — an observed lower-bound extent.
+pub const EQ_THREE: &[ParamDesc] = &[
+    ParamDesc {
+        id: "On",
+        ui_name: "On",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "on/off, stored 0..1 (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "GainLo",
+        ui_name: "Gain Lo",
+        stored_min: 0.00031622799,
+        stored_max: 1.99526203,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "amplitude-shaped stored extent (0.000316..1.995); the cited \
+                preset stores 1",
+    },
+    ParamDesc {
+        id: "GainMid",
+        ui_name: "Gain Mid",
+        stored_min: 0.00031622799,
+        stored_max: 1.99526203,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "amplitude-shaped stored extent (0.000316..1.995); the cited \
+                preset stores 1",
+    },
+    ParamDesc {
+        id: "GainHi",
+        ui_name: "Gain Hi",
+        stored_min: 0.00031622799,
+        stored_max: 1.99526203,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "amplitude-shaped stored extent (0.000316..1.995); the cited \
+                preset stores 1.99526203",
+    },
+    ParamDesc {
+        id: "FreqLo",
+        ui_name: "Freq Lo",
+        stored_min: 50.0,
+        stored_max: 5000.0,
+        unit: "Hz",
+        kind: ParamKind::Continuous,
+        notes: "Hz by the crate name rule (the module's surface note); the cited \
+                preset stores 464.754883",
+    },
+    ParamDesc {
+        id: "FreqHi",
+        ui_name: "Freq Hi",
+        stored_min: 200.0,
+        stored_max: 18000.0,
+        unit: "Hz",
+        kind: ParamKind::Continuous,
+        notes: "Hz by the crate name rule (the module's surface note); the cited \
+                preset stores 2037.84412",
+    },
+    ParamDesc {
+        id: "LowOn",
+        ui_name: "Low On",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "low band on/off (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "MidOn",
+        ui_name: "Mid On",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "mid band on/off (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "HighOn",
+        ui_name: "High On",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "high band on/off (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "Slope",
+        ui_name: "Slope",
+        stored_min: 0.0,
+        stored_max: 0.0,
+        unit: "",
+        kind: ParamKind::Discrete { labels: &["?"] },
+        notes: "bare integer element — no menu structure or labels stored in the \
+                XML; only stored 0 observed across the cited evidence — extent \
+                is an observed lower bound (the app menu may extend it)",
+    },
+];
+
+/// Grain Delay (document element `GrainDelay`) parameter table.
+///
+/// Sources: `evidence/devices/GrainDelay/preset-ascent.xml` — factory preset
+/// "Ascent" (the file the `grain_delay` module's typed surface cites),
+/// element names, `Manual` values and `MidiControllerRange` extents. No
+/// behavior-dossier semantics are claimed here beyond the XML's own and the
+/// module's surface notes: `Freq` is Hz by the crate name rule, `MsDelay`
+/// stores a bare numeric whose tag names the unit, `NewDryWet` is the stored
+/// dry/wet tag (no `DryWet` tag exists on this device's XML), and
+/// `BeatDelayEnum` is a bare-integer selector — an observed lower-bound
+/// extent.
+pub const GRAIN_DELAY: &[ParamDesc] = &[
+    ParamDesc {
+        id: "On",
+        ui_name: "On",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "on/off, stored 0..1 (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "Spray",
+        ui_name: "Spray",
+        stored_min: 0.0,
+        stored_max: 500.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..500 (spray-amount shaped; no unit claimed); the \
+                cited preset stores 0",
+    },
+    ParamDesc {
+        id: "Freq",
+        ui_name: "Freq",
+        stored_min: 1.0,
+        stored_max: 150.0,
+        unit: "Hz",
+        kind: ParamKind::Continuous,
+        notes: "Hz by the crate name rule (the module's surface note); the cited \
+                preset stores 1",
+    },
+    ParamDesc {
+        id: "Pitch",
+        ui_name: "Pitch",
+        stored_min: -36.0,
+        stored_max: 12.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent −36..12 (pitch-shaped; no unit claimed); the cited \
+                preset stores 5.25",
+    },
+    ParamDesc {
+        id: "RandomPitch",
+        ui_name: "Random Pitch",
+        stored_min: 0.0,
+        stored_max: 161.199997,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..161.2 (random-pitch amount; no unit claimed); \
+                the cited preset stores 0",
+    },
+    ParamDesc {
+        id: "Feedback",
+        ui_name: "Feedback",
+        stored_min: 0.0,
+        stored_max: 0.9499999881,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..0.95; the cited preset stores 0.4209803939",
+    },
+    ParamDesc {
+        id: "NewDryWet",
+        ui_name: "New Dry/Wet",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "crossfade (the stored dry/wet tag — the module's file-format \
+                note: no `DryWet` tag exists on this device's XML); the cited \
+                preset stores 0.7368420959",
+    },
+    ParamDesc {
+        id: "SyncMode",
+        ui_name: "Sync Mode",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "sync mode on/off (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "BeatDelayEnum",
+        ui_name: "Beat Delay Enum",
+        stored_min: 0.0,
+        stored_max: 0.0,
+        unit: "",
+        kind: ParamKind::Discrete { labels: &["?"] },
+        notes: "bare integer element — no menu structure or labels stored in the \
+                XML; only stored 0 observed across the cited evidence — extent \
+                is an observed lower bound (the app menu may extend it)",
+    },
+    ParamDesc {
+        id: "BarDelayOffset",
+        ui_name: "Bar Delay Offset",
+        stored_min: -0.3330000043,
+        stored_max: 0.3330000043,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent ±0.333 (bar-offset shaped); the cited preset \
+                stores 0",
+    },
+    ParamDesc {
+        id: "MsDelay",
+        ui_name: "Ms Delay",
+        stored_min: 1.0,
+        stored_max: 128.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 1..128 (bare numeric — the tag names ms, the \
+                module's surface note makes no further unit claim); the cited \
+                preset stores 54.578125",
+    },
+];
+
+/// Phaser-Flanger (document element `PhaserNew`) parameter table.
+///
+/// Sources: `evidence/devices/PhaserFlanger/preset-doubler-default.xml` —
+/// factory preset "Doubler Default" (the file the `phaser_flanger` module's
+/// typed surface cites), element names, `Manual` values and
+/// `MidiControllerRange` extents. No behavior-dossier semantics are claimed
+/// here beyond the XML's own and the module's surface notes: the LFO hub
+/// stores two parallel slots (`*2`-suffixed tags, kept verbatim as ids),
+/// `Modulation_Frequency*`, `CenterFrequency` and `SafeBassFrequency` are Hz
+/// by the crate name rule, and the delay-time parameters store bare numerics
+/// (units unclaimed). `Modulation_Waveform` and `Mode` are bare-integer
+/// selectors — observed lower-bound extents.
+pub const PHASER_FLANGER: &[ParamDesc] = &[
+    ParamDesc {
+        id: "On",
+        ui_name: "On",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "on/off, stored 0..1 (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "Modulation_Amount",
+        ui_name: "Modulation Amount",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..1; the cited preset stores 1",
+    },
+    ParamDesc {
+        id: "Modulation_Waveform",
+        ui_name: "Modulation Waveform",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Discrete { labels: &["?", "?"] },
+        notes: "bare integer element — no menu structure or labels stored in the \
+                XML; only stored 1 observed across the cited evidence — extent \
+                is an observed lower bound (the app menu may extend it)",
+    },
+    ParamDesc {
+        id: "Modulation_Frequency",
+        ui_name: "Modulation Frequency",
+        stored_min: 0.01000000071,
+        stored_max: 39.9999962,
+        unit: "Hz",
+        kind: ParamKind::Continuous,
+        notes: "Hz by the crate name rule (the module's surface note); the cited \
+                preset stores 0.200000003",
+    },
+    ParamDesc {
+        id: "Modulation_Frequency2",
+        ui_name: "Modulation Frequency 2",
+        stored_min: 0.01000000071,
+        stored_max: 39.9999962,
+        unit: "Hz",
+        kind: ParamKind::Continuous,
+        notes: "Hz by the crate name rule (the module's surface note); the cited \
+                preset stores 0.200000003",
+    },
+    ParamDesc {
+        id: "Modulation_Sync",
+        ui_name: "Modulation Sync",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "LFO sync on/off (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "Modulation_Sync2",
+        ui_name: "Modulation Sync 2",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "second LFO slot sync on/off (bool element in the preset XML); \
+                the cited preset stores true",
+    },
+    ParamDesc {
+        id: "Modulation_SyncedRate",
+        ui_name: "Modulation Synced Rate",
+        stored_min: 0.0,
+        stored_max: 21.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "integer stepper over the synced-rate menu (declared range \
+                0..21) — modeled Continuous with a quantize note; the cited \
+                preset stores 4",
+    },
+    ParamDesc {
+        id: "Modulation_SyncedRate2",
+        ui_name: "Modulation Synced Rate 2",
+        stored_min: 0.0,
+        stored_max: 21.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "integer stepper over the second slot's synced-rate menu \
+                (declared range 0..21) — modeled Continuous with a quantize \
+                note; the cited preset stores 4",
+    },
+    ParamDesc {
+        id: "Modulation_PhaseOffset",
+        ui_name: "Modulation Phase Offset",
+        stored_min: 0.0,
+        stored_max: 360.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..360 (degrees-shaped); the cited preset stores 0",
+    },
+    ParamDesc {
+        id: "Modulation_SpinEnabled",
+        ui_name: "Modulation Spin Enabled",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "spin on/off (bool element in the preset XML); the cited preset \
+                stores false",
+    },
+    ParamDesc {
+        id: "Modulation_Spin",
+        ui_name: "Modulation Spin",
+        stored_min: 0.0,
+        stored_max: 0.5,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..0.5; the cited preset stores 0",
+    },
+    ParamDesc {
+        id: "Modulation_DutyCycle",
+        ui_name: "Modulation Duty Cycle",
+        stored_min: -1.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent −1..1; the cited preset stores 0",
+    },
+    ParamDesc {
+        id: "Modulation_LfoBlend",
+        ui_name: "Modulation Lfo Blend",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..1; the cited preset stores 0",
+    },
+    ParamDesc {
+        id: "Modulation_EnvelopeEnabled",
+        ui_name: "Modulation Envelope Enabled",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "LFO envelope on/off (bool element in the preset XML); the cited \
+                preset stores true",
+    },
+    ParamDesc {
+        id: "Modulation_EnvelopeAmount",
+        ui_name: "Modulation Envelope Amount",
+        stored_min: -1.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent −1..1; the cited preset stores 0",
+    },
+    ParamDesc {
+        id: "Modulation_EnvelopeAttack",
+        ui_name: "Modulation Envelope Attack",
+        stored_min: 0.00009999999747,
+        stored_max: 0.02999999933,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0.0001..0.03 (time-shaped, unit unclaimed); the \
+                cited preset stores 0.006000000052",
+    },
+    ParamDesc {
+        id: "Modulation_EnvelopeRelease",
+        ui_name: "Modulation Envelope Release",
+        stored_min: 0.00009999999747,
+        stored_max: 0.400000006,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0.0001..0.4 (time-shaped, unit unclaimed); the \
+                cited preset stores 0.200000003",
+    },
+    ParamDesc {
+        id: "Mode",
+        ui_name: "Mode",
+        stored_min: 0.0,
+        stored_max: 2.0,
+        unit: "",
+        kind: ParamKind::Discrete {
+            labels: &["?", "?", "?"],
+        },
+        notes: "bare integer element — no menu structure or labels stored in the \
+                XML; only stored 2 observed across the cited evidence — extent \
+                is an observed lower bound (the app menu may extend it)",
+    },
+    ParamDesc {
+        id: "Notches",
+        ui_name: "Notches",
+        stored_min: 1.0,
+        stored_max: 42.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "integer stepper (declared range 1..42) — modeled Continuous with \
+                a quantize note; the cited preset stores 4",
+    },
+    ParamDesc {
+        id: "FlangerDelayTime",
+        ui_name: "Flanger Delay Time",
+        stored_min: 0.0001000000193,
+        stored_max: 0.02000000142,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0.0001..0.02 (bare numeric — the module's surface \
+                note leaves the unit unclaimed); the cited preset stores \
+                0.002500000177",
+    },
+    ParamDesc {
+        id: "DoublerDelayTime",
+        ui_name: "Doubler Delay Time",
+        stored_min: 0.02000000142,
+        stored_max: 0.1500000209,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0.02..0.15 (bare numeric — the module's surface \
+                note leaves the unit unclaimed); the cited preset stores \
+                0.07999999821",
+    },
+    ParamDesc {
+        id: "ModulationBlend",
+        ui_name: "Modulation Blend",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..1; the cited preset stores 0",
+    },
+    ParamDesc {
+        id: "CenterFrequency",
+        ui_name: "Center Frequency",
+        stored_min: 70.0,
+        stored_max: 18500.0,
+        unit: "Hz",
+        kind: ParamKind::Continuous,
+        notes: "Hz by the crate name rule (the module's surface note); the cited \
+                preset stores 999.999878",
+    },
+    ParamDesc {
+        id: "Spread",
+        ui_name: "Spread",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..1; the cited preset stores 0.5",
+    },
+    ParamDesc {
+        id: "Feedback",
+        ui_name: "Feedback",
+        stored_min: 0.0,
+        stored_max: 0.9900000095,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..0.99; the cited preset stores 0",
+    },
+    ParamDesc {
+        id: "Warmth",
+        ui_name: "Warmth",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..1; the cited preset stores 0",
+    },
+    ParamDesc {
+        id: "SafeBassFrequency",
+        ui_name: "Safe Bass Frequency",
+        stored_min: 4.99999952,
+        stored_max: 3000.00024,
+        unit: "Hz",
+        kind: ParamKind::Continuous,
+        notes: "Hz by the crate name rule (the module's surface note); the cited \
+                preset stores 99.9999924",
+    },
+    ParamDesc {
+        id: "InvertWet",
+        ui_name: "Invert Wet",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Toggle,
+        notes: "invert-wet on/off (bool element in the preset XML); the cited \
+                preset stores false",
+    },
+    ParamDesc {
+        id: "OutputGain",
+        ui_name: "Output Gain",
+        stored_min: 0.0,
+        stored_max: 2.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "stored extent 0..2 (amplitude-shaped); the cited preset stores \
+                0.9999999404",
+    },
+    ParamDesc {
+        id: "DryWet",
+        ui_name: "Dry/Wet",
+        stored_min: 0.0,
+        stored_max: 1.0,
+        unit: "",
+        kind: ParamKind::Continuous,
+        notes: "crossfade; the cited preset stores 1",
+    },
+];
+
 /// Parameter table for a device, keyed by its XML/LOM **document element
 /// name** (`"GlueCompressor"`, `"Echo"`, `"Reverb"`, `"Eq8"`, `"Delay"`, …).
 /// Several product names differ from their document element: Chorus-Ensemble
 /// stores as `Chorus2`, Hybrid Reverb as `Hybrid`, Utility as `StereoGain`,
-/// and the Wavetable instrument's preset root element is `InstrumentVector`
-/// (keyed here both ways — `"Wavetable"`, its device name, and
-/// `"InstrumentVector"`, the element a .als track actually carries).
+/// EQ Three as `FilterEQ3`, Phaser-Flanger as `PhaserNew`, and the Wavetable
+/// instrument's preset root element is `InstrumentVector` (keyed here both
+/// ways — `"Wavetable"`, its device name, and `"InstrumentVector"`, the
+/// element a .als track actually carries).
 pub fn table(device: &str) -> Option<&'static [ParamDesc]> {
     match device {
         "GlueCompressor" => Some(GLUE_COMPRESSOR),
@@ -6404,6 +7955,15 @@ pub fn table(device: &str) -> Option<&'static [ParamDesc]> {
         "Compressor2" => Some(COMPRESSOR),
         "Overdrive" => Some(OVERDRIVE),
         "Redux2" => Some(REDUX),
+        "Gate" => Some(GATE),
+        "Erosion" => Some(EROSION),
+        "Limiter" => Some(LIMITER),
+        "FilterDelay" => Some(FILTER_DELAY),
+        "BeatRepeat" => Some(BEAT_REPEAT),
+        "ChannelEq" => Some(CHANNEL_EQ),
+        "FilterEQ3" => Some(EQ_THREE),
+        "GrainDelay" => Some(GRAIN_DELAY),
+        "PhaserNew" => Some(PHASER_FLANGER),
         _ => None,
     }
 }
@@ -6434,6 +7994,15 @@ pub fn table_keys() -> &'static [&'static str] {
         "Compressor2",
         "Overdrive",
         "Redux2",
+        "Gate",
+        "Erosion",
+        "Limiter",
+        "FilterDelay",
+        "BeatRepeat",
+        "ChannelEq",
+        "FilterEQ3",
+        "GrainDelay",
+        "PhaserNew",
     ]
 }
 
@@ -6620,6 +8189,15 @@ mod tests {
         assert_eq!(table("Compressor2").map(|t| t.len()), Some(25));
         assert_eq!(table("Overdrive").map(|t| t.len()), Some(7));
         assert_eq!(table("Redux2").map(|t| t.len()), Some(10));
+        assert_eq!(table("Gate").map(|t| t.len()), Some(18));
+        assert_eq!(table("Erosion").map(|t| t.len()), Some(5));
+        assert_eq!(table("Limiter").map(|t| t.len()), Some(7));
+        assert_eq!(table("FilterDelay").map(|t| t.len()), Some(35));
+        assert_eq!(table("BeatRepeat").map(|t| t.len()), Some(18));
+        assert_eq!(table("ChannelEq").map(|t| t.len()), Some(7));
+        assert_eq!(table("FilterEQ3").map(|t| t.len()), Some(10));
+        assert_eq!(table("GrainDelay").map(|t| t.len()), Some(11));
+        assert_eq!(table("PhaserNew").map(|t| t.len()), Some(31));
         assert_eq!(table("Compressor"), None);
         assert_eq!(table("reverb"), None); // exact element-name match only
 
@@ -6643,6 +8221,15 @@ mod tests {
             "Compressor2",
             "Overdrive",
             "Redux2",
+            "Gate",
+            "Erosion",
+            "Limiter",
+            "FilterDelay",
+            "BeatRepeat",
+            "ChannelEq",
+            "FilterEQ3",
+            "GrainDelay",
+            "PhaserNew",
         ];
         for device in all {
             let t = table(device).unwrap();
@@ -7418,6 +9005,400 @@ mod tests {
             );
         }
         for (path, lo, hi) in crate::redux::RANGES {
+            let row = desc(t, path);
+            assert_eq!(
+                (row.stored_min, row.stored_max),
+                (*lo, *hi),
+                "{path}: table vs surface extent"
+            );
+        }
+    }
+
+    /// Gate ranges match the preset XML
+    /// (evidence/devices/Gate/preset-flipside.xml) — eighteen rows: the flat
+    /// parameters plus the two nested hubs (`SideChain`, `SideChainEq`) as
+    /// document paths exactly as the XML nests them. The crate's gate preset
+    /// constants (gate.rs, which relayed these extents before the XML was
+    /// unpacked) corroborate the same extents within rounding.
+    #[test]
+    fn gate_ranges_match_preset_xml() {
+        let t = table("Gate").expect("gate table");
+        assert_eq!(t.len(), 18);
+
+        assert_toggle(desc(t, "On"));
+        assert_continuous(desc(t, "Threshold"), 0.009999999776, 1.41253757);
+        assert_continuous(desc(t, "Attack"), 0.01999999955, 150.0);
+        assert_continuous(desc(t, "Hold"), 1.0, 1500.0);
+        assert_continuous(desc(t, "Release"), 0.1000000015, 750.0);
+        assert_continuous(desc(t, "Return"), 0.0, 24.0);
+        assert_continuous(desc(t, "Gain"), -75.0, 0.0);
+        assert_toggle(desc(t, "SideChain/OnOff"));
+        assert_continuous(
+            desc(t, "SideChain/RoutedInput/Volume"),
+            0.0003162277571,
+            15.8489332,
+        );
+        assert_continuous(desc(t, "SideChain/DryWet"), 0.0, 1.0);
+        assert_toggle(desc(t, "SideListen"));
+        assert_toggle(desc(t, "SideChainEq/On"));
+        assert_range(desc(t, "SideChainEq/Mode"), 0.0, 4.0); // observed lower bound
+        assert_continuous(desc(t, "SideChainEq/Freq"), 30.0, 15000.0);
+        assert_eq!(desc(t, "SideChainEq/Freq").unit, "Hz");
+        assert_continuous(desc(t, "SideChainEq/Q"), 0.1000000015, 12.0);
+        assert_continuous(desc(t, "SideChainEq/Gain"), -15.0, 15.0);
+        assert_range(desc(t, "FlipMode"), 0.0, 0.0); // observed lower bound
+        assert_range(desc(t, "LookAhead"), 0.0, 0.0); // observed lower bound
+
+        // the module's preset constants corroborate the table's extents
+        // (gate.rs carries them at preset-constant rounding)
+        let close = |a: f64, b: f64| (a - b).abs() < 0.01;
+        assert!(close(desc(t, "Threshold").stored_min, crate::gate::PRESET_THRESHOLD_MIN));
+        assert!(close(desc(t, "Threshold").stored_max, crate::gate::PRESET_THRESHOLD_MAX));
+        assert!(close(desc(t, "Attack").stored_min, crate::gate::PRESET_ATTACK_MS_MIN));
+        assert!(close(desc(t, "Attack").stored_max, crate::gate::PRESET_ATTACK_MS_MAX));
+        assert!(close(desc(t, "Hold").stored_min, crate::gate::PRESET_HOLD_MS_MIN));
+        assert!(close(desc(t, "Hold").stored_max, crate::gate::PRESET_HOLD_MS_MAX));
+        assert!(close(desc(t, "Release").stored_min, crate::gate::PRESET_RELEASE_MS_MIN));
+        assert!(close(desc(t, "Release").stored_max, crate::gate::PRESET_RELEASE_MS_MAX));
+        assert!(close(desc(t, "Return").stored_min, crate::gate::PRESET_RETURN_DB_MIN));
+        assert!(close(desc(t, "Return").stored_max, crate::gate::PRESET_RETURN_DB_MAX));
+        assert!(close(desc(t, "Gain").stored_min, crate::gate::PRESET_GAIN_DB_MIN));
+        assert!(close(desc(t, "Gain").stored_max, crate::gate::PRESET_GAIN_DB_MAX));
+    }
+
+    /// Erosion ranges match the preset XML
+    /// (evidence/devices/Erosion/preset-hiss.xml) — five flat rows, extents
+    /// exactly as the XML declares them; the crate's erosion range constants
+    /// (erosion.rs) corroborate the same extents within float rounding.
+    #[test]
+    fn erosion_ranges_match_preset_xml() {
+        let t = table("Erosion").expect("erosion table");
+        assert_eq!(t.len(), 5);
+
+        assert_toggle(desc(t, "On"));
+        assert_range(desc(t, "Mode"), 0.0, 1.0); // observed lower bound
+        assert_continuous(desc(t, "Freq"), 300.0, 18000.0);
+        assert_eq!(desc(t, "Freq").unit, "Hz");
+        assert_continuous(desc(t, "Amplitude"), 0.0, 200.0);
+        assert_continuous(desc(t, "BandQ"), 0.1000000015, 2.5);
+
+        let close = |a: f64, b: f64| (a - b).abs() < 1e-7;
+        assert!(close(desc(t, "Freq").stored_min, crate::erosion::FREQ_RANGE.0));
+        assert!(close(desc(t, "Freq").stored_max, crate::erosion::FREQ_RANGE.1));
+        assert!(close(desc(t, "Amplitude").stored_min, crate::erosion::AMPLITUDE_RANGE.0));
+        assert!(close(desc(t, "Amplitude").stored_max, crate::erosion::AMPLITUDE_RANGE.1));
+        assert!(close(desc(t, "BandQ").stored_min, crate::erosion::BAND_Q_RANGE.0));
+        assert!(close(desc(t, "BandQ").stored_max, crate::erosion::BAND_Q_RANGE.1));
+    }
+
+    /// Limiter ranges match the preset XML
+    /// (evidence/devices/Limiter/preset-fast.xml) — seven flat rows, extents
+    /// exactly as the XML declares them; the crate's limiter preset constants
+    /// corroborate the same extents within rounding.
+    #[test]
+    fn limiter_ranges_match_preset_xml() {
+        let t = table("Limiter").expect("limiter table");
+        assert_eq!(t.len(), 7);
+
+        assert_toggle(desc(t, "On"));
+        assert_continuous(desc(t, "Gain"), -24.0, 24.0);
+        assert_continuous(desc(t, "Ceiling"), -24.0, 0.0);
+        assert_continuous(desc(t, "Release"), 0.009999999776, 3000.0);
+        assert_toggle(desc(t, "AutoRelease"));
+        assert_toggle(desc(t, "LinkChannels"));
+        assert_range(desc(t, "Lookahead"), 0.0, 1.0); // observed lower bound
+
+        let close = |a: f64, b: f64| (a - b).abs() < 1e-7;
+        assert!(close(desc(t, "Gain").stored_min, crate::limiter::PRESET_GAIN_DB_MIN));
+        assert!(close(desc(t, "Gain").stored_max, crate::limiter::PRESET_GAIN_DB_MAX));
+        assert!(close(
+            desc(t, "Release").stored_min,
+            crate::limiter::PRESET_RELEASE_MS_MIN
+        ));
+        assert!(close(
+            desc(t, "Release").stored_max,
+            crate::limiter::PRESET_RELEASE_MS_MAX
+        ));
+        // the crate's default ceiling sits inside the table's Ceiling extent
+        let ceiling = desc(t, "Ceiling");
+        assert!(
+            (ceiling.stored_min..=ceiling.stored_max)
+                .contains(&crate::limiter::DEFAULT_CEILING_DB),
+            "default ceiling outside [{}, {}]",
+            ceiling.stored_min,
+            ceiling.stored_max
+        );
+    }
+
+    /// Filter Delay ranges match the preset XML
+    /// (evidence/devices/FilterDelay/preset-ambidel.xml) — the device switch,
+    /// the three numbered lines in tag order and the dry level, identical to
+    /// the typed surface (`filter_delay.rs`, same cited file).
+    #[test]
+    fn filter_delay_ranges_match_preset_xml() {
+        let t = table("FilterDelay").expect("filter delay table");
+        assert_eq!(t.len(), 35);
+
+        assert_toggle(desc(t, "On"));
+        for i in 1..=3 {
+            let line = |name: &str| format!("{name}{i}");
+            assert_toggle(desc(t, &line("On")));
+            assert_toggle(desc(t, &line("FilterOn")));
+            assert_continuous(desc(t, &line("MidFreq")), 50.0, 18000.0);
+            assert_eq!(desc(t, &line("MidFreq")).unit, "Hz");
+            assert_continuous(desc(t, &line("BandWidth")), 0.5, 9.0);
+            assert_toggle(desc(t, &line("DelayTimeSwitch")));
+            assert_range(desc(t, &line("BeatDelayEnum")), 0.0, 0.0); // observed lower bound
+            assert_continuous(
+                desc(t, &line("BeatDelayOffset")),
+                -0.3330000043,
+                0.3330000043,
+            );
+            assert_continuous(desc(t, &line("DelayTime")), 1.0, 999.0);
+            assert_continuous(desc(t, &line("Feedback")), 0.0, 1.0);
+            assert_continuous(desc(t, &line("Pan")), -1.0, 1.0);
+            assert_continuous(desc(t, &line("Volume")), 0.0003162277571, 1.99526238);
+        }
+        assert_continuous(desc(t, "DryVolume"), 0.0003162277571, 1.0);
+
+        assert_eq!(t.len(), crate::filter_delay::PATHS.len());
+        for path in crate::filter_delay::PATHS {
+            assert!(
+                t.iter().any(|p| p.id == *path),
+                "surface path {path} missing from the table"
+            );
+        }
+        for (path, lo, hi) in crate::filter_delay::RANGES {
+            let row = desc(t, path);
+            assert_eq!(
+                (row.stored_min, row.stored_max),
+                (*lo, *hi),
+                "{path}: table vs surface extent"
+            );
+        }
+    }
+
+    /// Beat Repeat ranges match the preset XML
+    /// (evidence/devices/BeatRepeat/preset-airpusher.xml) — eighteen flat
+    /// rows, identical to the typed surface (`beat_repeat.rs`, same cited
+    /// file); the grid/gate steppers carry their declared ranges (quantize
+    /// notes), and the two bare-integer selectors carry observed lower
+    /// bounds.
+    #[test]
+    fn beat_repeat_ranges_match_preset_xml() {
+        let t = table("BeatRepeat").expect("beat repeat table");
+        assert_eq!(t.len(), 18);
+
+        assert_toggle(desc(t, "On"));
+        assert_continuous(desc(t, "Chance"), 0.0, 1.0);
+        assert_continuous(desc(t, "Interval"), 0.0, 7.0);
+        assert_continuous(desc(t, "Offset"), 0.0, 15.0);
+        assert_continuous(desc(t, "Grid"), 0.0, 15.0);
+        assert_toggle(desc(t, "BlockTripplets"));
+        assert_continuous(desc(t, "GridChance"), 0.0, 10.0);
+        assert_range(desc(t, "GridChanceType"), 0.0, 2.0); // observed lower bound
+        assert_continuous(desc(t, "Gate"), 0.0, 18.0);
+        assert_continuous(desc(t, "DampVolume"), 0.0, 1.0);
+        assert_continuous(desc(t, "DampPitch"), 0.0, 1.0);
+        assert_continuous(desc(t, "BasePitch"), 0.0, 12.0);
+        assert_range(desc(t, "MixType"), 0.0, 1.0); // observed lower bound
+        assert_continuous(desc(t, "WetLevel"), 0.00031622799, 1.99526203);
+        assert_toggle(desc(t, "FilterOn"));
+        assert_continuous(desc(t, "MidFreq"), 50.0, 18000.0);
+        assert_eq!(desc(t, "MidFreq").unit, "Hz");
+        assert_continuous(desc(t, "BandWidth"), 0.5, 9.0);
+        assert_toggle(desc(t, "InstantRepeat"));
+
+        assert_eq!(t.len(), crate::beat_repeat::PATHS.len());
+        for path in crate::beat_repeat::PATHS {
+            assert!(
+                t.iter().any(|p| p.id == *path),
+                "surface path {path} missing from the table"
+            );
+        }
+        for (path, lo, hi) in crate::beat_repeat::RANGES {
+            let row = desc(t, path);
+            assert_eq!(
+                (row.stored_min, row.stored_max),
+                (*lo, *hi),
+                "{path}: table vs surface extent"
+            );
+        }
+    }
+
+    /// Channel EQ ranges match the preset XML
+    /// (evidence/devices/ChannelEQ/preset-boom-capture.xml) — seven flat
+    /// rows, identical to the typed surface (`channel_eq.rs`, same cited
+    /// file).
+    #[test]
+    fn channel_eq_ranges_match_preset_xml() {
+        let t = table("ChannelEq").expect("channel eq table");
+        assert_eq!(t.len(), 7);
+
+        assert_toggle(desc(t, "On"));
+        assert_toggle(desc(t, "HighpassOn"));
+        assert_continuous(desc(t, "LowShelfGain"), 0.1800000072, 5.60000134);
+        assert_continuous(desc(t, "MidGain"), 0.25, 4.0);
+        assert_continuous(desc(t, "MidFrequency"), 119.999985, 7500.00049);
+        assert_eq!(desc(t, "MidFrequency").unit, "Hz");
+        assert_continuous(desc(t, "HighShelfGain"), 0.1800000072, 5.60000134);
+        assert_continuous(desc(t, "Gain"), 0.25, 4.0);
+
+        assert_eq!(t.len(), crate::channel_eq::PATHS.len());
+        for path in crate::channel_eq::PATHS {
+            assert!(
+                t.iter().any(|p| p.id == *path),
+                "surface path {path} missing from the table"
+            );
+        }
+        for (path, lo, hi) in crate::channel_eq::RANGES {
+            let row = desc(t, path);
+            assert_eq!(
+                (row.stored_min, row.stored_max),
+                (*lo, *hi),
+                "{path}: table vs surface extent"
+            );
+        }
+    }
+
+    /// EQ Three ranges match the preset XML
+    /// (evidence/devices/EQThree/preset-boost-hihats.xml) — ten flat rows
+    /// under the device's document element `FilterEQ3`, identical to the
+    /// typed surface (`eq_three.rs`, same cited file).
+    #[test]
+    fn eq_three_ranges_match_preset_xml() {
+        let t = table("FilterEQ3").expect("eq three table");
+        assert_eq!(t.len(), 10);
+
+        assert_toggle(desc(t, "On"));
+        assert_continuous(desc(t, "GainLo"), 0.00031622799, 1.99526203);
+        assert_continuous(desc(t, "GainMid"), 0.00031622799, 1.99526203);
+        assert_continuous(desc(t, "GainHi"), 0.00031622799, 1.99526203);
+        assert_continuous(desc(t, "FreqLo"), 50.0, 5000.0);
+        assert_eq!(desc(t, "FreqLo").unit, "Hz");
+        assert_continuous(desc(t, "FreqHi"), 200.0, 18000.0);
+        assert_eq!(desc(t, "FreqHi").unit, "Hz");
+        assert_toggle(desc(t, "LowOn"));
+        assert_toggle(desc(t, "MidOn"));
+        assert_toggle(desc(t, "HighOn"));
+        assert_range(desc(t, "Slope"), 0.0, 0.0); // observed lower bound
+
+        assert_eq!(t.len(), crate::eq_three::PATHS.len());
+        for path in crate::eq_three::PATHS {
+            assert!(
+                t.iter().any(|p| p.id == *path),
+                "surface path {path} missing from the table"
+            );
+        }
+        for (path, lo, hi) in crate::eq_three::RANGES {
+            let row = desc(t, path);
+            assert_eq!(
+                (row.stored_min, row.stored_max),
+                (*lo, *hi),
+                "{path}: table vs surface extent"
+            );
+        }
+    }
+
+    /// Grain Delay ranges match the preset XML
+    /// (evidence/devices/GrainDelay/preset-ascent.xml) — eleven flat rows,
+    /// identical to the typed surface (`grain_delay.rs`, same cited file).
+    #[test]
+    fn grain_delay_ranges_match_preset_xml() {
+        let t = table("GrainDelay").expect("grain delay table");
+        assert_eq!(t.len(), 11);
+
+        assert_toggle(desc(t, "On"));
+        assert_continuous(desc(t, "Spray"), 0.0, 500.0);
+        assert_continuous(desc(t, "Freq"), 1.0, 150.0);
+        assert_eq!(desc(t, "Freq").unit, "Hz");
+        assert_continuous(desc(t, "Pitch"), -36.0, 12.0);
+        assert_continuous(desc(t, "RandomPitch"), 0.0, 161.199997);
+        assert_continuous(desc(t, "Feedback"), 0.0, 0.9499999881);
+        assert_continuous(desc(t, "NewDryWet"), 0.0, 1.0);
+        assert_toggle(desc(t, "SyncMode"));
+        assert_range(desc(t, "BeatDelayEnum"), 0.0, 0.0); // observed lower bound
+        assert_continuous(desc(t, "BarDelayOffset"), -0.3330000043, 0.3330000043);
+        assert_continuous(desc(t, "MsDelay"), 1.0, 128.0);
+
+        assert_eq!(t.len(), crate::grain_delay::PATHS.len());
+        for path in crate::grain_delay::PATHS {
+            assert!(
+                t.iter().any(|p| p.id == *path),
+                "surface path {path} missing from the table"
+            );
+        }
+        for (path, lo, hi) in crate::grain_delay::RANGES {
+            let row = desc(t, path);
+            assert_eq!(
+                (row.stored_min, row.stored_max),
+                (*lo, *hi),
+                "{path}: table vs surface extent"
+            );
+        }
+    }
+
+    /// Phaser-Flanger ranges match the preset XML
+    /// (evidence/devices/PhaserFlanger/preset-doubler-default.xml) — 31 flat
+    /// rows under the device's document element `PhaserNew` (the LFO hub
+    /// stores parallel `*2` slots), identical to the typed surface
+    /// (`phaser_flanger.rs`, same cited file).
+    #[test]
+    fn phaser_flanger_ranges_match_preset_xml() {
+        let t = table("PhaserNew").expect("phaser-flanger table");
+        assert_eq!(t.len(), 31);
+
+        assert_toggle(desc(t, "On"));
+        assert_continuous(desc(t, "Modulation_Amount"), 0.0, 1.0);
+        assert_range(desc(t, "Modulation_Waveform"), 0.0, 1.0); // observed lower bound
+        assert_continuous(desc(t, "Modulation_Frequency"), 0.01000000071, 39.9999962);
+        assert_eq!(desc(t, "Modulation_Frequency").unit, "Hz");
+        assert_continuous(desc(t, "Modulation_Frequency2"), 0.01000000071, 39.9999962);
+        assert_toggle(desc(t, "Modulation_Sync"));
+        assert_toggle(desc(t, "Modulation_Sync2"));
+        assert_continuous(desc(t, "Modulation_SyncedRate"), 0.0, 21.0);
+        assert_continuous(desc(t, "Modulation_SyncedRate2"), 0.0, 21.0);
+        assert_continuous(desc(t, "Modulation_PhaseOffset"), 0.0, 360.0);
+        assert_toggle(desc(t, "Modulation_SpinEnabled"));
+        assert_continuous(desc(t, "Modulation_Spin"), 0.0, 0.5);
+        assert_continuous(desc(t, "Modulation_DutyCycle"), -1.0, 1.0);
+        assert_continuous(desc(t, "Modulation_LfoBlend"), 0.0, 1.0);
+        assert_toggle(desc(t, "Modulation_EnvelopeEnabled"));
+        assert_continuous(desc(t, "Modulation_EnvelopeAmount"), -1.0, 1.0);
+        assert_continuous(
+            desc(t, "Modulation_EnvelopeAttack"),
+            0.00009999999747,
+            0.02999999933,
+        );
+        assert_continuous(
+            desc(t, "Modulation_EnvelopeRelease"),
+            0.00009999999747,
+            0.400000006,
+        );
+        assert_range(desc(t, "Mode"), 0.0, 2.0); // observed lower bound
+        assert_continuous(desc(t, "Notches"), 1.0, 42.0);
+        assert_continuous(desc(t, "FlangerDelayTime"), 0.0001000000193, 0.02000000142);
+        assert_continuous(desc(t, "DoublerDelayTime"), 0.02000000142, 0.1500000209);
+        assert_continuous(desc(t, "ModulationBlend"), 0.0, 1.0);
+        assert_continuous(desc(t, "CenterFrequency"), 70.0, 18500.0);
+        assert_eq!(desc(t, "CenterFrequency").unit, "Hz");
+        assert_continuous(desc(t, "Spread"), 0.0, 1.0);
+        assert_continuous(desc(t, "Feedback"), 0.0, 0.9900000095);
+        assert_continuous(desc(t, "Warmth"), 0.0, 1.0);
+        assert_continuous(desc(t, "SafeBassFrequency"), 4.99999952, 3000.00024);
+        assert_eq!(desc(t, "SafeBassFrequency").unit, "Hz");
+        assert_toggle(desc(t, "InvertWet"));
+        assert_continuous(desc(t, "OutputGain"), 0.0, 2.0);
+        assert_continuous(desc(t, "DryWet"), 0.0, 1.0);
+
+        assert_eq!(t.len(), crate::phaser_flanger::PATHS.len());
+        for path in crate::phaser_flanger::PATHS {
+            assert!(
+                t.iter().any(|p| p.id == *path),
+                "surface path {path} missing from the table"
+            );
+        }
+        for (path, lo, hi) in crate::phaser_flanger::RANGES {
             let row = desc(t, path);
             assert_eq!(
                 (row.stored_min, row.stored_max),

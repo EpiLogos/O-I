@@ -15,7 +15,13 @@ import { installDeviceStyles } from './device-styles'
  * The UI round added the first three of the previously faceless
  * live-dynamics devices: Compressor, Overdrive and Redux (the third
  * face-queue slot went to Redux because Gate's document surface has no
- * unpacked preset evidence — see the UI round's return).
+ * unpacked preset evidence — see the UI round's return). Round 2 completed
+ * the face queue: Gate (its preset evidence is now unpacked), Erosion,
+ * Limiter, Filter Delay, Beat Repeat, Channel EQ, EQ Three, Grain Delay and
+ * Phaser-Flanger — every live-dynamics module with a parameter table now
+ * carries a face. Element names differ from product names where the
+ * document does: EQ Three stores as `FilterEQ3`, Phaser-Flanger as
+ * `PhaserNew`.
  *
  * Slot: the live-mode detail host (`bottom` — beside the device chain in
  * the device detail row, the one mounted panel host in live mode). The
@@ -99,4 +105,94 @@ registerPanel({
   component: devicePanel('Redux2', 'Redux'),
   order: 35,
   note: 'Redux (element Redux2) stored parameters — live editing against the set (M3)',
+})
+
+registerPanel({
+  id: 'devices.gate',
+  title: 'Gate',
+  icon: 'device',
+  slot: 'bottom',
+  component: devicePanel('Gate', 'Gate'),
+  order: 36,
+  note: 'Gate stored parameters — live editing against the set (M3)',
+})
+
+registerPanel({
+  id: 'devices.erosion',
+  title: 'Erosion',
+  icon: 'device',
+  slot: 'bottom',
+  component: devicePanel('Erosion', 'Erosion'),
+  order: 37,
+  note: 'Erosion stored parameters — live editing against the set (M3)',
+})
+
+registerPanel({
+  id: 'devices.limiter',
+  title: 'Limiter',
+  icon: 'device',
+  slot: 'bottom',
+  component: devicePanel('Limiter', 'Limiter'),
+  order: 38,
+  note: 'Limiter stored parameters — live editing against the set (M3)',
+})
+
+registerPanel({
+  id: 'devices.filter-delay',
+  title: 'Filter Delay',
+  icon: 'device',
+  slot: 'bottom',
+  component: devicePanel('FilterDelay', 'Filter Delay'),
+  order: 39,
+  note: 'Filter Delay (three numbered lines + dry level) stored parameters — live editing against the set (M3)',
+})
+
+registerPanel({
+  id: 'devices.beat-repeat',
+  title: 'Beat Repeat',
+  icon: 'device',
+  slot: 'bottom',
+  component: devicePanel('BeatRepeat', 'Beat Repeat'),
+  order: 40,
+  note: 'Beat Repeat stored parameters — live editing against the set (M3)',
+})
+
+registerPanel({
+  id: 'devices.channel-eq',
+  title: 'Channel EQ',
+  icon: 'device',
+  slot: 'bottom',
+  component: devicePanel('ChannelEq', 'Channel EQ'),
+  order: 41,
+  note: 'Channel EQ stored parameters — live editing against the set (M3)',
+})
+
+registerPanel({
+  id: 'devices.eq-three',
+  title: 'EQ Three',
+  icon: 'device',
+  slot: 'bottom',
+  component: devicePanel('FilterEQ3', 'EQ Three'),
+  order: 42,
+  note: 'EQ Three (element FilterEQ3) stored parameters — live editing against the set (M3)',
+})
+
+registerPanel({
+  id: 'devices.grain-delay',
+  title: 'Grain Delay',
+  icon: 'device',
+  slot: 'bottom',
+  component: devicePanel('GrainDelay', 'Grain Delay'),
+  order: 43,
+  note: 'Grain Delay stored parameters — live editing against the set (M3)',
+})
+
+registerPanel({
+  id: 'devices.phaser-flanger',
+  title: 'Phaser-Flanger',
+  icon: 'device',
+  slot: 'bottom',
+  component: devicePanel('PhaserNew', 'Phaser-Flanger'),
+  order: 44,
+  note: 'Phaser-Flanger (element PhaserNew) stored parameters — live editing against the set (M3)',
 })

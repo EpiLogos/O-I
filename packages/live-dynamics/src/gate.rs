@@ -10,9 +10,11 @@
 //! NOTHING here claims parity and nothing gates a rebuild.
 //!
 //! No parameter-surface table lives here: the crate's parameter surfaces are
-//! clean-room XML facts (`params.rs` rule) and no Gate preset XML is unpacked
-//! under `evidence/devices/`. The preset extents cited by the derivation §5
-//! are carried as named constants instead.
+//! clean-room XML facts (`params.rs` rule) — the Gate document surface now
+//! lives in `params.rs::GATE`, citing the unpacked preset
+//! `evidence/devices/Gate/preset-flipside.xml` (first file in the device
+//! folder). The preset extents cited by the derivation §5 are carried as
+//! named constants instead (corroborated by the table's test).
 //!
 //! Deliberate residuals (derivation §4, named placeholders only): the
 //! sidechain-EQ biquad builder bodies (mode→type/Q tables implemented, the
