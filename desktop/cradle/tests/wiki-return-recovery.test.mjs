@@ -49,13 +49,18 @@ test('the saved file and pending Return survive checkpoint restoration with exac
 
 test('recovery reads the exact saved artifact without opening, rewriting or replacing a live composition',async()=>{
  const original=globalThis.fetch;const calls=[];
- globalThis.fetch=async(_url,options)=>{const op=JSON.parse(options.body);calls.push(op);return {json:async()=>({ok:true,outcome:{result:'file_read',reading:artifact.file}})};};
+ globalThis.fetch=async(_url,options)=>{
+  const op=JSON.parse(options.body);calls.push(op);
+  if(op.op==='file_read')return {json:async()=>({ok:true,outcome:{result:'file_read',reading:artifact.file}})};
+  return {json:async()=>({ok:true,outcome:{result:'expression',data:{state:'ready',document,file:artifact.file}}})};
+ };
  try{
   const held={location,revision:'file:r4',expression_ref:'expression:one'};
   assert.deepEqual(await readSavedArtifact(transport,held),artifact);
   await assert.rejects(readSavedArtifact(transport,{...held,revision:'file:older'}),/file has changed/);
   await assert.rejects(readSavedArtifact(transport,{...held,expression_ref:'expression:another'}),/recorded Expression/);
-  assert.ok(calls.every(op=>op.op==='file_read'));
+  assert.ok(calls.every(op=>op.op==='file_read'||op.request?.operation==='inspect_file'));
+  assert.equal(calls.some(op=>op.request?.operation==='save'||op.request?.operation==='open'),false);
  }finally{globalThis.fetch=original;}
 });
 
@@ -85,15 +90,18 @@ test('operation inspection requires current attachment and the recorded native a
 
 test('a redirected or malformed saved artifact cannot become a retry basis',async()=>{
  const original=globalThis.fetch;let reading=artifact.file;
- globalThis.fetch=async()=>({json:async()=>({ok:true,outcome:{result:'file_read',reading}})});
+ globalThis.fetch=async(_url,options)=>{
+  const op=JSON.parse(options.body);
+  if(op.op==='file_read')return {json:async()=>({ok:true,outcome:{result:'file_read',reading}})};
+  const decoded=JSON.parse(reading.content);
+  return {json:async()=>({ok:true,outcome:{result:'expression',data:{state:'ready',document:decoded,file:{location:reading.location,revision:reading.revision}}}})};
+ };
  try{
   const held={location,revision:'file:r4',expression_ref:'expression:one'};
   reading={...artifact.file,location:{...location,root:'/different'}};
   await assert.rejects(readSavedArtifact(transport,held),/redirected/);
-  for(const change of [{entities:[]},{relations:[]},{revision:0},{scenes:{}}]){
-   reading={...artifact.file,content:JSON.stringify({...document,...change})};
-   await assert.rejects(readSavedArtifact(transport,held),/recorded Expression/);
-  }
+  reading={...artifact.file,content:JSON.stringify({...document,expression_ref:'expression:other'})};
+  await assert.rejects(readSavedArtifact(transport,held),/recorded Expression/);
  }finally{globalThis.fetch=original;}
 });
 

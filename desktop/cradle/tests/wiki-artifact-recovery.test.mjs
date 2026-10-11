@@ -21,6 +21,10 @@ function fixture(initial,live=document){
    outcome={result:'expression',data:live&&JSON.stringify(live)!==JSON.stringify(op.request.document)?{state:'revision_conflict'}:{state:'opened',document:op.request.document}};
   }else if(op.op==='files_list')outcome={result:'directory_read',directory:{location:parent,entries:file?[{name:'work.expression.json',kind:'file',location}]:[]}};
   else if(op.op==='file_read')outcome={result:'file_read',reading:file};
+  else if(op.op==='expression'&&op.request.operation==='inspect_file'){
+   const decoded=file&&typeof file.content==='string'?JSON.parse(file.content):live;
+   outcome={result:'expression',data:{state:'ready',document:decoded,file:{location:file.location,revision:file.revision}}};
+  }
   else throw new Error(`Unexpected operation ${JSON.stringify(op)}`);
   return {json:async()=>({ok:true,outcome})};
  };

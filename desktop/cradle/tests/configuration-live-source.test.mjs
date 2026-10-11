@@ -104,27 +104,29 @@ test("plan binds each owner plan to its request; apply carries the same values",
     setting_ref: "ai-kit:resolution:model.default", scope: SCOPE,
     changes: [], expected_effect: { kind: "value-change" },
   };
-  const changeset = { schema: "oi.config-changeset/v1", changeset_id: "cs-cradle-1", status: "verified", operations: [] };
+  const changeset = { schema: "oi.config-changeset/v1", changeset_id: "cs-cradle-1", status: "verified", operations: [{}] };
   const { source, ops } = stubSource({
-    config_plan: { outcome: { result: "config_planned", plans: [plan], errors: [{ schema: "oi.config-error/v1", error_code: "unsupported_setting", message: "nope" }] } },
-    config_apply: { outcome: { result: "config_applied", changeset, owner_receipts: [{ receipt_id: "r1" }] } },
+    config_plan_reviewed: { outcome: { result: "config_reviewed_planned", changeset, plans: [plan] } },
+    config_apply_reviewed: { outcome: { result: "config_applied", changeset } },
   });
 
   const bundle = await source.plan([{ setting_ref: "ai-kit:resolution:model.default", scope: SCOPE, value: "sonnet-next" }]);
   assert.equal(bundle.plans[0].plan_id, "plan-1");
-  assert.equal(bundle.errors[0].error_code, "unsupported_setting");
+  assert.deepEqual(bundle.errors, []);
 
   const applied = await source.apply(bundle.plans);
   assert.equal(applied.changeset_id, "cs-cradle-1");
-  assert.deepEqual(ops[1].requests, [{ setting_ref: "ai-kit:resolution:model.default", scope: SCOPE, value: "sonnet-next", secret_reference: null }],
-    "apply carries the SAME requested value the plan was built from");
+  assert.deepEqual(ops[0].requests, [{ setting_ref: "ai-kit:resolution:model.default", scope: SCOPE, value: "sonnet-next", secret_reference: null }],
+    "planning carries the requested value");
+  assert.equal(ops[1].op, "config_apply_reviewed");
+  assert.equal(ops[1].changeset.changeset_id, "cs-cradle-1", "apply carries the admitted batch unchanged");
 });
 
 test("apply refuses a plan this session never planned", async () => {
   const { source } = stubSource({});
   await assert.rejects(
     () => source.apply([{ schema: "oi.config-plan/v1", plan_id: "plan-x", plan_digest: "d", setting_ref: "s:a:b", scope: SCOPE, changes: [], expected_effect: { kind: "none" } }]),
-    /plan the change again/,
+    /review the change again before applying/,
   );
 });
 
