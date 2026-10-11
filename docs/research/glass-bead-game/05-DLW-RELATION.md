@@ -12,6 +12,13 @@ Live study and clean-room shell blueprint), and
 `.wayfinder/maps/epi-logos-field.md` (the site-led Base/Central movement,
 O:I #592). Where rev 1 drew rhymes from the six-product README alone, rev 2
 draws them from the design law itself. Lanes 01–04 are unchanged.
+**Terminus note (2026-10-11, corrected).** The figure has a precise
+referent: Epi-Logos is a philosophical project — the corpus (essay, QL/MEF,
+Bimba, M/M′, Ta-Onta, Nara, Epii, the Covenant) as the system's esoteric
+identity, projected over its exoteric identity (the paradigm-neutral
+substrate) as the mode; bimba over pratibimba. The corpus is the owner's
+game and the native game of the system. See
+[06-THE-PRAXIS.md](06-THE-PRAXIS.md), §0.
 
 ---
 
@@ -184,4 +191,4 @@ as the audit (anti-rococo, anti-oracle, anti-sterility) and take the ladder
 as the measure: the workstation is working when its players leave it with
 more world than they brought.
 
-— Rev 2, returned for review, 2026-10-10.
+— Rev 2, returned for review, 2026-10-10; terminus note added 2026-10-11.
