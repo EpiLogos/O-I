@@ -14,8 +14,11 @@ import { OperatorPro, OperatorRack } from './operator'
  * Device panel ports (pro) — the faithful device-face family that EDITS:
  * each face is a port of its captured panel (capture → layout, dossier →
  * tooltips) bound to the M3 editing API (descriptors → stored values →
- * debounced POST with saved/error marks). The full faces dock right; the
- * compact rack faces dock in the bottom device-chain strip.
+ * debounced POST with saved/error marks). Full faces and compact rack
+ * faces both dock in the live-mode detail host (`bottom` — inside the
+ * device detail row's DeviceChainPanel, the one mounted panel host in live
+ * mode; the integration map's host decision, see ../devices/index.tsx):
+ * the racks first in the strip, the full faces after them.
  *
  * Operator is the family's one local-state face: its M6 voice model is
  * landed but no parameter table exists yet, so it is badged model-arriving
@@ -34,7 +37,7 @@ function pro(
   order: number,
   note: string,
 ) {
-  registerPanel({ id, title, icon: ICON_DEVICE, slot: 'right-dock', component, order, note })
+  registerPanel({ id, title, icon: ICON_DEVICE, slot: 'bottom', component, order, note })
 }
 
 function rack(
@@ -47,7 +50,7 @@ function rack(
   registerPanel({ id, title, icon: ICON_DEVICE, slot: 'bottom', component, order, note })
 }
 
-// right-dock: the full editing faces
+// the full editing faces (live detail host, after the racks)
 pro('devicespro.glue-compressor', 'Glue Compressor (pro)', GlueCompressorPro, 60,
   'Glue Compressor device face — live stored-parameter editing (GR meter stub lands with the realtime model)')
 pro('devicespro.echo', 'Echo (pro)', EchoPro, 61,
