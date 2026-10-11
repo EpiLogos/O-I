@@ -16,7 +16,10 @@
 //! `utility`'s per-sample section (legacy calc bodies, DC blocker,
 //! BassMono SVF) follows the same derivation-cited rule with the
 //! gain/pan/width transfer fn-pointers marked corpus-pending;
-//! `glue` is the render-gated exception.
+//! `glue`, `saturator` and `compressor` carry corpus-pinned (and
+//! render-gated) layers — Glue anchors, the Saturator Analog Clip curve,
+//! the Compressor GR composition (`compressor::GR_TABLE`) — and `reverb`,
+//! `echo`, `operator` and `wavetable` also gate against the render corpus.
 
 pub mod audio;
 pub mod phaser_flanger;

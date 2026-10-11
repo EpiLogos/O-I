@@ -29,7 +29,7 @@ Status ledger (updated as lanes land; gate = crate passes vs golden corpus):
 | Reverb | FX | ✓ | ✓ (+refinements) | comb-probe | ✓ (stereo+HF wired) | ✓ PASS |
 | Operator | INST | ✓ | ✓ (A + B modulator) | partial | ✓ (B wired) | ✓ PASS |
 | Wavetable | INST | ✓ | ✓ (rev 4+, N=1–8) | partial | ✓ | ✓ PASS |
-| Compressor | FX | ✓ (25 params) | — | ✓ (log2 closed-form; LUT=corpus) | ✓ (skeleton, LUT pending) | — |
+| Compressor | FX | ✓ (25 params) | ✓ (§6 corpus GR pin) | ✓ (log2 closed-form; GR LUT = corpus composition; ballistics pole-form corrected) | ✓ (chain + corpus GR_TABLE) | ✓ PASS steps static map (worst 0.011 dB/step; pins impulse-only, expansion pins INERT) |
 | Saturator | FX | ✓ (17 params) | ✓ (§6 corpus pinning) | ✓ (chain+curve laws, type enum decoded) | ✓ (chain; Analog Clip curve corpus-pinned) | ✓ static+sweep PASS (0.00/0.04 dB; colour pins INERT in corpus) |
 | EQ Eight | FX | ✓ (85 params) | ✓ (§6 corpus status) | ✓ (8-band cascades, Butterworth pole-Q sets, adaptive Q) | ✓ (coefficient laws + global gain; record→biquad partition open) | partial PASS (GlobalGain pins exact; no band pins exist) |
 | Auto Filter | FX | ✓ (30 params) | ✓ (§6 corpus status) | ✓ (37 callbacks, cutoff-LUT law, own detector) | ✓ (laws; modern engine + cutoff LUT unmodeled) | probe (cutoff pins live; no parity gate — LUT unmodeled) |
