@@ -184,3 +184,39 @@ choice as the Delay device's CompatibilityType.
   [H], do not build on them.
 - No behavioral claim of any grade is made; no golden-render corpus for
   Filter Delay exists yet.
+
+## 6. Corpus status (gate wave, 2026-10-11)
+
+BULK corpus: `BULK-filter-delay-default-*` — the Defaults set is the
+**Ambidel** preset: three bands, all free-time (IsBeatSync false),
+DryVolume 0.8032414317 — band 1: MidFreq 1014.30896, BW 2.09375,
+DelayTime 18.71875 ms, FB 0, Pan −1, Volume 1; band 2: MidFreq
+155.883896, BW 3.421875, DelayTime 64.984375 ms, FB 0.4126984179, Pan 0,
+Volume 0.3853087127; band 3: MidFreq 1732.05359, BW 2.359375, DelayTime
+31.515625 ms, FB 0, Pan +1, Volume 1. Pins: BandWidth 9/0.5 on bands 1–3
+(all LIVE and channel-routed per pan).
+
+**Delay-time law PINNED (gate PASS).** In the impulse render the direct
+sits at the unity-chain position × DryVolume (0.39594 = 0.49290 ×
+0.8032414317, −1.903 dB — the DryVolume law exact), and each band's first
+echo ONSET is at floor(direct + delay_samples(ms, sr)) within ±1 sample
+(917 vs 917.5, 1481 vs 1481.8, 2958 vs 2957.8 — the sr_kHz·ms law and the
+stored-ms unit confirmed); the peak rides the band filter's group delay
+(+3 samples at 1 kHz, +12 at 156 Hz). Channel routing follows the pans
+(hard-L band 1, hard-R band 3, centre band 2 equal in both channels within
+0.00 dB), and band 2's echo train repeats at ≈ the band delay with decay
+(k=2 peak at +36 samples, interval +21 of the 2865.8-sample delay; k=3
+sits at −79 dB next to the floor and is recorded, not asserted). Gate
+`tests/golden.rs::filterdelay_bulk_delay_time_gate` PASS.
+
+**BandWidth ratio LUT — attempted, NOT pinned.** The bandwidth pins give
+live IR changes, so the band-pass edges were fitted spectrally (RBJ
+Q = 1/√2 cascade of the crate's forms) against the band-1/2/3 echoes: the
+fit did not converge (band-shaped error ≫ the 1.0 dB gate convention at
+every grid point; r_low and r_high disagreed by orders of magnitude),
+i.e. either the captured band-filter form, the LUT mapping, or the
+interpolation is off — the LUT contents and the exact cascade stay
+corpus-pending. The stored 256×16 sinc table (0x1059ad4c0) likewise stays
+unpinned: the half-sample fractional offsets (18.71875 ms × 44.1 kHz =
+825.497 samples) are entangled with the band filters in every observable
+echo.

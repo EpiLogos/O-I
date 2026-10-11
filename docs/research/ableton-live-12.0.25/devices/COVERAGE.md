@@ -30,19 +30,19 @@ Status ledger (updated as lanes land; gate = crate passes vs golden corpus):
 | Operator | INST | ✓ | ✓ (A + B modulator) | partial | ✓ (B wired) | ✓ PASS |
 | Wavetable | INST | ✓ | ✓ (rev 4+, N=1–8) | partial | ✓ | ✓ PASS |
 | Compressor | FX | ✓ (25 params) | — | ✓ (log2 closed-form; LUT=corpus) | ✓ (skeleton, LUT pending) | — |
-| Saturator | FX | ✓ (17 params) | — | ✓ (chain+curve laws, type enum decoded) | — | — |
-| EQ Eight | FX | ✓ (85 params) | — | ✓ (8-band cascades, Butterworth pole-Q sets, adaptive Q) | — | — |
-| Auto Filter | FX | ✓ (30 params) | — | ✓ (37 callbacks, cutoff-LUT law, own detector) | — | — |
+| Saturator | FX | ✓ (17 params) | ✓ (§6 corpus pinning) | ✓ (chain+curve laws, type enum decoded) | ✓ (chain; Analog Clip curve corpus-pinned) | ✓ static+sweep PASS (0.00/0.04 dB; colour pins INERT in corpus) |
+| EQ Eight | FX | ✓ (85 params) | ✓ (§6 corpus status) | ✓ (8-band cascades, Butterworth pole-Q sets, adaptive Q) | ✓ (coefficient laws + global gain; record→biquad partition open) | partial PASS (GlobalGain pins exact; no band pins exist) |
+| Auto Filter | FX | ✓ (30 params) | ✓ (§6 corpus status) | ✓ (37 callbacks, cutoff-LUT law, own detector) | ✓ (laws; modern engine + cutoff LUT unmodeled) | probe (cutoff pins live; no parity gate — LUT unmodeled) |
 | Delay | FX | ✓ | — | ✓ (devicekit, mapping laws, crossfade curves) | — | — |
 | Multiband Dynamics | FX | — | — | ✓ (1/2/3-band, octaves domain, crossover) | — | — |
 | Limiter | FX | — | — | ✓ (max-pyramid lookahead, ceiling law) | — | — |
 | Gate | FX | — | — | ✓ (hysteresis + dual detector) | — | — |
-| Redux | FX | ✓ (10 params) | — | ✓ (steps=2^(bits-1), softness law) | — | — |
-| Overdrive | FX | ✓ (7 params) | — | ✓ (closed-form shaper x−4/27x³, PreserveDynamics=compressor) | — | — |
+| Redux | FX | ✓ (10 params) | ✓ (§6 corpus status) | ✓ (steps=2^(bits-1), softness law) | ✓ (frame; soft/decimate placeholders) | partial PASS (DryWet-0 + consistency; quantizer closure corpus-pending) |
+| Overdrive | FX | ✓ (7 params) | ✓ (§6 corpus status) | ✓ (closed-form shaper x−4/27x³, PreserveDynamics=compressor) | ✓ (chain; PD/tone/shelf LUTs pending) | FAIL 2.03 dB — honest record (3 LUTs missing) |
 | Erosion | FX | — | — | ✓ (LCG noise + dual delay; downsampler REFUTED) | — | — |
 | Chorus-Ensemble | FX | ✓ | — | ✓ (mode table decoded, cubic interp) | ✓ (surface) | — |
 | Phaser-Flanger | FX | ✓ | — | ✓ (3 modes, TPT-SVF cascade closed form) | ✓ (surface) | — |
-| Filter Delay | FX | ✓ (35 params) | — | ✓ (per-band, NO cross-band feedback) | ✓ (surface) | — |
+| Filter Delay | FX | ✓ (35 params) | ✓ (§6 corpus status) | ✓ (per-band, NO cross-band feedback) | ✓ (band laws; BW LUT + sinc table corpus-pending) | ✓ delay-time PASS (BW-ratio fit not converged — residual) |
 | Grain Delay | FX | ✓ | — | ✓ (sin² window pairs, MINSTD, pitch walk) | ✓ (surface) | — |
 | Beat Repeat | FX | ✓ | — | ✓ (FIVE processors, division tables; transient detector REFUTED) | ✓ (surface) | — |
 | Channel EQ | FX | ✓ | — | ✓ (SVF shelf algebra, gain-dependent corners) | ✓ (surface) | — |

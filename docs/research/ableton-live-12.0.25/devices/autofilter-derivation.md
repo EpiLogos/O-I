@@ -250,3 +250,22 @@ through the LFO object's own state machine (helpers
   **medium/low** — graded [H] inline, do not build on them alone.
 - No behavioral claim of any grade is made; the golden-render corpus for
   Auto Filter does not exist yet (COVERAGE row empty).
+
+## 6. Corpus status (gate wave, 2026-10-11)
+
+BULK corpus: `BULK-auto-filter-default-*` (ALS: FilterType 0, Cutoff 127,
+CutoffLimit 135, Resonance 0.1379310191, Morph 0, Drive 0, LfoAmount 0,
+LegacyMode false) + impulse pins (cutoff 135/20, drive 24, lfoamount 0).
+The steps render at default is unity (a 1 kHz sine passes flat at the
+default setting). Impulse peaks: default 0.23726@93; cutoff 20 →
+0.00063@819 (−51.6 dB, with a ~727-sample group delay — the near-DC
+filter's), cutoff 135 → 0.34906@92 (+3.4 dB). So the cutoff pins are LIVE
+and the min pin collapses the response; the drive-24 pin is dither-inert
+(like the Saturator pins — recorded, no explanation claimed) and the
+lfoamount-0 pin equals the default (inert by definition). The runtime
+cutoff-map LUT (0x1059a89a8) and the modern-engine coefficient law remain
+unmodeled/uncaptured: this corpus pins liveness and the cutoff ordering
+only — the LUT CONTENTS are NOT pinnable from these renders alone (the
+modern filter law between LUT and output is itself [H]). The probe
+`tests/golden.rs::autofilter_bulk_cutoff_probe` asserts exactly these
+corpus facts (no parity claim).

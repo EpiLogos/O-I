@@ -181,3 +181,22 @@ Whether Eco OFF still runs the same block engine (vs an inline path) is
   **low** — graded [H], do not build on them.
 - No behavioral claim of any grade is made; the golden-render corpus for Redux
   does not exist yet (COVERAGE row empty).
+
+## 6. Corpus status (gate wave, 2026-10-11)
+
+BULK corpus: `BULK-redux-default-*` + pins. Corpus default (ALS): SampleRate
+22491.3789 (≈ sr/2 → decimation ratio ≈ 0.51), BitDepth 1, QuantizerShape 1
+(soft), DcShift false, PostFilter on @ −2, DryWet 1.
+
+Gateable from this corpus (both PASS, `tests/golden.rs::
+redux_bulk_drywet_and_pin_consistency_gate`): **DryWet 0 → raw
+passthrough** (the `drywet-min` render is dither-identical to the corpus's
+Unity reference, max |Δ| 2 LSB), and **identical-parameter re-render
+consistency** (the `bitdepth-min` pin stores BitDepth 1 = the default → the
+two renders must match at the dither floor — they do). The BitDepth-16 pin
+is LIVE (IR max |Δ| 0.17). The per-sample quantize/decimate/soft
+expressions (§4, runtime tick closures) remain corpus-pending: the
+BitDepth-16 IR is NOT predicted by the crate (soft + hold placeholders) and
+no parity gate is claimed. A legacy-Redux corpus (`BULK-legacy-redux-*`,
+BitDepth 16/8/1 pins) is present but the legacy engine (`OReduxProcessor`)
+is itself uncaptured — recorded, not gated.
