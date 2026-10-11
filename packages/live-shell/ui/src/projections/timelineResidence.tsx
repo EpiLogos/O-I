@@ -40,6 +40,9 @@ import {PROJECTION_TIMELINE_KIND, timelinePresentation, type TimelinePresentatio
 export {PROJECTION_TIMELINE_KIND, timelinePresentation}
 export type {TimelinePresentation}
 
+import {WorldTimelinePresentation} from './worldTimelinePresentation'
+import type {WorldTimelineView} from './useWorldTemporalReading'
+
 export interface TimelineResidenceProps {
   set: SetSummary | null
   document: SetDocument | null
@@ -57,12 +60,14 @@ export interface TimelineResidenceProps {
   /** The World cut (L4 seam 5): World material as tracks over the kernel's
    * temporal read. Additive — the native cut keeps absolute precedence
    * inside each view, and with the prop absent every existing byte of the
-   * DOM/CSS contract is unchanged. */
+   * DOM/CSS contract is unchanged. Undefined means the civil field is unread. */
   world?: WorldTimelineView
 }
 
 export function TimelineProjectionResidence({set, document, selection, select, colors, setColor, session, arrangement, compactTransport, presented, world}: TimelineResidenceProps) {
+  const worldCutView = world
   return <Fragment>
+    {worldCutView && <WorldTimelinePresentation view={worldCutView} presentation={presented ?? 'session'} />}
     <div className="inhabitant composition-view" data-projection-kind={PROJECTION_TIMELINE_KIND} data-projection-presentation="session" hidden={presented !== 'session'}>
       <SessionView set={set} document={document} selection={selection} select={select} colors={colors} setColor={setColor} native={session} compactTransport={compactTransport} world={world} />
     </div>

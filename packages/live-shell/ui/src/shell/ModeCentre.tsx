@@ -6,61 +6,89 @@
  * framed, labelled, with the affordance that would fill it visible — NEVER
  * a bare sentence floating in a void).
  *
- * What killed the audit's void: the centre's World cut rendered the
- * Timeline projection's bare one-line absence (`view-empty`) across an
- * empty pane. This composition replaces that state — per mode, per
- * presentation:
+ * The four structures carry the mockups' own grammar at the mockups' density:
  *
- * - Base · Session — the day-as-clips frame: the five track columns (Day,
- *   Flows, Beings, Things, Goals) drawn as structure with named empty
- *   cells, and the unread-reading disclosure as a styled component INSIDE
- *   the frame.
- * - Base · Arrangement — today on one ruler: the hour ruler drawn, the
- *   day's clips named as the affordance that fills it.
- * - Technē · Session — the M3′ Journey: walk stops as rows (place ·
- *   occasion · artefact · narration), honestly empty until the journey
- *   owner lands.
- * - Technē · Arrangement — the M2′ Relation Field surface: the lens frame
- *   with the honest rows (the declared break, the four lenses' names) over
- *   the unread civil field.
+ * - Base · Session — the day as clips (world-shell-mockup-base-session): five
+ *   track columns with colour identity (Day steel · Flows teal · Beings
+ *   green · Things gold · Goals violet), a named first clip per track, the
+ *   eight-slot rhythm with soft-stop squares, and the per-track stop row.
+ * - Base · Arrangement — today on one ruler: the hour ruler drawn full
+ *   width, the day window (opened 08:30 · close 21:00) as a band, the now
+ *   needle ONLY when the civil read answers (a reading, never a wall clock),
+ *   and the day's material as named lanes.
+ * - Technē · Session — the M3′ Journey (world-shell-mockup-r2-scenes): the
+ *   walk-stop rows at the mockup's scene-row grammar — place · occasion ·
+ *   artefact · Expression · narration · transition in the mockup's column
+ *   colours, eight stops, and the scene-launcher column (stops 1–8, record
+ *   a walk).
+ * - Technē · Arrangement — the M2′ Relation Field: the four lenses in the
+ *   design's order (chronology · causal · recurrence · concurrency), the
+ *   honest lanes (authored history, development, the day, machines · NOW,
+ *   FieldNow), the declared break drawn as a break, and the epistemic
+ *   standing chip vocabulary (fact · claim · inferred · disputed · ghost).
  *
  * When the reading IS live the L4 presentation composes the centre (the
  * adapters own it); this frame then stands down — the App mounts it only
- * while the reading is absent or in flight. The disclosure names the read
- * that fills the frame (the kernel's temporal read) and keeps the
- * honesty boundaries: the retired native-access reading renders as the
- * designed waiting state, never fabricated content.
+ * while the reading is absent or in flight. The unread-reading disclosure
+ * is styled INSIDE every frame — never a floating sentence.
  *
  * Pure presentation over the grammar and the one temporal reading: no
  * store, no clock, no owner writes.
  */
 
+import type {CSSProperties} from 'react'
 import {MODE_GRAMMAR, type SurfMode} from './modeGrammar'
 import type {WorldTimelineView} from '../projections/useWorldTemporalReading'
 import './modeSurface.css'
 
-/** The five Base session tracks (Rev 5's second table: "the day as clips:
- * Day, Flows, Beings, Things and Goals as tracks") — the mockup's column
- * heads, each naming the clip that would sit in its first cell. */
+/** The five Base session tracks (Rev 5's second table) with the mockup's
+ * colour identity and clip names — short names in the cell, the full line
+ * in the tooltip (a clip cell carries a name, not a sentence). */
 const BASE_SESSION_TRACKS = [
-  {name: 'Day', clip: 'the day record — its document opens in the Document detail'},
-  {name: 'Flows', clip: 'the day\'s flow documents (Dialogue · Flow · Journal)'},
-  {name: 'Beings', clip: 'the day\'s being entries, with their bindings'},
-  {name: 'Things', clip: 'the day\'s thing entries, with their bindings'},
-  {name: 'Goals', clip: 'the day\'s goals lane'},
+  {name: 'Day', colour: 'var(--mode-day)', clip: 'the day record', clipNote: 'the day record — its document opens in the Document detail'},
+  {name: 'Flows', colour: 'var(--mode-flows)', clip: 'the day\'s flow', clipNote: 'the day\'s flow documents (Dialogue · Flow · Journal)'},
+  {name: 'Beings', colour: 'var(--mode-beings)', clip: 'being entries', clipNote: 'the day\'s being entries, with their bindings'},
+  {name: 'Things', colour: 'var(--mode-things)', clip: 'thing entries', clipNote: 'the day\'s thing entries, with their bindings'},
+  {name: 'Goals', colour: 'var(--mode-goals)', clip: 'the goals lane', clipNote: 'the day\'s goals lane'},
 ] as const
 
-/** The Technē journey's columns (a walk stop: place · occasion · artefact ·
- * Expression · narration · transition). */
-const JOURNEY_STOP_COLUMNS = ['Place', 'Occasion', 'Artefact', 'Narration', 'Transition'] as const
+/** The day's slots per track: one named clip, then soft-stop squares — the
+ * mockup's session rhythm (empty slot ≠ dead UI; its square soft-stops). */
+const SESSION_SLOTS = 7
 
-/** The Relation Field's honest rows — what the M2′ presentation composes
- * when the reading is live (the mockup's lens surface). */
+/** The journey's stop columns — a walk stop is place · occasion · artefact ·
+ * Expression · narration · transition (the mockup's own six). */
+const JOURNEY_STOP_COLUMNS = [
+  {name: 'Place', colour: 'var(--mode-place)'},
+  {name: 'Occasion', colour: 'var(--mode-occasion)'},
+  {name: 'Artefact', colour: 'var(--mode-artefact)'},
+  {name: 'Expression', colour: 'var(--mode-expression)'},
+  {name: 'Narration', colour: 'var(--mode-narration)'},
+  {name: 'Transition', colour: 'var(--mode-transition)'},
+] as const
+
+/** The walk's eight stops (the transport's own reading: "stop n/8"). */
+const WALK_STOPS = [1, 2, 3, 4, 5, 6, 7, 8] as const
+
+/** The Relation Field's honest lanes — what the M2′ presentation composes
+ * (the design's Rev 2: authored history beside development — runs,
+ * revisions, the Day, machine NOWs, FieldNow). */
 const RELATION_FIELD_ROWS = [
-  {name: 'Authored history', note: 'the deep-time half — the atlas non-linear scale, epochs as bands'},
-  {name: 'Development', note: 'runs, revisions, machine NOWs — the reading\'s admitted material'},
-  {name: 'The Day', note: 'the civil day\'s clips — returns, handoffs, clearings'},
-  {name: 'Declared break', note: 'the break into today — deep history keeps 61%, today\'s hours the rest'},
+  {name: 'Authored history', note: 'the deep-time half — the atlas non-linear scale, epochs as bands', standing: null},
+  {name: 'Development', note: 'runs, revisions, machine NOWs — the reading\'s admitted material', standing: 'run'},
+  {name: 'The Day', note: 'the civil day\'s clips — returns, handoffs, clearings', standing: 'fact'},
+  {name: 'Machines · NOW', note: 'each machine\'s own NOW reading, placed as it lands', standing: 'live'},
+  {name: 'FieldNow', note: 'the field\'s presence — other Worlds arriving', standing: 'claim'},
+] as const
+
+/** The epistemic standings (the design's Rev 2 + the cut's edge grammar):
+ * placement never upgrades standing. */
+const STANDINGS = [
+  {name: 'fact', title: 'fact — solid'},
+  {name: 'claim', title: 'claim — violet, dashed'},
+  {name: 'inferred', title: 'inferred — dotted'},
+  {name: 'disputed', title: 'disputed — red, broken, crossed'},
+  {name: 'ghost', title: 'ghost — an unresolved link, shown honestly'},
 ] as const
 
 export function ModeCentreFrame({mode, presentation, world}: {
@@ -78,6 +106,7 @@ export function ModeCentreFrame({mode, presentation, world}: {
     : source?.status === 'unavailable' ? 'unavailable'
     : 'no-reading'
   const reason = source && source.status !== 'live' ? source.error ?? null : null
+  const fills = mode === 'base' ? (presentation === 'session' ? 'columns' : 'ruler') : (presentation === 'session' ? 'stops' : 'rows')
   return <div className="mode-centre" data-mode-centre={mode} data-presentation={presentation} data-reading={state} role="status">
     <header className="mode-centre-head">
       <strong>{centre.label}</strong>
@@ -89,79 +118,126 @@ export function ModeCentreFrame({mode, presentation, world}: {
       </span>
     </header>
     {presentation === 'session' && mode === 'base' && <DayAsClipsStructure />}
-    {presentation === 'arrangement' && mode === 'base' && <TodayRulerStructure />}
+    {presentation === 'arrangement' && mode === 'base' && <TodayRulerStructure world={world} />}
     {presentation === 'session' && mode === 'techne' && <JourneyStructure />}
     {presentation === 'arrangement' && mode === 'techne' && <RelationFieldStructure />}
     <div className="mode-centre-disclosure">
       <b>{state === 'reading' ? 'Reading the civil field…' : 'The civil field is unread'}</b>
       {reason && <span className="mode-centre-disclosure-reason"> — {reason}</span>}
       {' '}The Timeline projection presents World tracks only over a real reading: the kernel's temporal read fills this frame's{' '}
-      {mode === 'base' ? (presentation === 'session' ? 'columns' : 'ruler') : (presentation === 'session' ? 'stops' : 'rows')}{' '}
+      {fills}{' '}
       when it answers. The frame holds its place — designed, honest, empty.
     </div>
   </div>
 }
 
-/** Base · Session — the day as clips: the five track columns as structure,
- * the first cell naming the clip that would sit in it (empty slot ≠ dead
- * UI: the affordance is visible, not hover-only). */
+/** Base · Session — the day as clips: five coloured track columns at the
+ * mockup's session rhythm (named first clip, soft-stop squares, stop row). */
 function DayAsClipsStructure() {
   return <div className="mode-centre-structure mode-centre-day" aria-label="The day as clips — track structure">
-    {BASE_SESSION_TRACKS.map(track => <div key={track.name} className="mode-centre-track" data-track={track.name}>
-      <div className="mode-centre-track-head" data-i={`${track.name} track|${track.clip}`}>{track.name}</div>
-      <button type="button" className="mode-centre-cell mode-centre-cell-named" data-i={`First clip of ${track.name}|${track.clip} — placed here when the civil field reads`}
-        title={track.clip}>{track.clip}</button>
-      <div className="mode-centre-cell mode-centre-cell-void" aria-hidden="true" />
-      <div className="mode-centre-cell mode-centre-cell-void" aria-hidden="true" />
+    {BASE_SESSION_TRACKS.map(track => <div key={track.name} className="mode-centre-track" data-track={track.name} style={{'--tc': track.colour} as CSSProperties}>
+      <div className="mode-centre-track-head" data-i={`${track.name} track|${track.clipNote}`}>{track.name}</div>
+      <button type="button" className="mode-centre-cell mode-centre-cell-named" data-i={`First clip of ${track.name}|${track.clipNote} — placed here when the civil field reads`}
+        title={track.clipNote}>
+        <span className="mode-centre-tri" aria-hidden="true" /><span className="mode-centre-cell-name">{track.clip}</span>
+      </button>
+      {Array.from({length: SESSION_SLOTS}, (_, slot) => <div key={slot} className="mode-centre-cell mode-centre-cell-void" aria-hidden="true">
+        <span className="mode-centre-soft" data-i={`Empty slot of ${track.name}|its square stops the track after the current entry — soft stop. Double-click writes an entry once the civil field reads.`} />
+      </div>)}
+      <div className="mode-centre-stoprow" aria-hidden="true">
+        <span className="mode-centre-stop-hard" data-i={`${track.name} hard stop|stops the track now and keeps what was written as a draft`} />
+        <span className="mode-centre-stop-retry" data-i={`${track.name} retry|restarts from the last good step — lit only when a lane in here has stalled`}>↻</span>
+        <span className="mode-centre-stop-chip" />
+      </div>
     </div>)}
   </div>
 }
 
-/** Base · Arrangement — today on one ruler: the hour ruler drawn, the day's
- * clips named as what fills it. */
-function TodayRulerStructure() {
-  const hours = [6, 9, 12, 15, 18, 21]
+/** The day window the grammar's own transport names (punch-in "the day
+ * opened (08:30)", punch-out "the day closes (21:00)"). */
+const DAY_WINDOW = {open: 8.5, close: 21, spanStart: 5, spanEnd: 23} as const
+const at = (hour: number) => `${((hour - DAY_WINDOW.spanStart) / (DAY_WINDOW.spanEnd - DAY_WINDOW.spanStart) * 100).toFixed(3)}%`
+
+/** Base · Arrangement — today on one ruler: the hour ruler drawn full
+ * width, the day window as a band, the now needle only over a real
+ * reading, and the day's material as named lanes. */
+function TodayRulerStructure({world}: {world: WorldTimelineView | null}) {
+  const source = world?.source
+  const now = source?.status === 'live' ? source.now : null
+  const nowHour = now?.instantUnixMs != null ? new Date(now.instantUnixMs).getHours() + new Date(now.instantUnixMs).getMinutes() / 60 : null
+  const inSpan = nowHour != null && nowHour >= DAY_WINDOW.spanStart && nowHour <= DAY_WINDOW.spanEnd
+  const hours: number[] = []
+  for (let hour = DAY_WINDOW.spanStart; hour <= DAY_WINDOW.spanEnd; hour++) hours.push(hour)
   return <div className="mode-centre-structure mode-centre-ruler" aria-label="Today on one ruler">
     <div className="mode-centre-ruler-row">
-      {hours.map(hour => <span key={hour} className="mode-centre-tick" data-hour={hour}><i>{String(hour).padStart(2, '0')}:00</i></span>)}
+      {hours.map(hour => <span key={hour} className="mode-centre-tick" data-hour={hour} style={{left: at(hour)}}><i>{String(hour).padStart(2, '0')}:00</i></span>)}
+      <span className="mode-centre-window" style={{left: at(DAY_WINDOW.open), width: `calc(${at(DAY_WINDOW.close)} - ${at(DAY_WINDOW.open)})`}}
+        data-i="The day window|the day opened 08:30, closes 21:00 — the grammar's own punch points" />
+      {nowHour != null && inSpan && <span className="mode-centre-now" style={{left: at(nowHour)}}
+        data-i="Now|the civil instant from the kernel's own temporal read — never the wall clock" />}
     </div>
-    <div className="mode-centre-ruler-lane">
-      <span className="mode-centre-ruler-note" data-i="Today's clips|the day's documents and entries, placed at their civil instants">
-        today's clips place here — the day opened, its entries, the close
-      </span>
+    <div className="mode-centre-ruler-lanes">
+      {[
+        {name: 'documents', note: 'the day record and its flow documents, at their civil instants'},
+        {name: 'entries', note: 'beings, things and goals entries as they are made'},
+        {name: 'returns · handoffs', note: 'the day\'s NOW returns and handoffs'},
+        {name: 'the close', note: 'the close routine lands here, before 21:00'},
+      ].map(lane => <div key={lane.name} className="mode-centre-ruler-lane" data-lane={lane.name}>
+        <span className="mode-centre-ruler-lane-name">{lane.name}</span>
+        <span className="mode-centre-ruler-note" data-i={`Today's ${lane.name}|${lane.note} — placed when the civil field reads`}>
+          {lane.note} place here
+        </span>
+      </div>)}
     </div>
   </div>
 }
 
-/** Technē · Session — the M3′ Journey: walk stops as rows. */
+/** Technē · Session — the M3′ Journey at the mockup's scene-row grammar:
+ * six coloured stop columns, eight stops, the scene-launcher column. */
 function JourneyStructure() {
   return <div className="mode-centre-structure mode-centre-journey" aria-label="M3′ Journey — walk stops">
     <div className="mode-centre-journey-heads">
-      {JOURNEY_STOP_COLUMNS.map(column => <span key={column} className="mode-centre-track-head">{column}</span>)}
+      <span className="mode-centre-track-head mode-centre-launcher-head">The walk</span>
+      {JOURNEY_STOP_COLUMNS.map(column => <span key={column.name} className="mode-centre-track-head" style={{'--tc': column.colour} as CSSProperties}>{column.name}</span>)}
     </div>
-    {[1, 2, 3].map(stop => <div key={stop} className="mode-centre-journey-row" data-stop={stop}>
-      <span className="mode-centre-stop-chip" data-i={`Walk stop ${stop}|place · occasion · artefact · narration · transition — the walk's stops fill from the encounter`}>
-        stop {stop}/8
+    {WALK_STOPS.map(stop => <div key={stop} className="mode-centre-journey-row" data-stop={stop}>
+      <span className="mode-centre-stop-chip" data-i={`Walk stop ${stop}|place · occasion · artefact · Expression · narration · transition — the walk's stops fill from the encounter; ▶ walks it`}>
+        {stop} ·
       </span>
-      {JOURNEY_STOP_COLUMNS.map(column => <span key={column} className="mode-centre-cell mode-centre-cell-void" aria-hidden="true" />)}
+      {JOURNEY_STOP_COLUMNS.map(column => <span key={column.name} className="mode-centre-cell mode-centre-cell-void" aria-hidden="true">
+        <span className="mode-centre-soft" />
+      </span>)}
     </div>)}
+    <div className="mode-centre-journey-record">
+      <button type="button" className="mode-centre-record" data-i="Record a walk|● records a new walk from your encounters — each becomes a stop">
+        ● record a walk
+      </button>
+    </div>
     <p className="mode-centre-note">The walk's writers wait for the journey owner; the stops hold their places.</p>
   </div>
 }
 
-/** Technē · Arrangement — the M2′ Relation Field surface: the lens frame
- * with its honest rows. */
+/** Technē · Arrangement — the M2′ Relation Field: the lenses in the
+ * design's order, the honest lanes, the declared break, the standings. */
 function RelationFieldStructure() {
   return <div className="mode-centre-structure mode-centre-relation" aria-label="M2′ Relation Field">
     <div className="mode-centre-lens-row" role="tablist" aria-label="Timeline lenses">
-      {['chronology', 'concurrency', 'causal', 'recurrence'].map(lens => (
+      {['chronology', 'causal', 'recurrence', 'concurrency'].map(lens => (
         <span key={lens} className="mode-centre-lens" data-lens={lens}>{lens}</span>
       ))}
+    </div>
+    <div className="mode-centre-break" data-i="The declared break|deep history keeps 61% of the ruler, today's hours the rest — the break is declared, never hidden">
+      <span>the declared break into today</span>
     </div>
     {RELATION_FIELD_ROWS.map(row => <div key={row.name} className="mode-centre-relation-row" data-row={row.name}>
       <span className="mode-centre-relation-name" data-i={`${row.name}|${row.note}`}>{row.name}</span>
       <span className="mode-centre-relation-note">{row.note}</span>
       <span className="mode-centre-relation-lane" aria-hidden="true" />
+      {row.standing && <span className={`mode-centre-standing mode-centre-standing-${row.standing}`} data-i={`${row.name} · standing|clips draw in their epistemic standing — placement never upgrades it`}>{row.standing}</span>}
     </div>)}
+    <div className="mode-centre-standing-legend" aria-label="Epistemic standings">
+      <span className="mode-centre-legend-title">standings</span>
+      {STANDINGS.map(standing => <span key={standing.name} className={`mode-centre-standing mode-centre-standing-${standing.name}`} title={standing.title}>{standing.name}</span>)}
+    </div>
   </div>
 }

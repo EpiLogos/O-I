@@ -151,10 +151,20 @@ export function createLiveConfigPlaneSource(call: OpCall): ConfigPlaneSource {
 
     async apply(plans: PlanDocument[]): Promise<ChangeSetDocument> {
       retireExpired();
-      const id = plans.length ? planBatches.get(plans[0]) : undefined;
-      const batch = id ? batches.get(id) : undefined;
-      if (!batch || plans.length !== batch.rawPlans.length || plans.some((plan, index) =>
-          planBatches.get(plan) !== id || JSON.stringify(plan) !== batch.rawPlans[index])) {
+      const raw = plans.map(plan => JSON.stringify(plan));
+      const remembered = plans.length ? planBatches.get(plans[0]) : undefined;
+      let batch = remembered ? batches.get(remembered) : undefined;
+      // The review controller hands apply a copy of the plans it showed.
+      // The batch is the admitted JSON, not the original object identity.
+      if (!batch) {
+        for (const candidate of batches.values()) {
+          if (candidate.rawPlans.length === raw.length && candidate.rawPlans.every((item, index) => item === raw[index])) {
+            batch = candidate;
+            break;
+          }
+        }
+      }
+      if (!batch || plans.length !== batch.rawPlans.length || raw.some((item, index) => item !== batch!.rawPlans[index])) {
         throw new Error("the complete admitted review batch is unavailable or changed; review the change again before applying");
       }
       const outcome = unwrap<Extract<KernelOpResult, { result: "config_applied" }>>(

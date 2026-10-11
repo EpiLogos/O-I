@@ -26,6 +26,7 @@
  */
 
 import type {IconName} from '../inhabitants/sdk/icons.ts'
+import type {KindShapeName} from '../inhabitants/sdk/marks.tsx'
 
 /** The surf's mode icons, in order: Live · Base · Central · Factory ·
  * Expressions · Technē (Revision 5's rack row). */
@@ -84,6 +85,12 @@ export interface ModeBrowserCategory {
   readonly group: string
   /** The icon-cut mark the category wears. */
   readonly mark: IconName
+  /** The cut's kind mark for the category, where the specimen's browser rail
+   * assigns one (icon-cut §7 "Browser rail": Days wear the day, Flows doc,
+   * Beings agent, Things source, Goals archetype, Files doc, Wiki source,
+   * Sessions run…). Present → the rail's filled kind drawing wins over the
+   * mono mark; absent → the mono mark is the rail's own word. */
+  readonly kindMark?: KindShapeName
   /** What the category's rows are. */
   readonly hint: string
   /** The family whose declared surface carries the entries (§12); absent
@@ -232,20 +239,20 @@ const base: SurfModeGrammar = {
   // family's declared surfaces: L7's browser categories + the L4 civil
   // reading for Days, the ground listing for Files.
   browser: [
-    {id: 'central-days', label: 'Days', group: 'Central', mark: 'die', family: 'central', state: 'cut',
+    {id: 'central-days', label: 'Days', group: 'Central', mark: 'die', kindMark: 'day', family: 'central', state: 'cut',
       hint: 'The civil calendar: a day per row, its record beneath — rows from the kernel\'s temporal read (L4) and the day records.'},
-    {id: 'central-flows', label: 'Flows', group: 'Central', mark: 'trav', family: 'central', state: 'waiting',
+    {id: 'central-flows', label: 'Flows', group: 'Central', mark: 'trav', kindMark: 'doc', family: 'central', state: 'waiting',
       hint: 'The flow documents (Dialogue · Flow · Journal). The Flow document device is declared; the flow listing\'s owner read is not landed — designed empty until it is.'},
-    {id: 'central-beings', label: 'Beings', group: 'Central', mark: 'bind', family: 'central', state: 'waiting',
+    {id: 'central-beings', label: 'Beings', group: 'Central', mark: 'bind', kindMark: 'agent', family: 'central', state: 'waiting',
       hint: 'Beings with their bindings (world, subject, office, sources). The oi-beings form\'s owner has not landed its listing read — designed empty until it is.'},
-    {id: 'central-things', label: 'Things', group: 'Central', mark: 'chain', family: 'central', state: 'waiting',
+    {id: 'central-things', label: 'Things', group: 'Central', mark: 'chain', kindMark: 'source', family: 'central', state: 'waiting',
       hint: 'Things with their bindings. The oi-things form\'s owner has not landed its listing read — designed empty until it is.'},
-    {id: 'central-goals', label: 'Goals', group: 'Central', mark: 'direct', family: 'central', state: 'waiting',
+    {id: 'central-goals', label: 'Goals', group: 'Central', mark: 'direct', kindMark: 'archetype', family: 'central', state: 'waiting',
       hint: 'The goals lane of the day. The goals listing\'s owner read is not landed — designed empty until it is.'},
-    {id: 'central-files', label: 'Files', group: 'Project', mark: 'detail',
+    {id: 'central-files', label: 'Files', group: 'Project', mark: 'detail', kindMark: 'doc',
       state: 'cut',
       hint: 'The ground\'s listing — folders and notes as rows; selecting one opens its craft in the Document detail.'},
-    {id: 'central-wiki', label: 'Wiki', group: 'Project', mark: 'lib', family: 'central', state: 'waiting',
+    {id: 'central-wiki', label: 'Wiki', group: 'Project', mark: 'lib', kindMark: 'source', family: 'central', state: 'waiting',
       hint: 'The wiki projects through its Expression owner (§6); the projection read does not answer in every boot — designed empty, named.'},
   ],
   centre: {
@@ -301,11 +308,11 @@ const factory: SurfModeGrammar = {
   // (AgentShellBrowser — the landed Factory column); the grammar records the
   // mode's category identity so the frame and the surface cannot drift.
   browser: [
-    {id: 'factory-sessions', label: 'Sessions', group: 'Work', mark: 'session', family: 'software-factory', state: 'cut',
+    {id: 'factory-sessions', label: 'Sessions', group: 'Work', mark: 'session', kindMark: 'run', family: 'software-factory', state: 'cut',
       hint: 'The working sessions — one row per session, tracks are sessions, clips are tasks.'},
-    {id: 'factory-agents', label: 'Agents', group: 'Work', mark: 'bind', family: 'software-factory', state: 'cut',
+    {id: 'factory-agents', label: 'Agents', group: 'Work', mark: 'bind', kindMark: 'agent', family: 'software-factory', state: 'cut',
       hint: 'The agent population — who is seated, running, stalled.'},
-    {id: 'factory-runs', label: 'Runs', group: 'Work', mark: 'arrangement', family: 'software-factory', state: 'cut',
+    {id: 'factory-runs', label: 'Runs', group: 'Work', mark: 'arrangement', kindMark: 'run', family: 'software-factory', state: 'cut',
       hint: 'The run viewer — attempts and their task trees as temporal material.'},
     {id: 'factory-knowledge', label: 'Knowledge', group: 'Ground', mark: 'search', family: 'software-factory', state: 'cut',
       hint: 'The knowledge route — skills and sources the sessions can admit.'},
@@ -420,18 +427,18 @@ const techne: SurfModeGrammar = {
     {id: 'techne-sources', label: 'Sources', group: 'To hand', mark: 'form',
       state: 'cut',
       hint: 'Sources to hand — the open works, openable in an instrument; rows from the retained app\'s own work list.'},
-    {id: 'techne-files', label: 'Files', group: 'To hand', mark: 'detail',
+    {id: 'techne-files', label: 'Files', group: 'To hand', mark: 'detail', kindMark: 'doc',
       state: 'cut',
       hint: 'Reference files from the ground\'s listing — add a reference to the lens from here.'},
-    {id: 'techne-bodies', label: 'Bodies', group: 'World', mark: 'earth', family: 'quaternal-logic', state: 'waiting',
+    {id: 'techne-bodies', label: 'Bodies', group: 'World', mark: 'earth', kindMark: 'world', family: 'quaternal-logic', state: 'waiting',
       hint: 'The field\'s bodies — your planet and the Worlds around it. The Earth projection\'s adapter is the family\'s to land (the atlas port refused the merge) — designed empty until it is.'},
-    {id: 'techne-locations', label: 'Locations', group: 'World', mark: 'placed', family: 'quaternal-logic', state: 'waiting',
+    {id: 'techne-locations', label: 'Locations', group: 'World', mark: 'placed', kindMark: 'location', family: 'quaternal-logic', state: 'waiting',
       hint: 'Placed artefacts and their anchors. Waits for the Earth projection\'s owner — designed empty, named.'},
-    {id: 'techne-places', label: 'Places', group: 'World', mark: 'map', family: 'quaternal-logic', state: 'waiting',
+    {id: 'techne-places', label: 'Places', group: 'World', mark: 'map', kindMark: 'place', family: 'quaternal-logic', state: 'waiting',
       hint: 'Earth places — the Atlas port\'s surface. Waits for the Places owner — designed empty, named.'},
-    {id: 'techne-palaces', label: 'Palaces', group: 'World', mark: 'palace', family: 'quaternal-logic', state: 'waiting',
+    {id: 'techne-palaces', label: 'Palaces', group: 'World', mark: 'palace', kindMark: 'palace', family: 'quaternal-logic', state: 'waiting',
       hint: 'Palaces — M5′ as locations you enter. Waits for the Palace owner — designed empty, named.'},
-    {id: 'techne-journeys', label: 'Journeys', group: 'World', mark: 'journey', family: 'quaternal-logic', state: 'waiting',
+    {id: 'techne-journeys', label: 'Journeys', group: 'World', mark: 'journey', kindMark: 'journey', family: 'quaternal-logic', state: 'waiting',
       hint: 'Journeys — the walk stops (place · occasion · artefact · narration). Waits for the journey owner — designed empty, named.'},
   ],
   centre: {

@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>World Shell Mockup — one World, four projections</title>
+<style>
+/* Tokens and frame geometry from packages/live-shell/ui/src/styles.css (env-1 seat,
+   45e15ed8b), carried from agent-shell-mockup.html. This mockup adds the World
+   integration: four projection panes (Earth/Sky · Timeline · Constellation ·
+   Expressions), the encounter spine (subject + Now/Occasion/Transport), and the
+   Technè rack per focused pane. Design law: WORLD-SHELL-DESIGN.md — one World,
+   four projections, real panes, one rack. */
+:root{
+  --bg-0:#26292d; --bg-1:#33363b; --bg-2:#3f4348; --bg-3:#4a4e54; --surface:#43464c;
+  --line:#24262a; --line-strong:#3d4147;
+  --text:#d4d7da; --text-dim:#a2a7ad; --text-faint:#71767c;
+  --accent:#ffbe00; --accent-soft:rgba(255,190,0,.13); --sel:#7ec3e6; --rec:#e0523f; --green:#8fd0a8; --stall:#ff9b4a;
+  --fizz:#5cc6b4; --honey:#e2a35e; --bumble:#d985a6; --drone:#8fbfb6;
+  --mercurius:#c9a0dc; --selfc:#9fb8d4; --mandala:#e0b7c4; --trickster:#d8a86a; --ancestor:#a8b89a;
+  --mono:ui-monospace,'SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#1b1d20;overflow:hidden}
+body{font:12px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input{font:inherit;color:inherit}
+.fit{position:absolute;left:50%;top:50%;transform-origin:center}
+svg{display:block}
+.frame{--dock-w:300px;width:1920px;height:1200px;display:grid;background:var(--bg-1);padding:0 6px;
+  grid-template-columns:400px minmax(0,1fr) var(--dock-w);grid-template-rows:64px minmax(0,1fr) 300px 28px;
+  grid-template-areas:"tp tp tp" "br ct dk" "ch ch dk" "sb sb sb"}
+.frame.no-browser{grid-template-columns:0 minmax(0,1fr) var(--dock-w)}
+.frame.no-dock{grid-template-columns:400px minmax(0,1fr) 0}
+.frame.no-browser.no-dock{grid-template-columns:0 minmax(0,1fr) 0}
+.frame.no-detail{grid-template-rows:64px minmax(0,1fr) 0 28px}
+.mono{font-family:var(--mono)} .dim{color:var(--text-dim)} .faint{color:var(--text-faint)}
+@keyframes blink{50%{opacity:.25}}
+
+/* ================= transport ================= */
+.tp{grid-area:tp;margin:0 -6px;padding:3px 10px 8px;border-bottom:3px solid var(--line);display:flex;flex-direction:column}
+.title{height:18px;text-align:center;font-size:12px;color:var(--text-dim)} .title b{color:var(--text);font-weight:500}
+.ctl{flex:1;display:flex;align-items:center;gap:7px}
+.g{display:flex;align-items:center;gap:2px;white-space:nowrap}
+.nc{height:19px;min-width:17px;padding:1px 4px;background:var(--bg-0);border:1px solid #30343a;line-height:14px;font-size:10px;color:var(--text-dim);display:flex;align-items:center;gap:3px}
+.nc:hover{color:var(--text)} .nc.on{background:var(--accent);color:#1d1f22;border-color:var(--accent)} .nc.warn{color:var(--stall)}
+.fld{height:19px;padding:2px 6px;font-size:10px;background:var(--bg-0);color:var(--text);display:flex;align-items:center;gap:4px;font-family:var(--mono)}
+.fld small{font-size:8.5px;color:var(--text-faint)}
+.tbtn{width:20px;height:22px;display:grid;place-items:center;color:var(--text-dim)}
+.tbtn.play{color:var(--accent)} .tbtn.rec{color:#c9c8ad}
+.tbtn.on.play{color:#1d1f22;background:var(--accent)} .tbtn.on.rec{color:var(--rec)}
+.sp{flex:1;min-width:4px}
+.encchip{height:21px;display:flex;align-items:center;gap:6px;padding:0 8px;background:var(--bg-0);border:1px solid var(--line-strong);font-size:11px;max-width:420px;white-space:nowrap;overflow:hidden}
+.encchip .sub{color:var(--text)} .encchip .occ{color:var(--text-dim);overflow:hidden;text-overflow:ellipsis}
+.encchip i{width:9px;height:9px;border-radius:50%;background:var(--mercurius);flex:none}
+.segw{display:flex;border:1px solid var(--line);height:21px}
+.segw button{padding:0 9px;font-size:10.5px;color:var(--text-dim);background:var(--bg-0);border-right:1px solid var(--line)}
+.segw button:last-child{border-right:none} .segw button.on{background:var(--accent);color:#1d1f22}
+.surf{display:flex;gap:6px;align-items:center;margin-left:6px}
+.surf button{color:var(--text-dim);width:24px;height:22px;display:grid;place-items:center;border:1px solid var(--line);background:var(--bg-0)}
+.surf button.on{color:#1d1f22;background:var(--accent);border-color:var(--accent)}
+.chrome{width:20px;height:20px;display:grid;place-items:center;color:var(--text-dim)} .chrome.on{color:var(--accent)}
+
+/* ================= browser ================= */
+.br{grid-area:br;min-width:0;min-height:0;display:flex;flex-direction:column;background:var(--bg-1);border:1px solid var(--line-strong);border-right:4px solid var(--line);border-radius:3px 0 0 3px;overflow:hidden;margin-top:4px}
+.bsearch{display:flex;height:25px;flex:none;padding:2px;gap:1px;border-bottom:1px solid var(--line)}
+.bsearch span{width:20px;display:grid;place-items:center;color:var(--text-faint)}
+.bsearch div{flex:1;background:var(--bg-0);color:var(--text-faint);font-size:11px;padding:2px 6px}
+.bcols{display:flex;flex:1;min-height:0}
+.bcats{width:118px;flex:none;border-right:1px solid var(--line);padding:0 3px;font-size:11px;overflow:hidden}
+.bcats h6{font-weight:400;font-size:10.5px;color:var(--text-faint);padding:6px 3px 2px}
+.bcat{display:flex;align-items:center;gap:6px;padding:2px 3px;color:var(--text-dim);cursor:default;border-radius:2px}
+.bcat.on{background:var(--bg-3);color:var(--text)} .bcat svg{width:11px;height:11px;flex:none}
+.bres{flex:1;min-width:0;background:var(--bg-2);display:flex;flex-direction:column}
+.bfilt{height:21px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:2px 5px;color:var(--text-dim);font-size:10px;background:var(--bg-1)}
+.bhead{display:flex;justify-content:space-between;height:20px;background:var(--bg-0);padding:2px 5px;font-size:10px;color:var(--text-dim)}
+.bitem{height:23px;display:flex;align-items:center;gap:6px;padding:2px 5px;color:var(--text-dim);font-size:11px;cursor:grab;white-space:nowrap}
+.bitem:hover{background:var(--bg-3);color:var(--text)}
+.bitem .st{margin-left:auto;font-size:10px;color:var(--text-faint)}
+.bitem .sdk{font-size:8.5px;border:1px solid var(--line-strong);padding:0 3px;color:var(--sel)}
+.bitem .dot{width:7px;height:7px;border-radius:50%;flex:none}
+.pool{height:46%;min-height:85px;display:flex;flex-direction:column;border-top:5px solid var(--line);background:var(--bg-2)}
+.poolh{height:22px;display:flex;align-items:center;gap:6px;padding:0 6px;background:var(--bg-1);border-bottom:1px solid var(--line);font-size:11px;flex:none}
+.poolh .r{margin-left:auto;color:var(--text-faint);font-size:10px}
+.poolb{flex:1;overflow:auto;padding:4px 0 8px}
+.sec{padding:6px 8px 2px;font-size:10px;color:var(--text-faint);display:flex;justify-content:space-between}
+.row{display:grid;grid-template-columns:78px minmax(0,1fr);align-items:center;gap:6px;padding:2px 8px;font-size:11px;min-height:22px}
+.row .k{color:var(--text-dim)}
+.seg{display:flex;border:1px solid var(--line);width:max-content;max-width:100%}
+.seg button{padding:1px 7px;font-size:10px;color:var(--text-dim);background:var(--bg-1);border-right:1px solid var(--line);height:17px}
+.seg button:last-child{border-right:none} .seg button.on{background:var(--accent);color:#1d1f22}
+.tgl{display:flex;align-items:center;gap:6px;padding:2px 8px;font-size:11px;min-height:22px;cursor:default}
+.tgl .lt{width:9px;height:9px;border-radius:50%;border:1px solid #0007;background:var(--bg-0);flex:none;cursor:pointer}
+.tgl .lt.on{background:var(--accent)} .tgl .r{margin-left:auto;font-size:10px;color:var(--text-faint)}
+.slider{height:5px;background:var(--bg-0);position:relative;flex:1} .slider i{position:absolute;left:0;top:0;bottom:0;background:var(--accent)}
+.fold{display:flex;align-items:center;gap:5px;padding:6px 8px;font-size:10.5px;color:var(--text-faint);cursor:pointer;border-top:1px solid var(--line);margin-top:6px}
+.fold .tri{font-size:8px;width:8px} .foldb{display:none} .foldb.open{display:block}
+.kv{display:grid;grid-template-columns:78px 1fr;padding:1px 8px;font-size:10.5px;color:var(--text-dim)}
+.kv span:last-child{font-family:var(--mono);color:var(--text)}
+.projbtns{display:flex;gap:3px;padding:4px 8px}
+.projbtns button{height:20px;padding:0 7px;font-size:10px;background:var(--bg-1);border:1px solid var(--line);color:var(--text-dim)}
+.projbtns button:hover{color:var(--text);border-color:var(--text-faint)}
+.bt{height:20px;padding:0 9px;font-size:10.5px;background:var(--bg-2);border:1px solid var(--line)}
+.bt.pri{background:var(--accent);border-color:var(--accent);color:#1d1f22}
+
+/* ================= centre: projection panes ================= */
+.ct{grid-area:ct;min-width:0;min-height:0;margin:4px 4px 4px 0;background:var(--bg-2);border:1px solid var(--line-strong);position:relative;overflow:hidden;display:flex}
+#panes{flex:1;display:grid;gap:3px;min-width:0;min-height:0;padding:3px}
+#panes.solo{grid-template-columns:1fr;grid-template-rows:1fr}
+#panes.duo{grid-template-columns:1fr 1fr;grid-template-rows:1fr}
+#panes.quad{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+.pane{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg-1);border:1px solid var(--line-strong);overflow:hidden;position:relative}
+.pane.foc{outline:1px solid var(--accent);outline-offset:-1px}
+.ph{height:25px;flex:none;display:flex;align-items:center;gap:5px;padding:0 5px;background:var(--bg-2);border-bottom:1px solid var(--line);font-size:10.5px;white-space:nowrap}
+.ph .pv{display:flex;gap:1px}
+.ph .pv button{width:21px;height:17px;display:grid;place-items:center;color:var(--text-faint)}
+.ph .pv button.on{color:#1d1f22;background:var(--accent)}
+.ph .subj{color:var(--text-dim);overflow:hidden;text-overflow:ellipsis}
+.ph .subj b{color:var(--text);font-weight:500}
+.ph .r{margin-left:auto;display:flex;gap:4px;color:var(--text-faint);font-size:10px;align-items:center}
+.pb{flex:1;position:relative;min-height:0;overflow:hidden}
+
+/* --- earth / sky --- */
+.glb{position:absolute;inset:0;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#232c36 0%,#1c222a 70%)}
+.glb canvas{position:absolute;inset:0}
+.gmk{position:absolute;transform:translate(-50%,-50%);text-align:center;cursor:pointer;z-index:3;pointer-events:auto}
+.gmk .d{display:inline-grid;place-items:center;width:13px;height:13px;border-radius:50%;background:#00000055;border:1.5px solid var(--c);color:var(--c);font-size:8px;line-height:1}
+.gmk .lab{position:absolute;left:0;top:13px;transform:translateX(-50%);font-size:9px;color:var(--text-dim);white-space:nowrap;text-shadow:0 1px 3px #000,0 0 7px #000c;margin-top:1px}
+.gmk.sel .d{background:var(--c);color:#1d1f22;box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 30%,transparent)}
+.gmk.sel .lab{color:var(--text)}
+.gmk.behind{opacity:.22}
+.gmk.live .d{border-style:dashed}
+.gmk .bees{position:absolute;left:-14px;top:-52px;display:flex;gap:1px}
+.cor{position:absolute;font-size:9.5px;color:var(--text-dim);background:#1d1f22cc;border:1px solid var(--line);padding:2px 7px;z-index:4;pointer-events:none}
+.zoomt{position:absolute;display:flex;border:1px solid var(--line-strong);background:#1d1f22d9;z-index:5}
+.zoomt button{padding:2px 8px;font-size:10px;color:var(--text-dim)}
+.zoomt button.on{background:var(--accent);color:#1d1f22}
+.leg{position:absolute;left:7px;bottom:7px;z-index:4;font-size:9.5px;color:var(--text-faint);line-height:1.7;background:#1d1f22a8;padding:3px 7px;border:1px solid var(--line)}
+.leg i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.skybig{position:absolute;inset:0;display:grid;place-items:center}
+@keyframes dashi{to{stroke-dashoffset:-60}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.torusring{transform-box:fill-box;transform-origin:center;animation:spin 40s linear infinite}
+.clockarc{transform-box:fill-box;transform-origin:center;animation:spin 90s linear infinite}
+
+/* --- timeline --- */
+.tl{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg-1)}
+.tlr{height:24px;flex:none;display:grid;grid-template-columns:132px minmax(0,1fr);border-bottom:1px solid var(--line);background:var(--bg-2)}
+.tlt{position:relative;font-size:9px;color:var(--text-faint);overflow:hidden}
+.tlt span{position:absolute;top:4px;padding-left:3px;border-left:1px solid var(--text-faint);height:13px;line-height:11px;white-space:nowrap}
+.tlr .note{position:absolute;right:6px;top:4px;font-size:9px;color:var(--text-faint)}
+.tlb{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.trw{flex:1;min-height:0;display:grid;grid-template-columns:132px minmax(0,1fr);border-bottom:1px solid var(--line)}
+.trw .h{display:flex;align-items:center;gap:5px;padding:0 5px 0 7px;font-size:10px;color:var(--text-dim);border-right:2px solid var(--tc);background:var(--bg-2);white-space:nowrap;overflow:hidden}
+.trw .h i{width:7px;height:7px;border-radius:2px;background:var(--tc);flex:none}
+.trw .h .fam{font-size:8.5px;color:var(--text-faint)}
+.lane{position:relative;background:var(--bg-2);background-image:linear-gradient(90deg,#ffffff06 1px,transparent 1px);background-size:10% 100%}
+.cl{position:absolute;top:3px;bottom:3px;background:var(--tc);border:1px solid #0005;color:#22282c;font-size:9px;padding:0 4px;line-height:14px;overflow:hidden;white-space:nowrap;cursor:pointer}
+.cl small{display:block;font-size:8.5px;opacity:.7}
+.cl.span{background:#ffffff10;color:var(--text-dim);border:1px solid var(--tc);border-top-width:2px;top:3px;bottom:52%}
+.cl[s]{top:auto;bottom:3px;height:40%;line-height:11px;font-size:8.5px}
+.cl.dash{border-style:dashed;background:#00000030;color:var(--text-dim)}
+.cl.held{opacity:.7;border-style:dotted}
+.cl.selc{box-shadow:0 0 0 1px var(--accent)}
+.cl.live{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),#0006)}
+.ndl{position:absolute;top:0;bottom:0;width:2px;z-index:5;pointer-events:none;box-shadow:0 0 0 1px #0006}
+.ndl .rd{position:absolute;top:2px;font-size:9px;font-family:var(--mono);white-space:nowrap;background:#1d1f22e0;color:var(--text);padding:0 4px}
+.ndl.occ{background:var(--accent)} .ndl.occ .rd{border-left:2px solid var(--accent)}
+.ndl.now{background:#ffffff30} .ndl.now .rd{border-left:2px solid #fff;color:var(--text-dim)}
+.ndl.run{background:var(--fizz)} .ndl.run .rd{border-left:none;border-right:2px solid var(--fizz);left:auto;right:5px}
+
+/* --- constellation --- */
+.cn{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 50%,#282d33 0%,#20242a 75%)}
+.cnode{cursor:pointer}
+.cnode text{font-size:9px;fill:var(--text-dim)}
+.cnode.sel text{fill:var(--text)}
+.cnode.dim{opacity:.3}
+.cedge{stroke:var(--line-strong);fill:none}
+.ceg{stroke-dasharray:2 4}
+.leg2{position:absolute;right:6px;top:5px;z-index:4;font-size:9px;color:var(--text-faint);line-height:1.5;background:#1d1f22d8;padding:3px 7px;border:1px solid var(--line);text-align:left}
+
+/* --- expressions --- */
+.ex{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg-1)}
+.exm{flex:1;display:flex;min-height:0}
+.exst{flex:1;position:relative;display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 42%,#2c3138 0%,#21252b 70%)}
+.exside{width:186px;flex:none;border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.exsi{padding:6px 8px;border-bottom:1px solid var(--line);font-size:10.5px;color:var(--text-dim);display:flex;flex-direction:column;gap:3px}
+.exsi b{color:var(--text);font-weight:500;font-size:11px}
+.exstrip{height:88px;flex:none;display:flex;gap:5px;padding:5px;border-top:1px solid var(--line);background:var(--bg-2)}
+.xc{width:118px;flex:none;border:1px solid var(--line);background:var(--bg-1);display:flex;flex-direction:column;cursor:pointer;position:relative}
+.xc:hover{border-color:var(--text-faint)} .xc.selc{border-color:var(--accent)}
+.xc .pv2{flex:1;margin:4px;position:relative;overflow:hidden;background:var(--bg-0)}
+.xc .nm{height:18px;display:flex;align-items:center;gap:4px;padding:0 5px;font-size:9.5px;color:var(--text-dim);white-space:nowrap;overflow:hidden}
+.xc .new{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--fizz)}
+.chakra{display:flex;flex-direction:column;gap:2.5px}
+.chakra .ck{display:flex;align-items:center;gap:6px;font-size:9.5px;color:var(--text-dim)}
+.chakra .ck i{width:8px;height:8px;border-radius:50%;flex:none}
+@keyframes spinrev{to{transform:rotate(-360deg)}}
+.ringr{transform-box:fill-box;transform-origin:center}
+.r1{animation:spin 26s linear infinite}.r2{animation:spinrev 34s linear infinite}.r3{animation:spin 48s linear infinite}.r4{animation:spinrev 66s linear infinite}
+
+/* ================= detail: the Technè rack ================= */
+.ch{grid-area:ch;min-width:0;min-height:0;display:flex;gap:4px;padding-bottom:4px;padding-right:4px}
+.dpane{flex:1;min-width:0;display:flex;flex-direction:column;border:1px solid var(--line);background:var(--bg-1)}
+.rackh{height:22px;flex:none;display:flex;align-items:center;gap:6px;padding:0 8px;background:var(--bg-2);border-bottom:1px solid var(--line);font-size:11px;color:var(--text-dim)}
+.rackh b{color:var(--text);font-weight:500}
+.chain{flex:1;display:flex;gap:6px;padding:8px;overflow:hidden;align-items:stretch}
+.dev{background:var(--bg-2);border:1px solid var(--line);display:flex;flex-direction:column;flex:none}
+.dev.sel{outline:1px solid var(--accent);outline-offset:-1px}
+.dh{height:21px;display:flex;align-items:center;gap:5px;padding:0 5px;border-bottom:1px solid var(--line);font-size:11px;cursor:default;white-space:nowrap}
+.dh .pw{width:10px;height:10px;border-radius:50%;border:2px solid var(--accent);flex:none;cursor:pointer} .dh .pw.off{border-color:var(--text-faint)}
+.dh .own{font-size:8.5px;border:1px solid var(--line-strong);padding:0 3px;color:var(--text-faint)}
+.dh .x{margin-left:auto;display:flex;gap:7px;color:var(--text-faint);font-size:10px} .dh .x span{cursor:pointer} .dh .x span:hover{color:var(--text)}
+.db{flex:1;display:flex;gap:8px;padding:7px;min-height:0}
+.dev.folded{width:24px} .dev.folded .dh{writing-mode:vertical-rl;height:auto;flex:1;border:none;padding:6px 0;justify-content:flex-start;gap:7px;align-items:center;width:22px}
+.vis{background:var(--bg-0);border:1px solid var(--line);position:relative;overflow:hidden;flex:none}
+.knobs{display:grid;grid-template-columns:repeat(2,64px);gap:6px 2px;align-content:start}
+.knob{display:flex;flex-direction:column;align-items:center;gap:1px;cursor:ns-resize;user-select:none}
+.knob .kl{font-size:9.5px;color:var(--text-dim);white-space:nowrap} .knob .kv{font-size:9.5px;font-family:var(--mono);color:var(--text)}
+.tog{display:flex;flex-direction:column;align-items:center;gap:3px}
+.tog .kl{font-size:9.5px;color:var(--text-dim)}
+.tog .tg{display:flex;border:1px solid var(--line)}
+.tog .tg span{font-size:9.5px;padding:1px 5px;background:var(--bg-0);color:var(--text-faint);cursor:pointer} .tog .tg span.on{background:var(--accent);color:#1d1f22}
+.dropz{width:150px;flex:none;border:1px dashed var(--line-strong);display:flex;align-items:center;justify-content:center;text-align:center;color:var(--text-faint);font-size:11px;padding:10px}
+.badge{font-size:8.5px;border:1px solid var(--line-strong);padding:0 4px;color:var(--text-faint)}
+.badge.ok{color:var(--green);border-color:#8fd0a855}
+.devcol{display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center}
+
+/* ================= context dock: tiles + launcher ================= */
+.dk{grid-area:dk;min-height:0;min-width:0;display:flex;flex-direction:column;border-left:4px solid var(--line);margin-top:4px;position:relative;background:var(--bg-1)}
+.grip{position:absolute;left:-7px;top:0;bottom:0;width:9px;cursor:ew-resize;z-index:5}
+.grip:hover{background:#ffbe0033}
+.tilesh{height:24px;flex:none;display:flex;align-items:center;gap:6px;padding:0 6px;background:var(--bg-2);border-bottom:1px solid var(--line);font-size:11px}
+.tilesh .r{margin-left:auto;display:flex;gap:3px}
+.tiles{flex:1;min-height:0;overflow:auto;padding:5px;display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:5px;align-content:start}
+.tile{border:1px solid var(--line);background:var(--bg-1);display:flex;flex-direction:column;min-width:0}
+.tlh{height:24px;display:flex;align-items:center;gap:5px;padding:0 6px;background:var(--bg-2);font-size:11px;border-bottom:1px solid var(--line)}
+.tlh .t{flex:1} .tlh .x{color:var(--text-faint);font-size:10px;display:flex;gap:7px} .tlh .x span{cursor:pointer} .tlh .x span:hover{color:var(--text)}
+.tlb{position:relative;overflow:hidden}
+.launch{height:300px;flex:none;border-top:5px solid var(--line);display:flex;flex-direction:column;background:var(--bg-2);margin-bottom:4px}
+.launch.folded{height:30px}
+.lh{height:25px;flex:none;display:flex;align-items:center;gap:5px;padding:0 5px;background:var(--bg-1);border-bottom:1px solid var(--line);font-size:11px}
+.lh input{flex:1;min-width:0;height:18px;background:var(--bg-0);border:1px solid var(--line);padding:0 6px;font-size:10.5px;color:var(--text);outline:none}
+.lh .f{color:var(--text-faint);cursor:pointer;width:16px;text-align:center}
+.lgrid{flex:1;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));grid-auto-rows:126px;gap:5px;padding:5px}
+.lcell{border:1px solid var(--line);background:var(--bg-1);display:flex;flex-direction:column;cursor:pointer;position:relative;min-width:0}
+.lcell:hover{border-color:var(--text-faint)} .lcell.on{border-color:var(--accent)}
+.lcell .pv{flex:1;background:var(--bg-0);margin:4px;position:relative;overflow:hidden}
+.lcell .nm{height:20px;display:flex;align-items:center;gap:5px;padding:0 6px;font-size:10.5px}
+.lcell .nm .s{margin-left:auto;font-size:9px;color:var(--sel)}
+.lcell .dot{position:absolute;top:7px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.term{font-family:var(--mono);font-size:10px;line-height:1.5;padding:6px;color:var(--text-dim);background:#1f2124;overflow:hidden}
+.term .p{color:var(--fizz)} .term .o{color:var(--green)}
+.hl{display:flex;align-items:center;gap:6px;padding:2px 6px;font-size:10.5px;cursor:default}
+.hl .d{width:6px;height:6px;border-radius:50%;flex:none}
+.ctxpin{display:flex;align-items:center;gap:6px;padding:3px 6px;font-size:9.5px;color:var(--text-faint);border-bottom:1px solid var(--line)}
+.trailrow{display:flex;align-items:center;gap:5px;padding:2px 7px;font-size:10.5px;color:var(--text-dim);cursor:pointer}
+.trailrow:hover{color:var(--text)}
+.trailrow .n{color:var(--text-faint);font-size:9px;font-family:var(--mono)}
+.imgcard{display:flex;gap:6px;padding:5px 6px;align-items:center}
+.imgcard .th{width:44px;height:34px;flex:none;background:var(--bg-0);border:1px solid var(--line);position:relative;overflow:hidden}
+.imgcard .ii{font-size:10px;color:var(--text-dim);line-height:1.35}
+.imgcard .ii small{display:block;font-size:8.5px;color:var(--text-faint);font-family:var(--mono)}
+
+/* ================= status ================= */
+.sb{grid-area:sb;margin:0 -6px;border-top:1px solid var(--line);background:var(--bg-1);display:flex;align-items:center;gap:10px;padding:0 8px;color:var(--text-dim);font-size:11px;min-width:0}
+.sb .i{width:16px;height:16px;border-radius:50%;background:var(--bg-3);display:grid;place-items:center;font-size:10px;flex:none}
+.sb .info{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:var(--bg-0);padding:2px 8px;height:20px}
+.sb .info b{color:var(--text);font-weight:500;margin-right:6px}
+.sb .tg{display:flex;gap:2px}
+.sb .tg button{padding:1px 8px;color:var(--text-dim);display:flex;gap:4px;align-items:center;height:20px;border:1px solid var(--line)}
+.sb .tg button.on{color:var(--accent)}
+
+/* sprites */
+.bee-s .wing{transform-box:fill-box;transform-origin:50% 100%}
+.bee-s.working .wing{animation:flap .12s infinite alternate}
+.bee-s.working .bodyg{animation:bob 1.4s ease-in-out infinite}
+.bee-s.idle .bodyg{animation:breathe 3.2s ease-in-out infinite}
+@keyframes flap{to{transform:scaleY(.35)}} @keyframes bob{50%{transform:translateY(-1.5px)}} @keyframes breathe{50%{transform:translateY(.6px)}}
+.form{transform-box:fill-box;transform-origin:center} .form.spin{animation:spin 14s linear infinite}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="fit" id="fit"><div class="frame" id="frame">
+
+<!-- ================= TRANSPORT — the encounter spine ================= -->
+<header class="tp">
+  <div class="title"><b>Mercurius field</b> — World shell · one World, four projections · vertical proof</div>
+  <div class="ctl">
+    <button class="chrome on" id="tBrowser" data-i="Browser|Show or hide the browser (⌘⌥B). World material lives here: places, occurrences, archetypes, sources, agency, form, ground.">▥</button>
+    <div class="g">
+      <span class="fld" data-i="World context|Which world the encounter stands in — the workspace book's WorldContext. central: the whole ground; epi-logos: the argument cartography field."><small>world</small>central</span>
+      <span class="encchip" id="encChip" data-i="The encounter|What is selected, of which world, with what reading. Every projection and every Technè device reads this one subject — there is no second selection model."><i></i><span class="sub" id="encSubj">Mercurius</span><span class="faint">›</span><span class="occ" id="encOcc">Bollingen · the lapis picture · 1927</span></span>
+      <button class="nc" data-i="Copy link|The Atlas law: every state is linkable and Back works. This address restores subject, occasion, panes and rack.">⧉</button>
+    </div>
+    <div class="g" style="margin-left:12px">
+      <div class="segw" data-i="Time spine|Three clocks, linkable but independent. Now: the civil field (day 2026-10-08). Occasion: the retained event's own time — its sky snapshot is kept and separately qualified for current admission. Transport: the performable playhead over temporal material.">
+        <button id="tmNow" data-i="Now|The civil clock — the current day/NOW field, owned by Central's civil-time policy.">Now</button>
+        <button id="tmOcc" data-i="Occasion|The selected occasion's retained time. Standing in 1927's sky without lying about now.">Occasion</button>
+        <button id="tmTr" data-i="Transport|The playhead over performable World material — sequences, run traces, day tracks.">Transport</button>
+      </div>
+      <span class="fld" id="nowFld" data-i="Now · civil|The current civil time and open day. The day closes at 21:00; NOW is a moving field, not a store."><small>now</small>14:36 · day 2026-10-08</span>
+      <span class="fld" id="occFld" data-i="Occasion · retained|The retained occasion: reopening an exact saved occasion keeps its snapshot and separately qualifies its current admission. Click an occurrence on Earth to move it."><small>occ</small>15 Jan 1927 · Bollingen ✓</span>
+      <span class="fld faint" data-i="Transport · position|Where the transport stands: phrase · step of the admitted sequence."><small>tr</small>1913 · i . 1</span>
+      <button class="nc on" data-i="Link clocks|Deliberate links between the three clocks — a sky following the transport, an occasion following selection. Off: fully independent.">⛓</button>
+    </div>
+    <div class="sp"></div>
+    <div class="g">
+      <button class="nc" id="tap" data-i="Tap · ping|Asks every running agent for a status line now. Fizz answers from run #214.">Tap</button>
+      <button class="tbtn play on" id="play" data-i="Run|Live agency keeps moving: run #214 advances, needles tick, the sky turns. Stop freezes the field — rendering sleeps, work stays recoverable."><svg width="15" height="15" viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg></button>
+      <button class="tbtn" id="stop" data-i="Pause the field|Every live projection sleeps; native work keeps its own lifecycle and is reconstructed on reopen."><svg width="15" height="15" viewBox="0 0 24 24"><path d="M6 6h12v12H6z" fill="currentColor"/></svg></button>
+      <span class="fld" data-i="Tokens|Where Live has key and scale: token flow of the counted sessions. run #214 in 96k · out 12k."><small>Σ</small>96k / 12k</span>
+      <span class="fld" data-i="Context|Where Live shows CPU load: the selected session's context-window fill.">31 %</span>
+    </div>
+    <div class="sp"></div>
+    <div class="g">
+      <span class="faint" style="font-size:10px;margin-right:2px">panes</span>
+      <div class="segw" data-i="Pane composition|Real panes from the surface engine, not view tabs. 1: one focused pane. 2: Earth beside Timeline — space beside time. 4: all four projections of the same encounter, side by side. Each pane keeps its own camera, selection memory and rack.">
+        <button id="lySolo" data-i="Solo|One pane, full bleed.">◧</button>
+        <button id="lyDuo" data-i="Duo|Two panes side by side.">◨</button>
+        <button id="lyQuad" data-i="Quad|The four-projection proof: Earth · Timeline · Constellation · Expressions of one encounter at once.">⊞</button>
+      </div>
+      <nav class="surf" id="projSwitch" data-i="Focused pane's projection|Switches the focused pane between the four primary projections. Graph and agent/filesystem stay implicit — inspectors, never modes."></nav>
+    </div>
+    <button class="chrome on" id="tDetail" data-i="Rack|Show or hide the focused pane's Technè rack (⌘⌥L).">▤</button>
+    <button class="chrome on" id="tDock" data-i="Context dock|Tiles above, launcher below: sky, inspectors, trail, images, ground."><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 7a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v2"/></svg></button>
+  </div>
+</header>
+
+<!-- ================= BROWSER — World material ================= -->
+<aside class="br" id="br">
+  <div class="bsearch"><span>‹</span><span>›</span><div>Search (⌘F)</div></div>
+  <div class="bcols">
+    <nav class="bcats" id="bcats"></nav>
+    <div class="bres">
+      <div class="bfilt"><span>○ Filters</span><span>In field</span></div>
+      <div class="bhead"><span>Name</span><span id="bheadR">Kind</span></div>
+      <div id="bitems" style="overflow:auto;flex:1"></div>
+    </div>
+  </div>
+  <section class="pool">
+    <div class="poolh"><span id="pIcon"></span><b id="pName" style="font-weight:500"></b><span class="r" id="pKind"></span></div>
+    <div class="poolb" id="pool"></div>
+  </section>
+</aside>
+
+<!-- ================= CENTRE — real panes, four projections ================= -->
+<main class="ct"><div id="panes" class="solo"></div></main>
+
+<!-- ================= CONTEXT DOCK ================= -->
+<aside class="dk" id="dk">
+  <div class="grip" id="grip" data-i="Resize|Drag left to give the context more room; tiles reflow into columns."></div>
+  <div class="tilesh"><span>Context</span><span class="faint" id="tileCount"></span>
+    <span class="r"><button class="nc" id="wider" data-i="Wider|Grow the dock leftwards for richer compositions; panes give up width.">⇤</button><button class="nc" id="narrower" data-i="Narrower|Shrink the dock back.">⇥</button></span></div>
+  <div class="tiles" id="tiles"></div>
+  <section class="launch" id="launch">
+    <div class="lh"><span class="f" id="lfold" data-i="Fold|Fold the launcher to its search bar; tiles take the height.">▾</span><input id="lsearch" placeholder="Open context… sky, inspector, trail"><span class="f" id="lmore" data-i="Library|The full context library is also in the browser under Ground · Context, where SDK widgets appear.">⋯</span></div>
+    <div class="lgrid" id="lgrid"></div>
+  </section>
+</aside>
+
+<!-- ================= DETAIL — the Technè rack of the focused pane ================= -->
+<section class="ch" id="ch">
+  <div class="dpane">
+    <div class="rackh" id="rackh"></div>
+    <div class="chain" id="chain"></div>
+  </div>
+</section>
+
+<!-- ================= STATUS ================= -->
+<footer class="sb">
+  <span class="i">i</span>
+  <div class="info" id="info"><b>Info</b>Hover anything to read what it does. Drag the Earth to spin it; select an occurrence — every projection follows.</div>
+  <span id="counts"></span>
+  <span id="sEnc" style="color:var(--text)"></span>
+  <div class="tg"><button id="tgRack" class="on">◷ Rack · <span id="rackOf">Earth</span></button></div>
+</footer>
+
+</div></div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+/* ======================= the World (one field, many projections) =======================
+   Scenario = the design doc's Factory vertical: Fizz's run #214 correlating Mercurius
+   occurrences in the Jung field. Same material everywhere: Earth places it, Timeline
+   times it, Constellation relates it, Expressions gives it form. Nothing is copied. */
+const A={
+  fizz:{name:'Fizz',hex:'#5cc6b4',role:'porting engineer',model:'opus-5.5',harness:'hermes · buzz-acp',aut:1,used:2,max:12,input:'steer',state:'working',doing:'correlating occurrences · attempt 2'},
+  honey:{name:'Honey',hex:'#e2a35e',role:'capture & finish',model:'grok-4',harness:'grok',aut:1,used:0,max:8,input:'queue',state:'held',doing:'held — glyph pass waits on #214'},
+  bumble:{name:'Bumble',hex:'#d985a6',role:'reviewer',model:'sonnet-5.5',harness:'claude-agent-acp',aut:0,used:0,max:20,input:'steer',state:'idle',doing:'next: review mercurius-field'}
+};
+const SUBJ={mercurius:{n:'Mercurius',c:'var(--mercurius)'},self:{n:'the Self',c:'var(--selfc)'},mandala:{n:'mandala',c:'var(--mandala)'},trickster:{n:'trickster',c:'var(--trickster)'},ancestor:{n:'ancestor',c:'var(--ancestor)'}};
+/* generalised Occurrence (field.ts contract): subject_ref · place · time · image · basis */
+const OCC=[
+  {id:'rb1913', n:'Zürich · the descent', sn:'descent 1913', y:1913.75, la:47.376, lo:8.541, s:'mercurius', basis:'Liber Novus · First Book', ret:1, ldx:-34, ldy:-20},
+  {id:'ss1916', n:'Bollingen · Septem Sermones', sn:'Sermones 1916', y:1916.6, la:47.223, lo:8.758, s:'mercurius', basis:'Septem Sermones ad Mortuos', ret:1, ldx:66, ldy:14},
+  {id:'boll1927', n:'Bollingen · the lapis picture', sn:'lapis 1927', y:1927.04, la:47.223, lo:8.758, s:'mercurius', basis:'Memories ch. 8 · the stone', ret:1, ldx:46, ldy:-22},
+  {id:'zh1944', n:'Zürich · the Mercurius vision', sn:'vision 1944', y:1944.2, la:47.376, lo:8.541, s:'mercurius', basis:'Memories ch. 10', ret:1, ldx:-58, ldy:2},
+  {id:'rav1933', n:'Ravenna · the vanishing icon', sn:'Ravenna', y:1933.3, la:44.418, lo:12.203, s:'self', basis:'Memories ch. 9', ret:1, ldx:38, ldy:16},
+  {id:'elgon1925', n:'Mount Elgon · the rhinoceros bug', sn:'Mt Elgon', y:1925.1, la:1.13, lo:34.55, s:'trickster', basis:'Memories ch. 5', ret:1},
+  {id:'taos1925', n:'Taos Pueblo · the rim of the world', sn:'Taos', y:1925.05, la:36.44, lo:-105.55, s:'ancestor', basis:'Memories ch. 5', ret:1},
+  {id:'mad1938', n:'Madras · the temple mandala', sn:'Madras', y:1938.05, la:13.082, lo:80.27, s:'mandala', basis:'Memories ch. 7', ret:1},
+  {id:'puk1926', n:'Pukerua Bay · the carved houses', sn:'Pukerua', y:1926.2, la:-41.05, lo:174.9, s:'ancestor', basis:'Memories ch. 6', ret:1},
+  {id:'anchor', n:'run #214 · live', y:2026.769, la:47.376, lo:8.541, live:1, ldx:-30, ldy:32}
+];
+const occ=id=>OCC.find(o=>o.id===id);
+/* Timeline: tracks of World material over one non-linear deep-time scale */
+const NOWY=2026.769;
+const AN=[[1875,0],[1885,3.5],[1895,6.5],[1905,9.5],[1913,12.5],[1920,16],[1927,20],[1933,24],[1939,28],[1944,32],[1950,37],[1961,42],[1975,47],[1990,51.5],[2005,56],[2018,61],[2024,65],[2026.4,70],[2026.76,78],[2026.772,94],[2026.81,99.4]];
+function pos(y){y=Math.max(1875,Math.min(2026.81,y));for(let i=1;i<AN.length;i++){if(y<=AN[i][0]){const [y0,p0]=AN[i-1],[y1,p1]=AN[i];return p0+(y1===y0?0:(y-y0)/(y1-y0)*(p1-p0))}}return 99.4}
+const TRK=[
+  {id:'jung',n:'C.G. Jung',fam:'biography',c:'#8a9096',cl:[{y0:1875.5,y1:1875.7,n:'b. Kesswil'},{y0:1900.2,y1:1900.45,n:'Burghölzli'},{y0:1913.6,y1:1916.7,n:'Liber Novus',k:'span'},{y0:1923.3,y1:1956.6,n:'the Tower · Bollingen',k:'span'},{y0:1944.15,y1:1944.5,n:'illness & vision',s:1},{y0:1961.4,y1:1961.6,n:'d. Küsnacht'}]},
+  {id:'merc',n:'Mercurius',fam:'occurrences',c:'var(--mercurius)',cl:[{y0:1913.75,y1:1913.95,n:'Zürich',o:'rb1913'},{y0:1916.6,y1:1916.8,n:'Sermones',o:'ss1916'},{y0:1927.04,y1:1927.25,n:'the lapis picture',o:'boll1927'},{y0:1944.2,y1:1944.4,n:'the vision',o:'zh1944'},{y0:2026.7683,y1:2026.7695,n:'▸ #214 draft correlation',k:'fizz'}]},
+  {id:'run',n:'run #214 · Fizz',fam:'factory',c:'var(--fizz)',cl:[{y0:2026.7683,y1:2026.7684,n:'launch'},{y0:2026.7684,y1:2026.7688,n:'survey sources'},{y0:2026.7689,y1:'live',n:'correlate occurrences',k:'live'}]},
+  {id:'day',n:'day 2026-10-08',fam:'civil · Central',c:'#97b1be',cl:[{y0:2026.7680,y1:2026.7683,n:'opened 07:42'},{y0:2026.7682,y1:2026.7683,n:'return',s:1},{y0:2026.7689,y1:2026.769,n:'handoff'},{y0:2026.7697,y1:2026.7699,n:'close 21:00',k:'dash',e:1}]},
+  {id:'sky',n:'Mercury · retrograde',fam:'chronos · QL',c:'var(--sel)',cl:[{y0:1926.95,y1:1927.07,n:'retrograde 1927',o:'boll1927'}]},
+  {id:'honey',n:'Honey · glyph pass',fam:'factory',c:'var(--honey)',cl:[{y0:2026.7685,y1:2026.7686,n:'tune glyph',k:'held'}]}
+];
+/* Sky: the dated-sky provider contract (kerykeion_snapshot) — ten bodies, one Earth anchor */
+const BOD=[['☉','Sun','#f5c96a'],['☽','Moon','#cfd6de'],['☿','Mercury','#a9b4bc'],['♀','Venus','#e8d3a0'],['♂','Mars','#d98a6a'],['♃','Jupiter','#d9b48a'],['♄','Saturn','#d8cfa3'],['♅','Uranus','#9fd4d8'],['♆','Neptune','#8aa8e0'],['♇','Pluto','#b3a8c0']];
+const SKY={
+  now:{d:'8 Oct 2026 · 14:36 · Zürich 47.4N 8.5E',L:[195,348,202,224,258,104,8,66,358,305]},
+  occ:{d:'15 Jan 1927 · Bollingen 47.2N 8.8E · retained ✓',L:[285,132,305,240,322,12,213,352,148,103]}
+};
+const SIGNS=['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+/* Constellation: relations owned natively; this is only their projection */
+const CN=[
+  {id:'mercurius',x:280,y:168,k:'subj',n:'Mercurius'},
+  {id:'rb1913',x:182,y:95,k:'occ',n:'descent 1913'},{id:'ss1916',x:178,y:240,k:'occ',n:'Sermones 1916'},
+  {id:'boll1927',x:382,y:78,k:'occ',n:'lapis 1927'},{id:'zh1944',x:378,y:255,k:'occ',n:'vision 1944'},
+  {id:'liber',x:70,y:150,k:'src',n:'Liber Novus'},{id:'aion',x:212,y:305,k:'src',n:'Aion'},{id:'alch',x:352,y:46,k:'src',n:'Alchemical St.'},
+  {id:'zrh',x:95,y:50,k:'place',n:'Zürich'},{id:'boll',x:500,y:56,k:'place',n:'Bollingen'},
+  {id:'run',x:508,y:288,k:'run',n:'run #214 · Fizz'},{id:'bumble',x:280,y:36,k:'agent',n:'Bumble · review'},
+  {id:'expr',x:66,y:288,k:'expr',n:'Mercurius field'},{id:'wiki',x:508,y:168,k:'ghost',n:'wiki · mercurius'}
+];
+const CE=[['mercurius','rb1913','manifests'],['mercurius','ss1916','manifests'],['mercurius','boll1927','manifests'],['mercurius','zh1944','manifests'],
+  ['rb1913','liber','sourced'],['ss1916','liber','sourced'],['boll1927','liber','sourced'],['zh1944','aion','sourced'],
+  ['rb1913','zrh','at'],['zh1944','zrh','at'],['ss1916','boll','at'],['boll1927','boll','at'],
+  ['run','mercurius','works on'],['run','expr','produced'],['bumble','run','reviews'],['wiki','mercurius','unresolved']];
+const cn=id=>CN.find(n=>n.id===id);
+const CHAK=[['Sahasrāra','#9b7fd4','Sun'],['Ājñā','#6f8fd4','Moon'],['Vishuddhā','#6fb8d8','Mercury'],['Anāhata','#7fd0a0','Venus'],['Manipūra','#f0d070','Mars'],['Svādhisthāna','#f0a05e','Jupiter'],['Mūlādhāra','#e07a6f','Saturn']];
+let S={layout:'solo',panes:[{view:'earth',rot:14,zoom:'earth'},{view:'timeline'},{view:'constellation'},{view:'expressions'}],focus:0,
+  subject:'mercurius',occ:'boll1927',timeMode:'now',skySrc:'now',tiles:['sky','inspector','graph'],q:'',launchFold:false,
+  trail:['earth · open','sky · now','timeline · deep'],cnSel:null,exCard:3,bcat:'occ',poolSel:'boll1927'};
+const LAYOUTS={solo:[0],duo:[0,1],quad:[0,1,2,3]};
+
+/* ======================= sprites (from agent-shell-mockup) ======================= */
+function bee(k,size=34,opts={}){const a=A[k];const st=opts.state||a.state;
+  const eyes=['idle','held'].includes(st)?'<path d="M17.5 16.5h2.4M22.3 16.5h2.4" stroke="#1d1f22" stroke-width="1.2"/>':'<circle cx="18.7" cy="16.3" r="1.25" fill="#1d1f22"/><circle cx="23.5" cy="16.3" r="1.25" fill="#1d1f22"/>';
+  return `<svg class="bee-s ${st==='working'?'working':'idle'}" width="${size}" height="${size}" viewBox="0 0 40 40">
+   <g class="bodyg"><ellipse class="wing" cx="15" cy="11" rx="4.5" ry="6.5" fill="#e9f3f5" fill-opacity=".55" stroke="#ffffff55"/>
+    <ellipse class="wing" cx="23" cy="10" rx="4" ry="6" fill="#e9f3f5" fill-opacity=".45" stroke="#ffffff55" style="animation-delay:.06s"/>
+    <ellipse cx="18" cy="24" rx="11" ry="9" fill="${a.hex}"/><path d="M13 16.5q-1 7.5 0 15M18 15.2q-1.2 8.8 0 17.6" stroke="#1d1f22" stroke-width="2.6" fill="none" stroke-opacity=".8"/>
+    <circle cx="23" cy="18" r="6" fill="${a.hex}"/>${eyes}<path d="M21 12.5q-1-4-3.5-5M25 12.5q1.5-4 4-4.5" stroke="#1d1f22" stroke-width="1" fill="none"/><path d="M7 24l-3 1" stroke="#1d1f22" stroke-width="1.6"/></g></svg>`}
+function formDots(cxcy,r,n,col){let d='';for(let i=0;i<n;i++){const t=i/n*Math.PI*2,rr=r*.28+r*.09*Math.sin(3*t);
+  d+=`<circle cx="${(cxcy+rr*Math.cos(t)).toFixed(1)}" cy="${(cxcy+rr*Math.sin(t)).toFixed(1)}" r="${(1+((i*7)%3)*.5).toFixed(1)}" fill="${col}" fill-opacity="${(.35+((i*5)%4)*.15).toFixed(2)}"/>`}return d}
+const youAv='<span style="display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#c9cdd1;color:#1d1f22;font-size:9.5px;font-weight:700">J</span>';
+
+/* ======================= primitives ======================= */
+function arc(a0,a1,r=11,c=15){const p=a=>[c+r*Math.sin(a*Math.PI/180),c-r*Math.cos(a*Math.PI/180)];const[x0,y0]=p(a0),[x1,y1]=p(a1);
+  return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${a1-a0>180?1:0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`}
+function knob(key,label,v,disp,col='var(--accent)',info=''){const a=-135+270*Math.max(.001,Math.min(1,v));
+  return `<div class="knob" data-knob="${key}" data-i="${label}|${info}"><span class="kl">${label}</span>
+   <svg width="30" height="30" viewBox="0 0 30 30"><path d="${arc(-135,135)}" stroke="var(--bg-0)" stroke-width="3" fill="none"/><path d="${arc(-135,a)}" stroke="${col}" stroke-width="3" fill="none"/>
+   <circle cx="15" cy="15" r="6.5" fill="var(--bg-3)"/><line x1="15" y1="15" x2="${(15+6.5*Math.sin(a*Math.PI/180)).toFixed(2)}" y2="${(15-6.5*Math.cos(a*Math.PI/180)).toFixed(2)}" stroke="var(--text)" stroke-width="1.5"/></svg>
+   <span class="kv">${disp}</span></div>`}
+const PVICON={
+ earth:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c3 3 3 14 0 17M12 3.5c-3 3-3 14 0 17"/></svg>',
+ timeline:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h9M4 12h16M4 18h12"/></svg>',
+ constellation:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 5L5 18h14zM12 5v13"/></svg>',
+ expressions:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zM12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8z"/></svg>'};
+const PVNAME={earth:'Earth / Solar-System — space',timeline:'Timeline — time',constellation:'Canvas / Constellation — relation',expressions:'Expressions — form'};
+const PVTIP={earth:'The spatial projection — the Archetypal-Earth engine: globe, tiles, instanced presence, non-linear time. Zoom out for the sky: the torus–solar–clock composition.',
+ timeline:'The temporal projection — Ableton grammar over any World material: biographies, occurrences, runs, days, celestial motion, on one non-linear deep-time scale.',
+ constellation:'The relational projection — d3-force constellation over natively owned relations. Liveness dimming, tie-basis edges, honest ghost nodes.',
+ expressions:'The form projection — glyphs, cymatics, chakral structures, scenes. Any World material may acquire an Expression; a Factory run result already has.'};
+
+/* ======================= sky wheel (shared: device, tile, Earth zoom-out) ======================= */
+function chartSVG(size,srcKey,o={}){
+  const s=SKY[srcKey],c=size/2,R=size*.44;
+  const P=(L,r)=>[c-r*Math.sin(L*Math.PI/180),c-r*Math.cos(L*Math.PI/180)];
+  let g='';
+  for(let i=0;i<12;i++){const L=i*30,[x0,y0]=P(L,R),[x1,y1]=P(L+30,R);
+    g+=`<line x1="${c}" y1="${c}" x2="${x0.toFixed(1)}" y2="${y0.toFixed(1)}" stroke="var(--line)" stroke-width="1"/>`;
+    const [tx,ty]=P(i*30+15,R+size*.045);
+    g+=`<text x="${tx.toFixed(1)}" y="${(ty+size*.015).toFixed(1)}" text-anchor="middle" font-size="${(size*.036).toFixed(1)}" fill="var(--text-faint)">${SIGNS[i]}</text>`}
+  let pl='';s.L.forEach((L,i)=>{const [x,y]=P(L,R*.66);const [gx,gy]=P(L,R*.66-size*.05);
+    pl+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(size*.013).toFixed(1)}" fill="${BOD[i][2]}"/>`+
+        `<text x="${gx.toFixed(1)}" y="${(gy+size*.013).toFixed(1)}" text-anchor="middle" font-size="${(size*.045).toFixed(1)}" fill="${BOD[i][2]}">${BOD[i][0]}</text>`});
+  const mer=i=>{const L=s.L[2],[x,y]=P(L,R*.66);return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(size*.026).toFixed(1)}" fill="none" stroke="var(--accent)" stroke-width="1.4"/>`};
+  let clock='';if(o.clock){clock=`<path d="${arc2(c,c,R*.30,-90,-90+250)}" stroke="var(--accent)" stroke-width="3" fill="none" class="clockarc" opacity=".85"/>`+
+    `<path d="${arc2(c,c,R*.22,-90,-90+120)}" stroke="var(--sel)" stroke-width="2.5" fill="none" stroke-dasharray="4 4"/>`+
+    `<circle cx="${c}" cy="${c}" r="${(R*.15).toFixed(1)}" fill="none" stroke="var(--text-faint)" stroke-dasharray="2 3"/>`}
+  let torus='';if(o.torus){torus=`<circle cx="${c}" cy="${c}" r="${R.toFixed(1)}" fill="none" stroke="var(--mercurius)" stroke-width="1.2" stroke-dasharray="10 6" opacity=".6" style="animation:dashi 14s linear infinite"/>`+
+    `<circle cx="${c}" cy="${c}" r="${(R*1.07).toFixed(1)}" fill="none" stroke="var(--mercurius)" stroke-width=".7" stroke-dasharray="2 7" opacity=".4" style="animation:dashi 26s linear infinite reverse"/>`}
+  let horizon='';if(o.horizon){horizon=`<ellipse cx="${c}" cy="${c}" rx="${(R*.97).toFixed(1)}" ry="${(R*.26).toFixed(1)}" fill="none" stroke="var(--text-faint)" stroke-width="1" opacity=".5"/>`+
+    (o.skyLabel?`<text x="${c}" y="${(size-8).toFixed(1)}" text-anchor="middle" font-size="${(size*.035).toFixed(1)}" fill="var(--text-dim)" style="paint-order:stroke;stroke:#1d1f22;stroke-width:3px">horizon · ${s.d}</text>`:'')}
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+   <circle cx="${c}" cy="${c}" r="${(R*.86).toFixed(1)}" fill="none" stroke="var(--line-strong)" stroke-width="1.5"/>${g}${pl}${mer()}${clock}${torus}${horizon}</svg>`}
+function arc2(cx,cy,r,a0,a1){const p=a=>[cx+r*Math.sin(a*Math.PI/180),cy-r*Math.cos(a*Math.PI/180)];const[x0,y0]=p(a0),[x1,y1]=p(a1);
+  return `M${x0.toFixed(1)} ${y0.toFixed(1)}A${r} ${r} 0 ${(a1-a0)>180?1:0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`}
+
+/* ======================= globe engine (Earth projection) ======================= */
+const LAND=[
+[-9,37,-9,43,-2,44,-5,48,-1,50,4,52,8,54,8,58,5,58,6,62,12,65,14,68,20,70,28,71,35,68,45,68,55,69,68,69,75,73,90,76,105,77,115,74,130,72,140,72,150,70,160,69,170,67,178,65,172,61,163,58,156,57,143,54,141,49,137,45,131,43,127,40,126,38,121,37,122,40,118,39,121,32,117,24,110,21,106,18,109,13,105,9,102,4,100,8,98,12,95,16,91,22,88,21,85,19,80,15,77,8,73,16,68,24,62,25,57,26,56,22,59,22,58,17,52,16,45,13,43,15,39,20,35,27,33,31,36,36,30,36,27,40,26,40,23,40,24,38,23,36,21,37,19,40,16,38,15,40,12,44,13,45,9,44,6,43,3,42,0,40,-1,37],
+[-17,15,-16,21,-10,29,-6,35,0,37,10,37,20,32,30,31,34,28,35,22,37,18,43,12,51,12,48,5,41,-2,40,-10,35,-20,33,-26,27,-33,20,-35,18,-32,12,-18,9,-1,3,6,-8,5,-13,9],
+[-168,66,-166,60,-158,57,-153,57,-148,60,-140,60,-136,57,-131,54,-125,49,-124,43,-121,35,-117,33,-113,29,-110,24,-106,23,-105,20,-96,16,-92,15,-88,16,-87,21,-90,21,-97,26,-97,28,-94,29,-89,29,-84,30,-82,25,-80,27,-81,31,-76,35,-74,40,-70,43,-66,45,-60,47,-64,49,-71,63,-79,65,-86,67,-95,68,-105,69,-115,70,-125,70,-135,70,-145,70,-157,71,-166,68],
+[-45,60,-40,64,-32,68,-22,70,-18,75,-25,79,-38,82,-52,83,-63,81,-67,76,-60,70,-54,65],
+[-81,-4,-80,0,-77,8,-72,11,-65,10,-60,8,-52,5,-50,0,-44,-3,-38,-5,-35,-8,-39,-14,-40,-20,-48,-26,-53,-33,-58,-38,-62,-41,-65,-45,-68,-50,-70,-54,-72,-52,-74,-46,-73,-40,-72,-32,-70,-25,-70,-18,-76,-14],
+[114,-22,113,-26,115,-34,119,-34,124,-33,130,-32,136,-35,140,-38,147,-38,150,-37,153,-31,153,-27,151,-24,146,-19,143,-14,142,-11,139,-17,136,-15,135,-12,131,-12,128,-15,122,-17],
+[130,31,132,33,135,34,137,35,140,36,141,39,141,42,143,43,145,44,142,45,140,42,139,38,136,36,133,35,130,33],
+[-5,50,-3,51,-1,52,-2,55,-4,58,-6,58,-5,56,-4,54,-5,52],[-10,52,-6,52,-6,55,-8,55],
+[44,-25,47,-25,50,-16,49,-13,47,-15,44,-20],
+[109,-1,109,2,112,5,117,7,119,1,116,-3,112,-3],
+[95,5,98,4,103,-1,106,-6,103,-6,99,0],
+[131,-1,135,-1,141,-3,147,-6,150,-10,145,-8,138,-8,132,-4],
+[172,-34,174,-38,175,-41,169,-46,168,-44,171,-41],
+[-24,64,-20,63,-14,64,-15,66,-21,66]];
+function gproject(la,lo,rot,W,H,R){const c=W/2,cy=H/2,t=12*Math.PI/180;
+  const p=la*Math.PI/180,l=(lo+rot)*Math.PI/180;
+  const x=c+R*Math.cos(p)*Math.sin(l), y=cy-R*(Math.cos(t)*Math.sin(p)-Math.sin(t)*Math.cos(p)*Math.cos(l)),
+        z=Math.sin(t)*Math.sin(p)+Math.cos(t)*Math.cos(p)*Math.cos(l);
+  return [x,y,z]}
+function drawGlobe(cv,rot,selOccId){
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,c=W/2,cy=H/2,R=Math.min(W,H)*.40;
+  ctx.clearRect(0,0,W,H);
+  const g=ctx.createRadialGradient(c-R*.35,cy-R*.42,R*.1,c,cy,R);
+  g.addColorStop(0,'#44627f');g.addColorStop(.62,'#2d4659');g.addColorStop(1,'#20303b');
+  ctx.beginPath();ctx.arc(c,cy,R,0,7);ctx.fillStyle=g;ctx.fill();
+  ctx.save();ctx.beginPath();ctx.arc(c,cy,R,0,7);ctx.clip();
+  ctx.strokeStyle='#ffffff10';ctx.lineWidth=1;
+  for(let lo=-180;lo<180;lo+=30){ctx.beginPath();let st=false;
+    for(let la=-80;la<=80;la+=4){const [x,y,z]=gproject(la,lo,rot,W,H,R);
+      if(z>0){st?ctx.lineTo(x,y):(ctx.moveTo(x,y),st=true)}else st=false}ctx.stroke()}
+  for(let la=-60;la<=60;la+=30){ctx.beginPath();let st=false;
+    for(let lo=-180;lo<=180;lo+=4){const [x,y,z]=gproject(la,lo,rot,W,H,R);
+      if(z>0){st?ctx.lineTo(x,y):(ctx.moveTo(x,y),st=true)}else st=false}ctx.stroke()}
+  ctx.fillStyle='#4d6154';ctx.strokeStyle='#6d8270';ctx.lineWidth=1;
+  for(const poly of LAND){ctx.beginPath();let st=false;
+    for(let i=0;i<poly.length;i+=2){let [x,y,z]=gproject(poly[i+1],poly[i],rot,W,H,R);
+      if(z<0){const dx=x-c,dy=y-cy,d=Math.hypot(dx,dy)||1;x=c+dx/d*R;y=cy+dy/d*R}
+      st?ctx.lineTo(x,y):(ctx.moveTo(x,y),st=true)}
+    ctx.closePath();ctx.fill();ctx.stroke()}
+  /* the field: chords between the selected subject's visible occurrences */
+  const pts=OCC.filter(o=>o.s===occ(selOccId).s&&!o.live).map(o=>({o,p:gproject(o.la,o.lo,rot,W,H,R)}));
+  ctx.strokeStyle='rgba(201,160,220,.5)';ctx.setLineDash([5,5]);ctx.lineWidth=1.2;
+  for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){if(pts[i].p[2]>0&&pts[j].p[2]>0){
+    ctx.beginPath();ctx.moveTo(pts[i].p[0],pts[i].p[1]);
+    ctx.quadraticCurveTo((pts[i].p[0]+pts[j].p[0])/2,(pts[i].p[1]+pts[j].p[1])/2-R*.12,pts[j].p[0],pts[j].p[1]);ctx.stroke()}}
+  ctx.setLineDash([]);
+  ctx.restore();
+  ctx.beginPath();ctx.arc(c,cy,R,0,7);ctx.strokeStyle='#8fb6d844';ctx.lineWidth=1.5;ctx.stroke();
+  return {c,cy,R}}
+function earthMarkers(paneEl,rot){
+  const cv=paneEl.querySelector('canvas'),ov=paneEl.querySelector('.mkov');if(!cv||!ov)return;
+  const W=cv.width,H=cv.height,R=Math.min(W,H)*.40,rect=ov.getBoundingClientRect();
+  const sc=cv.dataset.cssw?cv.width/cv.dataset.cssw:1;
+  let h='';for(const o of OCC){const [x,y,z]=gproject(o.la,o.lo,rot,W,H,R);
+    if(x<0||x>W||y<0||y>H)continue;
+    const cls=`gmk ${o.id===S.occ?'sel':''} ${z<.04?'behind':''} ${o.live?'live':''}`;
+    const col=o.live?'var(--fizz)':SUBJ[o.s].c;
+    if(o.live){h+=`<div class="${cls}" style="left:${x/sc}px;top:${y/sc}px" data-occ="${o.id}" data-i="Live agency · run #214|The work constellation anchored at the declared world/home position (Zürich). Geography holds the situation; the work keeps its own topology. Click to inspect Fizz.">
+      <span class="d" style="--c:${col}">●</span><span class="bees">${bee('fizz',24)}<span class="d" style="--c:var(--honey);width:9px;height:9px;font-size:6px">H</span><span class="d" style="--c:var(--bumble);width:9px;height:9px;font-size:6px">B</span></span><span class="lab">run #214 · live</span></div>`}
+    else{h+=`<div class="${cls}" style="left:${x/sc}px;top:${y/sc}px" data-occ="${o.id}" data-i="Occurrence · ${o.n}|${SUBJ[o.s].n} · ${Math.round(o.y)} · ${o.basis}. Click: make it the encounter — every projection follows. ${o.ret?'Its sky snapshot is retained.':''}">
+      <span class="d" style="--c:${SUBJ[o.s].c}">◍</span><span class="lab">${o.n.split(' · ')[0]}</span></div>`}}
+  ov.innerHTML=h}
+function sizeEarth(pEl){
+  const cv=pEl.querySelector('canvas');if(!cv)return;const box=pEl.getBoundingClientRect();
+  cv.width=Math.round(box.width);cv.height=Math.round(box.height);cv.dataset.cssw=box.width;
+  cv.style.width=box.width+'px';cv.style.height=box.height+'px';}
+
+/* ======================= browser ======================= */
+const CATS=[['World',[['Places','places'],['Occurrences','occ'],['Archetypes','arch'],['Sources','src']]],
+ ['Agency',[['Positions','pos'],['Runs','runs'],['Skills','skillsets']]],
+ ['Form',[['Expressions','expr']]],
+ ['Ground',[['Days','days'],['Wiki','wiki'],['Instruments','instr'],['Context','context']]]];
+function renderBrowser(){
+  $('#bcats').innerHTML=CATS.map(([h,items])=>`<h6>${h}</h6>`+items.map(([n,k])=>`<div class="bcat ${k===S.bcat?'on':''}" data-bcat="${k}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17z"/></svg>${n}</div>`).join('')).join('');
+  let h='';$('#bheadR').textContent='kind';
+  const mk=(dot,n,st,data)=>`<div class="bitem" ${data||''}><span class="dot" style="background:${dot}"></span>${n}<span class="st">${st||''}</span></div>`;
+  if(S.bcat==='occ')h=OCC.filter(o=>!o.live).map(o=>mk(SUBJ[o.s].c,o.n,SUBJ[o.s].n,`data-occsel="${o.id}"`)).join('');
+  else if(S.bcat==='places')h=[['Zürich','47.4N 8.5E · 3 occ'],['Bollingen','47.2N 8.8E · 2 occ'],['Ravenna','44.4N 12.2E'],['Mount Elgon','1.1N 34.6E'],['Taos Pueblo','36.4N 105.6W'],['Madras','13.1N 80.3E'],['Pukerua Bay','41.0S 174.9E'],['workcell anchor','declared home position']].map(([n,st])=>mk('#97b1be',n,st)).join('');
+  else if(S.bcat==='arch')h=Object.entries(SUBJ).map(([k,v])=>mk(v.c,v.n,OCC.filter(o=>o.s===k).length+' occ',`data-archsel="${k}"`)).join('');
+  else if(S.bcat==='src')h=[['Liber Novus','vault · 2778 files'],['Aion','ω'],['Alchemical Studies','ω'],['Memories, Dreams, Reflections','ω'],['Septem Sermones','facsimile'],['gazetteer','curated']].map(([n,st])=>mk('#a2a7ad',n,st)).join('');
+  else if(S.bcat==='pos')h=[['research · mercurius-field','Fizz · occupied'],['capture · glyph','Honey · held'],['review · weekly','Bumble · idle']].map(([n,st])=>mk('#5cc6b4',n,st)).join('');
+  else if(S.bcat==='runs')h=[['#214 correlate occurrences','running'],['#213 glyph pass','held'],['#212 review the day','done']].map(([n,st])=>mk('#5cc6b4',n,st)).join('');
+  else if(S.bcat==='skillsets')h=[['Jung field',['survey','correlate','glyph']],['Review',['review-pr','diff-grammar']]].map(([n,sk])=>`<div class="bitem" data-i="Skillset · ${n}|A rack of skills; drop it on a session's chain."><span class="dot" style="background:var(--accent)"></span>${n}<span class="st">${sk.length}</span></div>`).join('');
+  else if(S.bcat==='expr')h=[['Mercurius field','#214 · NEW'],['glyph · Mercurius','library'],['cymatic · 5:3','library'],['day 2026-10-08','composed']].map(([n,st])=>mk('var(--mercurius)',n,st)).join('');
+  else if(S.bcat==='days')h=[['2026-10-08','open'],['2026-10-07','closed'],['2026-10-06','closed']].map(([n,st])=>mk('#97b1be',n,st)).join('');
+  else if(S.bcat==='wiki')h=[['mercurius','ghost · unresolved'],['bollingen','page'],['red-book','page']].map(([n,st])=>mk('#a2a7ad',n,st)).join('');
+  else if(S.bcat==='instr')h=[['Sky · kerykeion','QL'],['Clock · M3','QL'],['Torus · M1','QL'],['Piano · Jango','instrument'],['Deck','QL'],['Nara','conversation']].map(([n,st])=>mk('var(--sel)',n,st,`data-i="Technè device · ${n}|Drag onto a rack — devices attach to the pane whose encounter they operate on."`)).join('');
+  else if(S.bcat==='context')h=CTX.map(c=>`<div class="bitem" data-tile="${c.id}" data-i="${c.name}|${c.desc} Click to open it as a tile in the dock.">${c.ico}${c.name}${c.sdk?'<span class="sdk">SDK</span>':''}<span class="st">${S.tiles.includes(c.id)?'● open':''}</span></div>`).join('');
+  else h='<div class="bitem faint">—</div>';
+  $('#bitems').innerHTML=h}
+
+/* ======================= pool (expanded) ======================= */
+function renderPool(){
+  let icon='◍',name='',kind='',h='';
+  if(S.poolSel&&occ(S.poolSel)){const o=occ(S.poolSel);
+    icon=`<span class="dot" style="width:8px;height:8px;border-radius:50%;background:${SUBJ[o.s].c};display:inline-block"></span>`;
+    name=o.n;kind=`occurrence · ${SUBJ[o.s].n}`;
+    h=`<div class="kv"><span>subject_ref</span><span>${SUBJ[o.s].n.toLowerCase()}@jung-field</span></div>
+      <div class="kv"><span>place</span><span>${o.la.toFixed(2)}, ${o.lo.toFixed(2)} · ±10 km</span></div>
+      <div class="kv"><span>time</span><span>${Math.floor(o.y)}</span></div>
+      <div class="kv"><span>basis</span><span>${o.basis}</span></div>
+      <div class="kv"><span>image ref</span><span>vault · as-such → image</span></div>
+      <div class="kv"><span>sky snapshot</span><span>${o.ret?'retained ✓ · admits now':'—'}</span></div>
+      <div class="projbtns">
+        <button data-proj="earth">show on Earth</button><button data-proj="timeline">in Timeline</button>
+        <button data-proj="constellation">as Constellation</button><button data-proj="expressions">in Expressions</button></div>
+      <div class="fold" data-fold="fPO"><span class="tri">▶</span>Relations</div><div class="foldb" id="fPO">
+        <div class="kv"><span>worked by</span><span>run #214 · Fizz</span></div>
+        <div class="kv"><span>sourced by</span><span>${o.basis.split(' · ')[0]}</span></div>
+        <div class="kv"><span>at</span><span>${o.n.split(' · ')[0]}</span></div></div>`}
+  else if(S.poolSel==='mercurius'){name='Mercurius';kind='archetype';
+    h=`<div class="sec"><span>Occurrences · 4 + 1 draft</span></div>`+
+      OCC.filter(o=>o.s==='mercurius').map(o=>`<div class="tgl" data-occsel="${o.id}"><span class="dot" style="width:7px;height:7px;border-radius:50%;background:${SUBJ.mercurius.c}"></span>${o.n}<span class="r">${Math.floor(o.y)}</span></div>`).join('')+
+      `<div class="kv" style="margin-top:4px"><span>field colour</span><span>#c9a0dc</span></div>
+       <div class="kv"><span>reception</span><span>Mercury ↔ Vishuddhā</span></div>
+       <div class="projbtns"><button data-proj="earth">on Earth</button><button data-proj="constellation">as Constellation</button><button data-proj="expressions">as Expression</button></div>`}
+  else{name='World';kind='the field';h=`<div class="sec"><span>The four projections</span></div>
+    <div class="kv"><span>space</span><span>Earth / Solar-System</span></div><div class="kv"><span>time</span><span>Timeline · deep scale</span></div>
+    <div class="kv"><span>relation</span><span>Canvas / Constellation</span></div><div class="kv"><span>form</span><span>Expressions</span></div>`}
+  $('#pIcon').innerHTML=icon;$('#pName').textContent=name;$('#pKind').textContent=kind;$('#pool').innerHTML=h}
+
+/* ======================= panes ======================= */
+function paneHeader(i,p){
+  const subj=SUBJ[S.subject];
+  return `<div class="ph" data-pfocus="${i}" data-i="Pane ${i+1}|A real pane of the surface engine — it keeps its own camera, selection memory and rack. Click to focus it.">
+   <span class="pv">${Object.keys(PVICON).map(v=>`<button class="${p.view===v?'on':''}" data-pv="${v}" data-pvi="${i}" data-i="${PVNAME[v]}|${PVTIP[v]}">${PVICON[v]}</button>`).join('')}</span>
+   <span class="subj"><b>${subj.n}</b> › ${occ(S.occ).n.split(' · ')[0]}${p.view==='earth'&&p.zoom==='sky'?' · sky':''}</span>
+   <span class="r"><span data-i="Encounter basis|subject_ref + occasion + trail — the spine every projection reads.">◍</span><span data-i="Pane menu|Split, tile, detach (real second window), redock — the pane engine's own operations.">⋮</span></span></div>`}
+function renderPanes(){
+  const host=$('#panes');host.className=S.layout;
+  host.innerHTML=LAYOUTS[S.layout].map(i=>{const p=S.panes[i];
+    return `<section class="pane ${S.focus===i?'foc':''}">${paneHeader(i,p)}<div class="pb" data-pb="${i}">${bodyFor(p)}</div></section>`}).join('');
+  host.querySelectorAll('.pb').forEach(pb=>{const p=S.panes[+pb.dataset.pb];
+    if(p.view==='earth')sizeEarth(pb.querySelector('.glb')||pb)});
+  renderGlobePanes();renderRack()}
+function bodyFor(p){
+  if(p.view==='earth')return earthBody(p);
+  if(p.view==='timeline')return tlBody();
+  if(p.view==='constellation')return cnBody();
+  return exBody()}
+/* ---- Earth / Sky ---- */
+function earthBody(p){
+  if(p.zoom==='sky'){
+    return `<div class="skybig" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0" data-i="The sky · M2|Zooming out of Earth: the geocentric field. Ten bodies from the dated-sky provider; the outer dashed ring is the M1 toroidal carrier; the inner arcs are the M3 clock — inscription (amber) and lens (blue). The retained occasion's snapshot shows; its current admission is stated separately.">
+      ${chartSVG(490,S.skySrc==='now'?'now':'occ',{torus:1,clock:1,horizon:1})}
+      <div class="cor" style="position:static;margin-top:2px">horizon · ${SKY[S.skySrc==='now'?'now':'occ'].d}</div>
+      <div class="zoomt" style="top:8px;right:8px;position:absolute" data-zoomt="earth"><button data-i="Earth|Back to the situated world surface.">◍ Earth</button><button class="on" data-i="Sky|The outward expansion — same projection, cosmic scale.">✧ Sky</button></div></div>`}
+  return `<div class="glb" data-glb="1">
+    <canvas></canvas><div class="mkov" style="position:absolute;inset:0;pointer-events:none"></div>
+    <div class="zoomt" style="top:8px;right:8px" data-zoomt="sky"><button class="on" data-i="Earth|The situated world surface — Archetypal-Earth's globe engine (tiles, atmosphere, instanced presence).">◍ Earth</button><button data-i="Sky|Zoom out: the solar-system field as one instrument — torus (M1) · sky (M2) · clock (M3).">✧ Sky</button></div>
+    <div class="cor" style="top:8px;left:8px">47.4°N 8.5°E · anchor Zürich · drag to spin</div>
+    <div class="leg"><span><i style="background:var(--mercurius)"></i>Mercurius · 4+1</span><br><span><i style="background:var(--selfc)"></i>the Self</span><br><span><i style="background:var(--fizz)"></i>live agency · run #214</span></div>
+   </div>`}
+function renderGlobePanes(){
+  $$('.pb').forEach(pb=>{const i=+pb.dataset.pb,p=S.panes[i];if(!p||p.view!=='earth')return;
+    const glb=pb.querySelector('[data-glb]');if(!glb)return;
+    const cv=glb.querySelector('canvas');
+    const rot=p.rot||14;
+    drawGlobe(cv,rot,S.occ);
+    earthMarkers(glb,rot);
+    if(!cv.dataset.wired){cv.dataset.wired=1;cv.style.cursor='grab';cv.addEventListener('mousedown',e=>{GLB.drag={p,x:e.clientX,rot:p.rot};cv.style.cursor='grabbing'});
+      glb.addEventListener('dblclick',e=>{const mk=e.target.closest('[data-occ]');if(mk)selectOcc(mk.dataset.occ,1)})}})}
+const GLB={drag:null};
+/* ---- Timeline ---- */
+function tlBody(){
+  const compact=S.layout!=='solo';
+  const TICKS=compact?[[1875,'1875'],[1927,'1927'],[1961,'1961'],[2026,'2026']]:[[1875,'1875'],[1900,'1900'],[1913,'1913'],[1927,'1927'],[1944,'1944'],[1961,'1961'],[1990,'1990'],[2026,'2026']];
+  let ticks='';TICKS.forEach(([y,l])=>ticks+=`<span style="left:${pos(y)}%">${l}</span>`);
+  const rows=TRK.map(t=>{
+    const clips=t.cl.map(c=>{const y1=c.y1==='live'?NOWY:c.y1;const L=pos(c.y0),Rp=pos(y1);
+      const k=c.k==='span'?'span':c.k==='dash'?'dash':c.k==='fizz'?'':c.k||'';
+      const col=c.k==='fizz'?'var(--fizz)':t.c;
+      const sel=c.o&&c.o===S.occ?' selc':'';
+      const edge=c.e?`left:auto;right:0;width:auto;`:'';
+      return `<div class="cl ${k}${sel}" ${c.s?'s':''} style="--tc:${col};left:${L}%;width:calc(${Rp}% - ${L}%);${edge}" ${c.o?`data-occsel="${c.o}"`:''} data-i="Clip · ${c.n}|${t.n} — ${t.fam}. ${c.k==='live'?'Running: no end drawn; the live edge is the needle.':c.o?'Click: make this occurrence the encounter.':''}">${c.n}${c.k==='live'?'<small>running</small>':''}</div>`}).join('');
+    return `<div class="trw" style="--tc:${t.c}"><div class="h"><i></i>${t.n}<span class="fam" style="margin-left:auto">${t.fam}</span></div><div class="lane">${clips}${t.id==='run'?`<div class="ndl run" style="left:${pos(NOWY)}%"><span class="rd">now · 14:36</span></div>`:''}</div></div>`}).join('');
+  return `<div class="tl">
+   <div class="tlr"><div></div><div class="tlt">${ticks}${compact?'':'<span class="note mono">non-linear · deep time — honest compression, no fabricated precision</span>'}</div></div>
+   <div class="tlb">${rows}
+    <div class="trw" style="--tc:var(--accent);flex:0;height:20px"><div class="h"><i style="background:var(--accent)"></i>occasion</div><div class="lane"><div class="ndl occ" style="left:${pos(occ(S.occ).y)}%"><span class="rd">occasion · ${occ(S.occ).n.split(' · ')[1]||''} ${Math.floor(occ(S.occ).y)} · retained ✓</span></div></div></div>
+   </div></div>`}
+/* ---- Constellation ---- */
+function cnBody(){
+  const sel=S.cnSel;
+  const adj=new Set();if(sel){CE.forEach(([a,b])=>{if(a===sel)adj.add(b);if(b===sel)adj.add(a)});adj.add(sel)}
+  const shape=n=>{if(n.k==='subj')return `<circle cx="${n.x}" cy="${n.y}" r="11" fill="#c9a0dc33" stroke="var(--mercurius)" stroke-width="1.6"/><circle cx="${n.x}" cy="${n.y}" r="4.5" fill="var(--mercurius)"/>`;
+    if(n.k==='occ')return `<circle cx="${n.x}" cy="${n.y}" r="${n.id===S.occ?8:6}" fill="${n.id===S.occ?'var(--mercurius)':'#c9a0dc44'}" stroke="${n.id===S.occ?'var(--accent)':'var(--mercurius)'}" stroke-width="${n.id===S.occ?2:1}"/>`;
+    if(n.k==='src')return `<rect x="${n.x-6}" y="${n.y-6}" width="12" height="12" fill="var(--bg-3)" stroke="var(--text-faint)"/>`;
+    if(n.k==='place')return `<rect x="${n.x-6.5}" y="${n.y-6.5}" width="13" height="13" fill="none" stroke="#97b1be" transform="rotate(45 ${n.x} ${n.y})"/>`;
+    if(n.k==='run')return `<rect x="${n.x-26}" y="${n.y-11}" width="52" height="22" rx="5" fill="#5cc6b422" stroke="var(--fizz)"/>`;
+    if(n.k==='agent')return `<rect x="${n.x-26}" y="${n.y-10}" width="52" height="20" rx="5" fill="var(--bg-3)" stroke="var(--bumble)"/>`;
+    if(n.k==='expr')return `<rect x="${n.x-27}" y="${n.y-12}" width="54" height="24" rx="5" fill="var(--bg-3)" stroke="var(--mercurius)"/><g class="form spin" style="animation-duration:18s">${formDots(n.x,n.y,9,12,'var(--mercurius)')}</g>`;
+    return `<circle cx="${n.x}" cy="${n.y}" r="7" fill="none" stroke="var(--text-faint)" stroke-dasharray="3 3"/>`};
+  const edges=CE.map(([a,b,t])=>{const na=cn(a),nb=cn(b);
+    const cls=t==='at'?'ceg':'';const col=t==='works on'?'var(--fizz)':t==='produced'?'var(--fizz)':t==='manifests'?'#c9a0dc66':'var(--line-strong)';
+    const dash=t==='produced'||t==='unresolved'?' stroke-dasharray="4 4"':'';
+    const dim=sel&&!adj.has(a)&&![a,'mercurius'].includes(sel)&&![a].includes(S.cnSel)?' opacity=".25"':'';
+    return `<path class="cedge ${cls}" d="M${na.x} ${na.y}L${nb.x} ${nb.y}" stroke="${col}"${dash}${dim}/>`}).join('');
+  const nodes=CN.map(n=>{const dim=sel&&!adj.has(n.id)&&n.id!=='mercurius'?'dim':'';
+    const isSel=n.id===S.occ||n.id===sel;
+    return `<g class="cnode ${dim} ${isSel?'sel':''}" data-cnode="${n.id}" data-i="${n.n}|${{subj:'The archetype — the encounter’s subject.',occ:'An occurrence of the field. Click: make it the encounter.',src:'A source of the vault — owned natively, projected here.',place:'A place — occurrences manifest at it.',run:'Factory work as World phenomena: Fizz’s run works on the archetype.',agent:'Bumble reviews the run’s result.',expr:'The Expression the run produced — a form of the same material.',ghost:'An unresolved link: the wiki page does not exist yet. It returns through a wiki return, never by direct edit.'}[n.k]}">
+     ${shape(n)}<text x="${n.x}" y="${n.y+ (n.k==='subj'?24:n.k==='ghost'?20:18)}" text-anchor="middle">${n.n}</text></g>`}).join('');
+  return `<div class="cn"><svg width="100%" height="100%" viewBox="0 0 560 330" preserveAspectRatio="xMidYMid meet" style="max-height:100%">
+    <g class="form" style="opacity:.25">${formDots(280,168,150,40,'var(--mercurius)')}</g>${edges}${nodes}
+    <g transform="translate(497 277)">${bee('fizz',22)}</g></svg>
+   <div class="leg2">edges: <span style="color:#c9a0dc">manifests</span> · <span style="color:var(--text-faint)">sourced · at</span> · <span style="color:var(--fizz)">works · produced</span><br>dashed = pending return · graph owned natively</div></div>`}
+/* ---- Expressions ---- */
+function glyphMercury(size,cx,cy,col){
+  const s=size/24;
+  return `<g transform="translate(${cx} ${cy}) scale(${s})" stroke="${col}" stroke-width="1.6" fill="none">
+   <circle cx="0" cy="-7" r="2.6"/><path d="M0 -4.4v9M-4 0h8"/><path d="M-4.5 7.5a4.5 4.5 0 0 0 9 0"/></g>`}
+function exBody(){
+  const rings=[['r1',150,44,'#9b7fd4'],['r2',118,34,'#6fb8d8'],['r3',88,26,'#7fd0a0'],['r4',60,20,'#f0a05e']];
+  const stage=`<svg width="86%" height="86%" viewBox="0 0 320 320">
+   ${rings.map(([cls,r,n,c])=>`<g class="ringr ${cls}">${formDots(160,160,r,n,c)}</g>`).join('')}
+   <circle cx="160" cy="160" r="30" fill="none" stroke="#c9a0dc55"/>
+   ${glyphMercury(46,160,160,'var(--mercurius)')}</svg>`;
+  const cym=`<svg width="100%" height="96" viewBox="0 0 176 96">${[0,1,2,3,4,5].map(i=>{const t=i*30*Math.PI/180;
+    return `<ellipse cx="88" cy="48" rx="${(34+i*11).toFixed(0)}" ry="${(8+i*3.2).toFixed(1)}" fill="none" stroke="var(--sel)" stroke-opacity="${(.65-i*.09).toFixed(2)}" transform="rotate(${i*30} 88 48)"/>`}).join('')}
+   <circle cx="88" cy="48" r="3" fill="var(--sel)"/><text x="88" y="92" text-anchor="middle" font-size="8.5" fill="var(--text-faint)">cymatic · 5:3 · harmonic locked to M1</text></svg>`;
+  const strip=[['Liber Novus · fol. draft','folio'],['glyph · Mercurius','glyph'],['cymatic · 5:3','cym'],['Mercurius field','field'],['day · composed','day']].map(([n,k],i)=>
+    `<div class="xc ${S.exCard===i?'selc':''}" data-excard="${i}" data-i="${n}|${i===3?'The run #214 result: a Factory output that became an Expression — same World material, given form.':i===0?'A vault image occurrence, given scene richness.':'Library material, projected.'}">
+      <div class="pv2">${{folio:'<svg width="100%" height="100%" viewBox="0 0 100 62"><rect width="100" height="62" fill="#4a3038"/><path d="M14 12q14 8 28 0t28 0 14 0" stroke="#c98a5a" fill="none" stroke-width="2"/><circle cx="50" cy="34" r="10" fill="none" stroke="#c98a5a" stroke-width="2"/><path d="M46 30l8 8M54 30l-8 8" stroke="#c98a5a" stroke-width="2"/></svg>',
+        glyph:`<svg width="100%" height="100%" viewBox="0 0 100 62">${glyphMercury(40,50,31,'var(--mercurius)')}</svg>`,
+        cym:'<svg width="100%" height="100%" viewBox="0 0 100 62"><g>'+[0,1,2,3].map(i=>`<ellipse cx="50" cy="31" rx="${12+i*10}" ry="${4+i*3.4}" fill="none" stroke="var(--sel)" stroke-opacity=".6" transform="rotate(${i*45} 50 31)"/>`).join('')+'</g></svg>',
+        field:`<svg width="100%" height="100%" viewBox="0 0 100 62"><g class="form spin" style="animation-duration:16s">${formDots(50,31,26,26,'var(--mercurius)')}</g>${glyphMercury(18,50,31,'var(--mercurius)')}</svg>`,
+        day:'<svg width="100%" height="100%" viewBox="0 0 100 62"><rect x="8" y="8" width="84" height="46" rx="4" fill="none" stroke="#97b1be"/><path d="M8 20h84M30 8v46M58 8v46" stroke="#97b1be" stroke-opacity=".5"/><rect x="64" y="28" width="22" height="18" rx="2" fill="#97b1be55"/></svg>'}[k]}</div>
+      <div class="nm">${n}</div>${i===3?'<span class="new"></span>':''}</div>`).join('');
+  return `<div class="ex">
+   <div class="exm"><div class="exst" data-i="Mercurius field|The selected Expression: run #214's draft result — four occurrences correlated into one composition. The rings are the chakral reception; the glyph is the field's own form (stand-in for the Expressions glyph library).">
+     ${stage}
+     <div class="cor" style="top:8px;left:8px">Mercurius field · run #214 · draft result <span class="badge" style="margin-left:6px;color:var(--fizz)">NEW</span></div>
+     <div class="cor" style="bottom:8px;left:8px">basis · 4 occurrences · Liber Novus folios · correlation draft 13:58</div>
+    </div>
+   <div class="exside">
+    <div class="exsi"><b>Mercurius field</b><span class="faint">produced by run #214 · Fizz · 13:58</span><span>state · draft — not yet returned</span></div>
+    <div class="exsi"><span class="faint" style="margin-bottom:1px">chakral reception</span>
+     <div class="chakra">${CHAK.map(([n,c,b])=>`<div class="ck" data-i="${n} · ${b}|The source-defined correspondences: the sky contract resolves Sun→Sahasrāra; the rest follow their declared basis."><i style="background:${c}"></i>${n}<span class="faint" style="margin-left:auto">${b}</span></div>`).join('')}</div>
+     <span class="badge ok" style="margin-top:4px;width:max-content">Sun → Sahasrāra · source-defined</span></div>
+    <div class="exsi" style="border-bottom:none">${cym}</div>
+   </div></div>
+   <div class="exstrip">${strip}</div></div>`}
+
+/* ======================= the Technè rack (focused pane) ======================= */
+const OWNR={QL:'QL-MEF',Central:'Central',Factory:'Factory',Expr:'Expressions',Act:'Actuation'};
+function skyDev(){const src=S.skySrc;
+  return `<div class="dev sel" style="width:312px" data-i="Sky · kerykeion|The dated-sky provider as a device: ten bodies, one Earth anchor. Source follows the time spine — now, or the retained occasion (snapshot kept, admission stated separately). Owned by QL-MEF.">
+   <div class="dh"><span class="pw"></span>✧ Sky<span class="faint" style="font-size:10px">kerykeion</span><span class="own">${OWNR.QL}</span><span class="x"><span>▾</span></span></div>
+   <div class="db"><div class="vis" style="width:116px;height:116px;display:grid;place-items:center">${chartSVG(112,src,{clock:1})}<div style="position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:8px;color:var(--text-faint);font-family:var(--mono);background:#1d1f22c9">${SKY[src].d.split(' · ')[0]}</div></div>
+    <div style="display:flex;flex-direction:column;gap:7px;align-items:center">
+     <div class="tog" data-i="Source|Which clock feeds the field: now (civil) or the occasion (retained snapshot)."><span class="kl">Source</span><div class="tg"><span class="${src==='now'?'on':''}" data-skysrc="now">now</span><span class="${src==='occ'?'on':''}" data-skysrc="occ">occasion</span></div></div>
+     <div class="knobs" style="grid-template-columns:repeat(2,74px)">${knob('lens','Lens',.4,'¼ field','var(--sel)','The aperture over the sky — which slice of the field the reading admits.')}${knob('retina','Retina',.6,'±3°','var(--sel)','Admission precision: how far a body may sit from the exact aspect and still count.')}</div>
+    </div></div></div>`}
+function clockDev(){return `<div class="dev" style="width:230px" data-i="Clock · M3|Inscription and lens are independent circles — complete restoration through save, restart and Return. Link them to the transport or let them run apart.">
+   <div class="dh"><span class="pw"></span>◷ Clock<span class="faint" style="font-size:10px">M3</span><span class="own">${OWNR.QL}</span><span class="x"><span>▾</span></span></div>
+   <div class="db"><div class="vis" style="width:96px;height:96px;display:grid;place-items:center"><svg width="92" height="92" viewBox="0 0 92 92">
+     <circle cx="46" cy="46" r="40" fill="none" stroke="var(--line-strong)"/><circle cx="46" cy="46" r="28" fill="none" stroke="var(--line)"/>
+     <path d="${arc2(46,46,40,-90,130)}" stroke="var(--accent)" stroke-width="3.5" fill="none" class="clockarc"/>
+     <path d="${arc2(46,46,28,-90,-10)}" stroke="var(--sel)" stroke-width="2.5" fill="none" stroke-dasharray="4 4"/>
+     <circle cx="46" cy="46" r="3" fill="var(--text-dim)"/></svg></div>
+    <div class="knobs" style="align-content:center">${knob('insc','Inscription',.61,'245°','var(--accent)','The inscription circle — where the occasion is written.')}${knob('lens2','Lens',.33,'80°','var(--sel)','The lens circle — the aperture through which it is read.')}
+    <div class="tog" data-i="Link|Lock the clock to the transport's playhead, or let it run independently."><span class="kl">Link</span><div class="tg"><span class="on">transport</span><span>free</span></div></div></div></div></div>`}
+function torusDev(){const p=3,q=2;let d='';
+  for(let i=0;i<=90;i++){const t=i/90*Math.PI*2*p;const R1=44,r1=15;
+    const x=46+(R1+r1*Math.cos(q*t/p))*Math.cos(t/p),y=46+(R1+r1*Math.cos(q*t/p))*Math.sin(t/p);
+    d+=(i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1)+' '}
+  return `<div class="dev" style="width:256px" data-i="Torus · M1|The harmonic/topological carrier — playable, transformable. One resonant folding body; its parameters are modulation sources for anything scoped to the encounter.">
+   <div class="dh"><span class="pw"></span>◎ Torus<span class="faint" style="font-size:10px">M1</span><span class="own">${OWNR.QL}</span><span class="x"><span>▾</span></span></div>
+   <div class="db"><div class="vis" style="width:100px;height:104px;display:grid;place-items:center"><svg width="96" height="96" viewBox="0 0 92 92"><g class="form spin" style="animation-duration:22s"><path d="${d}" fill="none" stroke="var(--fizz)" stroke-width="1.6"/></g><circle cx="46" cy="46" r="4" fill="var(--fizz)" fill-opacity=".6"/></svg></div>
+    <div class="knobs" style="align-content:center">${knob('harm','Harmonic',.5,'3:2','var(--fizz)','The p:q harmonic of the carrier.')}${knob('fold','Fold',.3,'soft','var(--fizz)','How the body folds its resonance — the transform side of M1.')}
+    <div class="tog" data-i="Play|The played torus: its motion is a time source other devices may bind."><span class="kl">Play</span><div class="tg"><span class="on">▶ on</span><span>off</span></div></div></div></div></div>`}
+function glyphDev(){return `<div class="dev" style="width:246px" data-i="Glyph|The subject's expressive form — a stand-in here for the Expressions glyph library. Compose it in place; the same material opens full in the Expressions projection.">
+   <div class="dh"><span class="pw"></span>❋ Glyph<span class="own">${OWNR.Expr}</span><span class="x"><span>▾</span></span></div>
+   <div class="db"><div class="vis" style="width:104px;height:104px;display:grid;place-items:center"><svg width="100" height="100" viewBox="0 0 100 100"><g class="form spin" style="animation-duration:20s">${formDots(50,50,34,30,'var(--mercurius)')}</g>${glyphMercury(30,50,50,'var(--mercurius)')}</svg></div>
+    <div class="knobs" style="align-content:center">${knob('form','Form',.5,'field','var(--mercurius)','Which form family the glyph draws from.')}${knob('sym','Symmetry',.66,'6-fold','var(--mercurius)','Rotational symmetry of the composition.')}
+    <button class="bt" data-pvto="expressions" style="width:max-content" data-i="Open|Focus a pane on the Expressions projection of this same subject.">Open in Expressions ↗</button></div></div></div>`}
+function runDev(){const a=A.fizz;
+  return `<div class="dev" style="width:306px" data-i="Run · #214|Factory work as a device on the encounter: who → how → where → lands. The work is World material — it appears on Earth at the anchor, in Timeline as tracks, in the Constellation, and its result is already an Expression.">
+   <div class="dh"><span class="pw ${a.state==='held'?'off':''}"></span>${bee('fizz',18)} Run · #214<span class="faint" style="font-size:10px">correlate occurrences</span><span class="own">${OWNR.Factory}</span><span class="x"><span data-openinsp="1">inspector ↗</span><span>▾</span></span></div>
+   <div class="db"><div class="vis" style="width:112px;height:104px"><svg width="112" height="104" viewBox="0 0 112 104"><g transform="translate(6 6)"><g class="form spin" style="animation-duration:16s">${formDots(50,48,40,40,a.hex)}</g></g>
+     <g transform="translate(34 28)">${bee('fizz',40)}</g>
+     <text x="56" y="92" text-anchor="middle" font-size="9" fill="var(--text-dim)" font-family="ui-monospace,monospace">${a.used}/${a.max} · attempt 2/5</text></svg></div>
+    <div class="knobs" style="align-content:center">${knob('aut','Autonomy',a.aut/2,['Suggest','Review','Auto'][a.aut],a.hex,'Suggest · Review (proposals) · Auto (lands with receipts).')}${knob('bud','Budget',a.max/24,a.max+' turns',a.hex,'Turns per attempt.')}
+    <div class="tog" data-i="Input|Steer the running turn, or queue."><span class="kl">Input</span><div class="tg"><span class="${a.input==='steer'?'on':''}">steer</span><span class="${a.input==='queue'?'on':''}">queue</span></div></div>
+    <div class="tog" data-i="Custody|You edited the glyph Honey held; her hold is suspended — the light makes custody visible."><span class="kl">Custody</span><div class="tg"><span class="on">held ✓</span></div></div></div></div></div>`}
+function dayDev(){return `<div class="dev" style="width:258px" data-i="Day|The civil day as a device: owned by Central's civil-time policy. A day is a lane in the Timeline projection; its returns are clips on it.">
+   <div class="dh"><span class="pw"></span>▣ Day<span class="faint" style="font-size:10px">2026-10-08</span><span class="own">${OWNR.Central}</span><span class="x"><span>▾</span></span></div>
+   <div class="db"><div style="flex:1;display:flex;flex-direction:column;gap:3px;justify-content:center;font-size:10.5px;color:var(--text-dim);padding:0 4px">
+    <div class="kv" style="padding:0 0 0 0"><span>opened</span><span>07:42 · 6 h 54 m</span></div>
+    <div class="kv" style="padding:0"><span>returns</span><span>7 today · last 14:10 handoff</span></div>
+    <div class="kv" style="padding:0"><span>NOW field</span><span>43 clearings active</span></div>
+    <div class="kv" style="padding:0"><span>closes</span><span>21:00 · the day closes, NOW ends</span></div>
+    <div style="display:flex;gap:5px;margin-top:3px"><button class="bt" data-i="Rollover|Move the remainder into tomorrow's clearing — a Central native action.">Rollover…</button><button class="bt" style="opacity:.55" data-i="Close|Closing a day is the owner's act — never an agent's.">Close 21:00 🔒</button></div></div></div></div>`}
+function transportDev(){return `<div class="dev" style="width:248px" data-i="Transport|The Timeline projection's own device: the scale and span of the temporal field, and whether the playhead follows Now.">
+   <div class="dh"><span class="pw"></span>≡ Transport<span class="own">shell</span><span class="x"><span>▾</span></span></div>
+   <div class="db"><div class="knobs" style="align-content:center">
+    ${knob('span','Span',.8,'1875→now','var(--text-dim)','The window the lanes cover — deep time or this afternoon.')}${knob('scrub','Position',.93,'2026','var(--text-dim)','Where the playhead stands.')}
+    <div class="tog" data-i="Scale|Deep: the Atlas's non-linear scale — honest compression. Linear: even years."><span class="kl">Scale</span><div class="tg"><span class="on">deep</span><span>linear</span></div></div>
+    <div class="tog" data-i="Follow|The playhead rides Now; off, it stands still while the world moves."><span class="kl">Follow</span><div class="tg"><span class="on">now</span><span>free</span></div></div></div></div></div>`}
+function lensDev(){return `<div class="dev" style="width:238px" data-i="Lens|The constellation's reading lens: how many hops stay lit, and which tie bases count.">
+   <div class="dh"><span class="pw"></span>⊹ Lens<span class="own">shell</span><span class="x"><span>▾</span></span></div>
+   <div class="db"><div class="knobs" style="align-content:center">
+    ${knob('depth','Depth',.5,'2 hops','var(--sel)','Neighbourhood radius — the rest dims, never hides.')}${knob('tie','Tie basis',.7,'all','var(--sel)','Which relation kinds the lens admits: manifests · sourced · at · works · produced.')}
+    <div class="tog" data-i="Ghosts|Show unresolved links as honest ghost nodes."><span class="kl">Ghosts</span><div class="tg"><span class="on">show</span><span>hide</span></div></div></div></div></div>`}
+function wikiDev(){return `<div class="dev" style="width:216px" data-i="Wiki|The wiki is never edited directly: knowledge travels as a return. This ghost is the pending return run #214's correlation would justify.">
+   <div class="dh"><span class="pw"></span>▦ Wiki<span class="own">${OWNR.Central}</span><span class="x"><span>▾</span></span></div>
+   <div class="db"><div style="flex:1;display:flex;flex-direction:column;gap:5px;justify-content:center;padding:0 6px">
+    <div style="border:1px dashed var(--line-strong);padding:5px 8px;font-size:10.5px;color:var(--text-dim)">wiki · mercurius<br><span class="faint" style="font-size:9.5px">unresolved · ghost since 14:02</span></div>
+    <button class="bt" data-i="Draft return|A wiki return the owner accepts — the only door knowledge enters through.">Draft return…</button></div></div></div>`}
+function chakraDev(){return `<div class="dev" style="width:300px" data-i="Chakral reception|M4's inheritance: the Earth chakra at the receiving centre. The correspondences are source-defined — Sun→Sahasrāra resolves from the sky contract; the rest keep their declared basis.">
+   <div class="dh"><span class="pw"></span>◉ Chakra<span class="faint" style="font-size:10px">reception</span><span class="own">${OWNR.QL}</span><span class="x"><span>▾</span></span></div>
+   <div class="db"><div class="vis" style="width:96px;height:104px;display:grid;place-items:center"><svg width="90" height="98" viewBox="0 0 90 98">
+    ${CHAK.map(([n,c],i)=>`<circle cx="45" cy="${12+i*12.5}" r="${5.5-i*.35}" fill="${c}" fill-opacity="${.85-i*.07}"/>`).join('')}
+    <path d="M45 6v86" stroke="var(--line)" stroke-dasharray="2 3"/></svg></div>
+    <div class="knobs" style="align-content:center">
+    ${knob('rec','Reception',.55,'open','var(--mercurius)','How strongly the occasion is received into the centres.')}
+    <div class="tog" data-i="Basis|Every correspondence shows its source — nothing pairs by vibes."><span class="kl">Basis</span><div class="tg"><span class="on">shown</span></div></div>
+    <span class="badge ok">Sun → Sahasrāra · source-defined</span><span class="badge">Mercury ↔ Vishuddhā · declared</span></div></div></div>`}
+const folded=(n,g='¤')=>`<div class="dev folded" data-i="${n} (folded)|A Technè device folded to its title, as in Live. Piano · Jango is the physical music instrument matrix; Nara is the conversation device; Deck is the QL response deck."><div class="dh"><span class="pw"></span>${g}${n}</div></div>`;
+const CHAINS={
+ earth:()=>[skyDev(),clockDev(),torusDev(),glyphDev(),runDev(),`<div class="dropz" data-i="Drop zone|Technè devices attach here — instruments, documents, conversations, curated apps. The rack is the plugin system of the whole environment.">Drop instruments on the Earth pane's rack</div>`],
+ timeline:()=>[transportDev(),runDev(),dayDev(),folded('Git','⎇'),`<div class="dropz">Drop devices on the Timeline pane's rack</div>`],
+ constellation:()=>[lensDev(),wikiDev(),runDev(),`<div class="dropz">Drop devices on the Constellation pane's rack</div>`],
+ expressions:()=>[glyphDev(),chakraDev(),torusDev(),folded('Piano · Jango'),folded('Nara'),`<div class="dropz">Drop devices on the Expressions pane's rack</div>`]};
+function renderRack(){
+  const v=S.panes[S.focus]?.view||'earth';
+  $('#rackh').innerHTML=`Technè rack — <b>${PVNAME[v].split(' — ')[0]}</b> pane · encounter <b>${SUBJ[S.subject].n}</b> › ${occ(S.occ).n.split(' · ')[0]} <span class="faint" style="margin-left:auto">devices attach to the pane whose encounter they operate on · no parallel stores</span>`;
+  $('#chain').innerHTML=CHAINS[v]().join('');
+  $('#rackOf').textContent=PVNAME[v].split(' — ')[0]}
+
+/* ======================= context dock ======================= */
+const CTX=[
+ {id:'sky',name:'Sky',ico:'✧',desc:'The dated-sky snapshot the field is reading — now or the retained occasion.'},
+ {id:'inspector',name:'Inspector',ico:'◍',desc:'The implicit agent/filesystem view of the selected agency: Position, body, current work, files, returns.'},
+ {id:'graph',name:'Graph',ico:'⊹',desc:'The relation neighbourhood in play — the graph as inspector, never a mode.'},
+ {id:'trail',name:'Trail',ico:'⌫',desc:'Where you have been. Every state is linkable and Back works.'},
+ {id:'images',name:'Images',ico:'▣',desc:'Vault images at the selected place — as-such → image → instance.'},
+ {id:'day',name:'Day',ico:'▦',desc:'The civil day reading: open since, returns, NOW clearings, close.'},
+ {id:'comm',name:'Communiqués',ico:'✉',desc:'Addressed messages between inhabitants, with delivery state.'},
+ {id:'cal',name:'Calendar',ico:'▣',desc:'An SDK widget: what is due around this work.',sdk:1}];
+function tileBody(id){
+  if(id==='sky'){const src=S.skySrc,s=SKY[src];
+    return `<div style="display:flex;gap:6px;padding:4px"><div style="flex:none">${chartSVG(104,src,{clock:1})}</div>
+     <div style="flex:1;min-width:0;font-size:9.5px;color:var(--text-dim);line-height:1.5">
+      <div class="mono" style="color:var(--text);font-size:9px">${s.d}</div>
+      ${BOD.map((b,i)=>`<div><span style="color:${b[2]}">${b[0]} ${b[1]}</span> <span class="mono faint">${Math.floor(s.L[i]/30)+1}° ${SIGNS[Math.floor(s.L[i]/30)]} · ${Math.round(s.L[i])}°</span></div>`).join('')}</div></div>`}
+  if(id==='inspector'){const a=A.fizz;return `<div style="padding:4px 7px;font-size:10.5px;line-height:1.65;color:var(--text-dim)">
+    <div style="display:flex;gap:6px;align-items:center">${bee('fizz',24)}<b style="color:var(--text)">Fizz</b><span class="mono faint">opus-5.5 · hermes</span><span class="badge" style="margin-left:auto;color:var(--accent)">working</span></div>
+    <div class="kv" style="padding:0;margin-top:3px"><span>Position</span><span>research · mercurius-field</span></div>
+    <div class="kv" style="padding:0"><span>Body</span><span>workcell env-1 · mac</span></div>
+    <div class="kv" style="padding:0"><span>Work</span><span>run #214 · attempt 2/5</span></div>
+    <div class="kv" style="padding:0"><span>Reads</span><span>Liber Novus · gazetteer · Aion</span></div>
+    <div class="kv" style="padding:0"><span>Writes</span><span>draft correlation · proposal</span></div>
+    <div class="kv" style="padding:0"><span>Files</span><span>occurrences.md +3 · map.json</span></div>
+    <div class="kv" style="padding:0"><span>Returns</span><span>#214-d1 digest · 13:58</span></div>
+    <div style="display:flex;gap:4px;margin-top:4px"><button class="bt pri" data-openinsp="1">Ask Fizz…</button><button class="bt" data-tile="comm">Communiqués</button></div></div>`}
+  if(id==='graph'){const N=[['mercurius',135,84,9,'var(--mercurius)'],['boll1927',210,44,5,'var(--mercurius)'],['run',218,128,6,'var(--fizz)'],['expr',66,140,6,'var(--mercurius)'],['liber',58,50,5,'var(--text-faint)'],['wiki',205,86,4,'none']];
+    return `<svg width="270" height="176" viewBox="0 0 270 176">${N.slice(1).map(([_,x,y])=>`<line x1="135" y1="84" x2="${x}" y2="${y}" stroke="var(--line-strong)"/>`).join('')}
+     ${N.map(([n,x,y,r,c])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${c==='none'?'none':c}" stroke="var(--text-faint)" ${c==='none'?'stroke-dasharray="2 2"':''}/>`).join('')}
+     ${N.map(([n,x,y])=>`<text x="${x}" y="${y+ (y>84?15:-9)}" text-anchor="middle" font-size="8.5" fill="var(--text-dim)">${n}</text>`).join('')}</svg>`}
+  if(id==='trail')return `<div class="ctxpin"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent)"></span>every state linkable · back works</div>`+
+    [...S.trail].reverse().map((t,i)=>`<div class="trailrow" data-i="Trail|${t} — restoring state, camera and occasion together."><span class="n">${String(S.trail.length-i).padStart(2,'0')}</span>${t}</div>`).join('');
+  if(id==='images'){const th=(n,k)=>{const art={tower:'<rect x="6" y="8" width="30" height="24" fill="#5a5f66"/><rect x="12" y="14" width="8" height="18" fill="#3a3e44"/><rect x="22" y="3" width="6" height="12" fill="#4a4f56"/><circle cx="33" cy="8" r="2.5" fill="#c9d4dc"/>',
+    lapis:'<circle cx="21" cy="17" r="11" fill="none" stroke="#c9a0dc" stroke-width="2"/><path d="M15 17h12M21 11v12" stroke="#c9a0dc" stroke-width="1.5"/>',
+    lake:'<path d="M4 26l10-8 6 5 8-9 8 12z" fill="#5d7264"/><circle cx="10" cy="8" r="3.5" fill="#e8d3a0"/>'}[k];
+    return `<div class="imgcard"><div class="th"><svg width="44" height="34" viewBox="0 0 42 34">${art}</svg></div><div class="ii">${n}<small>as-such → image → instance</small></div></div>`};
+    return th('the tower · 1958 print','tower')+th('lapis draft · facsimile','lapis')+th('the lake from the wall','lake')}
+  if(id==='day')return `<div style="padding:6px 8px;font-size:10.5px;color:var(--text-dim);line-height:1.7">
+    <div class="kv" style="padding:0"><span>day</span><span>2026-10-08 · open</span></div>
+    <div class="kv" style="padding:0"><span>now</span><span>14:36 · 6 h 54 m</span></div>
+    <div class="kv" style="padding:0"><span>returns</span><span>7 · last handoff 14:10</span></div>
+    <div class="kv" style="padding:0"><span>NOW field</span><span>43 active · 58 archived</span></div>
+    <div class="kv" style="padding:0"><span>closes</span><span>21:00 — what ends is useful</span></div></div>`;
+  if(id==='comm')return `<div style="padding:5px 7px;font-size:10.5px;color:var(--text-dim);line-height:1.6">
+    <div style="display:flex;gap:5px;align-items:center">${bee('fizz',20)}<span><b style="color:var(--text)">Fizz → you</b> · delivered 14:11<br>“4 occurrences correlate; 1916 Sermones links to Aion's Mercurius chapter. Draft on the field.”</span></div>
+    <div style="display:flex;gap:5px;align-items:center;margin-top:5px">${bee('bumble',20)}<span><b style="color:var(--text)">Bumble → Fizz</b> · held<br>“review scheduled when #214 returns.”</span></div></div>`;
+  return `<div style="padding:10px;color:var(--text-faint);font-size:11px">${CTX.find(c=>c.id===id).desc}</div>`}
+function preview(id){const p={sky:`<div style="display:grid;place-items:center;height:100%">${chartSVG(92,S.skySrc,{clock:1})}</div>`,
+  inspector:`<div style="padding:6px;display:flex;flex-direction:column;gap:3px;font-size:8.5px;color:var(--text-dim)"><div style="display:flex;gap:4px;align-items:center">${bee('fizz',16)}Fizz · run #214</div><div class="faint">Position · body · work · files</div><div class="faint">returns · workcell</div></div>`,
+  graph:`<svg width="100%" height="100%" viewBox="0 0 120 70"><g stroke="var(--line-strong)"><line x1="60" y1="35" x2="25" y2="15"/><line x1="60" y1="35" x2="95" y2="15"/><line x1="60" y1="35" x2="25" y2="56"/><line x1="60" y1="35" x2="95" y2="56"/></g><circle cx="60" cy="35" r="6" fill="var(--mercurius)"/>${[[25,15],[95,15],[25,56],[95,56]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="4" fill="var(--bg-3)"/>`).join('')}</svg>`,
+  trail:`<div class="mono" style="font-size:8.5px;padding:6px;color:var(--text-dim);line-height:1.7">03 sky · now<br>02 timeline<br>01 earth · open</div>`,
+  images:`<div style="padding:5px;display:flex;gap:3px"><div style="flex:1;background:#5a5f66"></div><div style="flex:1;background:#4d6154"></div><div style="flex:1;background:#3a4a58"></div></div>`,
+  day:`<div class="mono" style="font-size:8.5px;padding:6px;color:var(--text-dim);line-height:1.7">2026-10-08 · open<br>43 NOW clearings<br>closes 21:00</div>`,
+  comm:`<div style="padding:6px;font-size:8.5px;color:var(--text-dim);line-height:1.6">${bee('fizz',14)} “4 occurrences…”<br>delivered 14:11</div>`};
+  return p[id]||`<div style="display:grid;place-items:center;height:100%;font-size:20px;color:var(--text-faint)">${CTX.find(c=>c.id===id).ico}</div>`}
+function renderDock(){
+  $('#tiles').innerHTML=S.tiles.map(id=>{const c=CTX.find(x=>x.id===id);return `<section class="tile"><div class="tlh">${c.ico}<span class="t">${c.name}</span><span class="x"><span data-i="Pin|Stop following; keep this view.">⌖</span><span data-tclose="${id}" data-i="Close|Close the tile; it stays in the launcher.">✕</span></span></div><div class="tlb">${tileBody(id)}</div></section>`}).join('')||`<div class="faint" style="padding:12px;font-size:11px">Open context from the launcher below.</div>`;
+  $('#tileCount').textContent=`${S.tiles.length} open`;
+  const q=S.q.toLowerCase();
+  $('#lgrid').innerHTML=CTX.filter(c=>!q||c.name.toLowerCase().includes(q)||c.desc.toLowerCase().includes(q)).map(c=>`<div class="lcell ${S.tiles.includes(c.id)?'on':''}" data-tile="${c.id}" data-i="${c.name}|${c.desc} Click to open or close it above.${c.sdk?' Provided through the SDK.':''}"><div class="pv">${preview(c.id)}</div><div class="nm">${c.ico}${c.name}<span class="s">${c.sdk?'SDK':''}</span></div>${S.tiles.includes(c.id)?'<span class="dot"></span>':''}</div>`).join('');
+  $('#launch').classList.toggle('folded',S.launchFold);$('#lfold').textContent=S.launchFold?'▴':'▾'}
+
+/* ======================= transport + status ======================= */
+function renderTransport(){
+  ['tmNow','tmOcc','tmTr'].forEach(id=>$('#'+id).classList.toggle('on',({tmNow:'now',tmOcc:'occ',tmTr:'transport'})[id]===S.timeMode));
+  ['lySolo','lyDuo','lyQuad'].forEach(id=>$('#'+id).classList.toggle('on',({lySolo:'solo',lyDuo:'duo',lyQuad:'quad'})[id]===S.layout));
+  const fv=S.panes[S.focus]?.view||'earth';
+  $('#projSwitch').innerHTML=Object.keys(PVICON).map(v=>`<button class="${fv===v?'on':''}" data-pv="${v}" data-pvany="1" data-i="${PVNAME[v]}|${PVTIP[v]} Switches the focused pane to this projection.">${PVICON[v]}</button>`).join('');
+  const o=occ(S.occ);
+  const dot=$('#encChip').querySelector('i');if(dot)dot.style.background=SUBJ[S.subject].c;
+  $('#encSubj').textContent=SUBJ[S.subject].n;
+  $('#encOcc').textContent=`${o.n} · ${Math.floor(o.y)}`;
+  $('#occFld').innerHTML=`<small>occ</small>${Math.floor(o.y)} · ${o.n.split(' · ')[0]} ${o.ret?'✓':''}`;
+  $('#sEnc').textContent=`${SUBJ[S.subject].n} › ${o.n.split(' · ')[0]}`;
+  $('#counts').textContent=`${OCC.filter(x=>!x.live).length} occurrences · 3 runs · 1 running`}
+function render(){
+  renderBrowser();renderPool();renderPanes();renderDock();renderTransport()}
+
+/* ======================= globe wiring (overrides: layout-px sizing, incremental markers) ======================= */
+function sizeEarth(pEl){const cv=pEl.querySelector('canvas');if(!cv)return;
+  const w=pEl.clientWidth||600,h=pEl.clientHeight||400;
+  cv.width=Math.round(w);cv.height=Math.round(h);cv.style.width=w+'px';cv.style.height=h+'px'}
+function buildMarkers(glb){const ov=glb.querySelector('.mkov');if(ov.dataset.sig==='v1')return;
+  ov.dataset.sig='v1';let h='';
+  for(const o of OCC){const col=o.live?'var(--fizz)':SUBJ[o.s].c;
+    if(o.live)h+=`<div class="gmk live" data-occ="${o.id}" data-i="Live agency · run #214|The work constellation anchored at the declared world/home position (Zürich). Geography holds the situation; the work keeps its own topology. Click to inspect Fizz; double-click for the occasion's sky.">
+      <span class="d" style="--c:${col}">●</span><span class="bees">${bee('fizz',24)}<span class="d" style="--c:var(--honey);width:9px;height:9px;font-size:6px">H</span><span class="d" style="--c:var(--bumble);width:9px;height:9px;font-size:6px">B</span></span><span class="lab" style="left:${o.ldx||0}px;top:${o.ldy!=null?o.ldy:13}px">run #214 · live</span></div>`;
+    else h+=`<div class="gmk" data-occ="${o.id}" data-i="Occurrence · ${o.n}|${SUBJ[o.s].n} · ${Math.floor(o.y)} · ${o.basis}. Click: make it the encounter — every projection follows. Double-click: open its retained sky. ${o.ret?'Its sky snapshot is retained.':''}">
+      <span class="d" style="--c:${SUBJ[o.s].c}">◍</span><span class="lab" style="left:${o.ldx||0}px;top:${o.ldy!=null?o.ldy:13}px">${o.sn||o.n.split(' · ')[0]}</span></div>`}
+  ov.innerHTML=h}
+function placeMarkers(glb,rot){const cv=glb.querySelector('canvas'),W=cv.width,H=cv.height,R=Math.min(W,H)*.40;
+  glb.querySelectorAll('.gmk').forEach(el=>{const o=occ(el.dataset.occ);const [x,y,z]=gproject(o.la,o.lo,rot,W,H,R);
+    if(z<.05||x<0||x>W||y<0||y>H){el.style.display='none';return}
+    el.style.display='';el.style.left=x+'px';el.style.top=y+'px';
+    el.classList.toggle('sel',o.id===S.occ)})}
+const GLB2={drag:null};
+function renderGlobePanes(){$$('.pb').forEach(pb=>{const p=S.panes[+pb.dataset.pb];if(!p||p.view!=='earth'||p.zoom==='sky')return;
+  const glb=pb.querySelector('[data-glb]');if(!glb)return;const cv=glb.querySelector('canvas');
+  if(cv.width!==Math.round(glb.clientWidth)||cv.height!==Math.round(glb.clientHeight))sizeEarth(glb);
+  drawGlobe(cv,p.rot||14,S.occ);buildMarkers(glb);placeMarkers(glb,p.rot||14);
+  if(!cv.dataset.wired){cv.dataset.wired=1;cv.style.cursor='grab';
+    cv.addEventListener('mousedown',e=>{GLB2.drag={p,el:glb,x:e.clientX,rot:p.rot||14};cv.style.cursor='grabbing';e.preventDefault()});
+    glb.addEventListener('dblclick',e=>{const mk=e.target.closest('[data-occ]');if(mk&&mk.dataset.occ!=='anchor'){selectOcc(mk.dataset.occ);S.timeMode='occ';S.skySrc='occ';S.panes.forEach(pp=>{if(pp.view==='earth')pp.zoom='sky'});render()}})}})}
+
+/* ======================= selection — the spine ======================= */
+function selectOcc(id){const o=occ(id);if(!o)return;S.occ=id;S.subject=o.s;S.poolSel=id;S.cnSel=null;
+  S.trail.push(`${PVNAME[S.panes[S.focus]?.view||'earth'].split(' — ')[0].toLowerCase()} · ${o.n.split(' · ')[0]} ${Math.floor(o.y)}`);
+  if(S.trail.length>8)S.trail=S.trail.slice(-8);render()}
+function setPaneView(i,v){const p=S.panes[i];if(!p)return;p.view=v;if(v==='earth'&&!p.rot)p.rot=14;S.focus=i;render()}
+function projectTo(v){let i=LAYOUTS[S.layout].find(idx=>S.panes[idx].view===v);
+  if(i==null){i=S.focus;S.panes[i].view=v}
+  S.focus=i;render()}
+
+/* ======================= interaction ======================= */
+let last={k:null,t:0};
+const dbl=k=>{const now=Date.now();const hit=last.k===k&&now-last.t<420;last={k,t:now};return hit};
+let NOWMIN=14*60+36;
+const fmtT=()=>`${String(Math.floor(NOWMIN/60)).padStart(2,'0')}:${String(Math.floor(NOWMIN%60)).padStart(2,'0')}`;
+let PLAYING=true;
+document.addEventListener('click',e=>{const el=e.target;const q=s=>el.closest(s);let x;
+  if(x=q('[data-bcat]')){S.bcat=x.dataset.bcat;renderBrowser();return}
+  if(x=q('[data-occsel]')){selectOcc(x.dataset.occsel);return}
+  if(x=q('[data-occ]')){if(x.dataset.occ==='anchor'){S.tiles=['inspector',...S.tiles.filter(t=>t!=='inspector')];renderDock();$('#info').innerHTML='<b>run #214</b>The implicit agent view opened in the dock: Position, body, current work, files, returns.';return}
+    if(dbl('o'+x.dataset.occ)){S.timeMode='occ';S.skySrc='occ';const p=S.panes[S.focus];if(p&&p.view==='earth')p.zoom='sky'}
+    selectOcc(x.dataset.occ);return}
+  if(x=q('[data-archsel]')){S.subject=x.dataset.archsel;S.poolSel=x.dataset.archsel;S.trail.push(`archetype · ${SUBJ[S.subject].n}`);render();return}
+  if(x=q('[data-proj]')){projectTo(x.dataset.proj);return}
+  if(x=q('[data-pvto]')){setPaneView(S.focus,x.dataset.pvto);return}
+  if(x=q('[data-pv]')){const i=x.dataset.pvi!=null?+x.dataset.pvi:S.focus;setPaneView(i,x.dataset.pv);return}
+  if(x=q('[data-pfocus]')){S.focus=+x.dataset.pfocus;render();return}
+  if(x=q('[data-zoomt]')){const pb=x.closest('.pb');const p=S.panes[+pb.dataset.pb];p.zoom=x.dataset.zoomt;render();return}
+  if(q('#lySolo')){S.layout='solo';S.focus=0;render();return}
+  if(q('#lyDuo')){S.layout='duo';render();return}
+  if(q('#lyQuad')){S.layout='quad';render();return}
+  if(q('#tmNow')){S.timeMode='now';S.skySrc='now';render();return}
+  if(q('#tmOcc')){S.timeMode='occ';S.skySrc='occ';render();return}
+  if(q('#tmTr')){S.timeMode='transport';render();return}
+  if(x=q('[data-skysrc]')){S.skySrc=x.dataset.skysrc;render();return}
+  if(x=q('[data-cnode]')){const n=cn(x.dataset.cnode);
+    if(n.k==='occ'){selectOcc(n.id);return}
+    S.cnSel=S.cnSel===n.id?null:n.id;render();return}
+  if(x=q('[data-excard]')){S.exCard=+x.dataset.excard;render();return}
+  if(x=q('[data-openinsp]')){S.tiles=['inspector',...S.tiles.filter(t=>t!=='inspector')];renderDock();return}
+  if(x=q('[data-tclose]')){S.tiles=S.tiles.filter(i=>i!==x.dataset.tclose);renderDock();return}
+  if(x=q('[data-tile]')){const id=x.dataset.tile;S.tiles=S.tiles.includes(id)&&!x.classList.contains('bt')?S.tiles.filter(i=>i!==id):[...new Set([...S.tiles,id])];renderDock();return}
+  if(q('#lfold')){S.launchFold=!S.launchFold;renderDock();return}
+  if(q('#lmore')){S.bcat='context';renderBrowser();return}
+  if(q('#wider')){setDock(Math.min(900,dockW()+260));return} if(q('#narrower')){setDock(Math.max(300,dockW()-260));return}
+  if(q('#tap')){A.fizz.doing+=' · pinged '+fmtT();renderDock();$('#info').innerHTML='<b>Tap</b>Fizz answered from run #214 — attempt 2, correlating occurrences.';return}
+  if(q('#play')){PLAYING=true;$('#play').classList.add('on');return}
+  if(q('#stop')){PLAYING=false;$('#play').classList.remove('on');$('#info').innerHTML='<b>The field sleeps</b>Rendering pauses; native work keeps its own lifecycle. Reopening reconstructs the sequence from retained events.';return}
+  if(x=q('#tBrowser')){$('#frame').classList.toggle('no-browser');x.classList.toggle('on');sizeAll();return}
+  if(x=q('#tDock')){$('#frame').classList.toggle('no-dock');x.classList.toggle('on');sizeAll();return}
+  if(x=q('#tDetail')){$('#frame').classList.toggle('no-detail');x.classList.toggle('on');sizeAll();return}
+  if(q('#tgRack')){$('#tgRack').classList.toggle('on');return}
+});
+document.addEventListener('input',e=>{if(e.target.id==='lsearch'){S.q=e.target.value;renderDock()}});
+document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;
+  if(e.key==='Tab'){e.preventDefault();const order=['earth','timeline','constellation','expressions'];
+    const p=S.panes[S.focus];p.view=order[(order.indexOf(p.view)+1)%4];render()}});
+/* knobs */
+let drag=null;
+document.addEventListener('mousedown',e=>{const k=e.target.closest('[data-knob]');
+  if(k){drag={k:k.dataset.knob,y:e.clientY,acc:0};e.preventDefault()}});
+document.addEventListener('mousemove',e=>{if(!drag||drag.g)return;
+  drag.acc+=drag.y-e.clientY;drag.y=e.clientY;
+  while(Math.abs(drag.acc)>=14){const d=Math.sign(drag.acc);drag.acc-=d*14;const a=A.fizz;
+    if(drag.k==='aut')a.aut=Math.min(2,Math.max(0,a.aut+d));
+    if(drag.k==='bud')a.max=Math.min(24,Math.max(Math.max(a.used,2),a.max+2*d));
+    if(['aut','bud'].includes(drag.k))render()}});
+document.addEventListener('mouseup',()=>{if(drag&&!drag.g)drag=null});
+/* globe drag */
+document.addEventListener('mousemove',e=>{if(!GLB2.drag)return;
+  const sc=parseFloat($('#fit').dataset.s||1);
+  GLB2.drag.p.rot=GLB2.drag.rot+(e.clientX-GLB2.drag.x)*.35/sc;
+  drawGlobe(GLB2.drag.el.querySelector('canvas'),GLB2.drag.p.rot,S.occ);
+  placeMarkers(GLB2.drag.el,GLB2.drag.p.rot)});
+document.addEventListener('mouseup',()=>{if(GLB2.drag){GLB2.drag.el.querySelector('canvas').style.cursor='grab';GLB2.drag=null}});
+/* tooltips */
+document.addEventListener('mouseover',e=>{const el=e.target.closest('[data-i]');if(!el)return;const [t,p]=el.dataset.i.split('|');$('#info').innerHTML=`<b>${t}</b>${p||''}`});
+/* dock resize */
+const dockW=()=>parseInt(getComputedStyle($('#frame')).getPropertyValue('--dock-w'))||300;
+function setDock(w){$('#frame').style.setProperty('--dock-w',Math.round(w)+'px');sizeAll()}
+function sizeAll(){$$('.pb').forEach(pb=>{const p=S.panes[+pb.dataset.pb];
+  if(p&&p.view==='earth'&&p.zoom!=='sky'){sizeEarth(pb.querySelector('.glb')||pb);renderGlobePanes()}})}
+/* fit */
+function fit(){const s=Math.min(innerWidth/1920,innerHeight/1200);$('#fit').dataset.s=s;$('#fit').style.transform=`translate(-50%,-50%) scale(${s})`}
+addEventListener('resize',()=>{fit();sizeAll()});
+/* live loop: slow idle spin + clock */
+let lastFrame=0;
+function loop(ts){if(PLAYING&&ts-lastFrame>40){lastFrame=ts;
+    $$('.pb').forEach(pb=>{const p=S.panes[+pb.dataset.pb];
+      if(p&&p.view==='earth'&&p.zoom!=='sky'&&!GLB2.drag){const glb=pb.querySelector('[data-glb]');if(!glb)return;
+        p.rot=(p.rot||14)+.022;drawGlobe(glb.querySelector('canvas'),p.rot,S.occ);placeMarkers(glb,p.rot)}})}
+  requestAnimationFrame(loop)}
+setInterval(()=>{if(!PLAYING)return;NOWMIN+=1;
+  $('#nowFld').innerHTML=`<small>now</small>${fmtT()} · day 2026-10-08`;
+  const nd=$('.tlb .ndl.run .rd');if(nd)nd.textContent=`now · ${fmtT()}`},1000);
+/* init — states are linkable: ?layout=quad&occ=rav1933&zoom=sky&time=occ&tiles=sky,inspector */
+const QP=new URLSearchParams(location.search);
+if(['solo','duo','quad'].includes(QP.get('layout')))S.layout=QP.get('layout');
+if(QP.get('occ')&&occ(QP.get('occ'))){S.occ=QP.get('occ');S.subject=occ(S.occ).s;S.poolSel=S.occ}
+if(QP.get('zoom')==='sky')S.panes.forEach(p=>{if(p.view==='earth')p.zoom='sky'});
+if(QP.get('time')==='occ'){S.timeMode='occ';S.skySrc='occ'}
+if(QP.get('tiles'))S.tiles=QP.get('tiles').split(',');
+fit();render();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

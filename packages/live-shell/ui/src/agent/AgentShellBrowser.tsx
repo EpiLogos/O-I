@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useState} from 'react'
+import {useEffect, useMemo, useState, type DragEvent} from 'react'
 import type {AgencySessionRow} from '../../../../../desktop/cradle/src/agency/agencyTypes'
 import {AgentDevicePool} from './AgentDevicePool'
 import {useAgentShell} from './AgentShellContext'
@@ -6,6 +6,7 @@ import {useWorkspace} from '../shell/workspaceContext'
 import {useHarnessBinding} from './useHarnessBinding'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {refusalLine, safeJson} from './RefusalCard'
+import {AGENT_CHAIN_MIME, encodeChainDrag, setActiveChainDrag, type AgentChainDrag} from './agentChainDrag'
 import './agentShell.css'
 
 const CATEGORIES = [
@@ -42,6 +43,9 @@ export interface BrowserRow {
   readonly key: string
   readonly label: string
   readonly meta: string
+  /** Set when the row is a real disclosed item and may start a chain drag.
+   * Refusal and empty rows never carry one — nothing to drop. */
+  readonly drag?: AgentChainDrag
 }
 
 type KernelOutcome = {result?: string; data?: unknown; document?: unknown} | null | undefined
@@ -172,14 +176,36 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
     return () => { live = false }
   }, [transport, binding])
 
-  const list = useMemo(() => {
-    if (category === 'sess') return rows.map(row => ({key: `${row.spaceRef}:${row.sessionRef}`, label: row.purpose ?? row.sessionRef, meta: row.agentRef ?? row.spaceLabel ?? ''}))
-    if (category === 'context') return CONTEXT_TILES.map(tile => ({key: tile.id, label: tile.name, meta: shell.openTiles.includes(tile.id) ? '● open' : ''}))
-    if (category === 'git') return gitRowsFromWorkcell(seatOutcome, seatError)
-    if (category === 'skillsets') return skillsetRowsFromRoster(rosterOutcome, rosterError)
+  // Rows that carry a drag payload are exactly the rows a real owner reading
+  // disclosed: sessions (the track key), agents (the roster/session ref),
+  // skillsets (the accepted skill refs), git (the workcell seat). Refusal and
+  // empty rows drag nothing — nothing to drop.
+  const list = useMemo((): BrowserRow[] => {
+    if (category === 'sess') return rows.map(row => ({
+      key: `${row.spaceRef}:${row.sessionRef}`,
+      label: row.purpose ?? row.sessionRef,
+      meta: row.agentRef ?? row.spaceLabel ?? '',
+      drag: {family: 'session' as const, ref: `${row.spaceRef}:${row.sessionRef}`, label: row.purpose ?? row.sessionRef},
+    }))
+    if (category === 'context') return CONTEXT_TILES.map((tile): BrowserRow => ({key: tile.id, label: tile.name, meta: shell.openTiles.includes(tile.id) ? '● open' : ''}))
+    if (category === 'git') {
+      const seat = seatOutcome?.result === 'workcell_status_reading' && isObj(seatOutcome.data)
+        ? seatOutcome.data as {workcell_ref?: unknown} : null
+      const workcellRef = typeof seat?.workcell_ref === 'string' && seat.workcell_ref ? seat.workcell_ref : null
+      return gitRowsFromWorkcell(seatOutcome, seatError).map(row => row.key === 'seat' && workcellRef
+        ? {...row, drag: {family: 'git' as const, ref: workcellRef, label: row.label}}
+        : row)
+    }
+    if (category === 'skillsets') {
+      const answered = rosterOutcome?.result === 'agent_definition_reading'
+      return skillsetRowsFromRoster(rosterOutcome, rosterError).map(row =>
+        answered && row.meta === 'skillset'
+          ? {...row, drag: {family: 'skillset' as const, ref: row.key, label: row.label}}
+          : row)
+    }
     if (category === 'agents') {
       const names = [...new Set(rows.map(row => row.agentRef).filter((value): value is string => !!value))]
-      return names.length ? names.map(name => ({key: name, label: name, meta: 'agent'})) : [{key: 'empty-agents', label: loading ? 'Reading…' : 'No agent_ref disclosed yet.', meta: ''}]
+      return names.length ? names.map((name): BrowserRow => ({key: name, label: name, meta: 'agent', drag: {family: 'agent' as const, ref: name, label: name}})) : [{key: 'empty-agents', label: loading ? 'Reading…' : 'No agent_ref disclosed yet.', meta: ''}]
     }
     return [{key: 'empty', label: loading ? 'Reading…' : 'Nothing disclosed for this category yet.', meta: ''}]
   }, [category, rows, shell.openTiles, loading, rosterOutcome, rosterError, seatOutcome, seatError])
@@ -206,6 +232,18 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
               type="button"
               className="agent-bitem"
               title={item.label}
+              draggable={!!item.drag}
+              aria-describedby={item.drag ? `chain-drag-hint-${category}` : undefined}
+              onDragStart={item.drag ? (event: DragEvent<HTMLElement>) => {
+                // The row's own card is the drag image (the browser's native
+                // element snapshot) — never a substitute chip. The payload is
+                // typed bytes; the gesture-held copy lives in the model.
+                event.dataTransfer.effectAllowed = 'copy'
+                event.dataTransfer.setData(AGENT_CHAIN_MIME, encodeChainDrag(item.drag!))
+                event.dataTransfer.setData('text/plain', item.drag!.label)
+                setActiveChainDrag({kind: 'chain-item', drag: item.drag!})
+              } : undefined}
+              onDragEnd={item.drag ? () => setActiveChainDrag(null) : undefined}
               onClick={() => {
                 if (category === 'context') shell.toggleTile(item.key as typeof CONTEXT_TILES[number]['id'])
                 if (category === 'git') shell.toggleTile('diff')
@@ -219,6 +257,7 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
               <span className="st">{item.meta}</span>
             </button>
           ))}
+          <p id={`chain-drag-hint-${category}`} hidden>Drag onto the device chain: through → who → how → where → lands.</p>
         </div>
       </div>
       <AgentDevicePool

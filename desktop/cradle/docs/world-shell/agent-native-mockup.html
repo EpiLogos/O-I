@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Live shell — native agency mockup (design inference, 2026-10-08)</title>
+<style>
+  /* ---- house tokens (PANELS.md law: own tokens, no third-party art) ---- */
+  :root{
+    --bg-0:#0b0c0d; --bg-1:#111314; --bg-2:#16181a; --bg-3:#1d2023;
+    --line:#26292c; --line-soft:#1f2225; --line-strong:#34383c;
+    --text:#c9cdcf; --text-dim:#82898d; --text-faint:#575d61;
+    --accent:#d99b2f; --accent-soft:rgba(217,155,47,.14);
+    --ok:#6fae77; --blocked:#c05a4e; --info:#5d8fb0;
+    --fizz:#3fa79c; --honey:#d9a92f; --bumble:#c96f5a;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg-0);overflow:hidden}
+  body{font:11px/1.45 -apple-system,"SF Pro Text",system-ui,sans-serif;color:var(--text);
+       -webkit-font-smoothing:antialiased}
+  .fit{position:absolute;left:50%;top:50%;transform-origin:center}
+  .canvas{width:1920px;height:1200px;display:grid;position:relative;overflow:hidden;
+    grid-template-columns:400px 1fr 302px;
+    grid-template-rows:48px 1fr 240px 26px;
+    grid-template-areas:"transport transport transport" "browser center dock"
+                        "browser bottom dock" "status status status";
+    background:var(--bg-1);border:1px solid var(--line)}
+  .micro{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint)}
+  .mono{font-family:var(--mono);font-size:10px;color:var(--text-dim)}
+  .hair{border-top:1px solid var(--line-soft)}
+  ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#26292c;border-radius:4px}
+
+  /* ---- transport ---- */
+  .transport{grid-area:transport;display:flex;align-items:center;gap:14px;padding:0 14px;
+    background:var(--bg-2);border-bottom:1px solid var(--line)}
+  .work-title{font-size:12px;font-weight:600}
+  .crumb{display:flex;align-items:center;gap:6px}
+  .crumb .sep{color:var(--text-faint)}
+  .scope{display:flex;border:1px solid var(--line-strong);border-radius:3px;overflow:hidden}
+  .scope button{background:none;border:none;color:var(--text-dim);font:inherit;font-size:10px;
+    padding:3px 9px;cursor:pointer;border-right:1px solid var(--line)}
+  .scope button:last-child{border-right:none}
+  .scope button.on{background:var(--accent-soft);color:var(--accent)}
+  .tbtn{width:26px;height:26px;border:1px solid var(--line-strong);border-radius:3px;background:var(--bg-3);
+    color:var(--text-dim);display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer}
+  .tbtn.play{color:var(--accent);border-color:var(--accent)}
+  .transport .spacer{flex:1}
+  .views{display:flex;border:1px solid var(--line-strong);border-radius:3px;overflow:hidden}
+  .views button{background:var(--bg-2);border:none;border-right:1px solid var(--line);color:var(--text-dim);
+    font:inherit;font-size:10px;padding:4px 10px;cursor:pointer;display:flex;gap:5px;align-items:center}
+  .views button:last-child{border-right:none}
+  .views button.on{background:var(--bg-3);color:var(--text)}
+  .views button .dot{width:5px;height:5px;border-radius:50%;background:var(--accent)}
+  .presence{display:flex;gap:6px}
+  .pchip{display:flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:10px;
+    padding:2px 8px 2px 5px;font-size:10px;color:var(--text-dim);background:var(--bg-1)}
+  .pchip i{width:6px;height:6px;border-radius:50%;display:inline-block}
+  .pchip.working i{background:var(--accent);animation:pulse 1.6s infinite}
+  .pchip.idle i{background:var(--ok)} .pchip.blocked i{background:var(--blocked)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+  /* ---- browser ---- */
+  .browser{grid-area:browser;display:grid;grid-template-rows:1.25fr 1fr;border-right:1px solid var(--line);background:var(--bg-1);overflow:hidden;min-width:0;min-height:0}
+  .b-above{border-bottom:1px solid var(--line);display:grid;grid-template-columns:120px minmax(0,1fr);min-height:0;overflow:hidden}
+  .b-head{display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--line-soft)}
+  .cats{border-right:1px solid var(--line-soft);padding:6px 0;overflow:auto;min-height:0}
+  .cat{display:flex;align-items:center;gap:7px;padding:4px 10px;color:var(--text-dim);cursor:pointer;font-size:10.5px}
+  .cat .n{margin-left:auto;font-size:9px;color:var(--text-faint);font-family:var(--mono)}
+  .cat.on{background:var(--accent-soft);color:var(--accent);border-left:2px solid var(--accent);padding-left:8px}
+  .cat svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.6}
+  .results{overflow:auto;padding:8px;min-width:0;min-height:0}
+  .acard{border:1px solid var(--line);border-radius:4px;background:var(--bg-2);margin-bottom:7px;
+    padding:8px 9px;cursor:grab;position:relative}
+  .acard:hover{border-color:var(--line-strong)}
+  .acard .bar{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
+  .acard .row1{display:flex;align-items:center;gap:7px;margin-bottom:3px}
+  .avatar{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:700;color:#0b0c0d;flex:none}
+  .acard .name{font-weight:600;font-size:11.5px}
+  .acard .harness{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--text-faint);
+    border:1px solid var(--line);border-radius:3px;padding:1px 5px}
+  .acard .char{color:var(--text-dim);font-size:10.5px}
+  .acard .meta{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+  .tag{font-size:9px;border:1px solid var(--line);border-radius:3px;padding:1px 5px;color:var(--text-dim)}
+  .tag.ok{color:var(--ok);border-color:rgba(111,174,119,.35)}
+  .tag.acc{color:var(--accent);border-color:rgba(217,155,47,.4)}
+  .skillrow{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:3px;cursor:grab}
+  .skillrow:hover{background:var(--bg-2)}
+  .skillrow .compat{margin-left:auto}
+  .compat{font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:3px}
+  .compat.full{color:var(--ok);background:rgba(111,174,119,.1)}
+  .compat.part{color:var(--accent);background:var(--accent-soft)}
+  .mint{display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed var(--line-strong);
+    border-radius:4px;padding:7px;color:var(--text-dim);cursor:pointer;font-size:10.5px}
+  .mint:hover{color:var(--accent);border-color:var(--accent)}
+
+  /* ---- pool (browser below) ---- */
+  .b-below{display:flex;flex-direction:column;background:var(--bg-0);min-height:0}
+  .pool-tabs{display:flex;align-items:center;border-bottom:1px solid var(--line-soft);padding:0 8px}
+  .pool-tabs button{background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);
+    font:inherit;font-size:10px;padding:6px 9px;cursor:pointer}
+  .pool-tabs button.on{color:var(--text);border-bottom-color:var(--accent)}
+  .pool-tabs .micro{margin-left:auto}
+  .deleg{flex:1;overflow:auto;min-height:0}
+  .drow{display:flex;align-items:center;gap:9px;padding:6px 10px;border-bottom:1px solid var(--line-soft);font-size:10.5px}
+  .drow .who{display:flex;align-items:center;gap:6px;width:150px;flex:none;font-weight:600}
+  .drow .what{color:var(--text);width:240px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .drow .where{font-family:var(--mono);font-size:9.5px;color:var(--text-faint);width:170px;flex:none}
+  .drow .state{display:flex;align-items:center;gap:5px;width:170px;flex:none}
+  .drow .act{margin-left:auto;display:flex;gap:4px}
+  .mini{border:1px solid var(--line-strong);background:var(--bg-2);color:var(--text-dim);border-radius:3px;
+    font-size:9px;padding:2px 7px;cursor:pointer}
+  .mini:hover{color:var(--text);border-color:var(--text-faint)}
+  .st{display:flex;align-items:center;gap:5px;font-size:10px}
+  .st i{width:6px;height:6px;border-radius:50%}
+  .st.working{color:var(--accent)} .st.working i{background:var(--accent);animation:pulse 1.6s infinite}
+  .st.queued{color:var(--info)} .st.queued i{background:var(--info)}
+  .st.blocked{color:var(--blocked)} .st.blocked i{background:var(--blocked)}
+  .st.done{color:var(--ok)} .st.done i{background:var(--ok)}
+  .pool-foot{border-top:1px solid var(--line-soft);padding:5px 10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;row-gap:3px;overflow:hidden}
+  .pool-foot .micro{letter-spacing:.04em}
+
+  /* ---- center: conversations ---- */
+  .center{grid-area:center;display:flex;flex-direction:column;background:var(--bg-1);border-right:1px solid var(--line);min-width:0}
+  .room-head{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--line)}
+  .room-head .rn{font-size:12.5px;font-weight:600}
+  .room-head .members{display:flex;gap:4px;margin-left:auto}
+  .mav{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:8.5px;font-weight:700;color:#0b0c0d;border:2px solid var(--bg-1);margin-left:-5px}
+  .timeline{flex:1;overflow:auto;padding:14px 18px;display:flex;flex-direction:column;gap:12px;min-height:0}
+  .msg{display:flex;gap:10px;max-width:880px}
+  .msg .avatar{width:24px;height:24px;font-size:11px;margin-top:1px}
+  .msg .body{min-width:0}
+  .msg .who{display:flex;align-items:baseline;gap:7px;margin-bottom:2px}
+  .msg .who .nm{font-weight:600;font-size:11.5px}
+  .msg .who .agent-tag{font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;padding:0 4px;border-radius:2px}
+  .msg .who .tm{font-size:9.5px;color:var(--text-faint);font-family:var(--mono)}
+  .msg .txt{font-size:12px;color:var(--text)}
+  .msg .txt .mention{color:var(--accent);background:var(--accent-soft);border-radius:2px;padding:0 3px}
+  .msg .foot{display:flex;gap:6px;margin-top:5px;align-items:center}
+  .chip{font-size:9.5px;color:var(--text-dim);border:1px solid var(--line);border-radius:9px;padding:1px 7px}
+  .steered{font-size:9px;color:var(--accent);border:1px solid rgba(217,155,47,.4);border-radius:3px;
+    padding:1px 6px;background:var(--accent-soft)}
+  .hovtools{display:flex;gap:3px;margin-left:auto;opacity:0}
+  .msg:hover .hovtools{opacity:1}
+  .hovtools .mini{font-size:10px;padding:2px 6px}
+  .plan{margin:6px 0 0;padding:8px 12px;border-left:2px solid var(--line-strong);display:grid;gap:4px}
+  .plan b{color:var(--text)} .plan span{color:var(--text-dim)}
+  .card{border:1px solid var(--line);border-radius:5px;background:var(--bg-2);max-width:640px;overflow:hidden}
+  .card .chead{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line-soft)}
+  .card .chead .t{font-weight:600;font-size:11px}
+  .card .chead .src{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--text-faint)}
+  .card .cbody{padding:8px 10px}
+  .file{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;padding:2.5px 0;color:var(--text-dim)}
+  .file .adds{color:var(--ok)} .file .dels{color:var(--blocked)}
+  .card .cfoot{display:flex;gap:6px;padding:7px 10px;border-top:1px solid var(--line-soft)}
+  .btn{border:1px solid var(--line-strong);background:var(--bg-3);color:var(--text);border-radius:3px;
+    font:inherit;font-size:10px;padding:3px 10px;cursor:pointer}
+  .btn.primary{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+  .btn.danger{color:var(--blocked);border-color:rgba(192,90,78,.4)}
+  .prcard{display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:5px;
+    background:var(--bg-2);padding:7px 10px;max-width:430px}
+  .prcard .prsrc{font-family:var(--mono);font-size:9px;color:var(--text-faint);border:1px solid var(--line);
+    border-radius:3px;padding:1px 5px}
+  .composer{border-top:1px solid var(--line);padding:9px 14px 8px;background:var(--bg-1)}
+  .cbox{display:flex;align-items:center;gap:9px;border:1px solid var(--line-strong);border-radius:5px;
+    background:var(--bg-2);padding:8px 11px}
+  .cbox .ph{flex:1;color:var(--text-faint);font-size:11.5px}
+  .cbox .tools{display:flex;gap:9px;color:var(--text-faint);font-size:11px}
+  .working-strip{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:10px;color:var(--text-dim)}
+  .working-strip .bar{flex:1;height:2px;background:var(--line-soft);border-radius:1px;overflow:hidden}
+  .working-strip .bar i{display:block;height:100%;width:38%;background:var(--accent);border-radius:1px;animation:slide 2.2s infinite}
+  @keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX:100%;transform:translateX(370%)}}
+
+  /* ---- right dock: console ---- */
+  .dock{grid-area:dock;background:var(--bg-0);border-left:1px solid var(--line);display:flex;flex-direction:column;overflow:auto;min-width:0}
+  .dcard{border-bottom:1px solid var(--line)}
+  .dcard .dhead{display:flex;align-items:center;gap:7px;padding:7px 10px;cursor:pointer}
+  .dcard .dhead .cnt{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--accent)}
+  .dcard .dbody{padding:2px 10px 9px}
+  .aprow{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line-soft);font-size:10.5px}
+  .aprow:last-child{border-bottom:none}
+  .aprow .what{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .obs{font-family:var(--mono);font-size:9.5px;color:var(--text-dim);display:grid;gap:4px;padding:2px 0}
+  .obs .t{color:var(--text-faint)} .obs .ev{color:var(--accent)}
+  .actsum{display:grid;gap:5px;font-size:10px;color:var(--text-dim)}
+  .actsum .kv{display:flex;justify-content:space-between;gap:8px}
+  .actsum .kv b{color:var(--text);font-weight:600}
+  .budget{height:3px;background:var(--line-soft);border-radius:2px;overflow:hidden}
+  .budget i{display:block;height:100%;width:17%;background:var(--accent)}
+
+  /* ---- bottom detail: chain + agent face ---- */
+  .bottom{grid-area:bottom;display:grid;grid-template-columns:230px minmax(0,1fr);background:var(--bg-1);border-top:1px solid var(--line);min-width:0}
+  .chain{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  .mode-tabs{display:flex;border-bottom:1px solid var(--line-soft)}
+  .mode-tabs button{flex:1;background:none;border:none;color:var(--text-dim);font:inherit;font-size:10px;
+    padding:5px 0;cursor:pointer;border-right:1px solid var(--line-soft)}
+  .mode-tabs button:last-child{border-right:none}
+  .mode-tabs button.on{color:var(--accent);background:var(--accent-soft)}
+  .devrow{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line-soft);font-size:10.5px;color:var(--text-dim)}
+  .devrow .led{width:5px;height:5px;border-radius:50%;background:var(--line-strong)}
+  .devrow.agent{background:var(--bg-3);color:var(--text);border-left:2px solid var(--fizz);padding-left:8px}
+  .devrow.agent .led{background:var(--fizz);animation:pulse 1.6s infinite}
+  .face{padding:10px 14px;display:flex;flex-direction:column;gap:8px;overflow:auto;min-width:0}
+  .face-head{display:flex;align-items:center;gap:9px}
+  .face-head .fname{font-weight:600;font-size:12px}
+  .face-head .fstate{font-size:10px;color:var(--accent)}
+  .face-head .right{margin-left:auto;display:flex;gap:6px;align-items:center}
+  .frow{display:flex;gap:18px;align-items:flex-start}
+  .fgroup{display:grid;gap:4px}
+  .fgroup .lab{font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-faint)}
+  .seg{display:flex;border:1px solid var(--line-strong);border-radius:3px;overflow:hidden}
+  .seg button{background:var(--bg-2);border:none;border-right:1px solid var(--line);color:var(--text-dim);
+    font:inherit;font-size:9.5px;padding:3px 8px;cursor:pointer}
+  .seg button:last-child{border-right:none}
+  .seg button.on{background:var(--accent-soft);color:var(--accent)}
+  .chips{display:flex;gap:4px;flex-wrap:wrap;max-width:330px}
+  .kchip{font-size:9.5px;border:1px solid var(--line-strong);border-radius:3px;padding:2px 7px;color:var(--text-dim);cursor:pointer}
+  .kchip.on{color:var(--ok);border-color:rgba(111,174,119,.4)}
+  .kchip.off{color:var(--text-faint);text-decoration:line-through}
+  .kchip.add{color:var(--accent);border-style:dashed}
+  .macro{display:flex;align-items:center;gap:7px;border:1px solid var(--line-strong);border-radius:4px;
+    background:var(--bg-2);padding:4px 9px;font-size:10px;cursor:pointer}
+  .macro:hover{border-color:var(--accent)}
+  .macro .play{color:var(--accent);font-size:9px}
+  .confrow{display:flex;gap:16px;align-items:center;color:var(--text-dim);font-size:10px;
+    border-top:1px dashed var(--line);padding-top:7px}
+  .confrow .lab{font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-faint);margin-right:4px}
+
+  /* ---- status ---- */
+  .status{grid-area:status;display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--bg-0);
+    border-top:1px solid var(--line);font-size:10px;color:var(--text-dim)}
+  .status .mono{font-size:9.5px}
+  .status .right{margin-left:auto;display:flex;gap:12px;align-items:center}
+  .ws-ok{color:var(--ok)} .ws-draft{color:var(--accent)}
+
+  /* corner honesty tag */
+  .tagtag{position:absolute;right:10px;bottom:32px;font-family:var(--mono);font-size:9px;color:var(--text-faint);
+    background:var(--bg-0);border:1px solid var(--line);border-radius:3px;padding:2px 7px;z-index:5}
+</style>
+</head>
+<body>
+<div class="fit" id="fit">
+<div class="canvas">
+
+  <!-- ═══ TRANSPORT ═══ -->
+  <div class="transport">
+    <span class="work-title">Flight Path <span style="color:var(--text-faint);font-weight:400">— Release Cut</span></span>
+    <span class="crumb mono">Expression <span class="sep">›</span> Scene: <b style="color:var(--text)">bridge-2</b></span>
+    <div class="scope">
+      <button>Expression</button><button class="on">Scene</button><button>Object</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="tbtn">⏮</div><div class="tbtn play">▶</div><div class="tbtn">■</div><div class="tbtn">⏺</div>
+    <span class="mono">1. 1. 1 · 96 bpm · sim-time 00:12.4</span>
+    <div class="spacer"></div>
+    <div class="views">
+      <button>Body</button><button>Session</button><button>Arrangement</button>
+      <button class="on"><span class="dot"></span>Conversations</button>
+    </div>
+    <div class="presence">
+      <span class="pchip working"><i></i>Fizz · working</span>
+      <span class="pchip idle"><i></i>Honey · idle</span>
+      <span class="pchip blocked"><i></i>Bumble · blocked</span>
+    </div>
+  </div>
+
+  <!-- ═══ BROWSER ═══ -->
+  <div class="browser">
+    <div class="b-above">
+      <div class="cats">
+        <div class="b-head micro" style="padding:0 10px 5px">Browser</div>
+        <div class="cat"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z M4 9h16"/></svg>Works <span class="n">12</span></div>
+        <div class="cat"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>Objects <span class="n">31</span></div>
+        <div class="cat"><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8l7-5 7 5"/></svg>Properties <span class="n">84</span></div>
+        <div class="cat"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/></svg>Devices <span class="n">18</span></div>
+        <div class="cat on"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.5"/></svg>Agents <span class="n">4</span></div>
+        <div class="cat"><svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3 19c0-2.8 2.2-4.5 5-4.5M21 19c0-2.8-2.2-4.5-5-4.5"/></svg>Teams <span class="n">2</span></div>
+        <div class="cat"><svg viewBox="0 0 24 24"><path d="M13 3L5 13h5l-1 8 8-10h-5z"/></svg>Skills <span class="n">12</span></div>
+        <div class="cat"><svg viewBox="0 0 24 24"><path d="M5 5h14M5 12h14M5 19h9"/></svg>Registers <span class="n">7</span></div>
+        <div class="cat"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z M4 10h16"/></svg>Sources <span class="n">56</span></div>
+      </div>
+      <div class="results">
+        <div class="b-head" style="padding:0 2px 7px;overflow:hidden">
+          <span class="micro" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Agents — Central accepted profiles</span>
+          <span class="mono" style="margin-left:auto;white-space:nowrap">roster r41</span>
+        </div>
+        <div class="acard" style="border-left:none">
+          <div class="bar" style="background:var(--fizz)"></div>
+          <div class="row1">
+            <div class="avatar" style="background:var(--fizz)">F</div>
+            <span class="name">Fizz</span>
+            <span class="harness">buzz-acp · goose</span>
+          </div>
+          <div class="char">Porting engineer — keeps the platform boundary clean, hands off cleanly.</div>
+          <div class="meta"><span class="tag acc">character:ref</span><span class="tag">skills 6</span><span class="tag ok">accepted</span><span class="tag">world:bridge-2</span></div>
+        </div>
+        <div class="acard" style="border-left:none">
+          <div class="bar" style="background:var(--honey)"></div>
+          <div class="row1">
+            <div class="avatar" style="background:var(--honey)">H</div>
+            <span class="name">Honey</span>
+            <span class="harness">buzz-acp · goose</span>
+          </div>
+          <div class="char">Capture and finish — tuned physics, same look, one codebase.</div>
+          <div class="meta"><span class="tag acc">character:ref</span><span class="tag">skills 4</span><span class="tag ok">accepted</span></div>
+        </div>
+        <div class="acard" style="border-left:none">
+          <div class="bar" style="background:var(--bumble)"></div>
+          <div class="row1">
+            <div class="avatar" style="background:var(--bumble)">B</div>
+            <span class="name">Bumble</span>
+            <span class="harness">grok · agent stdio</span>
+          </div>
+          <div class="char">Planner and reviewer — re-plans ports, reviews both PRs before anyone merges.</div>
+          <div class="meta"><span class="tag">skills 5</span><span class="tag ok">accepted</span><span class="tag">guardian-adjacent</span></div>
+        </div>
+        <div class="mint">＋ Mint agent — intent → proposal → review</div>
+        <div class="b-head" style="padding:9px 2px 5px"><span class="micro">Skills · catalogue</span></div>
+        <div class="skillrow"><span>port-widgets</span><span class="compat part">partial · field-studies</span></div>
+        <div class="skillrow"><span>capture-plan</span><span class="compat full">compatible</span></div>
+        <div class="skillrow"><span>review-pr</span><span class="compat full">compatible</span></div>
+        <div class="skillrow"><span>diff-grammar</span><span class="compat full">compatible</span></div>
+      </div>
+    </div>
+    <div class="b-below">
+      <div class="pool-tabs">
+        <button class="on">Delegations</button>
+        <button>Material</button>
+        <button>Mapping</button>
+        <span class="micro" style="margin-left:auto;padding-right:4px">pool — Scene: bridge-2</span>
+      </div>
+      <div class="deleg">
+        <div class="drow">
+          <span class="who"><span class="avatar" style="background:var(--fizz);width:16px;height:16px;font-size:8.5px">F</span>Fizz</span>
+          <span class="what">Port Bridge 2 widgets to the plan</span>
+          <span class="where">scene:bridge-2 · act#212</span>
+          <span class="state st working"><i></i>working · steered</span>
+          <span class="act"><span class="mini">steer</span><span class="mini">cancel</span></span>
+        </div>
+        <div class="drow">
+          <span class="who"><span class="avatar" style="background:var(--honey);width:16px;height:16px;font-size:8.5px">H</span>Honey</span>
+          <span class="what">Capture pass — three-beat</span>
+          <span class="where">object:HeroShot · act#213</span>
+          <span class="state st queued"><i></i>queued · 1 ahead</span>
+          <span class="act"><span class="mini">release</span></span>
+        </div>
+        <div class="drow">
+          <span class="who"><span class="avatar" style="background:var(--bumble);width:16px;height:16px;font-size:8.5px">B</span>Bumble</span>
+          <span class="what">Review PR #482 (both PRs)</span>
+          <span class="where">composition · act#209</span>
+          <span class="state st blocked"><i></i>blocked · approval required</span>
+          <span class="act"><span class="mini">open</span></span>
+        </div>
+        <div class="drow" style="opacity:.55">
+          <span class="who"><span class="avatar" style="background:var(--fizz);width:16px;height:16px;font-size:8.5px">F</span>Fizz</span>
+          <span class="what">Drop old capture list from reads</span>
+          <span class="where">scene:bridge-2 · act#211</span>
+          <span class="state st done"><i></i>done · receipt r16</span>
+          <span class="act"><span class="mini">ledger</span></span>
+        </div>
+      </div>
+      <div class="pool-foot">
+        <span class="micro" style="white-space:nowrap">Gateway <b style="color:var(--ok)">buzz-acp ✓</b></span>
+        <span class="micro" style="white-space:nowrap">Autonomy <b style="color:var(--text)">act w/ review</b></span>
+        <span class="micro" style="white-space:nowrap">Budget <b style="color:var(--text)">12t / 40m</b></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CENTER — CONVERSATIONS ═══ -->
+  <div class="center">
+    <div class="room-head">
+      <span class="rn"># bridge-2</span>
+      <span class="micro">Scene room · bound to selection</span>
+      <span class="tag">2 humans · 3 agents</span>
+      <div class="members">
+        <span class="mav" style="background:#7a8790">A</span><span class="mav" style="background:#9a7fae">M</span>
+        <span class="mav" style="background:var(--fizz)">F</span><span class="mav" style="background:var(--honey)">H</span><span class="mav" style="background:var(--bumble)">B</span>
+      </div>
+    </div>
+    <div class="timeline">
+
+      <div class="msg">
+        <div class="avatar" style="background:#7a8790">A</div>
+        <div class="body">
+          <div class="who"><span class="nm">Alex Rivera</span><span class="tm">14:31:58</span></div>
+          <div class="txt">Let's move the hero to the new capture. <span class="mention">@Fizz</span> re-plan the port for Bridge 2 — keep Honey's tuned physics, same look.</div>
+        </div>
+      </div>
+
+      <div class="msg">
+        <div class="avatar" style="background:var(--fizz)">F</div>
+        <div class="body">
+          <div class="who"><span class="nm">Fizz</span><span class="agent-tag" style="color:var(--fizz);border:1px solid rgba(63,167,156,.4)">agent</span><span class="tm">14:32:01</span></div>
+          <div class="txt">On it — mapping the Bridge 2 field into the port plan. Handing placement to <span class="mention">@Honey</span>.</div>
+          <div class="foot"><span class="chip">👀 1</span><span class="chip">↩ reply 1</span></div>
+        </div>
+      </div>
+
+      <div class="msg">
+        <div class="avatar" style="background:#7a8790">A</div>
+        <div class="body">
+          <div class="who"><span class="nm">Alex Rivera</span><span class="tm">14:32:19</span></div>
+          <div class="txt"><span class="mention">@Fizz</span> also drop the old capture list from your reads.</div>
+          <div class="foot"><span class="steered">steered → working turn · withheld event delivered</span></div>
+        </div>
+      </div>
+
+      <div class="msg">
+        <div class="avatar" style="background:var(--fizz)">F</div>
+        <div class="body" style="flex:1">
+          <div class="who"><span class="nm">Fizz</span><span class="agent-tag" style="color:var(--fizz);border:1px solid rgba(63,167,156,.4)">agent</span><span class="tm">14:32:44</span>
+            <span class="hovtools"><span class="mini">↻ regenerate</span><span class="mini">⤷ steer</span><span class="mini">…</span></span></div>
+          <div class="txt">Clean three-beat port plan:</div>
+          <div class="plan">
+            <span><b>1 · Desktop compose</b> — <span>port the Bridge 2 view tree to widgets; platform boundary stays clean.</span></span>
+            <span><b>2 · Field settle</b> — <span>re-bind tuned physics params via the Scene rack, no retuning.</span></span>
+            <span><b>3 · Mobile handoff</b> — <span>thin adapters, notifications and deep links only.</span></span>
+          </div>
+          <div class="foot"><span class="chip">👀 2</span><span class="mono" style="font-size:9px">basis r15 → edits on r17</span></div>
+        </div>
+      </div>
+
+      <div class="msg">
+        <div class="body" style="max-width:640px">
+          <div class="card">
+            <div class="chead"><span style="color:var(--fizz)">▮</span><span class="t">Diff — port plan, first pass</span><span class="src">act#212 · draft → review</span></div>
+            <div class="cbody">
+              <div class="file">shell/scenes/bridge2/portPlan.ts <span class="adds">+42</span> <span class="dels">−7</span></div>
+              <div class="file">shell/scenes/bridge2/captureList.ts <span class="dels">−18</span></div>
+              <div class="file">shell/adapters/notifications.rs <span class="adds">+3</span></div>
+            </div>
+            <div class="cfoot"><span class="btn">Expand</span><span class="btn primary">Approve diffs</span><span class="btn">Request changes</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="msg">
+        <div class="body" style="max-width:640px">
+          <div class="card">
+            <div class="chead"><span style="color:var(--accent)">◈</span><span class="t">Approval — deploy Bridge 2 build?</span><span class="src">workflow · request_approval</span></div>
+            <div class="cbody"><div class="txt" style="font-size:11px;color:var(--text-dim)">Fizz asks: the three-beat plan is drafted and diffs await review. Deploy the Bridge 2 build after approval? <span class="mono">escalation → @alex · timeout 4h</span></div></div>
+            <div class="cfoot"><span class="btn primary">Approve</span><span class="btn danger">Deny</span><span class="btn">Details</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="msg">
+        <div class="avatar" style="background:var(--honey)">H</div>
+        <div class="body">
+          <div class="who"><span class="nm">Honey</span><span class="agent-tag" style="color:var(--honey);border:1px solid rgba(217,169,47,.4)">agent</span><span class="tm">14:33:10</span></div>
+          <div class="txt">Capture pass queued behind the port. Frame-anchored review will attach to the motion preview.</div>
+          <div class="foot"><span class="chip">🔗 00:04.2 media comment</span></div>
+        </div>
+      </div>
+
+      <div class="msg">
+        <div class="body" style="display:flex;gap:10px">
+          <div class="prcard"><span class="prsrc">BUZZ · PR</span><span style="font-size:11px">Port Bridge 2 scene — source</span><span class="mono" style="margin-left:auto;font-size:9px">open</span></div>
+          <div class="prcard"><span class="prsrc">GITHUB · PR</span><span style="font-size:11px">honeycomb-studio/deploy#482</span><span class="mono" style="margin-left:auto;font-size:9px">review</span></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="composer">
+      <div class="cbox">
+        <span class="ph">Message #bridge-2 — @ to delegate, Enter sends</span>
+        <span class="tools"><span>@</span><span>⌁</span><span>☺</span><span>AA</span></span>
+        <div class="tbtn" style="width:22px;height:22px">↑</div>
+      </div>
+      <div class="working-strip">
+        <span class="avatar" style="background:var(--fizz);width:13px;height:13px;font-size:7.5px">F</span>
+        <span><b style="color:var(--text)">Fizz: Working</b> · steered — weaving in your note · 2 turns left</span>
+        <span class="bar"><i></i></span>
+        <span class="mono" style="font-size:9px">act#212 · r17</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ RIGHT DOCK — CONSOLE ═══ -->
+  <div class="dock">
+    <div class="dcard">
+      <div class="dhead"><span class="micro" style="color:var(--text)">Approvals</span><span class="cnt">2</span></div>
+      <div class="dbody">
+        <div class="aprow"><span style="color:var(--fizz)">▮</span><span class="what">Fizz — bridge2 diffs (3 files)</span><span class="mini">review</span></div>
+        <div class="aprow"><span style="color:var(--accent)">◈</span><span class="what">Deploy Bridge 2 build — @alex</span><span class="mini">open</span></div>
+      </div>
+    </div>
+    <div class="dcard">
+      <div class="dhead"><span class="micro" style="color:var(--text)">Observer</span><span class="cnt">live</span></div>
+      <div class="dbody">
+        <div class="obs">
+          <div><span class="t">14:32:01</span> <span class="ev">turn_started</span> fizz · scene:bridge-2</div>
+          <div><span class="t">14:32:19</span> <span class="ev">steer_accepted</span> withheld event delivered</div>
+          <div><span class="t">14:32:44</span> <span class="ev">plan_posted</span> three-beat · act#212</div>
+          <div><span class="t">14:32:51</span> <span class="ev">tool file-edit</span> portPlan.ts +42 −7</div>
+          <div><span class="t">14:33:02</span> <span class="ev">request_approval</span> → @alex · 4h</div>
+          <div><span class="t">14:33:07</span> <span class="ev">handoff</span> placement → honey (queued)</div>
+        </div>
+      </div>
+    </div>
+    <div class="dcard">
+      <div class="dhead"><span class="micro" style="color:var(--text)">Act — Fizz @ bridge-2</span><span class="mono">#212</span></div>
+      <div class="dbody">
+        <div class="actsum">
+          <div class="kv"><span>autonomy</span><b>act with review</b></div>
+          <div class="kv"><span>reads</span><b>scene + registers</b></div>
+          <div class="kv"><span>writes</span><b>placement · layers · draft</b></div>
+          <div class="kv"><span>skills</span><b>port-widgets · capture-plan</b></div>
+          <div class="kv"><span>escalation</span><b>@alex</b></div>
+          <div class="kv"><span>budget</span><b>2 / 12 turns</b></div>
+          <div class="budget"><i></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BOTTOM DETAIL — CHAIN + AGENT FACE ═══ -->
+  <div class="bottom">
+    <div class="chain">
+      <div class="mode-tabs">
+        <button>Clip</button><button>Device</button><button class="on">Agent</button>
+      </div>
+      <div class="devrow"><span class="led"></span>EQ · scene tone</div>
+      <div class="devrow"><span class="led"></span>Echo · handoff tail</div>
+      <div class="devrow agent"><span class="led"></span>Fizz — agent · port plan</div>
+      <div class="devrow"><span class="led"></span>Reverb · room</div>
+      <div class="devrow" style="color:var(--text-faint)">＋ drop agent or device</div>
+      <div style="margin-top:auto;padding:6px 10px" class="micro">chain — scene:bridge-2 · agency is a device on the chain</div>
+    </div>
+    <div class="face">
+      <div class="face-head">
+        <div class="avatar" style="background:var(--fizz)">F</div>
+        <span class="fname">Fizz</span>
+        <span class="harness mono" style="font-size:9px;border:1px solid var(--line);border-radius:3px;padding:1px 5px;color:var(--text-faint)">buzz-acp · goose · act#212</span>
+        <span class="fstate">● working · steered</span>
+        <span class="right"><span class="mini">deep edit ↗</span><span class="mini">Configure ▾ ●</span></span>
+      </div>
+      <div class="frow">
+        <div class="fgroup"><span class="lab">Autonomy</span>
+          <div class="seg"><button>Suggest</button><button class="on">Act w/ review</button><button>Autonomous</button></div>
+        </div>
+        <div class="fgroup"><span class="lab">Reads — knowledge bounds</span>
+          <div class="chips"><span class="kchip on">this scene ✓</span><span class="kchip on">registers:physics ✓</span><span class="kchip off">whole expression</span><span class="kchip add">＋ ref</span></div>
+        </div>
+        <div class="fgroup"><span class="lab">Writes — projection</span>
+          <div class="chips"><span class="kchip on">placement</span><span class="kchip on">layers</span><span class="kchip on">properties</span><span class="kchip off">transport</span><span class="kchip">mode: draft → review</span></div>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="fgroup"><span class="lab">Skills admitted</span>
+          <div class="chips"><span class="kchip on">port-widgets</span><span class="kchip on">capture-plan</span><span class="kchip off">review-pr</span><span class="kchip add">＋ skill</span></div>
+        </div>
+        <div class="fgroup"><span class="lab">Review gate</span>
+          <div class="chips"><span class="kchip on">diffs</span><span class="kchip on">approvals</span><span class="kchip">escalate → @alex</span></div>
+        </div>
+        <div class="fgroup"><span class="lab">Budget</span>
+          <div class="chips"><span class="kchip">turns 2/12</span><span class="kchip">wall 14/40m</span></div>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="fgroup"><span class="lab">Chosen delegated controls (macros)</span>
+          <div style="display:flex;gap:6px">
+            <span class="macro"><span class="play">▶</span>Port widgets</span>
+            <span class="macro"><span class="play">▶</span>Capture plan</span>
+            <span class="macro" style="color:var(--text-faint);border-style:dashed">＋ map macro</span>
+          </div>
+        </div>
+      </div>
+      <div class="confrow">
+        <span><span class="lab">Steering</span><span class="mono">steer ● (queue · interrupt · owner-interrupt)</span></span>
+        <span><span class="lab">Runtime</span><span class="mono">goose · local pool</span></span>
+        <span><span class="lab">Memory</span><span class="mono">NIP-AE core · scene-scoped</span></span>
+        <span><span class="lab">Heartbeat</span><span class="mono">300s liveness</span></span>
+        <span><span class="lab">Governance</span><span class="mono">2 refs</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STATUS ═══ -->
+  <div class="status">
+    <span class="mono">act fizz/bridge-2#212 · r17 · basis ok</span>
+    <span class="mono">selection: object HeroShot (occurrence 2)</span>
+    <span class="right">
+      <span class="mono">Clip</span><span class="mono">Device</span><span class="mono" style="color:var(--accent)">Agent</span>
+      <span class="mono ws-draft">write standing: draft — revision guard armed</span>
+      <span class="mono ws-ok">gateway connected</span>
+    </span>
+  </div>
+
+  <div class="tagtag">design mockup — inference only · agentic-convergence · 2026-10-08 · no live data</div>
+</div>
+</div>
+<script>
+  function fit(){
+    const s=Math.min(innerWidth/1920,innerHeight/1200);
+    const f=document.getElementById('fit');
+    f.style.transform=`translate(-50%,-50%) scale(${s})`;
+  }
+  addEventListener('resize',fit);fit();
+  document.getElementById('fit').style.left='50%';
+  document.getElementById('fit').style.top='50%';
+  document.getElementById('fit').style.position='absolute';
+</script>
+</body>
+</html>

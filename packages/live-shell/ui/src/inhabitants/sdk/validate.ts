@@ -23,7 +23,7 @@ import {AGENT_SHELL_ADDRESS_TABLE} from '../agentParamAddresses.ts'
 import type {DeviceDeclaration, FamilyDeclaration, ParamInput, SdkParamRow} from './define.ts'
 import {allSdkParamRows, allTransportBindings, familyProduct, familyWriters} from './define.ts'
 import {isIconName} from './icons.ts'
-import {DEVICE_FORMATS, SDK_MODES, TRANSPORT_ROWS, isSdkMode} from './modes.ts'
+import {DEVICE_FORMATS, SDK_MODES, TRANSPORT_ROWS, TRANSPORT_SLOT_IDS, isSdkMode, isTransportTarget, transportTargetSlots} from './modes.ts'
 import {PRODUCT_IDS, isKnownProduct} from './products.ts'
 import {KNOWN_TOOLS, isKernelOp, isKnownTool} from './kernelOps.ts'
 
@@ -281,27 +281,51 @@ export function validateDeclaredFamily(
   }
 
   // Transport bindings: Rev 5's table made addressable — every binding sits
-  // on a declared row, in a declared mode, addressing a declared face's §14 row.
-  for (const binding of declaration.transport ?? []) {
+  // on a declared row-or-slot target, in a declared mode, addressing a
+  // declared face's §14 row.
+  for (const fault of validateTransportBindings(declaration.id, declaration.transport ?? [], params, manifest)) {
+    faults.push(fault)
+  }
+  return faults
+}
+
+/** The transport binding law over one set of bindings, against a family's
+ * declared/registered §14 rows and its face ids. Shared by admission
+ * (declaration.devices shape) and the adoption door (registered rows
+ * shape). Row-shaped and slot-shaped targets both legal; faults are
+ * authored sentences naming the law and the fix. `resolveInstance` maps a
+ * face id to the chain instance a §14 row is addressed by (the agent
+ * chain's rows carry deviceInstance `agent` while the binding addresses
+ * the face `harness-model` that composes it) — absent, the face id IS the
+ * instance, as kit-declared families declare it. */
+export function validateTransportBindings(
+  familyId: string,
+  bindings: readonly {readonly mode: string; readonly row: string; readonly face: string; readonly key: string}[],
+  rows: readonly SdkParamRow[],
+  manifest: InhabitantManifest,
+  resolveInstance?: (faceId: string) => string | undefined,
+): readonly string[] {
+  const faults: string[] = []
+  const faceIds = new Set(manifest.faces.map(face => face.id))
+  for (const binding of bindings) {
     if (!isSdkMode(binding.mode)) {
-      faults.push(`${manifest.id}: transport binding mode "${binding.mode}" is not one of the shell's modes (${SDK_MODES.join(' | ')})`)
+      faults.push(`${familyId}: transport binding mode "${binding.mode}" is not one of the shell's modes (${SDK_MODES.join(' | ')})`)
     }
-    if (!TRANSPORT_ROWS.includes(binding.row as never)) {
-      faults.push(`${manifest.id}: transport binding row "${binding.row}" is not a transport row (${TRANSPORT_ROWS.join(' | ')})`)
+    if (!isTransportTarget(binding.row)) {
+      faults.push(`${familyId}: transport binding row "${binding.row}" is not a transport row or slot (${TRANSPORT_ROWS.join(' | ')} · ${TRANSPORT_SLOT_IDS.join(' | ')})`)
     }
     if (!faceIds.has(binding.face)) {
-      faults.push(`${manifest.id}: transport binding addresses face "${binding.face}", which the family does not declare`)
+      faults.push(`${familyId}: transport binding addresses face "${binding.face}", which the family does not declare`)
       continue
     }
-    const device = declaration.devices.find(candidate => candidate.id === binding.face)
-    if (device && !device.params?.some(param => param.key === binding.key)) {
-      faults.push(`${manifest.id}: transport binding addresses "${binding.face}/${binding.key}", which carries no such §14 row`)
+    const instance = resolveInstance?.(binding.face) ?? binding.face
+    const addressed = rows.find(row => row.deviceInstance === instance && row.key === binding.key)
+    if (!addressed) {
+      faults.push(`${familyId}: transport binding addresses "${binding.face}/${binding.key}", which carries no such §14 row`)
     }
-    if (device?.modes && !device.modes.includes(binding.mode)) {
-      faults.push(`${manifest.id}: transport binding mode "${binding.mode}" is outside face "${binding.face}"'s mode scope`)
-    }
-    if (device?.admission === 'waiting') {
-      faults.push(`${manifest.id}: transport binding addresses "${binding.face}", which is a waiting face — a Rev 5 slot cannot be claimed by an owner that has not landed`)
+    const face = manifest.faces.find(candidate => candidate.id === binding.face)
+    if (face?.admission === 'waiting') {
+      faults.push(`${familyId}: transport binding addresses "${binding.face}", which is a waiting face — a Rev 5 slot cannot be claimed by an owner that has not landed`)
     }
   }
   return faults
@@ -344,16 +368,20 @@ export function validateAdmittedWorld(): WorldGateResult {
     }
   }
 
-  // Rev 5: one meaning per (mode, row) — two families binding the same
-  // transport row in the same mode is a double-booking.
+  // Rev 5: one meaning per (mode, slot) — two families binding the same
+  // slot (row- or slot-shaped) is a double-booking. Row bindings occupy
+  // every slot of their row (TRANSPORT_ROW_SLOTS), so a row binding and a
+  // slot binding of another family on one of its slots collide too.
   const rowOwners = new Map<string, FamilyManifestId>()
   for (const binding of allTransportBindings()) {
-    const key = `${binding.mode}/${binding.row}`
-    const prior = rowOwners.get(key)
-    if (prior && prior !== binding.family) {
-      cross.push(`transport double-booking: "${key}" is bound by families "${prior}" and "${binding.family}" — one meaning per mode's transport row`)
-    } else {
-      rowOwners.set(key, binding.family)
+    for (const slot of transportTargetSlots(binding.row)) {
+      const key = `${binding.mode}/${slot}`
+      const prior = rowOwners.get(key)
+      if (prior && prior !== binding.family) {
+        cross.push(`transport double-booking: "${key}" is bound by families "${prior}" and "${binding.family}" — one meaning per mode's transport slot`)
+      } else {
+        rowOwners.set(key, binding.family)
+      }
     }
   }
 

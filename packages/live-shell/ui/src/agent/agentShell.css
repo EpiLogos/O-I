@@ -201,7 +201,9 @@
 .agent-arr .ahead .mx span.n { background:var(--accent); color:var(--track-ink) }
 
 /* ============ detail: device chain (specimen §5 frame + mockup devices) ============ */
-.agent-device-chain { display:flex; gap:6px; padding:8px; overflow:hidden; align-items:stretch; font-size:11px; min-height:0 }
+/* The chain column: a drop's receipt/refusal card above, the card row below.
+   The row is the horizontal scroller — the 700px law keeps the cards' width. */
+.agent-device-chain { display:flex; flex-direction:column; gap:6px; padding:8px; overflow:hidden; font-size:11px; min-height:0 }
 .agent-device { background:var(--bg-2); border:1px solid var(--line); display:flex; flex-direction:column; flex:none; min-width:0 }
 .agent-device.sel { outline:1px solid var(--accent); outline-offset:-1px }
 .agent-device > .dh { height:22px; display:flex; align-items:center; gap:5px; padding:0 5px; background:var(--bg-0); border-bottom:1px solid var(--line); font-size:11px; cursor:default; white-space:nowrap }
@@ -237,9 +239,15 @@
 .agent-chainrow .md { font-size:9px; color:var(--text-faint); margin-left:auto }
 .agent-chains { width:150px; border-right:1px solid var(--line); display:flex; flex-direction:column; gap:2px; padding-right:6px }
 .agent-dropz { width:150px; flex:none; border:1px dashed var(--line-strong); display:flex; align-items:center; justify-content:center; text-align:center; color:var(--text-faint); font-size:11px; padding:10px }
+.agent-dropz.armed { border-color:var(--accent); color:var(--text) }
+/* The slide grip (the parent rack's ⋮⋮ grammar) and the visible drop slot a
+   slide opens between cards. Both use shell tokens only. */
+.agent-chain-grip { cursor:grab; color:var(--text-faint); font-size:9px; letter-spacing:-1px; padding:0 1px; flex:none }
+.agent-chain-grip:active { cursor:grabbing }
+.agent-chain-grip:hover { color:var(--text) }
+.agent-chain-gap { flex:0 0 3px; align-self:stretch; background:var(--accent); border-radius:2px; pointer-events:none }
 /* the pool keeps its legacy layout hooks (fixture battery) */
-.native-agent-rack { display:flex; flex-wrap:nowrap; gap:6px; padding:0; width:100% }
-.agent-device-chain { overflow-x:auto; overflow-y:hidden }
+.native-agent-rack { display:flex; flex-wrap:nowrap; gap:6px; padding:0; width:100%; align-items:stretch; overflow-x:auto; overflow-y:hidden }
 .agent-device-compact { min-width:0; flex:none }
 .agent-device-pool .agent-pool-row { display:grid; grid-template-columns:78px minmax(0,1fr); gap:6px; padding:2px 8px; font-size:11px; min-height:22px; align-items:center }
 .agent-device-pool .agent-pool-row span:first-child { color:var(--text-dim) }

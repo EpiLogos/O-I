@@ -109,7 +109,8 @@ test('the material surface no longer destroys its document to hide it', () => {
 
   // Every rendered source is unconditional: the same URL/string whatever the
   // visibility.
-  assert.equal(materialSource.split('src={baseUrl}').length - 1, 2, 'the tauri HTML frame and the PDF frame keep their material URL mounted');
+  assert.equal((materialSource.match(/src=\{htmlBasis\.frameUrl\}/g) ?? []).length, 1, 'the HTML frame keeps its material URL mounted');
+  assert.equal((materialSource.match(/src=\{baseUrl\}/g) ?? []).length, 1, 'the PDF frame keeps its material URL mounted');
   assert.ok(materialSource.includes('srcDoc={bridgeHtmlDocument}'), 'the bridge HTML frame keeps its srcDoc mounted');
   assert.ok(materialSource.includes('srcDoc={markdownHtmlDocument}'), 'the Markdown frame keeps its srcDoc mounted');
   assert.ok(materialSource.includes('src={imageSrc}'), 'the image keeps its src mounted');
@@ -138,11 +139,11 @@ test('acquisition is shared: the renderer consumes the broker, never a second di
   // Everything the editor already guaranteed must survive the seam swap.
   assert.ok(fileSurfaceSource.includes('readDraft') && fileSurfaceSource.includes('writeDraft') && fileSurfaceSource.includes('clearSavedDraft'), 'the durable draft path is untouched');
   assert.ok(fileSurfaceSource.includes('fileOperation'), 'writes, history and CAS still cross the owner operation');
-  assert.ok(fileSurfaceSource.includes('expected_revision:draft.base_revision'), 'the CAS expected-revision guard is intact');
+  assert.ok(fileSurfaceSource.includes('expected_revision:submitted.base_revision'), 'the CAS expected-revision guard is intact');
   assert.ok(fileSurfaceSource.includes('restoreView'), 'scroll/caret restoration is applied for seeded opens as for fresh reads');
   // Recovery now belongs to the native owner; retained-files-native.test.mjs
   // exercises deletion, restart and permission checks against that owner.
-  assert.ok(fileSurfaceSource.includes('lastFileReading(transport,binding.location)'), 'the read-only fallback obtains its retained reading from the native owner');
+  assert.ok(fileSurfaceSource.includes('lastFileReading(transport,binding.location!)'), 'the read-only fallback obtains its retained reading from the native owner');
 });
 
 /*

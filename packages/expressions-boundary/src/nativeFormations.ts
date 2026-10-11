@@ -5,7 +5,7 @@
  * (app.ts pointer add: entity() + shape + step-0 shape + glyph refit). Pure:
  * no DOM, no I/O. The 32-entity budget is the app's (formations and pins). */
 import type {Journey, Vec3, NativeFormationChange, NativeFormationShape, NativeObjectChange} from './editor.ts';
-import {clone, uid, validateJourney, type Entity} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
+import {clone, uid, validateJourney, type Entity, type Scene} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
 import {blueprintMember} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/blueprintGeometry';
 import {pruneAutomation} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeParameters';
 
@@ -33,6 +33,25 @@ export function validateFormationAdd(change: unknown): FormationAddSpec {
   if (!position || typeof position !== 'object' || !(['x', 'y', 'z'] as const).every(axis => Number.isFinite(position[axis]) && Math.abs(position[axis]) <= STAGE_LIMIT))
     throw Error('A formation position must have three finite stage coordinates within ±50.');
   return {title, shape: shape as NativeFormationShape, text: glyph, position: {x: position.x, y: position.y, z: position.z}};
+}
+
+const FORMATION_GLYPH_KEYS = ['kind', 'entity_id', 'text'];
+/** Admit one formation-glyph exactly, or refuse with the legible reason. The text law is formation-add's (1–120 characters
+ * after trim). The entity must be a formation of this Scene that is unlocked and not a blueprint member, as the app's
+ * native-glyph base edit requires (applyGlyph refuses a locked formation). Returns the admitted entity and trimmed text. */
+export function validateFormationGlyph(scene: Scene, change: unknown): {entity: Entity; text: string} {
+  if (!change || typeof change !== 'object' || Array.isArray(change)) throw Error('Choose an admitted formation glyph.');
+  const row = change as Record<string, unknown>;
+  if (row.kind !== 'formation-glyph' || Object.keys(row).length !== FORMATION_GLYPH_KEYS.length || Object.keys(row).some(key => !FORMATION_GLYPH_KEYS.includes(key)) || typeof row.entity_id !== 'string')
+    throw Error('A formation glyph carries only its entity and text.');
+  const text = typeof row.text === 'string' ? row.text.trim() : '';
+  if (!text || text.length > 120) throw Error('Give the glyph or word 1–120 characters.');
+  const entity = scene.entities.find(value => value.id === row.entity_id);
+  if (!entity) throw Error('This entity no longer belongs to this Scene.');
+  if (entity.kind !== 'formation') throw Error('Only a formation takes a formation glyph.');
+  if (entity.locked) throw Error('Unlock this formation before changing its shape.');
+  if (blueprintMember(scene, entity.id)) throw Error('Release the blueprint before changing one of its members.');
+  return {entity, text};
 }
 
 /** The app's add-path entity for one spec: the frame's own function (formationPlacement.ts), which the pointer add also calls. */

@@ -17,6 +17,7 @@ try {
  await page.goto(url,{waitUntil:'domcontentloaded',timeout:120000});
  await page.waitForFunction(()=>!!window.__FIELD_STUDIES__,null,{timeout:120000});
  await page.locator('[data-action="entry-new"]').click();
+ await page.waitForFunction(() => window.__FIELD_STUDIES__.getDocument().scenes[0].entities.length === 0, null, {timeout: 10000});
  assert.equal((await document()).scenes[0].entities.length,0);
  await page.locator('#tool-rail [data-action="tool-formation"]').click();
  await page.locator('#live-content [data-action="place-formation"]').click();

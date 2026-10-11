@@ -49,8 +49,8 @@
 .mode-centre-residence[hidden] { display: none }
 .center-body[data-lens-bar="true"] .mode-centre-residence { top: 25px }
 .mode-centre { height: 100%; display: flex; flex-direction: column; min-height: 0 }
-.mode-centre-head { flex: none; display: flex; align-items: baseline; gap: 8px; padding: 7px 10px 6px; border-bottom: 1px solid var(--line); background: var(--bg-1) }
-.mode-centre-head strong { font-size: 11px; color: var(--text) }
+.mode-centre-head { flex: none; display: flex; align-items: baseline; gap: 8px; padding: 7px 10px 6px; border-bottom: 1px solid var(--line); background: var(--bg-1); min-width: 0 }
+.mode-centre-head strong { font-size: 11px; color: var(--text); white-space: nowrap }
 .mode-centre-meaning { font-size: 10px; color: var(--text-dim); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .mode-centre-read { margin-left: auto; font-size: 10px; color: var(--text-faint); white-space: nowrap }
 .mode-centre-read[data-reading-state="reading"] { color: var(--accent-dim) }
@@ -58,40 +58,78 @@
 .mode-centre-structure { flex: 1; min-height: 0; overflow: auto; padding: 8px }
 .mode-centre-note { margin: 6px 2px; font-size: 10px; color: var(--text-faint) }
 
-/* Base · Session — the day as clips: the five track columns. */
+/* The mockup's column colours — the identity grammar of the mode centres
+   (world-shell-mockup-base-session / -r2-scenes). */
+.mode-centre { --mode-day: #97b1be; --mode-flows: #5cc6b4; --mode-beings: #8fd0a8; --mode-things: #e2a35e; --mode-goals: #c79ae0;
+  --mode-place: #d8c89a; --mode-occasion: #e2a35e; --mode-artefact: #c79ae0; --mode-expression: #b095d6; --mode-narration: #9db8cc; --mode-transition: #6fb3c9 }
+
+/* Base · Session — the day as clips: five coloured track columns at the
+   mockup's session rhythm (named first clip, soft-stop squares, stop row). */
 .mode-centre-day { display: flex; gap: 6px; align-items: stretch }
-.mode-centre-track { flex: 1 1 0; min-width: 96px; display: flex; flex-direction: column; gap: 4px }
-.mode-centre-track-head { flex: none; height: 22px; display: flex; align-items: center; padding: 0 7px; background: var(--bg-1); border: 1px solid var(--line); border-bottom: 2px solid var(--line-strong); font-size: 11px; color: var(--text-dim) }
-.mode-centre-cell { min-height: 26px; border: 1px solid var(--line); background: var(--bg-1); text-align: left; padding: 0 6px; font-size: 10px; color: var(--text-dim); overflow: hidden }
-.mode-centre-cell-named { color: var(--text-faint); white-space: nowrap; text-overflow: ellipsis; line-height: 24px }
+.mode-centre-track { flex: 1 1 0; min-width: 96px; display: flex; flex-direction: column; gap: 0 }
+.mode-centre-track-head { flex: none; height: 22px; display: flex; align-items: center; padding: 0 7px; margin-bottom: 2px; background: var(--tc, var(--bg-1)); border: 1px solid var(--line); border-bottom: 2px solid var(--line-strong); font-size: 11px; color: #21282e; font-weight: 500 }
+.mode-centre-cell { min-height: 26px; border: 1px solid var(--line); border-bottom-width: 1px; margin-bottom: -1px; background: var(--bg-1); text-align: left; padding: 0 6px; font-size: 10px; color: var(--text-dim); overflow: hidden; display: flex; align-items: center; gap: 4px }
+.mode-centre-cell-named { background: color-mix(in srgb, var(--tc, var(--bg-1)) 78%, var(--bg-2)); color: #252a2d; cursor: pointer }
+.mode-centre-cell-named:hover { background: color-mix(in srgb, var(--tc, var(--bg-1)) 88%, var(--bg-2)) }
+.mode-centre-tri { width: 0; height: 0; border-left: 7px solid #252a2dbb; border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; flex: none }
+.mode-centre-cell-name { overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
 .mode-centre-cell:not(button) { cursor: default }
-.mode-centre-cell-void { opacity: .45 }
-button.mode-centre-cell:hover { background: var(--bg-0); color: var(--text-dim) }
+.mode-centre-cell-void { opacity: .9 }
+.mode-centre-soft { width: 9px; height: 9px; border: 1px solid var(--line-strong); background: var(--bg-0); flex: none }
+.mode-centre-stoprow { height: 22px; margin-top: 2px; display: flex; align-items: center; gap: 3px; padding: 0 2px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line) }
+.mode-centre-stop-hard { width: 16px; height: 15px; display: grid; place-items: center; background: var(--bg-0); border: 1px solid var(--line) }
+.mode-centre-stop-retry { width: 16px; height: 15px; display: grid; place-items: center; background: var(--bg-0); border: 1px solid var(--line); color: var(--text-faint); font-size: 10px }
+.mode-centre-stop-chip { display: inline-block; width: 16px; height: 9px; margin-left: auto; background: var(--tc, var(--bg-3)) }
 
 /* Base · Arrangement — today on one ruler. */
 .mode-centre-ruler { display: flex; flex-direction: column; gap: 6px }
-.mode-centre-ruler-row { position: relative; height: 20px; border-bottom: 2px solid var(--line-strong) }
+.mode-centre-ruler-row { position: relative; height: 22px; border-bottom: 2px solid var(--line-strong); background: repeating-linear-gradient(90deg, transparent 0, transparent calc(100%/18 - 1px), var(--line) calc(100%/18 - 1px), var(--line) calc(100%/18)) }
 .mode-centre-tick { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--line); font-size: 9px; color: var(--text-faint) }
 .mode-centre-tick i { position: absolute; top: 2px; left: 3px; font-style: normal; white-space: nowrap }
-.mode-centre-tick[data-hour="6"] { left: 10% } .mode-centre-tick[data-hour="9"] { left: 26% } .mode-centre-tick[data-hour="12"] { left: 42% }
-.mode-centre-tick[data-hour="15"] { left: 58% } .mode-centre-tick[data-hour="18"] { left: 74% } .mode-centre-tick[data-hour="21"] { left: 90% }
-.mode-centre-ruler-lane { min-height: 44px; border: 1px dashed var(--line-strong); display: grid; place-content: center }
+.mode-centre-window { position: absolute; top: 0; bottom: 0; border-left: 2px solid var(--accent-dim, var(--accent)); border-right: 2px solid var(--accent-dim, var(--accent)); background: var(--accent-soft, rgba(255,190,0,.08)); pointer-events: none }
+.mode-centre-now { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent); box-shadow: 0 0 0 1px #0006; pointer-events: none }
+.mode-centre-ruler-lanes { display: flex; flex-direction: column; gap: 4px }
+.mode-centre-ruler-lane { position: relative; min-height: 40px; border: 1px dashed var(--line-strong); display: grid; grid-template-columns: 118px 1fr; align-items: center }
+.mode-centre-ruler-lane-name { font-size: 10px; color: var(--text-dim); padding: 0 8px; border-right: 1px solid var(--line) }
 .mode-centre-ruler-note { font-size: 10px; color: var(--text-faint); padding: 4px 8px }
 
-/* Technē · Session — the M3′ Journey: walk stops as rows. */
-.mode-centre-journey { display: flex; flex-direction: column; gap: 4px }
-.mode-centre-journey-heads, .mode-centre-journey-row { display: grid; grid-template-columns: 88px repeat(5, minmax(84px, 1fr)); gap: 4px }
+/* Technē · Session — the M3′ Journey: walk stops at the mockup's scene-row
+   grammar (six coloured columns + the scene-launcher column). */
+.mode-centre-journey { display: flex; flex-direction: column }
+.mode-centre-journey-heads, .mode-centre-journey-row { display: grid; grid-template-columns: 74px repeat(6, minmax(84px, 1fr)); gap: 4px }
+.mode-centre-journey-heads { margin-bottom: 2px }
+.mode-centre-journey-heads .mode-centre-launcher-head { background: var(--bg-1); color: var(--text-dim) }
 .mode-centre-journey-row { align-items: stretch }
-.mode-centre-stop-chip { display: inline-flex; align-items: center; padding: 0 6px; font-size: 10px; color: var(--text-dim); background: var(--bg-1); border: 1px solid var(--line) }
+.mode-centre-journey-row .mode-centre-cell-void { opacity: .9 }
+.mode-centre-stop-chip { display: inline-flex; align-items: center; padding: 0 7px; font-size: 10px; color: var(--text-dim); background: var(--bg-1); border: 1px solid var(--line); min-height: 26px }
+.mode-centre-journey-record { margin-top: 6px }
+.mode-centre-record { font-size: 10px; color: var(--text-dim); background: var(--bg-1); border: 1px solid var(--line); padding: 2px 8px; cursor: pointer }
+.mode-centre-record:hover { color: var(--text) }
 
 /* Technē · Arrangement — the M2′ Relation Field surface. */
-.mode-centre-relation { display: flex; flex-direction: column; gap: 6px }
+.mode-centre-relation { display: flex; flex-direction: column; gap: 5px }
 .mode-centre-lens-row { display: flex; gap: 4px; padding-bottom: 4px; border-bottom: 1px solid var(--line) }
 .mode-centre-lens { padding: 2px 8px; font-size: 10px; color: var(--text-dim); background: var(--bg-1); border: 1px solid var(--line) }
-.mode-centre-relation-row { display: grid; grid-template-columns: 128px minmax(140px, 1fr) minmax(80px, 220px); gap: 8px; align-items: center; min-height: 30px; border: 1px solid var(--line); background: var(--bg-1); padding: 2px 7px }
+.mode-centre-break { display: flex; align-items: center; gap: 8px; height: 18px; margin: 2px 0; color: var(--text-faint); font-size: 9.5px; letter-spacing: .04em }
+.mode-centre-break::before, .mode-centre-break::after { content: ''; flex: 1; height: 0; border-top: 2px dashed var(--line-strong) }
+.mode-centre-relation-row { display: grid; grid-template-columns: 118px minmax(120px, 1fr) minmax(70px, 200px) 64px; gap: 8px; align-items: center; min-height: 28px; border: 1px solid var(--line); background: var(--bg-1); padding: 2px 7px }
 .mode-centre-relation-name { font-size: 11px; color: var(--text) }
 .mode-centre-relation-note { font-size: 10px; color: var(--text-dim); min-width: 0 }
 .mode-centre-relation-lane { height: 10px; border-left: 1px dashed var(--line-strong); background: repeating-linear-gradient(90deg, transparent 0 11px, var(--line) 11px 12px) }
+.mode-centre-standing-legend { display: flex; align-items: center; gap: 5px; padding: 4px 1px }
+.mode-centre-legend-title { font-size: 9.5px; color: var(--text-faint); margin-right: 3px }
+
+/* The epistemic standings — the cut's edge grammar (fact solid · claim
+   violet dashed · inferred dotted · disputed red broken · ghost faint). */
+.mode-centre-standing, .mode-detail-standing-chip { display: inline-flex; align-items: center; height: 14px; padding: 0 6px; font-size: 9px; border: 1px solid var(--line-strong); color: var(--text-dim) }
+.mode-centre-standing-fact { border-style: solid; color: var(--text) }
+.mode-centre-standing-claim { border-style: dashed; border-color: var(--mercurius, #c79ae0); color: var(--mercurius, #c79ae0) }
+.mode-centre-standing-inferred { border-style: dotted; color: var(--text-dim) }
+.mode-centre-standing-disputed { border-style: dashed; border-color: #e3806f; color: #e3806f; text-decoration: line-through }
+.mode-centre-standing-ghost { border-style: dashed; color: var(--text-faint); opacity: .8 }
+.mode-centre-standing-live { border-style: solid; border-color: var(--accent); color: var(--accent) }
+.mode-centre-standing-run { border-style: solid; border-color: var(--fizz, #5cc6b4); color: var(--fizz, #5cc6b4) }
+.mode-detail-standing-chip { width: 22px; padding: 0; justify-content: center }
 
 /* The unread-reading disclosure — a styled component INSIDE the frame. */
 .mode-centre-disclosure { flex: none; margin: 0 8px 8px; padding: 7px 9px; border: 1px solid var(--line-strong); border-left: 3px solid var(--accent-dim); background: var(--bg-1); font-size: 11px; color: var(--text-dim); line-height: 1.45 }
@@ -111,6 +149,8 @@ button.mode-centre-cell:hover { background: var(--bg-0); color: var(--text-dim) 
 .mode-browser-crumbs button { padding: 1px 4px }
 .mode-browser-crumbs button:hover { background: var(--bg-3) }
 .mode-browser-crumbs button[aria-current="location"] { color: var(--accent) }
+.mode-browser-new { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 22px; padding: 2px 6px; font-size: 11px; color: var(--text-faint) }
+.mode-browser-resulthead { display: flex; justify-content: space-between; height: 20px; flex: none; background: var(--bg-0); padding: 2px 6px; font-size: 10px; color: var(--text-dim); border-bottom: 1px solid var(--line) }
 .mode-browser-empty { margin: 7px; border: 1px solid var(--line-strong); background: var(--bg-1); padding: 0 0 7px }
 .mode-browser-empty-head { display: flex; align-items: center; gap: 7px; padding: 6px 8px; border-bottom: 1px solid var(--line); background: var(--bg-0) }
 .mode-browser-empty-mark { display: grid; place-items: center; color: var(--text-dim) }
@@ -125,24 +165,122 @@ button.mode-centre-cell:hover { background: var(--bg-0); color: var(--text-dim) 
 .mode-browser-context p { margin: 3px 0 0 }
 .mode-browser-fault { margin: 7px; padding: 6px 8px; border: 1px solid var(--rec); color: #f3b4a0; font-size: 11px; background: var(--bg-1) }
 
+/* The aperture slot (Rev 3) — the encounter concepts the focused pane
+   follows, drawn in the pool beneath the category context. */
+.mode-browser-aperture { margin: 6px 7px 7px; border: 1px solid var(--line-strong); background: var(--bg-1) }
+.mode-browser-aperture-head { display: flex; justify-content: space-between; padding: 4px 8px; border-bottom: 1px solid var(--line); background: var(--bg-0); font-size: 10px; color: var(--text-faint); letter-spacing: .04em }
+.mode-browser-aperture-row { display: grid; grid-template-columns: 64px 1fr; gap: 8px; min-height: 21px; align-items: baseline; padding: 1px 8px; font-size: 10.5px }
+.mode-browser-aperture-name { color: var(--text-faint) }
+.mode-browser-aperture-value { color: var(--text-dim); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px }
+
 /* ——— the per-mode detail frames (device density, the guide's §3.7 chain
    anatomy scaled to the strip) ——— */
 .mode-detail-frame { width: min(100%, 980px); border: 1px solid var(--line-strong); background: var(--bg-1); margin: 6px; align-self: flex-start }
+.mode-detail-frame-wide { width: calc(100% - 12px) }
 .mode-detail-frame-head { display: flex; align-items: center; gap: 7px; padding: 5px 8px; border-bottom: 1px solid var(--line); background: var(--bg-0) }
 .mode-detail-frame-mark { display: grid; place-items: center; color: var(--text-dim) }
 .mode-detail-frame-head strong { font-size: 11px }
 .mode-detail-frame-sub { font-size: 10px; color: var(--text-faint); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.mode-detail-frame-state { margin-left: auto; flex: none; font-size: 9px; letter-spacing: .04em; color: var(--text-faint); border: 1px dashed var(--line-strong); padding: 1px 5px; white-space: nowrap }
 .mode-detail-frame-note { margin: 7px 8px; font-size: 11px; color: var(--text-dim); line-height: 1.45 }
 .mode-detail-frame-note b { color: var(--text) }
 .mode-detail-chips { list-style: none; display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0 8px 8px }
 .mode-detail-chip { font-size: 10px; color: var(--text-dim); background: var(--bg-2); border: 1px solid var(--line-strong); padding: 2px 7px }
+
+/* The document device cards — the guide's §3.7 chain anatomy: power lamp
+   (dark = no reading), name, owner, fold/pop marks, reason line. */
+.mode-detail-chain { display: flex; gap: 6px; padding: 8px; overflow-x: auto; align-items: stretch }
+.mode-detail-devcard { flex: 0 0 auto; width: 172px; border: 1px solid var(--line); background: var(--bg-2); display: flex; flex-direction: column }
+.mode-detail-devcard-head { display: flex; align-items: center; gap: 5px; height: 21px; padding: 0 6px; border-bottom: 1px solid var(--line); background: var(--bg-1); font-size: 11px; white-space: nowrap }
+.mode-detail-devcard-head strong { font-weight: 500 }
+.mode-detail-devcard-lamp { width: 9px; height: 9px; border-radius: 50%; background: var(--bg-3); border: 1px solid #0006; flex: none }
+.mode-detail-devcard-owner { font-size: 9.5px; color: var(--text-faint); overflow: hidden; text-overflow: ellipsis }
+.mode-detail-devcard-marks { margin-left: auto; display: flex; gap: 5px; color: var(--text-faint); align-items: center }
+.mode-detail-devcard-note { margin: 6px 7px 2px; font-size: 10px; color: var(--text-dim); line-height: 1.4 }
+.mode-detail-devcard-reason { margin: auto 7px 6px; font-size: 9.5px; color: var(--text-faint); font-style: italic }
+.mode-detail-dropzone { flex: 1 1 120px; min-width: 120px; border: 1px dashed var(--line-strong); display: flex; align-items: center; justify-content: center; text-align: center; color: var(--text-faint); font-size: 10.5px; padding: 8px }
+
 .mode-detail-rows { list-style: none; margin: 0; padding: 4px 8px; display: grid; gap: 2px }
 .mode-detail-row { display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 8px; min-height: 21px; align-items: baseline }
+.mode-detail-craft .mode-detail-row { grid-template-columns: 92px minmax(0, 1fr) }
 .mode-detail-row-op { font-size: 10px; color: var(--text-faint) }
 .mode-detail-row-value { font-size: 11px; color: var(--text-dim); min-width: 0; overflow-wrap: anywhere }
 .mode-detail-row-value.is-waiting, .mode-detail-row-value .is-waiting { color: var(--text-faint); font-style: italic }
 .mode-detail-row-value[data-admission="admitted"] { color: var(--text) }
 .mode-detail-row-value[data-admission="refused"] { color: var(--text-faint) }
+
+/* The Technē clip craft — the mockup's four sections in one row. */
+.mode-detail-craft { display: grid; grid-template-columns: minmax(200px, 1fr) minmax(220px, 1.2fr) minmax(160px, 1fr) minmax(160px, 1fr); gap: 0 }
+.mode-detail-craft-col { border-right: 1px solid var(--line); min-width: 0; display: flex; flex-direction: column }
+.mode-detail-craft-col:last-child { border-right: 0 }
+.mode-detail-craft-head { flex: none; padding: 4px 8px; border-bottom: 1px solid var(--line); background: var(--bg-0); font-size: 9.5px; letter-spacing: .05em; color: var(--text-faint) }
+.mode-detail-craft-col .mode-detail-rows { flex: 1 }
+.mode-detail-craft-note { margin: 7px 8px; font-size: 10.5px; color: var(--text-faint); line-height: 1.45 }
+.mode-detail-constellation { position: relative; height: 96px; margin: 10px; border: 1px dashed var(--line-strong) }
+.mode-detail-constellation-ghost { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; transform: translate(-50%, -50%); border: 1px dashed var(--text-faint); border-radius: 50%; opacity: .6 }
+.mode-detail-constellation-core { position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; transform: translate(-50%, -50%); border-radius: 50%; background: var(--bg-3); border: 1px solid var(--line-strong) }
+
+/* The Factory task log — task column + log column at device density. */
 .mode-detail-tasklog { display: grid; grid-template-columns: minmax(220px, 2fr) minmax(200px, 3fr); gap: 0 }
-.mode-detail-tasklog-log { border-left: 1px solid var(--line); min-height: 96px }
-@media (max-width: 1000px) { .mode-detail-tasklog { grid-template-columns: 1fr } .mode-detail-tasklog-log { border-left: 0; border-top: 1px solid var(--line) } }
+.mode-detail-tasklog-side { min-width: 0; border-right: 1px solid var(--line) }
+.mode-detail-tasklog-log { min-height: 96px; min-width: 0 }
+.mode-detail-tasklist { border-top: 1px solid var(--line); padding: 3px 0 6px }
+.mode-detail-tasklist-head { display: flex; justify-content: space-between; padding: 2px 8px; font-size: 9.5px; letter-spacing: .05em; color: var(--text-faint) }
+.mode-detail-tasklist-row { display: grid; grid-template-columns: 20px 1fr 52px; gap: 6px; align-items: baseline; min-height: 20px; padding: 1px 8px; font-size: 10.5px; color: var(--text-dim) }
+.mode-detail-tasklist-n { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; color: var(--text-faint) }
+.mode-detail-tasklist-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.mode-detail-tasklist-state { text-align: right; font-size: 9.5px }
+.mode-detail-task-running { color: var(--accent) }
+.mode-detail-task-queued { color: var(--text-faint) }
+.mode-detail-task-stalled { color: var(--stall) }
+.mode-detail-task-done { color: var(--text-faint) }
+.mode-detail-task-unknown { color: var(--text-faint); font-style: italic }
+.mode-detail-logrow { display: grid; grid-template-columns: 52px 52px 1fr; gap: 8px; min-height: 21px; align-items: baseline; padding: 2px 10px; font-size: 10.5px; color: var(--text-dim) }
+.mode-detail-logrow:hover { background: #ffffff08 }
+.mode-detail-logrow-time { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; color: var(--text-faint) }
+.mode-detail-logrow-state { font-size: 9.5px }
+.mode-detail-logrow-text { min-width: 0; overflow-wrap: anywhere }
+.mode-detail-logrow-meta { color: var(--text-faint); font-size: 10px }
+.mode-detail-logrow-wait { border-top: 1px solid var(--line); margin-top: 4px; font-size: 10px }
+@media (max-width: 1000px) { .mode-detail-tasklog { grid-template-columns: 1fr } .mode-detail-tasklog-side { border-right: 0; border-bottom: 1px solid var(--line) } .mode-detail-craft { grid-template-columns: 1fr 1fr } .mode-detail-craft-col { border-bottom: 1px solid var(--line) } }
+
+/* ——— the per-mode context dock (Rev 4: tiles above, launcher below, the
+   resize wedge that dies with the toggle) ——— */
+.mode-dock { position: relative; height: 100%; min-height: 0; display: flex; flex-direction: column; background: var(--bg-1); border-left: 4px solid var(--line) }
+.mode-dock-wedge { position: absolute; left: -7px; top: 0; bottom: 0; width: 9px; cursor: ew-resize; z-index: 5 }
+.mode-dock-wedge:hover { background: rgba(255, 190, 0, .2) }
+.mode-dock-tilesh { flex: none; height: 24px; display: flex; align-items: center; gap: 6px; padding: 0 8px; background: var(--bg-2); border-bottom: 1px solid var(--line); font-size: 11px; color: var(--text-dim) }
+.mode-dock-count { margin-left: auto; font-size: 10px; color: var(--text-faint) }
+.mode-dock-tiles { flex: 1; min-height: 0; overflow: auto; padding: 5px; display: grid; grid-template-columns: 1fr; gap: 5px; align-content: start }
+.mode-dock-empty { padding: 12px; font-size: 11px; color: var(--text-faint) }
+.mode-dock-tile { border: 1px solid var(--line); background: var(--bg-1); display: flex; flex-direction: column; min-width: 0 }
+.mode-dock-tile-head { flex: none; height: 24px; display: flex; align-items: center; gap: 5px; padding: 0 6px; background: var(--bg-2); font-size: 11px; border-bottom: 1px solid var(--line) }
+.mode-dock-tile-mark { display: grid; place-items: center; color: var(--text-dim) }
+.mode-dock-tile-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.mode-dock-tile-marks { display: flex; gap: 7px }
+.mode-dock-tile-marks button { color: var(--text-faint); font-size: 10px; padding: 1px 2px }
+.mode-dock-tile-marks button:hover, .mode-dock-tile-marks button[aria-pressed="true"] { color: var(--accent) }
+.mode-dock-tile-body { position: relative; overflow: hidden; max-height: 240px; overflow-y: auto }
+.mode-dock-companion { padding: 7px 8px }
+.mode-dock-companion-name { display: flex; align-items: baseline; gap: 6px; font-size: 11px }
+.mode-dock-companion-name b { font-weight: 500; color: var(--text) }
+.mode-dock-companion-name span { font-size: 9.5px; color: var(--text-faint) }
+.mode-dock-companion-tabs { margin-top: 4px; font-size: 10px; color: var(--text-dim) }
+.mode-dock-rows { padding: 4px 0 }
+.mode-dock-row { display: grid; grid-template-columns: 14px 54px 1fr; gap: 6px; align-items: center; min-height: 21px; padding: 1px 8px; font-size: 10.5px; color: var(--text-dim) }
+.mode-dock-row b { font-weight: 400; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.mode-dock-row-light { width: 6px; height: 6px; border-radius: 50%; flex: none }
+.mode-dock-row-meta { margin-left: auto; font-size: 9.5px; color: var(--text-faint) }
+.mode-dock-note { margin: 5px 8px 7px; font-size: 10.5px; color: var(--text-faint); line-height: 1.45 }
+.mode-dock-launch { flex: none; border-top: 5px solid var(--line); background: var(--bg-2); display: flex; flex-direction: column; margin-bottom: 0 }
+.mode-dock-launch-head { display: flex; align-items: center; gap: 5px; padding: 4px 5px; background: var(--bg-1); border-bottom: 1px solid var(--line) }
+.mode-dock-launch-head input { flex: 1; min-width: 0; height: 18px; background: var(--bg-0); border: 1px solid var(--line); padding: 0 6px; font-size: 10.5px; color: var(--text) }
+.mode-dock-launch-more { color: var(--text-faint); cursor: default; padding: 0 3px }
+.mode-dock-launch-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; padding: 5px; max-height: 180px; overflow: auto }
+.mode-dock-cell { border: 1px solid var(--line); background: var(--bg-1); display: flex; flex-direction: column; cursor: pointer; position: relative; min-width: 0; padding: 0 }
+.mode-dock-cell:hover { border-color: var(--text-faint) }
+.mode-dock-cell.open { border-color: var(--accent) }
+.mode-dock-cell-preview { flex: 1; min-height: 44px; display: grid; place-items: center; background: var(--bg-0); margin: 4px; color: var(--text-faint) }
+.mode-dock-cell-name { height: 20px; display: flex; align-items: center; gap: 5px; padding: 0 6px; font-size: 10.5px; color: var(--text-dim) }
+.mode-dock-cell-dot { margin-left: auto; width: 7px; height: 7px; border-radius: 50%; background: var(--accent) }
+.mode-dock-preset { margin: 0 5px 5px; padding: 3px 6px; font-size: 10px; color: var(--text-faint); border: 1px dashed var(--line-strong); background: transparent; text-align: left }

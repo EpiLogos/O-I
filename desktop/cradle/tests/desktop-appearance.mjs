@@ -7,7 +7,7 @@ import {chromium} from 'playwright';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const artifacts=fileURLToPath(new URL('../walk/artifacts/ui-convergence/',import.meta.url));
 mkdirSync(artifacts,{recursive:true});
-const server=await createServer({root,server:{host:'127.0.0.1',port:0},logLevel:'error'});
+const server=await createServer({root,server:{host:'127.0.0.1',port:0,strictPort:false},logLevel:'error'});
 await server.listen();
 const browser=await chromium.launch({headless:true});
 const url=`http://127.0.0.1:${server.httpServer.address().port}`;

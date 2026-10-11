@@ -1,10 +1,17 @@
-import {useEffect, useState} from 'react'
+import {useCallback, useEffect, useState} from 'react'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {useWorkspace} from '../shell/workspaceContext'
 import {useAgentShell} from './AgentShellContext'
-import {NativeAgentDeviceRack, type DeviceReading} from './NativeAgentDeviceRack'
+import {NativeAgentDeviceRack, type DeviceReading, type ChainDropTarget} from './NativeAgentDeviceRack'
 import {useHarnessBinding} from './useHarnessBinding'
-import {refusalLine, safeJson} from './RefusalCard'
+import {harnessAgentControl} from './harnessAgentControl'
+import {refusalLine, safeJson, RefusalCard} from './RefusalCard'
+import {
+  chainDropDecision,
+  encodeChainDrag,
+  MISSING_OPS,
+  type ActiveChainDrag,
+} from './agentChainDrag'
 import './agentShell.css'
 
 type Obj = Record<string, unknown>
@@ -51,14 +58,31 @@ function gatewayLine(doc: unknown): string {
   return 'answered — see the receipt for the full document'
 }
 
+/** The outcome of one drop attempt: the owner's receipt, or the refusal that
+ * names the missing operation. Rendered through the landed disclosure cards —
+ * a receipt is a styled note, a refusal is a RefusalCard with the verbatim
+ * receipt folded. */
+export interface ChainDropOutcome {
+  kind: 'receipt' | 'refused'
+  title: string
+  line: string
+  receipt: string | null
+}
+
 /** The device chain: every admit light is a reading — the harness binding for
  * the gateway, the accepted roster for the skillset rack, the workcell status
  * for git, the write arm for the world face. A refused read names itself and
- * carries its receipt folded — never raw JSON on the card surface. */
+ * carries its receipt folded — never raw JSON on the card surface.
+ *
+ * Drops land here too (the aperture law): every drop resolves through the
+ * drag model to ONE declared owner operation — the shell's own session
+ * selection, or `harness_agent_control` on the gateway binding — or it
+ * refuses with a card naming the exact missing operation. */
 export function AgentDeviceChain({sessionRef}: {sessionRef: string | null}) {
   const {transport} = useWorkspace()
   const shell = useAgentShell()
   const {binding} = useHarnessBinding(transport)
+  const [dropOutcome, setDropOutcome] = useState<ChainDropOutcome | null>(null)
   const [gateway, setGateway] = useState<DeviceReading>({kind: 'reading', title: 'Gateway · hermes', line: 'Reading gateway…', receipt: null})
   const [git, setGit] = useState<DeviceReading>({kind: 'reading', title: 'Git', line: 'Reading seat…', receipt: null})
   const [gitAdmitted, setGitAdmitted] = useState(false)
@@ -149,8 +173,69 @@ export function AgentDeviceChain({sessionRef}: {sessionRef: string | null}) {
     return () => { live = false }
   }, [transport, sessionRef, binding])
 
+  // One drop, one owner operation (or one named refusal). The session drop
+  // rides the run model's own selection — the who slot then reads the new
+  // session's task record through the effect above. The agent drop dispatches
+  // `harness_agent_control` (new) on the gateway binding, the op the gateway
+  // family declares, and folds the owner's outcome document as the receipt.
+  // Everything else refuses by name — the dragged item simply returns.
+  const attemptDrop = useCallback(async (active: ActiveChainDrag, target: ChainDropTarget) => {
+    if (active.kind === 'reorder') {
+      setDropOutcome({
+        kind: 'refused',
+        title: 'Slide refused',
+        line: `«${active.reorder.title}» over ${target.label} — the chain composition is declared at the family door (through → who → how → where → lands); no owner operation reorders it — missing op: ${MISSING_OPS.order}`,
+        receipt: encodeChainDrag(active.reorder),
+      })
+      return
+    }
+    const decision = chainDropDecision(active.drag)
+    if (decision.kind === 'missing-op') {
+      setDropOutcome({
+        kind: 'refused',
+        title: 'Drop refused',
+        line: `«${active.drag.label}» onto ${target.label} — no owner operation admits it: missing op ${decision.missingOp} — ${decision.because}.`,
+        receipt: encodeChainDrag(active.drag),
+      })
+      return
+    }
+    if (decision.operation.kind === 'select-session') {
+      shell.setSelectedTrackId(active.drag.ref)
+      setDropOutcome({
+        kind: 'receipt',
+        title: 'Chain subject',
+        line: `«${active.drag.label}» onto ${target.label} — the who slot reads this session’s task record (encounter_task_read follows the selection).`,
+        receipt: null,
+      })
+      return
+    }
+    const outcome = await harnessAgentControl(transport, binding, decision.operation.control)
+    setDropOutcome(outcome.ok
+      ? {
+          kind: 'receipt',
+          title: 'Agent seat',
+          line: `«${active.drag.label}» onto ${target.label} — ${outcome.note}`,
+          receipt: outcome.document !== undefined ? safeJson(outcome.document) : null,
+        }
+      : {
+          kind: 'refused',
+          title: 'Agent seat refused',
+          line: `«${active.drag.label}» onto ${target.label} — harness_agent_control (${decision.operation.control}) answered: ${outcome.error}`,
+          receipt: outcome.error,
+        })
+  }, [shell, transport, binding])
+
   return (
     <div className="agent-device-chain">
+      {dropOutcome && (dropOutcome.kind === 'refused'
+        ? <RefusalCard
+            title={dropOutcome.title}
+            line={dropOutcome.line}
+            receipt={dropOutcome.receipt}
+            onDismiss={() => setDropOutcome(null)}
+            dataI="Drop refusal|The named missing operation: the drop landed nothing, and the dragged item returned."
+          />
+        : <p className="agent-transport-note" role="status"><b>{dropOutcome.title}</b> — {dropOutcome.line}</p>)}
       <NativeAgentDeviceRack
         sessionRef={sessionRef}
         gateway={gateway}
@@ -163,6 +248,7 @@ export function AgentDeviceChain({sessionRef}: {sessionRef: string | null}) {
         skillsAdmitted={skillsAdmitted}
         skillsNote={skillsNote}
         identityNote={identityNote}
+        onDropAttempt={attemptDrop}
       />
     </div>
   )

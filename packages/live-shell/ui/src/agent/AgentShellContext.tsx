@@ -51,6 +51,10 @@ export interface AgentShellState {
   loopOn: boolean
   setLoopOn: (v: boolean) => void
   quantize: AgentQuantize
+  /** The direct setter (the interrupt-timing row's armed shell path —
+   * `shell.setQuantize`); the transport's cycle routes through the
+   * setter bridge, which dispatches the value to its carrier. */
+  setQuantize: (v: AgentQuantize) => void
   cycleQuantize: () => void
   tokenScope: AgentTokenScope
   cycleTokenScope: () => void
@@ -120,6 +124,7 @@ export function AgentShellProvider({children, frameRef}: {children: ReactNode; f
     handBackLit, setHandBackLit,
     loopOn, setLoopOn,
     quantize,
+    setQuantize,
     cycleQuantize: () => setQuantize(current => QUANTIZE_STEPS[(QUANTIZE_STEPS.indexOf(current) + 1) % QUANTIZE_STEPS.length]),
     tokenScope,
     cycleTokenScope: () => setTokenScope(current => TOKEN_SCOPES[(TOKEN_SCOPES.indexOf(current) + 1) % TOKEN_SCOPES.length]),

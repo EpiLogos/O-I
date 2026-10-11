@@ -27,6 +27,10 @@ O-I packages/live-shell/ui/src/inhabitants/sdk/   the kit (DEVICE-SDK.md is its 
 O-I packages/live-shell/ui/src/inhabitants/       the neutral door + families
 O-I suite/capability-matrix.json + suite/product-capabilities.json  the matrices
 O-I gates/                   the definition of landed (gates/run.mjs)
+O-I docs/research/glass-bead-game/   the figure — 06-THE-PRAXIS.md is the
+                                     praxis layer (the domain's intended use
+                                     as spec and verification layer); 01–05
+                                     the source study the figure stands on
 ```
 
 ## The loop (each step has its command; skip nothing)
@@ -35,7 +39,12 @@ O-I gates/                   the definition of landed (gates/run.mjs)
    spine (is this a T-thread? the spine decides where it lands), the
    ownership map (whose family), and the editor standard (what craft bar).
    Consult the authored ground before any code — code is a poor witness of
-   why a thing exists.
+   why a thing exists. Read the figure's referent (06 §0): the four modes
+   are chambers of one instrument; Epi-Logos is the philosophical corpus —
+   the esoteric identity projected over the exoteric substrate as the
+   epi-logos mode — and this domain builds the instrument it is played on.
+   A thread is right when the day-arc of 06 §7 can be performed through
+   what it lands.
 
 2. **Claim the lane.** `seat join env-1 o-i --new-lane --actor <you>
    --region <your paths>` — or attach as co-worker without `--new-lane`.

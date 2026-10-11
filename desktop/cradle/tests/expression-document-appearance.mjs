@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {renderedBounds} from '../walk/knowledge-projection-geometry.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
-const server=await createServer({root,appType:'custom',server:{host:'127.0.0.1',port:0},logLevel:'error'});
+const server=await createServer({root,appType:'custom',server:{host:'127.0.0.1',port:0,strictPort:false},logLevel:'error'});
 server.middlewares.use('/document-appearance',(_req,res)=>{
  res.setHeader('content-type','text/html');
  res.end('<body class="oi-desktop" style="margin:0"><link rel="stylesheet" href="/node_modules/@epilogos/oi-design-system/tokens.css"><div id="host" style="position:relative;width:600px;height:440px;background:var(--oi-canvas-ground)"></div><button id="focus">Keep focus</button></body>');

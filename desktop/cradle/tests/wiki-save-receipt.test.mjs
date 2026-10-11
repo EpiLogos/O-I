@@ -49,8 +49,10 @@ test('a successful receipt must agree with the independently read destination',a
  const original=globalThis.fetch;let writes=0;
  globalThis.fetch=async(_url,options)=>{
   const op=JSON.parse(options.body);
-  const outcome=op.op==='file_read'?{result:'file_read',reading:{location,revision:'file:changed-again',content:JSON.stringify(document)}}:
-   {result:'expression',data:op.request.operation==='inspect'?{state:'read',document}:(writes++,success)};
+  const outcome=op.op==='file_read'?{result:'file_read',reading:{location,revision:'file:changed-again',content:JSON.stringify(document)}}
+   :op.request?.operation==='inspect_file'?{result:'expression',data:{state:'ready',document,file:{location,revision:'file:changed-again'}}}
+   :op.request?.operation==='inspect'?{result:'expression',data:{state:'read',document}}
+   :(writes++,{result:'expression',data:success});
   return {json:async()=>({ok:true,outcome})};
  };
  try{

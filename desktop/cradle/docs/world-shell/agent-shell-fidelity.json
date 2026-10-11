@@ -1,0 +1,902 @@
+{
+  "schema": "oi.agent-shell-fidelity/v1",
+  "source": "new-shell/agent-shell-mockup.html",
+  "revision": "AGENTIC-CONVERGENCE.md Revision 5",
+  "generated_at": "2026-10-08",
+  "tokens": {
+    "--bg-0": "#26292d",
+    "--bg-1": "#33363b",
+    "--bg-2": "#3f4348",
+    "--bg-3": "#4a4e54",
+    "--surface": "#43464c",
+    "--line": "#24262a",
+    "--line-strong": "#3d4147",
+    "--text": "#d4d7da",
+    "--text-dim": "#a2a7ad",
+    "--text-faint": "#71767c",
+    "--accent": "#ffbe00",
+    "--accent-soft": "rgba(255,190,0,.13)",
+    "--sel": "#7ec3e6",
+    "--rec": "#e0523f",
+    "--green": "#8fd0a8",
+    "--stall": "#ff9b4a",
+    "--fizz": "#5cc6b4",
+    "--honey": "#e2a35e",
+    "--bumble": "#d985a6",
+    "--drone": "#8fbfb6",
+    "--mono": "ui-monospace,'SF Mono',Menlo,monospace"
+  },
+  "geometry": {
+    "viewports": [
+      {
+        "name": "desktop",
+        "width": 1920,
+        "height": 1200
+      },
+      {
+        "name": "compact",
+        "width": 700,
+        "height": 1200,
+        "note": "browser hidden via .frame.no-browser; dock may narrow"
+      }
+    ],
+    "frame": {
+      "gridTemplateColumns": "400px minmax(0, 1fr) var(--dock-w)",
+      "gridTemplateRows": "64px minmax(0, 1fr) 300px 28px",
+      "gridTemplateAreas": "\"tp tp tp\" \"br ct dk\" \"ch ch dk\" \"sb sb sb\"",
+      "dockWidthDefault": "300px",
+      "browserWidth": "400px",
+      "detailHeight": "300px",
+      "transportHeight": "64px",
+      "statusHeight": "28px"
+    }
+  },
+  "transport": {
+    "orderHint": [
+      "tBrowser",
+      "tap",
+      "effort",
+      "effDn",
+      "effUp",
+      "hb",
+      "tokScope",
+      "follow",
+      "play",
+      "stop",
+      "rec",
+      "od",
+      "arm",
+      "loop",
+      "tDetail",
+      "tDock",
+      "vSession",
+      "vArr"
+    ],
+    "functionTable": [
+      {
+        "live": "Play",
+        "agency": "Run"
+      },
+      {
+        "live": "Stop",
+        "agency": "Interrupt (quantized; twice cancels turn)"
+      },
+      {
+        "live": "Record",
+        "agency": "Voice"
+      },
+      {
+        "live": "Overdub",
+        "agency": "Steer vs queue"
+      },
+      {
+        "live": "Automation arm",
+        "agency": "Write arm"
+      },
+      {
+        "live": "Re-enable automation",
+        "agency": "Hand back"
+      },
+      {
+        "live": "Capture MIDI",
+        "agency": "Capture → skill"
+      },
+      {
+        "live": "Loop + length",
+        "agency": "Looped act with cap"
+      },
+      {
+        "live": "Tempo / time signature",
+        "agency": "Effort / Budget"
+      },
+      {
+        "live": "Metronome",
+        "agency": "Heartbeat"
+      },
+      {
+        "live": "Global quantize",
+        "agency": "Interrupt quantize"
+      },
+      {
+        "live": "Link",
+        "agency": "Shared field across harnesses"
+      },
+      {
+        "live": "Follow",
+        "agency": "View follows agent cursor"
+      },
+      {
+        "live": "Position counter",
+        "agency": "act · turn · step"
+      },
+      {
+        "live": "CPU meter",
+        "agency": "Context-window fill"
+      },
+      {
+        "live": "Key/MIDI map",
+        "agency": "Bind keys/voice to controls"
+      }
+    ]
+  },
+  "controls": [
+    {
+      "id": "tBrowser",
+      "label": "Browser",
+      "function": "Show or hide the browser (⌘⌥B).",
+      "hook": "data-i"
+    },
+    {
+      "id": "tap",
+      "label": "Tap · ping",
+      "function": "Asks every running agent for a status line now instead of at the next heartbeat. Answers land in the Agents tile.",
+      "hook": "data-i"
+    },
+    {
+      "id": "effort",
+      "label": "Effort",
+      "function": "Where Live has tempo: how hard the armed session thinks per turn (low → max). Each task can override it.",
+      "hook": "data-i"
+    },
+    {
+      "id": "effDn",
+      "label": "Effort −",
+      "function": "One step less effort.",
+      "hook": "data-i"
+    },
+    {
+      "id": "effUp",
+      "label": "Effort +",
+      "function": "One step more effort.",
+      "hook": "data-i"
+    },
+    {
+      "id": "hb",
+      "label": "Heartbeat",
+      "function": "Where Live has the metronome: running agents check in on a cadence. Each check-in moves that thread’s needle in the Arrangement; a needle that stops is a stall.",
+      "hook": "data-i"
+    },
+    {
+      "id": "tokScope",
+      "label": "Tokens",
+      "function": "Where Live has key and scale: a token counter. Click to switch what it counts — selected session · group · everything open.",
+      "hook": "data-i"
+    },
+    {
+      "id": "follow",
+      "label": "Follow",
+      "function": "The Arrangement scrolls with the live needles and Context tiles follow what the selected agent touches. Off: nothing moves your view.",
+      "hook": "data-i"
+    },
+    {
+      "id": "play",
+      "label": "Run",
+      "function": "Live’s Play. Launches the selected task, or every queued one. Enter in a composer is the same press.",
+      "hook": "data-i"
+    },
+    {
+      "id": "stop",
+      "label": "Stop all",
+      "function": "Once: every running agent pauses at the next quantize point and keeps context. Twice: turns are cancelled and unlanded writes return to basis. Per-session hard stop sits on each track.",
+      "hook": "data-i"
+    },
+    {
+      "id": "rec",
+      "label": "Voice",
+      "function": "Live’s Record. Records speech into a new task clip on the armed track, or into the open thread’s composer.",
+      "hook": "data-i"
+    },
+    {
+      "id": "od",
+      "label": "Steer · overdub",
+      "function": "On: what you send while an agent runs steers the running turn. Off: it queues as the next task.",
+      "hook": "data-i"
+    },
+    {
+      "id": "arm",
+      "label": "Write arm",
+      "function": "Live’s automation arm. Off: writes arrive as proposals. On: writes inside each world device land directly, with a receipt.",
+      "hook": "data-i"
+    },
+    {
+      "id": "loop",
+      "label": "Loop",
+      "function": "The selected task repeats until its stop condition or cap — a routine.",
+      "hook": "data-i"
+    },
+    {
+      "id": "vSession",
+      "label": "Session · Tab",
+      "function": "Tracks are sessions, clips are tasks.",
+      "hook": "data-i"
+    },
+    {
+      "id": "vArr",
+      "label": "Arrangement · Tab",
+      "function": "The run viewer: sessions over time, one live needle per thread.",
+      "hook": "data-i"
+    },
+    {
+      "id": "tDetail",
+      "label": "Detail",
+      "function": "Show or hide the device/clip detail (⌘⌥L).",
+      "hook": "data-i"
+    },
+    {
+      "id": "tDock",
+      "label": "Context dock",
+      "function": "Show or hide the context dock: tiles above, launcher below.",
+      "hook": "data-i"
+    },
+    {
+      "id": "grip",
+      "label": "Resize",
+      "function": "Drag left to give the context more room; tiles reflow into columns.",
+      "hook": "data-i"
+    },
+    {
+      "id": "wider",
+      "label": "Wider",
+      "function": "Grow the dock leftwards for richer compositions; Session/Arrangement give up width.",
+      "hook": "data-i"
+    },
+    {
+      "id": "narrower",
+      "label": "Narrower",
+      "function": "Shrink the dock back.",
+      "hook": "data-i"
+    },
+    {
+      "id": "lfold",
+      "label": "Fold",
+      "function": "Fold the launcher to its search bar; tiles take the height.",
+      "hook": "data-i"
+    },
+    {
+      "id": "lmore",
+      "label": "Library",
+      "function": "The full context library is also in the browser under Context, where SDK widgets appear too.",
+      "hook": "data-i"
+    },
+    {
+      "id": "toArr",
+      "label": "Runs",
+      "function": "See this thread among its siblings over time.",
+      "hook": "data-i"
+    },
+    {
+      "id": "foldBtn",
+      "label": "Fold",
+      "function": "Tools only.",
+      "hook": "data-i"
+    },
+    {
+      "id": "knob:${key}",
+      "label": "${label}",
+      "function": "${info}",
+      "hook": "data-knob"
+    },
+    {
+      "id": null,
+      "label": "Browser",
+      "function": "Show or hide the browser (⌘⌥B).",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Link",
+      "function": "Joins these sessions to agents in other harnesses and on other machines (Mac, Omarchy): one ledger, one clock. 2 peers.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Tap · ping",
+      "function": "Asks every running agent for a status line now instead of at the next heartbeat. Answers land in the Agents tile.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Effort",
+      "function": "Where Live has tempo: how hard the armed session thinks per turn (low → max). Each task can override it.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Effort −",
+      "function": "One step less effort.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Effort +",
+      "function": "One step more effort.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Budget",
+      "function": "Where Live has the time signature: turns used / allowed for the selected session.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Heartbeat",
+      "function": "Where Live has the metronome: running agents check in on a cadence. Each check-in moves that thread’s needle in the Arrangement; a needle that stops is a stall.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Interrupt quantize",
+      "function": "Where Live has launch quantization: how fast Stop and Steer land — now · next tool · next turn.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Tokens",
+      "function": "Where Live has key and scale: a token counter. Click to switch what it counts — selected session · group · everything open.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Tokens in",
+      "function": "Tokens read by the counted sessions.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Tokens out",
+      "function": "Tokens written by the counted sessions.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Follow",
+      "function": "The Arrangement scrolls with the live needles and Context tiles follow what the selected agent touches. Off: nothing moves your view.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Position",
+      "function": "Where Live shows bars.beats.sixteenths: task . turn . step of the selected session.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Run",
+      "function": "Live’s Play. Launches the selected task, or every queued one. Enter in a composer is the same press.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Stop all",
+      "function": "Once: every running agent pauses at the next quantize point and keeps context. Twice: turns are cancelled and unlanded writes return to basis. Per-session hard stop sits on each track.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Voice",
+      "function": "Live’s Record. Records speech into a new task clip on the armed track, or into the open thread’s composer.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Steer · overdub",
+      "function": "On: what you send while an agent runs steers the running turn. Off: it queues as the next task.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Write arm",
+      "function": "Live’s automation arm. Off: writes arrive as proposals. On: writes inside each world device land directly, with a receipt.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Hand back",
+      "function": "Live’s re-enable automation. Lit: you edited something an agent holds (HeroShot physics, Honey). Press to hand it back.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Capture",
+      "function": "Live’s session record. Records what you do by hand into a new clip on the armed track — a worked example an agent can learn as a skill.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Write window · in",
+      "function": "Punch-in: no writes before this step (here: until the plan is approved).",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Punch in",
+      "function": "Turns the write window’s start on or off.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Loop",
+      "function": "The selected task repeats until its stop condition or cap — a routine.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Punch out",
+      "function": "Writes stop after this step (here: before deploy).",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Write window · out",
+      "function": "Punch-out step, or the loop cap when Loop is on.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Point",
+      "function": "Live’s draw mode. Mark the stage or any tile; the armed agent receives the mark as a reference.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Keys",
+      "function": "Live’s computer keyboard: number keys launch task rows, letters fire rack macros, Space runs.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Earth view (planned)",
+      "function": "The Earth / Solar-System projection of the World. The button holds its place; the projection is still to be built.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Map",
+      "function": "Live’s MIDI map. Bind a key, pad or spoken phrase to any control — ‘Fizz, retry’.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Throughput",
+      "function": "Where Live shows sample rate: tokens per second across running agents.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Context",
+      "function": "Where Live shows CPU load: the selected session’s context-window fill.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Spend",
+      "function": "Where Live’s CPU meter sits: session spend against its cap.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Session · Tab",
+      "function": "Tracks are sessions, clips are tasks.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Arrangement · Tab",
+      "function": "The run viewer: sessions over time, one live needle per thread.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Expressions",
+      "function": "The native Expressions application (outside this mockup).",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Technē",
+      "function": "Knowledge and instruments (outside this mockup).",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Workbench",
+      "function": "Native sources and sessions (outside this mockup).",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Detail",
+      "function": "Show or hide the device/clip detail (⌘⌥L).",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Context dock",
+      "function": "Show or hide the context dock: tiles above, launcher below.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Resize",
+      "function": "Drag left to give the context more room; tiles reflow into columns.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Wider",
+      "function": "Grow the dock leftwards for richer compositions; Session/Arrangement give up width.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Narrower",
+      "function": "Shrink the dock back.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Fold",
+      "function": "Fold the launcher to its search bar; tiles take the height.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Library",
+      "function": "The full context library is also in the browser under Context, where SDK widgets appear too.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "${label}",
+      "function": "${info}",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "${c.name}",
+      "function": "${c.desc} Click to open it as a tile in the dock.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Curate",
+      "function": "Save a composition of tiles as a context preset; SDK widgets install here.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "${A[k].name}",
+      "function": "Drag onto a track to seat it as that session’s agent.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Skillset · ${n}",
+      "function": "A rack of skills; drop it on a session’s chain.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Git device",
+      "function": "Drop on a chain: the session commits through it.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "${t.name}",
+      "function": "Open its thread in the main space.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Group slot",
+      "function": "The children’s tasks in this row; launching fires them all. Amber = stalled.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "${c.plain?'Clip",
+      "function": "An ordinary Scene state; agents and native material share the grid.':'Task · '+c.n+'",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Empty slot",
+      "function": "Its square stops the session after the current task (soft stop). Double-click to write a task; arm and press ● to speak one.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Hard stop",
+      "function": "Stops ${t.group?'the group and every session in it':'this session'} now — mid-tool if needed — and keeps what was written as a draft.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Retry",
+      "function": "Restarts a stalled or failed task from its last good step, same basis.${lit?' Lit: a lane in here has stalled.':''}",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Main",
+      "function": "The whole work: Ledger and Approvals live on its chain.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Row · ${r}",
+      "function": "Launch the row: fires every task in it across sessions — a batch.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Main telemetry",
+      "function": "Everything into the dock and the ledger stream.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Subagent model",
+      "function": "Default model for everything this group spawns; a member’s strip can override it.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Telemetry",
+      "function": "Live’s track activator, on the number: the whole group as a context source. Off: it keeps running but stops feeding the dock, the ledger stream and other agents’ context.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Model",
+      "function": "This session’s model. Subagents can run a different one.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Watch",
+      "function": "Live’s monitor. In: always stream this session into the dock. Auto: when armed or selected. Off: never.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Telemetry · context source",
+      "function": "Live’s track activator. On: this session feeds the dock, the ledger stream and other agents’ context. Off: it keeps working, silently.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Solo",
+      "function": "Only soloed sessions may run.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Arm",
+      "function": "Who you are talking to: voice and the composer send here.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Activity · budget",
+      "function": "Meter: live activity (empty when telemetry is off). Fader: this session’s share of the budget, in turns.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Task · ${n}",
+      "function": "${st==='run'?'Running — no end is drawn; its needle is the live edge.':st==='stall'?'Stalled: the needle stopped where its output stopped.':'Done.'} Double-click to open the thread.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Queued",
+      "function": "Waiting behind the running task. No length is drawn: nobody knows how long it will take.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "${ln} · ${n}",
+      "function": "An event inside the task. Click: open it in a ${ln} tile.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Group",
+      "function": "Fold or unfold the crew.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Runs",
+      "function": "See this thread among its siblings over time.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "${a.name} · agent",
+      "function": "Compact. Click: expand in the pool. ↗: open its thread full.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Power",
+      "function": "The agent on, or benched.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Input",
+      "function": "Steer the running turn, or queue.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Skillset rack · Porting",
+      "function": "Skills as chains (light = admitted); macros steer several at once.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "${n} (folded)",
+      "function": "A device folded to its title, as in Live.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "World · bridge-2",
+      "function": "What the session may read (teal) and write (amber).",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Write mode",
+      "function": "propose · draft · direct (direct needs Write arm).",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Gateway (folded)",
+      "function": "This session rides its lead’s Hermes gateway connection.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Gateway · hermes",
+      "function": "Where the session runs: the harness connection (Hermes tui_gateway, JSON-RPC over stdio or WebSocket). Frames flow along the link; the ring is the replay buffer; the outer pulse is the heartbeat.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Connect",
+      "function": "Attach or detach this session’s transport. Detached sessions keep running in the harness and are re-attached with session.resume.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Transport",
+      "function": "stdio (spawned child, trusted) · ws (token / 30 s ticket at the upgrade) · remote (through Workcell’s address book).",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Approvals",
+      "function": "Default answer to approval.request: ask you each time · allow for this session · always. Deny is always yours to give.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Gateways",
+      "function": "Every gateway this work can reach, as chains. Three are named alike: Hermes’ tui_gateway, AIKit’s agency gateway and Actuation’s gateway on frank. Each row states its standing, never assumed.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Frame monitor",
+      "function": "Live’s MIDI monitor for agents: every frame the gateway sends or receives, per session, in order. Use it to see exactly what a stalled lane last did.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Git",
+      "function": "The session’s repository seat. The diagram is the branch against main; the pulsing hollow dot is uncommitted work.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Commit",
+      "function": "When the agent commits: per turn · per task · manual.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Push",
+      "function": "off · on land.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Land",
+      "function": "Open a draft PR from this branch (checks 2/3 ✓).",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Agentset · Port crew",
+      "function": "One chain per member, nested as spawned, each with its model. Click a member to open its thread.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Drop zone",
+      "function": "Gateways, agents, skillsets, worlds, git. Left to right: through → who → how → where → lands.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Then",
+      "function": "Live’s follow action, as hand-off.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Output style",
+      "function": "Per-task override of how the agent writes: register and form.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Steers",
+      "function": "Highlight where steering was heard.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Open thread",
+      "function": "Open this session’s thread in the main space.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Pin",
+      "function": "Stop following; keep this view.",
+      "hook": "data-i"
+    },
+    {
+      "id": null,
+      "label": "Close",
+      "function": "Close the tile; it stays in the launcher.",
+      "hook": "data-i"
+    }
+  ],
+  "regions": [
+    "transport",
+    "browser",
+    "centre",
+    "device-chain",
+    "context-dock",
+    "status-bar"
+  ]
+}

@@ -215,6 +215,10 @@ export function createNativeContentActions(content: NativeExpressionsContent, co
       if (!changes.length || changes.length > 64) return refuse('One bar gesture sends between one and 64 native changes');
       return controller.request({operation: 'apply', basis: at, changes: [...changes]});
     },
+    /** A plain read of the owner's current reading. It changes nothing; the bar polls it so effective (automated) values stay current. */
+    readNow(): Promise<NativeEditorReply> {
+      return controller.request({operation: 'read'});
+    },
     history(operation: 'undo' | 'redo' | 'save'): Promise<NativeEditorReply> {
       return controller.request({operation, basis});
     },

@@ -36,12 +36,20 @@ import {listFiles} from '../../../../../desktop/cradle/src/files/client'
 import {browserCategoriesOf, type ModeBrowserCategory, type SurfMode} from './modeGrammar'
 import {useWorkspace} from './workspace'
 import {Icon} from '../inhabitants/sdk/Icon'
+import {KindMark} from '../inhabitants/sdk/marks.tsx'
 import type {CentralSubjectSelection} from '../inhabitants/CentralSubjectDetail'
 import './modeSurface.css'
 
 /** The root register's day surface — where the civil calendar's records
  * live (`centralDayNowModel`'s subjectDayRef reads this shape). */
 const DAY_RECORDS_PATH = 'Control/agents/now/day'
+
+/** The category's mark — the cut rail's kind drawing when the grammar
+ * assigns one, the mono mark otherwise (icon-cut §7 "Browser rail"). */
+function CategoryMark({category, size = 13}: {category: ModeBrowserCategory; size?: number}) {
+  if (category.kindMark) return <KindMark kind={category.kindMark} size={size} />
+  return <Icon name={category.mark} size={size} />
+}
 
 export function ModeBrowser({mode, onSelectSubject, selectedSubject}: {
   mode: SurfMode
@@ -80,12 +88,21 @@ export function ModeBrowser({mode, onSelectSubject, selectedSubject}: {
             data-i={`${category.label}|${category.hint}`}
             title={`${category.label} — ${category.hint}${category.state === 'waiting' ? ' (declared, waiting)' : ''}`}
             onClick={() => {setActive(category.id); setNeedle('')}}>
-            <span aria-hidden="true"><Icon name={category.mark} size={13} /></span><span>{category.label}</span>
+            <span aria-hidden="true"><CategoryMark category={category} /></span><span>{category.label}</span>
             {category.state === 'waiting' && <span className="mode-browser-waiting-dot" aria-label="declared, waiting" />}
           </button>)}
+          {mode === 'base' && group === 'Project' && <button type="button" className="mode-browser-new" disabled
+            data-i="New|exactly Day · Flow · Beings · Things — the four document forms. The create operation is not wired here yet; the button holds its place."
+            title="New — exactly Day · Flow · Beings · Things. The create operation is not wired here yet; the button holds its place.">
+            <span aria-hidden="true">+</span><span>New</span>
+          </button>}
         </div>)}
       </nav>
       <div className="world-browser-results">
+        <div className="mode-browser-resulthead" aria-hidden="true">
+          <span>Name</span>
+          <span>{activeCategory?.id === 'central-days' ? 'State' : activeCategory?.id === 'techne-sources' ? 'Rev' : 'Size'}</span>
+        </div>
         {activeCategory && <CategoryRows category={activeCategory} mode={mode} needle={needle}
           onSelectSubject={onSelectSubject} selectedSubject={selectedSubject} />}
       </div>
@@ -95,9 +112,32 @@ export function ModeBrowser({mode, onSelectSubject, selectedSubject}: {
         title="Context — the category's standing"><span aria-hidden="true">▾</span> {activeCategory ? `${activeCategory.label} · ${activeCategory.state === 'waiting' ? 'declared, waiting' : 'reads'}` : 'Context'}</button></header>
       <div className="world-pool-body">
         {activeCategory && <CategoryContext category={activeCategory} mode={mode} />}
+        <ApertureSlot mode={mode} selectedSubject={selectedSubject} />
       </div>
     </section>
   </aside>
+}
+
+/** The aperture slot (Revision 3) — where Live keeps the groove pool: the
+ * encounter concepts the focused pane follows, and the pane line. Honest
+ * values only: the carrier's kind, the selected subject's path, the
+ * reading's state — never an invented encounter. */
+function ApertureSlot({mode, selectedSubject}: {mode: SurfMode; selectedSubject: CentralSubjectSelection | null}) {
+  const {transport} = useWorkspace()
+  const carrier = transport.kind === 'unavailable' ? '—' : transport.kind
+  const rows = [
+    {name: 'Field', value: mode === 'base' ? 'central' : 'the encounter\'s field', title: 'the field the pane follows'},
+    {name: 'World', value: carrier, title: transport.kind === 'unavailable' ? `the carrier is unavailable: ${transport.reason}` : `the ${carrier} carrier serves this ground`},
+    {name: 'Subject', value: selectedSubject ? selectedSubject.path.split('/').pop() ?? selectedSubject.path : 'not selected', title: selectedSubject ? selectedSubject.path : 'select a subject in the results — the pane follows the encounter'},
+    {name: 'Occasion', value: 'the day\'s Now', title: 'the pane follows the day\'s civil Now'},
+  ]
+  return <div className="mode-browser-aperture" aria-label="Aperture slot">
+    <div className="mode-browser-aperture-head">aperture <span>pane (1) · follows</span></div>
+    {rows.map(row => <div key={row.name} className="mode-browser-aperture-row" data-i={`${row.name}|${row.title}`}>
+      <span className="mode-browser-aperture-name">{row.name}</span>
+      <span className="mode-browser-aperture-value">{row.value}</span>
+    </div>)}
+  </div>
 }
 
 // ————————————————————————————————————————————————————————————————————————
@@ -161,7 +201,7 @@ function DaysRows({needle, onSelectSubject, selectedSubject}: {
           data-i={`Day ${entry.name.replace(/\.md$/, '')}|select the day — its record opens in the Document detail (CAS identity, basis, save-router standing)`}
           title={`${path} — select the day; its craft opens in the Document detail`}
           onClick={() => onSelectSubject({kind: 'day', path})}>
-          <span aria-hidden="true"><Icon name="die" size={12} /></span><span>{entry.name.replace(/\.md$/, '')}</span>
+          <span aria-hidden="true"><KindMark kind="day" size={12} /></span><span>{entry.name.replace(/\.md$/, '')}</span>
           <span className="mode-browser-row-meta">{entry.byte_len ?? '—'} B</span>
         </button>
       </li>
@@ -238,7 +278,7 @@ function GroundRows({needle, onSelectSubject, selectedSubject, mode}: {
             data-i={isDirectory ? `${entry.name}|open the folder's listing` : `${entry.name}|select the ${entry.kind} — its craft opens in the Document detail`}
             title={`${entryPath} — ${isDirectory ? 'open the folder' : 'select; the craft opens in the Document detail'}`}
             onClick={() => isDirectory ? navigateFiles(entryPath) : onSelectSubject(entryPath.endsWith('.md') && /\/now\/day\/\d{4}-\d{2}-\d{2}\.md$/.test(entryPath) ? {kind: 'day', path: entryPath} : {kind: 'note', path: entryPath})}>
-            <span aria-hidden="true"><Icon name={isDirectory ? 'lib' : 'detail'} size={12} /></span>
+            <span aria-hidden="true">{isDirectory ? <Icon name="lib" size={12} /> : <KindMark kind="doc" size={12} />}</span>
             <span>{entry.name}</span>
             {!isDirectory && entry.byte_len != null && <span className="mode-browser-row-meta">{entry.byte_len} B</span>}
           </button>
@@ -280,7 +320,7 @@ function SourceRows({needle}: {needle: string}) {
 function DesignedEmptyCategory({category}: {category: ModeBrowserCategory}) {
   return <section className="mode-browser-empty" data-waiting={category.id} aria-label={`${category.label} — declared, waiting`}>
     <header className="mode-browser-empty-head">
-      <span className="mode-browser-empty-mark"><Icon name={category.mark} size={15} /></span>
+      <span className="mode-browser-empty-mark"><CategoryMark category={category} size={15} /></span>
       <strong>{category.label}</strong>
       <span className="mode-browser-empty-state">declared, waiting</span>
     </header>

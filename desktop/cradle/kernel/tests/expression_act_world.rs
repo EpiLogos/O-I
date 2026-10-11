@@ -14,10 +14,12 @@ const ACT: &str = "act:controlled-epi-world-editions";
 struct Home(PathBuf);
 impl Home {
     fn new() -> Self {
-        Self(std::env::temp_dir().join(
-            format!("oi-act-world-{}-{}", std::process::id(),
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()),
-        ))
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static NEXT: AtomicU64 = AtomicU64::new(0);
+        // Parallel tests in this binary start inside one clock tick. A
+        // timestamped path collides, and the act-store lock then times out.
+        let n = NEXT.fetch_add(1, Ordering::Relaxed);
+        Self(std::env::temp_dir().join(format!("oi-act-world-{}-{}", std::process::id(), n)))
     }
     fn record(&self, reference: &str) -> PathBuf {
         ActStore::at_home(&self.0)
