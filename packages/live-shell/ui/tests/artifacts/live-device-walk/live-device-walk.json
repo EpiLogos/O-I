@@ -1,8 +1,8 @@
 {
   "schema": "oi.device-live-walk/v1",
-  "recorded_at": "2026-10-11T14:50:33.090Z",
+  "recorded_at": "2026-10-11T14:56:23.593Z",
   "channel": "scripted-playwright (computer use blocked machine-wide)",
-  "url": "http://127.0.0.1:64602",
+  "url": "http://127.0.0.1:49173",
   "steps": [
     {
       "name": "live mode stands",
