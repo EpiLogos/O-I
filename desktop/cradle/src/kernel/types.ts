@@ -389,7 +389,6 @@ export type KernelOp =
     }
   | { op: "surface_close"; surface_id: string }
   | { op: "surface_focus"; surface_id: string }
-  | { op: "temporal_events_read"; query: { subject?: string; window: { window: string; from_unix_ms: number; to_unix_ms: number } } }
   // ES1/ES4 expression-world operations (kernel `expression_world.rs`):
   // shared selection/deictic context, Surface portals, ExpressiveActs and
   // bounded local-whole bindings over exact native refs.
