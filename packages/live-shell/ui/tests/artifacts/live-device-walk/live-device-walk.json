@@ -1,0 +1,34 @@
+{
+  "schema": "oi.device-live-walk/v1",
+  "recorded_at": "2026-10-11T14:50:33.090Z",
+  "channel": "scripted-playwright (computer use blocked machine-wide)",
+  "url": "http://127.0.0.1:64602",
+  "steps": [
+    {
+      "name": "live mode stands",
+      "detail": "frame mode-audio, audio BrowserPane resident"
+    },
+    {
+      "name": "device detail opens",
+      "detail": "detail-density=device, tiles=3 (Compressor2, Overdrive, Redux2)"
+    },
+    {
+      "name": "device faces render rows",
+      "detail": "rows 8+7+6 (Compressor2+Overdrive+Redux2); Threshold=0.1791548878; Mid Freq unit Hz; Model row honest \"not stored\""
+    },
+    {
+      "name": "param edit round-trips",
+      "detail": "Overdrive Tone 50 → 42: POST answered, persisted value shown, saved mark lit"
+    },
+    {
+      "name": "owner persisted the write",
+      "detail": "POST deviceName=Overdrive paramId=Tone value=42 (track STIM); owner re-read Tone=42"
+    },
+    {
+      "name": "captures written",
+      "detail": "/Users/admin/Central/Work/O-I/packages/live-shell/ui/tests/artifacts/live-device-walk/captures"
+    }
+  ],
+  "browserErrors": [],
+  "pageErrors": []
+}

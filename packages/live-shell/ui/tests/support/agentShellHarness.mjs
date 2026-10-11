@@ -213,17 +213,24 @@ function replyJson(response, status, body) {
  * carries `kernel_bridge` so the page's readShellConfig() resolves a real
  * {kind:'bridge', url} transport. Set reads are refused — the harness
  * discloses no set document, exactly like an owner with nothing open.
+ *
+ * `defaultSet` is the config host's set (default: the fidelity harness's
+ * own name — nothing opens). `api` is an optional fixture owner:
+ * `api(request, response, path)` answers the requests it owns and returns
+ * true; everything else falls through to the host's own routes/404 (the
+ * live-device walk serves /api/set and the M3 device endpoints this way).
  */
-export async function serveShellPage({html, kernelBridge}) {
-  const server = createServer((request, response) => {
+export async function serveShellPage({html, kernelBridge, defaultSet = 'agent-shell-live-harness', api}) {
+  const server = createServer(async (request, response) => {
     const path = (request.url ?? '/').split('?')[0]
     if (path === '/' || path === '/index.html') {
       response.setHeader('Content-Type', 'text/html; charset=utf-8')
       response.end(html)
       return
     }
+    if (api && await api(request, response, path)) return
     if (path === '/api/config') {
-      replyJson(response, 200, {default_set: 'agent-shell-live-harness', kernel_bridge: kernelBridge})
+      replyJson(response, 200, {default_set: defaultSet, kernel_bridge: kernelBridge})
       return
     }
     if (path.startsWith('/api/')) {
