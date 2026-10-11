@@ -21,6 +21,23 @@
  */
 
 import {createHash} from 'node:crypto'
+import {readFileSync} from 'node:fs'
+import {dirname, join} from 'node:path'
+import {fileURLToPath} from 'node:url'
+
+// The full descriptor set, dumped from the real server's table by
+// `cargo run -p live-shell --example dump_device_descriptors` (regenerate
+// whenever params.rs gains tables). Every device face resolves its rows
+// exactly as the live server would; the hand-written trio below stays as an
+// override so the walk's seam assertions keep their pinned readings.
+const FULL_TABLES = (() => {
+  try {
+    const here = dirname(fileURLToPath(import.meta.url))
+    return JSON.parse(readFileSync(join(here, 'deviceDescriptors.json'), 'utf8'))
+  } catch {
+    return {}
+  }
+})()
 
 /** The fixture set's identifier — opaque, like the .als path the real owner
  * reads. Clearly not a real file: nothing here touches disk. */
@@ -208,7 +225,7 @@ export function createDeviceFixtureOwner() {
     }
 
     if (path === '/api/device-descriptors' && request.method === 'GET') {
-      replyJson(response, 200, FIXTURE_TABLES)
+      replyJson(response, 200, {...FULL_TABLES, ...FIXTURE_TABLES})
       return true
     }
 

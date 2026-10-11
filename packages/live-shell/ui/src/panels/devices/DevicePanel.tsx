@@ -204,7 +204,17 @@ export function DevicePanel({ elementName, displayTitle, set, loading, error }: 
   if (descError) {
     return <div className="panel-hint panel-hint-error">parameter tables unavailable: {descError}</div>
   }
-  if (!descRows) return <div className="panel-hint">reading parameter tables…</div>
+  // Distinguish "still reading" from "this device has no table": once the
+  // descriptor payload has arrived, an absent entry is a fact, not a wait.
+  if (!descriptors) return <div className="panel-hint">reading parameter tables…</div>
+  if (!descRows) {
+    return (
+      <div className="panel-hint">
+        no stored parameter table for {elementName} yet — its panel arrives with the
+        device's parameter surface
+      </div>
+    )
+  }
   if (carriers.length === 0) {
     return (
       <div className="panel-hint">
