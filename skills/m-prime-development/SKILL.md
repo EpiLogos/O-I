@@ -5,7 +5,7 @@ description: "METHOD: The domain loop for M-prime development work — the world
 
 # M-prime development — the domain loop
 
-Use this Skill for any work in the M-prime domain: the world shell and its
+Use this Skill when working in the M-prime domain: the world shell and its
 frame, the device SDK and its families, the racks, projections, mode
 system, instruments and documents. This is the ecology-of-law method for
 the domain — the founding text is [FOUNDING.md](FOUNDING.md) beside this
