@@ -8,6 +8,11 @@
 //!   /api/summary?path=<abs .als>   document summary JSON — the M2 contract
 //!   /api/document?path=<abs .als>  deep document JSON (devices with parameter
 //!                                  trees, arrangement clips, session grids)
+//!   /api/device-descriptors        live-dynamics parameter tables — the M3
+//!                                  device-edit contract's descriptor map
+//!   /api/document/device-params?path&track&device   one device's stored values
+//!   POST /api/document/device-param                 validate + write one stored
+//!                                  parameter back to the set (M3 editing)
 //!   /api/config      { default_set } — the set passed on the command line
 //!
 //! UI development: `cd ui && npm run dev` (:5173, /api proxied here).
@@ -20,7 +25,7 @@ mod native_world;
 
 use axum::extract::{Query, State};
 use axum::response::Html;
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::{Json, Router};
 use serde::Deserialize;
 use std::path::PathBuf;
@@ -114,6 +119,51 @@ async fn index(State(state): State<AppState>) -> Html<String> {
     Html(INDEX.replace("__DEFAULT_SET__", &state.default_set))
 }
 
+// ---------------------------------------------------------------------------
+// The M3 device-edit routes — the seam the device panels build against
+// (ui/src/panels/devices/api.ts); api.rs carries the contract logic.
+
+async fn device_descriptors() -> Json<serde_json::Value> {
+    Json(api::device_descriptors_json())
+}
+
+#[derive(Deserialize)]
+struct DeviceParamsQ {
+    path: String,
+    track: String,
+    device: String,
+}
+
+async fn device_params(Query(q): Query<DeviceParamsQ>) -> Json<serde_json::Value> {
+    match api::device_params_json(&q.path, &q.track, &q.device) {
+        Ok(value) => Json(value),
+        Err(error) => Json(serde_json::json!({ "error": error })),
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct DeviceParamEdit {
+    path: String,
+    track: String,
+    device_name: String,
+    param_id: String,
+    value: serde_json::Value,
+}
+
+async fn device_param(Json(body): Json<DeviceParamEdit>) -> Json<serde_json::Value> {
+    match api::device_param_set(
+        &body.path,
+        &body.track,
+        &body.device_name,
+        &body.param_id,
+        &body.value,
+    ) {
+        Ok(value) => Json(value),
+        Err(error) => Json(serde_json::json!({ "error": error })),
+    }
+}
+
 fn build_router(state: AppState) -> Router {
     Router::new()
         .route("/", get(index))
@@ -121,6 +171,9 @@ fn build_router(state: AppState) -> Router {
         .route("/api/document", get(document))
         .route("/api/set", get(set_reading))
         .route("/api/config", get(config))
+        .route("/api/device-descriptors", get(device_descriptors))
+        .route("/api/document/device-params", get(device_params))
+        .route("/api/document/device-param", post(device_param))
         .nest_service("/app", ServeDir::new(state.ui_dist.clone()))
         .nest_service(
             "/__application/expressions",
@@ -348,6 +401,173 @@ mod tests {
         assert_eq!(status, StatusCode::OK);
         let v: serde_json::Value = serde_json::from_str(&body).unwrap();
         assert!(v["error"].is_string());
+    }
+
+    /// A .als whose STIM track carries a Saturator with parameters the
+    /// live-dynamics table actually names — a flat row (`PreDrive`) and a
+    /// nested one (`WaveShaper/Drive`) — plus a toggle (`On`).
+    fn write_temp_saturator_als() -> PathBuf {
+        let doc = live_set::xml::parse(
+            r#"<Ableton><LiveSet>
+            <MainTrack><DeviceChain><Mixer><Tempo><Manual Value="131" /></Tempo></Mixer></DeviceChain></MainTrack>
+            <Tracks><AudioTrack Id="8"><Name><EffectiveName Value="STIM" /></Name>
+            <DeviceChain><DeviceChain><Devices>
+              <Saturator Id="7">
+                <On><Manual Value="true" /></On>
+                <PreDrive><Manual Value="6" />
+                  <MidiControllerRange><Min Value="-36" /><Max Value="36" /></MidiControllerRange>
+                </PreDrive>
+                <WaveShaper><Drive><Manual Value="0.5" />
+                  <MidiControllerRange><Min Value="0" /><Max Value="1" /></MidiControllerRange>
+                </Drive></WaveShaper>
+              </Saturator>
+            </Devices></DeviceChain></DeviceChain></AudioTrack></Tracks>
+            <Scenes><Scene /></Scenes></LiveSet></Ableton>"#,
+        )
+        .unwrap();
+        let dir = std::env::temp_dir().join(format!(
+            "live-shell-device-test-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("devices.als");
+        std::fs::write(&path, live_set::write_gz(&doc).unwrap()).unwrap();
+        path
+    }
+
+    #[tokio::test]
+    async fn device_edit_routes_serve_tables_read_and_write_stored_params() {
+        let als = write_temp_saturator_als();
+        let state = || AppState {
+            default_set: String::new(),
+            ui_dist: PathBuf::from("/nonexistent-ui-dist"),
+            expressions_dist: PathBuf::from(EXPRESSIONS_DIST),
+            kernel_bridge: None,
+            saved_works: Vec::new(),
+        };
+        let path = als.to_str().unwrap();
+
+        // descriptors: the Saturator table is served under its element name
+        let app = build_router(state());
+        let (status, body) = get_body(app, "/api/device-descriptors").await;
+        assert_eq!(status, StatusCode::OK);
+        let v: serde_json::Value = serde_json::from_str(&body).unwrap();
+        let rows = v["Saturator"].as_array().expect("Saturator table served");
+        let drive = rows
+            .iter()
+            .find(|row| row["id"] == "WaveShaper/Drive")
+            .expect("nested WaveShaper/Drive row in the table");
+        assert_eq!(drive["kind"], "continuous");
+        assert_eq!(drive["stored_max"], 1.0);
+        let on = rows
+            .iter()
+            .find(|row| row["id"] == "On")
+            .expect("On row in the table");
+        assert_eq!(on["kind"], "toggle");
+
+        // stored values: the document's own readings on the STIM track,
+        // nested paths resolved (WaveShaper/Drive)
+        let app = build_router(state());
+        let uri = format!(
+            "/api/document/device-params?path={}&track=STIM&device=Saturator",
+            path
+        );
+        let (status, body) = get_body(app, &uri).await;
+        assert_eq!(status, StatusCode::OK);
+        let v: serde_json::Value = serde_json::from_str(&body).unwrap();
+        let params = v["params"].as_array().unwrap();
+        let pre = params
+            .iter()
+            .find(|p| p["id"] == "PreDrive")
+            .expect("flat PreDrive reading");
+        assert_eq!(pre["value"], "6");
+        assert_eq!(pre["min"], "-36");
+        assert_eq!(pre["max"], "36");
+        let drive = params
+            .iter()
+            .find(|p| p["id"] == "WaveShaper/Drive")
+            .expect("nested Drive reading");
+        assert_eq!(drive["value"], "0.5");
+        assert_eq!(drive["min"], "0");
+        assert_eq!(drive["max"], "1");
+        // table rows the set does not carry are omitted (the panel's honest
+        // "not stored" state), so the reading list is table-shaped, not
+        // document-shaped
+        assert!(params
+            .iter()
+            .all(|p| rows.iter().any(|row| row["id"] == p["id"])));
+
+        // POST: validate + write; the response is the persisted reading
+        let app = build_router(state());
+        let edit = |param: &str, value: serde_json::Value| {
+            serde_json::json!({
+                "path": path,
+                "track": "STIM",
+                "deviceName": "Saturator",
+                "paramId": param,
+                "value": value,
+            })
+            .to_string()
+        };
+        let post = |body: String| {
+            app.clone().oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/api/document/device-param")
+                    .header("content-type", "application/json")
+                    .body(Body::from(body))
+                    .unwrap(),
+            )
+        };
+        let resp = post(edit("WaveShaper/Drive", serde_json::json!(0.8)))
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), StatusCode::OK);
+        let bytes = to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+        let v: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(v["param"]["id"], "WaveShaper/Drive");
+        assert_eq!(v["param"]["value"], "0.8");
+
+        // a toggle writes the document's own true/false convention
+        let resp = post(edit("On", serde_json::json!(false))).await.unwrap();
+        let bytes = to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+        let v: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(v["param"]["value"], "false");
+
+        // the set on disk carries the writes; a re-read sees them
+        let (status, body) = get_body(app.clone(), &uri).await;
+        assert_eq!(status, StatusCode::OK);
+        let v: serde_json::Value = serde_json::from_str(&body).unwrap();
+        let params = v["params"].as_array().unwrap();
+        assert!(params
+            .iter()
+            .any(|p| p["id"] == "WaveShaper/Drive" && p["value"] == "0.8"));
+        assert!(params.iter().any(|p| p["id"] == "On" && p["value"] == "false"));
+
+        // an out-of-range write is refused with the law named; the set stands
+        let resp = post(edit("WaveShaper/Drive", serde_json::json!(99.0)))
+            .await
+            .unwrap();
+        let bytes = to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+        let v: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        assert!(
+            v["error"].as_str().unwrap().contains("out of range"),
+            "out-of-range write names the law: {}",
+            v["error"]
+        );
+        let (_, body) = get_body(app, &uri).await;
+        let v: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert!(v["params"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|p| p["id"] == "WaveShaper/Drive" && p["value"] == "0.8"));
+
+        let _ = std::fs::remove_dir_all(als.parent().unwrap());
     }
 
     #[tokio::test]

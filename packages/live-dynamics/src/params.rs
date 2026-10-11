@@ -5928,7 +5928,8 @@ pub const OPERATOR: &[ParamDesc] = &[
 /// Several product names differ from their document element: Chorus-Ensemble
 /// stores as `Chorus2`, Hybrid Reverb as `Hybrid`, Utility as `StereoGain`,
 /// and the Wavetable instrument's preset root element is `InstrumentVector`
-/// (keyed here as `"Wavetable"`, its device name).
+/// (keyed here both ways — `"Wavetable"`, its device name, and
+/// `"InstrumentVector"`, the element a .als track actually carries).
 pub fn table(device: &str) -> Option<&'static [ParamDesc]> {
     match device {
         "GlueCompressor" => Some(GLUE_COMPRESSOR),
@@ -5949,6 +5950,32 @@ pub fn table(device: &str) -> Option<&'static [ParamDesc]> {
         "Operator" => Some(OPERATOR),
         _ => None,
     }
+}
+
+/// The element keys `table()` dispatches, in dispatch order — the shell's
+/// `/api/device-descriptors` route serves exactly this set. Keep in step
+/// with `table()`; the test beside this module pins every key to a
+/// resolved table.
+pub fn table_keys() -> &'static [&'static str] {
+    &[
+        "GlueCompressor",
+        "Echo",
+        "Reverb",
+        "Eq8",
+        "AutoFilter",
+        "AutoPan",
+        "Saturator",
+        "DrumBuss",
+        "Chorus2",
+        "Delay",
+        "Hybrid",
+        "MultibandDynamics",
+        "StereoGain",
+        "Drift",
+        "Wavetable",
+        "InstrumentVector",
+        "Operator",
+    ]
 }
 
 #[cfg(test)]
@@ -6802,6 +6829,20 @@ mod tests {
             "release rate {rate} vs fitted 175 dB/s"
         );
         assert!((env_at_pin.sustained_release_rate_db_s() - 115.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn table_keys_resolve_and_are_unique() {
+        let keys = table_keys();
+        for key in keys {
+            assert!(table(key).is_some(), "{key}: table_keys carries a key table() does not resolve");
+        }
+        let mut sorted = keys.to_vec();
+        sorted.sort_unstable();
+        sorted.dedup();
+        assert_eq!(sorted.len(), keys.len(), "table_keys carries no duplicates");
+        // The Wavetable aliases are the one intended double-key.
+        assert!(keys.contains(&"Wavetable") && keys.contains(&"InstrumentVector"));
     }
 }
 

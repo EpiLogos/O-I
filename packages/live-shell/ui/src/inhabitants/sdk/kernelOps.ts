@@ -100,6 +100,7 @@ export const KERNEL_OPS = [
   'factory_attempt_task_read',
   'factory_owner',
   'workcell_status_read',
+  'temporal_events_read',
   'inhabitation_read',
   'wiki_projection_read',
   'wiki_projection_sources',
@@ -139,7 +140,6 @@ export const KERNEL_OPS = [
   'surface_open',
   'surface_close',
   'surface_focus',
-  'temporal_events_read',
   'expression_world',
 ] as const
 
