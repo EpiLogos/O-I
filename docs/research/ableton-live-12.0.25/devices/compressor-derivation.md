@@ -234,7 +234,9 @@ a feedforward-solver loop; the Compressor is a direct detector → static-curve
   domain constants c20/c24, and the applied-gain cap (0x1058efe58) live in
   `__DATA` beyond the file-backed range — built at startup, not statically
   decodable [B-negative, evidence header]. A behavioral render (known red →
-  measured gain) pins the composition directly.
+  measured gain) pins the composition directly. **PINNED 2026-10-11 (§6):
+  the composition is pinned as GR_TABLE at the default pin; the raw table's
+  domain constants stay open.**
 - **Stored-ratio → display-ratio scaling** (slope hypothesis above) and the
   Threshold param-layer unit (linear at the processor; dB→linear conversion
   site = shell, not captured).
@@ -258,7 +260,10 @@ a feedforward-solver loop; the Compressor is a direct detector → static-curve
   message) and the shell wiring of the sidechain pointers when ExtInOn=false
   ([H]: 0x40/0x48 aliased to the main inputs).
 - Everything in §3 awaits the golden-render gate before any rebuild claims
-  parity (README's binding rule; no renders ran in this lane).
+  parity (README's binding rule; no renders ran in this lane). **Superseded
+  in part 2026-10-11 — see §6: the GR composition and the ballistics update
+  form are now pinned and gated; the §5 caveats on slope naming and
+  dispatch selection stand.**
 
 ## 5. Confidence
 
@@ -271,4 +276,74 @@ a feedforward-solver loop; the Compressor is a direct detector → static-curve
 - Slope/ratio naming, auto-release semantics, dispatch selection: **low** —
   graded [H], do not build on them.
 - No behavioral claim of any grade is made; the golden-render corpus for
-  Compressor does not exist yet (COVERAGE row empty).
+  Compressor does not exist yet (COVERAGE row empty). **Superseded
+  2026-10-11: the BULK corpus exists; behavioral findings in §6.**
+
+## 6. Corpus pinning (gate wave, 2026-10-11 — the BULK renders)
+
+The 2026-10-10 BULK run contains the first behavioral Compressor corpus:
+`BULK-compressor-default-{impulse,steps-1k,sweep-20-20k}-wav.aif` plus five
+impulse-only pins (Ratio 1, Gain −36/+36, ExpansionRatio 1/2). Every
+`BULK-compressor-*.als` carries exactly the crate DEFAULTS surface
+(Threshold 0.1791548878, Ratio 4, ExpansionRatio 1.14999998, Attack 30,
+Release 120, Gain 3, Knee 0.421875, LookAhead 1, DryWet 1, Model 0,
+LegacyModel 1, GainCompensation false). Analyzer:
+`harness/analyze_compressor_gr.py`; findings against §1–§4:
+
+- **Ballistics update form CORRECTED — the literal §1 reading is refuted.**
+  The decoded coefficients 0x168/0x170/0x180 are the POLE, not the input
+  weight: `s = c·s + (1−c)·x` with `c = exp(−1/(ms·sr_kHz))`. Evidence:
+  (a) the default impulse render peaks at 0.695831 = unity-chain 0.4929 ·
+  10^(+3/20) · 0.99941 — reduction ≈ 0 (−0.005 dB) one millisecond after a
+  full-scale spike, while the literal `s += c·(x−s)` (c ≈ 0.9993 at
+  30 ms/48 kHz) would already apply deep reduction there; (b) the steps
+  plateaus settle to constant gains (1 ms gain ripple ≤ 0.23 dB — the
+  literal form tracks |sin| and would ripple several dB at 2 kHz); (c) with
+  the pole form the four over-threshold onset trajectories of the steps
+  render collapse onto ONE single-valued g(red) curve (shared-bin spread
+  ≤ 0.05 dB); under the literal form the same pairing scatters. The crate
+  implements the pole form (`compressor.rs`; unit test
+  `pole_form_ballistics_have_nominal_time_constant` — 63% of a step after
+  τ = ms·sr_kHz samples).
+- **Applied-gain composition PINNED (GR_TABLE).** Settled plateau anchors
+  (steps −12/−6/−3/0 dBFS; [t0+0.35, t0+0.50] windows): red −0.1236 →
+  −1.3192 dB, −0.8710 → −5.0883, −1.2448 → −7.1495, −1.6185 → −9.2691;
+  the three sub-threshold steps measure 0.000 dB change (makeup exact).
+  In-between nodes are medians of the four onset trajectories paired
+  against the crate pre-LUT path (4 ms windows, gain = render RMS − input
+  RMS). The composition is NOT the plain octave→dB conversion: local slope
+  runs ≈3.6 → 4.25 dB per INPUT octave (pure 6.0206·red would be 4.515
+  flat), and the below-threshold entrance is far steeper than the crate
+  knee law (−1.02 dB already at red −0.02 oct) — the device LUT carries its
+  own soft-knee curvature, consistent with §3's runtime-built-LUT frame.
+  Deep asymptote between the last anchors: −5.67 dB per raw-red octave.
+  Wired as `GR_TABLE` + `applied_gain_db` in `compressor.rs`; the
+  terminal-slope extrapolation beyond red −1.70 (floor −60 dB) is outside
+  the corpus.
+- **Staging and makeup exact.** gain-min impulse = unity · 10^(−36/20)
+  (+0.0006 dB), default/gain-min = +39.000 ± 0.006 dB, gain-max clips at
+  the 16-bit export ceiling (expected at +36).
+- **ExpansionRatio pins DSP-INERT in Model 0 (corpus null).** The 1 and 2
+  renders are dither-identical to the default impulse (max |Δ| ≤ 2 LSB):
+  the slope-select [H] (Model 0 uses CompressionRatio) is behaviorally
+  confirmed; tripwire gate `compressor_expansionratio_pins_inert_tripwire`
+  fires if a re-render makes them live. The Ratio-1 impulse is also
+  dither-level equal to the default — at the +1 ms instant the Ratio-4
+  path has just crossed into reduction, so the pin does not separate.
+- **Sweep cross-check.** Steady applied gain 640–2450 Hz = −2.076 dB vs
+  the steps −6 dBFS settled −2.088 dB (0.012 dB); below 150 Hz the gain
+  wobbles ±1.5–3 dB with the half-wave ripple (ballistics confirmation);
+  above ~14 kHz an extra reduction develops (−2.1 → −3.3 dB at 20 kHz) —
+  named residual, not modeled.
+- **Residuals / missing pin spec.** The composition is pinned at ONE
+  parameter region (Ratio 4; threshold/knee/attack/release never pinned —
+  every non-default pin render is impulse-only, and an impulse shows only
+  the gain at the lookahead instant). The near-threshold detector-envelope
+  warp (the device engages before the crate red leaves 0 during onsets) is
+  absorbed into the table's steep entrance. The raw LUT domain constants
+  (c20/c24, cap, −31 clamp) stay open (§4). A pin spec that would separate
+  the composition's cross-terms: steps-1k renders at Ratio 1.5/10/20,
+  Threshold −30/−12/−6 dB, Knee 0/18 (plus an attack/release pair).
+
+Gate status: `compressor_bulk_static_map_gate` PASS — worst |Δ| 0.011 dB/step
+(tol 0.5) across all seven steps; pin-inert tripwire PASS.
