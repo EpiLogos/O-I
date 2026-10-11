@@ -268,7 +268,8 @@ fn defaults_parse_in_and_ranges_are_sane() {
 }
 
 // ===========================================================================
-// Per-sample layer — statically decodable only (derivation lane, 2026-10-10)
+// Per-sample layer — statically decodable + corpus-pinned (derivation lane
+// 2026-10-10; GR corpus pin 2026-10-11)
 //
 // Implements devices/compressor-derivation.md §1–§3 [D]/[B] claims for the
 // stock Live-12 path (`InternalCalc<false,0,0>`, model 0 / env mode 0):
@@ -276,25 +277,32 @@ fn defaults_parse_in_and_ranges_are_sane() {
 //   2. knee dB → octaves, edge slope 1/(2K)                 [D: 0x2e4/0x2e8]
 //   3. closed-form soft-knee curve in the log2 octave domain [D, §3]
 //   4. MAD detector (|L|+|R|)·0.5, linear, no dB conversion  [D, §3]
-//   5. two-stage ballistics: attack/release one-pole (doubles) + fixed 6×
+//   5. two-stage ballistics (doubles): attack/release one-pole + fixed 6×
 //      fast follower of stage 1                              [D: 0x160/0x168/
 //                                                              0x170/0x180]
+//      CORPUS-CORRECTED FORM (BULK corpus, 2026-10-11): the decoded
+//      coefficients 0x168/0x180/0x170 are the POLE (s = c·s + (1−c)·x);
+//      the literal `s += c·(x−s)` reading is refuted by the corpus — a
+//      full-scale impulse leaks through with reduction ≈ 0 at the +1 ms
+//      lookahead (default impulse vs unity chain: −0.005 dB), and the
+//      steps plateaus settle smoothly (gain ripple ≤ 0.23 dB). Evidence:
+//      harness/analyze_compressor_gr.py, dossier §6.
 //   6. lookahead ring + DryWet dry/(delayed·gain) crossfade  [D, §1/§3]
+//   7. applied-gain composition — CORPUS-PINNED (the GR_TABLE below): the
+//      runtime-built GR/makeup LUT (0x1059a89b8) composition at the corpus
+//      pin, replacing the identity placeholder of the binary lane.
 //
-// NOT implemented (residuals, derivation §4): the applied GR/makeup LUT
-// (runtime-built global table 0x1059a89b8, domain constants c20/c24 and cap
-// uncaptured — [B]-negative) and the GainCompensation makeup curve (same
-// table object). The applied gain is therefore modeled as
-//
-//     lut_placeholder(red) · makeup_comp · user_makeup
-//
-// with `lut_placeholder` the IDENTITY — i.e. this model applies NO gain
-// reduction. That is the explicit missing piece, pinned by the bulk corpus
-// (devices/COVERAGE.md Compressor row: behavior "—"), not a fitted neutral.
-// Auto-release (0x2ef, RMS→coefficient body uncaptured), the sidechain EQ
-// mode map, the Legacy family, Model 1/2 calc bodies and the callback
-// dispatch are equally out of scope. No golden renders ran in the source
-// lane; nothing here claims parity.
+// Still open (derivation §4): the LUT's own domain constants c20/c24 and
+// entry cap (the raw table is not statistically decodable), its behavior
+// under GainCompensation on, the red index clamp `max(−31, red)`, the
+// GainCompensation curve as a separate factor, auto-release (0x2ef), the
+// sidechain EQ mode map, the Legacy family, Model 1/2 calc bodies and the
+// callback dispatch. The corpus itself pins the composition at ONE pin
+// (default preset, Ratio 4 → slope −0.75, threshold 0.1792, knee 0.42 dB,
+// Model 0, LegacyModel 1); the pin renders are impulse-only (Ratio 1 and
+// Gain ±36 impulse renders confirm staging/makeup exactly, the two
+// ExpansionRatio pins are dither-inert in Model 0), so the threshold/ratio/
+// knee cross-terms of the composition are NOT separately pinned.
 // ===========================================================================
 
 /// Threshold floor at use: `max(thr, 10^−3.25)` [B raw-asm decode, §1 shared
@@ -435,14 +443,100 @@ pub fn lookahead_ms(look_ahead: i64, legacy_model: i64) -> f64 {
     }
 }
 
-/// Applied-gain GR placeholder: IDENTITY, standing in for the runtime-built
-/// GR/makeup LUT (`linear-interp lookup … indexed by c24·(max(−31, red)−c20)`,
-/// derivation §3/§4 — table object, domain constants and cap uncaptured,
-/// [B]-negative). THE residual: pinned by the bulk corpus, see
-/// devices/COVERAGE.md (Compressor behavior row "—"). The −31 red clamp
-/// lives inside that LUT index and is likewise unimplementable here.
-pub fn lut_placeholder(_reduction_oct: f64) -> f64 {
-    1.0
+/// Corpus-derived applied-gain composition table: crate reduction (octaves,
+/// ≤ 0) → applied gain (dB, ≤ 0), linear interp like the device's own LUT
+/// (`linear-interp lookup indexed by c24·(max(−31, red)−c20)`, §3).
+///
+/// Source: the 2026-10-10 BULK corpus, pinned by
+/// `harness/analyze_compressor_gr.py` (gate wave 2026-10-11):
+///   - settled plateaus of `BULK-compressor-default-steps-1k-wav.aif`
+///     (reductions −1.3192 / −5.0883 / −7.1495 / −9.2691 dB at red
+///     −0.1236 / −0.8710 / −1.2448 / −1.6185 oct — the exact nodes);
+///   - in-between nodes: medians of the four step-onset trajectories of the
+///     same render paired against the crate pre-LUT path (trajectories
+///     collapse onto one curve, shared-bin spread ≤ 0.05 dB — §6);
+///   - below threshold: 0 dB (three sub-threshold steps measure ≤ 0.001 dB
+///     change; the below-knee entrance is steep — −1.02 dB at red −0.02).
+///
+/// The table is the COMPOSITION (runtime GR LUT × makeup-comp curve) at the
+/// corpus pin — default preset, GainCompensation off, Ratio 4 (slope −0.75),
+/// threshold 0.1792, knee 0.42 dB, Model 0. The makeup-curve factor measured
+/// neutral there; [`CompressorModel::makeup_comp`] must stay 1.0 for
+/// corpus-faithful behavior. NOT pinned (corpus gap, §6): the composition's
+/// threshold/ratio/knee cross-terms (all non-default pins are impulse-only).
+pub const GR_TABLE: &[(f64, f64)] = &[
+    (-0.0000, 0.0000),
+    (-0.0200, -1.0243),
+    (-0.0400, -1.0783),
+    (-0.0600, -1.1387),
+    (-0.0800, -1.1854),
+    (-0.1000, -1.2491),
+    (-0.1236, -1.3192),
+    (-0.1500, -1.7233),
+    (-0.2000, -2.0156),
+    (-0.2500, -2.1515),
+    (-0.3000, -2.3974),
+    (-0.3500, -2.6312),
+    (-0.4000, -2.7371),
+    (-0.4500, -2.9229),
+    (-0.5000, -3.1974),
+    (-0.5500, -3.3369),
+    (-0.6000, -3.6052),
+    (-0.6500, -3.8799),
+    (-0.7000, -4.1011),
+    (-0.7500, -4.3998),
+    (-0.8000, -4.6811),
+    (-0.8500, -4.9788),
+    (-0.8710, -5.0883),
+    (-0.9000, -5.3788),
+    (-0.9500, -5.6555),
+    (-1.0000, -5.8965),
+    (-1.0500, -6.1208),
+    (-1.1000, -6.3960),
+    (-1.1500, -6.6698),
+    (-1.2000, -6.9287),
+    (-1.2448, -7.1495),
+    (-1.3000, -7.6060),
+    (-1.3500, -7.8735),
+    (-1.4000, -8.1460),
+    (-1.4500, -8.4015),
+    (-1.5000, -8.6521),
+    (-1.5500, -8.9252),
+    (-1.6000, -9.1791),
+    (-1.6185, -9.2691),
+    (-1.7000, -9.7314),
+];
+
+/// Terminal slope of the corpus composition (last two settled anchors,
+/// −1.2448 → −1.6185 oct): −5.671929 dB/oct. Used only beyond the last
+/// table node (red < −1.70 oct — outside the corpus; every corpus
+/// trajectory stays shallower).
+pub const GR_TABLE_TERMINAL_SLOPE_DB_OCT: f64 = -5.671_929;
+
+/// Applied-gain composition in dB at a reduction in octaves [corpus pin —
+/// see [`GR_TABLE`]]. 0 dB for red ≥ 0 (compression reduction is ≤ 0;
+/// expansion, Model 2, is out of corpus scope); linear interp on the table;
+/// beyond the last node extrapolate at [`GR_TABLE_TERMINAL_SLOPE_DB_OCT`],
+/// floored at −60 dB (stated modeling choice — the device's own −31 red
+/// index clamp is inside the uncaptured LUT domain, §4).
+pub fn applied_gain_db(red_oct: f64) -> f64 {
+    if red_oct >= 0.0 {
+        return 0.0;
+    }
+    let mag = -red_oct;
+    let last = GR_TABLE[GR_TABLE.len() - 1];
+    if mag >= -last.0 {
+        return (last.1 + GR_TABLE_TERMINAL_SLOPE_DB_OCT * (mag + last.0)).max(-60.0);
+    }
+    for w in GR_TABLE.windows(2) {
+        let ((r1, g1), (r2, g2)) = (w[0], w[1]);
+        let (m1, m2) = (-r1, -r2); // node magnitudes (octaves above threshold)
+        if mag >= m1 && mag <= m2 {
+            let t = (mag - m1) / (m2 - m1);
+            return g1 + t * (g2 - g1);
+        }
+    }
+    unreachable!("mag within table range")
 }
 
 /// The stock Live-12 per-sample model (`InternalCalc<false,0,0>` shape,
@@ -475,11 +569,14 @@ pub struct CompressorModel {
     ring_write: usize,
     /// Lookahead length in samples, float (0x1c0 = sr_kHz·ms [D]).
     pub lookahead_samples: f64,
-    /// GainCompensation makeup-curve value (0x2e0) — residual: runtime-built
-    /// LUT, unimplementable statically; structure only, neutral default.
+    /// GainCompensation makeup-curve value (0x2e0) — structural: the
+    /// corpus [`GR_TABLE`] composition already includes the makeup-curve
+    /// factor at the corpus pin (measured neutral, 0 dB); keep this at 1.0
+    /// for corpus-faithful behavior. A separately driven makeup curve is
+    /// outside the corpus (GainCompensation-on is not covered).
     pub makeup_comp: f64,
-    /// Last reduction in octaves (0x1e0, the GR meter source) — the meter
-    /// value itself is the placeholder LUT output.
+    /// Last reduction in octaves (0x1e0, the GR meter source) — the applied
+    /// gain is [`applied_gain_db`] of this value (the corpus-pinned LUT).
     pub reduction: f64,
 }
 
@@ -553,22 +650,26 @@ impl CompressorModel {
 
         // 5. two-stage ballistics, doubles [D §1 step 4]: stage 1
         //    attack/release one-pole; stage 2 the fixed 6× fast follower.
+        //    POLE FORM [corpus-corrected, §6]: the decoded coefficient is
+        //    the pole c; the input weight is 1−c — s = c·s + (1−c)·x.
         let coeff = if det > self.stage1 {
             self.attack_coeff
         } else {
             self.release_coeff
         };
-        self.stage1 += coeff * (det - self.stage1);
-        self.stage2 += self.fast_coeff * (self.stage1 - self.stage2);
+        self.stage1 += (1.0 - coeff) * (det - self.stage1);
+        self.stage2 += (1.0 - self.fast_coeff) * (self.stage1 - self.stage2);
 
         // 6. curve in octaves [D §3]: env = log2(stage2 + 1e-28).
         let env_oct = f64::log2(self.stage2 + ENV_LOG_FLOOR);
         self.reduction = reduction_octaves(env_oct, self.threshold_oct, self.knee_oct, self.slope);
 
-        // 7. applied gain [D §3]: GR LUT × makeup-comp curve × user makeup —
-        //    the two LUT factors are residuals (identity / neutral here).
+        // 7. applied gain [D §3 + corpus pin §6]: the corpus composition
+        //    table (GR LUT × makeup-comp curve at the pin) × the structural
+        //    makeup_comp field (neutral) × user makeup.
         let user_makeup = 10f64.powf(self.params.gain / 20.0); // 0x2ac [D]
-        let gain = lut_placeholder(self.reduction) * self.makeup_comp * user_makeup;
+        let comp = 10f64.powf(applied_gain_db(self.reduction) / 20.0);
+        let gain = comp * self.makeup_comp * user_makeup;
 
         // 8. delayed read [D §1 step 1]: slots at −la and −(la+1), fraction
         //    = la − int(la). Mode 0 (la = 0) reads the just-written slot.
@@ -714,36 +815,129 @@ mod curve_tests {
         assert!((m.lookahead_samples - 44.1).abs() < 1e-9); // 1.0 ms, legacy_model 1
     }
 
-    /// Structure check, no gate claim: with 0 dB user makeup and the LUT
-    /// placeholders at identity, wet and dry legs carry the SAME delayed
-    /// signal — the DryWet crossfade shape `dly·(1−w) + dly·gain·w` [D §3]
-    /// collapses to the pure lookahead delay at every w, while the curve
-    /// still drives the reduction state (0x1e0) the real LUT would consume.
+    /// Ballistics update form [corpus-corrected §6]: the decoded coefficient
+    /// is the POLE c (s = c·s + (1−c)·x), so a step reaches 63% of the new
+    /// level after τ = ms·sr_kHz samples; the literal `s += c·(x−s)` reading
+    /// (near-instant) is refuted by the corpus — one sample would already
+    /// carry 99.93% of a full-scale spike, while the BULK impulse renders
+    /// show reduction ≈ 0 at the +1 ms lookahead.
     #[test]
-    fn placeholder_chain_is_delay_only_at_unity_makeup() {
-        let mut m = CompressorModel::new(DEFAULTS, 48000);
-        m.params.gain = 0.0;
-        m.params.dry_wet = 0.37; // any w: both legs hold the same dly
-        m.params.threshold = 5.623_413_251_903_491e-4 * 4.0; // deep drive
-        m.params.ratio = 20.0;
-        m.params.knee = 18.0;
-        let w = 2.0 * std::f64::consts::PI * 1000.0 / 48000.0;
-        let la = m.lookahead_samples; // 1.0 ms → 48.0 samples at 48 kHz
-        assert!((la - 48.0).abs() < 1e-9);
-        let mut reduced = false;
-        for n in 0..4800 {
-            let s = (w * n as f64).sin() as f32;
-            let (ol, or_) = m.process(s, s);
-            reduced |= m.reduction < -1.0;
-            if (n as f64) < la {
-                continue; // startup: the ring reads its zeroed slots
-            }
-            let expect = (w * (n as f64 - la)).sin() as f32;
+    fn pole_form_ballistics_have_nominal_time_constant() {
+        let sr = 48000u32;
+        let mut m = CompressorModel::new(DEFAULTS, sr);
+        // one sample: the weight is 1−c ≈ 1/τ, not c ≈ 1 (literal reading)
+        let _ = m.process(1.0, 1.0);
+        assert!(m.stage1 < 0.001, "near-instant literal reading: {}", m.stage1);
+        // τ = 30 ms · 48 kHz = 1440 samples → 1 − e^−1
+        let tau = 1440usize;
+        for _ in 1..tau {
+            m.process(1.0, 1.0);
+        }
+        let want = 1.0 - (-1.0f64).exp();
+        assert!(
+            (m.stage1 - want).abs() < 1e-9,
+            "stage1 {} vs 1−e^−1 {}",
+            m.stage1,
+            want
+        );
+        // stage 2 lags stage 1 at the 6×-faster rate
+        assert!(m.stage2 > 0.5 && m.stage2 < m.stage1);
+    }
+
+    /// Corpus table [§6]: 0 dB at/below threshold (red ≥ 0), monotone
+    /// non-increasing, exact at the four settled BULK anchors, linear interp
+    /// between nodes, terminal-slope extrapolation past the corpus with a
+    /// stated −60 dB floor.
+    #[test]
+    fn gr_table_is_monotone_and_corpus_anchored() {
+        assert_eq!(applied_gain_db(0.0), 0.0);
+        assert_eq!(applied_gain_db(0.5), 0.0);
+        for w in GR_TABLE.windows(2) {
+            assert!(w[1].0 < w[0].0, "nodes in descending red order");
             assert!(
-                (ol - expect).abs() < 1e-4 && (or_ - expect).abs() < 1e-4,
-                "n {n}: {ol} vs {expect}"
+                w[1].1 <= w[0].1 + 1e-12,
+                "table not monotone at {:?} -> {:?}",
+                w[0],
+                w[1]
             );
         }
-        assert!(reduced, "curve never engaged under drive");
+        // exact at the settled anchors (steps -12 / -6 / -3 / 0 dBFS)
+        for &(red, db) in &[
+            (-0.1236, -1.3192),
+            (-0.8710, -5.0883),
+            (-1.2448, -7.1495),
+            (-1.6185, -9.2691),
+        ] {
+            assert!(
+                (applied_gain_db(red) - db).abs() < 5e-4,
+                "anchor {red}: {} vs {db}",
+                applied_gain_db(red)
+            );
+        }
+        // midpoint of a segment is the linear interp
+        let mid = applied_gain_db(-0.475);
+        let want = 0.5 * (-2.9229 + -3.1974);
+        assert!((mid - want).abs() < 5e-5, "mid {mid} vs {want}");
+        // below-threshold entrance is steep (corpus: -1.02 dB at red -0.02)
+        assert!((applied_gain_db(-0.02) - -1.0243).abs() < 5e-4);
+        // past the corpus: terminal slope continues, floored at -60 dB
+        let deep = applied_gain_db(-1.75);
+        let want_deep = -9.7314 + GR_TABLE_TERMINAL_SLOPE_DB_OCT * (1.75 - 1.70);
+        assert!((deep - want_deep).abs() < 1e-9);
+        assert_eq!(applied_gain_db(-30.0), -60.0);
+    }
+
+    /// Corpus-driven chain [§6]: below threshold at unity makeup the model
+    /// is a pure lookahead delay (the BULK sub-threshold steps measure
+    /// ≤ 0.001 dB change); a 0 dBFS 1 kHz drive settles to the corpus -6…0
+    /// region — reduction 0.8·|sin|-fraction → red ≈ −1.62 oct → applied
+    /// gain −9.27 dB, so the output/input ratio equals the table value.
+    #[test]
+    fn corpus_chain_matches_the_table_in_steady_state() {
+        let w = 2.0 * std::f64::consts::PI * 1000.0 / 48000.0;
+        // below threshold: delay-only at unity makeup
+        let mut m = CompressorModel::new(DEFAULTS, 48000);
+        m.params.gain = 0.0;
+        m.params.threshold = 1.99526238; // extent top — signal far below
+        let la = m.lookahead_samples;
+        assert!((la - 48.0).abs() < 1e-9);
+        for n in 0..4800 {
+            let s = (w * n as f64).sin() as f32 * 0.1;
+            let (ol, _) = m.process(s, s);
+            if (n as f64) < la {
+                continue;
+            }
+            let expect = (w * (n as f64 - la)).sin() as f32 * 0.1;
+            assert!((ol - expect).abs() < 1e-5, "n {n}: {ol} vs {expect}");
+        }
+        assert_eq!(m.reduction, 0.0);
+
+        // over threshold: the settled gain is the corpus table value × makeup
+        let mut m = CompressorModel::new(DEFAULTS, 48000); // Gain +3 dB
+        let n_total = 48000usize;
+        let mut out = Vec::with_capacity(n_total);
+        let mut inp = Vec::with_capacity(n_total);
+        for n in 0..n_total {
+            let s = (w * n as f64).sin() as f32; // 0 dBFS peak
+            let (ol, _) = m.process(s, s);
+            out.push(ol);
+            inp.push(s);
+        }
+        // settled reduction lands on the corpus 0 dBFS anchor (±0.02 oct)
+        assert!(
+            (m.reduction - -1.6185).abs() < 0.02,
+            "settled red {}",
+            m.reduction
+        );
+        // table(-1.6185) = -9.2691 dB; +3 dB makeup -> gain 0.4860
+        let g = 10f64.powf((applied_gain_db(m.reduction) + 3.0) / 20.0);
+        assert!((g - 0.4860).abs() < 0.001, "gain {g}");
+        // window RMS ratio of the last 8192 samples equals that gain
+        let k = n_total - 8192;
+        let rr = |b: &[f32]| -> f64 {
+            (b.iter().map(|v| f64::from(*v) * f64::from(*v)).sum::<f64>() / b.len() as f64).sqrt()
+        };
+        let ratio = rr(&out[k..]) / rr(&inp[k..]);
+        assert!((ratio - g).abs() < 0.01, "rms ratio {ratio} vs gain {g}");
     }
 }
