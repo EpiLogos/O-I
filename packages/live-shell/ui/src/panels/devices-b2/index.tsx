@@ -23,6 +23,10 @@ import { WavetablePort } from './wavetable'
  * tables (every ParamDesc = a control). Interactivity is local: controls
  * update the port's stored-value state and display it; persistence wires
  * in with the per-device M3 edit API (the corner badge says so).
+ *
+ * Slot: `bottom` — the live-mode detail host (inside the device detail
+ * row's DeviceChainPanel), the one mounted panel host in live mode, per the
+ * integration map's host decision (see ../devices/index.tsx).
  */
 
 installB2Styles()
@@ -35,7 +39,7 @@ function port(id: string, title: string, component: FunctionComponent, order: nu
     id,
     title,
     icon: ICON_CURVES,
-    slot: 'right-dock',
+    slot: 'bottom',
     component,
     order,
     note,
