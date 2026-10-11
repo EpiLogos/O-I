@@ -168,6 +168,295 @@ fn kind_str(kind: live_set::model::TrackKind) -> String {
     }
 }
 
+// ---------------------------------------------------------------------------
+// The M3 device-edit contract — the device panels' seam (integration map
+// §C): descriptors from live-dynamics' typed parameter tables, stored
+// values from the live-set document, and writes that validate against the
+// table's stored extent before the set is rewritten in place.
+
+/// One live-dynamics table row as the device panels' `ParamDescJson` client
+/// type reads it (ui/src/panels/devices/api.ts).
+#[derive(Serialize)]
+pub struct ParamDescJson {
+    pub id: String,
+    pub ui_name: String,
+    pub stored_min: f64,
+    pub stored_max: f64,
+    pub unit: String,
+    pub kind: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub labels: Option<Vec<String>>,
+    pub notes: String,
+}
+
+fn desc_json(desc: &live_dynamics::params::ParamDesc) -> ParamDescJson {
+    use live_dynamics::params::ParamKind;
+    let (kind, labels) = match &desc.kind {
+        ParamKind::Continuous => ("continuous", None),
+        ParamKind::Discrete { labels } => (
+            "discrete",
+            Some(labels.iter().map(|label| label.to_string()).collect()),
+        ),
+        ParamKind::Toggle => ("toggle", None),
+    };
+    ParamDescJson {
+        id: desc.id.to_string(),
+        ui_name: desc.ui_name.to_string(),
+        stored_min: desc.stored_min,
+        stored_max: desc.stored_max,
+        unit: desc.unit.to_string(),
+        kind,
+        labels,
+        notes: desc.notes.to_string(),
+    }
+}
+
+/// GET /api/device-descriptors — every live-dynamics parameter table, keyed
+/// by document element name (the key the device panels carry as element).
+pub fn device_descriptors_json() -> serde_json::Value {
+    let mut map = serde_json::Map::new();
+    for key in live_dynamics::params::table_keys() {
+        if let Some(table) = live_dynamics::params::table(key) {
+            let rows: Vec<ParamDescJson> = table.iter().map(desc_json).collect();
+            map.insert(
+                (*key).to_string(),
+                serde_json::to_value(rows).expect("descriptor rows serialize"),
+            );
+        }
+    }
+    serde_json::Value::Object(map)
+}
+
+/// Track element by the summary's own names: audio/midi/return tracks by
+/// `EffectiveName`, the master's `MainTrack` as "Master".
+fn find_track<'a>(
+    root: &'a live_set::xml::Element,
+    name: &str,
+) -> Option<&'a live_set::xml::Element> {
+    let live_set = root.find("LiveSet")?;
+    if name == "Master" {
+        return live_set.find("MainTrack");
+    }
+    let tracks = live_set.find("Tracks")?;
+    tracks.children.iter().find(|track| {
+        matches!(
+            track.name.as_str(),
+            "AudioTrack" | "MidiTrack" | "ReturnTrack"
+        ) && track.find("EffectiveName").and_then(|n| n.attr("Value")) == Some(name)
+    })
+}
+
+fn find_track_mut<'a>(
+    root: &'a mut live_set::xml::Element,
+    name: &str,
+) -> Option<&'a mut live_set::xml::Element> {
+    let master = name == "Master";
+    let live_set = root.find_mut("LiveSet")?;
+    if master {
+        return live_set.child_mut("MainTrack");
+    }
+    let tracks = live_set.child_mut("Tracks")?;
+    tracks.children.iter_mut().find(|track| {
+        matches!(
+            track.name.as_str(),
+            "AudioTrack" | "MidiTrack" | "ReturnTrack"
+        ) && track.find("EffectiveName").and_then(|n| n.attr("Value")) == Some(name)
+    })
+}
+
+/// The first device of a track's chain carrying the element name
+/// (`DeviceChain/DeviceChain/Devices` — the summary's own walk).
+fn find_device<'a>(
+    track: &'a live_set::xml::Element,
+    device: &str,
+) -> Option<&'a live_set::xml::Element> {
+    track
+        .child("DeviceChain")?
+        .child("DeviceChain")?
+        .child("Devices")?
+        .children
+        .iter()
+        .find(|d| d.name == device)
+}
+
+fn find_device_mut<'a>(
+    track: &'a mut live_set::xml::Element,
+    device: &str,
+) -> Option<&'a mut live_set::xml::Element> {
+    track
+        .child_mut("DeviceChain")?
+        .child_mut("DeviceChain")?
+        .child_mut("Devices")?
+        .children
+        .iter_mut()
+        .find(|d| d.name == device)
+}
+
+/// Resolve a table id — an XML path like `SideChain/OnOff` or
+/// `Bands.0/ParameterA/Freq` (band elements literally carry the dot) —
+/// inside a device element.
+fn resolve_path<'a>(
+    device: &'a live_set::xml::Element,
+    path: &str,
+) -> Option<&'a live_set::xml::Element> {
+    let mut node = device;
+    for segment in path.split('/') {
+        node = node.child(segment)?;
+    }
+    Some(node)
+}
+
+fn resolve_path_mut<'a>(
+    device: &'a mut live_set::xml::Element,
+    path: &str,
+) -> Option<&'a mut live_set::xml::Element> {
+    let mut node = device;
+    for segment in path.split('/') {
+        node = node.child_mut(segment)?;
+    }
+    Some(node)
+}
+
+fn param_json(id: &str, value: &str, range: Option<&live_set::xml::Element>) -> ParamJson {
+    ParamJson {
+        id: id.to_string(),
+        value: value.to_string(),
+        min: range
+            .and_then(|r| r.child("Min"))
+            .and_then(|m| m.attr("Value"))
+            .map(str::to_string),
+        max: range
+            .and_then(|r| r.child("Max"))
+            .and_then(|m| m.attr("Value"))
+            .map(str::to_string),
+    }
+}
+
+/// GET /api/document/device-params — one device's stored values on one
+/// track, table-driven: only the live-dynamics rows, exactly as the
+/// document stores them. A row the set does not carry is omitted, so the
+/// panel renders its honest "not stored in this document" state.
+pub fn device_params_json(
+    path: &str,
+    track_name: &str,
+    device: &str,
+) -> Result<serde_json::Value, String> {
+    let table = live_dynamics::params::table(device)
+        .ok_or_else(|| format!("no parameter table for device element \"{device}\""))?;
+    let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
+    let root = live_set::open_gz(&bytes).map_err(|e| e.to_string())?;
+    let track = find_track(&root, track_name)
+        .ok_or_else(|| format!("no track named \"{track_name}\" in the document"))?;
+    let element = find_device(track, device)
+        .ok_or_else(|| format!("no {device} device on track \"{track_name}\""))?;
+    let mut params = Vec::new();
+    for desc in table {
+        let Some(param) = resolve_path(element, desc.id) else {
+            continue;
+        };
+        let Some(manual) = param.child("Manual") else {
+            continue;
+        };
+        params.push(param_json(
+            desc.id,
+            manual.attr("Value").unwrap_or_default(),
+            param.child("MidiControllerRange"),
+        ));
+    }
+    Ok(serde_json::json!({ "params": params }))
+}
+
+/// POST /api/document/device-param — validate one stored parameter against
+/// the table's stored extent and write the set back (gzip .als in place):
+/// the document's own `Manual` value under the device element, resolved by
+/// the table id. The response carries the persisted reading.
+pub fn device_param_set(
+    path: &str,
+    track_name: &str,
+    device: &str,
+    param_id: &str,
+    value: &serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    use live_dynamics::params::ParamKind;
+    let table = live_dynamics::params::table(device)
+        .ok_or_else(|| format!("no parameter table for device element \"{device}\""))?;
+    let desc = table
+        .iter()
+        .find(|row| row.id == param_id)
+        .ok_or_else(|| format!("{device} has no stored parameter \"{param_id}\""))?;
+    let stored = match desc.kind {
+        ParamKind::Toggle => match value.as_bool() {
+            Some(true) => "true".to_string(),
+            Some(false) => "false".to_string(),
+            None => {
+                return Err(format!(
+                    "\"{param_id}\" is a toggle — value must be true or false"
+                ))
+            }
+        },
+        ParamKind::Discrete { .. } => {
+            let v = value.as_f64().ok_or_else(|| {
+                format!("\"{param_id}\" is a discrete menu — value must be a stored index")
+            })?;
+            if v.is_finite() && v.fract() == 0.0 && (desc.stored_min..=desc.stored_max).contains(&v)
+            {
+                format!("{}", v as i64)
+            } else {
+                return Err(out_of_range(desc, v));
+            }
+        }
+        ParamKind::Continuous => {
+            let v = value
+                .as_f64()
+                .ok_or_else(|| format!("\"{param_id}\" is continuous — value must be a number"))?;
+            if v.is_finite() && (desc.stored_min..=desc.stored_max).contains(&v) {
+                format!("{v}")
+            } else {
+                return Err(out_of_range(desc, v));
+            }
+        }
+    };
+    let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
+    let mut root = live_set::open_gz(&bytes).map_err(|e| e.to_string())?;
+    {
+        let track = find_track_mut(&mut root, track_name)
+            .ok_or_else(|| format!("no track named \"{track_name}\" in the document"))?;
+        let element = find_device_mut(track, device)
+            .ok_or_else(|| format!("no {device} device on track \"{track_name}\""))?;
+        let param = resolve_path_mut(element, param_id).ok_or_else(|| {
+            format!("the set carries no \"{param_id}\" element under {device} on \"{track_name}\"")
+        })?;
+        let manual = param
+            .child_mut("Manual")
+            .ok_or_else(|| format!("\"{param_id}\" carries no Manual value in the document"))?;
+        manual.set_attr("Value", &stored);
+    }
+    let out = live_set::write_gz(&root).map_err(|e| e.to_string())?;
+    std::fs::write(path, out).map_err(|e| e.to_string())?;
+    // The persisted reading, from the set's own element (range unchanged).
+    let range = find_track(&root, track_name)
+        .and_then(|track| find_device(track, device))
+        .and_then(|element| resolve_path(element, param_id))
+        .and_then(|param| param.child("MidiControllerRange"));
+    Ok(serde_json::json!({
+        "param": serde_json::to_value(param_json(param_id, &stored, range)).expect("param serializes"),
+    }))
+}
+
+fn out_of_range(desc: &live_dynamics::params::ParamDesc, value: f64) -> String {
+    if desc.unit.is_empty() {
+        format!(
+            "value {value} out of range for {} (stored {}..={})",
+            desc.id, desc.stored_min, desc.stored_max
+        )
+    } else {
+        format!(
+            "value {value} out of range for {} (stored {}..={} {})",
+            desc.id, desc.stored_min, desc.stored_max, desc.unit
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
