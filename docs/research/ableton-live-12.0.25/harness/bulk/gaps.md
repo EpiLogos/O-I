@@ -18,3 +18,24 @@ Adaptations (documented, not invented):
 
 ## Build results (queue_slice1.jsonl, queue_rest.jsonl)
 - built OK: 435/435
+
+## Sample-player defaults render SILENCE — correct, and now supplemented (2026-10-11)
+
+The BULK default sets for Sampler and Simpler reference **no sample** (their
+`.adv` defaults carry an empty `<SampleParts/>`), so `BULK-{sampler,simpler}-default-m1-velocity`
+render digital silence (−96.33 dBFS) — the correct output of an empty sample
+player, not a driver failure (the repeated NO-EXPORT-PANEL ledger lines were
+the driver retrying a set that legitimately produces silence; the render
+was restored from the driver stash as the honest default-state artifact).
+
+**Fix — loaded probes built**: `harness/build_sampler_loaded.py` copies the
+`MultiSamplePart` STRUCTURE from a factory preset (names/ranges only — no
+factory audio copied) and loads OUR OWN test signal
+`signals/steps-1k.wav` (clean-room, redistribution-safe) at RootKey 48
+(the M1 clip's key). Renders:
+- `BULK-sampler-loaded-steps.aif` — RMS **−46.78 dBFS** (audible)
+- `BULK-simpler-loaded-steps.aif` — RMS **−56.51 dBFS** (audible)
+
+These are the DSP-gating entries for Sampler/Simpler (filter/env/warp
+behavior); the default-state entries remain in the corpus as the
+empty-slot truth.
