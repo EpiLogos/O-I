@@ -2,6 +2,7 @@
 //! Run: cargo test -- --ignored
 
 use live_dynamics::audio;
+use live_dynamics::compressor;
 use live_dynamics::echo as taps_echo;
 use live_dynamics::glue::{self, GlueParams};
 use live_dynamics::operator;
@@ -2172,4 +2173,93 @@ fn autofilter_bulk_cutoff_probe() {
     // Pre-LUT cutoff law [D] sanity (the model's only cutoff-path claim):
     let e = live_dynamics::auto_filter::event_cutoff(127.0, 0.0, 0.0, 0.0, 0.0, 135.0);
     assert_eq!(e, 127.0, "event_cutoff must pass the unmodulated stored cutoff");
+}
+
+// ---------------------------------------------------------------------------
+// Compressor GR-composition gate (BULK corpus pinned 2026-10-11; the dossier
+// §6 pin; analyzer harness/analyze_compressor_gr.py). The `.als`
+// BULK-compressor-default-steps-1k-wav.als carries exactly the crate
+// DEFAULTS surface (Threshold 0.1791548878, Ratio 4, ExpansionRatio
+// 1.14999998, Attack 30, Release 120, Gain 3, Knee 0.421875, LookAhead 1,
+// DryWet 1, Model 0, LegacyModel 1, GainCompensation false). Gate: the
+// crate model (corpus GR_TABLE composition + pole-form ballistics + 1 ms
+// lookahead) vs the render, per-step [t0+0.10, t0+0.40] windows, the README
+// static tolerance ≤0.5 dB/step. The sub-threshold steps double as the
+// makeup pin: the measured change there is 0.000 dB at Gain +3.
+
+#[test]
+#[ignore]
+fn compressor_bulk_static_map_gate() {
+    const NAME: &str = "BULK-compressor-default-steps-1k-wav.aif";
+    if !render_exists(NAME) {
+        println!("skip {NAME}: render not present in this checkout");
+        return;
+    }
+    let render = read_render(NAME);
+    let sr = render.sample_rate;
+    // The corpus .als surface equals DEFAULTS (see the section header).
+    let mut m = compressor::CompressorModel::new(compressor::DEFAULTS, sr);
+    let signal = synth_steps_1k(sr);
+    let mut out = vec![0f32; signal.len()];
+    for (i, x) in signal.iter().enumerate() {
+        let (ol, _) = m.process(*x, *x);
+        out[i] = ol;
+    }
+    let mut worst = 0.0f64;
+    let mut failures: Vec<String> = Vec::new();
+    println!(
+        "compressor static map (BULK steps-1k, [t0+0.10, t0+0.40], tol ±{:.1} dB/step):",
+        verify::STATIC_TOLERANCE_DB
+    );
+    for (k, db) in [-30.0f64, -24.0, -18.0, -12.0, -6.0, -3.0, 0.0].iter().enumerate() {
+        let got = step_window_rms_db(&render.samples, sr, k);
+        let pred = step_window_rms_db(&out, sr, k);
+        let d = pred - got;
+        worst = worst.max(d.abs());
+        println!("  step {k} ({db:+5.0} dBFS): render {got:8.2}  model {pred:8.2}  Δ {d:+.2} dB");
+        if d.abs() > verify::STATIC_TOLERANCE_DB {
+            failures.push(format!("step {k} ({db:+.0} dBFS): model {pred:.2} vs render {got:.2}"));
+        }
+    }
+    println!("compressor static map: worst |Δ| {worst:.3} dB");
+    assert!(
+        failures.is_empty(),
+        "compressor bulk static gate failed:\n  {}",
+        failures.join("\n  ")
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Compressor corpus tripwires (the pin-inert findings of the BULK pin set;
+// analyzer harness/analyze_compressor_gr.py). The ExpansionRatio pins
+// (1 / 2) engage nothing in Model 0: both renders must stay dither-identical
+// to the default impulse. If a future re-render makes them live, the corpus
+// now carries expansion-slope information and this fires for a re-look.
+
+#[test]
+#[ignore]
+fn compressor_expansionratio_pins_inert_tripwire() {
+    let names = [
+        "BULK-compressor-default-impulse-wav.aif",
+        "BULK-compressor-pin-expansionratio-min.aif",
+        "BULK-compressor-pin-expansionratio-max.aif",
+    ];
+    if !names.iter().all(|n| render_exists(n)) {
+        println!("skip compressor expansionratio tripwire: renders not present");
+        return;
+    }
+    let bufs: Vec<Vec<f32>> = names.iter().map(|n| read_render(n).samples).collect();
+    for pair in bufs.windows(2) {
+        let d = pair[0]
+            .iter()
+            .zip(&pair[1])
+            .map(|(a, b)| (a - b).abs())
+            .fold(0.0f32, f32::max);
+        println!("  max |Δ| default vs pin: {d:.6}");
+        assert!(
+            d <= 1.2e-4,
+            "expansionratio pin render no longer dither-identical (max |Δ| {d}) — \
+             expansion-slope information may now exist in the corpus; re-pin"
+        );
+    }
 }
