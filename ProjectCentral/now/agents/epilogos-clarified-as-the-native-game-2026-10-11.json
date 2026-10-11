@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "epilogos-clarified-as-the-native-game-2026-10-11",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "zcode:glass-bead-game-study",
+  "kind": "note",
+  "recorded_at_unix_seconds": 1791676975,
+  "subject": "Epi-Logos clarified as the native game (not a fifth surface); study folder lost to lane churn and restored in full",
+  "result": "Two things. (1) OWNER CLARIFICATION RECORDED: Epi-Logos presents in the app as a mode (WorkspaceMode epi-logos, hint The authored world: the essay, Bimba, the Epii material, the products; WorldRef central|epi-logos) but is ontologically the systems NATIVE GAME — the precise referent of the Glass Bead Game figure. Central/Factory/Expressions/Techne are the instruments four chambers (ground/work/form/knowing); the shared field is where games are played and displayed; Epi-Logos is the playing itself. Mode is where the game sits while its instrument is being built. Written into 06-THE-PRAXIS.md section 0 (The figure's referent), section 7 retitled One player, one day — one game of Epi-Logos, closing line now names it the convergence's acceptance game; 05 rev 2 carries a terminus note; README carries the referent line. Keeps surfaces clean (never a fifth peer) and puts the authored corpus in true position: the game's repertoire and law, not one surface's content. (2) INCIDENT + RESTORATION: docs/research/glass-bead-game/ was wiped while untracked during concurrent lane branch churn tonight (reflog: main to main-convergence-20261010 at 00:51, to hermes-contract-fold at 00:57; folder untracked so git has no copy). README + lanes 01-05 lost; 06 and both appendices survived (written after the last sweep). All six files restored byte-faithfully from the authoring session (verified complete listing). RECOMMENDATION: land this folder into a commit on its own scoped branch soon — until then it remains exposed to the same sweep risk. No other files touched; the active lane on hermes-contract-fold was not disturbed.",
+  "status": "active"
+}

@@ -1,0 +1,15 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "device-sdk-landed-the-authoring-kit-2026-10-09",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:zcode-device-sdk",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791543910,
+  "subject": "Device SDK landed: the authoring kit, the gate, the icon cut, the agent loop (commit ec2cac658, lane agent/o-i-20261007-1639)",
+  "result": "LANDED (lane branch, unmerged as the lane stands): packages/live-shell/ui/src/inhabitants/sdk/ — define.ts (admitFamily/declareDeviceExtension, §14 row builders, validate-before-admit), validate.ts (per-device + family + world gate incl. AGENT_SHELL_ADDRESS_TABLE cross-check), controls.tsx + sdk.css (FacePlate/ScalarParam/EnumParam/BoolParam/ReadingRow/Lamp/Disclosure/WaitingFace/useFaceDrafts to NATIVE-EDITOR-STANDARD), icons.ts GENERATED from icon-cut.html by scripts/sync-icons.mjs (byte-lock --check; the lanes co-worker extended the sync to chevrons/kind-shapes/wood marks mid-session — their marks.tsx remains unstaged in flight), scaffold.ts + scripts (scaffold-device, validate-devices, device-gaps), DEVICE-SDK.md, dev harness + tests/device-sdk.browser.mjs scripted walk, tests/device-sdk.test.mjs (8/8), skills/device-sdk/SKILL.md. Verification: world gate PASS over the 7 admitted families; tsc clean on the sdk tree; vite build green; browser walk 6/6 steps with captures in tests/artifacts/device-sdk/. THE LOOP: npm run devices:gaps (capability matrices joined with the admitted surface — 91 candidates today) -> devices:scaffold -> declare faces/params (writePath only with a real writer) -> compose faces from the kit -> npm run test:device-sdk -> build -> return. DISCLOSURES: (1) skills/device-sdk/SKILL.md was written to Work/O-I/skills post-join — unzoned ground, no conflicting worker claim; moved into the worktree at commit time. (2) Pre-existing lane faults NOT mine, owners named: 9 ui test files fail on missing desktop/cradle/src/visuals/observations (importers incl. continuity-storage, native-input-custody — the cradle workspace lane owns the repair); desktop/cradle tsc dirt in AgentSessionGrid.tsx; the co-workers marks.tsx + inhabitantCard.tsx were mid-flight under my feet (I patched their WoodMark union access to unblock tsc — one line, disclosed here). (3) icon-cut.html is under active owner edit today — sync --check regenerates and compares; re-run npm run devices:sync-icons after specimen edits. CONTINUES: wire the five agent-shell families + QL plates onto the kit at their owners pace; landing the lane brings skills/device-sdk to main.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-09",
+    "2026-10-10"
+  ]
+}

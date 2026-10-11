@@ -1,0 +1,16 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "reader-chrome-aprime-character-correction-live-2026-10-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "zcode:expressions-deepen-20261007",
+  "kind": "note",
+  "recorded_at_unix_seconds": 1791472859,
+  "subject": "Reader chrome + A-prime character correction LIVE (#633 merged, 2e1c66c8)",
+  "result": "The two standing calls executed and deployed. READER: real fullscreen (requestFullscreen on the stage, browser-owned exit) replacing the zoom-fit mislabelled as fullscreen; focus mode (F key or the head button - header, sidebar and scene body hide; Escape returns); the scenes list moved to the LEFT sidebar in the field sidebar language, linking Expressions into the rest of the field; embed mode carries no duplicate rail (the reader own contents sidebar lists the scenes, as it already did). Deployed and browser-verified on production: fullscreen button present, focus hides the rail, sidebar sits left of the field. A-PRIME CHARACTERS: all 36 conjugate scene characters corrected from their paired A-face records to their own records (read at the pinned edition bb1a3b25), binding note records the correction; live index bodies verified (a05p no longer references Prakasa-Vimarsa; the staging/lens/assemblage descriptions are live). CI found two real regressions during landing which were fixed in the same PR: the embed phone layout squeezed the field to 17px (scene body sat beside the stage in a flex row - the column stacks now), and the render tests still encoded the pre-deepen design (editorial title equals scene name; embed expected a side rail) - tests updated to the deepen design. Landing turbulence recorded: the shared seat branch had accumulated seven other-lane commits which conflicted with main kernel work; the landing commit was rebuilt via plumbing (origin/main tree + exactly my five paths) and the PR force-pushed clean. Follow-ups: none outstanding from this commission; the corpus and reader are live.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-08",
+    "2026-10-09",
+    "2026-10-10"
+  ]
+}

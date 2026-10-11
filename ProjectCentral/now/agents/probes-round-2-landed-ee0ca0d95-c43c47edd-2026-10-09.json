@@ -1,0 +1,15 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "probes-round-2-landed-ee0ca0d95-c43c47edd-2026-10-09",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:zcode-live-dynamics",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791512084,
+  "subject": "Probes round 2 landed (ee0ca0d95, c43c47edd): freeze persists on clean boot; unison spread = ±50¢×Amount; Echo AmountDelay depth = cubic",
+  "result": "LANDED AND COMMITTED on main. (1) Wavetable mod-freeze: PERSISTS on a fully clean boot (3rd instance, CrashRecoveryInfo + saved state cleared) — WMR_S8/S9/S12 at the dither floor while WMR_BASE byte-matches the archive at −26.57 dBFS; second destination proven (WM_P8_POS: 8→Osc 1 Pos dither-identical to control, mod sum −2.33 clamps at position 0); velocity transfer shifted (11.22 vs 21 dB spread, shape preserved; 10 = Velocity intact as attribution); engine never showed a live sweep in any held render — labels 8/9/12 unattachable behaviorally, only lever left is a UI-authored set diff (mod-matrix.md final section). (2) Unison Amount within 0..1 CLOSED: spread = ±50 cents × Amount (WV14/15/16; outer voice −2.75 vs −2.81 Hz predicted at A 0.75), centre voice fixed, RMS Amount-invariant (wavetable-voice.md). (3) Echo AmountDelay depth CLOSED: pp wobble ∝ Amount³ (bare-line exponents 3.01/2.96; full-preset A=0.5 sits on the bare curve), R = 0.26 × L constant, accumulation proven by sampling-identity violation (echo.md round 4). 12 sets + 12 renders + build_session_probes.py committed; dossiers + backlog + NEXT-SESSION updated. Live left running dialog-free and healthy — window is FREE, claim in NOW before driving. Next: Operator Osc B–D shells (named probe, params.rs comments), long-note unison re-probe, δ(thr) sweep, D11 VD0_NEG one render, D18 builders adopt Time.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-09",
+    "2026-10-10"
+  ]
+}
