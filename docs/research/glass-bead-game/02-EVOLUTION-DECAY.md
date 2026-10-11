@@ -13,7 +13,7 @@ The Introduction is written by a Castalian historian of roughly 2400
 (Hesse's indication, reported in Ziolkowski's foreword). Everything we know
 of the Game's rise is told from inside the culture that fell. This is the
 novel's first and quietest structural joke: the history of the Game is an
- epitaph composed by a survivor of the Game. Ziolkowski: "the Castalian
+epitaph composed by a survivor of the Game. Ziolkowski: "the Castalian
 self-obsession from which Knecht defects is nowhere more evident than in
 the smug complacency of the narrator in the Introduction" — the narrator's
 "monkish tone… clerical pedantry… opens up the irony of the work," and as

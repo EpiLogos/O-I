@@ -283,9 +283,10 @@ not by the text).
 | Feuilleton | the newspaper arts-essay section; "Age of the Feuilleton" = the debased prehistory |
 | Berufung | calling, vocation; the summons into Castalia or into office |
 | lingua sacra | Knecht's name for the Game's language at the moment of his vocation |
-| Vicus Lusorum | "Players' Village," the settlement at Waldzell |
+| Vicus Lusorum | "Players' Village," the settlement of the Game players at Waldzell |
 | Archiv | register of examined and accepted symbols and decipherments |
 | Leben / the world | the contrast-class to Castalia; personified by Plinio Designori |
 
-Lanes 02–05 continue from here: evolution and decay (02), the ladder (03),
-the afterlife in computing (04), the relation to the DLW (05).
+Lanes 02–06 continue from here: evolution and decay (02), the ladder (03),
+the afterlife in computing (04), the relation to the DLW (05), the praxis
+synthesis (06).
