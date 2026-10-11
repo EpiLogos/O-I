@@ -1,6 +1,6 @@
 {
   "schema": "oi.device-sdk-walk/v1",
-  "recorded_at": "2026-10-11T14:20:20.945Z",
+  "recorded_at": "2026-10-11T14:51:10.657Z",
   "channel": "scripted-playwright (computer use blocked machine-wide)",
   "url": "http://127.0.0.1:5207/",
   "steps": [

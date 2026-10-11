@@ -2,13 +2,14 @@
 //! per-sample layer (no fitted scalars, no behavioral claims).
 //!
 //! Source: `docs/research/ableton-live-12.0.25/devices/erosion-derivation.md`
-//! (binary lane, 2026-10-09) — both the parameter surface ([B, preset XML]
-//! as relayed by that document; no evidence XML is unpacked for this device
-//! yet, so no RAW_MANUAL/DEFAULTS are claimed) and the per-sample layer.
-//! Implements its [D]/[B]-graded claims only. Per the derivation's own
-//! closing rule every claim still awaits the golden-render cross-check
-//! (COVERAGE row: behavior "—"), so NOTHING here gates a rebuild and no
-//! parity is claimed.
+//! (binary lane, 2026-10-09) — both the parameter surface and the per-sample
+//! layer. The document surface now lives in `params.rs::EROSION`, citing the
+//! unpacked preset `evidence/devices/Erosion/preset-hiss.xml` (first file in
+//! the device folder); this module still claims no RAW_MANUAL/DEFAULTS of
+//! its own. Implements the derivation's [D]/[B]-graded claims only. Per the
+//! derivation's own closing rule every claim still awaits the golden-render
+//! cross-check (COVERAGE row: behavior "—"), so NOTHING here gates a rebuild
+//! and no parity is claimed.
 //!
 //! The device is a delay-line scattersource — NOT a bit-mangler: two ~80 ms
 //! ring buffers read at `5 ms + depth·(bandpassed noise | sine)`, full-wet
