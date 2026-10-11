@@ -994,3 +994,6 @@
 {"label": "BULK-legacy-redux-legacy-pin-bitdepth-min", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
 {"label": "BULK-legacy-redux-legacy-pin-bitdepth-max", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
 {"label": "BULK-legacy-redux-legacy-pin-bitdepth-mid", "status": "skipped-existing", "seconds": 0, "note": "render already on disk"}
+{"label": "BULK-sampler-default-m1-velocity", "status": "rendered", "seconds": 0, "note": "restored from driver stash: silent by design (empty SampleParts; see gaps.md)"}
+{"label": "BULK-sampler-loaded-steps", "status": "rendered", "seconds": 0, "note": "loaded steps-1k.wav, -46.78 dBFS"}
+{"label": "BULK-simpler-loaded-steps", "status": "rendered", "seconds": 0, "note": "loaded steps-1k.wav, -56.51 dBFS"}

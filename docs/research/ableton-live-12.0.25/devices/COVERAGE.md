@@ -68,8 +68,8 @@ Status ledger (updated as lanes land; gate = crate passes vs golden corpus):
 | Collision | INST | ✓ | — | ✓ (menus decoded, 2 pinned DSP laws) | — | — |
 | Tension | INST | ✓ | — | ✓ (AStringStudio, full mp ledger 322) | — | — |
 | Meld | INST | ✓ | — | ✓ (mod matrix 50×19, 16-voice Poly) | — | — |
-| Sampler | INST | ✓ | — | ✓ (=Simpler engine, IsSimpler flag; zone model) | — | — |
-| Simpler | INST | ✓ | — | ✓ (SubOsc laws, shared warper, slicing) | — | — |
+| Sampler | INST | ✓ | — | ✓ (=Simpler engine, IsSimpler flag; zone model) | — | corpus: loaded probe ✓ (steps-1k, −46.8 dBFS) |
+| Simpler | INST | ✓ | — | ✓ (SubOsc laws, shared warper, slicing) | — | corpus: loaded probe ✓ (steps-1k, −56.5 dBFS) |
 | Impulse | INST | ✓ | — | ✓ (devicekit, 8 slots, key centers C4-C5) | — | — |
 | Vinyl Distortion | FX | — | — | ✓ (crackle resonators, pinch injection) | — | — |
 | Vocoder | FX | — | — | ✓ (geometric band law, formant tilt) | — | — |
