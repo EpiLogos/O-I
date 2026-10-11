@@ -17,16 +17,8 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
   const centreIdentity = !audio && surf && surf !== 'expressions'
     ? MODE_GRAMMAR[surf].centre[presentedView ?? 'session']
     : null
-  // Live's own identity (the commission): the presented presentation names
-  // the live work — "Session — clips and scenes · <the set>", the set being
-  // the context the mode's transport and detail serve. No set: the line
-  // says so and keeps the affordance (never another mode's identity).
-  const liveIdentity = audio && surf === 'live'
-    ? MODE_GRAMMAR.live.centre[presentedView ?? 'session']
-    : null
-  const liveWork = error ? null : loading ? null : set ? set.path : 'no set open — the browser opens one'
   return <footer className="statusbar" data-region="status-bar" role="status" title={`Viewport ${viewport[0]} × ${viewport[1]} · ${audio ? documentError ?? 'Summary and deep document readings' : reading?.nativeScene?.expression_ref ?? 'Native Expressions owner'} `}>
-    <span className="statusbar-info">i</span>{agentInfo && <span className="statusbar-agent-info" data-region="agent-status-info"><b>{agentInfo.label}</b>{agentInfo.fn}</span>}<span className="statusbar-path" title={audio ? path ?? undefined : reading?.nativeScene?.scene_ref}>{audio ? error ? <span className="statusbar-error">Open failed: {error}</span> : loading ? 'Opening…' : liveIdentity ? <><b>{liveIdentity.label}</b>{` — ${liveIdentity.meaning} · ${liveWork}`}</> : set ? set.path : 'No set open' : centreIdentity ? <><b>{centreIdentity.label}</b>{` — ${centreIdentity.meaning}`}{subjectLabel ? <span className="statusbar-subject" title={subjectLabel}>{` · ${subjectLabel}`}</span> : null}</> : reading?.document?.name ?? 'Expressions'}</span>
+    <span className="statusbar-info">i</span>{agentInfo && <span className="statusbar-agent-info" data-region="agent-status-info"><b>{agentInfo.label}</b>{agentInfo.fn}</span>}<span className="statusbar-path" title={audio ? path ?? undefined : reading?.nativeScene?.scene_ref}>{audio ? error ? <span className="statusbar-error">Open failed: {error}</span> : loading ? 'Opening…' : set ? set.path : 'No set open' : centreIdentity ? <><b>{centreIdentity.label}</b>{` — ${centreIdentity.meaning}`}{subjectLabel ? <span className="statusbar-subject" title={subjectLabel}>{` · ${subjectLabel}`}</span> : null}</> : reading?.document?.name ?? 'Expressions'}</span>
     {audio && documentError && <span className="statusbar-error" title={documentError}>Document unavailable</span>}
     {audio && set && <span className="statusbar-counts">{set.tracks.length} tracks · {set.scene_count} scenes · {set.arrangement_clips} clips</span>}
     {/* The track slot: the armed audio track in Live, the selected ground subject in Base·Central —
