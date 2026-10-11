@@ -3,7 +3,7 @@ import type {FileResourceScope} from '../files/resources';
 import {formEdits,projectDieDocument,type FormBasis} from '../central/dayForm';
 import {islandSpan,readDocumentIdentity,serialiseQlDoc,type DocumentIdentity} from '../document/identity';
 
-export interface HeldDraft {content:string;base_revision:string;saved_content:string}
+export interface HeldDraft {content:string;base_revision:string;saved_content:string;acknowledged?:boolean}
 /** A local working copy observed from the real document frame. It is neither
  * a source draft nor an admitted native source reading. Both variants share
  * the original v1 record and retain their independently observed bases. */
@@ -36,10 +36,20 @@ function put(ref:string,value:RecordValue):void {
  localStorage.setItem(key(ref),encoded);
  if(localStorage.getItem(key(ref))!==encoded)throw Error('This device did not acknowledge the exact draft record; keep the view open.');
 }
-export function readDraft(ref:string):HeldDraft|null {try{return source(record(ref));}catch{return null;}}
+export function readDraft(ref:string):HeldDraft|null {
+ try{
+  const held=record(ref),draft=source(held);
+  if(!draft)return null;
+  // Ordinary writes stay the plain draft. An intent carries its unacknowledged standing on the same record.
+  return held.acknowledged===false?{...draft,acknowledged:false}:draft;
+ }catch{return null;}
+}
 /** Read/merge/write is synchronous in a presenter. WebStorage is not a
  * cross-window transaction and its acknowledgement is not physical fsync. */
-export function writeDraft(ref:string,draft:HeldDraft):void {put(ref,{...record(ref),...draft,acknowledged:true});}
+export function writeDraft(ref:string,draft:HeldDraft):void {
+ const {acknowledged:standing,...body}=draft;
+ put(ref,{...record(ref),...body,acknowledged:standing===false?false:true});
+}
 export function clearSavedDraft(ref:string,content:string):void {
  const held=record(ref);if(source(held)?.content!==content)return;
  for(const field of ['content','base_revision','saved_content','acknowledged'])delete held[field];
