@@ -52,5 +52,9 @@
     "build",
     "dist",
     "field-studies-journeys/build"
+  ],
+  "include": [
+    "**/*",
+    "../src/**/*.d.ts"
   ]
 }
