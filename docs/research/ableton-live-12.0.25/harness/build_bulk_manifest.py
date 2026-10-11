@@ -92,7 +92,7 @@ def sonic_score(tag):
 
 def parse_params(adv_path):
     """Direct children of the device element with a numeric Manual and a
-    numeric MidiControllerRange: {tag: (min, max)}."""
+    numeric MidiControllerRange: {tag: (min, max, manual_default)}."""
     dev = list(ET.parse(gzip.open(str(adv_path))).getroot())[0]
     params = {}
     for c in list(dev):
@@ -108,7 +108,8 @@ def parse_params(adv_path):
             continue
         if DISCRETE.match(c.tag):
             continue
-        params[c.tag] = (float(mn.get("Value")), float(mx.get("Value")))
+        params[c.tag] = (float(mn.get("Value")), float(mx.get("Value")),
+                         float(man.get("Value")))
     return dev.tag, params
 
 
@@ -119,7 +120,7 @@ def pick_pins(params):
     ranked = ranked[:3]
     cands = []
     for rnd in ("min", "max", "mid"):
-        for tag, (mn, mx) in ranked:
+        for tag, (mn, mx, _dflt) in ranked:
             v = {"min": mn, "max": mx, "mid": (mn + mx) / 2.0}[rnd]
             cands.append((tag, v, rnd))
     out, seen = [], set()
@@ -131,6 +132,34 @@ def pick_pins(params):
         out.append((tag, v, rnd))
         if len(out) >= 5:
             break
+    return out
+
+
+def adjust_defaults(picked, params):
+    """Repair no-op pins: a pin whose value equals the device default is
+    dither-identical to the default render and probes nothing (the
+    2026-10-11 inert-pin audit, bulk/inert_pins.md, found 41 such pins out
+    of 273). Replace those values in place — labels and params stay stable,
+    so existing render labels keep their meaning — with the opposite
+    endpoint, then the mid or 1/3 points, skipping values another pin of
+    the same tag already carries. The min/max/mid suffix names the
+    candidate SLOT, not the value's position in the range.
+    """
+    taken = {(t, fmt(v)) for t, v, _ in picked}
+    out = []
+    for tag, v, rnd in picked:
+        mn, mx, dflt = params[tag]
+        if abs(v - dflt) < 1e-6:
+            alts = [mx if abs(mn - dflt) < 1e-6 else mn,
+                    (mn + mx) / 2.0,
+                    mn + (mx - mn) / 3.0, mx - (mx - mn) / 3.0]
+            for a in alts:
+                if abs(a - dflt) >= 1e-6 and (tag, fmt(a)) not in taken:
+                    taken.discard((tag, fmt(v)))
+                    taken.add((tag, fmt(a)))
+                    v = a
+                    break
+        out.append((tag, v, rnd))
     return out
 
 
@@ -191,7 +220,7 @@ def main():
     def emit(cls_dir, cls, device, adv, source, variant=None):
         nonlocal n_adv
         dev_tag, params = parse_params(adv)
-        pins = pick_pins(params)
+        pins = adjust_defaults(pick_pins(params), params)
         dev_slug = slug(device)
         if variant:
             dev_slug = f"legacy-{dev_slug}"

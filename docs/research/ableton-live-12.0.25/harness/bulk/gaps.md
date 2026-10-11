@@ -16,26 +16,33 @@ Adaptations (documented, not invented):
 - 'Legacy' folder expanded to its 5 real sub-devices (Chorus, Flanger, Frequency Shifter, Phaser, Redux Legacy), each on its first preset .adv.
 - Pins skip params with no numeric MidiControllerRange and discrete-choice params (Type/Mode/Shape/...).
 
-## Build results (queue_slice1.jsonl, queue_rest.jsonl)
-- built OK: 435/435
+## Build results (queue_repair.jsonl)
+- built OK: 14/14
 
-## Sample-player defaults render SILENCE — correct, and now supplemented (2026-10-11)
+## Pin-quality lane (2026-10-11) — audit, repair, bounded re-render
 
-The BULK default sets for Sampler and Simpler reference **no sample** (their
-`.adv` defaults carry an empty `<SampleParts/>`), so `BULK-{sampler,simpler}-default-m1-velocity`
-render digital silence (−96.33 dBFS) — the correct output of an empty sample
-player, not a driver failure (the repeated NO-EXPORT-PANEL ledger lines were
-the driver retrying a set that legitimately produces silence; the render
-was restored from the driver stash as the honest default-state artifact).
+Audit: `bulk/inert_pins.md` (`harness/analyze_bulk_pins.py`) — of 273 BULK
+pins, 108 were dither-identical (max|Δ| ≤ 2 LSB) to their device's
+same-signal default: 43 vacuous (MIDI FX silent lineage, Impulse empty
+slots) + 35 no-op values (= device default) + 30 genuine (section gates,
+excitation limits, the saturator colour defect); 6 further no-op pins read
+"live" on render-side variance alone. After the repairs below the corpus
+stands at 168 live / 62 inert / 43 vacuous (see inert_pins.md header).
 
-**Fix — loaded probes built**: `harness/build_sampler_loaded.py` copies the
-`MultiSamplePart` STRUCTURE from a factory preset (names/ranges only — no
-factory audio copied) and loads OUR OWN test signal
-`signals/steps-1k.wav` (clean-room, redistribution-safe) at RootKey 48
-(the M1 clip's key). Renders:
-- `BULK-sampler-loaded-steps.aif` — RMS **−46.78 dBFS** (audible)
-- `BULK-simpler-loaded-steps.aif` — RMS **−56.51 dBFS** (audible)
+Builder repair: `build_bulk_manifest.py` `pick_pins` + `adjust_defaults`
+now move no-op round-robin values off the device default in place (41 pins
+regenerated; labels/params unchanged; manifest.jsonl + queues rewritten).
 
-These are the DSP-gating entries for Sampler/Simpler (filter/env/warp
-behavior); the default-state entries remain in the corpus as the
-empty-slot truth.
+Bounded re-render batch (`bulk/run_repair_batch.sh`, 17 labels, all
+`repair-rendered` in `run_ledger.jsonl`): 5 saturator colour pins +
+3 saturator probes + 9 rebuilt no-op pins (8 now clearly live, 1
+excitation-inert) + 1 variance check. New sets: `live/BULK-saturator-probe-*`
+(queue `bulk/queue_color_probes.jsonl`, builder
+`build_saturator_color_probes.py`).
+
+Worklist for the next bounded pass: the remaining 20 no-op pins carry
+repaired values in the manifest while their .als/render pairs hold the old
+value (rebuild from `bulk/queue_repair.jsonl` pattern + manifest rows,
+then render). Satrator-colour laws need a non-stored-state route (see
+`bulk/inert_pins.md` Diagnosis §1). MIDI FX / Impulse vacuous lineages need
+a carrier (sampler-loaded precedent above).
