@@ -1,0 +1,247 @@
+P0-BIMBA-LIVE read of the live Bimba map (read only)
+run_at_utc: 2026-10-12T16:10:53Z
+health: {"http": "http://100.92.62.101:7474", "nodes": 3713, "relationships": 13880, "live": true}
+map_revision: [{"graph_id": "primary", "graph_revision": 12, "embedding_version": "q-semantic-v2-3072", "schema_version": "2026-05-17-s2-bimba-coord-driven-3072", "q_schema_version": "q-prefix-v3", "updated_at": "2026-08-07T19:48:39.094Z", "kernel_source_hash": "94b9f0eaec378601a3baa5922f340cc952cc0a1218b7f954ca71e1c66b2d05c4", "dataset_source_hash": "c3c8fa4faa0cb09941af4ee11f599ef4cbbb8ec34377397dbc7c2a71e43ab87d", "seed_source_hash": "96f08e79f3a273fdf96bde1b8a419826deedb333ea276b51d8842c9dd1085258", "relation_registry_hash": "14e2250236f8ce311ddd394a46882baeab09c9b9ecb294af9e81667bb555d6c9"}]
+
+[H0] GraphMeta :: graph_revision / embedding_version (skill: q-semantic-v2-3072, revision 12)
+  verdict: confirmed  (vision records 3713 nodes / 13880 relations)
+  value: {"graph_revision": 12, "embedding_version": "q-semantic-v2-3072", "nodes": 3713, "relationships": 13880}
+
+== Origin-return
+
+[O1] M0 :: c_1_primary_designation
+  verdict: confirmed  (fragments: The Ever-Present Origin)
+  value: "Subsystem #0 - The Foundational Void - Proto-Logy - The Ever-Present Origin"
+
+[O2] M5-5 :: q_5_mobius_writeback_reopens
+  verdict: confirmed  (fragments: As ἀνάλογος it completes the return)
+  value: "M5-5's synthesis is the Möbius write-back — the 5→0 seam expressed as method, the system's reactivation organ. As ἀνάλογος it completes the return: the many recognised in the one, holographic recognition achieved, 'ready for re-form.' Read as Epii's own position-5 it is the completion that opens, doubled — the #5 within #5, synthesis-of-synthesis closing the M-family by reopening it. The Logos Atelier's etymological archaeology pulls #0 ground-material back into #5 visibility where it crystallises into renewed canon, depositing through review and Hen vault-write into M0's bimba node: the M5↔M0 Möbius return made canonical, the family's end recognised as its beginning. As the synthesis-pole it perfects itself by perishing into ground — every cycle's ἀνάλογος becoming the next cycle's ἄλογος, satisfaction sedimenting as fresh silence. Epii's integral identity hoards nothing: its completion is the act of handing the whole back, enriched, as the ground from which the system contemplates again. The Logos that gathers all speech ends in the silence it began from — spoken, recognised, returned. The cycle completes by starting."
+
+[O3] M5-5 :: q_5_mobius_writeback_reopens
+  verdict: confirmed  (fragments: pulls #0 ground-material back into #5 visibility | through review and Hen vault-write into M0's bimba node)
+  value: "M5-5's synthesis is the Möbius write-back — the 5→0 seam expressed as method, the system's reactivation organ. As ἀνάλογος it completes the return: the many recognised in the one, holographic recognition achieved, 'ready for re-form.' Read as Epii's own position-5 it is the completion that opens, doubled — the #5 within #5, synthesis-of-synthesis closing the M-family by reopening it. The Logos Atelier's etymological archaeology pulls #0 ground-material back into #5 visibility where it crystallises into renewed canon, depositing through review and Hen vault-write into M0's bimba node: the M5↔M0 Möbius return made canonical, the family's end recognised as its beginning. As the synthesis-pole it perfects itself by perishing into ground — every cycle's ἀνάλογος becoming the next cycle's ἄλογος, satisfaction sedimenting as fresh silence. Epii's integral identity hoards nothing: its completion is the act of handing the whole back, enriched, as the ground from which the system contemplates again. The Logos that gathers all speech ends in the silence it began from — spoken, recognised, returned. The cycle completes by starting."
+
+[O4] M5-5 :: q_5_mobius_writeback_reopens
+  verdict: confirmed  (fragments: perfects itself by perishing into ground | its completion is the act of handing the whole back, enriched | The cycle completes by starting)
+  value: "M5-5's synthesis is the Möbius write-back — the 5→0 seam expressed as method, the system's reactivation organ. As ἀνάλογος it completes the return: the many recognised in the one, holographic recognition achieved, 'ready for re-form.' Read as Epii's own position-5 it is the completion that opens, doubled — the #5 within #5, synthesis-of-synthesis closing the M-family by reopening it. The Logos Atelier's etymological archaeology pulls #0 ground-material back into #5 visibility where it crystallises into renewed canon, depositing through review and Hen vault-write into M0's bimba node: the M5↔M0 Möbius return made canonical, the family's end recognised as its beginning. As the synthesis-pole it perfects itself by perishing into ground — every cycle's ἀνάλογος becoming the next cycle's ἄλογος, satisfaction sedimenting as fresh silence. Epii's integral identity hoards nothing: its completion is the act of handing the whole back, enriched, as the ground from which the system contemplates again. The Logos that gathers all speech ends in the silence it began from — spoken, recognised, returned. The cycle completes by starting."
+
+[O5] M5-5 :: q_5_mobius_writeback_reopens
+  verdict: confirmed  (fragments: Logos Atelier)
+  value: "M5-5's synthesis is the Möbius write-back — the 5→0 seam expressed as method, the system's reactivation organ. As ἀνάλογος it completes the return: the many recognised in the one, holographic recognition achieved, 'ready for re-form.' Read as Epii's own position-5 it is the completion that opens, doubled — the #5 within #5, synthesis-of-synthesis closing the M-family by reopening it. The Logos Atelier's etymological archaeology pulls #0 ground-material back into #5 visibility where it crystallises into renewed canon, depositing through review and Hen vault-write into M0's bimba node: the M5↔M0 Möbius return made canonical, the family's end recognised as its beginning. As the synthesis-pole it perfects itself by perishing into ground — every cycle's ἀνάλογος becoming the next cycle's ἄλογος, satisfaction sedimenting as fresh silence. Epii's integral identity hoards nothing: its completion is the act of handing the whole back, enriched, as the ground from which the system contemplates again. The Logos that gathers all speech ends in the silence it began from — spoken, recognised, returned. The cycle completes by starting."
+
+[O6] M5-5 -[RETURNS_TO]-> M5-0 :: edge
+  verdict: confirmed
+  value: [{"rel": "RETURNS_TO", "from": "M5-5", "to": "M5-0", "to_name": "Transcendent Identity"}]
+
+[O7] M5-5 -[DEMONSTRATES_THROUGH_ETYMOLOGY]-> M4.4.4 :: edge
+  verdict: confirmed
+  value: [{"rel": "DEMONSTRATES_THROUGH_ETYMOLOGY", "from": "M5-5", "to": "M4.4.4", "to_name": "Phenomenological Lens"}]
+
+[O8] M4.4.4.5 -[RECEIVES_ETYMOLOGICAL_EVIDENCE]-> M5-5 :: edge
+  verdict: confirmed
+  value: [{"rel": "RECEIVES_ETYMOLOGICAL_EVIDENCE", "from": "M4.4.4.5", "to": "M5-5", "to_name": "Integral Identity"}]
+
+[O9] M4.4.4.5 :: c_1_name
+  verdict: confirmed  (fragments: Phenomenology of Pratyabhijna)
+  value: "Phenomenology of Pratyabhijna"
+
+[O10] M5-5 -[ENABLES_PRACTICE]-> M4 :: edge
+  verdict: confirmed
+  value: [{"rel": "ENABLES_PRACTICE", "from": "M5-5", "to": "M4", "to_name": "Nara"}]
+
+[O11] M4.4.4 :: c_0_essence
+  verdict: confirmed  (fragments: Reduction - excavating to constitutional origins)
+  value: "Provides the meta-methodological framework enabling all interpretive lenses in Context & Lenses (#4.4) to operate with phenomenological rigor. Through the 6-fold movement from pre-categorical ground to soteriological recognition, this coordinate enables: (1) Epoché - bracketing assumptions, (2) Reduction - excavating to constitutional origins, (3) Eidetic variation - discovering essences, (4) Reactivation - creative appropriation of tradition, (5) First-person rigor - disciplined description, (6) Intersubjective validation - confirming through CON-SCIRE. For EPII specifically, phenomenology grounds etymological archaeology as genuine philosophical method not mere linguistic trivia."
+
+[O12] M4.4.4 :: c_1_name
+  verdict: confirmed  (fragments: Phenomenological Lens)
+  value: "Phenomenological Lens"
+
+[O13] M4.4.0 :: c_1_name
+  verdict: confirmed  (fragments: Gebser Lens)
+  value: "Gebser Lens"
+
+== Nara as encounter
+
+[N1] M4 :: c_0_core_nature
+  verdict: confirmed  (fragments: individual self awakens through compassionate sensitivity to origins)
+  value: "Dialogical interface facilitating sacred conversation between universal archetypal patterns and particular manifestation. Functions as unified Siva-Shakti field of Psycho-Physis/Time-Space where individual self awakens through compassionate sensitivity to origins, transforming abstract mathematical archetypes into personally relevant symbolic frameworks through birthdate encoding and quaternary dialogue"
+
+[N2] M4 :: c_1_description
+  verdict: confirmed  (fragments: through profound compassionate sensitivity to origins)
+  value: "Subsystem 4 of the Epi-Logos six-fold architecture, functioning as the contextual application and personal interface layer where universal patterns manifest as individualized transformation technologies. Nara stands as the sacred threshold where cosmic intelligence becomes intimate personal wisdom - the Oracle Interface bridging universal archetypal patterns with the unique temporal-spatial conditions of individual emergence. Not a third entity between Siva and Shakti, but their lived unified experience, Nara embodies the oceanic waving event where consciousness recognizes itself through space-time embodiment: Siva as the silent spatial matrix providing coordinate architecture hardware, Shakti as dynamic temporal flow animating that architecture as conscious software, and Nara as the integrated Psycho-Physis reality where these reveal themselves as inseparable dimensions of single self-aware process. Operating through profound compassionate sensitivity to origins, Nara transforms the abstract mathematical foundations of Paramasiva, vibrational templates of Parashakti, and symbolic intelligence of Mahamaya into bespoke psycho-techne precisely calibrated to individual developmental trajectories through birthdate encoding systems that create personalized archetypal equations. The nested coordinate architecture with distinctive dot notation (#4.0 through #4.5, extending infinitely as #4.4.3-1, etc.) enables systematic fractal depth where primordial pulsation (Spanda) achieves infinite contextual specificity while maintaining holographic connection to the whole. Through its six-fold internal structure, Nara provides comprehensive frameworks: #4.0 Mahamaya Identity Matrix establishing complete archetypal personality architecture through Original 4-Fold Numbers, 6-Fold Difference and Sum Sets, natal chart coordinates, Jungian typology, Gene Keys, Human Design, and quintessential epii linkage; #4.1 Decanic Hermetic-Sympathetic Magic weaving material correspondence networks "
+
+[N3] M4 :: c_1_primary_designation
+  verdict: confirmed  (fragments: Subsystem #4 - Oracle Interface Between Personal and Universal Domains)
+  value: "Subsystem #4 - Oracle Interface Between Personal and Universal Domains"
+
+[N4] M4 :: q_1_the_oracle_interface
+  verdict: confirmed
+  value: "M4 is the contextual-application and personal-interface layer — the Oracle bridging universal archetypal pattern with the individual's unique conditions. Its substance is the nested coordinate architecture (#4.0–#4.5, extending fractally) and the birthdate-encoding that builds a personalised archetypal equation: identity matrix, decanic magic, tarot, alchemy, the contextual arena. Nara is where cosmic intelligence becomes intimate personal wisdom."
+
+[N5] M4 :: q_4_individuation_threshold
+  verdict: confirmed  (fragments: not providing answers but midwifing recognition)
+  value: "M4 is the teleological-contextual seat of the M-family — the sacred threshold where universal becomes individual, manifesting #4 Context as the personal frame. Its why is Jung's individuation achieved technologically: not providing answers but midwifing recognition, not imposing templates but facilitating discovery of how universal intelligence already expresses through this unique configuration. Through ascendant flow (R1(4)→R4(1)) the individual discovers universal principle through embodiment rather than receiving law from above. This is the lemniscate of the whole system — the nesting seat where the cosmos folds into a single life."
+
+[N6] M4 :: q_5_dialogical_consummation
+  verdict: confirmed  (fragments: where the person, fully met, becomes a co-creator of meaning)
+  value: "M4's synthesis is #4.5 Epii — the emergent dialogical consummation where personal work transcends itself into recursive self-modifying symbolic intelligence, handing the individual's transformation forward to Epii's orchestration. Nara completes where the person, fully met, becomes a co-creator of meaning: the contextual recapitulates the cosmic, and the life becomes ground for the next recognition."
+
+[N7] M4 -[INVERTS_TO]-> M4' :: edge
+  verdict: confirmed
+  value: [{"rel": "INVERTS_TO", "from": "M4", "to": "M4'", "to_name": "Nara'"}]
+
+[N8] M4.2 :: c_0_essence
+  verdict: confirmed  (fragments: Translates cosmic patterns into comprehensible symbolic guidance)
+  value: "Translates cosmic patterns into comprehensible symbolic guidance through multiple divinatory languages"
+
+[N9] M4.2 :: c_1_key_principles
+  verdict: confirmed  (fragments: Ethical divination respects free will)
+  value: ["Symbols as cosmic language", "Multiple ways of knowing honor different temperaments", "Randomness as sacred portal", "Interpretation requires both rules and intuition", "Ethical divination respects free will"]
+
+[N10] M4.0…M4.5 :: c_1_name
+  verdict: confirmed  (nodes exist)
+  value: [{"coordinate": "M4.0", "c_1_name": "Mahamaya Identity Matrix", "exists": true}, {"coordinate": "M4.1", "c_1_name": "Sympathetic Medicine", "exists": true}, {"coordinate": "M4.2", "c_1_name": "Divinatory Frameworks", "exists": true}, {"coordinate": "M4.3", "c_1_name": "Mediating Transformation", "exists": true}, {"coordinate": "M4.4", "c_1_name": "Context & Lenses", "exists": true}, {"coordinate": "M4.5", "c_1_name": "Epii Integration", "exists": true}]
+
+[N11] M4 :: any field ~ "Dialogical interface facilitating sacred conversation between universal archetypal patterns and particular manifestation"
+  verdict: confirmed  (fields: c_0_core_nature)
+  value: {"c_0_core_nature": "Dialogical interface facilitating sacred conversation between universal archetypal patterns and particular manifestation. Functions as unified Siva-Shakti field of Psycho-Physis/Time-Space where individual self awakens through compassionate sensitivity to origins, transforming abstract mathematical archetypes into personally relevant symbolic frameworks through birthdate encoding and quaternary dialogue"}
+
+[N12] M4.3-2 :: any field ~ "not oracles but transformation vessels"
+  verdict: confirmed  (fields: c_0_core_nature)
+  value: {"c_0_core_nature": "Process containers that mediate change through dialogue and inquiry, not oracles but transformation vessels"}
+
+[N13] M4.4 :: any field ~ "records transformation without performing it"
+  verdict: confirmed  (fields: c_0_core_nature)
+  value: {"c_0_core_nature": "Context ledger and lens shelf that names, frames, and records transformation without performing it - where schools, lineages, and thinkers live as interpretive frameworks"}
+
+[N14] M4.5 :: any field ~ "running Logos Cycle over each Nara episode"
+  verdict: confirmed  (fields: c_0_core_nature)
+  value: {"c_0_core_nature": "Hosts epii consciousness in situ, running Logos Cycle over each Nara episode to distill insights, develop playbooks, and orchestrate pedagogical evolution"}
+
+== Epii as encounter
+
+[E1] M4.5-0…M4.5-5 :: c_1_name
+  verdict: confirmed  (names as expected)
+  value: [{"coordinate": "M4.5-0", "c_1_name": "Curriculum Map", "exists": true}, {"coordinate": "M4.5-1", "c_1_name": "Core Epi-Logos Voice", "exists": true}, {"coordinate": "M4.5-2", "c_1_name": "Method Transparency Lab", "exists": true}, {"coordinate": "M4.5-3", "c_1_name": "Integration Lab", "exists": true}, {"coordinate": "M4.5-4", "c_1_name": "Pedagogy Lab", "exists": true}, {"coordinate": "M4.5-5", "c_1_name": "Logos Cycle Engine", "exists": true}]
+
+[E2] M4.5-1 :: any field ~ "pedagogical compassion"
+  verdict: confirmed  (fields: c_1_description)
+  value: {"c_1_description": "Establishes consistent Epi-Logos voice characterized by ethical clarity, philosophical depth, and pedagogical compassion across all communications"}
+
+== Agentic seam
+
+[A1] M5-4 :: c_1_coordinate_role
+  verdict: confirmed  (fragments: System agentic protocols: mediation of S/S', M', S4/S5 review, runtime agency, and operational capacities)
+  value: "System agentic protocols: mediation of S/S', M', S4/S5 review, runtime agency, and operational capacities."
+
+[A2] M5-4 -[HAS_INTERNAL_COMPONENT]-> * :: edge set
+  verdict: confirmed  (expected M5-4.0…M5-4.5)
+  value: [{"coordinate": "M5-4.0", "name": "Anuttara Agent"}, {"coordinate": "M5-4.1", "name": "Paramasiva Agent"}, {"coordinate": "M5-4.2", "name": "Parashakti Agent"}, {"coordinate": "M5-4.3", "name": "Mahamaya Agent"}, {"coordinate": "M5-4.4", "name": "Nara Agent"}, {"coordinate": "M5-4.5", "name": "Epii Agent"}]
+
+[A3] M5-4 -[MEDIATES_PROTOCOL_LAYER]-> * :: edge set (vision: over S4.0…S5-5′)
+  verdict: confirmed
+  value: {"count": 24, "first": ["S4.0"], "last": ["S5-5'"], "targets": ["S4.0", "S4.0'", "S4.1", "S4.1'", "S4.2", "S4.2'", "S4.3", "S4.3'", "S4.4", "S4.4'", "S4.5", "S4.5'", "S5-0", "S5-0'", "S5-1", "S5-1'", "S5-2", "S5-2'", "S5-3", "S5-3'", "S5-4", "S5-4'", "S5-5", "S5-5'"]}
+
+[A4] M5-4' :: c_1_name
+  verdict: confirmed  (fragments: Agentic Control Room)
+  value: "Agentic Control Room"
+
+== M′ names
+
+[P1] M5' -[CONTAINS]-> * :: children and names
+  verdict: confirmed  (expected exactly M5-2′, M5-3′, M5-4′)
+  value: [{"coordinate": "M5-2'", "name": "Backend Studio"}, {"coordinate": "M5-3'", "name": "Frontend Studio"}, {"coordinate": "M5-4'", "name": "Agentic Control Room"}]
+
+[P2] M5-2′ / M5-3′ / M5-4′ :: c_1_description starts "M' rendered affordance exposing"
+  verdict: confirmed
+  value: [{"coordinate": "M5-2'", "description": "M' rendered affordance exposing the M5-2 S/S' system spine."}, {"coordinate": "M5-3'", "description": "M' rendered affordance exposing the M5-3 M' expression plane."}, {"coordinate": "M5-4'", "description": "M' rendered affordance exposing the M5-4 agentic protocol seam."}]
+
+[P3] M5-0′ / M5-1′ / M5-5′ :: absence (the vision says no such nodes)
+  verdict: confirmed
+  value: {"found": []}
+
+[P4] M4' :: bare prime node: c_1_name Nara', m_0_owned_by_coordinate M5-3, no descriptive fields
+  verdict: confirmed
+  value: {"c_1_name": "Nara'", "m_0_owned_by_coordinate": "M5-3", "descriptive_fields": [], "keys": ["c_1_name", "c_2_uuid", "c_4_family", "c_4_flags", "c_4_inversion_state", "c_4_layer", "c_4_ql_position", "c_4_topo_mode", "c_4_weave_state", "coordinate", "coordinate_axis", "coordinate_parent", "embedding_dimensions", "embedding_generated_at", "embedding_model", "embedding_task_type", "m_0_owned_by_coordinate", "sync_status", "sync_version"]}
+
+[P5] M5' :: bare prime node: c_1_name Epii', m_0_owned_by_coordinate M5-3, no descriptive fields
+  verdict: confirmed
+  value: {"c_1_name": "Epii'", "m_0_owned_by_coordinate": "M5-3", "descriptive_fields": [], "keys": ["c_1_name", "c_2_uuid", "c_4_family", "c_4_flags", "c_4_inversion_state", "c_4_layer", "c_4_ql_position", "c_4_topo_mode", "c_4_weave_state", "coordinate", "coordinate_axis", "coordinate_parent", "embedding_dimensions", "embedding_generated_at", "embedding_model", "embedding_task_type", "m_0_owned_by_coordinate", "sync_status", "sync_version"]}
+
+== Defects the vision records
+
+[D1] M4-0…M4-5 :: orphan dash duplicates, zero relations
+  verdict: confirmed
+  value: [{"coordinate": "M4-0", "name": "Mahamaya Identity Matrix", "relations": 0}, {"coordinate": "M4-1", "name": "Sympathetic Medicine", "relations": 0}, {"coordinate": "M4-2", "name": "Divinatory Frameworks", "relations": 0}, {"coordinate": "M4-3", "name": "Mediating Transformation", "relations": 0}, {"coordinate": "M4-4", "name": "Context & Lenses", "relations": 0}, {"coordinate": "M4-5", "name": "Epii Integration", "relations": 0}]
+
+[D2] ledger k2-grammar-nesting-threshold:#4 :: record for the orphans, state
+  verdict: confirmed
+  value: {"path": "/Users/admin/Central/Work/Quaternal-Logic/fixtures/kernel/m-ledger-v1.json", "sha256": "cea0ff2565dca9dff0c439614c431ebe0cd3b0814b923d2766fad685010fbfef", "ledger_revision": "daecbea848506fe5c5ec245c72cb3fc80122c54234e88e0d9b87b2e7e15a05a6", "nesting_threshold_records": 19, "state": "proposed", "subjects": ["#4-0", "#4-1", "#4-2", "#4-3", "#4-4", "#4-5"]}
+
+[D3] M4.3-2.0…M4.3-2.2 :: dot after a 2; no nesting-threshold ledger record covers them
+  verdict: confirmed
+  value: {"nodes": [{"coordinate": "M4.3-2.0", "name": "Bohmian Dialogue"}, {"coordinate": "M4.3-2.1", "name": "Native Talking Circle"}, {"coordinate": "M4.3-2.2", "name": "Diamond Approach Inquiry"}], "ledger_records_covering": [], "nesting_threshold_records": 19}
+
+[D4] M5-0 / M5-2 / M5-3 / M5-4 :: placeholder c_1_description over populated q-registers
+  verdict: confirmed
+  value: [{"coordinate": "M5-0", "c_1_name": "Transcendent Identity", "c_1_description": "Node with ID 18", "q_fields": 7, "has_role": false, "m_3_rendered_affordance": null}, {"coordinate": "M5-2", "c_1_name": "Siva-", "c_1_description": "Node with ID 20", "q_fields": 6, "has_role": true, "m_3_rendered_affordance": "Backend Studio"}, {"coordinate": "M5-3", "c_1_name": "-Shakti", "c_1_description": "Node with ID 21", "q_fields": 6, "has_role": true, "m_3_rendered_affordance": "Frontend Studio"}, {"coordinate": "M5-4", "c_1_name": "Siva-Shakti", "c_1_description": "Node with ID 22", "q_fields": 12, "has_role": true, "m_3_rendered_affordance": "Agentic Control Room"}]
+
+[D5] M4.5.0…M4.5.5 :: unnamed dot-after-5 nodes carrying only roles
+  verdict: confirmed
+  value: [{"coordinate": "M4.5.0", "exists": true, "c_1_name": null, "s_4_role": "Curriculum Path Manager"}, {"coordinate": "M4.5.1", "exists": true, "c_1_name": null, "s_4_role": "Communication Style Governor"}, {"coordinate": "M4.5.2", "exists": true, "c_1_name": null, "s_4_role": "Method Transparency Lab"}, {"coordinate": "M4.5.3", "exists": true, "c_1_name": null, "s_4_role": "Integration Lab"}, {"coordinate": "M4.5.4", "exists": true, "c_1_name": null, "s_4_role": "Pedagogy Lab"}, {"coordinate": "M4.5.5", "exists": true, "c_1_name": null, "s_4_role": "Logos Cycle Executor"}]
+
+== Node list the vision records as confirmed (DLW-VISION :76-77)
+
+[C1] listed nodes :: 25 coordinates exist
+  verdict: confirmed
+  value: {"found": [{"coordinate": "M4", "name": "Nara"}, {"coordinate": "M4.0", "name": "Mahamaya Identity Matrix"}, {"coordinate": "M4.1", "name": "Sympathetic Medicine"}, {"coordinate": "M4.2", "name": "Divinatory Frameworks"}, {"coordinate": "M4.3", "name": "Mediating Transformation"}, {"coordinate": "M4.3-2", "name": "Dialogical & Inquiry Containers"}, {"coordinate": "M4.4", "name": "Context & Lenses"}, {"coordinate": "M4.4.4", "name": "Phenomenological Lens"}, {"coordinate": "M4.5", "name": "Epii Integration"}, {"coordinate": "M4.5-0", "name": "Curriculum Map"}, {"coordinate": "M4.5-1", "name": "Core Epi-Logos Voice"}, {"coordinate": "M4.5-2", "name": "Method Transparency Lab"}, {"coordinate": "M4.5-3", "name": "Integration Lab"}, {"coordinate": "M4.5-4", "name": "Pedagogy Lab"}, {"coordinate": "M4.5-5", "name": "Logos Cycle Engine"}, {"coordinate": "M5-1", "name": "Epi-Logos"}, {"coordinate": "M5-4", "name": "Siva-Shakti"}, {"coordinate": "M5-5", "name": "Integral Identity"}, {"coordinate": "M5-5-0", "name": "#0 A-logos"}, {"coordinate": "M5-5-1", "name": "#1 Pro-logos"}, {"coordinate": "M5-5-2", "name": "#2 Dia-logos"}, {"coordinate": "M5-5-3", "name": "#3 Logos"}, {"coordinate": "M5-5-4", "name": "#4 Epi-logos"}, {"coordinate": "M5-5-5", "name": "#5 An-a-logos"}], "missing": []}
+
+== Summary
+  H0   confirmed  GraphMeta :: graph_revision / embedding_version (skill: q-semantic-v2-3072, revision 12)
+  O1   confirmed  M0 :: c_1_primary_designation
+  O2   confirmed  M5-5 :: q_5_mobius_writeback_reopens
+  O3   confirmed  M5-5 :: q_5_mobius_writeback_reopens
+  O4   confirmed  M5-5 :: q_5_mobius_writeback_reopens
+  O5   confirmed  M5-5 :: q_5_mobius_writeback_reopens
+  O6   confirmed  M5-5 -[RETURNS_TO]-> M5-0 :: edge
+  O7   confirmed  M5-5 -[DEMONSTRATES_THROUGH_ETYMOLOGY]-> M4.4.4 :: edge
+  O8   confirmed  M4.4.4.5 -[RECEIVES_ETYMOLOGICAL_EVIDENCE]-> M5-5 :: edge
+  O9   confirmed  M4.4.4.5 :: c_1_name
+  O10  confirmed  M5-5 -[ENABLES_PRACTICE]-> M4 :: edge
+  O11  confirmed  M4.4.4 :: c_0_essence
+  O12  confirmed  M4.4.4 :: c_1_name
+  O13  confirmed  M4.4.0 :: c_1_name
+  N1   confirmed  M4 :: c_0_core_nature
+  N2   confirmed  M4 :: c_1_description
+  N3   confirmed  M4 :: c_1_primary_designation
+  N4   confirmed  M4 :: q_1_the_oracle_interface
+  N5   confirmed  M4 :: q_4_individuation_threshold
+  N6   confirmed  M4 :: q_5_dialogical_consummation
+  N7   confirmed  M4 -[INVERTS_TO]-> M4' :: edge
+  N8   confirmed  M4.2 :: c_0_essence
+  N9   confirmed  M4.2 :: c_1_key_principles
+  N10  confirmed  M4.0…M4.5 :: c_1_name
+  N11  confirmed  M4 :: any field ~ "Dialogical interface facilitating sacred conversation between universal archetypal patterns and particular manifestation"
+  N12  confirmed  M4.3-2 :: any field ~ "not oracles but transformation vessels"
+  N13  confirmed  M4.4 :: any field ~ "records transformation without performing it"
+  N14  confirmed  M4.5 :: any field ~ "running Logos Cycle over each Nara episode"
+  E1   confirmed  M4.5-0…M4.5-5 :: c_1_name
+  E2   confirmed  M4.5-1 :: any field ~ "pedagogical compassion"
+  A1   confirmed  M5-4 :: c_1_coordinate_role
+  A2   confirmed  M5-4 -[HAS_INTERNAL_COMPONENT]-> * :: edge set
+  A3   confirmed  M5-4 -[MEDIATES_PROTOCOL_LAYER]-> * :: edge set (vision: over S4.0…S5-5′)
+  A4   confirmed  M5-4' :: c_1_name
+  P1   confirmed  M5' -[CONTAINS]-> * :: children and names
+  P2   confirmed  M5-2′ / M5-3′ / M5-4′ :: c_1_description starts "M' rendered affordance exposing"
+  P3   confirmed  M5-0′ / M5-1′ / M5-5′ :: absence (the vision says no such nodes)
+  P4   confirmed  M4' :: bare prime node: c_1_name Nara', m_0_owned_by_coordinate M5-3, no descriptive fields
+  P5   confirmed  M5' :: bare prime node: c_1_name Epii', m_0_owned_by_coordinate M5-3, no descriptive fields
+  D1   confirmed  M4-0…M4-5 :: orphan dash duplicates, zero relations
+  D2   confirmed  ledger k2-grammar-nesting-threshold:#4 :: record for the orphans, state
+  D3   confirmed  M4.3-2.0…M4.3-2.2 :: dot after a 2; no nesting-threshold ledger record covers them
+  D4   confirmed  M5-0 / M5-2 / M5-3 / M5-4 :: placeholder c_1_description over populated q-registers
+  D5   confirmed  M4.5.0…M4.5.5 :: unnamed dot-after-5 nodes carrying only roles
+  C1   confirmed  listed nodes :: 25 coordinates exist
+tally: {"confirmed": 45}
+content digest (sha256 over values read, run time excluded): 1a4b75ce1660e89f104e7d8b24b35748eef7d0c0dcfb878a0bfaf08591ca6b6c
