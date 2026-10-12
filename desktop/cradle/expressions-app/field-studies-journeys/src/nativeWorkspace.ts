@@ -158,7 +158,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
  const followOpen=async(reference:string,recovery?:unknown)=>{
   if(!reference.startsWith('expression:'))throw new Error('Choose a native Expression reference');
   const generation=++followGeneration;opens.cancel();
-  const address=hostedRecovery()?recoveryBinding(reference,recovery):null;
+  const address=hostedRecovery()?(recovery!==undefined?recoveryBinding(reference,recovery):selectedRecovery(reference)):null;
   // Revealing the same retained native work never reloads its recovery draft,
   // replaces human input, or resets its Scene transport.
   if(work.state?.view?.document.expression_ref===reference){
@@ -169,7 +169,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   // A refusal leaves both copies in place and cannot accept a newer CAS basis.
   if(host.shouldRetainDraft?.()!==false)await writeDraft(clone(host.snapshot().journey));
   requireAdoption(current);
-  const recovered=address?await readBoundWorkingDraft(address):await readWorkingDraft(reference,'expressions');
+  const recovered=address?await readBoundWorkingDraft(address):await readWorkingDraft(reference,hostedRecovery()?hostedScope():'expressions');
   requireAdoption(current);
   // Whether an act performs this Expression is read BEFORE the basis moves:
   // adopting the native basis and loading it into the field are one step, as
@@ -393,7 +393,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    * (never commits). Edited: keep the edits unsaved and disclose the newer
    * revision. Not open: follow it. */
   refreshReference:async(reference:string,recovery?:unknown):Promise<boolean>=>{while(busy)await ownerIdle;return run(async()=>{
-   if(hostedRecovery())recoveryBinding(reference,recovery);
+   if(hostedRecovery()&&recovery!==undefined)recoveryBinding(reference,recovery);
    const current=work.state?.view;
    if(!current||current.document.expression_ref!==reference){await followOpen(reference,recovery);return;}
    const raw=await readKernelExpression(reference) as KernelExpressionDocument;
