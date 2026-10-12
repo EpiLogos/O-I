@@ -61,3 +61,7 @@ that (d) and (18) run ahead of it while (a) and (b) wait.
 
 **Carries:** PATH §10 items 17, 18, 31, 34, 35 (the rerun reads
 DLW-VISION §0 as well as §6).
+
+**Conductor ruling, 12 Oct (PATH §10 item 31):** P0-R5b runs after P0-R6's
+UI leg in the same wave; all of (a), (b), (d), (18) together. The
+ModeBrowser carrier reading spans `:126-130`.

@@ -79,3 +79,19 @@ test command's `tests/owner-readback*.test.mjs` glob matches no file yet
 the window readback need `computer-use` (or scripted AX for text).
 
 **Carries:** PATH §10 items 4, 24, 34.
+
+**Conductor ruling, 12 Oct (PATH §10 item 24): go, option (a).** The host
+publishes the suite product universe in `live_shell_config`: a field in
+`native_shell.rs` `candidate::config` carrying the footprint's
+backing-options product list, read from the footprint the host already
+loads (never a literal list). The UI never hard-codes the universe (that
+would be a second store). Two legs, run in order:
+- **P0-R6-host** (zone `desktop/cradle/src-tauri/src/native_shell.rs` and
+  its tests): the field, typed, with a test that it equals the footprint's
+  list; `cargo check --features native_shell` green. Observing it needs a
+  rebuild from the commit (P0-R1 runner), which the conductor runs.
+- **P0-R6-ui** (the zone above): the readback module from the field —
+  admitted / excluded-by-footprint / failed / absent, owner named, "no
+  remedy named" where the host names none, "no host readback" on the
+  development browser — mounted through `RunContextReading`
+  (`src/shell/runContext.tsx`), which StatusBar renders in every mode.
