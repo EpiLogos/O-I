@@ -1,0 +1,15 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "night-round-2-protocol-four-subagent-2026-10-09",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:zcode-live-dynamics",
+  "kind": "note",
+  "recorded_at_unix_seconds": 1791538060,
+  "subject": "Night round 2 protocol: four subagent lanes; Live serialized via harness/.live-window.lock",
+  "result": "Three lanes (Operator Osc B–D + D11, Wavetable long-note/slope, Echo delta-thr/TimeLink) render through the ONE Live instance under with_live_lock.sh (mkdir mutex, PID-stamped, stale-steal; every lane3_render.sh call inside the lock; frontmost guard unchanged; never pkill). Lane 4 is offline (builders adopt Time, wavetable.rs unison law, no Live). Coordinator converges: only the coordinator edits reconstruction-backlog.md and NEXT-SESSION.md; lanes commit only their own paths via lane_commit.sh. Owner takeover: kill the lane processes and claim in NOW as usual — lanes SKIP (exit 9) when Live is not frontmost, they never keystroke over you.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-09",
+    "2026-10-10"
+  ]
+}
