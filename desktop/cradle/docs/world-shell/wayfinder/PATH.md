@@ -15,7 +15,12 @@ so W0c stays open (§9); carries 24–35 in §10. Wave W0d recorded 12 Oct:
 P0-R6-host (`2ac3c157f`), P0-R6-ui (`c4761bfd0`), P0-R5b (`e736ce78c`) and
 the P0-R4 honesty nit (`4a5887376`) committed; every UI leg UNVERIFIED
 (computer-use) and no rebuild from these commits yet; no review run, so W0d
-stays open (§9); carries 36–47 in §10.
+stays open (§9); carries 36–47 in §10. Wave W0e recorded 12 Oct: P0-R6b-host
+(`1f9b04034`), P0-R6b-ui (`c287c379c`), P0-R5c (`046fb857b`) and the P0-R1
+runner settle fix with runs r1e/r1f (`b57c206e5`, `95a24eaa7`) committed; the
+r1f in-window readback read 0 AX windows because the login session has been
+screen-locked since 16:08:56Z (owner act, §3); no review run, so W0e stays
+open (§9); carries 48–57 in §10.
 
 ## Roles (owner's model map, 12 Oct 2026)
 
@@ -131,7 +136,8 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
 
 | Gate | State | Clears by | Blocks |
 |---|---|---|---|
-| R1 native run at HEAD | **red** (partly) — built and launched from the clean commit `b50b970c3` (r1d, W0b); run context seen through scripted AX only; no pixel capture; no in-window owner readback (compiled/selected/registered/excluded/failed, waiting owners) | conductor: P0-R1 acc. 2 pixels + acc. 4 capture (needs the computer-use gate); acc. 3 in-window readback (code landed W0d, P0-R6 `2ac3c157f` + `c4761bfd0`; needs a runner rebuild and an observation, §10 item 36) | all acceptance |
+| R1 native run at HEAD | **red** (partly) — last built from the clean commit `b57c206e5` (r1f, W0e; `source_dirty: false`, quit 0); run context last seen through scripted AX at `b50b970c3` (r1d); r1e and r1f read 0 AX windows (session locked); no pixel capture; no in-window owner readback | owner: unlock the login session (row below); then conductor: re-run `launch`/`readback`/`quit` for r1f (§10 items 36, 48); P0-R1 acc. 2 pixels + acc. 4 capture (computer-use gate) | all acceptance |
+| Login session unlocked | **red — owner act** (12 Oct): `CGSSessionScreenIsLocked 1` since 16:08:56Z; while locked the host window is not exposed to accessibility, so every scripted AX readback reads 0 windows | owner | every in-window readback (P0-R1 acc. 2–3, P0-R6/P0-R6b, P0-R4 walk) |
 | Computer-use channel in the conductor session | **red — carried as the owner's named act** (12 Oct): turn on Computer Use for the conductor session in the Claude desktop app, or grant Screen Recording to the conductor's shell (`screencapture` was refused: "could not create image from display") | owner | every UI acceptance leg; P0-R1 acc. 2–4; R0 re-review |
 | ctrl roster fix installed | **green** (verified above) | — | — |
 | Factory receiving/advancement join | red | Factory owner | Phase 3 only |
@@ -154,36 +160,38 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
    follow-up ticket (not yet filed; §10 item 11).
 3. **P0-BIMBA-LIVE** — resolved W0b (`dcfb3731c`; 45/45 confirmed; the
    M4.3-2.0…2.2 defect sent to the QL owner as a NOW return).
-4. **P0-R1 (remainder)** — the clean-commit build is done (r1d,
-   `e411dc7d7`). What is left: acc. 2 in pixels and acc. 4 window capture
-   (conductor; **blocked by the computer-use gate**, owner act, §3); acc. 3
-   in-window owner readback (needs a UI ticket under
-   `packages/live-shell/ui/src`, not yet filed, §10 item 4); full-suite
-   backing and a fresh candidate profile (§10 items 5–6). **Nothing in
-   P0-R1 is claimable now** without the owner act or the new ticket.
+4. **P0-R1 (remainder)** — clean-commit builds done (r1d `e411dc7d7`; r1f
+   `95a24eaa7` at `b57c206e5`); runner settle fix landed W0e (`b57c206e5`,
+   §10 item 15 done). What is left: the in-window readback at `b57c206e5`
+   (acc. 2–3; **blocked by the owner unlocking the session**, §3, §10 item
+   48); acc. 2 in pixels and acc. 4 capture (**computer-use gate**, §3);
+   full-suite backing and a fresh candidate profile (§10 items 5–6).
+   **Nothing in P0-R1 is claimable now** without an owner act.
 5. **P0-R4** — code legs committed W0c (`7b59fecad`); honesty nit
    committed W0d (`4a5887376`, §10 item 27 done). What is left: the
    native-window walk (Blocked-by P0-R1 and the computer-use gate); the
    owner-side ops (§10 items 29–30). Ticket stays open; nothing in it is
    claimable by a builder.
-6. **P0-R6** — committed W0d: host field `2ac3c157f`, UI readback
-   `c4761bfd0`. Code legs done; acceptance 5 (pixels, both viewports) and
-   the in-window observation wait on a rebuild (§10 item 36) and the
-   computer-use gate. Not claimable; ticket open for its UI legs only.
+6. **P0-R6** — committed W0d (host field `2ac3c157f`, UI readback
+   `c4761bfd0`) and W0e (P0-R6b display names: host `1f9b04034`, UI
+   `c287c379c`; §10 item 39 done in code). The rebuild holding them is r1f
+   (`b57c206e5`); the in-window observation waits on the owner unlock (§10
+   items 36, 48) and acceptance 5 on the computer-use gate. Not claimable;
+   ticket open for its UI legs only.
 7. **P0-R5b** — committed W0d (`e736ce78c`): (a), (b), (d), (18) with tests.
    UI legs wait on the computer-use gate (§10 item 40). Not claimable.
-8. **Claimable now (conductor):** the P0-R1 runner rebuild from the clean
-   tree at the W0d record commit, then `readback` (scripted AX) for the
-   run context, `suite_product_ids` and the owner readback text (§10 item
-   36; P0-R1 evidence zone; one cargo build at a time); file the follow-up
-   tickets named in §10 (items 9, 10, 11, 15, 19, 29, 30, 41); the P0-R1
-   runner fixes in §10 item 15 (P0-R1 evidence zone, ahead of the rebuild,
-   since the first readback missed the AX tree in r1d).
-9. **Claimable as a one-file builder ticket once filed:** the
-   `owner-receipt` style rule (§10 item 41) in
-   `packages/live-shell/ui/src/` (reuse RefusalCard's folded-receipt class
-   or add one rule). No other product-code ticket is claimable: each waits
-   on the R1 gate, a phase gate, the computer-use gate, or the owner.
+8. **P0-R5c** — resolved in code W0e (`046fb857b`); pixels wait on the
+   computer-use gate (§10 item 51). Not claimable.
+9. **Claimable now (conductor):** the session-lock pre-check in the P0-R1
+   runner's `readback` (§10 item 53; P0-R1 evidence zone, small, in-zone);
+   file the follow-up tickets named in §10 (items 9, 10, 11, 19, 29, 30);
+   adopt or decline the WIDGET-GUIDE §8 proposals (items 21, 33, 46, 50).
+   **After the owner unlocks the session (conductor):** re-run
+   `launch`/`readback`/`quit` for r1f at `b57c206e5` (§10 items 36, 48),
+   keeping the locked attempt as a superseded record.
+10. No product-code ticket is claimable by a builder: each waits on the
+    session unlock, the R1 gate, a phase gate, the computer-use gate, or
+    the owner.
 
 ### Queued by phase (vision tickets, DLW-VISION §5.3)
 
@@ -266,6 +274,7 @@ third rewrite of an invent-the-spec problem.
 | W0b | P0-R5 (A+B) committed; P0-R1 committed (r1d clean-commit build; acc. 2 pixels, 3 in-window, 4 capture unmet); P0-BIMBA-LIVE committed (45/45 confirmed) | `f5adaa2ab` (P0-R5), `b50b970c3` + `e411dc7d7` (P0-R1 runner + r1c/r1d evidence), `dcfb3731c` (P0-BIMBA-LIVE); record commit "DLW W0b: record — PATH and ticket resolutions" | none run (no W0b review verdict); R0 re-review still owed for wave 0 (§7) and needs the computer-use gate | — (open: no review verdict; P0-R1 acceptance incomplete) |
 | W0c | P0-R4 committed (code legs only; native walk and owner ops unmet); P0-R6 blocked (zone-escape: host product universe, no code); P0-R5b blocked (blocked-by P0-R6, no code) | `7b59fecad` (P0-R4); record commit "DLW W0c: record — PATH and ticket resolutions" | none run (no W0c review verdict) | — (open: two tickets blocked; no review verdict) |
 | W0d | P0-R6-host committed; P0-R6-ui committed; P0-R5b committed ((a), (b), (d), (18)); P0-R4-nit committed. All code legs; every UI leg UNVERIFIED (computer-use); no rebuild from these commits | `2ac3c157f` (P0-R6-host), `c4761bfd0` (P0-R6-ui), `e736ce78c` (P0-R5b), `4a5887376` (P0-R4-nit); record commit "DLW W0d: record — PATH and ticket resolutions" | none run (no W0d review verdict) | — (open: no review verdict) |
+| W0e | P0-R6b-host committed; P0-R6b-ui committed; P0-R5c committed; P0-R1-observe committed (runner settle fix + r1e; conductor rebuild r1f from the clean tree at `b57c206e5`, `source_dirty: false`; in-window readback failed: 0 AX windows, session screen-locked since 16:08:56Z). Every UI leg UNVERIFIED (computer-use / scripted AX after unlock) | `1f9b04034` (P0-R6b-host), `c287c379c` (P0-R6b-ui), `046fb857b` (P0-R5c), `b57c206e5` + `95a24eaa7` (P0-R1 runner + r1e/r1f evidence); record commit "DLW W0e: record — PATH and ticket resolutions" | none run (no W0e review verdict) | — (open: no review verdict; P0-R1 in-window readback failed on the session lock) |
 
 ## 10. Carries
 
@@ -527,3 +536,81 @@ there are no review carries yet.
     P0-R6-host and P0-R4-nit returned none.
 47. **P0-R4 still open** — native walk per device family (item 25), the
     owner ops (items 29–30) and items 26, 28, 32, 33 stand unchanged by W0d.
+
+Status of earlier items after W0e: item 15 done (`b57c206e5`: `readback`
+needs an `AXWebArea` and three steady polls, gives up after 60 and exits 1;
+the runner copies `native-checkout-drift.json` itself). Item 36 attempted:
+r1f rebuilt from the clean tree at `b57c206e5` (holds every W0d and W0e
+code commit), readback read 0 AX windows on the session lock — still open,
+now behind item 48. Item 37 extends to the display-name chip: the width of
+"name (id)" in the narrow status bar (nowrap, overflow-hidden; truncation
+expected, not seen). Item 39 done in code (ruled 12 Oct, `d802bfd7c`;
+`1f9b04034`, `c287c379c`); its window leg rides item 36. Item 41 done (filed
+as P0-R5c `d802bfd7c`, landed `046fb857b`). The P0-R6 ticket's W0d
+`native_shell.rs` cites, stale after `1f9b04034`, were refreshed in its W0e
+resolution (`:241`, `:242-248`, `:446`, `:493`). Item 3 stands: `screencapture`
+was refused in r1e and r1f too, and before the lock in r1d.
+
+Registered from the W0e converge returns (12 Oct). No W0e review ran, so
+there are no review carries yet.
+
+48. **Owner act — unlock the login session.** `CGSSessionScreenIsLocked 1`
+    since 2026-10-12T16:08:56Z (channel: scripted,
+    `CGSessionCopyCurrentDictionary`), two minutes after r1d's successful
+    readback. Then the conductor moves r1f's top-level locked readback
+    files into `run-20261012T-r1f/readback-attempt-1/` and runs
+    `P0R1_STAMP=20261012T-r1f bash desktop/cradle/docs/world-shell/evidence/p0-r1/run-native-at-head.sh launch`,
+    then `readback` and `quit`, for the run context and the owner-readback
+    rows (item 36). Do not dispatch a builder for the in-window readback
+    before the unlock.
+49. **P0-R6b in the window (scripted AX, after item 48)** —
+    `suite_owner_names` and the named rows ("Software Factory
+    (software-factory) · excluded by footprint") are unseen in a running
+    window. `prepare()` wiring (`native_shell.rs:249`, `:446`, `:496`) is
+    code-reading only. The refusal inside `suite_owner_names` cannot fire
+    from `prepare()` (`suite_product_ids` already refuses an id with no
+    `OWNERS` row): harmless defence, covered by its own test. The
+    development-browser path drawing no names is tested in code, not seen.
+50. **WIDGET-GUIDE §8 proposal (P0-R6b-ui builder; conductor to adopt or
+    decline):** an owner readback row draws the host display name first,
+    the product id in parentheses as secondary text, then the state after a
+    middle dot; an owner the host names no display name for is drawn by its
+    id alone, never an invented name. The order and the parentheses are the
+    builder's reading of the ruling.
+51. **P0-R5c pixels (computer-use)** — the folded owner receipt beneath the
+    owner's words in NativeMaterialBrowser: summary affordance, monospace
+    body, spacing. Joins item 40 (18).
+52. **P0-R5c placement** — the rule lives in `native/workbench.css:1240-1242`
+    (the ticket's named stylesheets were outside the zone); it reaches the
+    page because `workbench.css` loads eagerly (`panels/index.ts` →
+    `panels/workbench.tsx` → `native/Workbench.tsx:44`). If the workbench
+    panel is ever lazy-loaded, the receipt style arrives only with that
+    chunk; a later zone can move it beside the native-browser styles.
+    `--mono` is defined in `src/agent/agentShell.css`, not the global
+    `src/styles.css`, so the rule carries a fallback stack; promoting
+    `--mono` to the global token sheet removes the duplication.
+53. **P0-R1 runner (P0-R1 evidence zone)** — `readback` should pre-check
+    the session lock (`CGSessionCopyCurrentDictionary`) and name it as the
+    absence, rather than polling 60 times and reading 0 windows.
+54. **Conductor's kit** — a scripted AX readback counts as settled only
+    when an `AXWebArea` is present, never on element count alone (an app
+    that answers `AXWindows` with itself gives a steady count with no
+    content: r1e `readback-attempt-1/`, 6992 elements). Before any AX
+    readback, check `CGSSessionScreenIsLocked`: a locked session shows 0
+    windows, which looks like a broken host.
+55. **Out-of-repo side effect repeated (item 6)** — r1e, the hand relaunch
+    of r1d and r1f each rewrote
+    `~/.config/oi-shell-candidate/0-1-2/{composition,catalogue}.json`
+    (PATH §2). The fresh candidate profile is still owed.
+56. **Evidence gap (r1e)** — the builder's hand relaunch of r1d at ~17:25Z
+    (the build-or-machine comparison) kept no logs; its result is recorded
+    in the README only.
+57. **Cite and brief hygiene (W0e)** — the P0-R5c ticket was filed with
+    `src/native/NativeMaterialBrowser.tsx:132`; the file is
+    `src/components/NativeMaterialBrowser.tsx:132` (corrected in the
+    ticket). The P0-R5c converge cited RefusalCard's rules as
+    `agentShell.css:294-296`; re-opened at record, they are `:295-297` (the
+    builder was right; corrected in the ticket). The P0-R1-observe zone
+    named `packages/live-shell/run-native-at-head.sh`, which does not
+    exist; the runner lives in `desktop/cradle/docs/world-shell/evidence/p0-r1/`
+    (§2). Converge re-opens cites with `sed -n` as builders do.

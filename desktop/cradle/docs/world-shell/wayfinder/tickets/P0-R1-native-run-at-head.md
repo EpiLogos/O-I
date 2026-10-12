@@ -1,7 +1,7 @@
 # P0-R1 — The native run path at HEAD
 
 Label: wayfinder:task (Phase 0 gate)
-Claimed-by: — (released W0b, 12 Oct; the remainder waits on the computer-use gate and a UI ticket, PATH §5)
+Claimed-by: — (released W0e, 12 Oct; the remainder waits on the owner unlocking the login session and on the computer-use gate, PATH §3, §5)
 Blocked-by: —
 Supersedes: DEVELOPMENT-TRACK-2026-10-09 "R1"; EXECUTION-CONTINUATION item 5
 
@@ -143,3 +143,79 @@ reuse 0-1-2's `owner_home` and rewrite its composition/catalogue); runner
 `readback` must poll until the AX tree settles (first r1d readback saw 6
 elements, kept in `readback-attempt-1/`) and must copy
 `native-checkout-drift.json` itself.
+
+### W0e — runner settle fix, r1e and r1f, 12 Oct 2026
+
+Still **not accepted**: the in-window readback (acc. 2 at the new HEAD,
+acc. 3) was attempted twice and read nothing, because the login session is
+screen-locked; acc. 4 is still not met. No review has run on W0e.
+
+**Landed.**
+- **`b57c206e5`** — the runner fixes for PATH §10 item 15 (evidence zone,
+  no product code), plus run `run-20261012T-r1e`. `readback` polls
+  `ax-run-context.swift` every 2 s and counts as settled only when the
+  window holds an `AXWebArea` and the element count is the same on three
+  polls in a row; it gives up after 60 polls (`P0R1_AX_POLLS`) and exits 1.
+  The walker walks only `AXWindow` elements, never descends into
+  `AXApplication`, and prints window, web-area and element counts. The
+  runner copies `stage/native-checkout-drift.json` into the run as
+  `2-native-checkout-drift.json`. r1e was built from the clean tree at
+  `046fb857b` with an uncommitted scratch copy of the runner (as r1c). Its
+  first readback, under the first settle rule, falsely reported "settled"
+  at 6992 elements with no web area (the app answered `AXWindows` with
+  itself); kept as `readback-attempt-1/`, rule replaced.
+- **`95a24eaa7`** — run `run-20261012T-r1f`, the conductor's acceptance
+  rebuild from the clean committed tree at `b57c206e5` with the committed
+  runner (`runner_sha256 a484aebb94de`), and the README "Run r1e" / "Run
+  r1f" sections. `b57c206e5` holds P0-R5c and both P0-R6b commits.
+
+**Checks (scripted, r1f).** Clean status before the build; steps 1–6 exit
+0, 17:28–17:39Z; seal verify 0; launch pid 44401. `2-`/`6-host-marker.json`:
+`source_revision b57c206e52a946cc2f76769b543b7ef1f9820fd7`,
+`source_dirty: false`, tree `d5277113da96`, exe `81f3f883303c`.
+`2-native-checkout-drift.json` copied by the runner, `changed_files []`.
+`7-composition.json` modules actuation, ai-kit, central; `7-catalogue.json`
+points factory, workcell and ql at `live-shell/unavailable/*`;
+`7-ctrl-version.txt` `ctrl 0.1.0 (7a451112a1a4)`. Readback: 60 polls, 0
+windows, 0 web areas, 0 elements; the runner exited 1 and said so (no
+false settle). Quit through the app menu, exit 0, no host process left.
+`bash -n` on the runner and `swiftc -typecheck` on the walker pass.
+
+**Cause of the empty readback (channel: scripted,
+`CGSessionCopyCurrentDictionary`).** `CGSSessionScreenIsLocked 1` since
+`CGSSessionScreenLockedTime 1791821336` = 2026-10-12T16:08:56Z, two minutes
+after r1d's successful readback, and still locked before and after r1f's
+readback. Relaunching r1d's own app by hand at ~17:25Z showed the same 0 AX
+windows, so the cause is the session, not the commits since `b50b970c3`.
+The lock does not explain `screencapture`'s refusal, which also happened in
+r1d before the lock.
+
+**Acceptance.**
+1. Met again at `b57c206e5` (r1f): clean committed tree, `source_dirty:
+   false`, drift empty, build logs and markers kept.
+2. Not re-observed at the new HEAD: the run-context text ("Native host ·
+   revision b57c206e52a9") was not read (0 AX windows). r1d's scripted-AX
+   reading at `b50b970c3` stands as the last observation.
+3. Partly met, as in W0b: composition, catalogue and `ctrl --version`
+   copied into evidence. The owner-readback rows, `suite_product_ids` and
+   `suite_owner_names` (P0-R6, P0-R6b) were not read in a window.
+4. Unmet: `screencapture` refused ("could not create image from display").
+
+**Unverified (channel).** Run context and owner readback in the window at
+`b57c206e5` (`scripted` AX, after the owner unlocks the session); window
+capture (`computer-use`, or `screencapture` after a Screen Recording
+grant); full-suite backing (only 0/1/2 run).
+
+**Next, once the session is unlocked (conductor).** Move r1f's top-level
+locked readback files (`7-ax-settle.log`, `7-window-run-context.txt`,
+`7-screencapture.log`, `basis-readback.txt`, and the launch/quit files of
+that launch) into `run-20261012T-r1f/readback-attempt-1/`, then
+`P0R1_STAMP=20261012T-r1f bash desktop/cradle/docs/world-shell/evidence/p0-r1/run-native-at-head.sh launch`,
+`readback`, `quit`.
+
+**Carries** (PATH §10 items 3, 5, 6, 36, 48, 53–56): owner unlock and the
+in-window readback; capture; full-suite backing; fresh candidate profile
+(r1e, the hand relaunch of r1d and r1f each rewrote
+`~/.config/oi-shell-candidate/0-1-2/{composition,catalogue}.json`); a
+session-lock pre-check in `readback`; the AX-settle rule for the conductor's
+kit; the hand relaunch of r1d at ~17:25Z kept no logs.

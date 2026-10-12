@@ -1,10 +1,11 @@
 # P0-R6 — Owner readback in the window: admitted, excluded, waiting
 
 Label: wayfinder:task (Phase 0 gate — "every device either admits through a real owner or names its absence")
-Claimed-by: — (released W0d, 12 Oct: host and UI code legs committed; UI legs open)
-Blocked-by: — for code (host field landed W0d, `2ac3c157f`). UI legs
-blocked-by a runner rebuild from the committed tree (PATH §10 item 36) and
-the computer-use gate.
+Claimed-by: — (released W0e, 12 Oct: P0-R6b host and UI code legs committed; UI legs open)
+Blocked-by: — for code (host fields landed W0d `2ac3c157f` and W0e
+`1f9b04034`). UI legs blocked-by the owner unlocking the login session (the
+r1f readback saw 0 AX windows, PATH §10 item 48), then an in-window readback
+(PATH §10 item 36), and the computer-use gate.
 
 Zones: `packages/live-shell/ui/src/shell/` (a new owner-readback module and
 its mount in the status/context region), `packages/live-shell/ui/src/native/application.ts`
@@ -165,3 +166,65 @@ secondary text. The shell still hard-codes nothing. Legs: **P0-R6b-host**
 (native_shell.rs + tests), **P0-R6b-ui** (the readback module + its test).
 Item 38 (absent-vs-unbuilt is only partial where no contribution row exists)
 stays a named limit in the readback's wording, not a fix.
+
+### W0e — P0-R6b display names landed, 12 Oct 2026 (ticket open for its UI legs)
+
+**Landed.**
+- **P0-R6b-host `1f9b04034`** (zone `desktop/cradle/src-tauri/src/native_shell.rs`
+  only, +46/-2). `candidate::suite_owner_names` (`native_shell.rs:104`)
+  maps each product id in the suite universe to its public name from the
+  existing `OWNERS` table (`:36-48`, fourth column); no literal list. An id
+  with no host owner is refused, never named. Computed in `prepare()` right
+  after the subset check (`:249`), held in the `RUNTIME` slot (`:446`) and
+  published as `live_shell_config.suite_owner_names` (`:496`). Two tests in
+  `suite_product_ids_tests` (`:578`, `:593`): the map's keys equal the
+  universe and each value equals the `OWNERS` name; an unowned id refuses
+  and an empty input gives an empty map.
+- **P0-R6b-ui `c287c379c`** (zone `ui/src/native/application.ts`,
+  `ui/src/shell/ownerReadback.{tsx,css}`, `ui/tests/owner-readback.test.mjs`).
+  `ShellConfig.suite_owner_names?: Record<string,string>`
+  (`application.ts:28`). `displayNameOf` (`ownerReadback.tsx:69`) accepts
+  only an own, non-empty string key; the row draws the host display name
+  first, the product id in parentheses as secondary text
+  (`.owner-readback-id`, `ownerReadback.css:5`), then the state after a
+  middle dot — e.g. "Software Factory (software-factory) · excluded by
+  footprint". An owner with no host name is drawn by its id alone. A
+  malformed map (null, array, string, non-string value, whitespace-only) or
+  an inherited prototype key names nothing. The development browser still
+  draws "No host readback" with no rows and no names. Five new tests (15 in
+  the suite), including a guard that the module quotes none of the host's
+  display names.
+
+**W0d cites refreshed** (re-opened after `1f9b04034`): the
+`suite_product_ids` call is now `native_shell.rs:241`, the subset refusal
+`:242-248`, the `RUNTIME` slot `:446`, the config field `:493`, the test
+module `:515`.
+
+**Checks (scripted, converge re-runs).** Host: `cargo check --features
+native_shell` green (15 warnings, none in `native_shell.rs`); `cargo test
+--features native_shell` 36 passed / 0 failed / 3 ignored, re-run on the
+clean committed tree. UI: tsc 0 errors; lane suites 174/174 at `c287c379c`.
+
+**Acceptance.** 1–4 met in code and tests (fixture configs only), now with
+display names per the ruling on PATH §10 item 39. 5 not met.
+
+**Unverified (channel).**
+- `suite_product_ids`, `suite_owner_names` and the readback rows in a
+  running native window (`scripted`, AX). The conductor rebuilt r1f from
+  the clean tree at `b57c206e5` (which holds both P0-R6b commits;
+  `source_dirty: false`), but its readback saw 0 AX windows: the login
+  session has been screen-locked since 16:08:56Z (`CGSSessionScreenIsLocked
+  1`). Re-run `readback` after the owner unlocks (PATH §10 items 36, 48).
+- `prepare()` wiring (`:249`, `:446`, `:496`): code-reading only. The
+  refusal inside `suite_owner_names` cannot fire from `prepare()`, since
+  `suite_product_ids` already refuses an id with no `OWNERS` row; it is
+  harmless defence, covered by its own test.
+- Acceptance 5, both viewports, the status-region look and the width of
+  "name (id)" in the narrow status bar (the chip is nowrap and
+  overflow-hidden, so truncation is expected but not seen): `computer-use`
+  (PATH §10 item 37).
+- The development-browser path drawing no names: tested in code, not seen
+  in a browser.
+
+**Carries:** PATH §10 items 36, 37, 48, 49, 50 (WIDGET-GUIDE §8 proposal:
+name first, id in parentheses). Item 39 is done in code.
