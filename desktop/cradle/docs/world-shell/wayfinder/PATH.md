@@ -1,10 +1,11 @@
 # PATH — the DLW build, live route
 
-Every agent reads this before acting. The conductor keeps it true; nobody
-else edits it. Builders never reconstruct the plan from chat — if PATH and a
-ticket disagree, stop and return `OPEN`.
+Every agent reads this, and `DLW-VISION.md` §0 and §6, before acting. The
+conductor keeps PATH true; nobody else edits it. Builders never reconstruct
+the plan from chat — if PATH and a ticket disagree, stop and return `OPEN`.
 
-Updated: 2026-10-12, `claude-code:dlw-conductor` (Opus).
+Updated: 2026-10-12, `claude-code:dlw-conductor` (Opus). Vision tickets
+(DLW-VISION §5.3) added to §5, 12 Oct.
 
 ## Roles (owner's model map, 12 Oct 2026)
 
@@ -14,9 +15,10 @@ Updated: 2026-10-12, `claude-code:dlw-conductor` (Opus).
 | Builder | Haiku, ≤3 at once | edit inside the claimed zone, run lane-local checks, return the receipt | stage, commit, leave the zone, answer an OPEN-QUESTION, call UI done from code |
 | Reviewer | Sonnet, 1 at a time, at seams | read the wave diff and refute the done-claim | fix, re-scope, review single patches |
 
-Brief templates: `BRIEF-BUILDER.md`, `BRIEF-REVIEWER.md`. Plan of record:
-`DLW-PLAN.md` (§9 order, §10 open questions, §11 laws). Standing map:
-`MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
+Brief templates: `BRIEF-BUILDER.md`, `BRIEF-REVIEWER.md`. Vision:
+`DLW-VISION.md` (figure and framing; §6 is the builder carry every brief
+embeds). Plan of record: `DLW-PLAN.md` (§9 order, §10 open questions, §11
+laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
 
 ## 1. Current phase
 
@@ -50,6 +52,19 @@ Brief templates: `BRIEF-BUILDER.md`, `BRIEF-REVIEWER.md`. Plan of record:
 - **Disk** 55 GB free. One cargo build at a time on the shared target pool.
 - **Computer use**: no desktop computer-use tool in the conductor session
   (checked 12 Oct). Subagents never have it.
+- **The vision is now part of what every agent reads.** `DLW-VISION.md`
+  compiles the owner's contemplation (`CONTEMPLATION-DLW-INSTRUMENT.md`) and
+  his mode ruling of 12 Oct (CONT:232-252). It governs figure and framing and
+  never overrides an owner ruling or settled law (DLW-VISION.md:14-17). Every
+  agent reads §0 (the one page) and §6 (the builder carry); both briefs embed
+  §6. The ruling is settled: five modes, **Live (base) · Central · Factory ·
+  Expressions · Technē**. Epi-Logos is a lens, not a mode. Live is the
+  reverse-engineering basis, ported, not approximated, and its destination is
+  Expressions with audio and video track layers on one timeline. No agent
+  presents the ruling as open. At 12 Oct the file is untracked in the seat;
+  P0-V1 lands it. DLW-PLAN.md also carries uncommitted rewrites in the seat
+  (+456/−56); tickets pin PLAN line cites to the committed plan
+  (`0dfa7b5ea`).
 
 ## 3. Hard gates
 
@@ -61,6 +76,7 @@ Brief templates: `BRIEF-BUILDER.md`, `BRIEF-REVIEWER.md`. Plan of record:
 | Factory receiving/advancement join | red | Factory owner | Phase 3 only |
 | R2 installed-state rename (ledger item 12) | owner nod | owner | retirement bookkeeping only |
 | §10 OPEN-QUESTIONs (42, unruled) | open | owner | any builder who hits one stops |
+| Vision ledger rows still PARTLY/OWNER (DLW-VISION §4) — named for tickets: L2 leave act, L7 primary presentation, L9, L23 timing, T-CROSS proposal | open | owner | T-WORLDCTX build leg; T-CROSS; T-LIVE-INTO-EXPRESSIONS. T-NARA builds without choosing L7. Any builder reaching such a row returns `OPEN Ln` |
 
 ## 4. Open claims
 
@@ -77,6 +93,57 @@ Brief templates: `BRIEF-BUILDER.md`, `BRIEF-REVIEWER.md`. Plan of record:
    native app after R1. Blocked-by: none (acceptance blocked-by P0-R1).
 3. **P0-R4** — owner bindings in the native run (roster, gateway, workcell
    reading, skillsets). Haiku once R1 boots. Blocked-by: P0-R1.
+4. **P0-V1** — land DLW-VISION and the DLW-PLAN rewrites (§5.1 items 1–16).
+   Conductor, docs only. Blocked-by: none. The seat's uncommitted DLW-PLAN
+   edits may be this ticket in progress; confirm before setting Claimed-by.
+5. **P0-BIMBA-LIVE** — read the live Bimba map read-only and keep a
+   re-runnable receipt for every headline the vision binds. Conductor.
+   Blocked-by: none (operational: oi-omarchy reachable).
+
+### Queued by phase (vision tickets, DLW-VISION §5.3)
+
+Phase order holds: no ticket below crosses a red gate. Files are in
+`tickets/`.
+
+- **Phase 0** — **P0-V2** design-document and widget-guide deltas (§5.2
+  items 17–23; conductor, docs). Blocked-by: P0-V1.
+- **Phase 2** — **T-TRAIL** every transition leaves a trail stop; return
+  appends. Blocked-by: Phase 1 gate; UI legs P0-R1 + computer-use. Stays
+  `OPEN` on retention and placement (PLAN §10 item 28).
+- **Phase 2** — **T-WORLDCTX** the Central mode's leave act and initial
+  world. Blocked-by: owner ruling on L2's leave act (owner question first);
+  Phase 1 gate for the build leg.
+- **Phase 3** — **T-NARA** one Nara dialogue binding met three ways (Central
+  vertical leg). Blocked-by: Phase 2 gate, T-TRAIL, P0-R1, P0-R4; needs a
+  current Nara identity and an open Expression. Chooses no primary
+  presentation (L7 stays the owner's).
+- **Phase 3** — **T-CROSS** journey → scene → exact return by ref equality.
+  *Proposed to the owner*; not claimable until he accepts (if he declines, it
+  stays a lane-5 target). Also blocked by the journey owner, T-TRAIL, the
+  Phase 2 gate and P0-R1.
+- **Phase 3** — the Factory vertical is unchanged (PLAN Phase 3 item 1).
+  "Feed Expressions" (CONT:180) is planned behind the red receiving gate. No
+  new ticket.
+- **Phase 4** — **T-LABELS** title "Central", plain instrument names, M′ as
+  provenance; never rename the stored book mode `base` without a migration.
+  Blocked-by: Phase 3 gate.
+- **Phase 4** — lane-5 targets carry the provenance mechanics of
+  origin-return (L-6) under plain names. This rides the target sets, not a
+  ticket.
+- **Phase 5** — **T-RETIRE-RECORD** retirement-with-record template from
+  LEGACY-CRADLE-RETIREMENT's shape. Decides nothing about modes (L9).
+  Blocked-by: Phase 4 gate.
+
+**Deferred, owner-timed, not claimable (no claim row):**
+**T-LIVE-INTO-EXPRESSIONS** (alias T-LIVE-EXPR), Live joined into
+Expressions on one audio and video timeline. Blocked-by: the Live port
+measured whole against the RE corpus; the owner naming the time (L23); a
+video-track design; Phase 4 gates. Listed so no other ticket does it by
+accident (DLW-VISION.md:1367-1368). Until then nothing merges Live's rail
+entry.
+
+**Stop rule for every vision ticket** (DLW-VISION.md:1369-1370): a builder
+who reaches a §4 row still PARTLY or OWNER returns `OPEN` with the row id.
 
 ## 6. Foreign lanes — do not touch
 

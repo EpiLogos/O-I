@@ -1,9 +1,13 @@
 # Builder brief — template (Haiku)
 
 The conductor fills the `<…>` slots and sends the whole block as the
-dispatch prompt. Nothing else goes in by default: no other tickets, no
-review essays, no chat history, no full PROGRAMME, crosswalk JSON or
-Ableton dossiers. Excerpts go in only when the ticket names them.
+dispatch prompt. One thing goes in every brief by default: the vision carry,
+DLW-VISION.md §6, pasted verbatim from the landed revision
+(DLW-VISION.md:1376-1377: "Every brief built from `BRIEF-BUILDER.md` and
+`BRIEF-REVIEWER.md` embeds the block below"). Nothing else goes in by default:
+no other tickets, no review essays, no chat history, no full PROGRAMME,
+crosswalk JSON or Ableton dossiers. Excerpts go in only when the ticket
+names them.
 
 ---
 
@@ -17,8 +21,29 @@ Other agents work in this checkout at the same time. Run `git status` first;
 any change you did not make is someone else's — never touch, revert,
 format or stage it.
 
+## Read first (in this order)
+1. This brief.
+2. DLW-VISION.md §0 (the one page) and §6 (builder carry):
+   /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/wayfinder/DLW-VISION.md
+   §6 is pasted below. Read §0 from the file.
+3. Your ticket, then only the sources it names.
+
 ## Your ticket
 <full ticket body: question, zone, acceptance, Blocked-by>
+
+## The vision you build inside (DLW-VISION.md §6, verbatim)
+<paste the DLW BUILDER CARRY block, DLW-VISION.md §6, unedited>
+The carry is not ornament and not a feature list. Its WHAT, ORIGIN, NARA,
+EPII, CROSS and ENDING lines bind what you build as much as HONESTY does:
+- a provenance field built as if it were the whole of origin-return
+  flattens it;
+- a Nara surface drawn as a pause or as an answer device misreads it;
+- a help panel standing in for Epii misreads it;
+- a crossing that loses its origin ref breaks it.
+The owner's mode ruling is settled law: Live (base) · Central · Factory ·
+Expressions · Technē, with Epi-Logos a lens, not a mode
+(CONTEMPLATION-DLW-INSTRUMENT.md:232-252). Never present it as open, and add,
+remove or merge no mode.
 
 ## The four laws (bind every line you write)
 1. Port law — port, never recreate. Before writing any new module, name
@@ -63,23 +88,27 @@ ticket needs cargo, say so and stop instead of building.
 - the acceptance's code legs are met and the checks are green, or
 - you hit an OPEN-QUESTION (DLW-PLAN §10) or a design gap — return OPEN,
   never invent the answer, or
+- you reach a DLW-VISION §4 row still PARTLY or OWNER — return
+  `OPEN L<n>` with the row id (DLW-VISION.md:1369-1370; §6 STOP), or
 - you need a foreign file, or someone else's uncommitted change conflicts.
 Never commit, never stage, never start or stop servers on ports you did
 not open yourself.
 
 ## Return exactly this shape
-RECEIPT: read <list>; binding laws: <the 3 that bind this ticket, in your words>
+RECEIPT: read <list, including DLW-VISION §0 and §6>; binding laws: <the 3 that bind this ticket, in your words>; vision: <the §6 lines that bind this ticket, in your words>
 ZONE: wrote only <paths> | BLOCKED: zone-escape <path>
 DIFF: <files> / approx lines
 PORT: <legacy path:line for each new module> | none-new
 CHECKS: <cmd> → pass|fail (paste the count line)
 ACCEPTANCE: met <bullets> | UNVERIFIED <bullets + channel needed>
 GUIDE: improvements for WIDGET-GUIDE §8 | none
-OPEN: none | OPEN-QUESTION #<n> | needs-owner <one line>
+OPEN: none | OPEN-QUESTION #<n> | OPEN L<n> (DLW-VISION §4) | needs-owner <one line>
 HANDOFF: ready-to-commit | needs-conductor-glue <why>
 ```
 
 ---
 
-Conductor refuses to converge a return with no RECEIPT or ZONE line, and
-re-runs every CHECKS command itself before staging.
+Conductor refuses to converge a return with no RECEIPT or ZONE line, or
+with a RECEIPT that names no vision line, and re-runs every CHECKS command
+itself before staging. A brief sent without the §6 block pasted is not a
+brief: the conductor re-sends it.
