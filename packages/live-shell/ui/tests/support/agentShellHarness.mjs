@@ -51,6 +51,13 @@ function centralGroundRoot() {
  * dated, so the ground's lane is scanned rather than pinned). Null when no
  * layout supplies it — callers refuse by name; nothing machine-bound. */
 function resolveProgrammePath(...parts) {
+  // The design pack's home is the repository (12 Oct 2026): new-shell/<x> is
+  // desktop/cradle/docs/world-shell/<x>. The reverse-engineering archive stays
+  // the fallback for raw evidence that never moved.
+  if (parts[0] === 'new-shell') {
+    const pack = join(ui, '..', '..', '..', 'desktop', 'cradle', 'docs', 'world-shell', ...parts.slice(1))
+    if (existsSync(pack)) return pack
+  }
   let dir = ui
   for (;;) {
     const candidate = join(dir, ...parts)

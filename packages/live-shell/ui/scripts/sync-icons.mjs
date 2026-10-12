@@ -29,9 +29,10 @@ import {fileURLToPath} from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const uiRoot = join(here, '..')
-// The specimen lives in the new-shell lane of the reverse-engineering
-// campaign (outside this repository) — resolvable on the working machines.
+// The specimen lives in the design pack (desktop/cradle/docs/world-shell),
+// with the reverse-engineering campaign copy as a fallback.
 const SPECIMEN_CANDIDATES = [
+  join(uiRoot, '..', '..', '..', 'desktop', 'cradle', 'docs', 'world-shell', 'icon-cut.html'),
   join(uiRoot, '..', '..', '..', '..', 'Work', 'reverse-engineering', '2026-10-07-techne-instrument-re', 'new-shell', 'icon-cut.html'),
   join(uiRoot, '..', '..', '..', '..', '..', 'Work', 'reverse-engineering', '2026-10-07-techne-instrument-re', 'new-shell', 'icon-cut.html'),
   '/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/icon-cut.html',
