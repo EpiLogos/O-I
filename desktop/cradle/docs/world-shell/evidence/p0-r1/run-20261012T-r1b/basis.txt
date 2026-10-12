@@ -1,0 +1,12 @@
+seat=/Users/admin/Central/worktrees/env-1/o-i
+branch=dlw/build-20261012
+head=13aaf53604d1efe1a70907276f89363204f82827
+stamp=20261012T-r1b
+out=/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src-tauri/target/p0-r1/20261012T-r1b
+backing=0/1/2
+mode=all
+status:
+ M desktop/cradle/src-tauri/Cargo.lock
+ M desktop/cradle/src-tauri/Cargo.toml
+ M packages/live-shell/build-native-candidate.py
+?? desktop/cradle/docs/world-shell/evidence/

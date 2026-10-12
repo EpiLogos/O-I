@@ -1775,6 +1775,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "47d9d19d1d6efa0109d2f65ff4c85cddd50bd572e5a00127ab10987290bcefae"
 
 [[package]]
+name = "live-dynamics"
+version = "0.1.0"
+
+[[package]]
 name = "live-set"
 version = "0.1.0"
 dependencies = [
@@ -2160,6 +2164,7 @@ dependencies = [
 name = "oi-cradle"
 version = "0.1.0"
 dependencies = [
+ "live-dynamics",
  "live-set",
  "objc2",
  "oi-cradle-kernel",
