@@ -1,8 +1,10 @@
 # P0-R6 — Owner readback in the window: admitted, excluded, waiting
 
 Label: wayfinder:task (Phase 0 gate — "every device either admits through a real owner or names its absence")
-Claimed-by: —
-Blocked-by: — (UI legs blocked-by the computer-use gate)
+Claimed-by: — (released W0c, 12 Oct: blocked, zone-escape)
+Blocked-by: a host field in `live_shell_config` disclosing the suite product
+universe (owner or conductor go/no-go, PATH §10 item 24). UI legs blocked-by
+the computer-use gate.
 
 Zones: `packages/live-shell/ui/src/shell/` (a new owner-readback module and
 its mount in the status/context region), `packages/live-shell/ui/src/native/application.ts`
@@ -44,4 +46,36 @@ names none of them today (PATH §10 item 4; R0 objection 7).
 
 ## Resolution
 
-—
+**Blocked W0c, 12 Oct 2026** — `BLOCKED: zone-escape` to
+`desktop/cradle/src-tauri/src/native_shell.rs`. Nothing written, no commit.
+
+**Found (code-reading, conductor re-read `native_shell.rs:429-430`).**
+`live_shell_config` carries `product_ids` (the backing's admitted list only:
+0/1/2 = central, actuation, ai-kit) and `contributions` (owners oi,
+ai-kit, software-factory; factory `owner_selected: false`, registration
+excluded). Workcell and quaternal-logic appear in neither, so the host
+readback cannot tell excluded-by-footprint from absent-because-unbuilt for
+them. Acceptance 1 and 2 cannot be met from config as it stands. Hard-coding
+the universe in the UI is refused (a second store; port and honesty laws).
+
+**Proposed host change (owner or conductor go/no-go, PATH §10 item 24).**
+Add a field in `candidate::config` carrying the footprint's backing-options
+product list (full suite: central, actuation, ai-kit, software-factory,
+workcell, quaternal-logic). Then a rebuild through the P0-R1 runner.
+
+**In-zone design, ready once the host field lands.** A pure readback module
+in `ui/src/shell/`: admitted / excluded-by-footprint / failed / absent, owner
+named, remedy "no remedy named" (the host discloses none), and a "no host
+readback" line on the development browser path. Mounted through
+`RunContextReading` in `ui/src/shell/runContext.tsx`, which `StatusBar`
+renders in every mode (`App.tsx:432`), so `components/StatusBar.tsx` stays
+out of zone.
+
+**Baseline (scripted).** tsc 0 errors; lane suites 143/143. The dispatched
+test command's `tests/owner-readback*.test.mjs` glob matches no file yet
+(PATH §10 item 34).
+
+**Unverified (channel).** Every acceptance: nothing built. Acceptance 5 and
+the window readback need `computer-use` (or scripted AX for text).
+
+**Carries:** PATH §10 items 4, 24, 34.

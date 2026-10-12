@@ -8,7 +8,10 @@ Updated: 2026-10-12, `claude-code:dlw-conductor` (Opus). Vision tickets
 (DLW-VISION §5.3) added to §5, 12 Oct. Wave 0 recorded 12 Oct: R0 returned
 **FAIL**; wave 0 stays open (§7, §9); carries in §10. Wave W0b recorded
 12 Oct: P0-R5, P0-R1 (r1d) and P0-BIMBA-LIVE committed; no review run on
-W0b, so W0b and wave 0 stay open (§9).
+W0b, so W0b and wave 0 stay open (§9). Wave W0c recorded 12 Oct: P0-R4
+code legs committed (`7b59fecad`); P0-R6 blocked (zone-escape: the host does
+not disclose the product universe); P0-R5b blocked-by P0-R6; no review run,
+so W0c stays open (§9); carries 24–35 in §10.
 
 ## Roles (owner's model map, 12 Oct 2026)
 
@@ -102,8 +105,15 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
   DLW-PLAN.md's 12 Oct rewrites are committed in `13aaf5360`. Tickets written
   before `13aaf5360` pin PLAN line cites to `0dfa7b5ea`; re-check a cite
   against the committed plan before relying on it.
-- **Seat tree**: clean after `dcfb3731c` (W0b converge, 12 Oct); pushed,
-  `origin/dlw/build-20261012` = `dcfb3731c` before this record commit.
+- **Seat tree**: clean after `7b59fecad` (W0c converge, P0-R4, 12 Oct);
+  pushed, `origin/dlw/build-20261012` = `7b59fecad` before the W0c record
+  commit. Lane suites 143/143 and agent suites 86/86 (81 + 5 P0-R4), tsc 0.
+- **`live_shell_config` carries no product universe** (re-read 12 Oct,
+  `src-tauri/src/native_shell.rs:429-430`): `product_ids` is the backing's
+  admitted list only (0/1/2: central, actuation, ai-kit) and `contributions`
+  names owners oi, ai-kit and software-factory. Workcell and quaternal-logic
+  appear in neither, so the shell cannot tell excluded-by-footprint from
+  absent-because-unbuilt (P0-R6 blocker, §10 item 24).
 
 ## 3. Hard gates
 
@@ -122,6 +132,8 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
 | Ticket | Agent | Zone | Since |
 |---|---|---|---|
 | conductor | claude-code:dlw-conductor | `desktop/cradle/docs/world-shell/wayfinder/` | 2026-10-12 |
+| P0-R6 | builder (Haiku), W0c — **blocked** (`BLOCKED: zone-escape` to `src-tauri/src/native_shell.rs`; nothing written) | `packages/live-shell/ui/src/shell/`, `ui/src/native/application.ts` (types), `ui/tests/` | 2026-10-12 |
+| P0-R5b | builder (Haiku), W0c — **blocked** (blocked-by P0-R6; nothing written) | `packages/live-shell/ui/src/` files named in the ticket, `ui/tests/` | 2026-10-12 |
 
 ## 5. Next claimable
 
@@ -139,14 +151,26 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
    `packages/live-shell/ui/src`, not yet filed, §10 item 4); full-suite
    backing and a fresh candidate profile (§10 items 5–6). **Nothing in
    P0-R1 is claimable now** without the owner act or the new ticket.
-5. **P0-R4** — owner bindings in the native run (roster, gateway, workcell
-   reading, skillsets). Haiku. Blocked-by: P0-R1 (R1 gate still red — not
-   claimable yet).
-6. **Claimable now (conductor, docs/evidence zones only):** file the
-   follow-up tickets named in §10 (items 4, 9, 10, 11, 15–19); the P0-R1
-   runner fixes in §10 item 15 (P0-R1 evidence zone). No product-code
-   ticket is claimable: every one waits on the R1 gate, a phase gate, or
-   the owner.
+5. **P0-R4** — code legs committed W0c (`7b59fecad`): owner table, named
+   waits, gateway lamp fix, roster attribution. Dispatched by the conductor
+   although Blocked-by P0-R1 held; only the code legs landed. What is left:
+   the native-window walk (blocked-by P0-R1 and the computer-use gate);
+   the owner-side ops (§10 items 29–30); the honesty nit (§10 item 27,
+   claimable as a one-file follow-up in `ui/src/agent/`). Ticket stays open.
+6. **P0-R6** — owner readback in the window. **Blocked**: needs a host field
+   in `native_shell.rs` disclosing the suite product universe (out of the
+   ticket's zone). Owner or conductor go/no-go on the host field (§10 item
+   24). Not claimable until that ruling; then the in-zone UI work is ready
+   (design in the ticket Resolution).
+7. **P0-R5b** — run-context follow-ups and the restored receipt. Blocked-by
+   P0-R6 (status region). Not claimable until P0-R6 lands, or the conductor
+   rules that items (d) and (18) may run first (§10 item 31).
+8. **Claimable now (conductor, docs/evidence zones only):** file the
+   follow-up tickets named in §10 (items 9, 10, 11, 15, 19, 29, 30); the
+   P0-R1 runner fixes in §10 item 15 (P0-R1 evidence zone); a one-file P0-R4
+   honesty follow-up (§10 item 27, `ui/src/agent/AgentShellBrowser.tsx`).
+   No other product-code ticket is claimable: each waits on the R1 gate, a
+   phase gate, the P0-R6 host ruling, or the owner.
 
 ### Queued by phase (vision tickets, DLW-VISION §5.3)
 
@@ -227,6 +251,7 @@ third rewrite of an invent-the-spec problem.
 |---|---|---|---|---|
 | 0 | P0-R1 (committed), P0-R5 (blocked, no code), P0-V2 item 23 (failed twice, uncommitted) (+ baseline tsc repair `24e7d8f7f`) | `24e7d8f7f`, `bfca96176`, `dd0162a6d`; record commit "DLW W0: record" | R0 **FAIL** (12 Oct): §7 stop rule unmet; P0-R1 acc. 1 (dirty-tree revision), 2, 3, 4 unmet; P0-R5 absent; R0 Q1 answered "yes, mistakable" | — (open) |
 | W0b | P0-R5 (A+B) committed; P0-R1 committed (r1d clean-commit build; acc. 2 pixels, 3 in-window, 4 capture unmet); P0-BIMBA-LIVE committed (45/45 confirmed) | `f5adaa2ab` (P0-R5), `b50b970c3` + `e411dc7d7` (P0-R1 runner + r1c/r1d evidence), `dcfb3731c` (P0-BIMBA-LIVE); record commit "DLW W0b: record — PATH and ticket resolutions" | none run (no W0b review verdict); R0 re-review still owed for wave 0 (§7) and needs the computer-use gate | — (open: no review verdict; P0-R1 acceptance incomplete) |
+| W0c | P0-R4 committed (code legs only; native walk and owner ops unmet); P0-R6 blocked (zone-escape: host product universe, no code); P0-R5b blocked (blocked-by P0-R6, no code) | `7b59fecad` (P0-R4); record commit "DLW W0c: record — PATH and ticket resolutions" | none run (no W0c review verdict) | — (open: two tickets blocked; no review verdict) |
 
 ## 10. Carries
 
@@ -246,7 +271,8 @@ by the ticket named, or by the owner where marked.
    `P0R1_STAMP=<stamp> bash desktop/cradle/docs/world-shell/evidence/p0-r1/run-native-at-head.sh launch`
    and `screencapture`, labelled `screen-capture (no interaction)`).
    Still owed after W0b: `screencapture` was refused again in r1c and r1d.
-4. **P0-R1 acc. 3** — evidence copies done W0b (r1d: `7-composition.json`,
+4. **P0-R1 acc. 3** — UI ticket filed as **P0-R6** (`1fdae0e30`); blocked
+   W0c on the host disclosure (item 24). Evidence copies done W0b (r1d: `7-composition.json`,
    `7-catalogue.json`, `7-ctrl-version.txt` = `7a451112a1a4`; catalogue
    points factory, workcell and ql at `live-shell/unavailable/*`). Still
    owed, as a new UI ticket under `packages/live-shell/ui/src` (to file):
@@ -297,11 +323,12 @@ there are no review carries yet.
     logs (copied by hand in r1c and r1d).
 16. **P0-R1 acc. 2** — the run-context span's title (tree digest, carrier)
     is not exposed to accessibility; observing it needs computer-use (hover).
-17. **P0-R5 follow-ups** (UI zone, ticket to file):
+17. **P0-R5 follow-ups** — filed as **P0-R5b** (`1fdae0e30`), blocked W0c:
     (a) `RunContextReading` reads `readShellConfig` once per `StatusBar`
     mount; a `readShellConfig(true)` refresh does not re-render it —
     subscribe to config refreshes.
-    (b) Consolidate the partial carrier readings at `ModeBrowser.tsx:127-130`,
+    (b) Consolidate the partial carrier readings at `ModeBrowser.tsx:126-130`
+    (transport `:126`, carrier `:127`, World row `:130`; re-opened W0c),
     `ModeContextDock.tsx:208`, `App.tsx:355-357` through
     `runContextOf`/`carrierOf`.
     (c) `SettingsWorkspace.tsx` Acknowledgement still dumps the settings
@@ -340,3 +367,66 @@ there are no review carries yet.
 23. **Brief hygiene** — the P0-BIMBA-LIVE brief's check wrote `> read.out`
     to the seat root, outside the zone. Briefs name
     `desktop/cradle/docs/world-shell/evidence/p0-bimba-live/read.out`.
+
+Registered from the W0c converge returns (12 Oct). No W0c review ran, so
+there are no review carries yet.
+
+24. **P0-R6 — host disclosure, owner or conductor go/no-go.**
+    `live_shell_config` (`native_shell.rs:429-430`) carries `product_ids`
+    (backing-admitted only) and `contributions`; no field names the suite
+    product universe. Proposal from the builder: add a host field in
+    `candidate::config` carrying the footprint's backing-options product
+    list (full suite: central, actuation, ai-kit, software-factory,
+    workcell, quaternal-logic), so the shell marks non-admitted products
+    excluded-by-footprint. Hard-coding the universe in the UI is refused (a
+    second store; port and honesty laws). The host change is product code
+    in `desktop/cradle/src-tauri` plus a rebuild through the P0-R1 runner.
+25. **P0-R6 / P0-R4 — native walk** (computer-use): P0-R4's lamps,
+    "waiting · <Owner>" headers, aria-labels and refusal cards at
+    `7b59fecad`, from a clean-tree rebuild (`source_dirty: false`). Gated on
+    §3 (computer-use) and P0-R1.
+26. **P0-R4 — native-run admissions not exercised**: Central roster through
+    bundled ctrl `7a451112a1a4`, AIKit `harness_agent_read`, Workcell
+    `workcell_status_read`. The r1d catalogue points workcell at
+    `live-shell/unavailable/*`, so the Git lamp is expected to read
+    "waiting · Workcell" (code-reading only).
+27. **P0-R4 honesty nit (fix next pass)** —
+    `AgentShellBrowser.gitRowsFromWorkcell` (`ui/src/agent/AgentShellBrowser.tsx:112-118`)
+    labels an answered seat without a `workcell_ref` as a refusal
+    ("workcell · refused"). Mark it refused only when `seatError` is set;
+    otherwise say the reading answered without a ref (meta likewise).
+28. **P0-R4 looseness to review** — when Central's roster answers with no
+    accepted `skill_refs`, the skillset row waits on AIKit with the remedy
+    "AIKit builds agent-chain skillset admit". The empty refs come from
+    Central's roster profiles; a reviewer confirms AIKit (rack owner,
+    AGENT-DEVICE-OWNERSHIP.md:27) is the right party to wait on.
+29. **Owner tickets (to file, owners' seats)** — ai-kit: build
+    `agent-chain skillset admit` or declare it absent; workcell: build
+    `workcell git-seat attach` or declare it absent.
+30. **needs-owner (P0-R4)** — `agent-chain order` has no grounded owner (the
+    composition is declared at the shell's family door,
+    `ui/src/inhabitants/agentDeviceCatalogue.ts:33`, `CHAIN_SLOTS`). Owner
+    names who owns it, or rules it absent.
+31. **P0-R5b ordering — conductor call.** Either land P0-R6 first, then
+    claim P0-R5b; or rule that items (d) and (18) (`runContext.tsx`,
+    `OwnerRefusal`, `NativeMaterialBrowser`) run before P0-R6, leaving (a)
+    and (b) (StatusBar and the mode files R6 mounts into) behind it.
+32. **Packaging** — the r1d payload ships workcell, factory and ql as
+    `live-shell/unavailable/*`. Bundling them is `build-native-candidate.py`
+    / `package-payload.py` work (P0-R1 / §10 item 5, full-suite backing).
+33. **WIDGET-GUIDE §8 proposals (P0-R4 builder; conductor to adopt or
+    decline):** (1) an unlit admit lamp's header reads "waiting · <Owner>"
+    and its accessible name "not admitted — waiting on <Owner>"; no bare
+    "unadmitted", no lamp prop defaulting to on; (2) a refused owner reading
+    is one line of at most 240 characters, "waiting on <Owner> — <reading
+    op> refused: <owner's words>", and "not reached" when the shell's own
+    transport failed; (3) a missing-op refusal names op, owner and remedy
+    ("<Owner> builds <op> on its own seat, or declares it absent"), and says
+    so when no owner is grounded.
+34. **Brief hygiene (W0c)** — the dispatch's test command names
+    `tests/owner-readback*.test.mjs`; the glob matches no file and zsh
+    aborts the whole command. Drop it until P0-R6 adds that suite. The
+    dispatch also named `docs/world-shell/wayfinder/` at the seat root; the
+    path is `desktop/cradle/docs/world-shell/wayfinder/`.
+35. **P0-R5b builder receipt incomplete** — the builder did not read
+    DLW-VISION §0 (only §6). A rerun of P0-R5b reads both.
