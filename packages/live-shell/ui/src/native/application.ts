@@ -14,6 +14,12 @@ export interface ShellConfig {
   default_set: string
   product_ids?: string[]
   contributions?: NativeContributionReading[]
+  /** The suite product universe the footprint offers (live_shell_config's
+   * suite_product_ids, native_shell.rs): every product named in the footprint's
+   * backing options that the host owns, in the host's owner order. product_ids
+   * is the selected backing's admitted subset of it. Absent on a host build
+   * that predates the field. */
+  suite_product_ids?: string[]
   kernel_bridge?: string
   kernel_transport?: {kind: 'tauri'; invoke: 'kernel_op'}
   kernel_epoch?: string

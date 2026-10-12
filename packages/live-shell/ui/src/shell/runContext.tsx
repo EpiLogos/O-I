@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react'
 import {nativeHost, readShellConfig, shellTransport, type ShellConfig} from '../native/application'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+import {OwnerReadback} from './ownerReadback'
 
 /**
  * The run-context reading (P0-R5 A): which world this shell runs in, stated
@@ -72,7 +73,8 @@ export function carrierOf(transport: KernelTransportStatus): string {
   return transport.reason
 }
 
-/** The status-region reading: reads the host's configuration once and states it. */
+/** The status-region reading: reads the host's configuration once and states it,
+ * with the owner readback (P0-R6) beside it from the same read. */
 export function RunContextReading() {
   const [read, setRead] = useState<{config: ShellConfig | null; error: string | null}>({config: null, error: null})
   useEffect(() => {
@@ -83,12 +85,16 @@ export function RunContextReading() {
     )
     return () => {live = false}
   }, [])
+  const native = nativeHost()
   const reading = runContextOf({
-    native: nativeHost(),
+    native,
     config: read.config,
     error: read.error,
     carrier: read.config ? carrierOf(shellTransport(read.config)) : 'not yet read',
   })
-  return <span className="statusbar-counts run-context" data-region="run-context" data-run-context={reading.kind}
-    title={reading.line}>{reading.label}</span>
+  return <>
+    <span className="statusbar-counts run-context" data-region="run-context" data-run-context={reading.kind}
+      title={reading.line}>{reading.label}</span>
+    <OwnerReadback native={native} config={read.config} error={read.error} />
+  </>
 }
