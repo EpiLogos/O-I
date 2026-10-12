@@ -62,8 +62,8 @@ derived, not asked.
 | **Session view** | Tracks × scenes grid of launchable clip slots; non-linear | The material in states, launchable: per mode its own grid (§2) | Material in states — symbols admitted, contested, proposed |
 | **Arrangement view** | One linear timeline of clips per track, on one ruler | The same material over time, one ruler; the time spine (civil / work / sky strata) | The time spine — the festival course |
 | **Track** | A lane of one kind of material; owns a device chain; routes to master/returns | A native stream of one kind (Day, Flow, Session, Expression, …) — never a copy, a projection of the owner's stream | A discipline's voice |
-| **Clip / slot** | Launchable material with state (stopped, playing, queued, recording); lives in one track | A native object at a revision (entry, document, task, scene, walk stop) with legible state | A bead — a symbol with its state |
-| **Scene** | A row launching one clip per track together | A coordinated state across streams (a Journey stop, an Expression scene) | A move of the game — the theme stated across voices |
+| **Clip / slot** | Launchable material with state (stopped, playing, queued, recording); lives in one track | A native object at a revision with legible state — an Expression's **scene**, an event, a task, an entry (§9.1) | A bead — a symbol with its state |
+| **Scene** (Live's row) | A row launching one clip per track together | A **stop**: it stands one or more clips at once — a walk stop, a moment across Expressions (§9.1–9.2). In the DLW the word "scene" means an Expression's scene, a clip | A move of the game — the theme stated across voices |
 | **Launch quantize / follow action** | When a launch lands; what follows a clip | When a save/steer/scene lands; what follows (routine, next stop) | The prescribed course |
 | **Device — instrument** | Generates signal from input events | Generates: the agent that answers, the physics sim that sounds, the instrument that forms | The fixed instrument sounding |
 | **Device — audio/MIDI effect** | Transforms what passes through; keeps the stream | Transforms the material in focus without replacing it (text, highlight, scope, formation) | Transformations — variation, counterpoint |
@@ -136,10 +136,10 @@ VIEWTIP, DVN, BCATS, CTABS/WID, deviceDetail/formDevice/liveDetail, TPM;
 
 | Semantic | Element | State |
 |---|---|---|
-| Session | scene rows to launch | built in part |
+| Session | **Expressions as tracks, their scenes as clips** in slots; rows are stops (§9) | built in part (today drawn inverted — §9.5) |
 | Arrangement | the Expression's scenes over time | designed |
 | Browser | Field: Graph · Scenes · Library · Views | designed |
-| Clip detail | **Scene**: sequence, durations, bindings (the scene strip moved here, Rev 5) | designed |
+| Clip detail | **the selected scene (a clip)**: sequence editor (entity lanes × steps), durations, bindings, both sides — visual and audio — in sync (§9.3–9.4) | designed |
 | Device = **Studio** | the engine's own controls, as sections: Tools · Selected · Formation · Material · Motion · **Body 3:3** (M1 + M2 + M3, M0, M5 toggles) · **Nara · M4** · Capture | designed (mockup Studio) |
 | The instrument | **the physics simulation is the sounding instrument** (instrument semantic): the GPGPU particle field with the cymatic resonator (2D plate, 3D cavity) sounds; M1 generates, M2 modulates (resonance key) | engine built in expressions-app; shell face: `nativeFieldFace.physics` |
 | Field devices (one whole device per app panel; three presentations of the same live parameters: **rack widget** in the bottom space the person adds · **expanded** in the browser's lower pool · **full** Studio) | physics · pointer · relational · medium · contacts · morph · focus · colour · ink · depth · resonance | built: nine `components/nativeFieldFace.<key>.ts` + morph/colour native faces; rack widget's ≤4 compact controls = macros |
@@ -323,7 +323,9 @@ Journey (M3′) and how both eventuate in a full Expression.
 ### 7.3 How a timeline eventuates in the full Expression
 
 **Thread (M2′, a walk track on the ruler) → walked (M3′ Journey: its stops
-as scene rows — Technē's Session) → each stop carries its Expression scene
+as rows — Technē's Session) → each stop launches the Expression scene(s) it
+carries (a walk goes through a sequence of Expressions or through the scenes
+within one Expression — §9.2)
 (the mockup's `WALK[].ex`) → captured (Technē transport: record a walk;
 view → scene) → the Expression's scene sequence (Expressions Session scene
 rows, Arrangement "the scenes over time") → sounded and formed by the
@@ -397,8 +399,9 @@ scenes and walks assembled for one body of material.
 
 The Expression a walk's stop carries is the media of that moment — images,
 video, live renders with sound (the physics instrument sounding). A walk is
-therefore a sequence of Expressions over the ruler: the Timeline's thread,
-walked, is what the Expression plays (§7.3).
+therefore a sequence of Expressions, or of scenes within one Expression,
+over the ruler (§9.2): the Timeline's thread, walked, is what the
+Expressions play (§7.3).
 
 ### 8.4 Port the code, not the shortcuts
 
@@ -410,3 +413,85 @@ material comes through the corpus provider seam (C2) and native owners with
 refs and revisions; projects and corpora through ProjectCentral; settings and
 default sets through the workspace; modes through the shell's one spine. Each
 such adaptation is recorded beside the pinned AE commit (T-AE-REPORT).
+
+---
+
+## 9. Tracks, clips, stops — one ontology, and Live's clip editing in every mode (owner, 12 Oct 2026)
+
+### 9.1 The rule, and the word "scene"
+
+**Expressions are to scenes as Live's tracks are to clips.** An Expression is
+a track; its scenes are its clips. So in the DLW **"scene" always means an
+Expression's scene — a clip.** Live's own "scene" (the row that launches one
+clip per track together) is called a **stop** here: a stop stands one or more
+clips at once. Every mode reads the same three levels:
+
+| Mode | Track | Clip | Stop (Live's scene row) | Takes (lanes under a clip) |
+|---|---|---|---|---|
+| Live | audio / MIDI / group / return | audio / MIDI clip | scene | take lanes, comping |
+| Expressions | **an Expression** | **a scene** | a moment across several Expressions | captured takes of a scene |
+| Technē (M2′ ruler / M3′ Journey) | a native stream: a reading's thread, a subject's occurrences, a journey, runs, revisions, sky | an event, occurrence or revision at its time and place | a **walk stop**: it stands its event and launches the Expression scene(s) it carries | readings that extend a reading (layers, never rewrites) |
+| Factory | a session | a task | a launched batch (Play: "every queued one") | **attempts** (attempt 1 failed · attempt 2 …); comping = choosing the attempt that lands (review) |
+| Central | a stream: Day · Flows · Beings · Things · Goals | an entry or document | the day's face (the die) standing its entries | revisions (draft · saved · edited since save) |
+
+### 9.2 A walk
+
+A walk is an ordered sequence of stops, and it takes one of two shapes —
+both Live mechanics:
+
+- **through a sequence of Expressions** — each stop launches a scene on a
+  different Expression (a track change at each stop): Live's **scene follow
+  actions**, row to row;
+- **through the scenes within one Expression** — the stops step down one
+  track's clips: Live's **clip follow actions**, clip to clip in a track.
+
+A walk may mix them. Launch quantize is the walk's arrival; pace is its
+tempo; Follow keeps the view on the standing stop. **Record a walk** is
+Live's Session → Arrangement recording: the walk, played, is laid out on the
+ruler as clips on Expression tracks. This replaces "a walk is a sequence of
+Expressions" in §7.3 and §8.3: a walk goes through a sequence of Expressions
+**or** through scenes within an Expression.
+
+### 9.3 Two sides of one track and one clip — sight and sound
+
+An Expression (track) and each of its scenes (clips) has two sides, one
+state:
+
+- **visual** — the form: glyph projection, the field, images, video, live
+  render;
+- **audio** — the sound: the physics instrument sounding (M1 generates, M2
+  modulates), entity voices, `followCymatic`.
+
+Sound and form are projections of one state (the musical law: common cause),
+so the two sides stay locked: edit one and the other follows. Live's own
+parallel is a video clip on an audio track — the picture in the video window,
+its sound in the track — and the joined audio+video timeline Live becomes in
+Expressions later (owner ruling). In the Arrangement each Expression track
+shows both lanes, picture over sound; the Clip detail shows both sides of
+the selected scene in sync.
+
+### 9.4 Live's clip editing, carried into every mode
+
+Live's Clip view is the richest editor in the product. Each part has a home
+in every mode's Clip detail:
+
+| Live Clip view | Expressions — a scene | Technē — an event | Factory — a task | Central — an entry |
+|---|---|---|---|---|
+| Clip box: name, colour, signature, groove | scene name, colour; signature = the field ratio (5:3) | name; standing (fact · claim · inferred · hypothesis) as colour and dash | task name; state | entry title; form |
+| Launch box: mode, quantize, legato, follow actions | scene launch quantize; follow = the next scene of the walk | arrival; follow = the walk's next stop | Run; quantize = when stop/steer lands (next tool); follow = the next queued task, the routine loop | — (entries are read, not launched) |
+| Start / end / loop markers, loop brace | scene in / out; scene loop | the event's span; the occasion window (Technē's loop brace) | the write window (plan ✓ … deploy) | the selection / highlight range |
+| **Note editor** (piano roll: rows × notes; velocity, chance; draw; fold; scale awareness) | the **sequence editor**: entity lanes × sequence steps (a step's hold + transition = a note's length + glide); fold to used entities; scale = the ☿ resonance key | the material an event gathers (its occurrences and passages), by time | the tool-run log: tool calls as notes on the task's time | the document itself, edited by the document devices |
+| **Sample editor** (waveform; warp markers, warp mode; transpose, gain, reverse) | the audio side of the scene: what the plate sounds, pitch riding the plate, voice gains | warp = the non-linear deep-time scale (material time mapped onto ruler time — AE's time scale) | — | — |
+| **Clip envelopes** (automation and modulation inside the clip) | Field-device parameters over the scene (physics, resonance, colour, …), each lane showing its modulator (§14) | — | effort / budget over the task | — |
+| Take lanes, comping, consolidate | capture takes; comp the take that stands; consolidate = save the scene | readings as layers | attempts; comp = review and land the attempt | revisions; consolidate = save |
+| Draw mode, keys, MIDI map | draw form (the Studio's form tool), keys, map | place tool | point (mark a tile for the armed agent) | highlight pen |
+
+### 9.5 What the shell has, and the fix
+
+`timeline/expressionsTrackAdapter.ts` projects **scenes as columns, entities
+as tracks and sequence steps as clips** — that is the inside of one scene,
+the sequence editor (§9.4, note editor row), drawn at the track level.
+**Fix (T-EXPRESSION-TRACKS):** at the Timeline level, Expressions are tracks
+and scenes are their clips, each track with its visual and audio lanes; the
+entity × step projection moves into the Scene's Clip detail as the sequence
+editor; stops are rows; takes are a scene's captured takes.
