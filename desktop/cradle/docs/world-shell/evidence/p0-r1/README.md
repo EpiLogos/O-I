@@ -3,7 +3,10 @@
 Ticket: `../../wayfinder/tickets/P0-R1-native-run-at-head.md`. Seat
 `worktrees/env-1/o-i`, lane `dlw/build-20261012`.
 
-- **`run-20261012T-r1c/` (12 Oct, 15:27–15:53Z)** — built from a clean tree at
+- **`run-20261012T-r1d/` (12 Oct, 15:55–16:07Z)**: the acceptance run. The
+  conductor rebuilt with the committed runner (`runner_sha256` `99480c26…`)
+  from a clean tree at `b50b970c3`. Marker `source_dirty: false`. See "Run r1d" below.
+- `run-20261012T-r1c/` (12 Oct, 15:27–15:53Z) — built from a clean tree at
   `f5adaa2ab` (holds the r1b repairs `bfca96176` and P0-R5 (A)); marker
   `source_dirty: false`. Recorded by a builder subagent dispatched by
   `claude-code:dlw-conductor`. See "Run r1c" below.
@@ -50,6 +53,7 @@ target pool. This directory keeps the commands, logs and readings.
 | `run-20261012T-r1b/` | **all steps exit 0**, 14:37–15:00Z | host built, packaged, sealed, launched; window present (dirty tree) |
 | `run-20261012T-r1c/attempt-1/` | exit 1 at step 1 | `cargo clean -p` refused the re-made pool: no `CACHEDIR.TAG` |
 | `run-20261012T-r1c/` | **all steps exit 0**, 15:27–15:46Z; readback 15:52Z; quit exit 0 at 15:52:48Z | clean tree at `f5adaa2ab` |
+| `run-20261012T-r1d/` | **all steps exit 0**, 15:55–16:06Z; readback 16:06:40Z; quit exit 0 at 16:06:46Z | conductor rebuild from the committed runner, clean tree at `b50b970c3` |
 
 ## Repairs (all in the ticket zone)
 
@@ -181,3 +185,34 @@ Runner repairs found on the way (all in this directory's runner):
 Still carried: backing `full-suite` was not run (`0/1/2` only). The profile
 still uses the 8 Oct `owner_home`. The out-of-repo 8 Oct inputs and the
 `client_receipt` re-record are unchanged (PATH §10 item 6).
+
+## Run r1d: conductor rebuild from the committed runner (12 Oct 2026)
+
+`run-20261012T-r1c` ran an uncommitted scratch copy of the runner, so the
+conductor committed the runner and r1c (`b50b970c3`) and rebuilt from that commit
+with `P0R1_STAMP=20261012T-r1d … all`, then `readback` and `quit`.
+
+- Basis (`basis-all.txt`): HEAD `b50b970c3b92…` with an empty `git status`, and
+  `runner_sha256` `99480c2674cc…`, the committed runner. Steps 1–6 exit 0.
+  `2-native-checkout-drift.json` lists no changed files. It was copied by hand
+  from the stage, as in r1c, because the runner does not copy it.
+- Host marker (built `2-` and sealed `6-`): `source_revision`
+  `b50b970c3b92528befcd45cbd5fcf6fc3ab43eaf`, `source_tree_sha256`
+  `050bd580ef49…`, **`source_dirty` false**, `executable_sha256`
+  `9f8988e8fd18…`. Seal verify exit 0. Launch pid 43207.
+- Owner discovery: `7-composition.json` selects actuation, ai-kit and central.
+  `7-catalogue.json` points factory, workcell and ql at
+  `live-shell/unavailable/*`. `7-ctrl-version.txt`: `ctrl 0.1.0
+  (7a451112a1a4)`, exit 0.
+- Window (channel: scripted, accessibility tree): `7-window-run-context.txt`
+  reads `Native host · revision b50b970c3b92`. The first readback
+  (`readback-attempt-1/`, 16:06:32Z, 22 s after launch) walked only 6
+  elements before the webview's tree was populated, so it found no run
+  context. The second readback (16:06:40Z) walked 1557 elements and found it.
+  The readback does not wait for the tree; until it does, re-run it if the
+  walk count is in single digits. The window still shows no
+  compiled/selected/registered/excluded/failed reading and does not name
+  factory, workcell or ql as waiting.
+- Capture: `screencapture` was refused again (no Screen Recording grant).
+- Quit: the app menu's Quit item was clicked (`8-quit.log`); the waiting parent
+  recorded **exit code 0**, and no host process was left.
