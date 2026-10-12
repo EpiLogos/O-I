@@ -55,8 +55,14 @@ const live=createLiveConfigPlaneSource(async op=>{
     case 'config_registry_read':return {outcome:{result:'config_registry_reading',reading:await wrapped.readRegistry()}};
     case 'config_resolutions_read':return {outcome:{result:'config_resolutions',resolutions:await wrapped.readResolutions(op.pairs)}};
     case 'config_desired_hold':await wrapped.holdDesired(op.request);return {outcome:{result:'config_desired_held',entry:{}}};
-    case 'config_plan':return {outcome:{result:'config_planned',...await wrapped.plan(op.requests)}};
-    case 'config_apply':return {outcome:{result:'config_applied',changeset:await wrapped.apply((await fixture.plan(op.requests)).plans)}};
+    // The production live source plans and applies one admitted, reviewed
+    // batch: a changeset covering every request, then those exact plans back.
+    case 'config_plan_reviewed':{
+      const planned=await wrapped.plan(op.requests);
+      const changeset={schema:'oi.config-changeset/v1',changeset_id:'cs-walk-'+calls.length,status:'planned',operations:op.requests.map(()=>({}))};
+      return {outcome:{result:'config_reviewed_planned',changeset,plans:planned.plans}};
+    }
+    case 'config_apply_reviewed':return {outcome:{result:'config_applied',changeset:await wrapped.apply(op.plans)}};
     case 'config_receipts':return {outcome:{result:'config_receipts',document:{receipts:await wrapped.receipts('')}}};
     default:throw Error('Unexpected typed operation '+op.op);
   }
@@ -117,7 +123,7 @@ try{
    await dialog.getByRole('button',{name:'Open selected source'}).click();
    await dialog.getByText('Controlled source, not a demo corpus claim.',{exact:true}).waitFor();
    const nativeCalls=await page.evaluate(()=>window.__SETUP__.nativeCalls);
-   check(nativeCalls.filter(op=>op.op==='config_apply').length===1&&nativeCalls.some(op=>op.op==='source_open'&&op.source_ref==='fixture:source:one'),'production live adapter then useful native source action');
+   check(nativeCalls.filter(op=>op.op==='config_apply_reviewed').length===1&&nativeCalls.some(op=>op.op==='source_open'&&op.source_ref==='fixture:source:one'),'production live adapter then useful native source action');
    check(nativeCalls.filter(op=>op.op==='sources_list').every(op=>!('project' in op)),'root source discovery invents no Project');
    await page.setViewportSize({width:430,height:700});await page.screenshot({path:resolve(out,name+'-narrow.png')});
    await page.keyboard.press('Escape');await dialog.waitFor({state:'detached'});
