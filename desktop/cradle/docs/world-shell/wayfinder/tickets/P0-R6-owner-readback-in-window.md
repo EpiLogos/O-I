@@ -155,3 +155,13 @@ only. 5 not met.
 39 (needs-owner: display names vs ids), 44 (extra states), 45 (shared
 mount with P0-R5b), 46 (WIDGET-GUIDE §8 proposal). Items 4 (code landed),
 24 and 34 are done.
+
+**Conductor ruling, 12 Oct (PATH §10 item 39): the host discloses display
+names.** The Rust `OWNERS` table in `native_shell.rs` already holds each
+owner's public name (Central, AIKit, Software Factory, Workcell, Quaternal
+Logic, …); `live_shell_config` gains a `suite_owner_names` map from that
+table (no new literal list), and the readback shows the name with the id as
+secondary text. The shell still hard-codes nothing. Legs: **P0-R6b-host**
+(native_shell.rs + tests), **P0-R6b-ui** (the readback module + its test).
+Item 38 (absent-vs-unbuilt is only partial where no contribution row exists)
+stays a named limit in the readback's wording, not a fix.
