@@ -46,6 +46,12 @@ const read = (op:any):any => {
   if (op.op==='file_read') return {result:'file_read',reading:op.location.ref===registerLocation.ref?registerFile():file};
   if (op.op==='graph') return {result:'graph_reading',reading:{schema:'oi.cradle.graph-reading/v1',nodes:[],edges:[],formations:[],inputs:{},counts:{},shape_catalog:{schema:'aikit.ql-authoring-forms/v1',forms:[]}}};
   if (op.op==='expression'&&op.request.operation==='inspect') return {result:'expression',data:{state:'read',document}};
+  if (op.op==='expression'&&op.request.operation==='inspect_file') {
+    if (!file) throw new Error('No controlled Expression file exists at the destination');
+    if (op.request.location?.ref!==file.location.ref) throw new Error('inspect_file was redirected away from the controlled artifact');
+    if (op.request.expected_file_revision&&op.request.expected_file_revision!==file.revision) throw new Error('inspect_file expected a different controlled file revision');
+    return {result:'expression',data:{state:'ready',document,file:{location:file.location,revision:file.revision}}};
+  }
   throw new Error(`Unexpected controlled reading ${JSON.stringify(op)}`);
 };
 const apply = async(op:any) => {

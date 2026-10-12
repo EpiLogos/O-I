@@ -75,8 +75,9 @@ try{
  const cardCount=()=>library.locator('button').count();
  const before=await cardCount();
  await importInput.setInputFiles(badFile);
- await page.getByRole('alert').waitFor();
- check(await page.getByRole('alert').textContent()!=='','a malformed file refuses in plain words');
+ const refused=page.getByRole('alert').filter({hasText:'broken.json'});
+ await refused.waitFor();
+ check(await refused.textContent()!=='','a malformed file refuses in plain words');
  check(await cardCount()===before,'a refused file adds no card');
  check(await page.evaluate(()=>!document.body.dataset.oiTheme),'a refused file selects nothing');
  await importInput.setInputFiles(themeFile);
