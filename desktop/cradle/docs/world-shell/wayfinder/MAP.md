@@ -142,6 +142,7 @@ before asking" for anything that changes what a product can do),
 
 ## Decisions so far
 
+- [Build model map: Opus conducts, Haiku builds, Sonnet reviews at seams](PATH.md) — owner, 12 Oct 2026. Supersedes the orchestration notes above where they differ: builders get bounded briefs (`BRIEF-BUILDER.md`), not the full protocol pack; ≤3 builders coding at once; one reviewer at R0–R6 seams (`BRIEF-REVIEWER.md`); PATH.md is the route every agent reads first. Seat is now `worktrees/env-1/o-i` lane `dlw/build-20261012` off `main` (the shell landed on main 11 Oct); new tickets live in `tickets/` beside this file.
 - [Four projections, real panes, one rack; no hierarchy](../new-shell/WORLD-SHELL-DESIGN.md) — World is the field; projections are siblings; panes are real; the rack is the plugin system (design law, §1-4).
 - [Tripartite spine named](../new-shell/WORLD-SHELL-DESIGN.md) — mode × world-context × kernel epoch is the only selection/navigation spine (§2).
 - [Central resolved without a mode](../new-shell/WORLD-SHELL-DESIGN.md) — Central material projects like any other; day/NOW → tracks + document devices (§6).
