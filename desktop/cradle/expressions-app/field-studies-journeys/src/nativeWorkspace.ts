@@ -7,7 +7,7 @@ import {clone,type Journey} from './model.js';
 import {NativeWorking,type NativeFile,type WorkingSnapshot} from './nativeWorking.js';
 import {kernelExpressionsAvailable,listKernelExpressions,readKernelExpression,nativeExpressionRequest,nativeFileRequest} from './kernelExpressions.js';
 import {readWorkingCheckpoint,readWorkingDraft,readBoundWorkingDraft,acceptWorkingRecoveryBasis,writeWorkingCheckpoint,writeDraft} from './recovery.js';
-import {hostedRecovery,recoveryBinding,recoveryBindingForDraft,selectNativeRecovery} from './nativeRecovery.js';
+import {hostedRecovery,hostedScope,recoveryBinding,selectedRecovery,draftRecoveryAddress,selectNativeRecovery} from './nativeRecovery.js';
 import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocument} from './kernelDocumentBridge.js';
 import {nativeConnections} from './nativeCorrespondence.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
@@ -75,8 +75,7 @@ export function isGenuineWorkspaceSwitch(state:{booted:boolean}):boolean{
 }
 export function installNativeWorkspace(host:NativeWorkspaceHost){
  const checkpoint=async(id:string,value:unknown)=>{
-  if(!hostedRecovery())return writeWorkingCheckpoint(id,value,'expressions');
-  const address=recoveryBindingForDraft(id);
+  const address=draftRecoveryAddress(id);
   await writeWorkingCheckpoint(address.checkpoint_id,value,address.scope);
  };
  const work=new NativeWorking({expression:nativeExpressionRequest,file:nativeFileRequest,
@@ -195,7 +194,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   // A live native document may already belong to an authored Journey with
   // its own identity, unsaved material or interrupted operation. Consult that
   // exact checkpoint before deriving a new rendering identity from the ref.
-  const address=hostedRecovery()?recoveryBinding(reference):null,recovered=address?await readBoundWorkingDraft(address):await readWorkingDraft(reference,'expressions');requireAdoption(current);
+  const address=hostedRecovery()?selectedRecovery(reference):null,recovered=address?await readBoundWorkingDraft(address):await readWorkingDraft(reference,hostedRecovery()?hostedScope():'expressions');requireAdoption(current);
   if(recovered){
    if(host.shouldRetainDraft?.()!==false)await writeDraft(clone(host.snapshot().journey));requireAdoption(current);
    acceptWorkingRecoveryBasis(recovered,current);
@@ -322,8 +321,8 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    if(isGenuineWorkspaceSwitch(bootState)){opens.cancel();restoreGeneration++;selections.cancel();}
    const generation=restoreGeneration;work.detach();host.correspondence({},null);
    if(hostedRecovery()&&host.shouldRetainDraft?.()===false){update();return;}
-   try{const address=hostedRecovery()?recoveryBindingForDraft(journey.id):null;
-    const record=await readWorkingCheckpoint(address?.checkpoint_id??journey.id,address?.scope??'expressions');
+   try{const address=draftRecoveryAddress(journey.id);
+    const record=await readWorkingCheckpoint(address.checkpoint_id,address.scope);
     if(generation!==restoreGeneration||host.snapshot().journey.id!==journey.id)return;if(record)work.restore(record,journey);update();}
    catch(error){if(generation===restoreGeneration){lastFailure=true;status(`Native recovery was not adopted: ${error instanceof Error?error.message:String(error)}`);update();}}
   },

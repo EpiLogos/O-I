@@ -1,5 +1,5 @@
 import {Journey,validateJourney} from './model';
-import {hostedRecovery,nativeRead,nativeWrite,nativeList,nativeFind,nativeRemove,recoveryScope,recoveryBindingForDraft,acceptRecoveryDraft,validateNativeRecoveryBasis,acceptNativeRecoveryBasis} from './nativeRecovery.js';
+import {hostedRecovery,nativeRead,nativeWrite,nativeList,nativeFind,nativeRemove,recoveryScope,draftRecoveryAddress,acceptRecoveryDraft,validateNativeRecoveryBasis,acceptNativeRecoveryBasis} from './nativeRecovery.js';
 import type {RecoveryBinding,RecoveryScope} from './nativeRecovery.js';
 import {Camera} from './camera';
 import {validateWorkingRecord} from './nativeWorking.js';
@@ -54,10 +54,10 @@ function recoveryStore(name:string):Promise<RecoveryStore>{
  if(idbBroken)return Promise.resolve(localStorageBacked(name));
  return db().then(database=>idbBacked(database,name)).catch(()=>{idbBroken=true;return localStorageBacked(name);});
 }
-export async function writeDraft(j:Journey,scope?:RecoveryScope){const value=validateJourney(j);if(hostedRecovery())return nativeWrite('draft',j.id,value,scope??recoveryBindingForDraft(j.id).scope);await (await recoveryStore('drafts')).put(j.id,value);}
-export async function readDraft(id:string,scope?:RecoveryScope){if(hostedRecovery()){const row=await nativeRead('draft',id,scope??recoveryBindingForDraft(id).scope);return row?validateJourney(row.value):undefined;}const row=await (await recoveryStore('drafts')).get(id);return row?validateJourney(row):undefined;}
+export async function writeDraft(j:Journey,scope?:RecoveryScope){const value=validateJourney(j);if(hostedRecovery())return nativeWrite('draft',j.id,value,scope??draftRecoveryAddress(j.id).scope);await (await recoveryStore('drafts')).put(j.id,value);}
+export async function readDraft(id:string,scope?:RecoveryScope){if(hostedRecovery()){const row=await nativeRead('draft',id,scope??draftRecoveryAddress(id).scope);return row?validateJourney(row.value):undefined;}const row=await (await recoveryStore('drafts')).get(id);return row?validateJourney(row):undefined;}
 export async function readDrafts(scope?:RecoveryScope){if(hostedRecovery()){const rows=await nativeList('draft',scope??recoveryScope());const values:Journey[]=[];for(const row of rows){const draft=await readDraft(row.id,row.scope);if(draft)values.push(draft);}return values;}const rows=await (await recoveryStore('drafts')).all();return rows.flatMap(value=>{try{return [validateJourney(value)];}catch{return [];}});}
-export async function removeDraft(id:string,scope?:RecoveryScope){if(hostedRecovery())return nativeRemove('draft',id,scope??recoveryBindingForDraft(id).scope);await (await recoveryStore('drafts')).delete(id);}
+export async function removeDraft(id:string,scope?:RecoveryScope){if(hostedRecovery())return nativeRemove('draft',id,scope??draftRecoveryAddress(id).scope);await (await recoveryStore('drafts')).delete(id);}
 
 /** Read only the host-selected checkpoint address. A same-ref duplicate is
  * not permission to choose another scope, revision or authoring draft. */
