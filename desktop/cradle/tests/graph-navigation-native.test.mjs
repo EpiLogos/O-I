@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {existsSync} from 'node:fs';
 import {readFile} from 'node:fs/promises';
 import {ForceWorld} from '../src/knowledge/layout.ts';
 import {screenPoint} from '../src/knowledge/camera.ts';
@@ -7,6 +8,9 @@ import {captureGraphContext,resolveGraphContext} from '../src/knowledge/graphCon
 import {graphScreenEdges,hitGraphScreenEdge,emphasizedGraphRelations,admitGraphLabel} from '../src/knowledge/graphRelationPresentation.ts';
 import {projectNavigationMinimap,navigationMinimapPoint,navigationViewport,navigationCameraAt} from '../src/shared/navigationMinimapGeometry.ts';
 const source=process.env.OI_NATIVE_GRAPH_RECEIPT??'/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native/graph-episode-2026-10-08T01-18-39-810Z/graph-central.json';
+if(!existsSync(source)){
+ test('archived native Graph receipt drives navigation regressions',{skip:`missing ${source}; set OI_NATIVE_GRAPH_RECEIPT`},()=>{});
+}else{
 const receipt=JSON.parse(await readFile(source,'utf8'));
 assert.equal(receipt.request.op,'graph');assert.equal(receipt.response.outcome.result,'graph_reading');
 const reading=receipt.response.outcome.reading;
@@ -59,3 +63,4 @@ test('context acts resolve actual native source again and refuse revision, owner
  assert.equal(resolveGraphContext(basis,[]),undefined);assert.equal(resolveGraphContext(basis,[...reading.nodes,node]),undefined);
  assert.equal(JSON.stringify(reading),original);
 });
+}

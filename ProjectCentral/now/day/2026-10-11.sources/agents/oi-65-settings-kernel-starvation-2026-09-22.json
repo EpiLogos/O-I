@@ -1,0 +1,27 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "oi-65-settings-kernel-starvation-2026-09-22",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex/o-i-65-lead",
+  "kind": "learning",
+  "recorded_at_unix_seconds": 1790107637,
+  "subject": "Background settings reads can starve native chat without missing backend capability",
+  "result": "At installed O:I1117b092cce46e3657bc35846e19a4c695c5e2c6, concealed retained Settings submitted all actionable settings in one config_resolutions_read. Each pair spawned oi config show, reopening KernelSurface and rediscovering owners/World. The Tauri global kernel mutex remained held across the scan. Live Oh-I draft stayed local/Updating for approximately3minutes, then reached native revision1 and Send worked.46 settings and actual1.16–1.42second individual reads support this source-based diagnosis. Preserve loading, unavailable, denied and failed as distinct states; absence in the UI does not establish absent native capability. Repair should bound lock occupancy and stop scheduling concealed/stale scans; batch native resolution should avoid repeated discovery. UI Stop worked during actual model activity: do not claim the mutex covers an entire asynchronous provider turn. This is independently reviewed diagnosis, not a completed repair or Factory execution. Governing return O:I#65/#201, C4/C5 and#205.",
+  "status": "promoted",
+  "source_refs": [
+    "central:source:control:root:Control/agents/now/clearings/62bbf5d269765d0e9e4087dee1e274e99f4ce0b0bf1a7c27996800c9014d8f44/T/bootstrap-checks/oi1117-config-starvation-diagnosis.md",
+    "https://github.com/EpiLogos/O-I/blob/1117b092cce46e3657bc35846e19a4c695c5e2c6/desktop/cradle/src/workspace/settings/v2/SettingsHome.tsx",
+    "https://github.com/EpiLogos/O-I/blob/1117b092cce46e3657bc35846e19a4c695c5e2c6/desktop/cradle/kernel/src/configuration.rs",
+    "https://github.com/EpiLogos/O-I/blob/1117b092cce46e3657bc35846e19a4c695c5e2c6/desktop/cradle/src-tauri/src/main.rs"
+  ],
+  "evidence_refs": [
+    "central:source:control:root:Control/agents/now/clearings/62bbf5d269765d0e9e4087dee1e274e99f4ce0b0bf1a7c27996800c9014d8f44/T/bootstrap-checks/oi1117-config-starvation-diagnosis.md"
+  ],
+  "preserve_refs": [
+    "https://github.com/EpiLogos/O-I/issues/201",
+    "https://github.com/EpiLogos/O-I/issues/65"
+  ],
+  "promoted_to": [
+    "ProjectCentral/agents/wiki/returns/oi-65-settings-kernel-starvation-2026-09-22.json"
+  ]
+}

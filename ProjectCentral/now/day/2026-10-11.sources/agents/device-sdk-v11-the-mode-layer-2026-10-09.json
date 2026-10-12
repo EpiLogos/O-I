@@ -1,0 +1,15 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "device-sdk-v11-the-mode-layer-2026-10-09",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:zcode-device-sdk",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791555929,
+  "subject": "Device SDK v1.1: the mode layer, the product carving law, and three adversarial QA rounds to SHIP (commits ec2cac658, 3b466340e, fe61d0c58 + residual)",
+  "result": "LANDED on lane agent/o-i-20261007-1639 (unmerged; lane stands). MODE LAYER (owner correction adopted: modes carry mode-specific plugins and ontologies): sdk/modes.ts declares the five modes ontology FROM the specimen — cut marks per mode (live/die/hex/expr/techne) with the rejected alts and the specimens own reasons (base-diamond collides with archetype; factory-chain), the per-mode transport readouts byte-drift-gated against icon-cut.html MODES, Rev 5 per-mode row meanings + Session/Arrangement verbatim, the transport-slot ontology (12 slots, cut mark + second mark per its relation alt|pair + rationale byte-verbatim incl curly quotes and the cmd glyph), TRANSPORT_PLAY_CELL, and the device-format vocabulary (chain-plate/die/scene-strip/run-viewer/instrument-face/tool-tile) with per-mode defaults. Faces declare modes scoping + per-mode formats; families declare Rev 5 transport bindings (mode+row -> face+key), gate-checked; facesForMode resolves the mode-scoped plugin surface. PRODUCT LAW: sdk/products.ts registry drift-gated vs suite/product-capabilities.json; FamilyDeclaration.product binding (newProduct claims carry authority), one product family per product (exclusive at admission), product-name squatting refused; gaps script prefers declared bindings and routes AIKit. QA: a fresh adversarial agent ran three rounds — round one found 8 majors (all fixed: extension-path door validation, writers membership law, unit/enumerated map traps, ReadingRow unit, AIKit routing, doc commands), round two found 4 new majors incl 2 regressions my fixes introduced (all fixed: writers law on extension path AND world gate, typed-entry out-of-range dispatches nothing, validate-devices fault-path crash, docs now teach writers), round three verdict SHIP with one minor residual (alts drift gate) closed after. 18/18 kit tests; world gate PASS; browser walk PASS (6 steps, captures fresh); full-tree tsc clean; devices:walk/devices:dev scripts added. DISCLOSURES: (1) the lanes co-worker landed marks.tsx + extended sync-icons mid-session; I patched their WoodMark union access once (disclosed earlier) and DEVICE-SDK.md now lists their module. (2) Remaining known boundaries, disclosed in DEVICE-SDK.md honest-limits: kernel:/tool: writer unions are shape-only (their owners unions are the check on first exercise); writers pre-arming is the documented fixture boundary; §16 panelSlots and §14 modulation-honesty kit surface await owner rulings. CONTINUES: five agent-shell + QL plates onto the kit at owners pace; mode-binding renderer when the Rev 5 transport thread lands.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-09",
+    "2026-10-10"
+  ]
+}

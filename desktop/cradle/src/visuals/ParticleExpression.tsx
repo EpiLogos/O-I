@@ -80,7 +80,11 @@ export function VisualsProvider({ children }: { children: ReactNode }) {
   const [observationRetry, setObservationRetry] = useState(0);
   const retryObservation = () => setObservationRetry(value => value + 1);
   useEffect(() => themes.subscribe(setPresentation), [themes]);
-  useEffect(() => {void themes.read();}, [themes, kernel.apply]);
+  // The owner admits operations only once its replay has been qualified; a
+  // read issued at mount is refused as retired access and would leave the
+  // appearance controls disabled until the human asks again. Read when the
+  // gate opens, and again whenever a new owner generation reopens it.
+  useEffect(() => {if (kernel.operationReady) void themes.read();}, [themes, kernel.apply, kernel.operationReady]);
   const themeReceipt = [...kernel.receipts].reverse().find(receipt => receipt.event === "presentation_changed")?.seq;
   useEffect(() => {if (themeReceipt !== undefined) void themes.read(false);}, [themes, themeReceipt]);
   useEffect(() => {

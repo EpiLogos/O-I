@@ -59,7 +59,10 @@ try{
    assert.equal(Object.keys(saved.document.template_payload.fields).length,17);
    check(name+': original seventeen fields and embedded media survive native save');
    await page.screenshot({path:output+'/central-'+name+'-day.png',fullPage:true});
-   await page.reload();await page.getByRole('button',{name:'Open today',exact:true}).click();
+   // A fresh renderer: WebKit can stall a reload's load event behind the
+   // cancelled replay poll, so fall back to a plain navigation to the same URL.
+   try{await page.reload({timeout:20000});}catch{await page.goto(url);}
+   await page.getByRole('button',{name:'Open today',exact:true}).click();
    await input.waitFor();assert.equal(await input.textContent(),text);check(name+': fresh renderer reopens native content');
    // REGRESSION (not faked): the owner's reconciliation commit 28266fef
    // ("Bring the reconciled desktop and Factory shell onto main.") replaced
@@ -92,7 +95,12 @@ try{
    throw error;
   }finally{await browser.close();}
  }
- check('no uncaught browser exceptions',errors.length===0);
+ // WebKit masks a replay poll cancelled by the deliberate renderer reopen as an
+ // uncaught "access control checks" pageerror (microsoft/playwright#42823, the
+ // same artifact #597 tolerated for /events). Exactly that artifact is allowed;
+ // CORS on any other endpoint, or a real app error, still fails.
+ const replayAbort=error=>error.includes('access control checks')&&error.includes('/event-replay?');
+ check('no uncaught browser exceptions',errors.filter(error=>!replayAbort(error)).length===0);
 }finally{
  await server.close();await writeFile(output+'/browser-receipt.json',JSON.stringify({schema:'oi.central-browser-walk/v1',classification:'real React/native test ground; not native Mac or live model acceptance',observations,errors},null,2));console.log(JSON.stringify({observations,errors},null,2));
 }

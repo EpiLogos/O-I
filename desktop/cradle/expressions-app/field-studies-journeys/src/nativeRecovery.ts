@@ -34,9 +34,24 @@ export function acceptRecoveryDraft(binding:RecoveryBinding,record:RecoveryRecor
  if(old&&(old.scope!==binding.scope||old.checkpoint_id!==binding.checkpoint_id))throw new Error('This draft has a different native recovery address; both records were retained');
  drafts.set(value.draft_id,{...binding});return value.draft_id;
 }
+/** The address the host selected for this reference, or null when none was.
+ * An Expression the person opens from inside the frame has none: it is
+ * addressed in the aperture's own scope (see draftRecoveryAddress). */
+export const selectedRecovery=(reference:string):RecoveryBinding|null=>{const b=bindings.get(reference);return b?{...b}:null;};
 export function selectNativeRecovery(binding:RecoveryBinding):void {selected=bindNativeRecovery(binding);}
-export function recoveryBindingForDraft(id:string):RecoveryBinding {
- const binding=drafts.get(id);if(!binding)throw new Error('Read the selected native checkpoint before retaining this draft');return {...binding};
+/** The aperture this frame is mounted in. The host forces exactly this scope on
+ * every recovery request from the frame (hostedApp.ts), so naming it here is
+ * not a choice of scope — it only keeps the frame's own addressing truthful. */
+export const hostedScope=():RecoveryScope=>
+ typeof location!=='undefined'&&new URLSearchParams(location.search).get('mode')==='techne'?'techne':'expressions';
+/** Where a draft's working copy lives. A draft read from a native checkpoint
+ * keeps that checkpoint's selected address. Work the host never bound — a new
+ * or freshly opened Expression — is addressed by its own id in the aperture's
+ * scope, so leaving it can still be acknowledged and recovered. */
+export function draftRecoveryAddress(id:string):{scope:RecoveryScope;checkpoint_id:string}{
+ const bound=drafts.get(id);
+ if(bound)return {scope:bound.scope,checkpoint_id:bound.checkpoint_id};
+ return {scope:hostedRecovery()?hostedScope():'expressions',checkpoint_id:id};
 }
 export const recoveryScope=():RecoveryScope=>{
  if(selected)return selected.scope;

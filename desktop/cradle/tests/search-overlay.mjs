@@ -139,6 +139,11 @@ try {
       await evidence.locator('summary').click();
       check((await evidence.locator('pre').innerText()).includes('history'),`${name}: History is an explicit owner read`);
       await fill('many');
+      // Hover legitimately selects the row under the pointer. Park the pointer
+      // outside the overlay so the check isolates the resize: the last click's
+      // position can land on a row once the viewport shrinks (layout differs by
+      // platform), and the browser's synthetic move would then hover it.
+      await page.mouse.move(2,2);
       await page.setViewportSize({width:420,height:420});
       check(await input.getAttribute('aria-activedescendant')==='knowledge-search-0',`${name}: resizing does not invent a selection`);
       await input.press('ArrowUp');

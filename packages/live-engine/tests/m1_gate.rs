@@ -42,6 +42,19 @@ const STEPS: [(f64, f64); 7] = [
     (0.0, 3.25),
 ];
 
+/// The harness signal lives in the reverse-engineering corpus, which is not
+/// tracked in git (docs/research/ableton-live-12.0.25 is ignored). A checkout
+/// without it skips these gates with a notice, as the golden renders do.
+fn corpus_present() -> bool {
+    let present = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join(SIGNAL)
+        .exists();
+    if !present {
+        eprintln!("skip: the harness signal is not present in this checkout ({SIGNAL})");
+    }
+    present
+}
+
 fn load_signal() -> live_engine::wav::WavAudio {
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(SIGNAL);
     let bytes = std::fs::read(&path)
@@ -80,6 +93,9 @@ fn step_rms(render: &[f32]) -> Vec<f64> {
 
 #[test]
 fn m1_gate_engine_matches_the_static_predictions() {
+    if !corpus_present() {
+        return;
+    }
     let params = gate_params();
     let render = render_set(Box::new(GlueDevice::new(params.clone())));
 
@@ -104,6 +120,9 @@ fn m1_gate_engine_matches_the_static_predictions() {
 
 #[test]
 fn m1_gate_bypass_reference_confirms_unity_staging() {
+    if !corpus_present() {
+        return;
+    }
     // The G6 role: with the device bypassed the same set must come out at
     // exactly the input level — the mixer itself adds nothing.
     let render = render_set(Box::new(BypassDevice));
@@ -118,6 +137,9 @@ fn m1_gate_bypass_reference_confirms_unity_staging() {
 
 #[test]
 fn m1_gate_render_is_deterministic() {
+    if !corpus_present() {
+        return;
+    }
     let a = render_set(Box::new(GlueDevice::new(gate_params())));
     let b = render_set(Box::new(GlueDevice::new(gate_params())));
     assert_eq!(a.len(), b.len());

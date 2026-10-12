@@ -7,7 +7,7 @@ Blocked-by:
 1. **The Live port measured as a whole against the RE corpus.** Live mode is
    the reverse-engineering basis (CONT:244-246). Its dynamics must be ported
    and verified against the measured reference: the verify gate and rows of
-   `docs/research/ableton-live-12.0.25/reconstruction-backlog.md` (:8, :25;
+   `Work/reverse-engineering/ableton-live-12.0.25/reconstruction-backlog.md` (:8, :25;
    D-rows D1–D18 at :57-75, 12 Oct) and DLW-PLAN §4.1.a, the measured reference (PLAN:679).
    Until the port measures whole, a merge would bury the basis it rests on.
 2. **The owner names the time** (L23, OWNER timing; DLW-VISION.md:1170).

@@ -69,10 +69,14 @@ return class RetainedProductionAdapter extends ProductionAdapter {
 
   configuration(frame) {
     const { toolbelt, propertyTracks, ...renderScene } = frame.scene;
-    const sig = frame.authoringRevision === undefined ? JSON.stringify(renderScene) : frame.scene.id + ":" + frame.authoringRevision;
-    if (this.retained?.lockedSignature && sig !== this.retained.lockedSignature) {
+    // The guard compares the authored identity only. The adapter's own
+    // `signature` also carries the live revision, which advances with live
+    // parameter edits that a retained lease must keep accepting.
+    const authored = frame.authoringRevision === undefined ? JSON.stringify(renderScene) : frame.scene.id + ":" + frame.authoringRevision;
+    if (this.retained?.lockedAuthored && authored !== this.retained.lockedAuthored) {
       throw new Error("A retained native field is attached; release it before replacing the authored expression scene.");
     }
+    this.authoredSignature = authored;
     return super.configuration(frame);
   }
 
@@ -109,7 +113,7 @@ return class RetainedProductionAdapter extends ProductionAdapter {
         external: false,
         recoveryRequired: false,
         presentation: null,
-        lockedSignature: this.signature,
+        lockedAuthored: this.authoredSignature,
         port: null
       };
       // Internal PointCloudField entity-target writes continue until the first

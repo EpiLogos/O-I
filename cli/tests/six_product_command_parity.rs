@@ -5,7 +5,20 @@ mod unix {
     use std::os::unix::process::ExitStatusExt;
     use std::path::Path;
     use std::process::{Command, Output};
+    use std::sync::{Mutex, MutexGuard};
     use tempfile::TempDir;
+
+    /// These tests write a script and execute it, concurrently, in one process.
+    /// On Linux a script that another thread's fork inherited while it was
+    /// still open for writing cannot be executed (ETXTBSY, "Text file busy"),
+    /// which surfaced as a spawn failure on a loaded runner. One test at a time
+    /// removes the overlap; each test is milliseconds.
+    static SERIAL: Mutex<()> = Mutex::new(());
+    fn serial() -> MutexGuard<'static, ()> {
+        SERIAL
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
 
     fn fake_executable(dir: &Path, name: &str, exit: i32) {
         let path = dir.join(name);
@@ -32,6 +45,7 @@ mod unix {
 
     #[test]
     fn all_six_canonical_namespaces_preserve_native_argv_stdout_and_exit() {
+        let _serial = serial();
         let home = TempDir::new().expect("home");
         let bin = TempDir::new().expect("bin");
         let cases = [
@@ -61,6 +75,7 @@ mod unix {
 
     #[test]
     fn compatibility_aliases_are_identical_to_canonical_routes() {
+        let _serial = serial();
         let home = TempDir::new().expect("home");
         let bin = TempDir::new().expect("bin");
         fake_executable(bin.path(), "ctrl", 0);
@@ -78,6 +93,7 @@ mod unix {
 
     #[test]
     fn unix_passthrough_preserves_native_signal_termination() {
+        let _serial = serial();
         let home = TempDir::new().expect("home");
         let bin = TempDir::new().expect("bin");
         fake_executable(bin.path(), "ctrl", 0);
@@ -110,6 +126,7 @@ mod unix {
 
     #[test]
     fn whole_world_heads_delegate_to_native_owners_with_exact_argv_stdout_and_exit() {
+        let _serial = serial();
         let home = TempDir::new().expect("home");
         let bin = TempDir::new().expect("bin");
         for (name, exit) in [("aikit", 17), ("factory", 18)] {
@@ -165,6 +182,7 @@ mod unix {
 
     #[test]
     fn ui_supplies_the_composed_world_through_the_env_boundary() {
+        let _serial = serial();
         let home = TempDir::new().expect("home");
         let bin = TempDir::new().expect("bin");
         fs::write(
@@ -193,6 +211,7 @@ mod unix {
 
     #[test]
     fn world_head_reenters_the_preserved_routes_and_composes_one_orientation() {
+        let _serial = serial();
         let home = TempDir::new().expect("home");
         let bin = TempDir::new().expect("bin");
 
@@ -232,6 +251,7 @@ mod unix {
 
     #[test]
     fn act_head_requires_exact_subject_and_input_and_invokes_the_native_owner_once() {
+        let _serial = serial();
         let home = TempDir::new().expect("home");
         let bin = TempDir::new().expect("bin");
         fs::write(
@@ -282,6 +302,7 @@ mod unix {
 
     #[test]
     fn act_invoke_accepts_the_documented_structured_flag_and_bare_act_lists_the_field() {
+        let _serial = serial();
         let home = TempDir::new().expect("home");
         let bin = TempDir::new().expect("bin");
         fs::write(
@@ -347,6 +368,7 @@ mod unix {
 
     #[test]
     fn act_invoke_large_input_reaches_the_owner_through_native_stdin_intact() {
+        let _serial = serial();
         let home = TempDir::new().expect("home");
         let bin = TempDir::new().expect("bin");
         fs::write(
@@ -403,6 +425,7 @@ mod unix {
 
     #[test]
     fn agent_roster_routes_the_exact_native_central_action() {
+        let _serial = serial();
         let home = TempDir::new().expect("home");
         let bin = TempDir::new().expect("bin");
         fake_executable(bin.path(), "ctrl", 0);

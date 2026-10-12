@@ -1,0 +1,25 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "expressions-family-port-is-in-the-2026-10-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "cursor",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791478977,
+  "subject": "Expressions family port is in the live shell, uncommitted",
+  "result": "The Expressions manifest, parameter addresses, modulation disclosure and timeline adapter are written and tested on agent/o-i-20261007-1639. UI suite 1044 pass, 3 fail: continuity-storage and native-knowledge-adapter are the known environment failures; the resonance disclosure assertion was updated and retested. Ledger is 129 ported, 40 partial, 4 not ported, 11 owner operations. Live replay was not run; the native stack was not started. Rounded still renders as Ink. Read EXPRESSIONS-PORT-PLAN.md and WORLD-SHELL-DESIGN.md and continue from the ledger.",
+  "status": "carried",
+  "source_refs": [
+    "Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/WORLD-SHELL-DESIGN.md",
+    "Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/EXPRESSIONS-PORT-PLAN.md"
+  ],
+  "evidence_refs": [
+    "Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/EXPRESSIONS-PORT-STATUS.json",
+    "Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/EXPRESSIONS-PARAMETER-ADDRESSES.md",
+    "Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/EXPRESSIONS-LIVE-REPLAY.md"
+  ],
+  "carried_from_days": [
+    "2026-10-08",
+    "2026-10-09",
+    "2026-10-10"
+  ]
+}

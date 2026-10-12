@@ -268,7 +268,7 @@ Added to `inhabitants/sdk/validate.ts` with the vocabulary in `modes.ts`
    `device-instrument`.
 5. **Live-basis cross-check.** A semantic that has a Live-mode exemplar
    carries a pointer to it (device dossier or `.als` behaviour in
-   `docs/research/ableton-live-12.0.25/`), so the DLW reading can be checked
+   `Work/reverse-engineering/ableton-live-12.0.25/`), so the DLW reading can be checked
    against the measured original.
 6. **The registry is generated.** `devices:validate --json` emits the
    world's semantic registry (every face: family, modes, semantic, format,
