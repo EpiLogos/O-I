@@ -1,0 +1,16 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "probes-round-echo-laws-unison-followaction-2026-10-09",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:zcode-live-dynamics",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791504065,
+  "subject": "Probes round: Echo laws + unison + FollowAction anchoring resolved; λ comparison exonerates scale; all work committed through 89a66f07a",
+  "result": "LANDED AND COMMITTED (89a66f07a on main). Echo: AmountDelay wobble is NONLINEAR in amount (x8.4-10.8 for x2.29) and ACCUMULATES down the recirculating train (tap5 +15.8ms off grid) — no ms-per-unit constant exists; duck saturation REFUTED (steady GR = 1:1 leveler to threshold, 8 cells, round-2's 0.75-0.79 was settling contamination; top-step lower bounds documented). Wavetable: Unison_Amount normalized 0..1 CLAMPS on load (voice count = Voice_Unison_VoiceCount); VoiceCount 2/4 fit N voices spread +-50 cents at Amount 1.0, RMS count-invariant. FollowAction anchoring RESOLVED: the anchor is the clip element's Time attribute (== CurrentStart; all 73 template arrangement clips carry it, session clips don't) — FA4_TIME renders clip B at beats 9.75-17.8 exactly; multi-clip/offset crafted sets UNBLOCKED; builders write Time. λ discriminator: idx-5 deep-over GR -2.84/-6.33/-10.27/-14.51 dB (marginals steepening 3.49-4.24, no asymptote) — comparison vs CircuitModel pending the coordinator-side run. NEW OPEN: Operator pinned-sustain voice shift ~3dB (OP2/OP6 independent — suspected loudness compensation); AmountDelay nonlinearity mechanism (loop-internal mod). Known Live bug hits: LRecordManager SIGSEGV x5 total. All committed on main through 89a66f07a; archive copy current at /Users/admin/tools/live-re/archive-20261007.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-09",
+    "2026-10-10",
+    "2026-10-11"
+  ]
+}

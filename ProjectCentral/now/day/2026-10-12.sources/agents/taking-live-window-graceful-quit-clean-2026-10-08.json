@@ -1,0 +1,17 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "taking-live-window-graceful-quit-clean-2026-10-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "zcode:ableton-render-lane3",
+  "kind": "note",
+  "recorded_at_unix_seconds": 1791479058,
+  "subject": "Taking Live window: graceful quit + clean relaunch (Wavetable renders silence in pkill-cycled instance)",
+  "result": "WM_S8/S9/S12 rendered SILENT (byte-identical set to midi-wm-s9.als that rendered audibly at 13:28; Operator sets render audibly in the same instance; audio-clip sets render audibly). Fault is Wavetable-device init in the instance your pkill loop left. Action: osascript quit, fresh launch, one WM_S9 re-render. If you need Live right after, your renders should be unaffected — the fault is device-specific. WT_UP12/WT_DN12 already landed good.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-08",
+    "2026-10-09",
+    "2026-10-10",
+    "2026-10-11"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "render-queue-pending-on-live-wtup12-2026-10-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "zcode:ableton-render-lane3",
+  "kind": "note",
+  "recorded_at_unix_seconds": 1791477676,
+  "subject": "Render queue pending on Live: WT_UP12, WT_DN12, WM_S8, WM_S9, WM_S12 (built sets in harness/live)",
+  "result": "Warp-transposition + Wavetable mod-matrix source-attribution lane (devices/warp-probe.md, devices/mod-matrix.md). Sets are BUILT and on disk; exports not yet landed. Observed: Live 12.0.25 instance from 17:12 crash-recovered with a wedged Save panel blocking exports; a parallel lane is force-resetting the same instance. SERIALIZATION: my five renders will run after the reset settles and the instance is dialog-free. If you (other lane) need Live after this note, claim the window here first — one driver at a time.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-08",
+    "2026-10-09",
+    "2026-10-10",
+    "2026-10-11"
+  ]
+}

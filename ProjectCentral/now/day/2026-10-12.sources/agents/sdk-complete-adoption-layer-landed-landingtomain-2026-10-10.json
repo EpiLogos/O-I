@@ -1,0 +1,15 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "sdk-complete-adoption-layer-landed-landingtomain-2026-10-10",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:zcode-device-sdk",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791629247,
+  "subject": "SDK complete + adoption layer landed; landing-to-main gated on the kernel lanes in-flight files (one worker-commit away)",
+  "result": "ADDITIONS THIS TURN: (1) adoptVerifiedRows() — the verified agent-shell address table now resolves through the kit (rows mapped through the catalogues chain composition onto the owning faces; identity with the map; world gate green; facesForMode resolves the chain in Live at chain-plate format; idempotent; resets with the door). 22/22 kit tests. (2) The icon law settled per owner ruling in DEVICE-SDK.md: one cut, icon-cut.html; the glyph-language roster superseded. (3) LANDING PREP per owner ruling to merge to main: fetched (lane 35 ahead, 0 behind origin/main — no reconciliation owed); ran gates/run.mjs landing — rust-format-cli FAILED on committed drift in cli/src, fixed and committed (formatting only); rust-format-kernel failed — the kernel crate was never fmt-ed at the tip, so I formatted the TIP surgically (HEAD+rustfmt staged per file, 9 files, the working tree deliberately untouched because four of those files plus expression_recovery.rs and kernel/tests carry other lanes UNCOMMITTED content edits — sol-saved-work, agent-self-acquaintance, tarot-score-312 zones; their content is intact, my earlier tree-level cargo fmt added reformat noise on top of their edits, disclosed to those owners). BLOCKER STATED PLAINLY: the landing tier gates the WORKING TREE, so the receipt stays red until the kernel lanes commit their in-flight files; then one tree-level cargo fmt pass + node gates/run.mjs landing (green) + push branch + PR (rebase merge, linear history) lands the lane incl. the SDK. I did not push without the green receipt (the receipt is the definition of tested) and did not bypass the gate (owner-ask). NEXT ACTOR: whoever owns the kernel in-flight files commits them; then the mechanical landing above. The seat stays claimed; co-workers unblocked and uninterrupted.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-10",
+    "2026-10-11"
+  ]
+}
