@@ -168,7 +168,7 @@ VIEWTIP, DVN, BCATS, CTABS/WID, deviceDetail/formDevice/liveDetail, TPM;
 | Element | Semantic | Note |
 |---|---|---|
 | Mode rail (five icons) + Session/Arrangement icons | Live's view selector, generalised | Epi-Logos is a lens, never a rail entry |
-| Panes (split tree, tabs on an auto-hidden rail) | **stretched**: Live has one main view + a second window; panes are the DLW's extension of the main view | allowed: each pane is one view of one projection; no fifth surface (§16) |
+| Panes (split tree, tabs on an auto-hidden rail) | **device type with several devices** (Live: several reverbs under one effect type) | every pane hosts an **instrument type** (Earth, Timeline, Graph, Expression, Document, Sessions, Thread, Terminal, …); a type has several implementations; default sets per mode, users save their own (`DLW-PANES-ONTOLOGY.md` §0, owner's words) — see §8.1 |
 | Right dock (companion + tiles: agent, Packet, Trail, Field, Agents, Terminal, Results, Sky, NOWs) | **stretched**: Live's Info/Help views + the agent-shell standard | the agent-shell mockup is the standard (owner ruling 8 Oct) |
 | Aperture (World · Local · Shared · Federated) + view-as | the key/scale slot in Technē; elsewhere the aperture slot | — |
 | Trail (every encounter kept) | undo history + the encounter spine | one spine, no second selection model |
@@ -234,8 +234,8 @@ VIEWTIP, DVN, BCATS, CTABS/WID, deviceDetail/formDevice/liveDetail, TPM;
    m-prime-matrices). **Fix:** the six M′ instruments are the instruments;
    QL faces are devices inside the instrument whose lens they serve (sky →
    M4′/M2′, torus → M1 body, m3-clock → M2′/M3′).
-10. **Panes and the right dock stretch Live** (§3). Kept, bounded: no fifth
-    surface; every pane is one view of one projection.
+10. **The right dock stretches Live** (§3). Kept, bounded: no fifth
+    surface. (Panes are not a stretch: they are instrument types, §8.1.)
 
 ---
 
@@ -355,3 +355,58 @@ stop across.
    The owner is the ported AE walk modules. **Fix (with T-TIMELINE-WALKS):**
    Technē's Session (M3′) reads the walks; Play walks them (pace, stop n/N,
    arrival quantize, Follow) as the mockup's transport already specifies.
+
+---
+
+## 8. Clarifications (owner, 12 Oct 2026)
+
+### 8.1 Instrument types, several implementations — the graphs
+
+Every pane hosts an instrument **type**; a type may have several
+**implementations**, selectable like Live's several reverbs
+(`DLW-PANES-ONTOLOGY.md` §0, the owner's words). The **Graph** type has two:
+
+- the **Archetypal-Earth graph** (the coloured field graph; its look is the
+  standard): its own settings are thin — four forces, the dust (occurrences),
+  the tie bases (jung · inferred · site), the node tiers, kept in browser
+  storage (`Work/Archetypal-Earth/src/graph/settings.ts`);
+- the **wiki constellation graph** (Obsidian-RE-derived, the cradle's;
+  `docs/cradle/WIKI-CONSTELLATION-SPEC.md` §4–5, `desktop/cradle/src/knowledge/`).
+
+Both sit under one native parameter model — M0′'s controls: depth, budget,
+view (list · tree · graph · form), kinds, ghosts, standing floor, relation
+types, the shared filter — which fills out what the AE graph lacks. Settings
+live in the workspace's sets, never in browser storage. The same holds for
+every type with more than one implementation.
+
+### 8.2 Palaces are curated systems within a corpus or project
+
+A **Palace** (M5′) is a curated system over one corpus or project.
+Archetypal-Earth's modes are the worked foundation: Aion (a reading — epochs,
+events, threads), the Red Book (a folio walk), Theory with Dynamics (concepts
+and their routes), Astrology over the Sky (a walk planet by planet), all
+standing on the Field. Read as a palace: its **rooms** are its curated
+sections (epochs, folios, chapters, concepts, planets); its **path** is its
+walks (M3′); its **objects** open at their revision and are owned by the
+corpus, never by the room; its **portals** lead to other palaces and places;
+private rooms hold the practice material (dreams, coincidences); its Return
+proposes to the owner. Live: a palace is a curated Set — tracks, sections,
+scenes and walks assembled for one body of material.
+
+### 8.3 What plays at a stop
+
+The Expression a walk's stop carries is the media of that moment — images,
+video, live renders with sound (the physics instrument sounding). A walk is
+therefore a sequence of Expressions over the ruler: the Timeline's thread,
+walked, is what the Expression plays (§7.3).
+
+### 8.4 Port the code, not the shortcuts
+
+Archetypal-Earth stands alone, so in places it handles data more loosely than
+O:I allows: data fetched from `public/data/*.json`, settings in browser
+storage, modes as flags on one state. That is fine for the app; it is not
+the DLW's. The port copies AE's code verbatim and adapts at the host seam:
+material comes through the corpus provider seam (C2) and native owners with
+refs and revisions; projects and corpora through ProjectCentral; settings and
+default sets through the workspace; modes through the shell's one spine. Each
+such adaptation is recorded beside the pinned AE commit (T-AE-REPORT).

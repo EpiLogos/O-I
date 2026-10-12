@@ -20,6 +20,10 @@ port and add a test that lists every module differing from it.
 
 - Every AE `src/` module present (or named as host-only and excluded, with
   the reason); content equals AE at the pin except recorded host adaptations.
+- Host adaptations follow lock §8.4: material through the C2 provider seam
+  and native owners (refs, revisions), settings in the workspace, modes
+  through the shell's spine — never AE's `public/data` fetches, browser
+  storage or mode flags.
 - Corpus neutrality holds (no Jung corpus bytes; the C2 amendments kept).
 - tsc zero; the atlas and timeline suites green; the drift test green.
 - UI legs (the atlas in the native app): UNVERIFIED until the screen pass.
