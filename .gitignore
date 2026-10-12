@@ -58,3 +58,8 @@ ProjectCentral/agents/now/
 packages/live-shell/ui/node_modules/
 packages/live-shell/ui/ui-dist/
 packages/live-shell/live-shell/ui/node_modules/
+
+# The Ableton Live reverse-engineering corpus (renders, evidence, harness): the
+# owner's working material, kept on disk until it has its place. Tests that read
+# it skip with a notice when it is absent.
+/docs/research/ableton-live-12.0.25/
