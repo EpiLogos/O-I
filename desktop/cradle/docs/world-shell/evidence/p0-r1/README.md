@@ -1,19 +1,32 @@
 # P0-R1 evidence — the native run path at HEAD
 
 Ticket: `../../wayfinder/tickets/P0-R1-native-run-at-head.md`. Seat
-`worktrees/env-1/o-i`, lane `dlw/build-20261012`, HEAD `13aaf5360`
-plus the uncommitted repairs listed below (so the built host's marker reads
-`source_dirty: true`). Recorded 2026-10-12 by a builder subagent dispatched by
-`claude-code:dlw-conductor`.
+`worktrees/env-1/o-i`, lane `dlw/build-20261012`.
+
+- **`run-20261012T-r1c/` (12 Oct, 15:27–15:53Z)** — built from a clean tree at
+  `f5adaa2ab` (holds the r1b repairs `bfca96176` and P0-R5 (A)); marker
+  `source_dirty: false`. Recorded by a builder subagent dispatched by
+  `claude-code:dlw-conductor`. See "Run r1c" below.
+- `run-20261012T-r1a/`, `run-20261012T-r1b/` — the earlier runs, from `13aaf5360`
+  with the repairs uncommitted (`source_dirty: true`).
 
 ## The command
 
 From the seat root:
 
 ```sh
-bash desktop/cradle/docs/world-shell/evidence/p0-r1/run-native-at-head.sh          # all: build, package, launch
-bash desktop/cradle/docs/world-shell/evidence/p0-r1/run-native-at-head.sh launch   # re-launch an existing run (set P0R1_STAMP)
+bash desktop/cradle/docs/world-shell/evidence/p0-r1/run-native-at-head.sh            # all: build, package, launch
+P0R1_STAMP=<stamp> bash …/run-native-at-head.sh launch     # re-launch a built run
+P0R1_STAMP=<stamp> bash …/run-native-at-head.sh readback   # owner-discovery copies + window run-context reading
+P0R1_STAMP=<stamp> bash …/run-native-at-head.sh quit       # app menu Quit; exit code from the waiting parent
 ```
+
+`build`/`all` refuse unless `git status` is empty (a build counts only from a
+commit; `P0R1_ALLOW_DIRTY=1` overrides for a run that is evidence of nothing).
+Outputs go to the register's target pool `Work/O-I/target/p0-r1/<stamp>/`
+(`P0R1_TARGET` overrides). Logs are written under `<stamp>/logs/` while the
+run is live and copied into `run-<stamp>/` here when each mode exits; the
+next build therefore needs the previous run's evidence committed first.
 
 It chains the existing producers without changing them: release `oi` with
 recorded basis → `build-native-candidate.py --build` (`tauri build --features
@@ -23,9 +36,9 @@ the owner's active managed receipt) → `application-support.py` →
 host. No Vite, no walk-bridge, no dev bridge: `native_shell.rs` `prepare()`
 refuses to start outside a sealed, qualified `.app`.
 
-Heavy outputs live under the gitignored
-`desktop/cradle/src-tauri/target/p0-r1/<stamp>/`. This directory keeps the
-commands, logs and readings.
+r1a/r1b put heavy outputs under the gitignored
+`desktop/cradle/src-tauri/target/p0-r1/<stamp>/`; from r1c they live in the
+target pool. This directory keeps the commands, logs and readings.
 
 ## Runs
 
@@ -34,7 +47,9 @@ commands, logs and readings.
 | `cargo-check-native_shell.log` | exit 101 | `api.rs` uses `live_dynamics` (since `425c1bcdf`, 11 Oct); the host's `native_shell` feature never linked the crate |
 | `cargo-check-native_shell-after-repair.log` | exit 0 | after repair 1 |
 | `run-20261012T-r1a/` | exit 2 at step 2 | `Native contribution registry differs from its reviewed source`: the producer compiled 3 manifests; the reviewed `generated.ts` has 4 (`field`, added in #612) |
-| `run-20261012T-r1b/` | **all steps exit 0**, 14:37–15:00Z | host built, packaged, sealed, launched; window present |
+| `run-20261012T-r1b/` | **all steps exit 0**, 14:37–15:00Z | host built, packaged, sealed, launched; window present (dirty tree) |
+| `run-20261012T-r1c/attempt-1/` | exit 1 at step 1 | `cargo clean -p` refused the re-made pool: no `CACHEDIR.TAG` |
+| `run-20261012T-r1c/` | **all steps exit 0**, 15:27–15:46Z; readback 15:52Z; quit exit 0 at 15:52:48Z | clean tree at `f5adaa2ab` |
 
 ## Repairs (all in the ticket zone)
 
@@ -92,8 +107,8 @@ commands, logs and readings.
   **self-referencing symlink** (created 2026-10-10 23:41). The seat's `target`
   links to it, so the producer's default `--target-dir` and any build through
   the seat link fail with "Too many levels of symbolic links". The runner
-  passes `desktop/cradle/src-tauri/target` explicitly. The owner of
-  `Control/user/workcell` (seat target-pool conversion) needs to repair it.
+  passed `desktop/cradle/src-tauri/target` explicitly. (Repaired by the
+  conductor 12 Oct 16:13 local, PATH §2; r1c builds into the pool.)
 - The candidate profile `0-1-2` keeps `owner_home` =
   `…/OI-Shell-Candidate-Acceptance/core-independent-20261008/expression-home`
   from the 8 Oct acceptance run. The launch reused that persisted setting and
@@ -101,3 +116,68 @@ commands, logs and readings.
 - Runner inputs carried from the 8 Oct campaign (read-only): product notices
   input, Node archives, SDK package inventory (client receipt re-recorded
   against the regenerated `CLIENT.json`), candidate notice files.
+
+## Run r1c — clean tree at `f5adaa2ab` (12 Oct 2026)
+
+Basis: `basis-all.txt` (HEAD `f5adaa2ab422…`, `git status` empty before
+step 1). Steps 1–6 exit 0 (`steps.log`). `2-native-checkout-drift.json`:
+no source changed during compilation.
+
+- **Host marker** (`2-host-marker.json`, and `6-host-marker.json` from the
+  sealed, extracted app): `source_revision` `f5adaa2ab422e06f957776412771388b58a24fdd`,
+  `source_tree_sha256` `41497fb718c6…`, **`source_dirty` false**,
+  `executable_sha256` `e0134148dbfc…`. Seal: `codesign --verify --strict
+  --all-architectures` exit 0.
+- **Launch**: pid 22497 under a detached parent that waits on it.
+  `6-launch.log` shows the candidate Expression socket bound.
+- **Owner discovery** (copies written by `prepare()` for this launch):
+  `7-composition.json` selects central, actuation and ai-kit, each resolved
+  into this run's sealed `.app` (`…/native-products/{central/bin/ctrl,
+  actuation/bin/actuation,ai-kit/bin/aikit}`). `7-catalogue.json` points
+  software-factory, workcell and quaternal-logic at
+  `…/live-shell/unavailable/{factory,workcell,ql}`. `7-ctrl-version.txt`: the
+  bundled ctrl prints `ctrl 0.1.0 (7a451112a1a4)`, exit 0.
+  `7-hosted-contributions.txt`: one registration rewritten this launch, two
+  from 8 Oct.
+- **live_shell_config, read back through the window** (channel: scripted,
+  accessibility tree, no interaction; `7-window-run-context.txt`, walker
+  `ax-run-context.swift`): the status region reads
+  `Native host · revision f5adaa2ab422` with no "uncommitted changes" suffix.
+  That is `source_revision` and `source_dirty: false` as the host's
+  `live_shell_config` returned them to the P0-R5 (A) reading. The span's
+  `title` (tree digest, carrier) is not exposed to accessibility. The
+  window shows **no** compiled/selected/registered/excluded/failed reading
+  and does not name factory, workcell or ql as waiting; the full
+  `live_shell_config` JSON (contributions, product_ids, backing) was not
+  read, because the command answers only the admitted webview.
+- **Capture**: `screencapture -x` refused again (`7-screencapture.log`: no
+  Screen Recording grant). No image.
+- **Quit**: the app menu's "Quit O-I Shell Candidate" clicked through the
+  accessibility tree, scoped to pid 22497 (`8-quit.log`); the waiting parent
+  recorded **exit code 0** (`quit-exit-code.txt`).
+
+Runner provenance: the build ran the runner from a scratch copy so that the
+checkout stayed clean (the runner fix itself is uncommitted). That copy's
+sha256 is `basis-all.txt`'s `runner_sha256`. Afterward only the readback
+section changed: the System Events walk took minutes, so it was replaced by
+the compiled walker. `basis-readback.txt`/`basis-quit.txt` record the runner
+now in this directory.
+
+Runner repairs found on the way (all in this directory's runner):
+1. It wrote `basis.txt` into the checkout before step 2, so `git status` was
+   never empty and the marker could never read `source_dirty: false`. Logs now
+   stay out of the checkout until the mode exits.
+2. Its `--target-dir` was `desktop/cradle/src-tauri/target`, which still
+   holds r1b's built `.app`; the producer refuses to build over one. It now
+   uses the repaired pool, and moves each built `.app` into `<stamp>/built/`
+   after packaging.
+3. The re-made pool had no `CACHEDIR.TAG`, so the CLI recorder's narrow
+   `cargo clean -p` refused (attempt 1). The runner writes cargo's tag
+   verbatim when it is missing.
+4. The launch's exit code was lost because the runner's shell exited first.
+   A detached parent now waits on the host pid and writes the code.
+5. New `readback` and `quit` modes, plus the clean-tree guard.
+
+Still carried: backing `full-suite` was not run (`0/1/2` only). The profile
+still uses the 8 Oct `owner_home`. The out-of-repo 8 Oct inputs and the
+`client_receipt` re-record are unchanged (PATH §10 item 6).
