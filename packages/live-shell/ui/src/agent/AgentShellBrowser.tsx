@@ -109,16 +109,28 @@ export function gitRowsFromWorkcell(
     ? seatOutcome.data as {workcell_ref?: unknown}
     : null
   const workcellRef = typeof seat?.workcell_ref === 'string' && seat.workcell_ref ? seat.workcell_ref : null
-  if (!workcellRef) {
-    const reason = seatError
-      ?? (seat ? 'workcell_status_read disclosed no workcell_ref' : 'workcell status unavailable')
+  if (workcellRef) return [{key: 'seat', label: `Git · ${workcellRef}`, meta: 'workcell'}]
+  // Refused only when the owner's read errored. A reading that answered
+  // without a ref is disclosed as answered, never as a refusal.
+  if (seatError) {
     return [{
       key: 'seat-unavailable',
-      label: `Git seat unavailable — ${ownerRefusalLine('workcell', reason)} (the workcell family's seat reading)`.slice(0, 240),
+      label: `Git seat unavailable — ${ownerRefusalLine('workcell', seatError)} (the workcell family's seat reading)`.slice(0, 240),
       meta: 'workcell · refused',
     }]
   }
-  return [{key: 'seat', label: `Git · ${workcellRef}`, meta: 'workcell'}]
+  if (seat) {
+    return [{
+      key: 'seat-no-ref',
+      label: `Git seat answered — workcell_status_read disclosed no workcell_ref (the workcell family's seat reading)`.slice(0, 240),
+      meta: 'workcell · no ref',
+    }]
+  }
+  return [{
+    key: 'seat-unread',
+    label: `Git seat not read — workcell_status_read gave no seat reading (the workcell family's seat reading)`.slice(0, 240),
+    meta: 'workcell · unread',
+  }]
 }
 
 export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRow[]; error: string | null; loading: boolean}) {
