@@ -54,7 +54,7 @@ Bracketed tags in the chapters resolve here. Paths absolute.
 | `shell-inputs/INDEX.md` | [shell-inputs INDEX] — the RE output pack for shell lanes; `live-12-re/devices/<slug>/DECODE.md + gates/` named "empty today, the path of record" |
 | `LANDING-REGISTER.md` | [LANDING-REGISTER] — decodes land first class; DECODE.md is spec of record; the tree is the only coordination medium; lane/path map |
 
-## D. The plan's own ground — `/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/`
+## D. The plan's own ground — `desktop/cradle/docs/world-shell/`
 
 | file | contribution |
 | --- | --- |

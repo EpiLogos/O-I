@@ -1,5 +1,7 @@
 # EXECUTION PROMPT — World shell: orchestrator commission
 
+> **Superseded on device semantics and owner facts (12 Oct 2026):** `DEVICE-SEMANTICS-LOCK.md` is the law, `PATH.md` the route, `EXECUTE.md` the execution prompt. This earlier commission (4–5 subagents, full protocol pack per agent) is superseded.
+
 Copy this whole document into a fresh orchestrator session, standing anywhere
 in the Central world.
 
@@ -19,7 +21,7 @@ the opening carries below sit on separate grounds precisely so they can.
 1. **Strap and orient.** Load `central-session-strap` / orient to the
    register. The work register is the `reverse-engineering` project; the
    governing programme is
-   `/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/PROGRAMME.md`.
+   `desktop/cradle/docs/world-shell/PROGRAMME.md`.
 2. **Load the wayfinder map** — `wayfinder/MAP.md` in the programme register
    (low-resolution, whole). It carries the destination, the orchestration
    discipline, the protocol pack, the standing laws, the decisions so far,

@@ -1,0 +1,25 @@
+{
+  "schema": "techne.new-shell.saved-work-config-acceptance/v1",
+  "result": "passed",
+  "url": "http://127.0.0.1:8789/api/config",
+  "config": {
+    "default_set": "/Users/admin/Music/Ableton/User Library/Templates/Piano and voices mastering.als",
+    "kernel_bridge": "http://127.0.0.1:4180",
+    "saved_works": [
+      {
+        "checkpoint_id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+        "expression_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+        "scope": "techne"
+      },
+      {
+        "checkpoint_id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+        "expression_ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+        "scope": "expressions"
+      }
+    ]
+  },
+  "summary_tracks": 21,
+  "summary_tempo": 131.0,
+  "missing_config_refusal_exit": 2,
+  "missing_config_refusal": "live-shell startup refused: Cannot open saved-work configuration /Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/no-such-identity-config.json: No such file or directory (os error 2)"
+}

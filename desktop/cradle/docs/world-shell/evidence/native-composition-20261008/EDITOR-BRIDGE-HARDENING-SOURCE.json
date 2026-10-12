@@ -1,0 +1,16 @@
+{
+  "schema": "epilogos.editor-bridge-patch-basis/v1",
+  "candidate_root": "/Users/admin/Central/worktrees/env-1/o-i",
+  "sources": {
+    "packages/expressions-boundary/src/host.ts": "43766ebfa242ff670756748e7d0fed9be677351df2e949c2f290c6d4abeea5cf",
+    "packages/expressions-boundary/src/editorHost.ts": "277d03657088feb219b29b899169caa32a8167575ae2ccb03ce793379b56fb24",
+    "desktop/cradle/expressions-app/field-studies-journeys/src/hostEditor.ts": "0f7e6fe305827e2c1f974fd037c008d4d5761a9c2eeec88f46dc579f59fe6bcf"
+  },
+  "proposed_sources": {
+    "packages/expressions-boundary/src/host.ts": "8635ce7b5818cb5a657ad80fc97d08f3d0fe3e8dd34bf1bad4599691f592f514",
+    "packages/expressions-boundary/src/editorHost.ts": "af6fd86882667e8a8441147c109be4b08d83b7092384d0bcb7e30579927f300c",
+    "desktop/cradle/expressions-app/field-studies-journeys/src/hostEditor.ts": "56d6abbabacc4de6c494e16c23261678b5aaa215568a3db05c636ca4e66eb440"
+  },
+  "production_files_changed": false,
+  "patch": "EDITOR-BRIDGE-HARDENING.patch"
+}

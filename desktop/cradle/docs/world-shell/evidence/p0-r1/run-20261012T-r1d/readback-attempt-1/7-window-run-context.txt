@@ -1,0 +1,25 @@
+# channel: scripted (accessibility tree), no interaction; pid 43207; 2026-10-12T16:06:32Z
+# AXIsProcessTrusted: true
+window: O-I Shell Candidate
+# elements visited: 6
+# owner-discovery words searched in the same window:
+# AXIsProcessTrusted: true
+window: O-I Shell Candidate
+AXGroup | value:  | title: — . — . — | description:  | help: Position — bars . beats . sixteenths · native transport position unavailable
+AXGroup | value:  | title: — kHz | description:  | help: Rate — the engine's sample rate · unavailable
+AXGroup | value:  | title: — % | description:  | help: CPU — the engine's CPU load · unavailable
+AXCheckBox | value:  | title: Workbench | description: Workbench | help: Native sources, sessions and registered contribution bodies in the continuity workspace
+AXStaticText | value: No clip is selected. Select a clip in Session (a clip slot) or Arrangement (a clip on a lane) — the clip's readings open here read-only; editing waits for the document owner. | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+AXStaticText | value: awaiting M3 edit API | title:  | description:  | help: 
+# elements visited: 1557

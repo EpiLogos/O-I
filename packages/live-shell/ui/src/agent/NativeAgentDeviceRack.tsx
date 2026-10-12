@@ -76,11 +76,12 @@ export function NativeAgentDeviceRack({
   autonomy = 'review',
   budgetUsed = 0,
   budgetCap = 12,
-  gatewayAdmitted = true,
+  gatewayAdmitted = false,
   gitAdmitted = false,
   skillsAdmitted = null,
   skillsNote = null,
   identityNote = null,
+  waitingOn = null,
   onDropAttempt,
 }: {
   sessionRef: string | null
@@ -97,6 +98,9 @@ export function NativeAgentDeviceRack({
   skillsNote?: string | null
   /** Central identity row: the first accepted roster agent ref, or null. */
   identityNote?: string | null
+  /** Who each unlit lamp waits on — the owner of the refused reading (P0-R4).
+   * Null while reading or once admitted; the header's owner line names it. */
+  waitingOn?: {gateway: string | null; skillset: string | null; git: string | null} | null
   /** The aperture receiver: one declared operation per drop, or the refusal
    * that names the missing op. The rack resolves targets and payloads; the
    * owner of the chain state (AgentDeviceChain) dispatches. */
@@ -176,9 +180,10 @@ export function NativeAgentDeviceRack({
       }}
     ><span aria-hidden="true">⋮⋮</span></span>
   )
-  const head = (id: AgentDeviceId, on: boolean, icon: ReactElement | null, title: string, own: string, pop?: () => void) => (
+  const head = (id: AgentDeviceId, on: boolean, icon: ReactElement | null, title: string, own: string, pop?: () => void, waiting?: string | null) => (
     <header className="dh">
-      <span className={'pw' + (on ? '' : ' off')} data-i={DEVICE_DATA_I.power} aria-label={on ? 'admitted' : 'not admitted'} />
+      <span className={'pw' + (on ? '' : ' off')} data-i={DEVICE_DATA_I.power}
+        aria-label={on ? 'admitted' : waiting ? `not admitted — waiting on ${waiting}` : 'not admitted'} />
       {icon}
       <b>{title}</b>
       <span className="own">{own}</span>
@@ -219,7 +224,7 @@ export function NativeAgentDeviceRack({
       return (
         <article className="agent-device agent-device-compact" data-slot={device.id} data-family={device.family} data-device={device.id}
           style={{width: 262}} data-i={DEVICE_DATA_I.gateway} onClick={() => open('gateway')}>
-          {head('gateway', gatewayAdmitted, <CutIcon name="link" size={11} />, 'Gateway', gatewayAdmitted ? 'harness binding' : 'unadmitted', () => shell.toggleTile('frames'))}
+          {head('gateway', gatewayAdmitted, <CutIcon name="link" size={11} />, 'Gateway', gatewayAdmitted ? 'harness binding' : waitingOn?.gateway ? `waiting · ${waitingOn.gateway}` : 'reading', () => shell.toggleTile('frames'), waitingOn?.gateway)}
           <div className="db">
             <div className="vis" style={{width: 96, height: 88}}>
               <svg width="96" height="88" viewBox="0 0 96 88" aria-hidden>
@@ -288,7 +293,7 @@ export function NativeAgentDeviceRack({
       return (
         <article className="agent-device agent-device-compact" data-slot={device.id} data-family={device.family} data-device={device.id}
           style={{width: 236}} data-i={DEVICE_DATA_I.skillset} onClick={() => open('skillset')}>
-          {head('skillset', admitted, <SkillMark kind="skillset" size={14} />, 'Skillsets', `${skillsAdmitted ?? 0} with refs`)}
+          {head('skillset', admitted, <SkillMark kind="skillset" size={14} />, 'Skillsets', admitted || !waitingOn?.skillset ? `${skillsAdmitted ?? 0} with refs` : `waiting · ${waitingOn.skillset}`, undefined, waitingOn?.skillset)}
           <div className="db" style={{flexDirection: 'column', gap: 4}}>
             <div className="agent-chainrow">
               <SkillMark kind="skill" size={14} state={admitted ? 'whole' : 'outline'} />
@@ -336,7 +341,7 @@ export function NativeAgentDeviceRack({
       return (
         <article className="agent-device agent-device-compact" data-slot={device.id} data-family={device.family} data-device={device.id}
           style={{width: 240}} data-i={DEVICE_DATA_I.git} onClick={() => open('git')}>
-          {head('git', gitAdmitted, <CutIcon name="chain" size={11} />, 'Git', gitAdmitted ? 'seat read' : 'unadmitted')}
+          {head('git', gitAdmitted, <CutIcon name="chain" size={11} />, 'Git', gitAdmitted ? 'seat read' : waitingOn?.git ? `waiting · ${waitingOn.git}` : 'reading', undefined, waitingOn?.git)}
           <div className="db" style={{flexDirection: 'column', gap: 4}}>
             <InlineNote kind={git.kind} title={git.kind === 'refused' ? 'Refused' : 'Seat'} line={git.line} />
             <div className="agent-kv" style={{padding: 0}}><span>Commit</span><span>turn · task · man</span></div>

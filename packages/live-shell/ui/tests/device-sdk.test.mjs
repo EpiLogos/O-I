@@ -44,6 +44,7 @@ const scaffold = await import('../src/inhabitants/sdk/scaffold.ts')
 const {access} = await import('node:fs/promises')
 const {join: joinPath} = await import('node:path')
 const SPECIMEN_CANDIDATES = [
+  joinPath(here, '..', '..', '..', '..', 'desktop', 'cradle', 'docs', 'world-shell', 'icon-cut.html'),
   joinPath(here, '..', '..', '..', '..', '..', 'Work', 'reverse-engineering', '2026-10-07-techne-instrument-re', 'new-shell', 'icon-cut.html'),
   '/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/icon-cut.html',
 ]

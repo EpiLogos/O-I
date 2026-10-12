@@ -3,6 +3,7 @@ import type { HostedAppState } from '@epilogos/expressions-boundary'
 import type { DetailMode } from './DeviceChainPanel'
 import { detailPairOf, MODE_GRAMMAR, surfModeOf } from '../shell/modeGrammar'
 import {Icon} from './Icon'
+import {RunContextReading} from '../shell/runContext'
 export function StatusBar({ state, documentError, viewport, selectedTrack, audio, mode, reading, detailMode, changeDetailMode, agentInfo, presentedView, subjectLabel }: { state: UseSet; documentError: string | null; viewport: number[]; selectedTrack?: string; audio: boolean; mode: string; reading: HostedAppState | null; detailMode: DetailMode; changeDetailMode: (mode: DetailMode) => void; agentInfo?: { label: string; fn: string } | null; /** The presentation that stands — the status identity is per presented view (the mockup's status line). */ presentedView?: 'session' | 'arrangement' | null; /** The Base mode's selected ground subject — the Document detail's aperture. */ subjectLabel?: string }) {
   const { set, path, error, loading } = state
   // The detail row's pair is per mode (WORLD-SHELL-DESIGN Rev 4): Clip |
@@ -33,6 +34,8 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
       the Expressions reading's scene name stays Expressions' own (never another mode's identity). */}
     <span className="statusbar-track">{audio ? selectedTrack : centreIdentity ? (subjectLabel ?? '') : reading?.sceneName}</span>
     {!audio && surf === 'expressions' && reading?.sceneState && <span className="statusbar-counts" title="Current Scene snapshot; file-save standing appears in the native Save control">Snapshot: {reading.sceneState === 'Edited since save' ? 'edited' : reading.sceneState === 'Draft' ? 'none' : 'saved'}{reading.nativeScene ? ` · revision ${reading.nativeScene.revision}` : ''}</span>}
+    {/* The run context stands in every mode: which world this shell runs in, from the host's own disclosure. */}
+    <RunContextReading />
     <nav className="status-detail-views" aria-label="Detail view">
       <button aria-label={pair.clip.label} data-i={`${pair.clip.label}|${pair.clip.meaning}`} title={`${pair.clip.label} — ${pair.clip.meaning}`} aria-pressed={detailMode === 'clip'} onClick={() => changeDetailMode('clip')}><Icon name="set" size={12} /><span>{pair.clip.label}</span></button>
       <button aria-label={pair.device.label} data-i={`${pair.device.label}|${pair.device.meaning}`} title={`${pair.device.label} — ${pair.device.meaning}`} aria-pressed={detailMode === 'device'} onClick={() => changeDetailMode('device')}><Icon name="device" size={12} /><span>{pair.device.label}</span></button>

@@ -1,0 +1,22 @@
+{
+  "schema": "techne.new-shell.native-gui-save-restore/v1",
+  "observed_at": "2026-10-07T19:34:18.069121+00:00",
+  "expression_ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+  "scope": "expressions",
+  "checkpoint_id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+  "before_document_revision": 4,
+  "edited_document_revision": 5,
+  "restored_document_revision": 6,
+  "edited_time_scale": 1.1,
+  "restored_time_scale": 1,
+  "checkpoint_revision": 2156,
+  "draft_revision": 2154,
+  "pending_operation_present": false,
+  "owner_dirty": true,
+  "owner_saved_revision": null,
+  "owner_file_disclosed": false,
+  "native_operations": "Native computer-use Time Scale entry, Cmd+S, Escape, Cmd+Z, Cmd+S; independent exact-address native checkpoint/draft/document readback",
+  "file_save_as_claimed": false,
+  "fresh_gui_reopen": "Native Zen navigation to built candidate8788/app, opened Expressions and exact configured Chakral; owning control and context both acknowledged revision6, selected Muladhara (Root). Original Time Scale1 independently verified through exact native document/checkpoint/draft; input value not inspected after reopen.",
+  "display_fault": "Legacy input displayed effective Time Scale 1 after saving authored base 1.1; retained owner presentation correctly contained 1.1. Editors must expose base/effective values distinctly."
+}

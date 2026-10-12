@@ -1,0 +1,80 @@
+- heading "Preferences window · development check" [level=2]
+- paragraph:
+  - text: This route mounts the actual
+  - code: world.settings
+  - text: contribution. The labelled scenario supplies non-secret specimens; no native writes occur.
+- text: Conversation draft
+- textbox "Conversation draft": Retained conversation draft
+- paragraph: "Selection: specimen agent · project settings-specimen"
+- button "Open Preferences"
+- button "Configure this agent’s capabilities…"
+- button "Remote machine setup…"
+- button "Manage automations…"
+- dialog "Preferences":
+  - text: Development scenario
+  - combobox "Development scenario":
+    - option "ready" [selected]
+    - option "loading"
+    - option "inherited"
+    - option "overridden"
+    - option "dirty"
+    - option "invalid"
+    - option "immediate"
+    - option "restart"
+    - option "pending"
+    - option "acknowledged"
+    - option "refused"
+    - option "failed"
+    - option "conflict"
+    - option "absent-product"
+    - option "unavailable-connection"
+  - generic: Explicit preview · no native writes
+  - region "Settings":
+    - heading "Preferences" [level=1]
+    - generic: ⌕
+    - searchbox "Search settings"
+    - button "← Agent activity"
+    - status:
+      - strong: Development scenario
+      - text: · ready · AIKit and Factory native schema specimens · simulated responses, no native writes
+    - navigation "Settings categories":
+      - button "Harnesses & models"
+      - button "Skills & methods"
+      - button "Profiles"
+      - button "Permissions"
+      - button "Credentials"
+      - button "Machines & services"
+      - button "Automations"
+      - button "Search & telemetry"
+      - button "Appearance & interaction"
+      - button "Products & updates"
+    - main:
+      - heading "Automations" [level=2]
+      - paragraph: Manage verified Methods that run on a schedule or in response to events.
+      - region "Automations":
+        - text: Work context
+        - combobox "Automation work context" [disabled]:
+          - option "This AIKit home"
+          - option "Development specimen project" [selected]
+        - button "Read again" [disabled]
+        - group "Automation views":
+          - button "My routines" [pressed]
+          - button "Methods"
+          - button "Run history"
+          - button "Harness timers"
+        - paragraph: Automations are awaiting the native AIKit connection. No routines have been read or run.
+        - button "Create routine…" [disabled]
+        - form "Create routine":
+          - generic: Name
+          - textbox "Name": Morning review
+          - generic: Method
+          - combobox "Method":
+            - option "Choose an active Method…" [selected]
+          - generic: Purpose (optional)
+          - textbox "Purpose (optional)": Review the active undertaking after its Method is verified.
+          - paragraph: Create and Enable await the native verified-run and authority selection adapter. Your draft remains local.
+          - button "Review creation" [disabled]
+          - button "Cancel draft"
+          - generic: Unsaved routine · created routines start in Draft
+        - navigation "My routines"
+    - button "ⓘ Info"

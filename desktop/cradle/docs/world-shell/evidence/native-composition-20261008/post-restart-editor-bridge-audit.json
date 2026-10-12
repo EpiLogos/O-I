@@ -1,0 +1,92 @@
+{
+  "grade": "B",
+  "claim": "actual production host/client/receiver and retained authoring read over a genuine native document; malformed/stale carrier and asynchronous readonly-port refusal fault injection only; no DOM/save acceptance",
+  "kernel_url": "http://127.0.0.1:4180",
+  "expression_ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+  "revision": 6,
+  "document_sha256": "e82d8283d5a2a6907691570b61240f4ec946ffeb39f7741874370c6b5a44635c",
+  "native_writes": 0,
+  "intentional_refusal_ports": 2,
+  "sources": [
+    {
+      "path": "../src/editorHost.ts",
+      "sha256": "af6fd86882667e8a8441147c109be4b08d83b7092384d0bcb7e30579927f300c"
+    },
+    {
+      "path": "../../../desktop/cradle/expressions-app/field-studies-journeys/src/hostEditor.ts",
+      "sha256": "b0f6291434d19c7cd4340bda46db03bfa040e1bdad080d43b09ae5ef50e5aadd"
+    }
+  ],
+  "passed": 17,
+  "failed": 0,
+  "results": [
+    {
+      "name": "real retained-owner reading matches the exact native expression and scene",
+      "passed": true
+    },
+    {
+      "name": "foreign frame and origin cannot settle an editor request",
+      "passed": true
+    },
+    {
+      "name": "stale captured native revision is refused before posting a mutation",
+      "passed": true
+    },
+    {
+      "name": "hiding the issued target preserves its genuine read acknowledgement and keeps new request authority strict",
+      "passed": true
+    },
+    {
+      "name": "a genuine different selected scene blocks old reading adoption without relabeling its acknowledged read",
+      "passed": true
+    },
+    {
+      "name": "reload invalidates pending editor operations",
+      "passed": true
+    },
+    {
+      "name": "an old unsolicited reading cannot re-enter a replacement frame epoch",
+      "passed": true
+    },
+    {
+      "name": "older same-scene native readings do not replace the current editor reading",
+      "passed": true
+    },
+    {
+      "name": "malformed entity readings are a correlated refusal, never a thrown receive handler",
+      "passed": true
+    },
+    {
+      "name": "a subscriber exception cannot strand an owner acknowledgement or starve other subscribers",
+      "passed": true
+    },
+    {
+      "name": "subscriber failure during dispose cannot leave editor message subscriptions attached",
+      "passed": true
+    },
+    {
+      "name": "receiver refuses stale authored basis and open human gestures before entering an owner effect",
+      "passed": true
+    },
+    {
+      "name": "receiver publishes its admitted binding and epoch so stale subscriptions can be rejected",
+      "passed": true
+    },
+    {
+      "name": "receiver requires a native read admission before dispatching any mutation",
+      "passed": true
+    },
+    {
+      "name": "older authoring revisions cannot overwrite a more recent local owner reading",
+      "passed": true
+    },
+    {
+      "name": "receiver retires an asynchronous denied outcome after dispose",
+      "passed": true
+    },
+    {
+      "name": "receiver retires an asynchronous denied outcome after newer-epoch",
+      "passed": true
+    }
+  ]
+}

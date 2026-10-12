@@ -72,6 +72,7 @@ export function AgentDevicePool({
   skillsAdmitted = null,
   skillsNote = null,
   identityNote = null,
+  skillsWaitingOn = null,
 }: {
   gatewayLine: string
   gatewayReceipt?: string | null
@@ -86,6 +87,8 @@ export function AgentDevicePool({
   skillsAdmitted?: number | null
   skillsNote?: string | null
   identityNote?: string | null
+  /** The owner an unlit skillset row waits on (P0-R4); null while reading. */
+  skillsWaitingOn?: string | null
 }) {
   const shell = useAgentShell()
   const devices = agentDeviceCatalogue()
@@ -154,7 +157,7 @@ export function AgentDevicePool({
           ? rows.map(row => (
             <label key={`${row.family}.${row.key}`} className="agent-pool-row" data-family={row.family}>
               <span>{rowLabel(row)}</span>
-              <span className="agent-disclosed">{(skillsAdmitted ?? 0) > 0 ? 'admitted' : 'not admitted'}</span>
+              <span className="agent-disclosed">{(skillsAdmitted ?? 0) > 0 ? 'admitted' : skillsWaitingOn ? `waiting · ${skillsWaitingOn}` : skillsAdmitted == null ? 'reading' : 'not admitted'}</span>
             </label>
           ))
           : rows.map(row => {

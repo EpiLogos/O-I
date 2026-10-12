@@ -1,0 +1,311 @@
+Generating TypeScript module bindings for module shared-field/spacetimedb
+Build finished successfully.
+Skipping private tables during codegen: activity_liveness_backing, admission_decision, admitted_contribution_backing, contact, contact_policy, contact_rate, contribution_index_decision, contribution_index_policy, contribution_ingress_backing, contribution_ingress_rate, contribution_receipt, exchange_grant, exchange_request, exchange_use, explore_entry_backing, explore_relation_backing, field_authority, field_day_backing, field_day_revision, field_now_backing, field_now_revision, field_owner, field_presence_backing, field_presence_connection_backing, field_read_grant, participant_backing, projection_backing, shared_field_backing, shared_stage_backing, stage_follower, watch.
+Creating directory shared-field/spacetimedb/module_bindings/types
+Creating directory shared-field/spacetimedb/module_bindings/types
+Generate finished successfully.
+shared-field client bundled into /Users/admin/Central/worktrees/env-1/o-i/shared-field/dist-client
+
+> live-shell-ui@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v6.4.4 building for production...
+transforming...
+✓ 1118 modules transformed.
+rendering chunks...
+[plugin vite:reporter] 
+(!) /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/library/libraryReading.ts is dynamically imported by /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/expressions/hostedApp.ts but also statically imported by /Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/cradle.ts, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/knowledge/constructionBlueprint.ts is dynamically imported by /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/expressions/hostedApp.ts but also statically imported by /Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/cradle.ts, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/node_modules/@tauri-apps/api/core.js is dynamically imported by /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/configuration/AdoptionEntry.tsx, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/flow/decisionClient.ts, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/kernel/bridge.ts, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/stage/ExpressionStage.tsx, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/workspace/GroundChooser.tsx but also statically imported by /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/node_modules/@tauri-apps/api/dpi.js, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/node_modules/@tauri-apps/api/event.js, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/node_modules/@tauri-apps/api/image.js, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/node_modules/@tauri-apps/api/window.js, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/browser/BrowserSurface.tsx, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/contributions/factory/workingSurfaceClient.ts, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/expressions/hostedApp.ts, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/terminal/TerminalSurface.tsx, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/timeline/dayTrackAdapter.ts is dynamically imported by /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/timeline/registerWorldTrackAdapters.ts but also statically imported by /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/projections/useWorldTemporalReading.ts, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/timeline/runTrackAdapter.ts is dynamically imported by /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/timeline/registerWorldTrackAdapters.ts but also statically imported by /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/projections/useWorldTemporalReading.ts, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/timeline/conversationTrackAdapter.ts is dynamically imported by /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/timeline/registerWorldTrackAdapters.ts but also statically imported by /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/projections/useWorldTemporalReading.ts, dynamic import will not move module into another chunk.
+
+[plugin vite:reporter] 
+(!) /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/node_modules/@tauri-apps/api/event.js is dynamically imported by /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/kernel/bridge.ts, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/stage/ExpressionStage.tsx, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/stage/ExpressionStage.tsx, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/visuals/ParticleExpression.tsx, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/visuals/ParticleExpression.tsx but also statically imported by /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/node_modules/@tauri-apps/api/window.js, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/browser/BrowserSurface.tsx, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/context/useBrowserContext.ts, /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+
+computing gzip size...
+ui-dist/index.html                                            0.45 kB │ gzip:     0.28 kB
+ui-dist/assets/KaTeX_Size4-Regular-Dl5lxZxV.woff2             4.93 kB
+ui-dist/assets/KaTeX_Size2-Regular-Dy4dx90m.woff2             5.21 kB
+ui-dist/assets/KaTeX_Size1-Regular-mCD8mA8B.woff2             5.47 kB
+ui-dist/assets/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2       6.91 kB
+ui-dist/assets/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2          6.91 kB
+ui-dist/assets/KaTeX_Script-Regular-D3wIWfF6.woff2            9.64 kB
+ui-dist/assets/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2        10.34 kB
+ui-dist/assets/KaTeX_Fraktur-Regular-CTYiF6lA.woff2          11.32 kB
+ui-dist/assets/KaTeX_Fraktur-Bold-CL6g_b3V.woff2             11.35 kB
+ui-dist/assets/KaTeX_SansSerif-Italic-C3H0VqGB.woff2         12.03 kB
+ui-dist/assets/KaTeX_SansSerif-Bold-D1sUS0GD.woff2           12.22 kB
+ui-dist/assets/KaTeX_Typewriter-Regular-CO6r4hn1.woff2       13.57 kB
+ui-dist/assets/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2          16.40 kB
+ui-dist/assets/KaTeX_Math-Italic-t53AETM-.woff2              16.44 kB
+ui-dist/assets/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2          16.78 kB
+ui-dist/assets/KaTeX_Main-Italic-NWA7e6Wa.woff2              16.99 kB
+ui-dist/assets/layout.worker-DG1t3xZc.js                     19.55 kB
+ui-dist/assets/KaTeX_Main-Bold-Cx986IdX.woff2                25.32 kB
+ui-dist/assets/KaTeX_Main-Regular-B22Nviop.woff2             26.27 kB
+ui-dist/assets/KaTeX_AMS-Regular-BQhdFMY1.woff2              28.08 kB
+ui-dist/assets/TechneCentre-C4Jb3GKR.css                      0.34 kB │ gzip:     0.22 kB
+ui-dist/assets/ComputerView-DlgKXPFk.css                      0.47 kB │ gzip:     0.24 kB
+ui-dist/assets/TerminalSurface-GiaEZJXQ.css                   0.71 kB │ gzip:     0.35 kB
+ui-dist/assets/Automations-CJWGYyax.css                       1.05 kB │ gzip:     0.45 kB
+ui-dist/assets/BrowserSurface-DFE0KTs_.css                    1.69 kB │ gzip:     0.66 kB
+ui-dist/assets/TextEditor-DiVFpzWm.css                        1.99 kB │ gzip:     0.65 kB
+ui-dist/assets/KnowledgeSurface-BXBn0jgq.css                  4.29 kB │ gzip:     1.18 kB
+ui-dist/assets/FocusedInstrumentComposition-DvLUgmaz.css      4.91 kB │ gzip:     1.33 kB
+ui-dist/assets/EpiLogosSurface-CWeAuKCW.css                   5.10 kB │ gzip:     1.47 kB
+ui-dist/assets/NodeDetails-BBaBZlPS.css                       5.15 kB │ gzip:     1.47 kB
+ui-dist/assets/xterm-6GBZ9nXN.css                             5.24 kB │ gzip:     1.91 kB
+ui-dist/assets/MaterialSurface-CeTXFcB3.css                   5.69 kB │ gzip:     1.48 kB
+ui-dist/assets/AgencySurface-D9Y1vZgC.css                     6.02 kB │ gzip:     1.46 kB
+ui-dist/assets/ExpressionView-BxZf1o5U.css                    8.54 kB │ gzip:     1.98 kB
+ui-dist/assets/SystemPanel-BTYt-CSo.css                      25.03 kB │ gzip:     4.44 kB
+ui-dist/assets/explore-IK0ugnUA.css                          27.70 kB │ gzip:     4.75 kB
+ui-dist/assets/FactoryCentre-CWgkvIV9.css                    75.03 kB │ gzip:    11.98 kB
+ui-dist/assets/FieldSurface-BCsZUyv6.css                     90.88 kB │ gzip:    19.18 kB
+ui-dist/assets/index-CCNNRgya.css                           464.03 kB │ gzip:    74.30 kB
+ui-dist/assets/PersonalSurface-Bn3TMEQG.js                    0.25 kB │ gzip:     0.22 kB
+ui-dist/assets/descriptor-DKmD4eTd.js                         0.47 kB │ gzip:     0.30 kB
+ui-dist/assets/descriptor-MCFbAKnO.js                         0.50 kB │ gzip:     0.31 kB
+ui-dist/assets/descriptor-Ctbo2-zB.js                         0.88 kB │ gzip:     0.45 kB
+ui-dist/assets/camera-CzfoR8nU.js                             0.88 kB │ gzip:     0.55 kB
+ui-dist/assets/aionTimeline-CxKQfBVa.js                       1.04 kB │ gzip:     0.51 kB
+ui-dist/assets/qlTrackRoles-DQQM3oTk.js                       1.21 kB │ gzip:     0.52 kB
+ui-dist/assets/expressionsTrackAdapter-D1R3u7R4.js            1.22 kB │ gzip:     0.67 kB
+ui-dist/assets/qlPhysicsTrackAdapter-DfU4Co-i.js              1.36 kB │ gzip:     0.74 kB
+ui-dist/assets/event-CNdo2oXa.js                              1.44 kB │ gzip:     0.69 kB
+ui-dist/assets/recipes-KpQ0H_jf.js                            1.83 kB │ gzip:     0.86 kB
+ui-dist/assets/descriptor-misQW7k4.js                         1.89 kB │ gzip:     0.66 kB
+ui-dist/assets/LibraryHost-BEv8dEqk.js                        1.95 kB │ gzip:     0.96 kB
+ui-dist/assets/qlAudioTrackAdapter-DsnPSp-C.js                1.95 kB │ gzip:     0.97 kB
+ui-dist/assets/useLayout-DocxvpBY.js                          2.17 kB │ gzip:     1.07 kB
+ui-dist/assets/TechneCentre-2D4jMEkr.js                       2.27 kB │ gzip:     1.11 kB
+ui-dist/assets/core-DhEqZVGG.js                               2.44 kB │ gzip:     0.98 kB
+ui-dist/assets/nativeCues-TtcidGRq.js                         6.17 kB │ gzip:     2.53 kB
+ui-dist/assets/ComputerView-B5gMg7GD.js                       6.66 kB │ gzip:     2.63 kB
+ui-dist/assets/deskStore-Cz0uFn-Y.js                          7.15 kB │ gzip:     2.73 kB
+ui-dist/assets/Automations-bmL8oeHN.js                        7.85 kB │ gzip:     2.71 kB
+ui-dist/assets/BrowserSurface-Bq8vEC3y.js                    10.05 kB │ gzip:     3.67 kB
+ui-dist/assets/window-CnWQI8OY.js                            14.07 kB │ gzip:     3.49 kB
+ui-dist/assets/EpiLogosSurface-ClIjQ2A-.js                   16.14 kB │ gzip:     5.33 kB
+ui-dist/assets/FocusedInstrumentComposition-luWkTl9W.js      18.65 kB │ gzip:     6.26 kB
+ui-dist/assets/TerminalSurface-wtrgsm9h.js                   21.31 kB │ gzip:     7.36 kB
+ui-dist/assets/AgencySurface-DvqvXkGm.js                     29.00 kB │ gzip:     8.35 kB
+ui-dist/assets/MaterialSurface-BBhN4nrZ.js                   33.71 kB │ gzip:    11.54 kB
+ui-dist/assets/NodeDetails-HgkLrZtc.js                       48.36 kB │ gzip:    14.69 kB
+ui-dist/assets/ExpressionView-C089SmcX.js                    86.70 kB │ gzip:    23.45 kB
+ui-dist/assets/KnowledgeSurface-Csy9RHTg.js                  93.94 kB │ gzip:    29.55 kB
+ui-dist/assets/FactoryCentre-gQYxqKmB.js                    132.20 kB │ gzip:    38.03 kB
+ui-dist/assets/ExploreSurface-DwUn3wKN.js                   136.80 kB │ gzip:    37.64 kB
+ui-dist/assets/FieldSurface-Px_CWW6t.js                     140.26 kB │ gzip:    48.40 kB
+ui-dist/assets/SystemPanel-gFSia5KX.js                      145.58 kB │ gzip:    41.44 kB
+ui-dist/assets/TextEditor-Cwts0FES.js                       167.85 kB │ gzip:    62.28 kB
+ui-dist/assets/xterm-XOw-FC4b.js                            334.21 kB │ gzip:    84.42 kB
+ui-dist/assets/engineSurface-BTBHiPqG.js                    824.76 kB │ gzip:   218.96 kB
+ui-dist/assets/index-CLByuKip.js                          5,290.74 kB │ gzip: 2,284.99 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 7.46s
+
+> oi-expressions-app@0.3.0 build
+> npm run build:journeys && vite build
+
+
+> oi-expressions-app@0.3.0 build:journeys
+> node field-studies-journeys/scripts/build.mjs
+
+Native standalone built: 8.57 MB; no runtime requests, external fonts or preview renderer.
+vite v6.4.3 building for production...
+transforming...
+node_modules/zod/v4/core/util.js (400:0): A comment
+
+"// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+
+in "node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+node_modules/zod/v4/core/regexes.js (74:0): A comment
+
+"/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+ * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+ * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+
+in "node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+✓ 3489 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/render.html                                        0.82 kB │ gzip:     0.44 kB
+dist/library.html                                       0.91 kB │ gzip:     0.46 kB
+dist/legacy.html                                        1.02 kB │ gzip:     0.51 kB
+dist/index.html                                         1.16 kB │ gzip:     0.50 kB
+dist/assets/inter-v12-latin-100-BQDzDElq.woff2         16.55 kB
+dist/assets/inter-v12-latin-regular-YtgfLPRn.woff2     16.71 kB
+dist/assets/inter-v12-latin-900-CMga-52B.woff2         17.18 kB
+dist/assets/inter-v12-latin-300-DEbyFmpd.woff2         17.33 kB
+dist/assets/inter-v12-latin-200-BxfrU12A.woff2         17.34 kB
+dist/assets/inter-v12-latin-500-DfX5FI9E.woff2         17.55 kB
+dist/assets/inter-v12-latin-600-BvOeHRLc.woff2         17.66 kB
+dist/assets/inter-v12-latin-800-Bdy4lAMa.woff2         17.76 kB
+dist/assets/inter-v12-latin-700-Bj1B9WKG.woff2         17.78 kB
+dist/assets/inter-v12-latin-100-46Mq0mOp.woff          21.24 kB
+dist/assets/inter-v12-latin-regular-CahmJf_6.woff      21.42 kB
+dist/assets/inter-v12-latin-900-ORHAl5ZU.woff          21.98 kB
+dist/assets/inter-v12-latin-300-f7r92Nkj.woff          22.16 kB
+dist/assets/inter-v12-latin-200-DXfqWPZg.woff          22.24 kB
+dist/assets/inter-v12-latin-500-BQ2gQN_M.woff          22.52 kB
+dist/assets/inter-v12-latin-600-D01NXWOK.woff          22.64 kB
+dist/assets/inter-v12-latin-700-B5TOIllR.woff          22.68 kB
+dist/assets/inter-v12-latin-800-DFVvDWwT.woff          22.71 kB
+dist/assets/legacy-DlLbGHKU.css                        77.90 kB │ gzip:    12.17 kB
+dist/assets/store-8h1OmfFb.css                        116.62 kB │ gzip:    23.26 kB
+dist/assets/main-Dq8jJEdV.css                         377.83 kB │ gzip:    58.45 kB
+dist/assets/library-Du_r8xxW.js                         2.66 kB │ gzip:     1.38 kB
+dist/assets/render-BV-IgpM0.js                          4.96 kB │ gzip:     2.41 kB
+dist/assets/factoryPresets-BI3Ds6rD.js                 14.60 kB │ gzip:     3.95 kB
+dist/assets/production-DB1r-yRz.js                     27.30 kB │ gzip:     9.26 kB
+dist/assets/configMigration-Dp3_xK3h.js                56.72 kB │ gzip:    19.66 kB
+dist/assets/module-D8iBLRih.js                         77.29 kB │ gzip:    27.59 kB
+dist/assets/camera-C0PMdmyq.js                         77.58 kB │ gzip:    25.98 kB
+dist/assets/legacy-BZIE9dwa.js                        183.87 kB │ gzip:    43.98 kB
+dist/assets/jsx-runtime-BxTkfGZw.js                   243.22 kB │ gzip:    76.30 kB
+dist/assets/native-48B9X9Wg.js                        432.75 kB │ gzip:    83.17 kB
+dist/assets/PointCloudField-CHL_2Irk.js               791.83 kB │ gzip:   211.26 kB
+dist/assets/maplibre-gl-CMWsAGdV.js                 1,070.45 kB │ gzip:   289.31 kB
+dist/assets/store-AWoztTMU.js                       1,543.12 kB │ gzip: 1,144.95 kB
+dist/assets/main-Duu1Va7n.js                        3,287.70 kB │ gzip:   981.14 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 5.61s
+{"archive": {"path": "/Users/admin/Central/Work/O-I/target/p0-r1/20261012T-r1f/stage.sources/sources.tar.gz", "sha256": "009d9e0f1e74e72a1027d11863e4942c50e32b51ef360cae1e420b8552bf8c31", "size_bytes": 62855337}, "basis_inputs": [{"path": "/Users/admin/Central/Work/O-I/target/p0-r1/20261012T-r1f/stage.frontend-source.json", "role": "frontend-prebuild-basis", "sha256": "486b9b87caf31885a0141461868a2a9a66f103b11a1128bbe7b9c7d4c5b66d27", "size_bytes": 434825}, {"path": "/Users/admin/Central/Work/O-I/target/p0-r1/20261012T-r1f/stage/declared-source-basis.json", "role": "staging-basis", "sha256": "0255e7cd43a55894c152504f10ac3cb2395314784e90def71da8cdfe0b74ffd8", "size_bytes": 2585436}, {"path": "/Users/admin/Central/Work/O-I/target/p0-r1/20261012T-r1f/cli-release-basis.json", "role": "suite-release-basis", "sha256": "86689eb4e3ba4e36b57037f0b04d2f8777fd25bafc44d8dbea727ff1fde659d1", "size_bytes": 873262}], "manifest_sha256": "d10bd26dbfdb005514a16f3d257bfd91ec035e1f8abad807ef8ef56035e9d700", "phase_tree_sha256": {"broad-staging": "d5277113da96bc1beb0d50c1e24d059cdef2a8ba605cb108ef2ca69f82b49dcc", "frontend-prebuild": "d5277113da96bc1beb0d50c1e24d059cdef2a8ba605cb108ef2ca69f82b49dcc", "native-normal-build": "e5608273ec1961a856b28019ad8e85c7f8888fea4038cae0830f4b84982770e9", "suite-normal-build": "68a595b8f75027e9473be89919e2139edea141588a3a33cd975661f23869a0c6"}, "schema": "oi.build-source-archive/v1", "source_bytes": 160110004, "source_dirty": false, "source_revision": "b57c206e52a946cc2f76769b543b7ef1f9820fd7", "standing": "verified declared input bytes; build completion remains separately qualified", "suite_release_artifact": {"path": "/Users/admin/Central/Work/O-I/target/release/oi", "sha256": "dc44fe66df23e4fbd6a0ec6b8f62191fb19c3c91b3eb0d660327e7cd3c00b039", "size_bytes": 16610672}, "unique_objects": 8751, "unique_source_paths": 9106}
+        Warn --no-sign flag detected: Signing will be skipped.
+        Info Looking up installed tauri packages to check mismatched versions...
+   Compiling oi-cradle v0.1.0 (/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src-tauri)
+warning: struct `ParamDescJson` is never constructed
+   --> src/../../../../packages/live-shell/src/api.rs:180:12
+    |
+180 | pub struct ParamDescJson {
+    |            ^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `desc_json` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:192:4
+    |
+192 | fn desc_json(desc: &live_dynamics::params::ParamDesc) -> ParamDescJson {
+    |    ^^^^^^^^^
+
+warning: function `device_descriptors_json` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:216:8
+    |
+216 | pub fn device_descriptors_json() -> serde_json::Value {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `find_track` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:232:4
+    |
+232 | fn find_track<'a>(
+    |    ^^^^^^^^^^
+
+warning: function `find_track_mut` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:249:4
+    |
+249 | fn find_track_mut<'a>(
+    |    ^^^^^^^^^^^^^^
+
+warning: function `find_device` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:269:4
+    |
+269 | fn find_device<'a>(
+    |    ^^^^^^^^^^^
+
+warning: function `find_device_mut` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:282:4
+    |
+282 | fn find_device_mut<'a>(
+    |    ^^^^^^^^^^^^^^^
+
+warning: function `resolve_path` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:298:4
+    |
+298 | fn resolve_path<'a>(
+    |    ^^^^^^^^^^^^
+
+warning: function `resolve_path_mut` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:309:4
+    |
+309 | fn resolve_path_mut<'a>(
+    |    ^^^^^^^^^^^^^^^^
+
+warning: function `param_json` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:320:4
+    |
+320 | fn param_json(id: &str, value: &str, range: Option<&live_set::xml::Element>) -> ParamJson {
+    |    ^^^^^^^^^^
+
+warning: function `device_params_json` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:339:8
+    |
+339 | pub fn device_params_json(
+    |        ^^^^^^^^^^^^^^^^^^
+
+warning: function `device_param_set` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:373:8
+    |
+373 | pub fn device_param_set(
+    |        ^^^^^^^^^^^^^^^^
+
+warning: function `out_of_range` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:446:4
+    |
+446 | fn out_of_range(desc: &live_dynamics::params::ParamDesc, value: f64) -> String {
+    |    ^^^^^^^^^^^^
+
+warning: fields `shell_dist` and `expressions_dist` are never read
+   --> src/../../../../packages/live-shell/src/runtime.rs:373:9
+    |
+370 | pub struct QualifiedPayload {
+    |            ---------------- fields in this struct
+...
+373 |     pub shell_dist: PathBuf,
+    |         ^^^^^^^^^^
+374 |     pub expressions_dist: PathBuf,
+    |         ^^^^^^^^^^^^^^^^
+
+warning: function `current_world_product_ids` is never used
+  --> src/../../../../packages/live-shell/src/native_contract.rs:25:15
+   |
+25 | pub(crate) fn current_world_product_ids(reading: &serde_json::Value) -> Result<Vec<String>, String> {
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `oi-cradle` (bin "oi-cradle") generated 15 warnings
+    Finished `release` profile [optimized] target(s) in 1m 39s
+       Built application at: /Users/admin/Central/Work/O-I/target/release/oi-cradle
+    Bundling O-I Shell Candidate.app (/Users/admin/Central/Work/O-I/target/release/bundle/macos/O-I Shell Candidate.app)
+        Warn Skipping signing due to --no-sign flag.
+    Finished 1 bundle at:
+        /Users/admin/Central/Work/O-I/target/release/bundle/macos/O-I Shell Candidate.app
+
+{
+  "standing": "native-feature-build-bytes",
+  "stage": "/Users/admin/Central/Work/O-I/target/p0-r1/20261012T-r1f/stage",
+  "native_app": "/Users/admin/Central/Work/O-I/target/release/bundle/macos/O-I Shell Candidate.app",
+  "footprint": "/Users/admin/Central/Work/O-I/target/p0-r1/20261012T-r1f/stage/footprint.json",
+  "source_revision": "b57c206e52a946cc2f76769b543b7ef1f9820fd7",
+  "source_tree_sha256": "d5277113da96bc1beb0d50c1e24d059cdef2a8ba605cb108ef2ca69f82b49dcc",
+  "functional_acceptance": "pending"
+}

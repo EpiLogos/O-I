@@ -76,6 +76,8 @@ maps it to the shell's audio cut (`shell/modeGrammar.ts:23–24, 166–217`);
 honesty law: read-only until the audio owners land
 (`shell/modeGrammar.ts:216`; `DEVELOPMENT-TRACK-2026-10-09.md:100`).
 
+> **Re-pinned 12 Oct 2026 (P0-V2 item 23).** The `:23–24` cite now lands on the file's header comment. The Live mapping is the header line at `shell/modeGrammar.ts:19`, and the Live grammar is `const live` at `:173`, so `166–217` still spans it. `:216` now holds a transport-slot row (the 'draw' slot), and the read-only wording has moved to `shell/modeGrammar.ts:223` (the Live grammar's `waitingNote`: "The audio engine's transport is read-only until its owner lands; the field holds its place."). The read-only note is also at `DEVELOPMENT-TRACK-2026-10-09.md:97` ("Live unchanged (read-only honesty)"). Read-only status was not re-tested here (channel: code-reading).
+
 ### 1.2 Base instrument
 The **Set document** — the audio set as a readable, playable whole. A pane in
 Live opens with the audio cut's composition: the Session grid or the

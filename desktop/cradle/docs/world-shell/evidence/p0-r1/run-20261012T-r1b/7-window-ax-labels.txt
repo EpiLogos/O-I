@@ -1,0 +1,898 @@
+# AX reading of window 'O-I Shell Candidate' (pid 71801), osascript System Events 'entire contents of window 1', 2026-10-12 ~15:01Z.
+# channel: scripted (accessibility tree), no interaction; distinct element labels in tree order. Raw dump (289 KB) not kept.
+group 1
+scroll area 1
+UI element 1
+static text Untitled
+checkbox Toggle browser
+button Link
+button Tap tempo
+text field Tempo
+group 1 of text field Tempo
+button Tempo nudge down
+button Tempo nudge up
+group — / —
+static text — / —
+button Metronome
+pop up button Global quantization
+group 3
+button Follow arrangement
+group — . — . —
+static text — . — . —
+button Play
+button Stop
+button Record
+button MIDI overdub
+button Automation arm
+button Re-enable automation
+button Session record
+group 5
+button Draw mode
+button Computer MIDI keyboard
+button Key mapping
+button MIDI mapping
+group — kHz
+static text — kHz
+group — %
+static text — %
+group Working surface
+checkbox Session · clips and scenes
+checkbox Arrangement · the song over time
+checkbox Live
+checkbox Base · Central
+checkbox Factory
+checkbox Expressions
+checkbox Technē
+checkbox Workbench
+checkbox Settings
+checkbox Toggle detail
+checkbox Toggle agents and context
+group 2
+group Browser
+button Browser back
+button Browser forward
+text field Search browser
+group 1 of text field Search browser
+UI element Collections
+static text Collections
+button Favorites
+UI element Library
+static text Library
+button ▥ All
+button ♫ Sounds
+button ⊞ Drums
+button ◯ Instruments
+button ▥ Audio Effects
+button ▤ MIDI Effects
+button 〰 Modulators
+button ▣ Max for Live
+button ♧ Plug-ins
+button ▹ Clips
+button ▰ Samples
+button ≋ Grooves
+button ♯ Tunings
+UI element Places
+static text Places
+button Sets
+button Open set
+static text ◯ Filters
+static text In set
+static text Name
+static text ▴
+static text No all disclosed by this set.
+static text Groove Name
+static text Base
+static text Quantize
+static text Timing
+static text Random
+static text Velocity
+static text No grooves in this reading.
+static text Groove Pool
+static text Global Amount
+text field Global groove amount
+group 1 of text field Global groove amount
+splitter Resize browser
+static text Session
+static text clips and scenes
+static text  — no set is open. Open a Live set from the 
+static text browser
+static text  (Places › Sets · Open set); the configured default set fills this grid when the shell starts with one.
+static text Track 
+static text 1
+static text 2
+group 4
+static text 3
+static text 4
+group 6
+static text 5
+static text Main
+group 7
+static text ▷
+group 8
+group 9
+group 10
+group 11
+group 12
+static text 6
+group 13
+static text 7
+group 14
+static text 8
+group Context dock
+splitter Resize the context dock
+static text Context
+static text  open
+static text Fizz
+checkbox Pin Agent
+button Close Agent
+static text Live
+static text Conversation · Activity · Context · Inspect
+static text The situated agent rides the shell in every mode; its chain docks in the detail row.
+group Launcher
+text field Open context
+group 1 of text field Open context
+static text Open context…
+group 2 of text field Open context
+checkbox Fizz open
+checkbox Trail
+checkbox NOWs
+button + Save current tiles as preset…
+splitter Resize detail
+group Detail panel
+static text Clip
+static text the clip in focus
+static text No clip is selected. Select a clip in Session (a clip slot) or Arrangement (a clip on a lane) — the clip's readings open here read-only; editing waits for the document owner.
+group What docks in the Clip detail
+static text Clip — Start · End · Position · Length · Signature · Groove
+static text Launch — launch mode
+static text Pitch & Time — Transpose · Fit to Scale
+static text Note editor — ruler · keyboard · velocity lane
+static text GLUE
+static text GlueCompressor
+static text no set open — open one from the browser
+static text ECHO
+static text Echo
+static text REVERB
+static text Reverb
+static text WAVETABLE
+static text InstrumentVector
+group 15
+group 16
+group 17
+static text EQ Eight (port)
+static text Eq8
+static text awaiting M3 edit API
+group 18
+slider 1
+static text 500 Hz
+static text freq
+group 19
+static text -15.0 dB
+static text gain
+group 20
+static text 0.10
+static text q
+group 21
+image 1
+image 2
+image 3
+image 4
+image 5
+image 6
+image 7
+image 8
+image 9
+image 10
+image 11
+image 12
+image 13
+image 14
+static text 100
+static text 1k
+static text 10k
+pop up button menu
+button 1
+button 2
+button 3
+button 4
+button 5
+button 6
+button 7
+button 8
+group 22
+static text OUTPUT / GLOBAL
+checkbox on
+static text on
+pop up button mode
+static text mode
+group 23
+radio group edit
+radio button A
+radio button B
+static text edit
+checkbox adapt:q
+static text adapt:q
+group 24
+static text scale
+group 25
+static text 0 dB
+checkbox audition
+static text audition
+static text STORED PARAMS
+group 26
+radio group precision
+radio button 0
+static text precision
+group 27
+radio group processing mode
+static text processing mode
+group 28
+radio group adaptive q factor
+radio button 1
+static text adaptive q factor
+checkbox live8 shelf scale
+static text live8 shelf scale
+static text Auto Filter (port)
+static text AutoFilter
+group 29
+static text ENVELOPE
+group 30
+static text attack
+group 31
+static text 200
+static text release
+group 32
+static text FILTER
+group 33
+static text 75.0
+group 34
+static text 0.14
+static text res
+group 35
+static text drive
+pop up button type
+static text type
+group 36
+radio group slope
+radio button 12
+radio button 24
+static text slope
+checkbox lfo on
+static text lfo on
+group 37
+static text LFO / S&H
+group 38
+static text 0
+static text amount
+group 39
+static text 0.01 Hz
+static text rate
+group 40
+static text 0 deg
+static text phase
+group 41
+static text offset
+pop up button shape
+static text shape
+pop up button stereo
+static text stereo
+group 42
+static text spin
+group 43
+static text s&h
+group 44
+radio group rate mode
+radio button Hz
+radio button Beat
+static text rate mode
+group 45
+radio group grid
+radio button Off
+radio button Bar
+static text grid
+checkbox quantize
+static text quantize
+checkbox legacy mode
+static text legacy mode
+group 46
+radio group legacy filter type
+radio button 2
+radio button 3
+static text legacy filter type
+group 47
+static text 0.20
+static text legacy q
+group 48
+radio group circuit lp/hp
+static text circuit lp/hp
+group 49
+radio group circuit
+radio button Clean
+radio button OVDR
+static text circuit
+group 50
+static text morph
+group 51
+static text mod hub
+group 52
+static text Auto Pan (port)
+static text AutoPan
+group 53
+radio button Normal
+radio button Quantized
+checkbox invert
+static text invert
+group 54
+static text LFO
+group 55
+static text 0.50
+group 56
+group 57
+static text 256 deg
+group 58
+static text 0.60
+group 59
+group 60
+pop up button division
+static text division
+group 61
+radio group waveform
+static text waveform
+group 62
+radio group stereo mode
+static text stereo mode
+group 63
+radio group beat quantize
+static text beat quantize
+group 64
+static text noise width
+group 65
+group 66
+static text Saturator (port)
+static text Saturator
+group 67
+group 68
+static text CURVE
+checkbox DC
+static text DC
+pop up button curve
+static text curve
+group 69
+static text COLOR
+group 70
+static text base
+group 71
+static text 18500 Hz
+group 72
+static text width
+group 73
+static text depth
+group 74
+static text OUTPUT
+group 75
+static text output
+checkbox soft clip
+static text soft clip
+group 76
+static text dry/wet
+static text 100 %
+static text mix
+group 77
+radio group oversample
+radio button On
+static text oversample
+group 78
+static text ws drive
+group 79
+static text ws lin
+group 80
+static text ws damp
+group 81
+static text ws period
+group 82
+static text ws depth
+static text Drum Buss (port)
+static text DrumBuss
+group 83
+static text DRIVE
+group 84
+group 85
+radio group character
+radio button Soft
+radio button Medium
+radio button Hard
+static text character
+group 86
+static text crunch
+static text -3.10 dB
+static text trim
+checkbox comp
+static text comp
+group 87
+static text BOOM
+group 88
+static text 0.45
+static text boom
+group 89
+static text 55.0 Hz
+group 90
+static text decay
+group 91
+static text TONE
+group 92
+static text 20000 Hz
+static text damp
+group 93
+static text transients
+group 94
+static text LEVEL
+group 95
+slider bass
+static text bass
+group 96
+slider out
+static text out
+group 97
+group 98
+static text Chorus-Ensemble (port)
+static text Chorus2
+group 99
+radio group mode
+radio button Classic
+radio button Ensemble
+radio button Vibrato
+group 100
+static text MODULATION
+group 101
+static text 0.82 Hz
+group 102
+static text 0.59
+group 103
+static text feedback
+group 104
+group 105
+group 106
+group 107
+group 108
+static text warmth
+group 109
+checkbox invert fb
+static text invert fb
+group 110
+static text vibrato offset
+checkbox highpass
+static text highpass
+group 111
+static text 20.0 Hz
+static text hp freq
+static text Delay (port)
+static text Delay
+group 112
+static text DELAY LINE
+static text Left
+checkbox sync L
+static text sync L
+group 113
+static text 0.25 s
+static text time
+static text delay time
+static text Right
+checkbox sync R
+static text sync R
+group 114
+checkbox link
+static text link
+checkbox ping pong
+static text ping pong
+checkbox freeze
+static text freeze
+group 115
+static text FEEDBACK / FILTER
+group 116
+checkbox filter
+static text filter
+group 117
+static text 1000 Hz
+group 118
+static text bandwidth
+group 119
+group 120
+static text 0.50 Hz
+group 121
+group 122
+group 123
+static text MODE
+group 124
+radio button Fade
+radio button Jump
+group 125
+group 126
+static text 100 ms
+static text simple time L
+group 127
+static text simple time R
+group 128
+static text 250 ms
+static text pp time L
+group 129
+static text pp time R
+group 130
+static text offset L
+group 131
+static text offset R
+group 132
+radio group compat
+static text compat
+group 133
+radio group dry/wet mode
+static text dry/wet mode
+checkbox eco
+static text eco
+static text Hybrid Reverb (port)
+static text Hybrid
+group 134
+static text send
+group 135
+static text 0.01 s
+static text pre-delay
+checkbox sync
+static text sync
+group 136
+radio group 1
+radio button Reverb
+radio button EQ
+static text —
+group 137
+static text 2.20 s
+group 138
+static text size
+pop up button algorithm
+static text algorithm
+checkbox freeze in
+static text freeze in
+group 139
+static text delay
+group 140
+static text mod
+group 141
+static text 440 Hz
+static text bass x
+group 142
+static text damping
+group 143
+group 144
+static text 0.70
+static text diffuse
+group 145
+static text bass mult
+checkbox ir post
+static text ir post
+pop up button ir decay
+static text ir decay
+pop up button ir size
+static text ir size
+group 146
+static text convol/algo
+pop up button routing
+static text routing
+group 147
+group 148
+group 149
+static text vintage
+checkbox bass mono
+static text bass mono
+group 150
+group 151
+static text pre-delay feedback
+group 152
+static text pre-delay fb sixteenth
+group 153
+static text tides amount
+group 154
+static text tides rate
+group 155
+static text tides wave
+group 156
+static text tides phase
+group 157
+static text quartz low damping
+group 158
+static text quartz distance
+group 159
+static text prism high mult
+group 160
+static text prism low mult
+group 161
+static text 1500 Hz
+static text prism crossover
+group 162
+static text prism sixth
+group 163
+static text prism seventh
+static text Multiband Dynamics (port)
+static text MultibandDynamics
+group 164
+static text SPLITS
+group 165
+static text 220 Hz
+static text low/mid
+group 166
+static text 2000 Hz
+static text mid/high
+group 167
+static text LOW
+checkbox solo
+static text solo
+group 168
+static text input
+static text below
+group 169
+static text -80.0 dB
+static text thresh
+group 170
+static text -1
+static text ratio
+static text above
+group 171
+static text -20.0 dB
+group 172
+static text att/rel
+group 173
+static text 80.0 ms
+static text att
+group 174
+static text rel
+group 175
+slider gain
+group 176
+static text MID
+group 177
+group 178
+group 179
+group 180
+group 181
+group 182
+group 183
+group 184
+group 185
+static text HIGH
+group 186
+group 187
+group 188
+group 189
+group 190
+group 191
+group 192
+group 193
+group 194
+group 195
+radio group detector
+radio button RMS
+radio button Peak
+static text detector
+checkbox knee
+static text knee
+checkbox side listen
+static text side listen
+pop up button edit mode
+static text edit mode
+group 196
+slider output
+group 197
+group 198
+static text Utility (port)
+static text StereoGain
+group 199
+static text INPUT
+checkbox ø L
+static text ø L
+checkbox ø R
+static text ø R
+group 200
+checkbox mono
+static text mono
+group 201
+static text 120 Hz
+group 202
+group 203
+static text +0.00 dB
+group 204
+static text balance
+checkbox mute
+static text mute
+group 205
+static text MID/SIDE
+checkbox m/s balance
+static text m/s balance
+group 206
+group 207
+checkbox m/s balance on
+static text m/s balance on
+group 208
+static text legacy gain
+static text Drift (port)
+static text Drift
+group 209
+static text OSCILLATORS
+pop up button osc1
+static text osc1
+group 210
+group 211
+static text 0 st
+static text oct
+pop up button sh mod src
+static text sh mod src
+group 212
+static text sh mod
+pop up button osc2
+static text osc2
+group 213
+static text detune
+group 214
+group 215
+static text PITCH MOD
+pop up button src 1
+static text src 1
+group 216
+static text amt 1
+pop up button src 2
+static text src 2
+group 217
+static text amt 2
+group 218
+static text OSC MIX
+checkbox osc1
+group 219
+checkbox osc2
+group 220
+checkbox noise
+static text noise
+group 221
+group 222
+group 223
+group 224
+group 225
+static text 10.0 Hz
+static text hp
+group 226
+static text track
+group 227
+static text mod 1
+group 228
+static text mod 2
+checkbox osc1 thru
+static text osc1 thru
+checkbox osc2 thru
+static text osc2 thru
+checkbox noise thru
+static text noise thru
+group 229
+static text ENVELOPES
+static text env 1
+group 230
+group 231
+static text 0.60 s
+group 232
+static text sustain
+group 233
+static text env 2
+group 234
+static text 0.05 s
+group 235
+group 236
+group 237
+group 238
+group 239
+static text 4 Hz
+group 240
+checkbox retrig
+static text retrig
+pop up button mod src
+static text mod src
+group 241
+static text mod amt
+group 242
+group 243
+static text 1 s
+group 244
+static text synced
+pop up button cyc mode
+static text cyc mode
+group 245
+static text cyc rate
+group 246
+static text cyc ratio
+group 247
+static text cyc time
+group 248
+static text cyc synced
+group 249
+static text cyc mid
+group 250
+static text cyc hold
+group 251
+static text MODULATION MATRIX
+group 252
+pop up button tgt 1
+static text tgt 1
+group 253
+pop up button tgt 2
+static text tgt 2
+pop up button src 3
+static text src 3
+group 254
+static text amt 3
+pop up button tgt 3
+static text tgt 3
+group 255
+static text VOICE / GLOBAL
+pop up button voice mode
+static text voice mode
+pop up button voices
+static text voices
+pop up button pb range
+static text pb range
+group 256
+static text drift
+checkbox legato
+static text legato
+checkbox note pb
+static text note pb
+group 257
+static text glide
+group 258
+static text 0.79
+static text volume
+group 259
+static text transpose
+group 260
+static text vel mod
+checkbox reset phase
+static text reset phase
+pop up button env2 mode
+static text env2 mode
+group 261
+static text poly depth
+group 262
+static text st depth
+group 263
+static text uni depth
+group 264
+static text mono depth
+static text Wavetable (port)
+group 265
+radio button Osc 1
+radio button Osc 2
+radio button Sub & Filters
+radio button Envelopes
+radio button LFOs
+radio button Voice & Global
+group 266
+static text OSCILLATOR 1
+checkbox osc1 on
+static text osc1 on
+group 267
+group 268
+group 269
+static text wave pos
+pop up button fx mode
+static text fx mode
+group 270
+static text fx 1
+group 271
+static text fx 2
+group 272
+static text pan
+group 273
+static text GLUE COMPRESSOR
+group 274
+group 275
+group 276
+group 277
+group 278
+static text i
+static text  — clips and scenes · no set open — the browser opens one
+group Detail view
+checkbox Clip
+checkbox Device
+group 1 of button 2

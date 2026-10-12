@@ -1,0 +1,18 @@
+# channel: scripted (accessibility tree), no interaction; pid 30557; 2026-10-12T17:25:05Z; settled=no at 0 elements
+# AXIsProcessTrusted: true
+# not a window (role AXApplication): O-I Shell Candidate
+# windows: 0
+# web areas: 0
+# elements visited: 0
+# owner readback (status region) searched in the same window:
+# AXIsProcessTrusted: true
+# not a window (role AXApplication): O-I Shell Candidate
+# windows: 0
+# web areas: 0
+# elements visited: 0
+# owner-discovery words searched in the same window:
+# AXIsProcessTrusted: true
+# not a window (role AXApplication): O-I Shell Candidate
+# windows: 0
+# web areas: 0
+# elements visited: 0

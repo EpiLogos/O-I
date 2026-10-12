@@ -514,7 +514,7 @@ spec and verification layer.** Concretely:
 - Deep dives: [Appendix A](appendix-a-expressions-dive.md) (sounding/forming
   surface), [Appendix B](appendix-b-worlds-of-knowing-dive.md) (worlds of
   knowing) — full inventories, status marks, citations.
-- Design corpus: `Work/reverse-engineering/2026-10-07-techne-instrument-re/
+- Design corpus: `desktop/cradle/docs/world-shell/
   new-shell/WORLD-SHELL-DESIGN.md` (rev 5; §§2–18);
   `docs/experience/TECHNE-DUAL-READING.md`; `docs/cradle/11-FACTORY.md`;
   `docs/cradle/WIKI-CONSTELLATION-SPEC.md`; `docs/cradle/CENTRAL-FIELD-

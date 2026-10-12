@@ -1,0 +1,12 @@
+- generic: "[plugin:vite:esbuild] Transform failed with 1 error: /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/agency/nativeAgent.ts:340:8: ERROR: The symbol \"current\" has already been declared"
+- generic: /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/agency/nativeAgent.ts:340:8
+- generic: "The symbol \"current\" has already been declared 338| // A write acknowledgement is not sufficient. Read both the source and the 339| // roster, independently, before offering session preparation. 340| const current = validateReview(await this.owner({action:\"review\",profile_ref:review.profile.ref}),scopeRef); | ^ 341| const roster = await this.readRoster(); 342| const persisted = roster.profiles.find(p => p.profile.ref === review.profile.ref);"
+- generic: at failureErrorWithLog (/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/node_modules/esbuild/lib/main.js:1467:15) at /Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/node_modules/esbuild/lib/main.js:736:50 at responseCallbacks.<computed> (/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/node_modules/esbuild/lib/main.js:603:9) at handleIncomingPacket (/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/node_modules/esbuild/lib/main.js:658:12) at Socket.readFromStdout (/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/node_modules/esbuild/lib/main.js:581:7) at Socket.emit (node:events:514:28) at addChunk (node:internal/streams/readable:568:12) at readableAddChunkPushByteMode (node:internal/streams/readable:519:3) at Readable.push (node:internal/streams/readable:399:5) at Pipe.onStreamRead (node:internal/stream_base_commons:189:23
+- text: Click outside, press Esc key, or fix the code to dismiss.
+- text: You can also disable this overlay by setting
+- code: server.hmr.overlay
+- text: to
+- code: "false"
+- text: in
+- code: vite.config.ts
+- text: .

@@ -1,0 +1,58 @@
+- heading "Preferences window · development check" [level=2]
+- paragraph:
+  - text: This route mounts the actual
+  - code: world.settings
+  - text: contribution. The labelled scenario supplies non-secret specimens; no native writes occur.
+- text: Conversation draft
+- textbox "Conversation draft": Retained conversation draft
+- paragraph: "Selection: specimen agent · project settings-specimen"
+- button "Open Preferences"
+- button "Configure this agent’s capabilities…"
+- button "Remote machine setup…"
+- button "Manage automations…"
+- dialog "Preferences":
+  - text: Development scenario
+  - combobox "Development scenario":
+    - option "ready" [selected]
+    - option "loading"
+    - option "inherited"
+    - option "overridden"
+    - option "dirty"
+    - option "invalid"
+    - option "immediate"
+    - option "restart"
+    - option "pending"
+    - option "acknowledged"
+    - option "refused"
+    - option "failed"
+    - option "conflict"
+    - option "absent-product"
+    - option "unavailable-connection"
+  - generic: Explicit preview · no native writes
+  - region "Settings":
+    - heading "Preferences" [level=1]
+    - generic: ⌕
+    - searchbox "Search settings"
+    - button "← Start work"
+    - status:
+      - strong: Development scenario
+      - text: · ready · AIKit and Factory native schema specimens · simulated responses, no native writes
+    - navigation "Settings categories":
+      - button "Harnesses & models"
+      - button "Skills & methods"
+      - button "Profiles"
+      - button "Permissions"
+      - button "Credentials"
+      - button "Machines & services"
+      - button "Automations"
+      - button "Search & telemetry"
+      - button "Appearance & interaction"
+      - button "Products & updates"
+    - main:
+      - heading "Products & updates" [level=2]
+      - paragraph: Manage installations, updates and service availability.
+      - region "Installed products and operations" [active]:
+        - heading "Installed products" [level=3]
+        - paragraph: Manage installed products and their available maintenance actions.
+        - paragraph: Installed products are awaiting the application connection. No installation or update has been performed here.
+    - button "ⓘ Info"

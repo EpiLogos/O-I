@@ -1,0 +1,25 @@
+{
+  "schema": "techne.new-shell.saved-work-config-acceptance/v1",
+  "result": "passed",
+  "url": "http://127.0.0.1:8789/api/config",
+  "config": {
+    "default_set": "/Users/admin/Music/Ableton/User Library/Templates/Piano and voices mastering.als",
+    "kernel_bridge": "http://127.0.0.1:4180",
+    "saved_works": [
+      {
+        "checkpoint_id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+        "expression_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+        "scope": "techne"
+      },
+      {
+        "checkpoint_id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+        "expression_ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+        "scope": "expressions"
+      }
+    ]
+  },
+  "summary_tracks": 21,
+  "summary_scenes": 8,
+  "summary_tempo": 131,
+  "binary_sha256": "9d1c651aff1d1642c552ebe06ca588cd5cb29678fac9791261cbbd6feda4e5ec"
+}

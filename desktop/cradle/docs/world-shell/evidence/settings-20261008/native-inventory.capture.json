@@ -1,0 +1,1918 @@
+{
+  "composition": {
+    "install_mode": null,
+    "install_mode_basis": null,
+    "present_positions": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "requested_mode": null,
+    "warnings": [
+      "current Workcell status failed with exit code 7"
+    ]
+  },
+  "owners": [
+    {
+      "composition": {
+        "position": 1,
+        "standing": "in_composition"
+      },
+      "owner_kind": "product",
+      "owner_ref": "actuation",
+      "reason": null,
+      "state": "available"
+    },
+    {
+      "composition": {
+        "position": 2,
+        "standing": "in_composition"
+      },
+      "owner_kind": "product",
+      "owner_ref": "ai-kit",
+      "reason": null,
+      "state": "available"
+    },
+    {
+      "composition": {
+        "position": 0,
+        "standing": "in_composition"
+      },
+      "owner_kind": "product",
+      "owner_ref": "central",
+      "reason": null,
+      "state": "available"
+    },
+    {
+      "composition": {
+        "position": null,
+        "standing": "unpositioned"
+      },
+      "owner_kind": "oi",
+      "owner_ref": "oi",
+      "reason": null,
+      "state": "available"
+    },
+    {
+      "composition": {
+        "position": 5,
+        "standing": "in_composition"
+      },
+      "owner_kind": "product",
+      "owner_ref": "quaternal-logic",
+      "reason": null,
+      "state": "available"
+    },
+    {
+      "composition": {
+        "position": 3,
+        "standing": "in_composition"
+      },
+      "owner_kind": "product",
+      "owner_ref": "software-factory",
+      "reason": null,
+      "state": "available"
+    },
+    {
+      "composition": {
+        "position": 4,
+        "standing": "in_composition"
+      },
+      "owner_kind": "product",
+      "owner_ref": "workcell",
+      "reason": null,
+      "state": "available"
+    }
+  ],
+  "schema": "oi.config-listing/v1",
+  "settings": [
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default": [
+        "self-differentiation",
+        "delegation",
+        "derivation",
+        "federation"
+      ],
+      "default_semantics": "constant",
+      "description": "The closed vocabulary of determination kinds Actuation's agency contract admits. Declared in the contract, not selected at runtime.",
+      "effect": {
+        "kind": "none",
+        "summary": "apply is refused: this subject is declared code, not applied configuration"
+      },
+      "native_ref": "crates/actuation-core/src/agency.rs",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "actuation",
+      "profileable": false,
+      "section_ref": "agency",
+      "sensitive": false,
+      "setting_ref": "actuation:agency:agency.determination.kinds",
+      "title": "Determination kinds",
+      "value_schema": {
+        "items": {
+          "options": [
+            {
+              "value": "self-differentiation"
+            },
+            {
+              "value": "delegation"
+            },
+            {
+              "value": "derivation"
+            },
+            {
+              "value": "federation"
+            }
+          ],
+          "type": "enum"
+        },
+        "type": "list"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default": [
+        "human_authored_refs",
+        "security_policy_refs",
+        "evidence_refs",
+        "external_reality_refs"
+      ],
+      "default_semantics": "constant",
+      "description": "The constraint categories a WorldBinding may carry above technical root agency. Root position inside an Objective Internality implies no sovereignty over them.",
+      "effect": {
+        "kind": "none",
+        "summary": "apply is refused: this subject is declared code, not applied configuration"
+      },
+      "native_ref": "crates/actuation-core/src/agency.rs",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "actuation",
+      "profileable": false,
+      "section_ref": "agency",
+      "sensitive": false,
+      "setting_ref": "actuation:agency:agency.world_binding.constraints",
+      "title": "WorldBinding constraint categories",
+      "value_schema": {
+        "items": {
+          "options": [
+            {
+              "value": "human_authored_refs"
+            },
+            {
+              "value": "security_policy_refs"
+            },
+            {
+              "value": "evidence_refs"
+            },
+            {
+              "value": "external_reality_refs"
+            }
+          ],
+          "type": "enum"
+        },
+        "type": "list"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default": [
+        "determine-agency",
+        "configure-agency",
+        "actualise-agency",
+        "reintegrate-return"
+      ],
+      "default_semantics": "constant",
+      "description": "The metagency operations Actuation's constitution names. Authority to exercise them is per-request MetagencyGrant evidence against the governing binding; discoverability here is not authority, and O:I root position confers no Actuation permission.",
+      "effect": {
+        "kind": "none",
+        "summary": "apply is refused: this subject is declared code, not applied configuration"
+      },
+      "native_ref": "crates/actuation-core/src/agency.rs",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "actuation",
+      "profileable": false,
+      "section_ref": "authority",
+      "sensitive": false,
+      "setting_ref": "actuation:authority:authority.metagency.operations",
+      "title": "Metagency operations",
+      "value_schema": {
+        "items": {
+          "options": [
+            {
+              "value": "determine-agency"
+            },
+            {
+              "value": "configure-agency"
+            },
+            {
+              "value": "actualise-agency"
+            },
+            {
+              "value": "reintegrate-return"
+            }
+          ],
+          "type": "enum"
+        },
+        "type": "list"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default": "Derivation requires explicit actualise-agency authority and an explicitly actualised Agent identity",
+      "default_semantics": "constant",
+      "description": "The declared rule that derivation requires explicit actualise-agency authority and an explicitly actualised Agent identity. A constitutional declaration, not a tunable.",
+      "effect": {
+        "kind": "none",
+        "summary": "apply is refused: this subject is declared code, not applied configuration"
+      },
+      "native_ref": "crates/actuation-runtime/src/actualisation.rs",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "actuation",
+      "profileable": false,
+      "section_ref": "authority",
+      "sensitive": false,
+      "setting_ref": "actuation:authority:authority.derivation.rule",
+      "title": "Derivation authority requirement",
+      "value_schema": {
+        "type": "scalar"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default": "Federation cannot silently carry determining authority; use an explicit delegation",
+      "default_semantics": "constant",
+      "description": "The declared rule that federation cannot silently carry determining authority. A constitutional declaration, not a tunable.",
+      "effect": {
+        "kind": "none",
+        "summary": "apply is refused: this subject is declared code, not applied configuration"
+      },
+      "native_ref": "crates/actuation-core/src/agency.rs",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "actuation",
+      "profileable": false,
+      "section_ref": "authority",
+      "sensitive": false,
+      "setting_ref": "actuation:authority:authority.federation.rule",
+      "title": "Federation authority rule",
+      "value_schema": {
+        "type": "scalar"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "computed",
+      "description": "Where durable stream files live. The default root is derived from HOME at resolution time; the effective root is caller-supplied per invocation (--store <dir> or ACTUATION_STREAM_STORE). Actuation owns no persisted settings store, so there is no profile-writable root.",
+      "effect": {
+        "kind": "none",
+        "summary": "apply is refused: this subject is declared code, not applied configuration"
+      },
+      "native_ref": "crates/actuation-stream/src/store.rs",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "actuation",
+      "profileable": false,
+      "section_ref": "activity",
+      "sensitive": false,
+      "setting_ref": "actuation:activity:stream.durable_store",
+      "title": "Durable stream store",
+      "value_schema": {
+        "format": "actuation-stream-store-root",
+        "type": "path"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default": [
+        "required",
+        "optional",
+        "autonomous-termination"
+      ],
+      "default_semantics": "constant",
+      "description": "The Return policy modes Actuation's contract admits: the closure vocabulary of the downward-authority/upward-return circuit.",
+      "effect": {
+        "kind": "none",
+        "summary": "apply is refused: this subject is declared code, not applied configuration"
+      },
+      "native_ref": "crates/actuation-core/src/agency.rs",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "actuation",
+      "profileable": false,
+      "section_ref": "return",
+      "sensitive": false,
+      "setting_ref": "actuation:return:return.modes",
+      "title": "Return policy modes",
+      "value_schema": {
+        "items": {
+          "options": [
+            {
+              "value": "required"
+            },
+            {
+              "value": "optional"
+            },
+            {
+              "value": "autonomous-termination"
+            }
+          ],
+          "type": "enum"
+        },
+        "type": "list"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        },
+        {
+          "scope_kind": "project",
+          "scope_ref": null
+        },
+        {
+          "scope_kind": "agent-session",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "computed",
+      "description": "Which native AIKit profile the scope declares (the resolution basis). Values are AIKit's own profile ids, passed by reference and resolved natively; profile internals are never copied into the plane.",
+      "effect": {
+        "kind": "session-restart-required",
+        "ref": "aikit diff --json",
+        "summary": "New sessions compose with the new profile; harness sessions already running keep their composition until they are relaunched."
+      },
+      "native_ref": "aikit:scope:profiles",
+      "operations": {
+        "apply": true,
+        "plan": true,
+        "reset": true,
+        "validate": true
+      },
+      "owner_ref": "ai-kit",
+      "profileable": true,
+      "section_ref": "resolution",
+      "sensitive": false,
+      "setting_ref": "ai-kit:resolution:resolution.profiles",
+      "title": "Native profile selection",
+      "value_schema": {
+        "subject_kind": "aikit.profile-id",
+        "type": "reference"
+      },
+      "writable": true
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default": [],
+      "default_semantics": "constant",
+      "description": "The skill-sets an unconfigured project inherits by default (AIKit home `config.toml`). No v2 disclosure axis exists for this setting yet, so reconciliation reads `unknown` while mutation still works.",
+      "effect": {
+        "kind": "value-change",
+        "ref": "aikit project defaults --json",
+        "summary": "The next project match inherits the new default skill-sets; already-resolved contexts keep theirs."
+      },
+      "native_ref": "aikit:config:default-skill-sets",
+      "operations": {
+        "apply": true,
+        "plan": true,
+        "reset": true,
+        "validate": true
+      },
+      "owner_ref": "ai-kit",
+      "profileable": false,
+      "section_ref": "resolution",
+      "sensitive": false,
+      "setting_ref": "ai-kit:resolution:skill-sets.default",
+      "title": "Default skill-sets",
+      "value_schema": {
+        "items": {
+          "type": "scalar"
+        },
+        "type": "list"
+      },
+      "writable": true
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        },
+        {
+          "scope_kind": "project",
+          "scope_ref": null
+        },
+        {
+          "scope_kind": "agent-session",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "computed",
+      "description": "The scope's declared capability enable/disable deltas, as an object mapping capability id to boolean. Applied through AIKit's native toggle pipeline, which re-materialises the scope's generation.",
+      "effect": {
+        "kind": "session-restart-required",
+        "ref": "aikit diff --json",
+        "summary": "The next compose resolves the new capability horizon; sessions already running keep the horizon they were launched with."
+      },
+      "native_ref": "aikit:scope:toggles",
+      "operations": {
+        "apply": true,
+        "plan": true,
+        "reset": true,
+        "validate": true
+      },
+      "owner_ref": "ai-kit",
+      "profileable": false,
+      "section_ref": "skills",
+      "sensitive": false,
+      "setting_ref": "ai-kit:skills:skills.capabilities",
+      "title": "Capability toggles",
+      "value_schema": {
+        "columns": [
+          {
+            "name": "capability",
+            "type": "scalar"
+          },
+          {
+            "name": "enabled",
+            "type": "boolean"
+          }
+        ],
+        "type": "table"
+      },
+      "writable": true
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "world",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "computed",
+      "description": "The model candidates a launch composes from. This catalogue is disclosure-only; harness-native launch preferences are configured separately through models.default, and governed selection remains per launch (`aikit compose --model`).",
+      "effect": {
+        "kind": "none",
+        "ref": "aikit compose --json",
+        "summary": "Model choice resolves per launch; there is no restart axis."
+      },
+      "native_ref": "aikit:model-catalogue",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": false
+      },
+      "owner_ref": "ai-kit",
+      "profileable": false,
+      "section_ref": "models",
+      "sensitive": false,
+      "setting_ref": "ai-kit:models:models.candidates",
+      "title": "Model candidates",
+      "value_schema": {
+        "subject_kind": "model.stable-id",
+        "type": "reference"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "world",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "Presence and reference for provider credentials — classic LLMs and voice models alike, one inventory per provider. The material is bound owner-natively (`aikit credential setup`, optionally declaring an external store location with `--ref op://…`); the lifecycle is closed with `aikit credential rotate` and `aikit credential revoke`, and `aikit credential discover` surfaces candidate keys already on the machine, presence only. This plane never carries or mutates a value.",
+      "effect": {
+        "kind": "provider-reconnect-required",
+        "ref": "aikit credential setup --json",
+        "summary": "When a credential is re-bound owner-natively, providers reconnect with it."
+      },
+      "native_ref": "aikit:credentials",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "ai-kit",
+      "profileable": false,
+      "section_ref": "models",
+      "sensitive": true,
+      "setting_ref": "ai-kit:models:models.credentials",
+      "title": "Provider credential reference",
+      "value_schema": {
+        "type": "secret"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default": {},
+      "default_semantics": "constant",
+      "description": "A harness-native model preference for new chats, keyed by the configured encounter provider ID. An explicit governed model policy takes precedence; existing and resumed chats keep their model.",
+      "effect": {
+        "kind": "session-restart-required",
+        "ref": "aikit system --json",
+        "summary": "New chats request this model through the harness's native selector or launch arguments and require its confirmation. Existing chats and governed model policies are unchanged."
+      },
+      "native_ref": "aikit:config:model-defaults",
+      "operations": {
+        "apply": true,
+        "plan": true,
+        "reset": true,
+        "validate": true
+      },
+      "owner_ref": "ai-kit",
+      "profileable": false,
+      "section_ref": "models",
+      "sensitive": false,
+      "setting_ref": "ai-kit:models:models.default",
+      "title": "Default model per harness",
+      "value_schema": {
+        "columns": [
+          {
+            "name": "harness",
+            "type": "scalar"
+          },
+          {
+            "name": "model",
+            "type": "scalar"
+          }
+        ],
+        "type": "table"
+      },
+      "writable": true
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "Which `aikit.decision-provider/v1` document AIKit uses when a command takes no explicit `--provider-file` (`aikit decide`). The value is the absolute path of that owner-native document, recorded as a reference with the digest it was elected at, never a copy; validation parses it with the decision-provider law. The local Kev service AIKit provisions writes such a document (`aikit decide service provision`). Electing starts nothing: the service lifecycle stays explicit.",
+      "effect": {
+        "kind": "value-change",
+        "ref": "aikit decide status",
+        "summary": "`aikit decide status|invoke` without `--provider-file` use the elected document, and refuse when it has changed since it was elected. Nothing is provisioned, started or stopped."
+      },
+      "native_ref": "aikit:config:decision-provider-election",
+      "operations": {
+        "apply": true,
+        "plan": true,
+        "reset": true,
+        "validate": true
+      },
+      "owner_ref": "ai-kit",
+      "profileable": true,
+      "section_ref": "local-services",
+      "sensitive": false,
+      "setting_ref": "ai-kit:local-services:decision.provider",
+      "title": "Decision provider election",
+      "value_schema": {
+        "format": "aikit.decision-provider/v1",
+        "type": "path"
+      },
+      "writable": true
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "Which `aikit.redis-now-config/v1` document AIKit uses when a command takes no explicit `--config-file` (`aikit now-context status`). The value is the absolute path of that owner-native document, recorded as a reference with the digest it was elected at. The local Redis AIKit provisions writes such a document (`aikit now-context service provision`). Electing starts nothing.",
+      "effect": {
+        "kind": "value-change",
+        "ref": "aikit now-context status",
+        "summary": "`aikit now-context status` without `--config-file` uses the elected document, and refuses when it has changed since it was elected. Nothing is provisioned, started or stopped."
+      },
+      "native_ref": "aikit:config:redis-now-election",
+      "operations": {
+        "apply": true,
+        "plan": true,
+        "reset": true,
+        "validate": true
+      },
+      "owner_ref": "ai-kit",
+      "profileable": true,
+      "section_ref": "local-services",
+      "sensitive": false,
+      "setting_ref": "ai-kit:local-services:now.redis",
+      "title": "Redis NOW election",
+      "value_schema": {
+        "format": "aikit.redis-now-config/v1",
+        "type": "path"
+      },
+      "writable": true
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default": {},
+      "default_semantics": "constant",
+      "description": "Which of a harness's own session permission modes a new encounter session starts in, as an object mapping a harness (its encounter provider id, or its executable's file name such as `hermes-acp`) to one mode id that harness advertises (for example `default`, `accept_edits`, `plan`). AIKit never defines or interprets a mode.",
+      "effect": {
+        "kind": "session-restart-required",
+        "ref": "aikit system --json",
+        "summary": "Applies when a new session opens: AIKit asks the harness to switch to the named mode, only if that harness advertises it, and records the harness's confirmation. Sessions already open keep their current mode. The harness still decides what each mode allows."
+      },
+      "native_ref": "aikit:config:permission-default-modes",
+      "operations": {
+        "apply": true,
+        "plan": true,
+        "reset": true,
+        "validate": true
+      },
+      "owner_ref": "ai-kit",
+      "profileable": true,
+      "section_ref": "permissions",
+      "sensitive": false,
+      "setting_ref": "ai-kit:permissions:permissions.default-mode",
+      "title": "Default permission mode per harness",
+      "value_schema": {
+        "columns": [
+          {
+            "name": "harness",
+            "type": "scalar"
+          },
+          {
+            "name": "mode",
+            "type": "scalar"
+          }
+        ],
+        "type": "table"
+      },
+      "writable": true
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "The PreToolUse enforcement entry Central ground law (filesystem-guardrails.md) requires in this harness; it rides the AIKit hook chain and blocks out-of-bounds writes with exit 2.",
+      "effect": {
+        "kind": "none",
+        "ref": "~/.claude/settings.json hooks.PreToolUse[].hooks[].command",
+        "summary": "The harness owns this entry natively; AIKit reads and desires it, and writes no trust change through this plane."
+      },
+      "native_ref": "~/.claude/settings.json hooks.PreToolUse[].hooks[].command",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "ai-kit",
+      "profileable": true,
+      "section_ref": "claude-code",
+      "sensitive": false,
+      "setting_ref": "ai-kit:claude-code:hooks.fs-guardrail",
+      "title": "PreToolUse filesystem guardrail",
+      "value_schema": {
+        "type": "scalar"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "project",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "Which project roots codex marks trusted. This ground trusts exactly the declared project roots, never $HOME wholesale.",
+      "effect": {
+        "kind": "none",
+        "ref": "~/.codex/config.toml [projects.\"<root>\"] trust_level",
+        "summary": "The harness owns this entry natively; AIKit reads and desires it, and writes no trust change through this plane."
+      },
+      "native_ref": "~/.codex/config.toml [projects.\"<root>\"] trust_level",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "ai-kit",
+      "profileable": true,
+      "section_ref": "codex",
+      "sensitive": false,
+      "setting_ref": "ai-kit:codex:projects.trust_level",
+      "title": "Project workspace trust",
+      "value_schema": {
+        "options": [
+          {
+            "value": "trusted"
+          }
+        ],
+        "type": "enum"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "Whether $HOME is ever trusted wholesale. The 2026-09-16 narrowing removed ~/Work and tm02-field-test trust; absence is the declaration — HOME is a dwelling, not a workspace.",
+      "effect": {
+        "kind": "none",
+        "ref": "~/.codex/config.toml (absence is the declaration)",
+        "summary": "The harness owns this entry natively; AIKit reads and desires it, and writes no trust change through this plane."
+      },
+      "native_ref": "~/.codex/config.toml (absence is the declaration)",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "ai-kit",
+      "profileable": true,
+      "section_ref": "codex",
+      "sensitive": false,
+      "setting_ref": "ai-kit:codex:home.trust_level",
+      "title": "Home wholesale trust",
+      "value_schema": {
+        "type": "boolean"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "The PreToolUse enforcement entry Central ground law (filesystem-guardrails.md) requires in this harness; it rides the AIKit hook chain and blocks out-of-bounds writes with exit 2.",
+      "effect": {
+        "kind": "none",
+        "ref": "~/.zcode/cli/config.json hooks.events.PreToolUse[].hooks[].command",
+        "summary": "The harness owns this entry natively; AIKit reads and desires it, and writes no trust change through this plane."
+      },
+      "native_ref": "~/.zcode/cli/config.json hooks.events.PreToolUse[].hooks[].command",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "ai-kit",
+      "profileable": true,
+      "section_ref": "zcode",
+      "sensitive": false,
+      "setting_ref": "ai-kit:zcode:hooks.fs-guardrail",
+      "title": "PreToolUse filesystem guardrail",
+      "value_schema": {
+        "type": "scalar"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "ground",
+          "scope_ref": null
+        },
+        {
+          "scope_kind": "project",
+          "scope_ref": null
+        }
+      ],
+      "description": "Requested standing (active | retired) for named skills that carry an authored manifest, per scope. Applied through the native control.skills.retire / control.skills.restore verbs; skills without a manifest are unresolved and are never touched.",
+      "effect": {
+        "kind": "value-change",
+        "summary": "Standing changes take effect at the next skill projection; no running process has to restart."
+      },
+      "native_ref": "central:skills:<scope>:<skill>:standing",
+      "operations": {
+        "apply": true,
+        "plan": true,
+        "reset": true,
+        "validate": true
+      },
+      "owner_ref": "central",
+      "profileable": true,
+      "section_ref": "skills",
+      "sensitive": false,
+      "setting_ref": "central:skills:central.skills",
+      "title": "Skill standing",
+      "value_schema": {
+        "columns": [
+          {
+            "name": "skill",
+            "type": "scalar"
+          },
+          {
+            "name": "standing",
+            "type": "enum"
+          }
+        ],
+        "type": "table"
+      },
+      "writable": true
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "ground",
+          "scope_ref": null
+        }
+      ],
+      "description": "The IANA timezone of Control/user/civil-time-policy.json, which Central's day lifecycle reads. Authored human ground: never mutated through the configuration verbs.",
+      "effect": {
+        "kind": "none"
+      },
+      "native_ref": "central:Control/user/civil-time-policy.json:timezone",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "central",
+      "profileable": false,
+      "section_ref": "policy",
+      "sensitive": false,
+      "setting_ref": "central:policy:civil-time.timezone",
+      "title": "Civil-time timezone",
+      "value_schema": {
+        "format": "iana-timezone",
+        "type": "scalar"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "ground",
+          "scope_ref": null
+        }
+      ],
+      "description": "Minutes after local midnight at which the civil day closes (0-1439), from the authored civil-time policy. Never mutated through the configuration verbs.",
+      "effect": {
+        "kind": "none"
+      },
+      "native_ref": "central:Control/user/civil-time-policy.json:day_boundary_minutes",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "central",
+      "profileable": false,
+      "section_ref": "policy",
+      "sensitive": false,
+      "setting_ref": "central:policy:civil-time.day-boundary-minutes",
+      "title": "Day boundary offset",
+      "value_schema": {
+        "maximum": 1439.0,
+        "minimum": 0.0,
+        "type": "integer"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "ground",
+          "scope_ref": null
+        }
+      ],
+      "description": "Whether the day may roll over automatically (authored civil-time policy). Never mutated through the configuration verbs.",
+      "effect": {
+        "kind": "none"
+      },
+      "native_ref": "central:Control/user/civil-time-policy.json:automatic_day_rollover",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "central",
+      "profileable": false,
+      "section_ref": "policy",
+      "sensitive": false,
+      "setting_ref": "central:policy:civil-time.automatic-day-rollover",
+      "title": "Automatic day rollover",
+      "value_schema": {
+        "type": "boolean"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "ground",
+          "scope_ref": null
+        }
+      ],
+      "description": "How the authored work-placement policy is enforced (native-actions today). Never mutated through the configuration verbs.",
+      "effect": {
+        "kind": "none"
+      },
+      "native_ref": "central:Control/user/placement.json:enforcement",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "central",
+      "profileable": false,
+      "section_ref": "policy",
+      "sensitive": false,
+      "setting_ref": "central:policy:placement.enforcement",
+      "title": "Work placement enforcement",
+      "value_schema": {
+        "options": [
+          {
+            "value": "native-actions"
+          }
+        ],
+        "type": "enum"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "ground",
+          "scope_ref": null
+        }
+      ],
+      "description": "The paths the authored work-placement policy marks writable, with their class. Never mutated through the configuration verbs.",
+      "effect": {
+        "kind": "none"
+      },
+      "native_ref": "central:Control/user/placement.json:writable",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "central",
+      "profileable": false,
+      "section_ref": "policy",
+      "sensitive": false,
+      "setting_ref": "central:policy:placement.writable-paths",
+      "title": "Writable placement grants",
+      "value_schema": {
+        "columns": [
+          {
+            "name": "path",
+            "type": "scalar"
+          },
+          {
+            "name": "class",
+            "type": "scalar"
+          }
+        ],
+        "type": "table"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "ground",
+          "scope_ref": null
+        }
+      ],
+      "description": "The paths the authored work-placement policy protects from session writes (Control/user among them). Never mutated through the configuration verbs.",
+      "effect": {
+        "kind": "none"
+      },
+      "native_ref": "central:Control/user/placement.json:protected",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "central",
+      "profileable": false,
+      "section_ref": "policy",
+      "sensitive": false,
+      "setting_ref": "central:policy:placement.protected-paths",
+      "title": "Protected placement paths",
+      "value_schema": {
+        "items": {
+          "type": "scalar"
+        },
+        "type": "list"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "ground",
+          "scope_ref": null
+        }
+      ],
+      "description": "Presence of the authored native-action-authority grants (Control/user/native-action-authority.json). Credential material never appears here: presence and reference only. Never mutated through the configuration verbs.",
+      "effect": {
+        "kind": "none"
+      },
+      "native_ref": "central:Control/user/native-action-authority.json",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "central",
+      "profileable": false,
+      "section_ref": "policy",
+      "sensitive": true,
+      "setting_ref": "central:policy:native-action.authority",
+      "title": "Native action authority",
+      "value_schema": {
+        "subject_kind": "central.native-action-authority",
+        "type": "reference"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "world",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "The oi executable this machine resolves for the suite's own commands.",
+      "effect": {
+        "kind": "none",
+        "summary": "Read-only disclosure of a fact this suite produces; nothing to re-apply."
+      },
+      "native_ref": "current_exe",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": false
+      },
+      "owner_ref": "oi",
+      "profileable": false,
+      "section_ref": "identity",
+      "sensitive": false,
+      "setting_ref": "oi:identity:suite-executable",
+      "title": "Suite executable",
+      "value_schema": {
+        "type": "scalar"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "world",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "Where binaries, receipts and build caches live for this installation.",
+      "effect": {
+        "kind": "none",
+        "summary": "Read-only disclosure of a fact this suite produces; nothing to re-apply."
+      },
+      "native_ref": "OI_DATA_HOME",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": false
+      },
+      "owner_ref": "oi",
+      "profileable": false,
+      "section_ref": "identity",
+      "sensitive": false,
+      "setting_ref": "oi:identity:managed-root",
+      "title": "Managed root",
+      "value_schema": {
+        "type": "scalar"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "world",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "The recorded suite build this installation stands on, with its standing.",
+      "effect": {
+        "kind": "none",
+        "summary": "Read-only disclosure of a fact this suite produces; nothing to re-apply."
+      },
+      "native_ref": "suite manifest",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": false
+      },
+      "owner_ref": "oi",
+      "profileable": false,
+      "section_ref": "identity",
+      "sensitive": false,
+      "setting_ref": "oi:identity:build-record",
+      "title": "Build record",
+      "value_schema": {
+        "type": "scalar"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "world",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "The Context Frame that organises this world (oi mode set, #268).",
+      "effect": {
+        "kind": "none",
+        "summary": "Read-only disclosure of a fact this suite produces; nothing to re-apply."
+      },
+      "native_ref": "current-world:context_frame.containing_frame",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": false
+      },
+      "owner_ref": "oi",
+      "profileable": false,
+      "section_ref": "composition",
+      "sensitive": false,
+      "setting_ref": "oi:composition:containing-frame",
+      "title": "Containing frame",
+      "value_schema": {
+        "type": "scalar"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "world",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "The effective install mode, when the frame discloses one; an explicit selection otherwise.",
+      "effect": {
+        "kind": "none",
+        "summary": "Read-only disclosure of a fact this suite produces; nothing to re-apply."
+      },
+      "native_ref": "current-world:context_frame.install_mode",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": false
+      },
+      "owner_ref": "oi",
+      "profileable": false,
+      "section_ref": "composition",
+      "sensitive": false,
+      "setting_ref": "oi:composition:install-mode",
+      "title": "Install mode",
+      "value_schema": {
+        "type": "scalar"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "world",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "Which of the six product positions are present in the effective composition.",
+      "effect": {
+        "kind": "none",
+        "summary": "Read-only disclosure of a fact this suite produces; nothing to re-apply."
+      },
+      "native_ref": "current-world:context_frame.present_positions",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": false
+      },
+      "owner_ref": "oi",
+      "profileable": false,
+      "section_ref": "composition",
+      "sensitive": false,
+      "setting_ref": "oi:composition:present-positions",
+      "title": "Present positions",
+      "value_schema": {
+        "type": "scalar"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "world",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "What the managed-update flow (oi update) last applied to this machine.",
+      "effect": {
+        "kind": "none",
+        "summary": "Read-only disclosure of a fact this suite produces; nothing to re-apply."
+      },
+      "native_ref": "receipts/updates/active.json",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": false
+      },
+      "owner_ref": "oi",
+      "profileable": false,
+      "section_ref": "update",
+      "sensitive": false,
+      "setting_ref": "oi:update:state",
+      "title": "Update state",
+      "value_schema": {
+        "type": "scalar"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "Version of the accepted deterministic QL kernel in this build.",
+      "effect": {
+        "kind": "none",
+        "summary": "QL offers no mutation for this kernel faculty through the configuration plane; the value is a read-only kernel fact of the accepted build, so applying a change would change nothing."
+      },
+      "native_ref": "quaternal-logic:kernel:capabilities",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "quaternal-logic",
+      "profileable": false,
+      "section_ref": "kernel",
+      "sensitive": false,
+      "setting_ref": "quaternal-logic:kernel:kernel.version",
+      "title": "Kernel version",
+      "value_schema": {
+        "type": "scalar"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "Schema version of the kernel's address and operator contracts.",
+      "effect": {
+        "kind": "none",
+        "summary": "QL offers no mutation for this kernel faculty through the configuration plane; the value is a read-only kernel fact of the accepted build, so applying a change would change nothing."
+      },
+      "native_ref": "quaternal-logic:kernel:capabilities",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "quaternal-logic",
+      "profileable": false,
+      "section_ref": "kernel",
+      "sensitive": false,
+      "setting_ref": "quaternal-logic:kernel:kernel.schema-version",
+      "title": "Kernel schema version",
+      "value_schema": {
+        "type": "scalar"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "The quaternal forms the accepted kernel supports.",
+      "effect": {
+        "kind": "none",
+        "summary": "QL offers no mutation for this kernel faculty through the configuration plane; the value is a read-only kernel fact of the accepted build, so applying a change would change nothing."
+      },
+      "native_ref": "quaternal-logic:kernel:capabilities",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "quaternal-logic",
+      "profileable": false,
+      "section_ref": "kernel",
+      "sensitive": false,
+      "setting_ref": "quaternal-logic:kernel:kernel.supported-forms",
+      "title": "Supported forms",
+      "value_schema": {
+        "items": {
+          "type": "scalar"
+        },
+        "type": "list"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "The three accepted deterministic kernel operators.",
+      "effect": {
+        "kind": "none",
+        "summary": "QL offers no mutation for this kernel faculty through the configuration plane; the value is a read-only kernel fact of the accepted build, so applying a change would change nothing."
+      },
+      "native_ref": "quaternal-logic:kernel:capabilities",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "quaternal-logic",
+      "profileable": false,
+      "section_ref": "kernel",
+      "sensitive": false,
+      "setting_ref": "quaternal-logic:kernel:kernel.deterministic-operators",
+      "title": "Deterministic operators",
+      "value_schema": {
+        "items": {
+          "type": "scalar"
+        },
+        "type": "list"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "Stochastic operator families disclosed by the kernel.",
+      "effect": {
+        "kind": "none",
+        "summary": "QL offers no mutation for this kernel faculty through the configuration plane; the value is a read-only kernel fact of the accepted build, so applying a change would change nothing."
+      },
+      "native_ref": "quaternal-logic:kernel:capabilities",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "quaternal-logic",
+      "profileable": false,
+      "section_ref": "kernel",
+      "sensitive": false,
+      "setting_ref": "quaternal-logic:kernel:kernel.stochastic-operators",
+      "title": "Stochastic operators",
+      "value_schema": {
+        "items": {
+          "type": "scalar"
+        },
+        "type": "list"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "Research operator families disclosed by the kernel.",
+      "effect": {
+        "kind": "none",
+        "summary": "QL offers no mutation for this kernel faculty through the configuration plane; the value is a read-only kernel fact of the accepted build, so applying a change would change nothing."
+      },
+      "native_ref": "quaternal-logic:kernel:capabilities",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "quaternal-logic",
+      "profileable": false,
+      "section_ref": "kernel",
+      "sensitive": false,
+      "setting_ref": "quaternal-logic:kernel:kernel.research-operators",
+      "title": "Research operators",
+      "value_schema": {
+        "items": {
+          "type": "scalar"
+        },
+        "type": "list"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "Outcome of the latest native kernel verification.",
+      "effect": {
+        "kind": "none",
+        "summary": "QL offers no mutation for this kernel faculty through the configuration plane; the value is a read-only kernel fact of the accepted build, so applying a change would change nothing."
+      },
+      "native_ref": "quaternal-logic:verify:report",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "quaternal-logic",
+      "profileable": false,
+      "section_ref": "readiness",
+      "sensitive": false,
+      "setting_ref": "quaternal-logic:readiness:readiness.status",
+      "title": "Verification status",
+      "value_schema": {
+        "type": "scalar"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "Number of native checks the verification runs.",
+      "effect": {
+        "kind": "none",
+        "summary": "QL offers no mutation for this kernel faculty through the configuration plane; the value is a read-only kernel fact of the accepted build, so applying a change would change nothing."
+      },
+      "native_ref": "quaternal-logic:verify:report",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "quaternal-logic",
+      "profileable": false,
+      "section_ref": "readiness",
+      "sensitive": false,
+      "setting_ref": "quaternal-logic:readiness:readiness.check-count",
+      "title": "Verification checks",
+      "value_schema": {
+        "minimum": 0.0,
+        "type": "integer"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "Observed state of the provider-backed service relation.",
+      "effect": {
+        "kind": "none",
+        "summary": "QL offers no mutation for this kernel faculty through the configuration plane; the value is a read-only kernel fact of the accepted build, so applying a change would change nothing."
+      },
+      "native_ref": "quaternal-logic:service:capabilities",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "quaternal-logic",
+      "profileable": false,
+      "section_ref": "service",
+      "sensitive": false,
+      "setting_ref": "quaternal-logic:service:service.provider-state",
+      "title": "Provider state",
+      "value_schema": {
+        "options": [
+          {
+            "value": "absent"
+          },
+          {
+            "value": "available"
+          },
+          {
+            "value": "degraded"
+          },
+          {
+            "value": "incompatible"
+          }
+        ],
+        "type": "enum"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "machine",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "Per-operation negotiated availability of the service boundary.",
+      "effect": {
+        "kind": "none",
+        "summary": "QL offers no mutation for this kernel faculty through the configuration plane; the value is a read-only kernel fact of the accepted build, so applying a change would change nothing."
+      },
+      "native_ref": "quaternal-logic:service:capabilities",
+      "operations": {
+        "apply": false,
+        "plan": false,
+        "reset": false,
+        "validate": true
+      },
+      "owner_ref": "quaternal-logic",
+      "profileable": false,
+      "section_ref": "service",
+      "sensitive": false,
+      "setting_ref": "quaternal-logic:service:service.operations",
+      "title": "Negotiated operations",
+      "value_schema": {
+        "columns": [
+          {
+            "name": "operation",
+            "type": "scalar"
+          },
+          {
+            "name": "supported",
+            "type": "boolean"
+          },
+          {
+            "name": "deterministic",
+            "type": "boolean"
+          }
+        ],
+        "type": "table"
+      },
+      "writable": false
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "project",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "none",
+      "description": "Which Central project this Factory project is bound to, verified against the Central project source document by the same native check the admission performs. The project scope_ref is the path of the Factory developmental state document that owns the binding — Factory's native address for one project's mutable state.",
+      "effect": {
+        "kind": "value-change",
+        "summary": "Future Factory central-project-link reads resolve through the new binding; the developmental state document gains the link."
+      },
+      "native_ref": "factory:developmental-state:central-project-links",
+      "operations": {
+        "apply": true,
+        "plan": true,
+        "reset": true,
+        "validate": true
+      },
+      "owner_ref": "software-factory",
+      "profileable": false,
+      "section_ref": "binding",
+      "sensitive": false,
+      "setting_ref": "software-factory:binding:central-project",
+      "title": "Central project binding",
+      "value_schema": {
+        "columns": [
+          {
+            "name": "central_project_ref",
+            "type": "scalar"
+          },
+          {
+            "name": "source_path",
+            "type": "path"
+          }
+        ],
+        "type": "table"
+      },
+      "writable": true
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "project",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "constant",
+      "description": "Default --limit for `factory telemetry search` when the flag is absent; delegated AIKit queries stay within this bound. Override per call with --limit.",
+      "effect": {
+        "kind": "value-change",
+        "summary": "Takes effect on the next telemetry command; no restart, no reindex"
+      },
+      "native_ref": "software-factory:telemetry-config",
+      "operations": {
+        "apply": true,
+        "plan": true,
+        "reset": true,
+        "validate": true
+      },
+      "owner_ref": "software-factory",
+      "profileable": false,
+      "section_ref": "telemetry",
+      "sensitive": false,
+      "setting_ref": "software-factory:telemetry:search-limit-default",
+      "title": "Search result limit default",
+      "value_schema": {
+        "maximum": 100.0,
+        "minimum": 1.0,
+        "type": "number"
+      },
+      "writable": true
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "project",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "constant",
+      "description": "Wall-clock budget for the delegated AIKit knowledge search subprocess. A timed-out search is disclosed as provider-unavailable, never retried silently.",
+      "effect": {
+        "kind": "value-change",
+        "summary": "Takes effect on the next telemetry command; no restart, no reindex"
+      },
+      "native_ref": "software-factory:telemetry-config",
+      "operations": {
+        "apply": true,
+        "plan": true,
+        "reset": true,
+        "validate": true
+      },
+      "owner_ref": "software-factory",
+      "profileable": false,
+      "section_ref": "telemetry",
+      "sensitive": false,
+      "setting_ref": "software-factory:telemetry:search-timeout-seconds",
+      "title": "Delegated search subprocess budget (seconds)",
+      "value_schema": {
+        "maximum": 600.0,
+        "minimum": 5.0,
+        "type": "number"
+      },
+      "writable": true
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "project",
+          "scope_ref": null
+        }
+      ],
+      "default_semantics": "constant",
+      "description": "Default poll interval for `factory telemetry watch`; the stream stays bounded by --max-events and --duration regardless.",
+      "effect": {
+        "kind": "value-change",
+        "summary": "Takes effect on the next telemetry command; no restart, no reindex"
+      },
+      "native_ref": "software-factory:telemetry-config",
+      "operations": {
+        "apply": true,
+        "plan": true,
+        "reset": true,
+        "validate": true
+      },
+      "owner_ref": "software-factory",
+      "profileable": false,
+      "section_ref": "telemetry",
+      "sensitive": false,
+      "setting_ref": "software-factory:telemetry:watch-interval-seconds",
+      "title": "Watch poll interval (seconds)",
+      "value_schema": {
+        "maximum": 60.0,
+        "minimum": 0.5,
+        "type": "number"
+      },
+      "writable": true
+    },
+    {
+      "allowed_scopes": [
+        {
+          "scope_kind": "workcell",
+          "scope_ref": null
+        }
+      ],
+      "default": [],
+      "default_semantics": "constant",
+      "description": "The operator's provider/material policy for this Workcell: which logical services it offers, whether each is materialised as a managed host process or observed as a target-owned service, where its endpoint is and how readiness is decided. Values are validated against this machine's material possibility — a declaration naming a program that does not exist here is refused and never enters declared state. Native state: services.json in the Workcell state root.",
+      "effect": {
+        "kind": "value-change",
+        "ref": "workcell discover --json",
+        "summary": "The next discovery on this Workcell offers the declared services; nothing is started until a demand requires them."
+      },
+      "native_ref": "workcell:state-root:services.json",
+      "operations": {
+        "apply": true,
+        "plan": true,
+        "reset": true,
+        "validate": true
+      },
+      "owner_ref": "workcell",
+      "profileable": false,
+      "section_ref": "processes-services",
+      "sensitive": false,
+      "setting_ref": "workcell:processes-services:services.declared",
+      "title": "Declared logical services",
+      "value_schema": {
+        "columns": [
+          {
+            "name": "logical_ref",
+            "type": "scalar"
+          },
+          {
+            "name": "lifetime",
+            "type": "scalar"
+          },
+          {
+            "name": "endpoint",
+            "type": "scalar"
+          },
+          {
+            "name": "program",
+            "type": "scalar"
+          },
+          {
+            "name": "args",
+            "type": "list"
+          },
+          {
+            "name": "acquisition",
+            "type": "scalar"
+          },
+          {
+            "name": "readiness",
+            "type": "table"
+          }
+        ],
+        "type": "table"
+      },
+      "writable": true
+    }
+  ]
+}

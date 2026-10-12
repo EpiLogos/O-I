@@ -16,7 +16,7 @@ this baseline. Earlier research/model checks do not close these targets.
 Executed register verification:
 
 ```text
-python3 /Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/acceptance.py verify
+python3 desktop/cradle/docs/world-shell/acceptance.py verify
 exit 0; source/identity/text/dependency/licence/evidence-record integrity passed
 126 total; by lane 21 / 25 / 26 / 30 / 24; 126 pending
 ```

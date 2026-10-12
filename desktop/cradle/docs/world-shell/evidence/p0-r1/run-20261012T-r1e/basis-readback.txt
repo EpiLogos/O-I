@@ -1,0 +1,13 @@
+seat=/Users/admin/Central/worktrees/env-1/o-i
+branch=dlw/build-20261012
+head=046fb857bba6d6b49bcc04c4a8ad6279902bafc4
+stamp=20261012T-r1e
+out=/Users/admin/Central/Work/O-I/target/p0-r1/20261012T-r1e
+target=/Users/admin/Central/Work/O-I/target
+backing=0/1/2
+mode=readback
+runner_sha256=a484aebb94ded10bcfa86f07dcfd0ae7fcc3c30bde6257f4107dedf62c353830
+status:
+ M desktop/cradle/docs/world-shell/evidence/p0-r1/ax-run-context.swift
+ M desktop/cradle/docs/world-shell/evidence/p0-r1/run-native-at-head.sh
+?? desktop/cradle/docs/world-shell/evidence/p0-r1/run-20261012T-r1e/

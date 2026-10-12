@@ -492,6 +492,8 @@ A future Epi-Logos integration is the natural place for a live shared relational
 
 SpaceTimeDB is the planned implementation candidate because the target problem is live shared relational state: addressable objects, relationships, subscriptions, recursive fields, Contribution graphs, presence, dialogue/activity, and immediately servable derived views.
 
+> **Re-pinned 12 Oct 2026 (P0-V2 item 23).** "Planned" is stale for the hosted field. The module is in the repository at `shared-field/spacetimedb/`. `shared-field/spacetimedb/hosting.json` names a `hosted` target (`maincloud.spacetimedb.com`, database `epilogos-oi-shared-field`), and `shared-field/spacetimedb/HOSTING.md` is the deployment runbook. Whether the production target is serving now was not probed in this pass.
+
 The dependency points downward:
 
 ```text

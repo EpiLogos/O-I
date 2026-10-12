@@ -1,0 +1,5 @@
+     Removed 7 files, 109.7MiB total
+   Compiling aikit-core v0.1.0 (https://github.com/EpiLogos/ai-kit?rev=e53801d#e53801d8)
+   Compiling oi-cli v0.1.0 (/Users/admin/Central/worktrees/env-1/o-i/cli)
+    Finished `release` profile [optimized] target(s) in 58.78s
+{"basis": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src-tauri/target/p0-r1/20261012T-r1b/cli-release-basis.json", "sha256": "6188f9861b38439f0494881889fd35de8344f8eeee27145ea9c6441552c929d5", "artifact": {"path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src-tauri/target/release/oi", "sha256": "4f46fb4e468fdb20b6d0a41445ac27ae157e9e3865a60d1d791c1d084d8d21eb", "size_bytes": 16610672, "profile": "release", "build_command": ["cargo", "build", "--release", "--manifest-path", "cli/Cargo.toml", "--target-dir", "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src-tauri/target", "-j1", "--locked"], "cwd": "/Users/admin/Central/worktrees/env-1/o-i"}}

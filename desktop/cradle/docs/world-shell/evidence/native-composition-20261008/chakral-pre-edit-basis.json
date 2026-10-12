@@ -1,0 +1,23 @@
+{
+  "schema": "techne.new-shell.native-pre-edit-basis/v1",
+  "result": "clean",
+  "observed_at": "2026-10-07T18:48:30.603Z",
+  "expression_ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+  "scope": "expressions",
+  "checkpoint_id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+  "checkpoint_revision": 2142,
+  "draft_id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+  "draft_revision": 2143,
+  "document_revision": 4,
+  "checkpoint_pending": null,
+  "draft_equals_checkpoint_journey": true,
+  "checkpoint_document_equals_native_owner": true,
+  "actual_composition_changes": 0,
+  "field_time_scale": 1,
+  "native_config_time_scale": 1,
+  "native_projection_time_scale": 1,
+  "personal_owner_writes": 0,
+  "gui_save_claimed": false,
+  "composition_source_sha256": "24e1818ad0840eec1bff3631295a690db9fa40ebdce5e8439631f31b172f3b46",
+  "composition_built_module_sha256": "2679331542f192e5cd917a6fc4ae339639994521a90883225b31d7d10a36ea31"
+}

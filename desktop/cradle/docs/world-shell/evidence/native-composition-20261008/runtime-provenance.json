@@ -1,0 +1,48 @@
+{
+  "schema": "techne.new-shell.runtime-provenance/v1",
+  "binaries": [
+    {
+      "path": "/Users/admin/Central/Work/O-I/target/debug/walk-bridge",
+      "sha256": "e2d7360775de3c852470d9a908a5aff563e249be03639348bc03002ad27d56e0",
+      "bytes": 76455440
+    },
+    {
+      "path": "/Users/admin/Central/Work/O-I/target/debug/live-shell",
+      "sha256": "9d1c651aff1d1642c552ebe06ca588cd5cb29678fac9791261cbbd6feda4e5ec",
+      "bytes": 8304360
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-3/central/target/release/ctrl",
+      "sha256": "56512253dffcbc5c0c271d18846e6f47e0fb124f2f1d93515f9eff4ecb498adf",
+      "bytes": 12672464
+    }
+  ],
+  "ctrl_checkout_head": "1ed6e625d0d7ee1d9986cd8171e98b5d2bddc4bc",
+  "ctrl_binding_environment": {
+    "OI_CENTRAL_CTRL_BIN": "/Users/admin/Central/worktrees/env-3/central/target/release/ctrl"
+  },
+  "bridge": "127.0.0.1:4180",
+  "shell_saved_work_configuration": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/saved-work-config.json",
+  "previous_runtime_binaries": [
+    {
+      "path": "/Users/admin/Central/Work/O-I/target/debug/walk-bridge",
+      "sha256": "e2d7360775de3c852470d9a908a5aff563e249be03639348bc03002ad27d56e0",
+      "bytes": 76455440
+    },
+    {
+      "path": "/Users/admin/Central/Work/O-I/target/debug/live-shell",
+      "sha256": "0905f2fa39d9a6c1c3ca06e6453a4817bf0c1d20e60a179557d2c33e0ac8aec4",
+      "bytes": 8304360
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-3/central/target/release/ctrl",
+      "sha256": "56512253dffcbc5c0c271d18846e6f47e0fb124f2f1d93515f9eff4ecb498adf",
+      "bytes": 12672464
+    }
+  ],
+  "candidate_head_observed": "214df508973b49b88b59465e2b47e98cd5919f59",
+  "recovery_source_sha256": "5f38d4a38d5162fb17a14e8d7d83c65ea2bea204c76d5cede42fa082a193976a",
+  "native_session": "74970",
+  "repaired_startup_acceptance": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/startup-acceptance-repaired.json",
+  "final_package_continuation_acceptance": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/startup-acceptance-current.json"
+}

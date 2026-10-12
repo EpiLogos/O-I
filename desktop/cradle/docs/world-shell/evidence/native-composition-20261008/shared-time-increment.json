@@ -1,0 +1,374 @@
+{
+  "schema": "techne.new-shell.shared-time-increment/v1",
+  "observed_at": "2026-10-08T06:47:52.911128+00:00",
+  "head": "40de7693050709577716f37a6c8d6b46fedeae82",
+  "standing": "Native owner/helper foundation implemented and exercised. Frozen body production build passed and all49 served outputs match local bytes. Shell compiler/build passed but shared source changes prevent current-tree provenance. Installed dated and visual acceptance remain pending; original126-target commission remains active.",
+  "sources": [
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/package.json",
+      "sha256": "8ca5a6c8e49a78a887064887cf8b12bf2fdee4f283bc187186cf2aace79fed6f",
+      "byte_len": 994,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/timeWindow.ts",
+      "sha256": "f4e8448aa3d8c20815bf022e680bb957dc4575a0fe5c7f9520ec77632cb8911b",
+      "byte_len": 12032,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/host.ts",
+      "sha256": "796cea7f630e1b4312141cf911f506183dd1c679b4c0a480fb4fbc5a39fb4296",
+      "byte_len": 19546,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/tests/time-window-native-acceptance.mjs",
+      "sha256": "2b663eae8d06f90148597ed7bdaaeef2f51e5ce92447df42e26b19e92843dd4d",
+      "byte_len": 28333,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/tests/run-native-time-window.mjs",
+      "sha256": "96438d8b9d8eed64a8adc7bb685821f2403d51133d593f5d5e53d962b9abec8f",
+      "byte_len": 1462,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/native/expressionOwners.ts",
+      "sha256": "161111b9d0d6e89e0c75321085ee8c804ba8c8db0d033e21bacbff1a01d903f7",
+      "byte_len": 3978,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/techne/session.ts",
+      "sha256": "bf5244924abf3fd8b3e3f74bf53d2d8addf339cc35e8e36afc51306bdf76a0be",
+      "byte_len": 11286,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/techne/m0m5/timeline/timeAxis.ts",
+      "sha256": "0d3b6f0c71d736824ea5a88c5bb0996ab61ccd095846c6e3439dce1f816e34e2",
+      "byte_len": 8118,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/techne/m0m5/timeline/scale.ts",
+      "sha256": "85b6e657cb02995334bc0271392c9bc49b44898e019e4e52390f13fe20d013c4",
+      "byte_len": 14632,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/techne/m0m5/timeline/relations.ts",
+      "sha256": "029da3ee5faf14293280a8538a1c39eb8bac9052e529479ac46ec5cde1f0e7d2",
+      "byte_len": 23143,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/techne/m0m5/timeline/lanes.ts",
+      "sha256": "65d1c8ef784c048a4fc04a0b5b8429a7e3250cd6b91a8ebf5427c646079fac8c",
+      "byte_len": 10271,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/techne/m0m5/timeline/state.ts",
+      "sha256": "e12f88ecc478fd7ff6a6fc458a5fef15deea928b4c413a815d44c1b95e03cf94",
+      "byte_len": 8796,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/tests/timeline-calendar.test.mjs",
+      "sha256": "86d219048a1893e5eeb5034b2df9419483cceeec711ebc30b2dbf61a8e79ef13",
+      "byte_len": 3223,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/kernelExpressions.ts",
+      "sha256": "1521ebdb1d2bace7ef959fe26d19e11e694301dd594b537a6ca51a73dbece45b",
+      "byte_len": 22142,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/sharedTimeWindow.tsx",
+      "sha256": "253886d2e2f18271529089b4896f41fdbbf962537b4283b46736670089e9cb36",
+      "byte_len": 8301,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/sharedTimeWindow.css",
+      "sha256": "a0545525179f2d5af2f4981b73381b7ab1eb8ab755f7355265e885432e2e1e09",
+      "byte_len": 816,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/sharedTimeProjection.ts",
+      "sha256": "0cd15d8bfcdcecf630ed7bf581ac8363e8f87f65466893e779f24bf44aa611fa",
+      "byte_len": 2276,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/placeReading.ts",
+      "sha256": "c94f578000062a682e6cb6dbb678983f4ebb6dd4d7cb9c42a9d280afac3ef05a",
+      "byte_len": 6202,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/placeFacetsPanel.tsx",
+      "sha256": "954874ee7b6a58bae11385c5aee196c2e32039bb2679336218194e4c645d3ff7",
+      "byte_len": 10608,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/researchInstruments.tsx",
+      "sha256": "f1d8de32d629fff3c1fe5466281ea186f6ea2e834f6537ae73e52c35f43ab9a3",
+      "byte_len": 66128,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/relationFieldView.tsx",
+      "sha256": "4a64ef6d8caf785276e9756b2b54a8063367c632badd8f42694366682fe16a55",
+      "byte_len": 18531,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    }
+  ],
+  "working_face": {
+    "url": "http://127.0.0.1:8789/app/",
+    "device": "Compact chosen controls/macros; full configuration disclosure and same-instance deep editor retained.",
+    "composition": "Whole-expression Scene Session/Arrangement and compact bottom Scene editor remain from prior native Scene increment.",
+    "shared_time": "Timeline/Places Time disclosure: explicit Apply, Clear and Refresh time context through one canonical host DisclosureSession; retained typed drafts and captured-source/session/selection guards. Relations/Phase/Activity report scope without removing the native facts."
+  },
+  "acquisition": {
+    "A": "Existing working shell/frame and stable JSON document API retained.",
+    "B": "Existing O-I native session, selection, temporal/precision, source-qualified reading and owner package mechanisms.",
+    "D": "Portable time-window receiving adapter and shell/instrument presentation; repairs in existing native calendar owner.",
+    "C": "No new external reference code or assets entered.",
+    "Ableton": "interface-only observable/measured reference; captures not shipped into candidate.",
+    "MapLibre": "existing in-tree renderer retained; no second globe."
+  },
+  "native_owner_evidence": {
+    "path": "evidence/shared-time-owner-native-20261008-03/time-window-acceptance.json",
+    "checks_passed": 47,
+    "actual_native_read_requests": 13,
+    "native_domain_writes": 0,
+    "scope": "current-register-owner/helper-only",
+    "source_hashes": 189,
+    "installed_host_iframe_admitted": false,
+    "mounted_Scene_time_admitted": false,
+    "dated_T6_T17_admitted": false
+  },
+  "protected_documents": [
+    {
+      "ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+      "revision": 6,
+      "sha256": "e82d8283d5a2a6907691570b61240f4ec946ffeb39f7741874370c6b5a44635c"
+    },
+    {
+      "ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+      "revision": 173,
+      "sha256": "36e6d44d201ad4da69d0bbb3e21a4260813801c2c5cccd4c62a977ec4bd0c76b"
+    },
+    {
+      "ref": "expression:chosen-control-acceptance-69bfc51d-4d5e-49fc-87b8-c61b744d5b42",
+      "revision": 11,
+      "sha256": "ecf5f9f3d7747bc178cd96733418975369a14a80fe81fc72b2d00f3b0d7df1cd"
+    }
+  ],
+  "regressions": {
+    "boundary": {
+      "total": 155,
+      "passed": 151,
+      "failed": 0,
+      "skipped": 4,
+      "evidence": "evidence/shared-time-final-boundary-package-tests.json",
+      "source_basis_limit": "This package command has no before/after input freeze manifest; native helper and production body packets retain their own exact source pins."
+    },
+    "calendar_navigation_native_model": {
+      "passed": 15,
+      "failed": 0,
+      "scope": "Actual source-function regressions, not dated native-data admission",
+      "evidence": "evidence/shared-time-calendar-native-math-suite.log"
+    },
+    "relations": {
+      "passed": 6,
+      "failed": 0,
+      "scope": "Existing pure layout/projection regressions, not mounted UI admission",
+      "evidence": "evidence/shared-time-relation-projection-regressions.log"
+    }
+  },
+  "runtime_read_evidence": "evidence/shared-time-native-runtime-read.json",
+  "gui": {
+    "accepted": false,
+    "native_computer_use": "Fresh native cua.listApps still reports the Mac locked and automatic unlock unavailable; no GUI operation issued.",
+    "viewports_pending": [
+      "1920x1200",
+      "approximately700px"
+    ],
+    "preserved": "Original unsubmitted tint and competing Chakral draft untouched; no new native GUI edit issued.",
+    "last_checked_at": "2026-10-08T06:47:52.911128+00:00"
+  },
+  "remaining": [
+    "Active shared shell writer changed App, Device, InputRetention, WorldDetail and two new continuity inputs across the guarded source interval; current-tree shell provenance is unaccepted. Bounded build effort stopped without touching the writer.",
+    "Native Techn\u0113173 Scene refuses its stale source revision; no reconciliation/overwrite of retained work performed.",
+    "Actual current-register payload has0temporal and0located rows; dated/partial cross-view activity is unexecuted.",
+    "AIKit native relations read returned real20second timeout; canonical graph relation provider remains unavailable.",
+    "Installed host/iframe roundtrip and both viewport/craft/keyboard/deep-return/save GUI activities remain unaccepted.",
+    "Native period-label/notes carriers are absent; no invented labels.",
+    "Legacy native Places identity-name/hierarchy timestamp comparator is separate from shared facet inclusion and still needs dated convergence acceptance.",
+    "Canonical personal Chakral file Save remains unaccepted because a real competing recovery draft is preserved; isolated native save/reopen proof remains separately evidenced.",
+    "Audio/device deep engines and full outward49feature/126target functional admission remain open; native owners retain authority."
+  ],
+  "full_126_targets_passed": 0,
+  "register_integrity": {
+    "result": "passed",
+    "evidence": "register-verification.json",
+    "target_count": 126,
+    "full_target_statuses": "126pending",
+    "repairs": [
+      "Initial register catalogue had older PROGRAMME pin; full current PROGRAMME re-read matched already-operative8afb105a source. Owner WorkOrder0 remains conversation amendment to D-A.",
+      "Two Obsidian references now point to owner-moved reverse-engineering campaign; exact source SHA256 unchanged."
+    ],
+    "knowledge_route": "Native aikit knowledge search new-shell programme returned no output within20seconds; owned query process terminated, then explicit named source fallback read in full."
+  },
+  "source_repairs": [
+    {
+      "evidence": "evidence/shared-time-native-input-type-repair.json",
+      "purpose": "Consume landed native private-input owner using declared string writer identity; fixed shell adapter compile fault without casting or changing semantics."
+    }
+  ],
+  "builds": {
+    "body": {
+      "evidence": "evidence/shared-time-calendar-expressions-build-replay-review.json",
+      "command": "npm run build",
+      "exit_code": 0,
+      "elapsed_seconds": 29.952,
+      "recorded_inputs_stable": true,
+      "input_count": 4154,
+      "body_sha256": "3af770c25c88224303f2d4286889f1891ba79eb617d9810f225371016083e0a2",
+      "body_bytes": 8863702,
+      "four_body_copies_identical": true,
+      "scope": "Native body typecheck, bundle and wrappers; no mounted UI admission"
+    },
+    "shell": {
+      "evidence": "evidence/shared-time-shell-current-build-review.json",
+      "command": "npm run build",
+      "exit_code": 0,
+      "elapsed_seconds": 62.052,
+      "current_source_basis_stable": false,
+      "output_count": 48,
+      "asset_references_resolve": true,
+      "asset_reference_count": 84,
+      "source_interval_drift": {
+        "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/App.tsx": {
+          "before": {
+            "sha256": "d293e2066b8fafc5c8db891e66380adcd003c8f2ace3f60264c832e97e5f3be4",
+            "bytes": 21575
+          },
+          "after": {
+            "sha256": "0e280b67bc5cf552ab54578b1b78dafe95695805faabc77c70ea0df53c8516a5",
+            "bytes": 21715
+          },
+          "typescript_input": true,
+          "observed_modified_at": "2026-10-08T06:33:58.840267+00:00"
+        },
+        "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeDeviceEditors.tsx": {
+          "before": {
+            "sha256": "654c0fbf1ee70ad82da1df835324b448271cdffb609a8e6e04faaeb983333321",
+            "bytes": 40372
+          },
+          "after": {
+            "sha256": "827fa1740e6ab2456ae05e560fc0f00b2b48d942c1cfe361280e75d461f1a7e5",
+            "bytes": 44905
+          },
+          "typescript_input": true,
+          "observed_modified_at": "2026-10-08T06:37:13.815539+00:00"
+        },
+        "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeInputRetention.tsx": {
+          "before": {
+            "sha256": "ed6a3723b6c25e00c1c104f734dc350575179608b91b7c1605e0469ca880c3f2",
+            "bytes": 7652
+          },
+          "after": {
+            "sha256": "b5f8c9234b8b5ff23c024e95cd61bcecb02d9e3b79cd719e943f29f099a91d94",
+            "bytes": 8165
+          },
+          "typescript_input": true,
+          "observed_modified_at": "2026-10-08T06:36:57.238533+00:00"
+        },
+        "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeWorldDetail.css": {
+          "before": {
+            "sha256": "0602e27e95997de4cf7668e70d1f00a46ea1cbfbc3ad3397a0c8f838a3cea0ca",
+            "bytes": 5028
+          },
+          "after": {
+            "sha256": "d5e9a6c673dee2ea0f2f9f88e56b5349023ff3aacc183823ec0e102884790191",
+            "bytes": 5464
+          },
+          "typescript_input": false,
+          "observed_modified_at": "2026-10-08T06:33:58.859603+00:00"
+        },
+        "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeWorldDetail.tsx": {
+          "before": {
+            "sha256": "abf738896d7cd1ac83f86020b1a81ca892bdcd7d2b2b1cea7fe14345a17e97be",
+            "bytes": 15621
+          },
+          "after": {
+            "sha256": "2ea91024962e20ce91f6a3efae69ea48865b624e803fd0a145b77175cac47ea5",
+            "bytes": 15832
+          },
+          "typescript_input": true,
+          "observed_modified_at": "2026-10-08T06:33:58.853695+00:00"
+        },
+        "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/continuity/glyphInputMaterial.ts": {
+          "before": null,
+          "after": {
+            "sha256": "e7475184e05b4a0b65b471f652491950a6033a93713ffe4a0f4fbcbe96ff3ef3",
+            "bytes": 4094
+          },
+          "typescript_input": true,
+          "observed_modified_at": "2026-10-08T06:36:20.280542+00:00"
+        },
+        "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/continuity/nativeInputContext.ts": {
+          "before": null,
+          "after": {
+            "sha256": "d2651a83fb5db9bdd638e7865f7e220e4e33c9a3450cebfbf0bda3f31be1b5e5",
+            "bytes": 377
+          },
+          "typescript_input": true,
+          "observed_modified_at": "2026-10-08T06:35:40.536405+00:00"
+        }
+      },
+      "primary_dist_outputs": {
+        "assets/index-32147LJF.js": {
+          "sha256": "f59011485828c574e6805c7115a7e0802de10c12fd500a145831fea993baa034",
+          "bytes": 2530181,
+          "relative_path": "assets/index-32147LJF.js",
+          "served_route": "/app/assets/index-32147LJF.js"
+        },
+        "assets/index-jzGAn9Dp.css": {
+          "sha256": "912e0d02fd14bc9e1be505d62654622a2c343eeb4301aad8979f754dd67c1c72",
+          "bytes": 270125,
+          "relative_path": "assets/index-jzGAn9Dp.css",
+          "served_route": "/app/assets/index-jzGAn9Dp.css"
+        },
+        "index.html": {
+          "sha256": "783b3c87b06168115e9324fe010dd5b680e8584cacffdf6d63afc00acfe5a3e2",
+          "bytes": 449,
+          "relative_path": "index.html",
+          "served_route": "/app/index.html"
+        }
+      },
+      "limit": "Active shared writer changed six compiler inputs and CSS across the guarded source interval; no stable current shell input claim. Bounded build effort stopped."
+    },
+    "served": {
+      "evidence": "evidence/shared-time-served-production-basis.json",
+      "observed_at": "2026-10-08T06:40:25.352Z",
+      "responses": 49,
+      "all_http_200": true,
+      "all_bytes_match": true,
+      "native_writes": 0,
+      "gui_accepted": false,
+      "limit": "Exact dist-byte delivery only; shell source divergence and mounted/UI acceptance remain open."
+    }
+  },
+  "now_return": "evidence/shared-time-now-return.json"
+}

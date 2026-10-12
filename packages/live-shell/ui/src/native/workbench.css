@@ -1231,3 +1231,12 @@
 .candidate-workbench-fault, .candidate-workbench-return {margin:0; padding:6px 8px; font-size:12px;}
 .candidate-workbench-fault button {margin-left:8px;}
 .candidate-workbench-rest {padding:24px;}
+
+/* The native-outcome receipt beneath an owner refusal (NativeMaterialBrowser,
+   P0-R5c): the RefusalCard folded-receipt treatment (agentShell.css
+   .agent-refusal details rules) ported to the owner-receipt disclosure. Folded
+   by default (no open attribute), a quiet developer affordance under the
+   owner's words, monospace body, token colours only. */
+.owner-receipt { margin-top:5px; font-size:10px; }
+.owner-receipt summary { cursor:pointer; color:var(--text-faint); }
+.owner-receipt pre { margin:4px 0 0; font-family:var(--mono, ui-monospace, 'SF Mono', Menlo, monospace); font-size:9.5px; color:var(--text-dim); white-space:pre-wrap; overflow-wrap:anywhere; max-height:140px; overflow:auto; }

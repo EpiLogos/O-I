@@ -25,6 +25,7 @@ import {Icon, type IconName} from '../inhabitants/sdk/Icon'
 import type {CentralSubjectSelection} from '../inhabitants/CentralSubjectDetail'
 import type {WorldTimelineView} from '../projections/useWorldTemporalReading'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+import {carrierOf} from './runContext'
 import './modeSurface.css'
 
 /** The dock's tile identities (Rev 4's tile set). `body: 'owner'` tiles
@@ -205,7 +206,7 @@ function TileBody({id, mode, world, transport, subject}: {
   }
   if (id === 'field') {
     return <div className="mode-dock-rows">
-      <div className="mode-dock-row"><span>carrier</span><b>{transport.kind === 'unavailable' ? '—' : transport.kind}</b></div>
+      <div className="mode-dock-row"><span>carrier</span><b>{transport.kind === 'unavailable' ? '—' : carrierOf(transport)}</b></div>
       <p className="mode-dock-note">{mode === 'techne'
         ? 'The field\'s presence — other Worlds arriving. Presence lands here when the field carrier answers.'
         : 'The field around this ground — presence and arrivals land here when the carrier answers.'}</p>

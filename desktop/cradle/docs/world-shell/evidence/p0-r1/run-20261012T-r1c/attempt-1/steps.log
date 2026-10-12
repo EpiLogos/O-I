@@ -1,0 +1,5 @@
+== 2026-10-12T15:26:51Z 0-clean-tree: ok (dirty allowed: 0)
+== 2026-10-12T15:26:51Z 1-cli-capture: python3 -B packages/live-shell/record-cli-build.py capture --command-json ["cargo","build","--release","--manifest-path","cli/Cargo.toml","--target-dir","/Users/admin/Central/Work/O-I/target","-j1","--locked"] --artifact /Users/admin/Central/Work/O-I/target/release/oi --capture /Users/admin/Central/Work/O-I/target/p0-r1/20261012T-r1c/cli-capture.json
+== 2026-10-12T15:26:54Z 1-cli-capture: exit 0
+== 2026-10-12T15:26:54Z 1-cli-build: python3 -B packages/live-shell/record-cli-build.py build --capture /Users/admin/Central/Work/O-I/target/p0-r1/20261012T-r1c/cli-capture.json --output /Users/admin/Central/Work/O-I/target/p0-r1/20261012T-r1c/cli-release-basis.json
+== 2026-10-12T15:26:55Z 1-cli-build: exit 1

@@ -1,0 +1,24 @@
+{
+  "schema": "techne.new-shell.recovery-conflict-inspection/v1",
+  "observed_at": "2026-10-07T23:43:09.161125+00:00",
+  "expression_ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+  "checkpoint_revision": 2156,
+  "draft_revision": 2208,
+  "checkpoint_document_revision": 6,
+  "current_document_revision": 6,
+  "current_document_sha256": "e82d8283d5a2a6907691570b61240f4ec946ffeb39f7741874370c6b5a44635c",
+  "checkpoint_document_matches_current": true,
+  "draft_keys": [
+    "description",
+    "id",
+    "loop",
+    "name",
+    "savedScenes",
+    "scenes",
+    "schema",
+    "shared",
+    "updatedAt",
+    "version"
+  ],
+  "native_writes": 0
+}

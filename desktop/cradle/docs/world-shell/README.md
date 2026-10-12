@@ -43,7 +43,7 @@ continuity wherever the target requires them.
 Run:
 
 ```sh
-python3 Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/acceptance.py verify
+python3 desktop/cradle/docs/world-shell/acceptance.py verify
 ```
 
 Initialization has already run and refuses to replace existing progress. Future

@@ -1,0 +1,10 @@
+seat=/Users/admin/Central/worktrees/env-1/o-i
+branch=dlw/build-20261012
+head=b50b970c3b92528befcd45cbd5fcf6fc3ab43eaf
+stamp=20261012T-r1d
+out=/Users/admin/Central/Work/O-I/target/p0-r1/20261012T-r1d
+target=/Users/admin/Central/Work/O-I/target
+backing=0/1/2
+mode=all
+runner_sha256=99480c2674cc598b7c9739e146a0f3fae636b816a2500e40c0ad89f9d56a760a
+status:

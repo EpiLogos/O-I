@@ -8,6 +8,7 @@ import {NativeInputRetentionProvider,nativeInputBinding} from './components/Nati
 import { useWorkspace } from './shell/workspace'
 import { DeviceChainPanel, type DetailMode } from './components/DeviceChainPanel'
 import { ModeContextDock } from './shell/ModeContextDock'
+import { carrierOf } from './shell/runContext'
 import type { SetSelection } from './components/SessionView'
 import { StatusBar } from './components/StatusBar'
 import { TransportBar } from './components/TransportBar'
@@ -354,7 +355,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     position: worldNowReadout(worldView),
     link: workspace.transport.kind === 'unavailable'
       ? {value: '—', title: `The kernel carrier is unavailable: ${workspace.transport.reason}`}
-      : {value: workspace.transport.kind, title: `The kernel carrier (${workspace.transport.kind}) serves the ground`},
+      : {value: carrierOf(workspace.transport), title: `The kernel carrier (${carrierOf(workspace.transport)}) serves the ground`},
   } : undefined
   const factoryTask = agency.tracks.find(item => trackKey(item) === shellCtx.selectedTrackId) ?? agency.tracks[0] ?? null
   const frameBody = (<>

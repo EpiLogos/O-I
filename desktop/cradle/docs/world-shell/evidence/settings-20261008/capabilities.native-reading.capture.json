@@ -1,0 +1,23 @@
+{
+  "desired": {
+    "set_at_unix_ms": 1791407489683,
+    "value": {
+      "skill/personal/ralph-tui-create-beads-rust": false
+    }
+  },
+  "native": {},
+  "native_reading": {
+    "observed_at_unix_ms": 1791407489683,
+    "reading_digest": "75980da0e68bcb0d5581cba04ae65c4167e810608b19bb55645dd760b65f6447"
+  },
+  "reconciliation": {
+    "reason": "the owner is unavailable on this subject: no project context is bound: AIKit's settings disclosure needs a project root (run from within a project, or pass --cwd)",
+    "status": "blocked"
+  },
+  "schema": "oi.config-resolution/v1",
+  "scope": {
+    "scope_kind": "machine",
+    "scope_ref": null
+  },
+  "setting_ref": "ai-kit:skills:skills.capabilities"
+}

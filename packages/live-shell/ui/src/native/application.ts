@@ -14,6 +14,18 @@ export interface ShellConfig {
   default_set: string
   product_ids?: string[]
   contributions?: NativeContributionReading[]
+  /** The suite product universe the footprint offers (live_shell_config's
+   * suite_product_ids, native_shell.rs): every product named in the footprint's
+   * backing options that the host owns, in the host's owner order. product_ids
+   * is the selected backing's admitted subset of it. Absent on a host build
+   * that predates the field. */
+  suite_product_ids?: string[]
+  /** Each suite product's public owner name (live_shell_config's
+   * suite_owner_names, native_shell.rs, read from the host's OWNERS table),
+   * keyed by product id. The readback shows the name with the id as secondary
+   * text. Absent on a host build that predates the field; a product the host
+   * names no name for is shown by its id alone. */
+  suite_owner_names?: Record<string, string>
   kernel_bridge?: string
   kernel_transport?: {kind: 'tauri'; invoke: 'kernel_op'}
   kernel_epoch?: string
@@ -27,6 +39,13 @@ export interface ShellConfig {
   onboarding?: boolean
   expressions_entry?: string
   saved_works?: unknown
+  /** The installed host's qualified source basis (live_shell_config in
+   * src-tauri native_shell.rs): the commit the binary was built from, its
+   * tree digest, and whether that tree carried uncommitted changes. The
+   * development browser discloses none of them. */
+  source_revision?: string
+  source_tree_sha256?: string
+  source_dirty?: boolean
 }
 export interface SetReading {summary: unknown; document: unknown; revision: string}
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
@@ -87,13 +106,26 @@ export function subscribeSet(path: string, listener: () => void): () => void {
   held.add(listener)
   return () => {held!.delete(listener); if (!held!.size) setListeners.delete(path)}
 }
+/** The settled outcome of the current owner configuration reading. */
+export type ShellConfigOutcome = {config: ShellConfig; error: null} | {config: null; error: string}
+const configListeners = new Set<(outcome: ShellConfigOutcome) => void>()
+/** Announces each settled reading of the current request (a value or a failure), so a
+ * surface that reads the configuration once can follow a refresh (readShellConfig(true)).
+ * A superseded request is not announced; the request that superseded it is. */
+export function subscribeShellConfig(listener: (outcome: ShellConfigOutcome) => void): () => void {
+  configListeners.add(listener)
+  return () => {configListeners.delete(listener)}
+}
+function announceShellConfig(outcome: ShellConfigOutcome): void {
+  for (const listener of [...configListeners]) listener(outcome)
+}
 /** One host reading and bounded shared document models above pane lifetimes.
  * Installed execution never discovers a development server or external assets. */
 export function readShellConfig(refresh = false): Promise<ShellConfig> {
   if (refresh) configuration = null
   if (configuration) return configuration
   const request = ++configRequest
-  configuration = (async () => {
+  const pending = (async () => {
     const value = nativeHost() ? await tauriInvoke<unknown>('live_shell_config', {}) : await json('/api/config')
     if (!object(value) || typeof value.default_set !== 'string') throw Error('Invalid native shell configuration')
     if (nativeHost() && (!Array.isArray(value.product_ids) || value.product_ids.some(id => typeof id !== 'string')
@@ -109,7 +141,13 @@ export function readShellConfig(refresh = false): Promise<ShellConfig> {
     if (scope !== next) {scope = next; ++generation; retireReadings()}
     return value as unknown as ShellConfig
   })().catch(cause => {if (request === configRequest) configuration = null; throw cause})
-  return configuration
+  configuration = pending
+  // Announce only the request that is still current at settlement; a superseded one stays silent.
+  void pending.then(
+    config => {if (request === configRequest) announceShellConfig({config, error: null})},
+    cause => {if (request === configRequest) announceShellConfig({config: null, error: cause instanceof Error ? cause.message : String(cause)})},
+  )
+  return pending
 }
 export function invalidateSet(path?: string): void {
   if (!path) {++generation; retireReadings()}

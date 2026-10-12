@@ -6,6 +6,7 @@ import {useWorkspace} from '../shell/workspace'
 import {materialCompatibility, materialRowVisible, selectionSlot} from './nativeBrowserModel'
 import {sceneReuseForm} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/reuse'
 import './NativeMaterialBrowser.css'
+import {OwnerRefusal} from './OwnerRefusal'
 
 /** Browser definitions are discovered by the native material register. Perform
  * binds that source at the retained editor's captured native destination. */
@@ -24,7 +25,7 @@ export function NativeMaterialBrowser({query, detailHost, onCount}: {query: stri
   const [loading,setLoading]=useState(false)
   const [fault,setFault]=useState<string|null>(null)
   const [notice,setNotice]=useState<string|null>(null)
-  const [retainedOutcome,setRetainedOutcome]=useState<{copy?:string;outcome?:unknown}|null>(null)
+  const [retainedOutcome,setRetainedOutcome]=useState<{copy?:string;outcome?:unknown;error:string;operation:string}|null>(null)
   const [showAll,setShowAll]=useState(false)
   const [saveTitle,setSaveTitle]=useState('')
   const [saved,setSaved]=useState<{copy:string;location:string|null}|null>(null)
@@ -53,6 +54,7 @@ export function NativeMaterialBrowser({query, detailHost, onCount}: {query: stri
   const admitted=sourceCurrent&&!!workspace.editor&&!!workspace.editorReading&&!workspace.editorReading.standing.pending&&workspace.nativeAccessCurrent(accessEpoch)
   async function perform(play:boolean) {
     if(!admitted||!selected||busy)return
+    setRetainedOutcome(null)
     const editor=workspace.editor!,basis=structuredClone(workspace.editorReading!.basis),material=structuredClone(selected)
     const transition=Number(duration)
     if(!duration.trim()||!Number.isFinite(transition)||transition<0||transition>3600){setFault('Transition must be between 0 and 3600 seconds.');return}
@@ -60,7 +62,7 @@ export function NativeMaterialBrowser({query, detailHost, onCount}: {query: stri
     try {
       const input={material:{file_ref:material.file_ref,revision:material.revision,...(state?{state}:material.entry_scene_ref?{scene_ref:material.entry_scene_ref}:{})},bindings:structuredClone(bindings),transition:{duration:transition,easing:'smoothstep'}}
       const result=await editor.request({operation:'material',basis,action:play?'play':'perform',input})
-      if(!result.ok){setRetainedOutcome({copy:result.retained_copy_ref,outcome:result.native_outcome});throw Error(result.error)}
+      if(!result.ok){setRetainedOutcome({copy:result.retained_copy_ref,outcome:result.native_outcome,error:result.error,operation:play?'Play passages':'Perform'});throw Error(result.error)}
       if(result.material?.kind!=='performed')throw Error('The native owner omitted its material performance receipt')
       const receipt=result.material.receipt
       setNotice(receipt.followed?'Performed into the native work.':'Native performance acknowledged; newer local work is retained. Refresh to follow when it is reconciled.')
@@ -84,11 +86,11 @@ export function NativeMaterialBrowser({query, detailHost, onCount}: {query: stri
   async function saveCurrent() {
     const editor=workspace.editor,reading=workspace.editorReading
     if(!editor||!reading||reading.standing.pending||busy)return
-    setBusy(true);setFault(null);setSaved(null)
+    setBusy(true);setFault(null);setSaved(null);setRetainedOutcome(null)
     try {
       const form=sceneReuseForm(saveTitle,reading.basis.scene_ref,reading.scenes?.scenes??[])
       const result=await editor.request({operation:'material',basis:structuredClone(reading.basis),action:'save-reusable',input:{form}})
-      if(!result.ok){setRetainedOutcome({copy:result.retained_copy_ref,outcome:result.native_outcome});throw Error(result.error)}
+      if(!result.ok){setRetainedOutcome({copy:result.retained_copy_ref,outcome:result.native_outcome,error:result.error,operation:'Save as reusable'});throw Error(result.error)}
       if(result.material?.kind!=='saved')throw Error('The native owner omitted its saved-material receipt')
       setSaved({copy:result.material.receipt.copy_ref,location:result.material.receipt.outcome.file?.location.path??null})
       setSaveTitle('');setRefresh(value=>value+1)
@@ -125,8 +127,9 @@ export function NativeMaterialBrowser({query, detailHost, onCount}: {query: stri
       {saved&&<p role="status">Saved <code>{saved.copy}</code>{saved.location?<> at <code>{saved.location}</code></>:null}</p>}
     </details>
     {loading&&<p role="status">Reading native material…</p>}
-    {fault&&<p className="native-error" role="alert">{fault}</p>}
-    {retainedOutcome&&(retainedOutcome.copy||retainedOutcome.outcome!==undefined)&&<details><summary>Retained native outcome</summary>{retainedOutcome.copy&&<p>Copy: <code>{retainedOutcome.copy}</code></p>}{retainedOutcome.outcome!==undefined&&<pre>{JSON.stringify(retainedOutcome.outcome,null,2)}</pre>}</details>}
+    {fault&&fault!==retainedOutcome?.error&&<p className="native-error" role="alert">{fault}</p>}
+    {retainedOutcome&&<OwnerRefusal owner="Native expression owner" operation={retainedOutcome.operation} error={retainedOutcome.error} fallback="The native owner refused this operation." copy={retainedOutcome.copy} dataI="material-refusal"/>}
+    {retainedOutcome&&retainedOutcome.outcome!==undefined&&<details className="owner-receipt" data-developer-view="native-outcome"><summary>Developer view · native outcome receipt</summary><pre>{JSON.stringify(retainedOutcome.outcome,null,2)}</pre></details>}
     {notice&&<p role="status">{notice}</p>}
     <ul>{materials.map(material=>{const state=compat(material),reason=state.state==='incompatible'?state.reason:undefined;return <li key={material.file_ref}><button type="button" data-browser-row className={`world-file-row${selected?.file_ref===material.file_ref?' selected':''}${reason?' is-incompatible':''}`} disabled={busy} onClick={()=>choose(material)} onKeyDown={event=>{if(event.key===' '){event.preventDefault();choose(material)}}} onKeyUp={event=>{if(event.key===' ')event.preventDefault()}} title={`${material.kind} · ${material.file_ref} · ${material.revision}${reason?`\n${reason}`:''}`} aria-pressed={selected?.file_ref===material.file_ref}><span aria-hidden="true">◇</span><span>{material.title}</span>{reason&&<small className="native-material-mark">Incompatible</small>}</button></li>})}</ul>
     {listing&&!materials.length&&<p className="native-empty">No material matches.</p>}

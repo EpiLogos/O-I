@@ -92,8 +92,36 @@ test('git rows refuse by name when the seat read errors', () => {
 
 test('a seat reading without a workcell_ref discloses the absence, never invents a seat', () => {
   const rows = browser.gitRowsFromWorkcell({result: 'workcell_status_reading', data: {health: 'ok'}}, null)
-  assert.equal(rows[0].key, 'seat-unavailable')
+  assert.equal(rows.length, 1)
+  assert.equal(rows[0].key, 'seat-no-ref')
   assert.ok(rows[0].label.includes('disclosed no workcell_ref'))
+  assert.ok(!rows[0].label.includes('unavailable'), 'an answered reading is not unavailable')
+  assert.equal(rows[0].drag, undefined, 'an answered row with no ref drags nothing')
+})
+
+// PATH §10 item 27 — an answered seat without a workcell_ref is not a refusal.
+// Refused is reserved for an owner read that errored (seatError set).
+test('an answered seat without a workcell_ref is labelled as answered, not refused', () => {
+  const rows = browser.gitRowsFromWorkcell({result: 'workcell_status_reading', data: {health: 'ok'}}, null)
+  assert.equal(rows[0].meta, 'workcell · no ref')
+  assert.ok(!rows[0].meta.includes('refused'), 'the meta does not call an answered reading refused')
+  assert.ok(!rows[0].label.includes('refused'), 'the label does not call an answered reading refused')
+  assert.ok(rows[0].label.includes('answered'), 'the label says the reading answered')
+})
+
+test('a seat read that errored is refused by name', () => {
+  const rows = browser.gitRowsFromWorkcell(null, 'Action refused: workcell offline')
+  assert.equal(rows[0].key, 'seat-unavailable')
+  assert.equal(rows[0].meta, 'workcell · refused')
+  assert.ok(rows[0].label.includes('Action refused: workcell offline'), 'the owner words are carried')
+})
+
+test('no seat reading and no read error is unread, not refused', () => {
+  const rows = browser.gitRowsFromWorkcell(null, null)
+  assert.equal(rows.length, 1)
+  assert.equal(rows[0].key, 'seat-unread')
+  assert.equal(rows[0].meta, 'workcell · unread')
+  assert.ok(!rows[0].meta.includes('refused'), 'nothing was refused when nothing was read')
 })
 
 // The faulted literals themselves are dead in the component source.

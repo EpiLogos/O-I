@@ -1,0 +1,80 @@
+- heading "Preferences window · development check" [level=2]
+- paragraph:
+  - text: This route mounts the actual
+  - code: world.settings
+  - text: contribution. The labelled scenario supplies non-secret specimens; no native writes occur.
+- text: Conversation draft
+- textbox "Conversation draft": Retained conversation draft
+- paragraph: "Selection: specimen agent · project settings-specimen"
+- button "Open Preferences"
+- button "Configure this agent’s capabilities…"
+- button "Remote machine setup…"
+- button "Manage automations…"
+- dialog "Preferences":
+  - text: Development scenario
+  - combobox "Development scenario":
+    - option "ready" [selected]
+    - option "loading"
+    - option "inherited"
+    - option "overridden"
+    - option "dirty"
+    - option "invalid"
+    - option "immediate"
+    - option "restart"
+    - option "pending"
+    - option "acknowledged"
+    - option "refused"
+    - option "failed"
+    - option "conflict"
+    - option "absent-product"
+    - option "unavailable-connection"
+  - generic: Explicit preview · no native writes
+  - region "Settings":
+    - heading "Preferences" [level=1]
+    - generic: ⌕
+    - searchbox "Search settings"
+    - button "← Start work"
+    - status:
+      - strong: Development scenario
+      - text: · ready · AIKit and Factory native schema specimens · simulated responses, no native writes
+    - navigation "Settings categories":
+      - button "Harnesses & models"
+      - button "Skills & methods"
+      - button "Profiles"
+      - button "Permissions"
+      - button "Credentials"
+      - button "Machines & services"
+      - button "Automations"
+      - button "Search & telemetry"
+      - button "Appearance & interaction"
+      - button "Products & updates"
+    - main:
+      - heading "Machines & services" [level=2]
+      - paragraph: Service declarations and execution environments.
+      - region "Remote machines":
+        - heading "Remote machines" [level=3]
+        - paragraph: Set up a Workcell to use when starting work. Connect uses its saved credential reference; it does not grant access on the remote machine.
+        - paragraph: Remote-machine operations are awaiting the Workcell adapter. Setup can be drafted here; no machine is saved or contacted.
+        - button "Add machine…" [disabled]
+        - button "Read machines again" [disabled]
+        - form "Add remote machine":
+          - generic: Label
+          - textbox "Label": studio-cell
+          - generic: A stable name for this machine.
+          - generic: Control endpoint
+          - textbox "Control endpoint": localhost:7777
+          - generic: HOST:PORT. Use brackets around an IPv6 host.
+          - generic: Credential reference
+          - textbox "Credential reference" [active]: keychain://workcell-connection/specimen
+          - generic: keychain:// or linux-secret-service://. Secret material stays in its credential store.
+          - group "Expected operations":
+            - generic: Expected operations
+            - paragraph: Records what you expect this machine to offer. Its remote grant determines actual access.
+            - text: The native operation catalogue has not been read.
+          - generic: Note (optional)
+          - textbox "Note (optional)"
+          - button "Save machine setup" [disabled]
+          - button "Cancel draft"
+          - generic: Unsaved setup
+    - button "ⓘ Info"
+    - generic: No configuration plans pending

@@ -1,0 +1,299 @@
+{
+  "schema": "techne.new-shell.scene-core-increment/v1",
+  "observed_at": "2026-10-08T05:26:58.355224+00:00",
+  "head": "40de7693050709577716f37a6c8d6b46fedeae82",
+  "standing": "Native Scene editing owner join built and exercised; shell Session/Arrangement/Clip presentation built and served. Visual/craft admission remains pending. Original126-target commission active.",
+  "working_face": {
+    "url": "http://127.0.0.1:8789/app/",
+    "session": "Native object columns, exact occurrence cells and whole-Scene row; no object launch. 26px row geometry.",
+    "arrangement": "Expression-wide authored Scene sections, integrated overview traversal/zoom/seek; selected Scene glyph source timing remains in its own seconds or morph axis.",
+    "clip": "Inline Scene name/duration/transition; Capture/Restore; order/duplicate/remove behind Configure; same instance deep editor.",
+    "device": "Existing compact chosen controls/macros, Configure, category browser/lower context pool retained."
+  },
+  "sources": [
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/package.json",
+      "sha256": "70a1a5e363b04763e72a80b076ebcacb1140711c2c1de9ce1af872d226838010",
+      "byte_len": 950,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/editor.ts",
+      "sha256": "05e77a4e1c94ef83d28ef4b686536139b84eae44760ddd62279a885c10283df6",
+      "byte_len": 6962,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/editorHost.ts",
+      "sha256": "c2a540520c5156d7bdd2ada5ecb492925de07afd271942b41d6f3078c70dec80",
+      "byte_len": 13525,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/scenes.ts",
+      "sha256": "a1c134a866c444264a439a9cfdc6221f9b07808a6e7b2d806c018ed01c65004d",
+      "byte_len": 10715,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/scenesValidation.ts",
+      "sha256": "f3b520b336cddf8aad31496156a06f854f4188ac68d925c9eb98a51007ce7e0f",
+      "byte_len": 7955,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/sceneEdits.ts",
+      "sha256": "27aaacb12e6c868f2435b1522b20416085718ce4f3d69a48e3699eb2faf53030",
+      "byte_len": 21133,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/tests/run-tests.mjs",
+      "sha256": "35fa021e4fe69621a83e250413baa6674b0522f68c21acc4bdda499754954faf",
+      "byte_len": 1258,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/tests/register-production-sources.mjs",
+      "sha256": "fb6fbc66303e199cabf8a8d9c1cbc71959a33c68554057e49c6467c3f6a817d4",
+      "byte_len": 94,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/tests/scenes-native-acceptance.mjs",
+      "sha256": "e58816aae4ad81417ba09ea1d83b1abd677c908507237ba638be450bf7a25e87",
+      "byte_len": 21671,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "sha256": "c9dfa5393dc6aee611f3103d6619219cd41b9be614a875badf447c8195c8df89",
+      "byte_len": 213588,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/hostEditor.ts",
+      "sha256": "3cf4730174bdcc885fad58fccf90dd2d1ae1f209349cc6b9149f95e919fc5b8d",
+      "byte_len": 33448,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorkspace.ts",
+      "sha256": "e0560d6922d1222edf1e0ad1ef0376792f80a5e1ad2ee93f2338d97eeb683919",
+      "byte_len": 31798,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/sceneTransport.ts",
+      "sha256": "9063974585f2123e620bf4ed9d7166bf8ed8d44270d8c1f11133aba0964f2238",
+      "byte_len": 3545,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts",
+      "sha256": "8bd18b9bb699b43ea6790d696871b5a3e7dacac6406248aaa11e3c7808f4745d",
+      "byte_len": 34832,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/store.ts",
+      "sha256": "81a8d6e282b2813780e95f678e21b925a9c807dd0e65e48d9260d57c4742bba1",
+      "byte_len": 4086,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/App.tsx",
+      "sha256": "dcd388492173e8fc25388fb0cc79c578ff5d500558d8fc9db8906077b425ff6f",
+      "byte_len": 20453,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/shell/nativeContent.ts",
+      "sha256": "6082ba8e757434a4824a989b0a7bb4f0f995c02bfb95fca113a58d573851040e",
+      "byte_len": 11919,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/shell/compositionViews.ts",
+      "sha256": "50d9982ad21baa26faacb2043e1920895d4a797afadf30a3fff6831d4a49c78a",
+      "byte_len": 9084,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/SessionView.tsx",
+      "sha256": "6b3a7c50c441d826de1c871aa3f0811eb8916c78ed0477d7ebd509360edc54e9",
+      "byte_len": 10848,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/ArrangementView.tsx",
+      "sha256": "2e6942182cdbf8f3f7859d3b0f1634a66c0fcb1561eb47705dab1c5904d1a76f",
+      "byte_len": 14689,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeWorldDetail.tsx",
+      "sha256": "63180336035ee1d1be8d9340e51a18aba75d63c33f9d949fd92d80e5682dee1e",
+      "byte_len": 12773,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeSceneEditor.tsx",
+      "sha256": "26b66d49f9ced29bfe4bca2f708982338065e1b3659941978522cfff5ecfb5ac",
+      "byte_len": 7636,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeSceneEditor.css",
+      "sha256": "79366aa3e28f6f381dab923b7c9c254ee6ae841df904f745608d76f5f997c4a2",
+      "byte_len": 1670,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeSceneTransport.tsx",
+      "sha256": "501c51cb224a673ab6b5825a725aeb62ed2a93849759cddd54ccceecb39d4e54",
+      "byte_len": 3543,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeSceneOverview.tsx",
+      "sha256": "bb5e10449c4404087f7fc8243f357be53b095b352e6aae3b62442704054d61a9",
+      "byte_len": 6982,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeCompositionViews.css",
+      "sha256": "af5bd37fffc7fc6ef803257054c1006a8272392a9192c817df948668657a9a21",
+      "byte_len": 6533,
+      "role": "native Scene core, owner join or shell presentation"
+    }
+  ],
+  "acquisition": {
+    "A": "Existing retained snapshot and transport receiver",
+    "B": "Native DocumentStore, NativeWorking, composition compiler and Scene workflow; normal local package export",
+    "D": "Portable guarded Scene edit protocol, actual-owner join and shell presentation",
+    "C": {
+      "code_entered": false,
+      "reference": "Ableton UI captures study/interface-only; no vendored captured assets or new reference code"
+    }
+  },
+  "native_evidence": [
+    {
+      "path": "evidence/scene-core-joined-20261008-01/scene-edit-acceptance.json",
+      "sha256": "c5347a121892e81441f80ad0c4d2e82eae3c922675f9b1865c1e076e467565d5",
+      "passed": true,
+      "checks": 18,
+      "native_writes": null,
+      "expression_ref": "expression:scene-core-acceptance-a47b32e7-56e2-42bb-b687-89801b858898",
+      "claim": null,
+      "ui_admitted": false
+    },
+    {
+      "path": "evidence/scene-receiver-native-20261008-01/scene-edit-acceptance.json",
+      "sha256": "9c773b1e2bd3997ba60f659a1a9eb062afeb684da92b9727e14a5dc65963ad91",
+      "passed": true,
+      "checks": 4,
+      "native_writes": null,
+      "expression_ref": "expression:scene-core-acceptance-b858b7b9-f6ee-4b84-a348-d18d46f7cd0b",
+      "claim": null,
+      "ui_admitted": false
+    },
+    {
+      "path": "evidence/scene-core-qualified-map-native-replay.json",
+      "sha256": "cd2fc80afcbba558d47ab00c84993757519478e6be4df8fce3428fb7f751dcca",
+      "passed": 26,
+      "checks": 26,
+      "native_writes": null,
+      "expression_ref": null,
+      "claim": "Scene projection and retained per-frame transport over actual native inspect reads; no GUI, audio rendering, editing or save acceptance",
+      "ui_admitted": false
+    },
+    {
+      "path": "evidence/scene-core-qualified-editor-bridge-native-replay.json",
+      "sha256": "1f1993848287e3e7bf8ae919b229ce8d69780279f61f639943db786614f6e9e1",
+      "passed": 22,
+      "checks": 22,
+      "native_writes": 0,
+      "expression_ref": "expression:chosen-control-acceptance-69bfc51d-4d5e-49fc-87b8-c61b744d5b42",
+      "claim": "actual production host/client/receiver and retained authoring read over a genuine native document; malformed/stale carrier and asynchronous readonly-port refusal fault injection only; no DOM/save acceptance",
+      "ui_admitted": false
+    }
+  ],
+  "joined_native_counts": {
+    "checks": 18,
+    "acknowledged_edit_batches": 21,
+    "real_revision_conflict_refusals": 2,
+    "checkpoint_writes": 48,
+    "file_save_readback_close_reopen": true,
+    "artifact": {
+      "location": {
+        "path": "Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/scene-core-joined-20261008-01/scene-core.oi-expression.json",
+        "ref": "central:path:/Users/admin/Central:Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/scene-core-joined-20261008-01/scene-core.oi-expression.json",
+        "root": "/Users/admin/Central",
+        "schema": "central.path-ref/v1"
+      },
+      "revision": "central.content-fnv1a64/v1:9003:b3db66424669f599",
+      "document_revision": 22,
+      "document_sha256": "eb849520d47d32116586d4bf9c719d9e89709bb3dcdcf2e040b63b4c9464af46"
+    }
+  },
+  "receiver": {
+    "checks": 4,
+    "native_selection_ack_precedes_presentation": true,
+    "engine_or_playback_accepted": false
+  },
+  "protected_documents": [
+    {
+      "expression_ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+      "revision": 6,
+      "document_sha256": "e82d8283d5a2a6907691570b61240f4ec946ffeb39f7741874370c6b5a44635c"
+    },
+    {
+      "expression_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+      "revision": 173,
+      "document_sha256": "36e6d44d201ad4da69d0bbb3e21a4260813801c2c5cccd4c62a977ec4bd0c76b"
+    },
+    {
+      "expression_ref": "expression:chosen-control-acceptance-69bfc51d-4d5e-49fc-87b8-c61b744d5b42",
+      "revision": 11,
+      "document_sha256": "ecf5f9f3d7747bc178cd96733418975369a14a80fe81fc72b2d00f3b0d7df1cd"
+    }
+  ],
+  "package_tests": {
+    "command": "npm test",
+    "cwd": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary",
+    "exit_code": 0,
+    "tests": 128,
+    "pass": 124,
+    "fail": 0,
+    "skipped": 4,
+    "first_failure_log": "evidence/scene-core-boundary-package-tests.log",
+    "repair": "Real isolated temporary WebStorage plus existing production TypeScript compiler loader; no replaced native/store behavior",
+    "replay_log": "evidence/scene-core-boundary-package-tests-replay.log"
+  },
+  "builds": {
+    "body": "evidence/scene-core-expressions-production-build-review.json",
+    "shell": "evidence/scene-core-served-production-basis.json",
+    "first_shell_build_drift": "evidence/scene-core-shell-production-build-drift.json"
+  },
+  "gui": {
+    "accepted": false,
+    "blocker": "Mac locked; native computer-use automatic unlock failed",
+    "required_viewports": [
+      "1920x1200",
+      "approximately700px"
+    ],
+    "personal_unsubmitted_work_preserved": true
+  },
+  "remaining": [
+    "Native computer-use craft/interaction replay of choosing controls, Scene operations, Configure and same-instance deep return at both viewports",
+    "All49 internal Expressions feature families need accepted outward homes; Source/Layers/Placement still route to retained Studio",
+    "Scene split/trim/ripple/shuttle/frame stepping, complete native compensating history and full SC-1\u20137 acceptance remain open",
+    "External body/trigger/unsupported native metadata duplication and incomplete paged whole-scene operations currently refuse",
+    "Shared explicit time window toolbar and Timeline/Places consumer join; no second iframe session store",
+    "Dated Techn\u0113 source currently stale4032 vs9027; native temporal declarations absent; no invented dates or guard bypass",
+    "Personal competing Chakral draft remains preserved; generic owning file Save/reopen proof only accepted on isolated test work",
+    "Audio/device agents remain native owners; no new offline audio playback or device-editing claim"
+  ],
+  "full_126_targets_passed": 0
+}

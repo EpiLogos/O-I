@@ -1,0 +1,70 @@
+{
+  "lane": "glyph-language",
+  "recorded": "2026-10-09",
+  "count": 79,
+  "grid": "24",
+  "stroke": 1.5,
+  "colour": "currentColor only. A control sets color to a token.",
+  "files": [
+    "roster.svg",
+    "GlyphRoster.md",
+    "glyphs.ts",
+    "roster-sheet.html",
+    "roster-sheet.png",
+    "emit.mjs",
+    "RESULT.json"
+  ],
+  "covered": {
+    "transport": ["play", "stop", "record", "arm", "loop", "punch", "tap", "link", "metronome", "re-enable", "capture", "overdub", "follow", "session", "arrangement"],
+    "mode": ["live", "base", "factory", "expressions", "techne"],
+    "projection": ["earth", "timeline", "constellation", "expression"],
+    "family": ["morph", "colour", "force", "field-lines"],
+    "product": ["central", "actuation", "ai-kit", "software-factory", "workcell", "quaternal-logic"],
+    "state": ["power", "admit", "deny", "hold", "hand-back", "steer", "effort", "folded", "expand", "pop-out", "refusing", "disabled", "waiting"],
+    "spine": ["field", "world", "subject", "occasion", "aperture", "view-as", "trail", "packet", "contact", "return"],
+    "document": ["day", "flow", "beings", "things", "clip", "device"],
+    "chrome": ["browser", "detail", "companion", "panes", "split-beside", "split-below", "four-fold", "close-pane", "fold"],
+    "skill_stand_ins": ["port-widgets", "capture-plan", "diff-grammar", "review-pr", "tune-physics", "deploy", "test-depth"]
+  },
+  "chip": {
+    "kinds": ["engine", "image", "character"],
+    "sizes": [16, 20, 24],
+    "empty_text": "O, the Expressions sampler's empty sample",
+    "failed_image": "waiting",
+    "law": "Frame only. The stage bake and glyphVolume stay in the Expressions engine."
+  },
+  "shared_drawings": {
+    "base": "central",
+    "factory": "software-factory",
+    "panes": "four-fold",
+    "home": "earth"
+  },
+  "waits": [
+    "C3 widget-standards extraction has not landed (wayfinder/tickets/C3-widget-standards.md, output wayfinder/WIDGET-STANDARDS.md). This roster does not rename ids ahead of that document.",
+    "The device-family field face is field-lines so the encounter spine can keep the plain name field. If the standards document calls that face field, reconcile the two names then.",
+    "Skill pictures are the geometric stand-ins in agent-shell-mockup.html. AGENTIC-CONVERGENCE.md points at the Expressions glyph library as their later source. Replace a picture with a chip; keep the skill id.",
+    "Bee portraits stay illustrations. They carry each agent's own colour, which this roster does not bake in.",
+    "Planet bodies stay the Earth projection's drawing. M0′–M5′ stay the mockup's text labels."
+  ],
+  "alignment_with_widget_standards": [
+    "Ids use the mockup's control words: play, stop, record, arm, loop, session, arrangement, the five mode ids, clip, device, panes, admit, deny, hold, hand-back, steer, effort, folded, expand, pop-out.",
+    "The data-i pattern stays on the control: Name|what it does, read into the status line. Every use also has an aria-label. glyphs.ts refuses an empty label.",
+    "Shell colour tokens are packages/live-shell/ui/src/styles.css. Paper tokens are the document tokens in world-shell-mockup.html (--paper, --ink, --pmid, --pfaint, --prule). Glyphs reference neither by name; the element sets color.",
+    "Refusing, disabled, and waiting are separate marks at full weight, for the empty, refusing, and disabled states the standards ticket asks every widget to specify.",
+    "When WIDGET-STANDARDS.md names a widget, that name is the glyph id to follow."
+  ],
+  "not_changed": [
+    "worktrees/env-1/o-i, including the shell seat",
+    "branch agent/o-i-20261007-1639",
+    "packages/live-shell/ui/src/styles.css",
+    "desktop/cradle/expressions-app glyph engine",
+    "new-shell mockup HTML and WORLD-SHELL-DESIGN.md",
+    "the wayfinder map"
+  ],
+  "evidence": {
+    "sheet": "roster-sheet.png",
+    "renderer": "Google Chrome headless",
+    "pixels": "1200×5247",
+    "shows": "Every mark at 16, 20, and 24 in the shell theme and the paper theme, plus the six chip examples."
+  }
+}

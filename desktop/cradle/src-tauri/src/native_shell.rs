@@ -65,6 +65,57 @@ mod candidate {
             .unwrap_or_else(|| absent.join(name))
     }
 
+    /// The suite product universe as the qualified footprint offers it: every
+    /// product named in any `backing.options` entry, in the host's `OWNERS`
+    /// order. Read from the footprint, never a literal list, so the shell can
+    /// tell a product excluded by the selected backing from one the footprint
+    /// does not offer at all. A product without a host owner binding refuses.
+    pub fn suite_product_ids(footprint: &Value) -> Result<Vec<String>, String> {
+        let options = footprint["backing"]["options"]
+            .as_object()
+            .ok_or("Native footprint has no backing options")?;
+        let mut offered = std::collections::BTreeSet::new();
+        for option in options.values() {
+            for product in option["products"]
+                .as_array()
+                .ok_or("Native footprint backing option has no products")?
+            {
+                let id = product
+                    .as_str()
+                    .ok_or("Native footprint backing product is not an id")?;
+                if !OWNERS.iter().any(|(owner, ..)| *owner == id) {
+                    return Err(format!(
+                        "Native footprint offers a product with no host owner: {id}"
+                    ));
+                }
+                offered.insert(id);
+            }
+        }
+        Ok(OWNERS
+            .iter()
+            .filter(|(owner, ..)| offered.contains(owner))
+            .map(|(owner, ..)| (*owner).to_owned())
+            .collect())
+    }
+
+    /// Each suite product's public name, read from the host's `OWNERS` table
+    /// (no second list), keyed by product id. The shell shows the name with
+    /// the id as secondary text. A product without a host owner refuses.
+    pub fn suite_owner_names(
+        product_ids: &[String],
+    ) -> Result<serde_json::Map<String, Value>, String> {
+        product_ids
+            .iter()
+            .map(|id| {
+                OWNERS
+                    .iter()
+                    .find(|(owner, ..)| *owner == id)
+                    .map(|(_, _, _, public_name)| (id.clone(), json!(public_name)))
+                    .ok_or_else(|| format!("Suite product has no host owner: {id}"))
+            })
+            .collect()
+    }
+
     fn write_atomic(path: &Path, value: &Value) -> Result<(), String> {
         let temporary = path.with_extension(format!("{}.tmp", std::process::id()));
         let bytes = serde_json::to_vec_pretty(value).map_err(|e| e.to_string())?;
@@ -187,6 +238,15 @@ mod candidate {
             return Err("Native candidate has no final resource seal".into());
         }
         let payload = runtime::qualify(root, &footprint)?;
+        let suite_product_ids = suite_product_ids(&native)?;
+        if !payload
+            .product_ids
+            .iter()
+            .all(|id| suite_product_ids.contains(id))
+        {
+            return Err("Selected backing names a product outside the footprint's suite".into());
+        }
+        let suite_owner_names = suite_owner_names(&suite_product_ids)?;
         let shared_field_client = root.join("Contents/Resources/shared-field/field-client.sh");
         if !shared_field_client.is_file() {
             return Err("Candidate has no bundled native SharedField client".into());
@@ -383,7 +443,7 @@ mod candidate {
         std::env::set_var("OI_CATALOG", &catalogue_path);
         std::env::set_var("OI_BIN", &payload.suite_cli);
         let contributions = admit_contributions(root, &payload)?;
-        RUNTIME.set(json!({"runtime_epoch":uuid::Uuid::new_v4().to_string(),"owner_home":owner_home,"expression_socket":expression_socket,"configuration_home":candidate_home,"composition_path":composition_path,"saved_work_config":identity_config,"contributions":contributions})).map_err(|_|"Native runtime already initialized")?;
+        RUNTIME.set(json!({"runtime_epoch":uuid::Uuid::new_v4().to_string(),"owner_home":owner_home,"expression_socket":expression_socket,"configuration_home":candidate_home,"composition_path":composition_path,"saved_work_config":identity_config,"contributions":contributions,"suite_product_ids":suite_product_ids,"suite_owner_names":suite_owner_names})).map_err(|_|"Native runtime already initialized")?;
         PAYLOAD
             .set(payload)
             .map_err(|_| "Candidate bootstrap already ran".to_string())
@@ -428,6 +488,12 @@ mod candidate {
         let mut result =
             json!({"default_set":std::env::var("LIVE_SHELL_DEFAULT_SET").unwrap_or_default(),"saved_works":super::inhabitants::configured_works()?,"kernel_transport":{"kind":"tauri","invoke":"kernel_op"},"kernel_epoch":runtime["runtime_epoch"],"runtime_epoch":runtime["runtime_epoch"],"runtime_scope":{"kind":"host-runtime","epoch":runtime["runtime_epoch"]},"profile_scope":{"backing_id":payload.backing_id,"configuration_home":runtime["configuration_home"],"active_profile":composition["active_profile"]},"personal_ground":ground,"onboarding":ground.is_none(),"world_scope":world_scope,"saved_work_config":runtime["saved_work_config"],"expressions_entry":"/__application/expressions/index.html","backing_id":payload.backing_id,"product_ids":payload.product_ids,"source_revision":payload.source_revision,"source_tree_sha256":payload.source_tree_sha256,"acceptance":"qualified-bytes; native-functional-acceptance-separate"});
         result["contributions"] = runtime["contributions"].clone();
+        // The footprint's suite universe beside the admitted `product_ids`:
+        // offered-but-not-selected reads as excluded by the backing.
+        result["suite_product_ids"] = runtime["suite_product_ids"].clone();
+        // Each suite owner's public name from the host's OWNERS table, keyed by
+        // product id; the shell shows the name with the id as secondary text.
+        result["suite_owner_names"] = runtime["suite_owner_names"].clone();
         result["expression_transport"] =
             json!({"kind":"unix","socket":runtime["expression_socket"]});
         result["source_dirty"] = json!(payload.source_dirty);
@@ -440,6 +506,95 @@ mod candidate {
             .and_then(|v| v["owner_home"].as_str())
             .ok_or("Native Expression owner home is unavailable")?;
         kernel.attach_act_store(Path::new(home))
+    }
+
+    // The candidate footprint is desktop/install-footprint.json with only its
+    // identity and targets rewritten (build-native-candidate.py), so its
+    // backing options are this file's.
+    #[cfg(test)]
+    mod suite_product_ids_tests {
+        use super::{suite_owner_names, suite_product_ids, OWNERS};
+        use serde_json::{json, Value};
+        use std::collections::BTreeSet;
+
+        fn footprint() -> Value {
+            serde_json::from_str(include_str!("../../../install-footprint.json")).unwrap()
+        }
+
+        fn ids(values: &Value) -> Vec<String> {
+            values
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|v| v.as_str().unwrap().to_owned())
+                .collect()
+        }
+
+        #[test]
+        fn universe_equals_the_footprints_backing_options() {
+            let footprint = footprint();
+            let universe = suite_product_ids(&footprint).unwrap();
+            let options = footprint["backing"]["options"].as_object().unwrap();
+            let union: BTreeSet<String> =
+                options.values().flat_map(|o| ids(&o["products"])).collect();
+            assert_eq!(universe.iter().cloned().collect::<BTreeSet<_>>(), union);
+            assert_eq!(universe.len(), union.len(), "no product listed twice");
+            // The widest option is the whole universe, in the same order.
+            let widest = options
+                .values()
+                .map(|o| ids(&o["products"]))
+                .max_by_key(Vec::len)
+                .unwrap();
+            assert_eq!(universe, widest);
+        }
+
+        #[test]
+        fn default_backing_leaves_named_products_outside_it() {
+            let footprint = footprint();
+            let universe = suite_product_ids(&footprint).unwrap();
+            let default = footprint["backing"]["default"].as_str().unwrap();
+            let admitted = ids(&footprint["backing"]["options"][default]["products"]);
+            assert!(admitted.iter().all(|id| universe.contains(id)));
+            assert!(
+                universe.len() > admitted.len(),
+                "default backing excludes part of the suite"
+            );
+        }
+
+        #[test]
+        fn a_product_without_a_host_owner_refuses() {
+            let footprint = json!({"backing":{"options":{"x":{"products":["central","unknown"]}}}});
+            let error = suite_product_ids(&footprint).unwrap_err();
+            assert!(error.contains("unknown"), "{error}");
+        }
+
+        #[test]
+        fn a_footprint_without_options_refuses() {
+            assert!(suite_product_ids(&json!({"backing":{}})).is_err());
+            assert!(suite_product_ids(&json!({"backing":{"options":{"x":{}}}})).is_err());
+        }
+
+        #[test]
+        fn owner_names_cover_the_universe_from_the_owners_table() {
+            let universe = suite_product_ids(&footprint()).unwrap();
+            let names = suite_owner_names(&universe).unwrap();
+            assert_eq!(
+                names.keys().cloned().collect::<BTreeSet<_>>(),
+                universe.iter().cloned().collect::<BTreeSet<_>>()
+            );
+            for id in &universe {
+                let (_, _, _, public_name) = OWNERS.iter().find(|(owner, ..)| owner == id).unwrap();
+                assert_eq!(names[id], json!(public_name), "{id}");
+                assert!(!public_name.is_empty(), "{id}");
+            }
+        }
+
+        #[test]
+        fn owner_names_for_a_product_without_a_host_owner_refuse() {
+            let error = suite_owner_names(&["central".into(), "unknown".into()]).unwrap_err();
+            assert!(error.contains("unknown"), "{error}");
+            assert!(suite_owner_names(&[]).unwrap().is_empty());
+        }
     }
 }
 

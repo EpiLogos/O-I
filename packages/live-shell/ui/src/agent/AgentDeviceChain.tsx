@@ -10,6 +10,9 @@ import {
   chainDropDecision,
   encodeChainDrag,
   MISSING_OPS,
+  missingOpRemedy,
+  OWNER_BINDINGS,
+  ownerRefusalLine,
   type ActiveChainDrag,
 } from './agentChainDrag'
 import './agentShell.css'
@@ -86,6 +89,11 @@ export function AgentDeviceChain({sessionRef}: {sessionRef: string | null}) {
   const [gateway, setGateway] = useState<DeviceReading>({kind: 'reading', title: 'Gateway · hermes', line: 'Reading gateway…', receipt: null})
   const [git, setGit] = useState<DeviceReading>({kind: 'reading', title: 'Git', line: 'Reading seat…', receipt: null})
   const [gitAdmitted, setGitAdmitted] = useState(false)
+  // The gateway lamp is earned by an answered harness reading, never assumed.
+  const [gatewayAdmitted, setGatewayAdmitted] = useState(false)
+  // Who each unlit lamp waits on (P0-R4): the owner of the refused reading,
+  // or null while reading / once admitted. Names, never guesses.
+  const [waitingOn, setWaitingOn] = useState<{gateway: string | null; skillset: string | null; git: string | null}>({gateway: null, skillset: null, git: null})
   const [skillsAdmitted, setSkillsAdmitted] = useState<number | null>(null)
   const [skillsNote, setSkillsNote] = useState<string | null>('Reading roster…')
   const [identityNote, setIdentityNote] = useState<string | null>(null)
@@ -98,11 +106,14 @@ export function AgentDeviceChain({sessionRef}: {sessionRef: string | null}) {
     void (async () => {
       if (transport.kind === 'unavailable') {
         if (live) {
-          setGateway({kind: 'refused', title: 'Gateway · hermes', line: transport.reason ?? 'Transport unavailable', receipt: null})
+          const reason = transport.reason ?? 'Transport unavailable'
+          setGateway({kind: 'refused', title: 'Gateway · hermes', line: ownerRefusalLine('gateway', reason, 'not-reached'), receipt: null})
+          setGatewayAdmitted(false)
           setGitAdmitted(false)
-          setGit({kind: 'refused', title: 'Git', line: 'Workcell unavailable', receipt: null})
+          setGit({kind: 'refused', title: 'Git', line: ownerRefusalLine('workcell', reason, 'not-reached'), receipt: null})
           setSkillsAdmitted(0)
-          setSkillsNote(transport.reason ?? 'Transport unavailable')
+          setSkillsNote(ownerRefusalLine('roster', reason, 'not-reached'))
+          setWaitingOn({gateway: OWNER_BINDINGS.gateway.owner, skillset: OWNER_BINDINGS.roster.owner, git: OWNER_BINDINGS.workcell.owner})
         }
         return
       }
@@ -110,10 +121,13 @@ export function AgentDeviceChain({sessionRef}: {sessionRef: string | null}) {
       if (live) {
         const gatewayOutcome = gatewayOp.error ? null : gatewayOp.outcome
         const gatewayReading = gatewayOutcome?.result === 'harness_agent_reading' ? gatewayOutcome : null
+        const gatewayAnswered = !!gatewayReading && !(isObj(gatewayReading.document) && 'refused' in gatewayReading.document)
+        setGatewayAdmitted(gatewayAnswered)
+        setWaitingOn(state => ({...state, gateway: gatewayAnswered ? null : OWNER_BINDINGS.gateway.owner}))
         if (!gatewayReading) {
-          setGateway({kind: 'refused', title: 'Gateway · hermes', line: refusalLine(gatewayOp.error, 'Harness gateway reading unavailable'), receipt: gatewayOp.error ? safeJson(gatewayOp.error) : null})
-        } else if (isObj(gatewayReading.document) && 'refused' in gatewayReading.document) {
-          setGateway({kind: 'refused', title: 'Gateway · hermes', line: gatewayLine(gatewayReading.document), receipt: safeJson(gatewayReading.document)})
+          setGateway({kind: 'refused', title: 'Gateway · hermes', line: ownerRefusalLine('gateway', refusalLine(gatewayOp.error, 'Harness gateway reading unavailable')), receipt: gatewayOp.error ? safeJson(gatewayOp.error) : null})
+        } else if (!gatewayAnswered) {
+          setGateway({kind: 'refused', title: 'Gateway · hermes', line: ownerRefusalLine('gateway', gatewayLine(gatewayReading.document)), receipt: safeJson(gatewayReading.document)})
         } else {
           setGateway({kind: 'reading', title: 'Gateway · hermes', line: `binding ${gatewayReading.binding} · ${gatewayLine(gatewayReading.document)}`, receipt: safeJson(gatewayReading.document)})
         }
@@ -122,15 +136,17 @@ export function AgentDeviceChain({sessionRef}: {sessionRef: string | null}) {
       if (live) {
         if (roster.error || roster.outcome?.result !== 'agent_definition_reading') {
           setSkillsAdmitted(0)
-          setSkillsNote(refusalLine(roster.error, 'Roster reading unavailable'))
+          setSkillsNote(ownerRefusalLine('roster', refusalLine(roster.error, 'Roster reading unavailable')))
           setIdentityNote(null)
+          setWaitingOn(state => ({...state, skillset: OWNER_BINDINGS.roster.owner}))
         } else {
           const admits = rosterAdmits(roster.outcome.data)
           setSkillsAdmitted(admits)
           setSkillsNote(admits > 0
             ? `${admits} accepted agent${admits === 1 ? '' : 's'} with skill refs disclosed.`
-            : 'No accepted agents with skill refs disclosed yet.')
+            : `No accepted agents with skill refs disclosed yet — waiting on ${OWNER_BINDINGS.skillset.owner}: ${missingOpRemedy('skillset')}.`)
           setIdentityNote(rosterIdentity(roster.outcome.data))
+          setWaitingOn(state => ({...state, skillset: admits > 0 ? null : OWNER_BINDINGS.skillset.owner}))
         }
       }
       if (sessionRef) {
@@ -152,11 +168,12 @@ export function AgentDeviceChain({sessionRef}: {sessionRef: string | null}) {
       const seatReading = seatOutcome?.result === 'workcell_status_reading' ? seatOutcome : null
       if (live) {
         setGitAdmitted(seatReading != null)
+        setWaitingOn(state => ({...state, git: seatReading != null ? null : OWNER_BINDINGS.workcell.owner}))
         const seatDoc = seatReading?.data
         const workcellRef = isObj(seatDoc) && typeof seatDoc.workcell_ref === 'string' ? seatDoc.workcell_ref : null
         const seatLine = seatReading
           ? (workcellRef ? `workcell ${workcellRef}` : 'workcell status answered — no workcell_ref disclosed')
-          : refusalLine(seat.error, 'Workcell status unavailable')
+          : ownerRefusalLine('workcell', refusalLine(seat.error, 'Workcell status unavailable'))
         const gitDoc = gitOp.outcome?.result === 'git_repository_reading' ? gitOp.outcome.document : null
         const gitRef = isObj(gitDoc) && typeof gitDoc.repo_root === 'string' ? gitDoc.repo_root : null
         const gitLine = gitOp.error
@@ -184,7 +201,7 @@ export function AgentDeviceChain({sessionRef}: {sessionRef: string | null}) {
       setDropOutcome({
         kind: 'refused',
         title: 'Slide refused',
-        line: `«${active.reorder.title}» over ${target.label} — the chain composition is declared at the family door (through → who → how → where → lands); no owner operation reorders it — missing op: ${MISSING_OPS.order}`,
+        line: `«${active.reorder.title}» over ${target.label} — the chain composition is declared at the family door (through → who → how → where → lands); no owner operation reorders it — missing op: ${MISSING_OPS.order}; remedy: ${missingOpRemedy('order')}.`,
         receipt: encodeChainDrag(active.reorder),
       })
       return
@@ -194,7 +211,7 @@ export function AgentDeviceChain({sessionRef}: {sessionRef: string | null}) {
       setDropOutcome({
         kind: 'refused',
         title: 'Drop refused',
-        line: `«${active.drag.label}» onto ${target.label} — no owner operation admits it: missing op ${decision.missingOp} — ${decision.because}.`,
+        line: `«${active.drag.label}» onto ${target.label} — no owner operation admits it: missing op ${decision.missingOp} — ${decision.because}; owner ${decision.owner ?? 'not named'}; remedy: ${decision.remedy}.`,
         receipt: encodeChainDrag(active.drag),
       })
       return
@@ -241,6 +258,8 @@ export function AgentDeviceChain({sessionRef}: {sessionRef: string | null}) {
         gateway={gateway}
         git={git}
         gitAdmitted={gitAdmitted}
+        gatewayAdmitted={gatewayAdmitted}
+        waitingOn={waitingOn}
         effort={shell.effort}
         budgetUsed={budgetUsed}
         budgetCap={budgetCap}

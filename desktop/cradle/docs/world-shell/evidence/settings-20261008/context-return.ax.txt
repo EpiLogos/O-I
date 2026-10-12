@@ -1,0 +1,35 @@
+Browser tab: 4, Title: "O:I · Settings development", URL: "http://127.0.0.1:5176/app/src/settings/preview.html".
+1 AXWebArea O:I · Settings development, URL: 127.0.0.1:5176/app/src/settings/preview.html
+	2 container root
+		3 text Settings contribution · development only
+		4 container
+			5 text Scenario 
+			6 pop up button (collapsed, settable) Description: Development scenario, Value: ready, Secondary Actions: Expand
+				7 menu
+					8 (selected) ready
+					9 loading
+					10 inherited
+					11 overridden
+					12 dirty
+					13 invalid
+					14 immediate
+					15 restart
+					16 pending
+					17 acknowledged
+					18 refused
+					19 failed
+					20 conflict
+					21 absent-product
+					22 unavailable-connection
+		23 button Open settings
+		24 heading Agent setup · contextual entry specimen, Value: 2
+			25 text Agent setup · contextual entry specimen
+		26 container
+			27 text Conversation draft
+			28 text field (settable) Description: Conversation draft, Value: Keep this draft after returning from Preferences.
+		29 text Selection: specimen agent · project settings-specimen
+		30 button Configure this agent’s capabilities…
+		31 container
+			32 text This entry uses  ai-kit:skills:skills.capabilities  at the exact project scope. The work and settings stay mounted.
+
+The focused UI element is 30 button Configure this agent’s capabilities…

@@ -1,0 +1,40 @@
+{
+  "schema": "techne.new-shell.continuation-sources/v1",
+  "sources": [
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/continuation.ts",
+      "sha256": "4bb855e97c271af6d9fc719a4e3bcb56ea3d672791d855d3e0bee00660808acf"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/tests/continuation-native-acceptance.mjs",
+      "sha256": "b9592fe575b2ae8843cdb7074dd07d76c5e6b347787e3d16712216c6e1189bc7"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/index.ts",
+      "sha256": "ba9ac3ea1781e6dfe7777fb89f496a7ef07e110bbdff96746d08c90ecaaef0d6"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/package.json",
+      "sha256": "c301a2ad36260c656ed0a34f3089e75ffcc2e2645681cddbc7618611f539ad52"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/src/inhabitants.rs",
+      "sha256": "ae063f13b061cca832077791a1e1bedcad70fad8a0de527160b9a133d772ef00"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/src/main.rs",
+      "sha256": "c849d24a2cc7531799daa1e3faf6c335975c0ee063a968bf0580717709ea6d83"
+    }
+  ],
+  "config_sha256": "91a7b5ce362f129adafab3d5c1da1d9e18c2d2872018daee08a635a9e5a1f8d6",
+  "acceptance": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/startup-acceptance.json",
+  "backend_acceptance": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/saved-work-config-acceptance.json",
+  "boundary_check": "npm run check passed after final native-reference qualification",
+  "backend_checks": "cargo test 10 passed; cargo build passed",
+  "acquisition": "B: existing native owners, D: bounded integration module/config",
+  "licence": "owned native source adopted through normal package; no step-C code enters this increment",
+  "native_identity_bounds": "owner-compatible ASCII Expression suffix1..128; canonical checkpoint id equals ref",
+  "final_backend_acceptance": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/saved-work-config-acceptance-final.json",
+  "real_binary_metadata_refusal_acceptance": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/configuration-refusal-acceptance.json",
+  "final_shipped_function_acceptance": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/startup-acceptance-current.json"
+}

@@ -1,0 +1,84 @@
+Browser tab: 3, Title: "O:I · Preferences window development", URL: "http://127.0.0.1:5176/app/src/settings/window-preview.html?settings-scenario=ready".
+0 AXWebArea O:I · Preferences window development, URL: 127.0.0.1:5176/app/src/settings/window-preview.html?settings-scenario=ready
+	1 container Preferences
+		2 container
+			3 text Development scenario 
+			4 pop up button (collapsed, settable) Description: Development scenario, Value: ready, Secondary Actions: Expand
+				5 menu
+					6 (selected) ready
+					7 loading
+					8 inherited
+					9 overridden
+					10 dirty
+					11 invalid
+					12 immediate
+					13 restart
+					14 pending
+					15 acknowledged
+					16 refused
+					17 failed
+					18 conflict
+					19 absent-product
+					20 unavailable-connection
+		21 text Explicit preview · no native writes
+		22 container Settings
+			23 container
+				24 heading Preferences, Value: 1
+					25 text Preferences
+				26 search text field (settable) Search settings
+				27 text ⌘ F
+				28 button ← Agent activity
+					29 text ← 
+					30 text Agent activity
+			31 container
+				32 text Development scenario  ·  ready · AIKit and Factory native schema specimens  · simulated responses, no native writes
+			33 container Settings categories
+				34 text PREFERENCES
+				35 button Harnesses & models
+				36 button Skills & methods
+				37 button Profiles
+				38 button Permissions
+				39 button Credentials
+				40 button Machines & services
+				41 button Automations
+				42 button Search & telemetry
+				43 button Appearance & interaction
+				44 text Development specimen
+			45 container
+				46 heading Automations, Value: 2
+					47 text Automations
+				48 text Manage verified Methods that run on a schedule or in response to events.
+				49 container Automations
+					50 container
+						51 text Work context
+						52 pop up button (disabled, collapsed, settable) Description: Automation work context, Value: Development specimen project, Secondary Actions: Expand
+							53 menu
+								54 (disabled) This AIKit home
+								55 (disabled) Development specimen project
+					56 button (disabled) Read again
+					57 container Automation views
+						58 checkbox My routines, Value: 1
+						59 checkbox Methods, Value: 0
+						60 checkbox Run history, Value: 0
+						61 checkbox Harness timers, Value: 0
+					62 text Automations are awaiting the native AIKit connection. No routines have been read or run.
+					63 button (disabled) Create routine…
+					64 container Create routine
+						65 text Name
+						66 text field (settable) Name, Value: Morning review, ID: :r2:-name
+						67 text Method
+						68 pop up button (collapsed, settable) Method, Value: Choose an active Method…, ID: :r2:-method, Secondary Actions: Expand
+							69 menu
+								70 (selected) Choose an active Method…
+						71 text Purpose (optional)
+						72 text field (settable) Purpose (optional), Value: Review the active undertaking after its Method is verified., ID: :r2:-description
+						73 text Create and Enable await the native verified-run and authority selection adapter. Your draft remains local.
+						74 button (disabled) Review creation
+						75 button Cancel draft
+						76 text Unsaved routine · created routines start in Draft
+					77 container My routines
+			78 container
+				79 button (collapsed) ⓘ Info, Secondary Actions: Expand
+				80 text No configuration plans pending
+
+The focused UI element is 49 container Automations

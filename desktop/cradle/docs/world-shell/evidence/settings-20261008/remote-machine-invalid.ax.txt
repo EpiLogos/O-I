@@ -1,0 +1,3 @@
+Browser tab: 3, Title: "O:I · Preferences window development", URL: "http://127.0.0.1:5176/app/src/settings/window-preview.html?settings-scenario=ready".
+There has been no change in the accessibility tree.
+The focused UI element is 65 text field (settable) Credential reference, ID: :r2:-credential_ref

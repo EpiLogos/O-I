@@ -1,0 +1,846 @@
+{
+  "schema": "techne.native-editor-source-basis/v1",
+  "standing": "Current working source snapshot and approved v0.2 placement; owner/helper foundation exercised; full visual and target admission pending",
+  "recorded_at": "2026-10-08T06:34:13.731613+00:00",
+  "heads": {
+    "/Users/admin/Central/worktrees/env-1/o-i": "40de7693050709577716f37a6c8d6b46fedeae82",
+    "/Users/admin/Central/Work/O-I": "f15df9eec79cdfadee6bcb2379cab9c82a002c02"
+  },
+  "working_tree_sources": true,
+  "accepted_owner_descriptors": [
+    {
+      "id": "central",
+      "revision": "39efa03ea8607bdd8a79b0e317457c2ccc3ead4c",
+      "protocol_min": "1.0",
+      "protocol_max": "1.0"
+    },
+    {
+      "id": "actuation",
+      "revision": "67e6b296b85bd3eb1554802fd55a476c474aa566",
+      "protocol_min": "1.0",
+      "protocol_max": "1.0"
+    },
+    {
+      "id": "ai-kit",
+      "revision": "8ef8a4f02ee9e095281d2d03d3e711404ead074a",
+      "protocol_min": "1.0",
+      "protocol_max": "1.0"
+    },
+    {
+      "id": "software-factory",
+      "revision": "a335048b0a5b907adc5d09f0dcbda05b98f79a05",
+      "protocol_min": "1.0",
+      "protocol_max": "1.0"
+    },
+    {
+      "id": "workcell",
+      "revision": "0c3ad1efafdeb254366b7b6122306fe657916a10",
+      "protocol_min": "1.0",
+      "protocol_max": "1.0"
+    },
+    {
+      "id": "quaternal-logic",
+      "revision": "7a02d87283d185835c88a6937ee7a442db15749e",
+      "protocol_min": "1.0",
+      "protocol_max": "1.0"
+    }
+  ],
+  "sources": [
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/PROGRAMME.md",
+      "sha256": "8afb105aa2659b90d0c827d53e90587f4b295ad829c78f43fff8fa721dd8605c",
+      "byte_len": 11654,
+      "role": "commission and convergence scope"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/CONVERGENCE.md",
+      "sha256": "d01c755d4e65c17f8eaa63ad7ed435e04f01d57d79350e26a4e638d4c4a18753",
+      "byte_len": 9124,
+      "role": "commission and convergence scope"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/lane-1-canvas-graph/TARGET-SET.md",
+      "sha256": "4960817ce7c089a316557d8a8ff75c92f1e7ae6c2183d77438aedf3917e73aa2",
+      "byte_len": 24423,
+      "role": "target acceptance source"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/lane-2-timeline/TARGET-SET.md",
+      "sha256": "57e02c638cf4c5cae2ae249036041baf8673b205be53c42cec7586925854ea45",
+      "byte_len": 32161,
+      "role": "target acceptance source"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/lane-3-expressions-editor/TARGET-SET.md",
+      "sha256": "714c1402f9bbf205d7f14620af36051fecfe774f49194f850d326a9da2e66d55",
+      "byte_len": 47051,
+      "role": "target acceptance source"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/lane-4-world-places/TARGET-SET.md",
+      "sha256": "ad3f6425c6fef711a550d2e57d2a3894313673dd9187b43af6aff0101e790e25",
+      "byte_len": 23201,
+      "role": "target acceptance source"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/lane-5-journey-palace/TARGET-SET.md",
+      "sha256": "b9e2f560e9bae343d1e0c9cb6e96b33b8cfe037d4ca4e258c8941e5526b8f1eb",
+      "byte_len": 41833,
+      "role": "target acceptance source"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/lane-7-app-structure/STRUCTURE.md",
+      "sha256": "4a35d9b529877b6e46ada302299393b5c84f7f1d8d37b072388b42e1ce5162cb",
+      "byte_len": 33399,
+      "role": "portable boundary"
+    },
+    {
+      "path": "/Users/admin/Central/Work/O-I/docs/research/ableton-live-12.0.25/ui/UI-EVIDENCE.md",
+      "sha256": "d02f8a096406059a1a38aea3b16d7da7bd0db010a006ba98658a14a9fd0aa128",
+      "byte_len": 6840,
+      "role": "measured UI and native saving contracts"
+    },
+    {
+      "path": "/Users/admin/Central/Work/O-I/docs/research/ableton-live-12.0.25/evidence/ui/live-session-real.png",
+      "sha256": "4307949c0c3de6c480d4fe7c3c08e9cb72d2b64c9695bb68db1fb0bef3a73eea",
+      "byte_len": 218414,
+      "role": "measured UI and native saving contracts"
+    },
+    {
+      "path": "/Users/admin/Central/Work/O-I/docs/research/ableton-live-12.0.25/evidence/ui/live-arrangement-real.png",
+      "sha256": "246526bf631ad912082821ff4d81a26b0193fd67d194f8c612199d348af2dd48",
+      "byte_len": 471081,
+      "role": "measured UI and native saving contracts"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-obsidian-re/contracts/a1-save-handling.contract.md",
+      "sha256": "421dcab29b7a231b090ccdf6e6ab7f65279e247ce0c40ca3a915dfcf09dc24e1",
+      "byte_len": 4278,
+      "role": "measured UI and native saving contracts",
+      "previous_location": "/Users/admin/Central/Work/O-I/campaign-evidence/2026-10-07-obsidian-re/contracts/a1-save-handling.contract.md"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/src/engine/paramRegistry.ts",
+      "sha256": "2098755fd3533980667799a0073e58f3b2d3e90511b1386fe2273961238c3abb",
+      "byte_len": 19058,
+      "role": "observed candidate implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeParameters.ts",
+      "sha256": "9a87fcc86bd2ffd354e4e2823324dc2799889350da53f62e86b41f2094bc5501",
+      "byte_len": 9776,
+      "role": "observed candidate implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts",
+      "sha256": "8bd18b9bb699b43ea6790d696871b5a3e7dacac6406248aaa11e3c7808f4745d",
+      "byte_len": 34832,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorkspace.ts",
+      "sha256": "e0560d6922d1222edf1e0ad1ef0376792f80a5e1ad2ee93f2338d97eeb683919",
+      "byte_len": 31798,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeSelectionQueue.ts",
+      "sha256": "b87de53a4d3128f410c0c0dfe6147c8675cb816b75083fafb16e11076320024d",
+      "byte_len": 1488,
+      "role": "observed candidate implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeOpenIntent.ts",
+      "sha256": "7811b86922e753d659bf0cb8853190ce78cb323a6d3767e375b6a82e9689e01b",
+      "byte_len": 1904,
+      "role": "observed candidate implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/kernel/types.ts",
+      "sha256": "fa8a88322f77de86120ff69884012911e809a4eae6bfac279563464680dd0bdc",
+      "byte_len": 37422,
+      "role": "observed candidate implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/kernel/bridge.ts",
+      "sha256": "c4bd25a4d9edf3aaa301b8c99f4c2f1fbbfc17fe6d3e7bbba078ee3fdfee074d",
+      "byte_len": 14638,
+      "role": "observed candidate implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/cradle.ts",
+      "sha256": "3a942a62ce3bc942d19175c139d0973f8c0c22aa59b13671db55143bcf77a1bf",
+      "byte_len": 13121,
+      "role": "observed candidate implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/host.ts",
+      "sha256": "796cea7f630e1b4312141cf911f506183dd1c679b4c0a480fb4fbc5a39fb4296",
+      "byte_len": 19546,
+      "role": "observed candidate implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/protocol.ts",
+      "sha256": "3c2dcde07c98ca0b991ee8315a0d254a153b31d4d238e9e7b5876cecdb766656",
+      "byte_len": 5439,
+      "role": "observed candidate implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/continuation.ts",
+      "sha256": "4bb855e97c271af6d9fc719a4e3bcb56ea3d672791d855d3e0bee00660808acf",
+      "byte_len": 6115,
+      "role": "observed candidate implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/techne.ts",
+      "sha256": "ae45c96a6e95f12c0a7f6e66a5e48d0b15f9467239cb24028033639e250f8da9",
+      "byte_len": 7606,
+      "role": "observed candidate implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/knowledge.ts",
+      "sha256": "7288f066422e48b2e0d2b49bac2687093b5790ebc2235086a98de8c605d44989",
+      "byte_len": 1022,
+      "role": "observed candidate implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/suite/native-protocol.json",
+      "sha256": "99c2f871b876ddaee486a387d81d931b404632d405bfee7b3e5087d66891a8fc",
+      "byte_len": 917,
+      "role": "observed candidate implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/surfaces.json",
+      "sha256": "609e061de9a0701dac18c946a2af56dd4bc083729eaad1f0983af249330adf67",
+      "byte_len": 16594,
+      "role": "observed candidate implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/src/api.rs",
+      "sha256": "029df11cdfa41dcb16da38d04f343c40046435b5757cf4db8dd3f7989810cdb1",
+      "byte_len": 11700,
+      "role": "observed candidate implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/parameters.ts",
+      "sha256": "3dc1eec345121d712bf399e6d83c23b281c3cc542f6208a8fa0e208faa379ffe",
+      "byte_len": 1047,
+      "role": "normal package export of existing native parameter primitives"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/package.json",
+      "sha256": "8ca5a6c8e49a78a887064887cf8b12bf2fdee4f283bc187186cf2aace79fed6f",
+      "byte_len": 994,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/runtime.ts",
+      "sha256": "e85de0ae8bd0a270032ac954761ce85182e1cd8a2b8d838fbd47f8d10c410086",
+      "byte_len": 659,
+      "role": "additive native package/frame integration; current working source, runtime acceptance recorded separately"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/recoveryBinding.ts",
+      "sha256": "10d48ebf9ef0c72f150bd8e95ad5232dc3abdbe0bba664e2134a1c0116aa9185",
+      "byte_len": 8609,
+      "role": "additive native package/frame integration; current working source, runtime acceptance recorded separately"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/editor.ts",
+      "sha256": "05e77a4e1c94ef83d28ef4b686536139b84eae44760ddd62279a885c10283df6",
+      "byte_len": 6962,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/editorHost.ts",
+      "sha256": "c2a540520c5156d7bdd2ada5ecb492925de07afd271942b41d6f3078c70dec80",
+      "byte_len": 13525,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/kernel/KernelContext.tsx",
+      "sha256": "ddb85272a0098571b4a85666962ce1152f88dd07926da73faa40a97c4f486cf6",
+      "byte_len": 808,
+      "role": "additive native package/frame integration; current working source, runtime acceptance recorded separately"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/stage/StageContext.tsx",
+      "sha256": "ea165ba23a7aee8a39f2eb10730646d6fca7f944a16da0556e44a0b3fb57d703",
+      "byte_len": 860,
+      "role": "additive native package/frame integration; current working source, runtime acceptance recorded separately"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/expressions/recoveryTypes.ts",
+      "sha256": "969b40eef59ba33c8db94014a7cb11fb93afecabeee5606d8746b7fd24b03086",
+      "byte_len": 1323,
+      "role": "additive native package/frame integration; current working source, runtime acceptance recorded separately"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeRecovery.ts",
+      "sha256": "47887808dd27ce3d630d0aa43d5bea84747a005705fb6124b3f758330cdbbdd7",
+      "byte_len": 11242,
+      "role": "additive native package/frame integration; current working source, runtime acceptance recorded separately"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/recovery.ts",
+      "sha256": "3b256607e32b5e203b9e1dabf7dc0c85d6acc04b66e825d13cb55ace8516e4ae",
+      "byte_len": 12281,
+      "role": "additive native package/frame integration; current working source, runtime acceptance recorded separately"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "sha256": "c4c7996fc8c0466998af1318439018bdeb654abc767360f3c97676c7f4054090",
+      "byte_len": 214013,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/App.tsx",
+      "sha256": "0e280b67bc5cf552ab54578b1b78dafe95695805faabc77c70ea0df53c8516a5",
+      "byte_len": 21715,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/settings/host.ts",
+      "sha256": "c8740aa26050d73ccf452adeaba3f524145ca0141f42752fd9ec63bb735cf72a",
+      "byte_len": 1073,
+      "role": "additive native package/frame integration; current working source, runtime acceptance recorded separately"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/NATIVE-EDITOR-STANDARD.md",
+      "sha256": "f4076c30d4aa005a6fe6d14164db3278545ec2f553c008e7d7d62f9909dc04dc",
+      "byte_len": 22003,
+      "role": "agent-derived design or bounded receiving record; not adopted governance"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/KERNEL-STATE-FOUNDATION.md",
+      "sha256": "1859c20704e94243646948e6946a338e6be4fa23cd66ec5abe54c6cc08eaeef8",
+      "byte_len": 15536,
+      "role": "agent-derived design or bounded receiving record; not adopted governance"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/INSTRUMENTATION-CONTRACT.md",
+      "sha256": "7fef37e91178b93ed5f4a45757cc3dff3282a21e0d2148ca197b1f7bd09445e6",
+      "byte_len": 55438,
+      "role": "agent-derived design or bounded receiving record; not adopted governance"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/workspacePreferences.ts",
+      "sha256": "d9a36594b34967dc51b20822e6b910e92b2f5e8d2235f6e947ce8219fc1d4efa",
+      "byte_len": 2959,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "sha256": "380bf12ca9265f0ce78010d710d4f5ab8f7a82e83d923764124ec9fc1f8cf828",
+      "byte_len": 9150,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/beltPicker.ts",
+      "sha256": "8442081af1ccd85f00e1a0679a55343f84e72c7b410753c8cc03dd603c9e5b97",
+      "byte_len": 1908,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/sharedSettings.ts",
+      "sha256": "40d5c8006d89da9c6563e5f26b2fc37566b6e70048393f76da4568047e80a0cc",
+      "byte_len": 3386,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/kernelComposition.ts",
+      "sha256": "24e1818ad0840eec1bff3631295a690db9fa40ebdce5e8439631f31b172f3b46",
+      "byte_len": 11680,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge.ts",
+      "sha256": "916d892d0f84b0247db814e13e139eed19e0770348b811c24cf5878a93dee52b",
+      "byte_len": 25536,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/hostEditor.ts",
+      "sha256": "8f799883bdcd639ee9b16b7ec2a82536dfd879a437abff7951bce2e12d3b1d45",
+      "byte_len": 35849,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/model.ts",
+      "sha256": "24df98124d7e98065d9dd98fc500198317d2aef3b2dc13a123772b98a1b27f21",
+      "byte_len": 35850,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "sha256": "bcad35e4cae3d74d35c7bbb5796c56308d4d2b6a3b6242282fef1a4865f9c9ee",
+      "byte_len": 57925,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/shell.ts",
+      "sha256": "e3131f3cb7722cb3519e7dfd831a67a04f0fd9c05ba34bf9380d984d21668d8a",
+      "byte_len": 12093,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/lensStudio.ts",
+      "sha256": "1f9c2db8d7721fffb647a1db325a325b151dc5625ee5ea339116bc95812f385c",
+      "byte_len": 3629,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/researchInstruments.tsx",
+      "sha256": "f1d8de32d629fff3c1fe5466281ea186f6ea2e834f6537ae73e52c35f43ab9a3",
+      "byte_len": 66128,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeField.ts",
+      "sha256": "f54f92a63d664e212b40a61e952411a2c6cb1872554fb0b5f441eb6195535b0c",
+      "byte_len": 44875,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/naraInstrument.tsx",
+      "sha256": "9be870612631ffda44649a0baa377ab5d46fcb41d11c775961108bad0136561d",
+      "byte_len": 42678,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/sceneWorkflow.ts",
+      "sha256": "f2f98c56fb6cace607735c1b862ee7de901ba8bd3a6f37933f1dbe4f27ec1c44",
+      "byte_len": 2397,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/propertyTracks.ts",
+      "sha256": "b9b874babdeac87b46a6c3413a83a9283438a440e798aa14076141e93286799e",
+      "byte_len": 4337,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationEditor.ts",
+      "sha256": "83d0200c9b7cf444abe1464e2c597f1148a912a794fdda3e7764330c68e7c364",
+      "byte_len": 6496,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/actPanel.ts",
+      "sha256": "84823c5fb1ae70b8b4707060d186030193c7981546a84a230cdcbb45dc8ac21c",
+      "byte_len": 25841,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/WorldBrowser.tsx",
+      "sha256": "e25c16f674a189c29ada448ab84a611a81aa84d8f430ac3bba71e8eb9a3fc2d2",
+      "byte_len": 13518,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeWorldDetail.tsx",
+      "sha256": "2ea91024962e20ce91f6a3efae69ea48865b624e803fd0a145b77175cac47ea5",
+      "byte_len": 15832,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeWorldDetail.css",
+      "sha256": "d5e9a6c673dee2ea0f2f9f88e56b5349023ff3aacc183823ec0e102884790191",
+      "byte_len": 5464,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeRackEditor.tsx",
+      "sha256": "49446869ce4520381a140d45d977d23394863741bfca2eeb6c101b6be84a3bcc",
+      "byte_len": 16896,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeMaterialBrowser.tsx",
+      "sha256": "01710701c77e82c9518be8bc0c8bb434c3c3b61038ee17bca9b3e4a24c001e43",
+      "byte_len": 10226,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/native/Foundation.tsx",
+      "sha256": "6edd4209dbf3e352444d3e9fb7feb7b058f42a5303da15b9a4fdd9332ac294a8",
+      "byte_len": 8208,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/nativeRackSchema.ts",
+      "sha256": "40622071d5b0a0aa10ca66fcedc038bc9bc698b8d5ffc7bbd8512aa2f1f81f1f",
+      "byte_len": 9825,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/Work/O-I/docs/research/ableton-live-12.0.25/evidence/ui/live-wavetable-device-panel.png",
+      "sha256": "f1a867ab204f9b5ca37179969375c65c6d0d32cbfec1bd46977dbba74ba9e657",
+      "byte_len": 454815,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/UI-UX-CONVERGENCE-STUDY.md",
+      "sha256": "e82e06d855dbfe805fe3311e3fbbe42a01d109ef43717b6ccc792ecf52116753",
+      "byte_len": 16412,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/EXPRESSIONS-FEATURE-MAP.md",
+      "sha256": "64569b5303ba1cb6df6db0db64cb32eb874c86d0c702a604a3c058f827b05cc1",
+      "byte_len": 13540,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/expressions-ui-actions.json",
+      "sha256": "3d92f35c8c75d515379d418414d79cd79ed9b310b85671931d5db82cb3c2f386",
+      "byte_len": 87344,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native-device-chain-1920x1200.png",
+      "sha256": "45fae8e97caf72d9ddeb85d4ac524385cd4a8989de307e4617dd3811c13ee7d5",
+      "byte_len": 1101444,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native-device-chain-700x700-before.png",
+      "sha256": "3982eee0de583dd4302ee67df4feac2a53788edd01de8da3816452603a4cb8cd",
+      "byte_len": 377268,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/preserved-open-draft.json",
+      "sha256": "5dc628e5f94c4d14a7481673bf6dfd02af0b75a9aec747798b695206c824a42a",
+      "byte_len": 1483,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/sol-8789-runtime-basis.json",
+      "sha256": "724e5086e167916e78da48dabb526c1cc5178feec23f7561a1e4b87d7ec28239",
+      "byte_len": 2551,
+      "role": "UX study source / actual implementation"
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/EDITOR-FOUNDATION-RETURN.html",
+      "sha256": "ceef38ae3fab265e0a68a2ce211d25233f858f9b16921063d40cc2bddf02b859",
+      "byte_len": 2088031,
+      "role": "current study and receiving standard"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/src/native_contract.rs",
+      "sha256": "3eb5eb5bdfa53d350364fc2b8ee5f5f79ee3d77a5546416262c116a15888474b",
+      "byte_len": 5978,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/src/native_world.rs",
+      "sha256": "b3bfa71fb630e243d7fa4f1e30cfc8f34ec2f07e2d414ad5c6b757d9855c698f",
+      "byte_len": 6062,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/src/runtime.rs",
+      "sha256": "03b0ce99747068e0338576d001e0f1ce25394711d43d7e600c4087b9db2457eb",
+      "byte_len": 32580,
+      "role": "native state / integration source"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/src/main.rs",
+      "sha256": "29bf4ce43f00baf304ecc0561896b8fbeae58a7cab64ef4d9f0018fb6bc01b5e",
+      "byte_len": 15904,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/Cargo.toml",
+      "sha256": "4d12d6156a3a91a615ecf9df5f5a6b88ac9abc99f9f049f42c048b568eb081d6",
+      "byte_len": 583,
+      "role": "native state / integration source"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/Cargo.lock",
+      "sha256": "63b908caaaa93cac1ce2fe9161b633b2b75da586bb8173b3ac86a13375f99c95",
+      "byte_len": 19802,
+      "role": "native state / integration source"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/tests/editor-bridge-native-audit.mjs",
+      "sha256": "7a7ed2bc7e5002081450b0d0d4eb61c5e1dc71cdb99240925c3ebec2ef402c3e",
+      "byte_len": 22170,
+      "role": "native state / integration source"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/scenes.ts",
+      "sha256": "a1c134a866c444264a439a9cfdc6221f9b07808a6e7b2d806c018ed01c65004d",
+      "byte_len": 10715,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/tests/scenes-native-acceptance.mjs",
+      "sha256": "e58816aae4ad81417ba09ea1d83b1abd677c908507237ba638be450bf7a25e87",
+      "byte_len": 21671,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/tests/run-native-scenes.mjs",
+      "sha256": "0865225870ddadfce57477bb2c6a1a7dc03df30227db2a816e196d45e3c8e977",
+      "byte_len": 1809,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/sceneTransport.ts",
+      "sha256": "9063974585f2123e620bf4ed9d7166bf8ed8d44270d8c1f11133aba0964f2238",
+      "byte_len": 3545,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/techne/session.ts",
+      "sha256": "bf5244924abf3fd8b3e3f74bf53d2d8addf339cc35e8e36afc51306bdf76a0be",
+      "byte_len": 11286,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/techne/m0m5/timeline/timeAxis.ts",
+      "sha256": "0d3b6f0c71d736824ea5a88c5bb0996ab61ccd095846c6e3439dce1f816e34e2",
+      "byte_len": 8118,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/tests/techne-time-axis-native-acceptance.mjs",
+      "sha256": "dbbce028deb935ed1907a571b35a7c6b3b0c18b6f27fb2fb4fb4580f5cfa6be6",
+      "byte_len": 18576,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/tests/run-techne-time-axis-native.mjs",
+      "sha256": "f5d5c8cee043253e1e24bf6fdf30abe8a7221868940a27a94916a88beb33a0b1",
+      "byte_len": 1518,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/native/application.ts",
+      "sha256": "d06b73197ce6eab9298aaecca89abf117d365b6917f622b2cfe5991cd4190f74",
+      "byte_len": 8720,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/shell/useSet.ts",
+      "sha256": "d47ec95752a1084eb8c30ac34f75271f8fcc8d2e91d8bc72fbf08d63473d95f7",
+      "byte_len": 5012,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeChosenControls.tsx",
+      "sha256": "d217ee9474c55dcda353ad4102e6ea8d54b400c94326b43b6e584c6de21f089a",
+      "byte_len": 15285,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativePropertyBrowser.tsx",
+      "sha256": "b47a89904fa33b06970497118b8a0850ae2fac35a5f46c9a62adf91dcd59e150",
+      "byte_len": 6853,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/cli/src/current_world.rs",
+      "sha256": "6c18583543f3fbcde69770cbce33af13796a4ab17c672fb56338d4bc76b6543b",
+      "byte_len": 38946,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/scenesValidation.ts",
+      "sha256": "f3b520b336cddf8aad31496156a06f854f4188ac68d925c9eb98a51007ce7e0f",
+      "byte_len": 7955,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/sceneEdits.ts",
+      "sha256": "27aaacb12e6c868f2435b1522b20416085718ce4f3d69a48e3699eb2faf53030",
+      "byte_len": 21133,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/tests/run-tests.mjs",
+      "sha256": "35fa021e4fe69621a83e250413baa6674b0522f68c21acc4bdda499754954faf",
+      "byte_len": 1258,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/tests/register-production-sources.mjs",
+      "sha256": "fb6fbc66303e199cabf8a8d9c1cbc71959a33c68554057e49c6467c3f6a817d4",
+      "byte_len": 94,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/store.ts",
+      "sha256": "81a8d6e282b2813780e95f678e21b925a9c807dd0e65e48d9260d57c4742bba1",
+      "byte_len": 4086,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/shell/nativeContent.ts",
+      "sha256": "6082ba8e757434a4824a989b0a7bb4f0f995c02bfb95fca113a58d573851040e",
+      "byte_len": 11919,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/shell/compositionViews.ts",
+      "sha256": "50d9982ad21baa26faacb2043e1920895d4a797afadf30a3fff6831d4a49c78a",
+      "byte_len": 9084,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/SessionView.tsx",
+      "sha256": "6b3a7c50c441d826de1c871aa3f0811eb8916c78ed0477d7ebd509360edc54e9",
+      "byte_len": 10848,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/ArrangementView.tsx",
+      "sha256": "2e6942182cdbf8f3f7859d3b0f1634a66c0fcb1561eb47705dab1c5904d1a76f",
+      "byte_len": 14689,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeSceneEditor.tsx",
+      "sha256": "26b66d49f9ced29bfe4bca2f708982338065e1b3659941978522cfff5ecfb5ac",
+      "byte_len": 7636,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeSceneEditor.css",
+      "sha256": "79366aa3e28f6f381dab923b7c9c254ee6ae841df904f745608d76f5f997c4a2",
+      "byte_len": 1670,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeSceneTransport.tsx",
+      "sha256": "501c51cb224a673ab6b5825a725aeb62ed2a93849759cddd54ccceecb39d4e54",
+      "byte_len": 3543,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeSceneOverview.tsx",
+      "sha256": "bb5e10449c4404087f7fc8243f357be53b095b352e6aae3b62442704054d61a9",
+      "byte_len": 6982,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeCompositionViews.css",
+      "sha256": "5127f032f68f3a48551be55392b8ec260af5d2b083ebe699ab8ceabc2feda2d5",
+      "byte_len": 6666,
+      "role": "native Scene core, owner join or shell presentation"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/timeWindow.ts",
+      "sha256": "f4e8448aa3d8c20815bf022e680bb957dc4575a0fe5c7f9520ec77632cb8911b",
+      "byte_len": 12032,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/tests/time-window-native-acceptance.mjs",
+      "sha256": "2b663eae8d06f90148597ed7bdaaeef2f51e5ce92447df42e26b19e92843dd4d",
+      "byte_len": 28333,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/tests/run-native-time-window.mjs",
+      "sha256": "96438d8b9d8eed64a8adc7bb685821f2403d51133d593f5d5e53d962b9abec8f",
+      "byte_len": 1462,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/native/expressionOwners.ts",
+      "sha256": "161111b9d0d6e89e0c75321085ee8c804ba8c8db0d033e21bacbff1a01d903f7",
+      "byte_len": 3978,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/techne/m0m5/timeline/scale.ts",
+      "sha256": "85b6e657cb02995334bc0271392c9bc49b44898e019e4e52390f13fe20d013c4",
+      "byte_len": 14632,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/techne/m0m5/timeline/relations.ts",
+      "sha256": "029da3ee5faf14293280a8538a1c39eb8bac9052e529479ac46ec5cde1f0e7d2",
+      "byte_len": 23143,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/techne/m0m5/timeline/lanes.ts",
+      "sha256": "65d1c8ef784c048a4fc04a0b5b8429a7e3250cd6b91a8ebf5427c646079fac8c",
+      "byte_len": 10271,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/techne/m0m5/timeline/state.ts",
+      "sha256": "e12f88ecc478fd7ff6a6fc458a5fef15deea928b4c413a815d44c1b95e03cf94",
+      "byte_len": 8796,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/tests/timeline-calendar.test.mjs",
+      "sha256": "86d219048a1893e5eeb5034b2df9419483cceeec711ebc30b2dbf61a8e79ef13",
+      "byte_len": 3223,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/kernelExpressions.ts",
+      "sha256": "1521ebdb1d2bace7ef959fe26d19e11e694301dd594b537a6ca51a73dbece45b",
+      "byte_len": 22142,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/sharedTimeWindow.tsx",
+      "sha256": "253886d2e2f18271529089b4896f41fdbbf962537b4283b46736670089e9cb36",
+      "byte_len": 8301,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/sharedTimeWindow.css",
+      "sha256": "a0545525179f2d5af2f4981b73381b7ab1eb8ab755f7355265e885432e2e1e09",
+      "byte_len": 816,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/sharedTimeProjection.ts",
+      "sha256": "0cd15d8bfcdcecf630ed7bf581ac8363e8f87f65466893e779f24bf44aa611fa",
+      "byte_len": 2276,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/placeReading.ts",
+      "sha256": "c94f578000062a682e6cb6dbb678983f4ebb6dd4d7cb9c42a9d280afac3ef05a",
+      "byte_len": 6202,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/placeFacetsPanel.tsx",
+      "sha256": "954874ee7b6a58bae11385c5aee196c2e32039bb2679336218194e4c645d3ff7",
+      "byte_len": 10608,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/relationFieldView.tsx",
+      "sha256": "4a64ef6d8caf785276e9756b2b54a8063367c632badd8f42694366682fe16a55",
+      "byte_len": 18531,
+      "role": "Existing native session/time comparison owner, portable boundary or instrument receiver"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/continuity/nativeInputs.ts",
+      "sha256": "7069494124460bc91f3170c85d13c42b1bd6e709f557335deb982ef9ba00c26d",
+      "byte_len": 4748,
+      "role": "Shared native private-input receiving adapter; root repaired its type to match native writer grammar"
+    }
+  ],
+  "notes": [
+    "Exact file hashes identify candidate source bytes; a repository HEAD alone does not represent uncommitted shared-seat work.",
+    "Owner descriptor revisions are accepted projections, not installed runtime acceptance.",
+    "No Step-C implementation is adopted by these design records.",
+    "Scene core increment source hashes captured; body and shell artifacts qualify their exact build inputs separately. No GUI acceptance while Mac locked.",
+    "Shared-time sources and native calendar comparison repairs captured; actual native owner47check packet pins its executed189source closure separately. Production manifests and served bytes define their own immutable basis. No GUI admission while Mac locked."
+  ],
+  "historical_basis": "editor-source-basis-2026-10-07.json",
+  "missing_current_sources": []
+}

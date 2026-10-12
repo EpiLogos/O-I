@@ -1,0 +1,357 @@
+- banner:
+  - generic: Rich Glyph and native parameter rack · file proof
+  - button "Toggle browser" [pressed]: ▥
+  - generic: Expressions
+  - generic: Orbit variation
+  - navigation "Working surface":
+    - button "Session view":
+    - button "Arrangement view":
+    - button "Expressions" [pressed]:
+    - button "Technē":
+    - button "Workbench":
+    - button "Settings" [active]:
+  - button "Toggle detail" [pressed]: ▤
+  - button "Toggle agents and context":
+- complementary "World browser":
+  - generic: Search Expressions
+  - searchbox "Search Expressions"
+  - navigation "World browser categories":
+    - heading "Library" [level=3]
+    - button "Expressions" [pressed]:
+      - generic: ◇
+      - generic: Expressions
+    - button "Material":
+      - generic: ▧
+      - generic: Material
+    - button "Parameters":
+      - generic: ○
+      - generic: Parameters
+    - button "Files":
+      - generic: ▸
+      - generic: Files
+    - button "Knowledge":
+      - generic: ⌘
+      - generic: Knowledge
+  - region "Saved native works":
+    - heading "Name" [level=3]
+    - list:
+      - button "Rich Glyph and native parameter rack · file proof":
+        - generic: ◇
+        - generic: Rich Glyph and native parameter rack · file proof
+      - button "Scene core owner acceptance":
+        - generic: ◇
+        - generic: Scene core owner acceptance
+      - button "Scene core owner acceptance":
+        - generic: ◇
+        - generic: Scene core owner acceptance
+      - button "Scene core owner acceptance":
+        - generic: ◇
+        - generic: Scene core owner acceptance
+      - button "Scene core owner acceptance":
+        - generic: ◇
+        - generic: Scene core owner acceptance
+      - button "Chosen control owner acceptance":
+        - generic: ◇
+        - generic: Chosen control owner acceptance
+      - button "Rich Glyph and native parameter rack · file proof":
+        - generic: ◇
+        - generic: Rich Glyph and native parameter rack · file proof
+      - button "Chakral Body — 7 Subtle Centers Constellation":
+        - generic: ◇
+        - generic: Chakral Body — 7 Subtle Centers Constellation
+      - button "Central — wiki local whole":
+        - generic: ◇
+        - generic: Central — wiki local whole
+  - region "Browser context":
+    - button "Context" [expanded]: ▾ Context
+    - paragraph: The open Expression keeps its own Scenes, objects and chosen controls.
+- separator "Resize browser"
+- main:
+  - generic "Expressions":
+    - iframe:
+      - application "Living field canvas. Press E to edit; P to place a pin.":
+        - generic "Native living particle field"
+      - banner:
+        - navigation "Canvas tools":
+          - button "Interact" [pressed]:
+          - button "Select":
+          - button "Pointer effects":
+          - button "Pin":
+          - button "Formation sequence" [pressed]:
+          - button "Edit page text (T)":
+          - button "Objects in this scene":
+        - button "Workspace menu":
+          - generic: •••
+        - button "Nara"
+        - button "Save (⌘S) · Rich Glyph and native parameter rack · file proof · revision 44":
+        - button "History and capture menu":
+          - generic: •••
+        - button "Image suite":
+      - button "Toolbelt": ⋮
+      - paragraph: X +0.000 · Y +0.000 · Z +0.000
+      - complementary "Formation sequence":
+        - heading "Formation sequence" [level=2]
+        - button "Close formation sequence": ×
+        - generic: Formation sequence
+        - combobox "Live formation":
+          - option "Layered source-bearing glyph" [selected]
+        - paragraph: ASCII glyph → Actual native O:I icon PNG → Return · playing
+        - paragraph: Actual native O:I icon PNG → ASCII glyph · 0%
+        - 'button "Edit state 1: ASCII glyph" [pressed]':
+          - img "ASCII glyph"
+          - generic: "1"
+        - 'button "Edit state 2: Actual native O:I icon PNG"':
+          - img "Actual native O:I icon PNG"
+          - generic: "2"
+        - 'button "Edit state 3: Return"':
+          - generic: Return
+          - generic: "3"
+        - button "Add sequence step":
+        - button "Add glyph"
+        - button "Add ASCII"
+        - button "Add image"
+        - generic: Formation
+        - combobox "Image suite formation":
+          - option "Layered source-bearing glyph" [selected]
+        - generic: Sequence state
+        - combobox "Image suite sequence state":
+          - option "1 · ASCII glyph" [selected]
+          - option "2 · Actual native O:I icon PNG"
+          - option "3 · Return"
+        - button "New formation"
+        - button "Add state"
+        - generic: Build this state from
+        - combobox "Build this state from":
+          - option "Glyph / geometry"
+          - option "Image"
+          - option "ASCII drawing" [selected]
+        - generic: State name
+        - textbox "State name"
+        - figure:
+          - img "ASCII glyph sampling preview"
+        - paragraph: ASCII crop 172×166 · 10% ink · 2,821 sample points
+        - generic: ASCII drawing
+        - textbox "ASCII drawing"
+        - generic: Monospace font
+        - textbox "Monospace font"
+        - generic: Font size ceiling
+        - spinbutton "Font size ceiling value"
+        - slider "Font size ceiling"
+        - generic: Sample negative space
+        - checkbox "Sample negative space"
+        - paragraph: The preview updates when an edit is applied; resume motion to let particles follow it. The complete drawing fits automatically. Line breaks, spaces and aspect ratio are preserved.
+        - button "Open formation sequence"
+        - generic "Glyph library"
+        - button "Move state earlier" [disabled]: ←
+        - button "Move state later": →
+        - button "Duplicate"
+        - button "Remove"
+        - button "Timing"
+        - button "New formation"
+        - button "Image / ASCII"
+        - button "Add state to earlier scene…"
+        - generic: Transition control
+        - combobox "Transition control":
+          - option "Hold one state"
+          - option "Manual blend"
+          - option "Play sequence" [selected]
+        - generic "Depth layers of this artwork"
+      - navigation "Scene transport":
+        - button "Previous scene (←)":
+        - button "02 Orbit variation":
+          - generic: "02"
+          - strong: Orbit variation
+        - button "Next scene (→)":
+        - button "Play scene (Space)":
+        - button "Play saved scenes":
+        - button "Acts"
+        - button "Present the artwork (F)":
+      - region "Research instrument workspace"
+- separator "Resize detail"
+- region "Native clip editor":
+  - text: Object
+  - combobox "Native editor selection":
+    - option "Choose an object"
+    - option "Layered source-bearing glyph" [selected]
+    - option "Force 1"
+    - option "Force 2"
+  - button "Scene"
+  - button "States" [pressed]
+  - button "Deep edit ↗"
+  - button "Refresh native editor": ↻
+  - region "Glyph Sequence editor":
+    - button "Glyph sequence enabled" [pressed]: ●
+    - strong: Glyph Sequence
+    - generic: Layered source-bearing glyph
+    - button "Undo glyph edit" [disabled]: ↶
+    - button "Redo glyph edit" [disabled]: ↷
+    - button "Save"
+    - group "Field · glyph font":
+      - generic: Field · glyph font
+      - text: Family
+      - combobox "Field font family":
+        - option "System Sans"
+        - option "Neue Grotesk"
+        - option "Humanist"
+        - option "Geometric"
+        - option "Classic Serif" [selected]
+        - option "Didone"
+        - option "Editorial Serif"
+        - option "Slab"
+        - option "Modern Mono"
+        - option "Typewriter"
+        - option "Display Heavy"
+        - option "Rounded"
+        - option "Custom stack"
+      - text: Weight
+      - combobox "Field font weight":
+        - option "Regular · 400"
+        - option "Semibold · 600"
+        - option "Bold · 700" [selected]
+        - option "Heavy · 900"
+      - generic: All Field glyphs · installed font stacks · authored boxes retained
+    - text: Compose
+    - combobox "Sequence operation":
+      - option "Hold state"
+      - option "Manual blend"
+      - option "Play sequence" [selected]
+    - text: Clock
+    - combobox "Sequence clock":
+      - option "Seconds" [selected]
+      - option "Morph cycles"
+    - text: Order
+    - combobox "Sequence order":
+      - option "Loop"
+      - option "Ping-pong" [selected]
+      - option "Deterministic random"
+    - generic: Rate
+    - textbox "Rate": "1.2"
+    - generic: Phase · cycles
+    - textbox "Phase · cycles": "0.17"
+    - generic: 8.90 s authored · state 2 · 0%
+    - listbox "Glyph states":
+      - 'option "ASCII glyph: hold 2.55, transition 0.35 seconds" [selected]':
+        - img "ASCII glyph":
+          - generic "ascii · depth -0.15"
+          - generic "image · depth 0.2"
+        - generic: 1 · ASCII glyph ●
+        - button "Resize state 1 hold"
+        - img "kineticSnap transition"
+        - generic: 2.55 + 0.35 s
+        - button "Resize state 1 transition"
+      - 'option "Actual native O:I icon PNG: hold 3.75, transition 0.75 seconds"':
+        - img "Actual native O:I icon PNG":
+          - generic "text · depth 0.4":
+            - generic: outer
+        - generic: 2 · Actual native O:I icon PNG ●
+        - button "Resize state 2 hold"
+        - img "kineticSnap transition"
+        - generic: 3.75 + 0.75 s
+        - button "Resize state 2 transition"
+      - 'option "Return: hold 0.45, transition 1.05 seconds"':
+        - img "Return":
+          - generic "text · depth 0":
+            - generic: Return
+        - generic: 3 · Return ●
+        - button "Resize state 3 hold"
+        - img "kineticSnap transition"
+        - generic: 0.45 + 1.05 s
+        - button "Resize state 3 transition"
+    - button "＋ State"
+    - button "Duplicate"
+    - button "←"
+    - button "→"
+    - button "Remove"
+    - generic "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph": State 1
+    - generic: Hold · s
+    - textbox "Hold · s": "2.55"
+    - generic: Transition · s
+    - textbox "Transition · s": "0.35"
+    - text: Shape
+    - combobox "State shape":
+      - option "text" [selected]
+      - option "ring"
+      - option "disc"
+      - option "square"
+      - option "triangle"
+      - option "yantra"
+      - option "cymatic"
+    - text: Glyph / word
+    - textbox "State glyph content": ASCII source
+    - button "Replace glyph" [disabled]
+    - text: ASCII
+    - textbox "ASCII drawing": /\ /++\ /____\
+    - button "Image / ASCII source"
+    - text: Easing
+    - combobox "Transition easing":
+      - option "Linear geodesic"
+      - option "Smooth"
+      - option "Kinetic snap" [selected]
+      - option "Whip"
+    - img "Actual native easing curve"
+    - generic: Impulse
+    - textbox "Impulse": "1.1"
+    - generic: Jitter
+    - textbox "Jitter": "0.12"
+    - strong: State body
+    - button "Release overrides"
+    - generic: Width
+    - textbox "Width": "0.8"
+    - generic: Height
+    - textbox "Height": "1.2"
+    - generic: Rotation · °
+    - textbox "Rotation · °": "17"
+    - generic: Scale
+    - textbox "Scale": "1.3"
+    - text: Tint
+    - textbox "State tint": "#336699"
+    - generic: Tint weight
+    - textbox "Tint weight": "0.6"
+    - text: State force kind
+    - combobox "State force kind":
+      - option "None"
+      - option "Attract"
+      - option "Repel"
+      - option "Vortex" [selected]
+    - generic: State radius · px
+    - textbox "State radius · px": "1415.4921619679906"
+    - generic: State force
+    - textbox "State force": "5.000000000000001"
+    - generic: State spin
+    - textbox "State spin": "-0.7"
+    - generic: Offset X
+    - textbox "Offset X": "0"
+    - generic: Offset Y
+    - textbox "Offset Y": "0"
+    - generic: Offset Z
+    - textbox "Offset Z": "0"
+    - button "Place state on Stage"
+    - strong: Spatial layers
+    - textbox "Layer layer:ascii-inner text": inner
+    - textbox "Layer layer:ascii-inner ASCII drawing": x+x
+    - generic: Depth
+    - textbox "Depth": "-0.15"
+    - generic: Layer scale
+    - textbox "Layer scale": "0.7"
+    - button "Remove layer": ×
+    - textbox "Layer layer:ascii-image text": image layer
+    - generic: Actual native O:I icon PNG
+    - generic: Depth
+    - textbox "Depth": "0.2"
+    - generic: Layer scale
+    - textbox "Layer scale": "0.9"
+    - button "Remove layer": ×
+    - button "＋ Layer"
+    - button "Edit layer sources"
+    - status:
+      - text: This native work is already open. Its Scene, transport and working draft were retained.
+      - generic "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a · expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:scene:scene-6a017310-a336-418c-9cbf-2f991809e3bb": r44 · 1
+- status "Viewport 615 × 346 · expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a":
+  - generic: i
+  - generic "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:scene:scene-6a017310-a336-418c-9cbf-2f991809e3bb": Rich Glyph and native parameter rack · file proof
+  - generic: Orbit variation
+  - navigation "Detail view":
+    - button "Clip details" [pressed]:
+      - generic: Clip
+    - button "Native device chain":
+      - generic: Device

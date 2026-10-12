@@ -1,0 +1,12 @@
+# channel: scripted (accessibility tree), no interaction; pid 22945; 2026-10-12T17:16:52Z; settled=yes at 6992 elements
+# AXIsProcessTrusted: true
+window: O-I Shell Candidate
+# elements visited: 6992
+# owner readback (status region) searched in the same window:
+# AXIsProcessTrusted: true
+window: O-I Shell Candidate
+# elements visited: 6992
+# owner-discovery words searched in the same window:
+# AXIsProcessTrusted: true
+window: O-I Shell Candidate
+# elements visited: 6992

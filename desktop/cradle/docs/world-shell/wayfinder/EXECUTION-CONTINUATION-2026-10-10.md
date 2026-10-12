@@ -1,5 +1,7 @@
 # Continuation prompt — the World-shell development track (10 October)
 
+> **Superseded on device semantics and owner facts (12 Oct 2026):** `DEVICE-SEMANTICS-LOCK.md` is the law, `PATH.md` the route, `EXECUTE.md` the execution prompt. This continuation is superseded.
+
 Copy this whole file into a fresh session standing anywhere in the Central
 world. It assumes the strap (central-session-strap) runs first.
 

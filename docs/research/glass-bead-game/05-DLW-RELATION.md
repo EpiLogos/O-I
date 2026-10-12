@@ -5,7 +5,7 @@
 **Revision note.** Rev 1 of this file was written before the design
 documents were read; the owner corrected the frame the same day ("you
 caught the worst slice of my system"). Rev 2 stands in the real sources:
-`Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/WORLD-SHELL-DESIGN.md`
+`desktop/cradle/docs/world-shell/WORLD-SHELL-DESIGN.md`
 (rev 5, one transport five meanings), `docs/experience/TECHNE-DUAL-READING.md`
 (the 4:2 / 3:3 lock), `docs/research/ableton-live-12.0.25/` (the measured
 Live study and clean-room shell blueprint), and

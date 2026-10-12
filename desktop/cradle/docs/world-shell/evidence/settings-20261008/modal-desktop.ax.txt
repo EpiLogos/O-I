@@ -1,0 +1,81 @@
+Window: "O:I · Preferences window development", App: Safari.
+0 standard window O:I · Preferences window development, ID: SafariWindow?IsSecure=false&UUID=F072A587-7887-4F52-A137-55AC33EAA055, Secondary Actions: Raise
+	1 split group
+		2 tab group
+			3 scroll area
+				4 HTML content Description: O:I · Preferences window development, URL: 127.0.0.1:5176/app/src/settings/window-preview.html?settings-scenario=ready
+					5 container Preferences
+						6 container
+							7 text Development scenario 
+							8 pop-up button Development scenario, Value: ready
+						9 text Explicit preview · no native writes
+						10 container Settings
+							11 container
+								12 heading Preferences, Value: 1
+									13 text Preferences
+								14 search text field (settable) Search settings, Placeholder: Search preferences
+									15 text Search preferences
+								16 text ⌘ F
+								17 button ← Agent setup
+							18 container
+								19 text Development scenario  ·  ready · AIKit and Factory native schema specimens  · simulated responses, no native writes
+							20 container Settings categories
+								21 text PREFERENCES
+								22 button Harnesses & models
+								23 button Skills & methods
+								24 button Profiles
+								25 button Permissions
+								26 button Credentials
+								27 button Search & telemetry
+								28 button Appearance & interaction
+								29 text Development specimen
+							30 container
+								31 heading Skills & methods, Value: 2
+									32 text Skills & methods
+								33 text Capabilities and skill sets composed into a working context. Applies to
+								34 pop-up button Capability toggles scope, Value: project
+								35 text field (settable) Capability toggles scope subject, Value: settings-specimen, Placeholder: Native subject reference
+								36 button Read scope
+								37 text Local changes retained at this scope
+								38 container ai-kit resolution
+									39 heading Working practices AIKit, Value: 3
+										40 text Working practices AIKit
+									41 container Default skill-sets
+										42 heading Default skill-sets, Value: 3
+											43 text Default skill-sets
+										44 text Inherited / resolved by owner
+										45 text  · This machine
+										46 text field (settable) Default skill-sets, item 1, Value: specimen-skill-set
+										47 button Remove Default skill-sets item 1
+										48 button + Add item
+										49 summary Details, Value: off
+											50 text Details
+								51 container ai-kit skills
+									52 heading Available capabilities AIKit, Value: 3
+										53 text Available capabilities AIKit
+									54 container Capability toggles
+										55 heading Capability toggles, Value: 3
+											56 text Capability toggles
+										57 text Inherited / resolved by owner
+										58 container Capability toggles
+											59 text Capability Enabled
+											60 text field (settable) Capability toggles, row 1, capability, Value: specimen-capability
+											61 container
+												62 tickbox Capability toggles, row 1, enabled, Value: 0
+												63 text Off
+											64 button Remove Capability toggles row 1
+											65 button + Add entry
+										66 button Undo
+										67 summary Details · local draft, Value: off
+											68 text Details
+											69 text  · local draft
+							70 container Selected preference help
+								71 heading Capability toggles, Value: 3
+									72 text Capability toggles
+								73 text The scope's declared capability enable/disable deltas, as an object mapping capability id to boolean. Applied through AIKit's native toggle pipeline, which re-materialises the scope's generation.
+								74 text Effective specimen-capability: On From owner_ref: development-specimen · path: specimen://inherited-native-source Applies New sessions  ·  The next compose resolves the new capability horizon; sessions already running keep the horizon they were launched with. Draft specimen-capability: Off  · not applied
+							75 container
+								76 button (expanded) ⓘ Info, Secondary Actions: Collapse
+								77 text 1 local change
+								78 button Review changes…
+								79 text Development only

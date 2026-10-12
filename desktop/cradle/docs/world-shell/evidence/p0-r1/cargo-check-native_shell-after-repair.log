@@ -1,0 +1,111 @@
+# cwd: /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src-tauri
+# rev: 13aaf53604d1efe1a70907276f89363204f82827 + working change: src-tauri/Cargo.toml adds live-dynamics to native_shell
+# cmd: cargo check --features native_shell
+2026-10-12T14:24:53Z
+     Locking 1 package to highest compatible version
+      Adding live-dynamics v0.1.0 (/Users/admin/Central/worktrees/env-1/o-i/packages/live-dynamics)
+    Checking live-dynamics v0.1.0 (/Users/admin/Central/worktrees/env-1/o-i/packages/live-dynamics)
+    Checking oi-cradle v0.1.0 (/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src-tauri)
+warning: struct `ParamDescJson` is never constructed
+   --> src/../../../../packages/live-shell/src/api.rs:180:12
+    |
+180 | pub struct ParamDescJson {
+    |            ^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `desc_json` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:192:4
+    |
+192 | fn desc_json(desc: &live_dynamics::params::ParamDesc) -> ParamDescJson {
+    |    ^^^^^^^^^
+
+warning: function `device_descriptors_json` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:216:8
+    |
+216 | pub fn device_descriptors_json() -> serde_json::Value {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `find_track` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:232:4
+    |
+232 | fn find_track<'a>(
+    |    ^^^^^^^^^^
+
+warning: function `find_track_mut` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:249:4
+    |
+249 | fn find_track_mut<'a>(
+    |    ^^^^^^^^^^^^^^
+
+warning: function `find_device` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:269:4
+    |
+269 | fn find_device<'a>(
+    |    ^^^^^^^^^^^
+
+warning: function `find_device_mut` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:282:4
+    |
+282 | fn find_device_mut<'a>(
+    |    ^^^^^^^^^^^^^^^
+
+warning: function `resolve_path` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:298:4
+    |
+298 | fn resolve_path<'a>(
+    |    ^^^^^^^^^^^^
+
+warning: function `resolve_path_mut` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:309:4
+    |
+309 | fn resolve_path_mut<'a>(
+    |    ^^^^^^^^^^^^^^^^
+
+warning: function `param_json` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:320:4
+    |
+320 | fn param_json(id: &str, value: &str, range: Option<&live_set::xml::Element>) -> ParamJson {
+    |    ^^^^^^^^^^
+
+warning: function `device_params_json` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:339:8
+    |
+339 | pub fn device_params_json(
+    |        ^^^^^^^^^^^^^^^^^^
+
+warning: function `device_param_set` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:373:8
+    |
+373 | pub fn device_param_set(
+    |        ^^^^^^^^^^^^^^^^
+
+warning: function `out_of_range` is never used
+   --> src/../../../../packages/live-shell/src/api.rs:446:4
+    |
+446 | fn out_of_range(desc: &live_dynamics::params::ParamDesc, value: f64) -> String {
+    |    ^^^^^^^^^^^^
+
+warning: fields `shell_dist` and `expressions_dist` are never read
+   --> src/../../../../packages/live-shell/src/runtime.rs:373:9
+    |
+370 | pub struct QualifiedPayload {
+    |            ---------------- fields in this struct
+...
+373 |     pub shell_dist: PathBuf,
+    |         ^^^^^^^^^^
+374 |     pub expressions_dist: PathBuf,
+    |         ^^^^^^^^^^^^^^^^
+
+warning: function `current_world_product_ids` is never used
+  --> src/../../../../packages/live-shell/src/native_contract.rs:25:15
+   |
+25 | pub(crate) fn current_world_product_ids(reading: &serde_json::Value) -> Result<Vec<String>, String> {
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `oi-cradle` (bin "oi-cradle") generated 15 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.56s
+real 4.64
+user 2.12
+sys 0.42
+exit=0

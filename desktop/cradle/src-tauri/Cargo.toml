@@ -8,7 +8,7 @@ publish = false
 tauri-build = { version = "=2.6.3", features = [] }
 
 [features]
-native_shell = ["dep:sha2", "dep:live-set", "dep:uuid"]
+native_shell = ["dep:sha2", "dep:live-set", "dep:live-dynamics", "dep:uuid"]
 
 [dependencies]
 portable-pty = "=0.9.0"
@@ -16,6 +16,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = { version = "0.10", optional = true }
 live-set = { path = "../../../packages/live-set", optional = true }
+live-dynamics = { path = "../../../packages/live-dynamics", optional = true }
 uuid = { version = "1", features = ["v4"], optional = true }
 oi-cradle-kernel = { path = "../kernel" }
 tauri-plugin-dialog = "=2.7.1"

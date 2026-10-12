@@ -1,0 +1,102 @@
+Browser tab: 4, Title: "O:I · Settings development", URL: "http://127.0.0.1:5176/app/src/settings/preview.html".
+1 AXWebArea O:I · Settings development, URL: 127.0.0.1:5176/app/src/settings/preview.html
+	2 container root
+		3 text Settings contribution · development only
+		4 container
+			5 text Scenario 
+			6 pop up button (collapsed, settable) Description: Development scenario, Value: absent-product, Secondary Actions: Expand
+				7 menu
+					8 ready
+					9 loading
+					10 inherited
+					11 overridden
+					12 dirty
+					13 invalid
+					14 immediate
+					15 restart
+					16 pending
+					17 acknowledged
+					18 refused
+					19 failed
+					20 conflict
+					21 (selected) absent-product
+					22 unavailable-connection
+		23 button Show retained work
+		24 container Settings
+			25 container
+				26 heading Preferences, Value: 1
+					27 text Preferences
+				28 search text field (settable) Search settings
+				29 text ⌘ F
+				30 button ← Back to work
+					31 text ← 
+					32 text Back to work
+			33 container
+				34 text Development scenario  ·  absent-product · AIKit and Factory native schema specimens  · simulated responses, no native writes
+			35 container Settings categories
+				36 text PREFERENCES
+				37 button Harnesses & models
+				38 button Skills & methods
+				39 button Profiles
+				40 button Permissions
+				41 button Credentials
+				42 button Appearance & interaction
+				43 text Development specimen
+			44 container
+				45 heading Harnesses & models, Value: 2
+					46 text Harnesses & models
+				47 text Defaults for new conversations. Choose the current harness and model beside the conversation. Applies to
+				48 pop up button (collapsed, settable) Description: Default model per harness scope, Value: This machine, Secondary Actions: Expand
+					49 menu
+						50 (selected) This machine
+				51 text This machine
+				52 container Harness and provider defaults
+					53 heading New conversations, Value: 3
+						54 text New conversations
+					55 container
+						56 heading Default provider for new chats, Value: 3
+							57 text Default provider for new chats
+						58 text This installation · O:I chat default owner
+						59 pop up button (disabled, collapsed, settable) Description: Default provider for new chats, Value: Use configured provider order, Secondary Actions: Expand
+							60 menu
+								61 (disabled) Use configured provider order
+					62 container
+						63 text Effective:  Not read  ·  Awaiting native resolution .
+					64 text Current conversation choices and connection verification are beside the conversation. Resuming work preserves that conversation’s model and harness.
+					65 text Harnesses, configured providers and saved defaults have not been read. Connect Cradle’s existing HarnessSource.
+					66 heading Harness installation, Value: 3
+						67 text Harness installation
+				68 container ai-kit models
+					69 heading Models AIKit, Value: 3
+						70 text Models AIKit
+					71 container Default model per harness
+						72 heading Default model per harness, Value: 3
+							73 text Default model per harness
+						74 text Override at this scope
+						75 container Default model per harness
+							76 text Harness Model
+							77 pop up button (collapsed, settable) Description: Default model per harness, row 1, harness, Value: Specimen harness, Secondary Actions: Expand
+								78 menu
+									79 Choose…
+									80 (selected) Specimen harness
+							81 text field (settable) Description: Default model per harness, row 1, model, Value: specimen-model
+							82 button Remove Default model per harness row 1
+							83 button + Add entry
+						84 button (collapsed) Details, Secondary Actions: Expand
+							85 text Details
+					86 container Model candidates
+						87 heading Model candidates, Value: 3
+							88 text Model candidates
+						89 text Override at this scope
+						90 text  · World
+						91 text specimen-model
+						92 button (collapsed) Details, Secondary Actions: Expand
+							93 text Details
+				94 heading Software Factory, Value: 3
+					95 text Software Factory
+				96 text Development specimen: product is not installed.
+			97 container
+				98 button (collapsed) ⓘ Info, Secondary Actions: Expand
+				99 text No pending changes
+
+The focused UI element is 1 AXWebArea O:I · Settings development, URL: 127.0.0.1:5176/app/src/settings/preview.html

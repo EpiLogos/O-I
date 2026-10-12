@@ -1,0 +1,265 @@
+*** Begin Patch
+*** Update File: /Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/host.ts
+@@
+     if (!this.ready || !this.presented() || !this.reading?.nativeScene) throw Error('Open one native Expression Scene before capturing its target');
+     return {bindingId: this.bindingId, epoch: this.epoch, scene: {...this.reading.nativeScene}};
+   }
++  /** Observe an already captured operation's surviving frame epoch. This does
++   * not authorize a new operation: captureTarget remains the presented gate. */
++  readOutcomeTarget(target: HostTarget): HostTarget | null {
++    if (!this.alive || !this.ready || target.bindingId !== this.bindingId || target.epoch !== this.epoch || !this.reading?.nativeScene) return null;
++    return {bindingId:this.bindingId,epoch:this.epoch,scene:{...this.reading.nativeScene}};
++  }
+   assertTarget(target: HostTarget) {
+     const current = this.captureTarget();
+     if (target.bindingId !== current.bindingId || target.epoch !== current.epoch
+*** Update File: /Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/editorHost.ts
+@@
+-import {EDITOR_CHANNEL, type NativeEditorController, type NativeEditorReading, type NativeEditorReply, type NativeEditorRequest} from './editor.ts';
++import {EDITOR_CHANNEL, type NativeEditorController, type NativeEditorReading, type NativeEditorReply} from './editor.ts';
+ import type {ExpressionsHost} from './host.ts';
+ import type {HostTarget} from './protocol.ts';
+ 
++const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
++const text = (value: unknown): value is string => typeof value === 'string' && value.length > 0;
++const revision = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) >= 0;
++const coordinates = (value: unknown) => object(value) && ['x','y','z'].every(key => typeof value[key] === 'number' && Number.isFinite(value[key]));
+ function reading(value: unknown): value is NativeEditorReading {
+-  if (!value || typeof value !== 'object') return false;
+-  const r = value as NativeEditorReading, b = r.basis;
+-  return !!b && typeof b.expression_ref === 'string' && b.expression_ref.startsWith('expression:')
+-    && Number.isSafeInteger(b.revision) && b.revision >= 0 && typeof b.scene_ref === 'string'
+-    && Number.isSafeInteger(b.authored_revision) && b.authored_revision >= 0
+-    && !!r.scene && typeof r.scene.id === 'string' && Array.isArray(r.scene.entities)
+-    && r.scene.entities.every(e => typeof e.id === 'string' && !!e.sequence && Array.isArray(e.sequence.steps))
+-    && !!r.history && !!r.selection && Array.isArray(r.selection.entity_ids) && !!r.standing;
++  if (!object(value) || !object(value.basis) || !object(value.scene) || !object(value.history)
++    || !object(value.selection) || !object(value.standing) || !object(value.entityOccurrences)) return false;
++  const {basis: b, scene, history, selection, standing} = value;
++  if (!text(b.expression_ref) || !b.expression_ref.startsWith('expression:') || !revision(b.revision)
++    || !text(b.scene_ref) || !revision(b.authored_revision) || !text(scene.id) || typeof scene.name !== 'string'
++    || !object(scene.engine) || !object(scene.field) || !object(scene.field.params) || !object(scene.composition)
++    || !object(scene.morph) || !Array.isArray(scene.entities) || !Array.isArray(selection.entity_ids)
++    || !selection.entity_ids.every(text) || !(selection.step_id === null || text(selection.step_id))
++    || typeof history.canUndo !== 'boolean' || typeof history.canRedo !== 'boolean'
++    || typeof standing.dirty !== 'boolean' || typeof standing.pending !== 'boolean'
++    || !(standing.notice === null || typeof standing.notice === 'string')
++    || !Object.values(value.entityOccurrences).every(text)) return false;
++  return scene.entities.every(e => object(e) && text(e.id) && typeof e.name === 'string'
++    && coordinates(e.position) && object(e.size) && typeof e.size.x === 'number' && typeof e.size.y === 'number'
++    && object(e.force) && text(e.force.kind) && object(e.sequence) && typeof e.sequence.enabled === 'boolean'
++    && Array.isArray(e.sequence.steps) && e.sequence.steps.every(step => object(step) && text(step.id)
++      && typeof step.text === 'string' && text(step.shape) && typeof step.hold === 'number' && Number.isFinite(step.hold)
++      && typeof step.transition === 'number' && Number.isFinite(step.transition)
++      && (step.position === null || coordinates(step.position))));
+ }
+ 
+ /** Uses the already mounted and admitted frame. It owns no document or transport. */
+ export function createNativeEditorClient(host: ExpressionsHost, messages: EventTarget = window): NativeEditorController {
+   const token = crypto.randomUUID();
+-  let alive = true, current: NativeEditorReading | null = null;
++  let alive = true, current: NativeEditorReading | null = null, admitted: HostTarget | null = null;
+   const listeners = new Set<(value: NativeEditorReading | null) => void>();
+-  const pending = new Map<string, {target: HostTarget; resolve: (reply: NativeEditorReply) => void; timer: ReturnType<typeof setTimeout>}>();
+-  const notify = (value: NativeEditorReading | null) => {current = value; for (const listener of listeners) listener(value)};
+-  const sameLocation = (target: HostTarget, value: NativeEditorReading) => {
+-    try {
+-      const now = host.captureTarget();
+-      return target.bindingId === now.bindingId && target.epoch === now.epoch
+-        && value.basis.expression_ref === now.scene.expression_ref && value.basis.scene_ref === now.scene.scene_ref
+-        && target.scene.expression_ref === now.scene.expression_ref && target.scene.scene_ref === now.scene.scene_ref;
+-    } catch {return false}
++  const pending = new Map<string, {target: HostTarget; read: boolean; resolve: (reply: NativeEditorReply) => void; timer: ReturnType<typeof setTimeout>}>();
++  const deliver = (listener: (value: NativeEditorReading | null) => void, value: NativeEditorReading | null) => {
++    try {listener(value)} catch {/* A presentation fault cannot change or strand an owning operation. */}
+   };
++  const notify = (value: NativeEditorReading | null) => {
++    current = value;
++    for (const listener of [...listeners]) deliver(listener,value);
++  };
++  const sameSubject = (a: HostTarget['scene'], b: HostTarget['scene']) => a.expression_ref === b.expression_ref && a.scene_ref === b.scene_ref;
++  const adoptable = (target: HostTarget, value: NativeEditorReading) => {
++    const now = host.readOutcomeTarget(target);
++    if (!now || !sameSubject(target.scene,now.scene) || value.basis.expression_ref !== now.scene.expression_ref
++      || value.basis.scene_ref !== now.scene.scene_ref || value.basis.revision < now.scene.revision) return false;
++    return !current || current.basis.expression_ref !== value.basis.expression_ref || current.basis.scene_ref !== value.basis.scene_ref
++      || value.basis.revision >= current.basis.revision && value.basis.authored_revision >= current.basis.authored_revision;
++  };
++  const matches = (data: Record<string, unknown>, target: HostTarget) => data.bindingId === target.bindingId && data.epoch === target.epoch;
+   const receive = (event: Event) => {
+     const e = event as MessageEvent;
+     if (!alive || e.source !== host.frame.contentWindow || e.origin !== host.origin) return;
+-    const data = e.data;
+-    if (!data || data.schema !== EDITOR_CHANNEL || data.token !== token) return;
++    const data: unknown = e.data;
++    if (!object(data) || data.schema !== EDITOR_CHANNEL || data.token !== token) return;
+     if (data.kind === 'reading') {
+-      if (!reading(data.reading)) return;
+-      try {if (sameLocation(host.captureTarget(), data.reading)) notify(data.reading)} catch {notify(null)}
++      if (admitted && matches(data,admitted) && reading(data.reading) && adoptable(admitted,data.reading)) notify(data.reading);
+       return;
+     }
+     if (data.kind !== 'result' || typeof data.req !== 'string') return;
+     const p = pending.get(data.req);
+     if (!p) return;
+     clearTimeout(p.timer); pending.delete(data.req);
+-    if (!data.reply || typeof data.reply.ok !== 'boolean') {p.resolve({ok: false, error: 'Invalid native editor outcome'}); return}
+-    const reply = data.reply as NativeEditorReply;
+-    if (reply.reading && (!reading(reply.reading) || !sameLocation(p.target, reply.reading))) {
+-      p.resolve({ok: false, error: 'The editor reply belongs to a replaced scene or host'}); return;
++    if (!matches(data,p.target) || !host.readOutcomeTarget(p.target)) {
++      p.resolve({ok:false,error:'The editor carrier belongs to a replaced host epoch; the native outcome is unresolved here'}); return;
+     }
+-    if (reply.ok && !reply.reading) {p.resolve({ok: false, error: 'The owner omitted its editor readback'}); return}
+-    if (reply.reading) notify(reply.reading);
++    if (!object(data.reply) || typeof data.reply.ok !== 'boolean' || !data.reply.ok && typeof data.reply.error !== 'string') {
++      p.resolve({ok:false,error:'Invalid native editor outcome'}); return;
++    }
++    const reply = data.reply as unknown as NativeEditorReply;
++    if (reply.reading !== undefined && !reading(reply.reading)) {
++      p.resolve({ok:false,error:'Invalid native editor readback'}); return;
++    }
++    if (reply.ok && !reply.reading) {p.resolve({ok:false,error:'The owner omitted its editor readback'}); return}
++    const adopt = !!reply.reading && adoptable(p.target,reply.reading);
++    if (p.read && reply.ok && adopt) admitted = p.target;
++    // The exact owner outcome remains true when selection or visibility changes.
++    // Only a current reading enters presentation. Settle independently of listeners.
+     p.resolve(reply);
++    if (adopt && reply.reading) notify(reply.reading);
+   };
+-  messages.addEventListener('message', receive);
++  messages.addEventListener('message',receive);
+   const replaced = () => {
++    admitted = null;
++    for (const p of pending.values()) {clearTimeout(p.timer); p.resolve({ok:false,error:'The retained application reloaded; its previous native outcomes are unresolved here'})}
++    pending.clear();
+     notify(null);
+-    for (const p of pending.values()) {clearTimeout(p.timer); p.resolve({ok: false, error: 'The retained application reloaded; reopen this editor'})}
+-    pending.clear();
+   };
+-  host.frame.addEventListener('load', replaced);
++  const loaded = () => {
++    // The first iframe load may complete the same boot epoch. The host is the
++    // authoritative lifetime owner; only a replaced epoch retires these requests.
++    if (admitted && host.readOutcomeTarget(admitted) || [...pending.values()].some(p => host.readOutcomeTarget(p.target))) return;
++    replaced();
++  };
++  host.frame.addEventListener('load',loaded);
+   return {
+     request(request) {
+-      if (!alive) return Promise.resolve({ok: false, error: 'This editor was disposed'});
++      if (!alive) return Promise.resolve({ok:false,error:'This editor was disposed'});
+       let target: HostTarget;
+       try {
+         target = host.captureTarget();
+-        if (request.operation !== 'read' && (request.basis.expression_ref !== target.scene.expression_ref
+-          || request.basis.scene_ref !== target.scene.scene_ref || request.basis.revision !== target.scene.revision)) throw Error('The captured native scene changed; retain the draft and refresh');
+-      } catch (cause) {return Promise.resolve({ok: false, error: cause instanceof Error ? cause.message : String(cause)})}
++        if (request.operation !== 'read') {
++          if (!admitted || !host.readOutcomeTarget(admitted) || !sameSubject(admitted.scene,target.scene)) throw Error('Read the current native editor before applying an operation');
++          if (request.basis.expression_ref !== target.scene.expression_ref || request.basis.scene_ref !== target.scene.scene_ref
++            || request.basis.revision !== target.scene.revision) throw Error('The captured native scene changed; retain the draft and refresh');
++        }
++      } catch (cause) {return Promise.resolve({ok:false,error:cause instanceof Error ? cause.message : String(cause)})}
+       const req = crypto.randomUUID();
+       return new Promise<NativeEditorReply>(resolve => {
+-        const timer = setTimeout(() => {pending.delete(req); resolve({ok: false, error: 'The native editor did not acknowledge this operation; the result is unresolved'})}, 30000);
+-        pending.set(req, {target, resolve, timer});
+-        host.frame.contentWindow!.postMessage({schema: EDITOR_CHANNEL, kind: 'request', token, req,
+-          bindingId: target.bindingId, epoch: target.epoch, request}, host.origin);
++        const timer = setTimeout(() => {pending.delete(req); resolve({ok:false,error:'The native editor did not acknowledge this operation; the result is unresolved'})},30000);
++        pending.set(req,{target,read:request.operation === 'read',resolve,timer});
++        try {host.frame.contentWindow!.postMessage({schema:EDITOR_CHANNEL,kind:'request',token,req,bindingId:target.bindingId,epoch:target.epoch,request},host.origin)}
++        catch (cause) {clearTimeout(timer);pending.delete(req);resolve({ok:false,error:`The native editor request was not delivered: ${cause instanceof Error ? cause.message : String(cause)}`})}
+       });
+     },
+-    subscribe(listener) {listeners.add(listener); listener(current); return () => {listeners.delete(listener)}},
++    subscribe(listener) {
++      if (!alive) {deliver(listener,null);return () => {}}
++      listeners.add(listener);deliver(listener,current);return () => {listeners.delete(listener)};
++    },
+     dispose() {
+       if (!alive) return;
+-      alive = false; replaced(); listeners.clear();
+-      messages.removeEventListener('message', receive); host.frame.removeEventListener('load', replaced);
++      alive = false;
++      messages.removeEventListener('message',receive);host.frame.removeEventListener('load',loaded);
++      try {replaced()} finally {listeners.clear()}
+     },
+   };
+ }
+*** Update File: /Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/hostEditor.ts
+@@
+ }
+ /** Receiving seam for the retained app. All effects stay with its existing owners. */
+ export function installNativeEditorReceiver(owner: NativeEditorReceiver, target: Window = window) {
+-  let binding: {token: string; bindingId: string; epoch: number} | null = null, busy = false;
++  type Binding = {token: string; bindingId: string; epoch: number};
++  let binding: Binding | null = null, busy = false, alive = true, generation = 0;
+   const seen = new Set<string>();
+-  const post = (data: object) => {if (binding) target.parent.postMessage({schema: EDITOR_CHANNEL,token: binding.token,...data},target.location.origin)};
+-  const publish = () => {if (binding) {try {post({kind:'reading',reading: owner.read()})} catch {/* no native reading is invented */}}};
++  const bounded = (value: unknown, max: number): value is string => typeof value === 'string' && value.length > 0 && value.length <= max;
++  const sameBinding = (a: Binding, b: Binding) => a.token === b.token && a.bindingId === b.bindingId && a.epoch === b.epoch;
++  const post = (address: Binding, data: object) => {
++    if (!alive) return;
++    try {target.parent.postMessage({schema:EDITOR_CHANNEL,...address,...data},target.location.origin)} catch {/* Failed delivery leaves the caller's outcome unresolved. */}
++  };
++  const publish = () => {
++    if (alive && binding) {try {post(binding,{kind:'reading',reading:owner.read()})} catch {/* No native reading is invented. */}}
++  };
+   const receive = async (event: MessageEvent) => {
+     const data = event.data;
+-    if (event.source !== target.parent || event.origin !== target.location.origin || !data || data.schema !== EDITOR_CHANNEL || data.kind !== 'request') return;
+-    if (typeof data.token !== 'string' || typeof data.req !== 'string' || typeof data.bindingId !== 'string' || !Number.isSafeInteger(data.epoch)) return;
++    if (!alive || event.source !== target.parent || event.origin !== target.location.origin || !data
++      || data.schema !== EDITOR_CHANNEL || data.kind !== 'request') return;
++    if (!bounded(data.token,128) || !bounded(data.req,128) || !bounded(data.bindingId,1024)
++      || !Number.isSafeInteger(data.epoch) || data.epoch < 0) return;
++    const address: Binding = {token:data.token,bindingId:data.bindingId,epoch:data.epoch};
+     const request = data.request as NativeEditorRequest;
+-    let reply: NativeEditorReply;
++    let requestGeneration = generation, reply: NativeEditorReply;
+     try {
+       if (!request || !['read','apply','select','open','undo','redo','save'].includes(request.operation)) throw Error('Unsupported native editor operation');
+-      if (!binding || request.operation === 'read' && !busy) binding = {token:data.token,bindingId:data.bindingId,epoch:data.epoch};
+-      if (binding.token !== data.token || binding.bindingId !== data.bindingId || binding.epoch !== data.epoch) throw Error('The editor binding was replaced');
++      if (!binding || !sameBinding(binding,address)) {
++        if (request.operation !== 'read') throw Error('Read the current native editor before applying an operation');
++        if (binding && binding.bindingId === address.bindingId && address.epoch < binding.epoch) throw Error('The editor binding belongs to a retired epoch');
++        if (busy && (!binding || binding.bindingId !== address.bindingId || address.epoch <= binding.epoch)) throw Error('A native editor operation is awaiting acknowledgement');
++        // A newer host epoch retires old replies, never cancels or fabricates the
++        // existing owner's effect. While it runs, further mutations remain busy.
++        binding = address;generation++;seen.clear();
++      }
++      requestGeneration = generation;
+       const key = `${data.token}:${data.req}`;
+       if (seen.has(key)) throw Error('This editor request was already handled; read its outcome before retrying');
+       if (seen.size >= 65536) throw Error('Reopen the editor after its bounded request history');
+@@
+           else await owner.history(request.operation);
+         } finally {busy = false}
+       }
++      if (!alive || requestGeneration !== generation) return;
+       reply = {ok:true,reading:owner.read()};
+     } catch (cause) {
++      if (!alive || requestGeneration !== generation) return;
+       reply = {ok:false,error:cause instanceof Error ? cause.message : String(cause)};
+-      try {reply.reading=owner.read()} catch {/* absent native work is explicit */}
++      try {reply.reading=owner.read()} catch {/* Absent native work is explicit. */}
+     }
+-    // Reply to this exact client even when its attempted binding was refused.
+-    target.parent.postMessage({schema:EDITOR_CHANNEL,kind:'result',token:data.token,req:data.req,reply},target.location.origin);
++    // A correlated refusal echoes the attempted address, not a different binding.
++    if (alive && requestGeneration === generation) post(address,{kind:'result',req:data.req,reply});
+   };
+   const listener = (event: MessageEvent) => {void receive(event)};
+   target.addEventListener('message',listener);
+-  return {publish,dispose:()=>{target.removeEventListener('message',listener);binding=null;seen.clear()}};
+-}
++  return {publish,dispose:()=>{
++    if (!alive) return;
++    alive=false;generation++;target.removeEventListener('message',listener);binding=null;seen.clear();
++  }};
++}
+*** End Patch

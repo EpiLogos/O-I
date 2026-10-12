@@ -1,0 +1,128 @@
+Browser tab: 4, Title: "O:I · Settings development", URL: "http://127.0.0.1:5176/app/src/settings/preview.html".
+1 AXWebArea O:I · Settings development, URL: 127.0.0.1:5176/app/src/settings/preview.html
+	2 container root
+		3 text Settings contribution · development only
+		4 container
+			5 text Scenario 
+			6 pop up button (collapsed, settable) Description: Development scenario, Value: restart, Secondary Actions: Expand
+				7 menu
+					8 ready
+					9 loading
+					10 inherited
+					11 overridden
+					12 dirty
+					13 invalid
+					14 immediate
+					15 (selected) restart
+					16 pending
+					17 acknowledged
+					18 refused
+					19 failed
+					20 conflict
+					21 absent-product
+					22 unavailable-connection
+		23 button Show retained work
+		24 container Settings
+			25 container
+				26 heading Preferences, Value: 1
+					27 text Preferences
+				28 search text field (settable) Search settings
+				29 text ⌘ F
+				30 button ← Agent setup
+					31 text ← 
+					32 text Agent setup
+			33 container
+				34 text Development scenario  ·  restart · AIKit and Factory native schema specimens  · simulated responses, no native writes
+			35 container Settings categories
+				36 text PREFERENCES
+				37 button Harnesses & models
+				38 button Skills & methods
+				39 button Profiles
+				40 button Permissions
+				41 button Credentials
+				42 button Search & telemetry
+				43 button Appearance & interaction
+				44 text Development specimen
+			45 container
+				46 heading Profiles, Value: 2
+					47 text Profiles
+				48 text The native profile used when composing new work. Applies to
+				49 pop up button (collapsed, settable) Description: Native profile selection scope, Value: This machine, Secondary Actions: Expand
+					50 menu
+						51 (selected) This machine
+						52 project
+						53 agent-session
+				54 text Local changes retained at this scope
+				55 container Named settings profiles
+					56 heading Named settings profiles, Value: 3
+						57 text Named settings profiles
+					58 text A named sparse set of O:I settings. The AIKit profile selection below decides which agent composition to use; these saved sets stage ordinary settings drafts.
+					59 text Saved profiles have not been read. Connect the retained O:I profile adapter.
+					60 button (disabled) New profile from valid drafts…
+					61 button (disabled) Import profile…
+				62 container ai-kit resolution
+					63 heading Working practices AIKit, Value: 3
+						64 text Working practices AIKit
+					65 container Native profile selection
+						66 heading Native profile selection, Value: 3
+							67 text Native profile selection
+						68 text Override at this scope
+						69 text field (settable) Description: Native profile selection, Value: specimen-profile-revised, ID: :r19:
+						70 button Undo
+						78 container
+							79 button (expanded) Details · local draft, Secondary Actions: Collapse
+								80 text Details
+								81 text  · local draft
+							82 text Which native AIKit profile the scope declares (the resolution basis). Values are AIKit's own profile ids, passed by reference and resolved natively; profile internals are never copied into the plane. Applies to
+							83 pop up button (collapsed, settable) Description: Native profile selection scope, Value: This machine, Secondary Actions: Expand
+								84 menu
+									85 (selected) This machine
+									86 project
+									87 agent-session
+							88 button Restore inheritance / default…
+							89 definition list
+								90 container Native identity
+									91 text Native identity
+								92 text ai-kit:resolution:resolution.profiles
+								93 container Owner / location
+									94 text Owner / location
+								95 container
+									96 text ai-kit  ·  aikit:scope:profiles
+								97 container Configured preference
+									98 text Configured preference
+								99 text No desired preference reported
+								100 container Declared override
+									101 text Declared override
+								102 text specimen-profile
+								103 container Effective resolution
+									104 text Effective resolution
+								105 container
+									106 text specimen-profile  ·  owner_ref: development-specimen · path: specimen://scope-override
+								107 container Observed runtime
+									108 text Observed runtime
+								109 text specimen-profile-previous
+								110 container Native staged change
+									111 text Native staged change
+								112 text Not reported
+								113 container Proposed override
+									114 text Proposed override
+								115 text specimen-profile-revised
+								116 container Applies
+									117 text Applies
+								118 text New sessions compose with the new profile; harness sessions already running keep their composition until they are relaunched.
+								119 container Native default
+									120 text Native default
+								121 text Computed by owner
+								122 container Reconciliation
+									123 text Reconciliation
+								124 container
+									125 text satisfied  ·
+								126 container Reading basis
+									127 text Reading basis
+								128 text specimen-reading-1
+			74 container
+				75 button (collapsed) ⓘ Info, Secondary Actions: Expand
+				76 text 1 local change
+				77 button Review changes…
+
+The focused UI element is 79 button (expanded) Details · local draft, Secondary Actions: Collapse

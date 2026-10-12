@@ -31,7 +31,7 @@ O-I packages/live-shell/ui/src/inhabitants/       the neutral door + the standin
   familyManifest.ts  the ONLY admission store
   manifest.ts        composed manifests + the door's validator
   agentParamAddresses.ts  the verified ownership map (AGENT_SHELL_ADDRESS_TABLE)
-Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/
+desktop/cradle/docs/world-shell/
   WORLD-SHELL-DESIGN.md   §12–16: families, the uncarved block, §14, time, four surfaces
   UX-SPINE-ALIGNMENT.md   the thread order — WHERE work lands is the spine's decision
   AGENT-DEVICE-OWNERSHIP.md  the verified per-device ownership map

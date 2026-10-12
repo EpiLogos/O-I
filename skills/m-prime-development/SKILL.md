@@ -14,7 +14,7 @@ file; read it once, work from here.
 ## Where the domain's law lives
 
 ```text
-Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/
+desktop/cradle/docs/world-shell/
   WORLD-SHELL-DESIGN.md      the design law (§12–16: families, uncarved block,
                              §14 addresses, time strata, four surfaces; Rev 5
                              at the top: one transport, five meanings)
