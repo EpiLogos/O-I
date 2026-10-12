@@ -67,3 +67,48 @@ browser path (the `/api/config` producer was not traced) — the reading says
 "no revision" there until it is. UI legs need `computer-use` in the native app.
 
 **Carries** (PATH §10 items 2, 11).
+
+### W0b — (A) + (B) landed, 12 Oct 2026
+
+**Landed.** `f5adaa2ab` (builder, converged and pushed by the conductor).
+(A) `native/application.ts` types `source_revision`, `source_tree_sha256`
+and `source_dirty` on `ShellConfig` (from `native_shell.rs:429`, `:433`);
+`shell/runContext.tsx` (new) holds `runContextOf` and `carrierOf` (labels
+ported from `native/configuration.ts:46-47`) and the `RunContextReading`
+span; `components/StatusBar.tsx` mounts it (`data-region=run-context`), so
+it renders on both shell paths (`App.tsx:432`, `:439`). States: native host
+at a disclosed revision with tree digest and dirty flag; development browser
+"no revision disclosed"; pending before the read; an unreadable
+configuration names its failure. Malformed revisions are rejected. (B)
+`components/OwnerRefusal.tsx` (new) reuses `refusalLine`
+(`agent/RefusalCard.tsx:105`): owner, operation, the owner's words, a remedy
+only when the owner names one, the retained copy ref, no receipt and no
+preformatted block. It replaces the raw `<pre>` dumps in
+`NativeMaterialBrowser.tsx` and `ProductPreferences.tsx` (whose success
+output is now named rows). Guard: `tests/run-context-refusal-guard.test.mjs`
+fails on `JSON.stringify`/`safeJson` in those two files and on any raw JSON
+`<pre>` across `src` outside four listed developer disclosures.
+
+**Checks (scripted, conductor re-run).** tsc 0 errors (baseline 0); lane
+suites 143/143 (baseline 125 + 18 new in `run-context.test.mjs` and
+`run-context-refusal-guard.test.mjs`); diff is exactly the 8 claimed files.
+
+**Native-app reading (from P0-R1 r1d, `scripted` AX).** The window's status
+region reads "Native host · revision b50b970c3b92" with no
+uncommitted-changes suffix.
+
+**Unverified (channel).** The reading and the refusal card in pixels in
+every mode (`computer-use`); the span's title (digest, carrier) is not in
+the AX tree (`computer-use`, hover). Development-browser wording and the
+status region were checked only as static markup (`renderToStaticMarkup`);
+no browser or dev server ran and the `/api/config` producer is not traced.
+The reading does not refresh on `readShellConfig(true)`.
+
+**Carries** (PATH §10 items 2, 11, 17, 18, 20, 21): refresh subscription;
+consolidate the partial carrier readings (`ModeBrowser.tsx:127-130`,
+`ModeContextDock.tsx:208`, `App.tsx:355-357`); `SettingsWorkspace.tsx`
+JSON acknowledgement (allowlisted); "not yet read" carrier in the error
+state; the removed `native_outcome` receipt in `NativeMaterialBrowser`
+(behaviour change, to confirm); **needs-owner:** the "fixture harness" kind
+has no producer and is not rendered; WIDGET-GUIDE §8 proposals; (C) the
+64-file error-string sweep.

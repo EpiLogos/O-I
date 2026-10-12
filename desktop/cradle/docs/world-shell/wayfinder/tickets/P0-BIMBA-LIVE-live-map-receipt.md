@@ -102,3 +102,48 @@ Partly met before claim. DLW-VISION records the 12 Oct read and its
 divergences (:74-82, :1311-1327). The receipt (acceptance 1–2) does not exist
 in the pack, so builders cannot re-run the read. This ticket makes the read
 reproducible.
+
+### W0b — resolved, 12 Oct 2026
+
+**Landed.** `dcfb3731c` — `evidence/p0-bimba-live/read.py` (imports the
+owner's `bimba_graph.py:57-107`; calls only `health`, `resolve_coordinate`
+and `cypher`, and refuses any statement that is not `MATCH … RETURN`),
+`read.out` (the builder's 16:10:53Z run, verbatim) and `headlines.md`
+(45 rows: H0, C1, O1–O13, N1–N14, E1–E2, A1–A4, P1–P5, D1–D5). The conductor
+corrected `headlines.md:26-27` and the `read.py` docstring, which had named
+`neighborhood()` though the script never calls it; output and digest are
+unchanged.
+
+**Acceptance.**
+1. Met: the write-word grep of `read.py` prints nothing; `read.out` opens
+   with `health()` — 3713 nodes / 13880 relations — and the map revision
+   (`GraphMeta graph_revision 12`, `embedding_version q-semantic-v2-3072`).
+2. Met: one row per headline; all 45 `confirmed`.
+3. Met (vacuous): nothing diverged or is absent. Optional re-cites for
+   P0-V1's zone: DLW-VISION :990, :1050, :1051, :546-547/:1052, :156/:472
+   cite BMAP for phrases the live map holds verbatim (rows N11–N14, E2).
+4. Met by the conductor: the M4.3-2.0…M4.3-2.2 defect went to the QL owner
+   as NOW return `bimba-map-defect-m4320-m4321-m4322-2026-10-12` (kind
+   question, status active), at
+   `Work/Quaternal-Logic/ProjectCentral/now/agents/`, via
+   `ctrl projectcentral.now.return`; `headlines.md` records the ref. No
+   QL-MEF issue was filed (public posting needs the owner's go-ahead). Map
+   and ledger fixture untouched.
+5. Met: run dated 2026-10-12T16:10:53Z with revision and content digest
+   `1a4b75ce1660e89f104e7d8b24b35748eef7d0c0dcfb878a0bfaf08591ca6b6c`;
+   DLW-VISION's "(queried 12 Oct 2026)" stays as written.
+
+**Checks (scripted).** The builder's second run and the conductor's re-run
+(16:13:28Z, before and after the docstring edit) give the same digest; the
+diff against the kept `read.out`, run times excluded, is empty. A scratch
+self-test showed each check can fail (wrong fragment, missing field, node,
+edge or phrase; non-`MATCH` statement refused). Every DLW-VISION cite in
+`headlines.md` was re-opened and holds.
+
+**Unverified.** No UI leg (`scripted` only). The receipt holds while the map
+stays at `graph_revision 12` and oi-omarchy is reachable; a re-run with a
+different digest is read row by row.
+
+**Carries** (PATH §10 items 19, 22, 23): P0-V1 optional re-cites; the QL
+owner's answer on the NOW return; briefs name the evidence path for
+`read.out`, not the seat root.

@@ -6,7 +6,9 @@ the plan from chat — if PATH and a ticket disagree, stop and return `OPEN`.
 
 Updated: 2026-10-12, `claude-code:dlw-conductor` (Opus). Vision tickets
 (DLW-VISION §5.3) added to §5, 12 Oct. Wave 0 recorded 12 Oct: R0 returned
-**FAIL**; wave 0 stays open (§7, §9); carries in §10.
+**FAIL**; wave 0 stays open (§7, §9); carries in §10. Wave W0b recorded
+12 Oct: P0-R5, P0-R1 (r1d) and P0-BIMBA-LIVE committed; no review run on
+W0b, so W0b and wave 0 stay open (§9).
 
 ## Roles (owner's model map, 12 Oct 2026)
 
@@ -39,19 +41,41 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
   C1–C3, F1–F4, V1, CE1) stay there; new tickets live in `tickets/` here.
 - **ctrl** installed `7a45111` (11 Oct 16:30) contains the roster fix
   `efef5c3` — the "ctrl binary reinstall" owner act is **done**.
-- **Native app**: none built from a commit. The one supported command
-  (P0-R1, committed `bfca96176`, logs `dd0162a6d`), run from the seat root:
+- **Native app**: built from a commit (W0b). The one supported command
+  (P0-R1, runner repaired and committed `b50b970c3`), run from the seat root:
   `bash desktop/cradle/docs/world-shell/evidence/p0-r1/run-native-at-head.sh all`
-  (`P0R1_STAMP=<stamp>` names the evidence run directory; `launch` re-launches
-  a built candidate). Its only green run (`run-20261012T-r1b`, 14:37–15:00Z)
-  built from `13aaf5360` **with the repairs uncommitted** (marker
-  `source_dirty: true`); no build or launch from `bfca96176`/`dd0162a6d` or
-  later exists yet. `~/Applications/O-I Shell Candidate.app` 0.1.2 (8 Oct)
-  and `O-I.app` (legacy cradle, 7 Oct) are evidence of nothing on this lane.
+  (`P0R1_STAMP=<stamp>` names the evidence run directory; `launch`
+  re-launches a built candidate; `readback` copies composition, catalogue,
+  `ctrl --version` and the AX run-context line; `quit` quits through the app
+  menu and records the exit code). The runner refuses a dirty tree.
+  Acceptance run: `run-20261012T-r1d` (15:55–16:06Z, evidence `e411dc7d7`),
+  built from the clean tree at `b50b970c3` with the committed runner; host
+  markers read `source_revision b50b970c3b92…`, `source_dirty: false`;
+  the window's AX tree reads "Native host · revision b50b970c3b92"
+  (channel `scripted`, not pixels); quit exit code 0. `run-20261012T-r1c`
+  (from `f5adaa2ab`, uncommitted scratch runner) is kept as the builder's
+  prior run; `r1b` (dirty tree) is history. `~/Applications/O-I Shell
+  Candidate.app` 0.1.2 (8 Oct) and `O-I.app` (legacy cradle, 7 Oct) are
+  evidence of nothing on this lane.
+- **Run-context reading** (P0-R5 (A), `f5adaa2ab`): `StatusBar.tsx` mounts
+  one reading from `runContextOf`/`carrierOf` (`ui/src/shell/runContext.tsx`);
+  owner refusals in `NativeMaterialBrowser.tsx` and `ProductPreferences.tsx`
+  render through `OwnerRefusal.tsx`, guarded by
+  `tests/run-context-refusal-guard.test.mjs`. Lane suites 143/143, tsc 0.
+- **Bimba map receipt** (P0-BIMBA-LIVE, `dcfb3731c`):
+  `evidence/p0-bimba-live/read.py` re-runs read-only (`python3 -I`); 12 Oct
+  16:10:53Z read: 3713 nodes / 13880 relations, `graph_revision 12`, 45/45
+  headlines confirmed, digest `1a4b75ce…6b6c`. A later digest that differs
+  is read row by row.
 - **Target pool**: `Work/O-I/target` was a self-referencing symlink (10 Oct 23:41 →
   12 Oct); the conductor replaced it with a real directory 12 Oct 16:13 (the
   link held no data). The seat's `target` link resolves again; the runner's
-  explicit `--target-dir` is no longer needed.
+  explicit `--target-dir` is no longer needed. The re-made pool had no
+  `CACHEDIR.TAG`, so `cargo clean` refused it; the W0b runner wrote cargo's
+  own tag into the pool root. Builds: `Work/O-I/target/p0-r1/20261012T-r1{c,d}`.
+- **Out-of-repo side effects of every P0-R1 run**: the app's `prepare()`
+  rewrites `~/.config/oi-shell-candidate/0-1-2/{composition,catalogue}.json`
+  and one hosted registration (§10 item 6).
 - **Evidence logs**: repo `.gitignore` drops `*.log`; evidence commits need
   `git add -f` (`bfca96176` missed them; `dd0162a6d` fixed it).
 - **Native host**: `desktop/cradle/src-tauri` feature `native_shell`
@@ -78,13 +102,14 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
   DLW-PLAN.md's 12 Oct rewrites are committed in `13aaf5360`. Tickets written
   before `13aaf5360` pin PLAN line cites to `0dfa7b5ea`; re-check a cite
   against the committed plan before relying on it.
-- **Seat tree**: clean after `2c331a4e7` (P0-V2 item-23 re-pins committed, 12 Oct).
+- **Seat tree**: clean after `dcfb3731c` (W0b converge, 12 Oct); pushed,
+  `origin/dlw/build-20261012` = `dcfb3731c` before this record commit.
 
 ## 3. Hard gates
 
 | Gate | State | Clears by | Blocks |
 |---|---|---|---|
-| R1 native run at HEAD | **red** (partly) — command committed; built and launched only from a dirty tree; no capture, no in-window run context or owner readback | conductor: P0-R1 remainder (§5) after P0-R5 (A) lands | all acceptance |
+| R1 native run at HEAD | **red** (partly) — built and launched from the clean commit `b50b970c3` (r1d, W0b); run context seen through scripted AX only; no pixel capture; no in-window owner readback (compiled/selected/registered/excluded/failed, waiting owners) | conductor: P0-R1 acc. 2 pixels + acc. 4 capture (needs the computer-use gate); acc. 3 in-window readback (UI ticket to file, §10 item 4) | all acceptance |
 | Computer-use channel in the conductor session | **red — carried as the owner's named act** (12 Oct): turn on Computer Use for the conductor session in the Claude desktop app, or grant Screen Recording to the conductor's shell (`screencapture` was refused: "could not create image from display") | owner | every UI acceptance leg; P0-R1 acc. 2–4; R0 re-review |
 | ctrl roster fix installed | **green** (verified above) | — | — |
 | Factory receiving/advancement join | red | Factory owner | Phase 3 only |
@@ -97,28 +122,31 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
 | Ticket | Agent | Zone | Since |
 |---|---|---|---|
 | conductor | claude-code:dlw-conductor | `desktop/cradle/docs/world-shell/wayfinder/` | 2026-10-12 |
-| P0-R5 | claude-code:dlw-conductor (scope owed) | `packages/live-shell/ui/src/` per the ticket | 2026-10-12 — **blocked**: builder stopped at the 12-file rule; no edits, no commit. Rescope recorded in the ticket's Resolution |
 
 ## 5. Next claimable
 
 1. **P0-V2** — resolved 12 Oct (`2c331a4e7`; conductor cite fix after the
    Sonnet diagnostic).
-2. **P0-R5 (A + B)** — run-context reading in the status region (≈4 files)
-   and owner-refusal disclosure (≈3 files), with the grep guard and a new
-   suite. Haiku. Blocked-by: none (acceptance blocked-by P0-R1 remainder +
-   computer-use). (C), the 64-file error-string sweep, becomes a follow-up
-   ticket (not yet filed).
-3. **P0-R1 (remainder)** — rebuild and relaunch from a clean tree at a
-   commit holding the repairs and P0-R5 (A); evidence copies of
-   composition.json, catalogue.json and `ctrl --version`; quit exit code;
-   window capture. Conductor. Blocked-by: P0-R5 (A) for a
-   clean, disclosing build; the computer-use gate (owner act) for acc. 4.
-4. **P0-BIMBA-LIVE** — read the live Bimba map read-only and keep a
-   re-runnable receipt for every headline the vision binds. Conductor.
-   Blocked-by: none (operational: oi-omarchy reachable).
+2. **P0-R5 (A + B)** — committed W0b (`f5adaa2ab`). Native-window legs
+   UNVERIFIED (computer-use). (C), the 64-file error-string sweep, is a
+   follow-up ticket (not yet filed; §10 item 11).
+3. **P0-BIMBA-LIVE** — resolved W0b (`dcfb3731c`; 45/45 confirmed; the
+   M4.3-2.0…2.2 defect sent to the QL owner as a NOW return).
+4. **P0-R1 (remainder)** — the clean-commit build is done (r1d,
+   `e411dc7d7`). What is left: acc. 2 in pixels and acc. 4 window capture
+   (conductor; **blocked by the computer-use gate**, owner act, §3); acc. 3
+   in-window owner readback (needs a UI ticket under
+   `packages/live-shell/ui/src`, not yet filed, §10 item 4); full-suite
+   backing and a fresh candidate profile (§10 items 5–6). **Nothing in
+   P0-R1 is claimable now** without the owner act or the new ticket.
 5. **P0-R4** — owner bindings in the native run (roster, gateway, workcell
    reading, skillsets). Haiku. Blocked-by: P0-R1 (R1 gate still red — not
    claimable yet).
+6. **Claimable now (conductor, docs/evidence zones only):** file the
+   follow-up tickets named in §10 (items 4, 9, 10, 11, 15–19); the P0-R1
+   runner fixes in §10 item 15 (P0-R1 evidence zone). No product-code
+   ticket is claimable: every one waits on the R1 gate, a phase gate, or
+   the owner.
 
 ### Queued by phase (vision tickets, DLW-VISION §5.3)
 
@@ -198,32 +226,40 @@ third rewrite of an invent-the-spec problem.
 | Wave | Tickets | Commits | Review | Closed |
 |---|---|---|---|---|
 | 0 | P0-R1 (committed), P0-R5 (blocked, no code), P0-V2 item 23 (failed twice, uncommitted) (+ baseline tsc repair `24e7d8f7f`) | `24e7d8f7f`, `bfca96176`, `dd0162a6d`; record commit "DLW W0: record" | R0 **FAIL** (12 Oct): §7 stop rule unmet; P0-R1 acc. 1 (dirty-tree revision), 2, 3, 4 unmet; P0-R5 absent; R0 Q1 answered "yes, mistakable" | — (open) |
+| W0b | P0-R5 (A+B) committed; P0-R1 committed (r1d clean-commit build; acc. 2 pixels, 3 in-window, 4 capture unmet); P0-BIMBA-LIVE committed (45/45 confirmed) | `f5adaa2ab` (P0-R5), `b50b970c3` + `e411dc7d7` (P0-R1 runner + r1c/r1d evidence), `dcfb3731c` (P0-BIMBA-LIVE); record commit "DLW W0b: record — PATH and ticket resolutions" | none run (no W0b review verdict); R0 re-review still owed for wave 0 (§7) and needs the computer-use gate | — (open: no review verdict; P0-R1 acceptance incomplete) |
 
 ## 10. Carries
 
 Registered from R0 (12 Oct) and the wave-0 converge returns. Each is owned
 by the ticket named, or by the owner where marked.
 
-1. **P0-R1** — rebuild and relaunch from a clean tree at the commit holding
-   the repairs (`dd0162a6d` or later); record that commit as the source
-   revision. Commit or revert the six P0-V2 docs first.
-2. **P0-R5** — land (A) the run-context reading (native host at revision /
-   fixture harness / development browser) in the status region in every
-   mode and (B) the owner-refusal disclosure component with its grep guard;
-   then observe in the native window. The development-browser path states
-   "no revision" until the `/api/config` producer is traced.
+1. ~~**P0-R1** — rebuild and relaunch from a clean tree at a commit holding
+   the repairs~~ done W0b: r1d from the clean tree at `b50b970c3`,
+   `source_dirty: false` (`e411dc7d7`).
+2. **P0-R5** — (A) and (B) landed W0b (`f5adaa2ab`). Still owed: observe
+   the reading and the refusal card in the native window (computer-use).
+   The development-browser path states "no revision disclosed"; the
+   `/api/config` producer is still not traced (checked only as static
+   markup). The "fixture harness" kind is not rendered: see item 20.
 3. **P0-R1 acc. 4** — capture the window with run context visible
    (computer-use, or Screen Recording for the conductor shell, then
    `P0R1_STAMP=<stamp> bash desktop/cradle/docs/world-shell/evidence/p0-r1/run-native-at-head.sh launch`
    and `screencapture`, labelled `screen-capture (no interaction)`).
-4. **P0-R1 acc. 3** — copy composition.json, catalogue.json and the bundled
-   `ctrl --version` into `evidence/p0-r1/`; show the
+   Still owed after W0b: `screencapture` was refused again in r1c and r1d.
+4. **P0-R1 acc. 3** — evidence copies done W0b (r1d: `7-composition.json`,
+   `7-catalogue.json`, `7-ctrl-version.txt` = `7a451112a1a4`; catalogue
+   points factory, workcell and ql at `live-shell/unavailable/*`). Still
+   owed, as a new UI ticket under `packages/live-shell/ui/src` (to file):
+   show the
    compiled/selected/registered/excluded/failed readback (`live_shell_config`)
    in the window, with factory, workcell and ql each named as waiting.
    Excluded-by-footprint must read differently from absent-because-unbuilt.
-5. **P0-R1** — capture the quit exit code through the real quit route
-   (parent shell waits on the pid); exercise the full-suite backing, not
-   only the footprint default 0/1/2.
+   A structured host-side readback of the full `live_shell_config`
+   (contributions, product_ids, backing) is also missing; adding one is a
+   product-code change plus a rebuild.
+5. **P0-R1** — quit exit code done W0b (app-menu Quit, parent waits on
+   the pid, exit 0 in r1c and r1d). Still owed: exercise the full-suite
+   backing, not only the footprint default 0/1/2.
 6. **P0-R1 / Phase 5** — bring the runner's out-of-repo inputs (8 Oct
    package-command notices, Node archives, SDK inventory) in-repo or produce
    them; replace the `client_receipt` re-record with a check that can fail;
@@ -249,3 +285,58 @@ by the ticket named, or by the owner where marked.
     the conductor 12 Oct (§2).
 13. **Owner** — the computer-use gate (§3).
 14. **Evidence hygiene** — `git add -f` for `*.log` evidence (§2).
+
+Registered from the W0b converge returns (12 Oct). No W0b review ran, so
+there are no review carries yet.
+
+15. **P0-R1 runner** (P0-R1 evidence zone) — `readback` does not wait for
+    the webview's AX tree (the first r1d readback walked 6 elements and
+    missed the run context; kept as `readback-attempt-1/`): poll
+    `ax-run-context.swift` until the element count settles. The runner
+    also does not copy `stage/native-checkout-drift.json` into the run's
+    logs (copied by hand in r1c and r1d).
+16. **P0-R1 acc. 2** — the run-context span's title (tree digest, carrier)
+    is not exposed to accessibility; observing it needs computer-use (hover).
+17. **P0-R5 follow-ups** (UI zone, ticket to file):
+    (a) `RunContextReading` reads `readShellConfig` once per `StatusBar`
+    mount; a `readShellConfig(true)` refresh does not re-render it —
+    subscribe to config refreshes.
+    (b) Consolidate the partial carrier readings at `ModeBrowser.tsx:127-130`,
+    `ModeContextDock.tsx:208`, `App.tsx:355-357` through
+    `runContextOf`/`carrierOf`.
+    (c) `SettingsWorkspace.tsx` Acknowledgement still dumps the settings
+    result as JSON; allowlisted in the guard as a developer disclosure.
+    (d) In the error state `runContextOf` is passed carrier "not yet read"
+    although the read failed; the field should say "configuration not read"
+    (not rendered today).
+18. **P0-R5 behaviour change — owner or conductor to confirm.**
+    `NativeMaterialBrowser` no longer shows the retained `native_outcome`
+    receipt (the folded JSON); only the owner's words, the operation and
+    the retained copy ref remain. If the receipt is wanted as a developer
+    view, re-add it folded and allowlisted in the guard.
+19. **P0-V1 zone (optional re-cites)** — DLW-VISION :990, :1050, :1051,
+    :546-547/:1052 and :156/:472 cite BMAP for phrases the live map holds
+    verbatim (P0-BIMBA-LIVE rows N11-N14, E2). Not divergences.
+20. **needs-owner (P0-R5)** — the ticket's three-way reading names a
+    "fixture harness" world, but no host supplies a fixture marker and the
+    shell has no producer for one. The reading renders native host /
+    development browser / pending only. Owner to say whether a fixture
+    label is wanted and what it reads from.
+21. **WIDGET-GUIDE §8 proposals (P0-R5 builder; conductor to adopt or
+    decline):** (1) the status region carries one run-context reading
+    (world name, disclosed revision, uncommitted-changes flag, carrier),
+    with a pending wording during the read and a named absence when no
+    revision is disclosed; (2) an owner refusal card is a named disclosure:
+    owner, boundary operation, the owner's own words, a remedy only when
+    the owner names one, the retained copy ref when kept, and no receipt or
+    JSON surface; (3) refused and accepted outcomes of a native operation
+    both show as named rows, never a preformatted dump.
+22. **P0-BIMBA-LIVE** — the receipt holds only while the map stays at
+    `graph_revision 12` and oi-omarchy is reachable. The M4.3-2.0…2.2
+    defect went to the QL owner as NOW return
+    `bimba-map-defect-m4320-m4321-m4322-2026-10-12` (kind question,
+    active); no QL-MEF GitHub issue was filed — posting publicly needs the
+    owner's go-ahead.
+23. **Brief hygiene** — the P0-BIMBA-LIVE brief's check wrote `> read.out`
+    to the seat root, outside the zone. Briefs name
+    `desktop/cradle/docs/world-shell/evidence/p0-bimba-live/read.out`.
