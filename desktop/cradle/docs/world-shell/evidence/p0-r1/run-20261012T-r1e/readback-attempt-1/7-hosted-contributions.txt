@@ -1,0 +1,9 @@
+total 24
+drwxr-xr-x@ 8 admin  staff   256 Oct 12 16:00 .
+drwxr-xr-x@ 3 admin  staff    96 Oct  8 13:19 ..
+-rw-r--r--  1 admin  staff   913 Oct 12 16:00 5c084d4e4e921e2768c3fb16586b58863fd498f261e38590ee8edddfc39db6ef.json
+-rw-r--r--  1 admin  staff     0 Oct 12 16:00 5c084d4e4e921e2768c3fb16586b58863fd498f261e38590ee8edddfc39db6ef.lock
+-rw-r--r--@ 1 admin  staff  2039 Oct  8 13:19 d34177e431467aa64876c2b4cfaef637ad912e460e75782ae1f839c4d5521e82.json
+-rw-r--r--@ 1 admin  staff     0 Oct  8 13:19 d34177e431467aa64876c2b4cfaef637ad912e460e75782ae1f839c4d5521e82.lock
+-rw-r--r--@ 1 admin  staff   898 Oct  8 13:19 e76a423660f2eea6fd14771b34f141f813535006f93c39bf53c689a4a158d887.json
+-rw-r--r--@ 1 admin  staff     0 Oct  8 13:19 e76a423660f2eea6fd14771b34f141f813535006f93c39bf53c689a4a158d887.lock

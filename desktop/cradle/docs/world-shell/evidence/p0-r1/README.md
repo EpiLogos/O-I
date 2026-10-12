@@ -3,6 +3,11 @@
 Ticket: `../../wayfinder/tickets/P0-R1-native-run-at-head.md`. Seat
 `worktrees/env-1/o-i`, lane `dlw/build-20261012`.
 
+- `run-20261012T-r1e/` (12 Oct, 17:06–17:25Z): built from a clean tree at
+  `046fb857b` (holds P0-R6-host/-ui, P0-R5b, P0-R5c), marker
+  `source_dirty: false`, quit exit 0. The window was not exposed to
+  accessibility, so the run context and owner readback were **not** read.
+  Recorded by a builder subagent. See "Run r1e" below.
 - **`run-20261012T-r1d/` (12 Oct, 15:55–16:07Z)**: the acceptance run. The
   conductor rebuilt with the committed runner (`runner_sha256` `99480c26…`)
   from a clean tree at `b50b970c3`. Marker `source_dirty: false`. See "Run r1d" below.
@@ -20,7 +25,7 @@ From the seat root:
 ```sh
 bash desktop/cradle/docs/world-shell/evidence/p0-r1/run-native-at-head.sh            # all: build, package, launch
 P0R1_STAMP=<stamp> bash …/run-native-at-head.sh launch     # re-launch a built run
-P0R1_STAMP=<stamp> bash …/run-native-at-head.sh readback   # owner-discovery copies + window run-context reading
+P0R1_STAMP=<stamp> bash …/run-native-at-head.sh readback   # owner-discovery copies + window run-context and owner readback (waits for the AX tree to settle)
 P0R1_STAMP=<stamp> bash …/run-native-at-head.sh quit       # app menu Quit; exit code from the waiting parent
 ```
 
@@ -216,3 +221,84 @@ with `P0R1_STAMP=20261012T-r1d … all`, then `readback` and `quit`.
 - Capture: `screencapture` was refused again (no Screen Recording grant).
 - Quit: the app menu's Quit item was clicked (`8-quit.log`); the waiting parent
   recorded **exit code 0**, and no host process was left.
+
+## Run r1e: clean tree at `046fb857b`, runner fixes for PATH §10 item 15 (12 Oct 2026)
+
+Asked for: rebuild from the clean tree at the W0d head and read back the run
+context and the owner readback (PATH §10 item 36), after fixing the runner
+(item 15). Recorded by a builder subagent dispatched by
+`claude-code:dlw-conductor`. The runner fixes are **uncommitted**: the
+builder brief forbids staging and committing. As in r1c, the build ran a
+scratch copy of the runner so that the checkout stayed clean.
+
+Runner and walker changes (this directory):
+1. `run-native-at-head.sh` copies `stage/native-checkout-drift.json` into
+   the run's logs after step 2, as `2-native-checkout-drift.json`. r1e shows
+   it: the file was copied by the runner, not by hand.
+2. `readback` polls the walker every 2 s. It reads the window and web-area
+   counts and the element count. It stops when the window holds at least one
+   web area (`AXWebArea`, the webview's document) and the element count is
+   the same on three polls in a row. It gives up after `P0R1_AX_POLLS` polls
+   (default 60) and exits 1, after it has written the reading and tried the
+   capture. Each poll is logged in `7-ax-settle.log`.
+3. `ax-run-context.swift` walks only elements whose role is `AXWindow`. It
+   never descends into an `AXApplication` element. It ends by printing the
+   counts of windows, web areas and elements.
+
+The first version of fix 2 is the one `basis-all.txt`'s `runner_sha256`
+names (`ea4f7215c748…`). It treated an element count that held steady
+above a floor of 50 as settled. In r1e that was wrong. The app answered
+`AXWindows` with its own application element, and the walk looped through the
+application and its menu bar down to depth 60: 6992 elements, steady, and no
+web area. The readback then reported "settled" and found nothing
+(`readback-attempt-1/`). Fixes 2 and 3 as now written replace that rule.
+Later modes ran the fixed runner (`a484aebb94de…`, see `basis-readback.txt`,
+`basis-launch.txt`, `basis-quit.txt`).
+
+- Basis (`basis-all.txt`): HEAD `046fb857bba6…`, `git status` empty. Steps
+  1–6 exit 0, 17:06–17:16Z (`steps.log`).
+- Host marker (built `2-` and sealed `6-`): `source_revision`
+  `046fb857bba6d6b49bcc04c4a8ad6279902bafc4`, `source_tree_sha256`
+  `af56cd6932c6…`, **`source_dirty` false**, `executable_sha256`
+  `f0d88ad95fba…`. Seal verify exit 0. `2-native-checkout-drift.json`:
+  `changed_files []`.
+- Owner discovery, copied by `readback`: `7-composition.json` selects
+  actuation, ai-kit and central. `7-catalogue.json` points factory, workcell
+  and ql at `live-shell/unavailable/*`. `7-ctrl-version.txt` records `ctrl
+  0.1.0 (7a451112a1a4)`, exit 0. The installed `ctrl --version` prints the
+  same.
+- **Window, first launch** (pid 22945, `launch-1/`). The 60-poll readback
+  found 0 windows, 0 web areas and 0 elements on every poll (17:20–17:22Z).
+  System Events counted 0 windows for the process. The app's `AXMainWindow`
+  and `AXFocusedWindow` returned the application element. CoreGraphics
+  listed two windows for the pid: an on-screen 136×124 window at (112,473)
+  and an off-screen 500×500 window. Neither is the configured 1280×820 main
+  window. The host's unified log shows the main page load completing
+  (`didFinishLoadForFrame`) and the WebKit view "window visible 1, window
+  occluded 1". Quit through the app menu: exit code 0.
+- **Window, second launch** (pid 30557, the top-level files): the same
+  result, 60 polls, 0 windows. Quit exit code 0, and no host process was
+  left.
+- **Is it the build or the machine?** The r1d app (`b50b970c3`), whose
+  window AX read 1557 elements at 16:06Z, was relaunched by hand at about
+  17:25Z to compare (logs in the builder's scratch, not kept). It showed
+  the same thing: 0 windows in AX, and the same two CoreGraphics windows.
+  So the missing window comes from the machine's window or desktop state at
+  that time, not from the commits since `b50b970c3`. The builder did not
+  find the cause. The conductor found it at 17:28Z (channel: scripted,
+  `CGSessionCopyCurrentDictionary`): `CGSSessionScreenIsLocked 1`, locked
+  since `CGSSessionScreenLockedTime 1791821336` = 16:08:56Z, two minutes
+  after r1d's readback. While the session is locked the host's window is
+  not exposed to accessibility (r1d's unlocked readback at 16:06Z read the
+  window; every locked readback since read none). `screencapture` was
+  refused before the lock too (r1d), so the lock is not its only cause.
+  Unlocking is an owner act; the readback has to be re-run after
+  it. The r1d
+  relaunch also rewrote the candidate profile's composition and catalogue
+  (the known side effect, PATH §2).
+- **Not observed**: the run-context text ("Native host · revision
+  046fb857bba6") and the owner-readback rows (admitted / excluded by
+  footprint, display names) were not read in the window. `suite_product_ids`
+  and `suite_owner_names` in a running window are still unseen (PATH §10
+  item 36).
+- Capture: `screencapture` was refused again (no Screen Recording grant).

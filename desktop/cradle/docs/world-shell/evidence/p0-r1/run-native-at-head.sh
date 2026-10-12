@@ -29,8 +29,10 @@
 #                                          `ctrl --version`, the host marker, and
 #                                          the window's run-context reading (the
 #                                          live_shell_config fields the status
-#                                          region renders), read from the
+#                                          region renders, and the owner
+#                                          readback), read from the
 #                                          accessibility tree (channel: scripted)
+#                                          once its element count has settled
 #   8. quit      (separate call)           the app menu's Quit item through the
 #                                          accessibility tree, scoped to the pid;
 #                                          waits for the parent's exit code
@@ -110,6 +112,9 @@ if [[ "$MODE" == build || "$MODE" == all ]]; then
       --stage "$OUT/stage" --target-dir "$TARGET" \
       --suite-cli "$TARGET/release/oi" --suite-source-basis "$OUT/cli-release-basis.json"
   cp "$APP_BUILT/Contents/Resources/live-shell-host.json" "$LOGS/2-host-marker.json"
+  # The producer's own record of source files that changed while it compiled
+  # (r1c and r1d copied it by hand).
+  cp "$OUT/stage/native-checkout-drift.json" "$LOGS/2-native-checkout-drift.json"
 
   run 3-freeze python3 -B packages/live-shell/freeze-product-bindings.py --backing "$BACKING" \
       --receipts "$ACTIVE_RECEIPT" --footprint "$OUT/stage/footprint.json" \
@@ -186,17 +191,44 @@ if [[ "$MODE" == readback ]]; then
   # (ax-run-context.swift, kept beside this runner) reads ~1.5k elements in
   # under a second; System Events' per-element property fetch took minutes.
   swiftc -O "$EVID/ax-run-context.swift" -o "$OUT/ax-run-context" >"$LOGS/7-ax-compile.log" 2>&1
-  { echo "# channel: scripted (accessibility tree), no interaction; pid $PID; $(date -u +%FT%TZ)"
+  # The webview fills its accessibility tree some seconds after the window
+  # opens: r1d's first readback walked 6 elements and missed the run
+  # context; 8 s later the walk found 1557. Poll the walk until the window
+  # holds a web area (the webview's document) and the element count is
+  # unchanged on three consecutive polls, 2 s apart, or give up after
+  # P0R1_AX_POLLS polls (default 60) and say so. Every poll's window, web
+  # area and element counts are kept in 7-ax-settle.log.
+  AX_POLLS="${P0R1_AX_POLLS:-60}"
+  ax_prev=""; ax_same=0; ax_poll=0; ax_settled=no
+  : >"$LOGS/7-ax-settle.log"
+  while (( ax_poll < AX_POLLS )); do
+    ax_poll=$((ax_poll + 1))
+    ax_walk="$("$OUT/ax-run-context" "$PID" 2>/dev/null || true)"
+    ax_n="$(sed -n 's/^# elements visited: //p' <<<"$ax_walk" | tail -1)"; ax_n="${ax_n:-0}"
+    ax_web="$(sed -n 's/^# web areas: //p' <<<"$ax_walk" | tail -1)"; ax_web="${ax_web:-0}"
+    ax_win="$(sed -n 's/^# windows: //p' <<<"$ax_walk" | tail -1)"; ax_win="${ax_win:-0}"
+    if [[ "$ax_n" == "$ax_prev" ]]; then ax_same=$((ax_same + 1)); else ax_same=1; fi
+    ax_prev="$ax_n"
+    echo "$(date -u +%FT%TZ) poll $ax_poll: $ax_win windows, $ax_web web areas, $ax_n elements (unchanged $ax_same)" >>"$LOGS/7-ax-settle.log"
+    if (( ax_web >= 1 && ax_same >= 3 )); then ax_settled=yes; break; fi
+    sleep 2
+  done
+  step "7-readback: AX tree settled=$ax_settled at $ax_prev elements after $ax_poll polls (7-ax-settle.log)"
+  { echo "# channel: scripted (accessibility tree), no interaction; pid $PID; $(date -u +%FT%TZ); settled=$ax_settled at $ax_prev elements"
     "$OUT/ax-run-context" "$PID"
+    echo "# owner readback (status region) searched in the same window:"
+    "$OUT/ax-run-context" "$PID" "Owners named by the host" "owners admitted" "admitted" "excluded by footprint" \
+        "absent" "not disclosed" "No host readback" "Reading owners" "Owners not read"
     echo "# owner-discovery words searched in the same window:"
     "$OUT/ax-run-context" "$PID" compiled selected registered excluded failed waiting unavailable
   } >"$LOGS/7-window-run-context.txt" 2>&1 || true
-  step "7-readback: window run-context reading written (7-window-run-context.txt)"
+  step "7-readback: window run-context and owner readback written (7-window-run-context.txt)"
   if /usr/sbin/screencapture -x "$LOGS/7-window-capture.png" >"$LOGS/7-screencapture.log" 2>&1; then
     step "7-readback: screen-capture (no interaction) kept"
   else
     step "7-readback: screencapture refused ($(tr '\n' ' ' <"$LOGS/7-screencapture.log"))"
   fi
+  [[ "$ax_settled" == yes ]] || { step "7-readback: the AX tree did not settle; the reading may be partial"; exit 1; }
 fi
 
 if [[ "$MODE" == quit ]]; then
