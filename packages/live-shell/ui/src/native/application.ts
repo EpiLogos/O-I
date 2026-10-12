@@ -27,6 +27,13 @@ export interface ShellConfig {
   onboarding?: boolean
   expressions_entry?: string
   saved_works?: unknown
+  /** The installed host's qualified source basis (live_shell_config in
+   * src-tauri native_shell.rs): the commit the binary was built from, its
+   * tree digest, and whether that tree carried uncommitted changes. The
+   * development browser discloses none of them. */
+  source_revision?: string
+  source_tree_sha256?: string
+  source_dirty?: boolean
 }
 export interface SetReading {summary: unknown; document: unknown; revision: string}
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
