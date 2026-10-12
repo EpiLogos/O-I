@@ -3,6 +3,10 @@
 Ticket: `../../wayfinder/tickets/P0-R1-native-run-at-head.md`. Seat
 `worktrees/env-1/o-i`, lane `dlw/build-20261012`.
 
+- `run-20261012T-r1f/` (12 Oct, 17:28–17:41Z): the conductor's rebuild with
+  the committed runner (`runner_sha256` `a484aebb…`) from a clean tree at
+  `b57c206e5`. Marker `source_dirty: false`, quit exit 0. Readback: 0 AX
+  windows, the session screen-locked. See "Run r1f" below.
 - `run-20261012T-r1e/` (12 Oct, 17:06–17:25Z): built from a clean tree at
   `046fb857b` (holds P0-R6-host/-ui, P0-R5b, P0-R5c), marker
   `source_dirty: false`, quit exit 0. The window was not exposed to
@@ -302,3 +306,32 @@ Later modes ran the fixed runner (`a484aebb94de…`, see `basis-readback.txt`,
   and `suite_owner_names` in a running window are still unseen (PATH §10
   item 36).
 - Capture: `screencapture` was refused again (no Screen Recording grant).
+
+## Run r1f: committed runner, clean tree at `b57c206e5` (12 Oct 2026)
+
+The conductor's acceptance rebuild after committing the item-15 runner fixes
+and r1e (`b57c206e5`), with `P0R1_STAMP=20261012T-r1f … all`, then
+`readback` and `quit`.
+
+- Basis (`basis-all.txt`): HEAD `b57c206e52a9…`, `git status` empty,
+  `runner_sha256` `a484aebb94de…` (the committed runner). Steps 1–6 exit 0,
+  17:28–17:39Z; seal verify exit 0; launch pid 44401.
+- Host marker (`2-` and `6-`): `source_revision`
+  `b57c206e52a946cc2f76769b543b7ef1f9820fd7`, `source_tree_sha256`
+  `d5277113da96…`, **`source_dirty` false**, `executable_sha256`
+  `81f3f883303c…`. `2-native-checkout-drift.json` (copied by the runner):
+  `changed_files []`.
+- Owner discovery, copied by `readback`: `7-composition.json` modules
+  actuation, ai-kit, central; `7-catalogue.json` points factory, workcell and
+  ql at `live-shell/unavailable/*`; `7-ctrl-version.txt` `ctrl 0.1.0
+  (7a451112a1a4)`, exit 0.
+- **Window** (channel: scripted AX): 60 polls, 0 windows, 0 web areas,
+  0 elements (`7-ax-settle.log`); the readback exited 1 and said so. The
+  login session was screen-locked before and after the readback
+  (`CGSSessionScreenIsLocked 1`, since 16:08:56Z). The run context
+  ("Native host · revision b57c206e52a9") and the owner-readback rows were
+  **not** read. Re-run `launch`, `readback`, `quit` with this stamp once the
+  owner has unlocked the session.
+- Capture: `screencapture` refused ("could not create image from display").
+- Quit: the app menu's Quit item (`8-quit.log`), **exit code 0** from the
+  waiting parent; no host process left.
