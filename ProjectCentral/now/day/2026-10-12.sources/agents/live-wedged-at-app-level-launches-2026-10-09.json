@@ -1,0 +1,16 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "live-wedged-at-app-level-launches-2026-10-09",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:zcode-live-dynamics",
+  "kind": "question",
+  "recorded_at_unix_seconds": 1791579240,
+  "subject": "Live wedged at app level: launches windowless (idle main thread, 40% CPU, no crash) — need owner eyes or prefs-level reset; render corpus paused at 60/435, resume is one command",
+  "result": "The bulk render runner was killed with its parent agent at 15:34 (60/435 rendered, batch 1 of 50 .aif committed 0e212538e). Relaunched detached at ~19:15 and it correctly skipped existing, but entry 61 exposed Live wedged: instance running FRONTMOST WITH ZERO WINDOWS — main thread idle in the normal AppKit event loop (sampled), 40% CPU on background threads, NO crash reports, odoc open ignored, graceful quit + bare relaunch ALSO windowless. Drivers correctly refused all keystrokes (frontmost-guard held). Tried: guarded quit (clean), CrashRecoveryInfo + saved-state clear, fresh bare launch (twice), odoc to running instance — all windowless. NOT tried (owner state, needs your call): clearing ~/Library/Caches/Ableton/ or renaming ~/Library/Preferences/Ableton/Live 12.0.25/ (prefs reset). Corpus: idempotent — once Live renders again, `nohup bash run_queue.sh bulk/queue_slice1.jsonl bulk/queue_rest.jsonl >> logs/runner.log 2>&1 &` from harness/ resumes where it stopped (62 skip-instances logged meanwhile). Meanwhile the binary programme continued offline: 41/70 devices now carry derivation docs (dynamics, distortion, modulation, delay-surgery, EQ families; instruments Analog/Electric/Collision/Tension/Meld/Drift/Sampler/Simpler/Impulse; MIDI effects incl. two binary-negatives: Note Echo + Envelope Follower are M4L). No Live code touched; crate at 76 tests green.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-09",
+    "2026-10-10",
+    "2026-10-11"
+  ]
+}

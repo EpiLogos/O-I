@@ -1,0 +1,17 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "top-bar-session-final-verified-state-2026-10-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "claude-code",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791476758,
+  "subject": "Top bar session final: verified state, side lanes, shell-route gap",
+  "result": "Supersedes expressions-top-bar-live-parameter-channel-2026-10-08. Final: UI suite 994 tests / 992 pass (2 known env failures: continuity-storage, native-knowledge-adapter); ui, boundary and frame typechecks 0. Verified against the real frame (engine kind production): streamed Time Scale stops the clock and document stays identical with 0 announces; a take recorded during a drag holds the ramp; hold/resume on a real automation lane. NOT verified: the bar in the live shell with a native-owner-backed work (private walk-bridge/live-shell/vite came up; opening a work needs an owner recovery checkpoint, not seeded). Added after first handoff: Cymatic on pairs plate size 300 (CYMATIC_LOW_PLATE), rack lists object pins only, per-control share toggle, effective-value polling 250 ms, automation Monitor live mode, Rounded round-trip (authoredMaterial), depth defaults removed. Side lanes done for the partial-rows thread: composition.layout panel-setting with Arrange, formation-glyph change kind, Kundalini blueprint refusal (starter still two undo steps: step-insert has no position). Boundary test native-glyph-lifetime has 2 failures in its own harness. Incident: a pattern pkill likely ended another session live-shell on :8787 (pid 10233); restart packages/live-shell/target/debug/live-shell if needed. Another session committed the whole shared tree incl. this work (7b34d4cb0). All my private servers stopped, temp files removed.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-08",
+    "2026-10-09",
+    "2026-10-10",
+    "2026-10-11"
+  ]
+}

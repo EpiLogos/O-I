@@ -1,0 +1,16 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "round-2-converged-four-parallel-lanes-2026-10-09",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:zcode-live-dynamics",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791541242,
+  "subject": "Round 2 converged: four parallel lanes landed (16a316e28, 81eeae875, f397d1e23, 4cb926945 + 9f4607adc helpers, a661dd29e convergence)",
+  "result": "ONE LEDGER for the round. Lane 1 Operator (16a316e28): Osc B is a PM/FM modulator shell of A, not a second voice — RMS invariant (−0.10 dB), h2 +34.5 dB with 1:1 h3 pairing, B Volume linear on the index (−5.66 dB at half), WaveForm 22 = user-wave sine null; D11 CLOSED (VD0_NEG flat, negative amount inert). Lane 2 Wavetable (81eeae875): unison is a STEREO spread — equal-gain voices panned hard-L/centre/hard-R at exactly ±50.00 cents; D15 asymmetric-layout reading refuted as left-channel artifact; D16 CLOSED: decay warp v(u)=(e^-ku−e^-k)/(1−e^-k), k=7.41·slope (one fitted scalar, resid RMS 0.036 dB), one-pole τ reading superseded (scalloped windows + release-tail contamination). Lane 3 Echo (f397d1e23): δ(thr) CLOSED linear (δ = −0.189·thr − 4.613, resid 0.050 dB, analyzer self-validates on round-3 cells); TimeLink=false honors own times (tR=0.4 exact, pingpong walk alternates) — hop=min was the linked special case. Lane 4 offline (4cb926945): builders Time anchor verified (already landed 89a66f07a) + offline self-check ALL PASS; wavetable.rs::unison implements the cents law, zero fitted scalars, cargo 43 lib + 1 golden green; echo.rs mod law cited at the coverage boundary. Convergence verified: no .asd committed, no shared-file edits by lanes, per-commit file counts match reports, lock + commit helpers committed (9f4607adc, lanes caught and fixed an arg-guard bug in them — folded). 11 new renders gated. Live left running dialog-free on VD0_NEG; window FREE — claim in NOW. Next probes ranked in NEXT-SESSION (Operator index law/Algorithm sweep first; VC-ladder stereo re-read; crate decay→warp-law gate).",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-09",
+    "2026-10-10",
+    "2026-10-11"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "clearings": [
+    {
+      "clearing": "0b8155ede2d947c7620f76538aff94954092e9e9f156eb069867cd1d2126aab9",
+      "fixtures": 412,
+      "learnings": 0,
+      "schema": "central.t-day-snapshot/v1",
+      "snapshot_dir": "clearings/0b8155ede2d947c7620f76538aff94954092e9e9f156eb069867cd1d2126aab9"
+    },
+    {
+      "clearing": "0d4b615e8c60ab212a64f55c701158f1408dac65d7b5368375bd8ef5b97da11b",
+      "fixtures": 2,
+      "learnings": 0,
+      "schema": "central.t-day-snapshot/v1",
+      "snapshot_dir": "clearings/0d4b615e8c60ab212a64f55c701158f1408dac65d7b5368375bd8ef5b97da11b"
+    },
+    {
+      "clearing": "e4b628b8de5b5dae4bc28ff4a28dbc4d0a462ebc28c08a318d7ca4530845dcf8",
+      "fixtures": 4,
+      "learnings": 0,
+      "schema": "central.t-day-snapshot/v1",
+      "snapshot_dir": "clearings/e4b628b8de5b5dae4bc28ff4a28dbc4d0a462ebc28c08a318d7ca4530845dcf8"
+    }
+  ],
+  "day": "2026-10-12",
+  "schema": "central.t-day-snapshot/v1"
+}

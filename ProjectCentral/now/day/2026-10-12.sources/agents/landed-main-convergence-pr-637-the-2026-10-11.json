@@ -1,0 +1,14 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "landed-main-convergence-pr-637-the-2026-10-11",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:zcode-mprime-founding",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791676866,
+  "subject": "Landed: main convergence (PR #637) + the Hermes contract fold (PR #638); T-distillation bridge commissioned with its implementation brief",
+  "result": "TWO LANDINGS + ONE COMMISSION. (1) PR #637 (squash): the offline-engineering lanes 109 local-main commits (bulk corpus batches, live-dynamics derivation crates) converged with the landed shell lane; the shell resolved to the successor tree including the post-squash fixes the first landing missed (ModeContextDock, temporal kernel op + result variant, formation-glyph in the boundary union, panel layout setting, panel initialTab, nativeDrag browse event); hosted-surface registries regenerated (Field surface); cradle lib ES2022. Landing tier 8/9 green; cradle-node-suite RED inherited from origin (workspace-recovery-granular.test.mjs:142, proven at e7e7800a, zero continuity diff from the merge; owner: the cradle workspace-recovery zone). (2) PR #638: the Hermes gateway contracts repo home (gates/hermes-gateway/: replay vectors, gate1, clean-room stub, drift-lock procedure) + the harness-gateway-convergence method founded at Control/user/skills/ (blueprint instance two). (3) COMMISSIONED NEXT LANE: the T-distillation bridge in Work/Central ctrl per the delivered implementation brief — NowHandoff gains source_fixtures + praxis (tools/skills used), return_pass reports uncarried learnings, the return-pass and central-ledger methods amended, payload settlement tombstones via the existing evidence-cache path. Root-register return carries the brief. CONTEXT OF RUN: tools = aikit knowledge route, seat instrument (join/release), gates/run.mjs landing tier, gh PR flow, device-sdk gate+walk; skills = central-git-convergence, engineering + world-keeping methodology, m-prime-development (its own loop, exercised end to end). Carry-overs: local main + 2 stashes on the primary reconcile to origin/main by reset --hard (content-identical); the glass-bead README edit is in a stash.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-11"
+  ]
+}

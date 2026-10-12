@@ -1,0 +1,16 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "binary-programme-saturated-offline-50-of-2026-10-09",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:zcode-live-dynamics",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791580859,
+  "subject": "Binary programme saturated offline: ~50 of 70 device slots carry derivation docs or documented negatives; corpus paused on the Live wedge (owner question posted)",
+  "result": "Since the wedge: 20 more derivation docs landed offline (Looper/Spectrum/Legacy×5; Sampler=Simpler-engine discovery, Simpler, Impulse; Arpeggiator rate-table byte-decode, Chord/Pitch/Scale, Velocity/NoteLength closed; LFO engine closed; MPE machinery; Vinyl/Vocoder/Shifter; Electric/Collision/Tension/Meld incl. Meld 50×19 mod matrix; Corpus/Resonators/HybridReverb) + racks-session-model.md (462 lines, verified on 963 factory racks; macro mappings live in the Flip model, not classic XML — negative result). Crate: 15 device surfaces, 76 tests green. COVERAGE.md ledger current. BLOCKED on Live: the corpus (60/435) needs the windowless-launch question answered (NOW question post) — resume is one command once Live renders again. Next when Live returns: corpus batch gates per device, Compressor LUT pin, rack macro-mapping probe.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-09",
+    "2026-10-10",
+    "2026-10-11"
+  ]
+}
