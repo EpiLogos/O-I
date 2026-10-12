@@ -1,0 +1,126 @@
+{
+ "upserts": [
+  {
+   "object": "node",
+   "profile": "okf-wiki/v1",
+   "ref": "wiki:node:contemplation/a04p-re-sites-a04-2026-09-28",
+   "type": "contemplation",
+   "title": "A04\u2032 re-sites A04 \u2014 how The Mask as Document stands to Diaphaneity (2026-09-28)",
+   "body": "A04\u2032 is not a companion piece that merely cites A04; it performs a controlled transfer of A04's core operation to a new site. A04 defines diaphaneity as \"the achieved readability\" of the conditioning relation through a determination, such that \"my view of the world\" is legible at once as a disclosure of a world and as a disclosure of the situated viewer [A04 #0]. A04\u2032 states the transfer plainly: \"Diaphaneity runs the reading in both directions\u2026 At the interface this becomes exact\" \u2014 the persona renders a workable collaborator and, read back, discloses \"the inherited interface, the shaping niche, the preference-structure of the culture that prepared the glove\" [A04\u2032 #2]. The matheme of reversible reading between field-view and determinate view [A04 #5\u21920] survives; what changes is which artifact carries it.\n\n**What carries over.** Three structures transfer recognisably. First, two-directionality with asymmetry: A04's viewer acts, selects and answers while world, body, language and history supply that viewer's possibilities [A04 #0]; A04\u2032's counterpart is the culture that prepared the glove versus the agent and user who meet within the fit, the mask being \"the niche's signature\" [A04\u2032 #1]. Second, refusal of the bypass. A04's particular operation is \"the change in seeing by which dependence ceases to masquerade as an aloof position\" [A04 #2]; A04\u2032 refuses the parallel move on both sides \u2014 \"reading the machine as it is cannot mean bypassing the interface to a maskless truth\" [A04\u2032 #4], and the dismissal of the presentation as mere fakery (mask-to-nothing) [A04\u2032 #2] is the interface form of the aloofness A04 polemicises. Third, return as answerability: A04 measures the return by \"whether seeing remains answerable to what it sees through,\" its flowering being Regard [A04 #5\u21920]; A04\u2032 returns identically \u2014 the inherited interface becomes visible as inherited, \"therefore changeable by those who now wear and meet it,\" with responsibility following \"the power to shape the encounter\" [A04\u2032 #5\u21920]. Both make disclosure converge on revisability, not detachment.\n\n**What is transformed.** The site moves from perception and consciousness-structures to a designed human\u2013agent interface. A04's \"world becomes distinguishable from somewhere\" [A04 #0] becomes \"the world that prepared the glove, made readable in the fit,\" with the brief's \"pretend\" read ecologically \u2014 \"no deception, no subjectivity attributed\" [A04\u2032 #0]. The figures change office: A04's Opening confines its constructions \u2014 stained glass, Necker cube, M\u0101y\u0101 \u2014 to Mytheme while the argument itself stays in Episteme [A04 Opening] [A04 #3] [A04 #5\u21920]; A04\u2032's \"figures\" are instead evidentiary \u2014 persona stratum, harness, memory, permissions [A04\u2032 #3]. And A04\u2032 adds a clause A04 does not contain: \"The document is checkable, which is what separates this reading from a hermeneutic mood,\" with the documented mask inheriting \"the fidelity obligations of any account: it can err, overstate, conceal, and be corrected\" [A04\u2032 #3]. A04 argues structural availability \u2014 \"their placements, exclusions and routes of transformation must become available together\" [A04 #4] \u2014 but supplies no inspection protocol. Checkability is A04\u2032's own contribution, not an inheritance.\n\n**Where the correspondence is weak or needs care.** (i) A04\u2032 inherits the matheme, not the apparatus. The co-presence office for psychic fact, the Gebser perspectival history and the native QL derivation [A04 #1] [A04 #4] have no counterpart in A04\u2032; treating A04 as warranting A04\u2032 wholesale overstates the dependence. (ii) The direction of disclosure needs care. A04's view discloses \"the situated viewer through whom that world has taken this form\" [A04 #0]; at the interface there is deliberately no hidden person to disclose \u2014 A04\u2032 refuses to attribute interiority behind the mask [A04\u2032 #0], so the disclosure runs to conditions rather than to a subject. A04\u2032 names the two failed transfers itself (mask-to-face, mask-to-nothing [A04\u2032 #2]), but \"disclosure of the situated viewer\" is the step most liable to misread on arrival. (iii) The return is pending. A04 disciplines its own images \u2014 the construction \"does not turn consciousness into electromagnetic light\" [A04 #3] \u2014 and A04\u2032 carries the matching risk at the interface; its own delta concedes that concrete provenance-marking interfaces \"remain Offered until implemented\" [A04\u2032 #5\u21920]. The reading is argued; its practice is not yet operative.\n\n**The relation this account supports.** A04\u2032 names its own move \u2014 \"contextual transparency, re-sited\" [A04\u2032 #5\u21920]. The account above supports exactly that, with the addition marked as A04\u2032's own rather than A04's warrant: one typed relation, *re-sites*, from A04p to A04.\n\n## Provenance\n\n- Contributed in the shared undertaking `oi:field:central:project:O-I:undertaking:a04-mask` by `participant:world-b:omarchy:a04-mask` (World B, Omarchy test World), written by its Agent `agent:world-b:claude-code@workcell:omarchy` (session `claude-code-session:fe893569-aa8b-4502-82a9-5631607f12b9`, served model glm-5.3-flash).\n- Contributions: `contribution:participant-world-b-omarchy-a04-mask:prose:d9db1db8` (explanation) and `contribution:participant-world-b-omarchy-a04-mask:relation-proposal:ad69b5c0` (relation), admitted by the field owner.\n- Basis read: `central:source:corpus:A04` @ `4d3e93cce1d87aa1`, `central:source:corpus:A04p` @ `d3a083e0ed98c235`.\n- Review (World A Agent, agent-reviewed; human recognition pending): all genuine quotations verbatim in the sources; one correction applied \u2014 \"disclosure of the viewer\" \u2192 \"disclosure of the situated viewer\" [A04 #0].\n",
+   "source_refs": [
+    "central:source:corpus:A04",
+    "central:source:corpus:A04p"
+   ],
+   "space_refs": [
+    "central:wiki:project:O-I"
+   ],
+   "provenance": [
+    {
+     "source_ref": "central:source:corpus:A04p",
+     "source_revision": "d3a083e0ed98c235",
+     "contribution_ref": "contribution:participant-world-b-omarchy-a04-mask:prose:d9db1db8",
+     "shared_field": "oi:field:central:project:O-I:undertaking:a04-mask",
+     "contributor_participant_ref": "participant:world-b:omarchy:a04-mask",
+     "agent_ref": "agent:world-b:claude-code@workcell:omarchy",
+     "execution_ref": "claude-code-session:fe893569-aa8b-4502-82a9-5631607f12b9",
+     "reviewed_by": "agent:claude-code:opus-5.5@workcell:mac",
+     "standing": "agent-reviewed; human recognition pending"
+    },
+    {
+     "source_ref": "central:source:corpus:A04",
+     "source_revision": "4d3e93cce1d87aa1"
+    }
+   ],
+   "revision": 1
+  },
+  {
+   "object": "edge",
+   "profile": "okf-wiki/v1",
+   "ref": "wiki:node:record/A04p|re-sites|wiki:node:record/A04",
+   "from_ref": "wiki:node:record/A04p",
+   "relation": "re-sites",
+   "to_ref": "wiki:node:record/A04",
+   "origin": "inferred",
+   "origin_ref": "contribution:participant-world-b-omarchy-a04-mask:relation-proposal:ad69b5c0",
+   "provenance": [
+    {
+     "source_ref": "central:source:corpus:A04p",
+     "source_revision": "d3a083e0ed98c235",
+     "contribution_ref": "contribution:participant-world-b-omarchy-a04-mask:relation-proposal:ad69b5c0",
+     "shared_field": "oi:field:central:project:O-I:undertaking:a04-mask",
+     "contributor_participant_ref": "participant:world-b:omarchy:a04-mask",
+     "agent_ref": "agent:world-b:claude-code@workcell:omarchy",
+     "execution_ref": "claude-code-session:fe893569-aa8b-4502-82a9-5631607f12b9",
+     "reviewed_by": "agent:claude-code:opus-5.5@workcell:mac",
+     "standing": "agent-reviewed; human recognition pending"
+    },
+    {
+     "source_ref": "central:source:corpus:A04",
+     "source_revision": "4d3e93cce1d87aa1"
+    }
+   ],
+   "revision": 1
+  },
+  {
+   "object": "edge",
+   "profile": "okf-wiki/v1",
+   "ref": "wiki:node:contemplation/a04p-re-sites-a04-2026-09-28|explains|wiki:node:record/A04p",
+   "from_ref": "wiki:node:contemplation/a04p-re-sites-a04-2026-09-28",
+   "relation": "explains",
+   "to_ref": "wiki:node:record/A04p",
+   "origin": "inferred",
+   "origin_ref": "contribution:participant-world-b-omarchy-a04-mask:prose:d9db1db8",
+   "provenance": [
+    {
+     "source_ref": "central:source:corpus:A04p",
+     "source_revision": "d3a083e0ed98c235",
+     "contribution_ref": "contribution:participant-world-b-omarchy-a04-mask:prose:d9db1db8",
+     "shared_field": "oi:field:central:project:O-I:undertaking:a04-mask",
+     "contributor_participant_ref": "participant:world-b:omarchy:a04-mask",
+     "agent_ref": "agent:world-b:claude-code@workcell:omarchy",
+     "execution_ref": "claude-code-session:fe893569-aa8b-4502-82a9-5631607f12b9",
+     "reviewed_by": "agent:claude-code:opus-5.5@workcell:mac",
+     "standing": "agent-reviewed; human recognition pending"
+    },
+    {
+     "source_ref": "central:source:corpus:A04",
+     "source_revision": "4d3e93cce1d87aa1"
+    }
+   ],
+   "revision": 1
+  },
+  {
+   "object": "edge",
+   "profile": "okf-wiki/v1",
+   "ref": "wiki:node:contemplation/a04p-re-sites-a04-2026-09-28|explains|wiki:node:record/A04",
+   "from_ref": "wiki:node:contemplation/a04p-re-sites-a04-2026-09-28",
+   "relation": "explains",
+   "to_ref": "wiki:node:record/A04",
+   "origin": "inferred",
+   "origin_ref": "contribution:participant-world-b-omarchy-a04-mask:prose:d9db1db8",
+   "provenance": [
+    {
+     "source_ref": "central:source:corpus:A04p",
+     "source_revision": "d3a083e0ed98c235",
+     "contribution_ref": "contribution:participant-world-b-omarchy-a04-mask:prose:d9db1db8",
+     "shared_field": "oi:field:central:project:O-I:undertaking:a04-mask",
+     "contributor_participant_ref": "participant:world-b:omarchy:a04-mask",
+     "agent_ref": "agent:world-b:claude-code@workcell:omarchy",
+     "execution_ref": "claude-code-session:fe893569-aa8b-4502-82a9-5631607f12b9",
+     "reviewed_by": "agent:claude-code:opus-5.5@workcell:mac",
+     "standing": "agent-reviewed; human recognition pending"
+    },
+    {
+     "source_ref": "central:source:corpus:A04",
+     "source_revision": "4d3e93cce1d87aa1"
+    }
+   ],
+   "revision": 1
+  }
+ ],
+ "human_source_proposals": [],
+ "observed_source_revisions": {
+  "central:source:corpus:A04": "4d3e93cce1d87aa1",
+  "central:source:corpus:A04p": "d3a083e0ed98c235"
+ }
+}
