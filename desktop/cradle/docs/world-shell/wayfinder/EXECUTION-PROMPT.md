@@ -1,5 +1,7 @@
 # EXECUTION PROMPT — World shell: orchestrator commission
 
+> **Superseded on device semantics and owner facts (12 Oct 2026):** `DEVICE-SEMANTICS-LOCK.md` is the law, `PATH.md` the route, `EXECUTE.md` the execution prompt. This earlier commission (4–5 subagents, full protocol pack per agent) is superseded.
+
 Copy this whole document into a fresh orchestrator session, standing anywhere
 in the Central world.
 

@@ -39,6 +39,19 @@ Mockup values (names, hours, counts, sample data) are illustrative. Their
 5. **The gate makes it unavoidable** (§5 below). Law a gate cannot check is
    aspiration (`skills/m-prime-development/FOUNDING.md`).
 
+**Settled by the owner — never reopened, never asked (12 Oct 2026):**
+five modes, Live the base mode and measured basis, later joined into
+Expressions' audio+video timeline; Epi-Logos is a lens, not a mode; Nara
+belongs to the Epi-Logos lens, overlaid on the astrology components ported
+from Archetypal-Earth; the physics/cymatic simulation IS the sounding
+instrument; the day is an automated closure and an instrument/device — no
+hours are set; development is unified — every repo a change needs is
+changed in the same work, no per-repo owner tickets; a player plays by
+downloading the app, making things and projecting them to the shared field;
+Technē instruments already act on Expressions; agent-chain order is
+Factory's (Ta-Onta). Anything else the code and corpus can answer is
+derived, not asked.
+
 ---
 
 ## 1. The ontology — Live semantic → DLW meaning → the Game

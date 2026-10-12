@@ -1,5 +1,7 @@
 # DLW — the Digital Logos Workspace: the unified product-build plan
 
+> **Superseded on device semantics and owner facts (12 Oct 2026):** `DEVICE-SEMANTICS-LOCK.md` is the law, `PATH.md` the route, `EXECUTE.md` the execution prompt. The §10 OPEN-QUESTION ledger is retired: the lock and the settled facts (lock §0) answer it, and builders never stop on it. Detail sections stay background, conformed to the lock where they differ.
+
 **Precedence (12 Oct 2026).** The vision of record is
 [DLW-VISION.md](DLW-VISION.md): the DLW as the instrument of Epi-Logos,
 compiled from the owner's contemplation and his five-mode ruling of the same

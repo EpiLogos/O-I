@@ -280,16 +280,15 @@ meanings (Rev 5 second table): e.g. Technē Session = M3′ Journey,
 Arrangement = M2′ Relation Field; Central ("Base" in Rev 5) Session = the
 day as clips, Arrangement = today on one ruler.
 
-**Central's punch row** *(12 Oct)*: punch-in "day opened (08:30)", loop
-"the day-close routine", punch-out "the day closes (21:00)"
-(`modeGrammar.ts:282-285`; `WORLD-SHELL-DESIGN.md:40`). The two hours carry
-a source tag: they are design text, one side of a three-sided record beside
-the civil-time policy (a date rule, `day_boundary_minutes: 0`) and the
-owner's practice (DLW-PLAN §5.4a); who fires the close is open (DLW-VISION
-L5; DLW-PLAN §10 item 45). The close control is drawn **declared and never
-fired**: `admission: 'declared'`, bound to `central.day.lifecycle` behind the
-owner's token (`packages/live-shell/ui/src/inhabitants/centralDayNowModel.ts:55-105`).
-No shell device fires a close.
+**Central's punch row** *(12 Oct; DEVICE-SEMANTICS-LOCK §2.2, §4.7)*: the day
+is an instrument with an automated closure, and no hours are set. Punch-in
+"day opened", loop "the close routine", punch-out "day closes" read the
+day's bounds from the Central owner (`centralDayNowModel.ts`) and show
+nothing when the owner gives none. The hour text still in
+`modeGrammar.ts:282-285` and `inhabitants/sdk/modes.ts:175` is a defect
+(ticket T-LABELS). The close control is drawn **declared and never
+fired** by the shell: the closure is the owner's automation
+(`centralDayNowModel.ts:55-105`).
 
 World-mockup transport controls (Rev 2 naming): Link · field carrier (joins
 the World to the shared field; off = same grammar over local ground); Tap ·

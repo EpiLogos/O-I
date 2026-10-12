@@ -1,5 +1,7 @@
 # DLW — the vision: the instrument of Epi-Logos
 
+> **Superseded on device semantics and owner facts (12 Oct 2026):** `DEVICE-SEMANTICS-LOCK.md` is the law, `PATH.md` the route, `EXECUTE.md` the execution prompt. This vision draft treated settled owner facts as open questions and asked them; its §4 ledger and §6 carry are retired — builders do not read it.
+
 **Standing.** Compiled 12 Oct 2026 from the owner's contemplation and his mode
 ruling of the same day ([CONTEMPLATION-DLW-INSTRUMENT.md](CONTEMPLATION-DLW-INSTRUMENT.md),
 ruling at CONT:232-252). The contemplation is the source of the vision, and it

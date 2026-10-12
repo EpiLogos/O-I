@@ -2,9 +2,8 @@
 
 Label: wayfinder:task (Phase 4, UI only)
 Claimed-by: —
-Blocked-by: Phase 3 gate (the phase chain, PATH §1). UI legs are also
-blocked by P0-R1 and the computer-use gate.
-Source: DLW-VISION.md §5.3 item 30 (:1354-1360); §2.1 naming defect
+Blocked-by: — (code legs). UI legs need the screen gate (PATH §3).
+Source: DEVICE-SEMANTICS-LOCK.md §4.6 and §4.7
 (:749-764); §2.3 (:829-837); ledger L19 (:1166).
 
 Zones: `packages/live-shell/ui/src/shell/modeGrammar.ts` (GRAM:17-22,
@@ -66,6 +65,16 @@ Exercised: the mode grammar as rendered and as tested.
    names. `UNVERIFIED: needs-computer-use` until the channel is green.
 5. If T-WORLDCTX landed the GRAM:21 comment first, this ticket verifies it and
    does not rewrite it.
+
+## Also in this ticket — no hard-coded day hours (DEVICE-SEMANTICS-LOCK §4.7)
+
+The day is an automated closure and an instrument; no hours are set. Replace
+the hour text in `packages/live-shell/ui/src/inhabitants/sdk/modes.ts:175`
+and `packages/live-shell/ui/src/shell/modeGrammar.ts:282` (and the matching
+`icon-cut.html` readout only if the drift test requires it) with "day opened ·
+close routine · day closes"; the punch slots read the day's bounds from the
+Central owner (`centralDayNowModel.ts`) and show nothing when the owner gives
+none.
 
 ## Resolution
 

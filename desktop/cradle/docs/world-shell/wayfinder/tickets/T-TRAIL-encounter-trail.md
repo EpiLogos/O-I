@@ -57,20 +57,12 @@ This ticket follows the vision's choice, appends (DLW-VISION.md:1330-1331),
 which matches the tile's own promise, "the trail keeps the encounters and
 returns to them" (DOCK:203). The pop precedent is retired with the port.
 
-## Open — waiting on the owner (DLW-PLAN §10 item 28)
+## Settled by the code (no owner question)
 
-"A ruling decides: placement and bound" (PLAN:3157). The ticket rules on
-neither:
-
-- **Bound.** The store already trims the trail to the last 24 on every write
-  (`TRAIL_LIMIT = 24`, STORE:68; `setContext`, store.ts:487). Writing through
-  `book.setContext` inherits that trim. The builder adds no retention rule of
-  its own and states the current trim in the return as `retention:
-  store TRAIL_LIMIT=24 (code standing, unruled — item 28)`. Whether the bound
-  is 24 or unbounded stays OPEN.
-- **Placement.** The Trail tile stands in the right dock as built (DOCK:42,
-  54-58), as Revision 2 places it (quoted at PLAN:3155-3156). Building on it is
-  not a ruling on placement.
+- **Bound:** the store's existing trim (`TRAIL_LIMIT = 24`, store.ts:68) stands;
+  the builder adds no retention rule of its own.
+- **Placement:** the Trail tile in the right dock, as built (DOCK:42, 54-58)
+  and as the mockup places it.
 
 ## Sources
 
