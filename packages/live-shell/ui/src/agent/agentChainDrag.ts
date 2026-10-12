@@ -126,9 +126,70 @@ export const MISSING_OPS = {
   order: 'agent-chain order',
 } as const
 
+// ---- Owners: who each binding waits on, and who owes each missing op -------
+
+/** The owner bindings the chain's lights read in the native run (P0-R4):
+ * each names the product that owns the reading and the reading's own op.
+ * Owners follow the verified per-device family map
+ * (`desktop/cradle/docs/world-shell/AGENT-DEVICE-OWNERSHIP.md:20-37`, carried
+ * at DLW-PLAN.md:1706-1713). The gateway lamp shows `harness_agent_read`, the
+ * AIKit agency gateway's harness-binding reading (:22) — the Gateway device's
+ * transport face is Actuation's (:20), so the missing transport op is owed by
+ * Actuation while the refused reading waits on AIKit. The skillset light reads
+ * Central's roster (:37, accepted profiles' skill_refs) while the rack itself
+ * is AIKit's (:27): a refused roster waits on Central, an empty rack on AIKit.
+ * Git is Workcell's seat (:30). A reading, never a write. */
+export type OwnerBindingId = 'roster' | 'gateway' | 'workcell' | 'skillset'
+export interface OwnerBinding {
+  /** The product's public name, as its catalogue surface names it. */
+  readonly owner: string
+  /** The owner reading whose answer admits the light. */
+  readonly reading: string
+}
+export const OWNER_BINDINGS: Readonly<Record<OwnerBindingId, OwnerBinding>> = {
+  roster: {owner: 'Central', reading: 'agent_definition roster'},
+  gateway: {owner: 'AIKit', reading: 'harness_agent_read'},
+  workcell: {owner: 'Workcell', reading: 'workcell_status_read'},
+  skillset: {owner: 'AIKit', reading: 'agent_definition roster (accepted skill_refs)'},
+}
+
+/** Who owes each missing op — the family that owns the face the op would
+ * admit onto (same map: skillset racks :27, git seat :30, gateway transport
+ * :20). `null` where no owner is named: the world face is a
+ * Central + AIKit split, and the chain's order is declared at the shell's own
+ * family door, not by any product. A null owner is disclosed as unnamed,
+ * never guessed. */
+export const MISSING_OP_OWNERS: Readonly<Record<keyof typeof MISSING_OPS, string | null>> = {
+  skillset: 'AIKit',
+  git: 'Workcell',
+  world: null,
+  gateway: 'Actuation',
+  order: null,
+}
+
+/** The remedy for a missing op, in the ticket's own terms: the owner builds
+ * it on its own seat, or declares it absent. With no owner named, the remedy
+ * is naming one first. */
+export function missingOpRemedy(op: keyof typeof MISSING_OPS): string {
+  const owner = MISSING_OP_OWNERS[op]
+  return owner
+    ? `${owner} builds ${MISSING_OPS[op]} on its own seat, or declares it absent`
+    : `no owner is named for ${MISSING_OPS[op]} yet — one must be named before it is built or declared absent`
+}
+
+/** A refused owner reading as one named line: the owner, the reading that
+ * refused, and the owner's own words. No remedy is invented — the owner's
+ * words carry one when the owner names it. `not-reached` is the shell's own
+ * transport failing before the owner was asked: the owner is still named,
+ * but the refusal is never put in its mouth. */
+export function ownerRefusalLine(binding: OwnerBindingId, words: string, how: 'refused' | 'not-reached' = 'refused'): string {
+  const {owner, reading} = OWNER_BINDINGS[binding]
+  return `waiting on ${owner} — ${reading} ${how === 'refused' ? 'refused' : 'not reached'}: ${words}`.slice(0, 240)
+}
+
 export type ChainDropDecision =
   | {kind: 'operation'; operation: ChainDropOperation; slot: AgentChainSlotId; via: string}
-  | {kind: 'missing-op'; missingOp: string; slot: AgentChainSlotId; because: string}
+  | {kind: 'missing-op'; missingOp: string; slot: AgentChainSlotId; because: string; owner: string | null; remedy: string}
 
 /** Where each family lands on the chain (the semantic positions). Sessions
  * and agents both land on the who slot: the session the chain serves, and the
@@ -172,6 +233,8 @@ export function chainDropDecision(drag: AgentChainDrag): ChainDropDecision {
         missingOp: MISSING_OPS.skillset,
         slot,
         because: 'the roster’s admission (agent_definition propose/accept) owns agent profiles, not chain seats',
+        owner: MISSING_OP_OWNERS.skillset,
+        remedy: missingOpRemedy('skillset'),
       }
     case 'git':
       return {
@@ -179,6 +242,8 @@ export function chainDropDecision(drag: AgentChainDrag): ChainDropDecision {
         missingOp: MISSING_OPS.git,
         slot,
         because: 'workcell_status_read is the seat’s reading; no owner operation attaches a seat to the chain',
+        owner: MISSING_OP_OWNERS.git,
+        remedy: missingOpRemedy('git'),
       }
   }
 }
@@ -194,7 +259,7 @@ export function dropZoneLine(active: ActiveChainDrag): string {
   if (decision.kind === 'operation') {
     return `Drop «${active.drag.label}» — ${decision.via}`
   }
-  return `«${active.drag.label}» — no owner operation; the drop refuses (missing op: ${decision.missingOp})`
+  return `«${active.drag.label}» — no owner operation; the drop refuses (missing op: ${decision.missingOp}${decision.owner ? ` · owed by ${decision.owner}` : ''})`
 }
 
 /** The insertion index among the chain cards (left-to-right rects) for a

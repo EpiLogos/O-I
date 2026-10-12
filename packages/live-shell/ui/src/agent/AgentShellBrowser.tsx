@@ -7,6 +7,7 @@ import {useHarnessBinding} from './useHarnessBinding'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {refusalLine, safeJson} from './RefusalCard'
 import {AGENT_CHAIN_MIME, encodeChainDrag, setActiveChainDrag, type AgentChainDrag} from './agentChainDrag'
+import {missingOpRemedy, OWNER_BINDINGS, ownerRefusalLine} from './agentChainDrag'
 import './agentShell.css'
 
 const CATEGORIES = [
@@ -78,16 +79,18 @@ export function skillsetRowsFromRoster(outcome: KernelOutcome, error: string | n
     const reason = error ?? 'roster reading unavailable'
     return [{
       key: 'skillsets-unadmitted',
-      label: `No skillsets admitted through the door yet — the ai-kit skillset registry (accepted roster skill_refs) refused: ${reason}`.slice(0, 240),
-      meta: 'ai-kit · refused',
+      // The refused reading is Central's roster Action, not the AIKit rack:
+      // the refusal names the owner that actually answered.
+      label: `No skillsets admitted through the door yet — ${ownerRefusalLine('roster', reason)}`.slice(0, 240),
+      meta: 'central · refused',
     }]
   }
   const refs = skillRefsOfAcceptedProfiles(outcome.data)
   if (!refs.length) {
     return [{
       key: 'skillsets-empty',
-      label: 'No skillsets admitted through the door yet — accepted agent profiles carrying skill_refs would supply them.',
-      meta: 'ai-kit',
+      label: `No skillsets admitted through the door yet — accepted agent profiles carrying skill_refs would supply them; waiting on ${OWNER_BINDINGS.skillset.owner}: ${missingOpRemedy('skillset')}.`.slice(0, 240),
+      meta: 'ai-kit · waiting',
     }]
   }
   return refs.map(ref => ({key: ref, label: ref, meta: 'skillset'}))
@@ -111,7 +114,7 @@ export function gitRowsFromWorkcell(
       ?? (seat ? 'workcell_status_read disclosed no workcell_ref' : 'workcell status unavailable')
     return [{
       key: 'seat-unavailable',
-      label: `Git seat unavailable — workcell_status_read (the workcell family's seat reading) answered: ${reason}`.slice(0, 240),
+      label: `Git seat unavailable — ${ownerRefusalLine('workcell', reason)} (the workcell family's seat reading)`.slice(0, 240),
       meta: 'workcell · refused',
     }]
   }
@@ -136,8 +139,8 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
       if (transport.kind === 'unavailable') {
         if (live) {
           const reason = transport.reason ?? 'Transport unavailable'
-          setGateway({line: reason, receipt: null, refused: true})
-          setGit({line: 'Workcell unavailable', receipt: null, refused: true})
+          setGateway({line: ownerRefusalLine('gateway', reason, 'not-reached'), receipt: null, refused: true})
+          setGit({line: ownerRefusalLine('workcell', reason, 'not-reached'), receipt: null, refused: true})
           setRosterOutcome(null)
           setRosterError(reason)
           setSeatOutcome(null)
@@ -150,7 +153,7 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
         const reading = !gatewayOp.error && gatewayOp.outcome?.result === 'harness_agent_reading' ? gatewayOp.outcome : null
         setGateway(reading
           ? {line: `binding ${reading.binding} answered — receipt holds the document`, receipt: safeJson(reading.document), refused: false}
-          : {line: refusalLine(gatewayOp.error, 'Harness gateway reading unavailable'), receipt: gatewayOp.error ? safeJson(gatewayOp.error) : null, refused: true})
+          : {line: ownerRefusalLine('gateway', refusalLine(gatewayOp.error, 'Harness gateway reading unavailable')), receipt: gatewayOp.error ? safeJson(gatewayOp.error) : null, refused: true})
       }
       // The Skillsets rows' admitted source: the roster reading the chain's
       // skillset admit light consumes (accepted profiles' skill_refs).
@@ -209,6 +212,22 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
     }
     return [{key: 'empty', label: loading ? 'Reading…' : 'Nothing disclosed for this category yet.', meta: ''}]
   }, [category, rows, shell.openTiles, loading, rosterOutcome, rosterError, seatOutcome, seatError])
+
+  // The pool's skillset rows read the same roster the Skillsets rows do —
+  // admitted when accepted profiles carry skill refs, else waiting on the
+  // owner of whichever reading left them dark (Central refused; AIKit empty).
+  const skillAdmission = useMemo(() => {
+    if (!rosterOutcome && !rosterError) return {count: null, note: null, waiting: null}
+    const rows = skillsetRowsFromRoster(rosterOutcome, rosterError)
+    const count = rows.filter(row => row.meta === 'skillset').length
+    if (count > 0) return {count, note: `${count} skill ref${count === 1 ? '' : 's'} on accepted roster profiles.`, waiting: null}
+    const refused = rows[0]?.key === 'skillsets-unadmitted'
+    return {
+      count: 0,
+      note: rows[0]?.label ?? null,
+      waiting: refused ? OWNER_BINDINGS.roster.owner : OWNER_BINDINGS.skillset.owner,
+    }
+  }, [rosterOutcome, rosterError])
 
   return (
     <aside className="agent-shell-browser" data-region="browser">
@@ -271,6 +290,9 @@ export function AgentShellBrowser({rows, error, loading}: {rows: AgencySessionRo
         autonomy={shell.steer ? 'steer' : 'review'}
         budgetUsed={0}
         budgetCap={12}
+        skillsAdmitted={skillAdmission.count}
+        skillsNote={skillAdmission.note}
+        skillsWaitingOn={skillAdmission.waiting}
       />
     </aside>
   )

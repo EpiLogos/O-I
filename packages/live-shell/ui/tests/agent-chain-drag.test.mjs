@@ -188,3 +188,69 @@ test('the new drag styles use shell tokens, not literal colours', async () => {
   assert.match(slice, /\.agent-dropz\.armed/)
   assert.doesNotMatch(slice.slice(slice.indexOf('The slide grip')), /#[0-9a-fA-F]{3,8}\b/, 'the new rules carry no literal colour')
 })
+
+// ---- P0-R4: every family admitted through its owner, or waiting on it by name
+
+test('each owner binding names its owner and the reading that admits the light', () => {
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(drag.OWNER_BINDINGS).map(([id, b]) => [id, b.owner])),
+    {roster: 'Central', gateway: 'AIKit', workcell: 'Workcell', skillset: 'AIKit'},
+    'owners follow the verified per-device family map (AGENT-DEVICE-OWNERSHIP)',
+  )
+  assert.equal(drag.OWNER_BINDINGS.gateway.reading, 'harness_agent_read')
+  assert.equal(drag.OWNER_BINDINGS.workcell.reading, 'workcell_status_read')
+  assert.match(drag.OWNER_BINDINGS.roster.reading, /agent_definition roster/)
+})
+
+test('the three missing ops from the table each name their owner and remedy, or an unnamed owner', () => {
+  assert.equal(drag.MISSING_OP_OWNERS.skillset, 'AIKit')
+  assert.equal(drag.MISSING_OP_OWNERS.git, 'Workcell')
+  assert.equal(drag.MISSING_OP_OWNERS.order, null, 'the order is declared at the shell door; no product owner is guessed')
+  assert.equal(drag.missingOpRemedy('skillset'), 'AIKit builds agent-chain skillset admit on its own seat, or declares it absent')
+  assert.equal(drag.missingOpRemedy('git'), 'Workcell builds workcell git-seat attach on its own seat, or declares it absent')
+  assert.match(drag.missingOpRemedy('order'), /no owner is named for agent-chain order yet/)
+  const admit = drag.chainDropDecision(skillset)
+  assert.equal(admit.owner, 'AIKit')
+  assert.equal(admit.remedy, drag.missingOpRemedy('skillset'))
+  const seatGit = drag.chainDropDecision(git)
+  assert.equal(seatGit.owner, 'Workcell')
+  assert.equal(seatGit.remedy, drag.missingOpRemedy('git'))
+  assert.match(drag.dropZoneLine({kind: 'chain-item', drag: skillset}), /owed by AIKit/)
+})
+
+test('a refused reading waits on its owner by name; a transport failure is never put in the owner’s mouth', () => {
+  const refused = drag.ownerRefusalLine('workcell', 'the owner refused — no seat registered')
+  assert.equal(refused, 'waiting on Workcell — workcell_status_read refused: the owner refused — no seat registered')
+  const unreached = drag.ownerRefusalLine('gateway', 'Transport unavailable', 'not-reached')
+  assert.match(unreached, /^waiting on AIKit — harness_agent_read not reached: Transport unavailable$/, 'harness_agent_read is the AIKit agency gateway’s reading')
+  assert.equal(drag.MISSING_OP_OWNERS.gateway, 'Actuation', 'the gateway transport face is Actuation’s')
+  assert.ok(drag.ownerRefusalLine('roster', 'x'.repeat(400)).length <= 240, 'one bounded line, never a dump')
+})
+
+test('the chain earns every lamp from a reading and names who an unlit lamp waits on', async () => {
+  const chain = await read('AgentDeviceChain.tsx')
+  const rack = await read('NativeAgentDeviceRack.tsx')
+  assert.match(rack, /gatewayAdmitted = false,/, 'the gateway lamp is dark until a reading answers — no default-on lamp')
+  assert.match(chain, /gatewayAdmitted=\{gatewayAdmitted\}/, 'the chain passes the earned gateway admission')
+  assert.match(chain, /setGatewayAdmitted\(gatewayAnswered\)/)
+  assert.match(chain, /waitingOn=\{waitingOn\}/)
+  assert.match(rack, /waiting · \$\{waitingOn\.gateway\}/)
+  assert.match(rack, /waiting · \$\{waitingOn\.git\}/)
+  assert.match(rack, /not admitted — waiting on \$\{waiting\}/, 'the lamp’s accessible name names the owner')
+  assert.doesNotMatch(rack, /'unadmitted'/, 'no bare unadmitted wall')
+  assert.match(chain, /owner \$\{decision\.owner \?\? 'not named'\}; remedy: \$\{decision\.remedy\}/, 'the drop refusal names owner and remedy')
+  assert.match(chain, /remedy: \$\{missingOpRemedy\('order'\)\}/, 'the slide refusal names the order op’s remedy')
+})
+
+test('the browser names the owner that actually refused: Central for the roster, not the AIKit rack', async () => {
+  const browser = await import('../src/agent/AgentShellBrowser.tsx')
+  const refused = browser.skillsetRowsFromRoster(null, 'Action refused: unknown field')
+  assert.match(refused[0].label, /waiting on Central — agent_definition roster refused: Action refused: unknown field/)
+  assert.doesNotMatch(refused[0].label, /ai-kit skillset registry.*refused/)
+  const empty = browser.skillsetRowsFromRoster({result: 'agent_definition_reading', data: {profiles: []}}, null)
+  assert.match(empty[0].label, /waiting on AIKit: AIKit builds agent-chain skillset admit/)
+  const pool = await read('AgentDevicePool.tsx')
+  assert.match(pool, /waiting · \$\{skillsWaitingOn\}/, 'the pool rows name who they wait on')
+  const source = await read('AgentShellBrowser.tsx')
+  assert.match(source, /skillsAdmitted=\{skillAdmission\.count\}/, 'the pool receives the same roster admission, not a default')
+})
