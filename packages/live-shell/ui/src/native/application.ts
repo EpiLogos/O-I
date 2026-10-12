@@ -20,6 +20,12 @@ export interface ShellConfig {
    * is the selected backing's admitted subset of it. Absent on a host build
    * that predates the field. */
   suite_product_ids?: string[]
+  /** Each suite product's public owner name (live_shell_config's
+   * suite_owner_names, native_shell.rs, read from the host's OWNERS table),
+   * keyed by product id. The readback shows the name with the id as secondary
+   * text. Absent on a host build that predates the field; a product the host
+   * names no name for is shown by its id alone. */
+  suite_owner_names?: Record<string, string>
   kernel_bridge?: string
   kernel_transport?: {kind: 'tauri'; invoke: 'kernel_op'}
   kernel_epoch?: string

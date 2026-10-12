@@ -2,6 +2,7 @@
    shrinks before the status path does, and it never wraps. */
 .owner-readback { display:flex; align-items:center; gap:10px; min-width:0; flex:0 1 auto; overflow:hidden; white-space:nowrap }
 .owner-readback-summary { color:var(--text-dim) }
+.owner-readback-id { color:var(--text-dim) }
 .owner-readback-row[data-owner-state="failed"] { color:var(--rec) }
 .owner-readback-row[data-owner-state="excluded-by-footprint"],
 .owner-readback-row[data-owner-state="absent"],

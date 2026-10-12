@@ -143,7 +143,62 @@ test('the readback renders one named state per owner in the status region', () =
   assert.match(html, /data-region="owner-readback"/)
   assert.match(html, /data-owner="workcell" data-owner-state="excluded-by-footprint"/)
   assert.match(html, /data-owner="central" data-owner-state="admitted"/)
-  assert.match(html, /workcell · excluded by footprint/)
+  assert.match(html, /<span class="owner-readback-name">workcell<\/span><span class="owner-readback-state"> · excluded by footprint<\/span>/,
+    'a host build without owner names draws the id alone, with no invented name and no id repeated beside it')
+})
+
+// The host's own display names (live_shell_config.suite_owner_names, from the OWNERS table).
+const NAMES = {central: 'Central', actuation: 'Actuation', 'ai-kit': 'AIKit', 'software-factory': 'Software Factory',
+  workcell: 'Workcell', 'quaternal-logic': 'Quaternal Logic'}
+const named = {...footprint, suite_owner_names: NAMES}
+
+test('each owner is drawn by the host display name, with its product id as secondary text', () => {
+  const reading = ownerReadbackOf({native: true, config: named, error: null})
+  const rows = byOwner(reading)
+  assert.equal(rows['software-factory'].name, 'Software Factory')
+  assert.equal(rows.workcell.name, 'Workcell')
+  assert.equal(rows.central.name, 'Central')
+  assert.match(rows['software-factory'].line, /^Software Factory \(software-factory\) · excluded by footprint — /)
+  const html = htmlOf(React.createElement(OwnerReadback, {native: true, config: named, error: null}))
+  assert.match(html, /<span class="owner-readback-name">Software Factory<\/span><span class="owner-readback-id"> \(software-factory\)<\/span><span class="owner-readback-state"> · excluded by footprint<\/span>/)
+  assert.match(html, /<span class="owner-readback-name">Central<\/span><span class="owner-readback-id"> \(central\)<\/span><span class="owner-readback-state"> · admitted<\/span>/)
+  assert.match(html, /data-owner="workcell" data-owner-state="excluded-by-footprint"/, 'the id stays on the row as a data attribute')
+})
+
+test('an owner the host names no display name for is drawn by its id alone, never with an invented name', () => {
+  const partial = {...footprint, suite_owner_names: {central: 'Central'}}
+  const rows = byOwner(ownerReadbackOf({native: true, config: partial, error: null}))
+  assert.equal(rows.central.name, 'Central')
+  assert.equal(rows.workcell.name, null)
+  assert.equal(rows.workcell.line.split(' · ')[0], 'workcell', 'the unnamed owner reads by its id')
+  const html = htmlOf(React.createElement(OwnerReadback, {native: true, config: partial, error: null}))
+  assert.match(html, /<span class="owner-readback-name">workcell<\/span><span class="owner-readback-state"> · excluded by footprint<\/span>/)
+})
+
+test('a malformed or inherited owner-name map names nothing it was not given', () => {
+  for (const suite_owner_names of [null, [], 'Central', {central: 7}, {central: '   '}]) {
+    const rows = byOwner(ownerReadbackOf({native: true, config: {...footprint, suite_owner_names}, error: null}))
+    assert.equal(rows.central.name, null, `ignored ${JSON.stringify(suite_owner_names)}`)
+  }
+  // An owner id that happens to be a prototype key is not a name the host gave.
+  const rows = byOwner(ownerReadbackOf({native: true, config: {...footprint, contributions: [
+    ...footprint.contributions,
+    {contribution_ref: 'toString.roster', owner: 'toString', revision: 1, compiled: true, owner_selected: false, registration: 'excluded'},
+  ], suite_owner_names: {}}, error: null}))
+  assert.equal(rows.toString.name, null)
+  assert.equal(rows.toString.state, 'absent')
+})
+
+test('the development browser draws no owner names either, even when a config carries them', () => {
+  const reading = ownerReadbackOf({native: false, config: named, error: null})
+  assert.equal(reading.rows.length, 0)
+  const html = htmlOf(React.createElement(OwnerReadback, {native: false, config: named, error: null}))
+  assert.doesNotMatch(html, /owner-readback-name|owner-readback-id/)
+})
+
+test('the module hard-codes no owner display name: the names come from the host, never from the shell', async () => {
+  const text = await readFile(new URL('../src/shell/ownerReadback.tsx', import.meta.url), 'utf8')
+  for (const name of Object.values(NAMES)) assert.doesNotMatch(text, new RegExp(`['"\`]${name}['"\`]`), `${name} is read from the host`)
 })
 
 test('the run-context region mounts the owner readback beside it, in the same status region', () => {

@@ -2,12 +2,15 @@ import type {ShellConfig} from '../native/application'
 import './ownerReadback.css'
 
 /**
- * The owner readback (P0-R6-ui): which suite products the native host admitted,
- * which the footprint excluded, which failed, and which are absent, read only
- * from the host's own live_shell_config. The shell never hard-codes the product
- * universe: suite_product_ids is the host's disclosure, and a product the host
- * does not name is never drawn. The development browser discloses no owner
- * configuration, so it gets a stated absence, never a fabricated admission.
+ * The owner readback (P0-R6-ui, P0-R6b-ui): which suite products the native host
+ * admitted, which the footprint excluded, which failed, and which are absent,
+ * read only from the host's own live_shell_config. The shell never hard-codes the
+ * product universe or the owner names: suite_product_ids and suite_owner_names are
+ * the host's disclosure. Each owner is drawn by its host display name with its
+ * product id as secondary text; a host build without a name for an owner draws the
+ * id alone, never an invented name. A product the host does not name is never
+ * drawn. The development browser discloses no owner configuration, so it gets a
+ * stated absence, never a fabricated admission.
  */
 
 export type OwnerState = 'admitted' | 'excluded-by-footprint' | 'failed' | 'absent' | 'undisclosed'
@@ -15,6 +18,8 @@ export type OwnerState = 'admitted' | 'excluded-by-footprint' | 'failed' | 'abse
 export interface OwnerReadbackRow {
   /** The owner, named by the host's product id. */
   owner: string
+  /** The host's public display name for the owner; null when the host names none. */
+  name: string | null
   state: OwnerState
   /** The state in the window's plain words. */
   label: string
@@ -36,7 +41,7 @@ export interface OwnerReadbackReading {
   rows: OwnerReadbackRow[]
 }
 
-export type OwnerReadbackConfig = Pick<ShellConfig, 'product_ids' | 'contributions' | 'suite_product_ids'>
+export type OwnerReadbackConfig = Pick<ShellConfig, 'product_ids' | 'contributions' | 'suite_product_ids' | 'suite_owner_names'>
 
 export interface OwnerReadbackInput {
   native: boolean
@@ -59,6 +64,14 @@ const LABEL: Record<OwnerState, string> = {
 
 const strings = (value: unknown): string[] | null =>
   Array.isArray(value) && value.every(item => typeof item === 'string') ? value as string[] : null
+
+/** The host's display name for an owner, or null when the host names none. Own keys only. */
+const displayNameOf = (names: unknown, owner: string): string | null => {
+  if (!names || typeof names !== 'object' || Array.isArray(names)) return null
+  if (!Object.prototype.hasOwnProperty.call(names, owner)) return null
+  const name = (names as Record<string, unknown>)[owner]
+  return typeof name === 'string' && name.trim() ? name : null
+}
 
 /** The readback as a pure function of what the host disclosed. */
 export function ownerReadbackOf({native, config, error}: OwnerReadbackInput): OwnerReadbackReading {
@@ -100,8 +113,10 @@ export function ownerReadbackOf({native, config, error}: OwnerReadbackInput): Ow
       undisclosed: 'the host did not disclose the suite product universe',
     }
     const remedy = state === 'admitted' ? null : NO_REMEDY
-    const line = `${owner} · ${LABEL[state]} — ${why[state]}.${remedy ? ` Remedy: ${remedy}.` : ''}`
-    return {owner, state, label: LABEL[state], line, remedy}
+    const name = displayNameOf(config.suite_owner_names, owner)
+    const display = name ? `${name} (${owner})` : owner
+    const line = `${display} · ${LABEL[state]} — ${why[state]}.${remedy ? ` Remedy: ${remedy}.` : ''}`
+    return {owner, name, state, label: LABEL[state], line, remedy}
   })
 
   const admittedCount = rows.filter(row => row.state === 'admitted').length
@@ -118,6 +133,10 @@ export function OwnerReadback({native, config, error}: OwnerReadbackInput) {
     data-owner-readback={reading.kind} role="group" aria-label={reading.line} title={reading.line}>
     <span className="owner-readback-summary">{reading.summary}</span>
     {reading.rows.map(row => <span key={row.owner} className="owner-readback-row" data-owner={row.owner}
-      data-owner-state={row.state} title={row.line}>{`${row.owner} · ${row.label}`}</span>)}
+      data-owner-state={row.state} title={row.line}>
+      <span className="owner-readback-name">{row.name ?? row.owner}</span>
+      {row.name ? <span className="owner-readback-id"> ({row.owner})</span> : null}
+      <span className="owner-readback-state"> · {row.label}</span>
+    </span>)}
   </span>
 }
