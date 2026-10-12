@@ -15,7 +15,7 @@ Read, in order:
 3. Your ticket: <path>
 4. Only the sources the ticket names.
 
-Seat: /Users/admin/Central/worktrees/env-1/o-i (lane dlw/build-20261012).
+Seat: /Users/admin/Central/worktrees/env-1/o-i (lane: <the lead's current dlw/… branch>).
 Other agents work here too: run `git status` first; anything you did not
 change is not yours — never touch, revert, format or stage it.
 

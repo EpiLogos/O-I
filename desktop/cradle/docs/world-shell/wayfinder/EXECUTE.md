@@ -8,7 +8,10 @@ Opus in the build.
 `PATH.md` (route, roles, gates, claimable tickets), then
 `DEVICE-SEMANTICS-LOCK.md` (the law and the owner's settled facts). Then
 `git status` and `git log --oneline -5` in the seat
-`/Users/admin/Central/worktrees/env-1/o-i`, on branch `dlw/build-20261012`.
+`/Users/admin/Central/worktrees/env-1/o-i`. Cut your lane from `main` first:
+`seat join env-1 o-i --branch dlw/<wave-or-ticket>-<date> --actor <you>` (the
+first DLW lane, `dlw/build-20261012`, landed as O-I #650). Land each wave by
+PR (main is protected); release the seat when the lane has landed.
 
 **Who works — exactly this:**
 - **You:** claim, brief, converge, commit, keep PATH, run the native app,
