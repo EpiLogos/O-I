@@ -41,7 +41,6 @@ export {PROJECTION_TIMELINE_KIND, timelinePresentation}
 export type {TimelinePresentation}
 
 import {WorldTimelinePresentation} from './worldTimelinePresentation'
-import type {WorldTimelineView} from './useWorldTemporalReading'
 
 export interface TimelineResidenceProps {
   set: SetSummary | null
