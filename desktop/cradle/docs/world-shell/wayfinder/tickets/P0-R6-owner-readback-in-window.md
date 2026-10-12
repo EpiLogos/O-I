@@ -1,9 +1,9 @@
 # P0-R6 — Owner readback in the window: admitted, excluded, waiting
 
 Label: wayfinder:task (Phase 0 gate — "every device either admits through a real owner or names its absence")
-Claimed-by: — (released W0c, 12 Oct: blocked, zone-escape)
-Blocked-by: a host field in `live_shell_config` disclosing the suite product
-universe (owner or conductor go/no-go, PATH §10 item 24). UI legs blocked-by
+Claimed-by: — (released W0d, 12 Oct: host and UI code legs committed; UI legs open)
+Blocked-by: — for code (host field landed W0d, `2ac3c157f`). UI legs
+blocked-by a runner rebuild from the committed tree (PATH §10 item 36) and
 the computer-use gate.
 
 Zones: `packages/live-shell/ui/src/shell/` (a new owner-readback module and
@@ -95,3 +95,63 @@ would be a second store). Two legs, run in order:
   remedy named" where the host names none, "no host readback" on the
   development browser — mounted through `RunContextReading`
   (`src/shell/runContext.tsx`), which StatusBar renders in every mode.
+
+### W0d — host field and UI readback landed, 12 Oct 2026 (ticket open for its UI legs)
+
+**Landed.**
+- **P0-R6-host `2ac3c157f`** (zone `desktop/cradle/src-tauri/src/native_shell.rs`
+  only, +112/-1). `candidate::suite_product_ids` (`native_shell.rs:73`)
+  reads the union of the footprint's `backing.options[*].products` from the
+  footprint `prepare()` already qualifies, filtered through the existing
+  `OWNERS` table (`:36-48`) in its order; no literal list. It is called
+  after `runtime::qualify` (`:223`); the host refuses to start when the
+  selected backing names a product outside the universe (`:224-230`); the
+  value is held in the `RUNTIME` slot (`:427`) and published as
+  `live_shell_config.suite_product_ids` (`:474`). For
+  `desktop/install-footprint.json` it yields central, actuation, ai-kit,
+  software-factory, workcell, quaternal-logic; the default 0/1/2 is a strict
+  subset. Four tests in `candidate::suite_product_ids_tests` (`:493`):
+  universe equals the backing-options union, default backing leaves named
+  products outside, a product with no host owner refuses, a footprint with
+  no options refuses.
+- **P0-R6-ui `c4761bfd0`** (zone `packages/live-shell/ui/src/shell/`,
+  `ui/src/native/application.ts` types, `ui/tests/`). New
+  `ui/src/shell/ownerReadback.tsx` + `.css`, mounted through
+  `RunContextReading` (`runContext.tsx`, now a fragment), which `StatusBar`
+  renders in every mode. Reading: admitted = `product_ids`;
+  excluded-by-footprint = in `suite_product_ids`, not in `product_ids`;
+  failed = a contribution with `registration: "failed"` (owner's words from
+  `failure`); absent = not in the universe ("absent, not compiled into this
+  build" for a `compiled: false` row, "absent, the footprint does not offer
+  it" otherwise). Every non-admitted row reads "Remedy: no remedy named"
+  (the host names no remedy field). The development browser draws "No host
+  readback" with no rows and no chips. Extra tested states: "not disclosed"
+  (a host build without `suite_product_ids`) and pending / unread.
+  `ShellConfig.suite_product_ids?: string[]` (`application.ts:22`). New
+  suite `tests/owner-readback.test.mjs` (10 tests), including a guard that
+  the module hard-codes no suite product id.
+
+**Checks (scripted, converge re-runs).** Host: `cargo check --features
+native_shell` green (15 warnings, none in `native_shell.rs`); `cargo test
+--features native_shell` 34 passed / 3 ignored, the 4 new tests passing,
+re-run on the clean committed tree. UI: tsc 0 errors; lane suites 158/158 at
+`c4761bfd0`. Conductor re-run at `4a5887376` (wave HEAD): lane suites
+169/169, tsc 0.
+
+**Acceptance.** 1–4 met in code and tests, verified against fixture configs
+only. 5 not met.
+
+**Unverified (channel).**
+- `suite_product_ids` and the readback in a running native window: needs a
+  rebuild from the clean committed tree through the P0-R1 runner
+  (`source_dirty: false`) and a `readback` (channel `scripted`, AX) — PATH
+  §10 item 36.
+- `prepare()` wiring (`:223`, `:224-230`, `:427`, `:474`): code-reading
+  only; the unit tests cover the pure reader, not the Tauri bootstrap.
+- Acceptance 5, both viewports, the status-region look and chip overflow:
+  `computer-use` (PATH §10 item 37).
+
+**Carries:** PATH §10 items 36, 37, 38 (absent-vs-unbuilt split is partial),
+39 (needs-owner: display names vs ids), 44 (extra states), 45 (shared
+mount with P0-R5b), 46 (WIDGET-GUIDE §8 proposal). Items 4 (code landed),
+24 and 34 are done.

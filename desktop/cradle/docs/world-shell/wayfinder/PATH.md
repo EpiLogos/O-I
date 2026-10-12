@@ -11,7 +11,11 @@ Updated: 2026-10-12, `claude-code:dlw-conductor` (Opus). Vision tickets
 W0b, so W0b and wave 0 stay open (§9). Wave W0c recorded 12 Oct: P0-R4
 code legs committed (`7b59fecad`); P0-R6 blocked (zone-escape: the host does
 not disclose the product universe); P0-R5b blocked-by P0-R6; no review run,
-so W0c stays open (§9); carries 24–35 in §10.
+so W0c stays open (§9); carries 24–35 in §10. Wave W0d recorded 12 Oct:
+P0-R6-host (`2ac3c157f`), P0-R6-ui (`c4761bfd0`), P0-R5b (`e736ce78c`) and
+the P0-R4 honesty nit (`4a5887376`) committed; every UI leg UNVERIFIED
+(computer-use) and no rebuild from these commits yet; no review run, so W0d
+stays open (§9); carries 36–47 in §10.
 
 ## Roles (owner's model map, 12 Oct 2026)
 
@@ -105,21 +109,29 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
   DLW-PLAN.md's 12 Oct rewrites are committed in `13aaf5360`. Tickets written
   before `13aaf5360` pin PLAN line cites to `0dfa7b5ea`; re-check a cite
   against the committed plan before relying on it.
-- **Seat tree**: clean after `7b59fecad` (W0c converge, P0-R4, 12 Oct);
-  pushed, `origin/dlw/build-20261012` = `7b59fecad` before the W0c record
-  commit. Lane suites 143/143 and agent suites 86/86 (81 + 5 P0-R4), tsc 0.
-- **`live_shell_config` carries no product universe** (re-read 12 Oct,
-  `src-tauri/src/native_shell.rs:429-430`): `product_ids` is the backing's
-  admitted list only (0/1/2: central, actuation, ai-kit) and `contributions`
-  names owners oi, ai-kit and software-factory. Workcell and quaternal-logic
-  appear in neither, so the shell cannot tell excluded-by-footprint from
-  absent-because-unbuilt (P0-R6 blocker, §10 item 24).
+- **Seat tree**: clean after `4a5887376` (W0d converge, 12 Oct); pushed,
+  `origin/dlw/build-20261012` = `4a5887376` before the W0d record commit.
+  Conductor re-run at `4a5887376`: lane suites 169/169 (includes agent
+  suites 89 and `owner-readback` 10), tsc 0. Host: `cargo test --features
+  native_shell` 34 passed / 3 ignored (P0-R6-host converge, `2ac3c157f`).
+- **`live_shell_config` now names the product universe in code**
+  (`2ac3c157f`): `suite_product_ids` (`native_shell.rs:73` reader, `:223`
+  call in `prepare()`, `:474` published) is the union of the footprint's
+  `backing.options[*].products` in `OWNERS` order — central, actuation,
+  ai-kit, software-factory, workcell, quaternal-logic. The host refuses to
+  start when the selected backing names a product outside it. **Not yet
+  observed in a running window**: no rebuild from `2ac3c157f` or later has
+  run (§10 item 36). The UI readback (`c4761bfd0`,
+  `ui/src/shell/ownerReadback.tsx`) reads admitted = `product_ids`,
+  excluded-by-footprint = universe minus `product_ids`, failed = a
+  contribution with `registration: "failed"`, absent = outside the
+  universe, and "No host readback" when the field is missing.
 
 ## 3. Hard gates
 
 | Gate | State | Clears by | Blocks |
 |---|---|---|---|
-| R1 native run at HEAD | **red** (partly) — built and launched from the clean commit `b50b970c3` (r1d, W0b); run context seen through scripted AX only; no pixel capture; no in-window owner readback (compiled/selected/registered/excluded/failed, waiting owners) | conductor: P0-R1 acc. 2 pixels + acc. 4 capture (needs the computer-use gate); acc. 3 in-window readback (UI ticket to file, §10 item 4) | all acceptance |
+| R1 native run at HEAD | **red** (partly) — built and launched from the clean commit `b50b970c3` (r1d, W0b); run context seen through scripted AX only; no pixel capture; no in-window owner readback (compiled/selected/registered/excluded/failed, waiting owners) | conductor: P0-R1 acc. 2 pixels + acc. 4 capture (needs the computer-use gate); acc. 3 in-window readback (code landed W0d, P0-R6 `2ac3c157f` + `c4761bfd0`; needs a runner rebuild and an observation, §10 item 36) | all acceptance |
 | Computer-use channel in the conductor session | **red — carried as the owner's named act** (12 Oct): turn on Computer Use for the conductor session in the Claude desktop app, or grant Screen Recording to the conductor's shell (`screencapture` was refused: "could not create image from display") | owner | every UI acceptance leg; P0-R1 acc. 2–4; R0 re-review |
 | ctrl roster fix installed | **green** (verified above) | — | — |
 | Factory receiving/advancement join | red | Factory owner | Phase 3 only |
@@ -132,8 +144,6 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
 | Ticket | Agent | Zone | Since |
 |---|---|---|---|
 | conductor | claude-code:dlw-conductor | `desktop/cradle/docs/world-shell/wayfinder/` | 2026-10-12 |
-| P0-R6 | builder (Haiku), W0c — **blocked** (`BLOCKED: zone-escape` to `src-tauri/src/native_shell.rs`; nothing written) | `packages/live-shell/ui/src/shell/`, `ui/src/native/application.ts` (types), `ui/tests/` | 2026-10-12 |
-| P0-R5b | builder (Haiku), W0c — **blocked** (blocked-by P0-R6; nothing written) | `packages/live-shell/ui/src/` files named in the ticket, `ui/tests/` | 2026-10-12 |
 
 ## 5. Next claimable
 
@@ -151,26 +161,29 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
    `packages/live-shell/ui/src`, not yet filed, §10 item 4); full-suite
    backing and a fresh candidate profile (§10 items 5–6). **Nothing in
    P0-R1 is claimable now** without the owner act or the new ticket.
-5. **P0-R4** — code legs committed W0c (`7b59fecad`): owner table, named
-   waits, gateway lamp fix, roster attribution. Dispatched by the conductor
-   although Blocked-by P0-R1 held; only the code legs landed. What is left:
-   the native-window walk (blocked-by P0-R1 and the computer-use gate);
-   the owner-side ops (§10 items 29–30); the honesty nit (§10 item 27,
-   claimable as a one-file follow-up in `ui/src/agent/`). Ticket stays open.
-6. **P0-R6** — owner readback in the window. **Blocked**: needs a host field
-   in `native_shell.rs` disclosing the suite product universe (out of the
-   ticket's zone). Owner or conductor go/no-go on the host field (§10 item
-   24). Not claimable until that ruling; then the in-zone UI work is ready
-   (design in the ticket Resolution).
-7. **P0-R5b** — run-context follow-ups and the restored receipt. Blocked-by
-   P0-R6 (status region). Not claimable until P0-R6 lands, or the conductor
-   rules that items (d) and (18) may run first (§10 item 31).
-8. **Claimable now (conductor, docs/evidence zones only):** file the
-   follow-up tickets named in §10 (items 9, 10, 11, 15, 19, 29, 30); the
-   P0-R1 runner fixes in §10 item 15 (P0-R1 evidence zone); a one-file P0-R4
-   honesty follow-up (§10 item 27, `ui/src/agent/AgentShellBrowser.tsx`).
-   No other product-code ticket is claimable: each waits on the R1 gate, a
-   phase gate, the P0-R6 host ruling, or the owner.
+5. **P0-R4** — code legs committed W0c (`7b59fecad`); honesty nit
+   committed W0d (`4a5887376`, §10 item 27 done). What is left: the
+   native-window walk (Blocked-by P0-R1 and the computer-use gate); the
+   owner-side ops (§10 items 29–30). Ticket stays open; nothing in it is
+   claimable by a builder.
+6. **P0-R6** — committed W0d: host field `2ac3c157f`, UI readback
+   `c4761bfd0`. Code legs done; acceptance 5 (pixels, both viewports) and
+   the in-window observation wait on a rebuild (§10 item 36) and the
+   computer-use gate. Not claimable; ticket open for its UI legs only.
+7. **P0-R5b** — committed W0d (`e736ce78c`): (a), (b), (d), (18) with tests.
+   UI legs wait on the computer-use gate (§10 item 40). Not claimable.
+8. **Claimable now (conductor):** the P0-R1 runner rebuild from the clean
+   tree at the W0d record commit, then `readback` (scripted AX) for the
+   run context, `suite_product_ids` and the owner readback text (§10 item
+   36; P0-R1 evidence zone; one cargo build at a time); file the follow-up
+   tickets named in §10 (items 9, 10, 11, 15, 19, 29, 30, 41); the P0-R1
+   runner fixes in §10 item 15 (P0-R1 evidence zone, ahead of the rebuild,
+   since the first readback missed the AX tree in r1d).
+9. **Claimable as a one-file builder ticket once filed:** the
+   `owner-receipt` style rule (§10 item 41) in
+   `packages/live-shell/ui/src/` (reuse RefusalCard's folded-receipt class
+   or add one rule). No other product-code ticket is claimable: each waits
+   on the R1 gate, a phase gate, the computer-use gate, or the owner.
 
 ### Queued by phase (vision tickets, DLW-VISION §5.3)
 
@@ -252,6 +265,7 @@ third rewrite of an invent-the-spec problem.
 | 0 | P0-R1 (committed), P0-R5 (blocked, no code), P0-V2 item 23 (failed twice, uncommitted) (+ baseline tsc repair `24e7d8f7f`) | `24e7d8f7f`, `bfca96176`, `dd0162a6d`; record commit "DLW W0: record" | R0 **FAIL** (12 Oct): §7 stop rule unmet; P0-R1 acc. 1 (dirty-tree revision), 2, 3, 4 unmet; P0-R5 absent; R0 Q1 answered "yes, mistakable" | — (open) |
 | W0b | P0-R5 (A+B) committed; P0-R1 committed (r1d clean-commit build; acc. 2 pixels, 3 in-window, 4 capture unmet); P0-BIMBA-LIVE committed (45/45 confirmed) | `f5adaa2ab` (P0-R5), `b50b970c3` + `e411dc7d7` (P0-R1 runner + r1c/r1d evidence), `dcfb3731c` (P0-BIMBA-LIVE); record commit "DLW W0b: record — PATH and ticket resolutions" | none run (no W0b review verdict); R0 re-review still owed for wave 0 (§7) and needs the computer-use gate | — (open: no review verdict; P0-R1 acceptance incomplete) |
 | W0c | P0-R4 committed (code legs only; native walk and owner ops unmet); P0-R6 blocked (zone-escape: host product universe, no code); P0-R5b blocked (blocked-by P0-R6, no code) | `7b59fecad` (P0-R4); record commit "DLW W0c: record — PATH and ticket resolutions" | none run (no W0c review verdict) | — (open: two tickets blocked; no review verdict) |
+| W0d | P0-R6-host committed; P0-R6-ui committed; P0-R5b committed ((a), (b), (d), (18)); P0-R4-nit committed. All code legs; every UI leg UNVERIFIED (computer-use); no rebuild from these commits | `2ac3c157f` (P0-R6-host), `c4761bfd0` (P0-R6-ui), `e736ce78c` (P0-R5b), `4a5887376` (P0-R4-nit); record commit "DLW W0d: record — PATH and ticket resolutions" | none run (no W0d review verdict) | — (open: no review verdict) |
 
 ## 10. Carries
 
@@ -428,5 +442,88 @@ there are no review carries yet.
     aborts the whole command. Drop it until P0-R6 adds that suite. The
     dispatch also named `docs/world-shell/wayfinder/` at the seat root; the
     path is `desktop/cradle/docs/world-shell/wayfinder/`.
-35. **P0-R5b builder receipt incomplete** — the builder did not read
-    DLW-VISION §0 (only §6). A rerun of P0-R5b reads both.
+35. ~~**P0-R5b builder receipt incomplete**~~ done W0d: the P0-R5b
+    builder read DLW-VISION §0 and §6.
+
+Status of earlier items after W0d: item 4 — code landed (`2ac3c157f`,
+`c4761bfd0`), observation owed (items 36–37). Item 17 (a), (b), (d) done
+(`e736ce78c`); (c) stays as ruled. Item 18 done (`e736ce78c`, folded and
+allowlisted). Item 24 done: ruled option (a), landed `2ac3c157f`. Item 27
+done (`4a5887376`). Item 31 done (ruled: P0-R5b after P0-R6-ui; ran in that
+order). Item 34 done: `tests/owner-readback.test.mjs` exists, so the glob
+now matches.
+
+Registered from the W0d converge returns (12 Oct). No W0d review ran, so
+there are no review carries yet.
+
+36. **Rebuild and observe (conductor, P0-R1 runner)** — nobody has seen
+    `suite_product_ids` or the owner readback in a running native window.
+    Rebuild from the clean tree at the W0d record commit (marker
+    `source_dirty: false`), then `readback` (scripted AX) for the run
+    context and the owner-readback rows. The `prepare()` wiring
+    (`native_shell.rs:223` call, the subset refusal at `:224-230`, the
+    `RUNTIME` slot at `:427`, the config field at `:474`) is checked by
+    code-reading only; the unit tests cover the pure reader, not the Tauri
+    bootstrap. Do item 15 (AX settle) first.
+37. **P0-R6 UI legs (computer-use)** — acceptance 5: both viewports, the
+    status-region look, chip overflow in the status bar.
+38. **P0-R6 absent-vs-unbuilt split is partial** — "absent, not compiled
+    into this build" appears only for a contribution row with
+    `compiled: false` whose owner is outside the universe. A product inside
+    the universe that the backing does not admit reads "excluded by
+    footprint" even when it is not compiled. Ticket acceptance 2 holds for
+    today's footprint; a later host field (compiled per product) would
+    close it.
+39. **needs-owner (P0-R6)** — `live_shell_config` carries no display names
+    for the suite owners, so the readback names each owner by its host
+    product id (central, actuation, ai-kit, software-factory, workcell,
+    quaternal-logic). The names live only in the Rust `OWNERS` table. Owner
+    rules: the host discloses display names (a host field), or the shell
+    keeps ids. The shell does not hard-code them.
+40. **P0-R5b UI legs (computer-use)** — (a) the run-context reading updates
+    live after `readShellConfig(true)` (the re-render is code-reading only;
+    `renderToStaticMarkup` runs no effects); (b) the longer `carrierOf`
+    wording ("Native owner configuration" / "Development native bridge" /
+    the unavailable reason) fits the ModeBrowser World row, the
+    ModeContextDock carrier row and the App transport link, both viewports;
+    (d) "configuration not read" in the window when the read fails; (18)
+    the folded receipt beneath the owner's words in NativeMaterialBrowser.
+41. **Follow-up ticket (to file)** — the restored
+    `<details className="owner-receipt">` (`NativeMaterialBrowser.tsx:132`)
+    has no style rule anywhere in `packages/live-shell/ui/src` or
+    `desktop/cradle/src` (conductor grep at `4a5887376`), so it renders
+    unstyled. Add one rule or reuse RefusalCard's folded-receipt class.
+42. **P0-R5b behaviour change — conductor accepts as the ticket's
+    consequence.** The three carrier readouts (ModeBrowser World row,
+    ModeContextDock carrier row, App transport link) now show `carrierOf`
+    wording where they showed the bare transport kind (`tauri` / `bridge`).
+    The ticket asked for that consolidation. The layout check is item 40
+    (b); if the wording breaks a row, the remedy is WIDGET-GUIDE proposal
+    item 46 (1), not a second reading.
+43. **P0-R4 nit — new unread state.** Before the first
+    `workcell_status_read` returns, and for an unexpected result kind with
+    no error, the Git row reads "Git seat not read" (key `seat-unread`, meta
+    "workcell · unread"); it previously read as refused. Follows the
+    ticket's rule; the label can be renamed (e.g. "reading…") if preferred.
+    Rendered row unverified (computer-use).
+44. **P0-R6-ui extra states** — beyond the ticket's four, the module draws
+    "not disclosed" (a host build that predates `suite_product_ids`;
+    excluded is not claimed without the universe) and pending / unread (the
+    reading before the host answers, and when the read fails). Both tested.
+45. **P0-R6-ui / P0-R5b shared mount** — `RunContextReading` now returns a
+    fragment holding the run-context span and `OwnerReadback`; P0-R5b's
+    subscription landed on top of it (`e736ce78c`). Any later change to the
+    status region starts from that fragment.
+46. **WIDGET-GUIDE §8 proposals (W0d builders; conductor to adopt or
+    decline):** P0-R6-ui — a readback row states its state in plain words
+    and its remedy on the same line ("<owner> · excluded by footprint …
+    Remedy: no remedy named"); the development path draws a stated absence
+    ("No host readback") and no state chips, never an empty table. P0-R5b —
+    (1) a readout row that names a carrier puts a short label in its value
+    and the full carrier wording in its title, so a long label cannot break
+    a narrow row; (2) a refusal surface keeps the owner's words as the
+    visible surface and folds any native receipt beneath them as a named
+    developer view, never as the surface (RefusalCard's pattern).
+    P0-R6-host and P0-R4-nit returned none.
+47. **P0-R4 still open** — native walk per device family (item 25), the
+    owner ops (items 29–30) and items 26, 28, 32, 33 stand unchanged by W0d.

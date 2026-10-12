@@ -1,7 +1,7 @@
 # P0-R4 — Owner bindings in the native run
 
 Label: wayfinder:task (Phase 0)
-Claimed-by: — (released W0c, 12 Oct: code legs committed; native walk and owner ops open)
+Claimed-by: — (released W0d, 12 Oct: code legs and honesty nit committed; native walk and owner ops open)
 Blocked-by: P0-R1
 
 Zones: `packages/live-shell/src/` binding glue and
@@ -73,3 +73,30 @@ design.
 **Carries:** PATH §10 items 25–30, 32, 33 (honesty nit item 27; owner
 tickets item 29; `agent-chain order` owner item 30; WIDGET-GUIDE proposals
 item 33).
+
+### W0d — honesty nit landed, 12 Oct 2026 (ticket stays open)
+
+**Landed `4a5887376`** (zone `ui/src/agent/AgentShellBrowser.tsx` and
+`ui/tests/agent-shell-browser-rows.test.mjs`). PATH §10 item 27.
+`gitRowsFromWorkcell` now returns the refused row (key `seat-unavailable`,
+meta "workcell · refused") only when `seatError` is set
+(`AgentShellBrowser.tsx:115-120`). An answered seat without a
+`workcell_ref` reads as answered (key `seat-no-ref`, label "Git seat
+answered - workcell_status_read disclosed no workcell_ref", meta
+"workcell · no ref", `:122-127`). No reading and no error reads as unread
+(key `seat-unread`, label "Git seat not read", meta "workcell · unread",
+`:130-132`), where it previously read as refused. Three new tests.
+
+**Checks (scripted, converge re-run).** tsc 0 errors; agent suites 89/89
+(86 + 3); `agent-shell-browser-rows` 11/11. Conductor re-run at
+`4a5887376`: lane suites 169/169.
+
+**Unverified (channel `computer-use`).** The rendered Git row in the native
+window.
+
+**Still open (unchanged by W0d).** The native-window walk per device family
+(PATH §10 item 25); native-run admissions (item 26); the owner ops (items
+29–30); items 28, 32, 33.
+
+**Carries:** PATH §10 items 43 (the new unread state; label renamable), 47.
+Item 27 is done. WIDGET-GUIDE: none from this leg.
