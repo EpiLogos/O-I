@@ -48,11 +48,10 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
   `source_dirty: true`); no build or launch from `bfca96176`/`dd0162a6d` or
   later exists yet. `~/Applications/O-I Shell Candidate.app` 0.1.2 (8 Oct)
   and `O-I.app` (legacy cradle, 7 Oct) are evidence of nothing on this lane.
-- **Target pool**: `Work/O-I/target` is a self-referencing symlink (since
-  10 Oct 23:41); every default build through the seat's `target` link fails
-  with "Too many levels of symbolic links". The runner passes an explicit
-  `--target-dir` as a workaround. Repair is the owner's (seat instrument,
-  `Control/user/workcell` target-pool conversion).
+- **Target pool**: `Work/O-I/target` was a self-referencing symlink (10 Oct 23:41 →
+  12 Oct); the conductor replaced it with a real directory 12 Oct 16:13 (the
+  link held no data). The seat's `target` link resolves again; the runner's
+  explicit `--target-dir` is no longer needed.
 - **Evidence logs**: repo `.gitignore` drops `*.log`; evidence commits need
   `git add -f` (`bfca96176` missed them; `dd0162a6d` fixed it).
 - **Native host**: `desktop/cradle/src-tauri` feature `native_shell`
@@ -79,11 +78,7 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
   DLW-PLAN.md's 12 Oct rewrites are committed in `13aaf5360`. Tickets written
   before `13aaf5360` pin PLAN line cites to `0dfa7b5ea`; re-check a cite
   against the committed plan before relying on it.
-- **Uncommitted in the seat (12 Oct, not the record's):** the P0-V2 item-23
-  re-pin diff, six files (EXPRESSIONS-ENCOUNTER-SPINE.md, DLW-PANES-ONTOLOGY.md,
-  DLW-PANES-PER-MODE.md, docs/SHARED-FIELD.md, integration-map.md,
-  appendix-a-expressions-dive.md). Refused twice; one wrong cite remains
-  (§10). Any build run while it stands is a dirty-tree build.
+- **Seat tree**: clean after `2c331a4e7` (P0-V2 item-23 re-pins committed, 12 Oct).
 
 ## 3. Hard gates
 
@@ -103,14 +98,11 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
 |---|---|---|---|
 | conductor | claude-code:dlw-conductor | `desktop/cradle/docs/world-shell/wayfinder/` | 2026-10-12 |
 | P0-R5 | claude-code:dlw-conductor (scope owed) | `packages/live-shell/ui/src/` per the ticket | 2026-10-12 — **blocked**: builder stopped at the 12-file rule; no edits, no commit. Rescope recorded in the ticket's Resolution |
-| P0-V2 (item 23) | claude-code:dlw-conductor | the six item-23 documents (§2) | 2026-10-12 — **failed twice** → Sonnet diagnostic: one-cite conductor glue, then review and commit |
 
 ## 5. Next claimable
 
-1. **P0-V2 (item 23 finish)** — conductor glue: `integration-map.md:182`
-   `DeviceChainPanel.tsx:15` → `components/DeviceChainPanel.tsx:44`; re-open
-   every added cite; commit the six files. Blocked-by: none. Do this first,
-   so the next build is not dirty with docs.
+1. **P0-V2** — resolved 12 Oct (`2c331a4e7`; conductor cite fix after the
+   Sonnet diagnostic).
 2. **P0-R5 (A + B)** — run-context reading in the status region (≈4 files)
    and owner-refusal disclosure (≈3 files), with the grep guard and a new
    suite. Haiku. Blocked-by: none (acceptance blocked-by P0-R1 remainder +
@@ -119,7 +111,7 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
 3. **P0-R1 (remainder)** — rebuild and relaunch from a clean tree at a
    commit holding the repairs and P0-R5 (A); evidence copies of
    composition.json, catalogue.json and `ctrl --version`; quit exit code;
-   window capture. Conductor. Blocked-by: P0-V2 commit and P0-R5 (A) for a
+   window capture. Conductor. Blocked-by: P0-R5 (A) for a
    clean, disclosing build; the computer-use gate (owner act) for acc. 4.
 4. **P0-BIMBA-LIVE** — read the live Bimba map read-only and keep a
    re-runnable receipt for every headline the vision binds. Conductor.
@@ -240,7 +232,7 @@ by the ticket named, or by the owner where marked.
    shows "Base · Central" (`ui/src/inhabitants/sdk/modes.ts:159`,
    `ui/src/shell/modeGrammar.ts:228`); the ruling says "Central". Phase 4,
    unchanged; no R0 pass may treat that title as accepted.
-8. **P0-V2** — fix `integration-map.md:182` (cite `:15` → `:44`), reviewer
+8. ~~**P0-V2** — fix `integration-map.md:182`~~ done (`2c331a4e7`): (cite `:15` → `:44`), reviewer
    pass on the six-file diff, commit; list the re-pins in the Resolution.
    Future docs-builder tickets add an acceptance: every added `path:line` is
    re-opened (`sed -n '<line>p'`) before return; a cite-checker script goes
@@ -253,7 +245,7 @@ by the ticket named, or by the owner where marked.
     `context.tsx:3`) have no host.
 11. **Follow-up ticket (to file)** — P0-R5 (C): raw error strings in 64
     `role="alert"` files become disclosure components.
-12. **Owner** — repair the self-referencing `Work/O-I/target` symlink
-    (§2). The runner's `--target-dir` is a workaround, not the supported path.
+12. ~~Owner — repair the self-referencing `Work/O-I/target` symlink~~ done by
+    the conductor 12 Oct (§2).
 13. **Owner** — the computer-use gate (§3).
 14. **Evidence hygiene** — `git add -f` for `*.log` evidence (§2).

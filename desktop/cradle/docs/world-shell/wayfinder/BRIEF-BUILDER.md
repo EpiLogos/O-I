@@ -84,6 +84,14 @@ the port source path:line>
 macOS has no `timeout`. One cargo build at a time on the machine; if the
 ticket needs cargo, say so and stop instead of building.
 
+## Two rules learned in wave 0
+- Every `path:line` you add or change is re-opened and read before you
+  return. CHECKS pastes one `sed -n '<line>p' <file>` per cite you added (or a
+  script's pass count). A cite you did not re-open is a cite you invented.
+- A build or launch counts only from a committed tree. If your evidence is a
+  build, say so in HANDOFF; the conductor commits, then rebuilds from the
+  commit before anything is called met.
+
 ## Stop and return when
 - the acceptance's code legs are met and the checks are green, or
 - you hit an OPEN-QUESTION (DLW-PLAN §10) or a design gap — return OPEN,

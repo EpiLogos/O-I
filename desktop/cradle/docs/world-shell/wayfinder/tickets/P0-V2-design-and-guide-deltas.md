@@ -118,3 +118,10 @@ counted.
 **Carries** (PATH §10 items 8–10): one-cite glue, reviewer pass, commit, then
 list the re-pins here; re-open-every-cite acceptance for future docs tickets;
 `devices-b2/README.md:40` re-pin; `RightDock` mounted nowhere.
+
+**Resolved 12 Oct 2026** — acceptance 5 met: the six item-23 documents re-pinned
+(`2c331a4e7`; wave W0 builder ×2, then the Sonnet diagnostic's one-cite
+conductor fix `integration-map.md:182` → `components/DeviceChainPanel.tsx:44`).
+Carried: `packages/live-shell/ui/src/panels/devices-b2/README.md:40` still says
+`(right-dock)` while the code registers `slot: 'bottom'`; `RightDock` is mounted
+nowhere (PATH §10).
