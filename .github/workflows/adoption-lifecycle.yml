@@ -49,7 +49,10 @@ jobs:
           from pathlib import Path
           paths = subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')
           prefixes = ('cli/', 'desktop/cradle/src/', 'desktop/cradle/kernel/', 'desktop/cradle/tests/', 'desktop/cradle/walk/', 'packages/', 'suite/', 'shared-field/', 'desktop/documents/', 'docs/', '.wayfinder/', 'skills/', 'scripts/', '.github/workflows/')
-          selected = [p for p in paths if p and (p.startswith(prefixes) or (p.startswith('desktop/cradle/') and p.count('/') == 2)) and '/artifacts/' not in p and Path(p).is_file()]
+          # docs/research holds the reverse-engineering corpus (about 3 GB of
+          # rendered evidence); it is not source of the CLI or the desktop and
+          # gzipping it took the job past its 30-minute bound.
+          selected = [p for p in paths if p and (p.startswith(prefixes) or (p.startswith('desktop/cradle/') and p.count('/') == 2)) and '/artifacts/' not in p and not p.startswith('docs/research/') and Path(p).is_file()]
           assert 'desktop/cradle/src/configuration/PlanDrawer.tsx' in selected
           assert 'cli/src/setup.rs' in selected
           with tarfile.open('/tmp/adoption-evidence/source.tar.gz', 'w:gz') as archive:
