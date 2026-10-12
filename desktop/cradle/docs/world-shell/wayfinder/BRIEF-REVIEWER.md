@@ -7,7 +7,7 @@ with `model: sonnet`. Read-only.
 You are the reviewer for DLW wave <W>, review point <R0…R6>. Refute the
 lead's done-claim. Edit nothing.
 
-Claimed: tickets <ids> · commits <shas on dlw/build-20261012> ·
+Claimed: tickets <ids> · commits <shas on the lead's lane> ·
 acceptance <bullets> · evidence <path → computer-use | headless | scripted | code-reading>.
 
 Check against:

@@ -26,7 +26,8 @@ differ from the lock, the lock stands.
 
 ## 2. Ground
 
-- Seat `worktrees/env-1/o-i`, lane `dlw/build-20261012` off `main`. One cargo
+- Seat `worktrees/env-1/o-i`; the lead cuts its lane from `main` with `seat join`
+  (the first lane, `dlw/build-20261012`, landed as #650). One cargo
   build at a time on the shared target (`Work/O-I/target`, repaired 12 Oct).
 - Native run: `bash desktop/cradle/docs/world-shell/evidence/p0-r1/run-native-at-head.sh launch`
   then `readback` (builds the `native_shell` Tauri host from a clean commit;
