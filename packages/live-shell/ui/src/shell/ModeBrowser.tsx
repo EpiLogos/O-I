@@ -35,6 +35,7 @@ import type {NativeDirectory} from '../../../../../desktop/cradle/src/kernel/typ
 import {listFiles} from '../../../../../desktop/cradle/src/files/client'
 import {browserCategoriesOf, type ModeBrowserCategory, type SurfMode} from './modeGrammar'
 import {useWorkspace} from './workspace'
+import {carrierOf} from './runContext'
 import {Icon} from '../inhabitants/sdk/Icon'
 import {KindMark} from '../inhabitants/sdk/marks.tsx'
 import type {CentralSubjectSelection} from '../inhabitants/CentralSubjectDetail'
@@ -124,10 +125,10 @@ export function ModeBrowser({mode, onSelectSubject, selectedSubject}: {
  * reading's state — never an invented encounter. */
 function ApertureSlot({mode, selectedSubject}: {mode: SurfMode; selectedSubject: CentralSubjectSelection | null}) {
   const {transport} = useWorkspace()
-  const carrier = transport.kind === 'unavailable' ? '—' : transport.kind
+  const carrier = transport.kind === 'unavailable' ? '—' : carrierOf(transport)
   const rows = [
     {name: 'Field', value: mode === 'base' ? 'central' : 'the encounter\'s field', title: 'the field the pane follows'},
-    {name: 'World', value: carrier, title: transport.kind === 'unavailable' ? `the carrier is unavailable: ${transport.reason}` : `the ${carrier} carrier serves this ground`},
+    {name: 'World', value: carrier, title: transport.kind === 'unavailable' ? `the carrier is unavailable: ${transport.reason}` : `${carrier} serves this ground`},
     {name: 'Subject', value: selectedSubject ? selectedSubject.path.split('/').pop() ?? selectedSubject.path : 'not selected', title: selectedSubject ? selectedSubject.path : 'select a subject in the results — the pane follows the encounter'},
     {name: 'Occasion', value: 'the day\'s Now', title: 'the pane follows the day\'s civil Now'},
   ]

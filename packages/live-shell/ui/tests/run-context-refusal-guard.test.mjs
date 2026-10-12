@@ -30,6 +30,13 @@ const read = rel => readFile(new URL(rel, src), 'utf8')
 // The owner-refusal surfaces the ticket names: no JSON dump may remain in them.
 const REFUSAL_SURFACES = ['components/NativeMaterialBrowser.tsx', 'settings/ProductPreferences.tsx']
 
+// The one serialisation a refusal surface may keep: the native-outcome receipt,
+// folded beneath the owner's words as a developer view (PATH §10 item 18, the
+// conductor's ruling 12 Oct: receipts stay intact; the owner's words lead).
+const FOLDED_RECEIPTS = {
+  'components/NativeMaterialBrowser.tsx': 'native-outcome',
+}
+
 // Developer disclosures that may still preformat JSON, with the reason each is
 // not an owner refusal (the rescope in the ticket's Resolution).
 const DEVELOPER_DISCLOSURES = {
@@ -37,19 +44,44 @@ const DEVELOPER_DISCLOSURES = {
   'settings/SettingsWorkspace.tsx': 'developer plan blocks and the acknowledgement of a settings apply (rescope: plan blocks are not refusals; the acknowledgement dump is a carried follow-up)',
   'components/NativeInputRetention.tsx': 'the input gesture receipt of a retained copy (an input record, not an owner refusal)',
   'agent/RefusalCard.tsx': 'the verbatim receipt folded behind a summary, never the surface (the refusal line is the surface)',
+  'components/NativeMaterialBrowser.tsx': 'the native-outcome receipt of a refused material operation, folded beneath the owner\'s words as a developer view (allowlisted by name, PATH §10 item 18)',
 }
 
 // A preformatted block that serialises a value with JSON.stringify or safeJson,
 // including inside a ternary within the block's expression.
 const RAW_DUMP = /<pre[^>]*>[^<]*(?:JSON\.stringify\(|safeJson\()/
 
-test('the named owner-refusal surfaces carry no raw JSON serialisation at all', async () => {
+test('the named owner-refusal surfaces carry no raw JSON serialisation outside their named folded receipt', async () => {
   for (const rel of REFUSAL_SURFACES) {
     const text = await read(rel)
-    assert.doesNotMatch(text, /JSON\.stringify\(/, `${rel} must not serialise JSON into the panel`)
     assert.doesNotMatch(text, /safeJson\(/, `${rel} must not serialise a receipt into the panel`)
     assert.match(text, /import \{ ?OwnerRefusal ?\} from/, `${rel} renders its refusals through OwnerRefusal`)
+    const folded = FOLDED_RECEIPTS[rel]
+    if (!folded) {
+      assert.doesNotMatch(text, /JSON\.stringify\(/, `${rel} must not serialise JSON into the panel`)
+      continue
+    }
+    // The receipt is the only serialisation, and it sits inside its named <details> developer view.
+    const views = text.match(new RegExp(`<details[^>]*data-developer-view="${folded}"[\\s\\S]*?</details>`, 'g')) ?? []
+    assert.equal(views.length, 1, `${rel} folds its ${folded} receipt in exactly one named developer view`)
+    assert.equal((text.match(/JSON\.stringify\(/g) ?? []).length, 1, `${rel} serialises JSON only once, in the folded receipt`)
+    assert.match(views[0], /JSON\.stringify\(/, `${rel}: the serialisation sits inside the folded receipt`)
+    assert.match(views[0], /<summary>Developer view/, `${rel}: the receipt is labelled as a developer view`)
   }
+})
+
+test('the run-context and carrier call sites read the carrier through carrierOf, never a second kind-only reading', async () => {
+  for (const rel of ['shell/ModeBrowser.tsx', 'shell/ModeContextDock.tsx', 'App.tsx']) {
+    const text = await read(rel)
+    assert.match(text, /import \{ ?carrierOf ?\} from/, `${rel} imports the one carrier reader`)
+    assert.doesNotMatch(text, /'—' : (?:workspace\.)?transport\.kind\b/, `${rel} must not show the bare transport kind as the carrier`)
+    assert.doesNotMatch(text, /value: (?:workspace\.)?transport\.kind\b/, `${rel} must not show the bare transport kind as the carrier`)
+  }
+})
+
+test('the run-context reading follows configuration refreshes, not only its first read', async () => {
+  const text = await read('shell/runContext.tsx')
+  assert.match(text, /subscribeShellConfig\(/, 'RunContextReading subscribes to the configuration readings')
 })
 
 test('OwnerRefusal itself renders no preformatted block and no JSON', async () => {

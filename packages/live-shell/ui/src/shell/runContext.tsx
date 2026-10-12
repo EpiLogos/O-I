@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react'
-import {nativeHost, readShellConfig, shellTransport, type ShellConfig} from '../native/application'
+import {nativeHost, readShellConfig, shellTransport, subscribeShellConfig, type ShellConfig} from '../native/application'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {OwnerReadback} from './ownerReadback'
 
@@ -73,24 +73,39 @@ export function carrierOf(transport: KernelTransportStatus): string {
   return transport.reason
 }
 
-/** The status-region reading: reads the host's configuration once and states it,
- * with the owner readback (P0-R6) beside it from the same read. */
+/** The carrier words for a configuration read: the carrier once the configuration
+ * is read, "configuration not read" when the read failed, "not yet read" before it settles. */
+export function carrierForRead(read: {config: ShellConfig | null; error: string | null}): string {
+  if (read.config) return carrierOf(shellTransport(read.config))
+  return read.error ? 'configuration not read' : 'not yet read'
+}
+
+/** The status-region reading: reads the host's configuration and states it, with the
+ * owner readback (P0-R6) beside it from the same read. It follows every settled
+ * refresh of the configuration (readShellConfig(true)), not only its first read. */
 export function RunContextReading() {
   const [read, setRead] = useState<{config: ShellConfig | null; error: string | null}>({config: null, error: null})
   useEffect(() => {
     let live = true
+    let announced = false
+    const off = subscribeShellConfig(outcome => {
+      announced = true
+      if (live) setRead({config: outcome.config, error: outcome.error})
+    })
+    // The first read is also announced when it is the current request; the caller's
+    // own settlement fills in only when no announcement has arrived.
     readShellConfig().then(
-      config => {if (live) setRead({config, error: null})},
-      cause => {if (live) setRead({config: null, error: cause instanceof Error ? cause.message : String(cause)})},
+      config => {if (live && !announced) setRead({config, error: null})},
+      cause => {if (live && !announced) setRead({config: null, error: cause instanceof Error ? cause.message : String(cause)})},
     )
-    return () => {live = false}
+    return () => {live = false; off()}
   }, [])
   const native = nativeHost()
   const reading = runContextOf({
     native,
     config: read.config,
     error: read.error,
-    carrier: read.config ? carrierOf(shellTransport(read.config)) : 'not yet read',
+    carrier: carrierForRead(read),
   })
   return <>
     <span className="statusbar-counts run-context" data-region="run-context" data-run-context={reading.kind}
