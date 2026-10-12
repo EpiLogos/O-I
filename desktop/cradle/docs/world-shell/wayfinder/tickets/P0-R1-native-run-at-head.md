@@ -44,4 +44,44 @@ dev bridge standing in for the host?
 
 ## Resolution
 
-—
+Partly resolved 12 Oct 2026, conductor. **Not accepted** (R0 FAIL, PATH §9).
+
+**Landed.** `bfca96176` — two repairs at their cause, no new module:
+`src-tauri/Cargo.toml`/`Cargo.lock` link `live-dynamics` into the
+`native_shell` feature (`packages/live-shell/src/api.rs` has imported it since
+`425c1bcdf`; before: 8× E0433); `build-native-candidate.py` adds `field` to
+the producer's contribution list, matching the reviewed `generated.ts` (#612),
+with a guard that refuses on drift. Runner and README in `evidence/p0-r1/`.
+`dd0162a6d` — the build, check and launch logs (force-added past `*.log`).
+
+**The command** (also PATH §2), from the seat root:
+`bash desktop/cradle/docs/world-shell/evidence/p0-r1/run-native-at-head.sh all`
+(`P0R1_STAMP=<stamp>` names the run directory; `launch` re-launches).
+
+**Checks (scripted).** `cargo check --features native_shell` exit 0 (conductor
+re-check log in evidence); `package_payload_test.py` 15/15 OK; run `r1a`
+failed at the contribution guard (3 vs 4); run `r1b` every step exit 0,
+codesign verify 0, launch pid 71801, window "O-I Shell Candidate" with the
+new shell in its AX tree; bundled `ctrl --version` → `7a451112a1a4`.
+
+**Acceptance.**
+1. Partly met: command recorded here and in PATH §2. The only build log's
+   revision is `13aaf5360` with the repairs uncommitted (`source_dirty: true`);
+   no build from a commit holding them exists.
+2. Unmet: the window shows no run context (native host, revision); new shell
+   seen only through scripted AX (channel `scripted`, not pixels). Joint with
+   P0-R5 (A).
+3. Unmet in the window: owner readings come from
+   `~/.config/oi-shell-candidate/0-1-2/{composition,catalogue}.json` read by
+   script, not copied into evidence; `live_shell_config` not read. ctrl leg met.
+4. Unmet: no capture. Computer-use absent; `screencapture` refused (no Screen
+   Recording grant).
+
+**Unverified (channel).** Run context and owner readback in the window
+(`computer-use`); quit exit code via the real quit route (`scripted`, not
+captured); full-suite backing (only 0/1/2 run).
+
+**Carries** (PATH §10 items 1, 3–6, 12): clean-tree rebuild at a commit;
+capture; evidence copies + in-window readback with factory/workcell/ql named
+waiting; quit code; out-of-repo inputs and the `client_receipt` re-record;
+fresh candidate profile; owner: `Work/O-I/target` self-symlink.

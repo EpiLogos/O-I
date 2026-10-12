@@ -95,3 +95,26 @@ Rev 5 "Base · Central" lines annotated with the ruling and T-LABELS
 DLW-PANES-ONTOLOGY.md:461-462, DLW-PANES-PER-MODE.md:76-77,
 EXPRESSIONS-ENCOUNTER-SPINE.md:17,74, SF:489-493, APPA's unmerged-lane rows.
 MAP:130's duplicated row is done. Claimable as a docs builder ticket.
+
+**Wave 0, 12 Oct — failed twice, then Sonnet diagnostic (PATH §8).** A docs
+builder wrote dated re-pin notes in all six item-23 documents
+(EXPRESSIONS-ENCOUNTER-SPINE.md, DLW-PANES-ONTOLOGY.md, DLW-PANES-PER-MODE.md,
+docs/SHARED-FIELD.md, docs/research/ableton-live-12.0.25/integration-map.md,
+docs/research/glass-bead-game/appendix-a-expressions-dive.md; +14/−3).
+Refusal 1: a false "absent from modeGrammar.ts" line (fixed). Refusal 2:
+`integration-map.md:182` cites `DeviceChainPanel.tsx:15` (that line is
+`DetailEmptyFrame`); the render is `components/DeviceChainPanel.tsx:44`. Every
+other added cite resolved by code-reading. Diagnosis: serial, non-exhaustive
+review of a cite-heavy deliverable, not a ticket or zone fault.
+
+**Nothing landed from item 23.** The six-file diff sits uncommitted in the
+seat, unreviewed as a whole. Acceptance 5 stays open.
+
+**Unverified (code-reading only):** the hosted maincloud shared field serving
+now; Live transport's read-only status; a trail store behind the "Trail" tile;
+APPA row-level landing via #635/#637; which agent/ tree PLAN's "28 files"
+counted.
+
+**Carries** (PATH §10 items 8–10): one-cite glue, reviewer pass, commit, then
+list the re-pins here; re-open-every-cite acceptance for future docs tickets;
+`devices-b2/README.md:40` re-pin; `RightDock` mounted nowhere.

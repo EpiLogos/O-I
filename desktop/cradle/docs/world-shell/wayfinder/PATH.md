@@ -5,7 +5,8 @@ conductor keeps PATH true; nobody else edits it. Builders never reconstruct
 the plan from chat — if PATH and a ticket disagree, stop and return `OPEN`.
 
 Updated: 2026-10-12, `claude-code:dlw-conductor` (Opus). Vision tickets
-(DLW-VISION §5.3) added to §5, 12 Oct.
+(DLW-VISION §5.3) added to §5, 12 Oct. Wave 0 recorded 12 Oct: R0 returned
+**FAIL**; wave 0 stays open (§7, §9); carries in §10.
 
 ## Roles (owner's model map, 12 Oct 2026)
 
@@ -38,9 +39,22 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
   C1–C3, F1–F4, V1, CE1) stay there; new tickets live in `tickets/` here.
 - **ctrl** installed `7a45111` (11 Oct 16:30) contains the roster fix
   `efef5c3` — the "ctrl binary reinstall" owner act is **done**.
-- **Native app**: none at HEAD. `~/Applications/O-I Shell Candidate.app`
-  is 0.1.2 from 8 Oct (pre agent-shell); `O-I.app` is the legacy cradle
-  (7 Oct). Neither is evidence of anything on this lane.
+- **Native app**: none built from a commit. The one supported command
+  (P0-R1, committed `bfca96176`, logs `dd0162a6d`), run from the seat root:
+  `bash desktop/cradle/docs/world-shell/evidence/p0-r1/run-native-at-head.sh all`
+  (`P0R1_STAMP=<stamp>` names the evidence run directory; `launch` re-launches
+  a built candidate). Its only green run (`run-20261012T-r1b`, 14:37–15:00Z)
+  built from `13aaf5360` **with the repairs uncommitted** (marker
+  `source_dirty: true`); no build or launch from `bfca96176`/`dd0162a6d` or
+  later exists yet. `~/Applications/O-I Shell Candidate.app` 0.1.2 (8 Oct)
+  and `O-I.app` (legacy cradle, 7 Oct) are evidence of nothing on this lane.
+- **Target pool**: `Work/O-I/target` is a self-referencing symlink (since
+  10 Oct 23:41); every default build through the seat's `target` link fails
+  with "Too many levels of symbolic links". The runner passes an explicit
+  `--target-dir` as a workaround. Repair is the owner's (seat instrument,
+  `Control/user/workcell` target-pool conversion).
+- **Evidence logs**: repo `.gitignore` drops `*.log`; evidence commits need
+  `git add -f` (`bfca96176` missed them; `dd0162a6d` fixed it).
 - **Native host**: `desktop/cradle/src-tauri` feature `native_shell`
   (`src/native_shell.rs` includes `packages/live-shell/src/{api,runtime,
   inhabitants}.rs`); producer `packages/live-shell/build-native-candidate.py`
@@ -62,16 +76,21 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
   reverse-engineering basis, ported, not approximated, and its destination is
   Expressions with audio and video track layers on one timeline. No agent
   presents the ruling as open. DLW-VISION.md, the vision tickets and both briefs are committed on the lane (`f591929b2`);
-  P0-V1's remaining work is the plan. DLW-PLAN.md carries the 12 Oct rewrites uncommitted in the seat
-  (+781/−76 against `f591929b2`, 12 Oct); tickets pin PLAN line cites to the committed plan
-  (`0dfa7b5ea`, unchanged through `f591929b2`).
+  DLW-PLAN.md's 12 Oct rewrites are committed in `13aaf5360`. Tickets written
+  before `13aaf5360` pin PLAN line cites to `0dfa7b5ea`; re-check a cite
+  against the committed plan before relying on it.
+- **Uncommitted in the seat (12 Oct, not the record's):** the P0-V2 item-23
+  re-pin diff, six files (EXPRESSIONS-ENCOUNTER-SPINE.md, DLW-PANES-ONTOLOGY.md,
+  DLW-PANES-PER-MODE.md, docs/SHARED-FIELD.md, integration-map.md,
+  appendix-a-expressions-dive.md). Refused twice; one wrong cite remains
+  (§10). Any build run while it stands is a dirty-tree build.
 
 ## 3. Hard gates
 
 | Gate | State | Clears by | Blocks |
 |---|---|---|---|
-| R1 native run at HEAD | **red** | conductor, ticket P0-R1 | all acceptance |
-| Computer-use channel in the conductor session | **red** | owner: turn on Computer Use for this session in the Claude desktop app | every UI acceptance leg; R0 review |
+| R1 native run at HEAD | **red** (partly) — command committed; built and launched only from a dirty tree; no capture, no in-window run context or owner readback | conductor: P0-R1 remainder (§5) after P0-R5 (A) lands | all acceptance |
+| Computer-use channel in the conductor session | **red — carried as the owner's named act** (12 Oct): turn on Computer Use for the conductor session in the Claude desktop app, or grant Screen Recording to the conductor's shell (`screencapture` was refused: "could not create image from display") | owner | every UI acceptance leg; P0-R1 acc. 2–4; R0 re-review |
 | ctrl roster fix installed | **green** (verified above) | — | — |
 | Factory receiving/advancement join | red | Factory owner | Phase 3 only |
 | R2 installed-state rename (ledger item 12) | owner nod | owner | retirement bookkeeping only |
@@ -83,23 +102,31 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
 | Ticket | Agent | Zone | Since |
 |---|---|---|---|
 | conductor | claude-code:dlw-conductor | `desktop/cradle/docs/world-shell/wayfinder/` | 2026-10-12 |
-| P0-R1 | claude-code:dlw-conductor | the ticket's zones (`src-tauri/` host glue, live-shell build scripts, `evidence/p0-r1/`) | 2026-10-12 |
+| P0-R5 | claude-code:dlw-conductor (scope owed) | `packages/live-shell/ui/src/` per the ticket | 2026-10-12 — **blocked**: builder stopped at the 12-file rule; no edits, no commit. Rescope recorded in the ticket's Resolution |
+| P0-V2 (item 23) | claude-code:dlw-conductor | the six item-23 documents (§2) | 2026-10-12 — **failed twice** → Sonnet diagnostic: one-cite conductor glue, then review and commit |
 
 ## 5. Next claimable
 
-1. **P0-R1** — native run path at HEAD. Conductor-led (judgment when the
-   host fails; heavy serial build). Blocked-by: none. Claimed: the ticket names the conductor (12 Oct).
-2. **P0-R5** — run-context disclosure + disclosure components. Haiku,
-   UI-only zone; can build in parallel with R1's compile, accepts in the
-   native app after R1. Blocked-by: none (acceptance blocked-by P0-R1).
-3. **P0-R4** — owner bindings in the native run (roster, gateway, workcell
-   reading, skillsets). Haiku once R1 boots. Blocked-by: P0-R1.
-4. **P0-V2 (remaining: item 23 re-pins)** — dated re-pin notes or
-   corrections in the six stale documents the ticket lists. Haiku, docs
-   zone. Blocked-by: none (P0-V1 resolved 12 Oct). Items 17–22 are done.
-5. **P0-BIMBA-LIVE** — read the live Bimba map read-only and keep a
+1. **P0-V2 (item 23 finish)** — conductor glue: `integration-map.md:182`
+   `DeviceChainPanel.tsx:15` → `components/DeviceChainPanel.tsx:44`; re-open
+   every added cite; commit the six files. Blocked-by: none. Do this first,
+   so the next build is not dirty with docs.
+2. **P0-R5 (A + B)** — run-context reading in the status region (≈4 files)
+   and owner-refusal disclosure (≈3 files), with the grep guard and a new
+   suite. Haiku. Blocked-by: none (acceptance blocked-by P0-R1 remainder +
+   computer-use). (C), the 64-file error-string sweep, becomes a follow-up
+   ticket (not yet filed).
+3. **P0-R1 (remainder)** — rebuild and relaunch from a clean tree at a
+   commit holding the repairs and P0-R5 (A); evidence copies of
+   composition.json, catalogue.json and `ctrl --version`; quit exit code;
+   window capture. Conductor. Blocked-by: P0-V2 commit and P0-R5 (A) for a
+   clean, disclosing build; the computer-use gate (owner act) for acc. 4.
+4. **P0-BIMBA-LIVE** — read the live Bimba map read-only and keep a
    re-runnable receipt for every headline the vision binds. Conductor.
    Blocked-by: none (operational: oi-omarchy reachable).
+5. **P0-R4** — owner bindings in the native run (roster, gateway, workcell
+   reading, skillsets). Haiku. Blocked-by: P0-R1 (R1 gate still red — not
+   claimable yet).
 
 ### Queued by phase (vision tickets, DLW-VISION §5.3)
 
@@ -178,4 +205,55 @@ third rewrite of an invent-the-spec problem.
 
 | Wave | Tickets | Commits | Review | Closed |
 |---|---|---|---|---|
-| 0 | P0-R1, P0-R5 (+ baseline tsc repair `24e7d8f7f`) | `24e7d8f7f` | R0 pending | — |
+| 0 | P0-R1 (committed), P0-R5 (blocked, no code), P0-V2 item 23 (failed twice, uncommitted) (+ baseline tsc repair `24e7d8f7f`) | `24e7d8f7f`, `bfca96176`, `dd0162a6d`; record commit "DLW W0: record" | R0 **FAIL** (12 Oct): §7 stop rule unmet; P0-R1 acc. 1 (dirty-tree revision), 2, 3, 4 unmet; P0-R5 absent; R0 Q1 answered "yes, mistakable" | — (open) |
+
+## 10. Carries
+
+Registered from R0 (12 Oct) and the wave-0 converge returns. Each is owned
+by the ticket named, or by the owner where marked.
+
+1. **P0-R1** — rebuild and relaunch from a clean tree at the commit holding
+   the repairs (`dd0162a6d` or later); record that commit as the source
+   revision. Commit or revert the six P0-V2 docs first.
+2. **P0-R5** — land (A) the run-context reading (native host at revision /
+   fixture harness / development browser) in the status region in every
+   mode and (B) the owner-refusal disclosure component with its grep guard;
+   then observe in the native window. The development-browser path states
+   "no revision" until the `/api/config` producer is traced.
+3. **P0-R1 acc. 4** — capture the window with run context visible
+   (computer-use, or Screen Recording for the conductor shell, then
+   `P0R1_STAMP=<stamp> bash desktop/cradle/docs/world-shell/evidence/p0-r1/run-native-at-head.sh launch`
+   and `screencapture`, labelled `screen-capture (no interaction)`).
+4. **P0-R1 acc. 3** — copy composition.json, catalogue.json and the bundled
+   `ctrl --version` into `evidence/p0-r1/`; show the
+   compiled/selected/registered/excluded/failed readback (`live_shell_config`)
+   in the window, with factory, workcell and ql each named as waiting.
+   Excluded-by-footprint must read differently from absent-because-unbuilt.
+5. **P0-R1** — capture the quit exit code through the real quit route
+   (parent shell waits on the pid); exercise the full-suite backing, not
+   only the footprint default 0/1/2.
+6. **P0-R1 / Phase 5** — bring the runner's out-of-repo inputs (8 Oct
+   package-command notices, Node archives, SDK inventory) in-repo or produce
+   them; replace the `client_receipt` re-record with a check that can fail;
+   launch against a fresh candidate profile, not 0-1-2's 8 Oct `owner_home`.
+7. **T-LABELS** — carried from the window itself: the native app at HEAD
+   shows "Base · Central" (`ui/src/inhabitants/sdk/modes.ts:159`,
+   `ui/src/shell/modeGrammar.ts:228`); the ruling says "Central". Phase 4,
+   unchanged; no R0 pass may treat that title as accepted.
+8. **P0-V2** — fix `integration-map.md:182` (cite `:15` → `:44`), reviewer
+   pass on the six-file diff, commit; list the re-pins in the Resolution.
+   Future docs-builder tickets add an acceptance: every added `path:line` is
+   re-opened (`sed -n '<line>p'`) before return; a cite-checker script goes
+   in the conductor's kit.
+9. **Follow-up ticket (to file)** — `packages/live-shell/ui/src/panels/devices-b2/README.md:40`
+   says "(right-dock)"; the code registers `slot: 'bottom'`
+   (`panels/devices-b2/index.tsx:42`).
+10. **Finding (to file)** — `RightDock` is mounted nowhere, so non-device
+    panels declaring `right-dock` (`inspector.tsx:16`, `clock.tsx:23`,
+    `context.tsx:3`) have no host.
+11. **Follow-up ticket (to file)** — P0-R5 (C): raw error strings in 64
+    `role="alert"` files become disclosure components.
+12. **Owner** — repair the self-referencing `Work/O-I/target` symlink
+    (§2). The runner's `--target-dir` is a workaround, not the supported path.
+13. **Owner** — the computer-use gate (§3).
+14. **Evidence hygiene** — `git add -f` for `*.log` evidence (§2).

@@ -41,4 +41,29 @@ files.
 
 ## Resolution
 
-—
+**Blocked 12 Oct 2026** — no edits, no commit. The builder stopped at this
+ticket's 12-file rule and returned the call sites.
+
+**Discovered (code-reading).** (A) Run context: port
+`src/native/configuration.ts:45-46` and `src/native/application.ts:33-37`;
+the host already emits `source_revision`/`source_tree_sha256` in
+`live_shell_config` (`src-tauri/src/native_shell.rs:429`) but `ShellConfig`
+(`application.ts:14-31`) does not type them. Render in `StatusBar.tsx`
+(mounted at `App.tsx:432`, `:439`); consolidate partial readings at
+`ModeBrowser.tsx:127-130`, `ModeContextDock.tsx:208`, `App.tsx:355-357`.
+(B) Raw JSON `<pre>` dumps: 6 files; owner refusals are `RefusalCard.tsx:99`
+(reuse its `refusalLine`), `NativeMaterialBrowser.tsx:129`,
+`ProductPreferences.tsx:15`. (C) Raw error strings: 64 `role="alert"` files.
+
+**Rescope (conductor, 12 Oct).** This ticket is (A) + (B). The guard forbids
+raw JSON for an owner refusal only, as the acceptance reads; developer
+disclosures (inspector set summary, SettingsWorkspace plan blocks) are not
+refusals. (C) goes to a follow-up ticket (PATH §10 item 11).
+
+**Baseline (scripted).** tsc 0 errors; lane suites 125/125 pass.
+
+**Unverified.** Everything: nothing built. Revision on the development
+browser path (the `/api/config` producer was not traced) — the reading says
+"no revision" there until it is. UI legs need `computer-use` in the native app.
+
+**Carries** (PATH §10 items 2, 11).
