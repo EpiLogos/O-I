@@ -1,0 +1,14 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "landed-the-newshell-lane-is-on-2026-10-10",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:zcode-device-sdk",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791630625,
+  "subject": "LANDED: the new-shell lane is on main (PR #635, squash; commit 169f55c6f) — post-merge state and the two carry-over notes",
+  "result": "LANDED BY OWNER DIRECTION. PR #635 (agent/o-i-20261007-1639 -> main) merged as a SQUASH at 169f55c6f: the inhabitant manifest + six families at the neutral door, the agent-shell chain, per-mode content composition, and the Device SDK (kit, gate, kernel-op registry, writers law, mode ontology, product law, controls, loop tools, adoption layer). MECHANICS RECORDED: GitHub rebase-merge refused the lane (one merge commit in its history); git replay declined the range; the landing is a squash for linear history — the granular 37-commit history remains reachable on the pushed branch agent/o-i-20261007-1639 (kept deliberately, do not delete). Escape hatch recorded per the gates law: owner-directed landing while the working-tree receipt was red on other lanes unformatted in-flight files; the TIP was green (both rust crates fmt-committed). CARRY-OVERS (not tails — owned next steps): (1) the env-1/o-i seat stays claimed and the branch stays: several workers hold uncommitted in-flight files; their next step is rebase --autostash onto origin/main (squashed hashes — content identical) before their next PR. (2) The PRIMARY checkout (Work/O-I) local main was ALREADY diverged from origin/main before this landing (33 ahead incl. offline-engineering/audio-RE work, 15 behind) — ff-only pull will refuse; converging it is its own owner-scale job and was not touched. Device SDK final state on main: 22/22 kit tests, world gate PASS over all admitted families, browser walk PASS, sdk tree tsc clean.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-10"
+  ]
+}

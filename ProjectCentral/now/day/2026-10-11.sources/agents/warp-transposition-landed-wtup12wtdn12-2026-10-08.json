@@ -1,0 +1,16 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "warp-transposition-landed-wtup12wtdn12-2026-10-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "zcode:ableton-render-lane3",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791480034,
+  "subject": "Warp transposition LANDED (WT_UP12/WT_DN12); mod-matrix 8/12 probes BLOCKED on Wavetable silent-render fault",
+  "result": "BATCH 1 DONE: +12/-12 semitone transposition at 1:1 Tones on the sweep — true pitch shift x2.000/x0.500 (duration stays 1:1, +29/+57 ms grain tails), level within 1 dB, discrete products <= -36 dB rel, no Nyquist folding at +12. Dossier: devices/warp-probe.md transposition section; backlog D9 updated; analyzer harness/analyze_warp_transpose.py; warp_edit.py gained a pitch argument. BATCH 2 BLOCKED: WM_S8/S9/S12 (mod-matrix Amp row amount 1.0, velocity staircase) all render DIGITAL SILENCE. Evidence chain: live/WM_S9.als is byte-identical to midi-wm-s9.als which rendered audibly at 13:28; Operator sets render audibly in the same instance; audio-clip sets render audibly; silence survives graceful quit + clean relaunch. Live 12.0.25 mis-instantiates Wavetable from loose hand-built sets since the 17:12 crash + parallel-lane pkill storm. NEXT WINDOW: re-render WT1_AMPVEL.als (known-audible) as discriminator, then the three waiting WM_S*.als (pins already verified in-set). Recorded in devices/mod-matrix.md + backlog D10 row. Live left running with WM_S9 loaded (loose set; standard Dont-Save swap applies).",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-08",
+    "2026-10-09",
+    "2026-10-10"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "expressions-top-bar-live-parameter-channel-2026-10-08",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "claude-code",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791474865,
+  "subject": "Expressions top bar, live parameter channel, pin mode, browser taxonomy study",
+  "result": "Seat env-1/o-i branch agent/o-i-20261007-1639, all UNCOMMITTED. Built: top-bar layout (tool rail, Time Scale, engine light, overflow), frame live channel (live set/hold/release + automation resume; LiveOverrides layer in frameData, no document write), arm+Play take and re-enable button, Pin mode + pinned-controls strip with the owner seed, shape-hold rack macro, particle-size range. Fixed: frame router dropped take/tracks; colorEnabled unset read; formationFromSpec duplicate; compact in-view Scene transport; vortex3d/dispersion3d explicit-0 defaults removed in both engine copies. Verified: UI suite 971 tests / 969 pass (2 known env failures), three typechecks 0, real-frame headless run (streamed Time Scale 0 stops simTime, document identical, 0 announces), stubbed-DOM runs at 700/1920 px. NOT verified: live shell with native stack (down, not restarted), production-engine config path under a live override, take START with chosen properties through the frame, hold on a really automated parameter, the visual effect of the depth-default change. Open decisions: Rounded material has no native datum; bar holds a manual value on automated params while Device panels still offset the lane (takeover law #580); Cymatic grid size taken as cymatics.plateSize; rack still lists all chosen controls. Docs: new-shell/EXPRESSIONS-PORT-STATUS.json (additions, defects), EXPRESSIONS-PORT-PLAN.md closing section, BROWSER-TAXONOMY-DIFFERENTIAL.md + browser-taxonomy-matrix.json.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-08",
+    "2026-10-09",
+    "2026-10-10"
+  ]
+}

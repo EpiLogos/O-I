@@ -1,0 +1,14 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "glass-bead-game-source-study-landed-2026-10-10",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "zcode:glass-bead-game-study",
+  "kind": "note",
+  "recorded_at_unix_seconds": 1791671561,
+  "subject": "Glass Bead Game source study landed at docs/research/glass-bead-game/ — the epilogos/Hesse relation now has a durable anchor",
+  "result": "Commissioned research (2026-10-10) on Hesse's Das Glasperlenspiel as source for the DLW conception of epilogos. Four verified lanes: 01-MECHANICS (the Game as the novel actually gives it — organ of canonical symbols, fugue-development, meditation constitutive after the mnemonist ban, Archive, festival games; corrections: no rules fragment exists, Rufung unattested, I Ching enters via the biography not the Introduction, no game is ever played for Father Jacobus); 02-EVOLUTION-DECAY (decay held inside the evolution: Plinio's retrogression-to-Feuilleton charge, the Circular Letter 'ripe for dismantling', the Board's deafness, the frozen Archive, decay as law not accident, frame written from after the fall ~2400, the Rainmaker/Tito counter-history); 03-LADDER (ladder-of-offices bondage rule, each stage a theme developed and dismissed, Stufen, Wittgenstein-parallel-not-influence, raft/ferry/finger lineage, the resignation, the biography refusing the ending); 04-COMPUTATIONAL-AFTERLIFE (Nelson anchor thinner than folklore, attempts catalog 1975-2026, three collapse modes: game/database/oracle, LLM-as-Magister is the predicted oracle-collapse, Buehler PRefLexOR the one substantive program); 05-DLW-RELATION (INTERPRETATION RETURNED FOR REVIEW, not adopted ground: the suite already rhymes with the Game more than any attempt; three collapse modes as standing design tests; meditation as structural pause; the ladder clause as success criterion — success is players who can leave; decay law as evolution-design with private-game/competition/renunciation clauses). All quotes verified against Winston translation full text via archive.org/details/hesseludi, cited by chapter; UNVERIFIED items marked. Position in research protocol: Discover/Source-lock/Study complete, Interpret returned, Operationalise/Experiment not begun.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-10"
+  ]
+}

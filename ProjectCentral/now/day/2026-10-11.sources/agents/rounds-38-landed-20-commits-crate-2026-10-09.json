@@ -1,0 +1,15 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "rounds-38-landed-20-commits-crate-2026-10-09",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:zcode-live-dynamics",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1791550108,
+  "subject": "Rounds 3-8 landed: 20+ commits — crate gates 13/13, reverb extension (R4 18.7→4.7%), Operator FM wired, wavetable fully closed N=1-8, warp mode-0 separates under tempo mismatch",
+  "result": "Continuous rounds since the last ledger. CLOSED: Wavetable complete (interior law, envelope warp all segments, unison spread/pan/gain N=1-8, VC1≡VC2, stereo layout — dossier rev 4+); Operator (B=PM modulator β law 3-pin, shells C/D + carrier/routed Feedback all sealed nulls, Algorithm null at factory indices); Echo (δ-thr linear, TimeLink semantics, walk-level stereo correction, mod section in-crate); Reverb (comb-probe negative → parametric supported, HF two-component tail + stereo decorrelation WIRED — R4 worst 18.7%→4.7%, R1 0.5%); Warp (modes 0-5 loadable, mode 0 separates under 90/120 tempo mismatch: onset +0.53ms vs mode 5 marker-exact); full golden gate suite 13/13 PASS with archive wiring; D11 + D18-builders closed. 53 lib tests green. Remaining thin: Operator PM/FM sign + off-factory Algorithms, warp mode-0 absolute name (LOM-inferred), D18 session-capture driver, UI-authored set diff for mod labels 8/9/12. Live dialog-free, window FREE. Evidence: every claim in the dossiers carries its render + commit.",
+  "status": "carried",
+  "carried_from_days": [
+    "2026-10-09",
+    "2026-10-10"
+  ]
+}
