@@ -226,3 +226,27 @@ The following are genuinely unresolved. Do not invent them; mark them.
 ## 7. One line
 
 The DLW is the instrument of Epi-Logos — the native game of the system — and the Glass Bead Game is the literary figure that names what a total environment for meaning is. Hesse described it; Live proved the pattern can exist as software; the DLW is the instance aimed at world-content, with the corpus as its esoteric identity and the system as its exoteric, and the day as the session in which the game is played.
+
+---
+
+## Owner ruling — the mode set (12 Oct 2026, after this contemplation)
+
+**Five modes stand: Live stays as the base mode.** The contemplation's
+four-mode table (§4) is read with Live alongside it, not folded away.
+Owner's words: "lets just keep the live mode, it ought be integrated
+cleanly, eventually, into expressions where we've planned to have the video
+and audio track layers together (like a video editor would, like davinci),
+but having the base mode means we can get a clean reverse engineer basis to
+ensure we are porting/using its real deep dynamics as a whole unified
+technology, building from that only gets better".
+
+What this fixes:
+- **Live mode is the reverse-engineering basis.** It holds Live's real deep
+  dynamics as one unified technology (live-set, live-dynamics, live-engine,
+  live-shell), ported, not approximated. Everything else builds from it.
+- **Its destination is Expressions.** Eventually Live integrates cleanly
+  into Expressions, where audio and video track layers live together on one
+  timeline (the video-editor shape, DaVinci-like). Until then Live stays a
+  distinct base mode so the port stays clean and measurable.
+- Mode set for the build: **Live (base) · Central · Factory · Expressions ·
+  Technē**, with Epi-Logos a lens, not a mode (standing ruling D2/A5).
