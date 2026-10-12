@@ -17,7 +17,10 @@ concurrency:
 jobs:
   kernel:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # The whole kernel suite is a debug build plus ~12 minutes of tests on a
+    # warm cache; a cold cache (every cancelled push) crossed the old 15-minute
+    # bound and the job died as "cancelled" with nothing wrong in the tests.
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
         with:
