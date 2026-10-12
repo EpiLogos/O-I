@@ -21,6 +21,10 @@ await server.listen();const browser=await chromium.launch({headless:true,args:['
 const context=await browser.newContext({colorScheme:'light',viewport:{width:900,height:800}});const page=await context.newPage();
 const receipt={...receiptIdentity(import.meta.url),classification:'real components and supplied native kernel; browser rendering, not installed Mac acceptance',checks:[],errors:[],passed:false};
 page.on('pageerror',e=>receipt.errors.push(e.message));
+// A runner-only timeout must say what the page and the owner were doing.
+const trace=[];
+page.on('console',m=>{if(['error','warning'].includes(m.type()))trace.push('console.'+m.type()+' '+m.text().slice(0,300));});
+page.on('response',async r=>{if(r.request().method()==='POST'&&r.url().startsWith(kernelBridge)){try{trace.push('POST '+(r.request().postData()||'').slice(0,140)+' => '+(await r.text()).slice(0,240));}catch{}}});
 await context.addInitScript(bridge=>{
  window.__OI_KERNEL_BRIDGE__=bridge;
  if(!sessionStorage.getItem('visuals-seed')){localStorage.setItem('oi-cradle.visuals.v1',JSON.stringify({enabled:false,welcomeEnabled:false,theme:'system'}));sessionStorage.setItem('visuals-seed','yes');}
@@ -46,8 +50,16 @@ try{
  const first=THEMES[0];const firstCard=library.locator('button').first();
  const swatchRgb=await firstCard.locator('.visuals-theme-swatch').evaluate(el=>el.style.background);
  check(swatchRgb===`rgb(${hexRgb(first.preview.ground)})`,'card preview uses the theme’s own ground, not the house palette');
- await firstCard.click();
- await page.waitForFunction(()=>!!document.body.dataset.oiTheme);
+ // The cards are honestly disabled while the owner is read or written, and a
+ // receipt-driven re-read can begin between the actionability check and the
+ // click on a slow runner; a click that lands on the disabled card is inert.
+ // Re-press until the selection lands, bounded, so the check is about the
+ // selection and not about that instant.
+ for(let attempt=1;;attempt++){
+  await firstCard.click();
+  try{await page.waitForFunction(()=>!!document.body.dataset.oiTheme,null,{timeout:6000});break;}
+  catch(cause){if(attempt>=5)throw cause;}
+ }
  check(await page.evaluate(()=>document.body.dataset.oiTheme)===first.id,'selection lands data-oi-theme');
  check(await page.evaluate(()=>previewTest.visuals.get().themeId)===first.id,'the preference owner holds the named theme');
  check(await page.evaluate(()=>previewTest.visuals.get().theme)===first.appearance,'the resolved theme follows the entry’s appearance');
@@ -104,4 +116,8 @@ try{
  await page.getByRole('button',{name:'Open Expressions',exact:true}).click();check(JSON.stringify(await page.evaluate(()=>hostModeRequests))==='["expressions"]','real supported host mode contract dispatched once');
  await page.screenshot({path:out+'/preferences.png'});await page.evaluate(()=>previewTest.unmount());check(await page.locator('canvas').count()===0,'provider unmount disposes canvas');
  assert.deepEqual(receipt.errors,[]);receipt.passed=true;
+}catch(error){
+ const page_state=await page.evaluate(()=>({visuals:window.previewTest?.visuals.get(),theme:document.body.dataset.oiTheme,alerts:[...document.querySelectorAll('[role=alert],[role=status]')].map(e=>e.textContent.trim().slice(0,200)),cards:[...document.querySelectorAll('.visuals-theme')].slice(0,3).map(b=>({disabled:b.disabled,pressed:b.getAttribute('aria-pressed')}))})).catch(cause=>String(cause));
+ console.error('DIAGNOSTIC',JSON.stringify({page_state,pageErrors:receipt.errors,trace:trace.slice(-30)},null,1));
+ throw error;
 }finally{writeFileSync(out+'/receipt.json',JSON.stringify(receipt,null,2));await browser.close();await server.close();}
