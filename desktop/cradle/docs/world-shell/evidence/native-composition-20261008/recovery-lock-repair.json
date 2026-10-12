@@ -1,0 +1,71 @@
+{
+  "schema": "techne.new-shell.recovery-lock-repair/v1",
+  "state": "native_source_and_runtime_passed_gui_save_paused_for_mode_scope_repair",
+  "fault": "Not saved \u2014 Native recovery lock is unavailable: lock acquisition failed because the operation would block",
+  "before_readonly_timings_ms": {
+    "techne_checkpoint_read": 1181,
+    "expressions_checkpoint_read": 445,
+    "expressions_checkpoint_list": 18793
+  },
+  "lock": "one process-independent root exclusive lock; original three-second acquisition deadline unchanged",
+  "observations": "idle probes found no held intervals or orphaned open holder; observed long readonly inventory decoding can occupy the writer critical section",
+  "repair": "Capture coherent bounded record bytes and sequence under lock; release readonly lock before full existing decode/schema/image/digest/component/identity qualification. Writers retain lock, CAS and atomic fsync/rename acknowledgements. Find reads and qualifies its selected body from the same captured snapshot.",
+  "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/kernel/src/expression_recovery.rs",
+  "source_sha256": "5f38d4a38d5162fb17a14e8d7d83c65ea2bea204c76d5cede42fa082a193976a",
+  "acquisition": "D: bounded native-owner implementation; no third-party source, and no adoption of inspected later shared-fingerprint native revisions",
+  "focused_suite": "9passed/1ignored",
+  "actual_source_test": {
+    "result": "passed",
+    "count": 1,
+    "duration_seconds": 13.84,
+    "checkpoint_sha256": "a1bba69686c2a586ca6c99364e8922a5d29c06b39d92c93ce3ea890c4ee70678",
+    "draft_sha256": "ac3204fcf314e13132e7ac14fa98fc1abf65447c8e64e4b683acfc0d62274355",
+    "scratch_owner_cas_write_completed_before_snapshot_qualification": true,
+    "snapshot_kept_old_revisions_after_new_durable_write": true,
+    "actual_personal_files_unchanged": true
+  },
+  "gui_save_replay": "paused by parent after source-bound mode/scope routing fault; retained frame initially mode=techne may later open authored Chakral under Expressions without frame replacement, while nativeWorkspace pins recovery scope from URL. No Save/pending replay by this child.",
+  "target_126_closure": false,
+  "prior_test_fault": "Missing governed TMPDIR parent caused initial rerun failure before scratch owner construction; empty temporary directory restored and unchanged source rerun passed",
+  "repaired_bridge_sha256": "e2d7360775de3c852470d9a908a5aff563e249be03639348bc03002ad27d56e0",
+  "repaired_native_session": "74970",
+  "fresh_empty_owner_continuation": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/startup-acceptance-repaired.json",
+  "real_inventory_lock_acceptance": {
+    "schema": "techne.new-shell.recovery-inventory-lock-acceptance/v1",
+    "request": "real expressions/checkpoint inventory",
+    "repaired_native_owner": true,
+    "request_result": {
+      "elapsed_ms": 3453,
+      "response_bytes": 7898,
+      "state": "listed",
+      "error": null
+    },
+    "samples": 1215,
+    "probe_interval_ms": 2,
+    "held_intervals": [
+      {
+        "start_ms": 44,
+        "duration_ms": 116
+      }
+    ],
+    "holder_observations_async": [
+      [
+        "p17307",
+        "cwalk-bridge",
+        "f6",
+        "l ",
+        "p21827",
+        "cPython",
+        "f3",
+        "l ",
+        "p28766",
+        "cPython",
+        "f3",
+        "l "
+      ]
+    ],
+    "observer_did_not_wait_for_holder_inventory_during_lock_probing": true
+  },
+  "mode_scope_owner": "parent owns nativeWorkspace/app; expressions_boundary child examining canonical host carrier",
+  "long_lock_observation": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/recovery-lock-observation-repaired.json"
+}

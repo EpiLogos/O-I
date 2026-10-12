@@ -2,7 +2,7 @@
 
 Compiler: lane `zcode:dlw-compile-p1`, 2026-10-10. One line per source: what
 it contributed to the draft. Paths relative to
-`/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/`
+`desktop/cradle/docs/world-shell/`
 unless absolute.
 
 ## Programme register (project root)

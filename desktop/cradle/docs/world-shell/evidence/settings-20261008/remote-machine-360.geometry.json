@@ -1,0 +1,25 @@
+{
+  "editor": {
+    "scrollWidth": 350,
+    "width": 350
+  },
+  "focusedLabel": ":r2:-credential_ref",
+  "navigation": {
+    "scrollWidth": 986,
+    "width": 358
+  },
+  "viewport": {
+    "height": 346,
+    "width": 615
+  },
+  "window": {
+    "bottom": 340.15926456451416,
+    "height": 334.1646728515625,
+    "left": 127.6893081665039,
+    "right": 487.6878128051758,
+    "top": 5.99459171295166,
+    "width": 359.9985046386719,
+    "x": 127.6893081665039,
+    "y": 5.99459171295166
+  }
+}

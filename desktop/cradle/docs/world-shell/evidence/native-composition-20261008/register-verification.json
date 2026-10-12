@@ -1,0 +1,23 @@
+{
+  "schema": "techne.new-shell-register-verification/v1",
+  "result": "passed",
+  "scope": "identity / source revision / target text / dependency / licence / evidence-record integrity only; no target functionality asserted",
+  "total": 126,
+  "by_lane": {
+    "1": 21,
+    "2": 25,
+    "3": 26,
+    "4": 30,
+    "5": 24
+  },
+  "by_status": {
+    "pending": 126
+  },
+  "progress_yes": {
+    "implemented": 0,
+    "exercised": 0,
+    "passed": 0,
+    "failed": 0,
+    "blocked": 0
+  }
+}

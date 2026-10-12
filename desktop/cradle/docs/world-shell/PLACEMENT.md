@@ -2,7 +2,7 @@
 
 Copied 11 October 2026 from the reverse-engineering campaign so the design
 sits in the cradle tree with the app. The campaign copy remains at
-`Work/reverse-engineering/2026-10-07-techne-instrument-re/`.
+`desktop/cradle/docs/world-shell/`.
 
 - **This directory** holds the design pack: `WORLD-SHELL-DESIGN.md`, the
   mockups, `icon-cut.html`, the port and instrumentation contracts, and

@@ -597,7 +597,7 @@ acceptance happens by direct computer use, never from this document.
    F/P column of DLW-PLAN §2).
 3. **Plain instrument names; the M′ address is provenance.** The deep
    instruments are project/graph, canvas, timeline, journey, places, palace
-   (D-F, `Work/reverse-engineering/2026-10-07-techne-instrument-re/PROGRAMME.md:97-108`); an M′ coordinate appears only in a
+   (D-F, `desktop/cradle/docs/world-shell/PROGRAMME.md:97-108`); an M′ coordinate appears only in a
    provenance field, never as the face's name.
 4. **No coined names.** A control, device or act is named by what it does,
    in plain words; origin-return in particular gets no coined UI label.

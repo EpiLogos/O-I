@@ -35,6 +35,16 @@ differ from the lock, the lock stands.
 - Running services that are not the lane's — never stop them: Vite 5176,
   walk-bridge 4179.
 
+**Where things live (12 Oct 2026, one home):** the design pack is
+`desktop/cradle/docs/world-shell/` — PROGRAMME, CONVERGENCE, the design and
+standards, the mockups, the target register (`targets.json` +
+`acceptance.py` + `ACCEPTANCE-CHECKPOINT.md`), `lanes/lane-1…7`,
+`glyph-language/`, `evidence/`, and `wayfinder/` (PATH, the lock, EXECUTE,
+briefs, tickets; `tickets/history/` holds the K1/L1–L9/C/F/V tickets). RE
+campaigns live in `campaign-evidence/`. `Work/reverse-engineering/` keeps
+only build artifacts and raw captures (not in git) — read its
+`MOVED-TO-O-I.md`.
+
 ## 3. Gates
 
 | Gate | State | Clears by |
@@ -103,7 +113,14 @@ claim; #281 M′ music in `Work/Quaternal-Logic` (the shell admits its
 landings); the Archetypal-Earth curation lane; whoever runs Vite 5176 /
 walk-bridge 4179.
 
-## 9. Wave log
+## 9. Carries
+
+- The target register refuses verify: `PROGRAMME.md` was edited (8 Oct) after the
+  register recorded its hash — true before the move too. Re-record the basis
+  (`python3 acceptance.py`) only with a dated note of what changed; the 0/126
+  progress stands either way.
+
+## 10. Wave log
 
 | Wave | Tickets | Commits | Review |
 |---|---|---|---|

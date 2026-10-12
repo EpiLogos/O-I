@@ -1,0 +1,18 @@
+{
+  "preferencesClosed": true,
+  "before": {
+    "phase": "0.17",
+    "rate": "1.2",
+    "selection": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph",
+    "workTitle": "Rich Glyph and native parameter rack · file proof"
+  },
+  "after": {
+    "focusLabel": "Settings",
+    "frameInertAttribute": null,
+    "phase": "0.17",
+    "rate": "1.2",
+    "selection": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a:entity:glyph",
+    "workTitle": "Rich Glyph and native parameter rack · file proof"
+  },
+  "workRetained": false
+}

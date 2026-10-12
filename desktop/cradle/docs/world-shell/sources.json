@@ -1,0 +1,109 @@
+{
+  "schema": "techne.new-shell-source-basis/v1",
+  "sources": [
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/PROGRAMME.md",
+      "sha256": "8afb105aa2659b90d0c827d53e90587f4b295ad829c78f43fff8fa721dd8605c",
+      "bytes": 11654
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/CONVERGENCE.md",
+      "sha256": "d01c755d4e65c17f8eaa63ad7ed435e04f01d57d79350e26a4e638d4c4a18753",
+      "bytes": 9124
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/lanes/lane-7-app-structure/STRUCTURE.md",
+      "sha256": "4a35d9b529877b6e46ada302299393b5c84f7f1d8d37b072388b42e1ce5162cb",
+      "bytes": 33399
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/lanes/lane-1-canvas-graph/TARGET-SET.md",
+      "sha256": "4960817ce7c089a316557d8a8ff75c92f1e7ae6c2183d77438aedf3917e73aa2",
+      "bytes": 24423
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/lanes/lane-1-canvas-graph/RE-TARGETS.md",
+      "sha256": "95c33d42268593f61f105e30694d0ab8573e3adc3e8be063fbe812f0d3de4d25",
+      "bytes": 12147
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/lanes/lane-2-timeline/TARGET-SET.md",
+      "sha256": "57e02c638cf4c5cae2ae249036041baf8673b205be53c42cec7586925854ea45",
+      "bytes": 32161
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/lanes/lane-2-timeline/RE-TARGETS.md",
+      "sha256": "82959f6118cdf07bf1788ab8bb94c0495bccb0b865be42f98c047c31c0ceea90",
+      "bytes": 12426
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/lanes/lane-3-expressions-editor/TARGET-SET.md",
+      "sha256": "714c1402f9bbf205d7f14620af36051fecfe774f49194f850d326a9da2e66d55",
+      "bytes": 47051
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/lanes/lane-3-expressions-editor/RE-TARGETS.md",
+      "sha256": "1ee3b2d0526a19bc1930b42822e3338bc0f9076a087566579f809f46e6ee993d",
+      "bytes": 8191
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/lanes/lane-4-world-places/TARGET-SET.md",
+      "sha256": "ad3f6425c6fef711a550d2e57d2a3894313673dd9187b43af6aff0101e790e25",
+      "bytes": 23201
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/lanes/lane-4-world-places/RE-TARGETS.md",
+      "sha256": "5aafc9ae5c21e2c52de627f2f927cf2013482032b04011dda564088c6afb9b9f",
+      "bytes": 10611
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/lanes/lane-5-journey-palace/TARGET-SET.md",
+      "sha256": "b9e2f560e9bae343d1e0c9cb6e96b33b8cfe037d4ca4e258c8941e5526b8f1eb",
+      "bytes": 41833
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/lanes/lane-5-journey-palace/RE-TARGETS.md",
+      "sha256": "23ff9876dc003d8aca3f4021817136bf7496e31ff70f05328249d729c2b06e8d",
+      "bytes": 12090
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-obsidian-re/contracts/a1-save-handling.contract.md",
+      "sha256": "421dcab29b7a231b090ccdf6e6ab7f65279e247ce0c40ca3a915dfcf09dc24e1",
+      "bytes": 4278
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-obsidian-re/recreation-backlog.md",
+      "sha256": "5f0478aebabdbcfe383bb5bb0daf8c6e92008d8c1970109a789be0a2fa3ec5d0",
+      "bytes": 7433
+    }
+  ],
+  "revision_history": [
+    {
+      "previous": {
+        "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/docs/world-shell/PROGRAMME.md",
+        "sha256": "9f6ae346bd4ee6dc33054ca62c1f8660ea4890135fda5c9e3d7fa869562fd5ac",
+        "bytes": 11721
+      },
+      "reconciled_at": "2026-10-08T06:26:25.621009+00:00",
+      "reason": "Initial register catalog retained older PROGRAMME pin; full current PROGRAMME re-read matches already-operative editor source basis8afb105a. Owner WorkOrder0 amendment remains explicit conversation authority."
+    },
+    {
+      "previous": {
+        "path": "/Users/admin/Central/Work/O-I/campaign-evidence/2026-10-07-obsidian-re/contracts/a1-save-handling.contract.md",
+        "sha256": "421dcab29b7a231b090ccdf6e6ab7f65279e247ce0c40ca3a915dfcf09dc24e1",
+        "bytes": 4278
+      },
+      "reconciled_at": "2026-10-08T06:27:28.446534+00:00",
+      "reason": "Owner-authorized Obsidian campaign relocation; exact source bytes unchanged."
+    },
+    {
+      "previous": {
+        "path": "/Users/admin/Central/Work/O-I/campaign-evidence/2026-10-07-obsidian-re/recreation-backlog.md",
+        "sha256": "5f0478aebabdbcfe383bb5bb0daf8c6e92008d8c1970109a789be0a2fa3ec5d0",
+        "bytes": 7433
+      },
+      "reconciled_at": "2026-10-08T06:27:28.446534+00:00",
+      "reason": "Owner-authorized Obsidian campaign relocation; exact source bytes unchanged."
+    }
+  ]
+}

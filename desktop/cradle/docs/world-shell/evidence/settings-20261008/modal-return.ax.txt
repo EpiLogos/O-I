@@ -1,0 +1,14 @@
+Browser tab: 3, Title: "O:I · Preferences window development", URL: "http://127.0.0.1:5176/app/src/settings/window-preview.html?settings-scenario=ready".
+1 AXWebArea O:I · Preferences window development, URL: 127.0.0.1:5176/app/src/settings/window-preview.html?settings-scenario=ready
+	2 container
+		3 heading Preferences window · development check, Value: 2
+			4 text Preferences window · development check
+		5 text This route mounts the actual 
+		6 text world.settings
+		7 text  contribution. The labelled scenario supplies non-secret specimens; no native writes occur. Conversation draft
+		8 text field (settable) Description: Conversation draft, Value: Window return must retain this draft.
+		9 text Selection: specimen agent · project settings-specimen
+		10 button Open Preferences
+		11 button Configure this agent’s capabilities…
+
+The focused UI element is 11 button Configure this agent’s capabilities…

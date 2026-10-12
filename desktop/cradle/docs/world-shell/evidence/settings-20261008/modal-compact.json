@@ -1,0 +1,19 @@
+{
+  "dialogRect": {
+    "bottom": 426.69771671295166,
+    "height": 420.703125,
+    "left": 5.99459171295166,
+    "right": 609.3900384902954,
+    "top": 5.99459171295166,
+    "width": 603.3954467773438,
+    "x": 5.99459171295166,
+    "y": 5.99459171295166
+  },
+  "frameInert": true,
+  "hasInvalidLabel": false,
+  "pageWidth": 615,
+  "viewport": {
+    "height": 432,
+    "width": 615
+  }
+}

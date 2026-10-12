@@ -11,7 +11,7 @@ not started).
 (the Expressions top-bar/family work stands on lane `agent/o-i-20261007-1639`,
 unmerged on 10 Oct; re-pinned 12 Oct 2026: that lane is history, not an ancestor of `origin/main`, and its content reached `main` via #635 and #637 per PATH §2, row level not re-verified — `ProjectCentral/now/day/2026-10-09.md:223,236`), the retained
 application at `Work/O-I/desktop/cradle/expressions-app/`, design intent at
-`Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/`, the
+`desktop/cradle/docs/world-shell/`, the
 clean-room Live engine at `Work/O-I/packages/live-engine|live-dynamics/`,
 material at `Work/O-I/desktop/cradle/material/expressive-material/`.
 

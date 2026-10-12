@@ -1,0 +1,2304 @@
+{
+  "schema": "techne.expressions-ui-action-inventory/v1",
+  "standing": "derived source coverage; no behavioral or migration acceptance",
+  "recorded_at": "2026-10-08T00:54:17.174460+00:00",
+  "source_sha256": "39805c54322b8744a2cd45db7b56339ac4e8ea4e754cb60fd07e53c06796208d",
+  "router_actions": [
+    {
+      "action": "record-properties",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 476,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "take-mode",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 477,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "delete-property-track",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 478,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "preview-tracks",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 479,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "studio",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 480,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "close-studio",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 481,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "dock-studio",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 482,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "automation-play",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 483,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "automation-pause",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 484,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "automation-loop",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 485,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "studio-section",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 486,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "quick-guide",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 487,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "sequence-panel",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 488,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "save-scene",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 489,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "save-next",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 489,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "restore-scene",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 490,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "toolbelt",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 491,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "browse-controls",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 492,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "close-belt-picker",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 493,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "confirm-belt-add",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 494,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "pointer-options",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 495,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "close-context",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 496,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "place-formation",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 497,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "choose-sequence-entity",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 498,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "pin-entity",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 499,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "belt-remove",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 500,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "belt-up",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 501,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "belt-down",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 501,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "belt-scope",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 502,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "import-favourites",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 503,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-palette",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 505,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-paper-harmonize",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 506,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-paper-invert",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 507,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-paper",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 508,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-palette-invert",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 509,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-palette-random",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 510,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-glyph",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 511,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-chain",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 515,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-kundalini-sequence",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 516,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-layout",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 517,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-disperse",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 518,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-reset-phases",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 519,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-reset",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 520,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-recover",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 521,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "delete-saved",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 522,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "edit",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 524,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "close-inspector",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 525,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "tab",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 526,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "objects",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 527,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "tool-select",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 528,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "tool-interact",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 528,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "tool-pin",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 528,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "tool-formation",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 528,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "tool-text",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 528,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "tool-orbit",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 528,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "view-2d",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 529,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "view-3d",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 530,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "guides",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 531,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "grid",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 532,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "snap",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 533,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "face-plane",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 534,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "keep-view",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 535,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "restore-view",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 536,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "scene-body-image",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 541,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "scene-body-text",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 541,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "scene-body-clear",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 554,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "scene-trigger-add",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 560,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "scene-trigger-remove",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 569,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "fit-view",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 575,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "timeline",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 576,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "open-timeline",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 577,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "close-timeline",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 578,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "previous",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 579,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "next",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 579,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "choose-scene",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 580,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "toggle-play",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 581,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "play-journey",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 582,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "present",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 583,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "exit-present",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 584,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "library",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 585,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "preset-browser",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 585,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "keep",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 585,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "deep-verso",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 586,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "blueprint",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 587,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-save",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 588,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-resolve",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 589,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-retry-open",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 590,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-retry-file",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 591,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-page",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 592,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-save-file",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 593,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-open-file",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 594,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "research-preview",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 595,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "native-library",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 596,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "lens",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 597,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "deep-home",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 598,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "deep-lived",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 599,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "capture-options",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 600,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "about",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 600,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "close-library",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 601,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "library-section",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 602,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "modes",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 603,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "start-mode",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 604,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "open-featured",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 605,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "fork-saved",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 606,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "close-dialog",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 607,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "confirm",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 608,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "load-built-in",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 609,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "add-built-in",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 610,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "import-legacy",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 611,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "load-saved",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 612,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "new-journey",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 613,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "entry-new",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 614,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "entry-continue",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 615,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "entry-open",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 616,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "entry-open-native",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 617,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "entry-starter-mark",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 618,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "entry-dismiss",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 619,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "new-scene",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 620,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "duplicate-scene",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 621,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "delete-scene",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 622,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "move-scene-left",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 623,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "move-scene-right",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 624,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "journey-settings",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 625,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "material",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 626,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "select-entity",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 627,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "select-all",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 628,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "repeat-pins",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 629,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "choose-shape",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 630,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "set-glyph",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 631,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "force-kind",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 632,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "semantic-add-modulation",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 633,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "semantic-remove-modulation",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 634,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "duplicate-entity",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 635,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "delete-entity",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 635,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "arrange",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 636,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "chakra-add",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 637,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "add-palette",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 638,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "remove-palette",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 639,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "fold-state",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 640,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "confirm-fold",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 641,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "image-suite",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 642,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "source-sequence",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 643,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "source-new",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 644,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "source-add",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 645,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "source-image",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 646,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "layer-add",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 647,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "layer-remove",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 648,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "layer-move",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 649,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "select-text",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 650,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "move-text",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 651,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "add-text",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 652,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "delete-text",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 653,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "entity-sequence",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 654,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "motion-tab",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 655,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "select-step",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 656,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "add-step",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 657,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "add-ascii-step",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 658,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "add-image-step",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 659,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "delete-step",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 660,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "capture-step-state",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 661,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "release-step-state",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 662,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "refit-sequence",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 663,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "font-family",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 664,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "place-keyframe",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 670,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "clear-keyframe",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 671,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "cancel-placement",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 672,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "route-up",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 673,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "route-down",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 673,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "show-monitor",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 674,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "monitor-mode",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 675,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "monitor-dock",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 676,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "monitor-add-glyph",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 677,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "edit-monitored",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 678,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "toggle-monitored",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 679,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "choose-group-target",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 680,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "close-assignment",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 681,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "confirm-group-target",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 682,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "assign-automation",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 683,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "delete-group",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 684,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "remove-group-target",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 685,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "detach-target",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 686,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "edit-morph",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 687,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "automate",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 688,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "add-lane",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 688,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "delete-lane",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 689,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "fire-lane",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 690,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "reveal-param",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 691,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "toggle-global",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 692,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "favourite",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 693,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "take-manual",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 694,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "tune-station",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 695,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "lane-up",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 696,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "lane-down",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 696,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "step-earlier",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 697,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "step-later",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 697,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "duplicate-step",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 698,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "undo",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 699,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "redo",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 700,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "save-browser",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 701,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "export-json",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 702,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "export-native",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 703,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "export-artifact",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 704,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "import",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 705,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "capture-image",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 706,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "record-video",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 707,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "stop-record",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 708,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    },
+    {
+      "action": "save-video",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 709,
+      "external_migration": "unaccepted",
+      "executed_evidence": []
+    }
+  ],
+  "literal_controls": [
+    {
+      "action": "native-recover",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 90
+    },
+    {
+      "action": "preview-tracks",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 213
+    },
+    {
+      "action": "delete-property-track",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 213
+    },
+    {
+      "action": "studio-section",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 222
+    },
+    {
+      "action": "tab",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 223
+    },
+    {
+      "action": "choose-scene",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 227
+    },
+    {
+      "action": "save-next",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 227
+    },
+    {
+      "action": "save-scene",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 227
+    },
+    {
+      "action": "save-next",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 227
+    },
+    {
+      "action": "restore-scene",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 227
+    },
+    {
+      "action": "choose-shape",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 228
+    },
+    {
+      "action": "cancel-placement",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 229
+    },
+    {
+      "action": "repeat-pins",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 229
+    },
+    {
+      "action": "close-context",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 233
+    },
+    {
+      "action": "studio-section",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 238
+    },
+    {
+      "action": "grid",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 242
+    },
+    {
+      "action": "snap",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 242
+    },
+    {
+      "action": "view-2d",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 242
+    },
+    {
+      "action": "view-3d",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 242
+    },
+    {
+      "action": "undo",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 243
+    },
+    {
+      "action": "redo",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 243
+    },
+    {
+      "action": "research-preview",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 248
+    },
+    {
+      "action": "modes",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 252
+    },
+    {
+      "action": "capture-options",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 253
+    },
+    {
+      "action": "close-dialog",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 371
+    },
+    {
+      "action": "close-dialog",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 459
+    },
+    {
+      "action": "confirm",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 459
+    },
+    {
+      "action": "save-video",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 468
+    },
+    {
+      "action": "close-dialog",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 468
+    },
+    {
+      "action": "confirm-fold",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 640
+    },
+    {
+      "action": "automate",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 713
+    },
+    {
+      "action": "choose-group-target",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 713
+    },
+    {
+      "action": "add-lane",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 713
+    },
+    {
+      "action": "modes",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 713
+    },
+    {
+      "action": "modes",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 713
+    },
+    {
+      "action": "capture-options",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 713
+    },
+    {
+      "action": "capture-options",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 713
+    },
+    {
+      "action": "studio-section",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 969
+    },
+    {
+      "action": "native-resolve",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 1200
+    },
+    {
+      "action": "native-retry-file",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 1200
+    },
+    {
+      "action": "native-retry-open",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 1200
+    },
+    {
+      "action": "native-page",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 1200
+    },
+    {
+      "action": "native-page",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "line": 1200
+    },
+    {
+      "action": "automation-play",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationEditor.ts",
+      "line": 8
+    },
+    {
+      "action": "automation-pause",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationEditor.ts",
+      "line": 8
+    },
+    {
+      "action": "automation-loop",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationEditor.ts",
+      "line": 8
+    },
+    {
+      "action": "add-lane",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationEditor.ts",
+      "line": 8
+    },
+    {
+      "action": "close-assignment",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationEditor.ts",
+      "line": 9
+    },
+    {
+      "action": "confirm-group-target",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationEditor.ts",
+      "line": 9
+    },
+    {
+      "action": "assign-automation",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationEditor.ts",
+      "line": 9
+    },
+    {
+      "action": "toggle-monitored",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationMonitor.ts",
+      "line": 7
+    },
+    {
+      "action": "fire-lane",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationMonitor.ts",
+      "line": 7
+    },
+    {
+      "action": "edit-monitored",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationMonitor.ts",
+      "line": 7
+    },
+    {
+      "action": "choose-group-target",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationMonitor.ts",
+      "line": 7
+    },
+    {
+      "action": "toggle-monitored",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationMonitor.ts",
+      "line": 14
+    },
+    {
+      "action": "fire-lane",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationMonitor.ts",
+      "line": 14
+    },
+    {
+      "action": "take-manual",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationMonitor.ts",
+      "line": 14
+    },
+    {
+      "action": "monitor-formation",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationMonitor.ts",
+      "line": 16
+    },
+    {
+      "action": "sequence-mode",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationMonitor.ts",
+      "line": 16
+    },
+    {
+      "action": "monitor-add-glyph",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationMonitor.ts",
+      "line": 16
+    },
+    {
+      "action": "monitor-mode",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationMonitor.ts",
+      "line": 18
+    },
+    {
+      "action": "monitor-dock",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/automationMonitor.ts",
+      "line": 18
+    },
+    {
+      "action": "close-belt-picker",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/beltPicker.ts",
+      "line": 7
+    },
+    {
+      "action": "close-belt-picker",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/beltPicker.ts",
+      "line": 7
+    },
+    {
+      "action": "confirm-belt-add",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/beltPicker.ts",
+      "line": 7
+    },
+    {
+      "action": "entry-new",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/entryGate.ts",
+      "line": 17
+    },
+    {
+      "action": "entry-continue",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/entryGate.ts",
+      "line": 18
+    },
+    {
+      "action": "entry-open",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/entryGate.ts",
+      "line": 19
+    },
+    {
+      "action": "entry-open-native",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/entryGate.ts",
+      "line": 20
+    },
+    {
+      "action": "entry-starter-mark",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/entryGate.ts",
+      "line": 25
+    },
+    {
+      "action": "entry-dismiss",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/entryGate.ts",
+      "line": 26
+    },
+    {
+      "action": "library-section",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/expressions.ts",
+      "line": 96
+    },
+    {
+      "action": "library-section",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/expressions.ts",
+      "line": 96
+    },
+    {
+      "action": "load-saved",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/expressions.ts",
+      "line": 120
+    },
+    {
+      "action": "start-mode",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/expressions.ts",
+      "line": 120
+    },
+    {
+      "action": "source-new",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/imageSuite.ts",
+      "line": 7
+    },
+    {
+      "action": "source-entity",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/imageSuite.ts",
+      "line": 9
+    },
+    {
+      "action": "source-step",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/imageSuite.ts",
+      "line": 9
+    },
+    {
+      "action": "source-new",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/imageSuite.ts",
+      "line": 9
+    },
+    {
+      "action": "source-add",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/imageSuite.ts",
+      "line": 9
+    },
+    {
+      "action": "source-kind",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/imageSuite.ts",
+      "line": 9
+    },
+    {
+      "action": "source-image",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/imageSuite.ts",
+      "line": 11
+    },
+    {
+      "action": "source-sequence",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/imageSuite.ts",
+      "line": 11
+    },
+    {
+      "action": "automate",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 31
+    },
+    {
+      "action": "take-manual",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 32
+    },
+    {
+      "action": "toggle-global",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 34
+    },
+    {
+      "action": "favourite",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 34
+    },
+    {
+      "action": "pin-entity",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 38
+    },
+    {
+      "action": "font-family",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 48
+    },
+    {
+      "action": "select-text",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 96
+    },
+    {
+      "action": "reveal-param",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 113
+    },
+    {
+      "action": "material",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 114
+    },
+    {
+      "action": "tune-station",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 128
+    },
+    {
+      "action": "select-entity",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 140
+    },
+    {
+      "action": "arrange",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 144
+    },
+    {
+      "action": "semantic-remove-modulation",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 157
+    },
+    {
+      "action": "semantic-add-modulation",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 171
+    },
+    {
+      "action": "force-kind",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 186
+    },
+    {
+      "action": "motion-tab",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 193
+    },
+    {
+      "action": "choose-sequence-entity",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 195
+    },
+    {
+      "action": "sequence-entity",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 199
+    },
+    {
+      "action": "sequence-mode",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 200
+    },
+    {
+      "action": "select-step",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 209
+    },
+    {
+      "action": "add-step",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 209
+    },
+    {
+      "action": "route-up",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 229
+    },
+    {
+      "action": "route-down",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts",
+      "line": 229
+    },
+    {
+      "action": "library-section",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/libraryScopes.ts",
+      "line": 41
+    },
+    {
+      "action": "close-library",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/libraryScopes.ts",
+      "line": 132
+    },
+    {
+      "action": "sequence-entity",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 13
+    },
+    {
+      "action": "select-step",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 15
+    },
+    {
+      "action": "add-step",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 15
+    },
+    {
+      "action": "add-step",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 16
+    },
+    {
+      "action": "add-ascii-step",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 16
+    },
+    {
+      "action": "add-image-step",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 16
+    },
+    {
+      "action": "entity-sequence",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 17
+    },
+    {
+      "action": "native-glyph",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 18
+    },
+    {
+      "action": "step-earlier",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 18
+    },
+    {
+      "action": "step-later",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 18
+    },
+    {
+      "action": "duplicate-step",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 18
+    },
+    {
+      "action": "delete-step",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 18
+    },
+    {
+      "action": "entity-sequence",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 18
+    },
+    {
+      "action": "place-formation",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 18
+    },
+    {
+      "action": "image-suite",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 19
+    },
+    {
+      "action": "fold-state",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 19
+    },
+    {
+      "action": "sequence-mode",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 19
+    },
+    {
+      "action": "place-formation",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 19
+    },
+    {
+      "action": "layer-move",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 23
+    },
+    {
+      "action": "layer-move",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 23
+    },
+    {
+      "action": "layer-remove",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 23
+    },
+    {
+      "action": "layer-add",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 24
+    },
+    {
+      "action": "layer-add",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 24
+    },
+    {
+      "action": "layer-add",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 24
+    },
+    {
+      "action": "belt-up",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 36
+    },
+    {
+      "action": "belt-down",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 36
+    },
+    {
+      "action": "belt-scope",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 36
+    },
+    {
+      "action": "belt-remove",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 36
+    },
+    {
+      "action": "import-favourites",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/liveWorkspace.ts",
+      "line": 38
+    },
+    {
+      "action": "native-palette",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeCatalogueUI.ts",
+      "line": 4
+    },
+    {
+      "action": "native-palette-random",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeCatalogueUI.ts",
+      "line": 4
+    },
+    {
+      "action": "native-palette-invert",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeCatalogueUI.ts",
+      "line": 4
+    },
+    {
+      "action": "native-paper",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeCatalogueUI.ts",
+      "line": 4
+    },
+    {
+      "action": "native-paper-harmonize",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeCatalogueUI.ts",
+      "line": 4
+    },
+    {
+      "action": "native-paper-invert",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeCatalogueUI.ts",
+      "line": 4
+    },
+    {
+      "action": "native-glyph",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeCatalogueUI.ts",
+      "line": 5
+    },
+    {
+      "action": "native-kundalini-sequence",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeCatalogueUI.ts",
+      "line": 6
+    },
+    {
+      "action": "native-chain",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeCatalogueUI.ts",
+      "line": 6
+    },
+    {
+      "action": "native-disperse",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeCatalogueUI.ts",
+      "line": 7
+    },
+    {
+      "action": "native-reset",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeCatalogueUI.ts",
+      "line": 7
+    },
+    {
+      "action": "native-layout",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/parityUI.ts",
+      "line": 13
+    },
+    {
+      "action": "source-kind",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/parityUI.ts",
+      "line": 34
+    },
+    {
+      "action": "studio-section",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/parityUI.ts",
+      "line": 69
+    },
+    {
+      "action": "native-reset-phases",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/parityUI.ts",
+      "line": 73
+    },
+    {
+      "action": "native-reset-phases",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/parityUI.ts",
+      "line": 74
+    },
+    {
+      "action": "native-glyph",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/parityUI.ts",
+      "line": 93
+    },
+    {
+      "action": "native-glyph",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/parityUI.ts",
+      "line": 94
+    },
+    {
+      "action": "quick-guide",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/shell.ts",
+      "line": 11
+    },
+    {
+      "action": "toolbelt",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/shell.ts",
+      "line": 13
+    },
+    {
+      "action": "snap",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/shell.ts",
+      "line": 13
+    },
+    {
+      "action": "face-plane",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/shell.ts",
+      "line": 13
+    },
+    {
+      "action": "studio-section",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/shell.ts",
+      "line": 17
+    },
+    {
+      "action": "sequence-panel",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/shell.ts",
+      "line": 20
+    },
+    {
+      "action": "toolbelt",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/shell.ts",
+      "line": 21
+    },
+    {
+      "action": "timeline",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/shell.ts",
+      "line": 23
+    },
+    {
+      "action": "open-timeline",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/shell.ts",
+      "line": 23
+    },
+    {
+      "action": "exit-present",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/shell.ts",
+      "line": 24
+    },
+    {
+      "action": "close-dialog",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/shell.ts",
+      "line": 30
+    },
+    {
+      "action": "about",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/shell.ts",
+      "line": 30
+    },
+    {
+      "action": "close-dialog",
+      "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/shell.ts",
+      "line": 30
+    }
+  ],
+  "limits": [
+    "Only literal cases of the app action router and literal data-action HTML attributes are indexed.",
+    "Separate React callbacks, keyboard/pointer handling, native surface operations and generated action names require their feature-family replay.",
+    "The inventory does not prove native capability, interaction or external placement."
+  ]
+}

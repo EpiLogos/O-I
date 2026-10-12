@@ -1,0 +1,51 @@
+{
+  "schema": "techne.new-shell.native-recovery-route-checkpoint/v1",
+  "result": "passed",
+  "owner": "root owns app recovery and GUI replay; target_acceptance audits actual source with disposable owner",
+  "personal_owner_writes": 0,
+  "gui_save_claimed": false,
+  "target_set_completion_claimed": false,
+  "root_files_changed_by_child": false,
+  "artifacts": [
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/RECOVERY-ROUTING-AUDIT.md",
+      "sha256": "f589838ad840b83c3479cbf4463303faf82f7d4f669ed9c3f3640c7003553f0d",
+      "bytes": 5950
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/recovery-route-native-acceptance.mjs",
+      "sha256": "b15e41ce3ec278a70b55571a632fd68128781e33dbd8120bfe7824154ce03019",
+      "bytes": 15499
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/recovery-route-ts-hook.mjs",
+      "sha256": "f0f8c906ca2deee59d8933f71df8dc1c0fca7398ddd58aa1c46e999ad1470801",
+      "bytes": 1222
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/recovery-route-ts-register.mjs",
+      "sha256": "ffc2b4e6d9da0cde900be8793f1a0868703d87ceda653af2b730e573eeb63a32",
+      "bytes": 97
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/recovery-route-native-acceptance.json",
+      "sha256": "d4377f4d12df8d4317e350dc7c8ebd82beb3dc532826da862b39787b2ac059b3",
+      "bytes": 5623
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/recovery-route-native-acceptance-initial.json",
+      "sha256": "bec30855b34bd151e1ecd2eefce830aba596ec4cf75852f521ec2503a92a0a04",
+      "bytes": 2310
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/recovery-route-harness-first-failure.stderr",
+      "sha256": "edba0cb3f62755634a5ce242220c9fb59db6bd24013e0d61d325b6eb2017ace1",
+      "bytes": 741
+    },
+    {
+      "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/chakral-pre-edit-basis.json",
+      "sha256": "2707c6bdcf5d1df41f7dd1b374d433c38d33a9baa10cc891cee51974adf159c6",
+      "bytes": 985
+    }
+  ]
+}

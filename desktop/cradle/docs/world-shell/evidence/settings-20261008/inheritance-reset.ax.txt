@@ -1,0 +1,151 @@
+Browser tab: 4, Title: "O:I · Settings development", URL: "http://127.0.0.1:5176/app/src/settings/preview.html".
+1 AXWebArea O:I · Settings development, URL: 127.0.0.1:5176/app/src/settings/preview.html
+	2 container root
+		3 text Settings contribution · development only
+		4 container
+			5 text Scenario 
+			6 pop up button (collapsed, settable) Description: Development scenario, Value: ready, Secondary Actions: Expand
+				7 menu
+					8 (selected) ready
+					9 loading
+					10 inherited
+					11 overridden
+					12 dirty
+					13 invalid
+					14 immediate
+					15 restart
+					16 pending
+					17 acknowledged
+					18 refused
+					19 failed
+					20 conflict
+					21 absent-product
+					22 unavailable-connection
+		23 button Show retained work
+		24 container Settings
+			25 container
+				26 heading Preferences, Value: 1
+					27 text Preferences
+				28 search text field (settable) Search settings
+				29 text ⌘ F
+				30 button ← Agent setup
+					31 text ← 
+					32 text Agent setup
+			33 container
+				34 text Development scenario  ·  ready · AIKit and Factory native schema specimens  · simulated responses, no native writes
+			35 container Settings categories
+				36 text PREFERENCES
+				37 button Harnesses & models
+				38 button Skills & methods
+				39 button Profiles
+				40 button Permissions
+				41 button Credentials
+				42 button Search & telemetry
+				43 button Appearance & interaction
+				44 text Development specimen
+			45 container
+				114 text Development reset response. No native override was removed.
+				46 heading Skills & methods, Value: 2
+					47 text Skills & methods
+				48 text Capabilities and skill sets composed into a working context. Applies to
+				49 pop up button (collapsed, settable) Description: Capability toggles scope, Value: project, Secondary Actions: Expand
+					50 menu
+						51 This machine
+						52 (selected) project
+						53 agent-session
+				103 combo box (settable) Description: Capability toggles scope subject, Value: settings-specimen
+				104 button Read scope
+				56 text project · settings-specimen
+				57 container ai-kit resolution
+					58 heading Working practices AIKit, Value: 3
+						59 text Working practices AIKit
+					60 container Default skill-sets
+						61 heading Default skill-sets, Value: 3
+							62 text Default skill-sets
+						63 text Inherited / resolved by owner
+						105 text  · This machine
+						65 text field (settable) Description: Default skill-sets, item 1, Value: specimen-skill-set
+						66 button Remove Default skill-sets item 1
+						67 button + Add item
+						68 button (collapsed) Details, Secondary Actions: Expand
+							69 text Details
+				70 container ai-kit skills
+					71 heading Available capabilities AIKit, Value: 3
+						72 text Available capabilities AIKit
+					73 container Capability toggles
+						74 heading Capability toggles, Value: 3
+							75 text Capability toggles
+						76 text Inherited / resolved by owner
+						106 container Capability toggles
+							107 text Capability Enabled
+							108 text field (settable) Description: Capability toggles, row 1, capability, Value: specimen-capability
+							109 container
+								110 checkbox (settable, integer) Description: Capability toggles, row 1, enabled, Value: 1
+								111 text On
+							112 button Remove Capability toggles row 1
+							113 button + Add entry
+						115 container
+							116 button (expanded) Details, Secondary Actions: Collapse
+								117 text Details
+							118 text The scope's declared capability enable/disable deltas, as an object mapping capability id to boolean. Applied through AIKit's native toggle pipeline, which re-materialises the scope's generation. Applies to
+							119 pop up button (collapsed, settable) Description: Capability toggles scope, Value: project, Secondary Actions: Expand
+								120 menu
+									121 This machine
+									122 (selected) project
+									123 agent-session
+							124 combo box (settable) Description: Capability toggles scope subject, Value: settings-specimen
+							125 button Read scope
+							126 button Restore inheritance / default…
+							127 definition list
+								128 container Native identity
+									129 text Native identity
+								130 text ai-kit:skills:skills.capabilities
+								131 container Owner / location
+									132 text Owner / location
+								133 container
+									134 text ai-kit  ·  aikit:scope:toggles
+								135 container Configured preference
+									136 text Configured preference
+								137 text No desired preference reported
+								138 container Declared override
+									139 text Declared override
+								140 text Not reported
+								141 container Effective resolution
+									142 text Effective resolution
+								143 container
+									144 text specimen-capability: On  ·  owner_ref: development-specimen · path: specimen://inherited-native-source
+								145 container Observed runtime
+									146 text Observed runtime
+								147 text specimen-capability: On
+								148 container Native staged change
+									149 text Native staged change
+								150 text Not reported
+								151 container Proposed override
+									152 text Proposed override
+								153 text No local draft
+								154 container Applies
+									155 text Applies
+								156 text The next compose resolves the new capability horizon; sessions already running keep the horizon they were launched with.
+								157 container Native default
+									158 text Native default
+								159 text Computed by owner
+								160 container Reconciliation
+									161 text Reconciliation
+								162 container
+									163 text satisfied  ·
+								164 container Reading basis
+									165 text Reading basis
+								166 text specimen-reading-3
+				167 container Native application result
+					168 heading Simulated result · applied, Value: 3
+						169 text Simulated  result ·  applied
+					170 container
+						171 text ai-kit:skills:skills.capabilities :  applied
+					172 button Close result
+					173 button (collapsed) Acknowledgement, Secondary Actions: Expand
+						174 text Acknowledgement
+			89 container
+				90 button (collapsed) ⓘ Info, Secondary Actions: Expand
+				91 text No pending changes
+
+The focused UI element is 167 container Native application result

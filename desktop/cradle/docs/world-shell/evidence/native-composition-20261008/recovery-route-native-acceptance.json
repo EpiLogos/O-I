@@ -1,0 +1,117 @@
+{
+  "schema": "techne.new-shell.native-recovery-route-acceptance/v1",
+  "grade": "B",
+  "result": "passed",
+  "claim": "actual app/host/native-owner routing; not GUI Save or craft acceptance",
+  "sources": [
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeRecovery.ts",
+      "sha256": "0df0e3f352a6ace59abae877b807823c397fb5d6f207c3e5d12f1132a3e0f2a4"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/recovery.ts",
+      "sha256": "795450748c29f8c02af72c01047162c51a985266a09e374e481a8642f76a1c41"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorkspace.ts",
+      "sha256": "d760efdd965d645fd07e91262ba9a453a1c0d8b2aa2e88b81247ff73305f4487"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "sha256": "3e5fd7e53d4f72a9eaef935c113e558b03b36de10b0bae5072a68cf56f702da1"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts",
+      "sha256": "c6521e8a31e9a37168c260379f125ea9d3f7956ee2fda04fef3454d2f14d3124"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/kernelExpressions.ts",
+      "sha256": "00c86ac06519d2faf7054e36ef14601d6d083d9cfdd71b151b1aac94652d90f0"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge.ts",
+      "sha256": "916d892d0f84b0247db814e13e139eed19e0770348b811c24cf5878a93dee52b"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/kernelComposition.ts",
+      "sha256": "24e1818ad0840eec1bff3631295a690db9fa40ebdce5e8439631f31b172f3b46"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/model.ts",
+      "sha256": "65b6a99df7896d563baaef5cd0edbe5ffe1c505626a2d75d77096c4981ef3205"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeSelectionQueue.ts",
+      "sha256": "b87de53a4d3128f410c0c0dfe6147c8675cb816b75083fafb16e11076320024d"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeOpenIntent.ts",
+      "sha256": "7811b86922e753d659bf0cb8853190ce78cb323a6d3767e375b6a82e9689e01b"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeFollow.ts",
+      "sha256": "2c67a6552a5f33f82c70c3c2635dcf88877caf3e8d01d6d0edc6ecf6cd587be5"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/worldChannel.ts",
+      "sha256": "4152aee975fe97641fb9937b681988a4ae29a2b19d4f5a5fc051d6dfb179905f"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/host.ts",
+      "sha256": "43766ebfa242ff670756748e7d0fed9be677351df2e949c2f290c6d4abeea5cf"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/recoveryBinding.ts",
+      "sha256": "10d48ebf9ef0c72f150bd8e95ad5232dc3abdbe0bba664e2134a1c0116aa9185"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/protocol.ts",
+      "sha256": "3c2dcde07c98ca0b991ee8315a0d254a153b31d4d238e9e7b5876cecdb766656"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/expressions/recoveryTypes.ts",
+      "sha256": "969b40eef59ba33c8db94014a7cb11fb93afecabeee5606d8746b7fd24b03086"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/kernel/bridge.ts",
+      "sha256": "973cc2a15e16e73855299b510d495924719b329bc553854e07dc9120c94fa504"
+    }
+  ],
+  "kernel_binary": "/Users/admin/Central/Work/O-I/target/debug/walk-bridge",
+  "kernel_sha256": "e2d7360775de3c852470d9a908a5aff563e249be03639348bc03002ad27d56e0",
+  "config_sha256": "91a7b5ce362f129adafab3d5c1da1d9e18c2d2872018daee08a635a9e5a1f8d6",
+  "personal_owner_requests": 2,
+  "personal_owner_writes": 0,
+  "retained_frame_url_unchanged": true,
+  "current_recovery_scope": "expressions",
+  "existing_central_pending_preserved": true,
+  "pending_replayed": false,
+  "generic_find_calls": 0,
+  "same_ref_alternative_scope_refused": true,
+  "draft_rebinding_refused": true,
+  "old_draft_writes_remained_techne": true,
+  "genuine_competing_owner_cas_refused": true,
+  "newer_read_did_not_accept_basis": true,
+  "conflict_did_not_overwrite": true,
+  "late_old_checkpoint_writes": [
+    {
+      "operation": "write",
+      "scope": "expressions",
+      "kind": "checkpoint",
+      "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1"
+    },
+    {
+      "operation": "write",
+      "scope": "expressions",
+      "kind": "checkpoint",
+      "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1"
+    }
+  ],
+  "late_effect_adopted_into_new_work": false,
+  "actual_native_focus_acknowledged_revision": 5,
+  "scratch_host_write_requests": 5,
+  "scratch_direct_seed_writes": 3,
+  "scratch_competing_writer_writes": 1,
+  "semantic_effects_confined_to_disposable_native_owner": true,
+  "disposable_home_deleted": true
+}

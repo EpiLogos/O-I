@@ -1,0 +1,240 @@
+{
+  "schema": "techne.new-shell.native-recovery-proof/v1",
+  "updated_at": "2026-10-07T16:36:19.819584+00:00",
+  "candidate": {
+    "seat": "/Users/admin/Central/worktrees/env-1/o-i",
+    "head": "214df508973b49b88b59465e2b47e98cd5919f59",
+    "branch": "agent/o-i-20261007-1639",
+    "modified_file": "desktop/cradle/kernel/src/expression_recovery.rs",
+    "source_sha256": {
+      "desktop/cradle/kernel/src/expression_recovery.rs": "caa81b31d189d9456cad4d2808c427d6fdd0c76234c690bc70741fff585d18c3",
+      "desktop/cradle/kernel/src/expression_file.rs": "a5fa660e31fdee0c7d6f90a80b0a59db473e31e10fadee037bae5283b99e3454",
+      "desktop/cradle/kernel/src/expression.rs": "20430211cd59c99ba607cb69cdbc95b56f363ae79950fb529a929891c74b28f0",
+      "desktop/cradle/kernel/src/lib.rs": "add3218f9a15fa2c33f270a53359c4c1035ef527c64c59eabeb253d76e103172",
+      "desktop/cradle/kernel/src/bin/walk-bridge.rs": "ea7749d7d74d693f4e041e3ab1b514e1c1ac9f3a3567acbefc819e950cc277de",
+      "desktop/cradle/kernel/Cargo.toml": "0b7fcc0bb08159e6c71683a7a0dea8fb9c152bc3dfcd3a6735af8bfa6a55b697",
+      "desktop/cradle/kernel/Cargo.lock": "9510124c4a840a879c9d20287dcc22293f98fad6439ce97e2b204652d88d3d2d"
+    }
+  },
+  "original_fault": {
+    "bridge": "http://127.0.0.1:4180",
+    "operation": "expression_recovery.find_checkpoint",
+    "scope": "expressions",
+    "expression_ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+    "error": "Invalid native recovery entry: unknown field `record`, expected one of `schema`, `scope`, `kind`, `id`, `revision`, `value` at line 1 column 54",
+    "cause": "The legacy-only reader could not read an existing native oi.expression-recovery-storage/v1 lossless image envelope in an unrelated retained draft."
+  },
+  "acquisition": {
+    "order": "B: existing O-I native implementation",
+    "classification": "adopt",
+    "source_revision": "5c1c9e4347fe731c903fb54dc37e1a83bf96854c",
+    "source_file": "desktop/cradle/kernel/src/expression_recovery.rs",
+    "source_sha256": "f06971b994049b0bdf4205829a56e1e912510f0d8ab0c9532de151afa4e30c4b",
+    "basis": "Owner commissioned existing native package integration. No step-C external reference code is imported. Current opt-in bridge diagnostic tracing is retained; existing expression_file intern/expand helpers are reused."
+  },
+  "retained_sources": [
+    {
+      "purpose": "canonical authored checkpoint",
+      "path": "/Users/admin/.oi/desktop/expression-recovery/expressions/142f8848e52fcf545281202458f7ed579519e0c997f1fee7b7c1e29f3942cc65.json",
+      "sha256": "723a7401565a5f508ffbafc84f136f2ba31c4b041e701030895a5fd441b89d0c",
+      "scope": "expressions",
+      "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+      "storage_revision": 1715,
+      "document_revision": 4,
+      "title": "Chakral Body — 7 Subtle Centers Constellation"
+    },
+    {
+      "purpose": "existing retained lossless image envelope",
+      "path": "/Users/admin/.oi/desktop/expression-recovery/expressions/9f6b3594dceb72ca52b3cafe52e617249eec92bbf53550048992e822401b7cc1.json",
+      "sha256": "ac3204fcf314e13132e7ac14fa98fc1abf65447c8e64e4b683acfc0d62274355",
+      "scope": "expressions",
+      "id": "expression:epi-25ae8154-f1c4-4895-ab67-3cb922f7e3d8",
+      "storage_revision": 2074,
+      "schema": "oi.expression-recovery-storage/v1"
+    }
+  ],
+  "verification": [
+    {
+      "id": "focused-recovery-native-storage",
+      "status": "passed",
+      "command": "CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/Users/admin/Central/Work/O-I/target cargo test --lib expression_recovery::tests -- --test-threads=2",
+      "cwd": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/kernel",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 1,
+      "note": "The ignored actual-retained proof is exercised separately."
+    },
+    {
+      "id": "actual-retained-native-owner-and-journal",
+      "status": "passed",
+      "test": "expression_recovery::tests::actual_retained_work_reopens_losslessly_with_owner_and_revision_evidence",
+      "invocation": "cargo test --lib <test> -- --ignored --exact --nocapture with OI_RECOVERY_REAL_CHECKPOINT, OI_RECOVERY_REAL_DRAFT and their _SHA256 variables set to retained_sources above",
+      "passed": 1,
+      "failed": 0,
+      "evidence": [
+        "Source hashes asserted before access",
+        "Retained canonical Document validated and opened by native Expression owner with the same reference/revision acknowledgement",
+        "Identical owner continuation returns no new change receipt",
+        "Native private journal write acknowledged as written; new owner read and addressed lookup preserve all fields",
+        "Stale revision write refuses and preserves accepted bytes",
+        "Actual retained image dictionary decode/re-encode preserves all data",
+        "Wrong expanded hash, missing image and duplicate schema refuse",
+        "Actual personal source bytes remain identical after the test"
+      ],
+      "scratch_home": "/Users/admin/Central/Work/O-I/ProjectCentral/now/tmp/sol-saved-work",
+      "initial_test_fault": "First run incorrectly expected journal success state ready. Native owner correctly returned written; the assertion was corrected and the real-data run passed."
+    }
+  ],
+  "bridge_runtime": {
+    "status": "passed",
+    "build": "CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/Users/admin/Central/Work/O-I/target cargo build --bin walk-bridge",
+    "restart_owner": "parent session2877, existing4180 only",
+    "build_status": "passed",
+    "build_seconds": 195,
+    "binary_path": "/Users/admin/Central/Work/O-I/target/debug/walk-bridge",
+    "binary_sha256": "ee9b18e5e6f3f4f4391de0def3ecaa2b3d59b07a3d0276e4c3a303c7b74fa55a",
+    "binary_bytes": 76427296,
+    "address": "http://127.0.0.1:4180",
+    "session_id": 57919,
+    "process_bound_to_candidate": true,
+    "transport": "Raw numeric JSON tokens preserved in private Document routing; bodies are not saved in the campaign proof.",
+    "initial_openings_with_startup_race": [
+      {
+        "scope": "expressions",
+        "expression_ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+        "source_path": "/Users/admin/.oi/desktop/expression-recovery/expressions/142f8848e52fcf545281202458f7ed579519e0c997f1fee7b7c1e29f3942cc65.json",
+        "source_sha256_before": "723a7401565a5f508ffbafc84f136f2ba31c4b041e701030895a5fd441b89d0c",
+        "lookup_ok": false,
+        "lookup_error": "Several native working drafts address this Expression; choose a draft explicitly",
+        "checkpoint_id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+        "storage_revision": 1715,
+        "recovery_schema": "oi.native-working/v1",
+        "pending_preserved_not_replayed": false,
+        "owner_open_state": "ready",
+        "expected_document_revision": 4,
+        "expected_document_sha256": "e5a10a6cddb1f888f25a4eedf89130d3fe960e18f9897d0afd6206a30566c9b9",
+        "receipts": [
+          {
+            "actor": "agent-session:sol-new-shell",
+            "event": "expression_changed",
+            "expression_ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+            "revision": 4,
+            "schema": "oi.kernel-event/v1",
+            "seq": 3,
+            "version": 1
+          }
+        ],
+        "document_revision": 4,
+        "document_sha256": "e5a10a6cddb1f888f25a4eedf89130d3fe960e18f9897d0afd6206a30566c9b9",
+        "exact_retained_document": true,
+        "title": "Chakral Body — 7 Subtle Centers Constellation",
+        "scene_count": 1,
+        "entity_count": 8,
+        "fresh_native_inspect_equal": true,
+        "identical_open_receipts": [],
+        "source_sha256_after": "723a7401565a5f508ffbafc84f136f2ba31c4b041e701030895a5fd441b89d0c",
+        "personal_checkpoint_unchanged": true
+      },
+      {
+        "scope": "techne",
+        "expression_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+        "source_path": "/Users/admin/.oi/desktop/expression-recovery/techne/e45b1af62898ff4ae983c368013cc2797aba3e84b826fdb39fcb8c558a17b633.json",
+        "source_sha256_before": "555c23c4cb305dfeaaa5038edeb5c425cbef19c15f59b67ab17024d9917afb4e",
+        "lookup_ok": true,
+        "lookup_state": "ready",
+        "checkpoint_id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+        "storage_revision": 797,
+        "recovery_schema": "oi.native-working/v1",
+        "pending_preserved_not_replayed": true,
+        "owner_open_state": "revision_conflict",
+        "expected_document_revision": 173,
+        "expected_document_sha256": "36e6d44d201ad4da69d0bbb3e21a4260813801c2c5cccd4c62a977ec4bd0c76b",
+        "receipts": [],
+        "owner_conflict": {
+          "current_revision": 1,
+          "detail": "An open draft is never replaced implicitly",
+          "expression_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+          "state": "revision_conflict"
+        },
+        "source_sha256_after": "555c23c4cb305dfeaaa5038edeb5c425cbef19c15f59b67ab17024d9917afb4e",
+        "personal_checkpoint_unchanged": true
+      }
+    ],
+    "startup_race_resolution": "Parent removed fallback native Wiki ensure and gated retained mount until genuine native inventory exists. Restarted only our candidate bridge; opened exact retained Central before reconnecting UI. No Restore, SaveAs, Close or CAS override was executed.",
+    "openings": [
+      {
+        "scope": "techne",
+        "expression_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+        "source_path": "/Users/admin/.oi/desktop/expression-recovery/techne/e45b1af62898ff4ae983c368013cc2797aba3e84b826fdb39fcb8c558a17b633.json",
+        "source_sha256_before": "555c23c4cb305dfeaaa5038edeb5c425cbef19c15f59b67ab17024d9917afb4e",
+        "checkpoint_id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+        "storage_revision": 797,
+        "pending_preserved_not_replayed": true,
+        "owner_open_state": "ready",
+        "expected_document_revision": 173,
+        "expected_document_sha256": "36e6d44d201ad4da69d0bbb3e21a4260813801c2c5cccd4c62a977ec4bd0c76b",
+        "receipts": [
+          {
+            "actor": "agent-session:sol-new-shell",
+            "event": "expression_changed",
+            "expression_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+            "revision": 173,
+            "schema": "oi.kernel-event/v1",
+            "seq": 1,
+            "version": 1
+          }
+        ],
+        "document_revision": 173,
+        "document_sha256": "36e6d44d201ad4da69d0bbb3e21a4260813801c2c5cccd4c62a977ec4bd0c76b",
+        "exact_retained_document": true,
+        "title": "Central — wiki local whole",
+        "scene_count": 15,
+        "entity_count": 30,
+        "fresh_native_inspect_equal": true,
+        "identical_open_receipts": [],
+        "source_sha256_after": "555c23c4cb305dfeaaa5038edeb5c425cbef19c15f59b67ab17024d9917afb4e",
+        "personal_checkpoint_unchanged": true
+      },
+      {
+        "scope": "expressions",
+        "expression_ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+        "source_path": "/Users/admin/.oi/desktop/expression-recovery/expressions/142f8848e52fcf545281202458f7ed579519e0c997f1fee7b7c1e29f3942cc65.json",
+        "source_sha256_before": "723a7401565a5f508ffbafc84f136f2ba31c4b041e701030895a5fd441b89d0c",
+        "checkpoint_id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+        "storage_revision": 1715,
+        "pending_preserved_not_replayed": false,
+        "owner_open_state": "ready",
+        "expected_document_revision": 4,
+        "expected_document_sha256": "e5a10a6cddb1f888f25a4eedf89130d3fe960e18f9897d0afd6206a30566c9b9",
+        "receipts": [
+          {
+            "actor": "agent-session:sol-new-shell",
+            "event": "expression_changed",
+            "expression_ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+            "revision": 4,
+            "schema": "oi.kernel-event/v1",
+            "seq": 2,
+            "version": 1
+          }
+        ],
+        "document_revision": 4,
+        "document_sha256": "e5a10a6cddb1f888f25a4eedf89130d3fe960e18f9897d0afd6206a30566c9b9",
+        "exact_retained_document": true,
+        "title": "Chakral Body — 7 Subtle Centers Constellation",
+        "scene_count": 1,
+        "entity_count": 8,
+        "fresh_native_inspect_equal": true,
+        "identical_open_receipts": [],
+        "source_sha256_after": "723a7401565a5f508ffbafc84f136f2ba31c4b041e701030895a5fd441b89d0c",
+        "personal_checkpoint_unchanged": true
+      }
+    ]
+  },
+  "limits": [
+    "Private recovery journal acknowledgement is not an ordinary file Save receipt. No file Save or UI acceptance is claimed by this repair.",
+    "Recovery never replays pending work automatically.",
+    "Historical duplicate checkpoint identities are preserved; generic lookup may correctly require explicit canonical id selection.",
+    "No 126-target implementation or pass status is advanced solely by this native repair.",
+    "Fresh bridge startup has an empty in-memory Expression inventory. Delivery launcher/boundary must reopen configured canonical recovery ids through the ordinary recovery read and Expression Open before mounting; current runtime preload is executed evidence, not a permanent startup implementation."
+  ]
+}

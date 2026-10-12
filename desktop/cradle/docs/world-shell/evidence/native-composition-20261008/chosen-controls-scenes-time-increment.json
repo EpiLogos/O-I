@@ -1,0 +1,199 @@
+{
+  "schema": "techne.new-shell.chosen-controls-scenes-time-increment/v1",
+  "observed_at": "2026-10-08T04:40:05.360830+00:00",
+  "source_basis": [
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/package.json",
+      "sha256": "524dc89d75d1fa653183ccdc4103403884cd95a9b0511ee7209ca30e30a9512d",
+      "byte_len": 989,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/scenes.ts",
+      "sha256": "92211f2ae149030cfc947f90a5695998a03ebd70af6661e4d4933bca8c1619a6",
+      "byte_len": 10552,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/editor.ts",
+      "sha256": "f39de9a6f652a88413d5cab08b5b839115366c3f1834a4e2f21dba7cda4165dd",
+      "byte_len": 5819,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/editorHost.ts",
+      "sha256": "da5dc51af14b8d675946c2fed883cfa710efd225c8480df97019b6254a99ebfd",
+      "byte_len": 12294,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/tests/scenes-native-acceptance.mjs",
+      "sha256": "5e639d934e01fd5312e8999b96eda55690aa57161e2bf75a8f159809594c2e08",
+      "byte_len": 19434,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/tests/run-native-scenes.mjs",
+      "sha256": "2ded2b06c19bf7bfbf58edec2a4e5068cc3e16fc299d40bc97e56d146c543801",
+      "byte_len": 1779,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/sceneTransport.ts",
+      "sha256": "9063974585f2123e620bf4ed9d7166bf8ed8d44270d8c1f11133aba0964f2238",
+      "byte_len": 3545,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "sha256": "5ff9380804d48c6f2400e9eb5bf1a7cc03acda5998efb296b19ec25f6c7607eb",
+      "byte_len": 207771,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/hostEditor.ts",
+      "sha256": "ddb52f69f43ce972d05160bafe90d7bcee5b45d965cdc7bdf433d9f1457820e0",
+      "byte_len": 25166,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/techne/session.ts",
+      "sha256": "61059039eba652e829c8c075420e2252d8ee69a6d6519861a85413856d9b8d37",
+      "byte_len": 11229,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/techne/m0m5/timeline/timeAxis.ts",
+      "sha256": "53948d88acdd869d40ff6e9cec2d715bca0e0da7384d68be2795ee38b08890c1",
+      "byte_len": 7943,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/tests/techne-time-axis-native-acceptance.mjs",
+      "sha256": "dbbce028deb935ed1907a571b35a7c6b3b0c18b6f27fb2fb4fb4580f5cfa6be6",
+      "byte_len": 18576,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/tests/run-techne-time-axis-native.mjs",
+      "sha256": "f5d5c8cee043253e1e24bf6fdf30abe8a7221868940a27a94916a88beb33a0b1",
+      "byte_len": 1518,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/native/Foundation.tsx",
+      "sha256": "6edd4209dbf3e352444d3e9fb7feb7b058f42a5303da15b9a4fdd9332ac294a8",
+      "byte_len": 8208,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/native/application.ts",
+      "sha256": "d06b73197ce6eab9298aaecca89abf117d365b6917f622b2cfe5991cd4190f74",
+      "byte_len": 8720,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/shell/useSet.ts",
+      "sha256": "d47ec95752a1084eb8c30ac34f75271f8fcc8d2e91d8bc72fbf08d63473d95f7",
+      "byte_len": 5012,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeChosenControls.tsx",
+      "sha256": "d217ee9474c55dcda353ad4102e6ea8d54b400c94326b43b6e584c6de21f089a",
+      "byte_len": 15285,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativeWorldDetail.tsx",
+      "sha256": "5d4845be945c46b487c817a2e8981fac08c8a90209100adb530db1024ebc30f5",
+      "byte_len": 9139,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/WorldBrowser.tsx",
+      "sha256": "e25c16f674a189c29ada448ab84a611a81aa84d8f430ac3bba71e8eb9a3fc2d2",
+      "byte_len": 13518,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/NativePropertyBrowser.tsx",
+      "sha256": "b47a89904fa33b06970497118b8a0850ae2fac35a5f46c9a62adf91dcd59e150",
+      "byte_len": 6853,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/src/native_contract.rs",
+      "sha256": "3eb5eb5bdfa53d350364fc2b8ee5f5f79ee3d77a5546416262c116a15888474b",
+      "byte_len": 5978,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/src/native_world.rs",
+      "sha256": "b3bfa71fb630e243d7fa4f1e30cfc8f34ec2f07e2d414ad5c6b757d9855c698f",
+      "byte_len": 6062,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/src/main.rs",
+      "sha256": "29bf4ce43f00baf304ecc0561896b8fbeae58a7cab64ef4d9f0018fb6bc01b5e",
+      "byte_len": 15904,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/cli/src/current_world.rs",
+      "sha256": "6c18583543f3fbcde69770cbce33af13796a4ab17c672fb56338d4bc76b6543b",
+      "byte_len": 38946,
+      "role": "chosen controls, native qualification, Scene transport or explicit time window integration"
+    }
+  ],
+  "candidate_head": "40de7693050709577716f37a6c8d6b46fedeae82",
+  "native_qualification": "evidence/scoped-current-world-cli-qualification.json",
+  "native_scene_guard_acceptance": "evidence/scene-transport-native-guard-acceptance.json",
+  "native_time_window_acceptance": "evidence/time-axis-session-native-acceptance.json",
+  "gui_acceptance": {
+    "passed": false,
+    "blocker": "Computer Use reports Mac locked; user unlock requested",
+    "pending": [
+      "pin/tune/Configure/fullscreen/return/native reopen",
+      "1920x1200 and ~700px visual comparison"
+    ]
+  },
+  "builds": {
+    "shell_runtime": "passed",
+    "chosen_controls_ui": "passed",
+    "guarded_expressions_body": "passed; exact public and packaged body match actual HTTP served bytes",
+    "time_window_ui": "typecheck and production bundle passed"
+  },
+  "remaining": [
+    "Techn\u0113173 retains an older wiki basis; all15 Scene temporal reads refuse current source",
+    "zero dated native temporal declarations in current register",
+    "source contract has no period labels/notes",
+    "whole-expression Scene route and occurrence traversal integration",
+    "all49 Expressions feature families need outward GUI admission",
+    "126 target behaviours remain individually unaccepted"
+  ],
+  "acquisition": "Step B native owner reuse and Step D integration; no Step C code entered",
+  "running_candidate": {
+    "url": "http://127.0.0.1:8789/app/",
+    "kernel_bridge": "http://127.0.0.1:4180",
+    "native_owner_binary": "/Users/admin/Central/worktrees/env-1/o-i/cli/.artifacts/sol-scoped-current-world-oi-0baf156726bf9025",
+    "config_evidence": "evidence/chosen-controls-scoped-world-config-reading.json"
+  },
+  "guarded_transport_coverage": {
+    "checks_passed": 23,
+    "native_inspects": 6,
+    "native_mutations": 0,
+    "authored_scene_transports": 3,
+    "fully_authored_saved_sequences": 1,
+    "unavailable_pacing_rows": 14,
+    "natural_partial_pages": 0
+  },
+  "served_basis": "evidence/guarded-served-build-basis.json",
+  "build_evidence": [
+    "evidence/scene-transport-guarded-expressions-body-build.log",
+    "evidence/scene-transport-guarded-body-build-review.json",
+    "evidence/scenes-time-window-shell-ui-typecheck.log",
+    "evidence/scenes-time-window-shell-ui-bundle.log"
+  ]
+}

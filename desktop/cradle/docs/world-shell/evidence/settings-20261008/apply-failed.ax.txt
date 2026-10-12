@@ -1,0 +1,105 @@
+Browser tab: 4, Title: "O:I · Settings development", URL: "http://127.0.0.1:5176/app/src/settings/preview.html".
+1 AXWebArea O:I · Settings development, URL: 127.0.0.1:5176/app/src/settings/preview.html
+	2 container root
+		3 text Settings contribution · development only
+		4 container
+			5 text Scenario 
+			6 pop up button (collapsed, settable) Description: Development scenario, Value: failed, Secondary Actions: Expand
+				7 menu
+					8 ready
+					9 loading
+					10 inherited
+					11 overridden
+					12 dirty
+					13 invalid
+					14 immediate
+					15 restart
+					16 pending
+					17 acknowledged
+					18 refused
+					19 (selected) failed
+					20 conflict
+					21 absent-product
+					22 unavailable-connection
+		23 button Show retained work
+		24 container Settings
+			25 container
+				26 heading Preferences, Value: 1
+					27 text Preferences
+				28 search text field (settable) Search settings
+				29 text ⌘ F
+				30 button ← Agent setup
+					31 text ← 
+					32 text Agent setup
+			33 container
+				34 text Development scenario  ·  failed · AIKit and Factory native schema specimens  · simulated responses, no native writes
+			35 container Settings categories
+				36 text PREFERENCES
+				37 button Harnesses & models
+				38 button Skills & methods
+				39 button Profiles
+				40 button Permissions
+				41 button Credentials
+				42 button Search & telemetry
+				43 button Appearance & interaction
+				44 text Development specimen
+			45 container
+				46 text Development response only. No native configuration was persisted.
+				47 heading Search & telemetry, Value: 2
+					48 text Search & telemetry
+				49 text Search limits and observation intervals for Factory telemetry. Applies to
+				50 pop up button (collapsed, settable) Description: Watch poll interval (seconds) scope, Value: project, Secondary Actions: Expand
+					51 menu
+						52 (selected) project
+				53 combo box (settable) Description: Watch poll interval (seconds) scope subject, Value: settings-specimen
+				54 button Read scope
+				55 text Local changes retained at this scope
+				56 container software-factory telemetry
+					57 heading Telemetry search Software Factory, Value: 3
+						58 text Telemetry search Software Factory
+					59 container Search result limit default
+						60 heading Search result limit default, Value: 3
+							61 text Search result limit default
+						62 text Override at this scope
+						63 text field (settable) Description: Search result limit default, Value: 20
+						64 text 1
+						65 text  – 
+						66 text 100
+						67 button (collapsed) Details, Secondary Actions: Expand
+							68 text Details
+					69 container Delegated search subprocess budget (seconds)
+						70 heading Delegated search subprocess budget (seconds), Value: 3
+							71 text Delegated search subprocess budget (seconds)
+						72 text Override at this scope
+						73 text field (settable) Description: Delegated search subprocess budget (seconds), Value: 30
+						74 text 5
+						75 text  – 
+						76 text 600
+						77 button (collapsed) Details, Secondary Actions: Expand
+							78 text Details
+					79 container Watch poll interval (seconds)
+						80 heading Watch poll interval (seconds), Value: 3
+							81 text Watch poll interval (seconds)
+						82 text Override at this scope
+						83 text field (settable) Description: Watch poll interval (seconds), Value: 0.75
+						84 text 0.5
+						85 text  – 
+						86 text 60
+						87 button Undo
+						88 button (collapsed) Details · local draft, Secondary Actions: Expand
+							89 text Details
+							90 text  · local draft
+				91 container Native application result
+					92 heading Simulated result · failed, Value: 3
+						93 text Simulated  result ·  failed
+					94 container
+						95 text software-factory:telemetry:watch-interval-seconds :  failed  · Development specimen: owner disconnected during apply.
+					96 button Close result
+					97 button (collapsed) Acknowledgement, Secondary Actions: Expand
+						98 text Acknowledgement
+			99 container
+				100 button (collapsed) ⓘ Info, Secondary Actions: Expand
+				101 text 1 local change
+				102 button Review changes…
+
+The focused UI element is 91 container Native application result

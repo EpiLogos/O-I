@@ -22,9 +22,9 @@ Every statement is tagged **EVIDENCE** (cited to a file and line or section) or 
 | LS | `/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/components/` |
 | LS-app | `/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/App.tsx` |
 | CR | `/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/` |
-| NS | `/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/` |
+| NS | `desktop/cradle/docs/world-shell/` |
 | UIE | `/Users/admin/Central/Work/O-I/docs/research/ableton-live-12.0.25/ui/UI-EVIDENCE.md` |
-| SCOPE | `/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/lane-6-ableton-shell/SCOPE.md` |
+| SCOPE | `desktop/cradle/docs/world-shell/lanes/lane-6-ableton-shell/SCOPE.md` |
 | SHELLBP | `/Users/admin/Central/Work/O-I/docs/research/ableton-live-12.0.25/shell/SHELL-BLUEPRINT.md` |
 | FAE | `/Users/admin/Central/worktrees/env-1/o-i/docs/experience/FACTORY-AGENCY.md` |
 | SPEC | `/Users/admin/Downloads/oi-editor-v2/EDITOR-AND-DEVICE-SPEC.md` |

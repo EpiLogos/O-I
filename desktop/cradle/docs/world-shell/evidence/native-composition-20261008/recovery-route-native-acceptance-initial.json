@@ -1,0 +1,55 @@
+{
+  "schema": "techne.new-shell.native-recovery-route-acceptance/v1",
+  "grade": "B",
+  "result": "passed",
+  "claim": "actual app/host/native-owner routing; not GUI Save or craft acceptance",
+  "sources": [
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeRecovery.ts",
+      "sha256": "0df0e3f352a6ace59abae877b807823c397fb5d6f207c3e5d12f1132a3e0f2a4"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/recovery.ts",
+      "sha256": "795450748c29f8c02af72c01047162c51a985266a09e374e481a8642f76a1c41"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorkspace.ts",
+      "sha256": "d760efdd965d645fd07e91262ba9a453a1c0d8b2aa2e88b81247ff73305f4487"
+    },
+    {
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts",
+      "sha256": "3e5fd7e53d4f72a9eaef935c113e558b03b36de10b0bae5072a68cf56f702da1"
+    }
+  ],
+  "kernel_binary": "/Users/admin/Central/Work/O-I/target/debug/walk-bridge",
+  "kernel_sha256": "e2d7360775de3c852470d9a908a5aff563e249be03639348bc03002ad27d56e0",
+  "config_sha256": "91a7b5ce362f129adafab3d5c1da1d9e18c2d2872018daee08a635a9e5a1f8d6",
+  "personal_owner_requests": 2,
+  "personal_owner_writes": 0,
+  "retained_frame_url_unchanged": true,
+  "current_recovery_scope": "expressions",
+  "existing_central_pending_preserved": true,
+  "pending_replayed": false,
+  "generic_find_calls": 0,
+  "same_ref_alternative_scope_refused": true,
+  "old_draft_writes_remained_techne": true,
+  "late_old_checkpoint_writes": [
+    {
+      "operation": "write",
+      "scope": "expressions",
+      "kind": "checkpoint",
+      "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1"
+    },
+    {
+      "operation": "write",
+      "scope": "expressions",
+      "kind": "checkpoint",
+      "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1"
+    }
+  ],
+  "late_effect_adopted_into_new_work": false,
+  "actual_native_focus_acknowledged_revision": 5,
+  "scratch_recovery_writes": 4,
+  "semantic_effects_confined_to_disposable_native_owner": true,
+  "disposable_home_deleted": true
+}

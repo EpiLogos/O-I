@@ -1,0 +1,51 @@
+{
+  "schema": "techne.new-shell.startup-acceptance/v1",
+  "result": "passed",
+  "kernel_url": "http://127.0.0.1:4180",
+  "config_path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/saved-work-config.json",
+  "config_sha256": "91a7b5ce362f129adafab3d5c1da1d9e18c2d2872018daee08a635a9e5a1f8d6",
+  "initial_expression_count": 0,
+  "works": [
+    {
+      "scope": "techne",
+      "checkpoint_id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+      "expression_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+      "storage_revision": 797,
+      "document_revision": 173,
+      "pending_retained": true
+    },
+    {
+      "scope": "expressions",
+      "checkpoint_id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+      "expression_ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+      "storage_revision": 2133,
+      "document_revision": 4,
+      "pending_retained": false
+    }
+  ],
+  "native_open_receipts": [
+    {
+      "actor": "host:native-startup-acceptance",
+      "event": "expression_changed",
+      "expression_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+      "revision": 173,
+      "schema": "oi.kernel-event/v1",
+      "seq": 1,
+      "version": 1
+    },
+    {
+      "actor": "host:native-startup-acceptance",
+      "event": "expression_changed",
+      "expression_ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+      "revision": 4,
+      "schema": "oi.kernel-event/v1",
+      "seq": 2,
+      "version": 1
+    }
+  ],
+  "exact_retained_inspections": 2,
+  "repeated_open_receipts": 0,
+  "absent_native_checkpoint_refusal": true,
+  "pending_not_replayed": true,
+  "recovery_writes": 0
+}

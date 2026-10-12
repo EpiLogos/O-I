@@ -65,7 +65,7 @@ here were checked byte-identical to their `Work/O-I` copies on 12 Oct.
   - `LAW` = `QL/skills/ql-law/SKILL.md`
   - `LOCK` = `QL/docs/L5-TECHNE-DUAL-READING-LOCK.md`
   - `MPW` = `QL/docs/M-PRIME-PHYSICAL-MUSIC-WAYFINDER.md`
-  - `PROG` = `/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/PROGRAMME.md`
+  - `PROG` = `desktop/cradle/docs/world-shell/PROGRAMME.md`
 
 Code was read at HEAD `6e2ab0b50`. The whole shell is on O-I `main` (#635, #637)
 (PATH §2).

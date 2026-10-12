@@ -1,0 +1,413 @@
+{
+  "schema": "techne.new-shell-source-licence-register/v1",
+  "standing": "acquisition classification before reference code entry; imports are empty at baseline",
+  "sources": [
+    {
+      "id": "tldraw",
+      "path": "/tmp/lane1-tldraw",
+      "revision": "035b741dc331bf76a4cb9af27c346be10bba2a88",
+      "licence": "source-available tldraw License",
+      "licence_source": {
+        "path": "/tmp/lane1-tldraw/LICENSE.md",
+        "sha256": "9578fcddc20e404b6a29f44b6fea81d8b331698c0e7e9be34132d6f4394fa533",
+        "bytes": 4609
+      },
+      "classification": "interface-only",
+      "reason": "Study-only; no vendoring or code adoption.",
+      "aliases": [
+        "tldraw"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "excalidraw",
+      "path": "/tmp/lane1-excalidraw",
+      "revision": "53973c3a423fbd75a4ce68107786b4fcb90e4968",
+      "licence": "MIT",
+      "licence_source": {
+        "path": "/tmp/lane1-excalidraw/LICENSE",
+        "sha256": "1352d204fdb90d5e482c13139d848bc2c9300a9a7de358a0a558a23e72d0d8be",
+        "bytes": 1067
+      },
+      "classification": "adopt",
+      "reason": "Permissive own-source only; retain notices and exact import provenance before entry.",
+      "aliases": [
+        "Excalidraw"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "timelinejs3",
+      "path": "/tmp/techne-lane2-scratch/TimelineJS3",
+      "revision": "12a80199b967394a020f8faa7b001162a71e2494",
+      "licence": "MPL-2.0",
+      "licence_source": {
+        "path": "/tmp/techne-lane2-scratch/TimelineJS3/LICENSE",
+        "sha256": "af175b9d96ee93c21a036152e1b905b0b95304d4ae8c2c921c7609100ba8df7e",
+        "bytes": 15921
+      },
+      "classification": "interface-only",
+      "reason": "Pinned LICENSE and package.json both say MPL-2.0; lane 2's MIT claim is incorrect. No code adoption is commissioned by this ledger.",
+      "aliases": [
+        "TimelineJS3"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "vis-timeline",
+      "path": "/tmp/techne-lane2-scratch/vis-timeline",
+      "revision": "67b24bb2b80bf5fef510476b2897e0a3e32f3f63",
+      "licence": "MIT OR Apache-2.0",
+      "licence_source": {
+        "path": "/tmp/techne-lane2-scratch/vis-timeline/LICENSE.md",
+        "sha256": "535036cac87eaf62b4460a592c2d12e349d6b1135f0203e77eab1b23ad08bc55",
+        "bytes": 315
+      },
+      "classification": "adopt",
+      "reason": "Choose and retain the applicable licence and notices before any own-source adoption.",
+      "aliases": [
+        "vis-timeline",
+        "vis "
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "periodo",
+      "path": "/tmp/techne-lane2-scratch/periodo-data",
+      "revision": "51fe03a205ac049b818c83bafe852bec2dc2b6e9",
+      "licence": "Unlicense (repository code); dataset terms separately required",
+      "licence_source": {
+        "path": "/tmp/techne-lane2-scratch/periodo-data/LICENSE",
+        "sha256": "7e12e5df4bae12cb21581ba157ced20e1986a0508dd10d0e8a4ab9a4cf94e85c",
+        "bytes": 1211
+      },
+      "classification": "interface-only",
+      "reason": "Root LICENSE is Unlicense; lane 2's CC0 data statement is not a licence for every artifact. This baseline adopts neither data nor code.",
+      "aliases": [
+        "PeriodO"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "kdenlive",
+      "path": "/tmp/techne-lane3-re/kdenlive",
+      "revision": "40caf7e22b10c5c40e87dc8b4c89b6cf9215f6b8",
+      "licence": "GPL-3.0 family",
+      "licence_source": {
+        "path": "/tmp/techne-lane3-re/kdenlive/COPYING",
+        "sha256": "b6a8bf63ae2c95b0aa256ee774680d7bd18f21f457da75466f7610b3b16acc4e",
+        "bytes": 34670
+      },
+      "classification": "interface-only",
+      "reason": "GPL-family code adoption requires a separately recorded explicit decision. Interface contracts may guide independent implementation.",
+      "aliases": [
+        "Kdenlive"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "blender",
+      "path": "/tmp/techne-lane3-re/blender",
+      "revision": "986dee0a76ba7d5a920d1a23d33f4e7e165bd6df",
+      "licence": "GPL family; per-file terms govern",
+      "licence_source": {
+        "path": "/tmp/techne-lane3-re/blender/COPYING",
+        "sha256": "19e6f4b541772f9d7b98a52bdbca3ebd5ef9e404956a9a6de68bfc3c1a178387",
+        "bytes": 302
+      },
+      "classification": "interface-only",
+      "reason": "No GPL code or assets enter the candidate; use documented behavior/interface only.",
+      "aliases": [
+        "Blender"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "olive",
+      "path": "/tmp/techne-lane3-re/olive",
+      "revision": "7e0e94abf6610026aebb9ddce8564c39522fac6e",
+      "licence": "GPL-3.0 family",
+      "licence_source": {
+        "path": "/tmp/techne-lane3-re/olive/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+        "bytes": 35149
+      },
+      "classification": "interface-only",
+      "reason": "No GPL code adoption; independently implement the recovered interface.",
+      "aliases": [
+        "Olive"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "libopenshot",
+      "path": "/tmp/techne-lane3-re/libopenshot",
+      "revision": "983c847ce7d0b7bfa4014d90bf86aa961a825f86",
+      "licence": "LGPL-3.0 family",
+      "licence_source": {
+        "path": "/tmp/techne-lane3-re/libopenshot/COPYING",
+        "sha256": "ea8af5e789cb2d4e9b10bce3874982ade163b749b6bfbdb32e2df21c4d106de1",
+        "bytes": 7650
+      },
+      "classification": "interface-only",
+      "reason": "No linking or vendoring authorised by this ledger; classify any future proposed link explicitly.",
+      "aliases": [
+        "libopenshot",
+        "OpenShot"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "shotcut",
+      "path": "/tmp/techne-lane3-re/shotcut",
+      "revision": "895ee392b6e0381353fbdc48b6889da9d3ad5c27",
+      "licence": "GPL-3.0 family",
+      "licence_source": {
+        "path": "/tmp/techne-lane3-re/shotcut/COPYING",
+        "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+        "bytes": 35147
+      },
+      "classification": "interface-only",
+      "reason": "GPL-family code adoption requires an explicit recorded decision; none taken here.",
+      "aliases": [
+        "Shotcut"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "mlt",
+      "path": "/tmp/techne-lane3-re/mlt",
+      "revision": "77ae5f8f8cb4e2f502c5dc868d6c7cf7b45bfc54",
+      "licence": "LGPL-2.1 family with module-specific terms",
+      "licence_source": {
+        "path": "/tmp/techne-lane3-re/mlt/COPYING",
+        "sha256": "592987e8510228d546540b84a22444bde98e48d03078d3b2eefcd889bec5ce8c",
+        "bytes": 26521
+      },
+      "classification": "interface-only",
+      "reason": "No code or runtime adoption; module-specific licence review would precede a future link.",
+      "aliases": [
+        "MLT"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "cesiumjs",
+      "path": "/tmp/re-lane4-cesium",
+      "revision": "a3aea90b28d913faa3dd41454c5ab40f7e912459",
+      "licence": "Apache-2.0",
+      "licence_source": {
+        "path": "/tmp/re-lane4-cesium/LICENSE.md",
+        "sha256": "721844bc0cdaa9b1a9a145dbca1f981e2de15a7e200a5d1fd9f5f1eed8e5d030",
+        "bytes": 55679
+      },
+      "classification": "interface-only",
+      "reason": "Camera/interface reference only. Places extends the existing MapLibre renderer; no second globe.",
+      "aliases": [
+        "Cesium"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "godot",
+      "path": "/tmp/re-lane5/godot",
+      "revision": "3ea0cf3e72699c5e3b35f7956670ac93b9d1d4a0",
+      "licence": "MIT (Godot own code); thirdparty notices separately govern",
+      "licence_source": {
+        "path": "/tmp/re-lane5/godot/LICENSE.txt",
+        "sha256": "b0435e3b3e4e55238f05f4b306f30524a1b2e20147810d436eaa554fa6855c80",
+        "bytes": 1149
+      },
+      "classification": "adopt",
+      "reason": "Only source verified under this own-code licence may be adopted; no thirdparty closure inferred.",
+      "aliases": [
+        "Godot"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "twine",
+      "path": "/tmp/re-lane5/twine",
+      "revision": "2c3b80144ba6f1fe9d8a4e5e11a2349ba55fc310",
+      "licence": "GPL-3.0",
+      "licence_source": {
+        "path": "/tmp/re-lane5/twine/LICENSE",
+        "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+        "bytes": 35147
+      },
+      "classification": "interface-only",
+      "reason": "Pinned LICENSE is GPL v3 and package.json says GPL-3.0. Programme/owner premise of permissive MIT is contradicted by possessed source; no source adoption.",
+      "aliases": [
+        "Twine"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "native-o-i",
+      "path": "/Users/admin/Central/worktrees/env-1/o-i",
+      "revision": "03b021c952610c7a749ca71cd5f07b779d3281dc",
+      "licence": "Existing owner-native implementation; normal package/build reuse (acquisition B)",
+      "licence_source": null,
+      "classification": "adopt",
+      "reason": "Reuse the existing Expressions body and its existing native owners, rather than copying semantics into shell state.",
+      "aliases": [],
+      "code_entered": false,
+      "imports": [],
+      "source": {
+        "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/package.json",
+        "sha256": "bd537243c5d3ace50f7d2c149091ef179a3539f786ec41f705d35616a17e6b5e",
+        "bytes": 1593
+      }
+    },
+    {
+      "id": "maplibre",
+      "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/node_modules/maplibre-gl",
+      "revision": "npm:6.11.1",
+      "licence": "BSD-3-Clause",
+      "licence_source": {
+        "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/node_modules/maplibre-gl/LICENSE.txt",
+        "sha256": "ee5fc05a0677eaf69601d2c7db0d9ecd6cc27c3abc1d0733bc9ed34707cf8ef2",
+        "bytes": 5984
+      },
+      "classification": "adopt",
+      "reason": "Already in-tree Places dependency. Extend this renderer; no second globe. Preserve its existing dependency licence closure.",
+      "aliases": [
+        "MapLibre",
+        "maplibre",
+        "Google Earth"
+      ],
+      "code_entered": false,
+      "imports": [],
+      "source": {
+        "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/node_modules/maplibre-gl/package.json",
+        "sha256": "43b03dfa0abe87bd63896cb2420a8ad2b8a26e49773d545a58237a2a86c798c2",
+        "bytes": 6565
+      }
+    },
+    {
+      "id": "obsidian",
+      "revision": null,
+      "licence": "No code or assets adopted; documentation/observable interface only",
+      "licence_source": null,
+      "classification": "interface-only",
+      "reason": "Possessed Obsidian 1.7.7 behavior and .canvas interface only; no proprietary code or assets.",
+      "aliases": [
+        "Obsidian"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "miro",
+      "revision": null,
+      "licence": "No code or assets adopted; documentation/observable interface only",
+      "licence_source": null,
+      "classification": "interface-only",
+      "reason": "Documentation-only quality bar, no captured authenticated behavior or source adoption.",
+      "aliases": [
+        "Miro"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "aeon",
+      "revision": null,
+      "licence": "No code or assets adopted; documentation/observable interface only",
+      "licence_source": null,
+      "classification": "interface-only",
+      "reason": "Aeon Timeline 2 manual only; installed application unavailable. No source code adoption.",
+      "aliases": [
+        "Aeon"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "histography-chronas",
+      "revision": null,
+      "licence": "No code or assets adopted; documentation/observable interface only",
+      "licence_source": null,
+      "classification": "interface-only",
+      "reason": "Captured observable interfaces only; no code/assets adoption.",
+      "aliases": [
+        "Histography",
+        "Chronas"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "unity",
+      "revision": null,
+      "licence": "No code or assets adopted; documentation/observable interface only",
+      "licence_source": null,
+      "classification": "interface-only",
+      "reason": "Manual vocabulary only; implementation not possessed. No code/assets adoption.",
+      "aliases": [
+        "Unity"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "resolve",
+      "revision": null,
+      "licence": "No code or assets adopted; documentation/observable interface only",
+      "licence_source": null,
+      "classification": "interface-only",
+      "reason": "Quality bar/documentation only; implementation unpossessed. No code adoption.",
+      "aliases": [
+        "Resolve"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "google-earth",
+      "revision": null,
+      "licence": "No code or assets adopted; documentation/observable interface only",
+      "licence_source": null,
+      "classification": "interface-only",
+      "reason": "Documented UX bar only; no code or imagery/asset adoption.",
+      "aliases": [
+        "Google Earth"
+      ],
+      "code_entered": false,
+      "imports": []
+    },
+    {
+      "id": "qgis-worldview",
+      "revision": null,
+      "licence": "No code or assets adopted; documentation/observable interface only",
+      "licence_source": null,
+      "classification": "interface-only",
+      "reason": "Documentation/interface precedent only; no repository or provider data adoption.",
+      "aliases": [
+        "QGIS",
+        "Worldview"
+      ],
+      "code_entered": false,
+      "imports": []
+    }
+  ],
+  "known_corrections": [
+    "Twine 2.12.1 is GPL-3.0 at the possessed revision, despite permissive/MIT claims in source notes and commission premise.",
+    "TimelineJS3 3.9.13 is MPL-2.0 at the possessed revision, despite lane-2 MIT claim.",
+    "PeriodO repository code root licence is Unlicense; its CC0 dataset claim does not classify all repository code."
+  ]
+}

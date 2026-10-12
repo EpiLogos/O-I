@@ -1,0 +1,266 @@
+{
+  "schema": "techne.new-shell-saved-work/v1",
+  "records": [
+    {
+      "ref": "expression:techne-m0.actuation.16f40c2b74af270fabc4fb2116d3b35b",
+      "title": "Actuation — wiki local whole",
+      "document_revision": 3,
+      "scene_count": 2,
+      "record_id": "expression:techne-m0.actuation.16f40c2b74af270fabc4fb2116d3b35b",
+      "scope": "techne",
+      "kind": "checkpoint",
+      "storage_revision": 760,
+      "source": {
+        "path": "/Users/admin/.oi/desktop/expression-recovery/techne/177d38c41f950ce864e1162baa008560307750f65669f550570c54d22f14cf30.json",
+        "sha256": "fc4210d0107fd2ef41755643d4caf2aada0072ff89c696e252045dc4675a7137",
+        "bytes": 50020
+      },
+      "standing": "observed recovery checkpoint metadata; not an active retained or published document",
+      "native_read_request": {
+        "op": "expression_recovery",
+        "request": {
+          "operation": "find_checkpoint",
+          "scope": "techne",
+          "expression_ref": "expression:techne-m0.actuation.16f40c2b74af270fabc4fb2116d3b35b"
+        }
+      }
+    },
+    {
+      "ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+      "title": "Central — wiki local whole",
+      "document_revision": 173,
+      "scene_count": 15,
+      "record_id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+      "scope": "techne",
+      "kind": "checkpoint",
+      "storage_revision": 797,
+      "source": {
+        "path": "/Users/admin/.oi/desktop/expression-recovery/techne/e45b1af62898ff4ae983c368013cc2797aba3e84b826fdb39fcb8c558a17b633.json",
+        "sha256": "555c23c4cb305dfeaaa5038edeb5c425cbef19c15f59b67ab17024d9917afb4e",
+        "bytes": 232194
+      },
+      "standing": "observed recovery checkpoint metadata; not an active retained or published document",
+      "native_read_request": {
+        "op": "expression_recovery",
+        "request": {
+          "operation": "find_checkpoint",
+          "scope": "techne",
+          "expression_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a"
+        }
+      }
+    },
+    {
+      "ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+      "title": "Chakral Body — 7 Subtle Centers Constellation",
+      "document_revision": 4,
+      "scene_count": 1,
+      "record_id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+      "scope": "expressions",
+      "kind": "checkpoint",
+      "storage_revision": 1715,
+      "source": {
+        "path": "/Users/admin/.oi/desktop/expression-recovery/expressions/142f8848e52fcf545281202458f7ed579519e0c997f1fee7b7c1e29f3942cc65.json",
+        "sha256": "723a7401565a5f508ffbafc84f136f2ba31c4b041e701030895a5fd441b89d0c",
+        "bytes": 147976
+      },
+      "standing": "observed recovery checkpoint metadata; not an active retained or published document",
+      "native_read_request": {
+        "op": "expression_recovery",
+        "request": {
+          "operation": "find_checkpoint",
+          "scope": "expressions",
+          "expression_ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1"
+        }
+      }
+    },
+    {
+      "ref": "expression:authored-e027f118-462f-4c3f-a148-ee664cdde05e",
+      "title": "Chakra Body · 7 centres",
+      "document_revision": 2,
+      "scene_count": 1,
+      "record_id": "expression-2bfc86f7-1a54-4334-a867-3a64d89fa6da",
+      "scope": "expressions",
+      "kind": "checkpoint",
+      "storage_revision": 1730,
+      "source": {
+        "path": "/Users/admin/.oi/desktop/expression-recovery/expressions/169e678092a6d776261ea4fb9e9547187741e5908965199b7f8ec3a08381b801.json",
+        "sha256": "f75c7176f9cf7a224d39afb82ece01712fb9e9b28d6f48dd5a785e7439986881",
+        "bytes": 110256
+      },
+      "standing": "observed recovery checkpoint metadata; not an active retained or published document",
+      "native_read_request": {
+        "op": "expression_recovery",
+        "request": {
+          "operation": "find_checkpoint",
+          "scope": "expressions",
+          "expression_ref": "expression:authored-e027f118-462f-4c3f-a148-ee664cdde05e"
+        }
+      }
+    },
+    {
+      "ref": "expression:authored-91af86fb-bf68-4d26-aa4f-fd6b5d4cceb8",
+      "title": "Chakra Body · 7 centres",
+      "document_revision": 2,
+      "scene_count": 1,
+      "record_id": "expression-92cd905f-5c9a-4038-a2ee-d3a5bdbaf759",
+      "scope": "expressions",
+      "kind": "checkpoint",
+      "storage_revision": 1673,
+      "source": {
+        "path": "/Users/admin/.oi/desktop/expression-recovery/expressions/1c3a37e8462f4f89b5bde042bdc62de8cfff4c077035f1bf7796c61282112f95.json",
+        "sha256": "23df75d73784c74b89505f61b07669a30def6221ba9e2a9bfd15ead267b72fd4",
+        "bytes": 108982
+      },
+      "standing": "observed recovery checkpoint metadata; not an active retained or published document",
+      "native_read_request": {
+        "op": "expression_recovery",
+        "request": {
+          "operation": "find_checkpoint",
+          "scope": "expressions",
+          "expression_ref": "expression:authored-91af86fb-bf68-4d26-aa4f-fd6b5d4cceb8"
+        }
+      }
+    },
+    {
+      "ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+      "title": "Chakral Body — 7 Subtle Centers Constellation",
+      "document_revision": 2,
+      "scene_count": 1,
+      "record_id": "expression-5b864759-88b0-43f0-9fdc-c7eb1a8de785",
+      "scope": "expressions",
+      "kind": "checkpoint",
+      "storage_revision": 1669,
+      "source": {
+        "path": "/Users/admin/.oi/desktop/expression-recovery/expressions/2eff0fa29f673b9169bcc4d8c026df9921ff35ca9a89efabb9fbee77d175a366.json",
+        "sha256": "4c0189b76c1150e3e5dc51560f1a8fcefeea6f6d847f5d6816f1ef0ae0ba6707",
+        "bytes": 106246
+      },
+      "standing": "observed recovery checkpoint metadata; not an active retained or published document",
+      "native_read_request": {
+        "op": "expression_recovery",
+        "request": {
+          "operation": "find_checkpoint",
+          "scope": "expressions",
+          "expression_ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1"
+        }
+      }
+    },
+    {
+      "ref": "expression:authored-4cfa97b2-c75c-451b-8233-eaa03ac13fd9",
+      "title": "Chakra Body · 7 centres",
+      "document_revision": 2,
+      "scene_count": 1,
+      "record_id": "expression-d9f6dbdd-a10e-4ba3-a3fb-73a150a5f27a",
+      "scope": "expressions",
+      "kind": "checkpoint",
+      "storage_revision": 1664,
+      "source": {
+        "path": "/Users/admin/.oi/desktop/expression-recovery/expressions/80b02cb1c1240412c8e1761d80ca412d1cf1a994ae7e72d6d0aff397a7e63428.json",
+        "sha256": "71ec38875e35dee5928af19dbf34f227ffea9229f353eb39107e28cf6f4a3338",
+        "bytes": 108982
+      },
+      "standing": "observed recovery checkpoint metadata; not an active retained or published document",
+      "native_read_request": {
+        "op": "expression_recovery",
+        "request": {
+          "operation": "find_checkpoint",
+          "scope": "expressions",
+          "expression_ref": "expression:authored-4cfa97b2-c75c-451b-8233-eaa03ac13fd9"
+        }
+      }
+    },
+    {
+      "ref": "expression:authored-05317ffc-46d0-4094-a7db-0fece7cdac16",
+      "title": "Untitled Expression / variation",
+      "document_revision": 2,
+      "scene_count": 1,
+      "record_id": "expression:authored-05317ffc-46d0-4094-a7db-0fece7cdac16",
+      "scope": "expressions",
+      "kind": "checkpoint",
+      "storage_revision": 1756,
+      "source": {
+        "path": "/Users/admin/.oi/desktop/expression-recovery/expressions/a44cef8a41c1dda9db0722caa6ad8a8c748e4599cce7896fdeced4ce79aec4dc.json",
+        "sha256": "18e343d16943e86f100139f4bc1c349348e0e9a19b63568a99f103d35949cb96",
+        "bytes": 8417
+      },
+      "standing": "observed recovery checkpoint metadata; not an active retained or published document",
+      "native_read_request": {
+        "op": "expression_recovery",
+        "request": {
+          "operation": "find_checkpoint",
+          "scope": "expressions",
+          "expression_ref": "expression:authored-05317ffc-46d0-4094-a7db-0fece7cdac16"
+        }
+      }
+    },
+    {
+      "ref": "expression:authored-05317ffc-46d0-4094-a7db-0fece7cdac16",
+      "title": "Untitled Expression / variation",
+      "document_revision": 2,
+      "scene_count": 1,
+      "record_id": "expression-0e03e49c-ab01-4a03-982f-5570233bfdf1",
+      "scope": "expressions",
+      "kind": "checkpoint",
+      "storage_revision": 1755,
+      "source": {
+        "path": "/Users/admin/.oi/desktop/expression-recovery/expressions/f4707f37bb2e185bb518dbbcfb273abf7f519055729a505bb90781fff8272107.json",
+        "sha256": "38c52cabc2c0eaefaf4c7c3fb2bbae8b4466741405033e445ac26295ea226513",
+        "bytes": 8345
+      },
+      "standing": "observed recovery checkpoint metadata; not an active retained or published document",
+      "native_read_request": {
+        "op": "expression_recovery",
+        "request": {
+          "operation": "find_checkpoint",
+          "scope": "expressions",
+          "expression_ref": "expression:authored-05317ffc-46d0-4094-a7db-0fece7cdac16"
+        }
+      }
+    }
+  ],
+  "native_endpoint_observations": [
+    {
+      "command": "oi desktop expression '{\"operation\":\"list\"}'",
+      "exit_code": 0,
+      "result_schema": "oi.expression-list/v1",
+      "expressions": [],
+      "interpretation": "No loaded documents on this resolved native endpoint; this does not establish absence of recovery checkpoints."
+    },
+    {
+      "command": "oi desktop expression '{\"operation\":\"index\"}'",
+      "exit_code": 0,
+      "result_schema": "oi.expression-index/v1",
+      "expressions": [],
+      "interpretation": "Native retained index empty at observation."
+    },
+    {
+      "command": "lsof -nP -iTCP:4179 -sTCP:LISTEN",
+      "exit_code": 1,
+      "interpretation": "No walk bridge listener on 4179 at observation."
+    },
+    {
+      "command": "oi desktop files list Control/user/collections",
+      "exit_code": 2,
+      "error": "oi: Central owner Action refused: No such file or directory (os error 2)"
+    },
+    {
+      "command": "oi desktop files list Work/O-I/ProjectCentral/user/collections",
+      "exit_code": 2,
+      "error": "oi: Central owner Action refused: No such file or directory (os error 2)"
+    }
+  ],
+  "reopen_requirement": "Recovery must be read and validated by its owning operation, then explicitly reopened through the ordinary native Expression owner. Recovery never replays a pending mutation. The shell must not persist recovered bodies as another semantic store.",
+  "build_source": {
+    "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/package.json",
+    "sha256": "bd537243c5d3ace50f7d2c149091ef179a3539f786ec41f705d35616a17e6b5e",
+    "bytes": 1593
+  },
+  "build_usage": "cd desktop/cradle/expressions-app && npm run build; private oi-expressions-app 0.3.0 builds journeys then Vite dist with relative base; generated dist/node_modules are excluded from source.",
+  "kernel_start_source": {
+    "path": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/kernel/src/bin/walk-bridge.rs",
+    "sha256": "ea7749d7d74d693f4e041e3ab1b514e1c1ac9f3a3567acbefc819e950cc277de",
+    "bytes": 49971
+  },
+  "kernel_start_usage": "From desktop/cradle/kernel: cargo run --bin walk-bridge -- 127.0.0.1:<port>. Actual parser consumes positional address (the header's --bind wording is stale). Use the existing kernel and durable owner store; production native host uses Tauri kernel_op.",
+  "kernel_http_usage": "POST http://127.0.0.1:<port>/op with one typed KernelOp; /state and /event-replay are reads; /material mirrors native material resolution. This transport is development-only."
+}

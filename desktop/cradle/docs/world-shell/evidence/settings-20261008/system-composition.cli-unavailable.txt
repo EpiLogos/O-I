@@ -1,0 +1,4 @@
+Read-only probe: oi system-composition --json
+Exit: 2
+Installed oi: unknown command 'system-composition'. Run 'oi help' for the shared composition surface.
+The source KernelOp system_composition_read remains the required receiving operation. This failed CLI alias does not prove a product absent or admitted.

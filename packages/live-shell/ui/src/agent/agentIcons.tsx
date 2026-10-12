@@ -2,7 +2,7 @@
  * Shell icon set, knob, chevrons, skill marks
  *
  * VERBATIM from the icon specimen (owner ruling, 2026-10-09):
- *   Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/icon-cut.html
+ *   desktop/cradle/docs/world-shell/icon-cut.html
  * Extracted by evidence/agent-shell-craft-20261009/headless/extract-specimen.mjs —
  * do not redraw by hand; re-run the extractor when the specimen moves.
  */

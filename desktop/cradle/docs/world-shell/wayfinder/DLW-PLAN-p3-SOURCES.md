@@ -16,7 +16,7 @@ traces to a row here. Code paths under `src/` are
 
 ## Design documents (new-shell register)
 
-Path prefix: `/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/`.
+Path prefix: `desktop/cradle/docs/world-shell/`.
 
 | Source | What it supplied |
 |---|---|

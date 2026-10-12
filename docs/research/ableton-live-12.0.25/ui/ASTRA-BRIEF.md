@@ -35,7 +35,7 @@ parameter trees) and the device parameter metadata tables.
 
 ## READ FIRST (the law — read in full before any code)
 
-1. Work/reverse-engineering/2026-10-07-techne-instrument-re/PROGRAMME.md
+1. desktop/cradle/docs/world-shell/PROGRAMME.md
    — the rulings block at the top is current law: D-A resolved (this shell
    is the base), D-E reversed (M0/M5 come in fully — the older
    coupled-views-only posture is superseded), five target sets approved as

@@ -1,0 +1,35 @@
+{
+  "schema": "techne.new-shell.configuration-refusal-acceptance/v1",
+  "basis_config_path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/saved-work-config.json",
+  "basis_config_sha256": "91a7b5ce362f129adafab3d5c1da1d9e18c2d2872018daee08a635a9e5a1f8d6",
+  "binary_sha256": "9d1c651aff1d1642c552ebe06ca588cd5cb29678fac9791261cbbd6feda4e5ec",
+  "result": "passed",
+  "cases": [
+    {
+      "case": "unknown_config_field",
+      "exit_code": 2,
+      "startup_refused": true
+    },
+    {
+      "case": "different_identity",
+      "exit_code": 2,
+      "startup_refused": true
+    },
+    {
+      "case": "duplicate_identity",
+      "exit_code": 2,
+      "startup_refused": true
+    },
+    {
+      "case": "foreign_reference_grammar",
+      "exit_code": 2,
+      "startup_refused": true
+    },
+    {
+      "case": "unsafe_revision_basis",
+      "exit_code": 2,
+      "startup_refused": true
+    }
+  ],
+  "no_kernel_acknowledgements_or_personal_bodies_used": true
+}

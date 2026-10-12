@@ -1,0 +1,142 @@
+Browser tab: 3, Title: "O:I · Preferences window development", URL: "http://127.0.0.1:5176/app/src/settings/window-preview.html?settings-scenario=ready".
+1 AXWebArea O:I · Preferences window development, URL: 127.0.0.1:5176/app/src/settings/window-preview.html?settings-scenario=ready
+	2 container Preferences
+		3 container
+			4 text Development scenario 
+			5 pop up button (collapsed, settable) Description: Development scenario, Value: ready, Secondary Actions: Expand
+				6 menu
+					7 (selected) ready
+					8 loading
+					9 inherited
+					10 overridden
+					11 dirty
+					12 invalid
+					13 immediate
+					14 restart
+					15 pending
+					16 acknowledged
+					17 refused
+					18 failed
+					19 conflict
+					20 absent-product
+					21 unavailable-connection
+		22 text Explicit preview · no native writes
+		23 container Settings
+			24 container
+				25 heading Preferences, Value: 1
+					26 text Preferences
+				27 search text field (settable) Search settings
+				28 text ⌘ F
+				29 button ← Agent setup
+					30 text ← 
+					31 text Agent setup
+			32 container
+				33 text Development scenario  ·  ready · AIKit and Factory native schema specimens  · simulated responses, no native writes
+			34 container Settings categories
+				35 text PREFERENCES
+				36 button Harnesses & models
+				37 button Skills & methods
+				38 button Profiles
+				39 button Permissions
+				40 button Credentials
+				41 button Search & telemetry
+				42 button Appearance & interaction
+				43 text Development specimen
+			44 container
+				91 text Development response only. No native configuration was persisted.
+				45 heading Skills & methods, Value: 2
+					46 text Skills & methods
+				47 text Capabilities and skill sets composed into a working context. Applies to
+				48 pop up button (collapsed, settable) Description: Capability toggles scope, Value: project, Secondary Actions: Expand
+					49 menu
+						50 This machine
+						51 (selected) project
+						52 agent-session
+				53 combo box (settable) Description: Capability toggles scope subject, Value: settings-specimen
+				54 button Read scope
+				55 text project · settings-specimen
+				56 container ai-kit resolution
+					57 heading Working practices AIKit, Value: 3
+						58 text Working practices AIKit
+					59 container Default skill-sets
+						60 heading Default skill-sets, Value: 3
+							61 text Default skill-sets
+						62 text Inherited / resolved by owner
+						63 text  · This machine
+						64 text field (settable) Description: Default skill-sets, item 1, Value: specimen-skill-set
+						65 button Remove Default skill-sets item 1
+						66 button + Add item
+						67 button (collapsed) Details, Secondary Actions: Expand
+							68 text Details
+				69 container ai-kit skills
+					70 heading Available capabilities AIKit, Value: 3
+						71 text Available capabilities AIKit
+					72 container Capability toggles
+						73 heading Capability toggles, Value: 3
+							74 text Capability toggles
+						75 text Override at this scope
+						76 container Capability toggles
+							77 text Capability Enabled
+							78 text field (settable) Description: Capability toggles, row 1, capability, Value: specimen-capability
+							79 container
+								80 checkbox (settable, integer) Description: Capability toggles, row 1, enabled, Value: 0
+								81 text Off
+							82 button Remove Capability toggles row 1
+							83 button + Add entry
+						92 container
+							93 button (expanded) Details, Secondary Actions: Collapse
+								94 text Details
+							95 text The scope's declared capability enable/disable deltas, as an object mapping capability id to boolean. Applied through AIKit's native toggle pipeline, which re-materialises the scope's generation. Applies to
+							96 pop up button (collapsed, settable) Description: Capability toggles scope, Value: project, Secondary Actions: Expand
+								97 menu
+									98 This machine
+									99 (selected) project
+									100 agent-session
+							101 combo box (settable) Description: Capability toggles scope subject, Value: settings-specimen
+							102 button Read scope
+							103 button Restore inheritance / default…
+							104 definition list
+								105 container Native identity
+									106 text Native identity
+								107 text ai-kit:skills:skills.capabilities
+								108 container Owner / location
+									109 text Owner / location
+								110 container
+									111 text ai-kit  ·  aikit:scope:toggles
+								112 container Configured preference
+									113 text Configured preference
+								114 text No desired preference reported
+								115 container Declared override
+									116 text Declared override
+								117 text specimen-capability: Off
+								118 container Effective resolution
+									119 text Effective resolution
+								120 container
+									121 text specimen-capability: Off  ·  owner_ref: development-specimen · path: specimen://scope-override
+								122 container Observed runtime
+									123 text Observed runtime
+								124 text specimen-capability: On
+								125 container Native staged change
+									126 text Native staged change
+								127 text Not reported
+								128 container Proposed override
+									129 text Proposed override
+								130 text No local draft
+								131 container Applies
+									132 text Applies
+								133 text The next compose resolves the new capability horizon; sessions already running keep the horizon they were launched with.
+								134 container Native default
+									135 text Native default
+								136 text Computed by owner
+								137 container Reconciliation
+									138 text Reconciliation
+								139 container
+									140 text satisfied  ·
+								141 container Reading basis
+									142 text Reading basis
+								143 text specimen-reading-2
+			88 container
+				89 button (collapsed) ⓘ Info, Secondary Actions: Expand
+				90 text No pending changes
+
+The focused UI element is 93 button (expanded) Details, Secondary Actions: Collapse

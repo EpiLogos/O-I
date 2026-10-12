@@ -1,0 +1,81 @@
+Browser tab: 3, Title: "O:I · Preferences window development", URL: "http://127.0.0.1:5176/app/src/settings/window-preview.html?settings-scenario=ready".
+0 AXWebArea O:I · Preferences window development, URL: 127.0.0.1:5176/app/src/settings/window-preview.html?settings-scenario=ready
+	1 container Preferences
+		2 container
+			3 text Development scenario 
+			4 pop up button (collapsed, settable) Description: Development scenario, Value: ready, Secondary Actions: Expand
+				5 menu
+					6 (selected) ready
+					7 loading
+					8 inherited
+					9 overridden
+					10 dirty
+					11 invalid
+					12 immediate
+					13 restart
+					14 pending
+					15 acknowledged
+					16 refused
+					17 failed
+					18 conflict
+					19 absent-product
+					20 unavailable-connection
+		21 text Explicit preview · no native writes
+		22 container Settings
+			23 container
+				24 heading Preferences, Value: 1
+					25 text Preferences
+				26 search text field (settable) Search settings
+				27 text ⌘ F
+				28 button ← Agent activity
+					29 text ← 
+					30 text Agent activity
+			31 container
+				32 text Development scenario  ·  ready · AIKit and Factory native schema specimens  · simulated responses, no native writes
+			33 container Settings categories
+				34 text PREFERENCES
+				35 button Harnesses & models
+				36 button Skills & methods
+				37 button Profiles
+				38 button Permissions
+				39 button Credentials
+				40 button Machines & services
+				41 button Automations
+				42 button Search & telemetry
+				43 button Appearance & interaction
+				44 text Development specimen
+			45 container
+				46 heading Machines & services, Value: 2
+					47 text Machines & services
+				48 text Service declarations and execution environments.
+				81 container Remote machines
+					82 heading Remote machines, Value: 3
+						83 text Remote machines
+					84 text Set up a Workcell to use when starting work. Connect uses its saved credential reference; it does not grant access on the remote machine.
+					85 text Remote-machine operations are awaiting the Workcell adapter. Setup can be drafted here; no machine is saved or contacted.
+					86 button (disabled) Add machine…
+					87 button (disabled) Read machines again
+					88 container Add remote machine
+						89 text Label
+						90 text field (settable) Label, Value: studio-cell, ID: :r7:-label
+						91 text A stable name for this machine.
+						92 text Control endpoint
+						93 text field (settable) Control endpoint, Value: localhost:65536, ID: :r7:-endpoint
+						94 text Use a port from 1 to 65535.
+						95 text Credential reference
+						96 text field (settable) Credential reference, Value: keychain://workcell-connection/specimen, ID: :r7:-credential_ref
+						97 text keychain:// or linux-secret-service://. Secret material stays in its credential store.
+						98 container Expected operations
+							99 text Expected operations
+							100 text Records what you expect this machine to offer. Its remote grant determines actual access.
+							101 text The native operation catalogue has not been read.
+						102 text Note (optional)
+						103 text field (settable) Note (optional), ID: :r7:-note
+						104 button (disabled) Save machine setup
+						105 button Cancel draft
+						106 text Unsaved setup
+			78 container
+				79 button (collapsed) ⓘ Info, Secondary Actions: Expand
+				80 text No configuration plans pending
+
+The focused UI element is 96 text field (settable) Credential reference, Value: keychain://workcell-connection/specimen, ID: :r7:-credential_ref

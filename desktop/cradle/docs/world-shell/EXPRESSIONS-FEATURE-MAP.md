@@ -8,7 +8,7 @@ Source shorthand:
 
 - **F/** = `/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/expressions-app/field-studies-journeys/src/`
 - **B/** = `/Users/admin/Central/worktrees/env-1/o-i/packages/expressions-boundary/src/`
-- **R/** = `/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/`
+- **R/** = `desktop/cradle/docs/world-shell/`
 
 Line citations are the research snapshot, with byte hashes in `ui-ux-research-basis.json`; shared source may move.
 

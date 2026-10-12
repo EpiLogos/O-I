@@ -1,0 +1,102 @@
+Browser tab: 4, Title: "O:I · Settings development", URL: "http://127.0.0.1:5176/app/src/settings/preview.html".
+1 AXWebArea O:I · Settings development, URL: 127.0.0.1:5176/app/src/settings/preview.html
+	2 container root
+		3 text Settings contribution · development only
+		4 container
+			5 text Scenario 
+			6 pop up button (collapsed, settable) Description: Development scenario, Value: conflict, Secondary Actions: Expand
+				7 menu
+					8 ready
+					9 loading
+					10 inherited
+					11 overridden
+					12 dirty
+					13 invalid
+					14 immediate
+					15 restart
+					16 pending
+					17 acknowledged
+					18 refused
+					19 failed
+					20 (selected) conflict
+					21 absent-product
+					22 unavailable-connection
+		23 button Show retained work
+		24 container Settings
+			25 container
+				26 heading Preferences, Value: 1
+					27 text Preferences
+				28 search text field (settable) Search settings
+				29 text ⌘ F
+				30 button ← Agent setup
+					31 text ← 
+					32 text Agent setup
+			33 container
+				34 text Development scenario  ·  conflict · AIKit and Factory native schema specimens  · simulated responses, no native writes
+			35 container Settings categories
+				36 text PREFERENCES
+				37 button Harnesses & models
+				38 button Skills & methods
+				39 button Profiles
+				40 button Permissions
+				41 button Credentials
+				42 button Search & telemetry
+				43 button Appearance & interaction
+				44 text Development specimen
+			45 container
+				46 text The native basis changed. Inspect the current values, then explicitly rebase your draft before reviewing again.
+				47 button Dismiss error
+				48 heading Search & telemetry, Value: 2
+					49 text Search & telemetry
+				50 text Search limits and observation intervals for Factory telemetry. Applies to
+				51 pop up button (collapsed, settable) Description: Watch poll interval (seconds) scope, Value: project, Secondary Actions: Expand
+					52 menu
+						53 (selected) project
+				54 combo box (settable) Description: Watch poll interval (seconds) scope subject, Value: settings-specimen
+				55 button Read scope
+				56 text Local changes retained at this scope
+				57 container software-factory telemetry
+					58 heading Telemetry search Software Factory, Value: 3
+						59 text Telemetry search Software Factory
+					60 container Search result limit default
+						61 heading Search result limit default, Value: 3
+							62 text Search result limit default
+						63 text Override at this scope
+						64 text field (settable) Description: Search result limit default, Value: 20
+						65 text 1
+						66 text  – 
+						67 text 100
+						68 button (collapsed) Details, Secondary Actions: Expand
+							69 text Details
+					70 container Delegated search subprocess budget (seconds)
+						71 heading Delegated search subprocess budget (seconds), Value: 3
+							72 text Delegated search subprocess budget (seconds)
+						73 text Override at this scope
+						74 text field (settable) Description: Delegated search subprocess budget (seconds), Value: 30
+						75 text 5
+						76 text  – 
+						77 text 600
+						78 button (collapsed) Details, Secondary Actions: Expand
+							79 text Details
+					80 container Watch poll interval (seconds)
+						81 heading Watch poll interval (seconds), Value: 3
+							82 text Watch poll interval (seconds)
+						83 text Override at this scope
+						84 text field (settable) Description: Watch poll interval (seconds), Value: 0.75
+						85 text 0.5
+						86 text  – 
+						87 text 60
+						88 button Undo
+						89 container
+							90 text The native reading or owner context changed. Your draft is retained.
+							91 button Keep draft on current basis
+						92 button (collapsed) Details · local draft · conflict, Secondary Actions: Expand
+							93 text Details
+							94 text  · local draft
+							95 text  · conflict
+			96 container
+				97 button (collapsed) ⓘ Info, Secondary Actions: Expand
+				98 text 1 local change
+				99 button Review changes…
+
+The focused UI element is 99 button Review changes…

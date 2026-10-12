@@ -1,0 +1,20 @@
+{
+  "schema": "techne.shell.saved-work-config/v1",
+  "works": [
+    {
+      "scope": "techne",
+      "checkpoint_id": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a",
+      "expression_ref": "expression:techne-m0.central.dd19f55a16862f362d32617854728b2a"
+    },
+    {
+      "scope": "expressions",
+      "checkpoint_id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+      "expression_ref": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1"
+    },
+    {
+      "scope": "expressions",
+      "checkpoint_id": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a",
+      "expression_ref": "expression:rich-glyph-rack-bfae25f4-8639-4d16-a6c8-22302102880a"
+    }
+  ]
+}

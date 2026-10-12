@@ -1,0 +1,45 @@
+Browser tab: 4, Title: "O:I · Settings development", URL: "http://127.0.0.1:5176/app/src/settings/preview.html".
+1 AXWebArea O:I · Settings development, URL: 127.0.0.1:5176/app/src/settings/preview.html
+	2 container root
+		3 text Settings contribution · development only
+		4 container
+			5 text Scenario 
+			6 pop up button (collapsed, settable) Description: Development scenario, Value: loading, Secondary Actions: Expand
+				7 menu
+					8 ready
+					9 (selected) loading
+					10 inherited
+					11 overridden
+					12 dirty
+					13 invalid
+					14 immediate
+					15 restart
+					16 pending
+					17 acknowledged
+					18 refused
+					19 failed
+					20 conflict
+					21 absent-product
+					22 unavailable-connection
+		23 button Show retained work
+		24 container Settings
+			25 container
+				26 heading Preferences, Value: 1
+					27 text Preferences
+				28 search text field (settable) Search settings
+				29 text ⌘ F
+				30 button ← Back to work
+					31 text ← 
+					32 text Back to work
+			33 container
+				34 text Development scenario  ·  loading · AIKit and Factory native schema specimens  · simulated responses, no native writes
+			35 container Settings categories
+				36 text PREFERENCES
+				37 button Appearance & interaction
+				38 text Development specimen
+			39 text Reading native preferences…
+			40 container
+				41 button (collapsed) ⓘ Info, Secondary Actions: Expand
+				42 text No pending changes
+
+The focused UI element is 1 AXWebArea O:I · Settings development, URL: 127.0.0.1:5176/app/src/settings/preview.html

@@ -4033,7 +4033,7 @@ done.
 - The 126-target register: `new-shell/README.md` +
   `ACCEPTANCE-CHECKPOINT.md` + `targets.json`; the crosswalk with verbatim
   acceptance shapes: `FUNCTIONAL-CROSSWALK.md` + `FUNCTIONAL-CROSSWALK.json`.
-- Landed-code tickets (L1–L9, K1, CE1, V1 and the craft lanes): `wayfinder/tickets/` in the origin mirror `Work/reverse-engineering/2026-10-07-techne-instrument-re/`; the DLW build's tickets (P0-*, T-*) live in `wayfinder/tickets/` beside this plan
+- Landed-code tickets (L1–L9, K1, CE1, V1 and the craft lanes): `wayfinder/tickets/` in the origin mirror `desktop/cradle/docs/world-shell/`; the DLW build's tickets (P0-*, T-*) live in `wayfinder/tickets/` beside this plan
   (PATH §2). Matrices: §8's table.
 - The owner's planning session of record: `sess_ac3200ca-b5e7-410e-81ff-4fa5a4c512e2`
   (`[session]` cites); the project NOW register

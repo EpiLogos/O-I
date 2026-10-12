@@ -1,0 +1,18 @@
+{
+  "schema": "techne.shell-viewport-evidence/v1",
+  "input": "native Zen responsive viewport camera through cua_repl",
+  "viewport": [
+    1920,
+    1200
+  ],
+  "device_pixel_ratio": 2,
+  "pixel_dimensions": [
+    3840,
+    2400
+  ],
+  "path": "/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/shell-arrangement-1920x1200.png",
+  "source_capture": "/Users/admin/Downloads/Screen Shot 2026-10-07 at 18.51.44.png",
+  "sha256": "68edfb71e35a1167e9cfe64994d99fe111c6220b6d1300d132000e6dd88fba3c",
+  "native_ax_dimension_confirmed": true,
+  "standing": "captured integrated overview and bottom Clip/Device switch; does not admit editing/playback"
+}

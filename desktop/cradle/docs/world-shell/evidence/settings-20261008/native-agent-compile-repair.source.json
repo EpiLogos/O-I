@@ -1,0 +1,7 @@
+{
+  "source": "/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/src/agency/nativeAgent.ts",
+  "sha256": "258f484aaa6b1bb369fa2b85e379a257fdf1b38e4eb58e4528d3e5dc4e59f936",
+  "reason": "A newly edited native-owner method shadows its current access predicate with a review record, blocking Vite/esbuild reload.",
+  "proposed_change": "Rename the local readback only; preserve the access predicate and native acceptance semantics.",
+  "status": "Proposed bounded repair for the active native writer; not applied over their file."
+}

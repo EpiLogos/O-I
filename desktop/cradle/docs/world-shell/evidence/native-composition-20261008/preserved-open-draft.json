@@ -1,0 +1,36 @@
+{
+  "schema": "techne.new-shell.preserved-open-draft/v1",
+  "observed_at": "2026-10-07T23:49:26.635374+00:00",
+  "native_gui_export": "/Users/admin/Downloads/chakral-body-7-subtle-centers-constellation.expression.json",
+  "preserved_copy": "conflicted-open-expression-preserved.expression.json",
+  "sha256": "48ad57ad64341026deabc75ae0e857af74436387a933059f6a32312b0db0f1a2",
+  "bytes": 102118,
+  "native_draft_revision": 2213,
+  "identical_to_current_retained_draft": false,
+  "different_paths": [
+    ".scenes[0].entities[6].force.kind",
+    ".scenes[0].entities[6].layers",
+    ".scenes[0].entities[6].native.extent",
+    ".scenes[0].entities[6].sequence.sourcesVersion",
+    ".scenes[0].entities[6].sequence.steps.length",
+    ".scenes[0].entities[6].sequence.steps[0].objectState",
+    ".scenes[0].entities[6].shape",
+    ".scenes[0].entities[6].size.x",
+    ".scenes[0].entities[6].size.y",
+    ".scenes[0].entities[6].text",
+    ".scenes[0].entities[6].tint",
+    ".scenes[0].entities[6].yantraId",
+    ".scenes[0].field.params.native_fluid__viscosity",
+    ".scenes[0].field.params.recovery",
+    ".updatedAt"
+  ],
+  "difference_count": 15,
+  "native_writes": 0,
+  "unsubmitted_shell_input": {
+    "field": "State tint",
+    "value": "#7e77f1",
+    "target": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__muladhara",
+    "step_id": "step-2e77d775-974f-462c-81eb-2897dfeb54b6",
+    "native_gui_standing": "Retained input draft; not acknowledged"
+  }
+}

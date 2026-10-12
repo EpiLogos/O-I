@@ -83,7 +83,7 @@ conversation, not by agents standing in for them.
 10. `Work/Quaternal-Logic/docs/M-PRIME-PHYSICAL-MUSIC-WAYFINDER.md` — the
    musical instrument's commissioned law (#281)
 
-Path prefix: `/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/`
+Path prefix: `desktop/cradle/docs/world-shell/`
 
 **Skills every session consults:** `central-parallel-execution`,
 `dispatching-parallel-agents`, `capability-matrices` ("Situate the concern

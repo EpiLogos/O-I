@@ -1,0 +1,3274 @@
+{
+  "description": "Spatial constellation of all 7 chakras positioned along the vertical spine with localized attractor vortices and spectral colors",
+  "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1",
+  "loop": true,
+  "name": "Chakral Body — 7 Subtle Centers Constellation",
+  "savedScenes": {},
+  "scenes": [
+    {
+      "automation": [],
+      "character": "An arrangement, waiting to happen.",
+      "composition": {
+        "carryStation": true,
+        "carryTint": true,
+        "focus": "parallel",
+        "focusDuration": 2.4,
+        "focusDwell": 1.2,
+        "frequencyDriver": "focus",
+        "layout": "Chakra Body",
+        "plane": "XY"
+      },
+      "duration": 12,
+      "engine": {
+        "paletteSource": "legacy",
+        "grainProfile": false,
+        "backgroundMode": "ambientGlow",
+        "resonatorMode": "resonator",
+        "focusOrder": "listed",
+        "dotShape": "circle",
+        "autoFitSizes": true,
+        "mediumEnabled": false,
+        "collisionEnabled": false,
+        "collisionMode": "obstacle",
+        "pairwiseEnabled": false,
+        "fontFamily": "system-ui, -apple-system, sans-serif",
+        "fontWeight": 900,
+        "resonanceEnabled": false,
+        "morphEnabled": false,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine",
+        "autoOscillate": true,
+        "relationalEnabled": false,
+        "relationalMode": "orbital",
+        "pointerMode": "repel",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 2.2,
+        "pointerClickRadius": 0.45,
+        "colorMode": "linearGradient",
+        "colorEnabled": true,
+        "mediumPlane": "vertical",
+        "mediumDimension": "2D",
+        "autoSweep": false,
+        "sweepDirection": "ascent",
+        "depthOcclusion": false,
+        "depthPerspective": false,
+        "depthTintColor": "#101018",
+        "dispersion3d": 0,
+        "inkMode": "whiteOnBlack",
+        "paletteId": "cyberpunk_neon",
+        "templateDimension": "2D",
+        "templateGeometry": "square",
+        "volumeEnabled": false,
+        "volumeProfile": "round",
+        "vortex3d": 0
+      },
+      "entities": [
+        {
+          "enabled": true,
+          "force": {
+            "kind": "vortex",
+            "radius": 0.18,
+            "spin": 1.2000000000000002,
+            "strength": 1.5840000000000003
+          },
+          "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__sahasrara",
+          "kind": "formation",
+          "locked": false,
+          "name": "Sahasrara (Crown)",
+          "native": {
+            "chakraId": "sahasrara",
+            "enabled": true,
+            "forces": {
+              "mode": "vortex",
+              "radius": 72,
+              "spin": 1.2000000000000002,
+              "strength": 1.5840000000000003
+            },
+            "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__sahasrara",
+            "kind": "formation",
+            "name": "Sahasrara (Crown)",
+            "scale": 0.384,
+            "sequence": {
+              "advance": "off",
+              "easing": "smoothstep",
+              "hold": 1,
+              "impulse": 0.6,
+              "jitter": 0,
+              "links": [],
+              "order": "loop",
+              "phaseOffset": 0,
+              "rateMul": 1,
+              "transition": 2.2
+            },
+            "shape": {
+              "kind": "yantra",
+              "yantraId": "sahasrara"
+            },
+            "share": 1,
+            "stationIndex": 6,
+            "tint": "#ff77ff",
+            "tintWeight": 1,
+            "x": 0,
+            "y": 270,
+            "z": 0
+          },
+          "position": {
+            "x": 0,
+            "y": 0.675,
+            "z": 0
+          },
+          "rotation": 0,
+          "scale": 0.384,
+          "sequence": {
+            "advance": "off",
+            "clock": "seconds",
+            "easing": "smoothstep",
+            "enabled": false,
+            "hold": 1,
+            "impulse": 0.6,
+            "jitter": 0,
+            "links": [],
+            "manual": false,
+            "order": "loop",
+            "phaseOffset": 0,
+            "rateMul": 1,
+            "steps": [
+              {
+                "hold": 1,
+                "holdOverride": false,
+                "id": "ent_sahasrara_base",
+                "native": {
+                  "id": "ent_sahasrara_base",
+                  "shape": {
+                    "kind": "yantra",
+                    "yantraId": "sahasrara"
+                  }
+                },
+                "position": null,
+                "shape": "yantra",
+                "text": "",
+                "transition": 2.2,
+                "transitionOverride": false,
+                "yantraId": "sahasrara"
+              }
+            ],
+            "transition": 2.2
+          },
+          "shape": "yantra",
+          "share": 1,
+          "size": {
+            "x": 1,
+            "y": 1
+          },
+          "station": 6,
+          "text": "",
+          "tint": "#ff77ff",
+          "tintWeight": 1,
+          "yantraId": "sahasrara"
+        },
+        {
+          "enabled": true,
+          "force": {
+            "kind": "vortex",
+            "radius": 0.15750000000000003,
+            "spin": -1.2000000000000002,
+            "strength": 1.4400000000000002
+          },
+          "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__ajna",
+          "kind": "formation",
+          "locked": false,
+          "name": "Ajna (Third Eye)",
+          "native": {
+            "chakraId": "ajna",
+            "enabled": true,
+            "forces": {
+              "mode": "vortex",
+              "radius": 63.00000000000001,
+              "spin": -1.2000000000000002,
+              "strength": 1.4400000000000002
+            },
+            "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__ajna",
+            "kind": "formation",
+            "name": "Ajna (Third Eye)",
+            "scale": 0.336,
+            "sequence": {
+              "advance": "off",
+              "easing": "smoothstep",
+              "hold": 1,
+              "impulse": 0.6,
+              "jitter": 0,
+              "links": [],
+              "order": "loop",
+              "phaseOffset": 0,
+              "rateMul": 1,
+              "transition": 2.2
+            },
+            "shape": {
+              "kind": "yantra",
+              "yantraId": "ajna"
+            },
+            "share": 1,
+            "stationIndex": 5,
+            "tint": "#66a3ff",
+            "tintWeight": 1,
+            "x": 0,
+            "y": 180,
+            "z": 0
+          },
+          "position": {
+            "x": 0,
+            "y": 0.45,
+            "z": 0
+          },
+          "rotation": 0,
+          "scale": 0.336,
+          "sequence": {
+            "advance": "off",
+            "clock": "seconds",
+            "easing": "smoothstep",
+            "enabled": false,
+            "hold": 1,
+            "impulse": 0.6,
+            "jitter": 0,
+            "links": [],
+            "manual": false,
+            "order": "loop",
+            "phaseOffset": 0,
+            "rateMul": 1,
+            "steps": [
+              {
+                "hold": 1,
+                "holdOverride": false,
+                "id": "ent_ajna_base",
+                "native": {
+                  "id": "ent_ajna_base",
+                  "shape": {
+                    "kind": "yantra",
+                    "yantraId": "ajna"
+                  }
+                },
+                "position": null,
+                "shape": "yantra",
+                "text": "",
+                "transition": 2.2,
+                "transitionOverride": false,
+                "yantraId": "ajna"
+              }
+            ],
+            "transition": 2.2
+          },
+          "shape": "yantra",
+          "share": 1,
+          "size": {
+            "x": 1,
+            "y": 1
+          },
+          "station": 5,
+          "text": "",
+          "tint": "#66a3ff",
+          "tintWeight": 1,
+          "yantraId": "ajna"
+        },
+        {
+          "enabled": true,
+          "force": {
+            "kind": "vortex",
+            "radius": 0.15750000000000003,
+            "spin": 1.2000000000000002,
+            "strength": 1.2960000000000003
+          },
+          "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__vishuddha",
+          "kind": "formation",
+          "locked": false,
+          "name": "Vishuddha (Throat)",
+          "native": {
+            "chakraId": "vishuddha",
+            "enabled": true,
+            "forces": {
+              "mode": "vortex",
+              "radius": 63.00000000000001,
+              "spin": 1.2000000000000002,
+              "strength": 1.2960000000000003
+            },
+            "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__vishuddha",
+            "kind": "formation",
+            "name": "Vishuddha (Throat)",
+            "scale": 0.336,
+            "sequence": {
+              "advance": "off",
+              "easing": "smoothstep",
+              "hold": 1,
+              "impulse": 0.6,
+              "jitter": 0,
+              "links": [],
+              "order": "loop",
+              "phaseOffset": 0,
+              "rateMul": 1,
+              "transition": 2.2
+            },
+            "shape": {
+              "kind": "yantra",
+              "yantraId": "vishuddha"
+            },
+            "share": 1,
+            "stationIndex": 4,
+            "tint": "#00ffff",
+            "tintWeight": 1,
+            "x": 0,
+            "y": 90,
+            "z": 0
+          },
+          "position": {
+            "x": 0,
+            "y": 0.225,
+            "z": 0
+          },
+          "rotation": 0,
+          "scale": 0.336,
+          "sequence": {
+            "advance": "off",
+            "clock": "seconds",
+            "easing": "smoothstep",
+            "enabled": false,
+            "hold": 1,
+            "impulse": 0.6,
+            "jitter": 0,
+            "links": [],
+            "manual": false,
+            "order": "loop",
+            "phaseOffset": 0,
+            "rateMul": 1,
+            "steps": [
+              {
+                "hold": 1,
+                "holdOverride": false,
+                "id": "ent_vishuddha_base",
+                "native": {
+                  "id": "ent_vishuddha_base",
+                  "shape": {
+                    "kind": "yantra",
+                    "yantraId": "vishuddha"
+                  }
+                },
+                "position": null,
+                "shape": "yantra",
+                "text": "",
+                "transition": 2.2,
+                "transitionOverride": false,
+                "yantraId": "vishuddha"
+              }
+            ],
+            "transition": 2.2
+          },
+          "shape": "yantra",
+          "share": 1,
+          "size": {
+            "x": 1,
+            "y": 1
+          },
+          "station": 4,
+          "text": "",
+          "tint": "#00ffff",
+          "tintWeight": 1,
+          "yantraId": "vishuddha"
+        },
+        {
+          "enabled": true,
+          "force": {
+            "kind": "vortex",
+            "radius": 0.16875,
+            "spin": -1.2000000000000002,
+            "strength": 1.7280000000000002
+          },
+          "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__anahata",
+          "kind": "formation",
+          "locked": false,
+          "name": "Anahata (Heart)",
+          "native": {
+            "chakraId": "anahata",
+            "enabled": true,
+            "forces": {
+              "mode": "vortex",
+              "radius": 67.5,
+              "spin": -1.2000000000000002,
+              "strength": 1.7280000000000002
+            },
+            "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__anahata",
+            "kind": "formation",
+            "name": "Anahata (Heart)",
+            "scale": 0.36,
+            "sequence": {
+              "advance": "off",
+              "easing": "smoothstep",
+              "hold": 1,
+              "impulse": 0.6,
+              "jitter": 0,
+              "links": [],
+              "order": "loop",
+              "phaseOffset": 0,
+              "rateMul": 1,
+              "transition": 2.2
+            },
+            "shape": {
+              "kind": "yantra",
+              "yantraId": "anahata"
+            },
+            "share": 1,
+            "stationIndex": 3,
+            "tint": "#00ff99",
+            "tintWeight": 1,
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 0,
+          "scale": 0.36,
+          "sequence": {
+            "advance": "off",
+            "clock": "seconds",
+            "easing": "smoothstep",
+            "enabled": false,
+            "hold": 1,
+            "impulse": 0.6,
+            "jitter": 0,
+            "links": [],
+            "manual": false,
+            "order": "loop",
+            "phaseOffset": 0,
+            "rateMul": 1,
+            "steps": [
+              {
+                "hold": 1,
+                "holdOverride": false,
+                "id": "ent_anahata_base",
+                "native": {
+                  "id": "ent_anahata_base",
+                  "shape": {
+                    "kind": "yantra",
+                    "yantraId": "anahata"
+                  }
+                },
+                "position": null,
+                "shape": "yantra",
+                "text": "",
+                "transition": 2.2,
+                "transitionOverride": false,
+                "yantraId": "anahata"
+              }
+            ],
+            "transition": 2.2
+          },
+          "shape": "yantra",
+          "share": 1,
+          "size": {
+            "x": 1,
+            "y": 1
+          },
+          "station": 3,
+          "text": "",
+          "tint": "#00ff99",
+          "tintWeight": 1,
+          "yantraId": "anahata"
+        },
+        {
+          "enabled": true,
+          "force": {
+            "kind": "vortex",
+            "radius": 0.15750000000000003,
+            "spin": 1.2000000000000002,
+            "strength": 1.368
+          },
+          "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__manipura",
+          "kind": "formation",
+          "locked": false,
+          "name": "Manipura (Solar Plexus)",
+          "native": {
+            "chakraId": "manipura",
+            "enabled": true,
+            "forces": {
+              "mode": "vortex",
+              "radius": 63.00000000000001,
+              "spin": 1.2000000000000002,
+              "strength": 1.368
+            },
+            "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__manipura",
+            "kind": "formation",
+            "name": "Manipura (Solar Plexus)",
+            "scale": 0.336,
+            "sequence": {
+              "advance": "off",
+              "easing": "smoothstep",
+              "hold": 1,
+              "impulse": 0.6,
+              "jitter": 0,
+              "links": [],
+              "order": "loop",
+              "phaseOffset": 0,
+              "rateMul": 1,
+              "transition": 2.2
+            },
+            "shape": {
+              "kind": "yantra",
+              "yantraId": "manipura"
+            },
+            "share": 1,
+            "stationIndex": 2,
+            "tint": "#ffff00",
+            "tintWeight": 1,
+            "x": 0,
+            "y": -90,
+            "z": 0
+          },
+          "position": {
+            "x": 0,
+            "y": -0.225,
+            "z": 0
+          },
+          "rotation": 0,
+          "scale": 0.336,
+          "sequence": {
+            "advance": "off",
+            "clock": "seconds",
+            "easing": "smoothstep",
+            "enabled": false,
+            "hold": 1,
+            "impulse": 0.6,
+            "jitter": 0,
+            "links": [],
+            "manual": false,
+            "order": "loop",
+            "phaseOffset": 0,
+            "rateMul": 1,
+            "steps": [
+              {
+                "hold": 1,
+                "holdOverride": false,
+                "id": "ent_manipura_base",
+                "native": {
+                  "id": "ent_manipura_base",
+                  "shape": {
+                    "kind": "yantra",
+                    "yantraId": "manipura"
+                  }
+                },
+                "position": null,
+                "shape": "yantra",
+                "text": "",
+                "transition": 2.2,
+                "transitionOverride": false,
+                "yantraId": "manipura"
+              }
+            ],
+            "transition": 2.2
+          },
+          "shape": "yantra",
+          "share": 1,
+          "size": {
+            "x": 1,
+            "y": 1
+          },
+          "station": 2,
+          "text": "",
+          "tint": "#ffff00",
+          "tintWeight": 1,
+          "yantraId": "manipura"
+        },
+        {
+          "enabled": true,
+          "force": {
+            "kind": "vortex",
+            "radius": 0.15750000000000003,
+            "spin": -1.2000000000000002,
+            "strength": 1.2960000000000003
+          },
+          "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__svadhisthana",
+          "kind": "formation",
+          "locked": false,
+          "name": "Svadhisthana (Sacral)",
+          "native": {
+            "chakraId": "svadhisthana",
+            "enabled": true,
+            "forces": {
+              "mode": "vortex",
+              "radius": 63.00000000000001,
+              "spin": -1.2000000000000002,
+              "strength": 1.2960000000000003
+            },
+            "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__svadhisthana",
+            "kind": "formation",
+            "name": "Svadhisthana (Sacral)",
+            "scale": 0.336,
+            "sequence": {
+              "advance": "off",
+              "easing": "smoothstep",
+              "hold": 1,
+              "impulse": 0.6,
+              "jitter": 0,
+              "links": [],
+              "order": "loop",
+              "phaseOffset": 0,
+              "rateMul": 1,
+              "transition": 2.2
+            },
+            "shape": {
+              "kind": "yantra",
+              "yantraId": "svadhisthana"
+            },
+            "share": 1,
+            "stationIndex": 1,
+            "tint": "#ff8800",
+            "tintWeight": 1,
+            "x": 0,
+            "y": -180,
+            "z": 0
+          },
+          "position": {
+            "x": 0,
+            "y": -0.45,
+            "z": 0
+          },
+          "rotation": 0,
+          "scale": 0.336,
+          "sequence": {
+            "advance": "off",
+            "clock": "seconds",
+            "easing": "smoothstep",
+            "enabled": false,
+            "hold": 1,
+            "impulse": 0.6,
+            "jitter": 0,
+            "links": [],
+            "manual": false,
+            "order": "loop",
+            "phaseOffset": 0,
+            "rateMul": 1,
+            "steps": [
+              {
+                "hold": 1,
+                "holdOverride": false,
+                "id": "ent_svadhisthana_base",
+                "native": {
+                  "id": "ent_svadhisthana_base",
+                  "shape": {
+                    "kind": "yantra",
+                    "yantraId": "svadhisthana"
+                  }
+                },
+                "position": null,
+                "shape": "yantra",
+                "text": "",
+                "transition": 2.2,
+                "transitionOverride": false,
+                "yantraId": "svadhisthana"
+              }
+            ],
+            "transition": 2.2
+          },
+          "shape": "yantra",
+          "share": 1,
+          "size": {
+            "x": 1,
+            "y": 1
+          },
+          "station": 1,
+          "text": "",
+          "tint": "#ff8800",
+          "tintWeight": 1,
+          "yantraId": "svadhisthana"
+        },
+        {
+          "enabled": true,
+          "force": {
+            "kind": "repel",
+            "radius": 0.16875,
+            "spin": 1.2000000000000002,
+            "strength": 1.5840000000000003
+          },
+          "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__muladhara",
+          "kind": "formation",
+          "locked": false,
+          "name": "Muladhara (Root)",
+          "native": {
+            "chakraId": "muladhara",
+            "enabled": true,
+            "forces": {
+              "mode": "vortex",
+              "radius": 67.5,
+              "spin": 1.2000000000000002,
+              "strength": 1.5840000000000003
+            },
+            "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__muladhara",
+            "kind": "formation",
+            "name": "Muladhara (Root)",
+            "scale": 0.36,
+            "sequence": {
+              "advance": "off",
+              "easing": "smoothstep",
+              "hold": 1,
+              "impulse": 0.6,
+              "jitter": 0,
+              "links": [],
+              "order": "loop",
+              "phaseOffset": 0,
+              "rateMul": 1,
+              "transition": 2.2
+            },
+            "shape": {
+              "kind": "yantra",
+              "yantraId": "muladhara"
+            },
+            "share": 1,
+            "stationIndex": 0,
+            "tint": "#ff2255",
+            "tintWeight": 1,
+            "x": 0,
+            "y": -270,
+            "z": 0,
+            "extent": {
+              "width": 392.53078376371366,
+              "height": 407.611343155988,
+              "rotation": 0,
+              "normalized": true
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": -0.675,
+            "z": 0
+          },
+          "rotation": 0,
+          "scale": 0.36,
+          "sequence": {
+            "advance": "off",
+            "clock": "seconds",
+            "easing": "smoothstep",
+            "enabled": false,
+            "hold": 1,
+            "impulse": 0.6,
+            "jitter": 0,
+            "links": [],
+            "manual": false,
+            "order": "loop",
+            "phaseOffset": 0,
+            "rateMul": 1,
+            "steps": [
+              {
+                "hold": 1,
+                "holdOverride": false,
+                "id": "ent_muladhara_base",
+                "native": {
+                  "id": "ent_muladhara_base",
+                  "shape": {
+                    "kind": "yantra",
+                    "yantraId": "muladhara"
+                  }
+                },
+                "position": null,
+                "shape": "yantra",
+                "text": "",
+                "transition": 2.2,
+                "transitionOverride": false,
+                "yantraId": "muladhara",
+                "objectState": {
+                  "normalized": false,
+                  "size": {
+                    "x": 1,
+                    "y": 1
+                  },
+                  "rotation": 0,
+                  "scale": 0.36,
+                  "tint": "#ff2255",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "repel",
+                    "radius": 0.16875,
+                    "spin": 1.2000000000000002,
+                    "strength": 1.5840000000000003
+                  }
+                }
+              },
+              {
+                "id": "step-2e77d775-974f-462c-81eb-2897dfeb54b6",
+                "text": "o",
+                "shape": "text",
+                "layers": [],
+                "hold": 1,
+                "transition": 2.2,
+                "position": null,
+                "objectState": {
+                  "normalized": true,
+                  "size": {
+                    "x": 0.997230559881121,
+                    "y": 1.002777131217488
+                  },
+                  "rotation": 0,
+                  "scale": 0.36,
+                  "tint": "#7e77f1",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "repel",
+                    "radius": 0.16875,
+                    "spin": 1.2000000000000002,
+                    "strength": 1.5840000000000003
+                  }
+                }
+              }
+            ],
+            "transition": 2.2,
+            "sourcesVersion": 1
+          },
+          "shape": "text",
+          "share": 1,
+          "size": {
+            "x": 0.997230559881121,
+            "y": 1.002777131217488
+          },
+          "station": 0,
+          "text": "o",
+          "tint": "#7e77f1",
+          "tintWeight": 1,
+          "layers": []
+        },
+        {
+          "force": {
+            "kind": "none",
+            "radius": 0.45,
+            "spin": 0,
+            "strength": 0
+          },
+          "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:occurrence-69d2da76-dcc3-4f49-8a4d-cc812fe32e84",
+          "kind": "formation",
+          "locked": false,
+          "name": "Planet Earth",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 0,
+          "scale": 1,
+          "sequence": {
+            "clock": "seconds",
+            "enabled": false,
+            "steps": [
+              {
+                "hold": 3,
+                "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:occurrence-69d2da76-dcc3-4f49-8a4d-cc812fe32e84",
+                "position": null,
+                "shape": "disc",
+                "text": "●",
+                "transition": 1
+              }
+            ]
+          },
+          "shape": "disc",
+          "share": 1,
+          "size": {
+            "x": 0.65,
+            "y": 0.86
+          },
+          "station": null,
+          "text": "●",
+          "tint": "#252720",
+          "tintWeight": 0
+        }
+      ],
+      "field": {
+        "background": "#0a0515",
+        "material": "ink",
+        "palette": [
+          "#ff1744",
+          "#b388ff",
+          "#00e676"
+        ],
+        "params": {
+          "circulation": 1.6,
+          "contrast": 0.93,
+          "count": 200000,
+          "curlDepth": 0.57,
+          "densityPhase": 0.3,
+          "densityScale": 1,
+          "densityTether": 1,
+          "depth": 1,
+          "dispersion": 0.6,
+          "dominance": 1,
+          "edgeWeight": 0,
+          "elongation": 0.04,
+          "excitation": 1,
+          "frequency": 396,
+          "grain": 0,
+          "gravityFalloff": 1.45,
+          "gravitySoftening": 0.1125,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "halo": 0.13,
+          "irregularity": 0.35,
+          "native_backgroundGlowIntensity": 0.4,
+          "native_collision__band": 40,
+          "native_collision__friction": 0.1,
+          "native_collision__integrity": 0.5,
+          "native_collision__restitution": 0.35,
+          "native_collision__strength": 4,
+          "native_color__angle": 90,
+          "native_color__contrast": 1.2,
+          "native_color__cycleSpeed": 0.8,
+          "native_color__densityWeight": 0.5,
+          "native_color__fieldCenterOffset__0": 0,
+          "native_color__fieldCenterOffset__1": 0,
+          "native_color__hueShiftSpeed": 0.05,
+          "native_color__speedReactiveIntensity": 1,
+          "native_color__turbulenceModulation": 0.3,
+          "native_color__waveFrequency": 1.5,
+          "native_composition__entityTintWeight": 0.85,
+          "native_composition__orchestration__focusTintWeight": 0.35,
+          "native_cymatics__agitation": 0.3,
+          "native_cymatics__baseFrequency": 40,
+          "native_cymatics__boundaryStrength": 6,
+          "native_cymatics__dampingQFactor": 4.5,
+          "native_cymatics__driveScale": 1,
+          "native_cymatics__modeCount": 64,
+          "native_cymatics__plateSize": 700,
+          "native_cymatics__sweepSpeed": 8,
+          "native_cymatics__sweep__glideS": 8,
+          "native_cymatics__transportGain": 1,
+          "native_depth__aerialFade": 0.55,
+          "native_depth__aerialRange": 2.2,
+          "native_depth__depthTintWeight": 0,
+          "native_depth__distance": 800,
+          "native_depth__fov": 38,
+          "native_depth__sizeAttenuation": 1,
+          "native_depth__sizeAttenuationCurve": 1,
+          "native_depth__sizeDepthBias": 0,
+          "native_fluid__viscosity": 0.98,
+          "native_glyphVolume__densityDepth": 0.35,
+          "native_glyphVolume__depth": 90,
+          "native_glyphVolume__faceBias": 0.55,
+          "native_glyphVolume__interiorFill": 0.25,
+          "native_glyphVolume__jitter": 2,
+          "native_glyphVolume__outsideTaper": 0.6,
+          "native_glyphVolume__referenceFalloff": 1,
+          "native_glyphVolume__surfaceThickness": 6,
+          "native_glyphVolume__wallBand": 42,
+          "native_glyphVolume__wallShare": 0.34,
+          "native_interaction__velocityInfluence": 1,
+          "native_medium__coupling": 0.8,
+          "native_medium__extent": 1400,
+          "native_medium__gridRes": 192,
+          "native_medium__iterations": 4,
+          "native_medium__persistence": 0.97,
+          "native_medium__pressure": 4,
+          "native_medium__splatGain": 1,
+          "native_morphProgress": 0,
+          "native_pairwise__extent": 1400,
+          "native_pairwise__radius": 2.2,
+          "native_pairwise__restitution": 0.12,
+          "native_pairwise__stiffness": 1,
+          "native_pairwise__viscosity": 0.06,
+          "native_particleSize__min": 1.2,
+          "native_relational__attractorCount": 3,
+          "native_relational__attractorGravity": 1.6,
+          "native_relational__chaosFactor": 0.2,
+          "native_relational__orbitRadius": 240,
+          "native_relational__orbitSpeed": 0.8,
+          "native_relational__relationalSpin": 1.4,
+          "native_relational__wanderSpeed": 0.5,
+          "native_toroidalMorph__breathDepth": 0.35,
+          "native_toroidalMorph__breathRate": 0.35,
+          "native_toroidalMorph__chiralCoupling": 0.75,
+          "native_toroidalMorph__fiberPhaseOffset": 0,
+          "native_toroidalMorph__manifoldRadius": 180,
+          "native_toroidalMorph__oscillationAmplitude": 1.2,
+          "native_toroidalMorph__poloidalWinding": 2,
+          "native_toroidalMorph__toroidalWinding": 3,
+          "opacity": 0.92,
+          "orientation": 0,
+          "pointerFalloff": 2,
+          "pointerRadius": 0.45,
+          "pointerStrength": 1.2,
+          "quadraticDrag": 0,
+          "recovery": 11.1,
+          "roundness": 0.95,
+          "size": 3.6,
+          "sizeBias": 1.6,
+          "snapRigidity": 1,
+          "softness": 0.15,
+          "speed": 0.6,
+          "speedLimit": 87.5,
+          "swirlRadius": 1.25,
+          "thermalJitter": 0,
+          "timeScale": 1,
+          "turbulence": 0.9,
+          "turbulenceScale": 1.4,
+          "vortexRadius": 1.125,
+          "zConfinement": 1
+        }
+      },
+      "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:scene:main",
+      "morph": {
+        "depth": 1,
+        "dwell": 0,
+        "law": "theta",
+        "phiOffset": 0,
+        "phiRate": 0.35,
+        "thetaOffset": 0,
+        "thetaRate": 0.8
+      },
+      "name": "Chakral Body — 7 Subtle Centers Constellation",
+      "native": {
+        "config": {
+          "autoMorph": false,
+          "autoMorphDuration": 4,
+          "automations": [],
+          "backgroundColor": "#0a0515",
+          "backgroundGlowIntensity": 0.4,
+          "backgroundMode": "ambientGlow",
+          "chaining": {
+            "advance": "time",
+            "chain": [
+              "▲",
+              "■",
+              "⬟",
+              "⬢",
+              "⯎",
+              "◉"
+            ],
+            "disperseImpulse": 0.8,
+            "easing": "smoothstep",
+            "enabled": false,
+            "mode": "loop",
+            "paused": false,
+            "stepHoldDuration": 1,
+            "timingJitter": 0.15,
+            "transitionDuration": 2.2
+          },
+          "collision": {
+            "band": 40,
+            "enabled": false,
+            "friction": 0.1,
+            "integrity": 0.5,
+            "mode": "obstacle",
+            "restitution": 0.35,
+            "strength": 4
+          },
+          "color": {
+            "accentColor": "#b388ff",
+            "angle": 90,
+            "backgroundColor": "#0a0515",
+            "backgroundGlowIntensity": 0.4,
+            "backgroundMode": "ambientGlow",
+            "contrast": 1.2,
+            "cycleSpeed": 0.8,
+            "densityWeight": 0.5,
+            "enabled": true,
+            "fieldCenterOffset": [
+              0,
+              0
+            ],
+            "hueShiftSpeed": 0.05,
+            "mode": "linearGradient",
+            "paletteId": "cyberpunk_neon",
+            "primaryColor": "#ff1744",
+            "secondaryColor": "#00e676",
+            "speedReactiveIntensity": 1,
+            "turbulenceModulation": 0.3,
+            "waveFrequency": 1.5
+          },
+          "colorMode": "whiteOnBlack",
+          "composition": {
+            "entityTintWeight": 0.85,
+            "layoutName": "Chakra Body",
+            "orchestration": {
+              "dwell": 1.2,
+              "focusTintWeight": 0.35,
+              "followStation": true,
+              "glide": 2.4,
+              "mode": "parallel",
+              "order": "listed"
+            },
+            "plane": "vertical"
+          },
+          "cymatics": {
+            "agitation": 0.3,
+            "autoSweep": false,
+            "baseFrequency": 40,
+            "boundaryStrength": 6,
+            "chaosIntensity": 1.4,
+            "dampingQFactor": 4.5,
+            "dimension": "2D",
+            "dominance": 1,
+            "driveScale": 1,
+            "driveStrength": 1,
+            "enabled": false,
+            "engine": "resonator",
+            "followFocus": true,
+            "frequencyHz": 396,
+            "modeCount": 64,
+            "nodalAttraction": 2.8,
+            "plateGeometry": "square",
+            "plateSize": 700,
+            "sweepSpeed": 8,
+            "transportGain": 1
+          },
+          "depth": {
+            "aerialFade": 0.55,
+            "aerialRange": 2.2,
+            "depthTintColor": "#101018",
+            "depthTintWeight": 0,
+            "distance": 800,
+            "fov": 38,
+            "occlusion": false,
+            "projection": "orthographic",
+            "sizeAttenuation": 1,
+            "sizeAttenuationCurve": 1,
+            "sizeDepthBias": 0
+          },
+          "dotShape": "circle",
+          "entities": [
+            {
+              "chakraId": "sahasrara",
+              "enabled": true,
+              "forces": {
+                "mode": "vortex",
+                "radius": 72,
+                "spin": 1.2000000000000002,
+                "strength": 1.5840000000000003
+              },
+              "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__sahasrara",
+              "kind": "formation",
+              "name": "Sahasrara (Crown)",
+              "scale": 0.384,
+              "sequence": {
+                "advance": "off",
+                "easing": "smoothstep",
+                "hold": 1,
+                "impulse": 0.6,
+                "jitter": 0,
+                "links": [],
+                "order": "loop",
+                "phaseOffset": 0,
+                "rateMul": 1,
+                "transition": 2.2
+              },
+              "shape": {
+                "kind": "yantra",
+                "yantraId": "sahasrara"
+              },
+              "share": 1,
+              "stationIndex": 6,
+              "tint": "#ff77ff",
+              "tintWeight": 1,
+              "x": 0,
+              "y": 270,
+              "z": 0
+            },
+            {
+              "chakraId": "ajna",
+              "enabled": true,
+              "forces": {
+                "mode": "vortex",
+                "radius": 63.00000000000001,
+                "spin": -1.2000000000000002,
+                "strength": 1.4400000000000002
+              },
+              "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__ajna",
+              "kind": "formation",
+              "name": "Ajna (Third Eye)",
+              "scale": 0.336,
+              "sequence": {
+                "advance": "off",
+                "easing": "smoothstep",
+                "hold": 1,
+                "impulse": 0.6,
+                "jitter": 0,
+                "links": [],
+                "order": "loop",
+                "phaseOffset": 0,
+                "rateMul": 1,
+                "transition": 2.2
+              },
+              "shape": {
+                "kind": "yantra",
+                "yantraId": "ajna"
+              },
+              "share": 1,
+              "stationIndex": 5,
+              "tint": "#66a3ff",
+              "tintWeight": 1,
+              "x": 0,
+              "y": 180,
+              "z": 0
+            },
+            {
+              "chakraId": "vishuddha",
+              "enabled": true,
+              "forces": {
+                "mode": "vortex",
+                "radius": 63.00000000000001,
+                "spin": 1.2000000000000002,
+                "strength": 1.2960000000000003
+              },
+              "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__vishuddha",
+              "kind": "formation",
+              "name": "Vishuddha (Throat)",
+              "scale": 0.336,
+              "sequence": {
+                "advance": "off",
+                "easing": "smoothstep",
+                "hold": 1,
+                "impulse": 0.6,
+                "jitter": 0,
+                "links": [],
+                "order": "loop",
+                "phaseOffset": 0,
+                "rateMul": 1,
+                "transition": 2.2
+              },
+              "shape": {
+                "kind": "yantra",
+                "yantraId": "vishuddha"
+              },
+              "share": 1,
+              "stationIndex": 4,
+              "tint": "#00ffff",
+              "tintWeight": 1,
+              "x": 0,
+              "y": 90,
+              "z": 0
+            },
+            {
+              "chakraId": "anahata",
+              "enabled": true,
+              "forces": {
+                "mode": "vortex",
+                "radius": 67.5,
+                "spin": -1.2000000000000002,
+                "strength": 1.7280000000000002
+              },
+              "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__anahata",
+              "kind": "formation",
+              "name": "Anahata (Heart)",
+              "scale": 0.36,
+              "sequence": {
+                "advance": "off",
+                "easing": "smoothstep",
+                "hold": 1,
+                "impulse": 0.6,
+                "jitter": 0,
+                "links": [],
+                "order": "loop",
+                "phaseOffset": 0,
+                "rateMul": 1,
+                "transition": 2.2
+              },
+              "shape": {
+                "kind": "yantra",
+                "yantraId": "anahata"
+              },
+              "share": 1,
+              "stationIndex": 3,
+              "tint": "#00ff99",
+              "tintWeight": 1,
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            {
+              "chakraId": "manipura",
+              "enabled": true,
+              "forces": {
+                "mode": "vortex",
+                "radius": 63.00000000000001,
+                "spin": 1.2000000000000002,
+                "strength": 1.368
+              },
+              "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__manipura",
+              "kind": "formation",
+              "name": "Manipura (Solar Plexus)",
+              "scale": 0.336,
+              "sequence": {
+                "advance": "off",
+                "easing": "smoothstep",
+                "hold": 1,
+                "impulse": 0.6,
+                "jitter": 0,
+                "links": [],
+                "order": "loop",
+                "phaseOffset": 0,
+                "rateMul": 1,
+                "transition": 2.2
+              },
+              "shape": {
+                "kind": "yantra",
+                "yantraId": "manipura"
+              },
+              "share": 1,
+              "stationIndex": 2,
+              "tint": "#ffff00",
+              "tintWeight": 1,
+              "x": 0,
+              "y": -90,
+              "z": 0
+            },
+            {
+              "chakraId": "svadhisthana",
+              "enabled": true,
+              "forces": {
+                "mode": "vortex",
+                "radius": 63.00000000000001,
+                "spin": -1.2000000000000002,
+                "strength": 1.2960000000000003
+              },
+              "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__svadhisthana",
+              "kind": "formation",
+              "name": "Svadhisthana (Sacral)",
+              "scale": 0.336,
+              "sequence": {
+                "advance": "off",
+                "easing": "smoothstep",
+                "hold": 1,
+                "impulse": 0.6,
+                "jitter": 0,
+                "links": [],
+                "order": "loop",
+                "phaseOffset": 0,
+                "rateMul": 1,
+                "transition": 2.2
+              },
+              "shape": {
+                "kind": "yantra",
+                "yantraId": "svadhisthana"
+              },
+              "share": 1,
+              "stationIndex": 1,
+              "tint": "#ff8800",
+              "tintWeight": 1,
+              "x": 0,
+              "y": -180,
+              "z": 0
+            },
+            {
+              "chakraId": "muladhara",
+              "enabled": true,
+              "forces": {
+                "mode": "vortex",
+                "radius": 67.5,
+                "spin": 1.2000000000000002,
+                "strength": 1.5840000000000003
+              },
+              "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__muladhara",
+              "kind": "formation",
+              "name": "Muladhara (Root)",
+              "scale": 0.36,
+              "sequence": {
+                "advance": "off",
+                "easing": "smoothstep",
+                "hold": 1,
+                "impulse": 0.6,
+                "jitter": 0,
+                "links": [],
+                "order": "loop",
+                "phaseOffset": 0,
+                "rateMul": 1,
+                "transition": 2.2
+              },
+              "shape": {
+                "kind": "yantra",
+                "yantraId": "muladhara"
+              },
+              "share": 1,
+              "stationIndex": 0,
+              "tint": "#ff2255",
+              "tintWeight": 1,
+              "x": 0,
+              "y": -270,
+              "z": 0
+            }
+          ],
+          "fluid": {
+            "curlDepth": 0.57,
+            "curlScale": 1.4,
+            "curlSpeed": 0.6,
+            "densityTether": 1,
+            "dispersion": 0.6,
+            "dispersion3d": 0,
+            "gravityX": 0,
+            "gravityY": 0,
+            "gravityZ": 0,
+            "maxSpeed": 35000,
+            "quadraticDrag": 0,
+            "returnSpeed": 1.3,
+            "snapRigidity": 1,
+            "thermalJitter": 0,
+            "timeScale": 1,
+            "turbulence": 0.9,
+            "viscosity": 0.95,
+            "vortex3d": 0,
+            "vortexRadius": 450,
+            "vortexStrength": 1.6,
+            "zConfinement": 1
+          },
+          "fontFamily": "system-ui, -apple-system, sans-serif",
+          "fontWeight": 900,
+          "glyph": [
+            "O",
+            "I"
+          ],
+          "glyphVolume": {
+            "densityDepth": 0.35,
+            "depth": 90,
+            "enabled": false,
+            "faceBias": 0.55,
+            "interiorFill": 0.25,
+            "jitter": 2,
+            "outsideTaper": 0.6,
+            "profile": "round",
+            "referenceFalloff": 1,
+            "surfaceThickness": 6,
+            "wallBand": 42,
+            "wallShare": 0.34
+          },
+          "interaction": {
+            "falloffPower": 2,
+            "mode": "repel",
+            "placedPoints": [],
+            "radius": 180,
+            "strength": 1.2,
+            "velocityInfluence": 1
+          },
+          "medium": {
+            "coupling": 0.8,
+            "dimension": "2D",
+            "enabled": false,
+            "extent": 1400,
+            "gridRes": 192,
+            "iterations": 4,
+            "persistence": 0.97,
+            "plane": "compositionPlane",
+            "pressure": 4,
+            "splatGain": 1
+          },
+          "morphProgress": 0,
+          "pairwise": {
+            "enabled": false,
+            "extent": 1400,
+            "radius": 2.2,
+            "restitution": 0.12,
+            "stiffness": 1,
+            "viscosity": 0.06
+          },
+          "particleCount": 200000,
+          "particleSize": {
+            "max": 3.6,
+            "min": 1.2
+          },
+          "positioning": "absolute",
+          "relational": {
+            "attractorCount": 3,
+            "attractorGravity": 1.6,
+            "chaosFactor": 0.2,
+            "enabled": false,
+            "gravityFalloff": 1.45,
+            "gravitySoftening": 45,
+            "mode": "orbital",
+            "orbitRadius": 240,
+            "orbitSpeed": 0.8,
+            "relationalSpin": 1.4,
+            "swirlRadius": 500,
+            "wanderSpeed": 0.5
+          },
+          "resonanceDrive": {
+            "kind": "semanticFocus",
+            "profileId": "chakra-seven-v1"
+          },
+          "semanticField": {
+            "affinity": {
+              "bandwidth": 0.14,
+              "method": "modalProjection"
+            },
+            "bindings": [
+              {
+                "carriers": [
+                  {
+                    "id": "ent_sahasrara",
+                    "kind": "entity"
+                  }
+                ],
+                "color": {
+                  "activation": "constant",
+                  "blend": "weighted",
+                  "colorSource": "canonical",
+                  "enabled": false,
+                  "falloff": "gaussian",
+                  "gain": 1,
+                  "metric": "compositionPlane",
+                  "radius": {
+                    "source": "force"
+                  }
+                },
+                "enabled": true,
+                "id": "semantic_sahasrara_ent_sahasrara",
+                "resonance": {
+                  "gain": 1
+                },
+                "semanticNodeId": "sahasrara"
+              },
+              {
+                "carriers": [
+                  {
+                    "id": "ent_ajna",
+                    "kind": "entity"
+                  }
+                ],
+                "color": {
+                  "activation": "constant",
+                  "blend": "weighted",
+                  "colorSource": "canonical",
+                  "enabled": false,
+                  "falloff": "gaussian",
+                  "gain": 1,
+                  "metric": "compositionPlane",
+                  "radius": {
+                    "source": "force"
+                  }
+                },
+                "enabled": true,
+                "id": "semantic_ajna_ent_ajna",
+                "resonance": {
+                  "gain": 1
+                },
+                "semanticNodeId": "ajna"
+              },
+              {
+                "carriers": [
+                  {
+                    "id": "ent_vishuddha",
+                    "kind": "entity"
+                  }
+                ],
+                "color": {
+                  "activation": "constant",
+                  "blend": "weighted",
+                  "colorSource": "canonical",
+                  "enabled": false,
+                  "falloff": "gaussian",
+                  "gain": 1,
+                  "metric": "compositionPlane",
+                  "radius": {
+                    "source": "force"
+                  }
+                },
+                "enabled": true,
+                "id": "semantic_vishuddha_ent_vishuddha",
+                "resonance": {
+                  "gain": 1
+                },
+                "semanticNodeId": "vishuddha"
+              },
+              {
+                "carriers": [
+                  {
+                    "id": "ent_anahata",
+                    "kind": "entity"
+                  }
+                ],
+                "color": {
+                  "activation": "constant",
+                  "blend": "weighted",
+                  "colorSource": "canonical",
+                  "enabled": false,
+                  "falloff": "gaussian",
+                  "gain": 1,
+                  "metric": "compositionPlane",
+                  "radius": {
+                    "source": "force"
+                  }
+                },
+                "enabled": true,
+                "id": "semantic_anahata_ent_anahata",
+                "resonance": {
+                  "gain": 1
+                },
+                "semanticNodeId": "anahata"
+              },
+              {
+                "carriers": [
+                  {
+                    "id": "ent_manipura",
+                    "kind": "entity"
+                  }
+                ],
+                "color": {
+                  "activation": "constant",
+                  "blend": "weighted",
+                  "colorSource": "canonical",
+                  "enabled": false,
+                  "falloff": "gaussian",
+                  "gain": 1,
+                  "metric": "compositionPlane",
+                  "radius": {
+                    "source": "force"
+                  }
+                },
+                "enabled": true,
+                "id": "semantic_manipura_ent_manipura",
+                "resonance": {
+                  "gain": 1
+                },
+                "semanticNodeId": "manipura"
+              },
+              {
+                "carriers": [
+                  {
+                    "id": "ent_svadhisthana",
+                    "kind": "entity"
+                  }
+                ],
+                "color": {
+                  "activation": "constant",
+                  "blend": "weighted",
+                  "colorSource": "canonical",
+                  "enabled": false,
+                  "falloff": "gaussian",
+                  "gain": 1,
+                  "metric": "compositionPlane",
+                  "radius": {
+                    "source": "force"
+                  }
+                },
+                "enabled": true,
+                "id": "semantic_svadhisthana_ent_svadhisthana",
+                "resonance": {
+                  "gain": 1
+                },
+                "semanticNodeId": "svadhisthana"
+              },
+              {
+                "carriers": [
+                  {
+                    "id": "ent_muladhara",
+                    "kind": "entity"
+                  }
+                ],
+                "color": {
+                  "activation": "constant",
+                  "blend": "weighted",
+                  "colorSource": "canonical",
+                  "enabled": false,
+                  "falloff": "gaussian",
+                  "gain": 1,
+                  "metric": "compositionPlane",
+                  "radius": {
+                    "source": "force"
+                  }
+                },
+                "enabled": true,
+                "id": "semantic_muladhara_ent_muladhara",
+                "resonance": {
+                  "gain": 1
+                },
+                "semanticNodeId": "muladhara"
+              }
+            ],
+            "enabled": true,
+            "globalColorGain": 1,
+            "profile": {
+              "kind": "chakra",
+              "profileId": "chakra-seven-v1"
+            }
+          },
+          "spatialChakra": {
+            "activeNodeIndex": 6,
+            "attractorInfluence": 1.8,
+            "autoCycle": true,
+            "cycleDirection": "ascent",
+            "cymatics": {
+              "agitation": 0.3,
+              "autoSweep": false,
+              "baseFrequency": 40,
+              "boundaryStrength": 6,
+              "chaosIntensity": 1.4,
+              "dampingQFactor": 4.5,
+              "dimension": "2D",
+              "driveScale": 1,
+              "driveStrength": 1,
+              "engine": "resonator",
+              "frequencyHz": 396,
+              "modeCount": 64,
+              "nodalAttraction": 2.8,
+              "plateGeometry": "square",
+              "plateSize": 700,
+              "sweep": {
+                "direction": "ascent",
+                "dwellS": 2,
+                "enabled": false,
+                "glideS": 3.5
+              },
+              "sweepSpeed": 8,
+              "transportGain": 1
+            },
+            "enabled": true,
+            "geometryMode": "yantra",
+            "glyphType": "both",
+            "holdDuration": 1.2,
+            "nodes": [
+              {
+                "active": true,
+                "attractorStrength": 2.2,
+                "color": "#ff77ff",
+                "element": "Cosmic Spirit (Akasha)",
+                "englishTitle": "Crown / Pure Consciousness",
+                "frequencyHz": 963,
+                "id": "sahasrara",
+                "name": "Sahasrara (Crown)",
+                "sanskrit": "सहस्रार",
+                "scale": 0.16,
+                "seedSyllable": "ॐ",
+                "symbol": "☸",
+                "x": 0,
+                "y": -270
+              },
+              {
+                "active": true,
+                "attractorStrength": 2,
+                "color": "#66a3ff",
+                "element": "Light (Prakasha)",
+                "englishTitle": "Third Eye / Intuition",
+                "frequencyHz": 852,
+                "id": "ajna",
+                "name": "Ajna (Third Eye)",
+                "sanskrit": "आज्ञा",
+                "scale": 0.14,
+                "seedSyllable": "ॐ",
+                "symbol": "👁",
+                "x": 0,
+                "y": -180
+              },
+              {
+                "active": true,
+                "attractorStrength": 1.8,
+                "color": "#00ffff",
+                "element": "Ether / Sound (Akasha)",
+                "englishTitle": "Throat / Expression",
+                "frequencyHz": 741,
+                "id": "vishuddha",
+                "name": "Vishuddha (Throat)",
+                "sanskrit": "विशुद्ध",
+                "scale": 0.14,
+                "seedSyllable": "हं",
+                "symbol": "◯",
+                "x": 0,
+                "y": -90
+              },
+              {
+                "active": true,
+                "attractorStrength": 2.4,
+                "color": "#00ff99",
+                "element": "Air (Vayu)",
+                "englishTitle": "Heart / Compassion",
+                "frequencyHz": 639,
+                "id": "anahata",
+                "name": "Anahata (Heart)",
+                "sanskrit": "अनाहत",
+                "scale": 0.15,
+                "seedSyllable": "यं",
+                "symbol": "✡",
+                "x": 0,
+                "y": 0
+              },
+              {
+                "active": true,
+                "attractorStrength": 1.9,
+                "color": "#ffff00",
+                "element": "Fire (Tejas)",
+                "englishTitle": "Solar Plexus / Willpower",
+                "frequencyHz": 528,
+                "id": "manipura",
+                "name": "Manipura (Solar Plexus)",
+                "sanskrit": "मणिपूर",
+                "scale": 0.14,
+                "seedSyllable": "रं",
+                "symbol": "▽",
+                "x": 0,
+                "y": 90
+              },
+              {
+                "active": true,
+                "attractorStrength": 1.8,
+                "color": "#ff8800",
+                "element": "Water (Apas)",
+                "englishTitle": "Sacral / Fluid Creativity",
+                "frequencyHz": 417,
+                "id": "svadhisthana",
+                "name": "Svadhisthana (Sacral)",
+                "sanskrit": "स्वाधिष्ठान",
+                "scale": 0.14,
+                "seedSyllable": "वं",
+                "symbol": "☽",
+                "x": 0,
+                "y": 180
+              },
+              {
+                "active": true,
+                "attractorStrength": 2.2,
+                "color": "#ff2255",
+                "element": "Earth (Prithvi)",
+                "englishTitle": "Root / Grounded Foundation",
+                "frequencyHz": 396,
+                "id": "muladhara",
+                "name": "Muladhara (Root)",
+                "sanskrit": "मूलाधार",
+                "scale": 0.15,
+                "seedSyllable": "लं",
+                "symbol": "🪷",
+                "x": 0,
+                "y": 270
+              }
+            ],
+            "particlePartitionSpread": 0.9,
+            "plane": "horizontal",
+            "playbackMode": "simultaneousBody",
+            "transitionDuration": 2.4,
+            "vortexStrength": 1.6
+          },
+          "style": "stipple",
+          "toroidalMorph": {
+            "autoOscillate": true,
+            "breathDepth": 0.35,
+            "breathRate": 0.35,
+            "chiralCoupling": 0.75,
+            "driveDepth": 1,
+            "driveShape": "sine",
+            "enabled": false,
+            "fiberPhaseOffset": 0,
+            "holdRatio": 0,
+            "interference": "toroidalOnly",
+            "manifoldRadius": 180,
+            "oscillationAmplitude": 1.2,
+            "oscillationSpeed": 0.8,
+            "poloidalPhase": 0,
+            "poloidalRate": 0.35,
+            "poloidalWinding": 2,
+            "progress": 0.5,
+            "toroidalPhase": 0,
+            "toroidalWinding": 3,
+            "trajectory": "toroidalHopf",
+            "volumetricDepthScale": 1
+          }
+        },
+        "original": {
+          "config": {
+            "autoMorph": false,
+            "color": {
+              "accentColor": "#b388ff",
+              "angle": 90,
+              "backgroundColor": "#0a0515",
+              "backgroundGlowIntensity": 0.4,
+              "backgroundMode": "ambientGlow",
+              "contrast": 1.2,
+              "cycleSpeed": 0.8,
+              "densityWeight": 0.5,
+              "enabled": true,
+              "fieldCenterOffset": [
+                0,
+                0
+              ],
+              "hueShiftSpeed": 0.05,
+              "mode": "linearGradient",
+              "primaryColor": "#ff1744",
+              "secondaryColor": "#00e676",
+              "speedReactiveIntensity": 1,
+              "turbulenceModulation": 0.3,
+              "waveFrequency": 1.5
+            },
+            "colorMode": "whiteOnBlack",
+            "dotShape": "circle",
+            "fluid": {
+              "curlScale": 1.4,
+              "curlSpeed": 0.6,
+              "dispersion": 0.6,
+              "returnSpeed": 1.3,
+              "turbulence": 0.9,
+              "viscosity": 0.95,
+              "vortexStrength": 1.6
+            },
+            "particleSize": {
+              "max": 3.6,
+              "min": 1.2
+            },
+            "spatialChakra": {
+              "attractorInfluence": 1.8,
+              "cycleDirection": "ascent",
+              "enabled": true,
+              "glyphType": "both",
+              "holdDuration": 1.2,
+              "nodes": [
+                {
+                  "active": true,
+                  "attractorStrength": 2.2,
+                  "color": "#ff77ff",
+                  "element": "Cosmic Spirit (Akasha)",
+                  "englishTitle": "Crown / Pure Consciousness",
+                  "frequencyHz": 963,
+                  "id": "sahasrara",
+                  "name": "Sahasrara (Crown)",
+                  "sanskrit": "सहस्रार",
+                  "scale": 0.16,
+                  "seedSyllable": "ॐ",
+                  "symbol": "☸",
+                  "x": 0,
+                  "y": -270
+                },
+                {
+                  "active": true,
+                  "attractorStrength": 2,
+                  "color": "#66a3ff",
+                  "element": "Light (Prakasha)",
+                  "englishTitle": "Third Eye / Intuition",
+                  "frequencyHz": 852,
+                  "id": "ajna",
+                  "name": "Ajna (Third Eye)",
+                  "sanskrit": "आज्ञा",
+                  "scale": 0.14,
+                  "seedSyllable": "ॐ",
+                  "symbol": "👁",
+                  "x": 0,
+                  "y": -180
+                },
+                {
+                  "active": true,
+                  "attractorStrength": 1.8,
+                  "color": "#00ffff",
+                  "element": "Ether / Sound (Akasha)",
+                  "englishTitle": "Throat / Expression",
+                  "frequencyHz": 741,
+                  "id": "vishuddha",
+                  "name": "Vishuddha (Throat)",
+                  "sanskrit": "विशुद्ध",
+                  "scale": 0.14,
+                  "seedSyllable": "हं",
+                  "symbol": "◯",
+                  "x": 0,
+                  "y": -90
+                },
+                {
+                  "active": true,
+                  "attractorStrength": 2.4,
+                  "color": "#00ff99",
+                  "element": "Air (Vayu)",
+                  "englishTitle": "Heart / Compassion",
+                  "frequencyHz": 639,
+                  "id": "anahata",
+                  "name": "Anahata (Heart)",
+                  "sanskrit": "अनाहत",
+                  "scale": 0.15,
+                  "seedSyllable": "यं",
+                  "symbol": "✡",
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "active": true,
+                  "attractorStrength": 1.9,
+                  "color": "#ffff00",
+                  "element": "Fire (Tejas)",
+                  "englishTitle": "Solar Plexus / Willpower",
+                  "frequencyHz": 528,
+                  "id": "manipura",
+                  "name": "Manipura (Solar Plexus)",
+                  "sanskrit": "मणिपूर",
+                  "scale": 0.14,
+                  "seedSyllable": "रं",
+                  "symbol": "▽",
+                  "x": 0,
+                  "y": 90
+                },
+                {
+                  "active": true,
+                  "attractorStrength": 1.8,
+                  "color": "#ff8800",
+                  "element": "Water (Apas)",
+                  "englishTitle": "Sacral / Fluid Creativity",
+                  "frequencyHz": 417,
+                  "id": "svadhisthana",
+                  "name": "Svadhisthana (Sacral)",
+                  "sanskrit": "स्वाधिष्ठान",
+                  "scale": 0.14,
+                  "seedSyllable": "वं",
+                  "symbol": "☽",
+                  "x": 0,
+                  "y": 180
+                },
+                {
+                  "active": true,
+                  "attractorStrength": 2.2,
+                  "color": "#ff2255",
+                  "element": "Earth (Prithvi)",
+                  "englishTitle": "Root / Grounded Foundation",
+                  "frequencyHz": 396,
+                  "id": "muladhara",
+                  "name": "Muladhara (Root)",
+                  "sanskrit": "मूलाधार",
+                  "scale": 0.15,
+                  "seedSyllable": "लं",
+                  "symbol": "🪷",
+                  "x": 0,
+                  "y": 270
+                }
+              ],
+              "particlePartitionSpread": 0.9,
+              "playbackMode": "simultaneousBody",
+              "transitionDuration": 2.4
+            },
+            "style": "stipple"
+          },
+          "name": "Chakral Body — 7 Subtle Centers Constellation"
+        },
+        "projection": {
+          "autoMorph": false,
+          "autoMorphDuration": 4,
+          "automations": [],
+          "backgroundColor": "#0a0515",
+          "backgroundGlowIntensity": 0.4,
+          "backgroundMode": "ambientGlow",
+          "chaining": {
+            "advance": "time",
+            "chain": [
+              "▲",
+              "■",
+              "⬟",
+              "⬢",
+              "⯎",
+              "◉"
+            ],
+            "disperseImpulse": 0.8,
+            "easing": "smoothstep",
+            "enabled": false,
+            "mode": "loop",
+            "paused": false,
+            "stepHoldDuration": 1,
+            "timingJitter": 0.15,
+            "transitionDuration": 2.2
+          },
+          "collision": {
+            "band": 40,
+            "enabled": false,
+            "friction": 0.1,
+            "integrity": 0.5,
+            "mode": "obstacle",
+            "restitution": 0.35,
+            "strength": 4
+          },
+          "color": {
+            "accentColor": "#b388ff",
+            "angle": 90,
+            "backgroundColor": "#0a0515",
+            "backgroundGlowIntensity": 0.4,
+            "backgroundMode": "ambientGlow",
+            "contrast": 1.2,
+            "cycleSpeed": 0.8,
+            "densityWeight": 0.5,
+            "enabled": true,
+            "fieldCenterOffset": [
+              0,
+              0
+            ],
+            "hueShiftSpeed": 0.05,
+            "mode": "linearGradient",
+            "paletteId": "cyberpunk_neon",
+            "primaryColor": "#ff1744",
+            "secondaryColor": "#00e676",
+            "speedReactiveIntensity": 1,
+            "turbulenceModulation": 0.3,
+            "waveFrequency": 1.5
+          },
+          "colorMode": "whiteOnBlack",
+          "composition": {
+            "entityTintWeight": 0.85,
+            "layoutName": "Chakra Body",
+            "orchestration": {
+              "dwell": 1.2,
+              "focusTintWeight": 0.35,
+              "followStation": false,
+              "glide": 2.4,
+              "mode": "parallel",
+              "order": "listed"
+            },
+            "plane": "vertical"
+          },
+          "cymatics": {
+            "agitation": 0.3,
+            "autoSweep": false,
+            "baseFrequency": 40,
+            "boundaryStrength": 6,
+            "chaosIntensity": 1.4,
+            "dampingQFactor": 4.5,
+            "dimension": "2D",
+            "dominance": 1,
+            "driveScale": 1,
+            "driveStrength": 1,
+            "enabled": false,
+            "engine": "resonator",
+            "followFocus": false,
+            "frequencyHz": 396,
+            "modeCount": 64,
+            "nodalAttraction": 2.8,
+            "plateGeometry": "square",
+            "plateSize": 700,
+            "sweep": {
+              "direction": "ascent",
+              "dwellS": 2,
+              "enabled": false,
+              "glideS": 8
+            },
+            "sweepSpeed": 8,
+            "transportGain": 1
+          },
+          "depth": {
+            "aerialFade": 0.55,
+            "aerialRange": 2.2,
+            "depthTintColor": "#101018",
+            "depthTintWeight": 0,
+            "distance": 800,
+            "fov": 38,
+            "occlusion": false,
+            "projection": "orthographic",
+            "sizeAttenuation": 1,
+            "sizeAttenuationCurve": 1,
+            "sizeDepthBias": 0
+          },
+          "dotShape": "circle",
+          "entities": [
+            {
+              "chakraId": "sahasrara",
+              "enabled": true,
+              "extent": {
+                "height": 400,
+                "normalized": false,
+                "rotation": 0,
+                "width": 400
+              },
+              "forces": {
+                "mode": "vortex",
+                "radius": 72,
+                "spin": 1.2000000000000002,
+                "strength": 1.5840000000000003
+              },
+              "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__sahasrara",
+              "kind": "formation",
+              "name": "Sahasrara (Crown)",
+              "scale": 0.384,
+              "sequence": {
+                "advance": "off",
+                "easing": "smoothstep",
+                "hold": 1,
+                "impulse": 0.6,
+                "jitter": 0,
+                "links": [
+                  {
+                    "id": "ent_sahasrara_base",
+                    "shape": {
+                      "kind": "yantra",
+                      "yantraId": "sahasrara"
+                    }
+                  }
+                ],
+                "order": "loop",
+                "phaseOffset": 0,
+                "rateMul": 1,
+                "transition": 2.2
+              },
+              "shape": {
+                "kind": "yantra",
+                "yantraId": "sahasrara"
+              },
+              "share": 1,
+              "stationIndex": 6,
+              "tint": "#ff77ff",
+              "tintWeight": 1,
+              "x": 0,
+              "y": 270,
+              "z": 0
+            },
+            {
+              "chakraId": "ajna",
+              "enabled": true,
+              "extent": {
+                "height": 400,
+                "normalized": false,
+                "rotation": 0,
+                "width": 400
+              },
+              "forces": {
+                "mode": "vortex",
+                "radius": 63.000000000000014,
+                "spin": -1.2000000000000002,
+                "strength": 1.4400000000000002
+              },
+              "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__ajna",
+              "kind": "formation",
+              "name": "Ajna (Third Eye)",
+              "scale": 0.336,
+              "sequence": {
+                "advance": "off",
+                "easing": "smoothstep",
+                "hold": 1,
+                "impulse": 0.6,
+                "jitter": 0,
+                "links": [
+                  {
+                    "id": "ent_ajna_base",
+                    "shape": {
+                      "kind": "yantra",
+                      "yantraId": "ajna"
+                    }
+                  }
+                ],
+                "order": "loop",
+                "phaseOffset": 0,
+                "rateMul": 1,
+                "transition": 2.2
+              },
+              "shape": {
+                "kind": "yantra",
+                "yantraId": "ajna"
+              },
+              "share": 1,
+              "stationIndex": 5,
+              "tint": "#66a3ff",
+              "tintWeight": 1,
+              "x": 0,
+              "y": 180,
+              "z": 0
+            },
+            {
+              "chakraId": "vishuddha",
+              "enabled": true,
+              "extent": {
+                "height": 400,
+                "normalized": false,
+                "rotation": 0,
+                "width": 400
+              },
+              "forces": {
+                "mode": "vortex",
+                "radius": 63.000000000000014,
+                "spin": 1.2000000000000002,
+                "strength": 1.2960000000000003
+              },
+              "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__vishuddha",
+              "kind": "formation",
+              "name": "Vishuddha (Throat)",
+              "scale": 0.336,
+              "sequence": {
+                "advance": "off",
+                "easing": "smoothstep",
+                "hold": 1,
+                "impulse": 0.6,
+                "jitter": 0,
+                "links": [
+                  {
+                    "id": "ent_vishuddha_base",
+                    "shape": {
+                      "kind": "yantra",
+                      "yantraId": "vishuddha"
+                    }
+                  }
+                ],
+                "order": "loop",
+                "phaseOffset": 0,
+                "rateMul": 1,
+                "transition": 2.2
+              },
+              "shape": {
+                "kind": "yantra",
+                "yantraId": "vishuddha"
+              },
+              "share": 1,
+              "stationIndex": 4,
+              "tint": "#00ffff",
+              "tintWeight": 1,
+              "x": 0,
+              "y": 90,
+              "z": 0
+            },
+            {
+              "chakraId": "anahata",
+              "enabled": true,
+              "extent": {
+                "height": 400,
+                "normalized": false,
+                "rotation": 0,
+                "width": 400
+              },
+              "forces": {
+                "mode": "vortex",
+                "radius": 67.5,
+                "spin": -1.2000000000000002,
+                "strength": 1.7280000000000002
+              },
+              "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__anahata",
+              "kind": "formation",
+              "name": "Anahata (Heart)",
+              "scale": 0.36,
+              "sequence": {
+                "advance": "off",
+                "easing": "smoothstep",
+                "hold": 1,
+                "impulse": 0.6,
+                "jitter": 0,
+                "links": [
+                  {
+                    "id": "ent_anahata_base",
+                    "shape": {
+                      "kind": "yantra",
+                      "yantraId": "anahata"
+                    }
+                  }
+                ],
+                "order": "loop",
+                "phaseOffset": 0,
+                "rateMul": 1,
+                "transition": 2.2
+              },
+              "shape": {
+                "kind": "yantra",
+                "yantraId": "anahata"
+              },
+              "share": 1,
+              "stationIndex": 3,
+              "tint": "#00ff99",
+              "tintWeight": 1,
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            {
+              "chakraId": "manipura",
+              "enabled": true,
+              "extent": {
+                "height": 400,
+                "normalized": false,
+                "rotation": 0,
+                "width": 400
+              },
+              "forces": {
+                "mode": "vortex",
+                "radius": 63.000000000000014,
+                "spin": 1.2000000000000002,
+                "strength": 1.368
+              },
+              "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__manipura",
+              "kind": "formation",
+              "name": "Manipura (Solar Plexus)",
+              "scale": 0.336,
+              "sequence": {
+                "advance": "off",
+                "easing": "smoothstep",
+                "hold": 1,
+                "impulse": 0.6,
+                "jitter": 0,
+                "links": [
+                  {
+                    "id": "ent_manipura_base",
+                    "shape": {
+                      "kind": "yantra",
+                      "yantraId": "manipura"
+                    }
+                  }
+                ],
+                "order": "loop",
+                "phaseOffset": 0,
+                "rateMul": 1,
+                "transition": 2.2
+              },
+              "shape": {
+                "kind": "yantra",
+                "yantraId": "manipura"
+              },
+              "share": 1,
+              "stationIndex": 2,
+              "tint": "#ffff00",
+              "tintWeight": 1,
+              "x": 0,
+              "y": -90,
+              "z": 0
+            },
+            {
+              "chakraId": "svadhisthana",
+              "enabled": true,
+              "extent": {
+                "height": 400,
+                "normalized": false,
+                "rotation": 0,
+                "width": 400
+              },
+              "forces": {
+                "mode": "vortex",
+                "radius": 63.000000000000014,
+                "spin": -1.2000000000000002,
+                "strength": 1.2960000000000003
+              },
+              "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__svadhisthana",
+              "kind": "formation",
+              "name": "Svadhisthana (Sacral)",
+              "scale": 0.336,
+              "sequence": {
+                "advance": "off",
+                "easing": "smoothstep",
+                "hold": 1,
+                "impulse": 0.6,
+                "jitter": 0,
+                "links": [
+                  {
+                    "id": "ent_svadhisthana_base",
+                    "shape": {
+                      "kind": "yantra",
+                      "yantraId": "svadhisthana"
+                    }
+                  }
+                ],
+                "order": "loop",
+                "phaseOffset": 0,
+                "rateMul": 1,
+                "transition": 2.2
+              },
+              "shape": {
+                "kind": "yantra",
+                "yantraId": "svadhisthana"
+              },
+              "share": 1,
+              "stationIndex": 1,
+              "tint": "#ff8800",
+              "tintWeight": 1,
+              "x": 0,
+              "y": -180,
+              "z": 0
+            },
+            {
+              "chakraId": "muladhara",
+              "enabled": true,
+              "extent": {
+                "height": 400,
+                "normalized": false,
+                "rotation": 0,
+                "width": 400
+              },
+              "forces": {
+                "mode": "vortex",
+                "radius": 67.5,
+                "spin": 1.2000000000000002,
+                "strength": 1.5840000000000003
+              },
+              "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__muladhara",
+              "kind": "formation",
+              "name": "Muladhara (Root)",
+              "scale": 0.36,
+              "sequence": {
+                "advance": "off",
+                "easing": "smoothstep",
+                "hold": 1,
+                "impulse": 0.6,
+                "jitter": 0,
+                "links": [
+                  {
+                    "id": "ent_muladhara_base",
+                    "shape": {
+                      "kind": "yantra",
+                      "yantraId": "muladhara"
+                    }
+                  }
+                ],
+                "order": "loop",
+                "phaseOffset": 0,
+                "rateMul": 1,
+                "transition": 2.2
+              },
+              "shape": {
+                "kind": "yantra",
+                "yantraId": "muladhara"
+              },
+              "share": 1,
+              "stationIndex": 0,
+              "tint": "#ff2255",
+              "tintWeight": 1,
+              "x": 0,
+              "y": -270,
+              "z": 0
+            }
+          ],
+          "fluid": {
+            "curlDepth": 0.57,
+            "curlScale": 1.4,
+            "curlSpeed": 0.6,
+            "densityTether": 1,
+            "dispersion": 0.6,
+            "dispersion3d": 0,
+            "gravityX": 0,
+            "gravityY": 0,
+            "gravityZ": 0,
+            "maxSpeed": 35000,
+            "quadraticDrag": 0,
+            "returnSpeed": 1.3,
+            "snapRigidity": 1,
+            "thermalJitter": 0,
+            "timeScale": 1,
+            "turbulence": 0.9,
+            "viscosity": 0.95,
+            "vortex3d": 0,
+            "vortexRadius": 450,
+            "vortexStrength": 1.6,
+            "zConfinement": 1
+          },
+          "fontFamily": "system-ui, -apple-system, sans-serif",
+          "fontWeight": 900,
+          "glyph": [
+            "O",
+            "I"
+          ],
+          "glyphVolume": {
+            "densityDepth": 0.35,
+            "depth": 90,
+            "enabled": false,
+            "faceBias": 0.55,
+            "interiorFill": 0.25,
+            "jitter": 2,
+            "outsideTaper": 0.6,
+            "profile": "round",
+            "referenceFalloff": 1,
+            "surfaceThickness": 6,
+            "wallBand": 42,
+            "wallShare": 0.34
+          },
+          "interaction": {
+            "clickMode": "pulse",
+            "clickRadius": 180,
+            "clickStrength": 2.2,
+            "falloffPower": 2,
+            "mode": "repel",
+            "placedPoints": [],
+            "radius": 180,
+            "strength": 1.2,
+            "velocityInfluence": 1
+          },
+          "medium": {
+            "coupling": 0.8,
+            "dimension": "2D",
+            "enabled": false,
+            "extent": 1400,
+            "gridRes": 192,
+            "iterations": 4,
+            "persistence": 0.97,
+            "plane": "compositionPlane",
+            "pressure": 4,
+            "splatGain": 1
+          },
+          "morphProgress": 0,
+          "pairwise": {
+            "enabled": false,
+            "extent": 1400,
+            "radius": 2.2,
+            "restitution": 0.12,
+            "stiffness": 1,
+            "viscosity": 0.06
+          },
+          "paperGrain": 0,
+          "particleCount": 200000,
+          "particleSize": {
+            "max": 3.6,
+            "min": 1.2
+          },
+          "positioning": "absolute",
+          "relational": {
+            "attractorCount": 3,
+            "attractorGravity": 1.6,
+            "chaosFactor": 0.2,
+            "enabled": false,
+            "gravityFalloff": 1.45,
+            "gravitySoftening": 45,
+            "mode": "orbital",
+            "orbitRadius": 240,
+            "orbitSpeed": 0.8,
+            "relationalSpin": 1.4,
+            "swirlRadius": 500,
+            "wanderSpeed": 0.5
+          },
+          "resonanceDrive": {
+            "kind": "semanticFocus",
+            "profileId": "chakra-seven-v1"
+          },
+          "semanticField": {
+            "affinity": {
+              "bandwidth": 0.14,
+              "method": "modalProjection"
+            },
+            "bindings": [
+              {
+                "carriers": [
+                  {
+                    "id": "ent_sahasrara",
+                    "kind": "entity"
+                  }
+                ],
+                "color": {
+                  "activation": "constant",
+                  "blend": "weighted",
+                  "colorSource": "canonical",
+                  "enabled": false,
+                  "falloff": "gaussian",
+                  "gain": 1,
+                  "metric": "compositionPlane",
+                  "radius": {
+                    "source": "force"
+                  }
+                },
+                "enabled": true,
+                "id": "semantic_sahasrara_ent_sahasrara",
+                "resonance": {
+                  "gain": 1
+                },
+                "semanticNodeId": "sahasrara"
+              },
+              {
+                "carriers": [
+                  {
+                    "id": "ent_ajna",
+                    "kind": "entity"
+                  }
+                ],
+                "color": {
+                  "activation": "constant",
+                  "blend": "weighted",
+                  "colorSource": "canonical",
+                  "enabled": false,
+                  "falloff": "gaussian",
+                  "gain": 1,
+                  "metric": "compositionPlane",
+                  "radius": {
+                    "source": "force"
+                  }
+                },
+                "enabled": true,
+                "id": "semantic_ajna_ent_ajna",
+                "resonance": {
+                  "gain": 1
+                },
+                "semanticNodeId": "ajna"
+              },
+              {
+                "carriers": [
+                  {
+                    "id": "ent_vishuddha",
+                    "kind": "entity"
+                  }
+                ],
+                "color": {
+                  "activation": "constant",
+                  "blend": "weighted",
+                  "colorSource": "canonical",
+                  "enabled": false,
+                  "falloff": "gaussian",
+                  "gain": 1,
+                  "metric": "compositionPlane",
+                  "radius": {
+                    "source": "force"
+                  }
+                },
+                "enabled": true,
+                "id": "semantic_vishuddha_ent_vishuddha",
+                "resonance": {
+                  "gain": 1
+                },
+                "semanticNodeId": "vishuddha"
+              },
+              {
+                "carriers": [
+                  {
+                    "id": "ent_anahata",
+                    "kind": "entity"
+                  }
+                ],
+                "color": {
+                  "activation": "constant",
+                  "blend": "weighted",
+                  "colorSource": "canonical",
+                  "enabled": false,
+                  "falloff": "gaussian",
+                  "gain": 1,
+                  "metric": "compositionPlane",
+                  "radius": {
+                    "source": "force"
+                  }
+                },
+                "enabled": true,
+                "id": "semantic_anahata_ent_anahata",
+                "resonance": {
+                  "gain": 1
+                },
+                "semanticNodeId": "anahata"
+              },
+              {
+                "carriers": [
+                  {
+                    "id": "ent_manipura",
+                    "kind": "entity"
+                  }
+                ],
+                "color": {
+                  "activation": "constant",
+                  "blend": "weighted",
+                  "colorSource": "canonical",
+                  "enabled": false,
+                  "falloff": "gaussian",
+                  "gain": 1,
+                  "metric": "compositionPlane",
+                  "radius": {
+                    "source": "force"
+                  }
+                },
+                "enabled": true,
+                "id": "semantic_manipura_ent_manipura",
+                "resonance": {
+                  "gain": 1
+                },
+                "semanticNodeId": "manipura"
+              },
+              {
+                "carriers": [
+                  {
+                    "id": "ent_svadhisthana",
+                    "kind": "entity"
+                  }
+                ],
+                "color": {
+                  "activation": "constant",
+                  "blend": "weighted",
+                  "colorSource": "canonical",
+                  "enabled": false,
+                  "falloff": "gaussian",
+                  "gain": 1,
+                  "metric": "compositionPlane",
+                  "radius": {
+                    "source": "force"
+                  }
+                },
+                "enabled": true,
+                "id": "semantic_svadhisthana_ent_svadhisthana",
+                "resonance": {
+                  "gain": 1
+                },
+                "semanticNodeId": "svadhisthana"
+              },
+              {
+                "carriers": [
+                  {
+                    "id": "ent_muladhara",
+                    "kind": "entity"
+                  }
+                ],
+                "color": {
+                  "activation": "constant",
+                  "blend": "weighted",
+                  "colorSource": "canonical",
+                  "enabled": false,
+                  "falloff": "gaussian",
+                  "gain": 1,
+                  "metric": "compositionPlane",
+                  "radius": {
+                    "source": "force"
+                  }
+                },
+                "enabled": true,
+                "id": "semantic_muladhara_ent_muladhara",
+                "resonance": {
+                  "gain": 1
+                },
+                "semanticNodeId": "muladhara"
+              }
+            ],
+            "enabled": true,
+            "globalColorGain": 1,
+            "profile": {
+              "kind": "chakra",
+              "profileId": "chakra-seven-v1"
+            }
+          },
+          "sourceType": "composition",
+          "spatialChakra": {
+            "activeNodeIndex": 6,
+            "attractorInfluence": 1.8,
+            "autoCycle": true,
+            "cycleDirection": "ascent",
+            "cymatics": {
+              "agitation": 0.3,
+              "autoSweep": false,
+              "baseFrequency": 40,
+              "boundaryStrength": 6,
+              "chaosIntensity": 1.4,
+              "dampingQFactor": 4.5,
+              "dimension": "2D",
+              "driveScale": 1,
+              "driveStrength": 1,
+              "engine": "resonator",
+              "frequencyHz": 396,
+              "modeCount": 64,
+              "nodalAttraction": 2.8,
+              "plateGeometry": "square",
+              "plateSize": 700,
+              "sweep": {
+                "direction": "ascent",
+                "dwellS": 2,
+                "enabled": false,
+                "glideS": 3.5
+              },
+              "sweepSpeed": 8,
+              "transportGain": 1
+            },
+            "enabled": true,
+            "geometryMode": "yantra",
+            "glyphType": "both",
+            "holdDuration": 1.2,
+            "nodes": [
+              {
+                "active": true,
+                "attractorStrength": 2.2,
+                "color": "#ff77ff",
+                "element": "Cosmic Spirit (Akasha)",
+                "englishTitle": "Crown / Pure Consciousness",
+                "frequencyHz": 963,
+                "id": "sahasrara",
+                "name": "Sahasrara (Crown)",
+                "sanskrit": "सहस्रार",
+                "scale": 0.16,
+                "seedSyllable": "ॐ",
+                "symbol": "☸",
+                "x": 0,
+                "y": -270
+              },
+              {
+                "active": true,
+                "attractorStrength": 2,
+                "color": "#66a3ff",
+                "element": "Light (Prakasha)",
+                "englishTitle": "Third Eye / Intuition",
+                "frequencyHz": 852,
+                "id": "ajna",
+                "name": "Ajna (Third Eye)",
+                "sanskrit": "आज्ञा",
+                "scale": 0.14,
+                "seedSyllable": "ॐ",
+                "symbol": "👁",
+                "x": 0,
+                "y": -180
+              },
+              {
+                "active": true,
+                "attractorStrength": 1.8,
+                "color": "#00ffff",
+                "element": "Ether / Sound (Akasha)",
+                "englishTitle": "Throat / Expression",
+                "frequencyHz": 741,
+                "id": "vishuddha",
+                "name": "Vishuddha (Throat)",
+                "sanskrit": "विशुद्ध",
+                "scale": 0.14,
+                "seedSyllable": "हं",
+                "symbol": "◯",
+                "x": 0,
+                "y": -90
+              },
+              {
+                "active": true,
+                "attractorStrength": 2.4,
+                "color": "#00ff99",
+                "element": "Air (Vayu)",
+                "englishTitle": "Heart / Compassion",
+                "frequencyHz": 639,
+                "id": "anahata",
+                "name": "Anahata (Heart)",
+                "sanskrit": "अनाहत",
+                "scale": 0.15,
+                "seedSyllable": "यं",
+                "symbol": "✡",
+                "x": 0,
+                "y": 0
+              },
+              {
+                "active": true,
+                "attractorStrength": 1.9,
+                "color": "#ffff00",
+                "element": "Fire (Tejas)",
+                "englishTitle": "Solar Plexus / Willpower",
+                "frequencyHz": 528,
+                "id": "manipura",
+                "name": "Manipura (Solar Plexus)",
+                "sanskrit": "मणिपूर",
+                "scale": 0.14,
+                "seedSyllable": "रं",
+                "symbol": "▽",
+                "x": 0,
+                "y": 90
+              },
+              {
+                "active": true,
+                "attractorStrength": 1.8,
+                "color": "#ff8800",
+                "element": "Water (Apas)",
+                "englishTitle": "Sacral / Fluid Creativity",
+                "frequencyHz": 417,
+                "id": "svadhisthana",
+                "name": "Svadhisthana (Sacral)",
+                "sanskrit": "स्वाधिष्ठान",
+                "scale": 0.14,
+                "seedSyllable": "वं",
+                "symbol": "☽",
+                "x": 0,
+                "y": 180
+              },
+              {
+                "active": true,
+                "attractorStrength": 2.2,
+                "color": "#ff2255",
+                "element": "Earth (Prithvi)",
+                "englishTitle": "Root / Grounded Foundation",
+                "frequencyHz": 396,
+                "id": "muladhara",
+                "name": "Muladhara (Root)",
+                "sanskrit": "मूलाधार",
+                "scale": 0.15,
+                "seedSyllable": "लं",
+                "symbol": "🪷",
+                "x": 0,
+                "y": 270
+              }
+            ],
+            "particlePartitionSpread": 0.9,
+            "plane": "horizontal",
+            "playbackMode": "simultaneousBody",
+            "transitionDuration": 2.4,
+            "vortexStrength": 1.6
+          },
+          "style": "stipple",
+          "toroidalMorph": {
+            "autoOscillate": true,
+            "breathDepth": 0.35,
+            "breathRate": 0.35,
+            "chiralCoupling": 0.75,
+            "driveDepth": 1,
+            "driveShape": "sine",
+            "enabled": false,
+            "fiberPhaseOffset": 0,
+            "holdRatio": 0,
+            "interference": "toroidalOnly",
+            "manifoldRadius": 180,
+            "oscillationAmplitude": 1.2,
+            "oscillationSpeed": 0.8,
+            "poloidalPhase": 0,
+            "poloidalRate": 0.35,
+            "poloidalWinding": 2,
+            "progress": 0.5,
+            "toroidalPhase": 0,
+            "toroidalWinding": 3,
+            "trajectory": "toroidalHopf",
+            "volumetricDepthScale": 1
+          }
+        }
+      },
+      "resonanceDrive": {
+        "kind": "semanticFocus",
+        "profileId": "chakra-seven-v1"
+      },
+      "semanticField": {
+        "affinity": {
+          "bandwidth": 0.14,
+          "method": "modalProjection"
+        },
+        "bindings": [
+          {
+            "carriers": [
+              {
+                "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__sahasrara",
+                "kind": "entity"
+              }
+            ],
+            "color": {
+              "activation": "constant",
+              "blend": "weighted",
+              "colorSource": "canonical",
+              "enabled": false,
+              "falloff": "gaussian",
+              "gain": 1,
+              "metric": "compositionPlane",
+              "radius": {
+                "source": "force"
+              }
+            },
+            "enabled": true,
+            "id": "semantic_sahasrara_ent_sahasrara",
+            "resonance": {
+              "gain": 1
+            },
+            "semanticNodeId": "sahasrara"
+          },
+          {
+            "carriers": [
+              {
+                "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__ajna",
+                "kind": "entity"
+              }
+            ],
+            "color": {
+              "activation": "constant",
+              "blend": "weighted",
+              "colorSource": "canonical",
+              "enabled": false,
+              "falloff": "gaussian",
+              "gain": 1,
+              "metric": "compositionPlane",
+              "radius": {
+                "source": "force"
+              }
+            },
+            "enabled": true,
+            "id": "semantic_ajna_ent_ajna",
+            "resonance": {
+              "gain": 1
+            },
+            "semanticNodeId": "ajna"
+          },
+          {
+            "carriers": [
+              {
+                "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__vishuddha",
+                "kind": "entity"
+              }
+            ],
+            "color": {
+              "activation": "constant",
+              "blend": "weighted",
+              "colorSource": "canonical",
+              "enabled": false,
+              "falloff": "gaussian",
+              "gain": 1,
+              "metric": "compositionPlane",
+              "radius": {
+                "source": "force"
+              }
+            },
+            "enabled": true,
+            "id": "semantic_vishuddha_ent_vishuddha",
+            "resonance": {
+              "gain": 1
+            },
+            "semanticNodeId": "vishuddha"
+          },
+          {
+            "carriers": [
+              {
+                "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__anahata",
+                "kind": "entity"
+              }
+            ],
+            "color": {
+              "activation": "constant",
+              "blend": "weighted",
+              "colorSource": "canonical",
+              "enabled": false,
+              "falloff": "gaussian",
+              "gain": 1,
+              "metric": "compositionPlane",
+              "radius": {
+                "source": "force"
+              }
+            },
+            "enabled": true,
+            "id": "semantic_anahata_ent_anahata",
+            "resonance": {
+              "gain": 1
+            },
+            "semanticNodeId": "anahata"
+          },
+          {
+            "carriers": [
+              {
+                "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__manipura",
+                "kind": "entity"
+              }
+            ],
+            "color": {
+              "activation": "constant",
+              "blend": "weighted",
+              "colorSource": "canonical",
+              "enabled": false,
+              "falloff": "gaussian",
+              "gain": 1,
+              "metric": "compositionPlane",
+              "radius": {
+                "source": "force"
+              }
+            },
+            "enabled": true,
+            "id": "semantic_manipura_ent_manipura",
+            "resonance": {
+              "gain": 1
+            },
+            "semanticNodeId": "manipura"
+          },
+          {
+            "carriers": [
+              {
+                "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__svadhisthana",
+                "kind": "entity"
+              }
+            ],
+            "color": {
+              "activation": "constant",
+              "blend": "weighted",
+              "colorSource": "canonical",
+              "enabled": false,
+              "falloff": "gaussian",
+              "gain": 1,
+              "metric": "compositionPlane",
+              "radius": {
+                "source": "force"
+              }
+            },
+            "enabled": true,
+            "id": "semantic_svadhisthana_ent_svadhisthana",
+            "resonance": {
+              "gain": 1
+            },
+            "semanticNodeId": "svadhisthana"
+          },
+          {
+            "carriers": [
+              {
+                "id": "expression:authored-acb9d00d-e7e4-4f2f-948f-395914da17b1:entity:ent__muladhara",
+                "kind": "entity"
+              }
+            ],
+            "color": {
+              "activation": "constant",
+              "blend": "weighted",
+              "colorSource": "canonical",
+              "enabled": false,
+              "falloff": "gaussian",
+              "gain": 1,
+              "metric": "compositionPlane",
+              "radius": {
+                "source": "force"
+              }
+            },
+            "enabled": true,
+            "id": "semantic_muladhara_ent_muladhara",
+            "resonance": {
+              "gain": 1
+            },
+            "semanticNodeId": "muladhara"
+          }
+        ],
+        "enabled": true,
+        "globalColorGain": 1,
+        "profile": {
+          "kind": "chakra",
+          "profileId": "chakra-seven-v1"
+        }
+      },
+      "text": [],
+      "toolbelt": [
+        {
+          "id": "speed",
+          "key": "timeScale",
+          "scope": "field"
+        },
+        {
+          "id": "spring",
+          "key": "recovery",
+          "scope": "field"
+        },
+        {
+          "id": "viscosity",
+          "key": "native_fluid__viscosity",
+          "scope": "field"
+        },
+        {
+          "id": "flow",
+          "key": "turbulence",
+          "scope": "field"
+        },
+        {
+          "id": "transition",
+          "key": "sequence.transition",
+          "scope": "selected"
+        },
+        {
+          "id": "blend",
+          "key": "native_morphProgress",
+          "scope": "field"
+        }
+      ],
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "panX": 0,
+        "panY": 0,
+        "pitch": 0,
+        "yaw": 0,
+        "zoom": 1
+      }
+    }
+  ],
+  "schema": "oi.journey",
+  "shared": {
+    "pointer": {
+      "engine.pointerClick": "pulse",
+      "engine.pointerClickRadius": 0.45,
+      "engine.pointerClickStrength": 2.2,
+      "engine.pointerMode": "repel",
+      "field.params.native_interaction__velocityInfluence": 1,
+      "field.params.pointerFalloff": 2,
+      "field.params.pointerRadius": 0.45,
+      "field.params.pointerStrength": 1.2
+    },
+    "toolbelt": [
+      {
+        "id": "shared-0",
+        "key": "timeScale",
+        "scope": "field"
+      },
+      {
+        "id": "shared-1",
+        "key": "recovery",
+        "scope": "field"
+      },
+      {
+        "id": "shared-2",
+        "key": "native_fluid__viscosity",
+        "scope": "field"
+      },
+      {
+        "id": "shared-3",
+        "key": "turbulence",
+        "scope": "field"
+      },
+      {
+        "id": "shared-4",
+        "key": "sequence.transition",
+        "scope": "selected"
+      },
+      {
+        "id": "shared-5",
+        "key": "native_morphProgress",
+        "scope": "field"
+      }
+    ],
+    "values": {}
+  },
+  "updatedAt": "2026-10-07T23:42:23.947Z",
+  "version": 1
+}

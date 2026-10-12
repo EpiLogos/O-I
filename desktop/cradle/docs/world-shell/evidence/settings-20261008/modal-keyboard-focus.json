@@ -1,0 +1,9 @@
+{
+  "trapBack": {
+    "dialog": "Preferences",
+    "focus": "ⓘ Info"
+  },
+  "trapForward": {
+    "focus": "Development scenario"
+  }
+}
