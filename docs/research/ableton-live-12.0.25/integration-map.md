@@ -179,6 +179,7 @@ live only), and the context dock (`App.tsx:414`).
   - `components/RightDock.tsx:12` — the `right-dock` host — is **mounted
     nowhere** in the frame; every full device face declares slot
     `'right-dock'`, so those faces have no host today.
+  > **Re-pinned 12 Oct 2026 (P0-V2 item 23): the registration claim above is stale.** `panels/index.ts:24-26` now imports `./devices`, `./devices-b2` and `./devices-pro`, and the families register with `slot: 'bottom'` (`panels/devices/index.tsx:54`, `panels/devices-b2/index.tsx:42`, `panels/devices-pro/index.ts:40`). `components/DeviceChainPanel.tsx:44` renders `getPanels('bottom')`, mounted in the live frame at `App.tsx:421`. The `right-dock` finding still holds: `RightDock` (`components/RightDock.tsx:12`) is defined and mounted nowhere, and no device-family face declares `right-dock` now (non-device panels still do: `panels/inspector.tsx:16`, `panels/clock.tsx:23`, `panels/context.tsx:3`). Checked by code-reading only; no UI leg was run.
 - The other device surfaces in the source list belong to other modes, not
   live: `NativeDeviceEditors/NativeDeviceBrowser/NativeDevicePoolView` are
   the native Expressions Field/entity/scene families (physics, medium,

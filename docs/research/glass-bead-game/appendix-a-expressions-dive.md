@@ -9,7 +9,7 @@ not started).
 
 **Scope of evidence.** Shell code at `Work/O-I/packages/live-shell/ui/src/`
 (the Expressions top-bar/family work stands on lane `agent/o-i-20261007-1639`,
-unmerged — `ProjectCentral/now/day/2026-10-09.md:223,236`), the retained
+unmerged on 10 Oct; re-pinned 12 Oct 2026: that lane is history, not an ancestor of `origin/main`, and its content reached `main` via #635 and #637 per PATH §2, row level not re-verified — `ProjectCentral/now/day/2026-10-09.md:223,236`), the retained
 application at `Work/O-I/desktop/cradle/expressions-app/`, design intent at
 `Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/`, the
 clean-room Live engine at `Work/O-I/packages/live-engine|live-dynamics/`,
@@ -334,13 +334,13 @@ exactly as the act ledger shows.
 
 | Capability | Status |
 |---|---|
-| Transport bar (play/stop, Time Scale live channel, arm+take, re-enable, pin mode, engine light, overflow, pinned strip) | LANDED (lane `agent/o-i-20261007-1639`, unmerged) |
+| Transport bar (play/stop, Time Scale live channel, arm+take, re-enable, pin mode, engine light, overflow, pinned strip) | LANDED (lane `agent/o-i-20261007-1639`, unmerged on 10 Oct; re-pinned 12 Oct 2026: lane is history, its content reached O-I `main` via #635 and #637) |
 | Stage tools (camera/guides/capture/present/export/import) | LANDED |
 | Scene editor (CRUD, snapshots, reorder, loop) · Takes tab · Glyph states editor · Device rack/pool/faces | LANDED |
 | Cymatic resonator, entity voices, physics field, forces, medium | LANDED (retained app) |
 | M1 instrument reading/face, sky epochs, owner standing, playback policy, 48 kHz port law | LANDED (no sounding claim: strike withheld) |
 | Track adapters (expressions / ql-audio / ql-physics) | LANDED as pure adapters |
-| Device SDK + 22-family admission + 129/40 port ledger + modulation honesty | LANDED (lane; live replay not yet run) |
+| Device SDK + 22-family admission + 129/40 port ledger + modulation honesty | LANDED (lane; re-pinned 12 Oct 2026: on O-I `main` via #635 and #637; live replay not yet run) |
 | Anima companion dock, living-field pane shape | LANDED (declared/mounted, honest placeholders) |
 | Field sync · tap tempo · scene quantize transport meanings; Technē/Factory transport columns; Takes-as-Timeline-lanes; single Scene-editor host | CHECKPOINTED |
 | Prepared bodies, performance input (Jankó/poly), realtime voice architecture, vendor vocabulary, mode-binding renderer, whole-shell replay | PLANNED |

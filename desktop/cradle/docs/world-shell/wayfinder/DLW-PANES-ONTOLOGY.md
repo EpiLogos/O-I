@@ -464,6 +464,8 @@ Mockup: `sessions` aperture (`world-shell-mockup.html:822`), `docgrid`/`musicses
 strip (mockup §3.4); transport slots (Factory column, `modeGrammar.ts:318-347`).
 Standing: agent-shell landed; Live-craft and per-mode grids open (§4.1 chapter).
 
+> **Re-pinned 12 Oct 2026 (P0-V2 item 23).** The mockup cites still resolve to the same code: `world-shell-mockup.html:822` (`sessions`), `:1701-1703` and `:1710-1711` (`docgrid`, `musicsess`, the view body). The `agent/` cite is stale. `DLW-PLAN.md:236-237` no longer carries it (those lines now hold M5-5 text); the `agent/` (28 files) row is at `DLW-PLAN.md:296`, a 10 Oct count. Today `packages/live-shell/ui/src/agent` holds 32 files and `desktop/cradle/src/agent` holds 44; the plan does not say which tree its 28 counted. "Live's grid in the mockup only" was not re-checked here.
+
 **T10. Thread** (Factory centre; conversation log). Contract: one session's
 conversation + tool events, nested as spawned. Implementations: the agent
 shell thread view (`agent-shell-mockup.html` §3.6; `renderThread` `:706`).

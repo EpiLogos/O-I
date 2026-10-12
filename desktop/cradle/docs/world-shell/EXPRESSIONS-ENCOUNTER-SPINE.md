@@ -16,6 +16,8 @@ So the shell's spine is a projection of one owner-side array. The array can hold
 
 The design's **trail** is not in the live shell. A search of `packages/live-shell/ui/src` for "trail" finds only a CSS comment. The shell has no trail store, so nothing here can read one. The shell does have a file selection, `selectedRef` (`shell/workspace.tsx:48`, `:236`), which is Central file selection, not Expression subject. Two "subject" concepts exist, but only the Expression subject is in scope here.
 
+> **Re-pinned 12 Oct 2026 (P0-V2 item 23).** The "finds only a CSS comment" search result is stale. "Trail" now appears as a dock tile name in `packages/live-shell/ui/src/shell/ModeContextDock.tsx:42`, and in the live and base tile lists (`:54-55`). Whether a trail store backs that tile was not checked, so "the shell has no trail store" is not re-verified here.
+
 ## Encounter transitions used below
 
 - **T1 Subject select.** Changes which object is selected. Must go through the owner's `select`.
@@ -72,6 +74,8 @@ const [checked, setChecked] = useState<ReadonlySet<string>>(() => new Set(readin
 ```
 
 The set is seeded once, from the spine, at mount. Nothing re-syncs it: there is no `useEffect` on `reading.selection`. The checkboxes and quick selects (`toggle` at `:63`, `quick` at `:67`) write only this set. The panel says so itself, at `NativeSceneFace.arrange.tsx:91`: "checking here does not change the native selection."
+
+> **Re-pinned 12 Oct 2026 (P0-V2 item 23).** The seed and the no-re-sync finding hold: `useState` seeds the set at `NativeSceneFace.arrange.tsx:26`, and the file has no `useEffect`. The quoted line has moved to `:99` (not `:91`), and `toggle` and `quick` are at `:71` and `:75` (not `:63` and `:67`). The owner's `select` still takes one `entity_id` (`packages/expressions-boundary/src/editor.ts:182`), so the gap stands.
 
 The reason it exists is real: the owner's `select` takes one object (`editor.ts:182`), so a multi-object batch cannot be a spine selection today. That makes it a T4 gap, not a casual copy. It is still a second store, and it is not bounded: it is not cleared on Scene change while the panel is mounted.
 
