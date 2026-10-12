@@ -7,8 +7,8 @@ are also blocked by P0-R1 and by the computer-use gate (PATH §3).
 Source: DLW-VISION.md §5.3 item 26 (:1329-1333); §2.4 (:902-941); ledger
 L12, L14 (:1159, :1161); DLW-PLAN §10 item 28 (PLAN:3152-3157).
 
-PLAN line cites read at the committed plan (`0dfa7b5ea`, unchanged at HEAD
-`90f44b9e5`). DLW-PLAN carries uncommitted rewrites in the seat (12 Oct);
+PLAN line cites read at the committed plan (`0dfa7b5ea`, unchanged through
+`f591929b2`). DLW-PLAN carries uncommitted rewrites in the seat (12 Oct);
 re-pin them at claim.
 
 Zones: `packages/live-shell/ui/src/projections/encounterBridge.ts`

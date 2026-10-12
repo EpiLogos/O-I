@@ -14,7 +14,7 @@ different things at the same level.
 [DLW-PLAN.md](DLW-PLAN.md) stays the plan of record for detail and is revised
 as §5 sets out. This document governs vision and framing only. It never
 overrides an owner ruling or settled law: the mode ruling (CONT:232-252), D13,
-§11a, the two-clock doctrine, and the 126 target identities (MAP:199-200).
+§11a, the two-clock doctrine, and the 126 target identities (MAP:200-201).
 
 **Markers.**
 - **Grounded**: a source states it, and the source is cited. An owner ruling is
@@ -276,7 +276,7 @@ coordinate. The binding rules are collected in §6.
   offline render, and realtime audition bit-identical to it. Glue, Echo,
   Reverb, Gain and Bypass come from gated `live-dynamics` models. It sounds in
   its own audition path today (APPA:217-224). The measured dynamics backlog is
-  LIVE/reconstruction-backlog.md (D1–D13).
+  LIVE/reconstruction-backlog.md (D1–D18 at 12 Oct, :57-75).
 - *Coordinate:* **Inferred** from usage: the Live corpus's "M0/M1/M3" are gate
   and seam labels, not Bimba coordinates ("live-engine is M1", "M1 gate green",
   APPA:218,222; "The M3 POST is that write path", LIVE/integration-map.md:278-279).
@@ -783,7 +783,7 @@ tick, session and `day_now` survive the 0/1 toggle (SEEDS/M'-SYSTEM-SPEC.md:172-
   beside them.
 - **Build.** The five-mode grammar is law. Live is ported as Live's real
   dynamics from the measured corpus, never approximated. Live's move into
-  Expressions waits on the owner's timing (T-LIVE-EXPR, L23).
+  Expressions waits on the owner's timing (T-LIVE-INTO-EXPRESSIONS, L23).
 
 ### 2.2 Live function families → DLW modes
 
@@ -1145,11 +1145,11 @@ Verdicts: **SOURCE** (the sources or an owner ruling settle it); **PARTLY**;
 
 | Id | Question | What the sources give | Verdict | Build |
 |---|---|---|---|---|
-| L1 *new* | The mode set; where the Live musical system lives | Owner ruling: Live (base) · Central · Factory · Expressions · Technē; Live the RE basis, ported not approximated; destination Expressions with audio and video track layers (CONT:232-252). Source tie for the music/audio half: MPW:10; WSD:917-918. The video layer rests on the ruling alone. APPA:217-224 and CONT:118 become a sequence (§2.1). D-G (Expressions inside the shell, PROG:110-112) and the 12 Oct ruling (Live mode's music system inside the Expressions mode) sit at different levels; both stand | **SOURCE** (owner ruling) | Five-mode grammar is law. Copy says "Live mode". Live stays distinct until T-LIVE-EXPR (L23) |
+| L1 *new* | The mode set; where the Live musical system lives | Owner ruling: Live (base) · Central · Factory · Expressions · Technē; Live the RE basis, ported not approximated; destination Expressions with audio and video track layers (CONT:232-252). Source tie for the music/audio half: MPW:10; WSD:917-918. The video layer rests on the ruling alone. APPA:217-224 and CONT:118 become a sequence (§2.1). D-G (Expressions inside the shell, PROG:110-112) and the 12 Oct ruling (Live mode's music system inside the Expressions mode) sit at different levels; both stand | **SOURCE** (owner ruling) | Five-mode grammar is law. Copy says "Live mode". Live stays distinct until T-LIVE-INTO-EXPRESSIONS (L23) |
 | L2 *new* | Central: a mode, or the world context riding every mode | The ruling names Central a mode (CONT:251). The design implements it as a world context (GRAM:20-21; WSD:533-536). Code drops the world on leaving (APP:259) against STORE:54-56 | PARTLY (mode: SOURCE; leave act: OWNER) | GRAM:20-21's mapping stands. T-WORLDCTX states the leave act. Title "Central" (T-LABELS) |
 | L3 | Epi-Logos: lens, mode or native game; lens carry-over (items 2, 3, 27) | Ruled: "a lens, not a mode (standing ruling D2/A5)" (CONT:252), as the cradle (MODE:135-139). The native game is the vision sense (CONT:14). WorldContext never takes `epi-logos` (APP:259); the Expressions app gets an `epi-logos` lens (expressions.tsx:118) | **SOURCE** (lens, not mode; item 2 answered as (a)) / OWNER (item 27) | No Epi-Logos rail entry |
 | L4 | Units above the day (C1) | None in the system (L-1). The owner closes weeks, months, quarters and decks in Nara's practice. QL cycles are not DLW units | OWNER | The Day is the only unit that closes. Create no week or season object; bind no QL cycle |
-| L5 *new* | Day hours, and who fires the close | Three sides (L-1). The mockup: closing is "the owner's act — never an agent's" (WS/world-shell-mockup-r1.html:797). The session floor tells agents to "close the day you were standing in" (FLOOR:297-298) | OWNER | 08:30/21:00 stay design text with a source tag. No shell device fires a close; closing stays `central.day.lifecycle` |
+| L5 *new* | Day hours, and who fires the close | Three sides (L-1). The mockup: closing is "the owner's act — never an agent's" (WS/world-shell-mockup-r1.html:798). The session floor tells agents to "close the day you were standing in" (FLOOR:297-298) | OWNER | 08:30/21:00 stay design text with a source tag. No shell device fires a close; closing stays `central.day.lifecycle` |
 | L6 | Technē → Expressions: what a composed Expression is (C2) | Artifact: Expression/Scene under `oi.expression/v1` (APPA:104-147). Journey→Scenes the strongest formal bridge (LOCK:465), one application with two operating modes (LOCK:390-399), "one scene identity, no shadow store" (PLAN:1704-1713). "View → scene" waits (GRAM:467) | PARTLY | The crossing is a lane-5 target with exact return by ref equality. No pipeline or hierarchy |
 | L7 | The DLW interface of the Nara encounter: rack, dock or day (C3) | The encounter is ruled by the owner's words (CONT:98). Sources (L-7): 3:3 foreground, the M4→M4′ chain, the Expressions companion, the Central rack face, the day flow | PARTLY (meaning SOURCE; interface OWNER) | One binding, no second conversation store, no verdict on synthesis, bodies handle-only. Draw no pause |
 | L8 | A teaching surface, or teaching distributed (C4; item 29) | "The teaching is the encounter" (CONT:106). Three loci (L-8): in situ at M4.5, ambient at M5′, objectified in Palace (LOCK:358) | PARTLY | No teaching-surface ticket. Essay and epii families stay receiving-only (PLAN:3204-3206) |
@@ -1167,7 +1167,7 @@ Verdicts: **SOURCE** (the sources or an owner ruling settle it); **PARTLY**;
 | L20 | The product's full name (item 1) | "DLW" is never expanded in CONT (CONT:1,14,196) | PARTLY / OWNER | Write "DLW". Do not expand it in UI |
 | L21 *new* | Technē companion label: Epii or Aletheia | Tension, one chain (§2.3): DOCK:67 "Epii" (M5) vs LOCK:510-517 "Technē_i := Aletheia_i" (S5′); Anima is the S4′ operator (LOCK:507) | OWNER | Keep the label. Record the tension in WG §9 |
 | L22 *new* | Review at M5-4, or M5-4 as the six agents | Both. The live M5-4 holds the "S4/S5 review" role, the six agents as internal components, and the M5-4′ "Agentic Control Room" affordance (live Bimba map (queried 12 Oct 2026); L-4). INTEGRATED-4-5-0:79,153 and the reflection (BMAP/M5/M5-4/*) agree with it | **SOURCE** (map, LAW:19) | No DLW surface claims the M5-4 or M5-4′ address until a ticket binds it; the address is provenance only (PROG:97-101) |
-| L23 *new* | When Live moves into Expressions; the audio+video track design | Direction ruled (CONT:247-250). No design or code names a video track. Track kinds enter as adapters (WSD:945-951; PLAN §5.2, §5.8) | OWNER (timing); design Open | T-LIVE-EXPR waits on the owner. Nothing merges Live's rail entry meanwhile |
+| L23 *new* | When Live moves into Expressions; the audio+video track design | Direction ruled (CONT:247-250). No design or code names a video track. Track kinds enter as adapters (WSD:945-951; PLAN §5.2, §5.8) | OWNER (timing); design Open | T-LIVE-INTO-EXPRESSIONS waits on the owner. Nothing merges Live's rail entry meanwhile |
 
 **Plan items the vision does not touch** (status only):
 
@@ -1175,7 +1175,7 @@ Verdicts: **SOURCE** (the sources or an owner ruling settle it); **PARTLY**;
 |---|---|
 | 5–11 (autonomy ladder … Hold launch, PLAN:3096-3115) | OWNER, unchanged |
 | 12 (installed-state rename) | owner nod; blocks retirement bookkeeping only |
-| 13 (ctrl reinstall) | **SOURCE: done** (PATH §2, roster fix `efef5c3` installed). The plan item is stale |
+| 13 (ctrl reinstall) | **SOURCE: done** (PATH §2, roster fix `efef5c3` installed). Closed in the 12 Oct plan revision (PLAN §10 item 13) |
 | 14, 15, 17, 39, 40, 42 | Open, unchanged |
 | 23 (QL procedural body generation) | PARTLY; #281 states it as law, not landed (MPW:118-122) |
 | 31 (step-transition bound) | Open, source vs source |
@@ -1188,7 +1188,7 @@ Verdicts: **SOURCE** (the sources or an owner ruling settle it); **PARTLY**;
 ## §5 The plan delta
 
 "Rewrite" here means the conductor edits the planning document. It is not
-PATH's "rewrite or escalate" of a failed brief (PATH:107-108). Rows still open
+PATH's "rewrite or escalate" of a failed brief (PATH:174-176). Rows still open
 in §4 are written in as recorded questions, never as resolutions; ruled rows are
 written in as law.
 
@@ -1196,7 +1196,7 @@ written in as law.
 
 1. **Preface.** PLAN §0 points to DLW-VISION as the vision source. Extend the
    precedence line (PROG:14-15): the vision governs figure and framing; owner
-   rulings and settled law (MAP:199-200) govern specification.
+   rulings and settled law (MAP:200-201) govern specification.
 2. **§0 (PLAN:73-165).** Keep PLAN:75-79 word for word. Add the figure paragraph
    (§0 item 1), the five-mode ruling (§0 item 3), and the owner's measure,
    "the teaching is the encounter". Attribute "a philosophical project" to the
@@ -1294,21 +1294,21 @@ written in as law.
     PANES-ONTOLOGY T9 (DLW-PANES-ONTOLOGY.md:461-462); PANES-PER-MODE GRAM line
     cites (DLW-PANES-PER-MODE.md:76-77); EXPRESSIONS-ENCOUNTER-SPINE lines 17 and
     74; SF:489-493 still says the hosted field is "planned"; APPA's unmerged-lane
-    rows; MAP:130 has a duplicated row.
+    rows; MAP:130 has a duplicated row (de-duplicated in the seat, 12 Oct).
 
 ### 5.3 PATH phases and tickets
 
 The phase chain 0→1→2→3→4→5 is unchanged (PATH §1). No ticket crosses a red gate.
 
-**Ticket mechanics.** None of the tickets below has a file or a PATH row yet. The
-conductor, who alone keeps PATH (PATH:3-5,13), writes each as
-`WS/wayfinder/tickets/<ID>-<slug>.md` from `BRIEF-BUILDER.md`, adds its row to
-PATH §5 "Next claimable" with its blocked-by, and dispatches reviewers from
+**Ticket mechanics.** Each ticket below has a file in `WS/wayfinder/tickets/` and a PATH §5 entry (committed `f591929b2`, 12 Oct; P0-BIMBA's receipt is ticket P0-BIMBA-LIVE). The
+conductor, who alone keeps PATH (PATH:3-5,14), writes each as
+`WS/wayfinder/tickets/<ID>-<slug>.md` from `BRIEF-BUILDER.md`, adds it to
+PATH §5 with its blocked-by, and dispatches reviewers from
 `BRIEF-REVIEWER.md`. Both briefs embed §6 from wave 1.
 
 24. **Phase 0, P0-V1** (conductor, docs only): land DLW-VISION and the §5.1
     rewrites.
-25. **Phase 0, P0-BIMBA: done, 12 Oct 2026** (read only, through the owner's
+25. **Phase 0, P0-BIMBA: done, 12 Oct 2026** (no ticket file; its re-runnable receipt is ticket P0-BIMBA-LIVE) (read only, through the owner's
     `bimba-graph` module). Confirmed: M4.0–M4.5, M4.3-2, M4.4.4, M4.5,
     M4.5-0…5, M4.5-1, M5-1, M5-4, M5-5 and M5-5-0…5. Divergences, the map
     winning (LAW:19):
@@ -1361,10 +1361,10 @@ PATH §5 "Next claimable" with its blocked-by, and dispatches reviewers from
 31. **Phase 5, T-RETIRE-RECORD.** Turn LEGACY-CRADLE-RETIREMENT.md's shape into a
     template: what retires, what does not, the named day, the gates. It decides
     nothing about modes (L9).
-32. **Deferred, owner-timed: T-LIVE-EXPR.** Integrate Live into Expressions with
+32. **Deferred, owner-timed: T-LIVE-INTO-EXPRESSIONS** (short id T-LIVE-EXPR). Integrate Live into Expressions with
     audio and video track layers on one timeline (CONT:247-250), as Timeline
     track adapters (WSD:945-951; PLAN §5.8). Not claimable until the owner names
-    the time and the Live port is measurable as a whole (L23). No PATH row until
+    the time and the Live port is measurable as a whole (L23). No PATH claim row until
     then; it is listed so that no other ticket does it by accident.
 33. **Stop rule.** A builder who reaches any §4 row still PARTLY or OWNER returns
     `OPEN` with the row id (PATH:5).
@@ -1399,7 +1399,7 @@ MODES   Five, owner-ruled: Live (base) · Central · Factory · Expressions ·
 LIVE    Live mode is the reverse-engineering basis: port Live's real dynamics
         from the measured corpus as one technology; never approximate. Its
         destination is Expressions with audio and video track layers on one
-        timeline; it stays distinct until the owner times T-LIVE-EXPR.
+        timeline; distinct until the owner times T-LIVE-INTO-EXPRESSIONS.
         (L-0, L18, L23)
 CROSS   The modes bleed, and that is the point: material becomes material in
         another mode. The owner's three crossings are the targets: a Central

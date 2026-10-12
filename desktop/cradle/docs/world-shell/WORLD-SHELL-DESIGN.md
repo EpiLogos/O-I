@@ -23,13 +23,15 @@ revision 5, the final pass. Earlier rounds are kept as `world-shell-mockup-r4.ht
 ## Revision 5 — one transport, five meanings (8 October 2026)
 
 **The rack:** Session and Arrangement view icons, then the mode icons: Live
-(music, the shell's base mode, restored), Base · Central, Factory, Expressions
-and Technē.
+(music, the shell's base mode, restored), Central, Factory, Expressions
+and Technē. *(12 Oct 2026: Rev 5 titled the Central icon "Base · Central";
+under the owner's five-mode ruling, CONTEMPLATION-DLW-INSTRUMENT.md:232-252,
+the title is "Central" — the code still carries the old title, ticket T-LABELS.)*
 
 **Every mode keeps the same transport slots in the same places.** Only their
 meaning changes:
 
-| Slot (Live) | Base · Central | Factory | Expressions | Technē |
+| Slot (Live) | Central (Rev 5 title "Base · Central", T-LABELS) | Factory | Expressions | Technē |
 |---|---|---|---|---|
 | Link · Tap | ground sync · stamp Now into the document | peers · ping agents | field sync · tap tempo | field carrier · back to Now |
 | tempo ‹ › · signature | die face (‹ › turns it) · 4+2 | effort · budget | field tempo · 5:3 ratio | walk pace · stop n/8 |
@@ -800,7 +802,7 @@ capture rate) + Factory receiving (results Return).
 
 ## 15. The time spine — locked at the top, bound from below
 
-Time is locked at a higher level. Four strata, one spine; families bind
+Time is locked at a higher level. Five strata, one spine; families bind
 and may contribute material, never fork clocks:
 
 1. **Chronos** — qualitative/cosmic time: kerykeion sky positions, the M3

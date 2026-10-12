@@ -6,7 +6,8 @@ Blocked-by: —
 Seat state at writing (12 Oct): DLW-PLAN.md carries uncommitted edits
 (`git diff --stat`: +456/−56), not made by this ticket's writer. Before
 dispatch, the conductor confirms whether they are this ticket in progress and
-sets Claimed-by.
+sets Claimed-by. *Since writing:* DLW-VISION.md and the tickets are committed
+(`f591929b2`, acceptance 1); the DLW-PLAN rewrites (+781/−76) remain uncommitted.
 Source: DLW-VISION.md §5.3 item 24 (DLW-VISION.md:1309-1310); the rewrites
 are §5.1 items 1–16 (DLW-VISION.md:1195-1267).
 
@@ -14,7 +15,7 @@ Zones: `desktop/cradle/docs/world-shell/wayfinder/DLW-VISION.md` (land it;
 correct only cites that P0-BIMBA-LIVE or this ticket's cite check finds
 wrong), `desktop/cradle/docs/world-shell/wayfinder/DLW-PLAN.md` (§0, §2, §4
 head, §4.1–§4.5, §5.4, §5.6, §6.1, §7, §8, §10, §11 as §5.1 lists them).
-Conductor only: PATH:13 gives planning documents to the conductor. No product
+Conductor only: PATH:14 gives planning documents to the conductor. No product
 code.
 
 ## Question
@@ -94,6 +95,8 @@ Exercised: the planning documents as the next builder reads them. Channels:
    the measured backlog as "D1–D13"; at 12 Oct
    `docs/research/ableton-live-12.0.25/reconstruction-backlog.md` carries rows
    D1–D16 (:57-73). Corrected in the vision or recorded in the Resolution.
+   *Re-read 12 Oct:* the backlog now carries D1–D18 (:57-75); DLW-VISION.md:279
+   and DLW-PLAN §4.1 FOCUS were corrected to that count.
 8. Reviewed at the next review point (R0 if it lands in wave 0) against §6
    and the mode ruling (BRIEF-REVIEWER.md).
 
@@ -105,4 +108,20 @@ REL:179-184) is proposed to the owner, not adopted.
 
 ## Resolution
 
-—
+Resolved 12 Oct 2026, conductor (`claude-code:dlw-conductor`), channels
+`scripted` + `code-reading`.
+
+- DLW-VISION.md landed in `f591929b2` (read/synthesise/verify workflow
+  wf_abae3904-68e, then revise/verify incl. the live Bimba map query
+  wf_14ec59f2-751).
+- §5.1 items 1–16 applied to DLW-PLAN.md (workflows wf_14ec59f2-751 +
+  wf_933ec42e-7ba, audit table in the latter's return): preface 3-18; §0
+  97-268; §2 393-449; §4 head 748-797; §4.1 831-886; §4.2 1542-1572; §4.3
+  1668-1684; §4.4 1789-1855; §4.5 1968-2033; §5.4 2352-2449; §5.6 2609-2629;
+  §6.1 2759-2813; §7 3108-3373; §8 3400-3405; §10 Group F items 43–51 + the
+  C1–C9 cross-reference 3846-3926; §11 3981-3999 (seat line, builder carry by
+  reference).
+- Cross-document consistency check run and its fixes applied; residuals
+  recorded on P0-V2 and in PATH §5.
+- Carried: the Live RE backlog grows under another lane (D1–D18 at check
+  time); the dated "D1–D16, 12 Oct" counts will go stale — re-pin on touch.

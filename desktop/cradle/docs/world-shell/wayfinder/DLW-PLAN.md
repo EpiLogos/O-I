@@ -1,5 +1,21 @@
 # DLW — the Digital Logos Workspace: the unified product-build plan
 
+**Precedence (12 Oct 2026).** The vision of record is
+[DLW-VISION.md](DLW-VISION.md): the DLW as the instrument of Epi-Logos,
+compiled from the owner's contemplation and his five-mode ruling of the same
+day ([CONTEMPLATION-DLW-INSTRUMENT.md](CONTEMPLATION-DLW-INSTRUMENT.md),
+ruling at `CONT:232-252`). **This document stays the plan of record for
+detail.** Where the two touch, the vision governs figure and framing; owner
+rulings and settled law govern specification: the mode ruling, D13, §11a,
+the two-clock doctrine and the 126 target identities (`MAP.md:200-201`).
+The vision overrides none of them. The 12 Oct revisions in this document
+apply DLW-VISION §5.1–5.2 and are marked *(12 Oct)*. In them, `CONT` is the
+contemplation, `VIS` is DLW-VISION, `L-n` is a layer in VIS §1.2, `Ln` is a
+row of the VIS §4 ledger, and the other short keys (`LOCK`, `MPW`, `TDR`,
+`GRAM`, `DOCK`, `APPA`, `PRAX`, `REL`, `LIVE`, `UI/…`) resolve through
+VIS's path-key list (`DLW-VISION.md:28-66`). Line cites into this plan
+inside VIS (`PLAN:n`) name the pre-revision lines.
+
 **Standing:** compiled unified plan, lane `zcode:dlw-compile-final`, dispatched by
 orchestrator `zcode:world-shell-orchestrator`, 2026-10-10. It merges three
 harvested part-drafts into one document:
@@ -43,7 +59,9 @@ the same artifact throughout.
 (ruling D2 + amendment A5, 2026-09-18; the cradle's `WorkspaceMode`
 `"epi-logos"` enum value is a refused seam — the mode switcher filters it
 out). The three registers are distinguished in §7 per P3 Chapter E. What the
-*new shell's* mode rail owes Epi-Logos remains ledger §10 item 2.
+*new shell's* mode rail owes Epi-Logos is settled *(12 Oct)*: "Epi-Logos a
+lens, not a mode (standing ruling D2/A5)" (`CONT:252`); ledger §10 item 2
+closes as answer (a).
 
 **Master planning source.** The owner's planning session of record is ZCode
 session `sess_ac3200ca-b5e7-410e-81ff-4fa5a4c512e2` ("Ableton Shell Handover
@@ -57,7 +75,11 @@ owner rulings "supersede older wording wherever the two differ"
 (`WORLD-SHELL-DESIGN.md:103-104` — "Where this conflicts with Revision 2
 below, this revision stands"; Rev 5 is "the final pass", :17-19); the
 DEVELOPMENT-TRACK (9 Oct) "supersedes the session's completion-shaped
-framings" (`DEVELOPMENT-TRACK-2026-10-09.md:6-7`).
+framings" (`DEVELOPMENT-TRACK-2026-10-09.md:6-7`). *(12 Oct)* The owner's
+mode ruling (`CONT:232-252`) is a later owner ruling and governs earlier
+wording where the two say different things at the same level (VIS Standing,
+**Inferred** from the `PROGRAMME.md:14-15` precedent). DLW-VISION governs
+figure and framing, never specification (preface above).
 
 **Source keys.** Bracketed tags such as `[session-model §4]`, `[racks §1.7]`,
 `[SDK]`, `[mockup:world]`, `[UI-EVIDENCE]`, `[CROSSWALK]`, `[WSD §14]`,
@@ -71,6 +93,26 @@ resolve in `DLW-PLAN-p3-SOURCES.md`. P1's full source inventory is
 ---
 
 ## 0. The product — what DLW is, in the sources' own words
+
+**The figure** *(12 Oct; VIS §0 items 1–2)*. A DAW is "a total environment
+for a medium"; the Glass Bead Game is "a total environment for meaning"
+(`CONT:26-28`). "Hesse described the pattern. Live proved the pattern can
+exist as software. The DLW is the instance" (`CONT:32`), aimed at the total
+contents and values of a *world*: "Not a database, not a wiki, not a
+chatbot, not a knowledge graph" (`CONT:30`). Live's proof is for a medium
+(`CONT:194`); the study's finding that no coherent computational Game yet
+exists (`AFTER:150-152`) is the bar the instance has to meet. Live's lesson
+is that the power "is not in any single feature — it is in the integration,
+the porousness, the shared clock" (`CONT:26`). The game the DLW exists to let
+anyone play is Epi-Logos, its native game: "the corpus made playable… the
+reflective turn — language operating on language — as a total environment"
+(`CONT:14,198`). The corpus is the esoteric identity, the system the
+exoteric, and the mode the projection of one over the other, "bimba over
+pratibimba" (`CONT:18`); the day is the session in which the game is played
+(`CONT:228`). Epi-Logos is "a philosophical project" by the owner's
+clarification of 11 Oct, as the study records it (`GBG/README.md:23-24`;
+`PRAX:50-51`). The sentence below gives the instance's anatomy; this
+paragraph says what the anatomy is for.
 
 DLW is **one desktop application: a Tauri/Rust host whose UI presents one
 World through four projections, in five working modes plus the Epi-Logos
@@ -144,6 +186,22 @@ spine.** Every element of that sentence is sourced:
   `packages/live-shell/ui/src/shell/modeGrammar.ts` ("The mode grammar —
   WORLD-SHELL-DESIGN Revision 5's tables as typed data… One transport, five
   meanings").
+  - **The mode set is owner-ruled law** *(12 Oct)*: "Five modes stand: Live
+    stays as the base mode" (`CONT:234`). Mode set for the build: **Live
+    (base) · Central · Factory · Expressions · Technē**, with Epi-Logos a
+    lens, not a mode (`CONT:251-252`). Live is the reverse-engineering
+    basis: Live's real deep dynamics as one unified technology (live-set,
+    live-dynamics, live-engine, live-shell), "ported, not approximated"
+    (`CONT:244-246`). Its destination is Expressions, where audio and video
+    track layers live together on one timeline, "like davinci"
+    (`CONT:236-241,247-250`); until then Live stays a distinct base mode "so
+    the port stays clean and measurable" (`CONT:249-250`). The music/audio
+    half is already grounded (`MPW:10`; `WORLD-SHELL-DESIGN.md:917-918`); the
+    video half rests on the ruling alone (ledger item 51). The code's rail
+    already matches the set (`SURF_MODES`, `shell/modeGrammar.ts:33`); the
+    Revision 5 quote above keeps its "Base · Central" wording, which the
+    ruling reads as "Central" (§4 head). One environment, never separate
+    apps (`CONT:169`): material becomes material in another mode (§6.1).
 
 - **The planning posture** (owner, `[session]` msg 68, verbatim sic): "we are
   plannign the full system shape and sccope, all leanes come off and back to
@@ -161,11 +219,65 @@ spine.** Every element of that sentence is sourced:
   owner AND functions and looks better than the mockup drew it… falling short
   of the guide is the only failure."
 
+**The measure** *(12 Oct; VIS §0 items 4–7)*. The craft bar measures the
+device; these measure the work the devices serve. Each is the owner's
+account, grounded in the kernel where VIS cites it; none is a UI label.
+
+- **Editing is origin-return.** Technē's editing "is not just editing — it
+  is working the material backward into its origin"; that working is
+  compassion, "loving sensitivity to origins", with origin as Gebser's
+  ever-present origin, "the origin not as a point in the past but as an
+  ever-present source" (`CONT:84-88`). "The
+  Archive is reversible. And the tracing is love" (`CONT:88`). The kernel
+  grounds the return: M0 is "The Ever-Present Origin"; M4 Nara is where the
+  individual self "awakens through compassionate sensitivity to origins";
+  M5-5's synthesis is the 5→0 write-back, an-a-logos "completes the return",
+  its etymological archaeology deposited "through review and Hen
+  vault-write into M0's bimba node"; M4.5-1 names "pedagogical compassion"
+  (live Bimba map, queried 12 Oct 2026; VIS §0 item 4, L-6). Provenance by
+  ref and revision, with an exact return, is the material condition of the
+  act, not the act (§4.5).
+- **The meditation is a dialogical encounter.** "The meditation is not a
+  pause. It is a dialogical encounter. The oracle speaks; you listen. The
+  system meets you; you meet the system. This is the layer that keeps the
+  symbols alive" (`CONT:98`). It is M4 Nara, foreground in the 3:3 reading
+  (`LOCK:31`), on the chain M4 Nara ↔ S4 Workcell ↔ S4′ Anima → M4′
+  (`LOCK:96`). Nara's work is "not providing answers but midwifing
+  recognition" (live Bimba map, M4 `q_4_individuation_threshold`).
+- **The teaching is the encounter.** "The system teaches by being met. Epii
+  is the face you meet. The teaching is the encounter" (`CONT:106`). Palace
+  is the form the M5 pedagogy pole takes in Technē, "the explicit deep
+  objectification of the otherwise ambient M5
+  articulation/pedagogy/recognition pole" (`LOCK:358`). No help or Lessons
+  panel stands in for it, and no device judges synthesis for the player
+  (`PRAX:497-500`).
+- **The modes are porous.** "Live is not five apps sharing a file format"
+  (`CONT:169`): a Central reading becomes a Factory commission's source, a
+  cymatic sweep in Expressions becomes a Journey phrase, a Technē Palace
+  composition becomes a return to Central's wiki as a proposal (`CONT:167`;
+  §6.1).
+- **The work ends.** "Games end… The score remains. This is what keeps a
+  total environment from becoming a totalising prison"; "An instrument that
+  cannot imagine its end will defend it" (`CONT:159,161`). In the kernel an
+  ending is a completion that hands the work back as ground — M5-5
+  "perfects itself by perishing into ground… The cycle completes by
+  starting" (live Bimba map, M5-5 `q_5_mobius_writeback_reopens`) — and a
+  stage ends "when stage completion criteria are met, not on fixed time
+  intervals" (`BMAP/M5/M5-5/M5-5.md:19`). The day closes; nothing larger
+  than the day yet retires with record (VIS L9, **Open**).
+
 ---
 
 ## 1. The ground truth — what exists today (the build starts here)
 
 ### 1.1 Landed code (verified on disk at the fold, 2026-10-10 ~13:30 BST, HEAD `109ba5d5c`, seat `worktrees/env-1/o-i`, branch `agent/o-i-20261007-1639`; the tree holds 84 uncommitted changes at the recount)
+
+**Seat now** *(12 Oct)*: `worktrees/env-1/o-i`, lane `dlw/build-20261012`, cut
+from `main` `619a4548b`. The shell landed on O-I `main`: #635 (`169f55c6f`,
+10 Oct), #637 (`d7e40b32b`) and the 11 Oct fold-in `0dfa7b5ea`, with the
+11 Oct Live-mode device-face rounds (PATH §2, `PATH.md:30-34`; `git log
+main`, 12 Oct). `agent/o-i-20261007-1639` is history; the heading above
+records where the fold verified, not where to work.
 
 All under `/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/` unless noted:
 
@@ -184,7 +296,7 @@ All under `/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/`
 | `agent/` (28 files) | The agent shell: session grid, arrangement needles, thread view, context dock, browser, device chain (made physically real — drag, drop, slide, refuse, `5b5b6a4ca` + `agentChainDrag.ts`), transport, gateway control, run model, fidelity oracle hooks | `AGENT-SHELL-ACCEPTANCE.md` + V1 verdict ticket; git log at seat |
 | `shell/live/` Live craft (10 Oct) | Live's place and surface at the measured Live standard: live empty states, live detail presentation, status-bar touches, `tests/live-mode-place` (8/8) | commit `0f4bfdadf`; git log at seat |
 | Kernel fix (cradle) | Kernel read horizon: `temporal_events_read` was ~114 serial `oi` spawns/read; now one shared register reading + 8-worker fan-out + 2 s answer cache; measured 55 s → **cold 11.4 s / warm 1.4 ms live**, identity byte-equal | K1 ticket resolution, commit `92695a963` |
-| Work/Central `9449881` | ctrl roster-read fix (validator learns `self_source`/`relational_logos` pins; 774/0 tests); **binary reinstall still pending (owner act)** | CE1 ticket resolution |
+| Work/Central `9449881` | ctrl roster-read fix (validator learns `self_source`/`relational_logos` pins; 774/0 tests); ~~binary reinstall still pending (owner act)~~ **reinstall done** *(12 Oct)*: the fix landed as `efef5c3`, and installed ctrl `7a45111` (11 Oct 16:30) contains it (ledger item 13, closed) | CE1 ticket resolution; `PATH.md:39-40`; `git merge-base --is-ancestor efef5c3 7a45111` in Work/Central, 12 Oct |
 
 ### 1.2 The suite products and crates (native owners — the shell binds, never reimplements)
 
@@ -260,7 +372,7 @@ All under `/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui/src/`
 - The computer-use acceptance leg — machine-wide blocker resolved
   (`~/.zcode/cua-broker/relaunch-broker.sh` workaround,
   `DEVELOPMENT-TRACK-2026-10-09.md:19-21`); passes still to execute.
-- Five fog items (`MAP.md:163-188`): projection-scale performance/clustering;
+- Five fog items (`MAP.md:165-189`): projection-scale performance/clustering;
   visiting exercised end-to-end; QL-side procedural body-generation contract;
   pushed turn streaming; multi-machine physical acceptance.
 - Lane-3's editor-core targets E01–E26 (0 landed into the shell as native
@@ -278,37 +390,63 @@ source tables are merged row by row; where both sources carry a row, both
 cites stand. Ground every UX decision in this table. The device-ontology
 chapter that owns the DLW side of it is §3.
 
-| Ableton concept | DLW ontology | Where sourced |
-|---|---|---|
-| **Clip** — material in a lane (warp/fades/gain/launch craft included) | A clip is World material in a track: Expressions scenes, historical events, Factory runs/tasks, agent activity, conversations, civil days/returns/handoffs, celestial motion, M3 clock transformations; clips carry epistemic standing (fact · claim · inferred · hypothesis · disputed · ghost), never upgraded by placement. Clip craft: live mode's clip properties + note editor (mockup); Central's clip-view craft: "CAS identity, basis and the save router's named outcomes (`saved \| unchanged \| stale \| conflict \| refused`) are this world's warp markers" | `WORLD-SHELL-DESIGN.md:400-408` (§3.2); `UX-SPINE-ALIGNMENT.md:80-90` (T5); Rev 2 Timeline rows (`WORLD-SHELL-DESIGN.md:255-258`); [mockup:world liveDetail clip view; WSD §12 Central]; owner: Central is like Live's clip view — "the nitty gritty functionalities of warping etc" [session] |
-| **Track** | A lane of World material — the Timeline projection's columns; track adapters project family material (day/run/conversation/expressions/audio/physics adapters over ONE `temporal_events_read` / scene membership — no second store) | `WORLD-SHELL-DESIGN.md:401-403`; L4/L9 adapters (§1.1; §5) |
-| **Scene** (session row) + session grid | A batch/row launcher: Expressions scene rows (the native Scene is the atomic launch unit — "whole-Scene launch remains atomic", `UI-UX-CONVERGENCE-STUDY.md:51`); Factory scene rows fire a row of acts (`AGENTIC-CONVERGENCE.md:179`); journeys are walk-stops in scene-row form (Rev 2). The session presentation of any World track set — the set model gains World track adapters (day tracks, run tracks, conversation clips); Rev-5 per-mode Session meanings are typed data | `WORLD-SHELL-DESIGN.md:255-257`; WSD §10 seam 5; L1 landed one-Timeline fix; [SDK modes.ts] |
-| **Arrangement** | The time-ordered reading of the same material: the integrated overview above the ruler is the single navigation surface — **no duplicate scrub bar** (owner ruling, retained, `WORLD-SHELL-DESIGN.md:407-408`) | `UI-UX-CONVERGENCE-STUDY.md:36` + design §3.2 |
-| **Session ⇄ Arrangement as two presentations of ONE Timeline projection** | Not audio-mode features; a presentation is not a mode switch (the recorded App.tsx fault, fixed in L1) | `WORLD-SHELL-DESIGN.md:399-401`; L1 resolution |
-| **Device** | One whole device = one panel/one parameter model with three presentations (compact ≤4 controls; expanded pool; full/centre) of the SAME live parameters; honest visual derived from readings; activator light only where a real owner enable exists. The DLW device face is a face over the proven aperture `{reading, disabled, apply, captureCurrent}`, composed from the SDK kit (`FacePlate`, `ScalarParam`, `EnumParam`, `BoolParam`, `ReadingRow`, `Lamp`, `Disclosure`, `WaitingFace`); "A face receives … and never dispatches a write of its own" | `DEVICE-PANEL-BRIEF.md:6-21` (owner model — "do not drift from it"); [WSD §5 "The device aperture is proven and generalises as-is"; SDK §controls, step 4] |
-| **Device chain (per track) / Rack — the chain itself** | THE plugin system of the whole environment: devices attach to the rack of the pane whose encounter they operate on — the inhabitant rack on the selected material's chain: chain strip, compact vs configure, deep-edit expand, enable toggles all exist as presentation states [WSD §5: `NativeDeviceStrip`, `NativeRackEditor` `is-compact`/`is-configuring`]; chain order per mode (agent chain: gateway → agent → skillset racks → world → git, read left-to-right as "through → who → how → where → lands" [mockup:agent dropz]); the rack follows the focused pane's material. The agent-shell chain is the landed instance | `WORLD-SHELL-DESIGN.md:314-322` (§1); `MAP.md:145-147`; `AGENTIC-CONVERGENCE.md` Rev 5 |
-| **Rack (4 kinds: Instrument / Audio Effect / MIDI Effect / Drum)** | **Family rack component form** — chains as rows with admit lights + a macro bank. Drum Rack's pad grid has its own face (the mockup's 16-pad Drum Rack [mockup:world liveDetail]); Instrument/Audio/MIDI racks share the chain-row form | [mockup:agent `skillRack()`; owner quote "Each chain is a skill; the light admits or denies it"] |
-| **Chain / branch** | Chain row in a rack, with its own enable (the light) and its own device list; per-material chain gestures: inserted/selected/folded/moved/duplicated/removed/activated devices; hot-swap, presets, macro mapping (crosswalk "Device lifecycle and rack topology" family, `FUNCTIONAL-CROSSWALK.md:179-187`); "Serial/parallel/shared contribution topology has real separate supported native instances". Branch zones + chain mixer = per-chain range + level/sends (measured, §3.1) — no DLW commitment names these yet: OPEN-QUESTION (ledger §10 item 19) on chain-selector semantics for non-audio families | same crosswalk family; [mockup:agent chains rows; racks §1.1–1.6] |
-| **Macro** (8 visible, 16 max) | **The mockup's macros**: `Thorough` (Thoroughness) 62%, `Test depth` 40%, `Reach`, `Risk` on the skillset rack; `Fan-out/Depth/Hand-back` on the agentset rack; §14: "macros are the first modulators, and the rack-topology family's 'macro range/curve/scope' is their contract". Owner verbatim: "Macros drive several skills' settings at once" | [mockup:agent skillRack/agentsetRack; WSD §14; CROSSWALK device-lifecycle gestures] |
-| **Macro snapshot / variation** | Preset store/recall + variation store/recall/exclusions — declared target gestures, acceptance = "macro target/range/curve/exclusions" readback; unset snapshot slots = −1/false is the measured storage shape | [CROSSWALK device-lifecycle family; racks §1.7] |
-| **Preset (.adv/.adg)** | Family manifest declaration (the admission-time "preset" of a family's device surface) + runtime preset store/recall as a **write with its owner op**; document-level recall = lift device element + Id + allocated pointees | [SDK admitFamily/declareDeviceExtension; CROSSWALK; session-model §4 rule 6] |
-| **Hot-swap** | **Compatible hot-swap** gesture; "refusal of unsupported swaps" is part of the detecting trial. Compatibility domain in Live is the signal-domain typing (`MidiToMidi`/`MidiToAudio`/`AudioToAudio`); DLW's typed equivalent is the chain's parameter/signal grammar — proposal, owner confirms: OPEN-QUESTION (ledger §10 item 18) | [CROSSWALK device-lifecycle; racks §1.1] |
-| **Device activator (`On`)** | **The activator light as a reading** — lit only where a real owner enable exists; hollow otherwise; `Lamp` states admit/deny/waiting/refusing/unknown. "A successful UI flag is never evidence of a native effect" | [DEVICE-PANEL-BRIEF rule 6; SDK Lamp; owner quote "the light admits or denies it"; MAP aperture law] |
-| **Signal flow (typed chains, sends, returns, crossfader)** | **The transport as signal flow** — one transport wearing five meanings; per-family time bindings; telemetry as modulation sources; the chain's left-to-right reading. The two-clock doctrine governs: civil time keeps closure; the sample clock is the work-time stratum families bind, never fork | [WSD Rev 5; §15 time spine; mockup:agent chain order; SCOPE §5; WSD §15, §18] |
-| **Transport** | ONE transport wearing five meanings (Rev 5 table, §4); Live restored as base mode | `WORLD-SHELL-DESIGN.md:23-42` |
-| **Groove pool (the geometry)** | The browser-below contextual working area (property definition/pinning, macro mapping targets, modulation monitor, per-mode pool content); the pool's audio purpose retained; in Expressions it becomes the selected property's mapping/pinning area (role selector, never a pile) | `UI-UX-CONVERGENCE-STUDY.md:63-64` (§Browser below) |
-| **Groove / swing (the content)** | (No source assigns a DLW meaning to Live's groove pool *content* beyond the geometry reuse; the pool geometry is reused per `UI-UX-CONVERGENCE-STUDY.md:63`) — ledger §10 item 16 records the gap | — |
-| **Browser (+ hot-swap pool)** | Category/results browser above + contextual pool below; categories over actual owners; preview ≠ open ≠ add; browser categories per family (four surfaces law: browser, rack, projections, inspectors — a fifth place is a design smell); "A device category is useful only when its insertion/capability is real" | `UI-UX-CONVERGENCE-STUDY.md:61-64`; `WORLD-SHELL-DESIGN.md:836-845` (§16) |
-| **Clip view \| Device view** | The bottom detail area = focused pane's rack view; the Clip\|Device pair is "toggled from the status bar as in the agent shell" (Rev 4) — the status bar's "Clip/Device switch" per the study; per-arrangement meanings (Rev 4 table, §4) | `WORLD-SHELL-DESIGN.md:80-98` (Rev 4); `UI-UX-CONVERGENCE-STUDY.md:67-69` |
-| **Key/scale** | Per-mode re-meaning: packet token count (Base) · tokens in/out (Factory) · ☿ resonance key (Expressions) · aperture/view-as (Technē) | Rev 5 table |
-| **Tempo / signature / metronome / quantize** | Per-mode re-meanings (die face 4+2; effort/budget; autosave/save-timing; heartbeat/interrupt timing; pulse/scene-quantize; walk pace/stop n/8; presence/arrival) | Rev 5 table |
-| **Warp / clip-view craft** | Central's clip-view craft: CAS identity, basis, save-router named outcomes (`saved \| unchanged \| stale \| conflict \| refused`) are "this world's warp markers" | `WORLD-SHELL-DESIGN.md:706-717` (§12 Central); owner clip-view quote `[session]` |
-| **Automation / modulation (incl. the measured matrices)** | Typed parameter addresses `{family, device-instance, key, type, range/unit, write-path}`; scope declaration = specification; modulation = routing relation source→target through custody/receipt law; **every modulated parameter shows its modulator** (Live colours the modulated knob). Measured precedent: Wavetable's 52×13 and Meld's 50×19 mod matrices — "the shell's device panel should expose the matrix … rather than a fixed velocity knob" | `WORLD-SHELL-DESIGN.md:772-799` (§14); [mod-matrix §Shell consequence] |
-| **Follow actions** | Hand-off (Factory: "Then = hand-off follow action", `AGENTIC-CONVERGENCE.md:179`); journey transitions as authored per-edge objects (lane-5 T5); the mockup's clip **Then** section: "hand off → Capture pass" — "Live's follow action, as hand-off" | cited rows; [mockup:agent renderClip Then; follow-action] |
-| **Takes / comping** | Takes are transport material, never a clock; performance recording is the take machinery (seed for #281); takes live on Timeline lanes (fifth-places audit: the Takes tab is a design smell, home is the Timeline) | `WORLD-SHELL-DESIGN.md:822` (§15.4); `EXPRESSIONS-FOUR-SURFACES.md:24-25` (item 4); §5.7 |
-| **Freeze / render / export** | Render/export offices belong to #281's composition/interop packet; capture actions per `EXPRESSIONS-FEATURE-MAP.md:53` | `M-PRIME-PHYSICAL-MUSIC-WAYFINDER.md:164` |
-| **Loader integrity laws** | Live's loader rejections restated as DLW's rack-topology integrity laws (identity, resolution, no danglers, arity, lift-in equivalence — §3.4) | [session-model §4] |
-| **126 targets** | The eight operation families, one of which **is** this ontology: "Device lifecycle and rack topology"; the acceptance register and its rules: §9 | [CROSSWALK; WSD §9] |
+| Ableton concept | DLW ontology | Where sourced | Function test (`CONT:38`) *(12 Oct)* |
+|---|---|---| --- |
+| **Clip** — material in a lane (warp/fades/gain/launch craft included) | A clip is World material in a track: Expressions scenes, historical events, Factory runs/tasks, agent activity, conversations, civil days/returns/handoffs, celestial motion, M3 clock transformations; clips carry epistemic standing (fact · claim · inferred · hypothesis · disputed · ghost), never upgraded by placement. Clip craft: live mode's clip properties + note editor (mockup); Central's clip-view craft: "CAS identity, basis and the save router's named outcomes (`saved \| unchanged \| stale \| conflict \| refused`) are this world's warp markers" | `WORLD-SHELL-DESIGN.md:400-408` (§3.2); `UX-SPINE-ALIGNMENT.md:80-90` (T5); Rev 2 Timeline rows (`WORLD-SHELL-DESIGN.md:255-258`); [mockup:world liveDetail clip view; WSD §12 Central]; owner: Central is like Live's clip view — "the nitty gritty functionalities of warping etc" [session] | **F** |
+| **Track** | A lane of World material — the Timeline projection's columns; track adapters project family material (day/run/conversation/expressions/audio/physics adapters over ONE `temporal_events_read` / scene membership — no second store) | `WORLD-SHELL-DESIGN.md:401-403`; L4/L9 adapters (§1.1; §5) | **F** |
+| **Scene** (session row) + session grid | A batch/row launcher: Expressions scene rows (the native Scene is the atomic launch unit — "whole-Scene launch remains atomic", `UI-UX-CONVERGENCE-STUDY.md:51`); Factory scene rows fire a row of acts (`AGENTIC-CONVERGENCE.md:179`); journeys are walk-stops in scene-row form (Rev 2). The session presentation of any World track set — the set model gains World track adapters (day tracks, run tracks, conversation clips); Rev-5 per-mode Session meanings are typed data | `WORLD-SHELL-DESIGN.md:255-257`; WSD §10 seam 5; L1 landed one-Timeline fix; [SDK modes.ts] | **F** in all five (day-as-clips, tasks, scene rows, journey stops; GRAM:178,231,301,363,415) |
+| **Arrangement** | The time-ordered reading of the same material: the integrated overview above the ruler is the single navigation surface — **no duplicate scrub bar** (owner ruling, retained, `WORLD-SHELL-DESIGN.md:407-408`) | `UI-UX-CONVERGENCE-STUDY.md:36` + design §3.2 | **F** |
+| **Session ⇄ Arrangement as two presentations of ONE Timeline projection** | Not audio-mode features; a presentation is not a mode switch (the recorded App.tsx fault, fixed in L1) | `WORLD-SHELL-DESIGN.md:399-401`; L1 resolution | **F** |
+| **Device** | One whole device = one panel/one parameter model with three presentations (compact ≤4 controls; expanded pool; full/centre) of the SAME live parameters; honest visual derived from readings; activator light only where a real owner enable exists. The DLW device face is a face over the proven aperture `{reading, disabled, apply, captureCurrent}`, composed from the SDK kit (`FacePlate`, `ScalarParam`, `EnumParam`, `BoolParam`, `ReadingRow`, `Lamp`, `Disclosure`, `WaitingFace`); "A face receives … and never dispatches a write of its own" | `DEVICE-PANEL-BRIEF.md:6-21` (owner model — "do not drift from it"); [WSD §5 "The device aperture is proven and generalises as-is"; SDK §controls, step 4] | **F** |
+| **Device chain (per track) / Rack — the chain itself** | THE plugin system of the whole environment: devices attach to the rack of the pane whose encounter they operate on — the inhabitant rack on the selected material's chain: chain strip, compact vs configure, deep-edit expand, enable toggles all exist as presentation states [WSD §5: `NativeDeviceStrip`, `NativeRackEditor` `is-compact`/`is-configuring`]; chain order per mode (agent chain: gateway → agent → skillset racks → world → git, read left-to-right as "through → who → how → where → lands" [mockup:agent dropz]); the rack follows the focused pane's material. The agent-shell chain is the landed instance | `WORLD-SHELL-DESIGN.md:314-322` (§1); `MAP.md:147-149`; `AGENTIC-CONVERGENCE.md` Rev 5 | **F** (a format per mode, `UI/inhabitants/sdk/modes.ts:303-316`) |
+| **Rack (4 kinds: Instrument / Audio Effect / MIDI Effect / Drum)** | **Family rack component form** — chains as rows with admit lights + a macro bank. Drum Rack's pad grid has its own face (the mockup's 16-pad Drum Rack [mockup:world liveDetail]); Instrument/Audio/MIDI racks share the chain-row form | [mockup:agent `skillRack()`; owner quote "Each chain is a skill; the light admits or denies it"] | **F** |
+| **Chain / branch** | Chain row in a rack, with its own enable (the light) and its own device list; per-material chain gestures: inserted/selected/folded/moved/duplicated/removed/activated devices; hot-swap, presets, macro mapping (crosswalk "Device lifecycle and rack topology" family, `FUNCTIONAL-CROSSWALK.md:179-187`); "Serial/parallel/shared contribution topology has real separate supported native instances". Branch zones + chain mixer = per-chain range + level/sends (measured, §3.1) — no DLW commitment names these yet: OPEN-QUESTION (ledger §10 item 19) on chain-selector semantics for non-audio families | same crosswalk family; [mockup:agent chains rows; racks §1.1–1.6] | **F**; selector beyond audio open (item 19) |
+| **Macro** (8 visible, 16 max) | **The mockup's macros**: `Thorough` (Thoroughness) 62%, `Test depth` 40%, `Reach`, `Risk` on the skillset rack; `Fan-out/Depth/Hand-back` on the agentset rack; §14: "macros are the first modulators, and the rack-topology family's 'macro range/curve/scope' is their contract". Owner verbatim: "Macros drive several skills' settings at once" | [mockup:agent skillRack/agentsetRack; WSD §14; CROSSWALK device-lifecycle gestures] | **F** |
+| **Macro snapshot / variation** | Preset store/recall + variation store/recall/exclusions — declared target gestures, acceptance = "macro target/range/curve/exclusions" readback; unset snapshot slots = −1/false is the measured storage shape | [CROSSWALK device-lifecycle family; racks §1.7] | **F** |
+| **Preset (.adv/.adg)** | Family manifest declaration (the admission-time "preset" of a family's device surface) + runtime preset store/recall as a **write with its owner op**; document-level recall = lift device element + Id + allocated pointees | [SDK admitFamily/declareDeviceExtension; CROSSWALK; session-model §4 rule 6] | **F** |
+| **Hot-swap** | **Compatible hot-swap** gesture; "refusal of unsupported swaps" is part of the detecting trial. Compatibility domain in Live is the signal-domain typing (`MidiToMidi`/`MidiToAudio`/`AudioToAudio`); DLW's typed equivalent is the chain's parameter/signal grammar — proposal, owner confirms: OPEN-QUESTION (ledger §10 item 18) | [CROSSWALK device-lifecycle; racks §1.1] | **F**; compatibility domain open (item 18) |
+| **Device activator (`On`)** | **The activator light as a reading** — lit only where a real owner enable exists; hollow otherwise; `Lamp` states admit/deny/waiting/refusing/unknown. "A successful UI flag is never evidence of a native effect" | [DEVICE-PANEL-BRIEF rule 6; SDK Lamp; owner quote "the light admits or denies it"; MAP aperture law] | **F** |
+| **Signal flow (typed chains, sends, returns, crossfader)** | **The transport as signal flow** — one transport wearing five meanings; per-family time bindings; telemetry as modulation sources; the chain's left-to-right reading. The two-clock doctrine governs: civil time keeps closure; the sample clock is the work-time stratum families bind, never fork | [WSD Rev 5; §15 time spine; mockup:agent chain order; SCOPE §5; WSD §15, §18] | **F** in the *signal* sense only; see the routing row below |
+| **Transport** | ONE transport wearing five meanings (Rev 5 table, §4); Live restored as base mode | `WORLD-SHELL-DESIGN.md:23-42` | Per slot (VIS §2.2). **F:** Central punch/loop → day window (GRAM:282-285); Technē occasion window; Factory write window (GRAM:344-346); metronome → Factory heartbeat, Technē presence pulse. **P:** Expressions punch/loop all "loop the saved sequence" (GRAM:396-398); Central metronome = autosave; CPU = save state; key/scale = packet tokens or aperture (GRAM:264-292,449-478) |
+| **Groove pool (the geometry)** | The browser-below contextual working area (property definition/pinning, macro mapping targets, modulation monitor, per-mode pool content); the pool's audio purpose retained; in Expressions it becomes the selected property's mapping/pinning area (role selector, never a pile) | `UI-UX-CONVERGENCE-STUDY.md:63-64` (§Browser below) | **P:** the aperture readouts sit in the groove pool's place (`UI/shell/ModeBrowser.tsx:121-140`) |
+| **Groove / swing (the content)** | (No source assigns a DLW meaning to Live's groove pool *content* beyond the geometry reuse; the pool geometry is reused per `UI-UX-CONVERGENCE-STUDY.md:63`) — ledger §10 item 16 records the gap | — | — (no groove function, item 16) |
+| **Browser (+ hot-swap pool)** | Category/results browser above + contextual pool below; categories over actual owners; preview ≠ open ≠ add; browser categories per family (four surfaces law: browser, rack, projections, inspectors — a fifth place is a design smell); "A device category is useful only when its insertion/capability is real" | `UI-UX-CONVERGENCE-STUDY.md:61-64`; `WORLD-SHELL-DESIGN.md:836-845` (§16) | **F** (the Archive register, `MECH:115-118`) |
+| **Clip view \| Device view** | The bottom detail area = focused pane's rack view; the Clip\|Device pair is "toggled from the status bar as in the agent shell" (Rev 4) — the status bar's "Clip/Device switch" per the study; per-arrangement meanings (Rev 4 table, §4) | `WORLD-SHELL-DESIGN.md:80-98` (Rev 4); `UI-UX-CONVERGENCE-STUDY.md:67-69` | **F** |
+| **Key/scale** | Per-mode re-meaning: packet token count (Base) · tokens in/out (Factory) · ☿ resonance key (Expressions) · aperture/view-as (Technē) | Rev 5 table | **P** for packet-token count and aperture (VIS §2.2); scale awareness itself is a Live-mode family (row below) |
+| **Tempo / signature / metronome / quantize** | Per-mode re-meanings (die face 4+2; effort/budget; autosave/save-timing; heartbeat/interrupt timing; pulse/scene-quantize; walk pace/stop n/8; presence/arrival) | Rev 5 table | F/P per mode: metronome → Factory heartbeat and Technē presence pulse **F**; Central metronome → autosave **P** (VIS §2.2) |
+| **Warp / clip-view craft** | Central's clip-view craft: CAS identity, basis, save-router named outcomes (`saved \| unchanged \| stale \| conflict \| refused`) are "this world's warp markers" | `WORLD-SHELL-DESIGN.md:706-717` (§12 Central); owner clip-view quote `[session]` | — **Tension**, three senses of "editing", unmerged: Live's warp engine (row below), Central's clip-view craft (this row; the owner's words, §4.2), Technē's origin-return (`CONT:82-84`; §4.5) (VIS L-6) |
+| **Automation / modulation (incl. the measured matrices)** | Typed parameter addresses `{family, device-instance, key, type, range/unit, write-path}`; scope declaration = specification; modulation = routing relation source→target through custody/receipt law; **every modulated parameter shows its modulator** (Live colours the modulated knob). Measured precedent: Wavetable's 52×13 and Meld's 50×19 mod matrices — "the shell's device panel should expose the matrix … rather than a fixed velocity knob" | `WORLD-SHELL-DESIGN.md:772-799` (§14); [mod-matrix §Shell consequence] | **F**; the honesty law: every modulated parameter shows its modulator (`CONT:52`) |
+| **Follow actions** | Hand-off (Factory: "Then = hand-off follow action", `AGENTIC-CONVERGENCE.md:179`); journey transitions as authored per-edge objects (lane-5 T5); the mockup's clip **Then** section: "hand off → Capture pass" — "Live's follow action, as hand-off" | cited rows; [mockup:agent renderClip Then; follow-action] | **F** (Factory "Then"; Technē per-edge transitions); a tooltip string only today (`UI/agent/agentFidelity.ts:103`) |
+| **Takes / comping** | Takes are transport material, never a clock; performance recording is the take machinery (seed for #281); takes live on Timeline lanes (fifth-places audit: the Takes tab is a design smell, home is the Timeline) | `WORLD-SHELL-DESIGN.md:822` (§15.4); `EXPRESSIONS-FOUR-SURFACES.md:24-25` (item 4); §5.7 | **F** for takes ("never a clock and never a Timeline track", `UI/timeline/worldTrackAdapter.ts:33-34`); comping: see the comping row below |
+| **Freeze / render / export** | Render/export offices belong to #281's composition/interop packet; capture actions per `EXPRESSIONS-FEATURE-MAP.md:53` | `M-PRIME-PHYSICAL-MUSIC-WAYFINDER.md:164` | Export **F** (Expressions export built, `APPA:52-57`); freeze and flatten have no destination (list below) |
+| **Loader integrity laws** | Live's loader rejections restated as DLW's rack-topology integrity laws (identity, resolution, no danglers, arity, lift-in equivalence — §3.4) | [session-model §4] | **F** |
+| **126 targets** | The eight operation families, one of which **is** this ontology: "Device lifecycle and rack topology"; the acceptance register and its rules: §9 | [CROSSWALK; WSD §9] | — (a register, not a Live function) |
+| **Routing — two senses** *(12 Oct)* (mixer, sends, returns) | *Signal routing* is the chain reading and its arity (the Signal-flow row; §3.4). *Authority routing* is the neutral door, the returns and attribution — the contemplation's sense: "Who has authority over what, what routes where, what returns to whom" (`CONT:64-70`). No source joins the two. Factory's track strip is authority routing (Watch, Solo, Arm, budget; `UI/agent/AgentSessionGrid.tsx:26-30`); agent return tracks A·Review / B·Wiki are designed (`AGENTIC-CONVERGENCE.md:181-185`); Live's mixer strip is inert (`UI/components/MixerStrip.tsx`); Expressions buses sit under #281 (`MPW:162`) | VIS L-4, §2.2 | Authority routing, not signal routing, wherever a mixer control is re-meant |
+| **Arm slot** *(12 Oct)* | Expressions "Studio arm" is record-arm. In Central, Factory and Technē the slot is the write-authority gate (agent write-arm, write arm, instrument writes). The two meanings are an **intended re-meaning** (`GRAM:4-5`) | GRAM:209,279,341,393,465 | **F** in Expressions (record-arm); **P** in Central, Factory and Technē (the slot's place, re-meant as the write-authority gate) |
+| **Tunings** *(12 Oct)* | Home: Live mode, the port. M2 pitch structures are tuning/modulation targets (D13, `MPW:32-34`). **Named gap:** no shell carrier | Browser "Tunings" (`LIVE/ui/UI-EVIDENCE.md:52`); "SET ScaleAndTuning" (`LIVE/devices/arpeggiator-derivation.md:120`) | **F** |
+| **Scale awareness** *(12 Oct)* | Home: Live mode, the port. **Named gap:** no shell carrier (the re-meant key/scale slot above is a different thing) | `root_note`, `scale_name` (`LIVE/lom/LOM-INVENTORY.md:236`) | **F** |
+| **Automation lanes and clip envelopes** *(12 Oct)* | Home: Live mode, the port. Live's arrangement is drawn without automation lanes (`UI/components/ArrangementView.tsx:49-148`). **Named gap:** not ported | `AutomationEnvelopes`, `AutomationLanes`, `ClipEnvelopeChooserViewState` in the set model (`LIVE/session-model.md:69,72`) | **F** |
+| **Warp engines** *(12 Oct)* | Home: Live mode, the port. `--play` plays unwarped clips only (`packages/live-shell/src/play.rs:12-14`). **Named gap:** not ported | WarpMode enum, stretch and transposition measured (`LIVE/reconstruction-backlog.md:65`, D9) | **F** |
+| **Comping / take lanes** *(12 Oct)* | Home: Live mode, the port; Expressions takes are the seed (`WORLD-SHELL-DESIGN.md:936-937`). **Named gap:** no comping anywhere | `TakeLanes/` in the track model (`LIVE/session-model.md:70`) | **F** |
+| **Controller / key / MIDI mapping** *(12 Oct)* | Home: Live mode, the port. **Named gap:** not ported; MIDI/MPE input has no destination in any mode (list below) | 140 controller remote-script directories; `MidiMap` (`LIVE/lom/LOM-INVENTORY.md:16,304`) | **F** |
+| **Sampling instruments** *(12 Oct)* | Home: Live mode, the port. **Named gap:** not ported | Simpler LOM surface (`LIVE/lom/LOM-INVENTORY.md:170`); Sampler in the browser (`LIVE/ui/UI-EVIDENCE.md:53,56`) | **F** |
+| **Audio + video track layers on one timeline** *(12 Oct)* | Home: Expressions, owner-ruled (`CONT:247-250`) — Live's destination, the DaVinci shape. Track kinds enter as adapters on the Timeline projection (`WORLD-SHELL-DESIGN.md:945-951`; §5.2, §5.8). **Named gap:** no design or code names a video track; deferred ticket T-LIVE-INTO-EXPRESSIONS, owner-timed (ledger item 51) | `CONT:236-241,247-250`; `MPW:10`; `WORLD-SHELL-DESIGN.md:917-918` | **F** for audio (the DaVinci pattern); the video layer rests on the ruling alone |
+
+**Reading the function column** *(12 Oct; VIS §2.2)*. The contemplation's
+test: the mapping "is not decorative — it names the same structural
+function" (`CONT:38`). **F**: the relocated control carries the same
+structural function. **P**: it keeps only the slot's place, re-meant (the
+transport law keeps places fixed, `WORLD-SHELL-DESIGN.md:23-41`). Live mode,
+the port, holds every family first; the rows say where each family's
+*function* also lands in the other modes. The rows marked *(12 Oct)* add the
+function families the table was missing, with their home or a named gap.
+
+**No destination in any mode** *(12 Oct; VIS §2.2, `DLW-VISION.md:821-825`)*: mixer volume, pan, sends and
+crossfader outside Factory; scene tempo and signature; locators; freeze and
+flatten; the waveform/warp editor outside Live mode; MIDI/MPE input (the
+#281 Jankó packet); mode-wide undo. **Ruled destination, no home yet:** video
+track layers (Expressions, ledger item 51). A builder who reaches one of
+these returns `OPEN`; none is invented a home.
 
 **The three disclosure levels** (binding on every device): compact/perform →
 configure → deep edit; deep edit keeps the same retained instance, draft and
@@ -607,6 +745,56 @@ render the revisions' M′ instrument names in owner ruling D-F's plain names
 throughout (project/graph, canvas, timeline, journey, places, palace); the
 revisions' own text still carries M0′–M5′.
 
+**The mode set — owner ruling, law** *(12 Oct; VIS §2.1, L1–L3)*. "Five
+modes stand: Live stays as the base mode" (`CONT:234`). The set for the
+build is **Live (base) · Central · Factory · Expressions · Technē**, with
+Epi-Logos a lens, not a mode (`CONT:251-252`). Add, remove or merge no mode;
+no Epi-Logos rail entry.
+
+- **Live is the reverse-engineering basis** (`CONT:244-246`), and its
+  destination is Expressions, with audio and video track layers on one
+  timeline (`CONT:247-250`). The sequence is the ruling's: Live stays a
+  distinct mode now so the port stays clean and measurable, and moves into
+  Expressions later, when the owner times it (ledger item 51). The music/audio
+  half of the destination is grounded in the sources: a composition
+  environment "inside the existing Expressions application" (`MPW:10`), and
+  "the DaVinci Resolve pattern the owner names: an integrated musical working
+  mode, not another app" (`WORLD-SHELL-DESIGN.md:917-918`). No source names a
+  video layer; the video half rests on the ruling alone. The clean-room
+  engine's present standing, "separate, the audio base mode… not the
+  Expressions sounding surface" (`APPA:217-224`), and "Expressions retains
+  basically the same full native Live musical system" (`CONT:118`) are the
+  two ends of that sequence, not a conflict.
+- **"Base" names Live.** `WORLD-SHELL-DESIGN.md:24-26`, `REL:29-33` ("The
+  DLW's base mode is music") and the ruling agree. "Central is the base. The
+  other modes return to it" (`CONT:179`) names Central as the ground of
+  return — "All return to Central" (`CONT:184`) — not the base mode.
+- **Central is a mode** by the ruling (`CONT:251`). The design builds it as a
+  world context over one book mode (`WORLD-SHELL-DESIGN.md:533-536`;
+  `GRAM:20-21`), which a mode can be; that mechanism stands. What stays open
+  is the leave act: leaving Central drops the world context (`APP:259`),
+  against the cradle law that the world holds "until the person leaves it"
+  (`STORE:54-56`). Ledger item 44: **partly settled** (mode ruled; leave act
+  the owner's, ticket T-WORLDCTX).
+- **Naming defect.** The code titles the Central mode `'Base · Central'`
+  (`GRAM:228`; comment `GRAM:31-32`), as do `WORLD-SHELL-DESIGN.md:26,32` and
+  the Rev 5 tables quoted below. Under the ruling the title is "Central"
+  (ticket T-LABELS). Two ids carry the word and differ: the surf/shell id
+  `base` is Central's (`GRAM:20,33`); the stored book mode `base` serves both
+  Live and Central (`GRAM:19-20`; `UI/continuity/workspace.tsx:27`), so it is
+  never renamed without a migration. The `GRAM:21` comment ("Central is a
+  world context, not a separate mode") is corrected to the ruling in the same
+  ticket.
+- **Older shapes, read as history.** The installed cradle's strip holds "the
+  four work modes only" (`MODE:139-142`), with Base for Central's ground; the
+  new shell restored Live beside them. Rev 3/4's four arrangements — the
+  Clip | Device table below, and Rev 3's per-mode rows — predate Live's
+  restoration in Rev 5 and carry no Live row.
+- **Modes against projections.** The five modes are not the design's four
+  projections (Earth, Timeline, Constellation, Expressions); modes are a
+  separate axis (`WORLD-SHELL-DESIGN.md:223-226,299-310`). How the modes bleed
+  into one another is §6.1's porous-modes paragraph.
+
 The per-mode transport meanings (Rev 5, verbatim from
 `WORLD-SHELL-DESIGN.md:29-42`) are the shared spine of all five chapters:
 
@@ -640,16 +828,62 @@ Clip | Device detail per arrangement (Rev 4, `WORLD-SHELL-DESIGN.md:84-89`):
 | Expressions | Scene: sequence, durations, bindings | Studio: the engine's own controls |
 | Technē | Clip: identity, place and time, disclosure, typed relations, bounded constellation, source | Instruments: the six (project/graph, canvas, timeline, journey, places, palace) — the open one expanded, others folded |
 
-### 4.1 LIVE — the music mode (the shell's base mode, restored), with the measured reference and the derivation corpus
+### 4.1 LIVE — the base mode: the reverse-engineering basis, destined for Expressions' joined audio/video timeline (with the measured reference and the derivation corpus)
 
-**FOCUS.** Live is the music working mode: the Ableton-grammar surface where
-the physical music instrument (M1–M4, QL-MEF #281) works as a first-class
-musical working mode — "an integrated musical working mode, not another app
-(#281 §3.1), reusing the shell's own machinery" (`WORLD-SHELL-DESIGN.md:917-921`).
-Rev 5 "restored" it as the base mode (`WORLD-SHELL-DESIGN.md:24-26`); the
-landed grammar maps `live → the shell's audio cut (book mode 'base', the
-music presentation)` (`shell/modeGrammar.ts:23-24`). Session shows clips and
+**FOCUS** *(revised 12 Oct)*. Live is the base mode and **the
+reverse-engineering basis** (owner ruling, `CONT:234,244-246`): it holds
+Live's real deep dynamics as one unified technology (live-set, live-dynamics,
+live-engine, live-shell), "ported, not approximated"; "having the base mode
+means we can get a clean reverse engineer basis to ensure we are
+porting/using its real deep dynamics as a whole unified technology, building
+from that only gets better" (`CONT:236-241`). The measured reference
+(§4.1.a) and the derivation corpus are the port's basis: port only measured
+dynamics (`LIVE/reconstruction-backlog.md`, D1–D18 at 12 Oct, :57-75), and every device count
+says what it counts (rows, expanded slots or stipulated devices; ledger item
+22's addendum). Live's lesson is the integration, the porousness and the
+shared clock, not feature parity alone (`CONT:26`; VIS §1.1 **Tension**,
+answered by the ruling's "as a whole unified technology").
+
+**Destination** *(12 Oct)*. Live "ought be integrated cleanly, eventually,
+into expressions where we've planned to have the video and audio track
+layers together (like a video editor would, like davinci)" (`CONT:236-239`).
+Until then it stays a distinct base mode "so the port stays clean and
+measurable" (`CONT:249-250`). The move is deferred ticket T-LIVE-INTO-EXPRESSIONS,
+owner-timed and claimable only when the Live port is measurable as a whole
+(ledger item 51); nothing merges Live's rail entry meanwhile. The music/audio
+half is grounded in the sources; the video half rests on the ruling (§4
+head).
+
+**The music working mode** (the design's account, unchanged): the
+Ableton-grammar surface where the physical music instrument (M1–M4, QL-MEF
+#281) works as a first-class musical working mode — "an integrated musical
+working mode, not another app (#281 §3.1), reusing the shell's own
+machinery" (`WORLD-SHELL-DESIGN.md:917-921`). Rev 5 "restored" it as the base
+mode (`WORLD-SHELL-DESIGN.md:24-26`); the landed grammar maps `live → the
+shell's audio cut (book mode 'base', the music presentation)`
+(`shell/modeGrammar.ts:19`; the fold cited :23-24). Session shows clips and
 scenes; Arrangement the song over time.
+
+**Function families the port carries with no shell carrier yet** *(12 Oct;
+§2 rows, VIS §2.2)*: tunings and scale awareness
+(`LIVE/ui/UI-EVIDENCE.md:52`; `LIVE/lom/LOM-INVENTORY.md:236`;
+`LIVE/devices/arpeggiator-derivation.md:120`); automation lanes and clip
+envelopes (`LIVE/session-model.md:69,72`); warp engines
+(`LIVE/reconstruction-backlog.md:65`, D9; `--play` skips warped clips,
+`packages/live-shell/src/play.rs:12-14`); comping and take lanes
+(`LIVE/session-model.md:70`); controller, key and MIDI mapping
+(`LIVE/lom/LOM-INVENTORY.md:16,304`); sampling instruments
+(`LIVE/lom/LOM-INVENTORY.md:170`; `LIVE/ui/UI-EVIDENCE.md:53,56`). Each is a
+named gap whose home is this mode; the audio + video track layers are the
+destination's gap (ledger item 51).
+
+**The write seam** *(12 Oct; VIS L-4, L18)*. Live device faces are
+registered (`UI/panels/index.ts:24-26`) and write over an HTTP seam, `POST
+/api/document/device-param` (`packages/live-shell/src/main.rs:174-176`),
+outside the writers law (§3.3; `LIVE/integration-map.md:271-282`). "One
+neutral door" is not yet true for this family. The faces stay readings
+until the seam has an owner operation; which family owns
+the seam is ledger item 25.
 
 **Transport meanings.** Live's own: the row is the reference reading all
 other modes re-mean (Rev 5 table above; Live column = the Ableton originals).
@@ -1305,19 +1539,37 @@ named acceptance; device gates run against the golden-render corpus
 (COVERAGE.md method); UI acceptance by direct computer use
 (`MAP.md:52-58`).
 
-### 4.2 BASE · CENTRAL — the ground's craft (days, documents, central devices)
+### 4.2 CENTRAL — the ground's craft (days, documents, central devices)
 
-**FOCUS.** "Base is Central's ground" (`WORLD-SHELL-DESIGN.md:119`). Central
-is **not a mode and not an app**: it is one World context
-(`WorldContext.world: 'central'`) whose material projects through the same
-four projections and inhabits the same rack — "Nothing new is stored. Central
-mode is the shell with Central material selected — the tripartite spine's
-world context, not a mode switch" (`WORLD-SHELL-DESIGN.md:533-556`, §6). The
-owner's mapping, verbatim `[session]`: "whilst central would be closer to
-what ableton has in its clip view, the nitty gritty fucntionalities of warping
-etc, this can be where central is mapped and you can see exactly what folders
-are being worked in, what impact across the central web, any erroneous
-worktrees or branch creations etc."
+*(Retitled 12 Oct from "BASE · CENTRAL": under the owner's ruling "base"
+names Live; the code's title `'Base · Central'` (`GRAM:228`) is a naming
+defect, ticket T-LABELS — §4 head.)*
+
+**FOCUS** *(revised 12 Oct)*. **Central is a mode** by the owner's ruling
+(`CONT:251`), and **not an app**. In the contemplation it is "the ground —
+the field where material lives, where a day composes, where the reading
+keeps its thread" (`CONT:179`), the ground every mode returns to: "All
+return to Central" (`CONT:184`). Its mechanism, which the ruling leaves
+standing, is one World context (`WorldContext.world: 'central'`) whose
+material projects through the same four projections and inhabits the same
+rack — "Nothing new is stored. Central mode is the shell with Central
+material selected — the tripartite spine's world context, not a mode
+switch" (`WORLD-SHELL-DESIGN.md:533-556`, §6). The design's "not a mode
+switch" describes that mechanism; it does not take Central out of the mode
+set. The leave act stays open (ledger item 44, partly settled; T-WORLDCTX).
+"Base is Central's ground" (`WORLD-SHELL-DESIGN.md:119`) is Rev 3's
+wording, before Live's restoration. The owner's mapping, verbatim
+`[session]`: "whilst central would be closer to what ableton has in its clip
+view, the nitty gritty fucntionalities of warping etc, this can be where
+central is mapped and you can see exactly what folders are being worked in,
+what impact across the central web, any erroneous worktrees or branch
+creations etc."
+
+**Tension, kept unmerged** *(12 Oct; VIS L-6)*. These words liken Central
+to Live's clip view and its warping. The contemplation places the editing
+layer in Technē, as origin-return (`CONT:82-84`; §4.5), and the warp engine
+itself is Live mode's port (§2, D9). Three senses of "editing"; none
+contradicts the others, and this plan merges none of them.
 
 **Transport meanings.** The Base · Central column of the Rev 5 table (ground
 sync · stamp Now; die face 4+2; autosave/save timing; packet token count;
@@ -1412,6 +1664,23 @@ kept distinct where a monolithic 'agent UI' would blur them." (The owner's
 genuinely verbatim words on this seam are the workcell-plugin and
 actuation-device examples, quoted in §0.) Session = sessions and tasks;
 Arrangement = the run viewer (Rev 5).
+
+**The mode in the contemplation** *(12 Oct)*: "The work — transformations in
+motion, agents under custody, runs commissioned and watched and received";
+"Factory is where work happens. Its outputs return to Central or feed
+Expressions" (`CONT:180`). Two crossings are named, and neither is wired:
+
+- **A reading becomes a commission's source** — the first of the owner's
+  three crossings: "You are reading in Central and a tangent opens onto a
+  Factory commission; the reading is now the commission's source"
+  (`CONT:167`). The design carries it as commissions from a reading
+  (`WORLD-SHELL-DESIGN.md:566-568`). The crossing is an explicit act that
+  keeps the reading's ref; it never sends, discloses or launches by itself
+  (`EXP/FACTORY-AGENCY.md:42,102`; VIS §2.4).
+- **Factory outputs feed Expressions** (`CONT:180`) — planned
+  (`APPB:254-259`), behind the red Factory receiving/advancement gate (PATH
+  §3; TO BUILD below). The feed is not built ahead of that gate (VIS §5.3
+  item 29).
 
 **Transport meanings.** Factory column: peers · ping agents; effort · budget;
 heartbeat · interrupt timing; tokens in · out; **run · stop all · voice ·
@@ -1516,6 +1785,73 @@ bindings" (`WORLD-SHELL-DESIGN.md:52-56`, Rev 5). The full capability port:
 "port the full capability, not a piecemeal subset"
 (`EXPRESSIONS-PORT-PLAN.md:3-4`). (The expressions *ontology* — tracks,
 clock, musical system — is §5.)
+
+**The mode, owner-ruled and kernel-bound** *(12 Oct; VIS §2.3, L-7, L-9)*.
+
+- **What it is.** "The form — the sounding, the physical, the scene. Where
+  things become sensible" (`CONT:181`): the conjugate 3:3 body, "rather than
+  the sixth 4:2 peer" (`TDR:35`).
+- **Nara, foreground.** The chain is M4 Nara ↔ S4 Workcell ↔ S4′ Anima → M4′
+  (`LOCK:96`), with Nara foreground in the 3:3 reading (`LOCK:31`); M4′ is
+  "the general Expressions application body, with the operative M1–M2–M3
+  backend" (`LOCK:388-397`), and by D-G the application "remains the M4
+  body" (`PROG:110`). Here the meditation lives as the owner states it: "not
+  a pause. It is a dialogical encounter. The oracle speaks; you listen. The
+  system meets you; you meet the system" (`CONT:98`). The companion is Anima
+  with the tab "Nara · oracle" (`DOCK:66`), matching "Anima_i = M_i × S4′,
+  situated expressive operator for the 3:3 / Expression reading"
+  (`LOCK:507-508`); the oracle is M4's own designation, "Oracle Interface
+  Between Personal and Universal Domains" (live Bimba map, queried 12 Oct
+  2026). Build rule (VIS L7): one `oi.nara-dialogue-binding/v1`, no second
+  conversation store, no device that renders a verdict on synthesis, bodies
+  handle-only; draw no pause. Where the Nara encounter's interface lives —
+  rack, dock or day — is the owner's (VIS L7, C3).
+- **Live's destination.** Live mode moves here, with audio and video track
+  layers on one timeline (`CONT:247-250`), when the owner times it (ledger
+  item 51). Track kinds enter as adapters on the Timeline projection (§5.2,
+  §5.8); no design or code yet names a video track.
+- **The medium, piece by piece** (`CONT:120-125` against the sources):
+  glyph-projection scenes as the medium — glyph, text and role material in
+  scenes is landed (`APPA:127-147`); naming it "the medium" is the owner's
+  (`CONT:120,123`). The physics sim as a single instrument is owner-stated
+  (`CONT:124`); the design docks "the field/PCM owner… as an instrument
+  device… the stage stays the instrument's visible body"
+  (`WORLD-SHELL-DESIGN.md:922-924`); whether the GPGPU field is that
+  device's body is **Open** (ledger item 47). Landed: `GPGPUSimulator`
+  (`APPA:151`); the cymatic resonator, 2D Chladni plate and 3D standing-wave
+  cavity, "a damped modal resonator in the envelope domain" (`APPA:163-168`;
+  `expressions-app/src/engine/cymaticResonator.ts:7-25`); `followCymatic`,
+  a per-entity voice that "sounds the entity's cymatic/template frequency"
+  (`APPA:174-176`; `UI/components/nativeEntityFace.sound.ts:12`).
+- **Item 47 (L17).** **Tension, causal wording only:** "the cymatic patterns
+  produce sound" (`CONT:124`) against excitation plus material "determine
+  evolving state", with audio and visible displacement deriving "from that
+  state" (`MPW:86-88`; §5.5). Entity voices are "never a second clock and
+  never the native M2 PCM owner" (`expressions-app/field-studies-journeys/src/native-field/entitySound.ts:5-7`), wording that differs
+  from D13 (`MPW:32-34`); their D13 standing is unruled. Keep the
+  common-cause law, add no generator, and label entity voices
+  "retained-app voices, relation to M1 unruled".
+- **Composition direction.** "Technē composes → Expressions performs"
+  (`CONT:116,127`) is read at the formal bridge the lock names, M3 Journey ↔
+  Expression Scenes (`LOCK:457-466`), between two operating modes of one
+  application (`LOCK:390-399`) — not a pipeline or a hierarchy. "The Palace
+  in Technē becomes the performance in Expressions" (`CONT:127`) has no
+  source: the Palace returns proposals (`APPB:72-76`; §4.5).
+- **Three counts of "family", kept apart:** 6 products (§1.2); 7 admitted at
+  the world gate (`APPA:239-240`); 22 Expressions device sub-families through
+  `familyAdmission` (`APPA:242-243`). The contemplation's "22 declared
+  families" (`CONT:60,141`) is the third.
+- **A lens is not a device.** "A pane-instrument *may expose* devices; a
+  device never hosts a pane" (`DLW-PANES-ONTOLOGY.md:164-197`). The
+  contemplation lists lenses, agents and devices as one layer of
+  transformations (`CONT:58-60`): one function, separate carriers.
+- **On main.** The Expressions native transport
+  (`UI/components/NativeTransportBar.tsx`), scene playback
+  (`UI/components/nativeScenePlayback.ts`) and property takes — record,
+  replace, append (`UI/components/NativeTakes.tsx`; `UI/native/frameTakes.ts`)
+  — are on `main` via #635. APPA's rows that place them on an unmerged lane
+  (`APPA:12,337`) are stale (VIS §5.2 item 23); "live replay not yet run" applies only
+  to the Device SDK row (`APPA:343`).
 
 **The three-part ontology (sound tracks + temporality tracks + the M1–M4
 musical system unified).** The owner's framing stands in the design: "audio
@@ -1628,6 +1964,72 @@ in code, `CONVERGENCE.md:81-100`). Rev 5: Technē's Session = the Journey;
 Arrangement = the Relation Field. "The instrument is the instrument": no
 separate Technē rack; the detail row is the focused lens's own native control
 set (`WORLD-SHELL-DESIGN.md:143-149`, Rev 3).
+
+**Origin-return — the owner's correction** *(12 Oct; VIS §0 item 4, L-6)*.
+Technē's editing "is not just editing — it is **working the material
+backward into its origin**" (`CONT:84`). That working is compassion, "loving
+sensitivity to origins", and the origin is Gebser's ever-present origin, "the
+origin not as a point in the past but as an ever-present source"
+(`CONT:86`). "Every lens,
+every constellation, every journey, every palace is an act of tracing
+material back to its source… The Archive is reversible. And the tracing is
+love" (`CONT:88`). This corrects the study's "world of knowing"
+(`PRAX:306-310`); read with `CONT:182,184`, Technē's knowing *is*
+origin-return. Hesse holds the same movement: the meditation on each
+symbol's "content, origin, and meaning" (`MECH:78`), and "forgetfulness of
+origins" as the mark of decay (`DECAY:150-151`).
+
+- **The kernel grounds the return** (live Bimba map, queried 12 Oct 2026,
+  unless noted): M0 is "The Ever-Present Origin" (M0
+  `c_1_primary_designation`). M5-5's synthesis is the 5→0 Möbius
+  write-back — "As ἀνάλογος it completes the return"
+  (`BMAP/M5/M5-5/M5-5.md:38`) — and its etymological archaeology deposits
+  "through review and Hen vault-write into M0's bimba node", with M5-5
+  `RETURNS_TO` M5-0, so the return passes through review to M5-0 and into
+  M0. M5-5 `DEMONSTRATES_THROUGH_ETYMOLOGY` → M4.4.4, the Phenomenological
+  Lens, "Reduction - excavating to constitutional origins": etymological
+  archaeology at M5 and Nara's reduction to constitutional origins at M4 are
+  one movement on the map. M4 Nara is where the individual self "awakens
+  through compassionate sensitivity to origins" (M4 `c_0_core_nature`).
+  Each Logos stage carries a Gebser structure (`BMAP/M5/M5-5/M5-5-0…5.md:24`);
+  Nara's lens 0 is the "Gebser Lens" (M4.4.0). M4.5-1 names "pedagogical
+  compassion" (`BMAP/M4/M4.5/M4.5-1.md:17`): the teaching carries the same
+  care as the return. **Inferred** (VIS L-6): M5′ is "the SAME application
+  in M5/M0 deep-working mode" (`LOCK:399-401`), the two poles the 5→0
+  write-back joins; Technē is the mode that works them.
+- **The provenance mechanics** — the material condition of the act, not the
+  act; built under plain names, with no coined UI label for the act:
+  - the cradle Trail with `returnTo` (`CRADLE/CradleFrame.tsx:1012-1026`) —
+    built in the legacy cradle, **not carried** into the new shell (T-TRAIL;
+    ledger item 28);
+  - the Technē Clip "source" section — **declared-waiting**
+    (`UI/shell/ModeDetail.tsx:254-263`);
+  - the lane-5 "source/verso leg with explicit return… return restores the
+    exact beat by ref equality" — **target** (lane-5 target set below);
+  - page-anchored cites, backlinks and ghosts — **built in
+    Archetypal-Earth** (`APPB:51-53`), not yet in the shell.
+  Every derived thing names its source and can be walked back to it in one
+  act; a return reaches the origin's owner as a proposal, never as a direct
+  write (VIS §6 ORIGIN).
+- **M5′ is the whole deep mode** (§11a): "the SAME application in M5/M0
+  deep-working mode" (`LOCK:399-401`); the six lenses are narrower
+  projections, and "M5′ is not reducible to a Palace screen"
+  (`LOCK:406-410`). The chain is M5 Epii ↔ S5 QL-MEF ↔ S5′ Aletheia → M5′
+  (`LOCK:97`). The dual reading, 4:2 Technē / 3:3 Expression, is
+  owner-ratified (`LOCK:3,14-51`); the contemplation's
+  "TECHNE-DUAL-READING.md" resolves to `docs/experience/TECHNE-DUAL-READING.md`
+  (`TDR:12-35`), cited with the lock.
+- **Palace is the M5 pedagogy pole's form.** Palace is "teachable", "the
+  explicit deep objectification of the otherwise ambient M5
+  articulation/pedagogy/recognition pole" (`LOCK:356-358`). "The system
+  teaches by being met… The teaching is the encounter" (`CONT:106`). The
+  Palace returns attributable proposals; it is not performed (`APPB:72-76`).
+  A separate teaching surface is the owner's (VIS L8).
+- **Companion label, Tension** (ledger item 49): the dock names the Technē
+  companion "Epii" (`DOCK:67`), its M5 subsystem, while the lock's S5′
+  operator is "Technē_i := Aletheia_i" (`LOCK:510-517`); the Expressions
+  companion is named by its S4′ operator, Anima. Same chain, different end.
+  The label stays until the owner rules.
 
 **Transport meanings.** Technē column: field carrier · back to Now; walk pace
 · stop n/8; presence · arrival; aperture · view as; **walk · stop · record
@@ -1947,7 +2349,12 @@ spine — locked at the top, bound from below"; owner's session phrasing:
 "also consider the cron and chronos level integration, as time is locked in
 at a higher level (global time functions, kerykeion, day/now levels etc.").
 
-The five strata, with their landed behaviours:
+The five strata, with their landed behaviours. *(12 Oct, count fixed.)*
+The count is **five**: `timeSpine.ts` defines five, and WSD §15's own list
+names five, under a heading that reads "Four strata, one spine"
+(`WORLD-SHELL-DESIGN.md:802-803`) — a defect in the design document, sent
+to its keeper (VIS §5.2 item 22). Cite five everywhere.
+
 
 1. **Chronos (§15.1)** — qualitative/cosmic time: "kerykeion sky positions,
    the M3 clock and inscription phases, Aion epochs, the planetary field.
@@ -1996,6 +2403,49 @@ spec. And the #281 packet law: "Transport state never silently overwrites
 civil Day or geometric clock state"
 (`M-PRIME-PHYSICAL-MUSIC-WORK-PACKETS.md` §9-C). "Families bind, never fork
 clocks."
+
+#### 5.4a Units — NOW and DAY *(12 Oct; VIS L-1, L4, L5)*
+
+The contemplation: "The DLW's time spine is **a wider system of NOWS and
+DAYS**… Every act in every mode is addressable in this time. This is why the
+modes can bleed: they read from the same spine" (`CONT:44`).
+
+- **The Day is the only unit that closes.** Day-close law: snapshot first,
+  then derive the dated reading; "yesterday remains a reading"; a DAY is a
+  civil-date reading, "never a scheduler's opinion"
+  (`CTRL/agents/governance/field-and-now/day-close.md:5,7-14,22`). If a close
+  cannot run honestly it "stops before it cleans" (`day-close.md:18`).
+- **FieldNow and FieldDay are two contracts.** `oi.field-now/v1` and
+  `oi.field-day/v1` (`OI/shared-field/field-now.mjs:303-360`): refs and
+  native revisions only, compare-and-swap advances; FieldDay's aggregation
+  interval is set by its own policy (`OI/shared-field/README.md:110-112`).
+- **Two NOWs, kept apart.** The Central/Workcell NOW is a horizon of bounded
+  work (`EXP/WORKCELL-NOW-TEMPORAL-FIELD.md:70-95`). FieldNow is a shared
+  field's collective reading with a presence cursor (`field-now.mjs:2,45`),
+  drawn as "the FieldNow presence pulse" (`GRAM:454`). The contemplation's
+  "FieldNow pulse" (`CONT:44`) is the second. Two units, not rivals.
+- **The day's hours sit in a three-sided record.** Design: 08:30 / close
+  routine / 21:00 (`WORLD-SHELL-DESIGN.md:40`; `GRAM:282-285`), with 21:00 as
+  a Cron cadence (`WORLD-SHELL-DESIGN.md:812-824`). Policy:
+  `day_boundary_minutes: 0`, `automatic_day_rollover: true`
+  (`CTRL/user/civil-time-policy.json`) — a date rule, not a working window.
+  Practice: the owner's Nara flow opens on a 6am scheduled task
+  (`NARA/CLAUDE.md:33`). 08:30/21:00 stay design text with a source tag; no
+  shell device fires a close, which stays `central.day.lifecycle`. Who fires
+  the close, and whether a cron-fired close fits the civil-date law, is
+  ledger item 45.
+- **Above the day: Open.** No WEEK, SEASON or YEAR unit exists in the
+  system; the shell's only week is a presentation window
+  (`UI/projections/useWorldTemporalReading.ts:107-114`). The owner closes
+  longer units in practice, in Nara's container, outside the DLW — weekly
+  and monthly quilts, a quarterly merge-back, "roughly twenty months to a
+  deck" (VIS L-1). Create no week or season object and bind no QL cycle as
+  one (VIS L4; the contemplation's open item 1, `CONT:206`).
+- **Tension, reconcilable.** "Every act in every mode is addressable in this
+  time" (`CONT:44`) stands beside "Do not create a universal event ontology"
+  (`EXP/WORKCELL-NOW-TEMPORAL-FIELD.md:194-232`). Refs on the spine satisfy
+  the first without the second: an act is addressable in time by its ref and
+  revision, with no universal event store.
 
 ### 5.5 The musical system's place — M1 source, M2 modulation-never-generation, M3 score material, M4 the body (C.5)
 
@@ -2156,6 +2606,27 @@ The laws in the landed code:
   retained admission "always sets `fresh_current_attested=false`"
   (`K8-SKY-CONTRACT.md`).
 
+**State vocabularies, named apart** *(12 Oct; VIS L-2, L15)*. Five
+vocabularies name different axes; none upgrades or translates another:
+
+| Vocabulary | Members | Source |
+|---|---|---|
+| Epistemic standing | fact · claim · inferred · hypothesis · disputed · ghost | `WORLD-SHELL-DESIGN.md:253-260` (Rev 2) |
+| Save outcomes | saved · unchanged · stale · conflict · refused | `WORLD-SHELL-DESIGN.md:714-717` |
+| Lamp and disclosure states | the lights law; Selected / Projected / Brokered / Observed effective / Adapter-inferred / Unknown / Withheld / Pending reload | `WIDGET-GUIDE.md:46-51`; `AGENTIC-CONVERGENCE.md:271-273` |
+| Kernel write-back | DryRun · PendingReview · Applied · Rejected (`CanonWriteBackState`), not mapped to the shell | `SEEDS/INTEGRATED-4-5-0-RECOGNITION-ARCHITECTURE.md:344,351-356` |
+| The contemplation's material states | proposed · landed · refused · in-progress · ghost | `CONT:52` |
+
+The contemplation's list sits beside the others as a fourth shell-facing
+vocabulary (**Tension**: a different axis, not a rival chip set). Render only
+standings a producer actually supplies; unknown shows as unknown (ledger
+item 35). QL already produces some standings of its own, e.g.
+"calculated-ephemeris-not-observed-sky"
+(`UI/inhabitants/quaternalLogicFamilyManifest.ts:40-45`). **Defect:** the
+Technē frame's standing list omits `hypothesis` (`UI/shell/ModeCentre.tsx:86-92`
+lists fact, claim, inferred, disputed, ghost) against the six-member chip set
+above; register and repair it in the Technē lane.
+
 ### 5.7 The take machinery — the performance-recording seed (C.7)
 
 The recording story is **declared, not claimed working**, and the
@@ -2253,7 +2724,7 @@ the design names it:"
    own layout tree (`modeLayouts`), with the standing rule that **a mode
    never closes surfaces**." (The new shell's landed surf grammar is
    `SURF_MODES` = live · base · factory · expressions · techne,
-   `shell/modeGrammar.ts:30-31`.)
+   `shell/modeGrammar.ts:31-33`.)
 2. **World context** — the workspace book's `WorldContext`
    (`world: central | epi-logos`, subject, reading, trail;
    `cradle/src/workspace/store.ts`): "This is the encounter: what is
@@ -2284,6 +2755,61 @@ Deep) maps directly: World = projection overview, Focus = selection
 (encounter.subject), Manifestation = an Expression opened, Thread = the
 trail, Deep = full device edit. Its hash router… is the model for linkable
 encounters" (`WORLD-SHELL-DESIGN.md:345-352`).
+
+**Three spines, named apart** *(12 Oct; VIS §2.4, §6 WORDS)*. "Spine" names
+three different things in the sources; keep them apart:
+
+1. the **time spine** — the five strata of §5.4 (`timeSpine.ts`);
+2. the **navigation spine** — mode × world-context × kernel epoch, this
+   section (`WORLD-SHELL-DESIGN.md:324-345`);
+3. the **encounter spine** — `encounter()` and the Trail
+   (`cradle/src/workspace/encounter.ts:61-89`; §6.4).
+
+**Three senses of "projection"**: the design's four projections (Earth,
+Timeline, Constellation, Expressions; `WORLD-SHELL-DESIGN.md:299-310`);
+shared-field projection, a World's material made visible to a field
+(`WORLD-SHELL-DESIGN.md:237-239`); and glyph projection, the Expressions
+medium (`CONT:120`). **Open:** whether mode × world × epoch (§2,
+`WORLD-SHELL-DESIGN.md:326-345`) and Rev 2's arrangement × projection ×
+device (`WORLD-SHELL-DESIGN.md:223-226`) are one axis set or two; no source
+reconciles them.
+
+**Porous modes** *(12 Oct; VIS §2.4)*. "This bleeding is the point. Live is
+not five apps sharing a file format… They are one environment, read in modes
+that slip into each other as the work demands" (`CONT:169`). The owner's
+account is of material becoming material in another mode: a Central reading
+becomes a Factory commission's source; a live cymatic sweep in Expressions
+becomes a Journey phrase; a Technē Palace composition becomes a return to
+Central's wiki as a proposal (`CONT:167`).
+
+- **Carriers, Grounded:** commissions from a reading
+  (`WORLD-SHELL-DESIGN.md:566-568`); Journey ↔ Expression Scenes
+  (`LOCK:465`; `TDR:341,365`); the Palace Return as an attributable proposal
+  (`APPB:72-76`). **Inferred:** each crossing is an act that keeps the
+  material's origin ref — origin-return run forward.
+- **Built mechanisms:** `chooseMode` is one transition; it sets world and
+  mode, keeps the context and closes no surface (`APP:257-264`); Live and
+  Expressions share the centre residence `world.expressions` (`APP:261`).
+  The transport keeps its slots in place while meanings change.
+  `BRIDGE.transition` writes subject and occasion as "Refs and titles only —
+  never content" (`BRIDGE:74-96`); the one-field identity law preserves
+  subject_ref, revision, constellation, ActionRefs and AgentSession
+  (`TDR:77-96`). The cut switch crosses 4:2 ↔ 3:3.
+- **The act's discipline:** "selection != disclosure; visible Action !=
+  authorised invocation" (`TDR:324-329`). A crossing never sends, discloses
+  or launches by itself (`EXP/FACTORY-AGENCY.md:42,102`).
+- **Gaps:** none of the three crossings is wired
+  (`WORLD-SHELL-DESIGN.md:566-568`; `GRAM:395,467`). No trail stop is
+  written (`BRIDGE:48,74-96`); the Trail tile shows only the current subject
+  (`DOCK:199-204`; ledger item 28). Leaving Central drops the world context
+  (`APP:259`; ledger item 44). The one enacted drill-through (Expression →
+  Technē → Central source) is in the legacy cradle
+  (`CRADLE/CradleFrame.tsx:1012-1026`). Implicit shifts — `openCenterPanel`
+  forces factory or expressions (`APP:327-338`) — follow no stated trigger
+  rule. **Conflict, two trail shapes:** the store's `TrailStop {mode,
+  surfaceRef, surfaceKind, label, position}` with `TRAIL_LIMIT = 24`
+  (`STORE:61,68`) against the encounter's `{address, at}`, unbounded
+  (`ENC:61-63,85`); the bridge carries the store shape (`BRIDGE:7,48`).
 
 ### 6.2 The transport: one transport, five meanings
 
@@ -2579,7 +3105,9 @@ The whole product, driven from one seat (each step cites its law above):
 (owner ruling D2 + amendment A5, 2026-09-18; the cradle's `WorkspaceMode`
 `"epi-logos"` enum value is a refused seam). The sources hold **three
 distinct registers** that must never be conflated; what the *new shell*
-owes each register is ledger §10 items 2–3.
+owes each register is ledger §10 items 2–3. *(12 Oct)* Item 2 is closed by
+the owner's ruling, "Epi-Logos a lens, not a mode (standing ruling D2/A5)"
+(`CONT:252`), answer (a); item 3 is partly answered (§7.6).
 
 ### 7.1 The three registers, precisely (P3 E.1)
 
@@ -2772,7 +3300,9 @@ The sources give four precise relations, and they are consistent:
    arrangement grammar does (`encounter.ts`: `Arrangement` includes
    'epi-logos'), and the surface registry admits an `epi-logos` surface
    kind (`FRAME_DISCLOSED_KINDS`). The two shells currently answer the
-   question differently — ledger §10 item 2.
+   question differently — ledger §10 item 2, closed 12 Oct by the ruling
+   (answer (a)): the new shell's grammar is right to carry no epi-logos
+   mode.
 4. **Its material still projects through the four projections.** By §6's
    resolution pattern (Central "is one World context whose material
    projects through the same four projections and inhabits the same rack"),
@@ -2798,8 +3328,46 @@ owners; the D2/A5 rulings; the corpus re-rooting behaviour and its exact
 restore; the four families and their receiving discipline; the threshold
 surface's composition; Nara's conditional admission; the constituted
 agent's persistence across the world; the drill-through + `oi:epi-return`
-passage restoration; the surface kind's existence in the registry. Open:
-ledger §10 items 2, 3, 27, 29.
+passage restoration; the surface kind's existence in the registry; and,
+from 12 Oct, the ruling that Epi-Logos is a lens, not a mode (`CONT:252`).
+Open: ledger §10 items 3 (partly answered), 27, 29.
+
+### 7.6 The native game, the owner's register and the four kernel senses *(12 Oct; VIS §0 item 2, §1.1)*
+
+- **The native game.** "Epi-Logos is not just the project's name. It is the
+  *native game* — the game the DLW exists to let any player play"
+  (`CONT:14`); "the corpus made playable… the reflective turn — language
+  operating on language — as a total environment" (`CONT:198`). The station
+  it names is "where language sees itself — the word upon the word"
+  (`CONT:16`), which fits M5-5, "where logos examines logos itself"
+  (`BMAP/M5/M5-5/M5-5.md:23`); that the project is "named for that turn" is
+  the owner's naming, not a kernel statement.
+- **The owner's register** (`CONT:18`): the corpus — "the essay, QL/MEF,
+  Bimba, M/M′, Vāk, Ta-Onta, Nara, Epii, the Covenant" — is the **esoteric
+  identity**; the system (the paradigm-neutral substrate, the six products,
+  the DLW shell) is the **exoteric identity**; the mode is the projection of
+  the one over the other, "bimba over pratibimba". Epi-Logos is "a
+  philosophical project" (owner clarification of 11 Oct, as the study
+  records it, `GBG/README.md:23-24`; `PRAX:50-51`).
+- **Lens, not mode — the ruling beside D2's earlier wording.** D2 (22 Sep)
+  spoke of "a mode in the footer, very minimal button… meant to just focus
+  the corpus" (§7.2); the 12 Oct ruling reads "Epi-Logos a lens, not a mode
+  (standing ruling D2/A5)" (`CONT:252`), naming D2/A5 itself as the standing
+  ruling, as the cradle already enforces (`MODE:135-139`). That the later
+  wording governs is **Inferred** from the `PROGRAMME.md:14-15` precedent.
+  No Epi-Logos rail entry is built.
+- **Partial carry-over in the new shell.** The Expressions panel passes the
+  retained application an `epi-logos` lens when quaternal-logic is installed
+  (`UI/panels/expressions.tsx:118,173-174`); WorldContext never takes
+  `epi-logos` (`APP:259`). The lens's own new-shell chrome (footer toggle,
+  head chip, corpus re-rooting) is ledger item 3, still open on that part.
+- **Four kernel senses of "Epi-Logos", kept apart:** M5-1, Epii's argument
+  (`BMAP/M5/M5-1/M5-1.md:14-18`); M5-5-4, stage 4 of the Logos cycle
+  (`BMAP/M5/M5-5/M5-5-4.md:14`); MEF L5-5′, "Word beyond words"
+  (`QL/docs/MEF-LENS-REGISTER.md:155-163`); M4.5-1, Core Epi-Logos Voice
+  (`BMAP/M4/M4.5/M4.5-1.md:14`). Four objects; no mapping between them, or
+  between the Logos cycle and the five modes, is built (`CONT:216`, "Do not
+  force it").
 
 ---
 
@@ -2828,6 +3396,13 @@ match landed UI components; the widget guide's improvement ledger
 Decisions-so-far and frontier. Verification loop: lane checks + computer-use
 exercise + UX-spine conformance (§2 of design; no second selection model) +
 matrix updates (`EXECUTION-PROMPT.md:145-158`).
+
+**Proposed to the owner, not adopted** *(12 Oct; VIS §5.1 item 16)*: one row
+that counts the leaving — "evidence of work and persons that left the
+workstation and held — publications shipped, products landed elsewhere,
+readers served by the site alone. The measure of the ladder is the
+climbing-down" (`REL:179-184`). **Inferred:** it is the matrices' form of
+the discipline of ending (`CONT:159-161`). No lane writes the row until the owner adopts it.
 
 ---
 
@@ -3007,6 +3582,16 @@ and E-5 merge into item 2; P3 E-2 merges into item 3). No question was
 dropped; no answer was invented. Conflicts are recorded as conflicts, not
 resolved silently.
 
+**Vision alignment, 12 Oct 2026** (DLW-VISION §4, §5.1 item 14): item 2 is
+**closed** by the owner's ruling (answer (a)); item 13 is **closed** (the
+owner act is done); items 1 and 3 are **partly answered**; nine rows from
+the VIS §4 ledger are added as items 43–51 (Group F), ruled rows written as
+law and open rows as recorded questions. The contemplation's own open items
+C1–C9 are cross-referenced in Group F. This ledger stays the one list of
+open questions; VIS §4 is its reading, not a second list. **51 items**;
+open after 12 Oct: 46 (items 2, 13, 43, 48 and 50 are settled; 44 is partly
+settled and stays open on its leave act).
+
 ### Group A — Identity / naming (1)
 
 1. **The name "DLW / Digital Logos Workspace".** The name appears in the
@@ -3018,6 +3603,10 @@ resolved silently.
    (`propose-not-write.md`). *A ruling decides:* the name adopted on the
    ground (or another name), after which all copy, code identifiers and
    registers align.
+   **Partly answered (12 Oct; VIS L20):** the owner's own contemplation
+   names the product "the DLW" throughout (`CONT:1,14,196`) and never
+   expands it. Write "DLW"; do not expand it in UI. The expansion "Digital
+   Logos Workspace" on the ground stays open.
 
 ### Group B — Ontology conflicts (source-vs-source, recorded verbatim, not smoothed) (5)
 
@@ -3058,7 +3647,7 @@ resolved silently.
 2. **Epi-Logos in the new shell's mode rail** (P1 #2 + P3 E-1/E-5): the
    Rev 5 rail has **five** mode icons — Live, Base·Central, Factory,
    Expressions, Technē (`WORLD-SHELL-DESIGN.md:24-27`;
-   `shell/modeGrammar.ts:30-31` `SURF_MODES`) — and no Epi-Logos icon; the
+   `shell/modeGrammar.ts:31-33` `SURF_MODES`) — and no Epi-Logos icon; the
    cradle has **six** WorkspaceModes including the refused `epi-logos` seam;
    the compilation commission says "plus the Epi-Logos lens". The cradle
    answered "world context + lens, never a sidebar mode" (ruling
@@ -3074,6 +3663,12 @@ resolved silently.
    button**" — whether the Technē/Expressions rail carries an Epi-Logos
    "mode button" (and what form it takes, given the Rev 5 rail's five
    icons) is part of this same ruling's surface.
+   **CLOSED 12 Oct — answer (a), by owner ruling:** "Mode set for the
+   build: Live (base) · Central · Factory · Expressions · Technē, with
+   Epi-Logos a lens, not a mode (standing ruling D2/A5)" (`CONT:251-252`).
+   No sixth surf mode. The mode-button vocabulary reads as the lens's
+   agent-composition default, not a rail entry (§7.6); its chrome is item
+   3.
 3. **The Epi-Logos lens carry-over and elaboration in the new shell**
    (P1 #3 + P3 E-2): the master planning session holds no Epi-Logos
    elaboration; the elaboration lives in `EPI-LOGOS-AGENT-MODE.md`,
@@ -3085,6 +3680,11 @@ resolved silently.
    any Epi-Logos surface beyond the world-binding + Nara/agency devices
    (e.g. the "curated Epi surface" the E2 entrance opens)? *A ruling
    decides:* the lens's new-shell chrome and any elaborated surface.
+   **Partly answered (12 Oct):** that it is a lens is ruled (`CONT:252`);
+   the new shell already carries a partial carry-over, the `epi-logos` lens
+   passed to the retained Expressions application
+   (`UI/panels/expressions.tsx:118,173-174`). The lens's chrome and any
+   elaborated surface stay open (§7.6).
 4. **Multi-select** (`EXPRESSIONS-ENCOUNTER-SPINE.md:155-158` + P3 D-10,
    verbatim): "Decide whether the owner supports multi-select. If not, the
    app should stop writing more than one id (`app.ts:341`)… If it does, add
@@ -3116,7 +3716,7 @@ resolved silently.
 14. **Remote posture ruling** — remote carrier "stands at refused/composed,
     never live (owner ruling)" (`AGENT-SHELL-ACCEPTANCE.md:62`); the
     Workcell remote-posture ruling (composed vs live) is named open fog
-    (`MAP.md:184-186`). *A ruling decides:* the posture.
+    (`MAP.md:186-187`). *A ruling decides:* the posture.
 16. **Groove (swing) has no assigned DLW meaning** — Live's groove *pool
     geometry* is reused (`UI-UX-CONVERGENCE-STUDY.md:63`) but no source maps
     groove *content* (swing/timing feel) into the World grammar; the
@@ -3185,13 +3785,17 @@ resolved silently.
     rename/mark of the legacy app and stale candidate
     (`DEVELOPMENT-TRACK-2026-10-09.md:58-66`). *The owner act decides;*
     phase 0 waits on it.
-13. **ctrl binary reinstall** — the owner act that clears the shell's roster
+13. ~~**ctrl binary reinstall** — the owner act that clears the shell's roster
     disclosure (CE1 carry-forward; the fix landed in Work/Central `9449881`,
-    774/0 tests, but the binary is not reinstalled). *The owner act decides.*
+    774/0 tests, but the binary is not reinstalled). *The owner act decides.*~~
+    **CLOSED 12 Oct — done.** Installed ctrl `7a45111` (11 Oct 16:30)
+    contains the roster fix `efef5c3`, the landed form of `9449881`
+    (`PATH.md:39-40`; `git merge-base --is-ancestor efef5c3 7a45111` in
+    Work/Central, 12 Oct). PATH's gate "ctrl roster fix installed" is green.
 23. **QL-side procedural body-generation contract** — planet-building
     controls drawn (Rev 3), GPU globe engine named; "the per-World seed→body
     contract on the QL side is the remaining specification"
-    (`MAP.md:180-183`). *The QL owner supplies the contract.*
+    (`MAP.md:182-185`). *The QL owner supplies the contract.*
 25. **Which family admits the derived Live device faces** (P2 §A6.4): the
     six product carvings are central, actuation, ai-kit, software-factory,
     workcell, quaternal-logic; §18 assigns the musical system to
@@ -3229,15 +3833,100 @@ resolved silently.
     environment.
 17. **Projection-scale performance and clustering** — "the one
     confirmed-open question… Needs its own research commission before any
-    lane promises a number" (`MAP.md:169-176`).
+    lane promises a number" (`MAP.md:171-177`).
 21. **Visiting exercised end-to-end** — contracts exist, no live
-    cross-machine visit flow run in the shell (`MAP.md:176-179`).
+    cross-machine visit flow run in the shell (`MAP.md:178-181`).
 40. **Multi-machine physical acceptance** — Workcell #24/#26/#27 + Arrakis
-    live smoke (`MAP.md:184-188`).
+    live smoke (`MAP.md:188-189`).
 42. **Cursor/Codex original captures unrecovered**
     (`FUNCTIONAL-CROSSWALK.md:236` — "preserve names and retrieve exact
     evidence"; V1's F5): the original independent verdicts' full fault lists
     are unrecoverable; three reconstructable defects were verified.
+
+### Group F — Vision alignment (12 Oct 2026; VIS §4 rows L1, L2, L5, L16, L17, L19, L21, L22, L23) (9)
+
+Ruled rows are written as law; open rows as recorded questions. Each item
+names its VIS §4 row; the row carries the full evidence.
+
+43. **The mode set; where the Live musical system lives** (L1).
+    **SETTLED — owner ruling, law:** "Mode set for the build: **Live (base)
+    · Central · Factory · Expressions · Technē**, with Epi-Logos a lens, not
+    a mode (standing ruling D2/A5)" (`CONT:251-252`). Live is the
+    reverse-engineering basis, ported not approximated (`CONT:244-246`); its
+    destination is Expressions with audio and video track layers
+    (`CONT:247-250`). The music/audio half is tied to `MPW:10` and
+    `WORLD-SHELL-DESIGN.md:917-918`; the video layer rests on the ruling
+    alone. D-G (Expressions inside the shell, `PROG:110-112`) and the ruling
+    (Live's music system moving into the Expressions mode) sit at different
+    levels; both stand (§4 head). *Build:* the five-mode grammar is law; copy
+    says "Live mode"; Live stays distinct until T-LIVE-INTO-EXPRESSIONS (item 51).
+44. **Central: a mode, or the world context riding every mode** (L2).
+    **PARTLY SETTLED.** Settled: Central is a mode (`CONT:251`); its
+    world-context mechanism stands (`GRAM:20-21`;
+    `WORLD-SHELL-DESIGN.md:533-536`). Open: the leave act — leaving Central
+    drops the world context (`APP:259`) against the cradle law that the world
+    holds "until the person leaves it" (`STORE:54-56`). *Build:* `GRAM:20-21`'s
+    mapping stands; title the mode "Central" (T-LABELS). *A ruling decides:*
+    the leave act and the Central mode's initial world (T-WORLDCTX).
+45. **The day's hours, and who fires the close** (L5). Three sides
+    (§5.4a): design 08:30/21:00, policy `day_boundary_minutes: 0`, practice
+    the 6am Nara flow. The mockup: "Closing a day is the owner's act — never
+    an agent['s]" (`WS/world-shell-mockup-r1.html:798`); the session floor
+    tells agents to "close the day you were standing in"
+    (`FLOOR:297-298`). *Build:* 08:30/21:00 stay design text with a source
+    tag; no shell device fires a close, which stays `central.day.lifecycle`
+    (`UI/inhabitants/centralDayNowModel.ts:55-105`). *A ruling decides:* who
+    fires the close, and whether a cron-fired close fits the civil-date law.
+46. **Hesse's two schools against the dual-reading pair** (L16). The pair
+    is ratified: Technē 4:2 / Expression 3:3 (`LOCK:3`); assigning Hesse's
+    schools to it is a reading (VIS L-5). *Build:* to the lock. *A ruling
+    decides:* whether the schools reading is adopted at all.
+47. **Does the plate sound; entity voices and D13; is the physics sim the
+    M1 instrument device** (L17). **Tension**, causal wording only, and
+    unruled body (§4.4 "Item 47"; §5.5). *Build:* keep the common-cause law,
+    add no generator, label entity voices "retained-app voices, relation to
+    M1 unruled"; send the wording repair to the QL owner. *The owner rules,
+    with the QL owner (#281).*
+48. **Technē instrument names** (L19). **SETTLED — law:** the deep
+    instruments go by their plain names, "project/graph, canvas, timeline,
+    journey, places, palace" (D-F, `PROG:97-108`); the code rename is
+    deferred (`PROG:104-105`), and `GRAM:415-416` still carries M′ labels.
+    *Build:* the UI shows plain names; the M′ address is provenance only
+    (T-LABELS).
+49. **Technē companion label: Epii or Aletheia** (L21). **Tension**, one
+    chain: the dock says "Epii" (`DOCK:67`, M5); the lock's S5′ operator is
+    "Technē_i := Aletheia_i" (`LOCK:510-517`); the Expressions companion is
+    named by its S4′ operator, Anima (`LOCK:507`; §4.5). *Build:* keep the
+    label; the tension is recorded in `WIDGET-GUIDE.md` §9. *The owner
+    rules.*
+50. **Review at M5-4, or M5-4 as the six agents** (L22). **SETTLED —
+    both**, by the live Bimba map (queried 12 Oct 2026; the map wins,
+    `LAW:19`): M5-4 holds the "S4/S5 review" role, the six agents as internal
+    components, and the M5-4′ "Agentic Control Room" affordance (VIS L-4).
+    *Build:* no DLW surface claims the M5-4 or M5-4′ address until a ticket
+    binds it; the address is provenance only (`PROG:97-101`).
+51. **When Live moves into Expressions; the audio + video track design**
+    (L23). Direction ruled (`CONT:247-250`). No design or code names a video
+    track; track kinds enter as adapters on the Timeline projection
+    (`WORLD-SHELL-DESIGN.md:945-951`; §5.2, §5.8). *Build:* T-LIVE-INTO-EXPRESSIONS is
+    deferred and owner-timed, claimable only when the Live port is
+    measurable as a whole; nothing merges Live's rail entry meanwhile. *The
+    owner times it;* the track design is Open.
+
+**The contemplation's open items, cross-referenced** (`CONT:202-222`). They
+are not added as items: each is the VIS §4 row and plan item named here.
+
+| CONT item | VIS row | This ledger / this plan |
+|---|---|---|
+| C1 Units above the day | L4 (OWNER) | §5.4a "Above the day: Open"; no week or season object |
+| C2 Technē → Expressions composition | L6 (PARTLY) | §4.4 "Composition direction"; lane-5 target; T-CROSS proposed |
+| C3 Nara's DLW interface | L7 (PARTLY) | §4.4 "Nara, foreground"; interface the owner's |
+| C4 A teaching surface | L8 (PARTLY) | item 29; §4.5 "Palace is the M5 pedagogy pole's form" |
+| C5 Ending above the day | L9 (OWNER) | §0 "The work ends"; retire nothing larger than a family |
+| C6 Logos cycle ↔ modes | L10 (OWNER if wanted) | §7.6 "Four kernel senses"; no mapping built |
+| C7 The performance | L11 (PARTLY / OWNER) | items 25, 30 |
+| C8 Origin-return as a working surface | L12 (PARTLY) | item 28; §4.5 "Origin-return" |
+| C9 How a non-owner plays | L13 (OWNER) | items 3, 21, 27 |
 
 **Named-unowned baseline defects** (not questions but the build inherits
 them): 15 cradle TS2550s; hosted-contributions drift (L1/L8); the
@@ -3289,9 +3978,25 @@ done.
 - **Acceptance is by direct computer use** (owner ruling 9 Oct,
   `MAP.md:52-58`) against real saved work, not fixtures
   (`UI-UX-CONVERGENCE-STUDY.md:100-101`).
+- **The vision's builder carry** *(12 Oct; VIS §6)*: every brief built from
+  `BRIEF-BUILDER.md` and `BRIEF-REVIEWER.md` embeds the DLW BUILDER CARRY
+  block verbatim (`DLW-VISION.md:1379-1469`), and a reviewer refutes a
+  done-claim against it. It is carried by reference here, not copied, so
+  there is one text. Its heads: WHAT, KEY, FIGURE, GAME, MODES (five,
+  owner-ruled; title the Central mode "Central"), LIVE (the
+  reverse-engineering basis; destination Expressions, owner-timed), CROSS
+  (crossings are explicit acts that keep the origin ref), NARA, EPII, ORIGIN
+  (every derived thing walks back to its source in one act; a return is a
+  proposal to the origin's owner; no coined UI label), HONESTY, MUSIC, TIME
+  (no device fires a close; no week or season), RECORD, EXTEND, FIELD,
+  ENDING, COORDS, WORDS ("base" means Live mode; never rename the stored
+  book mode `base` without a migration), STOP (a §10 item still open, or a
+  VIS §4 row still PARTLY or OWNER: return `OPEN` with the id).
 
-**The suites and crates that must stay green** (the seat:
-`/Users/admin/Central/worktrees/env-1/o-i`, branch `agent/o-i-20261007-1639`):
+**The suites and crates that must stay green** (the seat now *(12 Oct)*:
+`/Users/admin/Central/worktrees/env-1/o-i`, lane `dlw/build-20261012` off
+`main`, §1.1 "Seat now"; the figures below were run on the earlier branch
+`agent/o-i-20261007-1639`, which is history):
 
 - live-shell/ui — **re-run at the grill fold, HEAD `109ba5d5c`, 2026-10-10**:
   mode-grammar 14/14 (grown by the cross-mode fidelity sweep; the
@@ -3326,8 +4031,8 @@ done.
 - The 126-target register: `new-shell/README.md` +
   `ACCEPTANCE-CHECKPOINT.md` + `targets.json`; the crosswalk with verbatim
   acceptance shapes: `FUNCTIONAL-CROSSWALK.md` + `FUNCTIONAL-CROSSWALK.json`.
-- Landed-code tickets: `wayfinder/tickets/` (L1–L9, K1, CE1, V1 and the
-  craft lanes). Matrices: §8's table.
+- Landed-code tickets (L1–L9, K1, CE1, V1 and the craft lanes): `wayfinder/tickets/` in the origin mirror `Work/reverse-engineering/2026-10-07-techne-instrument-re/`; the DLW build's tickets (P0-*, T-*) live in `wayfinder/tickets/` beside this plan
+  (PATH §2). Matrices: §8's table.
 - The owner's planning session of record: `sess_ac3200ca-b5e7-410e-81ff-4fa5a4c512e2`
   (`[session]` cites); the project NOW register
   (`Work/reverse-engineering/ProjectCentral/now/` — the programme register

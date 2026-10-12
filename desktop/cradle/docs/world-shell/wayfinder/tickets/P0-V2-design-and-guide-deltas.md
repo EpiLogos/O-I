@@ -51,7 +51,7 @@ Which lines change:
   are registered); DLW-PANES-ONTOLOGY.md:461-462 (T9); DLW-PANES-PER-MODE.md:76-77
   (GRAM line cites); EXPRESSIONS-ENCOUNTER-SPINE.md lines 17 and 74;
   SF:489-493 ("planned" hosted field); APPA's unmerged-lane rows; MAP:130's
-  duplicated row (MAP is the conductor's, PATH:13).
+  duplicated row (MAP is the conductor's, PATH:14; de-duplicated in the seat, 12 Oct).
 
 ## Sources
 
@@ -84,4 +84,14 @@ them.
 
 ## Resolution
 
-—
+Partly resolved 12 Oct 2026, conductor. Items 17–21 applied to
+WIDGET-GUIDE.md (§4.1 :272-293, §4.3 :322-325, §4.6 :354-358, §4.12 :436-438,
+§4.14 :461-467, §9 :591-624) in wf_933ec42e-7ba, landing with P0-V1. Item 22
+applied by the conductor: WORLD-SHELL-DESIGN.md "Five strata" (§15) and the
+Rev 5 "Base · Central" lines annotated with the ruling and T-LABELS
+(acceptance 1–2 grep checks pass). Acceptance 3, 4, 6 hold by code-reading.
+
+**Remaining — acceptance 5 (item 23 re-pins):** LIVE/integration-map.md:164-181,
+DLW-PANES-ONTOLOGY.md:461-462, DLW-PANES-PER-MODE.md:76-77,
+EXPRESSIONS-ENCOUNTER-SPINE.md:17,74, SF:489-493, APPA's unmerged-lane rows.
+MAP:130's duplicated row is done. Claimable as a docs builder ticket.

@@ -8,8 +8,8 @@ a current Nara identity and an open Expression (ConversationNaraFace.tsx:9-10).
 Source: DLW-VISION.md §5.3 item 27 (:1336-1343); L-7 (:493-538); ledger L7
 (:1154); §6 NARA and EPII.
 
-PLAN line cites read at the committed plan (`0dfa7b5ea`, unchanged at HEAD
-`90f44b9e5`). DLW-PLAN carries uncommitted rewrites in the seat (12 Oct);
+PLAN line cites read at the committed plan (`0dfa7b5ea`, unchanged through
+`f591929b2`). DLW-PLAN carries uncommitted rewrites in the seat (12 Oct);
 re-pin them at claim.
 
 Zones: `packages/live-shell/ui/src/inhabitants/ConversationNaraFace.tsx`

@@ -30,8 +30,8 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
 - **Seat** `worktrees/env-1/o-i`, lane `dlw/build-20261012`, cut from
   `origin/main` `619a4548b`. The whole shell is on O-I `main` (#635, #637,
   `0dfa7b5ea` fold-in, the 11 Oct Live-mode device-face rounds).
-  `agent/o-i-20261007-1639` and `m-prime-methodology` are history — DLW-PLAN
-  §1/§11 and EXECUTION-* still name them; read those seat lines as stale.
+  `agent/o-i-20261007-1639` and `m-prime-methodology` are history — DLW-PLAN's
+  12 Oct revision marks them so (§1.1, §11); EXECUTION-* still name them; read those seat lines as stale.
 - **Design pack home** is this directory (`desktop/cradle/docs/world-shell/`).
   The copy under `Work/reverse-engineering/2026-10-07-techne-instrument-re/`
   is the origin mirror; new writes land here. Historical tickets (K1, L1–L9,
@@ -61,10 +61,10 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
   Expressions · Technē**. Epi-Logos is a lens, not a mode. Live is the
   reverse-engineering basis, ported, not approximated, and its destination is
   Expressions with audio and video track layers on one timeline. No agent
-  presents the ruling as open. At 12 Oct the file is untracked in the seat;
-  P0-V1 lands it. DLW-PLAN.md also carries uncommitted rewrites in the seat
-  (+456/−56); tickets pin PLAN line cites to the committed plan
-  (`0dfa7b5ea`).
+  presents the ruling as open. DLW-VISION.md, the vision tickets and both briefs are committed on the lane (`f591929b2`);
+  P0-V1's remaining work is the plan. DLW-PLAN.md carries the 12 Oct rewrites uncommitted in the seat
+  (+781/−76 against `f591929b2`, 12 Oct); tickets pin PLAN line cites to the committed plan
+  (`0dfa7b5ea`, unchanged through `f591929b2`).
 
 ## 3. Hard gates
 
@@ -75,7 +75,7 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
 | ctrl roster fix installed | **green** (verified above) | — | — |
 | Factory receiving/advancement join | red | Factory owner | Phase 3 only |
 | R2 installed-state rename (ledger item 12) | owner nod | owner | retirement bookkeeping only |
-| §10 OPEN-QUESTIONs (42, unruled) | open | owner | any builder who hits one stops |
+| §10 OPEN-QUESTIONs (46 open of 51 in the 12 Oct revision; 42 in the committed plan) | open | owner | any builder who hits one stops |
 | Vision ledger rows still PARTLY/OWNER (DLW-VISION §4) — named for tickets: L2 leave act, L7 primary presentation, L9, L23 timing, T-CROSS proposal | open | owner | T-WORLDCTX build leg; T-CROSS; T-LIVE-INTO-EXPRESSIONS. T-NARA builds without choosing L7. Any builder reaching such a row returns `OPEN Ln` |
 
 ## 4. Open claims
@@ -83,19 +83,20 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
 | Ticket | Agent | Zone | Since |
 |---|---|---|---|
 | conductor | claude-code:dlw-conductor | `desktop/cradle/docs/world-shell/wayfinder/` | 2026-10-12 |
+| P0-R1 | claude-code:dlw-conductor | the ticket's zones (`src-tauri/` host glue, live-shell build scripts, `evidence/p0-r1/`) | 2026-10-12 |
 
 ## 5. Next claimable
 
 1. **P0-R1** — native run path at HEAD. Conductor-led (judgment when the
-   host fails; heavy serial build). Blocked-by: none.
+   host fails; heavy serial build). Blocked-by: none. Claimed: the ticket names the conductor (12 Oct).
 2. **P0-R5** — run-context disclosure + disclosure components. Haiku,
    UI-only zone; can build in parallel with R1's compile, accepts in the
    native app after R1. Blocked-by: none (acceptance blocked-by P0-R1).
 3. **P0-R4** — owner bindings in the native run (roster, gateway, workcell
    reading, skillsets). Haiku once R1 boots. Blocked-by: P0-R1.
-4. **P0-V1** — land DLW-VISION and the DLW-PLAN rewrites (§5.1 items 1–16).
-   Conductor, docs only. Blocked-by: none. The seat's uncommitted DLW-PLAN
-   edits may be this ticket in progress; confirm before setting Claimed-by.
+4. **P0-V2 (remaining: item 23 re-pins)** — dated re-pin notes or
+   corrections in the six stale documents the ticket lists. Haiku, docs
+   zone. Blocked-by: none (P0-V1 resolved 12 Oct). Items 17–22 are done.
 5. **P0-BIMBA-LIVE** — read the live Bimba map read-only and keep a
    re-runnable receipt for every headline the vision binds. Conductor.
    Blocked-by: none (operational: oi-omarchy reachable).
@@ -105,14 +106,13 @@ laws). Standing map: `MAP.md`. Craft: `WIDGET-GUIDE.md` + `../icon-cut.html`.
 Phase order holds: no ticket below crosses a red gate. Files are in
 `tickets/`.
 
-- **Phase 0** — **P0-V2** design-document and widget-guide deltas (§5.2
-  items 17–23; conductor, docs). Blocked-by: P0-V1.
+- **Phase 0** — **P0-V1** resolved 12 Oct (vision + plan rewrites landed).
 - **Phase 2** — **T-TRAIL** every transition leaves a trail stop; return
   appends. Blocked-by: Phase 1 gate; UI legs P0-R1 + computer-use. Stays
   `OPEN` on retention and placement (PLAN §10 item 28).
 - **Phase 2** — **T-WORLDCTX** the Central mode's leave act and initial
   world. Blocked-by: owner ruling on L2's leave act (owner question first);
-  Phase 1 gate for the build leg.
+  Phase 1 gate for the build leg; UI legs P0-R1 + computer-use.
 - **Phase 3** — **T-NARA** one Nara dialogue binding met three ways (Central
   vertical leg). Blocked-by: Phase 2 gate, T-TRAIL, P0-R1, P0-R4; needs a
   current Nara identity and an open Expression. Chooses no primary
@@ -126,7 +126,7 @@ Phase order holds: no ticket below crosses a red gate. Files are in
   new ticket.
 - **Phase 4** — **T-LABELS** title "Central", plain instrument names, M′ as
   provenance; never rename the stored book mode `base` without a migration.
-  Blocked-by: Phase 3 gate.
+  Blocked-by: Phase 3 gate; UI legs P0-R1 + computer-use.
 - **Phase 4** — lane-5 targets carry the provenance mechanics of
   origin-return (L-6) under plain names. This rides the target sets, not a
   ticket.
@@ -138,7 +138,7 @@ Phase order holds: no ticket below crosses a red gate. Files are in
 **T-LIVE-INTO-EXPRESSIONS** (alias T-LIVE-EXPR), Live joined into
 Expressions on one audio and video timeline. Blocked-by: the Live port
 measured whole against the RE corpus; the owner naming the time (L23); a
-video-track design; Phase 4 gates. Listed so no other ticket does it by
+video-track design; Phase 4 gates; P0-R1. Listed so no other ticket does it by
 accident (DLW-VISION.md:1367-1368). Until then nothing merges Live's rail
 entry.
 

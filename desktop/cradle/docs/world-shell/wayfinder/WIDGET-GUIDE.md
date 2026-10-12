@@ -270,10 +270,26 @@ switch).
 Every mode keeps the same transport slots in the same places; only meaning
 changes (Base·Central / Factory / Expressions / Technē columns in the design
 doc's Rev-5 table; Live restored as the shell's base mode). Surf icons:
-Session and Arrangement first, then mode icons Live · Base · Central ·
-Factory · Expressions · Technē. Session/Arrangement per-mode meanings (Rev 5
-second table): e.g. Technē Session = M3′ Journey, Arrangement = M2′ Relation
-Field; Base Session = the day as clips, Arrangement = today on one ruler.
+Session and Arrangement first, then the five mode icons of the owner's
+ruling (12 Oct 2026): Live (base) · Central · Factory · Expressions · Technē
+(`CONTEMPLATION-DLW-INSTRUMENT.md:251-252`; `SURF_MODES`,
+`packages/live-shell/ui/src/shell/modeGrammar.ts:33`). The code and the
+Rev-5 tables title the Central icon "Base · Central"; under the ruling it is
+"Central" (a naming defect, ticket T-LABELS). Session/Arrangement per-mode
+meanings (Rev 5 second table): e.g. Technē Session = M3′ Journey,
+Arrangement = M2′ Relation Field; Central ("Base" in Rev 5) Session = the
+day as clips, Arrangement = today on one ruler.
+
+**Central's punch row** *(12 Oct)*: punch-in "day opened (08:30)", loop
+"the day-close routine", punch-out "the day closes (21:00)"
+(`modeGrammar.ts:282-285`; `WORLD-SHELL-DESIGN.md:40`). The two hours carry
+a source tag: they are design text, one side of a three-sided record beside
+the civil-time policy (a date rule, `day_boundary_minutes: 0`) and the
+owner's practice (DLW-PLAN §5.4a); who fires the close is open (DLW-VISION
+L5; DLW-PLAN §10 item 45). The close control is drawn **declared and never
+fired**: `admission: 'declared'`, bound to `central.day.lifecycle` behind the
+owner's token (`packages/live-shell/ui/src/inhabitants/centralDayNowModel.ts:55-105`).
+No shell device fires a close.
 
 World-mockup transport controls (Rev 2 naming): Link · field carrier (joins
 the World to the shared field; off = same grammar over local ground); Tap ·
@@ -303,6 +319,10 @@ follows or pins (`Field · World · Subject · Occasion`), the view's own
 controls (scale, lens, document view), and the pane layout. The four concepts
 #375 keeps apart are apart here: arrangement selector (transport) / surface
 tabs (pane rail) / lens navigation (Technē lens bar) / view controls (slot).
+*(12 Oct)* The slot **reuses the groove pool's place, with no groove
+function**: the aperture readouts sit where Live keeps the groove pool
+(`packages/live-shell/ui/src/shell/ModeBrowser.tsx:121-140`), and no source
+assigns Live's groove content a DLW meaning (DLW-PLAN §10 item 16).
 
 ### 4.4 Mode selector + panes (Rev 4)
 
@@ -330,6 +350,12 @@ Context tiles sit above (the agent — Fizz/Epii/Anima per arrangement, Packet,
 Trail, Field, Agents, Terminal, Results, Sky, NOWs); the 2×2 launcher below
 opens tiles and **never feeds the centre**; views come into panes from the
 browser's Views category.
+
+*(12 Oct)* A companion **never renders a verdict on synthesis**: no score,
+no picked reading, no judgement of what the player made. The companion body
+reads its **bound presence** (the agent or Nara binding it actually holds,
+with its standing), not only a name and a note, which is all the dock
+carries today (`packages/live-shell/ui/src/shell/ModeContextDock.tsx:62-68`).
 
 ### 4.7 Earth / solar system (Rev 2–3)
 
@@ -407,7 +433,9 @@ Rooms composing native refs; a guided path; **portals out** ("an authored
 link out of the palace; walking through it is an encounter like any other" —
 e.g. to Ravenna as a place, or to a shared vessel you can walk to but not
 own); a private room that fogs for every audience; Epii explains why each
-room exists.
+room exists. *(12 Oct)* The Palace returns attributable proposals; it is
+not performed (its Return routes a native owner Action and "never mutates
+native state", `docs/research/glass-bead-game/appendix-b-worlds-of-knowing-dive.md:72-76`).
 
 ### 4.13 Base documents (Rev 3)
 
@@ -429,6 +457,14 @@ One header line only (fewer titles law: window title = subject + day).
 Per arrangement: Base = the situated agent (Conversation · Activity ·
 Context · Inspect); Factory = result desk (…· Results); Expressions = Anima
 (Nara/oracle); Technē = Epii (Epii · Source · Proposals · Field).
+
+*(12 Oct)* The §4.6 rule holds here: no companion renders a verdict on
+synthesis, and each body reads its bound presence. **"Nara · oracle"
+stays**, grounded: "Oracle Interface Between Personal and Universal Domains"
+is M4's own designation (live Bimba map, queried 12 Oct 2026; M4.2), and the
+lock lists "M4 Nara, centres, EarthBody, identity/oracle/transformation/depth"
+(`Work/Quaternal-Logic/docs/L5-TECHNE-DUAL-READING-LOCK.md:153`). The Technē
+label "Epii" is kept under a recorded tension (§9).
 
 ### 4.15 Linkable states
 
@@ -551,3 +587,37 @@ This guide describes mockup forms and recorded implementation claims. It
 promotes no target, admits no family, and claims no native effect: all 126
 targets remain pending until each is exercised (honesty boundaries), and UI
 acceptance happens by direct computer use, never from this document.
+
+**Six naming and carrier rules** *(12 Oct 2026; DLW-VISION §5.2 item 21)*:
+
+1. **A lens is not a device.** "A pane-instrument *may expose* devices; a
+   device never hosts a pane" (`DLW-PANES-ONTOLOGY.md:164-197`).
+2. **Every relocated Live control names its function, or is labelled reuse
+   of the slot's place.** The transport keeps its places fixed; where a
+   slot keeps only its place, say so (as the aperture slot does, §4.3; the
+   F/P column of DLW-PLAN §2).
+3. **Plain instrument names; the M′ address is provenance.** The deep
+   instruments are project/graph, canvas, timeline, journey, places, palace
+   (D-F, `Work/reverse-engineering/2026-10-07-techne-instrument-re/PROGRAMME.md:97-108`); an M′ coordinate appears only in a
+   provenance field, never as the face's name.
+4. **No coined names.** A control, device or act is named by what it does,
+   in plain words; origin-return in particular gets no coined UI label.
+5. **Live-corpus M-labels are not Bimba coordinates.** The Live corpus's
+   "M0/M1/M3" are gate and seam labels ("live-engine is M1"; "The M3 POST is
+   that write path"), not QL/Bimba addresses (**Inferred** from usage, no
+   source states it; DLW-VISION L-0); never read or render one as the other.
+6. **"Base" names Live mode.** Under the owner's ruling (12 Oct 2026,
+   `CONTEMPLATION-DLW-INSTRUMENT.md:232-252`) "base" means Live mode, and the
+   Central mode is titled "Central". Where this guide's Rev 3–4 forms say
+   "Base" for the ground (§4.5, §4.13, §4.14), read "Central". Two ids carry
+   the word: the surf/shell id `base` is Central's, and the stored book mode
+   `base` serves both Live and Central (`modeGrammar.ts:19-20`;
+   `packages/live-shell/ui/src/continuity/workspace.tsx:27`), so it is never
+   renamed without a migration.
+
+**Tension recorded beside rule 6 — the Technē companion label** (DLW-VISION
+L21; DLW-PLAN §10 item 49): the dock names the Technē companion "Epii"
+(`ModeContextDock.tsx:67`), its M5 subsystem, while the lock's S5′ operator
+is "Technē_i := Aletheia_i" (`L5-TECHNE-DUAL-READING-LOCK.md:510-517`); the
+Expressions companion is named by its S4′ operator, Anima. Same chain,
+different end. The label stays until the owner rules.

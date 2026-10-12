@@ -9,8 +9,8 @@ owner"); T-TRAIL; Phase 2 gate; P0-R1.
 Source: DLW-VISION.md §5.3 item 28 (:1344-1349); ledger L6, L12, L14
 (:1153, :1159, :1161); §2.4 (:902-941); §6 CROSS and ORIGIN.
 
-PLAN line cites read at the committed plan (`0dfa7b5ea`, unchanged at HEAD
-`90f44b9e5`). DLW-PLAN carries uncommitted rewrites in the seat (12 Oct);
+PLAN line cites read at the committed plan (`0dfa7b5ea`, unchanged through
+`f591929b2`). DLW-PLAN carries uncommitted rewrites in the seat (12 Oct);
 re-pin them at claim.
 
 Zones: set by the conductor when the owner accepts. Expected seams (not yet

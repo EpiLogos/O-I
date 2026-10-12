@@ -3,7 +3,7 @@
 Label: wayfinder:task (Phase 4, UI only)
 Claimed-by: —
 Blocked-by: Phase 3 gate (the phase chain, PATH §1). UI legs are also
-blocked by the computer-use gate.
+blocked by P0-R1 and the computer-use gate.
 Source: DLW-VISION.md §5.3 item 30 (:1354-1360); §2.1 naming defect
 (:749-764); §2.3 (:829-837); ledger L19 (:1166).
 

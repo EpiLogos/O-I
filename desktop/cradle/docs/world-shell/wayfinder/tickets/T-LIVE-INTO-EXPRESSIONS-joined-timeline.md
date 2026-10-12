@@ -8,7 +8,7 @@ Blocked-by:
    the reverse-engineering basis (CONT:244-246). Its dynamics must be ported
    and verified against the measured reference: the verify gate and rows of
    `docs/research/ableton-live-12.0.25/reconstruction-backlog.md` (:8, :25;
-   D-rows at :57-73) and DLW-PLAN §4.1.a, the measured reference (PLAN:679).
+   D-rows D1–D18 at :57-75, 12 Oct) and DLW-PLAN §4.1.a, the measured reference (PLAN:679).
    Until the port measures whole, a merge would bury the basis it rests on.
 2. **The owner names the time** (L23, OWNER timing; DLW-VISION.md:1170).
 3. **A design for the video track layer.** No design or code names a video
@@ -21,8 +21,8 @@ Blocked-by:
 Source: DLW-VISION.md §5.3 item 32 (:1364-1368); §2.1 (:723-786); L-0
 (:261-283); ledger L1, L18, L23.
 
-PLAN line cites read at the committed plan (`0dfa7b5ea`, unchanged at HEAD
-`90f44b9e5`). DLW-PLAN carries uncommitted rewrites in the seat (12 Oct);
+PLAN line cites read at the committed plan (`0dfa7b5ea`, unchanged through
+`f591929b2`). DLW-PLAN carries uncommitted rewrites in the seat (12 Oct);
 re-pin them at claim.
 
 Zones: none until claimable. The conductor cuts zones when the owner times
@@ -72,8 +72,8 @@ place.
   L-9 (:600-603).
 - MPW:10, 32-34, 144-146; WSD:917-924, 945-951; PLAN §4.1 (:643-), §5.8
   (:2185-); reconstruction-backlog.md.
-- Note: DLW-VISION.md:279 names the backlog "D1–D13". At 12 Oct the backlog
-  carries D1–D16 (:57-73). P0-V1 corrects the vision.
+- Note: DLW-VISION.md:279 named the backlog "D1–D13". At 12 Oct the backlog
+  carries D1–D18 (:57-75); the vision and DLW-PLAN §4.1 now say so.
 
 ## Acceptance (provisional; re-cut by the conductor when the owner times it)
 
