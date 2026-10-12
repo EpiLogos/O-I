@@ -59,7 +59,10 @@ try{
    assert.equal(Object.keys(saved.document.template_payload.fields).length,17);
    check(name+': original seventeen fields and embedded media survive native save');
    await page.screenshot({path:output+'/central-'+name+'-day.png',fullPage:true});
-   await page.reload();await page.getByRole('button',{name:'Open today',exact:true}).click();
+   // A fresh renderer: WebKit can stall a reload's load event behind the
+   // cancelled replay poll, so fall back to a plain navigation to the same URL.
+   try{await page.reload({timeout:20000});}catch{await page.goto(url);}
+   await page.getByRole('button',{name:'Open today',exact:true}).click();
    await input.waitFor();assert.equal(await input.textContent(),text);check(name+': fresh renderer reopens native content');
    // REGRESSION (not faked): the owner's reconciliation commit 28266fef
    // ("Bring the reconciled desktop and Factory shell onto main.") replaced
