@@ -66,9 +66,14 @@ Phase chain: 0 native + disclosure → 1 semantics gate + craft →
    refuses otherwise (lock §5). No UI leg. Builder ×1 (zone: `inhabitants/`).
 2. **T-LABELS** code legs — "Central" title; no hard-coded day hours (lock
    §4.6–4.7). Builder ×1 — after 1, since both touch `modes.ts`.
-3. **Screen pass (lead, when the gate clears):** rebuild, launch, see and
+3. **T-AE-REPORT** — re-port Archetypal-Earth at HEAD, pinned, with a drift
+   check (lock §7.4.1). Lead-led (judgment), builders only for copy batches.
+   No UI leg for the copy itself.
+4. **T-TIMELINE-WALKS** — sections and walks in the Timeline; the Journey
+   reads them (lock §7). After T-AE-REPORT. Builder ×1–2 on disjoint zones.
+5. **Screen pass (lead, when the gate clears):** rebuild, launch, see and
    capture P0-R1/R4/R5/R5b/R5c/R6 at both viewports; then R0 review.
-4. Then, ticketed by the lead from lock §4 as they are claimed: Expressions
+6. Then, ticketed by the lead from lock §4 as they are claimed: Expressions
    Studio sections as devices (§4.8); Technē instruments hold the QL faces
    (§4.9); the 25 suite capabilities' homes (§4.2); T-TRAIL.
 

@@ -284,3 +284,74 @@ file shows to be invented or already settled (owner questions, invented
 tickets, hard-coded day hours, Nara framed outside the Epi-Logos lens, the
 physics sim's sounding treated as open, per-repo owner tickets). The list
 is made against this file and applied in one pass.
+
+---
+
+## 7. Archetypal-Earth — the instrument pattern and the time grammar (12 Oct 2026)
+
+Archetypal-Earth (`Work/Archetypal-Earth`, HEAD `35f76aa`) is not only the
+globe the shell ports: it is a finished instance of the instrument the DLW
+builds, and its threads and walks are the basis for the Timeline (M2′), the
+Journey (M3′) and how both eventuate in a full Expression.
+
+### 7.1 The instrument pattern (AE `ProjectCentral/docs/MODES-RFC.md` §2–4)
+
+| AE | Live semantic | DLW |
+|---|---|---|
+| The shell: one title, one menu, one lens-controls slot, one panel host; owns all chrome | the instrument frame | the Technē instrument frame (one frame, sections) |
+| A **lens** = plugin `{mount, enter(route), leave}`; hands the shell its few controls; never touches another lens | device in the instrument's chain | a device inside the instrument; its controls go to Detail → Device |
+| Field (globe + graph), Theory (+ Dynamics), Aion, Red Book | devices of M0′/M4′ (field), M2′ (Aion), M3′ (Red Book, dynamics routes) | as listed |
+| Astrology (natal sky beside Jung's, walked planet by planet) | device on the sky scale | the **Epi-Logos lens's Nara overlay** on the ported sky |
+| Dreams, Symbols, Coincidences (practice, private) | devices, private storage | practice devices, personal store, never in a link |
+| **Filters** (works, cultures, era, kinds) — one mask, never a mode | browser filter / aperture | the aperture + browser filter; never a new mode |
+| Graph = a second rendering of the field; Sky = a scale of the globe | view switch / zoom scale | Earth ⇄ Graph projection; System · Body · Region · Palace scales |
+| **One shared time control** — non-linear scale, era names, subject density trace, one play; "while a thread's walk stands, the one transport button serves it; the clock's own play yields" (`src/ui/time-control.ts:33`) | transport + arrangement overview | **one transport, five meanings** — in Technē, Play = walk |
+
+### 7.2 The time grammar (AE `src/types/history.ts`, `aion/`, `data/thread.ts`, `globe/chronology.ts`)
+
+| AE | Live semantic | M2′ Timeline (Arrangement) |
+|---|---|---|
+| **Reading** — one author's view of time; later readings `extends` and never rewrite | a track group / layer above | a reading is a layer of tracks; extensions stack as layers, never overwrite |
+| **Epoch** — nested half-open spans; the narrowest supplies the atmosphere (palette, polarity, spectrum) | arrangement sections (locators), nested | nested sections on the ruler; the narrowest colours what plays inside it |
+| **Event** — year, place, passages, the families and occurrences it gathers | arrangement clip | a clip at its year and place, carrying its passages and gathered material |
+| **Thread** — ordered event ids; the **whole-reading walk** derived chronologically, never stored | a follow-action chain through clips | a walk track: an ordered path the transport plays |
+| **Field thread** — a subject's located occurrences by year, thinned to one per time bucket, the rest kept as `also`; arcs between moved places | clip with its take lane / stack | a walk whose stops carry their bucket-mates (nothing dropped) |
+| **Chronology path** — the subject's places in date order, drawn along the cursor | the playhead's trace | Earth follows the playhead (Follow slot) |
+| **Standing stop** — tunes the clock to its year and the globe to its place | follow + position | the stop is the transport position and the encounter |
+| Density trace of the subject on the scrubber | arrangement overview | the ruler's overview |
+
+### 7.3 How a timeline eventuates in the full Expression
+
+**Thread (M2′, a walk track on the ruler) → walked (M3′ Journey: its stops
+as scene rows — Technē's Session) → each stop carries its Expression scene
+(the mockup's `WALK[].ex`) → captured (Technē transport: record a walk;
+view → scene) → the Expression's scene sequence (Expressions Session scene
+rows, Arrangement "the scenes over time") → sounded and formed by the
+physics instrument.** One transport serves every step: in Technē Play walks,
+in Expressions Play plays the scenes; position and Follow carry the standing
+stop across.
+
+### 7.4 What the shell has, and the fixes
+
+1. **The port is stale.** `packages/live-shell/ui/src/projections/atlas/src`
+   holds 66 modules; AE now holds 119 — 53 never ported (incl. `aion/walk.ts`,
+   `globe/chronology.ts`, `dynamics/*`, `redbook/*`, `lenses/*`,
+   `shell/*`, `astro/*`, `sky/{wheel,zodiac,orbits,cards,camera,compose}.ts`)
+   and 51 of the shared modules differ; AE has 68 commits since the port.
+   **Fix (T-AE-REPORT):** re-port verbatim at AE HEAD (the port law: copy
+   first, adapt hosts after), pin the AE commit in the port, and add a drift
+   check that names every module that differs from the pinned AE commit.
+2. **The Timeline contract has no sections and no walks.** `WorldTrackSet`
+   (`timeline/worldTrackAdapter.ts`) carries columns, tracks, clips, takes;
+   `aionTimeline.ts` folds epochs into flat columns, makes events one-year
+   clips and copies threads as clip tracks — the walk (order, stepping,
+   `also`, place, clock tuning) is lost. **Fix (T-TIMELINE-WALKS):** extend
+   the contract with nested sections and walks (ordered stops: clip ref,
+   year, place, `also`, the Expression scene it carries), re-project Aion
+   (readings as layers, epochs as sections, events as clips, threads and the
+   whole-reading walk as walks), and project AE's field threads and Red Book
+   and dynamics routes through the same walk shape.
+3. **The Journey "waits for the journey owner"** (`shell/modeGrammar.ts:442`).
+   The owner is the ported AE walk modules. **Fix (with T-TIMELINE-WALKS):**
+   Technē's Session (M3′) reads the walks; Play walks them (pace, stop n/N,
+   arrival quantize, Follow) as the mockup's transport already specifies.
