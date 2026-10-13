@@ -37,7 +37,7 @@ E09b, in the same commit:
 Scripted: transitions 9 and curve-lane 24; field-studies 627 pass / 0 fail;
 both builds are clean.
 
-**E11b (dispatched):** a transition pass in the production engine, since the
+**E11b (landed `e33c08971`):** a transition pass in the production engine, since the
 native app renders there:
 - dip exact at the midpoint;
 - wipe holds the outgoing frame;
@@ -47,3 +47,12 @@ native app renders there:
 
 Unverified (native pass): the four named mid-transition screenshots, the
 dip pixel check, and whether the seam glyph overlaps the trim edges.
+
+E11b as landed: `transitionPass.ts` composites the native field through a
+live render target. Dip is exact at the colour point (shader formula
+mirrored and asserted on CPU: `#f4f2eb` → 244,242,235). Wipe holds the
+outgoing frame. With no painted transition, `present()` returns false and
+the old render call runs. PNG and video capture carry the overlay, and the
+inspector uses the seam chooser. A wipe no longer crossfades particles.
+Open: the engine imports `field-studies-journeys/transitions.ts`; the pure
+helpers may move into the engine.

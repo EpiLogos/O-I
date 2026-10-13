@@ -123,8 +123,21 @@ map's only outward port. Scripted: places 127/127; the native place-set case
 is appended (gated). Lead accepted: the prefill rounds to 5 decimals, and
 "Edit place…" opens the whole-subject constellation editor (the existing
 route).
-**T17b (dispatched):** the draft (clicked coordinate or move proposal)
+**T17b (landed `6176030c6`):** the draft (clicked coordinate or move proposal)
 travels through `TechneConstellationRequest` → `PointCloudHost` →
 `CradleFrame` → `WikiFactsEditor`. The source basis is still required. The
 owner's save or refusal returns to the map: a refusal comes back verbatim
 with the marker returned, and a save triggers a re-read.
+
+T17b as landed: one validator (`validatePlaceDraft`, `placeAuthoring.ts`) is
+imported by the host, the frame and the editor. `WikiFactsEditor` seeds a
+visible "Draft from the map … Not saved", and `factsChanges` still refuses
+without a chosen source. Every routed save emits `oi:constellation-result`;
+the Places host shows a refusal in the owner's words and re-reads on save.
+Scripted: constellation-place-draft 6/6; places 129/129; cradle build clean.
+Open for T17c (cradle side): carry the draft on the construction frame
+instead of a module map, and auto-open the place editor for a map route.
+
+**T14–T16 + T17c-map (dispatched):** a time slider over dated events on the
+shared session window, playback, the imagery note, and a refused move
+returning its marker inside the map.
