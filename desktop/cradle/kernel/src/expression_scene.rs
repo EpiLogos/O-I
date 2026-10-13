@@ -457,6 +457,7 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
                 "frames",
                 "namedViews",
                 "connectors",
+                "placeViews",
             ]
             .contains(&key.as_str())
         })
@@ -761,6 +762,127 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
                     }
                 }
             }
+        }
+    }
+    // lane-4 T20: named Places views, kept beside the canvas views. Each is closed and refs-free (see place_view).
+    if let Some(places) = r.get("placeViews") {
+        let places = object(places, "Research place views")?;
+        if places.len() > 32 {
+            return Err("Research place view count exceeds its bound".into());
+        }
+        for (name, view) in places {
+            if name.trim().is_empty() || utf16_len(name) > 160 {
+                return Err("Invalid place view name".into());
+            }
+            place_view(view)?;
+        }
+    }
+    Ok(())
+}
+/// lane-4 T20: the basemap registry's own ids (basemapSources.ts). The app and this kernel hold one list; a JS test reads both.
+const BASEMAP_LAYER_IDS: &[&str] = &[
+    "offline-ground",
+    "osm-street",
+    "eox-sentinel2",
+    "esri-imagery",
+    "esri-place-names",
+];
+const PLACE_STANDINGS: &[&str] = &["factual", "mythic", "owner-vocabulary"];
+/// lane-4 T20: one named Places view, admitted closed. The camera is longitude x, latitude y, zoom, and optional pitch
+/// and bearing; the layer toggles, the basemap rows and the shared time window are each optional or nullable. No
+/// allowance for live sources and no occurrence refs: a view is presentation only.
+fn place_view(value: &Value) -> Result<(), String> {
+    let view = object(value, "Place view")?;
+    if view
+        .keys()
+        .any(|k| !["viewport", "relations", "standing", "basemap", "window"].contains(&k.as_str()))
+        || !view.contains_key("viewport")
+        || !view.contains_key("window")
+    {
+        return Err("Invalid place view".into());
+    }
+    let camera = object(&value["viewport"], "Place view camera")?;
+    if camera
+        .keys()
+        .any(|k| !["x", "y", "zoom", "pitch", "bearing"].contains(&k.as_str()))
+    {
+        return Err("Unknown viewport field".into());
+    }
+    number(&value["viewport"]["x"], -180.0, 180.0, "Viewport longitude")?;
+    number(&value["viewport"]["y"], -90.0, 90.0, "Viewport latitude")?;
+    number(&value["viewport"]["zoom"], 0.001, 1e5, "Viewport zoom")?;
+    if camera.contains_key("pitch") {
+        number(&value["viewport"]["pitch"], 0.0, 85.0, "Viewport pitch")?;
+    }
+    if camera.contains_key("bearing") {
+        number(
+            &value["viewport"]["bearing"],
+            -180.0,
+            180.0,
+            "Viewport bearing",
+        )?;
+    }
+    if let Some(relations) = view.get("relations") {
+        let rows = relations.as_array().ok_or("Invalid place view layers")?;
+        if rows.len() > 256
+            || rows
+                .iter()
+                .any(|row| !row.as_str().is_some_and(|s| utf16_len(s) <= 160))
+        {
+            return Err("Invalid place view layers".into());
+        }
+    }
+    if let Some(standing) = view.get("standing") {
+        let rows = standing.as_array().ok_or("Invalid place view standing")?;
+        if rows.len() > PLACE_STANDINGS.len()
+            || rows
+                .iter()
+                .any(|row| !row.as_str().is_some_and(|s| PLACE_STANDINGS.contains(&s)))
+        {
+            return Err("Invalid place view standing".into());
+        }
+    }
+    if let Some(basemap) = view.get("basemap") {
+        let basemap = object(basemap, "Place view basemap")?;
+        if basemap
+            .keys()
+            .any(|k| !["terrainVisible", "layers"].contains(&k.as_str()))
+            || !basemap.get("terrainVisible").is_some_and(Value::is_boolean)
+        {
+            return Err("Invalid place view basemap".into());
+        }
+        let Some(layers) = basemap.get("layers") else {
+            return Err("Invalid place view basemap".into());
+        };
+        let layers = object(layers, "Place view basemap layers")?;
+        if layers.len() > BASEMAP_LAYER_IDS.len() {
+            return Err("Place view basemap exceeds its bound".into());
+        }
+        for (id, layer) in layers {
+            if !BASEMAP_LAYER_IDS.contains(&id.as_str()) {
+                return Err("Unknown basemap layer".into());
+            }
+            let row = object(layer, "Basemap layer")?;
+            if row
+                .keys()
+                .any(|k| !["visible", "opacity"].contains(&k.as_str()))
+                || !row.get("visible").is_some_and(Value::is_boolean)
+            {
+                return Err("Invalid basemap layer".into());
+            }
+            number(&layer["opacity"], 0.0, 1.0, "Basemap opacity")?;
+        }
+    }
+    let window = &value["window"];
+    if !window.is_null() {
+        let span = object(window, "Place view window")?;
+        if span.keys().any(|k| !["from", "to"].contains(&k.as_str()))
+            || !["from", "to"].iter().all(|bound| {
+                span.get(*bound)
+                    .is_some_and(|v| v.is_null() || v.as_str().is_some_and(|s| utf16_len(s) <= 64))
+            })
+        {
+            return Err("Invalid place view window".into());
         }
     }
     Ok(())
@@ -1292,6 +1414,135 @@ mod tests {
                 "{refused}"
             );
         }
+    }
+
+    #[test]
+    fn place_views_are_admitted_bounded_and_closed() {
+        use super::validate_research;
+        use serde_json::{json, Value};
+        use std::collections::BTreeSet;
+        let ids: BTreeSet<&str> = BTreeSet::new();
+        let with = |extra: Value| {
+            let mut m = json!({"schema": "oi.research-scene/v1", "cards": {}, "strokes": [],
+                "views": {}, "timeline": {}});
+            for (k, v) in extra.as_object().unwrap() {
+                m[k] = v.clone();
+            }
+            m
+        };
+        // one named view under `name`, as the material holds it
+        let one = |name: &str, view: Value| {
+            let mut m = with(json!({}));
+            m["placeViews"] = json!({});
+            m["placeViews"][name] = view;
+            m
+        };
+        let full = json!({
+            "viewport": {"x": 2.35, "y": 48.85, "zoom": 11.0, "pitch": 40.0, "bearing": -20.0},
+            "relations": ["born in", "(relation not disclosed)"],
+            "standing": ["factual", "mythic"],
+            "basemap": {"terrainVisible": false, "layers": {
+                "offline-ground": {"visible": true, "opacity": 1.0},
+                "osm-street": {"visible": true, "opacity": 0.5},
+                "esri-imagery": {"visible": false, "opacity": 1.0}}},
+            "window": {"from": "1900-01-01", "to": null}
+        });
+        // material saved before place views existed, a view with every field, and the bare view (open layers, no window)
+        assert!(validate_research(&with(json!({})), &ids).is_ok());
+        assert!(validate_research(&one("Paris at dusk", full.clone()), &ids).is_ok());
+        assert!(validate_research(
+            &one(
+                "open",
+                json!({"viewport": {"x": 0, "y": 20, "zoom": 1}, "window": null})
+            ),
+            &ids
+        )
+        .is_ok());
+        // the name is 1 to 160 UTF-16 units: 80 emoji are 160 units and admitted, 81 are refused
+        assert!(validate_research(
+            &one(
+                &"\u{1F600}".repeat(80),
+                json!({"viewport": {"x": 0, "y": 0, "zoom": 1}, "window": null})
+            ),
+            &ids
+        )
+        .is_ok());
+        let camera = |extra: Value| {
+            let mut v = json!({"viewport": {"x": 0, "y": 0, "zoom": 1}, "window": null});
+            for (k, value) in extra.as_object().unwrap() {
+                v[k] = value.clone();
+            }
+            v
+        };
+        for (name, view) in [
+            ("", camera(json!({}))),
+            ("   ", camera(json!({}))),
+            ("\u{1F600}".repeat(81).as_str(), camera(json!({}))),
+            ("v", camera(json!({"extra": 1}))),
+            ("v", json!({"viewport": {"x": 0, "y": 0, "zoom": 1}})),
+            (
+                "v",
+                json!({"window": null, "viewport": {"x": 0, "y": 0, "zoom": 1, "roll": 1}}),
+            ),
+            (
+                "v",
+                json!({"viewport": {"x": 200, "y": 0, "zoom": 1}, "window": null}),
+            ),
+            (
+                "v",
+                json!({"viewport": {"x": 0, "y": 91, "zoom": 1}, "window": null}),
+            ),
+            (
+                "v",
+                json!({"viewport": {"x": 0, "y": 0, "zoom": 1, "pitch": 86}, "window": null}),
+            ),
+            (
+                "v",
+                json!({"viewport": {"x": 0, "y": 0, "zoom": 1, "bearing": 181}, "window": null}),
+            ),
+            ("v", camera(json!({"relations": "born in"}))),
+            ("v", camera(json!({"relations": ["x".repeat(161)]}))),
+            ("v", camera(json!({"standing": ["canonical"]}))),
+            ("v", camera(json!({"basemap": {"layers": {}}}))),
+            (
+                "v",
+                camera(
+                    json!({"basemap": {"terrainVisible": false, "layers": {"bing-aerial": {"visible": true, "opacity": 1}}}}),
+                ),
+            ),
+            (
+                "v",
+                camera(
+                    json!({"basemap": {"terrainVisible": false, "layers": {"osm-street": {"visible": true, "opacity": 1.5}}}}),
+                ),
+            ),
+            (
+                "v",
+                camera(
+                    json!({"basemap": {"terrainVisible": false, "layers": {"osm-street": {"visible": true, "opacity": 1, "live": true}}}}),
+                ),
+            ),
+            (
+                "v",
+                camera(json!({"window": {"from": "x".repeat(65), "to": null}})),
+            ),
+            (
+                "v",
+                camera(json!({"window": {"from": null, "to": null, "axis": 1}})),
+            ),
+        ] {
+            assert!(
+                validate_research(&one(name, view.clone()), &ids).is_err(),
+                "{name}: {view}"
+            );
+        }
+        // at most 32 named views
+        let mut many = with(json!({}));
+        many["placeViews"] = json!({});
+        for i in 0..33 {
+            many["placeViews"][format!("v{i}")] = camera(json!({}));
+        }
+        assert!(validate_research(&many, &ids).is_err());
     }
 
     #[test]

@@ -8,11 +8,20 @@
 .journey-beat-panel{padding:10px;min-width:0}
 .journey-beat-panel>header{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .journey-beat-panel h3{margin:0;font-size:12px;font-weight:500}
+.journey-beat-lane{position:relative;min-width:0}
 .journey-reading-beats{display:flex;gap:8px;list-style:none;margin:12px 0;padding:0;overflow-x:auto;align-items:flex-start}
-.journey-reading-beats>li{flex:0 0 180px;min-width:0}
-.journey-beat-card{display:flex;gap:8px;align-items:center;text-align:left;min-height:68px;width:100%;padding:10px}
+.journey-beat-item{flex:0 0 180px;min-width:0}
+.journey-reading-home .journey-beat-item{flex:auto;width:100%}
+.journey-beat-item[data-drag]{opacity:.55}
+.journey-beat-lane .scene-insert-line{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--ui-ink,currentColor);border-radius:1px;pointer-events:none;z-index:4}
+.journey-beat-lane .scene-insert-line[hidden]{display:none}
+.journey-beat-lane[data-axis=column] .scene-insert-line{top:0;bottom:auto;left:0;right:0;width:auto;height:2px;margin:-1px 0 0}
+.journey-beat-card{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 8px;align-items:center;text-align:left;min-height:68px;width:100%;padding:10px;cursor:grab}
+.journey-beat-card:disabled{cursor:default}
 .journey-beat-card[aria-current=step]{outline:1px solid var(--accent,currentColor)}
 .journey-beat-number{font-size:11px;opacity:.5}
-.journey-reading-beats details{font-size:10px;line-height:1.4;margin:6px 0;overflow-wrap:anywhere}
-.journey-reading-beats details p{margin:5px 0}
+.journey-beat-card strong{min-width:0;overflow-wrap:anywhere}
+.journey-beat-chips{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.journey-beat-chip{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:2px 5px;border:1px solid color-mix(in srgb,var(--knowledge-accent,#79c0d4) 45%,transparent);border-radius:999px;background:color-mix(in srgb,var(--knowledge-accent,#79c0d4) 14%,transparent);font-size:10px;line-height:1.4}
+.journey-beat-reason{grid-column:1/-1;font-size:10px;line-height:1.4;opacity:.65;overflow-wrap:anywhere}
 .journey-reading-source{font-size:10px;opacity:.65;overflow-wrap:anywhere}

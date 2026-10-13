@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import {bridgeReading, groundSelection, ensureSession, resetSessionAlignment} from "../src/techne/m0m5/reading.ts";
 import {validateReading, validateSession, crossCutSession} from "../src/techne/contract.ts";
 import {createDisclosureSessionStore, coReferenced} from "../src/techne/session.ts";
-import {beats} from "../src/techne/m0m5/journey/beats.ts";
+import {beats, sceneTitle} from "../src/techne/m0m5/journey/beats.ts";
 import {composeSceneProposal, EXPRESSION_EDIT_ACTION} from "../src/techne/m0m5/journey/compose.ts";
 import {crossToExpression, returnPosition} from "../src/techne/m0m5/journey/crossing.ts";
 import {resolveActionRoute} from "../src/techne/m0m5/adapter.ts";
@@ -168,6 +168,14 @@ test("journey beats are the reading's own Expression scene refs, verbatim", () =
   const none = beats(unbound);
   assert.equal(none.beats.length, 0);
   assert.match(none.unavailableReason, /disclose no scene refs/);
+});
+
+test("a journey beat's title is the last ':'-segment of its verbatim scene ref; '/' refs keep their tail", () => {
+  assert.equal(sceneTitle("oi.expression:probe:scene:one"), "one");
+  assert.equal(sceneTitle("oi.expression:probe:scene:first-look"), "first-look");
+  assert.equal(sceneTitle("scenes/intro"), "intro");
+  assert.equal(sceneTitle("bare"), "bare");
+  assert.equal(sceneTitle("oi.expression:probe:"), "oi.expression:probe:", "an empty tail falls back to the ref itself");
 });
 
 test("journey composition proposes a substrate-grammar scene_create route and refuses collisions", () => {

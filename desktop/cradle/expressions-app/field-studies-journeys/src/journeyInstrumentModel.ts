@@ -19,10 +19,19 @@ export function readJourneyInstrument(raw:unknown,view:KernelConversion,sceneId:
  const reading=raw as TechneReading;
  return {reading,model:beats(reading)};
 }
+/** One Scene's own reading, for its facet chips. The Scene must be bound by the
+ * reading at the revision requested; anything else is refused, never shown. */
+export function readJourneySceneFrame(raw:unknown,expression_ref:string,revision:number,scene_ref:string):TechneReading {
+ const validation=validateReading(raw);
+ if(!validation.valid)throw Error(`The Scene reading is invalid: ${validation.errors.join('; ')}`);
+ const reading=raw as TechneReading;
+ if(!(reading.expressions??[]).some(entry=>entry.expression_ref===expression_ref&&entry.scene_ref===scene_ref&&entry.revision===String(revision)))throw Error('The Scene reading does not bind this Scene at its native revision');
+ return reading;
+}
 export interface JourneyBeatFocus extends JourneyInstrumentBasis {target_scene_ref:string}
 /** A disclosed foreign Expression is visible as a beat but is never
  * selected through the current document's Scene focus operation. */
-export function prepareJourneyBeatFocus(beat:JourneyBeat,basis:JourneyInstrumentBasis,view:KernelConversion|undefined,sceneId:string):JourneyBeatFocus {
+export function prepareJourneyBeatFocus(beat:Pick<JourneyBeat,'expression_ref'|'revision'|'scene_ref'>,basis:JourneyInstrumentBasis,view:KernelConversion|undefined,sceneId:string):JourneyBeatFocus {
  if(!sameJourneyInstrumentBasis(basis,view,sceneId))throw Error('The native Journey source changed; refresh before opening its beat');
  if(beat.expression_ref!==basis.expression_ref)throw Error('This beat belongs to another bound Expression; open that native work first');
  if(beat.revision!==String(basis.revision))throw Error('This beat was disclosed at another native revision; refresh its reading');

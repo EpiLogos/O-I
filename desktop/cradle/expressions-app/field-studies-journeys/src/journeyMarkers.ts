@@ -45,12 +45,63 @@ export function sceneBoundaries(durations: readonly number[]): number[] {
   return out;
 }
 
-/** The scene under journey time `t` and its local time. A boundary belongs to the scene it starts,
- * matching the playhead's own index walk in app.ts. */
+/** The durations a playback clock runs on. The working clock (`saved` false) is each Scene's own duration, the clock the
+ * ruler draws. Saved-sequence playback (`saved` true) runs on the saved durations, so an unsaved Scene has no length there. */
+export function playDurations(scenes: ReadonlyArray<{id: string; duration: number}>,
+  savedScenes: Readonly<Record<string, {duration: number} | undefined>> | undefined, saved: boolean): number[] {
+  return scenes.map(scene => saved ? (savedScenes?.[scene.id]?.duration ?? 0) : scene.duration);
+}
+
+/** The scene under journey time `t` on the given clock, and its local time. A boundary belongs to the scene it starts.
+ * Zero-length scenes (unsaved, on the saved clock) have no span, so they are never the answer; at or past the end the
+ * answer is the last scene with length, at its full length. */
 export function sceneAtJourneyTime(durations: readonly number[], t: number): {sceneIndex: number; local: number} {
-  let index = 0, value = Math.max(0, t);
-  while (index < durations.length - 1 && value >= durations[index]) { value -= durations[index]; index++; }
-  return {sceneIndex: index, local: value};
+  const value = Math.max(0, t);
+  let start = 0, last = -1;
+  for (let index = 0; index < durations.length; index++) {
+    const duration = durations[index];
+    if (!(duration > 0)) continue;
+    last = index;
+    if (value < start + duration) return {sceneIndex: index, local: value - start};
+    start += duration;
+  }
+  return last < 0 ? {sceneIndex: 0, local: 0} : {sceneIndex: last, local: durations[last]};
+}
+
+/**
+ * E13b: a working-clock time mapped onto the clock playback runs (`play`, from playDurations). Identical clocks map
+ * to themselves. On the saved clock, a time inside an unsaved Scene collapses to the saved instant where that span
+ * sits: the end of the saved Scene before it, which is the start of the saved Scene after it. This is the nearest
+ * saved instant, so no loop edge or marker can name a Scene that playback does not run.
+ */
+export function toPlayClock(working: readonly number[], play: readonly number[], t: number): number {
+  const {sceneIndex, local} = sceneAtJourneyTime(working, t);
+  const start = sceneBoundaries(play)[sceneIndex] ?? 0;
+  return start + Math.min(local, play[sceneIndex] ?? 0);
+}
+
+/** E13b: the loop region on the clock playback runs. Null when its two edges meet on that clock: there is nothing to loop. */
+export function toPlayRegion(working: readonly number[], play: readonly number[], region: LoopRegion | undefined): LoopRegion | undefined {
+  if (!region) return undefined;
+  const from = toPlayClock(working, play, region.from), to = toPlayClock(working, play, region.to);
+  return to > from ? {from, to} : undefined;
+}
+
+/** E13b: the loop region in a Scene's own local time, when the whole region lies inside that Scene; otherwise null.
+ * Working-clock play (Space) loops a brace that lies within the Scene it plays. */
+export function sceneLocalRegion(working: readonly number[], sceneIndex: number, region: LoopRegion | undefined): LoopRegion | undefined {
+  if (!region || !(region.to > region.from)) return undefined;
+  const start = sceneBoundaries(working)[sceneIndex], duration = working[sceneIndex];
+  if (start === undefined || !(duration > 0) || region.from < start || region.to > start + duration) return undefined;
+  return {from: region.from - start, to: region.to - start};
+}
+
+/** E13b: what saved playback says to the author about a loop that does not play as drawn; null when it plays as drawn. */
+export function loopPlayNotice(working: readonly number[], play: readonly number[], region: LoopRegion | undefined): string | null {
+  if (!region || !(region.to > region.from)) return null;
+  if (!toPlayRegion(working, play, region)) return 'The loop has no length in the saved scenes, so saved playback runs without it. Save the scene it sits in to loop there.';
+  const edgeUnsaved = [region.from, region.to].some(t => !(play[sceneAtJourneyTime(working, t).sceneIndex] > 0));
+  return edgeUnsaved ? 'A loop edge sits in an unsaved scene; saved playback loops at the nearest saved instant. Save that scene to loop there.' : null;
 }
 
 /** Snaps `time` to the nearest scene boundary within `tolerancePx` pixels at `secondsPerPx`. */

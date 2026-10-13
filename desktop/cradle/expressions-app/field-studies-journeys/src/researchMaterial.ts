@@ -3,6 +3,7 @@
 import {clone,entity,uid,type Scene} from './model.js';
 import {validateConnector,CONNECTOR_KEY_MAX,CONNECTOR_RECORD_MAX,type ResearchConnector} from './canvasConnectors.js';
 import {CANVAS_OBJECT_KINDS,CANVAS_TOOL_SPEC,STICKY_DEFAULT_PALETTE,isCanvasObjectKind,isPaletteKey,isShapeFill,isShapeGeometry,type CanvasObjectKind,type CanvasToolChoice,type PaletteKey,type ShapeFill,type ShapeGeometry} from './canvasShapes.js';
+import {LIVE_BASEMAP_SOURCES,OFFLINE_GROUND_ID} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/basemapSources';
 
 /** Card kinds the material admits: the image/note cards plus the lane-1 A2
  * canvas objects (sticky, shape, text). */
@@ -32,6 +33,16 @@ export interface ResearchFrame {label:string;memberRefs:string[];z:number}
  * expect a "view" to restore — which cards were selected and which frame
  * sits on top. Never a second copy of graph material. */
 export interface ResearchNamedView {viewport:ResearchViewport;selectedRefs:string[];frameOrder:string[]}
+/** lane-4 T20–T21: the Places standing classes a layer can read (the cradle's own vocabulary, placeReading). */
+export type PlaceStanding='factual'|'mythic'|'owner-vocabulary';
+/** lane-4 T20: the basemap rows as a view or the Scene keeps them. Keys are the basemap registry ids (closed; the kernel holds the same list). Never the owner's live-source allowance. */
+export interface PlaceBasemapRecord {terrainVisible:boolean;layers:Record<string,{visible:boolean;opacity:number}>}
+/** lane-4 T20–T21: the Places layer toggles and basemap rows. Absent `relations` or `standing` = every layer on; absent `basemap` = the offline ground only. */
+export interface PlaceLayersRecord {relations?:string[];standing?:PlaceStanding[];basemap?:PlaceBasemapRecord}
+/** lane-4 T20: the shared time window a view restores ({from,to} as the session holds them; null = open). */
+export interface PlaceTimeWindowRecord {from:string|null;to:string|null}
+/** lane-4 T20: a named Places view — camera, layer toggles, basemap rows and the time window. Refs and presentation only, never a copy of the reading. */
+export interface PlaceViewRecord extends PlaceLayersRecord {viewport:{x:number;y:number;zoom:number;pitch?:number;bearing?:number};window:PlaceTimeWindowRecord|null}
 export interface ResearchMaterial {
  schema:'oi.research-scene/v1';cards:Record<string,ResearchCard>;strokes:ResearchStroke[];
 
@@ -39,6 +50,8 @@ export interface ResearchMaterial {
  frames:Record<string,ResearchFrame>; namedViews:Record<string,ResearchNamedView>;
  /** lane-1 A3–A4: presentation connectors keyed by the native edge id (absent = today's curved auto routing). */
  connectors?:Record<string,ResearchConnector>;
+ /** lane-4 T20: named Places views, kept beside the canvas's namedViews (absent = none saved). At most 32. */
+ placeViews?:Record<string,PlaceViewRecord>;
 }
 export type ResearchMaterialAction =
  | {type:'resize';id:string;width:number;height:number}
@@ -55,7 +68,9 @@ export type ResearchMaterialAction =
  | {type:'frame-remove';id:string}
  | {type:'frame-order';id:string;direction:'front'|'back'}
  | {type:'view-save';name:string;viewport:ResearchViewport;selectedRefs:string[];frameOrder:string[]}
- | {type:'view-remove';name:string};
+ /** lane-4 T20: a named Places view. It reuses the 'view-save' key (and its undo label) and writes placeViews, never namedViews. */
+ | {type:'view-save';name:string;place:PlaceViewRecord}
+ | {type:'view-remove';name:string;scope?:'place'};
 const color=(value:unknown)=>typeof value==='string'&&/^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(value);
 const finite=(v:unknown,low:number,high:number)=>typeof v==='number'&&Number.isFinite(v)&&v>=low&&v<=high;
 const text=(v:unknown,max=4096)=>typeof v==='string'&&v.length<=max;
@@ -90,7 +105,7 @@ export function pruneResearchOccurrence(scene:Scene,id:string):void {
  for(const view of Object.values(namedViews))view.selectedRefs=view.selectedRefs.filter(ref=>ref!==id);
 }
 export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):asserts value is ResearchMaterial {
- require(object(value),'Research material must be an object');keys(value,['schema','cards','strokes','views','timeline','frames','namedViews','connectors']);
+ require(object(value),'Research material must be an object');keys(value,['schema','cards','strokes','views','timeline','frames','namedViews','connectors','placeViews']);
  require(value.schema==='oi.research-scene/v1','Unsupported research material');
  require(new TextEncoder().encode(JSON.stringify(value)).length<=262144,'Research material exceeds 256 KiB');
  for(const key of ['cards','views','timeline'])require(object(value[key])&&Object.keys(value[key]).length<=(key==='views'?16:256),'Research record count exceeds its bound');
@@ -111,6 +126,9 @@ export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):
   require(Array.isArray(view.selectedRefs)&&view.selectedRefs.length<=64&&view.selectedRefs.every(ref=>typeof ref==='string'),'Invalid view selection');
   require(Array.isArray(view.frameOrder)&&view.frameOrder.length<=64&&view.frameOrder.every(ref=>typeof ref==='string'),'Invalid view frame order');
  }
+ // lane-4 T20: named Places views are absent in material saved before them; present, each is validated closed.
+ if(value.placeViews!==undefined)require(object(value.placeViews)&&Object.keys(value.placeViews).length<=PLACE_VIEW_LIMIT,'Place view count exceeds its bound');
+ for(const [name,view] of Object.entries(value.placeViews??{})){require(text(name,160)&&!!name.trim(),'Invalid place view name');validatePlaceView(view);}
  for(const [id,card] of Object.entries(value.cards) as [string,ResearchCard][]){
   require(ids.has(id)&&object(card),'Research card must address an existing occurrence');
   keys(card,['type','importedAt','content','caption','color','dotColour','bgColour','textColour','size','palette','shape','fill']);
@@ -134,6 +152,33 @@ export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):
  for(const layout of Object.values(value.timeline) as ResearchMaterial['timeline'][string][]){require(object(layout),'Invalid timeline layout');keys(layout,['offsetY','width','height','lane','layoutRevision']);require((layout.lane===undefined||text(layout.lane,1024))&&(layout.layoutRevision===undefined||Number.isSafeInteger(layout.layoutRevision)&&layout.layoutRevision>=1),'Invalid timeline layout revision');require(finite(layout.offsetY,-40000,40000)&&(layout.width===undefined||finite(layout.width,40,40000))&&(layout.height===undefined||finite(layout.height,40,40000)),'Invalid timeline layout');}
 }
 function validateViewport(v:unknown):void{require(object(v),'Invalid research viewport');keys(v,['x','y','zoom','pitch','bearing']);require(finite(v.x,-1e8,1e8)&&finite(v.y,-1e8,1e8)&&finite(v.zoom,.001,1e5)&&(v.pitch===undefined||finite(v.pitch,0,85))&&(v.bearing===undefined||finite(v.bearing,-180,180)),'Research viewport exceeds its bound');}
+/** lane-4 T20: the closed Places vocabularies a view or the layer record admits. The ids are the basemap registry's own; the kernel holds the same list. */
+export const PLACE_VIEW_LIMIT=32;
+const PLACE_STANDINGS:readonly PlaceStanding[]=['factual','mythic','owner-vocabulary'];
+const PLACE_BASEMAP_IDS:readonly string[]=[OFFLINE_GROUND_ID,...LIVE_BASEMAP_SOURCES.map(source=>source.id)];
+/** The layer fields of a place view (its toggles and basemap rows); the caller passes only those fields. */
+function validatePlaceLayers(value:Record<string,any>):void{
+ keys(value,['relations','standing','basemap']);
+ if(value.relations!==undefined)require(Array.isArray(value.relations)&&value.relations.length<=256&&value.relations.every((name:unknown)=>text(name,160)),'Invalid place view layers');
+ if(value.standing!==undefined)require(Array.isArray(value.standing)&&value.standing.length<=PLACE_STANDINGS.length&&value.standing.every((name:unknown)=>PLACE_STANDINGS.includes(name as PlaceStanding)),'Invalid place view standing');
+ if(value.basemap!==undefined){
+  require(object(value.basemap),'Invalid place view basemap');keys(value.basemap,['terrainVisible','layers']);
+  require(typeof value.basemap.terrainVisible==='boolean'&&object(value.basemap.layers),'Invalid place view basemap');
+  for(const [id,layer] of Object.entries(value.basemap.layers)){
+   require(PLACE_BASEMAP_IDS.includes(id),'Unknown basemap layer');require(object(layer),'Invalid basemap layer');keys(layer,['visible','opacity']);
+   require(typeof layer.visible==='boolean'&&finite(layer.opacity,0,1),'Invalid basemap layer');
+  }
+ }
+}
+/** lane-4 T20: a named Places view is closed, bounded and refs-free: camera (longitude x, latitude y, zoom, pitch, bearing), the layer toggles, the basemap rows and the shared time window. */
+export function validatePlaceView(value:unknown):void{
+ require(object(value),'Invalid place view');keys(value,['viewport','relations','standing','basemap','window']);
+ validateViewport(value.viewport);
+ require(finite(value.viewport.x,-180,180)&&finite(value.viewport.y,-90,90),'Place view camera exceeds the globe');
+ validatePlaceLayers({relations:value.relations,standing:value.standing,basemap:value.basemap});
+ require(value.window!==undefined,'Invalid place view window');
+ if(value.window!==null){require(object(value.window),'Invalid place view window');keys(value.window,['from','to']);require(['from','to'].every(key=>value.window[key]===null||typeof value.window[key]==='string'&&text(value.window[key],64)),'Invalid place view window');}
+}
 /** Tolerant plain-text reading of note blocks: paragraphs join with newlines,
  * non-text parts are skipped. Unlike expressionTextFromNote this never
  * throws — it is a projection for display, not a validation law. */
@@ -216,13 +261,19 @@ export function applyResearchMaterial(scene:Scene,action:ResearchMaterialAction)
  // never a second copy of graph material.
  case 'view-save':{
   require(text(action.name,160)&&!!action.name.trim(),'Invalid view name');
+  // lane-4 T20: a Places view is kept beside the canvas views and never among them. Its bounds are checked with the whole material below.
+  if('place' in action){research.placeViews??={};research.placeViews[action.name]=clone(action.place);break;}
   validateViewport(action.viewport);
   require(Array.isArray(action.selectedRefs)&&action.selectedRefs.length<=64&&action.selectedRefs.every(ref=>typeof ref==='string'),'Invalid view selection');
   require(Array.isArray(action.frameOrder)&&action.frameOrder.length<=64&&action.frameOrder.every(ref=>typeof ref==='string'),'Invalid view frame order');
   research.namedViews[action.name]={viewport:clone(action.viewport),selectedRefs:[...action.selectedRefs],frameOrder:[...action.frameOrder]};
   break;
  }
- case 'view-remove':delete research.namedViews[action.name];break;
+ case 'view-remove':
+  // Removing a Places view touches only placeViews; the Scene's occurrences, frames and canvas views stay as they were.
+  if(action.scope==='place'){if(research.placeViews){delete research.placeViews[action.name];if(!Object.keys(research.placeViews).length)delete research.placeViews;}}
+  else delete research.namedViews[action.name];
+  break;
  }
  require(next.entities.length<=32,'Scene authoring occurrence limit reached');
  validateResearchMaterial(research,new Set(next.entities.map(e=>e.id)));

@@ -5,6 +5,7 @@ import {valueAt,validateCurveEdit,channelRange,channelApplies,evaluateTracks,val
 import {NATIVE_BINDINGS} from '../build/nativeParameters.js';
 import {DocumentStore} from '../build/store.js';
 import {laneFrame,toPixel,fromPixel,curveHit,shownHandles,handlePosition,moveKey,moveHandle,insertKey,removeKey,setSegmentType,samplePath,channelStateFor,channelPanelHTML,channelName,previewScene} from '../build/curveLane.js';
+import {dragPreviewStep} from '../build/journeyTimelineLayout.js';
 
 // Lane-3 E09/E10. The pure logic lives in curveLane.ts; the curve is read through valueAt (one evaluator). Two native
 // parameters with finite hard limits stand in for two channels.
@@ -253,4 +254,40 @@ test('E09b: a curve gesture that breaks time order is refused as "Keyframes stay
  const points=[{time:0,value:1},{time:2,value:2},{time:4,value:3}];
  assert.throws(()=>validateCurveEdit(moveKey(points,1,0,2)),{message:'Keyframes stay in time order.'});
  assert.throws(()=>validateTracks([{id:'x',bind:bindA,points:[{time:2,value:1},{time:0,value:2}]}]),/Invalid property keyframe/);
+});
+
+// lane-3 E09c (review-2 #5). The drag preview is one step per pointer move (dragPreviewStep). A refused position keeps the
+// last valid preview on the field, and the drag revision moves only when the preview itself changes.
+const samePoints=(x,y)=>JSON.stringify(x)===JSON.stringify(y);
+test('E09c: the drag preview moves only on a changed, valid candidate; a refusal keeps the last valid preview', ()=>{
+ const first=[{time:0,value:1},{time:2,value:2}],second=[{time:0,value:1},{time:2,value:3}];
+ let step=dragPreviewStep(null,first,samePoints);
+ assert.deepEqual(step,{preview:first,changed:true},'the first valid position is a change');
+ step=dragPreviewStep(step.preview,null,samePoints);
+ assert.deepEqual(step,{preview:first,changed:false},'a refused position keeps the last valid preview and moves nothing');
+ step=dragPreviewStep(step.preview,first.map(p=>({...p})),samePoints);
+ assert.equal(step.changed,false,'an identical position is not a change');
+ step=dragPreviewStep(step.preview,second,samePoints);
+ assert.deepEqual(step,{preview:second,changed:true});
+});
+
+test('E09c: across a pointer path of one keyframe, the revision moves once per changed preview and a refusal shows the last valid one', ()=>{
+ const range={min:A.hardMin,max:A.hardMax};
+ const base=[{time:0,value:inside(A,.2)},{time:2,value:inside(A,.4)},{time:4,value:inside(A,.6)}];
+ const candidate=(time,value)=>{const next=moveKey(base,1,time,value);validateCurveEdit(next,range,touchesOfKey(next,1));return next;};
+ // a move; the same move again; a refused time (out of order); a move to time 3; a refused value (out of range)
+ const path=[[1,inside(A,.5)],[1,inside(A,.5)],[0,inside(A,.5)],[3,inside(A,.7)],[3,A.hardMax+5]];
+ let preview=null,serial=0,revision=0,changes=0;const shown=[];
+ for(const [time,value] of path){
+  let next=null;try{next=candidate(time,value);}catch{next=null;}
+  const step=dragPreviewStep(preview,next,samePoints);
+  preview=step.preview;
+  if(step.changed){changes++;revision=++serial;}
+  shown.push(preview);
+ }
+ assert.equal(changes,2,'two real changes: the first move, and the move to time 3');
+ assert.equal(revision,2,'the revision advanced exactly on those changes');
+ assert.deepEqual(shown[2],shown[1],'the refused time keeps the last valid preview on the field');
+ assert.deepEqual(shown[4],shown[3],'the refused value keeps the last valid preview on the field');
+ assert.notDeepEqual(shown[3],shown[1]);
 });

@@ -96,3 +96,14 @@ export function sceneAtTime(layout:TimelineLayout,t:number):{sceneId:string;loca
  const hit=clips.find(c=>time>=c.start&&time<c.end)??[...clips].reverse().find(c=>c.end>c.start)??clips[clips.length-1];
  return {sceneId:hit.sceneId,local:time-hit.start};
 }
+
+/**
+ * E09c: one step of a curve drag's preview, on the timeline's curve lane. A refused candidate (null) keeps the last valid
+ * preview, so the field does not snap back mid-drag. `changed` is true only when the preview itself moves; the caller
+ * advances the drag revision on that alone, so the engine rebuilds once per change instead of every tick.
+ */
+export function dragPreviewStep<T>(preview:T|null,candidate:T|null,same:(a:T,b:T)=>boolean):{preview:T|null;changed:boolean}{
+ if(candidate===null)return {preview,changed:false};
+ if(preview!==null&&same(preview,candidate))return {preview,changed:false};
+ return {preview:candidate,changed:true};
+}

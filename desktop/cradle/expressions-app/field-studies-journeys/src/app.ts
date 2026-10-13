@@ -18,8 +18,8 @@ import {PropertyTrack,sampleTrack,evaluateTracks,readTrackValue,mergeTake,expres
 import {curveHit,laneFrame,fromPixel,insertKey,removeKey,moveKey,moveHandle,setSegmentType,channelName,channelStateFor,channelPanelHTML,previewScene,type ChannelView,type HandleEnd,type LaneFrame,type Points} from './curveLane';
 import {transitionKindOf,transitionSpecFor,transitionLabel,dipWeights,wipeHoldRect,seamGlyphHTML,seamChooserHTML,writeSeamTransition,type TransitionKind,type TransitionParams,type TransitionSpec,type WipeDirection} from './transitions';
 import {journeyTimelineLayout} from './journeyTimelineLayout';
-import {MARKER_COLOURS,MARKER_LIMIT,MARKER_NAME_MAX,sceneBoundaries,sceneAtJourneyTime,snapToBoundary,markerNamed,markerAdd,markerRename,markerMove,markerRemove,nextMarkerTime,prevMarkerTime,setLoopEdge,dragLoopEdge,moveLoopRegion,type LoopEdge,type LoopRegion} from './journeyMarkers';
-import {durationFromEdgeDrag,sceneAtTime,secondsFromDrag,slipOffsetFromDrag,insertBeforeFor,SCENE_DURATION_MIN,SCENE_DURATION_MAX,type TimelineLayout} from './journeyTimelineLayout';
+import {MARKER_COLOURS,MARKER_LIMIT,MARKER_NAME_MAX,sceneBoundaries,sceneAtJourneyTime,snapToBoundary,markerNamed,markerAdd,markerRename,markerMove,markerRemove,nextMarkerTime,prevMarkerTime,setLoopEdge,dragLoopEdge,moveLoopRegion,playDurations,toPlayClock,loopPlayNotice,type LoopEdge,type LoopRegion} from './journeyMarkers';
+import {durationFromEdgeDrag,sceneAtTime,secondsFromDrag,slipOffsetFromDrag,insertBeforeFor,dragPreviewStep,SCENE_DURATION_MIN,SCENE_DURATION_MAX,type TimelineLayout} from './journeyTimelineLayout';
 import {entityTargets} from './nativeParameters';
 import {recordRecent,recentJourneys} from './recentWork';
 import {installPanelResize} from './panelResize';
@@ -117,7 +117,11 @@ let sceneBody:null|{sceneId:string;clip:HTMLElement;startX:number;trackPx:number
 // E09/E10 channel lane: the selected channel and keyframe, the live drag, and the working channel views (solo, mute,
 // show). Declared with the other gesture state, before any top-level code can render the timeline. None of it is saved.
 let curveSel:null|{sceneId:string;trackId:string;index:number|null}=null;
-let curveDrag:null|{sceneId:string;trackId:string;kind:'key'|'handle';index:number;end:HandleEnd;left:number;top:number;frame:LaneFrame;base:Points;range:ChannelRange|undefined;label:string;preview:Points|null;message:string;moved:boolean;raf:number}=null;
+let curveDrag:null|{sceneId:string;trackId:string;kind:'key'|'handle';index:number;end:HandleEnd;left:number;top:number;frame:LaneFrame;base:Points;range:ChannelRange|undefined;label:string;preview:Points|null;message:string;moved:boolean;raf:number;dragSeq:number}=null;
+/** E09c: the drag revision a curve preview carries to the engine. Serial across drags, so no two previews share one. */
+let curveDragSerial=0;
+/** E09c: above every track revision (a take is at most 3600 s at 60 steps a second), so drag and track revisions never meet. */
+const CURVE_DRAG_REVISION_BASE=1e6;
 // E11: the seam transition in flight, and the seam whose chooser is open. 'crossfade' is the overlay the app always had; a
 // painted kind (dip to colour, wipe) keeps a snapshot of the outgoing frame and paints its blend each frame.
 let transitionKind:TransitionKind='crossfade';let transitionSpecNow:TransitionSpec|undefined;let transitionSnapshot:HTMLCanvasElement|null=null;let seamSceneId:string|null=null;
@@ -267,7 +271,9 @@ $('inspector-title').textContent=document.querySelector<HTMLElement>('[data-acti
 const pctOf=(t:number,total:number)=>total>0?clamp(t/total*100,0,100):0;
 const secs=(t:number)=>`${t.toFixed(1)} s`;
 const journeyDurations=(doc:Journey)=>doc.scenes.map(s=>s.duration);
-const playheadJourneyTime=()=>expressionTiming(store.document,sceneIndex,sceneElapsed).time;
+/** E13b: the clock the running playback reads: saved durations during saved-sequence play, else the working clock (the ruler's). */
+const playClockDurations=(saved:boolean)=>playDurations(store.document.scenes,store.document.savedScenes,saved);
+const playheadPlayTime=(saved:boolean)=>expressionTiming(store.document,sceneIndex,sceneElapsed,saved).time;
 /** Presentation-only edits: the store labels the step; playback keeps running. */
 function changedPresentation(label:string,fn:(doc:Journey)=>void){
  store.change(label,fn);awaitingNativeBoot=false;nativeWorkspace?.cancelOpen();markSaved();overlayDirty=true;needsFrame=true;renderTimeline();
@@ -290,19 +296,31 @@ function deleteSelectedMarker(){
  const current=markerNamed(store.document.markers??[],id);if(!current){renderTimeline();return;}
  try{changedPresentation(`Delete marker ${current.name}`,d=>{d.markers=markerRemove(d.markers??[],id);});}catch(err){error(err);}
 }
-/** Journey time to scene and local seek. Paused, it seeks as the playhead does; playing, the playback keeps running. */
+/** A working-clock journey time (where markers and the loop are stored, and the ruler draws) to its place on the clock playback runs. */
 function jumpToJourneyTime(t:number){
- const doc=store.document,total=expressionTiming(doc,0,0).total,playing=journeyPlaying;
- const {sceneIndex:index,local}=sceneAtJourneyTime(journeyDurations(doc),clamp(t,0,total));
- if(index!==sceneIndex)setSceneRef(store.document.scenes[index].id,playing);
- if(playing){sceneElapsed=local;needsFrame=true;renderTimeline();}else seekWorkingScene(local);
+ const doc=store.document,total=expressionTiming(doc,0,0).total;
+ jumpToPlayTime(toPlayClock(journeyDurations(doc),playClockDurations(journeyPlaying),clamp(t,0,total)));
+}
+/** E13b: a time on the clock playback runs, to its scene and local seek. Paused, it seeks as the playhead does; playing, the
+ * playback keeps running and changes Scene through the native owner, as saved playback does. */
+function jumpToPlayTime(t:number){
+ const playing=journeyPlaying,play=playClockDurations(playing);
+ const {sceneIndex:index,local}=sceneAtJourneyTime(play,clamp(t,0,play.reduce((n,d)=>n+d,0)));
+ if(playing){
+  if(index!==sceneIndex)void advanceSavedScene(index,local);else sceneElapsed=local;
+  needsFrame=true;renderTimeline();return;
+ }
+ if(index!==sceneIndex)setSceneRef(store.document.scenes[index].id,false);
+ seekWorkingScene(local);
 }
 function jumpMarker(direction:1|-1){
- const markers=store.document.markers??[],t=playheadJourneyTime();
+ const doc=store.document,playing=journeyPlaying,play=playClockDurations(playing);
+ // Markers are stored on the working clock; the next or previous one is found on the clock playback runs.
+ const markers=(doc.markers??[]).map(m=>({...m,time:toPlayClock(journeyDurations(doc),play,m.time)})),t=playheadPlayTime(playing);
  const target=direction>0?nextMarkerTime(markers,t):prevMarkerTime(markers,t);
  if(target===null){toast(direction>0?'No marker after the playhead.':'No marker before the playhead.');return;}
  selectedMarkerId=markers.find(m=>Math.abs(m.time-target)<.005)?.id??null;
- jumpToJourneyTime(target);renderTimeline();
+ jumpToPlayTime(target);renderTimeline();
 }
 function setLoopAtPlayhead(edge:LoopEdge){
  const doc=store.document,timing=expressionTiming(doc,sceneIndex,sceneElapsed),result=setLoopEdge(doc.loopRegion,edge,timing.time,timing.total);
@@ -457,7 +475,7 @@ function beginCurveDrag(ev:PointerEvent,lane:HTMLElement){
  ev.preventDefault();
  const hit=at.hit,trackId=at.track.id;
  curveSel={sceneId:at.s.id,trackId,index:hit.index};
- curveDrag={sceneId:at.s.id,trackId,kind:hit.kind,index:hit.index,end:hit.kind==='handle'?hit.end:'out',left:at.rect.left,top:at.rect.top,frame:at.frame,base:at.track.points,range:at.range,label:channelName(at.s,at.track),preview:null,message:'',moved:false,raf:0};
+ curveDrag={sceneId:at.s.id,trackId,kind:hit.kind,index:hit.index,end:hit.kind==='handle'?hit.end:'out',left:at.rect.left,top:at.rect.top,frame:at.frame,base:at.track.points,range:at.range,label:channelName(at.s,at.track),preview:null,message:'',moved:false,raf:0,dragSeq:0};
  document.addEventListener('pointermove',moveCurveDrag);document.addEventListener('pointerup',upCurveDrag);document.addEventListener('pointercancel',cancelCurveDrag);
  renderTimeline();
 }
@@ -468,7 +486,11 @@ function moveCurveDrag(ev:PointerEvent){
  let next:Points|null=null,message='';
  try{const candidate=d.kind==='key'?moveKey(d.base,d.index,time,p.value):moveHandle(d.base,d.index,d.end,time,p.value);validateCurveEdit(candidate,d.range,curveTouches(candidate,d));next=candidate;}
  catch(err){message=err instanceof Error?err.message:String(err);}
- d.preview=next;needsFrame=true;
+ // E09c: a refused position keeps the last valid preview on the field, so the drag does not snap back. The drag revision
+ // moves only when the preview itself changes, so the engine rebuilds once per change, not on every pointer tick.
+ const step=dragPreviewStep(d.preview,next,(a,b)=>JSON.stringify(a)===JSON.stringify(b));
+ if(step.changed)d.dragSeq=++curveDragSerial;
+ d.preview=step.preview;needsFrame=true;
  if(message&&message!==d.message)toast(message);
  d.message=message;
  if(!d.raf)d.raf=requestAnimationFrame(()=>{d.raf=0;renderTimeline();});
@@ -478,7 +500,8 @@ function endCurveDrag(commit:boolean){
  curveDrag=null;if(d.raf)cancelAnimationFrame(d.raf);
  document.removeEventListener('pointermove',moveCurveDrag);document.removeEventListener('pointerup',upCurveDrag);document.removeEventListener('pointercancel',cancelCurveDrag);
  const next=d.preview;
- if(!commit||!d.moved||!next||JSON.stringify(next)===JSON.stringify(d.base)){renderTimeline();return;}
+ // A release over a refused position commits nothing, as before: the kept preview is not the pointer's position.
+ if(!commit||!d.moved||d.message||!next||JSON.stringify(next)===JSON.stringify(d.base)){renderTimeline();return;}
  const range=d.range;
  try{commitCurve(d.sceneId,d.trackId,next,curveTouches(next,d),`Edit curve ${d.label}`,range);}
  catch(err){error(err);renderTimeline();}
@@ -819,7 +842,10 @@ async function advanceSavedScene(index:number,local=0){if(sceneAdvancePending||!
  }catch(cause){if(!sceneTransportAlive)return;if(sceneIntentEpoch===intent&&scene().id===originalId){scenePlaying=false;journeyPlaying=false;applySceneView();}toast(cause instanceof Error?cause.message:String(cause));renderAll();}
  finally{sceneAdvancePending=false;}
 }
-function setSavedScenePlay(playing:boolean){sceneIntentEpoch++;journeyPlaying=playing;if(journeyPlaying){fieldPaused=false;scenePlaying=true;editing=false;inspectorOpen=false;timelineOpen=false;selected=[];cursorTool='interact';tool='interact';shapePickerOpen=false;placementStep=false;if(!store.document.savedScenes?.[scene().id])sceneIndex=savedSceneIndices(store.document)[0];sceneElapsed=0;fireAutomations(true);}applySceneView();renderAll();}
+function setSavedScenePlay(playing:boolean){sceneIntentEpoch++;journeyPlaying=playing;if(journeyPlaying){fieldPaused=false;scenePlaying=true;editing=false;inspectorOpen=false;timelineOpen=false;selected=[];cursorTool='interact';tool='interact';shapePickerOpen=false;placementStep=false;if(!store.document.savedScenes?.[scene().id])sceneIndex=savedSceneIndices(store.document)[0];sceneElapsed=0;fireAutomations(true);
+  // E13b: say, once at the start, when the brace does not play as drawn in saved scenes.
+  const doc=store.document,notice=loopPlayNotice(journeyDurations(doc),playClockDurations(true),doc.loopRegion);if(notice)toast(notice,6500);}
+ applySceneView();renderAll();}
 function seekWorkingScene(seconds:number){sceneIntentEpoch++;sceneElapsed=seconds;trackPreview=true;scenePlaying=false;journeyPlaying=false;applySceneView();needsFrame=true;transportUI();}
 function snapshotScene(input:{action:'save-snapshot';name:string;next:boolean}|{action:'restore-snapshot'}){const s=scene();sceneIntentEpoch++;if(input.action==='restore-snapshot'){sceneNames.delete(s.id);changed(()=>{if(!restoreScene(store.document,s.id))throw Error('This Scene has no saved snapshot');},true,'Restore scene snapshot');return;}
  changed(()=>{s.view={...s.view,mode:camera.mode,yaw:camera.yaw,pitch:camera.pitch,zoom:camera.zoom,panX:camera.panX/width,panY:camera.panY/height};delete s.view.nativeCamera;saveScene(store.document,s,input.name);sceneNames.delete(s.id);if(input.next){const next=nextSceneFrom(store.document,s);sceneIndex=store.document.scenes.indexOf(next);selected=[];stepIndex=0;sceneElapsed=0;}},true,'Save scene snapshot');}
@@ -1402,7 +1428,7 @@ function frameData(delta:number):EngineFrame{const base=activeScene();syncLiveSc
  const evidenceProjection=privateEvidenceField?.project(nativeWorkspace?.nativeView(),base.id)??null;
  let formationGeometryProjection:import('../../src/engine/formationGeometryProjection').FormationGeometryProjection|null=null;
  if(privateFormReading){try{formationGeometryProjection=naraFormGeometry(privateFormReading,nativeWorkspace?.nativeView(),base.id);}catch{privateFormReading=null;}}
- return {formationGeometryProjection,localizedResonanceProjection:evidenceProjection?privateEvidenceField?.resonance:null,forceEmitterProjection:evidenceProjection,entitySoundProjection:evidenceProjection?privateEvidenceField?.sound:undefined,connections:nativeConnectionRows[base.id],selectedConnection:nativeSelectedRelation,scene:current,scaffold:editing&&!presenting&&guidesVisible?current.view.nativeScaffold??'off':'off',simTime,delta,params:(()=>{const p=engine.capabilities.kind==='production'?current.field.params:evaluateParameters(current,simTime);return physisParticleCap&&p.count>physisParticleCap?{...p,count:physisParticleCap}:p;})(),camera,pointer,selectedIds:editing&&!presenting&&guidesVisible?selected:[],authoringRevision:dragging?undefined:store.revision*1e7+(tracksActive?1+Math.floor(sceneElapsed*60):0),liveRevision:liveOverrides.version};}
+ return {formationGeometryProjection,localizedResonanceProjection:evidenceProjection?privateEvidenceField?.resonance:null,forceEmitterProjection:evidenceProjection,entitySoundProjection:evidenceProjection?privateEvidenceField?.sound:undefined,connections:nativeConnectionRows[base.id],selectedConnection:nativeSelectedRelation,scene:current,scaffold:editing&&!presenting&&guidesVisible?current.view.nativeScaffold??'off':'off',simTime,delta,params:(()=>{const p=engine.capabilities.kind==='production'?current.field.params:evaluateParameters(current,simTime);return physisParticleCap&&p.count>physisParticleCap?{...p,count:physisParticleCap}:p;})(),camera,pointer,selectedIds:editing&&!presenting&&guidesVisible?selected:[],authoringRevision:store.revision*1e7+(dragging?CURVE_DRAG_REVISION_BASE+(curveDrag?.dragSeq??0):tracksActive?1+Math.floor(sceneElapsed*60):0),liveRevision:liveOverrides.version};}
 function recordableTracks(){return workspace.entries.flatMap(entry=>{const subject=entry.scope==='selected'?(selectedEntity()??scene().entities.find(e=>e.kind==='formation')):scene().entities.find(e=>e.id===entry.entityId);const bind=entry.scope==='field'?PARAMETERS.find(p=>p.key===entry.key)?.bind:subject?entityTargets(scene()).find(t=>t.entityId===subject.id&&t.key===entry.key)?.bind:undefined;if(!bind)return [];const track:PropertyTrack={id:uid('track'),bind,entityId:entry.scope==='field'?undefined:subject?.id,points:[]};return isShared(store.document,scene(),bind)||readTrackValue(scene(),track)===undefined?[]:[track];});}
 function finishPropertyTake(){if(!propertyTake)return;const take=propertyTake;propertyTake=null;if(take.elapsed>0){const end=Math.min(3600,take.start+take.elapsed);for(const t of take.tracks){const value=liveOverrides.valueForBind(t.bind)??readTrackValue(scene(),t);if(value!==undefined&&t.points.at(-1)?.time!==end)t.points.push({time:end,value});}changed(()=>{scene().propertyTakeRange={start:take.start,end};scene().propertyTracks=mergeTake(scene().propertyTracks??[],take.tracks,take.start,end);scene().duration=Math.max(scene().duration,end);},true,'Record property take');takeWindows.set(scene().id,{start:take.start,end});sceneElapsed=take.start;trackPreview=true;scenePlaying=false;toast('Property take recorded · save the scene to keep this version.');}renderAll();announceHostState();}
 function updatePropertyTake(now:number){const t=propertyTake;if(!t)return;if(t.sceneId!==scene().id){finishPropertyTake();return;}const remaining=Math.max(0,Math.ceil((t.armed-now)/1000));$('take-status').hidden=false;$('take-status').textContent=remaining?'Recording in '+remaining+'…':'Recording '+t.elapsed.toFixed(1)+'s · click record to stop';if(remaining)return;const elapsed=Math.min((now-t.armed)/1000,3600-t.start,t.limit??Infinity);t.elapsed=elapsed;sceneElapsed=t.start+elapsed;scenePlaying=true;if(elapsed-t.lastSample>=.05||t.lastSample<0){for(const track of t.tracks){const value=liveOverrides.valueForBind(track.bind)??readTrackValue(scene(),track);if(value===undefined)continue;sampleTrack(track,t.start+elapsed,value,t.start+Math.max(0,t.lastSample));}t.lastSample=elapsed;}if(t.start+elapsed>=3600||t.limit!==undefined&&elapsed>=t.limit)finishPropertyTake();}
@@ -1915,7 +1941,7 @@ const palaceInstrument=installPalaceInstrument({
  composeExpression:async({expression_ref,expected_revision,changes})=>{const data=await nativeExpressionRequest({operation:'edit',expression_ref,expected_revision,actor:'human:techne-palace',changes}) as {state?:string;current_revision?:number;document?:unknown}|null;if(data?.state==='revision_conflict')return {ok:false,reason:`This Palace changed elsewhere (now revision ${data.current_revision}). Nothing was saved; reopen it and try again.`};if(!data?.document||data.state!=='ready')return {ok:false,reason:`The Expression owner did not accept the composition (${String(data?.state)}).`};return {ok:true,document:palaceSnapshot(data.document)};},
  openExpression:ref=>{void nativeWorkspace?.open(ref);},
 },palaceHome);
-journeyInstrument=installJourneyInstrument({nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,read:readTechneReading,
+journeyInstrument=installJourneyInstrument({nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,read:(basis,scope)=>readTechneReading({expression_ref:basis.expression_ref,revision:basis.revision,scene_ref:basis.scene_ref,...(scope?{scope}:{})}),
  focusScene:async input=>{
   const view=nativeWorkspace?.nativeView(),reading=retainedEditor.read();
   if(!view||view.document.expression_ref!==input.expression_ref||view.document.revision!==input.revision
@@ -1923,6 +1949,7 @@ journeyInstrument=installJourneyInstrument({nativeView:()=>nativeWorkspace?.nati
    throw Error('The native Journey source changed or has unacknowledged authored work.');
   return await focusNativeSceneRef(input.target_scene_ref);
  },
+ editExpression:async request=>{const reply=await nativeExpressionRequest(request);if((reply as {state?:string}|null)?.state==='ready')await nativeWorkspace?.open(request.expression_ref);return reply;},
 },journeyHome);
 // lane-5 T2 · compose a scene from the journey lens. The floor (journeyBeats.ts) mints the
 // scene ref and refuses collisions; the kernel receives exactly one scene_create on the revision

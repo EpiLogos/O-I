@@ -2559,3 +2559,6 @@
 }
 /* review-3: a sticky is a light paper in every scene, so its label carries its own dark ink, not the scene's --ink. */
 :where(.research-instrument) .canvas-object--sticky{color:var(--canvas-object-ink,#25251e)}
+/* lane-4 T20-T21: the Places tool row's named-view controls take the instrument's own tokens. */
+:where(.research-instrument) .research-places-view-select{font:inherit;font-size:11px;color:var(--ob-ink);background:transparent;border:1px solid var(--ob-line-3);border-radius:6px;padding:2px 6px}
+:where(.research-instrument) .research-places-view-save{font:inherit;font-size:11px;color:var(--ob-ink);background:transparent;border:1px solid var(--ob-line-3);border-radius:6px;padding:2px 8px;cursor:pointer}
