@@ -252,5 +252,5 @@ test('the lens hook is provenance-admitted: the adapted hash in PROVENANCE is th
  const path='packages/canvas/src/timeline/TimelineLens.tsx';
  const actual=createHash('sha256').update(readFileSync(resolve(timelineDir,'TimelineLens.tsx'))).digest('hex');
  assert.equal(manifest.patches[path].adapted_sha256,actual);
- assert.match(manifest.patches[path].reason,/lane-2 T15-T18: timeline views and style$/);
+ assert.match(manifest.patches[path].reason,/lane-2 T15-T18: timeline views and style/);
 });

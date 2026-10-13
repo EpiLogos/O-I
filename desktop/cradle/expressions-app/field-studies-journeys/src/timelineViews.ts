@@ -21,7 +21,7 @@ import {
   type TimelineProjection,
   type TimelineViewRecord,
 } from './researchMaterial.js';
-import {TIMELINE_CATEGORIES} from '../../vendor/research-canvas/packages/canvas/src/timeline/categories';
+import {TIMELINE_CATEGORY_IDS} from './timelineCategoryIds';
 
 /** The lens's presentation as a view holds it (structurally the vendored TimelineLens snapshot, without the camera). */
 export interface TimelinePresentation {
@@ -76,7 +76,7 @@ export function timelineViewOf(input:{projection:TimelineProjection;presentation
  const [zoomLow,zoomHigh]=TIMELINE_PIXELS_PER_YEAR_RANGE;
  const refs=[...new Set(presentation.workingSetRefs)];
  if(refs.length>TIMELINE_VIEW_REF_LIMIT)throw new Error(`A timeline view keeps at most ${TIMELINE_VIEW_REF_LIMIT} working-set nodes. Remove some from the stack before saving.`);
- const hidden=TIMELINE_CATEGORIES.map(category=>category.id).filter(id=>presentation.hiddenCategories.includes(id));
+ const hidden=TIMELINE_CATEGORY_IDS.filter(id=>presentation.hiddenCategories.includes(id));
  const view:TimelineViewRecord={
   camera:{
    centerYear:Math.min(TIMELINE_CENTER_YEAR_LIMIT,Math.max(-TIMELINE_CENTER_YEAR_LIMIT,camera.centerYear)),

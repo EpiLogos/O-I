@@ -15,12 +15,7 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "paths": {
-      "@research-canvas/schema": ["./expressions-app/vendor/research-canvas/packages/schema/src/index.ts"],
-      "@research-canvas/domain": ["./expressions-app/vendor/research-canvas/packages/domain/src/index.ts"],
-      "@research-canvas/desktop-api": ["./expressions-app/vendor/research-canvas/packages/desktop-api/src/index.ts"]
-    }
+    "noFallthroughCasesInSwitch": true
   },
   "include": ["src"]
 }
