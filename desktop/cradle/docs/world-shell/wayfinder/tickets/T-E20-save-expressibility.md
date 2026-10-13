@@ -39,4 +39,20 @@ each newly emitted kind has its own case; each remaining refusal is named.
 
 ## Resolution
 
-—
+**Landed (13 Oct 2026; builder haiku, converged by the lead).** `documentToChanges`
+emits rename, scene_create, scene_remove, scene_rename, scene_reorder,
+scene_material_clear, parameter_automate/manual, subject_bind/unbind; the
+nine genuinely unrepresentable cases are the exported `UNEXPRESSIBLE`.
+Lead rulings: an automated parameter's value change is
+manual → set → automate (the kernel refuses a set on an automated
+parameter, `expression.rs:1551`); scene_create precedes scene_remove (the
+kernel keeps ≥1 Scene — the builder kept the design's order; the lead
+corrected it); composition removal and only-changed EDITABLE refusals
+accepted. Scripted: 56/56 (save-expressibility 19, bridge 11,
+native-composition 16, rich-material 10); tsc 0.
+
+**Found:** the live app's commit path is `kernelComposition.prepareCompositionEdit`
+(`app.ts:1423` → `nativeWorkspace.commit`), not `documentToChanges` — so
+the full grammar must also reach the live path: **T-E20b**. Also silently
+ignored by both: relations, entity pin, scene body/triggers, profiles,
+collections, reuse — T-E20b expresses or names them.
