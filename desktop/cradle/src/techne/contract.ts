@@ -414,11 +414,27 @@ export interface DisclosureSelection {
   selection_standing?: DisclosureStanding | null;
 }
 
-export interface DisclosureNavigationHop {
+/** The instrument hop: a cross-instrument crossing. It carries no `kind`, so every stored session stays valid. */
+export interface DisclosureInstrumentHop {
   from_instrument: TechneInstrument;
   to_instrument: TechneInstrument;
   selection_ref: string;
 }
+
+/** The steps of a Timeline trail (lane-2 T20): the model's event, relation and endpoint kinds, and the back step. */
+export type DisclosureTraversalStep = "event" | "relation" | "endpoint" | "back";
+
+/** A traversal hop: one step of a trail within an instrument. Its subject and selection are the session's, carried byte-equal. */
+export interface DisclosureTraversalHop {
+  kind: "traversal";
+  instrument: TechneInstrument;
+  step: DisclosureTraversalStep;
+  ref: string;
+  subject_ref: string;
+  selection_ref: string;
+}
+
+export type DisclosureNavigationHop = DisclosureInstrumentHop | DisclosureTraversalHop;
 
 /** The ephemeral cross-instrument disclosure session. Not a canonical domain
  * object; every hop preserves subject, source basis and selection unless the
@@ -527,6 +543,8 @@ function keysAllowed(value: Record<string, unknown>, allowed: readonly string[],
     if (!allowed.includes(key)) errors.push(`${label}: unknown field "${key}"`);
   }
 }
+
+const TRAVERSAL_STEPS: readonly string[] = ["event", "relation", "endpoint", "back"];
 
 function isInstrument(value: unknown): value is TechneInstrument {
   return typeof value === "string" && (TECHNE_INSTRUMENTS as readonly string[]).includes(value);
@@ -904,9 +922,21 @@ export function validateSession(value: unknown): TechneValidation {
     else value.navigation.forEach((hop, index) => {
       const label = `session.navigation[${index}]`;
       if (!isObject(hop)) { errors.push(`${label}: must be an object`); return; }
-      keysAllowed(hop, ["from_instrument", "to_instrument", "selection_ref"], label, errors);
-      for (const key of ["from_instrument", "to_instrument"]) if (!isInstrument(hop[key])) errors.push(`${label}.${key}: not an instrument`);
-      if (!ref(hop.selection_ref)) errors.push(`${label}.selection_ref: required`);
+      if (hop.kind === undefined) {
+        // The instrument hop, byte-compatible with every stored session.
+        keysAllowed(hop, ["from_instrument", "to_instrument", "selection_ref"], label, errors);
+        for (const key of ["from_instrument", "to_instrument"]) if (!isInstrument(hop[key])) errors.push(`${label}.${key}: not an instrument`);
+        if (!ref(hop.selection_ref)) errors.push(`${label}.selection_ref: required`);
+      } else if (hop.kind === "traversal") {
+        keysAllowed(hop, ["kind", "instrument", "step", "ref", "subject_ref", "selection_ref"], label, errors);
+        if (!isInstrument(hop.instrument)) errors.push(`${label}.instrument: not an instrument`);
+        if (!TRAVERSAL_STEPS.includes(hop.step as string)) errors.push(`${label}.step: event, relation, endpoint or back`);
+        for (const key of ["ref", "subject_ref", "selection_ref"]) if (!ref(hop[key])) errors.push(`${label}.${key}: required`);
+        // One subject per session: a traversal hop is never a foreign subject's. Its selection is checked where it is recorded.
+        if (ref(hop.subject_ref) && ref(value.subject_ref) && hop.subject_ref !== value.subject_ref) errors.push(`${label}.subject_ref: must be the session's subject`);
+      } else {
+        errors.push(`${label}.kind: unknown hop kind`);
+      }
     });
   }
   if (isObject(value.selection) && ref(value.subject_ref) && ref(value.selection.subject_ref) && value.subject_ref !== value.selection.subject_ref) {

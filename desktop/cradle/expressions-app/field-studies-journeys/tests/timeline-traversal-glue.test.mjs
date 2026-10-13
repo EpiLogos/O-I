@@ -146,11 +146,38 @@ test('the vendored Timeline forwards relation and endpoint selection to its host
 
 test('the mount drives the trail through the model and states it on the status line, with a Back to event control', async()=>{
  const mount=await readFile(resolve(engine,'src/researchInstruments.tsx'),'utf8');
- for(const name of ['openRelation','openEndpoint','backTrail','trailStanding','relationRefOf','trailFromEvent']){
+ for(const name of ['openRelation','openEndpoint','relationRefOf','trailFromEvent','trailOfNavigation','traversalHopOf']){
   assert.match(mount,new RegExp(`\\b${name}\\b`),`the mount imports ${name} from the model`);
  }
  assert.match(mount,/aria-label="Back to event"/);
  assert.match(mount,/Back to event/);
  assert.match(mount,/step\.reason/,'a refused step is stated on the status line in the model\'s own reason');
- assert.match(mount,/trailStanding\(/,'the status line names where the trail stands');
+ assert.match(mount,/foldStanding\(/,'the status line names where the trail stands');
+});
+
+test('the traversal hop the model builds is the session\'s own subject and selection, byte-equal, through the recorder', ()=>{
+ const reading=api.provingReading();
+ const store=api.createDisclosureSessionStore();
+ const session=store.setSelection(api.groundSelection(reading,'timeline'));
+ const hop=api.traversalHopOf(session,'relation',NATIVE);
+ assert.deepEqual(hop,{kind:'traversal',instrument:'timeline',step:'relation',ref:NATIVE,subject_ref:session.subject_ref,selection_ref:session.selection.selection_ref});
+ store.recordTraversal(api.traversalHopOf(session,'event',EVENT));
+ const recorded=store.recordTraversal(hop);
+ assert.equal(recorded.navigation.length,2);
+ assert.equal(api.trailOfNavigation(recorded.navigation).steps[0].ref,NATIVE);
+});
+
+test('the trail is read from the session navigation: the mount holds no trail of its own', async()=>{
+ const mount=await readFile(resolve(engine,'src/researchInstruments.tsx'),'utf8');
+ assert.match(mount,/\bwriteSharedTraversalHop\b/,'the mount writes its hops through the shared writer');
+ assert.match(mount,/writeSharedTraversalHop\(request,/,'every hop is written through the shared traversal writer');
+ assert.ok((mount.match(/runSteps\(/g)??[]).length>=3,'open relation, open endpoint and back each write their hops through the one route');
+ assert.match(mount,/trailOfNavigation\(/,'the mount reads the trail from the session\'s navigation');
+ assert.doesNotMatch(mount,/state\.traversal=\{hops|hops:\[\.\.\./,'the mount does not build a trail of its own');
+ const writer=await readFile(resolve(engine,'src/sharedTimeWindow.tsx'),'utf8');
+ assert.match(writer,/export async function writeSharedTraversalHop\(/);
+ assert.match(writer,/operation:'traversal'/);
+ const boundary=await readFile(resolve(engine,'../../../../packages/expressions-boundary/src/timeWindow.ts'),'utf8');
+ assert.match(boundary,/operation:\s*'traversal'/,'the owner\'s compare-and-set accepts the traversal operation');
+ assert.match(boundary,/store\.recordTraversal\(/);
 });

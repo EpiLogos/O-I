@@ -40,6 +40,7 @@ import {
   validateSession,
   type DisclosureSelection,
   type DisclosureSession,
+  type DisclosureTraversalHop,
   type TechneInstrument,
   type TechneReadingKind,
 } from "./contract.ts";
@@ -88,6 +89,9 @@ export interface DisclosureSessionStore {
    * untouched byte-exact; a crossing onto the cut the session already
    * occupies is refused. */
   crossCut(target: TechneInstrument): { session: DisclosureSession; cut: TechneReadingKind };
+  /** Lane-2 T20: append one traversal hop (a Timeline trail step) to the session's own navigation. It never changes the
+   * instrument; its subject and selection must be the session's, byte-equal, or it is refused by name and nothing changes. */
+  recordTraversal(hop: DisclosureTraversalHop): DisclosureSession;
   setTimeWindow(window: NonNullable<DisclosureSession["time_window"]> | null): DisclosureSession;
   /** Lane-2 T5: declare (or, with null, remove) the relative axis's zero — the
    * temporal facet_ref the person disclosed as T0. Checked against the reading
@@ -174,6 +178,23 @@ export function createDisclosureSessionStore(): DisclosureSessionStore {
       current = crossed.session;
       notify(listeners);
       return crossed;
+    },
+    recordTraversal(hop) {
+      if (!current) throw new Error("No DisclosureSession is open — select a subject first");
+      if (hop.subject_ref !== current.subject_ref) {
+        throw new Error(`Traversal hop refused: its subject_ref is not the session's subject; the subject is carried byte-equal, never re-targeted`);
+      }
+      if (hop.selection_ref !== current.selection.selection_ref) {
+        throw new Error(`Traversal hop refused: its selection_ref is not the session's selection; the selection is carried byte-equal, never re-targeted`);
+      }
+      if (hop.instrument !== current.instrument) {
+        throw new Error(`Traversal hop refused: its instrument is ${hop.instrument}, but the session's instrument is ${current.instrument}; the instrument is carried, never re-targeted`);
+      }
+      const next: DisclosureSession = {...current, navigation: [...current.navigation ?? [], hop]};
+      const session = checkedSession(next);
+      current = session;
+      notify(listeners);
+      return session;
     },
     setTimeWindow(window) {
       if (!current) throw new Error("No DisclosureSession is open — select a subject first");

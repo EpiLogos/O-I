@@ -87,9 +87,9 @@ export interface TimelineLensProps {
   participants?: readonly ParticipantSpan[];
   /** lane-2 T20: a cause-family relation selected on the chronology, handed to the host as its native relationship. Optional. */
   onOpenRelation?: (relationship: GraphRelationship) => void;
-  /** lane-2 T20: one endpoint of a followed cause-chain link selected. The host records the hop and returns false to refuse it;
-   * an accepted endpoint opens through this lens's own node-open path. Optional. */
-  onOpenEndpoint?: (relationship: GraphRelationship, side: "from" | "to") => boolean | void;
+  /** lane-2 T20: one endpoint of a followed cause-chain link selected. The host records the hop (possibly asynchronously) and
+   * resolves false to refuse it; an accepted endpoint opens through this lens's own node-open path. Optional. */
+  onOpenEndpoint?: (relationship: GraphRelationship, side: "from" | "to") => boolean | void | Promise<boolean | void>;
 }
 
 const AXIS_HEIGHT = 48;
@@ -469,8 +469,9 @@ export function TimelineLens({
   const openChainEndpoint = (relationship: GraphRelationship, side: "from" | "to") => {
     const graphNodeId = side === "from" ? relationship.sourceGraphNodeId : relationship.targetGraphNodeId;
     const accept = (node: GraphNode) => {
-      if (onOpenEndpoint?.(relationship, side) === false) return;
-      handleOpenNode(graphNodeId, node, false);
+      void Promise.resolve(onOpenEndpoint?.(relationship, side)).then((accepted) => {
+        if (accepted !== false) handleOpenNode(graphNodeId, node, false);
+      });
     };
     const placed = state.items.find((item) => item.graphNodeId === graphNodeId)?.node;
     if (placed) {

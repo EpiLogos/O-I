@@ -42,8 +42,8 @@ export interface TimelineSurfaceProps {
   participants?: readonly ParticipantSpan[];
   /** lane-2 T20: a cause-family relation selected on the chronology, forwarded from the lens. Optional. */
   onOpenRelation?: (relationship: GraphRelationship) => void;
-  /** lane-2 T20: an endpoint of a followed cause-chain link selected, forwarded from the lens; false refuses it. Optional. */
-  onOpenEndpoint?: (relationship: GraphRelationship, side: "from" | "to") => boolean | void;
+  /** lane-2 T20: an endpoint of a followed cause-chain link selected, forwarded from the lens; resolving false refuses it. Optional. */
+  onOpenEndpoint?: (relationship: GraphRelationship, side: "from" | "to") => boolean | void | Promise<boolean | void>;
 }
 
 /**
