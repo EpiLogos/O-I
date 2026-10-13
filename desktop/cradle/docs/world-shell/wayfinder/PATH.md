@@ -37,7 +37,9 @@ differ from the lock, the lock stands.
   `packages/live-shell/ui`): 1195 tests, 1185 pass, 10 fail in 10 files — 8
   WebStorage suites that need `--experimental-webstorage
   --localstorage-file=<tmp>` (by design), and 2 extensionless-import reds
-  (fixed in `864643e2e`). Phase-1 lane `dlw/phase1-semantics-20261013`: tsc 0;
+  (fixed in `864643e2e`). The full package is green under the right
+  invocation: plain `node --test tests/*.test.mjs` fails only inside the 9
+  WebStorage suites, which pass under `npm run test:webstorage`. Phase-1 lane `dlw/phase1-semantics-20261013`: tsc 0;
   devices:validate PASS; the touched suites green (see each ticket).
 - Running services that are not the lane's — never stop them: Vite 5176,
   walk-bridge 4179.
@@ -90,9 +92,8 @@ T-EXPRESSION-TRACKS (code legs), T-CAPABILITY-HOMES (lock §4.2), T-HOLDERS
    at both viewports; then R0, then R1.
 2. No-UI, claimable while the gate is red: **T-AE-C2-WORDING** (the
    founding corpus's name in AE UI copy → provider labels, C2-b8; ticket to
-   write from T-AE-REPORT's resolution); **T-CAPABILITY-HOMES-LANDED** (13
-   landed O-I/Suite refs without a family scope); a `test:webstorage`
-   script that runs the 8 WebStorage suites with an owned tmp file.
+   write from T-AE-REPORT's resolution); (landed 13 Oct: the 13 landed refs homed; `npm run test:webstorage` runs
+   the 9 WebStorage suites with owned tmp files — 140/140).
 3. After R0 (Phase 2 — seams; UI legs): **T-ATLAS-HOST** (the atlas mounts
    as `projection.earth` / `projection.constellation`; the World's corpus
    provider; host stores in the workspace) → **T-TIMELINE-WALKS leg 2** (the

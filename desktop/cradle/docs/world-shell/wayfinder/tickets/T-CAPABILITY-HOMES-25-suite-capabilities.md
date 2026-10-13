@@ -83,7 +83,11 @@ devices:validate PASS; semantic registry byte-identical; tsc 0;
 capability-homes + inhabitant-manifest + live-semantics + device-sdk +
 agent-family-manifest → 62/62.
 
-**Carried:** `devices:gaps --all` still shows 13 *landed* O-I/Suite refs
-without a family scope (e.g. `cap.suite.shared-field-grammar`) — outside
-the lock's 25; **T-CAPABILITY-HOMES-LANDED** when the matrix is next
-reconciled.
+**Then (lead, same day): the 13 landed refs** `devices:gaps --all` still
+showed without a scope are homed too — suite-skills-composition (ai-kit
+Skillset rack), authored-relation-surface (central Text over the Wiki),
+git-provider (workcell Git device); the shared-field four as the Link
+semantic (shell); adoption, inhabitation reading (status bar run context),
+explain chain (Info view), composable agentic freedom (the neutral door),
+Omarchy integration (embodiment), the physical reference world (the
+verification harness). `devices:gaps --all` → 0 unscoped.
