@@ -21,7 +21,11 @@ import {nativeAgentOwner} from "../agency/nativeAgentClient";
 import {KnowledgeStatus} from "./KnowledgeStatus";
 import {NativeSearchHit,SearchReadingFailure,searchHitTitle,searchHitDescription,searchKindLabel,searchOwnerLabel} from "./searchPresentation";
 import {subjectLabel} from "../../../../shared-field/presentation-text.mjs";
+import {PLACES_ON_MAP_LABEL, flyHereLabel, type BasemapContextHit, type PlaceOffer} from "../techne/m0m5/place/navigation";
 export {normalizeResolution} from "./searchProgress";
+
+/** The subject a search result names, as the reading provider reads it (lane-4 T22). */
+export interface PlaceSubject {ref: string; kind?: string; title: string; project?: string}
 
 /** The palette's typed tabs (10-SIDEBARS §3.1): All · Chats · Agents · Files
  * · Flows · Actions. Each tab filters one REAL source; a tab whose source or
@@ -35,6 +39,12 @@ export interface PaletteSources {
   onOpenAgents?: () => void;
   /** The app's own verbs (New chat, New flow, a mode…), each a real route. */
   actions?: {label: string; hint?: string; run: () => void}[];
+  /** Lane-4 T22: the place facets a subject's reading discloses, one "fly here" per place. Absent or empty: no affordance. */
+  placesOf?: (subject: PlaceSubject) => Promise<PlaceOffer[]>;
+  /** Lane-4 T22: open a subject with focus on one of its disclosed places (the selection carries the place ref; the camera lands by precision). */
+  flyHere?: (subject: PlaceSubject, place: PlaceOffer, address: KnowledgeAddress | null, title: string) => Promise<void> | void;
+  /** Lane-4 T22: offline gazetteer hits for the query, shown as basemap context under "Places on the map" — never as subjects. */
+  basemapHits?: (query: string) => BasemapContextHit[];
 }
 type PaletteTab = "all" | "chats" | "agents" | "files" | "flows" | "actions";
 interface TypedItem {key: string; label: string; detail: string; open: () => Promise<void> | void}
@@ -59,6 +69,15 @@ const evidenceSummary = (data: unknown): {name?: string; why?: string} => {
   const name = Array.isArray(reading.evidence) ? `${reading.evidence.length} ${reading.evidence.length === 1 ? "item" : "items"}` : "";
   return {name: name || undefined, why: typeof reading.why_selected === "string" ? reading.why_selected : undefined};
 };
+
+/** The local opening address of an owner resolution row. AIKit resolution rows always carry a local address; a hosted row
+ * (native_owner shared-field) would not, and is not what resolve returns. */
+function addressOfRow(row: ResolutionRow): KnowledgeAddress | null {
+  return graphAddress({
+    ref: row.reference, kind: row.kind, label: row.label, native_owner: row.owner,
+    provenance: { source: row.owner, detail: row.provenance }, actions: row.actions,
+  }) ?? null;
+}
 
 export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange, shortcutError, typed }: Props) {
   const { transport } = useKernel();
@@ -90,6 +109,32 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
   const [chats, setChats] = useState<{rows?: EncounterRow[]; error?: string}>({});
   const [agents, setAgents] = useState<{rows?: {ref: string; name: string; purpose: string}[]; error?: string}>({});
   const [flows, setFlows] = useState<{rows?: FlowInstanceRow[]; error?: string}>({});
+  // ---- lane-4 T22: place offers for the subjects this query found (Actions tab only) -------------
+  // A subject with no disclosed place offers nothing; a read that fails offers nothing either. The read is cached per subject ref.
+  const [placeOffers, setPlaceOffers] = useState<{subject: PlaceSubject; address: KnowledgeAddress | null; offers: PlaceOffer[]}[]>([]);
+  const placeReads = useRef(new Map<string, Promise<PlaceOffer[]>>());
+  const placeSubjects: {subject: PlaceSubject; address: KnowledgeAddress | null}[] = [
+    ...hits.filter(hit => hit.resource).map(hit => ({subject: {ref: hit.resource, kind: hit.kind, title: hit.label || hit.resource, project}, address: hit.address})),
+    ...rows.filter(row => row.reference).map(row => ({subject: {ref: row.reference, kind: row.kind, title: subjectLabel(row, "Unnamed resource"), project}, address: addressOfRow(row)})),
+  ].slice(0, 8);
+  const placeKey = tab === "actions" && query.trim() && typed?.placesOf ? placeSubjects.map(entry => entry.subject.ref).join("\n") : "";
+  useEffect(() => {
+    const placesOf = typed?.placesOf;
+    if (!placeKey || !placesOf) { setPlaceOffers([]); return; }
+    let live = true;
+    void Promise.all(placeSubjects.map(entry => {
+      let read = placeReads.current.get(entry.subject.ref);
+      if (!read) {
+        read = Promise.resolve().then(() => placesOf(entry.subject)).catch(() => []);
+        placeReads.current.set(entry.subject.ref, read);
+      }
+      return read.then(offers => ({...entry, offers}));
+    })).then(all => { if (live) setPlaceOffers(all.filter(entry => entry.offers.length > 0)); });
+    return () => { live = false; };
+    // The subject list is carried by placeKey (its refs); the effect re-runs only when the query's subjects or the tab change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [placeKey, tab]);
+  const basemap: BasemapContextHit[] = tab === "actions" && query.trim() && typed?.basemapHits ? typed.basemapHits(query.trim()) : [];
   const tabs: {id: PaletteTab; label: string}[] = [
     {id: "all", label: "All"},
     ...(typed?.onOpenChat ? [{id: "chats" as const, label: "Chats"}] : []),
@@ -136,6 +181,7 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
     : tab === "actions" ? [
         ...(typed?.actions ?? []).filter(action => matches(action.label, action.hint ?? "")).map(action => ({key: `app:${action.label}`, label: action.label, detail: action.hint ?? "Action", open: () => action.run()})),
         ...rows.filter(row => row.actions.length > 0).map((row, index) => ({key: `${row.reference}:${index}`, label: subjectLabel(row,`Unnamed resource ${index+1}`), detail: `${searchKindLabel(row.kind)} · ${searchOwnerLabel(row.owner)}`, open: () => openRow(row)})),
+        ...placeOffers.flatMap(entry => entry.offers.map(offer => ({key: `fly:${entry.subject.ref}:${offer.place_ref}`, label: flyHereLabel(offer), detail: `${entry.subject.title} · ${offer.precision}`, open: () => typed?.flyHere?.(entry.subject, offer, entry.address, entry.subject.title)}))),
       ]
     : [];
   const typedFailure=tab==="chats"?chats.error:tab==="agents"?agents.error:tab==="flows"?flows.error:undefined;
@@ -246,12 +292,7 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
     finally { opening.current = false; setIsOpening(false); }
   };
   const openRow = (row: ResolutionRow) => {
-    // AIKit resolution rows always carry a local address; a hosted row
-    // (native_owner shared-field) would not, and is not what resolve returns.
-    const address = graphAddress({
-      ref: row.reference, kind: row.kind, label: row.label, native_owner: row.owner,
-      provenance: { source: row.owner, detail: row.provenance }, actions: row.actions,
-    });
+    const address = addressOfRow(row);
     if (!address) { setError("This resource has no local opening route. Inspect its owner details for the available actions."); return; }
     return openAddress(address, subjectLabel(row,"Unnamed resource"));
   };
@@ -308,12 +349,18 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
       {error && <SearchReadingFailure error={error}/>}
       {typedFailure&&<SearchReadingFailure error={typedFailure} label={`${tabs.find(entry=>entry.id===tab)?.label??"This source"} unavailable`}/>}
       {typedState && !typedItems.length ? <p className="search-empty" role="status">{typedState}</p>
-        : !typedItems.length ? !typedFailure&&<p className="search-empty">{needle ? `No ${tabs.find(entry => entry.id === tab)?.label.toLowerCase()} match "${query.trim()}".` : `No ${tabs.find(entry => entry.id === tab)?.label.toLowerCase()} here yet.`}</p>
+        : !typedItems.length ? !typedFailure && !basemap.length && <p className="search-empty">{needle ? `No ${tabs.find(entry => entry.id === tab)?.label.toLowerCase()} match "${query.trim()}".` : `No ${tabs.find(entry => entry.id === tab)?.label.toLowerCase()} here yet.`}</p>
         : <ul aria-label={`${tabs.find(entry => entry.id === tab)?.label} results`}>{typedItems.map((item, index) => <li key={item.key} data-selected={typedSelected === index}>
             <button className="search-result" aria-current={typedSelected === index ? "true" : undefined} onFocus={() => setTypedSelected(index)} onPointerMove={() => setTypedSelected(index)} onClick={() => void openTyped(item)}>
               <span className="search-result-kind" aria-hidden="true">↗</span><span className="search-result-copy"><strong>{item.label}</strong><small>{item.detail}</small></span>
             </button>
           </li>)}</ul>}
+      {basemap.length > 0 && <section className="search-basemap" aria-label={PLACES_ON_MAP_LABEL}>
+        <header><strong>{PLACES_ON_MAP_LABEL}</strong> <small>Basemap context, not subjects</small></header>
+        <ul>{basemap.map(hit => <li key={hit.id} className="search-basemap-hit">
+          <span className="search-result-copy"><strong>{hit.label}</strong><small>{hit.source} · {hit.precision}{hit.coordinate ? "" : " · no point disclosed"}</small></span>
+        </li>)}</ul>
+      </section>}
     </div>}
     <div className="search-scroll" hidden={tab !== "all" || undefined}>
       <header className="search-context"><span title={project ?? "Central"}>{project ?? "Central"}</span><span role="status" aria-live="polite">{isOpening ? "Opening…" : composing ? "Composing…" : busy ? `${count ? `${count} results · ` : ""}${pendingProviders.length} ${pendingProviders.length === 1 ? "source" : "sources"} loading…` : `${count} ${count === 1 ? "result" : "results"}`}</span></header>

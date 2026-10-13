@@ -86,9 +86,18 @@ import { DesktopShell } from "./workspace/DesktopShell";
 import { Glyph } from "./workspace/Glyph";
 import { useWorkspaces } from "./workspace/store";
 import { useSearchLeader, matchesSearchLeader } from "./knowledge/leader";
-import { SearchOverlay } from "./knowledge/SearchOverlay";
+import { SearchOverlay, type PlaceSubject } from "./knowledge/SearchOverlay";
 import { knowledge } from "./knowledge/client";
 import type { KnowledgeAddress, KnowledgeReading } from "./kernel/types";
+// Lane-4 T22: "fly here" from a search result — the one session, refs carried verbatim, the offline gazetteer as basemap context.
+import { techneReadingProvider, NO_PROVIDER_REASON } from "./techne/techneReading";
+import { validateReading, type TechneReading } from "./techne/contract";
+import { disclosureSession } from "./techne/session";
+import { ensureSession } from "./techne/m0m5/reading";
+import { selectionForPlace } from "./techne/m0m5/place/register";
+import { placeOffersOfPayload, basemapContextHits, type PlaceOffer } from "./techne/m0m5/place/navigation";
+import gazetteerNdjson from "../expressions-app/vendor/research-canvas/packages/geography/data/pack/gazetteer.ndjson?raw";
+import { GazetteerIndex } from "../expressions-app/vendor/research-canvas/packages/geography/src/gazetteer";
 import { Rest } from "./Rest";
 import { useKernel } from "./kernel/KernelProvider";
 import type { ListedSource } from "./kernel/types";
@@ -2025,6 +2034,38 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     onCreateForm:async kind=>{const form=DOCUMENT_FORMS.find(candidate=>candidate.kind===kind);if(!form)throw new Error(`The ${kind} form is not offered by the document roster`);const created=await createFormInPlace(kernel.transport,form,{project:workspace.current.project,projects:kernel.snapshot.navigator?.root?.work.projects});await openFile(created.location);window.dispatchEvent(new CustomEvent("oi:form-created",{detail:{path:created.location.path}}));},
     onMessage:message=>setWindowError(message),
   };
+  // Lane-4 T22: the place offers of a search subject, read from its own reading. A subject with no disclosed place offers nothing.
+  const placesOfSearchSubject=async(subject:PlaceSubject)=>{
+    const provider=techneReadingProvider();
+    if(!provider)return [];
+    return placeOffersOfPayload(await provider.read(subject));
+  };
+  // Lane-4 T22: "fly here". The subject's reading is aligned with the ONE disclosure session; the selection is the session's own
+  // with focus_refs=[place_ref] (selectionForPlace), and the spatial focus names the same facet. An expression subject opens on its
+  // Places lens through the presented field (the existing field-open path, lens 'place'); any other subject opens through its own address.
+  const flyToPlaceFromSearch=async(subject:PlaceSubject,place:PlaceOffer,address:KnowledgeAddress|null,title:string)=>{
+    const provider=techneReadingProvider();
+    if(!provider)throw new Error(NO_PROVIDER_REASON);
+    const payload=await provider.read(subject);
+    const checked=validateReading(payload);
+    if(!checked.valid)throw new Error(`The reading of ${title} did not validate: ${checked.errors.join("; ")}`);
+    const session=ensureSession(payload as TechneReading,"place",disclosureSession);
+    if(!session)throw new Error(`No shared session could be aligned with ${title}.`);
+    disclosureSession.setSelection(selectionForPlace(session,place.place_ref));
+    disclosureSession.setSpatialFocus(place.place_ref);
+    if(subject.ref.startsWith("expression:")){
+      if((stateRef.current.mode??"base")!=="techne")enterModeRef.current("techne");
+      requestTechneFieldOpen(subject.ref,null,false,"place");
+      return;
+    }
+    if(!address)throw new Error(`${title} has no local opening route, so its place cannot be opened from here.`);
+    await openKnowledge(address,title,subject.project);
+  };
+  let offlineGazetteer:GazetteerIndex|null=null;
+  const basemapHitsFor=(query:string)=>{
+    if(!offlineGazetteer)offlineGazetteer=GazetteerIndex.loadNdjson(gazetteerNdjson);
+    return basemapContextHits(offlineGazetteer,query);
+  };
   const worldNavigator=(workspaceSelector:ReactNode)=><WorldNavigator onOpenIdentity={()=>void openModeSurface("nara-identity").catch(report)} onAgent={summonAgent} onMessage={message=>setWindowError(message)} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} mode={mode} onMode={enterMode} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenToday={openToday} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} onOpenFlowInstance={row=>openFlowInstance(row)} onNewFlow={()=>startWriting()} />;
 
   return (
@@ -2128,7 +2169,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         * Library is the Expressions application's real gallery, presented as
         * an ordinary canvas tab through LibraryHost. The summon's verso and
         * search presentations above are untouched. */}
-      {searchOpen && <SearchOverlay typed={{registers:["",...(kernel.snapshot.navigator?.root?.work.projects??[]).map(entry=>entry.name)],onOpenChat:leftHost.onOpenChat,onOpenFlow:row=>openFlowInstance(row),onOpenAgents:leftHost.onNewAgent,actions:[{label:"Automations",hint:"Routines, Methods and harness timers",run:()=>openAutomations(workspace.current.project)},{label:"New chat",hint:"Start a fresh conversation",run:leftHost.onNewChat!},{label:"New flow",hint:"Start writing",run:leftHost.onNewFlow!},...(["base","factory","expressions","techne","settings"] as const).map(id=>({label:`Go to ${id==="base"?"Base":MODE_CURATION[id].label}`,hint:"Mode",run:()=>enterMode(id)}))]}} leader={leader.shift} onLeaderChange={leader.change} shortcutError={leader.error} project={workspace.current.project} onClose={()=>setSearchOpen(false)} onOpen={openKnowledge} />}
+      {searchOpen && <SearchOverlay typed={{registers:["",...(kernel.snapshot.navigator?.root?.work.projects??[]).map(entry=>entry.name)],onOpenChat:leftHost.onOpenChat,onOpenFlow:row=>openFlowInstance(row),onOpenAgents:leftHost.onNewAgent,placesOf:placesOfSearchSubject,flyHere:flyToPlaceFromSearch,basemapHits:basemapHitsFor,actions:[{label:"Automations",hint:"Routines, Methods and harness timers",run:()=>openAutomations(workspace.current.project)},{label:"New chat",hint:"Start a fresh conversation",run:leftHost.onNewChat!},{label:"New flow",hint:"Start writing",run:leftHost.onNewFlow!},...(["base","factory","expressions","techne","settings"] as const).map(id=>({label:`Go to ${id==="base"?"Base":MODE_CURATION[id].label}`,hint:"Mode",run:()=>enterMode(id)}))]}} leader={leader.shift} onLeaderChange={leader.change} shortcutError={leader.error} project={workspace.current.project} onClose={()=>setSearchOpen(false)} onOpen={openKnowledge} />}
       {Object.entries(surfaceErrors).map(([id, error]) => (
         <SurfaceErrorOverlay key={id} surfaceId={id} error={error} onRetry={() => retrySurfaceOpen(id)} />
       ))}
