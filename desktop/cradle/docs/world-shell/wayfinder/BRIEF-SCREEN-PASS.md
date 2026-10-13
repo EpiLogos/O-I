@@ -61,3 +61,20 @@ CRAFT: <the 3 most visible craft gaps against Ableton Live / the mockups>
 - T-ATLAS-HOST — Technē lens bar: Places opens the Earth globe over the
   Archetypal-Earth corpus; Project / graph opens the coloured field graph;
   switching away and back keeps the camera (hidden-inhabitant law).
+- Lane 3 (E01–E07, E15/E16) — Expressions: the journey timeline shows one
+  clip per scene, widths proportional to duration; dragging a clip's right
+  edge trims it (toast names the 1 s / 3600 s limit); a split at the
+  playhead makes two scenes; Shift+edge rolls; undo (⌘Z) names the edit
+  ("Undo Trim scene …").
+- Lane 2 (T1–T3, T7, T8, T12, T13) — Technē Timeline (the canvas timeline in
+  the research instrument): a two-row axis (major/minor labels, BCE years
+  where the span reaches them); period bands with their names; clusters
+  collapse dense items with a count; the minimap below shows the visible
+  span highlighted; standing-coloured items.
+- Lane 4 (T1–T3, T6–T13, T29) — Places map: right-drag/ctrl-drag tilts and
+  rotates (pitch/bearing readout); selecting a place flies to its precision
+  zoom; markers read solid/halo/dashed by precision; layer filter control;
+  routes and hierarchy edges; the attribution line names the sources.
+- Lane 1 (A1, A5, A6) — Canvas: dragging a card near another shows a guide
+  line and snaps; zoom controls beside the minimap; keys + − 0 Shift+1
+  Shift+2; a zoom readout fades after zooming.
