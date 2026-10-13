@@ -440,7 +440,7 @@ const settleRecovery=async(found:{record:NativeWorkingRecord;journey:Journey;rec
   nativeView:()=>{const view=work.state?.view;return view?nested.view(view):undefined;},
   /** The nested documents read so far (E14). The verdict of a placement is taken from it. */
   nestedGraph:():NestedGraph=>nested.graph(),
-  readNested:(root:string,maxDepth:number):Promise<void>=>nested.readNested(root,maxDepth),
+  readNested:(ref:string,revision:unknown,maxDepth:number):Promise<void>=>nested.readNested(ref,revision,maxDepth),
   nestedDocument:(ref:string):NestedDocumentLike|undefined=>nested.document(ref),
   blueprint:async(intent:BlueprintIntent):Promise<void>=>{
    const captured=clone(intent);

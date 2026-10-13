@@ -147,13 +147,37 @@ test('playback: unread and refused are notices, never a guess', () => {
  assert.equal(M.nestedNotice(M.nestedFrameAt(0,5,[2],unread)),'not read');
  assert.equal(M.nestedNotice({kind:'end'}),null);
 });
-test('depth gate: the read plan stops at the placement bound', () => {
+test('depth gate: the read plan stops at the placement bound, and requests each document under its recorded key', () => {
  const A='expression:a',B='expression:b',C='expression:c';
- const doc=(ref,child)=>({expression_ref:ref,scenes:[{scene_ref:ref+':scene:main',entity_refs:[],body:{carrier:'expression_ref',subject_ref:child}}]});
- const g=new Map([[A,doc(A,B)]]);
- assert.deepEqual(M.nestedReadPlan(g,A,1),[]);
- assert.deepEqual(M.nestedReadPlan(g,A,2),[B]);
- g.set(B,doc(B,C));
- assert.deepEqual(M.nestedReadPlan(g,A,2),[]);
- assert.deepEqual(M.nestedReadPlan(g,A,3),[C]);
+ const doc=(ref,child)=>({expression_ref:ref,scenes:[{scene_ref:ref+':scene:main',entity_refs:[],body:{carrier:'expression_ref',subject_ref:child,reading:{revision:'1'}}}]});
+ const g=new Map([[A,doc(A,B)]]),req=new Map([[A,'rev:7']]),root={ref:A,key:'rev:7'};
+ assert.deepEqual(M.nestedReadPlan(g,req,root,1),[]);
+ assert.deepEqual(M.nestedReadPlan(g,req,root,2),[{ref:B,key:'rev:1'}]);
+ g.set(B,doc(B,C));req.set(B,'rev:1');
+ assert.deepEqual(M.nestedReadPlan(g,req,root,2),[]);
+ assert.deepEqual(M.nestedReadPlan(g,req,root,3),[{ref:C,key:'rev:1'}]);
+});
+test('freshness: a document is current only under the recorded key; the key is the recorded revision', () => {
+ assert.equal(M.nestedKeyOf('expression:x','7',1),'rev:7');
+ assert.equal(M.nestedKeyOf('expression:x','',2),'structure:expression:x:2');
+ const A='expression:a',B='expression:b';
+ const g=new Map([[A,{expression_ref:A,scenes:[{scene_ref:A+':s',entity_refs:[],body:{carrier:'expression_ref',subject_ref:B,reading:{revision:'1'}}}]}],[B,{expression_ref:B,scenes:[]}]]);
+ assert.deepEqual(M.nestedReadPlan(g,new Map([[A,'rev:7'],[B,'rev:0']]),{ref:A,key:'rev:7'},2),[{ref:B,key:'rev:1'}]);
+ assert.deepEqual(M.nestedReadPlan(g,new Map([[A,'rev:7'],[B,'rev:1']]),{ref:A,key:'rev:7'},2),[]);
+});
+test('seams: the entering Scene names outgoing and incoming, its kind and its length; the first Scene and a cut have none', () => {
+ const S=[{duration:2,transition:0,kind:'crossfade'},{duration:3,transition:1.5,kind:'dip-to-colour'},{duration:1,transition:0.5,kind:'cut'},{duration:2,transition:1,kind:'wipe'}];
+ assert.equal(M.nestedSeamAt(S,0,0),null);
+ assert.deepEqual(M.nestedSeamAt(S,1,0),{incoming:1,outgoing:0,kind:'dip-to-colour',seconds:1.5,elapsed:0});
+ assert.equal(M.nestedSeamAt(S,1,1.5),null);
+ assert.equal(M.nestedSeamAt(S,2,0),null);
+ assert.deepEqual(M.nestedSeamAt(S,3,0.4),{incoming:3,outgoing:2,kind:'wipe',seconds:1,elapsed:0.4});
+ assert.equal(M.nestedSeamMode('crossfade'),'crossfade');
+ assert.equal(M.nestedSeamMode('wipe'),'painted');
+ assert.equal(M.nestedSeamMode('cut'),'none');
+});
+test('seams: a seam starts once per crossing, and the latest seam in flight is the one taken', () => {
+ assert.equal(M.nestedBoundaryKey(SUB,1,2.5,0.5),M.nestedBoundaryKey(SUB,1,2.9,0.9));
+ assert.notEqual(M.nestedBoundaryKey(SUB,1,2.5,0.5),M.nestedBoundaryKey(SUB,2,5.5,0));
+ assert.equal(M.latestNestedSeam([{elapsed:1.2},{elapsed:0.3}],x=>x.elapsed).elapsed,0.3);
 });

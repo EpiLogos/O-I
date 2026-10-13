@@ -96,7 +96,7 @@ import type {ConnectionBinding} from '../../../../../packages/oi-design-system/e
 import type {KernelConversion,KernelSceneBody} from './kernelDocumentBridge.js';
 import {installSceneBodies} from './sceneBodies.js';
 import {prepareNativeSceneBody} from './nativeSceneBody.js';
-import {nestedBodyFor,placeNestedChange,setNestingDepthChange,removeNestedChange,nextNestedDepth,nestedEvaluation,nestedWindowVerdict,nestedControlsHTML,nestedSceneClass,nestedFrameAt,nestedNotice,isNestedBody,openNestedPicker,NESTED_DEFAULT_DEPTH,type NestedBinding} from './nestedOccurrence.js';
+import {nestedBodyFor,placeNestedChange,setNestingDepthChange,removeNestedChange,nextNestedDepth,nestedEvaluation,nestedWindowVerdict,nestedControlsHTML,nestedSceneClass,nestedFrameAt,nestedNotice,isNestedBody,nestedSeamAt,nestedSeamMode,nestedBoundaryKey,latestNestedSeam,type NestedSeam,openNestedPicker,NESTED_DEFAULT_DEPTH,type NestedBinding} from './nestedOccurrence.js';
 import {kernelDocumentToJourney,withNestedVerdicts} from './kernelDocumentBridge.js';
 import {openScenePortal} from './scenePortal.js';
 import {installActPanel} from './actPanel.js';
@@ -137,6 +137,8 @@ const CURVE_DRAG_REVISION_BASE=1e6;
 // E11: the seam transition in flight, and the seam whose chooser is open. 'crossfade' is the overlay the app always had; a
 // painted kind (dip to colour, wipe) keeps a snapshot of the outgoing frame and paints its blend each frame.
 let transitionKind:TransitionKind='crossfade';let transitionSpecNow:TransitionSpec|undefined;let transitionSnapshot:HTMLCanvasElement|null=null;let seamSceneId:string|null=null;
+// E14: the nested frame and seam last driven, so an overlay starts once per nested boundary crossing.
+let nestedFrameKey:string|null=null,nestedSeamKey:string|null=null;
 const channelViews=new Map<string,ChannelView>();
 mountShell();installPanelResize();installKernelExpressions();
 const recovery=document.createElement('section');recovery.id='engine-recovery';recovery.hidden=true;recovery.className='engine-recovery';recovery.setAttribute('role','alert');recovery.innerHTML='<h3>GPU context interrupted</h3><p>The expression is intact. Recovering recreates lost particle state, not a runtime checkpoint.</p><button class="secondary" data-action="native-recover">Recover field</button>';document.body.append(recovery);
@@ -669,6 +671,11 @@ function paintTransition(f:number){
  }
  ctx.globalAlpha=1;
 }
+/** E11: the crossfade seam. The outgoing frame is held on the transition canvas and fades over the incoming Scene; the same
+ * statements the Scene change always ran, extracted so a nested occurrence's crossing uses this exact path. */
+function startCrossfadeSeam(target:{id:string;transition:number},outgoingBackground:string){
+ const c=$<HTMLCanvasElement>('transition-canvas');c.width=engine.canvas.width;c.height=engine.canvas.height;c.getContext('2d')!.drawImage(engine.canvas,0,0);transitionBackground=outgoingBackground;c.style.background=transitionBackground;c.style.opacity='1';c.hidden=false;transitionStart=simTime;transitionDuration=target.transition;transitionEasing='linear';transitionKind='crossfade';transitionSnapshot=null;transitionSceneId=target.id;
+}
 /** E11: a painted seam (dip to colour, wipe) keeps a snapshot of the outgoing frame and paints its blend each frame. */
 function startPaintedSeam(target:Scene){
  const snapshot=document.createElement('canvas');snapshot.width=engine.canvas.width;snapshot.height=engine.canvas.height;snapshot.getContext('2d')!.drawImage(engine.canvas,0,0);
@@ -1016,7 +1023,7 @@ function applySceneView(){const v=activeScene().view;if(v)Object.assign(camera,c
 function sceneRefAt(index:number){const n=store.document.scenes.length;if(index<0)index=n-1;if(index>=n)index=0;return store.document.scenes[index].id;}
 function sceneIndexOf(sceneId:string){const index=store.document.scenes.findIndex(s=>s.id===sceneId);if(index<0)throw Error('The Scene is no longer present in this Expression');return index;}
 function setSceneRef(sceneId:string,automatic=false){const index=sceneIndexOf(sceneId);draftSchedule.flushNow('scene');if(!automatic)sceneIntentEpoch++;if(propertyTake)finishPropertyTake();trackPreview=false;pointer.active=false;if(index===sceneIndex&&!automatic)return;
- if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'&&transitionKindOf(store.document.scenes[index].transitionSpec)==='crossfade'){const c=$<HTMLCanvasElement>('transition-canvas');c.width=engine.canvas.width;c.height=engine.canvas.height;c.getContext('2d')!.drawImage(engine.canvas,0,0);transitionBackground=scene().field.background;c.style.background=transitionBackground;c.style.opacity='1';c.hidden=false;transitionStart=simTime;transitionDuration=store.document.scenes[index].transition;transitionEasing='linear';transitionKind='crossfade';transitionSnapshot=null;transitionSceneId=store.document.scenes[index].id;}else if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'&&transitionKindOf(store.document.scenes[index].transitionSpec)!=='cut'){startPaintedSeam(store.document.scenes[index]);}else{transitionDuration=0;transitionSnapshot=null;$('transition-canvas').hidden=true;}
+ if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'&&transitionKindOf(store.document.scenes[index].transitionSpec)==='crossfade'){startCrossfadeSeam(store.document.scenes[index],scene().field.background);}else if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'&&transitionKindOf(store.document.scenes[index].transitionSpec)!=='cut'){startPaintedSeam(store.document.scenes[index]);}else{transitionDuration=0;transitionSnapshot=null;$('transition-canvas').hidden=true;}
 
  sceneIndex=index;if(!automatic)journeyPlaying=false;applySceneView();sceneElapsed=0;selected=[];textId=scene().text[0]?.id??null;saveSession();placementStep=false;shapePickerOpen=false;if(!automatic)journeyPlaying=false;renderAll();void researchInstruments?.refresh();}
 /** Saved playback uses the existing frame playhead; native location changes
@@ -1234,18 +1241,26 @@ function nestedConversionOf(ref:string):KernelConversion|null{
  if(base===undefined){try{base=kernelDocumentToJourney(doc);}catch{base=null;}nestedConversions.set(doc,base);}
  return base?withNestedVerdicts(base,nativeWorkspace!.nestedGraph()):null;
 }
-type NestedPlayback={kind:'scene';scene:Scene;local:number;revision:number}|{kind:'paper';notice:string|null};
-/** Playback of an occurrence at host-local time `t`. The nested Expression plays at
- * its own time through its own Scenes; an occurrence nested inside it plays the
- * same way, at the depth its own bound admits. */
+/** A seam at one nesting level: the entering and leaving Scenes of that level, and the boundary it began at. */
+interface NestedSeamAt {seam:NestedSeam;incoming:Scene;outgoing:Scene;boundary:string}
+type NestedPlayback={kind:'scene';scene:Scene;local:number;revision:number;seams:NestedSeamAt[];key:string}|{kind:'paper';notice:string|null;seams:NestedSeamAt[];key:null};
+/** Playback of an occurrence at host-local time `t`. The nested Expression plays at its own time through its own Scenes;
+ * an occurrence nested inside it plays the same way, at the depth its own bound admits. Each level reports the seam in
+ * flight in its own Scenes, by the app's own rule. */
 function nestedPlayback(subjectRef:string,verdict:NestedBinding|null,hostDuration:number,t:number):NestedPlayback{
  const conversion=nestedConversionOf(subjectRef);
- const durations=conversion?.journey.scenes.map(s=>s.duration)??[];
- const frame=nestedFrameAt(t,hostDuration,durations,conversion?verdict:{subject_ref:subjectRef,max_depth:0,state:'unread',reason:`Nested expression ${subjectRef} is not read yet.`});
- if(frame.kind!=='scene')return {kind:'paper',notice:nestedNotice(frame)};
- const scene=conversion!.journey.scenes[frame.sceneIndex],inner=conversion!.bindings[scene.id];
- if(inner&&isNestedBody(inner.body))return nestedPlayback(inner.body.subject_ref,inner.nested??null,scene.duration,frame.local);
- return {kind:'scene',scene,local:frame.local,revision:nativeWorkspace?.nestedDocument(subjectRef)?.revision??0};
+ const scenes=conversion?.journey.scenes??[];
+ const frame=nestedFrameAt(t,hostDuration,scenes.map(s=>s.duration),conversion?verdict:{subject_ref:subjectRef,max_depth:0,state:'unread',reason:`Nested expression ${subjectRef} is not read yet.`});
+ if(frame.kind!=='scene')return {kind:'paper',notice:nestedNotice(frame),seams:[],key:null};
+ const scene=scenes[frame.sceneIndex],inner=conversion!.bindings[scene.id];
+ const boundary=nestedBoundaryKey(subjectRef,frame.sceneIndex,t,frame.local);
+ const seam=nestedSeamAt(scenes.map(s=>({duration:s.duration,transition:s.transition??0,kind:transitionKindOf(s.transitionSpec)})),frame.sceneIndex,frame.local);
+ const own:NestedSeamAt[]=seam?[{seam,incoming:scene,outgoing:scenes[seam.outgoing],boundary}]:[];
+ if(inner&&isNestedBody(inner.body)){
+  const deeper=nestedPlayback(inner.body.subject_ref,inner.nested??null,scene.duration,frame.local);
+  return {...deeper,seams:[...own,...deeper.seams]};
+ }
+ return {kind:'scene',scene,local:frame.local,revision:nativeWorkspace?.nestedDocument(subjectRef)?.revision??0,seams:own,key:boundary};
 }
 function setNestedNotice(text:string|null):void{
  let el=document.getElementById('nested-stage-notice');
@@ -1253,12 +1268,35 @@ function setNestedNotice(text:string|null):void{
  if(el.hidden===!text&&el.textContent===(text??''))return;
  el.textContent=text??'';el.hidden=!text;
 }
-/** The frame for a host Scene whose body is a nested occurrence, or null for any
- * other Scene. The engine renders the nested Scene it is handed, exactly as it
- * renders an open Expression; past the nested content the host's paper stands. */
+/** Start the seam an occurrence crossed, through the overlay the app always had: a crossfade holds the outgoing frame, a
+ * painted kind composes its blend. The overlay's clock is set to the boundary, so its progress is the nested time. */
+function startNestedSeam(at:NestedSeamAt):void{
+ const mode=nestedSeamMode(at.seam.kind);
+ if(mode==='none')return;
+ if(mode==='crossfade')startCrossfadeSeam(at.incoming,at.outgoing.field.background);
+ else startPaintedSeam(at.incoming);
+ transitionStart=simTime-at.seam.elapsed;
+}
+function clearNestedOverlay():void{
+ transitionDuration=0;transitionSnapshot=null;$('transition-canvas').hidden=true;
+}
+/** Drive the seam overlay from a nested frame. A seam starts once per boundary crossing, while playing, on the engine that
+ * draws overlays. A crossing with no seam (a cut, or a Scene without an entering transition), or a paused crossing, clears
+ * the overlay as setSceneRef does. A host-level transition into the occurrence is left alone: it is not a nested crossing. */
+function driveNestedSeam(playback:{key:string;seams:NestedSeamAt[]}):void{
+ const seam=latestNestedSeam(playback.seams,at=>at.seam.elapsed);
+ const boundaryChanged=playback.key!==nestedFrameKey,wasNested=nestedFrameKey!==null;
+ nestedFrameKey=playback.key;
+ const seamKey=seam?seam.boundary:null,seamChanged=seamKey!==nestedSeamKey;
+ nestedSeamKey=seamKey;
+ if(seam&&seamChanged&&scenePlaying&&engine.capabilities.kind==='preview')startNestedSeam(seam);
+ else if(boundaryChanged&&wasNested&&!(seam&&scenePlaying))clearNestedOverlay();
+}
+/** The frame for a host Scene whose body is a nested occurrence, or null for any other Scene. The engine renders the nested
+ * Scene it is handed, exactly as it renders an open Expression; past the nested content the host's paper stands. */
 function nestedFrameFor(base:Scene,delta:number):EngineFrame|null{
  const binding=nativeWorkspace?.nativeView()?.bindings[base.id];
- if(!binding||!isNestedBody(binding.body)){setNestedNotice(null);return null;}
+ if(!binding||!isNestedBody(binding.body)){setNestedNotice(null);nestedFrameKey=null;nestedSeamKey=null;return null;}
  const playback=nestedPlayback(binding.body.subject_ref,binding.nested??null,base.duration,sceneElapsed);
  let scene:Scene,revision:number,params:Readonly<Record<string,number>>;
  if(playback.kind==='scene'){
@@ -1266,9 +1304,11 @@ function nestedFrameFor(base:Scene,delta:number):EngineFrame|null{
   scene=tracked;params=evaluateParameters(tracked,playback.local);
   revision=playback.revision*1e7+(tracked!==playback.scene?1+Math.floor(playback.local*60):0);
   setNestedNotice(null);
+  driveNestedSeam(playback);
  }else{
   scene={...base,entities:[]};params=base.field.params;revision=0;
   setNestedNotice(playback.notice);
+  nestedFrameKey=null;nestedSeamKey=null;
  }
  return {scene,scaffold:'off',authoringRevision:revision,simTime,delta,params,camera,pointer,selectedIds:[]};
 }
@@ -1284,7 +1324,7 @@ async function placeExpressionIntoScene():Promise<void>{
   if(scene().id!==sceneId||nativeWorkspace?.nativeView()?.document.expression_ref!==host){toast('The Scene changed while you chose. Place the expression again.',8000);return;}
   try{
    const body=nestedBodyFor(host,{expression_ref:pick.expression_ref,revision:pick.revision,title:pick.title},NESTED_DEFAULT_DEPTH);
-   await nativeWorkspace!.readNested(pick.expression_ref,NESTED_DEFAULT_DEPTH);
+   await nativeWorkspace!.readNested(pick.expression_ref,pick.revision,NESTED_DEFAULT_DEPTH);
    const verdict=nestedEvaluation(host,body,nativeWorkspace!.nestedGraph());
    if(verdict.state!=='ready'){toast(`Not placed: ${verdict.reason}`,8000);return;}
    await nativeWorkspace!.edit([placeNestedChange(sceneRef,body)]);
