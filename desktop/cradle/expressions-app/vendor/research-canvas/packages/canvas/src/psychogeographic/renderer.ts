@@ -696,6 +696,7 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
         m.addLayer({
           id: "places-terminator-fill",
           type: "fill",
+          filter: ["==", ["get", "kind"], "night"],
           source: "places-terminator",
           paint: { "fill-color": TERMINATOR_STYLE.night, "fill-opacity": TERMINATOR_STYLE.nightOpacity },
         } as never, beneath);
@@ -705,6 +706,7 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
           id: "places-terminator-edge",
           type: "line",
           source: "places-terminator",
+          filter: ["==", ["get", "kind"], "terminator"],
           paint: { "line-color": TERMINATOR_STYLE.edge, "line-width": 1, "line-dasharray": [3, 2], "line-opacity": 0.7 },
         } as never, beneath);
       }

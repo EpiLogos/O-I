@@ -11,6 +11,7 @@
  *
  * Erasable TypeScript: loadable by Vite, the surface and `node --test`.
  */
+import { parseTimestamp } from "../../../../../../../src/techne/m0m5/timeline/scale";
 
 /** A subsolar point as the sky reading states it, in degrees. */
 export interface StatedSubsolar {
@@ -101,8 +102,10 @@ export function providerLabel(value: unknown): string {
  */
 export function windowInstant(window: { from: string | null; to: string | null } | null | undefined): string | null {
   if (!window) return null;
-  const from = window.from ? Date.parse(window.from) : Number.NaN;
-  const to = window.to ? Date.parse(window.to) : Number.NaN;
+  // Read through the time authority (BCE, signed six-digit and bare years exactly as the timeline reads them), never Date.parse.
+  const at = (value: string | null) => { if (!value) return Number.NaN; try { return parseTimestamp(value); } catch { return Number.NaN; } };
+  const from = at(window.from);
+  const to = at(window.to);
   if (Number.isFinite(from) && Number.isFinite(to)) return new Date((from + to) / 2).toISOString();
   if (Number.isFinite(from)) return new Date(from).toISOString();
   if (Number.isFinite(to)) return new Date(to).toISOString();
@@ -119,7 +122,11 @@ export function daylightBasis(instant: string | null): string {
 /** The `ql.sky-request/v1` epoch for an instant (UTC, seconds, no zone suffix); null means now. */
 export function skyRequestEpoch(instant: string | null, now: Date = new Date()): string {
   const at = instant === null ? now : new Date(instant);
-  return at.toISOString().slice(0, 19);
+  const iso = at.toISOString();
+  // The sky request's epoch is a four-digit-year civil instant; a window outside years 0000–9999 is refused by name, never
+  // sliced into a malformed epoch.
+  if (!/^\d{4}-/.test(iso)) throw new Error(`The sky producer reads epochs in years 0000–9999; this window's instant (${iso}) is outside them.`);
+  return iso.slice(0, 19);
 }
 
 /**
@@ -152,17 +159,26 @@ export function nightRing(subsolar: StatedSubsolar, step = 2): Array<[number, nu
 }
 
 /** The night side as a GeoJSON polygon feature. */
+/** The night side (a polygon, for the fill) and the terminator itself (the line, for the edge) as one collection: the edge
+ * is drawn from the great circle only, never from the polygon's closing edges along the ±180° seam and the pole. */
 export interface TerminatorFeature {
-  type: "Feature";
-  properties: { kind: "night" };
-  geometry: { type: "Polygon"; coordinates: Array<Array<[number, number]>> };
+  type: "FeatureCollection";
+  features: [
+    { type: "Feature"; properties: { kind: "night" }; geometry: { type: "Polygon"; coordinates: Array<Array<[number, number]>> } },
+    { type: "Feature"; properties: { kind: "terminator" }; geometry: { type: "LineString"; coordinates: Array<[number, number]> } },
+  ];
 }
 
-/** The night side as a GeoJSON polygon feature, for the renderer's source. */
+/** The night side and the terminator line, for the renderer's source. */
 export function terminatorFeature(subsolar: StatedSubsolar): TerminatorFeature {
+  const ring = nightRing(subsolar);
+  // The great-circle samples are the ring's first part, before the pole closing (two pole points and the repeat of the first).
+  const terminator = ring.slice(0, ring.length - 3);
   return {
-    type: "Feature",
-    properties: { kind: "night" },
-    geometry: { type: "Polygon", coordinates: [nightRing(subsolar)] },
+    type: "FeatureCollection",
+    features: [
+      { type: "Feature", properties: { kind: "night" }, geometry: { type: "Polygon", coordinates: [ring] } },
+      { type: "Feature", properties: { kind: "terminator" }, geometry: { type: "LineString", coordinates: terminator } },
+    ],
   };
 }

@@ -365,8 +365,8 @@
       "reason": "lane-4 T3/T6/T7/T29: map chrome \u2014 reset, atmosphere, attribution, stillness | lane-4 T11-T13: routes, hierarchy edges, provenance"
     },
     "packages/canvas/src/psychogeographic/renderer.ts": {
-      "adapted_sha256": "1718da47e3cef5dedde6633669b779415429915d43ae6bb7889094c2729a6bfb",
-      "reason": "lane-4 T1+T2+T10: pitch/bearing viewport, fly-to by facet precision, the precision marker grammar | lane-4 T3/T6/T7/T29: map chrome \u2014 reset, atmosphere, attribution, stillness | lane-4 T8+T9: relation layers + legend, regions as polygons | lane-4 T11-T13: routes, hierarchy edges, provenance | lane-4 T4/T5: basemap stack + terrain | lane-4 T17-T19: placemark authoring | lane review fixes 13 Oct | lane-4 T27-T28: terminator, ladder"
+      "adapted_sha256": "223eea2584ce69553177da27cca177983d59d22860f622802933c57cea8e6675",
+      "reason": "lane-4 T1+T2+T10: pitch/bearing viewport, fly-to by facet precision, the precision marker grammar | lane-4 T3/T6/T7/T29: map chrome \u2014 reset, atmosphere, attribution, stillness | lane-4 T8+T9: relation layers + legend, regions as polygons | lane-4 T11-T13: routes, hierarchy edges, provenance | lane-4 T4/T5: basemap stack + terrain | lane-4 T17-T19: placemark authoring | lane review fixes 13 Oct | lane-4 T27-T28: terminator, ladder | review-6: the terminator edge draws the great circle only"
     },
     "packages/schema/src/time.ts": {
       "upstream_sha256": "9107194ab14fcfaeca85499e7a88f71c06661cad824ed4ec89e28c87d7f9a9ea",
