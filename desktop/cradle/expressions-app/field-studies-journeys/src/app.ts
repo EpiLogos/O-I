@@ -96,7 +96,8 @@ import type {ConnectionBinding} from '../../../../../packages/oi-design-system/e
 import type {KernelConversion,KernelSceneBody} from './kernelDocumentBridge.js';
 import {installSceneBodies} from './sceneBodies.js';
 import {prepareNativeSceneBody} from './nativeSceneBody.js';
-import {nestedBodyFor,placeNestedChange,resizeNestedChange,removeNestedChange,nextNestedDepth,nestedEvaluation,nestedWindowVerdict,nestedControlsHTML,nestedSceneClass,openNestedPicker,NESTED_DEFAULT_DEPTH,NESTED_GRAPH_LIMIT,type NestedBinding,type NestedDocumentLike,type NestedGraph} from './nestedOccurrence.js';
+import {nestedBodyFor,placeNestedChange,setNestingDepthChange,removeNestedChange,nextNestedDepth,nestedEvaluation,nestedWindowVerdict,nestedControlsHTML,nestedSceneClass,nestedFrameAt,nestedNotice,isNestedBody,openNestedPicker,NESTED_DEFAULT_DEPTH,type NestedBinding} from './nestedOccurrence.js';
+import {kernelDocumentToJourney,withNestedVerdicts} from './kernelDocumentBridge.js';
 import {openScenePortal} from './scenePortal.js';
 import {installActPanel} from './actPanel.js';
 import {presentAdoption,followedPanels} from './nativeFollow.js';
@@ -1215,25 +1216,61 @@ function deleteEntities(){if(selected.some(id=>blueprintMember(scene(),id))){toa
 /** E02b/E03: a scene is moved by its ref; the guarded model op refuses any move that would change a Scene's content. */
 function reorderScene(sceneId:string,to:number){if(to<0||to>=store.document.scenes.length)return;const currentId=scene().id;changed(()=>{moveScene(store.document,sceneId,to);sceneIndex=store.document.scenes.findIndex(s=>s.id===currentId);},true,'Reorder scenes');}
 // E14 nested expression occurrence (lane-3 TARGET-SET E14). The occurrence is the
-// kernel's expression_ref Scene body; each write is one native edit. The Library
-// read supplies the choices and the bridge supplies the verdict; nothing is
-// stored beside the kernel.
+// kernel's expression_ref Scene body; each write is one native edit. The nested
+// documents are read through the workspace's kernel read (nativeWorkspace.readNested),
+// the verdict comes from the bridge, and playback is the nested Expression's own
+// Scenes at their own times through this same frame path. Nothing is stored beside
+// the kernel.
 function nestedBodyOf(sceneId:string):unknown{return nativeWorkspace?.nativeView()?.bindings[sceneId]?.body??null;}
 function nestedBindingOf(sceneId:string):NestedBinding|null{return nativeWorkspace?.nativeView()?.bindings[sceneId]?.nested??null;}
-/** The saved Expressions an occurrence may read, depth first from its subject,
- * bounded. A document that cannot be read stays absent, so the evaluation says
- * unread instead of guessing. */
-async function readNestedGraph(root:string):Promise<NestedGraph>{
- const graph:NestedGraph=new Map(),queue=[root];
- while(queue.length&&graph.size<NESTED_GRAPH_LIMIT){
-  const ref=queue.shift()!;
-  if(graph.has(ref))continue;
-  let doc:NestedDocumentLike;
-  try{doc=await readKernelExpression(ref) as NestedDocumentLike;}catch{continue;}
-  graph.set(ref,doc);
-  for(const s of doc.scenes??[]){const inner=s?.body;if(inner&&inner.carrier==='expression_ref'&&typeof inner.subject_ref==='string')queue.push(inner.subject_ref);}
+/** The nested Expression converted exactly as it is converted when it is open on
+ * its own. The conversion is memoised per document object; its verdicts are
+ * derived from the workspace's current graph on each use. */
+const nestedConversions=new WeakMap<object,KernelConversion|null>();
+function nestedConversionOf(ref:string):KernelConversion|null{
+ const doc=nativeWorkspace?.nestedDocument(ref);
+ if(!doc)return null;
+ let base=nestedConversions.get(doc);
+ if(base===undefined){try{base=kernelDocumentToJourney(doc);}catch{base=null;}nestedConversions.set(doc,base);}
+ return base?withNestedVerdicts(base,nativeWorkspace!.nestedGraph()):null;
+}
+type NestedPlayback={kind:'scene';scene:Scene;local:number;revision:number}|{kind:'paper';notice:string|null};
+/** Playback of an occurrence at host-local time `t`. The nested Expression plays at
+ * its own time through its own Scenes; an occurrence nested inside it plays the
+ * same way, at the depth its own bound admits. */
+function nestedPlayback(subjectRef:string,verdict:NestedBinding|null,hostDuration:number,t:number):NestedPlayback{
+ const conversion=nestedConversionOf(subjectRef);
+ const durations=conversion?.journey.scenes.map(s=>s.duration)??[];
+ const frame=nestedFrameAt(t,hostDuration,durations,conversion?verdict:{subject_ref:subjectRef,max_depth:0,state:'unread',reason:`Nested expression ${subjectRef} is not read yet.`});
+ if(frame.kind!=='scene')return {kind:'paper',notice:nestedNotice(frame)};
+ const scene=conversion!.journey.scenes[frame.sceneIndex],inner=conversion!.bindings[scene.id];
+ if(inner&&isNestedBody(inner.body))return nestedPlayback(inner.body.subject_ref,inner.nested??null,scene.duration,frame.local);
+ return {kind:'scene',scene,local:frame.local,revision:nativeWorkspace?.nestedDocument(subjectRef)?.revision??0};
+}
+function setNestedNotice(text:string|null):void{
+ let el=document.getElementById('nested-stage-notice');
+ if(!el){el=document.createElement('p');el.id='nested-stage-notice';el.setAttribute('role','status');el.hidden=true;document.body.append(el);}
+ if(el.hidden===!text&&el.textContent===(text??''))return;
+ el.textContent=text??'';el.hidden=!text;
+}
+/** The frame for a host Scene whose body is a nested occurrence, or null for any
+ * other Scene. The engine renders the nested Scene it is handed, exactly as it
+ * renders an open Expression; past the nested content the host's paper stands. */
+function nestedFrameFor(base:Scene,delta:number):EngineFrame|null{
+ const binding=nativeWorkspace?.nativeView()?.bindings[base.id];
+ if(!binding||!isNestedBody(binding.body)){setNestedNotice(null);return null;}
+ const playback=nestedPlayback(binding.body.subject_ref,binding.nested??null,base.duration,sceneElapsed);
+ let scene:Scene,revision:number,params:Readonly<Record<string,number>>;
+ if(playback.kind==='scene'){
+  const tracked=playback.scene.propertyTracks?.length?evaluateTracks(playback.scene,playback.local):playback.scene;
+  scene=tracked;params=evaluateParameters(tracked,playback.local);
+  revision=playback.revision*1e7+(tracked!==playback.scene?1+Math.floor(playback.local*60):0);
+  setNestedNotice(null);
+ }else{
+  scene={...base,entities:[]};params=base.field.params;revision=0;
+  setNestedNotice(playback.notice);
  }
- return graph;
+ return {scene,scaffold:'off',authoringRevision:revision,simTime,delta,params,camera,pointer,selectedIds:[]};
 }
 async function placeExpressionIntoScene():Promise<void>{
  const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
@@ -1247,19 +1284,20 @@ async function placeExpressionIntoScene():Promise<void>{
   if(scene().id!==sceneId||nativeWorkspace?.nativeView()?.document.expression_ref!==host){toast('The Scene changed while you chose. Place the expression again.',8000);return;}
   try{
    const body=nestedBodyFor(host,{expression_ref:pick.expression_ref,revision:pick.revision,title:pick.title},NESTED_DEFAULT_DEPTH);
-   const verdict=nestedEvaluation(host,body,await readNestedGraph(pick.expression_ref));
+   await nativeWorkspace!.readNested(pick.expression_ref,NESTED_DEFAULT_DEPTH);
+   const verdict=nestedEvaluation(host,body,nativeWorkspace!.nestedGraph());
    if(verdict.state!=='ready'){toast(`Not placed: ${verdict.reason}`,8000);return;}
    await nativeWorkspace!.edit([placeNestedChange(sceneRef,body)]);
-   toast(`${pick.title||pick.expression_ref} is placed in this Scene at depth ${NESTED_DEFAULT_DEPTH}, under its own expression ref.`,8000);
+   toast(`${pick.title||pick.expression_ref} is placed in this Scene at nesting depth ${NESTED_DEFAULT_DEPTH}, under its own expression ref.`,8000);
   }catch(cause){toast(`Not placed: ${(cause as Error).message}`,8000);}
  });
 }
-async function resizeNestedOccurrence():Promise<void>{
+async function changeNestingDepth():Promise<void>{
  const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
- if(!view||!binding||binding.body?.carrier!=='expression_ref'){toast('This Scene holds no nested expression to resize.');return;}
+ if(!view||!binding||binding.body?.carrier!=='expression_ref'){toast('This Scene holds no nested expression, so it has no nesting depth.');return;}
  const depth=nextNestedDepth(binding.body.recursion?.max_depth??NESTED_DEFAULT_DEPTH);
- try{await nativeWorkspace!.edit([resizeNestedChange(binding.scene_ref,binding.body,depth)]);toast(`Nested occurrence depth is now ${depth}.`);}
- catch(cause){toast(`Not resized: ${(cause as Error).message}`,8000);}
+ try{await nativeWorkspace!.edit([setNestingDepthChange(binding.scene_ref,binding.body,depth)]);toast(`Nesting depth is now ${depth}. Timing is still the Scene's own duration.`);}
+ catch(cause){toast(`Nesting depth not changed: ${(cause as Error).message}`,8000);}
 }
 async function removeNestedOccurrence():Promise<void>{
  const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
@@ -1370,7 +1408,7 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
   toast('Scene body cleared.');break;
  }
  case 'place-expression':void placeExpressionIntoScene();break;
- case 'resize-nested':void resizeNestedOccurrence();break;
+ case 'nesting-depth':void changeNestingDepth();break;
  case 'remove-nested':void removeNestedOccurrence();break;
  case 'scene-trigger-add':{
   const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
@@ -1697,7 +1735,7 @@ function resize(){width=innerWidth;height=innerHeight;engine.resize(width,height
 // Live parameter channel (stageCommands.ts 'live'): transient drag values and automation holds, runtime only. A Scene change ends both.
 const liveOverrides=new LiveOverrides();let liveSceneId='';
 function syncLiveScene(id:string){if(liveSceneId===id)return;liveSceneId=id;const held=liveOverrides.resume();const dragged=liveOverrides.releaseDrags();if(held||dragged)queueMicrotask(announceHostState);}
-function frameData(delta:number):EngineFrame{const base=activeScene();syncLiveScene(base.id);
+function frameData(delta:number):EngineFrame{const base=activeScene();syncLiveScene(base.id);const nestedFrame=nestedFrameFor(base,delta);if(nestedFrame)return nestedFrame;
  // Recorded takes override base values while the playhead moves; the revision
  // term follows the playhead so the engine rebuilds only when authored content
  // actually changes instead of hashing the whole document every frame.
@@ -2061,7 +2099,7 @@ const mastheadCentre=document.createElement('div');mastheadCentre.className='mas
 const workspaceCluster=masthead.querySelector('.workspace-cluster')!;workspaceCluster.replaceWith(mastheadCentre);
 const lensStudio=installLensStudio({activate:activateInstrument},mastheadCentre);
 mastheadCentre.append(workspaceCluster);
-nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!awaitingNativeBoot||store.revision!==0,snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision}),followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
+nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!awaitingNativeBoot||store.revision!==0,snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,refresh:()=>{needsFrame=true;renderAll();},summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision}),followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
 const retainedEditor=createRetainedNativeEditor({
  store,sceneId:()=>scene().id,nativeView:()=>nativeWorkspace?.nativeView(),
  selection:()=>({entity_ids:[...selected],step_id:scene().entities.find(e=>e.id===selected[0])?.sequence.steps[stepIndex]?.id??null}),

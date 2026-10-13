@@ -38,7 +38,7 @@ test('the placed body is the kernel expression_ref SceneBody, field for field', 
 test('place, resize and remove are the kernel scene body edits; the subject does not change on resize', () => {
  const body=M.nestedBodyFor(HOST,{expression_ref:SUB,revision:7},1);
  assert.deepEqual(M.placeNestedChange(HOST_SCENE,body),{change:'scene_body_set',scene_ref:HOST_SCENE,body});
- const resized=M.resizeNestedChange(HOST_SCENE,body,3);
+ const resized=M.setNestingDepthChange(HOST_SCENE,body,3);
  assert.equal(resized.body.recursion.max_depth,3);
  assert.equal(resized.body.subject_ref,SUB);
  assert.equal(body.recursion.max_depth,1,'resize returns a new body; the placed one is untouched');
@@ -95,12 +95,12 @@ test('the Scene page refuses an occurrence when it has no free member slot', () 
 test('resize changes only the admitted depth of a native body, and refuses a depth the kernel does not admit', () => {
  // A body as the kernel returns it (native reading shape), not the app-built one.
  const native={carrier:'expression_ref',subject_ref:SUB,native_owner:'oi',reading:{ref:SUB,revision:'7',availability:'available'},provenance:[],actions:[],presentation:'inline',capability:{state:'renderable'},span:null,recursion:{host_expression_ref:HOST,max_depth:1}};
- const out=M.resizeNestedChange(HOST_SCENE,native,4);
+ const out=M.setNestingDepthChange(HOST_SCENE,native,4);
  assert.equal(out.body.recursion.max_depth,4);
  assert.equal(out.body.reading.availability,'available');
  assert.equal(native.recursion.max_depth,1);
- assert.throws(()=>M.resizeNestedChange(HOST_SCENE,native,0),/Nesting depth must be 1 to 4/);
- assert.throws(()=>M.resizeNestedChange(HOST_SCENE,{...native,recursion:null},2),/no nested expression to resize/);
+ assert.throws(()=>M.setNestingDepthChange(HOST_SCENE,native,0),/Nesting depth must be 1 to 4/);
+ assert.throws(()=>M.setNestingDepthChange(HOST_SCENE,{...native,recursion:null},2),/no nested expression, so it has no nesting depth/);
 });
 
 test('an unread verdict is not shown as a fault; a refusal is', () => {
@@ -120,4 +120,40 @@ test('the presentation keeps its own ref and tokens-only classes, and escapes ti
  assert.match(html,/&lt;b&gt;no&lt;\/b&gt;/);
  assert.doesNotMatch(html,/<b>no<\/b>/);
  assert.match(M.nestedControlsHTML(null),/data-action="place-expression"/);
+});
+
+// Playback (E14): host-local time onto the nested Expression, clipping, the honest
+// notice, and the read plan's depth gate. Expected values are hand-computed.
+const LIVE={subject_ref:SUB,max_depth:2,state:'ready',depth:1,members:0};
+test('playback: host time maps to nested Scene and local time; a boundary starts the next Scene', () => {
+ assert.deepEqual(M.nestedFrameAt(0,10,[2,3],LIVE),{kind:'scene',sceneIndex:0,local:0});
+ assert.deepEqual(M.nestedFrameAt(1.5,10,[2,3],LIVE),{kind:'scene',sceneIndex:0,local:1.5});
+ assert.deepEqual(M.nestedFrameAt(2,10,[2,3],LIVE),{kind:'scene',sceneIndex:1,local:0});
+ assert.deepEqual(M.nestedFrameAt(4.5,10,[2,3],LIVE),{kind:'scene',sceneIndex:1,local:2.5});
+ assert.deepEqual(M.nestedFrameAt(-1,10,[2,3],LIVE),{kind:'scene',sceneIndex:0,local:0});
+});
+test('playback: zero-length Scenes have no span', () => {
+ assert.deepEqual(M.nestedFrameAt(0,10,[0,2,0,1],LIVE),{kind:'scene',sceneIndex:1,local:0});
+ assert.deepEqual(M.nestedFrameAt(2,10,[0,2,0,1],LIVE),{kind:'scene',sceneIndex:3,local:0});
+});
+test('playback: clipped at the host Scene duration; past the nested end the occurrence shows nothing', () => {
+ assert.deepEqual(M.nestedFrameAt(4,4,[2,3],LIVE),{kind:'clipped'});
+ assert.deepEqual(M.nestedFrameAt(2,6,[2],LIVE),{kind:'end'});
+ assert.deepEqual(M.nestedFrameAt(3,6,[2],LIVE),{kind:'end'});
+});
+test('playback: unread and refused are notices, never a guess', () => {
+ const unread={subject_ref:SUB,max_depth:1,state:'unread',reason:'not read'};
+ assert.deepEqual(M.nestedFrameAt(0,5,[2],unread),{kind:'unread',reason:'not read'});
+ assert.equal(M.nestedNotice(M.nestedFrameAt(0,5,[2],unread)),'not read');
+ assert.equal(M.nestedNotice({kind:'end'}),null);
+});
+test('depth gate: the read plan stops at the placement bound', () => {
+ const A='expression:a',B='expression:b',C='expression:c';
+ const doc=(ref,child)=>({expression_ref:ref,scenes:[{scene_ref:ref+':scene:main',entity_refs:[],body:{carrier:'expression_ref',subject_ref:child}}]});
+ const g=new Map([[A,doc(A,B)]]);
+ assert.deepEqual(M.nestedReadPlan(g,A,1),[]);
+ assert.deepEqual(M.nestedReadPlan(g,A,2),[B]);
+ g.set(B,doc(B,C));
+ assert.deepEqual(M.nestedReadPlan(g,A,2),[]);
+ assert.deepEqual(M.nestedReadPlan(g,A,3),[C]);
 });

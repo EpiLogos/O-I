@@ -39,6 +39,7 @@ export interface NestedBinding {subject_ref:string;max_depth:number;state:'ready
 /** A kernel document as far as nesting needs it. */
 export interface NestedDocumentLike {
  expression_ref:string;
+ revision?:number;
  scenes?:{scene_ref?:string;entity_refs?:unknown[];body?:{carrier?:unknown;subject_ref?:unknown}|null}[];
  entities?:Record<string,unknown>;
 }
@@ -74,19 +75,84 @@ export type NestedSceneClear={change:'scene_body_clear';scene_ref:string};
 export function placeNestedChange(sceneRef:string,body:NestedBody):NestedSceneSet{
  return {change:'scene_body_set',scene_ref:sceneRef,body};
 }
-/** Resize: the same occurrence (same subject, same reading) with a new admitted
- * depth. Takes the body as the kernel returned it, so a native body resizes as is. */
-export function resizeNestedChange<B extends {subject_ref:string;recursion:{host_expression_ref:string;max_depth:number}|null}>(sceneRef:string,current:B,maxDepth:number):{change:'scene_body_set';scene_ref:string;body:B}{
+/** Nesting depth: the same occurrence (same subject, same reading) with a new
+ * admitted depth (the kernel's RecursionBound). Timing is not touched: the
+ * occurrence's length is the host Scene's own duration. Takes the body as the
+ * kernel returned it, so a native body changes depth as is. */
+export function setNestingDepthChange<B extends {subject_ref:string;recursion:{host_expression_ref:string;max_depth:number}|null}>(sceneRef:string,current:B,maxDepth:number):{change:'scene_body_set';scene_ref:string;body:B}{
  if(!Number.isInteger(maxDepth)||maxDepth<NESTED_DEPTH_MIN||maxDepth>NESTED_DEPTH_MAX)
   throw new Error(`Nesting depth must be ${NESTED_DEPTH_MIN} to ${NESTED_DEPTH_MAX}; the kernel admits no other depth.`);
- if(!current.recursion)throw new Error('This Scene holds no nested expression to resize.');
+ if(!current.recursion)throw new Error('This Scene holds no nested expression, so it has no nesting depth.');
  return {change:'scene_body_set',scene_ref:sceneRef,body:{...current,recursion:{...current.recursion,max_depth:maxDepth}}};
+}
+
+/** The kernel documents still to read for an occurrence rooted at `root`, and
+ * no deeper than the placement's own bound. Level 1 is the subject; a document
+ * at level L names its nested Scene bodies at level L+1, so a document past
+ * `maxDepth` is never read. Documents already in `graph` are walked, not read. */
+export function nestedReadPlan(graph:NestedGraph,root:string,maxDepth:number,skip:ReadonlySet<string>=new Set()):string[]{
+ const plan:string[]=[],seen=new Set<string>();
+ let frontier=[root];
+ for(let level=1;level<=maxDepth&&frontier.length;level++){
+  const next:string[]=[];
+  for(const ref of frontier){
+   if(seen.has(ref))continue;
+   seen.add(ref);
+   const doc=graph.get(ref);
+   if(!doc){if(!skip.has(ref)&&plan.length+graph.size<NESTED_GRAPH_LIMIT)plan.push(ref);continue;}
+   for(const scene of doc.scenes??[]){const inner=scene?.body;if(inner&&inner.carrier==='expression_ref'&&typeof inner.subject_ref==='string')next.push(inner.subject_ref);}
+  }
+  frontier=next;
+ }
+ return plan;
+}
+
+// ——— playback: a host Scene whose body is a nested occurrence ———
+
+/** What the host frame shows at host-local time `t`. */
+export type NestedFrame=
+ |{kind:'scene';sceneIndex:number;local:number}
+ |{kind:'end'}
+ |{kind:'clipped'}
+ |{kind:'unread';reason:string}
+ |{kind:'refused';reason:string};
+
+/** Map a host-local time onto the nested Expression, the way a Blender meta-strip
+ * plays its contents: the nested Expression runs at its own time `t` from its
+ * first Scene. The occurrence is clipped at the host Scene's duration. Past the
+ * end of the nested content it shows nothing and the host's paper stands: a
+ * strip's contents end at their own length in Blender, and nothing is drawn
+ * from the strip beyond that. Zero-length Scenes have no span, and a boundary
+ * belongs to the Scene it starts, as in `sceneAtJourneyTime`. An unread or
+ * refused verdict is reported as such, never guessed past. */
+export function nestedFrameAt(hostLocal:number,hostDuration:number,nestedDurations:readonly number[],verdict:NestedBinding|null):NestedFrame{
+ if(!verdict)return {kind:'refused',reason:'This Scene holds no nested expression.'};
+ if(verdict.state==='refused')return {kind:'refused',reason:verdict.reason??'The occurrence is refused.'};
+ if(verdict.state==='unread')return {kind:'unread',reason:verdict.reason??`Nested expression ${verdict.subject_ref} is not read yet.`};
+ const t=Math.max(0,hostLocal);
+ if(!(t<hostDuration))return {kind:'clipped'};
+ let total=0;
+ for(const d of nestedDurations)if(d>0)total+=d;
+ if(!(t<total))return {kind:'end'};
+ let start=0;
+ for(let index=0;index<nestedDurations.length;index++){
+  const d=nestedDurations[index];
+  if(!(d>0))continue;
+  if(t<start+d)return {kind:'scene',sceneIndex:index,local:t-start};
+  start+=d;
+ }
+ return {kind:'end'};
+}
+
+/** The honest notice a frame carries when the occurrence cannot be drawn. */
+export function nestedNotice(frame:NestedFrame):string|null{
+ return frame.kind==='unread'||frame.kind==='refused'?frame.reason:null;
 }
 /** Remove: clears the Scene body that carried the occurrence. */
 export function removeNestedChange(sceneRef:string):NestedSceneClear{
  return {change:'scene_body_clear',scene_ref:sceneRef};
 }
-/** The depth a resize affordance steps to: 1 → 2 → 3 → 4 → 1. */
+/** The nesting depth the depth control steps to: 1 → 2 → 3 → 4 → 1. */
 export function nextNestedDepth(current:number):number{
  return current>=NESTED_DEPTH_MAX||!Number.isInteger(current)||current<NESTED_DEPTH_MIN?NESTED_DEPTH_MIN:current+1;
 }
@@ -159,7 +225,7 @@ export function nestedControlsHTML(body:unknown,binding?:NestedBinding|null):str
  // Only a refusal is shown. An unread verdict is the live state of the page
  // (the Library graph is read at placement) and is not a fault to display.
  const state=binding?.state==='refused'?`<p class="nested-refusal" role="status">${esc(binding.reason??'Refused.')}</p>`:'';
- return `${place}<div class="nested-controls" role="group" aria-label="Nested expression occurrence"><span class="nested-chip"><span class="nested-mark" aria-hidden="true"></span>Nested · ${title}</span><button data-action="resize-nested" aria-label="Change nesting depth, currently ${depth}">Depth ${depth}</button><button data-action="remove-nested" aria-label="Remove nested occurrence">Remove</button>${state}</div>`;
+ return `${place}<div class="nested-controls" role="group" aria-label="Nested expression occurrence"><span class="nested-chip"><span class="nested-mark" aria-hidden="true"></span>Nested · ${title}</span><button data-action="nesting-depth" aria-label="Nesting depth ${depth}; choose the next admitted depth">Nesting depth ${depth}</button><button data-action="remove-nested" aria-label="Remove nested occurrence">Remove</button>${state}</div>`;
 }
 
 export interface PickerEntry {expression_ref:string;title:string;revision:number}
