@@ -187,7 +187,8 @@
     "packages/canvas/src/canvas/CanvasGuides.tsx",
     "packages/canvas/src/canvas/ZoomReadout.tsx",
     "packages/canvas/src/psychogeographic/basemapSources.ts",
-    "packages/canvas/src/psychogeographic/basemapLayers.ts"
+    "packages/canvas/src/psychogeographic/basemapLayers.ts",
+    "packages/canvas/src/psychogeographic/placeAuthoring.ts"
   ],
   "patches": {
     "packages/canvas/src/CanvasView.tsx": {
@@ -242,8 +243,8 @@
     },
     "packages/canvas/src/psychogeographic/PsychogeographicMap.tsx": {
       "upstream_sha256": "55b9856e3106912eb7b6f8f6a9fb60e6b40e8852ef8126c0eb82f75a6bc25af7",
-      "adapted_sha256": "d1e6f03bfdbf2c569daaedc29f9a766dcef2827f78095a098a9f9dfad36a8c65",
-      "reason": "Expose rejected owner/context reads with retry; hosted offlineOnly capability omits live-network controls and refuses browser-policy activation. Optional host toolbar portal exposes the same Globe/Flat/Zoom to fit actions above the host HUD without another renderer or state store. Hosted selected-place context uses the existing native inspector with explicit close and selection clear. Hosted location details are explicitly toggled in native HUD; selection remains available when the inspector closes. | lane-4 T1+T2+T10: pitch/bearing viewport, fly-to by facet precision, the precision marker grammar | lane-4 T3/T6/T7/T29: map chrome \u2014 reset, atmosphere, attribution, stillness | lane-4 T8+T9: relation layers + legend, regions as polygons | lane-4 T11-T13: routes, hierarchy edges, provenance | lane-4 T4/T5: basemap stack + terrain | lane-4 T4b copy: the offline stance reads as the owner's switch"
+      "adapted_sha256": "2d39728514e3eccc8092c504ddac934a868f851c32334fe048c453dc1eb9a7ee",
+      "reason": "Expose rejected owner/context reads with retry; hosted offlineOnly capability omits live-network controls and refuses browser-policy activation. Optional host toolbar portal exposes the same Globe/Flat/Zoom to fit actions above the host HUD without another renderer or state store. Hosted selected-place context uses the existing native inspector with explicit close and selection clear. Hosted location details are explicitly toggled in native HUD; selection remains available when the inspector closes. | lane-4 T1+T2+T10: pitch/bearing viewport, fly-to by facet precision, the precision marker grammar | lane-4 T3/T6/T7/T29: map chrome \u2014 reset, atmosphere, attribution, stillness | lane-4 T8+T9: relation layers + legend, regions as polygons | lane-4 T11-T13: routes, hierarchy edges, provenance | lane-4 T4/T5: basemap stack + terrain | lane-4 T4b copy: the offline stance reads as the owner's switch | lane-4 T17-T19: placemark authoring"
     },
     "packages/canvas/src/streetview/StreetViewSurface.tsx": {
       "upstream_sha256": "0c77fb9bfb11a49f5683ddc38c5ee6f152a5e08c859a21c712064f8dd077a7d2",
@@ -356,8 +357,8 @@
       "reason": "lane-4 T3/T6/T7/T29: map chrome \u2014 reset, atmosphere, attribution, stillness | lane-4 T11-T13: routes, hierarchy edges, provenance"
     },
     "packages/canvas/src/psychogeographic/renderer.ts": {
-      "adapted_sha256": "6405ccc75075ebcdcaa3d5ddeb384b07d7e8117cef12ae41e46c0b5721ecf6ce",
-      "reason": "lane-4 T1+T2+T10: pitch/bearing viewport, fly-to by facet precision, the precision marker grammar | lane-4 T3/T6/T7/T29: map chrome \u2014 reset, atmosphere, attribution, stillness | lane-4 T8+T9: relation layers + legend, regions as polygons | lane-4 T11-T13: routes, hierarchy edges, provenance | lane-4 T4/T5: basemap stack + terrain"
+      "adapted_sha256": "128bc34c5bb5dd9529b41212e30a42eb6a654f6a939478e2308fca0c916ae2fb",
+      "reason": "lane-4 T1+T2+T10: pitch/bearing viewport, fly-to by facet precision, the precision marker grammar | lane-4 T3/T6/T7/T29: map chrome \u2014 reset, atmosphere, attribution, stillness | lane-4 T8+T9: relation layers + legend, regions as polygons | lane-4 T11-T13: routes, hierarchy edges, provenance | lane-4 T4/T5: basemap stack + terrain | lane-4 T17-T19: placemark authoring"
     },
     "packages/schema/src/time.ts": {
       "upstream_sha256": "9107194ab14fcfaeca85499e7a88f71c06661cad824ed4ec89e28c87d7f9a9ea",

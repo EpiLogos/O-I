@@ -38,6 +38,14 @@ import {
 import type { PlaceRegion } from "./placeLayers";
 import type { HierarchyEdgeDraw, PlaceRouteDraw } from "./placeRoutes";
 import type { BasemapRenderPlan } from "./basemapLayers";
+import {
+  dragEligibility,
+  longPressFires,
+  LONG_PRESS_MS,
+  LONG_PRESS_SLOP_PX,
+  type PlaceContextEvent,
+  type PlaceCoordinate,
+} from "./placeAuthoring";
 
 /** The camera as the map reports it. `pitch` and `bearing` are degrees and are
  * absent in records saved before T1; they read as 0. */
@@ -127,6 +135,12 @@ export interface MapSurfaceRenderer {
   setStopClickHandler?(handler: (sceneId: string) => void): void;
   setPlaceClickHandler?(handler: (graphNodeId: string) => void): void;
   setPlaceDoubleClickHandler?(handler: (graphNodeId: string) => void): void;
+  /** Lane-4 T17: a right-click or a one-finger long-press on the map or on a placed marker. */
+  setPlaceContextHandler?(handler: (event: PlaceContextEvent) => void): void;
+  /** Lane-4 T19: a draggable marker (approximate or region) was dropped; `from` is where the reading places it. */
+  setPlaceDragHandler?(handler: (graphNodeId: string, from: PlaceCoordinate, to: PlaceCoordinate) => void): void;
+  /** Lane-4 T19: returns a marker to the coordinate the reading gives it (after a proposal is cancelled or handed on). */
+  returnPlaceMarker?(graphNodeId: string): void;
   setLaneClickHandler?(handler: (laneId: string) => void): void;
   onViewChange?(handler: (view: MapViewState) => void): void;
   destroy(): void;
@@ -164,6 +178,16 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
   let basemapHeld = new Map<string, { key: string; layerId: string | null }>();
   let basemapErrorHandler: ((key: string, message: string) => void) | null = null;
   let settledHandler: (() => void) | null = null;
+  // Lane-4 T17/T19: the menu and drag handlers, each place marker's own maplibre marker with the
+  // coordinate the reading gives it, and the moment a drag ended (so its click is not a click).
+  let placeContextHandler: ((event: PlaceContextEvent) => void) | null = null;
+  let placeDragHandler: ((graphNodeId: string, from: PlaceCoordinate, to: PlaceCoordinate) => void) | null = null;
+  let placeMarkerHomes = new Map<string, { marker: InstanceType<typeof maplibre.Marker>; latitude: number; longitude: number }>();
+  let lastPlaceDragEnd = 0;
+  // A long-press that opened the menu is followed by a click on touch; that click is swallowed.
+  let swallowClickUntil = 0;
+  interface PressState { timer: ReturnType<typeof setTimeout>; x: number; y: number; moved: number; target: EventTarget | null }
+  let press: PressState | null = null;
 
   function emitViewChange(): void {
     if (!map || !viewChangeHandler) return;
@@ -181,6 +205,7 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
     for (const marker of htmlMarkers) marker.remove();
     htmlMarkers = [];
     placeElements = new Map();
+    placeMarkerHomes = new Map();
     pulseAnimation = null;
   }
 
@@ -283,6 +308,51 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
         if (held && basemapErrorHandler) basemapErrorHandler(held.key, cause?.message ?? String(event.error));
       });
       map.on("idle", () => settledHandler?.());
+      // Lane-4 T17: the menu a right-click or a one-finger long-press asks for. The point is
+      // unprojected from the container, so an empty-map menu carries the coordinate it was asked at.
+      const emitPlaceContext = (clientX: number, clientY: number, target: EventTarget | null): void => {
+        if (!map || !placeContextHandler) return;
+        const rect = map.getContainer().getBoundingClientRect();
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+        const at = map.unproject([x, y]);
+        const markerElement = target instanceof Element ? target.closest<HTMLElement>(".places-globe-marker") : null;
+        placeContextHandler({ graphNodeId: markerElement?.dataset.graphNodeId ?? null, latitude: at.lat, longitude: at.lng, x, y });
+      };
+      el.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+        emitPlaceContext(event.clientX, event.clientY, event.target);
+      });
+      const cancelPress = (): void => {
+        if (press) clearTimeout(press.timer);
+        press = null;
+      };
+      el.addEventListener("touchstart", (event) => {
+        cancelPress();
+        if (event.touches.length !== 1) return;
+        const touch = event.touches[0];
+        const started = { x: touch.clientX, y: touch.clientY, moved: 0, target: event.target };
+        press = {
+          ...started,
+          timer: setTimeout(() => {
+            const held = press;
+            press = null;
+            // The timer is the hold itself; the only test left is that the touch did not travel.
+            if (!held || !longPressFires(LONG_PRESS_MS, held.moved)) return;
+            swallowClickUntil = performance.now() + 400;
+            emitPlaceContext(held.x, held.y, held.target);
+          }, LONG_PRESS_MS),
+        };
+      }, { passive: true });
+      el.addEventListener("touchmove", (event) => {
+        if (!press) return;
+        if (event.touches.length !== 1) { cancelPress(); return; }
+        const touch = event.touches[0];
+        press.moved = Math.max(press.moved, Math.hypot(touch.clientX - press.x, touch.clientY - press.y));
+        if (press.moved > LONG_PRESS_SLOP_PX) cancelPress();
+      }, { passive: true });
+      el.addEventListener("touchend", cancelPress, { passive: true });
+      el.addEventListener("touchcancel", cancelPress, { passive: true });
       await waitForStyleLoad(map);
       if (projection === "globe") {
         map.setSky(skyForProjection("globe") as never);
@@ -346,7 +416,12 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
         element.dataset.precision = place.precision;
         element.dataset.markerKind = style.kind;
         element.dataset.entityType = place.entityType;
-        element.title = style.uncertainty ? `${place.title} — ${style.note}` : place.title;
+        element.dataset.graphNodeId = place.graphNodeId;
+        // Lane-4 T19: only an approximate or region point drags; an exact fix shows why in its title.
+        const eligibility = dragEligibility(place.precision, "point");
+        const base = style.uncertainty ? `${place.title} — ${style.note}` : place.title;
+        element.dataset.draggable = eligibility.ok ? "true" : "false";
+        element.title = eligibility.ok ? `${base} — drag to propose a new position` : `${base} — ${eligibility.reason}`;
         element.setAttribute("aria-label", `Open ${place.title}`);
         Object.assign(element.style, {
           position: "absolute",
@@ -358,7 +433,7 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
           border: style.border,
           background: style.background,
           boxShadow: style.boxShadow,
-          cursor: "pointer",
+          cursor: eligibility.ok ? "grab" : place.precision === "exact" ? "not-allowed" : "pointer",
           padding: "0",
         });
         anchor.append(element);
@@ -385,6 +460,9 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
 
         element.addEventListener("click", (event) => {
           event.stopPropagation();
+          // A drop is not a selection, and the click a long-press leaves behind is not one either.
+          const now = performance.now();
+          if (now - lastPlaceDragEnd < 300 || now < swallowClickUntil) return;
           placeClickHandler?.(place.graphNodeId);
         });
         element.addEventListener("dblclick", (event) => {
@@ -392,11 +470,29 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
           event.stopPropagation();
           placeDoubleClickHandler?.(place.graphNodeId);
         });
-        htmlMarkers.push(
-          new maplibre.Marker({ element: anchor, anchor: "center" })
-            .setLngLat([plan.longitude, plan.latitude])
-            .addTo(map),
-        );
+        // Lane-4 T19: a draggable marker moves under the pointer and reports where it was dropped.
+        // The marker stays where it was dropped until the proposal is applied or cancelled; the
+        // reading (and the marker's home) is what it returns to.
+        const marker = new maplibre.Marker({ element: anchor, anchor: "center", draggable: eligibility.ok })
+          .setLngLat([plan.longitude, plan.latitude])
+          .addTo(map);
+        if (eligibility.ok) {
+          marker.on("dragstart", () => {
+            element.style.cursor = "grabbing";
+          });
+          marker.on("dragend", () => {
+            element.style.cursor = "grab";
+            lastPlaceDragEnd = performance.now();
+            const dropped = marker.getLngLat();
+            placeDragHandler?.(
+              place.graphNodeId,
+              { latitude: plan.latitude, longitude: plan.longitude },
+              { latitude: dropped.lat, longitude: dropped.lng },
+            );
+          });
+        }
+        htmlMarkers.push(marker);
+        placeMarkerHomes.set(place.graphNodeId, { marker, latitude: plan.latitude, longitude: plan.longitude });
       }
       // Markers are rebuilt on every draw; a flight still travelling re-attaches its pulse.
       startPulse();
@@ -745,6 +841,17 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
     },
     setPlaceDoubleClickHandler(handler) {
       placeDoubleClickHandler = handler;
+    },
+    setPlaceContextHandler(handler) {
+      placeContextHandler = handler;
+    },
+    setPlaceDragHandler(handler) {
+      placeDragHandler = handler;
+    },
+    returnPlaceMarker(graphNodeId) {
+      const home = placeMarkerHomes.get(graphNodeId);
+      if (!home) return;
+      home.marker.setLngLat([home.longitude, home.latitude]);
     },
     setLaneClickHandler(handler) {
       laneClickHandler = handler;

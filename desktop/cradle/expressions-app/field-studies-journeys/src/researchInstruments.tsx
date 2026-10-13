@@ -24,6 +24,7 @@ import {sharedTimelinePresentation} from './sharedTimeProjection.js';
 import type {NativeTimeWindowReply} from '../../../../../packages/expressions-boundary/src/timeWindow';
 import {blueprintMember,type SceneBlueprint,type BlueprintTransform} from './blueprintGeometry.js';
 import {icon} from './icons.js';
+import {addRouteNotice,moveRouteNotice,type PlaceAuthoringHost} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring';
 import './researchInstrumentStyles.css';
 import './researchInstruments.css';
 import {CanvasNavigationOverview} from './canvasNavigationOverview';
@@ -765,6 +766,20 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    state.placeFilter??=OPEN_PLACE_FILTER;
    // Lane-4 T4/T5: the owner's live choice is session view state, held with the placeFilter. It is off until the owner allows it here, and only then does the policy's tile_refresh gate open.
    state.livePlaces??={allowed:false,policy:createLiveServicePolicy(),stack:defaultBasemapStack()};
+   // Lane-4 T17–T19: the map's authoring surface asks this host for the owner's route. "Edit place/time" opens
+   // the same constellation editor, and the map never writes a coordinate: the save, its basis check and its
+   // refusals all happen in that editor, and their own message is the one shown here.
+   const openPlaceRoute=(notice?:string)=>{
+    if(!placeEditRequest)return;
+    void techneConstellationRequest({...placeEditRequest,operation:'open'}).then(()=>{if(notice)message(notice);},error=>message(error instanceof Error?error.message:String(error)));
+   };
+   const placeAuthoring:PlaceAuthoringHost={
+    canAuthor:!!placeEditRequest,
+    unavailableReason:placeEditRequest?null:'This reading has no native Scene entity bound, so there is no authoring route here.',
+    onAddPlace:prefill=>openPlaceRoute(addRouteNotice(prefill)),
+    onEditPlace:()=>openPlaceRoute(),
+    onProposeMove:proposal=>openPlaceRoute(moveRouteNotice(proposal)),
+   };
    // W2 — the SAME filter state drives both the map's own repository
    // (presentation-only: `filteredPlacesRepository` never rewrites the
    // wrapped repository's reads) and the panel's facet list, so the markers
@@ -776,7 +791,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
       onFilterChange={next=>{state.placeFilter={...next,window:null};render(renderPlaces());}}
       editRequest={placeEditRequest} onError={message}/>;
     return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:placeRecordFromViewState(state.place)}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}{timeControls(()=>render(renderPlaces()))}</div>,host.tools)}
-    <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly={!state.livePlaces!.allowed} policy={state.livePlaces!.policy} basemapStack={state.livePlaces!.stack} onBasemapStackChange={next=>{state.livePlaces!.stack=next;}} onLiveSourcesAllowedChange={allowed=>{const live=state.livePlaces!;if(allowed)live.policy.optIn('tile_refresh','show live basemap sources the owner allowed in Places');else live.policy.optOut('tile_refresh');live.allowed=allowed;render(renderPlaces());}} placeFacets={nativeReading.spatial} layerFilter={filter} onLayerFilterChange={next=>{state.placeFilter={...next,window:null};render(renderPlaces());}} sourceAttributions={pack.manifest.sources.map(source=>`${source.name} (${source.license})`)}
+    <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly={!state.livePlaces!.allowed} policy={state.livePlaces!.policy} basemapStack={state.livePlaces!.stack} onBasemapStackChange={next=>{state.livePlaces!.stack=next;}} onLiveSourcesAllowedChange={allowed=>{const live=state.livePlaces!;if(allowed)live.policy.optIn('tile_refresh','show live basemap sources the owner allowed in Places');else live.policy.optOut('tile_refresh');live.allowed=allowed;render(renderPlaces());}} placeFacets={nativeReading.spatial} placeAuthoring={placeAuthoring} layerFilter={filter} onLayerFilterChange={next=>{state.placeFilter={...next,window:null};render(renderPlaces());}} sourceAttributions={pack.manifest.sources.map(source=>`${source.name} (${source.license})`)}
      initialViewState={state.place} initialSelectedGraphNodeId={state.selectedPlace}
      onViewStateChange={value=>{state.place=value;}} onSelectedGraphNodeIdChange={value=>{state.selectedPlace=value;render(renderPlaces());}}
      onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref&&node.place);if(node)host.inspectSubject(ref,{node});}}/>
