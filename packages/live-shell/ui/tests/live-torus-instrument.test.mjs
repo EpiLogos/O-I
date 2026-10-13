@@ -211,11 +211,11 @@ test('the frame announcement reaches the widget through the boundary reader and 
   const boundary = await import('../../../expressions-boundary/src/protocol.ts')
   const composer = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/instrumentAnnouncement.mjs')
   const basis = {event_ref: 'event:owner', subject_ref: 'subject:owner', registry_revision: 'registry:owner', geometry_ref: 'geometry:owner', material_ref: 'material:owner', model_ref: 'model:owner', generation: '4', samples_elapsed: '245760'}
-  const controller = {status: 'following', reason: null, playback_policy: ownerReading().playback_policy,
+  const controller = {status: 'following', reason: null, muted: true, presentation_level: {value: 1}, presentation_units_per_metre: 120, presentation_mode: 'domain-follow', playback_policy: ownerReading().playback_policy,
     native: {event_ref: 'event:owner', subject_ref: 'subject:owner', reason: null, acknowledged: {generation: '4', samples_elapsed: '245760'},
       presented: {generation: '4', samples_elapsed: '245760'}, audio: {...ownerReading().audio, native: basis}, available: true, held: false,
       in_flight: false, queued_blocks: 3, queued_bytes: 4096, coalesced_presentation_frames: 0, views: 1, disposed: false},
-    instrument: {acting: {m1: {lens12: 3, lens: 'L1′', context_frame: 2}, harmonic: {source: {selection: 'canonical-basis', index: 4}}, m3: {rna: true}}}}
+    instrument: {acting: {m1: {lens12: 3, lens: 'L1′', context_frame: 2}, harmonic: {source: {selection: 'canonical-basis', index: 4}}, m3: {rna: true}}, cadence: {playing: true, rate: 1, source: '1 tick/s'}, refusal: null}}
   // A hosted state as the frame announces it: the boundary admits it and carries the instrument.
   const hosted = boundary.readHostedState({hostMode: 'live', sceneIndex: 0, sceneCount: 1, nativeScene: {expression_ref: 'expression:kept', revision: 3, scene_ref: 'scene:one'}, instrument: composer.announceInstrument(controller)})
   assert.ok(hosted, 'the boundary admits the live announcement')

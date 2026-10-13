@@ -1936,7 +1936,7 @@ function setHostMode(mode:'expressions'|'techne'|'live'){
  renderRail();
  lensStudio.setMode(mode==='techne'?'techne':'expressions');
  if(mode!=='techne'){researchInstruments?.close();palaceInstrument.close();journeyInstrument?.close();journeyHome.hidden=true;setInstrumentSurface(null);}else activateInstrument(lensStudio.active());
- if(mode==='live'&&nativeField){studioSection='native';tab='field';setStudio(true);}
+ if(mode==='live'&&nativeField){studioSection='native';tab='field';setStudio(true);nativeField.openLive();}
  renderAll();
 }
 // Open an existing native Expression the host asked for at runtime — a
@@ -1983,6 +1983,11 @@ async function runStageCommand(command:StageCommand){
   case 'present':await action(command.on?'present':'exit-present',body);break;
   case 'export':await action({json:'export-json',native:'export-native',html:'export-artifact'}[command.format],body);break;
   case 'import':await action('import',body);break;
+  case 'instrument':
+   // The Live instrument's edits run the native field's own controller operations (nativeField.ts command): the same path as the Studio's controls.
+   if(!nativeField)throw new Error('This application has no native instrument.');
+   await nativeField.command(command.edit);
+   break;
   case 'live':
    // The streamed set returns before the announce below: it writes no document and must not trigger a shell read at 20 Hz.
    if(command.action==='set'){liveOverrides.setDrag(command.target,command.value);needsFrame=true;return;}
@@ -2678,7 +2683,7 @@ async function startWorkspace(){
  else if(draft&&(!initial.updatedAt||draft.id!==initial.id||draft.updatedAt>=initial.updatedAt)){store.document=initialiseSceneSaves(initialiseBelts(draft));store.touch();}recovered=validateSession(JSON.parse(localStorage.getItem(SESSION_KEY)??'null'),store.document);showEntry=!startsInTechne;}catch(e){console.warn('Draft recovery unavailable',e);showEntry=!startsInTechne;}}
  const linkedScene=deepLinkPending?.address.scene;
  if(recovered&&(linkedScene===undefined||linkedScene===recovered.sceneId)){sceneIndex=store.document.scenes.findIndex(s=>s.id===recovered!.sceneId);selected=recovered.selected;stepIndex=recovered.stepIndex;sceneElapsed=recovered.sceneElapsed;simTime=recovered.simTime;scenePlaying=recovered.scenePlaying??recovered.playing;workingTransport=recovered.workingTransport??STOPPED_TRANSPORT;journeyPlaying=recovered.journeyPlaying;if(recovered.fieldPaused!==undefined)fieldPaused=recovered.fieldPaused;if(qs.has('still'))fieldPaused=true;camera=recovered.camera;}else applySceneView();
- document.body.classList.toggle('oi-host-techne',hostMode==='techne');document.body.classList.toggle('oi-host-live',hostMode==='live');if(hostMode==='live'&&nativeField){studioSection='native';tab='field';setStudio(true);}renderRail();
+ document.body.classList.toggle('oi-host-techne',hostMode==='techne');document.body.classList.toggle('oi-host-live',hostMode==='live');if(hostMode==='live'&&nativeField){studioSection='native';tab='field';setStudio(true);nativeField.openLive();}renderRail();
  if(!qsExpression?.startsWith('expression:'))await nativeWorkspace?.changed(store.document);
  resize();engine.render(frameData(0));if(recovered?.transport)engine.restoreTransport?.(recovered.transport);
  trackPreview=!!scene().propertyTracks?.length;resize();renderAll();if(location.hash.startsWith('#library'))openLibrary(location.hash.includes('about')?'about':'collection',false);rafId=requestAnimationFrame(tick);

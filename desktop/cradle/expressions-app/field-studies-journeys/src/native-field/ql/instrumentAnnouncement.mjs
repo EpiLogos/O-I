@@ -18,6 +18,8 @@ export function announceInstrument(reading) {
   const basis = native.audio?.native ?? null;
   const identity = Object.fromEntries(IDENTITY.map(key => [key, basis?.[key] ?? (key === 'event_ref' || key === 'subject_ref' ? native[key] : undefined)]));
   const acting = reading.instrument?.acting ?? null;
+  const instrument = reading.instrument ?? null;
+  const cadence = instrument?.cadence ?? null;
   return {
     reading: {
       schema: 'ql.instrument-reading/v1',
@@ -43,5 +45,13 @@ export function announceInstrument(reading) {
       harmonic: acting.harmonic.source,
       rna: acting.m3.rna,
     } : null,
+    // The presentation parameters the owner's own controls read and write: sound, level, scale, cadence, and the instrument's named refusal.
+    parameters: {
+      muted: reading.muted === true,
+      level: reading.presentation_level?.value ?? null,
+      scale: {unitsPerMetre: reading.presentation_units_per_metre ?? null, mode: reading.presentation_mode ?? 'manual'},
+      cadence: cadence ? {rate: cadence.playing ? cadence.rate : 0, playing: cadence.playing === true, source: String(cadence.source ?? '')} : null,
+      refusal: instrument?.refusal ? `${instrument.refusal.operation}: ${instrument.refusal.reason}` : null,
+    },
   };
 }
