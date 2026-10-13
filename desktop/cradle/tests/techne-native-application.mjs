@@ -87,8 +87,10 @@ try{
  const m3basis=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking()?.native_ref??'');
  check(m3basis===ref,'The M3′ instrument stands on the exact open native construction, not a hardcoded blank');
  await frame.locator('#timeline-panel:not([hidden])').waitFor();
- const stripScenes=await frame.locator('#timeline-panel .scene-strip [data-action="choose-scene"]').count(),nativeScenes=await frame.evaluate(()=>window.__FIELD_STUDIES__.getDocument().scenes.length);
- check(stripScenes>0&&stripScenes===nativeScenes,'M3′ Journey discloses the real Scenes of the construction in its Scene strip');
+ // E01: the journey timeline shows the Scenes on the time track by default and as the compact strip when collapsed; either
+ // presentation discloses each Scene as one choose-scene clip, so the count is taken across both.
+ const stripScenes=await frame.locator('#timeline-panel :is(.scene-strip, .scene-track-lane) [data-action="choose-scene"]').count(),nativeScenes=await frame.evaluate(()=>window.__FIELD_STUDIES__.getDocument().scenes.length);
+ check(stripScenes>0&&stripScenes===nativeScenes,'M3′ Journey discloses the real Scenes of the construction in its Scene timeline');
  check(await frame.locator('#app > .masthead #native-save').isVisible(),'M3′ commits Scenes through the native owner (masthead Save), not a browser save');
  await frame.locator('#lens-chooser .lens-choice[data-lens="canvas"]').click();
  check(await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking()?.native_ref??'')===m3basis,'The open construction survives a lens change — the subject is carried, not reset');
