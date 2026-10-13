@@ -391,7 +391,7 @@ export class PointCloudField {
     this.entities.setBaseContext(cfg.style, cfg.fontFamily, cfg.fontWeight, comp.plane, cfg.cymatics);
     this.entities.setVolume(cfg.glyphVolume);
     this.entities.layout(cfg.entities || []);
-    const resolved = this.entities.update(cfg.entities || [], comp, this.simTime, this.lastDrive?.theta ?? 0, this.morphProgress, cfg.toroidalMorph?.holdRatio ?? 0, cfg.fontFamily, cfg.fontWeight);
+    const resolved = this.entities.update(cfg.entities || [], comp, this.simTime + (cfg.sequenceOffsetS ?? 0), this.lastDrive?.theta ?? 0, this.morphProgress, cfg.toroidalMorph?.holdRatio ?? 0, cfg.fontFamily, cfg.fontWeight);
     this.lastPoses = resolved.poses;
     const depthForms = !!(cfg.glyphVolume?.enabled && (cfg.glyphVolume?.depth ?? 0) > 0);
     this.lastForceEmitters = this.projectForceEmitters(compileEntityForceEmitters(cfg.entities || [], resolved.poses, cfg.interaction.placedPoints || [], depthForms ? 'world3d' : 'compositionPlane'));
@@ -1690,7 +1690,7 @@ export class PointCloudField {
     const manual = tm.enabled && tm.autoOscillate !== false ? drive.progress : (cfg.morphProgress ?? 0);
 
     // 1. Entities: resolve sequences from the clock, re-bake changed partitions, refresh uniforms
-    const res = this.entities.update(cfg.entities || [], comp, elapsedTime, drive.theta, manual, tm.holdRatio ?? 0, cfg.fontFamily, cfg.fontWeight);
+    const res = this.entities.update(cfg.entities || [], comp, elapsedTime + (cfg.sequenceOffsetS ?? 0), drive.theta, manual, tm.holdRatio ?? 0, cfg.fontFamily, cfg.fontWeight);
     this.lastFrames = res.frames;
     this.lastPoses = res.poses;
     if (delta > 0) for (const imp of res.impulses) this.triggerDisperse(imp);

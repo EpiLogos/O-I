@@ -65,3 +65,15 @@ test('a clamped document still validates, so the clamp never produces a refused 
  slipScene(j,j.scenes[3].id,9);rollSceneSeam(j,j.scenes[3].id,-8);
  assert.doesNotThrow(()=>validateJourney(clone(j)));
 });
+
+// E06c: the engine reads the same evolution point as the tracks. The render config carries the entry offset as the
+// entity sequence clock shift; the exported config never does, and an unslipped scene's render config is unchanged.
+test('E06c: the render config shifts the entity sequence clock by the entry offset; export never carries it',async()=>{
+ const {toRenderConfig,toNativeConfig,nativeExport}=await import('../build/nativeBridge.js');
+ const j=fixture();const s=j.scenes[0];
+ assert.deepEqual(toRenderConfig(s),toNativeConfig(s));
+ assert.equal('sequenceOffsetS' in toRenderConfig(s),false);
+ slipScene(j,s.id,3.5);
+ assert.equal(toRenderConfig(s).sequenceOffsetS,3.5);
+ assert.equal('sequenceOffsetS' in nativeExport(s).config,false);
+});
