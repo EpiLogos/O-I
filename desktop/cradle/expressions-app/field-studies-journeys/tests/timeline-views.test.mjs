@@ -221,7 +221,10 @@ test('the kernel holds the same lists and bounds the app does, and admits the sa
  assert.equal(scalar('TIMELINE_CENTER_YEAR_LIMIT'),api.material.TIMELINE_CENTER_YEAR_LIMIT);
  assert.equal(scalar('TIMELINE_PIXELS_PER_YEAR_LOW'),api.material.TIMELINE_PIXELS_PER_YEAR_RANGE[0]);
  assert.equal(scalar('TIMELINE_PIXELS_PER_YEAR_HIGH'),api.material.TIMELINE_PIXELS_PER_YEAR_RANGE[1]);
- assert.match(kernel,/"placeViews",\s*"timelineViews",/,'the top-level keys admit timelineViews');
+ // The research material's top-level key list (validate_research) admits timelineViews — membership, not its neighbours.
+ const topLevel=kernel.match(/fn validate_research[\s\S]*?\.any\(\|key\| \{\s*!\[([\s\S]*?)\]/);
+ assert.ok(topLevel,'validate_research declares its top-level keys');
+ assert.ok([...topLevel[1].matchAll(/"([^"]+)"/g)].some(entry=>entry[1]==='timelineViews'),'the top-level keys admit timelineViews');
  assert.match(kernel,/"layoutRevision",\s*"style",?\s*\]/,'a timeline layout admits its style');
  assert.match(kernel,/fn timeline_view\(value: &Value\)/);
  assert.ok(api.material.TIMELINE_VIEW_LIMIT===32&&api.material.TIMELINE_VIEW_REF_LIMIT===64&&api.material.TIMELINE_REF_MAX===512,'the bounds the kernel names');

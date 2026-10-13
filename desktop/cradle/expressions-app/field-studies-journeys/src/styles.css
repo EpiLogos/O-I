@@ -305,3 +305,5 @@ body{
 .timeline-toolbar .snap-toggle svg{width:14px;height:14px}
 .timeline-toolbar .snap-toggle[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
 .transport-readout{min-width:84px;font-variant-numeric:tabular-nums;color:var(--ink)}
+/* lane-3 E22/E23 — the stage fills the screen when focus mode wins real fullscreen; a refused fullscreen keeps the in-page focus. Tokens only. */
+#stage:fullscreen{width:100vw;height:100vh;background:var(--paper)}
