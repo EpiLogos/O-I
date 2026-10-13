@@ -7,7 +7,10 @@ import {sameSceneData} from './sceneCorrespondence.js';
 import {clone,validateJourney,type Journey} from './model.js';
 import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocument} from './kernelDocumentBridge.js';
 import {prepareCompositionEdit,acceptCompositionReply,rebaseCompositionView,type CompositionEdit} from './kernelComposition.js';
+import type {KernelChange} from './kernelExpressions.js';
 export interface WorkingSnapshot {journey:Journey;sceneId:string;entityId:string|null}
+/** E15c: what a Save acknowledged — the kernel edit and the kernel document either side of it. */
+export interface NativeCheckpoint {changes:KernelChange[];before:KernelExpressionDocument;after:KernelExpressionDocument}
 export interface NativeFile {location:{schema:'central.path-ref/v1';ref:string;root:string;path:string};revision:string;expression_ref:string}
 export type SaveDestination={parent_path:string;name:string}|{location:NativeFile['location'];revision:string};
 export type PendingNative =
@@ -17,7 +20,8 @@ export type PendingNative =
  | {kind:'selection';request:SelectionEdit}
  | {kind:'connections';request:ConnectionEdit}
  | {kind:'occurrence';intent:OccurrenceIntent;request:OccurrenceEdit}
- | {kind:'blueprint';intent:BlueprintIntent;request:BlueprintEdit};
+ | {kind:'blueprint';intent:BlueprintIntent;request:BlueprintEdit}
+ | {kind:'compensation';request:ConnectionEdit};
 export interface NativeSelection {scene_ref:string;entity_ref?:string|null;binding_ref?:string}
 export interface SelectionEdit {operation:'edit';expression_ref:string;expected_revision:number;actor:string;changes:[Record<string,unknown>]}
 function selectionEdit(view:KernelConversion,selection:NativeSelection):SelectionEdit {
@@ -152,6 +156,15 @@ export interface NativeWorkingPorts {
  mint:()=>string;
 }
 const same=sameSceneData;
+/** The document's content with the kernel's revision counters removed: a replayed
+ * Save is the same content at a later revision. */
+function withoutRevisions(document:unknown):unknown{
+ const value=clone(document) as {revision?:unknown;scenes?:{revision?:unknown}[];entities?:Record<string,{revision?:unknown}>};
+ delete value.revision;
+ for(const scene of value.scenes??[])delete scene.revision;
+ for(const entity of Object.values(value.entities??{}))delete entity.revision;
+ return value;
+}
 function readDocument(value:unknown,reference:string):KernelExpressionDocument {
  const result=value as {state?:string;expression_ref?:string;document?:KernelExpressionDocument}|null;
  if(result?.state==='revision_conflict'&&result.expression_ref===reference)throw new Error('revision_conflict: the native Expression changed; inspect its current basis before trying again');
@@ -199,7 +212,8 @@ export function validateWorkingRecord(raw:unknown,journey:Journey):NativeWorking
  }
  if(value.pending){
   const pending=value.pending;
-  if(!['create','edit','file','selection','connections','occurrence','blueprint'].includes(pending.kind))throw new Error('Unknown pending native operation');
+  if(!['create','edit','file','selection','connections','occurrence','blueprint','compensation'].includes(pending.kind))throw new Error('Unknown pending native operation');
+  if(pending.kind==='compensation'&&(!value.view||pending.request.operation!=='edit'||pending.request.expression_ref!==value.view.document.expression_ref||pending.request.expected_revision!==value.view.document.revision||!pending.request.changes.length))throw new Error('The recovered saved-edit replay does not match its captured native basis');
   if(pending.kind==='create'||pending.kind==='edit'){
    validateJourney(pending.submitted.journey);
    if(pending.submitted.journey.id!==journey.id)throw new Error('Pending proposal belongs to another draft');
@@ -345,7 +359,12 @@ export class NativeWorking {
   }else await this.persist({...record,pending:undefined},epoch);
   return clone(this.record!);
  }
- async commit(snapshot:WorkingSnapshot):Promise<KernelExpressionDocument>{
+ async commit(snapshot:WorkingSnapshot):Promise<KernelExpressionDocument>{return (await this.commitRecorded(snapshot)).document;}
+ /** The Save of commit(), returning what it acknowledged: the kernel edit and the
+  * kernel documents before and after it (the checkpoint an Undo past this Save
+  * compensates). It submits exactly what commit() submits. A Save with nothing to
+  * submit acknowledges an empty edit with the same document either side. */
+ async commitRecorded(snapshot:WorkingSnapshot):Promise<{document:KernelExpressionDocument;checkpoint:NativeCheckpoint}>{
   const epoch=this.begin(),submitted=clone(snapshot);
   try{
    validateJourney(submitted.journey);
@@ -364,14 +383,14 @@ export class NativeWorking {
    }
    const view=record.view!;
    const request=prepareCompositionEdit(view,submitted.journey,{sceneId:submitted.sceneId,entityId:submitted.entityId});
-   if(!request.changes.length)return clone(view.document);
+   if(!request.changes.length)return {document:clone(view.document),checkpoint:{changes:[],before:clone(view.document),after:clone(view.document)}};
    record={...record,pending:{kind:'edit',request,submitted}};
    await this.persist(record,epoch);
    const document=acceptCompositionReply(request,await this.ports.expression({...request}));
    if(!editMatches(record,request,submitted,document))throw new Error('Native acknowledgement does not contain the submitted composition; inspect before retrying');
    record={...record,view:rebaseCompositionView(view,submitted.journey,document),pending:undefined};
    await this.persist(record,epoch);
-   return document;
+   return {document,checkpoint:{changes:clone(request.changes) as unknown as KernelChange[],before:clone(view.document),after:clone(document)}};
   }finally{this.inFlight=false;}
  }
  /** Selection edits only the native focus and acknowledged revision. It never
@@ -453,8 +472,10 @@ export class NativeWorking {
    return view;
   }finally{this.inFlight=false;}
  }
- async saveFile(snapshot:WorkingSnapshot,destination:SaveDestination):Promise<NativeFile>{
-  const document=await this.commit(snapshot),epoch=this.begin();
+ async saveFile(snapshot:WorkingSnapshot,destination:SaveDestination):Promise<NativeFile>{return (await this.saveFileRecorded(snapshot,destination)).file;}
+ /** saveFile() with the Save's checkpoint (see commitRecorded). */
+ async saveFileRecorded(snapshot:WorkingSnapshot,destination:SaveDestination):Promise<{file:NativeFile;checkpoint:NativeCheckpoint}>{
+  const {document,checkpoint}=await this.commitRecorded(snapshot),epoch=this.begin();
   try{
    let record=this.record?clone(this.record):undefined;
    if(!record?.view||record.view.document.expression_ref!==document.expression_ref||record.draft_id!==snapshot.journey.id)throw new Error('The working position changed before file save; nothing was written to a different work');
@@ -463,7 +484,39 @@ export class NativeWorking {
    await this.persist(record,epoch);
    const result=await this.ports.file({operation:'perform',intent}),file=artifact(result,document.expression_ref);
    await this.persist({...record,file,pending:undefined},epoch);
-   return file;
+   return {file,checkpoint};
+  }finally{this.inFlight=false;}
+ }
+ /** E15c: replay one recorded Save's kernel edit at the acknowledged basis. `changes`
+  * is the Undo's compensation (`expected` = the document before the Save) or the Redo's
+  * forward edit (`expected` = the document after it). It carries the same pending,
+  * acknowledgement and readback checks as a Save and is never forced: a revision
+  * conflict is refused by name, the pending intent is cleared (the owner refused it),
+  * and nothing is written. */
+ async replayKernelEdit(changes:KernelChange[],expected:KernelExpressionDocument):Promise<KernelExpressionDocument>{
+  const epoch=this.begin();
+  try{
+   const record=this.record?clone(this.record):undefined;
+   if(!record?.view)throw new Error('Open a native Expression before undoing or redoing a saved edit');
+   let basis=record;
+   if(basis.pending)basis=await this.settlePending(basis,epoch);
+   const view=basis.view;
+   if(!view)throw new Error('Open a native Expression before undoing or redoing a saved edit');
+   if(!changes.length)throw new Error('This recorded Save has no kernel changes to replay');
+   const request:ConnectionEdit={operation:'edit',expression_ref:view.document.expression_ref,expected_revision:view.document.revision,actor:'human:expressions-app',changes:clone(changes) as unknown as Record<string,unknown>[]};
+   const want=withoutRevisions(expected);
+   await this.persist({...basis,pending:{kind:'compensation',request}},epoch);
+   const raw=await this.ports.expression({...request}) as {state?:string;current_revision?:unknown}|null;
+   if(raw?.state==='revision_conflict'){
+    await this.persist({...basis,pending:undefined},epoch);
+    throw new Error(`revision_conflict: native revision ${String(raw.current_revision)}; the recorded Save was not undone or redone and nothing was written. Reconcile this draft first`);
+   }
+   const reply=readDocument(raw,request.expression_ref);
+   if(!same(withoutRevisions(reply),want))throw new Error('Native acknowledgement differs from the recorded Save; inspect before retrying');
+   const observed=readDocument(await this.ports.expression({operation:'inspect',expression_ref:request.expression_ref}),request.expression_ref);
+   if(!same(withoutRevisions(observed),want))throw new Error('Native readback changed; preserve the pending edit and reconcile');
+   await this.persist({...basis,view:connectionView(view,observed),pending:undefined},epoch);
+   return clone(observed);
   }finally{this.inFlight=false;}
  }
  async retryFile():Promise<NativeFile>{
