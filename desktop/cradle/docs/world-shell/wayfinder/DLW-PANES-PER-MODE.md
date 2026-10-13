@@ -572,10 +572,11 @@ operation; subject identity and native Action ownership are preserved"
 (`lane-7-app-structure/STRUCTURE.md:15–19`). "The instrument is the
 instrument": no separate Technē rack; the detail row is the focused lens's
 own native control set (WSD :143–149). Session = M3′ Journey; Arrangement =
-M2′ Relation Field (Rev 5). In Technē the World views ARE instruments; "in
-other arrangements the same views can be pulled in as plain apertures,
-without instrument controls" (WSD :146–148; mockup INST/APS comment,
-world-shell-mockup.html:800–802).
+M2′ Relation Field (Rev 5). The World views ARE instruments in every mode:
+the owner's 13 October 2026 ruling retires the earlier "plain apertures,
+without instrument controls" rule — the Device side follows the focused
+pane's instrument in Central, Factory, Expressions and Live at full
+capability (WSD Technē section; DEVICE-SEMANTICS-LOCK §0.1).
 
 ### 5.2 Base instrument
 The **lens instrument** — the focused lens's body. The six types

@@ -52,6 +52,38 @@ Technē instruments already act on Expressions; agent-chain order is
 Factory's (Ta-Onta). Anything else the code and corpus can answer is
 derived, not asked.
 
+### 0.1 Every instrument in every mode (owner ruling, 13 Oct 2026)
+
+Relayed from the DLW documentation session; it supersedes the plain-aperture
+rule wherever this file, WSD, WIDGET-GUIDE, DLW-PANES-PER-MODE or the mockup
+stated it.
+
+1. **Every pane instrument works in every mode at full capability.**
+   Nothing is Technē-only. The detail row's Device side follows the
+   **focused pane's instrument** in any mode: a Places, Graph, Timeline or
+   Expression pane in Central or Factory gets that instrument's full native
+   controls through its devices' exposed parameters. The controls stay out
+   of the pane body. A pane that holds no instrument keeps its mode's Device
+   side (§2). The mode supplies the material; the instruments stay whole.
+2. **Each mode's material reads through the world (planet) grammar.**
+   Central: your planet is Central; projects are places on its surface; the
+   day's work and its meaningful points are walks on the planet; context and
+   files are ephemeral objects in orbit. Factory: a NOW is a planet (a task
+   becomes a world); agents are activity around it; subagents are nested
+   orbits. Expressions: within every mode as well — the graph projection
+   (the 0 instrument) is as apt for Central and Factory as for Expressions
+   (projecting context, wayfinder mapping). Live shares the same grammar.
+3. **Technē's 0 instrument is the Earth and solar system together with its
+   graph view** — the ported atlas's Earth ⇄ Graph. This replaces §2.5's
+   earlier reading (M0′ = Project/Wiki/Graph, M4′ = World/Places). The other
+   five instruments work the underlying information differently, to develop
+   that 0-layer world; their restatement follows the vision spec being
+   rewritten in this shape (O-I PR #655, `docs/dlw/`), and until it lands
+   §2.5's names for M1′–M5′ stand.
+4. **Three forms, three times.** Worlds, expressions and graphs (M5 / M4 /
+   M0) can each be live, moved into creative composition, and recorded and
+   played back (and so shared).
+
 ---
 
 ## 1. The ontology — Live semantic → DLW meaning → the Game
@@ -155,7 +187,7 @@ VIEWTIP, DVN, BCATS, CTABS/WID, deviceDetail/formDevice/liveDetail, TPM;
 | Arrangement | **M2′ Relation Field** over time | designed (`lens-M2`) |
 | Browser | To hand: Sources · Files; World: Bodies · Locations · Earth places · Palaces · Journeys · Views | designed |
 | Clip detail | the encounter: identity, place and time, disclosure, typed relations, bounded constellation, source (ref + revision) | designed |
-| Device = **the six instruments** (each an instrument, drawn as one instrument frame with sections; the focused lens expanded, the others folded) | **M0′** Project/Wiki/Graph (depth, budget, view, kinds, ghosts, source) · **M1′** Canvas/Constellation (tools, snap, layout, relation type, standing, promote) · **M2′** Relation Field/Timeline (projection, strata, standing floor, deep time, window) · **M3′** Journey/Scenes (stops, pace, transition, loop) · **M4′** World/Places (planet builder: body, landmass, climate, sky, locations, relations; scales system · body · region · palace) · **M5′** Palace (rooms, path, guide, portals) | designed (mockup INST + deviceDetail); QL instrument faces built (`qlInstrumentDevice.tsx`, QL family: sky, torus, m3-clock, deck, chakra, m-prime-matrices) |
+| Device = **the six instruments** (each an instrument, drawn as one instrument frame with sections; the focused lens expanded, the others folded; in every mode the Device side follows the focused pane's instrument — §0.1) | **M0′** the Earth and solar system ⇄ Graph (§0.1.3; formerly Project/Wiki/Graph: depth, budget, view, kinds, ghosts, source) · **M1′** Canvas/Constellation (tools, snap, layout, relation type, standing, promote) · **M2′** Relation Field/Timeline (projection, strata, standing floor, deep time, window) · **M3′** Journey/Scenes (stops, pace, transition, loop) · **M4′** World/Places (planet builder: body, landmass, climate, sky, locations, relations; scales system · body · region · palace) · **M5′** Palace (rooms, path, guide, portals) | designed (mockup INST + deviceDetail); QL instrument faces built (`qlInstrumentDevice.tsx`, QL family: sky, torus, m3-clock, deck, chakra, m-prime-matrices) |
 | Acting on Expressions | instruments already act on Expressions (some); view → scene capture; journey stops carry Expression scenes | built in part |
 | Sky / astrology | the Archetypal-Earth astrology components (ported) with **Nara overlaid** — the Epi-Logos lens | AE port built (atlas modules); Nara overlay designed (`DLW-SKY-NARA-INTEGRATION.md`) |
 | Companion | **Epii**: Epii · Source · Proposals · Field | designed |

@@ -798,8 +798,9 @@ function follow(t,e,o){
 function goTrail(i){if(i<0||i>=S.trail.length)return;S.ti=i;const t=S.trail[i];encounter(t.id,t.med,{noTrail:true})}
 
 /* ============================== apertures ==============================
-   Views a pane can pull in. In Technē the World views are instruments (lens M0′–M5′);
-   elsewhere the same views arrive as plain apertures, without the instrument controls. */
+   Views a pane can pull in. They are instruments (lens M0′–M5′) in every mode, at full
+   capability: the Device side follows the focused pane's instrument (owner ruling,
+   13 October 2026; the plain-aperture rule is retired). */
 const INST={
   M0:{k:'M0′',n:'Project / Wiki / Graph',view:'field',office:'ground · locate · traverse a bounded whole'},
   M1:{k:'M1′',n:'Canvas / Constellation',view:'canvas',office:'constructive determination — arrange, frame, relate'},
