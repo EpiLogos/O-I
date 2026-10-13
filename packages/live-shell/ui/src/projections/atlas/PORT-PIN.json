@@ -139,7 +139,7 @@
     "aion/skyclock.ts": "[C2] corpus-neutral seam (C2-CORPUS-SEAM.md): corpus-named convention defaults moved to the reading (C2-b10)",
     "aion/view.ts": "[C2] corpus-neutral seam (C2-CORPUS-SEAM.md): cite deep links (C2-a3); title, blurb and basis wording named by the provider (C2-b8); ring default (C2-b10)",
     "app/controller.ts": "[C2] corpus-neutral seam (C2-CORPUS-SEAM.md): passage sheet (C2-a3); BODY_KEYS from the sky contract (C2-b4); cites (C2-b7); site named by the provider (C2-b8). Host: the shell chrome mounts in the pane root, not document.body",
-    "data/corpus.ts": "[C2] corpus-neutral seam (C2-CORPUS-SEAM.md): corpus paths provider-supplied (C2-a3)",
+    "data/corpus.ts": "[§8.4] corpus volumes through the provider's published material",
     "data/load.ts": "[C2] corpus-neutral seam (C2-CORPUS-SEAM.md): field URL provider-supplied (C2-a2)",
     "data/model.ts": "[C2] corpus-neutral seam (C2-CORPUS-SEAM.md): cites (C2-b7) and the dropped subject field (C2 §1.3)",
     "data/search.ts": "[C2] corpus-neutral seam (C2-CORPUS-SEAM.md): invitation degrades to the whole field when a corpus has none of the found tiers (C2-c5)",
