@@ -68,6 +68,11 @@ test('precision labels state the precision verbatim, with an inclusive end and B
  assert.equal(label('-500',null,'year'),'501 BCE','astronomical -500 reads 501 BCE');
  assert.equal(label('-500','-400','year'),'501 BCE – 401 BCE');
  assert.equal(label('-000500',null,'century'),'501 BCE – 402 BCE','a BCE century states its years');
+ // Review fix: the unit that begins at year 0 is the first CE unit, never "1 BCE – 99".
+ assert.equal(label('0050',null,'century'),'1st c.');
+ assert.equal(label('0500',null,'millennium'),'1st millennium');
+ assert.equal(label('0005',null,'decade'),'1 BCE – 9','the decade from year 0 states its years');
+ assert.equal(label('0015',null,'decade'),'10s');
 });
 
 test('the display year is astronomical: year 0 is 1 BCE, positive years read plain',()=>{

@@ -568,18 +568,19 @@ function endSceneBody(commit:boolean){
  document.removeEventListener('pointermove',moveSceneBody);document.removeEventListener('pointerup',upSceneBody);document.removeEventListener('pointercancel',cancelSceneBody);
  document.body.classList.remove('moving-scene');
  renderTimeline();
- if(!commit||!b.moved)return;
+ if(!b.moved)return;
+ // A moved body never reads as a click, whether or not the move commits (a drag back to its start, a cancel).
+ trimClickGuardUntil=performance.now()+400;
+ if(!commit)return;
  const current=scene().id;
  try{
   if(b.mode==='slip'){
    if(b.offset===b.from)return;
-   trimClickGuardUntil=performance.now()+400;
    const offset=b.offset;
    changedComposite(`Slip scene ${sceneNameOf(b.sceneId)}`,d=>{slipScene(d,b.sceneId,offset);},()=>refocusScene(current));
    return;
   }
   if(b.targetId===b.sceneId)return;
-  trimClickGuardUntil=performance.now()+400;
   if(b.mode==='overwrite'){
    const replaced=b.targetId;
    changedComposite(`Overwrite scene ${sceneNameOf(replaced)} with ${sceneNameOf(b.sceneId)}`,d=>{overwriteScene(d,b.sceneId,replaced);},()=>refocusScene(current===replaced?b.sceneId:current));

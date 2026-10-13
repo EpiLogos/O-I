@@ -49,6 +49,9 @@ import {
 
 /** The camera as the map reports it. `pitch` and `bearing` are degrees and are
  * absent in records saved before T1; they read as 0. */
+/** Consecutive failed tiles, with none loading between them, after which a live basemap source reads as refused. */
+const BASEMAP_FAILURE_RUN = 4;
+
 export interface MapViewState {
   latitude: number;
   longitude: number;
@@ -176,6 +179,8 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
   let placeElements = new Map<string, HTMLElement>();
   // Lane-4 T4/T5: the basemap sources this renderer holds, by MapLibre source id.
   let basemapHeld = new Map<string, { key: string; layerId: string | null }>();
+  // Consecutive tile errors per basemap source since its last loaded tile (lane-4 T4: one bad tile is not a refusal).
+  const basemapErrorRuns = new Map<string, number>();
   let basemapErrorHandler: ((key: string, message: string) => void) | null = null;
   let settledHandler: (() => void) | null = null;
   // Lane-4 T17/T19: the menu and drag handlers, each place marker's own maplibre marker with the
@@ -305,7 +310,17 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
         const cause = event.error as { name?: string; message?: string } | undefined;
         if (cause?.name === "AbortError") return;
         const held = basemapHeld.get(event.sourceId);
+        // One failed tile (a 429, a 503) is not a refused source: a source fails after BASEMAP_FAILURE_RUN consecutive tile
+        // errors with no tile loaded between them, or on an error that names no tile (the source itself).
+        const tiled = (raised as unknown as { tile?: unknown }).tile !== undefined;
+        const run = (basemapErrorRuns.get(event.sourceId) ?? 0) + 1;
+        basemapErrorRuns.set(event.sourceId, run);
+        if (tiled && run < BASEMAP_FAILURE_RUN) return;
         if (held && basemapErrorHandler) basemapErrorHandler(held.key, cause?.message ?? String(event.error));
+      });
+      map.on("sourcedata", (event) => {
+        const loaded = event as unknown as { sourceId?: string; tile?: unknown };
+        if (loaded.sourceId && loaded.tile !== undefined) basemapErrorRuns.delete(loaded.sourceId);
       });
       map.on("idle", () => settledHandler?.());
       // Lane-4 T17: the menu a right-click or a one-finger long-press asks for. The point is
@@ -700,6 +715,7 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
         if (held.layerId && m.getLayer(held.layerId)) m.removeLayer(held.layerId);
         if (m.getSource(sourceId)) m.removeSource(sourceId);
         basemapHeld.delete(sourceId);
+        basemapErrorRuns.delete(sourceId);
       }
       // The offline ground is the bundled pack's own layer: its visibility and opacity, nothing else.
       const ground = m.getLayer("offline-base");
@@ -723,12 +739,18 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
           maxzoom: draw.maxZoom,
           attribution: draw.attribution,
         } as SourceSpecification);
-        // A new layer goes beneath the next imagery above it that is already on the map.
+        // A new layer goes beneath the next imagery above it that is already on the map. A layer that cannot be added takes
+        // its source back off, so the next apply starts clean instead of finding an orphaned source and drawing nothing.
         const above = plan.rasters.slice(index + 1).map((next) => next.layerId).find((id) => m.getLayer(id));
-        m.addLayer(
-          { id: draw.layerId, type: "raster", source: draw.sourceId, paint: { "raster-opacity": draw.opacity } } as never,
-          above ?? anchor,
-        );
+        try {
+          m.addLayer(
+            { id: draw.layerId, type: "raster", source: draw.sourceId, paint: { "raster-opacity": draw.opacity } } as never,
+            above ?? anchor,
+          );
+        } catch (cause) {
+          if (m.getSource(draw.sourceId)) m.removeSource(draw.sourceId);
+          throw cause;
+        }
         basemapHeld.set(draw.sourceId, { key: draw.key, layerId: draw.layerId });
       }
       if (plan.terrain) {

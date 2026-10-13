@@ -262,12 +262,15 @@ type SubstrateTemporalPrecision = NonNullable<GraphNode["temporalPrecision"]>;
 
 const SUBSTRATE_TEMPORAL_PRECISIONS: ReadonlySet<string> = new Set(TEMPORAL_PRECISIONS);
 
-function substrateTemporalPrecision(precision: string | null | undefined): SubstrateTemporalPrecision {
+function substrateTemporalPrecision(precision: string | null | undefined, instant?: string | null): SubstrateTemporalPrecision {
   if (precision !== null && precision !== undefined && SUBSTRATE_TEMPORAL_PRECISIONS.has(precision)) {
     return precision as SubstrateTemporalPrecision;
   }
   // Absent or unrecognised precision only. Every rung the facet actually
-  // states (millennium…subsecond) is carried verbatim above.
+  // states (eon…subsecond) is carried verbatim above. A bare year states no
+  // day, so it is read at year precision — a deep year (-780000) at "day"
+  // would be refused by the authority and the facet silently lost.
+  if (typeof instant === "string" && /^[+-]?\d+$/.test(instant.trim())) return "year";
   return "day";
 }
 
@@ -519,6 +522,7 @@ export function bundleFromTechneReadings(readings: TechneReadingLite[]): TechneF
           validTo: intervalTo ?? null,
           temporalPrecision: substrateTemporalPrecision(
             facet.precision ?? facet.interval?.from_precision ?? facet.interval?.to_precision,
+            facet.instant ?? facet.interval?.from ?? null,
           ),
         });
         pushRelationship(facet.kind, subjectRef, anchorId, temporalProperties);
