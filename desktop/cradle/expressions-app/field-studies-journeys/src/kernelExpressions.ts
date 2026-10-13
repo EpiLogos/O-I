@@ -118,7 +118,7 @@ export async function readKernelExpression(ref:string):Promise<unknown>{
 
 /** The kernel's Change grammar (oi.expression/v1), wire form: every kind the
  * documentToChanges diff below can emit (kernel expression.rs `Change`). */
-type KernelChange =
+export type KernelChange =
  |{change:"rename";title:string}
  |{change:"scene_create";scene_ref:string;title:string}
  |{change:"scene_rename";scene_ref:string;title:string}
@@ -192,7 +192,7 @@ export const UNEXPRESSIBLE={
  owner_metadata:'document provenance and refinements change only through their own owner operations (propose, review), not an edit',
  source_relation:'a source-owned relation changes only through its source owner; an Expression edit carries only O:I connections',
 } as const;
-const refuse=(reason:keyof typeof UNEXPRESSIBLE,subject:string):{error:string}=>({error:`${subject} is not expressible as a kernel edit in this cut: ${UNEXPRESSIBLE[reason]}`});
+const refuse=(reason:keyof typeof UNEXPRESSIBLE,subject:string):{error:string;refused:keyof typeof UNEXPRESSIBLE}=>({error:`${subject} is not expressible as a kernel edit in this cut: ${UNEXPRESSIBLE[reason]}`,refused:reason});
 
 /** One parameter's kernel changes: the value as parameter_set, the automation
  * as parameter_automate or parameter_manual. The kernel refuses parameter_set
@@ -235,7 +235,7 @@ function triggersOf(scenes:unknown):Map<string,{scene_ref:string;trigger:unknown
  * never dropped. The live composition path (kernelComposition.ts) builds its
  * edit from the same grammar; the shared kinds of both paths are pinned by
  * tests/commit-grammar-parity.test.mjs. */
-export function documentToChanges(current:unknown,edited:unknown):{changes:KernelChange[]}|{error:string}{
+export function documentToChanges(current:unknown,edited:unknown):{changes:KernelChange[]}|{error:string;refused?:keyof typeof UNEXPRESSIBLE}{
  if(!isDocument(edited))return{error:'the document is not an oi.expression/v1 expression'};
  if(!isDocument(current))return{error:'the kernel holds no readable document to diff against'};
  if(edited.expression_ref!==current.expression_ref)return{error:'the edited document addresses a different Expression than the kernel holds'};
@@ -376,19 +376,42 @@ export function documentToChanges(current:unknown,edited:unknown):{changes:Kerne
  return{changes};
 }
 
+/** The compensating kernel edit that restores `before` from `after`: the same
+ * diff read backwards. Reading it from the two documents, not from the change
+ * list alone, keeps every ordering law and named refusal of the forward grammar
+ * (a removed Scene restored with its members, a relation restored after its
+ * entities, a parameter that no change can remove) and needs no second
+ * implementation of the kernel's apply. */
+export type KernelCompensation={changes:KernelChange[]}|{refused:string;reason:string};
+export function invertEdit(before:unknown,after:unknown):KernelCompensation{
+ const diff=documentToChanges(after,before);
+ if('changes' in diff)return{changes:diff.changes};
+ return{refused:diff.refused??'not_diffable',reason:diff.error};
+}
+
 /** Save the app's edited kernel document: the difference goes back through
  * the kernel's own edit op at the document's expected revision. A revision
  * conflict (or any edit this cut cannot express) comes back as
- * {ok:false,error} — a conflict is never force-written. */
-export async function saveKernelExpression(doc:unknown):Promise<{ok:boolean;error?:string;revision?:number}>{
+ * {ok:false,error} — a conflict is never force-written.
+ * With `explicit`, the caller supplies the change list (a compensating edit
+ * from the undo stack) and the basis it holds: one edit, one expected
+ * revision, no diff against the kernel's current document. */
+export async function saveKernelExpression(doc:unknown,explicit?:{changes:KernelChange[];expectedRevision?:number}):Promise<{ok:boolean;error?:string;revision?:number}>{
  if(!isDocument(doc))return{ok:false,error:'saveKernelExpression needs an oi.expression/v1 document'};
- let current:unknown;
- try{current=await readKernelExpression(doc.expression_ref);}
- catch(cause){return{ok:false,error:`the kernel document could not be read before saving: ${cause instanceof Error?cause.message:String(cause)}`};}
- const diff=documentToChanges(current,doc);
- if('error' in diff)return{ok:false,error:diff.error};
- const data=await call<{state?:string;document?:{revision?:number};current_revision?:number}>("kernel-expression",{request:{operation:"edit",expression_ref:doc.expression_ref,expected_revision:doc.revision,actor:"expressions-app",changes:diff.changes}});
- if(data&&data.state==='revision_conflict')return{ok:false,error:`revision conflict: the kernel holds revision ${data.current_revision}, the edited document expected ${doc.revision}`};
+ let changes:KernelChange[],expectedRevision:number=doc.revision;
+ if(explicit){
+  if(!Array.isArray(explicit.changes)||explicit.changes.length===0)return{ok:false,error:'the explicit kernel edit carries no changes'};
+  changes=explicit.changes;expectedRevision=explicit.expectedRevision??doc.revision;
+ }else{
+  let current:unknown;
+  try{current=await readKernelExpression(doc.expression_ref);}
+  catch(cause){return{ok:false,error:`the kernel document could not be read before saving: ${cause instanceof Error?cause.message:String(cause)}`};}
+  const diff=documentToChanges(current,doc);
+  if('error' in diff)return{ok:false,error:diff.error};
+  changes=diff.changes;
+ }
+ const data=await call<{state?:string;document?:{revision?:number};current_revision?:number}>("kernel-expression",{request:{operation:"edit",expression_ref:doc.expression_ref,expected_revision:expectedRevision,actor:"expressions-app",changes}});
+ if(data&&data.state==='revision_conflict')return{ok:false,error:`revision conflict: the kernel holds revision ${data.current_revision}, the edited document expected ${expectedRevision}`};
  if(!data||data.state!=='ready')return{ok:false,error:`the kernel did not accept the edit (state ${String(data?.state)})`};
  return{ok:true,revision:data.document?.revision};
 }
