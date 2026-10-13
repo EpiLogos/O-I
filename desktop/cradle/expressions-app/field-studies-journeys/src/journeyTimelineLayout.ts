@@ -62,6 +62,21 @@ export function secondsFromDrag(dxPx:number,trackPx:number,total:number):number{
 }
 
 /**
+ * Lane-5 T6: the overlap a drag of `dxPx` authors on a seam, in seconds. The blend moves by the drag on the layout's own
+ * clock (`layout.total` seconds across the track), on the .1 s grid, and stops at both ends with a named `clamped`: 'min' at
+ * a cut (0 s), 'max' at `limit`, the incoming scene's blend limit. A move under 0.05 s keeps the value.
+ */
+export function overlapFromDrag(from:number,limit:number,layout:TimelineLayout,dxPx:number,trackPx:number):{seconds:number;clamped:'min'|'max'|null}{
+ if(!(limit>=0))throw new Error('This seam has no blend limit to drag against.');
+ const delta=secondsFromDrag(dxPx,trackPx,layout.total);
+ if(delta===0)return {seconds:from,clamped:null};
+ const want=Math.round((from+delta)*10)/10;
+ if(want<0)return {seconds:0,clamped:'min'};
+ if(want>limit)return {seconds:limit,clamped:'max'};
+ return {seconds:want,clamped:null};
+}
+
+/**
  * E06 slip: the entry offset a drag of `dxPx` gives. Dragging right shows earlier content, so the offset
  * falls by the drag. It stays on [0, duration), on the .1 grid once the drag moved it. An unmoved drag keeps the offset.
  */

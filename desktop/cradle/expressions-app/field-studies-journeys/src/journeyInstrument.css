@@ -25,3 +25,15 @@
 .journey-beat-chip{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:2px 5px;border:1px solid color-mix(in srgb,var(--knowledge-accent,#79c0d4) 45%,transparent);border-radius:999px;background:color-mix(in srgb,var(--knowledge-accent,#79c0d4) 14%,transparent);font-size:10px;line-height:1.4}
 .journey-beat-reason{grid-column:1/-1;font-size:10px;line-height:1.4;opacity:.65;overflow-wrap:anywhere}
 .journey-reading-source{font-size:10px;opacity:.65;overflow-wrap:anywhere}
+/* lane-5 T8 — the walked journey path: scenes in order with their seams, the position, the blend in force, the next scene. */
+.journey-playback-path{padding:10px;border-top:1px solid var(--ui-line,var(--line));min-width:0}
+.journey-playback-path>header{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.journey-playback-path h3{margin:0;font-size:12px;font-weight:500}
+.journey-path-clock{font-size:10px;opacity:.65;font-variant-numeric:tabular-nums}
+.journey-path-steps{list-style:none;margin:8px 0;padding:0;display:grid;gap:4px}
+.journey-path-step{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto);gap:8px;align-items:center}
+.journey-path-scene{min-width:0;text-align:left;overflow-wrap:anywhere;padding:4px 6px;cursor:pointer}
+.journey-path-step[data-current=true] .journey-path-scene{outline:1px solid var(--accent,currentColor)}
+.journey-path-seam{font-size:10px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;opacity:.75}
+.journey-path-seam.is-cut,.journey-path-seam.is-start{opacity:.45}
+.journey-path-edge,.journey-path-next{font-size:10px;line-height:1.4;opacity:.75;overflow-wrap:anywhere;margin:4px 0}

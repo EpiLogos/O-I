@@ -307,3 +307,9 @@ body{
 .transport-readout{min-width:84px;font-variant-numeric:tabular-nums;color:var(--ink)}
 /* lane-3 E22/E23 — the stage fills the screen when focus mode wins real fullscreen; a refused fullscreen keeps the in-page focus. Tokens only. */
 #stage:fullscreen{width:100vw;height:100vh;background:var(--paper)}
+/* lane-5 T5-T8 — the seam's blend band (T6) and its live caption (T7) on the strip. Tokens only. */
+.scene-track-lane .seam-blend{position:absolute;top:0;bottom:0;z-index:2;pointer-events:none;overflow:hidden;background:var(--accent-soft);border-left:1px solid var(--accent)}
+.scene-track-lane .seam-blend::after{content:"";position:absolute;left:0;top:0;bottom:0;width:calc(var(--blend-progress,0) * 100%);background:var(--accent);opacity:.45}
+.scene-track-lane .seam-blend[data-blending="false"]::after{width:0}
+.scene-track-lane .seam-caption{position:absolute;top:-1px;z-index:3;max-width:min(220px,60%);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px;border-radius:3px;background:var(--ui-surface);color:var(--ui-muted,var(--ink));font-size:10px;line-height:16px;pointer-events:none}
+.scene-track-lane .seam-caption[data-blending="true"]{color:var(--ui-ink,var(--ink))}
