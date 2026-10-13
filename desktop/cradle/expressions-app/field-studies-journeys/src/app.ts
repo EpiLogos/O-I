@@ -76,6 +76,8 @@ import {installLensStudio,type LensId} from './lensStudio.js';
 import {installResearchInstruments} from './researchInstruments.js';
 import {installPalaceInstrument} from './palaceInstrument.js';
 import {installJourneyInstrument} from './journeyInstrument.js';
+import {composeSceneRequest} from './journeyBeats.js';
+import {readJourneyInstrument} from './journeyInstrumentModel.js';
 import {installNaraInstrument} from './naraInstrument.js';
 import {naraFormGeometry} from './naraFormField.js';
 import type {NativeM3Reading} from '../../../src/nara/nativeM3';
@@ -991,7 +993,7 @@ function addLane(target='field.dispersion',syncWith?:string){if(!target.startsWi
  const newId=uid('lane');detailState.set('automation-'+(syncWith??newId),true);const span=(p.max-p.min)*.1,low=clamp(p.value-span,p.hardMin,p.hardMax),high=clamp(p.value+span,p.hardMin,p.hardMax);
  changed(()=>{scene().automation.push({id:newId,...(syncWith?{syncWith}:{}),enabled:true,target,type:'lfo',wave:'sine',min:low,max:high,rate:.08,phase:0,blend:'replace',duration:4,delay:0,loop:'once',firedAt:null});if(target==='field.frequency')scene().composition.frequencyDriver='automation';},true,'Add automation lane');}
 function duplicateEntity(){const list=scene().entities.filter(e=>selected.includes(e.id));if(!list.length)return;changed(()=>{selected=list.map(e=>{const n=clone(e);n.id=uid('entity');n.name+=' copy';n.position.x+=.12;n.position.y-=.12;n.locked=false;n.sequence.steps.forEach(k=>k.id=uid('step'));scene().entities.push(n);return n.id;});},true,'Duplicate objects');}
-function deleteEntities(){if(selected.some(id=>blueprintMember(scene(),id))){toast('Release the blueprint before removing one of its members.');return;}const ids=selected.filter(id=>!scene().entities.find(e=>e.id===id)?.locked);if(!ids.length){toast('Unlock a selected entity before removing it.');return;}let prunedLanes=false;changed(()=>{scene().entities=scene().entities.filter(e=>!ids.includes(e.id));selected=[];prunedLanes=pruneAutomation(scene());},true,'Delete objects');toast('Removed. Undo restores the configuration.'+(prunedLanes?' Its automation lanes without a remaining target were removed with it.':''));}
+function deleteEntities(){if(selected.some(id=>blueprintMember(scene(),id))){toast('Release the blueprint before removing one of its members.');return;}const ids=selected.filter(id=>!scene().entities.find(e=>e.id===id)?.locked);if(!ids.length){toast('Unlock a selected entity before removing it.');return;}let prunedLanes=false;changed(()=>{scene().entities=scene().entities.filter(e=>!ids.includes(e.id));selected=[];for(const id of ids)pruneResearchOccurrence(scene(),id);prunedLanes=pruneAutomation(scene());},true,'Delete objects');toast('Removed. Undo restores the configuration.'+(prunedLanes?' Its automation lanes without a remaining target were removed with it.':''));}
 /** E02b/E03: a scene is moved by its ref; the guarded model op refuses any move that would change a Scene's content. */
 function reorderScene(sceneId:string,to:number){if(to<0||to>=store.document.scenes.length)return;const currentId=scene().id;changed(()=>{moveScene(store.document,sceneId,to);sceneIndex=store.document.scenes.findIndex(s=>s.id===currentId);},true,'Reorder scenes');}
 async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),subjectId=el.closest<HTMLElement>('[data-entity-id]')?.dataset.entityId,e=subjectId?s.entities.find(v=>v.id===subjectId):selectedEntity();if(e&&el.closest('.live-sequence'))selected=[e.id];switch(name){
@@ -1285,13 +1287,16 @@ document.addEventListener('keydown',ev=>{if(ev.defaultPrevented)return;const el=
  if(ev.key===' '){ev.preventDefault();toggleScenePlay();needsFrame=true;return;}
  if(ev.key.toLowerCase()==='s'&&!typing&&timelineOpen&&!presenting){ev.preventDefault();void action('split-scene',el);return;}
  // E12/E13: locators and the loop brace answer while the timeline is open; the tool keys (I, O) take over only when it is closed.
- if(!typing&&timelineOpen&&!presenting){const k=ev.key.toLowerCase();if(k==='m'){ev.preventDefault();addMarkerAtPlayhead();return;}if(k==='['||k===']'){ev.preventDefault();jumpMarker(k===']'?1:-1);return;}if(k==='i'||k==='o'){ev.preventDefault();setLoopAtPlayhead(k==='i'?'from':'to');return;}if(ev.key==='\\'){ev.preventDefault();clearLoopRegion();return;}}
+ if(!typing&&timelineOpen&&!presenting){const k=ev.key.toLowerCase();if(ev.repeat&&(k==='m'||k==='i'||k==='o')){ev.preventDefault();return;}if(k==='m'){ev.preventDefault();addMarkerAtPlayhead();return;}if(k==='['||k===']'){ev.preventDefault();jumpMarker(k===']'?1:-1);return;}if(k==='i'||k==='o'){ev.preventDefault();setLoopAtPlayhead(k==='i'?'from':'to');return;}if(ev.key==='\\'){ev.preventDefault();clearLoopRegion();return;}}
  const shortcuts:Record<string,string>={e:'edit',p:'tool-pin',v:'tool-select',i:'tool-interact',a:'tool-formation',t:'tool-text',o:'tool-orbit',g:'grid',f:presenting?'exit-present':'present'};
  if(shortcuts[ev.key.toLowerCase()]){ev.preventDefault();void action(shortcuts[ev.key.toLowerCase()],el);return;}
  if(ev.key.startsWith('Arrow')){ev.preventDefault();if(editing&&selected.length){if(selected.some(id=>blueprintMember(scene(),id))){toast('Use Blueprint to move the whole shape.');return;}const amount=ev.shiftKey?.1:.01;if(placementStep){const entity=selectedEntity(),step=entity?.sequence.steps[stepIndex];if(!entity||!step||entity.locked)return;const view=nativeWorkspace?.nativeView(),occurrence=view?.bindings[scene().id]?.occurrences.find(row=>row.view_entity_id===entity.id);if(view&&!occurrence){toast('The selected formation has no current native occurrence');return;}if(occurrence&&(view!.document.entities[occurrence.entity_ref] as {pinned?:boolean})?.pinned){toast('Unpin the native occurrence before moving it');return;}const position=formationStateNudge(entity,step.id,ev.key,amount);if(position)changed(()=>{const current=scene().entities.find(row=>row.id===entity.id)?.sequence.steps.find(row=>row.id===step.id);if(current)current.position=position;},true,'Move keyframe');return;}changed(()=>scene().entities.filter(e=>selected.includes(e.id)&&!e.locked).forEach(e=>{if(ev.key==='ArrowLeft')e.position.x-=amount;if(ev.key==='ArrowRight')e.position.x+=amount;if(ev.key==='ArrowUp')e.position.y+=amount;if(ev.key==='ArrowDown')e.position.y-=amount;e.position.x=clamp(e.position.x,-50,50);e.position.y=clamp(e.position.y,-50,50);}),true,'Move objects');}else if(ev.key==='ArrowLeft')setSceneRef(sceneRefAt(sceneIndex-1));else if(ev.key==='ArrowRight')setSceneRef(sceneRefAt(sceneIndex+1));}
  // E09: with a keyframe selected in the channel lane, Delete removes that keyframe before any entity is touched.
  if((ev.key==='Delete'||ev.key==='Backspace')&&!typing&&timelineOpen&&selectedCurve()?.index!=null){ev.preventDefault();deleteCurveKey();return;}
- if((ev.key==='Delete'||ev.key==='Backspace')&&!typing&&timelineOpen&&selectedMarkerId){ev.preventDefault();deleteSelectedMarker();return;}
+ // A selected marker takes Delete only while it still exists and no stage object is selected: a stage selection made after
+ // jumping to a marker is what Delete removes.
+ if(selectedMarkerId&&!markerNamed(store.document.markers??[],selectedMarkerId))selectedMarkerId=null;
+ if((ev.key==='Delete'||ev.key==='Backspace')&&!typing&&timelineOpen&&selectedMarkerId&&!(editing&&selected.length)){ev.preventDefault();deleteSelectedMarker();return;}
  if((ev.key==='Delete'||ev.key==='Backspace')&&editing&&selected.length){ev.preventDefault();deleteEntities();}
 });
 $<HTMLInputElement>('source-file').addEventListener('change',async ev=>{const input=ev.target as HTMLInputElement,file=input.files?.[0],id=sourceUploadEntityId;if(!file||!id)return;try{if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>8_000_000)throw new Error('Use a PNG, JPEG or WebP smaller than 8 MB.');const url=await new Promise<string>((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=()=>reject(new Error('Image file could not be read'));r.readAsDataURL(file);});const s=store.document.scenes.find(s=>s.id===id.sceneId),e=s?.entities.find(e=>e.id===id.entityId);if(!s||!e||e.locked)return;
@@ -1915,6 +1920,39 @@ journeyInstrument=installJourneyInstrument({nativeView:()=>nativeWorkspace?.nati
   return await focusNativeSceneRef(input.target_scene_ref);
  },
 },journeyHome);
+// lane-5 T2 · compose a scene from the journey lens. The floor (journeyBeats.ts) mints the
+// scene ref and refuses collisions; the kernel receives exactly one scene_create on the revision
+// the reading disclosed. Nothing persists in the page; a refusal is a toast.
+const journeyComposeForm=document.createElement('form');
+journeyComposeForm.className='journey-compose';journeyComposeForm.setAttribute('aria-label','Compose a scene in this Journey');
+journeyComposeForm.innerHTML='<label>New scene<input name="title" maxlength="160" autocomplete="off" required></label><button type="submit">Compose scene</button>';
+journeyHome.append(journeyComposeForm);
+let journeyComposing=false;
+journeyComposeForm.addEventListener('submit',ev=>{
+ ev.preventDefault();if(journeyComposing)return;
+ const title=(journeyComposeForm.elements.namedItem('title') as HTMLInputElement|null)?.value??'';
+ journeyComposing=true;void composeJourneyScene(title).finally(()=>{journeyComposing=false;});
+});
+async function composeJourneyScene(title:string):Promise<void>{
+ const view=nativeWorkspace?.nativeView();
+ const basis=view&&view.bindings[scene().id];
+ if(!view||!basis){toast('Open a native Scene before composing a scene into this Journey.');return;}
+ const reading=retainedEditor.read();
+ if(store.transactionOpen||reading.standing.pending||reading.standing.dirty){toast('Save the open work before composing a scene into this Journey.');return;}
+ let disclosed:ReturnType<typeof readJourneyInstrument>['reading'];
+ try{
+  const raw=await readTechneReading({expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:basis.scene_ref});
+  disclosed=readJourneyInstrument(raw,view,scene().id).reading;
+ }catch(cause){toast(cause instanceof Error?cause.message:String(cause));return;}
+ const routed=composeSceneRequest({reading:disclosed,doc:view.document,focus_refs:[basis.scene_ref],title});
+ if(!routed.ok){toast(routed.reason);return;}
+ const reply=await nativeExpressionRequest(routed.request) as {state?:string;current_revision?:number;document?:{revision?:number}}|null;
+ if(reply?.state==='revision_conflict'){toast(`This Expression changed elsewhere (now revision ${reply.current_revision}). Nothing was composed; reopen it and try again.`);return;}
+ if(reply?.state!=='ready'){toast(`The Expression owner did not accept the composition (${String(reply?.state)}).`);return;}
+ toast(`Composed “${title.trim()}” into ${routed.request.expression_ref} at revision ${reply.document?.revision ?? routed.request.expected_revision+1}.`);
+ void nativeWorkspace?.open(routed.request.expression_ref);
+ void journeyInstrument?.refresh();
+}
 lensStudio.setMode(hostMode);
 (document.querySelector('#workspace-menu') as HTMLElement)?.insertAdjacentHTML('beforeend',ib('deep-home','home','Epii home','data-techne-only')+ib('deep-verso','wiki','Verso — the subject\u2019s account and sources','data-techne-only'));
 // Save is the primary act: it stays in the masthead at every width, outside
