@@ -1,0 +1,58 @@
+/* Scene sequence editor: the Clip side of a scene as Live's piano roll. Shell tokens only (styles.css :root). */
+
+.scene-sequence{display:flex;flex:none;min-height:0;max-height:52%;overflow:hidden;background:var(--bg-1);border-bottom:1px solid var(--line);font-size:10px;color:var(--text)}
+.scene-sequence button{font:inherit;color:var(--text);background:var(--bg-2);border:1px solid var(--line);border-radius:2px;padding:2px 6px;cursor:pointer}
+.scene-sequence button:disabled{opacity:.5;cursor:default}
+.scene-sequence button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.scene-sequence h5{font-weight:400;font-size:9.5px;color:var(--text-faint);letter-spacing:.06em;text-transform:uppercase;margin:0;padding:4px 10px}
+.scene-sequence-empty{margin:0;padding:10px;color:var(--text-dim)}
+.scene-muted{margin:0;padding:0 10px 4px;color:var(--text-faint)}
+.scene-empty{margin:0;padding:4px 10px;color:var(--text-dim)}
+.scene-fault{margin:0;padding:4px 10px;color:var(--rec);overflow-wrap:anywhere}
+
+.scene-clip{width:200px;flex:none;display:flex;flex-direction:column;gap:2px;min-height:0;overflow:auto;border-right:1px solid var(--line);background:var(--bg-1)}
+.scene-clip-head{height:22px;display:flex;align-items:center;padding:0 7px;background:var(--bg-3);color:var(--text);font-weight:500;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:none}
+.scene-clip-facts{display:grid;grid-template-columns:72px 1fr;margin:0;padding:2px 10px;row-gap:1px;color:var(--text-dim)}
+.scene-clip-facts dt{color:var(--text-dim)}
+.scene-clip-facts dd{margin:0;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.scene-takes{margin:0;padding:0 10px 4px 22px;color:var(--text)}
+.scene-open{margin:6px 10px;align-self:flex-start}
+
+.scene-notes{flex:1;min-width:0;min-height:0;overflow:auto;padding-bottom:4px}
+.scene-roll{min-width:0}
+.scene-roll-row{display:grid;grid-template-columns:132px minmax(0,1fr);min-width:0}
+.scene-ruler{height:18px;border-bottom:1px solid var(--line-strong);color:var(--text-faint)}
+.scene-ruler-cell{padding:2px 8px;border-right:1px solid var(--line);white-space:nowrap}
+.scene-ruler-track,.scene-lane-track{position:relative;min-width:0;overflow:hidden}
+.scene-ruler-track{height:18px}
+.scene-tick{position:absolute;top:0;bottom:0;padding:2px 3px;border-left:1px solid var(--line-strong);color:var(--text-faint);white-space:nowrap;line-height:14px}
+.scene-lane{border-bottom:1px solid var(--line)}
+.scene-lane-head{display:flex;align-items:center;gap:6px;min-width:0;height:26px;padding:0 8px;border-right:1px solid var(--line);color:var(--text);overflow:hidden;white-space:nowrap}
+.scene-lane-head>span:last-child{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.scene-lane-glyph{flex:none;width:16px;text-align:center;color:var(--accent)}
+.scene-lane-track{height:26px;background:var(--bg-2)}
+.scene-gridline{position:absolute;top:0;bottom:0;width:1px;background:var(--line);pointer-events:none}
+.scene-note-slot{display:contents}
+.scene-note{position:absolute;top:3px;bottom:3px;min-width:6px;max-width:100%;padding:0 4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-align:left;background:var(--accent-dim);color:var(--bg-0);border:1px solid var(--accent);border-radius:2px;line-height:18px;cursor:pointer}
+.scene-note>span{overflow:hidden;text-overflow:ellipsis}
+.scene-note.is-selected{outline:2px solid var(--text);outline-offset:-1px;background:var(--accent)}
+.scene-glide{position:absolute;top:50%;height:2px;margin-top:-1px;background:repeating-linear-gradient(90deg,var(--accent) 0 4px,transparent 4px 7px);pointer-events:none}
+
+.scene-envelopes{list-style:none;margin:0;padding:0 0 4px}
+.scene-envelope{display:grid;grid-template-columns:132px minmax(0,1fr) minmax(0,auto);align-items:center;min-height:22px;border-bottom:1px solid var(--line)}
+.scene-envelope-target{padding:0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-right:1px solid var(--line);color:var(--text)}
+.scene-envelope-lane{position:relative;height:6px;margin:0 8px;background:var(--bg-2);border-top:1px solid var(--line-strong)}
+.scene-envelope.is-off .scene-envelope-lane{border-top-style:dashed;opacity:.6}
+.scene-envelope:not(.is-off) .scene-envelope-lane{background:linear-gradient(90deg,var(--accent-dim),var(--bg-2))}
+.scene-envelope-by{padding:0 8px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px}
+
+/* The piano roll sits above the existing States editor on the Expressions clip side. */
+.native-clip-surface:has(>.scene-sequence){display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.native-clip-surface:has(>.scene-sequence)>.glyph-editor{flex:1 1 auto;height:auto;min-height:0}
+
+@media(max-width:720px){
+ .scene-sequence{flex-direction:column;max-height:60%}
+ .scene-clip{width:auto;border-right:0;border-bottom:1px solid var(--line);max-height:110px}
+ .scene-roll-row,.scene-envelope{grid-template-columns:96px minmax(0,1fr)}
+ .scene-envelope-by{grid-column:2;padding:0 8px 3px}
+}

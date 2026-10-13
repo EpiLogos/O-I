@@ -44,4 +44,14 @@ this ticket: editing a step routes through the existing native editor
 
 ## Resolution
 
-—
+**Code landed (13 Oct 2026; builder haiku, converged by the lead).**
+`SceneSequenceEditor.tsx` — the scene's piano roll above the States editor
+in Expressions' Clip side: lanes = objects, notes at their engine timing
+(`readNativeGlyphTiming` — the engine may play an entity-level hold, so the
+legacy projection's per-step hold is not trusted), length = hold, glide =
+transition, envelopes with their modulator, takes, honest empty/pending
+states; requests are only the existing `select` and `open` (double-click
+opens the source editor). Lead rulings: the clip box omits scene colour and
+the 5:3 signature until a native reading carries them; States stays the
+default surface. Scripted: 16/16; neighbours 90/90; vite build ok.
+Unverified: on screen (native, both viewports) — the lead's computer-use pass.
