@@ -30,6 +30,7 @@ import {DocumentDayDieFace} from './DocumentDayDieFace'
 import {FlowFace} from './DocumentFlowFace'
 import {NaraConversationFace} from './ConversationNaraFace'
 import {QlInstrumentBody, qlInstrumentLight, qlInstrumentStanding} from './qlInstrumentDevice'
+import {AtlasFaceBody, isAtlasFaceId} from './atlasFaceBodies'
 import {InhabitantCard, type CardLight} from './inhabitantCard.tsx'
 import type {IconName} from './sdk/Icon.tsx'
 import type {KindShapeName} from './sdk/marks.tsx'
@@ -180,6 +181,9 @@ function InhabitantFace({face, manifest, transport, day, flow, conversation, pro
       // reading arrives as the host received it (raw); the face parses and
       // renders the honest refusing state where no owner reading stands.
       body = <QlInstrumentBody reading={instrumentReading ?? null}/>
+    } else if (isAtlasFaceId(face.id)) {
+      // [atlas family] the Earth's own controls on the 0 instrument's rack: each body drives the mounted atlas's own state.
+      body = <AtlasFaceBody faceId={face.id}/>
     }
   }
 

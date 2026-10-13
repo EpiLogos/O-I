@@ -136,6 +136,32 @@ export function atlasMemoryStorage(): Storage {
   return sharedStorage
 }
 
+// ── the mounted atlas, for the shell's face bodies (inhabitants/atlasFaceBodies.tsx) ──────────
+
+let mountedAtlas: AtlasHandle | null = null
+const handleListeners = new Set<() => void>()
+
+function subscribeHandle(listener: () => void): () => void {
+  handleListeners.add(listener)
+  return () => { handleListeners.delete(listener) }
+}
+
+/** Publish (or withdraw, null) the mounted atlas. Called by the attachment; exported for the host tests. */
+export function publishAtlasHandle(next: AtlasHandle | null): void {
+  mountedAtlas = next;
+  for (const listener of handleListeners) listener();
+}
+
+/** The mounted atlas, as a plain read: null until it mounts, and again once its pane is destroyed. */
+export function atlasHandle(): AtlasHandle | null {
+  return mountedAtlas;
+}
+
+/** The mounted atlas, as a hook: the face bodies re-read it when it mounts or is withdrawn. */
+export function useAtlasHandle(): AtlasHandle | null {
+  return useSyncExternalStore(subscribeHandle, () => mountedAtlas, () => mountedAtlas);
+}
+
 // ── the attachment: one atlas in one element ──────────────────────────────
 
 export interface AtlasAttachment {
@@ -212,6 +238,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {controllerS
   registerCorpusProvider({...provider, load: async () => bundle}, {asDefault: true})
   progress.controllerStarted = true
   const mounted: AtlasHandle = await mountAtlas({globe, app, provider: ARCHETYPAL_EARTH_PROVIDER_ID})
+  publishAtlasHandle(mounted)
   // The reading the atlas holds is the World's Aion source, by reference, from the moment it stands.
   publishAtlasAionReading(bundle.history ? {providerId: ARCHETYPAL_EARTH_PROVIDER_ID, history: bundle.history} : null)
 
@@ -244,6 +271,7 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {controllerS
     if (retired) return
     retired = true
     publishAtlasAionReading(null)
+    publishAtlasHandle(null)
     observer?.disconnect()
     if (reconcileFollowed === reconcile) reconcileFollowed = null
     mounted.engine.setPaused(true)

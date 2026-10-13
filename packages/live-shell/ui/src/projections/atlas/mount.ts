@@ -21,7 +21,7 @@ import './src/style/graph.css';
 import './src/style/shell.css';
 import './src/style/touch.css';
 import { Controller } from './src/app/controller';
-import { buildModel } from './src/data/model';
+import { buildModel, type Model } from './src/data/model';
 import { rgbToHex, type RGBPalette } from './src/data/palette';
 import { GlobeEngine } from './src/globe/engine';
 import { prefersReducedMotion } from './src/ui/dom';
@@ -68,6 +68,10 @@ export interface AtlasMountOptions {
 export interface AtlasHandle {
   readonly engine: GlobeEngine;
   readonly ctl: Controller;
+  /** the one deep-time clock the atlas's time control reads (shell face bodies share it; the pane owns it) */
+  readonly time: TimeModel;
+  /** the corpus model the atlas draws (its time scale is the deep-time scale) */
+  readonly model: Model;
   destroy(): void;
 }
 
@@ -116,6 +120,8 @@ export async function mountAtlas(options: AtlasMountOptions): Promise<AtlasHandl
     requestAnimationFrame(() => loading?.classList.add('done'));
     const handle: AtlasHandle = {
       engine,
+      model,
+      time,
       get ctl(): Controller {
         return ctl!;
       },
