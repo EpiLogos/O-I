@@ -117,9 +117,9 @@ this table true. Tickets and resolutions live in `tickets/`.
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| lane-3 E22/E23 (deep links, fullscreen/focus) | haiku builder | `field-studies-journeys/src/{app.ts (boot URL, focus), deepLinks.ts, focusMode.ts}` | 2026-10-13 |
-| T-TIMELINE-WALKS leg 2 (the Journey reads the walks) | haiku builder | `packages/live-shell/ui/src/shell/ModeCentre.tsx` (Journey), walk modules | 2026-10-13 |
-| lane-4 T21 (layers + basemap persist per Scene) | haiku builder | `researchMaterial.ts`, `undoLabels.ts`, `placeViews.ts`, Places wiring, kernel `validate_research` | 2026-10-13 |
+| T-REVIEW-6 draft safety | haiku builder | `field-studies-journeys/src` draft/autosave modules | 2026-10-13 |
+| T-REVIEW-6 Factory (#6 grant resolution, #6b runRef, #7 status, #10 producer self-stop) | haiku builder | `kernel/src/factory.rs`, `src/contributions/factory/{FactoryLive.tsx, live/producer.ts, desk/RunHandoff.tsx, desk/runModel.ts}` | 2026-10-13 |
+| T-EVERY-MODE-INSTRUMENTS (owner ruling 13 Oct) | haiku builder | `packages/live-shell/ui/src/{App.tsx detail+lens bar, shell/ModeDetail.tsx, shell/paneInstrument.ts}` | 2026-10-13 |
 
 ## 8. Foreign lanes — never touch
 

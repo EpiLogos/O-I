@@ -146,8 +146,13 @@ tabs (pane rail), lens navigation (the Technē lens bar), view controls
 composes an instrument out of devices, and none appears in other modes. In
 Technē the detail row is the focused lens's own native control set, drawn as
 one instrument frame with sections; those controls are what modify its
-fundamental form. In other arrangements the same views can be pulled in as
-plain apertures, without instrument controls.
+fundamental form. Every pane instrument works in every mode at full
+capability (owner ruling, 13 October 2026, retiring the earlier plain-aperture
+rule): in any arrangement the detail row's Device side follows the focused
+pane's instrument, so a Places, Graph, Timeline or Expression pane in Central
+or Factory carries that instrument's full native controls through its
+devices' exposed parameters. The controls stay out of the pane body. The mode
+supplies the material; the instruments stay whole.
 
 **M4′ World / Places renders real bodies in one space.** Planets are lit by the
 field's star, so they show phases, and each is procedurally generated from its

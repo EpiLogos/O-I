@@ -340,8 +340,11 @@ Packet · Answer · form device); Factory = Task log | agent chain; Expressions
 relations, bounded constellation, source) | **Instruments — the six M0′–M5′;
 the focused lens's instrument is expanded with its own controls, others
 folded; clicking one opens it on the focused pane**. No separate "Technè
-rack" composes an instrument; in other arrangements the same views pull in as
-plain apertures without instrument controls.
+rack" composes an instrument. In every arrangement the Device side follows
+the focused pane's instrument at full capability — Central, Factory,
+Expressions and Live included (owner ruling, 13 October 2026; the earlier
+plain-aperture rule is retired); a pane that holds no instrument keeps its
+mode's Device side.
 
 ### 4.6 Right dock = agent-shell dock + context tiles (Rev 4)
 
