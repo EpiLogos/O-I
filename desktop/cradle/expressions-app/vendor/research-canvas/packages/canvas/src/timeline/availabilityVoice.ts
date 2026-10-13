@@ -11,6 +11,23 @@ export const NO_DATES_SENTENCE = "No dates disclosed by this source";
 export const NO_TIMELINE_REASON = "no temporal facets and no dated relations are disclosed — nothing is placed on a time axis, and none is invented";
 /** The authority's reason when the relation projections have no typed relation to draw. */
 export const NO_RELATIONS_REASON = "the reading discloses no typed relations";
+/** The reason for a projection the reading's availability does not report: unavailable, never invented as available. */
+export const NO_PROJECTION_REASON = "this projection is not disclosed by the reading";
+
+/**
+ * The authority's reason for every projection with nothing to draw (lane-2 T25 seams). `projectionAvailability`
+ * (src/techne/m0m5/timeline/relations.ts) reads these, so each absence has one sentence, shared by the authority
+ * and every surface that names it.
+ */
+export const PROJECTION_REASONS = {
+  timeline: NO_TIMELINE_REASON,
+  relations: NO_RELATIONS_REASON,
+  cause: "no CAUSES / INFLUENCES / dependency-family relations are disclosed",
+  echo: "no ECHOES / RESONATES_WITH / INSTANTIATES-family relations are disclosed",
+  opposition: "no OPPOSES / INHERITS / TRANSFORMS_INTO-family relations are disclosed",
+  phase: "no validity intervals and no transformation cycles are disclosed — no phase is fabricated",
+  activity: "no DAY / NOW / session / run continuity facets are disclosed",
+} as const;
 
 /** One projection's availability, as `projectionAvailability` reports it. Only the fields the voice reads. */
 export interface AvailabilityFact {
@@ -71,4 +88,20 @@ export function chronologyVoice(availability: readonly AvailabilityFact[]): Chro
     chronology,
     relationField,
   };
+}
+
+/** One projection's voice: available with no reason, or unavailable with the authority's own reason. */
+export interface ModeVoice {
+  readonly available: boolean;
+  readonly reason: string | null;
+}
+
+/**
+ * The voice of one relation projection (the Relations mode bar reads it, as the chronology reads `chronologyVoice`).
+ * A projection the availability does not report is unavailable with NO_PROJECTION_REASON, never invented as available.
+ */
+export function modeVoice(availability: readonly AvailabilityFact[], mode: string): ModeVoice {
+  const fact = factOf(availability, mode);
+  const available = fact?.available === true;
+  return {available, reason: available ? null : fact?.reason ?? NO_PROJECTION_REASON};
 }

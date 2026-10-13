@@ -96,21 +96,36 @@ test('releasing the stage fullscreen exits only a fullscreen the document holds,
 const instruments=await readFile(resolve(engine,'src/researchInstruments.tsx'),'utf8');
 const styles=await readFile(resolve(engine,'src/styles.css'),'utf8');
 
-test('the M2′ stage imports the shared focus model and the one fullscreen request, and holds its session on the view state',()=>{
+test('the M2′ stage imports the shared focus model and the one fullscreen request, and holds its session at install scope',()=>{
  assert.match(instruments,/import \{beginStageFocus,endStageFocus,isStageFocused,NOT_STAGE_FOCUS,releaseStageFullscreen,requestStageFullscreenOn,type StageFocusSession\} from '\.\/focusMode';/);
- assert.match(instruments,/timelineFocus\?:StageFocusSession<\{toolsDisplay:string\}>;timelineFullscreen\?:boolean;timelineFocusOff\?:\(\)=>void;/);
+ assert.match(instruments,/let timelineFocus:StageFocusSession<\{toolsDisplay:string\}>=NOT_STAGE_FOCUS,timelineFullscreen=false;/,'one stage focus per install, not per view');
+ assert.match(instruments,/let timelineFocusOff:\(\(\)=>void\)\|null=null;/,'one stage key listener per install');
+ assert.doesNotMatch(instruments,/timelineFocus\?:StageFocusSession/,'the session is no longer a field of the view state');
  assert.match(instruments,/void requestStageFullscreenOn\(body,\{navigationUI:'hide'\}\)\.then\(granted=>\{/,'the stage asks for real fullscreen on its own body');
+});
+
+test('the stage focus ends at install scope: unmount ends it, every load (a lens change) unmounts first, and destroy releases its listener',()=>{
+ const install=instruments.indexOf('export function installResearchInstruments(');
+ const declared=instruments.indexOf('const endTimelineFocus=');
+ const load=instruments.indexOf('async function load(selected:ResearchInstrument)');
+ assert.ok(install>=0&&declared>install&&declared<load,'endTimelineFocus is declared in the install scope, before load');
+ const unmountLine=instruments.split('\n').find(line=>/function unmount\(\)/.test(line))??'';
+ assert.match(unmountLine,/endTimelineFocus\(\);/,'unmount() ends the stage focus, so the shared tools come back');
+ assert.match(unmountLine,/timelineFocusOff\?\.\(\);timelineFocusOff=null;/,'unmount() releases the stage key listener; the M2′ load re-attaches it');
+ assert.match(instruments,/async function load\(selected:ResearchInstrument\)\{\s*flushPlaceLayers\(\);\s*const generation=\+\+epoch;unmount\(\);/,'a lens change unmounts before it reads');
+ assert.match(instruments,/destroy\(\)\{[^\n]*unmount\(\);/,'destroy unmounts, so the stage focus and its listener are released');
+ assert.doesNotMatch(instruments,/state\.timelineFocusOff/,'the listener is held once, at install scope');
 });
 
 test('F toggles focus; Escape restores while focused; a late grant after the focus ended is released, never held',()=>{
  assert.match(instruments,/if\(event\.key==='f'\|\|event\.key==='F'\)\{event\.preventDefault\(\);if\(focusOn\(\)\)endTimelineFocus\(\);else beginTimelineFocus\(\);\}/);
  assert.match(instruments,/if\(event\.key==='Escape'&&focusOn\(\)\)\{event\.preventDefault\(\);event\.stopImmediatePropagation\(\);endTimelineFocus\(\);return;\}/);
- assert.match(instruments,/if\(state\.timelineFocus!==started\)\{if\(granted\)releaseStageFullscreen\(\);return;\}/);
+ assert.match(instruments,/if\(timelineFocus!==started\)\{if\(granted\)releaseStageFullscreen\(\);return;\}/);
  assert.match(instruments,/window\.addEventListener\('keydown',onStageKey,true\);/,'Escape is taken in the capture phase, before the lens clears its selection');
 });
 
 test('focus hides the shared tools, marks the stage, and the exit restores the tools display it began from',()=>{
- assert.match(instruments,/const started=beginStageFocus\(state\.timelineFocus\?\?NOT_STAGE_FOCUS,\{toolsDisplay:host\.tools\.style\.display\},chrome=>\(\{\.\.\.chrome\}\)\);/);
+ assert.match(instruments,/const started=beginStageFocus\(timelineFocus,\{toolsDisplay:host\.tools\.style\.display\},chrome=>\(\{\.\.\.chrome\}\)\);/);
  assert.match(instruments,/host\.tools\.style\.display='none';\s*body\.dataset\.timelineFocus='true';/);
  assert.match(instruments,/if\(ended\.restore\)host\.tools\.style\.display=ended\.restore\.toolsDisplay;/);
  assert.match(instruments,/body\.removeAttribute\('data-timeline-focus'\);/);
@@ -118,7 +133,7 @@ test('focus hides the shared tools, marks the stage, and the exit restores the t
 });
 
 test('the browser exit from fullscreen ends a granted focus; a refused focus is ended only by its own keys',()=>{
- assert.match(instruments,/const onStageFullscreen=\(\)=>\{if\(state\.timelineFullscreen&&!document\.fullscreenElement\)endTimelineFocus\(\);\};/);
+ assert.match(instruments,/const onStageFullscreen=\(\)=>\{if\(timelineFullscreen&&!document\.fullscreenElement\)endTimelineFocus\(\);\};/);
  assert.match(instruments,/document\.addEventListener\('fullscreenchange',onStageFullscreen\);/);
 });
 

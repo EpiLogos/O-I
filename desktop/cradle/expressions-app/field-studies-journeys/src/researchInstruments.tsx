@@ -409,8 +409,6 @@ interface ViewState {
  timelineHandle?:TimelinePresentationHandle|null;timelinePresentation?:TimelinePresentation;timelinePending?:{name:string;presentation:TimelinePresentation};
  /** Remounts the chronology surface when a named view moves its camera (its camera is read once, at mount). */
  timelineKey?:number;
- /** lane-2 T24: the M2′ stage's focus session (focusMode.ts) and whether the browser granted it fullscreen; the detach of its listeners. */
- timelineFocus?:StageFocusSession<{toolsDisplay:string}>;timelineFullscreen?:boolean;timelineFocusOff?:()=>void;
  timeDraft?:SharedTimeDraft;
  /** Gesture transactions live on the ViewState, not inside canvasNode's
   * per-render closures, so one gesture survives the many re-renders a drag
@@ -482,9 +480,34 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
 const saveGlyph=document.createElement('span');saveGlyph.className='research-save-glyph';saveGlyph.setAttribute('role','img');saveGlyph.dataset.saveState='saved';saveGlyph.setAttribute('aria-label','Saved');
 const saveState=(state:'saving'|'saved'|'held')=>{saveGlyph.dataset.saveState=state;saveGlyph.setAttribute('aria-label',state==='saving'?'Saving':state==='held'?'Held, not saved':'Saved');};
 host.tools.append(saveGlyph);
+ // lane-2 T24, hoisted to the install (lane-2 T23–T25 seams): the M2′ stage has one focus session for the install, not one per
+ // view. The session (focusMode.ts) holds the tools display it began from; unmount() ends it, so every lens change, close and
+ // destroy brings the shared tools back. The stage's key listener is held here too, and detached on each unmount.
+ let timelineFocus:StageFocusSession<{toolsDisplay:string}>=NOT_STAGE_FOCUS,timelineFullscreen=false;
+ let timelineFocusOff:(()=>void)|null=null;
+ const focusOn=()=>isStageFocused(timelineFocus);
+ const endTimelineFocus=()=>{
+  const ended=endStageFocus(timelineFocus,chrome=>({...chrome}));
+  timelineFocus=ended.session;timelineFullscreen=false;
+  body.removeAttribute('data-timeline-focus');
+  if(ended.restore)host.tools.style.display=ended.restore.toolsDisplay;
+  releaseStageFullscreen();
+ };
+ const beginTimelineFocus=()=>{
+  if(focusOn())return;
+  const started=beginStageFocus(timelineFocus,{toolsDisplay:host.tools.style.display},chrome=>({...chrome}));
+  timelineFocus=started;
+  host.tools.style.display='none';
+  body.dataset.timelineFocus='true';
+  void requestStageFullscreenOn(body,{navigationUI:'hide'}).then(granted=>{
+   // Ended or superseded while the request settled: a late grant is released, never held.
+   if(timelineFocus!==started){if(granted)releaseStageFullscreen();return;}
+   timelineFullscreen=granted;
+  });
+ };
  function retain(){if(currentKey&&captureCanvas){const state=views.get(currentKey);if(state)state.canvas=captureCanvas();}captureCanvas=null;}
  function disposeGestures(){for(const state of views.values()){state.moveGesture?.dispose();state.resizeGesture?.dispose();state.groupMoveGesture?.dispose();}}
- function unmount(){retain();endPresentation(false);presentable=null;disposeGestures();root?.unmount();root=null;body.replaceChildren();}
+ function unmount(){endTimelineFocus();timelineFocusOff?.();timelineFocusOff=null;retain();endPresentation(false);presentable=null;disposeGestures();root?.unmount();root=null;body.replaceChildren();}
  // Multi-select repertoire (R1/R2, Wayfinder §6, §13). The vendored Canvas
  // reports neither modifier keys on a node click nor a batched multi-node
  // drag, so shift/ctrl-extend is tracked independently here, and a group
@@ -1340,31 +1363,9 @@ host.tools.append(saveGlyph);
     const trailControl=(trail:TraversalFold|null)=>trail&&trail.steps.length>0&&trail.origin===state.timeline?.selectedNodeId
      ?<button type="button" aria-label="Back to event" title={`Return along the trail to its event · ${foldStanding(trail)}`} onClick={backToEvent}>Back to event</button>
      :null;
-    // lane-2 T24 — focus mode for the M2′ stage. The lane-3 E23 focus session (focusMode.ts) holds the layout it began from and
-    // the stage asks for the same real fullscreen. F toggles; Escape, or the browser's own exit, restores exactly what focus began from.
-    const focusOn=()=>isStageFocused(state.timelineFocus??NOT_STAGE_FOCUS);
-    const endTimelineFocus=()=>{
-     const ended=endStageFocus(state.timelineFocus??NOT_STAGE_FOCUS,chrome=>({...chrome}));
-     state.timelineFocus=ended.session;state.timelineFullscreen=false;
-     body.removeAttribute('data-timeline-focus');
-     if(ended.restore)host.tools.style.display=ended.restore.toolsDisplay;
-     releaseStageFullscreen();
-    };
-    const beginTimelineFocus=()=>{
-     if(focusOn())return;
-     const started=beginStageFocus(state.timelineFocus??NOT_STAGE_FOCUS,{toolsDisplay:host.tools.style.display},chrome=>({...chrome}));
-     state.timelineFocus=started;
-     host.tools.style.display='none';
-     body.dataset.timelineFocus='true';
-     void requestStageFullscreenOn(body,{navigationUI:'hide'}).then(granted=>{
-      // Ended or superseded while the request settled: a late grant is released, never held.
-      if(state.timelineFocus!==started){if(granted)releaseStageFullscreen();return;}
-      state.timelineFullscreen=granted;
-     });
-    };
-    state.timelineFocusOff?.();
+    // The stage focus is held at install scope (above): this lens only attaches its own keys.
     if(view){
-     const onStageFullscreen=()=>{if(state.timelineFullscreen&&!document.fullscreenElement)endTimelineFocus();};
+     const onStageFullscreen=()=>{if(timelineFullscreen&&!document.fullscreenElement)endTimelineFocus();};
      const onStageKey=(event:KeyboardEvent)=>{
       // Focus that outlives its lens ends on the next key, so the shared tools are never left hidden.
       if(destroyed||lens!=='m2'){if(focusOn())endTimelineFocus();return;}
@@ -1377,7 +1378,7 @@ host.tools.append(saveGlyph);
      // Capture phase: a focused Escape is taken here, before the lens's own Escape clears its selection beneath.
      window.addEventListener('keydown',onStageKey,true);
      document.addEventListener('fullscreenchange',onStageFullscreen);
-     state.timelineFocusOff=()=>{window.removeEventListener('keydown',onStageKey,true);document.removeEventListener('fullscreenchange',onStageFullscreen);};
+     timelineFocusOff=()=>{window.removeEventListener('keydown',onStageKey,true);document.removeEventListener('fullscreenchange',onStageFullscreen);};
     }
     const canvasNode2=():ReactNode=>{
      // Lane-2 T5: relative mode exists only when the acknowledged session names a

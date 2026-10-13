@@ -150,20 +150,31 @@ export function TimelineRelationshipLayer({
           );
         })}
       </svg>
-      <StandingLegend />
+      <StandingLegend visuals={disclosedStandings(relationships)} />
     </>
   );
 }
 
 /**
+ * The standing classes the loaded reading discloses (lane-2 T23 seam), in the authority's order. Each relationship's
+ * class comes from the same standing grammar that colours its edge, so the legend never names a class the reading
+ * does not carry.
+ */
+export function disclosedStandings(relationships: readonly Pick<GraphRelationship, "properties">[]): StandingVisual[] {
+  const present = new Set(relationships.map((relationship) => standingOfRelationshipProperties(relationship.properties).visual));
+  return STANDING_LEGEND.map((entry) => entry.visual).filter((visual) => present.has(visual));
+}
+
+/**
  * The standing legend (lane-2 T11): the authority's `STANDING_LEGEND`, drawn with the
  * shared table's dash and colour. The relation field's standing chips read the same
- * entries, so both projections name a standing one way.
+ * entries, so both projections name a standing one way. `visuals` limits the legend to
+ * the classes the reading discloses; omitted, the whole authority list is drawn.
  */
-export function StandingLegend(): JSX.Element {
+export function StandingLegend({ visuals }: { visuals?: readonly StandingVisual[] } = {}): JSX.Element {
   return (
     <ul className="timeline-standing-legend" aria-label="Relation standing" data-testid="timeline-standing-legend">
-      {STANDING_LEGEND.map((entry) => {
+      {STANDING_LEGEND.filter((entry) => !visuals || visuals.includes(entry.visual)).map((entry) => {
         const drawing = STANDING_DRAWING[entry.visual];
         return (
           <li key={entry.visual} className={`timeline-standing-legend-item timeline-standing-legend-item--${entry.visual}`} title={entry.description}>

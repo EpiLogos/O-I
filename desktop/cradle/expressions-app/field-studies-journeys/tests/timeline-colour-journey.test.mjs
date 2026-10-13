@@ -119,9 +119,25 @@ test('no timeline source animates or transitions: the chronology moves only wher
  }
 });
 
-test('the stylesheet holds the chronology card still: the card opacity transition is overridden by the tail rule',async()=>{
+test('the chronology card holds still at its source: no transition on the node rule, and no tail override in styles.css',async()=>{
+ const instrumentStyles=await readFile(resolve(engine,'src/researchInstrumentStyles.css'),'utf8');
+ const nodeRules=[...instrumentStyles.matchAll(/:where\(\.research-instrument\) \.timeline-node \{[^}]*\}/g)].map(match=>match[0]);
+ assert.ok(nodeRules.length>=1,'the chronology node rule exists');
+ for(const rule of nodeRules)assert.doesNotMatch(rule,/transition/,`no transition declared at the source: ${rule}`);
  const styles=await readFile(resolve(engine,'src/styles.css'),'utf8');
- assert.match(styles,/\.research-instrument \.timeline-node\{transition:none\}/);
- const override=styles.slice(styles.indexOf('/* lane-2 T23'));
- assert.doesNotMatch(override,/#[0-9a-fA-F]{3,8}\b|rgba?\(/,'tokens only in the stillness rule');
+ assert.doesNotMatch(styles,/\.research-instrument \.timeline-node\{transition:none\}/,'the tail override is removed; the source is the one truth');
+});
+
+// lane-2 T23 seams: the relation field's standing colours read the one table through custom properties, never a literal copy.
+test('the relation field\'s standing classes take their colour from the one palette through custom properties, with no literal colour',async()=>{
+ const css=await readFile(resolve(engine,'src/relationFieldView.css'),'utf8');
+ const standingRules=css.split('\n').filter(line=>/^\.relation-field-standing-(sourced|derived|authored|disputed|mythic|unavailable)\b/.test(line));
+ assert.equal(standingRules.length,6,'one rule per standing class');
+ for(const line of standingRules){
+  assert.doesNotMatch(line,/#[0-9a-fA-F]{3,8}\b|rgba?\(/,`no literal colour: ${line}`);
+  assert.match(line,/var\(--standing-[a-z]+\)/,'the colour is a standing token');
+ }
+ const view=await readFile(resolve(engine,'src/relationFieldView.tsx'),'utf8');
+ assert.match(view,/import \{STANDING_COLOUR\} from '\.\.\/\.\.\/vendor\/research-canvas\/packages\/canvas\/src\/timeline\/palette'/);
+ assert.match(view,/--standing-\$\{/,'the tokens are set from the table, one per class');
 });

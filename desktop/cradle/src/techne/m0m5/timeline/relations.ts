@@ -32,6 +32,8 @@ import type {
 } from "../../contract.ts";
 import { standingOf, type StandingVisual } from "./standing";
 import { facetRange, parseTimestamp } from "./scale";
+// The one availability voice (lane-2 T23–T25 seams). The vendored module is import-free, so no root reaches the vendored schema.
+import { PROJECTION_REASONS } from "../../../../expressions-app/vendor/research-canvas/packages/canvas/src/timeline/availabilityVoice.ts";
 
 // ---------------------------------------------------------------------------
 // The edge model
@@ -310,13 +312,13 @@ export function projectionAvailability(reading: TechneReading, axis?: TechneTime
   const cycles = transformationCycles(field.edges);
   const datedEdges = field.edges.filter((edge) => edge.temporal.state === "dated").length;
   const modes: { mode: RelationProjectionMode; available: boolean; count: number | null; reason: string | null }[] = [
-    { mode: "timeline", available: temporal.length > 0 || datedEdges > 0, count: temporal.length + datedEdges || null, reason: temporal.length === 0 && datedEdges === 0 ? "no temporal facets and no dated relations are disclosed — nothing is placed on a time axis, and none is invented" : null },
-    { mode: "relations", available: field.edges.length > 0, count: field.edges.length || null, reason: field.edges.length === 0 ? "the reading discloses no typed relations" : null },
-    { mode: "cause", available: edgesForProjection(field.edges, "cause").length > 0, count: edgesForProjection(field.edges, "cause").length || null, reason: edgesForProjection(field.edges, "cause").length === 0 ? "no CAUSES / INFLUENCES / dependency-family relations are disclosed" : null },
-    { mode: "echo", available: edgesForProjection(field.edges, "echo").length > 0, count: edgesForProjection(field.edges, "echo").length || null, reason: edgesForProjection(field.edges, "echo").length === 0 ? "no ECHOES / RESONATES_WITH / INSTANTIATES-family relations are disclosed" : null },
-    { mode: "opposition", available: edgesForProjection(field.edges, "opposition").length > 0, count: edgesForProjection(field.edges, "opposition").length || null, reason: edgesForProjection(field.edges, "opposition").length === 0 ? "no OPPOSES / INHERITS / TRANSFORMS_INTO-family relations are disclosed" : null },
-    { mode: "phase", available: validityFacets.length > 0 || cycles.length > 0, count: validityFacets.length + cycles.length || null, reason: validityFacets.length === 0 && cycles.length === 0 ? "no validity intervals and no transformation cycles are disclosed — no phase is fabricated" : null },
-    { mode: "activity", available: continuityCount > 0, count: continuityCount || null, reason: continuityCount === 0 ? "no DAY / NOW / session / run continuity facets are disclosed" : null },
+    { mode: "timeline", available: temporal.length > 0 || datedEdges > 0, count: temporal.length + datedEdges || null, reason: temporal.length === 0 && datedEdges === 0 ? PROJECTION_REASONS.timeline : null },
+    { mode: "relations", available: field.edges.length > 0, count: field.edges.length || null, reason: field.edges.length === 0 ? PROJECTION_REASONS.relations : null },
+    { mode: "cause", available: edgesForProjection(field.edges, "cause").length > 0, count: edgesForProjection(field.edges, "cause").length || null, reason: edgesForProjection(field.edges, "cause").length === 0 ? PROJECTION_REASONS.cause : null },
+    { mode: "echo", available: edgesForProjection(field.edges, "echo").length > 0, count: edgesForProjection(field.edges, "echo").length || null, reason: edgesForProjection(field.edges, "echo").length === 0 ? PROJECTION_REASONS.echo : null },
+    { mode: "opposition", available: edgesForProjection(field.edges, "opposition").length > 0, count: edgesForProjection(field.edges, "opposition").length || null, reason: edgesForProjection(field.edges, "opposition").length === 0 ? PROJECTION_REASONS.opposition : null },
+    { mode: "phase", available: validityFacets.length > 0 || cycles.length > 0, count: validityFacets.length + cycles.length || null, reason: validityFacets.length === 0 && cycles.length === 0 ? PROJECTION_REASONS.phase : null },
+    { mode: "activity", available: continuityCount > 0, count: continuityCount || null, reason: continuityCount === 0 ? PROJECTION_REASONS.activity : null },
   ];
   if (!axis) return modes;
   const relationScope = new Map(axis.relations.map(row => [row.relation_ref ?? row.derived_ref!, row.scope]));
