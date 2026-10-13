@@ -25,6 +25,11 @@ fn object<'a>(value: &'a Value, name: &str) -> Result<&'a serde_json::Map<String
         .as_object()
         .ok_or_else(|| format!("{name} must be an object"))
 }
+/// A string's length as the app's JavaScript reads it (`string.length`, UTF-16 code units).
+fn utf16_len(s: &str) -> usize {
+    s.encode_utf16().count()
+}
+
 fn number(value: &Value, low: f64, high: f64, name: &str) -> Result<(), String> {
     if value
         .as_f64()
@@ -451,6 +456,7 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
                 "timeline",
                 "frames",
                 "namedViews",
+                "connectors",
             ]
             .contains(&key.as_str())
         })
@@ -463,7 +469,8 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
             return Err("Research record budget exceeded".into());
         }
     }
-    let bounded = |v: &Value, max: usize| v.as_str().is_some_and(|s| s.len() <= max);
+    // Lengths are counted as the app counts them (JavaScript string length: UTF-16 code units), never bytes.
+    let bounded = |v: &Value, max: usize| v.as_str().is_some_and(|s| utf16_len(s) <= max);
     let colour = |v: &Value| {
         v.as_str().is_some_and(|s| {
             (s.len() == 7 || s.len() == 9)
@@ -597,7 +604,7 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
             !["id", "points", "color", "width", "opacity", "createdAt"].contains(&k.as_str())
         }) || !stroke["id"]
             .as_str()
-            .is_some_and(|s| !s.is_empty() && s.len() <= 160 && seen.insert(s))
+            .is_some_and(|s| !s.is_empty() && utf16_len(s) <= 160 && seen.insert(s))
             || !colour(&stroke["color"])
             || !bounded(&stroke["createdAt"], 64)
         {
@@ -677,7 +684,7 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
             }
             if !f["label"]
                 .as_str()
-                .is_some_and(|l| !l.trim().is_empty() && l.chars().count() <= 160)
+                .is_some_and(|l| !l.trim().is_empty() && utf16_len(l) <= 160)
             {
                 return Err("Invalid frame label".into());
             }
@@ -697,7 +704,7 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
         for (name, view) in named {
             let v = object(view, "Research named view")?;
             if name.trim().is_empty()
-                || name.chars().count() > 160
+                || utf16_len(name) > 160
                 || v.keys()
                     .any(|k| !["viewport", "selectedRefs", "frameOrder"].contains(&k.as_str()))
             {
@@ -709,6 +716,50 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
             }
             if !refs(&v["frameOrder"], 0, false) {
                 return Err("Invalid view frame order".into());
+            }
+        }
+    }
+    // lane-1 A3–A4: presentation connectors keyed by the native edge id. The
+    // kind, label and card sides are closed; the relation itself is native.
+    if let Some(connectors) = r.get("connectors") {
+        let connectors = object(connectors, "Research connectors")?;
+        if connectors.len() > 256 {
+            return Err("Research connector count exceeds its bound".into());
+        }
+        for (edge, connector) in connectors {
+            if edge.is_empty() || edge.len() > 1024 {
+                return Err("Invalid connector edge".into());
+            }
+            let c = object(connector, "Research connector")?;
+            if c.keys()
+                .any(|k| !["kind", "label", "fromSide", "toSide"].contains(&k.as_str()))
+            {
+                return Err("Unknown connector field".into());
+            }
+            if !c
+                .get("kind")
+                .and_then(Value::as_str)
+                .is_some_and(|k| ["straight", "curved", "elbow"].contains(&k))
+            {
+                return Err("Invalid connector kind".into());
+            }
+            if let Some(label) = c.get("label") {
+                if !label
+                    .as_str()
+                    .is_some_and(|l| !l.trim().is_empty() && l.chars().count() <= 160)
+                {
+                    return Err("Invalid connector label".into());
+                }
+            }
+            for side in ["fromSide", "toSide"] {
+                if let Some(value) = c.get(side) {
+                    if !value
+                        .as_str()
+                        .is_some_and(|s| ["top", "right", "bottom", "left"].contains(&s))
+                    {
+                        return Err("Invalid connector side".into());
+                    }
+                }
             }
         }
     }
@@ -1047,7 +1098,7 @@ fn markers(rows: &[Value]) -> Result<(), String> {
             .get("name")
             .and_then(Value::as_str)
             .unwrap_or_default();
-        if !(1..=80).contains(&name.chars().count()) {
+        if !(1..=80).contains(&utf16_len(name)) {
             return Err("Journey marker names are 1 to 80 characters".into());
         }
         number(
@@ -1146,6 +1197,25 @@ impl Composition {
 #[cfg(test)]
 mod tests {
     #[test]
+    fn lengths_are_counted_as_the_app_counts_them() {
+        use super::{utf16_len, validate_research};
+        use serde_json::json;
+        use std::collections::BTreeSet;
+        // 3,000 CJK characters: 9,000 bytes but 3,000 UTF-16 units — within the 4,096 caption budget the app enforces.
+        let ids: BTreeSet<&str> = ["n"].into_iter().collect();
+        let long_caption = "漢".repeat(3_000);
+        let material = json!({"schema": "oi.research-scene/v1", "cards": {"n": {"type": "note", "caption": long_caption}},
+            "strokes": [], "views": {}, "timeline": {}});
+        assert!(validate_research(&material, &ids).is_ok());
+        // an emoji is two UTF-16 units: 81 of them exceed a 160-unit frame label, as they do in the app
+        assert_eq!(utf16_len("😀"), 2);
+        let label = "😀".repeat(81);
+        let framed = json!({"schema": "oi.research-scene/v1", "cards": {}, "strokes": [], "views": {}, "timeline": {},
+            "frames": {"f": {"label": label, "memberRefs": ["n"], "z": 0}}});
+        assert!(validate_research(&framed, &ids).is_err());
+    }
+
+    #[test]
     fn research_frames_and_named_views_are_admitted_bounded_and_closed() {
         use super::validate_research;
         use serde_json::{json, Value};
@@ -1174,6 +1244,48 @@ mod tests {
             json!({"namedViews": {"v": {"viewport": {"x": 0, "y": 0, "zoom": 1, "roll": 1}, "selectedRefs": [], "frameOrder": []}}}),
             json!({"namedViews": {"v": {"viewport": {"x": 0, "y": 0, "zoom": 1}, "selectedRefs": [], "frameOrder": [], "extra": 1}}}),
             json!({"layers": {}}),
+        ] {
+            assert!(
+                validate_research(&with(refused.clone()), &ids).is_err(),
+                "{refused}"
+            );
+        }
+    }
+
+    #[test]
+    fn research_connectors_are_admitted_bounded_and_closed() {
+        use super::validate_research;
+        use serde_json::{json, Value};
+        use std::collections::BTreeSet;
+        let ids: BTreeSet<&str> = ["a", "b"].into_iter().collect();
+        let with = |extra: Value| {
+            let mut m = json!({"schema": "oi.research-scene/v1", "cards": {}, "strokes": [],
+                "views": {}, "timeline": {}});
+            for (k, v) in extra.as_object().unwrap() {
+                m[k] = v.clone();
+            }
+            m
+        };
+        // material saved before connectors existed, and each closed connector shape
+        assert!(validate_research(&with(json!({})), &ids).is_ok());
+        assert!(validate_research(&with(json!({
+            "connectors": {
+                "expr:relation:connection-1": {"kind": "straight"},
+                "expr:relation:connection-2": {"kind": "curved", "label": "later", "fromSide": "bottom", "toSide": "top"},
+                "expr:relation:connection-3": {"kind": "elbow", "toSide": "left"}
+            }
+        })), &ids).is_ok());
+        for refused in [
+            json!({"connectors": {"e": {"kind": "arc"}}}),
+            json!({"connectors": {"e": {}}}),
+            json!({"connectors": {"e": {"kind": "elbow", "colour": "red"}}}),
+            json!({"connectors": {"e": {"kind": "elbow", "label": ""}}}),
+            json!({"connectors": {"e": {"kind": "elbow", "label": "   "}}}),
+            json!({"connectors": {"e": {"kind": "elbow", "label": "x".repeat(161)}}}),
+            json!({"connectors": {"e": {"kind": "elbow", "fromSide": "middle"}}}),
+            json!({"connectors": {"e": {"kind": "elbow", "toSide": 3}}}),
+            json!({"connectors": {"": {"kind": "elbow"}}}),
+            json!({"connectors": ["e"]}),
         ] {
             assert!(
                 validate_research(&with(refused.clone()), &ids).is_err(),
