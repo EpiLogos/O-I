@@ -2,18 +2,38 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
 import {register} from 'node:module'
-import {createKnowledgeBinding, createCanvasKnowledgeOpen, validateKnowledgeOpen, sameKnowledgeDestination} from '../src/native/knowledgeOpen.ts'
-import {validateNativeKnowledgeContext, resolveNativeGraphFocus} from '../../../../desktop/cradle/src/knowledge/nativeFocus.ts'
-import {projectUnresolvedGraph} from '../../../../desktop/cradle/src/knowledge/graphNavigation.ts'
-import {openBinding} from '../../../../desktop/cradle/src/surface/engine.ts'
-import {freshLayout} from '../../../../desktop/cradle/src/surface/types.ts'
-import {decodeLayout} from '../../../../desktop/cradle/src/surface/persist.ts'
+
+// Production sources in memory: .ts/.tsx transpiled, extensionless relative
+// specifiers retried as .ts/.tsx (the timeline-time-spine loader pattern).
+const root = new URL('../../../../', import.meta.url);
+const compiler = new URL('desktop/cradle/node_modules/typescript/lib/typescript.js', root).href;
+register(`data:text/javascript,${encodeURIComponent(`
+import ts from ${JSON.stringify(compiler)};
+import {readFile} from 'node:fs/promises';
+export async function resolve(specifier,context,next){
+  try{return await next(specifier,context)}catch(error){
+    if(!specifier.startsWith('.'))throw error;
+    if(specifier.endsWith('.js')){try{return await next(specifier.slice(0,-3)+'.ts',context)}catch{}}
+    for(const suffix of ['.ts','.tsx']){try{return await next(specifier+suffix,context)}catch{}}
+    throw error;
+  }
+}
+export async function load(url,context,next){
+  if(url.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export {}'};
+  if(!url.endsWith('.ts')&&!url.endsWith('.tsx'))return next(url,context);
+  return {format:'module',shortCircuit:true,source:ts.transpileModule(await readFile(new URL(url),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX},fileName:new URL(url).pathname}).outputText};
+}`)}`, import.meta.url);
+
+const {createKnowledgeBinding, createCanvasKnowledgeOpen, validateKnowledgeOpen, sameKnowledgeDestination} = await import('../src/native/knowledgeOpen.ts')
+const {validateNativeKnowledgeContext, resolveNativeGraphFocus} = await import('../../../../desktop/cradle/src/knowledge/nativeFocus.ts')
+const {projectUnresolvedGraph} = await import('../../../../desktop/cradle/src/knowledge/graphNavigation.ts')
+const {openBinding} = await import('../../../../desktop/cradle/src/surface/engine.ts')
+const {freshLayout} = await import('../../../../desktop/cradle/src/surface/types.ts')
+const {decodeLayout} = await import('../../../../desktop/cradle/src/surface/persist.ts')
 
 // The native authoring sources use the shipped TypeScript compiler's removal
 // of type-only symbols from mixed imports. Compile those actual sources only
 // in memory, as the native Glyph source suite does; no emitted/shared build.
-const compiler=new URL('../../../../desktop/cradle/node_modules/typescript/lib/typescript.js',import.meta.url).href
-register(`data:text/javascript,${encodeURIComponent(`import ts from ${JSON.stringify(compiler)};import {readFile} from 'node:fs/promises';export async function load(url,context,next){if(!url.endsWith('.ts')&&!url.endsWith('.tsx'))return next(url,context);const source=await readFile(new URL(url),'utf8');return {format:'module',shortCircuit:true,source:ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX},fileName:new URL(url).pathname}).outputText}}`)}`,import.meta.url)
 const {kernelDocumentToJourney}=await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge.ts')
 
 // Actual native owner document captured by the save/reopen acceptance, and

@@ -325,7 +325,7 @@ test('the mode ontology has not drifted from icon-cut.html', async () => {
   for (const mode of SDK_MODE_DECLARATIONS) {
     const entry = block.match(new RegExp(`${mode.name}:\\{name:'([^']+)', readouts:\\[([^\\]]+)\\]\\}`))
     assert.ok(entry, `${mode.name}: present in the specimen’s MODES`)
-    assert.equal(entry[1], mode.title.replace(' · Central', ''), `${mode.name}: title matches the specimen’s name`)
+    assert.equal(entry[1], mode.specimenName, `${mode.name}: title matches the specimen’s name`)
     const readouts = entry[2].split(',').map(part => part.trim().replace(/^'|'$/g, ''))
     assert.deepEqual(readouts, [...mode.readouts], `${mode.name}: readouts byte-match the specimen`)
   }

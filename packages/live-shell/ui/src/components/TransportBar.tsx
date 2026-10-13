@@ -69,7 +69,7 @@ export function TransportBar({ tempoBpm, name, mode, setView, chooseMode, presen
           data-i={`${presentation.label}|${presentation.meaning}`}
           title={`${presentation.label} · ${presentation.meaning} — Tab`} onClick={() => setView(value)}><CutIcon name={value} size={15} /></button>
       })}
-      {/* Then the mode rail: Live · Base · Central · Factory · Expressions ·
+      {/* Then the mode rail: Live (the base) · Central · Factory · Expressions ·
         Technē — marks cut from icon-cut.html (the generated sdk module). */}
       <ModeModeRail mode={mode} chooseMode={chooseMode} />
       {centerPanels.map(panel => <button key={panel.id} type="button" aria-label={panel.title} aria-pressed={activeCenter === panel.id} title={panel.note ?? panel.title} onClick={() => openCenter(panel.id)}><Icon name={panel.icon ?? 'element'} size={17} /></button>)}

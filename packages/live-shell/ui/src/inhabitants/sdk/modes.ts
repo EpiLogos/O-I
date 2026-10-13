@@ -69,6 +69,9 @@ export interface SdkMode {
   readonly sessionView: string
   /** Rev 5: what the Arrangement view shows in this mode. */
   readonly arrangementView: string
+  /** The M′ address an instrument's plain view name conserves as provenance
+   * (Technē: M3′ for the Journey, M2′ for the Timeline). Never the name. */
+  readonly viewProvenance?: {readonly sessionView?: string; readonly arrangementView?: string}
   /** Rev 5's slot meanings for this mode, per transport row. */
   readonly rows: readonly TransportRowMeaning[]
 }
@@ -156,7 +159,7 @@ export const SDK_MODE_DECLARATIONS: readonly SdkMode[] = [
   },
   {
     name: 'base',
-    title: 'Base · Central',
+    title: 'Central',
     specimenName: 'Base',
     mark: 'die',
     altMark: 'diamond',
@@ -172,7 +175,7 @@ export const SDK_MODE_DECLARATIONS: readonly SdkMode[] = [
       {row: 'key-scale', meaning: 'packet token count'},
       {row: 'transport', meaning: 'Answer (send the packet) · stop · dictate · append/replace'},
       {row: 'arm-capture', meaning: 'agent write-arm · hand back · selection → packet'},
-      {row: 'punch-loop', meaning: 'day opened 08:30 · close routine · 21:00'},
+      {row: 'punch-loop', meaning: 'day opened · close routine · day closes'},
       {row: 'draw-keys', meaning: 'highlight pen · keys · map · carrier · save state'},
     ],
   },
@@ -225,8 +228,9 @@ export const SDK_MODE_DECLARATIONS: readonly SdkMode[] = [
     mark: 'techne',
     workspaceMode: 'techne',
     readouts: ['Link 3', 'Now', '6 s', '7 / 8', 'pulse', 'arrive', 'as me', '14:37', '41 ms', '9 %'],
-    sessionView: 'M3′ Journey',
-    arrangementView: 'M2′ Relation Field',
+    sessionView: 'Journey',
+    arrangementView: 'Timeline',
+    viewProvenance: {sessionView: 'M3′ Journey', arrangementView: 'M2′ Relation Field'},
     rows: [
       {row: 'link-tap', meaning: 'field carrier · back to Now'},
       {row: 'tempo-signature', meaning: 'walk pace · stop n/8'},

@@ -321,8 +321,8 @@ export function TechneClipDetail({world}: {world: WorldTimelineView | null}) {
 const LENSES = [
   {id: 'project-graph', name: 'Project / graph', mark: 'lib', state: 'waiting', owner: 'the graph owner (the constellation module)'},
   {id: 'canvas', name: 'Canvas', mark: 'pane', state: 'waiting', owner: 'the canvas owner (the instrument-editors packet)'},
-  {id: 'timeline', name: 'Timeline', mark: 'arrangement', state: 'cut', presentation: 'arrangement' as const, owner: 'the World cut — M2′ Relation Field'},
-  {id: 'journey', name: 'Journey', mark: 'journey', state: 'cut', presentation: 'session' as const, owner: 'the World cut — M3′ Journey'},
+  {id: 'timeline', name: 'Timeline', mark: 'arrangement', state: 'cut', presentation: 'arrangement' as const, owner: 'the World cut — the Timeline (M2′)'},
+  {id: 'journey', name: 'Journey', mark: 'journey', state: 'cut', presentation: 'session' as const, owner: 'the World cut — the Journey (M3′)'},
   {id: 'places', name: 'Places', mark: 'placed', state: 'waiting', owner: 'the Places owner (the Atlas port)'},
   {id: 'palace', name: 'Palace', mark: 'palace', state: 'waiting', owner: 'the Palace owner (the integral composition)'},
 ] as const
