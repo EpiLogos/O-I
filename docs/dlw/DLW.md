@@ -210,208 +210,250 @@ closed into what it taught. It sits in Arrangement view to be edited, played
 back, and given to someone who will play it in their own world, where it is
 live again.
 
-## 5. Instruments
+## 5. Central — the day's work
 
-What you see in a pane is an instrument, and every instrument works in every
-kind of work. The kind of work decides what the instrument is looking at,
-never what it can do.
+Central is where the day happens. It looks and works like a code editor — your
+files down the left, documents open side by side, a terminal a click away —
+except that the day itself is one of the documents, and it fills itself in.
+Everything you do across the DLW leaves its mark there as you go: the passages
+you read and marked, the tasks you set going in Factory and what came back
+from them, the scene you composed, the walk you recorded, the conversation you
+had in someone else's world. By evening the day has gathered the whole of it
+into one structured page, and you add what only you can — what you noticed,
+what didn't work and why, what you want to remember. The work and your account
+of the work end up in the same place, and the evening never has to reconstruct
+the morning.
 
-The **world** instrument shows the Earth, the solar system and every world in
-the field, at any distance: the whole field, a system, one body, a region, a
-single place. Switch it to its graph view and the same material lays out as
-connections instead of distances, coloured by what each thing is. This is the
-ground Technē's other instruments build on.
+Every document in Central starts from a template, and every template is yours
+to change. A **Day** is shaped like a die, four faces for the work and two at
+its edges, and you turn it face by face as the day moves. A **Flow** is a
+running conversation or journal, with the people and agents in it named at the
+top. **Beings** and **Things** are the people and objects your work is about,
+each tied to the world it belongs to, its sources, and the real place where it
+stands. Restyle them, add sections, build new kinds of your own. However a page
+looks, it keeps its connections: a Day you have redesigned still fills itself,
+and a Thing you have rearranged still knows where it stands on the map.
 
-The **canvas** is a table to lay things out on: drag, group, frame, and draw a
-line between two things to say they are related. Where you put things is your
-own business. A line you draw is a suggestion until whoever owns that
-relation agrees to it.
+Type **@** and you are speaking Central's own search language. At its simplest
+it finds anything you can reach — a person, an agent, a place, a document, a
+passage — and sends what you have selected there. Highlight a paragraph and
+tag a colleague, and it reaches them as a message carrying the passage and
+where it came from. Tag an agent and it starts working on it. Tag a place and
+the passage is filed on that spot of your world. Past the simple uses it is a
+language with a grammar you grow into, and you make your own aliases in it, so
+that a short name you chose stands for a long search you use every day. Like
+anything worth learning on an instrument, it rewards the hours you give it.
 
-The **timeline** lays material out over time: authored history beside the
-work that produced it, on one ruler that can stretch from deep time to this
-morning. Everything on it keeps the weight it actually has — fact, claim,
-inference, guess, dispute, or a reference nobody has found yet — and putting
-something next to something else never turns a coincidence into a cause.
+Select a passage and the rest is close at hand: highlight it, note it, put it
+in the packet, or ask about it now. The packet is exactly what the agent will
+read; you see it whole, and how big it is, before anything is sent. Press Play
+and the agent answers into the page as a new entry with its sources, and any
+source followed back lands you on the line it came from. Press Record and
+talk, and your words go into the document. Overdub decides whether what comes
+back joins as a new entry or replaces the one you selected.
 
-The **journey** is an ordered walk through places, moments and things, with a
-pace, arrivals and a voice that tells it. You can play it, and you can record
-a new one from where you have just been.
+The agent never writes behind your back. With Arm off, anything it wants to
+change arrives as a proposal; arm it, and its edits land directly, each with a
+receipt. Change a passage the agent wrote and a light comes on, so that one
+press can hand it back. Tap stamps the moment into whatever you have open.
 
-The **palace** is a building you compose over one body of material, with
-rooms that each hold a part of it, a path through them, a private room for
-what is not for showing, and doors out to other places. It is how you give a
-whole subject a form someone else can enter.
+Turn to the world instrument and Central is your planet. Projects are places on
+its surface. The day's work is a walk across it, marked wherever something
+mattered, and whatever you are holding — open files, the context gathered for
+an agent — circles overhead and drops away when you are finished with it. On
+the world's graph side you see what today touched; in the knowledge graph you
+can follow your notes link by link into everything you have already written.
 
-Beside these sit the instruments any pane can hold for other kinds of
-material. The **expression** stage is the living field of Chapter 8. The
-**knowledge graph** is drawn for reading a wiki or a body of notes, link by
-link, with references nobody has resolved yet drawn as hollow ghosts, and
-with every node offering what its owner allows you to do with it. Documents,
-agent sessions and their threads, and a terminal are instruments too.
+Then the day closes itself. What you learned is filed into your knowledge, what
+you made is kept, and tomorrow begins on a clean face of the die.
 
-Open any of these in any pane, beside any other. Its controls appear in the
-device area at the bottom of the window whenever its pane has focus, and they
-are the full controls, wherever you are. The pane itself shows only the
-material.
+## 6. Factory — worlds making worlds
 
-An instrument can come in more than one build, the way Live has more than
-one reverb, each answering to the same controls. You arrange
-panes and instruments into sets, each kind of work has its default set, and
-you save your own.
+Factory is where you work with AI agents. Say what you want built — software, a
+body of research, a place for others to stand in — and the work breaks into
+tasks that agents take up while you watch the floor, stepping in where you are
+needed and staying out of the way where you aren't.
 
-## 6. Central — the day's work
+Each agent works a track, and its tasks are the clips. Drag an agent from the
+browser onto an empty track and it takes the seat. Fire a task and it runs;
+fire a row and a batch starts across every session at once. How a task is
+drawn tells you how it stands. A running task has no end, because nobody knows
+yet how long it will take, and a queued one has no length at all. A stalled
+task is striped and frozen where its output stopped, and its track lights a
+retry. Groups of agents fold under one header, and each agent's helpers step in
+beneath it, a coloured rail for every level, so three layers of delegation read
+at a glance.
 
-Central is where the day happens. It works like a code editor — files down
-the left, documents open side by side, a terminal a click away — except that
-the day itself is one of the documents. You write in it as you go: what you
-are working on, what you noticed, what went wrong. The work and the account
-of the work sit together, so at the end of the day nothing has to be pieced
-back together.
+In Arrangement view the work moves. Every thread runs along one ruler with a
+needle that jumps each time its agent checks in, and a needle that stops moving
+is a stall. Under each thread run its messages, the files it touched, its
+terminal, the pages it read; click any of them and it opens beside you.
 
-Documents come in four kinds. A **Day** has six faces, four for the work and
-two at its edges; you turn it face by face as the day moves, with the arrows
-where Live keeps its tempo. A **Flow** is a running conversation or journal
-with the people and agents named in it. **Beings** and **Things** are the
-people and objects your work is about, each tied to the world it belongs to,
-its sources, and the real place it stands.
-
-An agent works beside you in whatever you have open. Select a paragraph and
-send it to the packet — the packet is exactly what the agent will read, and
-you can see it whole before you send. Press Play and the agent answers into
-the page, as a new entry, with its sources; you can follow each source back
-to where it came from. Press Record and talk, and your words go into the
-document. If the agent wants to change something, the change waits for you,
-unless you have armed it to write directly, in which case each change it
-makes comes with a receipt.
-
-Look at Central through the world instrument and you see your planet. Your
-projects are places on it, today's work is a walk across it, and the files
-and context you are holding circle in orbit. Through the timeline you see
-today on one ruler: entries, runs, returns. Through the world's graph view you
-see what today touched, and through the knowledge graph how today's notes
-link into everything you already knew.
-
-When the day ends it closes itself. What you learned is filed into your
-knowledge, what you made is kept, and tomorrow starts clean.
-
-## 7. Factory — worlds making worlds
-
-In Factory you set agents to work, and what they make is worlds: a piece of
-software, a body of research, a place for others to stand. You say what you
-want in a sentence. The work breaks into tasks, agents take them up, and you
-watch it happen the way you would watch a workshop floor, stepping in where
-you are needed.
-
-Agents sit on tracks, one session to a track, and their tasks are clips. Fire
-a task and it runs; fire a row and a batch of them runs together across
-sessions. A running task has no end drawn, because nobody knows how long it
-will take. A queued one has no length. A stalled one is striped and frozen
-where its output stopped, and the track it sits on lights a retry.
-
-Turn to Arrangement view and every thread of work runs along one ruler, each
-with a needle that moves as its agent checks in. Below each thread its
-messages, files, terminal and web lookups run as lanes; click any one and it
-opens beside you.
-
-Each agent's chain reads left to right as the path the work takes: in through
-a gateway, to the agent itself, through the rack of skills it may use, into
-the part of the world it may touch, and out through the place its work lands.
-You set how much it decides for itself, how hard it thinks, how many turns it
-has. Skills sit in the rack with a light each, on or off, and one knob can
-turn several of them at once. A group of agents is a rack of its own, one
-agent to a chain.
+Select a session and its chain shows the road the work travels, left to right.
+In through a gateway, which decides what the agent must ask your permission
+for. Then the agent itself: its model, how much it decides alone, how hard it
+thinks, how many turns it gets. Then its skills, racked with a light each, on
+or off, with a few knobs that turn several at once — how thorough to be, how
+deep to test, how far to reach, how much risk to take. Then the part of the
+world it may touch, from one object up to everything you own, and whether what
+it writes there arrives as a proposal, a draft or a change. Last, the place its
+work lands: commits, and a request to merge with the checks that tested it.
+Pick the machine it runs on. Swap any device, add a skill, drop a whole team of
+agents onto the chain as a rack of its own.
 
 The transport becomes the foreman's desk. Play runs the work. Stop pauses at
-the next safe point and keeps what each agent had in mind; press it again to
-cancel. With Steer on, what you type reaches the agent mid-turn; with it off,
-it waits as the next task. Arm decides whether agents may write directly or
-must propose. Capture records what you do by hand, so an agent can learn it
-from you. Draw a window across the work and nothing is written before the plan
-is approved or after it ships.
+the next safe point and keeps what every agent had in mind; press it twice to
+cancel. With Steer on, what you type reaches an agent mid-turn, and with it off
+your words wait as the next task. Arm decides whether agents write directly or
+propose. Draw a window across a task and nothing is written before you approve
+the plan or after it ships. Capture records what you do by hand so an agent can
+learn it from you, and Tap asks every running agent where it has got to, the
+answers coming back to the dock where your agents gather at their stations like
+a hive.
 
-Through the world instrument, a piece of work is a planet: the task is the
-world being made, its agents move around it, and their helpers ride smaller
-orbits inside theirs. A whole programme of work shows as a system of such
-worlds. Through the graph it shows as a map of what depends on what.
+Seen as a world, a piece of work is a planet in the making. The task is the
+world, its agents move in orbit around it, and their helpers ride smaller
+orbits inside theirs; a whole programme is a system of such worlds, some
+settled, some still forming. Lay that programme out as a graph and it becomes a
+map of what waits on what — how you plan the next stretch, and how you find
+where it is stuck.
 
-## 8. Expressions — the living medium
+When a world is finished, it doesn't hang there. Some finished work becomes a
+workflow, the same steps ready to run again on new material. Some becomes a
+loop that studies its own results and runs better next time. And some worlds
+simply complete: what they made passes on into the places that needed it, and
+the world itself folds away.
 
-Expressions is a medium you step into. Text, symbols, image, physics and sound
-share one field. Particles gather into the shapes you give them and move by
-forces you set. A plate under the field resonates, and as you sweep it the
-pattern on its surface sounds: the pitch rides the lines where the plate
-stands still, and each symbol can carry a small voice that sings its own
-frequency. Sound and image come from the same state, so when one changes the
-other changes with it.
+## 7. Expressions — the living medium
 
-You work in scenes. An Expression holds its scenes the way a Live track holds
-its clips, and you launch, loop, layer and record them the same way. Open a
-scene and you see its two sides together: the sequence of what happens, step
-by step, with the symbols in lanes like notes on a roll, and the sound it
-makes. Add a voice, pin a force, turn the plate on and sweep it until the
-figure says what you meant. Take the swell, layer the next section over it,
-capture the figure as a new scene, save.
+Expressions is a medium you step into rather than look at. Text, symbols,
+image, physics and sound share one field. Particles gather into the shapes you
+give them and move by the forces you set; symbols hold their places or drift,
+pull on one another or push apart. Beneath the field lies a plate — in three
+dimensions, a chamber — and as you sweep it you hear the pattern forming on its
+surface. The pitch rides the lines where the plate stands still, and each
+symbol can carry a small voice tuned to its own frequency. Sound and image rise
+from the same moving state, so when one changes, the other changes with it.
 
-The engine's controls sit in the device area as one studio: tools, the
-selected symbol's actions, formation, material, motion, the body of the
-field, the personal layer, capture. Behind the studio are the devices that
-govern the field itself — physics, pointer, relations between symbols, the
-medium they move through, contact, morph, focus, colour, ink, depth,
-resonance — each one whole, with every setting it needs. Put any of them on
-your rack as a small widget with its four most-played controls; open it full
-when you need the rest.
+You build in scenes. An Expression holds its scenes the way a Live track holds
+its clips: launch them, loop them, layer one over another, record them. Open a
+scene and you have both its sides in front of you — the sequence step by step,
+each symbol in its own lane like a note on a roll, each step's hold and change
+set like a note's length and glide, and beneath it what the scene sounds like.
+Add a voice, pin its force, turn the plate on and sweep it until the figure
+says what you meant. Take the swell, layer the next section over it, capture
+the figure as a new scene, and save.
 
-The transport turns musical in the literal sense. Tempo is the field's tempo.
-The time signature is the scene's ratio of hold to change. Key is the
-resonance the field is tuned to. Play plays the scenes. Arm the studio and
-Play records a take.
+The studio sits in the device area: the field's tools; what you can do with the
+symbol you have selected — bind it, set it to follow another, give it an exact
+value, duplicate it, go to its source; then formation, material, motion, the
+body of the field, a personal layer that stays yours however the scene is
+shared, and capture. Behind the studio stand the devices that govern the field
+itself — physics, the pointer, how symbols relate, the medium they move
+through, what happens when they touch, morph, focus, colour, ink, depth,
+resonance — each a whole device with every setting it needs. Put one on your
+rack as a small widget with its four most-played controls, open it whole in the
+browser, or bring it up full size in the studio. Its settings stay live
+whether or not the widget is showing.
 
-Agents can play this medium too. Through the Ta-Onta interface an agent can
-open an Expression, compose in it and perform it, so that what an agent
-finds can come back to you as something you see and hear, not only as text.
+The transport turns in this case to the field. Tempo is the speed it forms and
+breathes at, and the time signature is the scene's ratio of hold to change. Key
+is the resonance the field is tuned to, which can be taken from the sky over
+your world so that colours and intervals shift as the planets move. Play plays
+the scenes. Arm the studio and Play records a take; record several, and keep
+the one that stands.
 
-Expressions is not a separate world from your work. Anything in any mode can
-be given an expression — a day, a run, a source, a place — and every mode
-can open the expression instrument beside its own.
+Agents can express through this medium as well. An interface built for them
+lets an agent open an Expression, compose in it and perform it, so that what an
+agent finds can reach you as something you see and hear. Teaching agents this
+well is ongoing work. The library of Expressions people make is how they learn:
+it shows them what an expression is, and how differently two people can give
+form to the same thing.
 
-## 9. Technē — crafting knowledge
+Anything in any mode can be given an expression — a day, a run of work, a
+source, a place, an argument you can't yet put into words — and every mode can
+open the expression stage beside its own panes. Scenes made here travel: onto a
+walk, into a palace, into someone else's world. In time Live joins this medium,
+and sound and picture will share one timeline the way a film editor holds them.
 
-Technē is where knowledge is made by building worlds. You find a subject and
-gather what surrounds it. You place it on the Earth where it happened and in
-the sky it happened under. You lay its history out on the ruler, walk its
-places in order, and build a palace to hold the whole. Here the six
-instruments are the material itself: places, peoples and agents, ways of
-seeing, and journeys through them.
+And you can simply stay with it. Turn the lights down, let a single symbol turn
+in the field and listen to what it does.
 
-Begin from the world. Your planet and the others turn around their star; pull
-in to a single body and its places are there, lit by the same sun, each one
-built from its owner's own settings. Build your own: choose its seas and
-continents, its climate and sky, then place locations on it and name them —
-a place, a palace, a portal to someone else's world, a route between. Earth's
-land is not yours to shape; you can only place things on it.
+## 8. Technē — crafting knowledge
 
-Every reference you bring in is real, from a real owner, at a known revision.
-When you trace a piece of material back — into its sources, its languages,
-the occasions it came from — the tracing is the work, and the way back stays
-open so you can trace it again.
+Technē is where knowledge is made by building worlds. Find a subject and gather
+what surrounds it: the people involved, the places, the sources and what they
+claim. Set it on the Earth where it happened and under the sky it happened
+beneath, lay its history along the ruler, walk its places in order, and build
+it a palace someone else can enter. Places, peoples and agents, ways of seeing,
+the journeys between them: here they are the material itself.
 
-Above the world the sky turns. Stand in today's sky, or in the sky of any
-date you choose, without losing your place in today; one tap brings you back
-to now.
+Why build knowledge like this? Because that is how people have always held it.
+We remember by place — the old art of memory set each thing to be remembered in
+a room of an imagined building, and a walk through the rooms brought it all
+back. We understand by time, by seeing what came before and what followed and
+what happened at once. And we think by relation, by putting one thing next to
+another and seeing that they belong together. A page of text holds these things
+flat. Technē gives each its own dimension, so that you can see where an idea
+lived, when it changed, what it touched, and walk through it in an order that
+makes sense. Everything you place carries its source and its owner, so a reader
+can always go back and check. And because each reading of a subject is a layer
+laid over the others, never a replacement for them, people who disagree can
+work on the same ground, with the disagreement in plain view. That is a
+different culture of knowledge from the one we have: shared without being
+flattened, open to anyone willing to walk it.
 
-A walk takes the history you have laid out and plays it. Each stop sets the
-clock to its year and the world to its place, and launches the scenes it
-carries — images, film, a live field sounding. A walk can go through several
-Expressions, one scene from each, or step down through the scenes of one.
-Record a walk and it lays itself out on the ruler, to be edited like anything
-else.
+Everything starts from the world. Pull back and you see the field of worlds
+turning around their stars. Come in, and a single body fills the pane, then a
+region, then one place with its exact position and the frame it was measured
+in. Turn the world to its graph side and the same material lays out by
+connection, each thing coloured by what it is, the ties between them showing
+what joins them. Build your own planet here — its seas and continents, climate
+and sky, and the places, palaces, roads and portals you set on it. Earth is
+given; you place things on it, and anchor your own world's places to its real
+ones.
 
-Under the instruments, Technē's transport walks. Tempo is the walk's pace,
-the time signature is which stop of how many, quantize is how a stop arrives.
-Key is how far you are looking and as whom: your world alone, or the shared
-field, or beyond; as yourself, as the field, as the public.
+The **canvas** is where you think out loud. Throw ideas onto it, drag them into
+clusters, draw a frame around a group, run a line from one thing to another to
+say they belong together, and keep going until the shape of the problem shows.
+It works the way a mind map does, with a difference: everything on it is a real
+thing you can open, and a line you draw stays a suggestion until whoever owns
+that relation agrees to it.
 
-## 10. Live — the studio it came from
+The **timeline** sets history beside the work that studied it, on one ruler
+that can stretch from deep time to this morning. One person's reading of an
+age is a layer of tracks, and a later reading lies over it without erasing it.
+Ages nest inside ages, and the narrowest colours everything inside it. Read the
+same events by date, by cause, by what keeps recurring, or by what happened at
+once. Everything keeps the weight it has — fact, claim, inference, guess,
+dispute, or a gap nobody has filled — and setting two things side by side never
+turns a coincidence into a cause.
+
+The **journey** is an ordered walk through places, moments and things, with a
+pace, a way of arriving at each stop, and a voice that tells it. The **palace**
+gives a whole subject a building to live in: rooms that each hold a part of it,
+a path through them, a guide who explains why each room is there, a private
+room that stays clouded, and doors out to other places and other people's
+worlds.
+
+A walk is where all of these meet. Take a thread from the timeline and walk it,
+and each stop sets the clock to its year and the world to its place, and
+launches the scenes it carries — an image, a film, a living field. A walk can
+pass through several Expressions, one scene from each, or step down through
+the scenes of one. Press Record and go somewhere new; your stops become the
+walk's stops, and it lays itself along the ruler, ready to edit and ready to
+give away.
+
+Above the world the sky turns. Stand in today's, or in the sky of any date you
+choose, and work there; one tap brings you back to now. The transport walks:
+tempo is the walk's pace, the time signature tells you which stop of how many,
+quantize decides how each stop arrives. Key is how far you are looking and as
+whom — your own world, the shared field or beyond; as yourself, as the field,
+as the public. Beside the instruments works a companion who reads the sources
+with you, proposes what might follow, and can tell you why any room in a palace
+stands where it does.
+
+## 9. Live — the studio it came from
 
 Live is the music studio the DLW grew from, and it is kept whole: a set,
 its tracks, clips and scenes, its instruments and effects, rebuilt from close
@@ -428,9 +470,9 @@ are bodies in it, and a song can be walked stop by stop. In time Live will
 join Expressions, where sound and picture will share one timeline the way a
 film editor holds them.
 
-## 11. The hands
+## 10. The hands
 
-### 11.1 Two views
+### 10.1 Two views
 
 Every kind of work has a Session view and an Arrangement view. Session view
 is a grid of launchable material, tracks across and rows down, for working
@@ -445,7 +487,7 @@ material on one ruler, for seeing the course of it. Tab switches between them.
 | Technē | a journey, its stops as rows | the timeline |
 | Live | clips and scenes | the song over time |
 
-### 11.2 Tracks, clips, stops
+### 10.2 Tracks, clips, stops
 
 A track is a stream of one kind of material, and in Live it plays one clip at
 a time. A clip is a piece of that material in a state: playing, stopped,
@@ -467,7 +509,7 @@ Takes lie under a clip as they do in Live, and you choose the one that
 stands: the best capture of a scene, the attempt at a task that should land,
 the reading of a history you want to keep.
 
-### 11.3 Devices
+### 10.3 Devices
 
 Instruments make things: an agent answers, the field sounds, a world takes
 shape. Effects change what passes through them without replacing it: a
@@ -490,7 +532,7 @@ devices do in Live, and each of the suite's products brings its own: the day
 and its documents, the agents and what tunes them, the skills they carry, the
 work they do, the machines they run on, and the sky and its clock.
 
-### 11.4 The browser
+### 10.4 The browser
 
 The browser on the left holds what you can bring in: material to open, kinds
 of instrument to open in a pane, devices to add to a chain, and running
@@ -498,7 +540,7 @@ things you can work with where they are. Preview, open and add are always
 three separate acts. Drag a skill onto an agent's chain and it is admitted;
 drag an agent onto a track and it takes the seat.
 
-### 11.5 The transport
+### 10.5 The transport
 
 The transport keeps Live's controls in Live's places in every mode, grouped
 as Live groups them. The table is the reference for what each one does where.
@@ -530,7 +572,7 @@ as Live groups them. The table is the reference for what each one does where.
 The day's opening and close come from the day itself. It opens, runs its
 closing routine at the end, and closes; no hours are fixed in the instrument.
 
-### 11.6 Companions
+### 10.6 Companions
 
 Each kind of work has its companion in the panel on the right, with the
 tiles you want beside it: the packet, the trail of everywhere you have been,
@@ -540,7 +582,7 @@ Expressions it is Nara, a presence that meets you in the form. In Technē it
 is Epii, who works beside the instruments and can tell you why each room of a
 palace is there. None of them judges your work for you.
 
-### 11.7 Going back
+### 10.7 Going back
 
 Everywhere you go is kept on a trail, and you can always go back: to the same
 place, the same page, the same point in the reading. Changing your kind of
@@ -550,7 +592,7 @@ work never closes anything. Every place can be linked to and reopened.
 
 # Part Two — The Game
 
-## 12. The figure
+## 11. The figure
 
 In 1943 Hermann Hesse published a novel about a game nobody had played. His
 narrator calls it "a mode of playing with the total contents and values of
@@ -580,7 +622,7 @@ studio, and every other mode plays on that studio's grammar. Hesse made music
 the model for a universal language. Here the universal language is built
 from a working musical instrument.
 
-## 13. The game's language
+## 12. The game's language
 
 Hesse's players stated a theme and developed it. In the DLW the theme is any
 piece of a world, and the development is the movement between its three
@@ -631,7 +673,7 @@ ends by itself. Whether a whole kind of work, or the instrument itself, could
 one day be retired with its record kept is a question the DLW keeps open,
 because an instrument that cannot imagine its end will defend it.
 
-## 14. Epi-Logos
+## 13. Epi-Logos
 
 The game the DLW exists to let anyone play is called Epi-Logos.
 
@@ -670,7 +712,7 @@ build and test; every change that matters passes through whoever owns what
 it would change, and a person has the last word. An agent can defer a
 decision. It cannot approve its own work into the canon.
 
-## 15. A day
+## 14. A day
 
 The day opens. You stand on your own world, the field around you, the sky
 turning over. In Central you read, one tangent held open beside the main
@@ -701,13 +743,13 @@ name.
 The day closes. What you learned is filed, what you made is kept, the walk
 is there for anyone you show it to.
 
-## 16. What the game warns
+## 15. What the game warns
 
 Hesse wrote the game's decline into its history, and three of his warnings
 apply to anything built in its image.
 
 A form can grow more beautiful than what it carries, and then it is glass.
-The DLW meets that by playing the day in Chapter 15: whatever cannot do its
+The DLW meets that by playing the day in Chapter 14: whatever cannot do its
 part in that day is ornament.
 
 A device that judges for the player — scores the scene, picks the reading —
@@ -721,7 +763,7 @@ taught, work landed, an expression shown, a reader who understood, a pupil
 who no longer needs the teacher. Hesse's novel ends with its Magister leaving
 the Order to teach a single pupil.
 
-## 17. Still to decide
+## 16. Still to decide
 
 - What the units of time beyond the day are — a week, a season, a year — and
   how they close.
