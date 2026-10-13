@@ -16,11 +16,24 @@ import {
   createOfflineMapStyle,
   GEOGRAPHY_EDGE_COLORS,
   GLOBE,
+  skyForProjection,
   type MapSurfaceOptions,
   type MapSurfaceProjection,
   type MapTileSource,
 } from "./mapStyle";
-import { clampPitch, normalizeBearing, PITCH_MAX, placeMarkerPlan } from "./placeNavigation";
+import {
+  clampPitch,
+  defaultPlaceView,
+  flightEase,
+  isIdle as isStillnessIdle,
+  normalizeBearing,
+  PITCH_MAX,
+  placeMarkerPlan,
+  pulseTarget,
+  RESET_DURATION_MS,
+  STILL,
+  type StillnessState,
+} from "./placeNavigation";
 
 /** The camera as the map reports it. `pitch` and `bearing` are degrees and are
  * absent in records saved before T1; they read as 0. */
@@ -35,6 +48,16 @@ export interface MapViewState {
 /** Optional camera terms for a flight. A pitch request is ignored in flat mode
  * (no error); a bearing applies in both projections. */
 export interface MapCameraFlight {
+  pitch?: number;
+  bearing?: number;
+  durationMs?: number;
+  easing?: (t: number) => number;
+  /** The place this flight travels to: its marker pulses for as long as the flight runs. */
+  pulseGraphNodeId?: string;
+}
+
+/** An eased return of pitch and bearing in place (no pan, no zoom). */
+export interface MapCameraEase {
   pitch?: number;
   bearing?: number;
   durationMs?: number;
@@ -78,6 +101,10 @@ export interface MapSurfaceRenderer {
   setLiveTileSource(tileSource: MapTileSource): Promise<void>;
   centerOn(latitude: number, longitude: number, zoom?: number): Promise<void>;
   flyTo?(latitude: number, longitude: number, zoom?: number, camera?: MapCameraFlight): Promise<void>;
+  /** Eases pitch and bearing in place: the compass return. */
+  easeCamera?(camera: MapCameraEase): Promise<void>;
+  /** True when the surface has no eased motion or flight in progress. */
+  isIdle?(): boolean;
   fitToPlaces?(places: PlaceRenderMarker[]): Promise<void>;
   setProjection?(projection: MapSurfaceProjection): Promise<void>;
   setStopClickHandler?(handler: (sceneId: string) => void): void;
@@ -104,6 +131,14 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
   let projection: MapSurfaceProjection = "globe";
   // The globe's own tilt, kept while the flat projection holds the camera top-down.
   let globeTilt: number | null = null;
+  // Lane-4 T29: the only motion this surface owns is an eased flight or return the
+  // reader asked for. Each one carries a clock and ends by it, so nothing outlives
+  // its motion; the marker pulse exists only while its place's flight runs.
+  let motion: StillnessState = STILL;
+  let motionToken = 0;
+  let motionTimer: ReturnType<typeof setTimeout> | null = null;
+  let pulseAnimation: Animation | null = null;
+  let placeElements = new Map<string, HTMLElement>();
 
   function emitViewChange(): void {
     if (!map || !viewChangeHandler) return;
@@ -120,21 +155,65 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
   function clearHtmlMarkers(): void {
     for (const marker of htmlMarkers) marker.remove();
     htmlMarkers = [];
+    placeElements = new Map();
+    pulseAnimation = null;
+  }
+
+  function stopPulse(): void {
+    pulseAnimation?.cancel();
+    pulseAnimation = null;
+  }
+
+  // A pulse is a Web Animation on the one marker a flight travels to. It is
+  // cancelled the moment that flight ends; no timer or frame loop drives it.
+  function startPulse(): void {
+    stopPulse();
+    const target = pulseTarget(motion);
+    const element = target ? placeElements.get(target) : undefined;
+    if (!element || typeof element.animate !== "function") return;
+    pulseAnimation = element.animate(
+      [
+        { transform: "scale(1)", opacity: 1 },
+        { transform: "scale(1.7)", opacity: 0.45 },
+        { transform: "scale(1)", opacity: 1 },
+      ],
+      { duration: 1100, iterations: Infinity, easing: "ease-in-out" },
+    );
+  }
+
+  function endMotion(): void {
+    motion = STILL;
+    stopPulse();
+  }
+
+  // Begins a motion and returns its token. Its clock ends the motion after its
+  // duration, so a motion always finishes even if the map reports no moveend.
+  function beginMotion(next: StillnessState, durationMs: number): number {
+    const token = ++motionToken;
+    if (motionTimer !== null) clearTimeout(motionTimer);
+    motion = next;
+    startPulse();
+    motionTimer = setTimeout(() => {
+      motionTimer = null;
+      if (token === motionToken) endMotion();
+    }, durationMs + 250);
+    return token;
   }
 
   return {
     async create(el, tileSource, options) {
       projection = options?.projection ?? "globe";
+      const home = defaultPlaceView();
       map = new maplibre.Map({
         container: el,
         style: createOfflineMapStyle(tileSource, { projection }) as StyleSpecification,
         attributionControl: { compact: false },
         // Keep renderer bootstrap identical to PsychogeographicMap's declared
-        // default state. MapLibre otherwise boots at 0,0 and can publish a
-        // late moveend after the surface has subscribed, persisting a camera
-        // the application never selected.
-        center: [0, 20],
-        zoom: 1,
+        // default state (the same defaultPlaceView). MapLibre otherwise boots at
+        // 0,0 and can publish a late moveend after the surface has subscribed,
+        // persisting a camera the application never selected.
+        center: [home.longitude, home.latitude],
+        zoom: home.zoom,
       });
       map.on("moveend", emitViewChange);
       // Full navigation: right-drag or Ctrl-drag rotates and tilts the globe;
@@ -154,7 +233,7 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
       });
       await waitForStyleLoad(map);
       if (projection === "globe") {
-        map.setSky({ "sky-color": GLOBE.space, "sky-horizon-blend": 0.4 });
+        map.setSky(skyForProjection("globe") as never);
       }
       emitViewChange();
     },
@@ -231,6 +310,7 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
           padding: "0",
         });
         anchor.append(element);
+        placeElements.set(place.graphNodeId, element);
 
         if (style.uncertainty) {
           const note = document.createElement("span");
@@ -266,6 +346,8 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
             .addTo(map),
         );
       }
+      // Markers are rebuilt on every draw; a flight still travelling re-attaches its pulse.
+      startPulse();
 
       for (const expression of expressions) {
         const element = document.createElement("span");
@@ -336,10 +418,12 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
     },
     async flyTo(latitude, longitude, zoom, camera) {
       if (!map) return;
+      const durationMs = camera?.durationMs ?? 900;
+      beginMotion({ flight: { graphNodeId: camera?.pulseGraphNodeId ?? null }, easing: true }, durationMs);
       map.flyTo({
         center: [longitude, latitude],
         zoom: zoom ?? 4,
-        duration: camera?.durationMs ?? 900,
+        duration: durationMs,
         ...(camera?.easing ? { easing: camera.easing } : {}),
         ...(camera?.bearing !== undefined ? { bearing: normalizeBearing(camera.bearing) } : {}),
         // Flat is top-down: a pitch request is ignored there, never an error.
@@ -347,6 +431,20 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
           ? { pitch: clampPitch(camera.pitch) }
           : {}),
       });
+    },
+    async easeCamera(camera) {
+      if (!map) return;
+      const durationMs = camera.durationMs ?? RESET_DURATION_MS;
+      beginMotion({ flight: null, easing: true }, durationMs);
+      map.easeTo({
+        duration: durationMs,
+        easing: camera.easing ?? flightEase,
+        ...(camera.bearing !== undefined ? { bearing: normalizeBearing(camera.bearing) } : {}),
+        ...(camera.pitch !== undefined ? { pitch: clampPitch(camera.pitch) } : {}),
+      });
+    },
+    isIdle() {
+      return isStillnessIdle(motion);
     },
     async fitToPlaces(places) {
       if (!map || places.length === 0) return;
@@ -373,13 +471,14 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
       }
       projection = next;
       map.setProjection({ type: next === "globe" ? "globe" : "mercator" });
+      // The limb belongs to the globe only; flat carries the same sky with no limb.
+      map.setSky(skyForProjection(next) as never);
       if (next === "globe") {
         map.setMaxPitch(PITCH_MAX);
         if (globeTilt !== null) {
           map.setPitch(globeTilt);
           globeTilt = null;
         }
-        map.setSky({ "sky-color": GLOBE.space, "sky-horizon-blend": 0.4 });
       }
       const globeOnly = next === "globe";
       if (map.getLayer("graticule-lines")) {
@@ -405,6 +504,9 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
       viewChangeHandler = handler;
     },
     destroy() {
+      if (motionTimer !== null) clearTimeout(motionTimer);
+      motionTimer = null;
+      motion = STILL;
       clearHtmlMarkers();
       map?.remove();
       map = null;

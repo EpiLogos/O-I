@@ -321,6 +321,51 @@ export function placeMarkerPlan(input: {
   return { style, latitude: point.latitude, longitude: point.longitude };
 }
 
+// ---------------------------------------------------------------------------
+// T3: the default view and the two eased returns to it (lane-4 T3)
+// ---------------------------------------------------------------------------
+
+/** The view the Places map boots at: the whole globe, centred on 20 N, zoom 1,
+ * untilted. The single source of that state; the renderer's bootstrap and the
+ * surface's initial view both read it, and the globe-home control flies to it. */
+export function defaultPlaceView(): PlaceViewState & { pitch: number; bearing: number } {
+  return withCameraDefaults({ latitude: 20, longitude: 0, zoom: 1 });
+}
+
+/** The compass return: bearing and pitch go to 0; the position and zoom the
+ * reader chose stay where they are. */
+export function northResetView(state: PlaceViewState): PlaceViewState & { pitch: number; bearing: number } {
+  const camera = withCameraDefaults(state);
+  return { latitude: camera.latitude, longitude: camera.longitude, zoom: camera.zoom, pitch: 0, bearing: 0 };
+}
+
+/** Duration of the eased return (compass or globe home), in milliseconds. */
+export const RESET_DURATION_MS = 800;
+
+// ---------------------------------------------------------------------------
+// T29: stillness — the idle globe does not move (lane-4 T29)
+// ---------------------------------------------------------------------------
+
+/** What the surface is moving. `flight` is a flight to a place (its marker may
+ * pulse) or null; `easing` is any eased camera motion in progress. */
+export interface StillnessState {
+  flight: { graphNodeId: string | null } | null;
+  easing: boolean;
+}
+
+export const STILL: StillnessState = { flight: null, easing: false };
+
+/** The idle globe is still: nothing is in flight and no eased motion runs. */
+export function isIdle(state: StillnessState): boolean {
+  return state.flight === null && !state.easing;
+}
+
+/** The one marker that pulses: the place a flight is travelling to, and only
+ * while that flight is in progress. Null for every other motion. */
+export function pulseTarget(state: StillnessState): string | null {
+  return state.flight?.graphNodeId ?? null;
+}
+
 function isLatLng(value: unknown): value is LatLng {
   if (!value || typeof value !== "object") return false;
   const { latitude, longitude } = value as Record<string, unknown>;

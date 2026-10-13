@@ -71,6 +71,37 @@ export const GEOGRAPHY_EDGE_COLORS: Record<GeographyEdge["mode"], string> = {
   inland_water: "#3fb89a",
 };
 
+/** Lane-4 T6: the globe's atmosphere, one tuned constant set. MapLibre's setSky
+ * takes literal colours, not CSS custom properties, so each colour is resolved
+ * here once from the design-system token it derives from
+ * (packages/oi-design-system/tokens.css). The tuning is scripted-only until the
+ * native pass sees the limb. */
+export const GLOBE_ATMOSPHERE = {
+  /** `--oi-mark-blue` (rgba 117, 174, 228; the dark theme's 0.3 alpha) as its opaque hue. */
+  limb: "#75aee4",
+  /** How strongly the limb glows over the space ground. */
+  blend: 0.5,
+} as const;
+
+/** The sky for a projection. Globe: the space ground with the blue limb.
+ * Flat: the same space ground with no limb (atmosphere-blend 0), so the flat
+ * map keeps the sky it had before the limb existed. */
+export function skyForProjection(projection: MapSurfaceProjection): Record<string, string | number> {
+  if (projection === "globe") {
+    return {
+      "sky-color": GLOBE.space,
+      "sky-horizon-blend": 0.4,
+      "horizon-color": GLOBE_ATMOSPHERE.limb,
+      "atmosphere-blend": GLOBE_ATMOSPHERE.blend,
+    };
+  }
+  return {
+    "sky-color": GLOBE.space,
+    "sky-horizon-blend": 0.4,
+    "atmosphere-blend": 0,
+  };
+}
+
 export function createOfflineMapStyle(
   tileSource: MapTileSource,
   options: MapSurfaceOptions = {},
