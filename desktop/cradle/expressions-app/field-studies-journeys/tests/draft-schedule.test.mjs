@@ -117,3 +117,47 @@ test('app.ts has one draft schedule and no competing timer or reschedule', ()=>{
  for(const trigger of ["flushNow('scene')","flushNow('studio')","flushNow('rail')","flushNow('hidden')","flushNow('quit')","addEventListener('beforeunload'"])
   assert.ok(source.includes(trigger),`context-switch trigger wired: ${trigger}`);
 });
+
+// T-REVIEW-6: a draft held by an open boot recovery choice is never written; a backup that does not land keeps its
+// edits pending; an edit made during a backup is written by a quit rather than left to a timer an unload cuts off.
+test('T-REVIEW-6: a held draft is never written: no timer, context switch or quit writes it, and the edit waits', async()=>{
+ const timers=fakeTimers(),calls=[];let held=true;
+ const schedule=new DraftSchedule({timers,held:()=>held,flush:reason=>{calls.push(reason);return Promise.resolve();}});
+ schedule.request();timers.advance(1000);
+ schedule.flushNow('scene');await schedule.flushNow('quit');
+ assert.deepEqual(calls,[],'nothing is written while the recovery choice is open');
+ assert.ok(schedule.pending()>0,'the edit stays pending, so it is not forgotten');
+ held=false;schedule.flushNow('scene');
+ assert.deepEqual(calls,['scene'],'the held edit is written once the choice is carried out');
+});
+
+test('T-REVIEW-6: a quit during a backup writes the edits made during that backup once it lands', async()=>{
+ const timers=fakeTimers(),calls=[],releases=[];
+ const schedule=new DraftSchedule({timers,flush:reason=>{calls.push(reason);return new Promise(resolve=>{releases.push(resolve);});}});
+ schedule.request();timers.advance(350);
+ schedule.request();
+ const quit=schedule.flushNow('quit');
+ assert.deepEqual(calls,['edit'],'the quit does not start a second write while the first is in flight');
+ releases[0]();await settle();
+ assert.deepEqual(calls,['edit','quit'],'the quit writes the edit made during the flight');
+ releases[1]();await quit;await settle();
+ assert.equal(schedule.pending(),0);
+});
+
+test('T-REVIEW-6: a backup that rejects keeps its edits pending, and the next context switch retries it', async()=>{
+ const timers=fakeTimers(),calls=[];let fail=true;
+ const schedule=new DraftSchedule({timers,flush:reason=>{calls.push(reason);return fail?Promise.reject(new Error('storage full')):Promise.resolve(true);}});
+ schedule.request();timers.advance(350);await settle();await settle();
+ assert.equal(schedule.pending(),1,'the edit is still pending after the failure');
+ fail=false;schedule.flushNow('rail');
+ assert.deepEqual(calls,['edit','rail'],'a context switch retries it at once');
+});
+
+test('T-REVIEW-6: a flush that reports it did not hold (false) is a failed backup, not a success', async()=>{
+ const timers=fakeTimers(),calls=[];
+ const schedule=new DraftSchedule({timers,flush:reason=>{calls.push(reason);return Promise.resolve(false);}});
+ schedule.request();schedule.flushNow('scene');await settle();await settle();
+ assert.equal(schedule.pending(),1,'a refused backup keeps its edit pending');
+ schedule.flushNow('studio');
+ assert.deepEqual(calls,['scene','studio'],'the next context switch tries again');
+});

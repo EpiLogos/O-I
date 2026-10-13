@@ -63,19 +63,20 @@ test('a failing quarantine keeps the damaged slot in place and writes nothing', 
  assert.equal(JSON.parse(l.store.map.get('j1#a')).seq,1,'the good copy is untouched');
 });
 
-test('a record that is a valid envelope but fails validation is quarantined whole, and the other records still load', async()=>{
+// T-REVIEW-6 (3b): this record once was quarantined whole on a validation failure. Only damaged bytes are quarantined now; a
+// record that parses but does not validate stays in place, is reported, and is never adopted.
+test('a record that is a valid envelope but fails validation stays in place and is reported, and the other records still load', async()=>{
  const l=layout();
  await writeRecord(l,'good-1',JSON.stringify({n:1}),at);
  await writeRecord(l,'good-2',JSON.stringify({n:2}),at);
  await writeRecord(l,'bad',JSON.stringify({n:'nope'}),at);
- const {values,quarantined}=await loadRecords(l,validate,at);
+ const {values,quarantined,rejected}=await loadRecords(l,validate,at);
  assert.deepEqual(values.map(v=>v.n).sort(),[1,2],'the healthy records load');
- assert.ok(quarantined.some(k=>k.startsWith('bad')),'the bad record is reported');
- const {records}=await listQuarantine(l.quarantine);
- const bad=records.find(r=>r.key.startsWith('bad'));
- assert.ok(bad,'the bad record is in quarantine');
- assert.match(bad.reason,/n must be a number/,'the reason names the validation failure');
- assert.equal(JSON.parse(JSON.parse(bad.raw).body).n,'nope','the stored slot is kept verbatim, envelope and body');
+ assert.deepEqual(quarantined,[],'no damage, so nothing is quarantined');
+ assert.deepEqual(rejected.map(r=>r.key),['bad'],'the invalid record is reported by key');
+ assert.match(rejected[0].reason,/n must be a number/,'the reason names the validation failure');
+ assert.equal((await listQuarantine(l.quarantine)).records.length,0,'and it is not moved out of reach');
+ assert.equal(JSON.parse(JSON.parse(l.store.map.get('bad#a')??l.store.map.get('bad#b')).body).n,'nope','its stored bytes are untouched');
  assert.equal((await loadRecord(l,'bad',validate,at)).value,undefined,'and never adopted');
 });
 
@@ -134,4 +135,79 @@ test('writePair picks the older slot, so the newest good copy is never the one o
  const after=await readPair(store,'r');
  assert.equal(after.body,'C');
  assert.equal(JSON.parse(store.map.get('r#b')).seq,2,'the seq-2 copy is the one replaced by seq 3 only after seq 3 is written');
+});
+
+// T-REVIEW-6 (3b, 3c, 6): only damage is quarantined; a pre-pair bare value is kept verbatim before it is retired or removed.
+test('T-REVIEW-6: a record that parses but fails validation stays in place, is reported and never adopted; only damage is quarantined', async()=>{
+ const l=layout();
+ await writeRecord(l,'bad',JSON.stringify({n:'nope'}),at);
+ const snapshot=[...l.store.map];
+ const loaded=await loadRecord(l,'bad',validate,at);
+ assert.equal(loaded.value,undefined,'never adopted');
+ assert.match(loaded.rejected,/n must be a number/,'reported with its reason');
+ assert.deepEqual(loaded.quarantined,[],'valid bytes are not quarantined');
+ assert.equal((await listQuarantine(l.quarantine)).records.length,0);
+ assert.deepEqual([...l.store.map],snapshot,'the stored bytes are untouched');
+});
+
+test('T-REVIEW-6: unparseable bytes inside a valid envelope are damage, quarantined verbatim and removed from the live store', async()=>{
+ const l=layout();
+ l.store.map.set('torn#a',encodeSlot(1,'{not json'));
+ const loaded=await loadRecord(l,'torn',validate,at);
+ assert.equal(loaded.value,undefined);
+ assert.ok(loaded.quarantined.length>=1,'the damage is reported');
+ const {records}=await listQuarantine(l.quarantine);
+ assert.equal(JSON.parse(records[0].raw).body,'{not json','the bytes are kept verbatim');
+ assert.equal(l.store.map.has('torn#a'),false,'the damaged slot leaves the live store');
+});
+
+test('T-REVIEW-6: a write over an invalid record keeps the invalid copy verbatim first, paired and atomic alike', async()=>{
+ for(const paired of [true,false]){
+  const l=layout({paired});
+  await writeRecord(l,'j1',JSON.stringify({n:'nope'}),at,validate);
+  await writeRecord(l,'j1',JSON.stringify({n:5}),at,validate);
+  const {records}=await listQuarantine(l.quarantine);
+  assert.equal(records.length,1,`paired=${paired}: the invalid copy is kept, not silently replaced`);
+  assert.match(records[0].raw,/nope/);
+  assert.deepEqual((await loadRecord(l,'j1',validate,at)).value,{n:5});
+ }
+});
+
+test('T-REVIEW-6: the next pair write retires a pre-pair bare value only after read-back, keeping its verbatim copy', async()=>{
+ const l=layout();
+ l.store.map.set('legacy',JSON.stringify({n:7}));
+ await writeRecord(l,'legacy',JSON.stringify({n:8}),at,validate);
+ assert.equal(l.store.map.has('legacy'),false,'the bare value is gone once the pair holds a valid copy');
+ const {records}=await listQuarantine(l.quarantine);
+ assert.equal(records.length,1);
+ assert.equal(records[0].raw,JSON.stringify({n:7}),'its verbatim copy is kept');
+ assert.deepEqual((await loadRecord(l,'legacy',validate,at)).value,{n:8});
+ const torn=layout();torn.store.map.set('legacy',JSON.stringify({n:7}));
+ const realPut=torn.store.put;
+ torn.store.put=async(k,raw)=>{await realPut(k,raw.slice(0,-5));};
+ await assert.rejects(writeRecord(torn,'legacy',JSON.stringify({n:8}),at),/previous copy is retained/);
+ assert.equal(torn.store.map.get('legacy'),JSON.stringify({n:7}),'a failed read-back leaves the bare value in place');
+});
+
+test('T-REVIEW-6: removing a record keeps a bare pre-pair value beside a valid pair verbatim before it is cleared', async()=>{
+ const l=layout();
+ await writeRecord(l,'j1',JSON.stringify({n:1}),at);
+ l.store.map.set('j1',JSON.stringify({n:0}));
+ await removeRecord(l,'j1',at);
+ assert.deepEqual([...l.store.map.keys()],[],'nothing remains');
+ const {records}=await listQuarantine(l.quarantine);
+ assert.ok(records.some(r=>r.raw===JSON.stringify({n:0})),'the bare value is kept verbatim');
+});
+
+// T-REVIEW-6 (3b, follow-on): removing a record never drops an invalid draft silently; it is kept verbatim first.
+test('T-REVIEW-6: removing a record quarantines an invalid draft first, paired and atomic alike', async()=>{
+ for(const paired of [true,false]){
+  const l=layout({paired});
+  await writeRecord(l,'j1',JSON.stringify({n:'nope'}),at);
+  await removeRecord(l,'j1',at,validate);
+  assert.deepEqual([...l.store.map.keys()],[],`paired=${paired}: the record is removed`);
+  const {records}=await listQuarantine(l.quarantine);
+  assert.equal(records.length,1,`paired=${paired}: the invalid draft is kept, not dropped`);
+  assert.match(records[0].raw,/nope/);
+ }
 });
