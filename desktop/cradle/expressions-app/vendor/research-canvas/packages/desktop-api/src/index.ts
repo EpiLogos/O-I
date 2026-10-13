@@ -8,6 +8,7 @@ import type {
   ProjectRootType,
   PublishSettings,
 } from "@research-canvas/schema";
+import { canonicalTemporalInstant, temporalFields } from "@research-canvas/schema";
 
 export type {
   ArchetypalLighting,
@@ -1966,34 +1967,23 @@ function defaultLayoutFor(graphNodeId: string, canvasId: string): NodeLayout {
 
 type TimelineInstantKey = readonly [number, number, number, number, number, number, number];
 
+/**
+ * The static transport's instant key: the UTC civil fields of an instant the
+ * authority admits (lane-2 T4b). The shapes stay the ones this transport has
+ * always served (a bare year, a year with month/day, a datetime with seconds and
+ * a declared offset); the year and the calendar are the authority's, so a deep
+ * year is read whole and never truncated.
+ */
 function parseStaticTimelineInstant(value: string | null): TimelineInstantKey | null {
   if (value === null || value.trim() !== value || value.startsWith("+")) return null;
   const trimmed = value.trim();
-  if (/^-?\d{1,6}$/u.test(trimmed)) return [Number(trimmed), 1, 1, 0, 0, 0, 0];
-  const rfc3339 = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,9}))?(Z|[+-]\d{2}:\d{2})$/u.exec(trimmed);
-  if (rfc3339) {
-    const localYear = Number(rfc3339[1]);
-    const localMonth = Number(rfc3339[2]);
-    const localDay = Number(rfc3339[3]);
-    if (localMonth < 1 || localMonth > 12 || localDay < 1 || localDay > timelineDaysInMonth(localYear, localMonth)) return null;
-    const date = new Date(trimmed);
-    if (Number.isNaN(date.getTime())) return null;
-    return [date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds(), date.getUTCMilliseconds()];
-  }
-  const match = /^(-?\d{1,6})-(\d{2})(?:-(\d{2}))?$/u.exec(trimmed);
-  if (!match) return null;
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = match[3] === undefined ? 1 : Number(match[3]);
-  if (month < 1 || month > 12 || day < 1 || day > timelineDaysInMonth(year, month)) return null;
-  return [year, month, day, 0, 0, 0, 0];
-}
-
-function timelineDaysInMonth(year: number, month: number): number {
-  if ([4, 6, 9, 11].includes(month)) return 30;
-  if (month !== 2) return 31;
-  const mod = (value: number, divisor: number) => ((value % divisor) + divisor) % divisor;
-  return mod(year, 4) === 0 && (mod(year, 100) !== 0 || mod(year, 400) === 0) ? 29 : 28;
+  const bare = /^-?\d+$/u.test(trimmed);
+  const dated = /^-?\d+-\d{2}(?:-\d{2})?$/u.test(trimmed);
+  const datetime = /^-?\d+-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/u.test(trimmed);
+  if (!bare && !dated && !datetime) return null;
+  const fields = temporalFields(canonicalTemporalInstant(trimmed));
+  if (fields === null) return null;
+  return [fields.year, fields.month + 1, fields.day, fields.hour, fields.minute, fields.second, fields.millisecond];
 }
 
 function compareTimelineKeys(a: TimelineInstantKey, b: TimelineInstantKey): number {

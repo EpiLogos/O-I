@@ -257,8 +257,8 @@
     },
     "packages/desktop-api/src/techneTransport.ts": {
       "upstream_sha256": "4054c16622be5cff834c7f5f5007efc6932fccde317194b259690e9d50bb7ab7",
-      "adapted_sha256": "222ad8928294a36b1cee9bc486010b334c5661a067a4a9e05061628b525d60b4",
-      "reason": "Exact temporal alias source resolution for native focused relations/expansion, preserving source endpoints without invented dates; retain native filter/error fixes. Resolve exact single-source Place aliases for current native incident relations, as for temporal aliases; no invented route semantics. | lane-2 T3: standing presentation + band/axis craft | lane-2 T8: periodisation bands"
+      "adapted_sha256": "3b4954e234b1cc113dfb22ee5c748d47c6dd42389421a5c0bdf1e325aaf2f199",
+      "reason": "Exact temporal alias source resolution for native focused relations/expansion, preserving source endpoints without invented dates; retain native filter/error fixes. Resolve exact single-source Place aliases for current native incident relations, as for temporal aliases; no invented route semantics. | lane-2 T3: standing presentation + band/axis craft | lane-2 T8: periodisation bands | lane-2 T4b: deep time through the seams"
     },
     "packages/canvas/src/timeline/TimelineNode.tsx": {
       "upstream_sha256": "b4fed38eeb92d5815ab81057ac3ea1d00459352baa1d30ab180c34f4bbb41b07",
@@ -343,8 +343,8 @@
       "reason": "lane-2 T1b: chronology on the authority's epoch-ms extents"
     },
     "packages/desktop-api/src/index.ts": {
-      "adapted_sha256": "0ea5aebaae1fa55c64e6821c4a6a8b29f29bdf430ba228b25f1719a986dac510",
-      "reason": "lane-2 T1: bridge carries every precision rung verbatim"
+      "adapted_sha256": "5f037ea96d4a6b8631b13a15dd969199c617f81dadc636f9d48457b70ce1560d",
+      "reason": "lane-2 T1: bridge carries every precision rung verbatim | lane-2 T4b: deep time through the seams"
     },
     "packages/schema/src/node.ts": {
       "adapted_sha256": "7f27a3277806df57dc63eb2d86d9c7e97445b4a1969d4d0877ed8d3d0ebd7c0b",
@@ -358,6 +358,11 @@
     "packages/canvas/src/psychogeographic/renderer.ts": {
       "adapted_sha256": "6405ccc75075ebcdcaa3d5ddeb384b07d7e8117cef12ae41e46c0b5721ecf6ce",
       "reason": "lane-4 T1+T2+T10: pitch/bearing viewport, fly-to by facet precision, the precision marker grammar | lane-4 T3/T6/T7/T29: map chrome \u2014 reset, atmosphere, attribution, stillness | lane-4 T8+T9: relation layers + legend, regions as polygons | lane-4 T11-T13: routes, hierarchy edges, provenance | lane-4 T4/T5: basemap stack + terrain"
+    },
+    "packages/schema/src/time.ts": {
+      "upstream_sha256": "9107194ab14fcfaeca85499e7a88f71c06661cad824ed4ec89e28c87d7f9a9ea",
+      "adapted_sha256": "537d0c29510a140bcdee285ea72c55d765f3bc37dd4aa0d23de4aeb7ebddcc0c",
+      "reason": "Deep time through the schema bounds (lane-2 T4b): isoTemporalBoundSchema admits the years the authority admits (a bare signed year of any length, a signed six-digit dated year) and refuses the rest through the authority's parseTimestamp rather than a private calendar; compareTemporalBounds orders on the authority's epoch ms; temporalEpochMs, canonicalTemporalInstant (legacy shorthand padding), temporalYear and temporalFields are the one door the desktop-api reads years through; the authority's TEMPORAL_PRECISIONS spelling is mirrored and pinned by a parity test. | lane-2 T4b: deep time through the seams"
     }
   }
 }

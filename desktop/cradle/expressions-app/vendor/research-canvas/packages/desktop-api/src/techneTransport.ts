@@ -56,6 +56,7 @@ import type {
   TimelineLayoutMutationResult,
   TimelineViewNode,
 } from "./graph";
+import { TEMPORAL_PRECISIONS, canonicalTemporalInstant, temporalYear } from "@research-canvas/schema";
 import type { WorkspaceTransport } from "./index";
 import { TECHNE_WORKSPACE_ID, type TechneFieldBundle } from "./techneBundle";
 
@@ -94,12 +95,9 @@ function defaultLayoutFor(graphNodeId: string, canvasId: string): NodeLayout {
   };
 }
 
-const TEMPORAL_PRECISION_RUNGS: readonly string[] = [
-  "millennium", "century", "decade", "year", "month", "day", "hour", "minute", "second", "subsecond",
-];
-
+/** Every rung the authority names, eon through subsecond, read from the one schema list. */
 function precisionRung(value: unknown): TemporalPrecision | null {
-  return typeof value === "string" && TEMPORAL_PRECISION_RUNGS.includes(value) ? value as TemporalPrecision : null;
+  return typeof value === "string" && (TEMPORAL_PRECISIONS as readonly string[]).includes(value) ? value as TemporalPrecision : null;
 }
 
 function matchesFilter<T>(value: T | null, filter?: { include?: T[]; exclude?: T[] }): boolean {
@@ -107,12 +105,10 @@ function matchesFilter<T>(value: T | null, filter?: { include?: T[]; exclude?: T
   return included && !(value !== null && filter?.exclude?.includes(value));
 }
 
+/** The civil year of a techne anchor, read by the authority (lane-2 T4b): a deep year is never truncated to its first six digits. */
 function techneTimelineYear(value: string | null): number | null {
   if (!value) return null;
-  const match = /^(-?\d{1,6})/.exec(value);
-  if (!match) return null;
-  const year = Number(match[1]);
-  return Number.isFinite(year) ? year : null;
+  return temporalYear(canonicalTemporalInstant(value));
 }
 
 export function createTechneTransport(bundle: TechneFieldBundle): TechneWorkspaceTransport {
