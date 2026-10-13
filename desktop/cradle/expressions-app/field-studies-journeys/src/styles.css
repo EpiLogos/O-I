@@ -254,3 +254,13 @@ body{
 .curve-tools button[aria-pressed="true"]{background:var(--ui-ink);border-color:var(--ui-ink);color:var(--ui-surface)}
 .curve-tools button:disabled{opacity:.4;cursor:default}
 .curve-readout{margin:0;font-size:11px;color:var(--ui-muted);font-variant-numeric:tabular-nums}
+/* lane-3 E09b/E11 */
+.seam-glyph{position:absolute;top:-8px;transform:translateX(-50%);z-index:3;width:22px;height:22px;min-height:0;padding:3px;border:1px solid var(--ui-line);border-radius:4px;background:var(--ui-surface);color:var(--ui-ink);display:grid;place-items:center;cursor:pointer}
+.seam-glyph:hover,.seam-glyph[aria-expanded="true"]{border-color:var(--ui-ink)}
+.seam-glyph svg,.seam-kind svg,.seam-directions svg{width:100%;height:100%;display:block}
+.seam-chooser{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0;padding:6px 8px;border:1px solid var(--ui-line);border-radius:6px;background:var(--ui-surface)}
+.seam-kinds,.seam-directions{display:flex;gap:4px;align-items:center}
+.seam-kind,.seam-directions button{width:28px;height:28px;min-height:0;padding:4px;border:1px solid var(--ui-line);border-radius:4px;background:transparent;color:var(--ui-ink);cursor:pointer}
+.seam-kind[aria-pressed="true"],.seam-directions button[aria-pressed="true"]{background:var(--ui-ink);border-color:var(--ui-ink);color:var(--ui-surface)}
+.seam-param,.seam-seconds{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--ui-muted)}
+.seam-seconds input{width:72px}

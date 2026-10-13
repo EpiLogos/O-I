@@ -58,15 +58,33 @@ export function channelRange(s:Scene,t:Pick<PropertyTrack,'bind'|'entityId'>):Ch
  if(t.bind.startsWith('field.params.')){const b=nativeBinding(t.bind.slice(13));return b?{label:b.label,min:b.hardMin,max:b.hardMax}:undefined;}
  const b=entityTargets(s).find(v=>v.entityId===t.entityId&&v.bind===t.bind);return b?{label:b.label,min:b.hardMin,max:b.hardMax}:undefined;
 }
-/** E09: the refusals for a curve edit, checked in order, each named. Structure is validateTracks' own law (strict time order, finite values, known interpolations), and its message is kept as it stands. The handle rules and the channel range are added here. Throws on the first refusal. */
-export function validateCurveEdit(points:PropertyTrack['points'],range?:Pick<ChannelRange,'min'|'max'>):void{
+/** E09b: what a curve edit touched. A key touch is a keyframe's value; a handle touch is one bezier handle. */
+export type CurveTouch={key:number}|{handle:number;end:'out'|'in'};
+/** The touches a keyframe makes when it moves: its own value, and the handles that travel with it (its out on the segment
+ * after it, its in on the segment before). */
+export function touchesOfKey(points:PropertyTrack['points'],index:number):CurveTouch[]{
+ const touched:CurveTouch[]=[{key:index}];
+ if(index<points.length-1&&points[index].out)touched.push({handle:index,end:'out'});
+ if(index>0&&points[index].in)touched.push({handle:index,end:'in'});
+ return touched;
+}
+/** E09: the refusals for a curve edit, checked in order, each named. Structure is validateTracks' own law (finite values, known interpolations); the time order is named for the curve gesture, "Keyframes stay in time order.", and validateTracks' own message is kept for load validation. The handle rules are added here. The channel range is checked on `touched` only (E09b): a legacy out-of-range point elsewhere on the channel does not block the edit. Without `touched`, every point and handle is checked. Throws on the first refusal. */
+export function validateCurveEdit(points:PropertyTrack['points'],range?:Pick<ChannelRange,'min'|'max'>,touched?:readonly CurveTouch[]):void{
+ const outOfOrder=points.findIndex((p,i)=>i>0&&Number.isFinite(p.time)&&Number.isFinite(points[i-1].time)&&p.time<=points[i-1].time);
+ if(outOfOrder>0)throw new Error('Keyframes stay in time order.');
  validateTracks([{id:'curve',bind:'field.params.curve',points}]);
- const within=(v:number)=>!range||(v>=range.min&&v<=range.max),limit=range?` (${range.min} to ${range.max})`:'';
  for(let i=0;i<points.length;i++){
   const p=points[i];
-  if(!within(p.value))throw new Error(`Keyframe value is outside the channel range${limit}`);
-  if(i<points.length-1&&p.out){const span=points[i+1].time-p.time;if(p.out.dt<0||p.out.dt>span)throw new Error('Handle time must stay inside its segment');if(!within(p.value+p.out.dv))throw new Error(`Handle value is outside the channel range${limit}`);}
-  if(i>0&&p.in){const span=p.time-points[i-1].time;if(p.in.dt<-span||p.in.dt>0)throw new Error('Handle time must stay inside its segment');if(!within(p.value+p.in.dv))throw new Error(`Handle value is outside the channel range${limit}`);}
+  if(i<points.length-1&&p.out){const span=points[i+1].time-p.time;if(p.out.dt<0||p.out.dt>span)throw new Error('Handle time must stay inside its segment');}
+  if(i>0&&p.in){const span=p.time-points[i-1].time;if(p.in.dt<-span||p.in.dt>0)throw new Error('Handle time must stay inside its segment');}
+ }
+ const within=(v:number)=>!range||(v>=range.min&&v<=range.max),limit=range?` (${range.min} to ${range.max})`:'';
+ const scope=touched??points.flatMap((_,i)=>touchesOfKey(points,i));
+ for(const t of scope){
+  if('key' in t){const p=points[t.key];if(p&&!within(p.value))throw new Error(`Keyframe value is outside the channel range${limit}`);continue;}
+  const p=points[t.handle];if(!p)continue;
+  if(t.end==='out'){if(t.handle<points.length-1&&p.out&&!within(p.value+p.out.dv))throw new Error(`Handle value is outside the channel range${limit}`);}
+  else if(t.handle>0&&p.in&&!within(p.value+p.in.dv))throw new Error(`Handle value is outside the channel range${limit}`);
  }
 }
 export function mergeTake(existing:PropertyTrack[],take:PropertyTrack[],start:number,end:number):PropertyTrack[]{const out=clone(existing);for(const t of take){const old=out.find(v=>v.bind===t.bind&&v.entityId===t.entityId);if(!old){out.push(clone(t));continue;}const points=old.points.filter(p=>p.time<start||p.time>end);old.points=[...points,...clone(t.points)].sort((a,b)=>a.time-b.time);}return out;}

@@ -14,6 +14,7 @@ import {NATIVE_BINDINGS,WORLD_SCALE} from './nativeParameters';
 import {basis,stageCentre,stageScale} from './camera';
 import type {EngineFrame,FieldEngineAdapter,EngineCommand} from './engine';
 import {EntitySoundBank,activeFromFocus} from './native-field/entitySound';
+import {DIP_AT_DEFAULT,transitionKindOf,type TransitionSpec} from './transitions';
 
 const mix=(a:number,b:number,t:number)=>a+(b-a)*t;
 function color(a:string,b:string,t:number){return '#'+new Color(a).lerp(new Color(b),t).getHexString();}
@@ -29,6 +30,8 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  private width=innerWidth;private height=innerHeight;private dpr=devicePixelRatio||1;
  private dirty=false;private signature='';private sceneId='';private target:PointCloudConfig|null=null;
  private from:PointCloudConfig|null=null;private transitionStart=0;private duration=0;
+ /** E11: the seam's transition into the current scene. Absent = crossfade (the config blend), byte-identical. */
+ private seam:TransitionSpec|undefined;
  private evaluated:PointCloudConfig|null=null;private applied:PointCloudConfig|null=null;private sources=new Map<string,string>();private sourceStatus:Record<string,string>={};
  private nativeDomain=false;
  /** Per-object sound voices for the present entities (authored `sound`). */
@@ -54,7 +57,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   const sig=frame.authoringRevision===undefined?JSON.stringify(renderScene):frame.scene.id+':'+frame.authoringRevision+':'+(frame.liveRevision??0);
   if(sig!==this.signature){
    const config=toRenderConfig(frame.scene);
-   if(this.engine&&this.sceneId!==frame.scene.id){this.duration=frame.delta>0?frame.scene.transition:0;this.from=this.duration>0?this.evaluated:null;this.transitionStart=this.engine.inspectState().simTime;}
+   if(this.engine&&this.sceneId!==frame.scene.id){this.seam=frame.scene.transitionSpec;this.duration=frame.delta>0&&transitionKindOf(this.seam)!=='cut'?frame.scene.transition:0;this.from=this.duration>0?this.evaluated:null;this.transitionStart=this.engine.inspectState().simTime;}
    this.target=config;this.signature=sig;this.sceneId=frame.scene.id;
   }
   const target=this.target!;
@@ -73,7 +76,9 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   })};
   for(const key of Object.keys(cfg.fluid) as (keyof typeof cfg.fluid)[])if(typeof cfg.fluid[key]==='number'&&typeof a.fluid[key]==='number')(cfg.fluid as any)[key]=mix(a.fluid[key]!,cfg.fluid[key]!,t);
   for(const key of MATERIAL_KEYS)if(cfg.material&&typeof a.material?.[key]==='number')cfg.material[key]=mix(a.material[key]!,target.material?.[key]??a.material[key]!,t);
-  cfg.backgroundColor=color(a.backgroundColor??'#f4f2eb',target.backgroundColor??'#f4f2eb',t);
+  // E11: a dip to colour reaches the incoming scene's own background at its point; the config blend has no mask, so a wipe
+  // and the particle state still blend as the crossfade does here (the native compositor is not in this path).
+  cfg.backgroundColor=color(a.backgroundColor??'#f4f2eb',target.backgroundColor??'#f4f2eb',transitionKindOf(this.seam)==='dip-to-colour'?Math.min(1,fraction/(this.seam?.at??DIP_AT_DEFAULT)):t);
   const oldPalette=a.color?.customPaletteColors??[a.color!.primaryColor],palette=target.color?.customPaletteColors??[target.color!.primaryColor];
   cfg.color.customPaletteColors=palette.map((c,i)=>color(oldPalette[Math.min(i,oldPalette.length-1)],c,t));
   return cfg;
