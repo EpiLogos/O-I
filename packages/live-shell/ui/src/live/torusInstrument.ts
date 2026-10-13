@@ -88,12 +88,18 @@ export function setLiveInstrumentCommander(next: LiveInstrumentCommander | null)
   commander = next
 }
 
-/** Send one instrument edit to the owner through the frame. Settles with the owner's answer; a refusal carries the owner's reason. */
-export function commitLiveInstrumentEdit(edit: InstrumentEdit): Promise<StageResult> {
+/** Send one stage command to the owner through the mounted frame: the one host-command channel the Live surfaces share. Settles with the
+ * owner's answer; a refusal (no frame, a concealed frame, the owner's own reason) comes back named, never thrown into the control. */
+export function commitLiveStage(command: StageCommand): Promise<StageResult> {
   if (commander === null) return Promise.resolve({ok: false, error: 'No Expressions application is mounted for the live instrument'})
   // A synchronous refusal (no mounted frame, or a concealed one) settles as a named result, never a throw into the control.
-  return new Promise<StageResult>(resolve => resolve(commander!({command: 'instrument', edit})))
+  return new Promise<StageResult>(resolve => resolve(commander!(command)))
     .catch((cause: unknown) => ({ok: false as const, error: cause instanceof Error ? cause.message : String(cause)}))
+}
+
+/** Send one instrument edit to the owner through the frame. Settles with the owner's answer; a refusal carries the owner's reason. */
+export function commitLiveInstrumentEdit(edit: InstrumentEdit): Promise<StageResult> {
+  return commitLiveStage({command: 'instrument', edit})
 }
 
 /** Whether the owner's instrument is in a state to take edits: a following or held session. Any other state refuses by name at the owner. */

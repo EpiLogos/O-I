@@ -1984,6 +1984,11 @@ async function runStageCommand(command:StageCommand){
   case 'present':await action(command.on?'present':'exit-present',body);break;
   case 'export':await action({json:'export-json',native:'export-native',html:'export-artifact'}[command.format],body);break;
   case 'import':await action('import',body);break;
+  case 'janko':
+   // A Jankó chord: the owner's own played voices, struck through the native owner (nativeField.ts playJanko). Never synthesised.
+   if(!nativeField)throw new Error('This application has no native instrument.');
+   await nativeField.playJanko(command.pitch_classes,command.amplitude);
+   break;
   case 'instrument':
    // The Live instrument's edits run the native field's own controller operations (nativeField.ts command): the same path as the Studio's controls.
    if(!nativeField)throw new Error('This application has no native instrument.');

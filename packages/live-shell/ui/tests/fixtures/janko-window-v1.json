@@ -1,0 +1,707 @@
+{
+  "column_period": 6,
+  "lens": null,
+  "rows": 6,
+  "schema": "ql.janko-surface/v1",
+  "substrate_pitch_classes": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+  ],
+  "surface": [
+    {
+      "keys": [
+        {
+          "coordinate": {
+            "face": "direct",
+            "position": 0
+          },
+          "direct_prime_face": "direct",
+          "key": {
+            "column": 0,
+            "row": 0
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "C",
+          "repeated_touch_point": 0,
+          "sounding_pitch_class": 0,
+          "whole_tone_row_family": 0
+        },
+        {
+          "coordinate": {
+            "face": "direct",
+            "position": 1
+          },
+          "direct_prime_face": "direct",
+          "key": {
+            "column": 1,
+            "row": 0
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "D",
+          "repeated_touch_point": 0,
+          "sounding_pitch_class": 2,
+          "whole_tone_row_family": 0
+        },
+        {
+          "coordinate": {
+            "face": "direct",
+            "position": 2
+          },
+          "direct_prime_face": "direct",
+          "key": {
+            "column": 2,
+            "row": 0
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "E",
+          "repeated_touch_point": 0,
+          "sounding_pitch_class": 4,
+          "whole_tone_row_family": 0
+        },
+        {
+          "coordinate": {
+            "face": "direct",
+            "position": 3
+          },
+          "direct_prime_face": "direct",
+          "key": {
+            "column": 3,
+            "row": 0
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "F#",
+          "repeated_touch_point": 0,
+          "sounding_pitch_class": 6,
+          "whole_tone_row_family": 0
+        },
+        {
+          "coordinate": {
+            "face": "direct",
+            "position": 4
+          },
+          "direct_prime_face": "direct",
+          "key": {
+            "column": 4,
+            "row": 0
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "G#",
+          "repeated_touch_point": 0,
+          "sounding_pitch_class": 8,
+          "whole_tone_row_family": 0
+        },
+        {
+          "coordinate": {
+            "face": "direct",
+            "position": 5
+          },
+          "direct_prime_face": "direct",
+          "key": {
+            "column": 5,
+            "row": 0
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "A#",
+          "repeated_touch_point": 0,
+          "sounding_pitch_class": 10,
+          "whole_tone_row_family": 0
+        }
+      ],
+      "row": 0,
+      "whole_tone_row_family": 0
+    },
+    {
+      "keys": [
+        {
+          "coordinate": {
+            "face": "prime",
+            "position": 0
+          },
+          "direct_prime_face": "prime",
+          "key": {
+            "column": 0,
+            "row": 1
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "C#",
+          "repeated_touch_point": 0,
+          "sounding_pitch_class": 1,
+          "whole_tone_row_family": 1
+        },
+        {
+          "coordinate": {
+            "face": "prime",
+            "position": 1
+          },
+          "direct_prime_face": "prime",
+          "key": {
+            "column": 1,
+            "row": 1
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "D#",
+          "repeated_touch_point": 0,
+          "sounding_pitch_class": 3,
+          "whole_tone_row_family": 1
+        },
+        {
+          "coordinate": {
+            "face": "prime",
+            "position": 2
+          },
+          "direct_prime_face": "prime",
+          "key": {
+            "column": 2,
+            "row": 1
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "F",
+          "repeated_touch_point": 0,
+          "sounding_pitch_class": 5,
+          "whole_tone_row_family": 1
+        },
+        {
+          "coordinate": {
+            "face": "prime",
+            "position": 3
+          },
+          "direct_prime_face": "prime",
+          "key": {
+            "column": 3,
+            "row": 1
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "G",
+          "repeated_touch_point": 0,
+          "sounding_pitch_class": 7,
+          "whole_tone_row_family": 1
+        },
+        {
+          "coordinate": {
+            "face": "prime",
+            "position": 4
+          },
+          "direct_prime_face": "prime",
+          "key": {
+            "column": 4,
+            "row": 1
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "A",
+          "repeated_touch_point": 0,
+          "sounding_pitch_class": 9,
+          "whole_tone_row_family": 1
+        },
+        {
+          "coordinate": {
+            "face": "prime",
+            "position": 5
+          },
+          "direct_prime_face": "prime",
+          "key": {
+            "column": 5,
+            "row": 1
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "B",
+          "repeated_touch_point": 0,
+          "sounding_pitch_class": 11,
+          "whole_tone_row_family": 1
+        }
+      ],
+      "row": 1,
+      "whole_tone_row_family": 1
+    },
+    {
+      "keys": [
+        {
+          "coordinate": {
+            "face": "direct",
+            "position": 1
+          },
+          "direct_prime_face": "direct",
+          "key": {
+            "column": 0,
+            "row": 2
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "D",
+          "repeated_touch_point": 1,
+          "sounding_pitch_class": 2,
+          "whole_tone_row_family": 0
+        },
+        {
+          "coordinate": {
+            "face": "direct",
+            "position": 2
+          },
+          "direct_prime_face": "direct",
+          "key": {
+            "column": 1,
+            "row": 2
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "E",
+          "repeated_touch_point": 1,
+          "sounding_pitch_class": 4,
+          "whole_tone_row_family": 0
+        },
+        {
+          "coordinate": {
+            "face": "direct",
+            "position": 3
+          },
+          "direct_prime_face": "direct",
+          "key": {
+            "column": 2,
+            "row": 2
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "F#",
+          "repeated_touch_point": 1,
+          "sounding_pitch_class": 6,
+          "whole_tone_row_family": 0
+        },
+        {
+          "coordinate": {
+            "face": "direct",
+            "position": 4
+          },
+          "direct_prime_face": "direct",
+          "key": {
+            "column": 3,
+            "row": 2
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "G#",
+          "repeated_touch_point": 1,
+          "sounding_pitch_class": 8,
+          "whole_tone_row_family": 0
+        },
+        {
+          "coordinate": {
+            "face": "direct",
+            "position": 5
+          },
+          "direct_prime_face": "direct",
+          "key": {
+            "column": 4,
+            "row": 2
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "A#",
+          "repeated_touch_point": 1,
+          "sounding_pitch_class": 10,
+          "whole_tone_row_family": 0
+        },
+        {
+          "coordinate": {
+            "face": "direct",
+            "position": 0
+          },
+          "direct_prime_face": "direct",
+          "key": {
+            "column": 5,
+            "row": 2
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "C",
+          "repeated_touch_point": 1,
+          "sounding_pitch_class": 0,
+          "whole_tone_row_family": 0
+        }
+      ],
+      "row": 2,
+      "whole_tone_row_family": 0
+    },
+    {
+      "keys": [
+        {
+          "coordinate": {
+            "face": "prime",
+            "position": 1
+          },
+          "direct_prime_face": "prime",
+          "key": {
+            "column": 0,
+            "row": 3
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "D#",
+          "repeated_touch_point": 1,
+          "sounding_pitch_class": 3,
+          "whole_tone_row_family": 1
+        },
+        {
+          "coordinate": {
+            "face": "prime",
+            "position": 2
+          },
+          "direct_prime_face": "prime",
+          "key": {
+            "column": 1,
+            "row": 3
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "F",
+          "repeated_touch_point": 1,
+          "sounding_pitch_class": 5,
+          "whole_tone_row_family": 1
+        },
+        {
+          "coordinate": {
+            "face": "prime",
+            "position": 3
+          },
+          "direct_prime_face": "prime",
+          "key": {
+            "column": 2,
+            "row": 3
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "G",
+          "repeated_touch_point": 1,
+          "sounding_pitch_class": 7,
+          "whole_tone_row_family": 1
+        },
+        {
+          "coordinate": {
+            "face": "prime",
+            "position": 4
+          },
+          "direct_prime_face": "prime",
+          "key": {
+            "column": 3,
+            "row": 3
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "A",
+          "repeated_touch_point": 1,
+          "sounding_pitch_class": 9,
+          "whole_tone_row_family": 1
+        },
+        {
+          "coordinate": {
+            "face": "prime",
+            "position": 5
+          },
+          "direct_prime_face": "prime",
+          "key": {
+            "column": 4,
+            "row": 3
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "B",
+          "repeated_touch_point": 1,
+          "sounding_pitch_class": 11,
+          "whole_tone_row_family": 1
+        },
+        {
+          "coordinate": {
+            "face": "prime",
+            "position": 0
+          },
+          "direct_prime_face": "prime",
+          "key": {
+            "column": 5,
+            "row": 3
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "C#",
+          "repeated_touch_point": 1,
+          "sounding_pitch_class": 1,
+          "whole_tone_row_family": 1
+        }
+      ],
+      "row": 3,
+      "whole_tone_row_family": 1
+    },
+    {
+      "keys": [
+        {
+          "coordinate": {
+            "face": "direct",
+            "position": 2
+          },
+          "direct_prime_face": "direct",
+          "key": {
+            "column": 0,
+            "row": 4
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "E",
+          "repeated_touch_point": 2,
+          "sounding_pitch_class": 4,
+          "whole_tone_row_family": 0
+        },
+        {
+          "coordinate": {
+            "face": "direct",
+            "position": 3
+          },
+          "direct_prime_face": "direct",
+          "key": {
+            "column": 1,
+            "row": 4
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "F#",
+          "repeated_touch_point": 2,
+          "sounding_pitch_class": 6,
+          "whole_tone_row_family": 0
+        },
+        {
+          "coordinate": {
+            "face": "direct",
+            "position": 4
+          },
+          "direct_prime_face": "direct",
+          "key": {
+            "column": 2,
+            "row": 4
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "G#",
+          "repeated_touch_point": 2,
+          "sounding_pitch_class": 8,
+          "whole_tone_row_family": 0
+        },
+        {
+          "coordinate": {
+            "face": "direct",
+            "position": 5
+          },
+          "direct_prime_face": "direct",
+          "key": {
+            "column": 3,
+            "row": 4
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "A#",
+          "repeated_touch_point": 2,
+          "sounding_pitch_class": 10,
+          "whole_tone_row_family": 0
+        },
+        {
+          "coordinate": {
+            "face": "direct",
+            "position": 0
+          },
+          "direct_prime_face": "direct",
+          "key": {
+            "column": 4,
+            "row": 4
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "C",
+          "repeated_touch_point": 2,
+          "sounding_pitch_class": 0,
+          "whole_tone_row_family": 0
+        },
+        {
+          "coordinate": {
+            "face": "direct",
+            "position": 1
+          },
+          "direct_prime_face": "direct",
+          "key": {
+            "column": 5,
+            "row": 4
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "D",
+          "repeated_touch_point": 2,
+          "sounding_pitch_class": 2,
+          "whole_tone_row_family": 0
+        }
+      ],
+      "row": 4,
+      "whole_tone_row_family": 0
+    },
+    {
+      "keys": [
+        {
+          "coordinate": {
+            "face": "prime",
+            "position": 2
+          },
+          "direct_prime_face": "prime",
+          "key": {
+            "column": 0,
+            "row": 5
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "F",
+          "repeated_touch_point": 2,
+          "sounding_pitch_class": 5,
+          "whole_tone_row_family": 1
+        },
+        {
+          "coordinate": {
+            "face": "prime",
+            "position": 3
+          },
+          "direct_prime_face": "prime",
+          "key": {
+            "column": 1,
+            "row": 5
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "G",
+          "repeated_touch_point": 2,
+          "sounding_pitch_class": 7,
+          "whole_tone_row_family": 1
+        },
+        {
+          "coordinate": {
+            "face": "prime",
+            "position": 4
+          },
+          "direct_prime_face": "prime",
+          "key": {
+            "column": 2,
+            "row": 5
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "A",
+          "repeated_touch_point": 2,
+          "sounding_pitch_class": 9,
+          "whole_tone_row_family": 1
+        },
+        {
+          "coordinate": {
+            "face": "prime",
+            "position": 5
+          },
+          "direct_prime_face": "prime",
+          "key": {
+            "column": 3,
+            "row": 5
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "B",
+          "repeated_touch_point": 2,
+          "sounding_pitch_class": 11,
+          "whole_tone_row_family": 1
+        },
+        {
+          "coordinate": {
+            "face": "prime",
+            "position": 0
+          },
+          "direct_prime_face": "prime",
+          "key": {
+            "column": 4,
+            "row": 5
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "C#",
+          "repeated_touch_point": 2,
+          "sounding_pitch_class": 1,
+          "whole_tone_row_family": 1
+        },
+        {
+          "coordinate": {
+            "face": "prime",
+            "position": 1
+          },
+          "direct_prime_face": "prime",
+          "key": {
+            "column": 5,
+            "row": 5
+          },
+          "lens": null,
+          "lens_tonic_pitch": null,
+          "musical_basis": "chromatic",
+          "pitch_name": "D#",
+          "repeated_touch_point": 2,
+          "sounding_pitch_class": 3,
+          "whole_tone_row_family": 1
+        }
+      ],
+      "row": 5,
+      "whole_tone_row_family": 1
+    }
+  ],
+  "touch_points": 3
+}
