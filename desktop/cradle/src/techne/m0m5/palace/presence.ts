@@ -52,6 +52,10 @@ export interface PalacePresenceEntry {
   placements: Partial<Record<PalaceRegionKey, {ref: string; locus: PalaceLocus}[]>>;
   expressions: {expression_ref: string; locus: PalaceLocus}[];
   bookmarks: {region: PalaceRegionKey; ref: string; locus: PalaceLocus | null}[];
+  /** lane-5 T15: the board's held points, keyed by studio region name. Absent in entries saved before the board. */
+  board?: Record<string, {x: number; y: number}>;
+  /** lane-5 T15: the board's pan and zoom. Absent in entries saved before the board. */
+  viewport?: {x: number; y: number; zoom: number};
 }
 
 /** How a restore stands. `persisted` is false when storage is absent or refused. */
@@ -71,6 +75,21 @@ const isIndex = (value: unknown, bound: number): value is number =>
 const isRegionKey = (value: unknown): value is PalaceRegionKey =>
   typeof value === "string" && (PALACE_REGION_ORDER as readonly string[]).includes(value);
 const isText = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
+/** A finite board point. A NaN or infinite coordinate is never a position. */
+const isPoint = (value: unknown): value is {x: number; y: number} =>
+  isObject(value) && Number.isFinite(value.x) && Number.isFinite(value.y);
+/** A finite pan and a finite positive zoom. */
+const isViewport = (value: unknown): value is {x: number; y: number; zoom: number} =>
+  isObject(value) && Number.isFinite(value.x) && Number.isFinite(value.y) && Number.isFinite(value.zoom) && (value.zoom as number) > 0;
+
+/** The studio region name whose board point is not finite, or null when every board point is a position. Names the refusal. */
+export function refusedBoardPoint(entry: unknown): string | null {
+  if (!isObject(entry) || entry.board === undefined || !isObject(entry.board)) return null;
+  for (const [name, point] of Object.entries(entry.board)) {
+    if (!isPoint(point)) return name;
+  }
+  return null;
+}
 
 function isLocus(value: unknown): value is PalaceLocus {
   if (!isObject(value) || !isObject(value.room)) return false;
@@ -101,6 +120,14 @@ function validEntry(value: unknown, subject: string, key: string): PalacePresenc
     if (!isObject(row) || !isRegionKey(row.region) || !isText(row.ref)) return null;
     if (row.locus !== null && !isLocus(row.locus)) return null;
   }
+  // lane-5 T15: optional board fields. A non-finite board point refuses the whole entry (refusedBoardPoint names it); an absent field is an older entry, accepted unchanged.
+  if (value.board !== undefined) {
+    if (!isObject(value.board)) return null;
+    for (const point of Object.values(value.board)) {
+      if (!isPoint(point)) return null;
+    }
+  }
+  if (value.viewport !== undefined && !isViewport(value.viewport)) return null;
   return value as unknown as PalacePresenceEntry;
 }
 
@@ -161,7 +188,28 @@ function encode(composition: PalaceComposition, reading: TechneReading): PalaceP
     placements,
     expressions: composition.expressions.placements.map((row) => ({expression_ref: row.expression_ref, locus: structuredClone(row.locus)})),
     bookmarks: composition.bookmarks.map((bookmark) => ({region: bookmark.region, ref: bookmark.ref, locus: structuredClone(bookmark.locus)})),
+    ...(composition.board ? {board: copyBoard(composition.board)} : {}),
+    ...(composition.viewport ? {viewport: {x: composition.viewport.x, y: composition.viewport.y, zoom: composition.viewport.zoom}} : {}),
   };
+}
+
+/** Saved loci grouped by their ref, in saved order. A ref the arrangement names more than once takes its own saved locus each
+ * time, in order, so a repeated ref never collapses onto its last locus. */
+function lociQueue<T extends {locus: PalaceLocus}>(rows: readonly T[], refOf: (row: T) => string): Map<string, PalaceLocus[]> {
+  const queues = new Map<string, PalaceLocus[]>();
+  for (const row of rows) {
+    const queue = queues.get(refOf(row));
+    if (queue) queue.push(row.locus);
+    else queues.set(refOf(row), [row.locus]);
+  }
+  return queues;
+}
+
+/** A plain copy of the board's held points: names and finite coordinates, nothing shared with the composition. */
+function copyBoard(board: Record<string, {x: number; y: number}>): Record<string, {x: number; y: number}> {
+  const out: Record<string, {x: number; y: number}> = {};
+  for (const [name, point] of Object.entries(board)) out[name] = {x: point.x, y: point.y};
+  return out;
 }
 
 /** Save one composition for its reading, replacing that subject's earlier basis. Returns false when storage refuses (never throws). */
@@ -186,16 +234,20 @@ function applyEntry(base: PalaceComposition, entry: PalacePresenceEntry): Palace
   for (const key of PALACE_REGION_ORDER) {
     const current = base.placements[key];
     if (!current) continue;
-    const saved = new Map((entry.placements[key] ?? []).map((row) => [row.ref, row.locus]));
-    placements[key] = current.map((placement) => (saved.has(placement.ref) ? {ref: placement.ref, locus: structuredClone(saved.get(placement.ref)!)} : placement));
+    const saved = lociQueue(entry.placements[key] ?? [], (row) => row.ref);
+    placements[key] = current.map((placement) => {
+      const locus = saved.get(placement.ref)?.shift();
+      return locus ? {ref: placement.ref, locus: structuredClone(locus)} : placement;
+    });
   }
   const present = new Set(base.regions.flatMap((region) => region.entries.map((candidate) => candidate.ref)));
-  const savedExpressions = new Map(entry.expressions.map((row) => [row.expression_ref, row.locus]));
+  const savedExpressions = lociQueue(entry.expressions, (row) => row.expression_ref);
   const expressions = {
     ...base.expressions,
-    placements: base.expressions.placements.map((placement) => (savedExpressions.has(placement.expression_ref)
-      ? {expression_ref: placement.expression_ref, locus: structuredClone(savedExpressions.get(placement.expression_ref)!)}
-      : placement)),
+    placements: base.expressions.placements.map((placement) => {
+      const locus = savedExpressions.get(placement.expression_ref)?.shift();
+      return locus ? {expression_ref: placement.expression_ref, locus: structuredClone(locus)} : placement;
+    }),
   };
   const bookmarks: PalaceBookmark[] = entry.bookmarks
     .filter((row) => present.has(row.ref) && base.regions.some((region) => region.key === row.region && region.entries.some((candidate) => candidate.ref === row.ref)))
@@ -207,6 +259,8 @@ function applyEntry(base: PalaceComposition, entry: PalacePresenceEntry): Palace
     expressions,
     bookmarks,
     ...(entry.walk_index !== undefined ? {walk_index: entry.walk_index} : {}),
+    ...(entry.board ? {board: copyBoard(entry.board)} : {}),
+    ...(entry.viewport ? {viewport: {x: entry.viewport.x, y: entry.viewport.y, zoom: entry.viewport.zoom}} : {}),
   };
 }
 

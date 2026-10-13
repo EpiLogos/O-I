@@ -50,6 +50,8 @@ import {palaceComposition,storeComposition,type PalaceComposition} from '../../.
 import {palacePresenceStorage,PALACE_UNPERSISTED_NOTICE,restorePalaceComposition,savePalaceComposition} from '../../../src/techne/m0m5/palace/presence';
 import {palaceAcceptOutcome,palaceAcceptRequest,palaceReturnProposal,type PalaceReturnProposal} from '../../../src/techne/m0m5/palace/return';
 import type {PalaceRegionEntry} from '../../../src/techne/m0m5/palace/regions';
+import {PalaceBoardView,type PalaceBoardViewport} from './palaceBoardView';
+import {boardSelectionLine,forgetBoardRegion,moveBoardRegion,validateBoardPositions,type BoardPoint,type BoardPositions} from './palaceBoard';
 import {PALACE_WIRED_INSTRUMENTS,palaceGuidedEdges,palaceOpenRoute,palaceWalkAt,palaceWalkResume,palaceWalkSteps,palaceWholeView,SCENE_REGION_STANDING,type PalaceGuidedEdge} from './palaceWhole';
 import './palaceInstrument.css';
 
@@ -90,6 +92,8 @@ export interface PalaceInstrumentHost {
 }
 
 const DEFAULT_REGION='Palace';
+/** T15: how long a pan or zoom must rest before its viewport is saved. */
+const VIEWPORT_SETTLE_MS=400;
 
 /** Seam B: the wired instruments that take an object ref as their focus (the frame carries it through their existing focus paths).
  * The project lens does not yet take one, so its Open keeps the line that says the object is not carried into it. */
@@ -129,6 +133,26 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis,carr
  const [accepting,setAccepting]=useState(false);
  const acceptInFlight=useRef(false);
  const persistFailed=useRef(false);
+ // T15: the board's held points, its selection and its viewport. Presentation only: a move reads and writes no region, Scene or body.
+ // The held points and the viewport persist through the Palace's presence owner (T21), saved on the gesture's end, never on a preview.
+ const [held,setHeld]=useState<BoardPositions>({});
+ const heldRef=useRef<BoardPositions>({});
+ const [selectedRegions,setSelectedRegions]=useState<string[]>([]);
+ const [restoredViewport,setRestoredViewport]=useState<PalaceBoardViewport|null>(null);
+ const viewportLive=useRef(false);
+ const viewportPending=useRef<PalaceBoardViewport|null>(null);
+ const viewportTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+ const readingRef=useRef(reading);readingRef.current=reading;
+ // T15 restore: the saved board and viewport come back with the reading, the board pruned to the regions the Palace holds now.
+ useEffect(()=>{
+  if(!reading)return;
+  const composition=palaceComposition(reading);
+  setBoard(validateBoardPositions(composition.board,regions.map(region=>region.name))??{});
+  setRestoredViewport(composition.viewport??null);
+  viewportLive.current=true;
+ },[reading]);
+ // A pending viewport settles once, on unmount, if the panel leaves before its trailing save fires.
+ useEffect(()=>()=>{if(viewportTimer.current!==null)flushViewport();},[]);
 
  useEffect(()=>{let live=true;void host.listExpressions().then(list=>{if(live){setEligible(list.filter(entry=>entry.expression_ref!==doc.expression_ref));setEligibleKnown(true);}}).catch(error=>{if(live)onMessage(error instanceof Error?error.message:String(error));});return()=>{live=false;};},[doc.expression_ref,doc.revision]);
 
@@ -236,7 +260,36 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis,carr
   if(regions.length<=1)return;
   setRegions(current=>current.filter(region=>region.name!==name));
   setRemoved(current=>current.includes(name)?current:[...current,name]);
+  setBoard(forgetBoardRegion(heldRef.current,name));
+  setSelectedRegions(current=>current.filter(region=>region!==name));
  }
+ function setBoard(next:BoardPositions){heldRef.current=next;setHeld(next);}
+ /** T15: one board gesture's released points, all together. Held in the view, then saved ONCE through the same save as the walk
+  * position (`persist`). Pure presentation: nothing here reaches `planRegions`, the composition's regions or the kernel. */
+ function moveBoardPoints(points:Record<string,BoardPoint>){
+  const names=regions.map(region=>region.name);
+  let next=heldRef.current;
+  for(const [name,point] of Object.entries(points))next=moveBoardRegion(next,names,name,point);
+  if(next===heldRef.current)return;
+  setBoard(next);
+  if(reading)persist({...palaceComposition(reading),board:next},reading);
+ }
+ /** T15: the board's pan and zoom. A pan or zoom fires per frame, so the save trails the last report: one write per settled view, never per frame. */
+ function viewportSettled(viewport:PalaceBoardViewport){
+  if(!viewportLive.current)return;   // the board's own fit before the restore is not the owner's view
+  viewportPending.current=viewport;
+  if(viewportTimer.current!==null)clearTimeout(viewportTimer.current);
+  viewportTimer.current=setTimeout(flushViewport,VIEWPORT_SETTLE_MS);
+ }
+ function flushViewport(){
+  if(viewportTimer.current!==null){clearTimeout(viewportTimer.current);viewportTimer.current=null;}
+  const viewport=viewportPending.current,current=readingRef.current;
+  viewportPending.current=null;
+  if(!viewport||!current)return;
+  persist({...palaceComposition(current),viewport},current);
+ }
+ /** T15: a marquee or click selection hands its region names to the region list, the palace's own selection surface, and says so once. */
+ function pickRegions(names:string[]){setSelectedRegions(names);onMessage(boardSelectionLine(names));}
  /** T19: propose the Return over a bound view of the composition. Pure: the stored composition and the reading are untouched. */
  function proposeReturn(){
   if(!reading)return;
@@ -354,9 +407,11 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis,carr
      </>}
    </section>
    <section className="palace-regions" aria-label="Regions and guided path">
+    <PalaceBoardView canvasKey={doc.expression_ref} regions={regions.map(region=>({name:region.name,member:region.member}))} held={held} selected={selectedRegions} viewport={restoredViewport} onMoves={moveBoardPoints} onViewport={viewportSettled} onSelect={pickRegions}/>
+    <h3 className="palace-walk-heading">Guided path · walk order</h3>
     {regions.map((region,index)=>
      <React.Fragment key={region.name}>
-     <div className="palace-region palace-standing-free" data-standing="free">
+     <div className={`palace-region palace-standing-free${selectedRegions.includes(region.name)?' palace-region-selected':''}`} data-standing="free" data-selected={selectedRegions.includes(region.name)?'true':undefined}>
       <div className="palace-region-head">
        <h3>{region.name}</h3>
        <div className="palace-region-controls">
