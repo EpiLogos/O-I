@@ -5,6 +5,11 @@
 // automation), clips (spans placed in a column on a track), and optional
 // transport material. The Timeline renders this shape; it knows no family.
 //
+// Optional time grammar (DEVICE-SEMANTICS-LOCK §7.2): layers (readings that
+// extend one another, never rewrite), sections (nested spans, Live's locators)
+// and walks (ordered stops, Live's follow-action chains through clips). Every
+// addition is optional: an adapter that declares none stays valid.
+//
 // Pure TypeScript. No React, no family names.
 
 export interface WorldTrackColumn {
@@ -15,8 +20,10 @@ export interface WorldTrackColumn {
 export interface WorldTrack {
   id: string;
   name: string;
-  // Lane kind, chosen by the family (e.g. 'entity', 'automation').
+  // Lane kind, chosen by the family (e.g. 'entity', 'automation', 'walk').
   kind: string;
+  // The layer (reading) the lane belongs to, when the family declares layers.
+  layerId?: string;
 }
 
 export interface WorldTrackClip {
@@ -38,14 +45,80 @@ export interface WorldTrackTake {
   name: string;
 }
 
+// A layer: one reading of the material. A later layer extends an earlier one
+// and never rewrites it.
+export interface WorldTrackLayer {
+  id: string;
+  name: string;
+  extends?: string;
+}
+
+// A section: a nested span on the time axis (a locator). The narrowest section
+// containing a point supplies what plays inside it.
+export interface WorldTrackSection {
+  id: string;
+  name: string;
+  // Half-open span [start, end). Units are the family's own.
+  span: {start: number; end: number};
+  parentId?: string;
+  layerId?: string;
+  // The colour the section gives what plays inside it: a hex, or the family's own token.
+  atmosphere?: string;
+}
+
+// A stop: one step of a walk. It stands a clip of the set, carries a year and a
+// place when the material has them, and reaches every item attached to it.
+export interface WorldWalkStop {
+  id: string;
+  label: string;
+  // The clip this stop stands (a clip of the same set).
+  clipId?: string;
+  // Tunes the transport position, when the material has a time.
+  year?: number;
+  // Tunes the globe, when the material has a place.
+  place?: {label?: string; lat?: number; lon?: number};
+  // Bucket-mates and attached material reached from this stop. Nothing is dropped.
+  also: string[];
+  // The scene the stop launches (an Expression scene), when the material names one.
+  sceneRef?: string;
+}
+
+// A walk: an ordered path through the stops. A derived walk is computed from the
+// material on read and is never stored.
+export interface WorldWalk {
+  id: string;
+  name: string;
+  layerId?: string;
+  // The family's own kind of walk. The Timeline does not interpret it.
+  kind: string;
+  derived: boolean;
+  stops: WorldWalkStop[];
+}
+
 export interface WorldTrackSet {
   columns: WorldTrackColumn[];
   tracks: WorldTrack[];
   clips: WorldTrackClip[];
   transport?: {takes: WorldTrackTake[]};
+  layers?: WorldTrackLayer[];
+  sections?: WorldTrackSection[];
+  walks?: WorldWalk[];
 }
 
 export interface WorldTrackAdapter<T> {
   id: string;
   project(reading: T): WorldTrackSet;
+}
+
+// Everything a walk reaches: each stop's own id, the clip it stands, and every
+// `also` ref. An unknown walk reaches nothing.
+export function walkReaches(set: WorldTrackSet, walkId: string): Set<string> {
+  const reached = new Set<string>();
+  const walk = set.walks?.find((w) => w.id === walkId);
+  for (const stop of walk?.stops ?? []) {
+    reached.add(stop.id);
+    if (stop.clipId !== undefined) reached.add(stop.clipId);
+    for (const ref of stop.also) reached.add(ref);
+  }
+  return reached;
 }
