@@ -91,10 +91,10 @@ export class PassageSheet {
          el('button', { type: 'button', class: 'link-quiet', text: 'next ¶ →', onclick: () => void this.step(1) })]);
       this.article.append(nav);
     }
-    // [C2-b8] the corpus is named by its provider, from the index's data (was
-    // the literal 'Read from the vault corpus · machine-anchored, page-true')
+    // [C2-b8] the corpus is named by its provider, from the index's data (the
+    // found literal names the corpus; at 5fe5117 'Drawn from the corpus · <title>')
     const corpusName = this.index?.provider.name ?? 'the corpus';
-    this.article.append(el('p', { class: 'dp-foot', text: `Read from ${corpusName} · machine-anchored, page-true` }));
+    this.article.append(el('p', { class: 'dp-foot', text: `Drawn from ${corpusName}${ref.title ? ` · ${ref.title}` : ''}` }));
     (this.root.querySelector('.dp-scroll') as HTMLElement).scrollTop = 0;
   }
 

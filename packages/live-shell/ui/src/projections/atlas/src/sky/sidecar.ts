@@ -5,7 +5,7 @@
 // A deployed copy of the site never calls: `local` is false and every ask is refused up front (the same rule the live
 // clock follows). Whatever the sidecar returns is validated before it is believed — a malformed chart is an error, not a
 // chart with holes.
-import { BODY_KEYS } from '../types/sky';
+import { BODY_KEYS, canonicalBodyKey } from '../types/sky';
 import type { BodyKey, GeocodeResult, SidecarChart, SkyColumns, SkyData, SkyGrid } from '../types/sky';
 
 export type SidecarFailure =
@@ -90,7 +90,7 @@ export function chartProblems(c: unknown): string[] {
   if (!Array.isArray(o.warnings)) out.push('warnings: expected array');
   if (o.zodiac !== 'tropical') out.push('zodiac: expected "tropical" (the page labels longitudes as such)');
   if (!o.bodies || typeof o.bodies !== 'object') out.push('bodies: missing');
-  else for (const k of BODY_KEYS) if (k !== 'earth') point((o.bodies as Record<string, unknown>)[k], `bodies.${k}`);
+  else for (const k of BODY_KEYS) if (k !== 'terra') point((o.bodies as Record<string, unknown>)[k], `bodies.${k}`);
   point(o.angles?.ascendant, 'angles.ascendant');
   point(o.angles?.midheaven, 'angles.midheaven');
   if (!o.houses || typeof o.houses.effective !== 'string' || !Array.isArray(o.houses.cusps) || o.houses.cusps.length !== 12 || !o.houses.cusps.every((x) => isNum(x) && x >= 0 && x < 360)) out.push('houses: expected effective system and 12 cusp longitudes');
@@ -102,7 +102,10 @@ export function chartProblems(c: unknown): string[] {
 /** The chart, or an error naming every way it broke the contract. */
 export function validateChart(c: unknown): SidecarChart {
   const problems = chartProblems(c);
-  if (problems.length) throw new SidecarError('unsupported', `The sidecar's chart does not match its contract: ${problems.join('; ')}`);
+  if (problems.length) {
+    console.warn('birth chart contract:', problems.join('; '));
+    throw new SidecarError('unsupported', 'The birth chart came back malformed and cannot be shown.');
+  }
   return c as SidecarChart;
 }
 
@@ -110,7 +113,13 @@ export function validateChart(c: unknown): SidecarChart {
 export const WINDOW_DAYS = 16;
 const PLANET_STEP_HOURS = 48;
 const MOON_STEP_HOURS = 6;
-const HELIO: BodyKey[] = ['mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto', 'earth'];
+/** The heliocentric bodies in the sidecar's own names (the planet Earth is `earth` there). Must equal tests/sky/golden/birth.json's requests. */
+const HELIO_SIDECAR = ['mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto', 'earth'];
+
+/** The sidecar's columns, re-keyed to the app's body keys (`earth` answers as `terra`); every other name is unchanged. */
+export function fromSidecarBodies<C>(bodies: Partial<Record<string, C>>): Partial<Record<BodyKey, C>> {
+  return Object.fromEntries(Object.entries(bodies).map(([k, v]) => [canonicalBodyKey(k), v])) as Partial<Record<BodyKey, C>>;
+}
 
 /** A window of the sidecar's own grids around one instant, shaped as the generated sky is, so SkyEphemeris reads it as is. */
 export interface BirthWindow {
@@ -122,11 +131,11 @@ export interface BirthWindow {
 
 const iso = (ms: number) => new Date(ms).toISOString().replace(/\.\d+Z$/, 'Z');
 
-function checkGrid(g: SkyGrid, bodies: string[], where: string) {
-  if (!g || typeof g.start !== 'string' || !isNum(g.stepHours) || !isNum(g.count) || !g.bodies) throw new SidecarError('unsupported', `The sidecar's ${where} grid is malformed.`);
+function checkGrid(g: SkyGrid, bodies: string[]) {
+  if (!g || typeof g.start !== 'string' || !isNum(g.stepHours) || !isNum(g.count) || !g.bodies) throw new SidecarError('unsupported', `The ephemeris window came back malformed.`);
   for (const b of bodies) {
-    const col = g.bodies[b as BodyKey] as SkyColumns | undefined;
-    if (!col || [col.lon, col.lat, col.r].some((a) => !Array.isArray(a) || a.length !== g.count || a.some((x) => !isNum(x)))) throw new SidecarError('unsupported', `The sidecar's ${where} grid has a malformed ${b} column.`);
+    const col = (g.bodies as Record<string, SkyColumns | undefined>)[b];
+    if (!col || [col.lon, col.lat, col.r].some((a) => !Array.isArray(a) || a.length !== g.count || a.some((x) => !isNum(x)))) throw new SidecarError('unsupported', `The ephemeris window came back malformed (${b} column).`);
   }
 }
 
@@ -143,7 +152,7 @@ export class SidecarClient {
   }
 
   private async get<T>(path: string, params: Record<string, string | number>, timeout = this.o.timeout): Promise<T> {
-    if (!this.o.local) throw new SidecarError('not-local', 'The ephemeris sidecar is only reachable when the site runs beside it, on this machine.');
+    if (!this.o.local) throw new SidecarError('not-local', 'The live ephemeris runs only on its home machine.');
     const url = `${this.o.base}${path}?${new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString()}`;
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), timeout);
@@ -151,7 +160,7 @@ export class SidecarClient {
     try {
       res = await this.o.fetch(url, { signal: ctl.signal });
     } catch {
-      throw new SidecarError('absent', 'The ephemeris sidecar is not running (start it with ephemeris/run.sh).');
+      throw new SidecarError('absent', 'The ephemeris is not running; a birth sky cannot be computed.');
     } finally {
       clearTimeout(timer);
     }
@@ -161,8 +170,8 @@ export class SidecarClient {
       const d = detail && typeof detail === 'object' ? detail : undefined;
       if (d?.error === 'outside-ephemeris-range') throw new SidecarError('out-of-range', `${d.message ?? 'That instant'} — the sky is computed only within the JPL DE440 ephemeris, 1549–2650.`);
       if (d?.error === 'geocoder-unreachable') throw new SidecarError('geocoder', 'The place lookup could not reach its service; choose a listed place or enter the coordinates.');
-      if (res.status === 422) throw new SidecarError('bad-input', typeof detail === 'string' ? detail : d?.message ?? 'The sidecar did not accept that input.');
-      throw new SidecarError('unsupported', `The sidecar answered ${res.status}.`);
+      if (res.status === 422) throw new SidecarError('bad-input', typeof detail === 'string' ? detail : d?.message ?? 'That birth moment could not be cast as given.');
+      throw new SidecarError('unsupported', 'The ephemeris could not be reached.');
     }
     try { return (await res.json()) as T; } catch { throw new SidecarError('unsupported', 'The sidecar did not answer with JSON.'); }
   }
@@ -192,11 +201,11 @@ export class SidecarClient {
     const half = WINDOW_DAYS * 86_400_000;
     const start = iso(centreMs - half);
     const [planets, moon] = await Promise.all([
-      this.get<SkyGrid>('/positions', { start, stepHours: PLANET_STEP_HOURS, count: (2 * WINDOW_DAYS * 24) / PLANET_STEP_HOURS + 1, bodies: HELIO.join(','), frame: 'helio' }),
+      this.get<SkyGrid>('/positions', { start, stepHours: PLANET_STEP_HOURS, count: (2 * WINDOW_DAYS * 24) / PLANET_STEP_HOURS + 1, bodies: HELIO_SIDECAR.join(','), frame: 'helio' }),
       this.get<SkyGrid>('/positions', { start, stepHours: MOON_STEP_HOURS, count: (2 * WINDOW_DAYS * 24) / MOON_STEP_HOURS + 1, bodies: 'moon', frame: 'geo' }),
     ]);
-    checkGrid(planets, HELIO, 'planet');
-    checkGrid(moon, ['moon'], 'Moon');
-    return { planets, moon, from: iso(centreMs - half), to: iso(centreMs + half) };
+    checkGrid(planets, HELIO_SIDECAR);
+    checkGrid(moon, ['moon']);
+    return { planets: { ...planets, bodies: fromSidecarBodies(planets.bodies) }, moon, from: iso(centreMs - half), to: iso(centreMs + half) };
   }
 }

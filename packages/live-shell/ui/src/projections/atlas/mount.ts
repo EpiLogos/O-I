@@ -1,7 +1,7 @@
 // The Earth projection's mount boundary — [C2-a1] the provider registry replaces
 // the found boot composition's fixed fetches.
 //
-// Named source: `src/main.ts` at the pinned atlas HEAD (606fbe6) — the boot
+// Named source: `src/main.ts` at the pinned atlas HEAD (5fe5117; re-ported 13 Oct 2026, T-AE-REPORT — see PORT.md) — the boot
 // sequence ported with one seam changed (the bundle comes from loadProvider()
 // instead of fixed fetches) and one shell obligation added (the mount/unmount
 // handle, WORLD-SHELL-DESIGN §10.2: "each projection is a module with
@@ -15,6 +15,11 @@
 import './src/style/main.css';
 import './src/style/aion.css';
 import './src/style/sky.css';
+import './src/style/redbook.css';
+import './src/style/dynamics.css';
+import './src/style/graph.css';
+import './src/style/shell.css';
+import './src/style/touch.css';
 import { Controller } from './src/app/controller';
 import { buildModel } from './src/data/model';
 import { rgbToHex, type RGBPalette } from './src/data/palette';
@@ -24,6 +29,8 @@ import { TimeModel } from './src/state/timeModel';
 import { historyExtent } from './src/aion/model';
 import { loadProvider, type CorpusBundle } from './provider/corpusProvider';
 import { setSkyProvider, type SkyProvider } from './provider/skyProvider';
+import { setPublishedSource } from './src/data/published';
+import { loadRedbook } from './src/redbook/load';
 
 export { registerFixtureProvider, FIXTURE_PROVIDER_ID } from './provider/fixtureProvider';
 export { setSkyProvider } from './provider/skyProvider';
@@ -78,6 +85,10 @@ export async function mountAtlas(options: AtlasMountOptions): Promise<AtlasHandl
     const symbols = bundle.symbols;
     // [C2-a3, r2] the corpus slot rides the bundle; absent ⇒ no cite is a link
     const corpus = bundle.corpus ?? null;
+    // [§8.4] the provider's published material (Red Book, dynamics, lens files, sky cards, Aion's book) — the found
+    // boot fetched these from public/data; here only the provider publishes them, and unpublished is absent
+    setPublishedSource(bundle.published ?? null);
+    const redbook = await loadRedbook();
     const model = buildModel(field, history ? historyExtent(history) : undefined, symbols);
     const time = new TimeModel();
     let ctl: Controller | null = null;
@@ -91,11 +102,11 @@ export async function mountAtlas(options: AtlasMountOptions): Promise<AtlasHandl
         onInteract: () => ctl?.onInteract(),
         onGrab: () => ctl?.onGrab(),
         onPalette: setPaletteVars,
-        onSkyPick: (key) => ctl?.onSkyPick(key),
+        onSkyPick: (key) => ctl?.onCanvasSkyPick(key),
       },
       prefersReducedMotion(),
     );
-    ctl = new Controller(model, engine, time, app, history, corpus);
+    ctl = new Controller(model, engine, time, app, history, corpus, redbook ?? undefined);
     await engine.ready;
     ctl.boot();
     requestAnimationFrame(() => loading?.classList.add('done'));

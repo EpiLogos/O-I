@@ -1,29 +1,31 @@
-// A compact graph settings space, away from the history scrubber.
+// A compact graph settings space, away from the history scrubber. Filters first, then the layout's four forces in one
+// quiet disclosure (closed by default). The crumb, the mode pill and G already take the person out of the graph, so
+// the sheet does not repeat them.
 import { el } from '../ui/dom';
 import { DEFAULT_TIE_BASES, type TieBasis, type TieBasisDecl } from '../types/field';
+import { DEFAULT_FORCES, FORCE_ROWS, forceMultiple, type Forces } from './forces';
+import { DEFAULT_KINDS, type KindFlags } from './settings';
 
 export interface ToolHandlers {
   onDepth(depth: number): void;
   onDust(on: boolean): void;
+  /** the tiers drawn: archetypes, theoretics, families (occurrences answer to onDust) */
+  onKinds(kinds: KindFlags): void;
   onTies(bases: TieBasis[]): void;
-  onSpread(linkSpace: number): void;
-  onGravity(gravity: number): void;
+  /** all four forces, as the person set them: applied to the live layout */
+  onForces(forces: Forces): void;
   onSky(on: boolean): void;
   onFit(): void;
-  onEarth(): void;
-  onWhole(): void;
 }
 
 export interface ToolState {
   local: boolean;
   depth: number;
   dust: boolean;
+  kinds: KindFlags;
   ties: TieBasis[];
-  hasSubject: boolean;
-  /** link-space multiplier on the layout's edge distances */
-  spread: number;
-  /** gravity multiplier on repulsion and centring */
-  gravity: number;
+  /** the layout's four forces, as set */
+  forces: Forces;
   /** the sky's bodies hung from the graph: off by default */
   sky: 'off' | 'loading' | 'on' | 'unavailable';
   /** when the standing sky is, in words — shown while the anchors are on */
@@ -39,15 +41,12 @@ export class GraphTools {
   private minus: HTMLButtonElement;
   private plus: HTMLButtonElement;
   private dust: HTMLButtonElement;
-  private whole: HTMLButtonElement;
-  private earth: HTMLButtonElement;
   private ties = new Map<TieBasis, HTMLButtonElement>();
   private sky: HTMLButtonElement;
-  private spread: HTMLInputElement;
-  private spreadN: HTMLElement;
-  private gravity: HTMLInputElement;
-  private gravityN: HTMLElement;
   private skyNote: HTMLElement;
+  private forceIn = new Map<keyof Forces, HTMLInputElement>();
+  private forceN = new Map<keyof Forces, HTMLElement>();
+  private kindButtons = new Map<keyof KindFlags, HTMLButtonElement>();
   /** [C2-b5] the tie bases and their labels are provider-declared (meta.ties.bases), strongest first */
   private bases: TieBasisDecl[];
   private state: ToolState;
@@ -55,12 +54,22 @@ export class GraphTools {
   constructor(h: ToolHandlers, bases: TieBasisDecl[] = DEFAULT_TIE_BASES) {
     // [C2-b5] default tie filter from the provider declaration (was the literal triple)
     this.bases = bases;
-    this.state = { local: false, depth: 1, dust: true, ties: bases.map((b) => b.id), hasSubject: false, sky: 'off', spread: 1.25, gravity: 0.8 };
+    this.state = { local: false, depth: 1, dust: true, kinds: { ...DEFAULT_KINDS }, ties: bases.map((b) => b.id), sky: 'off', forces: { ...DEFAULT_FORCES } };
     this.minus = el('button', { class: 'gvt-step', type: 'button', 'aria-label': 'Fewer steps from the subject', text: '−', onclick: () => h.onDepth(this.state.depth - 1) }) as HTMLButtonElement;
     this.plus = el('button', { class: 'gvt-step', type: 'button', 'aria-label': 'More steps from the subject', text: '+', onclick: () => h.onDepth(this.state.depth + 1) }) as HTMLButtonElement;
     this.depthN = el('span', { class: 'gvt-n' });
     this.depthWrap = el('div', { class: 'gvt-row', role: 'group', 'aria-label': 'Depth of the local graph' }, [el('span', { text: 'Steps' }), el('span', { class: 'gvt-depth' }, [this.minus, this.depthN, this.plus])]);
-    this.dust = el('button', { class: 'gvt-option', type: 'button', 'aria-pressed': 'true', onclick: () => h.onDust(!this.state.dust) }) as HTMLButtonElement;
+    // what is drawn, one toggle per tier: occurrences (the dust, where it always was) and the field's three node
+    // tiers. A tier switched off is absent from the drawing with its ties, so nothing is left stranded.
+    const kindGroup = el('div', { class: 'gvt-kinds', role: 'group', 'aria-label': 'What is drawn' });
+    this.dust = el('button', { class: 'gvt-filter', type: 'button', text: 'Occurrences', 'aria-pressed': 'true', onclick: () => h.onDust(!this.state.dust) }) as HTMLButtonElement;
+    kindGroup.append(this.dust);
+    for (const [kind, label] of [['archetype', 'Archetypes'], ['theoretic', 'Theoretics'], ['family', 'Families']] as const) {
+      const button = el('button', { class: 'gvt-filter', type: 'button', text: label, 'aria-pressed': 'true',
+        onclick: () => h.onKinds({ ...this.state.kinds, [kind]: !this.state.kinds[kind] }) }) as HTMLButtonElement;
+      this.kindButtons.set(kind, button);
+      kindGroup.append(button);
+    }
     const tieGroup = el('div', { class: 'gvt-ties', role: 'group', 'aria-label': 'Family to archetype relations' });
     // [C2-b5] labels from the provider's declaration (was the literal 'Jung'/'Inferred'/'Site' rows)
     for (const basis of this.bases) {
@@ -70,26 +79,35 @@ export class GraphTools {
     }
     this.sky = el('button', { class: 'gvt-option gvt-sky', type: 'button', text: 'Sky anchors', 'aria-pressed': 'false',
       onclick: () => h.onSky(this.state.sky === 'off' || this.state.sky === 'unavailable') }) as HTMLButtonElement;
-    this.spread = el('input', { type: 'range', class: 'gvt-range', min: '0.7', max: '1.8', step: '0.05', 'aria-label': 'Link space: how far apart the forms sit' }) as HTMLInputElement;
-    this.spread.addEventListener('input', () => h.onSpread(Number(this.spread.value)));
-    this.spreadN = el('span', { class: 'gvt-n' });
-    this.gravity = el('input', { type: 'range', class: 'gvt-range', min: '0.55', max: '1.5', step: '0.05', 'aria-label': 'Gravity: how strongly the field pulls together' }) as HTMLInputElement;
-    this.gravity.addEventListener('input', () => h.onGravity(Number(this.gravity.value)));
-    this.gravityN = el('span', { class: 'gvt-n' });
     this.skyNote = el('p', { class: 'gvt-caption gvt-sky-note', role: 'status', 'aria-live': 'polite' });
     this.skyNote.hidden = true;
+    // the four forces: one quiet disclosure, closed. Each slider re-sets the live layout in place; the tooltip says what it does.
+    const forces = el('details', { class: 'gvt-forces' }, [el('summary', { class: 'gvt-caption', text: 'Forces' })]);
+    for (const row of FORCE_ROWS) {
+      const input = el('input', { type: 'range', class: 'gvt-range', min: String(row.min), max: String(row.max), step: String(row.step), 'aria-label': `${row.label}: ${row.tip}`, title: row.tip }) as HTMLInputElement;
+      const out = el('span', { class: 'gvt-n' });
+      input.addEventListener('input', () => h.onForces({ ...this.state.forces, [row.key]: Number(input.value) }));
+      this.forceIn.set(row.key, input);
+      this.forceN.set(row.key, out);
+      forces.append(el('div', { class: 'gvt-row', title: row.tip }, [el('span', { text: row.label }), out, input]));
+    }
+    // back to the arrangement as drawn: a quiet text link, the same caption typography as the rest of the sheet
+    forces.append(el('button', { class: 'gvt-caption gvt-reset', type: 'button', text: 'Reset', title: 'Restore the arrangement as drawn',
+      onclick: () => h.onForces({ ...DEFAULT_FORCES }) }));
     const fit = el('button', { class: 'gvt-option', type: 'button', text: 'Reframe graph', onclick: () => { h.onFit(); this.close(); } });
     this.panel = el('section', { class: 'gvt-panel', id: 'graph-settings', 'aria-label': 'Graph settings' }, [
-      this.depthWrap, this.dust, el('div', { class: 'gvt-rels' }, [el('span', { class: 'gvt-caption', text: 'Relations' }), tieGroup]),
-      el('div', { class: 'gvt-row' }, [el('span', { text: 'Link space' }), this.spreadN, this.spread]),
-      el('div', { class: 'gvt-row' }, [el('span', { text: 'Gravity' }), this.gravityN, this.gravity]),
-      this.sky, this.skyNote, fit,
+      el('div', { class: 'gvt-rels' }, [el('span', { class: 'gvt-caption', text: 'Kinds' }), kindGroup]),
+      el('div', { class: 'gvt-rels' }, [el('span', { class: 'gvt-caption', text: 'Relations' }), tieGroup]),
+      this.sky, this.skyNote,
+      this.depthWrap,
+      forces,
+      fit,
+      // the one mark that is not a relation: what has no place on the globe, and so no walk
+      el('p', { class: 'gvt-caption gvt-key' }, [el('span', { class: 'gvt-hollow', 'aria-hidden': 'true' }), el('span', { text: 'Hollow: no recorded place, so not on the globe or in any walk' })]),
     ]);
     this.panel.hidden = true;
     this.toggle = el('button', { class: 'gvt-link gvt-settings', type: 'button', text: 'Settings', 'aria-expanded': 'false', 'aria-controls': 'graph-settings', onclick: () => this.setOpen(this.panel.hidden) }) as HTMLButtonElement;
-    this.whole = el('button', { class: 'gvt-link', type: 'button', text: 'Whole graph', onclick: () => { h.onWhole(); this.close(); } }) as HTMLButtonElement;
-    this.earth = el('button', { class: 'gvt-link gvt-earth', type: 'button', text: 'On Earth ↗', title: 'See this on Earth', onclick: () => { h.onEarth(); this.close(); } }) as HTMLButtonElement;
-    this.root = el('nav', { class: 'gv-tools', 'aria-label': 'Graph' }, [this.whole, this.earth, this.toggle, this.panel]);
+    this.root = el('nav', { class: 'gv-tools', 'aria-label': 'Graph' }, [this.toggle, this.panel]);
     // Safari does not focus buttons on pointer click, so Escape must also work
     // when the settings were opened with a pointer and focus remains on the canvas.
     document.addEventListener('keydown', (e) => {
@@ -119,23 +137,25 @@ export class GraphTools {
   private render() {
     const s = this.state;
     this.depthWrap.hidden = !s.local;
-    this.whole.hidden = !s.local;
-    this.earth.hidden = !s.hasSubject;
     this.depthN.textContent = String(s.depth);
     this.minus.disabled = s.depth <= 1;
     this.plus.disabled = s.depth >= 3;
-    this.dust.textContent = 'Occurrences';
     this.dust.setAttribute('aria-pressed', String(s.dust));
+    for (const [kind, button] of this.kindButtons) button.setAttribute('aria-pressed', String(s.kinds[kind]));
     for (const [basis, button] of this.ties) button.setAttribute('aria-pressed', String(s.ties.includes(basis)));
-    this.spread.value = String(s.spread);
-    this.spreadN.textContent = `${s.spread.toFixed(2)}×`;
-    this.gravity.value = String(s.gravity);
-    this.gravityN.textContent = `${s.gravity.toFixed(2)}×`;
+    for (const row of FORCE_ROWS) {
+      const v = s.forces[row.key];
+      const input = this.forceIn.get(row.key);
+      if (input) input.value = String(v);
+      const out = this.forceN.get(row.key);
+      // a readout is a multiple of the arrangement as drawn: 1.00× at rest, whatever the stored number
+      if (out) out.textContent = `${forceMultiple(row.key, v).toFixed(2)}×`;
+    }
     this.sky.setAttribute('aria-pressed', String(s.sky === 'on' || s.sky === 'loading'));
     this.sky.disabled = s.sky === 'loading';
     const note = s.sky === 'on' ? `Bodies stand at their geocentric ecliptic longitudes, ${s.skyAsOf ?? 'now'}. In a local graph they are ordinary neighbours.`
       : s.sky === 'loading' ? 'Loading the sky…'
-      : s.sky === 'unavailable' ? 'The sky\u2019s data is unavailable.' : '';
+      : s.sky === 'unavailable' ? 'The sky’s data is unavailable.' : '';
     this.skyNote.textContent = note;
     this.skyNote.hidden = !note;
     this.root.classList.toggle('is-local', s.local);

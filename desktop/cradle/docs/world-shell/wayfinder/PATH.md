@@ -105,7 +105,8 @@ bullet twice gets one Sonnet diagnostic; never a third builder attempt.
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| — | | | |
+| T-SEMANTICS-GATE | haiku builder (lead: claude-code:dlw-lead) | `packages/live-shell/ui/src/inhabitants/`, `src/projections/atlas/atlasFamilyManifest.ts`, `scripts/validate-devices.mjs`, `scripts/scaffold-device.mjs`, the admitting tests | 2026-10-13 |
+| T-AE-REPORT | claude-code:dlw-lead | `packages/live-shell/ui/src/projections/atlas/` (not `atlasFamilyManifest.ts`), `scripts/atlas-port-pin.mjs`, `tests/atlas-port-pin.test.mjs`, `package.json` | 2026-10-13 — landed, see ticket |
 
 ## 8. Foreign lanes — never touch
 

@@ -97,6 +97,8 @@ function buildField(): Field {
     prime,
     spectrum: { position: spectrum },
     palette,
+    // [AE 5fe5117] archetype↔archetype ties from curation; the fixture curates none
+    archetypes: [],
     body: [`${name} is one of the fixture's four as-such grades of the northern keepers' world.`, 'Bodies of text exercise the deep-sheet paragraphs; this is the second.'],
     image: i % 2 === 0 ? plate(i + 1, palette, 1920, 1080, name) : undefined,
     familyIds: FAMS.filter(([, , , , ties]) => ties.some(([aid]) => aid === id)).map(([fid]) => fid),
@@ -171,11 +173,13 @@ function buildField(): Field {
           { id: 'site', label: 'Local' },
         ],
       },
-      counts: { archetypes: archetypes.length, families: families.length, occurrences: occurrences.length, cultures: cultures.length, images: occurrences.filter((o) => o.image).length },
+      counts: { archetypes: archetypes.length, theoretics: 0, families: families.length, occurrences: occurrences.length, cultures: cultures.length, images: occurrences.filter((o) => o.image).length },
       yearMin: 1620,
       yearMax: 1931,
     },
     archetypes,
+    // [AE 5fe5117] the Theoretic tier (the field's ground and its instruments); the fixture has none
+    theoretics: [],
     families,
     occurrences,
     cultures,
