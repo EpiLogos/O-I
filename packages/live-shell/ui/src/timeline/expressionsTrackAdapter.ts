@@ -1,19 +1,24 @@
-// Expressions track adapter: projects one Expressions reading into the neutral
-// World track shape the Timeline renders.
+// Expressions track adapter: projects one Expressions work reading into the
+// neutral World track shape the Timeline renders (DEVICE-SEMANTICS-LOCK §9.1–9.3).
 //
 // Projection:
-// - columns: the scenes
-// - tracks: one row per entity of the presented scene, plus one automation
-//   track when the presented scene has any automation lane
-// - clips: each sequence step of an entity is a glyph-state span on the
-//   presented scene column. Span length is hold + transition.
-// - transport.takes: the presented scene's property tracks, named as takes.
+// - tracks: each Expression is a track with two lanes, a visual side and an audio
+//   side (`expression:<id>:visual`, `expression:<id>:audio`), grouped under
+//   `expression:<id>`.
+// - clips: each scene is a clip on both of its Expression's lanes, with the same
+//   span, so the two sides stay locked. Spans are column-local (the contract's
+//   law): a scene starts at 0 in its stop's column, and an Expression's scenes
+//   that share a column lie end to end by duration inside it. Order across
+//   stops is the columns' order (lead's ruling, 13 Oct 2026).
+// - columns: the stops (Live's scene rows) when stops are given. A scene no stop
+//   names sits in a trailing `unstopped` column. Without stops, one column per
+//   scene position.
+// - transport.takes: each scene's captured takes, targeting the scene.
 //
-// Takes belong to the Transport stratum of the time spine. This adapter only
-// exposes them as transport material. It does not build a clock, and it does
-// not put takes on the track rows.
+// Takes are transport material: never a clock, never a track.
+// The inside of one scene is projected by expressionsSequenceEditor.ts.
 //
-// Pure TypeScript. No React, no other family's adapter.
+// Pure TypeScript. No React, no family names.
 
 import type {
   WorldTrack,
@@ -24,57 +29,25 @@ import type {
   WorldTrackTake,
 } from './worldTrackAdapter';
 
-export interface ExpressionsScene {
-  id: string;
-  name: string;
-  duration: number;
-}
-
-export interface ExpressionsGlyph {
-  text?: string;
-  shape?: string;
-}
-
-export interface ExpressionsSequenceStep {
-  id: string;
-  hold: number;
-  transition: number;
-  // Optional per-step glyph. Falls back to the entity glyph.
-  glyph?: ExpressionsGlyph;
-}
-
-export interface ExpressionsEntity {
-  id: string;
-  name: string;
-  glyph?: ExpressionsGlyph;
-  sequence?: ExpressionsSequenceStep[];
-}
-
-export interface ExpressionsAutomationLane {
-  id: string;
-  target: string;
-  enabled: boolean;
-}
-
-export interface ExpressionsPropertyTrack {
-  id: string;
-  bind: string;
-}
-
-export interface ExpressionsTrackReading {
-  scenes: ExpressionsScene[];
-  presentedSceneId: string;
-  presented: {
-    entities: ExpressionsEntity[];
-    automationLanes: ExpressionsAutomationLane[];
-    propertyTracks: ExpressionsPropertyTrack[];
-  };
+export interface ExpressionsWorkReading {
+  expressions: {
+    id: string;
+    name: string;
+    scenes: {id: string; name: string; duration: number; takes?: {id: string; name: string}[]}[];
+  }[];
+  // Live's scene rows: each stop stands one or more scenes at once.
+  stops?: {id: string; name: string; scenes: {expressionId: string; sceneId: string}[]}[];
 }
 
 export const EXPRESSIONS_TRACK_ADAPTER_ID = 'expressions-track-adapter';
 
-const entityTrackId = (entityId: string): string => `entity:${entityId}`;
-const automationTrackId = (sceneId: string): string => `automation:${sceneId}`;
+const expressionGroupId = (expressionId: string): string => `expression:${expressionId}`;
+const visualLaneId = (expressionId: string): string => `expression:${expressionId}:visual`;
+const audioLaneId = (expressionId: string): string => `expression:${expressionId}:audio`;
+const sceneKey = (expressionId: string, sceneId: string): string => `scene:${expressionId}:${sceneId}`;
+const stopColumnId = (stopId: string): string => `stop:${stopId}`;
+const positionColumnId = (index: number): string => `position:${index}`;
+const UNSTOPPED_COLUMN_ID = 'unstopped';
 
 function requireDuration(value: number, label: string): number {
   if (!Number.isFinite(value) || value < 0) {
@@ -83,58 +56,82 @@ function requireDuration(value: number, label: string): number {
   return value;
 }
 
-function glyphLabel(step: ExpressionsSequenceStep, entity: ExpressionsEntity): string {
-  const glyph = step.glyph ?? entity.glyph;
-  return glyph?.text ?? glyph?.shape ?? step.id;
-}
+// Which column each scene sits in. A scene takes the first stop that names it.
+function placeScenes(reading: ExpressionsWorkReading): {columns: WorldTrackColumn[]; columnOf: Map<string, string>} {
+  const columns: WorldTrackColumn[] = [];
+  const columnOf = new Map<string, string>();
 
-export function projectExpressionsTracks(reading: ExpressionsTrackReading): WorldTrackSet {
-  const presentedScene = reading.scenes.find((scene) => scene.id === reading.presentedSceneId);
-  if (!presentedScene) {
-    throw new Error(`Presented scene ${reading.presentedSceneId} is not in the reading`);
-  }
-  const columnId = presentedScene.id;
-
-  const columns: WorldTrackColumn[] = reading.scenes.map(({id, name}) => ({id, name}));
-
-  const tracks: WorldTrack[] = reading.presented.entities.map((entity) => ({
-    id: entityTrackId(entity.id),
-    name: entity.name,
-    kind: 'entity',
-  }));
-  if (reading.presented.automationLanes.length > 0) {
-    tracks.push({id: automationTrackId(columnId), name: 'Automation', kind: 'automation'});
-  }
-
-  const clips: WorldTrackClip[] = [];
-  for (const entity of reading.presented.entities) {
-    let start = 0;
-    for (const step of entity.sequence ?? []) {
-      const hold = requireDuration(step.hold, `Step ${step.id} hold`);
-      const transition = requireDuration(step.transition, `Step ${step.id} transition`);
-      const end = start + hold + transition;
-      clips.push({
-        id: `clip:${entity.id}:${step.id}`,
-        trackId: entityTrackId(entity.id),
-        columnId,
-        label: glyphLabel(step, entity),
-        span: {start, end},
+  if (reading.stops === undefined) {
+    const positions = Math.max(0, ...reading.expressions.map((expression) => expression.scenes.length));
+    for (let index = 0; index < positions; index += 1) {
+      columns.push({id: positionColumnId(index), name: `Scene ${index + 1}`});
+    }
+    for (const expression of reading.expressions) {
+      expression.scenes.forEach((scene, index) => {
+        columnOf.set(sceneKey(expression.id, scene.id), positionColumnId(index));
       });
-      start = end;
+    }
+    return {columns, columnOf};
+  }
+
+  const known = new Set(reading.expressions.flatMap((expression) =>
+    expression.scenes.map((scene) => sceneKey(expression.id, scene.id))));
+  for (const stop of reading.stops) {
+    columns.push({id: stopColumnId(stop.id), name: stop.name});
+    for (const ref of stop.scenes) {
+      const key = sceneKey(ref.expressionId, ref.sceneId);
+      if (!known.has(key)) {
+        throw new Error(`Stop ${stop.id} names scene ${ref.sceneId} of ${ref.expressionId}, which is not in the reading`);
+      }
+      if (!columnOf.has(key)) columnOf.set(key, stopColumnId(stop.id));
     }
   }
+  const unstopped = [...known].filter((key) => !columnOf.has(key));
+  if (unstopped.length > 0) {
+    columns.push({id: UNSTOPPED_COLUMN_ID, name: 'Unstopped'});
+    for (const key of unstopped) columnOf.set(key, UNSTOPPED_COLUMN_ID);
+  }
+  return {columns, columnOf};
+}
 
-  // Takes are transport material, not tracks and not a clock.
-  const takes: WorldTrackTake[] = reading.presented.propertyTracks.map((track) => ({
-    id: track.id,
-    target: track.bind,
-    name: `Take ${track.id}`,
-  }));
+export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTrackSet {
+  const {columns, columnOf} = placeScenes(reading);
+
+  const tracks: WorldTrack[] = [];
+  const clips: WorldTrackClip[] = [];
+  const takes: WorldTrackTake[] = [];
+
+  for (const expression of reading.expressions) {
+    const groupId = expressionGroupId(expression.id);
+    tracks.push(
+      {id: visualLaneId(expression.id), name: `${expression.name}: visual`, kind: 'expression-visual', groupId, lane: 'visual'},
+      {id: audioLaneId(expression.id), name: `${expression.name}: audio`, kind: 'expression-audio', groupId, lane: 'audio'},
+    );
+
+    // column-local cursors: one per column this Expression's scenes occupy
+    const cursor = new Map<string, number>();
+    expression.scenes.forEach((scene) => {
+      const duration = requireDuration(scene.duration, `Scene ${scene.id} duration`);
+      const key = sceneKey(expression.id, scene.id);
+      const columnId = columnOf.get(key);
+      if (columnId === undefined) throw new Error(`Scene ${scene.id} of ${expression.id} has no column`);
+      const start = cursor.get(columnId) ?? 0;
+      const end = start + duration;
+      clips.push(
+        {id: `${key}:visual`, trackId: visualLaneId(expression.id), columnId, label: scene.name, span: {start, end}},
+        {id: `${key}:audio`, trackId: audioLaneId(expression.id), columnId, label: scene.name, span: {start, end}},
+      );
+      for (const take of scene.takes ?? []) {
+        takes.push({id: `${key}:${take.id}`, target: key, name: take.name});
+      }
+      cursor.set(columnId, end);
+    });
+  }
 
   return {columns, tracks, clips, transport: {takes}};
 }
 
-export const expressionsTrackAdapter: WorldTrackAdapter<ExpressionsTrackReading> = {
+export const expressionsTrackAdapter: WorldTrackAdapter<ExpressionsWorkReading> = {
   id: EXPRESSIONS_TRACK_ADAPTER_ID,
-  project: projectExpressionsTracks,
+  project: projectExpressionsWork,
 };

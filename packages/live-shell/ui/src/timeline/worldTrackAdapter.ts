@@ -24,6 +24,10 @@ export interface WorldTrack {
   kind: string;
   // The layer (reading) the lane belongs to, when the family declares layers.
   layerId?: string;
+  // The track a lane belongs to: lanes that share one groupId are one track.
+  groupId?: string;
+  // Which side of a grouped track this lane is: sight ('visual') or sound ('audio').
+  lane?: 'visual' | 'audio';
 }
 
 export interface WorldTrackClip {
@@ -79,7 +83,7 @@ export interface WorldWalkStop {
   place?: {label?: string; lat?: number; lon?: number};
   // Bucket-mates and attached material reached from this stop. Nothing is dropped.
   also: string[];
-  // The scene the stop launches (an Expression scene), when the material names one.
+  // The scene the stop launches (a scene of the family's own), when the material names one.
   sceneRef?: string;
 }
 
