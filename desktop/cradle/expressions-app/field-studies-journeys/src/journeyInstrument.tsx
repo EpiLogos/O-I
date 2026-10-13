@@ -9,6 +9,7 @@ import {journeyBeatView,reorderSceneRequest,type JourneyBeatCard,type JourneyBea
 import type {Journey} from './model';
 import {expressionTiming} from './propertyTracks';
 import {walkJourney,type JourneyPath} from './journeyPath';
+import {beatLoadKey,settleBounded} from './journeyLoadSchedule';
 import {journeyInstrumentBasis,sameJourneyInstrumentBasis,readJourneyInstrument,readJourneySceneFrame,prepareJourneyBeatFocus,type JourneyBeatFocus,type JourneyInstrumentBasis} from './journeyInstrumentModel';
 import './journeyInstrument.css';
 
@@ -145,11 +146,24 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
  const mount=document.createElement('section'),status=document.createElement('p');
  mount.className='journey-reading-workspace';mount.hidden=true;status.setAttribute('role','status');status.hidden=true;home.append(status,mount);
  let root:Root|null=null,epoch=0,open=false,destroyed=false;
+ /** T-REVIEW-4 #6: the load in flight, by the basis it reads. A refresh for the same basis joins it instead of starting a second. */
+ let inFlight:{key:string;done:Promise<void>}|undefined;
  const playback=host.playback&&host.seek?{read:host.playback,seek:host.seek}:undefined;
  const current=(basis:JourneyInstrumentBasis,generation:number)=>!destroyed&&open&&epoch===generation&&sameJourneyInstrumentBasis(basis,host.nativeView(),host.sceneId());
  const message=(text:string)=>{status.textContent=text;};
  const failure=(cause:unknown)=>cause instanceof Error?cause.message:String(cause);
- async function load(){
+ const basisKey=():string|undefined=>{try{return beatLoadKey(journeyInstrumentBasis(host.nativeView(),host.sceneId()));}catch{return undefined;}};
+ function load():Promise<void>{
+  const key=basisKey(),done=loadBeats();
+  if(key!==undefined){const entry={key,done};inFlight=entry;const clear=()=>{if(inFlight===entry)inFlight=undefined;};void done.then(clear,clear);}
+  return done;
+ }
+ function reuseOrLoad():Promise<void>{
+  const key=basisKey();
+  if(key!==undefined&&inFlight?.key===key)return inFlight.done;
+  return load();
+ }
+ async function loadBeats(){
   const generation=++epoch;
   try{
    const view=host.nativeView(),sceneId=host.sceneId(),basis=journeyInstrumentBasis(view,sceneId);
@@ -159,21 +173,12 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
    if(destroyed||!open||generation!==epoch)return;
    if(!current(basis,generation))throw Error('The selected native Journey changed while its reading was returning');
    const {reading}=readJourneyInstrument(raw,view!,sceneId);
-   // Each card's facets come from its own Scene's reading, never the whole's.
-   const cards=journeyBeatView(reading,view!.document).cards;
+   // The cards draw from the whole read at once; each card's facets are filled in as its own Scene's reading settles.
    const frames=new Map<string,TechneReading|string>();
-   const settled=await Promise.allSettled(cards.map(card=>{
-    if(card.expression_ref!==basis.expression_ref||card.revision!==String(basis.revision))
-     return Promise.reject(Error('This beat belongs to another bound Expression or revision; open that native work first'));
-    return host.read({expression_ref:card.expression_ref,revision:basis.revision,scene_ref:card.scene_ref})
-     .then(sceneRaw=>readJourneySceneFrame(sceneRaw,card.expression_ref,basis.revision,card.scene_ref));
-   }));
-   if(destroyed||!open||generation!==epoch)return;
-   settled.forEach((row,i)=>frames.set(cards[i].scene_ref,row.status==='fulfilled'?row.value:failure(row.reason)));
-   const beatView=journeyBeatView(reading,view!.document,frames);
+   let beatView=journeyBeatView(reading,view!.document);
    root??=createRoot(mount);
    let busy=false;
-   const draw=()=>{if(!current(basis,generation))return;root!.render(<JourneyBeatPanel reading={reading} beatView={beatView} native={view!} basis={basis} busy={busy} onRefresh={()=>void load()} playback={playback}
+   const draw=()=>{if(!current(basis,generation))return;root!.render(<JourneyBeatPanel reading={reading} beatView={beatView} native={view!} basis={basis} busy={busy} onRefresh={()=>void reuseOrLoad()} playback={playback}
     onFocus={card=>{
      if(busy)return;
      try{
@@ -205,13 +210,26 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
      }).catch(error=>{if(!destroyed&&open&&generation===epoch){busy=false;draw();message(failure(error));}});
     }}/>);};
    draw();message(beatView.unavailableReason??`${beatView.cards.length} native Scene bindings`);
+   // Bounded fill (four reads in flight). A stale load, one whose basis or generation moved, schedules no further reads.
+   const cards=beatView.cards;
+   await settleBounded(cards,4,card=>{
+    if(card.expression_ref!==basis.expression_ref||card.revision!==String(basis.revision))
+     return Promise.reject(Error('This beat belongs to another bound Expression or revision; open that native work first'));
+    // Each card's facets come from its own Scene's reading, never the whole's.
+    return host.read({expression_ref:card.expression_ref,revision:basis.revision,scene_ref:card.scene_ref})
+     .then(sceneRaw=>readJourneySceneFrame(sceneRaw,card.expression_ref,basis.revision,card.scene_ref));
+   },(index,row)=>{
+    frames.set(cards[index].scene_ref,row.status==='fulfilled'?row.value:failure(row.reason));
+    beatView=journeyBeatView(reading,view!.document,frames);
+    draw();
+   },()=>current(basis,generation));
   }catch(error){if(!destroyed&&open&&generation===epoch){root?.unmount();root=null;message(failure(error));}}
  }
  return {
   async open(){if(destroyed)throw Error('Journey instrument is closed');open=true;mount.hidden=false;status.hidden=false;await load();},
-  close(){epoch++;open=false;mount.hidden=true;status.hidden=true;root?.unmount();root=null;},
-  async refresh(){if(open)await load();},
-  destroy(){epoch++;open=false;destroyed=true;root?.unmount();root=null;mount.remove();status.remove();},
+  close(){epoch++;open=false;inFlight=undefined;mount.hidden=true;status.hidden=true;root?.unmount();root=null;},
+  async refresh(){if(open)await reuseOrLoad();},
+  destroy(){epoch++;open=false;destroyed=true;inFlight=undefined;root?.unmount();root=null;mount.remove();status.remove();},
   active(){return open;},
  };
 }

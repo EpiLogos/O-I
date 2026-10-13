@@ -5,6 +5,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {journeyBeatView, composeSceneRequest, reorderSceneRequest} from '../build/journeyBeats.js';
+import {settleBounded, beatLoadKey} from '../build/journeyLoadSchedule.js';
+import {readFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {fileURLToPath} from 'node:url';
 
 const EXPRESSION = 'oi.expression:probe';
 const ONE = `${EXPRESSION}:scene:one`;
@@ -279,4 +283,85 @@ test('T1b: the beat cards keep the disclosure reason when no scene is bound', ()
   const view = journeyBeatView(reading({expressions: [{expression_ref: EXPRESSION, revision: '7'}]}), DOC, new Map([[ONE, 'x']]));
   assert.deepEqual(view.cards, []);
   assert.equal(view.unavailableReason, 'bound Expressions disclose no scene refs');
+});
+
+// T-REVIEW-4 #6: the beat load fills each card's chips as its Scene read settles, four at a time, and a stale load schedules no
+// further reads. The scheduler is pure (journeyLoadSchedule.ts); the instrument's wiring is read from its source.
+const here = fileURLToPath(new URL('.', import.meta.url));
+const instrumentSource = readFileSync(join(here, '../src/journeyInstrument.tsx'), 'utf8');
+const appSource = readFileSync(join(here, '../src/app.ts'), 'utf8');
+
+const later = (value, ms) => new Promise((resolve) => setTimeout(() => resolve(value), ms));
+
+test('T-REVIEW-4 #6: settleBounded never has more than the limit in flight, and settles every item', async () => {
+  let inFlight = 0, peak = 0;
+  const settled = [];
+  const items = Array.from({length: 11}, (_, i) => i);
+  await settleBounded(items, 4, async (item) => {
+    inFlight++; peak = Math.max(peak, inFlight);
+    await later(null, (item * 7) % 5);
+    inFlight--;
+    return item * 10;
+  }, (index, outcome) => settled.push([index, outcome.status, outcome.value]), () => true);
+  assert.equal(peak, 4);
+  assert.equal(settled.length, 11);
+  assert.deepEqual(settled.map(([index]) => index).sort((a, b) => a - b), items);
+  assert.ok(settled.every(([index, status, value]) => status === 'fulfilled' && value === index * 10));
+});
+
+test('T-REVIEW-4 #6: a rejected read is its own outcome and does not stop the others', async () => {
+  const outcomes = new Map();
+  await settleBounded(['a', 'bad', 'c'], 4, async (item) => {
+    if (item === 'bad') throw Error('the Scene reading names no beat for this Scene');
+    return item.toUpperCase();
+  }, (index, outcome) => outcomes.set(index, outcome), () => true);
+  assert.equal(outcomes.get(0).value, 'A');
+  assert.equal(outcomes.get(1).status, 'rejected');
+  assert.equal(outcomes.get(1).reason.message, 'the Scene reading names no beat for this Scene');
+  assert.equal(outcomes.get(2).value, 'C');
+});
+
+test('T-REVIEW-4 #6: a stale load stops scheduling: after it goes stale, no further read starts and no late outcome is shown', async () => {
+  let stale = false, started = 0;
+  const shown = [];
+  await settleBounded(Array.from({length: 20}, (_, i) => i), 4, async (item) => {
+    started++;
+    await later(null, 2);
+    return item;
+  }, (index) => { shown.push(index); stale = true; }, () => !stale);
+  // The four first reads start together; the first settle flips the load stale, so nothing further is started.
+  assert.equal(started, 4);
+  assert.equal(shown.length, 1, 'only the outcome that settled while current is shown');
+});
+
+test('T-REVIEW-4 #6: the load key names the native Expression, its revision and the Scene; a refresh joins only the same key', () => {
+  const basis = {expression_ref: 'oi.expression:probe', revision: 7, scene_ref: 'oi.expression:probe:scene:one'};
+  assert.equal(beatLoadKey(basis), beatLoadKey({...basis}));
+  assert.notEqual(beatLoadKey(basis), beatLoadKey({...basis, revision: 8}));
+  assert.notEqual(beatLoadKey(basis), beatLoadKey({...basis, scene_ref: 'oi.expression:probe:scene:two'}));
+  assert.notEqual(beatLoadKey(basis), beatLoadKey({...basis, expression_ref: 'oi.expression:other'}));
+});
+
+test('T-REVIEW-4 #6: the instrument draws the cards before any Scene read, fills chips through the bounded settle, and refresh joins the load in flight', () => {
+  const load = instrumentSource.slice(instrumentSource.indexOf('async function loadBeats'), instrumentSource.indexOf('return {\n  async open()'));
+  const firstDraw = load.indexOf('draw();message(beatView.unavailableReason');
+  const settle = load.indexOf('settleBounded(cards,4,');
+  assert.ok(firstDraw > 0 && settle > firstDraw, 'the cards draw before the bounded fill starts');
+  assert.ok(load.includes('beatView=journeyBeatView(reading,view!.document,frames);'), 'each settled card redraws the view with its frames');
+  assert.ok(load.includes('},()=>current(basis,generation));'), 'the fill stops scheduling when the load goes stale');
+  assert.ok(instrumentSource.includes('if(key!==undefined&&inFlight?.key===key)return inFlight.done;'), 'a refresh for the same basis joins the load in flight');
+  assert.match(instrumentSource, /async refresh\(\)\{if\(open\)await reuseOrLoad\(\);\}/);
+  assert.ok(instrumentSource.includes('onRefresh={()=>void reuseOrLoad()}'), 'the Refresh button joins the same load');
+  assert.match(instrumentSource, /close\(\)\{epoch\+\+;open=false;inFlight=undefined;/);
+});
+
+test('T-REVIEW-4 #1: a reorder is refused with the compose words while work is open, and the native edit refreshes to the new revision', () => {
+  const edit = appSource.slice(appSource.indexOf(' editExpression:async request=>{'), appSource.indexOf(' editExpression:async request=>{') + 900);
+  assert.ok(edit.includes("if(store.transactionOpen||reading.standing.pending||reading.standing.dirty)throw Error('Save the open work before reordering this Journey.');"),
+    'reorder carries the dirty, pending and transaction guard');
+  assert.ok(edit.includes("if((reply as {state?:string}|null)?.state==='ready')await nativeWorkspace?.refreshReference(request.expression_ref);"),
+    'a ready reply refreshes through refreshReference, not open');
+  const compose = appSource.slice(appSource.indexOf('async function composeJourneyScene'), appSource.indexOf('async function composeJourneyScene') + 2400);
+  assert.ok(compose.includes('await nativeWorkspace?.refreshReference(routed.request.expression_ref);'), 'compose refreshes to the new revision');
+  assert.ok(compose.indexOf('refreshReference(routed.request.expression_ref)') < compose.indexOf('journeyInstrument?.refresh()'), 'the Journey re-reads after the refresh');
 });

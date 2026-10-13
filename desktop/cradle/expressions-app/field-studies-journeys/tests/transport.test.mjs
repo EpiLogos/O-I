@@ -141,3 +141,52 @@ test('the auto-advance clock reads the working transport rate, and a reverse shu
   assert.ok(appSource.includes('workingTransport};localStorage.setItem(SESSION_KEY'), 'the session saves the transport');
   assert.ok(recoverySource.includes('workingTransport:working'), 'the recovery session validates the working transport');
 });
+
+// T-REVIEW-4 #4 and #5: a reverse shuttle answers to the holds a forward frame answers to, stops at the Scene's start, and the
+// scrubbed playhead gives its focus back. The reverse branch asks advanceSceneTransport about the reverse step; these tests pin
+// what that question returns, and the app source is read for the wiring.
+const reverseJourney = {schema: 'oi.journey', version: 1, id: 'reverse', name: 'Reverse', description: '', loop: false, updatedAt: '',
+  scenes: [{id: 'a', name: 'A', duration: 10, transition: 0}]};
+const still = {playing: true, savedSequence: false, hidden: false, libraryOpen: false, propertyRecording: false, editing: false,
+  authoredSceneIds: ['a'], loopRegion: undefined};
+const backStep = 0.1;
+const heldFrame = (frame, elapsed) => frame.scene_playing === true && frame.completed === false
+  && frame.advance_to_scene_index === null && frame.elapsed_seconds === elapsed;
+
+test('T-REVIEW-4 #4: the reverse step moves an unheld playhead, and each forward hold holds the reverse one too', () => {
+  const moved = advanceSceneTransport(reverseJourney, 0, 5, backStep, still);
+  assert.ok(moved.elapsed_seconds > 5, 'an unheld frame advances, so the reverse step is answered by the same rule');
+  for (const hold of [{libraryOpen: true}, {propertyRecording: true}, {hidden: true}, {savedSequence: true, editing: true}]) {
+    const frame = advanceSceneTransport(reverseJourney, 0, 5, backStep, {...still, ...hold});
+    assert.ok(heldFrame(frame, 5), `held by ${Object.keys(hold)[0]}: the playhead does not move`);
+  }
+});
+
+test('T-REVIEW-4 #4: native pacing not disclosed refuses the reverse step with its reason, which the branch stops on', () => {
+  const frame = advanceSceneTransport(reverseJourney, 0, 5, backStep, {...still, authoredSceneIds: []});
+  assert.equal(frame.scene_playing, false);
+  assert.match(frame.unavailable_reason, /Native Scene pacing is not disclosed/);
+});
+
+test('T-REVIEW-4 #4: the reverse branch asks the forward rule about the reverse step, and stops at the start instead of running on', () => {
+  const frame = appSource.indexOf('// T-REVIEW-4 #4');
+  assert.ok(frame > 0, 'the reverse branch is marked');
+  const branch = appSource.slice(frame, frame + 1400);
+  assert.ok(branch.includes('const probe=advanceSceneTransport(store.document,sceneIndex,sceneElapsed,back,transportState);'),
+    'the reverse step is asked of advanceSceneTransport with the same state');
+  assert.ok(branch.includes('const held=probe.scene_playing&&!probe.completed&&probe.advance_to_scene_index===null&&probe.elapsed_seconds===sceneElapsed;'),
+    'a hold is the frame that does not move');
+  assert.ok(branch.includes('if(probe.unavailable_reason||held)transportFrame=probe;'), 'a hold or a refusal is taken as the forward rule gave it');
+  assert.ok(branch.includes(':{...probe,elapsed_seconds:0,scene_playing:false,saved_sequence_playing:false,completed:true'),
+    'reaching the start stops the transport');
+  assert.ok(!appSource.includes('sceneElapsed=Math.max(0,sceneElapsed+rate*Math.min(rawDelta,.25))'), 'the old reverse run-on is gone');
+  assert.ok(appSource.includes('const transportState={playing:scenePlaying,savedSequence:journeyPlaying'), 'the forward and reverse frames share one state');
+});
+
+test('T-REVIEW-4 #5: a pointer release gives the scrubbed playhead its focus back, so the typing guard does not swallow the transport keys', () => {
+  assert.ok(appSource.includes("const playhead=document.getElementById('expression-playhead');if(playhead&&document.activeElement===playhead)playhead.blur();"),
+    'the playhead blurs on pointerup while it holds focus');
+  const keydown = appSource.indexOf("document.addEventListener('keydown',ev=>{if(ev.defaultPrevented)return;");
+  assert.ok(keydown > 0 && appSource.includes("const typing=el.closest('input,textarea,select,[contenteditable=\"true\"]');"),
+    'the typing guard is unchanged: arrow keys still step a focused playhead');
+});
