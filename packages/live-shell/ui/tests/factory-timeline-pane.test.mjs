@@ -152,3 +152,13 @@ test('in Factory, the lens bar presses no Timeline or Journey lens while the age
   assert.equal(pane.factoryFocusedPane('projection.earth').presentation, null)
   assert.equal(pane.factoryFocusedPane('projection.timeline', 'session').presentation, 'session')
 })
+
+test('the World cut mounts one World presentation per retained view — never a residence-level duplicate', async () => {
+  const {readFile} = await import('node:fs/promises')
+  const residence = await readFile(new URL('../src/projections/timelineResidence.tsx', import.meta.url), 'utf8')
+  assert.doesNotMatch(residence, /<WorldTimelinePresentation/, 'the residence renders no World presentation of its own')
+  for (const view of ['SessionView', 'ArrangementView']) {
+    const src = await readFile(new URL(`../src/components/${view}.tsx`, import.meta.url), 'utf8')
+    assert.match(src, /if \(world\) return <WorldTimelinePresentation/, `${view} presents the World cut itself`)
+  }
+})

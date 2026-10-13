@@ -41,7 +41,6 @@ import {PROJECTION_TIMELINE_KIND, timelinePresentation, type TimelinePresentatio
 export {PROJECTION_TIMELINE_KIND, timelinePresentation}
 export type {TimelinePresentation}
 
-import {WorldTimelinePresentation} from './worldTimelinePresentation'
 
 export interface TimelineResidenceProps {
   set: SetSummary | null
@@ -69,9 +68,10 @@ export interface TimelineResidenceProps {
 }
 
 export function TimelineProjectionResidence({set, document, selection, select, colors, setColor, session, arrangement, compactTransport, presented, world, journey}: TimelineResidenceProps) {
-  const worldCutView = world
+  // The World cut is presented by the retained Session and Arrangement views themselves (each renders its
+  // WorldTimelinePresentation when `world` is set; only the presented one stands). A residence-level copy here would
+  // mount a second World presentation over the same reading — duplicate DOM, effects and reads.
   return <Fragment>
-    {worldCutView && <WorldTimelinePresentation view={worldCutView} presentation={presented ?? 'session'} journey={journey} />}
     <div className="inhabitant composition-view" data-projection-kind={PROJECTION_TIMELINE_KIND} data-projection-presentation="session" hidden={presented !== 'session'}>
       <SessionView set={set} document={document} selection={selection} select={select} colors={colors} setColor={setColor} native={session} compactTransport={compactTransport} world={world} journey={journey} />
     </div>
