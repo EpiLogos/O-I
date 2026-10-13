@@ -8,6 +8,8 @@
  * navigation furniture: the stage never reads them.
  */
 
+import {snapTime} from './snapModel';
+
 export const MARKER_COLOURS = ['amber', 'rose', 'sage', 'sky', 'violet'] as const;
 export type MarkerColour = typeof MARKER_COLOURS[number];
 export const MARKER_LIMIT = 64;
@@ -104,17 +106,11 @@ export function loopPlayNotice(working: readonly number[], play: readonly number
   return edgeUnsaved ? 'A loop edge sits in an unsaved scene; saved playback loops at the nearest saved instant. Save that scene to loop there.' : null;
 }
 
-/** Snaps `time` to the nearest scene boundary within `tolerancePx` pixels at `secondsPerPx`. */
+/** Snaps `time` to the nearest scene boundary within `tolerancePx` pixels at `secondsPerPx`. lane-3 E25: a thin call into the
+ * snap model, which every timeline drag now shares; the boundary-only form is kept for callers that have only boundaries. */
 export function snapToBoundary(time: number, boundaries: readonly number[], secondsPerPx: number,
   tolerancePx = MARKER_SNAP_PX): number {
-  if (!Number.isFinite(time) || !(secondsPerPx > 0)) return time;
-  const gap = tolerancePx * secondsPerPx;
-  let best: number | null = null;
-  for (const b of boundaries) {
-    const d = Math.abs(b - time);
-    if (d <= gap && (best === null || d < Math.abs(best - time))) best = b;
-  }
-  return best ?? time;
+  return snapTime(boundaries.map((b, index) => ({time: b, kind: 'scene' as const, id: `scene:${index}`})), time, secondsPerPx, {tolerancePx});
 }
 
 export function sortMarkers(list: readonly JourneyMarker[]): JourneyMarker[] {
