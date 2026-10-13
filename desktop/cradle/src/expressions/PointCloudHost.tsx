@@ -54,7 +54,6 @@ import {relateSceneConstellation} from "../techne/sceneConstellationRelation";
 import {relayNaraChannel} from "./naraChannel";
 import {readScope, scopeProject} from "../workspace/scope";
 import {chatProvisionTarget} from "../agent/chat/firstSend";
-import {disclosureSession, onSharedTimeWindowChange, SHARED_TIME_NUDGE} from "../techne/session";
 
 export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHostedState, readTechne, techneWorld, refreshToken, followsOwnRef = false, entryInstrument, project}: {mode?: HostedAppMode; deepLink?: string; bindingId?: string; onHostedState?: (state: HostedAppState) => void; readTechne?: (request: unknown) => Promise<unknown>; techneWorld?: (request: unknown) => Promise<unknown>; /** A changed token re-opens `deepLink` in place (refresh, no reload): an act performed elsewhere moved the kernel document. */ refreshToken?: number; /** A fixed act host (Factory Live, a Run page) presents its own Expression and is never the Expressions centre a navigator row opens into. */ followsOwnRef?: boolean; entryInstrument?: 'nara'; project?: string}) {
   const kernel = useKernel();
@@ -200,13 +199,6 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src, onHostedState]);
 
-  // T-FRAME-TIME-PUSH: the session's shared time window changed. A ready, presented frame is nudged to re-read the window through
-  // its own read; the nudge carries no window value (one window, one owner). Nothing runs while no session stands.
-  useEffect(() => onSharedTimeWindowChange(disclosureSession, () => {
-    const node = frame.current;
-    if (!node || state !== "ready" || !disclosureSession.get() || !node.getClientRects().length || node.closest("[hidden],[inert]")) return;
-    postMessageToFrame(node, {v: KERNEL_CHANNEL_VERSION, kind: SHARED_TIME_NUDGE});
-  }), [src, state]);
 
   useEffect(()=>{
     const visible=()=>{const node=frame.current;return !!node&&!!node.getClientRects().length&&!node.closest('[hidden],[inert]');};

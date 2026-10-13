@@ -106,9 +106,9 @@ test('an unready or concealed frame, or a host without a shared window, is not n
   assert.equal(unbound.nudges().length, 0, 'a host bound to no shared window never nudges');
 });
 
-test('the cradle host nudges its presented frame on a session window change and posts no window value', async () => {
+test('the legacy cradle host does not nudge: its relay serves no shared window, so the new shell host is the only one that does', async () => {
+  // The cradle relay (src/expressions/hostedApp.ts) has no techne-time-window handler, so a frame under PointCloudHost cannot
+  // read the shared window; a nudge there would be a message with no read behind it.
   const source = await readFile(fileURLToPath(new URL('../src/expressions/PointCloudHost.tsx', import.meta.url)), 'utf8');
-  assert.match(source, /onSharedTimeWindowChange\(disclosureSession/);
-  assert.match(source, /postMessageToFrame\(node,\s*\{v:\s*KERNEL_CHANNEL_VERSION,\s*kind:\s*SHARED_TIME_NUDGE\}\)/);
-  assert.doesNotMatch(source, /time_window/, 'the cradle host never carries the window');
+  assert.doesNotMatch(source, /SHARED_TIME_NUDGE|onSharedTimeWindowChange/);
 });
