@@ -38,6 +38,7 @@ import {
 import type { PlaceRegion } from "./placeLayers";
 import type { HierarchyEdgeDraw, PlaceRouteDraw } from "./placeRoutes";
 import type { BasemapRenderPlan } from "./basemapLayers";
+import type { TerminatorFeature } from "./terminator";
 import {
   dragEligibility,
   longPressFires,
@@ -119,6 +120,8 @@ export interface MapSurfaceRenderer {
   drawRoutes?(route: PlaceRouteDraw | null): Promise<void>;
   /** Lane-4 T12: the drawn LOCATED_IN hierarchy edges as dashed great-circle lines. */
   drawHierarchy?(edges: HierarchyEdgeDraw[]): Promise<void>;
+  /** Lane-4 T27: the night side of a STATED subsolar point (drawn, never derived here); null removes it. */
+  drawTerminator?(feature: TerminatorFeature | null): Promise<void>;
   /** Lane-4 T4/T5: holds the basemap plan (ground, imagery stack, terrain). Diffed, so a layer that stays keeps its tiles. */
   setBasemapPlan?(plan: BasemapRenderPlan): Promise<void>;
   /** The terrain elevation at a point, read where the terrain layer is loaded; null otherwise. */
@@ -676,6 +679,36 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
         );
       }
     },
+    async drawTerminator(feature) {
+      if (!map) throw new Error("map renderer is not initialized");
+      const m = map;
+      if (feature === null) {
+        for (const id of ["places-terminator-edge", "places-terminator-fill"]) {
+          if (m.getLayer(id)) m.removeLayer(id);
+        }
+        if (m.getSource("places-terminator")) m.removeSource("places-terminator");
+        return;
+      }
+      addGeoJsonSource(m, "places-terminator", feature);
+      // The night side sits above the basemap and beneath the place overlays, so markers and routes stay legible through it.
+      const beneath = TERMINATOR_ANCHORS.find((id) => m.getLayer(id));
+      if (!m.getLayer("places-terminator-fill")) {
+        m.addLayer({
+          id: "places-terminator-fill",
+          type: "fill",
+          source: "places-terminator",
+          paint: { "fill-color": TERMINATOR_STYLE.night, "fill-opacity": TERMINATOR_STYLE.nightOpacity },
+        } as never, beneath);
+      }
+      if (!m.getLayer("places-terminator-edge")) {
+        m.addLayer({
+          id: "places-terminator-edge",
+          type: "line",
+          source: "places-terminator",
+          paint: { "line-color": TERMINATOR_STYLE.edge, "line-width": 1, "line-dasharray": [3, 2], "line-opacity": 0.7 },
+        } as never, beneath);
+      }
+    },
     async drawHierarchy(edges) {
       if (!map) throw new Error("map renderer is not initialized");
       addGeoJsonSource(map, "places-hierarchy", {
@@ -903,6 +936,19 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
 }
 
 const BASE_LAYER_IDS = new Set(["ocean-background", "graticule-lines", "offline-base"]);
+
+/** Lane-4 T27: the night shading's paint. One tuned set; the stated reading is the only source of its geometry. */
+const TERMINATOR_STYLE = { night: "#050812", nightOpacity: 0.34, edge: "#c9b68a" } as const;
+
+/** The place overlays the night shading draws beneath, first found wins. */
+const TERMINATOR_ANCHORS = [
+  "places-regions-fill",
+  "geography-edges-layer",
+  "places-hierarchy-layer",
+  "places-routes-layer",
+  "psychogeographic-walk-layer",
+  "psychogeographic-marker-layer",
+];
 
 /** The first layer above the offline ground that is not a basemap layer: the overlays begin here. */
 function firstOverlayLayerId(map: InstanceType<typeof import("maplibre-gl").Map>): string | undefined {

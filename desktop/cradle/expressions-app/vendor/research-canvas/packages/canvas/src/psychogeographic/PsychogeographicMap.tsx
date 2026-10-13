@@ -16,6 +16,7 @@ import type { LiveServicePolicy } from "@research-canvas/geography";
 
 import type { TechnePlaceFacet } from "../../../../../../../src/techne/contract";
 import { nameInWindow, type TimeWindow } from "../../../../../../../src/techne/m0m5/place/filter";
+import { DAYLIGHT_LAW, daylightBasis, terminatorFeature, windowInstant, type DaylightAnswer, type DaylightHost } from "./terminator";
 import { OPEN_PLACE_FILTER, type PlaceFilterState } from "../../../../../../field-studies-journeys/src/placeReading";
 import { standingLabel, type StandingDrawing } from "../timeline/standingStyle";
 
@@ -207,6 +208,19 @@ export interface PsychogeographicMapProps {
   onOpenInTimeline?: (facet: TechnePlaceFacet) => void | Promise<void>;
   /** Lane-4 T23: "Open source" for the selected place's source ref. Offered only when that facet discloses one. */
   onOpenSource?: (sourceRef: string) => void;
+  /** Lane-4 T27: the optional day/night shading's sky-reading port. Absent: the layer row says no reading host is attached. */
+  daylight?: DaylightHost;
+  /** Lane-4 T28: the reference-frame ladder, one line per rung, from the reading (the host computes it; the map only shows it). */
+  ladder?: readonly PlaceLadderLine[];
+}
+
+/** Lane-4 T28: one rung of the ladder as the layers panel shows it. `reason` is the owner's, verbatim, for a rung that is not present. */
+export interface PlaceLadderLine {
+  rung: string;
+  label: string;
+  status: "present" | "absent" | "unavailable";
+  line: string;
+  reason: string | null;
 }
 
 /**
@@ -245,6 +259,8 @@ export function PsychogeographicMap({
   initialFocusGraphNodeId = null,
   onOpenInTimeline,
   onOpenSource,
+  daylight,
+  ladder,
 }: PsychogeographicMapProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mountedRenderer = useRef<MapSurfaceRenderer | null>(null);
@@ -308,6 +324,13 @@ export function PsychogeographicMap({
   const [elevation, setElevation] = useState<number | null>(null);
   const [activeLaneYear, setActiveLaneYear] = useState<number | null>(null);
   const [selectedLaneId, setSelectedLaneId] = useState<string | null>(null);
+  // Lane-4 T27: the day/night layer is off by default. Its answer is the sky reading's own, or the owner's reason it has none.
+  const [daylightOn, setDaylightOn] = useState(false);
+  const [daylightState, setDaylightState] = useState<{ status: "reading"; instant: string | null } | { status: "answered"; instant: string | null; answer: DaylightAnswer } | null>(null);
+  // Lane-4 T28: the ladder rung whose reason is open. Only a rung that is not present opens.
+  const [openRung, setOpenRung] = useState<string | null>(null);
+  const daylightRef = useRef<DaylightHost | undefined>(daylight);
+  daylightRef.current = daylight;
   // Lane-4 T17: the open menu, at the point it was asked for. Lane-4 T19: the one pending proposal.
   const [placeMenu, setPlaceMenu] = useState<{ graphNodeId: string | null; at: PlaceCoordinate; x: number; y: number } | null>(null);
   const [pendingMove, setPendingMove] = useState<PlaceMoveProposal | null>(null);
@@ -915,6 +938,35 @@ export function PsychogeographicMap({
     return () => { cancelled = true; };
   }, [expressionMarkers, filteredLanes, hierarchyEdges, placeMarkers, readyRenderer, regions, route]);
 
+  // Lane-4 T27: the instant is the committed window's (a live drag does not re-ask the sky); an open window is now (null).
+  const daylightInstant = windowInstant(layerFilter?.window ?? null);
+  useEffect(() => {
+    if (!daylightOn) { setDaylightState(null); return; }
+    const host = daylightRef.current;
+    if (!host) {
+      setDaylightState({ status: "answered", instant: daylightInstant, answer: { status: "unavailable", reason: "no sky reading host is attached to this map" } });
+      return;
+    }
+    let cancelled = false;
+    setDaylightState({ status: "reading", instant: daylightInstant });
+    host.read(daylightInstant).then(
+      (answer) => { if (!cancelled) setDaylightState({ status: "answered", instant: daylightInstant, answer }); },
+      (cause: unknown) => { if (!cancelled) setDaylightState({ status: "answered", instant: daylightInstant, answer: { status: "unavailable", reason: messageOf(cause) } }); },
+    );
+    return () => { cancelled = true; };
+  }, [daylightOn, daylightInstant]);
+  const statedSubsolar = daylightState?.status === "answered" && daylightState.answer.status === "stated" ? daylightState.answer.subsolar : null;
+  const statedKey = statedSubsolar ? `${statedSubsolar.latitude_degrees},${statedSubsolar.longitude_degrees}` : null;
+  useEffect(() => {
+    if (!readyRenderer || mountedRenderer.current !== readyRenderer || !readyRenderer.drawTerminator) return;
+    let cancelled = false;
+    const feature = statedSubsolar ? terminatorFeature(statedSubsolar) : null;
+    readyRenderer.drawTerminator(feature).catch((cause: unknown) => {
+      if (!cancelled) setDaylightState({ status: "answered", instant: daylightInstant, answer: { status: "unavailable", reason: `the map could not draw the shading: ${messageOf(cause)}` } });
+    });
+    return () => { cancelled = true; };
+  }, [readyRenderer, statedKey]);
+
   const setProjection = useCallback((next: "globe" | "flat") => {
     const currentRenderer = mountedRenderer.current;
     if (!currentRenderer) return;
@@ -1105,6 +1157,60 @@ export function PsychogeographicMap({
   // names its owner's reason verbatim.
   const topLive = topLiveRaster(plan);
   const topLiveSource = topLive ? { kind: "raster" as const, url: topLive.url, attribution: topLive.attribution } : null;
+  // Lane-4 T27: the day/night row. Its detail is the reading's own provenance, or the reason verbatim; nothing is drawn without a stated point.
+  const daylightDetail = (() => {
+    if (!daylightState) return null;
+    const basis = daylightBasis(daylightState.instant);
+    if (daylightState.status === "reading") return `Reading the sky at ${basis}…`;
+    const answer = daylightState.answer;
+    if (answer.status === "unavailable") return `Shading unavailable: ${answer.reason}. Nothing is drawn.`;
+    return `Night shaded from the stated subsolar point ${answer.subsolar.latitude_degrees.toFixed(2)}°, ${answer.subsolar.longitude_degrees.toFixed(2)}°. Epoch ${answer.epoch_utc} · provider ${answer.provider} · snapshot ${answer.snapshot_ref}. Basis: ${basis}. ${DAYLIGHT_LAW}`;
+  })();
+  const daylightSection = (
+    <section data-testid="places-daylight" aria-label="Day and night" style={{ display: "grid", gap: 6, marginBottom: 10 }}>
+      <h3 style={{ margin: 0, fontSize: 12 }}>Day and night</h3>
+      <label style={{ display: "flex", alignItems: "center", gap: 6 }} title="Off by default. On: the sky reading's own stated subsolar point for the window's instant.">
+        <input type="checkbox" data-testid="places-daylight-toggle" checked={daylightOn} onChange={() => setDaylightOn(value => !value)} />
+        <span>Shade night</span>
+      </label>
+      {daylightOn && daylightDetail !== null && (
+        <span data-testid="places-daylight-detail" role={daylightState?.status === "answered" && daylightState.answer.status === "unavailable" ? "status" : undefined} style={{ color: "#c9b68a", fontSize: 10, lineHeight: "14px" }}>{daylightDetail}</span>
+      )}
+    </section>
+  );
+  // Lane-4 T28: the ladder in one line per rung. A rung the reading does not disclose is never shown as present; its reason opens on click.
+  const ladderSection = ladder && ladder.length > 0 ? (
+    <section data-testid="places-ladder" aria-label="Reference-frame ladder" style={{ display: "grid", gap: 4, marginBottom: 10 }}>
+      <h3 style={{ margin: 0, fontSize: 12 }}>Ladder · where you stand</h3>
+      <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 4 }}>
+        {ladder.map(rung => {
+          const open = openRung === rung.rung && rung.reason !== null;
+          const present = rung.status === "present";
+          return (
+            <li key={rung.rung} data-testid={`places-ladder-rung-${rung.rung}`} data-status={rung.status}>
+              {present ? (
+                <div style={{ display: "flex", gap: 6, color: "var(--ob-ink, #e6edf5)" }}>
+                  <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rung.line}</span>
+                  <span style={{ flex: "none", color: "var(--ob-dim, #8797ab)" }}>present</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  aria-expanded={open}
+                  onClick={() => setOpenRung(current => (current === rung.rung ? null : rung.rung))}
+                  style={{ display: "flex", gap: 6, width: "100%", padding: 0, border: 0, background: "none", color: "var(--ob-dim, #8797ab)", textAlign: "left", font: "inherit", cursor: "pointer" }}
+                >
+                  <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rung.line}</span>
+                  <span style={{ flex: "none" }}>{open ? "hide reason" : "why"}</span>
+                </button>
+              )}
+              {open && <p role="note" data-testid={`places-ladder-reason-${rung.rung}`} style={{ margin: "2px 0 0", color: "#c9b68a", fontSize: 10, lineHeight: "14px" }}>{rung.reason}</p>}
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  ) : null;
   const firstFailure = Object.values(basemapFailures)[0] ?? null;
   const liveDisclosure = liveTileDisclosure({
     offlineOnly,
@@ -1603,6 +1709,8 @@ export function PsychogeographicMap({
           style={{ position: "absolute", right: 12, top: 58, zIndex: 8, width: 260, maxHeight: "46%", overflow: "auto", padding: 10, borderRadius: 10, background: "rgba(17,24,37,.88)", border: "1px solid var(--ob-line, #1b2634)", fontSize: 11 }}
         >
           {basemapSection}
+          {daylightSection}
+          {ladderSection}
           {layers.length > 0 && (<>
           <h3 style={{ margin: "0 0 6px", fontSize: 12 }}>Layers · relation</h3>
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 4 }}>

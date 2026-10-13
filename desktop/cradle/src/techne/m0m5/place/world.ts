@@ -369,6 +369,44 @@ export function referenceFrameLadder(reading: TechneReading | null): LadderRung[
   ];
 }
 
+/** One ladder rung as a single line in the layers panel (lane-4 T28). `status` is never "present" for a rung the reading does not disclose. */
+export interface LadderRungSummary {
+  rung: LadderRung["rung"];
+  label: string;
+  status: "present" | "absent" | "unavailable";
+  /** One line: what the reading discloses at a present rung; the status word otherwise. */
+  line: string;
+  /** The owner's reason verbatim for a rung that is not present; null for a present one. */
+  reason: string | null;
+}
+
+/**
+ * The one-line summaries of a ladder (T28). Availability maps one-to-one from the depth chain: "disclosed" is present,
+ * "absent-facet" is absent and "producer-unavailable" is unavailable; a non-present rung keeps its reason verbatim.
+ */
+export function ladderRungSummaries(ladder: LadderRung[]): LadderRungSummary[] {
+  return ladder.map((rung) => {
+    if (rung.availability === "disclosed") {
+      const disclosed = rung.disclosed.filter((entry) => entry.trim().length > 0);
+      return {
+        rung: rung.rung,
+        label: rung.label,
+        status: "present",
+        line: disclosed.length > 0 ? `${rung.label}: ${disclosed.join("; ")}` : `${rung.label}: present`,
+        reason: null,
+      };
+    }
+    const status = rung.availability === "producer-unavailable" ? "unavailable" : "absent";
+    return {
+      rung: rung.rung,
+      label: rung.label,
+      status,
+      line: `${rung.label}: ${status}`,
+      reason: rung.reason ?? "no reason disclosed",
+    };
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Structured World state for Aletheia_4 / Technē_4
 // ---------------------------------------------------------------------------
