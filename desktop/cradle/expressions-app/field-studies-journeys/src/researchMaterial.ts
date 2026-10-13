@@ -8,6 +8,7 @@ import {EMBED_CARD_SIZE,MEDIA_CARD_SIZE,embedHost,embedUrlRecord,isCentralPathRe
 import {FRAME_TITLE_MAX,frameTitleRecord} from './canvasFrames.js';
 import {LIVE_BASEMAP_SOURCES,OFFLINE_GROUND_ID} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/basemapSources';
 import {TIMELINE_CATEGORY_IDS as CATEGORY_IDS} from './timelineCategoryIds';
+import {TOUR_LIMIT,placeTourNameProblem,placeTourProblem,type PlaceTourRecord} from './placeTourRecord.js';
 
 /** Card kinds the material admits: the image/note cards, the lane-1 A2 canvas
  * objects (sticky, shape, text) and the lane-1 A10 embed and media cards. */
@@ -93,6 +94,8 @@ export interface ResearchMaterial {
  placeViews?:Record<string,PlaceViewRecord>;
  /** lane-4 T21: the Places layer toggles and basemap rows the Scene keeps, written whole (absent = every disclosed layer on, the offline ground only). Never the owner's live-source allowance. */
  placeLayers?:PlaceLayersRecord;
+ /** lane-4 T25: named Places tours, kept beside the Places views (absent = none saved). At most 16 tours of 32 stops; each is closed by placeTours.ts. */
+ placeTours?:Record<string,PlaceTourRecord>;
  /** lane-2 T15: named timeline views, kept beside the canvas's namedViews (absent = none saved). At most 32. */
  timelineViews?:Record<string,TimelineViewRecord>;
 }
@@ -119,6 +122,9 @@ export type ResearchMaterialAction =
  | {type:'place-view-remove';name:string}
  /** lane-4 T21: the Places layer toggles and basemap rows, written whole. Only placeLayers changes. */
  | {type:'place-layers-set';value:PlaceLayersRecord}
+ /** lane-4 T25: a named Places tour, kept beside the Places views. Only placeTours changes. */
+ | {type:'place-tour-save';name:string;tour:PlaceTourRecord}
+ | {type:'place-tour-remove';name:string}
  /** lane-2 T15: a named timeline view, kept beside the Places and canvas views. Only timelineViews changes. */
  | {type:'timeline-view-save';name:string;view:TimelineViewRecord}
  | {type:'timeline-view-remove';name:string}
@@ -166,7 +172,7 @@ export function validateViewBasis(value:unknown):asserts value is ViewBasis{
  require(['subject_ref','binding_ref'].every(key=>typeof value[key]==='string'&&value[key].length>0&&text(value[key],1024)),'Invalid view basis');
 }
 export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):asserts value is ResearchMaterial {
- require(object(value),'Research material must be an object');keys(value,['schema','cards','strokes','views','timeline','frames','namedViews','connectors','placeViews','placeLayers','timelineViews']);
+ require(object(value),'Research material must be an object');keys(value,['schema','cards','strokes','views','timeline','frames','namedViews','connectors','placeViews','placeLayers','timelineViews','placeTours']);
  require(value.schema==='oi.research-scene/v1','Unsupported research material');
  require(new TextEncoder().encode(JSON.stringify(value)).length<=262144,'Research material exceeds 256 KiB');
  for(const key of ['cards','views','timeline'])require(object(value[key])&&Object.keys(value[key]).length<=(key==='views'?16:256),'Research record count exceeds its bound');
@@ -198,6 +204,9 @@ export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):
  // lane-2 T15: named timeline views are absent in material saved before them; present, each is validated closed.
  if(value.timelineViews!==undefined)require(object(value.timelineViews)&&Object.keys(value.timelineViews).length<=TIMELINE_VIEW_LIMIT,'Timeline view count exceeds its bound');
  for(const [name,view] of Object.entries(value.timelineViews??{})){require(text(name,160)&&!!name.trim(),'Invalid timeline view name');validateTimelineView(view);}
+ // lane-4 T25: named Places tours are absent in material saved before them; present, each is validated closed by placeTours.ts.
+ if(value.placeTours!==undefined)require(object(value.placeTours)&&Object.keys(value.placeTours).length<=TOUR_LIMIT,'Place tour count exceeds its bound');
+ for(const [name,tour] of Object.entries(value.placeTours??{})){require(text(name,160)&&!!name.trim(),'Invalid place tour name');const problem=placeTourProblem(tour);require(problem===null,problem??'');}
  for(const [id,card] of Object.entries(value.cards) as [string,ResearchCard][]){
   require(ids.has(id)&&object(card),'Research card must address an existing occurrence');
   keys(card,['type','importedAt','content','caption','color','dotColour','bgColour','textColour','size','palette','shape','fill','url','media']);
@@ -400,6 +409,15 @@ function applyResearchStep(next:Scene,action:Exclude<ResearchMaterialAction,{typ
  case 'place-view-remove':{if(research.placeViews){delete research.placeViews[action.name];if(!Object.keys(research.placeViews).length)delete research.placeViews;}break;}
  // lane-4 T21: the layers are written whole and bounded here, and the whole material is checked again below.
  case 'place-layers-set':{validatePlaceLayersRecord(action.value);research.placeLayers=clone(action.value);break;}
+ // lane-4 T25: a tour is kept beside the Places views and never among them. Its name and its shape are checked before it is written.
+ case 'place-tour-save':{
+  const nameProblem=placeTourNameProblem(action.name,research.placeTours??{});require(nameProblem===null,nameProblem??'');
+  const tourProblem=placeTourProblem(action.tour);require(tourProblem===null,tourProblem??'');
+  research.placeTours??={};research.placeTours[action.name.trim()]=clone(action.tour);
+  break;
+ }
+ // Removing a tour touches only placeTours; the last removal leaves no empty record.
+ case 'place-tour-remove':{if(research.placeTours){delete research.placeTours[action.name];if(!Object.keys(research.placeTours).length)delete research.placeTours;}break;}
  // lane-2 T15: a timeline view is kept beside the other views. Its count bound is checked with the whole material below.
  case 'timeline-view-save':{
   require(text(action.name,160)&&!!action.name.trim(),'Invalid timeline view name');require(viewNameAllowed(action.name),'That view name is reserved');

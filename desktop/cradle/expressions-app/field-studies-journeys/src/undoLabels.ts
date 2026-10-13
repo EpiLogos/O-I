@@ -33,6 +33,8 @@ const RESEARCH_MATERIAL_LABELS:Record<ResearchMaterialAction['type'],string>={
  'place-view-save':'Save place view',
  'place-view-remove':'Remove place view',
  'place-layers-set':'Set map layers',
+ 'place-tour-save':'Save place tour',
+ 'place-tour-remove':'Remove place tour',
  'timeline-view-save':'Save timeline view',
  'timeline-view-remove':'Remove timeline view',
  'batch':'Edit research material',
