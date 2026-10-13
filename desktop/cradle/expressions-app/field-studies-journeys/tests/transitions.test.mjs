@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fieldStudies,clone,sceneContentDigest,validateJourney} from '../build/model.js';
-import {TRANSITION_KINDS,transitionKindOf,transitionSpecFor,validateTransitionSpec,dipWeights,wipeHoldRect,transitionLabel,seamGlyphHTML,seamChooserHTML,paintedOverlayActive,paintedPassParams,srgbUnit,renderTargetAction,transitionColourOf} from '../build/transitions.js';
+import {TRANSITION_KINDS,transitionKindOf,transitionSpecFor,validateTransitionSpec,dipWeights,wipeHoldRect,transitionLabel,seamGlyphHTML,seamChooserHTML,paintedOverlayActive,paintedPassParams,srgbUnit,renderTargetAction,transitionColourOf,holdFit,holdSampleUv,compositeMirror} from '../build/transitions.js';
 import {readFileSync} from 'node:fs';
 
 // Lane-3 E11: typed transitions per seam. The kind and its parameters ride on the Scene beside its duration; absent is
@@ -197,4 +197,83 @@ test('a split does not copy the source scene\'s painted transition onto the new 
  assert.equal(right.transition,0);
  assert.equal('transitionSpec' in right,false,'the right half inherits no seam glyph');
  assert.deepEqual(j.scenes[0].transitionSpec,{kind:'wipe',direction:'left'},'the left half keeps its own entry');
+});
+
+// Lane-3 E11c: the transition-pass edge cases. The GPU path cannot run under node. What is pinned here is the pure part
+// (the held frame's aspect mapping, the opaque composite) and the source shape of the three GPU-side decisions: the hold is
+// drawn clean, every pass restores the render target it found, and the engine no longer imports the app.
+
+test('E11c aspect: a held frame of the output\'s own aspect fits exactly, and any other aspect is contained, never stretched', ()=>{
+ assert.deepEqual(holdFit({width:1440,height:900},{width:1440,height:900}),{scale:[1,1],offset:[0,0]});
+ // A 16:9 still of a 16:10 canvas: the hold keeps its width and is centred vertically, with the sides in ground.
+ const wide=holdFit({width:1920,height:1080},{width:1440,height:900});
+ assert.ok(Math.abs(wide.scale[0]-.9)<1e-12&&wide.scale[1]===1);
+ assert.ok(Math.abs(wide.offset[0]-.05)<1e-12&&wide.offset[1]===0);
+ // A 4:3 still of the same canvas: the hold keeps its width, and the top and bottom are ground.
+ const tall=holdFit({width:1440,height:1080},{width:1440,height:900});
+ assert.equal(tall.scale[0],1);
+ assert.ok(Math.abs(tall.scale[1]-(4/3)/1.6)<1e-12);
+ assert.ok(Math.abs(tall.offset[1]-(1-tall.scale[1])/2)<1e-12);
+ // No stretch: the displayed rectangle keeps the hold's own proportions for every pair.
+ for(const [out,hold] of [[{width:1920,height:1080},{width:1440,height:900}],[{width:1440,height:1080},{width:1440,height:900}],[{width:720,height:720},{width:1600,height:900}],[{width:1280,height:800},{width:1280,height:800}]]){
+  const f=holdFit(out,hold);
+  const shown=(f.scale[0]*out.width)/(f.scale[1]*out.height);
+  assert.ok(Math.abs(shown-hold.width/hold.height)<1e-9,`no stretch for ${out.width}x${out.height} from ${hold.width}x${hold.height}`);
+  assert.ok(f.scale[0]<=1&&f.scale[1]<=1,'the held image is contained, never enlarged past the output');
+ }
+});
+
+test('E11c aspect: the output centre always reads the held centre, and the margins read nothing (the ground shows)', ()=>{
+ const f=holdFit({width:1440,height:1080},{width:1440,height:900});
+ assert.deepEqual(holdSampleUv([.5,.5],f),[.5,.5]);
+ assert.equal(holdSampleUv([.5,.02],f),null,'the bottom margin shows the ground');
+ assert.equal(holdSampleUv([.5,.98],f),null,'the top margin shows the ground');
+ const edge=holdSampleUv([.5,f.offset[1]],f);
+ assert.ok(edge&&Math.abs(edge[1])<1e-12,'the held image\'s bottom edge reads its first row');
+ const side=holdFit({width:1920,height:1080},{width:1440,height:900});
+ assert.equal(holdSampleUv([.01,.5],side),null,'the left margin shows the ground');
+ assert.deepEqual(holdSampleUv([0,0],holdFit({width:1440,height:900},{width:1440,height:900})),[0,0]);
+});
+
+test('E11c alpha: a painted transition frame is opaque everywhere, even over a transparent live pixel', ()=>{
+ const ground=[.1,.2,.3],paper=srgbUnit('#f4f2eb');
+ // A transparent live pixel, outside any dip colour, shows the ground and is still alpha 1.
+ assert.deepEqual(compositeMirror([0,0,0,0],0,paper,ground),[.1,.2,.3,1]);
+ // The alpha is 1 across the whole range of live alpha and colour weight, so the decision holds at every fraction.
+ for(const a of [0,.25,.5,1])for(const w of [0,.3,.5,1])assert.equal(compositeMirror([.2,.4,.6,a],w,paper,ground)[3],1,`alpha at live ${a}, colour ${w}`);
+ // At the colour point the composite is the colour, byte for byte, whatever the live frame held.
+ assert.deepEqual(compositeMirror([.9,.1,.5,0],1,paper,ground).slice(0,3).map(c=>Math.round(c*255)),[244,242,235]);
+});
+
+test('E11c clean hold: the hold is drawn through the same furniture toggle as the live side, and presentScene draws clean while a painted overlay is in force', ()=>{
+ const field=readFileSync(new URL('../../src/engine/PointCloudField.ts',import.meta.url),'utf8');
+ assert.match(field,/captureTransitionHold\(ground: string\) \{\s*const size[\s\S]*?this\.withTransitionClean\(\(\) => this\.transitionPass\.captureHold\(/);
+ assert.match(field,/private presentScene\(\) \{\s*if \(this\.transitionPass\.active && !this\.transitionClean\) \{ this\.withTransitionClean\(\(\) => this\.presentScene\(\)\); return; \}/);
+ // The toggle restores every child's visibility and the selection highlight, as withCleanFrame does.
+ assert.match(field,/private withTransitionClean<T>[\s\S]*?finally \{ this\.transitionClean = false; u\.uEditHasSelection\.value = selected; for \(const \[o, v\] of visibility\) o\.visible = v; \}/);
+ // A capture marks its opaque painted output on the canvas it returns.
+ assert.match(field,/if \(painted\) out\.dataset\.transitionOpaque = 'painted-frame-opaque';/);
+});
+
+test('E11c render targets: captureHold and present each restore the target they found, and nothing is left bound to the hold', ()=>{
+ const pass=readFileSync(new URL('../../src/engine/transitionPass.ts',import.meta.url),'utf8');
+ assert.match(pass,/captureHold\(renderer[\s\S]*?const previous=renderer\.getRenderTarget\(\);\s*try\{[\s\S]*?\}finally\{renderer\.setRenderTarget\(previous\);\}/);
+ assert.match(pass,/present\(renderer[\s\S]*?const previous=renderer\.getRenderTarget\(\);\s*try\{[\s\S]*?\}finally\{renderer\.setRenderTarget\(previous\);\}/);
+ // Every switch in the pass sits inside one of those try blocks: the two helpers are only called from them.
+ const helperCalls=(pass.match(/this\.renderLive\(|this\.quadPass\(/g)||[]).length;
+ assert.equal(helperCalls,4,'renderLive and quadPass are called from captureHold and present only');
+});
+
+test('E11c single implementation: the engine owns the pure helpers, transitions.ts re-exports them, and the engine imports nothing from the app', ()=>{
+ const math=readFileSync(new URL('../../src/engine/transitionMath.ts',import.meta.url),'utf8');
+ const pass=readFileSync(new URL('../../src/engine/transitionPass.ts',import.meta.url),'utf8');
+ const transitions=readFileSync(new URL('../src/transitions.ts',import.meta.url),'utf8');
+ assert.doesNotMatch(math,/^\s*import\s/m,'transitionMath.ts has no imports');
+ assert.doesNotMatch(pass,/field-studies-journeys/,'the engine does not import the app');
+ assert.match(pass,/from '\.\/transitionMath'/);
+ assert.match(transitions,/from '\.\.\/\.\.\/src\/engine\/transitionMath'/);
+ for(const name of ['dipWeights','wipeHoldRect','paintedPassParams','srgbUnit','renderTargetAction','transitionColourOf'])
+  assert.doesNotMatch(transitions,new RegExp(`function ${name}\\b`),`${name} is defined once, in the engine`);
+ assert.match(math,/export function dipWeights\(/);
+ assert.match(math,/export function transitionColourOf\(/);
 });

@@ -130,6 +130,8 @@ export class PointCloudField {
   private simulator!: GPGPUSimulator;
   /** E11b: the painted transition's compositing layer. Idle (no targets) unless a dip or wipe is in flight. */
   private transitionPass = new TransitionPass();
+  /** E11c: true while the transition pass draws the authoring-clean view (furniture hidden), as withCleanFrame does. */
+  private transitionClean = false;
   private glyphSampler!: GlyphSampler;
   /** The PS-G forms sampler (QL-MEF #296 #299): the retained glyph body, its
    * correspondence and the rasterisation/reseed instrument, consuming the
@@ -1502,13 +1504,26 @@ export class PointCloudField {
 
   /** E11b: this frame's painted transition overlay (null draws the field directly, as before). */
   public setTransitionOverlay(overlay: TransitionOverlay | null) { this.transitionPass.setOverlay(overlay); }
-  /** E11b: holds the outgoing frame, flattened over its own ground. Called at a transition's start, before the new configuration reaches the GPU. */
+  /** E11b: holds the outgoing frame, flattened over its own ground. Called at a transition's start, before the new configuration reaches the GPU.
+   * E11c: the hold is drawn clean, through the same furniture toggle the live side uses in withCleanFrame. */
   public captureTransitionHold(ground: string) {
     const size = this.renderer.getDrawingBufferSize(new THREE.Vector2());
-    this.transitionPass.captureHold(this.renderer, this.scene, this.camera, { width: Math.round(size.x), height: Math.round(size.y) }, ground);
+    this.withTransitionClean(() => this.transitionPass.captureHold(this.renderer, this.scene, this.camera, { width: Math.round(size.x), height: Math.round(size.y) }, ground));
   }
-  /** Draws the scene to the canvas: through the transition pass while a painted overlay is in force, else directly. */
+  /** E11c: runs fn with the authoring furniture hidden and the selection highlight off, restoring every visibility after it.
+   * Nested calls share the outer toggle. */
+  private withTransitionClean<T>(fn: () => T): T {
+    if (this.transitionClean) return fn();
+    const u = this.particleMaterial.uniforms, selected = u.uEditHasSelection.value;
+    const visibility = this.scene.children.map(o => [o, o.visible] as const);
+    this.transitionClean = true;
+    try { u.uEditHasSelection.value = 0; for (const [o] of visibility) if (o !== this.particlePoints) o.visible = false; return fn(); }
+    finally { this.transitionClean = false; u.uEditHasSelection.value = selected; for (const [o, v] of visibility) o.visible = v; }
+  }
+  /** Draws the scene to the canvas: through the transition pass while a painted overlay is in force, else directly.
+   * E11c: a painted frame is drawn clean, the same view its held side was captured in. */
   private presentScene() {
+    if (this.transitionPass.active && !this.transitionClean) { this.withTransitionClean(() => this.presentScene()); return; }
     if (!this.transitionPass.present(this.renderer, this.scene, this.camera, null)) this.renderer.render(this.scene, this.camera);
   }
 
@@ -1544,6 +1559,8 @@ export class PointCloudField {
       sizeScale *= this.viewHeight() / h;
     }
     this.particleMaterial.uniforms.uPixelRatio.value = sizeScale;
+    // E11c: a painted transition frame is opaque (see transitionPass.ts); the capture result says so on the canvas.
+    const painted = this.transitionPass.active;
     try {
       if(!this.transitionPass.present(this.renderer,this.scene,camera,target)){this.renderer.setRenderTarget(target); this.renderer.clear(); this.renderer.render(this.scene,camera);}
       const bytes=new Uint8Array(width*height*4);this.renderer.readRenderTargetPixels(target,0,0,width,height,bytes);
@@ -1551,7 +1568,9 @@ export class PointCloudField {
       const ctx=out.getContext('2d')!;const image=ctx.createImageData(width,height);
       for(let y=0;y<height;y++) image.data.set(bytes.subarray((height-1-y)*width*4,(height-y)*width*4),y*width*4);
       for(let i=0;i<image.data.length;i+=4){const alpha=image.data[i+3];if(alpha>0&&alpha<255){image.data[i]=Math.min(255,Math.round(image.data[i]*255/alpha));image.data[i+1]=Math.min(255,Math.round(image.data[i+1]*255/alpha));image.data[i+2]=Math.min(255,Math.round(image.data[i+2]*255/alpha));}}
-      ctx.putImageData(image,0,0);return out;
+      ctx.putImageData(image,0,0);
+      if (painted) out.dataset.transitionOpaque = 'painted-frame-opaque';
+      return out;
     } finally {this.renderer.setRenderTarget(previous);this.particleMaterial.uniforms.uPixelRatio.value=pixelRatio;this.particleMaterial.uniforms.uEditHasSelection.value=selected;for(const [o,v] of visibility)o.visible=v;target.dispose();}
   }
 
