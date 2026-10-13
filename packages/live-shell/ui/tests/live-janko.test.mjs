@@ -44,6 +44,7 @@ const input = await import('../src/live/janko/jankoInput.ts')
 const device = await import('../src/live/janko/JankoDevice.tsx')
 const torus = await import('../src/live/torusInstrument.ts')
 const kernelWindow = await import('../src/native/liveJankoWindow.ts')
+const midi = await import('../src/native/liveMidi.ts')
 const chain = await import('../src/components/DeviceChainPanel.tsx')
 const fixture = name => JSON.parse(readFileSync(new URL(`fixtures/${name}`, import.meta.url), 'utf8'))
 import {readFileSync} from 'node:fs'
@@ -283,4 +284,162 @@ test('the frame\'s chord reaches the owner through the one host-command channel 
     await new Promise(resolve => setTimeout(resolve, 0))
   } finally { torus.setLiveInstrumentCommander(null) }
   assert.deepEqual(sent, [{command: 'janko', action: 'play', pitch_classes: [2], amplitude: input.JANKO_DEFAULT_AMPLITUDE}])
+})
+
+// ── 7 — MIDI joins the one input path (T-LIVE-MIDI, first leg) ─────────────
+
+const tick = () => new Promise(resolve => setTimeout(resolve, 0))
+
+test('a MIDI note on reaches the same janko stage command as a pointer press, and the owner receives the velocity as its strike', async () => {
+  const pointerSent = []
+  const midiSent = []
+  const pointerPath = input.createJankoInput({send: command => { pointerSent.push(command); return Promise.resolve({ok: true}) }})
+  const midiPath = input.createJankoInput({send: command => { midiSent.push(command); return Promise.resolve({ok: true}) }})
+  pointerPath.down({kind: 'down', pitchClass: 4, source: 'pointer'})
+  midiPath.down(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 64, velocity: 127, on: true}))
+  await tick()
+  assert.equal(pointerSent.length, 1)
+  assert.equal(midiSent.length, 1)
+  assert.equal(midiSent[0].command, 'janko')
+  assert.equal(midiSent[0].action, 'play')
+  assert.deepEqual(midiSent[0].pitch_classes, pointerSent[0].pitch_classes, 'note 64 is pitch class 4, as the pointer key is')
+  assert.equal(midiSent[0].amplitude, 1, 'velocity 127 strikes at 127/127')
+  // And through the owner's channel: the frame receives the same command.
+  const frame = []
+  torus.setLiveInstrumentCommander(async command => { frame.push(command); return {ok: true} })
+  try {
+    const path = input.createJankoInput({send: command => torus.commitLiveStage(command)})
+    path.down(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 64, velocity: 64, on: true}))
+    await tick()
+  } finally { torus.setLiveInstrumentCommander(null) }
+  assert.deepEqual(frame, [{command: 'janko', action: 'play', pitch_classes: [4], amplitude: 64 / 127}])
+})
+
+test('velocity is the strike for MIDI and replaces pressure; every other source keeps its own law', () => {
+  assert.equal(input.strikeAmplitude({source: 'midi', velocity: 0.5, pressure: 0.9}), 0.5, 'velocity replaces pressure')
+  assert.equal(input.strikeAmplitude({source: 'midi', velocity: 1}), 1)
+  assert.equal(input.strikeAmplitude({source: 'midi', velocity: null}), input.JANKO_DEFAULT_AMPLITUDE, 'a MIDI note without a velocity strikes at the owner default')
+  for (const velocity of [0, -1, 2, NaN, Infinity]) {
+    const amplitude = input.strikeAmplitude({source: 'midi', velocity})
+    assert.ok(amplitude > 0 && amplitude <= 1, String(velocity))
+  }
+  assert.equal(input.strikeAmplitude({source: 'pointer', pressure: 1, velocity: 0.3}), 0.9, 'the pen law is unchanged, and velocity is ignored outside MIDI')
+  assert.equal(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 127, on: true}).velocity, 1)
+})
+
+test('a note-on at velocity 0 is a release, and so is a note-off: neither is a second act, and the key is let go', async () => {
+  assert.equal(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 0, on: true}).kind, 'up')
+  assert.equal(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 90, on: false}).kind, 'up')
+  const sent = []
+  const path = input.createJankoInput({send: command => { sent.push(command); return Promise.resolve({ok: true}) }})
+  path.down(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 100, on: true}))
+  await tick()
+  assert.deepEqual(path.held(), [0])
+  path.up(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 0, on: true}))
+  path.up(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 0, on: false}))
+  await tick()
+  assert.equal(sent.length, 1, 'a release sends nothing')
+  assert.deepEqual(path.held(), [])
+})
+
+test('the notes of one host batch are one chord, one owner act; a later batch is its own act', async () => {
+  const sent = []
+  const path = input.createJankoInput({send: command => { sent.push(command); return Promise.resolve({ok: true}) }})
+  const deliver = batch => {
+    for (const note of batch) {
+      const event = midi.midiNoteEvent(note)
+      if (event.kind === 'down') path.down(event)
+      else path.up(event)
+    }
+  }
+  deliver([
+    {port: 'Keys', channel: 0, note: 60, velocity: 100, on: true},
+    {port: 'Keys', channel: 0, note: 64, velocity: 90, on: true},
+    {port: 'Keys', channel: 0, note: 67, velocity: 80, on: true},
+  ])
+  await tick()
+  assert.deepEqual(sent.map(c => c.pitch_classes), [[0, 4, 7]], 'one chord')
+  assert.equal(sent[0].amplitude, 100 / 127, 'the chord strikes at its loudest note')
+  deliver([{port: 'Keys', channel: 0, note: 64, velocity: 0, on: true}])
+  assert.equal(sent.length, 1, 'a release in a later batch is no second act')
+  deliver([{port: 'Keys', channel: 0, note: 69, velocity: 110, on: true}])
+  await tick()
+  assert.deepEqual(sent.map(c => c.pitch_classes), [[0, 4, 7], [9]], 'a later batch is its own act')
+})
+
+test('outside the native host MIDI is a named absence: no listener is attached, no note arrives, and the device says why', () => {
+  const states = []
+  const notes = []
+  const off = midi.subscribeLiveMidi({native: false, onNotes: batch => notes.push(batch), onState: state => states.push(state)})
+  off()
+  assert.deepEqual(states, [{kind: 'refused', reason: midi.LIVE_MIDI_ABSENT}])
+  assert.deepEqual(notes, [])
+  assert.deepEqual(midi.liveMidiInitial(false), {kind: 'refused', reason: midi.LIVE_MIDI_ABSENT})
+  const markup = renderToStaticMarkup(React.createElement(device.JankoDeviceView, {windowState: null}))
+  assert.match(markup, /MIDI input refused: this window is not the native O:I host, so it has no MIDI access/)
+  assert.match(markup, /data-janko-midi="refused"/)
+})
+
+test('the one MIDI line names the ports the host hears, no connected input, or the named refusal; it is not a modal', () => {
+  assert.equal(midi.liveMidiLine({kind: 'ports', ports: ['Keys', 'Pads'], refusal: null}), 'MIDI input: Keys, Pads')
+  assert.equal(midi.liveMidiLine({kind: 'ports', ports: [], refusal: null}), 'no MIDI input connected')
+  assert.equal(midi.liveMidiLine({kind: 'ports', ports: [], refusal: 'MIDI input could not start: no client'}), 'MIDI input refused: MIDI input could not start: no client')
+  assert.equal(midi.liveMidiLine({kind: 'ports', ports: ['Keys'], refusal: 'Pads could not be opened: busy'}), 'MIDI input: Keys (Pads could not be opened: busy)')
+  assert.equal(midi.liveMidiLine({kind: 'reading'}), 'MIDI input: reading the native host')
+  const heard = renderToStaticMarkup(React.createElement(device.JankoDeviceView, {windowState: null, initialMidi: {kind: 'ports', ports: ['Keys'], refusal: null}}))
+  assert.match(heard, /data-janko-midi="ports"[^>]*>MIDI input: Keys</)
+  const silent = renderToStaticMarkup(React.createElement(device.JankoDeviceView, {windowState: null, initialMidi: {kind: 'ports', ports: [], refusal: null}}))
+  assert.match(silent, /no MIDI input connected/)
+  assert.doesNotMatch(silent, /role="dialog"|aria-modal/)
+})
+
+test('the device hears the host while mounted: notes in one batch, the port state, and nothing after it unmounts', async () => {
+  const handlers = new Map()
+  const stopped = []
+  const listen = async (event, handler) => { handlers.set(event, handler); return () => { stopped.push(event) } }
+  const states = []
+  const batches = []
+  const off = midi.subscribeLiveMidi({native: true, listen, onNotes: batch => batches.push(batch), onState: state => states.push(state)})
+  await tick(); await tick()
+  assert.deepEqual(states[0], {kind: 'reading'})
+  const notesHandler = handlers.get(midi.MIDI_NOTE_EVENT)
+  const portsHandler = handlers.get(midi.MIDI_PORTS_EVENT)
+  portsHandler({payload: {ports: ['Keys'], refusal: null}})
+  assert.deepEqual(states.at(-1), {kind: 'ports', ports: ['Keys'], refusal: null})
+  notesHandler({payload: [
+    {port: 'Keys', channel: 0, note: 60, velocity: 100, on: true},
+    {port: 'Keys', channel: 0, note: 64, velocity: 100, on: true},
+  ]})
+  assert.equal(batches.length, 1)
+  assert.equal(batches[0].length, 2, 'one batch: the chord arrived together')
+  off()
+  assert.deepEqual(stopped.sort(), [midi.MIDI_NOTE_EVENT, midi.MIDI_PORTS_EVENT].sort(), 'both listeners are released on unmount')
+  notesHandler({payload: [{port: 'Keys', channel: 0, note: 62, velocity: 100, on: true}]})
+  portsHandler({payload: {ports: [], refusal: null}})
+  assert.equal(batches.length, 1, 'a note after unmount reaches nothing')
+  assert.deepEqual(states.at(-1), {kind: 'ports', ports: ['Keys'], refusal: null}, 'and no state after unmount')
+})
+
+test('an unmount before the host answers still releases the listeners as they arrive', async () => {
+  const stopped = []
+  const waiting = []
+  const listen = event => new Promise(resolve => waiting.push(() => resolve(() => stopped.push(event))))
+  const off = midi.subscribeLiveMidi({native: true, listen, onNotes: () => {}, onState: () => {}})
+  off()
+  for (const release of waiting.splice(0)) release()
+  await tick(); await tick()
+  assert.equal(stopped.length, 2)
+})
+
+test('a malformed host payload is refused by name and plays nothing', async () => {
+  const handlers = new Map()
+  const states = []
+  const batches = []
+  const off = midi.subscribeLiveMidi({native: true, listen: async (event, handler) => { handlers.set(event, handler); return () => {} }, onNotes: b => batches.push(b), onState: s => states.push(s)})
+  await tick(); await tick()
+  handlers.get(midi.MIDI_NOTE_EVENT)({payload: [{port: 'Keys', channel: 0, note: 200, velocity: 100, on: true}]})
+  handlers.get(midi.MIDI_PORTS_EVENT)({payload: {ports: 'Keys'}})
+  off()
+  assert.deepEqual(batches, [])
+  assert.equal(states.filter(s => s.kind === 'refused').length, 2)
 })

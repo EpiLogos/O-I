@@ -1,7 +1,8 @@
 // The Jankó instrument device (T-LIVE-JANKO-DEVICE): the Live keyboard row beside the torus. Two layouts, one input path. The Jankó surface is the
 // owner's window (jankoLayout.ts); the piano is the admitted alternative. Every key sends its pitch class through the one input path
 // (jankoInput.ts) as a janko stage command; the owner answers, and a refusal is named here. The computer keyboard plays only while the
-// keyboard holds focus, never from editable text, and never with a modifier held.
+// keyboard holds focus, never from editable text, and never with a modifier held. MIDI from the native host joins the same path (liveMidi.ts):
+// a hardware controller plays whether or not the keyboard holds focus, and only while this device is mounted.
 
 import {useEffect, useMemo, useState, type KeyboardEvent, type PointerEvent} from 'react'
 import {commitLiveStage, useLiveTorusReading} from '../torusInstrument'
@@ -9,6 +10,7 @@ import {
   JANKO_PLACEMENT_NOTE, pianoKeys, useLiveJankoWindow, type JankoKey, type JankoWindowState,
 } from './jankoLayout'
 import {requestLiveJankoWindow} from '../../native/liveJankoWindow'
+import {liveMidiInitial, liveMidiLine, midiNoteEvent, subscribeLiveMidi, type LiveMidiState} from '../../native/liveMidi'
 import {useLiveModeInForce} from '../../native/liveModeCatalogue'
 import {pitchMask} from '../modes'
 import {COMPUTER_KEY_PITCH, createJankoInput, keyboardGate, type JankoInput, type NoteEvent} from './jankoInput'
@@ -33,16 +35,30 @@ export function JankoDevice() {
   return <JankoDeviceView windowState={windowState} modeMask={mask} modeLine={mode.state === 'in-force' ? mode.line : null}/>
 }
 
-export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask = null, modeLine = null}: {windowState: JankoWindowState | null; initialLayout?: JankoLayout; modeMask?: readonly boolean[] | null; modeLine?: string | null}) {
+export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask = null, modeLine = null, initialMidi = null}: {windowState: JankoWindowState | null; initialLayout?: JankoLayout; modeMask?: readonly boolean[] | null; modeLine?: string | null; initialMidi?: LiveMidiState | null}) {
   const [layout, setLayout] = useState<JankoLayout>(initialLayout)
   const [armed, setArmed] = useState(false)
   const [held, setHeld] = useState<readonly number[]>([])
   const [refusal, setRefusal] = useState<string | null>(null)
+  const [midi, setMidi] = useState<LiveMidiState>(() => initialMidi ?? liveMidiInitial())
   const input: JankoInput = useMemo(() => createJankoInput({
     send: command => commitLiveStage(command),
     onResult: result => setRefusal(result.ok ? null : result.error),
     onHeld: setHeld,
   }), [])
+  // MIDI joins the one input path. A hardware controller is explicit input, so it plays whether or not the keyboard holds focus; it is heard
+  // only while this device is mounted, and the unsubscribe on unmount releases the host's listeners.
+  useEffect(() => subscribeLiveMidi({
+    onState: setMidi,
+    onNotes: notes => {
+      setRefusal(null)
+      for (const note of notes) {
+        const event = midiNoteEvent(note)
+        if (event.kind === 'down') input.down(event)
+        else input.up(event)
+      }
+    },
+  }), [input])
   const press = (pitchClass: number, source: NoteEvent['source'], pressure?: number | null) => {
     setRefusal(null)
     input.down({kind: 'down', pitchClass, source, pressure})
@@ -108,6 +124,7 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
       </div>
       <p className="janko-hint">Focus the keyboard to play it from the computer keyboard (A–J row). Typing in a text field never plays a note.</p>
       <p className="janko-placement" data-janko-placement>{JANKO_PLACEMENT_NOTE}</p>
+      <p className="janko-note" data-janko-midi={midi.kind}>{liveMidiLine(midi)}</p>
       {refusal !== null && <p className="janko-note is-fault" role="alert" data-janko-refusal>{`Not sounded: ${refusal}`}</p>}
     </section>
   )

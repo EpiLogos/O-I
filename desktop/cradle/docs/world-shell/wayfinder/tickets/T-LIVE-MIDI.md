@@ -20,3 +20,21 @@ excitation, with measured latency.
   boundary.
 - Native: play the torus from a hardware MIDI controller; measured
   input-to-sound latency within packet A's budget.
+
+## Progress
+
+- Leg 1: MIDI input reaches the Jankó keyboard's one input path. The
+  native host (`src-tauri/src/midi.rs`, midir on CoreMIDI) opens every
+  input port, follows ports coming and going, and emits note-on/off to the
+  main window as `oi://midi-note` (a batch per drain, so a chord that
+  arrives together is one act); velocity 0 is a release. The shell
+  (`native/liveMidi.ts`) hands each note to `createJankoInput` as
+  `source: 'midi'` (velocity/127 is the strike), so it reaches the same
+  `janko` stage command as a pointer press. The device names the ports it
+  hears, "no MIDI input connected", or the absence outside the native host.
+  `midi_inputs` is granted to the main window and classified
+  `input-device` in the authority register.
+- Open: key/MIDI mapping of parameters and recording them as automation;
+  mappings persisted with the set; MIDI out; the latency budget asserted at
+  the engine boundary; the native run with a hardware controller and the
+  measured input-to-sound latency.

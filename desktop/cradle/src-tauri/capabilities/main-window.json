@@ -9,6 +9,7 @@
     "allow-arrangement-menu",
     "allow-kernel-op",
     "allow-kernel-event-log",
+    "allow-midi-inputs",
     "allow-window-detach",
     "allow-window-binding",
     "allow-window-redock",
