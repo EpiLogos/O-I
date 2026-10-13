@@ -34,3 +34,19 @@ export function graphAddress(node:GraphNode):KnowledgeAddress|undefined {
   if(node.kind==="file"||node.kind==="knowledge-source")return {kind:"source",value:node.ref};
   throw new Error(`The existing kernel read path does not admit ${node.kind}: ${node.ref}`);
 }
+/** The camera that centres a set of world points in the extent, within the
+ * zoom limits and a screen margin. It follows `screenPoint` (camera.ts): world
+ * (400,260) is the presented origin, so the centre maps to the extent centre.
+ * Undefined when there is nothing finite to fit; a single point clamps to the
+ * maximum zoom rather than dividing by a zero span. */
+export function graphFitCamera(points:readonly {x:number;y:number}[],extent:{width:number;height:number},limits:{minZoom:number;maxZoom:number},margin=48):{zoom:number;x:number;y:number}|undefined{
+  const finite=points.filter(point=>point&&Number.isFinite(point.x)&&Number.isFinite(point.y));
+  if(!finite.length||![extent.width,extent.height,limits.minZoom,limits.maxZoom,margin].every(Number.isFinite)||extent.width<=0||extent.height<=0)return undefined;
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  for(const point of finite){minX=Math.min(minX,point.x);maxX=Math.max(maxX,point.x);minY=Math.min(minY,point.y);maxY=Math.max(maxY,point.y);}
+  const usableWidth=Math.max(1,extent.width-2*margin),usableHeight=Math.max(1,extent.height-2*margin);
+  const spanX=Math.max(1,maxX-minX),spanY=Math.max(1,maxY-minY);
+  const zoom=Math.min(limits.maxZoom,Math.max(limits.minZoom,Math.min(usableWidth/spanX,usableHeight/spanY)));
+  const centreX=(minX+maxX)/2,centreY=(minY+maxY)/2;
+  return {zoom,x:-(centreX-400)*zoom,y:-(centreY-260)*zoom};
+}
