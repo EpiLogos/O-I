@@ -12,6 +12,8 @@ import {recoveryOffer,planRecoveryChoice,bootWasUnclean,type RecoveryChoice} fro
 import type {RecoveryRecord} from '../../../src/expressions/recoveryTypes';
 import {hostedRecovery,hostedScope,recoveryBinding,selectedRecovery,draftRecoveryAddress,selectNativeRecovery} from './nativeRecovery.js';
 import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocument} from './kernelDocumentBridge.js';
+import {nestedDocumentReads} from './nestedReads.js';
+import {type NestedDocumentLike,type NestedGraph} from './nestedOccurrence.js';
 import {nativeConnections} from './nativeCorrespondence.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
 import {prepareCompositionEdit} from './kernelComposition.js';
@@ -43,6 +45,8 @@ export interface NativeWorkspaceHost {
  version:()=>number;
  load:(view:KernelConversion,preservePosition?:boolean,history?:'record'|'acknowledge')=>void;
  toast:(message:string,duration?:number)=>void;
+ /** Re-render the open Expression's surfaces when nested documents arrive (E14). */
+ refresh?:()=>void;
  summon:(kind:'library'|'verso'|'search',subject?:NativeSubject)=>void;
  correspondence:(rows:Record<string,ConnectionBinding[]>,selection:string|null)=>void;
  /** The working document's truthful standing, shown by the app's own Save
@@ -90,6 +94,8 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
  let busy=false,notice='',lastFailure=false,restoreGeneration=0;const bootState={booted:false};
  let ownerIdle:Promise<void>=Promise.resolve();
  let queuedMutations=0;
+ // E14: the nested documents the open Expression names (nestedDocumentReads).
+ const nested=nestedDocumentReads(readKernelExpression,()=>host.refresh?.());
  const status=(text:string)=>{notice=text;update();};
  const update=()=>{
   const state=work.state,doc=state?.view?.document;
@@ -431,7 +437,11 @@ const settleRecovery=async(found:{record:NativeWorkingRecord;journey:Journey;rec
    });
    if(!succeeded)throw new Error(notice||'The native source insertion was not acknowledged.');
   },
-  nativeView:()=>work.state?.view,
+  nativeView:()=>{const view=work.state?.view;return view?nested.view(view):undefined;},
+  /** The nested documents read so far (E14). The verdict of a placement is taken from it. */
+  nestedGraph:():NestedGraph=>nested.graph(),
+  readNested:(root:string,maxDepth:number):Promise<void>=>nested.readNested(root,maxDepth),
+  nestedDocument:(ref:string):NestedDocumentLike|undefined=>nested.document(ref),
   blueprint:async(intent:BlueprintIntent):Promise<void>=>{
    const captured=clone(intent);
    const succeeded=await mutate(async()=>{

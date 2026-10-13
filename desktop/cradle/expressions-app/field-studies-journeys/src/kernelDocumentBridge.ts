@@ -176,6 +176,28 @@ function convertEntity(input:KernelEntity,id:string,notes:string[],document?:Ker
  }
  return out;
 }
+/** E14: the verdict on one nested body. It is evaluated against the graph of
+ * documents read so far, and must hold a free member slot on the page it sits on. */
+export function nestedVerdictFor(host:string,body:Parameters<typeof nestedEvaluation>[1],loadedOnPage:number,graph:NestedGraph):NestedBinding{
+ const verdict=nestedEvaluation(host,body,graph);
+ const slot=verdict.state!=='refused'?nestedWindowVerdict(loadedOnPage):null;
+ return slot?{subject_ref:verdict.subject_ref,max_depth:verdict.max_depth,state:'refused',reason:slot}:verdict;
+}
+/** E14: re-derive the nested verdicts of an open conversion against the graph
+ * of nested documents the workspace has read. The conversion itself is not
+ * changed beyond its bindings' `nested` field; a view with no nested body is
+ * returned as it is. */
+export function withNestedVerdicts(view:KernelConversion,graph:NestedGraph):KernelConversion{
+ let changed=false;
+ const bindings:Record<string,SceneBinding>={};
+ for(const [id,binding] of Object.entries(view.bindings)){
+  if(!isNestedBody(binding.body)){bindings[id]=binding;continue;}
+  changed=true;
+  bindings[id]={...binding,nested:nestedVerdictFor(view.document.expression_ref,binding.body,binding.loaded_refs.length,graph)};
+ }
+ return changed?{...view,bindings}:view;
+}
+
 /** The whole native material, before any renderer budget is applied. */
 export function nativeSceneMaterial(doc:KernelExpressionDocument,s:KernelScene):Scene{
  if(s.presentation){
@@ -252,9 +274,7 @@ export function kernelDocumentToJourney(raw:unknown,options:ViewOptions={}):Kern
   const sceneBody=validateSceneBody(clone(s.body??null));
   let nestedVerdict:NestedBinding|null=null;
   if(isNestedBody(sceneBody)){
-   nestedVerdict=nestedEvaluation(doc.expression_ref,sceneBody,options.nestedDocuments??new Map());
-   const slot=nestedVerdict.state!=='refused'?nestedWindowVerdict(loaded.length):null;
-   if(slot)nestedVerdict={subject_ref:nestedVerdict.subject_ref,max_depth:nestedVerdict.max_depth,state:'refused',reason:slot};
+   nestedVerdict=nestedVerdictFor(doc.expression_ref,sceneBody,loaded.length,options.nestedDocuments??new Map());
    if(nestedVerdict.state==='refused')notes.push(`${s.scene_ref}: nested expression ${sceneBody.subject_ref} refused: ${nestedVerdict.reason}`);
   }
   const occurrenceIds=new Map([...converted].map(([ref,e])=>[ref,e.id]));
