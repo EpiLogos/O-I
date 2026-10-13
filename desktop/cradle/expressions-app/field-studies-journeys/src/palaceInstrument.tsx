@@ -40,7 +40,13 @@ import {
  type PalaceChange,type PalaceDocumentSnapshot,type PalaceRegionSpec,
 } from '../../../src/techne/m0m5/palace/composition';
 import type {KernelConversion} from './kernelDocumentBridge.js';
-import {palaceInstrumentBasis,samePalaceInstrumentBasis,assertPalaceSource,samePalaceComposition} from './palaceInstrumentBasis';
+import {palaceInstrumentBasis,samePalaceInstrumentBasis,assertPalaceSource,samePalaceComposition,type PalaceInstrumentBasis} from './palaceInstrumentBasis';
+import {readTechneReading,type TechneSceneReadingRequest} from './kernelExpressions.js';
+import {assertInstrumentReadingScope} from './researchInstrumentsData';
+import {validateReading,type TechneReading} from '../../../src/techne/contract';
+import {palaceComposition,storeComposition} from '../../../src/techne/m0m5/palace/palace-state';
+import type {PalaceRegionEntry} from '../../../src/techne/m0m5/palace/regions';
+import {palaceGuidedEdges,palaceOpenRoute,palaceWalkAt,palaceWalkResume,palaceWalkSteps,palaceWholeView,SCENE_REGION_STANDING,type PalaceGuidedEdge} from './palaceWhole';
 import './palaceInstrument.css';
 
 export interface PalaceKernelExpression {expression_ref:string;title:string;revision:number}
@@ -69,7 +75,16 @@ export interface PalaceInstrumentHost {
  /** Opens one contained object independently — the same summon path the
   * Studio's own "open source" affordance uses. */
  openExpression:(ref:string)=>void;
+ /** The integral whole's reading (lane-5 T14): the Expression-wide Technè
+  * reading over the same native channel the journey instrument reads. Absent
+  * means the default channel, `readTechneReading`. */
+ readReading?:(request:TechneSceneReadingRequest)=>Promise<unknown>;
 }
+
+/** The Expression refs this surface can summon directly: the Expression summon
+ * path (`openExpression`). Any other instrument an integral entry names is
+ * refused by name in the status line, never silently dropped. */
+const WIRED_INSTRUMENTS=new Set<string>(['expressions']);
 
 const DEFAULT_REGION='Palace';
 
@@ -77,7 +92,15 @@ const DEFAULT_REGION='Palace';
  * member (or null while empty). */
 interface RegionDraft {name:string;scene_ref:string|null;member:PalaceRegionSpec['member']}
 
-function PalacePanel({host,doc,onMessage}:{host:PalaceInstrumentHost;doc:PalaceDocumentSnapshot&{title:string};onMessage:(text:string)=>void}) {
+/** T16: the connector between two guided-path cards. A plain path is a bare
+ * line; a gap, a broken edge and a self reference name themselves in words. */
+function EdgeNote({edge}:{edge:PalaceGuidedEdge|undefined}){
+ if(!edge)return null;
+ return <div className={`palace-edge palace-edge-${edge.kind}`} data-edge={edge.kind} aria-label={edge.reason} title={edge.reason}>{edge.kind==='path'?'':edge.reason}</div>;
+}
+
+/** `reading` is undefined while the whole's reading is still returning. */
+export function PalacePanel({host,doc,reading,readingReason,onMessage}:{host:PalaceInstrumentHost;doc:PalaceDocumentSnapshot&{title:string};reading:TechneReading|null|undefined;readingReason:string|null;onMessage:(text:string)=>void}) {
  const [draftDoc,setDraftDoc]=useState(doc);
  const [draftAuthoredRevision,setDraftAuthoredRevision]=useState(()=>host.authoredRevision());
  const lifetime=useRef({live:true,generation:0});
@@ -89,12 +112,37 @@ function PalacePanel({host,doc,onMessage}:{host:PalaceInstrumentHost;doc:PalaceD
  const [regions,setRegions]=useState<RegionDraft[]>(initial);
  const [removed,setRemoved]=useState<string[]>([]);
  const [eligible,setEligible]=useState<PalaceKernelExpression[]>([]);
+ const [eligibleKnown,setEligibleKnown]=useState(false);
  const [busy,setBusy]=useState(false);
  const [newRegion,setNewRegion]=useState('');
 
- useEffect(()=>{let live=true;void host.listExpressions().then(list=>{if(live)setEligible(list.filter(entry=>entry.expression_ref!==doc.expression_ref));}).catch(error=>{if(live)onMessage(error instanceof Error?error.message:String(error));});return()=>{live=false;};},[doc.expression_ref]);
+ useEffect(()=>{let live=true;void host.listExpressions().then(list=>{if(live){setEligible(list.filter(entry=>entry.expression_ref!==doc.expression_ref));setEligibleKnown(true);}}).catch(error=>{if(live)onMessage(error instanceof Error?error.message:String(error));});return()=>{live=false;};},[doc.expression_ref,doc.revision]);
 
  const containedRefs=useMemo(()=>new Set(regions.flatMap(region=>region.member?[region.member.expression_ref]:[])),[regions]);
+ // T16: the live Expression refs. Null until the owner's list is known, so a
+ // member is never called broken on a list that has not yet arrived.
+ const liveRefs=useMemo(()=>eligibleKnown?new Set(eligible.map(entry=>entry.expression_ref)):null,[eligible,eligibleKnown]);
+ // T16: the guided path's edges, re-derived from the Scene order on every render.
+ const guided=useMemo(()=>palaceGuidedEdges(regions.map(region=>({name:region.name,member_ref:region.member?.expression_ref??null})),doc.expression_ref,liveRefs),[regions,doc.expression_ref,liveRefs]);
+ // T14/T17: the integral whole and its walk, from the reading the Palace read.
+ // `whole` is null while the reading is still returning.
+ const whole=useMemo(()=>reading===undefined?null:palaceWholeView(reading),[reading]);
+ const walkSteps=useMemo(()=>palaceWalkSteps(reading??null),[reading]);
+ // The walk stands where the visitor last left it (the session presentation composition), wrapped into the walk as it now stands.
+ const [walkMoved,setWalkMoved]=useState<number|undefined>(undefined);
+ const walkIndex=palaceWalkAt(walkSteps,walkMoved??palaceWalkResume(reading?palaceComposition(reading).walk_index:undefined,walkSteps.length)).index;
+ const focus=palaceWalkAt(walkSteps,walkIndex).step;
+ function moveWalk(next:number){
+  const index=palaceWalkAt(walkSteps,next).index;
+  setWalkMoved(index);
+  // The walk position rides the Palace's own session presentation composition, never a new store.
+  if(reading)storeComposition({...palaceComposition(reading),walk_index:index});
+ }
+ function openWhole(entry:PalaceRegionEntry){
+  const route=palaceOpenRoute(entry,WIRED_INSTRUMENTS);
+  if(route.kind==='refused'){onMessage(`Refused: ${route.reason}.`);return;}
+  host.openExpression(route.ref);
+ }
 
  function createRegion(name:string,member:PalaceRegionSpec['member']){
   setRegions(current=>[...current,{name,scene_ref:regionSceneRef(doc.expression_ref,name),member}]);
@@ -191,9 +239,41 @@ function PalacePanel({host,doc,onMessage}:{host:PalaceInstrumentHost;doc:PalaceD
   </header>
   {doc.revision>draftDoc.revision&&<p role="status">This draft began at revision {draftDoc.revision}. The owner now discloses revision {doc.revision}; your input is retained. Revert explicitly takes the current composition.</p>}
   <div className="palace-body">
+   <section className="palace-whole" aria-label="Integral whole">
+    <h3>Integral whole</h3>
+    {whole===null
+     ?<p className="palace-empty">Reading the integral whole…</p>
+     :!whole.available
+      ?<p className="palace-empty">{whole.reason?`Unavailable: ${whole.reason}.`:readingReason?`Unavailable: ${readingReason}.`:'The reading is not yet disclosed.'}</p>
+      :<>
+      <div className="palace-walk" role="group" aria-label="Integral walk">
+       <button type="button" disabled={busy||walkSteps.length===0} onClick={()=>moveWalk(0)}>Start walk</button>
+       <button type="button" disabled={busy||walkSteps.length===0} onClick={()=>moveWalk(walkIndex-1)} aria-label="Previous locus">←</button>
+       <button type="button" disabled={busy||walkSteps.length===0} onClick={()=>moveWalk(walkIndex+1)} aria-label="Next locus">→</button>
+       <span className="palace-walk-readout">{focus?`Locus ${walkIndex+1} of ${walkSteps.length} · ${focus.office} · ${focus.ref}`:'Nothing stands in the whole, so the walk focuses nothing.'}</span>
+      </div>
+      {whole.regions.map(region=>
+       <div className={`palace-whole-region palace-standing-${region.standing.standing}`} key={region.key} data-region={region.key}>
+        <div className="palace-region-head"><h3>{region.office}</h3><span className="palace-note">{region.m_prime===null?'close':`M′${region.m_prime}`}</span></div>
+        <p className="palace-standing" data-standing={region.standing.standing}>{region.standing.line}</p>
+        <ul className="palace-whole-entries">{region.entries.map((entry,index)=>{
+         const focused=focus?.region===region.key&&focus.ref===entry.ref;
+         const route=palaceOpenRoute(entry,WIRED_INSTRUMENTS);
+         return <li key={`${entry.kind}:${entry.ref}:${index}`} data-walk-focus={focused?'true':undefined}>
+          <span className="palace-ref" title={entry.ref}>{entry.ref}</span>
+          <span className="palace-note">{entry.label}{entry.note?` · ${entry.note}`:''}</span>
+          <span className="palace-member-controls">
+           <button type="button" disabled={busy} onClick={()=>openWhole(entry)} title={route.kind==='refused'?route.reason:`Open in its own instrument`}>Open</button>
+          </span>
+         </li>;
+        })}</ul>
+       </div>)}
+     </>}
+   </section>
    <section className="palace-regions" aria-label="Regions and guided path">
     {regions.map((region,index)=>
-     <div className="palace-region" key={region.name}>
+     <React.Fragment key={region.name}>
+     <div className="palace-region palace-standing-free" data-standing="free">
       <div className="palace-region-head">
        <h3>{region.name}</h3>
        <div className="palace-region-controls">
@@ -202,6 +282,7 @@ function PalacePanel({host,doc,onMessage}:{host:PalaceInstrumentHost;doc:PalaceD
         <button type="button" disabled={busy||regions.length<=1} onClick={()=>removeRegion(region.name)}>Remove region</button>
        </div>
       </div>
+      <p className="palace-standing">{SCENE_REGION_STANDING.line}</p>
       {region.member
        ?<div className="palace-region-member">
          <p className="palace-primary-note">Contained Expression (native Scene body, Portal-openable):</p>
@@ -212,7 +293,9 @@ function PalacePanel({host,doc,onMessage}:{host:PalaceInstrumentHost;doc:PalaceD
           </span></div>
         </div>
        :<p className="palace-empty">No contained Expression yet — add one from the eligible list.</p>}
-     </div>)}
+     </div>
+     {index<regions.length-1&&<EdgeNote edge={guided.edges[index]}/>}
+     </React.Fragment>)}
     <div className="palace-add-region">
      <label>New region<input disabled={busy} value={newRegion} onChange={e=>setNewRegion(e.target.value)} maxLength={80} placeholder="Region name"/></label>
      <button type="button" disabled={busy||!newRegion.trim()} onClick={addRegion}>Add region</button>
@@ -261,6 +344,18 @@ export function installPalaceInstrument(host:PalaceInstrumentHost,home:HTMLEleme
  }
  function message(text:string){if(status)status.textContent=text;}
  function unmount(){root?.unmount();root=null;if(mount)mount.replaceChildren();}
+ /** T14: the Expression-wide Technè reading the integral whole composes from.
+  * Never throws: a reading that is absent, invalid or for another basis is
+  * refused by name, and the rest of the Palace still stands. */
+ async function readWhole(doc:PalaceDocumentSnapshot,basis:PalaceInstrumentBasis,view:KernelConversion):Promise<{reading:TechneReading|null;reason:string|null}>{
+  try{
+   const raw=await (host.readReading??readTechneReading)({expression_ref:doc.expression_ref,revision:doc.revision,scene_ref:basis.scene_ref,scope:'expression'});
+   const validation=validateReading(raw);
+   if(!validation.valid)throw Error(`The native Palace reading is invalid: ${validation.errors.join('; ')}`);
+   assertInstrumentReadingScope(raw,view,basis.scene_id);
+   return {reading:raw as TechneReading,reason:null};
+  }catch(error){return {reading:null,reason:error instanceof Error?error.message:String(error)};}
+ }
  async function load(){
   const generation=++epoch;
   const view=host.nativeView(),sceneId=host.sceneId();
@@ -273,7 +368,12 @@ export function installPalaceInstrument(host:PalaceInstrumentHost,home:HTMLEleme
    assertPalaceSource(doc,basis);
    ensureMount();
    root??=createRoot(mount!);
-   root.render(<PalacePanel key={doc.expression_ref} host={host} doc={doc} onMessage={message}/>);
+   // The regions and the Scene path stand at once; the integral whole follows when its reading returns.
+   const draw=(whole:{reading:TechneReading|null|undefined;reason:string|null})=>root!.render(<PalacePanel key={doc.expression_ref} host={host} doc={doc} reading={whole.reading} readingReason={whole.reason} onMessage={message}/>);
+   draw({reading:undefined,reason:null});
+   const whole=await readWhole(doc,basis,view);
+   if(generation!==epoch||destroyed||!open_)return;
+   draw(whole);
   }catch(error){if(generation!==epoch||destroyed)return;message(error instanceof Error?error.message:String(error));}
  }
  async function close_(){

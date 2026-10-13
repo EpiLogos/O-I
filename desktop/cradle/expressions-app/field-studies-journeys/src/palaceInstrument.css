@@ -29,3 +29,24 @@
 .palace-eligible h3{margin:0 0 6px;font:600 12px/1.3 var(--sans,system-ui,sans-serif)}
 .palace-eligible ul{list-style:none;margin:0 0 16px;padding:0;display:flex;flex-direction:column;gap:4px}
 .palace-eligible li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 6px}
+
+/* lane-5 T14/T16/T17/T18 — the integral whole, its walk, its edges and its standing. Tokens only. */
+.palace-whole{border-bottom:1px solid var(--line);padding-bottom:12px;min-width:0}
+.palace-whole>h3{margin:0 0 6px;font:600 12px/1.3 var(--sans,system-ui,sans-serif)}
+.palace-walk{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+.palace-walk button{font:11px/1.2 var(--sans,system-ui,sans-serif);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:5px 8px;cursor:pointer}
+.palace-walk button:disabled{opacity:.45;cursor:default}
+.palace-walk-readout{font:11px/1.4 var(--sans,system-ui,sans-serif);color:var(--muted);min-width:0}
+.palace-whole-region{border:1px solid var(--line);border-radius:6px;padding:10px;margin:0 0 10px;min-width:0}
+.palace-standing{margin:4px 0 6px;font:11px/1.4 var(--sans,system-ui,sans-serif);color:var(--muted)}
+.palace-whole-entries{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.palace-whole-entries li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 6px;border:1px solid transparent;border-radius:4px;min-width:0}
+.palace-whole-entries li[data-walk-focus="true"]{border-color:var(--ink);background:var(--wash)}
+.palace-whole-entries .palace-ref{flex:1 1 auto}
+.palace-note{font:11px/1.4 var(--sans,system-ui,sans-serif);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.palace-standing-warranted{border-left:3px solid var(--ink)}
+.palace-standing-owner{border-left:3px double var(--muted)}
+.palace-standing-free{border-style:dashed}
+.palace-edge{font:11px/1.4 var(--sans,system-ui,sans-serif);color:var(--muted);margin:0 0 4px 16px;padding:2px 8px;border-left:1px solid var(--line)}
+.palace-edge-path{height:10px;padding:0}
+.palace-edge-gap,.palace-edge-broken,.palace-edge-self{color:var(--ink);border-left:2px solid var(--ink)}
