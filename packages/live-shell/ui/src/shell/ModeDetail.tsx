@@ -12,13 +12,19 @@
  *   router's named outcomes) over the encounter's subject — honest absence
  *   until a subject is selected.
  * - Technē · Instruments: the Quaternal Logic family's faces through the
- *   same rack — the six lenses' instruments, the admitted field/PCM owner's
- *   face with its honest refusing state, the declared-waiting faces with
- *   their named owners and dark lamps.
+ *   same rack — the admitted field/PCM owner's face with its honest
+ *   refusing state, the declared-waiting faces with their named owners and
+ *   dark lamps. With a focused instrument (owner ruling, 13 Oct 2026) the
+ *   rack is the instrument families' faces (Quaternal Logic and the atlas),
+ *   the faces that instrument holds docked expanded, the others folded.
+ *   The Device side follows the focused pane's instrument in every mode
+ *   (paneInstrument.ts); this rack is the instrument face in any mode.
  * - Technē lens bar: the six lenses by their plain actual names (the
  *   programme's naming ruling) — timeline and journey drive the landed
- *   World cut's two presentations; the other four hold their places as
- *   declared waiting lenses (the instrument bodies are not mounted here).
+ *   World cut's two presentations; project / graph and places drive the
+ *   Earth atlas's two views; the other two hold their places as declared
+ *   waiting lenses. The bar stands over the centre in every mode whose
+ *   centre holds an instrument pane (paneInstrument.ts showsLensBar).
  *
  * Nothing here invents an owner: every waiting state names its owner, and
  * the rack renders what the manifests declare — no more.
@@ -34,6 +40,8 @@ import {useAtlasView, type AtlasView} from '../projections/atlas/AtlasProjection
 import {ChevronFold, PopOut} from '../inhabitants/sdk/marks.tsx'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import type {WorldTimelineView} from '../projections/useWorldTemporalReading'
+import {ATLAS_FAMILY_ID} from '../projections/atlas/atlasFamilyManifest'
+import type {PaneInstrumentId} from './paneInstrument'
 import './modeSurface.css'
 
 // The door is idempotent (a second identical load composes nothing new);
@@ -48,6 +56,14 @@ const centralManifests = (): readonly InhabitantManifest[] => {
 const qlManifests = (): readonly InhabitantManifest[] => {
   const ql = inhabitantManifest(QUATERNAL_LOGIC_FAMILY_ID)
   return ql ? [ql] : []
+}
+
+/** The instrument families: Quaternal Logic and the ported atlas (its graph
+ * tools, mode switch, globe and time control are held by Technē instruments
+ * in the family declarations, `heldBy`). */
+const instrumentManifests = (): readonly InhabitantManifest[] => {
+  const atlas = inhabitantManifest(ATLAS_FAMILY_ID)
+  return [...qlManifests(), ...(atlas ? [atlas] : [])]
 }
 
 /** Base · Devices — the ground's family on the chain (Rev 4's table). */
@@ -120,11 +136,18 @@ export function BaseDocumentDetail({transport, subject}: {transport: KernelTrans
 
 /** Technē · Instruments — the six lenses' instruments (Rev 4's table): the
  * admitted field/PCM owner's face reads its owner; the declared faces wait,
- * named. */
-export function TechneInstrumentsDetail({transport, instrumentReading}: {transport: KernelTransportStatus; instrumentReading?: unknown}) {
+ * named. With `focusInstrument` (a techne:* holder id) the instrument families'
+ * rack stands with that instrument's faces expanded and the others folded. */
+export function TechneInstrumentsDetail({transport, instrumentReading, focusInstrument}: {
+  transport: KernelTransportStatus
+  instrumentReading?: unknown
+  /** The focused pane's instrument (paneInstrument.ts); absent → the QL rack as it stands. */
+  focusInstrument?: string | null
+}) {
+  const manifests = focusInstrument ? instrumentManifests() : qlManifests()
   return (
-    <div className="mode-detail" data-mode-detail="techne-instruments">
-      <InhabitantRack manifests={qlManifests()} transport={transport} instrumentReading={instrumentReading} />
+    <div className="mode-detail" data-mode-detail="techne-instruments" data-focus-instrument={focusInstrument ?? undefined}>
+      <InhabitantRack manifests={manifests} transport={transport} instrumentReading={instrumentReading} focusInstrument={focusInstrument ?? null} />
     </div>
   )
 }
@@ -310,6 +333,47 @@ export function TechneClipDetail({world}: {world: WorldTimelineView | null}) {
       </section>
     </div>
   )
+}
+
+/** The instrument device side for a focused pane's instrument (owner ruling,
+ * 13 Oct 2026). A Technē holder stands its instrument rack; the knowledge
+ * graph is a standalone instrument with no device face declared yet, so its
+ * Device side says its controls are not declared and never shows the 0
+ * instrument's rack. */
+export function InstrumentDeviceDetail({transport, instrument, centralDevices = false}: {
+  transport: KernelTransportStatus
+  instrument: PaneInstrumentId
+  /** Central's own devices lead the chain (never removed by the ruling): the
+   * mode's material devices, then the focused pane's instrument. */
+  centralDevices?: boolean
+}) {
+  if (instrument === 'knowledge-graph') {
+    return (
+      <div className="mode-detail" data-mode-detail="knowledge-graph-device">
+        {centralDevices && <InhabitantRack manifests={centralManifests()} transport={transport} />}
+        <section className="mode-detail-frame mode-detail-frame-wide" data-detail="knowledge-graph" role="status">
+          <header className="mode-detail-frame-head">
+            <span className="mode-detail-frame-mark"><Icon name="lib" size={14} /></span>
+            <strong>Knowledge graph</strong>
+            <span className="mode-detail-frame-sub">the wiki-constellation knowledge graph</span>
+            <span className="mode-detail-frame-state">controls not yet declared</span>
+          </header>
+          <p className="mode-detail-frame-note">
+            The knowledge graph is its own instrument. Its device controls are not yet declared, so no
+            device face docks here. The Earth atlas's rack is not shown for it.
+          </p>
+        </section>
+      </div>
+    )
+  }
+  if (centralDevices) {
+    return (
+      <div className="mode-detail" data-mode-detail="techne-instruments" data-focus-instrument={instrument} data-central-devices="true">
+        <InhabitantRack manifests={[...centralManifests(), ...instrumentManifests()]} transport={transport} focusInstrument={instrument} />
+      </div>
+    )
+  }
+  return <TechneInstrumentsDetail transport={transport} focusInstrument={instrument} />
 }
 
 // ————————————————————————————————————————————————————————————————————————

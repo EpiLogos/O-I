@@ -35,7 +35,7 @@ import {TimelineProjectionResidence, timelinePresentation} from './projections/t
 import {useWorldTemporalReading} from './projections/useWorldTemporalReading'
 import {surfModeOf, type SurfMode} from './shell/modeGrammar'
 import type {ModeTransportReadouts} from './shell/ModeTransportBar'
-import {BaseDevicesDetail, BaseDocumentDetail, TechneInstrumentsDetail, TechneClipDetail, FactoryTaskLogDetail, TechneLensBar, worldNowReadout} from './shell/ModeDetail'
+import {BaseDevicesDetail, BaseDocumentDetail, TechneInstrumentsDetail, InstrumentDeviceDetail, TechneClipDetail, FactoryTaskLogDetail, TechneLensBar, worldNowReadout} from './shell/ModeDetail'
 import {ModeBrowser} from './shell/ModeBrowser'
 import {ModeCentreFrame} from './shell/ModeCentre'
 import type {CentralSubjectSelection} from './inhabitants/CentralSubjectDetail'
@@ -43,7 +43,8 @@ import {NATIVE_PRESENT_EXPRESSIONS} from './native/openStudio'
 import {sameEditorBasis,type NativeEditorBasis,type NativeEditorController} from '@epilogos/expressions-boundary/editor'
 import './NativeCompositionResidence.css'
 import {registerAtlasHost} from './projections/atlas/registerAtlasHost'
-import {presentAtlasView} from './projections/atlas/AtlasProjectionPanel'
+import {presentAtlasView, useAtlasView} from './projections/atlas/AtlasProjectionPanel'
+import {deviceInstrumentFor, showsLensBar} from './shell/paneInstrument'
 registerAtlasHost()
 const PALETTE =['#79b6ce', '#779dcc', '#9885bc', '#8baf9c', '#b096b2', '#6caaa9']
 export function App() {
@@ -346,9 +347,19 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   // (the encounter's, never a second store), what the World cut shows, and
   // the real readings the mode transport may wear.
   const agentShell = centerPanel === 'native.agent' && !settingsPresented
-  const worldCut = frameMode === 'base' || (frameMode === 'techne' && centerPanel === 'world.ground')
+  // The World cut is the ground pane itself: it stands only while the centre
+  // holds world.ground (in Central as in Technē), so the Earth atlas focused
+  // from the lens bar is not drawn over by the Timeline.
+  const worldCut = (frameMode === 'base' || frameMode === 'techne') && centerPanel === 'world.ground'
   const presented = worldCut ? (tab === 'arrangement' ? 'arrangement' as const : 'session' as const) : timelinePresentation(workspace.mode, tab, centerPanel)
   const presentedView = agentShell ? (shellCtx.centreView === 'arrangement' ? 'arrangement' as const : shellCtx.centreView === 'session' ? 'session' as const : null) : presented
+  // The focused centre pane's instrument (owner ruling, 13 Oct 2026): the
+  // Device side follows it in every mode but Live; the lens bar stands over
+  // the centre whenever it holds an instrument pane (paneInstrument.ts).
+  const atlasView = useAtlasView()
+  const focusedPane = settingsPresented ? 'world.settings' : centerPanel
+  const focusedInstrument = deviceInstrumentFor(frameMode, focusedPane, presented, atlasView)
+  const instrumentLensBar = showsLensBar(frameMode, focusedPane)
   // The centre's designed frame stands while the World cut's civil reading
   // is absent or in flight (the empty-state law: a designed surface inside
   // the frame, never a bare sentence in a void). The L4 presentations stay
@@ -384,16 +395,19 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     </div>
     <div className="browser-residence" hidden={!browser || !agentShell}><AgentShellBrowser rows={agency.rows} error={agency.error} loading={agency.loading} /></div>
     {browser && <div className="browser-resizer" role="separator" aria-label="Resize browser" aria-orientation="vertical" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); resizeBrowser(Math.max(120, Math.min(viewport[0] - 320, (browserWidth ?? document.querySelector('.browser-residence:not([hidden]) .browser,.browser-residence:not([hidden]) .world-browser')?.getBoundingClientRect().width ?? 430) + (event.key === 'ArrowRight' ? 10 : -10))))} }} onPointerDown={event => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) resizeBrowser(Math.max(120, Math.min(viewport[0] - 320, event.clientX))) }} />}
-    <main className="center"><div className={`center-body${nativeComposition && !settingsPresented ? ' native-composition-residence' : ''}${nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented?' native-editor-residence':''}`} data-lens-bar={frameMode === 'techne' && (centerPanel === 'world.ground' || centerPanel === 'projection.earth') && !settingsPresented ? 'true' : undefined}>
+    <main className="center"><div className={`center-body${nativeComposition && !settingsPresented ? ' native-composition-residence' : ''}${nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented?' native-editor-residence':''}`} data-lens-bar={instrumentLensBar ? 'true' : undefined}>
       {/* The Technē lens bar (Rev 3): its own axis above the centre — the
         six lenses by their plain names; the World cut's two presentations
         and the Earth atlas's two views are the cut lenses, the rest hold
-        their places, named. */}
-      {frameMode === 'techne' && (centerPanel === 'world.ground' || centerPanel === 'projection.earth') && !settingsPresented && <TechneLensBar presentation={presented ?? 'session'} atlasOpen={centerPanel === 'projection.earth'} onLens={lens => {
+        their places, named. It stands over any centre that holds an
+        instrument pane, in every mode but Live (owner ruling, 13 Oct 2026).
+        A World cut lens reached from a mode without the cut enters Technē's
+        ground, as the mode transport does. */}
+      {instrumentLensBar && <TechneLensBar presentation={presented ?? 'session'} atlasOpen={centerPanel === 'projection.earth'} onLens={lens => {
         if (lens.state !== 'cut') return
         presentSettings(false)
         if (lens.atlas) { presentAtlasView(lens.atlas); setCenterPanel('projection.earth'); return }
-        if (lens.presentation) { setTab(lens.presentation); setCenterPanel('world.ground') }
+        if (lens.presentation) { if (frameMode !== 'base' && frameMode !== 'techne') chooseMode('techne'); setTab(lens.presentation); setCenterPanel('world.ground') }
       }} />}
       {nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented&&<div className="native-editor-return"><span>{nativeEditorReturn.editor==='source'?'Source':nativeEditorReturn.editor==='layers'?'Layers':'State placement'}</span><button onClick={returnNativeEditor}>Return to {nativeEditorReturn.centerPanel==='native.arrangement'?'Arrangement':nativeEditorReturn.centerPanel==='native.session'?'Session':'Glyph editor'}</button></div>}
       {nativeComposition && !settingsPresented && nativeProjection.error && <div className="native-composition-fault" role="alert">{nativeProjection.error}</div>}
@@ -423,19 +437,24 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     <div className="dock-residence" hidden={!dock || agentShell}><ModeContextDock mode={frameMode} world={worldView} transport={workspace.transport} subject={centralSubject} /></div>
     <div className="dock-residence" hidden={!dock || !agentShell}><AgentContextDock /></div>
     {detail && <div className="detail-resizer" role="separator" aria-label="Resize detail" aria-orientation="horizontal" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {event.preventDefault(); resizeDetail(Math.max(120, Math.min(viewport[1] - 240, (detailHeight ?? document.querySelector('.detail-residence:not([hidden]) .chain,.detail-residence:not([hidden]) .native-world-detail')?.getBoundingClientRect().height ?? 330) + (event.key === 'ArrowUp' ? 10 : -10))))} }} onPointerDown={event => event.currentTarget.setPointerCapture(event.pointerId)} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) resizeDetail(Math.max(120, Math.min(viewport[1] - 240, viewport[1] - 28 - event.clientY))) }} />}
-    {/* The detail row's content is per mode (Rev 4's table): Live keeps the
-      audio chain; Expressions (and Technē's Clip side) keep the native
-      detail; Base wears the ground's Document|Devices; Technē's Device side
-      is the instruments rack; Factory wears the Task log | Agent chain. */}
+    {/* The detail row (Rev 4's table; owner ruling, 13 Oct 2026). The Clip
+      side is each mode's own craft, unchanged. The Device side follows the
+      focused centre pane's instrument in every mode but Live: when the pane
+      holds one (paneInstrument.ts), its device face stands — the instrument
+      rack with that instrument's faces expanded and the others folded. In
+      Central the ground's own Devices lead that chain — the mode supplies the
+      material, so its devices are never removed. The
+      Device side of a mode without an instrument pane is its own: Live the
+      audio chain, Expressions its native rack, Base the ground's Devices,
+      Technē the instruments rack, Factory the agent chain's device. */}
     <div className="detail-residence" hidden={!detail || frameMode !== 'live'}><DeviceChainPanel ctx={ctx} document={deep.document} selection={selection} mode={detailMode}/></div>
-    {/* The detail row's content is per mode (Rev 4's table): Live keeps the
-      audio chain; Expressions keeps the native detail; Base wears the
-      ground's Document|Devices; Technē's Device side is the instruments
-      rack and its Clip side is the clip craft over the World cut (the
-      native detail stays for the native cut's Clip); Factory wears the
-      Task log | Agent chain. */}
-    <div className="detail-residence" hidden={!detail || agentShell || !(frameMode === 'expressions' || (frameMode === 'techne' && detailMode === 'clip' && !worldCut))}><NativeWorldDetail mode={detailMode} configurationIntent={detailConfiguration} presentMode={mode=>{changeDetailMode(mode);setDetail(true)}} presentNativeEditor={presentNativeEditor} expand={() => {if(!detailExpansionReturn.current)detailExpansionReturn.current={height:detailHeight,workspaceId:workspace.workspaceId,accessEpoch:workspace.accessEpoch};resizeDetail(Math.max(120,viewport[1]-156))}} collapse={() => {const previous=detailExpansionReturn.current;detailExpansionReturn.current=null;if(previous&&previous.workspaceId===workspace.workspaceId&&previous.accessEpoch===workspace.accessEpoch)resizeDetail(previous.height)}}/></div>
-    <div className="detail-residence" hidden={!detail || !(frameMode === 'base' || (frameMode === 'techne' && (detailMode === 'device' || (detailMode === 'clip' && worldCut))))}>{frameMode === 'base' ? (detailMode === 'clip' ? <BaseDocumentDetail transport={workspace.transport} subject={centralSubject} /> : <BaseDevicesDetail transport={workspace.transport} />) : (worldCut && detailMode === 'clip' ? <TechneClipDetail world={worldView} /> : <TechneInstrumentsDetail transport={workspace.transport} />)}</div>
+    {/* Expressions keeps its native detail on both sides (its device rack is
+      the pane's own; the native cut's Clip stays native). A focused
+      instrument's Device side is handled by the instrument residence below. */}
+    <div className="detail-residence" hidden={!detail || agentShell || !(frameMode === 'expressions' || (frameMode === 'techne' && detailMode === 'clip' && !worldCut)) || (detailMode === 'device' && focusedInstrument !== null)}><NativeWorldDetail mode={detailMode} configurationIntent={detailConfiguration} presentMode={mode=>{changeDetailMode(mode);setDetail(true)}} presentNativeEditor={presentNativeEditor} expand={() => {if(!detailExpansionReturn.current)detailExpansionReturn.current={height:detailHeight,workspaceId:workspace.workspaceId,accessEpoch:workspace.accessEpoch};resizeDetail(Math.max(120,viewport[1]-156))}} collapse={() => {const previous=detailExpansionReturn.current;detailExpansionReturn.current=null;if(previous&&previous.workspaceId===workspace.workspaceId&&previous.accessEpoch===workspace.accessEpoch)resizeDetail(previous.height)}}/></div>
+    <div className="detail-residence" hidden={!detail || !(frameMode === 'base' || (frameMode === 'techne' && (detailMode === 'device' || (detailMode === 'clip' && worldCut)))) || (detailMode === 'device' && focusedInstrument !== null)}>{frameMode === 'base' ? (detailMode === 'clip' ? <BaseDocumentDetail transport={workspace.transport} subject={centralSubject} /> : <BaseDevicesDetail transport={workspace.transport} />) : (worldCut && detailMode === 'clip' ? <TechneClipDetail world={worldView} /> : <TechneInstrumentsDetail transport={workspace.transport} />)}</div>
+    {/* The instrument residence: the focused pane's instrument as the Device side, in any mode but Live. */}
+    <div className="detail-residence" hidden={!detail || focusedInstrument === null || detailMode !== 'device'} data-instrument-device={focusedInstrument ?? undefined}>{focusedInstrument !== null && <InstrumentDeviceDetail transport={workspace.transport} instrument={focusedInstrument} centralDevices={frameMode === 'base'} />}</div>
     <div className="detail-residence" hidden={!detail || !agentShell || detailMode !== 'clip'}><FactoryTaskLogDetail taskLabel={factoryTask?.purpose ?? null} task={factoryTask ? {sessionRef: factoryTask.sessionRef, purpose: factoryTask.purpose, agentName: factoryTask.agentName, needleState: factoryTask.needle?.state ?? null, tasks: factoryTask.tasks, budget: factoryTask.budget} : null} /></div>
     <div className="detail-residence" hidden={!detail || !agentShell || detailMode !== 'device'}><AgentShellDeviceDetail tracks={agency.tracks} /></div></NativeInputRetentionProvider>
     {agentShell ? <AgentStatusBarBridge detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={agency.tracks[0]?.purpose ?? undefined} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} /> : <StatusBar detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={state.set?.tracks[selection.track]?.name} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} />}
