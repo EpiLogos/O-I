@@ -1,7 +1,7 @@
 /** Shared time is read from the host's DisclosureSession. This renderer holds
  * input drafts and acknowledged snapshots only; it owns no session or clock. */
 import React,{useEffect,useRef,useState} from 'react';
-import {validateSession,type TechneReading} from '../../../src/techne/contract';
+import {validateSession,type DisclosureTraversalHop,type TechneReading} from '../../../src/techne/contract';
 import {timeAxis,type SharedTimeWindow} from '../../../src/techne/m0m5/timeline/timeAxis';
 import type {NativeTimeWindowBasis,NativeTimeWindowReply,NativeTimeWindowRequest} from '../../../../../packages/expressions-boundary/src/timeWindow';
 import {techneTimeWindowRequest} from './kernelExpressions.js';
@@ -38,6 +38,21 @@ export async function writeSharedTimeWindow(basis:NativeTimeWindowBasis,reading:
  }
  const request:NativeTimeWindowRequest={...basis,operation:'set',reading_ref:reading.reading_ref,instrument,
   expected_session_ref:acknowledged.session.session_ref,expected_selection:acknowledged.session.selection,expected_window:acknowledged.axis.window,window};
+ return qualifyTimeWindowReply(await techneTimeWindowRequest(request),basis,reading,instrument);
+}
+
+/** Lane-2 T20: one trail step recorded on the shared session through the owner's compare-and-set, the same route as the time
+ * writes. The hop's subject and selection must be the acknowledged session's; the reply is the session the mount keeps. */
+export async function writeSharedTraversalHop(basis:NativeTimeWindowBasis,reading:TechneReading,instrument:'timeline'|'place',acknowledged:NativeTimeWindowReply,hop:DisclosureTraversalHop):Promise<NativeTimeWindowReply> {
+ if(acknowledged.basis.expression_ref!==basis.expression_ref||acknowledged.basis.scene_ref!==basis.scene_ref
+  ||acknowledged.basis.revision!==basis.revision||acknowledged.reading_ref!==reading.reading_ref) {
+  throw Error('This trail belongs to an earlier native source or Scene; it was not changed');
+ }
+ if(hop.subject_ref!==acknowledged.session.subject_ref||hop.selection_ref!==acknowledged.session.selection.selection_ref) {
+  throw Error('This trail step is not the shared session\'s subject and selection; it was not recorded');
+ }
+ const request:NativeTimeWindowRequest={...basis,operation:'traversal',reading_ref:reading.reading_ref,instrument,
+  expected_session_ref:acknowledged.session.session_ref,expected_selection:acknowledged.session.selection,expected_window:acknowledged.axis.window,hop};
  return qualifyTimeWindowReply(await techneTimeWindowRequest(request),basis,reading,instrument);
 }
 

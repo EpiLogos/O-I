@@ -241,12 +241,12 @@
     },
     "packages/canvas/src/timeline/TimelineSurface.tsx": {
       "upstream_sha256": "167ebc1722ce27f58d2bef03bc60a220d33ee58a7b0930c976ca334dca84f595",
-      "adapted_sha256": "d320c38f75f89a992b58d776938da82eb70e7fbbdeb5befc9c8e611b8bcb797a",
+      "adapted_sha256": "f3353ef014336518b042e5a627d0232b9e9fa0e10e01f98d7c469d29e1ea263d",
       "reason": "Preserve native repository failures as visible unavailable readings with explicit retry; empty successful readings remain distinct. Retain original zoom/fit controls via optional host HUD portal; existing native Timeline state remains unchanged. Inner Timeline controls use the same optional host toolbar portal; original filters, subtimeline, lighting and camera callbacks retained without a duplicate toolbar. Native supplied complete dated Scene extent supports Fit outside the current camera window; button zoom shares the original lens scale, including moment level. | lane-2 T12+T13: honest clusters, scale-window minimap | lane-2 T4c: one year parser | lane-2 T9b-T14b: nesting and participants from readings | lane-2 T20 glue: onOpenRelation and onOpenEndpoint props forwarded from the surface to the lens."
     },
     "packages/canvas/src/timeline/TimelineLens.tsx": {
       "upstream_sha256": "8f1c71bed489ca426e16bdec89f24b696ccff4f41901167160ace36098057979",
-      "adapted_sha256": "cbb85a1b12d1f2ae0ec84b53fa9f36c714932f15df9fcab236a3a3412cb08418",
+      "adapted_sha256": "a022c61c2857be1c463ada8d0e2bd272c2949902a55bcab2c09600a09aef5e39",
       "reason": "Exact focused native relation filtering without losing focused reading; explicit Close/Escape clears selection and invalidates late replies, restores card/track focus; preserve host toolbar, capability and Walk controls. Vertical pan bounds consume the same collision-resolved display rectangles as cards. Optional explicit Close/Escape and existing-HUD visibility controls with focus return; hiding retains native walk/working-set state, Clear/Unload remain separate intentional actions. | lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T2+T7: precision bands, two-row axis, BCE/CE labels | lane-2 T8: periodisation bands | lane-2 T12+T13: honest clusters, scale-window minimap | lane-2 T10-T11: cause chains, standing edges | lane-2 T15-T18: timeline views and style | lane-2 T9-T14: nesting, participant spans | lane-2 T20 glue: onOpenRelation and onOpenEndpoint props, forwarded to the relationship layer and the cause-chain panel, which read each hop back to its native relationship; an endpoint the host accepts opens through the lens's own node-open path, and the panel offers no selection the host did not declare."
     },
     "packages/canvas/src/psychogeographic/PsychogeographicMap.tsx": {

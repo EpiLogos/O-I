@@ -37,10 +37,11 @@ import {OPEN_PLACE_FILTER,filteredPlacesRepository,subjectEntityRef,type PlaceFi
 import type {TechneReading,TechnePlaceFacet} from '../../../src/techne/contract';
 import {placeFocusFromSession} from '../../../src/techne/m0m5/place/register';
 import {openingPlaceSelection,timelineOpenPlan} from '../../../src/techne/m0m5/place/navigation';
-import {readSharedTimeWindow,writeSharedTimeWindow,qualifyTimeWindowReply,SharedTimeWindowControls,type SharedTimeDraft} from './sharedTimeWindow.js';
+import {readSharedTimeWindow,writeSharedTimeWindow,writeSharedTraversalHop,qualifyTimeWindowReply,SharedTimeWindowControls,type SharedTimeDraft} from './sharedTimeWindow.js';
 import {sharedTimelinePresentation} from './sharedTimeProjection.js';
 import {timeAxisProjection,relativeTimeAxisProjection} from '../../../src/techne/m0m5/timeline/timeAxis';
-import {axisEventOf,backTrail,currentHop,handoffDisclosure,handoffRefusal,openEndpoint,openRelation,originEvent,relationRefOf,showOnGlobeOf,trailFromEvent,trailStanding,type GlobeCarry,type NavigationTrail} from '../../../src/techne/m0m5/timeline/navigationIdentity';
+import {axisEventOf,currentHop,foldStanding,handoffDisclosure,handoffRefusal,openEndpoint,openRelation,relationRefOf,showOnGlobeOf,traversalHopOf,trailFromEvent,trailOfNavigation,type GlobeCarry,type TraversalFold} from '../../../src/techne/m0m5/timeline/navigationIdentity';
+import type {DisclosureTraversalStep} from '../../../src/techne/contract';
 import {sessionCrossingIdentity} from '../../../src/techne/session';
 import {containmentPairs,relationEdges,participantSpansFromReading} from '../../../src/techne/m0m5/timeline/relations';
 import type {NativeTimeWindowBasis,NativeTimeWindowReply,NativeTimeWindowRequest} from '../../../../../packages/expressions-boundary/src/timeWindow';
@@ -254,8 +255,8 @@ function SelectedEventControl({initial,listen,control}:{initial:string|null;list
  return <>{control(selected)}</>;
 }
 /** lane-2 T20: a control that follows the traversal trail, as SelectedEventControl follows the selected event. */
-function TrailControl({initial,listen,control}:{initial:NavigationTrail|null;listen:(listener:(trail:NavigationTrail|null)=>void)=>void;control:(trail:NavigationTrail|null)=>ReactNode}){
- const [trail,setTrail]=useState<NavigationTrail|null>(initial);
+function TrailControl({initial,listen,control}:{initial:TraversalFold|null;listen:(listener:(trail:TraversalFold|null)=>void)=>void;control:(trail:TraversalFold|null)=>ReactNode}){
+ const [trail,setTrail]=useState<TraversalFold|null>(initial);
  useEffect(()=>{listen(setTrail);},[]);
  return <>{control(trail)}</>;
 }
@@ -374,8 +375,8 @@ interface ViewState {
  /** lane-2 T21: the mounted globe control's listener for the chronology's selected event (presentation only). */
  globeListener?:(eventRef:string|null)=>void;
  /** lane-2 T20: the chronology's traversal trail (event → relation → endpoint), presentation only; its refs are the session's, verbatim. */
- traversal?:NavigationTrail|null;
- traversalListener?:(trail:NavigationTrail|null)=>void;
+ traversal?:TraversalFold|null;
+ traversalListener?:(trail:TraversalFold|null)=>void;
  canvasMinimap?:React.MutableRefObject<NavigationMinimapController|null>;
  /** A1 — alignment guides for the card being dragged: presentation only,
   * flow-unit geometry drawn against the live viewport, cleared on release. */
@@ -1238,47 +1239,68 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
      if(carry.state==='absent')return <button type="button" disabled aria-label="Show on the globe" title={carry.reason}>Show on the globe</button>;
      return <button type="button" aria-label="Show on the globe" title="Show this event's place on the globe, over the event's own validity" onClick={()=>{void showOnGlobe(carry as Extract<GlobeCarry,{state:'offer'}>).catch(error=>message(error instanceof Error?error.message:String(error)));}}>Show on the globe</button>;
     };
-    // lane-2 T20: the traversal trail. A relation or endpoint opens from the Timeline's own selected event; the model copies the
-    // session's subject and selection refs down every hop, byte-equal. A refusal is stated on the status line in the model's reason.
-    const setTrail=(next:NavigationTrail|null)=>{state.traversal=next;state.traversalListener?.(next);};
-    const eventTrail=():NavigationTrail|null=>{
-     const eventRef=state.timeline?.selectedNodeId;
-     if(!eventRef||!sharedTime)return null;
-     const trail=state.traversal;
-     if(trail&&originEvent(trail).ref===eventRef){
-      // A new relation opens from the event, so the trail returns along itself to the event first.
-      let here=trail;
-      while(currentHop(here).kind!=='event')here=backTrail(here);
-      return here;
-     }
-     return trailFromEvent(eventRef,sharedTime.session.subject_ref,sharedTime.session.selection.selection_ref);
+    // lane-2 T20: the traversal trail, one history. Every step is one compare-and-set write on the shared session through the owner's
+    // traversal route, and the trail is read back from the session's own navigation (its traversal hops since the origin event).
+    // The mount keeps only the cursor the Back control reads, replaced from each acknowledged reply.
+    const trailOf=():TraversalFold|null=>trailOfNavigation(sharedTime?.session.navigation);
+    const setTrail=(next:TraversalFold|null)=>{state.traversal=next;state.traversalListener?.(next);};
+    const recordStep=async(step:DisclosureTraversalStep,ref:string)=>{
+     const acknowledged=sharedTime;
+     if(!acknowledged)throw Error('The shared session is no longer presented, so the trail was not changed.');
+     const planned=sessionCrossingIdentity(acknowledged.session);
+     const reply=await writeSharedTraversalHop(request,nativeReading,'timeline',acknowledged,traversalHopOf(acknowledged.session,step,ref));
+     // The session the write was made on must still be the one presented; a drift is refused by name, never re-targeted.
+     const reason=handoffRefusal(planned,sharedTime?.session??null);
+     if(reason)throw Error(reason);
+     sharedTime=reply;
     };
-    const showTrail=(next:NavigationTrail)=>{setTrail(next);if(sharedTime)message(`${trailStanding(next)} · ${handoffDisclosure(sharedTime.session)}`);};
+    // The steps to record from the event: a new event starts its trail at the event; a relation always opens from that event.
+    const stepsFromEvent=(eventRef:string,steps:[DisclosureTraversalStep,string][]):[DisclosureTraversalStep,string][]=>{
+     const cursor=trailOf();
+     return cursor&&cursor.origin===eventRef?steps:[['event',eventRef],...steps];
+    };
+    const runSteps=async(steps:[DisclosureTraversalStep,string][]):Promise<boolean>=>{
+     try{
+      for(const [step,ref] of steps)await recordStep(step,ref);
+      setTrail(trailOf());
+      if(sharedTime){const cursor=trailOf();message(`${cursor?foldStanding(cursor):'event'} · ${handoffDisclosure(sharedTime.session)}`);}
+      return true;
+     }catch(error){message(error instanceof Error?error.message:String(error));return false;}
+    };
     const noTrailBase=()=>message(state.timeline?.selectedNodeId?'No Technē session is open, so this was not opened.':'A relation opens from its event. Select the event first.');
     const relationOfRow=(row:{sourceGraphNodeId:string;targetGraphNodeId:string;properties:Record<string,unknown>})=>({relation_ref:relationRefOf(row.properties),from_ref:row.sourceGraphNodeId,to_ref:row.targetGraphNodeId});
+    // The model judges each step first (a derived or non-touching relation is refused by name, and nothing is written).
     const openTrailRelation=(row:{sourceGraphNodeId:string;targetGraphNodeId:string;properties:Record<string,unknown>})=>{
-     const base=eventTrail();
-     if(!base){noTrailBase();return;}
-     const step=openRelation(base,relationOfRow(row));
+     const eventRef=state.timeline?.selectedNodeId;
+     if(!eventRef||!sharedTime){noTrailBase();return;}
+     const relation=relationOfRow(row);
+     const step=openRelation(trailFromEvent(eventRef,sharedTime.session.subject_ref,sharedTime.session.selection.selection_ref),relation);
      if(!step.ok){message(step.reason);return;}
-     showTrail(step.trail);
+     if(relation.relation_ref===null)return;
+     void runSteps(stepsFromEvent(eventRef,[['relation',relation.relation_ref]]));
     };
-    // An endpoint of the followed link: the hop is recorded here and a refusal is stated by name. The lens opens an accepted endpoint
-    // through its own node-open path, so the evidence anchor stays the one rule the Timeline has always carried.
-    const openTrailEndpoint=(row:{sourceGraphNodeId:string;targetGraphNodeId:string;properties:Record<string,unknown>},side:'from'|'to'):boolean=>{
-     const base=eventTrail();
-     if(!base){noTrailBase();return false;}
-     const onRelation=openRelation(base,relationOfRow(row));
+    // An endpoint of the followed link: the relation it belongs to is recorded first when the trail is not already on it, then the
+    // endpoint. The host's answer decides whether the lens opens the endpoint: a refusal is stated by name and opens nothing.
+    const openTrailEndpoint=async(row:{sourceGraphNodeId:string;targetGraphNodeId:string;properties:Record<string,unknown>},side:'from'|'to'):Promise<boolean>=>{
+     const eventRef=state.timeline?.selectedNodeId;
+     if(!eventRef||!sharedTime){noTrailBase();return false;}
+     const relation=relationOfRow(row);
+     const onRelation=openRelation(trailFromEvent(eventRef,sharedTime.session.subject_ref,sharedTime.session.selection.selection_ref),relation);
      if(!onRelation.ok){message(onRelation.reason);return false;}
-     const step=openEndpoint(onRelation.trail,side);
-     if(!step.ok){message(step.reason);return false;}
-     showTrail(step.trail);
-     return true;
+     const endpoint=openEndpoint(onRelation.trail,side);
+     if(!endpoint.ok){message(endpoint.reason);return false;}
+     const hop=currentHop(endpoint.trail);
+     if(hop.kind!=='endpoint'||relation.relation_ref===null)return false;
+     const cursor=trailOf();
+     const last=cursor&&cursor.steps.length>0?cursor.steps[cursor.steps.length-1]:null;
+     const onRelationAlready=cursor!==null&&cursor.origin===eventRef&&last!==null&&last.step==='relation'&&last.ref===relation.relation_ref;
+     const steps=stepsFromEvent(eventRef,onRelationAlready?[]:[['relation',relation.relation_ref]]);
+     return runSteps([...steps,['endpoint',hop.ref]]);
     };
-    // Back to event returns along the trail to the origin event; the event the Timeline selected is never moved.
-    const backToEvent=()=>{const trail=state.traversal;if(!trail)return;let here=trail;while(currentHop(here).kind!=='event')here=backTrail(here);showTrail(here);};
-    const trailControl=(trail:NavigationTrail|null)=>trail&&trail.hops.length>1
-     ?<button type="button" aria-label="Back to event" title={`Return along the trail to its event · ${trailStanding(trail)}`} onClick={backToEvent}>Back to event</button>
+    // Back to event records a back step; the trail returns to its origin event, and the Timeline's selection never moves.
+    const backToEvent=()=>{const cursor=trailOf();if(!cursor||cursor.steps.length===0)return;void runSteps([['back',cursor.origin]]);};
+    const trailControl=(trail:TraversalFold|null)=>trail&&trail.steps.length>0&&trail.origin===state.timeline?.selectedNodeId
+     ?<button type="button" aria-label="Back to event" title={`Return along the trail to its event · ${foldStanding(trail)}`} onClick={backToEvent}>Back to event</button>
      :null;
     const canvasNode2=():ReactNode=>{
      // Lane-2 T5: relative mode exists only when the acknowledged session names a
@@ -1296,7 +1318,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
        <option value="">Views…</option>{Object.keys(savedTimelineViews()).map(name=><optgroup key={name} label={name}><option value={`apply\u0000${name}`}>Go to</option><option value={`remove\u0000${name}`}>Remove</option></optgroup>)}</select>}
       {(tagReason||relationReason)&&<button onClick={()=>message([tagReason&&`Tags: ${tagReason}`,relationReason&&`Relations: ${relationReason}`].filter(Boolean).join(' · '))}>Reading incomplete</button>}
       {view&&state.m2Projection==='chronology'&&<SelectedEventControl initial={state.timeline?.selectedNodeId??null} listen={listener=>{state.globeListener=listener;}} control={globeControl}/>}
-      {view&&state.m2Projection==='chronology'&&<TrailControl initial={state.traversal??null} listen={listener=>{state.traversalListener=listener;}} control={trailControl}/>}
+      {view&&state.m2Projection==='chronology'&&<TrailControl initial={trailOf()} listen={listener=>{state.traversalListener=listener;}} control={trailControl}/>}
       {timeControls(()=>render(canvasNode2()))}
      </div>;
      if(state.m2Projection==='field'){
@@ -1317,7 +1339,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
      // session the host acknowledged — the same function lane 4 reads.
      const timed=sharedTimelinePresentation(data.dataSource,data.timeline,nativeReading,sharedTime?timeAxisProjection(nativeReading,sharedTime.session):null);
      return <>{createPortal(toggle,host.tools)}<TimelineSurface key={state.timelineKey??0} timeExtent={years.length?{startYear:first,endYear:last}:undefined} toolbarContainer={host.tools} repository={timed.repository} constellationId={data.reading.subject.subject_ref} dataSource={timed.dataSource} containment={containmentPairs(relationEdges(nativeReading))} participants={participantSpansFromReading(nativeReading).spans}
-      initialState={state.timeline!} onViewStateChange={value=>{state.timeline=value;if(state.traversal&&originEvent(state.traversal).ref!==value.selectedNodeId)setTrail(null);state.globeListener?.(value.selectedNodeId??null);}}
+      initialState={state.timeline!} onViewStateChange={value=>{const moved=value.selectedNodeId!==state.timeline?.selectedNodeId;state.timeline=value;if(moved)setTrail(trailOf());state.globeListener?.(value.selectedNodeId??null);}}
       onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref);if(node)host.inspectSubject(ref,{node});}} onOpenNode={(ref,node,relationField)=>{const facets=data.bundle.relationships.filter(row=>row.targetGraphNodeId===ref&&typeof row.properties.temporal_kind==='string');host.inspectSubject(ref,{node,relationField,anchor:facets.length>1?{state:'absent',reason:'More than one temporal facet is disclosed for this event; its source opens at its top.'}:evidenceAnchorOf(facets[0]?.properties??{})});}}
       onOpenRelation={openTrailRelation} onOpenEndpoint={openTrailEndpoint}/></>;
     };

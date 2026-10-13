@@ -13,7 +13,7 @@
  *
  * Erasable TypeScript: loadable by the renderer, Vite, and `node --test`.
  */
-import type {DisclosureSession, TechneReading, TechneSourceSelector} from "../../contract.ts";
+import type {DisclosureNavigationHop, DisclosureSession, DisclosureTraversalHop, DisclosureTraversalStep, TechneReading, TechneSourceSelector} from "../../contract.ts";
 import type {SessionCrossingIdentity} from "../../session.ts";
 import type {SharedTimeWindow, TechneTimeAxis, TimeAxisEvent} from "./timeAxis.ts";
 
@@ -153,6 +153,56 @@ export function backTrail(trail: NavigationTrail): NavigationTrail {
 /** Where the trail stands, one line: the hop kinds it has taken from its event, e.g. "event → relation → endpoint". */
 export function trailStanding(trail: NavigationTrail): string {
   return trail.hops.map(hop => hop.kind).join(" → ");
+}
+
+/**
+ * The trail as the session's own navigation records it (one history): the origin event and the steps taken since. A relation
+ * opens from the origin event; an endpoint follows its relation; back returns to the origin. Instrument hops are not steps.
+ */
+export interface TraversalFold {
+  origin: string;
+  steps: readonly {step: "relation" | "endpoint"; ref: string}[];
+}
+
+export function trailOfNavigation(navigation: readonly DisclosureNavigationHop[] | undefined): TraversalFold | null {
+  let origin: string | null = null;
+  let steps: {step: "relation" | "endpoint"; ref: string}[] = [];
+  for (const hop of navigation ?? []) {
+    if (!("kind" in hop) || hop.kind !== "traversal") continue;
+    if (hop.step === "event") {
+      origin = hop.ref;
+      steps = [];
+    } else if (origin === null) {
+      continue;
+    } else if (hop.step === "back") {
+      steps = [];
+    } else if (hop.step === "relation") {
+      steps = [{step: "relation", ref: hop.ref}];
+    } else if (hop.step === "endpoint" && steps.length > 0 && steps[steps.length - 1].step === "relation") {
+      steps = [...steps, {step: "endpoint", ref: hop.ref}];
+    }
+  }
+  return origin === null ? null : {origin, steps};
+}
+
+/** The fold's status line: "event → relation → endpoint" (the origin event, then the steps taken from it). */
+export function foldStanding(trail: TraversalFold): string {
+  return ["event", ...trail.steps.map(step => step.step)].join(" → ");
+}
+
+/**
+ * The traversal hop one step records on the session. Its subject and selection are copied from the session, so the
+ * recorder's byte-equal law holds by construction; nothing here mints a ref.
+ */
+export function traversalHopOf(session: DisclosureSession, step: DisclosureTraversalStep, ref: string): DisclosureTraversalHop {
+  return {
+    kind: "traversal",
+    instrument: session.instrument,
+    step,
+    ref,
+    subject_ref: session.subject_ref,
+    selection_ref: session.selection.selection_ref,
+  };
 }
 
 /** The native relation ref a bridge disclosed on a relation's properties, or null when the relation is derived. */
