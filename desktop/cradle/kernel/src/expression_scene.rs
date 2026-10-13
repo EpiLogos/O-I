@@ -428,13 +428,22 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
         let map = object(v, "Research viewport")?;
         if map
             .keys()
-            .any(|k| !["x", "y", "zoom"].contains(&k.as_str()))
+            .any(|k| !["x", "y", "zoom", "pitch", "bearing"].contains(&k.as_str()))
         {
             return Err("Unknown viewport field".into());
         }
         number(&v["x"], -1e8, 1e8, "Viewport x")?;
         number(&v["y"], -1e8, 1e8, "Viewport y")?;
-        number(&v["zoom"], 0.001, 1e5, "Viewport zoom")
+        number(&v["zoom"], 0.001, 1e5, "Viewport zoom")?;
+        // lane-4 T1: a Places view may be tilted and rotated; both optional,
+        // absent = the untilted, north-up view every earlier record means.
+        if map.contains_key("pitch") {
+            number(&v["pitch"], 0.0, 85.0, "Viewport pitch")?;
+        }
+        if map.contains_key("bearing") {
+            number(&v["bearing"], -180.0, 180.0, "Viewport bearing")?;
+        }
+        Ok(())
     };
     for (id, card) in value["cards"].as_object().unwrap() {
         let c = object(card, "Research card")?;
@@ -905,6 +914,43 @@ impl Composition {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn a_places_view_may_carry_pitch_and_bearing_within_bounds() {
+        use super::validate_research;
+        use serde_json::Value;
+        use std::collections::BTreeSet;
+        let ids: BTreeSet<&str> = BTreeSet::new();
+        let material = |view: Value| {
+            serde_json::json!({"schema": "oi.research-scene/v1", "cards": {}, "strokes": [],
+                "views": {"place": view}, "timeline": {}})
+        };
+        // every earlier record (x, y, zoom only) stays valid
+        assert!(validate_research(
+            &material(serde_json::json!({"x": 1.0, "y": 2.0, "zoom": 3.0})),
+            &ids
+        )
+        .is_ok());
+        // lane-4 T1: tilted, rotated
+        assert!(validate_research(&material(serde_json::json!({"x": 1.0, "y": 2.0, "zoom": 3.0, "pitch": 60.0, "bearing": -45.0})), &ids).is_ok());
+        // bounds
+        assert!(validate_research(
+            &material(serde_json::json!({"x": 1.0, "y": 2.0, "zoom": 3.0, "pitch": 86.0})),
+            &ids
+        )
+        .is_err());
+        assert!(validate_research(
+            &material(serde_json::json!({"x": 1.0, "y": 2.0, "zoom": 3.0, "bearing": 181.0})),
+            &ids
+        )
+        .is_err());
+        // still no unknown fields
+        assert!(validate_research(
+            &material(serde_json::json!({"x": 1.0, "y": 2.0, "zoom": 3.0, "roll": 1.0})),
+            &ids
+        )
+        .is_err());
+    }
+
     use super::Composition;
     use serde_json::{json, Value};
 

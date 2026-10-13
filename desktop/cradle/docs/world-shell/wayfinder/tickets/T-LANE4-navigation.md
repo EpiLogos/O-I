@@ -27,3 +27,15 @@ optional `pitch` [0,85] and `bearing` [-180,180] — kernel validator
 host (`researchInstruments.tsx:691,709`) switches to
 `viewStateFromPlaceRecord` / `placeRecordFromViewState` (kernel first —
 the helper only emits pitch/bearing for a tilted view).
+
+## Resolution — T-LANE4-NAV-b (persistence, lead)
+
+**Landed (13 Oct 2026).** The kernel's research viewport validator
+(`expression_scene.rs` `validate_research` → `viewport`) admits optional
+`pitch` [0,85] and `bearing` [-180,180] — earlier records unchanged, no
+other unknown field admitted (unit test); the app's `validateViewport` and
+`ResearchViewport` match; the Places host restores with
+`viewStateFromPlaceRecord` and saves with `placeRecordFromViewState` (an
+untilted view still writes the legacy `{x,y,zoom}`). Scripted: kernel
+`expression_scene` 2/2; places 28/28; tsc 0; build clean. Unverified: a
+tilted view saved and restored in the native app.
