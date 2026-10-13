@@ -84,20 +84,13 @@ Phase chain: 0 native + disclosure → 1 semantics gate + craft →
 1. **Screen pass** (Sonnet computer use) — waits on the owner's grant of
    "O-I Shell Candidate" (refused twice; never substituted by scripted AX
    clicks).
-2. Lane 1: B1 (save schedule — after the lane-3 autosave schedule, reuse it),
-   D1–D3 (instrument rail, saved views' subject basis, graph camera restore).
-3. Lane 2: T20 mount glue (relation/cause-chain selection → `openRelation` /
-   `openEndpoint`, back-to-event, navigation hop — `TimelineSurface.tsx`,
-   `graph.ts`), T23–T25.
-4. Lane 3: E14 (nested expression occurrence over the reuse register), E21
-   (scene→source→subject chain with back-references), E26 (collections as
-   bins), E18 library split.
-5. Lane 4: T25, T26. Lane 5: T9–T24.
-6. Knowledge graph instrument's device face (its spec's controls: depth,
-   budget, view, kinds, ghosts, standing floor, relation types, filter).
-7. Factory panes reachable (the agent shell's centre is always
+2. T-FRAME-TIME-PUSH (the hosted frames hear the shared window move).
+3. Lane-3 Family U (undo as kernel receipts; the adoption entry), E21, E26,
+   E18 library split.
+4. Lane 1: D1–D3. Lane 2: T23–T25. Lane 4: T25, T26. Lane 5: T9–T24.
+5. Factory panes reachable (the agent shell's centre is always
    `native.agent`; an instrument pane in Factory needs the split).
-8. Phase 3 Central vertical; Phase 5 retirement.
+6. Phase 3 Central vertical; Phase 5 retirement.
 
 Held for the owner: M1′–M5′ restatement and instrument count (vision spec
 #655); Factory `factory.run.close` grant; Factory owner `writeAuthority`.
@@ -117,9 +110,19 @@ this table true. Tickets and resolutions live in `tickets/`.
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| T-LANE2-T19b (the source opens at its passage) | haiku builder | `techneTransport.ts` facetQualification, `researchInstruments.tsx` onOpenNode/inspectSubject lines, `sourceHandoff.ts`, `CradleFrame.tsx` sceneSourceOpen/openFile, `TextEditor.tsx` reveal | 2026-10-13 |
-| lane-1 B4 → B2 → B3 (view drift, Obsidian `.canvas`, frame PNG) | haiku builder | `researchInstruments.tsx` applyView + save-view/frame rows, `researchMaterial.ts`, new `viewDrift.ts`/`obsidianCanvas.ts`/`frameImage.ts` | 2026-10-13 |
-| 0 instrument's controls (atlas face bodies on the rack) | haiku builder | `packages/live-shell/ui/src/projections/atlas/**`, `inhabitants/**` face-body plumbing | 2026-10-13 |
+| (none open — next wave below) | | | |
+
+Landing: #654's first 100 commits land as #656 (a rebase merge carries at
+most 100); #654 is rebased onto main after it and carries the rest.
+
+Settled this wave (13 Oct): lane-1 B1's trailing commit does not fit — the
+research scene commits to its owner per act and draws acknowledged state
+only, so a deferred commit would snap the canvas back; gestures already
+coalesce (`canvasGesture.ts`, 300 ms). B1's intent stands as per-act owner
+commits plus the save-state mark (40bc3d592). Open: every native edit adds an
+"Adopt native expression" undo entry beside the act's own (a `.canvas`
+import is three entries) — belongs to lane-3 Family U (undo as kernel
+receipts), not a one-argument patch.
 
 Factory close, after 4c274de4d: the kernel resolves a grant against
 `Control/user/native-action-authority.json` (root: `OI_CENTRAL_ROOT`, else the
