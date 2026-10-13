@@ -121,6 +121,12 @@ export function toNativeConfig(s:Scene):PointCloudConfig {
  const baseline=s.native.projection??nativeSnapshotToJourney({schemaVersion:CONFIG_SCHEMA_VERSION,config:s.native.config}).scenes[0].native!.projection!;
  return applyBlueprintAnchors(s,applyNativeDelta(s.native.config,baseline,projected) as PointCloudConfig);
 }
+/** The config the engine renders: the native config plus render-only facts. E06 slip: a scene's entry offset shifts its entity
+ * sequence clock as it shifts its property tracks; it is never part of the exported config. */
+export function toRenderConfig(s:Scene):PointCloudConfig {
+ const config=toNativeConfig(s);
+ return s.entryOffset?{...config,sequenceOffsetS:s.entryOffset}:config;
+}
 const shellShape=(s:NativeShape):Shape=>s.kind==='glyph'?'text':s.kind==='primitive'?s.primitive??'disc':s.kind;
 export function fromNativeEntity(e:NativeEntity):Entity{
  const out=entity(e.name,e.shape.text??'',{x:e.x/WORLD_SCALE,y:e.y/WORLD_SCALE,z:e.z/WORLD_SCALE});

@@ -516,6 +516,8 @@ export interface CompositionTelemetry {
 }
 
 export interface PointCloudConfig {
+  /** E06 slip, render-only: entity sequences read the clock shifted by this many seconds (the scene's entry offset). Absent = 0, the unshifted clock. Never exported. */
+  sequenceOffsetS?: number;
   /** Host-rendered paper surface, driven by the same automation clock. */
   paperGrain?: number;
   /** Granular mark rendering; no secondary particle simulation. */
