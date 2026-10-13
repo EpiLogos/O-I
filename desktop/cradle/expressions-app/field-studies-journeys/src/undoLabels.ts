@@ -57,6 +57,12 @@ export function connectActLabel(count:number):string{
  return count===1?'Connect':'Connect cards';
 }
 
+/** A `.canvas` import is one step named for the file it read: Import "<file name>" (the file name keeps its .canvas). */
+export function canvasImportLabel(fileName:string):string{
+ const name=fileName.replace(/["\u0000-\u001f]/g,' ').replace(/\s+/g,' ').trim().slice(0,80)||'untitled.canvas';
+ return `Import "${name}"`;
+}
+
 /** An adoption from outside this editor (another window, the kernel's own reconcile) is named for what it is. */
 export const KERNEL_UPDATE_LABEL='Update from the kernel';
 /** Why Undo refuses an outside update: the owner holds that change, and this editor has no inverse for it. */
@@ -66,6 +72,11 @@ export const OUTSIDE_UPDATE_REASON='it came from outside this editor, and the na
 export function historyToast(direction:HistoryDirection,label:string|null):string{
  if(!label)return direction==='undo'?'Nothing to undo.':'Nothing to redo.';
  return `${direction==='undo'?'Undone':'Redone'}: ${label}.`;
+}
+
+/** Undo or Redo while an import is open does nothing, and says why: the import is one step only once its owner acknowledges it. */
+export function historyWaitReason(direction:HistoryDirection,openLabel:string):string{
+ return `${direction==='undo'?'Undo':'Redo'} waits: ${openLabel} is still in progress, and it is one step once the native owner acknowledges it.`;
 }
 
 /** The accessible name and tooltip of the Undo or Redo control. */

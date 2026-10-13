@@ -37,19 +37,28 @@ export class DocumentStore {
  private lastCommit:HistoryEntry|null=null;
  /** True while a composite (withComposite) holds the one gesture open. */
  private composing=false;
+ /** E16 (spanning): the label of an open spanning gesture, or null. It stays open across a native owner act. */
+ private spanning:string|null=null;
+ /** True only while recordNativeAct records the owner act that closes the spanning gesture. */
+ private recording=false;
  /** True while a pointer gesture or uncommitted edit holds a baseline. */
  get transactionOpen(){return this.baseline!==null;}
+ /** The label of the open spanning gesture (an import in progress), or null. */
+ get spanningLabel():string|null{return this.spanning;}
  constructor(document:Journey){this.document=clone(document);}
+ /** Local edits wait while a spanning gesture is open: its owner act records it, and nothing else may fold into it. */
+ private refuseWhileSpanning(){if(this.spanning!==null&&!this.recording)throw new Error(`"${this.spanning}" is in progress: this edit waits until the native owner acknowledges it`);}
  /** A gesture takes its label from the first begin(); unlabelled gestures are "Edit". */
- begin(label?:string){if(!this.baseline){this.baseline=clone(this.document);this.mutated=false;this.pendingLabel=label?.trim()||'Edit';}}
+ begin(label?:string){this.refuseWhileSpanning();if(!this.baseline){this.baseline=clone(this.document);this.mutated=false;this.pendingLabel=label?.trim()||'Edit';}}
  /** Full-document stringify per gesture end showed up as frame hitches; the mutation flag is set by touch(). */
- finish(){if(this.composing)throw new Error('A composite edit closes once, when its edit returns; finish() inside it is refused');this.lastCommit=null;if(!this.baseline)return;const before=this.baseline;this.baseline=null;if(!this.mutated)return;const entry:HistoryEntry={label:this.pendingLabel,snapshot:before};this.undoStack.push(entry);this.lastCommit=entry;if(this.undoStack.length>60){this.undoStack.shift();if(this.kernelDepth!==null)this.kernelDepth=this.kernelDepth>0?this.kernelDepth-1:null;}this.redoStack=[];this.document.updatedAt=new Date().toISOString();this.touch();}
+ finish(){if(this.composing)throw new Error('A composite edit closes once, when its edit returns; finish() inside it is refused');this.refuseWhileSpanning();this.lastCommit=null;if(!this.baseline)return;const before=this.baseline;this.baseline=null;if(!this.mutated)return;const entry:HistoryEntry={label:this.pendingLabel,snapshot:before};this.undoStack.push(entry);this.lastCommit=entry;if(this.undoStack.length>60){this.undoStack.shift();if(this.kernelDepth!==null)this.kernelDepth=this.kernelDepth>0?this.kernelDepth-1:null;}this.redoStack=[];this.document.updatedAt=new Date().toISOString();this.touch();}
  /** Commit one labelled edit. Both forms keep working: change(fn) is labelled "Edit". */
  change(label:string,fn:(doc:Journey)=>void):void;
  change(fn:(doc:Journey)=>void):void;
  change(labelOrFn:string|((doc:Journey)=>void),maybeFn?:(doc:Journey)=>void):void{
   const label=typeof labelOrFn==='string'?labelOrFn:undefined,fn=typeof labelOrFn==='function'?labelOrFn:maybeFn;
   if(!fn)throw new TypeError('store.change needs an edit function');
+  this.refuseWhileSpanning();
   if(this.composing){this.joinComposite(fn);return;}
   this.begin(label);try{fn(this.document);this.mutated=true;this.finish();}catch(error){if(this.baseline)this.document=this.baseline;this.baseline=null;this.touch();throw error;}
  }
@@ -59,6 +68,7 @@ export class DocumentStore {
   * does not nest in another composite, and does not start inside an open gesture. */
  composite<T>(label:string,fn:(doc:Journey)=>T):T{
   if(this.composing)throw new Error(`"${label}" cannot nest inside a composite edit; its steps belong to the enclosing edit`);
+  this.refuseWhileSpanning();
   if(this.transactionOpen)throw new Error(`"${label}" cannot start inside an open gesture; finish that gesture first`);
   const gesture=mintGesture();
   this.composing=true;this.begin(label);
@@ -120,13 +130,41 @@ export class DocumentStore {
   this.kernelDepth=anchor.length;
   return true;
  }
+ /** E16 (spanning): open ONE labelled gesture that stays open across a native owner act, for an edit whose local
+  * draft and owner act are one step (a .canvas import: its cards and its connections). Local edits are refused by name
+  * until the act records the step (recordNativeAct closes the gesture under this label), or abandonSpanningGesture()
+  * closes it with nothing recorded and the document returned to where the gesture began. */
+ openSpanningGesture(label:string):void{
+  if(this.composing)throw new Error(`"${label}" cannot nest inside a composite edit; its steps belong to the enclosing edit`);
+  if(this.transactionOpen)throw new Error(`"${label}" cannot start inside an open gesture; finish that gesture first`);
+  this.begin(label);this.spanning=label.trim()||'Edit';
+ }
+ /** Withdraw the newest step as if it had never been made, when the owner refused the Save that was to record it:
+  * its snapshot returns and no redo survives. Only a step the owner never recorded, under this label, can be withdrawn. */
+ withdrawNewestStep(label:string):boolean{
+  this.refuseWhileSpanning();this.finish();
+  const top=this.undoStack.at(-1);
+  if(!top||top.label!==label||top.changes!==undefined)return false;
+  this.undoStack.pop();restoreInPlace(this.document,top.snapshot);this.redoStack=[];this.lastCommit=null;this.touch();
+  return true;
+ }
+ /** Close the open spanning gesture with nothing recorded: the document returns to where it began. */
+ abandonSpanningGesture():void{
+  if(this.spanning===null)return;
+  this.spanning=null;
+  if(this.baseline)restoreInPlace(this.document,this.baseline);
+  this.baseline=null;this.mutated=false;this.lastCommit=null;this.touch();
+ }
  /** E15/E16: one native act the owner acknowledged, as one labelled step. The step
   * adopts `next` and records the owner's checkpoint: the kernel edit that reached
   * it and the kernel documents either side. Steps its flush covered carry no kernel
   * edit of their own, as under a Save. A checkpoint whose edit has no inverse is kept
   * as a refusal on the step, so Undo names it instead of diverging from the kernel. */
  recordNativeAct(label:string,next:Journey,checkpoint:KernelCheckpoint|{refused:string;reason:string}):void{
-  this.change(label,()=>{this.document=clone(next);});
+  // E16 (spanning): an open spanning gesture closes here, and the owner act is its one step under the gesture's own label.
+  this.recording=true;
+  try{this.change(label,()=>{this.document=clone(next);});}
+  finally{this.recording=false;this.spanning=null;}
   const anchor=this.kernelSaveAnchor();
   if(!('changes' in checkpoint)){
    if(!anchor.entry)throw new Error(`"${label}" could not be recorded: its step moved`);
@@ -169,6 +207,7 @@ export class DocumentStore {
  }
  /** Redo one labelled step; compensated:true means its forward kernel edit was accepted. */
  redo(options?:{compensated?:boolean}):boolean{
+  this.refuseWhileSpanning();
   const entry=this.redoStack.pop();if(!entry)return false;
   // A step the kernel never held is redone locally: the kernel stays where it was, below the new head.
   const from=this.undoStack.length;if(entry.kernelHeld!==false||options?.compensated===true)this.settleKernel(from,from+1,options?.compensated===true);

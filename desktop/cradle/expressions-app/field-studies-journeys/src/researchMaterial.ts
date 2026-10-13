@@ -1,6 +1,7 @@
 /** Local research presentation of the SAME native Scene. Canonical source
  * bodies/relations are never edited by these material actions. */
-import {clone,entity,uid,type Scene} from './model.js';
+import {clone,entity,uid,type Journey,type Scene} from './model.js';
+import type {DocumentStore} from './store.js';
 import type {ViewBasis} from './viewDrift.js';
 import {validateConnector,CONNECTOR_KEY_MAX,CONNECTOR_RECORD_MAX,type ResearchConnector} from './canvasConnectors.js';
 import {CANVAS_OBJECT_KINDS,CANVAS_TOOL_SPEC,STICKY_DEFAULT_PALETTE,isCanvasObjectKind,isPaletteKey,isShapeFill,isShapeGeometry,type CanvasObjectKind,type CanvasToolChoice,type PaletteKey,type ShapeFill,type ShapeGeometry} from './canvasShapes.js';
@@ -442,4 +443,95 @@ export function applyConnectorRecord(scene:Scene,edgeId:string,value:ResearchCon
  if(Object.keys(connectors).length)research.connectors=connectors;else delete research.connectors;
  validateResearchMaterial(research,new Set(next.entities.map(e=>e.id)));
  Object.assign(scene,next);
+}
+
+/** lane-1 B2 / lane-3 E15-E16 — a `.canvas` import is ONE labelled undo step. Its cards and frames (the material batch) and
+ * its connections (native relations with their connector sides) are one owner act under one open gesture. The act's
+ * record closes that gesture as the one entry, so one Undo removes the whole import and one Redo restores it. A refused
+ * part writes nothing the import keeps: the owner is returned to where it began and the local gesture is dropped. */
+/** One connection the import makes, between two cards it created (by their view ids). Sides ride as the canvas's own connector record. */
+/** `named` is the connection as the import names it ("connection "x" from "A" to "B""), used when it is skipped. */
+export interface CanvasImportLink {sourceViewId:string;targetViewId:string;relationKind:string;named:string;connector?:ResearchConnector}
+/** What an import made: the connections it bound, and each connection it skipped, named with the reason. */
+export interface CanvasImportOutcome {connected:number;skipped:string[]}
+/** What the import needs from its host. The store is the one local document; the owner is reached only through `act`, `saveCards` and `rollback`. */
+export interface CanvasImportHost {
+ store:DocumentStore;
+ /** The owner's encoding of a relation kind. Throws a named refusal for a kind the owner cannot record. */
+ relationKind(kind:string):string;
+ /** A fresh binding ref for one connection of the open Expression. */
+ bindingRef():string;
+ /** The owner's acknowledged document now, or null when no native Expression is open. */
+ kernelDocument():unknown|null;
+ /** Save the local cards to the owner as the step's Save. True when the owner acknowledged it. */
+ saveCards():Promise<boolean>;
+ /** One owner act: the working cards are saved, `relate` gives the connections to bind (occurrenceOf resolves a card's native occurrence in the acknowledged view), the sides save with them, and the whole is recorded as ONE step under `label`. Throws when the owner refuses. */
+ act(label:string,relate:(occurrenceOf:(viewId:string)=>string|undefined)=>Record<string,unknown>[],sides?:(journey:Journey)=>void):Promise<void>;
+ /** Return the owner to `before` when the act saved cards it did not complete. Resolves when the owner is back at `before`. */
+ rollback(before:unknown):Promise<void>;
+}
+export interface CanvasImportInput {sceneId:string;label:string;actions:ResearchMaterialAction[];links:CanvasImportLink[]}
+
+function sceneInDocument(doc:Journey,sceneId:string):Scene{
+ const scene=doc.scenes.find(item=>item.id===sceneId);
+ if(!scene)throw new Error('The active Scene changed; nothing was imported.');
+ return scene;
+}
+function refusalText(error:unknown):string{return error instanceof Error?error.message:String(error);}
+
+/** Run one `.canvas` import. Resolves with the connections bound and the ones skipped (a connection whose end the owner does not hold is
+ * skipped and named, the cards and the other connections still land). Throws a refusal that names what stopped it when the owner refuses
+ * or the batch is refused: then nothing of the import lands. */
+export async function runCanvasImport(host:CanvasImportHost,input:CanvasImportInput):Promise<CanvasImportOutcome>{
+ const {sceneId,label,actions,links}=input;
+ const batch:ResearchMaterialAction={type:'batch',label,actions};
+ // Every connection kind is named before anything is written: a kind the owner cannot record refuses the whole import.
+ const kinds=links.map(link=>host.relationKind(link.relationKind));
+ if(!links.length){
+  // Cards only: one composite, then one Save on that step. A refused Save withdraws the step.
+  try{host.store.composite(label,doc=>{applyResearchMaterial(sceneInDocument(doc,sceneId),batch);});}
+  catch(error){throw new Error(`Import refused, nothing was imported: ${refusalText(error)}`);}
+  let reason='the native owner did not acknowledge the cards';
+  try{if(await host.saveCards())return {connected:0,skipped:[]};}catch(error){reason=refusalText(error);}
+  host.store.withdrawNewestStep(label);
+  throw new Error(`Import refused, nothing was imported: ${reason}.`);
+ }
+ const before=host.kernelDocument(),topBefore=host.store.undoStack.at(-1);
+ // The one gesture: it stays open across the owner act and the act's record closes it as the one step.
+ host.store.openSpanningGesture(label);
+ // The connections the act binds, and the ones it skips (their ends are input the owner does not hold), named as the import names them.
+ const bound=new Set<number>(),skipped:string[]=[];
+ try{
+  const refs=links.map(()=>host.bindingRef());
+  const lines=links.flatMap((link,index)=>link.connector?[{index,ref:refs[index],record:link.connector}]:[]);
+  applyResearchMaterial(sceneInDocument(host.store.document,sceneId),batch);
+  host.store.touch();
+  const relate=(occurrenceOf:(viewId:string)=>string|undefined)=>{
+   const changes:Record<string,unknown>[]=[];
+   links.forEach((link,index)=>{
+    const from=occurrenceOf(link.sourceViewId),to=occurrenceOf(link.targetViewId);
+    if(!from||!to){skipped.push(`${link.named} not imported: an end has no native occurrence yet`);return;}
+    bound.add(index);
+    changes.push({change:'relation_bind',binding:{binding_ref:refs[index],native_owner:'oi',relation:{ref:`${refs[index]}:${kinds[index]}`,revision:'1',availability:'available'},from_entity_ref:from,to_entity_ref:to,provenance:[]}});
+   });
+   // Every end missing leaves no connection to make: that is the owner holding none of the cards, so the whole import is refused and rolled back.
+   if(!changes.length)throw new Error('none of its connections has an end the owner holds');
+   return changes;
+  };
+  const sides=lines.length?(journey:Journey)=>{const target=sceneInDocument(journey,sceneId);for(const {index,ref,record} of lines)if(bound.has(index))applyConnectorRecord(target,ref,record);}:undefined;
+  await host.act(label,relate,sides);
+  // The act's record closes the gesture. An act that returns with the gesture still open recorded nothing: that is a failure, rolled back
+  // below, never a gesture left open (the owner-write gate would otherwise refuse every later change).
+  if(host.store.spanningLabel!==null)throw new Error('the owner answered the import without recording it');
+  return {connected:bound.size,skipped};
+ }catch(error){
+  const reason=refusalText(error);
+  // The act recorded the step, or it did not: a step that landed is kept whole; otherwise nothing of the import remains.
+  // The newest entry is compared by identity: the undo history is capped, so its length alone cannot show a new step.
+  if(host.store.undoStack.at(-1)!==topBefore)throw new Error(`Import landed as one step, but: ${reason}`);
+  let returned=true;
+  if(before!==null)try{await host.rollback(before);}catch{returned=false;}
+  host.store.abandonSpanningGesture();
+  throw new Error(returned?`Import refused, nothing was imported: ${reason}.`:`Import refused: ${reason}. The owner kept some of its cards and could not be returned to its state; reconcile the Expression before editing it.`);
+ }
 }

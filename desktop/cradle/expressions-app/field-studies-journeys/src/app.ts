@@ -44,7 +44,7 @@ import {CHAKRA_PROFILE_ID} from '../../src/engine/semantics/chakraProfile';
 import type {SemanticBinding,SemanticColorCoupling,SemanticFieldConfig} from '../../src/engine/semantics/semanticTypes';
 import {Journey,Scene,Entity,EntityLayer,TextLayer,Tool,Shape,Vec3,clone,uid,clamp,fieldStudies,oiMark,rethemeMark,sevenCentres,smallLanguage,blankJourney,blankScene,entity,pin,chakraEntities,validateJourney,AutomationLane,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX,type MarkThemeReading} from './model.js';
 import {DocumentStore,readLibrary,readLibraryDetailed,saveToLibrary,removeFromLibrary} from './store.js';
-import {bindingEditLabel,connectActLabel,historyTitle,historyToast,KERNEL_UPDATE_LABEL,OUTSIDE_UPDATE_REASON,researchMaterialLabel} from './undoLabels.js';
+import {bindingEditLabel,connectActLabel,historyTitle,historyToast,historyWaitReason,KERNEL_UPDATE_LABEL,OUTSIDE_UPDATE_REASON,researchMaterialLabel} from './undoLabels.js';
 import {defaultCamera,cameraForSceneView,project,unproject,facePlane,stageScale,stageCentre,basis,Camera} from './camera.js';
 import {FieldEngineAdapter,EngineFrame} from './engine.js';
 import {readPath} from '../../src/engine/automation';
@@ -66,7 +66,7 @@ const $=<T extends HTMLElement=HTMLElement>(id:string)=>document.getElementById(
 import {mountShell,iconButton as ib} from './shell.js';
 import {RailItem,railPressed} from './rail.js';
 import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover,collectionBinsOf,collectionsWith,type CollectionBins,type LibraryStanding} from './expressions.js';
-import {installKernelExpressions,kernelExpressionsAvailable,readTechneReading,techneConstellationRelate,listKernelExpressions,readKernelExpression,nativeExpressionRequest} from './kernelExpressions.js';
+import {installKernelExpressions,kernelExpressionsAvailable,readTechneReading,techneConstellationRelate,listKernelExpressions,readKernelExpression,nativeExpressionRequest,invertEdit} from './kernelExpressions.js';
 import {hostedRecovery} from './nativeRecovery.js';
 import {entryGateHTML} from './entryGate.js';
 import {AUTHORED_CHAKRA_STARTER,STANDING_LABEL} from './centreStanding.js';
@@ -95,7 +95,7 @@ import {naraFormGeometry} from './naraFormField.js';
 import type {NativeM3Reading} from '../../../src/nara/nativeM3';
 import {createEvidenceField,type PrivateEvidenceField} from './naraEvidenceField.js';
 import type {PalaceDocumentSnapshot} from '../../../src/techne/m0m5/palace/composition';
-import {applyResearchMaterial,applyConnectorRecord,pruneResearchOccurrence,type ResearchMaterialAction} from './researchMaterial.js';
+import {applyResearchMaterial,applyConnectorRecord,pruneResearchOccurrence,runCanvasImport,type CanvasImportHost,type ResearchMaterialAction} from './researchMaterial.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
 import type {KernelConversion,KernelSceneBody} from './kernelDocumentBridge.js';
 import {installSceneBodies} from './sceneBodies.js';
@@ -886,7 +886,7 @@ function renderAll(){syncDeepLinkAddress();blueprintHUD?.refresh();if(studioDock
  $('scene-number').textContent=String(sceneIndex+1).padStart(2,'0');$('scene-name').textContent=scene().name;
  $('scene-picker').setAttribute('aria-expanded',String(timelineOpen));$('scene-state').textContent=sceneSaveState(store.document,scene());
  document.querySelectorAll<HTMLButtonElement>('[data-rail]').forEach(b=>{const panel=contextKind==='pointer'?'pointer-options':contextKind||(sequenceOpen&&!studioOpen&&!timelineOpen&&!beltPickerOpen&&!modesOpen&&!captureOpen&&!shapePickerOpen&&tool!=='pin'?'formation':'');const active=railPressed(b.dataset.rail!,cursorTool,panel,tool==='pin');b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});document.querySelectorAll('[data-action="grid"]').forEach(b=>b.classList.toggle('active',camera.grid));document.querySelectorAll('[data-action="snap"]').forEach(b=>b.classList.toggle('active',camera.snap));document.querySelectorAll('[data-action="view-2d"]').forEach(b=>b.classList.toggle('active',camera.mode==='2d'));document.querySelectorAll('[data-action="view-3d"]').forEach(b=>b.classList.toggle('active',camera.mode==='3d'));$<HTMLSelectElement>('working-plane').value=camera.plane;$<HTMLInputElement>('working-depth').value=String(camera.depth);$('depth-axis').textContent=camera.plane==='XY'?'Z':camera.plane==='XZ'?'Y':'X';
- document.querySelectorAll<HTMLButtonElement>('[data-action="undo"]').forEach(b=>{b.disabled=!store.undoStack.length;const name=historyTitle('undo',store.undoLabel());b.title=name;b.setAttribute('aria-label',name);});document.querySelectorAll<HTMLButtonElement>('[data-action="redo"]').forEach(b=>{b.disabled=!store.redoStack.length;const name=historyTitle('redo',store.redoLabel());b.title=name;b.setAttribute('aria-label',name);});
+ document.querySelectorAll<HTMLButtonElement>('[data-action="undo"]').forEach(b=>{b.disabled=!store.undoStack.length||store.spanningLabel!==null;const name=historyTitle('undo',store.undoLabel());b.title=name;b.setAttribute('aria-label',name);});document.querySelectorAll<HTMLButtonElement>('[data-action="redo"]').forEach(b=>{b.disabled=!store.redoStack.length||store.spanningLabel!==null;const name=historyTitle('redo',store.redoLabel());b.title=name;b.setAttribute('aria-label',name);});
  document.body.classList.toggle('library-open',libraryOpen);
  $('library-page').hidden=!libraryOpen;const researchActive=document.body.classList.contains('research-active');$('stage').inert=libraryOpen||researchActive;
  // The full object/state Studio and the toolbelt serve the selected occurrence
@@ -2233,7 +2233,12 @@ const mastheadCentre=document.createElement('div');mastheadCentre.className='mas
 const workspaceCluster=masthead.querySelector('.workspace-cluster')!;workspaceCluster.replaceWith(mastheadCentre);
 const lensStudio=installLensStudio({activate:activateInstrument},mastheadCentre);
 mastheadCentre.append(workspaceCluster);
-nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!awaitingNativeBoot||store.revision!==0,anchor:()=>store.kernelSaveAnchor(),recordSave:(anchor,checkpoint)=>{if(!store.attachKernelCheckpoint(anchor,checkpoint))toast('Saved. Undo cannot reverse this Save on the native owner, because the step it began from has moved.',7000);},snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,refresh:()=>{needsFrame=true;renderAll();},summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision}),followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
+// The owner-write hold while a .canvas import is open: nativeWorkspace refuses every other owner write by name. The import's own
+// act and rollback pass it (asCanvasImportOwnerCall), as they are the only owner calls its gesture makes.
+let canvasImportOwnerCall=false;
+function ownerWriteRefusal():string|null{const label=store.spanningLabel;if(label===null||canvasImportOwnerCall)return null;return `${label} is in progress: this change waits until its native owner acknowledges it.`;}
+function asCanvasImportOwnerCall<T>(call:()=>T):T{canvasImportOwnerCall=true;try{return call();}finally{canvasImportOwnerCall=false;}}
+nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!awaitingNativeBoot||store.revision!==0,anchor:()=>store.kernelSaveAnchor(),recordSave:(anchor,checkpoint)=>{if(!store.attachKernelCheckpoint(anchor,checkpoint))toast('Saved. Undo cannot reverse this Save on the native owner, because the step it began from has moved.',7000);},snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,gate:ownerWriteRefusal,refresh:()=>{needsFrame=true;renderAll();},summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision}),followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
 const retainedEditor=createRetainedNativeEditor({
  store,sceneId:()=>scene().id,nativeView:()=>nativeWorkspace?.nativeView(),
  selection:()=>({entity_ids:[...selected],step_id:scene().entities.find(e=>e.id===selected[0])?.sequence.steps[stepIndex]?.id??null}),
@@ -2371,6 +2376,25 @@ document.body.append(researchInspector);
 function pinnedOccurrence(sceneId:string,viewEntityId:string):boolean{const view=nativeWorkspace?.nativeView(),occurrence=view?.bindings[sceneId]?.occurrences.find(o=>o.view_entity_id===viewEntityId);return !!(occurrence&&(view!.document.entities[occurrence.entity_ref] as {pinned?:boolean}|undefined)?.pinned);}
 function researchScene(id:string){const value=store.document.scenes.find(item=>item.id===id);if(!value||value.id!==scene().id)throw new Error('The active Scene changed; return to that Scene before editing.');return value;}
 async function commitResearch(){if(!await commitNativeRecorded())throw new Error('The native owner did not acknowledge this edit. Your working draft is retained.');}
+// B2/E15/E16 — the host a .canvas import runs through (researchMaterial.runCanvasImport). The local store is the one document;
+// the owner is reached through ONE native act (its flush saves the cards, its relations and sides follow, one recorded step).
+function canvasImportHost(sceneId:string):CanvasImportHost{
+ return {
+  store,
+  relationKind:kind=>connectionKind(kind),
+  bindingRef:()=>`${nativeWorkspace!.nativeView()!.document.expression_ref}:relation:connection-${crypto.randomUUID()}`,
+  kernelDocument:()=>nativeWorkspace?.nativeView()?.document??null,
+  saveCards:async()=>!!await commitNativeRecorded(),
+  act:(label,relate,sides)=>asCanvasImportOwnerCall(()=>nativeWorkspace!.edit(view=>{const binding=view.bindings[sceneId];return relate(viewId=>binding?.occurrences.find(row=>row.view_entity_id===viewId)?.entity_ref);},label,sides)),
+  rollback:async before=>{
+   const now=nativeWorkspace?.nativeView()?.document;
+   if(!now||before===null||(before as {revision?:number}).revision===now.revision)return;
+   const compensation=invertEdit(before,now);
+   if(!('changes' in compensation))throw new Error(compensation.reason);
+   await asCanvasImportOwnerCall(()=>nativeWorkspace!.replayCheckpoint(compensation.changes,before));
+  },
+ };
+}
 function ownResearchConnection(ref:string){const value=nativeWorkspace?.nativeView()?.document.relations?.[ref];if(!value||value.native_owner!=='oi')throw new Error('Source relations must be changed through their source owner.');return value;}
 function connectionKind(kind:string){if(!kind.trim()||kind.length>120)throw new Error('Choose a connection type of 1–120 characters.');return encodeURIComponent(kind.trim());}
 function assertConnectionMembers(sceneId:string,source:string,target:string){researchScene(sceneId);const members=nativeWorkspace?.nativeView()?.bindings[sceneId]?.member_refs;if(!members?.includes(source)||!members.includes(target))throw new Error('Both connection endpoints must belong to the current native Scene.');}
@@ -2433,6 +2457,8 @@ researchInstruments=installResearchInstruments({
   await nativeWorkspace!.edit(changes,connectActLabel(inputs.length),lines.length?journey=>{const target=journey.scenes.find(item=>item.id===sceneId);if(!target)throw new Error('The active Scene changed; nothing was connected.');for(const {ref,record} of lines)applyConnectorRecord(target,ref,record);}:undefined);
   return refs;
  },
+ // B2/E15/E16 — a .canvas import: its cards, frames and connections are one labelled undo step (see canvasImportHost).
+ importCanvas:(sceneId,label,actions,links)=>{researchScene(sceneId);const work=runCanvasImport(canvasImportHost(sceneId),{sceneId,label,actions,links});renderAll();return work.finally(renderAll);},
  connect:async(sceneId,input)=>{assertConnectionMembers(sceneId,input.sourceEntityRef,input.targetEntityRef);if(input.directionality&&!['directed','forward'].includes(input.directionality))throw new Error('Expression connections are directed. Choose a directed connection.');const id=`${nativeWorkspace!.nativeView()!.document.expression_ref}:relation:connection-${crypto.randomUUID()}`;await nativeWorkspace?.edit([{change:'relation_bind',binding:{binding_ref:id,native_owner:'oi',relation:{ref:`${id}:${connectionKind(input.relationKind)}`,revision:'1',availability:'available'},from_entity_ref:input.sourceEntityRef,to_entity_ref:input.targetEntityRef,provenance:[]}}],connectActLabel(1));},
  reconnect:async(sceneId,ref,input)=>{assertConnectionMembers(sceneId,input.sourceEntityRef,input.targetEntityRef);const binding=ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,from_entity_ref:input.sourceEntityRef,to_entity_ref:input.targetEntityRef}}],'Reconnect');},
  // Expression connections are directed: reversing swaps the exact endpoints;
@@ -2599,6 +2625,9 @@ async function commitNativeRecorded():Promise<boolean|undefined>{
 let historyStepping=false;
 async function stepHistory(direction:'undo'|'redo'):Promise<void>{
  if(historyStepping)return;
+ // A .canvas import is open: Undo and Redo wait and say why, through the toast; they never throw.
+ const openImport=store.spanningLabel;
+ if(openImport!==null){toast(historyWaitReason(direction,openImport),4200);return;}
  if(store.transactionOpen)store.finish();
  const plan=direction==='undo'?store.undoPlan():store.redoPlan();
  if(!plan)return;

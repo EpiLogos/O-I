@@ -62,21 +62,27 @@ test('connector sides ride the same act: applied inside the one edit, saved with
  assert.equal(callsWithin(body,'commitResearch').length,0,'no separate save follows the relations');
 });
 
-test('the Import .canvas wiring makes one connectMany call and no per-edge connect', ()=>{
+// lane-1 B2 / E15-E16: the import is ONE host call (importCanvas), one labelled step; the cards, frames and connections
+// are not separate material and connect calls. The step's own gates live in canvas-import-undo.test.mjs.
+test('the Import .canvas wiring makes one importCanvas call and no per-edge connect', ()=>{
  const importer=functionNamed(rf,'importCanvasFile')??null;
  const importerText=researchSource.slice(researchSource.indexOf('const importCanvasFile'),researchSource.indexOf('// B3 — the selection'));
  assert.ok(importerText.length>200,'the importer is found');
- assert.match(importerText,/host\.connectMany/,'the importer connects through connectMany');
+ assert.match(importerText,/host\.importCanvas\(/,'the importer imports through importCanvas');
+ assert.doesNotMatch(importerText,/host\.connectMany|host\.material\(/,'no separate material batch or connect act remains in the importer');
  assert.doesNotMatch(importerText,/\bconnect\(sceneId/,'no per-edge connect call remains in the importer');
  assert.doesNotMatch(importerText,/\bconnector\(sceneId/,'no per-edge connector call remains in the importer');
- assert.equal((importerText.match(/host\.connectMany/g)??[]).length,1,'one connectMany call');
+ assert.equal((importerText.match(/host\.importCanvas\(/g)??[]).length,1,'one importCanvas call');
  assert.equal(importer,null,'importCanvasFile is a local closure, not a top-level function');
 });
 
-test('the importer refuses every connection when any end lacks a native occurrence', ()=>{
- const importerText=researchSource.slice(researchSource.indexOf('const importCanvasFile'),researchSource.indexOf('// B3 — the selection'));
- assert.match(importerText,/missing\s*=|\.some\(|\.filter\(/,'the ends are checked before the act');
- assert.match(importerText,/an end has no native occurrence/,'the refusal names the missing end');
+test('a connection whose end lacks a native occurrence is skipped and named, and a refused import is rolled back', ()=>{
+ const materialSource=fs.readFileSync(new URL('../src/researchMaterial.ts',import.meta.url),'utf8');
+ const relate=materialSource.slice(materialSource.indexOf('const relate=(occurrenceOf'),materialSource.indexOf('const sides=lines.length'));
+ assert.match(relate,/if\(!from\|\|!to\)\{skipped\.push\(`\$\{link\.named\} not imported: an end has no native occurrence yet`\);return;\}/,'the act skips the missing end and names it');
+ const runner=materialSource.slice(materialSource.indexOf('export async function runCanvasImport'));
+ assert.match(runner,/host\.store\.abandonSpanningGesture\(\)/,'a refused import drops its gesture, so nothing is recorded');
+ assert.match(runner,/host\.rollback\(before\)/,'the owner is returned to where the import began');
 });
 
 test('B2: a drag-made connection takes the same one-write path as an import, and refuses as the single connect act does', () => {

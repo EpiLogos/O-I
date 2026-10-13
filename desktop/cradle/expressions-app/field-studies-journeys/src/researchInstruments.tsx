@@ -2,7 +2,8 @@
 import React,{Component,useEffect,useRef,useState,type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
 import {clone,uid,type Scene} from './model.js';
-import {notePlainText,type PlaceViewRecord,type ResearchCard,type ResearchMaterialAction,type ResearchStroke,type TimelineViewRecord} from './researchMaterial.js';
+import {notePlainText,type CanvasImportLink,type CanvasImportOutcome,type PlaceViewRecord,type ResearchCard,type ResearchMaterialAction,type ResearchStroke,type TimelineViewRecord} from './researchMaterial.js';
+import {canvasImportLabel} from './undoLabels.js';
 import {exportObsidianCanvas,noteBlocksFromText,parseObsidianCanvas,planObsidianImport,type CanvasExportEdge,type CanvasExportFrame,type CanvasExportNode,type ImportPlan} from './obsidianCanvas.js';
 import {frameBounds,renderFrameStage,type StageEdge} from './frameImage.js';
 import {download} from './capture';
@@ -352,6 +353,8 @@ export interface ResearchInstrumentsHost {
  connect?:(sceneId:string,input:{sourceEntityRef:string;targetEntityRef:string;relationKind:string;directionality?:string})=>Promise<void>;
  // B2: several connections in ONE owner edit. Refused whole when any input is refused; returns the minted binding refs in input order.
  connectMany?:(sceneId:string,inputs:{sourceEntityRef:string;targetEntityRef:string;relationKind:string;directionality?:string;label?:string;connector?:ResearchConnector}[])=>Promise<string[]>;
+ // B2/E15/E16: a .canvas import is ONE labelled undo step: its cards, frames and connections are one owner act. A refused part names itself and nothing lands.
+ importCanvas?:(sceneId:string,label:string,actions:ResearchMaterialAction[],links:CanvasImportLink[])=>Promise<CanvasImportOutcome>;
  reconnect?:(sceneId:string,bindingRef:string,input:{sourceEntityRef:string;targetEntityRef:string})=>Promise<void>;
  deleteConnection?:(sceneId:string,bindingRef:string)=>Promise<void>;
  updateConnectionKind?:(sceneId:string,bindingRef:string,kind:string)=>Promise<void>;
@@ -849,31 +852,27 @@ host.tools.append(saveGlyph);
     actions.push({type:'frame-save',id,label:frame.label,memberRefs:frame.memberKeys.flatMap(key=>created.get(key)??[])});
     if(frame.title)actions.push({type:'frame-title',id,title:frame.title});
    }
-   const connectMany=host.connectMany;
-   const failures:string[]=[];let connected=0;
+   // Each connection's ends are the cards this import created; its sides are the canvas's own connector record.
+   const cardName=(key:string)=>plan.cards.find(card=>card.key===key)?.title?.trim()||'an unnamed card';
+   const links:CanvasImportLink[]=plan.edges.map(edge=>{
+    const connector=edge.fromSide||edge.toSide?connectorRecord({kind:'curved',...(edge.fromSide?{fromSide:edge.fromSide}:{}),...(edge.toSide?{toSide:edge.toSide}:{})})??undefined:undefined;
+    const named=`connection "${edge.relationKind}" from "${cardName(edge.fromKey)}" to "${cardName(edge.toKey)}"`;
+    return {sourceViewId:created.get(edge.fromKey)??'',targetViewId:created.get(edge.toKey)??'',relationKind:edge.relationKind,named,...(connector?{connector}:{})};
+   });
+   let connected=0,skippedByOwner:string[]=[];
    const summary=()=>{
     const cards=`${plan.cards.length} card${plan.cards.length===1?'':'s'}${plan.frames.length?` and ${plan.frames.length} frame${plan.frames.length===1?'':'s'}`:''}`;
-    const links=plan.edges.length?`, ${connected} of ${plan.edges.length} connection${plan.edges.length===1?'':'s'}`:'';
-    const missed=[...plan.skipped,...failures];
-    return `Imported ${cards}${links}.${missed.length?` Not imported: ${missed.join('; ')}.`:''}`;
+    const linked=plan.edges.length?`, ${connected} connection${connected===1?'':'s'}`:'';
+    const missed=[...plan.skipped,...skippedByOwner];
+    return `Imported ${cards}${linked}.${missed.length?` Not imported: ${missed.join('; ')}.`:''}`;
    };
-   const nativeRef=(key:string)=>{const id=created.get(key);return id?host.nativeView()?.bindings[sceneId]?.occurrences.find(row=>row.view_entity_id===id)?.entity_ref:undefined;};
+   // B2/E15/E16: the cards, frames and connections are ONE labelled undo step, named for the file. A connection whose end is missing is
+   // named and skipped; an owner refusal or a refused batch names itself and nothing lands.
    apply(async()=>{
-    if(actions.length)await host.material(sceneId,{type:'batch',label:'Import .canvas',actions});
-    // Every end must have its native occurrence before anything is connected: one missing end refuses the whole set, and the status names it.
-    const cardName=(key:string)=>plan.cards.find(card=>card.key===key)?.title?.trim()||'an unnamed card';
-    const ends=plan.edges.map(edge=>({edge,label:`connection "${edge.relationKind}" from "${cardName(edge.fromKey)}" to "${cardName(edge.toKey)}"`,from:nativeRef(edge.fromKey),to:nativeRef(edge.toKey)}));
-    const missing=ends.filter(row=>!row.from||!row.to).map(row=>`${row.label} not imported: an end has no native occurrence yet`);
-    if(missing.length){failures.push(...missing,'no connection was made');return;}
-    if(!ends.length)return;
-    if(!connectMany){failures.push(...ends.map(row=>`${row.label} not imported: this host cannot create connections`));return;}
-    try{
-     const inputs=ends.map(({edge,label,from,to})=>{
-      const connector=edge.fromSide||edge.toSide?connectorRecord({kind:'curved',...(edge.fromSide?{fromSide:edge.fromSide}:{}),...(edge.toSide?{toSide:edge.toSide}:{})}):null;
-      return {sourceEntityRef:from!,targetEntityRef:to!,relationKind:edge.relationKind,directionality:'directed',label,...(connector?{connector}:{})};
-     });
-     connected=(await connectMany(sceneId,inputs)).length;
-    }catch(error){failures.push(`${ends.length} connection${ends.length===1?'':'s'} not imported, none connected: ${error instanceof Error?error.message:String(error)}`);}
+    if(!actions.length)return;
+    if(!host.importCanvas)throw new Error('This host cannot import a .canvas file.');
+    const outcome=await host.importCanvas(sceneId,canvasImportLabel(file.name),actions,links);
+    connected=outcome.connected;skippedByOwner=outcome.skipped;
    },true,summary);
   };
   // B3 — the selection (or a frame's members) as the canvas draws it: the live stage, cut to the members and the connections
