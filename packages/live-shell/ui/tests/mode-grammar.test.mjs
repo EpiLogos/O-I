@@ -85,7 +85,7 @@ test('Rev 5, first table: every mode\'s slot meanings carry the design\'s words'
       metro: ['autosave'], quantize: ['save timing'],
       key: ['packet token'],
       play: ['answer', 'packet'], arm: ['write-arm'], capture: ['selection', 'packet'],
-      'punch-in': ['08:30'], loop: ['close routine'], 'punch-out': ['21:00'],
+      'punch-in': ['day opened'], loop: ['close routine'], 'punch-out': ['day closes'],
       draw: ['highlight pen'], rate: ['carrier'], cpu: ['save state'],
     },
     factory: {
@@ -135,7 +135,7 @@ test('Rev 5, second table: Session and Arrangement mean what the design says, pe
     base: ['the day as clips', 'today on one ruler'],
     factory: ['sessions and tasks', 'the run viewer'],
     expressions: ['scene rows', 'the scenes over time'],
-    techne: ['journey', 'relation field'],
+    techne: ['journey', 'timeline'],
   }
   for (const [mode, [session, arrangement]] of Object.entries(EXPECT)) {
     const grammar = MODE_GRAMMAR[mode]
@@ -252,7 +252,7 @@ test('the centre compositions per mode × presentation carry the Rev-5 meanings'
     base: ['day as clips', 'today on one ruler'],
     factory: ['sessions, clips are tasks', 'the runs over time'],
     expressions: ['scene rows', 'the scenes over time'],
-    techne: ['walk stops', 'relation field'],
+    techne: ['walk stops', 'timeline'],
   }
   for (const [mode, [session, arrangement]] of Object.entries(EXPECT)) {
     const centre = MODE_GRAMMAR[mode].centre
@@ -304,4 +304,41 @@ test('the browser rail: categories wear the cut\'s kind marks where the specimen
       assert.ok(Object.hasOwn(KIND_SHAPES, expected), `${mode}/${category.id}: "${expected}" is a cut kind mark`)
     }
   }
+})
+
+// ————————————————————————————————————————————————————————————————————————
+// LOCK §4.6–4.7 (T-LABELS): the Central title; Technē's instruments carry
+// plain names, the M′ address kept as provenance; no hour is typed in code.
+
+test('the Central title; Technē labels are plain names with their M′ address as provenance', () => {
+  assert.equal(MODE_GRAMMAR.base.title, 'Central')
+  assert.equal(SDK_MODE_DECLARATIONS.find(mode => mode.name === 'base').title, 'Central')
+  const techne = MODE_GRAMMAR.techne
+  assert.equal(techne.session.meaning, 'Journey')
+  assert.equal(techne.session.provenance, 'M3′ Journey')
+  assert.equal(techne.arrangement.meaning, 'Timeline')
+  assert.equal(techne.arrangement.provenance, 'M2′ Relation Field')
+  assert.equal(techne.centre.session.label, 'Journey')
+  assert.equal(techne.centre.session.provenance, 'M3′ Journey')
+  assert.equal(techne.centre.arrangement.label, 'Timeline')
+  assert.equal(techne.centre.arrangement.provenance, 'M2′ Relation Field')
+  const sdkTechne = SDK_MODE_DECLARATIONS.find(mode => mode.name === 'techne')
+  assert.equal(sdkTechne.sessionView, 'Journey')
+  assert.equal(sdkTechne.arrangementView, 'Timeline')
+  assert.equal(sdkTechne.viewProvenance.sessionView, 'M3′ Journey')
+  assert.equal(sdkTechne.viewProvenance.arrangementView, 'M2′ Relation Field')
+  for (const text of [techne.session.label, techne.arrangement.label, techne.centre.session.label, techne.centre.arrangement.label, techne.centre.session.meaning, techne.centre.arrangement.meaning]) {
+    assert.ok(!/M\d′/.test(text), `"${text}" carries a plain name, not an M′ address`)
+  }
+})
+
+test('no hard-coded day hours: the punch slots name the owner\'s reading, never a typed hour', () => {
+  const HOUR = /\b\d{1,2}[:.]\d{2}\b/
+  const texts = [
+    ...MODE_GRAMMAR.base.transport.flatMap(slot => [slot.label, slot.fn]),
+    ...SDK_MODE_DECLARATIONS.find(mode => mode.name === 'base').rows.map(row => row.meaning),
+  ]
+  for (const text of texts) assert.ok(!HOUR.test(text), `"${text}" types no hour`)
+  assert.equal(MODE_GRAMMAR.base.transport.find(slot => slot.id === 'punch-in').label, 'Day opened')
+  assert.equal(MODE_GRAMMAR.base.transport.find(slot => slot.id === 'punch-out').label, 'Day close')
 })

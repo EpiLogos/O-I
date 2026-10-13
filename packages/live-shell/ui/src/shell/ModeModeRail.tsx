@@ -1,6 +1,6 @@
 /**
  * The mode rail — the surf's mode icons (WORLD-SHELL-DESIGN Revision 5):
- * Live · Base · Central · Factory · Expressions · Technē, each wearing its
+ * Live (the base) · Central · Factory · Expressions · Technē, each wearing its
  * icon-cut mark, the pressed one lit. ONE rail for every transport that
  * carries the mode system: the frame's TransportBar renders it after the
  * Session|Arrangement presentations, and the agency surface's transport

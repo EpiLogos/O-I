@@ -13,7 +13,8 @@
  *   green · Things gold · Goals violet), a named first clip per track, the
  *   eight-slot rhythm with soft-stop squares, and the per-track stop row.
  * - Base · Arrangement — today on one ruler: the hour ruler drawn full
- *   width, the day window (opened 08:30 · close 21:00) as a band, the now
+ *   width, the day window as a band only when the Central owner's reading
+ *   gives the day's bounds (no hours are set — DEVICE-SEMANTICS-LOCK §0, §4.7), the now
  *   needle ONLY when the civil read answers (a reading, never a wall clock),
  *   and the day's material as named lanes.
  * - Technē · Session — the M3′ Journey (world-shell-mockup-r2-scenes): the
@@ -153,10 +154,12 @@ function DayAsClipsStructure() {
   </div>
 }
 
-/** The day window the grammar's own transport names (punch-in "the day
- * opened (08:30)", punch-out "the day closes (21:00)"). */
-const DAY_WINDOW = {open: 8.5, close: 21, spanStart: 5, spanEnd: 23} as const
-const at = (hour: number) => `${((hour - DAY_WINDOW.spanStart) / (DAY_WINDOW.spanEnd - DAY_WINDOW.spanStart) * 100).toFixed(3)}%`
+/** The ruler spans the civil day. The day's own bounds — when it opened and
+ * its automated closure — are the Central owner's (DEVICE-SEMANTICS-LOCK §0,
+ * §4.7): the band is drawn only over the owner's reading, never from hours
+ * typed here. `dayBounds` stays null until the civil reading carries them. */
+const RULER = {spanStart: 0, spanEnd: 24} as const
+const at = (hour: number) => `${((hour - RULER.spanStart) / (RULER.spanEnd - RULER.spanStart) * 100).toFixed(3)}%`
 
 /** Base · Arrangement — today on one ruler: the hour ruler drawn full
  * width, the day window as a band, the now needle only over a real
@@ -165,14 +168,16 @@ function TodayRulerStructure({world}: {world: WorldTimelineView | null}) {
   const source = world?.source
   const now = source?.status === 'live' ? source.now : null
   const nowHour = now?.instantUnixMs != null ? new Date(now.instantUnixMs).getHours() + new Date(now.instantUnixMs).getMinutes() / 60 : null
-  const inSpan = nowHour != null && nowHour >= DAY_WINDOW.spanStart && nowHour <= DAY_WINDOW.spanEnd
+  const inSpan = nowHour != null && nowHour >= RULER.spanStart && nowHour <= RULER.spanEnd
+  // the owner's day bounds (opened · closes), in hours; null until the civil reading gives them
+  const dayBounds = null as {open: number; close: number} | null
   const hours: number[] = []
-  for (let hour = DAY_WINDOW.spanStart; hour <= DAY_WINDOW.spanEnd; hour++) hours.push(hour)
+  for (let hour = RULER.spanStart; hour <= RULER.spanEnd; hour += 2) hours.push(hour)
   return <div className="mode-centre-structure mode-centre-ruler" aria-label="Today on one ruler">
     <div className="mode-centre-ruler-row">
       {hours.map(hour => <span key={hour} className="mode-centre-tick" data-hour={hour} style={{left: at(hour)}}><i>{String(hour).padStart(2, '0')}:00</i></span>)}
-      <span className="mode-centre-window" style={{left: at(DAY_WINDOW.open), width: `calc(${at(DAY_WINDOW.close)} - ${at(DAY_WINDOW.open)})`}}
-        data-i="The day window|the day opened 08:30, closes 21:00 — the grammar's own punch points" />
+      {dayBounds && <span className="mode-centre-window" style={{left: at(dayBounds.open), width: `calc(${at(dayBounds.close)} - ${at(dayBounds.open)})`}}
+        data-i="The day window|when the day opened and its automated closure — the Central owner's reading" />}
       {nowHour != null && inSpan && <span className="mode-centre-now" style={{left: at(nowHour)}}
         data-i="Now|the civil instant from the kernel's own temporal read — never the wall clock" />}
     </div>
@@ -181,7 +186,7 @@ function TodayRulerStructure({world}: {world: WorldTimelineView | null}) {
         {name: 'documents', note: 'the day record and its flow documents, at their civil instants'},
         {name: 'entries', note: 'beings, things and goals entries as they are made'},
         {name: 'returns · handoffs', note: 'the day\'s NOW returns and handoffs'},
-        {name: 'the close', note: 'the close routine lands here, before 21:00'},
+        {name: 'the close', note: 'the day\'s automated closure lands here, when the Central owner closes it'},
       ].map(lane => <div key={lane.name} className="mode-centre-ruler-lane" data-lane={lane.name}>
         <span className="mode-centre-ruler-lane-name">{lane.name}</span>
         <span className="mode-centre-ruler-note" data-i={`Today's ${lane.name}|${lane.note} — placed when the civil field reads`}>
@@ -195,7 +200,7 @@ function TodayRulerStructure({world}: {world: WorldTimelineView | null}) {
 /** Technē · Session — the M3′ Journey at the mockup's scene-row grammar:
  * six coloured stop columns, eight stops, the scene-launcher column. */
 function JourneyStructure() {
-  return <div className="mode-centre-structure mode-centre-journey" aria-label="M3′ Journey — walk stops">
+  return <div className="mode-centre-structure mode-centre-journey" aria-label="Journey — walk stops" data-provenance="M3′">
     <div className="mode-centre-journey-heads">
       <span className="mode-centre-track-head mode-centre-launcher-head">The walk</span>
       {JOURNEY_STOP_COLUMNS.map(column => <span key={column.name} className="mode-centre-track-head" style={{'--tc': column.colour} as CSSProperties}>{column.name}</span>)}
@@ -220,7 +225,7 @@ function JourneyStructure() {
 /** Technē · Arrangement — the M2′ Relation Field: the lenses in the
  * design's order, the honest lanes, the declared break, the standings. */
 function RelationFieldStructure() {
-  return <div className="mode-centre-structure mode-centre-relation" aria-label="M2′ Relation Field">
+  return <div className="mode-centre-structure mode-centre-relation" aria-label="Timeline" data-provenance="M2′">
     <div className="mode-centre-lens-row" role="tablist" aria-label="Timeline lenses">
       {['chronology', 'causal', 'recurrence', 'concurrency'].map(lens => (
         <span key={lens} className="mode-centre-lens" data-lens={lens}>{lens}</span>

@@ -17,8 +17,9 @@
  * Mode → spine mapping (the aperture law: a mode switch is an encounter
  * transition over mode × WorldContext × accessEpoch, never a second store):
  * - live  → the shell's audio cut (book mode `base`, the music presentation)
- * - base  → book mode `base` + WorldContext.world = 'central' — the design's
- *   §6 resolution: Central is a world context, not a separate mode
+ * - base  → book mode `base` + WorldContext.world = 'central' — Central is a
+ *   mode, implemented as book mode `base` plus the Central world context
+ *   (WORLD-SHELL-DESIGN §6); the stored name `base` is kept, never renamed
  * - factory → book mode `factory` (the agency surface is its content)
  * - expressions/techne → their book modes, as standing.
  *
@@ -28,8 +29,9 @@
 import type {IconName} from '../inhabitants/sdk/icons.ts'
 import type {KindShapeName} from '../inhabitants/sdk/marks.tsx'
 
-/** The surf's mode icons, in order: Live · Base · Central · Factory ·
- * Expressions · Technē (Revision 5's rack row). */
+/** The surf's mode icons, in order: Live · Central · Factory · Expressions ·
+ * Technē — the five ruled modes (Revision 5's rack row). The shell id `base`
+ * is Central's; it is not Live's name. */
 export const SURF_MODES = ['live', 'base', 'factory', 'expressions', 'techne'] as const
 export type SurfMode = (typeof SURF_MODES)[number]
 
@@ -53,10 +55,13 @@ export interface SlotMeaning {
   readonly fn: string
 }
 
-/** One presentation's meaning: what the icon shows, and what the view holds. */
+/** One presentation's meaning: what the icon shows, and what the view holds.
+ * `provenance` conserves an instrument's M′ address (Technē's M3′, M2′ …)
+ * beside its plain name: the address is not the name, and is not deleted. */
 export interface PresentationMeaning {
   readonly label: string
   readonly meaning: string
+  readonly provenance?: string
 }
 
 /** Revision 4's Clip | Device pair, per arrangement. */
@@ -109,6 +114,8 @@ export interface ModeBrowserCategory {
 export interface CentreComposition {
   readonly label: string
   readonly meaning: string
+  /** The instrument's M′ address, conserved as provenance (Technē only). */
+  readonly provenance?: string
 }
 
 /** The mode's status identity: what the status bar's subject line names in
@@ -225,7 +232,7 @@ const live: SurfModeGrammar = {
 
 const base: SurfModeGrammar = {
   name: 'base',
-  title: 'Base · Central',
+  title: 'Central',
   mark: 'die',
   hint: 'The Central ground — the day and its documents',
   session: {label: 'Session', meaning: 'the day as clips: Day, Flows, Beings, Things and Goals as tracks'},
@@ -279,9 +286,9 @@ const base: SurfModeGrammar = {
     {id: 'arm', label: 'Agent write-arm', fn: 'off: agent writes arrive as proposals; on: they land with a receipt'},
     {id: 're-enable', label: 'Hand back', fn: 'hand back what you hold that an agent owns'},
     {id: 'capture', label: 'Selection → packet', fn: 'put the current selection into the packet'},
-    {id: 'punch-in', label: 'Day opened', fn: 'the day opened (08:30)'},
-    {id: 'loop', label: 'Close routine', fn: 'the day-close routine'},
-    {id: 'punch-out', label: 'Day close', fn: 'the day closes (21:00)'},
+    {id: 'punch-in', label: 'Day opened', fn: 'the day opened — the Central owner\'s reading; empty until the owner gives one'},
+    {id: 'loop', label: 'Close routine', fn: 'the day-close routine — the automated closure'},
+    {id: 'punch-out', label: 'Day close', fn: 'the day closes — the Central owner\'s reading; empty until the owner gives one'},
     {id: 'loop-length', label: 'Day span', fn: 'the day\'s span'},
     {id: 'draw', label: 'Highlight pen', fn: 'highlight in the open document'},
     {id: 'keys', label: 'Keys', fn: 'keys for the document\'s controls'},
@@ -412,8 +419,8 @@ const techne: SurfModeGrammar = {
   title: 'Technē',
   mark: 'techne',
   hint: 'The deep mode — the six lenses over one encounter',
-  session: {label: 'Session', meaning: 'M3′ Journey'},
-  arrangement: {label: 'Arrangement', meaning: 'M2′ Relation Field'},
+  session: {label: 'Session', meaning: 'Journey', provenance: 'M3′ Journey'},
+  arrangement: {label: 'Arrangement', meaning: 'Timeline', provenance: 'M2′ Relation Field'},
   detail: {
     clip: {label: 'Clip', meaning: 'identity, place and time, disclosure, typed relations, bounded constellation, source'},
     device: {label: 'Instruments', meaning: 'the six lenses — the focused lens\'s instrument expanded, the others folded; clicking one opens it on the focused pane'},
@@ -442,8 +449,8 @@ const techne: SurfModeGrammar = {
       hint: 'Journeys — the walk stops (place · occasion · artefact · narration). Waits for the journey owner — designed empty, named.'},
   ],
   centre: {
-    session: {label: 'M3′ Journey', meaning: 'walk stops — place · occasion · artefact · narration'},
-    arrangement: {label: 'M2′ Relation Field', meaning: 'the Relation Field — authored history beside development on one non-linear ruler with the declared break into today'},
+    session: {label: 'Journey', meaning: 'walk stops — place · occasion · artefact · narration', provenance: 'M3′ Journey'},
+    arrangement: {label: 'Timeline', meaning: 'timeline — authored history beside development on one non-linear ruler, with the declared break into today', provenance: 'M2′ Relation Field'},
   },
   status: {label: 'Technē', fn: 'the six lenses over one encounter'},
   transport: [

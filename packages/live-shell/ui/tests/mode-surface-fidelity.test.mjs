@@ -60,10 +60,12 @@ test('base session: five coloured track columns, named clips, the eight-slot rhy
   assert.ok(document.includes('--mode-day'), 'the colour grammar present')
 })
 
-test('base arrangement: the hour ruler drawn, the day window banded, lanes named', () => {
+test('base arrangement: the hour ruler drawn, no day window typed in code, lanes named', () => {
   const out = html(createElement(ModeCentreFrame, {mode: 'base', presentation: 'arrangement', world: null}))
-  assert.equal((out.match(/mode-centre-tick/g) ?? []).length, 19, 'hour ticks 05:00–23:00')
-  assert.ok(out.includes('mode-centre-window'), 'the day window drawn')
+  assert.equal((out.match(/mode-centre-tick/g) ?? []).length, 13, 'the civil day ruled 00:00–24:00')
+  // the day's bounds are the Central owner's (DEVICE-SEMANTICS-LOCK §0, §4.7): no band without its reading
+  assert.ok(!out.includes('mode-centre-window'), 'no day window without the owner')
+  assert.ok(!/08:30|21:00/.test(out), 'no typed day hours')
   assert.ok(out.includes('mode-centre-now') === false, 'no now needle without a live reading — never a wall clock')
   for (const lane of ['documents', 'entries', 'returns · handoffs', 'the close']) {
     assert.ok(out.includes(`data-lane="${lane}"`), `the ${lane} lane drawn`)

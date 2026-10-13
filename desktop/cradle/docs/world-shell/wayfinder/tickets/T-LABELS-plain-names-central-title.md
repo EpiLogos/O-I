@@ -1,7 +1,7 @@
 # T-LABELS — Plain instrument names; the Central mode titled "Central"
 
 Label: wayfinder:task (Phase 4, UI only)
-Claimed-by: —
+Claimed-by: claude-code:dlw-lead (13 Oct 2026; builder haiku ×1)
 Blocked-by: — (code legs). UI legs need the screen gate (PATH §3).
 Source: DEVICE-SEMANTICS-LOCK.md §4.6 and §4.7
 (:749-764); §2.3 (:829-837); ledger L19 (:1166).
@@ -78,4 +78,26 @@ none.
 
 ## Resolution
 
-—
+**Code legs landed (13 Oct 2026; builder haiku ×1 + the lead's out-of-zone residues).**
+- "Central" is the title in `modeGrammar.ts` and `sdk/modes.ts`; the surf
+  and rail comments name the five ruled modes (Live the base); the book
+  mode `base` is untouched (Central's shell id; Live's restore unchanged).
+- Technē: Session "Journey", Arrangement "Timeline" (lock §7.2: the M2′
+  Timeline; PROG:97-108's plain list), each keeping its M′ address as a
+  `provenance` field / `data-provenance`; the visible M′ strings in
+  `ModeCentre.tsx` and `ModeDetail.tsx` follow.
+- No typed day hours: the punch rows read "day opened · close routine ·
+  day closes"; the Today ruler spans the civil day and draws the day window
+  only over the Central owner's reading (none today → no band); the close
+  lane names the automated closure.
+- Loader reds fixed in the tests (extensionless cradle imports):
+  native-knowledge-adapter green under plain `node --test`;
+  continuity-storage 9/9 with `--experimental-webstorage
+  --localstorage-file=<tmp>` (it uses the global localStorage by design,
+  like the other WebStorage suites).
+- device-sdk's drift check reads `specimenName` (icon-cut keeps `Base`).
+- Scripted: tsc 0; device-sdk, mode-grammar, mode-surface-fidelity,
+  native-knowledge-adapter, live-mode-place → 65/65; devices:validate PASS.
+
+**Unverified:** acceptance 4 (the rail/status read "Central", Technē
+labels plain, no day band) — `UNVERIFIED: needs-computer-use`.

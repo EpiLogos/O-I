@@ -1,12 +1,35 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {loadWorkspaceBook, workspaceStorageNamespace, switchWorkspaceMode, updateWorkspaceBinding} from '../../../../desktop/cradle/src/workspace/store.ts'
-import {stageCheckpoint, commitCheckpoint, lastKnownGood, decodeLayoutProgressive} from '../../../../desktop/cradle/src/workspace/checkpoints.ts'
-import {preservePresentation, latestRecovery, listRecovery} from '../../../../desktop/cradle/src/workspace/recovery.ts'
-import {ContinuityResidency} from '../src/continuity/residency.ts'
-import {runtimeRecord} from '../../../../desktop/cradle/src/surface/runtime.ts'
-import {decodeApplicationView} from '../../../../desktop/cradle/src/surface/persist.ts'
-import {candidateApplicationEnvelope, readCandidateApplicationView} from '../src/continuity/applicationView.ts'
+import {register} from 'node:module'
+
+// Production sources in memory: .ts/.tsx transpiled, extensionless relative
+// specifiers retried as .ts/.tsx (the timeline-time-spine loader pattern).
+const root = new URL('../../../../', import.meta.url);
+const compiler = new URL('desktop/cradle/node_modules/typescript/lib/typescript.js', root).href;
+register(`data:text/javascript,${encodeURIComponent(`
+import ts from ${JSON.stringify(compiler)};
+import {readFile} from 'node:fs/promises';
+export async function resolve(specifier,context,next){
+  try{return await next(specifier,context)}catch(error){
+    if(!specifier.startsWith('.'))throw error;
+    if(specifier.endsWith('.js')){try{return await next(specifier.slice(0,-3)+'.ts',context)}catch{}}
+    for(const suffix of ['.ts','.tsx']){try{return await next(specifier+suffix,context)}catch{}}
+    throw error;
+  }
+}
+export async function load(url,context,next){
+  if(url.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export {}'};
+  if(!url.endsWith('.ts')&&!url.endsWith('.tsx'))return next(url,context);
+  return {format:'module',shortCircuit:true,source:ts.transpileModule(await readFile(new URL(url),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX},fileName:new URL(url).pathname}).outputText};
+}`)}`, import.meta.url);
+
+const {loadWorkspaceBook, workspaceStorageNamespace, switchWorkspaceMode, updateWorkspaceBinding} = await import('../../../../desktop/cradle/src/workspace/store.ts')
+const {stageCheckpoint, commitCheckpoint, lastKnownGood, decodeLayoutProgressive} = await import('../../../../desktop/cradle/src/workspace/checkpoints.ts')
+const {preservePresentation, latestRecovery, listRecovery} = await import('../../../../desktop/cradle/src/workspace/recovery.ts')
+const {ContinuityResidency} = await import('../src/continuity/residency.ts')
+const {runtimeRecord} = await import('../../../../desktop/cradle/src/surface/runtime.ts')
+const {decodeApplicationView} = await import('../../../../desktop/cradle/src/surface/persist.ts')
+const {candidateApplicationEnvelope, readCandidateApplicationView} = await import('../src/continuity/applicationView.ts')
 
 const options = {storageKey: 'oi.live-shell.candidate.workspace.v2', legacyLayoutKey: 'oi.live-shell.candidate.layout.v1'}
 const namespace = workspaceStorageNamespace(options)
