@@ -35,6 +35,13 @@ export interface GraphHandlers {
   onEarth(key: string | null): void;
   /** The sky's bodies, ties and standing longitudes, loaded on demand; null when the sky cannot be had. */
   loadSky?(): Promise<{ source: SkyAnchorSource; asOf: string } | null>;
+  /** [shell] the graph's controls changed (what GraphTools draws): the shell's face bodies re-read them. */
+  onControls?(): void;
+}
+
+/** What the graph's own controls show: the tool state GraphTools draws, and the tie bases the relations are named by. */
+export interface GraphControls extends ToolState {
+  readonly bases: readonly TieBasisDecl[];
 }
 
 export interface GraphTarget {
@@ -424,6 +431,7 @@ export class GraphView {
     this.selected = selected;
     this.emph = emph;
     this.tools.setState({ ...this.toolState(), local: subject >= 0 });
+    this.h_.onControls?.();
     if (key === this.lastTargetKey) return;
     // a selected occurrence the shown set lacks brings its form in: that is a change of layout too
     const layoutChanged = layoutKey !== this.lastTargetKey.split('|').slice(0, 3).join('|') || this.active.size === 0 || (selected >= 0 && !this.active.has(selected));
@@ -516,6 +524,12 @@ export class GraphView {
 
   private pushTools() {
     this.tools.setState(this.toolState());
+    this.h_.onControls?.();
+  }
+
+  /** [shell] The controls the graph shows, as its own tools draw them (the face bodies read this; the setters are the tools'). */
+  controls(): GraphControls {
+    return { ...this.toolState(), bases: this.bases };
   }
 
   /**
@@ -573,7 +587,7 @@ export class GraphView {
     return lon === undefined ? null : skyRingPosition(lon);
   }
 
-  private setDepth(d: number) {
+  setDepth(d: number) {
     const nd = Math.max(1, Math.min(3, d));
     if (nd === this.depth) return;
     this.depth = nd;
@@ -587,7 +601,7 @@ export class GraphView {
     saveSettings({ forces: this.forces, dust: this.dust, ties: this.ties, kinds: this.kinds });
   }
 
-  private setDust(on: boolean) {
+  setDust(on: boolean) {
     if (on === this.dust) return;
     this.dust = on;
     this.remember();
@@ -597,7 +611,7 @@ export class GraphView {
   }
 
   /** A tier switched on or off: its nodes and its ties leave the drawing together. */
-  private setKinds(next: KindFlags) {
+  setKinds(next: KindFlags) {
     if (next.archetype === this.kinds.archetype && next.theoretic === this.kinds.theoretic && next.family === this.kinds.family) return;
     this.kinds = { ...next };
     this.remember();
@@ -607,7 +621,7 @@ export class GraphView {
   }
 
   // ── which nodes are shown ────────────────────────────────────────────────
-  private setTies(bases: TieBasis[]) {
+  setTies(bases: TieBasis[]) {
     this.ties = bases;
     this.remember();
     this.pushTools();
@@ -615,7 +629,7 @@ export class GraphView {
   }
 
   /** The four forces, as the person set them: re-set on the live layout (the nodes keep their places) and reheated, so the change is seen settling. */
-  private setForces(f: Forces) {
+  setForces(f: Forces) {
     this.forces = { ...f };
     this.remember();
     this.pushTools();
@@ -990,7 +1004,7 @@ export class GraphView {
   }
 
   /** Frame what is shown afresh: the way back once the person has moved the camera (Reframe, the key 0). */
-  private reframe() {
+  reframe() {
     this.autoFit = true;
     this.follow = 1.2;
     this.refit(0.8);

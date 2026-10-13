@@ -1,0 +1,86 @@
+/* The atlas face bodies (atlasFaceBodies.tsx): the instrument-card scale of the Technē detail row, flat neutral, hairline
+ * divisions, 11 px type, the same tokens as the QL instrument face. */
+
+.atlas-face {
+  border-top: 1px solid var(--inh-line, #24262a);
+  color: var(--inh-text, #d4d7da);
+  font: 11px/1.45 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding-top: 6px;
+}
+
+.atlas-face-group,
+.atlas-face-row,
+.atlas-face-forces {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.atlas-face-caption {
+  color: var(--inh-faint, #71767c);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-right: 2px;
+}
+
+.atlas-face-note {
+  margin: 0;
+  color: var(--inh-faint, #71767c);
+  font-size: 10px;
+}
+
+.atlas-face-readout {
+  margin: 0;
+  font-size: 13px;
+  color: var(--inh-text, #d4d7da);
+}
+
+.atlas-face-n {
+  font-variant-numeric: tabular-nums;
+  color: var(--inh-text, #d4d7da);
+}
+
+.atlas-face-choice,
+.atlas-face-filter,
+.atlas-face-action,
+.atlas-face-step {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--inh-line, #24262a);
+  border-radius: 3px;
+  padding: 2px 7px;
+  cursor: pointer;
+}
+
+.atlas-face-choice[aria-pressed='true'],
+.atlas-face-filter[aria-pressed='true'] {
+  border-color: var(--inh-text, #d4d7da);
+}
+
+.atlas-face-step:disabled,
+.atlas-face-action:disabled,
+.atlas-face-filter:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.atlas-face-force {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 6px;
+  width: 100%;
+}
+
+.atlas-face-range {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+}

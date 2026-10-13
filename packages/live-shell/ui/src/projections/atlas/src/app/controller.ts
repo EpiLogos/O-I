@@ -110,6 +110,10 @@ export class Controller {
   private labelRect = { x: 0, y: 0, w: 380, h: 170 };
   /** the views a lens or the graph needs are fetched when first used (MODES-RFC §7); null until then */
   private graph: GraphView | null = null;
+  /** [shell] the shell's face bodies that show what the atlas holds (graph controls, globe scope) are told when it changes */
+  private faceListeners = new Set<() => void>();
+  /** [shell] the globe's whole-field choice, as the scope last reported it (the engine's own flag is private to it) */
+  private globeWhole = false;
   private loading = new Map<string, Promise<void>>();
   private navTok = 0;
   private root: HTMLElement;
@@ -240,7 +244,11 @@ export class Controller {
     });
     this.chrome = { setContext: (t) => this.shell.setContext(t), setControls: (n) => this.shell.setControls(n) };
     // a mode's own set on the globe is named under its title, with the whole field one click away (src/data/scope.ts)
-    this.engine.onScope = (scope, whole) => this.shell.setScope(scope, whole, (on) => this.engine.setWholeField(on));
+    this.engine.onScope = (scope, whole) => {
+      this.globeWhole = whole;
+      this.shell.setScope(scope, whole, (on) => this.engine.setWholeField(on));
+      this.emitFaces();
+    };
     this.panel = new Panel(root, () => this.closeSheet());
     // the sheet's visibility is the Options' first action and the globe's shift: both follow it (panel.ts)
     this.panel.onChange(() => this.syncSheet());
@@ -455,8 +463,10 @@ export class Controller {
         onSelect: (key) => this.onGraphSelect(key),
         onEarth: (key) => this.onGraphEarth(key),
         loadSky: () => this.skyAnchors(),
+        onControls: () => this.emitFaces(),
       }, this.engine.reduced);
       this.root.before(this.graph.root);
+      this.emitFaces();
     })));
     if (next.history && !this.aion && this.history) jobs.push(this.ensure('aion', () => import('../aion/view').then(({ AionView }) => {
       this.aion = new AionView(this.root, this.m, this.engine, this.time, this.history!, (state) => this.navigate(state), this.passages, (occId) => this.openReading(occId), this.chrome);
@@ -1859,6 +1869,30 @@ export class Controller {
   toggleMode() {
     this.navigate(withMode(this.state, !this.state.graph));
   }
+
+  // ── the shell's face bodies: the atlas's own state, read and told of changes ──
+  /** The graph view, once it has been opened in this session (null until then). */
+  get graphControls(): GraphView | null {
+    return this.graph;
+  }
+
+  /** The globe's scope, and whether the whole field is drawn with it. */
+  get globeScope(): { scope: GlobeEngine['scope']; wholeField: boolean } {
+    return { scope: this.engine.scope, wholeField: this.globeWhole };
+  }
+
+  /** Subscribe to what the face bodies show: the graph's controls (and its first opening), the globe's scope. */
+  subscribeFaces(listener: () => void): () => void {
+    this.faceListeners.add(listener);
+    return () => {
+      this.faceListeners.delete(listener);
+    };
+  }
+
+  private emitFaces(): void {
+    for (const listener of this.faceListeners) listener();
+  }
+
   private toggleAion() {
     if (!this.history) return;
     const reading = defaultReadingId(this.history.readings);
