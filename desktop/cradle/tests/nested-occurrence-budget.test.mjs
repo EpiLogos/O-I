@@ -147,23 +147,33 @@ test('playback: unread and refused are notices, never a guess', () => {
  assert.equal(M.nestedNotice(M.nestedFrameAt(0,5,[2],unread)),'not read');
  assert.equal(M.nestedNotice({kind:'end'}),null);
 });
-test('depth gate: the read plan stops at the placement bound, and requests each document under its recorded key', () => {
+test('depth gate: the read plan stops at the placement bound, and asks for each document it does not hold', () => {
  const A='expression:a',B='expression:b',C='expression:c';
- const doc=(ref,child)=>({expression_ref:ref,scenes:[{scene_ref:ref+':scene:main',entity_refs:[],body:{carrier:'expression_ref',subject_ref:child,reading:{revision:'1'}}}]});
- const g=new Map([[A,doc(A,B)]]),req=new Map([[A,'rev:7']]),root={ref:A,key:'rev:7'};
- assert.deepEqual(M.nestedReadPlan(g,req,root,1),[]);
- assert.deepEqual(M.nestedReadPlan(g,req,root,2),[{ref:B,key:'rev:1'}]);
- g.set(B,doc(B,C));req.set(B,'rev:1');
- assert.deepEqual(M.nestedReadPlan(g,req,root,2),[]);
- assert.deepEqual(M.nestedReadPlan(g,req,root,3),[{ref:C,key:'rev:1'}]);
+ const doc=(ref,child)=>({expression_ref:ref,revision:1,scenes:[{scene_ref:ref+':scene:main',entity_refs:[],body:{carrier:'expression_ref',subject_ref:child}}]});
+ const g=new Map([[A,doc(A,B)]]),listed=new Map([[A,1],[B,1],[C,1]]);
+ assert.deepEqual(M.nestedReadPlan(g,listed,A,1),[]);
+ assert.deepEqual(M.nestedReadPlan(g,listed,A,2),[B]);
+ g.set(B,doc(B,C));
+ assert.deepEqual(M.nestedReadPlan(g,listed,A,2),[]);
+ assert.deepEqual(M.nestedReadPlan(g,listed,A,3),[C]);
 });
-test('freshness: a document is current only under the recorded key; the key is the recorded revision', () => {
- assert.equal(M.nestedKeyOf('expression:x','7',1),'rev:7');
- assert.equal(M.nestedKeyOf('expression:x','',2),'structure:expression:x:2');
+test('freshness: a document is current at the revision the library lists it at; a moved one is asked for', () => {
  const A='expression:a',B='expression:b';
- const g=new Map([[A,{expression_ref:A,scenes:[{scene_ref:A+':s',entity_refs:[],body:{carrier:'expression_ref',subject_ref:B,reading:{revision:'1'}}}]}],[B,{expression_ref:B,scenes:[]}]]);
- assert.deepEqual(M.nestedReadPlan(g,new Map([[A,'rev:7'],[B,'rev:0']]),{ref:A,key:'rev:7'},2),[{ref:B,key:'rev:1'}]);
- assert.deepEqual(M.nestedReadPlan(g,new Map([[A,'rev:7'],[B,'rev:1']]),{ref:A,key:'rev:7'},2),[]);
+ const g=new Map([[A,{expression_ref:A,revision:1,scenes:[{scene_ref:A+':s',entity_refs:[],body:{carrier:'expression_ref',subject_ref:B}}]}],[B,{expression_ref:B,revision:1,scenes:[]}]]);
+ assert.deepEqual(M.nestedReadPlan(g,new Map([[A,1],[B,2]]),A,2),[B]);
+ assert.deepEqual(M.nestedReadPlan(g,new Map([[A,1],[B,1]]),A,2),[]);
+ assert.deepEqual(M.nestedReadPlan(g,new Map([[A,1],[B,1]]),A,2,()=>false),[],'a document held back by its wait is not asked');
+});
+test('backoff: the wait grows 1 s, 2 s, 4 s and is capped at five minutes', () => {
+ assert.equal(M.nestedBackoffMs(0),0);
+ assert.equal(M.nestedBackoffMs(1),1000);
+ assert.equal(M.nestedBackoffMs(3),4000);
+ assert.equal(M.nestedBackoffMs(30),300000);
+});
+test('changed: a recorded revision other than the listed one is changed; a listed-away revision is not compared', () => {
+ assert.equal(M.nestedChangedSincePlaced('7',8),true);
+ assert.equal(M.nestedChangedSincePlaced('7',7),false);
+ assert.equal(M.nestedChangedSincePlaced('7',undefined),false);
 });
 test('seams: the entering Scene names outgoing and incoming, its kind and its length; the first Scene and a cut have none', () => {
  const S=[{duration:2,transition:0,kind:'crossfade'},{duration:3,transition:1.5,kind:'dip-to-colour'},{duration:1,transition:0.5,kind:'cut'},{duration:2,transition:1,kind:'wipe'}];

@@ -95,7 +95,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
  let ownerIdle:Promise<void>=Promise.resolve();
  let queuedMutations=0;
  // E14: the nested documents the open Expression names (nestedDocumentReads).
- const nested=nestedDocumentReads(readKernelExpression,()=>host.refresh?.());
+ const nested=nestedDocumentReads(readKernelExpression,()=>host.refresh?.(),listKernelExpressions);
  const status=(text:string)=>{notice=text;update();};
  const update=()=>{
   const state=work.state,doc=state?.view?.document;
