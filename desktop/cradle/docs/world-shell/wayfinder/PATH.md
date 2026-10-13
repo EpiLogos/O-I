@@ -84,12 +84,14 @@ Phase chain: 0 native + disclosure → 1 semantics gate + craft →
 1. **Screen pass** (Sonnet computer use) — waits on the owner's grant of
    "O-I Shell Candidate" (refused twice; never substituted by scripted AX
    clicks).
-2. T-FRAME-TIME-PUSH (the hosted frames hear the shared window move).
-3. Lane-3 Family U (undo as kernel receipts; the adoption entry), E21, E26,
-   E18 library split.
-4. Lane 1: D1–D3. Lane 2: T23–T25. Lane 4: T25, T26. Lane 5: T9–T24.
-5. Factory panes reachable (the agent shell's centre is always
-   `native.agent`; an instrument pane in Factory needs the split).
+2. T-FACTORY-TIMELINE-PANE; T-EXPRESSIONS-PANE-LEASE.
+3. Lane-5 T15 (the palace's free-placement board), T22–T24; T21's journey
+   draft (scene order, pace) — no draft store exists yet.
+4. Lane-3: E21's projection standing reached from the frame (a host
+   request answering wikiSubjectStandings); `.canvas` import as one undo
+   entry (the material batch and the native connect act, grouped).
+5. Lane-2: the two parallel fullscreen paths (E23 requestStageFullscreen,
+   A8 Canvas present) unified when focus-mode.test.mjs's pin allows.
 6. Phase 3 Central vertical; Phase 5 retirement.
 
 Held for the owner: M1′–M5′ restatement and instrument count (vision spec
@@ -110,19 +112,19 @@ this table true. Tickets and resolutions live in `tickets/`.
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| (none open — next wave below) | | | |
+| lane-3 E18 (per-document library, quarantine) | haiku builder | `field-studies-journeys/src/{store.ts,draftStorage.ts,recovery.ts,library.ts}` | 2026-10-13 |
+| lane-5 T19 Accept route + seam B ref carry | haiku builder | `expressions-boundary/src/{protocol,host}.ts`, live-shell native owners + `driveHostedLens`, `palaceInstrument.tsx` Accept | 2026-10-13 |
+| WebKit editor-remount (shell-recovery) | sonnet reviewer | read-only investigation | 2026-10-13 |
 
-Landing: #654's first 100 commits land as #656 (a rebase merge carries at
-most 100); #654 is rebased onto main after it and carries the rest.
+Landed on main this day: #656 and #654 (the first 133 commits), #657 (the
+D-series, tours, E15/E16, the frame nudge's cradle withdrawal). Continuing on
+#658 (`dlw/build`).
 
-Settled this wave (13 Oct): lane-1 B1's trailing commit does not fit — the
-research scene commits to its owner per act and draws acknowledged state
-only, so a deferred commit would snap the canvas back; gestures already
-coalesce (`canvasGesture.ts`, 300 ms). B1's intent stands as per-act owner
-commits plus the save-state mark (40bc3d592). Open: every native edit adds an
-"Adopt native expression" undo entry beside the act's own (a `.canvas`
-import is three entries) — belongs to lane-3 Family U (undo as kernel
-receipts), not a one-argument patch.
+Open in CI: `Desktop shell recovery` fails intermittently on WebKit only —
+"the same editor DOM returns, not a remount" on the full-workspace Settings
+return at 360 px; ~9 clean runs to 19f5ed41d, then 3 failures in 4. Withdrawing
+the cradle host's nudge did not cure it (9e0527d70 failed again). Under
+investigation; no commit since 19f5ed41d touches the editor's retention.
 
 Factory close, after 4c274de4d: the kernel resolves a grant against
 `Control/user/native-action-authority.json` (root: `OI_CENTRAL_ROOT`, else the
