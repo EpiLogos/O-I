@@ -200,3 +200,14 @@ the time.
 **T5 + T6 (dispatched):** a relative axis from a disclosed zero ref, and the
 shared `techne:time-axis/v1` projection that both the chronology and Places
 consume.
+
+**T5 + T6 (landed `6176030c6`).** T6: `timeAxisProjection(reading, session)`
+returns `techne:time-axis/v1`. It is deterministic, and its session must be
+on this reading. The chronology mount reads it, and chronology and places
+consumers agree across seven windows. T5: `relativeAxisFromFacets` orders
+undated facets (array order — the contract has no order field) from a
+warranted zero, the session's `time_zero_ref`. It gives T0 / T±n steps:
+order, not duration, so no invented days. The Relative tab appears only when
+a zero is warranted. Scripted: cradle 72 tests pass, deep-time digest
+unchanged. **T5b (queued):** declare the zero from the host
+(`expressions-boundary`); expose the projection on the scene reading channel.
