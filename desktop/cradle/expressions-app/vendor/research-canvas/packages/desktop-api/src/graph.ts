@@ -126,6 +126,10 @@ export interface TimelineAnchor {
   validFrom: string;
   validTo: string | null;
   precision: NonNullable<GraphNode["temporalPrecision"]>;
+  /** The facet's own uncertainty string, verbatim from the source. Absent or null when none is stated. */
+  uncertainty?: string | null;
+  /** The facet's disclosed source ref. Absent or null when none is stated. */
+  source_ref?: string | null;
 }
 
 export interface TimelineLayoutOverride {

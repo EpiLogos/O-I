@@ -232,8 +232,8 @@
     },
     "packages/canvas/src/timeline/TimelineLens.tsx": {
       "upstream_sha256": "8f1c71bed489ca426e16bdec89f24b696ccff4f41901167160ace36098057979",
-      "adapted_sha256": "bc88824a1f502363ee9dd56b437ef5ab858948cd05c179ae6ffb1e93b2de6586",
-      "reason": "Exact focused native relation filtering without losing focused reading; explicit Close/Escape clears selection and invalidates late replies, restores card/track focus; preserve host toolbar, capability and Walk controls. Vertical pan bounds consume the same collision-resolved display rectangles as cards. Optional explicit Close/Escape and existing-HUD visibility controls with focus return; hiding retains native walk/working-set state, Clear/Unload remain separate intentional actions."
+      "adapted_sha256": "7c04ef657233b121309bc8b37993876d81926aa3e330af246e2bb14b4360604c",
+      "reason": "Exact focused native relation filtering without losing focused reading; explicit Close/Escape clears selection and invalidates late replies, restores card/track focus; preserve host toolbar, capability and Walk controls. Vertical pan bounds consume the same collision-resolved display rectangles as cards. Optional explicit Close/Escape and existing-HUD visibility controls with focus return; hiding retains native walk/working-set state, Clear/Unload remain separate intentional actions. | lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T2+T7: precision bands, two-row axis, BCE/CE labels"
     },
     "packages/canvas/src/psychogeographic/PsychogeographicMap.tsx": {
       "upstream_sha256": "55b9856e3106912eb7b6f8f6a9fb60e6b40e8852ef8126c0eb82f75a6bc25af7",
@@ -247,28 +247,28 @@
     },
     "packages/desktop-api/src/techneBundle.ts": {
       "upstream_sha256": "7ff3382b2331031cd4294595c660adbac2964330c9de41e807a97fa93e1e4b94",
-      "adapted_sha256": "e4352dc9742954f7a1582d21144d54eb21fcebf2fadafa0b351daa2d9957137e",
-      "reason": "Native canonical PlaceFacet allows absent names. Preserve empty names; only the host presentation chooses an occurrence title or neutral Location label. Preserve exact native relation identity, standing, evidence refs and disclosed temporal qualification in transient relationship properties; no inferred classification or provider-authority substitution."
+      "adapted_sha256": "1ec72d599ea1ada2439519e6fdfe84242b8a198a27edc79f073b29b07a699c62",
+      "reason": "Native canonical PlaceFacet allows absent names. Preserve empty names; only the host presentation chooses an occurrence title or neutral Location label. Preserve exact native relation identity, standing, evidence refs and disclosed temporal qualification in transient relationship properties; no inferred classification or provider-authority substitution. | lane-2 T1: bridge carries every precision rung verbatim"
     },
     "packages/desktop-api/src/techneTransport.ts": {
       "upstream_sha256": "4054c16622be5cff834c7f5f5007efc6932fccde317194b259690e9d50bb7ab7",
-      "adapted_sha256": "ccdee5f278bb24dfcc54da9ba0189c7c4b984b40f6a5481487e55a24b32d297a",
-      "reason": "Exact temporal alias source resolution for native focused relations/expansion, preserving source endpoints without invented dates; retain native filter/error fixes. Resolve exact single-source Place aliases for current native incident relations, as for temporal aliases; no invented route semantics."
+      "adapted_sha256": "907ce19b7a5baa68b237fb27a0a413d6e64b5906ec01cab3cb2206147e5fb76e",
+      "reason": "Exact temporal alias source resolution for native focused relations/expansion, preserving source endpoints without invented dates; retain native filter/error fixes. Resolve exact single-source Place aliases for current native incident relations, as for temporal aliases; no invented route semantics. | lane-2 T3: standing presentation + band/axis craft"
     },
     "packages/canvas/src/timeline/TimelineNode.tsx": {
       "upstream_sha256": "b4fed38eeb92d5815ab81057ac3ea1d00459352baa1d30ab180c34f4bbb41b07",
-      "adapted_sha256": "4e01bb04b4e83557b8d92cc974c217ce2752a4adc3fca09bc3820fc57fcdbf65",
-      "reason": " Apply tag/relation filters to returned native view records and exact endpoint sets; explicit absent native style/archetype capability disables only unsupported controls with owner reason, retaining original standalone defaults and geometry controls. Keyboard focus reveals marker labels; Space selects and Enter opens the exact source through existing callbacks. Use shared collision-resolved rectangles/century display height for visible cards and connector anchors; authored resize height remains intact."
+      "adapted_sha256": "cb641161a692fc7c96ed9edd2440320d4b0d208f7fd427090dccbac975425538",
+      "reason": "Apply tag/relation filters to returned native view records and exact endpoint sets; explicit absent native style/archetype capability disables only unsupported controls with owner reason, retaining original standalone defaults and geometry controls. Keyboard focus reveals marker labels; Space selects and Enter opens the exact source through existing callbacks. Use shared collision-resolved rectangles/century display height for visible cards and connector anchors; authored resize height remains intact. | lane-2 T3: standing presentation + band/axis craft"
     },
     "packages/canvas/src/timeline/ticks.ts": {
       "upstream_sha256": "32120f86b5b2bfa0b452227b5b287ac01ab6c9da314940eaf800636c70ce5897",
-      "reason": " Adapt tick label interval to actual screen spacing without truncating the time range. Convert native astronomical years to calendar BCE/CE labels: year zero is 1 BCE, no year zero CE.",
-      "adapted_sha256": "dcdcd921158df7810e1210cb956f214f72006170f0862be1e28fd9999ea4bbb4"
+      "adapted_sha256": "e6475c939ae54bd7df0828a950807a3f624c9e644841cf7a985e3e5660ef2496",
+      "reason": "Adapt tick label interval to actual screen spacing without truncating the time range. Convert native astronomical years to calendar BCE/CE labels: year zero is 1 BCE, no year zero CE. | lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T2+T7: precision bands, two-row axis, BCE/CE labels"
     },
     "packages/desktop-api/src/graph.ts": {
       "upstream_sha256": "96471b5834b2544d8ab475019e8de1484ee414af6cb40570200910c58ede52a2",
-      "adapted_sha256": "15bbdce699c9184e367506c7a3ed10a6e3f5d8e1e3e9e152958b9ba2472b5f3b",
-      "reason": "Optional transient Timeline relation-focus ref preserves dated edge identity; no stored graph change."
+      "adapted_sha256": "3cbb9ed4e41e08bd49ebd658bd0c70211b2a928bd5cc855063f4001011b32ebb",
+      "reason": "Optional transient Timeline relation-focus ref preserves dated edge identity; no stored graph change. | lane-2 T3: standing presentation + band/axis craft"
     },
     "packages/canvas/src/timeline/TimelineRelationField.tsx": {
       "upstream_sha256": "7a985dcad012bde50624a7bb846b1acdbac5ccee750f7f9d4538ec7b004c4901",
@@ -282,13 +282,13 @@
     },
     "packages/canvas/src/timeline/projection.ts": {
       "upstream_sha256": "686589e885e3cd6756c8f14b4a26a764c1e3a9058b0d27fc66952d66ee2714bc",
-      "adapted_sha256": "4e2ddf3cc29e22a6b7fe5fe045b33d181987d0c70cc57cab74f487e3b9a1e655",
-      "reason": "Collision-safe centred card rectangles expand vertical lanes without dropping dates or changing authored offsets; compact century display height matches the renderer."
+      "adapted_sha256": "6e32831d357028bc59cca407e9d81bcf88c7a7bef695cbd1cadb0e1eb591adc7",
+      "reason": "Collision-safe centred card rectangles expand vertical lanes without dropping dates or changing authored offsets; compact century display height matches the renderer. | lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T2+T7: precision bands, two-row axis, BCE/CE labels | lane-2 T3: standing presentation + band/axis craft"
     },
     "packages/canvas/src/timeline/instant.ts": {
       "upstream_sha256": "e32b94dfab9c85caede5823fa914f3d0a0d4e35c672c53330d60646d928a4070",
-      "adapted_sha256": "90fe41b4634bc9bca046f2cc0642257fdabcc32af1efc455fc68e16e878c622d",
-      "reason": "Preserve actual native signed ISO instants in transient Timeline parsing; correct BCE chronological fraction and JavaScript year 0\u201399 offset without rewriting source date or precision."
+      "adapted_sha256": "33f0192c1f0d84eaf7f00f473dd01d38cbf97da17bf4e2bef951ac2b199e1793",
+      "reason": "Preserve actual native signed ISO instants in transient Timeline parsing; correct BCE chronological fraction and JavaScript year 0\u201399 offset without rewriting source date or precision. | lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T2+T7: precision bands, two-row axis, BCE/CE labels"
     },
     "packages/canvas/src/timeline/TimelineWalk.tsx": {
       "upstream_sha256": "5d6ba77d26a1ab8aee395a066ef70140d2103263f937f0ea39f492a20ce82638",
@@ -304,6 +304,46 @@
       "upstream_sha256": "869fb6841d1d9d4dcda59293747e03e7536d908b29b51f06a6436f23416a4610",
       "adapted_sha256": "e1b7f38e3e9e1182f8a80bb308beea0847d8061a7c139385dee80d6b1721e741",
       "reason": "patches/annotation-erase-and-draft-colour.patch: optional draftColour (the in-progress stroke draws in the host's chosen stroke colour instead of a hardcoded orange) and optional erasing/onDeleteStroke (erase mode: the layer captures pointer events, tapping a stroke reports its id for removal; draw begin is suppressed while erasing)."
+    },
+    "apps/desktop/src/layout/timeline.css": {
+      "adapted_sha256": "53d0542436142610008025843f233f09da91b69ac79070cc89be19c058d5a47e",
+      "reason": "lane-2 T3: standing presentation + band/axis craft"
+    },
+    "packages/canvas/src/timeline/TimelineAxis.tsx": {
+      "adapted_sha256": "fb16cba977a6b8074a896018c2503d5e98ce1a88f75a47da766e8a55c0f6ee0e",
+      "reason": "lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T2+T7: precision bands, two-row axis, BCE/CE labels"
+    },
+    "packages/canvas/src/timeline/TimelineRelationshipLayer.tsx": {
+      "adapted_sha256": "32eafa572849eecfbf426573e9e11ceb275c45a20da30eafc2f64c8806ffa7a1",
+      "reason": "lane-2 T3: standing presentation + band/axis craft"
+    },
+    "packages/canvas/src/timeline/frames.ts": {
+      "adapted_sha256": "6ac53ce33f59a98dbfe22e83e08fa3585fc6e48c9244332714cf67f5c50b2237",
+      "reason": "lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T2+T7: precision bands, two-row axis, BCE/CE labels"
+    },
+    "packages/canvas/src/timeline/scale.ts": {
+      "adapted_sha256": "5e996e04779c2e7f660393db972db5d83fdae3b578917179c0082c5c228d38e9",
+      "reason": "lane-2 T1b: chronology on the authority's epoch-ms extents"
+    },
+    "packages/canvas/src/timeline/timelineStore.ts": {
+      "adapted_sha256": "8bc26d317d2259fe06a37e1ddc67db2b56f7770f5ac2fe86eae7f7d4604db732",
+      "reason": "lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T2+T7: precision bands, two-row axis, BCE/CE labels"
+    },
+    "packages/canvas/src/timeline/viewport.ts": {
+      "adapted_sha256": "4469799657ccbf3d29f27bbdff3aa272e5b2f2c8c5d9f6ccb0431051d27073c2",
+      "reason": "lane-2 T1b: chronology on the authority's epoch-ms extents"
+    },
+    "packages/canvas/src/timeline/walk.ts": {
+      "adapted_sha256": "e5135de9a9181f221de4527a19d2e3796459695e67b6a46b4ee1503706ef7e0f",
+      "reason": "lane-2 T1b: chronology on the authority's epoch-ms extents"
+    },
+    "packages/desktop-api/src/index.ts": {
+      "adapted_sha256": "0ea5aebaae1fa55c64e6821c4a6a8b29f29bdf430ba228b25f1719a986dac510",
+      "reason": "lane-2 T1: bridge carries every precision rung verbatim"
+    },
+    "packages/schema/src/node.ts": {
+      "adapted_sha256": "d49125360d608e2f3345d0c14e68ad3cd37dd6ac5158569eb3f4d3e81e9153e9",
+      "reason": "lane-2 T1: bridge carries every precision rung verbatim"
     }
   }
 }

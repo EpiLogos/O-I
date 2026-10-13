@@ -1,7 +1,7 @@
 /* Generated component-only Research Canvas styles, upstream 7df35f822f9235331a69940cdaf484fe4a0b95c1.
  * apps/desktop/src/styles.css sha256 e6c08ff2b137eee45a1b8428460867665bfeb0cee301286256db7105a95cac0e
  * apps/desktop/src/layout/observatory.css sha256 a4ea0293e22c78715e000166378e61ace207b9018f19a89faa96a4627f470fd5
- * apps/desktop/src/layout/timeline.css sha256 7b4d232d56d08ab6200b572172064c5671135ce170ba1ddff70202da5fc3c6af
+ * apps/desktop/src/layout/timeline.css sha256 53d0542436142610008025843f233f09da91b69ac79070cc89be19c058d5a47e
  * apps/desktop/src/layout/lenses.css sha256 ff5d66b514db5e8999853572c62b375a758bd7b8c5b04d6d6a17a5a082450466
  * Kept component selectors and local design tokens; omitted app/body/html/root
  * layout, imports and unrelated lenses. Every selector is scoped to the engine
@@ -904,6 +904,14 @@
   transform: translateX(4px);
 }
 
+:where(.research-instrument) .timeline-axis-tick--major .timeline-axis-tick-label {
+  font-weight: 600;
+}
+
+:where(.research-instrument) .timeline-axis-tick--minor .timeline-axis-tick-label {
+  opacity: 0.6;
+}
+
 :where(.research-instrument) .timeline-nodes {
   position: absolute;
   inset: 0;
@@ -927,6 +935,26 @@
   height: 2px;
   background: rgba(121, 192, 212, 0.38);
   pointer-events: none;
+}
+
+:where(.research-instrument) .timeline-node-band {
+  border-radius: 3px;
+}
+
+:where(.research-instrument) .timeline-node-band--uncertain {
+  background-image: repeating-linear-gradient(135deg, var(--band-hatch, transparent) 0 2px, transparent 2px 6px);
+}
+
+:where(.research-instrument) .timeline-node-standing {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0 0.3rem;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 :where(.research-instrument) .timeline-node-dot {

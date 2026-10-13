@@ -120,6 +120,17 @@ export function createTechneTransport(bundle: TechneFieldBundle): TechneWorkspac
   }
   const canvasById = new Map(bundle.canvases.map((canvas) => [canvas.canvasId, canvas]));
   const temporalNodes = bundle.nodes.filter((node) => node.isTemporal);
+  // The bridge writes each temporal facet's uncertainty and source ref on its
+  // subject→anchor relationship (techneBundle pushRelationship); the anchor
+  // carries them to the Timeline verbatim. Absent properties stay null.
+  const facetQualification = new Map<string, { uncertainty: string | null; source_ref: string | null }>();
+  for (const relationship of bundle.relationships) {
+    if (typeof relationship.properties.temporal_kind !== "string") continue;
+    facetQualification.set(relationship.targetGraphNodeId, {
+      uncertainty: typeof relationship.properties.temporal_uncertainty === "string" ? relationship.properties.temporal_uncertainty : null,
+      source_ref: typeof relationship.properties.temporal_source_ref === "string" ? relationship.properties.temporal_source_ref : null,
+    });
+  }
 
   // ---- accept-and-hold layout state (memory only; never persisted) ----
   const heldNodeLayouts = new Map<string, Map<string, NodeLayout>>();
@@ -159,12 +170,14 @@ export function createTechneTransport(bundle: TechneFieldBundle): TechneWorkspac
         });
         continue;
       }
+      const qualification = facetQualification.get(node.graphNodeId);
       nodes.push({
         node,
         anchor: {
           validFrom: node.validFrom,
           validTo: node.validTo,
           precision: node.temporalPrecision,
+          ...(qualification ? { uncertainty: qualification.uncertainty, source_ref: qualification.source_ref } : {}),
         },
         layoutOverride: heldTimelineLayouts.get(node.graphNodeId) ?? null,
       });

@@ -2,6 +2,7 @@ import type { GraphNode, TemporalPrecision, TimelineLane, TimelineViewNode } fro
 import { densityBandForPixelsPerYear } from "./scale";
 import { anchorExtent, anchorOffsetMs, calendarYear } from "./instant";
 import { msToPixel, timeCamera, type TimelineViewport } from "./viewport";
+import { standingOf, type StandingReading } from "../../../../../../../src/techne/m0m5/timeline/standing";
 
 export interface TimelineItem {
   graphNodeId: string;
@@ -9,6 +10,10 @@ export interface TimelineItem {
   /** See TimelineViewNode.relationCompanion: contextual, not historical. */
   relationCompanion?: boolean;
   presentation: TimelinePresentation;
+  /** The facet's own uncertainty string, verbatim (PeriodO's law: the source's text is authoritative). Null when none is stated. */
+  uncertainty: string | null;
+  /** standingOf over the facet's disclosed fields: its uncertainty text read as the standing, and its source ref. Never upgraded. */
+  standing: StandingReading;
   /** The honest extent in epoch ms: the authority's expansion at the anchor's own precision. */
   startMs: number;
   /** null = ongoing / open-ended (no validTo). */
@@ -78,10 +83,15 @@ export function projectNodes(records: TimelineViewNode[]): TimelineItem[] {
     if (!node.isTemporal) continue;
     const extent = anchorExtent(anchor.validFrom, anchor.validTo, anchor.precision);
     if (extent === null) continue;
+    // The facet's own disclosed fields, carried verbatim on the anchor (T3). Absent means none stated.
+    const uncertainty = typeof anchor.uncertainty === "string" && anchor.uncertainty.length > 0 ? anchor.uncertainty : null;
+    const sourceRef = typeof anchor.source_ref === "string" ? anchor.source_ref : null;
     items.push({
       graphNodeId: node.graphNodeId,
       node,
       relationCompanion: false,
+      uncertainty,
+      standing: standingOf({ standing: uncertainty, source_ref: sourceRef }),
       presentation: {
         lane: layoutOverride?.lane ?? null,
         offsetY: layoutOverride?.offsetY ?? 0,

@@ -68,3 +68,19 @@ the major row's weight in the timeline stylesheet
 (`vendor/research-canvas/apps/desktop/src/layout/timeline.css` and its
 generated copy `field-studies-journeys/src/researchInstrumentStyles.css` —
 regenerate, never hand-edit the copy), with the craft check on screen.
+
+## Resolution — T3 (uncertainty presentation) + T-LANE2-CRAFT
+
+**Landed (13 Oct 2026; builder haiku, corrected by the lead's rulings).**
+A fact's verbatim uncertainty string and source ref ride the transport to
+the TimelineItem; the class is `standingOf` (the authority's six classes,
+never upgraded): circa → hatched soft band, disputed/mythic → badge, the
+verbatim string in every title; relation edges keep the established
+relation-type palette (lead ruling: an established behaviour is never
+removed) and take only their dash + title from a disclosed standing. Band
+fill and the axis major/minor weights styled in `timeline.css` and carried
+into the scoped runtime copy `researchInstrumentStyles.css` (no generator
+exists; the copy's header transform applied by hand, sha line updated);
+PROVENANCE refreshed for the 18 lane-2 files (`verify-source.mjs` green for
+them). Scripted: timeline suites 30/30 + 27 wider; tsc 0; build clean.
+Unverified: the look (native pass).

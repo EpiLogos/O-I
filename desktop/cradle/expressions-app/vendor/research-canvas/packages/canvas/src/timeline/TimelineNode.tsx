@@ -6,6 +6,7 @@ import type { GraphNode } from "./contracts";
 import { categoryDefinition, deriveTimelineCategory } from "./categories";
 import { DEFAULT_TIMELINE_CARD_HEIGHT_PX } from "./projection";
 import { precisionLabel } from "./labels";
+import { STANDING_BADGED, STANDING_DRAWING, standingLabel } from "./standingStyle";
 
 /** A band is clipped to this many px. Beyond it the band lies wholly off the viewport, and the browser's layout limits are not reached. */
 const MAX_BAND_WIDTH_PX = 1_000_000;
@@ -76,6 +77,12 @@ export function TimelineNode({
   const bandColour = item.presentation.style.dotColour ?? categoryStyle.color;
   const bandFill = withAlpha(bandColour, 0.2);
   const bandEdge = withAlpha(bandColour, 0.6);
+  // T3: the verbatim uncertainty and its standing. Disputed and mythic standing is a badge;
+  // any other stated uncertainty (circa, uncertain) is a hatched band. Neither upgrades the fact.
+  const uncertainty = item.uncertainty;
+  const standingVisual = item.standing.visual;
+  const standingBadge = STANDING_BADGED.has(standingVisual) ? item.standing : null;
+  const hatched = uncertainty !== null && standingBadge === null;
   const positionX = 0;
   const positionY = item.presentation.offsetY;
   const cardWidth = bounds.width;
@@ -208,18 +215,20 @@ export function TimelineNode({
     >
       {spanWidth > 1 && (
         <div
-          className="timeline-node-span timeline-node-band"
+          className={`timeline-node-span timeline-node-band${hatched ? " timeline-node-band--uncertain" : ""}`}
           data-testid={`timeline-node-span-${item.graphNodeId}`}
           data-precision={item.precision}
-          title={precisionLabel(item)}
+          data-standing={standingVisual}
+          title={uncertainty !== null ? `${precisionLabel(item)} — ${uncertainty}` : precisionLabel(item)}
           style={{
             width: `${Math.min(spanWidth, MAX_BAND_WIDTH_PX)}px`,
             top: "-5px",
             height: "10px",
             boxSizing: "border-box",
-            background: bandFill,
+            backgroundColor: bandFill,
             border: bandEdge ? `1px solid ${bandEdge}` : undefined,
-          }}
+            "--band-hatch": withAlpha(bandColour, 0.45),
+          } as CSSProperties}
         />
       )}
       <span className="timeline-node-dot" />
@@ -285,9 +294,19 @@ export function TimelineNode({
           >
             {entityTypeGlyph(item.node.entityType)}
           </span>
-          <span className="timeline-node-date">
+          <span className="timeline-node-date" title={uncertainty ?? undefined}>
             {item.relationCompanion ? "linked context" : precisionLabel(item)}
           </span>
+          {standingBadge && (
+            <span
+              className={`timeline-node-standing timeline-node-standing--${standingBadge.visual}`}
+              data-testid={`timeline-node-standing-${item.graphNodeId}`}
+              title={standingBadge.verbatim ?? undefined}
+              style={{ color: STANDING_DRAWING[standingBadge.visual].stroke }}
+            >
+              {standingLabel(standingBadge.visual)}
+            </span>
+          )}
           <span className="timeline-node-title">{item.node.title}</span>
           {placeName && (
             <span
