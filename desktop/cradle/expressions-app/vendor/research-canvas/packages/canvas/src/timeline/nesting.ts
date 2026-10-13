@@ -2,9 +2,9 @@
  * lane-2 T9 — nested events with zoom-collapsing structure (pure).
  *
  * A parent event holds child events through the explicit containment pairs the
- * host supplies. The contract has no containment relation family yet
- * (`projectionForRelation` knows cause, echo and opposition only), so this
- * module reads the pairs it is given and invents none.
+ * host supplies — the authority's `part` family (PART_OF / CONTAINS and their
+ * kin, explicit verbs only) through `containmentPairs` (lane-2 T9b). This module
+ * reads the pairs it is given and invents none.
  *
  * A parent's extent is the min/max of its present children's own extents; one
  * open child leaves the parent open at its end, never an invented end. A parent

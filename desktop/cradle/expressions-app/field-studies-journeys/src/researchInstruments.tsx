@@ -31,6 +31,7 @@ import {openingPlaceSelection,timelineOpenPlan} from '../../../src/techne/m0m5/p
 import {readSharedTimeWindow,writeSharedTimeWindow,qualifyTimeWindowReply,SharedTimeWindowControls,type SharedTimeDraft} from './sharedTimeWindow.js';
 import {sharedTimelinePresentation} from './sharedTimeProjection.js';
 import {timeAxisProjection,relativeTimeAxisProjection} from '../../../src/techne/m0m5/timeline/timeAxis';
+import {containmentPairs,relationEdges,participantSpansFromReading} from '../../../src/techne/m0m5/timeline/relations';
 import type {NativeTimeWindowBasis,NativeTimeWindowReply,NativeTimeWindowRequest} from '../../../../../packages/expressions-boundary/src/timeWindow';
 import {blueprintMember,type SceneBlueprint,type BlueprintTransform} from './blueprintGeometry.js';
 import {icon} from './icons.js';
@@ -1099,7 +1100,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
      // Lane-2 T6: the chronology reads the shared time-axis projection of the
      // session the host acknowledged — the same function lane 4 reads.
      const timed=sharedTimelinePresentation(data.dataSource,data.timeline,nativeReading,sharedTime?timeAxisProjection(nativeReading,sharedTime.session):null);
-     return <>{createPortal(toggle,host.tools)}<TimelineSurface key={state.timelineKey??0} timeExtent={years.length?{startYear:first,endYear:last}:undefined} toolbarContainer={host.tools} repository={timed.repository} constellationId={data.reading.subject.subject_ref} dataSource={timed.dataSource}
+     return <>{createPortal(toggle,host.tools)}<TimelineSurface key={state.timelineKey??0} timeExtent={years.length?{startYear:first,endYear:last}:undefined} toolbarContainer={host.tools} repository={timed.repository} constellationId={data.reading.subject.subject_ref} dataSource={timed.dataSource} containment={containmentPairs(relationEdges(nativeReading))} participants={participantSpansFromReading(nativeReading).spans}
       initialState={state.timeline!} onViewStateChange={value=>{state.timeline=value;}}
       onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref);if(node)host.inspectSubject(ref,{node});}} onOpenNode={(ref,node,relationField)=>host.inspectSubject(ref,{node,relationField})}/></>;
     };

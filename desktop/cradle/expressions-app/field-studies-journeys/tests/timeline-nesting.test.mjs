@@ -6,9 +6,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {build} from 'esbuild';
 import {fileURLToPath} from 'node:url';
-const compiled=await build({stdin:{contents:"export * as nesting from '../../vendor/research-canvas/packages/canvas/src/timeline/nesting.ts';export * as viewport from '../../vendor/research-canvas/packages/canvas/src/timeline/viewport.ts';",resolveDir:fileURLToPath(new URL('../src/',import.meta.url)),loader:'ts'},tsconfig:fileURLToPath(new URL('../tsconfig.json',import.meta.url)),bundle:true,platform:'node',format:'esm',write:false,logLevel:'silent'});
+const compiled=await build({stdin:{contents:"export * as nesting from '../../vendor/research-canvas/packages/canvas/src/timeline/nesting.ts';export * as viewport from '../../vendor/research-canvas/packages/canvas/src/timeline/viewport.ts';export * as relations from '../../../src/techne/m0m5/timeline/relations.ts';",resolveDir:fileURLToPath(new URL('../src/',import.meta.url)),loader:'ts'},tsconfig:fileURLToPath(new URL('../tsconfig.json',import.meta.url)),bundle:true,platform:'node',format:'esm',write:false,logLevel:'silent'});
 const api=await import('data:text/javascript;base64,'+Buffer.from(compiled.outputFiles[0].text).toString('base64'));
-const {nesting,viewport}=api;
+const {nesting,viewport,relations}=api;
 
 const Y=(year)=>Date.UTC(year,0,1);
 const DAY=86_400_000;
@@ -121,4 +121,37 @@ test('an open child makes the collapsed span open at its end; a closed child kee
 test('no pairs and no items are the empty state', ()=>{
  assert.deepEqual(nesting.nestingAt([],ITEMS,camera(MARKER),'marker'),{collapsed:[],hidden:new Set()});
  assert.deepEqual(nesting.nestingAt(PAIRS,[],camera(MARKER),'marker'),{collapsed:[],hidden:new Set()});
+});
+
+// lane-2 T9b — the host's containment. The chronology host passes
+// containmentPairs(relationEdges(reading)): the authority reads the reading's part
+// family (explicit verbs, owner's direction) and the lens nests only those pairs.
+const reading=(relationList)=>({
+ reading_ref:'reading:war',
+ subject:{subject_ref:'subject:war',native_owner:'owner:test'},
+ whole:{whole_ref:'whole:war',relations:relationList},
+ disclosure:{instruments:[]},
+});
+
+test('the host containment: part_of relations from the reading reproduce the fixture pairs, and the war nests at the marker tier', ()=>{
+ const relationList=PAIRS.map(({parent,child})=>({relation:'part_of',from_ref:child,to_ref:parent}));
+ const pairs=relations.containmentPairs(relations.relationEdges(reading(relationList)));
+ assert.deepEqual(pairs,PAIRS,'the reading states the same containment the fixture does');
+ const state=nesting.nestingAt(pairs,ITEMS,camera(MARKER),'marker');
+ assert.deepEqual(state.collapsed.map((span)=>span.parent),['war']);
+ assert.equal(state.collapsed[0].childCount,3);
+});
+
+test('the same containment stated parent-first (contains) gives the same pairs and the same nesting', ()=>{
+ const relationList=PAIRS.map(({parent,child})=>({relation:'CONTAINS',from_ref:parent,to_ref:child}));
+ const pairs=relations.containmentPairs(relations.relationEdges(reading(relationList)));
+ assert.deepEqual(pairs,PAIRS);
+ assert.deepEqual(nesting.nestingAt(pairs,ITEMS,camera(MARKER),'marker').collapsed.map((span)=>span.parent),['war']);
+});
+
+test('a reading that states no containment hands the lens no pairs, so nothing nests', ()=>{
+ const relationList=[{relation:'CAUSES',from_ref:'e1',to_ref:'e4'},{relation:'mystery_link',from_ref:'b1',to_ref:'b2'}];
+ const pairs=relations.containmentPairs(relations.relationEdges(reading(relationList)));
+ assert.deepEqual(pairs,[]);
+ assert.deepEqual(nesting.nestingAt(pairs,ITEMS,camera(MARKER),'marker'),{collapsed:[],hidden:new Set()});
 });

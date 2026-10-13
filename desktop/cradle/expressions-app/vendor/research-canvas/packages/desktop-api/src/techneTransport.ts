@@ -95,6 +95,9 @@ function defaultLayoutFor(graphNodeId: string, canvasId: string): NodeLayout {
   };
 }
 
+/** A band record with the subject it belongs to (lane-2 T14b). */
+type BandRecordWithSubject = TimelineBandRecord & { subject_ref: string };
+
 /** Every rung the authority names, eon through subsecond, read from the one schema list. */
 function precisionRung(value: unknown): TemporalPrecision | null {
   return typeof value === "string" && (TEMPORAL_PRECISIONS as readonly string[]).includes(value) ? value as TemporalPrecision : null;
@@ -212,7 +215,9 @@ export function createTechneTransport(bundle: TechneFieldBundle): TechneWorkspac
   // lane-2 T8: every validity facet, as its disclosed band facts. A facet with
   // no dated anchor (a continuity ref only) keeps a null position, so the canvas
   // lists it as absent rather than drawing it. Nothing is computed here.
-  const bandRecords = (): TimelineBandRecord[] => bundle.relationships.flatMap((relationship): TimelineBandRecord[] => {
+  // lane-2 T14b: each band carries the subject it belongs to (the facet
+  // relationship's source node, the reading's subject_ref verbatim).
+  const bandRecords = (): BandRecordWithSubject[] => bundle.relationships.flatMap((relationship): BandRecordWithSubject[] => {
     const props = relationship.properties;
     if (props.temporal_kind !== "valid") return [];
     const anchor = nodeById.get(relationship.targetGraphNodeId);
@@ -229,6 +234,7 @@ export function createTechneTransport(bundle: TechneFieldBundle): TechneWorkspac
       latest_precision: precisionRung(props.temporal_to_precision),
       uncertainty: typeof props.temporal_uncertainty === "string" ? props.temporal_uncertainty : null,
       source_ref: typeof props.temporal_source_ref === "string" ? props.temporal_source_ref : null,
+      subject_ref: relationship.sourceGraphNodeId,
     }];
   });
 

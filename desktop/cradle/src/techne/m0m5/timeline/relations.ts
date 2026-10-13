@@ -16,7 +16,7 @@
  *     reported, never silently dated and never silently dropped.
  *   - TYPED RELATIONS KEEP THEIR IDENTITY: INSTANTIATES ≠ ECHOES ≠ CAUSES ≠
  *     INFLUENCES ≠ OPPOSES ≠ INHERITS ≠ TRANSFORMS_INTO ≠ SOURCED_FROM ≠
- *     RESONATES_WITH. Family classification is pattern-based and explicit;
+ *     RESONATES_WITH ≠ PART_OF / CONTAINS. Family classification is pattern-based and explicit;
  *     an unrecognised relation type lands only in the relation field itself
  *     — it never silently joins cause, echo or opposition.
  *   - EPISTEMIC STANDING IS OWNER-SUPPLIED: the visual grammar lives in
@@ -218,7 +218,7 @@ export type RelationProjectionMode =
   | "phase"
   | "activity";
 
-export type RelationFamilyName = "cause" | "echo" | "opposition" | "field";
+export type RelationFamilyName = "cause" | "echo" | "opposition" | "part" | "field";
 
 const FAMILY_RULES: readonly { family: Exclude<RelationFamilyName, "field">; pattern: RegExp }[] = [
   // Becoming / efficient relation: something brings something else about or
@@ -232,16 +232,46 @@ const FAMILY_RULES: readonly { family: Exclude<RelationFamilyName, "field">; pat
   { family: "echo", pattern: /^(echo(es)?|resonates?[ _-]?with|instantiates|recurs?([ _-]?with)?|parallels?)$/i },
   // Opposition / inheritance / transformation.
   { family: "opposition", pattern: /^(opposes?|contradicts?|conflicts?[ _-]?with|inherits?|transforms?[ _-]?into|evolves?[ _-]?into|supersedes)$/i },
+  // Containment (lane-2 T9b): one event or part sits inside another. Explicit
+  // verbs only; the direction is read by containmentPairs, never guessed here.
+  { family: "part", pattern: /^(part[ _-]?of|contains?|has[ _-]?part|within|sub[ _-]?event[ _-]?of)$/i },
 ];
+
+/** The containment verbs whose subject is the child: `A part_of B`, `A within B`, `A sub_event_of B` put A inside B. */
+const CHILD_FIRST_CONTAINMENT = /^(part[ _-]?of|within|sub[ _-]?event[ _-]?of)$/i;
 
 /** Which projection family a relation type belongs to. "field" means the
  * relation shows in the relation field only — an unrecognised type never
- * silently becomes causal, echoing or oppositional. */
+ * silently becomes causal, echoing, oppositional or containing. */
 export function projectionForRelation(relation: string): RelationFamilyName {
   for (const rule of FAMILY_RULES) {
     if (rule.pattern.test(relation.trim())) return rule.family;
   }
   return "field";
+}
+
+/**
+ * The explicit containment pairs (parent → child) the part family states.
+ * `A part_of B` / `A within B` / `A sub_event_of B` make B the parent;
+ * `A contains B` / `A has_part B` make A the parent. Only edges the family
+ * recognises contribute. Self-pairs and repeated pairs are dropped; cycles
+ * are left for the nesting projection to refuse. Pure: no chronology is read.
+ */
+export function containmentPairs(edges: readonly RelationEdge[]): { parent: string; child: string }[] {
+  const seen = new Set<string>();
+  const pairs: { parent: string; child: string }[] = [];
+  for (const edge of edges) {
+    if (projectionForRelation(edge.relation) !== "part") continue;
+    const childFirst = CHILD_FIRST_CONTAINMENT.test(edge.relation.trim());
+    const parent = childFirst ? edge.to_ref : edge.from_ref;
+    const child = childFirst ? edge.from_ref : edge.to_ref;
+    if (parent === child) continue;
+    const key = `${parent}\u0000${child}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    pairs.push({ parent, child });
+  }
+  return pairs;
 }
 
 export function edgesForProjection(edges: readonly RelationEdge[], mode: RelationProjectionMode): RelationEdge[] {

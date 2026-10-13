@@ -9,6 +9,8 @@ import type {
   TimelineWalk,
 } from "@research-canvas/desktop-api";
 import { TimelineLens as RichTimelineLens, type TimelineDataSource } from "./TimelineLens";
+import type { NestingPair } from "./nesting";
+import type { ParticipantSpan } from "../../../../../../../src/techne/m0m5/timeline/relations";
 import { TimelineMinimap } from "./TimelineMinimap";
 import { timelineWindowForViewport, visibleSpanForViewport } from "./minimapGeometry";
 import { MIN_PIXELS_PER_YEAR, MAX_PIXELS_PER_YEAR } from "./scale";
@@ -33,6 +35,10 @@ export interface TimelineSurfaceProps {
     timelineNode?: GraphNode,
     relationField?: TimelineRelationField,
   ) => void;
+  /** lane-2 T9b: containment pairs (parent → child) from the reading's part-family relations, forwarded to the lens. */
+  containment?: readonly NestingPair[];
+  /** lane-2 T14b: participant validity spans from the reading, forwarded to the lens. */
+  participants?: readonly ParticipantSpan[];
 }
 
 /**
@@ -52,6 +58,8 @@ export function TimelineSurface({
   onViewStateChange,
   onOpenCanvasNode,
   onOpenNode,
+  containment,
+  participants,
 }: TimelineSurfaceProps): JSX.Element {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const selectedNodeIdRef = useRef(initialState.selectedNodeId);
@@ -363,6 +371,8 @@ export function TimelineSurface({
           }}
           onViewportChange={handleLensViewportChange}
           cameraCommand={cameraCommand}
+          containment={containment}
+          participants={participants}
         />
       </div>
       {timeExtent && (
