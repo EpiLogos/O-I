@@ -204,3 +204,42 @@ test('the blend drag is wired: the seam glyph starts it, it authors through over
  assert.ok(callsNamed('paintSeamBlends').length>=1,'the live edge follows the playback clock');
  assert.match(appSource,/paintSeamBlends\(expressionTiming\(store\.document,sceneIndex,sceneElapsed,journeyPlaying\)\.time\)/);
 });
+
+// T-REVIEW-4 lane-5 T8 (OPEN 1): the playback-path panel's host wiring. Seeking a walked scene lands on its own start on the same
+// clock the panel reads; a saved sequence reads on its saved durations, which the host maps onto a clock journey.
+test('T-REVIEW-4 lane-5 T8: a walked scene seeks to its own start on the clock, and a time inside a scene maps to that scene and its local time', () => {
+  const path = walkJourney(journey, timing, 0);
+  for (const step of path.steps) {
+    const landed = walkJourney(journey, timing, step.start);
+    assert.equal(landed.position.index, step.index, `seek to ${step.name} lands on it`);
+    assert.ok(Math.abs(landed.position.time - step.start) < 1e-9, `its local time is zero at ${step.name}`);
+  }
+  const mid = walkJourney(journey, timing, 12.75);
+  assert.equal(mid.position.index, 1);
+  assert.ok(Math.abs((mid.position.time - mid.steps[1].start) - 0.75) < 1e-9, 'the local time is the seconds into that scene');
+});
+
+test('T-REVIEW-4 lane-5 T8: a saved sequence reads on its saved durations, which the clock journey carries as durations', () => {
+  const saved = {...journey, savedScenes: {s0: {duration: 6}, s1: {duration: 2}, s2: {duration: 9}}};
+  const clock = {...saved, scenes: saved.scenes.map(scene => ({...scene, duration: saved.savedScenes[scene.id]?.duration ?? 0}))};
+  // The panel reads expressionTiming(clock, index, local); the app's playback time is expressionTiming(saved, index, local, true).
+  for (const [index, local] of [[0, 0], [0, 4], [1, 1], [2, 8], [3, 0]]) {
+    assert.equal(expressionTiming(clock, index, local).time, expressionTiming(saved, index, local, true).time,
+      `scene ${index} at ${local} s reads the same on the saved clock`);
+  }
+  const path = walkJourney(clock, (index, local) => expressionTiming(clock, index, local), 7);
+  assert.equal(path.position.index, 1, 'the saved clock stands in the second saved scene at 7 s');
+  assert.ok(Math.abs(path.total - 17) < 1e-9, 'the saved clock totals the saved durations');
+});
+
+test('T-REVIEW-4 lane-5 T8: the app passes the playback clock and a seek to the instrument, and seeks through the scrub path', () => {
+  const app = fs.readFileSync(new URL('../src/app.ts', import.meta.url), 'utf8');
+  assert.ok(app.includes('playback:()=>{const journey=playbackJourney();return {journey,time:expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying).time};},'),
+    'the clock is the journey as the expression clock runs it, and its time');
+  assert.ok(app.includes('function playbackJourney():Journey{') && app.includes("if(!journeyPlaying)return working;"),
+    'a saved sequence runs on saved durations, otherwise the working ones');
+  assert.ok(app.includes('const journey=playbackJourney(),path=walkJourney(journey,(index,local)=>expressionTiming(journey,index,local),seconds);'),
+    'seek maps seconds to a scene on the same clock');
+  assert.ok(app.includes('if(index!==sceneIndex)setSceneRef(store.document.scenes[index].id);') && app.includes('seekWorkingScene(local);'),
+    'seek takes the playhead scrub path: adopt the scene, then seek its local time');
+});

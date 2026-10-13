@@ -15,7 +15,7 @@ import {defaultPlaceView,placeRecordFromViewState,viewStateFromPlaceRecord} from
 import type {PlaceViewRestoreTarget} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/PsychogeographicMap';
 import {defaultBasemapStack,type BasemapStack} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/basemapLayers';
 import type {KernelConversion} from './kernelDocumentBridge.js';
-import {techneConstellationRequest,type TechneSceneReadingRequest,type TechneConstellationRequest} from './kernelExpressions.js';
+import {techneConstellationRequest,techneTimeWindowRequest,openExternalLink,type TechneSceneReadingRequest,type TechneConstellationRequest} from './kernelExpressions.js';
 import {nativeInstrumentCanvas,nativeInstrumentTitles,nativeInstrumentPreviews,nativeInstrumentNodeTags,nativeInstrumentSourceRelations,readingInstruments,CANVAS_UNITS,assertInstrumentReadingScope,expressionTextFromNote,type InstrumentCanvas,type NativeRelationDirectionReading} from './researchInstrumentsData.js';
 import {createGestureTransaction,withGesturePreviews,type GestureTransaction} from './canvasGesture.js';
 import {
@@ -28,10 +28,10 @@ import {OPEN_PLACE_FILTER,filteredPlacesRepository,subjectEntityRef,type PlaceFi
 import type {TechneReading,TechnePlaceFacet} from '../../../src/techne/contract';
 import {placeFocusFromSession} from '../../../src/techne/m0m5/place/register';
 import {openingPlaceSelection,timelineOpenPlan} from '../../../src/techne/m0m5/place/navigation';
-import {readSharedTimeWindow,writeSharedTimeWindow,SharedTimeWindowControls,type SharedTimeDraft} from './sharedTimeWindow.js';
+import {readSharedTimeWindow,writeSharedTimeWindow,qualifyTimeWindowReply,SharedTimeWindowControls,type SharedTimeDraft} from './sharedTimeWindow.js';
 import {sharedTimelinePresentation} from './sharedTimeProjection.js';
 import {timeAxisProjection,relativeTimeAxisProjection} from '../../../src/techne/m0m5/timeline/timeAxis';
-import type {NativeTimeWindowReply} from '../../../../../packages/expressions-boundary/src/timeWindow';
+import type {NativeTimeWindowBasis,NativeTimeWindowReply,NativeTimeWindowRequest} from '../../../../../packages/expressions-boundary/src/timeWindow';
 import {blueprintMember,type SceneBlueprint,type BlueprintTransform} from './blueprintGeometry.js';
 import {icon} from './icons.js';
 import {addRouteNotice,moveRouteNotice,placeDraftForAdd,placeDraftForMove,constellationResultNotice,type PlaceAuthoringHost,type PlaceDraft,type PlaceRouteResult} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeAuthoring';
@@ -75,7 +75,8 @@ function EmbedCardOverlays({items}:{items:EmbedOverlay[]}){
   const style={left:item.left,top:item.top,width:item.width,height:item.height};
   if(item.kind==='embed'&&item.url)return <div key={item.id} className="research-embed-card" data-kind="embed" style={style}>
    <span className="research-embed-title">{item.label}</span>
-   <a className="research-embed-link" href={item.url} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">{embedHost(item.url)} · Open in browser</a>
+   {/* Lane-1 A10: an https link leaves the frame only through the host (the Tauri opener); a frame cannot open a browser tab itself. */}
+   <a className="research-embed-link" href={item.url} rel="noopener noreferrer" referrerPolicy="no-referrer" onClick={event=>{event.preventDefault();openExternalLink(item.url!);}}>{embedHost(item.url)} · Open in browser</a>
   </div>;
   if(item.kind==='media'&&item.media)return <div key={item.id} className="research-embed-card research-embed-card--media" data-kind="media" style={style}>
    <img src={mediaSourceUrl(item.media)} alt={mediaFileName(item.media)} draggable={false}/>
@@ -233,6 +234,19 @@ function ImageryPanel(props:React.ComponentProps<typeof StreetViewSurface>&{tool
    <StreetViewSurface {...props}/>
   </aside></>;
 }
+/** Lane-4 T23: the Places facet's place becomes the shared session's spatial focus through the owner's compare-and-set write
+ * (null clears it). Same discipline as writeSharedTimeWindow: the acknowledged reply must still address this source and Scene. */
+async function writeSharedSpatialFocus(basis:NativeTimeWindowBasis,reading:TechneReading,instrument:'timeline'|'place',acknowledged:NativeTimeWindowReply,placeRef:string|null):Promise<NativeTimeWindowReply> {
+ if(acknowledged.basis.expression_ref!==basis.expression_ref||acknowledged.basis.scene_ref!==basis.scene_ref
+  ||acknowledged.basis.revision!==basis.revision||acknowledged.reading_ref!==reading.reading_ref) {
+  throw Error('This place belongs to an earlier native source or Scene; it was not changed');
+ }
+ const request:NativeTimeWindowRequest={...basis,operation:'spatial',reading_ref:reading.reading_ref,instrument,
+  expected_session_ref:acknowledged.session.session_ref,expected_selection:acknowledged.session.selection,expected_window:acknowledged.axis.window,
+  expected_spatial_focus_ref:acknowledged.session.spatial_focus_ref??null,spatial_focus_ref:placeRef};
+ return qualifyTimeWindowReply(await techneTimeWindowRequest(request),basis,reading,instrument);
+}
+
 export interface ResearchInstrumentsHost {
  container:HTMLElement;
  tools:HTMLElement; inspector:HTMLElement;
@@ -260,6 +274,9 @@ export interface ResearchInstrumentsHost {
   * gesture, but N native writes — the host should implement this). */
  moveMany?:(sceneId:string,moves:{entityId:string;position:{x:number;y:number}}[])=>Promise<void>;
  openSubject:(ref:string)=>void;
+ /** Lane-4 T23 — the app's instrument activation. Places' "Open in Timeline" records the Timeline instrument through it, so the
+  * app's instrument state matches the lens. OPTIONAL: undeclared hosts load the Timeline lens directly. */
+ activateInstrument?:(lens:'timeline')=>void;
  /** OPTIONAL — declared for the empty-field creation path (Wayfinder §21:
   * choosing a frame can create an incomplete working draft; creation must
   * not be disabled when no subject/constellation exists yet). Undeclared
@@ -311,6 +328,8 @@ interface ViewState {
  canvas?:{x:number;y:number;zoom:number};timeline?:TimelineViewState;place?:{latitude:number;longitude:number;zoom:number};selectedNode?:string|null;selectedEdge?:string|null;selectedPlace?:string|null;placeFilter?:PlaceFilterState;livePlaces?:{allowed:boolean;policy:LiveServicePolicy;stack:BasemapStack};
  /** Lane-4 T21: the Places layers change waiting to settle (its timer and the write it will make now). */
  placeLayersSave?:{timer:ReturnType<typeof setTimeout>;write:()=>void};
+ /** T-REVIEW-4 #3: the layers key this view last wrote or adopted from the Scene (its lastWrittenKey), and the writes still in flight. */
+ placeLayersKey?:string;placeLayersWrites?:number;
  /** M2′: chronology (the vendored TimelineSurface) vs. the relation-field
   * projections (relationFieldView.tsx) — session-local presentation state,
   * never a second store. */
@@ -898,7 +917,10 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    </div>
   </div></>;
  }
+ /** T-REVIEW-4 #7: a settled Places layers change not yet written is written before the Scene it belongs to is left. */
+ function flushPlaceLayers(){for(const pending of views.values())pending.placeLayersSave?.write();}
  async function load(selected:ResearchInstrument){
+  flushPlaceLayers();
   const generation=++epoch;unmount();mount.hidden=false;message('Reading…');
   try{
    const view=host.nativeView(),sceneId=host.sceneId();
@@ -1107,6 +1129,14 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    state.placeFilter??=restoredLayers.filter;
    // Lane-4 T4/T5: the owner's live choice is session view state, held with the placeFilter. It is off until the owner allows it here, and only then does the policy's tile_refresh gate open.
    state.livePlaces??={allowed:false,policy:createLiveServicePolicy(),stack:restoredLayers.stack};
+   // T-REVIEW-4 #3: the Scene's stored layers are the record. When they differ from the key this view last wrote or adopted, and no
+   // write is pending or in flight, the Scene moved under the view (an undo or redo of "Set map layers"): the toggles and the basemap
+   // rows re-adopt from the Scene. The owner's live-source allowance is session state and is never re-adopted.
+   const sceneLayersKey=layersKey(restoredLayers.filter,restoredLayers.stack);
+   if(state.placeLayersKey===undefined)state.placeLayersKey=sceneLayersKey;
+   else if(!state.placeLayersSave&&!state.placeLayersWrites&&sceneLayersKey!==state.placeLayersKey){
+    state.placeFilter=restoredLayers.filter;state.livePlaces={...state.livePlaces!,stack:restoredLayers.stack};state.placeLayersKey=sceneLayersKey;
+   }
    // Lane-4 T17–T19: the map's authoring surface asks this host for the owner's route. "Edit place/time" opens
    // the same constellation editor, and the map never writes a coordinate: the save, its basis check and its
    // refusals all happen in that editor, and their own message is the one shown here.
@@ -1183,7 +1213,12 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     if(!scene||!state.placeFilter||!state.livePlaces)return;
     const kept=restoreLayers((()=>{try{return host.sceneMaterial(sceneId).research?.placeLayers;}catch{return undefined;}})());
     if(layersKey(state.placeFilter,state.livePlaces.stack)===layersKey(kept.filter,kept.stack))return;
-    void host.material(sceneId,{type:'place-layers-set',value:layersRecordOf(state.placeFilter,state.livePlaces.stack)}).catch(error=>message(error instanceof Error?error.message:String(error)));
+    // The key becomes the Scene's when the owner acknowledges the write; until then the write counts as in flight.
+    const key=layersKey(state.placeFilter,state.livePlaces.stack);
+    state.placeLayersWrites=(state.placeLayersWrites??0)+1;
+    void host.material(sceneId,{type:'place-layers-set',value:layersRecordOf(state.placeFilter,state.livePlaces.stack)})
+     .then(()=>{state.placeLayersKey=key;},error=>message(error instanceof Error?error.message:String(error)))
+     .finally(()=>{state.placeLayersWrites=(state.placeLayersWrites??1)-1;});
    };
    const scheduleLayersSave=()=>{
     if(state.placeLayersSave)clearTimeout(state.placeLayersSave.timer);
@@ -1216,17 +1251,17 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     // framed on open. A ref the reading does not disclose resolves to null: the lens opens unselected, with no error.
     // A focus the session declares governs the opening even when it is stale (then the lens opens unselected); see openingPlaceSelection.
     const sessionFocus=placeFocusFromSession(sharedTime?.session??null,nativeReading.spatial??[]);
-    // Lane-4 T23: "Open in Timeline" sets the shared window from the facet's own validity through the owner's existing write, then
-    // opens the Timeline lens on this same subject. Writing the spatial focus that makes Places reopen on this facet is an owner
-    // operation this renderer does not yet have (OPEN); the window and the subject are not changed by a facet with no validity.
+    // Lane-4 T23: "Open in Timeline" writes the facet's place as the shared spatial focus (so Places reopens on this facet) and the
+    // facet's validity as the shared window, each through the owner's compare-and-set write, then opens the Timeline lens through the
+    // app's instrument activation so the recorded instrument matches. A facet with no validity leaves the window unchanged.
     const openInTimeline=async(facet:TechnePlaceFacet)=>{
       const plan=timelineOpenPlan(facet);
-      if(plan.window){
-        if(!sharedTime||!timeCurrent())throw Error('The shared time window is no longer presented, so it was not changed.');
-        sharedTime=await writeSharedTimeWindow(request,nativeReading,'place',sharedTime,plan.window);
-      }
-      lens='m2';
-      await load('m2');
+      if(sharedTime&&timeCurrent()){
+        sharedTime=await writeSharedSpatialFocus(request,nativeReading,'place',sharedTime,plan.spatial_focus_ref);
+        if(plan.window)sharedTime=await writeSharedTimeWindow(request,nativeReading,'place',sharedTime,plan.window);
+      }else if(plan.window)throw Error('The shared time window is no longer presented, so it was not changed.');
+      if(host.activateInstrument)host.activateInstrument('timeline');
+      else{lens='m2';await load('m2');}
     };
     const facets=<PlaceFacetsPanel reading={nativeReading} selectedRef={state.selectedPlace??null} filter={filter} onOpenSource={ref=>host.inspectSubject(ref)} sharedTime
       onFilterChange={next=>{state.placeFilter={...next,window:null};scheduleLayersSave();render(renderPlaces());}}
@@ -1246,7 +1281,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
  }
  return {
   async open(selected:ResearchInstrument){if(destroyed)throw new Error('Research instrument workspace is closed');lens=selected;await load(selected);},
-  close(){++epoch;lens=null;unmount();mount.hidden=true;},
+  close(){flushPlaceLayers();++epoch;lens=null;unmount();mount.hidden=true;},
   async refresh(){
    if(materialInFlight){deferredRefresh=true;return;}
    if(!lens)return;
@@ -1262,7 +1297,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    }
    await load(lens);
   },
-  destroy(){++epoch;lens=null;destroyed=true;unmount();mount.remove();status.remove();for(const pending of views.values())pending.placeLayersSave?.write();views.clear();window.removeEventListener('keydown',onWindowKeydown);window.removeEventListener('keydown',onZoomKeydown);window.removeEventListener('keydown',onPresentStartKey);readoutRoot.unmount();readoutHost.remove();modifiers.dispose();},
+  destroy(){flushPlaceLayers();++epoch;lens=null;destroyed=true;unmount();mount.remove();status.remove();views.clear();window.removeEventListener('keydown',onWindowKeydown);window.removeEventListener('keydown',onZoomKeydown);window.removeEventListener('keydown',onPresentStartKey);readoutRoot.unmount();readoutHost.remove();modifiers.dispose();},
   active(){return lens;},
  };
 }

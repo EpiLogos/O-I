@@ -219,3 +219,55 @@ test('the kernel admits the same layers record and holds the same closed lists t
  assert.deepEqual(list('BASEMAP_LAYER_IDS'),[api.sources.OFFLINE_GROUND_ID,...api.sources.LIVE_BASEMAP_SOURCES.map(source=>source.id)]);
  assert.deepEqual(list('PLACE_STANDINGS'),['factual','mythic','owner-vocabulary']);
 });
+
+// T-REVIEW-4 #3 and #7: undo or redo of "Set map layers" re-adopts the Scene's layers, and a settled change not yet written is
+// written before its Scene is left (close, load of another Scene, destroy), and before the app's dispose tears anything down.
+test('T-REVIEW-4 #3: the Scene record after an undo is a different layers key, so the view re-adopts it instead of keeping the undone layers', ()=>{
+  const first={relations:new Set(['born in']),standing:new Set(['factual']),window:null};
+  const second={relations:new Set(['lived in','born in']),standing:new Set(['factual','mythic']),window:null};
+  const stack=stackWithChoices();
+  const scene=sceneWith();
+  api.material.applyResearchMaterial(scene,{type:'place-layers-set',value:api.views.layersRecordOf(first,stack)});
+  const firstRecord=roundTrip(scene.research.placeLayers);
+  api.material.applyResearchMaterial(scene,{type:'place-layers-set',value:api.views.layersRecordOf(second,stack)});
+  // An undo writes the earlier record back into the Scene; the view's key (what it last wrote) is the second one.
+  const viewKey=api.views.layersKey(second,stack);
+  const undone=api.views.restoreLayers(firstRecord);
+  assert.notEqual(api.views.layersKey(undone.filter,undone.stack),viewKey,'the Scene now differs from the last write, so it is re-adopted');
+  assert.equal(api.views.layersKey(undone.filter,undone.stack),api.views.layersKey(first,stack));
+  assert.deepEqual([...undone.filter.relations].sort(),['born in']);
+});
+
+test('T-REVIEW-4 #3: the view re-adopts only when no write is pending or in flight, and records the key it wrote or adopted', ()=>{
+  const source=read(resolve(engine,'src/researchInstruments.tsx'));
+  const body=code(source);
+  // the adoption rule: a stored key that differs from the view's own, with nothing pending and nothing in flight
+  assert.match(body,/const sceneLayersKey=layersKey\(restoredLayers\.filter,restoredLayers\.stack\);/);
+  assert.match(body,/if\(state\.placeLayersKey===undefined\)state\.placeLayersKey=sceneLayersKey;/,'the first visit records the Scene key');
+  assert.match(body,/else if\(!state\.placeLayersSave&&!state\.placeLayersWrites&&sceneLayersKey!==state\.placeLayersKey\)\{/,'a different key re-adopts only when nothing is pending or in flight');
+  assert.match(body,/state\.placeFilter=restoredLayers\.filter;state\.livePlaces=\{\.\.\.state\.livePlaces!,stack:restoredLayers\.stack\};state\.placeLayersKey=sceneLayersKey;/);
+  // the write records its key when acknowledged and counts as in flight until it settles
+  assert.match(body,/state\.placeLayersWrites=\(state\.placeLayersWrites\?\?0\)\+1;/);
+  assert.match(body,/\.then\(\(\)=>\{state\.placeLayersKey=key;\},error=>message\(/);
+  assert.match(body,/\.finally\(\(\)=>\{state\.placeLayersWrites=\(state\.placeLayersWrites\?\?1\)-1;\}\);/);
+  // the live-source allowance is never re-adopted
+  assert.doesNotMatch(body.slice(body.indexOf('const sceneLayersKey'),body.indexOf('const sceneLayersKey')+500),/allowed/);
+});
+
+test('T-REVIEW-4 #7: a pending layers write is flushed at close, at load, and first in destroy, before anything is disposed', ()=>{
+  const source=read(resolve(engine,'src/researchInstruments.tsx'));
+  const body=code(source);
+  assert.match(body,/function flushPlaceLayers\(\)\{for\(const pending of views\.values\(\)\)pending\.placeLayersSave\?\.write\(\);\}/);
+  assert.match(body,/async function load\(selected:ResearchInstrument\)\{\s*flushPlaceLayers\(\);/,'load flushes before it reads the Scene');
+  assert.match(body,/close\(\)\{flushPlaceLayers\(\);\+\+epoch;/,'close flushes first');
+  const destroy=body.slice(body.indexOf('destroy(){'),body.indexOf('destroy(){')+200);
+  assert.ok(destroy.startsWith('destroy(){flushPlaceLayers();++epoch;'),'destroy flushes before its first disposal');
+  assert.ok(destroy.indexOf('flushPlaceLayers')<destroy.indexOf('unmount()')&&destroy.indexOf('flushPlaceLayers')<destroy.indexOf('mount.remove()'));
+  // the app's dispose runs the instrument's destroy before the native editor endpoint is disposed
+  const app=read(resolve(engine,'src/app.ts'));
+  const dispose=app.indexOf('dispose:()=>{sceneTransportAlive=false');
+  assert.ok(dispose>0);
+  const research=app.indexOf('researchInstruments?.destroy();nativeEditorEndpoint?.dispose();',dispose);
+  assert.ok(research>dispose&&research-dispose<400,'the instrument is destroyed before the endpoint is disposed');
+  assert.doesNotMatch(app.slice(dispose,dispose+400),/nativeEditorEndpoint\?\.dispose\(\);researchInstruments/);
+});

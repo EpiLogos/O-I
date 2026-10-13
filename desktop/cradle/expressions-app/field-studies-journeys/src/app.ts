@@ -23,7 +23,8 @@ import {snapCandidates,snapTime,closestSnap,nextSnapPoint,prevSnapPoint,type Sna
 import {parseDeepLink,formatDeepLink,resolveSceneRef,resolveMarker,clampJourneyTime,markerAtTime,type DeepLinkAddress,shortenRef} from './deepLinks';
 import {NOT_FOCUSED,beginFocus,endFocus,focusedLayout,type FocusLayout,type FocusSession} from './focusMode';
 import {shuttle,pauseTransport,beginScrub,endScrub,stepFrame,transportRate,transportPlaying,transportReadout,STOPPED_TRANSPORT,type WorkingTransport} from './transport';
-import {durationFromEdgeDrag,sceneAtTime,secondsFromDrag,slipOffsetFromDrag,insertBeforeFor,dragPreviewStep,SCENE_DURATION_MIN,SCENE_DURATION_MAX,type TimelineLayout} from './journeyTimelineLayout';
+import {durationFromEdgeDrag,sceneAtTime,secondsFromDrag,slipOffsetFromDrag,insertBeforeFor,dragPreviewStep,overlapFromDrag,SCENE_DURATION_MIN,SCENE_DURATION_MAX,type TimelineLayout} from './journeyTimelineLayout';
+import {seamStates,seamCaption,seamBlendHTML,blendLimit,blendLimitMessage,walkJourney} from './journeyPath';
 import {entityTargets} from './nativeParameters';
 import {recordRecent,recentJourneys} from './recentWork';
 import {installPanelResize} from './panelResize';
@@ -112,6 +113,8 @@ import {mountSoundControls} from './soundControls.js';
 // E05 trim state, declared before any top-level code can render the timeline.
 let sceneTrim:null|{sceneId:string;startX:number;trackPx:number;base:TimelineLayout;from:number;duration:number;clamped:'min'|'max'|null;moved:boolean;frame:number}=null;
 let trimClickGuardUntil=0;
+// Lane-5 T6: the seam blend drag in flight. Declared with the trim and roll state, before any startup render can read it.
+let seamBlend:{sceneId:string;startX:number;trackPx:number;layout:TimelineLayout;from:number;limit:number;seconds:number;clamped:'min'|'max'|null;moved:boolean;frame:number}|null=null;
 // E06 roll state: a Shift-drag on a clip's edge moves the seam with the next scene. Declared here, with the trim state, for the same reason.
 let sceneRoll:null|{leftId:string;rightId:string;startX:number;trackPx:number;total:number;left:number;right:number;seconds:number;clamped:'min'|'max'|null;moved:boolean;frame:number}=null;
 /** The Scene ref being dragged; a move addresses the scene by ref, never by the index the clip stood at. */
@@ -401,10 +404,12 @@ function renderTimeline(){if(!timelineOpen)return;const s=scene(),doc=timelineDo
  // E01: clip extents come only from expressionTiming, via journeyTimelineLayout; widths are percent of the track so it stays fluid.
  // E05: during a trim drag `doc` is the previewed document, so the same clock lays out the preview.
  const layout=journeyTimelineLayout(scenes,(index,local)=>expressionTiming(doc,index,local),100);
+ // T7: each seam's live state on the same clock as the clips.
+ const seams=seamStates(scenes,(index,local)=>expressionTiming(doc,index,local),timing.time);
  const sceneButton=(v:(typeof scenes)[number],i:number,placement:string)=>`<button class="scene-image ${i===sceneIndex?'active':''}${track?' scene-clip':''}"${placement} data-action="choose-scene" data-index="${i}" data-scene-id="${esc(v.id)}" aria-label="Open scene ${i+1}: ${esc(v.name)}" title="${esc(v.name)} · ${sceneSaveState(store.document,v)}"><img src="${compositionCover(v)}" alt="${esc(v.name)}"><small>${i+1}</small>${track?trimEdgeHTML(v):''}<span class="scene-save-dot" data-status="${sceneSaveState(store.document,v)}"></span></button>`;
  const playhead=`id="expression-playhead" aria-label="Expression playhead" type="range" min="0" max="${timing.total}" step="0.05" value="${timing.time}"`;
  const body=track
-  ?`<div class="scene-track" aria-label="Expression track"><div class="scene-track-ruler">${[0,.25,.5,.75,1].map(f=>`<span style="left:${f*100}%">${(f*layout.total).toFixed(f===1?1:0)}s</span>`).join('')}</div>${locatorsHTML(doc,timing.total)}<div class="scene-track-lane">${loopWashHTML(doc,timing.total)}${scenes.map((v,i)=>sceneButton(v,i,` style="left:${layout.clips[i].x}%;width:${layout.clips[i].w}%"`)).join('')}${scenes.slice(1).map((v,k)=>seamGlyphHTML(v,layout.clips[k+1].x)).join('')}<input class="scene-track-playhead" type="range" ${playhead}></div></div>`
+  ?`<div class="scene-track" aria-label="Expression track"><div class="scene-track-ruler">${[0,.25,.5,.75,1].map(f=>`<span style="left:${f*100}%">${(f*layout.total).toFixed(f===1?1:0)}s</span>`).join('')}</div>${locatorsHTML(doc,timing.total)}<div class="scene-track-lane">${loopWashHTML(doc,timing.total)}${scenes.map((v,i)=>sceneButton(v,i,` style="left:${layout.clips[i].x}%;width:${layout.clips[i].w}%"`)).join('')}${scenes.slice(1).map((v,k)=>seamGlyphHTML(v,layout.clips[k+1].x)+seamBlendHTML(scenes[k],v,layout.clips[k+1].x,layout.total?Math.min(v.transition,v.duration)/layout.total*100:0,seams[k+1].fraction)).join('')}<input class="scene-track-playhead" type="range" ${playhead}></div></div>`
   :`<div class="scene-strip">${scenes.map((v,i)=>sceneButton(v,i,'')).join('')}<button class="scene-image scene-add" data-action="save-next" aria-label="Save and add next scene">${icon('plus')}</button></div><label class="expression-scrub"><span>Expression time</span><input type="range" ${playhead}></label>`;
  const toggle=`<button data-action="timeline-track" aria-pressed="${track}" title="${track?'Show the scenes as a compact strip':'Show the scenes on the time track'}">${track?'Collapse to strip':'Show track'}</button>`;
  // E09/E10: the channel rows and the selected channel's curve lane, under the clips in track mode only.
@@ -419,7 +424,7 @@ function renderTimeline(){if(!timelineOpen)return;const s=scene(),doc=timelineDo
 // of the scene material that the save emits as scene_material_set.
 function trimEdgeHTML(v:Scene){return `<span class="scene-trim-edge" data-scene-id="${esc(v.id)}" title="${esc(`${v.duration.toFixed(1)} s · drag to trim · double-click or Alt-click for exact seconds`)}" aria-hidden="true"></span>`;}
 /** E09: a curve drag previews on the lane through this document, laid over the trim and roll previews on the same clock. */
-function timelineDocument():Journey{const base=timelineTrimDocument(),c=curveDrag;if(!c?.preview)return base;const preview=c.preview;return {...base,scenes:base.scenes.map(v=>v.id===c.sceneId?{...v,propertyTracks:v.propertyTracks?.map(t=>t.id===c.trackId?{...t,points:preview}:t)}:v)};}
+function timelineDocument():Journey{const base=seamPreviewDocument(timelineTrimDocument()),c=curveDrag;if(!c?.preview)return base;const preview=c.preview;return {...base,scenes:base.scenes.map(v=>v.id===c.sceneId?{...v,propertyTracks:v.propertyTracks?.map(t=>t.id===c.trackId?{...t,points:preview}:t)}:v)};}
 function timelineTrimDocument():Journey{const t=sceneTrim,r=sceneRoll;
  // E06: a roll previews on the same clock: the left lasts +seconds, the right −seconds.
  if(r?.moved)return {...store.document,scenes:store.document.scenes.map(v=>v.id===r.leftId?{...v,duration:v.duration+r.seconds}:v.id===r.rightId?{...v,duration:v.duration-r.seconds}:v)};
@@ -575,6 +580,59 @@ function setSeamTransition(sceneId:string,kind:TransitionKind,params:TransitionP
 function setSeamKind(sceneId:string,kind:TransitionKind){
  const prior=store.document.scenes.find(v=>v.id===sceneId)?.transitionSpec;
  setSeamTransition(sceneId,kind,kind==='wipe'?{direction:prior?.direction}:kind==='dip-to-colour'?{at:prior?.at}:{});
+}
+// Lane-5 T6 · overlap-to-blend: drag a seam's glyph right to lengthen the blend it authors, left to a cut. The blend is the
+// incoming scene's head, the span the engine plays, so the overlap is that span and the expression clock does not move.
+// Pointer-up is ONE labelled edit through applyTimelineMove and writeSeamTransition. A cut seam that gains time becomes the
+// document's default blend; a dip or a wipe keeps its kind.
+function seamPreviewDocument(doc:Journey):Journey{const b=seamBlend;if(!b?.moved)return doc;return {...doc,scenes:doc.scenes.map(v=>v.id===b.sceneId?{...v,transition:b.seconds}:v)};}
+function beginSeamBlend(ev:PointerEvent,glyph:HTMLElement){
+ const sceneId=glyph.dataset.sceneId??'',lane=glyph.closest<HTMLElement>('.scene-track-lane');
+ const i=store.document.scenes.findIndex(v=>v.id===sceneId);
+ if(!lane||i<1)return;
+ if(sceneTrim||sceneRoll||sceneBody||seamBlend)return;
+ if(propertyTake){toast('Finish the property take before changing a seam.');return;}
+ const trackPx=lane.getBoundingClientRect().width;
+ if(!(trackPx>0))return;
+ ev.preventDefault();
+ const doc=store.document,v=doc.scenes[i];
+ seamBlend={sceneId,startX:ev.clientX,trackPx,layout:journeyTimelineLayout(doc.scenes,(index,local)=>expressionTiming(doc,index,local),100),from:v.transition,limit:blendLimit(v.duration),seconds:v.transition,clamped:null,moved:false,frame:0};
+ document.body.classList.add('trimming-scene');
+ document.addEventListener('pointermove',moveSeamBlend);document.addEventListener('pointerup',upSeamBlend);document.addEventListener('pointercancel',cancelSeamBlend);
+}
+function moveSeamBlend(ev:PointerEvent){
+ const b=seamBlend;if(!b)return;
+ let next:ReturnType<typeof overlapFromDrag>;
+ try{next=overlapFromDrag(b.from,b.limit,b.layout,ev.clientX-b.startX,b.trackPx);}catch(err){endSeamBlend(false);error(err);return;}
+ if(next.clamped&&next.clamped!==b.clamped)toast(next.clamped==='max'?blendLimitMessage(b.limit):'A blend stops at a cut: no seconds.');
+ b.clamped=next.clamped;b.seconds=next.seconds;b.moved=b.seconds!==b.from;
+ if(!b.frame)b.frame=requestAnimationFrame(()=>{b.frame=0;renderTimeline();});
+}
+function endSeamBlend(commit:boolean){
+ const b=seamBlend;if(!b)return;
+ seamBlend=null;if(b.frame)cancelAnimationFrame(b.frame);
+ document.removeEventListener('pointermove',moveSeamBlend);document.removeEventListener('pointerup',upSeamBlend);document.removeEventListener('pointercancel',cancelSeamBlend);
+ document.body.classList.remove('trimming-scene');
+ const target=store.document.scenes.find(v=>v.id===b.sceneId);
+ if(!commit||!b.moved||!target||target.transition===b.seconds){renderTimeline();return;}
+ trimClickGuardUntil=performance.now()+400;
+ const spec=transitionKindOf(target.transitionSpec)==='cut'&&b.seconds>0?undefined:target.transitionSpec;
+ try{changed(()=>{applyTimelineMove(store.document,scenes=>writeSeamTransition(scenes,b.sceneId,spec,b.seconds));},true,`Set blend into ${target.name}`);}
+ catch(err){error(err);renderTimeline();}
+}
+function upSeamBlend(){endSeamBlend(true);}
+function cancelSeamBlend(){endSeamBlend(false);}
+// Lane-5 T7 · the live edge: each blend's fill and caption follow the expression clock, while playing and while scrubbing.
+function paintSeamBlends(time:number){
+ const lane=document.querySelector<HTMLElement>('.scene-track-lane');if(!lane)return;
+ const doc=store.document;
+ for(const seam of seamStates(doc.scenes,(index,local)=>expressionTiming(doc,index,local),time)){
+  const scene=doc.scenes[seam.index],id=CSS.escape(seam.sceneId);
+  const band=lane.querySelector<HTMLElement>(`[data-seam-band][data-scene-id="${id}"]`);
+  if(band){band.style.setProperty('--blend-progress',(seam.fraction??0).toFixed(4));band.dataset.blending=String(seam.fraction!==null);}
+  const caption=lane.querySelector<HTMLElement>(`[data-seam-caption][data-scene-id="${id}"]`);
+  if(caption){const text=seamCaption(doc.scenes[seam.index-1]?.name,scene,seam.fraction);if(caption.textContent!==text)caption.textContent=text;caption.dataset.blending=String(seam.fraction!==null);}
+ }
 }
 /** E11: paints the transition in flight at fraction f. The crossfade keeps its overlay opacity exactly. A painted kind
  * composes its blend on the transition canvas over the live field: dip to colour fades the outgoing frame into the incoming
@@ -1462,6 +1520,9 @@ document.addEventListener('keydown',ev=>{if(ev.defaultPrevented)return;const el=
 // the tracks at the pointer and stops playback, so the scrub adds nothing to the physics clock. K-held state is released on keyup.
 $('timeline-panel').addEventListener('pointerdown',ev=>{if(ev.button!==0)return;if((ev.target as Element).closest('#expression-playhead,.scene-track-playhead'))workingTransport=beginScrub(workingTransport);});
 document.addEventListener('pointerup',()=>{workingTransport=endScrub(workingTransport);});
+// T-REVIEW-4 #5: a scrubbed playhead gives its focus back, so the typing guard does not swallow J, K, L, comma, full stop and Space after a
+// scrub. Arrow keys still step a focused playhead; only the pointer's release returns focus to the transport.
+document.addEventListener('pointerup',()=>{const playhead=document.getElementById('expression-playhead');if(playhead&&document.activeElement===playhead)playhead.blur();});
 document.addEventListener('pointercancel',()=>{workingTransport=endScrub(workingTransport);});
 document.addEventListener('keyup',ev=>{if(ev.key.toLowerCase()==='k')transportKeyHeld=false;});
 window.addEventListener('blur',()=>{transportKeyHeld=false;});
@@ -1480,6 +1541,7 @@ $<HTMLInputElement>('import-file').addEventListener('change',async ev=>{const in
 document.querySelectorAll<HTMLDialogElement>('dialog').forEach(d=>d.addEventListener('click',ev=>{if(ev.target!==d)return;const r=d.getBoundingClientRect();if(ev.clientX<r.left||ev.clientX>r.right||ev.clientY<r.top||ev.clientY>r.bottom)d.close();}));
 // E04/E05/E06: the gestures are delegated on the panel, which survives the re-renders a drag causes. The clip
 // body and the trim edge share one pointerdown: an edge is a trim (or a roll, with Shift); a body is a move.
+$('timeline-panel').addEventListener('pointerdown',ev=>{if(ev.button!==0)return;const glyph=(ev.target as Element).closest<HTMLElement>('.seam-glyph');if(glyph){beginSeamBlend(ev,glyph);return;}});
 $('timeline-panel').addEventListener('pointerdown',ev=>{if(ev.button!==0)return;const handle=(ev.target as Element).closest<HTMLElement>('.scene-trim-edge');if(handle){beginSceneTrim(ev,handle);return;}const clip=(ev.target as Element).closest<HTMLElement>('.scene-track .scene-clip');if(clip&&editing)beginSceneBody(ev,clip);});
 $('timeline-panel').addEventListener('dblclick',ev=>{const handle=(ev.target as Element).closest<HTMLElement>('.scene-trim-edge');if(handle){ev.preventDefault();openExactDuration(handle.dataset.sceneId??'');}});
 // E09: the channel lane's gestures are delegated on the panel too; its keyframes and handles are drawn, not hit.
@@ -1584,10 +1646,24 @@ function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!rese
  // the scene's end stops it — the transport returns to Play.
  // lane-3 E24: the auto-advance clock runs at the working transport's rate (play 1, shuttle its signed ×1/×2/×4). Scrubbing and stop are rate 0.
  syncWorkingTransport();const rate=transportRate(workingTransport),reverse=rate<0;
- const transportFrame=advanceSceneTransport(store.document,sceneIndex,sceneElapsed,reverse?0:rawDelta*Math.max(0,rate),{playing:scenePlaying,savedSequence:journeyPlaying,hidden:document.hidden,libraryOpen,propertyRecording:!!propertyTake,editing,authoredSceneIds:nativeSceneTransportMaterial(nativeWorkspace?.nativeView()),loopRegion:store.document.loopRegion});
+ const transportState={playing:scenePlaying,savedSequence:journeyPlaying,hidden:document.hidden,libraryOpen,propertyRecording:!!propertyTake,editing,authoredSceneIds:nativeSceneTransportMaterial(nativeWorkspace?.nativeView()),loopRegion:store.document.loopRegion};
+ let transportFrame=advanceSceneTransport(store.document,sceneIndex,sceneElapsed,reverse?0:rawDelta*Math.max(0,rate),transportState);
+ // T-REVIEW-4 #4: a reverse shuttle answers to the same holds a forward frame does (library, property recording, a saved sequence
+ // being edited, a hidden page, native pacing not disclosed). The forward rule is asked about the reverse step: a hold leaves the
+ // playhead where it is, a refusal stops with its reason, and reaching the Scene's start stops the transport rather than running on.
+ if(reverse&&scenePlaying){
+  const back=Math.min(rawDelta,.25)*Math.abs(rate);
+  const probe=advanceSceneTransport(store.document,sceneIndex,sceneElapsed,back,transportState);
+  const held=probe.scene_playing&&!probe.completed&&probe.advance_to_scene_index===null&&probe.elapsed_seconds===sceneElapsed;
+  if(probe.unavailable_reason||held)transportFrame=probe;
+  else{
+   const next=sceneElapsed-back;
+   transportFrame=next>0
+    ?{...probe,elapsed_seconds:next,scene_playing:true,completed:false,advance_to_scene_index:null,seek_local_seconds:null}
+    :{...probe,elapsed_seconds:0,scene_playing:false,saved_sequence_playing:false,completed:true,advance_to_scene_index:null,seek_local_seconds:null};
+  }
+ }
  sceneElapsed=transportFrame.elapsed_seconds;scenePlaying=transportFrame.scene_playing;
- // A reverse shuttle runs the Scene's playhead back, floored at its start (reverse through a saved sequence is not yet supported).
- if(reverse&&scenePlaying)sceneElapsed=Math.max(0,sceneElapsed+rate*Math.min(rawDelta,.25));
  const wasSequence=journeyPlaying;journeyPlaying=transportFrame.saved_sequence_playing;
  if(transportFrame.advance_to_scene_index!==null)void advanceSavedScene(transportFrame.advance_to_scene_index,transportFrame.seek_local_seconds??0);
  else if(transportFrame.unavailable_reason){if(wasSequence)applySceneView();toast(transportFrame.unavailable_reason);renderAll();}
@@ -1595,7 +1671,7 @@ function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!rese
  if(transitionDuration>0){const f=clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1);paintTransition(f);if(f>=1){transitionDuration=0;transitionSnapshot=null;$('transition-canvas').hidden=true;}}
  if(overlayDirty&&!libraryOpen)drawGuides();if(recorder.active){const paperScene={...activeScene(),field:{...activeScene().field,background:native?.background??scene().field.background,palette:native?.palette??scene().field.palette,params:{...scene().field.params,...native?.params}}};const copy=()=>recorder.frame(engine.canvas,paperScene,width,height,captureTransition());try{if(engine.withCleanFrame)engine.withCleanFrame(copy);else copy();}catch(err){recorder.stop();error(err);}}frames++;
  if(now-lastFpsTime>1000){fps=Math.round(frames*1000/(now-lastFpsTime));frames=0;lastFpsTime=now;}
- if(now-lastUI>33){document.querySelectorAll<HTMLElement>('[data-transport-readout]').forEach(el=>{el.textContent=transportReadout(workingTransport);});const s=activeScene(),timing=expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying),fraction=clamp(timing.time/timing.total,0,1);$('global-time').textContent=timing.time.toFixed(1)+' / '+timing.total.toFixed(1)+'s';const playhead=$<HTMLInputElement>('expression-playhead');if(playhead&&document.activeElement!==playhead)playhead.value=String(timing.time);$('journey-progress').style.width=fraction*100+'%';document.querySelectorAll<HTMLElement>('[data-scene-progress]').forEach(e=>e.style.width=(Number(e.dataset.sceneProgress)===sceneIndex?fraction*100:0)+'%');
+ if(now-lastUI>33){paintSeamBlends(expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying).time);document.querySelectorAll<HTMLElement>('[data-transport-readout]').forEach(el=>{el.textContent=transportReadout(workingTransport);});const s=activeScene(),timing=expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying),fraction=clamp(timing.time/timing.total,0,1);$('global-time').textContent=timing.time.toFixed(1)+' / '+timing.total.toFixed(1)+'s';const playhead=$<HTMLInputElement>('expression-playhead');if(playhead&&document.activeElement!==playhead)playhead.value=String(timing.time);$('journey-progress').style.width=fraction*100+'%';document.querySelectorAll<HTMLElement>('[data-scene-progress]').forEach(e=>e.style.width=(Number(e.dataset.sceneProgress)===sceneIndex?fraction*100:0)+'%');
  const nd=engine.telemetry?.()?.drive;const ph=nd?{theta:nd.theta,phi:nd.phi,drive:nd.progress}:phases(s,simTime);document.querySelectorAll<SVGLineElement>('[data-phase]').forEach(e=>e.setAttribute('transform',`rotate(${(e.dataset.phase==='theta'?ph.theta:ph.phi)*180/Math.PI} 50 50)`));if($('drive-value'))$('drive-value').style.width=ph.drive*100+'%';
  const telemetry=engine.telemetry?.();updateAutomationRuntime(telemetry);document.querySelectorAll<HTMLElement>('[data-formation-live]').forEach(el=>{const entity=s.entities.find(v=>v.id===el.dataset.formationLive),state=telemetry?.sequences?.find((v:any)=>v.entityId===entity?.id);if(!entity||!state)return;const a=entity.sequence.steps[state.linkIndex],b=entity.sequence.steps[state.nextIndex];el.textContent=state.linkCount>1?`${a?stateLabel({...a,source:stateSource(entity,state.linkIndex)}):'State'} → ${b?stateLabel({...b,source:stateSource(entity,state.nextIndex)}):'State'} · ${Math.round(state.progress*100)}%`:'Single target';});const effectivePaper={...s,field:{...s.field,background:telemetry?.background??s.field.background,palette:telemetry?.palette??s.field.palette,params:{...s.field.params,...telemetry?.params}}};paintLivePaper(effectivePaper);const params=telemetry?.params??evaluateParameters(s,simTime);for(const panel of [$('belt-content'),$('inspector-content'),$('automation-monitor'),$('context-panel').querySelector<HTMLElement>('.context-content')??$('context-panel')])updateToolbeltValues(panel,s,params,telemetry?.config);const monitored=s.automation.find(l=>l.id===monitoredLane),live=monitored?telemetry?.live?.find((v:any)=>v.id===(monitored.nativeId??monitored.id)):undefined;if(monitored){const monitor=$('automation-monitor'),target=automationTarget(s,monitored!.target),value=target?(target.target.startsWith('field.')?params[target.key]:Number(readPath(telemetry?.config,target.path))/target.factor):live?.value;monitor.querySelector('[data-cycle-hand]')?.setAttribute('transform',`rotate(${(live?.phase??0)*360} 32 32)`);monitor.querySelector('.cycle-progress')?.setAttribute('stroke-dasharray',`${(live?.phase??0)*100} 100`);const label=monitor.querySelector('[data-cycle-value]');if(label)label.textContent=Number(value).toFixed(3);const phase=monitor.querySelector('[data-cycle-phase]');if(phase)phase.textContent=!live?'Paused':live.done?'Done':Math.round(live.phase*100)+'%';}document.querySelectorAll<HTMLElement>('[data-source-status]').forEach(el=>el.textContent=telemetry?.sourceStatus?.[el.dataset.sourceStatus!]??'');const contribution=document.querySelector<HTMLElement>('[data-focus-contribution]');if(contribution){const col=telemetry?.config?.composition;contribution.textContent=`Palette → stored entity tint (${Math.round((selectedEntity()?.tintWeight??0)*(col?.entityTintWeight??1)*100)}%) → ${telemetry?.focus?'travelling focus ('+Math.round((col?.orchestration?.focusTintWeight??0)*100)+'%)':'no focus tint'}. Selection does not retune the field.`;}document.querySelectorAll<HTMLElement>('[data-live-target]').forEach(el=>{const target=automationTarget(s,el.dataset.liveTarget!);if(!target)return;const value=target.target.startsWith('field.')?params[target.key]:readPath(telemetry?.config,target.path);el.textContent=typeof value==='number'?(target.target.startsWith('field.')?value:value/target.factor).toFixed(3):target.value.toFixed(3);});document.querySelectorAll<HTMLElement>('[data-live-param]').forEach(e=>e.textContent=(params[e.dataset.liveParam!]??0).toFixed(2));const ent=selectedEntity();if(ent){const nt=engine.telemetry?.()?.sequences.find((v:any)=>v.entityId===ent.id);const seq=nt?{from:nt.linkIndex}:sequenceAt(ent,s,simTime);document.querySelectorAll<HTMLElement>('[data-step-live]').forEach(e=>e.classList.toggle('is-playing',ent.sequence.enabled&&Number(e.dataset.stepLive)===seq.from));}
  const nf=engine.telemetry?.()?.focus;const focus=nf?{entity:{id:nf.entityId}}:engine.capabilities.kind==='production'?null:focusAt(s,simTime);document.querySelectorAll<HTMLElement>('[data-focus-entity]').forEach(e=>e.classList.toggle('is-playing',e.dataset.focusEntity===focus?.entity.id));if(recorder.active){const t=Math.floor(recorder.elapsed);$('record-time').textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');$('record-size').textContent=`${captureSettings.width}px · ${fps} render fps`;if(t>=4&&fps>0&&fps<20&&!recordPerformanceWarned){recordPerformanceWarned=true;toast('Recording is below its 30 fps target. Reduce particle allocation or output size for this device.',7000);}}nativeEditorEndpoint?.publish();lastUI=now;
@@ -1817,7 +1893,7 @@ if(!nativeField)document.querySelector('[data-action="studio-section"][data-valu
 window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name,hostMode,activeLens:lensStudio.active()}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(reference:string|number)=>{if(typeof reference==='string')return focusNativeSceneRef(reference);toast('Index-based Scene navigation is a compatibility call; native navigation accepts a Scene reference.');setSceneRef(sceneRefAt(reference));},openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},native:()=>nativeField?.controller.reading,nativeTargets:()=>nativeField?.controller.inspectTargets(),
  // Acceptance probe: advance resident particle mechanics by fixed steps against
  // the targets already presented. No native request, clock or target write.
- probeSteps:(frames:number,dt:number)=>{if(!Number.isInteger(frames)||frames<1||frames>2000||!(dt>0&&dt<=.1))throw new Error('probe steps: 1–2000 frames of (0, 0.1] s');for(let i=0;i<frames;i++)engine.render(frameData(dt));needsFrame=true;return frames;},dispose:()=>{sceneTransportAlive=false;sceneIntentEpoch++;nativeEditorEndpoint?.dispose();researchInstruments?.destroy();nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
+ probeSteps:(frames:number,dt:number)=>{if(!Number.isInteger(frames)||frames<1||frames>2000||!(dt>0&&dt<=.1))throw new Error('probe steps: 1–2000 frames of (0, 0.1] s');for(let i=0;i<frames;i++)engine.render(frameData(dt));needsFrame=true;return frames;},dispose:()=>{sceneTransportAlive=false;sceneIntentEpoch++;researchInstruments?.destroy();nativeEditorEndpoint?.dispose();nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
 function applyNativeView(view:KernelConversion,preservePosition=false,adoptionHistory:'record'|'acknowledge'='record'){
  awaitingNativeBoot=false;
  // An opened native Expression is what the frame stands on: the entry gate
@@ -2036,6 +2112,8 @@ function connectionKind(kind:string){if(!kind.trim()||kind.length>120)throw new 
 function assertConnectionMembers(sceneId:string,source:string,target:string){researchScene(sceneId);const members=nativeWorkspace?.nativeView()?.bindings[sceneId]?.member_refs;if(!members?.includes(source)||!members.includes(target))throw new Error('Both connection endpoints must belong to the current native Scene.');}
 researchInstruments=installResearchInstruments({
  container:researchContainer,tools:researchTools,inspector:researchInspector,placesHome,canvasHome,pageMembers:delta=>nativeWorkspace?nativeWorkspace.page(delta):Promise.resolve(false),read:readTechneReading,
+ // Lane-4 T23: Places' "Open in Timeline" records the Timeline instrument here, so the instrument state matches the lens it loads.
+ activateInstrument:lens=>activateInstrument(lens),
  sceneMaterial:id=>clone(researchScene(id)),
  material:async(id,action:ResearchMaterialAction)=>{const target=researchScene(id);changed(()=>applyResearchMaterial(target,action),true,researchMaterialLabel(action));await commitResearch();},
  // lane-1 A3/A4: a connection's line kind, label and bound sides — presentation keyed by the native edge id; the relation itself is untouched.
@@ -2088,6 +2166,12 @@ const palaceInstrument=installPalaceInstrument({
  composeExpression:async({expression_ref,expected_revision,changes})=>{const data=await nativeExpressionRequest({operation:'edit',expression_ref,expected_revision,actor:'human:techne-palace',changes}) as {state?:string;current_revision?:number;document?:unknown}|null;if(data?.state==='revision_conflict')return {ok:false,reason:`This Palace changed elsewhere (now revision ${data.current_revision}). Nothing was saved; reopen it and try again.`};if(!data?.document||data.state!=='ready')return {ok:false,reason:`The Expression owner did not accept the composition (${String(data?.state)}).`};return {ok:true,document:palaceSnapshot(data.document)};},
  openExpression:ref=>{void nativeWorkspace?.open(ref);},
 },palaceHome);
+/** lane-5 T8: the journey as the expression clock runs it: a saved sequence runs on its saved durations, otherwise the working ones. */
+function playbackJourney():Journey{
+ const working=store.document;
+ if(!journeyPlaying)return working;
+ return {...working,scenes:working.scenes.map(scene=>({...scene,duration:working.savedScenes?.[scene.id]?.duration??0}))};
+}
 journeyInstrument=installJourneyInstrument({nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,read:(basis,scope)=>readTechneReading({expression_ref:basis.expression_ref,revision:basis.revision,scene_ref:basis.scene_ref,...(scope?{scope}:{})}),
  focusScene:async input=>{
   const view=nativeWorkspace?.nativeView(),reading=retainedEditor.read();
@@ -2096,7 +2180,25 @@ journeyInstrument=installJourneyInstrument({nativeView:()=>nativeWorkspace?.nati
    throw Error('The native Journey source changed or has unacknowledged authored work.');
   return await focusNativeSceneRef(input.target_scene_ref);
  },
- editExpression:async request=>{const reply=await nativeExpressionRequest(request);if((reply as {state?:string}|null)?.state==='ready')await nativeWorkspace?.open(request.expression_ref);return reply;},
+ // lane-5 T8: the playback-path panel. The clock is the journey as the expression clock runs it, and seek takes the same clock's seconds.
+ playback:()=>{const journey=playbackJourney();return {journey,time:expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying).time};},
+ seek:seconds=>{
+  const journey=playbackJourney(),path=walkJourney(journey,(index,local)=>expressionTiming(journey,index,local),seconds);
+  if(!path.position)return;
+  const index=path.position.index,local=path.position.time-path.steps[index].start;
+  // The same path as the playhead's scrub: the Scene is adopted, then the playhead seeks to its local time and holds.
+  if(index!==sceneIndex)setSceneRef(store.document.scenes[index].id);
+  seekWorkingScene(local);
+ },
+ editExpression:async request=>{
+  // T-REVIEW-4 #1: a reorder carries the same guard compose and focus carry: unsaved or pending work is never reordered over.
+  const reading=retainedEditor.read();
+  if(store.transactionOpen||reading.standing.pending||reading.standing.dirty)throw Error('Save the open work before reordering this Journey.');
+  const reply=await nativeExpressionRequest(request);
+  // The owner's new revision is read through refreshReference; open returns early for work that is already open.
+  if((reply as {state?:string}|null)?.state==='ready')await nativeWorkspace?.refreshReference(request.expression_ref);
+  return reply;
+ },
 },journeyHome);
 // lane-5 T2 · compose a scene from the journey lens. The floor (journeyBeats.ts) mints the
 // scene ref and refuses collisions; the kernel receives exactly one scene_create on the revision
@@ -2128,7 +2230,9 @@ async function composeJourneyScene(title:string):Promise<void>{
  if(reply?.state==='revision_conflict'){toast(`This Expression changed elsewhere (now revision ${reply.current_revision}). Nothing was composed; reopen it and try again.`);return;}
  if(reply?.state!=='ready'){toast(`The Expression owner did not accept the composition (${String(reply?.state)}).`);return;}
  toast(`Composed “${title.trim()}” into ${routed.request.expression_ref} at revision ${reply.document?.revision ?? routed.request.expected_revision+1}.`);
- void nativeWorkspace?.open(routed.request.expression_ref);
+ // T-REVIEW-4 #1: the owner's new revision is adopted through refreshReference (open returns early for work already open); the
+ // Journey re-reads once that revision stands.
+ await nativeWorkspace?.refreshReference(routed.request.expression_ref);
  void journeyInstrument?.refresh();
 }
 lensStudio.setMode(hostMode);
