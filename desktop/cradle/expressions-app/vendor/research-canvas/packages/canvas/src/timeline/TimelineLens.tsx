@@ -6,7 +6,9 @@ import { useStore } from "zustand";
 import type { ArchetypalLighting, ExpandedTimelineNode, GraphNode, LitInstance, TimelineFilters, TimelineLayoutMutationResult, TimelineRelationField as TimelineRelationFieldData, TimelineView, TimelineYearRange } from "./contracts";
 import { createTimelineStore, type TimelineCardGeometryUpdate } from "./timelineStore";
 import { DEFAULT_TIMELINE_CARD_WIDTH_PX, FALLBACK_TIMELINE_LANE_ID, placeItems, timelineCardBounds, type PlacedItem, type TimelinePresentation } from "./projection";
-import { generateTicks } from "./ticks";
+import { commonOffsetMs, visibleTicks } from "./ticks";
+import { densityBandForPixelsPerYear } from "./scale";
+import { pixelToMs, timeCamera } from "./viewport";
 import { TimelineAxis } from "./TimelineAxis";
 import { TimelineNode } from "./TimelineNode";
 import { TimelineRelationshipLayer } from "./TimelineRelationshipLayer";
@@ -233,28 +235,26 @@ export function TimelineLens({
       pixelsPerYear: viewport.pixelsPerYear,
     });
   }, [loaded, onViewportChange, state.items.length, viewport.centerYear, viewport.pixelsPerYear]);
-  const tier = state.tier();
   // Preserve direct manipulation at the normal working scale.  Only the
-  // genuinely panoramic millennium view collapses nodes to markers; century
-  // view remains a compact, readable card so a user never loses the controls
-  // simply by opening the timeline.
-  const lod = tier === "millennium"
-    ? "marker"
-    : tier === "century"
-      ? "label"
-      : "detail";
-  // Cull by year before collision placement. Filtering after `placeItems`
+  // genuinely panoramic view collapses nodes to markers; the label band keeps
+  // a compact, readable card so a user never loses the controls simply by
+  // opening the timeline.
+  const lod = densityBandForPixelsPerYear(viewport.pixelsPerYear);
+  // Cull by time before collision placement. Filtering after `placeItems`
   // would still make every zoom frame walk the whole loaded window, which is
   // the expensive path that caused deep-LOD freezes.
-  const renderYearRange = timelineRenderYearRange(viewport);
+  const renderCamera = timeCamera(viewport);
+  const renderFromMs = pixelToMs(renderCamera, 0) - TIMELINE_RENDER_OVERSCAN_PX / renderCamera.pixelsPerMs;
+  const renderToMs = pixelToMs(renderCamera, viewport.widthPx) + TIMELINE_RENDER_OVERSCAN_PX / renderCamera.pixelsPerMs;
   const layoutItems = state.items.filter((item) => {
-    const itemEnd = item.endYear ?? item.startYear;
-    return itemEnd >= renderYearRange.startYear && item.startYear <= renderYearRange.endYear;
+    const itemEnd = item.endMs ?? item.startMs;
+    return itemEnd >= renderFromMs && item.startMs <= renderToMs;
   });
   const allPlaced = placeItems(layoutItems, viewport, state.lanes);
   const categoryPlaced = allPlaced.filter((p) => visibleCategories[deriveTimelineCategory(p.item.node)]);
   const placed = categoryPlaced.filter((placement) => isInsideTimelineRenderBand(placement, viewport.widthPx));
-  const ticks = generateTicks(viewport, tier);
+  const ticks = visibleTicks(viewport, commonOffsetMs(state.items));
+  const axisUnit = ticks[0]?.unit ?? null;
   const lighting = state.litMap;
   const lightingActive = state.lightingOperatorId !== null;
   const showEmptyState = loaded && !loadError && state.items.length === 0;
@@ -595,7 +595,7 @@ export function TimelineLens({
 
   const toolbar = (
       <div className="timeline-toolbar" data-testid="timeline-toolbar">
-        <span className="timeline-tier" data-testid="timeline-tier">{tier}</span>
+        <span className="timeline-tier" data-testid="timeline-tier">{axisUnit ?? ""}</span>
         <button ref={walkToggleRef} type="button" aria-label={`${showWalk ? "Hide" : "Show"} temporal walk`}
           aria-expanded={showWalk} onClick={() => setShowWalk(value => !value)}>
           Walk · {walk.stops.length}
@@ -941,16 +941,6 @@ function timelineRangeForViewport(viewport: { centerYear: number; pixelsPerYear:
   return {
     startYear: Math.floor(viewport.centerYear - visibleYears / 2 - bufferYears),
     endYear: Math.ceil(viewport.centerYear + visibleYears / 2 + bufferYears),
-  };
-}
-
-function timelineRenderYearRange(viewport: { centerYear: number; pixelsPerYear: number; widthPx: number }): TimelineYearRange {
-  const pixelsPerYear = Math.max(viewport.pixelsPerYear, Number.EPSILON);
-  const visibleYears = viewport.widthPx / pixelsPerYear;
-  const overscanYears = TIMELINE_RENDER_OVERSCAN_PX / pixelsPerYear;
-  return {
-    startYear: viewport.centerYear - visibleYears / 2 - overscanYears,
-    endYear: viewport.centerYear + visibleYears / 2 + overscanYears,
   };
 }
 

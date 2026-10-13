@@ -1,7 +1,7 @@
 import type { GraphNode, TemporalPrecision, TimelineLane, TimelineViewNode } from "./contracts";
-import { tierForPixelsPerYear } from "./scale";
-import { parseTemporalInstant } from "./instant";
-import { yearToPixel, type TimelineViewport } from "./viewport";
+import { densityBandForPixelsPerYear } from "./scale";
+import { anchorExtent, anchorOffsetMs, calendarYear } from "./instant";
+import { msToPixel, timeCamera, type TimelineViewport } from "./viewport";
 
 export interface TimelineItem {
   graphNodeId: string;
@@ -9,8 +9,14 @@ export interface TimelineItem {
   /** See TimelineViewNode.relationCompanion: contextual, not historical. */
   relationCompanion?: boolean;
   presentation: TimelinePresentation;
-  startYear: number;
+  /** The honest extent in epoch ms: the authority's expansion at the anchor's own precision. */
+  startMs: number;
   /** null = ongoing / open-ended (no validTo). */
+  endMs: number | null;
+  /** UTC offset the anchor's own start declares, in ms. */
+  offsetMs: number;
+  /** Integer calendar years of the extent, for labels only. Never a coordinate. */
+  startYear: number;
   endYear: number | null;
   precision: TemporalPrecision;
 }
@@ -68,9 +74,8 @@ export function projectNodes(records: TimelineViewNode[]): TimelineItem[] {
   for (const record of records) {
     const { node, anchor, layoutOverride } = record;
     if (!node.isTemporal) continue;
-    const startYear = parseTemporalInstant(anchor.validFrom);
-    if (startYear === null) continue;
-    const endYear = parseTemporalInstant(anchor.validTo);
+    const extent = anchorExtent(anchor.validFrom, anchor.validTo, anchor.precision);
+    if (extent === null) continue;
     items.push({
       graphNodeId: node.graphNodeId,
       node,
@@ -83,12 +88,15 @@ export function projectNodes(records: TimelineViewNode[]): TimelineItem[] {
         style: layoutOverride?.style ?? {},
         layoutRevision: layoutOverride?.layoutRevision ?? null,
       },
-      startYear,
-      endYear,
+      startMs: extent.fromMs,
+      endMs: extent.toMs,
+      offsetMs: anchorOffsetMs(anchor.validFrom),
+      startYear: calendarYear(extent.fromMs),
+      endYear: extent.toMs === null ? null : calendarYear(extent.toMs - 1),
       precision: anchor.precision,
     });
   }
-  items.sort((a, b) => a.startYear - b.startYear);
+  items.sort((a, b) => a.startMs - b.startMs);
   return items;
 }
 
@@ -97,6 +105,7 @@ export function placeItems(
   viewport: TimelineViewport,
   laneDefinitions: TimelineLane[] = [],
 ): PlacedItem[] {
+  const camera = timeCamera(viewport);
   const explicitIds = Array.from(new Set([
     ...laneDefinitions.map((lane) => lane.id).filter(isExplicitPlacementLane),
     ...items
@@ -108,9 +117,8 @@ export function placeItems(
   const laneEnds = new Array(LANE_ORDER.length).fill(Number.NEGATIVE_INFINITY);
   const occupied: ReturnType<typeof timelineCardBounds>[] = [];
   return items.map((item) => {
-    const startPx = yearToPixel(viewport, item.startYear);
-    const endPx =
-      item.endYear === null ? startPx : yearToPixel(viewport, item.endYear);
+    const startPx = msToPixel(camera, item.startMs);
+    const endPx = item.endMs === null ? startPx : msToPixel(camera, item.endMs);
     const explicitSlot = item.presentation.lane !== null && isExplicitPlacementLane(item.presentation.lane)
       ? explicitSlots.get(item.presentation.lane)
       : undefined;
@@ -118,7 +126,7 @@ export function placeItems(
     const autoSlot = chooseLaneSlot(laneEnds, startPx - width / 2);
     const laneSlot = explicitSlot ?? explicitIds.length + autoSlot;
     if (explicitSlot === undefined) laneEnds[autoSlot] = startPx + width / 2 + CARD_GAP_PX;
-    const placed: PlacedItem = {item,startPx,endPx,laneIndex:Math.floor(laneSlot / 2),laneSide:LANE_ORDER[laneSlot % LANE_ORDER.length],...(tierForPixelsPerYear(viewport.pixelsPerYear)==='century'?{cardHeight:64}:{})};
+    const placed: PlacedItem = {item,startPx,endPx,laneIndex:Math.floor(laneSlot / 2),laneSide:LANE_ORDER[laneSlot % LANE_ORDER.length],...(densityBandForPixelsPerYear(viewport.pixelsPerYear)==='label'?{cardHeight:64}:{})};
     let bounds=timelineCardBounds(placed);
     // Cards are centred on their exact dates. Expand vertically rather than
     // reusing an occupied slot, merging events or changing authored layout.

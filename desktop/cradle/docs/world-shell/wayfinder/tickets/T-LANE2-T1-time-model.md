@@ -29,3 +29,24 @@ every zoom down to subsecond; an interval keeps both ends' precisions.
 Acceptance: the T1 target's — a second-precision facet renders at
 sub-second zoom with its true extent (screen pass), the expansion math is
 the authority's (pure test), existing tests green.
+
+## Resolution — T1b (chronology leg)
+
+**Landed (13 Oct 2026; builder haiku, converged by the lead).** The research
+canvas's chronology places every anchor on the authority's epoch-ms extent
+(`expandInstant` at the anchor's own precision); the canvas's parallel tier
+and year ladders are deleted; ticks are the authority's `ticksForDomain`
+(civil midnight under an offset); the zoom ceiling reaches 1000 px/ms (a
+one-second fact spans 1000 px). Year-precision placements at year zoom move
+≤0.48 px up to 120 px/yr. Lead rulings: interval ends are inclusive (the
+authority's law; T2's display convention); the drift tolerance accepted;
+the env-gated density proof amended to the ms camera (lead). Scripted:
+chronology-extent 11/11; timeline baseline unchanged (18 pass, 3 env-skipped);
+tsc 0. Unverified: rendering at sub-second zoom (native screen pass).
+
+**Carried:** T7 — BCE/CE display labels over the authority's ticks ("-500"
+must read 501 BCE; "1850 CE"); **T1c** — the camera's year boundary
+(`TimelineViewport`, `TimelineSurface`, the repository query window) moves to
+epoch-ms; anchors the authority grammar rejects (e.g. "2024-05-06 12:00",
+no `T`) surface as transport diagnostics rather than vanish; an interval's
+end keeps its own precision (needs `desktop-api` to carry two precisions).

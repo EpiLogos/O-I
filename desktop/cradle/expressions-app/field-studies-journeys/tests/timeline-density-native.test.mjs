@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 const artifact=process.env.OI_NATIVE_TIMELINE_PROOF;
 test('all retained native Timeline dates have distinct collision-free card rectangles',{skip:!artifact?'Set OI_NATIVE_TIMELINE_PROOF to an actual native stress receipt':false},async()=>{
  const actual=JSON.parse(await readFile(artifact,'utf8'));assert.ok(actual.reading.temporal.length);assert.ok(actual.document.expression_ref);
- const compiled=await build({stdin:{contents:"export {readingInstruments} from './researchInstrumentsData.ts';export {projectNodes,placeItems,timelineCardBounds} from '../../vendor/research-canvas/packages/canvas/src/timeline/projection.ts';export {yearToPixel} from '../../vendor/research-canvas/packages/canvas/src/timeline/viewport.ts';",resolveDir:fileURLToPath(new URL('../src/',import.meta.url)),loader:'ts'},tsconfig:fileURLToPath(new URL('../tsconfig.json',import.meta.url)),bundle:true,platform:'node',format:'esm',write:false,logLevel:'silent'});
+ const compiled=await build({stdin:{contents:"export {readingInstruments} from './researchInstrumentsData.ts';export {projectNodes,placeItems,timelineCardBounds} from '../../vendor/research-canvas/packages/canvas/src/timeline/projection.ts';export {msToPixel,timeCamera} from '../../vendor/research-canvas/packages/canvas/src/timeline/viewport.ts';",resolveDir:fileURLToPath(new URL('../src/',import.meta.url)),loader:'ts'},tsconfig:fileURLToPath(new URL('../tsconfig.json',import.meta.url)),bundle:true,platform:'node',format:'esm',write:false,logLevel:'silent'});
  const api=await import('data:text/javascript;base64,'+Buffer.from(compiled.outputFiles[0].text).toString('base64'));
  const data=await api.readingInstruments(actual.reading),view=await data.dataSource.loadTimelineView(),items=api.projectNodes(view.nodes),source=JSON.stringify(actual);
  assert.equal(items.length,actual.counts.timeline_anchors);assert.ok(items.length>=192);
@@ -23,7 +23,8 @@ test('all retained native Timeline dates have distinct collision-free card recta
   if(scenario.label==='native century cluster')assert.ok(bounds.every(b=>b.height===64),'century rectangles match actual compact card height');
   assert.equal(placed.length,items.length);assert.deepEqual(new Set(placed.map(p=>p.item.graphNodeId)),new Set(items.map(i=>i.graphNodeId)));
   for(let i=0;i<placed.length;i++){
-   assert.equal(placed[i].startPx,api.yearToPixel(scenario.viewport,placed[i].item.startYear),'date coordinate is never displaced');
+   // T1b: anchors place on the authority's epoch-ms extent (one time model), not a year float
+   assert.equal(placed[i].startPx,api.msToPixel(api.timeCamera(scenario.viewport),placed[i].item.startMs),'date coordinate is never displaced');
    for(let j=0;j<i;j++){
     const a=bounds[i],b=bounds[j];assert.ok(a.right+15.999<=b.left||b.right+15.999<=a.left||a.bottom+15.999<=b.top||b.bottom+15.999<=a.top,`${scenario.label}: ${placed[i].item.graphNodeId} overlaps ${placed[j].item.graphNodeId}`);
    }

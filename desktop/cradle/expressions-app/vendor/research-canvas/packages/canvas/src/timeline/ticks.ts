@@ -1,47 +1,36 @@
-import { tickIntervalYears, type ScaleTier } from "./scale";
-import { pixelToYear, yearToPixel, type TimelineViewport } from "./viewport";
+import { ticksForDomain, type Tick } from "./instant";
+import { msToPixel, pixelToMs, timeCamera, type TimelineViewport } from "./viewport";
 
+/** One axis mark. `unit` is the authority's rung, carried for the two-row axis (T7). */
 export interface AxisTick {
-  year: number;
+  ms: number;
   px: number;
   label: string;
+  unit: Tick["unit"];
 }
 
-export function formatYearLabel(year: number, _tier: ScaleTier): string {
-  const rounded = Math.round(year);
-  if (rounded <= 0) return `${1 - rounded} BCE`;
-  return `${rounded} CE`;
+/** Target count of marks for a track, so the axis keeps a readable density. */
+function tickTargetFor(widthPx: number): number {
+  return Math.max(2, Math.floor(widthPx / 120));
 }
 
 /**
- * Emit one tick per `tickIntervalYears(tier)` boundary across the visible
- * range, padded by one interval on each side so partial ticks render at the
- * edges. Ascending by year/px.
+ * Axis marks for the visible window. The authority's `ticksForDomain` decides
+ * the rung, the step and the labels; this only places them on the same camera
+ * as the cards. `offsetMs` is the civil frame the reading declares (see
+ * `commonOffsetMs`).
  */
-export function generateTicks(
-  viewport: TimelineViewport,
-  tier: ScaleTier,
-): AxisTick[] {
-  // Tier boundaries determine precision, while screen distance determines
-  // readable label density. Keep the complete time range at every zoom.
-  const baseInterval = tickIntervalYears(tier);
-  const required = Math.max(1, 88 / (baseInterval * viewport.pixelsPerYear));
-  const magnitude = 10 ** Math.floor(Math.log10(required));
-  const multiplier = [1, 2, 5, 10].find(value => value * magnitude >= required)! * magnitude;
-  const interval = baseInterval * multiplier;
-  const leftYear = pixelToYear(viewport, 0);
-  const rightYear = pixelToYear(viewport, viewport.widthPx);
+export function visibleTicks(viewport: TimelineViewport, offsetMs = 0): AxisTick[] {
+  const camera = timeCamera(viewport);
+  const domain = { fromMs: pixelToMs(camera, 0), toMs: pixelToMs(camera, viewport.widthPx) };
+  return ticksForDomain(domain, { offsetMs, targetTicks: tickTargetFor(viewport.widthPx) })
+    .map((tick) => ({ ms: tick.ms, px: msToPixel(camera, tick.ms), label: tick.label, unit: tick.unit }));
+}
 
-  const firstTick = Math.floor(leftYear / interval) * interval - interval;
-  const lastTick = Math.ceil(rightYear / interval) * interval + interval;
-
-  const ticks: AxisTick[] = [];
-  for (let year = firstTick; year <= lastTick; year += interval) {
-    ticks.push({
-      year,
-      px: yearToPixel(viewport, year),
-      label: formatYearLabel(year, tier),
-    });
-  }
-  return ticks;
+/** The one UTC offset every loaded anchor declares, or 0 when they disagree. The
+ * authority derives the civil frame from the reading's own instants, never from a zone database. */
+export function commonOffsetMs(items: readonly { offsetMs: number }[]): number {
+  if (items.length === 0) return 0;
+  const first = items[0].offsetMs;
+  return items.every((item) => item.offsetMs === first) ? first : 0;
 }
