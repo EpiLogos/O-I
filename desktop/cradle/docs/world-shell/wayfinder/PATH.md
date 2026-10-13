@@ -91,8 +91,8 @@ T-EXPRESSION-TRACKS (code legs), T-CAPABILITY-HOMES (lock §4.2), T-HOLDERS
    the Timeline's walk lanes and sections; the Expressions two-lane tracks)
    at both viewports; then R0, then R1.
 2. No-UI, claimable while the gate is red: **T-AE-C2-WORDING** (the
-   founding corpus's name in AE UI copy → provider labels, C2-b8; ticket to
-   write from T-AE-REPORT's resolution); (landed 13 Oct: the 13 landed refs homed; `npm run test:webstorage` runs
+   founding corpus's name in AE UI copy → provider labels, C2-b8; upstream
+   in AE once its curation lane has landed — ticket written); (landed 13 Oct: the 13 landed refs homed; `npm run test:webstorage` runs
    the 9 WebStorage suites with owned tmp files — 140/140).
 3. After R0 (Phase 2 — seams; UI legs): **T-ATLAS-HOST** (the atlas mounts
    as `projection.earth` / `projection.constellation`; the World's corpus
