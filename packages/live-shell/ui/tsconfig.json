@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
@@ -18,21 +14,7 @@
     "skipLibCheck": true,
     "allowJs": true,
     "allowImportingTsExtensions": true,
-    "noEmit": true,
-    "paths": {
-      "@research-canvas/schema": [
-        "../../../desktop/cradle/expressions-app/vendor/research-canvas/packages/schema/src/index.ts"
-      ],
-      "@research-canvas/desktop-api": [
-        "../../../desktop/cradle/expressions-app/vendor/research-canvas/packages/desktop-api/src/index.ts"
-      ],
-      "@research-canvas/domain": [
-        "../../../desktop/cradle/expressions-app/vendor/research-canvas/packages/domain/src/index.ts"
-      ]
-    }
+    "noEmit": true
   },
-  "include": [
-    "src",
-    "../../../desktop/cradle/src/**/*.d.ts"
-  ]
+  "include": ["src", "../../../desktop/cradle/src/**/*.d.ts"]
 }

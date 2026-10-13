@@ -6,7 +6,7 @@ import {CANVAS_OBJECT_KINDS,CANVAS_TOOL_SPEC,STICKY_DEFAULT_PALETTE,isCanvasObje
 import {EMBED_CARD_SIZE,MEDIA_CARD_SIZE,embedHost,embedUrlRecord,isCentralPathRef,mediaFileName,type CentralPathRef} from './canvasEmbeds.js';
 import {FRAME_TITLE_MAX,frameTitleRecord} from './canvasFrames.js';
 import {LIVE_BASEMAP_SOURCES,OFFLINE_GROUND_ID} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/basemapSources';
-import {TIMELINE_CATEGORIES} from '../../vendor/research-canvas/packages/canvas/src/timeline/categories';
+import {TIMELINE_CATEGORY_IDS as CATEGORY_IDS} from './timelineCategoryIds';
 
 /** Card kinds the material admits: the image/note cards, the lane-1 A2 canvas
  * objects (sticky, shape, text) and the lane-1 A10 embed and media cards. */
@@ -78,7 +78,7 @@ export const TIMELINE_REF_MAX=512;
 export const TIMELINE_CENTER_YEAR_LIMIT=1e10;
 /** The camera zoom a view may name: the lens floor (1e-9 px/year) up to a ceiling above the lens's own maximum, which the lens clamps to. */
 export const TIMELINE_PIXELS_PER_YEAR_RANGE:readonly [number,number]=[1e-9,1e14];
-const TIMELINE_CATEGORY_IDS:readonly string[]=TIMELINE_CATEGORIES.map(category=>category.id);
+const TIMELINE_CATEGORY_IDS:readonly string[]=CATEGORY_IDS;
 const TIMELINE_STYLE_KEYS:readonly string[]=['dotColour','bgColour','textColour'];
 export interface ResearchMaterial {
  schema:'oi.research-scene/v1';cards:Record<string,ResearchCard>;strokes:ResearchStroke[];
