@@ -1,6 +1,7 @@
 /** Local research presentation of the SAME native Scene. Canonical source
  * bodies/relations are never edited by these material actions. */
 import {clone,entity,uid,type Scene} from './model.js';
+import {validateConnector,CONNECTOR_KEY_MAX,CONNECTOR_RECORD_MAX,type ResearchConnector} from './canvasConnectors.js';
 import {CANVAS_OBJECT_KINDS,CANVAS_TOOL_SPEC,STICKY_DEFAULT_PALETTE,isCanvasObjectKind,isPaletteKey,isShapeFill,isShapeGeometry,type CanvasObjectKind,type CanvasToolChoice,type PaletteKey,type ShapeFill,type ShapeGeometry} from './canvasShapes.js';
 
 /** Card kinds the material admits: the image/note cards plus the lane-1 A2
@@ -36,6 +37,8 @@ export interface ResearchMaterial {
 
  views:Record<string,ResearchViewport>; timeline:Record<string,{offsetY:number;width?:number;height?:number;lane?:string;layoutRevision?:number}>;
  frames:Record<string,ResearchFrame>; namedViews:Record<string,ResearchNamedView>;
+ /** lane-1 A3–A4: presentation connectors keyed by the native edge id (absent = today's curved auto routing). */
+ connectors?:Record<string,ResearchConnector>;
 }
 export type ResearchMaterialAction =
  | {type:'resize';id:string;width:number;height:number}
@@ -87,7 +90,7 @@ export function pruneResearchOccurrence(scene:Scene,id:string):void {
  for(const view of Object.values(namedViews))view.selectedRefs=view.selectedRefs.filter(ref=>ref!==id);
 }
 export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):asserts value is ResearchMaterial {
- require(object(value),'Research material must be an object');keys(value,['schema','cards','strokes','views','timeline','frames','namedViews']);
+ require(object(value),'Research material must be an object');keys(value,['schema','cards','strokes','views','timeline','frames','namedViews','connectors']);
  require(value.schema==='oi.research-scene/v1','Unsupported research material');
  require(new TextEncoder().encode(JSON.stringify(value)).length<=262144,'Research material exceeds 256 KiB');
  for(const key of ['cards','views','timeline'])require(object(value[key])&&Object.keys(value[key]).length<=(key==='views'?16:256),'Research record count exceeds its bound');
@@ -123,6 +126,8 @@ export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):
   for(const key of ['color','dotColour','bgColour','textColour'] as const)if(card[key]!==undefined)require(color(card[key]),'Research colour is invalid');
   if(card.size!==undefined){require(object(card.size),'Invalid card display size');keys(card.size,['width','height']);require(finite(card.size.width,40,40000)&&finite(card.size.height,40,40000),'Invalid card display size');}
  }
+ // lane-1 A3–A4: absent is valid (material saved before connectors existed); present is validated closed.
+ if(value.connectors!==undefined){require(object(value.connectors)&&Object.keys(value.connectors).length<=CONNECTOR_RECORD_MAX,'Connector count exceeds its bound');for(const [edgeId,connector] of Object.entries(value.connectors)){require(text(edgeId,CONNECTOR_KEY_MAX)&&!!edgeId,'Invalid connector edge');validateConnector(connector);}}
  require(Array.isArray(value.strokes)&&value.strokes.length<=128,'Annotation count exceeds its bound');
  const seen=new Set<string>();for(const stroke of value.strokes){require(object(stroke),'Invalid annotation');keys(stroke,['id','points','color','width','opacity','createdAt']);require(text(stroke.id,160)&&!!stroke.id&&!seen.has(stroke.id),'Duplicate annotation');seen.add(stroke.id);require(color(stroke.color)&&finite(stroke.width,.1,100)&&finite(stroke.opacity,0,1)&&text(stroke.createdAt,64)&&Number.isFinite(Date.parse(stroke.createdAt)),'Invalid annotation style');require(Array.isArray(stroke.points)&&stroke.points.length>0&&stroke.points.length<=4096,'Annotation point budget exceeded');for(const p of stroke.points)require(object(p)&&finite(p.x,-40000,40000)&&finite(p.y,-40000,40000)&&(p.pressure===undefined||finite(p.pressure,0,1)),'Invalid annotation point');}
  for(const view of Object.values(value.views))validateViewport(view);
@@ -168,7 +173,10 @@ export function applyResearchMaterial(scene:Scene,action:ResearchMaterialAction)
  case 'create-card':{require(finite(action.position.x,-100,100)&&finite(action.position.y,-100,100),'Invalid card position');
   // lane-1 A2: a canvas object is named by its tool choice (a shape by its geometry); its label is the occurrence name.
   const choice=isCanvasObjectKind(action.kind)?canvasObjectChoice(action.kind,action.geometry):undefined;
-  const title=action.title??(choice?CANVAS_TOOL_SPEC[choice].label:action.kind==='image'?'Image':'Note');require(text(title,160)&&!!title,'Invalid card title');const e=entity(title,title.slice(0,120),{...action.position,z:0});e.id=uid('research');e.size={x:.6,y:.4};const c:ResearchCard={type:action.kind};if(action.kind==='note'){c.content='[]';e.shape='disc';e.text='';for(const step of e.sequence.steps){step.shape='disc';step.text='';}}if(action.kind==='image'){require(typeof action.dataUrl==='string'&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(action.dataUrl),'Choose a PNG/JPEG/WebP image');require(action.dataUrl.length<=262144,'Image exceeds native document budget; select a smaller image');c.importedAt=new Date().toISOString();e.source={kind:'image',image:{dataUrl:action.dataUrl,mode:'luminance',threshold:.5,invert:false,scale:1,name:title}};}if(choice){const spec=CANVAS_TOOL_SPEC[choice];c.size={...spec.size};e.text=title;if(action.kind==='sticky')c.palette=STICKY_DEFAULT_PALETTE;if(action.kind==='shape'){c.shape=spec.geometry;c.fill='none';}}next.entities.push(e);research.cards[e.id]=c;break;}
+  const title=action.title??(choice?CANVAS_TOOL_SPEC[choice].label:action.kind==='image'?'Image':'Note');require(text(title,160)&&!!title,'Invalid card title');const e=entity(title,title.slice(0,120),{...action.position,z:0});e.id=uid('research');e.size={x:.6,y:.4};const c:ResearchCard={type:action.kind};if(action.kind==='note')c.content='[]';
+  // A note and a canvas object (sticky, shape, text — lane-1 A2) are canvas presentation: on the stage they are a quiet disc, never
+  // a text formation spelling the tool's name. The object's label is its card caption.
+  if(action.kind==='note'||choice){e.shape='disc';e.text='';for(const step of e.sequence.steps){step.shape='disc';step.text='';}}if(action.kind==='image'){require(typeof action.dataUrl==='string'&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(action.dataUrl),'Choose a PNG/JPEG/WebP image');require(action.dataUrl.length<=262144,'Image exceeds native document budget; select a smaller image');c.importedAt=new Date().toISOString();e.source={kind:'image',image:{dataUrl:action.dataUrl,mode:'luminance',threshold:.5,invert:false,scale:1,name:title}};}if(choice){const spec=CANVAS_TOOL_SPEC[choice];c.size={...spec.size};if(action.kind==='sticky')c.palette=STICKY_DEFAULT_PALETTE;if(action.kind==='shape'){c.shape=spec.geometry;c.fill='none';}}next.entities.push(e);research.cards[e.id]=c;break;}
  case 'card-content':{const c=card(action.id);require(c.type==='note','Only note cards own rich note content');validateResearchContent(action.content);c.content=action.content;
   // The note's readable text is mirrored onto the occurrence, so the
   // Expression's own views (verso, tree, readers) show the note as text,
@@ -217,6 +225,20 @@ export function applyResearchMaterial(scene:Scene,action:ResearchMaterialAction)
  case 'view-remove':delete research.namedViews[action.name];break;
  }
  require(next.entities.length<=32,'Scene authoring occurrence limit reached');
+ validateResearchMaterial(research,new Set(next.entities.map(e=>e.id)));
+ Object.assign(scene,next);
+}
+/** lane-1 A3–A4: sets one connector's presentation record, or clears it with null,
+ * keyed by the native edge id. Mutates only the supplied working Scene; the
+ * native relation (kind, direction, endpoints) is never touched here. An empty
+ * record map is removed, so a Scene with no connectors is unchanged. */
+export function applyConnectorRecord(scene:Scene,edgeId:string,value:ResearchConnector|null):void {
+ require(text(edgeId,CONNECTOR_KEY_MAX)&&!!edgeId,'Invalid connector edge');
+ const next=clone(scene);const research=next.research??=emptyResearchMaterial();
+ research.frames??={};research.namedViews??={};
+ const connectors={...(research.connectors??{})};
+ if(value===null)delete connectors[edgeId];else{validateConnector(value);connectors[edgeId]=clone(value);}
+ if(Object.keys(connectors).length)research.connectors=connectors;else delete research.connectors;
  validateResearchMaterial(research,new Set(next.entities.map(e=>e.id)));
  Object.assign(scene,next);
 }

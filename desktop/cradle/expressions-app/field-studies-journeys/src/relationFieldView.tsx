@@ -27,7 +27,12 @@ import {lanesFromReading,type TimelineLane} from '../../../src/techne/m0m5/timel
 import {STANDING_LEGEND,type StandingVisual} from '../../../src/techne/m0m5/timeline/standing';
 import type {TechneTimeAxis,TimeAxisScope} from '../../../src/techne/m0m5/timeline/timeAxis';
 import {relationFieldState} from '../../../src/techne/m0m5/timeline/state';
+import {causeChains,relationFieldCauseSource,NO_DATE_DISCLOSED,type CauseChain} from '../../vendor/research-canvas/packages/canvas/src/timeline/causeChain';
+import {StandingLegend} from '../../vendor/research-canvas/packages/canvas/src/timeline/TimelineRelationshipLayer';
 import './relationFieldView.css';
+
+/** The one standing legend, shared with the chronology (lane-2 T11): the same entries and swatches in both projections. */
+export {StandingLegend};
 
 // ---------------------------------------------------------------------------
 // Pure layout/filter engine — no React, no DOM. Tested directly.
@@ -143,7 +148,12 @@ export function RelationFieldView({reading,width=720,initialMode='relations',tim
  const [mode,setMode]=useState<RelationFieldMode>(initialMode);
  const [standingFilter,setStandingFilter]=useState<ReadonlySet<StandingVisual>>(new Set());
  const [selected,setSelected]=useState<RelationEdge|null>(null);
+ // The followed cause chain (lane-2 T10), by its first hop's id; cause mode only.
+ const [chainId,setChainId]=useState<string|null>(null);
  const field=useMemo(()=>relationField(reading),[reading]);
+ const causeChainList=useMemo(()=>causeChains(field.edges.map(relationFieldCauseSource)),[field]);
+ const activeChain=causeChainList.find(chain=>chain.id===chainId)??null;
+ const toggleChain=(id:string)=>setChainId(current=>current===id?null:id);
  const availability=useMemo(()=>projectionAvailability(reading,timeAxis),[reading,timeAxis]);
  const fieldState=useMemo(()=>relationFieldState(reading,mode,null,timeAxis?.window),[reading,mode,timeAxis]);
  const dated=useMemo(()=>datedParticipants(field),[field]);
@@ -174,7 +184,11 @@ export function RelationFieldView({reading,width=720,initialMode='relations',tim
    return <ActivityPanel layout={activityLayout(reading)} axis={timeAxis}/>;
   }
   const layout=arcLayoutForMode(field,mode,width,standingFilter);
-  return <ArcPanel layout={layout} onSelectEdge={selectEdge} onOpenMember={onOpenMember} selected={selected} timeScopes={timeScopes}/>;
+  const chain=mode==='cause'?activeChain:null;
+  return <>
+   <ArcPanel layout={layout} onSelectEdge={selectEdge} onOpenMember={onOpenMember} selected={selected} timeScopes={timeScopes} chain={chain}/>
+   {mode==='cause'&&<CauseWalk chains={causeChainList} activeId={chainId} edges={field.edges} onToggle={toggleChain} onSelectEdge={selectEdge}/>}
+  </>;
  })();
 
  return <div className="relation-field-view">
@@ -183,7 +197,7 @@ export function RelationFieldView({reading,width=720,initialMode='relations',tim
     const a=availabilityFor(m);
     return <button key={m} type="button" role="tab" aria-selected={mode===m} aria-pressed={mode===m}
      disabled={a?!a.available:false} title={a?.reason??(a?.window_scope?`${a.window_scope.out_of_scope} outside the shared window · ${a.window_scope.unresolved} unresolved · ${a.window_scope.unpositioned} unpositioned`:undefined)}
-     onClick={()=>{setMode(m);setSelected(null);}}>{MODE_LABEL[m]}{a?.count?` · ${a.count}`:''}{a?.window_scope?.out_of_scope?` (${a.window_scope.out_of_scope} outside)`:''}</button>;
+     onClick={()=>{setMode(m);setSelected(null);setChainId(null);}}>{MODE_LABEL[m]}{a?.count?` · ${a.count}`:''}{a?.window_scope?.out_of_scope?` (${a.window_scope.out_of_scope} outside)`:''}</button>;
    })}
   </div>
   <div className="relation-field-filters" aria-label="Standing filter">
@@ -200,9 +214,10 @@ export function RelationFieldView({reading,width=720,initialMode='relations',tim
  </div>;
 }
 
-function ArcPanel({layout,onSelectEdge,onOpenMember,selected,timeScopes}:{layout:RelationFieldArcLayout;onSelectEdge:(edge:RelationEdge)=>void;onOpenMember?:(ref:string)=>void;selected:RelationEdge|null;timeScopes:ReadonlyMap<string,TimeAxisScope>}){
+function ArcPanel({layout,onSelectEdge,onOpenMember,selected,timeScopes,chain=null}:{layout:RelationFieldArcLayout;onSelectEdge:(edge:RelationEdge)=>void;onOpenMember?:(ref:string)=>void;selected:RelationEdge|null;timeScopes:ReadonlyMap<string,TimeAxisScope>;chain?:CauseChain|null}){
  if(!layout.edges.length)return <p className="relation-field-empty">No relations in this projection (after the current standing filter).</p>;
  const xOf=new Map(layout.nodes.map(n=>[n.ref,n]));
+ const chainHop=new Map((chain?.hops??[]).map((hop,index)=>[hop.id,index]));
  const height=Math.max(LANE_Y.undated+40,200);
  return <svg className="relation-field-arc" viewBox={`0 0 ${layout.width} ${height}`} role="img" aria-label={`${MODE_LABEL[layout.mode]} relation field`}>
   <line x1={0} y1={LANE_Y.dated} x2={layout.width} y2={LANE_Y.dated} className="relation-field-lane-line"/>
@@ -218,17 +233,48 @@ function ArcPanel({layout,onSelectEdge,onOpenMember,selected,timeScopes}:{layout
    const d=`M ${from.x} ${fromY} Q ${midX} ${controlY} ${to.x} ${toY}`;
    const isSelected=selected?.id===edge.id;
    const scope=timeScopes.get(edge.id);
-   return <path key={edge.id} d={d} tabIndex={0} role="button"
-    aria-label={`${edge.relation}: ${edge.from_ref} to ${edge.to_ref}, ${edge.standing_visual}${scope?`, ${scope.state}`:''}${edge.temporal.state==='dated'?', dated':edge.temporal.state==='unresolved'?', unresolved date':''}`}
-    data-time-scope={scope?.state} opacity={scope?.state==='out-of-scope'&&!isSelected?0.35:undefined}
-    className={`relation-field-edge relation-field-standing-${edge.standing_visual}${isSelected?' relation-field-edge-selected':''}`}
-    onClick={()=>onSelectEdge(edge)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onSelectEdge(edge);}}}/>;
+   // A followed chain: its hops at full strength in sequence, every other edge on a dimmed field.
+   const hop=chainHop.get(edge.id);
+   const chainOpacity=chain===null?undefined:hop===undefined?0.18:1;
+   const hopY=0.25*fromY+0.5*controlY+0.25*toY;
+   return <g key={edge.id}>
+    <path d={d} tabIndex={0} role="button"
+     aria-label={`${edge.relation}: ${edge.from_ref} to ${edge.to_ref}, ${edge.standing_visual}${scope?`, ${scope.state}`:''}${edge.temporal.state==='dated'?', dated':edge.temporal.state==='unresolved'?', unresolved date':''}`}
+     data-time-scope={scope?.state} data-chain-hop={hop===undefined?undefined:hop+1}
+     opacity={chainOpacity??(scope?.state==='out-of-scope'&&!isSelected?0.35:undefined)} strokeWidth={hop===undefined?undefined:2.4}
+     className={`relation-field-edge relation-field-standing-${edge.standing_visual}${isSelected?' relation-field-edge-selected':''}`}
+     onClick={()=>onSelectEdge(edge)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onSelectEdge(edge);}}}/>
+    {hop!==undefined&&<text x={midX} y={hopY-4} textAnchor="middle" className="relation-field-chain-index">{hop+1}</text>}
+   </g>;
   })}
   {layout.nodes.map(node=><g key={node.ref} className="relation-field-node" transform={`translate(${node.x},${LANE_Y[node.lane]})`}>
    <circle r={5} tabIndex={0} role="button" aria-label={`Open ${node.ref}`}
     onClick={()=>onOpenMember?.(node.ref)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onOpenMember?.(node.ref);}}}/>
   </g>)}
  </svg>;
+}
+
+/** The cause chains of the reading, in the authority's order. Each hop states its relation verbatim, its time or "no date disclosed", its offset from the hop before, and its standing. */
+function CauseWalk({chains,activeId,edges,onToggle,onSelectEdge}:{chains:readonly CauseChain[];activeId:string|null;edges:readonly RelationEdge[];onToggle:(id:string)=>void;onSelectEdge:(edge:RelationEdge)=>void}){
+ if(!chains.length)return <p className="relation-field-empty">No cause chain is disclosed: no two cause-family relations join end to end.</p>;
+ const edgeById=new Map(edges.map(edge=>[edge.id,edge]));
+ return <div className="relation-field-chains" aria-label="Cause chains">
+  {chains.map((chain,index)=>{const open=activeId===chain.id;return <div key={chain.id} className="relation-field-chain">
+   <button type="button" className="relation-field-chain-toggle" aria-pressed={open} onClick={()=>onToggle(chain.id)}>Chain {index+1} · {chain.hops.length} hop{chain.hops.length===1?'':'s'}</button>
+   {open&&<ol className="relation-field-chain-hops">{chain.hops.map((hop,i)=>{
+    const edge=edgeById.get(hop.id);
+    const standing=STANDING_LEGEND.find(l=>l.visual===hop.standing.visual)?.label??hop.standing.visual;
+    return <li key={hop.id} className="relation-field-chain-hop" data-standing={hop.standing.visual}>
+     <span className="relation-field-chain-hop-index">{i+1}</span>
+     <button type="button" className={`relation-field-chain-hop-edge relation-field-standing-${hop.standing.visual}`} disabled={!edge} onClick={()=>{if(edge)onSelectEdge(edge);}}>{hop.from_ref} —{hop.relation}→ {hop.to_ref}</button>
+     <span className="relation-field-chain-hop-time" title={hop.timeNote??undefined}>{hop.time?hop.time.label:NO_DATE_DISCLOSED}</span>
+     <span className="relation-field-chain-hop-offset">{hop.offset?hop.offset.label:'start of chain'}</span>
+     <span className="relation-field-chain-hop-standing">{standing}{hop.standing.verbatim!==null?` · "${hop.standing.verbatim}"`:''}</span>
+    </li>;
+   })}</ol>}
+  </div>;})}
+  <StandingLegend/>
+ </div>;
 }
 
 function PhasePanel({layout,onSelectEdge,selected,axis,timeScopes}:{layout:RelationFieldPhaseLayout;onSelectEdge:(edge:RelationEdge)=>void;selected:RelationEdge|null;axis?:TechneTimeAxis;timeScopes:ReadonlyMap<string,TimeAxisScope>}){

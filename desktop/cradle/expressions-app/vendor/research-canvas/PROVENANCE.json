@@ -190,13 +190,14 @@
     "packages/canvas/src/psychogeographic/basemapLayers.ts",
     "packages/canvas/src/psychogeographic/placeAuthoring.ts",
     "packages/canvas/src/canvas/CanvasObjectNodes.tsx",
-    "packages/canvas/src/psychogeographic/placeTimeControl.ts"
+    "packages/canvas/src/psychogeographic/placeTimeControl.ts",
+    "packages/canvas/src/timeline/causeChain.ts"
   ],
   "patches": {
     "packages/canvas/src/CanvasView.tsx": {
       "upstream_sha256": "b343759c921b283f4a05bd83e3f1622bba3cd6f68b0ff8c83f31a681a32266ee",
-      "adapted_sha256": "f2678967757810ff8a8cb568f4cb86a89e5caed92738c40e43a1ccdc2503a47a",
-      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host; optional host toolbar portal uses the actual zoom/fit actions and suppresses duplicate ReactFlow Controls only when hosted. patches/host-selection-viewport-gesture.patch: optional selectedNodeIds (real multi-selection), onSelectionChange/selectionOnDrag (native xyflow box select, pan preserved when unset), onViewportChange (xyflow onMove/onMoveEnd, no host polling loop), and onMoveNodePreview/onMoveNodeEnd (per-gesture drag preview/end, reporting every dragged node in a multi-selection; onMoveNode keeps its original per-callback behaviour when these are omitted). patches/annotation-erase-and-draft-colour.patch: threads the host's draftColour, erasing mode and onDeleteStroke through to AnnotationLayer. | lane-1 A1b: optional hostZoomControls prop (host draws its own +/-/fit, so the vendored zoom buttons and xyflow Controls are not drawn; Play stays); explicit minZoom/maxZoom from CANVAS_ZOOM_LIMITS (0.05 to 2, navigationGeometry.ts); every camera duration through cameraDuration (0 under prefers-reduced-motion). | lane-1 A2: shapes, stickies, text"
+      "adapted_sha256": "d07f308cdfb88f89a0ffcf0d72ccb8e772ebeee1e9474282c65e28338f441fe4",
+      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host; optional host toolbar portal uses the actual zoom/fit actions and suppresses duplicate ReactFlow Controls only when hosted. patches/host-selection-viewport-gesture.patch: optional selectedNodeIds (real multi-selection), onSelectionChange/selectionOnDrag (native xyflow box select, pan preserved when unset), onViewportChange (xyflow onMove/onMoveEnd, no host polling loop), and onMoveNodePreview/onMoveNodeEnd (per-gesture drag preview/end, reporting every dragged node in a multi-selection; onMoveNode keeps its original per-callback behaviour when these are omitted). patches/annotation-erase-and-draft-colour.patch: threads the host's draftColour, erasing mode and onDeleteStroke through to AnnotationLayer. | lane-1 A1b: optional hostZoomControls prop (host draws its own +/-/fit, so the vendored zoom buttons and xyflow Controls are not drawn; Play stays); explicit minZoom/maxZoom from CANVAS_ZOOM_LIMITS (0.05 to 2, navigationGeometry.ts); every camera duration through cameraDuration (0 under prefers-reduced-motion). | lane-1 A2: shapes, stickies, text | lane-1 A3-A4: connectors"
     },
     "packages/canvas/src/components/ContextMenu.tsx": {
       "upstream_sha256": "9b496da82f532acddf529afd2f1a6cb154de1ddd76efd91d20d50dd96285ff9e",
@@ -205,8 +206,8 @@
     },
     "packages/canvas/src/edges/AnnotatedEdge.tsx": {
       "upstream_sha256": "f29a962dc9065920759d1f95c4e71ea458a6050cbfa69ca79941c0dc831fe719",
-      "adapted_sha256": "9b87a70cc3ae493ba5bb9d23163651b9332ec0e45ba10e37abb6c97fd5a2b2a9",
-      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host. Pass both native direction markers to BaseEdge; the existing source direction is never inferred. Parallel native relation occurrences on the same unordered node pair (D1, techne-expression-mode.md \u00a736) get their own quadratic-bezier curvature offset, computed in the edge component itself from the live xyflow edge list via useEdges(); a pair with exactly one edge keeps the prior single getBezierPath call and label placement unchanged. patches/editable-relation-label.patch: the selected edge's label is a free text field with the known kinds as suggestions (datalist), so a relation can be named in the author's own words, not only from a fixed vocabulary."
+      "adapted_sha256": "c854d8de2e6f22f7f86339e4973cdb98c66c81392823d1f7d72d788b86708a01",
+      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host. Pass both native direction markers to BaseEdge; the existing source direction is never inferred. Parallel native relation occurrences on the same unordered node pair (D1, techne-expression-mode.md \u00a736) get their own quadratic-bezier curvature offset, computed in the edge component itself from the live xyflow edge list via useEdges(); a pair with exactly one edge keeps the prior single getBezierPath call and label placement unchanged. patches/editable-relation-label.patch: the selected edge's label is a free text field with the known kinds as suggestions (datalist), so a relation can be named in the author's own words, not only from a fixed vocabulary. | lane-1 A3-A4: connectors"
     },
     "packages/canvas/src/nodes/GroupNode.tsx": {
       "upstream_sha256": "b431969411ab3cee23021ff338e2f9ad74dd276c33fa940b0ed9e42fd867f3d8",
@@ -240,8 +241,8 @@
     },
     "packages/canvas/src/timeline/TimelineLens.tsx": {
       "upstream_sha256": "8f1c71bed489ca426e16bdec89f24b696ccff4f41901167160ace36098057979",
-      "adapted_sha256": "1305b6ac48e8c084cf3f9823123495dcd81ade78208fcdd5abcd4a48c2dd6294",
-      "reason": "Exact focused native relation filtering without losing focused reading; explicit Close/Escape clears selection and invalidates late replies, restores card/track focus; preserve host toolbar, capability and Walk controls. Vertical pan bounds consume the same collision-resolved display rectangles as cards. Optional explicit Close/Escape and existing-HUD visibility controls with focus return; hiding retains native walk/working-set state, Clear/Unload remain separate intentional actions. | lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T2+T7: precision bands, two-row axis, BCE/CE labels | lane-2 T8: periodisation bands | lane-2 T12+T13: honest clusters, scale-window minimap"
+      "adapted_sha256": "698481d1869a1e834256d74f614c765789a111720b1eb06898de9a65300dc76d",
+      "reason": "Exact focused native relation filtering without losing focused reading; explicit Close/Escape clears selection and invalidates late replies, restores card/track focus; preserve host toolbar, capability and Walk controls. Vertical pan bounds consume the same collision-resolved display rectangles as cards. Optional explicit Close/Escape and existing-HUD visibility controls with focus return; hiding retains native walk/working-set state, Clear/Unload remain separate intentional actions. | lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T2+T7: precision bands, two-row axis, BCE/CE labels | lane-2 T8: periodisation bands | lane-2 T12+T13: honest clusters, scale-window minimap | lane-2 T10-T11: cause chains, standing edges"
     },
     "packages/canvas/src/psychogeographic/PsychogeographicMap.tsx": {
       "upstream_sha256": "55b9856e3106912eb7b6f8f6a9fb60e6b40e8852ef8126c0eb82f75a6bc25af7",
@@ -322,8 +323,8 @@
       "reason": "lane-2 T1b: chronology on the authority's epoch-ms extents | lane-2 T2+T7: precision bands, two-row axis, BCE/CE labels | lane-2 T8: periodisation bands"
     },
     "packages/canvas/src/timeline/TimelineRelationshipLayer.tsx": {
-      "adapted_sha256": "32eafa572849eecfbf426573e9e11ceb275c45a20da30eafc2f64c8806ffa7a1",
-      "reason": "lane-2 T3: standing presentation + band/axis craft"
+      "adapted_sha256": "c9c54075c455702c1cd1d444051b3a66033e3ee6085bc0462a01c716ff76c12f",
+      "reason": "lane-2 T3: standing presentation + band/axis craft | lane-2 T10-T11: cause chains, standing edges"
     },
     "packages/canvas/src/timeline/frames.ts": {
       "adapted_sha256": "6ac53ce33f59a98dbfe22e83e08fa3585fc6e48c9244332714cf67f5c50b2237",

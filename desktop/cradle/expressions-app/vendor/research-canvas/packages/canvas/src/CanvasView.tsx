@@ -351,6 +351,11 @@ function CanvasViewInner({
     }
   }, [editingNodeId, nodes, readOnly]);
 
+  // lane-1 A4: true only while a connection or reconnection is being dragged.
+  // It reveals the card handles for the side pick and nothing else, so no
+  // standing side affordance is drawn at rest.
+  const [connecting, setConnecting] = useState(false);
+
   const handleConnect = useCallback(
     (connection: Connection) => {
       if (readOnly || !connection.source || !connection.target) return;
@@ -480,36 +485,43 @@ function CanvasViewInner({
     selected: isNodeSelected(node.id, selectedNodeId, selectedNodeIds)
   }));
 
-  const flowEdges: Edge[] = edges.map((edge) => ({
-    id: edge.id,
-    source: edge.sourceNodeId,
-    sourceHandle: edge.sourceHandleId ?? defaultSourceHandleId(),
-    target: edge.targetNodeId,
-    targetHandle: edge.targetHandleId ?? defaultTargetHandleId(),
-    type: "annotated",
-    reconnectable: !readOnly && !isEdgeReadOnly?.(edge.id) && !!onReconnectEdge,
-    data: {
-      readOnly: readOnly || !!isEdgeReadOnly?.(edge.id),
-      directionality: edge.directionality,
-      relationKind: edge.relationKind,
-      note: edge.note,
-      sequencing: edge.sequencing,
-      onSelect: () => {
-        onSelectNode?.(null);
-        onSelectEdge?.(edge.id);
+  const flowEdges: Edge[] = edges.map((edge) => {
+    // lane-1 A3: the host's presentation of the line (kind and midpoint label)
+    // rides on the edge; the relation itself is unchanged.
+    const presentation = (edge as CanvasEdge & { presentation?: { kind?: "straight" | "curved" | "elbow"; label?: string } }).presentation;
+    return {
+      id: edge.id,
+      source: edge.sourceNodeId,
+      sourceHandle: edge.sourceHandleId ?? defaultSourceHandleId(),
+      target: edge.targetNodeId,
+      targetHandle: edge.targetHandleId ?? defaultTargetHandleId(),
+      type: "annotated",
+      reconnectable: !readOnly && !isEdgeReadOnly?.(edge.id) && !!onReconnectEdge,
+      data: {
+        readOnly: readOnly || !!isEdgeReadOnly?.(edge.id),
+        directionality: edge.directionality,
+        relationKind: edge.relationKind,
+        note: edge.note,
+        sequencing: edge.sequencing,
+        connectorKind: presentation?.kind,
+        connectorLabel: presentation?.label,
+        onSelect: () => {
+          onSelectNode?.(null);
+          onSelectEdge?.(edge.id);
+        },
+        onCycleDirectionality: onCycleEdgeDirectionality ? () => onCycleEdgeDirectionality(edge.id) : undefined,
+        onDelete: onDeleteEdge ? () => onDeleteEdge(edge.id) : undefined,
+        onUpdateRelationKind: onUpdateEdgeRelationKind ? (relationKind: string) =>
+          onUpdateEdgeRelationKind(edge.id, relationKind) : undefined,
+        selected: edge.id === selectedEdgeId
       },
-      onCycleDirectionality: onCycleEdgeDirectionality ? () => onCycleEdgeDirectionality(edge.id) : undefined,
-      onDelete: onDeleteEdge ? () => onDeleteEdge(edge.id) : undefined,
-      onUpdateRelationKind: onUpdateEdgeRelationKind ? (relationKind: string) =>
-        onUpdateEdgeRelationKind(edge.id, relationKind) : undefined,
-      selected: edge.id === selectedEdgeId
-    },
-    ...(edge.sequencing
-      ? { markerEnd: { type: MarkerType.ArrowClosed } }
-      : edgeMarkers(edge.directionality)),
-    selected: edge.id === selectedEdgeId,
-    selectable: true
-  }));
+      ...(edge.sequencing
+        ? { markerEnd: { type: MarkerType.ArrowClosed } }
+        : edgeMarkers(edge.directionality)),
+      selected: edge.id === selectedEdgeId,
+      selectable: true
+    };
+  });
 
   const nodeContextMenuItems = useMemo(() => {
     if (!contextMenu?.nodeId) return [];
@@ -569,7 +581,7 @@ function CanvasViewInner({
       </div>
   );
   return (
-    <div ref={containerRef} className="canvas-flow" data-testid="canvas-flow">
+    <div ref={containerRef} className="canvas-flow" data-testid="canvas-flow" data-connecting={connecting ? "true" : "false"}>
       {toolbar && (toolbarContainer ? createPortal(toolbar, toolbarContainer) : toolbar)}
       <ReactFlow
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
@@ -683,6 +695,10 @@ function CanvasViewInner({
         }}
         onNodesChange={handleNodesChange}
         onConnect={handleConnect}
+        onConnectStart={() => setConnecting(true)}
+        onConnectEnd={() => setConnecting(false)}
+        onReconnectStart={() => setConnecting(true)}
+        onReconnectEnd={() => setConnecting(false)}
         onReconnect={(oldEdge, newConnection) => {
           if (readOnly || isEdgeReadOnly?.(oldEdge.id) || !newConnection.source || !newConnection.target) {
             return;

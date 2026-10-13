@@ -3,6 +3,7 @@ import React,{Component,useEffect,useRef,useState,type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
 import {clone,type Scene} from './model.js';
 import {type ResearchCard,type ResearchMaterialAction,type ResearchStroke} from './researchMaterial.js';
+import {CONNECTOR_KINDS,connectorPresentation,connectorRecord,connectorWithSides,sideFromHandleId,type ConnectorKind,type ResearchConnector} from './canvasConnectors.js';
 import {createRoot,type Root} from 'react-dom/client';
 import {CanvasView,TimelineSurface,PsychogeographicMap,StreetViewSurface,loadBundledGeographyPack,createLiveServicePolicy,type LiveServicePolicy,type TimelineViewState} from '../../vendor/research-canvas/components';
 import {placeRecordFromViewState,viewStateFromPlaceRecord} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeNavigation';
@@ -106,6 +107,22 @@ function ConstellationAction({request,onError}:{request:Omit<TechneConstellation
  return <button disabled={busy} onClick={()=>{setBusy(true);void techneConstellationRequest({...request,operation:'open'}).catch(error=>onError(error instanceof Error?error.message:String(error))).finally(()=>setBusy(false));}}>Edit constellation</button>;
 }
 
+/** lane-1 A3 — a connection's line kind (three quiet line glyphs in the tool
+ * grammar, no words) and its owner-written midpoint label. Presentation only:
+ * the relation keeps its own kind and direction. Emptying the label clears it. */
+const CONNECTOR_GLYPHS:Record<ConnectorKind,string>={straight:'M4 20 L20 4',curved:'M4 20 C4 8 20 16 20 4',elbow:'M4 20 V12 H20 V4'};
+function ConnectorControls({record,onChange}:{record:ResearchConnector|undefined;onChange:(next:ResearchConnector|null)=>void}){
+ const kind:ConnectorKind=record?.kind??'curved';
+ const [draft,setDraft]=useState(record?.label??'');
+ useEffect(()=>setDraft(record?.label??''),[record?.label]);
+ const keep={fromSide:record?.fromSide,toSide:record?.toSide};
+ const commit=()=>{const next=draft.trim();if(next!==(record?.label??''))onChange(connectorRecord({kind,label:next,...keep}));};
+ return <div className="research-connector-controls">
+  <div className="research-connector-kinds" role="group" aria-label="Connection line">{CONNECTOR_KINDS.map(option=><button key={option} type="button" aria-label={option} aria-pressed={kind===option} title={option} className="research-connector-kind" onClick={()=>{if(option!==kind)onChange(connectorRecord({kind:option,label:record?.label,...keep}));}}>
+   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d={CONNECTOR_GLYPHS[option]}/></svg></button>)}</div>
+  <label className="research-connector-label">Label<input aria-label="Connection label" value={draft} maxLength={160} onChange={e=>setDraft(e.target.value)} onBlur={commit} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();}}/></label>
+ </div>;
+}
 /** Presentation connection ≠ evidence. This offers a deliberate act — record
  * the disclosed O:I connection as a typed knowledge relation through the
  * native constellation operation — never an automatic promotion. */
@@ -189,6 +206,8 @@ export interface ResearchInstrumentsHost {
  pageMembers?:(delta:number)=>Promise<unknown>;
  sceneMaterial:(sceneId:string)=>Scene;
  material:(sceneId:string,action:ResearchMaterialAction)=>Promise<void>;
+ /** lane-1 A3–A4 — sets or clears one connector's presentation record by native edge id (null clears). OPTIONAL: when the host does not supply it the connector kind, label and side are read but not editable. */
+ connector?:(sceneId:string,edgeId:string,value:ResearchConnector|null)=>Promise<void>;
  inspectSubject:(ref:string,context?:{node?:unknown;relationField?:unknown})=>void;
  read:(request:TechneSceneReadingRequest)=>Promise<unknown>;
  nativeView:()=>KernelConversion|undefined;
@@ -446,7 +465,20 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   // occurrence (position, size, name) is unchanged, only its presentation is.
   const objectCardOf=(id:string)=>{const local=canvas.occurrences.get(id);return local?material?.cards[local]:undefined;};
   const previewNodes=withGesturePreviews(canvasObjectNodes(canvas.nodes,objectCardOf),id=>state.groupPreview?.get(id)??state.moveGesture?.previewValue(id),id=>state.resizeGesture?.previewValue(id));
-  const previewEdges=canvas.edges.map(edge=>state.sequencedEdges?.has(edge.id)?{...edge,sequencing:true}:edge);
+  // lane-1 A3–A4 — the presentation connector for each native edge: its line
+  // kind and midpoint label ride on `presentation`, and any bound card side
+  // becomes the handle the edge attaches to. The relation itself is untouched.
+  const previewEdges=canvas.edges.map(edge=>{
+   const presented=connectorPresentation(material?.connectors?.[edge.id]);
+   return {...edge,...(state.sequencedEdges?.has(edge.id)?{sequencing:true}:{}),sourceHandleId:presented.sourceHandleId,targetHandleId:presented.targetHandleId,presentation:{kind:presented.kind,label:presented.label}};
+  });
+  // A reconnect keeps the native edge id, so its sides are written against that
+  // id. (A create records its sides against the binding it mints; see onConnectNodes.)
+  const bindReconnectSides=(id:string,input:{sourceHandleId?:string;targetHandleId?:string})=>{
+   if(!host.connector||!canvas.sceneId)return Promise.resolve();
+   const next=connectorWithSides(material?.connectors?.[id],{fromSide:sideFromHandleId(input.sourceHandleId,'source'),toSide:sideFromHandleId(input.targetHandleId,'target')});
+   return host.connector(canvas.sceneId,id,next);
+  };
   // R1 — shift/ctrl-click extends the multi-select; a plain click replaces
   // it. The vendored Canvas reports no modifier state itself (trackModifiers
   // reads it independently), so this is the one seam that decides extend
@@ -621,6 +653,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
      onRelease={()=>host.releaseBlueprint&&apply(()=>host.releaseBlueprint!(canvas.sceneId!))}
      onPin={next=>host.pinEntity&&apply(()=>host.pinEntity!(canvas.sceneId!,current.id,next),false)}
     />}
+   {editable&&host.connector&&selectedEdgeObj&&!current&&<ConnectorControls key={selectedEdgeObj.id} record={material?.connectors?.[selectedEdgeObj.id]} onChange={next=>apply(()=>host.connector!(canvas.sceneId!,selectedEdgeObj.id,next))}/>}
    {relateEndpoints?.from&&relateEndpoints.to&&<RelateKnowledgeAction sceneId={canvas.sceneId!} sourceRef={relateEndpoints.from} targetRef={relateEndpoints.to} defaultRelation={selectedEdgeObj!.relationKind} relate={host.relateKnowledge!} onError={message} onResult={message}/>}
    {editable&&(material?.strokes??[]).map((stroke,i)=><button key={stroke.id} onClick={()=>act({type:'annotation-remove',id:stroke.id})}>Remove annotation {i+1}</button>)}
   </div>;
@@ -653,8 +686,21 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     onRegisterFlyToEdge={fly=>{flyToEdge=fly;}}
     onDeleteNode={editable&&host.deleteOccurrence?id=>apply(()=>host.deleteOccurrence!(canvas.sceneId!,occurrence(id))):undefined}
     onUpdateNoteContent={editable?(id,content)=>act({type:'card-content',id:occurrence(id),content},false):undefined}
-    onConnectNodes={editable&&host.connect?input=>apply(()=>host.connect!(canvas.sceneId!,{sourceEntityRef:input.sourceNodeId,targetEntityRef:input.targetNodeId,relationKind:input.relationKind,directionality:input.directionality})):undefined}
-    onReconnectEdge={editable&&host.reconnect?(id,input)=>apply(()=>host.reconnect!(canvas.sceneId!,ownConnection(id),{sourceEntityRef:input.sourceNodeId,targetEntityRef:input.targetNodeId})):undefined}
+    onConnectNodes={editable&&host.connect?input=>{
+     // A4 — the side a drag ended on is recorded for the connection the owner
+     // just created. The native owner mints its binding ref, so the new edge is
+     // the one binding that was absent before the write.
+     const sceneId=canvas.sceneId!;
+     const sides={fromSide:sideFromHandleId(input.sourceHandleId,'source'),toSide:sideFromHandleId(input.targetHandleId,'target')};
+     const bound=(): Set<string> => new Set((host.nativeView()?.bindings[sceneId]?.relations??[]).map(relation=>relation.binding_ref));
+     apply(async()=>{
+      const known=bound();
+      await host.connect!(sceneId,{sourceEntityRef:input.sourceNodeId,targetEntityRef:input.targetNodeId,relationKind:input.relationKind,directionality:input.directionality});
+      const created=(host.nativeView()?.bindings[sceneId]?.relations??[]).find(relation=>!known.has(relation.binding_ref));
+      if(created&&host.connector&&(sides.fromSide||sides.toSide))await host.connector(sceneId,created.binding_ref,connectorRecord({kind:'curved',...sides}));
+     });
+    }:undefined}
+    onReconnectEdge={editable&&host.reconnect?(id,input)=>apply(async()=>{await host.reconnect!(canvas.sceneId!,ownConnection(id),{sourceEntityRef:input.sourceNodeId,targetEntityRef:input.targetNodeId});await bindReconnectSides(id,input);}):undefined}
     onDeleteEdge={editable&&host.deleteConnection?id=>apply(()=>host.deleteConnection!(canvas.sceneId!,ownConnection(id))):undefined}
     onUpdateEdgeRelationKind={editable&&host.updateConnectionKind?(id,kind)=>apply(()=>host.updateConnectionKind!(canvas.sceneId!,ownConnection(id),kind)):undefined}
     onCycleEdgeDirectionality={editable&&host.updateConnectionDirectionality?id=>{

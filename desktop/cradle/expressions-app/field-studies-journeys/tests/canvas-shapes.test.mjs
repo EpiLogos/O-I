@@ -155,3 +155,16 @@ test('an unlabelled object shows no text on the stage; a labelled one shows its 
  // the mapper never mutates the rendered input
  assert.equal(nodes[0].type,'note');
 });
+
+// Review-3 fix (A2b): a canvas object never renders its tool name as a stage text formation.
+test('stickies, shapes and text objects are a quiet disc on the stage, like notes', async()=>{
+ const {applyResearchMaterial}=await import('../build/researchMaterial.js');
+ const {fieldStudies,clone}=await import('../build/model.js');
+ for(const [kind,geometry] of [['sticky'],['shape','ellipse'],['text']]){
+  const scene=clone(fieldStudies().scenes[0]);
+  applyResearchMaterial(scene,{type:'create-card',kind,...(geometry?{geometry}:{}),position:{x:0,y:0}});
+  const e=scene.entities.at(-1);
+  assert.equal(e.shape,'disc',kind);assert.equal(e.text,'',kind);
+  assert.ok(e.sequence.steps.every(step=>step.shape==='disc'&&step.text===''),kind);
+ }
+});

@@ -83,7 +83,7 @@ import {naraFormGeometry} from './naraFormField.js';
 import type {NativeM3Reading} from '../../../src/nara/nativeM3';
 import {createEvidenceField,type PrivateEvidenceField} from './naraEvidenceField.js';
 import type {PalaceDocumentSnapshot} from '../../../src/techne/m0m5/palace/composition';
-import {applyResearchMaterial,pruneResearchOccurrence,type ResearchMaterialAction} from './researchMaterial.js';
+import {applyResearchMaterial,applyConnectorRecord,pruneResearchOccurrence,type ResearchMaterialAction} from './researchMaterial.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
 import type {KernelConversion,KernelSceneBody} from './kernelDocumentBridge.js';
 import {installSceneBodies} from './sceneBodies.js';
@@ -1865,6 +1865,8 @@ researchInstruments=installResearchInstruments({
  container:researchContainer,tools:researchTools,inspector:researchInspector,placesHome,canvasHome,pageMembers:delta=>nativeWorkspace?nativeWorkspace.page(delta):Promise.resolve(false),read:readTechneReading,
  sceneMaterial:id=>clone(researchScene(id)),
  material:async(id,action:ResearchMaterialAction)=>{const target=researchScene(id);changed(()=>applyResearchMaterial(target,action),true,researchMaterialLabel(action));await commitResearch();},
+ // lane-1 A3/A4: a connection's line kind, label and bound sides — presentation keyed by the native edge id; the relation itself is untouched.
+ connector:async(id,edgeId,value)=>{const target=researchScene(id);changed(()=>applyConnectorRecord(target,edgeId,value),true,'Connection line');await commitResearch();},
  inspectSubject:(ref,context)=>{const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding){toast('Open a native Scene before opening its source.');return;}hostRequest({request:'summon',detail:{kind:'source',ref,context,subject:{ref:view.document.expression_ref,kind:'expression',nativeOwner:'oi',revision:view.document.revision,title:view.document.title,sceneRef:binding.scene_ref,entityRef:null,relationRef:null}}});},nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,
  select:(sceneId,entityId,bindingRef)=>{if(sceneId!==scene().id)return;selected=entityId?[entityId]:[];nativeSelectedRelation=bindingRef??null;void nativeWorkspace?.select(sceneId,entityId,bindingRef);overlayDirty=true;needsFrame=true;if(document.body.classList.contains('research-studio'))renderAll();},
  // A deliberate typed knowledge relationship between the two occurrences'
@@ -1895,7 +1897,9 @@ researchInstruments=installResearchInstruments({
  // Expression connections are directed: reversing swaps the exact endpoints;
  // undirected/bidirectional have no presentation representation and refuse.
  updateConnectionDirectionality:async(sceneId,ref,directionality)=>{researchScene(sceneId);const binding=ownResearchConnection(ref);if(directionality==='forward')return;if(directionality!=='backward')throw new Error('Expression connections are directed. Reverse it, or record an undirected constellation relationship.');assertConnectionMembers(sceneId,binding.to_entity_ref,binding.from_entity_ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,from_entity_ref:binding.to_entity_ref,to_entity_ref:binding.from_entity_ref}}]);},
- deleteConnection:async(sceneId,ref)=>{researchScene(sceneId);ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_remove',binding_ref:ref}]);},
+ deleteConnection:async(sceneId,ref)=>{const target=researchScene(sceneId);ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_remove',binding_ref:ref}]);
+  // the removed relation's line record goes with it (A3/A4), so no orphan presentation outlives its edge
+  if(target.research?.connectors?.[ref]){changed(()=>applyConnectorRecord(target,ref,null),true,'Remove connection line');await commitResearch();}},
  updateConnectionKind:async(sceneId,ref,kind)=>{researchScene(sceneId);const binding=ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,relation:{...binding.relation,ref:`${ref}:${connectionKind(kind)}`,revision:String(Number(binding.relation.revision)+1)}}}]);},
 });
 // M5′ Palace: regions are Scenes of the Palace Expression, each disclosing one
