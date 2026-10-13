@@ -18,7 +18,7 @@
  * installKernelExpressions() is the boot hook (app.ts) — it stands the
  * listener up; it is not part of the consumed API. */
 import {validateJourney} from './model.js';
-import {kernelDocumentToJourney,KernelExpressionDocument,KernelEntity,KernelParameter} from './kernelDocumentBridge.js';
+import {kernelDocumentToJourney,KernelExpressionDocument,KernelEntity,KernelParameter,KernelSubject} from './kernelDocumentBridge.js';
 
 const VERSION=1;
 type Pending={kind:string;resolve:(value:any)=>void;reject:(cause:Error)=>void;timer:number};
@@ -116,14 +116,24 @@ export async function readKernelExpression(ref:string):Promise<unknown>{
  return data.document;
 }
 
-/** The kernel's Change grammar (oi.expression/v1), wire form. */
+/** The kernel's Change grammar (oi.expression/v1), wire form: every kind the
+ * documentToChanges diff below can emit. */
 type KernelChange =
+ |{change:"rename";title:string}
  |{change:"scene_create";scene_ref:string;title:string}
+ |{change:"scene_rename";scene_ref:string;title:string}
+ |{change:"scene_remove";scene_ref:string}
+ |{change:"scene_reorder";scene_refs:string[]}
  |{change:"scene_compose";scene_ref:string;entity_refs:string[]}
+ |{change:"scene_material_set";scene_ref:string;presentation:{schema:'oi.journey-scene/v1';scene:unknown;saved?:unknown}}
+ |{change:"scene_material_clear";scene_ref:string}
  |{change:"entity_add";scene_ref:string;entity_ref:string;title:string}
  |{change:"entity_remove";entity_ref:string}
+ |{change:"subject_bind";entity_ref:string;binding:KernelSubject}
+ |{change:"subject_unbind";entity_ref:string}
  |{change:"parameter_set";entity_ref:string;parameter:string;value:string|number}
- |{change:"scene_material_set";scene_ref:string;presentation:{schema:'oi.journey-scene/v1';scene:unknown;saved?:unknown}}
+ |{change:"parameter_automate";entity_ref:string;parameter:string;automation:NonNullable<KernelParameter['automation']>}
+ |{change:"parameter_manual";entity_ref:string;parameter:string}
  |{change:"composition_set";presentation:unknown}
  |{change:"focus";scene_ref:string;entity_ref:string|null};
 
@@ -144,24 +154,69 @@ const isDocument=(doc:unknown):doc is KernelExpressionDocument=>
 
 const sameJson=(a:unknown,b:unknown)=>JSON.stringify(a)===JSON.stringify(b);
 
+/** The refusals that remain after the E20 diff. Each names a difference the
+ * kernel's own Change grammar cannot express; every other difference the
+ * editor can make is emitted as kernel changes, and none is dropped. */
+export const UNEXPRESSIBLE={
+ parameter_removal:'no kernel change removes a parameter from an entity',
+ parameter_outside_editable:'the parameter is outside the kernel\'s own parameter vocabulary (EDITABLE)',
+ non_finite_number:'a bounded numeric parameter must be a finite number',
+ text_value:'a textual parameter must be text',
+ new_entity_unplaced:'a new entity must be carried by a scene, because entity_add names the scene it joins',
+ undefined_scene_entity:'a scene may carry only entities the document defines',
+ unsupported_scene_material:'Scene material must be oi.journey-scene/v1 with a scene object',
+ unsupported_properties:'the Expression properties must be oi.journey-properties/v1',
+ composition_removal:'no kernel change clears the Expression properties; the kernel can only set them',
+} as const;
+const refuse=(reason:keyof typeof UNEXPRESSIBLE,subject:string):{error:string}=>({error:`${subject} is not expressible as a kernel edit in this cut: ${UNEXPRESSIBLE[reason]}`});
+
+/** One parameter's kernel changes: the value as parameter_set, the automation
+ * as parameter_automate or parameter_manual. The kernel refuses parameter_set
+ * on an automated parameter, so a value change under automation takes manual
+ * control, sets the value, and automates again with the same course. */
+function parameterChanges(ref:string,key:string,was:KernelParameter|undefined,p:KernelParameter):{changes:KernelChange[]}|{error:string}{
+ const wasAutomation=was?.automation??null,nowAutomation=p.automation??null;
+ const valueChanged=!was||!sameJson(was.value,p.value);
+ const automationChanged=!sameJson(wasAutomation,nowAutomation);
+ if(!valueChanged&&!automationChanged)return{changes:[]};
+ if(!EDITABLE.has(key))return refuse('parameter_outside_editable',`entity ${ref} parameter ${key}`);
+ if(valueChanged){
+  if(NUMERIC.has(key)){if(typeof p.value!=='number'||!Number.isFinite(p.value))return refuse('non_finite_number',`entity ${ref} parameter ${key}`);}
+  else if(typeof p.value!=='string')return refuse('text_value',`entity ${ref} parameter ${key}`);
+ }
+ const manual=wasAutomation!==null&&(valueChanged||nowAutomation===null);
+ const changes:KernelChange[]=[];
+ if(manual)changes.push({change:'parameter_manual',entity_ref:ref,parameter:key});
+ if(valueChanged)changes.push({change:'parameter_set',entity_ref:ref,parameter:key,value:p.value});
+ if(nowAutomation!==null&&(automationChanged||manual))changes.push({change:'parameter_automate',entity_ref:ref,parameter:key,automation:nowAutomation});
+ return{changes};
+}
+
 /** Diff the app's edited document against the kernel's current document and
- * express the difference in the kernel's own Change grammar. Differences
- * this cut cannot express (title/scene retitling, scene removal, subject,
- * relation, automation edits) are returned as a named refusal — never
- * force-written, never dropped. */
+ * express the difference in the kernel's own Change grammar, applied in the
+ * order emitted within one atomic edit. Differences this cut cannot express
+ * are returned as a named refusal (see UNEXPRESSIBLE) — never force-written,
+ * never dropped. */
 export function documentToChanges(current:unknown,edited:unknown):{changes:KernelChange[]}|{error:string}{
  if(!isDocument(edited))return{error:'the document is not an oi.expression/v1 expression'};
  if(!isDocument(current))return{error:'the kernel holds no readable document to diff against'};
  const changes:KernelChange[]=[];
- if(edited.title!==current.title)return{error:'expression retitling is not expressible as a kernel edit in this cut (the kernel has no title change)'};
+ if(edited.title!==current.title)changes.push({change:'rename',title:edited.title});
  const currentScenes=new Map((current.scenes as any[]).map(s=>[s.scene_ref,s]));
  const editedScenes=new Map((edited.scenes as any[]).map(s=>[s.scene_ref,s]));
- for(const ref of currentScenes.keys())if(!editedScenes.has(ref))return{error:`scene ${ref} was removed, and scene removal is not expressible as a kernel edit in this cut`};
+ // create before remove: the kernel keeps at least one Scene (expression.rs "An Expression retains at least one Scene"),
+ // so replacing the only Scene must create first (as kernelComposition.ts does).
  for(const [ref,scene] of editedScenes)if(!currentScenes.has(ref))changes.push({change:'scene_create',scene_ref:ref,title:String(scene.title||ref)});
+ for(const ref of currentScenes.keys())if(!editedScenes.has(ref))changes.push({change:'scene_remove',scene_ref:ref});
  for(const [ref,scene] of editedScenes){
   const before=currentScenes.get(ref);
-  if(before&&before.title!==scene.title)return{error:`scene ${ref} retitling is not expressible as a kernel edit in this cut`};
+  if(before&&before.title!==scene.title)changes.push({change:'scene_rename',scene_ref:ref,title:String(scene.title??'')});
  }
+ // The kernel appends created scenes, so after the removals and creations it
+ // holds the surviving refs in their current order, then the created refs.
+ const afterCreate=[...current.scenes.map(s=>s.scene_ref).filter(ref=>editedScenes.has(ref)),...[...editedScenes.keys()].filter(ref=>!currentScenes.has(ref))];
+ const editedOrder=[...editedScenes.keys()];
+ if(!sameJson(afterCreate,editedOrder))changes.push({change:'scene_reorder',scene_refs:editedOrder});
  const currentEntities=new Map(Object.entries(current.entities??{}));
  const editedEntities=new Map(Object.entries(edited.entities??{}));
  const homeOf=new Map<string,string>();
@@ -169,61 +224,57 @@ export function documentToChanges(current:unknown,edited:unknown):{changes:Kerne
  for(const ref of currentEntities.keys())if(!editedEntities.has(ref))changes.push({change:'entity_remove',entity_ref:ref});
  for(const [ref,entity] of editedEntities){
   const before=currentEntities.get(ref) as KernelEntity|undefined;
+  const now=entity as KernelEntity;
   if(!before){
    const sceneRef=homeOf.get(ref);
-   if(!sceneRef)return{error:`entity ${ref} is new but no scene carries it`};
+   if(!sceneRef)return refuse('new_entity_unplaced',`entity ${ref}`);
    // entity_add seeds a bare glyph-"O" formation; every parameter the edited
-   // document carries rides as its own parameter_set immediately after.
-   changes.push({change:'entity_add',scene_ref:sceneRef,entity_ref:ref,title:String((entity as KernelEntity).title||ref)});
-   for(const [key,p] of Object.entries((entity as KernelEntity).parameters??{}) as [string,KernelParameter][]){
-    if(!EDITABLE.has(key))return{error:`entity ${ref} parameter ${key} is not expressible as a kernel edit in this cut`};
-    if(NUMERIC.has(key)){
-     if(typeof p.value!=='number'||!Number.isFinite(p.value))return{error:`entity ${ref} parameter ${key} must be a finite number`};
-    }else if(typeof p.value!=='string')return{error:`entity ${ref} parameter ${key} must be text`};
-    changes.push({change:'parameter_set',entity_ref:ref,parameter:key,value:p.value});
+   // document carries rides as its own change immediately after.
+   changes.push({change:'entity_add',scene_ref:sceneRef,entity_ref:ref,title:String(now.title||ref)});
+   for(const [key,p] of Object.entries(now.parameters??{}) as [string,KernelParameter][]){
+    const part=parameterChanges(ref,key,undefined,p);
+    if('error' in part)return part;
+    changes.push(...part.changes);
    }
-   continue;
-  }
-  const parameters=(entity as KernelEntity).parameters??{};
-  const beforeParameters=before.parameters??{};
-  for(const [key,p] of Object.entries(parameters) as [string,KernelParameter][]){
-   if(!EDITABLE.has(key))return{error:`entity ${ref} parameter ${key} is not expressible as a kernel edit in this cut`};
-   const was=beforeParameters[key];
-   if(was?.automation)return{error:`entity ${ref} parameter ${key} is automated in the kernel; automation edits are not expressible in this cut`};
-   if(!was||!sameJson(was.value,p.value)){
-    if(NUMERIC.has(key)){
-     if(typeof p.value!=='number'||!Number.isFinite(p.value))return{error:`entity ${ref} parameter ${key} must be a finite number`};
-     changes.push({change:'parameter_set',entity_ref:ref,parameter:key,value:p.value});
-    }else{
-     if(typeof p.value!=='string')return{error:`entity ${ref} parameter ${key} must be text`};
-     changes.push({change:'parameter_set',entity_ref:ref,parameter:key,value:p.value});
-    }
+  }else{
+   const parameters=now.parameters??{};
+   const beforeParameters=before.parameters??{};
+   for(const [key,p] of Object.entries(parameters) as [string,KernelParameter][]){
+    const part=parameterChanges(ref,key,beforeParameters[key],p);
+    if('error' in part)return part;
+    changes.push(...part.changes);
    }
+   for(const key of Object.keys(beforeParameters))if(!(key in parameters))return refuse('parameter_removal',`entity ${ref} parameter ${key}`);
   }
-  for(const key of Object.keys(beforeParameters))if(!(key in parameters))return{error:`entity ${ref} parameter ${key} was removed, and parameter removal is not expressible as a kernel edit in this cut`};
-  if(!sameJson(before.subject??null,(entity as KernelEntity).subject??null))return{error:`entity ${ref} subject edits are not expressible as a kernel edit in this cut`};
+  // Subject: bind the edited binding, or unbind when it was cleared.
+  const beforeSubject=before?.subject??null,nowSubject=now.subject??null;
+  if(!sameJson(beforeSubject,nowSubject))changes.push(nowSubject===null?{change:'subject_unbind',entity_ref:ref}:{change:'subject_bind',entity_ref:ref,binding:nowSubject});
  }
  for(const [sceneRef,scene] of editedScenes){
   const before=currentScenes.get(sceneRef);
   const refs=[...((scene as any).entity_refs??[])];
-  for(const entityRef of refs)if(!editedEntities.has(entityRef))return{error:`scene ${sceneRef} carries entity ${entityRef}, which the edited document does not define`};
+  for(const entityRef of refs)if(!editedEntities.has(entityRef))return refuse('undefined_scene_entity',`scene ${sceneRef} carries entity ${entityRef}`);
   if(!before||!sameJson((before as any).entity_refs??[],refs))changes.push({change:'scene_compose',scene_ref:sceneRef,entity_refs:refs});
  }
  // Rich Scene material: a changed presentation returns whole through the
- // native composition path, after membership so its occurrences resolve.
+ // native composition path, after membership so its occurrences resolve; a
+ // removed presentation is the kernel's scene_material_clear.
  for(const [sceneRef,scene] of editedScenes){
   const presentation=(scene as any).presentation;
   const before=currentScenes.get(sceneRef);
   if(presentation===undefined||presentation===null){
-   if(before&&before.presentation)return{error:`scene ${sceneRef} material removal is not expressible as a kernel edit; keep the Scene material or remove the Scene`};
+   if(before&&before.presentation)changes.push({change:'scene_material_clear',scene_ref:sceneRef});
    continue;
   }
-  if(presentation.schema!=='oi.journey-scene/v1'||!presentation.scene||typeof presentation.scene!=='object')return{error:`scene ${sceneRef} carries unsupported Scene material`};
+  if(presentation.schema!=='oi.journey-scene/v1'||!presentation.scene||typeof presentation.scene!=='object')return refuse('unsupported_scene_material',`scene ${sceneRef}`);
   if(!before||!sameJson(before.presentation??null,presentation))changes.push({change:'scene_material_set',scene_ref:sceneRef,presentation:{schema:'oi.journey-scene/v1',scene:presentation.scene,saved:presentation.saved??null}});
  }
  const properties=(edited as any).presentation;
- if(properties!==undefined&&properties!==null&&!sameJson((current as any).presentation??null,properties)){
-  if(properties.schema!=='oi.journey-properties/v1')return{error:'the Expression properties are not oi.journey-properties/v1'};
+ const currentProperties=(current as any).presentation??null;
+ if(properties===undefined||properties===null){
+  if(currentProperties!==null)return refuse('composition_removal','the Expression properties');
+ }else if(!sameJson(currentProperties,properties)){
+  if(properties.schema!=='oi.journey-properties/v1')return refuse('unsupported_properties','the Expression properties');
   changes.push({change:'composition_set',presentation:properties});
  }
  const selection=(edited as any).selection;
