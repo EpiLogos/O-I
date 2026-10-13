@@ -64,6 +64,11 @@ export function readHostedState(raw: unknown): HostedAppState | null {
     if (typeof raw[key] !== 'string' || String(raw[key]).length > 4096) return null;
     state[key] = String(raw[key]);
   }
+  // The lens the frame stands in: one of the six holders. Absent is valid (a frame that has not reported one); any other value refuses the reading like every field here.
+  if (raw.lens !== undefined) {
+    if (!isDeepInstrument(raw.lens)) return null;
+    state.lens = raw.lens;
+  }
   for (const key of ['playing', 'journeyPlaying', 'fieldPaused', 'libraryOpen', 'recording', 'presenting', 'automationLoop', 'propertyRecording', 'propertyPreview'] as const) {
     if (raw[key] === undefined) continue;
     if (typeof raw[key] !== 'boolean') return null;

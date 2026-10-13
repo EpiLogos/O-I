@@ -20,15 +20,25 @@
  *   projection's presentations, paired as TechneLensBar pairs them —
  *   `arrangement` is the Timeline lens (techne:m2), `session` is the Journey
  *   lens (techne:m3). See ModeDetail.tsx LENSES.
- * - world.expressions → techne:m1 (Canvas; the Expressions pane).
+ * - world.expressions → the instrument of the hosted Expressions lens the
+ *   frame stands in (HOSTED_INSTRUMENT: project→m0, canvas→m1, timeline→m2,
+ *   journey→m3, place→m4, palace→m5). Until the frame reports a lens, the
+ *   pane holds none (null).
  * - native.workbench, native.agent, world.settings, documents and any other
  *   pane hold no instrument → null.
  *
+ * Lens bar (owner ruling, lock §0.1: the Device side and the lens follow the
+ * focused pane): when the hosted Expressions pane stands focused, the bar
+ * reads and drives the hosted lens. The two vocabularies differ in two ids,
+ * mapped in one table here (BAR_LENS_OF_HOSTED); the rest are identical.
+ *
  * Frame gates (deviceInstrumentFor): Live's centre is the audio cut, which
  * hides every centre pane but world.knowledge, so Live presents no
- * instrument and keeps its audio device chain. The Expressions native
+ * instrument and keeps its audio device chain. In Expressions, the native
  * panes keep their native device rack (NativeWorldDetail), the pane's own
- * controls, rather than being replaced by a held-face rack.
+ * controls, rather than being replaced by a held-face rack; the hosted pane
+ * keeps it too while the hosted lens is canvas (m1), whose native rack is the
+ * Expressions Canvas's own.
  *
  * Pure data: no React, no store, no I/O.
  */
@@ -46,14 +56,51 @@ export type PaneInstrumentId = TechneInstrumentId | 'knowledge-graph'
 /** The frame's mode reading (App.tsx `frameMode`). */
 export type FrameModeName = 'live' | 'base' | 'factory' | 'expressions' | 'techne'
 
+/** The hosted Expressions lens ids (protocol HostedTechneLens; the frame's own vocabulary). */
+export type HostedLens = 'project' | 'canvas' | 'timeline' | 'journey' | 'place' | 'palace'
+
+/** The hosted lens → the Technē holder it stands on. */
+export const HOSTED_INSTRUMENT: Readonly<Record<HostedLens, TechneInstrumentId>> = {
+  project: 'techne:m0',
+  canvas: 'techne:m1',
+  timeline: 'techne:m2',
+  journey: 'techne:m3',
+  place: 'techne:m4',
+  palace: 'techne:m5',
+}
+
+/** The Technē lens bar's id → the hosted lens id, where the two vocabularies differ. Every other bar id is the hosted id. */
+export const HOSTED_LENS_OF_BAR_ID: Readonly<Record<string, HostedLens>> = {
+  'project-graph': 'project',
+  places: 'place',
+}
+
+/** The hosted lens → the Technē lens bar's id: the one table both directions read. */
+export const BAR_LENS_OF_HOSTED: Readonly<Record<HostedLens, string>> = {
+  project: 'project-graph',
+  canvas: 'canvas',
+  timeline: 'timeline',
+  journey: 'journey',
+  place: 'places',
+  palace: 'palace',
+}
+
+/** The hosted lens a lens bar entry drives, or null when the entry names no hosted lens. */
+export function hostedLensOfBarId(barId: string): HostedLens | null {
+  if (barId in HOSTED_LENS_OF_BAR_ID) return HOSTED_LENS_OF_BAR_ID[barId]
+  return (Object.keys(BAR_LENS_OF_HOSTED) as HostedLens[]).find(lens => BAR_LENS_OF_HOSTED[lens] === barId) ?? null
+}
+
 /** The centre panels whose device side is their own native rack in Expressions. */
 const EXPRESSIONS_OWN_DEVICES: ReadonlySet<string> = new Set(['world.expressions', 'native.session', 'native.arrangement'])
 
-/** The instrument the focused centre pane holds, or null when it holds none. */
+/** The instrument the focused centre pane holds, or null when it holds none.
+ * `hostedLens` is the hosted Expressions lens the frame reports (null until it does). */
 export function instrumentOfPane(
   centerPanel: string,
   presentation: TimelinePresentation | null,
   _atlasView: AtlasView,
+  hostedLens: HostedLens | null = null,
 ): PaneInstrumentId | null {
   switch (centerPanel) {
     case 'projection.earth':
@@ -63,7 +110,7 @@ export function instrumentOfPane(
       // The knowledge graph: its own standalone instrument.
       return 'knowledge-graph'
     case 'world.expressions':
-      return 'techne:m1'
+      return hostedLens ? HOSTED_INSTRUMENT[hostedLens] : null
     case 'world.ground':
     case 'native.session':
     case 'native.arrangement':
@@ -82,14 +129,21 @@ export function deviceInstrumentFor(
   centerPanel: string,
   presentation: TimelinePresentation | null,
   atlasView: AtlasView,
+  hostedLens: HostedLens | null = null,
 ): PaneInstrumentId | null {
   if (frameMode === 'live') return null
+  // In Expressions mode the hosted pane is the mode's own instrument: its own studio and native rack stand, whatever lens the
+  // frame reports (it reports `project` by default) — never removed by the ruling. Elsewhere the hosted lens governs.
   if (frameMode === 'expressions' && EXPRESSIONS_OWN_DEVICES.has(centerPanel)) return null
-  return instrumentOfPane(centerPanel, presentation, atlasView)
+  return instrumentOfPane(centerPanel, presentation, atlasView, hostedLens)
 }
 
 /** Whether the Technē lens bar stands above the centre: the centre holds an
- * instrument pane (the World cut or the Earth atlas), in any mode but Live. */
+ * instrument pane (the World cut, the Earth atlas or the hosted Expressions
+ * pane), in any mode but Live. */
 export function showsLensBar(frameMode: FrameModeName, centerPanel: string): boolean {
-  return frameMode !== 'live' && (centerPanel === 'world.ground' || centerPanel === 'projection.earth')
+  if (frameMode === 'live') return false
+  // The hosted Expressions pane carries the lens bar outside Expressions mode; in it, the pane's own studio is its chrome.
+  if (centerPanel === 'world.expressions') return frameMode !== 'expressions'
+  return centerPanel === 'world.ground' || centerPanel === 'projection.earth'
 }

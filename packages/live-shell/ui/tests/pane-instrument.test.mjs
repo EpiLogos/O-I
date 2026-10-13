@@ -32,9 +32,9 @@ export async function load(u, c, n) {
     compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX}}).outputText};
 }`)}`, import.meta.url)
 
-const {instrumentOfPane, deviceInstrumentFor, showsLensBar} = await import('../src/shell/paneInstrument.ts')
+const {instrumentOfPane, deviceInstrumentFor, showsLensBar, HOSTED_INSTRUMENT, BAR_LENS_OF_HOSTED, hostedLensOfBarId} = await import('../src/shell/paneInstrument.ts')
 const {TECHNE_INSTRUMENTS} = await import('../src/inhabitants/sdk/semantics.ts')
-const {TechneInstrumentsDetail, InstrumentDeviceDetail, BaseDevicesDetail} = await import('../src/shell/ModeDetail.tsx')
+const {TechneInstrumentsDetail, InstrumentDeviceDetail, BaseDevicesDetail, TechneLensBar} = await import('../src/shell/ModeDetail.tsx')
 
 const html = element => renderToStaticMarkup(element)
 const transport = {kind: 'unavailable', reason: 'the test carrier is down'}
@@ -44,7 +44,7 @@ test('the pane → instrument table: every centre panel the shell uses maps as d
     ['projection.earth', null, 'graph', 'techne:m0'],
     ['projection.earth', null, 'earth', 'techne:m0'],
     ['world.knowledge', null, 'graph', 'knowledge-graph'],
-    ['world.expressions', null, 'graph', 'techne:m1'],
+    ['world.expressions', null, 'graph', null], // no hosted lens reported yet: the pane holds none until it does
     ['world.ground', 'arrangement', 'graph', 'techne:m2'],
     ['world.ground', 'session', 'graph', 'techne:m3'],
     ['world.ground', null, 'graph', null],
@@ -174,4 +174,86 @@ test('focused, the knowledge graph opens its own faces on the rack, named as the
   for (const face of ['knowledge-scope', 'knowledge-filters', 'knowledge-display']) assert.equal(expandedOf(out, face), 'true', `${face} docks expanded`)
   for (const title of ['Scope', 'Filters', 'Display']) assert.match(out, new RegExp(`>${title}<`))
   assert.doesNotMatch(out, />knowledge-scope</, 'no raw face id stands as a title')
+})
+
+const HOSTED = ['project', 'canvas', 'timeline', 'journey', 'place', 'palace']
+const HOLDERS = ['techne:m0', 'techne:m1', 'techne:m2', 'techne:m3', 'techne:m4', 'techne:m5']
+
+test('the hosted lens → holder table: each of the six hosted lenses stands on its own Technē holder', () => {
+  assert.deepEqual(Object.keys(HOSTED_INSTRUMENT).sort(), [...HOSTED].sort())
+  assert.deepEqual(HOSTED.map(lens => HOSTED_INSTRUMENT[lens]), HOLDERS)
+})
+
+test('the Expressions pane holds the instrument of the hosted lens the frame reports', () => {
+  HOSTED.forEach((lens, i) => {
+    assert.equal(instrumentOfPane('world.expressions', null, 'graph', lens), HOLDERS[i], `hosted ${lens}`)
+  })
+  assert.equal(instrumentOfPane('world.expressions', 'session', 'graph', 'timeline'), 'techne:m2', 'the hosted lens wins over the World presentation')
+})
+
+test('the lens bar and the hosted frame speak one table: project-graph↔project and places↔place, the rest identical', () => {
+  assert.equal(BAR_LENS_OF_HOSTED.project, 'project-graph')
+  assert.equal(BAR_LENS_OF_HOSTED.place, 'places')
+  for (const lens of ['canvas', 'timeline', 'journey', 'palace']) assert.equal(BAR_LENS_OF_HOSTED[lens], lens)
+  for (const lens of HOSTED) assert.equal(hostedLensOfBarId(BAR_LENS_OF_HOSTED[lens]), lens, `round trip ${lens}`)
+  assert.equal(hostedLensOfBarId('project-graph'), 'project')
+  assert.equal(hostedLensOfBarId('places'), 'place')
+  assert.equal(hostedLensOfBarId('graph'), null, 'the Earth atlas graph view names no hosted lens')
+  assert.equal(hostedLensOfBarId('no.such.lens'), null)
+})
+
+test('the lens bar stands over the hosted Expressions pane in every mode but its own, as over the other instrument panes', () => {
+  for (const mode of ['base', 'techne', 'factory']) assert.equal(showsLensBar(mode, 'world.expressions'), true, mode)
+  assert.equal(showsLensBar('expressions', 'world.expressions'), false, 'in Expressions mode the pane’s own studio is its chrome')
+  assert.equal(showsLensBar('live', 'world.expressions'), false, 'Live shows the audio cut')
+})
+
+test('the hosted Expressions pane follows the hosted lens in every mode the ruling covers (not Live)', () => {
+  for (const mode of ['base', 'techne', 'factory']) {
+    assert.equal(deviceInstrumentFor(mode, 'world.expressions', null, 'graph', 'timeline'), 'techne:m2', `${mode} · hosted timeline`)
+  }
+  assert.equal(deviceInstrumentFor('techne', 'world.expressions', null, 'graph', 'palace'), 'techne:m5', 'Technē · hosted palace')
+  assert.equal(deviceInstrumentFor('live', 'world.expressions', null, 'graph', 'timeline'), null, 'Live keeps the audio chain')
+  assert.equal(deviceInstrumentFor('base', 'world.expressions', null, 'graph', null), null, 'no hosted lens reported: the mode keeps its own Device side')
+})
+
+test('Expressions mode keeps its own native rack on its own panes, whatever lens the frame reports', () => {
+  assert.equal(deviceInstrumentFor('expressions', 'world.expressions', null, 'graph', 'canvas'), null, 'the hosted Canvas keeps its native rack')
+  assert.equal(deviceInstrumentFor('expressions', 'world.expressions', null, 'graph', null), null)
+  assert.equal(deviceInstrumentFor('expressions', 'world.expressions', null, 'graph', 'project'), null, 'the frame’s default lens never displaces Expressions’ own rack')
+  assert.equal(deviceInstrumentFor('expressions', 'world.expressions', null, 'graph', 'timeline'), null, 'Expressions mode is the pane’s own instrument')
+  assert.equal(deviceInstrumentFor('expressions', 'native.session', 'session', 'graph', 'timeline'), null, 'the native session pane keeps its own rack')
+  assert.equal(deviceInstrumentFor('expressions', 'native.arrangement', 'arrangement', 'graph', 'timeline'), null)
+})
+
+const pressedBars = out => [...out.matchAll(/aria-pressed="true"/g)].length
+const barOf = out => (out.match(/data-lens="([^"]+)"/) ?? [])[1] ?? null
+const disabledCount = out => [...out.matchAll(/ disabled=""/g)].length
+
+test('the lens bar over the hosted pane presses the hosted lens and nothing else', () => {
+  for (const [lens, barId] of [['project', 'project-graph'], ['canvas', 'canvas'], ['timeline', 'timeline'], ['journey', 'journey'], ['place', 'places'], ['palace', 'palace']]) {
+    const out = html(createElement(TechneLensBar, {presentation: 'arrangement', atlasOpen: false, onLens() {}, hosted: {lens}}))
+    assert.equal(barOf(out), barId, `hosted ${lens} presses ${barId}`)
+    assert.equal(pressedBars(out), 1, `one press for hosted ${lens}`)
+    assert.match(out, /data-hosted="true"/)
+  }
+})
+
+test('over the hosted pane every lens entry is reachable (each names a hosted lens), so none is disabled', () => {
+  const out = html(createElement(TechneLensBar, {presentation: 'session', atlasOpen: false, onLens() {}, hosted: {lens: 'canvas'}}))
+  assert.equal(disabledCount(out), 0, 'the hosted lenses all stand on this bar')
+})
+
+test('the hosted pane with no lens reported presses nothing', () => {
+  const out = html(createElement(TechneLensBar, {presentation: 'session', atlasOpen: false, onLens() {}, hosted: {lens: null}}))
+  assert.equal(pressedBars(out), 0)
+  assert.equal(barOf(out), null)
+})
+
+test('the World cut and Earth bar is unchanged when no hosted pane is focused', () => {
+  const world = html(createElement(TechneLensBar, {presentation: 'arrangement', atlasOpen: false, onLens() {}}))
+  assert.equal(barOf(world), 'timeline', 'the World arrangement presses Timeline, as before')
+  assert.doesNotMatch(world, /data-hosted=/)
+  assert.equal(disabledCount(world), 2, 'Canvas and Palace still hold their places, waiting')
+  // The atlas press (Project / graph or Places) is pinned by atlas-host.test.mjs, which sets the atlas view.
 })

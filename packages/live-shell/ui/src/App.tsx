@@ -44,7 +44,8 @@ import {sameEditorBasis,type NativeEditorBasis,type NativeEditorController} from
 import './NativeCompositionResidence.css'
 import {registerAtlasHost} from './projections/atlas/registerAtlasHost'
 import {presentAtlasView, useAtlasView} from './projections/atlas/AtlasProjectionPanel'
-import {deviceInstrumentFor, showsLensBar} from './shell/paneInstrument'
+import {deviceInstrumentFor, hostedLensOfBarId, showsLensBar, type HostedLens} from './shell/paneInstrument'
+import {captureTechneInstrumentOpen, TECHNE_INSTRUMENT_OPEN, type TechneInstrumentEvent} from './native/techneInstrumentOpen'
 registerAtlasHost()
 const PALETTE =['#79b6ce', '#779dcc', '#9885bc', '#8baf9c', '#b096b2', '#6caaa9']
 export function App() {
@@ -86,6 +87,8 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const [viewport, setViewport] = useState([window.innerWidth, window.innerHeight])
   useEffect(() => { const read = () => setViewport([window.innerWidth, window.innerHeight]); window.addEventListener('resize', read); return () => window.removeEventListener('resize', read) }, [])
   const [tab, setTab] = useState(restored?.tab ?? 'session')
+  // A refusal of the hosted lens press, named in one status sentence under the lens bar (the hosted pane only).
+  const [lensFault, setLensFault] = useState<string | null>(null)
   const [centerPanel, setCenterPanel] = useState((restored?.centerPanel === 'world.knowledge' ? 'native.workbench' : restored?.centerPanel) ?? 'world.expressions')
   const [knowledgeIntent, setKnowledgeIntent] = useState<{workspaceId: string; bindingId: string} | null>(null)
   useEffect(() => {
@@ -358,8 +361,21 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   // the centre whenever it holds an instrument pane (paneInstrument.ts).
   const atlasView = useAtlasView()
   const focusedPane = settingsPresented ? 'world.settings' : centerPanel
-  const focusedInstrument = deviceInstrumentFor(frameMode, focusedPane, presented, atlasView)
+  // The hosted Expressions lens the frame reports (publishReading, via the panel's onState). Null until it reports one.
+  const hostedLens = workspace.reading?.lens ?? null
+  const focusedInstrument = deviceInstrumentFor(frameMode, focusedPane, presented, atlasView, hostedLens)
   const instrumentLensBar = showsLensBar(frameMode, focusedPane)
+  // The hosted pane's lens press: the retained-instrument event the Technē browser already sends. The expressions panel's receiver
+  // validates it against the current native Scene and calls the hosted host's selectInstrument; nothing here holds the host.
+  const driveHostedLens = (lens: HostedLens) => {
+    setLensFault(null);
+    try {
+      const detail: TechneInstrumentEvent = {...captureTechneInstrumentOpen({workspaceId: workspace.workspaceId, accessEpoch: workspace.accessEpoch, accessReady: workspace.accessReady, nativeAccessCurrent: workspace.nativeAccessCurrent, mode: workspace.mode, editorReading: workspace.editorReading}, lens),
+        complete: result => {if (result.state === 'refused') setLensFault(result.reason)}};
+      window.dispatchEvent(new CustomEvent(TECHNE_INSTRUMENT_OPEN, {detail}));
+      if (!detail.handled) setLensFault('The Expressions application is not mounted in this shell.');
+    } catch (cause) {setLensFault(cause instanceof Error ? cause.message : String(cause));}
+  };
   // The centre's designed frame stands while the World cut's civil reading
   // is absent or in flight (the empty-state law: a designed surface inside
   // the frame, never a bare sentence in a void). The L4 presentations stay
@@ -403,12 +419,15 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
         instrument pane, in every mode but Live (owner ruling, 13 Oct 2026).
         A World cut lens reached from a mode without the cut enters Technē's
         ground, as the mode transport does. */}
-      {instrumentLensBar && <TechneLensBar presentation={presented ?? 'session'} atlasOpen={centerPanel === 'projection.earth'} onLens={lens => {
+      {instrumentLensBar && <TechneLensBar presentation={presented ?? 'session'} atlasOpen={centerPanel === 'projection.earth'} hosted={focusedPane === 'world.expressions' ? {lens: hostedLens} : null} onLens={lens => {
+        // The hosted pane's lens: a press drives the hosted application's lens through its retained-instrument receiver.
+        if (focusedPane === 'world.expressions') {const hosted = hostedLensOfBarId(lens.id); if (hosted) driveHostedLens(hosted); return}
         if (lens.state !== 'cut') return
         presentSettings(false)
         if (lens.atlas) { presentAtlasView(lens.atlas); setCenterPanel('projection.earth'); return }
         if (lens.presentation) { if (frameMode !== 'base' && frameMode !== 'techne') chooseMode('techne'); setTab(lens.presentation); setCenterPanel('world.ground') }
       }} />}
+      {instrumentLensBar && focusedPane === 'world.expressions' && lensFault && <p className="techne-lens-fault" role="status">{lensFault}</p>}
       {nativeEditorReturn&&centerPanel==='world.expressions'&&!settingsPresented&&<div className="native-editor-return"><span>{nativeEditorReturn.editor==='source'?'Source':nativeEditorReturn.editor==='layers'?'Layers':'State placement'}</span><button onClick={returnNativeEditor}>Return to {nativeEditorReturn.centerPanel==='native.arrangement'?'Arrangement':nativeEditorReturn.centerPanel==='native.session'?'Session':'Glyph editor'}</button></div>}
       {nativeComposition && !settingsPresented && nativeProjection.error && <div className="native-composition-fault" role="alert">{nativeProjection.error}</div>}
       {/* One Timeline projection over the current work; Session and

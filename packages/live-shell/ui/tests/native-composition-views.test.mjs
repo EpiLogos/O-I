@@ -565,12 +565,12 @@ test('actual mounted hosted freshness key is unique per mount and real host hide
   frame.dataset={};frame.style={};frame.attributes={};frame.setAttribute=(key,value)=>{frame.attributes[key]=value};frame.remove=()=>{frame.removed=true};frame.contentWindow={postMessage:(value,origin)=>{commands.push({value,origin})}};frames.push(frame);return frame;
  }};
  const container={ownerDocument,append:frame=>{frame.attached=true}};
- const invocation=new Function('mountExpressionsApplication','target','config','modeRef','worldLens','initialRef','continued','initial','owners','presented','workspaceRef','bookRef','selectionOwner','refreshEditor','setStatus','setHostFault','workspace','expressionBinding','live',ts.transpileModule(`${freshness}
+ const invocation=new Function('mountExpressionsApplication','target','config','modeRef','worldLens','initialRef','continued','initial','owners','presented','workspaceRef','bookRef','selectionOwner','refreshEditor','setStatus','setHostFault','workspace','expressionBinding','live','disclosureSession',ts.transpileModule(`${freshness}
 return ${call.getText(panel)};`,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText);
  const mounts=[];let visible=true;
  try{
   for(let lease=0;lease<2;lease++){
-   const mounted=invocation(mountExpressionsApplication,container,{expressions_entry:'/__application/expressions/index.html'},{current:'expressions'},{current:'generic'},r.reading.basis.expression_ref,undefined,undefined,{channels:{}},()=>visible,{current:{publishReading:blocked,publishEditorReading:blocked}}, {current:{current:{id:'retained-native-workspace'}}},{current:{workspaceId:'retained-native-workspace',expected:r.reading.basis.expression_ref}},()=>{},()=>{},()=>{},{setMode:blocked},()=>undefined,true);
+   const mounted=invocation(mountExpressionsApplication,container,{expressions_entry:'/__application/expressions/index.html'},{current:'expressions'},{current:'generic'},r.reading.basis.expression_ref,undefined,undefined,{channels:{}},()=>visible,{current:{publishReading:blocked,publishEditorReading:blocked}}, {current:{current:{id:'retained-native-workspace'}}},{current:{workspaceId:'retained-native-workspace',expected:r.reading.basis.expression_ref}},()=>{},()=>{},()=>{},{setMode:blocked},()=>undefined,true,undefined);
    mounts.push(mounted);const url=new URL(mounted.frame.src),original=mounted.frame.src;
    assert.equal(url.searchParams.get('expression'),r.reading.basis.expression_ref);assert.match(url.searchParams.get('host-load'),/^[0-9a-f-]{36}$/);assert.equal(url.searchParams.get('mode'),'expressions');
    visible=false;mounted.host.setPresented();visible=true;mounted.host.setPresented();mounted.host.setMode('techne','generic');mounted.host.setMode('expressions','generic');
