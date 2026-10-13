@@ -170,3 +170,48 @@ test('the native read answers the catalogue once, and names each refusal it is g
   const badDocument = await readQlMusicModes(async () => ({outcome: {result: 'music_modes_reading', document: {schema: 'ql.music-modes/v1'}}}))
   assert.equal(badDocument.state, 'refused', 'a document the shell cannot validate is refused, not shown')
 })
+
+// ── the one mode in force: transport, clip and Jankó surface read the same answer ──
+
+const {setModeInForce} = await import('../src/native/liveModeCatalogue.ts')
+const {JankoDeviceView} = await import('../src/live/janko/JankoDevice.tsx')
+const React = await import('react')
+const {renderToStaticMarkup} = await import('react-dom/server')
+const {pitchMask} = await import('../src/live/modes.ts')
+const {readFileSync} = await import('node:fs')
+const {readJankoWindow} = await import('../src/live/janko/jankoLayout.ts')
+
+test('the set\'s mode in force is one reading of the catalogue and the hold; a held scale off its root is not in force', () => {
+  const {catalogue} = parseQlMusicModes(document())
+  const ready = {state: 'ready', catalogue}
+  const inForce = setModeInForce(ready, {key: aeolian.key, root: 10})
+  assert.equal(inForce.mode.state, 'in-force')
+  assert.equal(inForce.mode.selection.scale.key, aeolian.key)
+  assert.equal(setModeInForce(ready, {key: aeolian.key, root: 3}).mode.state, 'waiting', 'aeolian on L0\' is a tonic instance on A♯ only')
+  const maqamOn = setModeInForce(ready, {key: maqam.key, root: 7})
+  assert.equal(maqamOn.mode.state, 'in-force', 'a maqam is stated from the root, on any root')
+  assert.equal(pitchMask(maqamOn.mode.selection.scale), null, 'and it serves no pitch set: nothing is marked in 12-TET')
+  const waiting = setModeInForce({state: 'refused', reason: 'ql-music.unsupported: old ql'}, {key: null, root: 0})
+  assert.match(waiting.line, /ql-music.unsupported: old ql/)
+})
+
+test('the Jankó surface recolours to the mode in force, and marks nothing without a pitch set', () => {
+  const window = JSON.parse(readFileSync(new URL('./fixtures/janko-window-v1.json', import.meta.url), 'utf8'))
+  const mask = pitchMask(parseQlMusicModes(document()).catalogue.scales.find(s => s.key === aeolian.key))
+  const marked = renderToStaticMarkup(React.createElement(JankoDeviceView, {windowState: readJankoWindow(window), modeMask: mask, modeLine: 'Mode in force — aeolian'}))
+  assert.match(marked, /data-janko-mode="in-force"/)
+  const inMode = (marked.match(/data-janko-in-mode="yes"/g) || []).length, outside = (marked.match(/data-janko-in-mode="no"/g) || []).length
+  assert.equal(inMode + outside, 36, 'every key says whether it is in the mode')
+  assert.equal(inMode, 21, 'seven classes, each on three touch-points of a six-column window')
+  assert.match(marked, /, in the mode"/)
+  const plain = renderToStaticMarkup(React.createElement(JankoDeviceView, {windowState: readJankoWindow(window), modeMask: null}))
+  assert.doesNotMatch(plain, /data-janko-in-mode/)
+  assert.match(plain, /data-janko-mode="none"/)
+})
+
+test('the clip inspector\'s Scale reads the set\'s mode in force, not an empty document value', () => {
+  const panel = readFileSync(new URL('../src/components/DeviceChainPanel.tsx', import.meta.url), 'utf8')
+  assert.match(panel, /<span className="clip-subheading">Scale<\/span><ClipModeValues \/>/)
+  assert.match(panel, /useLiveModeInForce\(\)/)
+  assert.doesNotMatch(panel, /<Value label="Root" \/><Value label="Mode" \/>/)
+})

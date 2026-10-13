@@ -17,3 +17,6 @@
 .janko-hint, .janko-placement { margin: 0; color: var(--text-faint); font-size: 10px; line-height: 1.4; }
 .janko-note { margin: 0; color: var(--text-dim); font-size: 10px; line-height: 1.4; }
 .janko-note.is-fault { color: var(--rec); }
+.janko-key[data-janko-in-mode="yes"] { color: var(--text); border-color: var(--accent-dim); }
+.janko-key[data-janko-in-mode="no"] { color: var(--text-faint); opacity: .55; }
+.janko-key[data-janko-in-mode][aria-pressed="true"] { opacity: 1; border-color: var(--accent); }

@@ -9,6 +9,8 @@ import {
   JANKO_PLACEMENT_NOTE, pianoKeys, useLiveJankoWindow, type JankoKey, type JankoWindowState,
 } from './jankoLayout'
 import {requestLiveJankoWindow} from '../../native/liveJankoWindow'
+import {useLiveModeInForce} from '../../native/liveModeCatalogue'
+import {pitchMask} from '../modes'
 import {COMPUTER_KEY_PITCH, createJankoInput, keyboardGate, type JankoInput, type NoteEvent} from './jankoInput'
 import './janko.css'
 
@@ -25,10 +27,13 @@ export function JankoDevice() {
   const torus = useLiveTorusReading()
   const lens = torus?.ok ? torus.determinants?.lens.lens12 ?? null : null
   useEffect(() => { void requestLiveJankoWindow(lens) }, [lens])
-  return <JankoDeviceView windowState={windowState}/>
+  // The surface recolours to the set's mode in force: the owner's pitch set only. A source scale serves no pitch set, so nothing is marked.
+  const {mode} = useLiveModeInForce()
+  const mask = mode.state === 'in-force' ? pitchMask(mode.selection.scale) : null
+  return <JankoDeviceView windowState={windowState} modeMask={mask} modeLine={mode.state === 'in-force' ? mode.line : null}/>
 }
 
-export function JankoDeviceView({windowState, initialLayout = 'janko'}: {windowState: JankoWindowState | null; initialLayout?: JankoLayout}) {
+export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask = null, modeLine = null}: {windowState: JankoWindowState | null; initialLayout?: JankoLayout; modeMask?: readonly boolean[] | null; modeLine?: string | null}) {
   const [layout, setLayout] = useState<JankoLayout>(initialLayout)
   const [armed, setArmed] = useState(false)
   const [held, setHeld] = useState<readonly number[]>([])
@@ -60,7 +65,8 @@ export function JankoDeviceView({windowState, initialLayout = 'janko'}: {windowS
 
   const keyButton = (pitchClass: number, label: string, detail: string, key?: JankoKey, black = false) => (
     <button key={key ? `${key.row}/${key.column}` : `piano/${pitchClass}`} type="button" className={`janko-key${black ? ' is-black' : ''}`}
-      aria-label={`${label}, ${detail}`} aria-pressed={held.includes(pitchClass)}
+      aria-label={`${label}, ${detail}${modeMask ? (modeMask[pitchClass] ? ', in the mode' : ', outside the mode') : ''}`} aria-pressed={held.includes(pitchClass)}
+      data-janko-in-mode={modeMask ? (modeMask[pitchClass] ? 'yes' : 'no') : undefined}
       data-janko-pitch-class={pitchClass} data-janko-row={key?.row} data-janko-column={key?.column} data-janko-touch-point={key?.touchPoint}
       onPointerDown={event => { press(pitchClass, pointerSource(event), pen(event)) }}
       onPointerUp={event => release(pitchClass, pointerSource(event))}
@@ -88,7 +94,7 @@ export function JankoDeviceView({windowState, initialLayout = 'janko'}: {windowS
           </div>
 
   return (
-    <section className="janko" aria-label="Jankó keyboard" data-janko-layout={layout} data-janko-armed={armed ? 'yes' : 'no'}>
+    <section className="janko" aria-label="Jankó keyboard" data-janko-layout={layout} data-janko-armed={armed ? 'yes' : 'no'} data-janko-mode={modeMask ? 'in-force' : 'none'} title={modeLine ?? undefined}>
       <header className="janko-head">
         <span className="janko-title">Keyboard</span>
         <div className="janko-layouts" role="group" aria-label="Keyboard layout">

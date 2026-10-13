@@ -17,6 +17,9 @@
  * Pure. No React, no store, no I/O.
  */
 
+/** The twelve pitch-class names, for display only (sharps, as the transport writes them). */
+export const PITCH_CLASS_NAMES: readonly string[] = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
+
 /** A closed pitch-class address, 0..=11. */
 export type PitchClass = number
 

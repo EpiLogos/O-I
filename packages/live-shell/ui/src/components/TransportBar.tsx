@@ -6,33 +6,26 @@ import { ModeTransportBar, type ModeTransportReadouts } from '../shell/ModeTrans
 import { ModeModeRail } from '../shell/ModeModeRail'
 import type { PanelRegistration } from '../shell/panels'
 import type { NativeCompositionViewSource } from '../shell/compositionViews'
-import { LIVE_MODE_SEAM, catalogueStatusLine, resolveModeInForce, scalesOnRoot, waitingModeInForce, type ModeInForce } from '../live/modes'
-import { setLiveModeHold, useLiveModeCatalogue, useLiveModeHold } from '../native/liveModeCatalogue'
+import { PITCH_CLASS_NAMES } from '../live/modes'
+import { setLiveModeHold, useLiveModeInForce } from '../native/liveModeCatalogue'
 
-const PITCH_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
 
 /** The Live transport's key / root / scale slots over the owner's ql.music-modes/v1
  * catalogue (T-LIVE-MODE-SCALES leg 2). Key keeps its established control; Root is
  * the tonic; Scale lists the catalogued modes on that tonic, grouped by basis
  * (scalesOnRoot). Its own component so the catalogue read and the held choice are hooks. */
 function LiveModeSlots() {
-  const { reading, refresh } = useLiveModeCatalogue()
-  const hold = useLiveModeHold()
-  const ready = reading.state === 'ready' ? reading.catalogue : null
-  const groups = ready ? scalesOnRoot(ready, hold.root) : []
-  const choice = hold.key && groups.some(group => group.scales.some(scale => scale.key === hold.key)) ? { key: hold.key, root: hold.root } : null
-  const mode: ModeInForce = !ready
-    ? waitingModeInForce(reading.state === 'refused' ? reading.reason : LIVE_MODE_SEAM)
-    : resolveModeInForce(ready.scales, choice)
-  const line = ready ? catalogueStatusLine(ready, mode) : mode.line
+  const { reading, hold, refresh, groups, mode, line } = useLiveModeInForce()
+  const ready = reading.state === 'ready'
+  const choice = mode.state === 'in-force' ? mode.selection : null
   return <>
     <NativeControl label="Scale" slot="key">♯</NativeControl>
     <select aria-label="Root note" data-i={slotDataI(slotMeaning('live', 'root'))} title={`Root — the mode in force's root. ${line}`}
       disabled={!ready} value={ready ? String(hold.root) : ''} onChange={event => setLiveModeHold({ root: Number(event.target.value) })}>
-      {ready ? PITCH_NAMES.map((name, pitch) => <option key={pitch} value={pitch}>{name}</option>) : <option>—</option>}
+      {ready ? PITCH_CLASS_NAMES.map((name, pitch) => <option key={pitch} value={pitch}>{name}</option>) : <option>—</option>}
     </select>
     <select aria-label="Scale mode" data-i={slotDataI(slotMeaning('live', 'scale'))} title={`Scale — the mode in force, one of the kernel's scales. ${line}`}
-      disabled={!ready || groups.length === 0} value={choice?.key ?? ''} onChange={event => setLiveModeHold({ key: event.target.value || null })}>
+      disabled={!ready || groups.length === 0} value={choice?.scale.key ?? ''} onChange={event => setLiveModeHold({ key: event.target.value || null })}>
       <option value="">{!ready ? '—' : groups.length ? 'none chosen' : 'no catalogued mode on this root'}</option>
       {groups.map(group => <optgroup key={group.label} label={group.label}>
         {group.scales.map(scale => <option key={scale.key} value={scale.key}>{scale.label}</option>)}

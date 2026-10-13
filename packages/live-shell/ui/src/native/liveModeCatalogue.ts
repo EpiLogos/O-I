@@ -12,7 +12,7 @@
 import {useEffect, useSyncExternalStore} from 'react'
 import {detectTransport, kernelOp, type KernelOpCall} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelOp} from '../../../../../desktop/cradle/src/kernel/types'
-import {parseQlMusicModes, type QlMusicModes} from '../live/modes'
+import {LIVE_MODE_SEAM, catalogueStatusLine, parseQlMusicModes, resolveModeInForce, scalesOnRoot, waitingModeInForce, type ModeInForce, type QlMusicModes, type ScaleGroup} from '../live/modes'
 
 export type LiveModeCatalogueState =
   | {readonly state: 'loading'}
@@ -99,4 +99,22 @@ export function useLiveModeHold(): LiveModeHold {
     () => hold,
     () => hold,
   )
+}
+
+/** The set's mode in force, from one reading and one hold: what the transport, the clip and the Jankó surface all read. Pure. */
+export function setModeInForce(reading: LiveModeCatalogueState, held: LiveModeHold): {readonly groups: readonly ScaleGroup[]; readonly mode: ModeInForce; readonly line: string} {
+  const ready = reading.state === 'ready' ? reading.catalogue : null
+  const groups = ready ? scalesOnRoot(ready, held.root) : []
+  const choice = held.key && groups.some(group => group.scales.some(scale => scale.key === held.key)) ? {key: held.key, root: held.root} : null
+  const mode: ModeInForce = !ready
+    ? waitingModeInForce(reading.state === 'refused' ? reading.reason : LIVE_MODE_SEAM)
+    : resolveModeInForce(ready.scales, choice)
+  return {groups, mode, line: ready ? catalogueStatusLine(ready, mode) : mode.line}
+}
+
+/** The set's mode in force for any Live surface; reads the catalogue once per session. */
+export function useLiveModeInForce(): ReturnType<typeof setModeInForce> & {readonly reading: LiveModeCatalogueState; readonly hold: LiveModeHold; readonly refresh: () => void} {
+  const {reading, refresh} = useLiveModeCatalogue()
+  const held = useLiveModeHold()
+  return {...setModeInForce(reading, held), reading, hold: held, refresh}
 }
