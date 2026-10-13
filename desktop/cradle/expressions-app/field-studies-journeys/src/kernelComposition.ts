@@ -6,6 +6,7 @@ import {clone, validateJourney, type Journey, type Scene} from './model.js';
 import {kernelDocumentToJourney,nativeSceneMaterial, type KernelConversion, type KernelExpressionDocument} from './kernelDocumentBridge.js';
 import {mapSceneOccurrences, mergeScenePage, validateSceneData, sameSceneData} from './sceneCorrespondence.js';
 import {validateEntitySound} from './native-field/entitySound.js';
+import type {JourneyMarker,LoopRegion} from './journeyMarkers.js';
 
 export type CompositionChange =
   | {change:'rename';title:string}
@@ -21,6 +22,8 @@ export type CompositionChange =
   | {change:'focus';scene_ref:string;entity_ref:string|null};
 export interface CompositionProperties {
   schema:'oi.journey-properties/v1';description:string;loop:boolean;shared?:Journey['shared'];
+  /** E12/E13: present (even empty) whenever the journey carries them, so removals persist. */
+  markers?:JourneyMarker[];loopRegion?:LoopRegion;
 }
 export interface CompositionEdit {
   operation:'edit';expression_ref:string;expected_revision:number;actor:string;
@@ -30,7 +33,9 @@ const same = sameSceneData;
 
 export function compositionProperties(journey:Journey):CompositionProperties {
   return {schema:'oi.journey-properties/v1',description:journey.description,loop:journey.loop,
-    ...(journey.shared ? {shared:clone(journey.shared)} : {})};
+    ...(journey.shared ? {shared:clone(journey.shared)} : {}),
+    ...(journey.markers !== undefined ? {markers:clone(journey.markers)} : {}),
+    ...(journey.loopRegion ? {loopRegion:{from:journey.loopRegion.from,to:journey.loopRegion.to}} : {})};
 }
 
 function localRef(expression:string,kind:'scene'|'entity',id:string):string {

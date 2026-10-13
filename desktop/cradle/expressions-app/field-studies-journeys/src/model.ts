@@ -2,6 +2,7 @@ import {validateResearchMaterial,type ResearchMaterial} from './researchMaterial
 import {validateBlueprint,type SceneBlueprint} from './blueprintGeometry.js';
 import {SharedSettings,globalPath,POINTER_PATHS} from './sharedSettings';
 import {validateAutomationLinks} from './automationLinks';
+import {validateMarkers,validateLoopRegion,type JourneyMarker,type LoopRegion} from './journeyMarkers';
 import {validateTransitionSpec,type TransitionSpec} from './transitions';
 import type {BeltEntry} from './workspacePreferences';
 import {validateWorkspace,validateDeviceWidgets,defaultWorkspace} from './workspacePreferences';
@@ -60,7 +61,9 @@ export interface Scene {research?:ResearchMaterial;pointerScope?:'local'|'global
  morph:{thetaRate:number;phiRate:number;thetaOffset:number;phiOffset:number;law:'theta'|'product'|'sum'|'beat';depth:number;dwell:number};
  automation:AutomationLane[];
 }
-export interface Journey {shared?:SharedSettings;savedScenes?:Record<string,Scene>;schema:'oi.journey';version:1;id:string;name:string;description:string;loop:boolean;scenes:Scene[];updatedAt:string}
+export interface Journey {shared?:SharedSettings;savedScenes?:Record<string,Scene>;schema:'oi.journey';version:1;id:string;name:string;description:string;loop:boolean;scenes:Scene[];updatedAt:string;
+ /** E12 journey markers and E13 loop region: journey-level presentation, persisted with the envelope. */
+ markers?:JourneyMarker[];loopRegion?:LoopRegion}
 /** The scene timing rule, in seconds. validateJourney reads these; the timeline's trim and the scene workflow read them too. */
 export const SCENE_DURATION_MIN=1;
 export const SCENE_DURATION_MAX=3600;
@@ -216,6 +219,9 @@ export function validateJourney(value:unknown):Journey {
   if(saved.length>64||saved.some(([id,s])=>!ids.has(id)||!s||s.id!==id))throw new Error('Saved scene does not match its working scene.');
   if(saved.length){const checked=validateJourney({...j,savedScenes:undefined,scenes:saved.map(([,s])=>s)});j.savedScenes=Object.fromEntries(checked.scenes.map(s=>[s.id,s]));}
  }
+ const duration=j.scenes.reduce((n,s)=>n+s.duration,0);
+ if(j.markers!==undefined)j.markers=validateMarkers(j.markers,duration);
+ if(j.loopRegion!==undefined){const region=validateLoopRegion(j.loopRegion,duration);if(region)j.loopRegion=region;else delete j.loopRegion;}
  return clone(j);
 }
 // --- Collections (the library refit at the Central/ProjectCentral levels) --
