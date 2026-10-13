@@ -122,6 +122,8 @@ export type ResearchMaterialAction =
  | {type:'timeline-view-remove';name:string};
 const color=(value:unknown)=>typeof value==='string'&&/^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(value);
 const finite=(v:unknown,low:number,high:number)=>typeof v==='number'&&Number.isFinite(v)&&v>=low&&v<=high;
+/** A record key that is a real own key: never one of a JavaScript object's own machinery names. */
+const viewNameAllowed=(name:string)=>!['__proto__','constructor','prototype'].includes(name.trim());
 const text=(v:unknown,max=4096)=>typeof v==='string'&&v.length<=max;
 const object=(v:unknown):v is Record<string,any>=>!!v&&typeof v==='object'&&!Array.isArray(v);
 function require(value:unknown,message:string):asserts value {if(!value)throw new Error(message);}
@@ -355,7 +357,7 @@ export function applyResearchMaterial(scene:Scene,action:ResearchMaterialAction)
  // expect it to: which cards were selected, and which frame sits on top —
  // never a second copy of graph material.
  case 'view-save':{
-  require(text(action.name,160)&&!!action.name.trim(),'Invalid view name');
+  require(text(action.name,160)&&!!action.name.trim(),'Invalid view name');require(viewNameAllowed(action.name),'That view name is reserved');
   validateViewport(action.viewport);
   require(Array.isArray(action.selectedRefs)&&action.selectedRefs.length<=64&&action.selectedRefs.every(ref=>typeof ref==='string'),'Invalid view selection');
   require(Array.isArray(action.frameOrder)&&action.frameOrder.length<=64&&action.frameOrder.every(ref=>typeof ref==='string'),'Invalid view frame order');
@@ -365,7 +367,7 @@ export function applyResearchMaterial(scene:Scene,action:ResearchMaterialAction)
  case 'view-remove':delete research.namedViews[action.name];break;
  // lane-4 T20: a Places view is kept beside the canvas views and never among them. Its bounds are checked with the whole material below.
  case 'place-view-save':{
-  require(text(action.name,160)&&!!action.name.trim(),'Invalid view name');
+  require(text(action.name,160)&&!!action.name.trim(),'Invalid view name');require(viewNameAllowed(action.name),'That view name is reserved');
   research.placeViews??={};research.placeViews[action.name]=clone(action.place);
   break;
  }
@@ -375,7 +377,7 @@ export function applyResearchMaterial(scene:Scene,action:ResearchMaterialAction)
  case 'place-layers-set':{validatePlaceLayersRecord(action.value);research.placeLayers=clone(action.value);break;}
  // lane-2 T15: a timeline view is kept beside the other views. Its count bound is checked with the whole material below.
  case 'timeline-view-save':{
-  require(text(action.name,160)&&!!action.name.trim(),'Invalid timeline view name');
+  require(text(action.name,160)&&!!action.name.trim(),'Invalid timeline view name');require(viewNameAllowed(action.name),'That view name is reserved');
   validateTimelineView(action.view);
   research.timelineViews??={};research.timelineViews[action.name]=clone(action.view);
   break;

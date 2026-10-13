@@ -32,11 +32,15 @@ import {PLACE_VIEW_LIMIT, type PlaceBasemapRecord, type PlaceLayersRecord, type 
 const BASEMAP_ROW_IDS: readonly string[] = [OFFLINE_GROUND_ID, ...LIVE_BASEMAP_SOURCES.map(source => source.id)];
 
 /** The reason a view cannot be saved under this name, in the owner's words; null when it can. */
+/** Names that collide with the record's own machinery (a JavaScript object): never a view name. */
+const RESERVED_VIEW_NAMES = new Set(['__proto__', 'constructor', 'prototype']);
+
 export function placeViewNameProblem(name: string, existing: Readonly<Record<string, unknown>>): string | null {
   const trimmed = name.trim();
   if (!trimmed) return 'Name the view first.';
   if (trimmed.length > 160) return 'A view name is at most 160 characters.';
-  if (!(trimmed in existing) && Object.keys(existing).length >= PLACE_VIEW_LIMIT) {
+  if (RESERVED_VIEW_NAMES.has(trimmed)) return 'That name is reserved; choose another.';
+  if (!Object.hasOwn(existing, trimmed) && Object.keys(existing).length >= PLACE_VIEW_LIMIT) {
     return `A Scene keeps at most ${PLACE_VIEW_LIMIT} place views. Remove one before saving another.`;
   }
   return null;

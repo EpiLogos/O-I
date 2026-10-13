@@ -29,12 +29,18 @@ export function qualifiedExpressionOwners(initial: ShellConfig, current: () => W
     })
     return {owners, context: {...context, current: isCurrent}, isCurrent}
   }
+  const presentsBasis=(context:ChannelContext,request:Record<string,unknown>)=>{
+    const scene=(context as {state?:{nativeScene?:NativeTimeWindowBasis}}).state?.nativeScene
+    return !!scene&&scene.expression_ref===request.expression_ref&&scene.revision===request.revision&&scene.scene_ref===request.scene_ref
+  }
   return {
     channels: {...Object.fromEntries(Object.keys(base.channels).map(channel => [channel, async (request: unknown, context: ChannelContext) => {
       const access = await qualify(context)
       const result = await access.owners.channels[channel](request, access.context)
       if (!access.isCurrent()) throw Error('The owner reply belongs to a retired native access; reread this work')
-      if(channel==='techne-reading'&&object(request)&&request.facet===undefined)time.admit(request as unknown as NativeTimeWindowBasis,result as TechneReading,access.context)
+      // The shared-time slot holds the presented Scene's own reading: admit only an unscoped, facet-less read of exactly
+      // that Scene. A Journey's per-card scene reads and its whole-Expression read (scope) are not the presented reading.
+      if(channel==='techne-reading'&&object(request)&&request.facet===undefined&&request.scope===undefined&&presentsBasis(access.context,request))time.admit(request as unknown as NativeTimeWindowBasis,result as TechneReading,access.context)
       return result
     }])), 'techne-time-window':async(request,context)=>{
       const access=await qualify(context)
