@@ -1,13 +1,17 @@
 /** Mature Research Canvas instruments mounted inside the running engine. */
 import React,{Component,useEffect,useRef,useState,type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
-import {clone,type Scene} from './model.js';
-import {type PlaceViewRecord,type ResearchCard,type ResearchMaterialAction,type ResearchStroke,type TimelineViewRecord} from './researchMaterial.js';
+import {clone,uid,type Scene} from './model.js';
+import {notePlainText,type PlaceViewRecord,type ResearchCard,type ResearchMaterialAction,type ResearchStroke,type TimelineViewRecord} from './researchMaterial.js';
+import {exportObsidianCanvas,noteBlocksFromText,parseObsidianCanvas,planObsidianImport,type CanvasExportEdge,type CanvasExportFrame,type CanvasExportNode,type ImportPlan} from './obsidianCanvas.js';
+import {frameBounds,renderFrameStage,type StageEdge} from './frameImage.js';
+import {download} from './capture';
 import {capturePlaceView,layersKey,layersRecordOf,placeViewNameProblem,restoreLayers,restorePlaceView,sameTimeWindow} from './placeViews.js';
 import {openTimelinePresentation,timelineRestoreNote,timelineStyleLoaded,timelineStyleOf,timelineViewNameProblem,timelineViewOf,timelineViewRestorePlan,type TimelinePresentation} from './timelineViews.js';
 import type {TimelinePresentationHandle} from '../../vendor/research-canvas/packages/canvas/src/timeline/TimelineLens';
 import {CONNECTOR_KINDS,connectorPresentation,connectorRecord,connectorWithSides,sideFromHandleId,type ConnectorKind,type ResearchConnector} from './canvasConnectors.js';
 import {frameHeadings,FRAME_TITLE_HIT_HEIGHT,FRAME_TITLE_MAX,type FrameHeading} from './canvasFrames.js';
+import {departedNotice,viewDrift} from './viewDrift.js';
 import {EMBED_CARD_SIZE,EMBED_GLYPH,canvasEmbedNodes,cardOverlayBox,embedCardLabel,embedHost,embedUrlRecord,isEmbedCardType,mediaFileName,mediaSourceUrl,type CentralPathRef} from './canvasEmbeds.js';
 import {createRoot,type Root} from 'react-dom/client';
 import {CanvasView,TimelineSurface,PsychogeographicMap,StreetViewSurface,loadBundledGeographyPack,createLiveServicePolicy,type LiveServicePolicy,type TimelineViewState} from '../../vendor/research-canvas/components';
@@ -20,6 +24,7 @@ import {daylightFromSky,skyRequestEpoch,type DaylightAnswer,type DaylightHost} f
 import type {NaraIdentityResult} from '../../../src/nara/identity/types';
 import type {SkyRequest} from '../../../src/nara/identity/types';
 import {ladderRungSummaries,referenceFrameLadder} from '../../../src/techne/m0m5/place/world';
+import {evidenceAnchorOf} from '../../../src/techne/m0m5/timeline/navigationIdentity';
 import {nativeInstrumentCanvas,nativeInstrumentTitles,nativeInstrumentPreviews,nativeInstrumentNodeTags,nativeInstrumentSourceRelations,readingInstruments,CANVAS_UNITS,assertInstrumentReadingScope,expressionTextFromNote,type InstrumentCanvas,type NativeRelationDirectionReading} from './researchInstrumentsData.js';
 import {createGestureTransaction,withGesturePreviews,type GestureTransaction} from './canvasGesture.js';
 import {
@@ -61,6 +66,10 @@ import {CANVAS_TOOL_CHOICES,CANVAS_TOOL_GLYPHS,CANVAS_TOOL_SPEC,PALETTE_KEYS,PAL
  * so nothing here changes for assistive tech or hover discovery — only the
  * always-visible label becomes a glyph. */
 function ToolIcon({name}:{name:string}){return <span className="research-tool-icon" aria-hidden="true" dangerouslySetInnerHTML={{__html:icon(name)}}/>;}
+/** B2/B3 — one download: the file is saved by the browser, nothing is uploaded or stored. */
+function saveBlob(blob:Blob,name:string){const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=name;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+/** A file name from the Canvas's title: letters, digits and dashes only. */
+const fileStem=(title:string)=>title.replace(/[^A-Za-z0-9._-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60)||'canvas';
 /** lane-1 C3 — the native subject a canvas card can show in the graph. Only an entity
  * that carries its own subject ref and native owner qualifies; a resource file, an
  * unbound card or an owner-less subject yields nothing, so no affordance is offered. */
@@ -294,7 +303,7 @@ export interface ResearchInstrumentsHost {
  material:(sceneId:string,action:ResearchMaterialAction)=>Promise<void>;
  /** lane-1 A3–A4 — sets or clears one connector's presentation record by native edge id (null clears). OPTIONAL: when the host does not supply it the connector kind, label and side are read but not editable. */
  connector?:(sceneId:string,edgeId:string,value:ResearchConnector|null)=>Promise<void>;
- inspectSubject:(ref:string,context?:{node?:unknown;relationField?:unknown})=>void;
+ inspectSubject:(ref:string,context?:{node?:unknown;relationField?:unknown;anchor?:unknown})=>void;
  /** lane-1 C3 — opens the field's wiki graph centred on a native subject, by its exact ref and owner. OPTIONAL: undeclared hosts offer no "Show in graph". */
  showInGraph?:(subjectRef:string,nativeOwner:string)=>void;
  read:(request:TechneSceneReadingRequest)=>Promise<unknown>;
@@ -424,6 +433,8 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
  let captureCanvas:(()=>{x:number;y:number;zoom:number})|null=null,currentKey:string|null=null;
  const views=new Map<string,ViewState>();
  let mutations:Promise<void>=Promise.resolve();
+ // B4: the title each occurrence last carried on this session's Canvas, so a departed member can be named after it is removed.
+ const lastTitles=new Map<string,string>();
  let materialInFlight=0,deferredRefresh=false;
  let dismissedCard:string|null=null;let flyToNode:((id:string,viewport?:{x:number;y:number;zoom:number})=>void)|null=null;
  let flyToEdge:((id:string,viewport?:{x:number;y:number;zoom:number})=>void)|null=null;
@@ -601,13 +612,14 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   groupContext=editable?{state,canvas,sceneId:canvas.sceneId}:null;
   const selection=state.multiSelect?.size?state.multiSelect:new Set(state.selectedNode?[state.selectedNode]:[]);
   navigation={canvas,selection};
-  const apply=(action:()=>Promise<void>,refresh=true)=>{
+  for(const node of canvas.nodes){const ref=canvas.occurrences.get(node.id);if(ref&&node.title)lastTitles.set(ref,node.title);}
+  const apply=(action:()=>Promise<void>,refresh=true,notice?:string|(()=>string))=>{
    const key=canvas.key;message('Saving…');
    mutations=mutations.catch(()=>{}).then(async()=>{
     if(destroyed||!host.nativeView()||nativeCanvas(host.nativeView()!,host.sceneId()).key!==key)throw new Error('The selected native composition changed; the queued edit was not applied');
     materialInFlight++;
     try{await action();}finally{materialInFlight--;}
-    if(currentKey===key&&!destroyed){message('Saved');if(lens==='m1'){const view=host.nativeView();if(view&&host.sceneId()===canvas.sceneId){const updated=nativeCanvas(view,host.sceneId());render(canvasNode(updated,state,epoch));}else if(refresh||deferredRefresh)await load('m1');}}
+    if(currentKey===key&&!destroyed){message(typeof notice==='function'?notice():notice??'Saved');if(lens==='m1'){const view=host.nativeView();if(view&&host.sceneId()===canvas.sceneId){const updated=nativeCanvas(view,host.sceneId());render(canvasNode(updated,state,epoch));}else if(refresh||deferredRefresh)await load('m1');}}
     if(!materialInFlight){const pending=deferredRefresh;deferredRefresh=false;if(pending&&lens&&currentKey!==key)await load(lens);}
 
    }).catch(error=>{if(currentKey===key&&!destroyed)message(error instanceof Error?error.message:String(error));});
@@ -732,7 +744,92 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   const saveFrame=()=>{if(selection.size<2)return;act({type:'frame-save',id:crypto.randomUUID(),label:`Frame ${framesOrdered.length+1}`,memberRefs:[...selection].map(occurrence)});};
   const namedViews=material?.namedViews??{};
   const saveView=()=>{if(!canvas.sceneId||!captureCanvas)return;const name=window.prompt('Name this view');if(!name)return;const viewport=captureCanvas();act({type:'view-save',name,viewport:{x:viewport.x,y:viewport.y,zoom:viewport.zoom},selectedRefs:[...selection].map(occurrence),frameOrder:framesOrdered.map(([id])=>id)},false);};
-  const applyView=(name:string)=>{const view=namedViews[name];if(!view)return;flyToNode?.('',{x:view.viewport.x,y:view.viewport.y,zoom:view.viewport.zoom});state.multiSelect=new Set(view.selectedRefs.map(ref=>canvas.nodes.find(n=>occurrence(n.id)===ref)?.id).filter((v):v is string=>!!v));select(state.multiSelect.size?[...state.multiSelect][0]:null);message(`View "${name}" applied`);};
+  // B4: applying a view reports the members that have left the Scene since it was saved (one sentence, the view still applies).
+  const applyView=(name:string)=>{const view=namedViews[name];if(!view)return;flyToNode?.('',{x:view.viewport.x,y:view.viewport.y,zoom:view.viewport.zoom});state.multiSelect=new Set(view.selectedRefs.map(ref=>canvas.nodes.find(n=>occurrence(n.id)===ref)?.id).filter((v):v is string=>!!v));select(state.multiSelect.size?[...state.multiSelect][0]:null);
+   const present=new Set(canvas.sceneId?host.sceneMaterial(canvas.sceneId).entities.map(entity=>entity.id):[]);
+   const {departed}=viewDrift(view,present);
+   message(departedNotice(name,departed,ref=>lastTitles.get(ref))??`View "${name}" applied`);};
+  // B2 — the composed Canvas as one Obsidian .canvas file. Cards keep their
+  // position and size; frames become group nodes; every connection keeps its
+  // native identity; what a .canvas cannot carry is named in its header.
+  const exportCanvasFile=()=>{
+   const nodes:CanvasExportNode[]=canvas.nodes.flatMap(node=>{
+    const ref=canvas.occurrences.get(node.id);
+    const card=ref?material?.cards[ref]:undefined;
+    const kind:CanvasExportNode['kind']=card?.type??(node.type==='resource'?'resource':'note');
+    const text=card?.type==='note'&&card.content!==undefined?notePlainText(card.content):node.summary;
+    return [{id:node.id,kind,title:node.title,text:text||undefined,url:card?.url,file:card?.media?.path,x:node.position.x,y:node.position.y,width:node.size.width,height:node.size.height}];
+   });
+   const edges:CanvasExportEdge[]=canvas.edges.map(edge=>{const connector=material?.connectors?.[edge.id];return {id:edge.id,fromNode:edge.sourceNodeId,toNode:edge.targetNodeId,fromSide:connector?.fromSide,toSide:connector?.toSide,relationKind:edge.relationKind};});
+   const reverse=new Map<string,string>([...canvas.occurrences.entries()].map(([view,ref])=>[ref,view]));
+   const frameList:CanvasExportFrame[]=framesOrdered.map(([id,frame])=>({id,label:frame.label,title:frame.title,memberIds:frame.memberRefs.map(ref=>reverse.get(ref)).filter((v):v is string=>!!v)}));
+   const {json,dropped}=exportObsidianCanvas({nodes,edges,frames:frameList});
+   saveBlob(new Blob([json],{type:'application/json'}),`${fileStem(canvas.title)}.canvas`);
+   message(`Exported ${nodes.length} card${nodes.length===1?'':'s'} as .canvas${dropped.length?`; ${dropped.length} detail${dropped.length===1?'':'s'} named in the file header`:''}.`);
+  };
+  const pickCanvasFile=()=>{if(!canvas.sceneId)return;const picker=document.createElement('input');picker.type='file';picker.accept='.canvas,application/json';picker.onchange=()=>{const file=picker.files?.[0];if(file)void importCanvasFile(file);};picker.click();};
+  // B2 — an Obsidian .canvas read into this Scene. The cards, their content, sizes and frames are ONE material batch ("Import .canvas"):
+  // one working copy, one commit, one undo step; a refused step refuses the whole import. Connections are native relations, each
+  // written by the host's connect act, so they are separate writes; each one that cannot be written is named in the status line.
+  const importCanvasFile=async(file:File)=>{
+   const sceneId=canvas.sceneId;if(!sceneId)return;
+   let plan:ImportPlan;
+   try{plan=planObsidianImport(parseObsidianCanvas(await file.text()));}catch(error){message(error instanceof Error?error.message:String(error));return;}
+   const created=new Map<string,string>();
+   const actions:ResearchMaterialAction[]=[];
+   for(const card of plan.cards){
+    const id=uid('research');created.set(card.key,id);
+    actions.push({type:'create-card',id,kind:card.kind,position:{x:card.x/CANVAS_UNITS,y:-card.y/CANVAS_UNITS},title:card.title,...(card.url?{url:card.url}:{})});
+    if(card.kind==='note'&&card.text)actions.push({type:'card-content',id,content:noteBlocksFromText(card.text)});
+    actions.push({type:'resize',id,width:Math.max(40,card.width),height:Math.max(40,card.height)});
+   }
+   for(const frame of plan.frames){
+    const id=uid('frame');
+    actions.push({type:'frame-save',id,label:frame.label,memberRefs:frame.memberKeys.flatMap(key=>created.get(key)??[])});
+    if(frame.title)actions.push({type:'frame-title',id,title:frame.title});
+   }
+   const connect=host.connect,connector=host.connector;
+   const failures:string[]=[];let connected=0;
+   const summary=()=>{
+    const cards=`${plan.cards.length} card${plan.cards.length===1?'':'s'}${plan.frames.length?` and ${plan.frames.length} frame${plan.frames.length===1?'':'s'}`:''}`;
+    const links=plan.edges.length?`, ${connected} of ${plan.edges.length} connection${plan.edges.length===1?'':'s'}`:'';
+    const missed=[...plan.skipped,...failures];
+    return `Imported ${cards}${links}.${missed.length?` Not imported: ${missed.join('; ')}.`:''}`;
+   };
+   const nativeRef=(key:string)=>{const id=created.get(key);return id?host.nativeView()?.bindings[sceneId]?.occurrences.find(row=>row.view_entity_id===id)?.entity_ref:undefined;};
+   apply(async()=>{
+    if(actions.length)await host.material(sceneId,{type:'batch',label:'Import .canvas',actions});
+    for(const edge of plan.edges){
+     const label=`connection "${edge.relationKind}"`;
+     const from=nativeRef(edge.fromKey),to=nativeRef(edge.toKey);
+     if(!connect){failures.push(`${label} not imported: this host cannot create connections`);continue;}
+     if(!from||!to){failures.push(`${label} not imported: an end has no native occurrence yet`);continue;}
+     try{
+      const known=new Set((host.nativeView()?.bindings[sceneId]?.relations??[]).map(row=>row.binding_ref));
+      await connect(sceneId,{sourceEntityRef:from,targetEntityRef:to,relationKind:edge.relationKind,directionality:'directed'});
+      const made=(host.nativeView()?.bindings[sceneId]?.relations??[]).find(row=>!known.has(row.binding_ref));
+      if(!made){failures.push(`${label} not imported: the new relation was not seen after it was written`);continue;}
+      if(connector&&(edge.fromSide||edge.toSide))await connector(sceneId,made.binding_ref,connectorRecord({kind:'curved',...(edge.fromSide?{fromSide:edge.fromSide}:{}),...(edge.toSide?{toSide:edge.toSide}:{})}));
+      connected++;
+     }catch(error){failures.push(`${label} not imported: ${error instanceof Error?error.message:String(error)}`);}
+    }
+   },true,summary);
+  };
+  // B3 — the selection (or a frame's members) as the canvas draws it: the live stage, cut to the members and the connections
+  // between them, chrome dropped, copied at 2x. Anything the copy cannot carry is named in the status line.
+  const exportFrameImage=()=>{
+   const flow=body.querySelector<HTMLElement>('.react-flow__viewport');
+   const members=canvas.nodes.filter(node=>selection.has(node.id));
+   const boxes=members.map(node=>({x:node.position.x,y:node.position.y,width:node.size.width,height:node.size.height}));
+   const bounds=frameBounds(boxes);
+   if(!bounds||!flow){message('Select a card to export its frame.');return;}
+   const memberBoxes=new Map(members.map((node,index)=>[node.id,boxes[index]]));
+   const edges:StageEdge[]=canvas.edges.map(edge=>({id:edge.id,sourceId:edge.sourceNodeId,targetId:edge.targetNodeId,labelled:!!edge.label}));
+   void renderFrameStage({flow,members:memberBoxes,edges,bounds}).then(({blob,refused})=>{
+    download(blob,`${fileStem(canvas.title)}-frame.png`);
+    message(`Exported ${members.length} card${members.length===1?'':'s'} as a 2× PNG of the frame${refused.length?`. Not drawn: ${refused.join('; ')}`:''}.`);
+   },error=>message(error instanceof Error?error.message:String(error)));
+  };
   // R1 — box selection is now the vendored Canvas's own xyflow selectionOnDrag
   // (host-selection-viewport-gesture.patch), reported through onSelectionChange
   // with the exact flow-space hit set; no screen-rect DOM query or lasso
@@ -803,6 +900,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    <button aria-label="Snap" title="Snap" aria-pressed={!!state.snapToGrid} onClick={()=>{state.snapToGrid=!state.snapToGrid;redraw();}}><ToolIcon name="grid"/></button>
    <button aria-label="Lasso" title="Lasso" aria-pressed={!!state.lassoOn} onClick={()=>{state.lassoOn=!state.lassoOn;redraw();}}><ToolIcon name="lasso"/></button>
    {selection.size>=2&&<button aria-label="Frame selection" title="Frame selection" onClick={saveFrame}><ToolIcon name="frame"/></button>}
+   {selection.size>=1&&<button type="button" aria-label="Export selection as PNG" title="Export the selection as a PNG of its bounds, at 2×" onClick={exportFrameImage}><ToolIcon name="download"/></button>}
    {framesOrdered.length>0&&<button aria-label="Present frames" title="Present frames (Shift+P)" onClick={()=>startPresentation(canvas,state,findTargets)}><GlyphIcon glyph={PRESENT_GLYPH}/></button>}
 </>}
    {(()=>{const binding=canvas.sceneId?host.nativeView()?.bindings[canvas.sceneId]:undefined;if(!binding||binding.page_count<=1||!host.pageMembers)return null;
@@ -822,6 +920,8 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    {Object.keys(namedViews).length>0&&<select aria-label="Saved views" value="" onChange={event=>{const [op,name]=event.target.value.split('\u0000');if(op==='apply')applyView(name);if(op==='remove')act({type:'view-remove',name},false);event.target.value='';}}>
     <option value="">Views…</option>{Object.keys(namedViews).map(name=><optgroup key={name} label={name}><option value={`apply\u0000${name}`}>Apply</option><option value={`remove\u0000${name}`}>Remove</option></optgroup>)}</select>}
    </div>
+   <div className="control"><span>Exchange</span><div className="button-row"><button type="button" aria-label="Export Obsidian canvas" title="Export as an Obsidian .canvas file" onClick={exportCanvasFile}><ToolIcon name="download"/></button>
+   <button type="button" aria-label="Import Obsidian canvas" title="Import an Obsidian .canvas file into this Scene" onClick={pickCanvasFile}><ToolIcon name="upload"/></button></div></div>
    <div className="control"><span>Frames</span>{framesOrdered.length===0&&<p className="control-note">Select two or more nodes and use Frame selection.</p>}
    {framesOrdered.length>0&&<select aria-label="Frames" value="" onChange={event=>{const [op,id]=event.target.value.split(':');if(op==='select'){const frame=frames[id];if(frame){state.multiSelect=new Set(frame.memberRefs.map(ref=>[...canvas.occurrences.entries()].find(([,v])=>v===ref)?.[0]).filter((v):v is string=>!!v));select([...state.multiSelect][0]??null);}}if(op==='title'){const next=window.prompt('Frame title',frames[id]?.title??'');if(next!==null)act({type:'frame-title',id,title:next});}if(op==='front')act({type:'frame-order',id,direction:'front'},false);if(op==='back')act({type:'frame-order',id,direction:'back'},false);if(op==='remove')act({type:'frame-remove',id},false);event.target.value='';}}>
     <option value="">Frames…</option>{framesOrdered.map(([id,frame])=><optgroup key={id} label={frame.label}><option value={`select:${id}`}>Select members</option><option value={`title:${id}`}>Title frame…</option><option value={`front:${id}`}>Bring to front</option><option value={`back:${id}`}>Send to back</option><option value={`remove:${id}`}>Remove frame</option></optgroup>)}</select>}
@@ -1166,7 +1266,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
      const timed=sharedTimelinePresentation(data.dataSource,data.timeline,nativeReading,sharedTime?timeAxisProjection(nativeReading,sharedTime.session):null);
      return <>{createPortal(toggle,host.tools)}<TimelineSurface key={state.timelineKey??0} timeExtent={years.length?{startYear:first,endYear:last}:undefined} toolbarContainer={host.tools} repository={timed.repository} constellationId={data.reading.subject.subject_ref} dataSource={timed.dataSource} containment={containmentPairs(relationEdges(nativeReading))} participants={participantSpansFromReading(nativeReading).spans}
       initialState={state.timeline!} onViewStateChange={value=>{state.timeline=value;state.globeListener?.(value.selectedNodeId??null);}}
-      onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref);if(node)host.inspectSubject(ref,{node});}} onOpenNode={(ref,node,relationField)=>host.inspectSubject(ref,{node,relationField})}/></>;
+      onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref);if(node)host.inspectSubject(ref,{node});}} onOpenNode={(ref,node,relationField)=>{const facets=data.bundle.relationships.filter(row=>row.targetGraphNodeId===ref&&typeof row.properties.temporal_kind==='string');host.inspectSubject(ref,{node,relationField,anchor:facets.length>1?{state:'absent',reason:'More than one temporal facet is disclosed for this event; its source opens at its top.'}:evidenceAnchorOf(facets[0]?.properties??{})});}}/></>;
     };
     // lane-2 T22: the status line names the subject, reading basis and window the session holds, exactly as it holds them.
     const chronologyStatus=temporal.length||state.m2Projection==='field'?(state.m2Projection==='field'?'Relations':'Timeline'):'No dates disclosed by this source';

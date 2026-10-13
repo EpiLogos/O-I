@@ -97,7 +97,7 @@ export interface ResearchMaterial {
 export type ResearchMaterialAction =
  | {type:'resize';id:string;width:number;height:number}
  | {type:'duplicate';id:string}
- | {type:'create-card';kind:ResearchCard['type'];position:{x:number;y:number};title?:string;dataUrl?:string;geometry?:ShapeGeometry;/** lane-1 A10: an embed card's https address. */url?:string;/** lane-1 A10: a media card's Central file. */media?:CentralPathRef}
+ | {type:'create-card';id?:string;kind:ResearchCard['type'];position:{x:number;y:number};title?:string;dataUrl?:string;geometry?:ShapeGeometry;/** lane-1 A10: an embed card's https address. */url?:string;/** lane-1 A10: a media card's Central file. */media?:CentralPathRef}
  | {type:'card-content';id:string;content:string}
  | {type:'card-caption';id:string;caption:string}
  | {type:'card-style';id:string;patch:Partial<Pick<ResearchCard,'color'|'dotColour'|'bgColour'|'textColour'|'palette'|'fill'>>}
@@ -119,7 +119,9 @@ export type ResearchMaterialAction =
  | {type:'place-layers-set';value:PlaceLayersRecord}
  /** lane-2 T15: a named timeline view, kept beside the Places and canvas views. Only timelineViews changes. */
  | {type:'timeline-view-save';name:string;view:TimelineViewRecord}
- | {type:'timeline-view-remove';name:string};
+ | {type:'timeline-view-remove';name:string}
+ /** B2: several changes made as ONE material change — one working copy, one validation, one commit and one undo step labelled `label`. Atomic: any refused step refuses the whole batch. Never nests. */
+ | {type:'batch';label:string;actions:ResearchMaterialAction[]};
 const color=(value:unknown)=>typeof value==='string'&&/^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(value);
 const finite=(v:unknown,low:number,high:number)=>typeof v==='number'&&Number.isFinite(v)&&v>=low&&v<=high;
 /** A record key that is a real own key: never one of a JavaScript object's own machinery names. */
@@ -146,14 +148,15 @@ export function validateResearchContent(content:string):void {
 export function emptyResearchMaterial():ResearchMaterial{return {schema:'oi.research-scene/v1',cards:{},strokes:[],views:{},timeline:{},frames:{},namedViews:{}};}
 export function pruneResearchOccurrence(scene:Scene,id:string):void {
  if(!scene.research)return;delete scene.research.cards[id];
- // A removed occurrence can neither remain frame membership nor be
- // addressed by a saved view's selection — both are ref-carrying
- // presentation state over occurrences that still exist. Research material
+ // A removed occurrence can no longer remain frame membership: a frame is
+ // presentation state over occurrences that still exist. Saved views are
+ // not pruned (B4). Research material
  // saved before frames/named views existed carries neither field.
- const frames=scene.research.frames??={};const namedViews=scene.research.namedViews??={};
+ const frames=scene.research.frames??={};
  for(const frame of Object.values(frames))frame.memberRefs=frame.memberRefs.filter(ref=>ref!==id);
  for(const key of Object.keys(frames))if(!frames[key].memberRefs.length)delete frames[key];
- for(const view of Object.values(namedViews))view.selectedRefs=view.selectedRefs.filter(ref=>ref!==id);
+ // B4: a saved view keeps the refs it held (its tombstones). Applying it reports
+ // the departed members (viewDrift) rather than dropping them here silently.
 }
 export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):asserts value is ResearchMaterial {
  require(object(value),'Research material must be an object');keys(value,['schema','cards','strokes','views','timeline','frames','namedViews','connectors','placeViews','placeLayers','timelineViews']);
@@ -267,8 +270,9 @@ export function validatePlaceView(value:unknown):void{
 }
 /** Tolerant plain-text reading of note blocks: paragraphs join with newlines,
  * non-text parts are skipped. Unlike expressionTextFromNote this never
- * throws — it is a projection for display, not a validation law. */
-function notePlainText(content:string):string{
+ * throws — it is a projection for display, not a validation law. Exported
+ * for the B2 .canvas export. */
+export function notePlainText(content:string):string{
  try{const blocks:unknown=JSON.parse(content);if(!Array.isArray(blocks))return '';
   return blocks.map((raw:any)=>{
    if(!raw||raw.type!=='paragraph'||!Array.isArray(raw.content))return '';
@@ -284,9 +288,21 @@ function canvasObjectChoice(kind:CanvasObjectKind,geometry:unknown):CanvasToolCh
  return geometry;
 }
 /** Mutate only the supplied working Scene; caller persists through the existing
- * composition CAS. Validate before replacing so a refusal leaves it intact. */
+ * composition CAS. Validate before replacing so a refusal leaves it intact.
+ * A batch applies its steps to one working copy and validates once (B2). */
 export function applyResearchMaterial(scene:Scene,action:ResearchMaterialAction):void {
- const next=clone(scene);const research=next.research??=emptyResearchMaterial();
+ const next=clone(scene);
+ if(action.type==='batch'){
+  require(text(action.label,160)&&!!action.label.trim(),'Invalid batch label');
+  require(Array.isArray(action.actions)&&action.actions.length>=1&&action.actions.length<=256,'A batch holds one to 256 changes');
+  for(const step of action.actions){require(step.type!=='batch','A batch cannot hold another batch');applyResearchStep(next,step);}
+ }else applyResearchStep(next,action);
+ require(next.entities.length<=32,'Scene authoring occurrence limit reached');
+ validateResearchMaterial(next.research!,new Set(next.entities.map(e=>e.id)));
+ Object.assign(scene,next);
+}
+function applyResearchStep(next:Scene,action:Exclude<ResearchMaterialAction,{type:'batch'}>):void {
+ const research=next.research??=emptyResearchMaterial();
  // Research material saved before frames/named views existed carries
  // neither field; backfill on first write so every action below can assume
  // both are present, matching every other record collection here.
@@ -307,7 +323,7 @@ export function applyResearchMaterial(scene:Scene,action:ResearchMaterialAction)
   // lane-1 A10: an embed is named by its host and a media card by its file, unless the owner named it.
   const link=action.kind==='embed'?embedUrlRecord(action.url):null;require(action.kind!=='embed'||link!==null,'Invalid embed link');
   require(action.kind!=='media'||isCentralPathRef(action.media),'Invalid media reference');
-  const title=action.title??(choice?CANVAS_TOOL_SPEC[choice].label:link!==null?embedHost(link):isCentralPathRef(action.media)?mediaFileName(action.media):action.kind==='image'?'Image':'Note');require(text(title,160)&&!!title,'Invalid card title');const e=entity(title,title.slice(0,120),{...action.position,z:0});e.id=uid('research');e.size={x:.6,y:.4};const c:ResearchCard={type:action.kind};if(action.kind==='note')c.content='[]';
+  const title=action.title??(choice?CANVAS_TOOL_SPEC[choice].label:link!==null?embedHost(link):isCentralPathRef(action.media)?mediaFileName(action.media):action.kind==='image'?'Image':'Note');require(text(title,160)&&!!title,'Invalid card title');const e=entity(title,title.slice(0,120),{...action.position,z:0});if(action.id!==undefined)require(text(action.id,128)&&/^[A-Za-z0-9_-]+$/.test(action.id)&&!next.entities.some(x=>x.id===action.id),'Invalid card id');e.id=action.id??uid('research');e.size={x:.6,y:.4};const c:ResearchCard={type:action.kind};if(action.kind==='note')c.content='[]';
   // A note and a canvas object (sticky, shape, text — lane-1 A2) are canvas presentation: on the stage they are a quiet disc, never
   // a text formation spelling the tool's name. The object's label is its card caption.
   if(action.kind==='note'||choice||action.kind==='embed'||action.kind==='media'){e.shape='disc';e.text='';for(const step of e.sequence.steps){step.shape='disc';step.text='';}}if(action.kind==='image'){require(typeof action.dataUrl==='string'&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(action.dataUrl),'Choose a PNG/JPEG/WebP image');require(action.dataUrl.length<=262144,'Image exceeds native document budget; select a smaller image');c.importedAt=new Date().toISOString();e.source={kind:'image',image:{dataUrl:action.dataUrl,mode:'luminance',threshold:.5,invert:false,scale:1,name:title}};}if(choice){const spec=CANVAS_TOOL_SPEC[choice];c.size={...spec.size};if(action.kind==='sticky')c.palette=STICKY_DEFAULT_PALETTE;if(action.kind==='shape'){c.shape=spec.geometry;c.fill='none';}}if(link!==null){c.url=link;c.size={...EMBED_CARD_SIZE};}if(action.kind==='media'&&isCentralPathRef(action.media)){c.media=clone(action.media);c.size={...MEDIA_CARD_SIZE};}next.entities.push(e);research.cards[e.id]=c;break;}
@@ -385,9 +401,6 @@ export function applyResearchMaterial(scene:Scene,action:ResearchMaterialAction)
  // Removing a timeline view touches only timelineViews: no occurrence, timeline layout, frame or other view is changed.
  case 'timeline-view-remove':{if(research.timelineViews){delete research.timelineViews[action.name];if(!Object.keys(research.timelineViews).length)delete research.timelineViews;}break;}
  }
- require(next.entities.length<=32,'Scene authoring occurrence limit reached');
- validateResearchMaterial(research,new Set(next.entities.map(e=>e.id)));
- Object.assign(scene,next);
 }
 /** lane-1 A3–A4: sets one connector's presentation record, or clears it with null,
  * keyed by the native edge id. Mutates only the supplied working Scene; the
