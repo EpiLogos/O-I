@@ -36,6 +36,7 @@ export function TimelineRelationshipLayer({
   lod,
   chain = null,
   onSelectChain,
+  onOpenRelation,
 }: {
   relationships: GraphRelationship[];
   placed: PlacedItem[];
@@ -45,6 +46,8 @@ export function TimelineRelationshipLayer({
   chain?: CauseChain | null;
   /** Selecting a cause-family edge (click or Enter) asks the surface to follow its chain. */
   onSelectChain?: (relationshipId: string) => void;
+  /** lane-2 T20: the same selection, handed to the host as the native relationship it names. Optional. */
+  onOpenRelation?: (relationship: GraphRelationship) => void;
 }): JSX.Element | null {
   if (lod === "marker" || relationships.length === 0 || viewportWidth <= 0) return null;
 
@@ -130,11 +133,15 @@ export function TimelineRelationshipLayer({
                   role="button"
                   tabIndex={0}
                   aria-label={`Follow the cause chain through ${relationship.relType}`}
-                  onClick={() => onSelectChain?.(relationship.id)}
+                  onClick={() => {
+                    onSelectChain?.(relationship.id);
+                    onOpenRelation?.(relationship);
+                  }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
                       onSelectChain?.(relationship.id);
+                      onOpenRelation?.(relationship);
                     }
                   }}
                 />
@@ -182,11 +189,17 @@ export function CauseChainPanel({
   titleOf,
   onFollow,
   onClear,
+  onOpenRelation,
+  onOpenEndpoint,
 }: {
   chain: CauseChain;
   titleOf: (graphNodeId: string) => string;
   onFollow: (hop: CauseHop) => void;
   onClear: () => void;
+  /** lane-2 T20: the link's relation selected; the host opens it on its trail. Undeclared: the relation text is plain. */
+  onOpenRelation?: (hop: CauseHop) => void;
+  /** lane-2 T20: one endpoint of the link selected; the host opens it at its subject. Undeclared: the titles are plain. */
+  onOpenEndpoint?: (hop: CauseHop, side: "from" | "to") => void;
 }): JSX.Element {
   return (
     <section className="timeline-chain-panel" aria-label="Cause chain" data-testid="timeline-cause-chain">
@@ -197,13 +210,35 @@ export function CauseChainPanel({
       <ol className="timeline-chain-hops">
         {chain.hops.map((hop, index) => {
           const standingText = `${standingLabel(hop.standing.visual)}${hop.standing.verbatim !== null ? ` · "${hop.standing.verbatim}"` : ""}`;
+          const number = index + 1;
           return (
             <li key={hop.id} className="timeline-chain-hop" data-testid={`timeline-chain-hop-${index + 1}`} data-standing={hop.standing.visual}>
               <span className="timeline-chain-hop-index">{index + 1}</span>
               <span className="timeline-chain-hop-path">
-                {titleOf(hop.from_ref)}
-                <span className="timeline-chain-hop-relation" title={standingText}>{` —${hop.relation}→ `}</span>
-                {titleOf(hop.to_ref)}
+                {onOpenEndpoint ? (
+                  <button type="button" data-testid={`timeline-chain-endpoint-${number}-from`} onClick={() => onOpenEndpoint(hop, "from")}>{titleOf(hop.from_ref)}</button>
+                ) : titleOf(hop.from_ref)}
+                {onOpenRelation ? (
+                  <span
+                    className="timeline-chain-hop-relation"
+                    data-testid={`timeline-chain-relation-${number}`}
+                    role="button"
+                    tabIndex={0}
+                    title={standingText}
+                    onClick={() => onOpenRelation(hop)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onOpenRelation(hop);
+                      }
+                    }}
+                  >{` —${hop.relation}→ `}</span>
+                ) : (
+                  <span className="timeline-chain-hop-relation" title={standingText}>{` —${hop.relation}→ `}</span>
+                )}
+                {onOpenEndpoint ? (
+                  <button type="button" data-testid={`timeline-chain-endpoint-${number}-to`} onClick={() => onOpenEndpoint(hop, "to")}>{titleOf(hop.to_ref)}</button>
+                ) : titleOf(hop.to_ref)}
               </span>
               <span className="timeline-chain-hop-time" data-undated={hop.time === null ? "true" : undefined} title={hop.time === null ? hop.timeNote ?? NO_DATE_DISCLOSED : undefined}>
                 {hopLabel(hop)}
