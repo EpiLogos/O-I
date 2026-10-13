@@ -49,6 +49,18 @@ re-read in `shell/modeGrammar.ts` / `inhabitants/sdk/modes.ts` (13 Oct).
 - Open: the installed quaternal-logic predates #330, so the live transport
   refuses by name until it is rebuilt into O:I. The choice is held for the
   session only, because the Live set document has no owner write for a
-  set-level mode. Ficino and Shem wait on their sources. Next: clip mode
-  through `modeForClip`, the roll's fold and highlight, the note devices,
-  and the Jankó recolour.
+  set-level mode. Ficino and Shem wait on their sources.
+- Leg 3: one mode in force (`setModeInForce` / `useLiveModeInForce`) is
+  read by the transport, the clip inspector's Scale (Root and Mode) and the
+  Jankó surface. The surface recolours to the owner's pitch set (every key
+  says in or outside the mode); a source scale serves no pitch set, so
+  nothing is marked. A clip carries no mode of its own until the set
+  document has an owner write for one. Live has no pitch roll (the scene
+  editor's rows are objects), so fold and highlight have no surface yet.
+- Install seam (14 Oct): `oi update --apply quaternal-logic` installed main
+  (37e3085, every companion), but the kernel reads `oi where`, which still
+  answers from the active suite receipt (QL 4276b94, no field host).
+  Re-activating the suite is refused on Central's registration drift and
+  would move all six products; this is handed off as its own task.
+- Next: the note devices before the torus (scale mapping, exact-ratio
+  tuning, sky).
