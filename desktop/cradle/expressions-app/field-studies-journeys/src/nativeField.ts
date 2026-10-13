@@ -8,6 +8,7 @@ import {NativeFieldController,NativeRenderer,EMBEDDED_NATIVE_PLAYBACK,CADENCES,I
 import {LENSES,CONTEXT_FRAMES,type SceneActing} from './native-field/scene';
 import type {FieldEngineAdapter} from './engine';
 import type {InstrumentEdit} from './stageCommands';
+import {createLiveEntry} from './native-field/liveEntry.mjs';
 /** scene_field.rs `PLANETS`, in scalar-degree order: the map's own names. */
 const PLANET_NAMES=['Sun','Venus','Mercury','Moon','Saturn','Jupiter','Mars','Neptune','Pluto'];
 const esc=(v:unknown)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
@@ -430,7 +431,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  const pagehide=()=>{void controller.dispose();};window.addEventListener('pagehide',pagehide);
  // Readback at human cadence; native scheduling stays in InstrumentSession.
  // A cadence-stale event basis is re-read here, never inside a beat.
- const timer=window.setInterval(()=>{void controller.refreshSources();update();},250);
+ const timer=window.setInterval(()=>{void controller.refreshSources();update();liveEntry.check();},250);
  /** Run one instrument edit the shell sent through the host channel. It calls the same controller operation the panel's own control calls, so
   * the owner refuses or accepts it exactly as it does a Studio click: a refused determinant is named by the owner and the rejection carries it. */
  const command=async(edit:InstrumentEdit):Promise<void>=>{
@@ -447,13 +448,17 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   else controller.followDomain();
   update();
  };
- /** Enter the Live cut: open the live instrument muted, as the panel's own open does. Nothing sounds: the session opens muted and sound stays
-  * the person's choice. A refused open (no scene, no owner, no retained field) is named in the status line, never faked. */
- const openLive=()=>{
-  const reading=controller.reading as any;
-  if(busy||composing||reading.lease||reading.status==='opening'||reading.status==='following'||reading.status==='held')return;
-  return open('now');
- };
+ /** Enter the Live cut: open the live instrument muted, as the panel's own open does, once per entry, with one retry (liveEntry.mjs). Nothing
+  * sounds: the session opens muted and sound stays the person's choice. A refusal (no scene, no owner, no retained field) is named in the
+  * status line, never faked. The retry runs when the retained GPU field reports live, or at the first frame if it already is. */
+ const liveEntry=createLiveEntry({
+  open:()=>{void open('now');},
+  isOpen:()=>{const status=(controller.reading as any).status;return status==='following'||status==='held';},
+  isBusy:()=>busy||composing||(controller.reading as any).status==='opening',
+  fieldLive:()=>!!(engine as any).retainedTopology?.(),
+ });
+ const openLive=()=>{liveEntry.enter();requestAnimationFrame(()=>liveEntry.check());};
+ const leaveLive=()=>liveEntry.leave();
  update();
- return {controller,panel,command,openLive,dispose:()=>{clearInterval(timer);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
+ return {controller,panel,command,openLive,leaveLive,dispose:()=>{clearInterval(timer);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
 }

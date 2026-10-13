@@ -1937,6 +1937,7 @@ function setHostMode(mode:'expressions'|'techne'|'live'){
  lensStudio.setMode(mode==='techne'?'techne':'expressions');
  if(mode!=='techne'){researchInstruments?.close();palaceInstrument.close();journeyInstrument?.close();journeyHome.hidden=true;setInstrumentSurface(null);}else activateInstrument(lensStudio.active());
  if(mode==='live'&&nativeField){studioSection='native';tab='field';setStudio(true);nativeField.openLive();}
+ if(mode!=='live')nativeField?.leaveLive();
  renderAll();
 }
 // Open an existing native Expression the host asked for at runtime — a

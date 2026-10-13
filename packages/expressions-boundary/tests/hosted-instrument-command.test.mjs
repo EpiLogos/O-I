@@ -64,3 +64,29 @@ test('the host posts the instrument command and settles with the frame answer; a
   assert.deepEqual(await refused, {ok: false, error: 'lens is already acting'});
   assert.throws(() => host.stageCommand({command: 'instrument', edit: {kind: 'lens', lens12: 12}}), /Unknown Expressions stage command/);
 });
+
+test('the Live instrument edits reach the owner while the frame is concealed; every other stage command keeps the presented gate', async t => {
+  let presented = false;
+  const wire = messageWire();
+  const frame = new EventTarget();
+  frame.src = `${origin}/__application/expressions/index.html`;
+  frame.contentWindow = {postMessage(data, targetOrigin) {assert.equal(targetOrigin, origin); wire.port1.postMessage(data);}};
+  frame.closest = () => null;
+  const host = new ExpressionsHost(frame, {bindingId: 'center:world', owners: {channels: {}}, messageTarget: new EventTarget(),
+    handshakeTimeoutMs: 1000, mode: 'live', isPresented: () => presented});
+  t.after(() => {host.dispose(); wire.dispose();});
+  const deliver = data => host.handleMessage({source: frame.contentWindow, origin, data});
+  await deliver({v: CHANNEL_VERSION, kind: 'oi-app-state', state: {hostMode: 'live', sceneIndex: 0, sceneCount: 1,
+    nativeScene: {expression_ref: 'expression:kept', revision: 3, scene_ref: 'scene:one'}}});
+  // Concealed under the Timeline: the instrument command is posted and answered; a view command is refused, as before.
+  assert.equal(host.isReady(), true);
+  const edit = host.stageCommand({command: 'instrument', edit: {kind: 'muted', muted: false}});
+  const posted = (await wire.observe()).filter(d => d.command === 'instrument').at(-1);
+  assert.deepEqual(posted.edit, {kind: 'muted', muted: false}, 'posted while concealed');
+  await deliver({v: CHANNEL_VERSION, kind: 'host-command-result', command: 'instrument', req: posted.req, ok: true});
+  assert.deepEqual(await edit, {ok: true});
+  assert.throws(() => host.stageCommand({command: 'view', action: 'guides'}), /concealed/, 'the presented gate still holds for the rest');
+  // Presented: nothing changes for any command.
+  presented = true;
+  assert.doesNotThrow(() => host.stageCommand({command: 'view', action: 'guides'}).catch(() => {}));
+});
