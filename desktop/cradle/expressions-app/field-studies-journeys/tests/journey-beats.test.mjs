@@ -234,3 +234,49 @@ test('routed requests are plain JSON data with a single change each', () => {
     assert.equal(result.request.changes.length, 1);
   }
 });
+
+// ---- T1b: the beat cards read each Scene's OWN facets over the Expression-wide disclosure
+
+/** The Expression-wide disclosure: every bound scene, no facets attributed to any of them. */
+function wholeReading() {
+  return reading({temporal: [], spatial: [], provenance: []});
+}
+
+test('T1b: the Expression-wide disclosure lists every scene and attributes no facet to any of them', () => {
+  const view = journeyBeatView(wholeReading(), DOC);
+  assert.deepEqual(view.cards.map((card) => card.scene_ref), [ONE, TWO]);
+  assert.ok(view.cards.every((card) => card.chips.length === 0), 'no chip is borrowed from the whole');
+  assert.ok(view.cards.every((card) => card.chipsReason === undefined));
+});
+
+test('T1b: each card takes its chips from its own Scene reading, verbatim', () => {
+  const frames = new Map([[ONE, reading({expressions: [{expression_ref: EXPRESSION, revision: '7', scene_ref: ONE}]})]]);
+  const view = journeyBeatView(wholeReading(), DOC, frames);
+  const [first, second] = view.cards;
+  assert.deepEqual(first.chips.map((chip) => chip.kind), ['time', 'place', 'source']);
+  assert.deepEqual(first.chips.map((chip) => chip.ref), ['t:1', 'place:here', 'central:source:probe']);
+  assert.equal(first.scene_ref, ONE, 'identity stays the verbatim scene ref');
+  assert.deepEqual(second.chips, [], 'a Scene with no frame entry shows no borrowed chip');
+});
+
+test('T1b: a Scene whose own reading cannot be read keeps its card with the owner reason and no chips', () => {
+  const frames = new Map([[TWO, 'the register carries no source binding for this Scene']]);
+  const [, second] = journeyBeatView(wholeReading(), DOC, frames).cards;
+  assert.equal(second.scene_ref, TWO);
+  assert.deepEqual(second.chips, []);
+  assert.equal(second.chipsReason, 'the register carries no source binding for this Scene');
+});
+
+test('T1b: a Scene reading that names no beat for its Scene is refused as a reason, never a chip', () => {
+  const frames = new Map([[ONE, reading({expressions: [{expression_ref: EXPRESSION, revision: '7', scene_ref: TWO}]})]]);
+  const [first] = journeyBeatView(wholeReading(), DOC, frames).cards;
+  assert.equal(first.scene_ref, ONE);
+  assert.deepEqual(first.chips, []);
+  assert.equal(first.chipsReason, 'the Scene reading names no beat for this Scene');
+});
+
+test('T1b: the beat cards keep the disclosure reason when no scene is bound', () => {
+  const view = journeyBeatView(reading({expressions: [{expression_ref: EXPRESSION, revision: '7'}]}), DOC, new Map([[ONE, 'x']]));
+  assert.deepEqual(view.cards, []);
+  assert.equal(view.unavailableReason, 'bound Expressions disclose no scene refs');
+});

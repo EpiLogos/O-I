@@ -1,7 +1,7 @@
 import type {Journey} from './model';
 import {savedSceneIndices} from './sceneWorkflow';
 import type {KernelConversion} from './kernelDocumentBridge';
-import {regionWrap,type LoopRegion} from './journeyMarkers';
+import {regionWrap,playDurations,toPlayRegion,sceneLocalRegion,type LoopRegion} from './journeyMarkers';
 
 export interface SceneTransportFrame {
   elapsed_seconds: number;
@@ -48,11 +48,22 @@ export function advanceSceneTransport(journey: Journey, sceneIndex: number, elap
   if (!active || !Number.isFinite(active.duration) || active.duration < 1 || active.duration > 3600
     || !Number.isFinite(elapsed) || elapsed < 0) return held;
   const nextElapsed = elapsed + Math.min(rawDelta, .25);
-  if (state.savedSequence && state.loopRegion) {
-    // E13: journey playback wraps at the region's out point, to its in point, exactly to the frame.
-    const wrap = regionWrap(journey.scenes.map(s => s.duration), sceneIndex, elapsed, nextElapsed - elapsed, state.loopRegion);
-    if (wrap) return {...held, elapsed_seconds: wrap.sceneIndex === sceneIndex ? wrap.local : elapsed,
-      advance_to_scene_index: wrap.sceneIndex === sceneIndex ? null : wrap.sceneIndex, seek_local_seconds: wrap.local};
+  if (state.loopRegion) {
+    // E13/E13b: the brace wraps at out -> in exactly to the frame, on the clock the running playback reads. The region is
+    // stored on the working clock; saved-sequence play maps it onto saved durations (unsaved Scenes have none), so it
+    // never wraps into a Scene that is not saved. Working play (Space) loops a brace that lies inside the Scene it plays.
+    const working = journey.scenes.map(s => s.duration);
+    if (state.savedSequence) {
+      const play = playDurations(journey.scenes, journey.savedScenes, true);
+      const region = toPlayRegion(working, play, state.loopRegion);
+      const wrap = region && regionWrap(play, sceneIndex, elapsed, nextElapsed - elapsed, region);
+      if (wrap) return {...held, elapsed_seconds: wrap.sceneIndex === sceneIndex ? wrap.local : elapsed,
+        advance_to_scene_index: wrap.sceneIndex === sceneIndex ? null : wrap.sceneIndex, seek_local_seconds: wrap.local};
+    } else {
+      const local = sceneLocalRegion(working, sceneIndex, state.loopRegion);
+      const wrap = local && regionWrap([working[sceneIndex]], 0, elapsed, nextElapsed - elapsed, local);
+      if (wrap) return {...held, elapsed_seconds: wrap.local};
+    }
   }
   if (!state.savedSequence) {
     const ended = nextElapsed >= active.duration - .001;

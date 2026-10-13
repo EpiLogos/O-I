@@ -2,11 +2,13 @@
 import React,{Component,useEffect,useRef,useState,type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
 import {clone,type Scene} from './model.js';
-import {type ResearchCard,type ResearchMaterialAction,type ResearchStroke} from './researchMaterial.js';
+import {type PlaceViewRecord,type ResearchCard,type ResearchMaterialAction,type ResearchStroke} from './researchMaterial.js';
+import {capturePlaceView,placeViewNameProblem,restorePlaceView,sameTimeWindow} from './placeViews.js';
 import {CONNECTOR_KINDS,connectorPresentation,connectorRecord,connectorWithSides,sideFromHandleId,type ConnectorKind,type ResearchConnector} from './canvasConnectors.js';
 import {createRoot,type Root} from 'react-dom/client';
 import {CanvasView,TimelineSurface,PsychogeographicMap,StreetViewSurface,loadBundledGeographyPack,createLiveServicePolicy,type LiveServicePolicy,type TimelineViewState} from '../../vendor/research-canvas/components';
-import {placeRecordFromViewState,viewStateFromPlaceRecord} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeNavigation';
+import {defaultPlaceView,placeRecordFromViewState,viewStateFromPlaceRecord} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeNavigation';
+import type {PlaceViewRestoreTarget} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/PsychogeographicMap';
 import {defaultBasemapStack,type BasemapStack} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/basemapLayers';
 import type {KernelConversion} from './kernelDocumentBridge.js';
 import {techneConstellationRequest,type TechneSceneReadingRequest,type TechneConstellationRequest} from './kernelExpressions.js';
@@ -939,8 +941,42 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    // (presentation-only: `filteredPlacesRepository` never rewrites the
    // wrapped repository's reads) and the panel's facet list, so the markers
    // and the panel always agree.
+   // Lane-4 T20: named Places views. A view is the camera, the layer toggles, the basemap rows and the shared time window,
+   // kept with the Scene as refs and presentation only. Save and remove are each one labelled undo entry. Going to a view sets
+   // the camera (it flies; reduced motion jumps), the layers, the basemap rows and the shared window. It never sets the owner's
+   // live-source switch, so going to a view grants no network.
+   let restoreViewOnMap:((target:PlaceViewRestoreTarget)=>void)|null=null;
+   const savedPlaceViews=():Record<string,PlaceViewRecord>=>{try{return host.sceneMaterial(sceneId).research?.placeViews??{};}catch{return {};}};
+   const savePlaceView=()=>{
+    if(!scene)return;
+    const entered=window.prompt('Name this place view');
+    if(entered===null)return;
+    const problem=placeViewNameProblem(entered,savedPlaceViews());
+    if(problem){message(problem);return;}
+    const name=entered.trim();
+    const record=capturePlaceView({viewState:state.place??defaultPlaceView(),filter:state.placeFilter!,stack:state.livePlaces!.stack,window:sharedTime?.axis.window??null});
+    void host.material(sceneId,{type:'view-save',name,place:record}).then(()=>{message(`View "${name}" saved`);render(renderPlaces());},error=>message(error instanceof Error?error.message:String(error)));
+   };
+   const applyPlaceView=async(name:string)=>{
+    const saved=savedPlaceViews()[name];
+    if(!saved){message(`No place view named "${name}"`);return;}
+    const plan=restorePlaceView(saved);
+    // The layers and the basemap rows are session view state. The map takes the same stack, and its own change report keeps this host in step.
+    state.placeFilter=plan.filter;
+    state.livePlaces!.stack=plan.stack;
+    restoreViewOnMap?.({viewState:plan.viewState,stack:plan.stack});
+    if(timeCurrent())render(renderPlaces());
+    let note=`View "${name}" restored`;
+    if(sharedTime&&timeCurrent()&&!sameTimeWindow(sharedTime.axis.window,plan.window)){
+     try{sharedTime=await writeSharedTimeWindow(request,nativeReading,'place',sharedTime,plan.window);if(timeCurrent())render(renderPlaces());}
+     catch(error){note=error instanceof Error?error.message:String(error);}
+    }else if(!sharedTime&&plan.window)note='Shared time is not available for this reading, so the saved window was not restored.';
+    message(note);
+   };
+   const removePlaceView=(name:string)=>{void host.material(sceneId,{type:'view-remove',name,scope:'place'}).then(()=>{message(`View "${name}" removed`);render(renderPlaces());},error=>message(error instanceof Error?error.message:String(error)));};
    const renderPlaces=():ReactNode=>{
     const filter={...state.placeFilter!,window:sharedTime?.axis.window??null};
+    const placeViewsNow=savedPlaceViews();
     // The window is not applied to the repository: the map applies it to every frame from the same filter (T14–T16), so a
     // live window never needs a repository reload. The relation and standing filters still narrow here.
     const filteredRepository=filteredPlacesRepository(data.places,nativeReading,{...filter,window:null});
@@ -962,8 +998,8 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     const facets=<PlaceFacetsPanel reading={nativeReading} selectedRef={state.selectedPlace??null} filter={filter} onOpenSource={ref=>host.inspectSubject(ref)} sharedTime
       onFilterChange={next=>{state.placeFilter={...next,window:null};render(renderPlaces());}}
       editRequest={placeEditRequest} onError={message}/>;
-    return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:placeRecordFromViewState(state.place)}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}{timeControls(()=>render(renderPlaces()))}</div>,host.tools)}
-    <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly={!state.livePlaces!.allowed} policy={state.livePlaces!.policy} basemapStack={state.livePlaces!.stack} onBasemapStackChange={next=>{state.livePlaces!.stack=next;}} onLiveSourcesAllowedChange={allowed=>{const live=state.livePlaces!;if(allowed)live.policy.optIn('tile_refresh','show live basemap sources the owner allowed in Places');else live.policy.optOut('tile_refresh');live.allowed=allowed;render(renderPlaces());}} placeFacets={nativeReading.spatial} placeAuthoring={placeAuthoring} placeTime={placeTime} layerFilter={filter} onLayerFilterChange={next=>{state.placeFilter={...next,window:null};render(renderPlaces());}} sourceAttributions={pack.manifest.sources.map(source=>`${source.name} (${source.license})`)}
+    return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:placeRecordFromViewState(state.place)}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}{scene&&<button type="button" className="research-places-view-save" aria-label="Save view…" title="Save this place view: camera, layers, basemap and time window" onClick={savePlaceView}>Save view…</button>}{scene&&Object.keys(placeViewsNow).length>0&&<select className="research-places-view-select" aria-label="Saved place views" value="" onChange={event=>{const [op,name]=event.target.value.split('\u0000');if(op==='apply')void applyPlaceView(name);if(op==='remove')removePlaceView(name);event.target.value='';}}><option value="">Views…</option>{Object.keys(placeViewsNow).map(name=><optgroup key={name} label={name}><option value={`apply\u0000${name}`}>Go to</option><option value={`remove\u0000${name}`}>Remove</option></optgroup>)}</select>}{timeControls(()=>render(renderPlaces()))}</div>,host.tools)}
+    <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly={!state.livePlaces!.allowed} policy={state.livePlaces!.policy} basemapStack={state.livePlaces!.stack} onBasemapStackChange={next=>{state.livePlaces!.stack=next;}} onLiveSourcesAllowedChange={allowed=>{const live=state.livePlaces!;if(allowed)live.policy.optIn('tile_refresh','show live basemap sources the owner allowed in Places');else live.policy.optOut('tile_refresh');live.allowed=allowed;render(renderPlaces());}} placeFacets={nativeReading.spatial} placeAuthoring={placeAuthoring} placeTime={placeTime} onRegisterPlaceViewRestore={restore=>{restoreViewOnMap=restore;}} layerFilter={filter} onLayerFilterChange={next=>{state.placeFilter={...next,window:null};render(renderPlaces());}} sourceAttributions={pack.manifest.sources.map(source=>`${source.name} (${source.license})`)}
      initialViewState={state.place} initialSelectedGraphNodeId={state.selectedPlace}
      onViewStateChange={value=>{state.place=value;}} onSelectedGraphNodeIdChange={value=>{state.selectedPlace=value;render(renderPlaces());}}
      onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref&&node.place);if(node)host.inspectSubject(ref,{node});}}/>

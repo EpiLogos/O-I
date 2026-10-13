@@ -134,6 +134,21 @@ function disclosureFor(hasTemporalBasis: boolean, hasExpression: boolean, hasSpa
   };
 }
 
+/** The kernel's own edit action, disclosed beside a bound Expression. Shared by
+ * the register-wide and the Expression-wide readings; the output is unchanged. */
+function expressionEditActions() {
+  return [{
+    action_ref: "oi.expression.edit",
+    native_owner: "oi.cradle.kernel",
+    authority: "the owner's own grammar (oi.expression/v1 edit through the kernel expression op)",
+    summary: "Edit the register's bound Expression — create and focus scenes — through the kernel's expression op",
+    expected_effects: [
+      "scene_create applies a new named scene to the bound Expression document",
+      "the edited document returns with its revision advanced; the projection store carries it",
+    ],
+  }];
+}
+
 /** The pure wire-payload builder: one register's real wiki reading + the
  * register's standing Expression document (when one stands) → one
  * ql.techne/v1 payload. Exported for the unit seam — the provider and the
@@ -187,16 +202,7 @@ export function wikiReadingPayload(input: {
           revision: String(document.revision),
           scene_ref: scene.scene_ref,
         })),
-      actions: [{
-        action_ref: "oi.expression.edit",
-        native_owner: "oi.cradle.kernel",
-        authority: "the owner's own grammar (oi.expression/v1 edit through the kernel expression op)",
-        summary: "Edit the register's bound Expression — create and focus scenes — through the kernel's expression op",
-        expected_effects: [
-          "scene_create applies a new named scene to the bound Expression document",
-          "the edited document returns with its revision advanced; the projection store carries it",
-        ],
-      }],
+      actions: expressionEditActions(),
     } : {}),
     ...(spatial.length ? {spatial} : {}),
     disclosure: disclosureFor(hasTemporalBasis, hasExpression, spatial.length > 0),
@@ -231,8 +237,13 @@ export function wikiTechneReadingProvider(transport: KernelTransportStatus): Tec
 }
 
 
-/** The hosted engine supplies native identity only, never a filesystem scope. */
-export interface WikiSceneReadingRequest {expression_ref: string; revision: number; scene_ref: string}
+/** The hosted engine supplies native identity only, never a filesystem scope.
+ * `scope: "expression"` asks for the Expression-wide reading (every bound Scene,
+ * no per-Scene facets); absent, the reading is the one Scene's own. */
+export interface WikiSceneReadingRequest {expression_ref: string; revision: number; scene_ref: string; scope?: "expression"}
+export function readingScopeOf(value: unknown): "scene" | "expression" {
+  return (value as {scope?: unknown} | null)?.scope === "expression" ? "expression" : "scene";
+}
 function sceneRequest(value: unknown): WikiSceneReadingRequest {
   const request = value as Partial<WikiSceneReadingRequest> | null;
   if (!request || typeof request !== "object" || Array.isArray(request)
@@ -241,6 +252,7 @@ function sceneRequest(value: unknown): WikiSceneReadingRequest {
     || !Number.isSafeInteger(request.revision) || request.revision! < 1) {
     throw new Error("A native Expression revision and Scene are required for this reading");
   }
+  if (request.scope !== undefined && request.scope !== "expression") throw new Error("Unknown reading scope");
   return request as WikiSceneReadingRequest;
 }
 
@@ -346,6 +358,9 @@ export async function readWikiSceneTechne(transport: KernelTransportStatus, inpu
     }
   }
   if (wikiReadingOf(getWikiProjectionState().standings[register.key]) !== reading) throw new Error("This Scene's source reading was invalidated while it was returning");
+  // The journey's whole-Expression reading: the same owner reading, bound to
+  // every Scene of the document. Per-Scene facets stay with the Scene reading.
+  if (readingScopeOf(input) === "expression") return wikiExpressionReadingPayload({register, reading, document});
   const [declaredSpatial,declaredTemporal]=await Promise.all([sceneSpatialFacets(reading.spatial,document,scene),resolveSceneTemporalFacets(reading.temporal,document,scene)]);
   if (wikiReadingOf(getWikiProjectionState().standings[register.key]) !== reading) throw new Error("This Scene's source reading was invalidated while its facet bindings were returning");
   return wikiSceneReadingPayload({register, reading, document, sceneRef: request.scene_ref,declaredSpatial,declaredTemporal});
@@ -401,6 +416,37 @@ export function wikiSceneReadingPayload(input: {
     ...(spatial.length ? {spatial} : {}),
     ...(temporal.temporal.length?{temporal:temporal.temporal}:{}),
     ...((temporal.provenance.length||canonical?.provenance.length)?{provenance:[...temporal.provenance,...(canonical?.provenance??[])]}:{}),
+    disclosure,
+  };
+}
+
+/** Pure Expression-wide aperture: every bound Scene of the document, in document
+ * order, on the one owner reading. It carries no temporal, spatial or
+ * provenance facets: those are attributed per Scene, and a document-wide
+ * facet would wrongly belong to every Scene at once. */
+export function wikiExpressionReadingPayload(input: {
+  register: WikiRegister;
+  reading: Extract<WikiRegisterReading, {state: "ready"}>;
+  document: ExpressionDocument;
+}): unknown {
+  const {reading, document} = input;
+  const sourceRef = `central:source:${reading.wikiBasis.path}`;
+  const disclosure = disclosureFor(false, true, false);
+  for (const lens of ["timeline", "place"]) {
+    const row = disclosure.instruments.find(entry => entry.instrument === lens)!;
+    row.available = false;
+    row.reason = "the Expression-wide reading attributes facets per Scene; each Scene reading carries its own";
+  }
+  return {
+    contract: TECHNE_CONTRACT,
+    reading_ref: `ql.techne:reading:${document.expression_ref}@${document.revision}`,
+    snapshot: {revision: reading.wikiBasis.revision, basis_ref: sourceRef},
+    subject: {subject_ref: document.expression_ref, native_owner: "oi.cradle.kernel", kind: "expression", native_revision: String(document.revision)},
+    whole: {whole_ref: document.expression_ref, member_refs: [], relations: [], focus_refs: [document.expression_ref]},
+    expressions: document.scenes
+      .filter(scene => typeof scene.scene_ref === "string" && scene.scene_ref.length > 0)
+      .map(scene => ({expression_ref: document.expression_ref, revision: String(document.revision), scene_ref: scene.scene_ref})),
+    actions: expressionEditActions(),
     disclosure,
   };
 }

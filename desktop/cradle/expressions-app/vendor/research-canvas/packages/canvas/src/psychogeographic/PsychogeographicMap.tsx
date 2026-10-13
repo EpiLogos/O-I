@@ -59,6 +59,7 @@ import {
   RESET_DURATION_MS,
   withCameraDefaults,
   type PlaceFlightPlan,
+  type PlaceViewState,
 } from "./placeNavigation";
 import {
   createMaplibreRenderer,
@@ -107,6 +108,8 @@ const NO_FACETS: readonly TechnePlaceFacet[] = [];
 
 /** The docked time bar's height. The notices and disclosure stand above it. */
 const TIME_BAR_HEIGHT = 46;
+/** Lane-4 T20: a restored view's eased flight (reduced motion jumps instead). */
+const VIEW_FLIGHT_MS = 1200;
 const timeButtonStyle = {
   font: "inherit",
   color: "var(--ob-ink, #e6edf6)",
@@ -152,6 +155,12 @@ function withoutKey(record: Readonly<Record<string, string>>, key: string): Reco
   return next;
 }
 
+/** Lane-4 T20: what a named view restores on the map. The owner's live-source allowance is never part of it. */
+export interface PlaceViewRestoreTarget {
+  viewState: PlaceViewState;
+  stack: BasemapStack;
+}
+
 export interface PsychogeographicMapProps {
   /** Put genuine map controls in the host toolbar instead of beneath it. */
   toolbarContainer?: HTMLElement;
@@ -190,6 +199,8 @@ export interface PsychogeographicMapProps {
   placeAuthoring?: PlaceAuthoringHost;
   /** Lane-4 T14–T16: the reading's dated extent and the shared time window the docked time control reads and writes. Absent: no time control. */
   placeTime?: PlaceTimeHost;
+  /** Lane-4 T20: hands the host the named-view restore. The camera flies (reduced motion: it jumps) and the basemap rows are set as saved. */
+  onRegisterPlaceViewRestore?: (restore: (target: PlaceViewRestoreTarget) => void) => void;
 }
 
 /**
@@ -224,6 +235,7 @@ export function PsychogeographicMap({
   onLiveSourcesAllowedChange,
   placeAuthoring,
   placeTime,
+  onRegisterPlaceViewRestore,
 }: PsychogeographicMapProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mountedRenderer = useRef<MapSurfaceRenderer | null>(null);
@@ -234,6 +246,8 @@ export function PsychogeographicMap({
   const placeContextRef = useRef<(event: PlaceContextEvent) => void>(() => {});
   const placeDragRef = useRef<(graphNodeId: string, from: PlaceCoordinate, to: PlaceCoordinate) => void>(() => {});
   const placeAuthoringRef = useRef<PlaceAuthoringHost | undefined>(placeAuthoring);
+  // Lane-4 T20: the host's named-view restore reaches the current camera and stack through this ref.
+  const placeViewRestoreRef = useRef<(target: PlaceViewRestoreTarget) => void>(() => {});
   placeAuthoringRef.current = placeAuthoring;
   const placeMenuRef = useRef<HTMLDivElement | null>(null);
   const initialViewStateRef = useRef<MapViewState | undefined>(initialViewState);
@@ -952,6 +966,31 @@ export function PsychogeographicMap({
     setStack(next);
     onBasemapStackChange?.(next);
   };
+  // Lane-4 T20: a named view's camera and basemap rows. The camera flies, or jumps under reduced motion. The rows are
+  // set as saved through commitStack, never through grantLive: the owner's allowance is not in the target, so a restore
+  // grants no network. A live row restored on draws only once the owner has allowed live sources.
+  placeViewRestoreRef.current = (target: PlaceViewRestoreTarget) => {
+    const current = mountedRenderer.current;
+    const camera = withCameraDefaults(target.viewState);
+    setFlightNotice(null);
+    if (current) {
+      if (reducedMotion) {
+        void current.centerOn(camera.latitude, camera.longitude, camera.zoom);
+        void current.easeCamera?.({ pitch: camera.pitch, bearing: camera.bearing, durationMs: 0 });
+      } else {
+        void current.flyTo?.(camera.latitude, camera.longitude, camera.zoom, {
+          pitch: camera.pitch,
+          bearing: camera.bearing,
+          durationMs: VIEW_FLIGHT_MS,
+          easing: flightEase,
+        });
+      }
+    }
+    commitStack(target.stack);
+  };
+  useEffect(() => {
+    onRegisterPlaceViewRestore?.((target) => placeViewRestoreRef.current(target));
+  }, [onRegisterPlaceViewRestore]);
   // A live source is requested through the policy's tile_refresh gate; the call completes at once, so the indicator never sticks.
   const grantLive = (name: string): boolean => {
     if (!policy || offlineOnly) return false;

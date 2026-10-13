@@ -474,7 +474,9 @@ export async function nativeSubjectBytesRequest(ref:string):Promise<NativeSubjec
 
 /** The active native Scene is the address. The host validates its revision
  * and source projection; no shell workspace or renderer file path supplies scope. */
-export interface TechneSceneReadingRequest {expression_ref:string;revision:number;scene_ref:string;facet?:'relation-semantics'|'node-metadata'|'scene-relations'}
+export interface TechneSceneReadingRequest {expression_ref:string;revision:number;scene_ref:string;facet?:'relation-semantics'|'node-metadata'|'scene-relations';
+ /** lane-5 T1b: 'expression' asks for the whole Expression's scenes (the journey); absent is the scene-scoped reading. */
+ scope?:'expression'}
 export const readTechneReading = (request:TechneSceneReadingRequest): Promise<unknown> => call("techne-reading", {request}, 45000);
 /** Session presentation action; the host's existing DisclosureSession owns
  * its declared window. Nothing is saved into the Expression by this route. */

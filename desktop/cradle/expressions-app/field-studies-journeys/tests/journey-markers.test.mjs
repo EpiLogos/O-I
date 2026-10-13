@@ -12,8 +12,10 @@ import {
   sceneBoundaries, sceneAtJourneyTime, snapToBoundary, validateMarkers, validateLoopRegion,
   markerAdd, markerRename, markerMove, markerRemove, nextMarkerTime, prevMarkerTime,
   setLoopEdge, dragLoopEdge, moveLoopRegion, regionWrap,
+  playDurations, toPlayClock, toPlayRegion, sceneLocalRegion, loopPlayNotice,
 } from '../build/journeyMarkers.js';
 import {advanceSceneTransport} from '../build/sceneTransport.js';
+import {expressionTiming} from '../build/propertyTracks.js';
 import {compositionProperties} from '../build/kernelComposition.js';
 import {blankJourney, validateJourney} from '../build/model.js';
 
@@ -228,4 +230,102 @@ test('a loop region at exactly the minimum length survives validation after an e
   if(m.validateLoopRegion(dragged,600))kept++;
  }
  assert.equal(kept,total,'every dragged region is still a region');
+});
+
+// lane-3 E13b (review-3 #4, #10). The region is stored on the working clock (the ruler's). Saved-sequence playback runs
+// on saved durations over saved Scenes only, so an unsaved Scene has no length there. Scene B below is unsaved.
+const WORKING_WITH_GAP = [10, 4, 6];            // working clock: A [0,10), B [10,14), C [14,20)
+const gapJourney = () => ({
+  schema: 'oi.journey', version: 1, id: 'j', name: 'j', description: '', loop: true, updatedAt: '',
+  scenes: [{id: 'a', name: 'a', duration: 10, transition: 0}, {id: 'b', name: 'b', duration: 4, transition: 0}, {id: 'c', name: 'c', duration: 6, transition: 0}],
+  savedScenes: {a: {id: 'a', duration: 10}, c: {id: 'c', duration: 6}},
+});
+const gapClock = () => { const j = gapJourney(); return playDurations(j.scenes, j.savedScenes, true); };
+
+test('E13b: the saved clock gives an unsaved Scene no length; a time inside it collapses to the saved instant it sits at', () => {
+  assert.deepEqual(gapClock(), [10, 0, 6]);
+  assert.deepEqual(playDurations(gapJourney().scenes, undefined, false), WORKING_WITH_GAP, 'the working clock is each Scene');
+  const play = gapClock();
+  assert.equal(toPlayClock(WORKING_WITH_GAP, play, 10), 10, 'the start of the unsaved Scene');
+  assert.equal(toPlayClock(WORKING_WITH_GAP, play, 12.5), 10, 'inside it: the same saved instant, not a time in another Scene');
+  assert.equal(toPlayClock(WORKING_WITH_GAP, play, 16), 12, 'Scene C at its local 2');
+  assert.equal(toPlayClock(WORKING_WITH_GAP, play, 20), 16, 'the journey end is the saved end');
+  for (const t of [0, 3.3, 10, 13.9, 20]) near(toPlayClock(WORKING_WITH_GAP, WORKING_WITH_GAP, t), t, 'identical clocks map to themselves');
+});
+
+test('E13b: the play clock is the ruler clock law: toPlayClock agrees with expressionTiming on the saved clock', () => {
+  const journey = gapJourney();
+  for (let t = 0; t <= 20; t += 0.5) {
+    const {sceneIndex, local} = sceneAtJourneyTime(WORKING_WITH_GAP, t);
+    const saved = journey.savedScenes[journey.scenes[sceneIndex].id]?.duration ?? 0;
+    near(toPlayClock(WORKING_WITH_GAP, gapClock(), t), expressionTiming(journey, sceneIndex, Math.min(local, saved), true).time, `t=${t}`);
+  }
+});
+
+test('E13b: scene lookup skips zero-length (unsaved) Scenes and stops at the last Scene with length', () => {
+  assert.deepEqual(sceneAtJourneyTime([10, 0, 6], 10), {sceneIndex: 2, local: 0}, 'a boundary over an unsaved Scene starts the next saved one');
+  assert.deepEqual(sceneAtJourneyTime([10, 0, 6], 99), {sceneIndex: 2, local: 6}, 'past the end is the last saved Scene, at its length');
+  assert.deepEqual(sceneAtJourneyTime([10, 0], 10), {sceneIndex: 0, local: 10}, 'never an unsaved last Scene');
+});
+
+test('E13b: a loop whose in point lies in an unsaved Scene wraps on the saved clock into a saved Scene, without stalling', () => {
+  const journey = gapJourney();
+  const common = {playing: true, savedSequence: true, libraryOpen: false, hidden: false, propertyRecording: false, editing: false};
+  // in = working 12 (inside B) -> saved 10; out = working 16 (C at local 2) -> saved 12. The loop plays saved [10, 12).
+  const wrapped = advanceSceneTransport(journey, 2, 1.9, 0.25, {...common, loopRegion: {from: 12, to: 16}});
+  assert.equal(wrapped.advance_to_scene_index, null, 'the wrap stays in C, a saved Scene');
+  near(wrapped.seek_local_seconds, 0.15, 'in + the 0.15 s overshoot, inside C');
+  assert.equal(wrapped.completed, false);
+});
+
+test('E13b: an out point inside an unsaved Scene wraps at the end of the saved Scene before it', () => {
+  const journey = gapJourney();
+  const common = {playing: true, savedSequence: true, libraryOpen: false, hidden: false, propertyRecording: false, editing: false};
+  // out = working 12 (inside B) -> saved 10, the end of A. The loop plays saved [4, 10).
+  const wrapped = advanceSceneTransport(journey, 0, 9.9, 0.25, {...common, loopRegion: {from: 4, to: 12}});
+  assert.equal(wrapped.advance_to_scene_index, null, 'back into A');
+  near(wrapped.seek_local_seconds, 4.15, 'in + the overshoot, in A');
+});
+
+test('E13b: a loop that lies entirely in unsaved Scenes has nothing to loop; saved playback runs on, never stalls', () => {
+  const journey = gapJourney();
+  const common = {playing: true, savedSequence: true, libraryOpen: false, hidden: false, propertyRecording: false, editing: false};
+  assert.equal(toPlayRegion(WORKING_WITH_GAP, gapClock(), {from: 11, to: 13}), undefined);
+  const next = advanceSceneTransport(journey, 0, 9.9, 0.25, {...common, loopRegion: {from: 11, to: 13}});
+  assert.equal(next.advance_to_scene_index, 2, 'A ends and the saved sequence goes on to C');
+  assert.equal(next.unavailable_reason, null);
+});
+
+test('E13b: a marker in an unsaved Scene is reached at the saved instant, which is the Scene after the gap', () => {
+  const journey = gapJourney();
+  const play = gapClock();
+  const {sceneIndex, local} = sceneAtJourneyTime(play, toPlayClock(WORKING_WITH_GAP, play, 12.5));
+  assert.equal(journey.scenes[sceneIndex].id, 'c');
+  assert.equal(local, 0);
+});
+
+test('E13b: Space (working-scene play) loops a brace that lies inside the Scene it plays, and only that', () => {
+  const journey = {
+    schema: 'oi.journey', version: 1, id: 'j', name: 'j', description: '', loop: true, updatedAt: '',
+    scenes: DURATIONS.map((duration, i) => ({id: 's' + i, name: 's' + i, duration, transition: 0})),
+    savedScenes: {},
+  };
+  const common = {playing: true, savedSequence: false, libraryOpen: false, hidden: false, propertyRecording: false, editing: false};
+  // scene 1 is working [10,14); the brace [11,13) is its local [1,3)
+  assert.deepEqual(sceneLocalRegion(DURATIONS, 1, {from: 11, to: 13}), {from: 1, to: 3});
+  assert.equal(sceneLocalRegion(DURATIONS, 1, {from: 8, to: 13}), undefined, 'a brace reaching out of the Scene is not a Scene loop');
+  const wrapped = advanceSceneTransport(journey, 1, 2.9, 0.25, {...common, loopRegion: {from: 11, to: 13}});
+  assert.equal(wrapped.advance_to_scene_index, null, 'the Scene keeps playing; no change of Scene');
+  near(wrapped.elapsed_seconds, 1.15, 'wraps to the in point, carrying the overshoot');
+  assert.equal(wrapped.completed, false);
+  const outside = advanceSceneTransport(journey, 1, 3.9, 0.25, {...common, loopRegion: {from: 11, to: 15}});
+  assert.equal(outside.completed, true, 'a brace across the Scene does not loop Space play: the Scene plays to its end');
+});
+
+test('E13b: the author is told when a loop does not play as drawn in saved scenes', () => {
+  const play = gapClock();
+  assert.equal(loopPlayNotice(WORKING_WITH_GAP, play, {from: 2, to: 9}), null, 'entirely in saved scenes');
+  assert.match(loopPlayNotice(WORKING_WITH_GAP, play, {from: 12, to: 16}), /unsaved scene/, 'an edge in an unsaved Scene');
+  assert.match(loopPlayNotice(WORKING_WITH_GAP, play, {from: 11, to: 13}), /no length in the saved scenes/, 'no length to loop');
+  assert.equal(loopPlayNotice(WORKING_WITH_GAP, WORKING_WITH_GAP, {from: 11, to: 13}), null, 'the working clock needs no notice');
 });

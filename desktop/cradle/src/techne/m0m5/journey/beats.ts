@@ -62,9 +62,11 @@ export interface JourneyModel {
   unavailableReason?: string;
 }
 
-/** The scene_ref tail: display text derived from the ref itself. */
+/** The scene_ref tail: display text derived from the ref itself. Native refs
+ * are ":"-segmented (`oi.expression:<id>:scene:<name>`), so the title is the last
+ * ":"-segment; a "/"-segmented ref keeps its last "/"-segment. */
 export function sceneTitle(sceneRef: string): string {
-  const tail = sceneRef.slice(sceneRef.lastIndexOf("/") + 1);
+  const tail = sceneRef.slice(Math.max(sceneRef.lastIndexOf(":"), sceneRef.lastIndexOf("/")) + 1);
   return tail.length > 0 ? tail : sceneRef;
 }
 

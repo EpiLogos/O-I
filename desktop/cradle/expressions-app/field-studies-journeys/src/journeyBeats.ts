@@ -32,7 +32,9 @@ export interface JourneyFacetChip {
 }
 
 /** One beat card. `scene_ref` is the identity; `onBasis` says the native document
- * holds this scene at the revision the reading disclosed. */
+ * holds this scene at the revision the reading disclosed. `chipsReason` is present
+ * exactly when the card's own facets could not be read: the chips are then empty
+ * and the reason is the owner's words, never a guess. */
 export interface JourneyBeatCard {
   scene_ref: string;
   expression_ref: string;
@@ -40,6 +42,7 @@ export interface JourneyBeatCard {
   title: string;
   onBasis: boolean;
   chips: JourneyFacetChip[];
+  chipsReason?: string;
 }
 
 export interface JourneyBeatView {
@@ -116,10 +119,28 @@ function cardOf(beat: JourneyBeat, doc: JourneyKernelDocument): JourneyBeatCard 
 
 /** The beat surface's model: one card per scene-bearing binding, in binding
  * order. A reading with no scene-bearing binding yields no cards and the
- * disclosure's own reason. Nothing is invented. */
-export function journeyBeatView(reading: TechneReading, doc: JourneyKernelDocument): JourneyBeatView {
+ * disclosure's own reason. Nothing is invented.
+ *
+ * `sceneFrames` (optional) carries each Scene's OWN reading, keyed by scene_ref,
+ * or the owner's reason it could not be read. The Expression-wide reading names
+ * every Scene but attributes no facets to any of them, so a card's chips come
+ * only from its own Scene's reading. Without an entry the card's chips are the
+ * reading's own (empty for the Expression-wide reading). */
+export function journeyBeatView(
+  reading: TechneReading,
+  doc: JourneyKernelDocument,
+  sceneFrames?: ReadonlyMap<string, TechneReading | string>,
+): JourneyBeatView {
   const model = beats(reading);
-  const cards = model.beats.map((beat) => cardOf(beat, doc));
+  const cards = model.beats.map((beat): JourneyBeatCard => {
+    const card = cardOf(beat, doc);
+    const frame = sceneFrames?.get(beat.scene_ref);
+    if (frame === undefined) return card;
+    if (typeof frame === 'string') return {...card, chips: [], chipsReason: frame};
+    const own = beats(frame).beats.find((row) => row.scene_ref === beat.scene_ref && row.expression_ref === beat.expression_ref);
+    if (!own) return {...card, chips: [], chipsReason: 'the Scene reading names no beat for this Scene'};
+    return {...card, chips: chipsOf(own.frame)};
+  });
   if (cards.length) return {cards};
   return {cards, unavailableReason: model.unavailableReason ?? 'the reading discloses no scene beats'};
 }
