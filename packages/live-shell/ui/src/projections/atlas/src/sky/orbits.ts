@@ -11,6 +11,7 @@
 // cards of its sephira's number with the Atu the field gives it. A card sways a little about its place and breathes in
 // its radius; the rank ring turns slowly, since nothing on it is a longitude.
 import { el } from '../ui/dom';
+import { hostOrigin, hostSize } from '../ui/hostSize';
 import type { SkyLayer } from './layer';
 import type { BodyKey } from '../types/sky';
 import { decanOf, imageUrl, type CardPlate, type RingCard } from './cards';
@@ -210,11 +211,13 @@ export class PlanetOrbits {
     // the line home: from the planet toward where the Earth stands (off screen, it runs to the edge)
     const earth = layer.screenDisc('terra');
     // the open panel is the screen's edge: a side panel on a desktop, a bottom sheet on a phone
-    let W = this.root.clientWidth || window.innerWidth, H = this.root.clientHeight || window.innerHeight;
+    let W = this.root.clientWidth || hostSize(this.root).w, H = this.root.clientHeight || hostSize(this.root).h;
     const panel = document.querySelector<HTMLElement>('.lens-panel:not([hidden])')?.getBoundingClientRect();
     if (panel && panel.width > 0) {
-      if (panel.left > W * 0.35) W = panel.left - 12;
-      else if (panel.top > H * 0.25) H = panel.top + 96; // (the edge math below keeps 120px off the bottom)
+      // the panel's client box, taken into the pane (W and H are the pane's)
+      const o = hostOrigin(this.root);
+      if (panel.left - o.x > W * 0.35) W = panel.left - o.x - 12;
+      else if (panel.top - o.y > H * 0.25) H = panel.top - o.y + 96; // (the edge math below keeps 120px off the bottom)
     }
     let ex = earth ? earth.x : cx - W, ey = earth ? earth.y : cy + H;
     const dx = ex - cx, dy = ey - cy, len = Math.hypot(dx, dy) || 1;

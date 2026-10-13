@@ -10,13 +10,39 @@ import './wikiConstruction.css';
 const OpenFacts=createContext<((reference:string,onSaved?:()=>void)=>void)|undefined>(undefined);
 const message=(error:unknown)=>error instanceof Error?error.message:String(error);
 
-/** Lane-4 T17b: the route a constellation open hands the time/place editor: the map's draft when the map offered one.
- * Held in memory until that editor opens; never saved. A later constellation open replaces it. */
-const constellationRoutes=new Map<string,{draft?:PlaceDraft}>();
+/** Lane-4 T17b/T17c: the route a constellation open hands the time/place editor: the map's draft when the map offered one.
+ * It stays on this module map rather than the construction frame: the frame is layout state persisted to localStorage
+ * (surface/persist.ts), so a draft there would survive reloads and could be consumed only by a layout write outside the editor.
+ * A route is keyed by its subject, expires, and is consumed only after the owner's read of that subject succeeds, so a
+ * failed read keeps it for the retry. Never saved. A later open of the same subject replaces it. */
+export const CONSTELLATION_ROUTE_TTL_MS=10*60*1000;
+export interface ConstellationRoute {subject:string;draft?:PlaceDraft;offered_at:number}
+const constellationRoutes=new Map<string,ConstellationRoute>();
 /** The constellation a time/place editor opened through, so its save answer can return to whoever opened it. */
 export interface PlaceRoute {frame_ref:string;place_ref?:string}
-export function offerConstellationRoute(frameRef:string,draft?:PlaceDraft):void{constellationRoutes.set(frameRef,{draft});}
-export function takeConstellationRoute(frameRef:string):{draft?:PlaceDraft}|undefined{const offered=constellationRoutes.get(frameRef);constellationRoutes.delete(frameRef);return offered;}
+const isFresh=(route:ConstellationRoute,now:number)=>now-route.offered_at<=CONSTELLATION_ROUTE_TTL_MS;
+export function offerConstellationRoute(frameRef:string,draft?:PlaceDraft,now:number=Date.now()):void{
+ for(const [subject,route] of constellationRoutes)if(!isFresh(route,now))constellationRoutes.delete(subject);
+ constellationRoutes.set(frameRef,{subject:frameRef,draft:draft?structuredClone(draft):undefined,offered_at:now});
+}
+/** The fresh route offered for exactly this subject, or nothing. Expired entries are released here. Never consumes. */
+export function peekConstellationRoute(subject:string,now:number=Date.now()):ConstellationRoute|undefined{
+ const route=constellationRoutes.get(subject);
+ if(!route)return undefined;
+ if(isFresh(route,now))return route;
+ constellationRoutes.delete(subject);
+ return undefined;
+}
+/** The route a successful owner read of `basisRef` answers: only the route offered for that same subject, while fresh.
+ * A basis of any other subject takes nothing, so a draft never reaches a different constellation or node. Pure of the map's writes. */
+export function routeReadFor(subject:string,basisRef:string,now:number=Date.now()):ConstellationRoute|undefined{
+ const route=peekConstellationRoute(subject,now);
+ return route&&route.subject===basisRef?route:undefined;
+}
+/** Consumed only after the owner has read the route's own subject. */
+export function consumeConstellationRoute(subject:string):void{constellationRoutes.delete(subject);}
+/** The subject's editor left: its unconsumed route is released and can never apply later. */
+export function dropConstellationRoute(subject:string):void{constellationRoutes.delete(subject);}
 const coordinateLabel=(lat:number,lon:number)=>`${lat.toFixed(5)}, ${lon.toFixed(5)}`;
 /** The place facet's geometry and precision start from the map's draft. The source basis is left empty: it stays required. Pure. */
 export function applyPlaceDraft(values:TimePlaceValues,draft:PlaceDraft):{values:TimePlaceValues;notice:string}{
@@ -36,9 +62,26 @@ export function applyPlaceDraft(values:TimePlaceValues,draft:PlaceDraft):{values
  const fact={place_ref:draft.place_ref??newRef('wiki:place'),precision:draft.precision,identity:{names:[{name:''}]},geometry:{type:'point',coordinates:at}} as TechnePlaceFacet;
  return {values:{...values,places:[...places,fact]},notice};
 }
-const reportRoute=(route:PlaceRoute|undefined,outcome:{kind:'saved'}|{kind:'refused';reason:string})=>{if(route)window.dispatchEvent(new CustomEvent('oi:constellation-result',{detail:{target:route,...outcome}}));};
-export function WikiFactsButton({reference,disabled=false,onSaved}:{reference:string;disabled?:boolean;onSaved?:()=>void}){
+const reportRoute=(route:PlaceRoute|undefined,outcome:{kind:'saved'}|{kind:'refused';reason:string})=>{if(route&&typeof window!=='undefined')window.dispatchEvent(new CustomEvent('oi:constellation-result',{detail:{target:route,...outcome}}));};
+/** A routed save answers the map exactly once: a refusal when the save did not complete, a saved answer when it did.
+ * A failure after the owner has saved (the local confirm) reports to the editor only, never a second answer. */
+export async function settleRoutedSave<T>(route:PlaceRoute|undefined,save:()=>Promise<T>,onSaved:(value:T)=>void,onError:(reason:string)=>void):Promise<void>{
+ let value:T;
+ try{value=await save();}
+ catch(cause){const reason=message(cause);reportRoute(route,{kind:'refused',reason});onError(reason);return;}
+ reportRoute(route,{kind:'saved'});
+ try{onSaved(value);}catch(cause){onError(message(cause));}
+}
+/** `routed` is the construction request a map route opened the panel with. That request auto-opens this editor once,
+ * when the panel is idle, and only for the subject the route names (the lookup is by the button's own reference). */
+export function WikiFactsButton({reference,disabled=false,onSaved,routed}:{reference:string;disabled?:boolean;onSaved?:()=>void;routed?:string}){
  const open=useContext(OpenFacts);
+ const autoOpened=useRef<string>();
+ useEffect(()=>{
+  if(!routed||disabled||!open||autoOpened.current===routed)return;
+  autoOpened.current=routed;
+  if(peekConstellationRoute(reference))open(reference,onSaved);
+ },[routed,disabled,open,reference]);
  return open?<button type="button" className="oi-action" disabled={disabled} onClick={()=>open(reference,onSaved)}>Edit time and place</button>:null;
 }
 /** The existing knowledge surface retains drafts. Closing this panel only
@@ -50,19 +93,29 @@ export function WikiFactsProvider({transport,project,checkpoints,onCheckpoint,on
  const panel=useRef<HTMLElement|null>(null);
  const held=selected?checkpoints[selected]:undefined;
  useEffect(()=>{if(selected)panel.current?.querySelector<HTMLButtonElement>('[data-facts-close]')?.focus();},[selected]);
- useEffect(()=>()=>{ticket.current++;},[]);
- const close=()=>{ticket.current++;target.current=undefined;route.current=undefined;setSelected(undefined);setBusy('');setObserved(undefined);returnFocus.current?.isConnected&&returnFocus.current.focus();};
+ // The frame leaving releases its unconsumed map route: it is never applied after the editor is gone.
+ useEffect(()=>()=>{ticket.current++;if(target.current)dropConstellationRoute(target.current);},[]);
+ const close=()=>{ticket.current++;if(target.current)dropConstellationRoute(target.current);target.current=undefined;route.current=undefined;setSelected(undefined);setBusy('');setObserved(undefined);returnFocus.current?.isConnected&&returnFocus.current.focus();};
  const open=async(reference:string,callback?:()=>void)=>{
   const id=++ticket.current;target.current=reference;returnFocus.current=document.activeElement as HTMLElement|null;notify.current=callback;setError('');setNotice('');setObserved(undefined);
-  const offeredRoute=takeConstellationRoute(reference),offered=offeredRoute?.draft;
-  route.current=offeredRoute?{frame_ref:reference,place_ref:offered?.place_ref}:undefined;
+  route.current=undefined;
   const retained=Object.entries(current.current).find(([,item])=>item.basis.target.ref===reference);
   if(retained){
+   // Nothing is read here, so this subject's route is answered now; a withheld draft keeps its route for a later open.
+   const live=routeReadFor(reference,reference),offered=live?.draft;
    if(offered&&retained[1].pending)setNotice('A pending time and place save is retained, so the map draft was not applied. Inspect it first.');
-   else if(offered){const seeded=applyPlaceDraft(retained[1].draft,offered);onCheckpoint(retained[0],{...retained[1],draft:structuredClone(seeded.values)});setNotice(seeded.notice);}
+   else{
+    if(offered){const seeded=applyPlaceDraft(retained[1].draft,offered);onCheckpoint(retained[0],{...retained[1],draft:structuredClone(seeded.values)});setNotice(seeded.notice);}
+    if(live){consumeConstellationRoute(reference);route.current={frame_ref:reference,place_ref:offered?.place_ref};}
+   }
    setBusy('');setSelected(retained[0]);return;}
   setBusy('Reading native facts…');setSelected('loading');
-  try{const basis=await inspectFacts(transport,project,reference);if(id!==ticket.current)return;const key=factsKey(basis.target);const seeded=offered?applyPlaceDraft(basis.values,offered):undefined;onCheckpoint(key,{basis,draft:structuredClone(seeded?seeded.values:basis.values)});if(seeded)setNotice(seeded.notice);setSelected(key);}
+  try{const basis=await inspectFacts(transport,project,reference);if(id!==ticket.current)return;const key=factsKey(basis.target);
+   // A failed read never reaches this line, so its route and draft stay for the retry. A read of another subject takes nothing.
+   const live=routeReadFor(reference,basis.target.ref),offered=live?.draft;const seeded=offered?applyPlaceDraft(basis.values,offered):undefined;
+   onCheckpoint(key,{basis,draft:structuredClone(seeded?seeded.values:basis.values)});
+   if(live){consumeConstellationRoute(reference);route.current={frame_ref:reference,place_ref:offered?.place_ref};}
+   if(seeded)setNotice(seeded.notice);setSelected(key);}
   catch(cause){if(id===ticket.current)setError(message(cause));}
   finally{if(id===ticket.current)setBusy('');}
  };
@@ -71,10 +124,11 @@ export function WikiFactsProvider({transport,project,checkpoints,onCheckpoint,on
   if(!selected)return;onCheckpoint(selected,{basis,draft:structuredClone(basis.values)});setObserved(undefined);setNotice(`Saved and read back · revision ${basis.revision}.`);onSaved();notify.current?.();
  };
  const save=async()=>{
-  if(!held||!selected)return;const id=++ticket.current,routed=route.current;setBusy('Saving native facts…');setError('');setNotice('');
-  try{const pending=structuredClone(prepareFacts(held)),checkpoint={...held,pending};onCheckpoint(selected,checkpoint);const basis=await saveFacts(transport,project,checkpoint);if(id===ticket.current)confirm(basis);reportRoute(routed,{kind:'saved'});}
-  catch(cause){reportRoute(routed,{kind:'refused',reason:message(cause)});if(id===ticket.current)setError(message(cause));}
-  finally{if(id===ticket.current)setBusy('');}
+  if(!held||!selected)return;const id=++ticket.current,routed=route.current,key=selected;setBusy('Saving native facts…');setError('');setNotice('');
+  await settleRoutedSave(routed,async()=>{const pending=structuredClone(prepareFacts(held)),checkpoint={...held,pending};onCheckpoint(key,checkpoint);return saveFacts(transport,project,checkpoint);},
+   basis=>{if(id===ticket.current)confirm(basis);},
+   reason=>{if(id===ticket.current)setError(reason);});
+  if(id===ticket.current)setBusy('');
  };
  const inspect=async()=>{
   if(!held)return;const id=++ticket.current;setBusy('Reading saved state…');setError('');

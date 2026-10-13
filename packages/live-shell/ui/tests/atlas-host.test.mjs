@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {readFile} from 'node:fs/promises'
+import {readFile, readdir} from 'node:fs/promises'
 import {register} from 'node:module'
 import {createElement} from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
@@ -144,4 +144,74 @@ test('the panel loads the atlas lazily, writes no storage of its own, and reimpl
   assert.match(code, /import\('\.\/mount'\)/, 'the atlas loads on first view')
   assert.match(code, /mounted\.ctl\.toggleMode\(\)/, 'the Earth ⇄ Graph switch is the controller\'s own toggle')
   assert.doesNotMatch(code, /new GlobeEngine|new Controller|\.navigate\(/, 'nothing of the atlas is reimplemented here')
+})
+
+// T-ATLAS-HOST-b: inside the shell the atlas is a pane, and its fixed overlays are contained by it. Its sizes and its
+// client-point placements are pane-relative. These are source checks on the port, plus the pure placement maths.
+const atlasSrc = new URL('../src/projections/atlas/src/', import.meta.url)
+async function filesUnder(dir) {
+  const out = []
+  for (const entry of await readdir(dir, {withFileTypes: true})) {
+    const url = new URL(entry.name + (entry.isDirectory() ? '/' : ''), dir)
+    if (entry.isDirectory()) out.push(...await filesUnder(url))
+    else out.push(url)
+  }
+  return out
+}
+
+test('the atlas stylesheets size against the pane: no vw or vh remains, and the pane is a size container', async () => {
+  const styles = (await filesUnder(new URL('style/', atlasSrc))).filter(url => url.pathname.endsWith('.css'))
+  assert.ok(styles.length >= 8, 'the atlas stylesheets are read')
+  for (const url of styles) {
+    const code = (await readFile(url, 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '')
+    assert.deepEqual(code.match(/\d(?:d?vw|d?vh)\b/g) ?? [], [], `${url.pathname.split('/').pop()} sizes against the window`)
+  }
+  const host = await readFile(new URL('../src/projections/atlas/atlasHost.css', import.meta.url), 'utf8')
+  assert.match(host, /\.atlas-host \{[^}]*contain: layout paint;[^}]*container-type: size;/, 'the pane contains its overlays and is their size container')
+})
+
+test('no atlas module reads the window size outside hostSize.ts: the pane is the atlas\'s viewport', async () => {
+  const sources = (await filesUnder(atlasSrc)).filter(url => /\.tsx?$/.test(url.pathname))
+  const readers = []
+  for (const url of sources) {
+    if (/window\.inner(Width|Height)/.test(await readFile(url, 'utf8'))) readers.push(url.pathname.split('/atlas/src/')[1])
+  }
+  assert.deepEqual(readers.filter(name => name !== 'ui/hostSize.ts'), [], 'every window-size read is the hostSize fallback')
+  assert.deepEqual(readers, ['ui/hostSize.ts'], 'hostSize.ts is the one reader, and it is the standalone fallback')
+})
+
+test('the hover label is placed from the pane origin: its client point is taken into .atlas-host, and no window is read', async () => {
+  const src = await readFile(new URL('ui/hover-label.ts', atlasSrc), 'utf8')
+  assert.match(src, /import \{[^}]*\bhostOrigin\b[^}]*\} from '\.\/hostSize'/, 'the origin comes from the pane helper')
+  assert.match(src, /paneLabelPosition\(x, y, hostOrigin\(this\.root\), hostSize\(this\.root\), this\.w\)/, 'the placement is the pane-relative one')
+  assert.doesNotMatch(src, /window\./, 'the label reads no window geometry')
+})
+
+test('the hover label is placed in pane coordinates, kept inside the pane; standalone it is the ported formula', async () => {
+  const {paneLabelPosition} = await import('../src/projections/atlas/src/ui/hostSize.ts')
+  const pane = {x: 300, y: 40}
+  const size = {w: 700, h: 500}
+  assert.deepEqual(paneLabelPosition(600, 200, pane, size, 160), {x: 316, y: 126}, 'a pointer in the pane: 16px right, 34px above, in pane coordinates')
+  assert.deepEqual(paneLabelPosition(980, 200, pane, size, 160), {x: 528, y: 126}, 'the right edge keeps 12px inside the pane')
+  assert.deepEqual(paneLabelPosition(600, 50, pane, size, 160), {x: 316, y: 12}, 'the top keeps 12px inside the pane')
+  assert.deepEqual(paneLabelPosition(600, 200, {x: 0, y: 0}, {w: 1440, h: 900}, 160), {x: 616, y: 166}, 'standalone (origin 0,0, window size): the ported formula')
+})
+
+test('hostSize reads the pane when one contains the atlas, and the window when none does', async () => {
+  const {hostSize, hostOrigin} = await import('../src/projections/atlas/src/ui/hostSize.ts')
+  const saved = {document: globalThis.document, window: globalThis.window}
+  const pane = {clientWidth: 700, clientHeight: 500, getBoundingClientRect: () => ({left: 300, top: 40}), closest: () => pane}
+  try {
+    globalThis.document = {querySelector: selector => (selector === '.atlas-host' ? pane : null)}
+    globalThis.window = {innerWidth: 1440, innerHeight: 900}
+    assert.deepEqual(hostSize(), {w: 700, h: 500}, 'hosted: the pane\'s client box')
+    assert.deepEqual(hostOrigin(), {x: 300, y: 40}, 'hosted: the pane\'s top-left in client coordinates')
+    assert.deepEqual(hostSize({closest: () => pane}), {w: 700, h: 500}, 'an element inside the pane finds it by closest')
+    globalThis.document = {querySelector: () => null}
+    assert.deepEqual(hostSize(), {w: 1440, h: 900}, 'standalone: the window')
+    assert.deepEqual(hostOrigin(), {x: 0, y: 0}, 'standalone: no origin')
+  } finally {
+    globalThis.document = saved.document
+    globalThis.window = saved.window
+  }
 })

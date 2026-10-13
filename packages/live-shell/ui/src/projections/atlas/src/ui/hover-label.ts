@@ -1,4 +1,5 @@
 import { el } from './dom';
+import { hostOrigin, hostSize, paneLabelPosition } from './hostSize';
 
 /** One quiet line near the cursor: name + era. */
 export class HoverLabel {
@@ -21,9 +22,9 @@ export class HoverLabel {
       this.w = 0;
     }
     if (!this.w) this.w = this.root.offsetWidth || 160;
-    const px = Math.min(Math.max(12, x + 16), window.innerWidth - this.w - 12);
-    const py = Math.max(12, y - 34);
-    this.root.style.transform = `translate3d(${px}px, ${py}px, 0)`;
+    // the client point is taken into the atlas pane (`.atlas-host` contains this fixed label): its origin and size
+    const p = paneLabelPosition(x, y, hostOrigin(this.root), hostSize(this.root), this.w);
+    this.root.style.transform = `translate3d(${p.x}px, ${p.y}px, 0)`;
     this.root.classList.add('on');
   }
 

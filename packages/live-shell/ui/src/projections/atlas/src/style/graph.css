@@ -38,7 +38,7 @@ body.mode-graph #globe { pointer-events: none; }
 .gv-tools [hidden] { display: none !important; }
 /* the manifest card hangs from the right edge: the settings keep to its left, and under the reading column they are not there */
 @media (min-width: 761px) {
-  body[data-state="manifest"] .gv-tools { right: calc(34px + min(410px, 40vw) + 16px); }
+  body[data-state="manifest"] .gv-tools { right: calc(34px + min(410px, 40cqw) + 16px); }
 }
 body.deep-open .gv-tools { visibility: hidden; pointer-events: none; }
 .gvt-depth { display: inline-flex; align-items: center; gap: 9px; }
@@ -52,8 +52,8 @@ body.deep-open .gv-tools { visibility: hidden; pointer-events: none; }
 .gvt-link { position: relative; }
 .gvt-link::before { content: ''; position: absolute; inset: -16px -14px; }
 .gvt-panel {
-  position: absolute; top: 29px; right: 0; width: 218px; max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 140px); overflow-y: auto; overscroll-behavior: contain;
+  position: absolute; top: 29px; right: 0; width: 218px; max-width: calc(100cqw - 32px);
+  max-height: calc(100cqh - 140px); overflow-y: auto; overscroll-behavior: contain;
   padding: 17px; border: 1px solid var(--hair); border-radius: 14px;
   background: var(--glass); backdrop-filter: blur(20px) saturate(1.15); box-shadow: 0 20px 60px rgb(0 0 0 / 0.4);
   display: grid; gap: 17px; letter-spacing: 0.03em; color: var(--ink-2);

@@ -7,6 +7,7 @@ import type { Subject } from '../data/model';
 import type { GlobeEngine, ScreenPoint } from '../globe/engine';
 import { Vector3 } from 'three';
 import { el, plate } from './dom';
+import { hostSize } from './hostSize';
 
 export type FloatTarget =
   | { type: 'occurrence'; occIdx: number }
@@ -179,8 +180,7 @@ export class Floats {
     this.clear();
     this.anchor = opts?.anchor ?? 'surface';
     // scale with the viewport so five plates still fit a small window
-    const vw = typeof window !== 'undefined' ? window.innerWidth : 1440;
-    const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
+    const { w: vw, h: vh } = hostSize();
     const k = Math.max(0.56, Math.min(1, Math.min(vw / 1440, vh / 900)));
     const maxW = narrow ? 112 : Math.round(214 * k);
     const maxH = narrow ? 140 : Math.round(262 * k);
