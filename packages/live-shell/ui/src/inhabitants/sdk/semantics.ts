@@ -206,6 +206,90 @@ export function liveExemplarFor(semantic: LiveSemantic): string {
 }
 
 // ---------------------------------------------------------------------------
+// the holders (lock §4.8, §4.9; ticket T-HOLDERS, lead's design 13 Oct 2026).
+// Every face names the device that holds it (`heldBy`); the gate checks the
+// naming. A holder is a device the instrument frame presents: a Studio section
+// (the Expressions device chain, in the mockup's order), the Clip detail, or
+// one of the six Technē instruments. Holders are declaration only: no face
+// changes behaviour because it is held.
+
+export interface HolderDeclaration {
+  readonly id: string
+  /** The plain name the holder presents as (lock §9.4: the name, never the M′ address). */
+  readonly title: string
+  readonly liveSemantic: LiveSemantic
+  /** A Technē instrument's M′ address, kept as provenance and never as its name. */
+  readonly provenance?: string
+  /** The faces this holder holds, as `family/face`. Declared for the Studio
+   * sections and the Clip detail; the Expressions faces' `heldBy` derives from
+   * it (holdersOfFace). Technē and atlas/QL faces declare their own `heldBy`. */
+  readonly holds?: readonly string[]
+}
+
+/** The Expressions device chain: the Studio's eight sections, in the mockup's
+ * order (world-shell-mockup.html, the Expressions Studio block). Effects are
+ * audio-fx; Body 3:3 is the physics instrument's modulation chain. */
+export const STUDIO_SECTIONS: readonly HolderDeclaration[] = [
+  {id: 'studio:tools', title: 'Tools', liveSemantic: 'device-audio-fx', holds: ['expressions/pointer']},
+  {id: 'studio:selected', title: 'Selected', liveSemantic: 'device-audio-fx', holds: ['expressions/force', 'expressions/sound', 'expressions/meaning']},
+  {id: 'studio:formation', title: 'Formation', liveSemantic: 'device-audio-fx', holds: ['expressions/formation', 'expressions/arrange', 'expressions/blueprint', 'expressions/text']},
+  {id: 'studio:material', title: 'Material', liveSemantic: 'device-audio-fx', holds: ['expressions/colour', 'expressions/ink', 'expressions/depth', 'expressions/medium']},
+  {id: 'studio:motion', title: 'Motion', liveSemantic: 'device-audio-fx', holds: ['expressions/relational', 'expressions/contacts', 'expressions/morph', 'expressions/focus']},
+  {id: 'studio:body', title: 'Body · 3:3', provenance: 'M1+M2+M3', liveSemantic: 'device-instrument', holds: ['expressions/physics', 'expressions/glyph', 'expressions/body', 'expressions/resonance', 'quaternal-logic/torus', 'quaternal-logic/ql-instrument']},
+  {id: 'studio:nara-m4', title: 'Nara · M4', liveSemantic: 'modulation'},
+  {id: 'studio:capture', title: 'Capture', liveSemantic: 'capture'},
+]
+
+/** The Clip detail: the selected scene is the clip, so its Clip detail holds the
+ * Expressions scene and its automation (lock §9.1, §9.4). */
+export const DETAIL_CLIP_HOLDER: HolderDeclaration = {
+  id: 'detail:clip', title: 'Clip detail', liveSemantic: 'detail-clip', holds: ['expressions/scene', 'expressions/automation'],
+}
+
+/** The six Technē instruments: each an instrument, its plain name kept beside
+ * its M′ provenance (lock §2.5, §4.9). */
+export const TECHNE_INSTRUMENTS: readonly HolderDeclaration[] = [
+  {id: 'techne:m0', title: 'Project', provenance: 'M0′', liveSemantic: 'device-instrument'},
+  {id: 'techne:m1', title: 'Canvas', provenance: 'M1′', liveSemantic: 'device-instrument'},
+  {id: 'techne:m2', title: 'Timeline', provenance: 'M2′', liveSemantic: 'device-instrument'},
+  {id: 'techne:m3', title: 'Journey', provenance: 'M3′', liveSemantic: 'device-instrument'},
+  {id: 'techne:m4', title: 'World', provenance: 'M4′', liveSemantic: 'device-instrument'},
+  {id: 'techne:m5', title: 'Palace', provenance: 'M5′', liveSemantic: 'device-instrument'},
+]
+
+/** Every known holder: the Studio sections, the Clip detail, the Technē instruments. */
+export const HOLDERS: readonly HolderDeclaration[] = [...STUDIO_SECTIONS, DETAIL_CLIP_HOLDER, ...TECHNE_INSTRUMENTS]
+
+export function isHolder(candidate: unknown): boolean {
+  return typeof candidate === 'string' && HOLDERS.some(holder => holder.id === candidate)
+}
+
+/** The holders a face declares through the Studio table and the Clip detail
+ * (`family/face`). An Expressions face's `heldBy` is this list. */
+export function holdersOfFace(family: string, face: string): readonly string[] {
+  const reference = `${family}/${face}`
+  return HOLDERS.filter(holder => holder.holds?.includes(reference)).map(holder => holder.id)
+}
+
+/** Families whose every face is held by exactly one holder (lock §4.8: every
+ * Expressions face appears in exactly one holder). */
+export const EXACTLY_ONE_HOLDER_FAMILIES: readonly string[] = ['expressions']
+
+/** The family-level holder law (lock §4.8, the lead's rule 3): every face of a
+ * one-holder family names exactly one holder. Coverage is a property of the
+ * whole family's face set, so it is judged where the family's faces are
+ * composed (expressionsFamilyManifest), not in the per-face validator: a
+ * hand-composed compatibility manifest carries no holders and is not refused
+ * for it. Empty = the family is covered. */
+export function validateHolderCoverage(family: string, faces: readonly SemanticFace[]): string[] {
+  if (!EXACTLY_ONE_HOLDER_FAMILIES.includes(family)) return []
+  return faces.flatMap(face => {
+    const count = face.heldBy?.length ?? 0
+    return count === 1 ? [] : [`${family}/${face.id}: an Expressions face is held by exactly one holder — heldBy names ${count} (lock §4.8); name the Studio section or the Clip detail that holds it`]
+  })
+}
+
+// ---------------------------------------------------------------------------
 // the gate over one face
 
 /** The structural face the gate reads. Both the door's FamilyFaceDeclaration
@@ -217,6 +301,8 @@ export interface SemanticFace {
   readonly modes?: readonly string[]
   readonly admission?: 'admitted' | 'waiting'
   readonly note?: string
+  /** The holder(s) that hold this face (lock §4.8, §4.9; see HOLDERS below). */
+  readonly heldBy?: readonly string[]
 }
 
 export interface SemanticContext {
@@ -376,6 +462,20 @@ export function validateFaceSemantic(face: SemanticFace, context: SemanticContex
     }
     default:
       break
+  }
+
+  // Holders (lock §4.8, §4.9; the lead's four gate rules, ticket T-HOLDERS).
+  const held = face.heldBy ?? []
+  for (const holder of held) {
+    if (!isHolder(holder)) {
+      claim(`heldBy "${holder}" is not a known holder — name a Studio section, the Clip detail or a Technē instrument (${list(HOLDERS.map(known => known.id))}) (lock §4.8, §4.9)`)
+    }
+  }
+  if (face.admission !== 'waiting' && checkedModes.includes('techne') && !held.some(holder => holder.startsWith('techne:'))) {
+    claim('an admitted Technē face is held by a techne:* instrument — name the instrument in heldBy (lock §4.9); a waiting face is exempt until its owner lands')
+  }
+  if ((semantic === 'device-audio-fx' || semantic === 'device-midi-fx') && held.some(holder => holder.startsWith('techne:'))) {
+    claim('an effect cannot be held by a techne:* instrument — a Technē chain device is an instrument, never an effect (lock §5.2)')
   }
 
   return faults

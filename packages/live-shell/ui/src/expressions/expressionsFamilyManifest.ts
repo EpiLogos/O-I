@@ -6,7 +6,7 @@ import {deviceCatalogue, type RackDevice} from '../components/nativeDeviceCatalo
 import {FIELD_FACE_MODELS} from '../components/nativeFieldFaceModel.ts'
 import {ENTITY_FACE_MODELS} from '../components/nativeEntityFaceModel.ts'
 import {SCENE_FACE_MODELS} from '../components/nativeSceneFaceModel.ts'
-import type {LiveSemantic, SemanticInvariant} from '../inhabitants/sdk/semantics.ts'
+import {holdersOfFace, validateFaceSemantic, validateHolderCoverage, type LiveSemantic, type SemanticInvariant} from '../inhabitants/sdk/semantics.ts'
 
 export type ExpressionsBrowserCategory = 'works' | 'material' | 'objects' | 'properties' | 'devices'
 export type ExpressionsFaceRegistry = 'field' | 'entity' | 'scene' | 'bespoke'
@@ -22,6 +22,8 @@ export interface ExpressionsFace {
   /** The Live semantic the face occupies (DEVICE-SEMANTICS-LOCK §1, §2.4, §5). */
   readonly liveSemantic: LiveSemantic
   readonly invariant?: SemanticInvariant
+  /** The one holder that holds the face: its Studio section, or the Clip detail (lock §4.8; semantics.ts holdersOfFace). */
+  readonly heldBy: readonly string[]
 }
 
 /** The Expressions faces' Live semantics (DEVICE-SEMANTICS-LOCK §2.4, §4.8, §9; lead's ruling 13 Oct 2026, T-SEMANTICS-GATE).
@@ -93,17 +95,27 @@ function faceOf(declaration: ExpressionsFamilyDeclaration, device: RackDevice | 
     registry: registryOf(declaration.id, device !== undefined),
     studio: device?.studio ?? null,
     paths: device ? [...device.paths] : [],
+    heldBy: holdersOfFace('expressions', declaration.id),
     ...semanticOf(declaration.id),
   }
 }
 
-/** One Expressions manifest. The same declaration and registries give the same faces. */
+/** One Expressions manifest. The same declaration and registries give the same faces.
+ * The Live semantic gate runs over its faces here (lock §4.8: every face is held by exactly one holder; §5). */
 export function expressionsFamilyManifest(): ExpressionsManifest {
   const catalogue = new Map(deviceCatalogue().map(device => [device.family, device] as const))
+  const faces = EXPRESSIONS_FAMILIES.map(declaration => faceOf(declaration, catalogue.get(declaration.id)))
+  const faults = [
+    ...faces.flatMap(face => validateFaceSemantic(face, {family: 'expressions'})),
+    ...validateHolderCoverage('expressions', faces),
+  ]
+  if (faults.length) {
+    throw new Error(`Expressions family refuses — the Live semantic law (DEVICE-SEMANTICS-LOCK §4.8, §5):\n- ${faults.join('\n- ')}`)
+  }
   return {
     id: 'expressions',
     browser: ['works', 'material', 'objects', 'properties', 'devices'],
-    faces: EXPRESSIONS_FAMILIES.map(declaration => faceOf(declaration, catalogue.get(declaration.id))),
+    faces,
     params: {grammar: 'parameterAddress.ts'},
     projections: ['expressions-track-adapter'],
     inspectors: ['rack', 'device-pool', 'GlyphSequenceEditor'],

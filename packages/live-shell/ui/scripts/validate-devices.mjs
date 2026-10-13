@@ -46,6 +46,10 @@ const schema = await import(pathToFileURL(join(uiRoot, 'src/inhabitants/manifest
 const world = await import(pathToFileURL(join(uiRoot, 'src/inhabitants/worldShellFamilies.ts')).href)
 const sdkValidate = await import(pathToFileURL(join(uiRoot, 'src/inhabitants/sdk/validate.ts')).href)
 const centralL7 = await import(pathToFileURL(join(uiRoot, 'src/inhabitants/centralFamilyL7.ts')).href)
+const semantics = await import(pathToFileURL(join(uiRoot, 'src/inhabitants/sdk/semantics.ts')).href)
+// The Expressions family is not admitted at the door; its faces pass the same
+// Live semantic law (and the holder rules, lock §4.8) when its manifest is built.
+const expressions = await import(pathToFileURL(join(uiRoot, 'src/expressions/expressionsFamilyManifest.ts')).href)
 
 world.loadWorldShellFamilies()
 // The gate's world is the 38 faces the world loader admits plus Central L7's
@@ -63,8 +67,15 @@ const writeRegistry = process.argv.includes('--write-registry')
 const families = door.allFamilyManifests().map(manifest => manifest.id)
 const registry = sdkValidate.semanticRegistry()
 
+let expressionsFault = null
+try {
+  expressions.expressionsFamilyManifest()
+} catch (error) {
+  expressionsFault = error.message
+}
+
 let faulted =
-  manifestFaults.size > 0 || gate.byFamily.size > 0 || gate.cross.length > 0 || iconFault !== null
+  manifestFaults.size > 0 || gate.byFamily.size > 0 || gate.cross.length > 0 || iconFault !== null || expressionsFault !== null
 
 const payload = {
   families,
@@ -72,7 +83,9 @@ const payload = {
   sdkFaults: Object.fromEntries(gate.byFamily),
   cross: gate.cross,
   icons: iconFault ? {fault: iconFault} : {ok: true},
+  expressions: expressionsFault ? {fault: expressionsFault} : {ok: true},
   registry,
+  holders: semantics.HOLDERS,
   pass: !faulted,
 }
 
@@ -105,7 +118,11 @@ if (json) {
     faulted = true
     console.error(`\nicons: ${iconFault}`)
   }
-  if (!faulted) console.log('device gate: PASS (manifests, §14 cross-checks, icon sync)')
+  if (expressionsFault) {
+    faulted = true
+    console.error(`\nexpressions (device gate):\n  - ${expressionsFault}`)
+  }
+  if (!faulted) console.log('device gate: PASS (manifests, §14 cross-checks, icon sync, Expressions holders)')
 }
 
 process.exit(faulted ? 1 : 0)

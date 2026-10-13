@@ -41,6 +41,7 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
         presentations: ['compact', 'expanded'],
         liveSemantic: 'device-instrument',
         admission: 'waiting',
+        heldBy: ['techne:m4', 'techne:m2'],
         note: 'Compact sky face over the landed QL kerykeion contract (ql.sky-request/v1 → ql.sky-snapshot/v1, ten bodies, Earth anchor, standing "calculated-ephemeris-not-observed-sky"). The shell-side envelope exists (skyProvider.requestQlSkySnapshot); the projection adapter and face body are the QL family\'s to land.',
       },
       {
@@ -48,6 +49,7 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
         presentations: ['compact', 'expanded'],
         liveSemantic: 'device-instrument',
         admission: 'waiting',
+        heldBy: ['studio:body'],
         note: 'The M1 torus/field as an instrument device face. The presentation exists in the retained M4 body (INSTRUMENT_PRESENTATION ±25/9 m → ±333 engine units, sky epochs); §18\'s rack docking ("the field/PCM owner docks as an instrument device") is law, not landed. Waits for the QL instrument owner.',
       },
       {
@@ -55,6 +57,7 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
         presentations: ['compact', 'expanded'],
         liveSemantic: 'device-instrument',
         admission: 'waiting',
+        heldBy: ['techne:m2', 'techne:m3'],
         note: 'M3 clock/inscription/lens — inscription circles and lens phases as device controls. The sequence-clock grammar exists in the retained app; the M3 packet (#281) is commissioned, not landed. Waits for its owner.',
       },
       {

@@ -147,6 +147,8 @@ export interface DeviceDeclaration {
   readonly liveSemantic: LiveSemantic
   /** The device's invariant for its semantic (lock §5.3). */
   readonly invariant?: SemanticInvariant
+  /** The holder(s) that hold this device (lock §4.8, §4.9; semantics.ts HOLDERS). */
+  readonly heldBy?: readonly string[]
   readonly kind?: InhabitantFaceKind
   /** Mode scoping — the modes this face presents in (the mode-specific
    * plugin surface). Absent = the face presents wherever its family does. */
@@ -475,6 +477,7 @@ function buildFaces(devices: readonly DeviceDeclaration[]): InhabitantFaceDeclar
     presentations: device.presentations ?? ['compact', 'expanded', 'full'],
     liveSemantic: device.liveSemantic,
     ...(device.invariant ? {invariant: device.invariant} : {}),
+    ...(device.heldBy ? {heldBy: device.heldBy} : {}),
     ...(device.modes ? {modes: device.modes} : {}),
     ...(device.note ? {note: device.note} : {}),
     ...(device.kind ? {kind: device.kind} : {}),

@@ -10,6 +10,7 @@
     "formats": {},
     "invariant": null,
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/lom/LOM-INVENTORY.md"
   },
   {
@@ -23,6 +24,7 @@
     "formats": {},
     "invariant": null,
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/ui/UI-EVIDENCE.md"
   },
   {
@@ -40,6 +42,7 @@
     "writePaths": [
       "kernel:harness_agent_control"
     ],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
   },
   {
@@ -61,6 +64,7 @@
       "chainSelector": "gateway"
     },
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/racks-session-model.md"
   },
   {
@@ -78,6 +82,7 @@
     "writePaths": [
       "kernel:harness_agent_control"
     ],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
   {
@@ -95,6 +100,7 @@
     "writePaths": [
       "kernel:harness_agent_control"
     ],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
   },
   {
@@ -108,6 +114,7 @@
     "formats": {},
     "invariant": null,
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/lom/LOM-INVENTORY.md"
   },
   {
@@ -123,6 +130,7 @@
       "transforms": "the agent's context reach (knowledge bounds on the World device)"
     },
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/reverb.md"
   },
   {
@@ -138,6 +146,7 @@
       "transforms": "the agent turn passing the skillset chain (the turn passes on)"
     },
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/reverb.md"
   },
   {
@@ -156,6 +165,7 @@
       "chainSelector": "skill (admit light)"
     },
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/racks-session-model.md"
   },
   {
@@ -171,6 +181,9 @@
       "generatesAbsent": "the corpus provider seam (C2) has no owner op yet; the globe forms from the bound CorpusProvider bundle"
     },
     "writePaths": [],
+    "heldBy": [
+      "techne:m4"
+    ],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
   {
@@ -184,6 +197,10 @@
     "formats": {},
     "invariant": null,
     "writePaths": [],
+    "heldBy": [
+      "techne:m0",
+      "techne:m1"
+    ],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/ui/UI-EVIDENCE.md"
   },
   {
@@ -197,6 +214,10 @@
     "formats": {},
     "invariant": null,
     "writePaths": [],
+    "heldBy": [
+      "techne:m4",
+      "techne:m0"
+    ],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/ui/UI-EVIDENCE.md"
   },
   {
@@ -210,6 +231,9 @@
     "formats": {},
     "invariant": null,
     "writePaths": [],
+    "heldBy": [
+      "techne:m2"
+    ],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/lom/LOM-INVENTORY.md"
   },
   {
@@ -223,6 +247,7 @@
     "formats": {},
     "invariant": null,
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/ui/UI-EVIDENCE.md"
   },
   {
@@ -238,6 +263,7 @@
       "transforms": "the agent's context: Central ground reads and context writes"
     },
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/reverb.md"
   },
   {
@@ -255,6 +281,7 @@
     "writePaths": [
       "kernel:receiving"
     ],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
   {
@@ -268,6 +295,7 @@
     "formats": {},
     "invariant": null,
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/lom/LOM-INVENTORY.md"
   },
   {
@@ -289,6 +317,7 @@
       ]
     },
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#5"
   },
   {
@@ -304,6 +333,7 @@
       "transforms": "the ground in focus — analysed, passed unchanged"
     },
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/reverb.md"
   },
   {
@@ -319,6 +349,7 @@
       "transforms": "the selected folder or note — its neighbourhood read, passed unchanged"
     },
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/reverb.md"
   },
   {
@@ -336,6 +367,7 @@
     "writePaths": [
       "kernel:nara_dialogue"
     ],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
   {
@@ -349,6 +381,7 @@
     "formats": {},
     "invariant": null,
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
   {
@@ -362,6 +395,7 @@
     "formats": {},
     "invariant": null,
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
   {
@@ -375,6 +409,7 @@
     "formats": {},
     "invariant": null,
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
   {
@@ -388,6 +423,10 @@
     "formats": {},
     "invariant": null,
     "writePaths": [],
+    "heldBy": [
+      "techne:m2",
+      "techne:m3"
+    ],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
   {
@@ -396,7 +435,7 @@
     "kind": "instrument",
     "liveSemantic": "device-instrument",
     "modes": [
-      "techne"
+      "expressions"
     ],
     "formats": {},
     "invariant": {
@@ -404,6 +443,9 @@
     },
     "writePaths": [
       "kernel:native_expression"
+    ],
+    "heldBy": [
+      "studio:body"
     ],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
@@ -418,6 +460,10 @@
     "formats": {},
     "invariant": null,
     "writePaths": [],
+    "heldBy": [
+      "techne:m4",
+      "techne:m2"
+    ],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
   {
@@ -431,6 +477,9 @@
     "formats": {},
     "invariant": null,
     "writePaths": [],
+    "heldBy": [
+      "studio:body"
+    ],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
   {
@@ -455,6 +504,7 @@
       ]
     },
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/racks-session-model.md"
   },
   {
@@ -472,6 +522,7 @@
     "writePaths": [
       "kernel:harness_agent_control"
     ],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
   },
   {
@@ -485,6 +536,7 @@
     "formats": {},
     "invariant": null,
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/lom/LOM-INVENTORY.md"
   },
   {
@@ -502,6 +554,7 @@
     "writePaths": [
       "shell.setWriteArm"
     ],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
   },
   {
@@ -517,6 +570,7 @@
       "stream": "the Factory ledger (main-track receipts)"
     },
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
   },
   {
@@ -532,6 +586,7 @@
       "stream": "the Factory run (one session's task stream)"
     },
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
   },
   {
@@ -549,6 +604,7 @@
     "writePaths": [
       "workcell-cli:git commit"
     ],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
   },
   {
@@ -562,6 +618,7 @@
     "formats": {},
     "invariant": null,
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/lom/LOM-INVENTORY.md"
   },
   {
@@ -575,6 +632,7 @@
     "formats": {},
     "invariant": null,
     "writePaths": [],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/lom/LOM-INVENTORY.md"
   },
   {
@@ -592,6 +650,7 @@
     "writePaths": [
       "workcell-cli:seat land"
     ],
+    "heldBy": [],
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/session-model.md#3"
   }
 ]
