@@ -112,7 +112,7 @@ test('every production nativeWorkspace receiving path has its exact authored or 
   };
   const visit = node => {if(ts.default.isCallExpression(node)&&node.expression.getText(file)==='host.load')calls.push([scope(node),node.arguments[2]?.getText(file)??'record']);ts.default.forEachChild(node,visit)};
   visit(file);
-  assert.deepEqual(calls,[['adopt',"'acknowledge'"],['followOpen',"'acknowledge'"],['openReference',"'acknowledge'"],['changePage',"'acknowledge'"],['resolvePending','record'],['advance',"'acknowledge'"],['edit','record'],['duplicateOccurrence','record'],['insertSource','record'],['blueprint','record'],['refreshReference',"'acknowledge'"]]);
+  assert.deepEqual(calls,[['adopt',"'acknowledge'"],['followOpen',"'acknowledge'"],['openReference',"'acknowledge'"],['changePage',"'acknowledge'"],['settle',"'act'"],['resolvePending',"'outside'"],['advance',"'acknowledge'"],['refreshReference',"'acknowledge'"]]);
 });
 
 test('production app defaults native authored loads to record and does not shadow browser history',async()=>{

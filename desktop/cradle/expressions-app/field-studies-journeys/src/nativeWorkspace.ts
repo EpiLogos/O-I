@@ -5,7 +5,8 @@ import type {BlueprintIntent} from './nativeBlueprint.js';
  * standing reaches the app's Save control and Studio footer via host.status. */
 import {clone,type Journey} from './model.js';
 import {NativeWorking,type NativeCheckpoint,type NativeFile,type NativeWorkingRecord,type WorkingSnapshot} from './nativeWorking.js';
-import {kernelExpressionsAvailable,listKernelExpressions,readKernelExpression,nativeExpressionRequest,nativeFileRequest,type KernelChange} from './kernelExpressions.js';
+import {kernelExpressionsAvailable,listKernelExpressions,readKernelExpression,nativeExpressionRequest,nativeFileRequest,documentToChanges,type KernelChange} from './kernelExpressions.js';
+import type {KernelSaveAnchor} from './store.js';
 import {readWorkingCheckpoint,readWorkingDraft,readBoundWorkingDraft,acceptWorkingRecoveryBasis,writeWorkingCheckpoint,writeDraft,applyRecoveryPlan,removeDraft} from './recovery.js';
 // lane-3 E19b: the hosted recovery choice uses the same offer and plan as the browser boot.
 import {recoveryOffer,planRecoveryChoice,bootWasUnclean,type RecoveryChoice} from './draftStorage.js';
@@ -39,11 +40,24 @@ export interface ConstructionFacets {
  scenes:{scene_ref:string;title:string;members:number;relations:number}[];
  currentScene:string|null;
 }
+/** How an adoption from the owner enters the one undo history (see the host's `load`). */
+export type NativeAdoption='record'|'acknowledge'|'act'|'outside';
+/** The kernel edit an owner acknowledged, with the kernel documents either side of it. */
+export interface KernelCheckpointRecord {changes:KernelChange[];before:unknown;after:unknown}
+/** One native act, named for what the user did: its label, and what the owner acknowledged (or the
+ * refusal by name when that kernel edit has no inverse). */
+export interface NativeActRecord {label:string;record:KernelCheckpointRecord|{refused:string;reason:string}}
 export interface NativeWorkspaceHost {
  shouldRetainDraft?:()=>boolean;
  snapshot:()=>WorkingSnapshot;
  version:()=>number;
- load:(view:KernelConversion,preservePosition?:boolean,history?:'record'|'acknowledge')=>void;
+ /** `act`: an adoption the app's own native act produced, recorded as ONE labelled undo step ('act').
+  * 'outside': an adoption from outside this editor, labelled for what it is ('outside'). */
+ load:(view:KernelConversion,preservePosition?:boolean,history?:NativeAdoption,act?:NativeActRecord)=>void;
+ /** E15: the undo anchor, read in the same step as the act's snapshot, so a Save that stands alone records on the step it began from. */
+ anchor?:()=>KernelSaveAnchor;
+ /** E15: a draft flush the owner acknowledged on its own is a Save: it records its checkpoint on the anchor it began at. */
+ recordSave?:(anchor:KernelSaveAnchor,checkpoint:KernelCheckpointRecord)=>void;
  toast:(message:string,duration?:number)=>void;
  /** Re-render the open Expression's surfaces when nested documents arrive (E14). */
  refresh?:()=>void;
@@ -299,18 +313,65 @@ const settleRecovery=async(found:{record:NativeWorkingRecord;journey:Journey;rec
   * edit touches the same Expression: editing never demands a manual save
   * first, and the structured edit lands on the draft's own new revision.
   * Returns true when a flush happened and the basis moved. */
- const flushDraft=async(current:KernelConversion):Promise<KernelConversion>=>{
-  if(!prepareCompositionEdit(current,host.snapshot().journey).changes.length)return current;
-  if(readThrough===current.document.expression_ref)throw new Error('An act is performing this Expression; this view reads through and keeps your edits unsaved rather than committing into it.');
-  await work.commit(host.snapshot());
-  return work.state?.view??current;
+ /** E15/E16: one native act. Its draft flush, its owner edit and, given `sides`, the composition that
+  * carries its connector sides are acknowledged in turn, then adopted as ONE labelled undo step whose
+  * checkpoint runs from the kernel document before the flush to the one after the last acknowledgement.
+  * A draft flush that stands alone is a Save: it records on the step it began from. An act that fails
+  * before the owner acknowledges an edit records nothing; after an acknowledgement it records exactly
+  * what the owner acknowledged. `label` may be read after the edit when the edit names itself. */
+ type ActLabel=string|(()=>string);
+ const actLabel=(label:ActLabel):string=>typeof label==='string'?label:label();
+ const nativeAct=(label:ActLabel,perform:(current:KernelConversion)=>Promise<{view:KernelConversion;changes?:KernelChange[]}|null>,options:{sides?:(journey:Journey)=>void;guard?:(current:KernelConversion)=>void}={}):Promise<boolean>=>{
+  const anchor=host.anchor?.();
+  return mutate(async()=>{
+   let current=work.state?.view;
+   if(!current)throw new Error('Open a native Expression first.');
+   options.guard?.(current);
+   const version=host.version(),before=clone(current.document);
+   let flush:KernelCheckpointRecord|null=null,finalView:KernelConversion|null=null;
+   let performed:KernelChange[]=[],sides:KernelChange[]=[],refusal:{refused:string;reason:string}|null=null;
+   // The one adoption: the act's own labelled step, or a flush recorded as a Save on its anchor.
+   const settle=()=>{
+    if(finalView){
+     restoreGeneration++;selections.cancel();
+     host.load(finalView,true,'act',{label:actLabel(label),record:refusal??{changes:[...(flush?.changes??[]),...performed,...sides],before:clone(before),after:clone(finalView.document)}});
+     update();
+    }else if(flush&&anchor)host.recordSave?.(anchor,flush);
+   };
+   try{
+    if(prepareCompositionEdit(current,host.snapshot().journey).changes.length){
+     if(readThrough===current.document.expression_ref)throw new Error('An act is performing this Expression; this view reads through and keeps your edits unsaved rather than committing into it.');
+     const saved=await work.commitRecorded(host.snapshot());
+     flush=saved.checkpoint;current=work.state?.view??current;
+    }
+    const basis=clone(current.document);
+    const result=await perform(current);
+    if(result&&result.view.document.revision!==basis.revision){
+     finalView=result.view;
+     if(result.changes)performed=result.changes;
+     else{const diff=documentToChanges(basis,finalView.document);if('changes' in diff)performed=diff.changes;else refusal={refused:String(diff.refused??'not_diffable'),reason:diff.error};}
+    }
+    if(options.sides&&finalView){
+     const journey=clone(finalView.journey);options.sides(journey);
+     const saved=await work.commitRecorded({...host.snapshot(),journey});
+     sides=saved.checkpoint.changes;finalView=work.state?.view??finalView;
+    }
+    if(host.version()!==version)throw new Error('The edit was saved natively; newer local edits remain in your working draft.');
+    settle();
+   }catch(error){
+    // Once the owner acknowledged the act, what landed is the step, unless local work moved underneath it.
+    if(finalView&&host.version()===version)settle();
+    else if(!finalView&&flush)settle();
+    throw error;
+   }
+  });
  };
  const resolvePending=()=>guarded(async()=>{
   const before=work.state,version=host.version();
   const clean=before?.view&&!prepareCompositionEdit(before.view,host.snapshot().journey).changes.length;
   const result=await work.inspectPending();
   if(before?.pending?.kind==='connections'&&work.state?.view){
-   if(clean&&host.version()===version){restoreGeneration++;selections.cancel();host.load(work.state.view,true);}
+   if(clean&&host.version()===version){restoreGeneration++;selections.cancel();host.load(work.state.view,true,'outside');}
    else{status(`${result} Newer local edits remain in your working draft.`);return;}
   }
   status(result);
@@ -393,48 +454,36 @@ const settleRecovery=async(found:{record:NativeWorkingRecord;journey:Journey;rec
   inspect(){const state=work.state;return {native_ref:state?.view?.document.expression_ref,revision:state?.view?.document.revision,file:state?.file,pending:state?.pending?.kind,notes:state?.view?.notes??[],bindings:state?.view?.bindings};},
   /** `changes` may be computed from the flushed native view (after the
    * working draft commits) — e.g. a reuse block naming committed refs. */
-  edit:async(input:Record<string,unknown>[]|((view:KernelConversion)=>Record<string,unknown>[]))=>{
+  /** One native edit, acknowledged as one labelled undo step (E15/E16). `sides` rides the same act:
+   * it edits the acknowledged composition (e.g. connector lines) and is saved with the edit. */
+  edit:async(input:Record<string,unknown>[]|((view:KernelConversion)=>Record<string,unknown>[]),label:ActLabel,sides?:(journey:Journey)=>void)=>{
    if(Array.isArray(input)&&!input.length)return;
-   const succeeded=await mutate(async()=>{
-    let current=work.state?.view;
-    if(!current)throw new Error('Open a native Expression before editing its connections.');
-    const version=host.version();
-    current=await flushDraft(current);
+   const succeeded=await nativeAct(label,async current=>{
     const changes=typeof input==='function'?input(current):input;
-    if(!changes.length)return;
+    if(!changes.length)return null;
     const view=await work.editConnections(changes);
-    if(host.version()!==version)throw new Error('The edit was saved natively; newer local edits remain in your working draft.');
-    restoreGeneration++;selections.cancel();
-    host.load(view,true);update();
-   });
+    return {view,changes:changes as unknown as KernelChange[]};
+   },{sides});
    if(!succeeded)throw new Error(notice||'The native edit was not acknowledged.');
   },
-  duplicateOccurrence:async(sceneId:string,entityId:string):Promise<void>=>{
-   const succeeded=await mutate(async()=>{
-    let current=work.state?.view,binding=current?.bindings[sceneId];
-    const occurrence=binding?.occurrences.find(row=>row.view_entity_id===entityId);
-    if(!current||!binding||!occurrence)throw new Error('Choose a source occurrence in the current native Scene');
+  duplicateOccurrence:async(sceneId:string,entityId:string,label:ActLabel='Duplicate object'):Promise<void>=>{
+   const succeeded=await nativeAct(label,async current=>{
+    const binding=current.bindings[sceneId],occurrence=binding?.occurrences.find(row=>row.view_entity_id===entityId);
+    if(!binding||!occurrence)throw new Error('Choose a source occurrence in the current native Scene');
     if(host.snapshot().sceneId!==sceneId)throw new Error('The selected Scene changed before duplication');
-    current=await flushDraft(current);
-    const adoption=captureNativeAdoption(host,()=>restoreGeneration);
     const view=await work.duplicateOccurrence({operation:'duplicate',scene_ref:binding.scene_ref,entity_ref:occurrence.entity_ref,new_entity_ref:current.document.expression_ref+':entity:occurrence-'+crypto.randomUUID()});
-    if(!adoption())throw new Error('The occurrence was duplicated natively; newer local work remains in your draft. Reopen its native composition when ready.');
-    restoreGeneration++;selections.cancel();host.load(view,true);update();
+    return {view};
    });
    if(!succeeded)throw new Error(notice||'The native duplicate was not acknowledged.');
   },
-  insertSource:async(choice:SourceOccurrenceChoice):Promise<void>=>{
+  insertSource:async(choice:SourceOccurrenceChoice,label:ActLabel='Insert source'):Promise<void>=>{
    const captured=clone(choice);
-   const succeeded=await mutate(async()=>{
-    let current=work.state?.view;const active=host.snapshot();let binding=current?.bindings[active.sceneId];
-    if(!current||current.document.expression_ref!==captured.expression_ref||current.document.revision!==captured.revision||binding?.scene_ref!==captured.scene_ref)throw new Error('The native Scene changed while choosing a source; choose again from its current composition');
-    current=await flushDraft(current);
-    binding=current.bindings[active.sceneId];
-    const adoption=captureNativeAdoption(host,()=>restoreGeneration);
+   const succeeded=await nativeAct(label,async()=>{
     const view=await work.insertSource({operation:'insert-source',scene_ref:captured.scene_ref,new_entity_ref:captured.expression_ref+':entity:occurrence-'+crypto.randomUUID(),title:captured.title,binding:captured.binding});
-    if(!adoption())throw new Error('The source was inserted natively; newer local work remains in your draft. Reopen its native composition when ready.');
-    restoreGeneration++;selections.cancel();host.load(view,true);update();
-   });
+    return {view};
+   },{guard:current=>{
+    if(current.document.expression_ref!==captured.expression_ref||current.document.revision!==captured.revision||current.bindings[host.snapshot().sceneId]?.scene_ref!==captured.scene_ref)throw new Error('The native Scene changed while choosing a source; choose again from its current composition');
+   }});
    if(!succeeded)throw new Error(notice||'The native source insertion was not acknowledged.');
   },
   nativeView:()=>{const view=work.state?.view;return view?nested.view(view):undefined;},
@@ -442,17 +491,11 @@ const settleRecovery=async(found:{record:NativeWorkingRecord;journey:Journey;rec
   nestedGraph:():NestedGraph=>nested.graph(),
   readNested:(ref:string,revision:unknown,maxDepth:number):Promise<void>=>nested.readNested(ref,revision,maxDepth),
   nestedDocument:(ref:string):NestedDocumentLike|undefined=>nested.document(ref),
-  blueprint:async(intent:BlueprintIntent):Promise<void>=>{
+  blueprint:async(intent:BlueprintIntent,label:ActLabel='Apply blueprint'):Promise<void>=>{
    const captured=clone(intent);
-   const succeeded=await mutate(async()=>{
-    let current=work.state?.view;const active=host.snapshot();
-    if(!current||current.document.expression_ref!==captured.expression_ref||current.document.revision!==captured.revision||current.bindings[active.sceneId]?.scene_ref!==captured.scene_ref)throw Error('The native Scene changed; inspect its blueprint before trying again');
-    current=await flushDraft(current);
-    const adoption=captureNativeAdoption(host,()=>restoreGeneration);
-    const view=await work.editBlueprint(captured);
-    if(!adoption())throw Error('The blueprint was saved natively; newer local work remains in your draft. Reopen when ready.');
-    restoreGeneration++;selections.cancel();host.load(view,true);update();
-   });
+   const succeeded=await nativeAct(label,async()=>({view:await work.editBlueprint(captured)}),{guard:current=>{
+    if(current.document.expression_ref!==captured.expression_ref||current.document.revision!==captured.revision||current.bindings[host.snapshot().sceneId]?.scene_ref!==captured.scene_ref)throw Error('The native Scene changed; inspect its blueprint before trying again');
+   }});
    if(!succeeded)throw Error(notice||'The native blueprint was not acknowledged');
   },
   /** Stand on a kernel Expression (host open-expression, boot deep link). */
