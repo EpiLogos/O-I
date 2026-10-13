@@ -19,9 +19,10 @@
  *
  * Erasable TypeScript: loadable by the renderer, Vite, and `node --test`.
  */
-import type { NativeActionRef, TechneActionRoute, TechneReading } from "../../contract.ts";
+import type { NativeActionRef, TechneActionReceipt, TechneActionRoute, TechneReading } from "../../contract.ts";
 import type { PalaceComposition } from "./palace-state.ts";
 import { arrangementOrder, palaceElements, type PalaceRegionSpec } from "./composition.ts";
+import { resolveActionRoute } from "../adapter.ts";
 
 /** The region-name stem the 3:3 expression floor composes under — matches
  * `regions.ts`'s own office label for the same facet, so a reader sees a
@@ -144,4 +145,37 @@ export function composedExpressionOrder(reading: TechneReading, composition: Pal
   return arrangementOrder(composition.expressions).filter((ref) =>
     palaceElements(reading).some((element) => element.expression_ref === ref),
   );
+}
+
+/** The actor a Palace Return is attributed to: the human at the Palace, as the composition's own Expression edits name it. */
+export const PALACE_RETURN_ACTOR = "human:techne-palace";
+
+/** One Return proposal: the shaped route, its receipt through the shared routing law, the attribution the Palace renders, and
+ * the refusal in words when there is nothing to route. */
+export interface PalaceReturnProposal {
+  route: TechneActionRoute | null;
+  receipt: TechneActionReceipt | null;
+  attribution: string;
+  refusal: string | null;
+}
+
+/** Propose the Palace's Return (lane-5 T19). Pure: proposing writes nothing and mutates no composition or reading. The route is
+ * the disclosed governed-write action with the arranged refs; its receipt comes from the shared routing law, so a route the law
+ * refuses comes back unrouted with its reason. Execution stays with the native owner under its own authority. */
+export function palaceReturnProposal(reading: TechneReading, composition: PalaceComposition): PalaceReturnProposal {
+  if (!composition.bound) {
+    return { route: null, receipt: null, attribution: "", refusal: "the Palace composition is not bound, so there is nothing to return" };
+  }
+  const route = palaceReturnRoute(reading, composition);
+  if (!route) {
+    const refusal = palaceReturnAction(reading)
+      ? "the composition holds no native refs to return"
+      : "this reading discloses no governed Return action";
+    return { route: null, receipt: null, attribution: "", refusal };
+  }
+  const receipt = resolveActionRoute(reading, route);
+  const shaped = palaceReturnInput(reading, composition);
+  const count = shaped?.composed_refs.length ?? 0;
+  const attribution = `Proposed by ${PALACE_RETURN_ACTOR} from reading ${reading.reading_ref} of subject ${reading.subject.subject_ref}: ${count} native refs in arrangement order, to ${route.action_ref}, awaiting human acceptance.`;
+  return { route, receipt, attribution, refusal: receipt.routed ? null : receipt.reason ?? "the routing law refused this route" };
 }

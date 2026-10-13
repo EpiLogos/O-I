@@ -177,6 +177,16 @@ export function palaceOpenRoute(entry: PalaceRegionEntry, wired: ReadonlySet<str
   return {kind: 'open', instrument: entry.open_instrument, ref: entry.ref};
 }
 
+/** The instruments a Palace entry can open into from this surface (lane-5 seam B). Each is a deep instrument the shell selects
+ * through the host's own instrument path; `expressions` is the Expression summon. The Palace never opens itself. */
+export const PALACE_WIRED_INSTRUMENTS: ReadonlySet<string> = new Set(['expressions', 'project', 'canvas', 'timeline', 'journey', 'place']);
+
+/** The frame's request for a non-Expression instrument: the existing host-request instrument summon, which the host turns into its
+ * own selectInstrument (expressions-boundary host.ts). It names the object ref it means; the host does not carry that ref yet. */
+export function palaceInstrumentOpenRequest(instrument: TechneInstrument, ref: string): {request: 'summon'; detail: {kind: 'instrument'; lens: TechneInstrument; ref: string}} {
+  return {request: 'summon', detail: {kind: 'instrument', lens: instrument, ref}};
+}
+
 // ---------------------------------------------------------------------------
 // T17 — the guided integral walk, method of loci over the whole
 // ---------------------------------------------------------------------------

@@ -41,12 +41,16 @@ import {
 } from '../../../src/techne/m0m5/palace/composition';
 import type {KernelConversion} from './kernelDocumentBridge.js';
 import {palaceInstrumentBasis,samePalaceInstrumentBasis,assertPalaceSource,samePalaceComposition,type PalaceInstrumentBasis} from './palaceInstrumentBasis';
-import {readTechneReading,type TechneSceneReadingRequest} from './kernelExpressions.js';
+import {readTechneReading,techneTimeWindowRequest,type TechneSceneReadingRequest} from './kernelExpressions.js';
+import {trackOwnSharedTimeWrite} from './sharedTimeWindow';
+import {palaceHopRequest,qualifyPalaceHopReply} from './palaceHop';
 import {assertInstrumentReadingScope} from './researchInstrumentsData';
-import {validateReading,type TechneReading} from '../../../src/techne/contract';
-import {palaceComposition,storeComposition} from '../../../src/techne/m0m5/palace/palace-state';
+import {validateReading,type TechneInstrument,type TechneReading} from '../../../src/techne/contract';
+import {palaceComposition,storeComposition,type PalaceComposition} from '../../../src/techne/m0m5/palace/palace-state';
+import {palacePresenceStorage,PALACE_UNPERSISTED_NOTICE,restorePalaceComposition,savePalaceComposition} from '../../../src/techne/m0m5/palace/presence';
+import {palaceReturnProposal,type PalaceReturnProposal} from '../../../src/techne/m0m5/palace/return';
 import type {PalaceRegionEntry} from '../../../src/techne/m0m5/palace/regions';
-import {palaceGuidedEdges,palaceOpenRoute,palaceWalkAt,palaceWalkResume,palaceWalkSteps,palaceWholeView,SCENE_REGION_STANDING,type PalaceGuidedEdge} from './palaceWhole';
+import {PALACE_WIRED_INSTRUMENTS,palaceGuidedEdges,palaceOpenRoute,palaceWalkAt,palaceWalkResume,palaceWalkSteps,palaceWholeView,SCENE_REGION_STANDING,type PalaceGuidedEdge} from './palaceWhole';
 import './palaceInstrument.css';
 
 export interface PalaceKernelExpression {expression_ref:string;title:string;revision:number}
@@ -75,16 +79,13 @@ export interface PalaceInstrumentHost {
  /** Opens one contained object independently — the same summon path the
   * Studio's own "open source" affordance uses. */
  openExpression:(ref:string)=>void;
+ /** Lane-5 seam B: opens a non-Expression Palace entry through the host's own instrument path (the frame's existing summon). */
+ openInstrument:(instrument:TechneInstrument,ref:string)=>void;
  /** The integral whole's reading (lane-5 T14): the Expression-wide Technè
   * reading over the same native channel the journey instrument reads. Absent
   * means the default channel, `readTechneReading`. */
  readReading?:(request:TechneSceneReadingRequest)=>Promise<unknown>;
 }
-
-/** The Expression refs this surface can summon directly: the Expression summon
- * path (`openExpression`). Any other instrument an integral entry names is
- * refused by name in the status line, never silently dropped. */
-const WIRED_INSTRUMENTS=new Set<string>(['expressions']);
 
 const DEFAULT_REGION='Palace';
 
@@ -100,7 +101,7 @@ function EdgeNote({edge}:{edge:PalaceGuidedEdge|undefined}){
 }
 
 /** `reading` is undefined while the whole's reading is still returning. */
-export function PalacePanel({host,doc,reading,readingReason,onMessage}:{host:PalaceInstrumentHost;doc:PalaceDocumentSnapshot&{title:string};reading:TechneReading|null|undefined;readingReason:string|null;onMessage:(text:string)=>void}) {
+export function PalacePanel({host,doc,reading,readingReason,onMessage,basis}:{host:PalaceInstrumentHost;doc:PalaceDocumentSnapshot&{title:string};reading:TechneReading|null|undefined;readingReason:string|null;onMessage:(text:string)=>void;basis:PalaceInstrumentBasis}) {
  const [draftDoc,setDraftDoc]=useState(doc);
  const [draftAuthoredRevision,setDraftAuthoredRevision]=useState(()=>host.authoredRevision());
  const lifetime=useRef({live:true,generation:0});
@@ -115,6 +116,9 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage}:{host:Pal
  const [eligibleKnown,setEligibleKnown]=useState(false);
  const [busy,setBusy]=useState(false);
  const [newRegion,setNewRegion]=useState('');
+ // T19: the Return proposal the Palace shows, or null. Proposing writes nothing; refusing clears it.
+ const [proposal,setProposal]=useState<PalaceReturnProposal|null>(null);
+ const persistFailed=useRef(false);
 
  useEffect(()=>{let live=true;void host.listExpressions().then(list=>{if(live){setEligible(list.filter(entry=>entry.expression_ref!==doc.expression_ref));setEligibleKnown(true);}}).catch(error=>{if(live)onMessage(error instanceof Error?error.message:String(error));});return()=>{live=false;};},[doc.expression_ref,doc.revision]);
 
@@ -136,12 +140,32 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage}:{host:Pal
   const index=palaceWalkAt(walkSteps,next).index;
   setWalkMoved(index);
   // The walk position rides the Palace's own session presentation composition, never a new store.
-  if(reading)storeComposition({...palaceComposition(reading),walk_index:index});
+  if(reading)persist({...palaceComposition(reading),walk_index:index},reading);
  }
  function openWhole(entry:PalaceRegionEntry){
-  const route=palaceOpenRoute(entry,WIRED_INSTRUMENTS);
+  const route=palaceOpenRoute(entry,PALACE_WIRED_INSTRUMENTS);
   if(route.kind==='refused'){onMessage(`Refused: ${route.reason}.`);return;}
-  host.openExpression(route.ref);
+  openPalaceObject(route.instrument,route.ref);
+ }
+ /** Seams A and B: one Open on a Palace object. An Expression opens natively and records its trail step on the session's one
+  * history (the owner's palace route); any other wired instrument goes through the host's instrument path, and says plainly
+  * that the object is not carried into it yet. */
+ function openPalaceObject(instrument:TechneInstrument,ref:string){
+  if(instrument!=='expressions'){
+   host.openInstrument(instrument,ref);
+   onMessage(`Asked the shell for the ${instrument} instrument. ${ref} is not carried into it yet.`);
+   return;
+  }
+  host.openExpression(ref);
+  if(!reading||!basis){onMessage(`Opened ${ref}. Its trail step waits for the Palace's integral reading.`);return;}
+  void recordPalaceHop({expression_ref:basis.expression_ref,revision:basis.revision,scene_ref:basis.scene_ref},reading,ref).then(
+   ()=>{if(lifetime.current.live)onMessage(`Opened ${ref}; its trail step is recorded on the session.`);},
+   error=>{if(lifetime.current.live)onMessage(`Opened ${ref}. Its trail step was not recorded: ${error instanceof Error?error.message:String(error)}`);});
+ }
+ /** Session presentation saved on change: the walk position and the rest of the composition persist through the Palace's owner. */
+ function persist(next:PalaceComposition,current:TechneReading){
+  storeComposition(next);
+  if(!savePalaceComposition(palacePresenceStorage(),next,current)&&!persistFailed.current){persistFailed.current=true;onMessage(PALACE_UNPERSISTED_NOTICE);}
  }
 
  function createRegion(name:string,member:PalaceRegionSpec['member']){
@@ -192,6 +216,14 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage}:{host:Pal
   setRegions(current=>current.filter(region=>region.name!==name));
   setRemoved(current=>current.includes(name)?current:[...current,name]);
  }
+ /** T19: propose the Return over a bound view of the composition. Pure: the stored composition and the reading are untouched. */
+ function proposeReturn(){
+  if(!reading)return;
+  const next=palaceReturnProposal(reading,{...palaceComposition(reading),bound:true});
+  setProposal(next);
+  onMessage(next.refusal?`Return not routed: ${next.refusal}. Nothing was changed.`:'Return proposed, awaiting human acceptance. Nothing has been written.');
+ }
+ function refuseReturn(){setProposal(null);onMessage('Return refused. Nothing was written.');}
  function cancel(){
   const current=host.nativeView();
   if(!current||current.document.expression_ref!==doc.expression_ref||current.document.revision!==doc.revision){onMessage('Refresh the Palace before discarding this draft; the displayed source is no longer current.');return;}
@@ -235,8 +267,18 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage}:{host:Pal
    <div className="palace-header-actions">
     <button type="button" disabled={busy||doc.revision>draftDoc.revision} onClick={()=>void save()}>Save composition</button>
     <button type="button" disabled={busy} onClick={cancel}>Revert</button>
+    <button type="button" disabled={busy||!reading} onClick={proposeReturn}>Propose Return</button>
    </div>
   </header>
+  {proposal&&<section className="palace-return" aria-label="Return proposal">
+   <p className="palace-standing">{proposal.receipt?.routed
+    ?`${proposal.attribution} Routed to ${proposal.receipt.action_ref} under ${proposal.receipt.authority??'the owner'}; the native owner decides.`
+    :`${proposal.attribution||'No Return is attributed.'} Not routed: ${proposal.refusal??'the routing law refused it'}.`}</p>
+   <div className="palace-header-actions">
+    <button type="button" onClick={refuseReturn}>Refuse proposal</button>
+    <button type="button" disabled title="Accepting runs the native owner's action; this surface cannot invoke it yet.">Accept and return</button>
+   </div>
+  </section>}
   {doc.revision>draftDoc.revision&&<p role="status">This draft began at revision {draftDoc.revision}. The owner now discloses revision {doc.revision}; your input is retained. Revert explicitly takes the current composition.</p>}
   <div className="palace-body">
    <section className="palace-whole" aria-label="Integral whole">
@@ -258,7 +300,7 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage}:{host:Pal
         <p className="palace-standing" data-standing={region.standing.standing}>{region.standing.line}</p>
         <ul className="palace-whole-entries">{region.entries.map((entry,index)=>{
          const focused=focus?.region===region.key&&focus.ref===entry.ref;
-         const route=palaceOpenRoute(entry,WIRED_INSTRUMENTS);
+         const route=palaceOpenRoute(entry,PALACE_WIRED_INSTRUMENTS);
          return <li key={`${entry.kind}:${entry.ref}:${index}`} data-walk-focus={focused?'true':undefined}>
           <span className="palace-ref" title={entry.ref}>{entry.ref}</span>
           <span className="palace-note">{entry.label}{entry.note?` · ${entry.note}`:''}</span>
@@ -288,7 +330,7 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage}:{host:Pal
          <p className="palace-primary-note">Contained Expression (native Scene body, Portal-openable):</p>
          <div className="palace-region-members"><span className="palace-ref">{region.member.title||region.member.expression_ref}</span>
           <span className="palace-member-controls">
-           <button type="button" disabled={busy} onClick={()=>host.openExpression(region.member!.expression_ref)}>Open</button>
+           <button type="button" disabled={busy} onClick={()=>openPalaceObject('expressions',region.member!.expression_ref)}>Open</button>
            <button type="button" disabled={busy} onClick={()=>removeMember(region.name)}>Remove</button>
           </span></div>
         </div>
@@ -331,6 +373,12 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage}:{host:Pal
  </div>;
 }
 
+/** Seam A, the frame's channel: one Palace trail step through the owner's one route (techne-time-window). The reply is qualified
+ * against this exact Scene and reading before it is trusted. */
+async function recordPalaceHop(basis:{expression_ref:string;revision:number;scene_ref:string},reading:TechneReading,ref:string){
+ return qualifyPalaceHopReply(await trackOwnSharedTimeWrite(techneTimeWindowRequest(palaceHopRequest(basis,reading,ref))),basis,reading);
+}
+
 /** The Palace composes inside the app's own Studio (section "Palace"): the
  * host supplies the Studio-owned mount; the live Expression stays the field. */
 export function installPalaceInstrument(host:PalaceInstrumentHost,home:HTMLElement){
@@ -369,10 +417,12 @@ export function installPalaceInstrument(host:PalaceInstrumentHost,home:HTMLEleme
    ensureMount();
    root??=createRoot(mount!);
    // The regions and the Scene path stand at once; the integral whole follows when its reading returns.
-   const draw=(whole:{reading:TechneReading|null|undefined;reason:string|null})=>root!.render(<PalacePanel key={doc.expression_ref} host={host} doc={doc} reading={whole.reading} readingReason={whole.reason} onMessage={message}/>);
+   const draw=(whole:{reading:TechneReading|null|undefined;reason:string|null})=>root!.render(<PalacePanel key={doc.expression_ref} host={host} doc={doc} reading={whole.reading} readingReason={whole.reason} onMessage={message} basis={basis}/>);
    draw({reading:undefined,reason:null});
    const whole=await readWhole(doc,basis,view);
    if(generation!==epoch||destroyed||!open_)return;
+   // T21: the saved arrangement, walk position and bookmarks come back before the Palace is drawn; the notice is said once.
+   if(whole.reading){const restored=restorePalaceComposition(whole.reading,palacePresenceStorage());if(restored.notice)message(restored.notice);}
    draw(whole);
   }catch(error){if(generation!==epoch||destroyed)return;message(error instanceof Error?error.message:String(error));}
  }

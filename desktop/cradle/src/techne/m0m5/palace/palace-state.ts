@@ -6,11 +6,12 @@
  * Laws carried here:
  *   - this is PRESENTATION state of one surface, never semantic data: binding
  *     the composition mutates no reading, mints no native ref, and writes no
- *     store (no localStorage, no IndexedDB, no Palace record). It lives as
+ *     semantic store (no Palace record, no source; presentation persists only through ./presence.ts). It lives as
  *     long as the desktop session and is re-derived from the reading after a
  *     full restart — re-entry within the session recovers it (the surface's
- *     restart/re-enter continuity); app-restart recovery is a recorded join
-     on the owner's presentation-artifact path;
+ *     restart/re-enter continuity); a reload recovers the presentation through
+ *     the Palace's own presence owner (./presence.ts, lane-5 T21), which saves
+ *     refs and presentation values only and validates them on restore;
  *   - state is keyed by the reading basis (subject_ref + reading_ref), so
  *     two subjects never share a composition;
  *   - no stochastic identity: keys are derived, never random; every
@@ -142,6 +143,11 @@ export function palaceComposition(reading: TechneReading): PalaceComposition {
   const derived = deriveComposition(reading);
   compositions.set(basis, derived);
   return derived;
+}
+
+/** Whether this session already holds the composition of one reading. Session continuity only; never a store. */
+export function hasPalaceComposition(reading: TechneReading): boolean {
+  return compositions.has(palaceBasis(reading));
 }
 
 /** Replace one basis's composition (the surface's local acts). Returns the
