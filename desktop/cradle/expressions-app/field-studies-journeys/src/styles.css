@@ -368,6 +368,22 @@ body{
 .research-save-glyph[data-save-state="saved"]{background:var(--muted)}
 .research-save-glyph[data-save-state="held"]{background:var(--accent)}
 
+/* lane-2 T25: the chronology's honest absence stands where the empty surface would be. Tokens only. */
+.research-chronology-empty{margin:0;padding:12px;color:var(--muted);font-size:12px;line-height:1.5}
+
+/* lane-2 T24: focus mode for the M2′ stage. The stage owns the screen and shows its axis and cards; the chrome
+ * (toolbar, filters, minimap, diagnostics, walk and working set panels, legend, relation mode bar) is hidden until focus ends.
+ * Tokens only. The shared chrome toggle lives in the host's tools; focus hides it through the inline display it restores. */
+.research-instrument-body[data-timeline-focus="true"]{background:var(--ob-bg,var(--paper))}
+.research-instrument-body[data-timeline-focus="true"] :is(.timeline-toolbar,.timeline-filters,.timeline-minimap,.timeline-diagnostics,.timeline-band-absent,.timeline-walk,.timeline-working-set,.timeline-chain-panel,.timeline-frame,.timeline-standing-legend,.timeline-surface-controls,.relation-field-modes,.relation-field-filters,.relation-field-note){display:none!important}
+.research-instrument-body:fullscreen{width:100%;height:100%;overflow:hidden;background:var(--ob-bg,var(--paper))}
+.research-timeline-focus{min-height:28px;padding:2px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit;font-size:12px;cursor:pointer}
+
+/* lane-2 T23: lawful stillness. A chronology card changes colour when its meaning changes, never through a fade; the
+ * only motion is the camera the person drives. Overrides the card's opacity transition in researchInstrumentStyles.css
+ * (OPEN: delete that declaration at its source). Nothing in the chronology animates by itself, so reduced motion holds. */
+.research-instrument .timeline-node{transition:none}
+
 /* E21 back-references and E26 collection bins: the reveal family and the Library bins, tokens only. */
 .reveal-group{display:flex;flex-wrap:wrap;gap:6px;padding:8px 0}
 .reveal-group button,.standing-actions button,.collection-picker button{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:4px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit;font-size:12px;cursor:pointer}

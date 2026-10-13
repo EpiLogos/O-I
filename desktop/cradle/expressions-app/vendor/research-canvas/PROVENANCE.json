@@ -196,9 +196,17 @@
     "packages/canvas/src/timeline/participantSpans.ts",
     "packages/canvas/src/timeline/TimelineNesting.tsx",
     "packages/canvas/src/timeline/TimelineParticipants.tsx",
-    "packages/canvas/src/psychogeographic/terminator.ts"
+    "packages/canvas/src/psychogeographic/terminator.ts",
+    "packages/canvas/src/timeline/availabilityVoice.ts",
+    "packages/canvas/src/timeline/palette.ts",
+    "packages/canvas/src/timeline/standingStyle.ts"
   ],
   "patches": {
+    "packages/canvas/src/timeline/categories.ts": {
+      "upstream_sha256": "201d672a055205d5843cc7467d6393dfa56c8aa1b19598154d45f32670023734",
+      "adapted_sha256": "f390c43fd002bbc75a1c59d43a40cf47d1bfaf26f47f23899bd4d2d7322d3881",
+      "reason": "Category colours and grounds read the shared chronology palette (palette.ts); every value and id is unchanged | lane-2 T23: one colour table for standing and category, so a colour carries one meaning"
+    },
     "packages/canvas/src/CanvasView.tsx": {
       "upstream_sha256": "b343759c921b283f4a05bd83e3f1622bba3cd6f68b0ff8c83f31a681a32266ee",
       "adapted_sha256": "d07f308cdfb88f89a0ffcf0d72ccb8e772ebeee1e9474282c65e28338f441fe4",

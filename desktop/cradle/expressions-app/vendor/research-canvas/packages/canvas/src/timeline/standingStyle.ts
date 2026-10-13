@@ -16,6 +16,7 @@ import {
   type StandingReading,
   type StandingVisual,
 } from "../../../../../../../src/techne/m0m5/timeline/standing";
+import { STANDING_COLOUR } from "./palette";
 
 export interface StandingDrawing {
   /** Stroke and text colour. */
@@ -25,12 +26,12 @@ export interface StandingDrawing {
 }
 
 export const STANDING_DRAWING: Record<StandingVisual, StandingDrawing> = {
-  sourced: { stroke: "#2e7d32" },
-  derived: { stroke: "#6a4bd6", dash: "5 3" },
-  authored: { stroke: "#0d6efd" },
-  disputed: { stroke: "#c62828", dash: "2 3" },
-  mythic: { stroke: "#b8860b", dash: "1 4" },
-  unavailable: { stroke: "#74766b", dash: "3 5" },
+  sourced: { stroke: STANDING_COLOUR.sourced },
+  derived: { stroke: STANDING_COLOUR.derived, dash: "5 3" },
+  authored: { stroke: STANDING_COLOUR.authored },
+  disputed: { stroke: STANDING_COLOUR.disputed, dash: "2 3" },
+  mythic: { stroke: STANDING_COLOUR.mythic, dash: "1 4" },
+  unavailable: { stroke: STANDING_COLOUR.unavailable, dash: "3 5" },
 };
 
 /** Classes that read as a badge on the card. Approximate facts read as a hatched band instead. */

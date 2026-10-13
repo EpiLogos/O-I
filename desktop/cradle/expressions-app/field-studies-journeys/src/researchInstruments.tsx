@@ -13,6 +13,7 @@ import {playPlaceTour,type PlaceTourPlayback} from './placeTourPlayback.js';
 import {PlaceTourPanel} from './placeTourPanel.js';
 import {beats as journeyBeatsOf} from '../../../src/techne/m0m5/journey/beats';
 import type {PlaceViewState} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeNavigation';
+import {beginStageFocus,endStageFocus,isStageFocused,NOT_STAGE_FOCUS,releaseStageFullscreen,requestStageFullscreenOn,type StageFocusSession} from './focusMode';
 import {openTimelinePresentation,timelineRestoreNote,timelineStyleLoaded,timelineStyleOf,timelineViewNameProblem,timelineViewOf,timelineViewRestorePlan,type TimelinePresentation} from './timelineViews.js';
 import type {TimelinePresentationHandle} from '../../vendor/research-canvas/packages/canvas/src/timeline/TimelineLens';
 import {CONNECTOR_KINDS,connectorPresentation,connectorRecord,connectorWithSides,sideFromHandleId,type ConnectorKind,type ResearchConnector} from './canvasConnectors.js';
@@ -49,7 +50,8 @@ import {timeAxisProjection,relativeTimeAxisProjection} from '../../../src/techne
 import {axisEventOf,currentHop,foldStanding,handoffDisclosure,handoffRefusal,openEndpoint,openRelation,relationRefOf,showOnGlobeOf,traversalHopOf,trailFromEvent,trailOfNavigation,type GlobeCarry,type TraversalFold} from '../../../src/techne/m0m5/timeline/navigationIdentity';
 import type {DisclosureTraversalStep} from '../../../src/techne/contract';
 import {sessionCrossingIdentity} from '../../../src/techne/session';
-import {containmentPairs,relationEdges,participantSpansFromReading} from '../../../src/techne/m0m5/timeline/relations';
+import {containmentPairs,projectionAvailability,relationEdges,participantSpansFromReading} from '../../../src/techne/m0m5/timeline/relations';
+import {chronologyVoice,NO_DATES_SENTENCE} from '../../vendor/research-canvas/packages/canvas/src/timeline/availabilityVoice';
 import type {NativeTimeWindowBasis,NativeTimeWindowReply,NativeTimeWindowRequest} from '../../../../../packages/expressions-boundary/src/timeWindow';
 import {blueprintMember,type SceneBlueprint,type BlueprintTransform} from './blueprintGeometry.js';
 import {icon} from './icons.js';
@@ -407,6 +409,8 @@ interface ViewState {
  timelineHandle?:TimelinePresentationHandle|null;timelinePresentation?:TimelinePresentation;timelinePending?:{name:string;presentation:TimelinePresentation};
  /** Remounts the chronology surface when a named view moves its camera (its camera is read once, at mount). */
  timelineKey?:number;
+ /** lane-2 T24: the M2′ stage's focus session (focusMode.ts) and whether the browser granted it fullscreen; the detach of its listeners. */
+ timelineFocus?:StageFocusSession<{toolsDisplay:string}>;timelineFullscreen?:boolean;timelineFocusOff?:()=>void;
  timeDraft?:SharedTimeDraft;
  /** Gesture transactions live on the ViewState, not inside canvasNode's
   * per-render closures, so one gesture survives the many re-renders a drag
@@ -1197,6 +1201,8 @@ host.tools.append(saveGlyph);
    }
    if(selected==='m2'){
     const temporal=data.bundle.nodes.filter(n=>n.isTemporal);
+    // lane-2 T25: the chronology, the Relations tab and the status line read one availability voice.
+    const voice=chronologyVoice(projectionAvailability(nativeReading,sharedTime?.axis));
     const years=temporal.flatMap(node=>[node.validFrom,node.validTo]).flatMap(value=>{const match=typeof value==='string'?/^(-?\d{1,6})(?:-|$)/.exec(value):null;return match?[Number(match[1])]:[];}).filter(Number.isFinite);
     const first=years.length?Math.min(...years):0,last=years.length?Math.max(...years):first;
     const available=Math.max(240,host.container.clientWidth-320);
@@ -1334,14 +1340,55 @@ host.tools.append(saveGlyph);
     const trailControl=(trail:TraversalFold|null)=>trail&&trail.steps.length>0&&trail.origin===state.timeline?.selectedNodeId
      ?<button type="button" aria-label="Back to event" title={`Return along the trail to its event · ${foldStanding(trail)}`} onClick={backToEvent}>Back to event</button>
      :null;
+    // lane-2 T24 — focus mode for the M2′ stage. The lane-3 E23 focus session (focusMode.ts) holds the layout it began from and
+    // the stage asks for the same real fullscreen. F toggles; Escape, or the browser's own exit, restores exactly what focus began from.
+    const focusOn=()=>isStageFocused(state.timelineFocus??NOT_STAGE_FOCUS);
+    const endTimelineFocus=()=>{
+     const ended=endStageFocus(state.timelineFocus??NOT_STAGE_FOCUS,chrome=>({...chrome}));
+     state.timelineFocus=ended.session;state.timelineFullscreen=false;
+     body.removeAttribute('data-timeline-focus');
+     if(ended.restore)host.tools.style.display=ended.restore.toolsDisplay;
+     releaseStageFullscreen();
+    };
+    const beginTimelineFocus=()=>{
+     if(focusOn())return;
+     const started=beginStageFocus(state.timelineFocus??NOT_STAGE_FOCUS,{toolsDisplay:host.tools.style.display},chrome=>({...chrome}));
+     state.timelineFocus=started;
+     host.tools.style.display='none';
+     body.dataset.timelineFocus='true';
+     void requestStageFullscreenOn(body,{navigationUI:'hide'}).then(granted=>{
+      // Ended or superseded while the request settled: a late grant is released, never held.
+      if(state.timelineFocus!==started){if(granted)releaseStageFullscreen();return;}
+      state.timelineFullscreen=granted;
+     });
+    };
+    state.timelineFocusOff?.();
+    if(view){
+     const onStageFullscreen=()=>{if(state.timelineFullscreen&&!document.fullscreenElement)endTimelineFocus();};
+     const onStageKey=(event:KeyboardEvent)=>{
+      // Focus that outlives its lens ends on the next key, so the shared tools are never left hidden.
+      if(destroyed||lens!=='m2'){if(focusOn())endTimelineFocus();return;}
+      if(views.get(currentKey??'')!==state||event.metaKey||event.ctrlKey||event.altKey)return;
+      const target=event.target as HTMLElement|null;
+      if(target?.isContentEditable||target?.tagName==='INPUT'||target?.tagName==='TEXTAREA'||target?.tagName==='SELECT')return;
+      if(event.key==='Escape'&&focusOn()){event.preventDefault();event.stopImmediatePropagation();endTimelineFocus();return;}
+      if(event.key==='f'||event.key==='F'){event.preventDefault();if(focusOn())endTimelineFocus();else beginTimelineFocus();}
+     };
+     // Capture phase: a focused Escape is taken here, before the lens's own Escape clears its selection beneath.
+     window.addEventListener('keydown',onStageKey,true);
+     document.addEventListener('fullscreenchange',onStageFullscreen);
+     state.timelineFocusOff=()=>{window.removeEventListener('keydown',onStageKey,true);document.removeEventListener('fullscreenchange',onStageFullscreen);};
+    }
     const canvasNode2=():ReactNode=>{
      // Lane-2 T5: relative mode exists only when the acknowledged session names a
      // zero this reading warrants; otherwise the segment is absent, never disabled.
      const relativeAxis=sharedTime?relativeTimeAxisProjection(nativeReading,sharedTime.session):null;
      if(state.m2Projection==='relative'&&!relativeAxis)state.m2Projection='chronology';
+     // lane-2 T25: a saved or carried Relations projection with nothing to draw falls back to the chronology, with its reason in the status line.
+     if(state.m2Projection==='field'&&!voice.relations.available)state.m2Projection='chronology';
      const toggle=<div className="research-tool-actions" role="tablist" aria-label="Timeline projection">
       <button role="tab" aria-selected={state.m2Projection==='chronology'} aria-pressed={state.m2Projection==='chronology'} onClick={()=>setProjection('chronology')}>Chronology</button>
-      <button role="tab" aria-selected={state.m2Projection==='field'} aria-pressed={state.m2Projection==='field'} onClick={()=>setProjection('field')}>Relations</button>
+      <button role="tab" aria-selected={state.m2Projection==='field'} aria-pressed={state.m2Projection==='field'} disabled={!voice.relations.available} title={voice.relations.reason??undefined} onClick={()=>setProjection('field')}>Relations</button>
       {relativeAxis&&<button role="tab" aria-selected={state.m2Projection==='relative'} aria-pressed={state.m2Projection==='relative'} onClick={()=>setProjection('relative')}>Relative</button>}
       <button aria-label="Refresh timeline" title="Refresh timeline" onClick={()=>void load('m2')}><ToolIcon name="history"/></button>
       {view&&state.m2Projection==='chronology'&&<button aria-label="Save timeline view" title="Save timeline view" onClick={()=>{if(state.timeline)void host.material(sceneId,{type:'viewport',key:'timeline',value:{x:state.timeline.centerYear,y:0,zoom:state.timeline.pixelsPerYear}}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}
@@ -1351,6 +1398,7 @@ host.tools.append(saveGlyph);
       {(tagReason||relationReason)&&<button onClick={()=>message([tagReason&&`Tags: ${tagReason}`,relationReason&&`Relations: ${relationReason}`].filter(Boolean).join(' · '))}>Reading incomplete</button>}
       {view&&state.m2Projection==='chronology'&&<SelectedEventControl initial={state.timeline?.selectedNodeId??null} listen={listener=>{state.globeListener=listener;}} control={globeControl}/>}
       {view&&state.m2Projection==='chronology'&&<TrailControl initial={trailOf()} listen={listener=>{state.traversalListener=listener;}} control={trailControl}/>}
+      {view&&<button type="button" className="research-timeline-focus" aria-label="Focus the timeline stage" title="Focus the stage: F toggles, Escape restores. The stage asks for fullscreen where granted; the chrome returns exactly on exit." onClick={beginTimelineFocus}>Focus</button>}
       {timeControls(()=>render(canvasNode2()))}
      </div>;
      if(state.m2Projection==='field'){
@@ -1370,13 +1418,15 @@ host.tools.append(saveGlyph);
      // Lane-2 T6: the chronology reads the shared time-axis projection of the
      // session the host acknowledged — the same function lane 4 reads.
      const timed=sharedTimelinePresentation(data.dataSource,data.timeline,nativeReading,sharedTime?timeAxisProjection(nativeReading,sharedTime.session):null);
+     // lane-2 T25: with no temporal facet there is nothing to place on the axis; the honest absence and its reason stand in for the empty surface.
+     if(temporal.length===0)return <>{createPortal(toggle,host.tools)}<p className="research-chronology-empty" data-testid="chronology-honest-empty" role="note">{NO_DATES_SENTENCE}{voice.timeline.reason?`: ${voice.timeline.reason}`:''}</p></>;
      return <>{createPortal(toggle,host.tools)}<TimelineSurface key={state.timelineKey??0} timeExtent={years.length?{startYear:first,endYear:last}:undefined} toolbarContainer={host.tools} repository={timed.repository} constellationId={data.reading.subject.subject_ref} dataSource={timed.dataSource} containment={containmentPairs(relationEdges(nativeReading))} participants={participantSpansFromReading(nativeReading).spans}
       initialState={state.timeline!} onViewStateChange={value=>{const moved=value.selectedNodeId!==state.timeline?.selectedNodeId;state.timeline=value;if(moved)setTrail(trailOf());state.globeListener?.(value.selectedNodeId??null);}}
       onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref);if(node)host.inspectSubject(ref,{node});}} onOpenNode={(ref,node,relationField)=>{const facets=data.bundle.relationships.filter(row=>row.targetGraphNodeId===ref&&typeof row.properties.temporal_kind==='string');host.inspectSubject(ref,{node,relationField,anchor:facets.length>1?{state:'absent',reason:'More than one temporal facet is disclosed for this event; its source opens at its top.'}:evidenceAnchorOf(facets[0]?.properties??{})});}}
       onOpenRelation={openTrailRelation} onOpenEndpoint={openTrailEndpoint}/></>;
     };
     // lane-2 T22: the status line names the subject, reading basis and window the session holds, exactly as it holds them.
-    const chronologyStatus=temporal.length||state.m2Projection==='field'?(state.m2Projection==='field'?'Relations':'Timeline'):'No dates disclosed by this source';
+    const chronologyStatus=state.m2Projection==='field'?voice.relationField:voice.chronology;
     message(sharedTime&&state.m2Projection==='chronology'?`${chronologyStatus} · ${handoffDisclosure(sharedTime.session)}`:chronologyStatus);
     if(sharedTime)followSharedTime(()=>render(canvasNode2()));
     render(canvasNode2());return;

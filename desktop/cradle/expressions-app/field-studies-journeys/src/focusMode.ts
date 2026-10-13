@@ -62,3 +62,48 @@ export function focusedLayout(layout: FocusLayout): FocusLayout {
     selected: [],
   };
 }
+
+// ---------------------------------------------------------------------------
+// lane-2 T24: the same focus session for a host whose layout is its own (the M2′ timeline stage snapshots its
+// chrome). Identical semantics to beginFocus/endFocus above: beginning while focused keeps the first snapshot,
+// and ending returns the exact snapshot focus began from.
+// ---------------------------------------------------------------------------
+
+export interface StageFocusSession<L> {
+  readonly prior: L | null;
+}
+
+export const NOT_STAGE_FOCUS: StageFocusSession<never> = {prior: null};
+
+export function isStageFocused<L>(session: StageFocusSession<L>): boolean {
+  return session.prior !== null;
+}
+
+export function beginStageFocus<L>(session: StageFocusSession<L>, layout: L, copy: (layout: L) => L): StageFocusSession<L> {
+  if (session.prior) return session;
+  return {prior: copy(layout)};
+}
+
+export function endStageFocus<L>(session: StageFocusSession<L>, copy: (layout: L) => L): {session: StageFocusSession<never>; restore: L | null} {
+  return {session: NOT_STAGE_FOCUS, restore: session.prior ? copy(session.prior) : null};
+}
+
+/**
+ * lane-2 T24 / lane-3 E23: the one request path for real fullscreen on a stage element. Granted resolves true;
+ * refused or unsupported resolves false, and focus stands in place (chrome still hidden).
+ */
+export function requestStageFullscreenOn(element: HTMLElement, options: FullscreenOptions = {}): Promise<boolean> {
+  if (typeof element.requestFullscreen !== 'function') return Promise.resolve(false);
+  let request: Promise<void>;
+  try {
+    request = Promise.resolve(element.requestFullscreen(options));
+  } catch {
+    return Promise.resolve(false);
+  }
+  return request.then(() => true, () => false);
+}
+
+/** Leaves fullscreen when the document holds it. Idempotent; a failed exit is not an error for the stage. */
+export function releaseStageFullscreen(): void {
+  if (document.fullscreenElement && typeof document.exitFullscreen === 'function') void document.exitFullscreen().catch(() => {});
+}
