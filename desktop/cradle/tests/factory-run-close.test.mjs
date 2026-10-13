@@ -85,3 +85,30 @@ test("the recognition the close follows is the owner's own recorded ref", () => 
   assert.equal(M.recognitionRefOf(answer), REC);
   assert.equal(M.recognitionRefOf({record: {}}), undefined);
 });
+
+// T-REVIEW-6 (#7): a close whose walk ended with the Run unfinished, or whose
+// reading is missing, stops nothing; the desk trusts the Run's own lifecycle.
+test("a walk that ends with the Run unfinished is a driver refusal and stops no live production", () => {
+  const stopped = [];
+  const stop = runKey => { stopped.push(runKey); return Promise.resolve(); };
+  const key = "source\u0000project\u0000run:A";
+  const walk = close({status: "refused", lifecycle: "active", steps: [step("active", "applied", 40), step("active", "applied", 40), step("active", "applied", 40), step("active", "applied", 40)], refusal: {source: "driver", step: null, message: "The Run is active after 4 owner move(s); the close needs it finished or archived, so the close stops here."}});
+  const receipt = M.readRunClose(walk, expect);
+  assert.equal(receipt.status, "refused");
+  assert.equal(M.settleRunClose(receipt, key, stop), false);
+  assert.deepEqual(stopped, []);
+});
+
+test("a close that says Finished over an unfinished Run is not a close, and stops nothing", () => {
+  const stopped = [];
+  const stop = runKey => { stopped.push(runKey); return Promise.resolve(); };
+  const key = "source\u0000project\u0000run:A";
+  assert.throws(() => M.readRunClose(close({lifecycle: "finishing"}), expect), /did not answer this Run's close/);
+  assert.throws(() => M.readRunClose(close({status: "already-finished", steps: [], lifecycle: null}), expect), /did not answer this Run's close/);
+  // Even a receipt that reached settleRunClose unchecked does not stop the Run.
+  const unfinished = close({lifecycle: "finishing"});
+  assert.equal(M.closeStopsLive(unfinished), false);
+  assert.equal(M.settleRunClose(unfinished, key, stop), false);
+  assert.equal(M.settleRunClose(close({lifecycle: null}), key, stop), false);
+  assert.deepEqual(stopped, []);
+});

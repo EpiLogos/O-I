@@ -349,12 +349,34 @@ pub enum OwnerRequest {
         recognition_ref: String,
         #[serde(default)]
         next_unit: Option<Value>,
-        /// The host's native action authority grant ref for this close
-        /// (Control/user/native-action-authority.json). Absent, the close is
-        /// refused before any owner call: the desk never asserts a grant.
+        /// The host's native action authority grant ref for this close, in the
+        /// form `central:native-action-authority#<principal_ref>`. Absent, the
+        /// close is refused before any owner call: the desk never asserts a grant.
         #[serde(default)]
         authority_grant: Option<String>,
+        /// The token the host holds for that grant. The kernel verifies its
+        /// sha256 against the grant's `token_sha256` and never records it.
+        #[serde(default)]
+        authority_token: Option<AuthorityToken>,
     },
+}
+
+/// The host's native action token. Serialised as the bare string, but its
+/// Debug output is redacted so a logged request never carries it.
+#[derive(Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(transparent)]
+pub struct AuthorityToken(String);
+
+impl AuthorityToken {
+    fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Debug for AuthorityToken {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("AuthorityToken(<redacted>)")
+    }
 }
 
 impl OwnerRequest {
@@ -1215,16 +1237,24 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             recognition_ref,
             next_unit,
             authority_grant,
+            authority_token,
         } => {
             let mut call =
                 |args: &[std::ffi::OsString], input: Option<&[u8]>| owner_call(args, input);
+            let contract = authority_contract_for(&state_path);
+            let authority = CloseAuthority {
+                grant: authority_grant,
+                token: authority_token,
+                contract: contract.as_deref(),
+                now_unix_seconds: now_unix_seconds(),
+            };
             Ok(run_close(
                 &mut call,
                 &state_path,
                 &run_ref,
                 &recognition_ref,
                 next_unit,
-                authority_grant,
+                authority,
             ))
         }
     }
@@ -1411,6 +1441,153 @@ fn action_call(call: &mut OwnerCall<'_>, state_path: &Path, body: &Value) -> Res
     Ok(receipt)
 }
 
+/// The Central contract that names the native action grants.
+const AUTHORITY_CONTRACT_REL: &str = "Control/user/native-action-authority.json";
+const AUTHORITY_CONTRACT_SCHEMA: &str = "central.native-action-authority/v1";
+/// The grant ref the host passes: `central:native-action-authority#<principal_ref>`.
+const AUTHORITY_GRANT_PREFIX: &str = "central:native-action-authority#";
+/// What a grant must list for this close, and the scope it must cover.
+const RUN_CLOSE_ACTION: &str = "factory.run.close";
+const RUN_CLOSE_SCOPE: &str = "project:Factory";
+
+/// The host's native action authority for one close: the grant ref and token
+/// it holds, the contract the grant resolves against, and the reading clock.
+pub struct CloseAuthority<'a> {
+    pub grant: Option<String>,
+    pub token: Option<AuthorityToken>,
+    /// `None` when no Central contract is found above the Factory state.
+    pub contract: Option<&'a Path>,
+    pub now_unix_seconds: u64,
+}
+
+/// The authority contract for a Factory state: the host's `OI_CENTRAL_ROOT`
+/// when set, else the nearest ancestor of the state that carries
+/// `Control/user/native-action-authority.json` (a project state sits under
+/// `Work/<Name>/.factory/`, so the Central root is above it).
+pub fn authority_contract_for(state_path: &Path) -> Option<PathBuf> {
+    authority_under(
+        state_path,
+        std::env::var_os("OI_CENTRAL_ROOT").map(PathBuf::from),
+    )
+}
+
+fn authority_under(state_path: &Path, central_root: Option<PathBuf>) -> Option<PathBuf> {
+    if let Some(root) = central_root {
+        return Some(root.join(AUTHORITY_CONTRACT_REL));
+    }
+    state_path
+        .ancestors()
+        .map(|dir| dir.join(AUTHORITY_CONTRACT_REL))
+        .find(|path| path.is_file())
+}
+
+fn now_unix_seconds() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|elapsed| elapsed.as_secs())
+        .unwrap_or_default()
+}
+
+/// The lowercase hex sha256 of a token, as the contract records it.
+fn token_sha256(token: &str) -> String {
+    use sha2::{Digest, Sha256};
+    Sha256::digest(token.as_bytes())
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect()
+}
+
+/// Whether the host's grant authorises this close, resolved against the
+/// contract document. Returns the refusal reason, or `None` when the grant
+/// exists, its token matches, it lists the close, covers the Factory scope and
+/// has not expired. The token is compared, never echoed.
+fn grant_refusal(
+    contract: &Value,
+    grant: &str,
+    token: Option<&AuthorityToken>,
+    now_unix_seconds: u64,
+) -> Option<String> {
+    if contract["schema"] != AUTHORITY_CONTRACT_SCHEMA {
+        return Some(format!(
+            "The native action authority contract is not {AUTHORITY_CONTRACT_SCHEMA}; the close cannot resolve its grant."
+        ));
+    }
+    let principal = grant
+        .strip_prefix(AUTHORITY_GRANT_PREFIX)
+        .filter(|principal| !principal.trim().is_empty());
+    let entry = principal.and_then(|principal| {
+        contract["grants"]
+            .as_array()?
+            .iter()
+            .find(|entry| entry["principal_ref"].as_str() == Some(principal))
+    });
+    let Some(entry) = entry else {
+        return Some(format!(
+            "unknown grant: no native action authority grant in the contract names {grant}."
+        ));
+    };
+    let presented = token.map(|token| token_sha256(token.as_str()));
+    let matches = matches!((presented.as_deref(), entry["token_sha256"].as_str()),
+        (Some(presented), Some(recorded)) if presented.eq_ignore_ascii_case(recorded));
+    if !matches {
+        return Some(
+            "token mismatch: the token the close carries does not match the grant's token_sha256."
+                .into(),
+        );
+    }
+    let lists_close = entry["actions"]
+        .as_array()
+        .is_some_and(|actions| actions.iter().any(|action| action == RUN_CLOSE_ACTION));
+    if !lists_close {
+        return Some(format!(
+            "action not granted: the grant does not list {RUN_CLOSE_ACTION}."
+        ));
+    }
+    let covers_scope = entry["scope_refs"]
+        .as_array()
+        .is_some_and(|scopes| scopes.iter().any(|scope| scope == RUN_CLOSE_SCOPE));
+    if !covers_scope {
+        return Some(format!(
+            "scope not granted: the grant does not cover {RUN_CLOSE_SCOPE}."
+        ));
+    }
+    match entry["expires_at_unix_seconds"].as_u64() {
+        Some(expires) if now_unix_seconds < expires => None,
+        Some(expires) => Some(format!(
+            "expired: the grant expired at {expires} unix seconds."
+        )),
+        None => Some("expired: the grant names no expiry, so it cannot authorise a close.".into()),
+    }
+}
+
+/// The grant gate for a close: the contract is read and the grant resolved
+/// against it. A contract that cannot be read refuses the same way.
+fn close_grant_refusal(authority: &CloseAuthority<'_>, grant: &str) -> Option<String> {
+    let Some(path) = authority.contract else {
+        return Some(
+            "The native action authority contract is not found above this Factory state, so the grant cannot be resolved."
+                .into(),
+        );
+    };
+    let contract: Value = match std::fs::read(path)
+        .map_err(|error| error.to_string())
+        .and_then(|bytes| serde_json::from_slice(&bytes).map_err(|error| error.to_string()))
+    {
+        Ok(contract) => contract,
+        Err(error) => {
+            return Some(format!(
+                "The native action authority contract cannot be read: {error}."
+            ))
+        }
+    };
+    grant_refusal(
+        &contract,
+        grant,
+        authority.token.as_ref(),
+        authority.now_unix_seconds,
+    )
+}
+
 /// Close a Run's own lifecycle after the person's Recognition. Returns the
 /// close document: `finished` (moves made to Finished), `already-finished` (no
 /// move needed), `next-unit-started`, or `refused` with the owner's (or the
@@ -1422,7 +1599,7 @@ pub fn run_close(
     run_ref: &str,
     recognition_ref: &str,
     next_unit: Option<Value>,
-    authority_grant: Option<String>,
+    authority: CloseAuthority<'_>,
 ) -> Value {
     let envelope = |status: &str, lifecycle: Value, steps: Vec<Value>, refusal: Value| {
         serde_json::json!({
@@ -1447,8 +1624,14 @@ pub fn run_close(
             ),
         );
     }
-    // The grant gate comes before any owner call: no grant, no move.
-    let grant = match authority_grant.filter(|grant| !grant.trim().is_empty()) {
+    // The grant gate comes before any owner call: no grant, no move. A grant
+    // must resolve against Central's contract (exists, token, action, scope,
+    // expiry); anything else refuses with the reason named.
+    let grant = match authority
+        .grant
+        .clone()
+        .filter(|grant| !grant.trim().is_empty())
+    {
         Some(grant) => grant,
         None => {
             return envelope(
@@ -1459,9 +1642,29 @@ pub fn run_close(
             )
         }
     };
+    if let Some(reason) = close_grant_refusal(&authority, &grant) {
+        return envelope(
+            "refused",
+            Value::Null,
+            vec![],
+            refusal("driver", None, reason),
+        );
+    }
     let mut steps: Vec<Value> = Vec::new();
 
     if let Some(unit) = next_unit {
+        if unit["runRef"] != run_ref {
+            return envelope(
+                "refused",
+                Value::Null,
+                steps,
+                refusal(
+                    "driver",
+                    None,
+                    "The next serial unit names another Run than this close.",
+                ),
+            );
+        }
         if unit["authority"]["authorityRef"] != grant.as_str() {
             return envelope(
                 "refused",
@@ -1624,15 +1827,55 @@ pub fn run_close(
         }
     }
 
-    let lifecycle = read_state(call, state_path, run_ref)
-        .map(|(run, _)| run["lifecycle"].clone())
-        .unwrap_or(Value::Null);
-    let status = if steps.is_empty() {
-        "already-finished"
-    } else {
-        "finished"
+    // Finished only when the owner's own reading says so: a walk that ran out
+    // of steps, or a final reading that fails, is not a finished Run.
+    let lifecycle = match read_state(call, state_path, run_ref) {
+        Ok((run, _)) => run["lifecycle"].as_str().map(str::to_owned),
+        Err(error) => {
+            return envelope(
+                "refused",
+                Value::Null,
+                steps,
+                refusal(
+                    "driver",
+                    None,
+                    format!("Factory's final reading of the Run failed, so the close cannot confirm where it stands: {}", error.message),
+                ),
+            )
+        }
     };
-    envelope(status, lifecycle, steps, Value::Null)
+    match lifecycle.as_deref() {
+        Some(lifecycle @ ("finished" | "archived")) => {
+            let status = if steps.is_empty() {
+                "already-finished"
+            } else {
+                "finished"
+            };
+            envelope(status, Value::String(lifecycle.to_owned()), steps, Value::Null)
+        }
+        Some(lifecycle) => {
+            let message = format!(
+                "The Run is {lifecycle} after {} owner move(s); the close needs it finished or archived, so the close stops here.",
+                steps.len()
+            );
+            envelope(
+                "refused",
+                Value::String(lifecycle.to_owned()),
+                steps,
+                refusal("driver", None, message),
+            )
+        }
+        None => envelope(
+            "refused",
+            Value::Null,
+            steps,
+            refusal(
+                "driver",
+                None,
+                "Factory's final reading names no lifecycle, so the close cannot confirm where the Run stands.",
+            ),
+        ),
+    }
 }
 
 #[cfg(test)]
@@ -1892,6 +2135,10 @@ mod run_close_tests {
         receiving: bool,
         authority: bool,
         refuse: Option<(String, String)>,
+        /// Accepts every transition and moves nothing: the walk runs out of steps.
+        stuck: bool,
+        /// The Run reading fails once the owner has taken this many moves.
+        fail_run_reads_after_moves: Option<usize>,
         applied: BTreeMap<String, Value>,
         actions: Vec<Value>,
         calls: usize,
@@ -1906,6 +2153,8 @@ mod run_close_tests {
                 receiving: true,
                 authority: true,
                 refuse: None,
+                stuck: false,
+                fail_run_reads_after_moves: None,
                 applied: BTreeMap::new(),
                 actions: Vec::new(),
                 calls: 0,
@@ -1923,6 +2172,13 @@ mod run_close_tests {
                 .map(|a| a.to_string_lossy().into_owned())
                 .collect();
             match (words[0].as_str(), words[1].as_str()) {
+                ("development", "run")
+                    if self
+                        .fail_run_reads_after_moves
+                        .is_some_and(|moves| self.actions.len() >= moves) =>
+                {
+                    Err(incompatible("Factory's Run reading is unavailable"))
+                }
                 ("development", "run") => Ok(serde_json::json!({
                     "lifecycle": self.lifecycle,
                     "revision": self.run_rev,
@@ -1983,6 +2239,20 @@ mod run_close_tests {
             if target == "finished" && !self.receiving {
                 return Err(refused("Finished requires live native receiving admission; a public receiving label or observation is not proof"));
             }
+            if self.stuck {
+                let previous = self.state_rev;
+                let receipt = serde_json::json!({
+                    "contract": ATTEMPT_ACTION_CONTRACT,
+                    "runRef": body["runRef"],
+                    "previousRevision": previous,
+                    "nextRevision": previous + 1,
+                    "operation": "transition-run",
+                    "attemptRefs": [],
+                    "standing": "scripted owner that moves nothing",
+                });
+                self.applied.insert(command_id, receipt.clone());
+                return Ok(receipt);
+            }
             let legal = matches!(
                 (self.lifecycle.as_str(), target.as_str()),
                 ("seeded", "active") | ("active", "finishing") | ("finishing", "finished")
@@ -2011,18 +2281,92 @@ mod run_close_tests {
         }
     }
 
-    /// The host's grant ref for the desk's close; the fake owner validates the
-    /// shape only, so the grant is simply carried into the authority block.
-    const GRANT: &str = "grant:factory-run-close:test";
+    const PRINCIPAL: &str = "central:source:control:root:Control/user/identity";
+    const GRANT: &str =
+        "central:native-action-authority#central:source:control:root:Control/user/identity";
+    const TOKEN: &str = "test-factory-close-token";
+    /// A fixed clock: the fixture grant expires after it, never before.
+    const NOW: u64 = 1_800_000_000;
 
-    fn close(fake: &mut Fake, next: Option<Value>) -> Value {
+    /// A temporary Central contract, removed when the test ends.
+    struct TempContract {
+        dir: PathBuf,
+        path: PathBuf,
+    }
+
+    impl TempContract {
+        fn new(document: &Value) -> Self {
+            static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+            let index = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            let dir = std::env::temp_dir()
+                .join(format!("factory-run-close-{}-{index}", std::process::id()));
+            let path = dir.join(AUTHORITY_CONTRACT_REL);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(&path, serde_json::to_vec(document).unwrap()).unwrap();
+            Self { dir, path }
+        }
+    }
+
+    impl Drop for TempContract {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.dir);
+        }
+    }
+
+    /// The contract the grant is written into: one grant for the close.
+    fn grant_document(actions: &[&str], scopes: &[&str], expires: u64) -> Value {
+        serde_json::json!({
+            "schema": AUTHORITY_CONTRACT_SCHEMA,
+            "scope_ref": "control:root",
+            "grants": [{
+                "principal_ref": PRINCIPAL,
+                "actor_kind": "human",
+                "token_sha256": token_sha256(TOKEN),
+                "scope_refs": scopes,
+                "actions": actions,
+                "expires_at_unix_seconds": expires,
+            }],
+        })
+    }
+
+    fn valid_document() -> Value {
+        grant_document(
+            &[RUN_CLOSE_ACTION],
+            &["control:root", RUN_CLOSE_SCOPE],
+            NOW + 1000,
+        )
+    }
+
+    fn close_with(
+        fake: &mut Fake,
+        next: Option<Value>,
+        grant: Option<String>,
+        token: Option<&str>,
+        contract: Option<&Path>,
+    ) -> Value {
         run_close(
             &mut |args: &[std::ffi::OsString], input: Option<&[u8]>| fake.call(args, input),
             Path::new("/s.json"),
             "run:A",
             "recognition:R1",
             next,
+            CloseAuthority {
+                grant,
+                token: token.map(|token| AuthorityToken(token.into())),
+                contract,
+                now_unix_seconds: NOW,
+            },
+        )
+    }
+
+    fn close(fake: &mut Fake, next: Option<Value>) -> Value {
+        let contract = TempContract::new(&valid_document());
+        close_with(
+            fake,
+            next,
             Some(GRANT.into()),
+            Some(TOKEN),
+            Some(&contract.path),
         )
     }
 
@@ -2201,14 +2545,7 @@ mod run_close_tests {
     fn no_grant_is_refused_before_any_owner_call() {
         let mut fake = Fake::new("active");
         for grant in [None, Some("  ".to_owned())] {
-            let result = run_close(
-                &mut |args: &[std::ffi::OsString], input: Option<&[u8]>| fake.call(args, input),
-                Path::new("/s.json"),
-                "run:A",
-                "recognition:R1",
-                None,
-                grant,
-            );
+            let result = close_with(&mut fake, None, grant, Some(TOKEN), None);
             assert_eq!(result["status"], "refused", "{result}");
             assert_eq!(result["refusal"]["source"], "driver");
             assert_eq!(
@@ -2232,6 +2569,198 @@ mod run_close_tests {
         assert!(finish_path("finished").unwrap().is_empty());
         assert!(finish_path("aborted").is_err());
         assert!(finish_path("waiting_human").is_err());
+    }
+
+    #[test]
+    fn a_grant_resolves_against_the_contract_and_each_refusal_is_named() {
+        let cases: [(&str, &str, Option<&str>, Value, &str); 7] = [
+            (
+                "a grant the contract does not name",
+                "central:native-action-authority#central:source:other",
+                Some(TOKEN),
+                valid_document(),
+                "unknown grant:",
+            ),
+            (
+                "a grant ref with no principal",
+                "central:native-action-authority#",
+                Some(TOKEN),
+                valid_document(),
+                "unknown grant:",
+            ),
+            (
+                "a close that carries no token",
+                GRANT,
+                None,
+                valid_document(),
+                "token mismatch:",
+            ),
+            (
+                "a token that is not the grant's",
+                GRANT,
+                Some("some-other-token"),
+                valid_document(),
+                "token mismatch:",
+            ),
+            (
+                "a grant that does not list factory.run.close",
+                GRANT,
+                Some(TOKEN),
+                grant_document(
+                    &["central.day.ensure"],
+                    &["control:root", RUN_CLOSE_SCOPE],
+                    NOW + 1000,
+                ),
+                "action not granted:",
+            ),
+            (
+                "a grant that does not cover project:Factory",
+                GRANT,
+                Some(TOKEN),
+                grant_document(&[RUN_CLOSE_ACTION], &["control:root"], NOW + 1000),
+                "scope not granted:",
+            ),
+            (
+                "a grant that has expired",
+                GRANT,
+                Some(TOKEN),
+                grant_document(&[RUN_CLOSE_ACTION], &[RUN_CLOSE_SCOPE], NOW),
+                "expired:",
+            ),
+        ];
+        for (name, grant, token, document, reason) in cases {
+            let contract = TempContract::new(&document);
+            let mut fake = Fake::new("active");
+            let result = close_with(
+                &mut fake,
+                None,
+                Some(grant.into()),
+                token,
+                Some(&contract.path),
+            );
+            assert_eq!(result["status"], "refused", "{name}: {result}");
+            assert_eq!(result["refusal"]["source"], "driver", "{name}");
+            let message = result["refusal"]["message"].as_str().unwrap();
+            assert!(message.starts_with(reason), "{name}: {message}");
+            assert_eq!(
+                fake.calls, 0,
+                "{name}: no owner call before the grant resolves"
+            );
+            assert_eq!(fake.lifecycle, "active", "{name}");
+            if let Some(token) = token {
+                assert!(
+                    !result.to_string().contains(token),
+                    "{name}: the token is never echoed"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn a_grant_whose_contract_is_missing_or_unreadable_is_refused_before_any_move() {
+        let base =
+            std::env::temp_dir().join(format!("factory-run-close-missing-{}", std::process::id()));
+        let missing = base.join("Control/user/native-action-authority.json");
+        let mut fake = Fake::new("active");
+        let result = close_with(
+            &mut fake,
+            None,
+            Some(GRANT.into()),
+            Some(TOKEN),
+            Some(&missing),
+        );
+        assert_eq!(result["refusal"]["source"], "driver");
+        assert!(result["refusal"]["message"]
+            .as_str()
+            .unwrap()
+            .starts_with("The native action authority contract cannot be read"));
+        let none = close_with(&mut fake, None, Some(GRANT.into()), Some(TOKEN), None);
+        assert!(none["refusal"]["message"]
+            .as_str()
+            .unwrap()
+            .starts_with("The native action authority contract is not found"));
+        assert_eq!(fake.calls, 0);
+        assert!(fake.actions.is_empty());
+    }
+
+    #[test]
+    fn a_valid_grant_passes_and_the_token_is_never_recorded_or_logged() {
+        let mut fake = Fake::new("active");
+        let result = close(&mut fake, None);
+        assert_eq!(result["status"], "finished", "{result}");
+        assert!(!result.to_string().contains(TOKEN), "{result}");
+        assert_eq!(fake.actions.len(), 2);
+        assert_eq!(fake.actions[0]["authority"]["authorityRef"], GRANT);
+        let wire = AuthorityToken(TOKEN.into());
+        assert!(
+            !format!("{wire:?}").contains(TOKEN),
+            "the token's Debug is redacted"
+        );
+        assert_eq!(serde_json::to_value(&wire).unwrap(), Value::from(TOKEN));
+    }
+
+    #[test]
+    fn the_authority_contract_is_the_nearest_central_root_above_the_state() {
+        let base =
+            std::env::temp_dir().join(format!("factory-run-close-root-{}", std::process::id()));
+        let contract = base.join("Central").join(AUTHORITY_CONTRACT_REL);
+        std::fs::create_dir_all(contract.parent().unwrap()).unwrap();
+        std::fs::write(&contract, "{}").unwrap();
+        let state = base.join("Central/Work/O-I/.factory/development-state.json");
+        assert_eq!(authority_under(&state, None), Some(contract));
+        let pinned = base.join("Pinned");
+        assert_eq!(
+            authority_under(&state, Some(pinned.clone())),
+            Some(pinned.join(AUTHORITY_CONTRACT_REL)),
+            "the host's Central root wins"
+        );
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    #[test]
+    fn a_next_unit_for_another_run_is_refused_before_any_move() {
+        let mut fake = Fake::new("active");
+        let unit = serde_json::json!({
+            "contract": ATTEMPT_ACTION_CONTRACT,
+            "runRef": "run:B",
+            "expectedRevision": 40,
+            "authority": {"authorityRef": GRANT},
+            "operation": {"operation": "start-serial", "attemptRef": "attempt:B2"},
+        });
+        let result = close(&mut fake, Some(unit));
+        assert_eq!(result["status"], "refused", "{result}");
+        assert_eq!(result["refusal"]["source"], "driver");
+        assert!(fake.actions.is_empty(), "another Run's unit is never sent");
+        assert_eq!(fake.lifecycle, "active");
+    }
+
+    #[test]
+    fn a_walk_that_runs_out_of_steps_is_refused_not_finished() {
+        let mut fake = Fake::new("active");
+        fake.stuck = true;
+        let result = close(&mut fake, None);
+        assert_eq!(result["status"], "refused", "{result}");
+        assert_eq!(result["refusal"]["source"], "driver");
+        assert_eq!(result["lifecycle"], "active");
+        assert_eq!(result["steps"].as_array().unwrap().len(), CLOSE_MAX_STEPS);
+        assert!(
+            result["refusal"]["message"]
+                .as_str()
+                .unwrap()
+                .contains("The Run is active"),
+            "{result}"
+        );
+    }
+
+    #[test]
+    fn a_final_reading_that_fails_is_refused_not_finished() {
+        let mut fake = Fake::new("active");
+        fake.stuck = true;
+        fake.fail_run_reads_after_moves = Some(CLOSE_MAX_STEPS);
+        let result = close(&mut fake, None);
+        assert_eq!(result["status"], "refused", "{result}");
+        assert_eq!(result["refusal"]["source"], "driver");
+        assert_eq!(result["lifecycle"], Value::Null);
     }
 
     #[test]

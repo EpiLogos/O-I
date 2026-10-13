@@ -59,6 +59,8 @@ export interface LiveIO {
   readConversation?(position: string, withPosition: string): Promise<unknown[]>;
   readCustody?(): Promise<unknown[]>;
   readCard?(agentRef: string): Promise<{character_ref?: string} | undefined>;
+  /** The Run's own lifecycle as Factory reads it (`factory.run-reading/v1`). */
+  readLifecycle?(): Promise<string | undefined>;
   /** Add late cast members / artifacts to the Run's Expression. */
   syncExpression?(readings: LiveReadings, cast: LiveCastMember[]): Promise<void>;
   /** The Expression-world seam (world.ts `viaTransport`). */
@@ -72,7 +74,12 @@ export interface LiveConfig {
   expressionRef: string;
   actor: string;
   context: RepertoireContext;
+  /** Called once when the producer stops itself because its Run reads finished. */
+  onRunFinished?: () => void;
 }
+
+/** The Run lifecycles at which the Run's own production ends (T-FACTORY-2b). */
+const FINISHED_LIFECYCLES = new Set(["finished", "archived"]);
 
 export interface PerformedPassage {key: string; op: ActOp; material?: ResolvedMaterial; state: "performed" | "refused" | "unresolved" | "skipped"; error?: string; at: number}
 export interface LiveState {
@@ -250,6 +257,9 @@ export class LiveProducer {
   /** Run-bounds per session, from its whole journal (settled once found). */
   private bounds = new Map<string, {from: number; to: number; settled: boolean}>();
   private skipped = new Set<string>();
+  /** Set by a pass whose own reading shows the Run finished or archived: the
+   * pass completes, then the follow loop stops itself (start). */
+  private runFinished = false;
   /** The act currently performed into (the chain's newest). */
   private current: string;
   constructor(io: LiveIO, config: LiveConfig, cursor: CursorState = emptyCursor()) {
@@ -445,6 +455,10 @@ export class LiveProducer {
     const previousRevision = this.state.cursor.telemetry?.stateRevision;
     const watch = await this.source("factory-telemetry", () => this.io.watch(this.state.cursor.telemetry));
     const moved = this.held.attempts === undefined || !watch || watch.cursor.stateRevision !== previousRevision;
+    // The Run's own reading: finished or archived outside this desk ends the
+    // production after this pass (its passages are still performed first).
+    const lifecycle = await this.source("factory-run", this.io.readLifecycle?.bind(this.io));
+    if (lifecycle !== undefined && FINISHED_LIFECYCLES.has(lifecycle)) this.runFinished = true;
     if (moved) {
       this.held.attempts = await this.source("factory-attempt", () => this.io.readAttempts()) ?? this.held.attempts;
       this.held.custody = await this.source("factory-custody", this.io.readCustody?.bind(this.io)) ?? this.held.custody;
@@ -601,6 +615,7 @@ export class LiveProducer {
   start(): void {
     if (this.running) return;
     this.stopped = false;
+    this.runFinished = false;
     this.running = (async () => {
       let backoff = MIN_PASS_MS;
       try {
@@ -612,6 +627,12 @@ export class LiveProducer {
           if (this.state.sources["factory-telemetry"] === "unavailable") failed = true;
           backoff = failed ? Math.min(backoff * 2, MAX_BACKOFF_MS) : MIN_PASS_MS;
           this.set({backoffMs: failed ? backoff : undefined, ...(failed ? {} : {error: undefined})});
+          // The pass has returned, so no request is in flight: the Run is
+          // finished and this producer ends itself, as stop() would.
+          if (this.runFinished) {
+            this.stopped = true;
+            this.config.onRunFinished?.();
+          }
           const rest = backoff - (Date.now() - began);
           if (rest > 0 && !this.stopped) await this.sleep(rest);
         }

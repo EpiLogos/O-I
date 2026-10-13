@@ -124,3 +124,38 @@ test("stop cuts the pause between passes short; the loop exits and stop() settle
   assert.equal(producer.state.status, "stopped");
   assert.equal(producer.following, false);
 });
+
+// T-REVIEW-6 (#10): a producer of a Run finished outside the desk stops itself
+// at a pass boundary, and only that; a Run still in progress keeps following.
+test("a producer stops itself when its own reading shows the Run finished", async () => {
+  const recorded = [];
+  const io = fakeIO({journals: {[session]: tape.pi}, recorded});
+  let reads = 0;
+  io.readLifecycle = async () => { reads++; return "finished"; };
+  let finished = 0;
+  const producer = new P.LiveProducer(io, {...config, onRunFinished: () => { finished++; }});
+  producer.start();
+  const deadline = Date.now() + 5000;
+  while (producer.following && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 5));
+  assert.equal(producer.following, false, "the producer ended itself without an explicit stop");
+  assert.equal(producer.state.status, "stopped");
+  assert.equal(finished, 1, "the owner of the producer is told once");
+  const atStop = reads;
+  assert.ok(recorded.length > 0, "the finishing pass performed its passages before ending");
+  await new Promise(resolve => setTimeout(resolve, 200));
+  assert.equal(reads, atStop, "no further pass reads the Run after it finished");
+});
+
+test("a Run whose reading is still in progress keeps following", async () => {
+  const io = fakeIO({journals: {[session]: tape.pi}, recorded: []});
+  io.readLifecycle = async () => "active";
+  let finished = 0;
+  const producer = new P.LiveProducer(io, {...config, onRunFinished: () => { finished++; }});
+  producer.start();
+  const deadline = Date.now() + 5000;
+  while (producer.state.lastPassAt === undefined && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 5));
+  assert.ok(producer.state.lastPassAt !== undefined, "the first pass completed");
+  assert.equal(producer.following, true, "an active Run is followed");
+  assert.equal(finished, 0);
+  await producer.stop();
+});
