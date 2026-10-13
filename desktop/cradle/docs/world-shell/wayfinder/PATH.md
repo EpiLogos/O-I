@@ -81,26 +81,26 @@ Phase chain: 0 native + disclosure → 1 semantics gate + craft →
 
 ## 5. Claimable now (in order)
 
-Phase 1's no-UI work landed on `dlw/phase1-semantics-20261013` (13 Oct):
-T-SEMANTICS-GATE, T-LABELS (code legs), T-AE-REPORT, T-TIMELINE-WALKS leg 1,
-T-EXPRESSION-TRACKS (code legs), T-CAPABILITY-HOMES (lock §4.2), T-HOLDERS
-(lock §4.8–4.9). What stands:
+1. **Screen pass** (Sonnet computer use) — waits on the owner's grant of
+   "O-I Shell Candidate" (refused twice; never substituted by scripted AX
+   clicks).
+2. Lane 1: B1 (save schedule — after the lane-3 autosave schedule, reuse it),
+   D1–D3 (instrument rail, saved views' subject basis, graph camera restore).
+3. Lane 2: T20 mount glue (relation/cause-chain selection → `openRelation` /
+   `openEndpoint`, back-to-event, navigation hop — `TimelineSurface.tsx`,
+   `graph.ts`), T23–T25.
+4. Lane 3: E14 (nested expression occurrence over the reuse register), E21
+   (scene→source→subject chain with back-references), E26 (collections as
+   bins), E18 library split.
+5. Lane 4: T25, T26. Lane 5: T9–T24.
+6. Knowledge graph instrument's device face (its spec's controls: depth,
+   budget, view, kinds, ghosts, standing floor, relation types, filter).
+7. Factory panes reachable (the agent shell's centre is always
+   `native.agent`; an instrument pane in Factory needs the split).
+8. Phase 3 Central vertical; Phase 5 retirement.
 
-1. **Screen pass (lead, when the gate clears):** rebuild, launch, see and
-   capture P0-R1/R4/R5/R5b/R5c/R6 and Phase 1's UI legs (T-LABELS acc. 4;
-   the Timeline's walk lanes and sections; the Expressions two-lane tracks)
-   at both viewports; then R0, then R1.
-2. No-UI, claimable while the gate is red: **T-AE-C2-WORDING** (the
-   founding corpus's name in AE UI copy → provider labels, C2-b8; upstream
-   in AE once its curation lane has landed — ticket written); (landed 13 Oct: the 13 landed refs homed; `npm run test:webstorage` runs
-   the 9 WebStorage suites with owned tmp files — 140/140).
-3. After R0 (Phase 2 — seams; UI legs): **T-ATLAS-HOST** (the atlas mounts
-   as `projection.earth` / `projection.constellation`; the World's corpus
-   provider; host stores in the workspace) → **T-TIMELINE-WALKS leg 2** (the
-   Journey reads the walks) · **T-SEQUENCE-EDITOR-MOUNT** (the scene's Clip
-   detail) · **T-TRAIL**.
-
-Deferred, owner-timed: T-LIVE-INTO-EXPRESSIONS.
+Held for the owner: M1′–M5′ restatement and instrument count (vision spec
+#655); Factory `factory.run.close` grant; Factory owner `writeAuthority`.
 
 ## 6. Review points (Sonnet, one at a time)
 
@@ -117,9 +117,17 @@ this table true. Tickets and resolutions live in `tickets/`.
 
 | Ticket | Who | Zone | Since |
 |---|---|---|---|
-| T-REVIEW-6 draft safety | haiku builder | `field-studies-journeys/src` draft/autosave modules | 2026-10-13 |
-| T-REVIEW-6 Factory (#6 grant resolution, #6b runRef, #7 status, #10 producer self-stop) | haiku builder | `kernel/src/factory.rs`, `src/contributions/factory/{FactoryLive.tsx, live/producer.ts, desk/RunHandoff.tsx, desk/runModel.ts}` | 2026-10-13 |
-| T-EVERY-MODE-INSTRUMENTS (owner ruling 13 Oct) | haiku builder | `packages/live-shell/ui/src/{App.tsx detail+lens bar, shell/ModeDetail.tsx, shell/paneInstrument.ts}` | 2026-10-13 |
+| T-LANE2-T19b (the source opens at its passage) | haiku builder | `techneTransport.ts` facetQualification, `researchInstruments.tsx` onOpenNode/inspectSubject lines, `sourceHandoff.ts`, `CradleFrame.tsx` sceneSourceOpen/openFile, `TextEditor.tsx` reveal | 2026-10-13 |
+| lane-1 B4 → B2 → B3 (view drift, Obsidian `.canvas`, frame PNG) | haiku builder | `researchInstruments.tsx` applyView + save-view/frame rows, `researchMaterial.ts`, new `viewDrift.ts`/`obsidianCanvas.ts`/`frameImage.ts` | 2026-10-13 |
+| 0 instrument's controls (atlas face bodies on the rack) | haiku builder | `packages/live-shell/ui/src/projections/atlas/**`, `inhabitants/**` face-body plumbing | 2026-10-13 |
+
+Factory close, after 4c274de4d: the kernel resolves a grant against
+`Control/user/native-action-authority.json` (root: `OI_CENTRAL_ROOT`, else the
+nearest ancestor of the Factory state holding the contract). Open: the token
+reaches the kernel only on the request; the native host should read it
+itself (`CENTRAL_NATIVE_TOKEN` / `~/.central/native-token`) so it never
+crosses the webview; and the contract grants no `factory.run.close` yet —
+the owner's grant.
 
 ## 8. Foreign lanes — never touch
 
