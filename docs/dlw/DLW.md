@@ -453,22 +453,54 @@ as the public. Beside the instruments works a companion who reads the sources
 with you, proposes what might follow, and can tell you why any room in a palace
 stands where it does.
 
-## 9. Live — the studio it came from
+## 9. Live — the instrument
 
-Live is the music studio the DLW grew from, and it is kept whole: a set,
-its tracks, clips and scenes, its instruments and effects, rebuilt from close
-study of the original so that they behave as the original does. Make music
-here as you would in Live.
+At the heart of the DLW is one instrument, and Live mode is where you play it.
 
-It is also the measure. Every other mode reads Live's grammar in its own way,
-and each reading can be checked against how Live itself behaves. A rack in
-Factory should behave like a rack in Live; a follow action in a walk like a
-follow action in a set.
+It is a torus, turning in the centre of the pane, and what you see is the sound
+itself: a field of vibration wound around a ring, its surface patterned by what
+it is doing. Two pulses drive it, beating against each other, and everything
+you hear comes from them. Touch the surface and it rings. Play a note and a
+point on the ring lights and answers; play a chord and several points light
+together, and the figure they draw on the surface is the chord's shape — the
+same shape the DLW uses for the symbol that chord belongs to. Play a symbol and
+you hear its harmony. Play its harmony and the symbol appears.
 
-Live shares the same worlds as everything else. A set is a world, its tracks
-are bodies in it, and a song can be walked stop by stop. In time Live will
-join Expressions, where sound and picture will share one timeline the way a
-film editor holds them.
+You play it from a keyboard laid out in six rows, two families of whole tones
+interleaved so that every semitone is a short step across and every chord has
+the same fingering in every key. Wrap those two rows around the ring and they
+become the torus's two helices, which is why a key on the keyboard and a point
+on the torus are the same thing. Use a mouse, your fingers, the computer
+keyboard or a MIDI controller; or switch to an ordinary piano layout if you
+would rather.
+
+Choose the mode you are playing in and the keyboard and the piano roll follow
+it, marking the notes that belong and folding away the ones that don't. The
+modes reach from the plain diatonic scale to the full set the logic generates,
+and beside them sit older scales that keep their own intervals and their own
+history: the planetary scales Marsilio Ficino composed in, meant to draw each
+planet's quality into whoever heard them; the Shem scales; the maqām. Over the
+instrument turns the sky of your world, and each planet can move a part of the
+sound — its own interval, its own colour — shown on the control it is moving.
+
+The mode lives where Live keeps its scales. Set it in the transport and the
+whole set plays in it: root, mode and tuning, with the keyboard recoloured to
+match. Open a clip and it can carry a mode of its own, so a piece can move from
+one to another phrase by phrase, and the roll folds to that clip's notes or
+highlights them in place. In the chain, devices work on the notes before they
+reach the torus — one bends whatever you play onto the mode, one sets the
+tuning in exact ratios, one hands parts of the sound to the planets overhead —
+and you can stack, reorder and save them like any other.
+
+Shape the sound as far as you like. Every part of the instrument is a setting
+you can turn, record and save, and a saved state is a sound you can return to,
+share or start from. Put devices on its chain to filter it, echo it, give it a
+room to sound in. Record what you play, edit it note by note in the roll,
+layer it, loop it, arrange it into a piece.
+
+The same torus turns at the centre of every Expression, so what you play here
+can be heard and seen there, inside a scene. One day the two will share a
+timeline, picture and sound together.
 
 ## 10. The hands
 
