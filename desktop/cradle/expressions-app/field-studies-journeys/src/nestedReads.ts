@@ -23,8 +23,8 @@ const READ_PASSES=4;
 
 /** The nested documents the open Expression's occurrences name, read through `read` (the kernel's expression read),
  * freshness taken from `list` (the kernel's expression list) and waits measured by `now`. A cache, never authored state:
- * pruned to what the open view names. A document that arrives, or a listing that changes a verdict, refreshes the host
- * through `refresh`. */
+ * pruned to what the open view names. The host is refreshed through `refresh` only when what it shows can have changed:
+ * a document arrives, a named document's listed revision moves, or the cache is pruned. */
 export function nestedDocumentReads(
  read:(ref:string)=>Promise<unknown>,
  refresh:()=>void,
@@ -74,11 +74,15 @@ export function nestedDocumentReads(
   // Keep what this view names and nothing else.
   const keep=new Set<string>();
   for(const body of roots)for(const ref of nestedReachable(graph,body.subject_ref,body.recursion?.max_depth??1))keep.add(ref);
-  for(const ref of [...graph.keys()])if(!keep.has(ref)){graph.delete(ref);version++;}
+  let pruned=false;
+  for(const ref of [...graph.keys()])if(!keep.has(ref)){graph.delete(ref);version++;pruned=true;}
+  // The listed revisions this view's verdicts and changed notes read: the roots and what they reach.
+  const named=[...new Set([...keep,...roots.map(body=>body.subject_ref)])];
   // One list call for this view. Without a listing nothing is asked for and the cache stands as it is.
   void (async()=>{
    let rows:readonly NestedListing[];
-   try{rows=await list();}catch{return;}
+   try{rows=await list();}catch{if(pruned)refresh();return;}
+   const before=named.map(ref=>listed.get(ref));
    listed.clear();
    for(const row of rows){
     listed.set(row.expression_ref,Number(row.revision));
@@ -86,10 +90,14 @@ export function nestedDocumentReads(
     const held=graph.get(row.expression_ref);
     if(held&&Number(held.revision)===Number(row.revision))waits.delete(row.expression_ref);
    }
-   version++;
-   await Promise.allSettled(roots.map(body=>readFrom(body.subject_ref,body.recursion?.max_depth??1)));
-   version++;
-   refresh();
+   const relisted=named.some((ref,index)=>listed.get(ref)!==before[index]);
+   if(relisted)version++;
+   const reads=await Promise.allSettled(roots.map(body=>readFrom(body.subject_ref,body.recursion?.max_depth??1)));
+   const arrived=reads.some(row=>row.status==='fulfilled'&&row.value);
+   if(arrived)version++;
+   // The host re-renders only when what it shows can have changed: a document arrived, a named revision moved (the
+   // changed note), or the cache was pruned — never for a listing that changed nothing it reads.
+   if(arrived||relisted||pruned)refresh();
   })();
  };
  const decorate=(view:KernelConversion):KernelConversion=>{

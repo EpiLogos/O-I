@@ -377,3 +377,16 @@ test('the cache is keyed by the revision the library lists, and the occurrence\'
  assert.equal(nested.nestedChangedSincePlaced(7,8),true);
  assert.equal(nested.nestedChangedSincePlaced('7',7),false);
 });
+test('an unrelated host view re-renders nothing: the host is refreshed only when a listing moves a named revision or a document arrives', async () => {
+ const h=harness();
+ h.readers.view(bridge.kernelDocumentToJourney(host(bound(1))));
+ await settle();
+ assert.equal(h.refreshes,1,'the first read lands');
+ for(let i=0;i<3;i++){h.readers.view(bridge.kernelDocumentToJourney(host(bound(1))));await settle();}
+ assert.equal(h.lists,4,'each new view still lists once');
+ assert.equal(h.refreshes,1,'a listing that changes nothing the host shows refreshes nothing');
+ h.rows=[{expression_ref:SUB,revision:8}];
+ h.readers.view(bridge.kernelDocumentToJourney(host(bound(1))));
+ await settle();
+ assert.equal(h.refreshes,2,'a moved revision (and its read) refreshes the host');
+});
