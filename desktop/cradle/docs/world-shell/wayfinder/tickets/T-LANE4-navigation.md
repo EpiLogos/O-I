@@ -112,4 +112,19 @@ T21); layer reorder; dead opt-in selectors
 (`researchInstrumentStyles.css` ~1704) to tidy. Unverified (native pass):
 imagery and terrain rendering, OSM's User-Agent policy under WKWebView.
 
-**T17–T19 — placemark authoring (dispatched 13 Oct 2026).**
+**T17–T19 — placemark authoring (landed `0dd1c6e50`, 13 Oct 2026; builder
+haiku).** A right-click or long-press on the Places map offers "Add place
+here" (and "Edit place…" on a marker). Both open the existing constellation
+route; the map never writes. Approximate and region markers drag into a
+pending-move chip that names the old → new coordinate and basis, with Apply /
+Cancel. Precision never upgrades. Exact markers do not drag, and their title
+says why. `placeAuthoring.ts` is the pure model; `PlaceAuthoringHost` is the
+map's only outward port. Scripted: places 127/127; the native place-set case
+is appended (gated). Lead accepted: the prefill rounds to 5 decimals, and
+"Edit place…" opens the whole-subject constellation editor (the existing
+route).
+**T17b (dispatched):** the draft (clicked coordinate or move proposal)
+travels through `TechneConstellationRequest` → `PointCloudHost` →
+`CradleFrame` → `WikiFactsEditor`. The source basis is still required. The
+owner's save or refusal returns to the map: a refusal comes back verbatim
+with the marker returned, and a save triggers a re-read.
