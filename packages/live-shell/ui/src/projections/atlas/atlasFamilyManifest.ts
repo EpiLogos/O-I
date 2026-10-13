@@ -27,7 +27,7 @@ export const atlasFamilyManifest: FamilyManifest = {
     'aion', // the Aion epoch view (deep time over the same globe)
   ],
   faces: [
-    { id: 'globe-engine', presentations: ['full'], liveSemantic: 'device-instrument', heldBy: ['techne:m4'], invariant: { generatesAbsent: 'the corpus provider seam (C2) has no owner op yet; the globe forms from the bound CorpusProvider bundle' }, note: 'the GPU globe (three.js), the projection pane body' },
+    { id: 'globe-engine', presentations: ['full'], liveSemantic: 'device-instrument', heldBy: ['techne:m0', 'techne:m4'], invariant: { generatesAbsent: 'the corpus provider seam (C2) has no owner op yet; the globe forms from the bound CorpusProvider bundle' }, note: 'the GPU globe (three.js), the projection pane body' },
     { id: 'graph-tools', presentations: ['compact', 'expanded'], liveSemantic: 'detail-device', heldBy: ['techne:m0', 'techne:m1'], note: 'the constellation’s own controls (depth, ties, spread, gravity, sky anchors)' },
     { id: 'mode-switch', presentations: ['compact'], liveSemantic: 'view-selector', heldBy: ['techne:m4', 'techne:m0'], note: 'Earth ⇄ Graph, the atlas’s own one-control switch' },
     { id: 'time-control', presentations: ['compact', 'expanded'], liveSemantic: 'transport-slot', heldBy: ['techne:m2'], note: 'the atlas’s non-linear deep-time scale (data/time.ts), the Occasion control’s deep-time face' },

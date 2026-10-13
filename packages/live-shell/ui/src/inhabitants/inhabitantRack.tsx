@@ -1,4 +1,4 @@
-import {useState, type ReactNode} from 'react'
+import {useEffect, useState, type ReactNode} from 'react'
 
 /** The inhabitant rack — the composed manifests rendered as the focused
  * material's device chain (WORLD-SHELL-DESIGN §5, §16: the rack is one of a
@@ -49,9 +49,13 @@ export interface InhabitantRackProps {
   /** [L9] The QL field/PCM owner's reading as the host received it (raw —
    * the instrument face parses it). Null/absent → the face's refusing state. */
   readonly instrumentReading?: unknown
+  /** The focused instrument (a `techne:*` holder id): the faces it holds
+   * (`heldBy`) dock expanded and every other face folds — the lock's "the
+   * focused lens expanded, the others folded". Absent → every face folds. */
+  readonly focusInstrument?: string | null
 }
 
-export function InhabitantRack({manifests, transport, day, flow, conversation, projects, instrumentReading}: InhabitantRackProps) {
+export function InhabitantRack({manifests, transport, day, flow, conversation, projects, instrumentReading, focusInstrument}: InhabitantRackProps) {
   const families = manifests.map(manifest => ({manifest, faces: manifest.faces}))
   const total = families.reduce((count, family) => count + family.faces.length, 0)
   return (
@@ -63,7 +67,7 @@ export function InhabitantRack({manifests, transport, day, flow, conversation, p
             {faces.map(face => (
               <InhabitantFace key={`${manifest.id}:${face.id}`} face={face} manifest={manifest}
                 transport={transport} day={day} flow={flow} conversation={conversation} projects={projects}
-                instrumentReading={instrumentReading}/>
+                instrumentReading={instrumentReading} focusInstrument={focusInstrument}/>
             ))}
           </div>
         </section>
@@ -85,6 +89,7 @@ interface FaceProps {
   readonly conversation?: InhabitantRackProps['conversation']
   readonly projects?: readonly {name?: string; path?: string}[]
   readonly instrumentReading?: unknown
+  readonly focusInstrument?: string | null
 }
 
 /** Each face's named mark of the cut — the header's kind reading. A face
@@ -135,8 +140,13 @@ function faceWidth(face: InhabitantFaceDeclaration): number | string {
 
 /** One face on the chain: the strip always; the body when expanded (dock/
  * expand — pop-out is declared and rides the pane engine's detach door). */
-function InhabitantFace({face, manifest, transport, day, flow, conversation, projects, instrumentReading}: FaceProps) {
-  const [expanded, setExpanded] = useState(false)
+function InhabitantFace({face, manifest, transport, day, flow, conversation, projects, instrumentReading, focusInstrument}: FaceProps) {
+  // The focused instrument's faces dock expanded; a change of focus re-stands
+  // every face (held → expanded, the rest folded). Without a focus, a face
+  // starts folded, as before.
+  const focused = focusInstrument != null && (face.heldBy ?? []).includes(focusInstrument)
+  const [expanded, setExpanded] = useState(focused)
+  useEffect(() => { setExpanded(focused) }, [focusInstrument])
   const kind = faceKind(face)
   const waiting = face.admission === 'waiting'
   const dockable = (face.dock ?? ['dock']).includes('dock')
