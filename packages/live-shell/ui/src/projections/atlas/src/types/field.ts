@@ -4,13 +4,15 @@
 // [C2-b1] Provider law (amended from the vault-named header): a corpus provider
 // is anything that can publish this bundle — the contract is corpus-neutral and
 // names no vault. Tier grammar (kept, C2-c3/c6): as-such → Archetype,
-// symbolic form → Family, place-time manifestation → Occurrence. The first
-// provider was the Jung archetypal-field vault; its tiers mapped
-//   wiki/archetypes  → Archetype · wiki/images → Family · wiki/instances → Occurrence
+// theoretical instrument / the field's ground → Theoretic, symbolic form →
+// Family, place-time manifestation → Occurrence. The first provider was the
+// Jung archetypal-field vault; its tiers mapped
+//   wiki/archetypes → Archetype · wiki/concepts → Theoretic · wiki/images → Family · wiki/instances → Occurrence
 // and the vault's own vocabulary (subject, Jung cites) stays in that provider's
 // published data, never here.
 
 export type ArchetypeId = string; // slug, e.g. "great-mother"
+export type TheoreticId = string; // slug, e.g. "psychoid"
 export type FamilyId = string; // slug, e.g. "serpent"
 export type OccurrenceId = string; // vault filename slug
 export type CultureId = string; // normalised slug, e.g. "latin-alchemy"
@@ -112,6 +114,45 @@ export interface Archetype {
   image?: ImageRef;
   familyIds: FamilyId[]; // families tied to it (any basis), most occurrences first
   occurrenceCount: number; // via its families
+  /** Ties to other archetypes, from curation alone (the numbers to the Self, the dyad to syzygy and shadow). */
+  archetypes: TheoreticTie[];
+  /** True when admitted from curation with no vault note yet (number archetypes). */
+  synthesised?: boolean;
+}
+
+/** A tie from a theoretic to a node the field holds. */
+export interface TheoreticTie {
+  id: string; // archetype / family / theoretic id
+  basis: TieBasis;
+}
+
+/**
+ * The vault's wiki/concepts/ tier: Jung's theoretical instruments, carried as a tier of the field
+ * beside archetypes, families and occurrences. Two of them are the field's own foundation and carry
+ * `ground`: the psychoid is the ontological tier-marker (where the archetype stops being psyche) and
+ * the archetype as such is the epistemological keystone (the irrepresentable pole known only through
+ * its images). Both are the reason the field has tiers at all, so they are stated as its ground
+ * rather than filed as two more entries in a list.
+ */
+export interface Theoretic {
+  id: TheoreticId;
+  name: string; // display, e.g. "The Psychoid"
+  oneLine: string; // ≤ 90 chars, orienting
+  ground: 'ontological' | 'epistemological' | null;
+  spectrum: Spectrum;
+  palette: Palette;
+  /** Verbatim Jung quote with cite, picked from the vault's mentions — never typed. */
+  definition?: { text: string; cite: string };
+  body: string[]; // plain text paragraphs; may be empty
+  archetypes: TheoreticTie[];
+  families: TheoreticTie[];
+  theoretics: TheoreticTie[]; // the theoretical web: this concept's own neighbours
+  occurrenceCount: number; // every occurrence its tied archetypes and families carry
+  /** The Theory section that already carries this concept, when one does. A link, never a choice. */
+  section?: string;
+  /** Another lens that already carries this concept (aion-time → Aion, synchronicity → Coincidences). */
+  lens?: string;
+  image?: ImageRef;
 }
 
 export interface Family {
@@ -125,6 +166,8 @@ export interface Family {
   spectrum: Spectrum;
   palette: Palette;
   body: string[]; // plain text paragraphs; may be empty
+  /** Verbatim Jung quote with cite, picked from the vault's mentions — never typed. */
+  definition?: { text: string; cite: string };
   image?: ImageRef;
   occurrenceIds: OccurrenceId[]; // sorted by year ascending
   /** True when the vault has no note for this family yet (only instance_of refs). */
@@ -188,15 +231,34 @@ export interface FieldMeta {
   freshness?: string;
   /** [C2-b2] The provider's tie bases, strongest first (see `tieBases`). */
   ties?: { bases: TieBasisDecl[] };
-  counts: { archetypes: number; families: number; occurrences: number; cultures: number; images: number };
+  counts: { archetypes: number; theoretics: number; families: number; occurrences: number; cultures: number; images: number; joins?: number };
   yearMin: number;
   yearMax: number;
+}
+
+/**
+ * A general relation between two nodes of the field, of any tier to any tier (curation/joins.json, nothing else).
+ * Basis says where the relation comes from, as for ties: never present "site" or "inferred" as Jung's word.
+ * `system` names the tradition the join belongs to (e.g. "thoth"); `voice` names whose reading it is.
+ * Joins carry no quotations in field.json.
+ */
+export interface Join {
+  id: string; // kebab-case, unique
+  a: { type: 'archetype' | 'theoretic' | 'family'; id: string };
+  b: { type: 'archetype' | 'theoretic' | 'family'; id: string };
+  basis: TieBasis;
+  note: string; // one plain sentence, no wikilinks, ≤ 400 chars
+  system?: string;
+  voice?: string;
 }
 
 export interface Field {
   meta: FieldMeta;
   archetypes: Archetype[];
+  theoretics: Theoretic[];
   families: Family[];
   occurrences: Occurrence[];
   cultures: Culture[];
+  /** Cross-system relations between any two nodes. Optional: older field.json files carry none. */
+  joins?: Join[];
 }

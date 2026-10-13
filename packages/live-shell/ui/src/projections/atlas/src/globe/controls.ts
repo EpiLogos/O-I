@@ -7,9 +7,16 @@ import * as THREE from 'three';
 import { dirFromLatLon, latLonFromDir, slerp, angleBetween, wrapLon, type Vec3 } from '../data/geo';
 import { easeInOutCubic } from '../data/palette';
 import { anchorView, clampDist, degPerPixel, easeDist, MAX_LAT, MIN_DIST, surfacePointAt, zoomedDist, type Lens } from './zoom';
+import { SETTLE, settleStep } from '../sky/stages';
 
 export { MIN_DIST };
 export const MAX_DIST = 5.4;
+/**
+ * Beyond `maxDist` while the sky is still loading (`softMaxDist`), each outward wheel step moves the target this fraction as
+ * far: the pull-back resists and keeps moving, so it never stalls and then jumps when the sky arrives (audit S3 (d)).
+ */
+const SOFT_RESIST = 0.3;
+const R2D = 180 / Math.PI;
 
 const DOUBLE_ZOOM = 0.4; // altitude factor for a double-click / double-tap
 const FLING_MAX = 240; // deg/s
@@ -54,6 +61,12 @@ export class CameraRig {
    * has always had; the sky layer moves it toward the Sun across the pull-back's handoff (src/sky/stages.ts).
    */
   readonly focus = new THREE.Vector3();
+  /**
+   * When set, the engine holds `focus` here instead of taking it from the sky layer. Scripted sky flights (the descent
+   * from a planet, the return to it) are Earth-centred polar flights: they pin the focus to the origin so the layer's own
+   * focus easing (approach / release) cannot move the camera underneath them. null: the layer owns the focus.
+   */
+  focusPin: THREE.Vector3 | null = null;
   shiftX = 0;
   shiftY = 0;
   tShiftX = 0;
@@ -61,9 +74,21 @@ export class CameraRig {
   autoRotate = true;
   /** how far the user may pull back (wider on portrait screens) */
   maxDist = MAX_DIST;
+  /**
+   * The further limit the pull-back is heading for while the sky loads (0: none). Beyond `maxDist` it resists (SOFT_RESIST);
+   * once the sky stands, `maxDist` is raised to it and the resistance is gone.
+   */
+  softMaxDist = 0;
   interacted = false;
   /** true while the user holds the globe or a flight is running (UI pauses hover) */
   dragging = false;
+  /** performance.now() of the last wheel or pinch step, and of the last drag step: the sky's arrival settle waits on them */
+  lastWheelAt = -Infinity;
+  lastDragAt = -Infinity;
+  /** true while the view was brought here by a wheel or pinch and no drag or key has moved it since (the arrival settle's condition) */
+  wheelDriven = false;
+  /** the orientation an arrival is settling toward (the sky's canonical system view), or null: any input cancels it */
+  settleTo: { lat: number; lon: number } | null = null;
 
   private vLat = 0;
   private vLon = 0;
@@ -81,7 +106,26 @@ export class CameraRig {
   private flyVLon = 0;
   private tmpA: Vec3 = [0, 0, 0];
   private tmpC: Vec3 = [0, 0, 0];
+  private tmpS: Vec3 = [0, 0, 0];
+  private tmpT: Vec3 = [0, 0, 0];
   private flyEndCbs: (() => void)[] = [];
+  /**
+   * The look-at point is `lerp(lookFrom, lookTo, ease(lookT))`, a scene point. `lookTo` is the held target, or the
+   * live `focus` while `lookTrack` (a recentre). The camera POSITION never depends on any of this: it is always
+   * focus + dir(lat, lon)·dist, so a gaze turns the camera and never translates it.
+   * The look blend (`lookOffset`) eases `lookOff0` → `lookGoal` on the same `ease(lookT)`: 1 = held on a target, 0 = centred.
+   * A retarget starts a new turn from wherever the look is now, so it never jumps.
+   */
+  private lookFrom = new THREE.Vector3();
+  private lookTo = new THREE.Vector3();
+  private lookTrack = true;
+  private lookT = 1;
+  private lookDur = 1;
+  private lookOff0 = 0;
+  private lookGoal: 0 | 1 = 0;
+  private lookDone: (() => void) | null = null;
+  private lookTmp = new THREE.Vector3();
+  private orbitTmp = new THREE.Vector3();
 
   constructor(private camera: THREE.PerspectiveCamera, private dom: HTMLElement, private opts: RigOptions) {
     dom.addEventListener('pointerdown', this.onDown);
@@ -102,6 +146,39 @@ export class CameraRig {
     return this.fly !== null;
   }
 
+  /** True while the look is turning toward a target, held off the focus, or easing back to it. The position is never affected. */
+  get gazing(): boolean {
+    return this.lookT < 1 || this.lookOffset > 1e-3;
+  }
+
+  /** The eased look blend: 1 held on a target, 0 centred on the focus, between while a turn runs. */
+  get lookOffset(): number {
+    return this.lookOff0 + (this.lookGoal - this.lookOff0) * easeInOutCubic(this.lookT);
+  }
+
+  /** The current look-at point (scene coordinates), written into `out`. */
+  lookPoint(out: THREE.Vector3 = new THREE.Vector3()): THREE.Vector3 {
+    const to = this.lookTrack ? this.focus : this.lookTo;
+    const e = easeInOutCubic(this.lookT);
+    if (e >= 1) out.copy(to);
+    else out.lerpVectors(this.lookFrom, to, e);
+    // degenerate: the look point is the camera itself, or lies on the up axis, where lookAt has no orientation — look at the focus
+    const p = this.orbitPos(this.orbitTmp);
+    const dx = out.x - p.x;
+    const dy = out.y - p.y;
+    const dz = out.z - p.z;
+    const len2 = dx * dx + dy * dy + dz * dz;
+    if (!(len2 > 1e-18) || dx * dx + dz * dz < 1e-10 * len2) out.copy(this.focus);
+    return out;
+  }
+
+  /** The camera position and look-at point the rig produces now, for tests and the harness. */
+  snapshot(): { pos: [number, number, number]; look: [number, number, number] } {
+    const p = this.orbitPos(new THREE.Vector3());
+    const l = this.lookPoint(new THREE.Vector3());
+    return { pos: [p.x, p.y, p.z], look: [l.x, l.y, l.z] };
+  }
+
   onFlyEnd(cb: () => void) {
     this.flyEndCbs.push(cb);
   }
@@ -111,29 +188,150 @@ export class CameraRig {
     return { lat: this.lat, lon: this.lon };
   }
 
-  /** Frame the point at (lat, lon) from distance `dist`, flying along the great circle. */
-  flyTo(lat: number, lon: number, dist: number, opts: { duration?: number; instant?: boolean } = {}) {
+  /**
+   * Turn the camera to look at a scene point, without moving it: the position stays focus + dir(lat, lon)·dist.
+   * Eases from wherever the look is now (mid-turn included), so retargeting is continuous. `onDone` fires once on arrival.
+   * Orbit gaze (look at Earth) and return-to-sky (look at the planet) both use this.
+   */
+  lookAtPoint(target: THREE.Vector3, opts: { duration?: number; instant?: boolean; onDone?: () => void } = {}) {
+    this.cancelFly(false);
+    this.settleTo = null;
+    this.wheelDriven = false;
+    this.vLat = this.vLon = 0;
+    const dur = opts.instant || this.opts.reduced ? 0 : (opts.duration ?? 1.5);
+    this.beginLook(target, 1, dur, opts.onDone ?? null);
+  }
+
+  /**
+   * Scripted pose, for the sky camera's tracks (descent, return, swing): set the orbit state directly, about the
+   * current `focus`, and hold the look on `look` (a scene point) or centre it on the focus when `look` is null.
+   * Cancels flights, inertia and any settle, and does not ease: the caller samples its own track every frame.
+   */
+  drive(lat: number, lon: number, dist: number, look: THREE.Vector3 | null = null) {
+    this.cancelFly(false);
+    this.vLat = this.vLon = 0;
+    this.anchor = null;
+    this.settleTo = null;
+    this.wheelDriven = false;
+    this.lat = Math.max(-MAX_LAT, Math.min(MAX_LAT, lat));
+    this.lon = wrapLon(lon);
+    this.dist = this.targetDist = Math.max(MIN_DIST + 0.02, dist);
+    if (look) {
+      this.lookFrom.copy(look);
+      this.lookTo.copy(look);
+      this.lookTrack = false;
+      this.lookT = 1;
+      this.lookGoal = 1;
+      this.lookOff0 = 1;
+      this.lookDone = null;
+    } else {
+      this.snapLookCentred();
+    }
+    this.apply();
+  }
+
+  /** Turn in place to look at a lat/lon on the Earth (unit sphere). */
+  lookAtEarth(lat: number, lon: number, opts: { duration?: number; instant?: boolean; onDone?: () => void } = {}) {
+    dirFromLatLon(lat, lon, this.tmpC);
+    this.lookAtPoint(new THREE.Vector3(this.tmpC[0], this.tmpC[1], this.tmpC[2]), opts);
+  }
+
+  /**
+   * End a gaze: the look eases back to the focus (tracking it live) over 0.6 s. The position is untouched and nothing drops.
+   */
+  clearGaze() {
+    this.recentreLook({ duration: 0.6 });
+  }
+
+  /**
+   * Ease the look point back to the focus, tracking the focus as it moves (default 0.7 s). Position untouched.
+   * Already centred: `onDone` fires at once. Already recentring: it carries on rather than restarting, so repeated
+   * input (wheel ticks) does not stall the ease.
+   */
+  recentreLook(opts: { duration?: number; onDone?: () => void } = {}) {
+    if (this.lookTrack && this.lookGoal === 0) {
+      if (this.lookT >= 1) {
+        opts.onDone?.();
+        return;
+      }
+      if (opts.onDone) this.lookDone = opts.onDone;
+      return;
+    }
+    const dur = this.opts.reduced ? 0 : (opts.duration ?? 0.7);
+    this.beginLook(null, 0, dur, opts.onDone ?? null);
+  }
+
+  /** Start a look turn from the current look point: to `to` (held), or to the focus when `to` is null (recentre). */
+  private beginLook(to: THREE.Vector3 | null, goal: 0 | 1, dur: number, done: (() => void) | null) {
+    const off = this.lookOffset;
+    this.lookPoint(this.lookTmp);
+    this.lookFrom.copy(this.lookTmp);
+    this.lookTrack = to === null;
+    if (to) this.lookTo.copy(to);
+    this.lookOff0 = off;
+    this.lookGoal = goal;
+    this.lookDur = Math.max(dur, 1e-3);
+    this.lookT = dur <= 0 ? 1 : 0;
+    this.lookDone = done;
+    this.apply();
+    if (this.lookT >= 1) this.finishLook();
+  }
+
+  private stepLook(dt: number) {
+    if (this.lookT >= 1) return;
+    this.lookT = Math.min(1, this.lookT + dt / this.lookDur);
+    if (this.lookT >= 1) this.finishLook();
+  }
+
+  /** Centre the look on the focus at once, with no turn (instant flights). */
+  private snapLookCentred() {
+    this.lookTrack = true;
+    this.lookT = 1;
+    this.lookGoal = 0;
+    this.lookOff0 = 0;
+    this.lookDone = null;
+  }
+
+  private finishLook() {
+    const cb = this.lookDone;
+    this.lookDone = null;
+    cb?.();
+  }
+
+  /**
+   * Frame the point at (lat, lon) from distance `dist`, flying along the great circle.
+   * `lift` (Earth radii at mid-flight) defaults from the hop's angle; pass 0 for a pure drop or a turn that must not climb.
+   */
+  flyTo(lat: number, lon: number, dist: number, opts: { duration?: number; instant?: boolean; lift?: number } = {}) {
     const clampedLat = Math.max(-MAX_LAT, Math.min(MAX_LAT, lat));
     const to = dirFromLatLon(clampedLat, lon);
     const from = dirFromLatLon(this.lat, this.lon);
-    const d1 = Math.max(MIN_DIST + 0.02, Math.min(this.maxDist, dist));
+    const d1 = Math.max(MIN_DIST + 0.02, Math.min(this.softCap(), dist));
     this.vLat = this.vLon = 0;
     this.anchor = null;
+    // a flight is a journey of its own: it ends any arrival settle, and the arrival it was by wheel no longer stands
+    this.settleTo = null;
+    this.wheelDriven = false;
+    this.flyEndCbs.length = 0;
     const ang = angleBetween(from, to);
     if (opts.instant || (ang < 1e-4 && Math.abs(d1 - this.dist) < 1e-3)) {
       this.lat = clampedLat;
       this.lon = wrapLon(lon);
       this.dist = this.targetDist = d1;
       this.fly = null;
+      if (opts.instant) this.snapLookCentred();
+      else this.recentreLook({ duration: 0.6 });
       this.apply();
       return;
     }
     let dur = opts.duration ?? Math.min(3.8, 1.3 + ang * 1.15 + Math.abs(Math.log((d1 - 1) / Math.max(this.dist - 1, 0.05))) * 0.42);
     if (this.opts.reduced) dur *= 0.4;
     // a long hop pulls the camera back mid-flight so the journey reads spatially
-    const lift = Math.min(1.25, ang * 0.62) * Math.min(1, 0.55 + ang);
+    const lift = opts.lift !== undefined ? opts.lift : Math.min(1.25, ang * 0.62) * Math.min(1, 0.55 + ang);
     this.fly = { t: 0, dur, from, to, d0: this.dist, d1, lift };
     this.targetDist = d1;
+    // a held look eases back to the focus during the flight, so the flight ends centred and is not bent by a gaze
+    this.recentreLook({ duration: Math.min(dur * 0.6, 1.0) });
   }
 
   setShift(x: number, y: number) {
@@ -146,6 +344,10 @@ export class CameraRig {
    * moving, decaying, so taking over never feels like hitting a wall.
    */
   cancelFly(carry = true) {
+    // every input comes through here: it ends an arrival settle, and a key, drag or wheel that follows is its own gesture
+    this.settleTo = null;
+    this.wheelDriven = false;
+    this.flyEndCbs.length = 0;
     if (!this.fly) return;
     this.fly = null;
     this.targetDist = this.dist;
@@ -158,6 +360,7 @@ export class CameraRig {
   /** Keyboard / programmatic nudges. */
   nudge(dLat: number, dLon: number) {
     this.markInteracted();
+    this.clearGaze();
     this.cancelFly();
     this.anchor = null;
     this.vLat += dLat;
@@ -166,6 +369,7 @@ export class CameraRig {
 
   zoomBy(factor: number) {
     this.markInteracted();
+    this.clearGaze();
     this.cancelFly();
     this.anchor = null;
     this.targetDist = clampDist(1 + (this.targetDist - 1) * Math.pow(factor, 1.5), this.maxDist);
@@ -228,6 +432,7 @@ export class CameraRig {
     try { this.dom.setPointerCapture(e.pointerId); } catch { /* synthetic or already-gone pointer */ }
     this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     this.markInteracted();
+    this.clearGaze();
     this.opts.onGrab();
     this.cancelFly(false);
     this.vLat = this.vLon = 0;
@@ -258,6 +463,8 @@ export class CameraRig {
     p.y = e.clientY;
     if (this.pointers.size === 1) {
       this.moved += Math.abs(dx) + Math.abs(dy);
+      // a drag is the user's own orbit: it ends the arrival settle for good, until the next wheel or pinch
+      if (dx || dy) { this.lastDragAt = performance.now(); this.wheelDriven = false; this.settleTo = null; }
       const pl = this.lat;
       const pn = this.lon;
       let moved = false;
@@ -287,7 +494,9 @@ export class CameraRig {
       const [a, b] = [...this.pointers.values()];
       const d = Math.max(Math.hypot(a.x - b.x, a.y - b.y), 10);
       // fingers apart → closer: altitude scales inversely with the finger span
-      this.dist = this.targetDist = clampDist(1 + (this.pinch.dist0 - 1) * (this.pinch.d0 / d), this.maxDist);
+      this.dist = this.targetDist = clampDist(1 + (this.pinch.dist0 - 1) * (this.pinch.d0 / d), this.softCap());
+      this.lastWheelAt = performance.now();
+      this.wheelDriven = true;
       if (this.anchor) {
         [this.anchor.nx, this.anchor.ny] = this.ndc((a.x + b.x) / 2, (a.y + b.y) / 2);
         this.applyAnchor();
@@ -333,6 +542,7 @@ export class CameraRig {
   /** Ease the altitude by `factor` toward the surface point under a client position. */
   zoomAt(clientX: number, clientY: number, factor: number) {
     this.markInteracted();
+    this.clearGaze();
     this.opts.onGrab();
     this.cancelFly();
     this.vLat = this.vLon = 0;
@@ -343,6 +553,7 @@ export class CameraRig {
   private onWheel = (e: WheelEvent) => {
     e.preventDefault();
     this.markInteracted();
+    this.clearGaze();
     this.opts.onGrab();
     this.cancelFly();
     if (this.pointers.size) return;
@@ -351,8 +562,12 @@ export class CameraRig {
     else if (e.deltaMode === 2) dy *= 400;
     if (e.deltaX && !dy) return; // horizontal scroll: ignore
     const before = this.targetDist;
-    this.targetDist = zoomedDist(this.targetDist, dy, e.ctrlKey, this.maxDist); // trackpad pinch sends ctrl+wheel
+    // beyond the hard limit (the sky still loading) an outward step resists: it moves on, slowly, rather than stalling
+    const resist = dy > 0 && before >= this.maxDist && this.softCap() > this.maxDist ? SOFT_RESIST : 1;
+    this.targetDist = zoomedDist(this.targetDist, dy * resist, e.ctrlKey, this.softCap()); // trackpad pinch sends ctrl+wheel
     if (this.targetDist === before) return;
+    this.lastWheelAt = performance.now();
+    this.wheelDriven = true;
     // choose the point under the cursor when a zoom begins or the cursor has moved;
     // while the gesture continues it stays the same point
     const w = this.wheelPos;
@@ -379,7 +594,9 @@ export class CameraRig {
     e.preventDefault();
     if (!this.gesture) return;
     const g = e as unknown as { scale: number };
-    this.dist = this.targetDist = clampDist(1 + (this.gesture.dist0 - 1) / Math.max(g.scale, 0.05), this.maxDist);
+    this.dist = this.targetDist = clampDist(1 + (this.gesture.dist0 - 1) / Math.max(g.scale, 0.05), this.softCap());
+    this.lastWheelAt = performance.now();
+    this.wheelDriven = true;
     this.applyAnchor();
     this.apply();
   };
@@ -435,7 +652,10 @@ export class CameraRig {
           if (Math.abs(this.vLat) < 0.02) this.vLat = 0;
         }
       }
-      if (this.targetDist > this.maxDist) this.targetDist = this.maxDist; // the window grew narrower
+      // an arrival settle turns the view toward the system's canonical pose, distance unchanged (only while the hand is off it)
+      if (this.settleTo && !this.dragging && this.pointers.size === 0 && !this.gesture) this.stepSettle(dt);
+      const cap = this.softCap();
+      if (this.targetDist > cap) this.targetDist = cap; // the window grew narrower
       if (this.pointers.size < 2 && !this.gesture) {
         const nd = easeDist(this.dist, this.targetDist, dt);
         if (nd !== this.dist) {
@@ -447,14 +667,49 @@ export class CameraRig {
         }
       }
     }
+    this.stepLook(dt);
     this.apply();
   }
 
-  private apply() {
+  /** The furthest the target may stand: the soft limit while the sky loads, else the hard `maxDist`. */
+  private softCap(): number {
+    return this.softMaxDist > this.maxDist ? this.softMaxDist : this.maxDist;
+  }
+
+  /**
+   * Turn the view toward `settleTo` by the eased, speed-capped step (stages.ts `settleStep`), along the great circle, at the
+   * same distance. Done when within `SETTLE.doneDeg`; a finished arrival is spent (`wheelDriven` clears), so it cannot re-fire.
+   */
+  private stepSettle(dt: number) {
+    const to = this.settleTo;
+    if (!to) return;
+    const a = dirFromLatLon(this.lat, this.lon, this.tmpS);
+    const b = dirFromLatLon(to.lat, to.lon, this.tmpT);
+    const ang = angleBetween(a, b) * R2D;
+    if (ang < SETTLE.doneDeg) {
+      this.lat = to.lat;
+      this.lon = wrapLon(to.lon);
+      this.settleTo = null;
+      this.wheelDriven = false;
+      return;
+    }
+    const p = slerp(a, b, Math.min(1, settleStep(ang, dt) / ang), this.tmpA);
+    const ll = latLonFromDir(p);
+    this.lat = ll.lat;
+    this.lon = ll.lon;
+  }
+
+  /** The orbit position, focus + dir(lat, lon)·dist, written into `out`. */
+  private orbitPos(out: THREE.Vector3): THREE.Vector3 {
     dirFromLatLon(this.lat, this.lon, this.tmpC);
-    this.camera.position.set(this.focus.x + this.tmpC[0] * this.dist, this.focus.y + this.tmpC[1] * this.dist, this.focus.z + this.tmpC[2] * this.dist);
+    const f = this.focus;
+    return out.set(f.x + this.tmpC[0] * this.dist, f.y + this.tmpC[1] * this.dist, f.z + this.tmpC[2] * this.dist);
+  }
+
+  private apply() {
+    this.orbitPos(this.camera.position);
     this.camera.up.set(0, 1, 0);
-    this.camera.lookAt(this.focus.x, this.focus.y, this.focus.z);
+    this.camera.lookAt(this.lookPoint(this.lookTmp));
   }
 }
 

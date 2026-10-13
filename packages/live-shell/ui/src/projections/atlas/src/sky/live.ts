@@ -3,7 +3,12 @@
 // against the sidecar's own "now" on a slow poll. Without the sidecar the moment is a snapshot, and says so. The
 // degradation is always a labelled state — never silence, never a stale moment dressed as the present.
 import type { SkyEphemeris } from './ephemeris';
-import { formatMoment } from './card';
+
+export const formatMoment = (ms: number): string => {
+  const d = new Date(ms);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())} UTC`;
+};
 
 export type LiveState =
   /** the sidecar agrees with the grids: the sky follows the clock */
@@ -69,15 +74,15 @@ export class SkyLive {
     return { kind: 'beyond', asOf, from: this.eph.data.meta.span.from.slice(0, 10), to: this.eph.data.meta.span.to.slice(0, 10) };
   }
 
-  /** True while the sky should follow the wall clock. */
+  /** True while the generated grids cover the clock, so the sky can be read at now without the sidecar. */
   get following(): boolean {
-    return this.state.kind === 'live';
+    return this.state.kind === 'live' || this.state.kind === 'snapshot' || this.state.kind === 'diverged';
   }
 
-  /** The instant to read the sky at: the clock when following, else the moment the snapshot was taken. */
+  /** The instant to read the sky at. The grids are the ephemeris: while they cover now, the sky follows the clock. */
   moment(): number {
-    const s = this.state;
-    return s.kind === 'live' ? this.o.now() : s.asOf;
+    // only a moment outside the grids is held; every covered state follows the clock
+    return this.state.kind === 'beyond' ? this.state.asOf : this.o.now();
   }
 
   start() {
@@ -143,23 +148,22 @@ export class SkyLive {
 }
 
 const hhmm = (ms: number) => formatMoment(ms).slice(11);
-const deg = (d: number) => `${d.toFixed(3)}°`;
 
 /** The sentence the sky wears for a live state: what it is, how it was checked, and when. */
 export function describeLive(s: LiveState): { label: string; detail: string } {
   switch (s.kind) {
     case 'live':
-      return { label: 'Live', detail: `Following the clock, checked against the sidecar at ${hhmm(s.checkedAt)} (Sun ${deg(s.sunDelta)}, Moon ${deg(s.moonDelta)}).` };
+      return { label: 'Live', detail: `Following the clock, checked at ${hhmm(s.checkedAt)}.` };
     case 'snapshot': {
-      const why = s.why === 'not-local' ? 'The live ephemeris is only reachable when the site runs beside its local sidecar.'
-        : s.why === 'unsupported' ? 'The sidecar did not answer as expected.'
-        : s.why === 'unreachable' ? 'The ephemeris sidecar answered with an error.'
-        : 'The ephemeris sidecar is not running.';
-      return { label: 'Snapshot', detail: `Computed from the generated ephemeris as of ${formatMoment(s.asOf)}; it does not follow the clock. ${why}` };
+      const why = s.why === 'not-local' ? 'The live sky is only reachable from its home machine.'
+        : s.why === 'unsupported' ? 'The live ephemeris did not answer.'
+        : s.why === 'unreachable' ? 'The live ephemeris answered with an error.'
+        : 'The live ephemeris is not running.';
+      return { label: 'Snapshot', detail: `Computed from the ephemeris as of ${formatMoment(s.asOf)}; it does not follow the clock. ${why}` };
     }
     case 'diverged':
-      return { label: 'Snapshot', detail: `Computed from the generated ephemeris as of ${formatMoment(s.asOf)}. The sidecar disagrees with it (Sun ${deg(s.sunDelta)}, Moon ${deg(s.moonDelta)}), so the sky is not called live.` };
+      return { label: 'Snapshot', detail: `Computed from the ephemeris as of ${formatMoment(s.asOf)}. It disagrees with the live check, so it is not called live.` };
     case 'beyond':
-      return { label: 'Beyond the generated sky', detail: `${formatMoment(s.asOf)} lies outside ${s.from.slice(0, 4)}–${Number(s.to.slice(0, 4)) - 1}: the bodies hold their nearest generated positions, and the Earth keeps its own light.` };
+      return { label: 'Beyond the ephemeris', detail: `${formatMoment(s.asOf)} lies outside ${s.from.slice(0, 4)}–${Number(s.to.slice(0, 4)) - 1}: the bodies hold their nearest computed positions, and the Earth keeps its own light.` };
   }
 }

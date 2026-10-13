@@ -1,16 +1,21 @@
 // The sky's quiet DOM: body labels (real buttons, so the sky is reachable by keyboard and by touch) and the
-// caption that says the radial scale is diagrammatic. Nothing here owns state: the controller does.
+// caption that says the radial scale is diagrammatic. Nothing here owns state: the controller does. The names' culture
+// and the live line are Astrology's Options (src/lenses/astrology.ts); this view only reports them (statusLine).
+import { glyphSvg, holoCss, signFamilyId } from './zodiac';
 import type { BodyKey } from '../types/sky';
-import { clear, el } from '../ui/dom';
+import { el } from '../ui/dom';
 import type { ScreenBody, SkyLayer } from './layer';
 import type { ChartScreenMark } from './chart-overlay';
 import { describeLive, type LiveState } from './live';
-import { COMPRESSION_CAPTION, GEOCENTRIC_CAPTION } from './stages';
 
 export interface SkyViewHooks {
   onBody(key: BodyKey): void;
   /** the label shown for a body under the standing culture */
   nameOf(key: BodyKey): string;
+  /** a sign's glyph opened as its field family: the same route a tied family takes from a sky card */
+  onSign(id: string): void;
+  /** whether the field holds a family; a sign's glyph is a control only when its family stands */
+  hasFamily(id: string): boolean;
 }
 
 interface LabelEntry {
@@ -27,12 +32,6 @@ export class SkyView {
   private active = false;
   private selected: BodyKey | null = null;
   private scratch: ScreenBody[] = [];
-  private culture: HTMLElement;
-  private cultureSelect: HTMLSelectElement;
-  private cultureNote: HTMLElement;
-  private liveNote: HTMLElement;
-  /** where the birth-sky disclosure stands: under the culture selector and the live note */
-  readonly birthHost: HTMLElement;
   private marks = new Map<string, HTMLElement>();
   private lastLive: LiveState | null = null;
   private held: string | null = null;
@@ -40,14 +39,8 @@ export class SkyView {
   constructor(parent: HTMLElement, private hooks: SkyViewHooks) {
     this.root = el('div', { class: 'sky-layer', 'aria-label': 'The sky: Sun, Moon and planets', role: 'group' });
     this.root.inert = true;
-    this.caption = el('p', { class: 'sky-caption', text: COMPRESSION_CAPTION, 'aria-hidden': 'true' });
-    this.cultureSelect = el('select', { 'aria-label': 'Read the names through a culture' });
-    this.cultureNote = el('p', { class: 'sky-culture-note' });
-    this.liveNote = el('p', { class: 'sky-live', role: 'status' });
-    this.birthHost = el('div', { class: 'sky-birth-host' });
-    this.culture = el('div', { class: 'sky-culture' }, [el('label', {}, [el('span', { text: 'Names read through' }), this.cultureSelect]), this.cultureNote, this.liveNote, this.birthHost]);
-    this.culture.inert = true;
-    parent.append(this.root, this.caption, this.culture);
+    this.caption = el('p', { class: 'sky-caption', 'aria-hidden': 'true' });
+    parent.append(this.root, this.caption);
   }
 
   setLayer(layer: SkyLayer) {
@@ -66,43 +59,22 @@ export class SkyView {
     this.setActive(this.active, this.selected);
   }
 
-  /** The cultures the names can be read through (the field's own, those with a table in cultures.json). */
-  setCultures(options: { id: string; name: string }[], onChange: (id: string | null) => void) {
-    clear(this.cultureSelect);
-    this.cultureSelect.append(el('option', { value: '', text: 'Greco-Roman (default)' }));
-    for (const o of options) this.cultureSelect.append(el('option', { value: o.id, text: o.name }));
-    this.cultureSelect.onchange = () => onChange(this.cultureSelect.value || null);
-  }
-
-  /** Reflect the standing culture in the selector and its note. */
-  setCulture(id: string | null, name?: string) {
-    this.cultureSelect.value = id ?? '';
-    this.cultureNote.textContent = id ? `Names read through ${name ?? id}, after the table of planetary gods.` : '';
-  }
-
   /** The sky's live state, in words: live and checked, a snapshot and why, or beyond the generated span. */
   setLive(state: LiveState) {
     this.lastLive = state;
-    this.paintLive();
   }
 
   /** While a birth sky stands, the clock is not followed: say what the sky is held at instead of "live". Null returns to the live state. */
   setHeld(detail: string | null) {
     this.held = detail;
-    this.paintLive();
   }
 
-  private paintLive() {
-    clear(this.liveNote);
-    if (this.held) {
-      this.liveNote.dataset.state = 'held';
-      this.liveNote.append(el('strong', { text: 'Birth sky' }), ` · ${this.held}`);
-      return;
-    }
-    if (!this.lastLive) return;
+  /** One line for Astrology's Options: held birth sky, or live status. */
+  statusLine(): { label: string; detail: string; state: string } | null {
+    if (this.held) return { label: 'Birth sky', detail: this.held, state: 'held' };
+    if (!this.lastLive || this.lastLive.kind === 'snapshot' || this.lastLive.kind === 'diverged') return null;
     const d = describeLive(this.lastLive);
-    this.liveNote.dataset.state = this.lastLive.kind;
-    this.liveNote.append(el('strong', { text: d.label }), ` · ${d.detail}`);
+    return { label: d.label, detail: d.detail, state: this.lastLive.kind };
   }
 
   /** Re-label after the standing culture changed. */
@@ -117,8 +89,6 @@ export class SkyView {
     this.active = on;
     this.selected = body ?? null;
     this.root.inert = !on;
-    this.culture.inert = !on;
-    this.culture.classList.toggle('on', on);
     document.body.classList.toggle('sky-on', on);
     for (const l of this.labels.values()) {
       l.node.tabIndex = on ? 0 : -1;
@@ -136,13 +106,12 @@ export class SkyView {
       return;
     }
     this.root.classList.add('on');
-    const text = layer.geoShare > 0.5 ? GEOCENTRIC_CAPTION : COMPRESSION_CAPTION;
-    if (this.caption.textContent !== text) this.caption.textContent = text;
-    this.caption.classList.toggle('on', layer.weights.rings > 0.55);
+    this.caption.textContent = '';
+    this.caption.classList.remove('on');
     const bodies = layer.screenBodies(this.scratch);
     const placed: { x: number; y: number; w: number }[] = [];
     // sun first, then Earth, then outward: the nearer wins a crowded corner
-    const order: BodyKey[] = ['sun', 'earth', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
+    const order: BodyKey[] = ['sun', 'terra', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
     const byKey = new Map(bodies.map((b) => [b.key, b]));
     for (const key of order) {
       const l = this.labels.get(key);
@@ -150,10 +119,13 @@ export class SkyView {
       const b = byKey.get(key);
       if (!b) { l.node.classList.remove('on'); continue; }
       if (!l.w) l.w = l.node.getBoundingClientRect().width || 60;
-      const x = b.x + 12;
+      // clear of the drawn disc: a grown body's name sits beyond its edge, not on its centre
+      const x = b.x + Math.max(12, b.px / 2 + 8);
       const y = b.y - 8;
       const clash = placed.some((p) => Math.abs(p.x - x) < (p.w + l.w) / 2 + 6 && Math.abs(p.y - y) < 17);
-      const on = !clash && b.alpha > 0.45;
+      // the approached body's card names it: its label stands down (hidden, so out of the tab order too)
+      const approached = layer.approach > 0.05 && key === this.selected;
+      const on = !clash && !approached && b.alpha > 0.45;
       l.node.classList.toggle('on', on);
       l.node.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
       if (on) placed.push({ x: x + l.w / 2, y, w: l.w });
@@ -168,11 +140,23 @@ export class SkyView {
       seen.add(m.id);
       let n = this.marks.get(m.id);
       if (!n) {
-        n = el('span', { class: `sky-chart-mark sky-chart-${m.kind}`, 'aria-hidden': 'true', text: m.text });
+        if (m.sign !== undefined) {
+          // a sign: its canonical glyph, in the band's own colour at that longitude; a real control when its family stands
+          const fam = signFamilyId(m.sign);
+          n = fam && this.hooks.hasFamily(fam)
+            ? el('button', { class: 'sky-chart-mark sky-chart-glyph sky-chart-btn', type: 'button', 'aria-label': m.text, title: m.text, onclick: () => this.hooks.onSign(fam) }, [glyphSvg(m.sign)])
+            : el('span', { class: 'sky-chart-mark sky-chart-glyph', 'aria-hidden': 'true' }, [glyphSvg(m.sign)]);
+          n.style.color = holoCss(m.sign);
+        } else n = el('span', { class: `sky-chart-mark sky-chart-${m.kind}`, 'aria-hidden': 'true', text: m.text });
         this.marks.set(m.id, n);
         this.root.append(n);
       }
-      n.classList.toggle('on', m.on);
+      if (m.size !== undefined) {
+        // drawn inside the band: most of its width, never so small it blurs nor so large it crowds
+        const px = Math.max(12, Math.min(46, m.size * 0.78));
+        n.style.width = n.style.height = `${px.toFixed(1)}px`;
+        setShown(n, m.on && m.size > 9);
+      } else setShown(n, m.on);
       n.style.transform = `translate(${m.x.toFixed(1)}px, ${m.y.toFixed(1)}px) translate(-50%, -50%)`;
     }
     for (const [id, n] of this.marks) if (!seen.has(id)) { n.remove(); this.marks.delete(id); }
@@ -182,6 +166,12 @@ export class SkyView {
     this.root.classList.remove('on');
     this.caption.classList.remove('on');
     for (const l of this.labels.values()) l.node.classList.remove('on');
-    for (const n of this.marks.values()) n.classList.remove('on');
+    for (const n of this.marks.values()) setShown(n, false);
   }
+}
+
+/** A mark's visibility; a sign control is in the tab order only while it shows (a hidden one is never a stop). */
+function setShown(n: HTMLElement, on: boolean) {
+  n.classList.toggle('on', on);
+  if (n instanceof HTMLButtonElement) n.tabIndex = on ? 0 : -1;
 }

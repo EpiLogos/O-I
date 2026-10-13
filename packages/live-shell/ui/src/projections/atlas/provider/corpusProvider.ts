@@ -22,6 +22,7 @@ import type { History } from '../src/types/history';
 import type { Symbols } from '../src/types/symbols';
 import type { CorpusIndex } from '../src/types/corpus';
 import type { TiesIndex } from '../src/sky/ties';
+import type { PublishedSource } from '../src/data/published';
 import { skyProvider } from './skyProvider';
 
 /** The image assets a provider publishes ([C2 §1.2] "images.json + the
@@ -54,6 +55,11 @@ export interface CorpusBundle {
   corpus?: CorpusIndex;
   symbols?: Symbols; // OPTIONAL — editorial overlay keyed by FamilyId
   ties?: TiesIndex; // OPTIONAL — body↔field ties; sky grids come from their own provider
+  /** [§8.4, T-AE-REPORT] OPTIONAL — the provider's published material by name (`redbook`, `dynamics`,
+   * `dynamics-route`, `aionbook`, `sky-cards`, and the lens files: `theory`, `alchemy`, `theory-pages`,
+   * `field-pages`, `numbers`, …). The found app fetched these from its own public/data; the atlas reads
+   * them only through this slot (src/data/published.ts). Absent ⇒ each mode shows its absent state. */
+  published?: PublishedSource;
 }
 
 export interface CorpusProvider {
@@ -94,6 +100,8 @@ export function jsonCorpusProvider(spec: {
   /** [C2-a3] the provider's published corpus index (…/corpus/index.json);
    * volume fetches resolve beside it. Absent ⇒ no cite deep links. */
   corpusUrl?: string;
+  /** [§8.4] the base URL the provider publishes its named material under (`<base>/<name>.json`). */
+  publishedBase?: string;
   images?: ImageBundle;
 }): CorpusProvider {
   return {
@@ -119,7 +127,9 @@ export function jsonCorpusProvider(spec: {
           : Promise.resolve(undefined),
         spec.corpusUrl ? loadCorpusIndex(spec.corpusUrl) : Promise.resolve(null),
       ]);
-      return { id: spec.id, name: spec.name, field, images: spec.images ?? {}, history, corpus: corpus ?? undefined, symbols };
+      const base = spec.publishedBase?.replace(/\/$/, '');
+      const published = base ? (name: string) => fetch(`${base}/${encodeURIComponent(name)}.json`) : undefined;
+      return { id: spec.id, name: spec.name, field, images: spec.images ?? {}, history, corpus: corpus ?? undefined, symbols, published };
     },
   };
 }

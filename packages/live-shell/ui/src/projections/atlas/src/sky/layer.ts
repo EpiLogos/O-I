@@ -9,7 +9,39 @@ import { eclipticVector, gmstDeg, obliquityDeg, sceneBasis, sceneFromEcliptic, w
 import type { Vec3 } from '../data/geo';
 import { blendPose, easeInOut, lerpAngle } from './flight';
 import { ChartOverlay, type ChartScreenMark } from './chart-overlay';
-import { AU_IN_EARTH_RADII, compressAu, skyVisible, stageWeights, SKY_EXTENT, type StageWeights } from './stages';
+import { AU_IN_EARTH_RADII, compressAu, EARTH_RADIUS_KM, logStep, skyVisible, stageWeights, SKY_EXTENT, type StageWeights } from './stages';
+
+/**
+ * The approach's eases, milliseconds, on the frame's clock: each frame advances them by its dt, clamped as the camera's
+ * flights are, so a slow frame stretches the ease as it stretches the flight, and the two stay together. Arriving eases in
+ * over 1.8 s; a release eases out over 3.2 s, the length of the camera's own pull-back, so the look-at does not leave the
+ * planet while the camera is still close to it. Both are shortened ×0.4 under reduced motion.
+ */
+const APPROACH_EASE_MS = 1800;
+const APPROACH_RELEASE_MS = 3200;
+
+/** The presence a beckoned body must stand at to count as beckoned (its `beckoned` getter, and the pure helpers). */
+export const BECKONED_ABOVE = 0.05;
+
+/**
+ * The body a beckon names while it is present enough to be the one held up: `key` when its presence is above
+ * `BECKONED_ABOVE`, else null. Pure, so the return's choreography and its tests read the same rule.
+ */
+export function beckonedBody(key: BodyKey | null, presence: number): BodyKey | null {
+  return key && presence > BECKONED_ABOVE ? key : null;
+}
+
+/**
+ * Whether the sky group draws this frame. The sky's own distance rule holds (`skyVisible`: nothing inside dist 20), and
+ * a beckon lifts it: any presence at all draws the group, and only the beckoned body carries alpha (every other body's
+ * stage weight is zero inside the Earth stage, so nothing else appears). Limit, not handled here: the depth planes
+ * (`depthPlanes`, stages.ts, set by engine.ts) still clip at `far`, which is dist + 3.2 + SKY_EXTENT·smoothstep((dist−6)/34):
+ * about 290 R⊕ at dist 10, 1 260 at 15, 3 050 at 20. A planet further than that from the camera is clipped while dist < 20,
+ * whatever beckon says. The return lifts to ~34 R⊕, where the far plane holds the planets.
+ */
+export function skyGroupShown(dist: number, beckonPresence: number): boolean {
+  return skyVisible(dist) || beckonPresence > 0;
+}
 
 const BODY_VERT = /* glsl */ `
 uniform vec2 uRes;
@@ -83,6 +115,33 @@ export function bodyPx(radiusKm: number): number {
   return 5 + 5.5 * Math.max(0, Math.min(3, Math.log10(radiusKm) - 3));
 }
 
+/**
+ * A 0→1 weight that eases in real time toward its target. A change of target starts from wherever the ease stands,
+ * so a reversal never jumps (the same easing as the flights).
+ */
+class Eased {
+  private from = 0;
+  private to = 0;
+  private t0 = -Infinity;
+  private dur = 0;
+  value(now: number): number {
+    if (now - this.t0 >= this.dur) return this.to;
+    return this.from + (this.to - this.from) * easeInOut((now - this.t0) / this.dur);
+  }
+  goTo(to: number, dur: number, now: number) {
+    if (to === this.to) return;
+    this.from = this.value(now);
+    this.to = to;
+    this.t0 = now;
+    this.dur = dur;
+  }
+  snap(v: number) {
+    this.from = this.to = v;
+    this.t0 = -Infinity;
+    this.dur = 0;
+  }
+}
+
 interface BodyDraw {
   key: BodyKey;
   mesh: THREE.Mesh;
@@ -90,13 +149,19 @@ interface BodyDraw {
   body: SkyBody;
   /** the base alpha this frame, before stage weighting */
   weight: number;
-  screen: { x: number; y: number; px: number; on: boolean };
+  /**
+   * `px` is the drawn disc (the Sun's is its glow, which never falls below a few dozen px); `held` is the body's own disc,
+   * the size the card rings and satellites are scaled by, so they stand down with the body and not with the glow.
+   */
+  screen: { x: number; y: number; px: number; held: number; on: boolean };
 }
 
 export interface ScreenBody {
   key: BodyKey;
   x: number;
   y: number;
+  /** the drawn disc's diameter, CSS px (its glow or its true disc, whichever is larger) */
+  px: number;
   /** 0..1, how present the body is in this stage */
   alpha: number;
   facing: boolean;
@@ -126,6 +191,30 @@ export class SkyLayer {
   gmst = 0;
   eps = 23.44;
   moment = Date.now();
+  /** The Sun's ecliptic longitude at the moment (the geocentric direction the sky is drawn along), degrees in [0, 360). */
+  sunLongitude(): number {
+    return this.bodyLongitude('sun');
+  }
+
+  /** A body's ecliptic longitude from the drawn pose, degrees in [0, 360). Falls back to the Sun when unknown. */
+  bodyLongitude(key: BodyKey): number {
+    const v = this.poses.get(key) ?? this.poses.get('sun');
+    return v ? (((Math.atan2(v[1], v[0]) * 180) / Math.PI) % 360 + 360) % 360 : 0;
+  }
+
+  /** A body's true radius in Earth radii (the sky camera's framer needs it); 1 for a body the data does not know. */
+  bodyRadiusR(key: BodyKey): number {
+    const km = this.data.bodies.find((b) => b.key === key)?.radiusKm;
+    return km && km > 0 ? km / 6371.0084 : 1;
+  }
+
+  /** A body's current place in scene coordinates (Earth-fixed), or null when unknown. */
+  scenePosition(key: BodyKey, out = new THREE.Vector3()): THREE.Vector3 | null {
+    const v = this.poses.get(key);
+    if (!v) return null;
+    const s = sceneFromEcliptic(v, this.gmst, this.eps);
+    return out.set(s[0], s[1], s[2]);
+  }
   /** the unit direction from the Earth to the Sun, scene axes, at the moment; valid only while `sunKnown` */
   readonly sunDir = new THREE.Vector3(1, 0, 0);
   /** false when the moment lies outside the generated span: there is no true Sun to light the Earth with */
@@ -160,6 +249,43 @@ export class SkyLayer {
   private res = new THREE.Vector2(1, 1);
   /** false when the moment lies outside the generated span: bodies hold the nearest sample */
   inSpan = true;
+  /** true under reduced motion: the approach's ease is shortened (the engine sets it when the sky attaches) */
+  reduced = false;
+  /**
+   * 0 → 1: how far the camera has approached the body on the open card (eased; 0 when none). A birth sky approaches its
+   * bodies too: each is drawn at its true geocentric place, so the walk goes to the planet instead of looking at it from
+   * the Earth (which left the camera at the Earth, inside the sky's exit, and dropped the walk back to the globe).
+   */
+  approach = 0;
+  /** the body the look-at is approached on; kept after a release so the look-at eases back from it */
+  private approachKey: BodyKey | null = null;
+  /** The body currently approached (null once the look-at has let go). Orbits read this. */
+  get approached(): BodyKey | null {
+    return this.approach > 0.05 ? this.approachKey : null;
+  }
+  /** the body beckoned up close (see `beckon`); kept after a release so it eases out where it stood */
+  private beckonKey: BodyKey | null = null;
+  private beckonE = new Eased();
+  /** The body beckoned at full presence this moment (null once it has let go). The return's compose reads this. */
+  get beckoned(): BodyKey | null {
+    return beckonedBody(this.beckonKey, this.beckonE.value(this.clock));
+  }
+  /** the approach's clock, ms: advanced by each frame's dt (see APPROACH_EASE_MS) */
+  private clock = 0;
+  private approachE = new Eased();
+  /** 0 → 1 while the look-at glides from one approached body to another (a re-target), from `swapFrom` */
+  private swap = new Eased();
+  private swapFrom = new THREE.Vector3();
+  /** the look-at point this frame when approached: the body's place, or the glide between two bodies */
+  private anchorPt = new THREE.Vector3();
+  private sunFocus = new THREE.Vector3();
+  private bodyScene = new THREE.Vector3();
+  /** the camera and viewport of the last `update`: the wheels below are projected through them */
+  private lastCam: THREE.PerspectiveCamera | null = null;
+  private lastWidth = 1;
+  private lastHeight = 1;
+  private wheelTmp = new THREE.Vector3();
+  private wheelAxis = new THREE.Vector3();
 
   constructor(readonly data: SkyData) {
     this.eph = this.baseEph = new SkyEphemeris(data);
@@ -238,7 +364,7 @@ export class SkyLayer {
       mesh.renderOrder = isSun ? 4 : 5;
       mesh.visible = false;
       this.group.add(mesh);
-      this.draws.set(body.key, { key: body.key, mesh, mat, body, weight: 0, screen: { x: 0, y: 0, px: 0, on: false } });
+      this.draws.set(body.key, { key: body.key, mesh, mat, body, weight: 0, screen: { x: 0, y: 0, px: 0, held: 0, on: false } });
     }
   }
 
@@ -280,17 +406,17 @@ export class SkyLayer {
       const v = this.poses.get(k);
       if (v) { v[0] = x; v[1] = y; v[2] = z; } else this.poses.set(k, [x, y, z]);
     };
-    const earth = eph.helio('earth', ms, this.e)!;
+    const earth = eph.helio('terra', ms, this.e)!;
     const ev = eclipticVector(earth.lon, earth.lat, compressAu(earth.r));
     // the Sun sits opposite the Earth's heliocentric vector
     set('sun', -ev[0], -ev[1], -ev[2]);
-    set('earth', 0, 0, 0);
+    set('terra', 0, 0, 0);
     const m = eph.moon(ms, this.p)!;
     const mv = eclipticVector(m.lon, m.lat, m.r * AU_IN_EARTH_RADII);
     set('moon', mv[0], mv[1], mv[2]);
     for (const body of this.data.bodies) {
       const key = body.key;
-      if (key === 'sun' || key === 'earth' || key === 'moon') continue;
+      if (key === 'sun' || key === 'terra' || key === 'moon') continue;
       const h = eph.helio(key, ms, this.p);
       if (!h) { this.poses.delete(key); continue; }
       if (geo) {
@@ -312,7 +438,8 @@ export class SkyLayer {
    * sky stays still in the view while the Earth turns beneath it (rig.lon is Earth-fixed).
    * Returns the lon correction to apply to the rig, degrees.
    */
-  prepare(dist: number): { focus: THREE.Vector3; dLon: number } {
+  prepare(dist: number, dt = 0): { focus: THREE.Vector3; dLon: number } {
+    this.clock += dt * 1000;
     const w = stageWeights(dist);
     this.weights = w;
     const clamped = this.eph.clamp(this.moment);
@@ -345,23 +472,93 @@ export class SkyLayer {
     // the Earth's true light: only where the Sun is known (inside the span the ephemeris covers)
     this.sunKnown = this.eph.covers(this.moment);
     if (this.sunKnown) this.sunDir.copy(this.sunScene).normalize();
-    this.focus.copy(this.sunScene).multiplyScalar(w.handoff * (1 - this.geoShare));
+    // the look-at and the camera's ride with the sky share one weight (`focus`), so the sky holds still in the view as it turns
+    this.sunFocus.copy(this.sunScene).multiplyScalar(w.focus * (1 - this.geoShare));
+    this.aimFocus(this.clock);
 
     let dLon = 0;
-    if (this.prevGmst !== null && w.handoff > 0) dLon = -w.handoff * wrap180(this.gmst - this.prevGmst);
+    if (this.prevGmst !== null && w.focus > 0) dLon = -w.focus * wrap180(this.gmst - this.prevGmst);
     this.prevGmst = this.gmst;
     return { focus: this.focus, dLon };
   }
 
+  /**
+   * Approach a body (its card is open) or release the approach (null). The look-at eases onto the body's drawn place
+   * and rides it as it moves; a body changed for another glides the look-at from one to the other, so nothing is
+   * passed through. A change of mind mid-ease starts from where the ease stands. `instant`: arrive with no ease.
+   */
+  setApproach(key: BodyKey | null, instant = false) {
+    const now = this.clock;
+    const scale = this.reduced ? 0.4 : 1;
+    if (key) {
+      if (key !== this.approachKey) {
+        if (this.approachKey && !instant && this.approachE.value(now) > 1e-3) {
+          this.swapFrom.copy(this.anchorPt);
+          this.swap.snap(0);
+          this.swap.goTo(1, APPROACH_EASE_MS * scale, now);
+        } else this.swap.snap(1);
+        this.approachKey = key;
+      }
+      if (instant) this.approachE.snap(1);
+      else this.approachE.goTo(1, APPROACH_EASE_MS * scale, now);
+    } else if (instant) this.approachE.snap(0);
+    else this.approachE.goTo(0, APPROACH_RELEASE_MS * scale, now);
+  }
+
+  /**
+   * Draw a body at full presence whatever its stage weight or the camera's distance: its disc, glow, label and
+   * `screenDisc`. It touches neither `focus`, `approach` nor the look-at; it is an extra alpha lift on that one body. The
+   * return choreography uses it to show the planet while the camera is still near Earth (where planets are otherwise not
+   * drawn). Eases on the layer's clock like `setApproach` (same durations, ×0.4 under reduced motion). `null` lets go.
+   * A different body rises from the level the last one stood at; the last one is not faded (it is dropped at once).
+   */
+  beckon(key: BodyKey | null, instant = false) {
+    const now = this.clock;
+    const scale = this.reduced ? 0.4 : 1;
+    if (key) {
+      if (key !== this.beckonKey) {
+        this.beckonE.snap(this.beckonE.value(now));
+        this.beckonKey = key;
+      }
+      if (instant) this.beckonE.snap(1);
+      else this.beckonE.goTo(1, APPROACH_EASE_MS * scale, now);
+    } else if (instant) this.beckonE.snap(0);
+    else this.beckonE.goTo(0, APPROACH_RELEASE_MS * scale, now);
+  }
+
+  /**
+   * The look-at: the Sun-centred focus, eased onto the approached body's drawn place (blended from the previous body
+   * during a glide). In a birth sky the Sun-centred focus has turned to the Earth (`geoShare`) and the approach leaves
+   * from there. Exactly that focus when no body is approached, so every other view is unchanged.
+   */
+  private aimFocus(now: number) {
+    this.approach = this.approachE.value(now);
+    const pv = this.approachKey ? this.poses.get(this.approachKey) : undefined;
+    if (this.approach <= 0 || !pv) {
+      this.focus.copy(this.sunFocus);
+      return;
+    }
+    const s = sceneFromEcliptic(pv, this.gmst, this.eps);
+    this.bodyScene.set(s[0], s[1], s[2]);
+    const k = this.swap.value(now);
+    if (k >= 1) this.anchorPt.copy(this.bodyScene);
+    else this.anchorPt.lerpVectors(this.swapFrom, this.bodyScene, k);
+    this.focus.lerpVectors(this.sunFocus, this.anchorPt, this.approach);
+  }
+
   /** After the camera moved: place everything, set opacities and sizes, update labels' screen positions. */
   update(camera: THREE.PerspectiveCamera, dist: number, width: number, height: number) {
-    const visible = skyVisible(dist);
+    const beckonP = this.beckonE.value(this.clock);
+    const visible = skyGroupShown(dist, beckonP);
     this.group.visible = visible;
     if (!visible) {
       for (const d of this.draws.values()) d.screen.on = false;
       this.chartMarks.length = 0;
       return;
     }
+    this.lastCam = camera;
+    this.lastWidth = width;
+    this.lastHeight = height;
     const w = this.weights;
     const clamped = this.eph.clamp(this.moment);
     const ms = clamped.ms;
@@ -396,30 +593,39 @@ export class SkyLayer {
     const tanH = Math.tan((camera.fov * Math.PI) / 360);
     const pxPerRad = (height * this.dpr * 0.5) / tanH;
     const proj = this.tmp2;
+    // a disc never grows past twice the viewport's height (shader cost; the approached disc is 30% of it)
+    const maxPx = 2 * height * this.dpr;
 
     for (const d of this.draws.values()) {
       const key = d.key;
       let alpha = 0;
       const pos = d.mesh.position;
       let px = bodyPx(d.body.radiusKm) * this.dpr;
+      let core = 0;
       if (key === 'sun') {
         pos.copy(this.sunScene);
         alpha = w.sun;
-        const core = (9 + 14 * (1 - w.handoff)) * this.dpr;
-        d.mat.uniforms.uCorePx.value = core;
+        core = (9 + 14 * (1 - w.handoff)) * this.dpr;
         px = core * (7 + 5 * (1 - w.handoff));
+        // the glow stands as it always did; the Sun grows to its true disc only as the approached body (its card open)
+        const truePx = this.approachKey === 'sun' ? this.trueDiskPx(d.body.radiusKm, pos, camera.position, pxPerRad) * this.approach : 0;
+        core = Math.max(core, truePx);
+        px = Math.max(px, truePx);
       } else if (key === 'moon') {
         const mv = this.poses.get('moon')!;
         const v = sceneFromEcliptic(mv, this.gmst, this.eps);
         pos.set(v[0], v[1], v[2]);
         alpha = w.moon;
-        const trueRad = d.body.radiusKm / 6371.0084;
-        const truePx = ((2 * trueRad) / Math.max(pos.distanceTo(camera.position), 1e-3)) * pxPerRad;
-        px = Math.max(px, truePx);
         d.mat.uniforms.uLight.value.copy(this.sunGeoDir).transformDirection(camInv);
-      } else if (key === 'earth') {
+      } else if (key === 'terra') {
         pos.set(0, 0, 0);
         alpha = w.earthPoint;
+        // held, the Earth is the camera's own subject, and the stage is pinned to the system by it (`stageDistance`): the
+        // labelled point gives way to the real globe by the camera's own distance from it, as it always did on a pull-back
+        if (this.approachKey === 'terra' && this.approach > 0) {
+          const near = logStep(camera.position.length(), 300, 1500);
+          alpha = alpha + (near - alpha) * this.approach;
+        }
         d.mat.uniforms.uLight.value.copy(this.sunScene).normalize().transformDirection(camInv);
       } else {
         const pv = this.poses.get(key);
@@ -429,6 +635,19 @@ export class SkyLayer {
         alpha = w.planets;
         d.mat.uniforms.uLight.value.copy(this.sunScene).sub(pos).normalize().transformDirection(camInv);
       }
+      // every body but the Sun (whose glow is above) grows to its true disc as the camera nears it, the Moon's rule
+      if (key !== 'sun') px = Math.max(px, this.trueDiskPx(d.body.radiusKm, pos, camera.position, pxPerRad));
+      px = Math.min(px, maxPx);
+      if (key === 'sun') d.mat.uniforms.uCorePx.value = Math.min(core, px);
+      // the approached body stays present as the camera comes to it, whatever its stage weight (the Earth's own mesh stays
+      // as the distance leaves it: the globe is drawn by the engine, and only its place on screen is held)
+      let onAlpha = alpha;
+      if (this.approach > 0 && key === this.approachKey) {
+        if (key === 'terra') onAlpha = Math.max(alpha, this.approach);
+        else alpha = onAlpha = Math.max(alpha, this.approach);
+      }
+      // the beckoned body is present at its beckon presence, whatever its stage weight (the approach's rule, beside it)
+      if (beckonP > 0 && key === this.beckonKey) alpha = onAlpha = Math.max(alpha, beckonP);
       d.mat.uniforms.uAlpha.value = alpha;
       d.mat.uniforms.uPx.value = px;
       d.mesh.visible = alpha > 0.004;
@@ -438,7 +657,9 @@ export class SkyLayer {
       d.screen.x = (proj.x * 0.5 + 0.5) * width;
       d.screen.y = (1 - (proj.y * 0.5 + 0.5)) * height;
       d.screen.px = px / this.dpr;
-      d.screen.on = alpha > 0.04 && proj.z < 1 && proj.z > -1 && Math.abs(proj.x) < 1.2 && Math.abs(proj.y) < 1.2;
+      // the body's own disc: the Sun's is its true size, with the glow's floor taken off
+      d.screen.held = key === 'sun' ? Math.min(this.trueDiskPx(d.body.radiusKm, pos, camera.position, pxPerRad), maxPx) / this.dpr : d.screen.px;
+      d.screen.on = onAlpha > 0.04 && proj.z < 1 && proj.z > -1 && Math.abs(proj.x) < 1.2 && Math.abs(proj.y) < 1.2;
     }
   }
 
@@ -460,7 +681,7 @@ export class SkyLayer {
     out.length = 0;
     for (const d of this.draws.values()) {
       if (!d.screen.on) continue;
-      out.push({ key: d.key, x: d.screen.x, y: d.screen.y, alpha: d.weight, facing: true });
+      out.push({ key: d.key, x: d.screen.x, y: d.screen.y, px: d.screen.px, alpha: d.weight, facing: true });
     }
     return out;
   }
@@ -471,7 +692,9 @@ export class SkyLayer {
     let best: BodyKey | null = null;
     let bestD = Infinity;
     for (const d of this.draws.values()) {
-      if (!d.screen.on || d.weight < 0.5) continue;
+      // the approached body is picked whatever its stage weight: its disc is the thing the card is about
+      const approached = this.approach > 0 && d.key === this.approachKey;
+      if (!d.screen.on || (d.weight < 0.5 && !approached)) continue;
       const reach = Math.max(radius, d.screen.px * 0.6);
       const dist = Math.hypot(d.screen.x - x, d.screen.y - y);
       if (dist <= reach && dist < bestD) {
@@ -486,6 +709,51 @@ export class SkyLayer {
   positionOf(key: BodyKey): THREE.Vector3 | null {
     const d = this.draws.get(key);
     return d ? d.mesh.position : null;
+  }
+
+  /** A body's drawn disc this frame: its centre and diameter in CSS px, and whether it is on screen. */
+  screenDisc(key: BodyKey): { x: number; y: number; px: number; held: number; on: boolean } | null {
+    const d = this.draws.get(key);
+    return d ? { ...d.screen } : null;
+  }
+
+  /**
+   * The ecliptic plane's own circle round a body, as the camera sees it this frame: a point of ecliptic longitude λ at
+   * `rPx` CSS px from the body's centre (measured across the plane, face-on) stands at (x + cos λ·ux + sin λ·vx,
+   * y + cos λ·uy + sin λ·vy). So a thing hung at a zodiacal longitude round a planet is drawn where that longitude truly
+   * lies — 0° Aries toward the vernal point, whichever way the camera looks at it. `zu`/`zv` are how far each axis points
+   * away from the camera (−1 … 1), so the far half of the wheel reads as far. Null while the body is not drawn.
+   */
+  eclipticWheel(key: BodyKey, rPx: number): { x: number; y: number; ux: number; uy: number; vx: number; vy: number; zu: number; zv: number } | null {
+    const cam = this.lastCam;
+    const d = this.draws.get(key);
+    if (!cam || !d || !(d.mesh.visible || d.screen.on)) return null;
+    const P = d.mesh.position;
+    const dist = Math.max(cam.position.distanceTo(P), 1e-6);
+    const worldPerPx = (2 * dist * Math.tan((cam.fov * Math.PI) / 360)) / Math.max(this.lastHeight, 1);
+    const rho = worldPerPx * rPx;
+    const basis = sceneBasis(this.gmst, this.eps);
+    const w = this.lastWidth;
+    const screen = (v: THREE.Vector3) => {
+      this.wheelTmp.copy(v).project(cam);
+      return [(this.wheelTmp.x * 0.5 + 0.5) * w, (1 - (this.wheelTmp.y * 0.5 + 0.5)) * this.lastHeight] as const;
+    };
+    const [x0, y0] = screen(P);
+    const out = { x: x0, y: y0, ux: 0, uy: 0, vx: 0, vy: 0, zu: 0, zv: 0 };
+    basis.slice(0, 2).forEach((b, i) => {
+      this.wheelAxis.set(b[0], b[1], b[2]);
+      const [x1, y1] = screen(this.wheelTmp.copy(P).addScaledVector(this.wheelAxis, rho));
+      // how far this axis points from the camera: the camera looks down its own −z
+      const away = -this.wheelAxis.transformDirection(cam.matrixWorldInverse).z;
+      if (i === 0) { out.ux = x1 - x0; out.uy = y1 - y0; out.zu = away; } else { out.vx = x1 - x0; out.vy = y1 - y0; out.zv = away; }
+    });
+    return out;
+  }
+
+  /** The diameter, device px, a body of this radius subtends at the camera: its true disc. */
+  private trueDiskPx(radiusKm: number, pos: THREE.Vector3, camPos: THREE.Vector3, pxPerRad: number): number {
+    const trueRad = radiusKm / EARTH_RADIUS_KM;
+    return ((2 * trueRad) / Math.max(pos.distanceTo(camPos), 1e-3)) * pxPerRad;
   }
 
   dispose() {
