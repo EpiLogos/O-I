@@ -9,6 +9,7 @@ import {LENSES,CONTEXT_FRAMES,type SceneActing} from './native-field/scene';
 import type {FieldEngineAdapter} from './engine';
 import type {InstrumentEdit} from './stageCommands';
 import {createLiveEntry} from './native-field/liveEntry.mjs';
+import {planJankoStrike} from './native-field/jankoStrike.mjs';
 /** scene_field.rs `PLANETS`, in scalar-degree order: the map's own names. */
 const PLANET_NAMES=['Sun','Venus','Mercury','Moon','Saturn','Jupiter','Mars','Neptune','Pluto'];
 const esc=(v:unknown)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
@@ -457,8 +458,16 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   isBusy:()=>busy||composing||(controller.reading as any).status==='opening',
   fieldLive:()=>!!(engine as any).retainedTopology?.(),
  });
+ /** A Jankó chord from the Live keyboard: the owner's own played voices for each pitch class, struck as one act through the owner's strike.
+  * Any silent class refuses the whole chord by name (planJankoStrike); nothing is synthesised here. */
+ const playJanko=async(pitchClasses:number[],amplitude:number):Promise<void>=>{
+  const reading=controller.reading as any;
+  const plan=planJankoStrike(reading.instrument?.influence?.played_addresses,pitchClasses);
+  if(plan.refusal)throw new Error(plan.refusal);
+  await controller.playVoices(plan.refs,amplitude);
+ };
  const openLive=()=>{liveEntry.enter();requestAnimationFrame(()=>liveEntry.check());};
  const leaveLive=()=>liveEntry.leave();
  update();
- return {controller,panel,command,openLive,leaveLive,dispose:()=>{clearInterval(timer);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
+ return {controller,panel,command,playJanko,openLive,leaveLive,dispose:()=>{clearInterval(timer);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
 }

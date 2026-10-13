@@ -4,7 +4,7 @@
  * application's own action body (app.ts action()); nothing here re-implements a
  * control. Camera pan/zoom/orbit stay pointer gestures on the stage itself. */
 import {NATIVE_BINDINGS} from './nativeParameters.js';
-export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument'] as const;
+export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko'] as const;
 export type StageCommandName = (typeof STAGE_COMMANDS)[number];
 /** Rail tools the shell may choose. Text and formation open their panels; pin is a placement mode. Orbit is a stage pointer gesture, never a command. */
 export const STAGE_TOOLS = ['select', 'interact', 'pin', 'text', 'formation'] as const;
@@ -109,7 +109,10 @@ export type StageCommand =
   | {command: 'automation'; action: 'resume'}
   | {command: 'live'; action: 'set' | 'hold'; target: string; value: number}
   | {command: 'live'; action: 'release'}
-  | {command: 'instrument'; edit: InstrumentEdit};
+  | {command: 'instrument'; edit: InstrumentEdit}
+  | {command: 'janko'; action: 'play'; pitch_classes: number[]; amplitude: number};
+/** A Jankó note: one to twelve distinct pitch classes (0–11) struck together as one act, at an amplitude in (0, 1] (modal metres; the owner's strike bound). */
+export const STAGE_JANKO_AMPLITUDE_MAX = 1;
 export type StageResult = {ok: true} | {ok: false; error: string};
 
 const BASE_KEYS = ['v', 'kind', 'command', 'req'] as const;
@@ -182,6 +185,15 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
       if (raw.action === 'play') return closed(raw, [...BASE_KEYS, 'action']) ? {req, command: {command: 'automation', action: 'play'}} : null;
       if (raw.action === 'resume') return closed(raw, [...BASE_KEYS, 'action']) ? {req, command: {command: 'automation', action: 'resume'}} : null;
       return raw.action === 'loop' && closed(raw, [...BASE_KEYS, 'action', 'on']) && typeof raw.on === 'boolean' ? {req, command: {command: 'automation', action: 'loop', on: raw.on}} : null;
+    case 'janko': {
+      // A chord is one act: distinct pitch classes, struck at one amplitude. Anything else is refused before the owner sees it.
+      if (!closed(raw, [...BASE_KEYS, 'action', 'pitch_classes', 'amplitude']) || raw.action !== 'play' || !Array.isArray(raw.pitch_classes)) return null;
+      const classes = raw.pitch_classes;
+      if (classes.length < 1 || classes.length > 12 || !classes.every(pc => Number.isSafeInteger(pc) && pc >= 0 && pc <= 11)) return null;
+      if (new Set(classes).size !== classes.length) return null;
+      if (typeof raw.amplitude !== 'number' || !Number.isFinite(raw.amplitude) || raw.amplitude <= 0 || raw.amplitude > STAGE_JANKO_AMPLITUDE_MAX) return null;
+      return {req, command: {command: 'janko', action: 'play', pitch_classes: [...classes], amplitude: raw.amplitude}};
+    }
     case 'instrument': {
       const edit = closed(raw, [...BASE_KEYS, 'edit']) ? readInstrumentEdit(raw.edit) : null;
       return edit ? {req, command: {command: 'instrument', edit}} : null;

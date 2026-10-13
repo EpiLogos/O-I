@@ -11,6 +11,6 @@ const body = app.slice(app.indexOf('function announceHostState(){'), app.indexOf
 test('announceHostState carries the active lens, read inside a guard, and omits it when none is read', () => {
   assert.ok(body.length > 200, 'announceHostState is found');
   assert.match(body, /let lens:LensId\|undefined;try\{lens=lensStudio\.active\(\);\}catch\{lens=undefined;\}/);
-  assert.match(body, /const state=\{\.\.\.\(lens\?\{lens\}:\{\}\),nativeScene:/);
+  assert.match(body, /const state=\{\.\.\.\(lens\?\{lens\}:\{\}\),\.\.\.\(instrument\?\{instrument\}:\{\}\),nativeScene:/, 'the lens, then the native instrument (T-LIVE-TORUS-INSTRUMENT), each omitted when absent');
   assert.match(body, /window\.parent\.postMessage\(\{v:1,kind:'oi-app-state',state\},'\*'\)/, 'the state is still posted as before');
 });

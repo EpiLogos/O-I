@@ -1,0 +1,19 @@
+/* The Jankó keyboard row (colour from the Live tokens only). */
+.janko { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg-2); color: var(--text); font-family: var(--font-mono); font-size: 11px; min-width: 0; }
+.janko-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.janko-title { font-size: 12px; }
+.janko-layouts { display: flex; gap: 4px; }
+.janko-layouts button, .janko-key { font: inherit; color: var(--text-dim); background: transparent; border: 1px solid var(--line); border-radius: 3px; padding: 2px 6px; cursor: pointer; }
+.janko-layouts button[aria-pressed="true"] { color: var(--text); border-color: var(--line-strong); }
+.janko-play { outline: none; }
+.janko-play:focus-visible { box-shadow: 0 0 0 1px var(--accent); border-radius: 3px; }
+.janko-surface { display: flex; flex-direction: column; gap: 3px; }
+.janko-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px; }
+.janko-row[data-janko-family="1"] { padding-left: 8px; }
+.janko-piano { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 2px; }
+.janko-key { min-width: 0; text-align: center; }
+.janko-key.is-black { background: var(--bg-3, transparent); }
+.janko-key[aria-pressed="true"] { color: var(--text); border-color: var(--accent); }
+.janko-hint, .janko-placement { margin: 0; color: var(--text-faint); font-size: 10px; line-height: 1.4; }
+.janko-note { margin: 0; color: var(--text-dim); font-size: 10px; line-height: 1.4; }
+.janko-note.is-fault { color: var(--rec); }
