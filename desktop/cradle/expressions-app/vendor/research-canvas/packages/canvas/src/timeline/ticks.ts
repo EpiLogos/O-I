@@ -15,6 +15,9 @@ function tickTargetFor(widthPx: number): number {
   return Math.max(2, Math.floor(widthPx / 120));
 }
 
+/** The least pixel distance two minor marks may stand apart: a readable label spacing (lane-2 T4c). */
+export const MIN_AXIS_SPACING_PX = 88;
+
 /**
  * Axis marks for the visible window. The authority's `ticksForDomain` decides
  * the rung, the step and the labels; this only places them on the same camera
@@ -57,7 +60,11 @@ const MAX_WIDEN_STEPS = 10;
 export function axisRows(camera: TimeCamera, offsetMs = 0): AxisRows {
   const targetTicks = tickTargetFor(camera.widthPx);
   const visible = { fromMs: pixelToMs(camera, 0), toMs: pixelToMs(camera, camera.widthPx) };
-  const minorTicks = ticksForDomain(visible, { offsetMs, targetTicks });
+  // The minor row keeps MIN_AXIS_SPACING_PX between marks: the authority steps
+  // its rung down when the chosen step would crowd or leave fewer than two marks.
+  const span = visible.toMs - visible.fromMs;
+  const minGapMs = camera.widthPx > 0 ? (MIN_AXIS_SPACING_PX * span) / camera.widthPx : undefined;
+  const minorTicks = ticksForDomain(visible, { offsetMs, targetTicks, minGapMs });
   const minorUnit = minorTicks[0]?.unit;
   if (minorUnit === undefined) return { major: [], minor: [] };
   const toAxis = (tick: Tick, row: AxisRow): AxisTick => ({
@@ -67,7 +74,6 @@ export function axisRows(camera: TimeCamera, offsetMs = 0): AxisRows {
     unit: tick.unit,
   });
   const minor = minorTicks.map((tick) => toAxis(tick, "minor"));
-  const span = visible.toMs - visible.fromMs;
   const centre = (visible.fromMs + visible.toMs) / 2;
   for (let step = 1; step <= MAX_WIDEN_STEPS; step += 1) {
     const half = (span * 2 ** step) / 2;

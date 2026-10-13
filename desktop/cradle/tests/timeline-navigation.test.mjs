@@ -54,18 +54,33 @@ test('axis labels remain separated and fit the viewport from whole history to de
   }
 });
 
-// OPEN (lane-2 T4b, not fixed here: ticks.ts and the authority's step rounding are outside this lane).
-// The minor row can carry a single mark, so the original "ticks cover both
-// viewport edges" and "at least two marks" invariants fail on this sweep. The
-// failure is reported with its numbers; the invariant is asserted, not relaxed.
-test('the minor row covers both viewport edges with at least two marks (OPEN: single-mark rows)',{todo:'OPEN lane-2 T4b: single-mark minor rows, see the failure count'},()=>{
+/**
+ * A deep window holding fewer than two year boundaries: beyond the Date range the
+ * finest honest rung is a year, so no two marks can be drawn in it (lane-2 T4c).
+ * Such windows are exempt from the two-mark rule and from nothing else; the
+ * spacing rule still holds for every row.
+ */
+function deepSubYearWindow(view){
+  const half=view.widthPx/view.pixelsPerYear/2;
+  const deep=!withinDateRange(view.centerYear-half)||!withinDateRange(view.centerYear+half);
+  if(!deep)return false;
+  const yearBoundaries=Math.floor(view.centerYear+half)-Math.ceil(view.centerYear-half)+1;
+  return yearBoundaries<2;
+}
+
+// Lane-2 T4c: a minor row steps down to a finer honest step (then to the next finer
+// rung) when its step would leave fewer than two marks or crowd them, so every
+// row covers both edges except a deep sub-year window (see deepSubYearWindow).
+test('the minor row covers both viewport edges with at least two marks',()=>{
   const centres=[...HUMAN_CENTRES,...DEEP_CENTRES];
   const zooms=[...HUMAN_ZOOMS,...DEEP_ZOOMS];
   const failures=[];
   let total=0;
   for(const widthPx of WIDTHS)for(const pixelsPerYear of zooms)for(const centerYear of centres){
+    const view={widthPx,pixelsPerYear,centerYear};
+    if(deepSubYearWindow(view))continue;
     total+=1;
-    const minor=axisRows(timeCamera({widthPx,pixelsPerYear,centerYear})).minor;
+    const minor=axisRows(timeCamera(view)).minor;
     if(minor.length<2||!coveredEdges(minor,widthPx))failures.push(`width ${widthPx}, ${pixelsPerYear} px/yr, centre ${centerYear}: ${minor.length} mark(s)`);
   }
   assert.equal(failures.length,0,`${failures.length} of ${total} configurations; first: ${failures.slice(0,3).join('; ')}`);
@@ -110,13 +125,10 @@ test('zoom retains the date under the pointer across LOD boundaries within the D
   }
 });
 
-// OPEN (lane-2 T4b, not fixed here: the authority's deep calendar is read-only for this lane).
-// Beyond JavaScript Date's range, the authority's calendarFields names an
-// instant's year from its day rounded to the nearest day, while the canvas's
-// yearToMs floors the year. An instant up to half a day before a year start
-// therefore reads back in the next year's length, and the zoom's pointer time
-// drifts by the fraction of a year times one day. The numbers are reported here.
-test('zoom keeps the date under the pointer beyond the Date range (OPEN: deep calendar day rounding)',{todo:'OPEN lane-2 T4b: deep-range year rounding, see the failure count'},()=>{
+// Lane-2 T4c: beyond JavaScript Date's range the authority reads an instant's
+// year by its own year starts (no half-day rounding), so the pointer's time
+// does not drift across a year start.
+test('zoom keeps the date under the pointer beyond the Date range',()=>{
   const zooms=[...HUMAN_ZOOMS,...ZOOM_STEPS,...DEEP_ZOOMS];
   const failures=[];
   let checked=0,maxDrift=0;

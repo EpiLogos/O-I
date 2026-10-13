@@ -121,13 +121,16 @@ export function calendarFields(ms: number): CalendarFields {
       millisecond: date.getUTCMilliseconds(),
     };
   }
-  const day = Math.round(ms / UNIT_MS.day);
-  if (!Number.isSafeInteger(day)) {
+  if (!Number.isFinite(ms)) {
     return { year: NaN, month: NaN, day: NaN, hour: NaN, minute: NaN, second: NaN, millisecond: NaN };
   }
-  let year = 1970 + Math.floor(day / 365.2425);
-  while (yearStartDays(year) > day) year -= 1;
-  while (yearStartDays(year + 1) <= day) year += 1;
+  // The year is the last whose start is at or before this ms, compared against
+  // yearStartMs itself: the same floats the year starts are built from. A day
+  // division would misread a year start far out (ms / DAY loses the ulp past
+  // 2^53 ms), so an instant before a year start reads the earlier year exactly.
+  let year = 1970 + Math.floor(ms / (365.2425 * UNIT_MS.day));
+  while (yearStartMs(year) > ms) year -= 1;
+  while (yearStartMs(year + 1) <= ms) year += 1;
   return { year, month: 0, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 };
 }
 
@@ -328,59 +331,53 @@ function labelForLocal(localMs: number, unit: TechneTemporalPrecision): string {
   return `${hmi}:${two(c.second)}.${String(c.millisecond).padStart(3, "0")}`;
 }
 
+/** The honest step multiples, coarsest last. */
+const NICE_MULTIPLES = [1, 2, 5, 10, 15, 20, 25, 30, 50, 100, 200, 250, 500];
+
 /** Snap a raw step multiple to the honest 1/2/5 ladder. */
 function niceMultiple(raw: number): number {
-  const candidates = [1, 2, 5, 10, 15, 20, 25, 30, 50, 100, 200, 250, 500];
-  const snapped = candidates.find((candidate) => candidate >= raw);
+  const snapped = NICE_MULTIPLES.find((candidate) => candidate >= raw);
   return snapped ?? Math.ceil(raw / 500) * 500;
 }
 
-/**
- * Tick marks for one view domain, in the civil frame the facets themselves
- * declare (`offsetMs` — the instrument derives it from the reading's own
- * instants; it is never guessed from a timezone database). The unit is the
- * coarsest ladder rung that still yields at least two marks; its step is the
- * smallest honest 1/2/5 multiple that keeps the count near the target.
- * Calendar boundaries align in the civil frame, so day ticks land on local
- * midnight. A domain beyond the Date range is read at year precision and no
- * finer: its ms cannot honestly place a month, a day or a clock. Deterministic
- * and pure.
- */
-export function ticksForDomain(domain: TimeRange, options?: { offsetMs?: number; targetTicks?: number }): Tick[] {
-  const offsetMs = options?.offsetMs ?? 0;
-  const targetTicks = options?.targetTicks ?? 6;
-  const span = domain.toMs - domain.fromMs;
-  const deep = Math.abs(domain.fromMs) > DATE_LIMIT_MS || Math.abs(domain.toMs) > DATE_LIMIT_MS;
-  const finest: TechneTemporalPrecision = deep ? "year" : "subsecond";
-  if (span <= 0) return [{ ms: domain.fromMs, label: labelForLocal(domain.fromMs + offsetMs, finest), unit: finest }];
+/** One rung and its step: the marks are every `step` units of `unit`. Below two
+ * seconds the unit is `subsecond` and the step is in ms. */
+interface Grid {
+  unit: TechneTemporalPrecision;
+  step: number;
+}
 
-  const localFrom = domain.fromMs + offsetMs;
-  const localTo = domain.toMs + offsetMs;
-  const ticks: Tick[] = [];
-  const push = (localMs: number, unit: TechneTemporalPrecision) => {
-    const ms = localMs - offsetMs;
-    if (!ticks.some((tick) => tick.ms === ms)) ticks.push({ ms, label: labelForLocal(localMs, unit), unit });
-  };
-
-  // Below two seconds, numeric subsecond steps honestly labelled with ms.
+/** The grid the window's span chooses before any spacing check. */
+function defaultGrid(span: number, targetTicks: number, deep: boolean): Grid {
   if (!deep && span < 2 * UNIT_MS.second) {
     const pow = Math.pow(10, Math.floor(Math.log10(span / targetTicks)));
     const mantissa = span / targetTicks / pow;
-    const stepMs = (mantissa <= 1 ? 1 : mantissa <= 2 ? 2 : mantissa <= 5 ? 5 : 10) * pow;
-    let boundary = Math.ceil((localFrom - offsetMs) / stepMs) * stepMs + offsetMs;
-    for (let guard = 0; guard <= 400 && boundary <= localTo; guard += 1) {
-      push(boundary, "subsecond");
-      boundary += stepMs;
-    }
-    return ticks;
+    return { unit: "subsecond", step: (mantissa <= 1 ? 1 : mantissa <= 2 ? 2 : mantissa <= 5 ? 5 : 10) * pow };
   }
-
   // The coarsest rung that still yields at least two marks. A deep domain
   // uses the year and coarser rungs only.
   const rungs = deep ? LADDER.filter((candidate) => isYearUnit(candidate.unit)) : LADDER;
   const rung = rungs.find((candidate) => span / candidate.ms >= 2) ?? rungs[rungs.length - 1];
-  const unit = rung.unit;
-  const step = niceMultiple(Math.ceil(span / rung.ms / targetTicks));
+  return { unit: rung.unit, step: niceMultiple(Math.ceil(span / rung.ms / targetTicks)) };
+}
+
+/** The marks of one grid over the local-frame window, aligned in the civil frame. */
+function gridTicks(grid: Grid, localFrom: number, localTo: number, offsetMs: number): Tick[] {
+  const { unit, step } = grid;
+  const ticks: Tick[] = [];
+  const push = (localMs: number, markUnit: TechneTemporalPrecision) => {
+    const ms = localMs - offsetMs;
+    if (!ticks.some((tick) => tick.ms === ms)) ticks.push({ ms, label: labelForLocal(localMs, markUnit), unit: markUnit });
+  };
+
+  if (unit === "subsecond") {
+    let boundary = Math.ceil((localFrom - offsetMs) / step) * step + offsetMs;
+    for (let guard = 0; guard <= 400 && boundary <= localTo; guard += 1) {
+      push(boundary, "subsecond");
+      boundary += step;
+    }
+    return ticks;
+  }
 
   if (unit === "month" || isYearUnit(unit)) {
     let boundary = truncateToLocal(localFrom, unit);
@@ -410,6 +407,79 @@ export function ticksForDomain(domain: TimeRange, options?: { offsetMs?: number;
   for (let guard = 0; guard <= 400 && boundary <= localTo; guard += 1) {
     push(boundary, unit);
     boundary += stepMs;
+  }
+  return ticks;
+}
+
+/** Finer grids, in the order a row tries them: the next smaller honest step of
+ * the same rung (in ms below two seconds), then the honest steps of the next
+ * finer rung, nearest first. A deep domain never leaves the year rungs. */
+function stepDownFrom(grid: Grid, deep: boolean): Grid[] {
+  if (grid.unit === "subsecond") {
+    const out: Grid[] = [];
+    const top = Math.floor(Math.log10(grid.step));
+    for (let decade = top; decade >= top - 6; decade -= 1) {
+      for (const multiple of [5, 2, 1]) {
+        const step = multiple * Math.pow(10, decade);
+        if (step < grid.step) out.push({ unit: "subsecond", step });
+      }
+    }
+    return out;
+  }
+  const sameRung = NICE_MULTIPLES.filter((step) => step < grid.step).reverse().map((step) => ({ unit: grid.unit, step }));
+  const rungIndex = LADDER.findIndex((rung) => rung.unit === grid.unit);
+  const finerRungs = LADDER.slice(rungIndex + 1).map((rung) => rung.unit).filter((unit) => !deep || isYearUnit(unit));
+  const finer = finerRungs.flatMap((unit) => [...NICE_MULTIPLES].reverse().map((step) => ({ unit, step })));
+  return [...sameRung, ...finer];
+}
+
+/** At least two marks, and every consecutive pair at least `minGapMs` apart. */
+function readableGrid(ticks: readonly Tick[], minGapMs: number): boolean {
+  if (ticks.length < 2) return false;
+  for (let i = 1; i < ticks.length; i += 1) {
+    if (ticks[i].ms - ticks[i - 1].ms < minGapMs * (1 - 1e-12)) return false;
+  }
+  return true;
+}
+
+/**
+ * Tick marks for one view domain, in the civil frame the facets themselves
+ * declare (`offsetMs` — the instrument derives it from the reading's own
+ * instants; it is never guessed from a timezone database). The unit is the
+ * coarsest ladder rung that still yields at least two marks; its step is the
+ * smallest honest 1/2/5 multiple that keeps the count near the target.
+ * Calendar boundaries align in the civil frame, so day ticks land on local
+ * midnight. A domain beyond the Date range is read at year precision and no
+ * finer: its ms cannot honestly place a month, a day or a clock. Deterministic
+ * and pure.
+ *
+ * `minGapMs` (lane-2 T4c) is the readable spacing the caller needs between
+ * consecutive marks, in ms of this domain (the caller converts its pixels). When
+ * the chosen step would give fewer than two marks or a closer pair, the same
+ * rung steps down to the next finer honest step that meets both. When no step
+ * of the rung can, the chosen grid is returned unchanged: the caller can see it.
+ * Without `minGapMs` the grid is the chosen one, as before.
+ */
+export function ticksForDomain(
+  domain: TimeRange,
+  options?: { offsetMs?: number; targetTicks?: number; minGapMs?: number },
+): Tick[] {
+  const offsetMs = options?.offsetMs ?? 0;
+  const targetTicks = options?.targetTicks ?? 6;
+  const span = domain.toMs - domain.fromMs;
+  const deep = Math.abs(domain.fromMs) > DATE_LIMIT_MS || Math.abs(domain.toMs) > DATE_LIMIT_MS;
+  const finest: TechneTemporalPrecision = deep ? "year" : "subsecond";
+  if (span <= 0) return [{ ms: domain.fromMs, label: labelForLocal(domain.fromMs + offsetMs, finest), unit: finest }];
+
+  const localFrom = domain.fromMs + offsetMs;
+  const localTo = domain.toMs + offsetMs;
+  const grid = defaultGrid(span, targetTicks, deep);
+  const ticks = gridTicks(grid, localFrom, localTo, offsetMs);
+  const minGapMs = options?.minGapMs;
+  if (minGapMs === undefined || readableGrid(ticks, minGapMs)) return ticks;
+  for (const finer of stepDownFrom(grid, deep)) {
+    const stepped = gridTicks(finer, localFrom, localTo, offsetMs);
+    if (readableGrid(stepped, minGapMs)) return stepped;
   }
   return ticks;
 }

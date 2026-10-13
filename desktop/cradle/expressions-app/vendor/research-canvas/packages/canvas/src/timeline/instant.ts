@@ -22,6 +22,9 @@ import {
   type TimeRange,
 } from "../../../../../../../src/techne/m0m5/timeline/scale";
 import type { TemporalPrecision } from "./contracts";
+// The schema's year door (lane-2 T4c): legacy shorthand years are padded there,
+// the one place that owns the grammar. Relative, so the node test runner resolves it.
+import { canonicalTemporalInstant } from "../../../schema/src/time";
 
 export { calendarFields, expandInstant, parseTimestamp, ticksForDomain, yearStartMs, yearsPerUnit, type Tick, type TimeRange };
 
@@ -35,20 +38,8 @@ export interface AnchorExtent {
   instantToMs: number;
 }
 
-const LEGACY_YEAR = /^([+-]?)(\d{1,6})((?:-\d{2}.*)?)$/u;
-
-/** Pad a legacy year to the authority's grammar (four digits, or a sign and six).
- * Anything that is not a year-led string is returned unchanged for the authority to judge. */
-export function canonicalInstant(raw: string): string {
-  const trimmed = raw.trim();
-  const match = LEGACY_YEAR.exec(trimmed);
-  if (!match) return trimmed;
-  const [, sign, digits, rest] = match;
-  const year = sign === "" && digits.length <= 4
-    ? digits.padStart(4, "0")
-    : `${sign === "-" ? "-" : "+"}${digits.padStart(6, "0")}`;
-  return `${year}${rest}`;
-}
+/** Pad a legacy year to the authority's grammar: the schema's canonicalTemporalInstant. */
+export const canonicalInstant = canonicalTemporalInstant;
 
 /** The honest extent of one anchor: its start expanded at its own precision,
  * its end expanded at the same precision. Null when the start is unparseable. */

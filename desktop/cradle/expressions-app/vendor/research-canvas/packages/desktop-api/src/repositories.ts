@@ -34,6 +34,7 @@ import type {
   Viewport,
 } from "@research-canvas/domain";
 import type { ArchetypeHeatmapEntry, ArchetypalExpression } from "@research-canvas/schema";
+import { canonicalTemporalInstant, temporalYear as temporalYearOf } from "@research-canvas/schema";
 import type {
   ArchetypalLighting,
   ExpandedTimelineNode,
@@ -478,12 +479,10 @@ export class DesktopTimelineRepository implements TimelineRepository {
   }
 }
 
+/** The civil year of a stored anchor, read through the schema's year door (lane-2 T4c). */
 function temporalYear(value: string | null | undefined): number | null {
   if (!value) return null;
-  const match = /^(-?\d{1,6})(?:-|$)/.exec(value);
-  if (!match) return null;
-  const year = Number(match[1]);
-  return Number.isFinite(year) ? year : null;
+  return temporalYearOf(canonicalTemporalInstant(value));
 }
 
 function temporalWindowOverlaps(

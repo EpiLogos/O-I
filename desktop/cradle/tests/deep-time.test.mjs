@@ -113,6 +113,26 @@ test('calendar fields of a deep ms carry the year only; human fields are Date fi
   assert.deepEqual(calendarFields(parseTimestamp('1850-03-04T10:15:30Z')), {year: 1850, month: 2, day: 4, hour: 10, minute: 15, second: 30, millisecond: 0});
 });
 
+test('an instant before a deep year start reads the earlier year, the last half day included', () => {
+  for (const year of [-780_000, 3_000_000_000, 4_500_000_000]) {
+    const start = yearStartMs(year);
+    assert.equal(calendarFields(start).year, year, `${year}: its first instant`);
+    assert.equal(calendarFields(start - 3_600_000).year, year - 1, `${year}: an hour before its start`);
+    assert.equal(calendarFields(start - 43_200_000).year, year - 1, `${year}: half a day before its start`);
+  }
+});
+
+test('a minimum mark gap steps the rung down to the next finer honest step; a readable grid is unchanged', () => {
+  // 16000 years on the millennium rung: the default step (10 millennia) leaves a single mark in this window.
+  const wide = {fromMs: yearStartMs(-8000), toMs: yearStartMs(8000)};
+  const minGapMs = 88 * (wide.toMs - wide.fromMs) / 320;
+  assert.deepEqual(ticksForDomain(wide, {targetTicks: 2}).map((tick) => calendarFields(tick.ms).year), [0], 'the default step leaves one mark');
+  assert.deepEqual(ticksForDomain(wide, {targetTicks: 2, minGapMs}).map((tick) => calendarFields(tick.ms).year), [-5000, 0, 5000], 'the 5-millennium step meets the gap');
+  // A grid already readable keeps its own marks exactly.
+  const human = {fromMs: yearStartMs(1850), toMs: yearStartMs(1851)};
+  assert.deepEqual(ticksForDomain(human, {targetTicks: 8, minGapMs: 1}), ticksForDomain(human, {targetTicks: 8}));
+});
+
 // Human-scale golden. The digest below was produced by the authority before lane-2 T4
 // over exactly this probe; it must not move. The probe covers parse, expand (every
 // precision), ticks (human domains, several offsets and targets) and facet ranges.
