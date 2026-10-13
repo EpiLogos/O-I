@@ -42,6 +42,10 @@ export const ENTITY_TYPES = [
 ] as const;
 export const entityTypeSchema = z.enum(ENTITY_TYPES);
 
+// Full precision ladder, in the authority's spelling and order
+// (desktop/cradle/src/techne/contract.ts TechneTemporalPrecision). Additive:
+// the first six values are unchanged; hour..subsecond are the finer rungs the
+// bridge previously coarsened to "day" (FINDINGS G1).
 export const TEMPORAL_PRECISIONS = [
   "millennium",
   "century",
@@ -49,6 +53,10 @@ export const TEMPORAL_PRECISIONS = [
   "year",
   "month",
   "day",
+  "hour",
+  "minute",
+  "second",
+  "subsecond",
 ] as const;
 export const temporalPrecisionSchema = z.enum(TEMPORAL_PRECISIONS);
 
