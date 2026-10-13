@@ -190,7 +190,8 @@ interface RetainedEditorOptions {
   nativeView(): KernelConversion | undefined;
   nativeSelect(sceneId: string, entityId: string | null): Promise<'applied' | 'superseded' | 'invalidated' | 'failed'>;
   commit(): Promise<boolean | undefined>;
-  change(mutate: () => void): void;
+  /** Every change names its step: the label is what Undo and Redo report. */
+  change(label: string, mutate: () => void): void;
   afterHistory(): void;
   selectLocal(entityId: string | null, stepIndex: number): void;
   openEditor(editor: 'source' | 'layers' | 'placement', entityId: string, stepIndex: number): void;
@@ -384,7 +385,7 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
         next=type==='widget'?applyNativeDeviceWidgetChanges(next,changes as NativeDeviceWidgetChange[]):type==='chosen'?applyNativeChosenControlChanges(next,scene.id,changes as NativeChosenControlChange[],options.selection().entity_ids,Object.fromEntries(binding.occurrences.map(o=>[o.view_entity_id,o.entity_ref]))):type==='device'?applyNativeDeviceChanges(next,scene.id,changes as NativeDeviceChange[],read().observation?.effectiveValues):type==='rack'?applyNativeRackChanges(next,scene.id,changes as NativeRackChange[],Object.fromEntries(binding.occurrences.map(o=>[o.view_entity_id,o.entity_ref])),read().observation?.effectiveValues,authorizeTarget):type==='automation'?applyNativeAutomationChanges(next,scene.id,changes as NativeAutomationChange[]):type==='track'?applyNativeTrackChanges(next,scene.id,changes as NativeTrackChange[]):type==='object'?applyNativeObjectChanges(next,scene.id,changes as NativeObjectChange[]):type==='formation'?applyNativeFormationChanges(next,scene.id,changes as NativeFormationChange[]):type==='text'?applyNativeSceneTextChanges(next,scene.id,changes as NativeSceneTextChange[]):type==='fold'?applyNativeStateFoldChanges(next,scene.id,changes as NativeFoldChange[]):applyNativeGlyphChanges(next,scene.id,changes as NativeGlyphChange[]);
         first=end;
       }
-      options.change(()=>{options.store.document=next});await commit();
+      options.change('Apply native edit',()=>{options.store.document=next});await commit();
     },
     async selectField(request,isCurrent=()=>true) {
       if(Object.keys(request).some(key=>key!=='operation'&&key!=='basis'))throw Error('Field selection accepts only its operation and captured native basis');
@@ -410,7 +411,7 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
       const selected=selectedTarget(target,revision,entity.id,request.step_id??null,isCurrent);
       options.selectLocal(entity.id,selected.index);
       if(request.step_id&&!selected.entity!.sequence.enabled&&!selected.entity!.sequence.manual) {
-        options.change(()=>syncHeldState(selected.entity!,selected.index));await commit();
+        options.change('Select link',()=>syncHeldState(selected.entity!,selected.index));await commit();
       }
     },
     async open(request,isCurrent=()=>true) {

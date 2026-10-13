@@ -118,3 +118,33 @@ test('no edit in app.ts falls back to the store default label', ()=>{
  (function visit(node){if(ts.isStringLiteral(node))literals.push(node.text);ts.forEachChild(node,visit);})(sf);
  assert.equal(literals.includes('Edit'),false);
 });
+
+// E15d: a host commit, a flush and a research commit are Saves, and a Save is one recorded checkpoint.
+test('every native commit in app.ts is a recorded Save, not a bare commit', ()=>{
+ const bare=[];
+ (function visit(node){if(ts.isCallExpression(node)&&ts.isPropertyAccessExpression(node.expression)&&node.expression.name.text==='commit'&&node.expression.expression.getText(sf).includes('nativeWorkspace'))bare.push(node);ts.forEachChild(node,visit);})(sf);
+ assert.equal(bare.length,0,`an unrecorded nativeWorkspace.commit() remains at app.ts:${bare.map(n=>sf.getLineAndCharacterOfPosition(n.getStart(sf)).line+1).join(',')}`);
+ const helper=[];
+ (function visit(node){if(ts.isFunctionDeclaration(node)&&node.name?.text==='commitNativeRecorded')helper.push(node);ts.forEachChild(node,visit);})(sf);
+ assert.equal(helper.length,1);
+ const body=helper[0].getText(sf);
+ for(const part of ['kernelSaveAnchor','commitRecorded','attachKernelCheckpoint'])assert.ok(body.includes(part),`commitNativeRecorded does not ${part}`);
+ const uses=[];
+ (function visit(node){if(ts.isIdentifier(node)&&node.text==='commitNativeRecorded'&&node.parent!==helper[0]&&!(ts.isFunctionDeclaration(node.parent)))uses.push(node);ts.forEachChild(node,visit);})(sf);
+ assert.ok(uses.length>=3,`commitNativeRecorded is used ${uses.length} times; the host commit, flush and research commit must all use it`);
+});
+
+// E15d: a host editor change names its step, and the app passes that label through to the history.
+test('every host editor change names its step, and the app passes the label through', ()=>{
+ const hostSource=fs.readFileSync(new URL('../src/hostEditor.ts',import.meta.url),'utf8');
+ assert.match(hostSource,/change\(label: string, mutate: \(\) => void\): void;/);
+ const hs=ts.createSourceFile('hostEditor.ts',hostSource,ts.ScriptTarget.ES2022,true,ts.ScriptKind.TS);
+ const changes=[];
+ (function visit(node){if(ts.isCallExpression(node)&&ts.isPropertyAccessExpression(node.expression)&&node.expression.name.text==='change'&&node.expression.expression.getText(hs)==='options')changes.push(node);ts.forEachChild(node,visit);})(hs);
+ assert.equal(changes.length,2);
+ for(const call of changes){
+  const at=hs.getLineAndCharacterOfPosition(call.getStart(hs)).line+1;
+  assert.ok(literalText(call.arguments[0]),`options.change at hostEditor.ts:${at} has no label`);
+ }
+ assert.match(appSource,/change:\(label,mutate\)=>changed\(mutate,true,label\)/);
+});

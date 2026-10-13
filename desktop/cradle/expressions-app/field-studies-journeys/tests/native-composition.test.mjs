@@ -65,11 +65,13 @@ test('saved and edited Scene versions, text, pacing and 3D survive serde key ord
  assert.equal(restart.document.expression_ref,native.expression_ref);
 });
 test('removing the Scene material binding loses the edited/saved distinction: explicit negative',()=>{
- const j=authored();saveScene(j,j.scenes[0],'First');j.scenes[0].duration=42;
+ const j=authored();saveScene(j,j.scenes[0],'First');
+ // a content edit (E02: timeline facts like duration are not content, so they no longer mark a Scene edited)
+ j.scenes[0].field.params.speed=0.123;
  const view=seed(j),native=ownerEdit(view.document,prepareCompositionEdit(view,j)).document;
  const complete=kernelDocumentToJourney(native);delete native.scenes[0].presentation;
  const disconnected=kernelDocumentToJourney(native);
- assert.notEqual(complete.journey.scenes[0].duration,disconnected.journey.scenes[0].duration);
+ assert.notEqual(complete.journey.scenes[0].field.params.speed,disconnected.journey.scenes[0].field.params.speed);
  assert.notEqual(sceneSaveState(complete.journey,complete.journey.scenes[0]),sceneSaveState(disconnected.journey,disconnected.journey.scenes[0]));
 });
 test('a saved-only formation is retained natively without being made visible or deleted',()=>{

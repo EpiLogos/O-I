@@ -10,6 +10,8 @@
  * read as percent of the track and the track stays fluid under resize.
  */
 import type {Scene} from './model';
+import {SCENE_DURATION_MIN,SCENE_DURATION_MAX} from './model';
+export {SCENE_DURATION_MIN,SCENE_DURATION_MAX};
 
 export interface TimelineTiming {start:number;total:number;time:number}
 /** `expressionTiming` bound to a journey, e.g. `(i,l)=>expressionTiming(journey,i,l)`. */
@@ -28,10 +30,6 @@ export function journeyTimelineLayout(scenes:ReadonlyArray<Pick<Scene,'id'|'dura
  });
  return {clips,total};
 }
-
-/** The scene duration rule, mirrored from model.ts validateJourney (`finite(s.duration,1,3600)`). */
-export const SCENE_DURATION_MIN=1;
-export const SCENE_DURATION_MAX=3600;
 
 /**
  * E05: the duration a right-edge drag of `dxPx` gives its scene. The scale is

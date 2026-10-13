@@ -1,4 +1,4 @@
-import {clone,uid,Journey,Scene,sceneContentDigest,SCENE_DURATION_MIN,SCENE_DURATION_MAX,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX} from './model';
+import {clone,uid,Journey,Scene,sceneContentDigest,SCENE_DURATION_MIN,SCENE_DURATION_MAX,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX,SCENE_TIMELINE_FACTS} from './model';
 
 /** A timeline move would have changed a scene's content. Named so callers can tell it from a validation refusal. */
 export class SceneContentMutationError extends Error{
@@ -48,7 +48,8 @@ export function initialiseSceneSaves(j:Journey){
 }
 export function sceneSaveState(j:Journey,s:Scene):'Draft'|'Saved'|'Edited since save'{
  const saved=j.savedScenes?.[s.id];
- const compare=(scene:Scene)=>{const {toolbelt,pointerScope,...rest}=scene;return rest;};return !saved?'Draft':JSON.stringify(compare(saved))===JSON.stringify(compare(s))?'Saved':'Edited since save';
+ // Timeline facts (duration, transition) are where a Scene sits in the Expression, not what it contains: a retimed clip keeps its save.
+ const compare=(scene:Scene)=>{const {toolbelt,pointerScope,...rest}=scene;return Object.fromEntries(Object.entries(rest).filter(([key])=>!(SCENE_TIMELINE_FACTS as readonly string[]).includes(key)));};return !saved?'Draft':JSON.stringify(compare(saved))===JSON.stringify(compare(s))?'Saved':'Edited since save';
 }
 export function saveScene(j:Journey,s:Scene,name:string){
  const trimmed=name.trim();if(!trimmed||trimmed.length>160)throw new Error('Give this scene a name of 1–160 characters.');
