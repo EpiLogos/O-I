@@ -3,7 +3,7 @@ import React,{Component,useEffect,useRef,useState,type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
 import {clone,type Scene} from './model.js';
 import {type PlaceViewRecord,type ResearchCard,type ResearchMaterialAction,type ResearchStroke,type TimelineViewRecord} from './researchMaterial.js';
-import {capturePlaceView,placeViewNameProblem,restorePlaceView,sameTimeWindow} from './placeViews.js';
+import {capturePlaceView,layersKey,layersRecordOf,placeViewNameProblem,restoreLayers,restorePlaceView,sameTimeWindow} from './placeViews.js';
 import {openTimelinePresentation,timelineRestoreNote,timelineStyleLoaded,timelineStyleOf,timelineViewNameProblem,timelineViewOf,timelineViewRestorePlan,type TimelinePresentation} from './timelineViews.js';
 import type {TimelinePresentationHandle} from '../../vendor/research-canvas/packages/canvas/src/timeline/TimelineLens';
 import {CONNECTOR_KINDS,connectorPresentation,connectorRecord,connectorWithSides,sideFromHandleId,type ConnectorKind,type ResearchConnector} from './canvasConnectors.js';
@@ -275,6 +275,8 @@ interface ViewState {
   * flow-unit geometry drawn against the live viewport, cleared on release. */
  snapGuides?:{guides:GuideLine[];boxes:Box[]};
  canvas?:{x:number;y:number;zoom:number};timeline?:TimelineViewState;place?:{latitude:number;longitude:number;zoom:number};selectedNode?:string|null;selectedEdge?:string|null;selectedPlace?:string|null;placeFilter?:PlaceFilterState;livePlaces?:{allowed:boolean;policy:LiveServicePolicy;stack:BasemapStack};
+ /** Lane-4 T21: the Places layers change waiting to settle (its timer and the write it will make now). */
+ placeLayersSave?:{timer:ReturnType<typeof setTimeout>;write:()=>void};
  /** M2′: chronology (the vendored TimelineSurface) vs. the relation-field
   * projections (relationFieldView.tsx) — session-local presentation state,
   * never a second store. */
@@ -1044,9 +1046,12 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    // honest absence, never a locally-invented edit path).
    const placeEntityRef=view?subjectEntityRef(view.document.entities,data.reading.subject.subject_ref):null;
    const placeEditRequest=view&&binding&&placeEntityRef?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref,entity_ref:placeEntityRef}:undefined;
-   state.placeFilter??=OPEN_PLACE_FILTER;
+   // Lane-4 T21: the Scene's saved layers restore on a first visit in this session (absent = today's defaults). Later visits keep
+   // the session's own state, which the last settled change already wrote. The owner's live-source allowance is never restored.
+   const restoredLayers=restoreLayers((()=>{try{return host.sceneMaterial(sceneId).research?.placeLayers;}catch{return undefined;}})());
+   state.placeFilter??=restoredLayers.filter;
    // Lane-4 T4/T5: the owner's live choice is session view state, held with the placeFilter. It is off until the owner allows it here, and only then does the policy's tile_refresh gate open.
-   state.livePlaces??={allowed:false,policy:createLiveServicePolicy(),stack:defaultBasemapStack()};
+   state.livePlaces??={allowed:false,policy:createLiveServicePolicy(),stack:restoredLayers.stack};
    // Lane-4 T17–T19: the map's authoring surface asks this host for the owner's route. "Edit place/time" opens
    // the same constellation editor, and the map never writes a coordinate: the save, its basis check and its
    // refusals all happen in that editor, and their own message is the one shown here.
@@ -1097,7 +1102,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     if(problem){message(problem);return;}
     const name=entered.trim();
     const record=capturePlaceView({viewState:state.place??defaultPlaceView(),filter:state.placeFilter!,stack:state.livePlaces!.stack,window:sharedTime?.axis.window??null});
-    void host.material(sceneId,{type:'view-save',name,place:record}).then(()=>{message(`View "${name}" saved`);render(renderPlaces());},error=>message(error instanceof Error?error.message:String(error)));
+    void host.material(sceneId,{type:'place-view-save',name,place:record}).then(()=>{message(`View "${name}" saved`);render(renderPlaces());},error=>message(error instanceof Error?error.message:String(error)));
    };
    const applyPlaceView=async(name:string)=>{
     const saved=savedPlaceViews()[name];
@@ -1106,6 +1111,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     // The layers and the basemap rows are session view state. The map takes the same stack, and its own change report keeps this host in step.
     state.placeFilter=plan.filter;
     state.livePlaces!.stack=plan.stack;
+    scheduleLayersSave();
     restoreViewOnMap?.({viewState:plan.viewState,stack:plan.stack});
     if(timeCurrent())render(renderPlaces());
     let note=`View "${name}" restored`;
@@ -1115,7 +1121,21 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     }else if(!sharedTime&&plan.window)note='Shared time is not available for this reading, so the saved window was not restored.';
     message(note);
    };
-   const removePlaceView=(name:string)=>{void host.material(sceneId,{type:'view-remove',name,scope:'place'}).then(()=>{message(`View "${name}" removed`);render(renderPlaces());},error=>message(error instanceof Error?error.message:String(error)));};
+   // Lane-4 T21: the layer toggles and basemap rows persist per Scene. A change is written once the person settles (600 ms idle),
+   // never per slider tick, and a settle that restates what the Scene already keeps writes nothing. Only the layers are written:
+   // the owner's live-source allowance is session state and is never part of the record.
+   const persistPlaceLayers=()=>{
+    if(!scene||!state.placeFilter||!state.livePlaces)return;
+    const kept=restoreLayers((()=>{try{return host.sceneMaterial(sceneId).research?.placeLayers;}catch{return undefined;}})());
+    if(layersKey(state.placeFilter,state.livePlaces.stack)===layersKey(kept.filter,kept.stack))return;
+    void host.material(sceneId,{type:'place-layers-set',value:layersRecordOf(state.placeFilter,state.livePlaces.stack)}).catch(error=>message(error instanceof Error?error.message:String(error)));
+   };
+   const scheduleLayersSave=()=>{
+    if(state.placeLayersSave)clearTimeout(state.placeLayersSave.timer);
+    const write=()=>{if(state.placeLayersSave){clearTimeout(state.placeLayersSave.timer);state.placeLayersSave=undefined;}persistPlaceLayers();};
+    state.placeLayersSave={timer:setTimeout(write,600),write};
+   };
+   const removePlaceView=(name:string)=>{void host.material(sceneId,{type:'place-view-remove',name}).then(()=>{message(`View "${name}" removed`);render(renderPlaces());},error=>message(error instanceof Error?error.message:String(error)));};
    const renderPlaces=():ReactNode=>{
     const filter={...state.placeFilter!,window:sharedTime?.axis.window??null};
     const placeViewsNow=savedPlaceViews();
@@ -1138,10 +1158,10 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
      },
     };
     const facets=<PlaceFacetsPanel reading={nativeReading} selectedRef={state.selectedPlace??null} filter={filter} onOpenSource={ref=>host.inspectSubject(ref)} sharedTime
-      onFilterChange={next=>{state.placeFilter={...next,window:null};render(renderPlaces());}}
+      onFilterChange={next=>{state.placeFilter={...next,window:null};scheduleLayersSave();render(renderPlaces());}}
       editRequest={placeEditRequest} onError={message}/>;
     return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:placeRecordFromViewState(state.place)}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}{scene&&<button type="button" className="research-places-view-save" aria-label="Save view…" title="Save this place view: camera, layers, basemap and time window" onClick={savePlaceView}>Save view…</button>}{scene&&Object.keys(placeViewsNow).length>0&&<select className="research-places-view-select" aria-label="Saved place views" value="" onChange={event=>{const [op,name]=event.target.value.split('\u0000');if(op==='apply')void applyPlaceView(name);if(op==='remove')removePlaceView(name);event.target.value='';}}><option value="">Views…</option>{Object.keys(placeViewsNow).map(name=><optgroup key={name} label={name}><option value={`apply\u0000${name}`}>Go to</option><option value={`remove\u0000${name}`}>Remove</option></optgroup>)}</select>}{timeControls(()=>render(renderPlaces()))}</div>,host.tools)}
-    <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly={!state.livePlaces!.allowed} policy={state.livePlaces!.policy} basemapStack={state.livePlaces!.stack} onBasemapStackChange={next=>{state.livePlaces!.stack=next;}} onLiveSourcesAllowedChange={allowed=>{const live=state.livePlaces!;if(allowed)live.policy.optIn('tile_refresh','show live basemap sources the owner allowed in Places');else live.policy.optOut('tile_refresh');live.allowed=allowed;render(renderPlaces());}} placeFacets={nativeReading.spatial} placeAuthoring={placeAuthoring} placeTime={placeTime} onRegisterPlaceViewRestore={restore=>{restoreViewOnMap=restore;}} layerFilter={filter} onLayerFilterChange={next=>{state.placeFilter={...next,window:null};render(renderPlaces());}} sourceAttributions={pack.manifest.sources.map(source=>`${source.name} (${source.license})`)}
+    <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly={!state.livePlaces!.allowed} policy={state.livePlaces!.policy} basemapStack={state.livePlaces!.stack} onBasemapStackChange={next=>{state.livePlaces!.stack=next;scheduleLayersSave();}} onLiveSourcesAllowedChange={allowed=>{const live=state.livePlaces!;if(allowed)live.policy.optIn('tile_refresh','show live basemap sources the owner allowed in Places');else live.policy.optOut('tile_refresh');live.allowed=allowed;render(renderPlaces());}} placeFacets={nativeReading.spatial} placeAuthoring={placeAuthoring} placeTime={placeTime} onRegisterPlaceViewRestore={restore=>{restoreViewOnMap=restore;}} layerFilter={filter} onLayerFilterChange={next=>{state.placeFilter={...next,window:null};scheduleLayersSave();render(renderPlaces());}} sourceAttributions={pack.manifest.sources.map(source=>`${source.name} (${source.license})`)}
      initialViewState={state.place} initialSelectedGraphNodeId={state.selectedPlace}
      onViewStateChange={value=>{state.place=value;}} onSelectedGraphNodeIdChange={value=>{state.selectedPlace=value;render(renderPlaces());}}
      onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref&&node.place);if(node)host.inspectSubject(ref,{node});}}/>
@@ -1170,7 +1190,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    }
    await load(lens);
   },
-  destroy(){++epoch;lens=null;destroyed=true;unmount();mount.remove();status.remove();views.clear();window.removeEventListener('keydown',onWindowKeydown);window.removeEventListener('keydown',onZoomKeydown);window.removeEventListener('keydown',onPresentStartKey);readoutRoot.unmount();readoutHost.remove();modifiers.dispose();},
+  destroy(){++epoch;lens=null;destroyed=true;unmount();mount.remove();status.remove();for(const pending of views.values())pending.placeLayersSave?.write();views.clear();window.removeEventListener('keydown',onWindowKeydown);window.removeEventListener('keydown',onZoomKeydown);window.removeEventListener('keydown',onPresentStartKey);readoutRoot.unmount();readoutHost.remove();modifiers.dispose();},
   active(){return lens;},
  };
 }

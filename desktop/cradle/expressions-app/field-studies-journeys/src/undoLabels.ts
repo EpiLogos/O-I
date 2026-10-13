@@ -29,6 +29,9 @@ const RESEARCH_MATERIAL_LABELS:Record<ResearchMaterialAction['type'],string>={
  'frame-order':'Reorder frames',
  'view-save':'Save view',
  'view-remove':'Remove view',
+ 'place-view-save':'Save place view',
+ 'place-view-remove':'Remove place view',
+ 'place-layers-set':'Set map layers',
  'timeline-view-save':'Save timeline view',
  'timeline-view-remove':'Remove timeline view',
 };

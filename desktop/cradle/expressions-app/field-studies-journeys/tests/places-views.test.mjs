@@ -171,16 +171,16 @@ test('saving or removing a place view touches only placeViews, and a refused sav
   namedViews:{'canvas view':{viewport:{x:1,y:2,zoom:3},selectedRefs:[],frameOrder:[]}}}};
  const before=JSON.stringify(scene);
  const view=api.views.capturePlaceView({viewState:camera,filter:openFilter,stack:stackWithChoices(),window:null});
- api.material.applyResearchMaterial(scene,{type:'view-save',name:'Paris',place:view});
+ api.material.applyResearchMaterial(scene,{type:'place-view-save',name:'Paris',place:view});
  assert.deepEqual(Object.keys(scene.research.placeViews),['Paris']);
  assert.deepEqual(scene.research.namedViews,JSON.parse(before).research.namedViews,'the canvas views are untouched');
  assert.deepEqual(scene.entities,JSON.parse(before).entities);
  const saved=JSON.stringify(scene);
- assert.throws(()=>api.material.applyResearchMaterial(scene,{type:'view-save',name:'   ',place:view}),/Invalid view name/);
+ assert.throws(()=>api.material.applyResearchMaterial(scene,{type:'place-view-save',name:'   ',place:view}),/Invalid view name/);
  assert.equal(JSON.stringify(scene),saved,'a blank name writes nothing');
- assert.throws(()=>api.material.applyResearchMaterial(scene,{type:'view-save',name:'bad',place:{...view,extra:1}}));
+ assert.throws(()=>api.material.applyResearchMaterial(scene,{type:'place-view-save',name:'bad',place:{...view,extra:1}}));
  assert.equal(JSON.stringify(scene),saved,'a view the bounds refuse writes nothing');
- api.material.applyResearchMaterial(scene,{type:'view-remove',name:'Paris',scope:'place'});
+ api.material.applyResearchMaterial(scene,{type:'place-view-remove',name:'Paris'});
  assert.equal(scene.research.placeViews,undefined,'the last place view leaves no empty record');
  assert.deepEqual(scene.entities,JSON.parse(before).entities,'the Scene is intact after a delete');
  assert.ok(scene.research.namedViews['canvas view'],'a canvas view is not removed by a place delete');
@@ -203,8 +203,8 @@ test('the kernel holds the same closed lists the app does, and admits the same r
 
 test('the Places host saves and goes to a view through the material path, and the map restore is registered', ()=>{
  const host=read(resolve(engine,'src/researchInstruments.tsx'));
- assert.match(host,/type:'view-save',name,place:record/);
- assert.match(host,/type:'view-remove',name,scope:'place'/);
+ assert.match(host,/type:'place-view-save',name,place:record/);
+ assert.match(host,/type:'place-view-remove',name/);
  assert.match(host,/onRegisterPlaceViewRestore=\{restore=>\{restoreViewOnMap=restore;\}\}/);
  assert.match(host,/aria-label="Saved place views"/);
  const map=read(resolve(canvasDir,'PsychogeographicMap.tsx'));
