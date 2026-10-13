@@ -211,6 +211,12 @@
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
     },
     {
+      "command": "midi::midi_inputs",
+      "classification": "input-device",
+      "rationale": "Lists the MIDI input ports the native host hears (or its named refusal). Read-only hardware input for the Live instrument's one note path (T-LIVE-MIDI); it opens no port on request, writes nothing and grants no generic native capability.",
+      "spec_ref": "docs/world-shell/wayfinder/tickets/T-LIVE-MIDI.md; DEVICE-SEMANTICS-LOCK §0.2 item 6; canonical plan Lane A §2"
+    },
+    {
       "command": "windows::window_detach",
       "classification": "window-lifecycle",
       "rationale": "Native window identity, placement and lifecycle projection.",
