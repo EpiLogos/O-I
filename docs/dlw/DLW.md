@@ -502,123 +502,172 @@ The same torus turns at the centre of every Expression, so what you play here
 can be heard and seen there, inside a scene. One day the two will share a
 timeline, picture and sound together.
 
-## 10. The hands
+## 10. Working the window
 
-### 10.1 Two views
+Everything in this section is the same in every kind of work. Learn it once.
 
-Every kind of work has a Session view and an Arrangement view. Session view
-is a grid of launchable material, tracks across and rows down, for working
-out of order: trying, launching, combining. Arrangement view lays the same
-material on one ruler, for seeing the course of it. Tab switches between them.
+### 10.1 The window
 
-| | Session view | Arrangement view |
+The window has five parts, and each one has one job. The transport across the
+top runs things. The browser down the left holds what you can bring in. Your
+work fills the middle. The widget rail on the right keeps what you want at
+hand. The detail area along the bottom shows what is selected and what is
+working on it.
+
+| Part | What it is for |
+|---|---|
+| Transport | Start, stop, record and set the pace of whatever you are working on. Choose the kind of work and the view. |
+| Browser | Find material, instruments and devices, and bring them in. |
+| Panes | Hold your work. Each pane holds one instrument. |
+| Widget rail | Keep context at hand in every kind of work: the agent you are talking to, the packet, the trail, a terminal, the sky. |
+| Detail | See the selected clip, or the chain of devices that works on it. |
+| Status bar | Read what any control does. Switch the detail area between Clip and Device. |
+
+To hide a part, click its toggle. The other parts grow to fill the space.
+
+### 10.2 Panes and sets
+
+Panes let you keep several things in front of you at once: a document beside
+the day it belongs to, an agent's thread beside the files it is changing, the
+timeline beside the place it describes.
+
+To open an instrument, drag it from the browser into a pane. You can also
+click it, and it opens in the pane that has focus. To split a pane, click ⊞.
+Then select Beside, Below or Four ways. To move a tab, drag it onto the centre
+of another pane. To make a new split, drag a tab onto the edge of a pane.
+
+A pane follows what you select, unless you pin it. A pinned pane keeps its
+subject while you work elsewhere.
+
+Some instruments come in more than one build, the way Live has more than one
+reverb. Each build answers to the same controls, so you can change the build
+without losing your settings.
+
+A set is an arrangement of panes, instruments, widgets and detail. Each kind
+of work opens with its own set. To keep an arrangement, save it as a set and
+give it a name. To return to it, select it from the browser.
+
+### 10.3 The browser
+
+The browser holds four kinds of thing: material to open, instruments to open
+in a pane, devices to put on a chain, and running things you can work with
+where they are.
+
+Preview, open and add are three separate actions. To preview something,
+select it once. To open it, double-click it or drag it into a pane. To add a
+device, drag it onto a chain. To seat an agent, drag it onto an empty track.
+
+The pool under the browser shows the selected device in full. Changes you
+make in the pool apply at once and do not add the device to your rack.
+
+### 10.4 Devices
+
+A device does one job to the material in front of it. An instrument makes
+something new: an agent answers, the field moves, the torus rings. An effect
+changes what passes through it and keeps the rest: a highlight marks a
+passage and leaves the passage whole. Devices sit left to right in a chain,
+and the material always passes through them in that order.
+
+A rack holds several chains side by side under one device, with a selector to
+choose between them. An agent's skills sit in a rack, and so do the agents of
+a team. A macro is one knob that turns several settings at once, each within
+its own range.
+
+Every device comes in three sizes, and all three show the same live settings:
+
+| Size | Where | What you get |
 |---|---|---|
-| Central | the day as clips: Day, Flows, Beings, Things and Goals as tracks | today on one ruler: entries, runs, returns |
-| Factory | sessions as tracks, tasks as clips | every thread of work, each with its needle |
-| Expressions | Expressions as tracks, their scenes as clips | the scenes over time, picture over sound |
-| Technē | a journey, its stops as rows | the timeline |
-| Live | clips and scenes | the song over time |
+| Compact | Your rack, along the bottom | A small live picture and up to four controls |
+| Whole | The pool under the browser | Every setting, grouped |
+| Full | A pane | The device at full size, to work in |
 
-### 10.2 Tracks, clips, stops
+A device can also fold down to its title. Click the title to open it again.
 
-A track is a stream of one kind of material, and in Live it plays one clip at
-a time. A clip is a piece of that material in a state: playing, stopped,
-queued, recording. In the DLW a clip is always the real thing, held at a
-known version — an entry in the day, a task, a scene, an event in history —
-never a copy.
+A light on a device is a reading. It is on only when the device reports that
+it is on. If the state is not known, the light stays dark.
 
-The word *scene* always means an Expression's scene, which is a clip. What
-Live calls a scene, the row that launches one clip on every track at once, the
-DLW calls a **stop**: it stands several things together, the way a stop on a
-walk stands a place, a moment and the scenes it carries.
+When something moves a value, the value shows what moved it. An agent's edit
+carries the agent's name. A knob that the sky is turning shows the planet that
+turns it. If you take hold of something an agent or instrument was holding,
+the hand-back light comes on. Press it to give control back.
 
-A follow action says what comes after a clip has played, and launch quantize
-says when a launch lands. In Factory they say which task runs next and
-whether your Stop lands now, after the current tool, or after the current
-turn. On a walk they say which stop follows and how it arrives.
-
-Takes lie under a clip as they do in Live, and you choose the one that
-stands: the best capture of a scene, the attempt at a task that should land,
-the reading of a history you want to keep.
-
-### 10.3 Devices
-
-Instruments make things: an agent answers, the field sounds, a world takes
-shape. Effects change what passes through them without replacing it: a
-highlight marks a passage and leaves it whole. They sit left to right in a
-chain, and the material passes through in that order.
-
-A rack holds several chains side by side under one device: skills in an
-agent's rack, agents in a group, pads in a drum rack. A macro is one knob
-turning several settings at once, each within its range. Every device comes
-three ways: a small widget you can add to your rack, the whole device opened
-in the browser, and the device at full size.
-
-When something changes a value, the value shows what changed it. An agent's
-edit carries the agent's name; a knob being moved by the time of day shows the
-time of day moving it. When you take hold of something an agent or instrument
-was moving, a light comes on to say so, and one press hands it back.
-
-Anyone can build a new device that sits in the same chain, as Max for Live
-devices do in Live, and each of the suite's products brings its own: the day
-and its documents, the agents and what tunes them, the skills they carry, the
-work they do, the machines they run on, and the sky and its clock.
-
-### 10.4 The browser
-
-The browser on the left holds what you can bring in: material to open, kinds
-of instrument to open in a pane, devices to add to a chain, and running
-things you can work with where they are. Preview, open and add are always
-three separate acts. Drag a skill onto an agent's chain and it is admitted;
-drag an agent onto a track and it takes the seat.
+You can build new devices that sit in the same chain, as Max for Live devices
+do in Live. Each part of the suite brings its own devices: the day and its
+documents, the agents and what tunes them, the skills they carry, the work
+they do, the machines they run on, and the sky and its clock.
 
 ### 10.5 The transport
 
-The transport keeps Live's controls in Live's places in every mode, grouped
-as Live groups them. The table is the reference for what each one does where.
+The transport keeps Live's controls in Live's places in every kind of work.
+What each control does follows the work in front of you. The table shows each
+control in each mode.
 
 | Control | Live | Central | Factory | Expressions | Technē |
 |---|---|---|---|---|---|
-| Link | share the set's clock with peers | stay in step with your ground on other machines | link agents across harnesses and machines | stay in step with others playing the same field | join the shared field |
-| Tap | tap tempo | stamp the moment into the open document | ask every running agent where it is, now | tap the field's tempo | come back to now |
-| Tempo | the set's tempo | turn the Day to its next face | how hard agents think each turn | the field's tempo | the walk's pace |
-| Time signature | the set's metre | the Day's shape: four faces and two edges | turns used of turns allowed | the scene's ratio of hold to change | which stop of how many |
-| Metronome | the click | autosave | agents check in on a beat; a still needle is a stall | the field's pulse | the presence of other worlds |
-| Quantize | when launches land | when a save lands | when Stop and Steer land | when scenes launch | how a stop arrives |
-| Key and scale | the set's key and scale | what the agent will read: its size and scope | tokens in and out | the resonance the field is tuned to | how far you look, and as whom |
-| Follow | the view keeps up with playback | views keep up with the day | views keep up with the agents | views keep up with the scene | panes follow what you meet |
-| Position | bars, beats, sixteenths | the moment of the day | task, turn, step | the moment in the scene | the clock that drives the panes |
-| Play | play the set | send the packet; the answer arrives as an entry | run the task, or every queued one | play the scenes | walk |
-| Stop | stop | stop dictating | pause at the next safe point; again, to cancel | stop and rewind the scene | stop the walk |
-| Record | record into the Arrangement | dictate into the document | speak a new task | record a take of the field | record a walk |
-| Overdub | add to what is there | append the new entry, or replace the selection | steer the running turn | layer the take over the scene | extend the walk |
-| Automation arm | record moves as automation | let the agent write directly, with receipts | let agents write directly, with receipts | record the studio as a take | let the instrument write |
-| Re-enable | back to the recorded automation | hand back what the agent was holding | hand back what the agent was holding | let go of values you are holding | hand back what the instrument was holding |
-| Capture | keep what you just played | put the selection in the packet | turn what you did by hand into an example | keep your last gestures as a scene | keep the view as a scene |
-| Loop and punch | loop and punch the brace | the day's opening, its close, and the routine between | the window agents may write in; a task repeated until done | loop the scenes | the window of a past moment you are standing in |
-| Draw | draw notes and automation | highlight | point an agent at something | draw a form into the field | place something |
-| Keys and maps | play from the keyboard; map keys and MIDI | keys for the document; bind a phrase to any control | number keys run rows, letters turn macros; bind "retry" to a word | number keys launch scenes; map gestures | keys and maps for the instrument |
-| Rate | sample rate | which machine serves your ground | how fast agents are writing | frame rate | the connection to the field |
-| Load | CPU | whether the document is saved | how full the agent's context is | the load on the graphics card | how much of your world is shown |
+| Link | Share tempo with other players | Keep your ground in step on other machines | Link agents across machines and harnesses | Keep in step with others playing the same field | Join the shared field |
+| Tap | Tap the tempo | Stamp the moment into the open document | Ask every running agent where it is | Tap the field's tempo | Come back to now |
+| Tempo | Set the tempo | Turn the Day to its next face | Set how hard agents think each turn | Set the field's speed | Set the walk's pace |
+| Time signature | Set the metre | Show the Day's shape: four faces and two edges | Show turns used of turns allowed | Set the scene's ratio of hold to change | Show which stop of how many |
+| Metronome | Click on the beat | Save as you go | Agents check in on a beat; a still needle is a stall | Pulse the field | Show who else is present |
+| Quantize | Set when launches land | Set when a save lands | Set when Stop and Steer land | Set when scenes launch | Set how a stop arrives |
+| Key, root and scale | Set the mode in force: root, mode and tuning | Show what the agent will read: its size and scope | Count tokens in and out | Tune the field's resonance | Set how far you look, and as whom |
+| Follow | Keep the view with the playhead | Keep views with the day | Keep views with the agents | Keep views with the scene | Keep panes with what you meet |
+| Position | Bars, beats, sixteenths | The moment of the day | Task, turn, step | The moment in the scene | The clock that drives the panes |
+| Play | Play | Send the packet; the answer arrives as an entry | Run the task, or every queued task | Play the scenes | Walk |
+| Stop | Stop | Stop dictating | Pause at the next safe point; press again to cancel | Stop and rewind the scene | Stop the walk |
+| Record | Record what you play | Dictate into the document | Speak a new task | Record a take of the field | Record a walk |
+| Overdub | Add to what is already recorded | Add a new entry, or replace the selection | Steer the running turn | Layer a take over the scene | Extend the walk |
+| Arm | Record your control moves | Let the agent write directly, with receipts | Let agents write directly, with receipts | Record the studio as a take | Let the instrument write |
+| Re-enable | Return to the recorded moves | Give back what the agent was holding | Give back what the agent was holding | Release values you are holding | Give back what the instrument was holding |
+| Capture | Keep the phrase you just played | Put the selection in the packet | Turn what you did by hand into an example | Keep your last gestures as a scene | Keep the view as a scene |
+| Loop and punch | Loop and punch the brace | Mark the day's opening and close, and the routine between | Set the window agents may write in; repeat a task until done | Loop the scenes | Mark the window of a past moment you stand in |
+| Draw | Draw notes and moves | Highlight | Point an agent at something | Draw a form into the field | Place something |
+| Keys and maps | Play the Jankó keyboard; map keys and MIDI | Bind keys and phrases to any control | Run rows with number keys; bind a word to any control | Launch scenes with number keys; map gestures | Map keys to the instrument |
+| Rate | Sample rate | Which machine serves your ground | How fast agents are writing | Frame rate | The connection to the field |
+| Load | Processor load | Whether the document is saved | How full the agent's context is | Graphics load | How much of your world you show |
 
-The day's opening and close come from the day itself. It opens, runs its
-closing routine at the end, and closes; no hours are fixed in the instrument.
+The day opens and closes by itself. No hours are set in the instrument.
 
-### 10.6 Companions
+### 10.6 Widgets
 
-Each kind of work has its companion in the panel on the right, with the
-tiles you want beside it: the packet, the trail of everywhere you have been,
-the agents, a terminal, results, the sky. In Central it is the agent working
-in your documents. In Factory it is a desk where results come back. In
-Expressions it is Nara, a presence that meets you in the form. In Technē it
-is Epii, who works beside the instruments and can tell you why each room of a
-palace is there. None of them judges your work for you.
+The rail on the right holds widgets: small live views of whatever you want to
+keep at hand while you work. The agent you are talking to is one. Others hold
+the packet, the trail, your agents at their stations, a terminal, the files an
+agent is changing, the changes waiting for your approval, the wiki, a
+calendar, the sky. Each widget holds a piece of context that belongs to your
+whole world, not to one kind of work, so it stays with you when you move. Open
+a terminal in Factory and it is still there in Central.
+
+To open a widget, click its square in the launcher at the bottom right. To
+stop a widget following your selection, pin it. To widen the rail, drag its
+edge. To keep a group of widgets, save it as a preset.
+
+Widgets are plugins. You can set each one up the way your work needs, and
+anyone can build new ones. To add a widget, install it from the browser.
 
 ### 10.7 Going back
 
-Everywhere you go is kept on a trail, and you can always go back: to the same
-place, the same page, the same point in the reading. Changing your kind of
-work never closes anything. Every place can be linked to and reopened.
+Every place you go is kept on the trail. To go back, select a stop on the
+trail. You return to the same place, the same page and the same point in the
+reading. Changing your kind of work never closes anything, and every place can
+be linked to and opened again.
+
+### 10.8 Keys
+
+| To | Press |
+|---|---|
+| Switch between Session view and Arrangement view | Tab |
+| Show or hide the browser | ⌘⌥B |
+| Show or hide the detail area | ⌘⌥L |
+| Play or stop | Space |
+| Launch a row | Its number key |
+| Turn a macro | Its letter key |
+| Send what you typed | Enter |
+| Steer the running turn | ⌥Enter |
+| Stop | Esc |
+| Search | ⌘F |
+
+Keys never play notes while you are typing in a document.
 
 ---
 
