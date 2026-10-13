@@ -128,6 +128,7 @@ export function AnnotatedEdge({
       <EdgeLabelRenderer>
         <div
           className="flow-edge-label"
+          data-edge-id={id}
           data-selected={data?.selected ? "true" : "false"}
           data-sequencing={data?.sequencing ? "true" : "false"}
           onClick={(event) => {

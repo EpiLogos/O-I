@@ -36,6 +36,23 @@ export function stageViewBox(bounds:ImageBox,scale=FRAME_IMAGE_SCALE):{width:num
 }
 
 /** Where a card sits inside the stage, in canvas units from the frame's origin. */
+/** The paper the stage is drawn on: the first opaque background from the flow up, as the theme paints it; white only when none is. */
+export function stagePaper(flow:Element):string {
+ for(let at:Element|null=flow;at;at=at.parentElement){
+  const colour=getComputedStyle(at).backgroundColor;
+  if(colour&&!isTransparent(colour))return colour;
+ }
+ return PAPER;
+}
+
+/** Whether a computed colour paints nothing (transparent or zero alpha). */
+export function isTransparent(colour:string):boolean {
+ const value=colour.replace(/\s+/g,'').toLowerCase();
+ if(value==='transparent')return true;
+ const alpha=value.match(/^rgba\([^,]+,[^,]+,[^,]+,([0-9.]+)\)$/)??value.match(/^rgb\([^/]+\/([0-9.]+%?)\)$/);
+ return !!alpha&&parseFloat(alpha[1])===0;
+}
+
 export function stagePlacement(box:ImageBox,bounds:ImageBox):{left:number;top:number} {
  return {left:box.x-bounds.x,top:box.y-bounds.y};
 }
@@ -170,28 +187,34 @@ export async function renderFrameStage(request:StageRequest):Promise<StageResult
   const el=liveNodes.get(id);
   if(el)nodeSources.push([id,el]);else refused.push(`card ${id} is not on the stage, so it is not drawn`);
  }
- const edgeSources:[StageEdge,Element][]=[];
+ // A connection's label is drawn by the canvas in its own layer, keyed by the edge id (AnnotatedEdge data-edge-id).
+ const liveLabels=new Map<string,Element>();
+ flow.querySelectorAll('.flow-edge-label[data-edge-id]').forEach(el=>liveLabels.set(el.getAttribute('data-edge-id')!,el));
+ const edgeSources:[StageEdge,Element][]=[],labelSources:Element[]=[];
  for(const edge of selection.edges){
   const el=liveEdges.get(edge.id);
   if(el)edgeSources.push([edge,el]);else refused.push(`connection ${edge.id} is not on the stage, so it is not drawn`);
-  if(el&&edge.labelled)refused.push(`connection ${edge.id}: its label is drawn by the canvas outside the line, so the image shows the line without its label`);
+  const label=el?liveLabels.get(edge.id):undefined;
+  if(label)labelSources.push(label);
+  else if(el&&edge.labelled)refused.push(`connection ${edge.id}: its label is not on the stage, so the image shows the line without its label`);
  }
  if(selection.leaving)refused.push(`${selection.leaving} connection${selection.leaving===1?'':'s'} leaving the frame ${selection.leaving===1?'is':'are'} not drawn`);
  const markerSource=flow.querySelector('.react-flow__edges defs');
  const families=new Set<string>();
  // The selected outline is a state of the live canvas, not of the card: it is lifted for the copy and restored at once, synchronously, so nothing paints in between.
  const selected=Array.from(flow.querySelectorAll('.selected'));
- let nodeClones:[string,Element][]=[],edgeClones:Element[]=[],markers:Element|null=null;
+ let nodeClones:[string,Element][]=[],edgeClones:Element[]=[],labelClones:Element[]=[],markers:Element|null=null;
  try{
   for(const el of selected)el.classList.remove('selected');
   nodeClones=nodeSources.map(([id,el])=>[id,cloneInlined(el,families)]);
   edgeClones=edgeSources.map(([,el])=>cloneInlined(el,families));
+  labelClones=labelSources.map(el=>cloneInlined(el,families));
   markers=markerSource?cloneInlined(markerSource,families):null;
  }finally{
   for(const el of selected)el.classList.add('selected');
  }
  for(const [,clone] of nodeClones)for(const chrome of Array.from(clone.querySelectorAll(CHROME_SELECTOR)))chrome.remove();
- for(const clone of edgeClones)for(const chrome of Array.from(clone.querySelectorAll(CHROME_SELECTOR)))chrome.remove();
+ for(const clone of [...edgeClones,...labelClones])for(const chrome of Array.from(clone.querySelectorAll(CHROME_SELECTOR)))chrome.remove();
  const pageOrigin=location.origin;
  for(const clone of [...nodeClones.map(([,c])=>c),...edgeClones]){
   for(const media of Array.from(clone.querySelectorAll('img,image'))){
@@ -228,6 +251,13 @@ export async function renderFrameStage(request:StageRequest):Promise<StageResult
   html.style.position='absolute';html.style.left='0px';html.style.top='0px';html.style.transform=`translate(${place.left}px,${place.top}px)`;
   root.append(html);
  }
+ // Labels sit in canvas coordinates (their own transform); one layer moves them into the frame, above the cards as on the stage.
+ if(labelClones.length){
+  const layer=document.createElementNS(XHTML_NS,'div') as HTMLElement;
+  layer.setAttribute('style',`position:absolute;left:0;top:0;transform:translate(${-bounds.x}px,${-bounds.y}px);`);
+  for(const clone of labelClones)layer.append(clone);
+  root.append(layer);
+ }
  foreign.append(root);svg.append(foreign);
 
  const markup=new XMLSerializer().serializeToString(svg);
@@ -238,7 +268,7 @@ export async function renderFrameStage(request:StageRequest):Promise<StageResult
  const element=document.createElement('canvas');element.width=view.width;element.height=view.height;
  const context=element.getContext('2d');
  if(!context)throw new Error('This browser cannot draw the frame image.');
- context.fillStyle=PAPER;context.fillRect(0,0,view.width,view.height);
+ context.fillStyle=stagePaper(flow);context.fillRect(0,0,view.width,view.height);
  context.drawImage(image,0,0,view.width,view.height);
  const blob=await png(element).catch(()=>{throw new Error('The stage holds a resource the browser will not copy into an image, so the PNG was not written.');});
  return {blob,refused};
