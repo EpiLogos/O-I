@@ -171,7 +171,7 @@ test('routed through the retained editor, a fold into an earlier Scene reaches t
   store.document.scenes.unshift(earlier);
   const owner = createRetainedNativeEditor({
     store, sceneId: () => presented.id, selection: () => ({entity_ids: [presented.entities[0].id], step_id: presented.entities[0].sequence.steps[0].id}), nativeView: () => view,
-    nativeSelect: async () => 'applied', commit: async () => true, change: mutate => mutate(), afterHistory: () => {}, selectLocal: () => {}, openEditor: () => {},
+    nativeSelect: async () => 'applied', commit: async () => true, change: (_label, mutate) => mutate(), afterHistory: () => {}, selectLocal: () => {}, openEditor: () => {},
     standing: () => ({busy: false, notice: null}), telemetry: () => undefined, fieldPaused: () => false,
   });
   const reading = owner.read();

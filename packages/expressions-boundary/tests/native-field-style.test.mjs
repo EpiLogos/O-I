@@ -54,7 +54,7 @@ test('the material and ink lists are the app’s authored unions, pinned to thei
   assert.deepEqual(FIELD_MATERIAL_CARDS.map(card => card.value), FIELD_MATERIALS);
   // The app's own material writer: a card click writes exactly one of the authored values.
   const app = await readFile(new URL('app.ts', author), 'utf8');
-  assert.match(app, /case 'material':changed\(\(\)=>\{s\.field\.material=el\.dataset\.value as Scene\['field'\]\['material'\];\}\);break;/);
+  assert.match(app, /case 'material':changed\(\(\)=>\{s\.field\.material=el\.dataset\.value as Scene\['field'\]\['material'\];\},true,'Set scene material'\);break;/);
   // The app's paper writers name the same ink values.
   assert.match(app, /s\.engine\.inkMode=isLightHex\(s\.field\.background\)\?'blackOnWhite':'whiteOnBlack';/);
 });
@@ -105,7 +105,7 @@ test('routed through the retained editor on a captured Expression, both changes 
     const ok = async () => true;
     const owner = createRetainedNativeEditor({
       store, sceneId: () => scene.id, selection: () => ({entity_ids: [], step_id: null}), nativeView: () => view,
-      nativeSelect: async () => 'applied', commit: ok, change: mutate => mutate(), afterHistory: () => {}, selectLocal: () => {}, openEditor: () => {},
+      nativeSelect: async () => 'applied', commit: ok, change: (_label, mutate) => mutate(), afterHistory: () => {}, selectLocal: () => {}, openEditor: () => {},
       standing: () => ({busy: false, notice: null}), telemetry: () => undefined, fieldPaused: () => false,
     });
     const basis = owner.read().basis;
