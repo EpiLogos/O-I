@@ -288,3 +288,10 @@ body{
 .journey-ruler-menu button{font:inherit;font-size:12px;text-align:left;padding:5px 8px;border:0;border-radius:4px;background:transparent;color:var(--ui-ink);cursor:pointer}
 .journey-ruler-menu button:hover:not(:disabled),.journey-ruler-menu button:focus-visible{background:var(--ui-wash)}
 .journey-ruler-menu button:disabled{color:var(--ui-muted);cursor:default}
+/* lane-5 T1-T3 */
+.journey-compose{display:flex;align-items:flex-end;gap:8px;padding:10px;border-top:1px solid var(--ui-line,var(--line))}
+.journey-compose label{display:grid;gap:3px;flex:1;min-width:0;font-size:10px;color:var(--ui-muted,var(--muted))}
+.journey-compose input{width:100%;min-width:0;height:26px;padding:0 6px;font:inherit;font-size:12px;color:var(--ui-ink,var(--ink));background:var(--ui-input,var(--panel));border:1px solid var(--ui-line,var(--line));border-radius:4px}
+.journey-compose button{flex:none;height:26px;padding:0 10px;font:inherit;font-size:11px;color:var(--ui-ink,var(--ink));background:var(--ui-wash,transparent);border:1px solid var(--ui-line,var(--line));border-radius:4px;cursor:pointer}
+.journey-compose button:disabled{color:var(--ui-muted,var(--muted));cursor:default}
+@media(max-width:620px){.journey-compose input{height:34px}.journey-compose button{height:34px}}
