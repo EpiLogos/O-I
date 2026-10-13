@@ -5,6 +5,7 @@ import {clone,type Scene} from './model.js';
 import {type ResearchMaterialAction,type ResearchStroke} from './researchMaterial.js';
 import {createRoot,type Root} from 'react-dom/client';
 import {CanvasView,TimelineSurface,PsychogeographicMap,StreetViewSurface,loadBundledGeographyPack,type TimelineViewState} from '../../vendor/research-canvas/components';
+import {placeRecordFromViewState,viewStateFromPlaceRecord} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeNavigation';
 import type {KernelConversion} from './kernelDocumentBridge.js';
 import {techneConstellationRequest,type TechneSceneReadingRequest,type TechneConstellationRequest} from './kernelExpressions.js';
 import {nativeInstrumentCanvas,nativeInstrumentTitles,nativeInstrumentPreviews,nativeInstrumentNodeTags,nativeInstrumentSourceRelations,readingInstruments,CANVAS_UNITS,assertInstrumentReadingScope,expressionTextFromNote,type InstrumentCanvas,type NativeRelationDirectionReading} from './researchInstrumentsData.js';
@@ -688,7 +689,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    const scene=view?host.sceneMaterial(sceneId):undefined,assets=new Map<string,string>();
    const images=(scene?.entities??[]).flatMap(entity=>{const card=scene?.research?.cards[entity.id];if(entity.source?.kind!=='image'||!entity.source.image.dataUrl)return [];const artifactPath=`scene-image:${entity.id}`;assets.set(artifactPath,entity.source.image.dataUrl);return [{id:entity.id,profileScope:data.reading.subject.subject_ref,artifactPath,capturedAt:null,latitude:null,longitude:null,headingDegrees:null,redactionStatus:'pending' as const,redactionRegions:[],redactedArtifactPath:null,createdAt:card?.importedAt,updatedAt:card?.importedAt}];});
    const importImagery=scene?()=>{const picker=document.createElement('input');picker.type='file';picker.accept='image/png,image/jpeg,image/webp';picker.onchange=async()=>{const file=picker.files?.[0];if(!file)return;try{if(file.size>196608)throw new Error('Choose an image smaller than 192 KiB for this native document.');const bytes=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);reader.readAsDataURL(file);});await host.material(sceneId,{type:'create-card',kind:'image',position:{x:0,y:0},title:file.name.slice(0,160),dataUrl:bytes});if(lens==='m4')await load('m4');}catch(error){message(String(error));}};picker.click();}:undefined;
-   const savedPlace=scene?.research?.views.place;state.place??=savedPlace?{latitude:savedPlace.y,longitude:savedPlace.x,zoom:savedPlace.zoom}:undefined;
+   const savedPlace=scene?.research?.views.place;state.place??=viewStateFromPlaceRecord(savedPlace)??undefined;
    // W3 — "Edit place/time" reopens the SAME native constellation route
    // "Edit constellation" already uses, for the Scene entity that carries
    // this reading's own subject; absent when no such entity is bound (an
@@ -706,7 +707,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     const facets=<PlaceFacetsPanel reading={nativeReading} selectedRef={state.selectedPlace??null} filter={filter} sharedTime
       onFilterChange={next=>{state.placeFilter={...next,window:null};render(renderPlaces());}}
       editRequest={placeEditRequest} onError={message}/>;
-    return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:{x:state.place.longitude,y:state.place.latitude,zoom:state.place.zoom}}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}{timeControls(()=>render(renderPlaces()))}</div>,host.tools)}
+    return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:placeRecordFromViewState(state.place)}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}{timeControls(()=>render(renderPlaces()))}</div>,host.tools)}
     <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly
      initialViewState={state.place} initialSelectedGraphNodeId={state.selectedPlace}
      onViewStateChange={value=>{state.place=value;}} onSelectedGraphNodeIdChange={value=>{state.selectedPlace=value;render(renderPlaces());}}

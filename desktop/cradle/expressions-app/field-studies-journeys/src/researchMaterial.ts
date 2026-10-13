@@ -12,7 +12,7 @@ export interface ResearchCard {
  size?:{width:number;height:number};
 
 }
-export interface ResearchViewport {x:number;y:number;zoom:number}
+export interface ResearchViewport {x:number;y:number;zoom:number;/** lane-4 T1: a tilted, rotated Places view (absent = untilted, north-up) */pitch?:number;bearing?:number}
 export interface ResearchStroke {id:string;points:{x:number;y:number;pressure?:number}[];color:string;width:number;opacity:number;createdAt:string}
 /** A presentation-only visual grouping over existing occurrence ids — never
  * a membership/semantic record. `z` orders overlapping frames for drawing
@@ -114,7 +114,7 @@ export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):
  for(const view of Object.values(value.views))validateViewport(view);
  for(const layout of Object.values(value.timeline) as ResearchMaterial['timeline'][string][]){require(object(layout),'Invalid timeline layout');keys(layout,['offsetY','width','height','lane','layoutRevision']);require((layout.lane===undefined||text(layout.lane,1024))&&(layout.layoutRevision===undefined||Number.isSafeInteger(layout.layoutRevision)&&layout.layoutRevision>=1),'Invalid timeline layout revision');require(finite(layout.offsetY,-40000,40000)&&(layout.width===undefined||finite(layout.width,40,40000))&&(layout.height===undefined||finite(layout.height,40,40000)),'Invalid timeline layout');}
 }
-function validateViewport(v:unknown):void{require(object(v),'Invalid research viewport');keys(v,['x','y','zoom']);require(finite(v.x,-1e8,1e8)&&finite(v.y,-1e8,1e8)&&finite(v.zoom,.001,1e5),'Research viewport exceeds its bound');}
+function validateViewport(v:unknown):void{require(object(v),'Invalid research viewport');keys(v,['x','y','zoom','pitch','bearing']);require(finite(v.x,-1e8,1e8)&&finite(v.y,-1e8,1e8)&&finite(v.zoom,.001,1e5)&&(v.pitch===undefined||finite(v.pitch,0,85))&&(v.bearing===undefined||finite(v.bearing,-180,180)),'Research viewport exceeds its bound');}
 /** Tolerant plain-text reading of note blocks: paragraphs join with newlines,
  * non-text parts are skipped. Unlike expressionTextFromNote this never
  * throws — it is a projection for display, not a validation law. */
