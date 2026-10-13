@@ -5,8 +5,22 @@ import type { ArchetypalExpression, GeographyEdge, GraphNodeContract } from "@re
 import type { LocatedGraphNode, PlacesRepository } from "@research-canvas/domain";
 import type { LiveServicePolicy } from "@research-canvas/geography";
 
+import type { TechnePlaceFacet } from "../../../../../../../src/techne/contract";
+import { OPEN_PLACE_FILTER, type PlaceFilterState } from "../../../../../../field-studies-journeys/src/placeReading";
+import { standingLabel, type StandingDrawing } from "../timeline/standingStyle";
+
 import { LocationPanel, pointForPlace } from "./LocationPanel";
 import { attributionReadout, imageryReadout, liveTileDisclosure } from "./disclosure";
+import {
+  layerVisible,
+  placeLayers,
+  placeRefsHidden,
+  placeRegions,
+  polygonPlaceRefs,
+  toggleLayer,
+  type PlaceLayer,
+  type PlaceRegion,
+} from "./placeLayers";
 import type { MapTileSource } from "./mapStyle";
 import {
   defaultPlaceView,
@@ -25,6 +39,8 @@ import {
   type MapViewState,
   type PlaceRenderMarker,
 } from "./renderer";
+
+const NO_FACETS: readonly TechnePlaceFacet[] = [];
 
 /** The chrome's small pills share one ground, so the disclosure reads as one line. */
 const DISCLOSURE_PILL = {
@@ -61,6 +77,12 @@ export interface PsychogeographicMapProps {
   onOpenCanvasNode?: (graphNodeId: string) => void | Promise<void>;
   /** Hands the host the fly-to choreography (`flyToPlace`), as the Canvas hands `flyToNode`. */
   onRegisterFlyToPlace?: (flyToPlace: (graphNodeId: string) => PlaceFlightPlan | null) => void;
+  /** The reading's full spatial facets (the cradle's `TechnePlaceFacet`s, unfiltered). When given, the map draws relation layers, a legend, and region polygons from them. */
+  placeFacets?: readonly TechnePlaceFacet[];
+  /** The presentation filter the side panel also writes. Layers and markers read it; it never changes the reading. */
+  layerFilter?: PlaceFilterState;
+  /** Asked for the next filter when a layer is toggled, so the side panel and the map read one state. Absent: the layers panel shows the legend only. */
+  onLayerFilterChange?: (next: PlaceFilterState) => void;
 }
 
 /**
@@ -87,6 +109,9 @@ export function PsychogeographicMap({
   onSelectedGraphNodeIdChange,
   onOpenCanvasNode,
   onRegisterFlyToPlace,
+  placeFacets = NO_FACETS,
+  layerFilter,
+  onLayerFilterChange,
 }: PsychogeographicMapProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mountedRenderer = useRef<MapSurfaceRenderer | null>(null);
@@ -177,7 +202,22 @@ export function PsychogeographicMap({
     };
   }, [projectId, refreshVersion, repository, readAttempt]);
 
+  // T8/T9: the reading's own facets decide the relation layers, the legend and the
+  // region polygons. The filter is the one the side panel writes; it narrows what is
+  // shown and never changes the reading.
+  const layerState = layerFilter ?? OPEN_PLACE_FILTER;
+  const layers = useMemo<PlaceLayer[]>(() => placeLayers(placeFacets), [placeFacets]);
+  const polygonRefs = useMemo(() => polygonPlaceRefs(placeFacets), [placeFacets]);
+  const hiddenRefs = useMemo(() => placeRefsHidden(placeFacets, layerState), [placeFacets, layerState]);
+  const regions = useMemo<PlaceRegion[]>(() => placeRegions(placeFacets, layerState), [placeFacets, layerState]);
+  const regionAnchors = useMemo(
+    () => new Map(regions.map((region) => [region.place_ref, region.anchor] as const)),
+    [regions],
+  );
+
   const placeMarkers = useMemo<PlaceRenderMarker[]>(() => nodes.flatMap((node) => {
+    // A region is drawn as its polygon, never also as a point; a place the filter hides is absent.
+    if (polygonRefs.has(node.graphNodeId) || hiddenRefs.has(node.graphNodeId)) return [];
     const point = pointForPlace(node);
     if (!point) return [];
     // The precision grammar decides whether a place is drawn at all: an
@@ -191,11 +231,17 @@ export function PsychogeographicMap({
       precision: node.place.coordinate.precision,
       entityType: node.entityType,
     }];
-  }), [nodes]);
+  }), [nodes, polygonRefs, hiddenRefs]);
 
   const expressionMarkers = useMemo<ArchetypeExpressionRenderMarker[]>(() => {
     const pointsByPlace = new Map(
-      nodes.flatMap((node) => {
+      nodes.flatMap((node): ReadonlyArray<readonly [string, { latitude: number; longitude: number }]> => {
+        if (hiddenRefs.has(node.graphNodeId)) return [];
+        // A region's expressions sit at its label anchor, never at a point marker.
+        if (polygonRefs.has(node.graphNodeId)) {
+          const anchor = regionAnchors.get(node.graphNodeId);
+          return anchor ? [[node.graphNodeId, { latitude: anchor[1], longitude: anchor[0] }] as const] : [];
+        }
         const point = pointForPlace(node);
         return point ? [[node.graphNodeId, point] as const] : [];
       }),
@@ -211,7 +257,7 @@ export function PsychogeographicMap({
         title: `${expression.expressionKind} · ${expression.timeWindow.start}`,
       }));
     });
-  }, [expressionsByPlace, nodes]);
+  }, [expressionsByPlace, nodes, hiddenRefs, polygonRefs, regionAnchors]);
 
   const selectedNode = useMemo(
     () => nodes.find((node) => node.graphNodeId === selectedNodeId) ?? null,
@@ -267,8 +313,8 @@ export function PsychogeographicMap({
     () => lanes.find((lane) => lane.id === selectedLaneId) ?? null,
     [lanes, selectedLaneId],
   );
-  const renderDataRef = useRef({ placeMarkers, expressionMarkers, filteredLanes });
-  renderDataRef.current = { placeMarkers, expressionMarkers, filteredLanes };
+  const renderDataRef = useRef({ placeMarkers, expressionMarkers, filteredLanes, regions });
+  renderDataRef.current = { placeMarkers, expressionMarkers, filteredLanes, regions };
 
   // T2: the flight to a place. The zoom and the marker both come from the
   // place's own precision; an unlocated place does not fly and is named instead.
@@ -391,11 +437,12 @@ export function PsychogeographicMap({
     void Promise.all([
       readyRenderer.drawPlaces?.(placeMarkers, expressionMarkers),
       readyRenderer.drawLanes?.(filteredLanes),
+      readyRenderer.drawRegions?.(regions),
     ]).catch((cause: unknown) => {
       if (!cancelled) setError(cause instanceof Error ? cause.message : String(cause));
     });
     return () => { cancelled = true; };
-  }, [expressionMarkers, filteredLanes, placeMarkers, readyRenderer]);
+  }, [expressionMarkers, filteredLanes, placeMarkers, readyRenderer, regions]);
 
   const setProjection = useCallback((next: "globe" | "flat") => {
     const currentRenderer = mountedRenderer.current;
@@ -409,6 +456,7 @@ export function PsychogeographicMap({
         await Promise.all([
           currentRenderer.drawPlaces?.(latest.placeMarkers, latest.expressionMarkers),
           currentRenderer.drawLanes?.(latest.filteredLanes),
+          currentRenderer.drawRegions?.(latest.regions),
         ]);
       } catch (cause) {
         if (mountedRenderer.current === currentRenderer) {
@@ -687,6 +735,48 @@ export function PsychogeographicMap({
         </div>
       )}
 
+      {layers.length > 0 && (
+        <div
+          className="psychogeographic-layers-panel"
+          data-testid="places-layers-panel"
+          style={{ position: "absolute", right: 12, top: 58, zIndex: 8, width: 260, maxHeight: "46%", overflow: "auto", padding: 10, borderRadius: 10, background: "rgba(17,24,37,.88)", border: "1px solid var(--ob-line, #1b2634)", fontSize: 11 }}
+        >
+          <h3 style={{ margin: "0 0 6px", fontSize: 12 }}>Layers · relation</h3>
+          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 4 }}>
+            {layers.map((layer) => {
+              const standingOff = layerState.standing !== null && !layerState.standing.has(layer.standingClass);
+              return (
+                <li key={layer.relation}>
+                  <label
+                    style={{ display: "flex", alignItems: "center", gap: 6 }}
+                    title={standingOff ? "Its standing is filtered off in the side panel" : layer.relation}
+                  >
+                    <input
+                      type="checkbox"
+                      data-testid={`places-layer-${layer.relation}`}
+                      checked={layerVisible(layerState, layer)}
+                      disabled={!onLayerFilterChange || standingOff}
+                      onChange={() => onLayerFilterChange?.(toggleLayer(layerState, layers, layer.relation))}
+                    />
+                    <LayerSwatch drawing={layer.drawing} />
+                    <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{layer.relation}</span>
+                    <span data-testid={`places-layer-count-${layer.relation}`} style={{ color: "var(--ob-dim, #8797ab)" }}>{layer.count}</span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+          <div data-testid="places-legend" style={{ marginTop: 8, display: "grid", gap: 3 }}>
+            {[...new Map(layers.map((layer) => [layer.visual, layer.drawing] as const)).entries()].map(([visual, drawing]) => (
+              <div key={visual} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <LayerSwatch drawing={drawing} />
+                <span>{standingLabel(visual)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {selectedLane && (
         <aside className="psychogeographic-lane-provenance" data-testid="lane-provenance" style={{ position: "absolute", left: 12, bottom: 46, zIndex: 9, width: 320, maxHeight: "38%", overflow: "auto", padding: 12, borderRadius: 10, background: "rgba(17,24,37,.94)", border: "1px solid var(--ob-line-3, #3a4e64)" }}>
           <h3 style={{ marginTop: 0 }}>{selectedLane.label}</h3>
@@ -714,6 +804,15 @@ export function PsychogeographicMap({
         </div>
       )}
     </div>
+  );
+}
+
+/** A standing's line sample, drawn with the one shared drawing table (timeline/standingStyle). */
+function LayerSwatch({ drawing }: { drawing: StandingDrawing }): JSX.Element {
+  return (
+    <svg width={18} height={8} aria-hidden="true" focusable="false" style={{ flex: "none" }}>
+      <line x1={0} y1={4} x2={18} y2={4} stroke={drawing.stroke} strokeWidth={2} strokeDasharray={drawing.dash} />
+    </svg>
   );
 }
 

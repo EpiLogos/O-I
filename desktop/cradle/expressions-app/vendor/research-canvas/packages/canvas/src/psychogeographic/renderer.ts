@@ -34,6 +34,7 @@ import {
   STILL,
   type StillnessState,
 } from "./placeNavigation";
+import type { PlaceRegion } from "./placeLayers";
 
 /** The camera as the map reports it. `pitch` and `bearing` are degrees and are
  * absent in records saved before T1; they read as 0. */
@@ -98,6 +99,8 @@ export interface MapSurfaceRenderer {
     expressions: ArchetypeExpressionRenderMarker[],
   ): Promise<void>;
   drawLanes?(edges: GeographyEdge[]): Promise<void>;
+  /** Region polygons: fill and outline at every zoom, the label at the authority's centroid. */
+  drawRegions?(regions: PlaceRegion[]): Promise<void>;
   setLiveTileSource(tileSource: MapTileSource): Promise<void>;
   centerOn(latitude: number, longitude: number, zoom?: number): Promise<void>;
   flyTo?(latitude: number, longitude: number, zoom?: number, camera?: MapCameraFlight): Promise<void>;
@@ -128,6 +131,8 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
   let laneClickHandler: ((laneId: string) => void) | null = null;
   let viewChangeHandler: ((view: MapViewState) => void) | null = null;
   let htmlMarkers: Array<{ remove(): void }> = [];
+  // Region labels are their own markers: a redraw of the place points must not erase them.
+  let regionLabelMarkers: Array<{ remove(): void }> = [];
   let projection: MapSurfaceProjection = "globe";
   // The globe's own tilt, kept while the flat projection holds the camera top-down.
   let globeTilt: number | null = null;
@@ -157,6 +162,11 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
     htmlMarkers = [];
     placeElements = new Map();
     pulseAnimation = null;
+  }
+
+  function clearRegionLabels(): void {
+    for (const marker of regionLabelMarkers) marker.remove();
+    regionLabelMarkers = [];
   }
 
   function stopPulse(): void {
@@ -230,6 +240,12 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
         const feature = event.features?.[0];
         const laneId = feature?.properties?.id as string | undefined;
         if (laneId && laneClickHandler) laneClickHandler(laneId);
+      });
+      // A region is selected through its own place, as a point marker is.
+      map.on("click", "places-regions-fill", (event) => {
+        const feature = event.features?.[0];
+        const placeRef = feature?.properties?.id as string | undefined;
+        if (placeRef && placeClickHandler) placeClickHandler(placeRef);
       });
       await waitForStyleLoad(map);
       if (projection === "globe") {
@@ -398,6 +414,59 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
         },
       });
     },
+    async drawRegions(regions) {
+      if (!map) throw new Error("map renderer is not initialized");
+      // A region is its polygon, filled and outlined. The outline width is in pixels,
+      // so it holds at every zoom; the label sits at the authority's centroid.
+      addGeoJsonSource(map, "places-regions", {
+        type: "FeatureCollection",
+        features: regions.map((region) => ({
+          type: "Feature",
+          geometry: { type: "Polygon", coordinates: region.rings },
+          properties: {
+            id: region.place_ref,
+            color: region.colour,
+            precision: region.precision,
+          },
+        })),
+      });
+      ensureLayer(map, {
+        id: "places-regions-fill",
+        type: "fill",
+        source: "places-regions",
+        paint: { "fill-color": ["get", "color"], "fill-opacity": 0.2 },
+      });
+      ensureLayer(map, {
+        id: "places-regions-outline",
+        type: "line",
+        source: "places-regions",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": ["get", "color"], "line-width": 2, "line-opacity": 0.9 },
+      });
+      clearRegionLabels();
+      for (const region of regions) {
+        const element = document.createElement("span");
+        element.className = "places-region-label";
+        element.dataset.testid = `globe-region-label-${region.place_ref}`;
+        element.dataset.precision = region.precision;
+        element.title = region.note;
+        element.textContent = `${region.label ?? region.place_ref} · ${region.precision}`;
+        Object.assign(element.style, {
+          display: "block",
+          pointerEvents: "none",
+          whiteSpace: "nowrap",
+          fontSize: "11px",
+          lineHeight: "14px",
+          color: "#c9b68a",
+          textShadow: "0 1px 2px rgba(0,0,0,.85)",
+        });
+        regionLabelMarkers.push(
+          new maplibre.Marker({ element, anchor: "center" })
+            .setLngLat(region.anchor)
+            .addTo(map),
+        );
+      }
+    },
     async setLiveTileSource(tileSource) {
       if (!map) throw new Error("map renderer is not initialized");
       if (map.getLayer("offline-base")) map.removeLayer("offline-base");
@@ -508,6 +577,7 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
       motionTimer = null;
       motion = STILL;
       clearHtmlMarkers();
+      clearRegionLabels();
       map?.remove();
       map = null;
       stopClickHandler = null;

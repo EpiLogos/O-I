@@ -237,8 +237,8 @@
     },
     "packages/canvas/src/psychogeographic/PsychogeographicMap.tsx": {
       "upstream_sha256": "55b9856e3106912eb7b6f8f6a9fb60e6b40e8852ef8126c0eb82f75a6bc25af7",
-      "adapted_sha256": "8afd51865dd7562144ab0eeb8b354488256e39f8a1083ae14805cbe8cf53f5bb",
-      "reason": "Expose rejected owner/context reads with retry; hosted offlineOnly capability omits live-network controls and refuses browser-policy activation. Optional host toolbar portal exposes the same Globe/Flat/Zoom to fit actions above the host HUD without another renderer or state store. Hosted selected-place context uses the existing native inspector with explicit close and selection clear. Hosted location details are explicitly toggled in native HUD; selection remains available when the inspector closes. | lane-4 T1+T2+T10: pitch/bearing viewport, fly-to by facet precision, the precision marker grammar | lane-4 T3/T6/T7/T29: map chrome — reset, atmosphere, attribution, stillness"
+      "adapted_sha256": "ed9b1592441e99516da953db8127422a5ac06b60a813cee979a727e77dd66b1e",
+      "reason": "Expose rejected owner/context reads with retry; hosted offlineOnly capability omits live-network controls and refuses browser-policy activation. Optional host toolbar portal exposes the same Globe/Flat/Zoom to fit actions above the host HUD without another renderer or state store. Hosted selected-place context uses the existing native inspector with explicit close and selection clear. Hosted location details are explicitly toggled in native HUD; selection remains available when the inspector closes. | lane-4 T1+T2+T10: pitch/bearing viewport, fly-to by facet precision, the precision marker grammar | lane-4 T3/T6/T7/T29: map chrome — reset, atmosphere, attribution, stillness | lane-4 T8+T9: relation layers + legend, regions as polygons"
     },
     "packages/canvas/src/streetview/StreetViewSurface.tsx": {
       "upstream_sha256": "0c77fb9bfb11a49f5683ddc38c5ee6f152a5e08c859a21c712064f8dd077a7d2",
@@ -351,8 +351,8 @@
       "reason": "lane-4 T3/T6/T7/T29: map chrome — reset, atmosphere, attribution, stillness"
     },
     "packages/canvas/src/psychogeographic/renderer.ts": {
-      "adapted_sha256": "812fd3e4accf93f1d86576d86ed33abaa28a48a21869eeadc8d4115ac1891f8c",
-      "reason": "lane-4 T1+T2+T10: pitch/bearing viewport, fly-to by facet precision, the precision marker grammar | lane-4 T3/T6/T7/T29: map chrome — reset, atmosphere, attribution, stillness"
+      "adapted_sha256": "abf48712c67c7cb2c578bf95c990d2d9bbab535a05805a48117bc3a0c9a1070e",
+      "reason": "lane-4 T1+T2+T10: pitch/bearing viewport, fly-to by facet precision, the precision marker grammar | lane-4 T3/T6/T7/T29: map chrome — reset, atmosphere, attribution, stillness | lane-4 T8+T9: relation layers + legend, regions as polygons"
     }
   }
 }
