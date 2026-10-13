@@ -1,7 +1,7 @@
 /* Generated component-only Research Canvas styles, upstream 7df35f822f9235331a69940cdaf484fe4a0b95c1.
  * apps/desktop/src/styles.css sha256 e6c08ff2b137eee45a1b8428460867665bfeb0cee301286256db7105a95cac0e
  * apps/desktop/src/layout/observatory.css sha256 a4ea0293e22c78715e000166378e61ace207b9018f19a89faa96a4627f470fd5
- * apps/desktop/src/layout/timeline.css sha256 844fd5b495b869f967ab04aff28185f9aadec21539e837a7c34c5fcd9ce9948d
+ * apps/desktop/src/layout/timeline.css sha256 b6e2008ed4d274cbbda2ad0eeceabe067cff7ee2fc1b8bc05e5fe6d61f4faff4
  * apps/desktop/src/layout/lenses.css sha256 ff5d66b514db5e8999853572c62b375a758bd7b8c5b04d6d6a17a5a082450466
  * Kept component selectors and local design tokens; omitted app/body/html/root
  * layout, imports and unrelated lenses. Every selector is scoped to the engine
@@ -2225,4 +2225,97 @@
 :where(.research-instrument) .timeline-band-absent ul {
   margin: 0;
   padding-left: 16px;
+}
+
+/* lane-2 T12 + T13: broad-tier clusters and the scale-window minimap. A cluster takes
+ * its members' category colour (--cluster-tone) mixed toward a neutral, so it reads
+ * quieter than a card. Tokens only; no transition, no animation. */
+:where(.research-instrument) .timeline-clusters {
+  z-index: 2;
+}
+
+:where(.research-instrument) .timeline-cluster {
+  position: absolute;
+  top: 0;
+  height: 16px;
+  min-width: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--cluster-tone) 62%, #8b95a5);
+  font-family: var(--ob-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 10px;
+  line-height: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+:where(.research-instrument) .timeline-cluster-span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--cluster-tone) 46%, #8b95a5);
+}
+
+:where(.research-instrument) .timeline-cluster-label {
+  position: absolute;
+  top: 4px;
+  left: 0;
+}
+
+:where(.research-instrument) .timeline-cluster:hover .timeline-cluster-span,
+:where(.research-instrument) .timeline-cluster:focus-visible .timeline-cluster-span {
+  background: color-mix(in srgb, var(--cluster-tone) 72%, #8b95a5);
+}
+
+:where(.research-instrument) .timeline-cluster:focus-visible {
+  outline: 1px solid color-mix(in srgb, var(--cluster-tone) 60%, transparent);
+  outline-offset: 2px;
+}
+
+:where(.research-instrument) .timeline-minimap {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  z-index: 6;
+  height: 12px;
+  border-radius: 3px;
+  background: color-mix(in srgb, #9aa6b8 9%, transparent);
+  touch-action: none;
+}
+
+:where(.research-instrument) .timeline-minimap-window {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, #9aa6b8 50%, transparent);
+  border-radius: 2px;
+  background: color-mix(in srgb, #9aa6b8 26%, transparent);
+  cursor: grab;
+}
+
+:where(.research-instrument) .timeline-minimap-window:active {
+  cursor: grabbing;
+}
+
+:where(.research-instrument) .timeline-minimap-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+:where(.research-instrument) .timeline-minimap-edge--left {
+  left: -4px;
+}
+
+:where(.research-instrument) .timeline-minimap-edge--right {
+  right: -4px;
 }

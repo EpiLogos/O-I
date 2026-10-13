@@ -9,6 +9,8 @@ import type {
   TimelineWalk,
 } from "@research-canvas/desktop-api";
 import { TimelineLens as RichTimelineLens, type TimelineDataSource } from "./TimelineLens";
+import { TimelineMinimap } from "./TimelineMinimap";
+import { timelineWindowForViewport, visibleSpanForViewport } from "./minimapGeometry";
 import { MIN_PIXELS_PER_YEAR, MAX_PIXELS_PER_YEAR } from "./scale";
 
 const EMPTY_WALK: TimelineWalk = { earthboundNodes: [], archetypeLayers: [] };
@@ -61,6 +63,7 @@ export function TimelineSurface({
   const [walkError, setWalkError] = useState<string | null>(null);
   const [readAttempt, setReadAttempt] = useState(0);
   const [lensRevision, setLensRevision] = useState(0);
+  const [cameraCommand, setCameraCommand] = useState<{ centerYear: number; pixelsPerYear: number; revision: number } | null>(null);
 
   const publishState = useCallback((next: TimelineViewState) => {
     const current = viewStateRef.current;
@@ -94,6 +97,11 @@ export function TimelineSurface({
 
   const timeWindow = useMemo(
     () => timelineWindowForViewport(viewState.centerYear, viewState.pixelsPerYear, widthPx),
+    [viewState.centerYear, viewState.pixelsPerYear, widthPx],
+  );
+  // The minimap highlights what the person sees (lane-2 T13 ruling), not the padded query window.
+  const visibleSpan = useMemo(
+    () => visibleSpanForViewport(viewState.centerYear, viewState.pixelsPerYear, widthPx),
     [viewState.centerYear, viewState.pixelsPerYear, widthPx],
   );
 
@@ -162,6 +170,16 @@ export function TimelineSurface({
       selectedNodeId: selectedNodeIdRef.current,
     });
     setLensRevision((revision) => revision + 1);
+  }, [publishState]);
+
+  // The scale-window minimap (lane-2 T13) moves this same camera without remounting the
+  // lens: the lens applies the command to its store, and its echo settles this state.
+  const requestCamera = useCallback((centerYear: number, pixelsPerYear: number) => {
+    const target = { centerYear, pixelsPerYear: clampPixelsPerYear(pixelsPerYear) };
+    if (sameViewport(viewStateRef.current, target)) return;
+    pendingControlledViewportRef.current = target;
+    publishState({ ...target, selectedNodeId: selectedNodeIdRef.current });
+    setCameraCommand((previous) => ({ ...target, revision: (previous?.revision ?? 0) + 1 }));
   }, [publishState]);
 
   const handleLensViewportChange = useCallback((viewport: { centerYear: number; pixelsPerYear: number }) => {
@@ -343,23 +361,21 @@ export function TimelineSurface({
             pixelsPerYear: viewState.pixelsPerYear,
           }}
           onViewportChange={handleLensViewportChange}
+          cameraCommand={cameraCommand}
         />
       </div>
+      {timeExtent && (
+        <TimelineMinimap
+          domain={{ startYear: timeExtent.startYear, endYear: timeExtent.endYear }}
+          visible={visibleSpan}
+          centerYear={viewState.centerYear}
+          pixelsPerYear={viewState.pixelsPerYear}
+          onPan={(centerYear) => requestCamera(centerYear, viewState.pixelsPerYear)}
+          onZoom={(pixelsPerYear) => requestCamera(viewState.centerYear, pixelsPerYear)}
+        />
+      )}
     </div>
   );
-}
-
-function timelineWindowForViewport(
-  centerYear: number,
-  pixelsPerYear: number,
-  widthPx: number,
-): TimelineTimeWindow {
-  const visibleYears = Math.max(1, widthPx) / clampPixelsPerYear(pixelsPerYear);
-  const paddedYears = Math.max(40, visibleYears * 1.5);
-  return {
-    startYear: Math.floor(centerYear - paddedYears / 2),
-    endYear: Math.ceil(centerYear + paddedYears / 2),
-  };
 }
 
 function yearPercent(year: number, window: TimelineTimeWindow): number {

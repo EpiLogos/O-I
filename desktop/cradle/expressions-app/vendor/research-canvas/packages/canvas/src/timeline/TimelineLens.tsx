@@ -8,8 +8,10 @@ import { createTimelineStore, type TimelineCardGeometryUpdate } from "./timeline
 import { DEFAULT_TIMELINE_CARD_WIDTH_PX, FALLBACK_TIMELINE_LANE_ID, bandExtent, placeItems, timelineCardBounds, type PlacedItem, type TimelinePresentation } from "./projection";
 import { axisRows, commonOffsetMs } from "./ticks";
 import { densityBandForPixelsPerYear } from "./scale";
-import { pixelToMs, timeCamera } from "./viewport";
+import { msToPixel, pixelToMs, timeCamera } from "./viewport";
 import { TimelineAxis } from "./TimelineAxis";
+import { clusterBroadItems, clusterLabel, clusterLabelWidthPx, clusterRows, clusterZoomView, type BroadCluster } from "./clusters";
+import { TimelineClusters, type TimelineClusterMark } from "./TimelineClusters";
 import { TimelineBandLanes } from "./TimelineBands";
 import { bandMarks, bandsFromReading } from "./bands";
 import { TimelineNode } from "./TimelineNode";
@@ -17,7 +19,7 @@ import { TimelineRelationshipLayer } from "./TimelineRelationshipLayer";
 import { TimelineRelationField } from "./TimelineRelationField";
 import { TimelineWalk } from "./TimelineWalk";
 import { TimelineWorkingSet } from "./TimelineWorkingSet";
-import { deriveTimelineCategory, TIMELINE_CATEGORIES, type TimelineCategory } from "./categories";
+import { categoryDefinition, deriveTimelineCategory, TIMELINE_CATEGORIES, type TimelineCategory } from "./categories";
 import { assembleTimelineWalk } from "./walk";
 
 export interface TimelineDataSource {
@@ -47,6 +49,8 @@ export interface TimelineLensProps {
   ) => void;
   initialViewport?: { centerYear: number; pixelsPerYear: number };
   onViewportChange?: (viewport: { centerYear: number; pixelsPerYear: number }) => void;
+  /** A camera the surface moves in place (the scale-window minimap, lane-2 T13). Applied to the store; never a remount. */
+  cameraCommand?: { centerYear: number; pixelsPerYear: number; revision: number } | null;
 }
 
 const AXIS_HEIGHT = 48;
@@ -71,6 +75,7 @@ export function TimelineLens({
   onOpenNode,
   initialViewport,
   onViewportChange,
+  cameraCommand,
 }: TimelineLensProps): JSX.Element {
   const store = useMemo(
     () => createTimelineStore(
@@ -84,6 +89,14 @@ export function TimelineLens({
     [],
   );
   const state = useStore(store);
+  // A surface camera move (lane-2 T13) is applied to this store in place. A revision
+  // already present at mount is not replayed: the mount camera is the surface's own.
+  const appliedCameraRevision = useRef(cameraCommand?.revision ?? 0);
+  useEffect(() => {
+    if (!cameraCommand || cameraCommand.revision === appliedCameraRevision.current) return;
+    appliedCameraRevision.current = cameraCommand.revision;
+    store.getState().setView(cameraCommand.centerYear, cameraCommand.pixelsPerYear);
+  }, [cameraCommand, store]);
   const trackRef = useRef<HTMLDivElement | null>(null);
   const [resonances, setResonances] = useState<LitInstance[]>([]);
   const [relationField, setRelationField] = useState<TimelineRelationFieldData | null>(null);
@@ -254,7 +267,40 @@ export function TimelineLens({
   });
   const allPlaced = placeItems(layoutItems, viewport, state.lanes);
   const categoryPlaced = allPlaced.filter((p) => visibleCategories[deriveTimelineCategory(p.item.node)]);
-  const placed = categoryPlaced.filter((placement) => isInsideTimelineRenderBand(placement, viewport.widthPx));
+  // Broad tier (lane-2 T12): at the marker band, placements that share an
+  // aggregate bucket become one honest count. A lone item keeps its own card.
+  const labelOffsetMs = commonOffsetMs(state.items);
+  const broadClusters: BroadCluster[] = lod === "marker"
+    ? clusterBroadItems(
+        categoryPlaced.map((p) => ({
+          fromMs: p.item.startMs,
+          toMs: bandExtent(p.item).toMs,
+          category: deriveTimelineCategory(p.item.node),
+        })),
+        { fromMs: renderFromMs, toMs: renderToMs },
+      )
+    : [];
+  const clusteredIndexes = new Set(broadClusters.flatMap((cluster) => cluster.memberIndexes));
+  const placed = categoryPlaced
+    .filter((_, index) => !clusteredIndexes.has(index))
+    .filter((placement) => isInsideTimelineRenderBand(placement, viewport.widthPx));
+  const clusterLabels = broadClusters.map((cluster) => clusterLabel(cluster, labelOffsetMs));
+  const clusterRow = clusterRows(broadClusters.map((cluster, index) => ({
+    left: msToPixel(renderCamera, cluster.fromMs),
+    width: clusterLabelWidthPx(clusterLabels[index]),
+  })));
+  const clusterMarks: TimelineClusterMark[] = broadClusters.map((cluster, index) => ({
+    cluster,
+    label: clusterLabels[index],
+    startPx: msToPixel(renderCamera, cluster.fromMs),
+    endPx: msToPixel(renderCamera, cluster.toMs),
+    row: clusterRow[index],
+    tone: categoryDefinition(cluster.category).color,
+  }));
+  const zoomToCluster = (cluster: BroadCluster) => {
+    const view = clusterZoomView(cluster, viewport.widthPx);
+    store.getState().setView(view.centerYear, view.pixelsPerYear);
+  };
   const axis = axisRows(renderCamera, commonOffsetMs(state.items));
   // Period bands (lane-2 T8): the reading's bands, through the authority's extent, on this camera.
   const bandReading = useMemo(() => bandsFromReading(state.bandRecords), [state.bandRecords]);
@@ -885,6 +931,7 @@ export function TimelineLens({
               );
             })}
           </div>
+          <TimelineClusters marks={clusterMarks} onZoom={zoomToCluster} />
         </div>
       </div>
       {hasRelationContext && displayRelationField !== null && (

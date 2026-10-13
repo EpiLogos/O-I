@@ -140,3 +140,18 @@ until ai-kit admits an optional bounded `label`; done in ai-kit by the lead
 (see the ai-kit PR). Pre-existing, noted: `tests/participation-facts-native.test.mjs`
 imports `formatYearLabel` from ticks.ts, deleted by T1b — fix with the next
 lane-2 ticket.
+
+## Resolution — T12 + T13 (honest clusters, scale-window minimap)
+
+**Landed (13 Oct 2026; builder haiku, with the lead's rulings).** At the
+marker tier overlapping items compress into clusters whose membership is
+exactly the authority's `aggregate()` bucket — "N events, <span>" when every
+member is an event, "N items, <span>" otherwise; one click zooms once to the
+span via the store's `setView`; never drawn as fake events; computed after
+culling. A slim strip over the reading's domain highlights the camera's
+VISIBLE span (lead ruling — the padded query window stops tracking at deep
+zoom), drag pans, edge-drag zooms, hidden when the view already holds the
+whole extent; no second view state. `participation-facts-native` repaired
+(imports + plain positive years per T7). Scripted: 48/48; verify-source
+green; tsc 0. Unverified: the look and drag feel (native pass); the
+participation test's gated body (needs the ctrl and kernel binaries).

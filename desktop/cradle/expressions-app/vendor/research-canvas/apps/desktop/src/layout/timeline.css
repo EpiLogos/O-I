@@ -847,3 +847,96 @@
   margin: 0;
   padding-left: 16px;
 }
+
+/* lane-2 T12 + T13: broad-tier clusters and the scale-window minimap. A cluster takes
+ * its members' category colour (--cluster-tone) mixed toward a neutral, so it reads
+ * quieter than a card. Tokens only; no transition, no animation. */
+.timeline-clusters {
+  z-index: 2;
+}
+
+.timeline-cluster {
+  position: absolute;
+  top: 0;
+  height: 16px;
+  min-width: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--cluster-tone) 62%, #8b95a5);
+  font-family: var(--ob-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 10px;
+  line-height: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.timeline-cluster-span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--cluster-tone) 46%, #8b95a5);
+}
+
+.timeline-cluster-label {
+  position: absolute;
+  top: 4px;
+  left: 0;
+}
+
+.timeline-cluster:hover .timeline-cluster-span,
+.timeline-cluster:focus-visible .timeline-cluster-span {
+  background: color-mix(in srgb, var(--cluster-tone) 72%, #8b95a5);
+}
+
+.timeline-cluster:focus-visible {
+  outline: 1px solid color-mix(in srgb, var(--cluster-tone) 60%, transparent);
+  outline-offset: 2px;
+}
+
+.timeline-minimap {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  z-index: 6;
+  height: 12px;
+  border-radius: 3px;
+  background: color-mix(in srgb, #9aa6b8 9%, transparent);
+  touch-action: none;
+}
+
+.timeline-minimap-window {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, #9aa6b8 50%, transparent);
+  border-radius: 2px;
+  background: color-mix(in srgb, #9aa6b8 26%, transparent);
+  cursor: grab;
+}
+
+.timeline-minimap-window:active {
+  cursor: grabbing;
+}
+
+.timeline-minimap-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+.timeline-minimap-edge--left {
+  left: -4px;
+}
+
+.timeline-minimap-edge--right {
+  right: -4px;
+}
