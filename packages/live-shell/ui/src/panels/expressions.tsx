@@ -10,6 +10,7 @@ import {registerPanel} from '../shell/panels'
 import {useWorkspace} from '../shell/workspace'
 import {readShellConfig, shellTransport} from '../native/application'
 import {qualifiedExpressionOwners} from '../native/expressionOwners'
+import {disclosureSession} from '../../../../../desktop/cradle/src/techne/session'
 import {useContinuity, type Workspace} from '../continuity'
 import {useKernel} from '../../../../../desktop/cradle/src/kernel/KernelProvider'
 import {groupsOf, openBinding} from '../../../../../desktop/cradle/src/surface/engine'
@@ -175,6 +176,8 @@ export function ExpressionsPanel() {
         bindingId: 'world.expressions', owners, mode: modeRef.current, world: worldLens.current,
         recoveryBindings: continued?.works, initialRecoveryBinding: initial,
         isPresented: presented,
+        // T-FRAME-TIME-PUSH: the session's shared window nudges the presented frame to re-read it (never a value carried).
+        sharedWindow: disclosureSession,
         onState: state => {
           if (!live) return
           setStage(previous => JSON.stringify(previous) === JSON.stringify(state) ? previous : state)
