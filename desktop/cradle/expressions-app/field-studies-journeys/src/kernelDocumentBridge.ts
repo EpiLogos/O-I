@@ -12,6 +12,7 @@ import {validateMarkers,validateLoopRegion} from './journeyMarkers.js';
 import {WORLD_SCALE} from './nativeParameters.js';
 import {mapSceneOccurrences,assertMaterialOccurrences} from './sceneCorrespondence.js';
 import {MAX_FORMATIONS,MAX_PINS} from '../../src/engine/fieldModel.js';
+import {isNestedBody,nestedEvaluation,nestedWindowVerdict,type NestedBinding,type NestedGraph} from './nestedOccurrence.js';
 
 export interface KernelParameter {value:string|number;automation?:{min:number;max:number;rate_hz:number;waveform:string}|null}
 export interface KernelSubject {subject_ref:string;native_owner:string;[key:string]:unknown}
@@ -115,9 +116,13 @@ export interface KernelScene {presentation?:{schema:'oi.journey-scene/v1';scene:
 export interface KernelRelation {binding_ref:string;relation:{ref:string;revision:string;[key:string]:unknown};from_entity_ref:string;to_entity_ref:string;[key:string]:unknown}
 export interface KernelExpressionDocument {presentation?:{schema:'oi.journey-properties/v1';description:string;loop:boolean;shared?:Journey['shared'];markers?:unknown[];loopRegion?:{from:number;to:number}}|null;schema:string;expression_ref:string;revision:number;title:string;scenes:KernelScene[];entities:Record<string,KernelEntity>;relations?:Record<string,KernelRelation>;selection?:{scene_ref:string;entity_ref:string|null;relation_ref?:string|null};representations?:unknown[];refinements?:unknown[];collections?:string[];profiles?:unknown[];[key:string]:unknown}
 export interface OccurrenceBinding {expression_ref:string;scene_ref:string;entity_ref:string;view_entity_id:string;subject:KernelSubject|null}
-export interface SceneBinding {scene_ref:string;member_refs:string[];loaded_refs:string[];page:number;page_count:number;hidden_refs:string[];focused_relation:string|null;occurrences:OccurrenceBinding[];relations:KernelRelation[];body:KernelSceneBody|null;triggers:KernelSceneTrigger[]}
+export interface SceneBinding {scene_ref:string;member_refs:string[];loaded_refs:string[];page:number;page_count:number;hidden_refs:string[];focused_relation:string|null;occurrences:OccurrenceBinding[];relations:KernelRelation[];body:KernelSceneBody|null;triggers:KernelSceneTrigger[];
+ /** E14: the verdict on a nested expression_ref body against its graph and this page's budget; null for every other body. */
+ nested?:NestedBinding|null}
 export interface KernelConversion {journey:Journey;notes:string[];startSceneId:string|null;document:KernelExpressionDocument;bindings:Record<string,SceneBinding>;entity_ids:Record<string,string>}
-export interface ViewOptions {pages?:Record<string,number>;focusRelation?:string|null;identity?:{expression?:string;scenes?:Record<string,string>;entities?:Record<string,string>}}
+export interface ViewOptions {pages?:Record<string,number>;focusRelation?:string|null;identity?:{expression?:string;scenes?:Record<string,string>;entities?:Record<string,string>};
+ /** E14: the nested Expressions the app has read, by ref. Absent entries read as unread; the bridge performs no I/O. */
+ nestedDocuments?:NestedGraph}
 export type ViewChange={change:'parameter_set';entity_ref:string;parameter:string;value:string|number};
 
 const MAPPED_KEYS=new Set(['x','y','z','scale','share','glyph','shape','kind','width','height','rotation','ascii','image','yantra','frequency','force_mode','force_strength','force_spin','force_radius']);
@@ -242,10 +247,20 @@ export function kernelDocumentToJourney(raw:unknown,options:ViewOptions={}):Kern
   const focusRef=options.focusRelation===undefined?(doc.selection?.scene_ref===s.scene_ref?doc.selection.relation_ref:null):options.focusRelation;
   const focused=explicit===undefined?relations.find(r=>r.binding_ref===focusRef && materialEntities.has(r.from_entity_ref) && materialEntities.has(r.to_entity_ref)):undefined;
   const loaded=focused?focusWindow(visibleRefs,focused,materialEntities,savedEntities):pages[page];
+  // E14: a nested body is evaluated against its graph and must hold a free
+  // member slot on the page it sits on; anything over budget is refused by name.
+  const sceneBody=validateSceneBody(clone(s.body??null));
+  let nestedVerdict:NestedBinding|null=null;
+  if(isNestedBody(sceneBody)){
+   nestedVerdict=nestedEvaluation(doc.expression_ref,sceneBody,options.nestedDocuments??new Map());
+   const slot=nestedVerdict.state!=='refused'?nestedWindowVerdict(loaded.length):null;
+   if(slot)nestedVerdict={subject_ref:nestedVerdict.subject_ref,max_depth:nestedVerdict.max_depth,state:'refused',reason:slot};
+   if(nestedVerdict.state==='refused')notes.push(`${s.scene_ref}: nested expression ${sceneBody.subject_ref} refused: ${nestedVerdict.reason}`);
+  }
   const occurrenceIds=new Map([...converted].map(([ref,e])=>[ref,e.id]));
   const scene=mapSceneOccurrences(material,idFor(s.scene_ref,'scene',ids,options.identity?.scenes?.[s.scene_ref]),occurrenceIds,new Set(loaded));
   if(saved)savedScenes[scene.id]=mapSceneOccurrences(saved,scene.id,occurrenceIds,new Set(loaded));
-  bindings[scene.id]={scene_ref:s.scene_ref,member_refs:[...s.entity_refs],loaded_refs:[...loaded],page,page_count:pages.length,hidden_refs:s.entity_refs.filter(ref=>!materialEntities.has(ref)),focused_relation:focused?.binding_ref??null,occurrences:loaded.filter(ref=>materialEntities.has(ref)).map(ref=>({expression_ref:doc.expression_ref,scene_ref:s.scene_ref,entity_ref:ref,view_entity_id:converted.get(ref)!.id,subject:clone(doc.entities[ref].subject??null)})),relations:clone(relations),body:validateSceneBody(clone(s.body??null)),triggers:validateSceneTriggers(clone(s.triggers??[]))};
+  bindings[scene.id]={scene_ref:s.scene_ref,member_refs:[...s.entity_refs],loaded_refs:[...loaded],page,page_count:pages.length,hidden_refs:s.entity_refs.filter(ref=>!materialEntities.has(ref)),focused_relation:focused?.binding_ref??null,occurrences:loaded.filter(ref=>materialEntities.has(ref)).map(ref=>({expression_ref:doc.expression_ref,scene_ref:s.scene_ref,entity_ref:ref,view_entity_id:converted.get(ref)!.id,subject:clone(doc.entities[ref].subject??null)})),relations:clone(relations),body:sceneBody,triggers:validateSceneTriggers(clone(s.triggers??[])),nested:nestedVerdict};
   if(loaded.length<s.entity_refs.length)notes.push(`${s.scene_ref}: ${loaded.length}/${s.entity_refs.length} members loaded; ${pages.length} disclosure pages preserve the whole`);
   return scene;
  });
