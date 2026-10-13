@@ -7,7 +7,6 @@
 // Human-scale behaviour is pinned by the four-digit cases below.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {build} from 'esbuild';
 import {
@@ -16,6 +15,7 @@ import {
   yearStartMs,
   yearsPerUnit,
 } from '../src/techne/m0m5/timeline/scale.ts';
+import {TEMPORAL_PRECISIONS as CONTRACT_TEMPORAL_PRECISIONS} from '../src/techne/contract.ts';
 import {
   canonicalTemporalInstant,
   checkBoundOrder,
@@ -90,15 +90,12 @@ test('a window that runs from a deep year to a deeper one orders on the authorit
   assert.equal(compareTemporalBounds('4500000000-01-01', '-780000'), null);
 });
 
-test('the schema precision list is the authority\'s list: the same spellings in the same order, coarsest first', async () => {
-  const contract = await readFile(new URL('../src/techne/contract.ts', import.meta.url), 'utf8');
-  const match = /const TEMPORAL_PRECISIONS: readonly string\[\] = \[([^\]]*)\]/.exec(contract);
-  assert.ok(match, 'contract.ts declares its TEMPORAL_PRECISIONS list');
-  const authority = [...match[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual([...TEMPORAL_PRECISIONS], authority);
-  assert.deepEqual(authority.slice(0, 4), ['eon', 'era', 'epoch', 'age']);
+test('the schema precision list is the authority\'s list: the same spellings in the same order, coarsest first', () => {
+  // The authority's list is the contract's exported TEMPORAL_PRECISIONS (imported, not read from source).
+  assert.equal(TEMPORAL_PRECISIONS, CONTRACT_TEMPORAL_PRECISIONS, 'the schema re-exports the contract list itself');
+  assert.deepEqual(CONTRACT_TEMPORAL_PRECISIONS.slice(0, 4), ['eon', 'era', 'epoch', 'age']);
   // Every rung the list names is one the authority can expand.
-  for (const rung of authority) {
+  for (const rung of CONTRACT_TEMPORAL_PRECISIONS) {
     const unit = yearsPerUnit(rung);
     if (unit !== null) assert.ok(Number.isFinite(expandInstant('4500000000', rung).toMs), `${rung} expands a deep year`);
   }

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { viewportSchema } from "./canvas";
 import { colourTagSchema } from "./colour";
 import { temporalPlaceSchema } from "./place";
+import { TEMPORAL_PRECISIONS } from "../../../../../../src/techne/contract";
 
 const nullToUndefined = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess((value) => (value === null ? undefined : value), schema);
@@ -42,27 +43,9 @@ export const ENTITY_TYPES = [
 ] as const;
 export const entityTypeSchema = z.enum(ENTITY_TYPES);
 
-// Full precision ladder, in the authority's spelling and order, coarsest first
-// (desktop/cradle/src/techne/contract.ts TechneTemporalPrecision). Additive:
-// the six values from millennium down are unchanged; hour..subsecond are the
-// finer rungs the bridge previously coarsened to "day" (FINDINGS G1); eon,
-// era, epoch and age are the deep-time rungs above millennium (lane-2 T4).
-export const TEMPORAL_PRECISIONS = [
-  "eon",
-  "era",
-  "epoch",
-  "age",
-  "millennium",
-  "century",
-  "decade",
-  "year",
-  "month",
-  "day",
-  "hour",
-  "minute",
-  "second",
-  "subsecond",
-] as const;
+// The precision ladder, coarsest first, is the authority's own list
+// (desktop/cradle/src/techne/contract.ts), imported, never mirrored (lane-2 T4c).
+export { TEMPORAL_PRECISIONS };
 export const temporalPrecisionSchema = z.enum(TEMPORAL_PRECISIONS);
 
 export const CONTENT_ORIGINS = [

@@ -12,6 +12,7 @@ import { TimelineLens as RichTimelineLens, type TimelineDataSource } from "./Tim
 import { TimelineMinimap } from "./TimelineMinimap";
 import { timelineWindowForViewport, visibleSpanForViewport } from "./minimapGeometry";
 import { MIN_PIXELS_PER_YEAR, MAX_PIXELS_PER_YEAR } from "./scale";
+import { canonicalTemporalInstant, temporalYear } from "@research-canvas/schema";
 
 const EMPTY_WALK: TimelineWalk = { earthboundNodes: [], archetypeLayers: [] };
 const CONTROL_ZOOM_FACTOR = 1.6;
@@ -383,12 +384,10 @@ function yearPercent(year: number, window: TimelineTimeWindow): number {
   return Math.max(0, Math.min(100, ((year - window.startYear) / span) * 100));
 }
 
+/** The civil year of a dated expression, read through the schema's year door (lane-2 T4c). */
 function yearFromTemporal(value: string | null): number | null {
   if (!value) return null;
-  const match = /^(-?\d{1,6})(?:-|$)/.exec(value);
-  if (!match) return null;
-  const year = Number(match[1]);
-  return Number.isFinite(year) ? year : null;
+  return temporalYear(canonicalTemporalInstant(value));
 }
 
 function clampPixelsPerYear(value: number): number {

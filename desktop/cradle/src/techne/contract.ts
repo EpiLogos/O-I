@@ -528,7 +528,8 @@ function isInstrument(value: unknown): value is TechneInstrument {
   return typeof value === "string" && (TECHNE_INSTRUMENTS as readonly string[]).includes(value);
 }
 
-const TEMPORAL_PRECISIONS: readonly string[] = ["eon", "era", "epoch", "age", "millennium", "century", "decade", "year", "month", "day", "hour", "minute", "second", "subsecond"];
+/** The precision spellings, coarsest first. Exported so the schema can read this list rather than mirror it (lane-2 T4c). */
+export const TEMPORAL_PRECISIONS = ["eon", "era", "epoch", "age", "millennium", "century", "decade", "year", "month", "day", "hour", "minute", "second", "subsecond"] as const satisfies readonly TechneTemporalPrecision[];
 const PLACE_PRECISIONS: readonly string[] = ["exact", "approximate", "region", "unlocated"];
 const RESULT_CLASSES: readonly string[] = ["canonical", "deterministic", "semantic-stochastic", "research"];
 const TEMPORAL_KINDS: readonly string[] = ["occurrence", "receipt", "valid", "source-created", "source-modified", "day", "now", "session", "run", "generation", "presentation"];
@@ -570,7 +571,7 @@ export function validateTemporalFacet(value: unknown, label: string, errors: str
     errors.push(`${label}.label: must be a string of at most 256 characters or null`);
   if (!TEMPORAL_KINDS.includes(value.kind as string)) errors.push(`${label}.kind: not a temporal kind`);
   if (value.facet_ref !== undefined && !nullableRef(value.facet_ref)) errors.push(`${label}.facet_ref: must be a ref or null`);
-  if (value.precision !== undefined && !TEMPORAL_PRECISIONS.includes(value.precision as string)) errors.push(`${label}.precision: not a temporal precision`);
+  if (value.precision !== undefined && !(TEMPORAL_PRECISIONS as readonly string[]).includes(value.precision as string)) errors.push(`${label}.precision: not a temporal precision`);
   for (const key of ["day_ref", "now_ref", "session_ref", "run_ref", "attempt_ref", "return_ref"]) {
     if (value[key] !== undefined && !ref(value[key])) errors.push(`${label}.${key}: must be a ref`);
   }
@@ -584,7 +585,7 @@ export function validateTemporalFacet(value: unknown, label: string, errors: str
     if (!isObject(interval)) { errors.push(`${label}.interval: must be an object`); return; }
     keysAllowed(interval, ["from", "to", "from_precision", "to_precision"], `${label}.interval`, errors);
     for (const key of ["from", "to"]) if (interval[key] !== undefined && !stringOrNull(interval[key])) errors.push(`${label}.interval.${key}: must be a timestamp or null`);
-    for (const key of ["from_precision", "to_precision"]) if (interval[key] !== undefined && !TEMPORAL_PRECISIONS.includes(interval[key] as string)) errors.push(`${label}.interval.${key}: not a temporal precision`);
+    for (const key of ["from_precision", "to_precision"]) if (interval[key] !== undefined && !(TEMPORAL_PRECISIONS as readonly string[]).includes(interval[key] as string)) errors.push(`${label}.interval.${key}: not a temporal precision`);
   }
   if (!TEMPORAL_CARRIERS.some((carrier) => value[carrier] !== undefined)) {
     errors.push(`${label}: a temporal facet carries at least one of instant, interval, day_ref, now_ref, session_ref, run_ref`);
