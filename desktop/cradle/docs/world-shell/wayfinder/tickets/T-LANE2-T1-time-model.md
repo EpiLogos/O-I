@@ -211,3 +211,17 @@ order, not duration, so no invented days. The Relative tab appears only when
 a zero is warranted. Scripted: cradle 72 tests pass, deep-time digest
 unchanged. **T5b (queued):** declare the zero from the host
 (`expressions-boundary`); expose the projection on the scene reading channel.
+
+**T10 + T11 (landed `bf75f65fb`).** `causeChain.ts` walks the authority's
+`directedChains` over the cause family. A followed chain draws its hops
+numbered, at full standing strength on a dimmed field. Offsets appear only
+when both hops are dated; an undated hop says "no date disclosed". Follow
+moves the camera once. Chronology edges carry `standingOf` classes,
+arrowheads, the shared `StandingLegend` and the verbatim standing. The
+relation-type stroke stays (T3 ruling). Scripted: 15 new tests; timeline,
+chronology and relation suites 88 pass / 0 fail.
+
+Open:
+- `directedChains` can emit a sub-chain that repeats a longer chain's tail
+  (authority owner).
+- The relation field's standing chips have not moved to the shared legend.

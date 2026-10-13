@@ -44,3 +44,15 @@ and the kernel. One picker sits in the tool row, and the
 its card caption. Lead (kernel): research `frames` / `namedViews`, which the
 kernel had refused, are now admitted with the same bounds as the app.
 **A3 + A4 (dispatched):** connector kinds and labels; side-binding.
+
+**A3 + A4 (landed `bf75f65fb`, kernel `50f2e9a06`).** Connectors are
+straight, curved or elbow, with a midpoint label and bound sides. They are
+presentation records keyed by the native edge id (`canvasConnectors.ts`), and
+an absent record means today's routing. The native relation receipt is
+untouched. Validation is closed in both JS and the kernel. Lead: the host
+`connector` hook (one labelled undo entry), and `deleteConnection` prunes the
+edge's record.
+
+Open:
+- Parallel edges keep the sibling curve for straight and elbow kinds.
+- The side pick uses xyflow's nearest-handle highlight.
