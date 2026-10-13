@@ -94,4 +94,20 @@ by the lead's computer-use / headless-Playwright pass.
 
 ## Resolution
 
-—
+**Code landed (13 Oct 2026; host leg builder haiku + the lead's fixes).**
+`AtlasProjectionPanel.tsx` mounts the atlas lazily (its own chunk) over the
+World's provider; `registerAtlasHost.ts` admits `projection.earth` as a
+centre panel and both projection kinds at the cradle door (a second module
+is refused); Technē's lens bar cuts **Places** (Earth) and **Project / graph**
+(the field graph, through the controller's own `toggleMode`); hidden panes
+pause through `engine.setPaused`; atlas memory is keyed under the
+workspace's storage namespace. Lead fixes: AE's document-level CSS (`:root`
+tokens that collided with the shell's `--ink/--sans/--serif/--ease`, `*`,
+`html/body`, `button`, `a`, `:focus-visible`) scoped to `.atlas-host`
+(recorded in PORT-PIN); the atmosphere palette written on the pane, not the
+document; the practice store follows the host's binding (probed on use).
+Scripted: atlas-host 5/5, provider 9/9, pin check 0, tsc 0, vite build ok.
+Carried: the controller's window listeners outlive `destroy()` (the host
+claims the atlas once per session — hidden-inhabitant retention, so it is
+never unmounted in practice); a workspace-sets field would replace the
+namespaced keys. UI legs: the native screen pass.

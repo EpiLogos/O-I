@@ -1,0 +1,301 @@
+// The Earth projection in the shell: one atlas instance, mounted into one pane.
+//
+// The host leg of T-ATLAS-HOST (DEVICE-SEMANTICS-LOCK §8.1, §8.4). The atlas is the ported Archetypal-Earth code and is
+// mounted with mountAtlas; its own Earth ⇄ Graph switch is driven through its controller (toggleMode). Nothing of the
+// atlas is reimplemented here. What the host adds: the corpus provider is registered from the World
+// (archetypalEarthProvider), the atlas's three memories are bound to the workspace's storage namespace, and the pane's
+// lifecycle is the shell's: the atlas mounts on first view, pauses while concealed (the hidden-inhabitant law: the
+// instance survives), and is destroyed with its pane.
+//
+// The view (Earth or Graph) has no home in the spine: the spine holds no presentation (projectionModules.ts). It is held
+// here as a mirror of the atlas controller's own mode, which the atlas writes to body[data-mode] (graph/switch.ts). The
+// atlas owns the state; the lens bar reads the mirror.
+
+import {useEffect, useRef, useState, useSyncExternalStore} from 'react'
+import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import {useContinuity} from '../../continuity/workspace'
+import {useWorkspace} from '../../shell/workspace'
+import type {AtlasHandle} from './mount'
+import './atlasHost.css'
+
+export type AtlasView = 'earth' | 'graph'
+
+// ── the view ──────────────────────────────────────────────────────────────
+
+let desiredView: AtlasView = 'earth'
+let viewAsked = false
+const viewListeners = new Set<() => void>()
+let reconcileFollowed: (() => void) | null = null
+
+function mirrorView(next: AtlasView): void {
+  if (next === desiredView) return
+  desiredView = next
+  for (const listener of viewListeners) listener()
+}
+
+function subscribeView(listener: () => void): () => void {
+  viewListeners.add(listener)
+  return () => { viewListeners.delete(listener) }
+}
+
+/** The view the centre atlas presents, read by the lens bar. */
+export function useAtlasView(): AtlasView {
+  return useSyncExternalStore(subscribeView, () => desiredView, () => desiredView)
+}
+
+/** A lens asks for a view. The mounted atlas follows once it is presented; before its first mount the request waits. */
+export function presentAtlasView(view: AtlasView): void {
+  viewAsked = true
+  mirrorView(view)
+  reconcileFollowed?.()
+}
+
+// ── the workspace scope: the atlas's memories, per workspace id ───────────
+
+export interface AtlasHostScope {
+  /** the workspace book's storage namespace (continuity: storageNamespace.key) */
+  namespace: string
+  /** the active workspace id */
+  workspaceId: string
+}
+
+let scope: AtlasHostScope | null = null
+
+export function bindAtlasScope(next: AtlasHostScope): void {
+  scope = next
+}
+
+function localArea(): Storage | null {
+  try {
+    return globalThis.localStorage ?? null
+  } catch {
+    return null
+  }
+}
+
+/** The one Storage the atlas's memories are bound to: keys under the book's namespace, one set per workspace id. The
+ * atlas never names a key or an area itself. With no workspace bound, nothing is read and a write is refused, so the
+ * atlas's own probe finds no storage and says so, rather than keeping something nowhere. */
+function workspaceStorage(): Storage {
+  const prefix = (): string | null => (scope ? `${scope.namespace}.atlas.${scope.workspaceId}::` : null)
+  const owned = (): string[] => {
+    const p = prefix()
+    const area = localArea()
+    if (!p || !area) return []
+    const keys: string[] = []
+    for (let i = 0; i < area.length; i++) {
+      const key = area.key(i)
+      if (key?.startsWith(p)) keys.push(key)
+    }
+    return keys
+  }
+  const store: Storage = {
+    get length() {
+      return owned().length
+    },
+    key(index) {
+      const p = prefix()
+      const key = owned()[index]
+      return p && key ? key.slice(p.length) : null
+    },
+    getItem(key) {
+      const p = prefix()
+      const area = localArea()
+      if (!p || !area) return null
+      try {
+        return area.getItem(p + key)
+      } catch {
+        return null
+      }
+    },
+    setItem(key, value) {
+      const p = prefix()
+      const area = localArea()
+      if (!p || !area) throw Error('No workspace is bound for the Earth projection memory')
+      area.setItem(p + key, value)
+    },
+    removeItem(key) {
+      const p = prefix()
+      const area = localArea()
+      if (p && area) area.removeItem(p + key)
+    },
+    clear() {
+      const area = localArea()
+      for (const key of owned()) area?.removeItem(key)
+    },
+  }
+  return store
+}
+
+const sharedStorage = workspaceStorage()
+
+/** The atlas's memory Storage, as the host binds it (exported for the host tests). */
+export function atlasMemoryStorage(): Storage {
+  return sharedStorage
+}
+
+// ── the attachment: one atlas in one element ──────────────────────────────
+
+export interface AtlasAttachment {
+  setVisible(visible: boolean): void
+  unmount(): void
+}
+
+export interface AtlasAttachOptions {
+  /** the pane body the atlas fills */
+  element: HTMLElement
+  /** the kernel transport the corpus provider reads through */
+  transport: KernelTransportStatus
+  /** the centre atlas follows the view the lens bar presents; a projection-kind door holds its own fixed view */
+  follow: boolean
+  /** the fixed view when not following */
+  view?: AtlasView
+}
+
+/** The ported controller binds window and document listeners that its unmount does not retire (mount.ts, destroy). A
+ * second instance would therefore stack on the first, so the atlas is mounted once per session, and a retired one is
+ * not mounted again. */
+let claimed = false
+
+/** Mount the atlas into the element. Throws with the atlas's own honest message when it cannot mount. */
+export async function attachAtlas(options: AtlasAttachOptions): Promise<AtlasAttachment> {
+  if (claimed) throw Error('The Earth projection is already mounted in this session. Its controller keeps window listeners that cannot be retired, so it is not mounted again.')
+  if (!scope) throw Error('No workspace is bound for the Earth projection, so its settings have nowhere to live.')
+  claimed = true
+  const {element, transport, follow} = options
+  const fixedView: AtlasView = options.view ?? 'earth'
+  const target = (): AtlasView => (follow ? desiredView : fixedView)
+  element.replaceChildren()
+  const globe = document.createElement('div')
+  globe.id = 'globe'
+  globe.className = 'atlas-host-globe'
+  const app = document.createElement('div')
+  app.id = 'app'
+  app.className = 'atlas-host-app'
+  element.append(globe, app)
+
+  // Graph settings and the landing flag read their store at each call, so they follow this binding. The practice store is
+  // not so: practice/store.ts builds its singleton, and probes storage, when that module first evaluates. The import of
+  // it below precedes setPracticeStorage, so the singleton stays in memory for the session. A rebinding seam is needed
+  // in the port (OPEN: T-ATLAS-HOST, practice persistence).
+  const [settings, landing, practice] = await Promise.all([
+    import('./src/graph/settings'),
+    import('./src/shell/landing'),
+    import('./src/practice/store'),
+  ])
+  settings.setGraphSettingsStore(sharedStorage)
+  landing.setLandingStore(sharedStorage)
+  practice.setPracticeStorage(sharedStorage)
+  const [{registerCorpusProvider}, {archetypalEarthProvider, ARCHETYPAL_EARTH_PROVIDER_ID}, {mountAtlas}] = await Promise.all([
+    import('./provider/corpusProvider'),
+    import('./provider/archetypalEarthProvider'),
+    import('./mount'),
+  ])
+  registerCorpusProvider(archetypalEarthProvider(transport), {asDefault: true})
+  const mounted: AtlasHandle = await mountAtlas({globe, app, provider: ARCHETYPAL_EARTH_PROVIDER_ID})
+
+  let visible = true
+  let retired = false
+  const reconcile = () => {
+    if (retired || !visible) return
+    const current: AtlasView = mounted.ctl.state.graph ? 'graph' : 'earth'
+    if (current !== target()) mounted.ctl.toggleMode()
+  }
+  let observer: MutationObserver | null = null
+  if (follow) {
+    // A view asked before the atlas stood is honoured; otherwise the atlas's own state is adopted.
+    if (!viewAsked) mirrorView(mounted.ctl.state.graph ? 'graph' : 'earth')
+    viewAsked = false
+    reconcileFollowed = reconcile
+    observer = new MutationObserver(() => mirrorView(mounted.ctl.state.graph ? 'graph' : 'earth'))
+    observer.observe(document.body, {attributes: true, attributeFilter: ['data-mode']})
+  }
+  reconcile()
+
+  const setVisible = (next: boolean) => {
+    if (retired) return
+    visible = next
+    // the globe is not seen while concealed, and the graph is the view while the graph is on
+    mounted.engine.setPaused(!next || !!mounted.ctl.state.graph)
+    if (next) reconcile()
+  }
+  const unmount = () => {
+    if (retired) return
+    retired = true
+    observer?.disconnect()
+    if (reconcileFollowed === reconcile) reconcileFollowed = null
+    mounted.engine.setPaused(true)
+    mounted.destroy()
+  }
+  return {setVisible, unmount}
+}
+
+// ── the centre pane ───────────────────────────────────────────────────────
+
+/** The Earth centre panel: mounts the atlas on first view, then keeps it through concealment. */
+export function AtlasEarthPane() {
+  const {transport} = useWorkspace()
+  const continuity = useContinuity()
+  const namespace = continuity.storageNamespace.key
+  const workspaceId = continuity.current.id
+  const wrapper = useRef<HTMLDivElement>(null)
+  const body = useRef<HTMLDivElement>(null)
+  const attachment = useRef<AtlasAttachment | null>(null)
+  const wantVisible = useRef(false)
+  const started = useRef(false)
+  const transportRef = useRef(transport)
+  transportRef.current = transport
+  const [phase, setPhase] = useState<{state: 'waiting' | 'reading' | 'ready' | 'failed'; message?: string}>({state: 'waiting'})
+
+  useEffect(() => {
+    bindAtlasScope({namespace, workspaceId})
+  }, [namespace, workspaceId])
+
+  useEffect(() => {
+    const element = wrapper.current
+    if (!element || typeof IntersectionObserver === 'undefined') return
+    let alive = true
+    const start = () => {
+      if (started.current) return
+      started.current = true
+      setPhase({state: 'reading'})
+      attachAtlas({element: body.current!, transport: transportRef.current, follow: true})
+        .then(next => {
+          if (!alive) {
+            next.unmount()
+            return
+          }
+          attachment.current = next
+          next.setVisible(wantVisible.current)
+          setPhase({state: 'ready'})
+        })
+        .catch((error: unknown) => {
+          if (alive) setPhase({state: 'failed', message: error instanceof Error ? error.message : String(error)})
+        })
+    }
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        wantVisible.current = entry.isIntersecting
+        if (entry.isIntersecting) start()
+        attachment.current?.setVisible(entry.isIntersecting)
+      }
+    })
+    observer.observe(element)
+    return () => {
+      alive = false
+      observer.disconnect()
+      attachment.current?.unmount()
+      attachment.current = null
+    }
+  }, [])
+
+  const text = phase.state === 'failed'
+    ? `The Earth could not mount: ${phase.message ?? 'unknown error'}`
+    : phase.state === 'reading' ? 'Reading the field…' : null
+  return (
+    <div ref={wrapper} className="atlas-host" data-atlas-phase={phase.state} data-projection-kind="projection.earth">
+      <div ref={body} className="atlas-host-body" />
+      {text && <p role={phase.state === 'failed' ? 'alert' : 'status'} className="atlas-host-status">{text}</p>}
+    </div>
+  )
+}

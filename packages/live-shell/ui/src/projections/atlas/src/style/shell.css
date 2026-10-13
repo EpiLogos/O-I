@@ -2,7 +2,7 @@
    top right; the menu (a popover on a desktop, a bottom sheet on a phone); filter chips; the panel for panel lenses.
    Touch targets are at least 44px wherever the pointer is coarse. */
 
-:root {
+.atlas-host { /* [§8.4 host] scoped (was :root) */
   --shell-x: 22px;
   --shell-y: 18px;
   /* where top-left content (the focus label, the sky's names) begins, under the lens button */
@@ -139,7 +139,7 @@ body.panel-open .reveal { opacity: 0 !important; pointer-events: none !important
 
 /* ── phones: the menu and the panel are bottom sheets; targets grow to 44px ───── */
 @media (max-width: 760px) {
-  :root { --shell-x: 14px; --shell-y: 12px; --shell-below: 66px; }
+  .atlas-host { --shell-x: 14px; --shell-y: 12px; --shell-below: 66px; }
   .shell { max-width: calc(100vw - 2 * var(--shell-x) - 100px); }
   .sh-lens { height: var(--tap); padding: 0 14px 0 12px; }
   .sh-title { margin-top: 10px; font-size: 1.3rem; }
