@@ -135,8 +135,8 @@ test('an unedited parameter outside the vocabulary is not a difference',()=>{
 
 test('each remaining refusal is named, and the named set is exactly UNEXPRESSIBLE',()=>{
  assert.deepEqual(Object.keys(UNEXPRESSIBLE).sort(),[
-  'composition_removal','new_entity_unplaced','non_finite_number','parameter_outside_editable','parameter_removal',
-  'text_value','undefined_scene_entity','unsupported_properties','unsupported_scene_material',
+  'composition_removal','entity_rename','new_entity_unplaced','non_finite_number','owner_metadata','parameter_outside_editable','parameter_removal',
+  'representation_removal','source_relation','text_value','undefined_scene_entity','unsupported_properties','unsupported_scene_material',
  ]);
  const cases=[
   ['parameter_removal',e=>{delete e.entities[X].parameters.x;},'x'],

@@ -117,7 +117,7 @@ export async function readKernelExpression(ref:string):Promise<unknown>{
 }
 
 /** The kernel's Change grammar (oi.expression/v1), wire form: every kind the
- * documentToChanges diff below can emit. */
+ * documentToChanges diff below can emit (kernel expression.rs `Change`). */
 type KernelChange =
  |{change:"rename";title:string}
  |{change:"scene_create";scene_ref:string;title:string}
@@ -127,13 +127,29 @@ type KernelChange =
  |{change:"scene_compose";scene_ref:string;entity_refs:string[]}
  |{change:"scene_material_set";scene_ref:string;presentation:{schema:'oi.journey-scene/v1';scene:unknown;saved?:unknown}}
  |{change:"scene_material_clear";scene_ref:string}
+ |{change:"scene_performance_set";scene_ref:string;performance:unknown}
+ |{change:"scene_performance_clear";scene_ref:string}
+ |{change:"scene_body_set";scene_ref:string;body:unknown}
+ |{change:"scene_body_clear";scene_ref:string}
+ |{change:"scene_trigger_attach";scene_ref:string;trigger:unknown}
+ |{change:"scene_trigger_detach";trigger_ref:string}
  |{change:"entity_add";scene_ref:string;entity_ref:string;title:string}
  |{change:"entity_remove";entity_ref:string}
+ |{change:"entity_pin";entity_ref:string;pinned:boolean}
  |{change:"subject_bind";entity_ref:string;binding:KernelSubject}
  |{change:"subject_unbind";entity_ref:string}
  |{change:"parameter_set";entity_ref:string;parameter:string;value:string|number}
  |{change:"parameter_automate";entity_ref:string;parameter:string;automation:NonNullable<KernelParameter['automation']>}
  |{change:"parameter_manual";entity_ref:string;parameter:string}
+ |{change:"relation_bind";binding:unknown}
+ |{change:"relation_remove";binding_ref:string}
+ |{change:"relation_focus";scene_ref:string;binding_ref:string}
+ |{change:"representation_bind";binding:unknown}
+ |{change:"profile_adopt";adoption:unknown}
+ |{change:"profile_release";profile_ref:string}
+ |{change:"collections_set";collections:string[]}
+ |{change:"reuse_set";reuse:unknown}
+ |{change:"reuse_clear"}
  |{change:"composition_set";presentation:unknown}
  |{change:"focus";scene_ref:string;entity_ref:string|null};
 
@@ -154,9 +170,13 @@ const isDocument=(doc:unknown):doc is KernelExpressionDocument=>
 
 const sameJson=(a:unknown,b:unknown)=>JSON.stringify(a)===JSON.stringify(b);
 
-/** The refusals that remain after the E20 diff. Each names a difference the
- * kernel's own Change grammar cannot express; every other difference the
- * editor can make is emitted as kernel changes, and none is dropped. */
+/** The one list of refusals, shared by the document diff and the live
+ * composition path. Each names a difference the kernel's Change grammar cannot
+ * carry (no change removes a parameter, a representation, or sets an entity
+ * title), or one the owner rules forbid an Expression edit to carry
+ * (source_relation: only O:I connections are edited here; owner_metadata:
+ * provenance and refinements have their own owner operations). Every other
+ * difference is emitted as kernel changes; none is dropped. */
 export const UNEXPRESSIBLE={
  parameter_removal:'no kernel change removes a parameter from an entity',
  parameter_outside_editable:'the parameter is outside the kernel\'s own parameter vocabulary (EDITABLE)',
@@ -167,6 +187,10 @@ export const UNEXPRESSIBLE={
  unsupported_scene_material:'Scene material must be oi.journey-scene/v1 with a scene object',
  unsupported_properties:'the Expression properties must be oi.journey-properties/v1',
  composition_removal:'no kernel change clears the Expression properties; the kernel can only set them',
+ entity_rename:'the kernel sets an entity title only when the entity is added; no change renames an entity',
+ representation_removal:'no kernel change removes a representation binding; representation_bind only adds or replaces',
+ owner_metadata:'document provenance and refinements change only through their own owner operations (propose, review), not an edit',
+ source_relation:'a source-owned relation changes only through its source owner; an Expression edit carries only O:I connections',
 } as const;
 const refuse=(reason:keyof typeof UNEXPRESSIBLE,subject:string):{error:string}=>({error:`${subject} is not expressible as a kernel edit in this cut: ${UNEXPRESSIBLE[reason]}`});
 
@@ -192,16 +216,38 @@ function parameterChanges(ref:string,key:string,was:KernelParameter|undefined,p:
  return{changes};
 }
 
+/** Kernel document rows, read without trusting their shape. */
+const at=(value:unknown,key:string):unknown=>value&&typeof value==='object'?(value as Record<string,unknown>)[key]:undefined;
+const ownerOf=(row:unknown):string=>String(at(row,'native_owner')??'');
+const rowsOf=(rows:unknown):unknown[]=>Array.isArray(rows)?rows:[];
+function keyed(rows:unknown,keyOf:(row:unknown)=>string):Map<string,unknown>{const out=new Map<string,unknown>();for(const row of rowsOf(rows))out.set(keyOf(row),row);return out;}
+/** Every trigger of a Scene list, keyed by trigger_ref, with the Scene that carries it. */
+function triggersOf(scenes:unknown):Map<string,{scene_ref:string;trigger:unknown}>{
+ const out=new Map<string,{scene_ref:string;trigger:unknown}>();
+ for(const scene of rowsOf(scenes))for(const trigger of rowsOf(at(scene,'triggers')))out.set(String(at(trigger,'trigger_ref')),{scene_ref:String(at(scene,'scene_ref')),trigger});
+ return out;
+}
+
 /** Diff the app's edited document against the kernel's current document and
  * express the difference in the kernel's own Change grammar, applied in the
  * order emitted within one atomic edit. Differences this cut cannot express
  * are returned as a named refusal (see UNEXPRESSIBLE) — never force-written,
- * never dropped. */
+ * never dropped. The live composition path (kernelComposition.ts) builds its
+ * edit from the same grammar; the shared kinds of both paths are pinned by
+ * tests/commit-grammar-parity.test.mjs. */
 export function documentToChanges(current:unknown,edited:unknown):{changes:KernelChange[]}|{error:string}{
  if(!isDocument(edited))return{error:'the document is not an oi.expression/v1 expression'};
  if(!isDocument(current))return{error:'the kernel holds no readable document to diff against'};
+ if(edited.expression_ref!==current.expression_ref)return{error:'the edited document addresses a different Expression than the kernel holds'};
+ const was=current as unknown as Record<string,unknown>,now=edited as unknown as Record<string,unknown>;
+ // Refusals come before any change: nothing partial is returned.
+ if(!sameJson(was.provenance??[],now.provenance??[])||!sameJson(was.refinements??[],now.refinements??[]))return refuse('owner_metadata','the document provenance and refinements');
  const changes:KernelChange[]=[];
  if(edited.title!==current.title)changes.push({change:'rename',title:edited.title});
+ // A trigger that is gone, moved or changed detaches first, so a removed Scene
+ // never leaves a dangling trigger behind (the kernel validates triggers whole).
+ const currentTriggers=triggersOf(current.scenes),editedTriggers=triggersOf(edited.scenes);
+ for(const [ref,old] of currentTriggers){const next=editedTriggers.get(ref);if(!next||next.scene_ref!==old.scene_ref||!sameJson(next.trigger,old.trigger))changes.push({change:'scene_trigger_detach',trigger_ref:ref});}
  const currentScenes=new Map((current.scenes as any[]).map(s=>[s.scene_ref,s]));
  const editedScenes=new Map((edited.scenes as any[]).map(s=>[s.scene_ref,s]));
  // create before remove: the kernel keeps at least one Scene (expression.rs "An Expression retains at least one Scene"),
@@ -217,6 +263,15 @@ export function documentToChanges(current:unknown,edited:unknown):{changes:Kerne
  const afterCreate=[...current.scenes.map(s=>s.scene_ref).filter(ref=>editedScenes.has(ref)),...[...editedScenes.keys()].filter(ref=>!currentScenes.has(ref))];
  const editedOrder=[...editedScenes.keys()];
  if(!sameJson(afterCreate,editedOrder))changes.push({change:'scene_reorder',scene_refs:editedOrder});
+ // A relation that is gone leaves before its entities do: the kernel drops a
+ // relation touching a removed entity without a report, so it must be removed first.
+ const currentRelations=new Map(Object.entries((was.relations??{}) as Record<string,unknown>));
+ const editedRelations=new Map(Object.entries((now.relations??{}) as Record<string,unknown>));
+ for(const [ref,old] of currentRelations){
+  if(editedRelations.has(ref)&&sameJson(editedRelations.get(ref),old))continue;
+  if(ownerOf(old)!=='oi')return refuse('source_relation',`relation ${ref}`);
+  if(!editedRelations.has(ref))changes.push({change:'relation_remove',binding_ref:ref});
+ }
  const currentEntities=new Map(Object.entries(current.entities??{}));
  const editedEntities=new Map(Object.entries(edited.entities??{}));
  const homeOf=new Map<string,string>();
@@ -237,6 +292,8 @@ export function documentToChanges(current:unknown,edited:unknown):{changes:Kerne
     changes.push(...part.changes);
    }
   }else{
+   // The kernel sets an entity title only at entity_add; a renamed entity is refused, never dropped.
+   if(before.title!==now.title)return refuse('entity_rename',`entity ${ref}`);
    const parameters=now.parameters??{};
    const beforeParameters=before.parameters??{};
    for(const [key,p] of Object.entries(parameters) as [string,KernelParameter][]){
@@ -249,6 +306,8 @@ export function documentToChanges(current:unknown,edited:unknown):{changes:Kerne
   // Subject: bind the edited binding, or unbind when it was cleared.
   const beforeSubject=before?.subject??null,nowSubject=now.subject??null;
   if(!sameJson(beforeSubject,nowSubject))changes.push(nowSubject===null?{change:'subject_unbind',entity_ref:ref}:{change:'subject_bind',entity_ref:ref,binding:nowSubject});
+  // A world-position pin is a flag on the occurrence (kernel EntityPin).
+  if(Boolean(before?.pinned)!==Boolean(now.pinned))changes.push({change:'entity_pin',entity_ref:ref,pinned:Boolean(now.pinned)});
  }
  for(const [sceneRef,scene] of editedScenes){
   const before=currentScenes.get(sceneRef);
@@ -256,6 +315,38 @@ export function documentToChanges(current:unknown,edited:unknown):{changes:Kerne
   for(const entityRef of refs)if(!editedEntities.has(entityRef))return refuse('undefined_scene_entity',`scene ${sceneRef} carries entity ${entityRef}`);
   if(!before||!sameJson((before as any).entity_refs??[],refs))changes.push({change:'scene_compose',scene_ref:sceneRef,entity_refs:refs});
  }
+ // Scene-level kernel carriers, whole: a body and a performance are set, or cleared when removed.
+ for(const [sceneRef,scene] of editedScenes){
+  const before=currentScenes.get(sceneRef);
+  const body=at(scene,'body')??null,wasBody=at(before,'body')??null;
+  if(!sameJson(wasBody,body))changes.push(body===null?{change:'scene_body_clear',scene_ref:sceneRef}:{change:'scene_body_set',scene_ref:sceneRef,body});
+  const performance=at(scene,'performance')??null,wasPerformance=at(before,'performance')??null;
+  if(!sameJson(wasPerformance,performance))changes.push(performance===null?{change:'scene_performance_clear',scene_ref:sceneRef}:{change:'scene_performance_set',scene_ref:sceneRef,performance});
+ }
+ // Connections and relation bindings: a changed or new binding is bound whole; the kernel has no relation-owner rule of its own, so the source-owner rule is kept here.
+ for(const [ref,next] of editedRelations){
+  const old=currentRelations.get(ref);
+  if(old!==undefined&&sameJson(old,next))continue;
+  if(ownerOf(next)!=='oi')return refuse('source_relation',`relation ${ref}`);
+  changes.push({change:'relation_bind',binding:next});
+ }
+ // Representation bindings add or replace; the kernel has no removal.
+ const repRef=(row:unknown)=>String(at(at(row,'representation'),'ref')??'');
+ const currentReps=keyed(was.representations,repRef),editedReps=keyed(now.representations,repRef);
+ for(const ref of currentReps.keys())if(!editedReps.has(ref))return refuse('representation_removal',`representation ${ref}`);
+ for(const [ref,rep] of editedReps)if(!sameJson(currentReps.get(ref),rep))changes.push({change:'representation_bind',binding:rep});
+ // Scene triggers: a new or changed trigger attaches after its Scene and entities exist.
+ for(const [ref,next] of editedTriggers){const old=currentTriggers.get(ref);if(!old||old.scene_ref!==next.scene_ref||!sameJson(old.trigger,next.trigger))changes.push({change:'scene_trigger_attach',scene_ref:next.scene_ref,trigger:next.trigger});}
+ // Profile adoptions: released when gone, adopted when new or changed.
+ const profileKey=(row:unknown)=>String(at(row,'profile_ref')??'');
+ const currentProfiles=keyed(was.profiles,profileKey),editedProfiles=keyed(now.profiles,profileKey);
+ for(const ref of currentProfiles.keys())if(!editedProfiles.has(ref))changes.push({change:'profile_release',profile_ref:ref});
+ for(const [ref,profile] of editedProfiles)if(!sameJson(currentProfiles.get(ref),profile))changes.push({change:'profile_adopt',adoption:profile});
+ const collectionsWas=rowsOf(was.collections) as string[],collectionsNow=rowsOf(now.collections) as string[];
+ if(!sameJson(collectionsWas,collectionsNow))changes.push({change:'collections_set',collections:[...collectionsNow]});
+ // Reusable material: set whole, or cleared when removed.
+ const reuseWas=was.reuse??null,reuseNow=now.reuse??null;
+ if(!sameJson(reuseWas,reuseNow))changes.push(reuseNow===null?{change:'reuse_clear'}:{change:'reuse_set',reuse:reuseNow});
  // Rich Scene material: a changed presentation returns whole through the
  // native composition path, after membership so its occurrences resolve; a
  // removed presentation is the kernel's scene_material_clear.
@@ -277,8 +368,11 @@ export function documentToChanges(current:unknown,edited:unknown):{changes:Kerne
   if(properties.schema!=='oi.journey-properties/v1')return refuse('unsupported_properties','the Expression properties');
   changes.push({change:'composition_set',presentation:properties});
  }
+ // A selected relation occurrence is relation_focus; an entity or scene selection is focus.
  const selection=(edited as any).selection;
- if(selection&&typeof selection.scene_ref==='string'&&(!current || !sameJson((current as any).selection,selection)))changes.push({change:'focus',scene_ref:selection.scene_ref,entity_ref:selection.entity_ref??null});
+ if(selection&&typeof selection.scene_ref==='string'&&!sameJson((current as any).selection??null,selection))changes.push(typeof selection.relation_ref==='string'&&selection.relation_ref
+  ?{change:'relation_focus',scene_ref:selection.scene_ref,binding_ref:selection.relation_ref}
+  :{change:'focus',scene_ref:selection.scene_ref,entity_ref:selection.entity_ref??null});
  return{changes};
 }
 
