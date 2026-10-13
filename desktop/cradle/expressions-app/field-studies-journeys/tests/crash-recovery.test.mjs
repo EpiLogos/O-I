@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {blankJourney,blankScene,clone,validateJourney} from '../build/model.js';
-import {recoveryOffer,planRecoveryChoice,draftCopy,readUncleanExit,markSessionOpen,markSessionClosed,offerClock,SESSION_MARK_KEY,TAB_INSTANCE_KEY,tabInstance,recordBootExit,bootWasUnclean,writeRecord,loadRecord,removeRecord,listQuarantine,quarantine} from '../build/draftStorage.js';
+import {recoveryOffer,planRecoveryChoice,draftCopy,readUncleanExit,markSessionOpen,markSessionClosed,offerClock,SESSION_MARK_KEY,TAB_INSTANCE_KEY,tabInstance,recordBootExit,bootWasUnclean,writeRecord,loadRecord,removeRecord,listQuarantine,quarantine,quarantinedCopy,quarantinedName,encodeSlot} from '../build/draftStorage.js';
 
 // lane-3 E19: after an unclean exit, the draft and the last saved copy are both kept and the owner chooses.
 const T0='2026-10-13T09:00:00.000Z',T1='2026-10-13T09:05:00.000Z',T2='2026-10-13T09:07:30.000Z';
@@ -41,11 +41,18 @@ test('no offer when the saved copy is newer, or the two are different expression
  assert.match(recoveryOffer({draft,uncleanExit:true}).reason,/no draft and saved copy/);
 });
 
-test('restore draft opens the draft and removes nothing', ()=>{
+// T-REVIEW-6 (2): restoring the draft used to keep nothing of the saved side, so the next autosave replaced the saved copy.
+// The saved copy is now preserved as its own named Library copy before the draft becomes the working copy.
+test('restore draft keeps the saved copy as its own named Library copy first, then opens the draft and removes nothing', ()=>{
  const saved=expression('e1','Saved',T0),draft=expression('e1','Saved',T1,2);
  const plan=planRecoveryChoice('restore-draft',draft,saved,new Date(2026,9,13,9,8));
  assert.equal(material(plan.open),material(draft));
- assert.equal(plan.removeDraft,false);assert.equal(plan.quarantineDraft,false);assert.equal(plan.copy,undefined);
+ assert.equal(plan.removeDraft,false);assert.equal(plan.quarantineDraft,false);
+ assert.ok(plan.copy,'the saved copy is preserved before the draft becomes the working copy');
+ assert.notEqual(plan.copy.id,'e1','a new identity, so later autosaves of the draft cannot replace it');
+ const body=j=>{const c=clone(j);delete c.id;delete c.name;delete c.updatedAt;return JSON.stringify(c);};
+ assert.equal(body(plan.copy),body(saved),'the saved material is kept exactly');
+ assert.match(plan.copy.name,/^Saved · saved before recovery 09:08$/);
 });
 
 test('keep saved opens the saved copy and sends the draft to quarantine, not to deletion', ()=>{
@@ -230,4 +237,46 @@ test('E19b: the native open settles its recovery through the same plan, before a
  assert.ok(app.includes('chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision})'),'the owner is asked with the kernel revision named');
  assert.ok(app.indexOf('recordBootExit(uncleanExit)')<app.indexOf("if(!window.__JOURNEY__&&!qs.has('journey')&&!qsExpression)"),'a hosted boot records its mark too');
  assert.ok(app.includes('let uncleanExit=false;try{uncleanExit=readUncleanExit(localStorage);markSessionOpen(localStorage,new Date());}catch'),'one reading of the tab mark, before this page marks itself open');
+});
+
+// T-REVIEW-6 (3a): a quarantined draft restores as a new Library copy only when it validates now; a refusal names the reason.
+test('T-REVIEW-6: a quarantined draft restores as a new Library copy only when it validates; otherwise the refusal names the reason', ()=>{
+ const good=expression('e9','Quarantined',T1,2);
+ const copy=quarantinedCopy(JSON.stringify(good),new Date(2026,9,13,10,30));
+ assert.notEqual(copy.id,'e9');
+ assert.match(copy.name,/^Quarantined · restored draft 10:30$/);
+ assert.equal(copy.scenes.length,2,'the copy holds the quarantined material');
+ assert.equal(quarantinedCopy(encodeSlot(3,JSON.stringify(good)),new Date(2026,9,13,10,31)).scenes.length,2,'a kept slot envelope is unwrapped');
+ assert.throws(()=>quarantinedCopy(JSON.stringify({...good,scenes:'nope'}),new Date()),/cannot be restored: .+/);
+ assert.throws(()=>quarantinedCopy('not json',new Date()),/cannot be restored/);
+ assert.equal(quarantinedName(JSON.stringify(good),'fallback'),'Quarantined','the listing names the draft');
+ assert.equal(quarantinedName('not json','fallback'),'fallback','an unreadable draft is listed by its key');
+});
+
+// T-REVIEW-6 (1, 4, 5c): the boot holds the draft while the owner decides; quit writes the clean mark before its flush;
+// deleting one saved copy cancels the backup only when that copy is the open document. These are wiring pins on app.ts.
+test('T-REVIEW-6: the recovery choice holds the draft from the dialog until its plan is kept, and a held draft is never written', ()=>{
+ const source=fs.readFileSync(new URL('../src/app.ts',import.meta.url),'utf8');
+ const boot=source.slice(source.indexOf('if(draft&&saved&&offer.offer){'),source.indexOf('else if(draft&&(!initial.updatedAt'));
+ assert.ok(boot.includes('recoveryOfferOpen=true'),'the draft is held');
+ assert.ok(boot.indexOf('recoveryOfferOpen=true')<boot.indexOf('await askRecoveryChoice(draft,offer)'),'held before the dialog opens');
+ assert.ok(boot.indexOf('await applyRecoveryPlan(plan,draft)')<boot.indexOf('recoveryOfferOpen=false'),'released only after the plan is kept');
+ assert.ok(/!recoveryOfferOpen\)await writeDraft\(previous\)/.test(source),'a departing write cannot replace the held draft');
+ assert.ok(/held:\(\)=>recoveryOfferOpen/.test(source),'the schedule reads the hold');
+});
+
+test('T-REVIEW-6: quit returns at once while a recovery choice is open, and writes the clean mark before its asynchronous flush', ()=>{
+ const source=fs.readFileSync(new URL('../src/app.ts',import.meta.url),'utf8');
+ const body=source.slice(source.indexOf('function quitDraft('),source.indexOf("window.addEventListener('pagehide'"));
+ const flush=body.indexOf("flushNow('quit')"),sync=body.indexOf('markSessionClosed(localStorage');
+ assert.ok(body.indexOf('if(recoveryOfferOpen)return')>=0&&body.indexOf('if(recoveryOfferOpen)return')<flush,'a held draft returns before any write');
+ assert.ok(sync>=0&&flush>=0&&sync<flush,'an idle exit is marked in the handler, before an unload can cut the flush short');
+});
+
+test('T-REVIEW-6: deleting a saved copy cancels the backup only when that copy is the open document', ()=>{
+ const source=fs.readFileSync(new URL('../src/app.ts',import.meta.url),'utf8');
+ const line=source.split('\n').find(l=>l.includes("case 'delete-saved':"));
+ assert.ok(line,'delete-saved is wired');
+ assert.ok(line.includes('if(store.document.id===id)draftSchedule.cancel()'),'cancel only for the open document');
+ assert.ok(!/;draftSchedule\.cancel\(\);/.test(line),'no unconditional cancel for another saved copy');
 });

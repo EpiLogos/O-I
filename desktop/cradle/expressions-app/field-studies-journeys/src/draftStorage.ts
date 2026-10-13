@@ -38,7 +38,7 @@ export function encodeSlot(seq:number,body:string):string{return JSON.stringify(
 export interface PairReading{
  /** The newest valid body; a pre-pair value at the bare key when no valid slot exists; otherwise undefined. */
  body:string|undefined;seq:number;legacy:boolean;
- /** Every copy that is present, verbatim, whether valid or damaged. */
+ /** Every copy that is present, verbatim, whether valid or damaged. A pre-pair value at the bare key is always one of them (T-REVIEW-6). */
  present:{slot:string;raw:string}[];
  /** Slots that are present but unreadable. */
  damaged:{slot:string;raw:string}[];
@@ -50,18 +50,22 @@ export async function readPair(store:KeyStore,key:string):Promise<PairReading>{
  const readings=found.map(({slot,raw})=>({slot,reading:readSlot(raw)}));
  const damaged=readings.flatMap(({slot,reading})=>reading.state==='damaged'?[{slot,raw:reading.raw}]:[]);
  const valid=readings.flatMap(({reading})=>reading.state==='valid'?[reading]:[]);
- if(valid.length){const best=valid.reduce((x,y)=>y.seq>x.seq?y:x);return {body:best.body,seq:best.seq,legacy:false,present,damaged};}
  const legacy=await store.get(key);
- return {body:legacy,seq:0,legacy:legacy!==undefined,present:legacy===undefined?present:[...present,{slot:key,raw:legacy}],damaged};
+ const copies=legacy===undefined?present:[...present,{slot:key,raw:legacy}];
+ if(valid.length){const best=valid.reduce((x,y)=>y.seq>x.seq?y:x);return {body:best.body,seq:best.seq,legacy:false,present:copies,damaged};}
+ return {body:legacy,seq:0,legacy:legacy!==undefined,present:copies,damaged};
 }
-/** Write one body as the next version. Every damaged slot is quarantined (by the callback) before it can be overwritten; if that throws, nothing is written. */
-export async function writePair(store:KeyStore,key:string,body:string,quarantineDamaged:(slot:string,raw:string)=>Promise<void>):Promise<number>{
+/** Write one body as the next version. Every damaged slot is quarantined (by the callback) before it can be overwritten; if that throws, nothing is written.
+ * A pre-pair bare value is retired only after the new version reads back, and its verbatim copy is kept first (retireBare). */
+export async function writePair(store:KeyStore,key:string,body:string,quarantineDamaged:(slot:string,raw:string)=>Promise<void>,retireBare?:(raw:string)=>Promise<void>):Promise<number>{
  const current=await readPair(store,key);
  for(const {slot,raw} of current.damaged)await quarantineDamaged(slot,raw);
  const seq=current.seq+1,slot=`${key}#${seq%2===1?'a':'b'}`,encoded=encodeSlot(seq,body);
  await store.put(slot,encoded);
  const back=readSlot(await store.get(slot));
  if(back.state!=='valid'||back.seq!==seq||back.body!==body)throw new Error('The draft backup could not be verified. The previous copy is retained.');
+ const bare=current.present.find(copy=>copy.slot===key);
+ if(bare&&retireBare){await retireBare(bare.raw);await store.delete(key);}
  return seq;
 }
 /** Remove every slot and any legacy value of one record. */
@@ -91,44 +95,74 @@ export async function listQuarantine(store:KeyStore):Promise<{records:Quarantine
 /** Where one record family lives. `paired` selects the versioned-pair write (localStorage); IndexedDB keys are atomic and are used directly. */
 export interface RecordLayout{store:KeyStore;quarantine:KeyStore;prefix:string;paired:boolean;source:string}
 const SLOT_DAMAGE='The record was torn or damaged by an interrupted write. Its verbatim copy is kept here.';
-/** Write one record. Damaged slots are quarantined before any overwrite; a failed read-back throws and keeps the previous copy. */
-export async function writeRecord(layout:RecordLayout,key:string,body:string,at:Date):Promise<void>{
+const LEGACY_VALUE='A value from before the versioned record format, superseded by the record that replaces it. Its verbatim copy is kept here.';
+const SUPERSEDED='Superseded by a newer draft. It did not validate, so it was never adopted. Its verbatim copy is kept here.';
+function acceptable(raw:string,validate:(value:unknown)=>unknown):boolean{try{validate(JSON.parse(raw));return true;}catch{return false;}}
+/** Write one record. Damaged slots are quarantined before any overwrite; a record that does not validate is kept verbatim before
+ * a newer write replaces it (T-REVIEW-6); a failed read-back throws and keeps the previous copy. */
+export async function writeRecord(layout:RecordLayout,key:string,body:string,at:Date,validate?:(value:unknown)=>unknown):Promise<void>{
  const full=layout.prefix+key;
- if(!layout.paired){await layout.store.put(full,body);return;}
- await writePair(layout.store,full,body,async(slot,raw)=>{await quarantine(layout.quarantine,layout.source,slot,raw,SLOT_DAMAGE,at);await layout.store.delete(slot);});
+ if(!layout.paired){
+  const current=await layout.store.get(full);
+  if(current!==undefined&&validate&&!acceptable(current,validate))await quarantine(layout.quarantine,layout.source,full,current,SUPERSEDED,at);
+  await layout.store.put(full,body);return;
+ }
+ if(validate){
+  const reading=await readPair(layout.store,full);
+  if(reading.body!==undefined&&!acceptable(reading.body,validate))
+   for(const copy of reading.present)if(!reading.damaged.some(d=>d.slot===copy.slot))await quarantine(layout.quarantine,layout.source,copy.slot,copy.raw,SUPERSEDED,at);
+ }
+ await writePair(layout.store,full,body,async(slot,raw)=>{await quarantine(layout.quarantine,layout.source,slot,raw,SLOT_DAMAGE,at);await layout.store.delete(slot);},async raw=>{await quarantine(layout.quarantine,layout.source,full,raw,LEGACY_VALUE,at);});
 }
-export interface LoadedRecord<T>{value?:T;quarantined:string[]}
-/** Read and validate one record. Damaged slots and records that fail validation are quarantined, never adopted and never silently dropped. */
+export interface LoadedRecord<T>{value?:T;quarantined:string[];/** Bytes that parse but do not validate: kept in place, reported, never adopted. */rejected?:string}
+/** Read and validate one record. Only damaged bytes (unreadable slots, unparseable text) are quarantined. A record that parses but fails validation
+ * stays where it is, is reported with its reason, and is never adopted (T-REVIEW-6). */
 export async function loadRecord<T>(layout:RecordLayout,key:string,validate:(value:unknown)=>T,at:Date):Promise<LoadedRecord<T>>{
  const full=layout.prefix+key,quarantined:string[]=[];
  const reading:PairReading=layout.paired?await readPair(layout.store,full):{body:await layout.store.get(full),present:[],damaged:[],seq:0,legacy:false};
  for(const {slot,raw} of reading.damaged){await quarantine(layout.quarantine,layout.source,slot,raw,SLOT_DAMAGE,at);await layout.store.delete(slot);quarantined.push(slot);}
  if(reading.body===undefined)return {quarantined};
- let value:T;
- try{value=validate(JSON.parse(reading.body));}
+ let parsed:unknown;
+ try{parsed=JSON.parse(reading.body);}
  catch(error){
   const reason=`Unreadable ${layout.source}: ${error instanceof Error?error.message:String(error)}`;
-  // Every present copy is kept verbatim, so an older good slot is never lost with the bad one.
+  // Every present copy is kept verbatim, so an older good slot is never lost with the damaged one.
   const copies=layout.paired&&reading.present.length?reading.present:[{slot:full,raw:reading.body}];
   for(const {slot,raw} of copies)await quarantine(layout.quarantine,layout.source,slot,raw,reason,at);
   if(layout.paired)await removePair(layout.store,full);else await layout.store.delete(full);
   return {quarantined:[...quarantined,...copies.map(c=>c.slot)]};
  }
- return {value,quarantined};
+ try{return {value:validate(parsed),quarantined};}
+ catch(error){return {quarantined,rejected:error instanceof Error?error.message:String(error)};}
 }
-/** Load every record under the layout's prefix; the logical key is the id, with pair suffixes folded. */
-export async function loadRecords<T>(layout:RecordLayout,validate:(value:unknown)=>T,at:Date,limit=512):Promise<{values:T[];quarantined:string[]}>{
+/** Load every record under the layout's prefix; the logical key is the id, with pair suffixes folded. Records that do not validate are reported by key. */
+export async function loadRecords<T>(layout:RecordLayout,validate:(value:unknown)=>T,at:Date,limit=512):Promise<{values:T[];quarantined:string[];rejected:{key:string;reason:string}[]}>{
  const logical=[...new Set((await layout.store.keys(layout.prefix)).map(k=>k.slice(layout.prefix.length).replace(/#[ab]$/,'')).filter(k=>k.length>0))].slice(0,limit);
- const values:T[]=[],quarantined:string[]=[];
- for(const key of logical){const one=await loadRecord(layout,key,validate,at);if(one.value!==undefined)values.push(one.value);quarantined.push(...one.quarantined);}
- return {values,quarantined};
+ const values:T[]=[],quarantined:string[]=[],rejected:{key:string;reason:string}[]=[];
+ for(const key of logical){
+  const one=await loadRecord(layout,key,validate,at);
+  if(one.value!==undefined)values.push(one.value);
+  quarantined.push(...one.quarantined);
+  if(one.rejected!==undefined)rejected.push({key,reason:one.rejected});
+ }
+ return {values,quarantined,rejected};
 }
-/** Remove one record. Damaged slots are quarantined first, so removal never drops material. */
-export async function removeRecord(layout:RecordLayout,key:string,at:Date):Promise<void>{
+const REMOVED='Removed with its saved copy. It did not validate, so it was never adopted. Its verbatim copy is kept here.';
+/** Remove one record. Damaged slots, a pre-pair bare value and, when a validator is given, any copy that does not validate are quarantined
+ * first, verbatim, so removal never drops material (T-REVIEW-6). */
+export async function removeRecord(layout:RecordLayout,key:string,at:Date,validate?:(value:unknown)=>unknown):Promise<void>{
  const full=layout.prefix+key;
- if(!layout.paired){await layout.store.delete(full);return;}
+ if(!layout.paired){
+  const current=await layout.store.get(full);
+  if(current!==undefined&&validate&&!acceptable(current,validate))await quarantine(layout.quarantine,layout.source,full,current,REMOVED,at);
+  await layout.store.delete(full);return;
+ }
  const reading=await readPair(layout.store,full);
- for(const {slot,raw} of reading.damaged)await quarantine(layout.quarantine,layout.source,slot,raw,SLOT_DAMAGE,at);
+ for(const {slot,raw} of reading.present){
+  if(slot===full)await quarantine(layout.quarantine,layout.source,slot,raw,LEGACY_VALUE,at);
+  else if(reading.damaged.some(d=>d.slot===slot))await quarantine(layout.quarantine,layout.source,slot,raw,SLOT_DAMAGE,at);
+  else if(validate&&!acceptable(recordText(raw),validate))await quarantine(layout.quarantine,layout.source,slot,raw,REMOVED,at);
+ }
  await removePair(layout.store,full);
 }
 // ---- E19 ----
@@ -150,19 +184,37 @@ export function recoveryOffer(input:{draft?:Journey;saved?:Journey;uncleanExit:b
 }
 export type RecoveryChoice='restore-draft'|'keep-saved'|'keep-both';
 export interface RecoveryPlan{open:Journey;copy?:Journey;quarantineDraft:boolean;removeDraft:boolean}
-/** The Library copy a kept draft becomes: a new identity, the draft's full material, and a name that says where it came from. */
-export function draftCopy(draft:Journey,at:Date):Journey{
- const copy=clone(draft);copy.id=uid('expression');
+/** A Library copy with a new identity: the source's full material, and a name that says where it came from and when. */
+function namedCopy(source:Journey,at:Date,label:string):Journey{
+ const copy=clone(source);copy.id=uid('expression');
  const hh=String(at.getHours()).padStart(2,'0'),mm=String(at.getMinutes()).padStart(2,'0');
- const suffix=` · recovered draft ${hh}:${mm}`;
- copy.name=(draft.name.length+suffix.length>160?draft.name.slice(0,160-suffix.length):draft.name)+suffix;
+ const suffix=` · ${label} ${hh}:${mm}`;
+ copy.name=(source.name.length+suffix.length>160?source.name.slice(0,160-suffix.length):source.name)+suffix;
  return validateJourney(copy);
 }
-/** What a choice does. Every side is kept: the draft is restored, moved to quarantine, or copied into the Library. */
+/** The Library copy a kept draft becomes: a new identity, the draft's full material, and a name that says where it came from. */
+export function draftCopy(draft:Journey,at:Date):Journey{return namedCopy(draft,at,'recovered draft');}
+/** The Library copy the saved version becomes when the draft is restored: the saved side is kept before the draft replaces it (T-REVIEW-6). */
+export function savedBeforeRecoveryCopy(saved:Journey,at:Date):Journey{return namedCopy(saved,at,'saved before recovery');}
+/** What a choice does. Every side is kept: the draft is restored (the saved copy first preserved as a Library copy), moved to quarantine, or copied into the Library. */
 export function planRecoveryChoice(choice:RecoveryChoice,draft:Journey,saved:Journey,at:Date):RecoveryPlan{
- if(choice==='restore-draft')return {open:clone(draft),quarantineDraft:false,removeDraft:false};
+ if(choice==='restore-draft')return {open:clone(draft),copy:savedBeforeRecoveryCopy(saved,at),quarantineDraft:false,removeDraft:false};
  if(choice==='keep-saved')return {open:clone(saved),quarantineDraft:true,removeDraft:true};
  return {open:clone(saved),copy:draftCopy(draft,at),quarantineDraft:false,removeDraft:true};
+}
+/** The record's own text: a kept slot envelope is unwrapped, anything else is taken as it is. */
+function recordText(raw:string):string{const slot=readSlot(raw);return slot.state==='valid'?slot.body:raw;}
+/** A quarantined draft as a Library copy. It must validate now; otherwise the refusal names the reason and nothing is made (T-REVIEW-6). */
+export function quarantinedCopy(raw:string,at:Date):Journey{
+ let journey:Journey;
+ try{journey=validateJourney(JSON.parse(recordText(raw)));}
+ catch(error){throw new Error(`This quarantined draft cannot be restored: ${error instanceof Error?error.message:String(error)}`);}
+ return namedCopy(journey,at,'restored draft');
+}
+/** The name a quarantined draft is listed under; a record that cannot be read is listed by its key. */
+export function quarantinedName(raw:string,fallback:string):string{
+ try{const value=JSON.parse(recordText(raw)) as {name?:unknown};return typeof value.name==='string'&&value.name.trim()?value.name:fallback;}
+ catch{return fallback;}
 }
 export const SESSION_MARK_KEY='oi.field-studies.session.v1';
 export const TAB_INSTANCE_KEY='oi.field-studies.tab.v1';

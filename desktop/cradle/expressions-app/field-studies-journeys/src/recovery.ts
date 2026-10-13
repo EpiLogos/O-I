@@ -10,7 +10,7 @@ import {TransportState,validateTransport} from '../../src/engine/transportState'
 import {validateWorkingTransport,type WorkingTransport} from './transport';
 // lane-3 E18/E19: the standalone draft records, their quarantine and the boot choice.
 import {readLibrary,saveToLibrary} from './store.js';
-import {type KeyStore,type RecordLayout,type RecoveryPlan,loadRecord,loadRecords,writeRecord,removeRecord,quarantine,listQuarantine,readPair} from './draftStorage.js';
+import {type KeyStore,type RecordLayout,type RecoveryPlan,loadRecord,loadRecords,writeRecord,removeRecord,quarantine,listQuarantine,readPair,quarantinedCopy,quarantinedName,offerClock} from './draftStorage.js';
 export const SESSION_KEY='oi.expression-session.v1';
 export interface SessionState {version:1;journeyId:string;sceneId:string;selected:string[];stepIndex:number;sceneElapsed:number;simTime:number;playing:boolean;journeyPlaying:boolean;camera:Camera;transport?:TransportState;workingTransport?:WorkingTransport;scenePlaying?:boolean;fieldPaused?:boolean}
 export function validateSession(value:unknown,j:Journey):SessionState|undefined{
@@ -102,6 +102,20 @@ async function draftRawText(layout:RecordLayout,id:string):Promise<string|undefi
 }
 /** Every quarantined draft with its reason, for listing to the owner. */
 export async function listQuarantinedDrafts(){return listQuarantine(await quarantineKV());}
+/** The Library's quarantine section (T-REVIEW-6): each readable entry with its name, reason and time, and every unreadable id, never hidden. */
+export async function quarantineView(now:Date=new Date()){
+ const {records,unreadable}=await listQuarantinedDrafts();
+ return {rows:records.map(r=>({id:r.id,key:r.key,name:quarantinedName(r.raw,r.key),reason:r.reason,when:offerClock(r.at,now),raw:r.raw})),unreadable};
+}
+/** Restore one quarantined draft as a Library copy. The copy is written and read back; the quarantined record stays where it is. */
+export async function restoreQuarantinedDraft(id:string):Promise<Journey>{
+ const {records}=await listQuarantinedDrafts();const record=records.find(r=>r.id===id);
+ if(!record)throw new Error('That quarantined draft is no longer stored.');
+ const copy=quarantinedCopy(record.raw,new Date());
+ saveToLibrary(copy);
+ if(!readLibrary().some(row=>row.id===copy.id))throw new Error('The browser Library did not keep the restored copy. The quarantined draft was retained.');
+ return copy;
+}
 /** Carry out one boot choice. A copy is saved and read back before the draft is removed; a quarantined draft is kept verbatim before removal. */
 export async function applyRecoveryPlan(plan:RecoveryPlan,draft:Journey):Promise<void>{
  const at=new Date();
@@ -111,12 +125,12 @@ export async function applyRecoveryPlan(plan:RecoveryPlan,draft:Journey):Promise
   const raw=(await draftRawText(layout,draft.id))??JSON.stringify(validateJourney(draft));
   await quarantine(layout.quarantine,'draft',draft.id,raw,'Superseded by the saved copy after an unclean exit. The draft is kept here verbatim.',at);
  }
- if(plan.removeDraft)await removeRecord(layout,draft.id,at);
+ if(plan.removeDraft)await removeRecord(layout,draft.id,at,validateJourney);
 }
-export async function writeDraft(j:Journey,scope?:RecoveryScope){const value=validateJourney(j);if(hostedRecovery())return nativeWrite('draft',j.id,value,scope??draftRecoveryAddress(j.id).scope);await writeRecord(await draftLayout(),j.id,JSON.stringify(value),new Date());}
+export async function writeDraft(j:Journey,scope?:RecoveryScope){const value=validateJourney(j);if(hostedRecovery())return nativeWrite('draft',j.id,value,scope??draftRecoveryAddress(j.id).scope);await writeRecord(await draftLayout(),j.id,JSON.stringify(value),new Date(),validateJourney);}
 export async function readDraft(id:string,scope?:RecoveryScope){if(hostedRecovery()){const row=await nativeRead('draft',id,scope??draftRecoveryAddress(id).scope);return row?validateJourney(row.value):undefined;}return (await loadRecord(await draftLayout(),id,validateJourney,new Date())).value;}
-export async function readDrafts(scope?:RecoveryScope){if(hostedRecovery()){const rows=await nativeList('draft',scope??recoveryScope());const values:Journey[]=[];for(const row of rows){const draft=await readDraft(row.id,row.scope);if(draft)values.push(draft);}return values;}return (await loadRecords(await draftLayout(),validateJourney,new Date())).values;}
-export async function removeDraft(id:string,scope?:RecoveryScope){if(hostedRecovery())return nativeRemove('draft',id,scope??draftRecoveryAddress(id).scope);await removeRecord(await draftLayout(),id,new Date());}
+export async function readDrafts(scope?:RecoveryScope){if(hostedRecovery()){const rows=await nativeList('draft',scope??recoveryScope());const values:Journey[]=[];for(const row of rows){const draft=await readDraft(row.id,row.scope);if(draft)values.push(draft);}return values;}const loaded=await loadRecords(await draftLayout(),validateJourney,new Date());for(const row of loaded.rejected)console.warn(`Draft ${row.key} is kept in place and was not adopted: ${row.reason}`);return loaded.values;}
+export async function removeDraft(id:string,scope?:RecoveryScope){if(hostedRecovery())return nativeRemove('draft',id,scope??draftRecoveryAddress(id).scope);await removeRecord(await draftLayout(),id,new Date(),validateJourney);}
 
 /** Read only the host-selected checkpoint address. A same-ref duplicate is
  * not permission to choose another scope, revision or authoring draft. */

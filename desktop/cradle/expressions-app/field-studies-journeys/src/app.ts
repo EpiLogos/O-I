@@ -1,7 +1,7 @@
 import {installBlueprintHUD} from './blueprintHUD.js';
 import {blueprintMember} from './blueprintGeometry.js';
 import {installNativeField} from "./nativeField";
-import {SESSION_KEY,SessionState,validateSession,writeDraft,readDraft,readDrafts,removeDraft,applyRecoveryPlan} from './recovery';
+import {SESSION_KEY,SessionState,validateSession,writeDraft,readDraft,readDrafts,removeDraft,applyRecoveryPlan,quarantineView,restoreQuarantinedDraft} from './recovery';
 // lane-3 E17-E19: one draft scheduler, the draft/saved offer and the session mark.
 import {DraftSchedule,draftStatusLine} from './draftSchedule';
 import {recoveryOffer,planRecoveryChoice,readUncleanExit,markSessionOpen,markSessionClosed,offerClock,recordBootExit,type RecoveryChoice} from './draftStorage';
@@ -207,8 +207,12 @@ function error(err:unknown){console.error(err);toast(err instanceof Error?err.me
 const deletedLibraryIds=new Set<string>();
 function saveSession(){try{const session:SessionState={version:1,journeyId:store.document.id,sceneId:scene().id,selected,stepIndex,sceneElapsed,simTime,playing:scenePlaying,scenePlaying,journeyPlaying,fieldPaused,camera:{...camera},transport:engine.transportState?.(),workingTransport};localStorage.setItem(SESSION_KEY,JSON.stringify(session));localStorage.setItem('oi.field-studies.last',store.document.id);}catch{}}
 let draftBackupBusy=false;
-/** lane-3 E17: the one schedule for draft backups. Edits coalesce on a 350 ms timer; context switches and quit flush at once; nothing flushes inside an open gesture. */
-const draftSchedule=new DraftSchedule({flush:()=>flushDraft(),gestureOpen:()=>store.transactionOpen});
+// lane-3 E19 (T-REVIEW-6): true from the boot's recovery dialog until its choice is kept. The draft is held: no backup and no clean mark.
+let recoveryOfferOpen=false;
+// The Library's quarantine section (T-REVIEW-6): read when the Library opens and after each restore.
+let quarantineState:{rows:{id:string;key:string;name:string;reason:string;when:string;raw:string}[];unreadable:string[];message?:string}={rows:[],unreadable:[]};
+/** lane-3 E17: the one schedule for draft backups. Edits coalesce on a 350 ms timer; context switches and quit flush at once; nothing flushes inside an open gesture or a held recovery choice. */
+const draftSchedule=new DraftSchedule({flush:()=>flushDraft(),gestureOpen:()=>store.transactionOpen,held:()=>recoveryOfferOpen});
 async function flushDraft(){
  if(awaitingNativeBoot){if(store.revision===0)return;awaitingNativeBoot=false;nativeWorkspace?.cancelOpen();} // Retain an actual edit; an untouched opening canvas is not recovery material.
  // Coalesce changes while a gesture or native disk write is in flight. A
@@ -233,10 +237,11 @@ async function flushDraft(){
   if(hostedRecovery()){
    $('save-status').textContent=draftStatusLine('refused',new Date(),'native');
    if(!autosaveErrorShown){toast(cause instanceof Error?cause.message:'Native recovery is unavailable. Keep this work open or save a file.',7000);autosaveErrorShown=true;}
-   return;
+   return false; // T-REVIEW-6: a backup that did not land keeps its edits pending for the next context switch.
   }
   try{saveToLibrary(draft);$('save-status').textContent=draftStatusLine('backed-up',new Date(),'browser');}
   catch{$('save-status').textContent=draftStatusLine('unavailable',new Date(),'browser');if(!autosaveErrorShown){toast('Browser storage is unavailable or full. Export the expression to preserve your work.',7000);autosaveErrorShown=true;}}
+  return false; // The draft record did not land (a Library copy may have): the edits stay pending and are retried.
  }finally{draftBackupBusy=false;}
 }
 
@@ -1113,8 +1118,10 @@ function preset(value:string){return value==='seven-centres'?nativeSeven():value
 function hasLegacyLibrary(){try{return !!localStorage.getItem('typographic_pointcloud_saved_states');}catch{return false;}}
 function rememberCover(){try{engine.render(frameData(0));if(!engine.capture)return;const out=document.createElement('canvas');out.width=560;out.height=350;paintNativeCapture(out,engine.capture(560,350),scene(),{...captureSettings,transparent:false,includeText:true},width,height);covers.set(store.document.id,out.toDataURL('image/webp',.8));}catch{/* Gallery fallback is a static composition preview, not a substitute engine. */}}
 let coverObserver:IntersectionObserver|null=null;
+/** T-REVIEW-6: reads the quarantined drafts for the Library section. The section fills when the read lands; a message names the last restore's outcome. */
+function refreshQuarantine(message?:string){void quarantineView().then(view=>{quarantineState={rows:view.rows,unreadable:view.unreadable,message};if(libraryOpen)renderLibrary();}).catch(()=>undefined);}
 function renderLibrary(){coverObserver?.disconnect();const library=readLibraryDetailed(),scroll=$('library-page').scrollTop;const saved=Array.from(new Map([...library.journeys,...sessionExpressions.values()].map(j=>[j.id,j])).values());
- $('library-page').innerHTML=libraryHTML({current:store.document,saved,featured,starters,section:librarySection,errors:library.blocked?['Browser storage is unavailable here. Export an expression to keep a portable copy.']:library.errors,legacy:hasLegacyLibrary(),cover:j=>covers.get(j.id)});$('library-page').scrollTop=scroll;
+ $('library-page').innerHTML=libraryHTML({current:store.document,saved,featured,starters,section:librarySection,errors:library.blocked?['Browser storage is unavailable here. Export an expression to keep a portable copy.']:library.errors,legacy:hasLegacyLibrary(),quarantine:quarantineState,cover:j=>covers.get(j.id)});$('library-page').scrollTop=scroll;
  const documents=new Map([...featured,...saved,store.document,...starters.map(p=>p.expression)].map(j=>[j.id,j]));
  const paint=(image:HTMLImageElement)=>{const j=documents.get(image.dataset.previewId!);if(j){image.src=compositionCover(j.scenes[0]);image.removeAttribute('data-preview-id');}};
  const images=$('library-page').querySelectorAll<HTMLImageElement>('img[data-preview-id]');
@@ -1123,7 +1130,7 @@ function renderLibrary(){coverObserver?.disconnect();const library=readLibraryDe
 }
 function openLibrary(section:'collection'|'about'='collection',navigate=true){if(propertyTake)finishPropertyTake();
  if(!libraryOpen)rememberCover();
- pointer.active=false;modesOpen=false;captureOpen=false;librarySection=section;libraryOpen=true;
+ pointer.active=false;modesOpen=false;captureOpen=false;librarySection=section;libraryOpen=true;refreshQuarantine();
  if(recorder.active){recorder.stop();toast('Recording stopped before opening the library.');}
  if(navigate)try{history.pushState({oiLibrary:true},'', '#library'+(section==='about'?'/about':''));}catch{}
  renderAll();$('library-page').focus({preventScroll:true});
@@ -1170,7 +1177,7 @@ async function loadJourney(j:Journey){
  const generation=++journeyNavigation,version=store.revision,previous=clone(store.document);
  // A navigation may only replace the canvas after its actual departing work
  // has an acknowledged backup. A returning save never replaces newer edits.
- if(!deletedLibraryIds.has(previous.id))await writeDraft(previous);
+ if(!deletedLibraryIds.has(previous.id)&&!recoveryOfferOpen)await writeDraft(previous);
  if(generation!==journeyNavigation||version!==store.revision)throw new Error('The open request was superseded by newer work. Your current Expression was retained.');
  applyJourney(j);
  // A successful explicit open is the person's entry into the instrument.
@@ -1262,7 +1269,9 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'native-reset-phases':engine.command?.({type:'reset-phases'});needsFrame=true;break;
  case 'native-reset':confirmChange('Reset the particle field?','This deliberately reseeds particle positions and resets morph phases. The expression and its settings are preserved.',()=>{engine.command?.({type:'reset-field'});needsFrame=true;});break;
  case 'native-recover':engine.command?.({type:'recover-context'});recovery.hidden=true;needsFrame=true;break;
- case 'delete-saved':{const id=el.dataset.id!;confirmChange('Remove this saved copy?','Only this understood saved expression is removed. Other saved and unreadable entries are retained. The active expression remains open.',()=>{removeFromLibrary(id);deletedLibraryIds.add(id);void removeDraft(id).catch(error);draftSchedule.cancel();sessionExpressions.delete(id);covers.delete(id);renderLibrary();});break;}
+ case 'export-quarantine':{const row=quarantineState.rows.find(r=>r.id===el.dataset.id);if(row){download(new Blob([row.raw],{type:'application/json'}),slug(row.name)+'.quarantined.json');toast('Quarantined draft exported exactly as it was kept.');}break;}
+ case 'restore-quarantine':{const id=el.dataset.id!;void restoreQuarantinedDraft(id).then(copy=>{refreshQuarantine(`Restored as a Library copy: ${copy.name}`);toast('Restored as a Library copy.');}).catch(cause=>refreshQuarantine(cause instanceof Error?cause.message:String(cause)));break;}
+ case 'delete-saved':{const id=el.dataset.id!;confirmChange('Remove this saved copy?','Only this understood saved expression is removed. Other saved and unreadable entries are retained. The active expression remains open.',()=>{removeFromLibrary(id);deletedLibraryIds.add(id);void removeDraft(id).catch(error);if(store.document.id===id)draftSchedule.cancel();sessionExpressions.delete(id);covers.delete(id);renderLibrary();});break;}
 
  case 'edit':edit(!inspectorOpen,selectedEntity()?'objects':'field');break;
  case 'close-inspector':if(studioOpen){setStudio(false);break;}inspectorOpen=false;railExpanded=false;renderAll();break;
@@ -1897,7 +1906,15 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
 });
 // lane-3 E17/E19: quit flushes the draft (with its Library copy) and, once nothing is pending, marks the session closed cleanly.
 // beforeunload can be cancelled by the page's own prompt, so only pagehide (the page is going away) may mark the exit clean.
-function quitDraft(markClean:boolean){lastLibraryWrite=0;void draftSchedule.flushNow('quit').then(()=>{if(markClean&&draftSchedule.pending()===0){try{markSessionClosed(localStorage,new Date());}catch{/* An unavailable store leaves the mark open: the next start treats it as unclean. */}}}).catch(()=>undefined);}
+function quitDraft(markClean:boolean){
+ lastLibraryWrite=0;
+ // T-REVIEW-6: while the boot's recovery choice is open the draft is held. Nothing is written and the exit stays unclean, so the offer returns on the next start.
+ if(recoveryOfferOpen)return;
+ // Nothing pending and no gesture open: the draft already holds the document, so the clean mark is written in this handler. An unload can cut an asynchronous flush short, which would leave a clean exit reported as unclean.
+ if(markClean&&draftSchedule.pending()===0&&!store.transactionOpen){try{markSessionClosed(localStorage,new Date());}catch{/* An unavailable store leaves the mark open: the next start treats it as unclean. */}}
+ // Otherwise the flush is written, and the mark follows only if it lands with nothing pending. A flush the unload cuts short leaves the mark open, which is honest.
+ void draftSchedule.flushNow('quit').then(()=>{if(markClean&&!recoveryOfferOpen&&draftSchedule.pending()===0&&!store.transactionOpen){try{markSessionClosed(localStorage,new Date());}catch{/* An unavailable store leaves the mark open: the next start treats it as unclean. */}}}).catch(()=>undefined);
+}
 window.addEventListener('pagehide',()=>{if(propertyTake)finishPropertyTake();recorder.stop();quitDraft(true);});
 window.addEventListener('beforeunload',()=>quitDraft(false));
 // A page restored from the back-forward cache is running again: it is open until its next pagehide.
@@ -2400,7 +2417,13 @@ async function startWorkspace(){
  // lane-3 E19: after an unclean exit, a draft that differs from its saved copy is offered as a choice; a clean exit adopts nothing silently either way.
  const saved=draft?readLibrary().find(j=>j.id===draft.id):undefined;
  const offer=draft&&saved&&!hostedRecovery()?recoveryOffer({draft,saved,uncleanExit}):{offer:false as const,reason:''};
- if(draft&&saved&&offer.offer){const choice=await askRecoveryChoice(draft,offer);const plan=planRecoveryChoice(choice,draft,saved,new Date());await applyRecoveryPlan(plan,draft);if(plan.removeDraft)sessionExpressions.delete(draft.id);if(plan.copy)sessionExpressions.set(plan.copy.id,plan.copy);store.document=initialiseSceneSaves(initialiseBelts(plan.open));store.touch();}
+ if(draft&&saved&&offer.offer){
+ // T-REVIEW-6: the draft is held from the dialog until its choice is kept. Writing now would replace the draft with the saved copy under the same id.
+ recoveryOfferOpen=true;
+ const choice=await askRecoveryChoice(draft,offer);const plan=planRecoveryChoice(choice,draft,saved,new Date());
+ try{await applyRecoveryPlan(plan,draft);}catch(error){toast('The recovery choice could not be kept. The draft stays held for the next start; export a file to keep this work.',9000);throw error;}
+ recoveryOfferOpen=false;
+ if(plan.removeDraft)sessionExpressions.delete(draft.id);if(plan.copy)sessionExpressions.set(plan.copy.id,plan.copy);store.document=initialiseSceneSaves(initialiseBelts(plan.open));store.touch();}
  else if(draft&&(!initial.updatedAt||draft.id!==initial.id||draft.updatedAt>=initial.updatedAt)){store.document=initialiseSceneSaves(initialiseBelts(draft));store.touch();}recovered=validateSession(JSON.parse(localStorage.getItem(SESSION_KEY)??'null'),store.document);showEntry=!startsInTechne;}catch(e){console.warn('Draft recovery unavailable',e);showEntry=!startsInTechne;}}
  const linkedScene=deepLinkPending?.address.scene;
  if(recovered&&(linkedScene===undefined||linkedScene===recovered.sceneId)){sceneIndex=store.document.scenes.findIndex(s=>s.id===recovered!.sceneId);selected=recovered.selected;stepIndex=recovered.stepIndex;sceneElapsed=recovered.sceneElapsed;simTime=recovered.simTime;scenePlaying=recovered.scenePlaying??recovered.playing;workingTransport=recovered.workingTransport??STOPPED_TRANSPORT;journeyPlaying=recovered.journeyPlaying;if(recovered.fieldPaused!==undefined)fieldPaused=recovered.fieldPaused;if(qs.has('still'))fieldPaused=true;camera=recovered.camera;}else applySceneView();

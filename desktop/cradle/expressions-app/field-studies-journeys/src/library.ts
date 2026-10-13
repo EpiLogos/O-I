@@ -18,8 +18,22 @@
 import {compositionCover,featuredExpressions,startingPoints,libraryHTML} from './expressions.js';
 import {readLibraryDetailed,removeFromLibrary} from './store.js';
 import {installNativeLibraryInteractions} from './libraryScopes.js';
+// T-REVIEW-6: the quarantine section reads and restores through the same recovery owner as the instrument.
+import {quarantineView,restoreQuarantinedDraft} from './recovery.js';
 
 type StartingPoint = ReturnType<typeof startingPoints>[number];
+type QuarantineState={rows:{id:string;key:string;name:string;reason:string;when:string;raw:string}[];unreadable:string[];message?:string};
+let quarantine:QuarantineState={rows:[],unreadable:[]};
+/** The exact stored text of a quarantined draft, offered as a file. */
+function downloadVerbatim(text:string,name:string):void{
+  const url=URL.createObjectURL(new Blob([text],{type:'application/json'}));
+  const anchor=document.createElement('a');anchor.href=url;anchor.download=name;document.body.append(anchor);anchor.click();anchor.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+/** Reads the quarantined drafts; a message names the last restore's outcome. */
+function refreshQuarantine(message?:string):void{
+  void quarantineView().then(view=>{quarantine={rows:view.rows,unreadable:view.unreadable,message};renderLibrary();}).catch(()=>undefined);
+}
 
 const page=():HTMLElement=>document.getElementById('library-page')!;
 const hostRequest=(payload:{request:string;mode?:string})=>{
@@ -44,7 +58,7 @@ function renderLibrary():void{
   const paint=(image:HTMLImageElement)=>{const j=documents.get(image.dataset.previewId!);if(j){image.src=compositionCover(j.scenes[0]);image.removeAttribute('data-preview-id');}};
   page().innerHTML=libraryHTML({saved,featured,starters,section,standalone:true,
     errors:library.blocked?['Browser storage is unavailable here. Export an expression from the instrument to keep a portable copy.']:library.errors,
-    legacy:hasLegacyLibrary(),cover:j=>covers.get(j.id)});
+    legacy:hasLegacyLibrary(),quarantine,cover:j=>covers.get(j.id)});
   page().scrollTop=scroll;
   const images=page().querySelectorAll<HTMLImageElement>('img[data-preview-id]');
   if(typeof IntersectionObserver==='undefined')images.forEach(paint);
@@ -85,6 +99,8 @@ document.addEventListener('click',event=>{
     case 'start-mode':
     case 'open-featured':hostRequest({request:'workspace-mode',mode:'expressions'});break;
     case 'delete-saved':{const id=el.dataset.id!;removeFromLibrary(id);covers.delete(id);renderLibrary();break;}
+    case 'export-quarantine':{const row=quarantine.rows.find(r=>r.id===el.dataset.id);if(row)downloadVerbatim(row.raw,row.name.replace(/[^A-Za-z0-9._-]+/g,'-').slice(0,80)+'.quarantined.json');break;}
+    case 'restore-quarantine':{const id=el.dataset.id!;void restoreQuarantinedDraft(id).then(copy=>refreshQuarantine(`Restored as a Library copy: ${copy.name}`)).catch(cause=>refreshQuarantine(cause instanceof Error?cause.message:String(cause)));break;}
   }
 });
 document.addEventListener('input',event=>{
@@ -98,6 +114,7 @@ document.addEventListener('input',event=>{
 });
 
 renderLibrary();
+refreshQuarantine();
 // The host's ready watch reads the same oi-app-state announcement the
 // instrument makes — one boot handshake grammar.
 try{window.parent.postMessage({v:1,kind:'oi-app-state',state:{libraryOpen:true}},'*');}catch{}

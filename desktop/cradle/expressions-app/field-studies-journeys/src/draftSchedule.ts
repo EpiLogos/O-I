@@ -5,16 +5,23 @@
  * first unflushed edit (the coalescing window the target set keeps at 350 ms).
  * Context switches (scene, rail, studio close) and quit call flushNow(), which
  * writes immediately. Nothing flushes while a gesture or composite is open: the
- * request re-arms and the backup waits for the gesture to finish. */
+ * request re-arms and the backup waits for the gesture to finish.
+ *
+ * T-REVIEW-6: a held draft (a boot recovery choice is open) is never written; a
+ * backup that does not land keeps its edits pending for the next context switch;
+ * an edit made during a backup is written by a quit that arrives during it. */
 export const DRAFT_DEBOUNCE_MS=350;
 export type DraftFlushReason='edit'|'scene'|'rail'|'studio'|'hidden'|'quit';
 export interface DraftTimers{set(run:()=>void,ms:number):unknown;clear(handle:unknown):void}
 export interface DraftScheduleOptions{
  debounceMs?:number;
- /** Performs one backup. Called synchronously so its first step reads the document as it stands. */
+ /** Performs one backup. Called synchronously so its first step reads the document as it stands.
+  * Resolves false (or rejects) when the backup did not hold; the edits then stay pending. */
  flush:(reason:DraftFlushReason)=>Promise<unknown>|unknown;
  /** True while a pointer gesture, composite or other transaction is open. */
  gestureOpen?:()=>boolean;
+ /** True while a boot recovery choice holds the draft: nothing is written and edits wait. */
+ held?:()=>boolean;
  timers?:DraftTimers;
 }
 const browserTimers:DraftTimers={set:(run,ms)=>window.setTimeout(run,ms),clear:handle=>window.clearTimeout(handle as number)};
@@ -26,10 +33,11 @@ export class DraftSchedule{
  private inFlight:Promise<void>|null=null;
  private readonly flushFn:DraftScheduleOptions['flush'];
  private readonly gestureOpen:() => boolean;
+ private readonly held:() => boolean;
  private readonly timers:DraftTimers;
  constructor(options:DraftScheduleOptions){
   this.debounceMs=options.debounceMs??DRAFT_DEBOUNCE_MS;
-  this.flushFn=options.flush;this.gestureOpen=options.gestureOpen??(()=>false);this.timers=options.timers??browserTimers;
+  this.flushFn=options.flush;this.gestureOpen=options.gestureOpen??(()=>false);this.held=options.held??(()=>false);this.timers=options.timers??browserTimers;
  }
  /** Unflushed edits plus a backup still in flight. Zero means the draft is current. */
  pending():number{return (this.dirty?1:0)+(this.inFlight?1:0);}
@@ -41,11 +49,17 @@ export class DraftSchedule{
  }
  /** Immediate backup. Quit always writes (it also settles the session mark);
   * the other reasons write only when an edit is waiting. Inside a gesture the
-  * backup is deferred, never forced. */
+  * backup is deferred, never forced. Under a hold nothing is written. */
  flushNow(reason:DraftFlushReason):Promise<void>{
   this.clearTimer();
+  if(this.held())return this.inFlight??Promise.resolve();
   if(this.gestureOpen()){this.dirty=true;this.arm(this.debounceMs);return this.inFlight??Promise.resolve();}
-  if(this.inFlight){this.redo=this.redo||this.dirty;return this.inFlight;}
+  if(this.inFlight){
+   if(!this.dirty)return this.inFlight;
+   // Edits made during the flight are written once it lands, by this call, not left to a timer that an unload cuts off.
+   const drain=():Promise<void>=>this.inFlight?this.inFlight.then(drain):(this.dirty?this.run(reason):Promise.resolve());
+   return this.inFlight.then(drain);
+  }
   if(!this.dirty&&reason!=='quit')return Promise.resolve();
   return this.run(reason);
  }
@@ -54,6 +68,7 @@ export class DraftSchedule{
  private arm(ms:number):void{this.timer=this.timers.set(()=>{this.timer=undefined;this.fire();},ms);}
  private clearTimer():void{if(this.timer!==undefined){this.timers.clear(this.timer);this.timer=undefined;}}
  private fire():void{
+  if(this.held())return;
   if(this.gestureOpen()){this.arm(this.debounceMs);return;}
   if(this.inFlight){this.redo=true;return;}
   if(this.dirty)void this.run('edit');
@@ -62,8 +77,9 @@ export class DraftSchedule{
   this.dirty=false;
   let started:Promise<unknown>;
   try{started=Promise.resolve(this.flushFn(reason));}catch(error){started=Promise.reject(error);}
-  // A failed backup is not retried on a loop: the edits stay pending and the next change or context switch tries again.
-  const flight:Promise<void>=started.then(()=>undefined,()=>undefined).then(()=>{
+  // A backup that did not hold (a rejection, or a flush that reports false) keeps its edits pending.
+  // Nothing retries on a loop: the next change or context switch tries again.
+  const flight:Promise<void>=started.then(result=>{if(result===false)this.dirty=true;},()=>{this.dirty=true;}).then(()=>{
    if(this.inFlight===flight)this.inFlight=null;
    if(this.redo){this.redo=false;if(this.timer===undefined)this.arm(this.debounceMs);}
   });
