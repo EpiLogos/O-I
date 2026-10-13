@@ -42,11 +42,16 @@ export const ENTITY_TYPES = [
 ] as const;
 export const entityTypeSchema = z.enum(ENTITY_TYPES);
 
-// Full precision ladder, in the authority's spelling and order
+// Full precision ladder, in the authority's spelling and order, coarsest first
 // (desktop/cradle/src/techne/contract.ts TechneTemporalPrecision). Additive:
-// the first six values are unchanged; hour..subsecond are the finer rungs the
-// bridge previously coarsened to "day" (FINDINGS G1).
+// the six values from millennium down are unchanged; hour..subsecond are the
+// finer rungs the bridge previously coarsened to "day" (FINDINGS G1); eon,
+// era, epoch and age are the deep-time rungs above millennium (lane-2 T4).
 export const TEMPORAL_PRECISIONS = [
+  "eon",
+  "era",
+  "epoch",
+  "age",
   "millennium",
   "century",
   "decade",

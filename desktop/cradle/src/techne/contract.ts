@@ -93,6 +93,10 @@ export type TechneTemporalKind =
   | "presentation";
 
 export type TechneTemporalPrecision =
+  | "eon"
+  | "era"
+  | "epoch"
+  | "age"
   | "millennium"
   | "century"
   | "decade"
@@ -524,7 +528,7 @@ function isInstrument(value: unknown): value is TechneInstrument {
   return typeof value === "string" && (TECHNE_INSTRUMENTS as readonly string[]).includes(value);
 }
 
-const TEMPORAL_PRECISIONS: readonly string[] = ["millennium", "century", "decade", "year", "month", "day", "hour", "minute", "second", "subsecond"];
+const TEMPORAL_PRECISIONS: readonly string[] = ["eon", "era", "epoch", "age", "millennium", "century", "decade", "year", "month", "day", "hour", "minute", "second", "subsecond"];
 const PLACE_PRECISIONS: readonly string[] = ["exact", "approximate", "region", "unlocated"];
 const RESULT_CLASSES: readonly string[] = ["canonical", "deterministic", "semantic-stochastic", "research"];
 const TEMPORAL_KINDS: readonly string[] = ["occurrence", "receipt", "valid", "source-created", "source-modified", "day", "now", "session", "run", "generation", "presentation"];

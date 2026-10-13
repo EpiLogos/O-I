@@ -11,16 +11,19 @@
  *    year-start anchor lands on the same epoch ms as the camera's year.
  */
 import {
+  calendarFields,
   expandInstant,
   instantOffsetMs,
   parseTimestamp,
   ticksForDomain,
+  yearStartMs,
+  yearsPerUnit,
   type Tick,
   type TimeRange,
 } from "../../../../../../../src/techne/m0m5/timeline/scale";
 import type { TemporalPrecision } from "./contracts";
 
-export { expandInstant, parseTimestamp, ticksForDomain, type Tick, type TimeRange };
+export { calendarFields, expandInstant, parseTimestamp, ticksForDomain, yearStartMs, yearsPerUnit, type Tick, type TimeRange };
 
 /** An anchor's honest extent in epoch ms. `toMs` is null for an open-ended or
  * point-only anchor; a bounded `toMs` is the authority's inclusive end. */
@@ -76,17 +79,9 @@ export function anchorOffsetMs(validFrom: string): number {
   return instantOffsetMs(canonicalInstant(validFrom));
 }
 
-/** The Gregorian calendar year containing an epoch ms, as an integer. */
+/** The Gregorian calendar year containing an epoch ms, as an integer (the authority's civil fields, deep years included). */
 export function calendarYear(ms: number): number {
-  return new Date(ms).getUTCFullYear();
-}
-
-/** Epoch ms of 1 January of a calendar year, from the authority's own parser. */
-function yearStartMs(year: number): number {
-  const text = year >= 0 && year <= 9999
-    ? String(year).padStart(4, "0")
-    : `${year < 0 ? "-" : "+"}${String(Math.abs(year)).padStart(6, "0")}`;
-  return parseTimestamp(text);
+  return calendarFields(ms).year;
 }
 
 /** Camera boundary: a fractional calendar year to epoch ms, linear inside that

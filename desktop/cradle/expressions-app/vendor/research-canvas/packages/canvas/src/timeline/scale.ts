@@ -11,7 +11,10 @@
  * ms per pixel. Anchors never place on it. */
 export const MS_PER_YEAR = 365.2425 * 86_400_000;
 
-export const MIN_PIXELS_PER_YEAR = 0.02;
+/** The zoom floor lets a deep-time reading fit (lane-2 T4): 1e-9 px per year is
+ * about 1e12 years across 1000 px. The previous 0.02 floor capped the view at
+ * about 50,000 years across, too narrow for the reading from -780000 to +4.5e9. */
+export const MIN_PIXELS_PER_YEAR = 1e-9;
 /** 1000 px per millisecond, the authority's finest rung. A subsecond facet keeps
  * its true extent at every zoom the camera allows. */
 export const MAX_PIXELS_PER_MS = 1000;

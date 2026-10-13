@@ -13,6 +13,7 @@
  */
 import type { TemporalPrecision } from "./contracts";
 import type { TimelineItem } from "./projection";
+import { calendarFields, yearsPerUnit } from "./instant";
 
 export type AxisRow = "major" | "minor";
 
@@ -21,13 +22,25 @@ export type LabelledItem = Pick<TimelineItem, "startMs" | "endMs" | "offsetMs" |
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+/** From this many years a label is deep time: its digits are grouped and its era is stated. */
+const DEEP_LABEL_MIN = 10_000;
+
+/** Digits grouped in threes: 780000 reads "780,000". */
+function groupDigits(n: number): string {
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 /**
  * A calendar year as a display year. The calendar is astronomical: year 0 is
- * 1 BCE, so -500 reads "501 BCE". Positive years read plain ("1850").
+ * 1 BCE, so -500 reads "501 BCE". Positive years read plain ("1850"). From ten
+ * thousand years the label groups its digits and states its era ("780,001 BCE",
+ * "4,500,000,000 CE"), because a bare count that size does not say which era it
+ * is in (lane-2 T4).
  */
 export function formatYear(year: number): string {
   const whole = Math.trunc(year);
-  return whole <= 0 ? `${1 - whole} BCE` : `${whole}`;
+  if (whole <= 0) return `${groupDigits(1 - whole)} BCE`;
+  return whole < DEEP_LABEL_MIN ? `${whole}` : `${groupDigits(whole)} CE`;
 }
 
 /** An English ordinal: 1st, 2nd, 3rd, 11th, 12th, 21st. */
@@ -48,17 +61,9 @@ interface Civil {
   millisecond: number;
 }
 
+/** The civil fields of a local-frame ms, read by the authority (deep years included). */
 function civil(localMs: number): Civil {
-  const d = new Date(localMs);
-  return {
-    year: d.getUTCFullYear(),
-    month: d.getUTCMonth(),
-    day: d.getUTCDate(),
-    hour: d.getUTCHours(),
-    minute: d.getUTCMinutes(),
-    second: d.getUTCSeconds(),
-    millisecond: d.getUTCMilliseconds(),
-  };
+  return calendarFields(localMs);
 }
 
 function two(value: number): string {
@@ -91,6 +96,13 @@ function unitLabel(localMs: number, unitYears: number, precision: TemporalPrecis
       const index = start / unitYears + 1;
       return precision === "millennium" ? `${ordinal(index)} millennium` : `${ordinal(index)} c.`;
     }
+    case "age":
+    case "epoch":
+    case "era":
+    case "eon": {
+      const start = Math.floor(c.year / unitYears) * unitYears;
+      return yearSpan(start, start + unitYears - 1);
+    }
     case "year":
       return formatYear(c.year);
     case "month":
@@ -108,23 +120,38 @@ function unitLabel(localMs: number, unitYears: number, precision: TemporalPrecis
   }
 }
 
-/** Years in one unit of the item's own precision, from the authority's extent of its start instant. */
+/** Half a day in ms: the step back from a local midnight that stays inside the day before. */
+const HALF_DAY_MS = 43_200_000;
+
+/**
+ * The last instant a half-open end covers: one millisecond back. Where the ms
+ * scale cannot step one millisecond (beyond 2^53 ms the step is absorbed), half a
+ * day back still reads the last year, because a year-level end is a local
+ * midnight (lane-2 T4). Exact at human scale: the millisecond step is kept.
+ */
+function lastInstant(endMs: number): number {
+  return endMs - 1 === endMs ? endMs - HALF_DAY_MS : endMs - 1;
+}
+
+/** Years in one unit of the item's own precision: the authority's ladder for a year-or-coarser unit, else the extent of its start instant. */
 function unitYearsOf(item: LabelledItem): number {
+  const known = yearsPerUnit(item.precision);
+  if (known !== null) return known;
   const first = civil(item.startMs + item.offsetMs).year;
-  const last = civil(item.precisionEndMs - 1 + item.offsetMs).year;
+  const last = civil(lastInstant(item.precisionEndMs) + item.offsetMs).year;
   return last - first + 1;
 }
 
 /**
  * The precision label of an item, stating its precision verbatim: "1963",
  * "12th c.", "4 Mar 1850". An interval states both ends with an inclusive end
- * ("1850 – 2016"): the end is the last millisecond of the interval's end unit.
+ * ("1850 – 2016"): the end is the last instant of the interval's end unit.
  */
 export function precisionLabel(item: LabelledItem): string {
   const unitYears = unitYearsOf(item);
   const start = unitLabel(item.startMs + item.offsetMs, unitYears, item.precision);
   if (item.endMs === null) return start;
-  const end = unitLabel(item.endMs - 1 + item.offsetMs, unitYears, item.precision);
+  const end = unitLabel(lastInstant(item.endMs) + item.offsetMs, unitYears, item.precision);
   return end === start ? start : `${start} – ${end}`;
 }
 
@@ -136,7 +163,7 @@ export function precisionLabel(item: LabelledItem): string {
  */
 export function spanLabel(fromMs: number, toMs: number, offsetMs: number): string {
   const first = civil(fromMs + offsetMs).year;
-  const last = civil(Math.max(fromMs, toMs - 1) + offsetMs).year;
+  const last = civil(Math.max(fromMs, lastInstant(toMs)) + offsetMs).year;
   return first === last ? formatYear(first) : yearSpan(first, last);
 }
 
@@ -148,7 +175,8 @@ export function spanLabel(fromMs: number, toMs: number, offsetMs: number): strin
  */
 export function axisLabel(ms: number, unit: TemporalPrecision, offsetMs: number, row: AxisRow): string {
   const local = ms + offsetMs;
-  if (unit === "millennium" || unit === "century" || unit === "decade" || unit === "year") {
+  if (unit === "eon" || unit === "era" || unit === "epoch" || unit === "age"
+    || unit === "millennium" || unit === "century" || unit === "decade" || unit === "year") {
     return formatYear(civil(local).year);
   }
   if (row === "major") return unitLabel(local, 1, unit);
