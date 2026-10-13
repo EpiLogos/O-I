@@ -711,54 +711,64 @@ the language of sound are one language.
 
 ## 12. The game's language
 
-Hesse's players stated a theme and developed it. In the DLW the theme is any
-piece of a world, and the development is the movement between its three
-forms and its three times: a place in your world becomes a scene that
-sounds, the scene becomes a stop on a walk, the walk is recorded and played
-in someone else's world. That movement is the play. It is the same in every
-kind of work, because the instrument is the same.
+In Hesse's game the player was never only moving symbols about. Each theme was
+a piece of the world's knowledge, and each move worked on the player as well.
+Knecht describes a game well played closing around the one who played it the
+way a sphere closes around its centre, so that they came away having taken a
+whole, ordered world into themselves. The DLW is built for that double
+movement. What you make in your world becomes knowledge others can walk
+through, and making it is how you come to know. Take either half away and the
+other goes hollow.
 
-Hesse distinguished two schools of the game. Formal games found their unity
-in the material. Psychological games found it in the silence after each
-move. The DLW keeps both: Technē works the material until it holds together,
-and Expressions lets you meet it as something lived.
+You develop a theme by carrying it. You meet it in the day's work, take it into
+a scene until you can hear what it is, and lay it along a walk that someone
+else can follow. Each step changes its form, and each step asks something
+different of you.
 
-**Origin.** Knecht spent years translating a single school game back,
-phrase by phrase, into mathematics, ornament, Chinese and Greek. The game's
-archive could always be read back into the disciplines it came from. Technē
-works the same way: every reference keeps its owner and its version through
-every reading, so that anything can be traced to where it came from. That
-tracing is a kind of care. It treats the origin as something still present,
-which is what Jean Gebser meant by the ever-present origin.
+Hesse's players knew two schools. One found the game's unity in the material,
+in how the themes fitted together. The other found it in the player, in a
+sequence of meditations that led them, move by move, towards experiencing the
+whole. One school faces the world and the other faces the self, and the DLW
+keeps room for both. In Technē you work the material until it holds: the
+history checked, the relations accepted, the palace built room by room. In
+Expressions you meet the same material as something lived, a field you stand
+inside and listen to.
 
-**The silence after the symbol.** For Hesse's audience the meditation was
-the heart of the game. In the DLW that place belongs to Nara, the presence
-you meet in the field: not a judge of your work, a listener and a reply.
-Whether the instrument should ever require a pause, as Hesse's game did, is
-still an open question, and nothing automatic fills the space until it is
-answered.
+At the great public games, what the people watching valued most was the
+silence. After each symbol every player stopped and considered it — what it
+held, where it came from, what it meant — so that the sign would stay full. The
+DLW gives that silence its place in Expressions, where a presence meets you in
+the field, listens, answers, and never judges. Whether the instrument should
+ever require the pause, as Hesse's game did, is left open. Nothing automatic is
+allowed to fill it in the meantime.
 
-**Teaching.** *Magister Ludi* first meant simply schoolmaster, and Knecht
-ends as a teacher. Epii is the DLW's teacher: it works beside the
-instruments and explains, and you learn the instrument by playing it with
-Epii there.
+Any game could be read back into the disciplines it was made from. Knecht
+spent years translating a single school game, phrase by phrase, into
+mathematics, ornament, Chinese and Greek. Every reference in the DLW keeps its
+owner and its version so that you can do the same: follow anything back to
+where it began. Jean Gebser called that beginning the ever-present origin, a
+source that stays present rather than receding into the past. Tracing it is a
+kind of care, and it runs in both directions: back through what a thing came
+from, and back through what you came from in coming to know it.
 
-**The village.** Hesse gave the game a village where its players lived. The
-DLW's shared field is that village with every player a world: you visit what
-others have shown, take back what they give you under their name, and show
-your own world as far as you choose. Hesse also kept the private game: "to
-this day everyone is free to play the Game privately." Your world, unshown,
-is where that game is played.
+*Magister Ludi* first meant simply schoolmaster, and Knecht ends his life as a
+teacher. The DLW teaches the way any instrument does. A companion works beside
+you and explains what you are looking at, and the rest you learn by playing.
 
-**The score.** Hesse's games were written down so they could be played
-again. Here a day closes into what it learned and made, a walk is recorded,
-a take is kept, and each record can be opened and played again by someone
-else.
+Hesse gave his players a village. The DLW gives them a field. Every player is a
+world in it, every visit lands on what its host has chosen to show, and every
+gift arrives under its giver's name. He kept the private game as well — "to
+this day everyone is free to play the Game privately" — and your world, before
+you have shown any of it, is where that game is played.
 
-**Ending.** Games end; festivals end; the score remains. A day in the DLW
-ends by itself. Whether a whole kind of work, or the instrument itself, could
-one day be retired with its record kept is a question the DLW keeps open,
-because an instrument that cannot imagine its end will defend it.
+Games were written down so they could be played again. Here a day closes into
+what it taught, a walk is recorded, a take is kept, and whoever you give them
+to can play them in their own world.
+
+And games end. A day in the DLW closes by itself. Whether a whole kind of work,
+or the instrument itself, might one day be retired with its record kept is a
+question the DLW keeps open. An instrument that cannot imagine its end will
+defend it.
 
 ## 13. Epi-Logos
 
