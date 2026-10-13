@@ -83,6 +83,7 @@ import {worldRequest} from './worldChannel';
 import {installLensStudio,type LensId} from './lensStudio.js';
 import {installResearchInstruments} from './researchInstruments.js';
 import {installPalaceInstrument} from './palaceInstrument.js';
+import {palaceInstrumentOpenRequest} from './palaceWhole.js';
 import {installJourneyInstrument} from './journeyInstrument.js';
 import {writeJourneyCrossing,writeJourneyReturn} from './sharedTimeWindow.js';
 import {composeSceneRequest} from './journeyBeats.js';
@@ -2420,6 +2421,8 @@ const palaceInstrument=installPalaceInstrument({
  readExpression:async ref=>palaceSnapshot(await readKernelExpression(ref)),
  composeExpression:async({expression_ref,expected_revision,changes})=>{const data=await nativeExpressionRequest({operation:'edit',expression_ref,expected_revision,actor:'human:techne-palace',changes}) as {state?:string;current_revision?:number;document?:unknown}|null;if(data?.state==='revision_conflict')return {ok:false,reason:`This Palace changed elsewhere (now revision ${data.current_revision}). Nothing was saved; reopen it and try again.`};if(!data?.document||data.state!=='ready')return {ok:false,reason:`The Expression owner did not accept the composition (${String(data?.state)}).`};return {ok:true,document:palaceSnapshot(data.document)};},
  openExpression:ref=>{void nativeWorkspace?.open(ref);},
+ // Lane-5 seam B: a non-Expression palace entry asks for its instrument through the frame's existing host-request summon.
+ openInstrument:(instrument,ref)=>{hostRequest(palaceInstrumentOpenRequest(instrument,ref));},
 },palaceHome);
 /** lane-5 T8: the journey as the expression clock runs it: a saved sequence runs on its saved durations, otherwise the working ones. */
 function playbackJourney():Journey{

@@ -32,6 +32,9 @@ export type NativeTimeWindowRequest = NativeTimeWindowBasis & {reading_ref: stri
       expected_window: SharedTimeWindow | null; target_scene_ref: string}
   // Lane-5 T11: leave the Expression reading and restore the beat the crossing entered, by ref equality (never an index).
   | {operation: 'return'; expected_session_ref: string; expected_selection: DisclosureSelection; expected_window: SharedTimeWindow | null}
+  // Lane-5 palace seam A: an Open on a Palace object records one trail step on the session's one history. The Expression-wide
+  // reading the Palace presents at this basis is its admission; the hop carries the session's own subject and selection.
+  | {operation: 'palace'; target_ref: string}
 );
 /** What a crossing or a return did: the beat it entered, or the beat a return restored or lost (named by ref). */
 export type NativeTimeWindowCrossing = {operation: 'cross'; scene_ref: string}
@@ -155,6 +158,27 @@ export function createNativeTimeWindowOwner({store}: {store: DisclosureSessionSt
       throw Error('The injected native session owner does not carry the exact Expression/Scene ground');
     return session;
   };
+  /** Lane-5 palace seam A: an Open on a Palace object records one endpoint hop on the session's one history. The Expression-wide
+   * reading the Palace presents at this exact basis is its admission, the same authority a crossing uses. The hop carries the
+   * session's own subject and selection; a session off the Expression reading is refused by name and nothing is recorded. */
+  const palaceHop = (raw: Record<string, unknown>, native: NativeTimeWindowBasis, context: ChannelContext): NativeTimeWindowReply => {
+    const palace = journeyAdmitted;
+    if (!palace || !sameBasis(palace.basis, native) || palace.reading.reading_ref !== raw.reading_ref)
+      throw Error('The Palace is not admitted at this native Scene; reopen the Palace before recording its trail step');
+    current(context, native, palace);
+    if (!boundedText(raw.target_ref)) throw Error('A Palace trail step names one object ref');
+    const before = store.get();
+    if (!before) throw Error('Read the native shared session before recording a Palace trail step');
+    checkedSession(before);
+    qualifySameSource(before, palace);
+    if (before.instrument !== 'expressions') throw Error('Palace trail step refused: the session is not on the Expression reading; nothing was recorded');
+    const session = store.recordTraversal({kind: 'traversal', instrument: 'expressions', step: 'endpoint', ref: raw.target_ref,
+      subject_ref: before.subject_ref, selection_ref: before.selection.selection_ref});
+    current(context, native, palace);
+    if (store.get() !== session) throw Error('The native session advanced before its Palace reply');
+    return {schema: 'oi.native-time-window/v1', basis: copy(palace.basis), reading_ref: palace.reading.reading_ref, instrument: 'expressions',
+      session: copy(checkedSession(session)), axis: copy(timeAxis(palace.reading, session.time_window ?? null))};
+  };
   return {
     admit(request: NativeTimeWindowBasis, reading: TechneReading, context: ChannelContext): void {
       const next = admission(request, reading, context, false);
@@ -170,16 +194,18 @@ export function createNativeTimeWindowOwner({store}: {store: DisclosureSessionSt
       // Each operation names the instrument it may address: time writes are Timeline/Place; the crossing's refresh and cross
       // are the Journey's; a return leaves the Expression reading.
       const instrumentFor: Record<string, readonly string[]> = {read: ['timeline', 'place'], set: ['timeline', 'place'], spatial: ['timeline', 'place'],
-        traversal: ['timeline', 'place'], refresh: ['timeline', 'place', 'journey'], cross: ['journey'], return: ['expressions']};
+        traversal: ['timeline', 'place'], refresh: ['timeline', 'place', 'journey'], cross: ['journey'], return: ['expressions'], palace: ['expressions']};
       if (!object(raw) || !Object.prototype.hasOwnProperty.call(instrumentFor, String(raw.operation)) || !instrumentFor[String(raw.operation)].includes(String(raw.instrument))
         || !boundedText(raw.reading_ref)) throw Error('Shared time supports only exact read/set/refresh/spatial/traversal operations for Timeline or Places, and cross/return for the Journey');
       const extra = raw.operation === 'set' ? ['expected_session_ref', 'expected_selection', 'expected_window', 'window']
         : raw.operation === 'spatial' ? ['expected_session_ref', 'expected_selection', 'expected_window', 'expected_spatial_focus_ref', 'spatial_focus_ref']
         : raw.operation === 'traversal' ? ['expected_session_ref', 'expected_selection', 'expected_window', 'hop']
         : raw.operation === 'cross' ? ['expected_session_ref', 'expected_selection', 'expected_window', 'target_scene_ref']
-        : raw.operation === 'return' ? ['expected_session_ref', 'expected_selection', 'expected_window'] : [];
+        : raw.operation === 'return' ? ['expected_session_ref', 'expected_selection', 'expected_window']
+        : raw.operation === 'palace' ? ['target_ref'] : [];
       if (Object.keys(raw).some(key => !['expression_ref', 'revision', 'scene_ref', 'operation', 'instrument', 'reading_ref', ...extra].includes(key)))
         throw Error('Unsupported shared-time operands; presentation internals do not cross this boundary');
+      if (raw.operation === 'palace') return palaceHop(raw, native, context);
       const entry = admitted;
       current(context, native, entry ?? undefined);
       if (!entry || !sameBasis(entry.basis, native) || entry.reading.reading_ref !== raw.reading_ref)
