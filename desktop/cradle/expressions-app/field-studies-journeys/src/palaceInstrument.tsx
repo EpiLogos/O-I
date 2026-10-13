@@ -91,6 +91,10 @@ export interface PalaceInstrumentHost {
 
 const DEFAULT_REGION='Palace';
 
+/** Seam B: the wired instruments that take an object ref as their focus (the frame carries it through their existing focus paths).
+ * The project lens does not yet take one, so its Open keeps the line that says the object is not carried into it. */
+const FOCUS_CARRIED_INSTRUMENTS:ReadonlySet<TechneInstrument>=new Set<TechneInstrument>(['canvas','timeline','place','journey']);
+
 /** A region draft in the editor: its name, live/pending Scene ref, its one
  * member (or null while empty). */
 interface RegionDraft {name:string;scene_ref:string|null;member:PalaceRegionSpec['member']}
@@ -103,7 +107,7 @@ function EdgeNote({edge}:{edge:PalaceGuidedEdge|undefined}){
 }
 
 /** `reading` is undefined while the whole's reading is still returning. */
-export function PalacePanel({host,doc,reading,readingReason,onMessage,basis}:{host:PalaceInstrumentHost;doc:PalaceDocumentSnapshot&{title:string};reading:TechneReading|null|undefined;readingReason:string|null;onMessage:(text:string)=>void;basis:PalaceInstrumentBasis}) {
+export function PalacePanel({host,doc,reading,readingReason,onMessage,basis,carried}:{host:PalaceInstrumentHost;doc:PalaceDocumentSnapshot&{title:string};reading:TechneReading|null|undefined;readingReason:string|null;onMessage:(text:string)=>void;basis:PalaceInstrumentBasis;carried?:{ref:string;nonce:number}}) {
  const [draftDoc,setDraftDoc]=useState(doc);
  const [draftAuthoredRevision,setDraftAuthoredRevision]=useState(()=>host.authoredRevision());
  const lifetime=useRef({live:true,generation:0});
@@ -142,6 +146,15 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis}:{ho
  const [walkMoved,setWalkMoved]=useState<number|undefined>(undefined);
  const walkIndex=palaceWalkAt(walkSteps,walkMoved??palaceWalkResume(reading?palaceComposition(reading).walk_index:undefined,walkSteps.length)).index;
  const focus=palaceWalkAt(walkSteps,walkIndex).step;
+ // Seam B: a carried walk locus is focused once per open, through the walk's own index. A ref the walk does not hold is named and nothing moves.
+ const carriedApplied=useRef<number|undefined>(undefined);
+ useEffect(()=>{
+  if(!carried||reading==null||carriedApplied.current===carried.nonce)return;
+  carriedApplied.current=carried.nonce;
+  const index=walkSteps.findIndex(step=>step.ref===carried.ref);
+  if(index<0){onMessage(`Not focused: ${carried.ref} is not a step of this Palace walk.`);return;}
+  setWalkMoved(index);
+ },[carried,reading,walkSteps,onMessage]);
  function moveWalk(next:number){
   const index=palaceWalkAt(walkSteps,next).index;
   setWalkMoved(index);
@@ -159,7 +172,9 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis}:{ho
  function openPalaceObject(instrument:TechneInstrument,ref:string){
   if(instrument!=='expressions'){
    host.openInstrument(instrument,ref);
-   onMessage(`Asked the shell for the ${instrument} instrument. ${ref} is not carried into it yet.`);
+   onMessage(FOCUS_CARRIED_INSTRUMENTS.has(instrument)
+    ?`Asked the shell for the ${instrument} instrument with ${ref} in focus. The instrument names any ref it cannot find.`
+    :`Asked the shell for the ${instrument} instrument. ${ref} is not carried into it yet.`);
    return;
   }
   host.openExpression(ref);
@@ -409,6 +424,8 @@ async function recordPalaceHop(basis:{expression_ref:string;revision:number;scen
  * host supplies the Studio-owned mount; the live Expression stays the field. */
 export function installPalaceInstrument(host:PalaceInstrumentHost,home:HTMLElement){
  let root:Root|null=null,mount:HTMLElement|null=null,status:HTMLElement|null=null,epoch=0,destroyed=false,open_=false;
+ // Seam B: the walk locus the frame carried into this open. Its nonce makes each open's focus apply once, and a refresh never re-applies it.
+ let carriedFocus:{ref:string;nonce:number}|undefined,focusNonce=0;
  function ensureMount(){
   if(mount)return mount;
   mount=document.createElement('section');mount.id='techne-palace-workspace';mount.className='palace-workspace';mount.hidden=true;
@@ -443,7 +460,7 @@ export function installPalaceInstrument(host:PalaceInstrumentHost,home:HTMLEleme
    ensureMount();
    root??=createRoot(mount!);
    // The regions and the Scene path stand at once; the integral whole follows when its reading returns.
-   const draw=(whole:{reading:TechneReading|null|undefined;reason:string|null})=>root!.render(<PalacePanel key={doc.expression_ref} host={host} doc={doc} reading={whole.reading} readingReason={whole.reason} onMessage={message} basis={basis}/>);
+   const draw=(whole:{reading:TechneReading|null|undefined;reason:string|null})=>root!.render(<PalacePanel key={doc.expression_ref} host={host} doc={doc} reading={whole.reading} readingReason={whole.reason} onMessage={message} basis={basis} carried={carriedFocus}/>);
    draw({reading:undefined,reason:null});
    const whole=await readWhole(doc,basis,view);
    if(generation!==epoch||destroyed||!open_)return;
@@ -456,7 +473,7 @@ export function installPalaceInstrument(host:PalaceInstrumentHost,home:HTMLEleme
   epoch++;open_=false;unmount();if(mount)mount.hidden=true;
  }
  return {
-  async open(){if(destroyed)throw new Error('Palace instrument workspace is closed');open_=true;ensureMount();if(mount)mount.hidden=false;await load();},
+  async open(focusRef?:string){if(destroyed)throw new Error('Palace instrument workspace is closed');if(focusRef!==undefined)carriedFocus={ref:focusRef,nonce:++focusNonce};open_=true;ensureMount();if(mount)mount.hidden=false;await load();},
   close(){void close_();},
   async refresh(){if(open_)await load();},
   destroy(){epoch++;destroyed=true;unmount();mount?.remove();status?.remove();mount=null;status=null;},

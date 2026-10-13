@@ -454,6 +454,8 @@ class InstrumentBoundary extends Component<{children:ReactNode},{error:string|nu
 }
 export function installResearchInstruments(host:ResearchInstrumentsHost){
  let lens:ResearchInstrument|null=null,root:Root|null=null,epoch=0,destroyed=false;
+ // Seam B: the object ref an open carries. load consumes it synchronously at its start, so it is never seen by a later refresh.
+ let pendingFocus:string|undefined;
  // T-FRAME-TIME-PUSH: the presented time instrument's follower of the host's shared-window nudges (one at a time).
  let offSharedTimeNudges:(()=>void)|null=null;
  let captureCanvas:(()=>{x:number;y:number;zoom:number})|null=null,currentKey:string|null=null;
@@ -1122,6 +1124,7 @@ host.tools.append(saveGlyph);
  async function load(selected:ResearchInstrument){
   flushPlaceLayers();
   const generation=++epoch;unmount();mount.hidden=false;message('Reading…');
+  const focusRef=pendingFocus;pendingFocus=undefined;
   try{
    const view=host.nativeView(),sceneId=host.sceneId();
    const sameBasis=()=>{const now=host.nativeView();return host.sceneId()===sceneId&&now?.document.expression_ref===view?.document.expression_ref&&now?.document.revision===view?.document.revision;};
@@ -1133,7 +1136,10 @@ host.tools.append(saveGlyph);
     const focused=focus?.scene_ref===view.bindings[sceneId].scene_ref?focus.entity_ref??null:null;
     state.selectedNode=state.selectedNode&&canvas.nodes.some(node=>node.id===state.selectedNode)?state.selectedNode:focused;
     state.selectedEdge=focus?.scene_ref===view.bindings[sceneId].scene_ref?focus.relation_ref??null:null;
-    message(canvas.hiddenCount?`${canvas.title} · ${canvas.hiddenCount} further members on other Scene pages`:canvas.title);
+    // Seam B: a carried card is focused through the native select (host.select on its occurrence). A ref not on this canvas is named.
+    const m1Note=focusRef!==undefined&&!canvas.nodes.some(node=>node.id===focusRef)?`Not focused: ${focusRef} is not a card on this canvas.`:null;
+    if(focusRef!==undefined&&canvas.nodes.some(node=>node.id===focusRef)){state.selectedNode=focusRef;state.selectedEdge=null;if(canvas.sceneId)host.select(canvas.sceneId,canvas.occurrences.get(focusRef)??null);}
+    message(m1Note??(canvas.hiddenCount?`${canvas.title} · ${canvas.hiddenCount} further members on other Scene pages`:canvas.title));
     render(canvasNode(canvas,state,generation));
     // R3 — semantic zoom/LOD is presentational only and never touches
     // entity/card size (interactions.ts semanticZoomLevel/labelsForZoom).
@@ -1234,6 +1240,10 @@ host.tools.append(saveGlyph);
     // Chronology vs. the M2′ relation-field projections is a presentation
     // switch over the SAME reading/repository — never a second app, tab or
     // store (Wayfinder §16). Session-local only, like the timeline camera.
+    // Seam B: a carried event is the chronology selection, through the one timeline key a named view also remounts with. A ref the reading does not date is named.
+    const focusEvent=focusRef!==undefined?(temporal.some(node=>node.graphNodeId===focusRef)?focusRef:null):undefined;
+    const focusNote=focusRef!==undefined&&focusEvent===null?`Not focused: ${focusRef} is not a dated event in this reading.`:null;
+    if(focusEvent){state.timeline={...state.timeline!,selectedNodeId:focusEvent};state.timelineKey=(state.timelineKey??0)+1;}
     state.m2Projection??='chronology';
     const setProjection=(next:'chronology'|'field'|'relative')=>{
      // Leaving the chronology keeps what it held, so a view saved from the relation field names the chronology's own filters.
@@ -1428,7 +1438,8 @@ host.tools.append(saveGlyph);
     };
     // lane-2 T22: the status line names the subject, reading basis and window the session holds, exactly as it holds them.
     const chronologyStatus=state.m2Projection==='field'?voice.relationField:voice.chronology;
-    message(sharedTime&&state.m2Projection==='chronology'?`${chronologyStatus} · ${handoffDisclosure(sharedTime.session)}`:chronologyStatus);
+    const timelineStatus=sharedTime&&state.m2Projection==='chronology'?`${chronologyStatus} · ${handoffDisclosure(sharedTime.session)}`:chronologyStatus;
+    message(focusNote?`${focusNote} ${timelineStatus}`:timelineStatus);
     if(sharedTime)followSharedTime(()=>render(canvasNode2()));
     render(canvasNode2());return;
    }
@@ -1620,6 +1631,9 @@ host.tools.append(saveGlyph);
     const tour=withStopBinding(saved,index,beat);
     void host.material(sceneId,{type:'place-tour-save',name,tour}).then(()=>{message(beat?`Stop ${index+1} bound to ${beat.scene_ref}`:`Stop ${index+1} unbound`);render(renderPlaces());},refusal);
    };
+   // Seam B: a carried place is the opening selection and the framed focus, through the same two props. A place the reading does not disclose is named.
+   const carriedPlace=focusRef!==undefined&&(nativeReading.spatial??[]).some(facet=>facet.place_ref===focusRef)?focusRef:undefined;
+   const placeNote=focusRef!==undefined&&carriedPlace===undefined?`Not focused: ${focusRef} is not a disclosed place in this reading.`:null;
    const renderPlaces=():ReactNode=>{
     const filter={...state.placeFilter!,window:sharedTime?.axis.window??null};
     const placeViewsNow=savedPlaceViews();
@@ -1667,7 +1681,7 @@ host.tools.append(saveGlyph);
       editRequest={placeEditRequest} onError={message}/>;
     return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:placeRecordFromViewState(state.place)}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}{scene&&<button type="button" className="research-places-view-save" aria-label="Save view…" title="Save this place view: camera, layers, basemap and time window" onClick={savePlaceView}>Save view…</button>}{scene&&Object.keys(placeViewsNow).length>0&&<select className="research-places-view-select" aria-label="Saved place views" value="" onChange={event=>{const [op,name]=event.target.value.split('\u0000');if(op==='apply')void applyPlaceView(name);if(op==='remove')removePlaceView(name);event.target.value='';}}><option value="">Views…</option>{Object.keys(placeViewsNow).map(name=><optgroup key={name} label={name}><option value={`apply\u0000${name}`}>Go to</option><option value={`remove\u0000${name}`}>Remove</option></optgroup>)}</select>}{timeControls(()=>render(renderPlaces()))}</div>,host.tools)}
     <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly={!state.livePlaces!.allowed} policy={state.livePlaces!.policy} basemapStack={state.livePlaces!.stack} onBasemapStackChange={next=>{state.livePlaces!.stack=next;scheduleLayersSave();}} onLiveSourcesAllowedChange={allowed=>{const live=state.livePlaces!;if(allowed)live.policy.optIn('tile_refresh','show live basemap sources the owner allowed in Places');else live.policy.optOut('tile_refresh');live.allowed=allowed;render(renderPlaces());}} placeFacets={nativeReading.spatial} placeAuthoring={placeAuthoring} placeTime={placeTime} daylight={PLACES_DAYLIGHT} ladder={ladderRungSummaries(referenceFrameLadder(nativeReading))} onRegisterPlaceViewRestore={restore=>{restoreViewOnMap=restore;}} onRegisterPlaceFlight={flight=>{flyOnMap=flight;}} layerFilter={filter} onLayerFilterChange={next=>{state.placeFilter={...next,window:null};scheduleLayersSave();render(renderPlaces());}} sourceAttributions={pack.manifest.sources.map(source=>`${source.name} (${source.license})`)}
-     initialViewState={state.place} initialSelectedGraphNodeId={openingPlaceSelection(sharedTime?.session??null,nativeReading.spatial??[],state.selectedPlace??null)} initialFocusGraphNodeId={sessionFocus}
+     initialViewState={state.place} initialSelectedGraphNodeId={carriedPlace??openingPlaceSelection(sharedTime?.session??null,nativeReading.spatial??[],state.selectedPlace??null)} initialFocusGraphNodeId={carriedPlace??sessionFocus}
      onOpenInTimeline={facet=>{void openInTimeline(facet).catch(error=>message(error instanceof Error?error.message:String(error)));}} onOpenSource={ref=>host.inspectSubject(ref)}
      onViewStateChange={value=>{state.place=value;}} onSelectedGraphNodeIdChange={value=>{state.selectedPlace=value;render(renderPlaces());}}
      onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref&&node.place);if(node)host.inspectSubject(ref,{node});}}/>
@@ -1678,10 +1692,11 @@ host.tools.append(saveGlyph);
    };
    if(sharedTime)followSharedTime(()=>render(renderPlaces()));
    render(renderPlaces());
+   if(placeNote)message(placeNote);
   }catch(error){if(epoch!==generation||destroyed)return;message(error instanceof Error?error.message:String(error));body.replaceChildren();}
  }
  return {
-  async open(selected:ResearchInstrument){if(destroyed)throw new Error('Research instrument workspace is closed');lens=selected;await load(selected);},
+  async open(selected:ResearchInstrument,focusRef?:string){if(destroyed)throw new Error('Research instrument workspace is closed');lens=selected;pendingFocus=focusRef;await load(selected);},
   close(){flushPlaceLayers();++epoch;lens=null;unmount();mount.hidden=true;},
   async refresh(){
    if(materialInFlight){deferredRefresh=true;return;}
