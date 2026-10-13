@@ -7,6 +7,12 @@ import {exportObsidianCanvas,noteBlocksFromText,parseObsidianCanvas,planObsidian
 import {frameBounds,renderFrameStage,type StageEdge} from './frameImage.js';
 import {download} from './capture';
 import {capturePlaceView,layersKey,layersRecordOf,placeViewNameProblem,restoreLayers,restorePlaceView,sameTimeWindow} from './placeViews.js';
+import {appendTourStop,captureTourStop,removeTourStop,resolveTourBindings} from './placeTours.js';
+import {placeTourSessionOf} from './placeTourSession.js';
+import {playPlaceTour,type PlaceTourPlayback} from './placeTourPlayback.js';
+import {PlaceTourPanel} from './placeTourPanel.js';
+import {beats as journeyBeatsOf} from '../../../src/techne/m0m5/journey/beats';
+import type {PlaceViewState} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeNavigation';
 import {openTimelinePresentation,timelineRestoreNote,timelineStyleLoaded,timelineStyleOf,timelineViewNameProblem,timelineViewOf,timelineViewRestorePlan,type TimelinePresentation} from './timelineViews.js';
 import type {TimelinePresentationHandle} from '../../vendor/research-canvas/packages/canvas/src/timeline/TimelineLens';
 import {CONNECTOR_KINDS,connectorPresentation,connectorRecord,connectorWithSides,sideFromHandleId,type ConnectorKind,type ResearchConnector} from './canvasConnectors.js';
@@ -1481,6 +1487,50 @@ host.tools.append(saveGlyph);
     state.placeLayersSave={timer:setTimeout(write,600),write};
    };
    const removePlaceView=(name:string)=>{void host.material(sceneId,{type:'place-view-remove',name}).then(()=>{message(`View "${name}" removed`);render(renderPlaces());},error=>message(error instanceof Error?error.message:String(error)));};
+   // Lane-4 T25–T26: a tour is recorded from the camera the map shows and played as flights. It is not written to the Scene yet
+   // (OPEN: the native placeTours key); until then it lives in this session only. A stop's journey binding is read from the
+   // journey's own beats on every render, never copied here.
+   let flyOnMap:((camera:PlaceViewState,durationMs:number)=>void)|null=null;
+   let tourPlayback:PlaceTourPlayback|null=null;
+   const tourSession=()=>placeTourSessionOf(sceneId);
+   const reducedMotionNow=()=>{try{return window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch{return false;}};
+   const stopTour=()=>{tourPlayback?.stop();tourPlayback=null;};
+   const toggleTourRecording=()=>{
+    if(!scene){message('Open a Scene to record a tour.');return;}
+    const session=tourSession();
+    if(session.recording){session.recording=false;message('Recording stopped. The tour is kept for this session only; saving tours to the Scene is still open.');}
+    else{stopTour();session.recording=true;message('Recording: each stop is the camera the map shows. Saving tours to the Scene is still open.');}
+    render(renderPlaces());
+   };
+   const addTourStop=(caption:string,holdSeconds:number)=>{
+    if(!scene)return;
+    const session=tourSession();
+    const selected=state.selectedPlace??null;
+    // The place a stop names is the selected place only when this reading discloses it; no ref is minted for a stop.
+    const placeRef=selected!==null&&(nativeReading.spatial??[]).some(facet=>facet.place_ref===selected)?selected:null;
+    const stop=captureTourStop({viewState:state.place??defaultPlaceView(),placeRef,caption,holdMs:Math.round(holdSeconds*1000)});
+    const next=appendTourStop(session.record,stop);
+    if(next.problem){message(next.problem);return;}
+    session.record=next.record;
+    message(`Stop ${session.record.stops.length} recorded`);
+    render(renderPlaces());
+   };
+   const removeTourStopAt=(index:number)=>{const session=tourSession();session.record=removeTourStop(session.record,index);render(renderPlaces());};
+   const playTour=()=>{
+    const session=tourSession();
+    if(!scene||session.record.stops.length===0)return;
+    stopTour();
+    session.recording=false;
+    tourPlayback=playPlaceTour(session.record,{
+     reducedMotion:reducedMotionNow(),
+     fly:(camera,durationMs)=>{if(destroyed||lens!=='m4'){stopTour();return;}flyOnMap?.(camera,durationMs);},
+     onArrive:(caption,index)=>{if(destroyed||lens!=='m4')return;message(caption??`Stop ${index+1} of ${session.record.stops.length}`);},
+     onDone:()=>{tourPlayback=null;if(!destroyed&&lens==='m4'){message('Tour finished');render(renderPlaces());}},
+    });
+    render(renderPlaces());
+   };
+   const stopPlayingTour=()=>{stopTour();message('Tour stopped');render(renderPlaces());};
+   const clearTour=()=>{stopTour();const session=tourSession();session.record={stops:[]};session.recording=false;message('Tour cleared');render(renderPlaces());};
    const renderPlaces=():ReactNode=>{
     const filter={...state.placeFilter!,window:sharedTime?.axis.window??null};
     const placeViewsNow=savedPlaceViews();
@@ -1527,12 +1577,13 @@ host.tools.append(saveGlyph);
       onFilterChange={next=>{state.placeFilter={...next,window:null};scheduleLayersSave();render(renderPlaces());}}
       editRequest={placeEditRequest} onError={message}/>;
     return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:placeRecordFromViewState(state.place)}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}{scene&&<button type="button" className="research-places-view-save" aria-label="Save view…" title="Save this place view: camera, layers, basemap and time window" onClick={savePlaceView}>Save view…</button>}{scene&&Object.keys(placeViewsNow).length>0&&<select className="research-places-view-select" aria-label="Saved place views" value="" onChange={event=>{const [op,name]=event.target.value.split('\u0000');if(op==='apply')void applyPlaceView(name);if(op==='remove')removePlaceView(name);event.target.value='';}}><option value="">Views…</option>{Object.keys(placeViewsNow).map(name=><optgroup key={name} label={name}><option value={`apply\u0000${name}`}>Go to</option><option value={`remove\u0000${name}`}>Remove</option></optgroup>)}</select>}{timeControls(()=>render(renderPlaces()))}</div>,host.tools)}
-    <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly={!state.livePlaces!.allowed} policy={state.livePlaces!.policy} basemapStack={state.livePlaces!.stack} onBasemapStackChange={next=>{state.livePlaces!.stack=next;scheduleLayersSave();}} onLiveSourcesAllowedChange={allowed=>{const live=state.livePlaces!;if(allowed)live.policy.optIn('tile_refresh','show live basemap sources the owner allowed in Places');else live.policy.optOut('tile_refresh');live.allowed=allowed;render(renderPlaces());}} placeFacets={nativeReading.spatial} placeAuthoring={placeAuthoring} placeTime={placeTime} daylight={PLACES_DAYLIGHT} ladder={ladderRungSummaries(referenceFrameLadder(nativeReading))} onRegisterPlaceViewRestore={restore=>{restoreViewOnMap=restore;}} layerFilter={filter} onLayerFilterChange={next=>{state.placeFilter={...next,window:null};scheduleLayersSave();render(renderPlaces());}} sourceAttributions={pack.manifest.sources.map(source=>`${source.name} (${source.license})`)}
+    <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly={!state.livePlaces!.allowed} policy={state.livePlaces!.policy} basemapStack={state.livePlaces!.stack} onBasemapStackChange={next=>{state.livePlaces!.stack=next;scheduleLayersSave();}} onLiveSourcesAllowedChange={allowed=>{const live=state.livePlaces!;if(allowed)live.policy.optIn('tile_refresh','show live basemap sources the owner allowed in Places');else live.policy.optOut('tile_refresh');live.allowed=allowed;render(renderPlaces());}} placeFacets={nativeReading.spatial} placeAuthoring={placeAuthoring} placeTime={placeTime} daylight={PLACES_DAYLIGHT} ladder={ladderRungSummaries(referenceFrameLadder(nativeReading))} onRegisterPlaceViewRestore={restore=>{restoreViewOnMap=restore;}} onRegisterPlaceFlight={flight=>{flyOnMap=flight;}} layerFilter={filter} onLayerFilterChange={next=>{state.placeFilter={...next,window:null};scheduleLayersSave();render(renderPlaces());}} sourceAttributions={pack.manifest.sources.map(source=>`${source.name} (${source.license})`)}
      initialViewState={state.place} initialSelectedGraphNodeId={openingPlaceSelection(sharedTime?.session??null,nativeReading.spatial??[],state.selectedPlace??null)} initialFocusGraphNodeId={sessionFocus}
      onOpenInTimeline={facet=>{void openInTimeline(facet).catch(error=>message(error instanceof Error?error.message:String(error)));}} onOpenSource={ref=>host.inspectSubject(ref)}
      onViewStateChange={value=>{state.place=value;}} onSelectedGraphNodeIdChange={value=>{state.selectedPlace=value;render(renderPlaces());}}
      onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref&&node.place);if(node)host.inspectSubject(ref,{node});}}/>
      <ImageryPanel tools={host.placesHome??host.tools} toolbarContainer={host.placesHome??host.tools} images={images} offlineOnly imageTitle={image=>scene?.entities.find(entity=>entity.id===image.id)?.name??'Scene image'} resolveAsset={path=>{const value=assets.get(path);if(!value)throw new Error('Image is not bound to this native Scene');return value;}} onImport={importImagery}/>
+     <PlaceTourPanel sceneOpen={!!scene} session={tourSession()} playing={!!tourPlayback} bindings={resolveTourBindings(tourSession().record,journeyBeatsOf(nativeReading).beats)} onToggleRecording={toggleTourRecording} onAddStop={addTourStop} onRemoveStop={removeTourStopAt} onPlay={playTour} onStop={stopPlayingTour} onClear={clearTour}/>
      {!host.placesHome&&facets}
     </div>{host.placesHome&&createPortal(facets,host.placesHome)}</>;
    };
