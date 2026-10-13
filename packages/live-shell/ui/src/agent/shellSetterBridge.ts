@@ -34,6 +34,14 @@ import {registerShellSetter} from '../inhabitants/sdk/shellSetters.ts'
 import {fireHarnessControlByKey, familyParamRows} from './agentNativeDispatch.ts'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import type {AgentShellState} from './AgentShellContext.tsx'
+import {atlasHandle, presentAtlasView} from '../projections/atlas/AtlasProjectionPanel.tsx'
+import type {AtlasHandle} from '../projections/atlas/mount.ts'
+import {formatYear} from '../projections/atlas/src/data/time.ts'
+import {FORCE_ROWS, type Forces} from '../projections/atlas/src/graph/forces.ts'
+import {
+  allTime, DEPTH_RANGE, KIND_NAMES, playOrPause, scrubClock, setForce, stepDepth, TIE_BASE_IDS, toggleCumulative, toggleKind,
+  toggleOccurrences, toggleSky, toggleTie, setWholeField,
+} from '../inhabitants/atlasFaceActions.ts'
 
 /** The rows the bridge's setters dispatch through — resolved from the kit
  * registries by (family, deviceInstance, key), so the dispatch always
@@ -109,6 +117,201 @@ export function useShellSetterBridge(
       shell: latest.current.shell,
       onReceipt: setReceipt,
     })
+    registerAtlasShellSetters()
   }, [])
   return {receipt}
+}
+
+// ── the Earth's parameters: the mounted atlas's own face actions ───────────────────────────────────────────────────
+//
+// Each writer is registered under the shell.setAtlas* path its atlas-earth row names (agentNativeP0.ts). It reads the one
+// mounted atlas at dispatch time (AtlasProjectionPanel's handle), validates its value against the domain the row declares,
+// and then calls the SAME atlas face action the face body calls for that control (atlasFaceActions.ts): the state it moves is
+// the state the body reads, and no writer keeps a copy. A value outside its domain, a malformed value, an atlas that has not
+// mounted and a graph that has not been opened are each refused by name. Nothing is clamped, held or silently dropped.
+
+const UNMOUNTED = 'the Earth has not mounted in this session, so the atlas it drives does not stand; the value is refused, not held'
+const UNOPENED = 'the constellation has not been opened in this session, so its controls have no graph to drive (the Graph view is shown first)'
+
+type AtlasOutcome = {readonly note: string} | {readonly refusal: string}
+const done = (note: string): AtlasOutcome => ({note})
+const refuse = (refusal: string): AtlasOutcome => ({refusal})
+
+/** A number on a closed domain, or the refusal that names the domain. */
+function within(value: unknown, min: number, max: number, what: string): string | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return `${what} takes a number, and ${String(value)} is not one`
+  if (value < min || value > max) return `${what} is ${value}; the atlas takes ${min} to ${max}, and the value is refused rather than clamped`
+  return null
+}
+
+function booleanValue(value: unknown, what: string): string | null {
+  return typeof value === 'boolean' ? null : `${what} takes true or false, and ${String(value)} is neither`
+}
+
+/** A set of named choices: a list, no repeats, every name one of the choices the row declares. */
+function choiceSet(value: unknown, choices: readonly string[], what: string): {readonly set: Set<string>} | string {
+  if (!Array.isArray(value)) return `${what} takes a list of ${choices.join(', ')}`
+  for (const item of value) {
+    if (typeof item !== 'string' || !choices.includes(item)) return `${what} names ${String(item)}, which is not one of ${choices.join(', ')}`
+  }
+  const set = new Set<string>(value as string[])
+  if (set.size !== value.length) return `${what} names a choice twice`
+  return {set}
+}
+
+/** Register one atlas writer under its path: refused by name while no atlas is mounted, otherwise the act's own outcome. */
+function atlasWriter(path: string, act: (value: unknown, handle: AtlasHandle) => AtlasOutcome): void {
+  registerShellSetter(path, async value => {
+    const handle = atlasHandle()
+    if (!handle) {
+      const refused: DispatchReceipt = {kind: 'refused', channel: 'shell', writePath: path, reason: `${path} refuses — ${UNMOUNTED}.`}
+      return refused
+    }
+    const outcome = act(value, handle)
+    const receipt: DispatchReceipt = 'refusal' in outcome
+      ? {kind: 'refused', channel: 'shell', writePath: path, reason: `${path} refuses — ${outcome.refusal}.`}
+      : {kind: 'fired', channel: 'shell', writePath: path, note: outcome.note}
+    return receipt
+  })
+}
+
+const FORCE_WRITERS: readonly (readonly [keyof Forces, string])[] = [
+  ['centre', 'shell.setAtlasCentre'],
+  ['repel', 'shell.setAtlasRepel'],
+  ['link', 'shell.setAtlasLink'],
+  ['distance', 'shell.setAtlasDistance'],
+]
+
+/** Every shell.setAtlas* path the atlas-earth rows name. The bridge registers exactly these. */
+export const ATLAS_SHELL_SETTERS: readonly string[] = [
+  'shell.setAtlasDepth',
+  ...FORCE_WRITERS.map(([, path]) => path),
+  'shell.setAtlasTies', 'shell.setAtlasKinds', 'shell.setAtlasOccurrences', 'shell.setAtlasSkyAnchors',
+  'shell.setAtlasView',
+  'shell.setAtlasWholeField',
+  'shell.setAtlasCursor', 'shell.setAtlasAllTime', 'shell.setAtlasPlay', 'shell.setAtlasCumulative',
+]
+
+/** Register the atlas's writers. Idempotent: a registration replaces by path. The shell's transport registers them on mount
+ * (useShellSetterBridge); the tests register them directly. */
+export function registerAtlasShellSetters(): void {
+  // graph-tools: the constellation's own controls, through the graph the controller holds.
+  atlasWriter('shell.setAtlasDepth', (value, handle) => {
+    const bad = within(value, DEPTH_RANGE.min, DEPTH_RANGE.max, 'Steps from the subject')
+    if (bad) return refuse(bad)
+    if (!Number.isInteger(value)) return refuse(`Steps from the subject take a whole number, and ${String(value)} is not one`)
+    const graph = handle.ctl.graphControls
+    if (!graph) return refuse(UNOPENED)
+    const target = value as number
+    const from = graph.controls().depth
+    for (let i = 0; i < Math.abs(target - from); i++) stepDepth(graph, target > from ? 1 : -1)
+    return done(`Steps from the subject: ${graph.controls().depth}.`)
+  })
+
+  for (const [key, path] of FORCE_WRITERS) {
+    const spec = FORCE_ROWS.find(force => force.key === key)
+    if (!spec) throw new Error(`the atlas has no force "${key}"`)
+    atlasWriter(path, (value, handle) => {
+      const bad = within(value, spec.min, spec.max, spec.label)
+      if (bad) return refuse(bad)
+      const graph = handle.ctl.graphControls
+      if (!graph) return refuse(UNOPENED)
+      setForce(graph, key, value as number)
+      return done(`${spec.label} is ${graph.controls().forces[key]}.`)
+    })
+  }
+
+  atlasWriter('shell.setAtlasTies', (value, handle) => {
+    const chosen = choiceSet(value, TIE_BASE_IDS, 'Relations drawn')
+    if (typeof chosen === 'string') return refuse(chosen)
+    const graph = handle.ctl.graphControls
+    if (!graph) return refuse(UNOPENED)
+    const declared = graph.controls().bases.map(basis => basis.id)
+    for (const id of chosen.set) {
+      if (!declared.some(basis => basis === id)) return refuse(`the graph does not declare the relation "${id}" (it declares ${declared.join(', ')})`)
+    }
+    for (const basis of declared) {
+      if (chosen.set.has(basis) !== graph.controls().ties.includes(basis)) toggleTie(graph, basis)
+    }
+    return done(`Relations drawn: ${graph.controls().ties.join(', ') || 'none'}.`)
+  })
+
+  atlasWriter('shell.setAtlasKinds', (value, handle) => {
+    const chosen = choiceSet(value, KIND_NAMES, 'Kinds drawn')
+    if (typeof chosen === 'string') return refuse(chosen)
+    const graph = handle.ctl.graphControls
+    if (!graph) return refuse(UNOPENED)
+    for (const kind of KIND_NAMES) {
+      if (chosen.set.has(kind) !== graph.controls().kinds[kind]) toggleKind(graph, kind)
+    }
+    const kinds = graph.controls().kinds
+    return done(`Kinds drawn: ${KIND_NAMES.filter(kind => kinds[kind]).join(', ') || 'none'}.`)
+  })
+
+  atlasWriter('shell.setAtlasOccurrences', (value, handle) => {
+    const bad = booleanValue(value, 'Occurrences')
+    if (bad) return refuse(bad)
+    const graph = handle.ctl.graphControls
+    if (!graph) return refuse(UNOPENED)
+    if (graph.controls().dust !== value) toggleOccurrences(graph)
+    return done(`Occurrences are ${graph.controls().dust ? 'drawn' : 'hidden'}.`)
+  })
+
+  atlasWriter('shell.setAtlasSkyAnchors', (value, handle) => {
+    const bad = booleanValue(value, 'Sky anchors')
+    if (bad) return refuse(bad)
+    const graph = handle.ctl.graphControls
+    if (!graph) return refuse(UNOPENED)
+    // the face's own reading: loading counts as on, so asking for it while it loads is already so
+    const standing = (sky: string) => sky === 'on' || sky === 'loading'
+    if (standing(graph.controls().sky) !== value) toggleSky(graph)
+    return done(`Sky anchors: ${graph.controls().sky}.`)
+  })
+
+  // mode-switch: the lens bar's own view mirror, which the Earth follows when it mounts. Like the face body, the choice
+  // stands whether or not the Earth has mounted yet — the mirror is the shell's, not the atlas's.
+  registerShellSetter('shell.setAtlasView', async value => {
+    const receipt: DispatchReceipt = value !== 'earth' && value !== 'graph'
+      ? {kind: 'refused', channel: 'shell', writePath: 'shell.setAtlasView', reason: `shell.setAtlasView refuses — the view is earth or graph, and ${String(value)} is neither.`}
+      : (presentAtlasView(value), {kind: 'fired', channel: 'shell', writePath: 'shell.setAtlasView', note: `The Earth presents the ${value} view.`})
+    return receipt
+  })
+
+  // globe-engine: the whole-field choice, offered only while a mode's own set stands aside on the globe (as the body).
+  atlasWriter('shell.setAtlasWholeField', (value, handle) => {
+    const bad = booleanValue(value, 'Whole field')
+    if (bad) return refuse(bad)
+    if (!handle.ctl.globeScope.scope) return refuse('no mode’s set is set aside on the globe, so there is no whole-field choice to make')
+    setWholeField(handle.engine, value as boolean)
+    return done(value ? 'The globe shows the whole field.' : `The globe shows ${handle.ctl.globeScope.scope.label}.`)
+  })
+
+  // time-control: the atlas's one deep-time clock.
+  atlasWriter('shell.setAtlasCursor', (value, handle) => {
+    const clock = handle.time
+    const bad = within(value, clock.fromU, clock.toU, 'The cursor')
+    if (bad) return refuse(bad)
+    scrubClock(handle.ctl, clock, value as number)
+    return done(`The cursor stands at ${formatYear(handle.model.scale.fromU(clock.cursorU))}.`)
+  })
+
+  atlasWriter('shell.setAtlasAllTime', (value, handle) => {
+    if (value !== true) return refuse('all time is the clock’s resting state and is left by scrubbing the cursor, so false is not written directly')
+    allTime(handle.ctl, handle.time)
+    return done('The clock stands at all time.')
+  })
+
+  atlasWriter('shell.setAtlasPlay', (value, handle) => {
+    const bad = booleanValue(value, 'Play')
+    if (bad) return refuse(bad)
+    if (handle.time.playing !== value) playOrPause(handle.ctl, handle.time)
+    return done(value ? 'The clock plays.' : 'The clock is paused.')
+  })
+
+  atlasWriter('shell.setAtlasCumulative', (value, handle) => {
+    const bad = booleanValue(value, 'Cumulative')
+    if (bad) return refuse(bad)
+    if (handle.time.cumulative !== value) toggleCumulative(handle.time)
+    return done(`The trail is ${value ? 'cumulative' : 'single'}.`)
+  })
 }

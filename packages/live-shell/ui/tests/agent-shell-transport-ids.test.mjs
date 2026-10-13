@@ -17,6 +17,8 @@ export async function resolve(s, c, n) {
     if (!s.startsWith('.')) throw e;
     if (s.endsWith('.js')) { try { return await n(s.slice(0, -3) + '.ts', c) } catch {} }
     for (const x of ['.ts', '.tsx']) { try { return await n(s + x, c) } catch {} }
+    // a directory import (the atlas panel's shell workspace reads ../continuity): its index, as the bundler resolves it
+    for (const x of ['/index.ts', '/index.tsx']) { try { return await n(s + x, c) } catch {} }
     throw e;
   }
 }
