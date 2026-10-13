@@ -12,6 +12,22 @@ import { standingLabel, type StandingDrawing } from "../timeline/standingStyle";
 import { LocationPanel, pointForPlace } from "./LocationPanel";
 import { attributionReadout, imageryReadout, liveTileDisclosure } from "./disclosure";
 import {
+  basemapGateReason,
+  basemapRows,
+  composeBasemapPlan,
+  defaultBasemapStack,
+  hideLiveBasemaps,
+  setBasemapOpacity,
+  setBasemapVisible,
+  setTerrainVisible,
+  terrainBasemapRow,
+  terrainReadout,
+  topLiveRaster,
+  type BasemapGate,
+  type BasemapRow,
+  type BasemapStack,
+} from "./basemapLayers";
+import {
   admittedFacets,
   layerVisible,
   placeLayers,
@@ -57,6 +73,14 @@ function messageOf(cause: unknown): string {
   return cause instanceof Error ? cause.message : String(cause);
 }
 
+/** The record without one key; the same record when the key is absent, so no needless update. */
+function withoutKey(record: Readonly<Record<string, string>>, key: string): Record<string, string> {
+  if (!(key in record)) return record as Record<string, string>;
+  const next = { ...record };
+  delete next[key];
+  return next;
+}
+
 export interface PsychogeographicMapProps {
   /** Put genuine map controls in the host toolbar instead of beneath it. */
   toolbarContainer?: HTMLElement;
@@ -85,6 +109,12 @@ export interface PsychogeographicMapProps {
   layerFilter?: PlaceFilterState;
   /** Asked for the next filter when a layer is toggled, so the side panel and the map read one state. Absent: the layers panel shows the legend only. */
   onLayerFilterChange?: (next: PlaceFilterState) => void;
+  /** Lane-4 T4/T5: the basemap stack the surface starts from (read once, as initialViewState is). Absent: the offline ground only. */
+  basemapStack?: BasemapStack;
+  /** Reports each change of the stack so the host can keep it; the surface owns the stack after mount and does not re-render its host for it. */
+  onBasemapStackChange?: (next: BasemapStack) => void;
+  /** The owner's native switch for live sources. The host passes `offlineOnly` from the same choice. Absent, the switch is not drawn. */
+  onLiveSourcesAllowedChange?: (allowed: boolean) => void;
 }
 
 /**
@@ -114,6 +144,9 @@ export function PsychogeographicMap({
   placeFacets = NO_FACETS,
   layerFilter,
   onLayerFilterChange,
+  basemapStack,
+  onBasemapStackChange,
+  onLiveSourcesAllowedChange,
 }: PsychogeographicMapProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mountedRenderer = useRef<MapSurfaceRenderer | null>(null);
@@ -161,17 +194,21 @@ export function PsychogeographicMap({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [readAttempt, setReadAttempt] = useState(0);
-  const [policyRevision, setPolicyRevision] = useState(0);
-  const [liveTilesActive, setLiveTilesActive] = useState(false);
-  const [liveFallback, setLiveFallback] = useState(false);
-  // The live source on screen (null when none), and the owner's reason it failed, verbatim.
-  const [activeLiveSource, setActiveLiveSource] = useState<MapTileSource | null>(null);
-  const [liveFailure, setLiveFailure] = useState<string | null>(null);
+  // Lane-4 T4/T5: the stack is the surface's own after mount; each change is reported, never re-rendered through the host.
+  const [stack, setStack] = useState<BasemapStack>(() => basemapStack ?? defaultBasemapStack());
+  // The renderer's own refusals, keyed by registry id, each the refusal's message verbatim.
+  const [basemapFailures, setBasemapFailures] = useState<Record<string, string>>({});
+  const [settled, setSettled] = useState(0);
+  const [elevation, setElevation] = useState<number | null>(null);
   const [activeLaneYear, setActiveLaneYear] = useState<number | null>(null);
   const [selectedLaneId, setSelectedLaneId] = useState<string | null>(null);
 
   const tileRefreshOptedIn = !offlineOnly && !!policy?.isOptedIn("tile_refresh");
-  void policyRevision;
+  // Lane-4 T4/T5: the plan the renderer holds for this stack under the live gate. A live row draws only through it.
+  const plan = useMemo(
+    () => composeBasemapPlan(stack, { offlineOnly, hasPolicy: !!policy, optedIn: tileRefreshOptedIn }, basemapFailures),
+    [stack, offlineOnly, policy, tileRefreshOptedIn, basemapFailures],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -420,6 +457,12 @@ export function PsychogeographicMap({
           setViewState(nextViewState);
           onViewStateChangeRef.current?.(nextViewState);
         });
+        renderer.onBasemapError?.((key, message) => {
+          if (!cancelled) setBasemapFailures(previous => (previous[key] ? previous : { ...previous, [key]: message }));
+        });
+        renderer.onSettled?.(() => {
+          if (!cancelled) setSettled(value => value + 1);
+        });
         const restoredViewState = initialViewStateRef.current;
         if (restoredViewState) {
           // Records saved before T1 carry no pitch or bearing: they restore untilted.
@@ -484,37 +527,28 @@ export function PsychogeographicMap({
     })();
   }, []);
 
-  const refreshLiveTiles = useCallback(async () => {
-    if (offlineOnly || !policy) return;
-    const currentRenderer = mountedRenderer.current;
-    if (!currentRenderer) return;
-    if (policy.requestLiveAction("tile_refresh", "refresh live basemap tiles") !== "granted") return;
-    const liveSource: MapTileSource = {
-      kind: "raster",
-      url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-      attribution: "© OpenStreetMap contributors",
-    };
-    try {
-      await currentRenderer.setLiveTileSource(liveSource);
-      if (mountedRenderer.current !== currentRenderer) return;
-      setLiveTilesActive(true);
-      setLiveFallback(false);
-      setActiveLiveSource(liveSource);
-      setLiveFailure(null);
-    } catch (cause) {
-      if (mountedRenderer.current !== currentRenderer) return;
-      setLiveTilesActive(false);
-      setLiveFallback(true);
-      setActiveLiveSource(null);
-      setLiveFailure(messageOf(cause));
-      try {
-        await currentRenderer.setLiveTileSource(tileSource);
-      } catch {
-        // The original offline surface stays mounted even if a source swap is
-        // unsupported by a test/static renderer.
-      }
+  // Lane-4 T4/T5: the renderer holds exactly the plan. A refused apply is named; a later apply that succeeds clears it.
+  useEffect(() => {
+    if (!readyRenderer || mountedRenderer.current !== readyRenderer || !readyRenderer.setBasemapPlan) return;
+    let cancelled = false;
+    void readyRenderer.setBasemapPlan(plan).then(() => {
+      if (!cancelled) setBasemapFailures(previous => withoutKey(previous, "renderer"));
+    }, (cause: unknown) => {
+      if (!cancelled) setBasemapFailures(previous => ({ ...previous, renderer: messageOf(cause) }));
+    });
+    return () => { cancelled = true; };
+  }, [plan, readyRenderer]);
+
+  // Lane-4 T5: the elevation of the selected place, read where the terrain layer is loaded (settled re-reads once tiles arrive).
+  const selectedPoint = selectedNode ? pointForPlace(selectedNode) : null;
+  const terrainActive = plan.terrain !== null;
+  useEffect(() => {
+    if (!terrainActive || !readyRenderer?.sampleElevation || !selectedPoint) {
+      setElevation(null);
+      return;
     }
-  }, [policy, tileSource, offlineOnly]);
+    setElevation(readyRenderer.sampleElevation(selectedPoint.latitude, selectedPoint.longitude) ?? null);
+  }, [readyRenderer, terrainActive, selectedNode?.graphNodeId, selectedPoint?.latitude, selectedPoint?.longitude, settled, viewState]);
 
   // T3: the compass returns bearing and tilt to north in place; globe home flies
   // to the default view. Both are eased and finish by their own clock.
@@ -537,25 +571,129 @@ export function PsychogeographicMap({
     });
   };
 
+  // Lane-4 T4/T5: every change of the stack goes through commitStack.
+  const commitStack = (next: BasemapStack) => {
+    setStack(next);
+    onBasemapStackChange?.(next);
+  };
+  // A live source is requested through the policy's tile_refresh gate; the call completes at once, so the indicator never sticks.
+  const grantLive = (name: string): boolean => {
+    if (!policy || offlineOnly) return false;
+    const decision = policy.requestLiveAction("tile_refresh", `show ${name} basemap`);
+    policy.complete();
+    return decision === "granted";
+  };
+  const gateReason = basemapGateReason({ offlineOnly, hasPolicy: !!policy, optedIn: tileRefreshOptedIn } satisfies BasemapGate);
+  const rows = basemapRows(stack, { offlineOnly, hasPolicy: !!policy, optedIn: tileRefreshOptedIn }, basemapFailures);
+  const terrainRow = terrainBasemapRow(stack, { offlineOnly, hasPolicy: !!policy, optedIn: tileRefreshOptedIn }, basemapFailures);
+  const setLayerOn = (row: BasemapRow) => {
+    const terrain = row.family === "terrain";
+    if (row.visible) {
+      commitStack(terrain ? setTerrainVisible(stack, false) : setBasemapVisible(stack, row.id, false));
+      return;
+    }
+    if (row.family !== "ground" && !grantLive(row.name)) return;
+    setBasemapFailures(previous => withoutKey(previous, row.id));
+    commitStack(terrain ? setTerrainVisible(stack, true) : setBasemapVisible(stack, row.id, true));
+  };
+  const basemapItem = (row: BasemapRow, withOpacity: boolean) => (
+    <li
+      key={row.id}
+      data-testid={`places-basemap-${row.id}`}
+      data-family={row.family}
+      data-state={row.failure !== null ? "unavailable" : row.visible ? "on" : "off"}
+    >
+      <label
+        style={{ display: "flex", alignItems: "center", gap: 6 }}
+        title={row.failure ?? (row.attribution ? `${row.attribution} [${row.licence}]` : row.licence)}
+      >
+        <input
+          type="checkbox"
+          data-testid={`places-basemap-toggle-${row.id}`}
+          checked={row.visible}
+          disabled={!row.enabled && !row.visible}
+          onChange={() => setLayerOn(row)}
+        />
+        <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.name}</span>
+        {withOpacity && (
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.05}
+            value={row.opacity}
+            disabled={!row.visible}
+            aria-label={`${row.name} opacity`}
+            data-testid={`places-basemap-opacity-${row.id}`}
+            style={{ width: 70 }}
+            onChange={event => commitStack(setBasemapOpacity(stack, row.id, Number(event.target.value)))}
+          />
+        )}
+      </label>
+      {row.failure !== null && (
+        <span data-testid={`places-basemap-reason-${row.id}`} style={{ display: "block", paddingLeft: 22, color: "#c9b68a", fontSize: 10, lineHeight: "14px" }}>
+          {row.failure}
+        </span>
+      )}
+    </li>
+  );
+  const basemapSection = (
+    <section data-testid="places-basemap" aria-label="Basemap layers" style={{ display: "grid", gap: 6, marginBottom: 10 }}>
+      <h3 style={{ margin: 0, fontSize: 12 }}>Basemap</h3>
+      {onLiveSourcesAllowedChange && (
+        <label data-testid="places-live-allow" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <input
+            type="checkbox"
+            checked={tileRefreshOptedIn}
+            onChange={() => {
+              if (tileRefreshOptedIn) commitStack(hideLiveBasemaps(stack));
+              setBasemapFailures({});
+              onLiveSourcesAllowedChange(!tileRefreshOptedIn);
+            }}
+          />
+          <span>Allow live sources (owner choice)</span>
+        </label>
+      )}
+      {gateReason !== null && (
+        <span data-testid="places-basemap-gate" style={{ color: "#c9b68a", fontSize: 10, lineHeight: "14px" }}>{gateReason}</span>
+      )}
+      <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 6 }}>
+        {rows.map(row => basemapItem(row, true))}
+        {basemapItem(terrainRow, false)}
+      </ul>
+    </section>
+  );
+
   // T7: every network-loaded pixel is attributed here, and an unavailable source
   // names its owner's reason verbatim.
+  const topLive = topLiveRaster(plan);
+  const topLiveSource = topLive ? { kind: "raster" as const, url: topLive.url, attribution: topLive.attribution } : null;
+  const firstFailure = Object.values(basemapFailures)[0] ?? null;
   const liveDisclosure = liveTileDisclosure({
     offlineOnly,
     hasPolicy: !!policy,
     optedIn: tileRefreshOptedIn,
-    liveSource: activeLiveSource,
-    failure: liveFallback ? liveFailure : null,
+    liveSource: topLiveSource,
+    failure: firstFailure,
   });
-  const imageryText = imageryReadout(tileSource, activeLiveSource);
+  const imageryText = plan.ground.visible || topLiveSource
+    ? imageryReadout(tileSource, topLiveSource)
+    : "imagery: none on screen";
   const attributionText = attributionReadout([
     tileSource.attribution,
-    activeLiveSource?.attribution,
+    ...plan.attributions,
     ...sourceAttributions,
   ]);
-
-  const connectionLabel = liveFallback
+  const terrainText = terrainReadout({
+    active: terrainActive,
+    selected: selectedNode
+      ? { title: selectedNode.title, located: selectedPoint !== null, elevationMeters: elevation }
+      : null,
+  });
+  const liveOnScreen = plan.rasters.length > 0 || terrainActive;
+  const connectionLabel = firstFailure !== null
     ? "Live tiles (offline fallback)"
-    : liveTilesActive
+    : liveOnScreen
       ? "Live tiles"
       : "Offline";
 
@@ -587,27 +725,6 @@ export function PsychogeographicMap({
         <button type="button" data-testid="places-compass-reset" title="Return to north: bearing and tilt to zero" aria-label="Return to north" disabled={!readyRenderer} onClick={returnToNorth}>North</button>
         <button type="button" data-testid="places-globe-home" title="Globe home: the default view" aria-label="Globe home" disabled={!readyRenderer} onClick={goGlobeHome}>Globe home</button>
         {inspectorContainer && <button type="button" disabled={!selectedNodeId} aria-expanded={detailsOpen} onClick={() => setDetailsOpen(value => !value)}>Location details</button>}
-        {!offlineOnly && policy && (!tileRefreshOptedIn ? (
-          <button
-            type="button"
-            data-testid="psychogeographic-opt-in-live"
-            onClick={() => {
-              policy.optIn("tile_refresh", "refresh live basemap tiles");
-              setPolicyRevision((revision) => revision + 1);
-            }}
-          >
-            Enable live tiles
-          </button>
-        ) : (
-          <button
-            type="button"
-            data-testid="psychogeographic-refresh-tiles"
-            disabled={!readyRenderer}
-            onClick={() => void refreshLiveTiles()}
-          >
-            Refresh tiles
-          </button>
-        ))}
       </div>
   );
 
@@ -672,7 +789,7 @@ export function PsychogeographicMap({
         <div
           className="psychogeographic-connection"
           data-testid="places-connection-status"
-          data-state={liveFallback ? "fallback" : liveTilesActive ? "live" : "offline"}
+          data-state={firstFailure !== null ? "fallback" : liveOnScreen ? "live" : "offline"}
           aria-live="polite"
           style={DISCLOSURE_PILL}
         >
@@ -680,6 +797,7 @@ export function PsychogeographicMap({
         </div>
         <span data-testid="places-imagery-readout" style={DISCLOSURE_PILL}>{imageryText}</span>
         <span data-testid="places-attribution" style={DISCLOSURE_PILL}>{attributionText}</span>
+        <span data-testid="places-terrain-readout" style={DISCLOSURE_PILL}>{terrainText}</span>
         {liveDisclosure.reason !== null ? (
           <span data-testid="places-live-unavailable" style={DISCLOSURE_PILL}>
             Live tiles unavailable: {liveDisclosure.reason}
@@ -753,12 +871,14 @@ export function PsychogeographicMap({
         </div>
       )}
 
-      {layers.length > 0 && (
+      {(
         <div
           className="psychogeographic-layers-panel"
           data-testid="places-layers-panel"
           style={{ position: "absolute", right: 12, top: 58, zIndex: 8, width: 260, maxHeight: "46%", overflow: "auto", padding: 10, borderRadius: 10, background: "rgba(17,24,37,.88)", border: "1px solid var(--ob-line, #1b2634)", fontSize: 11 }}
         >
+          {basemapSection}
+          {layers.length > 0 && (<>
           <h3 style={{ margin: "0 0 6px", fontSize: 12 }}>Layers · relation</h3>
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 4 }}>
             {layers.map((layer) => {
@@ -792,6 +912,7 @@ export function PsychogeographicMap({
               </div>
             ))}
           </div>
+          </>)}
         </div>
       )}
 

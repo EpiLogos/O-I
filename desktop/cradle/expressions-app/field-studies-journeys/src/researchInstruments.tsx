@@ -4,8 +4,9 @@ import {createPortal} from 'react-dom';
 import {clone,type Scene} from './model.js';
 import {type ResearchMaterialAction,type ResearchStroke} from './researchMaterial.js';
 import {createRoot,type Root} from 'react-dom/client';
-import {CanvasView,TimelineSurface,PsychogeographicMap,StreetViewSurface,loadBundledGeographyPack,type TimelineViewState} from '../../vendor/research-canvas/components';
+import {CanvasView,TimelineSurface,PsychogeographicMap,StreetViewSurface,loadBundledGeographyPack,createLiveServicePolicy,type LiveServicePolicy,type TimelineViewState} from '../../vendor/research-canvas/components';
 import {placeRecordFromViewState,viewStateFromPlaceRecord} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeNavigation';
+import {defaultBasemapStack,type BasemapStack} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/basemapLayers';
 import type {KernelConversion} from './kernelDocumentBridge.js';
 import {techneConstellationRequest,type TechneSceneReadingRequest,type TechneConstellationRequest} from './kernelExpressions.js';
 import {nativeInstrumentCanvas,nativeInstrumentTitles,nativeInstrumentPreviews,nativeInstrumentNodeTags,nativeInstrumentSourceRelations,readingInstruments,CANVAS_UNITS,assertInstrumentReadingScope,expressionTextFromNote,type InstrumentCanvas,type NativeRelationDirectionReading} from './researchInstrumentsData.js';
@@ -193,7 +194,7 @@ interface ViewState {
  /** A1 — alignment guides for the card being dragged: presentation only,
   * flow-unit geometry drawn against the live viewport, cleared on release. */
  snapGuides?:{guides:GuideLine[];boxes:Box[]};
- canvas?:{x:number;y:number;zoom:number};timeline?:TimelineViewState;place?:{latitude:number;longitude:number;zoom:number};selectedNode?:string|null;selectedEdge?:string|null;selectedPlace?:string|null;placeFilter?:PlaceFilterState;
+ canvas?:{x:number;y:number;zoom:number};timeline?:TimelineViewState;place?:{latitude:number;longitude:number;zoom:number};selectedNode?:string|null;selectedEdge?:string|null;selectedPlace?:string|null;placeFilter?:PlaceFilterState;livePlaces?:{allowed:boolean;policy:LiveServicePolicy;stack:BasemapStack};
  /** M2′: chronology (the vendored TimelineSurface) vs. the relation-field
   * projections (relationFieldView.tsx) — session-local presentation state,
   * never a second store. */
@@ -762,6 +763,8 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    const placeEntityRef=view?subjectEntityRef(view.document.entities,data.reading.subject.subject_ref):null;
    const placeEditRequest=view&&binding&&placeEntityRef?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref,entity_ref:placeEntityRef}:undefined;
    state.placeFilter??=OPEN_PLACE_FILTER;
+   // Lane-4 T4/T5: the owner's live choice is session view state, held with the placeFilter. It is off until the owner allows it here, and only then does the policy's tile_refresh gate open.
+   state.livePlaces??={allowed:false,policy:createLiveServicePolicy(),stack:defaultBasemapStack()};
    // W2 — the SAME filter state drives both the map's own repository
    // (presentation-only: `filteredPlacesRepository` never rewrites the
    // wrapped repository's reads) and the panel's facet list, so the markers
@@ -773,7 +776,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
       onFilterChange={next=>{state.placeFilter={...next,window:null};render(renderPlaces());}}
       editRequest={placeEditRequest} onError={message}/>;
     return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:placeRecordFromViewState(state.place)}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}{timeControls(()=>render(renderPlaces()))}</div>,host.tools)}
-    <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly placeFacets={nativeReading.spatial} layerFilter={filter} onLayerFilterChange={next=>{state.placeFilter={...next,window:null};render(renderPlaces());}} sourceAttributions={pack.manifest.sources.map(source=>`${source.name} (${source.license})`)}
+    <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly={!state.livePlaces!.allowed} policy={state.livePlaces!.policy} basemapStack={state.livePlaces!.stack} onBasemapStackChange={next=>{state.livePlaces!.stack=next;}} onLiveSourcesAllowedChange={allowed=>{const live=state.livePlaces!;if(allowed)live.policy.optIn('tile_refresh','show live basemap sources the owner allowed in Places');else live.policy.optOut('tile_refresh');live.allowed=allowed;render(renderPlaces());}} placeFacets={nativeReading.spatial} layerFilter={filter} onLayerFilterChange={next=>{state.placeFilter={...next,window:null};render(renderPlaces());}} sourceAttributions={pack.manifest.sources.map(source=>`${source.name} (${source.license})`)}
      initialViewState={state.place} initialSelectedGraphNodeId={state.selectedPlace}
      onViewStateChange={value=>{state.place=value;}} onSelectedGraphNodeIdChange={value=>{state.selectedPlace=value;render(renderPlaces());}}
      onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref&&node.place);if(node)host.inspectSubject(ref,{node});}}/>
