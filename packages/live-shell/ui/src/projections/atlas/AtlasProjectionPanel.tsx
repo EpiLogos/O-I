@@ -15,6 +15,8 @@ import {useEffect, useRef, useState, useSyncExternalStore} from 'react'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {useContinuity} from '../../continuity/workspace'
 import {useWorkspace} from '../../shell/workspace'
+import type {AionEpochJump} from './aionTimeline'
+import type {History} from './src/types/history'
 import type {AtlasHandle} from './mount'
 import './atlasHost.css'
 
@@ -210,6 +212,8 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {controllerS
   registerCorpusProvider({...provider, load: async () => bundle}, {asDefault: true})
   progress.controllerStarted = true
   const mounted: AtlasHandle = await mountAtlas({globe, app, provider: ARCHETYPAL_EARTH_PROVIDER_ID})
+  // The reading the atlas holds is the World's Aion source, by reference, from the moment it stands.
+  publishAtlasAionReading(bundle.history ? {providerId: ARCHETYPAL_EARTH_PROVIDER_ID, history: bundle.history} : null)
 
   let visible = true
   let retired = false
@@ -239,12 +243,63 @@ async function attachClaimed(options: AtlasAttachOptions, progress: {controllerS
   const unmount = () => {
     if (retired) return
     retired = true
+    publishAtlasAionReading(null)
     observer?.disconnect()
     if (reconcileFollowed === reconcile) reconcileFollowed = null
     mounted.engine.setPaused(true)
     mounted.destroy()
   }
   return {setVisible, unmount}
+}
+
+// ── the Aion reading and the epoch jump (T-TIMELINE-WALKS leg 3) ──────────
+
+/** The Aion history the mounted atlas holds. The World's Aion walks read it by reference through the family door; a
+ * copy is never made. Null until the atlas has mounted, and again once its pane is destroyed (honest absence). */
+export interface AtlasAionReading {
+  providerId: string
+  history: History
+}
+
+let aionReading: AtlasAionReading | null = null
+const aionListeners = new Set<() => void>()
+
+/** Publish (or withdraw, null) the reading the atlas mounted with. Called by the attachment; exported for the host tests. */
+export function publishAtlasAionReading(next: AtlasAionReading | null): void {
+  aionReading = next
+  for (const listener of aionListeners) listener()
+}
+
+function subscribeAionReading(listener: () => void): () => void {
+  aionListeners.add(listener)
+  return () => { aionListeners.delete(listener) }
+}
+
+/** The Aion reading the mounted atlas holds, as a plain read (the World's hook subscribes through useAtlasAionReading). */
+export function atlasAionReading(): AtlasAionReading | null {
+  return aionReading
+}
+
+/** The Aion reading the mounted atlas holds, read by the World's temporal hook. */
+export function useAtlasAionReading(): AtlasAionReading | null {
+  return useSyncExternalStore(subscribeAionReading, () => aionReading, () => aionReading)
+}
+
+/** The encounter bridge's epoch jump for a stop of an atlas reading (a Timeline or Journey stop: the layer is the
+ * reading, the stop id is the event). The atlas owns its camera: this writes the atlas's own linkable state, the
+ * `#/aion/<reading>/epoch/<epoch>` grammar aionEpochJump names, and the atlas's hashchange listener moves its view. The
+ * shell reads nothing back. Resolves to the jump, or null when the atlas holds no such event. */
+export async function jumpAtlasToLayerStop(layerId: string, eventId: string): Promise<AionEpochJump | null> {
+  const held = aionReading
+  if (!held) return null
+  const reading = held.history.readings.find((r) => r.id === layerId)
+  const event = reading?.events.find((e) => e.id === eventId)
+  const epoch = reading && event ? reading.epochs.find((e) => e.id === event.epochId) : undefined
+  if (!reading || !epoch) return null
+  const { aionEpochJump } = await import('./aionTimeline')
+  const jump = aionEpochJump(reading, epoch, held.providerId)
+  if (typeof location !== 'undefined' && location.hash !== jump.hash) location.hash = jump.hash
+  return jump
 }
 
 // ── the centre pane ───────────────────────────────────────────────────────

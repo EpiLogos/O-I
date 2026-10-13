@@ -28,8 +28,9 @@ import {
 import {projectDayTracks, dayClipEventIndex} from '../timeline/dayTrackAdapter';
 import {projectRunTracks, runClipEventIndex, type AdmittedRun} from '../timeline/runTrackAdapter';
 import {projectConversationTracks, conversationClipEventIndex} from '../timeline/conversationTrackAdapter';
-import {projectLaneWorldTracks} from '../timeline/registerWorldTrackAdapters';
+import {projectLaneWorldTracks, projectWorldTracks} from '../timeline/registerWorldTrackAdapters';
 import type {WorldTrackSet} from '../timeline/worldTrackAdapter';
+import {useAtlasAionReading} from './atlas/AtlasProjectionPanel';
 
 // The read's real cost is the owner's (K1: the temporal read walks every
 // stream; the 2 s answer cache makes repeats identical) — the needle
@@ -83,6 +84,22 @@ export function useWorldTemporalReading(transport: KernelTransportStatus): World
   const [admittedRuns, setAdmittedRuns] = useState<AdmittedRun[] | null>(null);
   const [admittedRunsError, setAdmittedRunsError] = useState<string | null>(null);
   const [, bumpRevision] = useState(0);
+  // The atlas's Aion reading (held by the mounted Earth pane, by reference). Its walks reach the World's sets through
+  // the family door — the atlas-aion-timeline declaration the atlas manifest admits — so the one derivation is the
+  // adapter's. Absent while the atlas holds no reading: no set, never an empty placeholder.
+  const atlasAion = useAtlasAionReading();
+  const [aionSet, setAionSet] = useState<WorldTrackSet | null>(null);
+  useEffect(() => {
+    if (!atlasAion) {
+      setAionSet(null);
+      return;
+    }
+    let alive = true;
+    projectWorldTracks('atlas-aion-timeline', {history: atlasAion.history, providerId: atlasAion.providerId})
+      .then((set) => { if (alive) setAionSet(set); })
+      .catch(() => { if (alive) setAionSet(null); });
+    return () => { alive = false; };
+  }, [atlasAion]);
 
   // The read cadence is a declared cron parameter; each real execution
   // fires it and lands a clip. Declared once per spine; the spine's
@@ -187,11 +204,13 @@ export function useWorldTemporalReading(transport: KernelTransportStatus): World
   const sets = useMemo((): WorldTrackSet[] => {
     if (status !== 'live') return [];
     // Central's civil day first (the mockup's Day group), then runs, then
-    // conversations. The lane adapters are pure; the family door
+    // conversations, then the atlas's Aion readings when the Earth pane holds
+    // one. The lane adapters are pure; the family door
     // (projectLaneWorldTracks / projectWorldTracks) stays the path for
     // family-declared adapters such as the atlas epoch jump.
-    return [projectDayTracks(events), projectRunTracks(events, admittedRuns ?? undefined), projectConversationTracks(events)];
-  }, [events, status, admittedRuns]);
+    const lanes = [projectDayTracks(events), projectRunTracks(events, admittedRuns ?? undefined), projectConversationTracks(events)];
+    return aionSet ? [...lanes, aionSet] : lanes;
+  }, [events, status, admittedRuns, aionSet]);
 
   const eventByClipId = useMemo((): Map<string, TemporalEventRow> => {
     if (status !== 'live') return new Map();

@@ -16,6 +16,7 @@ export async function resolve(specifier,context,next){
     if(!specifier.startsWith('.'))throw error;
     if(specifier.endsWith('.js')){try{return await next(specifier.slice(0,-3)+'.ts',context)}catch{}}
     for(const suffix of ['.ts','.tsx']){try{return await next(specifier+suffix,context)}catch{}}
+    for(const suffix of ['/index.ts','/index.tsx']){try{return await next(specifier+suffix,context)}catch{}}
     throw error;
   }
 }
@@ -237,4 +238,79 @@ test('walkReaches of an unknown walk reaches nothing', () => {
 test('the Timeline contract stays family-free (no atlas, reading or route names in worldTrackAdapter.ts)', async () => {
   const source = await readFile(new URL('../src/timeline/worldTrackAdapter.ts', import.meta.url), 'utf8');
   assert.doesNotMatch(source, /\batlas\b|\baion\b|redbook|dynamics|fieldthread|field-thread|archetype/i);
+});
+
+// ── leg 3 (T-TIMELINE-WALKS): the Timeline draws the walks and nested sections the sets carry ───────────────────
+// The same sets the lanes draw: every walk an ordered rail (numbered n of N, each stop a focus), every section nested by
+// its parent and coloured by its atmosphere. Rendered through the real presentation, in both presentations.
+
+const {createElement} = await import('react');
+const {renderToStaticMarkup} = await import('react-dom/server');
+const {WorldTimelinePresentation} = await import('../src/projections/worldTimelinePresentation.tsx');
+const {createTimeSpine} = await import('../src/timeline/timeSpine.ts');
+const {projectWorldTracks} = await import('../src/timeline/registerWorldTrackAdapters.ts');
+// The shell admits its families at start (main.tsx); the family door reads the admitted manifests, so the test does too.
+const {loadAgentShellFamilies} = await import('../src/inhabitants/loadAgentShellFamilies.ts');
+loadAgentShellFamilies();
+
+const liveSet = projectAionReading({history: corpus.history, providerId: 'fixture'});
+const dynamicsSet = projectDynamicsRoute({
+  version: 1, title: 'The lens walk', line: '',
+  movements: [{id: 'm1', n: 'I', title: 'First', line: '', stops: [
+    {id: 's1', figure: 'f', line: '', concept: 'strange-attractor', familyIds: ['lighthouse']},
+    {id: 's2', figure: 'f', line: '', name: 'Named stop', familyIds: []},
+  ]}],
+});
+const liveSets = [liveSet, dynamicsSet];
+const liveView = (sets) => ({
+  source: {status: 'live', error: null, now: null, events: [], sets, eventByClipId: new Map(), admittedRuns: null, admittedRunsError: null, readAtUnixMs: null, readCadence: null},
+  spine: createTimeSpine(),
+  selectOccasion() {},
+});
+const drawn = (sets, presentation) => renderToStaticMarkup(createElement(WorldTimelinePresentation, {view: liveView(sets), presentation}));
+
+test('the Timeline draws every walk as an ordered rail, n of N, in both presentations', () => {
+  const walks = liveSets.flatMap((set) => set.walks ?? []);
+  const refs = walks.flatMap((walk) => walk.stops.map((stop) => stop.id));
+  for (const presentation of ['session', 'arrangement']) {
+    const out = drawn(liveSets, presentation);
+    const at = walks.map((walk) => out.indexOf(`data-walk-row="${walk.id}"`));
+    assert.ok(at.every((index) => index >= 0), `${presentation}: every walk has its row`);
+    assert.deepEqual(at, [...at].sort((a, b) => a - b), `${presentation}: the rows keep the sets’ order`);
+    const rails = [...out.matchAll(/data-walk-stop="(\d+)" data-stop-ref="([^"]+)"/g)];
+    assert.deepEqual(rails.map((match) => match[2]), refs, `${presentation}: the rail stops, walk by walk, in the walk’s order`);
+    assert.deepEqual(rails.map((match) => Number(match[1])), walks.flatMap((walk) => walk.stops.map((_, i) => i + 1)), `${presentation}: numbered 1..N per walk`);
+  }
+});
+
+test('the Timeline nests every section by its parent, coloured by its atmosphere', () => {
+  const sections = liveSets.flatMap((set) => set.sections ?? []);
+  const child = liveSet.sections.find((section) => section.parentId);
+  assert.ok(child && child.atmosphere, 'the fixture has a nested, coloured section');
+  for (const presentation of ['session', 'arrangement']) {
+    const out = drawn(liveSets, presentation);
+    assert.equal((out.match(/data-section="/g) ?? []).length, sections.length, `${presentation}: one chip per section`);
+    const depth = Number(out.match(new RegExp(`data-section="${child.id}" data-depth="(\\d+)"`))?.[1]);
+    assert.ok(depth >= 1, `${presentation}: the nested section is drawn nested (depth ${depth})`);
+    assert.ok(out.includes(`border-left:3px solid ${child.atmosphere}`), `${presentation}: the section takes its atmosphere`);
+  }
+});
+
+test('with no walk carried the Timeline draws no rail and names the absence', () => {
+  const out = drawn([{columns: [], tracks: [], clips: []}], 'session');
+  assert.ok(!out.includes('data-walk-row='), 'no walk row is drawn');
+  assert.ok(out.includes('data-world-walks="0"'));
+  assert.match(out, /No walks are carried by the World(&#x27;|')s track sets/, 'the absence is named, not left silent');
+});
+
+test('the World’s temporal hook and the Timeline wire the walk focus the shared way', async () => {
+  const hook = await readFile(new URL('../src/projections/useWorldTemporalReading.ts', import.meta.url), 'utf8');
+  assert.match(hook, /projectWorldTracks\('atlas-aion-timeline'/, 'the Aion reading reaches the sets through the family door');
+  assert.match(hook, /useAtlasAionReading\(\)/);
+  assert.match(hook, /return aionSet \? \[\.\.\.lanes, aionSet\] : lanes/, 'the Aion set joins the sets only when the atlas holds one');
+  const presentation = await readFile(new URL('../src/projections/worldTimelinePresentation.tsx', import.meta.url), 'utf8');
+  assert.match(presentation, /applyWalkStopFocus\(focus, selectOccasion\)/, 'a rail stop applies the shared focus');
+  assert.match(presentation, /walkStopOfClip\(sets, entry\.clip\.id\)/, 'a walk clip selects its stop, not nothing');
+  const family = await projectWorldTracks('atlas-aion-timeline', {history: corpus.history, providerId: 'fixture'});
+  assert.deepEqual(family, liveSet, 'the family door projects the same set the Timeline draws');
 });

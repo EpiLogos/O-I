@@ -176,3 +176,64 @@ test('the Journey no longer says it waits for the journey owner', async () => {
   const source = await readFile(new URL('../src/shell/ModeCentre.tsx', import.meta.url), 'utf8')
   assert.doesNotMatch(source, /waits for the journey owner/)
 })
+
+// ── leg 3 (T-TIMELINE-WALKS): a stop focuses its occasion, its atlas epoch, or names why it cannot ───────────────
+// The walk stop's focus is the one rule the Journey and the Timeline share (journeyWalks.ts walkStopFocus,
+// timeline/walkFocus.ts applyWalkStopFocus). The atlas epoch jump is the encounter bridge's write: the atlas's own
+// hash (`#/aion/<reading>/epoch/<epoch>`); the shell reads nothing back.
+
+const {walkStopFocus, walkStopOfClip} = await import('../src/timeline/journeyWalks.ts')
+const {applyWalkStopFocus} = await import('../src/timeline/walkFocus.ts')
+const {publishAtlasAionReading, jumpAtlasToLayerStop, atlasAionReading} = await import('../src/projections/atlas/AtlasProjectionPanel.tsx')
+
+const aionWalk = aionSet.walks.find((walk) => walk.id === `${READING_ID}:all`)
+const aionStop = aionWalk.stops[0]
+
+test('a walk stop focuses its occasion when its clip is one, its layer’s epoch when it belongs to a reading, else names why not', () => {
+  const event = {stream: 'run', kind: 'run', subject_ref: 'session-1', instant_unix_ms: 1, summary: 'a run'}
+  assert.deepEqual(walkStopFocus(aionWalk, aionStop, new Map([[aionStop.clipId, event]])), {kind: 'occasion', event},
+    'an occasion the Timeline gives the clip wins')
+  assert.deepEqual(walkStopFocus(aionWalk, aionStop, new Map()), {kind: 'layer', layerId: READING_ID, stopId: aionStop.id},
+    'an atlas stop focuses its layer and its own event')
+  const fieldWalk = fieldSet.walks[0]
+  const absent = walkStopFocus(fieldWalk, fieldWalk.stops[0], new Map())
+  assert.equal(absent.kind, 'absent')
+  assert.match(absent.reason, /belongs to no reading/, 'a field stop names that it belongs to no reading')
+  const found = walkStopOfClip(sets, aionStop.clipId)
+  assert.equal(found.walk, aionWalk, 'a walk clip finds its walk by reference')
+  assert.equal(found.stop, aionStop)
+  assert.equal(walkStopOfClip(sets, 'no-such-clip'), undefined)
+})
+
+test('the atlas epoch jump writes the atlas’s own hash for the stop’s epoch; with no reading held it is honestly absent', async () => {
+  publishAtlasAionReading(null)
+  assert.equal(atlasAionReading(), null)
+  assert.equal(await jumpAtlasToLayerStop(READING_ID, aionStop.id), null, 'no reading held: no jump')
+  const named = await applyWalkStopFocus({kind: 'layer', layerId: READING_ID, stopId: aionStop.id}, () => assert.fail('no occasion here'))
+  assert.match(named, /Earth pane/, 'the absence names the Earth pane that loads the reading')
+
+  publishAtlasAionReading({providerId: 'archetypal-earth', history: corpus.history})
+  const event = reading.events.find((e) => e.id === aionStop.id)
+  const jump = await jumpAtlasToLayerStop(READING_ID, aionStop.id)
+  assert.equal(jump.kind, 'atlas-epoch')
+  assert.equal(jump.providerId, 'archetypal-earth')
+  assert.equal(jump.epochId, event.epochId, 'the stop’s own epoch')
+  assert.equal(jump.hash, `#/aion/${READING_ID}/epoch/${event.epochId}`, 'the atlas’s linkable grammar, as aionEpochJump names it')
+  assert.equal(await jumpAtlasToLayerStop(READING_ID, 'no-such-event'), null, 'an event the reading does not hold is not jumped to')
+  assert.equal(await applyWalkStopFocus({kind: 'layer', layerId: READING_ID, stopId: aionStop.id}, () => {}), null, 'a held epoch stands the focus')
+  let selected = null
+  const event2 = {stream: 'run', kind: 'run', subject_ref: 's', instant_unix_ms: 2, summary: 'occasion'}
+  assert.equal(await applyWalkStopFocus({kind: 'occasion', event: event2}, (e) => { selected = e }), null)
+  assert.equal(selected, event2, 'an occasion is selected through the caller’s spine, not the atlas')
+  publishAtlasAionReading(null)
+})
+
+test('the World reads the atlas Aion reading through the family door: the same set the adapter projects, declared by the atlas manifest', async () => {
+  const {projectWorldTracks, isManifestDeclared} = await import('../src/timeline/registerWorldTrackAdapters.ts')
+  const {loadAgentShellFamilies} = await import('../src/inhabitants/loadAgentShellFamilies.ts')
+  loadAgentShellFamilies()
+  assert.equal(isManifestDeclared('atlas-aion-timeline'), true, 'the atlas manifest declares the Aion projection')
+  const viaDoor = await projectWorldTracks('atlas-aion-timeline', {history: corpus.history, providerId: 'fixture'})
+  const direct = projectAionReading({history: corpus.history, providerId: 'fixture'})
+  assert.deepEqual(viaDoor, direct, 'one derivation: the family door yields the adapter’s own set')
+})
