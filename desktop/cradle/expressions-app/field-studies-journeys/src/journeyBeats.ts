@@ -88,7 +88,8 @@ function chipsOf(frame: JourneyBeatFrame): JourneyFacetChip[] {
   for (const facet of frame.temporal) {
     const from = facet.interval?.from ?? '';
     const to = facet.interval?.to ?? '';
-    const value = facet.instant ?? facet.day_ref ?? (from || to ? `${from} → ${to}` : facet.kind);
+    // T13: a facet the reading does not value says so; it is never labelled with its own kind, and an open end is named.
+    const value = facet.instant ?? facet.day_ref ?? (from || to ? `${from || 'undisclosed'} → ${to || 'undisclosed'}` : 'undated');
     chips.push({kind: 'time', ref: facet.facet_ref ?? null, label: `${facet.kind} · ${value}`});
   }
   for (const place of frame.places) {

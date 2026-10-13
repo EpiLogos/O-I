@@ -10,6 +10,7 @@ import type {Journey} from './model';
 import {expressionTiming} from './propertyTracks';
 import {walkJourney,type JourneyPath} from './journeyPath';
 import {beatLoadKey,settleBounded} from './journeyLoadSchedule';
+import {reconcileJourneyPresence} from './journeyPresence';
 import {journeyInstrumentBasis,sameJourneyInstrumentBasis,readJourneyInstrument,readJourneySceneFrame,prepareJourneyBeatFocus,type JourneyBeatFocus,type JourneyInstrumentBasis} from './journeyInstrumentModel';
 import './journeyInstrument.css';
 
@@ -109,14 +110,17 @@ function JourneyPlaybackPath({read,seek}:{read:()=>JourneyPlaybackClock|undefine
  </section>;
 }
 
-export function JourneyBeatPanel({reading,beatView,native,basis,busy,onFocus,onMove,onRefresh,playback}:{
+export function JourneyBeatPanel({reading,beatView,native,basis,busy,onFocus,onMove,onRefresh,playback,notice}:{
  reading:TechneReading;beatView:JourneyBeatView;native:KernelConversion;basis:JourneyInstrumentBasis;busy:boolean;
  onFocus:(card:JourneyBeatCard)=>void;onMove:(sceneRef:string,toIndex:number)=>void;onRefresh:()=>void;
  playback?:{read:()=>JourneyPlaybackClock|undefined;seek:(seconds:number)=>void};
+ /** T9: the presence disclosure for this load (field moved / stale), one plain sentence. */
+ notice?:string;
 }):ReactElement{
  const cards=beatView.cards;
  return <section className="journey-beat-panel" aria-label="Reading-derived Journey">
   <header><h3>Journey</h3><button type="button" disabled={busy} onClick={onRefresh}>Refresh reading</button></header>
+  {notice?<p className="journey-presence-notice" role="status">{notice}</p>:null}
   {!cards.length?<p role="status">{beatView.unavailableReason}</p>:<div className="journey-beat-lane">
    <ol className="journey-reading-beats">{cards.map((card,index)=>{
     const scene=native.document.scenes.find(item=>item.scene_ref===card.scene_ref);
@@ -173,12 +177,14 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
    if(destroyed||!open||generation!==epoch)return;
    if(!current(basis,generation))throw Error('The selected native Journey changed while its reading was returning');
    const {reading}=readJourneyInstrument(raw,view!,sceneId);
+   // T9: disclose the author's saved position against this reading, and record the position this load stands on.
+   const presence=reconcileJourneyPresence({reading,expression_ref:basis.expression_ref,scene_ref:basis.scene_ref});
    // The cards draw from the whole read at once; each card's facets are filled in as its own Scene's reading settles.
    const frames=new Map<string,TechneReading|string>();
    let beatView=journeyBeatView(reading,view!.document);
    root??=createRoot(mount);
    let busy=false;
-   const draw=()=>{if(!current(basis,generation))return;root!.render(<JourneyBeatPanel reading={reading} beatView={beatView} native={view!} basis={basis} busy={busy} onRefresh={()=>void reuseOrLoad()} playback={playback}
+   const draw=()=>{if(!current(basis,generation))return;root!.render(<JourneyBeatPanel reading={reading} beatView={beatView} native={view!} basis={basis} busy={busy} onRefresh={()=>void reuseOrLoad()} playback={playback} notice={presence.notice}
     onFocus={card=>{
      if(busy)return;
      try{
