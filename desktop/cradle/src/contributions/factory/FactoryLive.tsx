@@ -29,9 +29,12 @@
  * (`factory telemetry watch --resume`, the attempt reading's revision, each
  * participant's encounter journal `after` cursor, the Gateway population and
  * Communiques, Factory custody) performed into the Run's Expression act
- * (live/producer.ts). One producer per Run, reference-counted by the views
- * that show it (the Run page's Live tab, a Tasks conversation's Live), and
- * stopped when the last view closes: bounded by construction.
+ * (live/producer.ts). One producer per Run, OWNED BY THE RUN: started and
+ * stopped explicitly (startRunLive / stopRunLive, driven by the Run's Live
+ * control). Views only subscribe (followRunLive) and release their
+ * subscription; closing a view never stops or loses work, and reopening
+ * re-attaches to the in-flight production. The law: WORLD-SHELL-DESIGN.md §7
+ * ("the Run's Expression production moved out of view lifetime").
  */
 import {createContext, useCallback, useContext, useMemo, useState, useSyncExternalStore, type ReactNode} from "react";
 import {emitExpressionCue} from "../../stage/cues";
@@ -179,7 +182,7 @@ export function useFactoryLive(): FactoryLiveReading {
 export interface LiveRunSource {runKey: string; runRef: string; statePath: string; project?: string; goal?: string; worldRef?: string | null; explicitExpression?: string;
   /** The workflow inspection's units (task types, SkillSets, skills for the repertoire). */
   units?: {key?: string; workflowUnitRef?: string; praxisRefs?: string[]; agentRequirements?: {agentSetRefs?: string[]}}[]}
-interface LiveHolder {producer: LiveProducer; holders: number; state: LiveState; unsubscribe: () => void}
+interface LiveHolder {producer: LiveProducer; state: LiveState; unsubscribe: () => void}
 const liveHolders = new Map<string, LiveHolder>();
 const liveListeners = new Set<() => void>();
 const emitLive = () => { for (const listener of [...liveListeners]) listener(); };
@@ -220,35 +223,72 @@ export function kernelLiveIO(transport: KernelTransportStatus, source: LiveRunSo
   };
 }
 
-/** Hold the Run's live follow while a view shows it; the returned release
- * stops the producer when the last holder leaves. */
-export function followRunLive(transport: KernelTransportStatus, source: LiveRunSource): () => void {
-  let holder = liveHolders.get(source.runKey);
-  if (!holder) {
-    const explicit = source.explicitExpression ?? explicitByRun.get(source.runKey);
-    const producer = new LiveProducer(kernelLiveIO(transport, source), {
-      runRef: source.runRef, goal: source.goal, actRef: actRefFor(source.runRef), expressionRef: liveExpressionRefFor(source.runRef),
-      actor: "desktop:factory-live", context: {...contextOfUnits(source.units ?? []), ...(explicit ? {explicit} : {})},
-    });
-    const created: LiveHolder = {producer, holders: 0, state: producer.state, unsubscribe: () => {}};
-    created.unsubscribe = producer.subscribe(state => { created.state = state; emitLive(); });
-    liveHolders.set(source.runKey, created);
-    holder = created;
-    producer.start();
-  }
-  holder.holders++;
+/** The Run's own state for its live production: `stopped` only by the
+ * person's explicit stop. A Run not stopped is followed whenever a view
+ * shows it (the default), and the state is session-scoped; the kernel act
+ * is the durable record. */
+const liveIntent = new Map<string, "following" | "stopped">();
+/** Views subscribed to each Run's live state (a count, never a lifetime). */
+const liveSubscribers = new Map<string, number>();
+/** Injectable IO: the kernel by default; tests supply a recording fake. */
+export type LiveIOFactory = (transport: KernelTransportStatus, source: LiveRunSource) => LiveIO;
+
+/** Start the Run's production (idempotent). A stopped predecessor's loop is
+ * awaited first, so a successor never performs into the same act while the
+ * predecessor is still mid-passage: exactly-once holds across a stop. */
+export async function startRunLive(transport: KernelTransportStatus, source: LiveRunSource, makeIO: LiveIOFactory = kernelLiveIO): Promise<void> {
+  liveIntent.set(source.runKey, "following");
+  const held = liveHolders.get(source.runKey);
+  if (held?.producer.following) return;
+  if (held) await held.producer.stop();
+  // A stop may have arrived while the predecessor wound down, or a
+  // concurrent start may already hold the Run.
+  if (liveIntent.get(source.runKey) !== "following" || liveHolders.get(source.runKey)?.producer.following) return;
+  held?.unsubscribe();
+  const explicit = source.explicitExpression ?? explicitByRun.get(source.runKey);
+  const producer = new LiveProducer(makeIO(transport, source), {
+    runRef: source.runRef, goal: source.goal, actRef: actRefFor(source.runRef), expressionRef: liveExpressionRefFor(source.runRef),
+    actor: "desktop:factory-live", context: {...contextOfUnits(source.units ?? []), ...(explicit ? {explicit} : {})},
+  });
+  const created: LiveHolder = {producer, state: producer.state, unsubscribe: () => {}};
+  created.unsubscribe = producer.subscribe(state => { created.state = state; emitLive(); });
+  liveHolders.set(source.runKey, created);
+  producer.start();
+  emitLive();
+}
+
+/** The Run's explicit stop: the production ends at its next passage boundary
+ * and the promise settles when it has. The act keeps every passage performed;
+ * Follow resumes it. */
+export async function stopRunLive(runKey: string): Promise<void> {
+  liveIntent.set(runKey, "stopped");
+  const held = liveHolders.get(runKey);
+  emitLive();
+  if (!held) return;
+  await held.producer.stop();
+  emitLive();
+}
+
+/** A view subscribes to the Run's live state. The release only drops the
+ * subscriber count; it never stops the production. The first subscriber of a
+ * Run that has not been stopped starts it (the Run's default), through the
+ * same start the Run's control uses. */
+export function followRunLive(transport: KernelTransportStatus, source: LiveRunSource, makeIO: LiveIOFactory = kernelLiveIO): () => void {
+  liveSubscribers.set(source.runKey, (liveSubscribers.get(source.runKey) ?? 0) + 1);
+  if (liveIntent.get(source.runKey) !== "stopped") void startRunLive(transport, source, makeIO);
   emitLive();
   let released = false;
   return () => {
     if (released) return;
     released = true;
-    const current = liveHolders.get(source.runKey);
-    if (!current) return;
-    current.holders--;
-    if (current.holders <= 0) { current.producer.stop(); current.unsubscribe(); liveHolders.delete(source.runKey); }
+    const count = (liveSubscribers.get(source.runKey) ?? 1) - 1;
+    if (count > 0) liveSubscribers.set(source.runKey, count); else liveSubscribers.delete(source.runKey);
     emitLive();
   };
 }
+
+/** Views currently subscribed to a Run (diagnostics and tests). */
+export const runLiveSubscribers = (runKey: string) => liveSubscribers.get(runKey) ?? 0;
 
 /** The Run's live state (undefined while no view holds it). */
 export function useRunLive(runKey: string | undefined): LiveState | undefined {
@@ -267,5 +307,7 @@ export async function selectRunExpression(runKey: string, fileRef: string | unde
   await liveHolders.get(runKey)?.producer.select(fileRef);
 }
 const explicitByRun = new Map<string, string>();
-/** Tests / diagnostics: how many producers are held. */
-export const heldLiveFollows = () => liveHolders.size;
+/** Tests / diagnostics: how many Runs have a production following now. */
+export const heldLiveFollows = () => [...liveHolders.values()].filter(holder => holder.producer.following).length;
+/** Tests / diagnostics: the Run's production (following or stopped). */
+export const heldRunLive = (runKey: string): LiveProducer | undefined => liveHolders.get(runKey)?.producer;
