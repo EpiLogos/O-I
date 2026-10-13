@@ -70,10 +70,15 @@
  *       unavailable and degraded instruments, so surfaces can honestly
  *       degrade.
  *
+ * lane-2 T19: a temporal facet's passage selector crosses on its subject→anchor
+ * relationship as `temporal_provenance_selector`, verbatim, and only when the
+ * reading makes it unambiguous (see `temporalFacetPassage`). Absent otherwise:
+ * the source then opens at its top, never at an invented anchor.
+ *
  * Not projected on purpose: the ql facet (the substrate's ql* GraphNode
  * columns are Research Canvas domain semantics, not ql.techne/v1 facts) and
- * provenance selectors / native actions (no substrate slot; they stay with
- * the reading, which remains the owner of its own meaning).
+ * native actions and the rest of the provenance rows (no substrate slot; they
+ * stay with the reading, which remains the owner of its own meaning).
  */
 
 import { EMPTY_GRAPH_NODE_METADATA, TEMPORAL_PRECISIONS } from "@research-canvas/schema";
@@ -257,6 +262,35 @@ export const TECHNE_NO_TIME_DISCLOSED = "1970-01-01T00:00:00.000Z";
 
 /** The scene stub's place carrier: matches no place, resolves to nothing. */
 export const TECHNE_UNDISCLOSED_PLACE_ID = "techne:place:undisclosed";
+
+/** lane-2 T19: the three locatable source units. A text_span, timestamp_range or image_region names a passage; an
+ * `other` selector names an identity only and locates nothing. */
+function isLocatableSelector(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const selector = value as Record<string, unknown>;
+  if (selector.unit === "text_span") {
+    return Number.isInteger(selector.start) && Number.isInteger(selector.end)
+      && (selector.start as number) >= 0 && (selector.start as number) <= (selector.end as number);
+  }
+  if (selector.unit === "timestamp_range") return typeof selector.from === "string" && typeof selector.to === "string";
+  if (selector.unit === "image_region") {
+    return ["x", "y", "width", "height"].every(key => typeof selector[key] === "number" && Number.isFinite(selector[key] as number));
+  }
+  return false;
+}
+
+/**
+ * lane-2 T19: the passage a temporal facet is evidenced at, or undefined. A facet owns a passage only when its source
+ * names no other facet of this reading AND the reading discloses exactly one locatable selector for that source. Two
+ * facets from one source, or two candidate passages, are never narrowed by guessing: the source then opens at its top.
+ */
+function temporalFacetPassage(reading: TechneReadingLite, facet: TechneTemporalFacetLite): unknown {
+  const sourceRef = facet.source_ref;
+  if (typeof sourceRef !== "string" || sourceRef.length === 0) return undefined;
+  if ((reading.temporal ?? []).filter(row => row.source_ref === sourceRef).length !== 1) return undefined;
+  const passages = (reading.provenance ?? []).filter(row => row.source_ref === sourceRef && isLocatableSelector(row.selector));
+  return passages.length === 1 ? structuredClone(passages[0].selector) : undefined;
+}
 
 type SubstrateTemporalPrecision = NonNullable<GraphNode["temporalPrecision"]>;
 
@@ -489,6 +523,8 @@ export function bundleFromTechneReadings(readings: TechneReadingLite[]): TechneF
     }
 
     (reading.temporal ?? []).forEach((facet, index) => {
+      // lane-2 T19: the passage rides only when disclosed unambiguously; absence is never a placeholder selector.
+      const passage = temporalFacetPassage(reading, facet);
       const temporalProperties = {
         temporal_kind: facet.kind,
         temporal_uncertainty: facet.uncertainty ?? null,
@@ -505,6 +541,7 @@ export function bundleFromTechneReadings(readings: TechneReadingLite[]): TechneF
         temporal_shape: facet.instant != null ? "instant" : facet.interval != null ? "interval" : null,
         temporal_from_precision: facet.instant != null ? (facet.precision ?? null) : (facet.interval?.from_precision ?? null),
         temporal_to_precision: facet.instant != null ? (facet.precision ?? null) : (facet.interval?.to_precision ?? null),
+        ...(passage !== undefined ? {temporal_provenance_selector: passage} : {}),
       };
       const instant = facet.instant ?? null;
       const intervalFrom = facet.interval?.from ?? null;

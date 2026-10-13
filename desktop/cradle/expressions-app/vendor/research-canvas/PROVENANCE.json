@@ -261,8 +261,8 @@
     },
     "packages/desktop-api/src/techneBundle.ts": {
       "upstream_sha256": "7ff3382b2331031cd4294595c660adbac2964330c9de41e807a97fa93e1e4b94",
-      "adapted_sha256": "a7366393c79f013b4266001b259330a35954b9a40786a5ade36f49e18de81700",
-      "reason": "Native canonical PlaceFacet allows absent names. Preserve empty names; only the host presentation chooses an occurrence title or neutral Location label. Preserve exact native relation identity, standing, evidence refs and disclosed temporal qualification in transient relationship properties; no inferred classification or provider-authority substitution. | lane-2 T1: bridge carries every precision rung verbatim | lane-2 T8: periodisation bands | lane review fixes 13 Oct"
+      "adapted_sha256": "aa20463edd1e3ba9d6bb02d9d3a1a5b54841af66d80a49d670e6456e260029f6",
+      "reason": "Native canonical PlaceFacet allows absent names. Preserve empty names; only the host presentation chooses an occurrence title or neutral Location label. Preserve exact native relation identity, standing, evidence refs and disclosed temporal qualification in transient relationship properties; no inferred classification or provider-authority substitution. | lane-2 T1: bridge carries every precision rung verbatim | lane-2 T8: periodisation bands | lane review fixes 13 Oct | lane-2 T19-T22: navigation identity"
     },
     "packages/desktop-api/src/techneTransport.ts": {
       "upstream_sha256": "4054c16622be5cff834c7f5f5007efc6932fccde317194b259690e9d50bb7ab7",
