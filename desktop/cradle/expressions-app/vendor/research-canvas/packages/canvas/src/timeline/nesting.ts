@@ -88,7 +88,9 @@ function reach(start: string, edges: ReadonlyMap<string, ReadonlySet<string>>): 
 /** Whether a parent with present children collapses at this camera. */
 function collapses(childExtents: readonly NestingItem[], camera: TimeCamera, band: DensityBand): boolean {
   if (band === "marker") return true;
-  const lefts = childExtents.map((child) => msToPixel(camera, child.fromMs)).sort((a, b) => a - b);
+  // Children that start at the same instant never separate by zooming (they stack), so they do not hold the parent closed:
+  // only distinct starts are measured.
+  const lefts = [...new Set(childExtents.map((child) => child.fromMs))].map((fromMs) => msToPixel(camera, fromMs)).sort((a, b) => a - b);
   for (let index = 1; index < lefts.length; index += 1) {
     if (lefts[index] - lefts[index - 1] < DEFAULT_TIMELINE_CARD_WIDTH_PX) return true;
   }

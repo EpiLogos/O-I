@@ -1,4 +1,5 @@
 import {useEffect, useRef, useState} from 'react'
+import {externalHttpsUrl} from '../../../../../desktop/cradle/src/shared/externalLink'
 import {mountExpressionsApplication, reopenConfiguredWorks,
   type ExpressionsHost, type HostedAppMode, type ChannelContext} from '@epilogos/expressions-boundary'
 import {createCradleOwners, type KernelTransportStatus} from '@epilogos/expressions-boundary/cradle'
@@ -193,7 +194,14 @@ export function ExpressionsPanel() {
           setStatus(value === 'ready' ? 'Expressions' : value === 'loading' ? 'Loading Expressions…' : 'Expressions unavailable')
           setHostFault(value === 'ready' ? null : reason ?? null)
         }},
-        onHostRequest: request => {if (request.request === 'workspace-mode' && (request.mode === 'expressions' || request.mode === 'techne')) workspace.setMode(request.mode)},
+        onHostRequest: request => {
+          if (request.request === 'workspace-mode' && (request.mode === 'expressions' || request.mode === 'techne')) workspace.setMode(request.mode)
+          // An https link the hosted Expressions application asks to open (link cards): the one gate, then the Tauri opener.
+          if (request.request === 'open-external') {
+            const url = externalHttpsUrl((request as {url?: unknown}).url)
+            if (url) void import('@tauri-apps/api/core').then(({invoke}) => invoke('plugin:opener|open_url', {url})).catch(() => {})
+          }
+        },
         onStudioResult: result => {if (live && !result.ok) setFault(result.error)},
       })
       host.current = mounted.host

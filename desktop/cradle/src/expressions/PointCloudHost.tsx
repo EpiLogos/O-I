@@ -22,6 +22,7 @@
  * frame while it stands (hostedApp.trackShellCutout).
  */
 import {useEffect, useRef, useState} from "react";
+import {externalHttpsUrl} from "../shared/externalLink";
 import {invoke} from "@tauri-apps/api/core";
 import {ActStrip} from "../expression/ActStrip";
 import {consumeExpressionRequest, getExpressionSelectionState, registerExpressionCentre, subscribeExpressionSelection} from "./selection";
@@ -311,11 +312,9 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
       if (data.request === "open-external") {
         // Lane-1 A10: an https link from the hosted application opens in the default browser through the Tauri opener, whose
         // capability admits https URLs only. Anything else is dropped here and refused again by the opener's scope.
-        const raw = (data as {url?: unknown}).url;
-        let target: URL | null = null;
-        try { target = typeof raw === "string" && raw.length <= 2048 ? new URL(raw) : null; } catch { target = null; }
-        if (target?.protocol === "https:") {
-          void invoke("plugin:opener|open_url", {url: target.href}).catch(error => window.dispatchEvent(new CustomEvent("oi:workspace-message", {detail: {message: error instanceof Error ? error.message : String(error)}})));
+        const url = externalHttpsUrl((data as {url?: unknown}).url);
+        if (url) {
+          void invoke("plugin:opener|open_url", {url}).catch(error => window.dispatchEvent(new CustomEvent("oi:workspace-message", {detail: {message: error instanceof Error ? error.message : String(error)}})));
         }
         return;
       }
