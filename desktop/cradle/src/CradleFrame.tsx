@@ -88,6 +88,7 @@ import { useWorkspaces } from "./workspace/store";
 import { useSearchLeader, matchesSearchLeader } from "./knowledge/leader";
 import { SearchOverlay, type PlaceSubject } from "./knowledge/SearchOverlay";
 import { knowledge } from "./knowledge/client";
+import { validateNativeKnowledgeContext, type NativeKnowledgeContext } from "./knowledge/nativeFocus";
 import type { KnowledgeAddress, KnowledgeReading } from "./kernel/types";
 // Lane-4 T22: "fly here" from a search result — the one session, refs carried verbatim, the offline gazetteer as basemap context.
 import { techneReadingProvider, NO_PROVIDER_REASON } from "./techne/techneReading";
@@ -759,8 +760,11 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     await openSource({ref: buffer.source_ref, path: buffer.path ?? "", treatment: "projectcentral-user", agent_retrieval_allowed: true, revision: buffer.base_revision}, undefined);
   };
 
-  const openKnowledge = async (address: KnowledgeAddress, title: string, project?: string, placement: "tab"|"page"|"window" = "tab", graphOrigin?:string, intoArg?: "side"|"portal"|"tree", stillCurrent?:()=>boolean,onOpened?:(binding:SurfaceBinding)=>void|Promise<void>) => {
+  const openKnowledge = async (address: KnowledgeAddress, title: string, project?: string, placement: "tab"|"page"|"window" = "tab", graphOrigin?:string, intoArg?: "side"|"portal"|"tree", stillCurrent?:()=>boolean,onOpened?:(binding:SurfaceBinding)=>void|Promise<void>, nativeKnowledge?:NativeKnowledgeContext) => {
     const requireCurrent=()=>{if(stillCurrent&&!stillCurrent())throw new Error("Navigation changed while the source was opening; open it again from its Scene.");};
+    // A native focus ask (a canvas's "Show in graph") rides the knowledge view; an existing twin takes it too.
+    const focusTwin=(id:string)=>{if(nativeKnowledge)setState(s=>s.surfaces[id]?{...s,surfaces:{...s.surfaces,[id]:{...s.surfaces[id],view:{...s.surfaces[id].view,nativeKnowledge}}}}:s);};
+    const bindingView=(plane?:{knowledgePlane:"page";graphOrigin?:string})=>{const view={...(plane?{knowledgePlane:plane.knowledgePlane,graphOrigin:plane.graphOrigin}:{}),...(nativeKnowledge?{nativeKnowledge}:{})};return Object.keys(view).length?{view}:{};};
     requireCurrent();
     if(placement==="window"&&kernel.transport.kind!=="tauri")throw new Error("Native popout is available in the desktop app");
     // Project wiki ownership is an exact Central disclosure, never inferred
@@ -792,10 +796,10 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       }catch(error){sourcePortalSurface.current=undefined;await kernel.surfaceClose(binding.id).catch(()=>{});throw error;}
     }else if(into==="side"){
       const twins=twinsByCanvas(same);
-      if(twins.side){setState(s=>activateInHostCanvas(s,twins.side!.id));await onOpened?.(twins.side);}
-      else if(twins.tree){setState(s=>moveTreeTabToSide(s,twins.tree!.id));await onOpened?.(twins.tree);}
+      if(twins.side){focusTwin(twins.side.id);setState(s=>activateInHostCanvas(s,twins.side!.id));await onOpened?.(twins.side);}
+      else if(twins.tree){focusTwin(twins.tree.id);setState(s=>moveTreeTabToSide(s,twins.tree!.id));await onOpened?.(twins.tree);}
       else{
-        const binding:SurfaceBinding={id:crypto.randomUUID(),kind:"knowledge",ref:read.resource,title,project,address,...(placement!=="tab"?{view:{knowledgePlane:"page" as const,graphOrigin}}:{})};
+        const binding:SurfaceBinding={id:crypto.randomUUID(),kind:"knowledge",ref:read.resource,title,project,address,...bindingView(placement!=="tab"?{knowledgePlane:"page",graphOrigin}:undefined)};
         const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"knowledge",source_ref:binding.ref,title:binding.title});
         if (opened?.result !== "surface_opened") throw new Error("The native knowledge surface could not be opened");
         requireCurrent();
@@ -805,7 +809,8 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     } else {
       // A side-hosted tab is never re-hosted here: a tree ask mints its own.
       const existing = Object.values(current.surfaces).find(b=>same(b)&&(into==='tree'||!current.sidePane?.tabs.includes(b.id)));
-      const binding:SurfaceBinding = existing ?? {id:crypto.randomUUID(),kind:"knowledge",ref:read.resource,title,project,address,...(placement!=="tab"?{view:{knowledgePlane:"page" as const,graphOrigin}}:{})};
+      if(existing)focusTwin(existing.id);
+      const binding:SurfaceBinding = existing ?? {id:crypto.randomUUID(),kind:"knowledge",ref:read.resource,title,project,address,...bindingView(placement!=="tab"?{knowledgePlane:"page",graphOrigin}:undefined)};
       const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"knowledge",source_ref:binding.ref,title:binding.title});
       if (opened?.result !== "surface_opened") throw new Error("The native knowledge surface could not be opened");
       requireCurrent();
@@ -1041,7 +1046,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     // a real pane placement the workbench's own grammar carries, never a
     // modal dead-end. Sources enter Base because files live there;
     // knowledge has no home mode, so it lands where the person stands.
-    const knowledgeOpen=(event:Event)=>{const d=detail<{ref?:string;title?:string;project?:string;returnTo?:unknown}>(event);if(!d?.ref)return;leave("Reading",d.returnTo);void openKnowledgeRef.current({kind:"wiki",value:d.ref},d.title??"Wiki",d.project).catch(fail);};
+    const knowledgeOpen=(event:Event)=>{const d=detail<{ref?:string;title?:string;project?:string;returnTo?:unknown;nativeKnowledge?:unknown}>(event);if(!d?.ref)return;const native=d.nativeKnowledge===undefined?undefined:validateNativeKnowledgeContext(d.nativeKnowledge);if(d.nativeKnowledge!==undefined&&!native){fail(new Error("The graph refused a native subject it could not admit."));return;}leave("Reading",d.returnTo);void openKnowledgeRef.current({kind:"wiki",value:d.ref},d.title??"Wiki",d.project,undefined,undefined,undefined,undefined,undefined,native??undefined).catch(fail);};
     // Return: pop the newest stop, stand in its mode, hand the place back to its surface.
     const back=()=>{
       const trail=workspaceRef.current.current.context?.trail??[];const stop=trail[trail.length-1];if(!stop)return;

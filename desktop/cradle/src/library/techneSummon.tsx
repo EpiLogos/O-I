@@ -2,7 +2,7 @@
  * The Technē summon seam (owner Wayfinder §13, T1/T2 contract): T1's Technē
  * HUD dispatches window CustomEvents —
  *
- *   "oi:techne-summon"          {kind: "library" | "verso" | "search"}
+ *   "oi:techne-summon"          {kind: "library" | "verso" | "search" | "graph"}
  *   "oi:techne-summon-closed"   {kind}
  *
  * and this component answers them through the surfaces that already exist:
@@ -32,11 +32,12 @@ import {listFiles} from "../files/client";
 import type {CentralLocation} from "../kernel/types";
 import {ExpressionVerso} from "../expression/ExpressionVerso";
 import {resolveVersoSubject, useVersoAccount, type VersoSubject, type CarriedNativeSubject} from "../expression/versoAccount";
+import {graphHopContext, graphSummonSubject} from "../knowledge/nativeFocus";
 
 export const TECHNE_SUMMON_EVENT = "oi:techne-summon";
 export const TECHNE_SUMMON_CLOSED_EVENT = "oi:techne-summon-closed";
 
-type SummonKind = "library" | "verso" | "search";
+type SummonKind = "library" | "verso" | "search" | "graph";
 
 /** The last presentation ask the summon made, for a Library browser that
  * mounts after the ask (the overlay's browser is lazy). */
@@ -67,6 +68,18 @@ export function TechneSummonSurface(host: SummonHostContext & {onOpenLibrary: ()
         // event answers an already-mounted one.
         window.dispatchEvent(new CustomEvent("oi:library-view", {detail: {view: summonView, focus: kind === "search" ? "search" : undefined}}));
         observeLibraryClose(kind);
+      } else if (kind === "graph") {
+        // A canvas's "Show in graph": the carried subject is admitted by its
+        // exact ref and native owner, then the register's wiki graph opens
+        // with that focus. Every refusal is named; nothing is guessed.
+        const summon = graphSummonSubject(detail?.subject);
+        if (!summon.ok) { window.dispatchEvent(new CustomEvent("oi:workspace-message", {detail: {message: summon.reason}})); return; }
+        const project = summon.project ?? hostRef.current.subject?.project;
+        const space = project ? kernel.snapshot.navigator?.root?.work.projects.find(row => row.name === project)?.projectcentral.agent_wiki.wiki.space_ref : undefined;
+        if (!project || !space) { window.dispatchEvent(new CustomEvent("oi:workspace-message", {detail: {message: "This subject's register has no wiki graph to show it in."}})); return; }
+        const nativeKnowledge = graphHopContext(summon);
+        if (!nativeKnowledge) { window.dispatchEvent(new CustomEvent("oi:workspace-message", {detail: {message: "The graph refused a subject it could not admit."}})); return; }
+        window.dispatchEvent(new CustomEvent("oi:epi-open-knowledge", {detail: {ref: space, title: "Graph", project, nativeKnowledge}}));
       } else if (kind === "verso") {
         // The application's exact current native work (when it carried one)
         // takes precedence over the kernel's global focus, so the verso
