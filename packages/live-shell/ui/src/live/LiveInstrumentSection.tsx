@@ -4,11 +4,12 @@
 // nothing until the owner has published a reading.
 
 import {useState} from 'react'
-import {registerPanel} from '../shell/panels'
+import {registerPanel, type PanelContext} from '../shell/panels'
 import type {InstrumentEdit} from '@epilogos/expressions-boundary'
 import {
   commitLiveInstrumentEdit, LIVE_CADENCE_OPTIONS, liveInstrumentWritable, liveTorusMacroRows, useLiveTorusReading, type LiveTorusState,
 } from './torusInstrument'
+import {legacyGeneratorPanels} from './liveChain'
 import './liveInstrumentSection.css'
 
 /** The owner's status line, as the native field words it (nativeField.ts statusLine). */
@@ -101,11 +102,28 @@ function LiveInstrumentSectionPanel() {
   return <LiveInstrumentSectionView state={state}/>
 }
 
+/** The ported generator faces, kept reachable under one labelled section until their capacities have a home in the torus's chain. */
+export function LegacyGeneratorsSection(props: PanelContext) {
+  const panels = legacyGeneratorPanels()
+  return (
+    <section className="live-legacy" aria-label="Legacy generators" data-live-legacy>
+      <h4>Legacy generators</h4>
+      <p className="live-legacy-note">The torus is the instrument; these faces remain until its chain carries their capacities.</p>
+      {panels.map(panel => { const Panel = panel.component; return <div key={panel.id} className="live-legacy-face" data-legacy-generator={panel.id}><Panel {...props}/></div> })}
+    </section>
+  )
+}
+
+/** The Instruments section: the expanded instrument, then the legacy generators. */
+function InstrumentsSection(props: PanelContext) {
+  return <><LiveInstrumentSectionPanel/><LegacyGeneratorsSection {...props}/></>
+}
+
 registerPanel({
   id: 'Instruments',
   title: 'Instruments',
   slot: 'browser-section',
-  component: LiveInstrumentSectionPanel,
+  component: InstrumentsSection,
   order: 5,
   navigation: false,
   note: 'The one instrument, expanded: its parameters grouped as the native field groups them, read from the owner reading.',
