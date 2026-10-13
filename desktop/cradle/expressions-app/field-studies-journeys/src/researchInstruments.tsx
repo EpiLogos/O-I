@@ -1647,7 +1647,7 @@ host.tools.append(saveGlyph);
    }
    await load(lens);
   },
-  destroy(){offSharedTimeNudges?.();offSharedTimeNudges=null;flushPlaceLayers();++epoch;lens=null;destroyed=true;unmount();mount.remove();status.remove();views.clear();window.removeEventListener('keydown',onWindowKeydown);window.removeEventListener('keydown',onZoomKeydown);window.removeEventListener('keydown',onPresentStartKey);readoutRoot.unmount();readoutHost.remove();modifiers.dispose();},
+  destroy(){flushPlaceLayers();++epoch;offSharedTimeNudges?.();offSharedTimeNudges=null;lens=null;destroyed=true;unmount();mount.remove();status.remove();views.clear();window.removeEventListener('keydown',onWindowKeydown);window.removeEventListener('keydown',onZoomKeydown);window.removeEventListener('keydown',onPresentStartKey);readoutRoot.unmount();readoutHost.remove();modifiers.dispose();},
   active(){return lens;},
  };
 }
