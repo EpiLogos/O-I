@@ -1,0 +1,4 @@
+/* Live's centre (T-LIVE-TORUS-INSTRUMENT leg 2): the instrument, the hosted M1 body, is the playing surface and overlays the centre
+ * when the centre identity is world.expressions. The Timeline (Session / Arrangement) stays mounted beneath and shows whenever the
+ * centre identity is a Timeline view. The overlay is opaque so the Timeline never shows through the stage. */
+.inhabitant.live-centre-torus { background: var(--bg-2) }

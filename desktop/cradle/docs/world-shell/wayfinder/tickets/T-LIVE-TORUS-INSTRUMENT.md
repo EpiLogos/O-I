@@ -11,7 +11,7 @@ repo the feature needs).
 
 1. **The one simulation.** The visible torus is the full oscillation state —
    a real, cymatic simulation in the Expressions engine over the existing M1
-   topology (`#1-5`, `ql_m1_torus` R=16/9, r=1, 720° return); touching or
+   topology (`#1-5-1`, `ql_m1_torus` in QL-MEF `c/src/m1.c:141-151`, R=16/9 and r=1 per `c/include/ql/m1.h:50`; the 720° is the M1 clock's double cover, not an embedding parameter); touching or
    exciting a point excites the body there; audio (sample rate) and picture
    (frame rate) are observations of one prepared state. Live mode and every
    Expression's M1 body seat the **same** simulation — never two builds.

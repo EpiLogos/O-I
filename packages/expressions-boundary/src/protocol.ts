@@ -5,8 +5,10 @@
  * vendored app's kernelExpressions.ts/app.ts. */
 import {TECHNE_INSTRUMENTS, type TechneActionRoute, type TechneReading} from '../../../desktop/cradle/src/techne/contract.ts';
 import {resolveActionRoute} from '../../../desktop/cradle/src/techne/m0m5/adapter.ts';
-import type {HostedAppState, HostedAppMode, HostedTechneLens} from '../../../desktop/cradle/src/expressions/hostedApp';
-export type {HostedAppState, HostedAppMode, HostedTechneLens};
+import type {HostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants} from '../../../desktop/cradle/src/expressions/hostedApp';
+export type {HostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants};
+// The shell's QL reading parser (the owner shape, ql.instrument-reading/v1): the boundary validates the instrument with it, never a copy.
+import {parseQlInstrumentReading} from '../../live-shell/ui/src/inhabitants/ql/qlInstrumentReading.ts';
 export type {TechneReading, TechneActionRoute, TechneActionReceipt, NativeActionRef} from '../../../desktop/cradle/src/techne/contract.ts';
 export {assertReading, resolveActionRoute} from '../../../desktop/cradle/src/techne/m0m5/adapter.ts';
 
@@ -14,7 +16,7 @@ export const CHANNEL_VERSION = 1;
 export const NATIVE_CHANNEL = 'oi.native-expression/v1';
 export const DEEP_INSTRUMENT_IDS = TECHNE_INSTRUMENTS.filter((id): id is HostedTechneLens => id !== 'expressions');
 export const FRAME_EXPRESSION_OPERATIONS = new Set(['profile_define', 'profile_inspect', 'list', 'inspect', 'create', 'edit', 'open', 'open_file', 'save_as', 'save', 'export', 'fork', 'index', 'close', 'invoke_action']);
-export const isHostedAppMode = (v: unknown): v is HostedAppMode => v === 'expressions' || v === 'techne';
+export const isHostedAppMode = (v: unknown): v is HostedAppMode => v === 'expressions' || v === 'techne' || v === 'live';
 export const isDeepInstrument = (v: unknown): v is HostedTechneLens => DEEP_INSTRUMENT_IDS.includes(v as HostedTechneLens);
 export const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 export const boundedText = (v: unknown, max = 4096): v is string => typeof v === 'string' && v.trim().length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
@@ -37,6 +39,38 @@ export function readOpenStudioResult(raw: Record<string, unknown>): {ok: true; s
   if (raw.command !== OPEN_STUDIO_COMMAND || typeof raw.ok !== 'boolean') return null;
   if (raw.ok) return isStudioSection(raw.section) ? {ok: true, section: raw.section} : null;
   return boundedText(raw.error, 512) ? {ok: false, error: raw.error} : null;
+}
+
+/** The owner's determinants (scene.ts SceneActing): the lens, context frame, harmonic basis and M3 transcription the native M1 body acts on.
+ * Exact or refused: a determinant the owner does not state is absent (null), never a guessed value. */
+export function readHostedDeterminants(raw: unknown): HostedInstrumentDeterminants | null | string {
+  if (raw === null || raw === undefined) return null;
+  if (!object(raw) || !object(raw.lens) || !object(raw.harmonic)) return 'determinants: expected lens, contextFrame, harmonic and rna';
+  const {lens, harmonic} = raw;
+  if (!Number.isSafeInteger(lens.lens12) || Number(lens.lens12) < 0 || Number(lens.lens12) > 11) return 'determinants.lens.lens12: expected 0..11';
+  if (!boundedText(lens.label, 16)) return 'determinants.lens.label: expected the owner label';
+  if (!Number.isSafeInteger(raw.contextFrame) || Number(raw.contextFrame) < 1 || Number(raw.contextFrame) > 7) return 'determinants.contextFrame: expected 1..7';
+  if (harmonic.selection === 'selected-source-row') {
+    // the selected source row carries no index
+  } else if (harmonic.selection === 'canonical-basis' && Number.isSafeInteger(harmonic.index) && Number(harmonic.index) >= 0 && Number(harmonic.index) <= 7) {
+    // one of the eight native bases
+  } else return 'determinants.harmonic: expected the selected source row or canonical basis 0..7';
+  if (typeof raw.rna !== 'boolean') return 'determinants.rna: expected a boolean';
+  const harmonicSource = harmonic.selection === 'canonical-basis'
+    ? {selection: 'canonical-basis' as const, index: Number(harmonic.index)} : {selection: 'selected-source-row' as const};
+  return {lens: {lens12: Number(lens.lens12), label: String(lens.label)}, contextFrame: Number(raw.contextFrame), harmonic: harmonicSource, rna: raw.rna};
+}
+
+/** The instrument the frame announces: the owner reading (ql.instrument-reading/v1, parsed by the shell's reader) and the owner's determinants.
+ * A malformed or refused reading is carried as its named fault: the shell renders the refusal, never a plausible state. */
+export function readHostedInstrument(raw: unknown): HostedInstrument {
+  if (!object(raw)) return {ok: false, fault: 'instrument: expected the announced reading envelope'};
+  let reading;
+  try {reading = parseQlInstrumentReading(raw.reading);}
+  catch (cause) {return {ok: false, fault: cause instanceof Error ? cause.message : String(cause)};}
+  const determinants = readHostedDeterminants(raw.determinants);
+  if (typeof determinants === 'string') return {ok: false, fault: determinants};
+  return {ok: true, reading, determinants};
 }
 
 /** Selection is a reading of what the application shows, never a request. */
@@ -86,6 +120,8 @@ export function readHostedState(raw: unknown): HostedAppState | null {
       ...(stage.tool !== undefined ? {tool: stage.tool} : {}), ...(stage.repeatPins !== undefined ? {repeatPins: stage.repeatPins} : {}),
       ...(stage.videoTake !== undefined ? {videoTake: stage.videoTake} : {})};
   }
+  // The native instrument the frame announces (the Live torus reads it). A reading the owner does not produce is carried as its named refusal.
+  if (raw.instrument !== undefined) state.instrument = readHostedInstrument(raw.instrument);
   if (raw.hostMode !== undefined) {
     if (!isHostedAppMode(raw.hostMode)) return null;
     state.hostMode = raw.hostMode;

@@ -46,7 +46,7 @@ const QUATERNAL_LOGIC_MANIFEST: InhabitantManifest = {
       },
       {
         id: 'torus',
-        presentations: ['compact', 'expanded'],
+        presentations: ['compact', 'expanded', 'full'],
         liveSemantic: 'device-instrument',
         admission: 'waiting',
         heldBy: ['studio:body'],

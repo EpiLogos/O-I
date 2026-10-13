@@ -26,6 +26,7 @@ import type {StudioSection} from '@epilogos/expressions-boundary'
 import type {HostedAppState, StageCommand, StageResult} from '@epilogos/expressions-boundary'
 import {NativeStageTools} from '../components/NativeStageTools'
 import {publishFrameTakeLink} from '../native/frameTakes'
+import {liveTorusFromHost, publishLiveTorusState} from '../live/torusInstrument'
 
 interface NativeWork {expression_ref: string; title: string; revision: number}
 const expressionDescriptor = registeredHostedSurfaces.find(row => row.descriptor.kind === 'expressions')?.descriptor
@@ -65,7 +66,9 @@ export function ExpressionsPanel() {
   const qualified = !!workspace.nativeScope
   const starting = useRef(false)
   const [attempt, retry] = useState(0)
-  const modeRef = useRef<HostedAppMode>(workspace.mode === 'techne' ? 'techne' : 'expressions')
+  // The hosted cut for the shell's mode: Live (the 'audio' workspace) is the frame's 'live' cut, the native M1 body.
+  const hostCut = (mode: typeof workspace.mode): HostedAppMode => mode === 'audio' ? 'live' : mode
+  const modeRef = useRef<HostedAppMode>(hostCut(workspace.mode))
   const worldLens = useRef('generic')
   const [status, setStatus] = useState('Loading Expressions…')
   const [fault, setFault] = useState<string | null>(null)
@@ -183,6 +186,8 @@ export function ExpressionsPanel() {
           setStage(previous => JSON.stringify(previous) === JSON.stringify(state) ? previous : state)
           setNativeEngineMounted(!!state.nativeScene)
           workspaceRef.current.publishReading(state)
+          // The one instrument's reading (ticket T-LIVE-TORUS-INSTRUMENT): the frame's announced owner reading, or its withdrawal.
+          publishLiveTorusState(liveTorusFromHost(state.instrument))
           if (state.nativeScene) {
             const owner = bookRef.current, selected = selectionOwner.current
             const binding = expressionBinding(owner.current), scene = state.nativeScene
@@ -257,7 +262,7 @@ export function ExpressionsPanel() {
     window.addEventListener('oi:epi-examine', examine)
     const observer = new MutationObserver(visible)
     for (let parent: HTMLElement | null = target; parent; parent = parent.parentElement) observer.observe(parent, {attributes: true, attributeFilter: ['hidden', 'inert', 'style', 'class']})
-    return () => {live = false; ++facadeGeneration; openRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
+    return () => {live = false; publishLiveTorusState(null); ++facadeGeneration; openRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
       stopSelection.current?.(); stopSelection.current = null; navigator.current?.dispose(); navigator.current = null;
       stopInstruments?.(); stopInstruments = null;
       stopEditor?.(); editor?.dispose(); workspace.attachEditor(null); workspace.publishEditorReading(null);
@@ -312,9 +317,8 @@ export function ExpressionsPanel() {
   }, [qualified, workspace.accessEpoch, workspace.accessReady])
   useEffect(() => {
     stopSelection.current?.(); stopSelection.current = null
-    if (workspace.mode === 'audio') return
-    modeRef.current = workspace.mode
-    host.current?.setMode(workspace.mode, worldLens.current)
+    modeRef.current = hostCut(workspace.mode)
+    host.current?.setMode(modeRef.current, worldLens.current)
     host.current?.setPresented()
     if (workspace.mode === 'techne' && navigator.current) stopSelection.current = navigator.current.connectSelectionRequests()
   }, [workspace.mode])

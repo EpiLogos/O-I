@@ -1,0 +1,8 @@
+/* The Live cut (hosted mode 'live', ticket T-LIVE-TORUS-INSTRUMENT): the native M1 body presented full-stage. The Expressions
+ * masthead, its tool rail and the instrument navigator belong to the Expressions and Technē cuts; the Live cut conceals them so the
+ * stage is the presentation. The stage, the Studio's native section and the instrument's own controls stay. */
+body.oi-host-live #app > .masthead,
+body.oi-host-live nav.instrument,
+body.oi-host-live #instrument-tools {
+  display: none !important;
+}
