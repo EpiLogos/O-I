@@ -519,3 +519,50 @@ export function wikiDocumentOf(standing: RegisterStanding | undefined): Expressi
   if (standing.phase === "ready" || standing.phase === "drift") return standing.document;
   return wikiProjectionOf(standing)?.document;
 }
+
+// ---- E21 back-reference (projection side): from a subject, where it stands in the wiki projections --------------
+
+export interface ProjectedSubjectStanding {
+  registerKey: string;
+  expression_ref: string;
+  scene_ref: string;
+  scene_title: string;
+  entity_ref: string;
+  entity_title: string;
+  subject_ref: string;
+}
+
+/** Every projected occurrence of one subject, per register, read from the standing document each register's
+ * standing already holds (the kernel document where one stands, else the projection's own). Pure: the store
+ * passes its own state, so the reverse query is one reading of the one projection state, never a second index. */
+export function projectedSubjectStandings(
+  standings: Readonly<Record<string, RegisterStanding>>,
+  subjectRef: string,
+): ProjectedSubjectStanding[] {
+  const out: ProjectedSubjectStanding[] = [];
+  for (const [registerKey, standing] of Object.entries(standings)) {
+    const document = wikiDocumentOf(standing);
+    if (!document) continue;
+    for (const scene of document.scenes) {
+      for (const entityRef of scene.entity_refs) {
+        const entity = document.entities[entityRef];
+        if (entity?.subject?.subject_ref !== subjectRef) continue;
+        out.push({
+          registerKey,
+          expression_ref: document.expression_ref,
+          scene_ref: scene.scene_ref,
+          scene_title: scene.title,
+          entity_ref: entityRef,
+          entity_title: entity.title,
+          subject_ref: subjectRef,
+        });
+      }
+    }
+  }
+  return out;
+}
+
+/** The current projection state's standing for one subject; apertures render it, the host answers it. */
+export function wikiSubjectStandings(subjectRef: string): ProjectedSubjectStanding[] {
+  return projectedSubjectStandings(state.standings, subjectRef);
+}

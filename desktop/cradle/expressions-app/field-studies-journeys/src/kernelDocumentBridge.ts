@@ -326,3 +326,21 @@ export function kernelViewToChanges(view:KernelConversion,edited:Journey):ViewCh
  }
  return changes;
 }
+
+// ——— E21 (SC-6) back-reference, native side: the query over the bindings the bridge already built. It reads
+// `occurrences` (the OccurrenceBinding spine above); it builds no index of its own. ———
+export interface SubjectOccurrence {expression_ref:string;subject_ref:string;scene_ref:string;scene_title:string;entity_ref:string;entity_title:string;view_entity_id:string}
+/** Where one subject stands in the opened Expression: every bound occurrence that carries it, in Scene order. */
+export function occurrencesOfSubject(view:KernelConversion,subjectRef:string):SubjectOccurrence[]{
+ const titles=new Map(view.document.scenes.map(s=>[s.scene_ref,s.title]));
+ const out:SubjectOccurrence[]=[];
+ for(const scene of view.journey.scenes){
+  const binding=view.bindings[scene.id];
+  if(!binding)continue;
+  for(const occurrence of binding.occurrences){
+   if(occurrence.subject?.subject_ref!==subjectRef)continue;
+   out.push({expression_ref:occurrence.expression_ref,subject_ref:subjectRef,scene_ref:occurrence.scene_ref,scene_title:titles.get(occurrence.scene_ref)??occurrence.scene_ref,entity_ref:occurrence.entity_ref,entity_title:view.document.entities[occurrence.entity_ref]?.title??occurrence.entity_ref,view_entity_id:occurrence.view_entity_id});
+  }
+ }
+ return out;
+}

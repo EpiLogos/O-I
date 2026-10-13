@@ -63,7 +63,7 @@ import {defaultCapture,CaptureSettings,CaptureTransition,download,slug,createOut
 const $=<T extends HTMLElement=HTMLElement>(id:string)=>document.getElementById(id) as T;
 import {mountShell,iconButton as ib} from './shell.js';
 import {RailItem,railPressed} from './rail.js';
-import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover} from './expressions.js';
+import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover,collectionBinsOf,collectionsWith,type CollectionBins,type LibraryStanding} from './expressions.js';
 import {installKernelExpressions,kernelExpressionsAvailable,readTechneReading,techneConstellationRelate,listKernelExpressions,readKernelExpression,nativeExpressionRequest} from './kernelExpressions.js';
 import {hostedRecovery} from './nativeRecovery.js';
 import {entryGateHTML} from './entryGate.js';
@@ -98,7 +98,7 @@ import type {KernelConversion,KernelSceneBody} from './kernelDocumentBridge.js';
 import {installSceneBodies} from './sceneBodies.js';
 import {prepareNativeSceneBody} from './nativeSceneBody.js';
 import {nestedBodyFor,placeNestedChange,setNestingDepthChange,removeNestedChange,nextNestedDepth,nestedEvaluation,nestedWindowVerdict,nestedControlsHTML,nestedSceneClass,nestedFrameAt,nestedNotice,isNestedBody,nestedSeamAt,nestedSeamMode,nestedBoundaryKey,latestNestedSeam,type NestedSeam,openNestedPicker,NESTED_DEFAULT_DEPTH,type NestedBinding} from './nestedOccurrence.js';
-import {kernelDocumentToJourney,withNestedVerdicts} from './kernelDocumentBridge.js';
+import {kernelDocumentToJourney,occurrencesOfSubject,withNestedVerdicts} from './kernelDocumentBridge.js';
 import {openScenePortal} from './scenePortal.js';
 import {installActPanel} from './actPanel.js';
 import {presentAdoption,followedPanels} from './nativeFollow.js';
@@ -873,7 +873,7 @@ function setHint(){let h='';if(placementStep)h=`Place link ${stepIndex+1} on the
  $('tool-hint').innerHTML=h;$('tool-hint').hidden=!h||!editing||!railExpanded;$('stage').style.cursor=tool==='select'?'default':tool==='orbit'?'grab':'crosshair';}
 function saveWorkspace(){store.change('Update toolbelt',()=>{store.document.shared!.toolbelt=clone(workspace.entries);});markSaved();try{localStorage.setItem(WORKSPACE_KEY,JSON.stringify(workspace));workspaceStorageError=false;}catch{workspaceStorageError=true;}}
 function liveContext():InspectorContext{return {scene:effectiveScene(store.document,scene()),journey:store.document,selected,textId,tab,motionTab,stepIndex,preview:false,search:'',supported:[...engine.capabilities.parameters],pinned:workspace.entries.filter(v=>v.scope==='field').map(v=>v.key)};}
-function renderContext(){const host=$('context-panel');host.hidden=!contextKind||presenting||libraryOpen;if(!contextKind)return;const title=contextKind==='objects'?'Objects in this scene':contextKind==='text'?'Page text':'Pointer';const ctx={...liveContext(),tab:contextKind==='objects'?'objects':contextKind==='text'?'scene':'field'} as InspectorContext;const content=document.createElement('div');content.innerHTML=inspectorHTML(ctx);if(contextKind==='objects')content.querySelector('[data-detail="arrange"]')?.remove();if(contextKind==='text'||contextKind==='pointer'){const group=content.querySelector('[data-detail="'+(contextKind==='text'?'page-text':'pointer')+'"]');if(group){(group as HTMLDetailsElement).open=true;content.replaceChildren(group);}}host.innerHTML='<header><h2>'+title+'</h2><button data-action="close-context" aria-label="Close local controls">×</button></header><div class="context-content">'+content.innerHTML+'</div>';}
+function renderContext(){const host=$('context-panel');host.hidden=!contextKind||presenting||libraryOpen;if(!contextKind)return;const title=contextKind==='objects'?'Objects in this scene':contextKind==='text'?'Page text':'Pointer';const ctx={...liveContext(),tab:contextKind==='objects'?'objects':contextKind==='text'?'scene':'field'} as InspectorContext;const content=document.createElement('div');content.innerHTML=inspectorHTML(ctx);if(contextKind==='objects')content.querySelector('[data-detail="arrange"]')?.remove();if(contextKind==='text'||contextKind==='pointer'){const group=content.querySelector('[data-detail="'+(contextKind==='text'?'page-text':'pointer')+'"]');if(group){(group as HTMLDetailsElement).open=true;content.replaceChildren(group);}}host.innerHTML='<header><h2>'+title+'</h2><button data-action="close-context" aria-label="Close local controls">×</button></header><div class="context-content">'+content.innerHTML+(contextKind==='objects'?revealHTML():'')+'</div>';}
 function renderLive(){const parts=liveWorkspaceHTML(liveContext(),workspace);const secondary=tool==='pin'||studioOpen||timelineOpen||modesOpen||captureOpen||beltPickerOpen||!!contextKind||shapePickerOpen;$('live-workspace').hidden=!sequenceOpen||secondary||presenting||libraryOpen;$('toolbelt-panel').hidden=!beltOpen||presenting||libraryOpen;$('toolbelt-button').setAttribute('aria-expanded',String(!$('toolbelt-panel').hidden));for(const [id,html] of [['live-content',parts.sequence],['belt-content',parts.controls]]){const host=$(id),scroll=host.scrollTop,openGlyphs=Array.from(host.querySelectorAll<HTMLDetailsElement>('[data-glyph-category][open]')).map(d=>d.dataset.glyphCategory),libraryExpanded=host.querySelector<HTMLDetailsElement>('.glyph-tree')?.open,layerDisclosure=readLayerDisclosure(host.querySelector<HTMLDetailsElement>('.live-layers'));host.innerHTML=html;restoreLayerDisclosure(host.querySelector<HTMLDetailsElement>('.live-layers'),layerDisclosure);if(libraryExpanded){const tree=host.querySelector<HTMLDetailsElement>('.glyph-tree');if(tree)tree.open=true;}host.querySelectorAll<HTMLDetailsElement>('[data-glyph-category]').forEach(d=>d.open=openGlyphs.includes(d.dataset.glyphCategory));host.scrollTop=scroll;}$('belt-picker').hidden=!beltPickerOpen||libraryOpen;if(beltPickerOpen)$('belt-picker').innerHTML=pickerHTML(scene(),workspace.entries,pendingBelt);const evaluated=engine.telemetry?.();updateToolbeltValues($('belt-content'),scene(),evaluated?.params??scene().field.params,evaluated?.config);renderContext();if(!$('context-panel').hidden)void refreshSourcePreviews($('context-panel'));if(!$('live-workspace').hidden)void refreshSourcePreviews($('live-content'));const chooser=$('automation-assignment');chooser.hidden=!assignmentTarget&&!assignmentGroup;if(!chooser.hidden)chooser.innerHTML=assignmentHTML(scene(),assignmentTarget,assignmentGroup);const monitor=$('automation-monitor');monitor.hidden=!scene().automation.length||!beltOpen||presenting||libraryOpen;document.documentElement.style.setProperty('--automation-height',monitor.hidden?'0px':'160px');if(!monitor.hidden){if(!scene().automation.some(l=>l.id===monitoredLane))monitoredLane=scene().automation[0].id;const belt=$('toolbelt-panel');if(monitorDocked){if(monitor.parentElement!==belt)belt.appendChild(monitor);monitor.classList.add('docked');}else{if(monitor.parentElement!==document.body)document.body.appendChild(monitor);monitor.classList.remove('docked');}monitor.innerHTML=monitorHTML(scene(),monitoredLane,monitorMode);}document.querySelector('.instrument')?.classList.toggle('expanded',timelineOpen);}
 // Docking swaps the studio's anchor side, so a width/height transition would teleport it: invert the layout change, then play the transform back.
 function flipPanel(el:HTMLElement,mutate:()=>void){el.style.transition='none';el.style.transform='';const a=el.getBoundingClientRect();mutate();const b=el.getBoundingClientRect(),dx=a.left-b.left,dy=a.top-b.top,sx=b.width?a.width/b.width:1,sy=b.height?a.height/b.height:1;if(!b.width||!b.height||(!dx&&!dy&&Math.abs(sx-1)<.002&&Math.abs(sy-1)<.002)){el.style.transition='';return;}const done=(ev:TransitionEvent)=>{if(ev.target!==el||ev.propertyName!=='transform')return;el.removeEventListener('transitionend',done);el.style.transition='';el.style.transformOrigin='';};el.addEventListener('transitionend',done);el.style.transformOrigin='top left';el.style.transform=`translate(${dx}px,${dy}px) scale(${sx},${sy})`;void el.offsetWidth;el.style.transition='transform .25s cubic-bezier(.2,.8,.2,1)';el.style.transform='';}
@@ -1049,6 +1049,45 @@ function setSavedScenePlay(playing:boolean){sceneIntentEpoch++;journeyPlaying=pl
 function seekWorkingScene(seconds:number){sceneIntentEpoch++;sceneElapsed=seconds;trackPreview=true;scenePlaying=false;journeyPlaying=false;applySceneView();needsFrame=true;transportUI();syncDeepLinkAddress();}
 function snapshotScene(input:{action:'save-snapshot';name:string;next:boolean}|{action:'restore-snapshot'}){const s=scene();sceneIntentEpoch++;if(input.action==='restore-snapshot'){sceneNames.delete(s.id);changed(()=>{if(!restoreScene(store.document,s.id))throw Error('This Scene has no saved snapshot');},true,'Restore scene snapshot');return;}
  changed(()=>{s.view={...s.view,mode:camera.mode,yaw:camera.yaw,pitch:camera.pitch,zoom:camera.zoom,panX:camera.panX/width,panY:camera.panY/height};delete s.view.nativeCamera;saveScene(store.document,s,input.name);sceneNames.delete(s.id);if(input.next){const next=nextSceneFrom(store.document,s);sceneIndex=store.document.scenes.indexOf(next);selected=[];stepIndex=0;sceneElapsed=0;}},true,'Save scene snapshot');}
+// ——— E21 (SC-6) scene → source → subject, with back-references. Source and subject reveal through the two summons the
+// research host already sends (inspectSubject, showInGraph); the back-reference reads this Expression's own bindings
+// (occurrencesOfSubject). No second index. ———
+function summonSource(ref:string,context?:{node?:unknown;relationField?:unknown}){const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding){toast('Open a native Scene before opening its source.');return;}hostRequest({request:'summon',detail:{kind:'source',ref,context,subject:{ref:view.document.expression_ref,kind:'expression',nativeOwner:'oi',revision:view.document.revision,title:view.document.title,sceneRef:binding.scene_ref,entityRef:null,relationRef:null}}});}
+function summonGraph(subjectRef:string,nativeOwner:string){const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding){toast('Open a native Scene before showing its subject in the graph.');return;}hostRequest({request:'summon',detail:{kind:'graph',subject:{ref:subjectRef,nativeOwner,kind:'subject',revision:view.document.revision,title:view.document.title,sceneRef:binding.scene_ref,entityRef:null,relationRef:null} as unknown as NativeSubject}});}
+/** The selected occurrence, when exactly one bound entity is selected in the open Scene. */
+function selectedOccurrence(){const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding||selected.length!==1)return null;const occurrence=binding.occurrences.find(o=>o.view_entity_id===selected[0]);return occurrence?{view,occurrence}:null;}
+/** Where the selected occurrence's subject stands in the open Expression: its occurrences, scene by scene. */
+function subjectStandingFor():LibraryStanding|undefined{const found=selectedOccurrence(),subject=found?.occurrence.subject?.subject_ref;if(!found||!subject)return undefined;return {subject,projection:'unread',rows:occurrencesOfSubject(found.view,subject).map(o=>({kind:'scene' as const,title:`${o.entity_title} · ${o.scene_title}`,detail:o.scene_ref,scene_ref:o.scene_ref,entity_ref:o.entity_ref,view_entity_id:o.view_entity_id,subject_ref:subject}))};}
+/** The reveal family for one selected occurrence: source, subject and where it stands share one menu and one grammar. */
+function revealHTML():string{const found=selectedOccurrence(),subject=found?.occurrence.subject;if(!found||!subject)return '';const ref=esc(subject.subject_ref);return `<section class="reveal-group" data-scope="reveal" aria-label="Reveal this occurrence"><button type="button" data-action="reveal-source" data-subject="${ref}">${icon('arrowRight')}<span>Source</span></button><button type="button" data-action="reveal-subject" data-subject="${ref}" data-owner="${esc(subject.native_owner)}">${icon('arrowRight')}<span>Subject</span></button><button type="button" data-action="reveal-stands" data-subject="${ref}">${icon('search')}<span>Where it stands</span></button></section>`;}
+/** A back-reference row jumps: a native occurrence through the kernel focus and the binding selection; a wiki
+ * projection through the graph summon that opens its owning register. */
+async function jumpToStanding(el:HTMLElement){
+ if(el.dataset.kind==='projection'){summonGraph(el.dataset.subject??'',el.dataset.owner||'wiki');return;}
+ const sceneRef=el.dataset.scene??'',viewId=el.dataset.viewEntity??'',view=nativeWorkspace?.nativeView();
+ const sceneId=view?Object.entries(view.bindings).find(([,binding])=>binding.scene_ref===sceneRef)?.[0]:undefined;
+ if(!sceneId)throw Error('That Scene is no longer in the open Expression.');
+ await focusNativeSceneRef(sceneRef);
+ await nativeWorkspace?.select(sceneId,viewId);
+ closeLibrary();
+ if(scene().id!==sceneId)toast('Scene focused. Select the occurrence on the stage.');
+}
+// ——— E26 collections as bins: the kernel's own index is the one reading; assignment is the existing collections_set
+// change through the one save path, labelled for undo. ———
+let collectionBins:CollectionBins|null=null;
+/** The kernel's collections, read live; the Library redraws when the reading lands. */
+function refreshCollections(){void nativeExpressionRequest({operation:'index'}).then(index=>{collectionBins=collectionBinsOf(index,nativeWorkspace?.nativeView()?.document.expression_ref);}).catch(()=>{collectionBins=null;}).finally(()=>{if(libraryOpen)renderLibrary();});}
+async function assignCollections(el:HTMLElement){
+ const picker=el.closest<HTMLElement>('[data-scope="collection-picker"]'),view=nativeWorkspace?.nativeView();
+ if(!picker||!view)throw Error('Open the native Expression before assigning its collections.');
+ if(picker.dataset.expression!==view.document.expression_ref)throw Error('The open Expression changed; reopen the Library to assign.');
+ const chosen=[...picker.querySelectorAll<HTMLInputElement>('input[name="collection"]:checked')].map(input=>input.value);
+ const next=collectionsWith(chosen,picker.querySelector<HTMLInputElement>('input[name="new-collection"]')?.value??'');
+ if(JSON.stringify(next)===JSON.stringify(collectionsWith(view.document.collections??[],'')))return toast('Collections are unchanged.');
+ await nativeWorkspace!.edit(()=>[{change:'collections_set',collections:next}],'Set collections');
+ refreshCollections();
+ toast(next.length?`Collections: ${next.join(', ')}`:'Removed from every collection.');
+}
 function selectEntity(id:string,multi=false){cursorTool='select';pointer.active=false;railKey='select';railExpanded=true;if(multi){selected=selected.includes(id)?selected.filter(x=>x!==id):[...selected,id];}else selected=[id];editing=true;inspectorOpen=false;contextKind='objects';tab='objects';studioSection='formations';tool='select';shapePickerOpen=false;journeyPlaying=false;stepIndex=0;renderAll();}
 function semanticBindingFor(s:Scene,entityId:string):SemanticBinding|undefined{return s.semanticField?.bindings.find(b=>b.carriers.some(c=>c.kind==='entity'&&c.id===entityId));}
 function defaultSemanticColor():SemanticColorCoupling{return{enabled:true,colorSource:'canonical',gain:1,radius:{source:'force'},falloff:'gaussian',metric:'compositionPlane',blend:'weighted',activation:'constant'};}
@@ -1132,7 +1171,7 @@ let coverObserver:IntersectionObserver|null=null;
 /** T-REVIEW-6: reads the quarantined drafts for the Library section. The section fills when the read lands; a message names the last restore's outcome. */
 function refreshQuarantine(message?:string){void quarantineView().then(view=>{quarantineState={rows:view.rows,unreadable:view.unreadable,message};if(libraryOpen)renderLibrary();}).catch(()=>undefined);}
 function renderLibrary(){coverObserver?.disconnect();const library=readLibraryDetailed(),scroll=$('library-page').scrollTop;const saved=Array.from(new Map([...library.journeys,...sessionExpressions.values()].map(j=>[j.id,j])).values());
- $('library-page').innerHTML=libraryHTML({current:store.document,saved,featured,starters,section:librarySection,errors:library.blocked?['Browser storage is unavailable here. Export an expression to keep a portable copy.']:library.errors,legacy:hasLegacyLibrary(),quarantine:quarantineState,cover:j=>covers.get(j.id)});$('library-page').scrollTop=scroll;
+ $('library-page').innerHTML=libraryHTML({current:store.document,saved,featured,starters,section:librarySection,errors:library.blocked?['Browser storage is unavailable here. Export an expression to keep a portable copy.']:library.errors,legacy:hasLegacyLibrary(),quarantine:quarantineState,standing:subjectStandingFor(),bins:collectionBins,cover:j=>covers.get(j.id)});$('library-page').scrollTop=scroll;
  const documents=new Map([...featured,...saved,store.document,...starters.map(p=>p.expression)].map(j=>[j.id,j]));
  const paint=(image:HTMLImageElement)=>{const j=documents.get(image.dataset.previewId!);if(j){image.src=compositionCover(j.scenes[0]);image.removeAttribute('data-preview-id');}};
  const images=$('library-page').querySelectorAll<HTMLImageElement>('img[data-preview-id]');
@@ -1141,7 +1180,7 @@ function renderLibrary(){coverObserver?.disconnect();const library=readLibraryDe
 }
 function openLibrary(section:'collection'|'about'='collection',navigate=true){if(propertyTake)finishPropertyTake();
  if(!libraryOpen)rememberCover();
- pointer.active=false;modesOpen=false;captureOpen=false;librarySection=section;libraryOpen=true;refreshQuarantine();
+ pointer.active=false;modesOpen=false;captureOpen=false;librarySection=section;libraryOpen=true;refreshQuarantine();refreshCollections();
  if(recorder.active){recorder.stop();toast('Recording stopped before opening the library.');}
  if(navigate)try{history.pushState({oiLibrary:true},'', '#library'+(section==='about'?'/about':''));}catch{}
  renderAll();$('library-page').focus({preventScroll:true});
@@ -1496,6 +1535,11 @@ case 'timeline-track':timelineTrack=!timelineTrack;renderAll();break;
  case 'deep-lived':hostRequest({request:'workspace-mode',mode:'expressions'});break;
  case 'capture-options':inspectorOpen=false;contextKind='';beltPickerOpen=false;timelineOpen=false;modesOpen=false;readCapture();openKeep();break;case 'about':closeDialogs();openAbout();break;
  case 'close-library':closeLibrary();break;
+ case 'jump-standing':void jumpToStanding(el).catch(cause=>toast(cause instanceof Error?cause.message:String(cause)));break;
+ case 'reveal-source':summonSource(el.dataset.subject??'');break;
+ case 'reveal-subject':summonGraph(el.dataset.subject??'',el.dataset.owner||'wiki');break;
+ case 'reveal-stands':openLibrary('collection');break;
+ case 'set-collections':void assignCollections(el).catch(cause=>toast(cause instanceof Error?cause.message:String(cause)));break;
  case 'library-section':librarySection=el.dataset.section as 'collection'|'about';renderLibrary();$('library-page').scrollTop=0;break;
  case 'modes':modesOpen=!modesOpen;if(modesOpen){inspectorOpen=false;contextKind='';beltPickerOpen=false;timelineOpen=false;}captureOpen=false;pointer.active=false;if(modesOpen)$('modes-panel').innerHTML=modesHTML(starters,recentJourneys(Array.from(new Map([...readLibrary(),...sessionExpressions.values(),store.document].map(j=>[j.id,j])).values()),recentIds));renderAll();break;
  case 'start-mode':{const item=starters.find(p=>p.id===el.dataset.id);if(item)await loadJourney(forkExpression(item.expression));break;}
@@ -2303,7 +2347,7 @@ researchInstruments=installResearchInstruments({
  material:async(id,action:ResearchMaterialAction)=>{const target=researchScene(id);changed(()=>applyResearchMaterial(target,action),true,researchMaterialLabel(action));await commitResearch();},
  // lane-1 A3/A4: a connection's line kind, label and bound sides — presentation keyed by the native edge id; the relation itself is untouched.
  connector:async(id,edgeId,value)=>{const target=researchScene(id);changed(()=>applyConnectorRecord(target,edgeId,value),true,'Connection line');await commitResearch();},
- inspectSubject:(ref,context)=>{const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding){toast('Open a native Scene before opening its source.');return;}hostRequest({request:'summon',detail:{kind:'source',ref,context,subject:{ref:view.document.expression_ref,kind:'expression',nativeOwner:'oi',revision:view.document.revision,title:view.document.title,sceneRef:binding.scene_ref,entityRef:null,relationRef:null}}});},showInGraph:(subjectRef,nativeOwner)=>{const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding){toast('Open a native Scene before showing its subject in the graph.');return;}hostRequest({request:'summon',detail:{kind:'graph',subject:{ref:subjectRef,nativeOwner,kind:'subject',revision:view.document.revision,title:view.document.title,sceneRef:binding.scene_ref,entityRef:null,relationRef:null} as unknown as NativeSubject}});},nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,
+ inspectSubject:(ref,context)=>summonSource(ref,context),showInGraph:(subjectRef,nativeOwner)=>summonGraph(subjectRef,nativeOwner),nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,
  select:(sceneId,entityId,bindingRef)=>{if(sceneId!==scene().id)return;selected=entityId?[entityId]:[];nativeSelectedRelation=bindingRef??null;void nativeWorkspace?.select(sceneId,entityId,bindingRef);overlayDirty=true;needsFrame=true;if(document.body.classList.contains('research-studio'))renderAll();},
  // A deliberate typed knowledge relationship between the two occurrences'
  // constellation participations. The presentation connection is unchanged.

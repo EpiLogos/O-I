@@ -367,3 +367,24 @@ body{
 .research-save-glyph[data-save-state="saving"]{background:transparent;border:1px solid var(--muted)}
 .research-save-glyph[data-save-state="saved"]{background:var(--muted)}
 .research-save-glyph[data-save-state="held"]{background:var(--accent)}
+
+/* E21 back-references and E26 collection bins: the reveal family and the Library bins, tokens only. */
+.reveal-group{display:flex;flex-wrap:wrap;gap:6px;padding:8px 0}
+.reveal-group button,.standing-actions button,.collection-picker button{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:4px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit;font-size:12px;cursor:pointer}
+.reveal-group svg{width:14px;height:14px}
+.standing-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.standing-jump{display:grid;gap:2px;width:100%;text-align:left;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit;cursor:pointer}
+.standing-jump span{color:var(--muted);font-size:11px;overflow-wrap:anywhere}
+.standing-actions{margin-top:8px;display:flex;justify-content:flex-end}
+.collection-bin{border-top:1px solid var(--line);padding:8px 0}
+.collection-bin summary{display:flex;justify-content:space-between;align-items:center;cursor:pointer;color:var(--ink)}
+.collection-bin summary span{color:var(--muted);font-size:11px}
+.collection-bin.is-uncollected summary strong{color:var(--muted)}
+.collection-bin ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:4px}
+.collection-member{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--ink)}
+.collection-member[hidden]{display:none}
+.collection-member small{color:var(--accent);font-size:10px}
+.collection-member.is-current span{font-weight:600}
+.collection-picker{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.collection-option{display:inline-flex;gap:4px;align-items:center;font-size:12px;color:var(--ink)}
+.collection-picker input[name="new-collection"]{min-height:32px;min-width:160px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit}

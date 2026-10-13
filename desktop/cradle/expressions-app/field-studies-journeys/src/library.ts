@@ -15,8 +15,9 @@
  * Appearance rides the existing `oi-shell-cutout` host message; until it
  * lands, the OS preference leads. */
 
-import {compositionCover,featuredExpressions,startingPoints,libraryHTML} from './expressions.js';
+import {compositionCover,featuredExpressions,startingPoints,libraryHTML,collectionBinsOf,type CollectionBins} from './expressions.js';
 import {readLibraryDetailed,removeFromLibrary} from './store.js';
+import {nativeExpressionRequest} from './kernelExpressions.js';
 import {installNativeLibraryInteractions} from './libraryScopes.js';
 // T-REVIEW-6: the quarantine section reads and restores through the same recovery owner as the instrument.
 import {quarantineView,restoreQuarantinedDraft} from './recovery.js';
@@ -24,6 +25,11 @@ import {quarantineView,restoreQuarantinedDraft} from './recovery.js';
 type StartingPoint = ReturnType<typeof startingPoints>[number];
 type QuarantineState={rows:{id:string;key:string;name:string;reason:string;when:string;raw:string}[];unreadable:string[];message?:string};
 let quarantine:QuarantineState={rows:[],unreadable:[]};
+/** E26: the kernel's collections read as bins, read-only on this page (assignment belongs to the instrument). */
+let bins:CollectionBins|null=null;
+function refreshBins():void{
+  void nativeExpressionRequest({operation:'index'}).then(index=>{bins=collectionBinsOf(index);renderLibrary();}).catch(()=>{bins=null;});
+}
 /** The exact stored text of a quarantined draft, offered as a file. */
 function downloadVerbatim(text:string,name:string):void{
   const url=URL.createObjectURL(new Blob([text],{type:'application/json'}));
@@ -58,7 +64,7 @@ function renderLibrary():void{
   const paint=(image:HTMLImageElement)=>{const j=documents.get(image.dataset.previewId!);if(j){image.src=compositionCover(j.scenes[0]);image.removeAttribute('data-preview-id');}};
   page().innerHTML=libraryHTML({saved,featured,starters,section,standalone:true,
     errors:library.blocked?['Browser storage is unavailable here. Export an expression from the instrument to keep a portable copy.']:library.errors,
-    legacy:hasLegacyLibrary(),quarantine,cover:j=>covers.get(j.id)});
+    legacy:hasLegacyLibrary(),quarantine,bins,cover:j=>covers.get(j.id)});
   page().scrollTop=scroll;
   const images=page().querySelectorAll<HTMLImageElement>('img[data-preview-id]');
   if(typeof IntersectionObserver==='undefined')images.forEach(paint);
@@ -115,6 +121,7 @@ document.addEventListener('input',event=>{
 
 renderLibrary();
 refreshQuarantine();
+refreshBins();
 // The host's ready watch reads the same oi-app-state announcement the
 // instrument makes — one boot handshake grammar.
 try{window.parent.postMessage({v:1,kind:'oi-app-state',state:{libraryOpen:true}},'*');}catch{}
