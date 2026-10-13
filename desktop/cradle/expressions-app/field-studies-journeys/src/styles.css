@@ -337,3 +337,25 @@ body{
 .quarantine-actions button{min-height:32px;padding:4px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit;font-size:12px;cursor:pointer}
 .quarantine-actions button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .quarantine-message{margin:0 0 12px;font-size:12px;color:var(--muted)}
+/* E14 nested expression occurrence: the same token family as the native Scene
+ * marks (--marker-*), tokens only. */
+.scene-image.scene-nested{box-shadow:inset 0 0 0 2px var(--marker-violet),inset 0 -22px 18px -12px color-mix(in srgb,var(--marker-violet) 34%,transparent)}
+.scene-image.scene-place{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1px dashed var(--line);background:var(--panel);color:var(--muted);cursor:pointer}
+.scene-place-mark{font-size:18px;line-height:1}
+.scene-place small{font-size:10px}
+.nested-controls{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12px;color:var(--ink)}
+.nested-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid var(--marker-violet);color:var(--ink);background:color-mix(in srgb,var(--marker-violet) 14%,var(--panel))}
+.nested-mark{width:8px;height:8px;border-radius:50%;background:var(--marker-violet)}
+.nested-controls button{min-height:28px;padding:2px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit;font-size:12px;cursor:pointer}
+.nested-controls button:focus-visible,.nested-pick:focus-visible,.nested-picker-actions button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.nested-refusal{flex-basis:100%;margin:0;color:var(--marker-rose);font-size:12px}
+.nested-note{margin:0;color:var(--muted);font-size:12px}
+.nested-picker{max-width:min(440px,calc(100vw - 32px));border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);box-shadow:var(--shadow);padding:0}
+.nested-picker::backdrop{background:color-mix(in srgb,var(--ink) 28%,transparent)}
+.nested-picker-form{padding:16px;display:grid;gap:10px}
+.nested-picker-form h2{margin:0;font-size:16px;font-weight:500}
+.nested-pick-list{display:grid;gap:6px;max-height:50vh;overflow:auto}
+.nested-pick{display:grid;gap:2px;text-align:left;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit;cursor:pointer}
+.nested-pick small{color:var(--muted);font-size:11px;overflow-wrap:anywhere}
+.nested-picker-actions{display:flex;justify-content:flex-end}
+.nested-picker-actions button{min-height:32px;padding:4px 14px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit;cursor:pointer}

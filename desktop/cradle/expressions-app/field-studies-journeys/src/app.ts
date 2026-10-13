@@ -96,6 +96,7 @@ import type {ConnectionBinding} from '../../../../../packages/oi-design-system/e
 import type {KernelConversion,KernelSceneBody} from './kernelDocumentBridge.js';
 import {installSceneBodies} from './sceneBodies.js';
 import {prepareNativeSceneBody} from './nativeSceneBody.js';
+import {nestedBodyFor,placeNestedChange,resizeNestedChange,removeNestedChange,nextNestedDepth,nestedEvaluation,nestedWindowVerdict,nestedControlsHTML,nestedSceneClass,openNestedPicker,NESTED_DEFAULT_DEPTH,NESTED_GRAPH_LIMIT,type NestedBinding,type NestedDocumentLike,type NestedGraph} from './nestedOccurrence.js';
 import {openScenePortal} from './scenePortal.js';
 import {installActPanel} from './actPanel.js';
 import {presentAdoption,followedPanels} from './nativeFollow.js';
@@ -420,11 +421,11 @@ function renderTimeline(){if(!timelineOpen)return;const s=scene(),doc=timelineDo
  const layout=journeyTimelineLayout(scenes,(index,local)=>expressionTiming(doc,index,local),100);
  // T7: each seam's live state on the same clock as the clips.
  const seams=seamStates(scenes,(index,local)=>expressionTiming(doc,index,local),timing.time);
- const sceneButton=(v:(typeof scenes)[number],i:number,placement:string)=>`<button class="scene-image ${i===sceneIndex?'active':''}${track?' scene-clip':''}"${placement} data-action="choose-scene" data-index="${i}" data-scene-id="${esc(v.id)}" aria-label="Open scene ${i+1}: ${esc(v.name)}" title="${esc(v.name)} · ${sceneSaveState(store.document,v)}"><img src="${compositionCover(v)}" alt="${esc(v.name)}"><small>${i+1}</small>${track?trimEdgeHTML(v):''}<span class="scene-save-dot" data-status="${sceneSaveState(store.document,v)}"></span></button>`;
+ const sceneButton=(v:(typeof scenes)[number],i:number,placement:string)=>`<button class="scene-image ${i===sceneIndex?'active':''}${track?' scene-clip':''}${nestedSceneClass(nestedBodyOf(v.id))}"${placement} data-action="choose-scene" data-index="${i}" data-scene-id="${esc(v.id)}" aria-label="Open scene ${i+1}: ${esc(v.name)}" title="${esc(v.name)} · ${sceneSaveState(store.document,v)}"><img src="${compositionCover(v)}" alt="${esc(v.name)}"><small>${i+1}</small>${track?trimEdgeHTML(v):''}<span class="scene-save-dot" data-status="${sceneSaveState(store.document,v)}"></span></button>`;
  const playhead=`id="expression-playhead" aria-label="Expression playhead" type="range" min="0" max="${timing.total}" step="0.05" value="${timing.time}"`;
  const body=track
   ?`<div class="scene-track" aria-label="Expression track"><div class="scene-track-ruler">${[0,.25,.5,.75,1].map(f=>`<span style="left:${f*100}%">${(f*layout.total).toFixed(f===1?1:0)}s</span>`).join('')}</div>${locatorsHTML(doc,timing.total)}<div class="scene-track-lane">${loopWashHTML(doc,timing.total)}${scenes.map((v,i)=>sceneButton(v,i,` style="left:${layout.clips[i].x}%;width:${layout.clips[i].w}%"`)).join('')}${scenes.slice(1).map((v,k)=>seamGlyphHTML(v,layout.clips[k+1].x)+seamBlendHTML(scenes[k],v,layout.clips[k+1].x,layout.total?Math.min(v.transition,v.duration)/layout.total*100:0,seams[k+1].fraction)).join('')}<input class="scene-track-playhead" type="range" ${playhead}></div></div>`
-  :`<div class="scene-strip">${scenes.map((v,i)=>sceneButton(v,i,'')).join('')}<button class="scene-image scene-add" data-action="save-next" aria-label="Save and add next scene">${icon('plus')}</button></div><label class="expression-scrub"><span>Expression time</span><input type="range" ${playhead}></label>`;
+  :`<div class="scene-strip">${scenes.map((v,i)=>sceneButton(v,i,'')).join('')}<button class="scene-image scene-add" data-action="save-next" aria-label="Save and add next scene">${icon('plus')}</button>${nestedControlsHTML(nestedBodyOf(scene().id),nestedBindingOf(scene().id))}</div><label class="expression-scrub"><span>Expression time</span><input type="range" ${playhead}></label>`;
  const toggle=`<button data-action="timeline-track" aria-pressed="${track}" title="${track?'Show the scenes as a compact strip':'Show the scenes on the time track'}">${track?'Collapse to strip':'Show track'}</button>`;
  // E09/E10: the channel rows and the selected channel's curve lane, under the clips in track mode only.
  const curveHTML=track?channelPanelHTML({scene:doc.scenes.find(v=>v.id===s.id)??s,selected:curveSel?.sceneId===s.id?{trackId:curveSel.trackId,index:curveSel.index}:null,views:viewsFor(s.id)}):'';
@@ -1213,6 +1214,59 @@ function duplicateEntity(){const list=scene().entities.filter(e=>selected.includ
 function deleteEntities(){if(selected.some(id=>blueprintMember(scene(),id))){toast('Release the blueprint before removing one of its members.');return;}const ids=selected.filter(id=>!scene().entities.find(e=>e.id===id)?.locked);if(!ids.length){toast('Unlock a selected entity before removing it.');return;}let prunedLanes=false;changed(()=>{scene().entities=scene().entities.filter(e=>!ids.includes(e.id));selected=[];for(const id of ids)pruneResearchOccurrence(scene(),id);prunedLanes=pruneAutomation(scene());},true,'Delete objects');toast('Removed. Undo restores the configuration.'+(prunedLanes?' Its automation lanes without a remaining target were removed with it.':''));}
 /** E02b/E03: a scene is moved by its ref; the guarded model op refuses any move that would change a Scene's content. */
 function reorderScene(sceneId:string,to:number){if(to<0||to>=store.document.scenes.length)return;const currentId=scene().id;changed(()=>{moveScene(store.document,sceneId,to);sceneIndex=store.document.scenes.findIndex(s=>s.id===currentId);},true,'Reorder scenes');}
+// E14 nested expression occurrence (lane-3 TARGET-SET E14). The occurrence is the
+// kernel's expression_ref Scene body; each write is one native edit. The Library
+// read supplies the choices and the bridge supplies the verdict; nothing is
+// stored beside the kernel.
+function nestedBodyOf(sceneId:string):unknown{return nativeWorkspace?.nativeView()?.bindings[sceneId]?.body??null;}
+function nestedBindingOf(sceneId:string):NestedBinding|null{return nativeWorkspace?.nativeView()?.bindings[sceneId]?.nested??null;}
+/** The saved Expressions an occurrence may read, depth first from its subject,
+ * bounded. A document that cannot be read stays absent, so the evaluation says
+ * unread instead of guessing. */
+async function readNestedGraph(root:string):Promise<NestedGraph>{
+ const graph:NestedGraph=new Map(),queue=[root];
+ while(queue.length&&graph.size<NESTED_GRAPH_LIMIT){
+  const ref=queue.shift()!;
+  if(graph.has(ref))continue;
+  let doc:NestedDocumentLike;
+  try{doc=await readKernelExpression(ref) as NestedDocumentLike;}catch{continue;}
+  graph.set(ref,doc);
+  for(const s of doc.scenes??[]){const inner=s?.body;if(inner&&inner.carrier==='expression_ref'&&typeof inner.subject_ref==='string')queue.push(inner.subject_ref);}
+ }
+ return graph;
+}
+async function placeExpressionIntoScene():Promise<void>{
+ const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
+ if(!view||!binding){toast('Open this Scene as a native Expression before placing an expression in it.');return;}
+ const slot=nestedWindowVerdict(binding.loaded_refs.length);
+ if(slot){toast(`Not placed: ${slot}`,8000);return;}
+ const sceneId=scene().id,host=view.document.expression_ref,sceneRef=binding.scene_ref;
+ let listed:Awaited<ReturnType<typeof listKernelExpressions>>;
+ try{listed=await listKernelExpressions();}catch(cause){toast(`The Library could not list saved expressions: ${(cause as Error).message}`,8000);return;}
+ openNestedPicker(listed.filter(entry=>entry.expression_ref!==host).map(entry=>({expression_ref:entry.expression_ref,title:entry.title,revision:entry.revision})),async pick=>{
+  if(scene().id!==sceneId||nativeWorkspace?.nativeView()?.document.expression_ref!==host){toast('The Scene changed while you chose. Place the expression again.',8000);return;}
+  try{
+   const body=nestedBodyFor(host,{expression_ref:pick.expression_ref,revision:pick.revision,title:pick.title},NESTED_DEFAULT_DEPTH);
+   const verdict=nestedEvaluation(host,body,await readNestedGraph(pick.expression_ref));
+   if(verdict.state!=='ready'){toast(`Not placed: ${verdict.reason}`,8000);return;}
+   await nativeWorkspace!.edit([placeNestedChange(sceneRef,body)]);
+   toast(`${pick.title||pick.expression_ref} is placed in this Scene at depth ${NESTED_DEFAULT_DEPTH}, under its own expression ref.`,8000);
+  }catch(cause){toast(`Not placed: ${(cause as Error).message}`,8000);}
+ });
+}
+async function resizeNestedOccurrence():Promise<void>{
+ const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
+ if(!view||!binding||binding.body?.carrier!=='expression_ref'){toast('This Scene holds no nested expression to resize.');return;}
+ const depth=nextNestedDepth(binding.body.recursion?.max_depth??NESTED_DEFAULT_DEPTH);
+ try{await nativeWorkspace!.edit([resizeNestedChange(binding.scene_ref,binding.body,depth)]);toast(`Nested occurrence depth is now ${depth}.`);}
+ catch(cause){toast(`Not resized: ${(cause as Error).message}`,8000);}
+}
+async function removeNestedOccurrence():Promise<void>{
+ const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
+ if(!view||!binding||binding.body?.carrier!=='expression_ref'){toast('This Scene holds no nested expression to remove.');return;}
+ try{await nativeWorkspace!.edit([removeNestedChange(binding.scene_ref)]);toast('Nested occurrence removed. This Scene is free of it, and its page slot is released.',8000);}
+ catch(cause){toast(`Not removed: ${(cause as Error).message}`,8000);}
+}
 async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),subjectId=el.closest<HTMLElement>('[data-entity-id]')?.dataset.entityId,e=subjectId?s.entities.find(v=>v.id===subjectId):selectedEntity();if(e&&el.closest('.live-sequence'))selected=[e.id];switch(name){
  case 'record-properties':if(propertyTake){finishPropertyTake();break;}else{const tracks=recordableTracks();if(!tracks.length){toast('Add local numeric properties to the toolbelt. Shared overrides must be made local before recording.');break;}const previous=s.propertyTakeRange??takeWindows.get(s.id),start=appendTake?(previous?.end??sceneElapsed):(previous?.start??sceneElapsed);if(start>=3600){toast('This scene has reached its one-hour duration limit.');break;}journeyPlaying=false;trackPreview=false;fieldPaused=false;propertyTake={sceneId:s.id,armed:performance.now()+2000,start,elapsed:0,tracks,lastSample:-1,limit:!appendTake&&previous?previous.end-previous.start:undefined};renderAll();}break;
  case 'take-mode':appendTake=!appendTake;renderAll();break;
@@ -1315,6 +1369,9 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
   await nativeWorkspace?.edit([{change:'scene_body_clear',scene_ref:binding.scene_ref}]);
   toast('Scene body cleared.');break;
  }
+ case 'place-expression':void placeExpressionIntoScene();break;
+ case 'resize-nested':void resizeNestedOccurrence();break;
+ case 'remove-nested':void removeNestedOccurrence();break;
  case 'scene-trigger-add':{
   const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
   if(!view||!binding){toast('Open this Scene as a native Expression first.');break;}
