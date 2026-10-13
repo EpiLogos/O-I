@@ -74,3 +74,20 @@ is points only, so polygons appear only from readings with polygon geometry.
 Debt noted: the vendor imports `placeReading.ts` helpers from the app and
 inverts the cradle's private `polygonRings` through `projectPlaces` (round-trip
 tested) — move the helpers to cradle src and export `polygonRings` in a tidy pass.
+
+## Resolution — T11 + T12 + T13 (routes, hierarchy edges, provenance)
+
+**Landed (13 Oct 2026; builder haiku + lead host wiring).** `placeRoutes.ts`:
+TRAVELLED_TO movements draw as route lines with numbered clickable stops in
+`routeModel`'s validity order (open-bound last; fewer than two drawable
+stops draws nothing; unlocated never a stop; stop click = selectPlace);
+LOCATED_IN hierarchy edges from the authority's `projectPlaces` edges
+(region parents at their centroid; an endpoint without a position is
+listed with its reason, never drawn; expired edges dropped by their own
+validity). `placeProvenance.ts` + the facets panel: source ref, revision,
+native owner and the producer's selector per facet ("no provenance
+disclosed" / "revision not disclosed" — never invented), with "Open source"
+routed through the host's `inspectSubject` (lead wiring). Scripted: places
+suites 85/85; verify-source green; tsc 0. Unverified: the look and clicks
+(native pass). Not done: provenance in the marker detail (LocationPanel
+carries no provenance field).

@@ -21,6 +21,9 @@ import {
  type PlaceFilterState,
  sharedPlaceTimeScope,
 } from './placeReading.js';
+import {markerStyleForPrecision} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeNavigation';
+import {placeHierarchy} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeRoutes';
+import {facetProvenance,type FacetProvenance} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeProvenance';
 import './placeFacetsPanel.css';
 
 /** W3 — opens the SAME native constellation-authoring route "Edit
@@ -39,6 +42,31 @@ function EditPlaceTimeAction({request,onError}:{request:Omit<TechneConstellation
   setBusy(true);
   void techneConstellationRequest({...request,operation:'open'}).catch(error=>onError(error instanceof Error?error.message:String(error))).finally(()=>setBusy(false));
  }}>Edit place/time</button>;
+}
+
+/** T13 — the provenance of the selected place: the producer's own rows, verbatim.
+ * "Open source" appears only when the host supplies an open route; otherwise the
+ * ref stands as text with its absence named. */
+function ProvenanceBlock({provenance,onOpenSource}:{provenance:FacetProvenance;onOpenSource?:(ref:string)=>void}){
+ const openAction=(ref:string)=><div className="place-facets-open"><code>{ref}</code>{onOpenSource
+  ?<button type="button" onClick={()=>onOpenSource(ref)}>Open source</button>
+  :<span className="place-facets-unavailable">no open route</span>}</div>;
+ return <div className="place-facets-provenance" aria-label="Provenance">
+  <h5>Provenance</h5>
+  {provenance.rows.length===0&&<>
+   <p className="place-facets-message" role="status">no provenance disclosed</p>
+   {provenance.source_ref&&openAction(provenance.source_ref)}
+  </>}
+  {provenance.rows.length>0&&<ol>{provenance.rows.map((row,index)=><li key={`${row.source_ref}-${index}`}>
+   {openAction(row.source_ref)}
+   <dl>
+    <dt>Revision</dt><dd>{row.source_revision??'revision not disclosed'}</dd>
+    <dt>Native owner</dt><dd>{row.native_owner}</dd>
+    <dt>Selector</dt><dd>{row.selector??'no selector disclosed'}</dd>
+    {row.standing&&<><dt>Standing</dt><dd>{row.standing}</dd></>}
+   </dl>
+  </li>)}</ol>}
+ </div>;
 }
 
 function depthLabel(depth:DepthState['depth']):string{
@@ -63,6 +91,8 @@ function RouteOverlay({route,facets}:{route:ReturnType<typeof routeModel>;facets
  const points=route.stops.map(stop=>{
   const geometry=byRef.get(stop.place_ref)?.geometry;
   if(!geometry||geometry.type!=='point'||!Array.isArray(geometry.coordinates))return null;
+  // An unlocated stop stays in the list above and never on the line (the map's own precision law).
+  if(!markerStyleForPrecision(stop.precision).drawn)return null;
   const [lon,lat]=geometry.coordinates;
   return typeof lon==='number'&&typeof lat==='number'?projectEquirect(lon,lat,bounds,width,height):null;
  }).filter((point):point is {x:number;y:number}=>point!==null);
@@ -92,9 +122,12 @@ export interface PlaceFacetsPanelProps {
  onError:(message:string)=>void;
  /** Mounted shared-session controls replace the legacy local time inputs. */
  sharedTime?:boolean;
+ /** T13: the host's open route for a source ref. Absent means no open route is
+  * wired, and the provenance block says so beside the ref. */
+ onOpenSource?:(ref:string)=>void;
 }
 
-export function PlaceFacetsPanel({reading,selectedRef,filter,onFilterChange,editRequest,onError,sharedTime=false}:PlaceFacetsPanelProps){
+export function PlaceFacetsPanel({reading,selectedRef,filter,onFilterChange,editRequest,onError,sharedTime=false,onOpenSource}:PlaceFacetsPanelProps){
  const status=placeState(reading);
  const options=placeFilterOptions(reading);
  const facets=filteredFacets(reading,filter);
@@ -106,6 +139,8 @@ export function PlaceFacetsPanel({reading,selectedRef,filter,onFilterChange,edit
  const relations=placeRelations(facets);
  const depths=depthChain(reading);
  const route=routeModel(facets,filter.window);
+ // T12: the hierarchy edges the globe cannot draw are listed here, never hidden.
+ const hierarchy=placeHierarchy(reading?.spatial??[],new Set(facets.map(facet=>facet.place_ref)),filter.window);
 
  const toggleRelation=(value:string)=>onFilterChange({...filter,relations:toggleFilterMembership(filter.relations,options.relations,value)});
  const toggleStanding=(value:'factual'|'mythic'|'owner-vocabulary')=>onFilterChange({...filter,standing:toggleFilterMembership(filter.standing,options.standing,value)});
@@ -149,6 +184,7 @@ export function PlaceFacetsPanel({reading,selectedRef,filter,onFilterChange,edit
     {street.source_ref&&<><dt>Source</dt><dd>{street.source_ref}</dd></>}
     {street.observer_frame&&<><dt>Observer frame</dt><dd>{street.observer_frame}</dd></>}
    </dl>
+   <ProvenanceBlock provenance={facetProvenance(reading?.provenance,street.place)} onOpenSource={onOpenSource}/>
    {street.hierarchy.length>0&&<div className="place-facets-hierarchy">
     <h5>Hierarchy</h5>
     <ol>{street.hierarchy.map((row,index)=><li key={`${row.place_ref}-${index}`}>
@@ -165,6 +201,13 @@ export function PlaceFacetsPanel({reading,selectedRef,filter,onFilterChange,edit
   </div>}
 
   <RouteOverlay route={route} facets={facets}/>
+
+  {hierarchy.undrawn.length>0&&<div className="place-facets-hierarchy-undrawn">
+   <h5>Hierarchy not drawn on the globe</h5>
+   <ul>{hierarchy.undrawn.map((edge,index)=><li key={`${edge.from_ref}-${edge.to_ref}-${index}`}>
+    {edge.from_ref} → {edge.to_ref} <span className="place-facets-hierarchy-relation">({edge.relation})</span> — {edge.reason}
+   </li>)}</ul>
+  </div>}
 
   <div className="place-facets-depths">
    <h5>Reference frame</h5>
