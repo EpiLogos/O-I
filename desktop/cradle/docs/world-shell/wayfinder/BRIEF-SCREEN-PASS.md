@@ -78,3 +78,12 @@ CRAFT: <the 3 most visible craft gaps against Ableton Live / the mockups>
 - Lane 1 (A1, A5, A6) — Canvas: dragging a card near another shows a guide
   line and snaps; zoom controls beside the minimap; keys + − 0 Shift+1
   Shift+2; a zoom readout fades after zooming.
+
+## Runs
+
+- 13 Oct 2026, build `20261013T-wave3` at `7692eacc7` (pid 25898): readback
+  (scripted, accessibility tree, no interaction) shows "Native host · revision
+  7692eacc7864" and "3 of 6 owners admitted" (three admitted, three excluded
+  by footprint). The computer-use driver's `request_access` for "O-I Shell
+  Candidate" was refused twice (owner away). The interactive checklist waits
+  for the owner's grant; it is not substituted by scripted clicks.
