@@ -218,3 +218,14 @@ test('a journey validates its markers and region against its own length, clampin
   journey.markers = [marker('m-2', 1, 'x', '#ff0000')];
   assert.throws(() => validateJourney(journey), /palette key/);
 });
+
+// Review-3 fix: a region dragged to the minimum length survives its own rounding (38% of edge drags were dropped).
+test('a loop region at exactly the minimum length survives validation after an edge drag', async()=>{
+ const m=await import('../build/journeyMarkers.js');
+ let kept=0,total=0;
+ for(let from=0;from<3;from+=0.0137)for(const t of [from-1,from+0.01,from+0.02]){
+  const region={from,to:from+1};const dragged=m.dragLoopEdge(region,'to',t,600);total++;
+  if(m.validateLoopRegion(dragged,600))kept++;
+ }
+ assert.equal(kept,total,'every dragged region is still a region');
+});

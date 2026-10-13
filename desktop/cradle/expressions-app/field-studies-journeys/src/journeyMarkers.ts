@@ -16,6 +16,8 @@ export const MARKER_NAME_MAX = 80;
 export const MARKER_SNAP_PX = 6;
 /** The shortest loop region the brace admits. */
 export const LOOP_MIN_SECONDS = .05;
+/** Rounding slack for the minimum length: a region dragged to exactly LOOP_MIN_SECONDS survives its own rounding. */
+const LOOP_EPSILON = 1e-9;
 /** Kernel bound for any journey time: 64 scenes of at most 3600 seconds. */
 export const JOURNEY_TIME_MAX = 64 * 3600;
 
@@ -93,7 +95,7 @@ export function validateLoopRegion(value: unknown, duration: number): LoopRegion
     throw new Error('Invalid loop region.');
   }
   const from = clampTime(round2(value.from), duration), to = clampTime(round2(value.to), duration);
-  return to - from >= LOOP_MIN_SECONDS ? {from, to} : undefined;
+  return to - from >= LOOP_MIN_SECONDS - LOOP_EPSILON ? {from, to} : undefined;
 }
 
 export function markerNamed(list: readonly JourneyMarker[], id: string): JourneyMarker | undefined {
@@ -143,7 +145,7 @@ export function setLoopEdge(region: LoopRegion | undefined, edge: LoopEdge, time
   const t = clampTime(round2(time), duration);
   const base = region ?? {from: 0, to: duration};
   const next = edge === 'from' ? {from: t, to: base.to} : {from: base.from, to: t};
-  if (next.to - next.from < LOOP_MIN_SECONDS) {
+  if (next.to - next.from < LOOP_MIN_SECONDS - LOOP_EPSILON) {
     return {refusal: edge === 'from' ? 'The loop in must come before the loop out.' : 'The loop out must come after the loop in.'};
   }
   return {region: next};

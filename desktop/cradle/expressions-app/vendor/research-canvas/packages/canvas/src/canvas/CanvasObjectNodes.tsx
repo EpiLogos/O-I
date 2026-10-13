@@ -20,7 +20,7 @@ function ObjectResize({selected, readOnly}: {selected?: boolean; readOnly?: bool
   return (
     <NodeResizeControl
       minWidth={40}
-      minHeight={28}
+      minHeight={40}
       position="bottom-right"
       className="node-resize-control node-resize-control--bottom-right"
       style={{display: selected && !readOnly ? "flex" : "none"}}

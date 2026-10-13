@@ -126,7 +126,8 @@ export function WikiFactsProvider({transport,project,checkpoints,onCheckpoint,on
  const save=async()=>{
   if(!held||!selected)return;const id=++ticket.current,routed=route.current,key=selected;setBusy('Saving native facts…');setError('');setNotice('');
   await settleRoutedSave(routed,async()=>{const pending=structuredClone(prepareFacts(held)),checkpoint={...held,pending};onCheckpoint(key,checkpoint);return saveFacts(transport,project,checkpoint);},
-   basis=>{if(id===ticket.current)confirm(basis);},
+   // Once the map has heard its route saved, the route is spent: a later save in this editor is the person's own edit.
+   basis=>{if(routed&&route.current===routed)route.current=undefined;if(id===ticket.current)confirm(basis);},
    reason=>{if(id===ticket.current)setError(reason);});
   if(id===ticket.current)setBusy('');
  };
