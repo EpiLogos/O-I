@@ -190,31 +190,25 @@ history you want to keep. Above all of it runs the **transport**, the same
 controls in the same places in every mode, each meaning what it should for
 the work in front of you.
 
-## 4. Three forms, three times
+## 4. Three times
 
-Anything in the DLW can be seen in three forms.
+Whatever you are working with, you can meet it in three times.
 
-As a **world**, it has places, bodies and distances, and you can stand in it.
-As an **expression**, it becomes something you can see and hear: a scene of
-moving symbols, text and light, sounding as it moves. As a **graph**, it lays
-out what is connected to what, so that you can follow the threads and see the
-whole at once.
+**Live** is the thing as it happens: agents moving around the task they are
+building, the field breathing on its pulse, your planet changing under your
+hands. It is Session view's time — things launched and running, you listening
+and answering.
 
-Each form can be taken in three times.
+Take it into your hands and it is **composed**. You order the stops of a walk,
+build a scene until the figure says what you meant, drag a graph into the
+shape of an argument. That is Clip view's work, and you can do it in the
+present or step back into a past moment, a chosen day's sky, and compose
+there.
 
-It can be **live**: the world as it stands right now, the agents moving
-around it, the field breathing as you work. It can be **composed**: taken
-into your hands and shaped — the walk ordered, the scene built, the graph
-arranged to make an argument. And it can be **recorded**: kept, played back,
-and so given to someone else.
-
-A day of work shows all nine. As you work, your planet changes in front of
-you. In the evening you lay the day out as a graph and see what it touched.
-You take the moment that mattered into a scene and compose it until it says
-what you meant, then you record a walk through the places it came from. Next
-week someone else plays the walk and stands where you stood.
-
-This is the instrument's language, and it is the same in every kind of work.
+What you keep is **recorded** — a take, a walk laid along the ruler, a day
+closed into what it taught. It sits in Arrangement view to be edited, played
+back, and given to someone who will play it in their own world, where it is
+live again.
 
 ## 5. Instruments
 
