@@ -338,6 +338,8 @@ export interface ResearchInstrumentsHost {
  deleteOccurrence?:(sceneId:string,entityId:string)=>Promise<void>;
  updateContent?:(sceneId:string,entityId:string,text:string)=>Promise<void>;
  connect?:(sceneId:string,input:{sourceEntityRef:string;targetEntityRef:string;relationKind:string;directionality?:string})=>Promise<void>;
+ // B2: several connections in ONE owner edit. Refused whole when any input is refused; returns the minted binding refs in input order.
+ connectMany?:(sceneId:string,inputs:{sourceEntityRef:string;targetEntityRef:string;relationKind:string;directionality?:string;label?:string;connector?:ResearchConnector}[])=>Promise<string[]>;
  reconnect?:(sceneId:string,bindingRef:string,input:{sourceEntityRef:string;targetEntityRef:string})=>Promise<void>;
  deleteConnection?:(sceneId:string,bindingRef:string)=>Promise<void>;
  updateConnectionKind?:(sceneId:string,bindingRef:string,kind:string)=>Promise<void>;
@@ -459,6 +461,11 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
  const status=document.createElement('div');status.className='research-instrument-status';status.setAttribute('role','status');
  const body=document.createElement('div');body.className='research-instrument-body';mount.append(body);host.tools.append(status);
  const message=(text:string)=>{status.textContent=text;};
+// B1 — one quiet save-state glyph beside the status line: saving while an act's commit is in flight, saved once the owner acknowledges it,
+// held when the owner refuses. It raises nothing on a routine save.
+const saveGlyph=document.createElement('span');saveGlyph.className='research-save-glyph';saveGlyph.setAttribute('role','img');saveGlyph.dataset.saveState='saved';saveGlyph.setAttribute('aria-label','Saved');
+const saveState=(state:'saving'|'saved'|'held')=>{saveGlyph.dataset.saveState=state;saveGlyph.setAttribute('aria-label',state==='saving'?'Saving':state==='held'?'Held, not saved':'Saved');};
+host.tools.append(saveGlyph);
  function retain(){if(currentKey&&captureCanvas){const state=views.get(currentKey);if(state)state.canvas=captureCanvas();}captureCanvas=null;}
  function disposeGestures(){for(const state of views.values()){state.moveGesture?.dispose();state.resizeGesture?.dispose();state.groupMoveGesture?.dispose();}}
  function unmount(){retain();endPresentation(false);presentable=null;disposeGestures();root?.unmount();root=null;body.replaceChildren();}
@@ -627,12 +634,12 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    const key=canvas.key;message('Saving…');
    mutations=mutations.catch(()=>{}).then(async()=>{
     if(destroyed||!host.nativeView()||nativeCanvas(host.nativeView()!,host.sceneId()).key!==key)throw new Error('The selected native composition changed; the queued edit was not applied');
-    materialInFlight++;
-    try{await action();}finally{materialInFlight--;}
+    materialInFlight++;saveState('saving');
+    try{await action();saveState('saved');}finally{materialInFlight--;}
     if(currentKey===key&&!destroyed){message(typeof notice==='function'?notice():notice??'Saved');if(lens==='m1'){const view=host.nativeView();if(view&&host.sceneId()===canvas.sceneId){const updated=nativeCanvas(view,host.sceneId());render(canvasNode(updated,state,epoch));}else if(refresh||deferredRefresh)await load('m1');}}
     if(!materialInFlight){const pending=deferredRefresh;deferredRefresh=false;if(pending&&lens&&currentKey!==key)await load(lens);}
 
-   }).catch(error=>{if(currentKey===key&&!destroyed)message(error instanceof Error?error.message:String(error));});
+   }).catch(error=>{saveState('held');if(currentKey===key&&!destroyed)message(error instanceof Error?error.message:String(error));});
   };
   const occurrence=(id:string)=>{const value=canvas.occurrences.get(id);if(!value)throw new Error('This card has no native occurrence');return value;};
   const ownConnection=(id:string)=>{const relation=host.nativeView()?.document.relations?.[id];if(relation?.native_owner!=='oi')throw new Error('This source relation is read-only; use its native owner to change it');return id;};
@@ -798,7 +805,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     actions.push({type:'frame-save',id,label:frame.label,memberRefs:frame.memberKeys.flatMap(key=>created.get(key)??[])});
     if(frame.title)actions.push({type:'frame-title',id,title:frame.title});
    }
-   const connect=host.connect,connector=host.connector;
+   const connectMany=host.connectMany;
    const failures:string[]=[];let connected=0;
    const summary=()=>{
     const cards=`${plan.cards.length} card${plan.cards.length===1?'':'s'}${plan.frames.length?` and ${plan.frames.length} frame${plan.frames.length===1?'':'s'}`:''}`;
@@ -809,20 +816,20 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    const nativeRef=(key:string)=>{const id=created.get(key);return id?host.nativeView()?.bindings[sceneId]?.occurrences.find(row=>row.view_entity_id===id)?.entity_ref:undefined;};
    apply(async()=>{
     if(actions.length)await host.material(sceneId,{type:'batch',label:'Import .canvas',actions});
-    for(const edge of plan.edges){
-     const label=`connection "${edge.relationKind}"`;
-     const from=nativeRef(edge.fromKey),to=nativeRef(edge.toKey);
-     if(!connect){failures.push(`${label} not imported: this host cannot create connections`);continue;}
-     if(!from||!to){failures.push(`${label} not imported: an end has no native occurrence yet`);continue;}
-     try{
-      const known=new Set((host.nativeView()?.bindings[sceneId]?.relations??[]).map(row=>row.binding_ref));
-      await connect(sceneId,{sourceEntityRef:from,targetEntityRef:to,relationKind:edge.relationKind,directionality:'directed'});
-      const made=(host.nativeView()?.bindings[sceneId]?.relations??[]).find(row=>!known.has(row.binding_ref));
-      if(!made){failures.push(`${label} not imported: the new relation was not seen after it was written`);continue;}
-      if(connector&&(edge.fromSide||edge.toSide))await connector(sceneId,made.binding_ref,connectorRecord({kind:'curved',...(edge.fromSide?{fromSide:edge.fromSide}:{}),...(edge.toSide?{toSide:edge.toSide}:{})}));
-      connected++;
-     }catch(error){failures.push(`${label} not imported: ${error instanceof Error?error.message:String(error)}`);}
-    }
+    // Every end must have its native occurrence before anything is connected: one missing end refuses the whole set, and the status names it.
+    const cardName=(key:string)=>plan.cards.find(card=>card.key===key)?.title?.trim()||'an unnamed card';
+    const ends=plan.edges.map(edge=>({edge,label:`connection "${edge.relationKind}" from "${cardName(edge.fromKey)}" to "${cardName(edge.toKey)}"`,from:nativeRef(edge.fromKey),to:nativeRef(edge.toKey)}));
+    const missing=ends.filter(row=>!row.from||!row.to).map(row=>`${row.label} not imported: an end has no native occurrence yet`);
+    if(missing.length){failures.push(...missing,'no connection was made');return;}
+    if(!ends.length)return;
+    if(!connectMany){failures.push(...ends.map(row=>`${row.label} not imported: this host cannot create connections`));return;}
+    try{
+     const inputs=ends.map(({edge,label,from,to})=>{
+      const connector=edge.fromSide||edge.toSide?connectorRecord({kind:'curved',...(edge.fromSide?{fromSide:edge.fromSide}:{}),...(edge.toSide?{toSide:edge.toSide}:{})}):null;
+      return {sourceEntityRef:from!,targetEntityRef:to!,relationKind:edge.relationKind,directionality:'directed',label,...(connector?{connector}:{})};
+     });
+     connected=(await connectMany(sceneId,inputs)).length;
+    }catch(error){failures.push(`${ends.length} connection${ends.length===1?'':'s'} not imported, none connected: ${error instanceof Error?error.message:String(error)}`);}
    },true,summary);
   };
   // B3 — the selection (or a frame's members) as the canvas draws it: the live stage, cut to the members and the connections

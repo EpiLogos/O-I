@@ -361,3 +361,9 @@ body{
 .nested-picker-actions button{min-height:32px;padding:4px 14px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit;cursor:pointer}
 .nested-stage-notice{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:5;max-width:min(560px,calc(100vw - 32px));margin:0;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--muted);font-size:12px;text-align:center}
 .nested-stage-notice[hidden]{display:none}
+
+/* B1 save glyph */
+.research-save-glyph{display:inline-block;width:6px;height:6px;margin:0 6px 0 2px;border-radius:50%;vertical-align:middle;background:var(--muted)}
+.research-save-glyph[data-save-state="saving"]{background:transparent;border:1px solid var(--muted)}
+.research-save-glyph[data-save-state="saved"]{background:var(--muted)}
+.research-save-glyph[data-save-state="held"]{background:var(--accent)}

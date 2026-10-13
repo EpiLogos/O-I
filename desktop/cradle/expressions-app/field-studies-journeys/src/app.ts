@@ -42,7 +42,7 @@ import {CHAKRA_PROFILE_ID} from '../../src/engine/semantics/chakraProfile';
 import type {SemanticBinding,SemanticColorCoupling,SemanticFieldConfig} from '../../src/engine/semantics/semanticTypes';
 import {Journey,Scene,Entity,EntityLayer,TextLayer,Tool,Shape,Vec3,clone,uid,clamp,fieldStudies,oiMark,rethemeMark,sevenCentres,smallLanguage,blankJourney,blankScene,entity,pin,chakraEntities,validateJourney,AutomationLane,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX,type MarkThemeReading} from './model.js';
 import {DocumentStore,readLibrary,readLibraryDetailed,saveToLibrary,removeFromLibrary} from './store.js';
-import {bindingEditLabel,historyTitle,historyToast,researchMaterialLabel} from './undoLabels.js';
+import {bindingEditLabel,connectionLinesLabel,historyTitle,historyToast,researchMaterialLabel} from './undoLabels.js';
 import {defaultCamera,cameraForSceneView,project,unproject,facePlane,stageScale,stageCentre,basis,Camera} from './camera.js';
 import {FieldEngineAdapter,EngineFrame} from './engine.js';
 import {readPath} from '../../src/engine/automation';
@@ -2313,6 +2313,33 @@ researchInstruments=installResearchInstruments({
  duplicateOccurrence:async(sceneId,entityId)=>{researchScene(sceneId);if(!nativeWorkspace)throw new Error('Open a native Scene first.');await nativeWorkspace.duplicateOccurrence(sceneId,entityId);},
  deleteOccurrence:async(sceneId,entityId)=>{if(blueprintMember(researchScene(sceneId),entityId))throw new Error('Release the blueprint before removing a member.');const target=researchScene(sceneId),item=target.entities.find(value=>value.id===entityId);if(!item||item.locked)throw new Error('This occurrence is locked or no longer present.');changed(()=>{target.entities=target.entities.filter(value=>value.id!==entityId);selected=selected.filter(id=>id!==entityId);pruneResearchOccurrence(target,entityId);pruneAutomation(target);},true,'Remove object');await commitResearch();},
  updateContent:async(sceneId,entityId,text)=>{const item=researchScene(sceneId).entities.find(value=>value.id===entityId);if(!item||item.locked)throw new Error('This occurrence is locked or no longer present.');changed(()=>{item.text=text;item.name=text.split('\n')[0].slice(0,160)||'Note';},true,'Edit note');await commitResearch();},
+ // B2 — several connections in ONE owner edit (Import .canvas). Every end is checked before anything is written: a refusal connects
+ // nothing and names the end. The refs are minted here, in input order, and returned. Connector sides are presentation kept in the
+ // Scene's research material, so they are one labelled change after the relations land, then one composition save.
+ connectMany:async(sceneId,inputs)=>{
+  researchScene(sceneId);
+  const view=nativeWorkspace?.nativeView(),binding=view?.bindings[sceneId];
+  if(!view||!binding)throw new Error('Open the native Scene before connecting its cards.');
+  if(!inputs.length)return [];
+  const members=new Set(binding.member_refs);
+  inputs.forEach((input,index)=>{
+   const label=input.label?.trim()||`connection ${index+1}`;
+   if(!members.has(input.sourceEntityRef))throw new Error(`Import refused: the source of ${label} has no native occurrence in this Scene. Nothing was connected.`);
+   if(!members.has(input.targetEntityRef))throw new Error(`Import refused: the target of ${label} has no native occurrence in this Scene. Nothing was connected.`);
+   if(input.directionality&&!['directed','forward'].includes(input.directionality))throw new Error('Expression connections are directed. Choose a directed connection.');
+   connectionKind(input.relationKind);
+  });
+  const expression=view.document.expression_ref;
+  const refs=inputs.map(()=>`${expression}:relation:connection-${crypto.randomUUID()}`);
+  const changes=inputs.map((input,index)=>({change:'relation_bind',binding:{binding_ref:refs[index],native_owner:'oi',relation:{ref:`${refs[index]}:${connectionKind(input.relationKind)}`,revision:'1',availability:'available'},from_entity_ref:input.sourceEntityRef,to_entity_ref:input.targetEntityRef,provenance:[]}}));
+  await nativeWorkspace!.edit(changes);
+  const lines=inputs.flatMap((input,index)=>input.connector?[{ref:refs[index],record:input.connector}]:[]);
+  if(lines.length){
+   changed(()=>{const target=researchScene(sceneId);for(const {ref,record} of lines)applyConnectorRecord(target,ref,record);},true,connectionLinesLabel(lines.length));
+   await commitResearch();
+  }
+  return refs;
+ },
  connect:async(sceneId,input)=>{assertConnectionMembers(sceneId,input.sourceEntityRef,input.targetEntityRef);if(input.directionality&&!['directed','forward'].includes(input.directionality))throw new Error('Expression connections are directed. Choose a directed connection.');const id=`${nativeWorkspace!.nativeView()!.document.expression_ref}:relation:connection-${crypto.randomUUID()}`;await nativeWorkspace?.edit([{change:'relation_bind',binding:{binding_ref:id,native_owner:'oi',relation:{ref:`${id}:${connectionKind(input.relationKind)}`,revision:'1',availability:'available'},from_entity_ref:input.sourceEntityRef,to_entity_ref:input.targetEntityRef,provenance:[]}}]);},
  reconnect:async(sceneId,ref,input)=>{assertConnectionMembers(sceneId,input.sourceEntityRef,input.targetEntityRef);const binding=ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,from_entity_ref:input.sourceEntityRef,to_entity_ref:input.targetEntityRef}}]);},
  // Expression connections are directed: reversing swaps the exact endpoints;

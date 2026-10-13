@@ -45,6 +45,11 @@ export function researchMaterialLabel(action:{type:ResearchMaterialAction['type'
  return RESEARCH_MATERIAL_LABELS[action.type];
 }
 
+/** A connection's line records (kind, label, sides) are named as the lines they set. */
+export function connectionLinesLabel(count:number):string{
+ return count===1?'Connection line':'Connection lines';
+}
+
 /** What the Undo or Redo toast says about the edit it reversed. */
 export function historyToast(direction:HistoryDirection,label:string|null):string{
  if(!label)return direction==='undo'?'Nothing to undo.':'Nothing to redo.';
