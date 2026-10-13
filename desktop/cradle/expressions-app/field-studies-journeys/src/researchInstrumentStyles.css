@@ -2319,3 +2319,15 @@
 :where(.research-instrument) .timeline-minimap-edge--right {
   right: -4px;
 }
+
+/* lane-1 A1+A5+A6 — canvas navigation: alignment guides, zoom controls, zoom readout.
+ * Presentation only; hairline and panel tokens are the canvas's own. */
+:where(.research-instrument) .canvas-guides{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:3}
+:where(.research-instrument) .canvas-guides line{stroke:var(--ob-line);stroke-width:1;opacity:.7}
+:where(.research-instrument) .canvas-zoom-controls{position:absolute;right:calc(var(--oi-space-3,12px) + 160px + 8px);bottom:calc(var(--oi-space-4,16px) + 46px);z-index:4;display:flex;gap:4px}
+:where(.research-instrument) .canvas-zoom-controls button{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;padding:0;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);cursor:pointer}
+:where(.research-instrument) .canvas-zoom-controls button:disabled{opacity:.4;cursor:default}
+:where(.research-instrument) .canvas-zoom-controls button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(max-width:600px){:where(.research-instrument) .canvas-zoom-controls{right:calc(var(--oi-space-3,12px) + 118px + 8px)}}
+:where(.research-instrument) .canvas-zoom-readout-host{position:absolute;inset:0;pointer-events:none;z-index:6}
+:where(.research-instrument) .canvas-zoom-readout{position:absolute;left:12px;bottom:16px;padding:2px 8px;border-radius:4px;background:var(--panel);color:var(--ink);font:11px/1.4 system-ui,sans-serif;font-variant-numeric:tabular-nums}
