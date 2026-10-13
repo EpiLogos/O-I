@@ -240,6 +240,8 @@ export class LiveProducer {
   private config: LiveConfig;
   private stopped = false;
   private running?: Promise<void>;
+  /** Cuts the pause between passes short when the producer is stopped. */
+  private wakeSleep?: () => void;
   private repertoire: Repertoire = {basis: "none", material: []};
   private listeners = new Set<(state: LiveState) => void>();
   private passes = 0;
@@ -611,13 +613,29 @@ export class LiveProducer {
           backoff = failed ? Math.min(backoff * 2, MAX_BACKOFF_MS) : MIN_PASS_MS;
           this.set({backoffMs: failed ? backoff : undefined, ...(failed ? {} : {error: undefined})});
           const rest = backoff - (Date.now() - began);
-          if (rest > 0 && !this.stopped) await new Promise(resolve => setTimeout(resolve, rest));
+          if (rest > 0 && !this.stopped) await this.sleep(rest);
         }
       } catch { /* open refused: the state carries the reason */ }
       finally { this.running = undefined; if (this.stopped) this.set({status: "stopped"}); }
     })();
   }
-  stop(): void { this.stopped = true; }
+  /** Stop at a passage boundary. A passage in flight is never cut mid-request
+   * (the pass checks between passages, and `performWithRetry` completes), the
+   * pause between passes ends at once, and the returned promise settles when
+   * the loop has exited. The act keeps every passage performed: a successor
+   * producer resumes from it (cursorFromAct), so an interruption is resumable. */
+  stop(): Promise<void> {
+    this.stopped = true;
+    this.wakeSleep?.();
+    return this.running ?? Promise.resolve();
+  }
+  private sleep(ms: number): Promise<void> {
+    return new Promise<void>(resolve => {
+      const finish = () => { clearTimeout(timer); this.wakeSleep = undefined; resolve(); };
+      const timer = setTimeout(finish, ms);
+      this.wakeSleep = finish;
+    });
+  }
   get following(): boolean { return !!this.running && !this.stopped; }
 }
 

@@ -20,7 +20,7 @@ import type {ExpressionDocument} from "../../../expression/types";
 import type {RunEntry} from "../desk/deskStore";
 import type {RunPageHost} from "../desk/RunPage";
 import {readAgentCard} from "../../../agency/agentCardReading";
-import {followRunLive, selectRunExpression, useRunLive} from "../FactoryLive";
+import {followRunLive, selectRunExpression, startRunLive, stopRunLive, useRunLive} from "../FactoryLive";
 import {readAndComposeRunExpression} from "../run-expression";
 import {actSeek, type WorldAct} from "../../../expression/world";
 import {continueActInMode} from "../../../expression/crossModeAct";
@@ -47,7 +47,12 @@ export function RunLiveExpression({entry, runKey, host, children}: {entry: RunEn
   const live = useRunLive(runKey);
   const project = card.source.project;
 
-  // Open the Run's Expression, then hold the live follow while shown.
+  // The Run's live production is the Run's own (startRunLive / stopRunLive,
+  // driven by the Follow and Stop controls below). This view only subscribes:
+  // unmounting releases the subscription and never stops the work.
+  const liveSource = () => ({runKey, runRef: run.runRef, statePath: card.source.statePath, project, goal: run.destination ?? card.title, units: entry.inspection?.units});
+
+  // Open the Run's Expression, then subscribe to the Run's live state while shown.
   useEffect(() => {
     let alive = true;
     let release: (() => void) | undefined;
@@ -57,7 +62,7 @@ export function RunLiveExpression({entry, runKey, host, children}: {entry: RunEn
         await ensureExpression(kernel.transport, () => readAndComposeRunExpression(kernel.transport, card.source.statePath, run.runRef, expressionRef, undefined, undefined, readCard), "desktop:factory-live");
         if (!alive) return;
         setReady("ready");
-        release = followRunLive(kernel.transport, {runKey, runRef: run.runRef, statePath: card.source.statePath, project, goal: run.destination ?? card.title, units: entry.inspection?.units});
+        release = followRunLive(kernel.transport, liveSource());
       } catch (error) {
         if (alive) { setReady("refused"); setReason(error instanceof Error ? error.message : String(error)); }
       }
@@ -122,7 +127,7 @@ export function RunLiveExpression({entry, runKey, host, children}: {entry: RunEn
       {(ready === "opening" || (ready === "ready" && !staged)) && <p className="frun-note" role="status">Opening the Run's Expression…</p>}
       {ready === "refused" && <p className="frun-note" role="alert">The Run's Expression could not open: {reason}</p>}
       {object && <ObjectPanel object={object} entry={entry} runKey={runKey} host={host} performed={live?.performed ?? []} currentAct={live?.act?.act_ref} onClose={() => setSelection(undefined)}/>}
-      <LiveStrip entry={entry} live={live}/>
+      <LiveStrip entry={entry} live={live} onFollow={() => void startRunLive(kernel.transport, liveSource()).catch(() => undefined)} onStop={() => void stopRunLive(runKey)}/>
     </div>
     <ExpressionChoice live={live} onChoose={fileRef => void selectRunExpression(runKey, fileRef).catch(error => host.onMessage?.(`That Expression could not be selected: ${error instanceof Error ? error.message : String(error)}`))}/>
     <Timeline passages={live?.performed ?? []} act={live?.act} chain={live?.chain ?? []} onSeek={(actRef, position) => void seek(actRef, position)}/>
@@ -145,11 +150,15 @@ function ExpressionChoice({live, onChoose}: {live: ReturnType<typeof useRunLive>
   </label>;
 }
 
-function LiveStrip({entry, live}: {entry: RunEntry; live: ReturnType<typeof useRunLive>}) {
+/** The Run's own live control: Stop ends the production at its next passage
+ * boundary (its work stays recoverable in the act); Follow resumes it. */
+function LiveStrip({entry, live, onFollow, onStop}: {entry: RunEntry; live: ReturnType<typeof useRunLive>; onFollow: () => void; onStop: () => void}) {
   const unavailable = Object.entries(live?.sources ?? {}).filter(([, state]) => state === "unavailable").map(([name]) => name.replace(/^journal:.*$/, "a journal").replace(/^card:.*$/, "an Agent card"));
   const words = live?.repertoire?.basis === "none" ? "no repertoire material is available yet" : live?.repertoire?.expression ? `${live.repertoire.expression.title} (${live.repertoire.basis})` : "reading the repertoire";
   return <p className="flx-strip" data-live-repertoire={live?.repertoire?.basis ?? "reading"}>
     <span>{live?.status === "following" ? "● following" : live?.status ?? "opening"}</span>
+    {live?.status === "following" && <button type="button" className="flx-follow" onClick={onStop} title="Stop the Run's live production; its work stays recoverable">Stop following</button>}
+    {live?.status === "stopped" && <button type="button" className="flx-follow" onClick={onFollow}>Follow</button>}
     <span> · {entry.card.title}</span>
     <span> · {words}</span>
     {live?.error && <span role="alert"> · {live.error}</span>}
