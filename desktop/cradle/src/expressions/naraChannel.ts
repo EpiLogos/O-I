@@ -509,7 +509,7 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
       const changes = r.operation !== 'act_status' && r.operation !== 'current_read' && r.operation !== 'act_inspect' && r.operation !== 'epii_inspect' && r.operation !== 'coordinate' && r.operation !== 'read' && r.operation !== 'interrupt' && r.operation !== 'release_identity'
         && !(r.operation === 'voice' && (r.request.operation === 'close' || r.request.operation === 'read'))
         && !(r.operation === 'm3' && r.request.operation === 'read')
-        && !(r.operation === 'identity' && ['list', 'open'].includes(r.request.operation));
+        && !(r.operation === 'identity' && ['list', 'open', 'transit'].includes(r.request.operation)); // transit is a pure QL reading (nara_identity.rs Request::Transit writes nothing)
       if (changes && mutating) throw new Error('Another Nara operation is still pending.');
       if (changes) {mutating = true; held = true;}
       respond({ok: true, data: await execute(r, requireEpoch)});
