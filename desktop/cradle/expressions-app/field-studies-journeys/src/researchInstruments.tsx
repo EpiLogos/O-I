@@ -7,6 +7,8 @@ import {capturePlaceView,layersKey,layersRecordOf,placeViewNameProblem,restoreLa
 import {openTimelinePresentation,timelineRestoreNote,timelineStyleLoaded,timelineStyleOf,timelineViewNameProblem,timelineViewOf,timelineViewRestorePlan,type TimelinePresentation} from './timelineViews.js';
 import type {TimelinePresentationHandle} from '../../vendor/research-canvas/packages/canvas/src/timeline/TimelineLens';
 import {CONNECTOR_KINDS,connectorPresentation,connectorRecord,connectorWithSides,sideFromHandleId,type ConnectorKind,type ResearchConnector} from './canvasConnectors.js';
+import {frameHeadings,FRAME_TITLE_HIT_HEIGHT,FRAME_TITLE_MAX,type FrameHeading} from './canvasFrames.js';
+import {EMBED_CARD_SIZE,EMBED_GLYPH,canvasEmbedNodes,cardOverlayBox,embedCardLabel,embedHost,embedUrlRecord,isEmbedCardType,mediaFileName,mediaSourceUrl,type CentralPathRef} from './canvasEmbeds.js';
 import {createRoot,type Root} from 'react-dom/client';
 import {CanvasView,TimelineSurface,PsychogeographicMap,StreetViewSurface,loadBundledGeographyPack,createLiveServicePolicy,type LiveServicePolicy,type TimelineViewState} from '../../vendor/research-canvas/components';
 import {defaultPlaceView,placeRecordFromViewState,viewStateFromPlaceRecord} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/placeNavigation';
@@ -23,7 +25,9 @@ import {
 import {RelationFieldView} from './relationFieldView.js';
 import {PlaceFacetsPanel} from './placeFacetsPanel.js';
 import {OPEN_PLACE_FILTER,filteredPlacesRepository,subjectEntityRef,type PlaceFilterState} from './placeReading.js';
-import type {TechneReading} from '../../../src/techne/contract';
+import type {TechneReading,TechnePlaceFacet} from '../../../src/techne/contract';
+import {placeFocusFromSession} from '../../../src/techne/m0m5/place/register';
+import {openingPlaceSelection,timelineOpenPlan} from '../../../src/techne/m0m5/place/navigation';
 import {readSharedTimeWindow,writeSharedTimeWindow,SharedTimeWindowControls,type SharedTimeDraft} from './sharedTimeWindow.js';
 import {sharedTimelinePresentation} from './sharedTimeProjection.js';
 import {timeAxisProjection,relativeTimeAxisProjection} from '../../../src/techne/m0m5/timeline/timeAxis';
@@ -50,6 +54,36 @@ import {CANVAS_TOOL_CHOICES,CANVAS_TOOL_GLYPHS,CANVAS_TOOL_SPEC,PALETTE_KEYS,PAL
  * so nothing here changes for assistive tech or hover discovery — only the
  * always-visible label becomes a glyph. */
 function ToolIcon({name}:{name:string}){return <span className="research-tool-icon" aria-hidden="true" dangerouslySetInnerHTML={{__html:icon(name)}}/>;}
+/** lane-1 A9 — a frame's heading at its top edge. A titled frame shows its caption; an untitled frame, while the canvas is editable, offers only a hit strip so the owner can title it in place. Double-click edits; Enter or blur commits; Escape cancels; a blank title removes the heading. */
+function FrameHeadings({headings,editable,onTitle}:{headings:FrameHeading[];editable:boolean;onTitle:(id:string,title:string)=>void}){
+ const [editing,setEditing]=useState<string|null>(null);
+ const shown=headings.filter(heading=>heading.title||editable);
+ if(!shown.length)return null;
+ return <div className="research-frame-headings">{shown.map(heading=>{
+  if(editing===heading.id)return <input key={heading.id} className="research-frame-title-input" aria-label="Frame title" maxLength={FRAME_TITLE_MAX} autoFocus defaultValue={heading.title} style={{left:heading.left,top:heading.top}}
+   onBlur={event=>{const next=event.currentTarget.value;setEditing(null);if(next.trim()!==heading.title)onTitle(heading.id,next);}}
+   onKeyDown={event=>{if(event.key==='Enter')event.currentTarget.blur();if(event.key==='Escape'){event.currentTarget.value=heading.title;event.currentTarget.blur();}}}/>;
+  const className=`research-frame-heading${heading.hit?' research-frame-heading--hit':''}${editable?' research-frame-heading--editable':''}`;
+  return <div key={heading.id} className={className} data-frame={heading.id} style={heading.hit?{left:heading.left,top:heading.top,width:heading.width,height:FRAME_TITLE_HIT_HEIGHT}:{left:heading.left,top:heading.top}} onDoubleClick={editable?()=>setEditing(heading.id):undefined}>{heading.title}</div>;
+ })}</div>;
+}
+/** lane-1 A10 — an embed or media card drawn over its occurrence's own box. The overlay passes pointer events through, so selection and drag stay with the card beneath; only the link is clickable. A link card shows its title, host and an "Open in browser" link: the native frame policy does not embed pages, so the card never frames one. */
+type EmbedOverlay={id:string;kind:'embed'|'media';label:string;url?:string;media?:CentralPathRef;left:number;top:number;width:number;height:number};
+function EmbedCardOverlays({items}:{items:EmbedOverlay[]}){
+ if(!items.length)return null;
+ return <div className="research-embed-layer">{items.map(item=>{
+  const style={left:item.left,top:item.top,width:item.width,height:item.height};
+  if(item.kind==='embed'&&item.url)return <div key={item.id} className="research-embed-card" data-kind="embed" style={style}>
+   <span className="research-embed-title">{item.label}</span>
+   <a className="research-embed-link" href={item.url} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">{embedHost(item.url)} · Open in browser</a>
+  </div>;
+  if(item.kind==='media'&&item.media)return <div key={item.id} className="research-embed-card research-embed-card--media" data-kind="media" style={style}>
+   <img src={mediaSourceUrl(item.media)} alt={mediaFileName(item.media)} draggable={false}/>
+   <span className="research-embed-title">{item.label}</span>
+  </div>;
+  return null;
+ })}</div>;
+}
 /** A2 — the same 24×24 stroke grammar as ToolIcon, for the object glyphs drawn in canvasShapes.ts. */
 function GlyphIcon({glyph}:{glyph:string}){return <span className="research-tool-icon" aria-hidden="true" dangerouslySetInnerHTML={{__html:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${glyph}"/></svg>`}}/>;}
 /** A2 — the one canvas object picker: a single icon button that opens the five
@@ -556,7 +590,15 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   // A2 — a sticky, shape or text card renders as its own node type; the native
   // occurrence (position, size, name) is unchanged, only its presentation is.
   const objectCardOf=(id:string)=>{const local=canvas.occurrences.get(id);return local?material?.cards[local]:undefined;};
-  const previewNodes=withGesturePreviews(canvasObjectNodes(canvas.nodes,objectCardOf),id=>state.groupPreview?.get(id)??state.moveGesture?.previewValue(id),id=>state.resizeGesture?.previewValue(id));
+  const previewNodes=withGesturePreviews(canvasEmbedNodes(canvasObjectNodes(canvas.nodes,objectCardOf),objectCardOf),id=>state.groupPreview?.get(id)??state.moveGesture?.previewValue(id),id=>state.resizeGesture?.previewValue(id));
+  // lane-1 A9–A10 — each occurrence's on-stage box (gesture previews included), by its native ref: a frame's heading sits on its members' bounds, and a link or media card over its own box.
+  const boxByRef=new Map<string,Box>();
+  for(const node of previewNodes){const ref=canvas.occurrences.get(node.id);if(ref)boxByRef.set(ref,boxOfNode(node));}
+  const embedOverlays:EmbedOverlay[]=previewNodes.flatMap(node=>{
+   const ref=canvas.occurrences.get(node.id),card=ref?material?.cards[ref]:undefined,box=ref?boxByRef.get(ref):undefined;
+   if(!card||!box||!isEmbedCardType(card))return [];
+   return [{id:node.id,kind:card.type,label:embedCardLabel(card,node.title??''),url:card.url,media:card.media,...cardOverlayBox(box,state.canvas??{x:0,y:0,zoom:1})}];
+  });
   // lane-1 A3–A4 — the presentation connector for each native edge: its line
   // kind and midpoint label ride on `presentation`, and any bound card side
   // becomes the handle the edge attaches to. The relation itself is untouched.
@@ -658,6 +700,17 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    state.objectTool=choice;redraw();
    act({type:'create-card',kind:spec.kind,geometry:spec.geometry,title:spec.label,position:{x:(centreX-spec.size.width/2)/CANVAS_UNITS,y:-(centreY-spec.size.height/2)/CANVAS_UNITS}});
   };
+  // lane-1 A10 — a link card is made from an https address the owner pastes; it lands at the pane's centre, as an object does.
+  const linkPrompt=()=>{
+   if(!canvas.sceneId)return;
+   const pasted=window.prompt('Paste an https address for this link card');
+   if(pasted===null)return;
+   const url=embedUrlRecord(pasted);
+   if(!url){message('A link card needs an https address.');return;}
+   const pane=paneSize(),viewport=currentViewport();
+   const centreX=(pane.width/2-viewport.x)/viewport.zoom,centreY=(pane.height/2-viewport.y)/viewport.zoom;
+   act({type:'create-card',kind:'embed',url,title:embedHost(url),position:{x:(centreX-EMBED_CARD_SIZE.width/2)/CANVAS_UNITS,y:-(centreY-EMBED_CARD_SIZE.height/2)/CANVAS_UNITS}});
+  };
   const imageImport=()=>{const input=document.createElement('input');input.type='file';input.accept='image/png,image/jpeg,image/webp';input.onchange=async()=>{const file=input.files?.[0];if(!file)return;try{if(file.size>196608)throw new Error('Choose an image smaller than 192 KiB for this native document.');const dataUrl=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);reader.readAsDataURL(file);});act({type:'create-card',kind:'image',title:file.name.slice(0,160),dataUrl,position:{x:0,y:0}});}catch(error){message(String(error));}};input.click();};
   const annotations=(material?.strokes??[]).map(stroke=>({id:stroke.id,canvasId:canvas.key,annotationType:'stroke' as const,points:stroke.points,style:{color:stroke.color,width:stroke.width,opacity:stroke.opacity},bounds:{position:{x:Math.min(...stroke.points.map(p=>p.x)),y:Math.min(...stroke.points.map(p=>p.y))},size:{width:Math.max(1,Math.max(...stroke.points.map(p=>p.x))-Math.min(...stroke.points.map(p=>p.x))),height:Math.max(1,Math.max(...stroke.points.map(p=>p.y))-Math.min(...stroke.points.map(p=>p.y)))}},createdAt:stroke.createdAt,updatedAt:stroke.createdAt}));
   // The card follows the selection: selecting a node or connection shows it,
@@ -683,7 +736,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    state.multiSelect=new Set(current.node_ids);select(current.node_ids[0]??null);flyToNode('',camera);redraw();
   };
   const controls=<div className="research-tool-actions" aria-label="Canvas tools">
-   {editable&&<><button aria-label="Note" title="Note" onClick={()=>act({type:'create-card',kind:'note',position:{x:0,y:0}})}><ToolIcon name="text"/></button><button aria-label="Image" title="Image" onClick={imageImport}><ToolIcon name="upload"/></button>
+   {editable&&<><button aria-label="Note" title="Note" onClick={()=>act({type:'create-card',kind:'note',position:{x:0,y:0}})}><ToolIcon name="text"/></button><button aria-label="Image" title="Image" onClick={imageImport}><ToolIcon name="upload"/></button><button aria-label="Link card" title="Link card — paste an https address" onClick={linkPrompt}><GlyphIcon glyph={EMBED_GLYPH}/></button>
    <CanvasObjectPicker choice={state.objectTool} onPick={createObject}/>
    <button aria-label="Draw" title="Draw" aria-pressed={!!state.drawing} onClick={()=>{state.drawing=!state.drawing;if(state.drawing)state.erasing=false;redraw();}}><ToolIcon name="pen"/></button>
    <button aria-label="Erase" title="Erase — click a stroke to remove it" aria-pressed={!!state.erasing} onClick={()=>{state.erasing=!state.erasing;if(state.erasing)state.drawing=false;redraw();}}><ToolIcon name="eraser"/></button>
@@ -714,8 +767,8 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     <option value="">Views…</option>{Object.keys(namedViews).map(name=><optgroup key={name} label={name}><option value={`apply\u0000${name}`}>Apply</option><option value={`remove\u0000${name}`}>Remove</option></optgroup>)}</select>}
    </div>
    <div className="control"><span>Frames</span>{framesOrdered.length===0&&<p className="control-note">Select two or more nodes and use Frame selection.</p>}
-   {framesOrdered.length>0&&<select aria-label="Frames" value="" onChange={event=>{const [op,id]=event.target.value.split(':');if(op==='select'){const frame=frames[id];if(frame){state.multiSelect=new Set(frame.memberRefs.map(ref=>[...canvas.occurrences.entries()].find(([,v])=>v===ref)?.[0]).filter((v):v is string=>!!v));select([...state.multiSelect][0]??null);}}if(op==='front')act({type:'frame-order',id,direction:'front'},false);if(op==='back')act({type:'frame-order',id,direction:'back'},false);if(op==='remove')act({type:'frame-remove',id},false);event.target.value='';}}>
-    <option value="">Frames…</option>{framesOrdered.map(([id,frame])=><optgroup key={id} label={frame.label}><option value={`select:${id}`}>Select members</option><option value={`front:${id}`}>Bring to front</option><option value={`back:${id}`}>Send to back</option><option value={`remove:${id}`}>Remove frame</option></optgroup>)}</select>}
+   {framesOrdered.length>0&&<select aria-label="Frames" value="" onChange={event=>{const [op,id]=event.target.value.split(':');if(op==='select'){const frame=frames[id];if(frame){state.multiSelect=new Set(frame.memberRefs.map(ref=>[...canvas.occurrences.entries()].find(([,v])=>v===ref)?.[0]).filter((v):v is string=>!!v));select([...state.multiSelect][0]??null);}}if(op==='title'){const next=window.prompt('Frame title',frames[id]?.title??'');if(next!==null)act({type:'frame-title',id,title:next});}if(op==='front')act({type:'frame-order',id,direction:'front'},false);if(op==='back')act({type:'frame-order',id,direction:'back'},false);if(op==='remove')act({type:'frame-remove',id},false);event.target.value='';}}>
+    <option value="">Frames…</option>{framesOrdered.map(([id,frame])=><optgroup key={id} label={frame.label}><option value={`select:${id}`}>Select members</option><option value={`title:${id}`}>Title frame…</option><option value={`front:${id}`}>Bring to front</option><option value={`back:${id}`}>Send to back</option><option value={`remove:${id}`}>Remove frame</option></optgroup>)}</select>}
    </div></>}
   </div>;
   const edgeId=!current?state.selectedEdge:null;
@@ -834,6 +887,8 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     onRegisterCaptureViewport={capture=>{captureCanvas=capture;}} />
    {editable&&<CanvasFindOverlay key={`find:${canvas.key}`} canvasKey={canvas.key} targets={findTargets} tools={host.tools} onChoose={chooseFound}/>}
    <CanvasGuides segments={state.snapGuides?guideSegments(state.snapGuides.guides,state.snapGuides.boxes,state.canvas??{x:0,y:0,zoom:1}):[]}/>
+   <FrameHeadings headings={frameHeadings(frames,ref=>boxByRef.get(ref),state.canvas??{x:0,y:0,zoom:1})} editable={editable} onTitle={(id,title)=>act({type:'frame-title',id,title})}/>
+   <EmbedCardOverlays items={embedOverlays}/>
    <CanvasNavigationOverview key={canvas.key} nodes={previewNodes} edges={previewEdges} capture={()=>state.canvas??captureCanvas?.()??null} controller={state.canvasMinimap} onCamera={viewport=>{if(epoch===generation&&currentKey===canvas.key)flyToNode?.('',viewport);}}/>
    <div className="canvas-zoom-controls" role="group" aria-label="Canvas zoom">
     <button type="button" aria-label="Zoom out canvas" title="Zoom out (−)" onClick={()=>zoomView(currentViewport().zoom/ZOOM_STEP)}><ToolIcon name="minus"/></button>
@@ -1157,12 +1212,29 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
       if(timeCurrent())render(renderPlaces());
      },
     };
+    // Lane-4 T24: the shared session's spatial focus (or a focused selection naming a disclosed place) is the place selected and
+    // framed on open. A ref the reading does not disclose resolves to null: the lens opens unselected, with no error.
+    // A focus the session declares governs the opening even when it is stale (then the lens opens unselected); see openingPlaceSelection.
+    const sessionFocus=placeFocusFromSession(sharedTime?.session??null,nativeReading.spatial??[]);
+    // Lane-4 T23: "Open in Timeline" sets the shared window from the facet's own validity through the owner's existing write, then
+    // opens the Timeline lens on this same subject. Writing the spatial focus that makes Places reopen on this facet is an owner
+    // operation this renderer does not yet have (OPEN); the window and the subject are not changed by a facet with no validity.
+    const openInTimeline=async(facet:TechnePlaceFacet)=>{
+      const plan=timelineOpenPlan(facet);
+      if(plan.window){
+        if(!sharedTime||!timeCurrent())throw Error('The shared time window is no longer presented, so it was not changed.');
+        sharedTime=await writeSharedTimeWindow(request,nativeReading,'place',sharedTime,plan.window);
+      }
+      lens='m2';
+      await load('m2');
+    };
     const facets=<PlaceFacetsPanel reading={nativeReading} selectedRef={state.selectedPlace??null} filter={filter} onOpenSource={ref=>host.inspectSubject(ref)} sharedTime
       onFilterChange={next=>{state.placeFilter={...next,window:null};scheduleLayersSave();render(renderPlaces());}}
       editRequest={placeEditRequest} onError={message}/>;
     return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:placeRecordFromViewState(state.place)}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}{scene&&<button type="button" className="research-places-view-save" aria-label="Save view…" title="Save this place view: camera, layers, basemap and time window" onClick={savePlaceView}>Save view…</button>}{scene&&Object.keys(placeViewsNow).length>0&&<select className="research-places-view-select" aria-label="Saved place views" value="" onChange={event=>{const [op,name]=event.target.value.split('\u0000');if(op==='apply')void applyPlaceView(name);if(op==='remove')removePlaceView(name);event.target.value='';}}><option value="">Views…</option>{Object.keys(placeViewsNow).map(name=><optgroup key={name} label={name}><option value={`apply\u0000${name}`}>Go to</option><option value={`remove\u0000${name}`}>Remove</option></optgroup>)}</select>}{timeControls(()=>render(renderPlaces()))}</div>,host.tools)}
     <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly={!state.livePlaces!.allowed} policy={state.livePlaces!.policy} basemapStack={state.livePlaces!.stack} onBasemapStackChange={next=>{state.livePlaces!.stack=next;scheduleLayersSave();}} onLiveSourcesAllowedChange={allowed=>{const live=state.livePlaces!;if(allowed)live.policy.optIn('tile_refresh','show live basemap sources the owner allowed in Places');else live.policy.optOut('tile_refresh');live.allowed=allowed;render(renderPlaces());}} placeFacets={nativeReading.spatial} placeAuthoring={placeAuthoring} placeTime={placeTime} onRegisterPlaceViewRestore={restore=>{restoreViewOnMap=restore;}} layerFilter={filter} onLayerFilterChange={next=>{state.placeFilter={...next,window:null};scheduleLayersSave();render(renderPlaces());}} sourceAttributions={pack.manifest.sources.map(source=>`${source.name} (${source.license})`)}
-     initialViewState={state.place} initialSelectedGraphNodeId={state.selectedPlace}
+     initialViewState={state.place} initialSelectedGraphNodeId={openingPlaceSelection(sharedTime?.session??null,nativeReading.spatial??[],state.selectedPlace??null)} initialFocusGraphNodeId={sessionFocus}
+     onOpenInTimeline={facet=>{void openInTimeline(facet).catch(error=>message(error instanceof Error?error.message:String(error)));}} onOpenSource={ref=>host.inspectSubject(ref)}
      onViewStateChange={value=>{state.place=value;}} onSelectedGraphNodeIdChange={value=>{state.selectedPlace=value;render(renderPlaces());}}
      onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref&&node.place);if(node)host.inspectSubject(ref,{node});}}/>
      <ImageryPanel tools={host.placesHome??host.tools} toolbarContainer={host.placesHome??host.tools} images={images} offlineOnly imageTitle={image=>scene?.entities.find(entity=>entity.id===image.id)?.name??'Scene image'} resolveAsset={path=>{const value=assets.get(path);if(!value)throw new Error('Image is not bound to this native Scene');return value;}} onImport={importImagery}/>

@@ -3,12 +3,14 @@
 import {clone,entity,uid,type Scene} from './model.js';
 import {validateConnector,CONNECTOR_KEY_MAX,CONNECTOR_RECORD_MAX,type ResearchConnector} from './canvasConnectors.js';
 import {CANVAS_OBJECT_KINDS,CANVAS_TOOL_SPEC,STICKY_DEFAULT_PALETTE,isCanvasObjectKind,isPaletteKey,isShapeFill,isShapeGeometry,type CanvasObjectKind,type CanvasToolChoice,type PaletteKey,type ShapeFill,type ShapeGeometry} from './canvasShapes.js';
+import {EMBED_CARD_SIZE,MEDIA_CARD_SIZE,embedHost,embedUrlRecord,isCentralPathRef,mediaFileName,type CentralPathRef} from './canvasEmbeds.js';
+import {FRAME_TITLE_MAX,frameTitleRecord} from './canvasFrames.js';
 import {LIVE_BASEMAP_SOURCES,OFFLINE_GROUND_ID} from '../../vendor/research-canvas/packages/canvas/src/psychogeographic/basemapSources';
 import {TIMELINE_CATEGORIES} from '../../vendor/research-canvas/packages/canvas/src/timeline/categories';
 
-/** Card kinds the material admits: the image/note cards plus the lane-1 A2
- * canvas objects (sticky, shape, text). */
-export type ResearchCardKind='note'|'image'|CanvasObjectKind;
+/** Card kinds the material admits: the image/note cards, the lane-1 A2 canvas
+ * objects (sticky, shape, text) and the lane-1 A10 embed and media cards. */
+export type ResearchCardKind='note'|'image'|'embed'|'media'|CanvasObjectKind;
 export interface ResearchCard {
  type:ResearchCardKind;
  importedAt?:string; content?:string; caption?:string;
@@ -23,13 +25,17 @@ export interface ResearchCard {
  shape?:ShapeGeometry;
  /** lane-1 A2 — a shape's fill: 'none' (stroke only, the quiet default) or a palette key (`type:'shape'` only). */
  fill?:ShapeFill;
+ /** lane-1 A10 — an embed card's address (`type:'embed'` only, required there): the https URL as typed, never a fetched copy. */
+ url?:string;
+ /** lane-1 A10 — a media card's reference to a possessed Central file (`type:'media'` only, required there). Bytes are read through the material protocol, never stored here. */
+ media?:CentralPathRef;
 }
 export interface ResearchViewport {x:number;y:number;zoom:number;/** lane-4 T1: a tilted, rotated Places view (absent = untilted, north-up) */pitch?:number;bearing?:number}
 export interface ResearchStroke {id:string;points:{x:number;y:number;pressure?:number}[];color:string;width:number;opacity:number;createdAt:string}
 /** A presentation-only visual grouping over existing occurrence ids — never
  * a membership/semantic record. `z` orders overlapping frames for drawing
  * (bring-to-front / send-to-back are presentation state, nothing else). */
-export interface ResearchFrame {label:string;memberRefs:string[];z:number}
+export interface ResearchFrame {label:string;/** lane-1 A9: the owner's heading, drawn at the frame's top edge; absent = no heading on the stage. The label is never drawn. */title?:string;memberRefs:string[];z:number}
 /** A named saved view: camera + the presentation state a person would
  * expect a "view" to restore — which cards were selected and which frame
  * sits on top. Never a second copy of graph material. */
@@ -91,7 +97,7 @@ export interface ResearchMaterial {
 export type ResearchMaterialAction =
  | {type:'resize';id:string;width:number;height:number}
  | {type:'duplicate';id:string}
- | {type:'create-card';kind:ResearchCard['type'];position:{x:number;y:number};title?:string;dataUrl?:string;geometry?:ShapeGeometry}
+ | {type:'create-card';kind:ResearchCard['type'];position:{x:number;y:number};title?:string;dataUrl?:string;geometry?:ShapeGeometry;/** lane-1 A10: an embed card's https address. */url?:string;/** lane-1 A10: a media card's Central file. */media?:CentralPathRef}
  | {type:'card-content';id:string;content:string}
  | {type:'card-caption';id:string;caption:string}
  | {type:'card-style';id:string;patch:Partial<Pick<ResearchCard,'color'|'dotColour'|'bgColour'|'textColour'|'palette'|'fill'>>}
@@ -101,6 +107,8 @@ export type ResearchMaterialAction =
  | {type:'timeline-layout';id:string;value:ResearchMaterial['timeline'][string];expectedRevision:number|null}
  | {type:'frame-save';id:string;label:string;memberRefs:string[]}
  | {type:'frame-remove';id:string}
+ /** lane-1 A9: the owner's heading for a frame; an empty or blank title removes it (no trace left on the stage). */
+ | {type:'frame-title';id:string;title:string}
  | {type:'frame-order';id:string;direction:'front'|'back'}
  | {type:'view-save';name:string;viewport:ResearchViewport;selectedRefs:string[];frameOrder:string[]}
  | {type:'view-remove';name:string}
@@ -155,9 +163,11 @@ export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):
  // present is validated strictly like every other record collection.
  if(value.frames!==undefined)require(object(value.frames)&&Object.keys(value.frames).length<=64,'Research frame count exceeds its bound');
  if(value.namedViews!==undefined)require(object(value.namedViews)&&Object.keys(value.namedViews).length<=32,'Research named view count exceeds its bound');
- for(const [,frame] of Object.entries(value.frames??{}) as [string,{label?:unknown;memberRefs?:unknown;z?:unknown}][]){
-  require(object(frame),'Invalid frame');keys(frame,['label','memberRefs','z']);
+ for(const [,frame] of Object.entries(value.frames??{}) as [string,{label?:unknown;title?:unknown;memberRefs?:unknown;z?:unknown}][]){
+  require(object(frame),'Invalid frame');keys(frame,['label','title','memberRefs','z']);
   require(text(frame.label,160)&&!!frame.label,'Invalid frame label');
+  // lane-1 A9: a title is absent or a non-blank heading; a blank one is removed, never stored.
+  if(frame.title!==undefined)require(text(frame.title,FRAME_TITLE_MAX)&&!!(frame.title as string).trim(),'Invalid frame title');
   require(Array.isArray(frame.memberRefs)&&frame.memberRefs.length>=1&&frame.memberRefs.length<=64&&frame.memberRefs.every(ref=>typeof ref==='string'&&ids.has(ref)),'Invalid frame membership');
   require(Number.isInteger(frame.z),'Invalid frame order');
  }
@@ -177,8 +187,11 @@ export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):
  for(const [name,view] of Object.entries(value.timelineViews??{})){require(text(name,160)&&!!name.trim(),'Invalid timeline view name');validateTimelineView(view);}
  for(const [id,card] of Object.entries(value.cards) as [string,ResearchCard][]){
   require(ids.has(id)&&object(card),'Research card must address an existing occurrence');
-  keys(card,['type','importedAt','content','caption','color','dotColour','bgColour','textColour','size','palette','shape','fill']);
-  require(['note','image',...CANVAS_OBJECT_KINDS].includes(card.type),'Unknown research card kind');
+  keys(card,['type','importedAt','content','caption','color','dotColour','bgColour','textColour','size','palette','shape','fill','url','media']);
+  require(['note','image','embed','media',...CANVAS_OBJECT_KINDS].includes(card.type),'Unknown research card kind');
+  // lane-1 A10: an embed carries an https address and a media card a Central path reference; each is admitted only on its own kind.
+  require(card.type==='embed'?embedUrlRecord(card.url)===card.url:card.url===undefined,'Invalid embed link');
+  require(card.type==='media'?isCentralPathRef(card.media):card.media===undefined,'Invalid media reference');
   // lane-1 A2: a sticky carries a palette KEY (never a colour), a shape a
   // geometry and a fill key; each field is admitted only on its own kind.
   if(card.palette!==undefined)require(card.type==='sticky'&&isPaletteKey(card.palette),'Invalid sticky colour');
@@ -289,10 +302,13 @@ export function applyResearchMaterial(scene:Scene,action:ResearchMaterialAction)
  case 'create-card':{require(finite(action.position.x,-100,100)&&finite(action.position.y,-100,100),'Invalid card position');
   // lane-1 A2: a canvas object is named by its tool choice (a shape by its geometry); its label is the occurrence name.
   const choice=isCanvasObjectKind(action.kind)?canvasObjectChoice(action.kind,action.geometry):undefined;
-  const title=action.title??(choice?CANVAS_TOOL_SPEC[choice].label:action.kind==='image'?'Image':'Note');require(text(title,160)&&!!title,'Invalid card title');const e=entity(title,title.slice(0,120),{...action.position,z:0});e.id=uid('research');e.size={x:.6,y:.4};const c:ResearchCard={type:action.kind};if(action.kind==='note')c.content='[]';
+  // lane-1 A10: an embed is named by its host and a media card by its file, unless the owner named it.
+  const link=action.kind==='embed'?embedUrlRecord(action.url):null;require(action.kind!=='embed'||link!==null,'Invalid embed link');
+  require(action.kind!=='media'||isCentralPathRef(action.media),'Invalid media reference');
+  const title=action.title??(choice?CANVAS_TOOL_SPEC[choice].label:link!==null?embedHost(link):isCentralPathRef(action.media)?mediaFileName(action.media):action.kind==='image'?'Image':'Note');require(text(title,160)&&!!title,'Invalid card title');const e=entity(title,title.slice(0,120),{...action.position,z:0});e.id=uid('research');e.size={x:.6,y:.4};const c:ResearchCard={type:action.kind};if(action.kind==='note')c.content='[]';
   // A note and a canvas object (sticky, shape, text — lane-1 A2) are canvas presentation: on the stage they are a quiet disc, never
   // a text formation spelling the tool's name. The object's label is its card caption.
-  if(action.kind==='note'||choice){e.shape='disc';e.text='';for(const step of e.sequence.steps){step.shape='disc';step.text='';}}if(action.kind==='image'){require(typeof action.dataUrl==='string'&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(action.dataUrl),'Choose a PNG/JPEG/WebP image');require(action.dataUrl.length<=262144,'Image exceeds native document budget; select a smaller image');c.importedAt=new Date().toISOString();e.source={kind:'image',image:{dataUrl:action.dataUrl,mode:'luminance',threshold:.5,invert:false,scale:1,name:title}};}if(choice){const spec=CANVAS_TOOL_SPEC[choice];c.size={...spec.size};if(action.kind==='sticky')c.palette=STICKY_DEFAULT_PALETTE;if(action.kind==='shape'){c.shape=spec.geometry;c.fill='none';}}next.entities.push(e);research.cards[e.id]=c;break;}
+  if(action.kind==='note'||choice||action.kind==='embed'||action.kind==='media'){e.shape='disc';e.text='';for(const step of e.sequence.steps){step.shape='disc';step.text='';}}if(action.kind==='image'){require(typeof action.dataUrl==='string'&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(action.dataUrl),'Choose a PNG/JPEG/WebP image');require(action.dataUrl.length<=262144,'Image exceeds native document budget; select a smaller image');c.importedAt=new Date().toISOString();e.source={kind:'image',image:{dataUrl:action.dataUrl,mode:'luminance',threshold:.5,invert:false,scale:1,name:title}};}if(choice){const spec=CANVAS_TOOL_SPEC[choice];c.size={...spec.size};if(action.kind==='sticky')c.palette=STICKY_DEFAULT_PALETTE;if(action.kind==='shape'){c.shape=spec.geometry;c.fill='none';}}if(link!==null){c.url=link;c.size={...EMBED_CARD_SIZE};}if(action.kind==='media'&&isCentralPathRef(action.media)){c.media=clone(action.media);c.size={...MEDIA_CARD_SIZE};}next.entities.push(e);research.cards[e.id]=c;break;}
  case 'card-content':{const c=card(action.id);require(c.type==='note','Only note cards own rich note content');validateResearchContent(action.content);c.content=action.content;
   // The note's readable text is mirrored onto the occurrence, so the
   // Expression's own views (verso, tree, readers) show the note as text,
@@ -317,10 +333,18 @@ export function applyResearchMaterial(scene:Scene,action:ResearchMaterialAction)
   const members=[...new Set(action.memberRefs)];
   for(const ref of members)require(next.entities.some(e=>e.id===ref),'Frame member is missing');
   const existing=research.frames[action.id];
-  research.frames[action.id]={label:action.label,memberRefs:members,z:existing?.z??Object.keys(research.frames).length};
+  // Re-labelling or re-grouping keeps the owner's heading and order; only the membership and label change.
+  research.frames[action.id]={label:action.label,...(existing?.title!==undefined?{title:existing.title}:{}),memberRefs:members,z:existing?.z??Object.keys(research.frames).length};
   break;
  }
  case 'frame-remove':delete research.frames[action.id];break;
+ // lane-1 A9: the heading is the owner's text; a blank one removes the key, so a cleared frame leaves no trace.
+ case 'frame-title':{
+  const frame=research.frames[action.id];require(frame,'Frame is missing');
+  const title=frameTitleRecord(action.title);
+  if(title===null)delete frame.title;else frame.title=title;
+  break;
+ }
  case 'frame-order':{
   const frame=research.frames[action.id];require(frame,'Frame is missing');
   const others=Object.entries(research.frames).filter(([id])=>id!==action.id).map(([,f])=>f.z);

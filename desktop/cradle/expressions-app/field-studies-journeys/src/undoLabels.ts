@@ -1,4 +1,4 @@
-import type {ResearchMaterialAction} from './researchMaterial.js';
+import type {ResearchCardKind,ResearchMaterialAction} from './researchMaterial.js';
 /** Names for the one undo history. Every undoable edit says what it is in the
  * app's own voice ("Trim scene 3", "Reorder scenes", "Move object"), so Undo,
  * Redo and their toast can name the edit they reverse. Pure: no DOM, no store. */
@@ -26,6 +26,7 @@ const RESEARCH_MATERIAL_LABELS:Record<ResearchMaterialAction['type'],string>={
  'timeline-layout':'Arrange or style timeline card',
  'frame-save':'Save frame',
  'frame-remove':'Remove frame',
+ 'frame-title':'Title frame',
  'frame-order':'Reorder frames',
  'view-save':'Save view',
  'view-remove':'Remove view',
@@ -35,7 +36,12 @@ const RESEARCH_MATERIAL_LABELS:Record<ResearchMaterialAction['type'],string>={
  'timeline-view-save':'Save timeline view',
  'timeline-view-remove':'Remove timeline view',
 };
-export function researchMaterialLabel(action:Pick<ResearchMaterialAction,'type'>):string{return RESEARCH_MATERIAL_LABELS[action.type];}
+/** lane-1 A10: an embed or media card is named as what it adds; every other create-card keeps "Add card". */
+export function researchMaterialLabel(action:{type:ResearchMaterialAction['type'];kind?:ResearchCardKind}):string{
+ if(action.type==='create-card'&&action.kind==='embed')return 'Add link card';
+ if(action.type==='create-card'&&action.kind==='media')return 'Add media card';
+ return RESEARCH_MATERIAL_LABELS[action.type];
+}
 
 /** What the Undo or Redo toast says about the edit it reversed. */
 export function historyToast(direction:HistoryDirection,label:string|null):string{

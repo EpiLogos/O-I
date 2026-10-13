@@ -443,6 +443,39 @@ fn role_slot(value: &Value) -> Result<(), String> {
     Ok(())
 }
 
+/// lane-1 A10: an https address with a host, no userinfo, and no whitespace or
+/// control characters, stored trimmed and at most 2048 UTF-16 units (canvasEmbeds.ts).
+fn https_link(value: &str) -> bool {
+    let rest = match value.strip_prefix("https://") {
+        Some(rest) => rest,
+        None => return false,
+    };
+    let authority = &rest[..rest.find(['/', '?', '#']).unwrap_or(rest.len())];
+    value == value.trim()
+        && utf16_len(value) <= 2048
+        && !authority.is_empty()
+        && !authority.contains('@')
+        && !value.chars().any(|c| c.is_whitespace() || c.is_control())
+}
+
+/// lane-1 A10: a closed Central path reference (canvasEmbeds.ts isCentralPathRef).
+fn central_path_ref(value: &Value) -> bool {
+    let map = match value.as_object() {
+        Some(map) => map,
+        None => return false,
+    };
+    map.len() == 4
+        && ["schema", "ref", "root", "path"]
+            .iter()
+            .all(|k| map.contains_key(*k))
+        && value["schema"] == "central.path-ref/v1"
+        && ["ref", "root", "path"].iter().all(|k| {
+            value[*k]
+                .as_str()
+                .is_some_and(|s| !s.is_empty() && utf16_len(s) <= 1024)
+        })
+}
+
 fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> {
     let r = object(value, "Research material")?;
     if value["schema"] != "oi.research-scene/v1"
@@ -506,7 +539,10 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
         let c = object(card, "Research card")?;
         let kind = card["type"].as_str();
         if !ids.contains(id.as_str())
-            || !matches!(kind, Some("note" | "image" | "sticky" | "shape" | "text"))
+            || !matches!(
+                kind,
+                Some("note" | "image" | "sticky" | "shape" | "text" | "embed" | "media")
+            )
             || c.keys().any(|k| {
                 ![
                     "type",
@@ -521,6 +557,8 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
                     "palette",
                     "shape",
                     "fill",
+                    "url",
+                    "media",
                 ]
                 .contains(&k.as_str())
             })
@@ -564,6 +602,21 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
             }
         } else if c.contains_key("shape") || c.contains_key("fill") {
             return Err("Only shape cards carry a geometry or fill".into());
+        }
+        // lane-1 A10: an embed carries an https address and a media card a Central path reference; each is admitted only on its own kind.
+        if kind == Some("embed") {
+            if !c.get("url").and_then(Value::as_str).is_some_and(https_link) {
+                return Err("Invalid embed link".into());
+            }
+        } else if c.contains_key("url") {
+            return Err("Invalid embed link".into());
+        }
+        if kind == Some("media") {
+            if !c.get("media").is_some_and(central_path_ref) {
+                return Err("Invalid media reference".into());
+            }
+        } else if c.contains_key("media") {
+            return Err("Invalid media reference".into());
         }
         if let Some(v) = c.get("importedAt") {
             if card["type"] != "image" || !bounded(v, 64) {
@@ -698,7 +751,7 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
             let f = object(frame, "Research frame")?;
             if id.len() > 1024
                 || f.keys()
-                    .any(|k| !["label", "memberRefs", "z"].contains(&k.as_str()))
+                    .any(|k| !["label", "title", "memberRefs", "z"].contains(&k.as_str()))
             {
                 return Err("Invalid frame".into());
             }
@@ -707,6 +760,15 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
                 .is_some_and(|l| !l.trim().is_empty() && utf16_len(l) <= 160)
             {
                 return Err("Invalid frame label".into());
+            }
+            // lane-1 A9: a title is absent or a non-blank heading of at most 160 UTF-16 units (researchMaterial.ts).
+            if let Some(title) = f.get("title") {
+                if !title
+                    .as_str()
+                    .is_some_and(|t| !t.trim().is_empty() && utf16_len(t) <= 160)
+                {
+                    return Err("Invalid frame title".into());
+                }
             }
             if !refs(&f["memberRefs"], 1, true) {
                 return Err("Invalid frame membership".into());
@@ -1613,6 +1675,55 @@ mod tests {
             json!({"namedViews": {"v": {"viewport": {"x": 0, "y": 0, "zoom": 1, "roll": 1}, "selectedRefs": [], "frameOrder": []}}}),
             json!({"namedViews": {"v": {"viewport": {"x": 0, "y": 0, "zoom": 1}, "selectedRefs": [], "frameOrder": [], "extra": 1}}}),
             json!({"layers": {}}),
+        ] {
+            assert!(
+                validate_research(&with(refused.clone()), &ids).is_err(),
+                "{refused}"
+            );
+        }
+    }
+
+    #[test]
+    fn research_embed_media_cards_and_frame_titles_are_admitted_and_closed() {
+        use super::validate_research;
+        use serde_json::{json, Value};
+        use std::collections::BTreeSet;
+        let ids: BTreeSet<&str> = ["a", "b"].into_iter().collect();
+        let with = |extra: Value| {
+            let mut m = json!({"schema": "oi.research-scene/v1", "cards": {}, "strokes": [],
+                "views": {}, "timeline": {}});
+            for (k, v) in extra.as_object().unwrap() {
+                m[k] = v.clone();
+            }
+            m
+        };
+        let location = json!({"schema": "central.path-ref/v1", "ref": "r", "root": "Work", "path": "Work/a.png"});
+        // an https embed and a Central media reference, each on its own kind; a frame carries a heading
+        assert!(validate_research(&with(json!({
+            "cards": {
+                "a": {"type": "embed", "url": "https://example.org/page?x=1", "size": {"width": 320, "height": 200}},
+                "b": {"type": "media", "media": location.clone()}
+            },
+            "frames": {"f1": {"label": "Frame 1", "title": "Évora — the walls", "memberRefs": ["a", "b"], "z": 0}}
+        })), &ids).is_ok());
+        for refused in [
+            json!({"cards": {"a": {"type": "embed"}}}),
+            json!({"cards": {"a": {"type": "embed", "url": "http://example.org"}}}),
+            json!({"cards": {"a": {"type": "embed", "url": "https://"}}}),
+            json!({"cards": {"a": {"type": "embed", "url": "https://user@example.org"}}}),
+            json!({"cards": {"a": {"type": "embed", "url": " https://example.org"}}}),
+            json!({"cards": {"a": {"type": "embed", "url": "https://exa mple.org"}}}),
+            json!({"cards": {"a": {"type": "embed", "url": format!("https://{}", "x".repeat(2048))}}}),
+            json!({"cards": {"a": {"type": "note", "url": "https://example.org"}}}),
+            json!({"cards": {"a": {"type": "media"}}}),
+            json!({"cards": {"a": {"type": "media", "media": {"schema": "central.path-ref/v1", "ref": "r", "root": "Work"}}}}),
+            json!({"cards": {"a": {"type": "media", "media": {"schema": "central.path-ref/v1", "ref": "r", "root": "Work", "path": "x", "extra": 1}}}}),
+            json!({"cards": {"a": {"type": "media", "media": {"schema": "file", "ref": "r", "root": "Work", "path": "x"}}}}),
+            json!({"cards": {"a": {"type": "note", "media": location.clone()}}}),
+            json!({"cards": {"a": {"type": "embed", "url": "https://example.org", "media": location.clone()}}}),
+            json!({"frames": {"f1": {"label": "x", "title": "   ", "memberRefs": ["a"], "z": 0}}}),
+            json!({"frames": {"f1": {"label": "x", "title": "x".repeat(161), "memberRefs": ["a"], "z": 0}}}),
+            json!({"frames": {"f1": {"label": "x", "title": 3, "memberRefs": ["a"], "z": 0}}}),
         ] {
             assert!(
                 validate_research(&with(refused.clone()), &ids).is_err(),
