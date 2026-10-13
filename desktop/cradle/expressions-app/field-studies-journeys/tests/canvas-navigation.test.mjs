@@ -159,3 +159,58 @@ test('a horizontal guide spans the cards on its row', ()=>{
 test('a guide with no card on its line produces no segment', ()=>{
  assert.deepEqual(api.guideSegments([{axis:'x',at:999}],[{x:0,y:0,width:10,height:10}],{x:0,y:0,zoom:1}),[]);
 });
+
+test('the one shared zoom range is 0.05 to 2, and fit-all of 50 cards never clamps inside it', ()=>{
+ assert.deepEqual(api.CANVAS_ZOOM_LIMITS,{minZoom:0.05,maxZoom:2});
+ const cards=scatter();
+ for(const pane of WINDOWS){
+  assert.equal(api.fitViewport(cards,pane,api.CANVAS_ZOOM_LIMITS).clamped,false,`fit-all at ${pane.width}x${pane.height}`);
+ }
+});
+
+test('a fit that needs less than the floor still reports the clamp honestly', ()=>{
+ const tall=[{x:0,y:0,width:200,height:140},{x:0,y:200000,width:200,height:140}];
+ const fit=api.fitViewport(tall,{width:800,height:600},api.CANVAS_ZOOM_LIMITS);
+ assert.equal(fit.clamped,true);
+ assert.equal(fit.viewport.zoom,0.05);
+});
+
+test('camera durations are zero under reduced motion and untouched otherwise; absent matchMedia is no preference', ()=>{
+ const previous=globalThis.matchMedia;
+ try{
+  delete globalThis.matchMedia;
+  assert.equal(api.prefersReducedMotion(),false);
+  assert.equal(api.cameraDuration(500),500);
+  globalThis.matchMedia=(query)=>({matches:query==='(prefers-reduced-motion: reduce)'});
+  assert.equal(api.prefersReducedMotion(),true);
+  assert.equal(api.cameraDuration(500),0);
+  assert.equal(api.cameraDuration(350),0);
+  globalThis.matchMedia=()=>({matches:false});
+  assert.equal(api.cameraDuration(500),500);
+ }finally{
+  if(previous===undefined)delete globalThis.matchMedia;else globalThis.matchMedia=previous;
+ }
+});
+
+test('a guide spans a card whose edge, not its centre, lies on the line', ()=>{
+ const boxes=[{x:250,y:0,width:100,height:100},{x:150,y:400,width:100,height:100}];
+ const [segment]=api.guideSegments([{axis:'x',at:250}],boxes,{x:0,y:0,zoom:1});
+ assert.equal(segment.y1,0);
+ assert.equal(segment.y2,500);
+});
+
+test('a dragged card aligns its left edge to a neighbour left edge when that is the closest line', ()=>{
+ const others=[{ref:'neighbour',box:{x:250,y:0,width:100,height:100}}];
+ // Dragged centre 306 is 6 from the neighbour centre 300; its left edge 246 is 4 from the neighbour left edge 250.
+ const outcome=api.snapDraggedBox({x:246,y:500,width:120,height:100},others,1,'dragged');
+ assert.deepEqual(outcome.guides,[{axis:'x',at:250}]);
+ assert.equal(outcome.topLeft.x,250);
+});
+
+test('a dragged card aligns its right edge to a neighbour right edge', ()=>{
+ const others=[{ref:'neighbour',box:{x:250,y:0,width:100,height:100}}];
+ // Centre 292 is 8 from 300 (within 8); right edge 352 is 2 from 350 and wins.
+ const outcome=api.snapDraggedBox({x:232,y:500,width:120,height:100},others,1,'dragged');
+ assert.deepEqual(outcome.guides,[{axis:'x',at:350}]);
+ assert.equal(outcome.topLeft.x,230);
+});

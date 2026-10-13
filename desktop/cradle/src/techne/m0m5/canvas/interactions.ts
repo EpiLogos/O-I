@@ -201,41 +201,73 @@ export interface SnapResult {
   guides: Array<{ axis: "x" | "y"; at: number }>;
 }
 
+/** A node's size in the same unit space as its position. */
+export interface SnapBox {
+  width: number;
+  height: number;
+}
+
+/** Edge-aware snapping inputs. `dragged` is the size of the node being moved;
+ * `others` maps each other node's ref to its size. A ref with no entry snaps
+ * by centre only. */
+export interface SnapBoxes {
+  dragged: SnapBox;
+  others: Readonly<Record<string, SnapBox>>;
+}
+
 /** Snap a dragged position to the other nodes' centres (and optionally the
  * origin axes) within a threshold. The dragged node's own ref is excluded
- * from attraction. Guides name the line the position snapped to. */
+ * from attraction. Guides name the line the position snapped to.
+ *
+ * With `options.boxes`, the dragged box's left, centre and right (top, centre
+ * and bottom) also align to the other boxes' edges and centres. Without it,
+ * the centre-only result is unchanged. */
 export function snapPosition(
   position: Point,
   others: PositionedNode[],
   draggedRef: string,
   threshold: number,
-  options: { snapToOrigin?: boolean } = {},
+  options: { snapToOrigin?: boolean; boxes?: SnapBoxes } = {},
 ): SnapResult {
   let bestAxis: "x" | "y" | null = null;
   let bestAt = 0;
+  let bestAnchor = 0;
   let bestDistance = Number.POSITIVE_INFINITY;
-  const consider = (axis: "x" | "y", at: number) => {
-    const distance = Math.abs((axis === "x" ? position.x : position.y) - at);
+  // `anchor` is the dragged box's offset from its centre on this axis; the
+  // dragged anchor meets the target line `at` when the centre moves to at - anchor.
+  const consider = (axis: "x" | "y", at: number, anchor: number) => {
+    const distance = Math.abs((axis === "x" ? position.x : position.y) + anchor - at);
     if (distance <= threshold && distance < bestDistance) {
       bestAxis = axis;
       bestAt = at;
+      bestAnchor = anchor;
       bestDistance = distance;
     }
   };
+  const boxes = options.boxes;
+  // Centre first on every axis: on an exact tie the centre line wins, as it
+  // always did. Without boxes the order is the original per-node x then y.
+  const draggedAnchorsX = boxes ? [0, -boxes.dragged.width / 2, boxes.dragged.width / 2] : [0];
+  const draggedAnchorsY = boxes ? [0, -boxes.dragged.height / 2, boxes.dragged.height / 2] : [0];
   for (const other of others) {
     if (other.ref === draggedRef) continue;
-    consider("x", other.x);
-    consider("y", other.y);
+    const size = boxes && Object.prototype.hasOwnProperty.call(boxes.others, other.ref)
+      ? boxes.others[other.ref]
+      : undefined;
+    const targetsX = size ? [other.x, other.x - size.width / 2, other.x + size.width / 2] : [other.x];
+    const targetsY = size ? [other.y, other.y - size.height / 2, other.y + size.height / 2] : [other.y];
+    for (const anchor of draggedAnchorsX) for (const at of targetsX) consider("x", at, anchor);
+    for (const anchor of draggedAnchorsY) for (const at of targetsY) consider("y", at, anchor);
   }
   if (options.snapToOrigin) {
-    consider("x", 0);
-    consider("y", 0);
+    consider("x", 0, 0);
+    consider("y", 0, 0);
   }
   if (bestAxis === null) return { position, guides: [] };
   const snapped: Point =
     bestAxis === "x"
-      ? { x: tidy(bestAt), y: position.y }
-      : { x: position.x, y: tidy(bestAt) };
+      ? { x: tidy(bestAt - bestAnchor), y: position.y }
+      : { x: position.x, y: tidy(bestAt - bestAnchor) };
   return { position: snapped, guides: [{ axis: bestAxis, at: bestAt }] };
 }
 

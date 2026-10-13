@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react';
-import {zoomPercent} from './navigationGeometry';
+import {prefersReducedMotion,zoomPercent} from './navigationGeometry';
 
 /** How long the readout holds after the last zoom change before it fades. */
 export const ZOOM_READOUT_HOLD_MS=900;
@@ -18,6 +18,6 @@ export function ZoomReadout({zoom,token}:{zoom:number;token:number}){
   const timer=setTimeout(()=>setVisible(false),ZOOM_READOUT_HOLD_MS);
   return()=>clearTimeout(timer);
  },[token]);
- const reduced=typeof window!=='undefined'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const reduced=prefersReducedMotion();
  return <output className="canvas-zoom-readout" data-visible={visible?'true':'false'} aria-hidden="true" style={{opacity:visible?1:0,transition:reduced?'none':`opacity ${ZOOM_READOUT_FADE_MS}ms ease`}}>{zoomPercent(zoom)}</output>;
 }

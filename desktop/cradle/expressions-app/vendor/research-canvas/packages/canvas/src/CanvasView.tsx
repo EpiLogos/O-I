@@ -38,10 +38,15 @@ import { ImageNode } from "./nodes/ImageNode";
 import { NoteNode } from "./nodes/NoteNode";
 import { ResourceNode } from "./nodes/ResourceNode";
 import { defaultSourceHandleId, defaultTargetHandleId } from "./nodes/nodeHandles";
+import { CANVAS_ZOOM_LIMITS, cameraDuration } from "./canvas/navigationGeometry";
 
 export interface CanvasViewProps {
   /** Optional host HUD. Omitted keeps the standalone toolbar and controls. */
   toolbarContainer?: HTMLElement | null;
+  /** The host renders its own zoom controls (+/−/fit), so the vendored zoom
+   * buttons and xyflow Controls are not drawn. Play and the rest of the row
+   * remain. Omitted keeps the standalone behaviour. */
+  hostZoomControls?: boolean;
   /** Owner supplies no write capability; preserve navigation and selection only. */
   readOnly?: boolean;
   /** A source-owned relation can remain read-only inside an editable Scene. */
@@ -152,6 +157,7 @@ export function CanvasView(props: CanvasViewProps) {
 
 function CanvasViewInner({
   toolbarContainer = null,
+  hostZoomControls = false,
   readOnly = false,
   isEdgeReadOnly,
   canvasKey,
@@ -219,7 +225,7 @@ function CanvasViewInner({
       const newest = nodes[nodes.length - 1];
       if (newest) {
         setCenter(newest.position.x + 80, newest.position.y + 60, {
-          duration: 350,
+          duration: cameraDuration(350),
           zoom: Math.max(1, getZoom()),
         });
       }
@@ -241,14 +247,14 @@ function CanvasViewInner({
   const flyToNode = useCallback(
     (nodeId: string, viewport?: { x: number; y: number; zoom: number }) => {
       if (viewport) {
-        void setViewport(viewport, { duration: 500 });
+        void setViewport(viewport, { duration: cameraDuration(500) });
       } else {
         const node = nodes.find((n) => n.id === nodeId);
         if (node) {
           setCenter(
             node.position.x + (node.size?.width ?? 200) / 2,
             node.position.y + (node.size?.height ?? 140) / 2,
-            { duration: 500, zoom: Math.max(1, getZoom()) }
+            { duration: cameraDuration(500), zoom: Math.max(1, getZoom()) }
           );
         }
       }
@@ -259,7 +265,7 @@ function CanvasViewInner({
   const flyToEdge = useCallback(
     (edgeId: string, viewport?: { x: number; y: number; zoom: number }) => {
       if (viewport) {
-        void setViewport(viewport, { duration: 500 });
+        void setViewport(viewport, { duration: cameraDuration(500) });
         return;
       }
 
@@ -284,7 +290,7 @@ function CanvasViewInner({
       };
 
       setCenter((sourceCenter.x + targetCenter.x) / 2, (sourceCenter.y + targetCenter.y) / 2, {
-        duration: 500,
+        duration: cameraDuration(500),
         zoom: Math.max(1, getZoom()),
       });
     },
@@ -539,21 +545,29 @@ function CanvasViewInner({
     onSelectNode,
   ],);
 
-  const toolbar = (
+  const showPlaySequence = !!onPlaySequence && edges.some((e) => e.sequencing);
+  // A host with its own zoom controls keeps only the non-zoom buttons here.
+  const toolbar = hostZoomControls && !showPlaySequence ? null : (
       <div className={toolbarContainer ? "canvas-toolbar canvas-toolbar-hosted" : "canvas-toolbar"} data-testid="canvas-toolbar">
-        <button type="button" aria-label="Zoom in" onClick={() => zoomIn?.()}>+</button>
-        <button type="button" aria-label="Zoom out" onClick={() => zoomOut?.()}>-</button>
-        <button type="button" aria-label="Fit view" onClick={() => fitView({ padding: 0.15 })}>Fit</button>
-        {onPlaySequence && edges.some((e) => e.sequencing) && (
+        {!hostZoomControls && (
+          <>
+            <button type="button" aria-label="Zoom in" onClick={() => zoomIn?.()}>+</button>
+            <button type="button" aria-label="Zoom out" onClick={() => zoomOut?.()}>-</button>
+            <button type="button" aria-label="Fit view" onClick={() => fitView({ padding: 0.15 })}>Fit</button>
+          </>
+        )}
+        {showPlaySequence && (
           <button type="button" aria-label="Play sequence" onClick={() => onPlaySequence?.()}>Play</button>
         )}
       </div>
   );
   return (
     <div ref={containerRef} className="canvas-flow" data-testid="canvas-flow">
-      {toolbarContainer ? createPortal(toolbar, toolbarContainer) : toolbar}
+      {toolbar && (toolbarContainer ? createPortal(toolbar, toolbarContainer) : toolbar)}
       <ReactFlow
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+        minZoom={CANVAS_ZOOM_LIMITS.minZoom}
+        maxZoom={CANVAS_ZOOM_LIMITS.maxZoom}
         edgeTypes={edgeTypes}
         edges={flowEdges}
         fitView
@@ -693,7 +707,7 @@ function CanvasViewInner({
         panOnDrag={selectionOnDrag ? [1, 2] : true}
       >
         <Background color="rgba(244, 232, 208, 0.08)" gap={24} />
-        {!toolbarContainer && <Controls showInteractive={false} />}
+        {!toolbarContainer && !hostZoomControls && <Controls showInteractive={false} />}
         {sequenceGraph.nodeSet.size > 0 && (
           <SequenceMap
             graph={sequenceGraph}
