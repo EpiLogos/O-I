@@ -123,11 +123,11 @@ this table true. Tickets and resolutions live in `tickets/`.
 
 Factory close, after 4c274de4d: the kernel resolves a grant against
 `Control/user/native-action-authority.json` (root: `OI_CENTRAL_ROOT`, else the
-nearest ancestor of the Factory state holding the contract). Open: the token
-reaches the kernel only on the request; the native host should read it
-itself (`CENTRAL_NATIVE_TOKEN` / `~/.central/native-token`) so it never
-crosses the webview; and the contract grants no `factory.run.close` yet —
-the owner's grant.
+nearest ancestor of the Factory state holding the contract); the native
+host reads its own token (`CENTRAL_NATIVE_TOKEN`, else
+`~/.central/native-token`, 6ce7de75c) — it never crosses the webview. Open:
+the contract grants no `factory.run.close` yet — the owner's grant — and the
+desk names no principal until one exists.
 
 ## 8. Foreign lanes — never touch
 
