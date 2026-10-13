@@ -20,6 +20,10 @@ export interface FamilyFaceDeclaration {
   readonly invariant?: SemanticInvariant
   /** The modes the face presents in (absent = its family's home modes). */
   readonly modes?: readonly string[]
+  /** The holder(s) that hold this face (lock §4.8, §4.9; sdk/semantics.ts
+   * HOLDERS): a Studio section, the Clip detail or a Technē instrument. A
+   * waiting face with no owner yet may leave it absent. */
+  readonly heldBy?: readonly string[]
 }
 
 export interface FamilyManifest {

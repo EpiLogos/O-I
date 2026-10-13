@@ -520,6 +520,8 @@ export interface SemanticRegistryEntry {
   readonly invariant: SemanticInvariant | null
   /** The owner write paths the face's invariant names (generates, replaceReceipt, routesTo). */
   readonly writePaths: readonly string[]
+  /** The holders the face names (lock §4.8, §4.9): a Studio section, the Clip detail or a Technē instrument; empty = none declared yet. */
+  readonly heldBy: readonly string[]
   /** The Live-mode exemplar this semantic is checked against (lock §5.5). */
   readonly exemplar: string
 }
@@ -544,6 +546,7 @@ export function semanticRegistry(): SemanticRegistryEntry[] {
         formats,
         invariant,
         writePaths,
+        heldBy: [...(face.heldBy ?? [])],
         exemplar: LIVE_EXEMPLARS[face.liveSemantic],
       })
     }

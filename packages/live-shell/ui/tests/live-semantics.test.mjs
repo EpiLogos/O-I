@@ -109,6 +109,13 @@ test('the registry names the write path and the Live exemplar of each face', () 
   assert.equal(find('software-factory', 'agent-custody').liveSemantic, 'macro')
 })
 
+test('every registry entry names its holders (heldBy): an array of known holders (lock §4.8, §4.9)', () => {
+  for (const entry of sdkValidate.semanticRegistry()) {
+    assert.ok(Array.isArray(entry.heldBy), `${entry.family}/${entry.face} carries heldBy`)
+    for (const holder of entry.heldBy) assert.ok(semantics.isHolder(holder), `${entry.family}/${entry.face} names the known holder "${holder}"`)
+  }
+})
+
 test('the write-path grammar moved to semantics.ts and validate.ts re-exports it unchanged', () => {
   assert.equal(sdkValidate.isWritePath, semantics.isWritePath)
   assert.equal(semantics.isWritePath('kernel:receiving'), true)
