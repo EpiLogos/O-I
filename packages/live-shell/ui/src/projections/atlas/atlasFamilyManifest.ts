@@ -42,9 +42,10 @@ export const atlasFamilyManifest: InhabitantManifest = {
   ],
   inspectors: [],
   time: {
-    // The atlas binds no shared stratum yet: its deep-time clock (state/timeModel.ts) is its own. Binding it to the shell's
-    // occasion window is T-ATLAS-TIME (wayfinder tickets); until then nothing here claims to read one.
-    consumes: [],
+    // The deep-time clock is bound to the shell's occasion window (T-ATLAS-TIME, sharedClock.ts) while a shared session
+    // stands: a window set by any instrument moves the Earth's cursor, and the Earth's own moves are written to that window.
+    // With no session standing the clock keeps its own presentation. The atlas's non-linear scale is its own view of that time.
+    consumes: ['occasion'],
     contributes: ['aion-epochs'], // epoch spans, as the reading gives them
   },
   telemetry: null, // nothing observable is exposed yet — honestly null

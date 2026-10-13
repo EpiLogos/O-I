@@ -31,6 +31,7 @@ import "./knowledge.css";
 import "./filters.css";
 import {Glyph} from "../workspace/Glyph";
 import {resolveNativeGraphFocus, type NativeKnowledgeContext} from './nativeFocus';
+import {publishKnowledgeGraphHandle, type KnowledgeGraphSurface} from './knowledgeGraphHandle';
 
 type Camera={zoom:number;x:number;y:number};
 type Visit=GraphVisit;
@@ -234,6 +235,20 @@ export function KnowledgeSurface({binding,onOpen,nativeContext}: {binding:Surfac
     setDetailNode(undefined);
     setCamera(()=>visit.selected?unaccommodate(fitted,anchor,{x:0,y:0,...extent},extent):fitted);
   };
+  // The graph's own Device side (knowledgeGraphHandle.ts, lock §8.1): this surface publishes the state its panel and
+  // canvas already read, and the acts its controls already call. Nothing is copied: the handle reads the view's filters
+  // and camera, and writes through the same changeFilters/setCamera/fitView paths. Only the graph plane publishes.
+  const knowledgeToken=useRef<object>({});
+  const domains=useMemo(()=>visibleModel?{kinds:[...new Set(visibleModel.nodes.map(node=>node.kind))].sort(),relations:[...new Set(visibleModel.edges.map(edge=>edge.relation))].sort()}:null,[visibleModel]);
+  const fitRef=useRef<()=>void>(()=>{});fitRef.current=fitView;
+  const patchFilters=useCallback((patch:Partial<GraphFilterState>)=>setTravel(t=>({...t,visits:t.visits.map((v,i)=>i===t.index?{...v,filters:restoreGraphFilters({...restoreGraphFilters(v.filters),...patch})}:v)})),[]);
+  const setZoom=useCallback((zoom:number)=>setTravel(t=>({...t,visits:t.visits.map((v,i)=>i===t.index?{...v,camera:{...v.camera,zoom}}:v)})),[]);
+  useEffect(()=>{
+    if(!isGraph){publishKnowledgeGraphHandle(knowledgeToken.current,null);return;}
+    const surface:KnowledgeGraphSurface={filters,zoom:camera.zoom,domains,counts:filtered?.counts??null,selected:visit.selected??null,patchFilters,setZoom,fit:()=>fitRef.current()};
+    publishKnowledgeGraphHandle(knowledgeToken.current,surface);
+  },[isGraph,filters,camera.zoom,domains,filtered,visit.selected,patchFilters,setZoom]);
+  useEffect(()=>()=>publishKnowledgeGraphHandle(knowledgeToken.current,null),[]);
   return <section className="knowledge-surface" aria-label="Knowledge surface" aria-busy={busy}>
     <WikiFactsProvider transport={transport} project={binding.project} checkpoints={travel.facts??{}} onCheckpoint={saveFactsCheckpoint} onSaved={()=>setGeneration(n=>n+1)}>
     {travel.factsRecovery&&<details><summary>Show raw retained time/place recovery</summary><p role="alert">{travel.factsRecovery.message}</p><pre>{JSON.stringify(travel.factsRecovery.raw,null,2)}</pre></details>}

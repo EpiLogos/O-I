@@ -31,6 +31,7 @@ import {FlowFace} from './DocumentFlowFace'
 import {NaraConversationFace} from './ConversationNaraFace'
 import {QlInstrumentBody, qlInstrumentLight, qlInstrumentStanding} from './qlInstrumentDevice'
 import {AtlasFaceBody, isAtlasFaceId} from './atlasFaceBodies'
+import {KnowledgeFaceBody, isKnowledgeFaceId} from './knowledgeGraphFaceBodies'
 import {InhabitantCard, type CardLight} from './inhabitantCard.tsx'
 import type {IconName} from './sdk/Icon.tsx'
 import type {KindShapeName} from './sdk/marks.tsx'
@@ -184,6 +185,9 @@ function InhabitantFace({face, manifest, transport, day, flow, conversation, pro
     } else if (isAtlasFaceId(face.id)) {
       // [atlas family] the Earth's own controls on the 0 instrument's rack: each body drives the mounted atlas's own state.
       body = <AtlasFaceBody faceId={face.id}/>
+    } else if (isKnowledgeFaceId(face.id)) {
+      // [T-KNOWLEDGE-GRAPH-DEVICE] the wiki constellation's own controls: each body drives the open graph's own handle.
+      body = <KnowledgeFaceBody faceId={face.id}/>
     }
   }
 
@@ -228,6 +232,14 @@ function InhabitantFace({face, manifest, transport, day, flow, conversation, pro
 
 /** The human names of the declared faces — a type name is not a name. */
 const FACE_TITLES: Readonly<Record<string, string>> = Object.freeze({
+  // the 0 instrument (the atlas) and the knowledge graph
+  'globe-engine': 'Globe',
+  'graph-tools': 'Graph tools',
+  'mode-switch': 'Earth ⇄ Graph',
+  'time-control': 'Deep time',
+  'knowledge-scope': 'Scope',
+  'knowledge-filters': 'Filters',
+  'knowledge-display': 'Display',
   'context-world': 'Context · world',
   'agent-identity': 'Agent identity',
   'ground-hygiene': 'Ground hygiene',

@@ -42,6 +42,13 @@ import {
   allTime, DEPTH_RANGE, KIND_NAMES, playOrPause, scrubClock, setForce, stepDepth, TIE_BASE_IDS, toggleCumulative, toggleKind,
   toggleOccurrences, toggleSky, toggleTie, setWholeField,
 } from '../inhabitants/atlasFaceActions.ts'
+// [T-KNOWLEDGE-GRAPH-DEVICE] the knowledge graph's writers (the block at the end of this file) drive the open surface's handle.
+import {knowledgeGraphSurface} from '../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle.ts'
+import type {KnowledgeGraphSurface} from '../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle.ts'
+import {
+  DEPTH_RANGE as KNOWLEDGE_DEPTH_RANGE, KNOWLEDGE_CONTEXTS, KNOWLEDGE_DIRECTIONS, KNOWLEDGE_KINDS, KNOWLEDGE_LABELS,
+  KNOWLEDGE_RELATIONS, KNOWLEDGE_SCOPES, TEXT_LIMIT, ZOOM_RANGE, setFilters, setZoom as setKnowledgeZoom,
+} from '../inhabitants/knowledgeGraphFaceActions.ts'
 
 /** The rows the bridge's setters dispatch through — resolved from the kit
  * registries by (family, deviceInstance, key), so the dispatch always
@@ -118,6 +125,7 @@ export function useShellSetterBridge(
       onReceipt: setReceipt,
     })
     registerAtlasShellSetters()
+    registerKnowledgeShellSetters()
   }, [])
   return {receipt}
 }
@@ -286,25 +294,31 @@ export function registerAtlasShellSetters(): void {
     return done(value ? 'The globe shows the whole field.' : `The globe shows ${handle.ctl.globeScope.scope.label}.`)
   })
 
-  // time-control: the atlas's one deep-time clock.
+  // time-control: the atlas's one deep-time clock, bound to the shell's shared time window (T-ATLAS-TIME): a scrub writes
+  // the window once, and a refusal by the window is named here rather than reported as done.
   atlasWriter('shell.setAtlasCursor', (value, handle) => {
     const clock = handle.time
     const bad = within(value, clock.fromU, clock.toU, 'The cursor')
     if (bad) return refuse(bad)
-    scrubClock(handle.ctl, clock, value as number)
+    const refusal = scrubClock(handle.ctl, clock, value as number)
+    if (refusal) return refuse(refusal)
     return done(`The cursor stands at ${formatYear(handle.model.scale.fromU(clock.cursorU))}.`)
   })
 
   atlasWriter('shell.setAtlasAllTime', (value, handle) => {
     if (value !== true) return refuse('all time is the clock’s resting state and is left by scrubbing the cursor, so false is not written directly')
-    allTime(handle.ctl, handle.time)
+    const refusal = allTime(handle.ctl, handle.time)
+    if (refusal) return refuse(refusal)
     return done('The clock stands at all time.')
   })
 
   atlasWriter('shell.setAtlasPlay', (value, handle) => {
     const bad = booleanValue(value, 'Play')
     if (bad) return refuse(bad)
-    if (handle.time.playing !== value) playOrPause(handle.ctl, handle.time)
+    if (handle.time.playing !== value) {
+      const refusal = playOrPause(handle.ctl, handle.time)
+      if (refusal) return refuse(refusal)
+    }
     return done(value ? 'The clock plays.' : 'The clock is paused.')
   })
 
@@ -313,5 +327,176 @@ export function registerAtlasShellSetters(): void {
     if (bad) return refuse(bad)
     if (handle.time.cumulative !== value) toggleCumulative(handle.time)
     return done(`The trail is ${value ? 'cumulative' : 'single'}.`)
+  })
+}
+
+// ── the knowledge graph's parameters: the open surface's own handle (T-KNOWLEDGE-GRAPH-DEVICE; lock §8.1) ─────────────────
+//
+// Each writer is registered under the shell.setKnowledge* path its row names (agentNativeP0.ts). It reads the open graph's
+// handle at dispatch time, validates its value against the domain the row declares and the reading the graph holds, and
+// then calls the SAME act the face body calls (knowledgeGraphFaceActions.ts), which the surface implements over its own
+// filter state and camera. A value outside its domain, a malformed value, a reading the graph has not loaded and a graph
+// that is not open are each refused by name. Nothing is clamped, held or silently dropped.
+
+const KNOWLEDGE_UNOPENED = 'no knowledge graph is open in this session, so there is no graph to drive; the value is refused, not held'
+
+type KnowledgeOutcome = {readonly note: string} | {readonly refusal: string}
+const kdone = (note: string): KnowledgeOutcome => ({note})
+const krefuse = (refusal: string): KnowledgeOutcome => ({refusal})
+
+/** A list of choices as a reason names them: "a, b or c". */
+function orList(choices: readonly string[]): string {
+  return choices.length <= 1 ? choices.join('') : `${choices.slice(0, -1).join(', ')} or ${choices[choices.length - 1]}`
+}
+
+/** A number on a closed domain (whole, when asked), or the refusal that names the domain. */
+function knowledgeNumber(value: unknown, min: number, max: number, what: string, whole = false): string | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return `${what} takes a number, and ${String(value)} is not one`
+  if (value < min || value > max) return `${what} takes a number from ${min} to ${max}, and ${value} is outside it; the value is refused rather than clamped`
+  if (whole && !Number.isInteger(value)) return `${what} takes a whole number, and ${value} is not one`
+  return null
+}
+
+/** One of the declared choices, or the refusal that names them. */
+function knowledgeChoice(value: unknown, choices: readonly string[], what: string): string | null {
+  return typeof value === 'string' && choices.includes(value) ? null : `${what} takes ${orList(choices)}, and ${String(value)} is not one`
+}
+
+function knowledgeSwitch(value: unknown, what: string): string | null {
+  return typeof value === 'boolean' ? null : `${what} takes true or false, and ${String(value)} is neither`
+}
+
+function knowledgeText(value: unknown, what: string): string | null {
+  if (typeof value !== 'string') return `${what} takes text, and ${String(value)} is not text`
+  if (value.length > TEXT_LIMIT) return `${what} keeps at most ${TEXT_LIMIT} characters, and this has ${value.length}`
+  return null
+}
+
+/** A set of named choices: a list with no repeats, every name one of the declared choices, and every name held by the open
+ * reading (null while the reading has not loaded: nothing can be checked against it, so the set is refused). */
+function knowledgeSet(value: unknown, declared: readonly string[], held: readonly string[] | null, what: string, noun: string): {readonly set: string[]} | string {
+  if (!Array.isArray(value)) return `${what} takes a list of ${orList(declared)}`
+  for (const item of value) {
+    if (typeof item !== 'string' || !declared.includes(item)) return `${what} names ${String(item)}, which is not one of ${declared.join(', ')}`
+  }
+  if (new Set(value).size !== value.length) return `${what} names a choice twice`
+  if (held === null) return `the open graph has not loaded its reading, so ${what} has nothing to check against; the value is refused, not held`
+  for (const item of value as string[]) {
+    if (!held.includes(item)) return `${what} names ${item}, and the open graph holds no ${noun} ${item}`
+  }
+  return {set: [...(value as string[])]}
+}
+
+/** Register one knowledge writer under its path: refused by name while no graph is open, otherwise the act's own outcome. */
+function knowledgeWriter(path: string, act: (value: unknown, surface: KnowledgeGraphSurface) => KnowledgeOutcome): void {
+  registerShellSetter(path, async value => {
+    const surface = knowledgeGraphSurface()
+    if (!surface) {
+      const refused: DispatchReceipt = {kind: 'refused', channel: 'shell', writePath: path, reason: `${path} refuses — ${KNOWLEDGE_UNOPENED}.`}
+      return refused
+    }
+    const outcome = act(value, surface)
+    const receipt: DispatchReceipt = 'refusal' in outcome
+      ? {kind: 'refused', channel: 'shell', writePath: path, reason: `${path} refuses — ${outcome.refusal}.`}
+      : {kind: 'fired', channel: 'shell', writePath: path, note: outcome.note}
+    return receipt
+  })
+}
+
+/** Every shell.setKnowledge* path the knowledge-graph rows name. The bridge registers exactly these. */
+export const KNOWLEDGE_SHELL_SETTERS: readonly string[] = [
+  'shell.setKnowledgeScope', 'shell.setKnowledgeDepth', 'shell.setKnowledgeDirection', 'shell.setKnowledgeShared',
+  'shell.setKnowledgeGhosts', 'shell.setKnowledgeText', 'shell.setKnowledgeKinds', 'shell.setKnowledgeRelations',
+  'shell.setKnowledgeIsolated', 'shell.setKnowledgeContext', 'shell.setKnowledgeLabels', 'shell.setKnowledgeArrows',
+  'shell.setKnowledgeZoom',
+]
+
+/** Register the knowledge graph's writers. Idempotent: a registration replaces by path. The shell's transport registers them
+ * on mount (useShellSetterBridge); the tests register them directly. */
+export function registerKnowledgeShellSetters(): void {
+  // knowledge-scope: scope, depth, direction, the shared field, the unresolved markers.
+  knowledgeWriter('shell.setKnowledgeScope', (value, surface) => {
+    const bad = knowledgeChoice(value, KNOWLEDGE_SCOPES, 'Scope')
+    if (bad) return krefuse(bad)
+    setFilters(surface, {scope: value as 'field' | 'local'})
+    return kdone(`Scope: ${value}.`)
+  })
+  knowledgeWriter('shell.setKnowledgeDepth', (value, surface) => {
+    const bad = knowledgeNumber(value, KNOWLEDGE_DEPTH_RANGE.min, KNOWLEDGE_DEPTH_RANGE.max, 'Depth', true)
+    if (bad) return krefuse(bad)
+    // The depth input is disabled outside a local view (GraphFilters.tsx): the writer refuses the same, by name.
+    if (surface.filters.scope !== 'local') return krefuse('Depth applies in a local view; the scope is the available field, so set the scope to the selected subject first, as the depth input does')
+    setFilters(surface, {depth: value as number})
+    return kdone(`Depth: ${value} ${value === 1 ? 'step' : 'steps'}.`)
+  })
+  knowledgeWriter('shell.setKnowledgeDirection', (value, surface) => {
+    const bad = knowledgeChoice(value, KNOWLEDGE_DIRECTIONS, 'Relation direction')
+    if (bad) return krefuse(bad)
+    setFilters(surface, {direction: value as 'both' | 'outgoing' | 'incoming'})
+    return kdone(`Relations followed: ${value}.`)
+  })
+  knowledgeWriter('shell.setKnowledgeShared', (value, surface) => {
+    const bad = knowledgeSwitch(value, 'Shared field')
+    if (bad) return krefuse(bad)
+    setFilters(surface, {shared: value as boolean})
+    return kdone(`Shared field: ${value ? 'included' : 'not included'}.`)
+  })
+  knowledgeWriter('shell.setKnowledgeGhosts', (value, surface) => {
+    const bad = knowledgeSwitch(value, 'Unresolved link markers')
+    if (bad) return krefuse(bad)
+    setFilters(surface, {unresolved: value as boolean})
+    return kdone(`Unresolved link markers: ${value ? 'shown' : 'hidden'}.`)
+  })
+
+  // knowledge-filters: find, kinds, relation types, the connected-only switch, the constellation context.
+  knowledgeWriter('shell.setKnowledgeText', (value, surface) => {
+    const bad = knowledgeText(value, 'Find')
+    if (bad) return krefuse(bad)
+    setFilters(surface, {text: value as string})
+    return kdone(value ? `Find: ${value}.` : 'Find cleared.')
+  })
+  knowledgeWriter('shell.setKnowledgeKinds', (value, surface) => {
+    const chosen = knowledgeSet(value, KNOWLEDGE_KINDS, surface.domains?.kinds ?? null, 'Subject kinds', 'subject of kind')
+    if (typeof chosen === 'string') return krefuse(chosen)
+    setFilters(surface, {kinds: chosen.set})
+    return kdone(`Subject kinds: ${chosen.set.join(', ') || 'all'}.`)
+  })
+  knowledgeWriter('shell.setKnowledgeRelations', (value, surface) => {
+    const chosen = knowledgeSet(value, KNOWLEDGE_RELATIONS, surface.domains?.relations ?? null, 'Relation types', 'relation')
+    if (typeof chosen === 'string') return krefuse(chosen)
+    setFilters(surface, {relations: chosen.set})
+    return kdone(`Relation types: ${chosen.set.join(', ') || 'all'}.`)
+  })
+  knowledgeWriter('shell.setKnowledgeIsolated', (value, surface) => {
+    const bad = knowledgeSwitch(value, 'Subjects with no disclosed relations')
+    if (bad) return krefuse(bad)
+    setFilters(surface, {isolated: value as boolean})
+    return kdone(`Subjects with no disclosed relations: ${value ? 'included' : 'left out'}.`)
+  })
+  knowledgeWriter('shell.setKnowledgeContext', (value, surface) => {
+    const bad = knowledgeChoice(value, KNOWLEDGE_CONTEXTS, 'Constellation context')
+    if (bad) return krefuse(bad)
+    setFilters(surface, {context: value as 'structure' | 'matches'})
+    return kdone(`Constellation context: ${value}.`)
+  })
+
+  // knowledge-display: labels, relation arrows, zoom.
+  knowledgeWriter('shell.setKnowledgeLabels', (value, surface) => {
+    const bad = knowledgeChoice(value, KNOWLEDGE_LABELS, 'Labels')
+    if (bad) return krefuse(bad)
+    setFilters(surface, {labels: value as 'automatic' | 'all' | 'focus'})
+    return kdone(`Labels: ${value}.`)
+  })
+  knowledgeWriter('shell.setKnowledgeArrows', (value, surface) => {
+    const bad = knowledgeSwitch(value, 'Relation arrows')
+    if (bad) return krefuse(bad)
+    setFilters(surface, {arrows: value as boolean})
+    return kdone(`Relation arrows: ${value ? 'shown' : 'hidden'}.`)
+  })
+  knowledgeWriter('shell.setKnowledgeZoom', (value, surface) => {
+    const bad = knowledgeNumber(value, ZOOM_RANGE.min, ZOOM_RANGE.max, 'Zoom')
+    if (bad) return krefuse(bad)
+    setKnowledgeZoom(surface, value as number)
+    return kdone(`Zoom: ${Math.round((value as number) * 100)}%.`)
   })
 }

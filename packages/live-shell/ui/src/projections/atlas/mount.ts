@@ -26,6 +26,7 @@ import { rgbToHex, type RGBPalette } from './src/data/palette';
 import { GlobeEngine } from './src/globe/engine';
 import { prefersReducedMotion } from './src/ui/dom';
 import { TimeModel } from './src/state/timeModel';
+import type { TimeScale } from './src/data/time';
 import { historyExtent } from './src/aion/model';
 import { loadProvider, type CorpusBundle } from './provider/corpusProvider';
 import { setSkyProvider, type SkyProvider } from './provider/skyProvider';
@@ -63,6 +64,9 @@ export interface AtlasMountOptions {
   /** the sky slot; set before mount (see provider/skyProvider.ts — the shell's
    * QL kerykeion binding arrives there, no ephemeris invented) */
   sky?: SkyProvider;
+  /** T-ATLAS-TIME: binds the clock to the shell's shared time window. Called once the controller has booted, so the boot
+   * itself writes nothing to the window; the returned binding is released when the atlas is destroyed. */
+  clock?: (time: TimeModel, scale: TimeScale) => {dispose(): void};
 }
 
 export interface AtlasHandle {
@@ -117,6 +121,8 @@ export async function mountAtlas(options: AtlasMountOptions): Promise<AtlasHandl
     ctl = new Controller(model, engine, time, app, history, corpus, redbook ?? undefined);
     await engine.ready;
     ctl.boot();
+    // T-ATLAS-TIME: the clock binds to the shared window only after the boot, so the boot writes nothing to it.
+    const binding = options.clock ? options.clock(time, model.scale) : null;
     requestAnimationFrame(() => loading?.classList.add('done'));
     const handle: AtlasHandle = {
       engine,
@@ -126,6 +132,7 @@ export async function mountAtlas(options: AtlasMountOptions): Promise<AtlasHandl
         return ctl!;
       },
       destroy() {
+        binding?.dispose();
         // The found app had no unmount (a page, not a pane); the pane boundary
         // needs one. The engine's renderer and the controller's document-level
         // listeners are the two owners of teardown; full listener retirement is

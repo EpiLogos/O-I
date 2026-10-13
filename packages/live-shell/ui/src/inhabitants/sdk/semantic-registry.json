@@ -373,6 +373,48 @@
     "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/devices/operator-voice.md"
   },
   {
+    "family": "knowledge-graph",
+    "face": "knowledge-display",
+    "kind": "parameter",
+    "liveSemantic": "detail-device",
+    "modes": [],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "heldBy": [
+      "knowledge-graph"
+    ],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/ui/UI-EVIDENCE.md"
+  },
+  {
+    "family": "knowledge-graph",
+    "face": "knowledge-filters",
+    "kind": "parameter",
+    "liveSemantic": "detail-device",
+    "modes": [],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "heldBy": [
+      "knowledge-graph"
+    ],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/ui/UI-EVIDENCE.md"
+  },
+  {
+    "family": "knowledge-graph",
+    "face": "knowledge-scope",
+    "kind": "parameter",
+    "liveSemantic": "detail-device",
+    "modes": [],
+    "formats": {},
+    "invariant": null,
+    "writePaths": [],
+    "heldBy": [
+      "knowledge-graph"
+    ],
+    "exemplar": "Work/reverse-engineering/ableton-live-12.0.25/ui/UI-EVIDENCE.md"
+  },
+  {
     "family": "quaternal-logic",
     "face": "chakra",
     "kind": "parameter",
