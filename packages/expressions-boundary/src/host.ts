@@ -1,5 +1,5 @@
 import {
-  boundedText, CHANNEL_VERSION, expressionRef, FRAME_EXPRESSION_OPERATIONS,
+  boundedText, CHANNEL_VERSION, expressionRef, FRAME_EXPRESSION_OPERATIONS, readFrameActionRequest,
   isDeepInstrument, isHostedAppMode, isStudioSection, NATIVE_CHANNEL, object, OPEN_STUDIO_COMMAND, positiveInteger, readHostedState, readOpenStudioResult,
   type ChannelContext, type ExpressionsOwners, type HostedAppMode, type HostedAppState,
   type HostedTechneLens, type HostTarget, type StudioSection,
@@ -198,7 +198,10 @@ export class ExpressionsHost {
     if (kind === 'host-request') {
       if (!this.ready || !this.presented() || !boundedText(data.request, 128)) return;
       if (data.request === 'summon' && object(data.detail) && data.detail.kind === 'instrument' && isDeepInstrument(data.detail.lens)) {
-        this.selectInstrument(data.detail.lens);
+        // The object ref the summon names rides with its lens (lane-5 seam B). A malformed ref is refused, never guessed.
+        const ref = data.detail.ref;
+        if (ref !== undefined && !boundedText(ref, 512)) return;
+        this.selectInstrument(data.detail.lens, typeof ref === 'string' ? ref : undefined);
       } else this.options.onHostRequest?.(data);
       return;
     }
@@ -239,6 +242,8 @@ export class ExpressionsHost {
       let request = data.request;
       if (kind === 'kernel-expression') {
         if (!object(request) || typeof request.operation !== 'string' || !FRAME_EXPRESSION_OPERATIONS.has(request.operation)) throw Error('Unsupported kernel-expression operation');
+        // A Return reaches the owner only as the exact frame action; whether the reading still offers it is the owner's decision.
+        if (request.operation === 'invoke_action' && !readFrameActionRequest(request)) throw Error('Malformed invoke_action request: a disclosed route, its reading request and an actor are required');
       } else if (kind === 'central-read') request = {path: data.path};
       else if (kind === 'central-subject-text' || kind === 'central-subject-bytes') request = {ref: data.ref};
       else if (kind === 'expression-recovery') {
@@ -314,11 +319,13 @@ export class ExpressionsHost {
   setPresented() {
     this.post({schema: NATIVE_CHANNEL, epoch: this.nativeEpoch, kind: 'visibility', visible: this.presented()});
   }
-  selectInstrument(lens: HostedTechneLens) {
+  /** Selects one deep instrument. A focus ref (the object the instrument should show) rides with the lens when given. */
+  selectInstrument(lens: HostedTechneLens, ref?: string) {
     if (!isDeepInstrument(lens)) throw Error('Unknown deep instrument');
     if (!this.presented()) throw Error('The requested application is concealed');
+    if (ref !== undefined && !boundedText(ref, 512)) throw Error('An instrument focus ref must be bounded text');
     this.setMode('techne');
-    this.post({v: CHANNEL_VERSION, kind: 'host-command', command: 'lens', lens});
+    this.post({v: CHANNEL_VERSION, kind: 'host-command', command: 'lens', lens, ...(ref !== undefined ? {ref} : {})});
   }
   openExpression(ref: string, targetBindingId: string, options: {refresh?: boolean; lens?: HostedTechneLens} = {}) {
     if (!expressionRef(ref)) throw Error('A native Expression ref is required');

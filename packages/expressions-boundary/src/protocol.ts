@@ -3,7 +3,8 @@
  * the application that made them; this boundary has no document store.
  * Wire compatibility: desktop/cradle/src/expressions/hostedApp.ts and the
  * vendored app's kernelExpressions.ts/app.ts. */
-import {TECHNE_INSTRUMENTS} from '../../../desktop/cradle/src/techne/contract.ts';
+import {TECHNE_INSTRUMENTS, type TechneActionRoute, type TechneReading} from '../../../desktop/cradle/src/techne/contract.ts';
+import {resolveActionRoute} from '../../../desktop/cradle/src/techne/m0m5/adapter.ts';
 import type {HostedAppState, HostedAppMode, HostedTechneLens} from '../../../desktop/cradle/src/expressions/hostedApp';
 export type {HostedAppState, HostedAppMode, HostedTechneLens};
 export type {TechneReading, TechneActionRoute, TechneActionReceipt, NativeActionRef} from '../../../desktop/cradle/src/techne/contract.ts';
@@ -12,7 +13,7 @@ export {assertReading, resolveActionRoute} from '../../../desktop/cradle/src/tec
 export const CHANNEL_VERSION = 1;
 export const NATIVE_CHANNEL = 'oi.native-expression/v1';
 export const DEEP_INSTRUMENT_IDS = TECHNE_INSTRUMENTS.filter((id): id is HostedTechneLens => id !== 'expressions');
-export const FRAME_EXPRESSION_OPERATIONS = new Set(['profile_define', 'profile_inspect', 'list', 'inspect', 'create', 'edit', 'open', 'open_file', 'save_as', 'save', 'export', 'fork', 'index', 'close']);
+export const FRAME_EXPRESSION_OPERATIONS = new Set(['profile_define', 'profile_inspect', 'list', 'inspect', 'create', 'edit', 'open', 'open_file', 'save_as', 'save', 'export', 'fork', 'index', 'close', 'invoke_action']);
 export const isHostedAppMode = (v: unknown): v is HostedAppMode => v === 'expressions' || v === 'techne';
 export const isDeepInstrument = (v: unknown): v is HostedTechneLens => DEEP_INSTRUMENT_IDS.includes(v as HostedTechneLens);
 export const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -107,6 +108,55 @@ export function readHostedState(raw: unknown): HostedAppState | null {
   // announces its cut and concrete scene count, even while native boot waits.
   if (!isHostedAppMode(state.hostMode) || state.sceneCount === undefined) return null;
   return state;
+}
+
+/** The frame's routed Return (lane-5 T19 Accept): one disclosed native action, the subject it names, the reading the proposal was
+ * made from, the reading request the owner re-reads, and the human actor the Return is attributed to. The frame asserts no
+ * authority: the owner decides whether the reading still offers the action. */
+export interface FrameActionRequest {
+  operation: 'invoke_action';
+  route: TechneActionRoute;
+  reading_ref: string;
+  reading_request: {expression_ref: string; revision: number; scene_ref: string; scope?: 'expression'};
+  actor: string;
+}
+/** Parse one frame action exactly. Anything else is null: the gate refuses it by name and the owner never sees it. */
+export function readFrameActionRequest(raw: unknown): FrameActionRequest | null {
+  if (!object(raw) || raw.operation !== 'invoke_action' || !object(raw.route) || !object(raw.reading_request)) return null;
+  const route = raw.route, reading = raw.reading_request;
+  if (!boundedText(route.action_ref, 256) || !boundedText(route.subject_ref) || !boundedText(raw.reading_ref) || !boundedText(raw.actor, 256)) return null;
+  if (route.selection_ref !== undefined && route.selection_ref !== null && !boundedText(route.selection_ref)) return null;
+  if (route.input !== undefined && !object(route.input)) return null;
+  if (!expressionRef(reading.expression_ref) || !positiveInteger(reading.revision) || !boundedText(reading.scene_ref)) return null;
+  if (reading.scope !== undefined && reading.scope !== 'expression') return null;
+  return {
+    operation: 'invoke_action',
+    route: {action_ref: route.action_ref, subject_ref: route.subject_ref, selection_ref: (route.selection_ref as string | null | undefined) ?? null,
+      ...(route.input !== undefined ? {input: route.input} : {})},
+    reading_ref: raw.reading_ref,
+    reading_request: {expression_ref: reading.expression_ref, revision: reading.revision, scene_ref: reading.scene_ref,
+      ...(reading.scope === 'expression' ? {scope: 'expression' as const} : {})},
+    actor: raw.actor,
+  };
+}
+export type FrameActionVerdict = {ok: true; action: string; target_ref: string; input: Record<string, unknown>} | {ok: false; reason: string};
+/** The owner's decision over the reading it re-read: a proposal from an earlier reading is stale; a route the reading does not
+ * offer (or that names another subject) is refused by the routing law, by name. An offered action is returned with the actor and
+ * the source reading attached to its input. Pure: nothing is invoked here. */
+export function decideFrameAction(reading: TechneReading, request: FrameActionRequest): FrameActionVerdict {
+  if (reading.reading_ref !== request.reading_ref) {
+    return {ok: false, reason: `stale: the proposal was made from reading ${request.reading_ref}, and the owner now discloses ${reading.reading_ref}; propose the Return again`};
+  }
+  let receipt;
+  try {receipt = resolveActionRoute(reading, request.route);}
+  catch (cause) {return {ok: false, reason: cause instanceof Error ? cause.message : String(cause)};}
+  if (!receipt.routed) return {ok: false, reason: receipt.reason ?? `action ${request.route.action_ref} is not offered by reading ${reading.reading_ref}`};
+  return {
+    ok: true,
+    action: request.route.action_ref,
+    target_ref: request.route.subject_ref,
+    input: {...((request.route.input as Record<string, unknown> | undefined) ?? {}), actor: request.actor, source_reading_ref: reading.reading_ref},
+  };
 }
 
 export interface HostTarget {

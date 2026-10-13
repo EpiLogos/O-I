@@ -41,14 +41,14 @@ import {
 } from '../../../src/techne/m0m5/palace/composition';
 import type {KernelConversion} from './kernelDocumentBridge.js';
 import {palaceInstrumentBasis,samePalaceInstrumentBasis,assertPalaceSource,samePalaceComposition,type PalaceInstrumentBasis} from './palaceInstrumentBasis';
-import {readTechneReading,techneTimeWindowRequest,type TechneSceneReadingRequest} from './kernelExpressions.js';
+import {nativeExpressionRequest,readTechneReading,techneTimeWindowRequest,type TechneSceneReadingRequest} from './kernelExpressions.js';
 import {trackOwnSharedTimeWrite} from './sharedTimeWindow';
 import {palaceHopRequest,qualifyPalaceHopReply} from './palaceHop';
 import {assertInstrumentReadingScope} from './researchInstrumentsData';
 import {validateReading,type TechneInstrument,type TechneReading} from '../../../src/techne/contract';
 import {palaceComposition,storeComposition,type PalaceComposition} from '../../../src/techne/m0m5/palace/palace-state';
 import {palacePresenceStorage,PALACE_UNPERSISTED_NOTICE,restorePalaceComposition,savePalaceComposition} from '../../../src/techne/m0m5/palace/presence';
-import {palaceReturnProposal,type PalaceReturnProposal} from '../../../src/techne/m0m5/palace/return';
+import {palaceAcceptOutcome,palaceAcceptRequest,palaceReturnProposal,type PalaceReturnProposal} from '../../../src/techne/m0m5/palace/return';
 import type {PalaceRegionEntry} from '../../../src/techne/m0m5/palace/regions';
 import {PALACE_WIRED_INSTRUMENTS,palaceGuidedEdges,palaceOpenRoute,palaceWalkAt,palaceWalkResume,palaceWalkSteps,palaceWholeView,SCENE_REGION_STANDING,type PalaceGuidedEdge} from './palaceWhole';
 import './palaceInstrument.css';
@@ -85,6 +85,8 @@ export interface PalaceInstrumentHost {
   * reading over the same native channel the journey instrument reads. Absent
   * means the default channel, `readTechneReading`. */
  readReading?:(request:TechneSceneReadingRequest)=>Promise<unknown>;
+ /** Lane-5 T19 Accept: invokes the frame's routed Return through the kernel-expression channel. Absent means that default channel, `nativeExpressionRequest`. */
+ invokeAction?:(request:Record<string,unknown>)=>Promise<unknown>;
 }
 
 const DEFAULT_REGION='Palace';
@@ -118,6 +120,10 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis}:{ho
  const [newRegion,setNewRegion]=useState('');
  // T19: the Return proposal the Palace shows, or null. Proposing writes nothing; refusing clears it.
  const [proposal,setProposal]=useState<PalaceReturnProposal|null>(null);
+ // T19 Accept: the one status line the owner's receipt (or refusal) comes back as; `accepting` holds the request in flight.
+ const [acceptance,setAcceptance]=useState<{line:string;accepted:boolean}|null>(null);
+ const [accepting,setAccepting]=useState(false);
+ const acceptInFlight=useRef(false);
  const persistFailed=useRef(false);
 
  useEffect(()=>{let live=true;void host.listExpressions().then(list=>{if(live){setEligible(list.filter(entry=>entry.expression_ref!==doc.expression_ref));setEligibleKnown(true);}}).catch(error=>{if(live)onMessage(error instanceof Error?error.message:String(error));});return()=>{live=false;};},[doc.expression_ref,doc.revision]);
@@ -221,9 +227,28 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis}:{ho
   if(!reading)return;
   const next=palaceReturnProposal(reading,{...palaceComposition(reading),bound:true});
   setProposal(next);
+  setAcceptance(null);
   onMessage(next.refusal?`Return not routed: ${next.refusal}. Nothing was changed.`:'Return proposed, awaiting human acceptance. Nothing has been written.');
  }
- function refuseReturn(){setProposal(null);onMessage('Return refused. Nothing was written.');}
+ function refuseReturn(){setProposal(null);setAcceptance(null);onMessage('Return refused. Nothing was written.');}
+ /** T19 Accept: the proposal's own route goes to the owner through the kernel-expression channel. The owner re-reads the reading the
+  * proposal came from and decides; the one status line says what came back. Only an invoked receipt crosses back to M0′. */
+ async function acceptReturn(){
+  if(!proposal||!reading||acceptInFlight.current||!proposal.receipt?.routed)return;
+  const request=palaceAcceptRequest(proposal,{expression_ref:doc.expression_ref,revision:doc.revision,scene_ref:basis.scene_ref});
+  if(!request){setAcceptance({line:'Not accepted: the proposal has no routed action to invoke.',accepted:false});return;}
+  const live=()=>lifetime.current.live;
+  acceptInFlight.current=true;
+  setAccepting(true);
+  try{
+   const raw=await (host.invokeAction??nativeExpressionRequest)(request as unknown as Record<string,unknown>);
+   if(!live())return;
+   const outcome=palaceAcceptOutcome(reading,proposal,raw);
+   setAcceptance({line:outcome.line,accepted:outcome.accepted});
+   if(outcome.crossing&&proposal.route)host.openInstrument(outcome.crossing.instrument,proposal.route.subject_ref);
+  }catch(error){if(live())setAcceptance({line:`Not accepted: ${error instanceof Error?error.message:String(error)}.`,accepted:false});}
+  finally{acceptInFlight.current=false;if(live())setAccepting(false);}
+ }
  function cancel(){
   const current=host.nativeView();
   if(!current||current.document.expression_ref!==doc.expression_ref||current.document.revision!==doc.revision){onMessage('Refresh the Palace before discarding this draft; the displayed source is no longer current.');return;}
@@ -276,8 +301,9 @@ export function PalacePanel({host,doc,reading,readingReason,onMessage,basis}:{ho
     :`${proposal.attribution||'No Return is attributed.'} Not routed: ${proposal.refusal??'the routing law refused it'}.`}</p>
    <div className="palace-header-actions">
     <button type="button" onClick={refuseReturn}>Refuse proposal</button>
-    <button type="button" disabled title="Accepting runs the native owner's action; this surface cannot invoke it yet.">Accept and return</button>
+    <button type="button" disabled={accepting||acceptance?.accepted===true||!proposal.receipt?.routed} onClick={()=>void acceptReturn()}>Accept and return</button>
    </div>
+   {acceptance&&<p role="status" className="palace-standing" data-accepted={acceptance.accepted?'true':'false'}>{acceptance.line}</p>}
   </section>}
   {doc.revision>draftDoc.revision&&<p role="status">This draft began at revision {draftDoc.revision}. The owner now discloses revision {doc.revision}; your input is retained. Revert explicitly takes the current composition.</p>}
   <div className="palace-body">

@@ -12,7 +12,7 @@ import {readSceneBlueprint} from '../../../desktop/cradle/src/knowledge/construc
 import {readWikiSceneTechne, resolveSceneConstellation} from '../../../desktop/cradle/src/techne/wikiReadingProvider';
 import {relateSceneConstellation} from '../../../desktop/cradle/src/techne/sceneConstellationRelation';
 import {ensureWikiNativeExpression, publishWikiNativeRegisters, selectedWikiNativeRegister, selectWikiNativeRegister, wikiNativeRegisters} from '../../../desktop/cradle/src/techne/wikiNativeExpression';
-import {boundedText, object, type ChannelContext, type ExpressionsOwners} from './protocol.ts';
+import {assertReading, boundedText, decideFrameAction, object, readFrameActionRequest, type ChannelContext, type ExpressionsOwners} from './protocol.ts';
 
 export type {KernelTransportStatus, KernelReceipt, NativeFileReading, NativeFileEntry, NativeDirectory, CentralLocation} from '../../../desktop/cradle/src/kernel/types';
 export {listFiles, readFile, resolveFileLocation} from '../../../desktop/cradle/src/files/client';
@@ -83,9 +83,28 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
     if (!file?.retrieval_allowed) throw Error('Central does not disclose this subject for retrieval');
     return file.location;
   };
+  /** lane-5 T19 Accept: the frame's routed Return. The owner re-reads the reading the proposal came from and decides, under that
+   * reading, whether the disclosed action is still offered (stale or not offered is refused by name). Only then does the kernel's
+   * own action seam dispatch it; the dispatch's own answer comes back as data. No grant is asserted here. */
+  const frameAction = async (raw: unknown, context: ChannelContext) => {
+    const request = readFrameActionRequest(raw);
+    if (!request) throw Error('Malformed invoke_action request: a disclosed route, its reading request and an actor are required');
+    requireCurrent(context);
+    const reading = assertReading(await readWikiSceneTechne(transport, request.reading_request));
+    requireCurrent(context);
+    const verdict = decideFrameAction(reading, request);
+    if (!verdict.ok) return {state: 'refused', reason: verdict.reason};
+    const call = await kernelOp(transport, {op: 'invoke_action', invocation: {action: verdict.action, target_ref: verdict.target_ref, input: verdict.input}} as KernelOp, context.signal);
+    if (call.error || call.outcome?.result !== 'action_dispatched') throw Error(call.error ?? 'The native owner did not answer the action dispatch');
+    options.onOutcome?.(call.outcome);
+    if (call.outcome.receipts?.length) options.onReceipts?.(call.outcome.receipts);
+    return {state: 'dispatched', dispatch: call.outcome.dispatch};
+  };
   return {
     channels: {
-      'kernel-expression': (request, context) => data({op: 'expression', request} as KernelOp, 'expression', context),
+      'kernel-expression': (request, context) => object(request) && request.operation === 'invoke_action'
+        ? frameAction(request, context)
+        : data({op: 'expression', request} as KernelOp, 'expression', context),
       'kernel-expression-world': (request, context) => {
         if (!object(request) || !boundedText(request.operation, 128)) throw Error('A native world operation is required');
         return data({op: 'expression_world', request} as KernelOp, 'expression_world', context);

@@ -12,15 +12,17 @@ export interface TechneInstrumentOpen {
   workspace_id: string; access_epoch: number; binding_id: string;
   basis: NativeEditorBasis; selection: NativeEditorReading['selection'];
   lens: HostedTechneLens;
+  /** The object the opened instrument should focus (lane-5 seam B). Absent when the open names no object. */
+  focus_ref?: string;
 }
 /** Presentation only. The retained owner keeps the document, cameras,
  * filters and its instrument models. A posted command is never a save ACK. */
-export function captureTechneInstrumentOpen(scope: TechneInstrumentScope, lens: HostedTechneLens, bindingId = 'world.expressions'): TechneInstrumentOpen {
+export function captureTechneInstrumentOpen(scope: TechneInstrumentScope, lens: HostedTechneLens, bindingId = 'world.expressions', focusRef?: string): TechneInstrumentOpen {
   const reading = scope.editorReading;
   if (!scope.accessReady || !scope.nativeAccessCurrent(scope.accessEpoch) || scope.mode === 'audio' || !reading || reading.standing.pending)
     throw Error('Open an available native Expression before choosing its instrument');
   return validateTechneInstrumentOpen({workspace_id: scope.workspaceId, access_epoch: scope.accessEpoch, binding_id: bindingId,
-    basis: {...reading.basis}, selection: structuredClone(reading.selection), lens});
+    basis: {...reading.basis}, selection: structuredClone(reading.selection), lens, ...(focusRef !== undefined ? {focus_ref: focusRef} : {})});
 }
 export function validateTechneInstrumentOpen(raw: unknown): TechneInstrumentOpen {
   const input = raw as TechneInstrumentOpen | null;
@@ -32,8 +34,10 @@ export function validateTechneInstrumentOpen(raw: unknown): TechneInstrumentOpen
     || !selection || !Array.isArray(selection.entity_ids) || selection.entity_ids.length > 10000
     || !selection.entity_ids.every(id => boundedText(id)) || new Set(selection.entity_ids).size !== selection.entity_ids.length
     || selection.step_id !== null && !boundedText(selection.step_id)) throw Error('The instrument needs an exact native Scene and selection basis');
+  if (input.focus_ref !== undefined && !boundedText(input.focus_ref, 512)) throw Error('An instrument focus ref must be bounded text');
   return {workspace_id: input.workspace_id, access_epoch: input.access_epoch, binding_id: input.binding_id,
-    basis: {...basis}, selection: {entity_ids: [...selection.entity_ids], step_id: selection.step_id}, lens: input.lens};
+    basis: {...basis}, selection: {entity_ids: [...selection.entity_ids], step_id: selection.step_id}, lens: input.lens,
+    ...(input.focus_ref !== undefined ? {focus_ref: input.focus_ref} : {})};
 }
 export function currentTechneInstrumentOpen(input: TechneInstrumentOpen, scope: TechneInstrumentScope): boolean {
   const reading = scope.editorReading;
@@ -53,7 +57,7 @@ export function openRetainedTechneInstrument(receiver: TechneInstrumentReceiver,
   const scene = receiver.host.getState()?.nativeScene;
   if (!scene || scene.expression_ref !== input.basis.expression_ref || scene.scene_ref !== input.basis.scene_ref || scene.revision !== input.basis.revision)
     throw Error('The retained application has not adopted this exact native Scene');
-  receiver.host.selectInstrument(input.lens);
+  receiver.host.selectInstrument(input.lens, input.focus_ref);
   return {state: 'requested', lens: input.lens};
 }
 export interface TechneInstrumentEvent extends TechneInstrumentOpen {
