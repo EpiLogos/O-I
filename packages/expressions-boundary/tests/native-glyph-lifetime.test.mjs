@@ -35,7 +35,7 @@ function retained(t,checkpoint=()=>{throw closed}) {
  work.restore({schema:'oi.native-working/v1',draft_id:view.journey.id,view},store.document);
  const owner=createRetainedNativeEditor({store,sceneId:()=>scene.id,selection:()=>selection,nativeView:()=>work.state.view,
   nativeSelect:()=>{throw closed},commit:async()=>{await work.commit({journey:structuredClone(store.document),sceneId:scene.id,entityId:entity.id});return true},
-  change:fn=>store.change(fn),afterHistory:()=>{},selectLocal:()=>{throw closed},openEditor:()=>{throw closed},standing:()=>({busy:false,notice:null}),telemetry:()=>undefined,fieldPaused:()=>false});
+  change:(label,fn)=>store.change(label,fn),afterHistory:()=>{},selectLocal:()=>{throw closed},openEditor:()=>{throw closed},standing:()=>({busy:false,notice:null}),telemetry:()=>undefined,fieldPaused:()=>false});
  const target=new EventTarget(),pending=new Map();let index=0;
  const parent={postMessage:data=>{if(data.kind==='result'){pending.get(data.req)?.(data.reply);pending.delete(data.req)}}};
  target.parent=parent;target.location={origin:'http://source-review.invalid'};
@@ -49,7 +49,7 @@ function presented(reading,request) {
  const lifetime={current:{mounted:true,epoch:1}},tickets={current:0},latest={current:{reading}};
  const setters={setPending:value=>values.updates.push(['pending',value]),setFault:value=>values.updates.push(['fault',value]),setTimingDraft:value=>{values.timing=typeof value==='function'?value(values.timing):value;values.updates.push(['timing',values.timing])}};
  const entity=reading.scene.entities.find(row=>row.id===reading.selection.entity_ids[0]),step=entity.sequence.steps.find(row=>row.id===reading.selection.step_id);
- const bindings={r:reading,e:entity,k:step,request,lifetime,tickets,latest,timingDraft:values.timing,shown:()=>lifetime.current.mounted&&values.visible,isPresented:()=>values.visible,currentGlyphReply,...setters};
+ const bindings={r:reading,e:entity,k:step,request,lifetime,tickets,latest,refusal:{current:null},timingDraft:values.timing,shown:()=>lifetime.current.mounted&&values.visible,isPresented:()=>values.visible,currentGlyphReply,...setters};
  return {values,lifetime,latest,apply:execute('apply',bindings),settle:execute('settle',bindings)};
 }
 function deferred(){let reject,enter;const pending=new Promise((_,r)=>{reject=r}),started=new Promise(resolve=>{enter=resolve});return {pending,started,reject,enter}}
@@ -110,7 +110,7 @@ test('numeric input retains its first captured actual basis through rerender and
  const r=retained(t),read=await r.request({operation:'read'}),p=presented(read.reading,r.request),values=new Map(),id='captured-rich-hold';let retargeted=0;
  const onChange=nodes(node=>ts.isJsxAttribute(node)&&node.name.getText(source)==='onChange'&&node.getText(source).includes('numericCommit'))[0].initializer.expression;
  const receive=bindings=>new Function(...Object.keys(bindings),ts.transpileModule(`const receive=${onChange.getText(source)};`,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText+'\nreturn receive;')(...Object.values(bindings));
- const context={values,changed:()=>{}},bindings={context,id,label:'Hold',setDraft:()=>{},min:0,max:3600};
+ const context={values,changed:()=>{},capture:()=>()=>undefined,retain:()=>{}},bindings={context,id,identity:id,value:r.entity.sequence.steps[0].hold,label:'Hold',setDraft:()=>{},min:0,max:3600};
  receive({...bindings,onCommit:hold=>p.apply([{kind:'step-timing',entity_id:r.entity.id,step_id:r.entity.sequence.steps[0].id,hold}])})({target:{value:'3.05'}});
  r.store.begin();r.store.document.scenes[0].entities[0].sequence.steps[0].hold=2.75;r.store.touch();
  receive({...bindings,onCommit:()=>{retargeted++;throw Error('Newer intent must not replace the captured draft')}})({target:{value:'3.15'}});
