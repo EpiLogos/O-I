@@ -5,6 +5,7 @@ import {validateSession,type DisclosureTraversalHop,type TechneReading} from '..
 import {timeAxis,type SharedTimeWindow} from '../../../src/techne/m0m5/timeline/timeAxis';
 import type {NativeTimeWindowBasis,NativeTimeWindowReply,NativeTimeWindowRequest} from '../../../../../packages/expressions-boundary/src/timeWindow';
 import {techneTimeWindowRequest} from './kernelExpressions.js';
+import {SHARED_TIME_NUDGE} from '../../../src/techne/session';
 import './sharedTimeWindow.css';
 
 export interface SharedTimeDraft {
@@ -30,6 +31,76 @@ export function qualifyTimeWindowReply(raw:unknown,basis:NativeTimeWindowBasis,r
  return structuredClone(value);
 }
 
+/** T-FRAME-TIME-PUSH. The host's nudge says only that the session's shared window changed; it carries no value. The frame
+ * re-reads through its own read and moves its view when what it reads differs from what it holds. This frame's own writes
+ * are tracked: while one is in flight a nudge waits for it, and a read that began before a write settled is never adopted. */
+let ownWritesInFlight=0;
+let writeGeneration=0;
+const writeSettled=new Set<()=>void>();
+
+/** Track one of this frame's own shared-time writes, so the echo of that write is reconciled once and never re-rendered. */
+export function trackOwnSharedTimeWrite<T>(write:Promise<T>):Promise<T>{
+ ownWritesInFlight++;writeGeneration++;
+ const settle=()=>{ownWritesInFlight--;writeGeneration++;for(const listener of [...writeSettled])listener();};
+ return write.then(value=>{settle();return value},error=>{settle();throw error});
+}
+
+/** The same session window and selection: the sole comparison a nudge's re-read is held to (never a value from the nudge). */
+export function sameSharedTime(a:NativeTimeWindowReply,b:NativeTimeWindowReply):boolean{
+ return a.session.session_ref===b.session.session_ref
+  &&JSON.stringify(a.session.time_window??null)===JSON.stringify(b.session.time_window??null)
+  &&JSON.stringify(a.session.selection)===JSON.stringify(b.session.selection);
+}
+
+export interface SharedTimeFollow {basis:NativeTimeWindowBasis;reading:TechneReading;instrument:'timeline'|'place';
+ /** The lens is still presented for this reading (the guard the presentation read uses). */
+ current:()=>boolean;
+ /** The window this frame holds: its last acknowledged reply, or null before the presentation read. */
+ held:()=>NativeTimeWindowReply|null;
+ /** The lens's existing refresh path: called with the re-read reply only when it differs from the held one. */
+ refresh:(reply:NativeTimeWindowReply)=>void;
+}
+
+/** Follow the host's shared-window nudges for one presented instrument. Returns the teardown. Outside a host frame it does nothing. */
+export function followSharedTimeNudges(follow:SharedTimeFollow):()=>void{
+ if(typeof window==='undefined'||window.parent===window)return()=>{};
+ let live=true,reading=false,pending=false;
+ const reconcile=async():Promise<void>=>{
+  if(!live)return;
+  if(reading||ownWritesInFlight>0){pending=true;return;}
+  if(!follow.current())return;
+  const held=follow.held();
+  if(!held)return;
+  reading=true;pending=false;
+  const issued=writeGeneration;
+  try{
+   const reply=await readSharedTimeWindow(follow.basis,follow.reading,follow.instrument,follow.current);
+   if(!live)return;
+   if(issued!==writeGeneration){pending=true;return;}
+   const now=follow.held();
+   // The echo of this frame's own write reads back the window it holds: nothing changed, nothing re-renders, nothing is written.
+   if(!now||sameSharedTime(now,reply))return;
+   follow.refresh(reply);
+  }catch{
+   // A refused re-read keeps the held window; the presentation read reports the refusal to the reader.
+  }finally{
+   reading=false;
+   if(pending&&live){pending=false;void reconcile();}
+  }
+ };
+ // A settled write reconciles on the next turn, after its writer has acknowledged the reply it holds.
+ const settled=()=>{if(pending&&live)setTimeout(()=>void reconcile(),0);};
+ writeSettled.add(settled);
+ const onMessage=(event:MessageEvent)=>{
+  if(!live||event.source!==window.parent||!event.data||typeof event.data!=='object')return;
+  const data=event.data as {v?:unknown;kind?:unknown};
+  if(data.v!==1||data.kind!==SHARED_TIME_NUDGE)return;
+  void reconcile();
+ };
+ window.addEventListener('message',onMessage);
+ return()=>{live=false;writeSettled.delete(settled);window.removeEventListener('message',onMessage);};
+}
+
 /** Lane-4 T14: the setter the docked Places time control shares with the popover. It writes the acknowledged session's window against that session (compare-and-set), and returns the qualified reply. */
 export async function writeSharedTimeWindow(basis:NativeTimeWindowBasis,reading:TechneReading,instrument:'timeline'|'place',acknowledged:NativeTimeWindowReply,window:SharedTimeWindow|null):Promise<NativeTimeWindowReply> {
  if(acknowledged.basis.expression_ref!==basis.expression_ref||acknowledged.basis.scene_ref!==basis.scene_ref
@@ -38,7 +109,7 @@ export async function writeSharedTimeWindow(basis:NativeTimeWindowBasis,reading:
  }
  const request:NativeTimeWindowRequest={...basis,operation:'set',reading_ref:reading.reading_ref,instrument,
   expected_session_ref:acknowledged.session.session_ref,expected_selection:acknowledged.session.selection,expected_window:acknowledged.axis.window,window};
- return qualifyTimeWindowReply(await techneTimeWindowRequest(request),basis,reading,instrument);
+ return qualifyTimeWindowReply(await trackOwnSharedTimeWrite(techneTimeWindowRequest(request)),basis,reading,instrument);
 }
 
 /** Lane-2 T20: one trail step recorded on the shared session through the owner's compare-and-set, the same route as the time
@@ -53,7 +124,7 @@ export async function writeSharedTraversalHop(basis:NativeTimeWindowBasis,readin
  }
  const request:NativeTimeWindowRequest={...basis,operation:'traversal',reading_ref:reading.reading_ref,instrument,
   expected_session_ref:acknowledged.session.session_ref,expected_selection:acknowledged.session.selection,expected_window:acknowledged.axis.window,hop};
- return qualifyTimeWindowReply(await techneTimeWindowRequest(request),basis,reading,instrument);
+ return qualifyTimeWindowReply(await trackOwnSharedTimeWrite(techneTimeWindowRequest(request)),basis,reading,instrument);
 }
 
 export async function readSharedTimeWindow(basis:NativeTimeWindowBasis,reading:TechneReading,instrument:'timeline'|'place',current:()=>boolean):Promise<NativeTimeWindowReply> {
@@ -99,7 +170,7 @@ export function SharedTimeWindowControls({basis,reading,instrument,acknowledged,
   setBusy(true);setFault(undefined);
   const request:NativeTimeWindowRequest={...basis,operation:'set',reading_ref:reading.reading_ref,instrument,
    expected_session_ref:captured.session.session_ref,expected_selection:captured.session.selection,expected_window:captured.axis.window,window};
-  void techneTimeWindowRequest(request).then(raw=>{
+  void trackOwnSharedTimeWrite(techneTimeWindowRequest(request)).then(raw=>{
    if(!alive.current||!current())return;
    const reply=qualifyTimeWindowReply(raw,basis,reading,instrument);
    draft.captured=null;draft.from=reply.axis.window?.from??'';draft.to=reply.axis.window?.to??'';

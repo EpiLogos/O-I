@@ -316,3 +316,25 @@ export function techneSurfaceBinding(session: DisclosureSession, surfaceId?: str
 /** The Cradle's one current disclosure session (the host and later instrument
  * lanes subscribe to this; tests build their own stores). */
 export const disclosureSession: DisclosureSessionStore = createDisclosureSessionStore();
+
+/** T-FRAME-TIME-PUSH: the value-free nudge the host posts to each presented Expressions frame when the session's shared time
+ * window changes. It carries no window: a frame re-reads the window through its own read. */
+export const SHARED_TIME_NUDGE = "shared-time-nudge";
+
+/** Notify once per change of the session's time window: never for a selection-only change, a repeated window, a session
+ * starting or ending, or while no session stands. The listener receives no value; it re-reads the window through its owner. */
+export function onSharedTimeWindowChange(store: DisclosureSessionStore, listener: () => void): () => void {
+  const windowKey = (session: DisclosureSession): string => JSON.stringify([session.time_window?.from ?? null, session.time_window?.to ?? null]);
+  let last: string | null = store.get() ? windowKey(store.get()!) : null;
+  return store.subscribe(() => {
+    const session = store.get();
+    if (!session) {
+      last = null;
+      return;
+    }
+    const next = windowKey(session);
+    const previous = last;
+    last = next;
+    if (previous !== null && previous !== next) listener();
+  });
+}

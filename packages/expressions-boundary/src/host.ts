@@ -6,6 +6,7 @@ import {
 } from './protocol.ts';
 import {readStageResult, stageRequestMessage, type StageCommand, type StageResult} from './protocol.ts';
 import {RecoveryAdmission, type RecoveryBinding} from './recoveryBinding.ts';
+import {onSharedTimeWindowChange, SHARED_TIME_NUDGE, type DisclosureSessionStore} from '../../../desktop/cradle/src/techne/session.ts';
 /** A stage control that the frame never answers settles as a refusal, never a hang. */
 const STAGE_TIMEOUT_MS = 60000;
 
@@ -33,6 +34,9 @@ export interface ExpressionsHostOptions {
   initialNavigationPending?: boolean;
   /** EventTarget injection exercises this same controller without a DOM. */
   messageTarget?: EventTarget;
+  /** The session store the shared-time owner writes. A window change in it nudges a ready, presented frame (value-free; the
+   * frame re-reads through its own read). Omitted: this host is not nudged. */
+  sharedWindow?: DisclosureSessionStore;
 }
 
 /** One retained frame. Changing the cut posts a message and never changes src.
@@ -64,6 +68,7 @@ export class ExpressionsHost {
   private nativeLease: string | null = null;
   private nativeOpening = false;
   private stopOwners?: () => void;
+  private stopSharedTimeNudges?: () => void;
 
   constructor(frame: HTMLIFrameElement, options: ExpressionsHostOptions) {
     if (!boundedText(options.bindingId)) throw Error('A hosted application needs its own binding identity');
@@ -84,6 +89,7 @@ export class ExpressionsHost {
     this.messages.addEventListener('message', this.receive);
     frame.addEventListener('load', this.loaded);
     this.stopOwners = options.owners.attach?.(frame, () => this.reading);
+    this.stopSharedTimeNudges = options.sharedWindow ? onSharedTimeWindowChange(options.sharedWindow, () => this.nudgeSharedTime()) : undefined;
     this.startHandshake();
   }
 
@@ -145,6 +151,11 @@ export class ExpressionsHost {
     const epoch = this.epoch;
     return {mode: this.mode, bindingId: this.bindingId, epoch, signal: this.abort.signal,
       state: this.reading, current: () => this.alive && epoch === this.epoch};
+  }
+  /** T-FRAME-TIME-PUSH: the shared window changed. A ready, presented frame is nudged; the nudge carries no window value. */
+  private nudgeSharedTime() {
+    if (!this.alive || !this.ready || !this.presented()) return;
+    this.post({v: CHANNEL_VERSION, kind: SHARED_TIME_NUDGE});
   }
   private presented() {
     return this.alive && (this.options.isPresented?.() ?? !this.frame.closest?.('[hidden],[inert]'));
@@ -374,6 +385,7 @@ export class ExpressionsHost {
     this.abort.abort();
     clearTimeout(this.timeout);
     this.stopOwners?.();
+    this.stopSharedTimeNudges?.();
     this.releaseNative(lease, context);
     this.messages.removeEventListener('message', this.guard, true);
     this.messages.removeEventListener('message', this.receive);
