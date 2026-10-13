@@ -13,6 +13,7 @@ import {readWikiSceneTechne, resolveSceneConstellation} from '../../../desktop/c
 import {relateSceneConstellation} from '../../../desktop/cradle/src/techne/sceneConstellationRelation';
 import {ensureWikiNativeExpression, publishWikiNativeRegisters, selectedWikiNativeRegister, selectWikiNativeRegister, wikiNativeRegisters} from '../../../desktop/cradle/src/techne/wikiNativeExpression';
 import {assertReading, boundedText, decideFrameAction, object, readFrameActionRequest, type ChannelContext, type ExpressionsOwners} from './protocol.ts';
+import {readFramePerformanceRequest, recallPerformanceBasis, refusePerformanceSave, summarizePerformanceBases} from './performanceBasis.ts';
 
 export type {KernelTransportStatus, KernelReceipt, NativeFileReading, NativeFileEntry, NativeDirectory, CentralLocation} from '../../../desktop/cradle/src/kernel/types';
 export {listFiles, readFile, resolveFileLocation} from '../../../desktop/cradle/src/files/client';
@@ -100,11 +101,31 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
     if (call.outcome.receipts?.length) options.onReceipts?.(call.outcome.receipts);
     return {state: 'dispatched', dispatch: call.outcome.dispatch};
   };
+  /** The presets' owner path (performanceBasis.ts). The kernel's own inspect reads the presented Scene's performance bases; the boundary
+   * summarises them with the digests the kernel holds, refuses a save by name, and states what a recall can apply. It seals nothing. */
+  const performanceRequest = async (raw: unknown, context: ChannelContext) => {
+    const request = readFramePerformanceRequest(raw);
+    if (!request) throw Error('Malformed performance request');
+    requireCurrent(context);
+    const inspected = await kernelOp(transport, {op: 'expression', request: {operation: 'inspect', expression_ref: request.expression_ref}} as KernelOp, context.signal);
+    const document = inspected.outcome?.result === 'expression'
+      ? (inspected.outcome.data as {document?: {expression_ref?: unknown; scenes?: Array<{scene_ref?: unknown; performance?: unknown}>}}).document : undefined;
+    if (inspected.error || !document || document.expression_ref !== request.expression_ref) throw Error(inspected.error ?? 'The native Expression could not be read');
+    requireCurrent(context);
+    const scene = document.scenes?.find(row => row.scene_ref === request.scene_ref);
+    if (!scene) throw Error('The presented Scene is absent from this native Expression');
+    const bases = object(scene.performance) ? scene.performance.bases : [];
+    if (request.action === 'list') return {state: 'listed', bases: summarizePerformanceBases(bases)};
+    if (request.action === 'save') return refusePerformanceSave({performance: scene.performance}, request.name);
+    return recallPerformanceBasis(bases, request.basis_ref);
+  };
   return {
     channels: {
       'kernel-expression': (request, context) => object(request) && request.operation === 'invoke_action'
         ? frameAction(request, context)
-        : data({op: 'expression', request} as KernelOp, 'expression', context),
+        : object(request) && request.operation === 'performance'
+          ? performanceRequest(request, context)
+          : data({op: 'expression', request} as KernelOp, 'expression', context),
       'kernel-expression-world': (request, context) => {
         if (!object(request) || !boundedText(request.operation, 128)) throw Error('A native world operation is required');
         return data({op: 'expression_world', request} as KernelOp, 'expression_world', context);

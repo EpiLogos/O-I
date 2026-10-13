@@ -5,6 +5,7 @@ import {
   type HostedTechneLens, type HostTarget, type StudioSection,
 } from './protocol.ts';
 import {readStageResult, stageRequestMessage, type StageCommand, type StageResult} from './protocol.ts';
+import {readFramePerformanceRequest, type PerformanceAction} from './protocol.ts';
 import {RecoveryAdmission, type RecoveryBinding} from './recoveryBinding.ts';
 import {onSharedTimeWindowChange, SHARED_TIME_NUDGE, type DisclosureSessionStore} from '../../../desktop/cradle/src/techne/session.ts';
 /** A stage control that the frame never answers settles as a refusal, never a hang. */
@@ -244,6 +245,8 @@ export class ExpressionsHost {
         if (!object(request) || typeof request.operation !== 'string' || !FRAME_EXPRESSION_OPERATIONS.has(request.operation)) throw Error('Unsupported kernel-expression operation');
         // A Return reaches the owner only as the exact frame action; whether the reading still offers it is the owner's decision.
         if (request.operation === 'invoke_action' && !readFrameActionRequest(request)) throw Error('Malformed invoke_action request: a disclosed route, its reading request and an actor are required');
+        // A performance request is exact, and it names only the presented Scene the reading holds (the same gate invoke_action keeps).
+        if (request.operation === 'performance' && !this.presentedPerformance(request)) throw Error('Malformed performance request: a presented Scene and an exact action are required');
       } else if (kind === 'central-read') request = {path: data.path};
       else if (kind === 'central-subject-text' || kind === 'central-subject-bytes') request = {ref: data.ref};
       else if (kind === 'expression-recovery') {
@@ -307,6 +310,25 @@ export class ExpressionsHost {
     finally {if (opening && context.current() && nativeEpoch === this.nativeEpoch) this.nativeOpening = false;}
   }
 
+  /** A frame performance request, exact and for the presented Scene only; anything else is refused before any owner sees it. */
+  private presentedPerformance(raw: unknown): boolean {
+    const request = readFramePerformanceRequest(raw);
+    const scene = this.reading?.nativeScene;
+    return request !== null && !!scene && request.expression_ref === scene.expression_ref && request.scene_ref === scene.scene_ref;
+  }
+  /** The presets' owner path: one performance action on the presented Scene, through the kernel-expression owner. The refs come from the
+   * frame's own announced reading, never from the caller. */
+  performance(action: PerformanceAction): Promise<unknown> {
+    if (!this.alive) throw Error('The hosted application was disposed');
+    if (!this.ready) throw Error('The Expressions application has not reported its state yet');
+    const scene = this.reading?.nativeScene;
+    if (!scene) throw Error('No native Scene is presented; open one before a performance action');
+    const request = readFramePerformanceRequest({operation: 'performance', ...action, expression_ref: scene.expression_ref, scene_ref: scene.scene_ref});
+    if (!request) throw Error('Malformed performance request');
+    const owner = this.options.owners.channels['kernel-expression'];
+    if (!owner) throw Error('No native Expressions owner is attached for performance actions');
+    return Promise.resolve().then(() => owner(request, this.context()));
+  }
   getState(): HostedAppState | null {return this.reading;}
   isReady(): boolean {return this.ready && this.alive;}
   setMode(mode: HostedAppMode, world = this.world) {
