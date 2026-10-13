@@ -16,6 +16,9 @@ export type NativeTimeWindowRequest = NativeTimeWindowBasis & {reading_ref: stri
   | {operation: 'refresh'}
   | {operation: 'set'; expected_session_ref: string; expected_selection: DisclosureSelection;
       expected_window: SharedTimeWindow | null; window: SharedTimeWindow | null}
+  // Lane-4 T23/T24: the Places place the shared session focuses (null clears it). Same CAS as `set`, plus the captured spatial focus.
+  | {operation: 'spatial'; expected_session_ref: string; expected_selection: DisclosureSelection;
+      expected_window: SharedTimeWindow | null; expected_spatial_focus_ref: string | null; spatial_focus_ref: string | null}
 );
 export interface NativeTimeWindowReply {
   schema: 'oi.native-time-window/v1';
@@ -33,6 +36,22 @@ const canonical = (value: unknown): string | undefined => JSON.stringify(value, 
   object(item) ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a.localeCompare(b))) : item);
 const sameWindow = (a: SharedTimeWindow | null, b: SharedTimeWindow | null) => a === null || b === null
   ? a === b : a.from === b.from && a.to === b.to;
+/** Boundary validation for a spatial-focus operand: a bounded place ref, or null to clear the focus. */
+export function declaredSpatialRef(raw: unknown): string | null {
+  if (raw === null) return null;
+  if (typeof raw !== 'string' || raw.length === 0 || raw.length > 4096)
+    throw Error('Shared place focus requires an explicit place ref or null');
+  return raw;
+}
+/** Compare-and-set predicate for a spatial write: the session must still be the captured one, with the same
+ * spatial focus, window and actual source-qualified selection (instrument included). Pure; the owner refuses on false. */
+export function spatialCaptureMatches(session: DisclosureSession, captured: {session_ref: string; selection: DisclosureSelection;
+  spatial_focus_ref: string | null; window: SharedTimeWindow | null}): boolean {
+  return session.session_ref === captured.session_ref
+    && (session.spatial_focus_ref ?? null) === captured.spatial_focus_ref
+    && sameWindow(session.time_window ?? null, captured.window)
+    && canonical(session.selection) === canonical(captured.selection);
+}
 function basis(raw: unknown): NativeTimeWindowBasis {
   if (!object(raw) || !expressionRef(raw.expression_ref) || !positiveInteger(raw.revision) || !boundedText(raw.scene_ref))
     throw Error('An exact native Expression revision and Scene are required for shared time');
@@ -115,9 +134,10 @@ export function createNativeTimeWindowOwner({store}: {store: DisclosureSessionSt
     },
     handle(raw: unknown, context: ChannelContext): NativeTimeWindowReply {
       const native = basis(raw);
-      if (!object(raw) || !['read', 'set', 'refresh'].includes(String(raw.operation)) || !['timeline', 'place'].includes(String(raw.instrument))
-        || !boundedText(raw.reading_ref)) throw Error('Shared time supports only exact read/set/refresh operations for Timeline or Places');
-      const extra = raw.operation === 'set' ? ['expected_session_ref', 'expected_selection', 'expected_window', 'window'] : [];
+      if (!object(raw) || !['read', 'set', 'refresh', 'spatial'].includes(String(raw.operation)) || !['timeline', 'place'].includes(String(raw.instrument))
+        || !boundedText(raw.reading_ref)) throw Error('Shared time supports only exact read/set/refresh/spatial operations for Timeline or Places');
+      const extra = raw.operation === 'set' ? ['expected_session_ref', 'expected_selection', 'expected_window', 'window']
+        : raw.operation === 'spatial' ? ['expected_session_ref', 'expected_selection', 'expected_window', 'expected_spatial_focus_ref', 'spatial_focus_ref'] : [];
       if (Object.keys(raw).some(key => !['expression_ref', 'revision', 'scene_ref', 'operation', 'instrument', 'reading_ref', ...extra].includes(key)))
         throw Error('Unsupported shared-time operands; presentation internals do not cross this boundary');
       const entry = admitted;
@@ -126,6 +146,21 @@ export function createNativeTimeWindowOwner({store}: {store: DisclosureSessionSt
         throw Error('No actual native reading is admitted at this shared-time basis');
       const instrument = raw.instrument as NativeTimeWindowInstrument;
       let window: SharedTimeWindow | null = null, expectedWindow: SharedTimeWindow | null = null;
+      let spatialCapture: {session_ref: string; selection: DisclosureSelection; spatial_focus_ref: string | null; window: SharedTimeWindow | null} | null = null;
+      let spatialFocus: string | null = null;
+      if (raw.operation === 'spatial') {
+        spatialFocus = declaredSpatialRef(raw.spatial_focus_ref);
+        const captured = {session_ref: raw.expected_session_ref as string, selection: raw.expected_selection as DisclosureSelection,
+          spatial_focus_ref: declaredSpatialRef(raw.expected_spatial_focus_ref), window: declaredWindow(raw.expected_window)};
+        if (!boundedText(raw.expected_session_ref) || !validateSelection(raw.expected_selection).valid)
+          throw Error('Shared place focus requires the exact captured session and source-qualified selection');
+        const before = store.get();
+        if (!before) throw Error('Read the native shared session before setting its place focus');
+        qualifySameSource(before, entry);
+        if (!spatialCaptureMatches(before, captured))
+          throw Error('The shared session, place focus, window or actual selection/instrument changed; read it before setting place focus');
+        spatialCapture = captured;
+      }
       if (raw.operation === 'set') {
         window = declaredWindow(raw.window); expectedWindow = declaredWindow(raw.expected_window);
         const selected = validateSelection(raw.expected_selection);
@@ -158,6 +193,13 @@ export function createNativeTimeWindowOwner({store}: {store: DisclosureSessionSt
           throw Error('The native session advanced during the shared-time instrument hop');
         current(context, native, entry);
         session = store.setTimeWindow(window);
+      }
+      if (spatialCapture) {
+        // Same as set: the instrument hop may move only the recorded instrument; the captured spatial focus and window must still hold.
+        if (!spatialCaptureMatches(session, {...spatialCapture, selection: {...spatialCapture.selection, instrument}}))
+          throw Error('The native session advanced during the shared place-focus instrument hop');
+        current(context, native, entry);
+        session = store.setSpatialFocus(spatialFocus);
       }
       current(context, native, entry);
       if (store.get() !== session) throw Error('The native session advanced before its shared-time reply');

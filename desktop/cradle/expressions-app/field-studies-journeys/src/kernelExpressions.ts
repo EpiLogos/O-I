@@ -43,6 +43,17 @@ function onMessage(ev:MessageEvent){
 }
 function post(message:Record<string,unknown>):void{window.parent.postMessage({v:VERSION,...message},'*');}
 
+/** Lane-1 A10: an https link leaves the frame only as a host request; the host's opener is the only thing that opens it.
+ * Returns false when the frame is not hosted or the link is not a bounded https URL (nothing is sent). */
+export function openExternalLink(url:string):boolean{
+  if(typeof url!=='string'||url.length>2048||window.parent===window)return false;
+  let parsed:URL;
+  try{parsed=new URL(url);}catch{return false;}
+  if(parsed.protocol!=='https:')return false;
+  post({kind:'host-request',request:'open-external',url:parsed.href});
+  return true;
+}
+
 /** Boot hook: stand the channel listener up inside the hosted frame. Safe to
  * call anywhere (standalone, Node tests): outside a host frame it simply
  * never arms, and kernelExpressionsAvailable() stays false. The pinned API

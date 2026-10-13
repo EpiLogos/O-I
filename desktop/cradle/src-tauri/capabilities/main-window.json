@@ -25,7 +25,8 @@
     "allow-terminal-checkpoint",
     "allow-terminal-reconcile",
     "allow-expression-walk-observation",
-    "core:window:allow-set-theme"
+    "core:window:allow-set-theme",
+    {"identifier": "opener:allow-open-url", "allow": [{"url": "https://*"}]}
   ],
   "webviews": [
     "main",

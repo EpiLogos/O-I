@@ -201,6 +201,7 @@ fn main() {
     let builder = material_protocol::register(tauri::Builder::default());
     builder
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             app.manage(windows::Windows::default());
             #[cfg(feature = "native_shell")]
