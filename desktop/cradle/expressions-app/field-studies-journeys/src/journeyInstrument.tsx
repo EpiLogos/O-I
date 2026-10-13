@@ -1,15 +1,27 @@
 import type {ReactElement,PointerEvent as ReactPointerEvent} from 'react';
+import {useEffect,useState} from 'react';
 import {createRoot,type Root} from 'react-dom/client';
 import type {KernelConversion} from './kernelDocumentBridge';
 import type {TechneReading} from '../../../src/techne/contract';
 import {draftFromBeats,moveBeat} from '../../../src/techne/m0m5/journey/sequence';
 import {beats} from '../../../src/techne/m0m5/journey/beats';
 import {journeyBeatView,reorderSceneRequest,type JourneyBeatCard,type JourneyBeatView,type JourneyEditRequest} from './journeyBeats';
+import type {Journey} from './model';
+import {expressionTiming} from './propertyTracks';
+import {walkJourney,type JourneyPath} from './journeyPath';
 import {journeyInstrumentBasis,sameJourneyInstrumentBasis,readJourneyInstrument,readJourneySceneFrame,prepareJourneyBeatFocus,type JourneyBeatFocus,type JourneyInstrumentBasis} from './journeyInstrumentModel';
 import './journeyInstrument.css';
 
+/** T8: the playback clock as the host runs it: the journey as its clock reads it (a saved-sequence run passes the saved
+ * durations), and the expression time on that clock. The walked path is derived from this and nothing else. */
+export interface JourneyPlaybackClock {journey:Journey;time:number}
+
 export interface JourneyInstrumentHost {
  nativeView:()=>KernelConversion|undefined;sceneId:()=>string;
+ /** T8: the live playback clock, or undefined when no journey plays here. Without it the walked path is not shown. */
+ playback?:()=>JourneyPlaybackClock|undefined;
+ /** T8: seek the playhead to a journey time in seconds; the walked path's scenes are seekable through it. */
+ seek?:(seconds:number)=>void;
  /** One native reading. Without `scope` it is the Scene's own reading; with
   * `scope: 'expression'` it is the whole Expression's disclosure (every bound
   * Scene, in document order). */
@@ -76,9 +88,30 @@ function beginBeatDrag(ev:ReactPointerEvent<HTMLLIElement>,from:number,cards:rea
  document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',cancel);
 }
 
-export function JourneyBeatPanel({reading,beatView,native,basis,busy,onFocus,onMove,onRefresh}:{
+/** T8: the walked journey path beneath the beats: the scenes in order with their seams, the scene the clock stands in, the
+ * blend in force, and the scene next after it. Each scene seeks the playhead. The clock is polled, so a paused or scrubbed
+ * playhead reads the same way a playing one does. */
+function JourneyPlaybackPath({read,seek}:{read:()=>JourneyPlaybackClock|undefined;seek:(seconds:number)=>void}):ReactElement|null{
+ const [clock,setClock]=useState<JourneyPlaybackClock|undefined>(()=>read());
+ useEffect(()=>{const id=window.setInterval(()=>setClock(read()),200);return ()=>window.clearInterval(id);},[read]);
+ if(!clock||!clock.journey.scenes.length)return null;
+ const path:JourneyPath=walkJourney(clock.journey,(index,local)=>expressionTiming(clock.journey,index,local),clock.time);
+ return <section className="journey-playback-path" aria-label="Journey playback path">
+  <header><h3>Playback</h3>{path.position?<span className="journey-path-clock">Scene {path.position.index+1} of {path.steps.length} · {path.position.time.toFixed(1)} / {path.total.toFixed(1)} s</span>:null}</header>
+  <ol className="journey-path-steps">{path.steps.map(step=>{const current=path.position?.index===step.index;return <li key={step.sceneId} className="journey-path-step" data-current={current}>
+   <button type="button" className="journey-path-scene" aria-current={current?'step':undefined} title={`Play from ${step.start.toFixed(1)} s`} onClick={()=>seek(step.start)}>
+    <span aria-hidden="true">{step.index+1}</span> {step.name}</button>
+   <span className={`journey-path-seam${step.seam?step.seam.blends?'':' is-cut':' is-start'}`}>{step.seam?step.seam.label:'Start'}</span>
+  </li>;})}</ol>
+  {path.edge?<p className="journey-path-edge">{path.edge.from} → {path.edge.to} · {path.edge.label} · {Math.round(path.edge.fraction*100)}%</p>:null}
+  <p className="journey-path-next">{path.next?`Next: ${path.next.name}${path.next.wraps?' (loops to the start)':''}`:path.position?'The journey ends here.':'The playhead is outside the journey.'}</p>
+ </section>;
+}
+
+export function JourneyBeatPanel({reading,beatView,native,basis,busy,onFocus,onMove,onRefresh,playback}:{
  reading:TechneReading;beatView:JourneyBeatView;native:KernelConversion;basis:JourneyInstrumentBasis;busy:boolean;
  onFocus:(card:JourneyBeatCard)=>void;onMove:(sceneRef:string,toIndex:number)=>void;onRefresh:()=>void;
+ playback?:{read:()=>JourneyPlaybackClock|undefined;seek:(seconds:number)=>void};
 }):ReactElement{
  const cards=beatView.cards;
  return <section className="journey-beat-panel" aria-label="Reading-derived Journey">
@@ -100,6 +133,7 @@ export function JourneyBeatPanel({reading,beatView,native,basis,busy,onFocus,onM
    })}</ol>
    <span className="scene-insert-line" aria-hidden="true" hidden/>
   </div>}
+  {playback?<JourneyPlaybackPath read={playback.read} seek={playback.seek}/>:null}
   <p className="journey-reading-source">{reading.subject.subject_ref}</p>
  </section>;
 }
@@ -111,6 +145,7 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
  const mount=document.createElement('section'),status=document.createElement('p');
  mount.className='journey-reading-workspace';mount.hidden=true;status.setAttribute('role','status');status.hidden=true;home.append(status,mount);
  let root:Root|null=null,epoch=0,open=false,destroyed=false;
+ const playback=host.playback&&host.seek?{read:host.playback,seek:host.seek}:undefined;
  const current=(basis:JourneyInstrumentBasis,generation:number)=>!destroyed&&open&&epoch===generation&&sameJourneyInstrumentBasis(basis,host.nativeView(),host.sceneId());
  const message=(text:string)=>{status.textContent=text;};
  const failure=(cause:unknown)=>cause instanceof Error?cause.message:String(cause);
@@ -138,7 +173,7 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
    const beatView=journeyBeatView(reading,view!.document,frames);
    root??=createRoot(mount);
    let busy=false;
-   const draw=()=>{if(!current(basis,generation))return;root!.render(<JourneyBeatPanel reading={reading} beatView={beatView} native={view!} basis={basis} busy={busy} onRefresh={()=>void load()}
+   const draw=()=>{if(!current(basis,generation))return;root!.render(<JourneyBeatPanel reading={reading} beatView={beatView} native={view!} basis={basis} busy={busy} onRefresh={()=>void load()} playback={playback}
     onFocus={card=>{
      if(busy)return;
      try{
