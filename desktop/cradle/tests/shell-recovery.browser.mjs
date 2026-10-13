@@ -53,6 +53,14 @@ async function captureExit(page){
  }));
  writeFileSync(`${out}/${key}-exit.json`,JSON.stringify({...state,pageErrors:page.w1Errors??[]},null,2));
 }
+// The shell boots under StrictMode on the dev server: after a mount commit React destroys and re-runs every layout effect
+// once. TextEditor builds its CodeMirror view in a layout effect, so a draft's .cm-content is REPLACED ~50 ms after it first
+// appears. Retain only once the element has held still (15 frames, 300 ms): retaining the first element seen can retain the
+// pre-replay one, which the Settings return then correctly finds detached — a test race, never a product remount.
+async function settledEditor(page,selector){
+ await page.locator(selector).waitFor();
+ await page.evaluate(sel=>new Promise(resolve=>{const t0=performance.now();let held=null,frames=0;const tick=()=>{const now=document.querySelector(sel);if(now&&now===held)frames++;else{held=now;frames=0;}if(frames>=15&&performance.now()-t0>=300){window.retainedEditor=now;resolve();}else requestAnimationFrame(tick);};tick();}),selector);
+}
 async function corner(page,expected){
  // A viewport change delivers the media-query notification before React's
  // next commit. Wait for the EXPECTED ownership, not merely any old visible
@@ -105,7 +113,7 @@ try{
    });
    await scenario(`${engineName}/${scheme}: full-workspace Settings, narrow preferences, real return and themes`,async()=>{
     const {context,page}=await seed(browser,scheme);try{
-     const editor=page.locator(visible+' [data-group-id="left"] .cm-content');if(!reference){await editor.waitFor();await editor.evaluate(el=>{window.retainedEditor=el;});}
+     const editorSel=visible+' [data-group-id="left"] .cm-content';const editor=page.locator(editorSel);if(!reference){await settledEditor(page,editorSel);}
      await page.keyboard.press('Control+Alt+5');await page.getByRole('region',{name:'Settings',exact:true}).waitFor();
      if(!reference){await page.waitForFunction(()=>JSON.parse(localStorage.getItem('oi-cradle.workspaces.v1')).workspaces[0].layout.mode==='settings');const s=await page.evaluate(()=>JSON.parse(localStorage.getItem('oi-cradle.workspaces.v1')).workspaces[0].layout);assert.equal(s.agencyDepth,'panel','12-SETTINGS §1: the left stays open as the section list');assert.equal(s.rightDepth,'collapsed','the right panel rests collapsed');}
      await page.getByRole('navigation',{name:'Settings sections'}).locator('[data-settings-section="appearance"]').click();await page.locator('.visuals-preferences').waitFor();
