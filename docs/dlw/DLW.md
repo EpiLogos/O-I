@@ -105,12 +105,11 @@ What you see in a pane is an instrument, and every instrument works in every
 kind of work. The kind of work decides what the instrument is looking at,
 never what it can do.
 
-There are six.
-
 The **world** instrument shows the Earth, the solar system and every world in
 the field, at any distance: the whole field, a system, one body, a region, a
 single place. Switch it to its graph view and the same material lays out as
-connections instead of distances. This is the ground the other five build on.
+connections instead of distances, coloured by what each thing is. This is the
+ground Technē's other instruments build on.
 
 The **canvas** is a table to lay things out on: drag, group, frame, and draw a
 line between two things to say they are related. Where you put things is your
@@ -127,22 +126,25 @@ The **journey** is an ordered walk through places, moments and things, with a
 pace, arrivals and a voice that tells it. You can play it, and you can record
 a new one from where you have just been.
 
-The **expression** instrument is the living field of Chapter 7: symbols,
-text, image, physics and sound in one scene.
-
 The **palace** is a building you compose over one body of material, with
 rooms that each hold a part of it, a path through them, a private room for
 what is not for showing, and doors out to other places. It is how you give a
 whole subject a form someone else can enter.
+
+Beside these sit the instruments any pane can hold for other kinds of
+material. The **expression** stage is the living field of Chapter 7. The
+**knowledge graph** is drawn for reading a wiki or a body of notes, link by
+link, with references nobody has resolved yet drawn as hollow ghosts, and
+with every node offering what its owner allows you to do with it. Documents,
+agent sessions and their threads, and a terminal are instruments too.
 
 Open any of these in any pane, beside any other. Its controls appear in the
 device area at the bottom of the window whenever its pane has focus, and they
 are the full controls, wherever you are. The pane itself shows only the
 material.
 
-Each instrument can come in more than one build, the way Live has more than
-one reverb: two graph views, for instance, one coloured and spacious, one
-drawn tight for reading a wiki, both under the same controls. You arrange
+An instrument can come in more than one build, the way Live has more than
+one reverb, each answering to the same controls. You arrange
 panes and instruments into sets, each kind of work has its default set, and
 you save your own.
 
@@ -174,8 +176,9 @@ makes comes with a receipt.
 Look at Central through the world instrument and you see your planet. Your
 projects are places on it, today's work is a walk across it, and the files
 and context you are holding circle in orbit. Through the timeline you see
-today on one ruler: entries, runs, returns. Through the graph you see what
-today touched.
+today on one ruler: entries, runs, returns. Through the world's graph view you
+see what today touched, and through the knowledge graph how today's notes
+link into everything you already knew.
 
 When the day ends it closes itself. What you learned is filed into your
 knowledge, what you made is kept, and tomorrow starts clean.
