@@ -44,6 +44,7 @@ import {sameEditorBasis,type NativeEditorBasis,type NativeEditorController} from
 import './NativeCompositionResidence.css'
 import './live/liveCentre.css'
 import './live/LiveInstrumentSection'
+import './live/LivePresets'
 import {registerAtlasHost} from './projections/atlas/registerAtlasHost'
 import {registerTimelineHost} from './projections/timelinePane'
 import {setTimelinePanePresentation, useTimelinePanePresentation, usePublishTimelineReading} from './projections/timelinePaneHost'

@@ -13,3 +13,10 @@
 .live-instrument-segments { display: flex; gap: 4px; }
 .live-instrument-range { display: flex; flex-direction: column; gap: 2px; }
 .live-instrument-range span { color: var(--text-faint); font-size: 10px; }
+.live-legacy { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border-top: 1px solid var(--line); color: var(--text); font-family: var(--font-mono); font-size: 11px; }
+.live-legacy h4 { margin: 0; font-size: 10px; font-weight: 400; color: var(--text-faint); text-transform: uppercase; letter-spacing: .06em; }
+.live-legacy-note { margin: 0; color: var(--text-faint); font-size: 10px; }
+.live-legacy-face { min-width: 0; }
+.live-presets { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; color: var(--text); font-family: var(--font-mono); font-size: 11px; }
+.live-presets h4 { margin: 0; font-size: 10px; font-weight: 400; color: var(--text-faint); text-transform: uppercase; letter-spacing: .06em; }
+.live-presets-note { margin: 0; color: var(--text-dim); font-size: 10px; line-height: 1.4; }
