@@ -16,11 +16,11 @@ import {updateToolbeltValues,liveValue} from './liveValues';
 import {beltCandidates,pickerHTML} from './beltPicker';
 import {PropertyTrack,sampleTrack,evaluateTracks,readTrackValue,mergeTake,expressionTiming} from './propertyTracks';
 import {journeyTimelineLayout} from './journeyTimelineLayout';
-import {durationFromEdgeDrag,sceneAtTime,SCENE_DURATION_MIN,SCENE_DURATION_MAX,type TimelineLayout} from './journeyTimelineLayout';
+import {durationFromEdgeDrag,sceneAtTime,secondsFromDrag,slipOffsetFromDrag,insertBeforeFor,SCENE_DURATION_MIN,SCENE_DURATION_MAX,type TimelineLayout} from './journeyTimelineLayout';
 import {entityTargets} from './nativeParameters';
 import {recordRecent,recentJourneys} from './recentWork';
 import {installPanelResize} from './panelResize';
-import {initialiseSceneSaves,sceneSaveState,saveScene,nextSceneFrom,moveScene,retimeScene,removeScene,splitScene,applyTimelineMove,restoreScene,savedSceneIndices,sceneParameterChanges} from './sceneWorkflow';
+import {initialiseSceneSaves,sceneSaveState,saveScene,nextSceneFrom,moveScene,retimeScene,removeScene,splitScene,applyTimelineMove,restoreScene,savedSceneIndices,sceneParameterChanges,insertScene,overwriteScene,stillScene,rollSceneSeam,seamRollRange,slipScene} from './sceneWorkflow';
 import {advanceSceneTransport,nativeSceneTransportMaterial} from './sceneTransport';
 import {liveWorkspaceHTML} from './liveWorkspace';
 import {defaultWorkspace,validateWorkspace,WORKSPACE_KEY,moveBeltEntry,syncHeldState} from './workspacePreferences';
@@ -103,6 +103,12 @@ import {mountSoundControls} from './soundControls.js';
 // E05 trim state, declared before any top-level code can render the timeline.
 let sceneTrim:null|{sceneId:string;startX:number;trackPx:number;base:TimelineLayout;from:number;duration:number;clamped:'min'|'max'|null;moved:boolean;frame:number}=null;
 let trimClickGuardUntil=0;
+// E06 roll state: a Shift-drag on a clip's edge moves the seam with the next scene. Declared here, with the trim state, for the same reason.
+let sceneRoll:null|{leftId:string;rightId:string;startX:number;trackPx:number;total:number;left:number;right:number;seconds:number;clamped:'min'|'max'|null;moved:boolean;frame:number}=null;
+/** The Scene ref being dragged; a move addresses the scene by ref, never by the index the clip stood at. */
+let sceneDragId='';
+// E04/E06 body gesture state: one drag on a clip body; Alt+Shift overwrites, Alt slips, plain inserts or slides.
+let sceneBody:null|{sceneId:string;clip:HTMLElement;startX:number;trackPx:number;total:number;duration:number;from:number;mode:'insert'|'overwrite'|'slip';targetId:string;rightHalf:boolean;offset:number;moved:boolean}=null;
 mountShell();installPanelResize();installKernelExpressions();
 const recovery=document.createElement('section');recovery.id='engine-recovery';recovery.hidden=true;recovery.className='engine-recovery';recovery.setAttribute('role','alert');recovery.innerHTML='<h3>GPU context interrupted</h3><p>The expression is intact. Recovering recreates lost particle state, not a runtime checkpoint.</p><button class="secondary" data-action="native-recover">Recover field</button>';document.body.append(recovery);
 
@@ -253,7 +259,7 @@ function renderTimeline(){if(!timelineOpen)return;const s=scene(),doc=timelineDo
   ?`<div class="scene-track" aria-label="Expression track"><div class="scene-track-ruler">${[0,.25,.5,.75,1].map(f=>`<span style="left:${f*100}%">${(f*layout.total).toFixed(f===1?1:0)}s</span>`).join('')}</div><div class="scene-track-lane">${scenes.map((v,i)=>sceneButton(v,i,` style="left:${layout.clips[i].x}%;width:${layout.clips[i].w}%"`)).join('')}<input class="scene-track-playhead" type="range" ${playhead}></div></div>`
   :`<div class="scene-strip">${scenes.map((v,i)=>sceneButton(v,i,'')).join('')}<button class="scene-image scene-add" data-action="save-next" aria-label="Save and add next scene">${icon('plus')}</button></div><label class="expression-scrub"><span>Expression time</span><input type="range" ${playhead}></label>`;
  const toggle=`<button data-action="timeline-track" aria-pressed="${track}" title="${track?'Show the scenes as a compact strip':'Show the scenes on the time track'}">${track?'Collapse to strip':'Show track'}</button>`;
- $('timeline-panel').innerHTML=`${body}<div class="scene-save-row"><label>Scene name<input id="scene-save-name" value="${esc(sceneNames.get(s.id)??s.name)}" maxlength="160"></label><label>Hold · seconds<input type="number" data-bind="duration" value="${sceneTrim?.moved&&sceneTrim.sceneId===s.id?sceneTrim.duration:s.duration}" min="${SCENE_DURATION_MIN}" max="${SCENE_DURATION_MAX}" step=".1"></label><label>Transition<input type="number" aria-label="Transition seconds" data-bind="transition" value="${s.transition}" min="0" max="30" step=".1"></label><button class="primary" data-action="save-scene">Save scene</button><button data-action="save-next">Save & next</button><button data-action="restore-scene" ${!store.document.savedScenes?.[s.id]?'disabled':''}>Restore</button><button data-action="split-scene" title="Cut this scene in two at the playhead · S">Split</button>${ib('move-scene-left','arrowLeft','Move scene earlier',`data-scene-id="${esc(s.id)}"`)}${ib('move-scene-right','arrowRight','Move scene later',`data-scene-id="${esc(s.id)}"`)}${ib('delete-scene','trash','Delete scene',`data-scene-id="${esc(s.id)}"`)}${toggle}${ib('close-timeline','chevronDown','Collapse scenes')}</div><p class="scene-caption">${sceneSaveState(store.document,s)} · ${s.propertyTracks?.length??0} recorded properties · Scrubbing evaluates settings; particle motion continues from its current state.</p>`;}
+ $('timeline-panel').innerHTML=`${body}<div class="scene-save-row"><label>Scene name<input id="scene-save-name" value="${esc(sceneNames.get(s.id)??s.name)}" maxlength="160"></label><label>Hold · seconds<input type="number" data-bind="duration" value="${sceneTrim?.moved&&sceneTrim.sceneId===s.id?sceneTrim.duration:s.duration}" min="${SCENE_DURATION_MIN}" max="${SCENE_DURATION_MAX}" step=".1"></label><label>Transition<input type="number" aria-label="Transition seconds" data-bind="transition" value="${s.transition}" min="0" max="30" step=".1"></label><button class="primary" data-action="save-scene">Save scene</button><button data-action="save-next">Save & next</button><button data-action="restore-scene" ${!store.document.savedScenes?.[s.id]?'disabled':''}>Restore</button><button data-action="split-scene" title="Cut this scene in two at the playhead · S">Split</button><button data-action="still-scene" title="Add a still scene after this one: a held frame for a timed void, with no motion">Still scene</button>${ib('move-scene-left','arrowLeft','Move scene earlier',`data-scene-id="${esc(s.id)}"`)}${ib('move-scene-right','arrowRight','Move scene later',`data-scene-id="${esc(s.id)}"`)}${ib('delete-scene','trash','Delete scene',`data-scene-id="${esc(s.id)}"`)}${toggle}${ib('close-timeline','chevronDown','Collapse scenes')}</div><p class="scene-caption">${sceneSaveState(store.document,s)} · ${s.propertyTracks?.length??0} recorded properties · Scrubbing evaluates settings; particle motion continues from its current state.</p>${track?'<p class="scene-gesture-hint">Edge: trim · Shift+edge: roll the seam · Drag a clip: slide or insert (Alt+Shift: overwrite) · Alt+drag a clip: slip</p>':''}`;}
 // E05 · trim: a clip's right edge changes that scene's duration. The drag previews
 // on the timeline only: timelineDocument() reads a shallow copy with the one new
 // duration, so the layout still runs on the single Expression clock. Pointer-up
@@ -261,7 +267,10 @@ function renderTimeline(){if(!timelineOpen)return;const s=scene(),doc=timelineDo
 // gets one entry. The save then rides the existing kernel path: the duration is part
 // of the scene material that the save emits as scene_material_set.
 function trimEdgeHTML(v:Scene){return `<span class="scene-trim-edge" data-scene-id="${esc(v.id)}" title="${esc(`${v.duration.toFixed(1)} s · drag to trim · double-click or Alt-click for exact seconds`)}" aria-hidden="true"></span>`;}
-function timelineDocument():Journey{const t=sceneTrim;if(!t?.moved)return store.document;return {...store.document,scenes:store.document.scenes.map(v=>v.id===t.sceneId?{...v,duration:t.duration}:v)};}
+function timelineDocument():Journey{const t=sceneTrim,r=sceneRoll;
+ // E06: a roll previews on the same clock: the left lasts +seconds, the right −seconds.
+ if(r?.moved)return {...store.document,scenes:store.document.scenes.map(v=>v.id===r.leftId?{...v,duration:v.duration+r.seconds}:v.id===r.rightId?{...v,duration:v.duration-r.seconds}:v)};
+ if(!t?.moved)return store.document;return {...store.document,scenes:store.document.scenes.map(v=>v.id===t.sceneId?{...v,duration:t.duration}:v)};}
 function trimLimitToast(limit:'min'|'max'){toast(limit==='min'?`Scene duration stops at ${SCENE_DURATION_MIN} second, the shortest a scene can hold.`:`Scene duration stops at ${SCENE_DURATION_MAX} seconds, one hour, the longest a scene can hold.`);}
 /** Exact entry: select the scene, then focus its Hold · seconds input, the numeric the timeline already commits. */
 function openExactDuration(sceneId:string){
@@ -275,6 +284,8 @@ function beginSceneTrim(ev:PointerEvent,handle:HTMLElement){
  if(sceneTrim)endSceneTrim(false);
  ev.preventDefault();
  if(ev.altKey){trimClickGuardUntil=performance.now()+400;openExactDuration(sceneId);return;}
+ // E06: Shift on an edge rolls the seam with the next scene instead of trimming this one alone.
+ if(ev.shiftKey){beginSceneRoll(ev,handle);return;}
  if(ev.detail>1)return;
  if(propertyTake){toast('Finish the property take before changing this scene\'s length.');return;}
  const trackPx=lane.getBoundingClientRect().width;
@@ -310,11 +321,135 @@ function endSceneTrim(commit:boolean){
 }
 function upSceneTrim(){endSceneTrim(true);}
 function cancelSceneTrim(){endSceneTrim(false);}
+// E06 · roll: Shift-drag on a clip's edge. The seam moves with the next scene: the left lasts +d, the right −d,
+// Σ is conserved, and each side keeps the timing bounds. Pointer-up makes ONE labelled composite (one undo entry).
+function sceneNameOf(sceneId:string){return store.document.scenes.find(s=>s.id===sceneId)?.name??'scene';}
+/** A move can change a scene's index; the playhead stays on the same scene, by ref. */
+function refocusScene(sceneId:string){sceneIndex=Math.max(0,store.document.scenes.findIndex(s=>s.id===sceneId));}
+function beginSceneRoll(ev:PointerEvent,handle:HTMLElement){
+ const leftId=handle.dataset.sceneId??'',lane=handle.closest<HTMLElement>('.scene-track-lane');
+ const scenes=store.document.scenes,i=scenes.findIndex(v=>v.id===leftId);
+ if(!lane||i<0)return;
+ if(i>=scenes.length-1){toast('There is no scene after this one to roll the seam into.');return;}
+ if(propertyTake){toast('Finish the property take before rolling a seam.');return;}
+ const trackPx=lane.getBoundingClientRect().width;
+ if(!(trackPx>0))return;
+ const total=journeyTimelineLayout(scenes,(index,local)=>expressionTiming(store.document,index,local),100).total;
+ sceneRoll={leftId,rightId:scenes[i+1].id,startX:ev.clientX,trackPx,total,left:scenes[i].duration,right:scenes[i+1].duration,seconds:0,clamped:null,moved:false,frame:0};
+ document.body.classList.add('trimming-scene');
+ document.addEventListener('pointermove',moveSceneRoll);document.addEventListener('pointerup',upSceneRoll);document.addEventListener('pointercancel',cancelSceneRoll);
+}
+function moveSceneRoll(ev:PointerEvent){
+ const r=sceneRoll;if(!r)return;
+ const range=seamRollRange(r.left,r.right),want=secondsFromDrag(ev.clientX-r.startX,r.trackPx,r.total);
+ const seconds=Math.min(range.max,Math.max(range.min,want)),clamped=want<range.min?'min':want>range.max?'max':null;
+ if(clamped&&clamped!==r.clamped)toast(`The seam stops at its limit: a scene lasts ${SCENE_DURATION_MIN} to ${SCENE_DURATION_MAX} seconds.`);
+ r.clamped=clamped;r.seconds=seconds;r.moved=seconds!==0;
+ if(!r.frame)r.frame=requestAnimationFrame(()=>{r.frame=0;renderTimeline();});
+}
+function endSceneRoll(commit:boolean){
+ const r=sceneRoll;if(!r)return;
+ sceneRoll=null;if(r.frame)cancelAnimationFrame(r.frame);
+ document.removeEventListener('pointermove',moveSceneRoll);document.removeEventListener('pointerup',upSceneRoll);document.removeEventListener('pointercancel',cancelSceneRoll);
+ document.body.classList.remove('trimming-scene');
+ if(!commit||!r.moved){renderTimeline();return;}
+ trimClickGuardUntil=performance.now()+400;
+ try{changedComposite(`Roll seam after ${sceneNameOf(r.leftId)}`,d=>{rollSceneSeam(d,r.leftId,r.seconds);});if(sceneElapsed>scene().duration)sceneElapsed=scene().duration;}catch(err){error(err);renderTimeline();}
+}
+function upSceneRoll(){endSceneRoll(true);}
+function cancelSceneRoll(){endSceneRoll(false);}
+// E04/E06 · body: one drag on a clip body. The modifiers set its meaning, read live: plain = slide/insert (the
+// scene moves before the clip whose near half the pointer is over, a line shows the edge); Alt+Shift = overwrite
+// (that clip is replaced by this one, the clip is highlighted); Alt = slip (the scene starts earlier or later in
+// its own evolution, the clip reads its new start). Pointer-up is ONE labelled composite (one undo entry).
+function beginSceneBody(ev:PointerEvent,clip:HTMLElement){
+ const sceneId=clip.dataset.sceneId??'',lane=clip.closest<HTMLElement>('.scene-track-lane');
+ const v=store.document.scenes.find(s=>s.id===sceneId);
+ if(!v||!lane||sceneTrim||sceneRoll)return;
+ if(propertyTake){toast('Finish the property take before moving a scene.');return;}
+ const trackPx=lane.getBoundingClientRect().width;
+ if(!(trackPx>0))return;
+ ev.preventDefault();
+ const total=journeyTimelineLayout(store.document.scenes,(index,local)=>expressionTiming(store.document,index,local),100).total;
+ sceneBody={sceneId,clip,startX:ev.clientX,trackPx,total,duration:v.duration,from:v.entryOffset??0,mode:'insert',targetId:sceneId,rightHalf:false,offset:v.entryOffset??0,moved:false};sceneDragId=sceneId;
+ document.body.classList.add('moving-scene');
+ document.addEventListener('pointermove',moveSceneBody);document.addEventListener('pointerup',upSceneBody);document.addEventListener('pointercancel',cancelSceneBody);
+}
+function moveSceneBody(ev:PointerEvent){
+ const b=sceneBody;if(!b)return;
+ const dx=ev.clientX-b.startX;
+ if(!b.moved&&Math.abs(dx)<4)return;
+ b.moved=true;
+ b.mode=ev.altKey&&ev.shiftKey?'overwrite':ev.altKey?'slip':'insert';
+ if(b.mode==='slip'){b.offset=slipOffsetFromDrag(b.from,dx,b.trackPx,b.total,b.duration);}
+ else{
+  const lane=b.clip.closest<HTMLElement>('.scene-track-lane'),rect=lane?.getBoundingClientRect();
+  if(rect&&rect.width>0){
+   const seconds=Math.min(Math.max((ev.clientX-rect.left)/rect.width,0),1)*b.total;
+   const hit=sceneAtTime(journeyTimelineLayout(store.document.scenes,(index,local)=>expressionTiming(store.document,index,local),100),seconds);
+   if(hit){const target=store.document.scenes.find(s=>s.id===hit.sceneId);b.targetId=hit.sceneId;b.rightHalf=!!target&&hit.local>target.duration/2;}
+  }
+ }
+ paintSceneBody();
+}
+function paintSceneBody(){
+ const b=sceneBody;if(!b)return;
+ const lane=b.clip.closest<HTMLElement>('.scene-track-lane');if(!lane)return;
+ lane.querySelectorAll<HTMLElement>('[data-drop]').forEach(el=>el.removeAttribute('data-drop'));
+ const line=lane.querySelector<HTMLElement>('.scene-insert-line');
+ b.clip.dataset.drag=b.mode;
+ if(b.mode==='slip'){b.clip.dataset.readout=`starts at ${b.offset.toFixed(1)} s`;if(line)line.hidden=true;return;}
+ delete b.clip.dataset.readout;
+ const target=b.targetId===b.sceneId?null:lane.querySelector<HTMLElement>(`[data-scene-id="${CSS.escape(b.targetId)}"]`);
+ if(b.mode==='overwrite'){target?.setAttribute('data-drop','overwrite');if(line)line.hidden=true;return;}
+ if(!target){if(line)line.hidden=true;return;}
+ const insertLine=line??lane.appendChild(Object.assign(document.createElement('div'),{className:'scene-insert-line'}));
+ const laneRect=lane.getBoundingClientRect(),tr=target.getBoundingClientRect();
+ insertLine.hidden=false;insertLine.style.left=`${(b.rightHalf?tr.right:tr.left)-laneRect.left}px`;
+}
+function endSceneBody(commit:boolean){
+ const b=sceneBody;if(!b)return;
+ sceneBody=null;sceneDragId='';
+ document.removeEventListener('pointermove',moveSceneBody);document.removeEventListener('pointerup',upSceneBody);document.removeEventListener('pointercancel',cancelSceneBody);
+ document.body.classList.remove('moving-scene');
+ renderTimeline();
+ if(!commit||!b.moved)return;
+ const current=scene().id;
+ try{
+  if(b.mode==='slip'){
+   if(b.offset===b.from)return;
+   trimClickGuardUntil=performance.now()+400;
+   const offset=b.offset;
+   changedComposite(`Slip scene ${sceneNameOf(b.sceneId)}`,d=>{slipScene(d,b.sceneId,offset);},()=>refocusScene(current));
+   return;
+  }
+  if(b.targetId===b.sceneId)return;
+  trimClickGuardUntil=performance.now()+400;
+  if(b.mode==='overwrite'){
+   const replaced=b.targetId;
+   changedComposite(`Overwrite scene ${sceneNameOf(replaced)} with ${sceneNameOf(b.sceneId)}`,d=>{overwriteScene(d,b.sceneId,replaced);},()=>refocusScene(current===replaced?b.sceneId:current));
+   return;
+  }
+  const before=insertBeforeFor(store.document.scenes,b.targetId,b.rightHalf);
+  changedComposite(`Insert scene ${sceneNameOf(b.sceneId)}`,d=>{insertScene(d,b.sceneId,before);},()=>refocusScene(current));
+ }catch(err){error(err);}
+}
+function upSceneBody(){endSceneBody(true);}
+function cancelSceneBody(){endSceneBody(false);}
+/** E04 starter: a still scene after the current one, as one labelled edit. */
+function addStillScene(){
+ if(propertyTake){toast('Finish the property take before adding a scene.');return;}
+ if(store.document.scenes.length>=64){toast('An expression can contain up to 64 scenes.');return;}
+ const fresh=stillScene();
+ changed(()=>{applyTimelineMove(store.document,scenes=>{scenes.splice(sceneIndex+1,0,fresh);});sceneIndex++;selected=[];textId=scene().text[0]?.id??null;sceneElapsed=0;journeyPlaying=false;},true,'Add still scene');
+ edit(true,'scene');timelineOpen=true;renderAll();
+}
 // E07 · split: the scene under the playhead is cut in two at the playhead's global time.
 // One labelled composite (E16) is one undo entry and one kernel edit; a refusal throws
 // before anything is written and is named in the toast.
-function changedComposite(label:string,fn:(doc:Journey)=>void){
+function changedComposite(label:string,fn:(doc:Journey)=>void,after?:()=>void){
  store.composite(label,fn);
+ after?.();
  trackPreview=false;if(journeyPlaying){journeyPlaying=false;applySceneView();}
  awaitingNativeBoot=false;nativeWorkspace?.cancelOpen();markSaved();overlayDirty=true;needsFrame=true;renderAll();
 }
@@ -753,6 +888,7 @@ case 'timeline-track':timelineTrack=!timelineTrack;renderAll();break;
  case 'new-scene':changed(()=>{const fresh=blankScene();applyTimelineMove(store.document,scenes=>{scenes.splice(sceneIndex+1,0,fresh);});sceneIndex++;selected=[];textId=scene().text[0]?.id??null;sceneElapsed=0;journeyPlaying=false;},true,'Add scene');edit(true,'scene');timelineOpen=true;renderAll();break;
  case 'duplicate-scene':{const id=el.dataset.sceneId??scene().id;changed(()=>{const source=store.document.scenes[sceneIndexOf(id)];const next=nextSceneFrom(store.document,source);next.name=(source.name+' / variation').slice(0,160);sceneIndex=store.document.scenes.indexOf(next);sceneElapsed=0;journeyPlaying=false;},true,'Duplicate scene');break;}
  case 'split-scene':splitSceneAtPlayhead();break;
+ case 'still-scene':addStillScene();break;
  case 'delete-scene':{const id=el.dataset.sceneId??'';if(store.document.scenes.length===1){toast('Keep at least one scene in the expression.');break;}const name=store.document.scenes[sceneIndexOf(id)].name;confirmChange('Remove this scene?',`“${name}” will be removed from this expression. Undo can restore it.`,()=>changed(()=>{const at=sceneIndexOf(id);removeScene(store.document,id);if(sceneIndex>=at)sceneIndex=Math.max(0,sceneIndex-1);sceneElapsed=0;},true,'Delete scene'));break;}
  case 'move-scene-left':{const id=el.dataset.sceneId??'';reorderScene(id,sceneIndexOf(id)-1);break;}
  case 'move-scene-right':{const id=el.dataset.sceneId??'';reorderScene(id,sceneIndexOf(id)+1);break;}
@@ -902,14 +1038,10 @@ $<HTMLInputElement>('source-file').addEventListener('change',async ev=>{const in
  }catch(err){error(err);}finally{input.value='';sourceUploadEntityId=null;}});
 $<HTMLInputElement>('import-file').addEventListener('change',async ev=>{const input=ev.target as HTMLInputElement,file=input.files?.[0];if(!file)return;try{if(file.size>32_000_000)throw new Error('Choose a configuration smaller than 32 MB.');const result=importDocuments(JSON.parse(await file.text()));collectImported(result.journeys);if(!libraryOpen)openLibrary();else renderLibrary();toast(`${result.journeys.length} document(s) imported. ${result.errors.length?result.errors.map(e=>`Entry ${e.index+1}: ${e.message}`).join(' · '):'All accepted; original input is unchanged.'}`,10000);}catch(err){error(err);}finally{input.value='';}});
 document.querySelectorAll<HTMLDialogElement>('dialog').forEach(d=>d.addEventListener('click',ev=>{if(ev.target!==d)return;const r=d.getBoundingClientRect();if(ev.clientX<r.left||ev.clientX>r.right||ev.clientY<r.top||ev.clientY>r.bottom)d.close();}));
-/** The Scene ref being dragged; a drop reorders by ref, never by the index the card stood at. */
-let sceneDragId='';
-// E05: the trim edge is delegated on the panel, which survives the re-renders a drag causes.
-$('timeline-panel').addEventListener('pointerdown',ev=>{const handle=(ev.target as Element).closest<HTMLElement>('.scene-trim-edge');if(handle&&ev.button===0)beginSceneTrim(ev,handle);});
+// E04/E05/E06: the gestures are delegated on the panel, which survives the re-renders a drag causes. The clip
+// body and the trim edge share one pointerdown: an edge is a trim (or a roll, with Shift); a body is a move.
+$('timeline-panel').addEventListener('pointerdown',ev=>{if(ev.button!==0)return;const handle=(ev.target as Element).closest<HTMLElement>('.scene-trim-edge');if(handle){beginSceneTrim(ev,handle);return;}const clip=(ev.target as Element).closest<HTMLElement>('.scene-track .scene-clip');if(clip&&editing)beginSceneBody(ev,clip);});
 $('timeline-panel').addEventListener('dblclick',ev=>{const handle=(ev.target as Element).closest<HTMLElement>('.scene-trim-edge');if(handle){ev.preventDefault();openExactDuration(handle.dataset.sceneId??'');}});
-$('timeline-panel').addEventListener('dragstart',ev=>{const card=(ev.target as Element).closest<HTMLElement>('[data-scene-id]');if(!editing||!card)return;sceneDragId=card.dataset.sceneId??'';ev.dataTransfer?.setData('text/plain',sceneDragId);if(ev.dataTransfer)ev.dataTransfer.effectAllowed='move';});
-$('timeline-panel').addEventListener('dragover',ev=>{if(editing&&sceneDragId&&(ev.target as Element).closest('[data-scene-id]'))ev.preventDefault();});
-$('timeline-panel').addEventListener('drop',ev=>{const card=(ev.target as Element).closest<HTMLElement>('[data-scene-id]');if(card&&sceneDragId){ev.preventDefault();const to=store.document.scenes.findIndex(s=>s.id===card.dataset.sceneId);reorderScene(sceneDragId,to);sceneDragId='';}});
 function hitEntity(x:number,y:number){if(engine.hitEntity){const id=engine.hitEntity(x,y);return scene().entities.find(e=>e.id===id);}let winner:Entity|undefined,best=25;for(const e of [...scene().entities].reverse()){const p=project(e.position,camera,width,height),d=Math.hypot(x-p.x,y-p.y);if(d<best){best=d;winner=e;}}return winner;}
 function positionAt(ev:PointerEvent,plane=camera.plane,depth=camera.depth){return unproject(ev.clientX,ev.clientY,camera,width,height,plane,depth);}
 function showCoordinates(v:Vec3){const number=(n:number)=>(Math.abs(n)<.0005?0:n).toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3,signDisplay:'always',useGrouping:false});

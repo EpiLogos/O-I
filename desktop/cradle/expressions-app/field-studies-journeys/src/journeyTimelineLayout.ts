@@ -51,6 +51,39 @@ export function durationFromEdgeDrag(layout:TimelineLayout,sceneId:string,dxPx:n
 }
 
 /**
+ * E04/E06: the seconds a horizontal drag of `dxPx` moves along the layout's own clock (`total` seconds
+ * across `trackPx`), on the .1 s grid. A move under 0.05 s is no move (0).
+ */
+export function secondsFromDrag(dxPx:number,trackPx:number,total:number):number{
+ if(!(trackPx>0)||!(total>0)||!Number.isFinite(dxPx))return 0;
+ const raw=dxPx/trackPx*total;
+ if(Math.abs(raw)<.05)return 0;
+ return Math.round(raw*10)/10;
+}
+
+/**
+ * E06 slip: the entry offset a drag of `dxPx` gives. Dragging right shows earlier content, so the offset
+ * falls by the drag. It stays on [0, duration), on the .1 grid once the drag moved it. An unmoved drag keeps the offset.
+ */
+export function slipOffsetFromDrag(from:number,dxPx:number,trackPx:number,total:number,duration:number):number{
+ const moved=secondsFromDrag(dxPx,trackPx,total);
+ const max=Math.max(0,Math.round((duration-.1)*10)/10);
+ const next=moved===0?from:Math.round((from-moved)*10)/10;
+ return Math.min(max,Math.max(0,next));
+}
+
+/**
+ * E04: where a drop on clip `targetId` inserts. Its left half inserts before it; its right half inserts
+ * before the Scene after it (null = at the end of the Expression).
+ */
+export function insertBeforeFor(scenes:ReadonlyArray<{id:string}>,targetId:string,rightHalf:boolean):string|null{
+ const at=scenes.findIndex(s=>s.id===targetId);
+ if(at<0)throw new Error('This scene is no longer on the timeline.');
+ if(!rightHalf)return targetId;
+ return at+1<scenes.length?scenes[at+1].id:null;
+}
+
+/**
  * The scene under global time `t`, with its local time. Intervals are half-open
  * [start, end) so a boundary belongs to the scene it starts, matching
  * `expressionTiming(j, index, local).time`. The final instant `t = total`

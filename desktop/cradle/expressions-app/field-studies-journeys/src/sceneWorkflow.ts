@@ -1,4 +1,4 @@
-import {clone,uid,Journey,Scene,Entity,sceneContentDigest,SCENE_DURATION_MIN,SCENE_DURATION_MAX,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX,SCENE_TIMELINE_FACTS} from './model';
+import {clone,uid,blankScene,Journey,Scene,Entity,sceneContentDigest,SCENE_DURATION_MIN,SCENE_DURATION_MAX,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX,SCENE_TIMELINE_FACTS} from './model';
 import {valueAt,segmentControls,curveParameter,type PropertyTrack,type CurvePoint} from './propertyTracks';
 
 /** A timeline move would have changed a scene's content. Named so callers can tell it from a validation refusal. */
@@ -41,6 +41,58 @@ export function removeScene(j:Journey,sceneId:string):void{
  if(j.scenes.length<=1)throw new Error('Keep at least one scene in the expression.');
  applyTimelineMove(j,scenes=>{scenes.splice(index,1);});
  if(j.savedScenes)delete j.savedScenes[sceneId];
+}
+
+// ---- E04: insert, overwrite, still scene ------------------------------------
+/** E04 insert: Scene `sceneId` moves to sit before Scene `beforeSceneId` (null = at the end). The successors ripple along; nothing is created, removed or retimed, so Σ durations is unchanged. Inserting a scene before itself, or where it already stands, changes nothing. */
+export function insertScene(j:Journey,sceneId:string,beforeSceneId:string|null):void{
+ const from=indexOfScene(j,sceneId);
+ if(beforeSceneId===sceneId)return;
+ if(beforeSceneId===null){moveScene(j,sceneId,j.scenes.length-1);return;}
+ const at=indexOfScene(j,beforeSceneId);
+ // The target's index shifts down by one once the source has left its place above it.
+ moveScene(j,sceneId,from<at?at-1:at);
+}
+/** E04 overwrite: Scene `targetId` is replaced in its place by Scene `sourceId`. The source leaves its old place, which closes like any gap (its successors shift), and the target leaves the Expression with its saved copy, as removeScene does. Σ durations therefore falls by the target's duration: an overwrite with no gaps replaces a clip and gives back its length. */
+export function overwriteScene(j:Journey,sourceId:string,targetId:string):void{
+ if(sourceId===targetId)throw new Error('A scene cannot overwrite itself.');
+ const s=indexOfScene(j,sourceId),t=indexOfScene(j,targetId);
+ applyTimelineMove(j,scenes=>{const source=scenes[s];const replaced=scenes.map((v,i)=>i===t?source:v).filter((_v,i)=>i!==s);scenes.splice(0,scenes.length,...replaced);});
+ if(j.savedScenes)delete j.savedScenes[targetId];
+}
+/** E04 starter: a still scene is a normal Scene for a timed void, not a null gap. One held frame: the quiet count the preview already floors at (4000), no automation and no entities, so nothing moves. It has its own ref and sits in the sequence like any scene. */
+export function stillScene(name='Still scene'):Scene{
+ const s=blankScene(name);
+ s.character='A held frame. Nothing moves.';
+ s.field={...s.field,params:{...s.field.params,count:4000}};
+ s.automation=[];
+ s.entities=[];
+ return s;
+}
+
+// ---- E06: roll the seam, slip the entry -------------------------------------
+/** The seconds a seam between two Scenes may move: each side stays within the scene timing bounds. Both limits contain zero. */
+export function seamRollRange(left:number,right:number):{min:number;max:number}{
+ return {min:Math.max(SCENE_DURATION_MIN-left,right-SCENE_DURATION_MAX),max:Math.min(SCENE_DURATION_MAX-left,right-SCENE_DURATION_MIN)};
+}
+/** E06 roll: the seam after Scene `leftId` moves by `seconds` (positive = later). The left lasts +seconds and the next Scene −seconds, so Σ durations is conserved. The roll stops at the limit it reaches: the applied seconds come back, and `clamped` names the limit ('min' earlier, 'max' later). One applyTimelineMove. */
+export function rollSceneSeam(j:Journey,leftId:string,seconds:number):{seconds:number;clamped:'min'|'max'|null}{
+ const i=indexOfScene(j,leftId);
+ if(i>=j.scenes.length-1)throw new Error('There is no scene after this one to roll the seam into.');
+ if(!Number.isFinite(seconds))throw new Error('Roll the seam by a finite number of seconds.');
+ const left=j.scenes[i].duration,right=j.scenes[i+1].duration;
+ const range=seamRollRange(left,right);
+ const applied=Math.min(range.max,Math.max(range.min,seconds));
+ const clamped=seconds<range.min?'min':seconds>range.max?'max':null;
+ if(applied!==0)applyTimelineMove(j,scenes=>{scenes[i].duration=left+applied;scenes[i+1].duration=right-applied;});
+ return {seconds:applied,clamped};
+}
+/** E06 slip: Scene `sceneId` starts `offset` seconds into its own evolution. Its property tracks read local time + offset (propertyTracks.evaluateTracks). The offset is a timeline fact, so no content changes. The gesture keeps it in [0, duration); 0 removes it, since absent = 0. */
+export function slipScene(j:Journey,sceneId:string,offset:number):void{
+ const index=indexOfScene(j,sceneId);
+ const duration=j.scenes[index].duration;
+ if(!Number.isFinite(offset)||offset<0||offset>=duration)throw new Error(`A scene can only start inside its own length: 0 up to ${duration} seconds.`);
+ applyTimelineMove(j,scenes=>{if(offset===0)delete scenes[index].entryOffset;else scenes[index].entryOffset=offset;});
 }
 
 // ---- E07: split a scene at the playhead -------------------------------------
@@ -96,7 +148,10 @@ function splitSceneContent(src:Scene,t:number,newId:string):{left:Scene;right:Sc
  const left:Scene=clone(src),right:Scene=clone(src);
  left.duration=t;
  right.id=newId;right.name=`${src.name} / split`.slice(0,160);right.duration=src.duration-t;right.transition=0;
- if(src.propertyTracks){const cut=splitTracks(src.propertyTracks,t);left.propertyTracks=cut.left.length?cut.left:undefined;right.propertyTracks=cut.right.length?cut.right:undefined;}
+ // E06: the tracks are read on the evolution clock, local t + entryOffset. The cut is that evolution time, so the left keeps
+ // its evolution [entryOffset, cut) and the right starts its evolution at the cut, with no offset of its own.
+ const cutAt=t+(src.entryOffset??0);delete right.entryOffset;
+ if(src.propertyTracks){const cut=splitTracks(src.propertyTracks,cutAt);left.propertyTracks=cut.left.length?cut.left:undefined;right.propertyTracks=cut.right.length?cut.right:undefined;}
  // A recorded take interval is in scene-local time: clip it to the left, shift it to the right.
  const range=src.propertyTakeRange;
  left.propertyTakeRange=range&&range.start<t?{start:range.start,end:Math.min(range.end,t)}:undefined;
