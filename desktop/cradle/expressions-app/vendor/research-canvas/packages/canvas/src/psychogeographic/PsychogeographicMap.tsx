@@ -1,11 +1,21 @@
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type JSX,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 
 import type { ArchetypalExpression, GeographyEdge, GraphNodeContract } from "@research-canvas/schema";
 import type { LocatedGraphNode, PlacesRepository } from "@research-canvas/domain";
 import type { LiveServicePolicy } from "@research-canvas/geography";
 
 import type { TechnePlaceFacet } from "../../../../../../../src/techne/contract";
+import { nameInWindow, type TimeWindow } from "../../../../../../../src/techne/m0m5/place/filter";
 import { OPEN_PLACE_FILTER, type PlaceFilterState } from "../../../../../../field-studies-journeys/src/placeReading";
 import { standingLabel, type StandingDrawing } from "../timeline/standingStyle";
 
@@ -60,6 +70,7 @@ import {
 import {
   moveProposal,
   placeMenuItems,
+  placeRouteResultFor,
   prefillFromClick,
   proposalSummary,
   type PlaceAuthoringHost,
@@ -68,8 +79,51 @@ import {
   type PlaceMenuItem,
   type PlaceMoveProposal,
 } from "./placeAuthoring";
+import { LIVE_BASEMAP_SOURCES } from "./basemapSources";
+import {
+  advanceSpan,
+  centreSpanOn,
+  dragSpan,
+  extentEndLabels,
+  imageryTimeNote,
+  nudgeMs,
+  playStartSpan,
+  PLAYBACK_SPEEDS,
+  prefersReducedMotion,
+  startSpanFor,
+  stepSpan,
+  spanOfWindow,
+  spanText,
+  timeControlStatus,
+  trackPercent,
+  windowOfSpan,
+  type PlaceTimeHost,
+  type PlaybackSpeed,
+  type TimeSpan,
+  type WindowHandle,
+} from "./placeTimeControl";
 
 const NO_FACETS: readonly TechnePlaceFacet[] = [];
+
+/** The docked time bar's height. The notices and disclosure stand above it. */
+const TIME_BAR_HEIGHT = 46;
+const timeButtonStyle = {
+  font: "inherit",
+  color: "var(--ob-ink, #e6edf6)",
+  background: "transparent",
+  border: "1px solid var(--ob-line-3, #3a4e64)",
+  borderRadius: 6,
+  padding: "2px 8px",
+  cursor: "pointer",
+} as const;
+const timeFieldStyle = {
+  font: "inherit",
+  color: "var(--ob-ink, #e6edf6)",
+  background: "rgba(9,13,19,.9)",
+  border: "1px solid var(--ob-line-3, #3a4e64)",
+  borderRadius: 6,
+  padding: "2px 4px",
+} as const;
 
 /** The chrome's small pills share one ground, so the disclosure reads as one line. */
 const DISCLOSURE_PILL = {
@@ -82,6 +136,12 @@ const DISCLOSURE_PILL = {
 
 function messageOf(cause: unknown): string {
   return cause instanceof Error ? cause.message : String(cause);
+}
+
+/** The identity name that stands in a bounded window (its own validity); the open window and an unnamed place keep the title. */
+function placeTitleInWindow(facet: TechnePlaceFacet | undefined, window: TimeWindow | null, fallback: string): string {
+  if (!facet || !window || (window.from == null && window.to == null)) return fallback;
+  return nameInWindow(facet, window)?.name ?? fallback;
 }
 
 /** The record without one key; the same record when the key is absent, so no needless update. */
@@ -128,6 +188,8 @@ export interface PsychogeographicMapProps {
   onLiveSourcesAllowedChange?: (allowed: boolean) => void;
   /** Lane-4 T17/T19: the owner's authoring route for this reading. Absent: no menu, and a drag proposes nothing. */
   placeAuthoring?: PlaceAuthoringHost;
+  /** Lane-4 T14–T16: the reading's dated extent and the shared time window the docked time control reads and writes. Absent: no time control. */
+  placeTime?: PlaceTimeHost;
 }
 
 /**
@@ -161,6 +223,7 @@ export function PsychogeographicMap({
   onBasemapStackChange,
   onLiveSourcesAllowedChange,
   placeAuthoring,
+  placeTime,
 }: PsychogeographicMapProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mountedRenderer = useRef<MapSurfaceRenderer | null>(null);
@@ -226,6 +289,21 @@ export function PsychogeographicMap({
   const [placeMenu, setPlaceMenu] = useState<{ graphNodeId: string | null; at: PlaceCoordinate; x: number; y: number } | null>(null);
   const [pendingMove, setPendingMove] = useState<PlaceMoveProposal | null>(null);
   const [authoringNotice, setAuthoringNotice] = useState<string | null>(null);
+  // Lane-4 T14–T16: the window this map draws while the person drags, steps or plays. It is presentation only;
+  // the shared session is written when a drag ends, a step is taken, or playback pauses or reaches the end.
+  const [liveSpan, setLiveSpan] = useState<TimeSpan | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState<PlaybackSpeed>(1);
+  const [loop, setLoop] = useState(false);
+  const [timeNotice, setTimeNotice] = useState<string | null>(null);
+  const [reducedMotion, setReducedMotion] = useState<boolean>(prefersReducedMotion);
+  const liveSpanRef = useRef<TimeSpan | null>(null);
+  const placeTimeRef = useRef<PlaceTimeHost | undefined>(placeTime);
+  placeTimeRef.current = placeTime;
+  const pendingCommits = useRef(0);
+  const commitChain = useRef<Promise<void>>(Promise.resolve());
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const dragRef = useRef<{ handle: WindowHandle; startX: number; width: number; start: TimeSpan; moved: boolean } | null>(null);
 
   const tileRefreshOptedIn = !offlineOnly && !!policy?.isOptedIn("tile_refresh");
   // Lane-4 T4/T5: the plan the renderer holds for this stack under the live gate. A live row draws only through it.
@@ -268,7 +346,26 @@ export function PsychogeographicMap({
   // T8/T9: the reading's own facets decide the relation layers, the legend and the
   // region polygons. The filter is the one the side panel writes; it narrows what is
   // shown and never changes the reading.
-  const layerState = layerFilter ?? OPEN_PLACE_FILTER;
+  // Lane-4 T14–T16: while the window is live (a drag, a step, playback), this map's own filter carries it, so every
+  // layer, route, hierarchy edge and marker stands by the same validity law on every frame. Otherwise the shared window.
+  const timeExtent = placeTime?.extent ?? null;
+  const timeExtentFrom = timeExtent?.fromMs ?? null;
+  const timeExtentTo = timeExtent?.toMs ?? null;
+  const timeStatus = timeControlStatus({
+    extent: timeExtent,
+    extentReason: placeTime?.extentReason,
+    unavailableReason: placeTime?.unavailableReason,
+    reducedMotion,
+  });
+  const liveWindow = useMemo(
+    () => (liveSpan && timeExtentFrom !== null && timeExtentTo !== null ? windowOfSpan(liveSpan) : null),
+    [liveSpan, timeExtentFrom, timeExtentTo],
+  );
+  const layerState = useMemo(
+    () => (liveWindow ? { ...(layerFilter ?? OPEN_PLACE_FILTER), window: liveWindow } : (layerFilter ?? OPEN_PLACE_FILTER)),
+    [layerFilter, liveWindow],
+  );
+  const facetByRef = useMemo(() => new Map(placeFacets.map((facet) => [facet.place_ref, facet] as const)), [placeFacets]);
   const layers = useMemo<PlaceLayer[]>(() => placeLayers(placeFacets), [placeFacets]);
   const polygonRefs = useMemo(() => polygonPlaceRefs(placeFacets), [placeFacets]);
   const hiddenRefs = useMemo(() => placeRefsHidden(placeFacets, layerState), [placeFacets, layerState]);
@@ -300,13 +397,14 @@ export function PsychogeographicMap({
     if (!placeMarkerPlan({ precision: node.place.coordinate.precision, ...point })) return [];
     return [{
       graphNodeId: node.graphNodeId,
-      title: node.title,
+      // Lane-4 T14: a bounded window shows the identity name that stands in it (its own validity); the open window keeps the title.
+      title: placeTitleInWindow(facetByRef.get(node.graphNodeId), layerState.window ?? null, node.title),
       latitude: point.latitude,
       longitude: point.longitude,
       precision: node.place.coordinate.precision,
       entityType: node.entityType,
     }];
-  }), [nodes, polygonRefs, hiddenRefs]);
+  }), [nodes, polygonRefs, hiddenRefs, facetByRef, layerState.window]);
 
   const expressionMarkers = useMemo<ArchetypeExpressionRenderMarker[]>(() => {
     const pointsByPlace = new Map(
@@ -529,6 +627,156 @@ export function PsychogeographicMap({
     if (pendingMove) mountedRenderer.current?.returnPlaceMarker?.(pendingMove.graphNodeId);
     setPendingMove(null);
   };
+
+  // Lane-4 T17c: the owner's answer to a route this map opened comes back here. A refused move's marker goes back
+  // to the reading, and the owner's own words are the notice. A save shows its notice; the host re-reads the reading.
+  useEffect(() => {
+    const subscribe = placeAuthoring?.subscribeRouteResults;
+    if (!subscribe) return;
+    return subscribe((result) => {
+      const routed = placeRouteResultFor(result);
+      if (routed.returnMarker !== null) mountedRenderer.current?.returnPlaceMarker?.(routed.returnMarker);
+      setAuthoringNotice(routed.notice.text);
+    });
+  }, [placeAuthoring?.subscribeRouteResults]);
+
+  // Lane-4 T14–T16: the docked time control. Its live window is presentation; commits to the shared window are
+  // serialised, so a second write never races the first one's acknowledgement.
+  const setSpanLive = (span: TimeSpan | null) => {
+    liveSpanRef.current = span;
+    setLiveSpan(span);
+  };
+  const commitSpan = (span: TimeSpan) => {
+    const host = placeTimeRef.current;
+    if (!host) return;
+    setTimeNotice(null);
+    pendingCommits.current += 1;
+    commitChain.current = commitChain.current.then(async () => {
+      try {
+        await host.onWindowCommit(windowOfSpan(span));
+      } catch (cause: unknown) {
+        setTimeNotice(messageOf(cause));
+        // A refused window is not kept on the track: the shared window stands as the owner acknowledged it.
+        if (pendingCommits.current <= 1) setSpanLive(null);
+      } finally {
+        pendingCommits.current -= 1;
+      }
+    });
+  };
+  // The acknowledged shared window replaces the live one, once no write of this map is still pending.
+  useEffect(() => {
+    if (pendingCommits.current === 0) setSpanLive(null);
+  }, [placeTime?.window]);
+
+  const pausePlayback = () => {
+    setPlaying(false);
+    const span = liveSpanRef.current;
+    if (span) commitSpan(span);
+  };
+  const togglePlay = () => {
+    if (!timeExtent || !timeStatus.playable) return;
+    if (playing) {
+      pausePlayback();
+      return;
+    }
+    const base = liveSpanRef.current ?? startSpanFor(timeExtent, placeTimeRef.current?.window ?? null);
+    setSpanLive(playStartSpan(timeExtent, base));
+    setPlaying(true);
+  };
+  const stepWindow = (direction: 1 | -1) => {
+    if (!timeExtent || !timeStatus.enabled || playing) return;
+    const base = liveSpanRef.current ?? startSpanFor(timeExtent, placeTimeRef.current?.window ?? null);
+    const step = stepSpan(timeExtent, base, direction);
+    if (!step.moved) return;
+    setSpanLive(step.span);
+    commitSpan(step.span);
+  };
+  const nudgeHandle = (handle: WindowHandle, direction: 1 | -1) => {
+    if (!timeExtent || !timeStatus.enabled || playing) return;
+    const base = liveSpanRef.current ?? spanOfWindow(timeExtent, placeTimeRef.current?.window ?? null);
+    const next = dragSpan(timeExtent, base, handle, direction * nudgeMs(timeExtent));
+    if (next.fromMs === base.fromMs && next.toMs === base.toMs) return;
+    setSpanLive(next);
+    commitSpan(next);
+  };
+  const beginDrag = (handle: WindowHandle, event: ReactPointerEvent<HTMLDivElement>) => {
+    const track = trackRef.current;
+    if (!track || !timeExtent || !timeStatus.enabled || playing || event.button !== 0) return;
+    track.setPointerCapture?.(event.pointerId);
+    dragRef.current = {
+      handle,
+      startX: event.clientX,
+      width: track.getBoundingClientRect().width,
+      start: liveSpanRef.current ?? spanOfWindow(timeExtent, placeTimeRef.current?.window ?? null),
+      moved: false,
+    };
+  };
+  const moveDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag || !timeExtent || drag.width <= 0) return;
+    const deltaMs = ((event.clientX - drag.startX) / drag.width) * (timeExtent.toMs - timeExtent.fromMs);
+    if (deltaMs !== 0) drag.moved = true;
+    setSpanLive(dragSpan(timeExtent, drag.start, drag.handle, deltaMs));
+  };
+  const endDrag = () => {
+    const drag = dragRef.current;
+    dragRef.current = null;
+    const span = liveSpanRef.current;
+    if (drag?.moved && span) commitSpan(span);
+  };
+  const pressTrack = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget || !timeExtent || !timeStatus.enabled || playing || event.button !== 0) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (rect.width <= 0) return;
+    const atMs = timeExtent.fromMs + ((event.clientX - rect.left) / rect.width) * (timeExtent.toMs - timeExtent.fromMs);
+    const next = centreSpanOn(timeExtent, liveSpanRef.current ?? startSpanFor(timeExtent, placeTimeRef.current?.window ?? null), atMs);
+    setSpanLive(next);
+    commitSpan(next);
+  };
+  // Space plays and pauses when the map has focus; a focused control keeps its own Space.
+  const onSurfaceKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== " " || event.defaultPrevented || !timeStatus.playable) return;
+    const tag = (event.target as HTMLElement).tagName;
+    if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA" || tag === "BUTTON") return;
+    event.preventDefault();
+    togglePlay();
+  };
+
+  // Playback animates the window across the extent, one window-width per SECONDS_PER_WINDOW_AT_1X / speed seconds.
+  // It stops at the end, or loops; the frame is written to the live window, and the shared window is written on pause.
+  useEffect(() => {
+    if (!playing || timeExtentFrom === null || timeExtentTo === null) return;
+    const extent = { fromMs: timeExtentFrom, toMs: timeExtentTo };
+    let frame = 0;
+    let last: number | null = null;
+    const tick = (now: number) => {
+      const elapsed = last === null ? 0 : now - last;
+      last = now;
+      const current = liveSpanRef.current ?? startSpanFor(extent, placeTimeRef.current?.window ?? null);
+      const next = advanceSpan(extent, current, elapsed, speed, loop);
+      setSpanLive(next.span);
+      if (next.ended) {
+        setPlaying(false);
+        commitSpan(next.span);
+        return;
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [playing, speed, loop, timeExtentFrom, timeExtentTo]);
+
+  // Reduced motion: no continuous animation. Stepping remains; a playing window stops and says so.
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  useEffect(() => {
+    if (reducedMotion && playing) pausePlayback();
+  }, [reducedMotion]);
 
   // The menu closes on Escape and on any press outside it; a press on the map still reaches the map.
   useEffect(() => {
@@ -861,6 +1109,7 @@ export function PsychogeographicMap({
       className="psychogeographic-surface"
       data-testid="psychogeographic-surface"
       data-view={view}
+      onKeyDown={onSurfaceKeyDown}
       style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#05070f" }}
     >
       {toolbarContainer ? createPortal(controls, toolbarContainer) : controls}
@@ -876,6 +1125,183 @@ export function PsychogeographicMap({
         style={{ position: "absolute", inset: 0 }}
       />
 
+      {placeTime && (() => {
+        // Lane-4 T14–T16: the docked time control. The track is the reading's own dated extent; the window is the live one
+        // while the person drags, steps or plays, and the shared window otherwise. The label and the bounds are the timeline's own.
+        const enabled = timeStatus.enabled;
+        const displayed = timeExtent ? (liveSpan ?? spanOfWindow(timeExtent, placeTime.window)) : null;
+        const percent = timeExtent && displayed ? trackPercent(timeExtent, displayed) : null;
+        const ends = timeExtent ? extentEndLabels(timeExtent) : null;
+        const imagery = imageryTimeNote(LIVE_BASEMAP_SOURCES.filter((source) => stack.layers[source.id]?.visible));
+        const reason = timeNotice ?? timeStatus.reason ?? null;
+        const handle = (edge: "from" | "to") => (
+          <div
+            role="slider"
+            tabIndex={enabled ? 0 : -1}
+            aria-label={edge === "from" ? "Window start" : "Window end"}
+            aria-disabled={!enabled}
+            aria-valuetext={displayed ? spanText(displayed) : undefined}
+            data-testid={`places-time-handle-${edge}`}
+            onPointerDown={(event) => {
+              event.stopPropagation();
+              beginDrag(edge, event);
+            }}
+            onKeyDown={(event) => {
+              if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+              event.preventDefault();
+              nudgeHandle(edge, event.key === "ArrowRight" ? 1 : -1);
+            }}
+            style={{
+              position: "absolute",
+              top: -3,
+              bottom: -3,
+              ...(edge === "from" ? { left: -4 } : { right: -4 }),
+              width: 8,
+              borderRadius: 3,
+              background: "#c9b68a",
+              cursor: enabled ? "ew-resize" : "not-allowed",
+              touchAction: "none",
+            }}
+          />
+        );
+        return (
+          <div
+            className="places-time"
+            data-testid="places-time-control"
+            data-enabled={enabled}
+            data-playing={playing}
+            role="group"
+            aria-label="Places time window"
+            title={timeStatus.playReason ?? undefined}
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 8,
+              height: TIME_BAR_HEIGHT,
+              boxSizing: "border-box",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "0 12px",
+              overflow: "hidden",
+              background: "rgba(9,13,19,.92)",
+              borderTop: "1px solid var(--ob-line-3, #3a4e64)",
+              color: "var(--ob-ink, #e6edf6)",
+              fontSize: 11,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flex: "none" }}>
+              <button type="button" aria-label="Step window back" title="Step back one window-width" disabled={!enabled || playing} onClick={() => stepWindow(-1)} style={timeButtonStyle}>◀</button>
+              <button
+                type="button"
+                aria-label={playing ? "Pause" : "Play"}
+                aria-pressed={playing}
+                title={timeStatus.playReason ?? (playing ? "Pause (Space)" : "Play across the dated extent (Space)")}
+                disabled={!timeStatus.playable}
+                onClick={togglePlay}
+                style={timeButtonStyle}
+              >
+                {playing ? "Pause" : "Play"}
+              </button>
+              <button type="button" aria-label="Step window forward" title="Step forward one window-width" disabled={!enabled || playing} onClick={() => stepWindow(1)} style={timeButtonStyle}>▶</button>
+              <select
+                aria-label="Playback speed"
+                title="One window-width every six seconds at ×1"
+                disabled={!timeStatus.playable}
+                value={speed}
+                onChange={(event) => setSpeed(Number(event.target.value) as PlaybackSpeed)}
+                style={timeFieldStyle}
+              >
+                {PLAYBACK_SPEEDS.map((value) => (
+                  <option key={value} value={value}>{`×${value}`}</option>
+                ))}
+              </select>
+              <label style={{ display: "flex", alignItems: "center", gap: 4, color: "var(--ob-dim, #8797ab)" }}>
+                <input type="checkbox" checked={loop} disabled={!timeStatus.playable} onChange={(event) => setLoop(event.target.checked)} />
+                Loop
+              </label>
+            </div>
+            <div
+              ref={trackRef}
+              className="places-time-track"
+              data-testid="places-time-track"
+              role="presentation"
+              aria-disabled={!enabled}
+              title={timeStatus.reason ?? undefined}
+              onPointerDown={pressTrack}
+              onPointerMove={moveDrag}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
+              style={{
+                position: "relative",
+                flex: 1,
+                minWidth: 80,
+                height: 18,
+                borderRadius: 4,
+                background: "rgba(255,255,255,.06)",
+                cursor: enabled ? "pointer" : "not-allowed",
+                touchAction: "none",
+              }}
+            >
+              {displayed && percent && (
+                <div
+                  className="places-time-window"
+                  data-testid="places-time-window"
+                  onPointerDown={(event) => beginDrag("body", event)}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    bottom: 0,
+                    left: `${percent.left}%`,
+                    width: `${percent.width}%`,
+                    minWidth: 6,
+                    boxSizing: "border-box",
+                    background: "rgba(201,182,138,.28)",
+                    border: "1px solid #c9b68a",
+                    borderRadius: 4,
+                    cursor: enabled ? "grab" : "not-allowed",
+                  }}
+                >
+                  {handle("from")}
+                  {handle("to")}
+                </div>
+              )}
+            </div>
+            <span data-testid="places-time-label" aria-live="polite" style={{ flex: "none", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+              {displayed ? spanText(displayed) : "No dated window"}
+            </span>
+            {ends && (
+              <span style={{ flex: "none", color: "var(--ob-dim, #8797ab)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+                {`${ends.start} – ${ends.end}`}
+              </span>
+            )}
+            {imagery && (
+              <span data-testid="places-time-imagery" style={{ flex: "none", color: "var(--ob-dim, #8797ab)", whiteSpace: "nowrap" }}>
+                {imagery}
+              </span>
+            )}
+            {reason && (
+              <span
+                role="status"
+                data-testid="places-time-reason"
+                style={{
+                  flex: "none",
+                  maxWidth: 300,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  color: timeNotice ? "#c9b68a" : "var(--ob-dim, #8797ab)",
+                }}
+              >
+                {reason}
+              </span>
+            )}
+          </div>
+        );
+      })()}
+
       {flightNotice && (
         <div
           role="status"
@@ -884,7 +1310,7 @@ export function PsychogeographicMap({
           style={{
             position: "absolute",
             left: 12,
-            bottom: 42,
+            bottom: TIME_BAR_HEIGHT + 42,
             zIndex: 9,
             maxWidth: 360,
             padding: "5px 9px",
@@ -964,7 +1390,7 @@ export function PsychogeographicMap({
           style={{
             position: "absolute",
             left: 12,
-            bottom: 74,
+            bottom: TIME_BAR_HEIGHT + 74,
             zIndex: 9,
             maxWidth: 560,
             display: "flex",
@@ -1012,7 +1438,7 @@ export function PsychogeographicMap({
         style={{
           position: "absolute",
           left: 12,
-          bottom: 12,
+          bottom: TIME_BAR_HEIGHT + 12,
           zIndex: 9,
           maxWidth: "calc(100% - 200px)",
           display: "flex",

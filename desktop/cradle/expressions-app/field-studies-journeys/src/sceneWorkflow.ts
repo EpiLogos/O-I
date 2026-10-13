@@ -149,7 +149,7 @@ function rightSequence(sequence:Entity['sequence'],t:number):Entity['sequence']{
 function splitSceneContent(src:Scene,t:number,newId:string):{left:Scene;right:Scene}{
  const left:Scene=clone(src),right:Scene=clone(src);
  left.duration=t;clampEntryOffset(left);
- right.id=newId;right.name=`${src.name} / split`.slice(0,160);right.duration=src.duration-t;right.transition=0;
+ right.id=newId;right.name=`${src.name} / split`.slice(0,160);right.duration=src.duration-t;right.transition=0;delete right.transitionSpec;
  // E06: the tracks are read on the evolution clock, local t + entryOffset. The cut is that evolution time, so the left keeps
  // its evolution [entryOffset, cut) and the right starts its evolution at the cut, with no offset of its own.
  const cutAt=t+(src.entryOffset??0);delete right.entryOffset;

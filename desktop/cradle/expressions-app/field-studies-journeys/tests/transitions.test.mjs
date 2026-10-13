@@ -186,3 +186,15 @@ test('E11b: the inspector offers the seam chooser the timeline uses, in place of
  assert.match(inspector,/\$\{seamChooserHTML\(s,\{min:SCENE_TRANSITION_MIN,max:SCENE_TRANSITION_MAX\}\)\}/);
  assert.doesNotMatch(inspector,/numeric\('Transition \(seconds\)'/);
 });
+
+// Review fix (13 Oct 2026): a split's right half starts on a 0-second seam, so it carries no painted transition.
+test('a split does not copy the source scene\'s painted transition onto the new seam', async()=>{
+ const {fieldStudies,clone}=await import('../build/model.js');
+ const {splitScene,initialiseSceneSaves}=await import('../build/sceneWorkflow.js');
+ const j=initialiseSceneSaves(clone(fieldStudies()));const s=j.scenes[0];s.duration=14;s.transitionSpec={kind:'wipe',direction:'left'};
+ splitScene(j,s.id,5,'split-right');
+ const right=j.scenes[1];
+ assert.equal(right.transition,0);
+ assert.equal('transitionSpec' in right,false,'the right half inherits no seam glyph');
+ assert.deepEqual(j.scenes[0].transitionSpec,{kind:'wipe',direction:'left'},'the left half keeps its own entry');
+});

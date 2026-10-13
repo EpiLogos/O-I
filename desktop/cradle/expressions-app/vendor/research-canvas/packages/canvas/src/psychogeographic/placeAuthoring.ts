@@ -255,6 +255,26 @@ export interface PlaceAuthoringHost extends PlaceAuthoringAvailability {
   onAddPlace(prefill: PlacePrefillOk): void;
   onEditPlace(graphNodeId: string): void;
   onProposeMove(proposal: PlaceMoveProposal): void | Promise<void>;
+  /** Lane-4 T17c: the owner's answers to routes this map opened, as they arrive. Returns the unsubscribe. Absent: answers are not returned to the map. */
+  subscribeRouteResults?(listener: (result: PlaceRouteResult) => void): () => void;
+}
+
+// ---------------------------------------------------------------------------
+// T17c — the owner's answer returns to the map: the marker goes back, the words show
+// ---------------------------------------------------------------------------
+
+/** One answer from the owner's constellation route, with the marker that route was opened for (null for an add). */
+export interface PlaceRouteResult {
+  graphNodeId: string | null;
+  outcome: ConstellationRouteOutcome;
+}
+
+/** What the map does with an owner answer: its marker returns to the reading (a marker never keeps an unsaved position), and the owner's words are shown. */
+export function placeRouteResultFor(result: PlaceRouteResult): {
+  returnMarker: string | null;
+  notice: { kind: PlaceRefusalKind | "saved"; text: string; reload: boolean };
+} {
+  return { returnMarker: result.graphNodeId, notice: constellationResultNotice(result.outcome) };
 }
 
 // ---------------------------------------------------------------------------

@@ -2338,3 +2338,31 @@
 :where(.research-instrument) .psychogeographic-layers-panel [data-testid="places-basemap"] input:disabled{opacity:.45}
 :where(.research-instrument) .psychogeographic-layers-panel [data-testid="places-basemap"] input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 :where(.research-instrument) .psychogeographic-layers-panel [data-testid="places-basemap"] li[data-state="unavailable"] > label{opacity:.75}
+
+/* lane-4 T14-T16: the docked time control on the Places map. Geometry is the map's own inline layout; these rules add state and focus only, from tokens. */
+:where(.research-instrument) .places-time button:disabled,:where(.research-instrument) .places-time select:disabled{opacity:.4;cursor:default}
+:where(.research-instrument) .places-time button:focus-visible,:where(.research-instrument) .places-time select:focus-visible,:where(.research-instrument) .places-time [role="slider"]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+:where(.research-instrument) .places-time input[type=checkbox]{accent-color:var(--accent)}
+:where(.research-instrument) .places-time-track[aria-disabled="true"] .places-time-window{opacity:.4}
+
+/* lane-1 A2: shapes, stickies and text on the Research Canvas. Quiet by
+ * default: shapes are stroke-only unless one palette fill is chosen; stickies
+ * take one token colour; text is bare. The palette keys in material map to
+ * these tokens at render time, so no colour value lives in the record. */
+:root{
+  --canvas-object-amber:#f1e4bf;
+  --canvas-object-sage:#dbe6d3;
+  --canvas-object-sky:#d6e6ee;
+  --canvas-object-rose:#f0d9d4;
+  --canvas-object-stone:#e7e4da;
+  --canvas-object-stroke:#74766b;
+}
+:where(.research-instrument) .canvas-object{position:relative;box-sizing:border-box;display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-width:0;min-height:0;padding:10px 12px;color:var(--ink);font:13px/1.35 var(--sans);text-align:center;overflow:hidden}
+:where(.research-instrument) .canvas-object__label{position:relative;max-width:100%;overflow-wrap:anywhere}
+:where(.research-instrument) .canvas-object__shape{position:absolute;inset:1px;width:calc(100% - 2px);height:calc(100% - 2px);overflow:visible}
+:where(.research-instrument) .canvas-object__shape *{vector-effect:non-scaling-stroke;stroke:var(--canvas-object-stroke);stroke-width:1.35px}
+:where(.research-instrument) .canvas-object--sticky{align-items:flex-start;justify-content:flex-start;padding:14px 16px;text-align:left;border-radius:3px;background:var(--canvas-object-amber);box-shadow:0 1px 0 rgba(37,39,32,.06),0 10px 20px -16px rgba(37,39,32,.55)}
+:where(.research-instrument) .canvas-object--text{justify-content:flex-start;padding:4px 6px;font-size:15px;text-align:left;background:transparent}
+:where(.research-instrument) .canvas-object[data-selected="true"]{filter:drop-shadow(0 0 0.4rem color-mix(in srgb,var(--accent) 35%,transparent))}
+:where(.research-instrument) .canvas-object--text[data-selected="true"]{filter:none;outline:1px dashed var(--accent);outline-offset:4px}
+:where(.research-instrument) .canvas-object--rectangle .canvas-object__shape *,:where(.research-instrument) .canvas-object--ellipse .canvas-object__shape *,:where(.research-instrument) .canvas-object--diamond .canvas-object__shape *{stroke-linejoin:round}

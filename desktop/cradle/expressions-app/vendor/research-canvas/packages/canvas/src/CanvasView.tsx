@@ -39,6 +39,7 @@ import { NoteNode } from "./nodes/NoteNode";
 import { ResourceNode } from "./nodes/ResourceNode";
 import { defaultSourceHandleId, defaultTargetHandleId } from "./nodes/nodeHandles";
 import { CANVAS_ZOOM_LIMITS, cameraDuration } from "./canvas/navigationGeometry";
+import { DiamondNode, EllipseNode, RectangleNode, StickyNode, TextNode } from "./canvas/CanvasObjectNodes";
 
 export interface CanvasViewProps {
   /** Optional host HUD. Omitted keeps the standalone toolbar and controls. */
@@ -140,7 +141,13 @@ const nodeTypes: NodeTypes = {
   group: GroupNode,
   image: ImageNode,
   note: NoteNode,
-  resource: ResourceNode
+  resource: ResourceNode,
+  // lane-1 A2: sticky, shape and text occurrences (CanvasObjectNodes.tsx)
+  sticky: StickyNode,
+  text: TextNode,
+  rectangle: RectangleNode,
+  ellipse: EllipseNode,
+  diamond: DiamondNode
 };
 
 const edgeTypes: Record<string, ComponentType<any>> = {

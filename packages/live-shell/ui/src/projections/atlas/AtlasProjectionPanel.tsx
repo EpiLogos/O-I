@@ -162,20 +162,19 @@ export async function attachAtlas(options: AtlasAttachOptions): Promise<AtlasAtt
   if (claimed) throw Error('The Earth projection is already mounted in this session. Its controller keeps window listeners that cannot be retired, so it is not mounted again.')
   if (!scope) throw Error('No workspace is bound for the Earth projection, so its settings have nowhere to live.')
   claimed = true
+  const progress = {controllerStarted: false}
   try {
-    return await attachClaimed(options)
+    return await attachClaimed(options, progress)
   } catch (error) {
     // Everything before the controller mounts binds no window listener, so a failure there (an unlisted corpus, a
-    // transient read) releases the claim and a later attempt may mount. A failure inside mountAtlas keeps it.
-    if (!(error instanceof AtlasMountFailure)) claimed = false
-    throw error instanceof AtlasMountFailure ? error.cause : error
+    // transient read) releases the claim and a later attempt may mount. Once mountAtlas has begun — including any failure
+    // after it returned — its listeners may be bound, so the claim is kept.
+    if (!progress.controllerStarted) claimed = false
+    throw error
   }
 }
 
-/** A failure raised once the controller has begun mounting (its listeners may be bound). */
-class AtlasMountFailure extends Error {}
-
-async function attachClaimed(options: AtlasAttachOptions): Promise<AtlasAttachment> {
+async function attachClaimed(options: AtlasAttachOptions, progress: {controllerStarted: boolean}): Promise<AtlasAttachment> {
   const {element, transport, follow} = options
   const fixedView: AtlasView = options.view ?? 'earth'
   const target = (): AtlasView => (follow ? desiredView : fixedView)
@@ -209,12 +208,8 @@ async function attachClaimed(options: AtlasAttachOptions): Promise<AtlasAttachme
   const provider = archetypalEarthProvider(transport)
   const bundle = await provider.load()
   registerCorpusProvider({...provider, load: async () => bundle}, {asDefault: true})
-  let mounted: AtlasHandle
-  try {
-    mounted = await mountAtlas({globe, app, provider: ARCHETYPAL_EARTH_PROVIDER_ID})
-  } catch (cause) {
-    throw new AtlasMountFailure('the Earth controller did not mount', {cause})
-  }
+  progress.controllerStarted = true
+  const mounted: AtlasHandle = await mountAtlas({globe, app, provider: ARCHETYPAL_EARTH_PROVIDER_ID})
 
   let visible = true
   let retired = false
