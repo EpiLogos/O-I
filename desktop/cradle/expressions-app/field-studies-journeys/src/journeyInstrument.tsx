@@ -1,7 +1,7 @@
 import type {ReactElement,PointerEvent as ReactPointerEvent} from 'react';
 import {useEffect,useState} from 'react';
 import {createRoot,type Root} from 'react-dom/client';
-import type {KernelConversion} from './kernelDocumentBridge';
+import type {KernelConversion,KernelSceneTrigger} from './kernelDocumentBridge';
 import type {TechneReading} from '../../../src/techne/contract';
 import {draftFromBeats,moveBeat} from '../../../src/techne/m0m5/journey/sequence';
 import {beats} from '../../../src/techne/m0m5/journey/beats';
@@ -10,7 +10,7 @@ import type {Journey} from './model';
 import {expressionTiming} from './propertyTracks';
 import {walkJourney,type JourneyPath} from './journeyPath';
 import {beatLoadKey,settleBounded} from './journeyLoadSchedule';
-import {reconcileJourneyPresence} from './journeyPresence';
+import {reconcileJourneyPresence,recordJourneyPosition,savedJourneyPosition} from './journeyPresence';
 import {journeyInstrumentBasis,sameJourneyInstrumentBasis,readJourneyInstrument,readJourneySceneFrame,prepareJourneyBeatFocus,type JourneyBeatFocus,type JourneyInstrumentBasis} from './journeyInstrumentModel';
 import './journeyInstrument.css';
 
@@ -18,8 +18,22 @@ import './journeyInstrument.css';
  * durations), and the expression time on that clock. The walked path is derived from this and nothing else. */
 export interface JourneyPlaybackClock {journey:Journey;time:number}
 
+/** T12: the labels a beat's source portal carries, by placement. re_dock returns to a scene and is never offered as a source. */
+const PORTAL_LABEL:Record<string,string>={preview:'Preview source',overlay:'Overlay source',beside:'Open beside',full:'Open full',detached:'Detach source'};
+/** T12: the Scene's own explicit activation portals, the ones a beat can place. A Scene with none offers none. */
+export function journeyPortalTriggers(native:KernelConversion,sceneRef:string):KernelSceneTrigger[]{
+ const binding=Object.values(native.bindings).find(entry=>entry.scene_ref===sceneRef);
+ return (binding?.triggers??[]).filter(trigger=>trigger.occasion==='activate'&&trigger.target.kind==='portal'&&trigger.target.placement!=='re_dock');
+}
+export function journeyPortalLabel(trigger:KernelSceneTrigger):string{
+ return (trigger.target.kind==='portal'&&PORTAL_LABEL[trigger.target.placement])||'Open source';
+}
+
 export interface JourneyInstrumentHost {
  nativeView:()=>KernelConversion|undefined;sceneId:()=>string;
+ /** T12: place a Scene's own source portal through the host, which opens it in its disclosed placement; the host's
+  * "Return to scene" closes it and the journey position is untouched. Absent: no portal affordance is drawn. */
+ portal?:(trigger:KernelSceneTrigger,basis:JourneyInstrumentBasis)=>Promise<unknown>;
  /** T8: the live playback clock, or undefined when no journey plays here. Without it the walked path is not shown. */
  playback?:()=>JourneyPlaybackClock|undefined;
  /** T8: seek the playhead to a journey time in seconds; the walked path's scenes are seekable through it. */
@@ -110,10 +124,12 @@ function JourneyPlaybackPath({read,seek}:{read:()=>JourneyPlaybackClock|undefine
  </section>;
 }
 
-export function JourneyBeatPanel({reading,beatView,native,basis,busy,onFocus,onMove,onRefresh,playback,notice}:{
+export function JourneyBeatPanel({reading,beatView,native,basis,busy,onFocus,onMove,onRefresh,playback,notice,onPortal}:{
  reading:TechneReading;beatView:JourneyBeatView;native:KernelConversion;basis:JourneyInstrumentBasis;busy:boolean;
  onFocus:(card:JourneyBeatCard)=>void;onMove:(sceneRef:string,toIndex:number)=>void;onRefresh:()=>void;
  playback?:{read:()=>JourneyPlaybackClock|undefined;seek:(seconds:number)=>void};
+ /** T12: place one of a beat's own source portals. Absent: no portal affordance. */
+ onPortal?:(trigger:KernelSceneTrigger,card:JourneyBeatCard)=>void;
  /** T9: the presence disclosure for this load (field moved / stale), one plain sentence. */
  notice?:string;
 }):ReactElement{
@@ -134,6 +150,12 @@ export function JourneyBeatPanel({reading,beatView,native,basis,busy,onFocus,onM
       <span className="journey-beat-chips">{card.chips.map((chip,i)=><span key={`${chip.kind}:${i}`} className={`journey-beat-chip journey-beat-chip-${chip.kind}`} data-facet={chip.kind} title={chip.ref??undefined}>{chip.label}</span>)}</span>
       {card.chipsReason?<span className="journey-beat-reason">{card.chipsReason}</span>:null}
      </button>
+     {onPortal?journeyPortalTriggers(native,card.scene_ref).map(trigger=>{
+      const current=card.onBasis&&basis.scene_ref===card.scene_ref;
+      return <button key={trigger.trigger_ref} type="button" className="journey-beat-portal" data-journey-portal={trigger.trigger_ref} disabled={!current}
+       title={current?'Place this Scene\'s source; Return to scene closes it':'Open this Scene first to place its source'}
+       onClick={()=>onPortal(trigger,card)}>{journeyPortalLabel(trigger)}</button>;
+     }):null}
     </li>;
    })}</ol>
    <span className="scene-insert-line" aria-hidden="true" hidden/>
@@ -152,6 +174,9 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
  let root:Root|null=null,epoch=0,open=false,destroyed=false;
  /** T-REVIEW-4 #6: the load in flight, by the basis it reads. A refresh for the same basis joins it instead of starting a second. */
  let inFlight:{key:string;done:Promise<void>}|undefined;
+ /** T9: the Expression-wide reading last held, by its native basis. The strip records a Scene change against it without a read. */
+ let held:{expression_ref:string;revision:number;reading:TechneReading}|undefined;
+ let restoring:Promise<boolean>|undefined;
  const playback=host.playback&&host.seek?{read:host.playback,seek:host.seek}:undefined;
  const current=(basis:JourneyInstrumentBasis,generation:number)=>!destroyed&&open&&epoch===generation&&sameJourneyInstrumentBasis(basis,host.nativeView(),host.sceneId());
  const message=(text:string)=>{status.textContent=text;};
@@ -177,6 +202,7 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
    if(destroyed||!open||generation!==epoch)return;
    if(!current(basis,generation))throw Error('The selected native Journey changed while its reading was returning');
    const {reading}=readJourneyInstrument(raw,view!,sceneId);
+   held={expression_ref:basis.expression_ref,revision:basis.revision,reading};
    // T9: disclose the author's saved position against this reading, and record the position this load stands on.
    const presence=reconcileJourneyPresence({reading,expression_ref:basis.expression_ref,scene_ref:basis.scene_ref});
    // The cards draw from the whole read at once; each card's facets are filled in as its own Scene's reading settles.
@@ -184,7 +210,14 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
    let beatView=journeyBeatView(reading,view!.document);
    root??=createRoot(mount);
    let busy=false;
+   const portal=host.portal;
    const draw=()=>{if(!current(basis,generation))return;root!.render(<JourneyBeatPanel reading={reading} beatView={beatView} native={view!} basis={basis} busy={busy} onRefresh={()=>void reuseOrLoad()} playback={playback} notice={presence.notice}
+    onPortal={portal?(trigger,card)=>{
+     // T12: the source is placed by the host; its own return closes it, and this journey position is not changed.
+     void portal(trigger,{expression_ref:basis.expression_ref,revision:basis.revision,scene_ref:card.scene_ref}).then(()=>{
+      if(!destroyed&&open&&generation===epoch)message(`${card.title}: its source is placed. Return to scene closes it.`);
+     }).catch(error=>{if(!destroyed&&open&&generation===epoch)message(failure(error));});
+    }:undefined}
     onFocus={card=>{
      if(busy)return;
      try{
@@ -231,7 +264,48 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
    },()=>current(basis,generation));
   }catch(error){if(!destroyed&&open&&generation===epoch){root?.unmount();root=null;message(failure(error));}}
  }
+ /** T9: the presence of this Expression is read against its reading, and the Scene it was saved on is reopened when that position
+  * is current. Settled (true) once it has restored, found nothing, or refused by name; false while the native view is not ready. */
+ function restoreOnce():Promise<boolean>{
+  if(destroyed)return Promise.resolve(true);
+  let view:KernelConversion|undefined,basis:JourneyInstrumentBasis;
+  try{view=host.nativeView();basis=journeyInstrumentBasis(view,host.sceneId());}catch{return Promise.resolve(false);}
+  const native=view!;
+  return host.read(basis,'expression').then(async raw=>{
+   const {reading}=readJourneyInstrument(raw,native,host.sceneId());
+   held={expression_ref:basis.expression_ref,revision:basis.revision,reading};
+   const saved=savedJourneyPosition({reading});
+   const target=saved.presence&&beats(reading).beats.find(beat=>beat.scene_ref===saved.presence!.scene_ref);
+   if(!target||target.scene_ref===basis.scene_ref)return true;
+   let focus:JourneyBeatFocus;
+   try{focus=prepareJourneyBeatFocus(target,basis,host.nativeView(),host.sceneId());}catch(error){message(failure(error));return true;}
+   await host.focusScene(focus);
+   recordJourneyPosition({reading,expression_ref:basis.expression_ref,scene_ref:target.scene_ref});
+   return true;
+  }).catch(error=>{
+   // A refused restore is said once, by name; a transport that is not ready yet is retried by the next native load.
+   if(/not ready|unavailable/.test(failure(error)))return false;
+   message(failure(error));return true;
+  });
+ }
  return {
+  /** T9: restore the author's saved Scene once per page, from the first native load that can read it. */
+  restorePosition(){restoring??=restoreOnce().finally(()=>{restoring=undefined;});return restoring;},
+  /** T9: the strip moved to a Scene; record it as the position, through the same presence owner the instrument reads from. */
+  recordPosition(sceneId:string){
+   let view:KernelConversion|undefined,basis:JourneyInstrumentBasis;
+   try{view=host.nativeView();basis=journeyInstrumentBasis(view,sceneId);}catch{return;}
+   if(held&&held.expression_ref===basis.expression_ref&&held.revision===basis.revision){
+    recordJourneyPosition({reading:held.reading,expression_ref:basis.expression_ref,scene_ref:basis.scene_ref});return;
+   }
+   const native=view!;
+   void host.read(basis,'expression').then(raw=>{
+    if(destroyed)return;
+    const {reading}=readJourneyInstrument(raw,native,sceneId);
+    held={expression_ref:basis.expression_ref,revision:basis.revision,reading};
+    recordJourneyPosition({reading,expression_ref:basis.expression_ref,scene_ref:basis.scene_ref});
+   }).catch(()=>{});
+  },
   async open(){if(destroyed)throw Error('Journey instrument is closed');open=true;mount.hidden=false;status.hidden=false;await load();},
   close(){epoch++;open=false;inFlight=undefined;mount.hidden=true;status.hidden=true;root?.unmount();root=null;},
   async refresh(){if(open)await reuseOrLoad();},

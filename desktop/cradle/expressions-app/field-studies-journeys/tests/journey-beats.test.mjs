@@ -4,7 +4,7 @@
 // refs. Run after `npm run build:journeys` (this suite imports the bundled build/ module).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {journeyBeatView, composeSceneRequest, reorderSceneRequest} from '../build/journeyBeats.js';
+import {journeyBeatView, composeSceneRequest, reorderSceneRequest, SCENE_READING_PENDING} from '../build/journeyBeats.js';
 import {settleBounded, beatLoadKey} from '../build/journeyLoadSchedule.js';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
@@ -68,8 +68,14 @@ test('T1: one card per scene-bearing binding, in binding order, identity byte-id
   assert.ok(view.cards.every((card) => card.onBasis), 'every disclosed scene is on the native revision');
 });
 
-test('T1: the reading frame becomes facet chips in the reading own vocabulary', () => {
-  const [first] = journeyBeatView(reading(), DOC).cards;
+test('T1: a card takes facet chips only from its own Scene reading; until that reading settles it says so, never the whole', () => {
+  // T13: the Expression-wide reading's facets are not shown on any card. Before the card's own Scene reading arrives it is pending.
+  const pending = journeyBeatView(reading(), DOC).cards;
+  assert.ok(pending.every((card) => card.chips.length === 0 && card.chipsReason === SCENE_READING_PENDING), 'no card borrows the whole reading facets');
+  // Once the Scene's own reading arrives, its facets are the card's, in the reading own vocabulary.
+  const frames = new Map([[ONE, reading({expressions: [{expression_ref: EXPRESSION, revision: '7', scene_ref: ONE}]})]]);
+  const [first] = journeyBeatView(reading(), DOC, frames).cards;
+  assert.equal(first.chipsReason, undefined);
   const time = first.chips.filter((chip) => chip.kind === 'time');
   const place = first.chips.filter((chip) => chip.kind === 'place');
   const source = first.chips.filter((chip) => chip.kind === 'source');
@@ -250,7 +256,7 @@ test('T1b: the Expression-wide disclosure lists every scene and attributes no fa
   const view = journeyBeatView(wholeReading(), DOC);
   assert.deepEqual(view.cards.map((card) => card.scene_ref), [ONE, TWO]);
   assert.ok(view.cards.every((card) => card.chips.length === 0), 'no chip is borrowed from the whole');
-  assert.ok(view.cards.every((card) => card.chipsReason === undefined));
+  assert.ok(view.cards.every((card) => card.chipsReason === SCENE_READING_PENDING), 'each card says its own reading is pending');
 });
 
 test('T1b: each card takes its chips from its own Scene reading, verbatim', () => {
@@ -261,6 +267,7 @@ test('T1b: each card takes its chips from its own Scene reading, verbatim', () =
   assert.deepEqual(first.chips.map((chip) => chip.ref), ['t:1', 'place:here', 'central:source:probe']);
   assert.equal(first.scene_ref, ONE, 'identity stays the verbatim scene ref');
   assert.deepEqual(second.chips, [], 'a Scene with no frame entry shows no borrowed chip');
+  assert.equal(second.chipsReason, SCENE_READING_PENDING, 'and says its reading is pending');
 });
 
 test('T1b: a Scene whose own reading cannot be read keeps its card with the owner reason and no chips', () => {

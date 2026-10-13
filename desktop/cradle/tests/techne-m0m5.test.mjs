@@ -225,3 +225,21 @@ test("the 3:3 crossing carries the scene ref in the selection's focus and Return
   assert.equal(back.focus_ref, "oi.expression:probe:scene:two");
   assert.equal(back.beat.scene_ref, "oi.expression:probe:scene:two");
 });
+test("T11: Return finds the beat by ref after the scenes are reordered while crossed, and discloses the honest miss when the focused scene is deleted", () => {
+  resetSessionAlignment();
+  const store = createDisclosureSessionStore();
+  const session = store.setSelection(groundSelection(READING, "journey"));
+  const crossing = crossToExpression(session, "oi.expression:probe:scene:two");
+  store.setSelection(crossing.selection);
+  const crossedSession = store.openInInstrument(crossing.target);
+  // Reordered while crossed: the beat keeps its ref, its index changes, and Return still names it by ref.
+  const reordered = [...beats(READING).beats].reverse();
+  const back = returnPosition(crossedSession, reordered);
+  assert.equal(back.beat.scene_ref, "oi.expression:probe:scene:two");
+  assert.equal(reordered.indexOf(back.beat), 0, "the beat is found by its ref, not by the position it held");
+  // Deleted while crossed: no beat is guessed; the focus ref is returned as data.
+  const deleted = beats(READING).beats.filter((beat) => beat.scene_ref !== "oi.expression:probe:scene:two");
+  const miss = returnPosition(crossedSession, deleted);
+  assert.equal(miss.beat, null, "no neighbouring beat is substituted");
+  assert.equal(miss.focus_ref, null, "a focus this reading no longer discloses is no focus at all, never a stale position");
+});
