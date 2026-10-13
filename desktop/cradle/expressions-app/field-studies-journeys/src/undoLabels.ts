@@ -35,9 +35,11 @@ const RESEARCH_MATERIAL_LABELS:Record<ResearchMaterialAction['type'],string>={
  'place-layers-set':'Set map layers',
  'timeline-view-save':'Save timeline view',
  'timeline-view-remove':'Remove timeline view',
+ 'batch':'Edit research material',
 };
 /** lane-1 A10: an embed or media card is named as what it adds; every other create-card keeps "Add card". */
-export function researchMaterialLabel(action:{type:ResearchMaterialAction['type'];kind?:ResearchCardKind}):string{
+export function researchMaterialLabel(action:{type:ResearchMaterialAction['type'];kind?:ResearchCardKind;label?:string}):string{
+ if(action.type==='batch'&&action.label)return action.label;
  if(action.type==='create-card'&&action.kind==='embed')return 'Add link card';
  if(action.type==='create-card'&&action.kind==='media')return 'Add media card';
  return RESEARCH_MATERIAL_LABELS[action.type];
