@@ -155,3 +155,20 @@ whole extent; no second view state. `participation-facts-native` repaired
 (imports + plain positive years per T7). Scripted: 48/48; verify-source
 green; tsc 0. Unverified: the look and drag feel (native pass); the
 participation test's gated body (needs the ctrl and kernel binaries).
+
+**T4 — deep time (landed `220ce31e6`, 13 Oct 2026; builder haiku).** The
+authority (`scale.ts`) gains the eon / era / epoch / age rungs (contract
+union and both precision lists, coarsest first) and positions years beyond
+Date's range by exact proleptic-Gregorian day count (equal to Date wherever
+Date reaches). A deep year admits year-or-coarser precision only. The canvas
+`instant.ts` and `labels.ts` consume the authority with no Date arithmetic
+(enforced by a test). Labels keep T7's astronomical convention (−780000 reads
+"780,001 BCE"; the era is always stated). The zoom floor drops to 1e-9 px/yr.
+Human scale is unchanged: a 58 KB probe digest is identical, and an 86,000-case
+sweep shows 0 differences. Scripted: cradle 39/39, field-studies 43/43, tsc 0.
+**T4b (dispatched):** the transport (`techneTransport.ts`) lacks the deep rungs
+and truncates years to six digits. `desktop-api` returns null past six digits.
+`schema/time.ts` admits four-digit bounds only. `timeline-navigation.test` has
+been red since T1b removed `generateTicks`; it is to be ported to the axis API.
+Lead ruling: the atlas `formatYear` (−1 and 0 both read "1 BCE") is left to
+the atlas port pin, upstream in AE.
