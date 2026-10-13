@@ -2064,7 +2064,16 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
  if(d&&d.v===1&&d.kind==='host-command'){
   if(d.command==='interact'||d.command==='select')activateRail(d.command);
   else if(d.command==='open-expression'&&typeof d.ref==='string'){if((d as {refresh?:unknown}).refresh===true&&kernelExpressionsAvailable())void nativeWorkspace?.refreshReference(d.ref,d.recovery);else openHostExpression(d.ref,d.recovery);}
-  else if(d.command==='lens'&&typeof (d as {lens?:unknown}).lens==='string'&&['project','canvas','timeline','journey','place','palace'].includes((d as {lens:string}).lens)){if(hostMode!=='techne')setHostMode('techne');lensStudio.select((d as {lens:LensId}).lens);}
+  else if(d.command==='lens'&&typeof (d as {lens?:unknown}).lens==='string'&&['project','canvas','timeline','journey','place','palace'].includes((d as {lens:string}).lens)){
+   const lens=(d as {lens:LensId}).lens,ref=(d as {ref?:unknown}).ref;
+   if(hostMode!=='techne')setHostMode('techne');
+   // Seam B: a lens press that carries an object ref focuses that object in the instrument it opens. A press with no ref is unchanged.
+   if(typeof ref==='string'&&ref.length>0&&ref.length<=512){
+    if(lens==='project')toast(`${ref} is not carried into the Project lens yet.`,8000);
+    carriedFocus={lens,ref};
+    try{lensStudio.select(lens);}finally{carriedFocus=null;}
+   }else lensStudio.select(lens);
+  }
   else if(d.command==='refresh-expression'&&typeof d.ref==='string')void nativeWorkspace?.refreshReference(d.ref,d.recovery);
   else if(d.command==='insert-source'&&typeof d.req==='string'){
    const req=d.req,target=d.target as {expression_ref?:unknown;revision?:unknown;scene_ref?:unknown}|undefined,source=d.source as {title?:unknown;binding?:unknown}|undefined;
@@ -2158,7 +2167,10 @@ function setInstrumentSurface(lens:LensId|null){
   lastTime=performance.now();needsFrame=true;overlayDirty=true;
  }
 }
+// Seam B: the object ref a lens press carries, for the one press that is selecting its lens (set and cleared around lensStudio.select).
+let carriedFocus:{lens:LensId;ref:string}|null=null;
 function activateInstrument(lens:LensId){
+ const carried=carriedFocus?.lens===lens?carriedFocus.ref:undefined;
  // A Studio section that belongs to the instrument being left does not stay
  // open, empty, over the next one.
  const owned:Record<string,LensId>={places:'place',palace:'palace',canvas:'canvas'};
@@ -2170,15 +2182,15 @@ function activateInstrument(lens:LensId){
  researchPreview=false;
  // M0/M3/M5 are operating modes of this same Expression and Scene engine.
  // Mature Research Canvas tools are mounted by the research instrument adapter.
- if(lens==='canvas'||lens==='timeline'||lens==='place'){if(propertyTake)finishPropertyTake();if(recorder.active){recorder.stop();toast('Recording stopped before opening the research instrument.');}void researchInstruments?.open(lens==='canvas'?'m1':lens==='timeline'?'m2':'m4');}
+ if(lens==='canvas'||lens==='timeline'||lens==='place'){if(propertyTake)finishPropertyTake();if(recorder.active){recorder.stop();toast('Recording stopped before opening the research instrument.');}void researchInstruments?.open(lens==='canvas'?'m1':lens==='timeline'?'m2':'m4',carried);}
  else researchInstruments?.close();
  if(lens==='project'){sequenceOpen=false;timelineOpen=false;inspectorOpen=false;contextKind='';beltPickerOpen=false;}
  if(lens==='journey'){sequenceOpen=false;timelineOpen=true;inspectorOpen=false;contextKind='';beltPickerOpen=false;}
  journeyHome.hidden=lens!=='journey';
- if(lens==='journey')void journeyInstrument?.open().then(()=>journeyInstrument?.returnFromCrossing()); // T11: a crossed beat returns by ref, through the owner.
+ if(lens==='journey')void journeyInstrument?.open().then(()=>journeyInstrument?.returnFromCrossing()).then(()=>carried===undefined?undefined:journeyInstrument?.focusBeat(carried)); // T11: a crossed beat returns by ref, through the owner.
  else journeyInstrument?.close();
  if(lens==='place'){editing=true;inspectorOpen=true;contextKind='';tab='field';studioSection='places';}
- if(lens==='palace'){if(propertyTake)finishPropertyTake();editing=true;inspectorOpen=true;contextKind='';tab='field';studioSection='palace';void palaceInstrument.open();}
+ if(lens==='palace'){if(propertyTake)finishPropertyTake();editing=true;inspectorOpen=true;contextKind='';tab='field';studioSection='palace';void palaceInstrument.open(carried);}
  else palaceInstrument.close();
  renderAll();announceHostState();
 }

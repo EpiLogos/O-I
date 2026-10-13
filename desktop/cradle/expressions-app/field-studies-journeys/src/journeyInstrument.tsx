@@ -362,6 +362,22 @@ export function installJourneyInstrument(host:JourneyInstrumentHost,home:HTMLEle
     message(journeyReturnNotice(reply)??`Back in this Journey at "${sceneTitle(restoredRef??basis.scene_ref)}".`);
    }catch(error){if(!destroyed&&open)message(failure(error));}
   },
+ /** Seam B: a carried beat ref is focused through the owner's scene focus (focusScene), the same path the beat's own focus uses. A ref
+  * that is not a beat of this Journey is named in the status line and nothing moves. */
+ async focusBeat(ref:string){
+  if(destroyed||!open)return;
+  let view:KernelConversion|undefined,basis:JourneyInstrumentBasis;
+  try{view=host.nativeView();basis=journeyInstrumentBasis(view,host.sceneId());}catch(error){message(failure(error));return;}
+  try{
+   const raw=await host.read(basis,'expression');
+   const {reading}=readJourneyInstrument(raw,view!,host.sceneId());
+   const target=beats(reading).beats.find(beat=>beat.scene_ref===ref);
+   if(!target){message(`Not focused: ${ref} is not a beat of this Journey.`);return;}
+   await host.focusScene(prepareJourneyBeatFocus(target,basis,view!,host.sceneId()));
+   if(destroyed||!open)return;
+   await load();
+  }catch(error){if(!destroyed&&open)message(failure(error));}
+ },
  async refresh(){if(open)await reuseOrLoad();},
   destroy(){epoch++;open=false;destroyed=true;inFlight=undefined;root?.unmount();root=null;mount.remove();status.remove();},
   active(){return open;},
