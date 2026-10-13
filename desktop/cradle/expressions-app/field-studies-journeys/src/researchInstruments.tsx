@@ -704,7 +704,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    const renderPlaces=():ReactNode=>{
     const filter={...state.placeFilter!,window:sharedTime?.axis.window??null};
     const filteredRepository=filteredPlacesRepository(data.places,nativeReading,filter);
-    const facets=<PlaceFacetsPanel reading={nativeReading} selectedRef={state.selectedPlace??null} filter={filter} sharedTime
+    const facets=<PlaceFacetsPanel reading={nativeReading} selectedRef={state.selectedPlace??null} filter={filter} onOpenSource={ref=>host.inspectSubject(ref)} sharedTime
       onFilterChange={next=>{state.placeFilter={...next,window:null};render(renderPlaces());}}
       editRequest={placeEditRequest} onError={message}/>;
     return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:placeRecordFromViewState(state.place)}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}{timeControls(()=>render(renderPlaces()))}</div>,host.tools)}

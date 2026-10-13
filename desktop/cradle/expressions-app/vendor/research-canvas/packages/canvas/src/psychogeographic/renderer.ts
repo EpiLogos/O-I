@@ -16,6 +16,7 @@ import {
   createOfflineMapStyle,
   GEOGRAPHY_EDGE_COLORS,
   GLOBE,
+  PLACE_ROUTE_STYLE,
   skyForProjection,
   type MapSurfaceOptions,
   type MapSurfaceProjection,
@@ -35,6 +36,7 @@ import {
   type StillnessState,
 } from "./placeNavigation";
 import type { PlaceRegion } from "./placeLayers";
+import type { HierarchyEdgeDraw, PlaceRouteDraw } from "./placeRoutes";
 
 /** The camera as the map reports it. `pitch` and `bearing` are degrees and are
  * absent in records saved before T1; they read as 0. */
@@ -101,6 +103,10 @@ export interface MapSurfaceRenderer {
   drawLanes?(edges: GeographyEdge[]): Promise<void>;
   /** Region polygons: fill and outline at every zoom, the label at the authority's centroid. */
   drawRegions?(regions: PlaceRegion[]): Promise<void>;
+  /** Lane-4 T11: the TRAVELLED_TO route as one line with its numbered stops; null draws none. */
+  drawRoutes?(route: PlaceRouteDraw | null): Promise<void>;
+  /** Lane-4 T12: the drawn LOCATED_IN hierarchy edges as dashed great-circle lines. */
+  drawHierarchy?(edges: HierarchyEdgeDraw[]): Promise<void>;
   setLiveTileSource(tileSource: MapTileSource): Promise<void>;
   centerOn(latitude: number, longitude: number, zoom?: number): Promise<void>;
   flyTo?(latitude: number, longitude: number, zoom?: number, camera?: MapCameraFlight): Promise<void>;
@@ -133,6 +139,8 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
   let htmlMarkers: Array<{ remove(): void }> = [];
   // Region labels are their own markers: a redraw of the place points must not erase them.
   let regionLabelMarkers: Array<{ remove(): void }> = [];
+  // Route stops are their own markers, so a redraw of the place points never erases them.
+  let routeStopMarkers: Array<{ remove(): void }> = [];
   let projection: MapSurfaceProjection = "globe";
   // The globe's own tilt, kept while the flat projection holds the camera top-down.
   let globeTilt: number | null = null;
@@ -167,6 +175,11 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
   function clearRegionLabels(): void {
     for (const marker of regionLabelMarkers) marker.remove();
     regionLabelMarkers = [];
+  }
+
+  function clearRouteStops(): void {
+    for (const marker of routeStopMarkers) marker.remove();
+    routeStopMarkers = [];
   }
 
   function stopPulse(): void {
@@ -467,6 +480,91 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
         );
       }
     },
+    async drawRoutes(route) {
+      if (!map) throw new Error("map renderer is not initialized");
+      // The route is one line in the reading's own stop order; a null route draws nothing.
+      addGeoJsonSource(map, "places-routes", {
+        type: "FeatureCollection",
+        features: route
+          ? [{ type: "Feature", geometry: { type: "LineString", coordinates: route.path }, properties: { id: "route" } }]
+          : [],
+      });
+      ensureLayer(map, {
+        id: "places-routes-layer",
+        type: "line",
+        source: "places-routes",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": PLACE_ROUTE_STYLE.route, "line-width": 2.5, "line-opacity": 0.9 },
+      });
+      clearRouteStops();
+      if (!route) return;
+      // Each stop is a numbered button. Its click is the place's own click (select, detail, fly).
+      for (const stop of route.stops) {
+        const anchor = document.createElement("div");
+        anchor.className = "places-route-stop-anchor";
+        Object.assign(anchor.style, { position: "relative", width: "0", height: "0" });
+
+        const element = document.createElement("button");
+        element.type = "button";
+        element.className = "places-route-stop";
+        element.dataset.testid = `globe-route-stop-${stop.place_ref}`;
+        element.dataset.stop = String(stop.number);
+        element.textContent = String(stop.number);
+        const label = stop.label ?? stop.place_ref;
+        element.title = stop.ordering_bound
+          ? `${stop.number}. ${label} · from ${stop.ordering_bound}`
+          : `${stop.number}. ${label}`;
+        element.setAttribute("aria-label", `Route stop ${stop.number}: ${label}`);
+        Object.assign(element.style, {
+          position: "absolute",
+          left: "10px",
+          top: "-22px",
+          width: "18px",
+          height: "18px",
+          borderRadius: "50%",
+          border: `1px solid ${PLACE_ROUTE_STYLE.stopText}`,
+          background: PLACE_ROUTE_STYLE.stop,
+          color: PLACE_ROUTE_STYLE.stopText,
+          font: "600 10px/16px sans-serif",
+          textAlign: "center",
+          cursor: "pointer",
+          padding: "0",
+        });
+        element.addEventListener("click", (event) => {
+          event.stopPropagation();
+          placeClickHandler?.(stop.place_ref);
+        });
+        anchor.append(element);
+        routeStopMarkers.push(
+          new maplibre.Marker({ element: anchor, anchor: "center" })
+            .setLngLat(stop.lonLat)
+            .addTo(map),
+        );
+      }
+    },
+    async drawHierarchy(edges) {
+      if (!map) throw new Error("map renderer is not initialized");
+      addGeoJsonSource(map, "places-hierarchy", {
+        type: "FeatureCollection",
+        features: edges.map((edge) => ({
+          type: "Feature",
+          geometry: { type: "LineString", coordinates: edge.path },
+          properties: { from: edge.from_ref, to: edge.to_ref, relation: edge.relation },
+        })),
+      });
+      ensureLayer(map, {
+        id: "places-hierarchy-layer",
+        type: "line",
+        source: "places-hierarchy",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          "line-color": PLACE_ROUTE_STYLE.hierarchy,
+          "line-width": 1.5,
+          "line-dasharray": [2, 2],
+          "line-opacity": 0.85,
+        },
+      });
+    },
     async setLiveTileSource(tileSource) {
       if (!map) throw new Error("map renderer is not initialized");
       if (map.getLayer("offline-base")) map.removeLayer("offline-base");
@@ -578,6 +676,7 @@ export async function createMaplibreRenderer(): Promise<MapSurfaceRenderer> {
       motion = STILL;
       clearHtmlMarkers();
       clearRegionLabels();
+      clearRouteStops();
       map?.remove();
       map = null;
       stopClickHandler = null;

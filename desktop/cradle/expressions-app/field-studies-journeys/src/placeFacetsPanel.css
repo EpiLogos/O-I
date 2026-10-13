@@ -34,3 +34,8 @@
 #inspector .places-home button{color:var(--ui-ink)!important;background:var(--ui-wash)!important;border:1px solid var(--ui-line)!important;border-radius:6px;padding:4px 8px;font:11px var(--sans)}
 #inspector .places-home button[data-active=true]{border-color:var(--ui-ink)!important}
 #inspector .places-home button:disabled{opacity:.45}
+.place-facets-provenance ol{margin:.25rem 0;padding-left:1.1rem}
+.place-facets-provenance dl{margin:.15rem 0 .4rem}
+.place-facets-open{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;margin:.2rem 0}
+.place-facets-open code{font-size:.8em;word-break:break-all}
+.place-facets-hierarchy-undrawn ul{margin:.25rem 0;padding-left:1.1rem}

@@ -45,7 +45,7 @@ const UNDISCLOSED_RELATION = "(relation not disclosed)";
 /** The frame the authority's ring reader projects into. At the default camera
  * (lon 0, lat 0, zoom 1) longitude and latitude map 1:1 onto x and y, so the
  * rings invert exactly back to degrees. */
-const UNIT_FRAME = { width: 360, height: 180 } as const;
+export const UNIT_FRAME = { width: 360, height: 180 } as const;
 
 /** The relation a facet is grouped and filtered under, as the filter reads it. */
 export function relationKey(relation: string | null | undefined): string {
@@ -163,8 +163,8 @@ export interface PlaceRegion {
   anchor: [number, number];
 }
 
-/** Inverts the unit frame back to degrees. */
-function toLonLat(point: { x: number; y: number }): [number, number] {
+/** Inverts the unit frame back to degrees: a projected point to [lon, lat]. */
+export function toLonLat(point: { x: number; y: number }): [number, number] {
   return [point.x - 180, 90 - point.y];
 }
 

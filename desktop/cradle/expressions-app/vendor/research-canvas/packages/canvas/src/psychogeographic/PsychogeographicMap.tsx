@@ -12,6 +12,7 @@ import { standingLabel, type StandingDrawing } from "../timeline/standingStyle";
 import { LocationPanel, pointForPlace } from "./LocationPanel";
 import { attributionReadout, imageryReadout, liveTileDisclosure } from "./disclosure";
 import {
+  admittedFacets,
   layerVisible,
   placeLayers,
   placeRefsHidden,
@@ -21,6 +22,7 @@ import {
   type PlaceLayer,
   type PlaceRegion,
 } from "./placeLayers";
+import { placeHierarchy, placeRouteForMap, type HierarchyEdgeDraw, type PlaceRouteDraw } from "./placeRoutes";
 import type { MapTileSource } from "./mapStyle";
 import {
   defaultPlaceView,
@@ -215,6 +217,18 @@ export function PsychogeographicMap({
     [regions],
   );
 
+  // T11/T12: the route and the LOCATED_IN edges read the same presentation filter as the
+  // layers. Both are narrowed views of the reading's own facets; neither rewrites them.
+  const admitted = useMemo(() => admittedFacets(placeFacets, layerState), [placeFacets, layerState]);
+  const route = useMemo<PlaceRouteDraw | null>(
+    () => placeRouteForMap(admitted, layerState.window),
+    [admitted, layerState.window],
+  );
+  const hierarchyEdges = useMemo<HierarchyEdgeDraw[]>(
+    () => placeHierarchy(placeFacets, new Set(admitted.map((facet) => facet.place_ref)), layerState.window).drawn,
+    [placeFacets, admitted, layerState.window],
+  );
+
   const placeMarkers = useMemo<PlaceRenderMarker[]>(() => nodes.flatMap((node) => {
     // A region is drawn as its polygon, never also as a point; a place the filter hides is absent.
     if (polygonRefs.has(node.graphNodeId) || hiddenRefs.has(node.graphNodeId)) return [];
@@ -313,8 +327,8 @@ export function PsychogeographicMap({
     () => lanes.find((lane) => lane.id === selectedLaneId) ?? null,
     [lanes, selectedLaneId],
   );
-  const renderDataRef = useRef({ placeMarkers, expressionMarkers, filteredLanes, regions });
-  renderDataRef.current = { placeMarkers, expressionMarkers, filteredLanes, regions };
+  const renderDataRef = useRef({ placeMarkers, expressionMarkers, filteredLanes, regions, route, hierarchyEdges });
+  renderDataRef.current = { placeMarkers, expressionMarkers, filteredLanes, regions, route, hierarchyEdges };
 
   // T2: the flight to a place. The zoom and the marker both come from the
   // place's own precision; an unlocated place does not fly and is named instead.
@@ -438,11 +452,13 @@ export function PsychogeographicMap({
       readyRenderer.drawPlaces?.(placeMarkers, expressionMarkers),
       readyRenderer.drawLanes?.(filteredLanes),
       readyRenderer.drawRegions?.(regions),
+      readyRenderer.drawRoutes?.(route),
+      readyRenderer.drawHierarchy?.(hierarchyEdges),
     ]).catch((cause: unknown) => {
       if (!cancelled) setError(cause instanceof Error ? cause.message : String(cause));
     });
     return () => { cancelled = true; };
-  }, [expressionMarkers, filteredLanes, placeMarkers, readyRenderer, regions]);
+  }, [expressionMarkers, filteredLanes, hierarchyEdges, placeMarkers, readyRenderer, regions, route]);
 
   const setProjection = useCallback((next: "globe" | "flat") => {
     const currentRenderer = mountedRenderer.current;
@@ -457,6 +473,8 @@ export function PsychogeographicMap({
           currentRenderer.drawPlaces?.(latest.placeMarkers, latest.expressionMarkers),
           currentRenderer.drawLanes?.(latest.filteredLanes),
           currentRenderer.drawRegions?.(latest.regions),
+          currentRenderer.drawRoutes?.(latest.route),
+          currentRenderer.drawHierarchy?.(latest.hierarchyEdges),
         ]);
       } catch (cause) {
         if (mountedRenderer.current === currentRenderer) {

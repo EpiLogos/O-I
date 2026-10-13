@@ -71,6 +71,16 @@ export const GEOGRAPHY_EDGE_COLORS: Record<GeographyEdge["mode"], string> = {
   inland_water: "#3fb89a",
 };
 
+/** Lane-4 T11/T12: a TRAVELLED_TO route, its numbered stops, and the LOCATED_IN
+ * hierarchy edges. Literal colours, as MapLibre takes them. The route is a
+ * light line distinct from the amber place markers; the hierarchy a quiet blue. */
+export const PLACE_ROUTE_STYLE = {
+  route: "#f2f0e6",
+  stop: "#f2f0e6",
+  stopText: "#17171d",
+  hierarchy: "#8fb4d9",
+} as const;
+
 /** Lane-4 T6: the globe's atmosphere, one tuned constant set. MapLibre's setSky
  * takes literal colours, not CSS custom properties, so each colour is resolved
  * here once from the design-system token it derives from
