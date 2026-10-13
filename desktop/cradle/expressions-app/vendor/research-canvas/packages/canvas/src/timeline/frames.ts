@@ -3,7 +3,7 @@ import type {
   GraphRelationship,
   TimelineViewNode,
 } from "./contracts";
-import { parseTemporalInstant } from "./instant";
+import { anchorExtent } from "./instant";
 import type { TimelineItem } from "./projection";
 
 /**
@@ -21,8 +21,8 @@ export interface TimelineFrameState {
   /** A Place frame is a spatial sub-timeline; other temporal frames are
    * time-bounded without a spatial claim. Earth is the zero-case. */
   spatialFrame: TimelineSpatialFrame;
-  /** The frame's own temporal window (its validFrom–validTo). */
-  window: { startYear: number; endYear: number } | null;
+  /** The frame's own temporal window in epoch ms (its honest validFrom–validTo extent). */
+  window: { fromMs: number; toMs: number } | null;
 }
 
 /** A trans-temporal node hovering above a sub-timeline. Archetypes, Dynamics,
@@ -64,16 +64,15 @@ export function frameStateForNode(
   if (!record || !record.node.isTemporal) {
     return null;
   }
-  const startYear = parseTemporalInstant(record.anchor.validFrom);
-  if (startYear === null) {
+  const extent = anchorExtent(record.anchor.validFrom, record.anchor.validTo, record.anchor.precision);
+  if (extent === null) {
     return null;
   }
-  const endYear = parseTemporalInstant(record.anchor.validTo) ?? startYear;
   return {
     frameNodeId,
     title: record.node.title,
     spatialFrame: record.node.entityType === "Place" ? "place" : "none",
-    window: { startYear, endYear },
+    window: { fromMs: extent.fromMs, toMs: extent.toMs ?? extent.fromMs },
   };
 }
 
@@ -87,12 +86,12 @@ export function projectSubTimeline(
   const related = relatedNodeIds(frame.frameNodeId, relationships);
   let members = items.filter((item) => related.has(item.graphNodeId));
   if (frame.window) {
-    const { startYear, endYear } = frame.window;
+    const { fromMs, toMs } = frame.window;
     members = members.filter((item) => {
-      const itemEnd = item.endYear ?? item.startYear;
+      const itemEnd = item.endMs ?? item.startMs;
       // Overlap semantics: a place whose identity spans the whole frame
       // window still belongs to the frame's sub-timeline.
-      return itemEnd >= startYear && item.startYear <= endYear;
+      return itemEnd >= fromMs && item.startMs <= toMs;
     });
   }
   return members;

@@ -1,7 +1,8 @@
 import { createStore, type StoreApi } from "zustand/vanilla";
 
 import type { ArchetypalLighting, ExpandedTimelineNode, GraphNode, GraphRelationship, TimelineDiagnostic, TimelineLane, TimelineLayoutOverride, TimelineView, TimelineViewNode } from "./contracts";
-import { tierForPixelsPerYear, type ScaleTier } from "./scale";
+import { MS_PER_YEAR } from "./scale";
+import { msToYear, yearToMs } from "./instant";
 import { projectNodes, type TimelineItem, type TimelinePresentation } from "./projection";
 import {
   frameStateForNode,
@@ -64,7 +65,6 @@ export interface TimelineStoreState {
   workingSet: WorkingSetEntry[];
 
   viewport: () => TimelineViewport;
-  tier: () => ScaleTier;
 
   setWidth: (px: number) => void;
   hydrate: (view: TimelineView, preserveViewport?: boolean) => void;
@@ -133,7 +133,6 @@ export function createTimelineStore(
         widthPx: s.widthPx,
       };
     },
-    tier: () => tierForPixelsPerYear(get().pixelsPerYear),
 
     setWidth: (px) => {
       const s = get();
@@ -229,7 +228,7 @@ export function createTimelineStore(
         ...(frame.window
           ? {
               centerYear: Math.round(
-                (frame.window.startYear + frame.window.endYear) / 2,
+                msToYear((frame.window.fromMs + frame.window.toMs) / 2),
               ),
             }
           : {}),
@@ -311,43 +310,44 @@ export function createTimelineStore(
 function isCameraNearTimeline(items: TimelineItem[], centerYear: number): boolean {
   if (items.length === 0 || !Number.isFinite(centerYear)) return false;
 
-  let minYear = Number.POSITIVE_INFINITY;
-  let maxYear = Number.NEGATIVE_INFINITY;
+  let minMs = Number.POSITIVE_INFINITY;
+  let maxMs = Number.NEGATIVE_INFINITY;
   for (const item of items) {
-    minYear = Math.min(minYear, item.startYear);
-    maxYear = Math.max(maxYear, item.endYear ?? item.startYear);
+    minMs = Math.min(minMs, item.startMs);
+    maxMs = Math.max(maxMs, item.endMs ?? item.startMs);
   }
 
-  if (!Number.isFinite(minYear) || !Number.isFinite(maxYear)) return false;
-  const domainYears = Math.max(maxYear - minYear, 1);
+  if (!Number.isFinite(minMs) || !Number.isFinite(maxMs)) return false;
+  const domainYears = Math.max((maxMs - minMs) / MS_PER_YEAR, 1);
   // The margin preserves a nearby, intentional working focus while avoiding
   // a stale camera from a different historical corpus.
-  const marginYears = Math.max(50, domainYears * 0.25);
-  return centerYear >= minYear - marginYears && centerYear <= maxYear + marginYears;
+  const marginMs = Math.max(50, domainYears * 0.25) * MS_PER_YEAR;
+  const centerMs = yearToMs(centerYear);
+  return centerMs >= minMs - marginMs && centerMs <= maxMs + marginMs;
 }
 
 function fitViewportToItems(
   items: TimelineItem[],
   widthPx: number,
 ): Pick<TimelineStoreState, "centerYear" | "pixelsPerYear"> {
-  let minYear = Number.POSITIVE_INFINITY;
-  let maxYear = Number.NEGATIVE_INFINITY;
+  let minMs = Number.POSITIVE_INFINITY;
+  let maxMs = Number.NEGATIVE_INFINITY;
   for (const item of items) {
-    minYear = Math.min(minYear, item.startYear);
-    maxYear = Math.max(maxYear, item.endYear ?? item.startYear);
+    minMs = Math.min(minMs, item.startMs);
+    maxMs = Math.max(maxMs, item.endMs ?? item.startMs);
   }
 
-  if (!Number.isFinite(minYear) || !Number.isFinite(maxYear)) {
+  if (!Number.isFinite(minMs) || !Number.isFinite(maxMs)) {
     return { centerYear: 1700, pixelsPerYear: 2 };
   }
 
-  const domainYears = Math.max(maxYear - minYear, 1);
+  const domainYears = Math.max((maxMs - minMs) / MS_PER_YEAR, 1);
   const visibleYears = Math.max(
     MIN_INITIAL_VISIBLE_YEARS,
     domainYears * (1 + DOMAIN_PADDING_RATIO),
   );
   return {
-    centerYear: (minYear + maxYear) / 2,
+    centerYear: msToYear((minMs + maxMs) / 2),
     pixelsPerYear: clampPixelsPerYear(widthPx / visibleYears),
   };
 }

@@ -3,7 +3,7 @@ import type {
   TimelineViewNode,
 } from "./contracts";
 import type { TimelineFrameState } from "./frames";
-import { parseTemporalInstant } from "./instant";
+import { calendarYear, canonicalInstant, parseTimestamp } from "./instant";
 import { frameStateForNode, projectSubTimeline, relatedNodeIds } from "./frames";
 import { projectNodes } from "./projection";
 
@@ -125,7 +125,11 @@ export function timelineWalkNodeIds(walk: TimelineWalk): Set<string> {
  * (`frames.ts`) so the walk reads the same dates as the axis.
  */
 export function timelineWalkStopYear(stop: TimelineWalkStop): number | null {
-  return parseTemporalInstant(stop.validFrom);
+  try {
+    return calendarYear(parseTimestamp(canonicalInstant(stop.validFrom)));
+  } catch {
+    return null;
+  }
 }
 
 export { relatedNodeIds };
